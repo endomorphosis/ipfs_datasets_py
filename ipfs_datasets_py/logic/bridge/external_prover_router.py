@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 from dataclasses import dataclass
 from typing import Any, Mapping, Optional, Sequence
+import time
 
 from .fol_tdfol import FolTdfolBridgeAdapter, coerce_tdfol_formula
 from .types import (
@@ -149,7 +150,8 @@ class ExternalProverRouterBridgeAdapter:
         graph_result = GraphProjectionResult.from_graph_data(context["graph_data"])
         attempted = max(1, int(proof_gate.attempted_count or len(formulas)))
         failure_ratio = max(0.0, (attempted - proof_gate.valid_count) / attempted)
-        unavailable_loss = 0.0 if router.get_available_provers() else 1.0
+        available_provers = _router_available_provers(router)
+        unavailable_loss = 0.0 if available_provers else 1.0
         round_trip = RoundTripMetrics(
             cosine_similarity=max(0.0, 1.0 - unavailable_loss),
             cosine_loss=unavailable_loss,
@@ -176,7 +178,7 @@ class ExternalProverRouterBridgeAdapter:
             status=status,
             metadata={
                 "adapter": "external_prover_router_bridge_v1",
-                "available_provers": router.get_available_provers(),
+                "available_provers": available_provers,
             },
         )
 
@@ -196,7 +198,7 @@ def _build_router(*, enable_native: bool, enable_external_binaries: bool) -> Any
 
 
 def _proof_gate_from_router(router: Any, formulas: Sequence[Any]) -> ProofGateResult:
-    available = list(router.get_available_provers())
+    available = _router_available_provers(router)
     attempted = len(formulas)
     if attempted <= 0:
         return ProofGateResult.disabled(reason="no_router_formulas_available")
@@ -404,32 +406,220 @@ def _route_formula_with_compat(
     attempts: list[Exception] = []
     strategy_text = str(getattr(strategy, "value", strategy) or "sequential")
     timeout_ms = max(1, int(float(timeout or 0.0) * 1000.0))
+    timeout_seconds = float(timeout or 0.0)
     for method_name in ("route", "prove"):
         method = getattr(router, method_name, None)
         if not callable(method):
             continue
-        for kwargs in (
-            {"strategy": strategy, "timeout": timeout},
-            {"strategy": strategy_text, "timeout": timeout},
-            {"strategy": strategy_text, "timeout_ms": timeout_ms},
-            {"axioms": (), "strategy": strategy, "timeout": timeout},
-            {"axioms": (), "strategy": strategy_text, "timeout": timeout},
-            {"axioms": (), "strategy": strategy_text, "timeout_ms": timeout_ms},
-            {"axioms": (), "timeout": timeout},
-            {"timeout": timeout},
-            {"timeout_ms": timeout_ms},
-            {},
+        for args, kwargs in (
+            ((), {"strategy": strategy, "timeout": timeout}),
+            ((), {"strategy": strategy_text, "timeout": timeout}),
+            ((), {"strategy": strategy_text, "timeout_ms": timeout_ms}),
+            ((), {"axioms": (), "strategy": strategy, "timeout": timeout}),
+            ((), {"axioms": (), "strategy": strategy_text, "timeout": timeout}),
+            ((), {"axioms": (), "strategy": strategy_text, "timeout_ms": timeout_ms}),
+            ((), {"axioms": (), "timeout": timeout}),
+            ((), {"timeout": timeout}),
+            ((), {"timeout_ms": timeout_ms}),
+            ((strategy_text, timeout_seconds), {}),
+            ((strategy_text,), {}),
+            ((), {}),
         ):
             try:
-                return method(formula, **kwargs)
+                return method(formula, *args, **kwargs)
             except (TypeError, ValueError) as exc:
                 attempts.append(exc)
                 continue
             except Exception as exc:
                 raise exc
+    compat_result = _route_formula_from_router_inventory(
+        router,
+        formula,
+        strategy_text=strategy_text,
+        timeout=float(timeout or 0.0),
+    )
+    if compat_result is not None:
+        return compat_result
     if attempts:
         raise attempts[-1]
     raise RuntimeError("router_missing_route_and_prove")
+
+
+def _route_formula_from_router_inventory(
+    router: Any,
+    formula: Any,
+    *,
+    strategy_text: str,
+    timeout: float,
+) -> Optional[Mapping[str, Any]]:
+    """Compat fallback for routers that expose prover inventory but no route/prove API."""
+
+    provers = _router_prover_mapping(router)
+    if not provers:
+        return None
+    candidate_names = _router_candidate_provers(router, formula=formula)
+    if not candidate_names:
+        candidate_names = list(provers.keys())
+    if not any(name in provers for name in candidate_names):
+        candidate_names = list(provers.keys())
+    if not candidate_names:
+        return None
+
+    all_results: dict[str, Any] = {}
+    start = time.monotonic()
+    for prover_name in candidate_names:
+        prover = provers.get(prover_name)
+        if prover is None:
+            continue
+        try:
+            prover_result = _call_prover_with_compat(
+                prover,
+                formula,
+                timeout=timeout,
+            )
+        except Exception as exc:
+            all_results[str(prover_name)] = f"Error: {exc}"
+            continue
+        all_results[str(prover_name)] = prover_result
+        proved = _result_proved(prover_result)
+        if proved:
+            return {
+                "all_results": all_results,
+                "is_proved": True,
+                "proof_time": max(0.0, time.monotonic() - start),
+                "prover_used": str(prover_name),
+                "reason": f"Proved by {prover_name}",
+                "strategy_used": strategy_text or "compat_selected_prover",
+            }
+
+    first_completed = next(
+        (
+            name
+            for name, value in all_results.items()
+            if not isinstance(value, str)
+        ),
+        "",
+    )
+    return {
+        "all_results": all_results,
+        "is_proved": False,
+        "proof_time": max(0.0, time.monotonic() - start),
+        "prover_used": first_completed,
+        "reason": "All provers failed",
+        "strategy_used": strategy_text or "compat_selected_prover",
+    }
+
+
+def _call_prover_with_compat(
+    prover: Any,
+    formula: Any,
+    *,
+    timeout: float,
+) -> Any:
+    prove = getattr(prover, "prove", None)
+    if not callable(prove):
+        raise TypeError("prover_missing_prove")
+
+    timeout_ms = max(1, int(float(timeout or 0.0) * 1000.0))
+    attempts: list[Exception] = []
+    for kwargs in (
+        {"axioms": (), "timeout": timeout},
+        {"timeout": timeout},
+        {"axioms": (), "timeout_ms": timeout_ms},
+        {"timeout_ms": timeout_ms},
+        {"axioms": ()},
+        {},
+    ):
+        try:
+            return prove(formula, **kwargs)
+        except (TypeError, ValueError) as exc:
+            attempts.append(exc)
+            continue
+    if attempts:
+        raise attempts[-1]
+    return prove(formula)
+
+
+def _router_candidate_provers(router: Any, *, formula: Any) -> list[str]:
+    available = _router_available_provers(router)
+    selected = ""
+    select_prover = getattr(router, "select_prover", None)
+    if callable(select_prover):
+        try:
+            selected = str(select_prover(formula) or "").strip()
+        except Exception:
+            selected = ""
+    if not selected:
+        fallback = getattr(router, "fallback_prover", "")
+        if callable(fallback):
+            try:
+                fallback = fallback()
+            except Exception:
+                fallback = ""
+        selected = str(fallback or "").strip()
+    if selected:
+        return [selected] + [name for name in available if name != selected]
+    return list(available)
+
+
+def _router_prover_mapping(router: Any) -> dict[str, Any]:
+    provers = getattr(router, "provers", None)
+    if not isinstance(provers, Mapping):
+        return {}
+    return {
+        str(name): prover
+        for name, prover in provers.items()
+        if str(name).strip()
+    }
+
+
+def _router_available_provers(router: Any) -> list[str]:
+    available: list[str] = []
+    seen: set[str] = set()
+
+    def _add_name(name: Any) -> None:
+        text = str(name or "").strip()
+        if not text or text in seen:
+            return
+        seen.add(text)
+        available.append(text)
+
+    def _extend(value: Any) -> None:
+        if isinstance(value, Mapping):
+            for name in value.keys():
+                _add_name(name)
+            return
+        if isinstance(value, (str, bytes)):
+            _add_name(value)
+            return
+        if isinstance(value, Sequence):
+            for name in value:
+                _add_name(name)
+            return
+        if value is None:
+            return
+        _add_name(value)
+
+    for attr_name in ("get_available_provers", "backup_provers"):
+        value = getattr(router, attr_name, None)
+        if callable(value):
+            try:
+                value = value()
+            except Exception:
+                continue
+        _extend(value)
+
+    _extend(getattr(router, "provers", None))
+
+    fallback = getattr(router, "fallback_prover", None)
+    if callable(fallback):
+        try:
+            fallback = fallback()
+        except Exception:
+            fallback = None
+    _add_name(fallback)
+
+    return available
 
 
 def _result_compiled(

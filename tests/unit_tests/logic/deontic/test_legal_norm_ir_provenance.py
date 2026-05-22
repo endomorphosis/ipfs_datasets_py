@@ -2,6 +2,7 @@
 
 from ipfs_datasets_py.logic.deontic.ir import (
     LegalNormIR,
+    legal_norm_ir_phase8_required_slots,
     legal_norm_ir_slot_provenance,
 )
 from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
@@ -82,3 +83,31 @@ def test_ir_slot_provenance_keeps_unresolved_numbered_reference_blocked():
     assert records["exceptions"]["status"] == "grounded"
     assert records["cross_references"]["spans"]
     assert records["exceptions"]["spans"]
+
+
+def test_phase8_required_slots_include_only_present_optional_slots():
+    element = extract_normative_elements(
+        "The Director shall issue a permit within 10 days after application unless approval is denied."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    required_slots = legal_norm_ir_phase8_required_slots(norm)
+
+    assert required_slots[:3] == ["actor", "modality", "action"]
+    assert "temporal_constraints" in required_slots
+    assert "exceptions" in required_slots
+    assert "conditions" not in required_slots
+    assert "cross_references" not in required_slots
+
+
+def test_phase8_required_slots_include_cross_references_when_present():
+    element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    required_slots = legal_norm_ir_phase8_required_slots(norm)
+
+    assert required_slots[:3] == ["actor", "modality", "action"]
+    assert "exceptions" in required_slots
+    assert "cross_references" in required_slots

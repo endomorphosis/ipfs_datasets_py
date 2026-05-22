@@ -2981,6 +2981,52 @@ def test_modal_ir_to_flogic_triples_infers_selected_frame_and_candidates_from_me
     ]
 
 
+def test_decode_modal_ir_document_infers_selected_frame_terms_from_metadata() -> None:
+    decoded = decode_modal_ir_document(_metadata_only_frame_terms_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["selected_ontology_frame"] == ["administrative_notice_hearing"]
+    assert slot_map["interpreted_in_frame"] == ["administrative_notice_hearing"]
+    assert slot_map["candidate_ontology_frame"] == [
+        "administrative_notice_hearing",
+        "criminal_penalty_enforcement",
+        "housing_voucher_benefits",
+    ]
+    assert slot_map["candidate_ontology_frame_rank"] == ["1", "2", "3"]
+    assert slot_map["candidate_ontology_frame_ranked"] == [
+        "1:administrative_notice_hearing",
+        "2:criminal_penalty_enforcement",
+        "3:housing_voucher_benefits",
+    ]
+    assert slot_map["candidate_ontology_term"] == [
+        "administrative",
+        "administrative_notice_hearing",
+        "agency",
+        "appeal",
+        "deadline",
+        "criminal",
+        "enforcement",
+        "penalty",
+        "accommodation",
+        "housing",
+        "voucher",
+    ]
+    assert slot_map["selected_ontology_term"] == [
+        "administrative",
+        "administrative_notice_hearing",
+        "agency",
+        "appeal",
+        "deadline",
+    ]
+    assert slot_map["interpreted_in_frame_term"] == [
+        "administrative",
+        "administrative_notice_hearing",
+        "agency",
+        "appeal",
+        "deadline",
+    ]
+
+
 def test_modal_ir_to_flogic_triples_emits_document_citation_slots_when_no_formulas() -> None:
     triples = modal_ir_to_flogic_triples(_zero_formula_sample_document())
 

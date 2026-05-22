@@ -154,6 +154,10 @@ _USCODE_38_8112_PACKET_519_TEXT = (
 _USCODE_36_170307_TODO_TEXT = (
     "Administrative notice and hearing procedures are established for this subchapter."
 )
+_USCODE_36_21110_TODO_TEXT = (
+    "Sec. 21110 - Administrative notice and hearing activities. "
+    "Historical and Revision Notes."
+)
 _USCODE_10_1095C_TODO_TEXT = (
     "Administrative review procedures are established for health care collection actions."
 )
@@ -364,6 +368,18 @@ def test_spacy_encoder_detects_editorial_frame_scope_signals() -> None:
     assert signals["has_frame_editorial_scope_phrase"] is True
 
 
+def test_spacy_encoder_detects_of_this_title_as_statutory_scope_reference() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        "Section 430f-12 of this title shall apply.",
+        document_id="sample-statutory-of-this-title-reference",
+    )
+
+    signals = modal_ambiguity_signals(encoding)
+    assert signals["has_statutory_scope_reference"] is True
+    assert signals["has_deontic_scope"] is True
+
+
 def test_spacy_decoder_promotes_frame_logits_over_hybrid_for_editorial_scope_text() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
@@ -408,6 +424,59 @@ def test_spacy_decoder_promotes_frame_logits_over_temporal_for_editorial_scope_t
     )
 
     assert logits["frame"] > logits["temporal"]
+
+
+def test_spacy_decoder_debiases_editorial_frame_logits_when_deontic_scope_competes_without_frame_cues() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="8",
+        section="606",
+        text="Section transferred to section 1421l of this title shall apply.",
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+
+    logits = codec.family_logits_for_sample(
+        sample,
+        modal_families=("frame", "deontic", "temporal"),
+    )
+
+    assert not any(cue.family == "frame" for cue in encoding.cues)
+    assert signals["has_frame_editorial_scope_phrase"] is True
+    assert signals["has_statutory_scope_reference"] is True
+    assert signals["has_deontic_cue"] is True
+    assert logits["deontic"] > logits["frame"]
+
+
+def test_spacy_decoder_debiases_editorial_frame_logits_when_temporal_scope_competes_without_frame_cues() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="42",
+        section="603a",
+        text=(
+            "Section transferred to section 1421l of this title applies "
+            "beginning on January 1, 2030."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+
+    logits = codec.family_logits_for_sample(
+        sample,
+        modal_families=("frame", "temporal", "deontic"),
+    )
+
+    assert not any(cue.family == "frame" for cue in encoding.cues)
+    assert signals["has_frame_editorial_scope_phrase"] is True
+    assert signals["has_statutory_scope_reference"] is True
+    assert signals["has_temporal_scope"] is True
+    assert logits["temporal"] > logits["frame"]
 
 
 def test_spacy_codec_debiases_generic_frame_cues_when_deontic_force_is_present() -> None:
@@ -1915,6 +1984,56 @@ def test_spacy_directional_backfill_reinforces_frame_to_deontic_with_explicit_sc
     assert counts["deontic"] > 0.85
 
 
+def test_spacy_directional_backfill_adds_conditional_support_for_deontic_scope() -> None:
+    counts = {
+        "deontic": 0.9,
+        "conditional_normative": 0.05,
+    }
+    signals = {
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": True,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": True,
+        "has_conditional_scope_token": False,
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": True,
+        "has_deontic_cue": False,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": False,
+        "has_frame_editorial_scope_phrase": False,
+        "has_frame_cue": False,
+    }
+
+    _apply_directional_modal_family_pair_backfill(counts, signals)
+
+    assert counts["conditional_normative"] > 0.2
+
+
+def test_spacy_directional_backfill_adds_frame_support_for_temporal_scope_with_editorial_frame_signals() -> None:
+    counts = {
+        "temporal": 0.9,
+        "frame": 0.1,
+    }
+    signals = {
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": True,
+        "has_temporal_scope_token": False,
+        "has_temporal_within_scope": False,
+        "has_calendar_date_scope": False,
+        "has_temporal_cue": True,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": False,
+        "has_frame_editorial_scope_phrase": True,
+        "has_frame_cue": False,
+        "has_statutory_scope_reference": False,
+    }
+
+    _apply_directional_modal_family_pair_backfill(counts, signals)
+
+    assert counts["frame"] > 0.3
+
+
 def test_spacy_temporal_scope_boost_is_stronger_with_deontic_cue_competition() -> None:
     base_signals = {
         "has_temporal_scope": True,
@@ -2390,6 +2509,45 @@ def test_spacy_codec_backfills_deontic_share_for_single_frame_cue_with_temporal_
         if item["family"] == "deontic"
     )
     assert deontic_share > 0.0
+
+
+def test_spacy_codec_reinforces_deontic_share_for_moderate_temporal_scope_with_explicit_cue() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    baseline = build_us_code_sample(
+        title="31",
+        section="711a",
+        text="Within 30 days after receipt, the agency issues a determination.",
+    )
+    competing = build_us_code_sample(
+        title="31",
+        section="711b",
+        text="Within 30 days after receipt, the agency shall issue a determination.",
+    )
+    baseline_ranking = ranked_modal_families(codec.encode_sample(baseline))
+    competing_ranking = ranked_modal_families(codec.encode_sample(competing))
+
+    baseline_deontic_share = next(
+        (
+            float(item["share"])
+            for item in baseline_ranking
+            if item["family"] == "deontic"
+        ),
+        0.0,
+    )
+    competing_deontic_share = next(
+        (
+            float(item["share"])
+            for item in competing_ranking
+            if item["family"] == "deontic"
+        ),
+        0.0,
+    )
+
+    assert competing_deontic_share > baseline_deontic_share
+    assert competing_deontic_share > 0.35
 
 
 def test_spacy_codec_backfills_temporal_share_for_deontic_competition_with_calendar_scope() -> None:
@@ -3528,6 +3686,55 @@ def test_spacy_encoder_extracts_temporal_cues_from_recurring_effective_date_phra
     )
 
 
+def test_spacy_decoder_reinforces_deontic_scope_for_office_tenure_successor_clauses() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="2",
+        section="5602",
+        text=(
+            "Any person duly elected and qualified as Sergeant at Arms of the House of "
+            "Representatives shall continue in said office until his successor is chosen "
+            "and qualified, subject however, to removal by the House of Representatives."
+        ),
+    )
+
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    logits = codec.family_logits_for_sample(
+        sample,
+        modal_families=("deontic", "temporal"),
+    )
+
+    assert signals["has_deontic_scope_phrase"] is True
+    assert logits["deontic"] > logits["temporal"]
+
+
+def test_spacy_decoder_treats_until_expended_as_strong_temporal_scope_phrase() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="25",
+        section="123b",
+        text="Amounts appropriated under this section shall remain available until expended.",
+    )
+
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    logits = codec.family_logits_for_sample(
+        sample,
+        modal_families=("deontic", "temporal"),
+    )
+
+    assert signals["has_temporal_scope_phrase"] is True
+    assert signals["has_temporal_expended_scope_phrase"] is True
+    assert logits["temporal"] > logits["deontic"]
+
+
 def test_spacy_encoder_extracts_epistemic_cues_for_knowledge_and_belief() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     encoding = encoder.encode(
@@ -3896,6 +4103,38 @@ def test_spacy_compiler_replays_packet_todo_samples_for_36_170307_10_1095c_and_1
         assert fallback.metadata["fallback_rule"] == "uscode_procedural_clause_v1"
         assert fallback.metadata["procedural_keyword"] == procedural_keyword
         assert fallback.provenance.citation == citation
+
+
+def test_spacy_compiler_adds_short_residual_heading_span_coverage_for_36_21110_todo_shape() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    encoding = encoder.encode(
+        _USCODE_36_21110_TODO_TEXT,
+        document_id="us-code-36-21110-e10464bdc5e2ba17",
+        citation="36 U.S.C. 21110",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    assert modal_ir.document_id == "us-code-36-21110-e10464bdc5e2ba17"
+    assert modal_ir.formulas
+    fallback = modal_ir.formulas[-1]
+    assert fallback.operator.family == "frame"
+    assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
+    assert fallback.metadata["fallback_rule"] == "uscode_section_heading_v1"
+    residual_formulas = [
+        formula
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    ]
+    assert residual_formulas
+    residual_text_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in residual_formulas
+    }
+    assert "Historical and Revision Notes." in residual_text_spans
 
 
 def test_spacy_compiler_supports_usc_and_section_symbol_citation_variants_for_sec_headings() -> None:

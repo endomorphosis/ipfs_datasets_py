@@ -166,6 +166,26 @@ _USCODE_PROCEDURAL_CLAUSE_MIN_TOKENS = 6
 _USCODE_PROCEDURAL_CLAUSE_MAX_TOKENS = 42
 _USCODE_RESIDUAL_SPAN_MIN_TOKENS = 6
 _USCODE_RESIDUAL_SPAN_MAX_TOKENS = 120
+_USCODE_SHORT_RESIDUAL_HEADING_MIN_TOKENS = 1
+_USCODE_SHORT_RESIDUAL_HEADING_MAX_TOKENS = 5
+_USCODE_SHORT_RESIDUAL_HEADING_SIGNAL_TOKENS = frozenset(
+    {
+        "activities",
+        "activity",
+        "administrative",
+        "amendment",
+        "amendments",
+        "hearing",
+        "historical",
+        "notice",
+        "notes",
+        "procedure",
+        "procedures",
+        "records",
+        "review",
+        "revision",
+    }
+)
 _USCODE_MAX_RESIDUAL_SPAN_FORMULAS = 3
 
 
@@ -553,15 +573,23 @@ class LegalModalParser:
         if not normalized:
             return False
         lowered = normalized.lower()
-        token_count = len(_TOKEN_RE.findall(lowered))
+        tokens = _TOKEN_RE.findall(lowered)
+        token_count = len(tokens)
+        is_short_heading_candidate = self._is_short_residual_heading_coverage_candidate(
+            tokens
+        )
         if (
             token_count < _USCODE_RESIDUAL_SPAN_MIN_TOKENS
             or token_count > _USCODE_RESIDUAL_SPAN_MAX_TOKENS
         ):
-            return False
+            if not is_short_heading_candidate:
+                return False
         if self.extract_cues(normalized):
             return False
-        if self._looks_like_heading_without_section_reference(normalized):
+        if (
+            self._looks_like_heading_without_section_reference(normalized)
+            and not is_short_heading_candidate
+        ):
             return False
         if (
             _USCODE_CODIFICATION_HINT_RE.search(lowered)
@@ -570,6 +598,20 @@ class LegalModalParser:
         ):
             return False
         return True
+
+    def _is_short_residual_heading_coverage_candidate(
+        self,
+        tokens: Sequence[str],
+    ) -> bool:
+        token_count = len(tokens)
+        if (
+            token_count < _USCODE_SHORT_RESIDUAL_HEADING_MIN_TOKENS
+            or token_count > _USCODE_SHORT_RESIDUAL_HEADING_MAX_TOKENS
+        ):
+            return False
+        return bool(
+            set(tokens) & _USCODE_SHORT_RESIDUAL_HEADING_SIGNAL_TOKENS
+        )
 
     def _residual_span_coverage_formula(
         self,

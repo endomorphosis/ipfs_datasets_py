@@ -84,6 +84,39 @@ def test_legal_norm_ir_roundtrip_from_typed_dict_preserves_quality_and_slot_reco
     assert rehydrated.temporal_constraints[0].get("quantity") == 30
 
 
+def test_legal_norm_ir_recovers_modal_slots_from_prompt_context_detail_rows() -> None:
+    parsed = extract_normative_elements(
+        "The Director is authorized and directed to adopt rules."
+    )[0]
+    detail = {
+        "schema_version": parsed["schema_version"],
+        "source_id": f"{parsed['source_id']}:detail",
+        "text": parsed["text"],
+        "support_text": parsed["support_text"],
+        "support_span": parsed["support_span"],
+        "norm_type": "",
+        "modality": None,
+        "deontic_operator": "",
+        "subject": list(parsed["subject"]),
+        "action": list(parsed["action"]),
+        "llm_repair": {
+            "required": True,
+            "reasons": ["legacy_detail_projection"],
+            "prompt_context": {
+                "source_text": parsed["text"],
+                "norm_type": parsed["norm_type"],
+                "deontic_operator": parsed["deontic_operator"],
+            },
+        },
+    }
+
+    ir = LegalNormIR.from_parser_element(detail)
+
+    assert ir.norm_type == "obligation"
+    assert ir.modality == "O"
+    assert ir.canonical_modality == "O"
+
+
 def test_legal_norm_ir_decoder_validation_gate_distinguishes_cross_reference_warning_classes() -> None:
     cross_reference_only = extract_normative_elements(
         "This section applies to food carts."

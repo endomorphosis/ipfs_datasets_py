@@ -280,41 +280,65 @@ def _tdfol_formula_from_norm(norm: Mapping[str, Any]) -> Any:
 def coerce_tdfol_formula(formula: Any) -> Optional[Any]:
     """Return a TDFOL formula object from either object or parser-friendly text."""
 
+    return _coerce_tdfol_formula(formula, seen=set())
+
+
+def _coerce_tdfol_formula(formula: Any, *, seen: set[int]) -> Optional[Any]:
     if formula is None:
         return None
+    if hasattr(formula, "to_string") and hasattr(formula, "get_predicates"):
+        return formula
     if isinstance(formula, Mapping):
-        for key in (
+        object_id = id(formula)
+        if object_id in seen:
+            return None
+        seen.add(object_id)
+        formula_keys = (
             "formula_object",
             "proof_formula_object",
             "formula",
             "proof_input",
             "proof_formula",
             "tdfol_formula",
-        ):
+            "value",
+            "text",
+        )
+        container_keys = (
+            "obligations",
+            "proof_obligations",
+            "records",
+            "formulas",
+            "items",
+        )
+        consumed_keys: set[str] = set()
+        for key in formula_keys + container_keys:
             if key not in formula:
                 continue
+            consumed_keys.add(key)
             value = formula.get(key)
             if value is formula:
                 continue
-            coerced = coerce_tdfol_formula(value)
+            coerced = _coerce_tdfol_formula(value, seen=seen)
+            if coerced is not None:
+                return coerced
+        for raw_key in sorted(formula.keys(), key=lambda item: str(item)):
+            key = str(raw_key)
+            if key in consumed_keys:
+                continue
+            value = formula.get(raw_key)
+            if value is formula:
+                continue
+            coerced = _coerce_tdfol_formula(value, seen=seen)
             if coerced is not None:
                 return coerced
         return None
-    if hasattr(formula, "to_string") and hasattr(formula, "get_predicates"):
-        return formula
-    if isinstance(formula, Mapping):
-        for key in (
-            "formula_object",
-            "formula",
-            "proof_input",
-            "tdfol_formula",
-            "value",
-            "text",
-        ):
-            candidate = formula.get(key)
-            if candidate is formula:
-                continue
-            coerced = coerce_tdfol_formula(candidate)
+    if isinstance(formula, Sequence) and not isinstance(formula, (str, bytes)):
+        object_id = id(formula)
+        if object_id in seen:
+            return None
+        seen.add(object_id)
+        for item in formula:
+            coerced = _coerce_tdfol_formula(item, seen=seen)
             if coerced is not None:
                 return coerced
         return None
@@ -324,7 +348,12 @@ def coerce_tdfol_formula(formula: Any) -> Optional[Any]:
     try:
         from ipfs_datasets_py.logic.TDFOL.tdfol_parser import parse_tdfol_safe
 
-        return parse_tdfol_safe(text)
+        parsed = parse_tdfol_safe(text)
+        if parsed is not None:
+            return parsed
+        if text.endswith("."):
+            return parse_tdfol_safe(text[:-1].rstrip())
+        return None
     except Exception:
         return None
 

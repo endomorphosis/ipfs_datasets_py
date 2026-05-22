@@ -53,11 +53,12 @@ def flogic_triples_to_graph_data(
     """Convert F-logic triples into Neo4j-compatible migration graph data."""
     input_triple_count = len(triples)
     normalized = _normalize_triples(triples)
+    projected = _canonical_projection_triples(normalized)
     node_map: Dict[str, NodeData] = {}
     relationships: List[RelationshipData] = []
     relationship_types: set[str] = set()
 
-    for index, triple in enumerate(normalized):
+    for index, triple in enumerate(projected):
         subject = triple["subject"]
         predicate = triple["predicate"]
         obj = triple["object"]
@@ -88,6 +89,7 @@ def flogic_triples_to_graph_data(
                     "flogic_object": obj,
                     "flogic_predicate": predicate,
                     "flogic_subject": subject,
+                    "flogic_triple_key": _triple_identity_key(subject, predicate, obj),
                     "source": "flogic_triple",
                     "triple_index": index,
                 },
@@ -95,8 +97,13 @@ def flogic_triples_to_graph_data(
         )
 
     node_labels = sorted({label for node in node_map.values() for label in node.labels})
+    unique_triple_count = _unique_triple_count(projected)
+    duplicate_triple_count = max(0, len(projected) - unique_triple_count)
     graph_metadata = {
-        "flogic_triple_count": len(normalized),
+        "flogic_duplicate_triple_count": duplicate_triple_count,
+        "flogic_normalized_triple_count": len(normalized),
+        "flogic_triple_count": len(projected),
+        "flogic_unique_triple_count": unique_triple_count,
         "graph_id": graph_id or _default_graph_id(normalized),
         "neo4j_compatible": True,
         "source": "modal_flogic_ir",
@@ -105,8 +112,9 @@ def flogic_triples_to_graph_data(
         graph_metadata.update(dict(metadata))
     graph_metadata.update(
         _projection_alignment_metadata(
-            normalized,
+            projected,
             input_triple_count=input_triple_count,
+            normalized_triple_count=len(normalized),
             node_count=len(node_map),
             relationship_count=len(relationships),
         )
@@ -258,6 +266,21 @@ def _normalize_triples(triples: Sequence[Mapping[str, Any]]) -> List[Dict[str, s
     return normalized
 
 
+def _canonical_projection_triples(
+    triples: Sequence[Mapping[str, str]],
+) -> List[Dict[str, str]]:
+    """Return triples in deterministic lexical order."""
+    normalized = [
+        {
+            "subject": str(triple.get("subject") or ""),
+            "predicate": str(triple.get("predicate") or ""),
+            "object": str(triple.get("object") or ""),
+        }
+        for triple in triples
+    ]
+    return sorted(normalized, key=lambda item: (item["subject"], item["predicate"], item["object"]))
+
+
 def _ensure_node(
     node_map: Dict[str, NodeData],
     flogic_id: str,
@@ -292,9 +315,13 @@ def _node_id(flogic_id: str) -> str:
 
 
 def _relationship_id(index: int, subject: str, predicate: str, obj: str) -> str:
-    payload = "\x1f".join((subject, predicate, obj, str(index)))
+    payload = "\x1f".join((_triple_identity_key(subject, predicate, obj), str(index)))
     digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()[:20]
     return f"flogic-rel-{digest}"
+
+
+def _triple_identity_key(subject: str, predicate: str, obj: str) -> str:
+    return "\x1f".join((subject, predicate, obj))
 
 
 def _relationship_type(predicate: str) -> str:
@@ -326,16 +353,22 @@ def _projection_alignment_metadata(
     triples: Sequence[Mapping[str, str]],
     *,
     input_triple_count: int,
+    normalized_triple_count: int,
     node_count: int,
     relationship_count: int,
 ) -> Dict[str, Any]:
     subjects = {str(triple["subject"]) for triple in triples}
     predicates = {str(triple["predicate"]) for triple in triples}
     objects = {str(triple["object"]) for triple in triples}
+    unique_triple_count = _unique_triple_count(triples)
     metadata: Dict[str, Any] = {
         "flogic_input_triple_count": input_triple_count,
-        "flogic_invalid_triple_count": max(0, input_triple_count - len(triples)),
+        "flogic_invalid_triple_count": max(0, input_triple_count - normalized_triple_count),
+        "flogic_duplicate_triple_count": max(0, len(triples) - unique_triple_count),
+        "flogic_normalized_triple_count": normalized_triple_count,
+        "flogic_unique_triple_count": unique_triple_count,
         "frame_logic_projection_aligned": relationship_count == len(triples),
+        "frame_logic_projection_has_duplicate_facts": len(triples) != unique_triple_count,
         "frame_logic_projection_node_count": node_count,
         "frame_logic_projection_relationship_count": relationship_count,
         "frame_logic_unique_object_count": len(objects),
@@ -367,6 +400,19 @@ def _unique(values: Iterable[str]) -> List[str]:
         seen.add(value)
         result.append(value)
     return result
+
+
+def _unique_triple_count(triples: Sequence[Mapping[str, str]]) -> int:
+    return len(
+        {
+            (
+                str(triple.get("subject") or ""),
+                str(triple.get("predicate") or ""),
+                str(triple.get("object") or ""),
+            )
+            for triple in triples
+        }
+    )
 
 
 __all__ = [

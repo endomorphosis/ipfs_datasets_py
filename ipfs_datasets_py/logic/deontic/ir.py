@@ -612,6 +612,15 @@ def _enumeration_index(value: Any) -> Optional[int]:
 
 
 _CANONICAL_MODALITY_OPERATORS = {"O", "P", "F", "DEF", "APP", "EXEMPT", "LIFE"}
+_MODALITY_NORM_TYPE_MAP = {
+    "O": "obligation",
+    "P": "permission",
+    "F": "prohibition",
+    "DEF": "definition",
+    "APP": "applicability",
+    "EXEMPT": "exemption",
+    "LIFE": "instrument_lifecycle",
+}
 _NORM_TYPE_MODALITY_MAP = {
     "obligation": "O",
     "mandatory_obligation": "O",
@@ -670,7 +679,9 @@ _PROHIBITION_MODALITY_RE = re.compile(
     re.IGNORECASE,
 )
 _OBLIGATION_MODALITY_RE = re.compile(
-    r"\b(?:shall|required?|must|obligat(?:ion|ory)?|mandatory|duty)\b",
+    r"\b(?:shall|required?|must|obligat(?:ion|ory)?|mandatory|duty)\b"
+    r"|\b(?:is|are)\s+authorized\s+and\s+directed\s+to\b"
+    r"|\b(?:is|are)\s+directed\s+to\b",
     re.IGNORECASE,
 )
 _PERMISSION_MODALITY_RE = re.compile(
@@ -731,17 +742,37 @@ def _modality_from_parser_element(element: Dict[str, Any]) -> str:
     parser warning. Unknown norm types still stay empty and blocked downstream.
     """
 
+    resolved_norm_type = _norm_type_from_parser_element(element)
     for key in ("deontic_operator", "modality"):
         inferred = canonical_modality_operator(
             element.get(key),
-            element.get("norm_type"),
+            resolved_norm_type,
+        )
+        if inferred:
+            return inferred
+
+    legal_frame = element.get("legal_frame")
+    if isinstance(legal_frame, Mapping):
+        for key in ("deontic_operator", "modality", "norm_type"):
+            inferred = canonical_modality_operator(
+                legal_frame.get(key),
+                resolved_norm_type,
+            )
+            if inferred:
+                return inferred
+
+    prompt_context = _prompt_context_mapping(element)
+    for key in ("deontic_operator", "modality", "norm_type"):
+        inferred = canonical_modality_operator(
+            prompt_context.get(key),
+            resolved_norm_type,
         )
         if inferred:
             return inferred
 
     inferred_norm_type = canonical_modality_operator(
         "",
-        element.get("norm_type"),
+        resolved_norm_type,
     )
     if inferred_norm_type:
         return inferred_norm_type
@@ -750,6 +781,49 @@ def _modality_from_parser_element(element: Dict[str, Any]) -> str:
         inferred = _modality_from_textual_value(element.get(key))
         if inferred:
             return inferred
+    for key in ("source_text", "text", "support_text", "action"):
+        inferred = _modality_from_textual_value(prompt_context.get(key))
+        if inferred:
+            return inferred
+    return ""
+
+
+def _prompt_context_mapping(element: Mapping[str, Any]) -> Dict[str, Any]:
+    llm_repair = element.get("llm_repair")
+    if not isinstance(llm_repair, Mapping):
+        return {}
+    prompt_context = llm_repair.get("prompt_context")
+    if not isinstance(prompt_context, Mapping):
+        return {}
+    return dict(prompt_context)
+
+
+def _norm_type_from_parser_element(element: Dict[str, Any]) -> str:
+    """Return a stable norm type from top-level or legacy detail slots."""
+
+    top_level = str(element.get("norm_type") or "").strip()
+    if top_level:
+        return top_level
+
+    legal_frame = element.get("legal_frame")
+    if isinstance(legal_frame, Mapping):
+        legal_frame_norm_type = str(legal_frame.get("norm_type") or "").strip()
+        if legal_frame_norm_type:
+            return legal_frame_norm_type
+
+    prompt_context = _prompt_context_mapping(element)
+    prompt_norm_type = str(prompt_context.get("norm_type") or "").strip()
+    if prompt_norm_type:
+        return prompt_norm_type
+
+    for container in (element, legal_frame, prompt_context):
+        if not isinstance(container, Mapping):
+            continue
+        for key in ("deontic_operator", "modality"):
+            inferred_modality = canonical_modality_operator(container.get(key), "")
+            inferred_norm_type = _MODALITY_NORM_TYPE_MAP.get(inferred_modality)
+            if inferred_norm_type:
+                return inferred_norm_type
     return ""
 
 
@@ -1217,7 +1291,7 @@ class LegalNormIR:
             source_span=SourceSpan.from_value(source_span_value),
             support_span=SourceSpan.from_value(element.get("support_span")),
             modality=_modality_from_parser_element(element),
-            norm_type=str(element.get("norm_type") or ""),
+            norm_type=_norm_type_from_parser_element(element),
             actor=(
                 _actor_text(element)
                 or _applicability_actor_text(element)
@@ -1330,6 +1404,19 @@ DEFAULT_IR_PROVENANCE_SLOTS = (
     "cross_references",
 )
 
+DEFAULT_PHASE8_QUALITY_CORE_SLOTS = (
+    "actor",
+    "modality",
+    "action",
+)
+
+DEFAULT_PHASE8_QUALITY_OPTIONAL_SLOTS = (
+    "conditions",
+    "exceptions",
+    "temporal_constraints",
+    "cross_references",
+)
+
 _FIELD_SPAN_ALIASES = {
     "actor": ("actor", "subject"),
     "modality": ("modality", "deontic_operator", "modal"),
@@ -1364,6 +1451,34 @@ def parser_warnings_require_decoder_validation(warnings: Sequence[str]) -> bool:
             continue
         return True
     return False
+
+
+def legal_norm_ir_phase8_required_slots(
+    norm: "LegalNormIR",
+    core_slots: Sequence[str] = DEFAULT_PHASE8_QUALITY_CORE_SLOTS,
+    optional_slots: Sequence[str] = DEFAULT_PHASE8_QUALITY_OPTIONAL_SLOTS,
+) -> List[str]:
+    """Return per-norm Phase 8 slots required for quality-gate completeness.
+
+    Phase 8 quality should always require core deontic slots (actor/modality/
+    action) and should require optional legal slots only when that norm
+    actually carries grounded data for them. This avoids treating absent
+    optional structures as reconstruction/provenance defects.
+    """
+
+    required: List[str] = []
+    for slot in core_slots:
+        slot_name = str(slot or "").strip()
+        if slot_name and slot_name not in required:
+            required.append(slot_name)
+
+    for slot in optional_slots:
+        slot_name = str(slot or "").strip()
+        if not slot_name or slot_name in required:
+            continue
+        if not _ir_slot_value_is_empty(_phase8_slot_value(norm, slot_name)):
+            required.append(slot_name)
+    return required
 
 
 def legal_norm_ir_slot_provenance(
@@ -1416,6 +1531,20 @@ def _ir_slot_value_is_empty(value: Any) -> bool:
     if isinstance(value, (list, tuple, dict, set)):
         return len(value) == 0
     return False
+
+
+def _phase8_slot_value(norm: LegalNormIR, slot: str) -> Any:
+    """Return a normalized slot value for Phase 8 requirement selection."""
+
+    if slot == "cross_references":
+        references = list(norm.cross_references or [])
+        references.extend(
+            reference
+            for reference in list(norm.resolved_cross_references or [])
+            if reference not in references
+        )
+        return references
+    return getattr(norm, slot, None)
 
 
 def _ir_slot_spans(norm: LegalNormIR, slot: str, value: Any) -> List[List[int]]:

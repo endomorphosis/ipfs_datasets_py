@@ -86,6 +86,23 @@ def test_modal_frame_logic_bridge_evaluates_ir_graph_and_proof_gate() -> None:
     assert report.to_dict()["ir_document"]["has_frame_logic"] is True
 
 
+def test_modal_frame_logic_bridge_scales_sparse_citation_loss() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("modal_frame_logic")
+    report = adapter.evaluate(
+        "16 U.S.C. 973k",
+        document_id="bridge-layer-citation-only",
+        citation="16 U.S.C. 973k",
+    )
+
+    assert report.status == "ok"
+    assert report.accepted is True
+    assert report.total_loss < 2.0
+    assert report.metadata["sparse_citation_loss_calibrated"] is True
+    assert report.metadata["sparse_citation_loss_scale"] < 1.0
+
+
 def test_deontic_bridge_evaluates_legal_norm_ir_and_prover_syntax() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
@@ -127,6 +144,28 @@ def test_deontic_bridge_evaluates_legal_norm_ir_and_prover_syntax() -> None:
     assert report.to_dict()["ir_document"]["views"]["deontic_prover_syntax"][
         "metadata"
     ]["coverage_record_count"] >= 1
+
+
+def test_deontic_bridge_phase8_quality_gate_uses_present_optional_slots_only() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("deontic_norms")
+    report = adapter.evaluate(
+        "The Director shall issue a permit after notice and hearing.",
+        document_id="deontic-bridge-phase8-slot-scope",
+        citation="Deontic Bridge Phase8 Slot Scope",
+    )
+
+    phase8_records = report.ir_document.views["deontic_phase8_quality"].payload["records"]
+    assert len(phase8_records) >= 1
+    first = phase8_records[0]
+    assert first["phase8_quality_complete"] is True
+    assert first["requires_validation"] is False
+    assert "missing_reconstruction_slot:exceptions" not in first["coverage_blockers"]
+    assert "missing_reconstruction_slot:cross_references" not in first["coverage_blockers"]
+    assert "missing_ir_slot_provenance:exceptions" not in first["coverage_blockers"]
+    assert "missing_ir_slot_provenance:cross_references" not in first["coverage_blockers"]
+    assert report.round_trip.extra_losses["deontic_phase8_quality_incomplete_loss"] == 0.0
 
 
 def test_deontic_bridge_soft_accepts_non_normative_statutory_text() -> None:
@@ -447,6 +486,43 @@ def test_tdfol_bridge_coerce_handles_proof_obligation_payload_mapping() -> None:
     assert coerced.to_string() == payload["formula"]
 
 
+def test_tdfol_bridge_coerce_handles_nested_proof_obligation_payload_view() -> None:
+    from ipfs_datasets_py.logic.TDFOL.tdfol_core import DeonticFormula, DeonticOperator
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
+
+    payload = {
+        "obligations": [
+            {
+                "formula": "O(disclose_records(agency))",
+                "source_id": "tdfol:norm:test",
+                "target_logic": "TDFOL",
+            }
+        ]
+    }
+
+    coerced = coerce_tdfol_formula(payload)
+
+    assert isinstance(coerced, DeonticFormula)
+    assert coerced.operator == DeonticOperator.OBLIGATION
+    assert coerced.to_string() == payload["obligations"][0]["formula"]
+
+
+def test_tdfol_bridge_coerce_parses_textual_logical_connectives() -> None:
+    from ipfs_datasets_py.logic.TDFOL.tdfol_core import QuantifiedFormula
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
+
+    formula = (
+        "forall t. (activation_clause(nrm_1) and true and not (false))"
+        " -> O_t(Act_deadbeef(actor, t))."
+    )
+
+    coerced = coerce_tdfol_formula(formula)
+
+    assert isinstance(coerced, QuantifiedFormula)
+    assert "activation_clause" in coerced.get_predicates()
+    assert "O_t" in coerced.get_predicates()
+
+
 def test_cec_dcec_bridge_evaluates_event_formulas_and_graph() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
@@ -504,6 +580,105 @@ def test_cec_dcec_bridge_synthesizes_fallback_formula_when_norm_extraction_is_em
     assert report.round_trip.extra_losses["cec_dcec_no_formula_loss"] == 0.0
     assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
+def test_cec_dcec_bridge_recovers_norms_from_legacy_parser_element_metadata() -> None:
+    from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
+
+    class _LegacyParserElementResult:
+        success = True
+        metadata = {
+            "parser_element": {
+                "schema_version": "legal_norm_ir-v1",
+                "source_id": "legacy:cec:parser-element",
+                "canonical_citation": "36 U.S.C. 151504",
+                "deontic_operator": "shall",
+                "subject": ["Secretary"],
+                "action": ["submit report"],
+                "text": "The Secretary shall submit report.",
+                "support_text": "The Secretary shall submit report.",
+                "support_span": [0, 33],
+                "norm_type": "obligation",
+                "promotable_to_theorem": True,
+                "export_readiness": {"blockers": []},
+                "field_spans": {
+                    "subject": [4, 13],
+                    "modality": [14, 19],
+                    "action": [20, 33],
+                },
+            },
+            "legal_norm_irs": [],
+        }
+
+    class _LegacyParserElementConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _LegacyParserElementResult()
+
+    adapter = CecDcecBridgeAdapter(converter=_LegacyParserElementConverter())
+    report = adapter.evaluate(
+        "The Secretary shall submit report.",
+        document_id="cec-bridge-legacy-parser-element",
+        citation="CEC Bridge Legacy Parser Element",
+    )
+
+    assert report.ir_document.views["event_calculus"].metadata["state_formula_count"] == 1
+    event_record = report.ir_document.views["event_calculus"].payload["records"][0]
+    assert event_record["source_id"] == "legacy:cec:parser-element"
+    assert event_record["event_formula_source"] == "deontic.prover_syntax"
+    assert event_record["event_formula_syntax_valid"] is True
+    assert (
+        event_record["event_formula_target_parse_profile"]["top_level_symbol"]
+        == "Happens"
+    )
+    assert event_record["event_formula_fingerprint"]
+    assert report.proof_gate.compiles is True
+
+
+def test_cec_dcec_bridge_emits_parse_profile_for_fallback_event_formulas() -> None:
+    from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
+
+    class _NoSourceIdNormResult:
+        success = True
+        metadata = {
+            "legal_norm_irs": [
+                {
+                    "actor": "Secretary",
+                    "action": "submit report",
+                    "modality": "obligated",
+                }
+            ]
+        }
+
+    class _NoSourceIdNormConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _NoSourceIdNormResult()
+
+    adapter = CecDcecBridgeAdapter(converter=_NoSourceIdNormConverter())
+    report = adapter.evaluate(
+        "The Secretary shall submit report.",
+        document_id="cec-bridge-fallback-parse-profile",
+        citation="CEC Bridge Fallback Parse Profile",
+    )
+
+    event_record = report.ir_document.views["event_calculus"].payload["records"][0]
+    assert event_record["event_formula_source"] == "cec_dcec_bridge_fallback"
+    assert event_record["event_formula_syntax_valid"] is True
+    assert (
+        event_record["event_formula_target_parse_profile"]["target_parse_profile_complete"]
+        is True
+    )
+    assert (
+        event_record["event_formula_target_components"]["uses_event_calculus_wrapper"]
+        is True
+    )
+    assert event_record["event_formula_target_quality_gate"]["syntax_valid"] is True
+    assert len(event_record["event_formula_fingerprint"]) == 24
+    assert any(
+        triple["predicate"] == "event_formula_fingerprint"
+        for triple in report.ir_document.frame_logic_triples
+    )
 
 
 def test_external_prover_router_bridge_uses_native_prover_gate() -> None:
@@ -810,6 +985,98 @@ def test_external_prover_router_bridge_supports_route_signature_without_axioms(
     assert "external_provers:legacy" in report.proof_gate.verified_by
 
 
+def test_external_prover_router_bridge_supports_positional_route_signature(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge.external_prover_router import (
+        ExternalProverRouterBridgeAdapter,
+    )
+
+    class _PositionalRouteResult:
+        def __init__(self) -> None:
+            self.is_proved = True
+            self.prover_used = "legacy"
+            self.proof_time = 0.01
+            self.reason = "Proved by legacy"
+            self.strategy_used = "sequential"
+
+    class _PositionalRouteRouter:
+        @staticmethod
+        def get_available_provers() -> list[str]:
+            return ["legacy"]
+
+        @staticmethod
+        def route(formula, strategy, timeout):
+            if strategy != "sequential":
+                raise ValueError("legacy positional route expects sequential strategy")
+            if float(timeout) <= 0.0:
+                raise ValueError("timeout must be positive")
+            return _PositionalRouteResult()
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.bridge.external_prover_router._build_router",
+        lambda **_kwargs: _PositionalRouteRouter(),
+    )
+
+    adapter = ExternalProverRouterBridgeAdapter(
+        enable_native=False,
+        enable_external_binaries=True,
+    )
+    report = adapter.evaluate(
+        "The agency shall publish notice before the permit takes effect.",
+        document_id="external-prover-bridge-positional-route",
+        citation="External Prover Bridge Positional Route",
+    )
+
+    assert report.proof_gate.compiles is True
+    assert report.proof_gate.valid_count == report.proof_gate.attempted_count
+    assert report.proof_gate.details[0]["prover_used"] == "legacy"
+    assert "external_provers:legacy" in report.proof_gate.verified_by
+
+
+def test_external_prover_router_bridge_falls_back_to_inventory_only_router(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge.external_prover_router import (
+        ExternalProverRouterBridgeAdapter,
+    )
+
+    class _LegacyInventoryProver:
+        @staticmethod
+        def prove(_formula, timeout_ms=1000):
+            return bool(timeout_ms)
+
+    class _InventoryOnlyRouter:
+        provers = {"native": _LegacyInventoryProver()}
+        backup_provers = ("native",)
+        fallback_prover = "native"
+
+        @staticmethod
+        def select_prover(_formula):
+            return "native"
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.bridge.external_prover_router._build_router",
+        lambda **_kwargs: _InventoryOnlyRouter(),
+    )
+
+    adapter = ExternalProverRouterBridgeAdapter(
+        enable_native=False,
+        enable_external_binaries=True,
+    )
+    report = adapter.evaluate(
+        "The agency shall publish notice before the permit takes effect.",
+        document_id="external-prover-bridge-inventory-only",
+        citation="External Prover Bridge Inventory Only",
+    )
+
+    assert report.proof_gate.compiles is True
+    assert report.proof_gate.valid_count == report.proof_gate.attempted_count
+    assert report.proof_gate.details[0]["prover_used"] == "native"
+    assert "external_provers:native" in report.proof_gate.verified_by
+    assert report.round_trip.extra_losses["external_prover_unavailable_loss"] == 0.0
+
+
 def test_zkp_attestation_bridge_evaluates_proof_attestations_and_graph() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
@@ -980,6 +1247,60 @@ def test_multiview_bridge_accepts_deontic_soft_pass_with_partial_proof_gate(
 
     deontic_report = report.reports["deontic_norms"]
     assert deontic_report.proof_gate.compiles is False
+    assert deontic_report.metadata["proof_gate_soft_pass"] is True
+    assert deontic_report.status == "ok"
+    assert deontic_report.accepted is True
+    assert report.accepted_count == 2
+    assert report.acceptance_rate == 1.0
+    assert report.canonical_loss_vector()["legal_ir_multiview_acceptance_loss"] == 0.0
+
+
+def test_multiview_bridge_accepts_deontic_soft_pass_with_core_fol_only(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
+    from ipfs_datasets_py.logic.bridge.types import ProofGateResult
+
+    def _partial_deontic_gate(_records):
+        return ProofGateResult(
+            attempted_count=5,
+            valid_count=1,
+            failed_count=4,
+            verified_by=("deontic:fol",),
+            details=(
+                {
+                    "blocking_failed_targets": [
+                        "deontic_cec",
+                        "deontic_fol",
+                        "deontic_temporal_fol",
+                        "frame_logic",
+                    ],
+                    "passed_targets": ["fol"],
+                    "source_id": "deontic:test-core-fol-soft-pass",
+                },
+            ),
+        )
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.bridge.deontic_norms._proof_gate_from_coverage_records",
+        _partial_deontic_gate,
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.bridge.deontic_norms._coverage_requires_validation",
+        lambda _records: False,
+    )
+
+    report = evaluate_legal_ir_multiview(
+        "22 U.S.C. 4132: The term Secretary means the Secretary of State.",
+        bridge_names=("deontic_norms", "fol_tdfol"),
+        document_id="multiview-deontic-core-fol-soft-pass",
+        citation="22 U.S.C. 4132",
+        cache=False,
+    )
+
+    deontic_report = report.reports["deontic_norms"]
+    assert deontic_report.proof_gate.compiles is False
+    assert deontic_report.metadata["coverage_requires_validation"] is False
     assert deontic_report.metadata["proof_gate_soft_pass"] is True
     assert deontic_report.status == "ok"
     assert deontic_report.accepted is True

@@ -89,6 +89,45 @@ def test_prover_syntax_canonicalizes_textual_modality_tokens_for_typed_ir_obliga
         ] == "O"
 
 
+def test_prover_syntax_uses_prompt_context_obligation_for_detail_only_rows():
+    parsed = extract_normative_elements(
+        "The Director is authorized and directed to adopt rules."
+    )[0]
+    detail = {
+        "schema_version": parsed["schema_version"],
+        "source_id": f"{parsed['source_id']}:detail",
+        "text": parsed["text"],
+        "support_text": parsed["support_text"],
+        "support_span": parsed["support_span"],
+        "norm_type": "",
+        "modality": None,
+        "deontic_operator": "",
+        "subject": list(parsed["subject"]),
+        "action": list(parsed["action"]),
+        "llm_repair": {
+            "required": True,
+            "reasons": ["legacy_detail_projection"],
+            "prompt_context": {
+                "source_text": parsed["text"],
+                "norm_type": parsed["norm_type"],
+                "deontic_operator": parsed["deontic_operator"],
+            },
+        },
+    }
+    norm = LegalNormIR.from_parser_element(detail)
+    records = {
+        target.target: target.to_dict()
+        for target in validate_ir_with_provers(norm).targets
+    }
+
+    assert norm.modality == "O"
+    assert records["deontic_fol"]["exported_formula"].startswith("O(forall x.")
+    assert records["deontic_temporal_fol"]["exported_formula"].startswith("always(O(")
+    assert records["deontic_fol"]["target_dialect_profile"][
+        "source_deontic_operator"
+    ] == "O"
+
+
 def test_prover_syntax_records_carry_decoder_context_for_local_targets():
     examples = [
         (

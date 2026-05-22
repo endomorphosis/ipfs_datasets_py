@@ -76,6 +76,11 @@ def _canonical_modal_family_token(value: Any) -> str:
     resolved = str(value or "").strip()
     if not resolved:
         return ""
+    if "->" in resolved:
+        _, target_family = resolved.split("->", maxsplit=1)
+        target_family = target_family.strip()
+        if target_family:
+            resolved = target_family
     candidate_tokens: List[str] = []
     seen_tokens: set[str] = set()
 
@@ -90,7 +95,23 @@ def _canonical_modal_family_token(value: Any) -> str:
     leaf_colon = leaf_dot.rsplit(":", maxsplit=1)[-1].strip()
     leaf_slash = leaf_colon.rsplit("/", maxsplit=1)[-1].strip()
     leaf_pipe = leaf_slash.rsplit("|", maxsplit=1)[-1].strip()
-    for token in (resolved, leaf_dot, leaf_colon, leaf_slash, leaf_pipe):
+    split_tokens: List[str] = []
+    for delimiter in (".", ":", "/", "|"):
+        if delimiter not in resolved:
+            continue
+        split_tokens.extend(
+            part.strip()
+            for part in resolved.split(delimiter)
+            if str(part).strip()
+        )
+    for token in (
+        resolved,
+        leaf_dot,
+        leaf_colon,
+        leaf_slash,
+        leaf_pipe,
+        *split_tokens,
+    ):
         _remember(token)
         lowered = token.lower()
         _remember(lowered)
@@ -169,6 +190,17 @@ def _is_compiler_ambiguity_policy_pair(
     return bool(resolver(predicted_family, target_family))
 
 
+def _is_signal_free_adaptive_ambiguity_pair(
+    predicted_family: str,
+    target_family: str,
+) -> bool:
+    resolver = _current_compiler_attr(
+        "is_signal_free_adaptive_ambiguity_pair",
+        is_signal_free_adaptive_ambiguity_pair,
+    )
+    return bool(resolver(predicted_family, target_family))
+
+
 def _prefers_contested_zero_margin_adaptive_ambiguity_pair(
     predicted_family: str,
     target_family: str,
@@ -196,11 +228,9 @@ def _supports_signal_free_adaptive_ambiguity_pair(
         )
         or resolved_target_family
         in _signal_free_adaptive_ambiguity_targets(predicted_family)
-        or bool(
-            is_signal_free_adaptive_ambiguity_pair(
-                predicted_family,
-                resolved_target_family,
-            )
+        or _is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            resolved_target_family,
         )
         or _is_compiler_ambiguity_policy_pair(
             predicted_family,
@@ -1530,9 +1560,17 @@ class DeterministicModalCompiler:
                     signals.get("has_epistemic_scope")
                     or signals.get("has_epistemic_cue")
                 ),
+                ModalLogicFamily.DYNAMIC.value: bool(
+                    signals.get("has_dynamic_scope")
+                    or signals.get("has_dynamic_cue")
+                ),
                 ModalLogicFamily.DOXASTIC.value: bool(
                     signals.get("has_doxastic_scope")
                     or signals.get("has_doxastic_cue")
+                ),
+                ModalLogicFamily.DYNAMIC.value: bool(
+                    signals.get("has_dynamic_scope")
+                    or signals.get("has_dynamic_cue")
                 ),
             }
         elif predicted_family == ModalLogicFamily.HYBRID.value:

@@ -15,6 +15,12 @@ import re
 from dataclasses import asdict, dataclass, field
 from typing import Any, Dict, List, Mapping, Sequence, Tuple
 
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector import (
+    FrameCandidate,
+    frame_ontology_terms,
+    frame_ontology_terms_from_feature_keys,
+    normalize_frame_ontology_term,
+)
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
     ModalIRDocument,
     ModalIRFormula,
@@ -181,6 +187,12 @@ _STATUTORY_SCOPE_REFERENCE_RE = re.compile(
     re.IGNORECASE,
 )
 _CUE_TOKEN_RE = re.compile(r"[a-z0-9]+")
+_FRAME_ONTOLOGY_METADATA_MAX_DEPTH = 6
+_FRAME_ONTOLOGY_METADATA_MAX_VALUES = 256
+_FRAME_ONTOLOGY_METADATA_OPAQUE_ID_HEX_RE = re.compile(
+    r"[0-9a-f]{12,}",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -231,6 +243,7 @@ def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
         *_document_citation_phrases(document),
         *_document_modal_family_count_phrases(document),
         *_frame_candidate_phrases(document),
+        *_frame_ontology_phrases(document),
     ]
     if not document.formulas:
         phrases.extend(_document_provenance_alignment_phrases(document))
@@ -2527,6 +2540,280 @@ def _frame_candidate_phrases(document: ModalIRDocument) -> List[DecodedModalPhra
     return phrases
 
 
+def _frame_ontology_phrases(document: ModalIRDocument) -> List[DecodedModalPhrase]:
+    selected_frame = _selected_frame(document)
+    frame_terms_by_frame = _frame_ontology_terms_by_frame(document)
+    ranked_frame_ids = _ranked_candidate_frame_ids(
+        document,
+        frame_terms_by_frame=frame_terms_by_frame,
+        selected_frame=selected_frame,
+    )
+    phrases: List[DecodedModalPhrase] = []
+    selected_frame_terms: List[str] = []
+
+    for rank, frame_id in enumerate(ranked_frame_ids, start=1):
+        phrases.append(
+            DecodedModalPhrase(
+                text=frame_id,
+                slot="candidate_ontology_frame",
+                provenance_only=True,
+            )
+        )
+        phrases.append(
+            DecodedModalPhrase(
+                text=str(rank),
+                slot="candidate_ontology_frame_rank",
+                provenance_only=True,
+            )
+        )
+        for slot, value in _numeric_signature_slots(
+            str(rank),
+            slot_prefix="candidate_ontology_frame_rank",
+        ):
+            phrases.append(
+                DecodedModalPhrase(
+                    text=value,
+                    slot=slot,
+                    provenance_only=True,
+                )
+            )
+        ranked_value = f"{rank}:{frame_id}"
+        phrases.append(
+            DecodedModalPhrase(
+                text=ranked_value,
+                slot="candidate_ontology_frame_ranked",
+                provenance_only=True,
+            )
+        )
+        for slot, value in _typed_identifier_slots(
+            ranked_value,
+            slot_prefix="candidate_ontology_frame_ranked",
+        ):
+            phrases.append(
+                DecodedModalPhrase(
+                    text=value,
+                    slot=slot,
+                    provenance_only=True,
+                )
+            )
+        candidate_terms = frame_terms_by_frame.get(frame_id, [])
+        for term in candidate_terms:
+            phrases.append(
+                DecodedModalPhrase(
+                    text=term,
+                    slot="candidate_ontology_term",
+                    provenance_only=True,
+                )
+            )
+        if selected_frame and frame_id == selected_frame:
+            selected_frame_terms = list(candidate_terms)
+            for term in selected_frame_terms:
+                phrases.append(
+                    DecodedModalPhrase(
+                        text=term,
+                        slot="selected_ontology_term",
+                        provenance_only=True,
+                    )
+                )
+
+    if selected_frame and not selected_frame_terms:
+        selected_frame_terms = list(frame_terms_by_frame.get(selected_frame, ()))
+        for term in selected_frame_terms:
+            phrases.append(
+                DecodedModalPhrase(
+                    text=term,
+                    slot="selected_ontology_term",
+                    provenance_only=True,
+                )
+            )
+
+    if selected_frame:
+        phrases.append(
+            DecodedModalPhrase(
+                text=selected_frame,
+                slot="selected_ontology_frame",
+                provenance_only=True,
+            )
+        )
+        phrases.append(
+            DecodedModalPhrase(
+                text=selected_frame,
+                slot="interpreted_in_frame",
+                provenance_only=True,
+            )
+        )
+        for term in selected_frame_terms:
+            phrases.append(
+                DecodedModalPhrase(
+                    text=term,
+                    slot="interpreted_in_frame_term",
+                    provenance_only=True,
+                )
+            )
+
+    return phrases
+
+
+def _frame_ontology_terms_by_frame(document: ModalIRDocument) -> Dict[str, List[str]]:
+    result: Dict[str, List[str]] = {}
+    metadata_terms = document.metadata.get("frame_ontology_terms")
+    if isinstance(metadata_terms, Mapping):
+        for frame_id, values in metadata_terms.items():
+            frame_key = _clean_text(frame_id)
+            if not frame_key:
+                continue
+            terms = _frame_ontology_metadata_terms(values)
+            if terms:
+                result[frame_key] = terms
+
+    for frame in document.frame_candidates:
+        frame_key = _clean_text(getattr(frame, "frame_id", "") or "")
+        if not frame_key:
+            continue
+        if frame_key in result and result[frame_key]:
+            continue
+        matched_terms = list(getattr(frame, "matched_terms", ()) or ())
+        candidate = FrameCandidate(
+            frame_id=frame_key,
+            label=frame_key.replace("_", " "),
+            terms=tuple(matched_terms),
+            domain="general",
+        )
+        terms = _unique_preserve_order(
+            normalize_frame_ontology_term(term)
+            for term in frame_ontology_terms(
+                candidate,
+                matched_terms=matched_terms,
+            )
+        )
+        if terms:
+            result[frame_key] = terms
+    return result
+
+
+def _frame_ontology_metadata_terms(value: Any) -> List[str]:
+    terms: List[str] = []
+    for raw_value in _frame_ontology_metadata_strings(value):
+        cleaned = _clean_text(raw_value)
+        if not cleaned:
+            continue
+        if _is_probable_frame_ontology_metadata_identifier(cleaned):
+            continue
+        source_id_match = _USCODE_SOURCE_ID_RE.match(cleaned)
+        if source_id_match:
+            source_terms = frame_ontology_terms_from_feature_keys(
+                [f"slot:source_id:{cleaned}"],
+            )
+            if source_terms:
+                terms.extend(source_terms)
+                continue
+        feature_terms = frame_ontology_terms_from_feature_keys([cleaned])
+        if feature_terms:
+            terms.extend(feature_terms)
+            continue
+        normalized = normalize_frame_ontology_term(
+            cleaned,
+            keep_numeric_tokens=True,
+        )
+        if normalized:
+            terms.append(normalized)
+    return _unique_preserve_order(terms)
+
+
+def _frame_ontology_metadata_strings(value: Any) -> List[str]:
+    extracted: List[str] = []
+    _collect_frame_ontology_metadata_strings(
+        value,
+        extracted,
+        depth=0,
+    )
+    return extracted
+
+
+def _collect_frame_ontology_metadata_strings(
+    value: Any,
+    extracted: List[str],
+    *,
+    depth: int,
+) -> None:
+    if (
+        value is None
+        or depth >= _FRAME_ONTOLOGY_METADATA_MAX_DEPTH
+        or len(extracted) >= _FRAME_ONTOLOGY_METADATA_MAX_VALUES
+    ):
+        return
+    if isinstance(value, Mapping):
+        for nested_value in value.values():
+            _collect_frame_ontology_metadata_strings(
+                nested_value,
+                extracted,
+                depth=depth + 1,
+            )
+            if len(extracted) >= _FRAME_ONTOLOGY_METADATA_MAX_VALUES:
+                return
+        return
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        for nested_value in value:
+            _collect_frame_ontology_metadata_strings(
+                nested_value,
+                extracted,
+                depth=depth + 1,
+            )
+            if len(extracted) >= _FRAME_ONTOLOGY_METADATA_MAX_VALUES:
+                return
+        return
+    if isinstance(value, str):
+        cleaned = _clean_text(value)
+        if cleaned:
+            extracted.append(cleaned)
+
+
+def _is_probable_frame_ontology_metadata_identifier(value: str) -> bool:
+    cleaned = _clean_text(value)
+    if not cleaned or " " in cleaned:
+        return False
+    lowered = cleaned.lower()
+    if lowered.startswith("modal-synthesis-"):
+        return True
+    if lowered.startswith("program-"):
+        return True
+    if _USCODE_SOURCE_ID_RE.match(cleaned):
+        return False
+    if _FRAME_ONTOLOGY_METADATA_OPAQUE_ID_HEX_RE.search(cleaned) is None:
+        return False
+    return "-" in cleaned or "_" in cleaned
+
+
+def _ranked_candidate_frame_ids(
+    document: ModalIRDocument,
+    *,
+    frame_terms_by_frame: Mapping[str, Sequence[str]],
+    selected_frame: str,
+) -> List[str]:
+    ranked_frame_ids: List[str] = []
+    seen: set[str] = set()
+
+    for frame in sorted(
+        document.frame_candidates,
+        key=lambda candidate: _frame_candidate_sort_key(candidate),
+    ):
+        frame_id = _clean_text(getattr(frame, "frame_id", "") or "")
+        if not frame_id or frame_id in seen:
+            continue
+        seen.add(frame_id)
+        ranked_frame_ids.append(frame_id)
+    for frame_id in sorted(frame_terms_by_frame):
+        cleaned = _clean_text(frame_id)
+        if not cleaned or cleaned in seen:
+            continue
+        seen.add(cleaned)
+        ranked_frame_ids.append(cleaned)
+    normalized_selected = _clean_text(selected_frame)
+    if normalized_selected and normalized_selected not in seen:
+        ranked_frame_ids.append(normalized_selected)
+    return ranked_frame_ids
+
+
 def _frame_candidate_sort_key(candidate: Any) -> Tuple[float, str]:
     frame_id = _clean_text(getattr(candidate, "frame_id", "") or "")
     try:
@@ -2534,6 +2821,18 @@ def _frame_candidate_sort_key(candidate: Any) -> Tuple[float, str]:
     except (TypeError, ValueError):
         score = 0.0
     return (-score, frame_id)
+
+
+def _unique_preserve_order(values: Sequence[str]) -> List[str]:
+    seen: set[str] = set()
+    result: List[str] = []
+    for value in values:
+        cleaned = _clean_text(value)
+        if not cleaned or cleaned in seen:
+            continue
+        seen.add(cleaned)
+        result.append(cleaned)
+    return result
 
 
 def _operator_phrase(formula: ModalIRFormula) -> str:

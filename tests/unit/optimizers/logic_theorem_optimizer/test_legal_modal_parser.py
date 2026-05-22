@@ -131,6 +131,10 @@ _USCODE_38_8112_PACKET_519_TEXT = (
 _USCODE_36_170307_TODO_TEXT = (
     "Administrative notice and hearing procedures are established for this subchapter."
 )
+_USCODE_36_21110_TODO_TEXT = (
+    "Sec. 21110 - Administrative notice and hearing activities. "
+    "Historical and Revision Notes."
+)
 _USCODE_10_1095C_TODO_TEXT = (
     "Administrative review procedures are established for health care collection actions."
 )
@@ -1125,6 +1129,36 @@ def test_parser_replays_packet_todo_samples_for_36_170307_10_1095c_and_19_2113()
         assert fallback.metadata["fallback_rule"] == "uscode_procedural_clause_v1"
         assert fallback.metadata["procedural_keyword"] == procedural_keyword
         assert fallback.provenance.citation == citation
+
+
+def test_parser_adds_short_residual_heading_span_coverage_for_36_21110_todo_shape() -> None:
+    parser = LegalModalParser()
+    document = parser.parse(
+        _USCODE_36_21110_TODO_TEXT,
+        document_id="us-code-36-21110-e10464bdc5e2ba17",
+        source="us_code",
+        citation="36 U.S.C. 21110",
+    )
+
+    assert document.document_id == "us-code-36-21110-e10464bdc5e2ba17"
+    assert document.formulas
+    fallback = document.formulas[-1]
+    assert fallback.operator.family == "frame"
+    assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
+    assert fallback.metadata["fallback_rule"] == "uscode_section_heading_v1"
+    residual_formulas = [
+        formula
+        for formula in document.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    ]
+    assert residual_formulas
+    residual_text_spans = {
+        document.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in residual_formulas
+    }
+    assert "Historical and Revision Notes." in residual_text_spans
 
 
 def test_parser_replays_heading_only_zero_formula_cases_for_25_422_48_1572_and_42_6323() -> None:

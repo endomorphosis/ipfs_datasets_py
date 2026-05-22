@@ -399,13 +399,16 @@ def _deontic_export_context_from_parser_elements(
 ) -> dict[str, Any]:
     context = _empty_deontic_export_context()
     norm_objects = _legal_norm_objects_from_parser_elements(parser_elements)
+    required_slots_by_source = _phase8_required_slots_by_source(norm_objects)
     context["norm_count"] = len(norm_objects)
     if not norm_objects:
         return context
 
     from ipfs_datasets_py.logic.deontic.exports import (
         build_decoder_records_from_irs,
+        build_ir_slot_provenance_audit_record,
         build_ir_slot_provenance_audit_records,
+        build_phase8_quality_summary_record,
         build_phase8_quality_summary_records,
         build_proof_obligation_record_from_ir,
         build_prover_syntax_records_from_ir,
@@ -430,7 +433,23 @@ def _deontic_export_context_from_parser_elements(
         decoder_records = []
 
     try:
-        ir_slot_provenance_records = build_ir_slot_provenance_audit_records(norm_objects)
+        if required_slots_by_source:
+            ir_slot_provenance_records = []
+            for norm in norm_objects:
+                source_id = str(getattr(norm, "source_id", "") or "").strip()
+                slots = required_slots_by_source.get(source_id)
+                if slots:
+                    ir_slot_provenance_records.append(
+                        build_ir_slot_provenance_audit_record(norm, slots=slots)
+                    )
+                else:
+                    ir_slot_provenance_records.append(
+                        build_ir_slot_provenance_audit_record(norm)
+                    )
+        else:
+            ir_slot_provenance_records = build_ir_slot_provenance_audit_records(
+                norm_objects
+            )
         context["ir_slot_provenance_records"] = ir_slot_provenance_records
         context["ir_slot_provenance_summary"] = (
             summarize_ir_slot_provenance_audit_records(ir_slot_provenance_records)
@@ -463,16 +482,40 @@ def _deontic_export_context_from_parser_elements(
         _record_export_context_error(context, "proof_and_repair_records", exc)
 
     try:
-        phase8_records = build_phase8_quality_summary_records(
+        if required_slots_by_source:
+            decoder_by_source = _group_records_by_source(decoder_records)
+            prover_by_source = _group_records_by_source(prover_syntax_records)
+            provenance_by_source = _group_records_by_source(ir_slot_provenance_records)
+            source_ids = sorted(
+                set(decoder_by_source)
+                | set(prover_by_source)
+                | set(provenance_by_source)
+            )
+            phase8_records = [
+                build_phase8_quality_summary_record(
+                    source_id,
+                    decoder_records=decoder_by_source.get(source_id, []),
+                    prover_syntax_records=prover_by_source.get(source_id, []),
+                    ir_slot_provenance_records=provenance_by_source.get(source_id, []),
+                    required_slots=required_slots_by_source.get(source_id, ()),
+                )
+                for source_id in source_ids
+            ]
+        else:
+            phase8_records = build_phase8_quality_summary_records(
+                decoder_records=decoder_records,
+                prover_syntax_records=prover_syntax_records,
+                ir_slot_provenance_records=ir_slot_provenance_records,
+            )
+        context["phase8_quality_records"] = phase8_records
+        raw_phase8_summary = summarize_phase8_quality_records(
             decoder_records=decoder_records,
             prover_syntax_records=prover_syntax_records,
             ir_slot_provenance_records=ir_slot_provenance_records,
         )
-        context["phase8_quality_records"] = phase8_records
-        context["phase8_quality_summary"] = summarize_phase8_quality_records(
-            decoder_records=decoder_records,
-            prover_syntax_records=prover_syntax_records,
-            ir_slot_provenance_records=ir_slot_provenance_records,
+        context["phase8_quality_summary"] = _phase8_summary_from_records(
+            phase8_records,
+            raw_phase8_summary,
         )
     except Exception as exc:  # pragma: no cover - diagnostics only
         _record_export_context_error(context, "phase8_quality", exc)
@@ -532,6 +575,92 @@ def _legal_norm_objects_from_parser_elements(
         except Exception:
             continue
     return norms
+
+
+def _phase8_required_slots_by_source(
+    norm_objects: Sequence[Any],
+) -> dict[str, tuple[str, ...]]:
+    """Return source-keyed Phase 8 slot requirements derived from typed IR."""
+
+    if not norm_objects:
+        return {}
+    from ipfs_datasets_py.logic.deontic.ir import legal_norm_ir_phase8_required_slots
+
+    required_by_source: dict[str, tuple[str, ...]] = {}
+    for norm in norm_objects:
+        source_id = str(getattr(norm, "source_id", "") or "").strip()
+        if not source_id:
+            continue
+        merged = list(required_by_source.get(source_id, ()))
+        for slot in legal_norm_ir_phase8_required_slots(norm):
+            slot_name = str(slot or "").strip()
+            if slot_name and slot_name not in merged:
+                merged.append(slot_name)
+        required_by_source[source_id] = tuple(merged)
+    return required_by_source
+
+
+def _group_records_by_source(
+    records: Sequence[Mapping[str, Any]],
+) -> dict[str, list[dict[str, Any]]]:
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for record in records or []:
+        if not isinstance(record, Mapping):
+            continue
+        source_id = str(record.get("source_id") or "").strip()
+        if not source_id:
+            continue
+        grouped.setdefault(source_id, []).append(dict(record))
+    return grouped
+
+
+def _phase8_summary_from_records(
+    records: Sequence[Mapping[str, Any]],
+    default_summary: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Overlay aggregate source-level completion fields from Phase 8 rows."""
+
+    summary = dict(default_summary or {})
+    valid_records = [record for record in records or [] if isinstance(record, Mapping)]
+    record_count = len(valid_records)
+    complete_count = sum(
+        1
+        for record in valid_records
+        if record.get("phase8_quality_complete") is True
+    )
+    requires_validation_count = sum(
+        1
+        for record in valid_records
+        if record.get("requires_validation") is True
+    )
+    blockers: set[str] = set()
+    for record in valid_records:
+        blockers.update(
+            str(blocker or "").strip()
+            for blocker in (record.get("coverage_blockers") or [])
+            if str(blocker or "").strip()
+        )
+
+    summary.update(
+        {
+            "source_record_count": record_count,
+            "complete_source_count": complete_count,
+            "source_complete_rate": round(complete_count / record_count, 6)
+            if record_count
+            else 0.0,
+            "requires_validation_source_count": requires_validation_count,
+            "source_requires_validation_rate": round(
+                requires_validation_count / record_count,
+                6,
+            )
+            if record_count
+            else 0.0,
+            "phase8_quality_complete": bool(record_count and complete_count == record_count),
+            "requires_validation": bool(requires_validation_count),
+            "coverage_blockers": sorted(blockers),
+        }
+    )
+    return summary
 
 
 def _deontic_graph_payload_from_norm_objects(
@@ -1013,15 +1142,67 @@ def _deontic_proof_gate_soft_pass(
     coverage_requires_validation: bool,
     proof_gate: ProofGateResult,
 ) -> bool:
-    """Allow acceptance when coverage is partial but at least one target compiled."""
+    """Allow acceptance when partial deontic coverage still proves core syntax."""
 
-    if not coverage_requires_validation:
-        return False
     if proof_gate.attempted_count <= 0:
         return False
     if proof_gate.valid_count <= 0:
         return False
-    return True
+    if proof_gate.compiles:
+        return False
+    if coverage_requires_validation:
+        return True
+
+    blocking_targets = _blocking_targets_from_proof_gate_details(proof_gate.details)
+    if not blocking_targets:
+        return False
+    passed_targets = _passed_targets_from_proof_gate_details(proof_gate.details)
+    if "fol" not in passed_targets:
+        return False
+    return blocking_targets.issubset(
+        {
+            "frame_logic",
+            "deontic_cec",
+            "deontic_fol",
+            "deontic_temporal_fol",
+        }
+    )
+
+
+def _blocking_targets_from_proof_gate_details(
+    details: Sequence[Mapping[str, Any]],
+) -> set[str]:
+    targets: set[str] = set()
+    for item in details:
+        for key in (
+            "blocking_failed_targets",
+            "blocking_missing_targets",
+            "failed_targets",
+            "missing_targets",
+        ):
+            value = item.get(key)
+            if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
+                continue
+            for target in value:
+                target_name = str(target or "").strip()
+                if target_name:
+                    targets.add(target_name)
+    return targets
+
+
+def _passed_targets_from_proof_gate_details(
+    details: Sequence[Mapping[str, Any]],
+) -> set[str]:
+    targets: set[str] = set()
+    for item in details:
+        value = item.get("passed_targets")
+        if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
+            continue
+        for target in value:
+            target_name = str(target or "").strip()
+            if target_name:
+                targets.add(target_name)
+    return targets
 
 
 def _decoded_text_from_capability_view(ir_document: LegalIRDocument) -> str:

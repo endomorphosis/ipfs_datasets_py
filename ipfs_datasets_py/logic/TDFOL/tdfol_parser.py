@@ -124,18 +124,24 @@ class TDFOLLexer:
         "∧": TokenType.AND,
         "&": TokenType.AND,
         "^": TokenType.AND,
+        "and": TokenType.AND,
         "∨": TokenType.OR,
         "|": TokenType.OR,
+        "or": TokenType.OR,
         "¬": TokenType.NOT,
         "~": TokenType.NOT,
         "!": TokenType.NOT,
+        "not": TokenType.NOT,
         "→": TokenType.IMPLIES,
         "->": TokenType.IMPLIES,
         "=>": TokenType.IMPLIES,
+        "implies": TokenType.IMPLIES,
         "↔": TokenType.IFF,
         "<->": TokenType.IFF,
         "<=>": TokenType.IFF,
+        "iff": TokenType.IFF,
         "⊕": TokenType.XOR,
+        "xor": TokenType.XOR,
         
         # Quantifiers
         "∀": TokenType.FORALL,
@@ -152,14 +158,21 @@ class TDFOLLexer:
         "□": TokenType.ALWAYS,
         "[]": TokenType.ALWAYS,
         "G": TokenType.ALWAYS,
+        "always": TokenType.ALWAYS,
         "◊": TokenType.EVENTUALLY,
         "<>": TokenType.EVENTUALLY,
         "eventually": TokenType.EVENTUALLY,
         "X": TokenType.NEXT,
+        "next": TokenType.NEXT,
         "U": TokenType.UNTIL,
+        "until": TokenType.UNTIL,
         "S": TokenType.SINCE,
+        "since": TokenType.SINCE,
         "W": TokenType.WEAK_UNTIL,
+        "weak_until": TokenType.WEAK_UNTIL,
+        "weakuntil": TokenType.WEAK_UNTIL,
         "R": TokenType.RELEASE,
+        "release": TokenType.RELEASE,
         
         # Structural
         "(": TokenType.LPAREN,
@@ -235,6 +248,22 @@ class TDFOLLexer:
                 continue
             
             char = self.current_char()
+
+            # Single-letter modal/deontic symbols are operators only when
+            # standalone. For names like O_t(...) or Obligation(...), consume
+            # a full identifier instead of splitting on the first letter.
+            if char in {"O", "P", "F", "G", "X", "U", "S", "W", "R"}:
+                next_char = self.peek_char()
+                if next_char and (next_char.isalnum() or next_char == "_"):
+                    identifier = self.read_identifier()
+                    if identifier.lower() in self.SYMBOLS:
+                        token_type = self.SYMBOLS[identifier.lower()]
+                    else:
+                        token_type = TokenType.IDENTIFIER
+                    self.tokens.append(
+                        Token(token_type, identifier, self.position - len(identifier))
+                    )
+                    continue
             
             # Single character symbols
             if char in self.SYMBOLS:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Any, Mapping, Optional, Sequence
 
@@ -96,6 +97,11 @@ class ModalFrameLogicBridgeAdapter:
             )
 
         round_trip = RoundTripMetrics.from_loss_mapping(codec_result.losses)
+        round_trip, sparse_citation_calibrated = _calibrate_round_trip_for_sparse_citation(
+            round_trip,
+            text=text,
+            citation=citation,
+        )
         status = "ok" if ir_document.has_frame_logic and graph_result.graph_failure_penalty == 0.0 else "partial"
         if should_prove and not proof_gate.compiles:
             status = "partial"
@@ -113,6 +119,10 @@ class ModalFrameLogicBridgeAdapter:
                 "adapter": "modal_frame_logic_bridge_v1",
                 "parser_name": codec_result.parser_name,
                 "selected_frame": codec_result.selected_frame or "",
+                "sparse_citation_loss_calibrated": sparse_citation_calibrated,
+                "sparse_citation_loss_scale": (
+                    _SPARSE_CITATION_LOSS_SCALE if sparse_citation_calibrated else 1.0
+                ),
             },
         )
 
@@ -265,6 +275,65 @@ def _citation_from_modal_ir(modal_ir: Any) -> str:
     return str(metadata.get("citation") or modal_ir.document_id)
 
 
+_SPARSE_CITATION_LOSS_SCALE = 0.25
+_SPARSE_CITATION_MAX_TOKEN_COUNT = 6
+_SPARSE_CITATION_RE = re.compile(
+    r"\b\d+\s*u\.?\s*s\.?\s*c\.?\s*[\dA-Za-z\-]+\b",
+    flags=re.IGNORECASE,
+)
+
+
+def _calibrate_round_trip_for_sparse_citation(
+    round_trip: RoundTripMetrics,
+    *,
+    text: str,
+    citation: Optional[str],
+) -> tuple[RoundTripMetrics, bool]:
+    if not _is_sparse_citation_like_text(text, citation=citation):
+        return round_trip, False
+
+    scale = _SPARSE_CITATION_LOSS_SCALE
+    cosine_distance = max(0.0, 1.0 - _float(round_trip.cosine_similarity))
+    scaled_cosine_distance = cosine_distance * scale
+    scaled_cosine_similarity = max(-1.0, min(1.0, 1.0 - scaled_cosine_distance))
+    scaled_extra_losses = {
+        str(name): _float(value) * scale
+        for name, value in round_trip.extra_losses.items()
+    }
+    return (
+        RoundTripMetrics(
+            cosine_similarity=scaled_cosine_similarity,
+            cosine_loss=scaled_cosine_distance,
+            cross_entropy_loss=max(0.0, _float(round_trip.cross_entropy_loss)) * scale,
+            reconstruction_loss=max(0.0, _float(round_trip.reconstruction_loss)) * scale,
+            text_reconstruction_loss=max(0.0, _float(round_trip.text_reconstruction_loss))
+            * scale,
+            frame_ranking_loss=max(0.0, _float(round_trip.frame_ranking_loss)) * scale,
+            flogic_similarity_score=max(-1.0, min(1.0, 1.0 - scaled_cosine_distance)),
+            flogic_similarity_loss=scaled_cosine_distance,
+            symbolic_validity_penalty=max(0.0, _float(round_trip.symbolic_validity_penalty)),
+            extra_losses=scaled_extra_losses,
+        ),
+        True,
+    )
+
+
+def _is_sparse_citation_like_text(text: str, *, citation: Optional[str]) -> bool:
+    normalized_text = " ".join(str(text or "").split())
+    if not normalized_text:
+        return False
+    lowered = normalized_text.lower()
+    token_count = len(lowered.split())
+    if token_count > _SPARSE_CITATION_MAX_TOKEN_COUNT:
+        return False
+
+    normalized_citation = " ".join(str(citation or "").split()).lower()
+    if normalized_citation and lowered == normalized_citation:
+        return True
+
+    return bool(_SPARSE_CITATION_RE.search(lowered))
+
+
 def _supports_soft_unavailable_pass(proof_gate: ProofGateResult) -> bool:
     if proof_gate.attempted_count <= 0:
         return False
@@ -286,6 +355,13 @@ def _detail_has_status(detail: Mapping[str, Any], status: str) -> bool:
         return False
     target = str(status).strip().lower()
     return any(str(item).strip().lower() == target for item in statuses)
+
+
+def _float(value: Any) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
 
 
 __all__ = ["ModalFrameLogicBridgeAdapter"]

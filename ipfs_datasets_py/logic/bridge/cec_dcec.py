@@ -86,9 +86,19 @@ class CecDcecBridgeAdapter:
                     "records": [
                         {
                             "event_calculus_formula": record["event_calculus_formula"],
+                            "event_formula_fingerprint": record["event_formula_fingerprint"],
                             "event_formula_source": record["event_formula_source"],
                             "event_formula_syntax_valid": bool(
                                 record["event_formula_syntax_valid"]
+                            ),
+                            "event_formula_target_components": _mapping(
+                                record.get("event_formula_target_components")
+                            ),
+                            "event_formula_target_parse_profile": _mapping(
+                                record.get("event_formula_target_parse_profile")
+                            ),
+                            "event_formula_target_quality_gate": _mapping(
+                                record.get("event_formula_target_quality_gate")
                             ),
                             "modality": record["modality"],
                             "source_id": record["source_id"],
@@ -271,15 +281,111 @@ class CecDcecBridgeAdapter:
 def _deontic_norms_from_text(text: str, *, converter: Any) -> list[dict[str, Any]]:
     result = converter.convert(text)
     metadata = dict(getattr(result, "metadata", {}) or {})
-    norms = _list_of_dicts(metadata.get("legal_norm_irs"))
+    norms = _deontic_norm_rows_from_metadata(metadata)
     if norms:
         return norms
     fallback = _fallback_norm_from_conversion(result=result, text=text)
     return [fallback] if fallback else []
 
 
+def _deontic_norm_rows_from_metadata(metadata: Mapping[str, Any]) -> list[dict[str, Any]]:
+    norms = _list_of_dicts(metadata.get("legal_norm_irs"))
+    if not norms:
+        legal_norm_ir = metadata.get("legal_norm_ir")
+        if isinstance(legal_norm_ir, Mapping):
+            norms = [dict(legal_norm_ir)]
+    if norms:
+        return norms
+
+    parser_elements = _list_of_dicts(metadata.get("parser_elements"))
+    if not parser_elements:
+        parser_element = metadata.get("parser_element")
+        if isinstance(parser_element, Mapping):
+            parser_elements = [dict(parser_element)]
+    if not parser_elements:
+        return []
+
+    from_parser_elements = _legal_norm_rows_from_parser_elements(parser_elements)
+    if from_parser_elements:
+        return from_parser_elements
+    return [
+        _minimal_norm_from_parser_element(element, index=index)
+        for index, element in enumerate(parser_elements)
+    ]
+
+
+def _legal_norm_rows_from_parser_elements(
+    parser_elements: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    if not parser_elements:
+        return []
+    try:
+        from ipfs_datasets_py.logic.deontic.ir import LegalNormIR
+    except Exception:
+        return []
+
+    rows: list[dict[str, Any]] = []
+    for element in parser_elements:
+        if not isinstance(element, Mapping):
+            continue
+        try:
+            rows.append(LegalNormIR.from_parser_element(dict(element)).to_dict())
+        except Exception:
+            continue
+    return rows
+
+
+def _minimal_norm_from_parser_element(
+    element: Mapping[str, Any],
+    *,
+    index: int,
+) -> dict[str, Any]:
+    source_id = str(element.get("source_id") or f"dcec:parser:{index}")
+    actor = _first_text_value(
+        element.get("actor"),
+        element.get("subject"),
+        fallback="actor",
+    )
+    action = _first_text_value(
+        element.get("action"),
+        element.get("action_verb"),
+        element.get("proposition"),
+        fallback="act",
+    )
+    modality = _first_text_value(
+        element.get("modality"),
+        element.get("deontic_operator"),
+        element.get("norm_type"),
+        fallback="obligated",
+    )
+    row: dict[str, Any] = {
+        "actor": actor,
+        "action": action,
+        "modality": modality,
+        "norm_type": modality,
+        "source_id": source_id,
+    }
+    citation = _first_text_value(
+        element.get("canonical_citation"),
+        element.get("citation"),
+    )
+    if citation:
+        row["canonical_citation"] = citation
+    support_text = _first_text_value(
+        element.get("support_text"),
+        element.get("source_text"),
+    )
+    if support_text:
+        row["support_text"] = support_text
+    return row
+
+
 def _dcec_records(norms: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
     event_formula_exports = _event_formula_exports_from_norms(norms)
+    pending_event_formula_exports = {
+        source_id: list(records)
+        for source_id, records in event_formula_exports.items()
+    }
     records: list[dict[str, Any]] = []
     for index, norm in enumerate(norms):
         actor = _symbol(norm.get("actor"), fallback="actor")
@@ -301,7 +407,11 @@ def _dcec_records(norms: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
             event=event,
             modality=modality,
         )
-        event_formula_export = event_formula_exports.get(source_id)
+        event_formula_export = _take_event_formula_export(
+            pending_event_formula_exports,
+            source_id=source_id,
+            index=index,
+        )
         if event_formula_export:
             event_calculus_formula = str(
                 event_formula_export.get("event_calculus_formula") or ""
@@ -312,6 +422,15 @@ def _dcec_records(norms: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
             event_formula_syntax_valid = bool(
                 event_formula_export.get("event_formula_syntax_valid")
             )
+            event_formula_target_parse_profile = _mapping(
+                event_formula_export.get("event_formula_target_parse_profile")
+            )
+            event_formula_target_components = _mapping(
+                event_formula_export.get("event_formula_target_components")
+            )
+            event_formula_target_quality_gate = _mapping(
+                event_formula_export.get("event_formula_target_quality_gate")
+            )
         else:
             event_calculus_formula = _event_calculus_formula_text(
                 source_id=source_id,
@@ -321,6 +440,23 @@ def _dcec_records(norms: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
             event_formula_syntax_valid = _event_calculus_formula_shape_valid(
                 event_calculus_formula
             )
+            event_formula_target_parse_profile = _event_formula_parse_profile(
+                event_calculus_formula
+            )
+            event_formula_target_components = _event_formula_target_components(
+                event_calculus_formula,
+                source_id=source_id,
+                modality=modality,
+            )
+            event_formula_target_quality_gate = {
+                "syntax_valid": bool(event_formula_syntax_valid),
+                "target_parse_profile_complete": bool(
+                    event_formula_target_parse_profile.get("target_parse_profile_complete")
+                    is True
+                ),
+                "requires_validation": not bool(event_formula_syntax_valid),
+            }
+        event_formula_fingerprint = _stable_short_hash(event_calculus_formula)
         valid, validation_reason = _compile_dcec_proof_input(formula_object)
         records.append(
             {
@@ -331,6 +467,10 @@ def _dcec_records(norms: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
                 "event_calculus_formula": event_calculus_formula,
                 "event_formula_source": event_formula_source,
                 "event_formula_syntax_valid": event_formula_syntax_valid,
+                "event_formula_target_parse_profile": event_formula_target_parse_profile,
+                "event_formula_target_components": event_formula_target_components,
+                "event_formula_target_quality_gate": event_formula_target_quality_gate,
+                "event_formula_fingerprint": event_formula_fingerprint,
                 "formula_object": formula_object,
                 "modality": modality,
                 "source_id": source_id,
@@ -409,6 +549,16 @@ def _dcec_frame_logic_triples(
                     "object": str(
                         bool(record.get("event_formula_syntax_valid"))
                     ).lower(),
+                },
+                {
+                    "subject": source_id,
+                    "predicate": "event_formula_source",
+                    "object": str(record.get("event_formula_source") or ""),
+                },
+                {
+                    "subject": source_id,
+                    "predicate": "event_formula_fingerprint",
+                    "object": str(record.get("event_formula_fingerprint") or ""),
                 },
             ]
         )
@@ -526,8 +676,8 @@ def _proof_input_formula_text(*, actor: str, event: str, modality: str) -> str:
 
 def _event_formula_exports_from_norms(
     norms: Sequence[Mapping[str, Any]],
-) -> dict[str, dict[str, Any]]:
-    exports: dict[str, dict[str, Any]] = {}
+) -> dict[str, list[dict[str, Any]]]:
+    exports: dict[str, list[dict[str, Any]]] = {}
     if not norms:
         return exports
     try:
@@ -556,13 +706,46 @@ def _event_formula_exports_from_norms(
             exported_formula = str(record.get("exported_formula") or "").strip()
             if not exported_formula:
                 continue
-            exports[source_id] = {
-                "event_calculus_formula": exported_formula,
-                "event_formula_source": "deontic.prover_syntax",
-                "event_formula_syntax_valid": bool(record.get("syntax_valid") is True),
-            }
+            exports.setdefault(source_id, []).append(
+                {
+                    "event_calculus_formula": exported_formula,
+                    "event_formula_fingerprint": _stable_short_hash(exported_formula),
+                    "event_formula_source": "deontic.prover_syntax",
+                    "event_formula_syntax_valid": bool(record.get("syntax_valid") is True),
+                    "event_formula_target_components": _mapping(
+                        record.get("target_components")
+                    ),
+                    "event_formula_target_parse_profile": _mapping(
+                        record.get("target_parse_profile")
+                    ),
+                    "event_formula_target_quality_gate": _mapping(
+                        record.get("target_quality_gate")
+                    ),
+                }
+            )
             break
     return exports
+
+
+def _take_event_formula_export(
+    exports: Mapping[str, Sequence[Mapping[str, Any]]],
+    *,
+    source_id: str,
+    index: int,
+) -> Optional[dict[str, Any]]:
+    for key in (
+        source_id,
+        f"dcec:norm:{index}",
+        f"dcec:parser:{index}",
+    ):
+        rows = exports.get(key)
+        if not rows:
+            continue
+        row = dict(rows[0])
+        if isinstance(rows, list):
+            rows.pop(0)
+        return row
+    return None
 
 
 def _event_calculus_formula_text(*, source_id: str, deontic_formula: str) -> str:
@@ -586,6 +769,59 @@ def _event_calculus_formula_shape_valid(formula: str) -> bool:
 def _source_symbol(source_id: str) -> str:
     value = re.sub(r"[^0-9A-Za-z_]+", "_", str(source_id or "unknown")).strip("_")
     return value or "unknown"
+
+
+def _event_formula_parse_profile(formula: str) -> dict[str, Any]:
+    text = str(formula or "").strip()
+    wrappers = [
+        match.group(1)
+        for match in re.finditer(r"\b([A-Za-z][A-Za-z0-9_]*)\s*\(", text)
+        if match.group(1) in {"Happens", "HoldsAt", "always", "O", "P", "F"}
+    ]
+    event_predicates: list[str] = []
+    for predicate in re.findall(r"\b(Happens|HoldsAt)\s*\(", text):
+        if predicate not in event_predicates:
+            event_predicates.append(predicate)
+    top_level_symbol = ""
+    top_level_match = re.match(r"^\s*([A-Za-z][A-Za-z0-9_]*)\s*\(", text)
+    if top_level_match:
+        top_level_symbol = top_level_match.group(1)
+    return {
+        "contains_implication": "=>" in text,
+        "event_predicates": event_predicates,
+        "target_parse_profile_complete": bool(
+            top_level_symbol == "Happens"
+            and event_predicates == ["Happens", "HoldsAt"]
+            and "=>" in text
+        ),
+        "top_level_symbol": top_level_symbol,
+        "wrapper_sequence": wrappers,
+    }
+
+
+def _event_formula_target_components(
+    formula: str,
+    *,
+    source_id: str,
+    modality: str,
+) -> dict[str, Any]:
+    parse_profile = _event_formula_parse_profile(formula)
+    return {
+        "formula_role": "event_calculus_state",
+        "modality": modality,
+        "source_id": source_id,
+        "target": "deontic_cec",
+        "target_parse_profile_complete": bool(
+            parse_profile.get("target_parse_profile_complete") is True
+        ),
+        "uses_event_calculus_wrapper": bool(
+            parse_profile.get("event_predicates") == ["Happens", "HoldsAt"]
+        ),
+    }
+
+
+def _stable_short_hash(value: str) -> str:
+    return hashlib.sha256(str(value or "").encode("utf-8")).hexdigest()[:24]
 
 
 def _fallback_norm_from_conversion(*, result: Any, text: str) -> Optional[dict[str, Any]]:
@@ -683,6 +919,31 @@ def _list_of_dicts(value: Any) -> list[dict[str, Any]]:
     if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
         return []
     return [dict(item) for item in value if isinstance(item, Mapping)]
+
+
+def _mapping(value: Any) -> dict[str, Any]:
+    if isinstance(value, Mapping):
+        return dict(value)
+    return {}
+
+
+def _first_text_value(*values: Any, fallback: str = "") -> str:
+    for value in values:
+        if isinstance(value, str):
+            text = value.strip()
+            if text:
+                return text
+            continue
+        if isinstance(value, Mapping):
+            nested = _first_text_value(*value.values())
+            if nested:
+                return nested
+            continue
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            nested = _first_text_value(*list(value))
+            if nested:
+                return nested
+    return str(fallback or "").strip()
 
 
 __all__ = ["CecDcecBridgeAdapter"]

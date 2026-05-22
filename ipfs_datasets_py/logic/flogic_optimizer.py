@@ -358,7 +358,12 @@ def _frame_ontology_metadata(
             triples=kg_triples,
         )
     )
-    ontology_terms = sorted(set(feature_terms) | set(triple_terms))
+    # Contextualized terms preserve low-signal structural values by attaching
+    # their frame predicate context (for example parity/count positioned
+    # features), so include them in the canonical audit union as ontology terms.
+    ontology_terms = sorted(
+        set(feature_terms) | set(triple_terms) | set(contextualized_terms)
+    )
     feature_high_signal_terms = frame_ontology_high_signal_terms(feature_terms)
     triple_high_signal_terms = frame_ontology_high_signal_terms(triple_terms)
     contextualized_high_signal_terms = frame_ontology_high_signal_terms(

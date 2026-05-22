@@ -32,6 +32,14 @@ NORMATIVE_MODAL_FAMILIES: Tuple[ModalLogicFamily, ...] = (
 
 COMPILER_AMBIGUITY_CORE_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.FRAME.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.FRAME.value,
+    ),
+    (
         ModalLogicFamily.DEONTIC.value,
         ModalLogicFamily.TEMPORAL.value,
     ),
@@ -172,6 +180,10 @@ COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] =
     ),
     (
         ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.DYNAMIC.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
         ModalLogicFamily.TEMPORAL.value,
     ),
     *COMPILER_AMBIGUITY_CORE_FAMILY_PAIRS,
@@ -201,6 +213,10 @@ COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.DEONTIC.value,
         ModalLogicFamily.EPISTEMIC.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.ALETHIC.value,
     ),
     (
         ModalLogicFamily.DEONTIC.value,
@@ -296,6 +312,10 @@ COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     ),
     (
         ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.DYNAMIC.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
         ModalLogicFamily.ALETHIC.value,
     ),
     (
@@ -313,6 +333,10 @@ COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.TEMPORAL.value,
         ModalLogicFamily.FRAME.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.DYNAMIC.value,
     ),
     (
         ModalLogicFamily.TEMPORAL.value,
@@ -436,6 +460,10 @@ SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.TEMPORAL.value,
         ModalLogicFamily.FRAME.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.DYNAMIC.value,
     ),
     (
         ModalLogicFamily.TEMPORAL.value,
@@ -605,6 +633,10 @@ PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...
     (
         ModalLogicFamily.TEMPORAL.value,
         ModalLogicFamily.FRAME.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.DYNAMIC.value,
     ),
     (
         ModalLogicFamily.TEMPORAL.value,
@@ -1019,16 +1051,20 @@ def supports_signal_free_adaptive_ambiguity_pair(
     target_family: ModalLogicFamily | str,
 ) -> bool:
     """Return whether an adaptive pair should emit ambiguity without target cues."""
-    resolved_target_family = _resolve_modal_family_name(target_family)
+    resolved_predicted_family = _resolve_modal_family_name(predicted_family)
+    resolved_target_family = _resolve_modal_family_name(
+        target_family,
+        prefer_target_side=True,
+    )
     return (
-        resolved_target_family in compiler_ambiguity_policy_targets(predicted_family)
+        resolved_target_family
+        in compiler_ambiguity_policy_targets(resolved_predicted_family)
         or is_signal_free_adaptive_ambiguity_pair(
-            predicted_family,
+            resolved_predicted_family,
             resolved_target_family,
         )
-        or resolved_target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        or resolved_target_family
+        in compiler_required_adaptive_ambiguity_targets(resolved_predicted_family)
     )
 
 
@@ -1062,7 +1098,10 @@ def is_signal_free_adaptive_ambiguity_pair(
 ) -> bool:
     """Return whether a pair is in the signal-free adaptive ambiguity policy."""
     resolved_predicted_family = _resolve_modal_family_name(predicted_family)
-    resolved_target_family = _resolve_modal_family_name(target_family)
+    resolved_target_family = _resolve_modal_family_name(
+        target_family,
+        prefer_target_side=True,
+    )
     return (
         resolved_predicted_family,
         resolved_target_family,
@@ -1099,7 +1138,10 @@ def is_compiler_required_adaptive_ambiguity_pair(
 ) -> bool:
     """Return whether a pair is in the compiler-required ambiguity policy bundle."""
     resolved_predicted_family = _resolve_modal_family_name(predicted_family)
-    resolved_target_family = _resolve_modal_family_name(target_family)
+    resolved_target_family = _resolve_modal_family_name(
+        target_family,
+        prefer_target_side=True,
+    )
     return (
         resolved_predicted_family,
         resolved_target_family,
@@ -1112,7 +1154,10 @@ def is_compiler_ambiguity_policy_pair(
 ) -> bool:
     """Return whether a pair is part of the compiler_ambiguity synthesis bundle."""
     resolved_predicted_family = _resolve_modal_family_name(predicted_family)
-    resolved_target_family = _resolve_modal_family_name(target_family)
+    resolved_target_family = _resolve_modal_family_name(
+        target_family,
+        prefer_target_side=True,
+    )
     return (
         resolved_predicted_family,
         resolved_target_family,
@@ -1125,7 +1170,10 @@ def is_priority_signal_free_adaptive_ambiguity_pair(
 ) -> bool:
     """Return whether a pair is part of the highest-priority adaptive ambiguity policy."""
     resolved_predicted_family = _resolve_modal_family_name(predicted_family)
-    resolved_target_family = _resolve_modal_family_name(target_family)
+    resolved_target_family = _resolve_modal_family_name(
+        target_family,
+        prefer_target_side=True,
+    )
     return (
         resolved_predicted_family,
         resolved_target_family,
@@ -1138,19 +1186,32 @@ def prefers_contested_zero_margin_adaptive_ambiguity_pair(
 ) -> bool:
     """Return whether a zero-margin adaptive pair should be contested, not outvoted."""
     resolved_predicted_family = _resolve_modal_family_name(predicted_family)
-    resolved_target_family = _resolve_modal_family_name(target_family)
+    resolved_target_family = _resolve_modal_family_name(
+        target_family,
+        prefer_target_side=True,
+    )
     return (
         resolved_predicted_family,
         resolved_target_family,
     ) in ZERO_MARGIN_CONTESTED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS
 
 
-def _resolve_modal_family_name(family: ModalLogicFamily | str) -> str:
+def _resolve_modal_family_name(
+    family: ModalLogicFamily | str,
+    *,
+    prefer_target_side: bool = False,
+) -> str:
     if isinstance(family, ModalLogicFamily):
         return family.value
     resolved = str(family).strip()
     if not resolved:
         return ""
+    if "->" in resolved:
+        source_family, target_family = resolved.split("->", maxsplit=1)
+        directional_side = target_family if prefer_target_side else source_family
+        directional_side = directional_side.strip()
+        if directional_side:
+            resolved = directional_side
     candidate_tokens: list[str] = []
     seen_tokens: set[str] = set()
 

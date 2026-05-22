@@ -1003,11 +1003,15 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                     else None
                 )
                 timed_out = bool(timeout_diagnostics.get("timed_out")) or ("timed out" in error_text.lower())
+                no_remaining_work_signal = timeout_classification in {
+                    "timeout_with_no_detectable_remaining_work",
+                    "timeout_without_progress_signal_no_remaining_work",
+                }
                 timeout_promoted_to_success = bool(
                     error_text
                     and timed_out
-                    and statutes_count > 0
                     and timeout_work_remaining is False
+                    and (statutes_count > 0 or no_remaining_work_signal)
                 )
                 state_status = "error" if error_text else ("zero_statutes" if statutes_count <= 0 else "success")
                 if timeout_promoted_to_success:

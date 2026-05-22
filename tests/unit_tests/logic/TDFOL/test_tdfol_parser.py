@@ -86,12 +86,11 @@ class TestLexerTokenization:
         lexer = TDFOLLexer(text)
         tokens = lexer.tokenize()
         
-        # THEN should tokenize (note: "P" is ambiguous with PERMISSION)
-        # The lexer tokenizes "P" as PERMISSION, then "erson" as IDENTIFIER
-        assert len(tokens) == 3
-        assert tokens[0].type == TokenType.PERMISSION  # "P" matches keyword
-        assert tokens[1].type == TokenType.IDENTIFIER  # "erson"
-        assert tokens[2].type == TokenType.EOF
+        # THEN should preserve it as one identifier token
+        assert len(tokens) == 2
+        assert tokens[0].type == TokenType.IDENTIFIER
+        assert tokens[0].value == "Person"
+        assert tokens[1].type == TokenType.EOF
     
     def test_lexer_identifier_with_underscore(self):
         """Test tokenizing identifier with underscores."""
@@ -529,6 +528,18 @@ class TestParserLogicOperators:
         # THEN should be a binary formula with AND
         assert isinstance(formula, BinaryFormula)
         assert formula.operator == LogicOperator.AND
+
+    def test_parse_conjunction_with_text_keyword(self):
+        """Test parsing conjunction via textual keyword."""
+        # GIVEN a conjunction written with textual syntax
+        formula_str = "Qa and Qb"
+
+        # WHEN parsing
+        formula = parse_tdfol(formula_str)
+
+        # THEN should be a binary formula with AND
+        assert isinstance(formula, BinaryFormula)
+        assert formula.operator == LogicOperator.AND
     
     def test_parse_disjunction(self):
         """Test parsing disjunction."""
@@ -550,6 +561,18 @@ class TestParserLogicOperators:
         # WHEN parsing
         formula = parse_tdfol(formula_str)
         
+        # THEN should be a unary formula with NOT
+        assert isinstance(formula, UnaryFormula)
+        assert formula.operator == LogicOperator.NOT
+
+    def test_parse_negation_with_text_keyword(self):
+        """Test parsing negation via textual keyword."""
+        # GIVEN a negation written with textual syntax
+        formula_str = "not Qq"
+
+        # WHEN parsing
+        formula = parse_tdfol(formula_str)
+
         # THEN should be a unary formula with NOT
         assert isinstance(formula, UnaryFormula)
         assert formula.operator == LogicOperator.NOT

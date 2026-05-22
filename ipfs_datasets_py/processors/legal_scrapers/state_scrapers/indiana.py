@@ -42,7 +42,9 @@ class IndianaScraper(BaseStateScraper):
         return [
             {
                 "name": "Indiana Code",
-                "url": "http://web.archive.org/web/20231201000000/http://iga.in.gov/legislative/laws/2023/ic/titles/",
+                # Use live titles index so generic fallback can proceed even
+                # when web archives are unavailable.
+                "url": "https://iga.in.gov/legislative/laws/2024/ic/titles/",
                 "type": "Code",
             }
         ]
