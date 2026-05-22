@@ -512,7 +512,10 @@ class BaseStateScraper(ABC):
         checkpoint_path = self._partial_checkpoint_path()
         if checkpoint_path is None:
             return False
-        if not isinstance(statutes, list) or not statutes:
+        if not isinstance(statutes, list):
+            return False
+        progress_payload = dict(extra) if isinstance(extra, dict) and extra else {}
+        if not statutes and not progress_payload:
             return False
 
         count = len(statutes)
@@ -539,7 +542,7 @@ class BaseStateScraper(ABC):
                 serialized_rows.append(statute.to_dict())
             except Exception:
                 continue
-        if not serialized_rows:
+        if not serialized_rows and not progress_payload:
             return False
 
         payload: Dict[str, Any] = {
@@ -551,8 +554,8 @@ class BaseStateScraper(ABC):
             "statutes_count": len(serialized_rows),
             "statutes": serialized_rows,
         }
-        if isinstance(extra, dict) and extra:
-            payload["progress"] = dict(extra)
+        if progress_payload:
+            payload["progress"] = progress_payload
 
         try:
             checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
@@ -827,6 +830,13 @@ class BaseStateScraper(ABC):
         codes = self.get_code_list()
         
         self.logger.info(f"Scraping {len(codes)} codes for {self.state_name}")
+        self._write_partial_checkpoint(
+            all_statutes,
+            code_name="scrape_all",
+            stage_label="scrape_all:start",
+            force=True,
+            extra={"codes_total": len(codes), "codes_completed": 0},
+        )
         
         for code_index, code_info in enumerate(codes, start=1):
             if max_statutes and len(all_statutes) >= max_statutes:
@@ -865,6 +875,19 @@ class BaseStateScraper(ABC):
                             code_timeout,
                         )
                         statutes = []
+                        self._write_partial_checkpoint(
+                            all_statutes,
+                            code_name=code_name,
+                            stage_label=f"scrape_all:timeout:{code_index}",
+                            force=True,
+                            extra={
+                                "codes_total": len(codes),
+                                "codes_completed": code_index - 1,
+                                "latest_code_name": code_name,
+                                "latest_code_statutes": 0,
+                                "code_timeout_seconds": float(code_timeout),
+                            },
+                        )
                 else:
                     statutes = await scrape_task
                 if max_statutes:
@@ -895,6 +918,19 @@ class BaseStateScraper(ABC):
                 
             except Exception as e:
                 self.logger.error(f"Failed to scrape {code_name}: {e}")
+                self._write_partial_checkpoint(
+                    all_statutes,
+                    code_name=code_name,
+                    stage_label=f"scrape_all:error:{code_index}",
+                    force=True,
+                    extra={
+                        "codes_total": len(codes),
+                        "codes_completed": code_index - 1,
+                        "latest_code_name": code_name,
+                        "latest_code_statutes": 0,
+                        "latest_error": str(e),
+                    },
+                )
             
             # Rate limiting
             time.sleep(rate_limit_delay)

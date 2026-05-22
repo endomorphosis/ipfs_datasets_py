@@ -860,6 +860,7 @@ def _extract_checkpoint_work_signal(payload: Dict[str, Any]) -> Tuple[str, int, 
         ("titles_scanned", "discovered_titles", "titles"),
         ("chapters_scanned", "discovered_chapters", "chapters"),
         ("scanned_sections", "discovered_sections", "sections"),
+        ("codes_completed", "codes_total", "codes"),
     ]
     for src in sources:
         for scanned_key, discovered_key, label in candidate_pairs:
