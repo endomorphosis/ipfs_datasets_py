@@ -2211,9 +2211,35 @@ def _commit_repair_worktree_targets(
             "commit": _git_stdout(repair_worktree, "rev-parse", "HEAD"),
             "status": "no_target_files",
         }
+    addable_targets: List[str] = []
+    skipped_missing_targets: List[str] = []
+    for path in target_files:
+        relative = _safe_repo_relative_path(str(path))
+        if (repair_worktree / relative).exists() or (repair_worktree / relative).is_symlink():
+            addable_targets.append(str(path))
+            continue
+        tracked = subprocess.run(
+            ["git", "ls-files", "--error-unmatch", "--", str(path)],
+            cwd=repair_worktree,
+            capture_output=True,
+            text=True,
+            timeout=30.0,
+        )
+        if tracked.returncode == 0:
+            addable_targets.append(str(path))
+        else:
+            skipped_missing_targets.append(str(path))
+
+    if not addable_targets:
+        return {
+            "changed": False,
+            "commit": _git_stdout(repair_worktree, "rev-parse", "HEAD"),
+            "skipped_missing_targets": skipped_missing_targets,
+            "status": "no_addable_target_files",
+        }
 
     add = subprocess.run(
-        ["git", "add", "-A", "--", *target_files],
+        ["git", "add", "-A", "--", *addable_targets],
         cwd=repair_worktree,
         capture_output=True,
         text=True,
@@ -2224,12 +2250,13 @@ def _commit_repair_worktree_targets(
             "changed": False,
             "status": "add_failed",
             "exit_code": add.returncode,
+            "skipped_missing_targets": skipped_missing_targets,
             "stderr_tail": (add.stderr or "")[-500:],
             "stdout_tail": (add.stdout or "")[-500:],
         }
 
     diff = subprocess.run(
-        ["git", "diff", "--cached", "--quiet", "--", *target_files],
+        ["git", "diff", "--cached", "--quiet", "--", *addable_targets],
         cwd=repair_worktree,
         capture_output=True,
         text=True,
@@ -2239,6 +2266,7 @@ def _commit_repair_worktree_targets(
         return {
             "changed": False,
             "commit": _git_stdout(repair_worktree, "rev-parse", "HEAD"),
+            "skipped_missing_targets": skipped_missing_targets,
             "status": "unchanged",
         }
     if diff.returncode != 1:
@@ -2246,6 +2274,7 @@ def _commit_repair_worktree_targets(
             "changed": False,
             "status": "diff_failed",
             "exit_code": diff.returncode,
+            "skipped_missing_targets": skipped_missing_targets,
             "stderr_tail": (diff.stderr or "")[-500:],
             "stdout_tail": (diff.stdout or "")[-500:],
         }
@@ -2272,6 +2301,7 @@ def _commit_repair_worktree_targets(
             "changed": False,
             "status": "commit_failed",
             "exit_code": commit.returncode,
+            "skipped_missing_targets": skipped_missing_targets,
             "stderr_tail": (commit.stderr or "")[-500:],
             "stdout_tail": (commit.stdout or "")[-500:],
         }
@@ -2279,6 +2309,7 @@ def _commit_repair_worktree_targets(
     return {
         "changed": True,
         "commit": _git_stdout(repair_worktree, "rev-parse", "HEAD"),
+        "skipped_missing_targets": skipped_missing_targets,
         "status": "committed",
     }
 

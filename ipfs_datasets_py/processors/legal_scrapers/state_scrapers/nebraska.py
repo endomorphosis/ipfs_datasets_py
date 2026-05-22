@@ -67,6 +67,17 @@ class NebraskaScraper(BaseStateScraper):
         self.logger.info("Nebraska official index: discovered %s chapter urls", len(chapter_urls))
         statutes: List[NormalizedStatute] = []
         limit = max(1, int(max_statutes)) if max_statutes is not None else None
+        self._write_partial_checkpoint(
+            statutes,
+            code_name=code_name,
+            stage_label="nebraska:chapter-discovery",
+            extra={
+                "chapters_scanned": 0,
+                "discovered_chapters": int(len(chapter_urls)),
+                "codes_completed": 0,
+                "codes_total": 1,
+            },
+        )
         for chapter_index, chapter_url in enumerate(chapter_urls, start=1):
             if limit is not None and len(statutes) >= limit:
                 break
@@ -86,6 +97,30 @@ class NebraskaScraper(BaseStateScraper):
                     len(section_urls),
                     len(statutes),
                 )
+            if chapter_index == 1 or chapter_index % 10 == 0 or chapter_index == len(chapter_urls):
+                self._write_partial_checkpoint(
+                    statutes,
+                    code_name=code_name,
+                    stage_label="nebraska:chapter-scan",
+                    extra={
+                        "chapters_scanned": int(chapter_index),
+                        "discovered_chapters": int(len(chapter_urls)),
+                        "codes_completed": 0,
+                        "codes_total": 1,
+                    },
+                )
+        self._write_partial_checkpoint(
+            statutes,
+            code_name=code_name,
+            stage_label="nebraska:complete",
+            force=True,
+            extra={
+                "chapters_scanned": int(len(chapter_urls)),
+                "discovered_chapters": int(len(chapter_urls)),
+                "codes_completed": 1,
+                "codes_total": 1,
+            },
+        )
         return statutes[:limit] if limit is not None else statutes
 
     async def _scrape_direct_seed_sections(self, code_name: str, max_statutes: int = 2) -> List[NormalizedStatute]:

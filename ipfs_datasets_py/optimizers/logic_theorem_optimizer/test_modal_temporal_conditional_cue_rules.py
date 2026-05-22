@@ -15,6 +15,9 @@ from ipfs_datasets_py.logic.modal.compiler import (  # noqa: E402
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (  # noqa: E402
     ModalLogicFamily,
 )
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec import (  # noqa: E402
+    ranked_modal_families,
+)
 
 
 def test_compiler_treats_after_application_cross_reference_as_non_temporal_scope() -> None:
@@ -50,3 +53,99 @@ def test_compiler_preserves_temporal_after_date_sequence_cue() -> None:
     assert result.encoding is not None
     counts = result.encoding.modal_family_counts()
     assert counts.get(ModalLogicFamily.TEMPORAL.value, 0) >= 1
+
+
+def test_compiler_reinforces_deontic_against_generic_frame_statutory_scope() -> None:
+def test_compiler_backfills_frame_share_for_statutory_temporal_scope_clause() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    result = compiler.compile(
+        (
+            "The authority of the Secretary under this section, as provided in this "
+            "section, and requirements apply."
+        ),
+        document_id="compiler-ambiguity-frame-deontic-structural-scope",
+            "Under this chapter, this section, this subchapter, and this subtitle, "
+            "after June 1, 2030, regulations apply."
+        ),
+        document_id="compiler-ambiguity-statutory-temporal-frame-backfill",
+    )
+
+    assert result.encoding is not None
+    ranking = ranked_modal_families(result.encoding)
+    assert ranking
+    shares = {entry["family"]: float(entry["share_raw"]) for entry in ranking}
+    assert ranking[0]["family"] == ModalLogicFamily.DEONTIC.value
+    assert shares[ModalLogicFamily.DEONTIC.value] >= shares[ModalLogicFamily.FRAME.value]
+
+
+def test_compiler_reinforces_temporal_conditional_statutory_competition() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    result = compiler.compile(
+        (
+            "For each fiscal year, the authority of the Secretary under this section, "
+            "as provided in this section."
+        ),
+        document_id="compiler-ambiguity-temporal-conditional-statutory-scope",
+    )
+
+    assert result.encoding is not None
+    ranking = ranked_modal_families(result.encoding)
+    assert ranking
+    shares = {entry["family"]: float(entry["share_raw"]) for entry in ranking}
+    assert shares[ModalLogicFamily.CONDITIONAL_NORMATIVE.value] > shares[ModalLogicFamily.FRAME.value]
+    assert shares[ModalLogicFamily.CONDITIONAL_NORMATIVE.value] >= 0.30
+
+
+def test_compiler_reinforces_temporal_deontic_statutory_competition() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    result = compiler.compile(
+        (
+            "For each fiscal year, the authority of the Secretary under this section, "
+            "and requirements apply."
+        ),
+        document_id="compiler-ambiguity-temporal-deontic-statutory-scope",
+    )
+
+    assert result.encoding is not None
+    ranking = ranked_modal_families(result.encoding)
+    assert ranking
+    shares = {entry["family"]: float(entry["share_raw"]) for entry in ranking}
+    assert shares[ModalLogicFamily.DEONTIC.value] > shares[ModalLogicFamily.FRAME.value]
+    assert shares[ModalLogicFamily.DEONTIC.value] >= 0.25
+
+
+def test_compiler_backfills_alethic_scope_in_frame_heavy_statutory_clauses() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    result = compiler.compile(
+        (
+            "The authority of the Secretary under this section, as provided in this "
+            "section, and the agency is unable to enforce."
+        ),
+        document_id="compiler-ambiguity-frame-alethic-structural-scope",
+    )
+
+    assert result.encoding is not None
+    ranking = ranked_modal_families(result.encoding)
+    assert ranking
+    shares = {entry["family"]: float(entry["share_raw"]) for entry in ranking}
+    assert shares[ModalLogicFamily.ALETHIC.value] > 0.10
+    shares = {
+        str(candidate["family"]): float(candidate.get("share_raw", candidate.get("share", 0.0)))
+        for candidate in ranking
+    }
+    assert shares.get(ModalLogicFamily.FRAME.value, 0.0) > 0.0
+    assert shares.get(ModalLogicFamily.TEMPORAL.value, 0.0) > shares.get(
+        ModalLogicFamily.FRAME.value, 0.0
+    )

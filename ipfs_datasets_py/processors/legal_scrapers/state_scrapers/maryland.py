@@ -101,6 +101,21 @@ class MarylandScraper(BaseStateScraper):
         statutes: List[NormalizedStatute] = []
         seen_urls = set()
         sem = asyncio.Semaphore(8)
+        discovered_candidates = 0
+        scanned_candidates = 0
+        self._write_partial_checkpoint(
+            statutes,
+            code_name=code_name,
+            stage_label="maryland:article-discovery",
+            extra={
+                "titles_scanned": 0,
+                "discovered_titles": int(len(articles_payload)),
+                "scanned_candidates": 0,
+                "discovered_candidates": 0,
+                "codes_completed": 0,
+                "codes_total": 1,
+            },
+        )
 
         async def _build_one(
             *,
@@ -118,7 +133,7 @@ class MarylandScraper(BaseStateScraper):
                     section_url=section_url,
                 )
 
-        for article in articles_payload:
+        for article_index, article in enumerate(articles_payload, start=1):
             if len(statutes) >= max_statutes:
                 break
             if not isinstance(article, dict):
@@ -141,6 +156,7 @@ class MarylandScraper(BaseStateScraper):
             section_jobs = []
             remaining = max_statutes - len(statutes)
             budget = min(len(sections_payload), max(remaining * 4, 80))
+            discovered_candidates += int(budget)
             for section in sections_payload[:budget]:
                 if not isinstance(section, dict):
                     continue
@@ -175,8 +191,22 @@ class MarylandScraper(BaseStateScraper):
                 len(section_jobs),
                 len(statutes),
             )
+            self._write_partial_checkpoint(
+                statutes,
+                code_name=code_name,
+                stage_label="maryland:article-scan",
+                extra={
+                    "titles_scanned": int(article_index),
+                    "discovered_titles": int(len(articles_payload)),
+                    "scanned_candidates": int(scanned_candidates),
+                    "discovered_candidates": int(discovered_candidates),
+                    "codes_completed": 0,
+                    "codes_total": 1,
+                },
+            )
 
             for statute in await asyncio.gather(*section_jobs, return_exceptions=True):
+                scanned_candidates += 1
                 if isinstance(statute, Exception):
                     continue
                 if statute is None:
@@ -190,9 +220,32 @@ class MarylandScraper(BaseStateScraper):
                         "Maryland API scrape: statutes_so_far=%s",
                         len(statutes),
                     )
+                    self._write_partial_checkpoint(
+                        statutes,
+                        code_name=code_name,
+                        stage_label="maryland:section-progress",
+                        extra={
+                            "scanned_candidates": int(scanned_candidates),
+                            "discovered_candidates": int(discovered_candidates),
+                            "codes_completed": 0,
+                            "codes_total": 1,
+                        },
+                    )
                 if len(statutes) >= max_statutes:
                     break
 
+        self._write_partial_checkpoint(
+            statutes,
+            code_name=code_name,
+            stage_label="maryland:complete",
+            force=True,
+            extra={
+                "scanned_candidates": int(scanned_candidates),
+                "discovered_candidates": int(discovered_candidates),
+                "codes_completed": 1,
+                "codes_total": 1,
+            },
+        )
         return statutes
 
     async def _build_statute_from_section_page(

@@ -9,7 +9,7 @@ import threading
 from ipfs_datasets_py.utils import anyio_compat as asyncio
 import inspect
 import time
-from typing import Callable, Dict, List, Optional, Any
+from typing import Callable, Dict, List, Optional, Any, Mapping
 from datetime import datetime, timezone
 import json
 import os
@@ -115,6 +115,78 @@ def _coerce_checkpoint_updated_at(value: Any) -> str:
         except Exception:
             return ""
     return str(value).strip()
+
+
+def _checkpoint_updated_at_to_timestamp(value: Any) -> float:
+    if value is None:
+        return 0.0
+    if isinstance(value, (int, float)):
+        try:
+            return float(value)
+        except Exception:
+            return 0.0
+    text = str(value or "").strip()
+    if not text:
+        return 0.0
+    try:
+        return datetime.fromisoformat(text.replace("Z", "+00:00")).timestamp()
+    except Exception:
+        return 0.0
+
+
+def _partial_checkpoint_path_for_state(state_code: str) -> Optional[Path]:
+    checkpoint_dir = str(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR") or "").strip()
+    if not checkpoint_dir:
+        return None
+    try:
+        return Path(checkpoint_dir).expanduser().resolve() / f"STATE-{state_code.upper()}-partial.json"
+    except Exception:
+        return None
+
+
+def _partial_checkpoint_progress_signature(payload: Mapping[str, Any]) -> tuple[Any, ...]:
+    progress = payload.get("progress") if isinstance(payload.get("progress"), Mapping) else {}
+    counters = (
+        _safe_int(payload.get("statutes_count"), 0),
+        _safe_int(progress.get("scanned_candidates"), 0),
+        _safe_int(progress.get("discovered_candidates"), 0),
+        _safe_int(progress.get("scanned_history_urls"), 0),
+        _safe_int(progress.get("discovered_history_urls"), 0),
+        _safe_int(progress.get("scanned_laws"), 0),
+        _safe_int(progress.get("discovered_laws"), 0),
+        _safe_int(progress.get("titles_scanned"), 0),
+        _safe_int(progress.get("discovered_titles"), 0),
+        _safe_int(progress.get("chapters_scanned"), 0),
+        _safe_int(progress.get("discovered_chapters"), 0),
+        _safe_int(progress.get("codes_completed"), _safe_int(payload.get("codes_completed"), 0)),
+        _safe_int(progress.get("codes_total"), _safe_int(payload.get("codes_total"), 0)),
+        str(payload.get("stage_label") or "").strip(),
+    )
+    return counters
+
+
+def _read_partial_checkpoint_activity(state_code: str) -> Dict[str, Any]:
+    path = _partial_checkpoint_path_for_state(state_code)
+    if path is None or not path.exists():
+        return {"path": str(path) if path else "", "updated_ts": 0.0, "signature": tuple()}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        try:
+            mtime = float(path.stat().st_mtime)
+        except Exception:
+            mtime = 0.0
+        return {"path": str(path), "updated_ts": mtime, "signature": tuple()}
+    updated_ts = _checkpoint_updated_at_to_timestamp(payload.get("updated_at"))
+    if updated_ts <= 0.0:
+        try:
+            updated_ts = float(path.stat().st_mtime)
+        except Exception:
+            updated_ts = 0.0
+    signature: tuple[Any, ...] = tuple()
+    if isinstance(payload, Mapping):
+        signature = _partial_checkpoint_progress_signature(payload)
+    return {"path": str(path), "updated_ts": updated_ts, "signature": signature}
 
 
 def _derive_timeout_diagnostics_from_checkpoint_payload(
@@ -1323,7 +1395,85 @@ async def _run_sync_scrape_on_daemon_thread(
     worker.start()
 
     if timeout_seconds > 0:
-        return await asyncio.wait_for(result_future, timeout=timeout_seconds)
+        poll_seconds_raw = str(os.getenv("STATE_SCRAPER_TIMEOUT_POLL_SECONDS", "") or "").strip()
+        try:
+            if poll_seconds_raw:
+                poll_seconds = float(poll_seconds_raw)
+            else:
+                poll_seconds = min(15.0, max(0.01, float(timeout_seconds) / 4.0))
+        except Exception:
+            poll_seconds = min(15.0, max(0.01, float(timeout_seconds) / 4.0))
+        poll_seconds = max(0.01, min(120.0, poll_seconds))
+
+        grace_raw = str(os.getenv("STATE_SCRAPER_PROGRESS_GRACE_SECONDS", "") or "").strip()
+        try:
+            if grace_raw:
+                progress_grace_seconds = float(grace_raw)
+            elif float(timeout_seconds) <= 60.0:
+                progress_grace_seconds = 0.0
+            else:
+                progress_grace_seconds = max(60.0, min(900.0, float(timeout_seconds) * 0.35))
+        except Exception:
+            progress_grace_seconds = 0.0 if float(timeout_seconds) <= 60.0 else max(60.0, min(900.0, float(timeout_seconds) * 0.35))
+        progress_grace_seconds = max(0.0, progress_grace_seconds)
+
+        hard_timeout_raw = str(os.getenv("STATE_SCRAPER_HARD_TIMEOUT_SECONDS", "") or "").strip()
+        try:
+            if hard_timeout_raw:
+                hard_timeout_seconds = float(hard_timeout_raw)
+            elif float(timeout_seconds) <= 60.0:
+                hard_timeout_seconds = float(timeout_seconds) + max(0.02, float(timeout_seconds) * 0.25)
+            else:
+                hard_timeout_seconds = max(float(timeout_seconds) + progress_grace_seconds, float(timeout_seconds) * 6.0)
+        except Exception:
+            if float(timeout_seconds) <= 60.0:
+                hard_timeout_seconds = float(timeout_seconds) + max(0.02, float(timeout_seconds) * 0.25)
+            else:
+                hard_timeout_seconds = max(float(timeout_seconds) + progress_grace_seconds, float(timeout_seconds) * 6.0)
+        if hard_timeout_seconds <= 0.0:
+            hard_timeout_seconds = float(timeout_seconds) + progress_grace_seconds
+
+        start_ts = time.time()
+        checkpoint_activity = _read_partial_checkpoint_activity(state_code)
+        last_signature = checkpoint_activity.get("signature", tuple())
+        last_progress_ts = start_ts
+        initial_checkpoint_updated_ts = float(checkpoint_activity.get("updated_ts") or 0.0)
+        if initial_checkpoint_updated_ts > 0.0:
+            last_progress_ts = max(last_progress_ts, initial_checkpoint_updated_ts)
+
+        while True:
+            now_ts = time.time()
+            elapsed = now_ts - start_ts
+            if result_future.done():
+                return result_future.result()
+            if elapsed >= hard_timeout_seconds:
+                break
+            wait_window = min(poll_seconds, max(0.25, hard_timeout_seconds - elapsed))
+            await asyncio.sleep(wait_window)
+            if result_future.done():
+                return result_future.result()
+
+            activity = _read_partial_checkpoint_activity(state_code)
+            signature = activity.get("signature", tuple())
+            updated_ts = float(activity.get("updated_ts") or 0.0)
+            signature_changed = bool(signature and signature != last_signature)
+            checkpoint_advanced = bool(updated_ts > initial_checkpoint_updated_ts + 1e-6)
+            if signature_changed:
+                last_signature = signature
+                last_progress_ts = now_ts
+            elif checkpoint_advanced and updated_ts > last_progress_ts:
+                # Treat checkpoint freshness as weak progress, even if
+                # counters are unchanged.
+                last_progress_ts = updated_ts
+
+            elapsed = now_ts - start_ts
+            since_progress = now_ts - last_progress_ts
+            if elapsed >= float(timeout_seconds) and since_progress >= progress_grace_seconds:
+                break
+
+        raise asyncio.TimeoutError(
+            f"state scrape timed out after {timeout_seconds} seconds"
+        )
     return await result_future
 
 

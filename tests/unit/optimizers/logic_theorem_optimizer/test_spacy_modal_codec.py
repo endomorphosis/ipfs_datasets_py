@@ -292,6 +292,20 @@ def test_spacy_encoder_treats_non_deadline_by_as_non_temporal_cue() -> None:
     )
 
 
+def test_spacy_encoder_treats_statutory_cross_reference_by_as_non_temporal_cue() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        "The Secretary shall provide notice by section 8005 of this title.",
+        document_id="sample-by-statutory-cross-reference",
+    )
+
+    assert any(cue.family == "deontic" and cue.cue.lower() == "shall" for cue in encoding.cues)
+    assert not any(
+        cue.family == "temporal" and cue.cue.lower() == "by"
+        for cue in encoding.cues
+    )
+
+
 def test_spacy_encoder_treats_deadline_by_as_temporal_cue() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     encoding = encoder.encode(
@@ -366,6 +380,19 @@ def test_spacy_encoder_detects_editorial_frame_scope_signals() -> None:
     assert signals["has_frame_context"] is True
     assert signals["has_frame_scope_phrase"] is True
     assert signals["has_frame_editorial_scope_phrase"] is True
+
+
+def test_spacy_encoder_detects_procedural_frame_scope_signals() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        "Administrative notice and hearing procedures are established under this section.",
+        document_id="sample-procedural-frame-scope",
+    )
+
+    signals = modal_ambiguity_signals(encoding)
+    assert signals["has_frame_procedural_scope_phrase"] is True
+    assert signals["has_frame_context"] is True
+    assert signals["has_frame_scope_phrase"] is False
 
 
 def test_spacy_encoder_detects_of_this_title_as_statutory_scope_reference() -> None:
@@ -477,6 +504,76 @@ def test_spacy_decoder_debiases_editorial_frame_logits_when_temporal_scope_compe
     assert signals["has_statutory_scope_reference"] is True
     assert signals["has_temporal_scope"] is True
     assert logits["temporal"] > logits["frame"]
+
+
+def test_spacy_encoder_treats_repealed_status_as_temporal_scope_signal() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    baseline_sample = build_us_code_sample(
+        title="45",
+        section="44 to 46",
+        text="Secs. 44 to 46.",
+    )
+    repealed_sample = build_us_code_sample(
+        title="45",
+        section="44 to 46",
+        text="Secs. 44 to 46. Repealed.",
+    )
+
+    baseline_encoding = codec.encode_sample(baseline_sample)
+    repealed_encoding = codec.encode_sample(repealed_sample)
+    baseline_signals = modal_ambiguity_signals(baseline_encoding)
+    repealed_signals = modal_ambiguity_signals(repealed_encoding)
+    baseline_logits = codec.family_logits_for_sample(
+        baseline_sample,
+        modal_families=("frame", "temporal"),
+    )
+    repealed_logits = codec.family_logits_for_sample(
+        repealed_sample,
+        modal_families=("frame", "temporal"),
+    )
+
+    assert baseline_signals["has_temporal_scope"] is False
+    assert baseline_signals["has_temporal_status_scope"] is False
+    assert repealed_signals["has_temporal_scope"] is True
+    assert repealed_signals["has_temporal_status_scope"] is True
+    assert repealed_signals["has_frame_scope_phrase"] is True
+    assert repealed_logits["temporal"] > baseline_logits["temporal"]
+
+
+def test_spacy_codec_debiases_generic_frame_share_for_repealed_statutory_scope() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="42",
+        section="2308",
+        text="Authority and jurisdiction under this section are repealed.",
+    )
+
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+
+    assert signals["has_statutory_scope_reference"] is True
+    assert signals["has_temporal_scope"] is True
+    assert signals["has_temporal_status_scope"] is True
+    assert any(item["family"] == "temporal" for item in ranking)
+    temporal_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "temporal"
+    )
+    frame_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "frame"
+    )
+    assert temporal_share > 0.3
+    assert (frame_share - temporal_share) <= 0.05
 
 
 def test_spacy_codec_debiases_generic_frame_cues_when_deontic_force_is_present() -> None:
@@ -993,7 +1090,7 @@ def test_spacy_codec_backfills_conditional_share_for_generic_frame_only_scope() 
 
     ranking = ranked_modal_families(codec.encode_sample(sample))
 
-    assert ranking[0]["family"] == "frame"
+    assert ranking[0]["family"] == "conditional_normative"
     conditional_share = next(
         float(item["share"])
         for item in ranking
@@ -1005,7 +1102,7 @@ def test_spacy_codec_backfills_conditional_share_for_generic_frame_only_scope() 
         if item["family"] == "frame"
     )
     assert conditional_share > 0.0
-    assert frame_share > conditional_share
+    assert conditional_share > frame_share
 
 
 def test_spacy_codec_backfills_deontic_share_for_generic_frame_only_scope() -> None:
@@ -1897,6 +1994,34 @@ def test_spacy_backfill_reinforces_existing_conditional_weight_for_temporal_comp
     assert counts["conditional_normative"] > 0.9
 
 
+def test_spacy_backfill_reinforces_temporal_to_conditional_statutory_scope_below_trigger() -> None:
+    baseline_counts = {
+        "temporal": 1.6,
+        "conditional_normative": 0.08,
+    }
+    competing_counts = dict(baseline_counts)
+    baseline_signals = {
+        "has_temporal_scope": True,
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": True,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": True,
+        "has_conditional_scope_token": False,
+        "has_statutory_scope_reference": False,
+        "has_deontic_scope": False,
+        "has_deontic_cue": False,
+    }
+    competing_signals = {
+        **baseline_signals,
+        "has_statutory_scope_reference": True,
+    }
+
+    _apply_competing_scope_backfill(baseline_counts, baseline_signals)
+    _apply_competing_scope_backfill(competing_counts, competing_signals)
+
+    assert competing_counts["conditional_normative"] > baseline_counts["conditional_normative"]
+
+
 def test_spacy_backfill_reinforces_existing_epistemic_weight_for_temporal_competition() -> None:
     counts = {
         "temporal": 2.4,
@@ -1984,6 +2109,37 @@ def test_spacy_directional_backfill_reinforces_frame_to_deontic_with_explicit_sc
     assert counts["deontic"] > 0.85
 
 
+def test_spacy_directional_backfill_reinforces_frame_to_conditional_for_deontic_statutory_scope() -> None:
+    baseline_counts = {
+        "frame": 2.2,
+        "conditional_normative": 0.18,
+    }
+    competing_counts = dict(baseline_counts)
+    baseline_signals = {
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": True,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": True,
+        "has_conditional_scope_token": False,
+        "has_deontic_scope": False,
+        "has_deontic_cue": False,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": False,
+        "has_frame_editorial_scope_phrase": False,
+        "has_frame_cue": True,
+        "has_statutory_scope_reference": True,
+    }
+    competing_signals = {
+        **baseline_signals,
+        "has_deontic_scope": True,
+    }
+
+    _apply_directional_modal_family_pair_backfill(baseline_counts, baseline_signals)
+    _apply_directional_modal_family_pair_backfill(competing_counts, competing_signals)
+
+    assert competing_counts["conditional_normative"] > baseline_counts["conditional_normative"]
+
+
 def test_spacy_directional_backfill_adds_conditional_support_for_deontic_scope() -> None:
     counts = {
         "deontic": 0.9,
@@ -2010,6 +2166,38 @@ def test_spacy_directional_backfill_adds_conditional_support_for_deontic_scope()
     assert counts["conditional_normative"] > 0.2
 
 
+def test_spacy_directional_backfill_adds_temporal_support_for_weak_statutory_frame_deontic_scope() -> None:
+    baseline_counts = {
+        "frame": 2.0,
+        "temporal": 0.04,
+    }
+    competing_counts = dict(baseline_counts)
+    baseline_signals = {
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": False,
+        "has_temporal_scope_token": False,
+        "has_temporal_within_scope": False,
+        "has_calendar_date_scope": False,
+        "has_temporal_cue": False,
+        "has_deontic_scope": False,
+        "has_deontic_cue": False,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": False,
+        "has_frame_editorial_scope_phrase": False,
+        "has_frame_cue": True,
+        "has_statutory_scope_reference": True,
+    }
+    competing_signals = {
+        **baseline_signals,
+        "has_deontic_scope": True,
+    }
+
+    _apply_directional_modal_family_pair_backfill(baseline_counts, baseline_signals)
+    _apply_directional_modal_family_pair_backfill(competing_counts, competing_signals)
+
+    assert competing_counts["temporal"] > baseline_counts["temporal"]
+
+
 def test_spacy_directional_backfill_adds_frame_support_for_temporal_scope_with_editorial_frame_signals() -> None:
     counts = {
         "temporal": 0.9,
@@ -2032,6 +2220,62 @@ def test_spacy_directional_backfill_adds_frame_support_for_temporal_scope_with_e
     _apply_directional_modal_family_pair_backfill(counts, signals)
 
     assert counts["frame"] > 0.3
+
+
+def test_spacy_directional_backfill_reinforces_temporal_to_deontic_for_strong_statutory_scope() -> None:
+    counts = {
+        "temporal": 3.4,
+        "deontic": 0.1,
+        "frame": 0.1,
+    }
+    signals = {
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": True,
+        "has_temporal_scope_token": True,
+        "has_temporal_within_scope": False,
+        "has_calendar_date_scope": True,
+        "has_temporal_cue": True,
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": True,
+        "has_deontic_cue": False,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": False,
+        "has_frame_editorial_scope_phrase": False,
+        "has_frame_cue": False,
+        "has_statutory_scope_reference": True,
+    }
+
+    _apply_directional_modal_family_pair_backfill(counts, signals)
+
+    assert counts["deontic"] >= 1.0
+
+
+def test_spacy_directional_backfill_reinforces_temporal_to_frame_for_editorial_statutory_scope() -> None:
+    counts = {
+        "temporal": 3.2,
+        "deontic": 0.2,
+        "frame": 0.05,
+    }
+    signals = {
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": True,
+        "has_temporal_scope_token": True,
+        "has_temporal_within_scope": False,
+        "has_calendar_date_scope": True,
+        "has_temporal_cue": True,
+        "has_deontic_scope": False,
+        "has_deontic_scope_phrase": False,
+        "has_deontic_cue": False,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_frame_editorial_scope_phrase": True,
+        "has_frame_cue": False,
+        "has_statutory_scope_reference": True,
+    }
+
+    _apply_directional_modal_family_pair_backfill(counts, signals)
+
+    assert counts["frame"] >= 0.62
 
 
 def test_spacy_temporal_scope_boost_is_stronger_with_deontic_cue_competition() -> None:
@@ -2098,6 +2342,38 @@ def test_spacy_frame_bonus_preserves_more_statutory_weight_for_weak_temporal_sco
     assert weak_temporal_bonus > 0.5
 
 
+def test_spacy_frame_bonus_recognizes_procedural_frame_scope_signal() -> None:
+    baseline_signals = {
+        "has_frame_context": True,
+        "has_statutory_scope_reference": True,
+        "has_deontic_scope": True,
+    }
+    procedural_signals = {
+        **baseline_signals,
+        "has_frame_procedural_scope_phrase": True,
+    }
+
+    assert _frame_logit_bonus(procedural_signals) > _frame_logit_bonus(baseline_signals)
+
+
+def test_spacy_deontic_boost_reinforces_explicit_deontic_scope_in_procedural_frame_context() -> None:
+    baseline_signals = {
+        "has_deontic_scope": True,
+        "has_deontic_cue": True,
+        "has_frame_context": True,
+        "has_statutory_scope_reference": True,
+    }
+    procedural_signals = {
+        **baseline_signals,
+        "has_frame_procedural_scope_phrase": True,
+    }
+
+    baseline_boost = _scope_signal_family_logit_boosts(baseline_signals)["deontic"]
+    procedural_boost = _scope_signal_family_logit_boosts(procedural_signals)["deontic"]
+
+    assert procedural_boost > baseline_boost
+
+
 def test_spacy_temporal_soft_cap_treats_strong_frame_scope_as_competing_signal() -> None:
     counts = {
         "temporal": 4.0,
@@ -2111,6 +2387,36 @@ def test_spacy_temporal_soft_cap_treats_strong_frame_scope_as_competing_signal()
     _apply_temporal_competing_scope_soft_cap(counts, signals)
 
     assert counts["temporal"] < 4.0
+
+
+def test_spacy_temporal_soft_cap_strengthens_with_multiple_strong_competing_scopes() -> None:
+    frame_only_counts = {
+        "temporal": 4.0,
+        "frame": 1.0,
+    }
+    frame_only_signals = {
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+    }
+    frame_and_deontic_counts = {
+        "temporal": 4.0,
+        "frame": 1.0,
+        "deontic": 1.0,
+    }
+    frame_and_deontic_signals = {
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": True,
+    }
+
+    _apply_temporal_competing_scope_soft_cap(frame_only_counts, frame_only_signals)
+    _apply_temporal_competing_scope_soft_cap(
+        frame_and_deontic_counts,
+        frame_and_deontic_signals,
+    )
+
+    assert frame_and_deontic_counts["temporal"] < frame_only_counts["temporal"]
 
 
 def test_spacy_dynamic_soft_cap_treats_strong_temporal_scope_as_competing_signal() -> None:
@@ -2650,6 +2956,80 @@ def test_spacy_codec_backfills_conditional_share_for_single_frame_cue_with_statu
     assert conditional_share > 0.0
 
 
+def test_spacy_codec_prefers_conditional_share_for_frame_statutory_scope_with_explicit_conditional_phrase() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="31",
+        section="712a",
+        text=(
+            "Authority and jurisdiction under this section, as provided in "
+            "subsection (b), apply."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+
+    assert not any(cue.family == "conditional_normative" for cue in encoding.cues)
+    assert signals["has_frame_cue"] is True
+    assert signals["has_statutory_scope_reference"] is True
+    assert signals["has_conditional_scope_phrase"] is True
+
+    frame_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "frame"
+    )
+    conditional_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "conditional_normative"
+    )
+    assert conditional_share > frame_share
+
+
+def test_spacy_codec_avoids_conditional_backfill_for_bare_statutory_frame_scope() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="31",
+        section="712b",
+        text="Authority and jurisdiction under this section apply.",
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+
+    assert signals["has_frame_cue"] is True
+    assert signals["has_statutory_scope_reference"] is True
+    assert signals["has_condition_clause"] is False
+    assert signals["has_exception_clause"] is False
+    assert signals["has_conditional_scope_phrase"] is False
+    assert signals["has_conditional_scope_token"] is False
+
+    frame_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "frame"
+    )
+    conditional_share = next(
+        (
+            float(item["share"])
+            for item in ranking
+            if item["family"] == "conditional_normative"
+        ),
+        0.0,
+    )
+    assert ranking[0]["family"] == "frame"
+    assert frame_share > 0.9
+    assert conditional_share == 0.0
+
+
 def test_spacy_codec_backfills_epistemic_share_for_single_frame_cue_with_scope_phrase() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
@@ -2713,6 +3093,29 @@ def test_spacy_codec_backfills_frame_share_for_statutory_reference_deontic_compe
     assert competing_signals["has_deontic_scope_phrase"] is False
     assert competing_ranking[0]["family"] == "deontic"
     assert competing_frame_share > baseline_frame_share
+
+
+def test_spacy_codec_backfills_frame_share_for_statutory_deontic_scope_without_frame_lexemes() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="22",
+        section="8005",
+        text="Any person shall pay the fee under section 8005 of this title.",
+    )
+    encoding = codec.encode_sample(sample)
+    ranking = ranked_modal_families(encoding)
+    signals = modal_ambiguity_signals(encoding)
+
+    shares = {str(item["family"]): float(item["share"]) for item in ranking}
+    assert signals["has_statutory_scope_reference"] is True
+    assert signals["has_deontic_scope"] is True
+    assert signals["has_frame_context"] is False
+    assert signals["has_frame_cue"] is False
+    assert shares["frame"] > 0.0
+    assert shares["deontic"] > shares["frame"]
 
 
 def test_spacy_codec_keeps_deontic_dominant_for_statutory_reference_with_dense_frame_cues() -> None:
@@ -3447,6 +3850,25 @@ def test_spacy_encoder_extracts_conditional_subject_to_terms_and_conditions_cue(
     )
 
 
+def test_spacy_modal_signals_treat_subject_to_subsection_as_conditional_scope_phrase() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        (
+            "The agency shall issue notice subject to subsection (b) under this section."
+        ),
+        document_id="sample-subject-to-subsection-conditional-scope",
+    )
+    signals = modal_ambiguity_signals(encoding)
+
+    assert any(
+        cue.family == "conditional_normative"
+        and cue.cue.lower() == "subject to subsection"
+        for cue in encoding.cues
+    )
+    assert signals["has_conditional_scope_phrase"] is True
+    assert signals["has_condition_or_exception_scope"] is True
+
+
 def test_spacy_encoder_extracts_conditional_scope_cues_from_statutory_phrases() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     encoding = encoder.encode(
@@ -3489,6 +3911,61 @@ def test_spacy_encoder_extracts_temporal_scope_cues_from_deadline_phrases() -> N
         and cue.cue.lower() == "effective date"
         for cue in encoding.cues
     )
+
+
+def test_spacy_encoder_extracts_temporal_cues_from_succeeding_fiscal_year_phrases() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        (
+            "Authority under this section applies for each succeeding fiscal year "
+            "thereafter."
+        ),
+        document_id="sample-temporal-succeeding-fiscal-year-phrases",
+    )
+
+    assert any(
+        cue.family == "temporal"
+        and cue.cue.lower() == "for each succeeding fiscal year"
+        for cue in encoding.cues
+    )
+
+
+def test_spacy_codec_strengthens_temporal_share_for_frame_context_with_succeeding_fiscal_year_phrase() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    baseline = build_us_code_sample(
+        title="31",
+        section="7200a",
+        text="Authority and jurisdiction under this section apply.",
+    )
+    competing = build_us_code_sample(
+        title="31",
+        section="7200b",
+        text=(
+            "Authority and jurisdiction under this section apply for each succeeding "
+            "fiscal year thereafter."
+        ),
+    )
+
+    baseline_ranking = ranked_modal_families(codec.encode_sample(baseline))
+    competing_ranking = ranked_modal_families(codec.encode_sample(competing))
+    baseline_temporal_share = next(
+        (
+            float(item["share"])
+            for item in baseline_ranking
+            if item["family"] == "temporal"
+        ),
+        0.0,
+    )
+    competing_temporal_share = next(
+        float(item["share"])
+        for item in competing_ranking
+        if item["family"] == "temporal"
+    )
+
+    assert competing_temporal_share > baseline_temporal_share
 
 
 def test_spacy_encoder_extracts_deontic_obligation_phrase_cue() -> None:

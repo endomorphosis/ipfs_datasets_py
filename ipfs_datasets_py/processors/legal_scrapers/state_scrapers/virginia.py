@@ -133,6 +133,17 @@ class VirginiaScraper(BaseStateScraper):
         self.logger.info("Virginia official index: discovered %s title links", len(title_links))
         statutes: List[NormalizedStatute] = []
         limit = max(1, int(max_statutes)) if max_statutes is not None else None
+        self._write_partial_checkpoint(
+            statutes,
+            code_name=code_name,
+            stage_label="virginia:title-discovery",
+            extra={
+                "titles_scanned": 0,
+                "discovered_titles": int(len(title_links)),
+                "codes_completed": 0,
+                "codes_total": 1,
+            },
+        )
         for title_index, (title_url, title_label) in enumerate(title_links, start=1):
             if limit is not None and len(statutes) >= limit:
                 break
@@ -144,6 +155,18 @@ class VirginiaScraper(BaseStateScraper):
                 len(title_links),
                 len(chapter_links),
                 len(statutes),
+            )
+            self._write_partial_checkpoint(
+                statutes,
+                code_name=code_name,
+                stage_label="virginia:title-scan",
+                extra={
+                    "titles_scanned": int(title_index),
+                    "discovered_titles": int(len(title_links)),
+                    "discovered_chapters": int(len(chapter_links)),
+                    "codes_completed": 0,
+                    "codes_total": 1,
+                },
             )
             for chapter_index, (chapter_url, chapter_label) in enumerate(chapter_links, start=1):
                 if limit is not None and len(statutes) >= limit:
@@ -158,12 +181,37 @@ class VirginiaScraper(BaseStateScraper):
                         len(section_links),
                         len(statutes),
                     )
+                    self._write_partial_checkpoint(
+                        statutes,
+                        code_name=code_name,
+                        stage_label="virginia:chapter-scan",
+                        extra={
+                            "titles_scanned": int(title_index),
+                            "discovered_titles": int(len(title_links)),
+                            "chapters_scanned": int(chapter_index),
+                            "discovered_chapters": int(len(chapter_links)),
+                            "codes_completed": 0,
+                            "codes_total": 1,
+                        },
+                    )
                 parsed = await self._scrape_section_urls(
                     code_name,
                     section_links,
                     max_statutes=(None if limit is None else max(0, limit - len(statutes))),
                 )
                 statutes.extend(parsed)
+        self._write_partial_checkpoint(
+            statutes,
+            code_name=code_name,
+            stage_label="virginia:complete",
+            force=True,
+            extra={
+                "titles_scanned": int(len(title_links)),
+                "discovered_titles": int(len(title_links)),
+                "codes_completed": 1,
+                "codes_total": 1,
+            },
+        )
         return statutes[:limit] if limit is not None else statutes
 
     async def _discover_title_links(self) -> List[Tuple[str, str]]:

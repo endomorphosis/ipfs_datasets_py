@@ -117,6 +117,17 @@ class NorthCarolinaScraper(BaseStateScraper):
         self.logger.info("North Carolina official index: discovered %s chapter urls", len(chapter_urls))
         statutes: List[NormalizedStatute] = []
         limit = max(1, int(max_statutes)) if max_statutes is not None else None
+        self._write_partial_checkpoint(
+            statutes,
+            code_name=code_name,
+            stage_label="north-carolina:chapter-discovery",
+            extra={
+                "chapters_scanned": 0,
+                "discovered_chapters": int(len(chapter_urls)),
+                "codes_completed": 0,
+                "codes_total": 1,
+            },
+        )
         for chapter_index, chapter_url in enumerate(chapter_urls, start=1):
             if limit is not None and len(statutes) >= limit:
                 break
@@ -138,6 +149,30 @@ class NorthCarolinaScraper(BaseStateScraper):
                     len(section_urls),
                     len(statutes),
                 )
+            if chapter_index == 1 or chapter_index % 10 == 0 or chapter_index == len(chapter_urls):
+                self._write_partial_checkpoint(
+                    statutes,
+                    code_name=code_name,
+                    stage_label="north-carolina:chapter-scan",
+                    extra={
+                        "chapters_scanned": int(chapter_index),
+                        "discovered_chapters": int(len(chapter_urls)),
+                        "codes_completed": 0,
+                        "codes_total": 1,
+                    },
+                )
+        self._write_partial_checkpoint(
+            statutes,
+            code_name=code_name,
+            stage_label="north-carolina:complete",
+            force=True,
+            extra={
+                "chapters_scanned": int(len(chapter_urls)),
+                "discovered_chapters": int(len(chapter_urls)),
+                "codes_completed": 1,
+                "codes_total": 1,
+            },
+        )
         return statutes[:limit] if limit is not None else statutes
 
     async def _discover_chapter_urls(self) -> List[str]:

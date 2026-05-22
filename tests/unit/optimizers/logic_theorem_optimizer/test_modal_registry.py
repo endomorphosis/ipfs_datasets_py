@@ -6,6 +6,7 @@ import json
 
 import ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry as modal_registry
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
+    COMPILER_AMBIGUITY_CORE_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS,
     COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
     compiler_ambiguity_policy_targets,
@@ -140,6 +141,22 @@ def test_adaptive_policy_helpers_normalize_directional_family_pair_tokens() -> N
     assert "deontic" in compiler_ambiguity_policy_targets("frame->deontic")
 
 
+def test_compiler_ambiguity_core_pairs_cover_frame_margin_bundle_targets() -> None:
+    core_pairs = set(COMPILER_AMBIGUITY_CORE_FAMILY_PAIRS)
+    expected_frame_pairs = {
+        ("frame", "conditional_normative"),
+        ("frame", "epistemic"),
+        ("frame", "frame"),
+    }
+    assert expected_frame_pairs.issubset(core_pairs)
+    for predicted_family, target_family in expected_frame_pairs:
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+
 def test_signal_free_pair_helper_normalizes_prefixed_and_enum_style_family_tokens() -> None:
     assert is_signal_free_adaptive_ambiguity_pair(
         "flogic:modal_family:frame",
@@ -257,7 +274,6 @@ def test_compiler_required_adaptive_ambiguity_pairs_are_covered_by_both_policies
         ("epistemic", "epistemic"),
         ("epistemic", "temporal"),
         ("frame", "alethic"),
-        ("frame", "frame"),
     }
     for predicted_family, target_family in (
         COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS
@@ -729,6 +745,7 @@ def test_priority_signal_free_adaptive_ambiguity_pair_policy_is_directional() ->
         ("hybrid", "frame"),
         ("frame", "conditional_normative"),
         ("frame", "deontic"),
+        ("frame", "frame"),
         ("frame", "epistemic"),
         ("frame", "temporal"),
         ("frame", "doxastic"),
@@ -846,6 +863,7 @@ def test_priority_signal_free_adaptive_targets_are_ordered_directional_subsets()
         "epistemic",
         "temporal",
         "doxastic",
+        "frame",
     )
     assert priority_signal_free_adaptive_ambiguity_targets("deontic") == (
         "conditional_normative",
@@ -885,6 +903,7 @@ def test_priority_signal_free_policy_covers_recurrent_compiler_ambiguity_pairs()
         ("epistemic", "conditional_normative"),
         ("frame", "conditional_normative"),
         ("frame", "deontic"),
+        ("frame", "frame"),
         ("frame", "epistemic"),
         ("frame", "temporal"),
         ("frame", "doxastic"),
@@ -895,6 +914,33 @@ def test_priority_signal_free_policy_covers_recurrent_compiler_ambiguity_pairs()
             target_family,
         )
         assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+
+def test_packet_001270_recurrent_compiler_registry_family_pairs_are_supported() -> None:
+    """Keep packet-001270 recurrent directional family transitions policy-covered."""
+    recurrent_pairs = (
+        ("deontic", "temporal"),
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("conditional_normative", "frame"),
+        ("temporal", "alethic"),
+        ("temporal", "deontic"),
+        ("temporal", "frame"),
+        ("deontic", "deontic"),
+        ("frame", "frame"),
+        ("temporal", "temporal"),
+        ("conditional_normative", "temporal"),
+        ("deontic", "alethic"),
+    )
+    for predicted_family, target_family in recurrent_pairs:
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_compiler_ambiguity_policy_pair(
             predicted_family,
             target_family,
         )

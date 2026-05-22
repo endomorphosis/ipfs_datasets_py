@@ -225,10 +225,13 @@ Notes:
 	`python3 scripts/ops/legal_data/check_state_law_coverage.py`
 	`python3 scripts/ops/legal_data/check_state_law_coverage.py --min-records 20`
 	`python3 scripts/ops/legal_data/check_state_law_coverage.py --states AL,CT,GA,NM --min-records 5`
-- `refresh_state_laws_corpus.py` now keeps a persistent completed-state registry
-	at `<output_root>/state_laws_completed_states.json` (default:
-	`~/.ipfs_datasets/state_laws/state_laws_completed_states.json`), and skips
-	those states on later runs unless `--no-skip-completed-states` is set.
+- `refresh_state_laws_corpus.py` keeps a persistent completed-state registry at
+	`~/.ipfs_datasets/state_laws/state_laws_completed_states.json` by default
+	(even when shard output roots differ), and skips those states on later runs
+	unless `--no-skip-completed-states` is set.
+	It also loads a repo-tracked baseline file by default:
+	`scripts/ops/legal_data/state_laws_completed_states.baseline.json`
+	(currently seeded with high-confidence complete states: `MN`, `OK`, `WV`).
 	By default only `status=success` entries are treated as skip-complete; legacy
 	`status=zero_statutes` rows are still recorded for diagnostics but are *not*
 	auto-skipped unless `STATE_LAWS_REGISTRY_TREAT_ZERO_AS_COMPLETE=1` is set.
@@ -239,6 +242,8 @@ Notes:
 	`.venv/bin/python scripts/ops/legal_data/refresh_state_laws_corpus.py --scrape --states all --json`
 	`.venv/bin/python scripts/ops/legal_data/refresh_state_laws_corpus.py --scrape --states all --no-skip-completed-states --json`
 	`.venv/bin/python scripts/ops/legal_data/refresh_state_laws_corpus.py --scrape --states CT,IN --completed-states-registry /tmp/state_laws_completed_states.json --json`
+	`.venv/bin/python scripts/ops/legal_data/refresh_state_laws_corpus.py --scrape --states CT,IN --completed-states-baseline scripts/ops/legal_data/state_laws_completed_states.baseline.json --json`
+	`.venv/bin/python scripts/ops/legal_data/refresh_state_laws_corpus.py --scrape --states CT,IN --no-load-completed-states-baseline --json`
 	`.venv/bin/python scripts/ops/legal_data/refresh_state_laws_corpus.py --scrape --states CT,ME --progress-heartbeat-seconds 30 --json`
 	`python3 scripts/ops/legal_data/refresh_state_laws_corpus.py --states MN,NH --dry-run --json` (example: MN already marked complete, NH still queued)
 	To manually pin a state as completed in the shared registry (example: `MN`):

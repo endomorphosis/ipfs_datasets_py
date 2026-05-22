@@ -249,6 +249,17 @@ class IndianaScraper(BaseStateScraper):
         seen_pages = set()
         queue = list(seed_urls)
         crawl_limit = int(os.getenv("INDIANA_JUSTIA_CRAWL_PAGE_LIMIT", "2000") or "2000")
+        self._write_partial_checkpoint(
+            out,
+            code_name=code_name,
+            stage_label="indiana:justia-link-graph:start",
+            extra={
+                "scanned_candidates": 0,
+                "discovered_candidates": int(len(queue)),
+                "codes_completed": 0,
+                "codes_total": 1,
+            },
+        )
 
         while queue and len(out) < max_statutes and len(seen_pages) < crawl_limit:
             page_url = queue.pop(0)
@@ -263,6 +274,17 @@ class IndianaScraper(BaseStateScraper):
                     len(out),
                     len(out),
                     crawl_limit,
+                )
+                self._write_partial_checkpoint(
+                    out,
+                    code_name=code_name,
+                    stage_label="indiana:justia-link-graph:progress",
+                    extra={
+                        "scanned_candidates": int(len(seen_pages)),
+                        "discovered_candidates": int(len(seen_pages) + len(queue)),
+                        "codes_completed": 0,
+                        "codes_total": 1,
+                    },
                 )
             try:
                 payload = await self._fetch_page_content_with_archival_fallback(page_url, timeout_seconds=35)
@@ -339,6 +361,18 @@ class IndianaScraper(BaseStateScraper):
                 if len(out) >= max_statutes:
                     break
 
+        self._write_partial_checkpoint(
+            out,
+            code_name=code_name,
+            stage_label="indiana:justia-link-graph:complete",
+            force=True,
+            extra={
+                "scanned_candidates": int(len(seen_pages)),
+                "discovered_candidates": int(len(seen_pages) + len(queue)),
+                "codes_completed": 1,
+                "codes_total": 1,
+            },
+        )
         return out
 
     async def _scrape_archived_title_pages(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
@@ -348,8 +382,21 @@ class IndianaScraper(BaseStateScraper):
         seen = set()
         queued = set()
         crawl_limit = int(os.getenv("INDIANA_JUSTIA_CRAWL_PAGE_LIMIT", "2000") or "2000")
+        self._write_partial_checkpoint(
+            out,
+            code_name=code_name,
+            stage_label="indiana:archived-title-pages:start",
+            extra={
+                "titles_scanned": 0,
+                "discovered_titles": int(len(title_urls)),
+                "scanned_candidates": 0,
+                "discovered_candidates": 0,
+                "codes_completed": 0,
+                "codes_total": 1,
+            },
+        )
 
-        for title_url in title_urls:
+        for title_index, title_url in enumerate(title_urls, start=1):
             if len(out) >= max_statutes:
                 break
             queue = [title_url]
@@ -401,34 +448,62 @@ class IndianaScraper(BaseStateScraper):
                         or "chapter" in lower_label
                         or re.search(r"\b(?:ic|sec\.|section)\s*\d", lower_label, re.IGNORECASE)
                     )
-                if not looks_statutory:
-                    continue
+                    if not looks_statutory:
+                        continue
 
-                section_number = self._extract_section_number(label)
-                if not section_number:
-                    section_number = self._derive_section_number_from_url(abs_url)
-                if not section_number:
-                    continue
+                    section_number = self._extract_section_number(label)
+                    if not section_number:
+                        section_number = self._derive_section_number_from_url(abs_url)
+                    if not section_number:
+                        continue
 
-                if lower_label.startswith("article ") or lower_label.startswith("title "):
-                    continue
+                    if lower_label.startswith("article ") or lower_label.startswith("title "):
+                        continue
 
-                key = f"{section_number}|{abs_url}".lower()
-                if key in seen:
-                    continue
-                statute = await self._build_archived_justia_link_statute(
-                    code_name=code_name,
-                    section_number=section_number,
-                    label=label,
-                    source_url=abs_url,
-                )
-                if statute is None:
-                    continue
-                seen.add(key)
-                out.append(statute)
-                if len(out) >= max_statutes:
-                    break
+                    key = f"{section_number}|{abs_url}".lower()
+                    if key in seen:
+                        continue
+                    statute = await self._build_archived_justia_link_statute(
+                        code_name=code_name,
+                        section_number=section_number,
+                        label=label,
+                        source_url=abs_url,
+                    )
+                    if statute is None:
+                        continue
+                    seen.add(key)
+                    out.append(statute)
+                    if len(out) >= max_statutes:
+                        break
+                if pages_seen == 1 or pages_seen % 25 == 0 or pages_seen >= crawl_limit:
+                    self._write_partial_checkpoint(
+                        out,
+                        code_name=code_name,
+                        stage_label="indiana:archived-title-pages:progress",
+                        extra={
+                            "titles_scanned": int(title_index),
+                            "discovered_titles": int(len(title_urls)),
+                            "scanned_candidates": int(pages_seen),
+                            "discovered_candidates": int(len(queued)),
+                            "codes_completed": 0,
+                            "codes_total": 1,
+                        },
+                    )
 
+        self._write_partial_checkpoint(
+            out,
+            code_name=code_name,
+            stage_label="indiana:archived-title-pages:complete",
+            force=True,
+            extra={
+                "titles_scanned": int(len(title_urls)),
+                "discovered_titles": int(len(title_urls)),
+                "scanned_candidates": int(len(queued)),
+                "discovered_candidates": int(len(queued)),
+                "codes_completed": 1,
+                "codes_total": 1,
+            },
+        )
         return out
 
     async def _build_archived_justia_link_statute(
@@ -526,8 +601,19 @@ class IndianaScraper(BaseStateScraper):
         for discovered_url in await self._discover_archived_pdf_urls(limit=max(max_statutes * 8, 200)):
             if discovered_url not in candidate_urls:
                 candidate_urls.append(discovered_url)
+        self._write_partial_checkpoint(
+            statutes,
+            code_name=code_name,
+            stage_label="indiana:archived-pdfs:start",
+            extra={
+                "scanned_candidates": 0,
+                "discovered_candidates": int(len(candidate_urls)),
+                "codes_completed": 0,
+                "codes_total": 1,
+            },
+        )
 
-        for pdf_url in candidate_urls:
+        for candidate_index, pdf_url in enumerate(candidate_urls, start=1):
             if len(statutes) >= max_statutes:
                 break
 
@@ -539,7 +625,31 @@ class IndianaScraper(BaseStateScraper):
 
             seen_ids.add(statute.statute_id)
             statutes.append(statute)
+            if candidate_index == 1 or candidate_index % 50 == 0:
+                self._write_partial_checkpoint(
+                    statutes,
+                    code_name=code_name,
+                    stage_label="indiana:archived-pdfs:progress",
+                    extra={
+                        "scanned_candidates": int(candidate_index),
+                        "discovered_candidates": int(len(candidate_urls)),
+                        "codes_completed": 0,
+                        "codes_total": 1,
+                    },
+                )
 
+        self._write_partial_checkpoint(
+            statutes,
+            code_name=code_name,
+            stage_label="indiana:archived-pdfs:complete",
+            force=True,
+            extra={
+                "scanned_candidates": int(min(len(candidate_urls), len(seen_ids))),
+                "discovered_candidates": int(len(candidate_urls)),
+                "codes_completed": 1,
+                "codes_total": 1,
+            },
+        )
         return statutes
 
     async def _discover_archived_pdf_urls(self, limit: int = 240) -> List[str]:

@@ -80,6 +80,17 @@ class RhodeIslandScraper(BaseStateScraper):
                 max_title,
                 max_sections,
             )
+            self._write_partial_checkpoint(
+                statutes,
+                code_name=code_name,
+                stage_label="rhode-island:title-scan:start",
+                extra={
+                    "titles_scanned": 0,
+                    "discovered_titles": int(max_title),
+                    "codes_completed": 0,
+                    "codes_total": 1,
+                },
+            )
             for title_num in range(1, max_title + 1):
                 if len(statutes) >= max_sections:
                     break
@@ -100,6 +111,18 @@ class RhodeIslandScraper(BaseStateScraper):
                     full_url = urljoin(title_url, str(link.get("href") or ""))
                     if _TITLE_LINK_RE.search(full_url):
                         chapter_links.append((link, full_url))
+                self._write_partial_checkpoint(
+                    statutes,
+                    code_name=code_name,
+                    stage_label="rhode-island:title-scan",
+                    extra={
+                        "titles_scanned": int(title_num),
+                        "discovered_titles": int(max_title),
+                        "discovered_chapters": int(len(chapter_links)),
+                        "codes_completed": 0,
+                        "codes_total": 1,
+                    },
+                )
 
                 for link, chapter_url in chapter_links:
                     if len(statutes) >= max_sections:
@@ -160,8 +183,31 @@ class RhodeIslandScraper(BaseStateScraper):
                                 title_num,
                                 len(statutes),
                             )
+                            self._write_partial_checkpoint(
+                                statutes,
+                                code_name=code_name,
+                                stage_label="rhode-island:section-progress",
+                                extra={
+                                    "titles_scanned": int(title_num),
+                                    "discovered_titles": int(max_title),
+                                    "codes_completed": 0,
+                                    "codes_total": 1,
+                                },
+                            )
 
             self.logger.info("Rhode Island custom scraper: Scraped %s sections", len(statutes))
+            self._write_partial_checkpoint(
+                statutes,
+                code_name=code_name,
+                stage_label="rhode-island:complete",
+                force=True,
+                extra={
+                    "titles_scanned": int(max_title),
+                    "discovered_titles": int(max_title),
+                    "codes_completed": 1,
+                    "codes_total": 1,
+                },
+            )
             if not statutes:
                 self.logger.info("Rhode Island custom scraper found no data, falling back to generic scraper")
                 return await self._generic_scrape(code_name, code_url, citation_format, max_sections)

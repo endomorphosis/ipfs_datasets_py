@@ -279,6 +279,17 @@ class ConnecticutScraper(BaseStateScraper):
             chapter_urls = await self._discover_chapter_urls(code_url, limit=max(max_sections * 3, 20))
             statutes: List[NormalizedStatute] = []
             seen_sections: set[str] = set()
+            self._write_partial_checkpoint(
+                statutes,
+                code_name=code_name,
+                stage_label="connecticut:chapter-discovery",
+                extra={
+                    "chapters_scanned": 0,
+                    "discovered_chapters": int(len(chapter_urls)),
+                    "codes_completed": 0,
+                    "codes_total": 1,
+                },
+            )
             if chapter_urls:
                 self.logger.info(
                     "Connecticut chapter crawl: discovered_chapters=%s",
@@ -307,8 +318,31 @@ class ConnecticutScraper(BaseStateScraper):
                         len(chapter_urls),
                         len(statutes),
                     )
+                    self._write_partial_checkpoint(
+                        statutes,
+                        code_name=code_name,
+                        stage_label="connecticut:chapter-scan",
+                        extra={
+                            "chapters_scanned": int(chapter_index),
+                            "discovered_chapters": int(len(chapter_urls)),
+                            "codes_completed": 0,
+                            "codes_total": 1,
+                        },
+                    )
 
             self.logger.info(f"Connecticut custom scraper: Scraped {len(statutes)} sections")
+            self._write_partial_checkpoint(
+                statutes,
+                code_name=code_name,
+                stage_label="connecticut:complete",
+                force=True,
+                extra={
+                    "chapters_scanned": int(len(chapter_urls)),
+                    "discovered_chapters": int(len(chapter_urls)),
+                    "codes_completed": 1,
+                    "codes_total": 1,
+                },
+            )
             
             # Fallback to generic scraper if no data found
             if not statutes:

@@ -83,8 +83,41 @@ def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _canonical_completed_states_registry_path() -> Path:
+    env_override = str(os.getenv("STATE_LAWS_COMPLETED_STATES_REGISTRY_PATH", "") or "").strip()
+    if env_override:
+        return Path(env_override).expanduser().resolve()
+    canonical_root = Path(_CORPUS.default_local_root()).expanduser().resolve()
+    return canonical_root / "state_laws_completed_states.json"
+
+
+def _uses_shared_completed_registry(output_root: Path) -> bool:
+    try:
+        resolved_output = Path(output_root).expanduser().resolve()
+    except Exception:
+        return False
+    canonical_root = Path(_CORPUS.default_local_root()).expanduser().resolve()
+    if resolved_output == canonical_root:
+        return True
+    parts = {part.lower() for part in resolved_output.parts}
+    if "legal_scraper_parallel" in parts and resolved_output.name.lower() == "output":
+        return True
+    return False
+
+
 def _default_completed_states_registry_path(output_root: Path) -> Path:
-    return output_root / "state_laws_completed_states.json"
+    # Use a shared registry for canonical corpus output roots and daemon shard
+    # outputs, but keep ad-hoc/custom output roots isolated.
+    if _uses_shared_completed_registry(output_root):
+        return _canonical_completed_states_registry_path()
+    return Path(output_root).expanduser().resolve() / "state_laws_completed_states.json"
+
+
+def _default_completed_states_baseline_path() -> Path:
+    env_override = str(os.getenv("STATE_LAWS_COMPLETED_STATES_BASELINE_PATH", "") or "").strip()
+    if env_override:
+        return Path(env_override).expanduser().resolve()
+    return Path(__file__).resolve().with_name("state_laws_completed_states.baseline.json")
 
 
 def _empty_completed_states_registry() -> Dict[str, Any]:
@@ -169,6 +202,30 @@ def _write_completed_states_registry(path: Path, registry: Mapping[str, Any]) ->
         json.dumps(normalized, indent=2, sort_keys=True, ensure_ascii=False, default=str),
         encoding="utf-8",
     )
+
+
+def _merge_completed_states_registries(
+    *,
+    base_registry: Mapping[str, Any],
+    overlay_registry: Mapping[str, Any],
+) -> Dict[str, Any]:
+    base = _normalize_completed_states_registry(base_registry)
+    overlay = _normalize_completed_states_registry(overlay_registry)
+    merged = _empty_completed_states_registry()
+
+    base_states = base.get("states") if isinstance(base.get("states"), Mapping) else {}
+    overlay_states = overlay.get("states") if isinstance(overlay.get("states"), Mapping) else {}
+    states_map: Dict[str, Dict[str, Any]] = {}
+    for state_code, entry in base_states.items():
+        if isinstance(entry, Mapping):
+            states_map[str(state_code)] = dict(entry)
+    for state_code, entry in overlay_states.items():
+        if isinstance(entry, Mapping):
+            states_map[str(state_code)] = dict(entry)
+
+    merged["states"] = dict(sorted(states_map.items()))
+    merged["updated_at"] = str(overlay.get("updated_at") or base.get("updated_at") or "").strip()
+    return merged
 
 
 def _completed_states_to_skip(states: Sequence[str], registry: Mapping[str, Any]) -> List[str]:
@@ -272,6 +329,108 @@ def _merge_completed_states_registry(
     merged["states"] = dict(sorted(states_map.items()))
     merged["updated_at"] = now
     return merged
+
+
+def _reconcile_state_results_from_partial_checkpoints(
+    *,
+    progress_state: Dict[str, Any],
+    checkpoint_dir: Path,
+) -> Dict[str, Any]:
+    """Promote terminal checkpoint-complete states that timed out in callback flow.
+
+    Some long-running state scrapes can exceed the callback timeout envelope yet
+    finish shortly after in their worker thread, leaving a final
+    `STATE-XX-partial.json` with stage `...complete` and larger statute counts.
+    This reconciliation pass converts those stale timeout/error rows into
+    success so completed states are not retried forever.
+    """
+
+    results = progress_state.get("state_results")
+    if not isinstance(results, dict):
+        return {"reconciled_states": [], "checked_state_count": 0}
+
+    reconciled_states: List[Dict[str, Any]] = []
+    checked_state_count = 0
+    checkpoint_root = Path(checkpoint_dir).expanduser().resolve()
+    for state_code, entry in list(results.items()):
+        if not isinstance(entry, dict):
+            continue
+        checked_state_count += 1
+        status = str(entry.get("status") or "").strip().lower()
+        if status not in {"error", "zero_statutes"}:
+            continue
+
+        checkpoint_path = checkpoint_root / f"STATE-{str(state_code or '').upper()}-partial.json"
+        if not checkpoint_path.exists():
+            continue
+        try:
+            payload = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if not isinstance(payload, Mapping):
+            continue
+
+        stage_label = str(payload.get("stage_label") or "").strip()
+        stage_label_lower = stage_label.lower()
+        progress = payload.get("progress") if isinstance(payload.get("progress"), Mapping) else {}
+        try:
+            checkpoint_statutes_count = int(payload.get("statutes_count") or len(list(payload.get("statutes") or [])))
+        except Exception:
+            checkpoint_statutes_count = 0
+        try:
+            prior_count = int(entry.get("statutes_count") or 0)
+        except Exception:
+            prior_count = 0
+
+        try:
+            codes_completed = int(progress.get("codes_completed") or payload.get("codes_completed") or 0)
+        except Exception:
+            codes_completed = 0
+        try:
+            codes_total = int(progress.get("codes_total") or payload.get("codes_total") or 0)
+        except Exception:
+            codes_total = 0
+
+        checkpoint_complete = bool(
+            checkpoint_statutes_count > 0
+            and (
+                stage_label_lower == "complete"
+                or stage_label_lower.endswith(":complete")
+                or stage_label_lower.startswith("scrape_all:complete")
+                or (codes_total > 0 and codes_completed >= codes_total)
+            )
+        )
+        if not checkpoint_complete:
+            continue
+        if checkpoint_statutes_count < prior_count:
+            continue
+
+        entry["status"] = "success"
+        entry["statutes_count"] = int(checkpoint_statutes_count)
+        entry["completion_mode"] = "checkpoint_reconciled_complete"
+        entry["checkpoint_reconciled"] = True
+        entry["checkpoint_path"] = str(checkpoint_path)
+        entry["checkpoint_stage_label"] = stage_label
+        if str(payload.get("updated_at") or "").strip():
+            entry["checkpoint_updated_at"] = str(payload.get("updated_at") or "").strip()
+        if "error" in entry:
+            entry["timeout_original_error"] = str(entry.get("error") or "")
+            entry.pop("error", None)
+        reconciled_states.append(
+            {
+                "state": str(state_code).upper(),
+                "prior_status": status,
+                "prior_statutes_count": prior_count,
+                "checkpoint_statutes_count": checkpoint_statutes_count,
+                "checkpoint_stage_label": stage_label,
+            }
+        )
+
+    return {
+        "reconciled_states": reconciled_states,
+        "checked_state_count": checked_state_count,
+        "reconciled_count": len(reconciled_states),
+    }
 
 
 def _normalize_states(value: str, *, include_dc: bool = False) -> List[str]:
@@ -834,9 +993,30 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
         if completed_registry_raw
         else _default_completed_states_registry_path(output_root)
     )
+    completed_baseline_raw = str(getattr(args, "completed_states_baseline", "") or "").strip()
+    completed_states_baseline_path = (
+        Path(completed_baseline_raw).expanduser().resolve()
+        if completed_baseline_raw
+        else _default_completed_states_baseline_path()
+    )
     skip_completed_states = bool(getattr(args, "skip_completed_states", True))
     persist_completed_states_registry = bool(getattr(args, "persist_completed_states_registry", True))
+    if hasattr(args, "load_completed_states_baseline"):
+        load_completed_states_baseline = bool(getattr(args, "load_completed_states_baseline", True))
+    elif completed_baseline_raw:
+        load_completed_states_baseline = True
+    else:
+        load_completed_states_baseline = _uses_shared_completed_registry(output_root)
     completed_states_registry = _load_completed_states_registry(completed_states_registry_path)
+    baseline_registry = (
+        _load_completed_states_registry(completed_states_baseline_path)
+        if load_completed_states_baseline and completed_states_baseline_path.exists()
+        else _empty_completed_states_registry()
+    )
+    completed_states_registry = _merge_completed_states_registries(
+        base_registry=baseline_registry,
+        overlay_registry=completed_states_registry,
+    )
     skipped_completed_states = (
         _completed_states_to_skip(requested_states, completed_states_registry)
         if skip_completed_states
@@ -859,6 +1039,8 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
         "skipped_completed_count": len(skipped_completed_states),
         "skip_completed_states": skip_completed_states,
         "completed_states_registry_path": str(completed_states_registry_path),
+        "completed_states_baseline_path": str(completed_states_baseline_path),
+        "load_completed_states_baseline": load_completed_states_baseline,
         "persist_completed_states_registry": persist_completed_states_registry,
         "scrape": bool(args.scrape),
         "jsonld_dir": str(jsonld_dir),
@@ -1116,6 +1298,8 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
 
     scrape_result: Dict[str, Any] | None = None
     full_corpus_guard_audit: Dict[str, Any] | None = None
+    checkpoint_reconciliation: Dict[str, Any] | None = None
+    scrape_max_statutes_for_run: Optional[int] = None
     progress_heartbeat_stop: asyncio.Event | None = None
     progress_heartbeat_task: asyncio.Task[Any] | None = None
     if args.scrape:
@@ -1128,6 +1312,7 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
             }
         else:
             scrape_max_statutes = int(args.max_statutes) if int(args.max_statutes or 0) > 0 else None
+            scrape_max_statutes_for_run = scrape_max_statutes
             if scrape_max_statutes is None and not bool(getattr(args, "skip_full_corpus_guard_audit", False)):
                 full_corpus_guard_audit = _run_full_corpus_guard_audit(states=states)
                 if str(full_corpus_guard_audit.get("status")) != "pass":
@@ -1188,6 +1373,15 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                     else:
                         os.environ["STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR"] = previous_checkpoint_dir_env
 
+    if args.scrape and scrape_max_statutes_for_run is None:
+        checkpoint_reconciliation = _reconcile_state_results_from_partial_checkpoints(
+            progress_state=progress_state,
+            checkpoint_dir=output_root / "partial_checkpoints",
+        )
+        _recompute_progress_counts()
+        _write_progress_state()
+        _write_completed_states_registry_snapshot()
+
     build_result = build_state_laws_parquet_artifacts(
         states=requested_states,
         jsonld_dir=jsonld_dir,
@@ -1245,6 +1439,7 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
         "build": build_result,
         "startup_sync": startup_sync_result,
         "full_corpus_guard_audit": full_corpus_guard_audit,
+        "checkpoint_reconciliation": checkpoint_reconciliation,
         "progress_path": str(progress_path),
         "incremental_state_publish": {
             "enabled": bool(publish_to_hf and incremental_state_publish),
@@ -1260,6 +1455,8 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
             "persisted": bool(persist_completed_states_registry),
             "completed_state_count": len(completed_registry_states),
             "skipped_completed_states": skipped_completed_states,
+            "baseline_path": str(completed_states_baseline_path),
+            "baseline_loaded": bool(load_completed_states_baseline and completed_states_baseline_path.exists()),
         },
     }
 
@@ -1288,7 +1485,19 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--completed-states-registry",
         default="",
-        help="Path to persistent completed-state registry JSON (default: <output_root>/state_laws_completed_states.json).",
+        help="Path to persistent completed-state registry JSON (default: ~/.ipfs_datasets/state_laws/state_laws_completed_states.json).",
+    )
+    parser.add_argument(
+        "--completed-states-baseline",
+        default="",
+        help="Path to repo-tracked completed-state baseline JSON (default: scripts/ops/legal_data/state_laws_completed_states.baseline.json).",
+    )
+    parser.add_argument(
+        "--no-load-completed-states-baseline",
+        dest="load_completed_states_baseline",
+        action="store_false",
+        default=True,
+        help="Do not load repo-tracked completed-state baseline before evaluating skips.",
     )
     parser.add_argument(
         "--no-skip-completed-states",

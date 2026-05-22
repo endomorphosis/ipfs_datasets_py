@@ -886,11 +886,23 @@ class DeterministicModalCompiler:
         )
 
     @staticmethod
-    def _canonical_modal_family_name(value: Any) -> str:
+    def _canonical_modal_family_name(
+        value: Any,
+        *,
+        prefer_target_side: bool = False,
+    ) -> str:
         """Normalize modal family tokens for stable explicit ambiguity typing."""
         resolved = str(value or "").strip()
         if not resolved:
             return ""
+        if "->" in resolved:
+            source_family, _ = resolved.split("->", maxsplit=1)
+            directional_side = source_family.strip()
+            source_family, target_family = resolved.split("->", maxsplit=1)
+            directional_side = target_family if prefer_target_side else source_family
+            directional_side = directional_side.strip()
+            if directional_side:
+                resolved = directional_side
         candidate_tokens: List[str] = []
         seen_tokens: set[str] = set()
 
@@ -945,8 +957,19 @@ class DeterministicModalCompiler:
         predicted_family = self._canonical_modal_family_name(
             metadata.get("predicted_family")
         )
+        target_family_raw = str(metadata.get("target_family") or "").strip()
+        if "->" in target_family_raw:
+            _, directional_target_family = target_family_raw.split("->", maxsplit=1)
+            target_family = self._canonical_modal_family_name(
+                directional_target_family
+            )
+        else:
+            target_family = self._canonical_modal_family_name(
+                metadata.get("target_family")
+            )
         target_family = self._canonical_modal_family_name(
-            metadata.get("target_family")
+            metadata.get("target_family"),
+            prefer_target_side=True,
         )
         if not predicted_family and ambiguity.candidate_ids:
             predicted_family = self._canonical_modal_family_name(
@@ -954,7 +977,8 @@ class DeterministicModalCompiler:
             )
         if not target_family and len(ambiguity.candidate_ids) > 1:
             target_family = self._canonical_modal_family_name(
-                ambiguity.candidate_ids[1]
+                ambiguity.candidate_ids[1],
+                prefer_target_side=True,
             )
 
         policy_pair = str(metadata.get("adaptive_policy_pair") or "").strip()
@@ -963,7 +987,10 @@ class DeterministicModalCompiler:
             if not predicted_family:
                 predicted_family = self._canonical_modal_family_name(policy_predicted)
             if not target_family:
-                target_family = self._canonical_modal_family_name(policy_target)
+                target_family = self._canonical_modal_family_name(
+                    policy_target,
+                    prefer_target_side=True,
+                )
 
         is_self_pair = bool(metadata.get("is_self_pair")) or (
             len(ambiguity.candidate_ids) == 1
@@ -1106,6 +1133,11 @@ class DeterministicModalCompiler:
         for target_family in ordered_target_families:
             has_signal = bool(target_signal_by_family.get(target_family, False))
             is_self_pair = target_family == predicted_family
+            self_pair_margin = (
+                predicted_margin_to_runner_up
+                if predicted_margin_to_runner_up is not None
+                else predicted_share
+            )
             runner_up_is_priority_policy_pair = bool(
                 is_self_pair
                 and runner_up_family is not None
@@ -1123,9 +1155,8 @@ class DeterministicModalCompiler:
                 )
             )
             if is_self_pair and (
-                predicted_margin_to_runner_up is None
-                or not self._adaptive_margin_within_threshold(
-                    family_margin=predicted_margin_to_runner_up,
+                not self._adaptive_margin_within_threshold(
+                    family_margin=self_pair_margin,
                     threshold=threshold,
                 )
             ):
@@ -1162,8 +1193,8 @@ class DeterministicModalCompiler:
             ):
                 continue
             family_margin = (
-                predicted_margin_to_runner_up
-                if is_self_pair and predicted_margin_to_runner_up is not None
+                self_pair_margin
+                if is_self_pair
                 else target_share - predicted_share
             )
             if not self._adaptive_margin_within_threshold(
@@ -1222,6 +1253,11 @@ class DeterministicModalCompiler:
                 family_margin=family_margin,
                 threshold=threshold,
             )
+            predicted_margin_to_runner_up_value = (
+                self_pair_margin
+                if is_self_pair and predicted_margin_to_runner_up is None
+                else predicted_margin_to_runner_up
+            )
             base_metadata = {
                 "adaptive_family_margin_threshold": threshold,
                 "adaptive_margin_direction": margin_direction,
@@ -1270,10 +1306,10 @@ class DeterministicModalCompiler:
                     else None
                 ),
                 "predicted_family": predicted_family,
-                "predicted_margin_to_runner_up_raw": predicted_margin_to_runner_up,
+                "predicted_margin_to_runner_up_raw": predicted_margin_to_runner_up_value,
                 "predicted_margin_to_runner_up": (
-                    round(predicted_margin_to_runner_up, 6)
-                    if predicted_margin_to_runner_up is not None
+                    round(predicted_margin_to_runner_up_value, 6)
+                    if predicted_margin_to_runner_up_value is not None
                     else None
                 ),
                 "runner_up_family": runner_up_family,
@@ -1464,7 +1500,8 @@ class DeterministicModalCompiler:
         ):
             target_family = (
                 DeterministicModalCompiler._canonical_modal_family_name(
-                    raw_target_family
+                    raw_target_family,
+                    prefer_target_side=True,
                 )
                 or str(raw_target_family)
             )
@@ -1476,7 +1513,8 @@ class DeterministicModalCompiler:
         ):
             target_family = (
                 DeterministicModalCompiler._canonical_modal_family_name(
-                    raw_target_family
+                    raw_target_family,
+                    prefer_target_side=True,
                 )
                 or str(raw_target_family)
             )
@@ -1488,7 +1526,8 @@ class DeterministicModalCompiler:
         ):
             target_family = (
                 DeterministicModalCompiler._canonical_modal_family_name(
-                    raw_target_family
+                    raw_target_family,
+                    prefer_target_side=True,
                 )
                 or str(raw_target_family)
             )
@@ -1500,7 +1539,8 @@ class DeterministicModalCompiler:
         ):
             target_family = (
                 DeterministicModalCompiler._canonical_modal_family_name(
-                    raw_target_family
+                    raw_target_family,
+                    prefer_target_side=True,
                 )
                 or str(raw_target_family)
             )

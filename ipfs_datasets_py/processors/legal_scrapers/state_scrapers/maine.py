@@ -151,9 +151,20 @@ class MaineScraper(BaseStateScraper):
             len(title_urls),
             max_statutes,
         )
+        self._write_partial_checkpoint(
+            statutes,
+            code_name=code_name,
+            stage_label="maine:title-discovery",
+            extra={
+                "titles_scanned": 0,
+                "discovered_titles": int(len(title_urls)),
+                "codes_completed": 0,
+                "codes_total": 1,
+            },
+        )
 
         processed_chapters = 0
-        for title_url in title_urls:
+        for title_index, title_url in enumerate(title_urls, start=1):
             if len(statutes) >= max_statutes:
                 break
             title_raw = await self._fetch_page_content_with_archival_fallback(title_url, timeout_seconds=25)
@@ -178,6 +189,18 @@ class MaineScraper(BaseStateScraper):
                 title_url,
                 len(chapter_urls),
                 len(statutes),
+            )
+            self._write_partial_checkpoint(
+                statutes,
+                code_name=code_name,
+                stage_label="maine:title-scan",
+                extra={
+                    "titles_scanned": int(title_index),
+                    "discovered_titles": int(len(title_urls)),
+                    "discovered_chapters": int(len(chapter_urls)),
+                    "codes_completed": 0,
+                    "codes_total": 1,
+                },
             )
 
             for chapter_url in chapter_urls:
@@ -206,9 +229,32 @@ class MaineScraper(BaseStateScraper):
                                 processed_chapters,
                                 len(statutes),
                             )
+                            self._write_partial_checkpoint(
+                                statutes,
+                                code_name=code_name,
+                                stage_label="maine:section-scan",
+                                extra={
+                                    "chapters_scanned": int(processed_chapters),
+                                    "codes_completed": 0,
+                                    "codes_total": 1,
+                                },
+                            )
                         if len(statutes) >= max_statutes:
                             break
 
+        self._write_partial_checkpoint(
+            statutes,
+            code_name=code_name,
+            stage_label="maine:complete",
+            force=True,
+            extra={
+                "titles_scanned": int(len(title_urls)),
+                "discovered_titles": int(len(title_urls)),
+                "chapters_scanned": int(processed_chapters),
+                "codes_completed": 1,
+                "codes_total": 1,
+            },
+        )
         return statutes
 
     async def _build_official_section_statute(

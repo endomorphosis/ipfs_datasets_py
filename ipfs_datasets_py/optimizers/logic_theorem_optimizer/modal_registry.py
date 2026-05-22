@@ -48,6 +48,10 @@ COMPILER_AMBIGUITY_CORE_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
     ),
     (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.EPISTEMIC.value,
+    ),
+    (
         ModalLogicFamily.TEMPORAL.value,
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
     ),
@@ -263,6 +267,10 @@ COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
         ModalLogicFamily.FRAME.value,
     ),
     (
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        ModalLogicFamily.ALETHIC.value,
+    ),
+    (
         ModalLogicFamily.EPISTEMIC.value,
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
     ),
@@ -299,20 +307,12 @@ COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
         ModalLogicFamily.DOXASTIC.value,
     ),
     (
-        ModalLogicFamily.FRAME.value,
-        ModalLogicFamily.FRAME.value,
-    ),
-    (
         ModalLogicFamily.HYBRID.value,
         ModalLogicFamily.FRAME.value,
     ),
     (
         ModalLogicFamily.TEMPORAL.value,
         ModalLogicFamily.DEONTIC.value,
-    ),
-    (
-        ModalLogicFamily.TEMPORAL.value,
-        ModalLogicFamily.DYNAMIC.value,
     ),
     (
         ModalLogicFamily.TEMPORAL.value,
@@ -325,10 +325,6 @@ COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.TEMPORAL.value,
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
-    ),
-    (
-        ModalLogicFamily.TEMPORAL.value,
-        ModalLogicFamily.EPISTEMIC.value,
     ),
     (
         ModalLogicFamily.TEMPORAL.value,
@@ -666,6 +662,10 @@ PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...
         ModalLogicFamily.FRAME.value,
         ModalLogicFamily.DOXASTIC.value,
     ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.FRAME.value,
+    ),
 )
 
 PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
@@ -841,6 +841,11 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                     "for each fiscal year",
                     "for each of fiscal years",
                     "for fiscal years",
+                    "for each succeeding fiscal year",
+                    "for each subsequent fiscal year",
+                    "for the first fiscal year",
+                    "for the subsequent fiscal year",
+                    "for each year thereafter",
                     "for each calendar year",
                     "for calendar years",
                     "from time to time",
@@ -944,6 +949,7 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                     "provided that",
                     "subject to",
                     "as provided by",
+                    "as provided under",
                     "as otherwise provided in",
                     "as otherwise provided by",
                     "as otherwise provided under",
@@ -971,6 +977,14 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                     "subject to terms and conditions",
                     "subject to such terms and conditions",
                     "subject to the terms and conditions",
+                    "subject to subsection",
+                    "subject to section",
+                    "subject to paragraph",
+                    "subject to subparagraph",
+                    "subject to chapter",
+                    "subject to this section",
+                    "subject to this chapter",
+                    "subject to this title",
                     "subject only to",
                     "subject, however, to",
                     "subject however to",
