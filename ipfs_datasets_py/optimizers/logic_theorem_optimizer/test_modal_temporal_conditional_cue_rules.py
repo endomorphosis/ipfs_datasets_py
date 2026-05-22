@@ -56,7 +56,6 @@ def test_compiler_preserves_temporal_after_date_sequence_cue() -> None:
 
 
 def test_compiler_reinforces_deontic_against_generic_frame_statutory_scope() -> None:
-def test_compiler_backfills_frame_share_for_statutory_temporal_scope_clause() -> None:
     compiler = DeterministicModalCompiler(
         config=ModalCompilerConfig(parser_backend="spacy")
     )
@@ -67,6 +66,22 @@ def test_compiler_backfills_frame_share_for_statutory_temporal_scope_clause() ->
             "section, and requirements apply."
         ),
         document_id="compiler-ambiguity-frame-deontic-structural-scope",
+    )
+
+    assert result.encoding is not None
+    ranking = ranked_modal_families(result.encoding)
+    assert ranking
+    shares = {entry["family"]: float(entry["share_raw"]) for entry in ranking}
+    assert shares[ModalLogicFamily.DEONTIC.value] >= shares[ModalLogicFamily.FRAME.value]
+
+
+def test_compiler_backfills_frame_share_for_statutory_temporal_scope_clause() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    result = compiler.compile(
+        (
             "Under this chapter, this section, this subchapter, and this subtitle, "
             "after June 1, 2030, regulations apply."
         ),
@@ -76,9 +91,14 @@ def test_compiler_backfills_frame_share_for_statutory_temporal_scope_clause() ->
     assert result.encoding is not None
     ranking = ranked_modal_families(result.encoding)
     assert ranking
-    shares = {entry["family"]: float(entry["share_raw"]) for entry in ranking}
-    assert ranking[0]["family"] == ModalLogicFamily.DEONTIC.value
-    assert shares[ModalLogicFamily.DEONTIC.value] >= shares[ModalLogicFamily.FRAME.value]
+    shares = {
+        str(candidate["family"]): float(candidate.get("share_raw", candidate.get("share", 0.0)))
+        for candidate in ranking
+    }
+    assert shares.get(ModalLogicFamily.FRAME.value, 0.0) > 0.0
+    assert shares.get(ModalLogicFamily.TEMPORAL.value, 0.0) > shares.get(
+        ModalLogicFamily.FRAME.value, 0.0
+    )
 
 
 def test_compiler_reinforces_temporal_conditional_statutory_competition() -> None:
@@ -141,11 +161,3 @@ def test_compiler_backfills_alethic_scope_in_frame_heavy_statutory_clauses() -> 
     assert ranking
     shares = {entry["family"]: float(entry["share_raw"]) for entry in ranking}
     assert shares[ModalLogicFamily.ALETHIC.value] > 0.10
-    shares = {
-        str(candidate["family"]): float(candidate.get("share_raw", candidate.get("share", 0.0)))
-        for candidate in ranking
-    }
-    assert shares.get(ModalLogicFamily.FRAME.value, 0.0) > 0.0
-    assert shares.get(ModalLogicFamily.TEMPORAL.value, 0.0) > shares.get(
-        ModalLogicFamily.FRAME.value, 0.0
-    )

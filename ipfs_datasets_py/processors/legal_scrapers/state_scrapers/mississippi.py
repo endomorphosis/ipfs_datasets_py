@@ -8,6 +8,7 @@ import inspect
 import json
 import os
 import re
+import ssl
 import time
 from dataclasses import fields as dataclass_fields
 from datetime import datetime
@@ -31,6 +32,7 @@ class MississippiScraper(BaseStateScraper):
         "https://web.archive.org/web/20001009002301/http://billstatus.ls.state.ms.us/1997/all_measures/allmsrs.htm",
         "https://web.archive.org/web/20240414234245/https://billstatus.ls.state.ms.us/1997/all_measures/allmsrs.htm",
     ]
+    _INSECURE_TLS_RETRY_DOMAINS = ("legislature.ms.gov", "billstatus.ls.state.ms.us")
     
     def get_base_url(self) -> str:
         """Return the base URL for Mississippi's legislative website."""
@@ -78,6 +80,17 @@ class MississippiScraper(BaseStateScraper):
             default_code_name=code_name,
             max_statutes=(limit or 1000000),
         )
+        checkpoint.write_progress(
+            statutes=seed_statutes,
+            code_name=code_name,
+            stage_label="mississippi:scrape_code:start",
+            scanned_history_urls=len(seed_statutes),
+            discovered_history_urls=len(seed_statutes),
+            extra_progress={
+                "codes_total": 1,
+                "codes_completed": 0,
+            },
+        )
         if self._full_corpus_enabled():
             use_common_crawl_seed = str(
                 os.getenv("STATE_SCRAPER_MS_COMMON_CRAWL_FULL_CORPUS_SEEDS_ENABLED", "1")
@@ -109,6 +122,7 @@ class MississippiScraper(BaseStateScraper):
                     checkpoint.maybe_write(
                         seed_statutes,
                         code_name=code_name,
+                        stage_label="mississippi:seed:common_crawl",
                         scanned_history_urls=len(seed_statutes),
                         discovered_history_urls=len(seed_statutes),
                     )
@@ -140,6 +154,7 @@ class MississippiScraper(BaseStateScraper):
                     checkpoint.maybe_write(
                         seed_statutes,
                         code_name=code_name,
+                        stage_label="mississippi:seed:jina",
                         scanned_history_urls=0,
                         discovered_history_urls=0,
                     )
@@ -157,12 +172,34 @@ class MississippiScraper(BaseStateScraper):
             archival_kwargs["seed_statutes"] = seed_statutes
         if "checkpoint" in archival_params:
             archival_kwargs["checkpoint"] = checkpoint
+        checkpoint.write_progress(
+            statutes=seed_statutes,
+            code_name=code_name,
+            stage_label="mississippi:archive:start",
+            scanned_history_urls=len(seed_statutes),
+            discovered_history_urls=len(seed_statutes),
+            extra_progress={
+                "codes_total": 1,
+                "codes_completed": 0,
+            },
+        )
         archival = await self._scrape_archived_bill_history(
             code_name=code_name,
             max_statutes=limit or 1000000,
             **archival_kwargs,
         )
         if archival and (not self._full_corpus_enabled() or max_statutes is not None):
+            checkpoint.write_progress(
+                statutes=archival,
+                code_name=code_name,
+                stage_label="mississippi:archive:complete",
+                scanned_history_urls=len(archival),
+                discovered_history_urls=len(archival),
+                extra_progress={
+                    "codes_total": 1,
+                    "codes_completed": 1,
+                },
+            )
             self.logger.info(f"Mississippi archive history fallback: Scraped {len(archival)} records")
             return archival[:limit] if limit is not None else archival
 
@@ -173,12 +210,39 @@ class MississippiScraper(BaseStateScraper):
             # Archive fallback candidate when live pathing changes.
             "https://web.archive.org/web/20251017000000/https://www.legislature.ms.gov/legislation/",
         ]
+        checkpoint.write_progress(
+            statutes=archival,
+            code_name=code_name,
+            stage_label="mississippi:live-fallback:start",
+            scanned_history_urls=len(archival),
+            discovered_history_urls=len(archival),
+            extra_progress={
+                "codes_total": 1,
+                "codes_completed": 0,
+                "candidates_total": len(candidate_urls),
+                "candidates_scanned": 0,
+            },
+        )
 
         seen = set()
-        for candidate in candidate_urls:
+        for candidate_index, candidate in enumerate(candidate_urls, start=1):
             if candidate in seen:
                 continue
             seen.add(candidate)
+            checkpoint.write_progress(
+                statutes=archival,
+                code_name=code_name,
+                stage_label="mississippi:live-fallback:candidate",
+                scanned_history_urls=len(archival),
+                discovered_history_urls=len(archival),
+                extra_progress={
+                    "codes_total": 1,
+                    "codes_completed": 0,
+                    "candidates_total": len(candidate_urls),
+                    "candidates_scanned": int(candidate_index),
+                    "candidate_url": candidate,
+                },
+            )
 
             if self.has_playwright():
                 try:
@@ -191,19 +255,69 @@ class MississippiScraper(BaseStateScraper):
                         timeout=45000,
                     )
                     if statutes:
+                        checkpoint.write_progress(
+                            statutes=statutes,
+                            code_name=code_name,
+                            stage_label="mississippi:live-fallback:playwright-complete",
+                            scanned_history_urls=len(statutes),
+                            discovered_history_urls=len(statutes),
+                            extra_progress={
+                                "codes_total": 1,
+                                "codes_completed": 1,
+                                "candidates_total": len(candidate_urls),
+                                "candidates_scanned": int(candidate_index),
+                            },
+                        )
                         return statutes[:limit]
                 except Exception:
                     pass
 
             statutes = await self._generic_scrape(code_name, candidate, "Miss. Code Ann.", max_sections=limit)
             if statutes:
+                checkpoint.write_progress(
+                    statutes=statutes,
+                    code_name=code_name,
+                    stage_label="mississippi:live-fallback:generic-complete",
+                    scanned_history_urls=len(statutes),
+                    discovered_history_urls=len(statutes),
+                    extra_progress={
+                        "codes_total": 1,
+                        "codes_completed": 1,
+                        "candidates_total": len(candidate_urls),
+                        "candidates_scanned": int(candidate_index),
+                    },
+                )
                 return statutes[:limit]
 
         if archival:
+            checkpoint.write_progress(
+                statutes=archival,
+                code_name=code_name,
+                stage_label="mississippi:complete:archive",
+                scanned_history_urls=len(archival),
+                discovered_history_urls=len(archival),
+                extra_progress={
+                    "codes_total": 1,
+                    "codes_completed": 1,
+                },
+            )
             self.logger.info(f"Mississippi archive history fallback: Scraped {len(archival)} records")
             if limit is not None:
                 return archival[:limit]
             return list(archival)
+        checkpoint.write_progress(
+            statutes=[],
+            code_name=code_name,
+            stage_label="mississippi:complete:zero",
+            scanned_history_urls=0,
+            discovered_history_urls=0,
+            extra_progress={
+                "codes_total": 1,
+                "codes_completed": 1,
+                "candidates_total": len(candidate_urls),
+                "candidates_scanned": len(candidate_urls),
+            },
+        )
         return []
 
     async def _scrape_jina_justia_seed_sections(self, code_name: str, max_statutes: int = 1) -> List[NormalizedStatute]:
@@ -557,7 +671,58 @@ class MississippiScraper(BaseStateScraper):
             except Exception:
                 await asyncio.sleep(0.7)
                 continue
+            insecure_retry = await self._request_text_with_insecure_tls_retry(
+                url=url,
+                headers=headers,
+                timeout=timeout,
+            )
+            if insecure_retry:
+                return insecure_retry
+            await asyncio.sleep(0.7)
         return ""
+
+    def _needs_insecure_tls_retry(self, url: str) -> bool:
+        value = str(url or "").lower()
+        return any(domain in value for domain in self._INSECURE_TLS_RETRY_DOMAINS)
+
+    async def _request_text_with_insecure_tls_retry(
+        self,
+        *,
+        url: str,
+        headers: Dict[str, str],
+        timeout: int,
+    ) -> str:
+        if not self._needs_insecure_tls_retry(url):
+            return ""
+
+        def _request_insecure() -> str:
+            req_headers = {"User-Agent": "Mozilla/5.0"}
+            req_headers.update(dict(headers or {}))
+            request = urllib.request.Request(url, headers=req_headers)
+            ssl_context = ssl.create_default_context()
+            ssl_context.check_hostname = False
+            ssl_context.verify_mode = ssl.CERT_NONE
+            with urllib.request.urlopen(
+                request,
+                timeout=max(1, int(timeout or 30)),
+                context=ssl_context,
+            ) as response:
+                payload = response.read()
+            return payload.decode("utf-8", errors="replace")
+
+        try:
+            text = await asyncio.wait_for(
+                asyncio.to_thread(_request_insecure),
+                timeout=max(2, int(timeout or 30)) + 3,
+            )
+        except Exception:
+            return ""
+        if text:
+            self.logger.info(
+                "Mississippi TLS fallback succeeded for host with invalid cert: %s",
+                url,
+            )
+        return text
 
 
 # Register this scraper with the registry
@@ -678,6 +843,7 @@ class _MississippiCheckpoint:
         statutes: List[NormalizedStatute],
         *,
         code_name: str,
+        stage_label: str = "mississippi:progress",
         scanned_history_urls: int,
         discovered_history_urls: int,
     ) -> None:
@@ -689,6 +855,7 @@ class _MississippiCheckpoint:
         self.write(
             statutes,
             code_name=code_name,
+            stage_label=stage_label,
             scanned_history_urls=scanned_history_urls,
             discovered_history_urls=discovered_history_urls,
         )
@@ -698,18 +865,48 @@ class _MississippiCheckpoint:
         statutes: List[NormalizedStatute],
         *,
         code_name: str,
+        stage_label: str = "mississippi:complete",
         scanned_history_urls: int,
         discovered_history_urls: int,
     ) -> None:
-        if not self.path or not statutes:
+        self.write_progress(
+            statutes=statutes,
+            code_name=code_name,
+            stage_label=stage_label,
+            scanned_history_urls=scanned_history_urls,
+            discovered_history_urls=discovered_history_urls,
+            extra_progress=None,
+        )
+
+    def write_progress(
+        self,
+        *,
+        statutes: List[NormalizedStatute],
+        code_name: str,
+        stage_label: str,
+        scanned_history_urls: int,
+        discovered_history_urls: int,
+        extra_progress: Optional[Dict[str, Any]],
+    ) -> None:
+        if not self.path:
             return
+        statutes = list(statutes or [])
+        progress_payload: Dict[str, Any] = {
+            "scanned_history_urls": int(scanned_history_urls),
+            "discovered_history_urls": int(discovered_history_urls),
+        }
+        if isinstance(extra_progress, dict):
+            for key, value in extra_progress.items():
+                progress_payload[str(key)] = value
         payload = {
             "state_code": self.state_code,
             "updated_at": time.time(),
             "statutes_count": len(statutes),
             "code_name": code_name,
+            "stage_label": str(stage_label or "").strip() or "mississippi:progress",
             "scanned_history_urls": int(scanned_history_urls),
             "discovered_history_urls": int(discovered_history_urls),
+            "progress": progress_payload,
             "statutes": [statute.to_dict() for statute in statutes],
         }
         tmp_path = self.path.with_suffix(".tmp")

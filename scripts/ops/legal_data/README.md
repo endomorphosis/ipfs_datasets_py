@@ -232,6 +232,9 @@ Notes:
 	It also loads a repo-tracked baseline file by default:
 	`scripts/ops/legal_data/state_laws_completed_states.baseline.json`
 	(currently seeded with high-confidence complete states: `MN`, `OK`, `WV`).
+	Only add states to this baseline after an uncapped/full-corpus confirmation.
+	Do not promote bounded probe runs (for example `--max-statutes 120/200`) to
+	baseline-complete, because those runs are diagnostic and intentionally partial.
 	By default only `status=success` entries are treated as skip-complete; legacy
 	`status=zero_statutes` rows are still recorded for diagnostics but are *not*
 	auto-skipped unless `STATE_LAWS_REGISTRY_TREAT_ZERO_AS_COMPLETE=1` is set.

@@ -760,6 +760,7 @@ _FRAME_TO_TEMPORAL_SCOPE_REINFORCEMENT_MAX = 1.35
 _FRAME_TO_CONDITIONAL_SCOPE_REINFORCEMENT_MAX = 1.35
 _TEMPORAL_TO_DEONTIC_SCOPE_REINFORCEMENT_MAX = 1.35
 _TEMPORAL_TO_CONDITIONAL_SCOPE_REINFORCEMENT_MAX = 1.35
+_TEMPORAL_TO_FRAME_SCOPE_REINFORCEMENT_MAX = 1.25
 _TEMPORAL_TO_EPISTEMIC_SCOPE_REINFORCEMENT_MAX = 1.2
 _TEMPORAL_EPISTEMIC_SCOPE_REINFORCEMENT_TRIGGER = 2.0
 _DEONTIC_SCOPE_PHRASE_REINFORCEMENT = 0.35
@@ -2918,19 +2919,25 @@ def _apply_competing_scope_backfill(
         and deontic_count <= _COMPETING_SCOPE_BACKFILL_WEIGHT
         and bool(signals.get("has_deontic_scope"))
     ):
+        has_explicit_deontic_scope = bool(
+            signals.get("has_deontic_scope_phrase")
+            or signals.get("has_deontic_cue")
+        )
         deontic_backfill = _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT
         if (
             bool(signals.get("has_statutory_scope_reference"))
-            or bool(signals.get("has_deontic_scope_phrase"))
-            or bool(signals.get("has_deontic_cue"))
+            or has_explicit_deontic_scope
         ):
+            deontic_backfill_max = _TEMPORAL_COMPETING_SCOPE_BACKFILL_MAX
+            if has_explicit_deontic_scope:
+                deontic_backfill_max = _FRAME_TO_DEONTIC_SCOPE_REINFORCEMENT_MAX
             deontic_backfill = max(
                 deontic_backfill,
                 _scaled_competing_scope_backfill(
                     source_count=frame_count,
                     ratio=_DEONTIC_COMPETING_SCOPE_BACKFILL_RATIO,
                     minimum=_FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
-                    maximum=_TEMPORAL_COMPETING_SCOPE_BACKFILL_MAX,
+                    maximum=deontic_backfill_max,
                 ),
             )
         counts[deontic_family] = max(
@@ -2977,6 +2984,7 @@ def _apply_competing_scope_backfill(
         and temporal_count <= _COMPETING_SCOPE_BACKFILL_WEIGHT
         and bool(signals.get("has_temporal_scope"))
     ):
+        temporal_backfill_max = _STRONG_TEMPORAL_COMPETING_SCOPE_BACKFILL_MAX
         temporal_backfill = _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT
         if (
             bool(signals.get("has_calendar_date_scope"))
@@ -2995,13 +3003,14 @@ def _apply_competing_scope_backfill(
                 or bool(signals.get("has_frame_editorial_scope_phrase"))
             )
         ):
+            temporal_backfill_max = _FRAME_TO_TEMPORAL_SCOPE_REINFORCEMENT_MAX
             temporal_backfill = max(
                 temporal_backfill,
                 _scaled_competing_scope_backfill(
                     source_count=frame_count,
                     ratio=_TEMPORAL_COMPETING_SCOPE_BACKFILL_RATIO,
                     minimum=_FRAME_STRONG_TEMPORAL_COMPETING_SCOPE_BACKFILL_WEIGHT,
-                    maximum=_STRONG_TEMPORAL_COMPETING_SCOPE_BACKFILL_MAX,
+                    maximum=temporal_backfill_max,
                 ),
             )
         counts[temporal_family] = max(
@@ -3231,19 +3240,23 @@ def _apply_competing_scope_backfill(
             or bool(signals.get("has_deontic_cue"))
         )
     ):
+        has_explicit_deontic_scope = bool(
+            signals.get("has_deontic_scope_phrase")
+            or signals.get("has_deontic_cue")
+        )
+        deontic_backfill_max = _DEONTIC_COMPETING_SCOPE_BACKFILL_MAX
+        if has_explicit_deontic_scope:
+            deontic_backfill_max = _TEMPORAL_TO_DEONTIC_SCOPE_REINFORCEMENT_MAX
         deontic_backfill = max(
             _COMPETING_SCOPE_BACKFILL_WEIGHT,
             _scaled_competing_scope_backfill(
                 source_count=temporal_count,
                 ratio=_TEMPORAL_COMPETING_SCOPE_BACKFILL_RATIO,
                 minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
-                maximum=_DEONTIC_COMPETING_SCOPE_BACKFILL_MAX,
+                maximum=deontic_backfill_max,
             ),
         )
-        if bool(
-            signals.get("has_deontic_scope_phrase")
-            or signals.get("has_deontic_cue")
-        ):
+        if has_explicit_deontic_scope:
             deontic_backfill = max(
                 deontic_backfill,
                 _STRONG_SCOPE_BACKFILL_WEIGHT,
@@ -3304,13 +3317,22 @@ def _apply_competing_scope_backfill(
             or bool(signals.get("has_conditional_scope_token"))
         )
     ):
+        has_explicit_conditional_scope = bool(
+            signals.get("has_condition_clause")
+            or signals.get("has_exception_clause")
+            or signals.get("has_conditional_scope_phrase")
+            or signals.get("has_conditional_scope_token")
+        )
+        conditional_backfill_max = _TEMPORAL_COMPETING_SCOPE_BACKFILL_MAX
+        if has_explicit_conditional_scope:
+            conditional_backfill_max = _TEMPORAL_TO_CONDITIONAL_SCOPE_REINFORCEMENT_MAX
         conditional_backfill = max(
             _COMPETING_SCOPE_BACKFILL_WEIGHT,
             _scaled_competing_scope_backfill(
                 source_count=temporal_count,
                 ratio=_TEMPORAL_COMPETING_SCOPE_BACKFILL_RATIO,
                 minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
-                maximum=_TEMPORAL_COMPETING_SCOPE_BACKFILL_MAX,
+                maximum=conditional_backfill_max,
             ),
         )
         if bool(
@@ -3425,13 +3447,21 @@ def _apply_competing_scope_backfill(
             or bool(signals.get("has_statutory_scope_reference"))
         )
     ):
+        has_explicit_frame_scope = bool(
+            signals.get("has_frame_scope_phrase")
+            or signals.get("has_frame_editorial_scope_phrase")
+            or signals.get("has_statutory_scope_reference")
+        )
+        frame_backfill_max = _TEMPORAL_COMPETING_SCOPE_BACKFILL_MAX
+        if has_explicit_frame_scope:
+            frame_backfill_max = _TEMPORAL_TO_FRAME_SCOPE_REINFORCEMENT_MAX
         frame_backfill = max(
             _COMPETING_SCOPE_BACKFILL_WEIGHT,
             _scaled_competing_scope_backfill(
                 source_count=temporal_count,
                 ratio=_TEMPORAL_COMPETING_SCOPE_BACKFILL_RATIO,
                 minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
-                maximum=_TEMPORAL_COMPETING_SCOPE_BACKFILL_MAX,
+                maximum=frame_backfill_max,
             ),
         )
         if (

@@ -1324,13 +1324,13 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                     }
             previous_full_corpus_env = os.environ.get("STATE_SCRAPER_FULL_CORPUS")
             previous_checkpoint_dir_env = os.environ.get("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR")
+            os.environ["STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR"] = str(output_root / "partial_checkpoints")
             if scrape_max_statutes is None:
                 # Several state scrapers intentionally keep normal probes bounded
                 # unless this flag is set.  Treat an uncapped refresh as an
                 # explicit full-corpus scrape so the daemon cannot silently publish
                 # sample-sized state shards.
                 os.environ["STATE_SCRAPER_FULL_CORPUS"] = "1"
-                os.environ["STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR"] = str(output_root / "partial_checkpoints")
             progress_heartbeat_stop = asyncio.Event()
             progress_heartbeat_task = asyncio.create_task(_progress_heartbeat_loop(progress_heartbeat_stop))
             try:
@@ -1368,12 +1368,12 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                         os.environ.pop("STATE_SCRAPER_FULL_CORPUS", None)
                     else:
                         os.environ["STATE_SCRAPER_FULL_CORPUS"] = previous_full_corpus_env
-                    if previous_checkpoint_dir_env is None:
-                        os.environ.pop("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", None)
-                    else:
-                        os.environ["STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR"] = previous_checkpoint_dir_env
+                if previous_checkpoint_dir_env is None:
+                    os.environ.pop("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", None)
+                else:
+                    os.environ["STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR"] = previous_checkpoint_dir_env
 
-    if args.scrape and scrape_max_statutes_for_run is None:
+    if args.scrape:
         checkpoint_reconciliation = _reconcile_state_results_from_partial_checkpoints(
             progress_state=progress_state,
             checkpoint_dir=output_root / "partial_checkpoints",

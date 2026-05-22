@@ -321,9 +321,25 @@ class WashingtonScraper(BaseStateScraper):
 
         out: List[NormalizedStatute] = []
         limit = max(1, int(max_statutes)) if max_statutes is not None else None
-        for url, section_number in section_urls:
+        checkpoint_every = self._env_int("STATE_SCRAPER_WA_SECTION_CHECKPOINT_EVERY", default=20)
+        checkpoint_every = max(5, min(200, int(checkpoint_every or 20)))
+        total_sections = len(section_urls)
+        for section_index, (url, section_number) in enumerate(section_urls, start=1):
             if limit is not None and len(out) >= limit:
                 break
+            if section_index == 1 or section_index % checkpoint_every == 0:
+                self._write_partial_checkpoint(
+                    out,
+                    code_name=code_name,
+                    stage_label="washington:section-scan",
+                    extra={
+                        "sections_scanned": int(section_index),
+                        "discovered_sections": int(total_sections),
+                        "codes_completed": 0,
+                        "codes_total": 1,
+                        "discovery_method": discovery_method,
+                    },
+                )
             raw = await self._fetch_page_content_with_archival_fallback(url, timeout_seconds=25)
             if not raw:
                 continue
@@ -358,6 +374,19 @@ class WashingtonScraper(BaseStateScraper):
                     },
                 )
             )
+        self._write_partial_checkpoint(
+            out,
+            code_name=code_name,
+            stage_label="washington:section-scan-complete",
+            force=True,
+            extra={
+                "sections_scanned": int(min(total_sections, len(section_urls))),
+                "discovered_sections": int(total_sections),
+                "codes_completed": 0,
+                "codes_total": 1,
+                "discovery_method": discovery_method,
+            },
+        )
         return out
 
 

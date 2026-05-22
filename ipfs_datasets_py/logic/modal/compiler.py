@@ -847,6 +847,7 @@ class DeterministicModalCompiler:
                         "target_family": (
                             target_family or metadata.get("target_family")
                         ),
+                        "is_explicit_adaptive_ambiguity": True,
                         "adaptive_base_ambiguity_type": "adaptive_family_margin_low",
                     },
                 )
@@ -1353,7 +1354,10 @@ class DeterministicModalCompiler:
                     message=base_message,
                     candidate_ids=candidate_ids,
                     severity="requires_rule" if requires_rule else "review",
-                    metadata=dict(base_metadata),
+                    metadata={
+                        **base_metadata,
+                        "is_explicit_adaptive_ambiguity": False,
+                    },
                 )
             )
             ambiguities.append(
@@ -1364,6 +1368,7 @@ class DeterministicModalCompiler:
                     severity="requires_rule" if requires_rule else "review",
                     metadata={
                         **base_metadata,
+                        "is_explicit_adaptive_ambiguity": True,
                         "adaptive_base_ambiguity_type": "adaptive_family_margin_low",
                     },
                 )
@@ -1441,20 +1446,27 @@ class DeterministicModalCompiler:
                 resolved_share = float(share)
             except (TypeError, ValueError):
                 continue
-            canonical_shares[canonical_family] = max(
-                canonical_shares.get(canonical_family, 0.0),
-                resolved_share,
-            )
+            if canonical_family in canonical_shares:
+                canonical_shares[canonical_family] = max(
+                    canonical_shares[canonical_family],
+                    resolved_share,
+                )
+            else:
+                canonical_shares[canonical_family] = resolved_share
         for candidate in ranking:
             canonical_family = self._canonical_modal_family_name(
                 candidate.get("family")
             )
             if not canonical_family:
                 continue
-            canonical_shares[canonical_family] = max(
-                canonical_shares.get(canonical_family, 0.0),
-                self._ranking_share(candidate),
-            )
+            candidate_share = self._ranking_share(candidate)
+            if canonical_family in canonical_shares:
+                canonical_shares[canonical_family] = max(
+                    canonical_shares[canonical_family],
+                    candidate_share,
+                )
+            else:
+                canonical_shares[canonical_family] = candidate_share
         return canonical_shares
 
     @staticmethod
@@ -1984,7 +1996,10 @@ class DeterministicModalCompiler:
                 message=base_message,
                 candidate_ids=candidate_ids,
                 severity="requires_rule" if requires_rule else "review",
-                metadata=dict(base_metadata),
+                metadata={
+                    **base_metadata,
+                    "is_explicit_adaptive_ambiguity": False,
+                },
             ),
             ModalCompilationAmbiguity(
                 ambiguity_type=explicit_type,
@@ -1993,6 +2008,7 @@ class DeterministicModalCompiler:
                 severity="requires_rule" if requires_rule else "review",
                 metadata={
                     **base_metadata,
+                    "is_explicit_adaptive_ambiguity": True,
                     "adaptive_base_ambiguity_type": "adaptive_family_margin_low",
                 },
             ),
@@ -2208,7 +2224,10 @@ class DeterministicModalCompiler:
                 ),
                 candidate_ids=[resolved_compiled_primary_family],
                 severity="requires_rule" if requires_rule else "review",
-                metadata=dict(base_metadata),
+                metadata={
+                    **base_metadata,
+                    "is_explicit_adaptive_ambiguity": False,
+                },
             ),
             ModalCompilationAmbiguity(
                 ambiguity_type=explicit_type,
@@ -2220,6 +2239,7 @@ class DeterministicModalCompiler:
                 severity="requires_rule" if requires_rule else "review",
                 metadata={
                     **base_metadata,
+                    "is_explicit_adaptive_ambiguity": True,
                     "adaptive_base_ambiguity_type": "adaptive_family_margin_low",
                 },
             ),

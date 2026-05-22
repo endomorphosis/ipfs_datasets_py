@@ -297,9 +297,28 @@ class VirginiaScraper(BaseStateScraper):
 
         limit = max(1, int(max_statutes)) if max_statutes is not None else None
         statutes: List[NormalizedStatute] = []
-        for source_url, section_label in section_urls:
+        checkpoint_every_raw = str(self._env_int("STATE_SCRAPER_VA_SECTION_CHECKPOINT_EVERY", default=20))
+        try:
+            checkpoint_every = int(checkpoint_every_raw or 20)
+        except Exception:
+            checkpoint_every = 20
+        checkpoint_every = max(5, min(200, checkpoint_every))
+        total_sections = len(section_urls)
+        for section_index, (source_url, section_label) in enumerate(section_urls, start=1):
             if limit is not None and len(statutes) >= limit:
                 break
+            if section_index == 1 or section_index % checkpoint_every == 0:
+                self._write_partial_checkpoint(
+                    statutes,
+                    code_name=code_name,
+                    stage_label="virginia:section-scan",
+                    extra={
+                        "sections_scanned": int(section_index),
+                        "discovered_sections": int(total_sections),
+                        "codes_completed": 0,
+                        "codes_total": 1,
+                    },
+                )
             payload = await self._fetch_page_content_with_archival_fallback(source_url, timeout_seconds=15)
             if not payload:
                 continue
@@ -331,6 +350,18 @@ class VirginiaScraper(BaseStateScraper):
                     structured_data={"source_kind": "official_virginia_code_html", "skip_hydrate": True},
                 )
             )
+        self._write_partial_checkpoint(
+            statutes,
+            code_name=code_name,
+            stage_label="virginia:section-scan-complete",
+            force=True,
+            extra={
+                "sections_scanned": int(min(total_sections, len(section_urls))),
+                "discovered_sections": int(total_sections),
+                "codes_completed": 0,
+                "codes_total": 1,
+            },
+        )
         return statutes
 
 

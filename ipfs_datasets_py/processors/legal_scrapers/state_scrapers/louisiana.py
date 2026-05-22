@@ -203,9 +203,9 @@ class LouisianaScraper(BaseStateScraper):
         )
         heartbeat_every_raw = str(os.getenv("STATE_SCRAPER_LA_SCAN_HEARTBEAT_EVERY", "") or "").strip()
         try:
-            heartbeat_every = int(heartbeat_every_raw) if heartbeat_every_raw else 250
+            heartbeat_every = int(heartbeat_every_raw) if heartbeat_every_raw else 25
         except Exception:
-            heartbeat_every = 250
+            heartbeat_every = 25
         heartbeat_every = max(25, min(2000, heartbeat_every))
         discovered_total = len(law_urls)
 
@@ -220,20 +220,19 @@ class LouisianaScraper(BaseStateScraper):
                     discovered_total,
                     len(statutes),
                 )
-                if statutes:
-                    self._write_partial_checkpoint(
-                        statutes,
-                        code_name=code_name,
-                        stage_label="louisiana-law-page-scan",
-                        extra={
-                            "scanned_laws": int(law_index),
-                            "discovered_laws": int(discovered_total),
-                            "codes_completed": 1,
-                            "codes_total": 1,
-                            "source_kind": source_kind,
-                            "discovery_method": discovery_method,
-                        },
-                    )
+                self._write_partial_checkpoint(
+                    statutes,
+                    code_name=code_name,
+                    stage_label="louisiana-law-page-scan",
+                    extra={
+                        "scanned_laws": int(law_index),
+                        "discovered_laws": int(discovered_total),
+                        "codes_completed": 0,
+                        "codes_total": 1,
+                        "source_kind": source_kind,
+                        "discovery_method": discovery_method,
+                    },
+                )
 
             law_html = await self._request_text(law_url=law_url, headers=headers, timeout=45)
             if not law_html:
@@ -293,21 +292,20 @@ class LouisianaScraper(BaseStateScraper):
                     },
                 )
 
-        if statutes:
-            self._write_partial_checkpoint(
-                statutes,
-                code_name=code_name,
-                stage_label="louisiana-law-page-complete",
-                force=True,
-                extra={
-                    "scanned_laws": int(discovered_total),
-                    "discovered_laws": int(discovered_total),
-                    "codes_completed": 1,
-                    "codes_total": 1,
-                    "source_kind": source_kind,
-                    "discovery_method": discovery_method,
-                },
-            )
+        self._write_partial_checkpoint(
+            statutes,
+            code_name=code_name,
+            stage_label="louisiana-law-page-complete",
+            force=True,
+            extra={
+                "scanned_laws": int(discovered_total),
+                "discovered_laws": int(discovered_total),
+                "codes_completed": 1,
+                "codes_total": 1,
+                "source_kind": source_kind,
+                "discovery_method": discovery_method,
+            },
+        )
         return statutes
 
     async def _discover_live_toc_title_pages(self, limit: int) -> List[str]:

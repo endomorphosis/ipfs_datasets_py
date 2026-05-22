@@ -401,6 +401,7 @@ def test_compiler_required_adaptive_ambiguity_bundle_covers_deontic_conflict_pai
         "deontic",
         "temporal",
         "conditional_normative",
+        "frame",
     )
     assert compiler_required_adaptive_ambiguity_targets("deontic") == (
         "conditional_normative",
@@ -432,6 +433,7 @@ def test_compiler_required_adaptive_ambiguity_bundle_covers_deontic_conflict_pai
     assert compiler_required_adaptive_ambiguity_targets("temporal") == (
         "deontic",
         "epistemic",
+        "doxastic",
         "conditional_normative",
         "frame",
         "dynamic",
@@ -450,6 +452,7 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
         ("conditional_normative", "epistemic"),
         ("conditional_normative", "temporal"),
         ("conditional_normative", "frame"),
+        ("conditional_normative", "alethic"),
         ("deontic", "conditional_normative"),
         ("deontic", "deontic"),
         ("deontic", "dynamic"),
@@ -457,6 +460,7 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
         ("deontic", "alethic"),
         ("deontic", "temporal"),
         ("deontic", "frame"),
+        ("doxastic", "doxastic"),
         ("dynamic", "temporal"),
         ("epistemic", "conditional_normative"),
         ("frame", "conditional_normative"),
@@ -472,6 +476,7 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
         ("temporal", "deontic"),
         ("temporal", "alethic"),
         ("temporal", "epistemic"),
+        ("temporal", "doxastic"),
         ("temporal", "conditional_normative"),
         ("temporal", "frame"),
         ("temporal", "dynamic"),
@@ -498,6 +503,7 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
     ) is True
     assert is_compiler_ambiguity_policy_pair("conditional_normative", "temporal") is True
     assert is_compiler_ambiguity_policy_pair("conditional_normative", "frame") is True
+    assert is_compiler_ambiguity_policy_pair("conditional_normative", "alethic") is True
     assert is_compiler_ambiguity_policy_pair("deontic", "conditional_normative") is True
     assert is_compiler_ambiguity_policy_pair("deontic", "deontic") is True
     assert is_compiler_ambiguity_policy_pair("deontic", "dynamic") is True
@@ -505,6 +511,7 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
     assert is_compiler_ambiguity_policy_pair("deontic", "alethic") is True
     assert is_compiler_ambiguity_policy_pair("deontic", "temporal") is True
     assert is_compiler_ambiguity_policy_pair("deontic", "frame") is True
+    assert is_compiler_ambiguity_policy_pair("doxastic", "doxastic") is True
     assert is_compiler_ambiguity_policy_pair("dynamic", "temporal") is True
     assert is_compiler_ambiguity_policy_pair(
         "epistemic",
@@ -523,6 +530,7 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
     assert is_compiler_ambiguity_policy_pair("temporal", "deontic") is True
     assert is_compiler_ambiguity_policy_pair("temporal", "alethic") is True
     assert is_compiler_ambiguity_policy_pair("temporal", "epistemic") is True
+    assert is_compiler_ambiguity_policy_pair("temporal", "doxastic") is True
     assert is_compiler_ambiguity_policy_pair("temporal", "conditional_normative") is True
     assert is_compiler_ambiguity_policy_pair("temporal", "frame") is True
     assert is_compiler_ambiguity_policy_pair("temporal", "dynamic") is True
@@ -619,6 +627,7 @@ def test_compiler_ambiguity_policy_targets_are_ordered_and_directional() -> None
         "frame",
         "dynamic",
         "temporal",
+        "doxastic",
     )
     assert compiler_ambiguity_policy_targets("temporal") == (
         "deontic",
@@ -628,6 +637,7 @@ def test_compiler_ambiguity_policy_targets_are_ordered_and_directional() -> None
         "frame",
         "dynamic",
         "temporal",
+        "doxastic",
     )
     assert compiler_ambiguity_policy_targets("conditional_normative") == (
         "deontic",
@@ -635,6 +645,7 @@ def test_compiler_ambiguity_policy_targets_are_ordered_and_directional() -> None
         "conditional_normative",
         "epistemic",
         "frame",
+        "alethic",
     )
     assert compiler_ambiguity_policy_targets("temporal") == (
         "deontic",
@@ -644,6 +655,7 @@ def test_compiler_ambiguity_policy_targets_are_ordered_and_directional() -> None
         "frame",
         "dynamic",
         "temporal",
+        "doxastic",
     )
 
 
@@ -661,6 +673,7 @@ def test_signal_free_adaptive_ambiguity_targets_are_ordered_and_directional() ->
         "deontic",
         "alethic",
         "epistemic",
+        "doxastic",
         "frame",
         "dynamic",
         "temporal",
@@ -739,6 +752,7 @@ def test_priority_signal_free_adaptive_ambiguity_pair_policy_is_directional() ->
         ("temporal", "deontic"),
         ("temporal", "alethic"),
         ("temporal", "epistemic"),
+        ("temporal", "doxastic"),
         ("temporal", "frame"),
         ("temporal", "dynamic"),
         ("temporal", "temporal"),
@@ -812,6 +826,7 @@ def test_priority_signal_free_adaptive_ambiguity_pair_policy_is_directional() ->
     assert is_priority_signal_free_adaptive_ambiguity_pair("temporal", "deontic")
     assert is_priority_signal_free_adaptive_ambiguity_pair("temporal", "alethic")
     assert is_priority_signal_free_adaptive_ambiguity_pair("temporal", "epistemic")
+    assert is_priority_signal_free_adaptive_ambiguity_pair("temporal", "doxastic")
     assert is_priority_signal_free_adaptive_ambiguity_pair("temporal", "frame")
     assert is_priority_signal_free_adaptive_ambiguity_pair("temporal", "dynamic")
     assert is_priority_signal_free_adaptive_ambiguity_pair("temporal", "temporal")
@@ -856,6 +871,7 @@ def test_priority_signal_free_adaptive_targets_are_ordered_directional_subsets()
         "frame",
         "dynamic",
         "temporal",
+        "doxastic",
     )
     assert priority_signal_free_adaptive_ambiguity_targets("frame") == (
         "conditional_normative",

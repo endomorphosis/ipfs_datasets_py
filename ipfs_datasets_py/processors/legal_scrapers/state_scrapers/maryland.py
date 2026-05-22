@@ -153,10 +153,15 @@ class MarylandScraper(BaseStateScraper):
             if not isinstance(sections_payload, list):
                 continue
 
-            section_jobs = []
             remaining = max_statutes - len(statutes)
-            budget = min(len(sections_payload), max(remaining * 4, 80))
+            section_budget_cap = self._env_int(
+                "STATE_SCRAPER_MD_MAX_SECTION_BUDGET_PER_ARTICLE",
+                default=240,
+            )
+            section_budget_cap = max(40, min(2000, int(section_budget_cap or 240)))
+            budget = min(len(sections_payload), max(remaining * 3, 40), section_budget_cap)
             discovered_candidates += int(budget)
+            section_inputs: List[tuple[str, str, str, str]] = []
             for section in sections_payload[:budget]:
                 if not isinstance(section, dict):
                     continue
@@ -176,19 +181,19 @@ class MarylandScraper(BaseStateScraper):
                     continue
 
                 seen_urls.add(section_url)
-                section_jobs.append(
-                    _build_one(
-                        article_display=article_display,
-                        section_label=section_label,
-                        section_code=section_code,
-                        section_url=section_url,
+                section_inputs.append(
+                    (
+                        article_display,
+                        section_label,
+                        section_code,
+                        section_url,
                     )
                 )
 
             self.logger.info(
                 "Maryland API scrape: article=%s queued_sections=%s statutes_so_far=%s",
                 article_code,
-                len(section_jobs),
+                len(section_inputs),
                 len(statutes),
             )
             self._write_partial_checkpoint(
@@ -205,32 +210,52 @@ class MarylandScraper(BaseStateScraper):
                 },
             )
 
-            for statute in await asyncio.gather(*section_jobs, return_exceptions=True):
-                scanned_candidates += 1
-                if isinstance(statute, Exception):
-                    continue
-                if statute is None:
-                    continue
-                if not self._is_maryland_api_record(statute) and self._is_low_quality_statute_record(statute):
-                    continue
+            section_batch_size = self._env_int("STATE_SCRAPER_MD_SECTION_BATCH_SIZE", default=40)
+            section_batch_size = max(8, min(256, int(section_batch_size or 40)))
+            for batch_start in range(0, len(section_inputs), section_batch_size):
+                if len(statutes) >= max_statutes:
+                    break
+                batch_inputs = section_inputs[batch_start : batch_start + section_batch_size]
+                batch_jobs = [
+                    _build_one(
+                        article_display=item[0],
+                        section_label=item[1],
+                        section_code=item[2],
+                        section_url=item[3],
+                    )
+                    for item in batch_inputs
+                ]
+                for statute in await asyncio.gather(*batch_jobs, return_exceptions=True):
+                    scanned_candidates += 1
+                    if isinstance(statute, Exception):
+                        continue
+                    if statute is None:
+                        continue
+                    if not self._is_maryland_api_record(statute) and self._is_low_quality_statute_record(statute):
+                        continue
 
-                statutes.append(statute)
-                if len(statutes) == 1 or len(statutes) % 50 == 0:
-                    self.logger.info(
-                        "Maryland API scrape: statutes_so_far=%s",
-                        len(statutes),
-                    )
-                    self._write_partial_checkpoint(
-                        statutes,
-                        code_name=code_name,
-                        stage_label="maryland:section-progress",
-                        extra={
-                            "scanned_candidates": int(scanned_candidates),
-                            "discovered_candidates": int(discovered_candidates),
-                            "codes_completed": 0,
-                            "codes_total": 1,
-                        },
-                    )
+                    statutes.append(statute)
+                    if len(statutes) == 1 or len(statutes) % 50 == 0:
+                        self.logger.info(
+                            "Maryland API scrape: statutes_so_far=%s",
+                            len(statutes),
+                        )
+                    if len(statutes) >= max_statutes:
+                        break
+
+                self._write_partial_checkpoint(
+                    statutes,
+                    code_name=code_name,
+                    stage_label="maryland:section-progress",
+                    extra={
+                        "titles_scanned": int(article_index),
+                        "discovered_titles": int(len(articles_payload)),
+                        "scanned_candidates": int(scanned_candidates),
+                        "discovered_candidates": int(discovered_candidates),
+                        "codes_completed": 0,
+                        "codes_total": 1,
+                    },
+                )
                 if len(statutes) >= max_statutes:
                     break
 

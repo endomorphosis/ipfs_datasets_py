@@ -537,7 +537,18 @@ async def scrape_state_laws(
                     timeouts = _derive_bounded_scraper_timeouts(bounded_timeout)
                     code_timeout = max(0.1, float(timeouts.get("code_timeout_seconds") or 0.0))
                     fetch_timeout = max(0.1, float(timeouts.get("fetch_timeout_seconds") or 0.0))
-                    os.environ["STATE_SCRAPER_CODE_TIMEOUT_SECONDS"] = f"{code_timeout:.3f}"
+                    disable_code_timeout_with_checkpoint = str(
+                        os.environ.get("STATE_SCRAPER_DISABLE_CODE_TIMEOUT_WITH_CHECKPOINT", "1") or "1"
+                    ).strip().lower() in {"1", "true", "yes", "on"}
+                    checkpoint_dir_configured = bool(
+                        str(os.environ.get("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", "") or "").strip()
+                    )
+                    if disable_code_timeout_with_checkpoint and checkpoint_dir_configured:
+                        code_timeout = 0.0
+                    if code_timeout > 0:
+                        os.environ["STATE_SCRAPER_CODE_TIMEOUT_SECONDS"] = f"{code_timeout:.3f}"
+                    else:
+                        os.environ.pop("STATE_SCRAPER_CODE_TIMEOUT_SECONDS", None)
                     os.environ["STATE_SCRAPER_FETCH_TIMEOUT_SECONDS"] = f"{fetch_timeout:.3f}"
                     os.environ["STATE_SCRAPER_MAX_STATUTES"] = str(int(max_statutes))
                     os.environ["STATE_SCRAPER_BOUNDED_DIRECT_ONLY"] = "1"
@@ -1342,7 +1353,18 @@ async def _run_sync_scrape_on_daemon_thread(
             timeouts = _derive_bounded_scraper_timeouts(bounded_timeout)
             code_timeout = max(0.1, float(timeouts.get("code_timeout_seconds") or 0.0))
             fetch_timeout = max(0.1, float(timeouts.get("fetch_timeout_seconds") or 0.0))
-            os.environ["STATE_SCRAPER_CODE_TIMEOUT_SECONDS"] = f"{code_timeout:.3f}"
+            disable_code_timeout_with_checkpoint = str(
+                os.environ.get("STATE_SCRAPER_DISABLE_CODE_TIMEOUT_WITH_CHECKPOINT", "1") or "1"
+            ).strip().lower() in {"1", "true", "yes", "on"}
+            checkpoint_dir_configured = bool(
+                str(os.environ.get("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", "") or "").strip()
+            )
+            if disable_code_timeout_with_checkpoint and checkpoint_dir_configured:
+                code_timeout = 0.0
+            if code_timeout > 0:
+                os.environ["STATE_SCRAPER_CODE_TIMEOUT_SECONDS"] = f"{code_timeout:.3f}"
+            else:
+                os.environ.pop("STATE_SCRAPER_CODE_TIMEOUT_SECONDS", None)
             os.environ["STATE_SCRAPER_FETCH_TIMEOUT_SECONDS"] = f"{fetch_timeout:.3f}"
             os.environ["STATE_SCRAPER_MAX_STATUTES"] = str(int(max_statutes))
             os.environ["STATE_SCRAPER_BOUNDED_DIRECT_ONLY"] = "1"
