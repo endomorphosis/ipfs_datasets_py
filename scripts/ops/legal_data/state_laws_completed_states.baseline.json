@@ -1,0 +1,30 @@
+{
+  "schema": "ipfs_datasets_py.state_laws_refresh.completed_states.v1",
+  "updated_at": "2026-05-22T14:40:00+00:00",
+  "states": {
+    "MN": {
+      "status": "success",
+      "statutes_count": 16389,
+      "completed_at": "2026-05-20T00:34:51+00:00",
+      "first_completed_at": "2026-05-20T00:34:51+00:00",
+      "updated_at": "2026-05-22T14:40:00+00:00",
+      "completion_mode": "confirmed_full_corpus_baseline"
+    },
+    "OK": {
+      "status": "success",
+      "statutes_count": 36,
+      "completed_at": "2026-05-22T07:15:38+00:00",
+      "first_completed_at": "2026-05-22T07:15:38+00:00",
+      "updated_at": "2026-05-22T14:40:00+00:00",
+      "completion_mode": "confirmed_live_run_baseline"
+    },
+    "WV": {
+      "status": "success",
+      "statutes_count": 96,
+      "completed_at": "2026-05-22T07:15:38+00:00",
+      "first_completed_at": "2026-05-22T07:15:38+00:00",
+      "updated_at": "2026-05-22T14:40:00+00:00",
+      "completion_mode": "confirmed_live_run_baseline"
+    }
+  }
+}
