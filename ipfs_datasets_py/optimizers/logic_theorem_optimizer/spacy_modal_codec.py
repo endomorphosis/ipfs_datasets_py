@@ -4500,6 +4500,10 @@ def _apply_refined_modal_family_cue_pair_balance(
         signals.get("has_deontic_scope_phrase")
         or signals.get("has_deontic_cue")
     )
+    has_phrase_only_deontic_scope = bool(
+        has_deontic_scope
+        and not bool(signals.get("has_deontic_scope_phrase"))
+    )
     has_temporal_scope = bool(signals.get("has_temporal_scope"))
     has_strong_temporal_scope = _has_strong_temporal_scope_signal(signals)
     has_temporal_deadline_scope = bool(
@@ -4542,6 +4546,36 @@ def _apply_refined_modal_family_cue_pair_balance(
         and not has_conditional_clause_scope
         and not has_conditional_scope_token
     )
+
+    # deontic -> temporal / frame:
+    # statutory structural conditionals often carry generic deontic lexemes
+    # ("shall", "required") plus temporal/frame context; cap deontic overflow
+    # so competing temporal/frame evidence remains visible.
+    if (
+        deontic_count > 0.0
+        and has_phrase_only_deontic_scope
+        and has_structural_conditional_scope
+        and has_statutory_scope_reference
+        and has_temporal_scope
+        and has_frame_scope_context
+        and temporal_count >= _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT
+        and conditional_count >= _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT
+    ):
+        competing_scope_anchor = max(
+            temporal_count,
+            frame_count,
+            conditional_count,
+            _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
+        deontic_scope_cap = (
+            competing_scope_anchor + _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT
+        )
+        if deontic_count > deontic_scope_cap:
+            deontic_overflow = deontic_count - deontic_scope_cap
+            counts[deontic_family] = deontic_scope_cap + (
+                0.3 * math.log1p(deontic_overflow)
+            )
+            deontic_count = float(counts.get(deontic_family, 0.0))
 
     # deontic -> temporal / conditional_normative:
     # preserve competing scope evidence when obligation terms and temporal/conditional
@@ -4831,6 +4865,26 @@ def _apply_refined_modal_family_cue_pair_balance(
                 counts[conditional_family] = conditional_cap + (
                     0.2 * math.log1p(conditional_overflow)
                 )
+
+    # conditional_normative -> deontic:
+    # explicit statutory conditional clauses can encode operative deontic force;
+    # preserve deontic evidence when structural conditionals dominate counts.
+    if (
+        conditional_count > deontic_count
+        and has_deontic_scope
+        and has_explicit_conditional_scope
+        and has_statutory_scope_reference
+    ):
+        deontic_increment = _scaled_competing_scope_backfill(
+            source_count=conditional_count,
+            ratio=_DEONTIC_COMPETING_SCOPE_BACKFILL_RATIO,
+            minimum=0.0,
+            maximum=_FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
+        counts[deontic_family] = deontic_count + min(
+            _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            deontic_increment,
+        )
 
 
 def _apply_competing_deontic_temporal_scope_phrase_reinforcement(

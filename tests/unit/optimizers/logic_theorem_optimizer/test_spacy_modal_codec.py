@@ -2822,6 +2822,77 @@ def test_spacy_refined_pair_balance_caps_non_deadline_temporal_pressure_against_
     assert counts["deontic"] == 0.5
 
 
+def test_spacy_refined_pair_balance_caps_generic_deontic_overflow_for_structural_temporal_frame_scope() -> None:
+    counts = {
+        "deontic": 3.2,
+        "temporal": 2.0,
+        "conditional_normative": 2.0,
+        "frame": 1.0,
+    }
+    signals = {
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": True,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": True,
+        "has_conditional_scope_token": False,
+        "has_statutory_scope_reference": True,
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": False,
+        "has_deontic_cue": True,
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": True,
+        "has_temporal_scope_token": True,
+        "has_temporal_within_scope": False,
+        "has_temporal_status_scope": True,
+        "has_temporal_deadline_cue": False,
+        "has_calendar_date_scope": True,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_frame_editorial_scope_phrase": True,
+        "has_frame_cue": True,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["deontic"] < 3.2
+    assert counts["deontic"] > counts["temporal"]
+
+
+def test_spacy_refined_pair_balance_reinforces_deontic_when_explicit_statutory_conditional_scope_dominates() -> None:
+    counts = {
+        "conditional_normative": 4.6,
+        "deontic": 3.4,
+        "temporal": 3.0,
+        "frame": 0.75,
+    }
+    signals = {
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": True,
+        "has_exception_clause": True,
+        "has_conditional_scope_phrase": True,
+        "has_conditional_scope_token": False,
+        "has_statutory_scope_reference": True,
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": False,
+        "has_deontic_cue": True,
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": True,
+        "has_temporal_scope_token": True,
+        "has_temporal_within_scope": False,
+        "has_temporal_status_scope": True,
+        "has_temporal_deadline_cue": True,
+        "has_calendar_date_scope": True,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_frame_editorial_scope_phrase": True,
+        "has_frame_cue": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["deontic"] > 3.4
+
+
 def test_spacy_refined_pair_balance_reinforces_temporal_for_structural_statutory_conditional_scope_with_temporal_cue() -> None:
     counts = {
         "conditional_normative": 0.62,
