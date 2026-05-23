@@ -5649,11 +5649,15 @@ def _trim_uscode_compilation_surface_text(
     if not likely_compilation:
         return normalized
     section_match = _USCODE_INLINE_SECTION_REF_RE.search(normalized)
+    # Residual span formulas often carry compilation heading text without an
+    # inline "Sec./§" marker in-span. Preserve a bounded cleaned fallback so
+    # IR/F-logic slot features keep informative heading token positions.
     if section_match is None:
-        return ""
-    candidate = _clean_non_empty_string(
-        normalized[section_match.end() :].lstrip(" \t\r\n-–—:;,.")
-    )
+        candidate = normalized
+    else:
+        candidate = _clean_non_empty_string(
+            normalized[section_match.end() :].lstrip(" \t\r\n-–—:;,.")
+        )
     if not candidate:
         return ""
     candidate = _clean_non_empty_string(_USCODE_GPO_ATTRIBUTION_RE.sub("", candidate))

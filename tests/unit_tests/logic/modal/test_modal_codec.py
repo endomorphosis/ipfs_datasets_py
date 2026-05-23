@@ -13630,6 +13630,94 @@ def test_modal_decompiler_and_triples_surface_fallback_text_for_heading_without_
     )
 
 
+def test_modal_decompiler_and_triples_keep_compilation_fallback_slots_without_inline_section_ref() -> None:
+    heading_span = (
+        " United States Code, 2024 Edition Title 16 - CONSERVATION CHAPTER 30 - "
+        "WILD HORSES AND BURROS:"
+    )
+    chapter_span = (
+        " United States Code, 2024 Edition Title 22 - FOREIGN RELATIONS AND "
+        "INTERCOURSE CHAPTER 64 - UNITED STATES RESPONSE TO TERRORISM AFFECTING "
+        "AMERICANS ABROAD Sec."
+    )
+    source_text = f"Prefix.{heading_span} Middle.{chapter_span} 5505 - Training."
+    heading_start = source_text.index(heading_span)
+    heading_end = heading_start + len(heading_span)
+    chapter_start = source_text.index(chapter_span)
+    chapter_end = chapter_start + len(chapter_span)
+    formulas = [
+        ModalIRFormula(
+            formula_id="compilation-fallback-doc:f0001",
+            operator=ModalIROperator(
+                family="frame",
+                system="F",
+                symbol="Frame",
+                label="ontology_frame",
+            ),
+            predicate=ModalIRPredicate(
+                name="united_states_code_edition_title_conservation",
+                role="clause",
+            ),
+            provenance=ModalIRProvenance(
+                source_id="compilation-fallback-doc",
+                start_char=heading_start,
+                end_char=heading_end,
+                citation="16 U.S.C. 1332",
+            ),
+            metadata={
+                "cue": "__uscode_residual_span_fallback__",
+                "fallback_rule": "uscode_residual_span_coverage_v1",
+            },
+        ),
+        ModalIRFormula(
+            formula_id="compilation-fallback-doc:f0002",
+            operator=ModalIROperator(
+                family="frame",
+                system="F",
+                symbol="Frame",
+                label="ontology_frame",
+            ),
+            predicate=ModalIRPredicate(
+                name="united_states_code_edition_title_foreign_relations",
+                role="clause",
+            ),
+            provenance=ModalIRProvenance(
+                source_id="compilation-fallback-doc",
+                start_char=chapter_start,
+                end_char=chapter_end,
+                citation="22 U.S.C. 5505",
+            ),
+            metadata={
+                "cue": "__uscode_residual_span_fallback__",
+                "fallback_rule": "uscode_residual_span_coverage_v1",
+            },
+        ),
+    ]
+    document = ModalIRDocument(
+        document_id="compilation-fallback-doc",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=formulas,
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(document)
+
+    assert "13:and" in slot_texts["fallback_surface_text_alnum_segment_positioned"]
+    assert "20:alpha" in slot_texts["fallback_surface_text_alnum_segment_kind_positioned"]
+    assert any(
+        triple["predicate"] == "fallback_surface_text_alnum_segment_positioned"
+        and triple["object"] == "13:and"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "fallback_surface_text_alnum_segment_kind_positioned"
+        and triple["object"] == "20:alpha"
+        for triple in triples
+    )
+
+
 def test_modal_decompiler_falls_back_to_frame_logic_selected_frame() -> None:
     compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
     compiled = compiler.compile("The agency must provide notice.")
