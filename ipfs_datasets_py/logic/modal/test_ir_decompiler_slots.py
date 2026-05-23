@@ -3871,9 +3871,13 @@ def test_decode_modal_ir_document_emits_condition_exception_scope_slots() -> Non
     assert slot_map["condition_modal_operator"] == ["O"]
     assert slot_map["condition_modal_lexeme"] == ["provided_that"]
     assert slot_map["condition_modal_bridge_signature"] == [
-        "conditional_normative:O|:provided_that"
+        "conditional_normative:O|:provided_that",
+        "frame:Frame:provided_that",
     ]
-    assert slot_map["condition_modal_bridge_family"] == ["conditional_normative"]
+    assert slot_map["condition_modal_bridge_family"] == [
+        "conditional_normative",
+        "frame",
+    ]
     assert slot_map["condition_provided_that"] == ["the applicant submits annual reports"]
     assert slot_map["condition_scope"] == ["the applicant submits annual reports"]
     assert slot_map["condition_scope_token_suffix"] == ["reports"]
@@ -3912,9 +3916,13 @@ def test_modal_ir_to_flogic_triples_emits_condition_exception_scope_slots() -> N
     assert objects("condition_modal_operator") == ["O"]
     assert objects("condition_modal_lexeme") == ["provided_that"]
     assert objects("condition_modal_bridge_signature") == [
-        "conditional_normative:O|:provided_that"
+        "conditional_normative:O|:provided_that",
+        "frame:Frame:provided_that",
     ]
-    assert objects("condition_modal_bridge_family") == ["conditional_normative"]
+    assert objects("condition_modal_bridge_family") == [
+        "conditional_normative",
+        "frame",
+    ]
     assert objects("condition_provided_that") == ["the applicant submits annual reports"]
     assert objects("condition_scope") == ["the applicant submits annual reports"]
     assert objects("condition_scope_token_suffix") == ["reports"]

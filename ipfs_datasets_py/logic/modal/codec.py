@@ -268,6 +268,7 @@ _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...
     "provided_that": (
         ("conditional_normative", "O|"),
         ("deontic", "O"),
+        ("frame", "Frame"),
     ),
     "subject_to": (
         ("conditional_normative", "O|"),
@@ -308,6 +309,7 @@ _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...
     "determines": (
         ("epistemic", "K"),
         ("doxastic", "B"),
+        ("conditional_normative", "O|"),
     ),
     "finds": (("epistemic", "K"),),
     "knows": (("epistemic", "K"),),
@@ -316,6 +318,7 @@ _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...
     "reason_to_believe": (
         ("epistemic", "K"),
         ("doxastic", "B"),
+        ("conditional_normative", "O|"),
     ),
     "reasonably_believes": (("doxastic", "B"),),
     "intent_to": (("doxastic", "B"),),
@@ -1492,7 +1495,11 @@ def modal_ir_to_flogic_triples(
                         "object": value,
                     }
                 )
-        for condition in sorted({value for value in formula.conditions if value}):
+        for condition in _unique_preserve_order(
+            str(value).strip()
+            for value in formula.conditions
+            if str(value or "").strip()
+        ):
             triples.append(
                 {
                     "subject": formula.formula_id,
@@ -1598,7 +1605,23 @@ def modal_ir_to_flogic_triples(
                                 "object": predicate_value,
                             }
                         )
-        for exception in sorted({value for value in formula.exceptions if value}):
+                    for predicate_name, predicate_value in _contextual_modal_cue_components(
+                        formula,
+                        text=scoped_value,
+                        slot_prefix="condition_scope",
+                    ):
+                        triples.append(
+                            {
+                                "subject": formula.formula_id,
+                                "predicate": predicate_name,
+                                "object": predicate_value,
+                            }
+                        )
+        for exception in _unique_preserve_order(
+            str(value).strip()
+            for value in formula.exceptions
+            if str(value or "").strip()
+        ):
             triples.append(
                 {
                     "subject": formula.formula_id,
@@ -1695,6 +1718,18 @@ def modal_ir_to_flogic_triples(
                     )
                     for predicate_name, predicate_value in _typed_identifier_components(
                         scoped_value,
+                        slot_prefix="exception_scope",
+                    ):
+                        triples.append(
+                            {
+                                "subject": formula.formula_id,
+                                "predicate": predicate_name,
+                                "object": predicate_value,
+                            }
+                        )
+                    for predicate_name, predicate_value in _contextual_modal_cue_components(
+                        formula,
+                        text=scoped_value,
                         slot_prefix="exception_scope",
                     ):
                         triples.append(
@@ -2195,6 +2230,9 @@ def _modal_lexeme_components(
     normalized_slot_prefix = _clean_non_empty_string(slot_prefix)
     if not cue_value or not family or not symbol or not normalized_slot_prefix:
         return []
+    alias_prefix = ""
+    if normalized_slot_prefix.endswith("_modal"):
+        alias_prefix = _clean_non_empty_string(normalized_slot_prefix[: -len("_modal")])
     signature = f"{family}:{symbol}:{cue_value}"
     components: List[tuple[str, str]] = [
         (f"{normalized_slot_prefix}_signature", signature),
@@ -2235,6 +2273,18 @@ def _modal_lexeme_components(
         components.append((f"{normalized_slot_prefix}_registry_operator", registry_symbol))
         components.append((f"{normalized_slot_prefix}_registry_signature", registry_signature))
         components.append((f"{normalized_slot_prefix}_registry_alignment", registry_alignment))
+        components.append(
+            (
+                f"{normalized_slot_prefix}_registry_family_pair",
+                f"{family}->{registry_family}",
+            )
+        )
+        components.append(
+            (
+                f"{normalized_slot_prefix}_registry_operator_pair",
+                f"{symbol}->{registry_symbol}",
+            )
+        )
         if registry_family != family or registry_symbol != symbol:
             bridged_value = f"{registry_symbol}:{cue_value}"
             components.append((f"{normalized_slot_prefix}_{registry_family}", bridged_value))
@@ -2244,34 +2294,48 @@ def _modal_lexeme_components(
                     registry_signature,
                 )
             )
-            if normalized_slot_prefix.endswith("_modal"):
-                alias_prefix = _clean_non_empty_string(
-                    normalized_slot_prefix[: -len("_modal")]
-                )
-                if alias_prefix:
-                    components.append(
-                        (
-                            f"{alias_prefix}_{registry_family}",
-                            bridged_value,
-                        )
+            if alias_prefix:
+                components.append(
+                    (
+                        f"{alias_prefix}_{registry_family}",
+                        bridged_value,
                     )
+                )
     for bridge_family, bridge_symbol in _cue_bridge_operator_pairs(cue_value):
-        if bridge_family == family and bridge_symbol == symbol:
-            continue
         bridge_signature = f"{bridge_family}:{bridge_symbol}:{cue_value}"
+        bridge_family_pair = f"{family}->{bridge_family}"
+        bridge_operator_pair = f"{symbol}->{bridge_symbol}"
+        components.append(
+            (
+                f"{normalized_slot_prefix}_bridge_family_pair",
+                bridge_family_pair,
+            )
+        )
+        components.append(
+            (
+                f"{normalized_slot_prefix}_bridge_operator_pair",
+                bridge_operator_pair,
+            )
+        )
+        if alias_prefix:
+            components.append((f"{alias_prefix}_bridge_family_pair", bridge_family_pair))
+        if bridge_family == family and bridge_symbol == symbol:
+            components.append((f"{normalized_slot_prefix}_self_bridge_family", bridge_family))
+            components.append((f"{normalized_slot_prefix}_self_bridge_operator", bridge_symbol))
+            components.append((f"{normalized_slot_prefix}_self_bridge_signature", bridge_signature))
+            if alias_prefix:
+                components.append((f"{alias_prefix}_self_bridge_family", bridge_family))
+                components.append((f"{alias_prefix}_self_bridge_signature", bridge_signature))
+            continue
         bridge_value = f"{bridge_symbol}:{cue_value}"
         components.append((f"{normalized_slot_prefix}_bridge_family", bridge_family))
         components.append((f"{normalized_slot_prefix}_bridge_operator", bridge_symbol))
         components.append((f"{normalized_slot_prefix}_bridge_signature", bridge_signature))
         components.append((f"{normalized_slot_prefix}_bridge_{bridge_family}", bridge_value))
-        if normalized_slot_prefix.endswith("_modal"):
-            alias_prefix = _clean_non_empty_string(
-                normalized_slot_prefix[: -len("_modal")]
-            )
-            if alias_prefix:
-                components.append((f"{alias_prefix}_bridge_family", bridge_family))
-                components.append((f"{alias_prefix}_bridge_signature", bridge_signature))
-                components.append((f"{alias_prefix}_{bridge_family}", bridge_value))
+        if alias_prefix:
+            components.append((f"{alias_prefix}_bridge_family", bridge_family))
+            components.append((f"{alias_prefix}_bridge_signature", bridge_signature))
+            components.append((f"{alias_prefix}_{bridge_family}", bridge_value))
     if symbol == "O|":
         conditional_normative_value = f"{symbol}:{cue_value}"
         components.append(
@@ -2286,15 +2350,13 @@ def _modal_lexeme_components(
                 f"conditional_normative:{conditional_normative_value}",
             )
         )
-        if normalized_slot_prefix.endswith("_modal"):
-            alias_prefix = _clean_non_empty_string(normalized_slot_prefix[: -len("_modal")])
-            if alias_prefix:
-                components.append(
-                    (
-                        f"{alias_prefix}_conditional_normative",
-                        conditional_normative_value,
-                    )
+        if alias_prefix:
+            components.append(
+                (
+                    f"{alias_prefix}_conditional_normative",
+                    conditional_normative_value,
                 )
+            )
     temporal_relation = _temporal_clause_prefix_relation(cue_value)
     if temporal_relation:
         components.append(
@@ -2341,6 +2403,13 @@ def _condition_proxy_components_from_exception(
         components.extend(
             _typed_identifier_components(
                 scoped_value,
+                slot_prefix="condition_scope",
+            )
+        )
+        components.extend(
+            _contextual_modal_cue_components(
+                formula,
+                text=scoped_value,
                 slot_prefix="condition_scope",
             )
         )

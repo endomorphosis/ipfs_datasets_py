@@ -169,8 +169,10 @@ class ModalIRFormula:
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "conditions": sorted(self.conditions),
-            "exceptions": sorted(self.exceptions),
+            # Preserve clause order because scope/temporal semantics depend on
+            # source sequencing (for example, "if ... by ... after ...").
+            "conditions": list(self.conditions),
+            "exceptions": list(self.exceptions),
             "formula_id": self.formula_id,
             "metadata": dict(sorted(self.metadata.items())),
             "operator": self.operator.to_dict(),
