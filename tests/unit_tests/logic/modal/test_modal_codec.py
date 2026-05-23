@@ -12959,6 +12959,67 @@ def test_modal_decompiler_and_triples_surface_authority_and_required_bridge_cues
     )
 
 
+def test_modal_decompiler_and_triples_surface_inflected_bridge_cue_variants() -> None:
+    source_id = "us-code-34-50502-aa628c288d18dc00"
+    source_text = (
+        "Provided that the authority determine eligibility, the agency requires "
+        "action on the effective dates."
+    )
+    formula = ModalIRFormula(
+        formula_id=f"{source_id}:f0001",
+        operator=ModalIROperator(
+            family="conditional_normative",
+            system="kd",
+            symbol="O|",
+            label="conditional_obligation",
+        ),
+        predicate=ModalIRPredicate(
+            name="determine_eligibility_requires_action_on_effective_dates"
+        ),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="34 U.S.C. 50502",
+        ),
+        conditions=["provided that the authority determine eligibility"],
+        metadata={"cue": "provided that"},
+    )
+    document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(document)
+
+    assert "determine" in slot_texts["bridge_cue"]
+    assert "requires" in slot_texts["bridge_cue"]
+    assert "effective_dates" in slot_texts["bridge_cue"]
+    assert "epistemic:K:determine" in slot_texts["bridge_modal_bridge_signature"]
+    assert "doxastic:B:determine" in slot_texts["bridge_modal_bridge_signature"]
+    assert "deontic:O:requires" in slot_texts["bridge_modal_bridge_signature"]
+    assert "temporal:F:effective_dates" in slot_texts["bridge_modal_bridge_signature"]
+    assert any(
+        triple["predicate"] == "bridge_modal_bridge_signature"
+        and triple["object"] == "epistemic:K:determine"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "bridge_modal_bridge_signature"
+        and triple["object"] == "deontic:O:requires"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "bridge_modal_bridge_signature"
+        and triple["object"] == "temporal:F:effective_dates"
+        for triple in triples
+    )
+
+
 def test_modal_decompiler_surfaces_metadata_citation_slots_without_formulas() -> None:
     document = ModalIRDocument(
         document_id="metadata-citation-only-doc",
