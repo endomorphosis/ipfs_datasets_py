@@ -1001,6 +1001,54 @@ def _span_metrics_sample_document() -> ModalIRDocument:
     )
 
 
+def _string_offset_span_metrics_sample_document() -> ModalIRDocument:
+    source_id = "us-code-38-3325-dd8d4281cf491ad3"
+    source_text = "A" * 200
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-span-string-1",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="kd",
+                    symbol="O",
+                    label="obligatory",
+                ),
+                predicate=ModalIRPredicate(name="residual_span_clause"),
+                provenance=ModalIRProvenance(
+                    source_id=source_id,
+                    start_char="120",  # type: ignore[arg-type]
+                    end_char="128",  # type: ignore[arg-type]
+                    citation="38 U.S.C. 3325",
+                ),
+                metadata={
+                    "cue": "__uscode_residual_span_fallback__",
+                    "fallback_rule": "uscode_residual_span_coverage_v1",
+                },
+            ),
+            ModalIRFormula(
+                formula_id="f-span-string-2",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="frame",
+                    symbol="Frame",
+                    label="framed as",
+                ),
+                predicate=ModalIRPredicate(name="status_clause"),
+                provenance=ModalIRProvenance(
+                    source_id=source_id,
+                    start_char="46",  # type: ignore[arg-type]
+                    end_char="59",  # type: ignore[arg-type]
+                    citation="38 U.S.C. 3325",
+                ),
+            ),
+        ],
+    )
+
+
 def _single_formula_temporal_family_sample_document() -> ModalIRDocument:
     source_id = "us-code-7-8758-6c50bb2c1676bbf9"
     formula = ModalIRFormula(
@@ -5798,6 +5846,36 @@ def test_modal_ir_to_flogic_triples_emits_span_metric_slots() -> None:
     assert objects("modal_span_char_count_digit_count_bucket") == ["2_digit"]
     assert objects("modal_span_coverage_percent_prefix_two_digits") == ["55"]
     assert objects("source_context_span_count_parity") == ["even"]
+
+
+def test_decode_modal_ir_document_emits_numeric_support_span_slots_for_string_offsets() -> None:
+    decoded = decode_modal_ir_document(_string_offset_span_metrics_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["support_span_start_char"] == ["46"]
+    assert slot_map["support_span_start_char_trailing_two_digits"] == ["46"]
+    assert slot_map["support_span_end_char"] == ["128"]
+    assert slot_map["support_span_end_char_trailing_two_digits"] == ["28"]
+    assert slot_map["support_span_width"] == ["82"]
+    assert slot_map["support_span_width_trailing_two_digits"] == ["82"]
+
+
+def test_modal_ir_to_flogic_triples_emits_numeric_support_span_slots_for_string_offsets() -> None:
+    triples = modal_ir_to_flogic_triples(_string_offset_span_metrics_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("support_span_start_char") == ["46"]
+    assert objects("support_span_start_char_trailing_two_digits") == ["46"]
+    assert objects("support_span_end_char") == ["128"]
+    assert objects("support_span_end_char_trailing_two_digits") == ["28"]
+    assert objects("support_span_width") == ["82"]
+    assert objects("support_span_width_trailing_two_digits") == ["82"]
 
 
 def test_decode_and_triples_emit_no_modal_span_bucket_for_zero_formula_documents() -> None:

@@ -3760,8 +3760,18 @@ def _merged_formula_spans(
 def _support_span(formulas: Sequence[ModalIRFormula]) -> List[int]:
     if not formulas:
         return [0, 0]
-    starts = [formula.provenance.start_char for formula in formulas]
-    ends = [formula.provenance.end_char for formula in formulas]
+    starts: List[int] = []
+    ends: List[int] = []
+    for formula in formulas:
+        try:
+            start = int(formula.provenance.start_char)
+            end = int(formula.provenance.end_char)
+        except (TypeError, ValueError):
+            continue
+        starts.append(start)
+        ends.append(max(start, end))
+    if not starts or not ends:
+        return [0, 0]
     return [min(starts), max(ends)]
 
 
