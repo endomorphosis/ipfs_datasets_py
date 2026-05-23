@@ -339,6 +339,8 @@ _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...
     "calendar_years": (("temporal", "F"),),
     "effective_date": (("temporal", "F"),),
     "effective_dates": (("temporal", "F"),),
+    "on_and_after": (("temporal", "F"),),
+    "on_or_after": (("temporal", "F"),),
     "determine": (
         ("epistemic", "K"),
         ("doxastic", "B"),
@@ -665,6 +667,14 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
         spans=spans,
         emitted=statutory_scope_emissions,
     )
+    phrases.extend(
+        _contextual_modal_cue_phrases(
+            formula=formula,
+            text=predicate_text,
+            slot_prefix="predicate",
+            spans=spans,
+        )
+    )
     operator_label = _resolved_modal_operator_label(formula)
     if operator_label:
         operator_spans = _span_from_values(cue_start, cue_end) or spans
@@ -831,6 +841,14 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
             argument,
             spans=spans,
             emitted=statutory_scope_emissions,
+        )
+        phrases.extend(
+            _contextual_modal_cue_phrases(
+                formula=formula,
+                text=argument,
+                slot_prefix="argument",
+                spans=spans,
+            )
         )
         typed_argument_slot = _typed_argument_slot(argument)
         if typed_argument_slot is None:

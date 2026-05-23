@@ -368,6 +368,8 @@ _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...
     "calendar_years": (("temporal", "F"),),
     "effective_date": (("temporal", "F"),),
     "effective_dates": (("temporal", "F"),),
+    "on_and_after": (("temporal", "F"),),
+    "on_or_after": (("temporal", "F"),),
     "determine": (
         ("epistemic", "K"),
         ("doxastic", "B"),
@@ -1186,6 +1188,7 @@ def modal_ir_to_flogic_triples(
         exception_prefix_temporal_relations: set[str] = set()
         exception_modal_entries: set[tuple[str, str]] = set()
         statutory_scope_entries: set[tuple[str, str]] = set()
+        argument_modal_entries: set[tuple[str, str]] = set()
         triples.extend(
             [
                 {
@@ -1238,6 +1241,18 @@ def modal_ir_to_flogic_triples(
             )
         for predicate_name, predicate_value in _content_scope_components(
             formula.predicate.name,
+            slot_prefix="predicate",
+        ):
+            triples.append(
+                {
+                    "subject": formula.formula_id,
+                    "predicate": predicate_name,
+                    "object": predicate_value,
+                }
+            )
+        for predicate_name, predicate_value in _contextual_modal_cue_components(
+            formula,
+            text=formula.predicate.name,
             slot_prefix="predicate",
         ):
             triples.append(
@@ -1412,6 +1427,22 @@ def modal_ir_to_flogic_triples(
                     "object": argument,
                 }
             )
+            for predicate_name, predicate_value in _contextual_modal_cue_components(
+                formula,
+                text=argument,
+                slot_prefix="argument",
+            ):
+                marker = (predicate_name, predicate_value)
+                if marker in argument_modal_entries:
+                    continue
+                argument_modal_entries.add(marker)
+                triples.append(
+                    {
+                        "subject": formula.formula_id,
+                        "predicate": predicate_name,
+                        "object": predicate_value,
+                    }
+                )
             typed_argument = _typed_argument_key_value(argument)
             if typed_argument is None:
                 _append_statutory_scope_triples(

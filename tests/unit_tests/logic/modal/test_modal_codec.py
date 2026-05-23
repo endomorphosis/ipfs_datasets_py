@@ -13062,6 +13062,72 @@ def test_modal_decompiler_and_triples_surface_inflected_bridge_cue_variants() ->
     )
 
 
+def test_modal_decompiler_and_triples_surface_predicate_and_argument_contextual_bridge_slots() -> None:
+    source_id = "us-code-43-1467a-49e61664c350948a"
+    source_text = (
+        "The Secretary must issue refunds on and after October 11, 2000, "
+        "in accordance with section 552, and on or after approval."
+    )
+    formula = ModalIRFormula(
+        formula_id=f"{source_id}:f0001",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(
+            name="must_issue_refunds_on_and_after_effective_dates",
+            arguments=[
+                "scope:in_accordance_with_section_552",
+                "timing:on_or_after_approval",
+            ],
+        ),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="43 U.S.C. 1467a",
+        ),
+        metadata={"cue": "must"},
+    )
+    document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(document)
+
+    assert "temporal:F:on_and_after" in slot_texts["predicate_modal_bridge_signature"]
+    assert "temporal:F:effective_dates" in slot_texts["predicate_modal_bridge_signature"]
+    assert "temporal:F:on_or_after" in slot_texts["argument_modal_bridge_signature"]
+    assert "frame:Frame:in_accordance_with" in slot_texts[
+        "argument_modal_bridge_signature"
+    ]
+    assert "conditional_normative:O|:in_accordance_with" in slot_texts[
+        "argument_modal_bridge_signature"
+    ]
+    assert any(
+        triple["predicate"] == "predicate_modal_bridge_signature"
+        and triple["object"] == "temporal:F:on_and_after"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "argument_modal_bridge_signature"
+        and triple["object"] == "frame:Frame:in_accordance_with"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "argument_modal_bridge_signature"
+        and triple["object"] == "temporal:F:on_or_after"
+        for triple in triples
+    )
+
+
 def test_modal_decompiler_surfaces_metadata_citation_slots_without_formulas() -> None:
     document = ModalIRDocument(
         document_id="metadata-citation-only-doc",
