@@ -200,6 +200,23 @@ _LOW_INFORMATION_SCOPE_LEADING_TOKENS = frozenset(
         "such",
     }
 )
+_STRUCTURAL_FRAME_CUE_TOKENS = frozenset(
+    {
+        "article",
+        "chapter",
+        "clause",
+        "division",
+        "paragraph",
+        "part",
+        "section",
+        "subchapter",
+        "subclause",
+        "subparagraph",
+        "subsection",
+        "subtitle",
+        "title",
+    }
+)
 _CANONICAL_MODAL_OPERATOR_LABELS: Mapping[Tuple[str, str], str] = {
     ("deontic", "O"): "obligation",
     ("deontic", "P"): "permission",
@@ -4502,6 +4519,111 @@ def _contextual_modal_cues_from_text(
     return cues
 
 
+def _structural_frame_cues_from_text(text: str) -> List[str]:
+    normalized_text = _clean_text(text).replace("_", " ").lower()
+    if not normalized_text:
+        return []
+    cues: List[str] = []
+    for token in _CUE_TOKEN_RE.findall(normalized_text):
+        if not token:
+            continue
+        normalized_token = token
+        if normalized_token.endswith("s"):
+            singular = normalized_token[:-1]
+            if singular in _STRUCTURAL_FRAME_CUE_TOKENS:
+                normalized_token = singular
+        if (
+            normalized_token in _STRUCTURAL_FRAME_CUE_TOKENS
+            and normalized_token not in cues
+        ):
+            cues.append(normalized_token)
+    return cues
+
+
+def _refined_cue_bridge_operator_pairs(
+    cue: str,
+) -> List[Tuple[str, str]]:
+    normalized_cue = _clean_text(cue).lower()
+    if not normalized_cue:
+        return []
+    pairs = _cue_bridge_operator_pairs(normalized_cue)
+    if (
+        normalized_cue in _STRUCTURAL_FRAME_CUE_TOKENS
+        and ("frame", "Frame") not in pairs
+    ):
+        pairs.append(("frame", "Frame"))
+    unique_pairs: List[Tuple[str, str]] = []
+    for family, symbol in pairs:
+        normalized_family = _clean_text(family).lower()
+        normalized_symbol = _clean_text(symbol)
+        pair = (normalized_family, normalized_symbol)
+        if not pair[0] or not pair[1] or pair in unique_pairs:
+            continue
+        unique_pairs.append(pair)
+    return unique_pairs
+
+
+def _refined_contextual_modal_cues_from_text(
+    formula: ModalIRFormula,
+    *,
+    text: str,
+) -> List[str]:
+    cues: List[str] = []
+    for cue in _contextual_modal_cues_from_text(formula, text=text):
+        if cue and cue not in cues:
+            cues.append(cue)
+    for cue in _structural_frame_cues_from_text(text):
+        if cue and cue not in cues:
+            cues.append(cue)
+    return cues
+
+
+def _refined_contextual_modal_transition_slots(
+    formula: ModalIRFormula,
+    *,
+    text: str,
+    slot_prefix: str,
+) -> List[Tuple[str, str]]:
+    normalized_slot_prefix = _clean_text(slot_prefix)
+    formula_family = _clean_text(formula.operator.family).lower()
+    formula_symbol = _clean_text(formula.operator.symbol)
+    if not normalized_slot_prefix or not formula_family or not formula_symbol:
+        return []
+    slots: List[Tuple[str, str]] = []
+    for cue in _refined_contextual_modal_cues_from_text(formula, text=text):
+        normalized_cue = _clean_text(cue).lower()
+        if not normalized_cue:
+            continue
+        source_signature = f"{formula_family}:{formula_symbol}:{normalized_cue}"
+        slots.extend(
+            (
+                (f"{normalized_slot_prefix}_refined_modal_cue", normalized_cue),
+                ("refined_modal_cue", normalized_cue),
+                (f"{normalized_slot_prefix}_refined_modal_signature", source_signature),
+                ("refined_modal_signature", source_signature),
+            )
+        )
+        for bridge_family, bridge_symbol in _refined_cue_bridge_operator_pairs(normalized_cue):
+            pair = f"{formula_family}->{bridge_family}"
+            bridge_signature = f"{bridge_family}:{bridge_symbol}:{normalized_cue}"
+            slots.extend(
+                (
+                    (f"{normalized_slot_prefix}_refined_modal_family_pair", pair),
+                    (f"{normalized_slot_prefix}_refined_modal_pair_cue", f"{pair}:{normalized_cue}"),
+                    (
+                        f"{normalized_slot_prefix}_refined_modal_bridge_signature",
+                        bridge_signature,
+                    ),
+                    ("refined_modal_family_pair", pair),
+                    ("refined_modal_pair_cue", f"{pair}:{normalized_cue}"),
+                    ("refined_modal_bridge_signature", bridge_signature),
+                    ("refined_modal_context_slot", normalized_slot_prefix),
+                    ("refined_modal_context_pair", f"{normalized_slot_prefix}:{pair}"),
+                )
+            )
+    return _unique_slot_values(slots)
+
+
 def _contextual_modal_cue_phrases(
     *,
     formula: ModalIRFormula,
@@ -4548,6 +4670,23 @@ def _contextual_modal_cue_phrases(
                     provenance_only=True,
                 )
             )
+    for refined_slot, refined_value in _refined_contextual_modal_transition_slots(
+        formula,
+        text=text,
+        slot_prefix=normalized_slot_prefix,
+    ):
+        marker = (refined_slot, refined_value)
+        if marker in seen:
+            continue
+        seen.add(marker)
+        phrases.append(
+            DecodedModalPhrase(
+                text=refined_value,
+                slot=refined_slot,
+                spans=spans,
+                provenance_only=True,
+            )
+        )
     return phrases
 
 
