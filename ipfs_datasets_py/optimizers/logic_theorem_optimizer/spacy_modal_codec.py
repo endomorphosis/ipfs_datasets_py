@@ -4454,10 +4454,12 @@ def _apply_refined_modal_family_cue_pair_balance(
     deontic_family = ModalLogicFamily.DEONTIC.value
     temporal_family = ModalLogicFamily.TEMPORAL.value
     conditional_family = ModalLogicFamily.CONDITIONAL_NORMATIVE.value
+    frame_family = ModalLogicFamily.FRAME.value
 
     deontic_count = float(counts.get(deontic_family, 0.0))
     temporal_count = float(counts.get(temporal_family, 0.0))
     conditional_count = float(counts.get(conditional_family, 0.0))
+    frame_count = float(counts.get(frame_family, 0.0))
 
     has_deontic_scope = bool(
         signals.get("has_deontic_scope")
@@ -4477,9 +4479,33 @@ def _apply_refined_modal_family_cue_pair_balance(
     has_structural_conditional_scope = bool(
         signals.get("has_condition_or_exception_scope")
     )
+    has_conditional_clause_scope = bool(
+        signals.get("has_condition_clause")
+        or signals.get("has_exception_clause")
+    )
+    has_conditional_scope_token = bool(signals.get("has_conditional_scope_token"))
+    has_conditional_scope_phrase = bool(signals.get("has_conditional_scope_phrase"))
     has_explicit_conditional_scope = _has_explicit_conditional_scope(signals)
     has_statutory_scope_reference = bool(
         signals.get("has_statutory_scope_reference")
+    )
+    has_frame_scope_context = bool(
+        signals.get("has_frame_context")
+        or signals.get("has_frame_scope_phrase")
+        or signals.get("has_frame_editorial_scope_phrase")
+        or signals.get("has_frame_cue")
+        or has_statutory_scope_reference
+    )
+    has_phrase_only_conditional_scope = bool(
+        has_structural_conditional_scope
+        and has_conditional_scope_phrase
+        and not has_conditional_clause_scope
+        and not has_conditional_scope_token
+    )
+    has_non_clause_structural_conditional_scope = bool(
+        has_structural_conditional_scope
+        and not has_conditional_clause_scope
+        and not has_conditional_scope_token
     )
 
     # deontic -> temporal / conditional_normative:
@@ -4507,6 +4533,26 @@ def _apply_refined_modal_family_cue_pair_balance(
         conditional_floor = _scaled_competing_scope_backfill(
             source_count=deontic_count,
             ratio=0.22,
+            minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            maximum=_STATUTORY_GENERIC_FRAME_CONDITIONAL_SCOPE_MAX,
+        )
+        counts[conditional_family] = max(
+            conditional_count,
+            conditional_floor,
+        )
+        conditional_count = float(counts.get(conditional_family, 0.0))
+
+    # deontic -> conditional_normative:
+    # phrase-only statutory scope (e.g., "with respect to") should still register a
+    # conditional runner-up when deontic cues dominate.
+    if (
+        deontic_count > 0.0
+        and has_phrase_only_conditional_scope
+        and has_statutory_scope_reference
+    ):
+        conditional_floor = _scaled_competing_scope_backfill(
+            source_count=deontic_count,
+            ratio=0.2,
             minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
             maximum=_STATUTORY_GENERIC_FRAME_CONDITIONAL_SCOPE_MAX,
         )
@@ -4578,9 +4624,12 @@ def _apply_refined_modal_family_cue_pair_balance(
     if (
         conditional_count > 0.0
         and has_structural_conditional_scope
-        and not has_explicit_conditional_scope
+        and (
+            not has_explicit_conditional_scope
+            or has_non_clause_structural_conditional_scope
+        )
     ):
-        if has_deontic_scope:
+        if has_deontic_scope and conditional_count >= deontic_count:
             deontic_maximum = (
                 _DEONTIC_COMPETING_SCOPE_BACKFILL_MAX
                 if not has_statutory_scope_reference
@@ -4597,7 +4646,11 @@ def _apply_refined_modal_family_cue_pair_balance(
                 deontic_floor,
             )
             deontic_count = float(counts.get(deontic_family, 0.0))
-        if has_temporal_scope and has_strong_temporal_scope:
+        if (
+            has_temporal_scope
+            and has_strong_temporal_scope
+            and conditional_count >= temporal_count
+        ):
             temporal_floor = _scaled_competing_scope_backfill(
                 source_count=conditional_count,
                 ratio=0.24,
@@ -4608,6 +4661,34 @@ def _apply_refined_modal_family_cue_pair_balance(
                 float(counts.get(temporal_family, 0.0)),
                 temporal_floor,
             )
+            temporal_count = float(counts.get(temporal_family, 0.0))
+        if has_frame_scope_context and conditional_count >= frame_count:
+            frame_floor = _scaled_competing_scope_backfill(
+                source_count=conditional_count,
+                ratio=0.24,
+                minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                maximum=_STATUTORY_GENERIC_FRAME_CONDITIONAL_SCOPE_MAX,
+            )
+            counts[frame_family] = max(
+                frame_count,
+                frame_floor,
+            )
+            frame_count = float(counts.get(frame_family, 0.0))
+
+            if (
+                has_statutory_scope_reference
+                and not has_deontic_scope
+                and not has_temporal_scope
+                and conditional_count > frame_count
+            ):
+                conditional_cap = max(
+                    frame_count,
+                    _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                )
+                conditional_overflow = conditional_count - conditional_cap
+                counts[conditional_family] = conditional_cap + (
+                    0.2 * math.log1p(conditional_overflow)
+                )
 
 
 def _apply_competing_deontic_temporal_scope_phrase_reinforcement(
