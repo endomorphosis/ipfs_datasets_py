@@ -12823,6 +12823,62 @@ def test_modal_decompiler_and_triples_surface_temporal_for_purposes_bridge_slots
     )
 
 
+def test_modal_decompiler_and_triples_surface_temporal_after_cross_family_bridge_slots() -> None:
+    source_id = "us-code-42-7385s-359864d4338b98ff"
+    source_text = "After transfer, benefits are paid."
+    formula = ModalIRFormula(
+        formula_id=f"{source_id}:f0001",
+        operator=ModalIROperator(
+            family="temporal",
+            system="ltl",
+            symbol="F",
+            label="eventually",
+        ),
+        predicate=ModalIRPredicate(name="pay_benefits"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="42 U.S.C. 7385s",
+        ),
+        conditions=["after transfer"],
+        metadata={"cue": "after"},
+    )
+    document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(document)
+
+    assert "after" in slot_texts["condition_prefix_key"]
+    assert "after" in slot_texts["condition_prefix_temporal_relation"]
+    assert "temporal:X:after" in slot_texts["condition_modal_bridge_signature"]
+    assert "conditional_normative:O|:after" in slot_texts[
+        "condition_modal_bridge_signature"
+    ]
+    assert "dynamic:[a]:after" in slot_texts["condition_modal_bridge_signature"]
+    assert "temporal->temporal" in slot_texts["condition_modal_bridge_family_pair"]
+    assert "temporal->conditional_normative" in slot_texts[
+        "condition_modal_bridge_family_pair"
+    ]
+    assert "temporal->dynamic" in slot_texts["condition_modal_bridge_family_pair"]
+    assert any(
+        triple["predicate"] == "condition_modal_bridge_signature"
+        and triple["object"] == "conditional_normative:O|:after"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "condition_modal_bridge_signature"
+        and triple["object"] == "dynamic:[a]:after"
+        for triple in triples
+    )
+
+
 def test_modal_decompiler_and_triples_surface_subject_to_frame_and_scope_bridge_slots() -> None:
     source_id = "us-code-6-314-a0a9a6dc41d25a7f"
     source_text = (

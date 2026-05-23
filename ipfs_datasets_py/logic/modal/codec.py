@@ -116,6 +116,7 @@ _EXCEPTION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("except", "except"),
 )
 _TEMPORAL_CLAUSE_PREFIX_RELATIONS: dict[str, str] = {
+    "when": "when",
     "until": "until",
     "after": "after",
     "before": "before",
@@ -353,6 +354,41 @@ _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...
     "with_respect_to": (
         ("conditional_normative", "O|"),
         ("frame", "Frame"),
+    ),
+    "when": (
+        ("conditional_normative", "O|"),
+        ("temporal", "X"),
+    ),
+    "until": (
+        ("conditional_normative", "O|"),
+        ("temporal", "G"),
+    ),
+    "after": (
+        ("conditional_normative", "O|"),
+        ("temporal", "X"),
+        ("dynamic", "[a]"),
+    ),
+    "before": (
+        ("conditional_normative", "O|"),
+        ("temporal", "X"),
+        ("dynamic", "[a]"),
+    ),
+    "upon": (
+        ("conditional_normative", "O|"),
+        ("temporal", "X"),
+        ("dynamic", "[a]"),
+    ),
+    "by": (
+        ("conditional_normative", "O|"),
+        ("temporal", "F"),
+    ),
+    "no_later_than": (
+        ("conditional_normative", "O|"),
+        ("temporal", "F"),
+    ),
+    "not_later_than": (
+        ("conditional_normative", "O|"),
+        ("temporal", "F"),
     ),
     "shall": (("deontic", "O"),),
     "must": (("deontic", "O"),),
