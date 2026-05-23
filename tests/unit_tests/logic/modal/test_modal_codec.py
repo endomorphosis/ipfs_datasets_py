@@ -13094,6 +13094,57 @@ def test_modal_decompiler_and_triples_surface_in_accordance_with_bridge_slots() 
     )
 
 
+def test_modal_decompiler_and_triples_surface_as_described_in_bridge_slots() -> None:
+    source_id = "us-code-5-552-as-described-bridge"
+    source_text = "The agency shall comply as described in section 552(a)(1)."
+    formula = ModalIRFormula(
+        formula_id=f"{source_id}:f0001",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="shall_comply"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="5 U.S.C. 552",
+        ),
+        conditions=["as described in section 552(a)(1)"],
+        metadata={"cue": "shall"},
+    )
+    document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(document)
+
+    assert "as_described_in" in slot_texts["condition_prefix_key"]
+    assert "section 552(a)(1)" in slot_texts["condition_scope"]
+    assert "as_described_in" in slot_texts["bridge_cue"]
+    assert "conditional_normative:O|:as_described_in" in slot_texts[
+        "condition_modal_bridge_signature"
+    ]
+    assert "frame:Frame:as_described_in" in slot_texts["condition_modal_bridge_signature"]
+    assert any(
+        triple["predicate"] == "condition_modal_bridge_signature"
+        and triple["object"] == "conditional_normative:O|:as_described_in"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "condition_modal_bridge_signature"
+        and triple["object"] == "frame:Frame:as_described_in"
+        for triple in triples
+    )
+
+
 def test_modal_decompiler_and_triples_surface_authority_and_required_bridge_cues() -> None:
     source_id = "us-code-16-580f-d159c17cca2fb07b"
     source_text = (
@@ -14030,6 +14081,30 @@ def test_modal_decompiler_and_triples_surface_editorial_fallback_slots() -> None
     assert any(
         triple["predicate"] == "status_keyword_token_count"
         and triple["object"] == "1"
+        for triple in triples
+    )
+
+
+def test_modal_decompiler_normalizes_secs_status_fallback_surface_text() -> None:
+    compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
+    compiled = compiler.compile(
+        "Secs. 435, 436 - Repealed.",
+        document_id="us-code-2-435-range-fallback",
+        citation="2 U.S.C. 435",
+        source="us_code",
+    )
+
+    decoded = decode_modal_ir_document(compiled.modal_ir)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(compiled.modal_ir)
+
+    assert slot_texts["status_keyword"] == ["repealed"]
+    assert len(slot_texts["fallback_surface_text"]) == 1
+    assert slot_texts["fallback_surface_text"][0].lower() == "repealed"
+    assert "436" not in slot_texts["fallback_surface_text"][0]
+    assert any(
+        triple["predicate"] == "fallback_surface_text"
+        and triple["object"].lower() == "repealed"
         for triple in triples
     )
 

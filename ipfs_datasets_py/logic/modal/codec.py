@@ -91,8 +91,17 @@ _CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("for the purposes of", "for_the_purposes_of"),
     ("for purposes of", "for_purposes_of"),
     ("with respect to", "with_respect_to"),
+    ("as otherwise provided in", "as_otherwise_provided_in"),
+    ("as set forth in", "as_set_forth_in"),
+    ("as described in", "as_described_in"),
+    ("as defined in", "as_defined_in"),
     ("in accordance with", "in_accordance_with"),
     ("as provided in", "as_provided_in"),
+    ("referred to in", "referred_to_in"),
+    ("described in", "described_in"),
+    ("defined in", "defined_in"),
+    ("pursuant to", "pursuant_to"),
+    ("to the extent", "to_the_extent"),
     ("to the extent provided", "to_the_extent_provided"),
     ("not later than", "not_later_than"),
     ("no later than", "no_later_than"),
@@ -138,6 +147,11 @@ _USCODE_SOURCE_ID_RE = re.compile(
 _TRAILING_SECTION_PUNCT_RE = re.compile(r"[.;:]+$")
 _CITATION_SECTION_COMPONENT_SPLIT_RE = re.compile(r"[.\-]+")
 _CITATION_SECTION_DELIMITER_RE = re.compile(r"[.\-]+")
+_USCODE_SECTION_TOKEN_PATTERN = r"\d[0-9A-Za-z.\-]*(?:\([^)]+\))*"
+_USCODE_SECTION_LIST_PATTERN = (
+    rf"{_USCODE_SECTION_TOKEN_PATTERN}"
+    rf"(?:\s*(?:,|and|or|to|through|thru)\s*{_USCODE_SECTION_TOKEN_PATTERN})*"
+)
 _CITATION_SECTION_RANGE_RE = re.compile(
     r"^\s*(?P<start>[0-9A-Za-z.\-]+)\s+"
     r"(?P<connector>to|through|thru)\s+"
@@ -148,16 +162,19 @@ _CITATION_SECTION_PART_RE = re.compile(
     r"^(?P<number>\d+)(?P<suffix>[A-Za-z]+)?$"
 )
 _USCODE_LEADING_SECTION_REF_RE = re.compile(
-    r"^\s*(?:(?:§\s*|sec\.?\s*|section\s+)\d[0-9A-Za-z.\-]*(?:\([^)]+\))*|\d[0-9A-Za-z.\-]*(?:\([^)]+\))*)\s*(?:[.:\-–—]+)?\s*",
+    rf"^\s*(?:(?:§{{1,2}}\s*|secs?\.?\s*|sections?\s+){_USCODE_SECTION_LIST_PATTERN}|{_USCODE_SECTION_TOKEN_PATTERN})\s*(?:[.:\-–—]+)?\s*",
     re.IGNORECASE,
 )
 _USCODE_STATUS_LEADING_SECTION_LABEL_RE = re.compile(
-    r"^\s*(?:(?:this|such)\s+)?(?:sections?|sec\.?)\b\s*[,.:;\-–—]*\s*",
+    r"^\s*(?:(?:this|such)\s+)?(?:sections?|secs?\.?)\b\s*[,.:;\-–—]*\s*",
+    re.IGNORECASE,
+)
+_USCODE_STATUS_LEADING_SECTION_NUMBERS_RE = re.compile(
+    rf"^\s*[,.:;\-–—]*\s*(?:{_USCODE_SECTION_LIST_PATTERN})\s*[,.:;\-–—]*\s*",
     re.IGNORECASE,
 )
 _USCODE_INLINE_SECTION_REF_RE = re.compile(
-    r"(?<!\w)(?:§{1,2}\s*|sec\.?\s*|section\s+)"
-    r"\d[0-9A-Za-z.\-]*(?:\([^)]+\))*",
+    rf"(?<!\w)(?:§{{1,2}}\s*|secs?\.?\s*|sections?\s+){_USCODE_SECTION_LIST_PATTERN}",
     re.IGNORECASE,
 )
 _USCODE_GPO_ATTRIBUTION_RE = re.compile(
@@ -329,12 +346,45 @@ _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...
         ("conditional_normative", "O|"),
         ("deontic", "O"),
     ),
+    "to_the_extent": (("conditional_normative", "O|"),),
     "to_the_extent_provided": (("conditional_normative", "O|"),),
     "in_accordance_with": (
         ("conditional_normative", "O|"),
         ("frame", "Frame"),
     ),
+    "as_otherwise_provided_in": (
+        ("conditional_normative", "O|"),
+        ("frame", "Frame"),
+    ),
     "as_provided_in": (
+        ("conditional_normative", "O|"),
+        ("frame", "Frame"),
+    ),
+    "as_set_forth_in": (
+        ("conditional_normative", "O|"),
+        ("frame", "Frame"),
+    ),
+    "as_described_in": (
+        ("conditional_normative", "O|"),
+        ("frame", "Frame"),
+    ),
+    "as_defined_in": (
+        ("conditional_normative", "O|"),
+        ("frame", "Frame"),
+    ),
+    "referred_to_in": (
+        ("conditional_normative", "O|"),
+        ("frame", "Frame"),
+    ),
+    "described_in": (
+        ("conditional_normative", "O|"),
+        ("frame", "Frame"),
+    ),
+    "defined_in": (
+        ("conditional_normative", "O|"),
+        ("frame", "Frame"),
+    ),
+    "pursuant_to": (
         ("conditional_normative", "O|"),
         ("frame", "Frame"),
     ),
@@ -6205,6 +6255,9 @@ def _status_heading_surface_text(text: str, *, status_keyword: str) -> str:
     if not lowered_text.startswith(normalized_keyword):
         stripped_text = _clean_non_empty_string(
             _USCODE_STATUS_LEADING_SECTION_LABEL_RE.sub("", normalized_text, count=1)
+        )
+        stripped_text = _clean_non_empty_string(
+            _USCODE_STATUS_LEADING_SECTION_NUMBERS_RE.sub("", stripped_text, count=1)
         )
         lowered_stripped_text = stripped_text.lower()
         if not stripped_text or not lowered_stripped_text.startswith(normalized_keyword):
