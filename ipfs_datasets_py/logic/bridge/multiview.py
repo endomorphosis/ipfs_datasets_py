@@ -32,7 +32,8 @@ _BRIDGE_CONTRACT_DENSE_LANE_CAPS = {
     "zkp.circuits": 0.18,
 }
 _BRIDGE_CONTRACT_CONDITIONAL_CUE_RE = re.compile(
-    r"\b(?:if|provided\s+that|unless|subject\s+to|with\s+respect\s+to)\b",
+    r"\b(?:if|provided\s+that|unless|subject\s+to|with\s+respect\s+to|"
+    r"in\s+accordance\s+with|pursuant\s+to|for\s+each|for\s+every)\b",
     flags=re.IGNORECASE,
 )
 _BRIDGE_CONTRACT_FOR_PURPOSES_CUE_RE = re.compile(
@@ -116,6 +117,11 @@ _BRIDGE_CONTRACT_STATUTE_SCAFFOLD_CUE_RE = re.compile(
     r"\b(?:united\s+states\s+code|u\.s\.\s+government\s+publishing\s+office|"
     r"historical\s+and\s+revision\s+notes|statutory\s+notes(?:\s+and\s+related\s+subsidiaries)?|"
     r"amendments?|codification|effective\s+date|references\s+in\s+text)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_GOVERNANCE_CROSS_REFERENCE_CUE_RE = re.compile(
+    r"\b(?:in\s+accordance\s+with|pursuant\s+to|with\s+respect\s+to|subject\s+to)\s+"
+    r"(?:this\s+(?:section|chapter|subchapter|part)|title\s+\d+[a-z0-9\-]*)\b",
     flags=re.IGNORECASE,
 )
 
@@ -895,6 +901,24 @@ def _rebalance_dense_contract_distribution(
     has_dense_statute_scaffold = (
         statute_scaffold_cue_count > 0 and structural_frame_cue_count >= 2
     )
+    has_governance_cross_reference_cue = bool(
+        _BRIDGE_CONTRACT_GOVERNANCE_CROSS_REFERENCE_CUE_RE.search(normalized_text)
+    )
+    if (
+        has_governance_cross_reference_cue
+        and has_structural_only_frame_cue
+        and has_deontic_cue
+        and has_conditional_cue
+        and not has_temporal_cue
+        and not has_dense_statute_scaffold
+    ):
+        # Treat governance cross-references as normative conditionals rather than
+        # standalone structural/frame evidence.
+        has_structural_frame_cue = False
+        has_structural_only_frame_cue = False
+        has_frame_cue = (
+            has_frame_definition_cue or has_authority_frame_cue or has_enforcement_frame_cue
+        )
     has_temporal_priority_without_normative_cue = (
         has_temporal_cue
         and not has_deontic_cue

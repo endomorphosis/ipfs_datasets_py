@@ -2088,6 +2088,62 @@ def test_dense_contract_rebalance_keeps_deontic_lane_for_scaffolded_conditional_
     assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
 
 
+def test_dense_contract_rebalance_treats_governance_cross_reference_as_conditional_normative() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_dense_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.24,
+        "TDFOL.prover": 0.22,
+        "deontic.ir": 0.19,
+        "knowledge_graphs.neo4j_compat": 0.18,
+        "zkp.circuits": 0.17,
+    }
+
+    rebalanced = _rebalance_dense_contract_distribution(
+        distribution,
+        text=(
+            "Foreign Claims Settlement Commission of the United States is authorized "
+            "to appoint officers and employees in accordance with title 5."
+        ),
+    )
+
+    assert rebalanced["deontic.ir"] >= 0.30
+    assert rebalanced["deontic.ir"] > rebalanced["CEC.native"]
+    assert rebalanced["knowledge_graphs.neo4j_compat"] <= 0.14
+    assert rebalanced["zkp.circuits"] <= 0.13
+    assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
+
+
+def test_dense_contract_rebalance_treats_for_each_quantifier_as_conditional_normative() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_dense_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.24,
+        "TDFOL.prover": 0.22,
+        "deontic.ir": 0.19,
+        "knowledge_graphs.neo4j_compat": 0.18,
+        "zkp.circuits": 0.17,
+    }
+
+    rebalanced = _rebalance_dense_contract_distribution(
+        distribution,
+        text=(
+            "For each individual whose illness serves as the basis for compensation, "
+            "the total amount paid under this part shall not exceed the statutory cap."
+        ),
+    )
+
+    assert rebalanced["deontic.ir"] >= 0.33
+    assert rebalanced["deontic.ir"] > rebalanced["CEC.native"]
+    assert rebalanced["knowledge_graphs.neo4j_compat"] <= 0.14
+    assert rebalanced["zkp.circuits"] <= 0.15
+    assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
+
+
 def test_dense_contract_rebalance_separates_scaffolded_temporal_conditionals() -> None:
     from ipfs_datasets_py.logic.bridge.multiview import (
         _rebalance_dense_contract_distribution,
