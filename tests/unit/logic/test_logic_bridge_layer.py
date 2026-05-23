@@ -2241,6 +2241,63 @@ def test_dense_contract_rebalance_prioritizes_temporal_lane_for_repealed_scaffol
     assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
 
 
+def test_dense_contract_rebalance_treats_repealed_legislative_history_as_frame_signal() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_dense_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.24,
+        "TDFOL.prover": 0.22,
+        "deontic.ir": 0.19,
+        "knowledge_graphs.neo4j_compat": 0.18,
+        "zkp.circuits": 0.17,
+    }
+
+    rebalanced = _rebalance_dense_contract_distribution(
+        distribution,
+        text=(
+            "U.S.C. Title 23 - HIGHWAYS CHAPTER 2 - OTHER HIGHWAYS Sec. 211 - "
+            "Repealed. Pub. L. 100-17, title I, section 133(e)(1), Apr. 2, 1987. "
+            "Section, Pub. L. 85-767, Aug. 27, 1958, related to timber access road hearings."
+        ),
+    )
+
+    assert rebalanced["CEC.native"] >= 0.24
+    assert rebalanced["knowledge_graphs.neo4j_compat"] >= 0.21
+    assert rebalanced["TDFOL.prover"] <= 0.20
+    assert rebalanced["deontic.ir"] <= 0.205
+    assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
+
+
+def test_dense_contract_rebalance_treats_prior_to_archival_notes_as_temporal_signal() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_dense_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.24,
+        "TDFOL.prover": 0.22,
+        "deontic.ir": 0.19,
+        "knowledge_graphs.neo4j_compat": 0.18,
+        "zkp.circuits": 0.17,
+    }
+
+    rebalanced = _rebalance_dense_contract_distribution(
+        distribution,
+        text=(
+            "Section 42. Transferred Editorial Notes Codification. Section was "
+            "formerly classified to section 536 of title 18 prior to the general "
+            "revision and enactment of title 18, by act June 25, 1948."
+        ),
+    )
+
+    assert rebalanced["TDFOL.prover"] >= 0.30
+    assert rebalanced["deontic.ir"] <= 0.16
+    assert rebalanced["TDFOL.prover"] > rebalanced["CEC.native"]
+    assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
+
+
 def test_dense_contract_rebalance_treats_authorized_empowered_discretion_as_frame_signal() -> None:
     from ipfs_datasets_py.logic.bridge.multiview import (
         _rebalance_dense_contract_distribution,

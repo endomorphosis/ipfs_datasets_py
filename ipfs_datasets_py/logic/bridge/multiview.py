@@ -65,6 +65,10 @@ _BRIDGE_CONTRACT_MONTH_TEMPORAL_CUE_RE = re.compile(
     r"dec(?:ember)?)\b",
     flags=re.IGNORECASE,
 )
+_BRIDGE_CONTRACT_PRIOR_TO_TEMPORAL_CUE_RE = re.compile(
+    r"\bprior\s+to\b",
+    flags=re.IGNORECASE,
+)
 _BRIDGE_CONTRACT_BY_DATE_TEMPORAL_CUE_RE = re.compile(
     r"\bby\s+(?:"
     r"(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|"
@@ -78,7 +82,12 @@ _BRIDGE_CONTRACT_BY_DATE_TEMPORAL_CUE_RE = re.compile(
     flags=re.IGNORECASE,
 )
 _BRIDGE_CONTRACT_REPEAL_TEMPORAL_CUE_RE = re.compile(
-    r"\b(?:repeal(?:ed|s|ing)?|sunset(?:ted|s)?|terminate(?:d|s|ion)?|expired|expiration)\b",
+    r"\b(?:repeal(?:ed|s|ing)?|sunset(?:ted|s)?|terminate(?:d|s|ion)?|expired|expiration|"
+    r"supersed(?:e|ed|es|ing))\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_LEGISLATIVE_HISTORY_CUE_RE = re.compile(
+    r"pub\.\s*l\.",
     flags=re.IGNORECASE,
 )
 _BRIDGE_CONTRACT_FRAME_DEFINITION_CUE_RE = re.compile(
@@ -131,6 +140,10 @@ _BRIDGE_CONTRACT_STATUTE_SCAFFOLD_CUE_RE = re.compile(
 _BRIDGE_CONTRACT_GOVERNANCE_CROSS_REFERENCE_CUE_RE = re.compile(
     r"\b(?:in\s+accordance\s+with|pursuant\s+to|with\s+respect\s+to|subject\s+to)\s+"
     r"(?:this\s+(?:section|chapter|subchapter|part)|title\s+\d+[a-z0-9\-]*)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_MAY_DATE_SUFFIX_RE = re.compile(
+    r"^\s+\d{1,2}(?:st|nd|rd|th)?(?:,\s*\d{4})?\b",
     flags=re.IGNORECASE,
 )
 
@@ -835,8 +848,11 @@ def _rebalance_dense_contract_distribution(
     )
     conditional_cue_count += for_purposes_cue_count
     conditional_cue_count += provided_for_cue_count
-    deontic_cue_count = _cue_count(_BRIDGE_CONTRACT_DEONTIC_CUE_RE, normalized_text)
-    permission_deontic_cue_count = _cue_count(
+    deontic_cue_count = _contextual_modal_cue_count(
+        _BRIDGE_CONTRACT_DEONTIC_CUE_RE,
+        normalized_text,
+    )
+    permission_deontic_cue_count = _contextual_modal_cue_count(
         _BRIDGE_CONTRACT_PERMISSION_DEONTIC_CUE_RE,
         normalized_text,
     )
@@ -853,6 +869,10 @@ def _rebalance_dense_contract_distribution(
         _BRIDGE_CONTRACT_MONTH_TEMPORAL_CUE_RE,
         normalized_text,
     )
+    prior_to_temporal_cue_count = _cue_count(
+        _BRIDGE_CONTRACT_PRIOR_TO_TEMPORAL_CUE_RE,
+        normalized_text,
+    )
     by_date_temporal_cue_count = _cue_count(
         _BRIDGE_CONTRACT_BY_DATE_TEMPORAL_CUE_RE,
         normalized_text,
@@ -863,10 +883,12 @@ def _rebalance_dense_contract_distribution(
     )
     temporal_cue_count += strong_temporal_cue_count
     temporal_cue_count += month_temporal_cue_count
+    temporal_cue_count += prior_to_temporal_cue_count
     temporal_cue_count += by_date_temporal_cue_count
     temporal_cue_count += repeal_temporal_cue_count
     strong_temporal_cue_count += by_date_temporal_cue_count
     strong_temporal_cue_count += repeal_temporal_cue_count
+    strong_temporal_cue_count += prior_to_temporal_cue_count
     structural_frame_cue_count = _cue_count(
         _BRIDGE_CONTRACT_STRUCTURAL_FRAME_CUE_RE,
         normalized_text,
@@ -941,6 +963,18 @@ def _rebalance_dense_contract_distribution(
             or has_explicit_temporal_deadline_cue
         )
     )
+    legislative_history_cue_count = _cue_count(
+        _BRIDGE_CONTRACT_LEGISLATIVE_HISTORY_CUE_RE,
+        normalized_text,
+    )
+    has_repealed_history_frame_cue = (
+        repeal_temporal_cue_count > 0
+        and legislative_history_cue_count >= 2
+        and has_structural_only_frame_cue
+        and not has_deontic_cue
+    )
+    if has_repealed_history_frame_cue:
+        has_temporal_priority_without_normative_cue = False
     has_permission_only_deontic_signal = (
         has_deontic_cue
         and permission_deontic_cue_count > 0
@@ -1366,6 +1400,21 @@ def _payload_signal_values(payload: Mapping[str, Any]) -> list[float]:
 
 def _cue_count(pattern: re.Pattern[str], text: str) -> int:
     return sum(1 for _ in pattern.finditer(text))
+
+
+def _contextual_modal_cue_count(pattern: re.Pattern[str], text: str) -> int:
+    """Count modal lexical cues while filtering date-month uses of ``may``."""
+
+    count = 0
+    for match in pattern.finditer(text):
+        token = match.group(0).strip().lower()
+        if token != "may":
+            count += 1
+            continue
+        if _BRIDGE_CONTRACT_MAY_DATE_SUFFIX_RE.match(text[match.end() :]):
+            continue
+        count += 1
+    return count
 
 
 def _float_or_zero(value: Any) -> float:
