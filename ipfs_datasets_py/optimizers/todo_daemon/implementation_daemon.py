@@ -1151,14 +1151,6 @@ class PortalImplementationDaemon:
                         parent_relative=full_relative,
                     )
                 continue
-            self._run_git(["submodule", "update", "--init", "--recursive", "--", relative], cwd=worktree_path)
-            target = worktree_path / relative
-            if self._is_git_worktree(target):
-                self._initialize_nested_worktree_submodules(
-                    target,
-                    branch_name=branch_name,
-                    parent_relative=full_relative,
-                )
 
     def _create_local_submodule_worktree(
         self,
