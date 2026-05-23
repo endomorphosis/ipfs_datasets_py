@@ -2682,6 +2682,35 @@ def test_spacy_refined_pair_balance_reinforces_conditional_for_phrase_only_statu
     assert counts["conditional_normative"] >= 0.4
 
 
+def test_spacy_refined_pair_balance_skips_purpose_only_conditional_reinforcement_for_explicit_deontic_scope() -> None:
+    counts = {
+        "deontic": 2.0,
+        "conditional_normative": 0.04,
+    }
+    signals = {
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": False,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": True,
+        "has_conditional_scope_token": False,
+        "has_purpose_scope_phrase": True,
+        "has_statutory_scope_reference": True,
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": True,
+        "has_deontic_cue": True,
+        "has_temporal_scope": False,
+        "has_temporal_scope_phrase": False,
+        "has_temporal_scope_token": False,
+        "has_temporal_within_scope": False,
+        "has_temporal_status_scope": False,
+        "has_calendar_date_scope": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["conditional_normative"] == pytest.approx(0.04)
+
+
 def test_spacy_refined_pair_balance_caps_non_deadline_temporal_pressure_against_explicit_deontic_scope() -> None:
     counts = {
         "temporal": 2.0,
@@ -4440,6 +4469,25 @@ def test_spacy_encoder_extracts_conditional_scope_cues_from_statutory_phrases() 
     assert any(
         cue.family == "conditional_normative"
         and cue.cue.lower() == "for purposes of"
+        for cue in encoding.cues
+    )
+    signals = modal_ambiguity_signals(encoding)
+    assert signals["has_purpose_scope_phrase"] is True
+
+
+def test_spacy_encoder_extracts_dynamic_transfer_and_vesting_cues() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        (
+            "There are transferred to and vested in the Secretary all functions "
+            "relating to administration."
+        ),
+        document_id="sample-dynamic-transfer-vesting",
+    )
+
+    assert any(
+        cue.family == "dynamic"
+        and cue.cue.lower() == "transferred to and vested in"
         for cue in encoding.cues
     )
 

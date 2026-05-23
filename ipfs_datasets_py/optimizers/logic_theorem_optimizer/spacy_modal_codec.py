@@ -77,6 +77,10 @@ _CONDITIONAL_SCOPE_PHRASES = (
     "insofar as",
     "insofar as practicable",
 )
+_PURPOSE_SCOPE_PHRASES = (
+    "for purposes of",
+    "for the purposes of",
+)
 _STATUTORY_SCOPE_REFERENCE_PHRASES = (
     "as provided by",
     "as provided in",
@@ -374,6 +378,7 @@ _DYNAMIC_SCOPE_PHRASES = (
     "after filing",
     "after service",
     "after transfer",
+    "transferred to and vested in",
     "upon filing",
     "upon service",
     "upon transfer",
@@ -4488,6 +4493,7 @@ def _apply_refined_modal_family_cue_pair_balance(
     )
     has_conditional_scope_token = bool(signals.get("has_conditional_scope_token"))
     has_conditional_scope_phrase = bool(signals.get("has_conditional_scope_phrase"))
+    has_purpose_scope_phrase = bool(signals.get("has_purpose_scope_phrase"))
     has_explicit_conditional_scope = _has_explicit_conditional_scope(signals)
     has_statutory_scope_reference = bool(
         signals.get("has_statutory_scope_reference")
@@ -4552,6 +4558,11 @@ def _apply_refined_modal_family_cue_pair_balance(
         deontic_count > 0.0
         and has_phrase_only_conditional_scope
         and has_statutory_scope_reference
+        and not (
+            has_purpose_scope_phrase
+            and has_explicit_deontic_scope
+            and not has_temporal_scope
+        )
     ):
         conditional_floor = _scaled_competing_scope_backfill(
             source_count=deontic_count,
@@ -4997,6 +5008,15 @@ def _scope_signal_family_logit_boosts(signals: Mapping[str, bool]) -> Dict[str, 
                 or bool(signals.get("has_deontic_cue"))
             ):
                 deontic_bonus += 0.2
+        if (
+            bool(signals.get("has_purpose_scope_phrase"))
+            and bool(
+                signals.get("has_deontic_scope_phrase")
+                or signals.get("has_deontic_cue")
+            )
+            and not bool(signals.get("has_temporal_scope"))
+        ):
+            deontic_bonus += 0.1
         boosts[ModalLogicFamily.DEONTIC.value] = deontic_bonus
     temporal_bonus = 0.0
     if bool(signals.get("has_temporal_scope")):
@@ -5109,6 +5129,9 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
     conditional_scope_phrase = _contains_scope_phrase(
         normalized_text, _CONDITIONAL_SCOPE_PHRASES
     )
+    purpose_scope_phrase = _contains_scope_phrase(
+        normalized_text, _PURPOSE_SCOPE_PHRASES
+    )
     statutory_scope_reference = _contains_scope_phrase(
         normalized_text, _STATUTORY_SCOPE_REFERENCE_PHRASES
     )
@@ -5200,6 +5223,7 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         "has_condition_clause": condition_clauses,
         "has_conditional_scope_token": conditional_scope_token,
         "has_conditional_scope_phrase": conditional_scope_phrase,
+        "has_purpose_scope_phrase": purpose_scope_phrase,
         "has_statutory_scope_reference": statutory_scope_reference,
         "has_exception_clause": exception_clauses,
         "has_condition_or_exception_scope": (
