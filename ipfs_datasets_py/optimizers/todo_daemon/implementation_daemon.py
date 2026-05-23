@@ -46,7 +46,7 @@ RECENT_NO_CHANGE_COOLDOWN_SECONDS = 1800.0
 NO_CHANGE_SELECTION_PENALTY = 50
 UNRESOLVED_MERGE_SELECTION_PENALTY = 1000
 SHARED_WORKTREE_PATHS = ("wallet_interface/ui/node_modules",)
-WORKTREE_SUBMODULE_PATHS = ("ipfs_datasets_py",)
+WORKTREE_SUBMODULE_PATHS = ("ipfs_datasets_py", "swissknife")
 EPHEMERAL_WORKTREE_PATHS = (
     *SHARED_WORKTREE_PATHS,
     ".pytest_cache",
@@ -69,6 +69,7 @@ GENERATED_WORKTREE_DIR_NAMES = {
 }
 GENERATED_WORKTREE_SUFFIXES = (".pyc", ".pyo")
 UNTRACKED_WORKTREE_CONTEXT_PREFIXES = (
+    ".gitmodules",
     "docs/",
     "implementation_plan/",
     "scripts/",
@@ -464,8 +465,9 @@ class PortalImplementationDaemon:
         previous = PortalTaskState.load(self.state_path)
         strategy = self.load_strategy()
         now = utc_now()
-        merge_reconciliation = self._reconcile_failed_merges()
-        unresolved_merge_failures = self._unresolved_merge_failures_by_task()
+        status_completed_task_ids = {task.task_id for task in tasks if task.status == "completed"}
+        merge_reconciliation = self._reconcile_failed_merges(skip_task_ids=status_completed_task_ids)
+        unresolved_merge_failures = self._unresolved_merge_failures_by_task(skip_task_ids=status_completed_task_ids)
         recent_outcomes = self._latest_implementation_finished_by_task()
         successfully_merged_task_ids = self._successfully_merged_task_ids()
         live_inflight_implementation = self._find_live_inflight_implementation()
@@ -686,6 +688,7 @@ class PortalImplementationDaemon:
             "results": [],
             "reason": "not_run",
         }
+        todo_update_result: dict[str, Any] = {}
 
         try:
             self._write_lock_metadata(lock_fd, lock_metadata)
@@ -740,6 +743,8 @@ class PortalImplementationDaemon:
                 validation_result = self._run_validation_commands(workspace_path, task, log_path)
                 if not validation_result.get("passed", False):
                     effective_returncode = int(validation_result.get("returncode") or 1)
+            if effective_returncode == 0:
+                todo_update_result = self._mark_task_completed_in_todo(task.task_id)
             finished_at = utc_now()
             state.implementation_attempts[task.task_id] = attempt
             state.last_implementation_task_id = task.task_id
@@ -756,6 +761,8 @@ class PortalImplementationDaemon:
                 "log_path": str(log_path),
                 "validation_result": validation_result,
             }
+            if todo_update_result:
+                result["todo_update_result"] = todo_update_result
             self._record_event("implementation_finished", result)
             return result
         except subprocess.TimeoutExpired:
@@ -783,6 +790,56 @@ class PortalImplementationDaemon:
                     lock_path.unlink()
             except OSError:
                 logger.warning("Failed to remove implementation lock %s", lock_path)
+
+    def _mark_task_completed_in_todo(self, task_id: str) -> dict[str, Any]:
+        todo_path = self.todo_path
+        try:
+            lines = todo_path.read_text(encoding="utf-8").splitlines(keepends=True)
+        except OSError as exc:
+            result = {"updated": False, "task_id": task_id, "reason": "read_failed", "error": str(exc)}
+            self._record_event("todo_status_update_failed", result)
+            return result
+
+        heading = f"## {task_id}"
+        in_task = False
+        status_index: int | None = None
+        for index, line in enumerate(lines):
+            if line.startswith(self.task_header_prefix):
+                if in_task:
+                    break
+                in_task = line.startswith(heading)
+                continue
+            if in_task and line.startswith("- Status:"):
+                status_index = index
+                break
+
+        if status_index is None:
+            result = {"updated": False, "task_id": task_id, "reason": "status_line_missing"}
+            self._record_event("todo_status_update_failed", result)
+            return result
+
+        current = lines[status_index].split(":", 1)[1].strip()
+        if normalize_status(current) == "completed":
+            return {"updated": False, "task_id": task_id, "reason": "already_completed"}
+
+        newline = "\n" if lines[status_index].endswith("\n") else ""
+        lines[status_index] = "- Status: completed" + newline
+        tmp_path = todo_path.with_name(f".{todo_path.name}.tmp")
+        try:
+            tmp_path.write_text("".join(lines), encoding="utf-8")
+            os.replace(tmp_path, todo_path)
+        except OSError as exc:
+            try:
+                tmp_path.unlink()
+            except OSError:
+                pass
+            result = {"updated": False, "task_id": task_id, "reason": "write_failed", "error": str(exc)}
+            self._record_event("todo_status_update_failed", result)
+            return result
+
+        result = {"updated": True, "task_id": task_id, "path": str(todo_path)}
+        self._record_event("todo_status_updated", result)
+        return result
 
     def _run_implementation_in_ephemeral_worktree(
         self,
@@ -815,6 +872,7 @@ class PortalImplementationDaemon:
         returncode = 1
         commit_result: dict[str, Any] = {"committed": False}
         failed_preservation_result: dict[str, Any] = {}
+        todo_update_result: dict[str, Any] = {}
 
         try:
             baseline_ref = self._create_seeded_worktree(worktree_path, branch_name, task=task)
@@ -928,6 +986,8 @@ class PortalImplementationDaemon:
             int(merge_result["returncode"]) if merge_result.get("returncode") is not None else None
         )
         state.last_merge_error = str(merge_result.get("stderr") or merge_result.get("reason") or "")
+        if returncode == 0:
+            todo_update_result = self._mark_task_completed_in_todo(task.task_id)
         self._mark_implementation_finished(state, finished_at=finished_at)
         state.save(self.state_path)
         result = {
@@ -945,6 +1005,8 @@ class PortalImplementationDaemon:
             "cleanup_result": cleanup_result,
             "failed_preservation_result": failed_preservation_result,
         }
+        if todo_update_result:
+            result["todo_update_result"] = todo_update_result
         self._record_event("implementation_finished", result)
         return result
 
@@ -1040,14 +1102,14 @@ class PortalImplementationDaemon:
         baseline_ref = self._run_git(["rev-parse", "HEAD"], cwd=worktree_path).stdout.strip()
         self._initialize_worktree_submodules(worktree_path, branch_name=branch_name)
         self._link_shared_worktree_paths(worktree_path)
-        self._seed_untracked_worktree_context(worktree_path, task=task)
+        self._seed_untracked_worktree_context(worktree_path, task=task, overwrite_existing=True)
         return baseline_ref
 
     def _initialize_worktree_submodules(self, worktree_path: Path, *, branch_name: str = "") -> None:
         for relative in WORKTREE_SUBMODULE_PATHS:
-            if not self._worktree_declares_submodule(worktree_path, relative):
-                continue
             if self._create_local_submodule_worktree(worktree_path, relative, branch_name=branch_name):
+                continue
+            if not self._worktree_declares_submodule(worktree_path, relative):
                 continue
             self._run_git(["submodule", "update", "--init", "--recursive", "--", relative], cwd=worktree_path)
 
@@ -1176,8 +1238,9 @@ class PortalImplementationDaemon:
         worktree_path: Path,
         *,
         task: PortalTask | None = None,
+        overwrite_existing: bool = False,
     ) -> list[str]:
-        """Copy relevant untracked source context into an ephemeral worktree."""
+        """Copy relevant dirty source context into an ephemeral worktree."""
 
         seeded: list[str] = []
         for relative in self._untracked_worktree_context_paths():
@@ -1188,7 +1251,11 @@ class PortalImplementationDaemon:
                 continue
             target = worktree_path / relative
             if target.exists() or target.is_symlink():
-                continue
+                if not overwrite_existing:
+                    continue
+                if target.is_dir():
+                    continue
+                target.unlink()
             target.parent.mkdir(parents=True, exist_ok=True)
             if source.is_symlink():
                 target.symlink_to(os.readlink(source))
@@ -1208,16 +1275,24 @@ class PortalImplementationDaemon:
         return seeded
 
     def _untracked_worktree_context_paths(self) -> list[str]:
-        result = subprocess.run(
+        candidates: set[str] = set()
+        commands = (
             ["git", "ls-files", "--others", "--exclude-standard", "-z"],
-            cwd=self.repo_root,
-            capture_output=True,
-            check=False,
+            ["git", "diff", "--name-only", "-z"],
+            ["git", "diff", "--cached", "--name-only", "-z"],
         )
-        if result.returncode != 0:
-            return []
-        paths = result.stdout.decode("utf-8", errors="surrogateescape").split("\0")
-        return sorted(path for path in paths if path)
+        for command in commands:
+            result = subprocess.run(
+                command,
+                cwd=self.repo_root,
+                capture_output=True,
+                check=False,
+            )
+            if result.returncode != 0:
+                continue
+            paths = result.stdout.decode("utf-8", errors="surrogateescape").split("\0")
+            candidates.update(path for path in paths if path)
+        return sorted(candidates)
 
     def _untracked_context_path_allowed(self, relative: str) -> bool:
         if not relative or relative.startswith("/") or "\0" in relative:
@@ -2143,10 +2218,10 @@ class PortalImplementationDaemon:
             return set()
         return {line.strip() for line in result.stdout.splitlines() if line.strip()}
 
-    def _reconcile_failed_merges(self) -> list[dict[str, Any]]:
+    def _reconcile_failed_merges(self, *, skip_task_ids: set[str] | None = None) -> list[dict[str, Any]]:
         results: list[dict[str, Any]] = []
         target_branch = self._main_branch_name()
-        for event in self._failed_merge_candidates():
+        for event in self._failed_merge_candidates(skip_task_ids=skip_task_ids):
             task_id = str(event.get("task_id") or "")
             attempt = int(event.get("attempt") or 0)
             branch = str(event.get("branch") or "")
@@ -2213,7 +2288,8 @@ class PortalImplementationDaemon:
             results.append(result)
         return results
 
-    def _failed_merge_candidates(self) -> list[dict[str, Any]]:
+    def _failed_merge_candidates(self, *, skip_task_ids: set[str] | None = None) -> list[dict[str, Any]]:
+        skip_task_ids = skip_task_ids or set()
         candidates: dict[tuple[str, str], dict[str, Any]] = {}
         reconciled_commits: set[str] = set()
         abandoned_commits: set[str] = set()
@@ -2230,6 +2306,9 @@ class PortalImplementationDaemon:
                 continue
             if str(event.get("type") or "") != "implementation_finished":
                 continue
+            task_id = str(event.get("task_id") or "")
+            if task_id in skip_task_ids:
+                continue
             implementation_commit = str(event.get("implementation_commit") or "")
             if (
                 not implementation_commit
@@ -2245,7 +2324,6 @@ class PortalImplementationDaemon:
                 continue
             if not merge_result.get("attempted") or merge_result.get("merged"):
                 continue
-            task_id = str(event.get("task_id") or "")
             key = (task_id, implementation_commit)
             candidates[key] = event
 
@@ -2262,11 +2340,14 @@ class PortalImplementationDaemon:
                 unresolved.append(event)
         return unresolved
 
-    def _unresolved_merge_failures_by_task(self) -> dict[str, dict[str, Any]]:
+    def _unresolved_merge_failures_by_task(self, *, skip_task_ids: set[str] | None = None) -> dict[str, dict[str, Any]]:
+        skip_task_ids = skip_task_ids or set()
         failures: dict[str, dict[str, Any]] = {}
         target_branch = self._main_branch_name()
-        for event in self._failed_merge_candidates():
+        for event in self._failed_merge_candidates(skip_task_ids=skip_task_ids):
             task_id = str(event.get("task_id") or "")
+            if task_id in skip_task_ids:
+                continue
             implementation_commit = str(event.get("implementation_commit") or "")
             if task_id and implementation_commit and not self._git_ref_is_ancestor(implementation_commit, target_branch):
                 failures[task_id] = event
