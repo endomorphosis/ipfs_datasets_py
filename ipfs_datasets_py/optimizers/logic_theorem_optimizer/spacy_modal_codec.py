@@ -691,6 +691,11 @@ _FRAME_SCOPE_PHRASES = (
     "was formerly classified",
 )
 _FRAME_STRUCTURAL_AUTHORITY_SCOPE_PHRASES = (
+    "authority to",
+    "exclusive authority to",
+    "legislative authority to",
+    "powers of authorities",
+    "powers of such authority",
     "authorized and directed to",
     "authorized and empowered",
     "is authorized and directed to",
@@ -4630,6 +4635,34 @@ def _apply_refined_modal_family_cue_pair_balance(
                 0.3 * math.log1p(deontic_overflow)
             )
             deontic_count = float(counts.get(deontic_family, 0.0))
+    # deontic -> temporal / frame:
+    # editorial statutory sections with dense temporal/status and conditional
+    # scaffolding can accumulate many generic deontic verbs; cap that overflow
+    # so temporal/frame evidence stays visible.
+    if (
+        deontic_count > 0.0
+        and has_structural_conditional_scope
+        and has_statutory_scope_reference
+        and has_temporal_scope
+        and has_frame_scope_context
+        and has_editorial_frame_context
+        and bool(signals.get("has_temporal_status_scope"))
+        and temporal_count >= _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT
+        and conditional_count >= _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT
+    ):
+        competing_scope_anchor = max(
+            temporal_count,
+            frame_count,
+            conditional_count,
+            _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
+        deontic_scope_cap = competing_scope_anchor + _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT
+        if deontic_count > deontic_scope_cap:
+            deontic_overflow = deontic_count - deontic_scope_cap
+            counts[deontic_family] = deontic_scope_cap + (
+                0.25 * math.log1p(deontic_overflow)
+            )
+            deontic_count = float(counts.get(deontic_family, 0.0))
     # conditional_normative -> deontic:
     # qualifier-style conditional scaffolding (for example, "subject to ..." or
     # "for purposes of ...") should not flatten explicit deontic force to a tie.
@@ -5395,6 +5428,15 @@ def _scope_signal_family_logit_boosts(signals: Mapping[str, bool]) -> Dict[str, 
             0.0,
             temporal_bonus - temporal_noise_penalty,
         )
+    if (
+        temporal_bonus > 0.0
+        and bool(signals.get("has_temporal_status_scope"))
+        and not has_explicit_temporal_scope
+        and bool(signals.get("has_frame_scope_phrase"))
+        and not bool(signals.get("has_statutory_scope_reference"))
+        and not bool(signals.get("has_temporal_scope_phrase"))
+    ):
+        temporal_bonus = max(0.0, temporal_bonus - 0.55)
     if (
         temporal_bonus > 0.0
         and has_editorial_frame_context

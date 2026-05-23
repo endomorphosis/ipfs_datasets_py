@@ -368,6 +368,19 @@ def test_spacy_encoder_treats_within_days_as_temporal_cue_and_scope() -> None:
     assert signals["has_temporal_scope"] is True
 
 
+def test_spacy_encoder_treats_prior_to_as_temporal_cue() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        "The filing applies only to records created prior to January 1, 2030.",
+        document_id="sample-prior-to-temporal",
+    )
+
+    assert any(
+        cue.family == "temporal" and cue.cue.lower() == "prior to"
+        for cue in encoding.cues
+    )
+
+
 def test_spacy_encoder_detects_editorial_frame_scope_signals() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     encoding = encoder.encode(
@@ -2931,6 +2944,43 @@ def test_spacy_refined_pair_balance_caps_generic_deontic_overflow_for_structural
     assert counts["deontic"] > counts["temporal"]
 
 
+def test_spacy_refined_pair_balance_caps_editorial_deontic_overflow_with_temporal_status_scope() -> None:
+    counts = {
+        "deontic": 5.6,
+        "temporal": 1.35,
+        "conditional_normative": 3.0,
+        "frame": 1.0,
+    }
+    signals = {
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": True,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": True,
+        "has_conditional_scope_token": False,
+        "has_statutory_scope_reference": True,
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": True,
+        "has_deontic_cue": True,
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": False,
+        "has_temporal_scope_token": True,
+        "has_temporal_within_scope": False,
+        "has_temporal_status_scope": True,
+        "has_temporal_deadline_cue": False,
+        "has_calendar_date_scope": True,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_frame_editorial_scope_phrase": True,
+        "has_frame_cue": True,
+    }
+    baseline_deontic = counts["deontic"]
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["deontic"] < baseline_deontic
+    assert counts["deontic"] > counts["temporal"]
+
+
 def test_spacy_refined_pair_balance_reinforces_deontic_when_explicit_statutory_conditional_scope_dominates() -> None:
     counts = {
         "conditional_normative": 4.6,
@@ -3202,6 +3252,33 @@ def test_spacy_temporal_scope_boost_damps_editorial_calendar_noise_without_tempo
 
     assert noise_boosts["temporal"] < explicit_temporal_boosts["temporal"]
     assert noise_boosts["deontic"] > 0.0
+
+
+def test_spacy_temporal_scope_boost_damps_status_only_temporal_noise_in_non_statutory_frame_scope() -> None:
+    baseline_signals = {
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": False,
+        "has_temporal_scope_token": False,
+        "has_temporal_within_scope": False,
+        "has_temporal_deadline_cue": False,
+        "has_temporal_cue": False,
+        "has_temporal_status_scope": True,
+        "has_calendar_date_scope": True,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_statutory_scope_reference": False,
+    }
+    statutory_reference_signals = {
+        **baseline_signals,
+        "has_statutory_scope_reference": True,
+    }
+
+    baseline_boosts = _scope_signal_family_logit_boosts(baseline_signals)
+    statutory_boosts = _scope_signal_family_logit_boosts(
+        statutory_reference_signals
+    )
+
+    assert baseline_boosts["temporal"] < statutory_boosts["temporal"]
 
 
 def test_spacy_frame_bonus_preserves_more_statutory_weight_for_weak_temporal_scope() -> None:

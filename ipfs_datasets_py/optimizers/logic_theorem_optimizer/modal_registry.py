@@ -1472,6 +1472,7 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                     "for calendar years",
                     "from time to time",
                     "on or after",
+                    "prior to",
                     "beginning on or after",
                     "no earlier than",
                     "no later than",
