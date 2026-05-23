@@ -1110,19 +1110,73 @@ class PortalImplementationDaemon:
     def _initialize_worktree_submodules(self, worktree_path: Path, *, branch_name: str = "") -> None:
         for relative in WORKTREE_SUBMODULE_PATHS:
             if self._create_local_submodule_worktree(worktree_path, relative, branch_name=branch_name):
+                target = worktree_path / relative
+                if self._is_git_worktree(target):
+                    self._initialize_nested_worktree_submodules(
+                        target,
+                        branch_name=branch_name,
+                        parent_relative=relative,
+                    )
                 continue
-            if not self._worktree_declares_submodule(worktree_path, relative):
+            if self._worktree_declares_submodule(worktree_path, relative):
+                self._run_git(["submodule", "update", "--init", "--recursive", "--", relative], cwd=worktree_path)
+                target = worktree_path / relative
+                if self._is_git_worktree(target):
+                    self._initialize_nested_worktree_submodules(
+                        target,
+                        branch_name=branch_name,
+                        parent_relative=relative,
+                    )
+
+    def _initialize_nested_worktree_submodules(
+        self,
+        worktree_path: Path,
+        *,
+        branch_name: str,
+        parent_relative: str,
+    ) -> None:
+        for relative in self._declared_submodule_paths(worktree_path):
+            full_relative = f"{parent_relative.rstrip('/')}/{relative}"
+            if self._create_local_submodule_worktree(
+                worktree_path,
+                relative,
+                branch_name=branch_name,
+                source_relative=full_relative,
+            ):
+                target = worktree_path / relative
+                if self._is_git_worktree(target):
+                    self._initialize_nested_worktree_submodules(
+                        target,
+                        branch_name=branch_name,
+                        parent_relative=full_relative,
+                    )
                 continue
             self._run_git(["submodule", "update", "--init", "--recursive", "--", relative], cwd=worktree_path)
+            target = worktree_path / relative
+            if self._is_git_worktree(target):
+                self._initialize_nested_worktree_submodules(
+                    target,
+                    branch_name=branch_name,
+                    parent_relative=full_relative,
+                )
 
-    def _create_local_submodule_worktree(self, worktree_path: Path, relative: str, *, branch_name: str = "") -> bool:
-        source = (self.repo_root / relative).resolve()
+    def _create_local_submodule_worktree(
+        self,
+        worktree_path: Path,
+        relative: str,
+        *,
+        branch_name: str = "",
+        source_relative: str | None = None,
+    ) -> bool:
+        source_key = source_relative or relative
+        source = (self.repo_root / source_key).resolve()
         if not source.exists() or not self._is_git_worktree(source):
             return False
+        base_ref = self._submodule_gitlink_ref(worktree_path, relative) or "HEAD"
         target = worktree_path / relative
         if self._is_git_worktree(target) and not target.is_symlink():
             if branch_name:
-                expected_branch = self._submodule_worktree_branch_name(branch_name, relative)
+                expected_branch = self._submodule_worktree_branch_name(branch_name, source_key)
                 current_branch = self._git_current_branch(target)
                 if current_branch and current_branch != expected_branch:
                     return False
@@ -1136,14 +1190,28 @@ class PortalImplementationDaemon:
                 target.unlink()
         target.parent.mkdir(parents=True, exist_ok=True)
         if branch_name:
-            submodule_branch = self._submodule_worktree_branch_name(branch_name, relative)
+            submodule_branch = self._submodule_worktree_branch_name(branch_name, source_key)
             if self._git_ref_exists_in_repo(source, submodule_branch):
                 self._run_git(["worktree", "add", str(target), submodule_branch], cwd=source)
                 return True
-            self._run_git(["worktree", "add", "-b", submodule_branch, str(target), "HEAD"], cwd=source)
+            self._run_git(["worktree", "add", "-b", submodule_branch, str(target), base_ref], cwd=source)
             return True
-        self._run_git(["worktree", "add", "--detach", str(target), "HEAD"], cwd=source)
+        self._run_git(["worktree", "add", "--detach", str(target), base_ref], cwd=source)
         return True
+
+    def _submodule_gitlink_ref(self, worktree_path: Path, relative: str) -> str:
+        if not self._repo_relative_path_safe(relative):
+            return ""
+        result = subprocess.run(
+            ["git", "rev-parse", f"HEAD:{relative}"],
+            cwd=worktree_path,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            return ""
+        return result.stdout.strip()
 
     @staticmethod
     def _submodule_worktree_branch_name(branch_name: str, relative: str) -> str:
@@ -1192,9 +1260,12 @@ class PortalImplementationDaemon:
         return result.returncode == 0
 
     def _worktree_declares_submodule(self, worktree_path: Path, relative: str) -> bool:
+        return relative in self._declared_submodule_paths(worktree_path)
+
+    def _declared_submodule_paths(self, worktree_path: Path) -> list[str]:
         gitmodules = worktree_path / ".gitmodules"
         if not gitmodules.exists():
-            return False
+            return []
         result = subprocess.run(
             ["git", "config", "--file", str(gitmodules), "--get-regexp", r"^submodule\..*\.path$"],
             cwd=worktree_path,
@@ -1203,8 +1274,13 @@ class PortalImplementationDaemon:
             check=False,
         )
         if result.returncode != 0:
-            return False
-        return any(line.split(maxsplit=1)[-1].strip() == relative for line in result.stdout.splitlines())
+            return []
+        paths: list[str] = []
+        for line in result.stdout.splitlines():
+            path = line.split(maxsplit=1)[-1].strip()
+            if path and self._repo_relative_path_safe(path):
+                paths.append(path)
+        return paths
 
     def _link_shared_worktree_paths(self, worktree_path: Path) -> None:
         for relative in SHARED_WORKTREE_PATHS:
@@ -1318,9 +1394,13 @@ class PortalImplementationDaemon:
         self._restore_uncommitted_submodule_pointers(worktree_path, submodule_results)
         self._run_git(["add", "-A"], cwd=worktree_path)
         self._remove_generated_paths_from_index(worktree_path)
+        self._restore_uncommitted_submodule_pointers(worktree_path, submodule_results)
         status = self._run_git(["status", "--porcelain"], cwd=worktree_path).stdout.strip()
-        if not status:
+        staged_status = self._staged_worktree_status(worktree_path)
+        if not staged_status:
             result: dict[str, Any] = {"committed": False, "reason": "no_changes"}
+            if status:
+                result["status"] = status
             if submodule_results:
                 result["submodule_results"] = submodule_results
             return result
@@ -1359,12 +1439,24 @@ class PortalImplementationDaemon:
             target = worktree_path / relative
             if not self._is_git_worktree(target):
                 continue
+            nested_results = self._commit_nested_submodule_changes(
+                target,
+                task,
+                attempt,
+                parent_relative=relative,
+            )
             self._restore_ephemeral_worktree_paths_for_commit(target)
             self._run_git(["add", "-A"], cwd=target)
             self._remove_generated_paths_from_index(target)
             status = self._run_git(["status", "--porcelain"], cwd=target).stdout.strip()
-            if not status:
-                results.append({"path": relative, "committed": False, "reason": "no_changes"})
+            staged_status = self._staged_worktree_status(target)
+            if not staged_status:
+                result: dict[str, Any] = {"path": relative, "committed": False, "reason": "no_changes"}
+                if status:
+                    result["status"] = status
+                if nested_results:
+                    result["nested_submodule_results"] = nested_results
+                results.append(result)
                 continue
             self._run_git(
                 [
@@ -1383,7 +1475,70 @@ class PortalImplementationDaemon:
                 cwd=target,
             )
             commit_ref = self._run_git(["rev-parse", "HEAD"], cwd=target).stdout.strip()
-            results.append({"path": relative, "committed": True, "commit": commit_ref, "status": status})
+            result = {"path": relative, "committed": True, "commit": commit_ref, "status": status}
+            if nested_results:
+                result["nested_submodule_results"] = nested_results
+            results.append(result)
+        return results
+
+    def _commit_nested_submodule_changes(
+        self,
+        worktree_path: Path,
+        task: PortalTask,
+        attempt: int,
+        *,
+        parent_relative: str,
+    ) -> list[dict[str, Any]]:
+        results: list[dict[str, Any]] = []
+        for relative in self._declared_submodule_paths(worktree_path):
+            full_relative = f"{parent_relative.rstrip('/')}/{relative}"
+            target = worktree_path / relative
+            if not self._is_git_worktree(target):
+                continue
+            nested_results = self._commit_nested_submodule_changes(
+                target,
+                task,
+                attempt,
+                parent_relative=full_relative,
+            )
+            self._restore_ephemeral_worktree_paths_for_commit(target)
+            self._run_git(["add", "-A"], cwd=target)
+            self._remove_generated_paths_from_index(target)
+            status = self._run_git(["status", "--porcelain"], cwd=target).stdout.strip()
+            staged_status = self._staged_worktree_status(target)
+            if not staged_status:
+                result: dict[str, Any] = {
+                    "path": full_relative,
+                    "committed": False,
+                    "reason": "no_changes",
+                }
+                if status:
+                    result["status"] = status
+                if nested_results:
+                    result["nested_submodule_results"] = nested_results
+                results.append(result)
+                continue
+            self._run_git(
+                [
+                    "-c",
+                    "user.name=Implementation Daemon",
+                    "-c",
+                    "user.email=implementation-daemon@example.invalid",
+                    "commit",
+                    "-m",
+                    f"{task.task_id}: {task.title or 'implementation attempt'}",
+                    "-m",
+                    f"Attempt: {attempt}",
+                    "-m",
+                    f"Submodule: {full_relative}",
+                ],
+                cwd=target,
+            )
+            commit_ref = self._run_git(["rev-parse", "HEAD"], cwd=target).stdout.strip()
+            result = {"path": full_relative, "committed": True, "commit": commit_ref, "status": status}
+            if nested_results:
+                result["nested_submodule_results"] = nested_results
+            results.append(result)
         return results
 
     def _restore_uncommitted_submodule_pointers(
@@ -1505,6 +1660,18 @@ class PortalImplementationDaemon:
             return []
         paths = result.stdout.decode("utf-8", errors="surrogateescape").split("\0")
         return [path for path in paths if path]
+
+    def _staged_worktree_status(self, cwd: Path) -> str:
+        result = subprocess.run(
+            ["git", "diff", "--cached", "--name-status"],
+            cwd=cwd,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            return ""
+        return result.stdout.strip()
 
     def _path_tracked_in_repo(self, cwd: Path, relative: str) -> bool:
         result = subprocess.run(
@@ -1873,10 +2040,13 @@ class PortalImplementationDaemon:
                 submodule_merge_results = self._merge_submodule_branches_to_main(branch_name)
             elif removed_untracked:
                 self._restore_removed_untracked_paths(removed_untracked, cwd=merge_workspace)
+            failed_submodules = [item for item in submodule_merge_results if not item.get("merged", False)]
+            effective_returncode = merge.returncode
+            effective_merged = merge.returncode == 0 and not failed_submodules
             result = {
                 "attempted": True,
-                "merged": merge.returncode == 0,
-                "returncode": merge.returncode,
+                "merged": effective_merged,
+                "returncode": 2 if failed_submodules else effective_returncode,
                 "branch": branch_name,
                 "target_branch": target_branch,
                 "command": command,
@@ -1890,9 +2060,9 @@ class PortalImplementationDaemon:
                 "identical_untracked_paths": identical_untracked_paths,
                 "submodule_merge_results": submodule_merge_results,
             }
-            failed_submodules = [item for item in submodule_merge_results if not item.get("merged", False)]
             if failed_submodules:
                 result["submodule_merge_failed"] = True
+                result["reason"] = "submodule_merge_failed"
             self._record_event("merge_finished", result)
             return result
         finally:
@@ -1910,10 +2080,25 @@ class PortalImplementationDaemon:
                 logger.warning("Failed to remove merge lock %s", merge_lock)
 
     def _merge_submodule_branches_to_main(self, branch_name: str) -> list[dict[str, Any]]:
+        return self._merge_submodule_branches_to_main_in_repo(
+            repo_path=self.repo_root,
+            branch_name=branch_name,
+            parent_relative="",
+        )
+
+    def _merge_submodule_branches_to_main_in_repo(
+        self,
+        *,
+        repo_path: Path,
+        branch_name: str,
+        parent_relative: str,
+    ) -> list[dict[str, Any]]:
         results: list[dict[str, Any]] = []
-        for relative in WORKTREE_SUBMODULE_PATHS:
-            source = (self.repo_root / relative).resolve()
-            submodule_branch = self._submodule_worktree_branch_name(branch_name, relative)
+        relatives = WORKTREE_SUBMODULE_PATHS if not parent_relative else tuple(self._declared_submodule_paths(repo_path))
+        for relative in relatives:
+            full_relative = f"{parent_relative.rstrip('/')}/{relative}" if parent_relative else relative
+            source = (self.repo_root / full_relative).resolve()
+            submodule_branch = self._submodule_worktree_branch_name(branch_name, full_relative)
             if not self._is_git_worktree(source):
                 continue
             if not self._git_ref_exists_in_repo(source, submodule_branch):
@@ -1973,7 +2158,7 @@ class PortalImplementationDaemon:
                 check=False,
             )
             result = {
-                "path": relative,
+                "path": full_relative,
                 "branch": submodule_branch,
                 "default_branch": default_branch,
                 "merged": merge.returncode == 0,
@@ -1985,6 +2170,14 @@ class PortalImplementationDaemon:
             if merge.returncode == 0:
                 result["commit"] = self._run_git(["rev-parse", "HEAD"], cwd=source).stdout.strip()
             results.append(result)
+            if merge.returncode == 0:
+                results.extend(
+                    self._merge_submodule_branches_to_main_in_repo(
+                        repo_path=source,
+                        branch_name=branch_name,
+                        parent_relative=full_relative,
+                    )
+                )
         return results
 
     def _submodule_default_branch(self, relative: str, source: Path) -> str:
@@ -2069,18 +2262,32 @@ class PortalImplementationDaemon:
         self._record_event("cleanup_finished", result)
         return result
 
-    def _cleanup_worktree_submodules(self, worktree_path: Path, branch_name: str) -> list[dict[str, Any]]:
+    def _cleanup_worktree_submodules(
+        self,
+        worktree_path: Path,
+        branch_name: str,
+        *,
+        parent_relative: str = "",
+    ) -> list[dict[str, Any]]:
         results: list[dict[str, Any]] = []
-        for relative in WORKTREE_SUBMODULE_PATHS:
-            source = (self.repo_root / relative).resolve()
+        relatives = WORKTREE_SUBMODULE_PATHS if not parent_relative else tuple(self._declared_submodule_paths(worktree_path))
+        for relative in relatives:
+            full_relative = f"{parent_relative.rstrip('/')}/{relative}" if parent_relative else relative
+            source = (self.repo_root / full_relative).resolve()
             target = worktree_path / relative
-            submodule_branch = self._submodule_worktree_branch_name(branch_name, relative)
+            submodule_branch = self._submodule_worktree_branch_name(branch_name, full_relative)
             if not self._is_git_worktree(source):
                 continue
             removed_worktree = False
             deleted_branch = False
+            nested_cleanup: list[dict[str, Any]] = []
             errors: list[str] = []
             if self._is_git_worktree(target):
+                nested_cleanup = self._cleanup_worktree_submodules(
+                    target,
+                    branch_name,
+                    parent_relative=full_relative,
+                )
                 remove = subprocess.run(
                     ["git", "worktree", "remove", "--force", str(target)],
                     cwd=source,
@@ -2109,12 +2316,13 @@ class PortalImplementationDaemon:
                     errors.append((delete.stderr or delete.stdout).strip())
             results.append(
                 {
-                    "path": relative,
+                    "path": full_relative,
                     "branch": submodule_branch,
                     "removed_worktree": removed_worktree,
                     "deleted_branch": deleted_branch,
                     "cleaned": not errors,
                     "errors": errors,
+                    "nested_submodule_cleanup": nested_cleanup,
                 }
             )
         return results
@@ -2228,7 +2436,7 @@ class PortalImplementationDaemon:
         return paths
 
     def _branch_changed_paths(self, branch_name: str, *, base_ref: str | None = None) -> set[str]:
-        base = base_ref or self._main_branch_name()
+        base = base_ref or self._branch_merge_base(branch_name, self._main_branch_name())
         result = subprocess.run(
             ["git", "diff", "--name-only", f"{base}..{branch_name}"],
             cwd=self.repo_root,
@@ -2239,6 +2447,18 @@ class PortalImplementationDaemon:
         if result.returncode != 0:
             return set()
         return {line.strip() for line in result.stdout.splitlines() if line.strip()}
+
+    def _branch_merge_base(self, branch_name: str, target_branch: str) -> str:
+        result = subprocess.run(
+            ["git", "merge-base", target_branch, branch_name],
+            cwd=self.repo_root,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            return result.stdout.strip()
+        return target_branch
 
     def _reconcile_failed_merges(self, *, skip_task_ids: set[str] | None = None) -> list[dict[str, Any]]:
         results: list[dict[str, Any]] = []
