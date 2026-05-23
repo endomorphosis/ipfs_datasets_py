@@ -96,6 +96,10 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS: Tuple[Tuple[str, str], ...] = (
     ),
     (
         ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.FRAME.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
         ModalLogicFamily.DEONTIC.value,
     ),
     (
@@ -149,6 +153,10 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.TEMPORAL.value,
         ModalLogicFamily.TEMPORAL.value,
+    ),
+    (
+        ModalLogicFamily.DOXASTIC.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
     ),
     (
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
@@ -562,6 +570,14 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR: Mapping[
     (
         ModalLogicFamily.DEONTIC.value,
         ModalLogicFamily.TEMPORAL.value,
+    ): 0.0015,
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.FRAME.value,
+    ): 0.0015,
+    (
+        ModalLogicFamily.DOXASTIC.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
     ): 0.0015,
     (
         ModalLogicFamily.TEMPORAL.value,
