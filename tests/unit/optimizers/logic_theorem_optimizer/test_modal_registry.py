@@ -153,8 +153,22 @@ def test_refined_modal_family_cue_margin_buffer_is_pair_specific_and_normalized(
     ) <= 1e-12
     assert abs(
         compiler_refined_modal_family_cue_margin_buffer(
+            "deontic",
+            "deontic",
+        )
+        - 0.0015
+    ) <= 1e-12
+    assert abs(
+        compiler_refined_modal_family_cue_margin_buffer(
             "temporal",
             "temporal->deontic",
+        )
+        - 0.0015
+    ) <= 1e-12
+    assert abs(
+        compiler_refined_modal_family_cue_margin_buffer(
+            "temporal",
+            "temporal",
         )
         - 0.0015
     ) <= 1e-12
