@@ -1895,6 +1895,69 @@ def test_dense_contract_rebalance_keeps_deontic_signal_for_scaffolded_norms() ->
     assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
 
 
+def test_dense_contract_rebalance_promotes_scaffolded_repeated_normative_duties() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_dense_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.24,
+        "TDFOL.prover": 0.22,
+        "deontic.ir": 0.19,
+        "knowledge_graphs.neo4j_compat": 0.18,
+        "zkp.circuits": 0.17,
+    }
+
+    rebalanced = _rebalance_dense_contract_distribution(
+        distribution,
+        text=(
+            "U.S.C. Title 5 - GOVERNMENT ORGANIZATION AND EMPLOYEES. From the "
+            "U.S. Government Publishing Office. The Secretary shall establish "
+            "procedures, shall submit reports, may enter into agreements, shall "
+            "coordinate implementation, and may issue guidance. Editorial Notes "
+            "Codification Section was formerly classified."
+        ),
+    )
+
+    assert rebalanced["deontic.ir"] >= 0.27
+    assert rebalanced["deontic.ir"] > rebalanced["CEC.native"]
+    assert rebalanced["knowledge_graphs.neo4j_compat"] <= 0.18
+    assert rebalanced["zkp.circuits"] <= 0.10
+    assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
+
+
+def test_dense_contract_rebalance_treats_scaffolded_findings_purpose_as_epistemic() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_dense_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.24,
+        "TDFOL.prover": 0.22,
+        "deontic.ir": 0.19,
+        "knowledge_graphs.neo4j_compat": 0.18,
+        "zkp.circuits": 0.17,
+    }
+
+    rebalanced = _rebalance_dense_contract_distribution(
+        distribution,
+        text=(
+            "U.S.C. Title 16 - CONSERVATION. Sec. 6551 - Findings and purpose. "
+            "From the U.S. Government Publishing Office. Congress finds that "
+            "severe infestation may result in increased fire risk and the purposes "
+            "of this section are to require the Secretary to develop an assessment "
+            "program. Editorial Notes Codification Section was formerly classified."
+        ),
+    )
+
+    assert rebalanced["CEC.native"] >= 0.29
+    assert rebalanced["knowledge_graphs.neo4j_compat"] >= 0.22
+    assert rebalanced["TDFOL.prover"] <= 0.17
+    assert rebalanced["deontic.ir"] <= 0.22
+    assert rebalanced["zkp.circuits"] <= 0.11
+    assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
+
+
 def test_dense_contract_rebalance_treats_for_purposes_deontic_scope_as_normative() -> None:
     from ipfs_datasets_py.logic.bridge.multiview import (
         _rebalance_dense_contract_distribution,
