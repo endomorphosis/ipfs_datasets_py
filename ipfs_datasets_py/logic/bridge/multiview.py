@@ -40,8 +40,12 @@ _BRIDGE_CONTRACT_FOR_PURPOSES_CUE_RE = re.compile(
     r"\bfor\s+purposes?\s+of\b",
     flags=re.IGNORECASE,
 )
+_BRIDGE_CONTRACT_PROVIDED_FOR_CUE_RE = re.compile(
+    r"\b(?:as\s+)?provided\s+for\b",
+    flags=re.IGNORECASE,
+)
 _BRIDGE_CONTRACT_DEONTIC_CUE_RE = re.compile(
-    r"\b(?:shall|must|may|required|prohibited|forbidden|authorized|entitled|"
+    r"\b(?:shall|should|must|may|required|requirements?|prohibited|forbidden|authorized|entitled|"
     r"authoriz(?:e|es|ed|ation|ations)|permit(?:s|ted|ting)?|allow(?:s|ed|ing)?)\b",
     flags=re.IGNORECASE,
 )
@@ -115,7 +119,7 @@ _BRIDGE_CONTRACT_PERMISSION_DEONTIC_CUE_RE = re.compile(
     flags=re.IGNORECASE,
 )
 _BRIDGE_CONTRACT_OBLIGATION_DEONTIC_CUE_RE = re.compile(
-    r"\b(?:shall|must|required|prohibited|forbidden)\b",
+    r"\b(?:shall|should|must|required|requirements?|prohibited|forbidden)\b",
     flags=re.IGNORECASE,
 )
 _BRIDGE_CONTRACT_STATUTE_SCAFFOLD_CUE_RE = re.compile(
@@ -825,7 +829,12 @@ def _rebalance_dense_contract_distribution(
         _BRIDGE_CONTRACT_FOR_PURPOSES_CUE_RE,
         normalized_text,
     )
+    provided_for_cue_count = _cue_count(
+        _BRIDGE_CONTRACT_PROVIDED_FOR_CUE_RE,
+        normalized_text,
+    )
     conditional_cue_count += for_purposes_cue_count
+    conditional_cue_count += provided_for_cue_count
     deontic_cue_count = _cue_count(_BRIDGE_CONTRACT_DEONTIC_CUE_RE, normalized_text)
     permission_deontic_cue_count = _cue_count(
         _BRIDGE_CONTRACT_PERMISSION_DEONTIC_CUE_RE,
@@ -942,7 +951,7 @@ def _rebalance_dense_contract_distribution(
     )
     has_repeated_normative_deontic_signal = (
         permission_deontic_cue_count + obligation_deontic_cue_count
-    ) >= 4
+    ) >= 3
     has_scaffolded_normative_operations = (
         has_dense_statute_scaffold
         and has_repeated_normative_deontic_signal
