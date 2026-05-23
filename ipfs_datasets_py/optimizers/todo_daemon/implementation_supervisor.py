@@ -50,6 +50,7 @@ class PortalSupervisorConfig:
     implement: bool = False
     implementation_command: str = ""
     implementation_timeout: float = 1800.0
+    implementation_log_stall_seconds: float = 300.0
     use_ephemeral_worktree: bool = True
     worktree_root: Path | None = None
     repo_root: Path = field(default_factory=Path.cwd)
@@ -186,7 +187,7 @@ class PortalImplementationSupervisor:
             heartbeat_seconds=max(0.01, float(self.config.check_interval)),
             poll_seconds=min(1.0, max(0.01, float(self.config.check_interval))),
             watchdog_stale_after_seconds=max(0.0, float(self.config.stale_seconds)),
-            watchdog_startup_grace_seconds=max(0.0, float(self.config.stale_seconds)),
+            watchdog_startup_grace_seconds=max(30.0, float(self.config.check_interval) * 2.0),
             stop_grace_seconds=15.0,
             max_restarts=max(0, int(self.config.max_restarts)),
             status_static_fields={
@@ -225,6 +226,30 @@ class PortalImplementationSupervisor:
         max_age_seconds = max(float(self.config.stale_seconds), float(self.config.implementation_timeout))
         return max(0.0, now_ts - started_at.timestamp()) <= max_age_seconds + grace_seconds
 
+    def _implementation_log_stall_reason(self, state: PortalTaskState, *, now_ts: float) -> str:
+        if not state.active_task_id or not state.implementation_in_progress:
+            return ""
+        threshold = max(0.0, float(self.config.implementation_log_stall_seconds))
+        if threshold <= 0.0:
+            return ""
+        log_text = state.last_implementation_log_path or state.active_log_path
+        if not log_text:
+            return ""
+        log_path = Path(log_text)
+        if not log_path.is_absolute():
+            log_path = self.config.repo_root / log_path
+        try:
+            stat = log_path.stat()
+        except OSError:
+            return ""
+        age_seconds = max(0.0, now_ts - stat.st_mtime)
+        if age_seconds <= threshold:
+            return ""
+        return (
+            f"implementation log stalled for active task {state.active_task_id}: "
+            f"{age_seconds:.0f}s without output in {log_path}"
+        )
+
     def is_stuck(
         self,
         state: PortalTaskState,
@@ -232,6 +257,9 @@ class PortalImplementationSupervisor:
         now_ts: float,
         ignore_progress_until_ts: float | None = None,
     ) -> tuple[bool, str]:
+        log_stall_reason = self._implementation_log_stall_reason(state, now_ts=now_ts)
+        if log_stall_reason:
+            return True, log_stall_reason
         if self._implementation_attempt_is_active(state, now_ts=now_ts):
             return False, ""
         heartbeat_age = self._age_seconds(state.heartbeat_at, now_ts)
@@ -476,6 +504,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--implementation-timeout", type=float, default=1800.0)
     parser.add_argument(
+        "--implementation-log-stall-seconds",
+        type=float,
+        default=300.0,
+        help="Recycle an active implementation attempt after this many seconds without log output; <=0 disables.",
+    )
+    parser.add_argument(
         "--no-ephemeral-worktree",
         action="store_true",
         help="Run implementation commands in the main checkout instead of isolated temporary git worktrees",
@@ -517,6 +551,7 @@ def main(argv: list[str] | None = None) -> None:
             implement=args.implement,
             implementation_command=args.implementation_command,
             implementation_timeout=args.implementation_timeout,
+            implementation_log_stall_seconds=args.implementation_log_stall_seconds,
             use_ephemeral_worktree=args.implement and not args.no_ephemeral_worktree,
             worktree_root=args.worktree_root,
             repo_root=REPO_ROOT,
