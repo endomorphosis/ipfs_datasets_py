@@ -26,10 +26,10 @@ _BRIDGE_CONTRACT_EXCLUDED_COMPONENTS = (
 _BRIDGE_VIEW_SIGNAL_WEIGHT_CAP = 2.0
 _BRIDGE_CONTRACT_DENSE_LANE_MIN_COUNT = 4
 _BRIDGE_CONTRACT_DENSE_LANE_CAPS = {
-    "CEC.native": 0.21,
-    "TDFOL.prover": 0.21,
-    "knowledge_graphs.neo4j_compat": 0.16,
-    "zkp.circuits": 0.19,
+    "CEC.native": 0.19,
+    "TDFOL.prover": 0.19,
+    "knowledge_graphs.neo4j_compat": 0.13,
+    "zkp.circuits": 0.18,
 }
 _BRIDGE_CONTRACT_CONDITIONAL_CUE_RE = re.compile(
     r"\b(?:if|provided\s+that|unless|subject\s+to|with\s+respect\s+to)\b",
@@ -45,6 +45,10 @@ _BRIDGE_CONTRACT_TEMPORAL_CUE_RE = re.compile(
 )
 _BRIDGE_CONTRACT_FRAME_DEFINITION_CUE_RE = re.compile(
     r"\b(?:means|defined\s+as|for\s+purposes\s+of|in\s+this\s+section)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_STRUCTURAL_FRAME_CUE_RE = re.compile(
+    r"\b(?:definitions?|editorial\s+notes?|codification|reclassified|transferred)\b",
     flags=re.IGNORECASE,
 )
 _BRIDGE_CONTRACT_EPISTEMIC_CUE_RE = re.compile(
@@ -745,15 +749,19 @@ def _rebalance_dense_contract_distribution(
     has_frame_definition_cue = bool(
         _BRIDGE_CONTRACT_FRAME_DEFINITION_CUE_RE.search(normalized_text)
     )
+    has_structural_frame_cue = bool(
+        _BRIDGE_CONTRACT_STRUCTURAL_FRAME_CUE_RE.search(normalized_text)
+    )
+    has_frame_cue = has_frame_definition_cue or has_structural_frame_cue
     has_epistemic_cue = bool(_BRIDGE_CONTRACT_EPISTEMIC_CUE_RE.search(normalized_text))
 
     caps = dict(_BRIDGE_CONTRACT_DENSE_LANE_CAPS)
-    if has_conditional_cue and not has_frame_definition_cue:
+    if has_conditional_cue and not has_frame_cue:
         caps["knowledge_graphs.neo4j_compat"] = min(
             caps["knowledge_graphs.neo4j_compat"],
-            0.14,
+            0.12,
         )
-    if has_frame_definition_cue:
+    if has_frame_cue:
         caps["knowledge_graphs.neo4j_compat"] = max(
             caps["knowledge_graphs.neo4j_compat"],
             0.19,
@@ -766,11 +774,11 @@ def _rebalance_dense_contract_distribution(
         )
         caps["CEC.native"] = max(caps["CEC.native"], 0.22)
     if has_deontic_cue:
-        caps["CEC.native"] = min(caps["CEC.native"], 0.19)
+        caps["CEC.native"] = min(caps["CEC.native"], 0.18)
     if has_deontic_cue and has_temporal_cue:
-        caps["TDFOL.prover"] = min(caps["TDFOL.prover"], 0.19)
+        caps["TDFOL.prover"] = min(caps["TDFOL.prover"], 0.18)
     if has_conditional_cue or has_deontic_cue or has_temporal_cue:
-        caps["zkp.circuits"] = min(caps["zkp.circuits"], 0.17)
+        caps["zkp.circuits"] = min(caps["zkp.circuits"], 0.16)
 
     adjusted = dict(lanes)
     excess_mass = 0.0
@@ -785,7 +793,7 @@ def _rebalance_dense_contract_distribution(
     if excess_mass <= 0.0:
         return adjusted
 
-    if has_frame_definition_cue:
+    if has_frame_cue:
         target_mix = (
             ("knowledge_graphs.neo4j_compat", 0.45),
             ("CEC.native", 0.30),
@@ -801,27 +809,27 @@ def _rebalance_dense_contract_distribution(
         )
     elif has_temporal_cue and not has_deontic_cue:
         target_mix = (
-            ("TDFOL.prover", 0.60),
-            ("CEC.native", 0.25),
-            ("deontic.ir", 0.15),
+            ("TDFOL.prover", 0.65),
+            ("CEC.native", 0.22),
+            ("deontic.ir", 0.13),
         )
     elif has_deontic_cue and not has_temporal_cue:
         target_mix = (
-            ("deontic.ir", 0.75),
-            ("CEC.native", 0.15),
-            ("TDFOL.prover", 0.10),
+            ("deontic.ir", 0.82),
+            ("CEC.native", 0.10),
+            ("TDFOL.prover", 0.08),
         )
     elif has_deontic_cue and has_temporal_cue:
+        target_mix = (
+            ("deontic.ir", 0.78),
+            ("TDFOL.prover", 0.16),
+            ("CEC.native", 0.06),
+        )
+    else:
         target_mix = (
             ("deontic.ir", 0.70),
             ("TDFOL.prover", 0.20),
             ("CEC.native", 0.10),
-        )
-    else:
-        target_mix = (
-            ("deontic.ir", 0.55),
-            ("TDFOL.prover", 0.30),
-            ("CEC.native", 0.15),
         )
 
     present_targets = [

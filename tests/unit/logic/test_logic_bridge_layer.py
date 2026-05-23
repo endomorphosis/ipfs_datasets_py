@@ -1727,6 +1727,57 @@ def test_dense_contract_rebalance_downweights_auxiliary_lanes_for_conditional_no
     assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
 
 
+def test_dense_contract_rebalance_biases_deontic_lane_for_underspecified_statute_text() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_dense_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.22,
+        "TDFOL.prover": 0.21,
+        "deontic.ir": 0.23,
+        "knowledge_graphs.neo4j_compat": 0.16,
+        "zkp.circuits": 0.18,
+    }
+
+    rebalanced = _rebalance_dense_contract_distribution(
+        distribution,
+        text="22 U.S.C. 5505 - Disaster assistance for Americans abroad.",
+    )
+
+    assert rebalanced["deontic.ir"] > rebalanced["CEC.native"]
+    assert rebalanced["deontic.ir"] > rebalanced["TDFOL.prover"]
+    assert rebalanced["knowledge_graphs.neo4j_compat"] <= 0.13
+    assert rebalanced["zkp.circuits"] <= 0.18
+    assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
+
+
+def test_dense_contract_rebalance_treats_structural_statute_cues_as_frame_evidence() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_dense_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.24,
+        "TDFOL.prover": 0.22,
+        "deontic.ir": 0.19,
+        "knowledge_graphs.neo4j_compat": 0.18,
+        "zkp.circuits": 0.17,
+    }
+
+    rebalanced = _rebalance_dense_contract_distribution(
+        distribution,
+        text=(
+            "42 U.S.C. 5677. Transferred Editorial Notes Codification Section 5677 "
+            "was editorially reclassified."
+        ),
+    )
+
+    assert rebalanced["knowledge_graphs.neo4j_compat"] >= 0.19
+    assert rebalanced["CEC.native"] >= rebalanced["TDFOL.prover"]
+    assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
+
+
 def test_multiview_bridge_accepts_citation_prefixed_statutory_text() -> None:
     from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
 
