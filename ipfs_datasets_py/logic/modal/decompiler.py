@@ -190,6 +190,16 @@ _LOW_INFORMATION_SECTION_MARKER_TOKENS = frozenset(
         "sections",
     }
 )
+_LOW_INFORMATION_SCOPE_LEADING_TOKENS = frozenset(
+    {
+        "the",
+        "a",
+        "an",
+        "this",
+        "that",
+        "such",
+    }
+)
 _CANONICAL_MODAL_OPERATOR_LABELS: Mapping[Tuple[str, str], str] = {
     ("deontic", "O"): "obligation",
     ("deontic", "P"): "permission",
@@ -642,6 +652,13 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
                 provenance_only=True,
             )
         )
+    phrases.extend(
+        _content_scope_phrases(
+            predicate_text,
+            slot_prefix="predicate",
+            spans=spans,
+        )
+    )
     _append_statutory_scope_phrases(
         phrases,
         predicate_text,
@@ -3738,6 +3755,13 @@ def _typed_clause_phrases(
                 spans=spans,
             )
         )
+        phrases.extend(
+            _content_scope_phrases(
+                scoped_value,
+                slot_prefix=f"{slot}_scope",
+                spans=spans,
+            )
+        )
     return phrases
 
 
@@ -3876,7 +3900,61 @@ def _condition_proxy_phrases_from_exception(
             spans=spans,
         )
     )
+    phrases.extend(
+        _content_scope_phrases(
+            scoped_value,
+            slot_prefix="condition_scope",
+            spans=spans,
+        )
+    )
     return phrases
+
+
+def _content_scope_phrases(
+    text: str,
+    *,
+    slot_prefix: str,
+    spans: List[List[int]],
+) -> List[DecodedModalPhrase]:
+    content_value = _content_scope_value(text)
+    if not content_value:
+        return []
+    phrases: List[DecodedModalPhrase] = [
+        DecodedModalPhrase(
+            text=content_value,
+            slot=f"{slot_prefix}_content",
+            spans=spans,
+            provenance_only=True,
+        )
+    ]
+    for slot, value in _typed_identifier_slots(
+        content_value,
+        slot_prefix=f"{slot_prefix}_content",
+    ):
+        phrases.append(
+            DecodedModalPhrase(
+                text=value,
+                slot=slot,
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+    return phrases
+
+
+def _content_scope_value(text: str) -> str:
+    normalized = _clean_text(text)
+    if not normalized:
+        return ""
+    tokens = normalized.split()
+    while tokens and tokens[0].lower() in _LOW_INFORMATION_SCOPE_LEADING_TOKENS:
+        tokens = tokens[1:]
+    if not tokens:
+        return ""
+    content = _clean_text(" ".join(tokens))
+    if not content or content.lower() == normalized.lower():
+        return ""
+    return content
 
 
 def _cue_modal_slots(

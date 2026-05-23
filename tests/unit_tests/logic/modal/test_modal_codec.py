@@ -12860,6 +12860,10 @@ def test_modal_decompiler_and_triples_surface_subject_to_frame_and_scope_bridge_
 
     assert "subject_to" in slot_texts["condition_prefix_key"]
     assert "frame:Frame:subject_to" in slot_texts["condition_modal_bridge_signature"]
+    assert slot_texts["condition_scope_content"] == [
+        "secretary determines that compliance is adequate"
+    ]
+    assert slot_texts["condition_scope_content_token_prefix"] == ["secretary"]
     assert "fiscal_year" in slot_texts["bridge_cue"]
     assert "determines" in slot_texts["bridge_cue"]
     assert "temporal:F:fiscal_year" in slot_texts["bridge_modal_bridge_signature"]
@@ -12868,6 +12872,11 @@ def test_modal_decompiler_and_triples_surface_subject_to_frame_and_scope_bridge_
     assert any(
         triple["predicate"] == "condition_modal_bridge_signature"
         and triple["object"] == "frame:Frame:subject_to"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "condition_scope_content"
+        and triple["object"] == "secretary determines that compliance is adequate"
         for triple in triples
     )
     assert any(

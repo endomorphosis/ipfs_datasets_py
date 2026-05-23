@@ -219,6 +219,16 @@ _LOW_INFORMATION_SECTION_MARKER_TOKENS = frozenset(
         "sections",
     }
 )
+_LOW_INFORMATION_SCOPE_LEADING_TOKENS = frozenset(
+    {
+        "the",
+        "a",
+        "an",
+        "this",
+        "that",
+        "such",
+    }
+)
 _CANONICAL_MODAL_OPERATOR_LABELS: Mapping[tuple[str, str], str] = {
     ("deontic", "O"): "obligation",
     ("deontic", "P"): "permission",
@@ -1226,6 +1236,17 @@ def modal_ir_to_flogic_triples(
                     "object": predicate_value,
                 }
             )
+        for predicate_name, predicate_value in _content_scope_components(
+            formula.predicate.name,
+            slot_prefix="predicate",
+        ):
+            triples.append(
+                {
+                    "subject": formula.formula_id,
+                    "predicate": predicate_name,
+                    "object": predicate_value,
+                }
+            )
         modal_operator_label = _resolved_modal_operator_label(formula)
         if modal_operator_label:
             triples.append(
@@ -1691,6 +1712,17 @@ def modal_ir_to_flogic_triples(
                                 "object": predicate_value,
                             }
                         )
+                    for predicate_name, predicate_value in _content_scope_components(
+                        scoped_value,
+                        slot_prefix="condition_scope",
+                    ):
+                        triples.append(
+                            {
+                                "subject": formula.formula_id,
+                                "predicate": predicate_name,
+                                "object": predicate_value,
+                            }
+                        )
         for exception in _unique_preserve_order(
             str(value).strip()
             for value in formula.exceptions
@@ -1804,6 +1836,17 @@ def modal_ir_to_flogic_triples(
                     for predicate_name, predicate_value in _contextual_modal_cue_components(
                         formula,
                         text=scoped_value,
+                        slot_prefix="exception_scope",
+                    ):
+                        triples.append(
+                            {
+                                "subject": formula.formula_id,
+                                "predicate": predicate_name,
+                                "object": predicate_value,
+                            }
+                        )
+                    for predicate_name, predicate_value in _content_scope_components(
+                        scoped_value,
                         slot_prefix="exception_scope",
                     ):
                         triples.append(
@@ -2487,7 +2530,48 @@ def _condition_proxy_components_from_exception(
                 slot_prefix="condition_scope",
             )
         )
+        components.extend(
+            _content_scope_components(
+                scoped_value,
+                slot_prefix="condition_scope",
+            )
+        )
     return _unique_preserve_order_tuples(components)
+
+
+def _content_scope_components(
+    text: str,
+    *,
+    slot_prefix: str,
+) -> List[tuple[str, str]]:
+    content_value = _content_scope_value(text)
+    if not content_value:
+        return []
+    components: List[tuple[str, str]] = [
+        (f"{slot_prefix}_content", content_value)
+    ]
+    components.extend(
+        _typed_identifier_components(
+            content_value,
+            slot_prefix=f"{slot_prefix}_content",
+        )
+    )
+    return _unique_preserve_order_tuples(components)
+
+
+def _content_scope_value(text: str) -> str:
+    normalized = _clean_non_empty_string(text)
+    if not normalized:
+        return ""
+    tokens = normalized.split()
+    while tokens and tokens[0].lower() in _LOW_INFORMATION_SCOPE_LEADING_TOKENS:
+        tokens = tokens[1:]
+    if not tokens:
+        return ""
+    content = _clean_non_empty_string(" ".join(tokens))
+    if not content or content.lower() == normalized.lower():
+        return ""
+    return content
 
 
 def _temporal_clause_prefix_relation(prefix_key: str) -> str:
