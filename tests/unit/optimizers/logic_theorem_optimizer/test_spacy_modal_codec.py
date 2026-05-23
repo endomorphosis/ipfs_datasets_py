@@ -3021,6 +3021,33 @@ def test_spacy_refined_pair_balance_caps_editorial_temporal_status_pressure_for_
     assert counts["deontic"] == pytest.approx(1.35)
 
 
+def test_spacy_refined_pair_balance_reinforces_frame_for_purpose_scoped_deontic_statutory_scope() -> None:
+    counts = {
+        "deontic": 2.5,
+        "conditional_normative": 1.2,
+        "frame": 0.2,
+    }
+    signals = {
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": False,
+        "has_deontic_cue": True,
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": False,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": True,
+        "has_conditional_scope_token": False,
+        "has_purpose_scope_phrase": True,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_frame_editorial_scope_phrase": True,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["frame"] >= 0.6
+
+
 def test_spacy_temporal_scope_boost_is_stronger_with_deontic_cue_competition() -> None:
     base_signals = {
         "has_temporal_scope": True,
@@ -3062,6 +3089,37 @@ def test_spacy_temporal_scope_boost_is_weaker_for_weak_temporal_scope_with_deont
 
     assert competing_boosts["temporal"] < base_boosts["temporal"]
     assert competing_boosts["deontic"] > 0.0
+
+
+def test_spacy_temporal_scope_boost_damps_editorial_calendar_noise_without_temporal_cues() -> None:
+    noise_signals = {
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": False,
+        "has_temporal_scope_token": True,
+        "has_temporal_within_scope": False,
+        "has_temporal_deadline_cue": False,
+        "has_temporal_cue": False,
+        "has_calendar_date_scope": True,
+        "has_temporal_status_scope": True,
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": False,
+        "has_deontic_cue": True,
+        "has_frame_context": True,
+        "has_frame_editorial_scope_phrase": True,
+        "has_statutory_scope_reference": True,
+    }
+    explicit_temporal_signals = {
+        **noise_signals,
+        "has_temporal_cue": True,
+    }
+
+    noise_boosts = _scope_signal_family_logit_boosts(noise_signals)
+    explicit_temporal_boosts = _scope_signal_family_logit_boosts(
+        explicit_temporal_signals
+    )
+
+    assert noise_boosts["temporal"] < explicit_temporal_boosts["temporal"]
+    assert noise_boosts["deontic"] > 0.0
 
 
 def test_spacy_frame_bonus_preserves_more_statutory_weight_for_weak_temporal_scope() -> None:

@@ -4674,6 +4674,31 @@ def _apply_refined_modal_family_cue_pair_balance(
         )
         conditional_count = float(counts.get(conditional_family, 0.0))
 
+    # deontic -> frame:
+    # statutory purpose/reference qualifiers can carry structural frame semantics
+    # alongside operative deontic force; preserve frame evidence in that mix.
+    if (
+        deontic_count > frame_count
+        and has_deontic_scope
+        and has_explicit_deontic_scope
+        and has_frame_scope_context
+        and has_statutory_scope_reference
+        and has_purpose_scope_phrase
+        and has_non_clause_structural_conditional_scope
+        and conditional_count >= _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT
+    ):
+        frame_floor = _scaled_competing_scope_backfill(
+            source_count=max(deontic_count, conditional_count),
+            ratio=0.24,
+            minimum=_FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            maximum=_STATUTORY_GENERIC_FRAME_DEONTIC_SCOPE_MAX,
+        )
+        counts[frame_family] = max(
+            frame_count,
+            frame_floor,
+        )
+        frame_count = float(counts.get(frame_family, 0.0))
+
     # temporal -> deontic:
     # phrase-only structural qualifiers (e.g., "with respect to") often carry
     # operative deontic force even when temporal deadlines are present.
@@ -5047,6 +5072,21 @@ def _scope_signal_family_logit_boosts(signals: Mapping[str, bool]) -> Dict[str, 
     boosts: Dict[str, float] = {}
     explicit_conditional_scope = _has_explicit_conditional_scope(signals)
     has_strong_temporal_scope = _has_strong_temporal_scope_signal(signals)
+    has_non_status_temporal_phrase = bool(
+        signals.get("has_temporal_scope_phrase")
+        and not signals.get("has_temporal_status_scope")
+    )
+    has_explicit_temporal_scope = bool(
+        signals.get("has_temporal_cue")
+        or has_non_status_temporal_phrase
+        or signals.get("has_temporal_within_scope")
+        or signals.get("has_temporal_deadline_cue")
+    )
+    has_structural_temporal_scope = bool(
+        signals.get("has_calendar_date_scope")
+        or signals.get("has_temporal_status_scope")
+        or signals.get("has_temporal_scope_token")
+    )
     has_frame_context_signal = bool(
         signals.get("has_frame_context")
         or signals.get("has_frame_cue")
@@ -5063,6 +5103,11 @@ def _scope_signal_family_logit_boosts(signals: Mapping[str, bool]) -> Dict[str, 
             signals.get("has_frame_context")
             or signals.get("has_frame_cue")
         )
+    )
+    has_structural_scope_context = bool(
+        has_frame_context_signal
+        or has_editorial_frame_context
+        or has_statutory_frame_context
     )
     has_strong_temporal_scope = bool(
         signals.get("has_calendar_date_scope")
@@ -5114,6 +5159,13 @@ def _scope_signal_family_logit_boosts(signals: Mapping[str, bool]) -> Dict[str, 
             conditional_bonus += 0.1
             if has_strong_temporal_scope:
                 conditional_bonus += 0.05
+        if (
+            not explicit_conditional_scope
+            and bool(signals.get("has_statutory_scope_reference"))
+            and bool(signals.get("has_deontic_cue"))
+            and not bool(signals.get("has_temporal_cue"))
+        ):
+            conditional_bonus = max(0.0, conditional_bonus - 0.2)
         boosts[ModalLogicFamily.CONDITIONAL_NORMATIVE.value] = conditional_bonus
     if bool(signals.get("has_deontic_scope")):
         deontic_bonus = 0.8
@@ -5186,6 +5238,13 @@ def _scope_signal_family_logit_boosts(signals: Mapping[str, bool]) -> Dict[str, 
             and not bool(signals.get("has_temporal_scope"))
         ):
             deontic_bonus += 0.1
+        if (
+            bool(signals.get("has_deontic_cue"))
+            and has_structural_temporal_scope
+            and not has_explicit_temporal_scope
+            and has_structural_scope_context
+        ):
+            deontic_bonus += 0.2
         boosts[ModalLogicFamily.DEONTIC.value] = deontic_bonus
     temporal_bonus = 0.0
     if bool(signals.get("has_temporal_scope")):
@@ -5222,6 +5281,25 @@ def _scope_signal_family_logit_boosts(signals: Mapping[str, bool]) -> Dict[str, 
             and not has_editorial_frame_context
         ):
             temporal_bonus += 0.2
+    if (
+        temporal_bonus > 0.0
+        and has_structural_temporal_scope
+        and not has_explicit_temporal_scope
+        and bool(
+            signals.get("has_deontic_scope")
+            or signals.get("has_deontic_cue")
+        )
+        and has_structural_scope_context
+    ):
+        temporal_noise_penalty = 0.65
+        if has_editorial_frame_context:
+            temporal_noise_penalty = max(temporal_noise_penalty, 1.0)
+        if has_statutory_frame_context and bool(signals.get("has_deontic_cue")):
+            temporal_noise_penalty = max(temporal_noise_penalty, 1.15)
+        temporal_bonus = max(
+            0.0,
+            temporal_bonus - temporal_noise_penalty,
+        )
     if (
         temporal_bonus > 0.0
         and has_editorial_frame_context
