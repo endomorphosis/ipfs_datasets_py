@@ -1380,6 +1380,18 @@ def modal_ir_to_flogic_triples(
                         "object": value,
                     }
                 )
+            for predicate, value in _contextual_modal_cue_components(
+                formula,
+                text=section_heading_tail,
+                slot_prefix="section_heading_tail",
+            ):
+                triples.append(
+                    {
+                        "subject": formula.formula_id,
+                        "predicate": predicate,
+                        "object": value,
+                    }
+                )
         fallback_surface_text = _fallback_surface_text(
             modal_ir=modal_ir,
             formula=formula,
@@ -1394,6 +1406,18 @@ def modal_ir_to_flogic_triples(
             )
             for predicate, value in _typed_identifier_components(
                 fallback_surface_text,
+                slot_prefix="fallback_surface_text",
+            ):
+                triples.append(
+                    {
+                        "subject": formula.formula_id,
+                        "predicate": predicate,
+                        "object": value,
+                    }
+                )
+            for predicate, value in _contextual_modal_cue_components(
+                formula,
+                text=fallback_surface_text,
                 slot_prefix="fallback_surface_text",
             ):
                 triples.append(
@@ -2370,6 +2394,71 @@ def _formula_bridge_cues(formula: ModalIRFormula) -> List[str]:
         if re.search(rf"(?<!\w){re.escape(cue_surface)}(?!\w)", searchable_text):
             cues.append(cue_key)
     return cues
+
+
+def _contextual_modal_cues_from_text(
+    formula: ModalIRFormula,
+    *,
+    text: str,
+) -> List[str]:
+    normalized_text = _clean_non_empty_string(text).replace("_", " ").lower()
+    if not normalized_text:
+        return []
+
+    candidate_terms: List[str] = []
+    candidate_terms.extend(
+        _clean_non_empty_string(term).replace("_", " ").lower()
+        for term in _operator_cue_terms(formula)
+        if _clean_non_empty_string(term)
+    )
+    candidate_terms.extend(
+        cue_key.replace("_", " ").lower()
+        for cue_key in _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS
+        if cue_key
+    )
+    unique_terms = sorted(
+        {
+            term
+            for term in candidate_terms
+            if term
+        },
+        key=lambda item: (-len(item.split()), -len(item), item),
+    )
+
+    cues: List[str] = []
+    for cue_term in unique_terms:
+        if not _text_contains_cue_term(normalized_text, cue_term):
+            continue
+        cue_tokens = _CUE_TOKEN_RE.findall(cue_term)
+        if not cue_tokens:
+            continue
+        cue_key = "_".join(cue_tokens)
+        if cue_key and cue_key not in cues:
+            cues.append(cue_key)
+    return cues
+
+
+def _contextual_modal_cue_components(
+    formula: ModalIRFormula,
+    *,
+    text: str,
+    slot_prefix: str,
+) -> List[tuple[str, str]]:
+    normalized_slot_prefix = _clean_non_empty_string(slot_prefix)
+    if not normalized_slot_prefix:
+        return []
+    components: List[tuple[str, str]] = []
+    for cue in _contextual_modal_cues_from_text(formula, text=text):
+        components.append((f"{normalized_slot_prefix}_cue", cue))
+        components.append((f"{normalized_slot_prefix}_modal_cue", cue))
+        components.extend(
+            _modal_lexeme_components(
+                formula,
+                cue=cue,
+                slot_prefix=f"{normalized_slot_prefix}_modal",
+            )
+        )
+    return _unique_preserve_order_tuples(components)
 
 
 def _status_keyword_value(

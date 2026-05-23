@@ -1007,6 +1007,14 @@ def _fallback_section_heading_tail_phrases(
                 provenance_only=True,
             )
         )
+    phrases.extend(
+        _contextual_modal_cue_phrases(
+            formula=formula,
+            text=heading_tail,
+            slot_prefix="section_heading_tail",
+            spans=spans,
+        )
+    )
     return phrases
 
 
@@ -1039,6 +1047,14 @@ def _fallback_surface_text_phrases(
                 provenance_only=True,
             )
         )
+    phrases.extend(
+        _contextual_modal_cue_phrases(
+            formula=formula,
+            text=surface_text,
+            slot_prefix="fallback_surface_text",
+            spans=spans,
+        )
+    )
     return phrases
 
 
@@ -4098,6 +4114,97 @@ def _formula_bridge_cues(formula: ModalIRFormula) -> List[str]:
         if re.search(rf"(?<!\w){re.escape(cue_surface)}(?!\w)", searchable_text):
             cues.append(cue_key)
     return cues
+
+
+def _contextual_modal_cues_from_text(
+    formula: ModalIRFormula,
+    *,
+    text: str,
+) -> List[str]:
+    normalized_text = _clean_text(text).replace("_", " ").lower()
+    if not normalized_text:
+        return []
+
+    candidate_terms: List[str] = []
+    candidate_terms.extend(
+        _clean_text(term).replace("_", " ").lower()
+        for term in _operator_cue_terms(formula)
+        if _clean_text(term)
+    )
+    candidate_terms.extend(
+        cue_key.replace("_", " ").lower()
+        for cue_key in _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS
+        if cue_key
+    )
+    unique_terms = sorted(
+        {
+            term
+            for term in candidate_terms
+            if term
+        },
+        key=lambda item: (-len(item.split()), -len(item), item),
+    )
+
+    cues: List[str] = []
+    for cue_term in unique_terms:
+        if not _text_contains_cue_term(normalized_text, cue_term):
+            continue
+        cue_tokens = _CUE_TOKEN_RE.findall(cue_term)
+        if not cue_tokens:
+            continue
+        cue_key = "_".join(cue_tokens)
+        if cue_key and cue_key not in cues:
+            cues.append(cue_key)
+    return cues
+
+
+def _contextual_modal_cue_phrases(
+    *,
+    formula: ModalIRFormula,
+    text: str,
+    slot_prefix: str,
+    spans: List[List[int]],
+) -> List[DecodedModalPhrase]:
+    normalized_slot_prefix = _clean_text(slot_prefix)
+    if not normalized_slot_prefix:
+        return []
+    phrases: List[DecodedModalPhrase] = []
+    seen: set[Tuple[str, str]] = set()
+    for cue in _contextual_modal_cues_from_text(formula, text=text):
+        for cue_slot, cue_value in (
+            (f"{normalized_slot_prefix}_cue", cue),
+            (f"{normalized_slot_prefix}_modal_cue", cue),
+        ):
+            marker = (cue_slot, cue_value)
+            if marker in seen:
+                continue
+            seen.add(marker)
+            phrases.append(
+                DecodedModalPhrase(
+                    text=cue_value,
+                    slot=cue_slot,
+                    spans=spans,
+                    provenance_only=True,
+                )
+            )
+        for modal_slot, modal_value in _modal_lexeme_slots(
+            formula,
+            cue=cue,
+            slot_prefix=f"{normalized_slot_prefix}_modal",
+        ):
+            marker = (modal_slot, modal_value)
+            if marker in seen:
+                continue
+            seen.add(marker)
+            phrases.append(
+                DecodedModalPhrase(
+                    text=modal_value,
+                    slot=modal_slot,
+                    spans=spans,
+                    provenance_only=True,
+                )
+            )
+    return phrases
 
 
 def _append_statutory_scope_phrases(

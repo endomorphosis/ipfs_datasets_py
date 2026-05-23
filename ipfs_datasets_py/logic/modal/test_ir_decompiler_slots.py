@@ -642,6 +642,39 @@ def _compilation_preamble_fallback_surface_sample_document() -> ModalIRDocument:
     )
 
 
+def _fallback_surface_contextual_modal_cue_sample_document() -> ModalIRDocument:
+    source_id = "us-code-6-314-0123abcd4567ef89"
+    normalized_text = (
+        "Sec. 314 - Subject to annual review, effective date requirements apply."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-fallback-surface-contextual-modal-cues",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="uscode_section_heading_fallback"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(normalized_text),
+            citation="6 U.S.C. 314",
+        ),
+        metadata={
+            "cue": "__uscode_section_heading_fallback__",
+            "fallback_rule": "uscode_section_heading_v1",
+        },
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
 def _typed_clause_scope_sample_document() -> ModalIRDocument:
     source_id = "us-code-7-6409-502d7cea35400f08"
     normalized_text = (
@@ -3747,6 +3780,54 @@ def test_modal_ir_to_flogic_triples_trim_compilation_preamble_from_fallback_surf
     assert "united" not in objects("fallback_surface_text_token")
     assert "states" not in objects("fallback_surface_text_token")
     assert "edition" not in objects("fallback_surface_text_token")
+
+
+def test_decode_modal_ir_document_emits_contextual_modal_cues_for_fallback_surface() -> None:
+    decoded = decode_modal_ir_document(
+        _fallback_surface_contextual_modal_cue_sample_document()
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert set(slot_map["fallback_surface_text_cue"]) == {
+        "effective_date",
+        "subject_to",
+    }
+    assert set(slot_map["fallback_surface_text_modal_signature"]) == {
+        "deontic:O:effective_date",
+        "deontic:O:subject_to",
+    }
+    assert {
+        "temporal:F:effective_date",
+        "conditional_normative:O|:subject_to",
+        "frame:Frame:subject_to",
+    }.issubset(set(slot_map["fallback_surface_text_modal_bridge_signature"]))
+
+
+def test_modal_ir_to_flogic_triples_emit_contextual_modal_cues_for_fallback_surface() -> None:
+    triples = modal_ir_to_flogic_triples(
+        _fallback_surface_contextual_modal_cue_sample_document()
+    )
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert set(objects("fallback_surface_text_cue")) == {
+        "effective_date",
+        "subject_to",
+    }
+    assert set(objects("fallback_surface_text_modal_signature")) == {
+        "deontic:O:effective_date",
+        "deontic:O:subject_to",
+    }
+    assert {
+        "temporal:F:effective_date",
+        "conditional_normative:O|:subject_to",
+        "frame:Frame:subject_to",
+    }.issubset(set(objects("fallback_surface_text_modal_bridge_signature")))
 
 
 def test_decode_modal_ir_document_emits_procedural_keyword_slots() -> None:
