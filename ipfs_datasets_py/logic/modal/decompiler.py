@@ -168,6 +168,47 @@ _STRICT_ROMAN_NUMERAL_RE = re.compile(
     re.IGNORECASE,
 )
 _VOWEL_CHARS = frozenset({"a", "e", "i", "o", "u"})
+_LOW_INFORMATION_SECTION_MARKER_TOKENS = frozenset(
+    {
+        "sec",
+        "secs",
+        "section",
+        "sections",
+    }
+)
+_CANONICAL_MODAL_OPERATOR_LABELS: Mapping[Tuple[str, str], str] = {
+    ("deontic", "O"): "obligation",
+    ("deontic", "P"): "permission",
+    ("deontic", "F"): "prohibition",
+    ("conditional_normative", "O|"): "conditional_obligation",
+    ("temporal", "F"): "eventuality",
+    ("temporal", "G"): "always",
+    ("temporal", "X"): "next",
+    ("epistemic", "K"): "knowledge",
+    ("doxastic", "B"): "belief",
+    ("frame", "Frame"): "frame",
+}
+_CANONICAL_MODAL_OPERATOR_LABEL_ALIASES: Mapping[str, str] = {
+    "obligatory": "obligation",
+    "obligation": "obligation",
+    "permitted": "permission",
+    "permission": "permission",
+    "forbidden": "prohibition",
+    "prohibited": "prohibition",
+    "prohibition": "prohibition",
+    "conditionally obligatory": "conditional_obligation",
+    "conditional obligation": "conditional_obligation",
+    "eventually": "eventuality",
+    "eventuality": "eventuality",
+    "always": "always",
+    "next": "next",
+    "known": "knowledge",
+    "knowledge": "knowledge",
+    "believed": "belief",
+    "belief": "belief",
+    "framed as": "frame",
+    "frame": "frame",
+}
 _PROVENANCE_NUMERIC_ALIGNMENT_SIGNATURES: tuple[str, ...] = (
     "leading_digit",
     "parity",
@@ -452,6 +493,32 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
         for slot, value in _typed_identifier_slots(
             operator_label,
             slot_prefix="modal_operator_label",
+        ):
+            phrases.append(
+                DecodedModalPhrase(
+                    text=value,
+                    slot=slot,
+                    spans=operator_spans,
+                    provenance_only=True,
+                )
+            )
+    canonical_operator_label = _canonical_modal_operator_label(
+        formula,
+        operator_label=operator_label,
+    )
+    if canonical_operator_label:
+        operator_spans = _span_from_values(cue_start, cue_end) or spans
+        phrases.append(
+            DecodedModalPhrase(
+                text=canonical_operator_label,
+                slot="modal_operator_label_canonical",
+                spans=operator_spans,
+                provenance_only=True,
+            )
+        )
+        for slot, value in _typed_identifier_slots(
+            canonical_operator_label,
+            slot_prefix="modal_operator_label_canonical",
         ):
             phrases.append(
                 DecodedModalPhrase(
@@ -910,19 +977,50 @@ def _fallback_surface_text(
     normalized = _TRAILING_SECTION_PUNCT_RE.sub("", normalized)
     if not normalized:
         return ""
+    status_keyword = _derived_status_keyword(
+        formula=formula,
+        fallback_rule=fallback_rule,
+    )
     status_surface = _status_heading_surface_text(
         normalized,
-        status_keyword=_derived_status_keyword(
-            formula=formula,
-            fallback_rule=fallback_rule,
-        ),
+        status_keyword=status_keyword,
     )
     if status_surface:
         return status_surface
+    if _is_low_information_section_marker(normalized):
+        if status_keyword:
+            return status_keyword
+        inferred_status = _status_keyword_from_source_text(source_text)
+        if inferred_status:
+            return inferred_status
+        return ""
     tokens = _tokenize_for_similarity(normalized)
     if not tokens or len(tokens) > max_tokens:
         return ""
     return normalized
+
+
+def _is_low_information_section_marker(text: str) -> bool:
+    normalized = _clean_text(text)
+    if not normalized:
+        return False
+    if re.fullmatch(r"[§\s.]+", normalized):
+        return True
+    tokens = _CUE_TOKEN_RE.findall(normalized.lower())
+    return (
+        len(tokens) == 1
+        and tokens[0] in _LOW_INFORMATION_SECTION_MARKER_TOKENS
+    )
+
+
+def _status_keyword_from_source_text(text: str) -> str:
+    normalized_text = _clean_text(text).lower()
+    if not normalized_text:
+        return ""
+    for keyword in _USCODE_FALLBACK_STATUS_KEYWORDS:
+        if re.search(rf"(?<!\w){re.escape(keyword)}(?!\w)", normalized_text):
+            return keyword
+    return ""
 
 
 def _status_heading_surface_text(text: str, *, status_keyword: str) -> str:
@@ -2863,6 +2961,22 @@ def _resolved_modal_operator_label(formula: ModalIRFormula) -> str:
     if not fallback or fallback == _clean_text(formula.operator.symbol):
         return ""
     return fallback
+
+
+def _canonical_modal_operator_label(
+    formula: ModalIRFormula,
+    *,
+    operator_label: str,
+) -> str:
+    family = _clean_text(formula.operator.family).lower()
+    symbol = _clean_text(formula.operator.symbol)
+    direct = _CANONICAL_MODAL_OPERATOR_LABELS.get((family, symbol), "")
+    if direct:
+        return direct
+    normalized_label = _clean_text(operator_label).lower()
+    if not normalized_label:
+        return ""
+    return _CANONICAL_MODAL_OPERATOR_LABEL_ALIASES.get(normalized_label, "")
 
 
 def _modal_operator_signature(
