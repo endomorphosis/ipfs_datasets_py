@@ -2202,7 +2202,11 @@ def _typed_clause_key_value(
     if not normalized:
         return None
     prefixes = _CONDITION_PREFIXES if clause_type == "condition" else _EXCEPTION_PREFIXES
-    for prefix_text, prefix_key in prefixes:
+    for prefix_text, prefix_key in sorted(
+        prefixes,
+        key=lambda item: len(item[0]),
+        reverse=True,
+    ):
         if not _text_has_prefix(normalized, prefix_text):
             continue
         value = _clean_non_empty_string(normalized[len(prefix_text) :].lstrip(",:;- "))

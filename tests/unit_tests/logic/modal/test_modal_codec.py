@@ -13181,6 +13181,63 @@ def test_modal_decompiler_and_triples_surface_as_described_in_bridge_slots() -> 
     )
 
 
+def test_modal_decompiler_and_triples_prefer_longest_condition_prefix_match() -> None:
+    source_id = "us-code-5-552-longest-prefix"
+    source_text = (
+        "The agency shall provide records to the extent provided in section 552(a)(1)."
+    )
+    formula = ModalIRFormula(
+        formula_id=f"{source_id}:f0001",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="shall_provide_records"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="5 U.S.C. 552",
+        ),
+        conditions=["to the extent provided in section 552(a)(1)"],
+        metadata={"cue": "shall"},
+    )
+    document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(document)
+
+    assert "to_the_extent_provided" in slot_texts["condition_prefix_key"]
+    assert slot_texts["condition_to_the_extent_provided"] == ["in section 552(a)(1)"]
+    assert "deontic:O:to_the_extent_provided" in slot_texts["condition_modal_signature"]
+    assert "conditional_normative:O|:to_the_extent_provided" in slot_texts[
+        "condition_modal_bridge_signature"
+    ]
+    assert any(
+        triple["predicate"] == "condition_prefix_key"
+        and triple["object"] == "to_the_extent_provided"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "condition_to_the_extent_provided"
+        and triple["object"] == "in section 552(a)(1)"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "condition_modal_bridge_signature"
+        and triple["object"] == "conditional_normative:O|:to_the_extent_provided"
+        for triple in triples
+    )
+
+
 def test_modal_decompiler_and_triples_surface_authority_and_required_bridge_cues() -> None:
     source_id = "us-code-16-580f-d159c17cca2fb07b"
     source_text = (

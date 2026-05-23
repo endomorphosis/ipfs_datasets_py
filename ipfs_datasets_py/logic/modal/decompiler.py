@@ -3929,7 +3929,11 @@ def _typed_clause_slot(
     if not normalized:
         return None
     prefixes = _CONDITION_PREFIXES if slot == "condition" else _EXCEPTION_PREFIXES
-    for prefix_text, prefix_key in prefixes:
+    for prefix_text, prefix_key in sorted(
+        prefixes,
+        key=lambda item: len(item[0]),
+        reverse=True,
+    ):
         if not _text_has_prefix(normalized, prefix_text):
             continue
         suffix = _clean_text(normalized[len(prefix_text) :].lstrip(",:;- "))
