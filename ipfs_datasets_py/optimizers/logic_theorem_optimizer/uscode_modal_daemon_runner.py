@@ -13,6 +13,7 @@ import hashlib
 import json
 import os
 import random
+import shlex
 import shutil
 import signal
 import subprocess
@@ -3487,6 +3488,48 @@ def _codex_packet_should_requeue_transient(packet: Mapping[str, Any]) -> bool:
     return _codex_exec_logs_indicate_transient_failure(exec_result)
 
 
+def _codex_validation_commands_for_todos(
+    todos: Sequence[ModalTodo],
+) -> Optional[List[List[str]]]:
+    """Return explicit validation commands requested by claimed TODO metadata."""
+    commands: List[List[str]] = []
+    seen: set[tuple[str, ...]] = set()
+    for todo in todos:
+        raw_commands = todo.metadata.get("validation_commands")
+        if not isinstance(raw_commands, Sequence) or isinstance(raw_commands, (str, bytes)):
+            raw_commands = [raw_commands] if raw_commands else []
+        for raw_command in raw_commands:
+            if isinstance(raw_command, str):
+                command = shlex.split(raw_command)
+            elif isinstance(raw_command, Sequence):
+                command = [str(part) for part in raw_command]
+            else:
+                continue
+            command = [part for part in command if part]
+            key = tuple(command)
+            if not command or key in seen:
+                continue
+            seen.add(key)
+            commands.append(command)
+    return commands or None
+
+
+def _codex_packet_validation_report(packet: Mapping[str, Any]) -> Dict[str, Any]:
+    """Summarize packet validation/apply evidence for queue finalization."""
+    main_validation = dict(packet.get("main_apply_validation", {}) or {})
+    baseline_validation = dict(packet.get("main_apply_baseline_validation", {}) or {})
+    return {
+        "baseline_status": baseline_validation.get("status"),
+        "main_apply_status": packet.get("main_apply_status"),
+        "metric_deltas": dict(packet.get("metric_deltas", {}) or {}),
+        "patch_status": packet.get("patch_status"),
+        "status": main_validation.get("status")
+        or packet.get("main_apply_status")
+        or packet.get("patch_status")
+        or "not_measured",
+    }
+
+
 def _suggested_target_files(todos: Sequence[ModalTodo]) -> List[str]:
     files: List[str] = []
     for todo in todos:
@@ -4947,6 +4990,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                         model=args.codex_model,
                         sandbox=args.codex_sandbox,
                         timeout_seconds=args.codex_timeout_seconds,
+                        validation_commands=_codex_validation_commands_for_todos(claimed),
                     )
                     exec_status = str(
                         dict(packet.get("codex_exec", {})).get("status", "unknown")
@@ -4966,6 +5010,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                                 if packet.get("patch_status") is not None
                                 else None
                             ),
+                            validation_report=_codex_packet_validation_report(packet),
                         )
                         if finalize_report["updated"]:
                             queue.save_jsonl(queue_path)

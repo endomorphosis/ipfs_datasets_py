@@ -1060,6 +1060,81 @@ class AdaptiveModalAutoencoder:
             "todo_id": todo_id,
         }
 
+    def train_generalizable_projection(
+        self,
+        samples: Sequence[LegalSample],
+        *,
+        validation_samples: Optional[Sequence[LegalSample]] = None,
+        epochs: int = 3,
+        learning_rate: float = 0.35,
+        l2_regularization: float = 0.0,
+    ) -> Dict[str, Any]:
+        """Train feature-level weights with rollback on holdout regression.
+
+        This guarded path keeps sample-memory disabled for updates, so any
+        accepted improvement must come from reusable feature embeddings/logits.
+        """
+        sample_list = list(samples)
+        validation_list = list(validation_samples or [])
+        target_samples = validation_list or sample_list
+        before = self.evaluate(target_samples, use_sample_memory=False)
+        best_state = self.state.copy()
+        best = before
+        accepted_epochs = 0
+        epoch_reports: List[Dict[str, Any]] = []
+
+        for epoch in range(1, max(0, int(epochs)) + 1):
+            epoch_before_state = self.state.copy()
+            for sample in sample_list:
+                self._nudge_family_logits(
+                    sample,
+                    learning_rate=learning_rate,
+                    update_sample_memory=False,
+                )
+                self._nudge_decoded_embedding(
+                    sample,
+                    learning_rate=learning_rate,
+                    update_sample_memory=False,
+                )
+                self._nudge_legal_ir_view_logits(
+                    sample,
+                    learning_rate=learning_rate,
+                    update_sample_memory=False,
+                )
+            self._regularize_feature_state(l2_regularization)
+            after = self.evaluate(target_samples, use_sample_memory=False)
+            improved = _evaluation_improved_for_training(best, after)
+            epoch_reports.append(
+                {
+                    "accepted": improved,
+                    "cross_entropy_delta": best.cross_entropy_loss - after.cross_entropy_loss,
+                    "cosine_similarity_delta": (
+                        after.embedding_cosine_similarity
+                        - best.embedding_cosine_similarity
+                    ),
+                    "epoch": epoch,
+                    "reconstruction_delta": best.reconstruction_loss - after.reconstruction_loss,
+                }
+            )
+            if improved:
+                best = after
+                best_state = self.state.copy()
+                accepted_epochs += 1
+                continue
+            self.state = epoch_before_state
+            break
+
+        self.state = best_state
+        return {
+            "accepted_epochs": accepted_epochs,
+            "after": best.to_dict(),
+            "before": before.to_dict(),
+            "compute_backend": self.compute_backend_metadata(),
+            "epoch_reports": epoch_reports,
+            "sample_memory_used": False,
+            "validation_sample_count": len(target_samples),
+        }
+
     def _decoded_for(self, sample: LegalSample, *, use_sample_memory: bool = True) -> List[float]:
         stored = self.state.decoded_embeddings.get(sample.sample_id) if use_sample_memory else None
         if stored is not None and len(stored) == len(sample.embedding_vector):
@@ -1203,17 +1278,24 @@ class AdaptiveModalAutoencoder:
         cache["base_logits"] = dict(result)
         return result
 
-    def _nudge_decoded_embedding(self, sample: LegalSample, *, learning_rate: float) -> None:
+    def _nudge_decoded_embedding(
+        self,
+        sample: LegalSample,
+        *,
+        learning_rate: float,
+        update_sample_memory: bool = True,
+    ) -> None:
         step = _clamp_learning_rate(learning_rate)
-        current = self._decoded_for(sample)
+        current = self._decoded_for(sample, use_sample_memory=update_sample_memory)
         if len(current) != len(sample.embedding_vector):
             current = [0.0 for _ in sample.embedding_vector]
         error = self._vector_difference(sample.embedding_vector, current)
-        self.state.decoded_embeddings[sample.sample_id] = self._blend_toward(
-            current,
-            sample.embedding_vector,
-            step=step,
-        )
+        if update_sample_memory:
+            self.state.decoded_embeddings[sample.sample_id] = self._blend_toward(
+                current,
+                sample.embedding_vector,
+                step=step,
+            )
         feature_keys = self._feature_keys_for(sample)
         if not feature_keys:
             return
@@ -1227,16 +1309,23 @@ class AdaptiveModalAutoencoder:
                 weights[:] = [0.0 for _ in sample.embedding_vector]
             weights[:] = self._add_scaled_vector(weights, error, scale=feature_step)
 
-    def _nudge_family_logits(self, sample: LegalSample, *, learning_rate: float) -> None:
+    def _nudge_family_logits(
+        self,
+        sample: LegalSample,
+        *,
+        learning_rate: float,
+        update_sample_memory: bool = True,
+    ) -> None:
         step = _clamp_learning_rate(learning_rate)
         target = _target_family(sample)
-        logits = self.state.family_logits.setdefault(sample.sample_id, {})
-        logits[target] = logits.get(target, 0.0) + (2.0 * step)
-        for family in self.modal_families:
-            if family != target:
-                logits[family] = logits.get(family, 0.0) - (
-                    step / max(len(self.modal_families) - 1, 1)
-                )
+        if update_sample_memory:
+            logits = self.state.family_logits.setdefault(sample.sample_id, {})
+            logits[target] = logits.get(target, 0.0) + (2.0 * step)
+            for family in self.modal_families:
+                if family != target:
+                    logits[family] = logits.get(family, 0.0) - (
+                        step / max(len(self.modal_families) - 1, 1)
+                    )
         feature_keys = self._feature_keys_for(sample)
         if not feature_keys:
             return
@@ -1255,21 +1344,27 @@ class AdaptiveModalAutoencoder:
         sample: LegalSample,
         *,
         learning_rate: float,
+        update_sample_memory: bool = True,
     ) -> bool:
         target_distribution = self._legal_ir_view_target_cache.get(sample.sample_id)
         if not target_distribution:
             return False
         step = _clamp_learning_rate(learning_rate)
-        predicted = self._legal_ir_view_distribution(sample, target_distribution)
+        predicted = self._legal_ir_view_distribution(
+            sample,
+            target_distribution,
+            use_sample_memory=update_sample_memory,
+        )
         families = _unique_preserve_order(
             list(predicted.keys()) + list(target_distribution.keys())
         )
-        logits = self.state.family_logits.setdefault(sample.sample_id, {})
-        for family in families:
-            gradient = float(target_distribution.get(family, 0.0)) - float(
-                predicted.get(family, 0.0)
-            )
-            logits[family] = logits.get(family, 0.0) + (2.0 * step * gradient)
+        if update_sample_memory:
+            logits = self.state.family_logits.setdefault(sample.sample_id, {})
+            for family in families:
+                gradient = float(target_distribution.get(family, 0.0)) - float(
+                    predicted.get(family, 0.0)
+                )
+                logits[family] = logits.get(family, 0.0) + (2.0 * step * gradient)
 
         feature_keys = self._feature_keys_for(sample)
         if not feature_keys:
@@ -1285,6 +1380,20 @@ class AdaptiveModalAutoencoder:
                     2.0 * feature_step * gradient
                 )
         return True
+
+    def _regularize_feature_state(self, l2_regularization: float) -> None:
+        factor = max(0.0, 1.0 - max(0.0, float(l2_regularization)))
+        if factor >= 1.0:
+            return
+        for feature, vector in list(self.state.feature_embedding_weights.items()):
+            self.state.feature_embedding_weights[feature] = [
+                float(value) * factor for value in vector
+            ]
+        for feature, logits in list(self.state.feature_family_logits.items()):
+            self.state.feature_family_logits[feature] = {
+                family: float(value) * factor
+                for family, value in logits.items()
+            }
 
     def _feature_embedding_adjustment(self, sample: LegalSample, *, dimensions: int) -> List[float]:
         vectors = [
@@ -2128,6 +2237,25 @@ def _float_or_zero(value: Any) -> float:
         return float(value)
     except (TypeError, ValueError):
         return 0.0
+
+
+def _evaluation_improved_for_training(
+    before: AutoencoderEvaluation,
+    after: AutoencoderEvaluation,
+) -> bool:
+    """Return true when a feature-level update improves any guarded metric."""
+    if after.cross_entropy_loss < before.cross_entropy_loss:
+        return True
+    if after.embedding_cosine_similarity > before.embedding_cosine_similarity:
+        return True
+    if after.reconstruction_loss < before.reconstruction_loss:
+        return True
+    legal_ir_names = set(before.legal_ir_losses) | set(after.legal_ir_losses)
+    return any(
+        float(after.legal_ir_losses.get(name, 0.0))
+        < float(before.legal_ir_losses.get(name, 0.0))
+        for name in legal_ir_names
+    )
 
 
 def _vector_norm(values: Sequence[float]) -> float:

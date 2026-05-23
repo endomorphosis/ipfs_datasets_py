@@ -198,6 +198,41 @@ def test_adaptive_autoencoder_todo_updates_lower_ce_and_increase_cosine() -> Non
     assert autoencoder.state.applied_todo_ids == ["ce-1", "cos-1"]
 
 
+def test_adaptive_autoencoder_generalizable_projection_uses_holdout_without_sample_memory() -> None:
+    train_sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice within 30 days.",
+    )
+    validation_sample = build_us_code_sample(
+        title="5",
+        section="553",
+        text="The agency must provide notice before adopting a rule.",
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        feature_embedding_weight_scale=1.0,
+        feature_family_logit_scale=1.0,
+    )
+    before = autoencoder.evaluate([validation_sample], use_sample_memory=False)
+
+    report = autoencoder.train_generalizable_projection(
+        [train_sample],
+        validation_samples=[validation_sample],
+        epochs=3,
+        learning_rate=0.5,
+    )
+    after = autoencoder.evaluate([validation_sample], use_sample_memory=False)
+
+    assert report["accepted_epochs"] >= 1
+    assert report["sample_memory_used"] is False
+    assert after.cross_entropy_loss < before.cross_entropy_loss
+    assert after.embedding_cosine_similarity > before.embedding_cosine_similarity
+    assert autoencoder.state.family_logits == {}
+    assert autoencoder.state.decoded_embeddings == {}
+    assert autoencoder.state.feature_family_logits
+    assert autoencoder.state.feature_embedding_weights
+
+
 def test_adaptive_autoencoder_cross_entropy_uses_mixed_family_targets() -> None:
     sample = build_us_code_sample(
         title="5",

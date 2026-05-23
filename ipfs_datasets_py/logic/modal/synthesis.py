@@ -34,6 +34,106 @@ class ModalProgramSynthesisHint:
         return asdict(self)
 
 
+@dataclass(frozen=True)
+class ModalResidualRepairRoute:
+    """Deterministic route from a stable autoencoder residual to repair code."""
+
+    action: str
+    target_component: str
+    rationale: str
+    priority: float = 0.05
+
+
+RESIDUAL_REPAIR_ROUTES: Dict[str, ModalResidualRepairRoute] = {
+    "cross_entropy_loss": ModalResidualRepairRoute(
+        action="refine_modal_family_cue_rules",
+        target_component="modal.compiler.registry",
+        rationale="Cross-entropy residuals indicate modal-family cue or registry ambiguity.",
+        priority=0.5,
+    ),
+    "cosine_loss": ModalResidualRepairRoute(
+        action="refine_typed_ir_or_decompiler_slots",
+        target_component="modal.ir_decompiler",
+        rationale="Cosine residuals indicate typed IR/decompiler slots are losing embedding semantics.",
+        priority=0.5,
+    ),
+    "reconstruction_loss": ModalResidualRepairRoute(
+        action="refine_typed_ir_or_decompiler_slots",
+        target_component="modal.ir_decompiler",
+        rationale="Reconstruction residuals indicate typed IR/decompiler slots are losing source semantics.",
+        priority=0.5,
+    ),
+    "legal_ir_view_cross_entropy_loss": ModalResidualRepairRoute(
+        action="repair_multiview_legal_ir_loss",
+        target_component="bridge.contracts",
+        rationale="LegalIR view residuals indicate canonical multiview bridge alignment needs repair.",
+        priority=0.5,
+    ),
+    "legal_ir_multiview_proof_failure_ratio": ModalResidualRepairRoute(
+        action="repair_multiview_legal_ir_prover_gate",
+        target_component="external_provers.router",
+        rationale="Proof-gate residuals indicate external theorem prover routing needs repair.",
+        priority=0.5,
+    ),
+    "legal_ir_multiview_graph_failure_penalty": ModalResidualRepairRoute(
+        action="repair_multiview_legal_ir_graph_projection",
+        target_component="knowledge_graphs.neo4j_compat",
+        rationale="Graph residuals indicate Neo4j-compatible LegalIR projection needs repair.",
+        priority=0.5,
+    ),
+    "deontic_decoder_slot_loss": ModalResidualRepairRoute(
+        action="repair_deontic_bridge_quality_gate",
+        target_component="deontic.ir",
+        rationale="Deontic slot residuals indicate LegalNormIR bridge reconstruction needs repair.",
+        priority=0.5,
+    ),
+}
+
+
+def route_autoencoder_residual(
+    loss_name: str,
+    *,
+    focus: Sequence[str] = (),
+) -> ModalResidualRepairRoute | None:
+    """Return the deterministic code-repair route for a persistent residual."""
+    normalized = str(loss_name or "").strip()
+    if normalized in RESIDUAL_REPAIR_ROUTES:
+        return RESIDUAL_REPAIR_ROUTES[normalized]
+    focus_set = {str(item) for item in focus}
+    if "repair_deontic_bridge_quality_gate" in focus_set:
+        return RESIDUAL_REPAIR_ROUTES["deontic_decoder_slot_loss"]
+    if "repair_multiview_legal_ir_graph_projection" in focus_set:
+        return RESIDUAL_REPAIR_ROUTES["legal_ir_multiview_graph_failure_penalty"]
+    if "repair_external_prover_router" in focus_set:
+        return RESIDUAL_REPAIR_ROUTES["legal_ir_multiview_proof_failure_ratio"]
+    return None
+
+
+def residual_signature_for_hint(hint: ModalProgramSynthesisHint) -> str:
+    """Return a stable signature for clustering repeated residual repair hints."""
+    evidence = dict(hint.evidence or {})
+    payload = {
+        "action": hint.action,
+        "family_pair": [
+            evidence.get("predicted_family"),
+            evidence.get("target_family"),
+        ],
+        "frame_features": sorted(map(str, evidence.get("frame_features", []) or []))[:8],
+        "target_component": hint.target_component,
+        "top_embedding_features": sorted(
+            map(str, evidence.get("top_embedding_features", []) or [])
+        )[:8],
+        "top_family_features": sorted(
+            map(str, evidence.get("top_family_features", []) or [])
+        )[:8],
+        "top_target_views": sorted(map(str, evidence.get("top_target_views", []) or []))[:8],
+    }
+    digest = hashlib.sha256(
+        json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+    ).hexdigest()[:16]
+    return f"residual-{digest}"
+
+
 def synthesis_hints_from_autoencoder_introspection(
     introspection: Mapping[str, Any],
 ) -> List[ModalProgramSynthesisHint]:
@@ -41,6 +141,44 @@ def synthesis_hints_from_autoencoder_introspection(
     sample_id = str(introspection.get("sample_id") or "")
     focus = [str(value) for value in introspection.get("synthesis_focus", [])]
     hints: List[ModalProgramSynthesisHint] = []
+    routed_loss_names = [
+        "cross_entropy_loss",
+        "cosine_loss",
+        "reconstruction_loss",
+        "legal_ir_view_cross_entropy_loss",
+        "legal_ir_multiview_proof_failure_ratio",
+        "legal_ir_multiview_graph_failure_penalty",
+        "deontic_decoder_slot_loss",
+    ]
+
+    for loss_name in routed_loss_names:
+        value = introspection.get(loss_name)
+        if value in (None, "", 0, 0.0):
+            continue
+        route = route_autoencoder_residual(loss_name, focus=focus)
+        if route is None:
+            continue
+        hints.append(
+            _hint(
+                sample_id,
+                action=route.action,
+                target_component=route.target_component,
+                rationale=route.rationale,
+                priority=max(route.priority, float(value or 0.0)),
+                evidence={
+                    "loss_name": loss_name,
+                    "loss_value": value,
+                    "predicted_family": introspection.get("predicted_family"),
+                    "target_family": introspection.get("target_family"),
+                    "top_embedding_features": _feature_names(
+                        introspection.get("top_embedding_contributions", [])
+                    ),
+                    "top_family_features": _feature_names(
+                        introspection.get("top_family_contributions", [])
+                    ),
+                },
+            )
+        )
 
     if "add_deterministic_parser_rule" in focus:
         hints.append(
@@ -378,6 +516,9 @@ def _family_margin(introspection: Mapping[str, Any]) -> float:
 
 __all__ = [
     "ModalProgramSynthesisHint",
+    "ModalResidualRepairRoute",
+    "residual_signature_for_hint",
+    "route_autoencoder_residual",
     "synthesis_hints_from_autoencoder_introspection",
     "synthesis_hints_from_autoencoder_introspections",
 ]

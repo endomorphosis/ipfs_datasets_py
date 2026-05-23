@@ -12,6 +12,7 @@ from typing import Any, BinaryIO, Callable, Dict, Iterable, List, Mapping, Optio
 
 from ipfs_datasets_py.logic.modal.synthesis import (
     ModalProgramSynthesisHint,
+    residual_signature_for_hint,
     synthesis_hints_from_autoencoder_introspections,
 )
 from ipfs_datasets_py.logic.submodule_registry import logic_optimizer_scope_for_component
@@ -907,6 +908,10 @@ class ModalProgramSynthesisTodoGenerator:
                 _compact_hint_evidence(hint)
                 for hint in sorted(cluster, key=lambda hint: hint.hint_id)
             ]
+            residual_signatures = _unique_preserve_order(
+                residual_signature_for_hint(hint)
+                for hint in sorted(cluster, key=lambda hint: hint.hint_id)
+            )
             program_synthesis_scope = _program_synthesis_scope(
                 action=action,
                 target_component=target_component,
@@ -920,6 +925,7 @@ class ModalProgramSynthesisTodoGenerator:
                 "dedupe_signature": dedupe_signature,
                 "program_synthesis_scope": program_synthesis_scope,
                 "hint_evidence": hint_evidence,
+                "residual_signatures": residual_signatures,
                 "source": "modal_program_synthesis_todo_generator_v1",
                 "support_count": len(sample_ids),
                 "target_component": target_component,
@@ -1124,6 +1130,46 @@ class ModalTodoQueue:
         self._todos = {todo.todo_id: todo for todo in kept}
         return len(removed_ids)
 
+    def compact_autoencoder_backlog(
+        self,
+        *,
+        optimizer_role: str = AUTOENCODER_SGD_ROLE,
+        retire_failed_validation: bool = True,
+    ) -> Dict[str, int]:
+        """Compact transient autoencoder SGD backlog while preserving Codex work."""
+        before = self.role_status_counts()
+        before_role = before.get(optimizer_role, {})
+        before_total = sum(before_role.values())
+        program_before = sum(before.get(PROGRAM_SYNTHESIS_ROLE, {}).values())
+
+        deduped = self.deduplicate_autoencoder(optimizer_role=optimizer_role)
+        retired_failed_validation = 0
+        if retire_failed_validation:
+            retired_ids = [
+                todo.todo_id
+                for todo in self._todos.values()
+                if _todo_optimizer_role(todo) == optimizer_role
+                and todo.status == "failed_validation"
+            ]
+            for todo_id in retired_ids:
+                self._todos.pop(todo_id, None)
+            retired_failed_validation = len(retired_ids)
+
+        after = self.role_status_counts()
+        after_role = after.get(optimizer_role, {})
+        after_total = sum(after_role.values())
+        program_after = sum(after.get(PROGRAM_SYNTHESIS_ROLE, {}).values())
+        return {
+            "after_autoencoder_total": after_total,
+            "before_autoencoder_total": before_total,
+            "compacted_count": deduped,
+            "pending_after": int(after_role.get("pending", 0)),
+            "pending_before": int(before_role.get("pending", 0)),
+            "preserved_program_synthesis_count": program_after,
+            "program_synthesis_count_before": program_before,
+            "retired_failed_validation_count": retired_failed_validation,
+        }
+
     def pending(self, *, optimizer_role: Optional[str] = None) -> List[ModalTodo]:
         return self._by_priority(status="pending", optimizer_role=optimizer_role)
 
@@ -1230,15 +1276,30 @@ class ModalTodoQueue:
 
         anchor = candidates[0]
         anchor_key = _program_todo_semantic_bundle_key(anchor)
+        anchor_scope = _program_todo_scope(anchor)
+        anchor_target = _todo_target_component(anchor)
         claimed = [anchor]
         for todo in candidates[1:]:
             if len(claimed) >= max_items:
                 break
-            if _program_todo_semantic_bundle_key(todo) != anchor_key:
+            todo_key = _program_todo_semantic_bundle_key(todo)
+            same_exact_bundle = todo_key == anchor_key
+            same_ast_lane = (
+                _program_todo_scope(todo) == anchor_scope
+                and _todo_target_component(todo) == anchor_target
+            )
+            if not same_exact_bundle and not same_ast_lane:
                 continue
             claimed.append(todo)
 
+        anchor_id = anchor.todo_id
         for todo in claimed:
+            todo.metadata["semantic_bundle_anchor_id"] = anchor_id
+            todo.metadata["semantic_bundle_reason"] = (
+                "same_semantic_bundle_key"
+                if _program_todo_semantic_bundle_key(todo) == anchor_key
+                else "same_ast_scope_and_target_component"
+            )
             todo.claim(worker_id)
         return claimed
 
@@ -1491,6 +1552,17 @@ class ModalTodoSupervisor:
         self.queue.add_many(todos)
         return todos
 
+    def compact_autoencoder_backlog(
+        self,
+        *,
+        retire_failed_validation: bool = True,
+    ) -> Dict[str, int]:
+        """Compact transient autoencoder SGD work without touching Codex TODOs."""
+        return self.queue.compact_autoencoder_backlog(
+            optimizer_role=self.policy.autoencoder_role,
+            retire_failed_validation=retire_failed_validation,
+        )
+
     def _bounded_new_todos(
         self,
         todos: Iterable[ModalTodo],
@@ -1661,6 +1733,41 @@ class ModalTodoSupervisor:
             execution_mode=execution_mode,
         )
 
+    def autoencoder_status(
+        self,
+        *,
+        execution_mode: str = "adaptive_autoencoder_sgd",
+    ) -> Dict[str, Any]:
+        """Return queue counters for transient autoencoder SGD TODOs."""
+        return self.role_status(
+            optimizer_role=self.policy.autoencoder_role,
+            execution_mode=execution_mode,
+        )
+
+    def update_optimizer_queue_summary(
+        self,
+        summary: Dict[str, Any],
+        *,
+        autoencoder_execution_mode: str = "adaptive_autoencoder_sgd",
+        program_execution_mode: str = "queued_for_external_codex_worker",
+    ) -> Dict[str, Dict[str, Any]]:
+        """Apply both optimizer-role counters onto a run summary mapping."""
+        auto_status = self.autoencoder_status(execution_mode=autoencoder_execution_mode)
+        program_status = self.program_synthesis_status(execution_mode=program_execution_mode)
+        for prefix, status in (
+            ("autoencoder_sgd", auto_status),
+            ("program_synthesis", program_status),
+        ):
+            summary[f"{prefix}_pending"] = status["pending"]
+            summary[f"{prefix}_claimed"] = status["claimed"]
+            summary[f"{prefix}_completed"] = status["completed"]
+            summary[f"{prefix}_failed_validation"] = status["failed_validation"]
+            summary[f"{prefix}_execution_mode"] = status["execution_mode"]
+        return {
+            "autoencoder_sgd": auto_status,
+            "program_synthesis": program_status,
+        }
+
     def update_program_synthesis_summary(
         self,
         summary: Dict[str, Any],
@@ -1672,6 +1779,7 @@ class ModalTodoSupervisor:
         summary["program_synthesis_pending"] = status["pending"]
         summary["program_synthesis_claimed"] = status["claimed"]
         summary["program_synthesis_completed"] = status["completed"]
+        summary["program_synthesis_failed_validation"] = status["failed_validation"]
         summary["codex_program_synthesis_execution_mode"] = status["execution_mode"]
         return status
 
@@ -1681,6 +1789,7 @@ class ModalTodoSupervisor:
         *,
         codex_exec_status: str,
         patch_status: Optional[str],
+        validation_report: Optional[Mapping[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Finalize claimed program-synthesis TODOs based on Codex execution outcome."""
         todo_ids = [
@@ -1711,6 +1820,13 @@ class ModalTodoSupervisor:
             "main_apply_no_merged_delta",
         }:
             for todo_id in todo_ids:
+                todo = self.queue.get(todo_id)
+                if todo is not None:
+                    todo.metadata["validation_gate"] = _program_synthesis_validation_gate(
+                        todo,
+                        patch_status=normalized_patch_status,
+                        validation_report=validation_report,
+                    )
                 completed_count += int(self.queue.complete(todo_id))
             outcome = "completed"
         elif normalized_patch_status.startswith("main_apply_baseline_validation_failed"):
@@ -2091,6 +2207,42 @@ def _merge_autoencoder_todo_evidence(target: ModalTodo, duplicate: ModalTodo) ->
         target.metadata["deduped_failed_validation_count"] = (
             int(target.metadata.get("deduped_failed_validation_count", 0)) + 1
         )
+
+
+def _program_synthesis_validation_gate(
+    todo: ModalTodo,
+    *,
+    patch_status: str,
+    validation_report: Optional[Mapping[str, Any]],
+) -> Dict[str, Any]:
+    """Record why a Codex patch was accepted for a program-synthesis TODO."""
+    report = dict(validation_report or {})
+    metric_deltas = dict(report.get("metric_deltas", {}) or {})
+    targeted_metrics = [
+        str(metric)
+        for metric in todo.metadata.get("target_metrics", [])
+        if str(metric).strip()
+    ]
+    improved_metrics = [
+        metric
+        for metric in targeted_metrics
+        if float(metric_deltas.get(metric, 0.0) or 0.0) > 0.0
+    ]
+    deterministic_fix = str(report.get("status") or "").lower() in {
+        "passed",
+        "skipped",
+        "not_measured",
+        "",
+    }
+    return {
+        "accepted": bool(improved_metrics or deterministic_fix),
+        "deterministic_validation_fix": deterministic_fix,
+        "improved_metrics": improved_metrics,
+        "metric_deltas": metric_deltas,
+        "patch_status": patch_status,
+        "target_metrics": targeted_metrics,
+        "validation_status": str(report.get("status") or "not_measured"),
+    }
 
 
 def _program_todo_id(

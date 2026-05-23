@@ -15,6 +15,7 @@ from ipfs_datasets_py.logic.modal import (
     DeterministicModalLogicCodec,
     ModalLogicCodecConfig,
 )
+from ipfs_datasets_py.logic.modal.synthesis import route_autoencoder_residual
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import build_us_code_sample
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import AdaptiveModalAutoencoder
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import (
@@ -196,6 +197,28 @@ def test_loss_generator_routes_cross_logic_bridge_losses_to_ast_scopes() -> None
     assert actions_by_loss["zkp_verification_failure_ratio"].metadata[
         "program_synthesis_scope"
     ] == "zkp"
+
+
+def test_autoencoder_residual_router_targets_logic_submodules() -> None:
+    assert route_autoencoder_residual("cross_entropy_loss").target_component == (
+        "modal.compiler.registry"
+    )
+    assert route_autoencoder_residual("cosine_loss").target_component == (
+        "modal.ir_decompiler"
+    )
+    assert route_autoencoder_residual(
+        "legal_ir_multiview_proof_failure_ratio"
+    ).target_component == "external_provers.router"
+    assert route_autoencoder_residual(
+        "legal_ir_multiview_graph_failure_penalty"
+    ).target_component == "knowledge_graphs.neo4j_compat"
+    assert route_autoencoder_residual("deontic_decoder_slot_loss").target_component == (
+        "deontic.ir"
+    )
+    assert route_autoencoder_residual(
+        "unknown_loss",
+        focus=("repair_multiview_legal_ir_graph_projection",),
+    ).target_component == "knowledge_graphs.neo4j_compat"
 
 
 def test_queue_claims_multiple_pending_todos_at_once() -> None:
@@ -450,6 +473,80 @@ def test_queue_autoencoder_dedupe_batches_equivalent_sgd_todos() -> None:
     assert representative.metadata["autoencoder_bundle_signature"]
 
 
+def test_queue_compacts_autoencoder_backlog_without_removing_program_synthesis_history() -> None:
+    autoencoder_metadata = {
+        "execution_target": "adaptive_autoencoder",
+        "optimizer_role": "autoencoder_sgd",
+        "selected_frame": "agency_duty",
+    }
+    program_metadata = {
+        "execution_target": "codex_program_repair",
+        "optimizer_role": "program_synthesis",
+        "target_component": "modal.compiler",
+    }
+    pending = ModalTodo(
+        todo_id="sgd-pending",
+        action="improve_encoder_decoder_reconstruction",
+        objective="improve reconstruction",
+        sample_ids=["a"],
+        citations=["1 U.S.C. 1"],
+        loss_name="cosine_loss",
+        loss_value=0.5,
+        priority=10.0,
+        metadata=dict(autoencoder_metadata),
+    )
+    duplicate_failed = ModalTodo(
+        todo_id="sgd-duplicate-failed",
+        action="improve_encoder_decoder_reconstruction",
+        objective="duplicate reconstruction",
+        sample_ids=["b"],
+        citations=["2 U.S.C. 2"],
+        loss_name="cosine_loss",
+        loss_value=0.6,
+        priority=9.0,
+        status="failed_validation",
+        metadata=dict(autoencoder_metadata),
+    )
+    stale_failed = ModalTodo(
+        todo_id="sgd-stale-failed",
+        action="improve_modal_family_classifier",
+        objective="stale family update",
+        sample_ids=["c"],
+        citations=["3 U.S.C. 3"],
+        loss_name="cross_entropy_loss",
+        loss_value=0.7,
+        priority=8.0,
+        status="failed_validation",
+        metadata=dict(autoencoder_metadata),
+    )
+    completed_program = ModalTodo(
+        todo_id="program-completed",
+        action="add_deterministic_parser_rule",
+        objective="program repair history",
+        sample_ids=["d"],
+        citations=["4 U.S.C. 4"],
+        loss_name="parser_formula_count",
+        loss_value=1.0,
+        priority=7.0,
+        status="completed",
+        metadata=dict(program_metadata),
+    )
+    queue = ModalTodoQueue([pending, duplicate_failed, stale_failed, completed_program])
+
+    report = queue.compact_autoencoder_backlog()
+
+    assert report["compacted_count"] == 1
+    assert report["retired_failed_validation_count"] == 1
+    assert report["pending_after"] == 1
+    assert report["preserved_program_synthesis_count"] == 1
+    assert queue.get("program-completed").status == "completed"
+    representative = queue.get("sgd-pending")
+    assert representative is not None
+    assert representative.sample_ids == ["a", "b"]
+    assert queue.get("sgd-duplicate-failed") is None
+    assert queue.get("sgd-stale-failed") is None
+
+
 def test_supervisor_can_claim_program_synthesis_by_ast_scope() -> None:
     compiler = ModalTodo(
         todo_id="program-compiler",
@@ -564,8 +661,19 @@ def test_supervisor_can_claim_semantic_program_synthesis_bundle_by_ast_scope() -
         semantic_bundle=True,
     )
 
-    assert [todo.todo_id for todo in claimed] == ["program-anchor", "program-sibling"]
-    assert supervisor.queue.get("program-different-family").status == "pending"
+    assert [todo.todo_id for todo in claimed] == [
+        "program-anchor",
+        "program-different-family",
+        "program-sibling",
+    ]
+    assert claimed[0].metadata["semantic_bundle_anchor_id"] == "program-anchor"
+    assert claimed[0].metadata["semantic_bundle_reason"] == "same_semantic_bundle_key"
+    assert (
+        supervisor.queue.get("program-different-family").metadata[
+            "semantic_bundle_reason"
+        ]
+        == "same_ast_scope_and_target_component"
+    )
     assert supervisor.queue.get("program-frame").status == "pending"
 
 
@@ -934,6 +1042,7 @@ def test_program_synthesis_generator_clusters_stable_autoencoder_residuals() -> 
     assert all(todo.metadata["execution_target"] == "codex_program_repair" for todo in todos)
     assert all(todo.metadata["support_count"] >= 2 for todo in todos)
     assert all(todo.metadata["hint_evidence"] for todo in todos)
+    assert all(todo.metadata["residual_signatures"] for todo in todos)
     for todo in todos:
         assert {
             evidence["hint_id"] for evidence in todo.metadata["hint_evidence"]
@@ -1210,6 +1319,82 @@ def test_supervisor_program_synthesis_summary_writes_standard_keys() -> None:
     assert summary["codex_program_synthesis_execution_mode"] == "codex_cli_executor"
 
 
+def test_supervisor_optimizer_queue_summary_separates_autoencoder_and_codex_lanes() -> None:
+    autoencoder_todo = ModalTodo(
+        todo_id="sgd",
+        action="improve_modal_family_classifier",
+        objective="improve family logits",
+        sample_ids=["a"],
+        citations=[],
+        loss_name="cross_entropy_loss",
+        loss_value=1.0,
+        priority=2.0,
+        metadata={"optimizer_role": "autoencoder_sgd"},
+    )
+    program_todo = ModalTodo(
+        todo_id="program",
+        action="add_deterministic_parser_rule",
+        objective="repair parser",
+        sample_ids=["b"],
+        citations=[],
+        loss_name="parser_formula_count",
+        loss_value=1.0,
+        priority=1.0,
+        status="failed_validation",
+        metadata={"optimizer_role": "program_synthesis"},
+    )
+    supervisor = ModalTodoSupervisor(queue=ModalTodoQueue([autoencoder_todo, program_todo]))
+    summary = {}
+
+    statuses = supervisor.update_optimizer_queue_summary(
+        summary,
+        autoencoder_execution_mode="adaptive_sgd",
+        program_execution_mode="codex_cli",
+    )
+
+    assert statuses["autoencoder_sgd"]["pending"] == 1
+    assert statuses["program_synthesis"]["failed_validation"] == 1
+    assert summary["autoencoder_sgd_pending"] == 1
+    assert summary["program_synthesis_failed_validation"] == 1
+    assert summary["autoencoder_sgd_execution_mode"] == "adaptive_sgd"
+    assert summary["program_synthesis_execution_mode"] == "codex_cli"
+
+
+def test_codex_runner_extracts_todo_validation_commands_and_packet_report() -> None:
+    todo = ModalTodo(
+        todo_id="program",
+        action="add_deterministic_parser_rule",
+        objective="repair parser",
+        sample_ids=["a"],
+        citations=[],
+        loss_name="parser_formula_count",
+        loss_value=1.0,
+        priority=1.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "validation_commands": [
+                f"{sys.executable} -m pytest -q tests/unit/foo.py",
+                [sys.executable, "-m", "pytest", "-q", "tests/unit/foo.py"],
+            ],
+        },
+    )
+
+    commands = runner._codex_validation_commands_for_todos([todo])
+    report = runner._codex_packet_validation_report(
+        {
+            "main_apply_status": "applied",
+            "main_apply_validation": {"status": "passed"},
+            "metric_deltas": {"cross_entropy_loss": 0.1},
+            "patch_status": "applied_to_main",
+        }
+    )
+
+    assert commands == [[sys.executable, "-m", "pytest", "-q", "tests/unit/foo.py"]]
+    assert report["status"] == "passed"
+    assert report["main_apply_status"] == "applied"
+    assert report["metric_deltas"] == {"cross_entropy_loss": 0.1}
+
+
 def test_supervisor_finalize_program_synthesis_batch_applies_queue_transitions() -> None:
     samples = [
         build_us_code_sample(
@@ -1235,16 +1420,26 @@ def test_supervisor_finalize_program_synthesis_batch_applies_queue_transitions()
         max_items=1,
     )
     assert claimed
+    claimed[0].metadata["target_metrics"] = ["cross_entropy_loss"]
 
     completed = supervisor.finalize_program_synthesis_batch(
         claimed,
         codex_exec_status="succeeded",
         patch_status="created",
+        validation_report={
+            "metric_deltas": {"cross_entropy_loss": 0.2},
+            "status": "passed",
+        },
     )
     assert completed["updated"] is True
     assert completed["completed_count"] == 1
     assert completed["failed_validation_count"] == 0
-    assert supervisor.queue.get(claimed[0].todo_id).status == "completed"
+    completed_todo = supervisor.queue.get(claimed[0].todo_id)
+    assert completed_todo.status == "completed"
+    assert completed_todo.metadata["validation_gate"]["accepted"] is True
+    assert completed_todo.metadata["validation_gate"]["improved_metrics"] == [
+        "cross_entropy_loss"
+    ]
 
     supervisor_fail = ModalTodoSupervisor(
         policy=ModalOptimizerPolicy(program_synthesis_min_support=2)
