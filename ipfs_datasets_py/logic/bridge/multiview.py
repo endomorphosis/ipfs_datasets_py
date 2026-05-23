@@ -185,11 +185,34 @@ class MultiViewLegalIRReport:
         )
 
     def view_distribution(self) -> Dict[str, float]:
-        """Return a normalised distribution over formal IR view source components."""
+        """Return a normalized distribution over canonical bridge contract lanes.
+
+        The canonical distribution intentionally collapses fine-grained adapter
+        internals (for example ``deontic.exports`` and ``deontic.metrics``)
+        into stable optimizer-facing component lanes (for example
+        ``deontic.ir``). This keeps the LegalIR view target space compact and
+        deterministic across adapters while preserving cross-family routing
+        signals for ``bridge.contracts`` repair actions.
+        """
 
         counts: Dict[str, int] = {}
-        for view in self.document.views.values():
-            component = str(view.source_component or view.format or view.name)
+        for view_name, view in self.document.views.items():
+            component = _canonical_bridge_component_name(
+                str(view.source_component or ""),
+            )
+            if not component:
+                adapter_name = str(view.metadata.get("adapter_name") or "").strip()
+                if adapter_name:
+                    try:
+                        component = _canonical_bridge_component_name(
+                            logic_bridge_spec(adapter_name).target_component,
+                        )
+                    except KeyError:
+                        component = ""
+            if not component:
+                component = _canonical_bridge_component_name(str(view.format or ""))
+            if not component:
+                component = str(view_name or view.name)
             counts[component] = counts.get(component, 0) + 1
         total = float(sum(counts.values()))
         if total <= 0.0:
@@ -491,6 +514,26 @@ def _document_id(text: str) -> str:
 
 def _loss_prefix(adapter_name: str) -> str:
     return str(adapter_name or "bridge").replace("-", "_")
+
+
+def _canonical_bridge_component_name(component: str) -> str:
+    name = str(component or "").strip()
+    if not name:
+        return ""
+    canonical_prefixes = (
+        ("knowledge_graphs.", "knowledge_graphs.neo4j_compat"),
+        ("deontic.", "deontic.ir"),
+        ("TDFOL.", "TDFOL.prover"),
+        ("fol.", "TDFOL.prover"),
+        ("CEC.", "CEC.native"),
+        ("external_provers.", "external_provers.router"),
+        ("zkp.", "zkp.circuits"),
+        ("modal.", "modal.frame_logic"),
+    )
+    for prefix, canonical in canonical_prefixes:
+        if name.startswith(prefix):
+            return canonical
+    return name
 
 
 def _float_or_zero(value: Any) -> float:

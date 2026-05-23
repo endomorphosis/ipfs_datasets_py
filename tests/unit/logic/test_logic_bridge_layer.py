@@ -1581,6 +1581,29 @@ def test_multiview_bridge_evaluation_builds_canonical_legal_ir_document() -> Non
     assert target.view_distribution
 
 
+def test_multiview_bridge_distribution_uses_canonical_component_lanes() -> None:
+    from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
+
+    report = evaluate_legal_ir_multiview(
+        "The agency shall publish notice before the permit takes effect.",
+        bridge_names=("deontic_norms", "fol_tdfol"),
+        document_id="multiview-canonical-view-distribution",
+        citation="Multiview Canonical View Distribution",
+        cache=False,
+    )
+
+    distribution = report.view_distribution()
+    assert distribution
+    assert set(distribution) == {
+        "TDFOL.prover",
+        "deontic.ir",
+        "knowledge_graphs.neo4j_compat",
+    }
+    assert "deontic.exports" not in distribution
+    assert "deontic.metrics" not in distribution
+    assert abs(sum(distribution.values()) - 1.0) < 1e-9
+
+
 def test_multiview_bridge_accepts_citation_prefixed_statutory_text() -> None:
     from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
 
