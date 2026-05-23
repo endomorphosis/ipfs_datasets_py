@@ -1601,6 +1601,9 @@ def test_multiview_bridge_distribution_uses_canonical_component_lanes() -> None:
     }
     assert "deontic.exports" not in distribution
     assert "deontic.metrics" not in distribution
+    assert distribution["deontic.ir"] < 0.65
+    assert distribution["TDFOL.prover"] > 0.20
+    assert distribution["knowledge_graphs.neo4j_compat"] > 0.07
     assert abs(sum(distribution.values()) - 1.0) < 1e-9
 
 

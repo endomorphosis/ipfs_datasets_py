@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import inspect
+import math
 from dataclasses import dataclass, field
 from typing import Any, Dict, Mapping, Optional, Sequence
 
@@ -18,6 +19,10 @@ _BRIDGE_CONTRACT_CORE_COMPONENTS = (
     "TDFOL.prover",
     "knowledge_graphs.neo4j_compat",
 )
+_BRIDGE_CONTRACT_EXCLUDED_COMPONENTS = (
+    "external_provers.router",
+)
+_BRIDGE_VIEW_SIGNAL_WEIGHT_CAP = 2.0
 
 
 @dataclass(frozen=True)
@@ -202,7 +207,8 @@ class MultiViewLegalIRReport:
         signals for ``bridge.contracts`` repair actions.
         """
 
-        counts: Dict[str, int] = {}
+        adapter_component_weights: Dict[str, Dict[str, float]] = {}
+        adapter_total_weights: Dict[str, float] = {}
         for view_name, view in self.document.views.items():
             component = _canonical_bridge_component_name(
                 str(view.source_component or ""),
@@ -220,7 +226,26 @@ class MultiViewLegalIRReport:
                 component = _canonical_bridge_component_name(str(view.format or ""))
             if not component:
                 component = str(view_name or view.name)
-            counts[component] = counts.get(component, 0) + 1
+            adapter_name = _adapter_name_for_view(view_name, view)
+            signal_weight = _view_signal_weight(view)
+            component_weights = adapter_component_weights.setdefault(adapter_name, {})
+            component_weights[component] = component_weights.get(component, 0.0) + signal_weight
+            adapter_total_weights[adapter_name] = (
+                adapter_total_weights.get(adapter_name, 0.0) + signal_weight
+            )
+
+        counts: Dict[str, float] = {}
+        for adapter_name, component_weights in sorted(adapter_component_weights.items()):
+            total_weight = adapter_total_weights.get(adapter_name, 0.0)
+            if total_weight <= 0.0:
+                continue
+            report = self.reports.get(adapter_name)
+            adapter_mass = _adapter_view_distribution_mass(report)
+            for component, weight in component_weights.items():
+                counts[component] = counts.get(component, 0.0) + (
+                    adapter_mass * (weight / total_weight)
+                )
+
         total = float(sum(counts.values()))
         if total <= 0.0:
             return {}
@@ -270,6 +295,8 @@ class MultiViewLegalIRReport:
         for component, value in canonical.items():
             lane = _bridge_contract_lane_component(component)
             if not lane:
+                continue
+            if lane in _BRIDGE_CONTRACT_EXCLUDED_COMPONENTS:
                 continue
             lane_weights[lane] = lane_weights.get(lane, 0.0) + max(0.0, float(value))
 
@@ -609,6 +636,74 @@ def _bridge_contract_lane_component(component: str) -> str:
         if name.startswith(prefix):
             return lane
     return ""
+
+
+def _adapter_name_for_view(view_name: str, view: LogicIRView) -> str:
+    adapter_name = str(view.metadata.get("adapter_name") or "").strip()
+    if adapter_name:
+        return adapter_name
+    if "." in str(view_name):
+        prefix, _separator, _suffix = str(view_name).partition(".")
+        if prefix:
+            return prefix
+    return "_unscoped"
+
+
+def _adapter_view_distribution_mass(report: Optional[BridgeEvaluationReport]) -> float:
+    """Return deterministic adapter mass for canonical view balancing."""
+
+    if report is None:
+        return 1.0
+    proof_quality = max(0.0, 1.0 - float(report.proof_gate.failure_ratio))
+    graph_quality = max(
+        0.0,
+        1.0 - float(report.graph_projection.graph_failure_penalty),
+    )
+    # Keep non-accepted adapters visible but down-weighted.
+    if not report.accepted:
+        return 0.65 + (0.2 * proof_quality) + (0.15 * graph_quality)
+    return 1.0
+
+
+def _view_signal_weight(view: LogicIRView) -> float:
+    """Return deterministic evidence weight for one canonical view."""
+
+    signal_values: list[float] = []
+    signal_values.extend(_metadata_signal_values(view.metadata))
+    signal_values.extend(_payload_signal_values(view.payload))
+    if not signal_values:
+        return 1.0
+    strongest = max(0.0, max(signal_values))
+    return 1.0 + min(_BRIDGE_VIEW_SIGNAL_WEIGHT_CAP, math.log1p(strongest))
+
+
+def _metadata_signal_values(metadata: Mapping[str, Any]) -> list[float]:
+    values: list[float] = []
+    for key, raw_value in dict(metadata or {}).items():
+        key_name = str(key).strip().lower()
+        if not key_name.endswith("_count"):
+            continue
+        if key_name in {"node_count", "relationship_count"}:
+            continue
+        try:
+            numeric_value = float(raw_value)
+        except (TypeError, ValueError):
+            continue
+        if numeric_value > 0.0:
+            values.append(numeric_value)
+    return values
+
+
+def _payload_signal_values(payload: Mapping[str, Any]) -> list[float]:
+    values: list[float] = []
+    data = payload if isinstance(payload, Mapping) else {}
+    for key in ("events", "norms", "obligations", "records", "triples"):
+        value = data.get(key)
+        if isinstance(value, (str, bytes)):
+            continue
+        if isinstance(value, Sequence):
+            values.append(float(len(value)))
+    return values
 
 
 def _float_or_zero(value: Any) -> float:
