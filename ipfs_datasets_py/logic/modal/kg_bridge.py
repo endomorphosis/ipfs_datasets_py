@@ -33,6 +33,11 @@ _FRAME_PREDICATES = {
     "interpreted_in_frame",
     "selected_ontology_frame",
 }
+_FRAME_PREDICATE_PREFIXES = (
+    "candidate_ontology_frame",
+    "interpreted_in_frame",
+    "selected_ontology_frame",
+)
 _VALUE_LABELS_BY_PREDICATE = {
     "modal_family": "ModalFamily",
     "modal_operator": "ModalOperator",
@@ -56,6 +61,10 @@ _PROVENANCE_PREDICATES = {
     "hint_id",
     "sample_id",
 }
+_PROVENANCE_PREDICATE_PREFIXES = (
+    "source_context_span_",
+    "support_span_",
+)
 _MODAL_SEMANTIC_PREDICATES = {
     "cue",
     "modal_cue",
@@ -66,6 +75,19 @@ _MODAL_SEMANTIC_PREDICATES = {
     "predicate",
     "predicate_role",
 }
+_MODAL_SEMANTIC_PREDICATE_PREFIXES = (
+    "cue_modal_",
+    "modal_",
+    "predicate_",
+    "selected_frame_modal_family",
+)
+_DOCUMENT_SCOPE_PREDICATE_PREFIXES = (
+    "source_text_",
+    "source_id",
+)
+_CITATION_PREDICATE_PREFIXES = (
+    "citation_",
+)
 _CITATION_TOKENS = (
     "citation",
     "section",
@@ -446,16 +468,24 @@ def _projection_view_for_predicate(predicate: str) -> str:
         return "fact"
     if normalized == "type":
         return "type_assertion"
-    if normalized in _FRAME_PREDICATES:
+    if normalized in _FRAME_PREDICATES or normalized.startswith(_FRAME_PREDICATE_PREFIXES):
         return "frame_link"
-    if normalized in _DOCUMENT_SCOPE_PREDICATES:
-        return "document_scope"
-    if normalized in _PROVENANCE_PREDICATES:
-        return "provenance"
-    if normalized in _MODAL_SEMANTIC_PREDICATES:
-        return "modal_semantics"
     if "ontology_term" in normalized:
         return "ontology_term"
+    if normalized in _MODAL_SEMANTIC_PREDICATES or normalized.startswith(
+        _MODAL_SEMANTIC_PREDICATE_PREFIXES
+    ):
+        return "modal_semantics"
+    if normalized in _PROVENANCE_PREDICATES or normalized.startswith(
+        _PROVENANCE_PREDICATE_PREFIXES
+    ):
+        return "provenance"
+    if normalized in _DOCUMENT_SCOPE_PREDICATES or normalized.startswith(
+        _DOCUMENT_SCOPE_PREDICATE_PREFIXES
+    ):
+        return "document_scope"
+    if normalized.startswith(_CITATION_PREDICATE_PREFIXES):
+        return "citation_structure"
     if any(token in normalized for token in _CITATION_TOKENS):
         return "citation_structure"
     return "fact"

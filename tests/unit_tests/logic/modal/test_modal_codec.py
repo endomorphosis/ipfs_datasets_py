@@ -660,6 +660,60 @@ def test_flogic_graph_projection_metadata_tracks_frame_logic_alignment() -> None
     assert graph_data.metadata["frame_logic_selected_frame"] == "administrative_notice_hearing"
 
 
+def test_flogic_graph_projection_classifies_structured_predicates_into_projection_views() -> None:
+    graph_data = flogic_triples_to_graph_data(
+        [
+            {
+                "subject": "sample-doc",
+                "predicate": "candidate_ontology_frame_ranked_token",
+                "object": "administrative",
+            },
+            {
+                "subject": "sample-doc",
+                "predicate": "selected_frame_modal_family_count_value",
+                "object": "2",
+            },
+            {
+                "subject": "sample-doc",
+                "predicate": "citation_source_id_alignment_profile_token",
+                "object": "usc",
+            },
+            {
+                "subject": "sample-doc",
+                "predicate": "support_span_start_char",
+                "object": "0",
+            },
+            {
+                "subject": "sample-doc",
+                "predicate": "source_text_char_count",
+                "object": "128",
+            },
+            {"subject": "sample-doc", "predicate": "custom_fact", "object": "x"},
+        ],
+        graph_id="sample-doc:flogic",
+    )
+
+    view_by_predicate = {
+        rel.properties["flogic_predicate"]: rel.properties["frame_logic_projection_view"]
+        for rel in graph_data.relationships
+    }
+    assert view_by_predicate["candidate_ontology_frame_ranked_token"] == "frame_link"
+    assert view_by_predicate["selected_frame_modal_family_count_value"] == "modal_semantics"
+    assert view_by_predicate["citation_source_id_alignment_profile_token"] == "citation_structure"
+    assert view_by_predicate["support_span_start_char"] == "provenance"
+    assert view_by_predicate["source_text_char_count"] == "document_scope"
+    assert view_by_predicate["custom_fact"] == "fact"
+
+    assert graph_data.metadata["frame_logic_projection_view_distribution"] == {
+        "citation_structure": 1,
+        "document_scope": 1,
+        "fact": 1,
+        "frame_link": 1,
+        "modal_semantics": 1,
+        "provenance": 1,
+    }
+
+
 def test_modal_ir_graph_projection_metadata_keeps_frame_logic_selected_frame() -> None:
     document = ModalIRDocument(
         document_id="sample-doc",
