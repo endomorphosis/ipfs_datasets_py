@@ -223,6 +223,11 @@ _TEMPORAL_STATUS_SCOPE_TOKENS = frozenset(
         "effective",
         "enacted",
         "enactment",
+        "extend",
+        "extended",
+        "extends",
+        "extension",
+        "extensions",
         "expire",
         "expired",
         "expires",
@@ -276,6 +281,10 @@ _TEMPORAL_SCOPE_PHRASES = (
     "on or after",
     "period beginning on",
     "period ending on",
+    "is extended",
+    "are extended",
+    "extended over",
+    "extended to",
     "until expended",
     "available until expended",
     "remain available until expended",
@@ -287,6 +296,14 @@ _TEMPORAL_EXPENDED_SCOPE_PHRASES = (
     "until expended",
     "available until expended",
     "remain available until expended",
+)
+_TEMPORAL_DEADLINE_CUE_TERMS = frozenset(
+    {
+        "by",
+        "within",
+        "no later than",
+        "not later than",
+    }
 )
 _EPISTEMIC_SCOPE_TOKENS = frozenset(
     {
@@ -4452,6 +4469,11 @@ def _apply_refined_modal_family_cue_pair_balance(
     )
     has_temporal_scope = bool(signals.get("has_temporal_scope"))
     has_strong_temporal_scope = _has_strong_temporal_scope_signal(signals)
+    has_temporal_deadline_scope = bool(
+        signals.get("has_temporal_deadline_cue")
+        or signals.get("has_temporal_within_scope")
+        or signals.get("has_calendar_date_scope")
+    )
     has_structural_conditional_scope = bool(
         signals.get("has_condition_or_exception_scope")
     )
@@ -4527,6 +4549,28 @@ def _apply_refined_modal_family_cue_pair_balance(
             deontic_floor,
         )
         deontic_count = float(counts.get(deontic_family, 0.0))
+
+    # temporal -> deontic:
+    # damp non-deadline temporal pressure when explicit deontic force co-occurs.
+    if (
+        temporal_count > deontic_count
+        and has_temporal_scope
+        and has_deontic_scope
+        and has_explicit_deontic_scope
+        and has_statutory_scope_reference
+        and not has_temporal_deadline_scope
+        and not has_explicit_conditional_scope
+    ):
+        temporal_cap = max(
+            deontic_count,
+            _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
+        if temporal_count > temporal_cap:
+            temporal_overflow = temporal_count - temporal_cap
+            counts[temporal_family] = temporal_cap + (
+                0.25 * math.log1p(temporal_overflow)
+            )
+            temporal_count = float(counts.get(temporal_family, 0.0))
 
     # conditional_normative -> deontic / temporal:
     # statutory-reference conditionals without explicit "if/unless" clauses are often
@@ -4949,6 +4993,11 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
     temporal_expended_scope_phrase = _contains_scope_phrase(
         normalized_text, _TEMPORAL_EXPENDED_SCOPE_PHRASES
     )
+    temporal_deadline_cue = any(
+        cue.family == ModalLogicFamily.TEMPORAL.value
+        and cue.cue.lower() in _TEMPORAL_DEADLINE_CUE_TERMS
+        for cue in encoding.cues
+    )
     dynamic_scope_phrase = _contains_scope_phrase(
         normalized_text, _DYNAMIC_SCOPE_PHRASES
     )
@@ -5040,6 +5089,7 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         "has_temporal_scope": temporal_scope or ModalLogicFamily.TEMPORAL.value in cue_families,
         "has_temporal_cue": ModalLogicFamily.TEMPORAL.value in cue_families,
         "has_temporal_scope_phrase": bool(temporal_scope_phrase),
+        "has_temporal_deadline_cue": temporal_deadline_cue,
         "has_temporal_expended_scope_phrase": bool(temporal_expended_scope_phrase),
         "has_temporal_scope_token": temporal_scope_token,
         "has_temporal_status_scope": temporal_status_scope_token,

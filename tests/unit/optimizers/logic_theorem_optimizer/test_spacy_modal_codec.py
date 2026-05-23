@@ -545,6 +545,46 @@ def test_spacy_encoder_treats_repealed_status_as_temporal_scope_signal() -> None
     assert repealed_logits["temporal"] > baseline_logits["temporal"]
 
 
+def test_spacy_encoder_treats_extended_over_status_as_temporal_scope_signal() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    baseline_sample = build_us_code_sample(
+        title="43",
+        section="647",
+        text="The provisions of this title shall apply to these lands.",
+    )
+    extended_sample = build_us_code_sample(
+        title="43",
+        section="647",
+        text=(
+            "The provisions of this title are extended over these lands and "
+            "shall apply."
+        ),
+    )
+
+    baseline_encoding = codec.encode_sample(baseline_sample)
+    extended_encoding = codec.encode_sample(extended_sample)
+    baseline_signals = modal_ambiguity_signals(baseline_encoding)
+    extended_signals = modal_ambiguity_signals(extended_encoding)
+    baseline_logits = codec.family_logits_for_sample(
+        baseline_sample,
+        modal_families=("deontic", "temporal", "frame"),
+    )
+    extended_logits = codec.family_logits_for_sample(
+        extended_sample,
+        modal_families=("deontic", "temporal", "frame"),
+    )
+
+    assert baseline_signals["has_temporal_scope"] is False
+    assert baseline_signals["has_temporal_status_scope"] is False
+    assert extended_signals["has_temporal_scope"] is True
+    assert extended_signals["has_temporal_scope_phrase"] is True
+    assert extended_signals["has_temporal_status_scope"] is True
+    assert extended_logits["temporal"] > baseline_logits["temporal"]
+
+
 def test_spacy_codec_debiases_generic_frame_share_for_repealed_statutory_scope() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
@@ -2576,6 +2616,38 @@ def test_spacy_refined_pair_balance_reinforces_deontic_and_temporal_for_structur
 
     assert counts["deontic"] >= 0.52
     assert counts["temporal"] >= 0.52
+
+
+def test_spacy_refined_pair_balance_caps_non_deadline_temporal_pressure_against_explicit_deontic_scope() -> None:
+    counts = {
+        "temporal": 2.0,
+        "deontic": 0.5,
+        "conditional_normative": 0.0,
+    }
+    signals = {
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": True,
+        "has_temporal_scope_token": True,
+        "has_temporal_within_scope": False,
+        "has_temporal_status_scope": False,
+        "has_calendar_date_scope": False,
+        "has_temporal_deadline_cue": False,
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": True,
+        "has_deontic_cue": False,
+        "has_condition_or_exception_scope": False,
+        "has_condition_clause": False,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": False,
+        "has_conditional_scope_token": False,
+        "has_statutory_scope_reference": True,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["temporal"] < 2.0
+    assert counts["temporal"] < 1.0
+    assert counts["deontic"] == 0.5
 
 
 def test_spacy_temporal_scope_boost_is_stronger_with_deontic_cue_competition() -> None:
