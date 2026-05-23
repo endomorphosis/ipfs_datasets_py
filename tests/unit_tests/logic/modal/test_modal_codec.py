@@ -47,6 +47,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
     ModalIRProvenance,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
+    COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR,
     compiler_refined_modal_family_cue_margin_buffer,
     is_compiler_ambiguity_policy_pair,
     supports_signal_free_adaptive_ambiguity_pair,
@@ -3730,6 +3731,49 @@ def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_001558_pair
             )
             < 1e-12
         )
+
+
+def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_001257_pairs() -> None:
+    packet_pairs = (
+        ("conditional_normative", "frame"),
+        ("conditional_normative", "deontic"),
+        ("deontic", "frame"),
+        ("deontic", "temporal"),
+        ("epistemic", "conditional_normative"),
+        ("temporal", "deontic"),
+    )
+    for predicted_family, target_family in packet_pairs:
+        assert (
+            supports_signal_free_adaptive_ambiguity_pair(
+                predicted_family,
+                target_family,
+            )
+            is True
+        )
+        assert (
+            is_compiler_ambiguity_policy_pair(
+                predicted_family,
+                target_family,
+            )
+            is True
+        )
+        assert (
+            abs(
+                compiler_refined_modal_family_cue_margin_buffer(
+                    predicted_family,
+                    target_family,
+                )
+                - 0.0015
+            )
+            < 1e-12
+        )
+
+
+def test_modal_registry_refined_cue_margin_buffer_keys_are_pair_shaped() -> None:
+    assert all(
+        isinstance(pair, tuple) and len(pair) == 2
+        for pair in COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR
+    )
 
 
 def test_modal_compiler_preserves_packet_000606_compiler_ambiguity_policy_for_evidence_margins(
