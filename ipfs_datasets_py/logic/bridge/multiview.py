@@ -12,6 +12,12 @@ from .types import BridgeEvaluationReport, LegalIRDocument, LogicIRView
 
 _MULTIVIEW_CACHE_MAX_ITEMS = 1024
 _MULTIVIEW_EVALUATION_CACHE: Dict[str, "MultiViewLegalIRReport"] = {}
+_BRIDGE_CONTRACT_MIN_COMPONENT_WEIGHT = 0.07
+_BRIDGE_CONTRACT_CORE_COMPONENTS = (
+    "deontic.ir",
+    "TDFOL.prover",
+    "knowledge_graphs.neo4j_compat",
+)
 
 
 @dataclass(frozen=True)
@@ -175,12 +181,13 @@ class MultiViewLegalIRReport:
             }
             for adapter_name in self.bridge_names
         }
+        contract_distribution = self.contract_view_distribution()
         return LegalIRTrainingTarget(
             bridge_names=tuple(self.bridge_names),
             document=self.document,
             losses=self.canonical_loss_vector(),
             adapter_losses=adapter_losses,
-            view_distribution=self.view_distribution(),
+            view_distribution=contract_distribution or self.view_distribution(),
             accepted=self.accepted,
         )
 
@@ -244,6 +251,53 @@ class MultiViewLegalIRReport:
         if expected_count <= 0:
             return 0.0
         return max(0.0, 1.0 - min(1.0, present_count / expected_count))
+
+    def contract_view_distribution(self) -> Dict[str, float]:
+        """Return a compact bridge-contract view distribution for autoencoder targets.
+
+        The multiview report keeps modal and auxiliary adapter lanes in
+        ``view_distribution()`` for diagnostics.  For optimizer-facing
+        ``bridge.contracts`` routing, we keep only cross-bridge lanes and prune
+        very small tail mass to reduce distribution entropy and make the target
+        less noisy across samples.
+        """
+
+        canonical = self.view_distribution()
+        if not canonical:
+            return {}
+
+        lane_weights: Dict[str, float] = {}
+        for component, value in canonical.items():
+            lane = _bridge_contract_lane_component(component)
+            if not lane:
+                continue
+            lane_weights[lane] = lane_weights.get(lane, 0.0) + max(0.0, float(value))
+
+        if not lane_weights:
+            return {}
+
+        kept = {
+            lane: weight
+            for lane, weight in lane_weights.items()
+            if (
+                lane in _BRIDGE_CONTRACT_CORE_COMPONENTS
+                or weight >= _BRIDGE_CONTRACT_MIN_COMPONENT_WEIGHT
+            )
+        }
+        if len(kept) < 2:
+            top_lanes = sorted(
+                lane_weights.items(),
+                key=lambda item: (-item[1], item[0]),
+            )[:2]
+            kept = {lane: weight for lane, weight in top_lanes}
+
+        total = sum(kept.values())
+        if total <= 0.0:
+            return {}
+        return {
+            lane: weight / total
+            for lane, weight in sorted(kept.items())
+        }
 
     def _round_trip_mean(self, metric_name: str) -> float:
         return _mean_with_failures(
@@ -534,6 +588,27 @@ def _canonical_bridge_component_name(component: str) -> str:
         if name.startswith(prefix):
             return canonical
     return name
+
+
+def _bridge_contract_lane_component(component: str) -> str:
+    """Map canonical component names to bridge-contract optimizer lanes."""
+
+    name = str(component or "").strip()
+    if not name:
+        return ""
+    lane_prefixes = (
+        ("deontic.", "deontic.ir"),
+        ("TDFOL.", "TDFOL.prover"),
+        ("fol.", "TDFOL.prover"),
+        ("CEC.", "CEC.native"),
+        ("external_provers.", "external_provers.router"),
+        ("knowledge_graphs.", "knowledge_graphs.neo4j_compat"),
+        ("zkp.", "zkp.circuits"),
+    )
+    for prefix, lane in lane_prefixes:
+        if name.startswith(prefix):
+            return lane
+    return ""
 
 
 def _float_or_zero(value: Any) -> float:
