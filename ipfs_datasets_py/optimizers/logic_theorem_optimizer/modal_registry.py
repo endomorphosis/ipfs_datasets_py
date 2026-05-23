@@ -108,6 +108,10 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS: Tuple[Tuple[str, str], ...] = (
     ),
     (
         ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.EPISTEMIC.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
         ModalLogicFamily.DEONTIC.value,
     ),
     (
@@ -602,6 +606,10 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR: Mapping[
     (
         ModalLogicFamily.DEONTIC.value,
         ModalLogicFamily.FRAME.value,
+    ): 0.0015,
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.EPISTEMIC.value,
     ): 0.0015,
     (
         ModalLogicFamily.DOXASTIC.value,
