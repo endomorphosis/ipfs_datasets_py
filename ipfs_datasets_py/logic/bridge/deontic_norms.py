@@ -74,7 +74,11 @@ class DeonticNormsBridgeAdapter:
             coverage_records = _coverage_records_from_norm_objects(norm_objects)
         if not capability_records and norm_objects:
             capability_records = _capability_records_from_norm_objects(norm_objects)
-        deontic_exports = _deontic_export_context_from_parser_elements(deontic_source_rows)
+        deontic_exports = _deontic_export_context_from_parser_elements(
+            deontic_source_rows,
+            coverage_records=coverage_records,
+        )
+        coverage_metrics = _coverage_validation_metrics(coverage_records)
         parser_metrics = _summarize_parser_metrics(deontic_source_rows)
         resolved_document_id = document_id or _document_id_from_norms(norms, text)
         triples = tuple(
@@ -118,7 +122,16 @@ class DeonticNormsBridgeAdapter:
                 format="deontic-local-prover-syntax-coverage",
                 source_component="deontic.prover_syntax",
                 payload={"records": coverage_records},
-                metadata={"coverage_record_count": len(coverage_records)},
+                metadata={
+                    "coverage_record_count": len(coverage_records),
+                    "coverage_requires_validation_count": coverage_metrics[
+                        "requires_validation_count"
+                    ],
+                    "coverage_requires_validation_rate": coverage_metrics[
+                        "requires_validation_rate"
+                    ],
+                    "coverage_validated_count": coverage_metrics["validated_count"],
+                },
             ),
             "deontic_parser_metrics": LogicIRView(
                 name="deontic_parser_metrics",
@@ -204,6 +217,12 @@ class DeonticNormsBridgeAdapter:
                 metadata={
                     "quality_record_count": len(
                         deontic_exports["phase8_quality_records"]
+                    ),
+                    "requires_validation_count": int(
+                        deontic_exports["phase8_quality_summary"].get(
+                            "requires_validation_source_count"
+                        )
+                        or 0
                     ),
                 },
             ),
@@ -381,6 +400,12 @@ def _coverage_records_need_rebuild(records: Sequence[Mapping[str, Any]]) -> bool
             return True
         if any(target not in status_by_target for target in required_targets):
             return True
+        quality_summary = summary.get("quality_gate_summary")
+        if not isinstance(quality_summary, Mapping):
+            return True
+        role_summary = summary.get("target_role_matrix_summary")
+        if not isinstance(role_summary, Mapping):
+            return True
     return False
 
 
@@ -396,6 +421,8 @@ def _capability_records_from_norm_objects(norm_objects: Sequence[Any]) -> list[d
 
 def _deontic_export_context_from_parser_elements(
     parser_elements: Sequence[Mapping[str, Any]],
+    *,
+    coverage_records: Sequence[Mapping[str, Any]] = (),
 ) -> dict[str, Any]:
     context = _empty_deontic_export_context()
     norm_objects = _legal_norm_objects_from_parser_elements(parser_elements)
@@ -507,6 +534,10 @@ def _deontic_export_context_from_parser_elements(
                 prover_syntax_records=prover_syntax_records,
                 ir_slot_provenance_records=ir_slot_provenance_records,
             )
+        phase8_records = _merge_phase8_validation_from_coverage_records(
+            phase8_records,
+            coverage_records,
+        )
         context["phase8_quality_records"] = phase8_records
         raw_phase8_summary = summarize_phase8_quality_records(
             decoder_records=decoder_records,
@@ -815,7 +846,9 @@ def _round_trip_from_deontic_context(
     if grounded_phrase_rate <= 0.0:
         grounded_phrase_rate = grounded_slot_rate
     syntax_valid_rate = _float(metrics.get("phase8_prover_syntax_valid_rate"))
-    quality_requires_validation_rate = _float(metrics.get("phase8_quality_requires_validation_rate"))
+    quality_requires_validation_rate = _float(
+        metrics.get("phase8_quality_requires_validation_rate")
+    )
     norm_count = int(deontic_exports.get("norm_count") or 0)
     if norm_count <= 0:
         # Non-normative legal text should not force a hard deontic loss.
@@ -831,7 +864,16 @@ def _round_trip_from_deontic_context(
     phase8_quality_records = _list_of_dicts(deontic_exports.get("phase8_quality_records"))
     decoder_records = _list_of_dicts(deontic_exports.get("decoder_records"))
     repair_queue_records = _list_of_dicts(deontic_exports.get("repair_queue_records"))
+    phase8_quality_summary = _mapping(deontic_exports.get("phase8_quality_summary"))
     quality_incomplete_rate = _record_validation_rate(phase8_quality_records)
+    quality_requires_validation_rate = _rate(
+        phase8_quality_summary.get("requires_validation_source_count"),
+        phase8_quality_summary.get("source_record_count"),
+    )
+    if not phase8_quality_records and quality_requires_validation_rate <= 0.0:
+        quality_requires_validation_rate = _float(
+            metrics.get("phase8_quality_requires_validation_rate")
+        )
     decoder_requires_validation_rate = _record_validation_rate(decoder_records)
     extra_losses = {
         "deontic_decoder_requires_validation_rate": decoder_requires_validation_rate,
@@ -919,7 +961,7 @@ def _proof_gate_from_coverage_records(records: Sequence[Mapping[str, Any]]) -> P
                 "blocking_missing_targets": blocking_missing_targets,
                 "soft_failed_targets": soft_failed_targets,
                 "soft_missing_targets": soft_missing_targets,
-                "requires_validation": bool(record.get("requires_validation")),
+                "requires_validation": _coverage_record_requires_validation(record),
                 "source_id": record.get("source_id"),
                 "syntax_valid_rate": summary["syntax_valid_rate"],
             }
@@ -1134,7 +1176,85 @@ def _graph_data_from_triples(
 
 
 def _coverage_requires_validation(records: Sequence[Mapping[str, Any]]) -> bool:
-    return any(bool(record.get("requires_validation")) for record in records)
+    return _coverage_validation_metrics(records)["requires_validation_count"] > 0
+
+
+def _coverage_validation_metrics(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    total = 0
+    requires_validation = 0
+    for record in records or []:
+        if not isinstance(record, Mapping):
+            continue
+        total += 1
+        if _coverage_record_requires_validation(record):
+            requires_validation += 1
+    validated = max(0, total - requires_validation)
+    return {
+        "record_count": total,
+        "requires_validation_count": requires_validation,
+        "requires_validation_rate": round(requires_validation / total, 6) if total else 0.0,
+        "validated_count": validated,
+    }
+
+
+def _coverage_record_requires_validation(record: Mapping[str, Any]) -> bool:
+    if bool(record.get("requires_validation")):
+        return True
+    summary = record.get("coverage_summary")
+    if isinstance(summary, Mapping) and bool(summary.get("requires_validation")):
+        return True
+    return False
+
+
+def _merge_phase8_validation_from_coverage_records(
+    phase8_records: Sequence[Mapping[str, Any]],
+    coverage_records: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    if not phase8_records:
+        return []
+
+    coverage_by_source: dict[str, dict[str, Any]] = {}
+    for record in coverage_records or []:
+        if not isinstance(record, Mapping):
+            continue
+        source_id = str(record.get("source_id") or "").strip()
+        if source_id:
+            coverage_by_source[source_id] = dict(record)
+
+    merged: list[dict[str, Any]] = []
+    for phase8_record in phase8_records:
+        row = dict(phase8_record)
+        source_id = str(row.get("source_id") or "").strip()
+        coverage_record = coverage_by_source.get(source_id)
+        if coverage_record is None:
+            merged.append(row)
+            continue
+
+        blockers = set(_list_of_strings(row.get("coverage_blockers")))
+        blockers.update(_list_of_strings(coverage_record.get("coverage_blockers")))
+
+        requires_validation = bool(row.get("requires_validation")) or _coverage_record_requires_validation(
+            coverage_record
+        )
+        row["coverage_blockers"] = sorted(blockers)
+        row["requires_validation"] = requires_validation
+        row["phase8_quality_complete"] = (
+            bool(row.get("phase8_quality_complete")) and not requires_validation
+        )
+        coverage_summary = row.get("coverage_summary")
+        if isinstance(coverage_summary, Mapping):
+            summary = dict(coverage_summary)
+            summary["requires_validation"] = requires_validation
+            summary["phase8_quality_complete"] = bool(
+                summary.get("phase8_quality_complete")
+            ) and not requires_validation
+            summary_blockers = set(_list_of_strings(summary.get("coverage_blockers")))
+            summary_blockers.update(blockers)
+            summary["coverage_blockers"] = sorted(summary_blockers)
+            row["coverage_summary"] = summary
+        merged.append(row)
+
+    return merged
 
 
 def _deontic_proof_gate_soft_pass(
