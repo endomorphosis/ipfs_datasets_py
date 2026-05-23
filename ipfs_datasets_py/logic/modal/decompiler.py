@@ -208,6 +208,11 @@ _LOW_INFORMATION_SECTION_MARKER_TOKENS = frozenset(
         "sections",
     }
 )
+_LOW_INFORMATION_SECTION_MARKER_SINGLE_CHAR_TOKENS = frozenset(
+    {
+        "s",
+    }
+)
 _LOW_INFORMATION_SCOPE_LEADING_TOKENS = frozenset(
     {
         "the",
@@ -1426,9 +1431,12 @@ def _is_low_information_section_marker(text: str) -> bool:
     if re.fullmatch(r"[§\s.]+", normalized):
         return True
     tokens = _CUE_TOKEN_RE.findall(normalized.lower())
+    if len(tokens) != 1:
+        return False
+    token = tokens[0]
     return (
-        len(tokens) == 1
-        and tokens[0] in _LOW_INFORMATION_SECTION_MARKER_TOKENS
+        token in _LOW_INFORMATION_SECTION_MARKER_TOKENS
+        or token in _LOW_INFORMATION_SECTION_MARKER_SINGLE_CHAR_TOKENS
     )
 
 

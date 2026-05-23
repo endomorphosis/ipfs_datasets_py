@@ -607,6 +607,37 @@ def _low_information_fallback_surface_sample_document() -> ModalIRDocument:
     )
 
 
+def _single_letter_low_information_fallback_surface_sample_document() -> ModalIRDocument:
+    source_id = "us-code-19-134-9f14e2dcbf0f4b1a"
+    normalized_text = "S. Repealed."
+    formula = ModalIRFormula(
+        formula_id="f-single-letter-low-information-fallback-surface",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(name="uscode_repealed_heading_fallback"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=2,
+            citation="19 U.S.C. 134",
+        ),
+        metadata={
+            "cue": "__uscode_section_heading_fallback__",
+            "fallback_rule": "uscode_editorial_status_heading_v1",
+        },
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
 def _compilation_preamble_fallback_surface_sample_document() -> ModalIRDocument:
     source_id = "us-code-25-1300h-3-259e36c7e802ffdb"
     normalized_text = (
@@ -3810,6 +3841,36 @@ def test_modal_ir_to_flogic_triples_avoid_low_information_fallback_surface_text(
     assert objects("fallback_surface_text") == ["repealed"]
     assert objects("fallback_surface_text_token") == ["repealed"]
     assert "sec" not in objects("fallback_surface_text_token")
+
+
+def test_decode_modal_ir_document_avoids_single_letter_low_information_fallback_surface_text() -> None:
+    decoded = decode_modal_ir_document(
+        _single_letter_low_information_fallback_surface_sample_document()
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["status_keyword"] == ["repealed"]
+    assert slot_map["fallback_surface_text"] == ["repealed"]
+    assert slot_map["fallback_surface_text_token"] == ["repealed"]
+    assert "s" not in slot_map["fallback_surface_text_token"]
+
+
+def test_modal_ir_to_flogic_triples_avoid_single_letter_low_information_fallback_surface_text() -> None:
+    triples = modal_ir_to_flogic_triples(
+        _single_letter_low_information_fallback_surface_sample_document()
+    )
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("status_keyword") == ["repealed"]
+    assert objects("fallback_surface_text") == ["repealed"]
+    assert objects("fallback_surface_text_token") == ["repealed"]
+    assert "s" not in objects("fallback_surface_text_token")
 
 
 def test_decode_modal_ir_document_trims_compilation_preamble_from_fallback_surface() -> None:

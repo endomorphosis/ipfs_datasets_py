@@ -237,6 +237,11 @@ _LOW_INFORMATION_SECTION_MARKER_TOKENS = frozenset(
         "sections",
     }
 )
+_LOW_INFORMATION_SECTION_MARKER_SINGLE_CHAR_TOKENS = frozenset(
+    {
+        "s",
+    }
+)
 _LOW_INFORMATION_SCOPE_LEADING_TOKENS = frozenset(
     {
         "the",
@@ -6233,7 +6238,13 @@ def _is_low_information_section_marker(text: str) -> bool:
     if re.fullmatch(r"[§\s.]+", normalized):
         return True
     tokens = _SLOT_FEATURE_TOKEN_RE.findall(normalized.lower())
-    return len(tokens) == 1 and tokens[0] in _LOW_INFORMATION_SECTION_MARKER_TOKENS
+    if len(tokens) != 1:
+        return False
+    token = tokens[0]
+    return (
+        token in _LOW_INFORMATION_SECTION_MARKER_TOKENS
+        or token in _LOW_INFORMATION_SECTION_MARKER_SINGLE_CHAR_TOKENS
+    )
 
 
 def _status_keyword_from_source_text(text: str) -> str:
