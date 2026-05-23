@@ -147,6 +147,26 @@ def test_frame_ontology_terms_support_selected_frame_modal_family_count_predicat
     assert feature_terms == ["deontic", "frame", "temporal", "dynamic", "epistemic"]
 
 
+def test_frame_ontology_terms_preserve_modal_family_count_structural_parity_values() -> None:
+    triple_terms = frame_ontology_terms_from_triples(
+        [
+            {"predicate": "modal_family_count_deontic_parity", "object": "odd"},
+            {"predicate": "selected_frame_modal_family_deontic_parity", "object": "odd"},
+        ]
+    )
+    feature_keys = [
+        "flogic:modal_family_count_deontic_parity:odd",
+        "slot:selected_frame_modal_family_deontic_parity:odd",
+    ]
+    feature_terms = frame_ontology_terms_from_feature_keys(feature_keys)
+    contextualized = frame_ontology_contextualized_terms(feature_keys=feature_keys)
+
+    assert triple_terms == ["odd"]
+    assert feature_terms == ["odd"]
+    assert "modal_family_count_deontic_parity_odd" in contextualized
+    assert "selected_frame_modal_family_deontic_parity_odd" in contextualized
+
+
 def test_frame_ontology_terms_support_source_id_citation_canonical_predicates() -> None:
     triple_terms = frame_ontology_terms_from_triples(
         [

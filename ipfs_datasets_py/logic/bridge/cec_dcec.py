@@ -16,6 +16,28 @@ from .types import (
     RoundTripMetrics,
 )
 
+_EVENT_PREDICATE_CANONICAL_BY_LOWER = {
+    "happens": "Happens",
+    "holdsat": "HoldsAt",
+    "initiates": "Initiates",
+    "terminates": "Terminates",
+    "releasedat": "ReleasedAt",
+    "clipped": "Clipped",
+    "trajectory": "Trajectory",
+    "initially": "Initially",
+    "initiallyp": "InitiallyP",
+    "initiallyn": "InitiallyN",
+}
+_EVENT_PREDICATE_SET = set(_EVENT_PREDICATE_CANONICAL_BY_LOWER.values())
+_EVENT_FORMULA_WRAPPER_CANONICAL_BY_LOWER = {
+    **_EVENT_PREDICATE_CANONICAL_BY_LOWER,
+    "legal_norm": "legal_norm",
+    "always": "always",
+    "o": "O",
+    "p": "P",
+    "f": "F",
+}
+
 
 @dataclass
 class CecDcecBridgeAdapter:
@@ -456,6 +478,20 @@ def _dcec_records(norms: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
                 ),
                 "requires_validation": not bool(event_formula_syntax_valid),
             }
+        (
+            event_formula_syntax_valid,
+            event_formula_target_parse_profile,
+            event_formula_target_components,
+            event_formula_target_quality_gate,
+        ) = _normalize_event_formula_fields(
+            formula=event_calculus_formula,
+            syntax_valid=event_formula_syntax_valid,
+            target_parse_profile=event_formula_target_parse_profile,
+            target_components=event_formula_target_components,
+            target_quality_gate=event_formula_target_quality_gate,
+            source_id=source_id,
+            modality=modality,
+        )
         event_formula_fingerprint = _stable_short_hash(event_calculus_formula)
         valid, validation_reason = _compile_dcec_proof_input(formula_object)
         records.append(
@@ -757,13 +793,8 @@ def _event_calculus_formula_text(*, source_id: str, deontic_formula: str) -> str
 
 
 def _event_calculus_formula_shape_valid(formula: str) -> bool:
-    text = str(formula or "").strip()
-    return bool(
-        re.match(
-            r"^Happens\(legal_norm\([A-Za-z0-9_]+\), t\) => HoldsAt\(.+, t\)$",
-            text,
-        )
-    )
+    parse_profile = _event_formula_parse_profile(formula)
+    return bool(parse_profile.get("target_parse_profile_complete") is True)
 
 
 def _source_symbol(source_id: str) -> str:
@@ -772,31 +803,246 @@ def _source_symbol(source_id: str) -> str:
 
 
 def _event_formula_parse_profile(formula: str) -> dict[str, Any]:
-    text = str(formula or "").strip()
+    text = _strip_event_formula_clause_terminator(str(formula or "").strip())
+    top_level_connector, connector_index = _top_level_connector(text)
+    quantifier_variables = _quantifier_variables(text)
     wrappers = [
-        match.group(1)
+        _canonical_wrapper_symbol(match.group(1))
         for match in re.finditer(r"\b([A-Za-z][A-Za-z0-9_]*)\s*\(", text)
-        if match.group(1) in {"Happens", "HoldsAt", "always", "O", "P", "F"}
+        if _canonical_wrapper_symbol(match.group(1))
     ]
-    event_predicates: list[str] = []
-    for predicate in re.findall(r"\b(Happens|HoldsAt)\s*\(", text):
-        if predicate not in event_predicates:
-            event_predicates.append(predicate)
-    top_level_symbol = ""
-    top_level_match = re.match(r"^\s*([A-Za-z][A-Za-z0-9_]*)\s*\(", text)
-    if top_level_match:
-        top_level_symbol = top_level_match.group(1)
+    event_predicates = _event_predicates(text)
+    top_level_symbol = _top_level_symbol(text)
+    parse_profile_complete = _event_formula_parse_profile_complete(
+        text=text,
+        top_level_symbol=top_level_symbol,
+        top_level_connector=top_level_connector,
+        connector_index=connector_index,
+        quantifier_variables=quantifier_variables,
+        event_predicates=event_predicates,
+    )
     return {
-        "contains_implication": "=>" in text,
+        "contains_implication": bool(top_level_connector),
         "event_predicates": event_predicates,
-        "target_parse_profile_complete": bool(
-            top_level_symbol == "Happens"
-            and event_predicates == ["Happens", "HoldsAt"]
-            and "=>" in text
-        ),
+        "target_parse_profile_complete": parse_profile_complete,
         "top_level_symbol": top_level_symbol,
+        "top_level_connector": top_level_connector,
+        "quantifier_variables": quantifier_variables,
         "wrapper_sequence": wrappers,
     }
+
+
+def _event_formula_parse_profile_complete(
+    *,
+    text: str,
+    top_level_symbol: str,
+    top_level_connector: str,
+    connector_index: int,
+    quantifier_variables: Sequence[str],
+    event_predicates: Sequence[str],
+) -> bool:
+    if not text or not _balanced_delimiters(text):
+        return False
+    if not event_predicates:
+        return False
+    if top_level_connector:
+        if connector_index <= 0:
+            return False
+        left = text[:connector_index].strip()
+        right = text[connector_index + len(top_level_connector):].strip()
+        return bool(left and right)
+    if top_level_symbol in {"forall", "exists"}:
+        return bool(quantifier_variables)
+    return top_level_symbol in _EVENT_PREDICATE_SET
+
+
+def _balanced_delimiters(text: str) -> bool:
+    stack: list[str] = []
+    opening = {"(": ")", "[": "]", "{": "}"}
+    closing = {")": "(", "]": "[", "}": "{"}
+    for char in str(text or ""):
+        if char in opening:
+            stack.append(char)
+            continue
+        if char in closing:
+            if not stack:
+                return False
+            if stack[-1] != closing[char]:
+                return False
+            stack.pop()
+    return not stack
+
+
+def _top_level_symbol(text: str) -> str:
+    match = re.match(r"^\s*([A-Za-z][A-Za-z0-9_]*)\s*\(", text)
+    if match:
+        token = match.group(1)
+        return _canonical_event_predicate(token) or token
+    if re.match(r"^\s*forall\s+[A-Za-z][A-Za-z0-9_]*\.", text, flags=re.IGNORECASE):
+        return "forall"
+    if re.match(r"^\s*exists\s+[A-Za-z][A-Za-z0-9_]*\.", text, flags=re.IGNORECASE):
+        return "exists"
+    return ""
+
+
+def _quantifier_variables(text: str) -> list[str]:
+    variables: list[str] = []
+    for variable in re.findall(
+        r"\b(?:forall|exists)\s+([A-Za-z][A-Za-z0-9_]*)\.",
+        text,
+        flags=re.IGNORECASE,
+    ):
+        symbol = str(variable).strip()
+        if symbol and symbol not in variables:
+            variables.append(symbol)
+    return variables
+
+
+def _canonical_wrapper_symbol(token: str) -> str:
+    return _EVENT_FORMULA_WRAPPER_CANONICAL_BY_LOWER.get(str(token or "").lower(), "")
+
+
+def _canonical_event_predicate(token: str) -> str:
+    return _EVENT_PREDICATE_CANONICAL_BY_LOWER.get(str(token or "").lower(), "")
+
+
+def _event_predicates(text: str) -> list[str]:
+    predicates: list[str] = []
+    for token in re.findall(r"\b([A-Za-z][A-Za-z0-9_]*)\s*\(", text):
+        canonical = _canonical_event_predicate(token)
+        if canonical and canonical not in predicates:
+            predicates.append(canonical)
+    return predicates
+
+
+def _strip_event_formula_clause_terminator(text: str) -> str:
+    value = str(text or "").strip()
+    while value.endswith(".") or value.endswith(";"):
+        value = value[:-1].strip()
+    return value
+
+
+def _top_level_connector(text: str) -> tuple[str, int]:
+    depth = 0
+    for index, char in enumerate(text):
+        if char in "([{":
+            depth += 1
+            continue
+        if char in ")]}":
+            depth = max(0, depth - 1)
+            continue
+        if depth != 0:
+            continue
+        if text.startswith("=>", index):
+            return ("=>", index)
+        if text.startswith("->", index):
+            return ("->", index)
+        if text.startswith(":-", index):
+            return (":-", index)
+    return ("", -1)
+
+
+def _normalize_event_formula_fields(
+    *,
+    formula: str,
+    syntax_valid: bool,
+    target_parse_profile: Mapping[str, Any],
+    target_components: Mapping[str, Any],
+    target_quality_gate: Mapping[str, Any],
+    source_id: str,
+    modality: str,
+) -> tuple[bool, dict[str, Any], dict[str, Any], dict[str, Any]]:
+    derived_parse_profile = _event_formula_parse_profile(formula)
+    merged_parse_profile = _merge_event_formula_parse_profile(
+        base=_mapping(target_parse_profile),
+        derived=derived_parse_profile,
+    )
+    resolved_syntax_valid = bool(
+        syntax_valid or merged_parse_profile.get("target_parse_profile_complete") is True
+    )
+    derived_components = _event_formula_target_components(
+        formula,
+        source_id=source_id,
+        modality=modality,
+    )
+    merged_components = _merge_event_formula_target_components(
+        base=_mapping(target_components),
+        derived=derived_components,
+        parse_profile=merged_parse_profile,
+        source_id=source_id,
+        modality=modality,
+    )
+    quality_gate = _mapping(target_quality_gate)
+    resolved_quality_gate = {
+        **quality_gate,
+        "syntax_valid": resolved_syntax_valid,
+        "target_parse_profile_complete": bool(
+            merged_parse_profile.get("target_parse_profile_complete") is True
+        ),
+        "requires_validation": bool(
+            quality_gate.get("requires_validation") is True or not resolved_syntax_valid
+        ),
+    }
+    return (
+        resolved_syntax_valid,
+        merged_parse_profile,
+        merged_components,
+        resolved_quality_gate,
+    )
+
+
+def _merge_event_formula_parse_profile(
+    *,
+    base: Mapping[str, Any],
+    derived: Mapping[str, Any],
+) -> dict[str, Any]:
+    merged = dict(base)
+    for key, value in dict(derived).items():
+        if key not in merged or merged.get(key) in (None, "", [], {}):
+            merged[key] = value
+    merged["target_parse_profile_complete"] = bool(
+        merged.get("target_parse_profile_complete") is True
+        or derived.get("target_parse_profile_complete") is True
+    )
+    if not merged.get("contains_implication"):
+        merged["contains_implication"] = bool(derived.get("contains_implication"))
+    if not merged.get("top_level_symbol"):
+        merged["top_level_symbol"] = str(derived.get("top_level_symbol") or "")
+    if not merged.get("top_level_connector"):
+        merged["top_level_connector"] = str(derived.get("top_level_connector") or "")
+    if not merged.get("wrapper_sequence"):
+        merged["wrapper_sequence"] = list(derived.get("wrapper_sequence") or [])
+    if not merged.get("event_predicates"):
+        merged["event_predicates"] = list(derived.get("event_predicates") or [])
+    if not merged.get("quantifier_variables"):
+        merged["quantifier_variables"] = list(derived.get("quantifier_variables") or [])
+    return merged
+
+
+def _merge_event_formula_target_components(
+    *,
+    base: Mapping[str, Any],
+    derived: Mapping[str, Any],
+    parse_profile: Mapping[str, Any],
+    source_id: str,
+    modality: str,
+) -> dict[str, Any]:
+    merged = dict(base)
+    for key, value in dict(derived).items():
+        if key not in merged or merged.get(key) in (None, "", [], {}):
+            merged[key] = value
+    merged["formula_role"] = "event_calculus_state"
+    merged["target"] = "deontic_cec"
+    merged["source_id"] = source_id
+    merged["modality"] = modality
+    merged["target_parse_profile_complete"] = bool(
+        merged.get("target_parse_profile_complete") is True
+        or parse_profile.get("target_parse_profile_complete") is True
+    )
+    merged["uses_event_calculus_wrapper"] = bool(
+        list(parse_profile.get("event_predicates") or [])
+    )
+    return merged
 
 
 def _event_formula_target_components(
@@ -815,7 +1061,7 @@ def _event_formula_target_components(
             parse_profile.get("target_parse_profile_complete") is True
         ),
         "uses_event_calculus_wrapper": bool(
-            parse_profile.get("event_predicates") == ["Happens", "HoldsAt"]
+            list(parse_profile.get("event_predicates") or [])
         ),
     }
 

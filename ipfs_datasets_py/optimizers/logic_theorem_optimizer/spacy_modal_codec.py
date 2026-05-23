@@ -321,6 +321,10 @@ _EPISTEMIC_SCOPE_PHRASES = (
     "is deemed",
     "knowledge of",
     "reason to believe",
+    "reasonably believe",
+    "reasonably believes",
+    "reasonably believed",
+    "reasonably believing",
 )
 _DYNAMIC_SCOPE_TOKENS = frozenset(
     {
@@ -699,6 +703,7 @@ _TEMPORAL_STRONG_COMPETING_SCOPE_SOFT_CAP = 2.5
 _TEMPORAL_MULTI_COMPETING_SCOPE_SOFT_CAP = 2.25
 _CONDITIONAL_COMPETING_SCOPE_SOFT_CAP = 3.0
 _CONDITIONAL_STRONG_DEONTIC_COMPETING_SCOPE_SOFT_CAP = 2.0
+_CONDITIONAL_STRONG_EPISTEMIC_COMPETING_SCOPE_SOFT_CAP = 2.1
 _FRAME_COMPETING_SCOPE_SOFT_CAP = 3.0
 _FRAME_STRONG_COMPETING_SCOPE_SOFT_CAP = 2.5
 _DYNAMIC_COMPETING_SCOPE_SOFT_CAP = 2.5
@@ -732,6 +737,7 @@ _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_TRIGGER = 0.2
 _TEMPORAL_CONDITIONAL_SCOPE_BACKFILL_TRIGGER = 2.5
 _TEMPORAL_FRAME_SCOPE_BACKFILL_TRIGGER = 3.0
 _TEMPORAL_EPISTEMIC_SCOPE_BACKFILL_TRIGGER = 3.0
+_TEMPORAL_ALETHIC_SCOPE_BACKFILL_TRIGGER = 3.0
 _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT = 0.35
 _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT = 0.18
 _STATUTORY_FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT = 0.35
@@ -759,10 +765,13 @@ _FRAME_TO_DEONTIC_SCOPE_REINFORCEMENT_MAX = 1.25
 _FRAME_TO_TEMPORAL_SCOPE_REINFORCEMENT_MAX = 1.35
 _FRAME_TO_CONDITIONAL_SCOPE_REINFORCEMENT_MAX = 1.35
 _TEMPORAL_TO_DEONTIC_SCOPE_REINFORCEMENT_MAX = 1.35
+_EPISTEMIC_TO_DEONTIC_SCOPE_REINFORCEMENT_MAX = 1.35
 _TEMPORAL_TO_CONDITIONAL_SCOPE_REINFORCEMENT_MAX = 1.35
 _TEMPORAL_TO_FRAME_SCOPE_REINFORCEMENT_MAX = 1.25
 _TEMPORAL_TO_EPISTEMIC_SCOPE_REINFORCEMENT_MAX = 1.2
+_TEMPORAL_TO_ALETHIC_SCOPE_REINFORCEMENT_MAX = 1.2
 _TEMPORAL_EPISTEMIC_SCOPE_REINFORCEMENT_TRIGGER = 2.0
+_TEMPORAL_ALETHIC_SCOPE_REINFORCEMENT_TRIGGER = 2.0
 _DEONTIC_SCOPE_PHRASE_REINFORCEMENT = 0.35
 _TEMPORAL_SCOPE_PHRASE_REINFORCEMENT = 0.35
 _DEONTIC_SCOPE_TOKENS = frozenset(
@@ -2036,10 +2045,16 @@ def _apply_conditional_competing_scope_soft_cap(
         or bool(signals.get("has_statutory_scope_reference"))
         or float(counts.get(ModalLogicFamily.FRAME.value, 0.0)) > 0.0
     )
+    has_epistemic_competition = (
+        bool(signals.get("has_epistemic_scope"))
+        or bool(signals.get("has_epistemic_cue"))
+        or float(counts.get(ModalLogicFamily.EPISTEMIC.value, 0.0)) > 0.0
+    )
     if not (
         has_deontic_competition
         or has_temporal_competition
         or has_frame_competition
+        or has_epistemic_competition
     ):
         return
     explicit_conditional_scope = _has_explicit_conditional_scope(signals)
@@ -2050,6 +2065,13 @@ def _apply_conditional_competing_scope_soft_cap(
             or bool(signals.get("has_deontic_cue"))
         )
     )
+    has_strong_epistemic_competition = (
+        has_epistemic_competition
+        and (
+            bool(signals.get("has_epistemic_scope_phrase"))
+            or bool(signals.get("has_epistemic_cue"))
+        )
+    )
     conditional_soft_cap = _CONDITIONAL_COMPETING_SCOPE_SOFT_CAP
     if (
         not explicit_conditional_scope
@@ -2058,6 +2080,14 @@ def _apply_conditional_competing_scope_soft_cap(
         conditional_soft_cap = min(
             conditional_soft_cap,
             _CONDITIONAL_STRONG_DEONTIC_COMPETING_SCOPE_SOFT_CAP,
+        )
+    if (
+        not explicit_conditional_scope
+        and has_strong_epistemic_competition
+    ):
+        conditional_soft_cap = min(
+            conditional_soft_cap,
+            _CONDITIONAL_STRONG_EPISTEMIC_COMPETING_SCOPE_SOFT_CAP,
         )
     if conditional_count <= conditional_soft_cap:
         return
@@ -2466,6 +2496,7 @@ def _apply_competing_scope_backfill(
     temporal_family = ModalLogicFamily.TEMPORAL.value
     frame_family = ModalLogicFamily.FRAME.value
     dynamic_family = ModalLogicFamily.DYNAMIC.value
+    doxastic_family = ModalLogicFamily.DOXASTIC.value
     epistemic_family = ModalLogicFamily.EPISTEMIC.value
     alethic_family = ModalLogicFamily.ALETHIC.value
     deontic_count = float(counts.get(deontic_family, 0.0))
@@ -2473,6 +2504,7 @@ def _apply_competing_scope_backfill(
     temporal_count = float(counts.get(temporal_family, 0.0))
     frame_count = float(counts.get(frame_family, 0.0))
     dynamic_count = float(counts.get(dynamic_family, 0.0))
+    doxastic_count = float(counts.get(doxastic_family, 0.0))
     epistemic_count = float(counts.get(epistemic_family, 0.0))
     alethic_count = float(counts.get(alethic_family, 0.0))
     has_moderate_frame_competition = (
@@ -2820,6 +2852,33 @@ def _apply_competing_scope_backfill(
                 epistemic_backfill,
                 _STRONG_SCOPE_BACKFILL_WEIGHT,
             )
+        counts[epistemic_family] = max(
+            float(counts.get(epistemic_family, 0.0)),
+            epistemic_backfill,
+        )
+    if (
+        doxastic_count >= _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT
+        and epistemic_count <= _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT
+        and bool(
+            signals.get("has_epistemic_scope")
+            or signals.get("has_epistemic_cue")
+        )
+    ):
+        epistemic_backfill = _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT
+        if bool(signals.get("has_epistemic_scope_phrase")):
+            epistemic_backfill = max(
+                epistemic_backfill,
+                _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            )
+        epistemic_backfill = max(
+            epistemic_backfill,
+            _scaled_competing_scope_backfill(
+                source_count=doxastic_count,
+                ratio=_DEONTIC_COMPETING_SCOPE_BACKFILL_RATIO,
+                minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                maximum=_STATUTORY_GENERIC_FRAME_EPISTEMIC_SCOPE_MAX,
+            ),
+        )
         counts[epistemic_family] = max(
             float(counts.get(epistemic_family, 0.0)),
             epistemic_backfill,
@@ -3438,6 +3497,43 @@ def _apply_competing_scope_backfill(
             epistemic_backfill,
         )
     if (
+        temporal_count >= _TEMPORAL_ALETHIC_SCOPE_BACKFILL_TRIGGER
+        and alethic_count <= 0.0
+        and bool(
+            signals.get("has_alethic_scope")
+            or signals.get("has_alethic_cue")
+        )
+    ):
+        counts[alethic_family] = max(
+            float(counts.get(alethic_family, 0.0)),
+            _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
+    if (
+        temporal_count >= _TEMPORAL_ALETHIC_SCOPE_REINFORCEMENT_TRIGGER
+        and 0.0 < alethic_count <= _LOW_COMPETING_SCOPE_REINFORCEMENT_LIMIT
+        and bool(
+            signals.get("has_alethic_scope")
+            or signals.get("has_alethic_cue")
+        )
+        and bool(
+            signals.get("has_alethic_scope_phrase")
+            or signals.get("has_alethic_cue")
+        )
+    ):
+        alethic_backfill = max(
+            float(alethic_count),
+            _scaled_competing_scope_backfill(
+                source_count=temporal_count,
+                ratio=_REINFORCED_COMPETING_SCOPE_BACKFILL_RATIO,
+                minimum=1.0,
+                maximum=_TEMPORAL_TO_ALETHIC_SCOPE_REINFORCEMENT_MAX,
+            ),
+        )
+        counts[alethic_family] = max(
+            float(counts.get(alethic_family, 0.0)),
+            alethic_backfill,
+        )
+    if (
         temporal_count >= _TEMPORAL_FRAME_SCOPE_BACKFILL_TRIGGER
         and frame_count <= _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_TRIGGER
         and (
@@ -3531,6 +3627,7 @@ def _apply_directional_modal_family_pair_backfill(
     deontic_family = ModalLogicFamily.DEONTIC.value
     temporal_family = ModalLogicFamily.TEMPORAL.value
     conditional_family = ModalLogicFamily.CONDITIONAL_NORMATIVE.value
+    epistemic_family = ModalLogicFamily.EPISTEMIC.value
 
     has_strong_temporal_scope = bool(
         signals.get("has_calendar_date_scope")
@@ -3544,13 +3641,16 @@ def _apply_directional_modal_family_pair_backfill(
     has_statutory_scope_reference = bool(
         signals.get("has_statutory_scope_reference")
     )
-    # Treat statutory cross-references as weak frame scope in this directional
-    # pass so mixed temporal/deontic/conditional clauses retain frame evidence.
-    has_frame_scope_signal = bool(
+    has_direct_frame_scope_signal = bool(
         signals.get("has_frame_context")
         or signals.get("has_frame_scope_phrase")
         or signals.get("has_frame_editorial_scope_phrase")
         or signals.get("has_frame_cue")
+    )
+    # Treat statutory cross-references as weak frame scope in this directional
+    # pass so mixed temporal/deontic/conditional clauses retain frame evidence.
+    has_frame_scope_signal = bool(
+        has_direct_frame_scope_signal
         or has_statutory_scope_reference
     )
     has_editorial_frame_scope = bool(
@@ -3581,11 +3681,33 @@ def _apply_directional_modal_family_pair_backfill(
             or has_frame_scope_signal
         )
     )
+    has_epistemic_scope_signal = bool(
+        signals.get("has_epistemic_scope")
+        or signals.get("has_epistemic_cue")
+    )
+    has_strong_epistemic_scope = bool(
+        signals.get("has_epistemic_scope_phrase")
+        or signals.get("has_epistemic_cue")
+    )
+    has_epistemic_scope = bool(
+        signals.get("has_epistemic_scope")
+        or signals.get("has_epistemic_cue")
+    )
 
     frame_count = float(counts.get(frame_family, 0.0))
     deontic_count = float(counts.get(deontic_family, 0.0))
     temporal_count = float(counts.get(temporal_family, 0.0))
     conditional_count = float(counts.get(conditional_family, 0.0))
+    epistemic_count = float(counts.get(epistemic_family, 0.0))
+    has_conditional_temporal_competing_context = (
+        has_statutory_scope_reference
+        or has_editorial_frame_scope
+        or has_frame_scope_signal
+        or (
+            has_explicit_conditional_scope
+            and has_strong_temporal_scope
+        )
+    )
 
     # conditional_normative -> temporal
     if (
@@ -3597,7 +3719,9 @@ def _apply_directional_modal_family_pair_backfill(
             has_statutory_scope_reference
             or has_editorial_frame_scope
             or has_frame_scope_signal
+            or (has_explicit_conditional_scope and has_strong_temporal_scope)
         )
+        and has_conditional_temporal_competing_context
     ):
         temporal_top_up = _scaled_competing_scope_backfill(
             source_count=conditional_count,
@@ -3607,6 +3731,36 @@ def _apply_directional_modal_family_pair_backfill(
         )
         counts[temporal_family] = max(temporal_count, temporal_top_up)
         temporal_count = float(counts.get(temporal_family, 0.0))
+
+    # conditional_normative -> epistemic
+    if (
+        conditional_count >= _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT
+        and epistemic_count <= _LOW_COMPETING_SCOPE_REINFORCEMENT_LIMIT
+        and epistemic_count < conditional_count
+        and has_epistemic_scope_signal
+        and (
+            has_explicit_conditional_scope
+            or has_structural_conditional_scope
+            or has_statutory_scope_reference
+            or has_frame_scope_signal
+        )
+    ):
+        epistemic_top_up = _scaled_competing_scope_backfill(
+            source_count=conditional_count,
+            ratio=_DEONTIC_COMPETING_SCOPE_BACKFILL_RATIO,
+            minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            maximum=_STATUTORY_GENERIC_FRAME_EPISTEMIC_SCOPE_MAX,
+        )
+        if has_strong_epistemic_scope and (
+            has_statutory_scope_reference
+            or has_explicit_conditional_scope
+        ):
+            epistemic_top_up = max(
+                epistemic_top_up,
+                _STRONG_SCOPE_BACKFILL_WEIGHT,
+            )
+        counts[epistemic_family] = max(epistemic_count, epistemic_top_up)
+        epistemic_count = float(counts.get(epistemic_family, 0.0))
 
     # conditional_normative -> frame
     if (
@@ -3637,6 +3791,56 @@ def _apply_directional_modal_family_pair_backfill(
             )
         counts[frame_family] = max(frame_count, frame_top_up)
         frame_count = float(counts.get(frame_family, 0.0))
+
+    # conditional_normative -> deontic
+    if (
+        conditional_count >= _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT
+        and deontic_count <= _LOW_COMPETING_SCOPE_REINFORCEMENT_LIMIT
+        and deontic_count < conditional_count
+        and bool(
+            signals.get("has_deontic_scope")
+            or signals.get("has_deontic_cue")
+        )
+        and (
+            has_explicit_conditional_scope
+            or has_structural_conditional_scope
+        )
+        and (
+            has_explicit_deontic_scope
+            or has_structural_deontic_scope
+        )
+        and (
+            has_statutory_scope_reference
+            or has_frame_scope_signal
+        )
+    ):
+        deontic_top_up_max = (
+            _STATUTORY_GENERIC_FRAME_DEONTIC_SCOPE_MAX
+            if has_statutory_scope_reference
+            else _DEONTIC_COMPETING_SCOPE_BACKFILL_MAX
+        )
+        deontic_top_up = _scaled_competing_scope_backfill(
+            source_count=max(conditional_count, frame_count),
+            ratio=_DEONTIC_COMPETING_SCOPE_BACKFILL_RATIO,
+            minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            maximum=deontic_top_up_max,
+        )
+        if has_explicit_conditional_scope and has_explicit_deontic_scope:
+            deontic_top_up = max(
+                deontic_top_up,
+                _scaled_competing_scope_backfill(
+                    source_count=max(conditional_count, frame_count),
+                    ratio=_REINFORCED_COMPETING_SCOPE_BACKFILL_RATIO,
+                    minimum=_STRONG_SCOPE_BACKFILL_WEIGHT,
+                    maximum=_FRAME_TO_DEONTIC_SCOPE_REINFORCEMENT_MAX,
+                ),
+            )
+            deontic_top_up = max(
+                deontic_top_up,
+                _STRONG_SCOPE_BACKFILL_WEIGHT,
+            )
+        counts[deontic_family] = max(deontic_count, deontic_top_up)
+        deontic_count = float(counts.get(deontic_family, 0.0))
 
     # temporal -> deontic
     if (
@@ -3734,6 +3938,11 @@ def _apply_directional_modal_family_pair_backfill(
                     maximum=_STATUTORY_GENERIC_FRAME_CONDITIONAL_SCOPE_MAX,
                 ),
             )
+        if has_structural_conditional_scope and has_statutory_scope_reference:
+            conditional_top_up = max(
+                conditional_top_up,
+                _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            )
         counts[conditional_family] = max(conditional_count, conditional_top_up)
         conditional_count = float(counts.get(conditional_family, 0.0))
 
@@ -3757,6 +3966,18 @@ def _apply_directional_modal_family_pair_backfill(
             if has_explicit_deontic_scope
             else _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT
         )
+        if (
+            has_strong_temporal_scope
+            and has_explicit_deontic_scope
+            and (
+                has_statutory_scope_reference
+                or has_frame_scope_signal
+            )
+        ):
+            deontic_top_up_max = max(
+                deontic_top_up_max,
+                _TEMPORAL_TO_DEONTIC_SCOPE_REINFORCEMENT_MAX,
+            )
         deontic_top_up = _scaled_competing_scope_backfill(
             source_count=temporal_count,
             ratio=_TEMPORAL_COMPETING_SCOPE_BACKFILL_RATIO,
@@ -3770,7 +3991,51 @@ def _apply_directional_modal_family_pair_backfill(
                     source_count=max(temporal_count, frame_count),
                     ratio=_STATUTORY_GENERIC_FRAME_COMPETING_SCOPE_RATIO,
                     minimum=_STRONG_SCOPE_BACKFILL_WEIGHT,
-                    maximum=_STATUTORY_GENERIC_FRAME_DEONTIC_SCOPE_MAX,
+                    maximum=(
+                        _TEMPORAL_TO_DEONTIC_SCOPE_REINFORCEMENT_MAX
+                        if has_explicit_deontic_scope
+                        else _STATUTORY_GENERIC_FRAME_DEONTIC_SCOPE_MAX
+                    ),
+                ),
+            )
+        if has_strong_temporal_scope and has_explicit_deontic_scope:
+            deontic_top_up = max(
+                deontic_top_up,
+                _STRONG_SCOPE_BACKFILL_WEIGHT,
+            )
+        counts[deontic_family] = max(deontic_count, deontic_top_up)
+        deontic_count = float(counts.get(deontic_family, 0.0))
+
+    # epistemic -> deontic
+    if (
+        epistemic_count >= _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT
+        and deontic_count <= _LOW_COMPETING_SCOPE_REINFORCEMENT_LIMIT
+        and deontic_count < epistemic_count
+        and has_epistemic_scope
+        and bool(
+            signals.get("has_deontic_scope")
+            or signals.get("has_deontic_cue")
+        )
+        and has_explicit_deontic_scope
+        and (
+            has_statutory_scope_reference
+            or has_frame_scope_signal
+        )
+    ):
+        deontic_top_up = _scaled_competing_scope_backfill(
+            source_count=epistemic_count,
+            ratio=_DEONTIC_COMPETING_SCOPE_BACKFILL_RATIO,
+            minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            maximum=_DEONTIC_COMPETING_SCOPE_BACKFILL_MAX,
+        )
+        if has_statutory_scope_reference:
+            deontic_top_up = max(
+                deontic_top_up,
+                _scaled_competing_scope_backfill(
+                    source_count=max(epistemic_count, frame_count),
+                    ratio=_REINFORCED_COMPETING_SCOPE_BACKFILL_RATIO,
+                    minimum=_STRONG_SCOPE_BACKFILL_WEIGHT,
+                    maximum=_EPISTEMIC_TO_DEONTIC_SCOPE_REINFORCEMENT_MAX,
                 ),
             )
         counts[deontic_family] = max(deontic_count, deontic_top_up)
@@ -3803,6 +4068,75 @@ def _apply_directional_modal_family_pair_backfill(
             )
         counts[conditional_family] = max(conditional_count, conditional_top_up)
         conditional_count = float(counts.get(conditional_family, 0.0))
+
+    # conditional_normative -> deontic
+    if (
+        conditional_count >= _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT
+        and deontic_count < conditional_count
+        and bool(signals.get("has_deontic_scope") or signals.get("has_deontic_cue"))
+        and (has_explicit_deontic_scope or has_structural_deontic_scope)
+        and (has_statutory_scope_reference or has_frame_scope_signal)
+    ):
+        deontic_top_up_max = _DEONTIC_COMPETING_SCOPE_BACKFILL_MAX
+        if has_explicit_deontic_scope and has_statutory_scope_reference:
+            deontic_top_up_max = max(
+                deontic_top_up_max,
+                _STATUTORY_GENERIC_FRAME_DEONTIC_SCOPE_MAX,
+            )
+        deontic_top_up = _scaled_competing_scope_backfill(
+            source_count=conditional_count,
+            ratio=_DEONTIC_COMPETING_SCOPE_BACKFILL_RATIO,
+            minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            maximum=deontic_top_up_max,
+        )
+        if has_explicit_deontic_scope and has_explicit_conditional_scope:
+            deontic_top_up = max(
+                deontic_top_up,
+                _STRONG_SCOPE_BACKFILL_WEIGHT,
+            )
+        counts[deontic_family] = max(deontic_count, deontic_top_up)
+        deontic_count = float(counts.get(deontic_family, 0.0))
+    # deontic -> temporal
+    if (
+        deontic_count >= _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT
+        and temporal_count <= _LOW_COMPETING_SCOPE_REINFORCEMENT_LIMIT
+        and temporal_count < deontic_count
+        and bool(signals.get("has_temporal_scope"))
+        and (
+            has_strong_temporal_scope
+            or has_temporal_cue_scope
+        )
+        and (
+            has_statutory_scope_reference
+            or has_frame_scope_signal
+            or has_explicit_deontic_scope
+        )
+    ):
+        temporal_top_up = _scaled_competing_scope_backfill(
+            source_count=max(deontic_count, frame_count),
+            ratio=_TEMPORAL_COMPETING_SCOPE_BACKFILL_RATIO,
+            minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            maximum=(
+                _STRONG_TEMPORAL_COMPETING_SCOPE_BACKFILL_MAX
+                if has_strong_temporal_scope
+                else _TEMPORAL_COMPETING_SCOPE_BACKFILL_MAX
+            ),
+        )
+        if has_strong_temporal_scope and (
+            has_explicit_deontic_scope
+            or has_structural_deontic_scope
+        ):
+            temporal_top_up = max(
+                temporal_top_up,
+                _scaled_competing_scope_backfill(
+                    source_count=max(deontic_count, frame_count),
+                    ratio=_REINFORCED_COMPETING_SCOPE_BACKFILL_RATIO,
+                    minimum=_STRONG_SCOPE_BACKFILL_WEIGHT,
+                    maximum=_FRAME_TO_TEMPORAL_SCOPE_REINFORCEMENT_MAX,
+                ),
+            )
+        counts[temporal_family] = max(temporal_count, temporal_top_up)
+        temporal_count = float(counts.get(temporal_family, 0.0))
 
     # temporal -> frame
     if (
@@ -3840,9 +4174,32 @@ def _apply_directional_modal_family_pair_backfill(
                     maximum=_TEMPORAL_TO_FRAME_STRONG_SCOPE_BACKFILL_MAX,
                 ),
             )
+        elif (
+            has_strong_temporal_scope
+            and has_statutory_scope_reference
+            and bool(signals.get("has_frame_context"))
+            and not has_editorial_frame_scope
+        ):
+            frame_top_up = max(
+                frame_top_up,
+                _scaled_competing_scope_backfill(
+                    source_count=temporal_count,
+                    ratio=_DEONTIC_COMPETING_SCOPE_BACKFILL_RATIO,
+                    minimum=_FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                    maximum=_TEMPORAL_COMPETING_SCOPE_BACKFILL_MAX,
+                ),
+            )
         if bool(
             signals.get("has_frame_scope_phrase")
             or has_editorial_frame_scope
+        ):
+            frame_top_up = max(
+                frame_top_up,
+                _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            )
+        elif (
+            has_statutory_scope_reference
+            and bool(signals.get("has_frame_context"))
         ):
             frame_top_up = max(
                 frame_top_up,
@@ -3987,11 +4344,38 @@ def _apply_directional_modal_family_pair_backfill(
         counts[temporal_family] = max(temporal_count, temporal_top_up)
         temporal_count = float(counts.get(temporal_family, 0.0))
 
+    # deontic -> temporal
+    if (
+        deontic_count >= _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT
+        and temporal_count < deontic_count
+        and bool(signals.get("has_temporal_scope"))
+        and has_strong_temporal_scope
+        and (has_statutory_scope_reference or has_frame_scope_signal)
+    ):
+        temporal_top_up = _scaled_competing_scope_backfill(
+            source_count=deontic_count,
+            ratio=_TEMPORAL_COMPETING_SCOPE_BACKFILL_RATIO,
+            minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            maximum=_STRONG_TEMPORAL_COMPETING_SCOPE_BACKFILL_MAX,
+        )
+        if has_explicit_deontic_scope and has_statutory_scope_reference:
+            temporal_top_up = max(
+                temporal_top_up,
+                _scaled_competing_scope_backfill(
+                    source_count=deontic_count,
+                    ratio=_STATUTORY_GENERIC_FRAME_COMPETING_SCOPE_RATIO,
+                    minimum=_FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                    maximum=_FRAME_TO_TEMPORAL_SCOPE_REINFORCEMENT_MAX,
+                ),
+            )
+        counts[temporal_family] = max(temporal_count, temporal_top_up)
+        temporal_count = float(counts.get(temporal_family, 0.0))
+
     # deontic -> frame
     if (
         deontic_count >= _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT
         and frame_count < deontic_count
-        and has_frame_scope_signal
+        and has_direct_frame_scope_signal
         and (
             has_statutory_scope_reference
             or has_editorial_frame_scope
@@ -4010,7 +4394,7 @@ def _apply_directional_modal_family_pair_backfill(
         deontic_count >= _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT
         and frame_count <= _COMPETING_SCOPE_BACKFILL_WEIGHT
         and frame_count < deontic_count
-        and not has_frame_scope_signal
+        and not has_direct_frame_scope_signal
         and has_statutory_scope_reference
         and (
             has_explicit_deontic_scope
@@ -4022,11 +4406,21 @@ def _apply_directional_modal_family_pair_backfill(
             ratio=_DEONTIC_COMPETING_SCOPE_BACKFILL_RATIO,
             minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
             maximum=(
-                _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT
+                _STATUTORY_GENERIC_FRAME_DEONTIC_SCOPE_MAX
                 if has_explicit_deontic_scope
-                else _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT
+                else _STATUTORY_GENERIC_FRAME_COMPETING_SCOPE_MAX
             ),
         )
+        if has_explicit_deontic_scope:
+            frame_top_up = max(
+                frame_top_up,
+                _scaled_competing_scope_backfill(
+                    source_count=deontic_count,
+                    ratio=_REINFORCED_COMPETING_SCOPE_BACKFILL_RATIO,
+                    minimum=_FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                    maximum=_STATUTORY_GENERIC_FRAME_DEONTIC_SCOPE_MAX,
+                ),
+            )
         counts[frame_family] = max(frame_count, frame_top_up)
         frame_count = float(counts.get(frame_family, 0.0))
 

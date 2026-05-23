@@ -16,6 +16,11 @@ from .types import (
     RoundTripMetrics,
 )
 
+_RESERVED_TDFOL_TERM_PREFIX = re.compile(
+    r"([\(\,]\s*)(or|and|not|iff|implies|xor)_",
+    flags=re.IGNORECASE,
+)
+
 
 @dataclass
 class FolTdfolBridgeAdapter:
@@ -348,14 +353,52 @@ def _coerce_tdfol_formula(formula: Any, *, seen: set[int]) -> Optional[Any]:
     try:
         from ipfs_datasets_py.logic.TDFOL.tdfol_parser import parse_tdfol_safe
 
-        parsed = parse_tdfol_safe(text)
-        if parsed is not None:
-            return parsed
-        if text.endswith("."):
-            return parse_tdfol_safe(text[:-1].rstrip())
+        for candidate in _tdfol_parse_candidates(text):
+            parsed = parse_tdfol_safe(candidate)
+            if parsed is not None:
+                return parsed
         return None
     except Exception:
         return None
+
+
+def _tdfol_parse_candidates(text: str) -> list[str]:
+    normalized = str(text or "").strip()
+    if not normalized:
+        return []
+    candidates: list[str] = []
+
+    def _add(candidate: str) -> None:
+        value = str(candidate or "").strip()
+        if value and value not in candidates:
+            candidates.append(value)
+
+    sanitized = _sanitize_tdfol_formula_text(normalized)
+    if sanitized != normalized:
+        _add(sanitized)
+    _add(normalized)
+
+    if normalized.endswith("."):
+        stripped = normalized[:-1].rstrip()
+        sanitized_stripped = _sanitize_tdfol_formula_text(stripped)
+        if sanitized_stripped != stripped:
+            _add(sanitized_stripped)
+        _add(stripped)
+
+    return candidates
+
+
+def _sanitize_tdfol_formula_text(text: str) -> str:
+    normalized = str(text or "").strip()
+    if not normalized:
+        return ""
+    # Some legal source text yields terms like "(or_said_banks)" where "or"
+    # is interpreted as a logical connective token by the parser. Prefix these
+    # term names deterministically so they remain parseable symbols.
+    return _RESERVED_TDFOL_TERM_PREFIX.sub(
+        lambda match: f"{match.group(1)}term_{match.group(2).lower()}_",
+        normalized,
+    )
 
 
 def _tdfol_parse_ok(formula: str) -> bool:

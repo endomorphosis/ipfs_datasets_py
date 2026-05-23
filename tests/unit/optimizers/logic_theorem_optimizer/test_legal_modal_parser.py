@@ -384,6 +384,7 @@ _USCODE_43_1656_PACKET_39_TEXT = "The withdrawal and reservation of lands."
 _USCODE_25_422_HEADING_ONLY_TEXT = "Housing voucher benefits and utility allowances."
 _USCODE_48_1572_HEADING_ONLY_TEXT = "Administrative notice and hearing."
 _USCODE_42_6323_HEADING_ONLY_TEXT = "Notice and hearing requirements."
+_USCODE_42_18791_TODO_TEXT = "Sec. 18791 - Administrative provisions. Additional provisions."
 _USCODE_7_431_TODO_TEXT = "Sec. 431 - Declaration of policy."
 _USCODE_6_257_TODO_TEXT = "Sec. 257 - National planning scenarios and preparedness targets."
 _USCODE_45_81_TO_92_TODO_TEXT = "Secs. 81 to 92. Repealed."
@@ -1159,6 +1160,36 @@ def test_parser_adds_short_residual_heading_span_coverage_for_36_21110_todo_shap
         for formula in residual_formulas
     }
     assert "Historical and Revision Notes." in residual_text_spans
+
+
+def test_parser_adds_short_residual_heading_span_coverage_for_42_18791_todo_shape() -> None:
+    parser = LegalModalParser()
+    document = parser.parse(
+        _USCODE_42_18791_TODO_TEXT,
+        document_id="us-code-42-18791.-fa3f6f298b46c6e4",
+        source="us_code",
+        citation="42 U.S.C. 18791.",
+    )
+
+    assert document.document_id == "us-code-42-18791.-fa3f6f298b46c6e4"
+    assert document.formulas
+    fallback = document.formulas[-1]
+    assert fallback.operator.family == "frame"
+    assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
+    assert fallback.metadata["fallback_rule"] == "uscode_section_heading_v1"
+    residual_formulas = [
+        formula
+        for formula in document.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    ]
+    assert residual_formulas
+    residual_text_spans = {
+        document.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in residual_formulas
+    }
+    assert "Additional provisions." in residual_text_spans
 
 
 def test_parser_replays_heading_only_zero_formula_cases_for_25_422_48_1572_and_42_6323() -> None:

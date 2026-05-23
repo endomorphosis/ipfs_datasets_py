@@ -78,6 +78,8 @@ __all__ = [
     'BooleanCircuit',  # Alias for ZKPCircuit (backward compatibility with docs)
     'ZKPError',
     'create_implication_circuit',
+    'build_proof_attestation_view',
+    'decode_simulated_proof_layout',
 ]
 
 _SIMULATION_WARNING = (
@@ -185,10 +187,21 @@ def __getattr__(name: str):
         globals()["SimulatedZKPVerifier"] = value
         return globals()[name]
 
-    if name in {"ZKPCircuit", "SimulatedZKPCircuit", "BooleanCircuit", "create_implication_circuit"}:
+    if name in {
+        "ZKPCircuit",
+        "SimulatedZKPCircuit",
+        "BooleanCircuit",
+        "create_implication_circuit",
+        "build_proof_attestation_view",
+        "decode_simulated_proof_layout",
+    }:
         mod = importlib.import_module(f"{__name__}.circuits")
-        if name == "create_implication_circuit":
-            value = getattr(mod, "create_implication_circuit")
+        if name in {
+            "create_implication_circuit",
+            "build_proof_attestation_view",
+            "decode_simulated_proof_layout",
+        }:
+            value = getattr(mod, name)
             globals()[name] = value
             return value
         value = getattr(mod, "ZKPCircuit")

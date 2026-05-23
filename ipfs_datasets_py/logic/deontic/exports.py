@@ -47,6 +47,14 @@ _SECTION_REFERENCE_LIST_RE = re.compile(
     re.IGNORECASE,
 )
 _SECTION_REFERENCE_TOKEN_RE = re.compile(r"[0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*", re.IGNORECASE)
+_US_CODE_REFERENCE_RE = re.compile(
+    r"\b\d+\s+u\.?\s*s\.?\s*c\.?\s*(?:§\s*)?([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)\.?",
+    re.IGNORECASE,
+)
+_US_CODE_SOURCE_ID_RE = re.compile(
+    r"^us-code-(?P<title>\d+)-(?P<section>.+)-(?P<digest>[0-9a-f]{8,})$",
+    re.IGNORECASE,
+)
 _SECTION_HEADING_RE = re.compile(
     r"(?:^|\n)\s*(?:section|sec\.?|§)\s+([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)\b",
     re.IGNORECASE,
@@ -3687,6 +3695,9 @@ def _same_document_section_index(norms: Sequence[LegalNormIR]) -> Dict[str, str]
         citation = _canonical_section_citation(norm.canonical_citation)
         if citation and norm.source_id:
             section_index.setdefault(citation, norm.source_id)
+        source_id_citation = _source_id_section_citation(norm.source_id)
+        if source_id_citation and norm.source_id:
+            section_index.setdefault(source_id_citation, norm.source_id)
         for citation in _section_context_citations(norm):
             if citation and norm.source_id:
                 section_index.setdefault(citation, norm.source_id)
@@ -3782,7 +3793,28 @@ def _section_citations_from_text(text: str) -> List[str]:
             if citation not in citations:
                 citations.append(citation)
 
+    for match in _US_CODE_REFERENCE_RE.finditer(value):
+        token = str(match.group(1) or "").strip().lower().rstrip(".")
+        if not token:
+            continue
+        citation = f"section {token}"
+        if citation not in citations:
+            citations.append(citation)
+
     return citations
+
+
+def _source_id_section_citation(source_id: str) -> str:
+    """Return ``section <n>`` from ``us-code-<title>-<section>-<digest>`` IDs."""
+
+    source = str(source_id or "").strip().lower()
+    match = _US_CODE_SOURCE_ID_RE.match(source)
+    if not match:
+        return ""
+    section = str(match.group("section") or "").strip().lower().rstrip(".")
+    if not section or not section[0].isdigit():
+        return ""
+    return _canonical_section_citation(f"section {section}")
 
 
 def _section_context_citations(norm: LegalNormIR) -> List[str]:
@@ -4167,9 +4199,15 @@ def _prompt_context_section_index(
 ) -> Dict[str, str]:
     section_index: Dict[str, str] = {}
     source_id = str(element.get("source_id") or prompt_context.get("source_id") or "")
+    source_id_citation = _source_id_section_citation(source_id)
+    if source_id_citation:
+        section_index.setdefault(source_id_citation, source_id)
 
     for candidate in all_elements:
         candidate_id = str(candidate.get("source_id") or "")
+        candidate_source_id_citation = _source_id_section_citation(candidate_id)
+        if candidate_source_id_citation:
+            section_index.setdefault(candidate_source_id_citation, candidate_id or source_id)
         for key in ("canonical_citation", "citation"):
             citation = _canonical_section_citation(str(candidate.get(key) or ""))
             if citation:

@@ -48,6 +48,14 @@ COMPILER_AMBIGUITY_CORE_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
         ModalLogicFamily.TEMPORAL.value,
     ),
     (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
         ModalLogicFamily.TEMPORAL.value,
         ModalLogicFamily.DEONTIC.value,
     ),
@@ -71,16 +79,60 @@ COMPILER_AMBIGUITY_CORE_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
 
 COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
         ModalLogicFamily.DEONTIC.value,
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
     ),
     (
         ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ),
+    (
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        ModalLogicFamily.DYNAMIC.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
         ModalLogicFamily.TEMPORAL.value,
     ),
     (
         ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.ALETHIC.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
         ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.EPISTEMIC.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
     ),
     (
         ModalLogicFamily.TEMPORAL.value,
@@ -99,6 +151,14 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS: Tuple[Tuple[str, str], ...] = (
         ModalLogicFamily.TEMPORAL.value,
     ),
     (
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        ModalLogicFamily.EPISTEMIC.value,
+    ),
+    (
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ),
+    (
         ModalLogicFamily.FRAME.value,
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
     ),
@@ -113,6 +173,29 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.FRAME.value,
         ModalLogicFamily.FRAME.value,
+    ),
+)
+
+COMPILER_AMBIGUITY_PACKET_000669_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.EPISTEMIC.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.DEONTIC.value,
     ),
 )
 
@@ -183,6 +266,10 @@ COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] =
     ),
     (
         ModalLogicFamily.DOXASTIC.value,
+        ModalLogicFamily.EPISTEMIC.value,
+    ),
+    (
+        ModalLogicFamily.DOXASTIC.value,
         ModalLogicFamily.DOXASTIC.value,
     ),
     (
@@ -235,6 +322,10 @@ COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] =
     ),
     (
         ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.ALETHIC.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
         ModalLogicFamily.EPISTEMIC.value,
     ),
     (
@@ -257,6 +348,7 @@ COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] =
         ModalLogicFamily.TEMPORAL.value,
         ModalLogicFamily.TEMPORAL.value,
     ),
+    *COMPILER_AMBIGUITY_PACKET_000669_FAMILY_PAIRS,
     *COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS,
     *COMPILER_AMBIGUITY_CORE_FAMILY_PAIRS,
 )
@@ -308,6 +400,10 @@ COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     ),
     (
         ModalLogicFamily.DOXASTIC.value,
+        ModalLogicFamily.EPISTEMIC.value,
+    ),
+    (
+        ModalLogicFamily.DOXASTIC.value,
         ModalLogicFamily.DOXASTIC.value,
     ),
     (
@@ -345,6 +441,10 @@ COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.EPISTEMIC.value,
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.EPISTEMIC.value,
+        ModalLogicFamily.DEONTIC.value,
     ),
     (
         ModalLogicFamily.FRAME.value,
@@ -410,6 +510,7 @@ COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
         ModalLogicFamily.TEMPORAL.value,
         ModalLogicFamily.TEMPORAL.value,
     ),
+    *COMPILER_AMBIGUITY_PACKET_000669_FAMILY_PAIRS,
     *COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS,
     *COMPILER_AMBIGUITY_CORE_FAMILY_PAIRS,
 )
@@ -420,6 +521,20 @@ ZERO_MARGIN_CONTESTED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ..
         ModalLogicFamily.EPISTEMIC.value,
     ),
 )
+
+COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR: Mapping[
+    Tuple[str, str],
+    float,
+] = {
+    (
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ): 0.0015,
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.DEONTIC.value,
+    ): 0.0015,
+}
 
 SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
@@ -512,6 +627,10 @@ SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     ),
     (
         ModalLogicFamily.DOXASTIC.value,
+        ModalLogicFamily.EPISTEMIC.value,
+    ),
+    (
+        ModalLogicFamily.DOXASTIC.value,
         ModalLogicFamily.DOXASTIC.value,
     ),
     (
@@ -586,6 +705,7 @@ SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
         ModalLogicFamily.FRAME.value,
         ModalLogicFamily.DOXASTIC.value,
     ),
+    *COMPILER_AMBIGUITY_PACKET_000669_FAMILY_PAIRS,
     *COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS,
     *COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
 )
@@ -682,6 +802,10 @@ PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...
     ),
     (
         ModalLogicFamily.DOXASTIC.value,
+        ModalLogicFamily.EPISTEMIC.value,
+    ),
+    (
+        ModalLogicFamily.DOXASTIC.value,
         ModalLogicFamily.DOXASTIC.value,
     ),
     (
@@ -752,6 +876,7 @@ PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...
         ModalLogicFamily.FRAME.value,
         ModalLogicFamily.FRAME.value,
     ),
+    *COMPILER_AMBIGUITY_PACKET_000669_FAMILY_PAIRS,
     *COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS,
 )
 
@@ -1169,6 +1294,27 @@ def supports_signal_free_adaptive_ambiguity_pair(
     )
 
 
+def compiler_refined_modal_family_cue_margin_buffer(
+    predicted_family: ModalLogicFamily | str,
+    target_family: ModalLogicFamily | str,
+) -> float:
+    """Return an additive low-margin threshold buffer for refined cue-policy pairs."""
+    resolved_predicted_family = _resolve_modal_family_name(predicted_family)
+    resolved_target_family = _resolve_modal_family_name(
+        target_family,
+        prefer_target_side=True,
+    )
+    return float(
+        COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR.get(
+            (
+                resolved_predicted_family,
+                resolved_target_family,
+            ),
+            0.0,
+        )
+    )
+
+
 def compiler_ambiguity_policy_targets(
     predicted_family: ModalLogicFamily | str,
 ) -> Tuple[str, ...]:
@@ -1365,9 +1511,12 @@ __all__ = [
     "DEFAULT_MODAL_PROFILES",
     "DEFAULT_MODAL_REGISTRY",
     "COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS",
+    "COMPILER_AMBIGUITY_PACKET_000669_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_CORE_FAMILY_PAIRS",
     "COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS",
+    "COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR",
     "COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS",
+    "compiler_refined_modal_family_cue_margin_buffer",
     "compiler_ambiguity_policy_targets",
     "is_compiler_ambiguity_policy_pair",
     "ZERO_MARGIN_CONTESTED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS",

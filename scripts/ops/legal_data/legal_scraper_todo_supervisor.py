@@ -1601,15 +1601,25 @@ def _collect_parallel_watch_payload(
             state_stall_seconds=max(300.0, float(state_stall_seconds)),
         )
         progress_path_text = str(state_rate_analytics.get("progress_path") or "").strip()
+        progress_updated_at = str(state_rate_analytics.get("progress_updated_at") or "").strip()
+        progress_updated_epoch = _safe_iso_to_epoch(progress_updated_at)
+        if heartbeat_age is None and progress_updated_epoch is not None:
+            heartbeat_age = max(0.0, now - progress_updated_epoch)
+            max_age = max(max_age, float(heartbeat_age))
+        if not updated_at and progress_updated_at:
+            updated_at = progress_updated_at
+        if not phase_status:
+            phase_status = str(state_rate_analytics.get("progress_status") or "")
 
         if shard_pid and pid_alive is False:
             shard_status = "dead_pid"
         elif not phase_path and progress_path_text:
-            shard_status = "running"
+            if heartbeat_age is not None and heartbeat_age > stale_after_seconds:
+                shard_status = "stale"
+            else:
+                shard_status = "running"
             if not phase_status:
-                phase_status = str(state_rate_analytics.get("progress_status") or "running")
-            if not updated_at:
-                updated_at = str(state_rate_analytics.get("progress_updated_at") or "")
+                phase_status = "running"
         elif not phase_path:
             shard_status = "missing_phase"
         elif heartbeat_age is not None and heartbeat_age > stale_after_seconds:

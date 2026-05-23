@@ -41,6 +41,38 @@ _VALUE_LABELS_BY_PREDICATE = {
     "predicate_role": "LegalPredicateRole",
     "source": "LegalSource",
 }
+_DOCUMENT_SCOPE_PREDICATES = {
+    "belongs_to_document",
+    "contains_formula",
+    "contains_norm",
+    "source",
+    "source_id",
+}
+_PROVENANCE_PREDICATES = {
+    "citation",
+    "citation_source",
+    "citation_title",
+    "evidence",
+    "hint_id",
+    "sample_id",
+}
+_MODAL_SEMANTIC_PREDICATES = {
+    "cue",
+    "modal_cue",
+    "modal_family",
+    "modal_operator",
+    "modal_system",
+    "operator",
+    "predicate",
+    "predicate_role",
+}
+_CITATION_TOKENS = (
+    "citation",
+    "section",
+    "source_id",
+    "title",
+    "usc",
+)
 _IDENTIFIER_RE = re.compile(r"[^A-Za-z0-9_]+")
 
 
@@ -57,11 +89,13 @@ def flogic_triples_to_graph_data(
     node_map: Dict[str, NodeData] = {}
     relationships: List[RelationshipData] = []
     relationship_types: set[str] = set()
+    projection_view_counts: Dict[str, int] = {}
 
     for index, triple in enumerate(projected):
         subject = triple["subject"]
         predicate = triple["predicate"]
         obj = triple["object"]
+        projection_view = _projection_view_for_predicate(predicate)
         subject_node = _ensure_node(node_map, subject, labels=[FLOGIC_RESOURCE_LABEL])
         object_labels = [FLOGIC_VALUE_LABEL]
         if predicate == "type":
@@ -90,11 +124,13 @@ def flogic_triples_to_graph_data(
                     "flogic_predicate": predicate,
                     "flogic_subject": subject,
                     "flogic_triple_key": _triple_identity_key(subject, predicate, obj),
+                    "frame_logic_projection_view": projection_view,
                     "source": "flogic_triple",
                     "triple_index": index,
                 },
             )
         )
+        projection_view_counts[projection_view] = projection_view_counts.get(projection_view, 0) + 1
 
     node_labels = sorted({label for node in node_map.values() for label in node.labels})
     unique_triple_count = _unique_triple_count(projected)
@@ -116,6 +152,7 @@ def flogic_triples_to_graph_data(
             input_triple_count=input_triple_count,
             normalized_triple_count=len(normalized),
             node_count=len(node_map),
+            projection_view_counts=projection_view_counts,
             relationship_count=len(relationships),
         )
     )
@@ -355,6 +392,7 @@ def _projection_alignment_metadata(
     input_triple_count: int,
     normalized_triple_count: int,
     node_count: int,
+    projection_view_counts: Mapping[str, int],
     relationship_count: int,
 ) -> Dict[str, Any]:
     subjects = {str(triple["subject"]) for triple in triples}
@@ -367,10 +405,21 @@ def _projection_alignment_metadata(
         "flogic_duplicate_triple_count": max(0, len(triples) - unique_triple_count),
         "flogic_normalized_triple_count": normalized_triple_count,
         "flogic_unique_triple_count": unique_triple_count,
+        "frame_logic_projection_input_aligned": relationship_count == input_triple_count,
+        "frame_logic_projection_input_relationship_gap": input_triple_count
+        - relationship_count,
         "frame_logic_projection_aligned": relationship_count == len(triples),
+        "frame_logic_projection_normalized_aligned": relationship_count
+        == normalized_triple_count,
         "frame_logic_projection_has_duplicate_facts": len(triples) != unique_triple_count,
         "frame_logic_projection_node_count": node_count,
         "frame_logic_projection_relationship_count": relationship_count,
+        "frame_logic_projection_view_count": len(projection_view_counts),
+        "frame_logic_projection_view_distribution": {
+            name: int(projection_view_counts[name])
+            for name in sorted(projection_view_counts)
+        },
+        "frame_logic_projection_views": sorted(projection_view_counts),
         "frame_logic_unique_object_count": len(objects),
         "frame_logic_unique_predicate_count": len(predicates),
         "frame_logic_unique_subject_count": len(subjects),
@@ -389,6 +438,27 @@ def _selected_frame_from_triples(triples: Sequence[Mapping[str, str]]) -> str:
         if frame:
             return frame
     return ""
+
+
+def _projection_view_for_predicate(predicate: str) -> str:
+    normalized = str(predicate or "").strip().lower()
+    if not normalized:
+        return "fact"
+    if normalized == "type":
+        return "type_assertion"
+    if normalized in _FRAME_PREDICATES:
+        return "frame_link"
+    if normalized in _DOCUMENT_SCOPE_PREDICATES:
+        return "document_scope"
+    if normalized in _PROVENANCE_PREDICATES:
+        return "provenance"
+    if normalized in _MODAL_SEMANTIC_PREDICATES:
+        return "modal_semantics"
+    if "ontology_term" in normalized:
+        return "ontology_term"
+    if any(token in normalized for token in _CITATION_TOKENS):
+        return "citation_structure"
+    return "fact"
 
 
 def _unique(values: Iterable[str]) -> List[str]:

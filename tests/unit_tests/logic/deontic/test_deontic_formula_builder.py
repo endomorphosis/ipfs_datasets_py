@@ -3446,6 +3446,28 @@ def test_numbered_reference_exception_without_resolution_stays_blocked():
     assert record["deterministic_resolution"] == {}
 
 
+def test_us_code_self_numbered_reference_exception_resolves_from_citation_and_source_id():
+    element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 18791."
+    )[0]
+    element = dict(element)
+    element["canonical_citation"] = "42 U.S.C. 18791."
+    element["source_id"] = "us-code-42-18791.-fa3f6f298b46c6e4"
+
+    record = build_deontic_formula_records_from_irs(
+        [LegalNormIR.from_parser_element(element)]
+    )[0]
+
+    assert record["formula"] == "O(∀x (Secretary(x) → PublishNotice(x)))"
+    assert record["proof_ready"] is True
+    assert record["requires_validation"] is False
+    assert record["repair_required"] is False
+    assert record["deterministic_resolution"]["type"] == (
+        "resolved_same_document_reference_exception"
+    )
+    assert record["deterministic_resolution"]["references"] == ["section 18791"]
+
+
 def test_batch_formula_records_resolve_same_document_numbered_reference_exception():
     reference_element = extract_normative_elements("The clerk shall maintain the index.")[0]
     reference_element = dict(reference_element)

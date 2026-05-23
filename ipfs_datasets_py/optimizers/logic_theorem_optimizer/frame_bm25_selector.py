@@ -1222,7 +1222,7 @@ def _normalized_modal_family_count_value(
         return family.strip() or raw_value
     if normalized_predicate.startswith("modal_family_count_"):
         family = normalized_predicate[len("modal_family_count_") :].strip("_")
-        if family and family not in {"family", "ranked", "value"}:
+        if family in _FRAME_ONTOLOGY_MODAL_FAMILY_VALUES:
             return family
     return raw_value
 

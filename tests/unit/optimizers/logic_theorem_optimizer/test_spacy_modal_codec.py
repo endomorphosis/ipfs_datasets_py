@@ -28,6 +28,7 @@ pytest.importorskip("spacy")
 _USCODE_25_422_HEADING_ONLY_TEXT = "Housing voucher benefits and utility allowances."
 _USCODE_48_1572_HEADING_ONLY_TEXT = "Administrative notice and hearing."
 _USCODE_42_6323_HEADING_ONLY_TEXT = "Notice and hearing requirements."
+_USCODE_42_18791_TODO_TEXT = "Sec. 18791 - Administrative provisions. Additional provisions."
 _USCODE_7_473A_SEC_HEADING_TEXT = "Sec. 473a - Cotton classification services."
 _USCODE_20_1067J_SEC_HEADING_TEXT = "Sec. 1067j - Administrative provisions."
 _USCODE_15_2501_SEC_HEADING_TEXT = "Sec. 2501 - Congressional findings and policy."
@@ -2061,6 +2062,61 @@ def test_spacy_directional_backfill_adds_frame_support_for_conditional_statutory
     assert counts["frame"] > 0.3
 
 
+def test_spacy_directional_backfill_adds_epistemic_support_for_conditional_scope() -> None:
+    counts = {
+        "conditional_normative": 2.6,
+        "epistemic": 0.02,
+    }
+    signals = {
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": True,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": True,
+        "has_conditional_scope_token": False,
+        "has_epistemic_scope": True,
+        "has_epistemic_scope_phrase": True,
+        "has_epistemic_cue": True,
+        "has_statutory_scope_reference": False,
+        "has_frame_context": False,
+        "has_frame_scope_phrase": False,
+        "has_frame_editorial_scope_phrase": False,
+        "has_frame_cue": False,
+    }
+
+    _apply_directional_modal_family_pair_backfill(counts, signals)
+
+    assert counts["epistemic"] > 0.2
+
+
+def test_spacy_directional_backfill_adds_temporal_support_for_strong_conditional_scope_without_frame_context() -> None:
+    counts = {
+        "conditional_normative": 2.4,
+        "temporal": 0.05,
+    }
+    signals = {
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": True,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": True,
+        "has_conditional_scope_token": False,
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": True,
+        "has_temporal_scope_token": False,
+        "has_temporal_within_scope": False,
+        "has_calendar_date_scope": False,
+        "has_temporal_cue": False,
+        "has_statutory_scope_reference": False,
+        "has_frame_context": False,
+        "has_frame_scope_phrase": False,
+        "has_frame_editorial_scope_phrase": False,
+        "has_frame_cue": False,
+    }
+
+    _apply_directional_modal_family_pair_backfill(counts, signals)
+
+    assert counts["temporal"] > 0.2
+
+
 def test_spacy_directional_backfill_adds_structural_deontic_support_for_temporal_scope() -> None:
     counts = {
         "temporal": 0.8,
@@ -2164,6 +2220,82 @@ def test_spacy_directional_backfill_adds_conditional_support_for_deontic_scope()
     _apply_directional_modal_family_pair_backfill(counts, signals)
 
     assert counts["conditional_normative"] > 0.2
+
+
+def test_spacy_directional_backfill_adds_deontic_support_for_conditional_statutory_scope() -> None:
+    counts = {
+        "conditional_normative": 2.3,
+        "deontic": 0.08,
+        "frame": 0.05,
+    }
+    signals = {
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": True,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": True,
+        "has_conditional_scope_token": False,
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": True,
+        "has_deontic_cue": False,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": False,
+        "has_frame_scope_phrase": False,
+        "has_frame_editorial_scope_phrase": False,
+        "has_frame_cue": False,
+    }
+
+    _apply_directional_modal_family_pair_backfill(counts, signals)
+
+    assert counts["deontic"] > 0.7
+
+
+def test_spacy_directional_backfill_reinforces_deontic_to_temporal_for_strong_statutory_scope() -> None:
+    counts = {
+        "deontic": 2.8,
+        "temporal": 0.06,
+        "frame": 0.0,
+    }
+    signals = {
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": True,
+        "has_deontic_cue": False,
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": True,
+        "has_temporal_scope_token": True,
+        "has_temporal_within_scope": False,
+        "has_temporal_cue": True,
+        "has_calendar_date_scope": True,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": False,
+        "has_frame_scope_phrase": False,
+        "has_frame_editorial_scope_phrase": False,
+        "has_frame_cue": False,
+    }
+
+    _apply_directional_modal_family_pair_backfill(counts, signals)
+
+    assert counts["temporal"] > 0.7
+
+
+def test_spacy_directional_backfill_reinforces_deontic_to_frame_without_frame_lexemes() -> None:
+    counts = {
+        "deontic": 2.0,
+        "frame": 0.0,
+    }
+    signals = {
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": True,
+        "has_deontic_cue": False,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": False,
+        "has_frame_scope_phrase": False,
+        "has_frame_editorial_scope_phrase": False,
+        "has_frame_cue": False,
+    }
+
+    _apply_directional_modal_family_pair_backfill(counts, signals)
+
+    assert counts["frame"] >= 0.78
 
 
 def test_spacy_directional_backfill_adds_temporal_support_for_weak_statutory_frame_deontic_scope() -> None:
@@ -2276,6 +2408,85 @@ def test_spacy_directional_backfill_reinforces_temporal_to_frame_for_editorial_s
     _apply_directional_modal_family_pair_backfill(counts, signals)
 
     assert counts["frame"] >= 0.62
+
+
+def test_spacy_directional_backfill_reinforces_temporal_to_frame_for_statutory_context_without_editorial_phrase() -> None:
+    counts = {
+        "temporal": 3.0,
+        "frame": 0.05,
+    }
+    signals = {
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": True,
+        "has_temporal_scope_token": True,
+        "has_temporal_within_scope": False,
+        "has_calendar_date_scope": True,
+        "has_temporal_cue": True,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": False,
+        "has_frame_editorial_scope_phrase": False,
+        "has_frame_cue": False,
+        "has_statutory_scope_reference": True,
+    }
+
+    _apply_directional_modal_family_pair_backfill(counts, signals)
+
+    assert counts["frame"] >= 0.6
+
+
+def test_spacy_directional_backfill_reinforces_conditional_to_deontic_for_explicit_scope() -> None:
+    counts = {
+        "conditional_normative": 2.2,
+        "deontic": 0.05,
+        "frame": 0.0,
+    }
+    signals = {
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": True,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": True,
+        "has_conditional_scope_token": False,
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": True,
+        "has_deontic_cue": False,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": False,
+        "has_frame_editorial_scope_phrase": False,
+        "has_frame_cue": False,
+        "has_statutory_scope_reference": True,
+    }
+
+    _apply_directional_modal_family_pair_backfill(counts, signals)
+
+    assert counts["deontic"] >= 0.4
+
+
+def test_spacy_directional_backfill_reinforces_deontic_to_temporal_for_strong_temporal_scope() -> None:
+    counts = {
+        "deontic": 2.8,
+        "temporal": 0.04,
+        "frame": 0.0,
+    }
+    signals = {
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": True,
+        "has_temporal_scope_token": True,
+        "has_temporal_within_scope": False,
+        "has_calendar_date_scope": True,
+        "has_temporal_cue": True,
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": False,
+        "has_deontic_cue": False,
+        "has_frame_context": False,
+        "has_frame_scope_phrase": False,
+        "has_frame_editorial_scope_phrase": False,
+        "has_frame_cue": False,
+        "has_statutory_scope_reference": True,
+    }
+
+    _apply_directional_modal_family_pair_backfill(counts, signals)
+
+    assert counts["temporal"] >= 0.7
 
 
 def test_spacy_temporal_scope_boost_is_stronger_with_deontic_cue_competition() -> None:
@@ -4612,6 +4823,38 @@ def test_spacy_compiler_adds_short_residual_heading_span_coverage_for_36_21110_t
         for formula in residual_formulas
     }
     assert "Historical and Revision Notes." in residual_text_spans
+
+
+def test_spacy_compiler_adds_short_residual_heading_span_coverage_for_42_18791_todo_shape() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    encoding = encoder.encode(
+        _USCODE_42_18791_TODO_TEXT,
+        document_id="us-code-42-18791.-fa3f6f298b46c6e4",
+        citation="42 U.S.C. 18791.",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    assert modal_ir.document_id == "us-code-42-18791.-fa3f6f298b46c6e4"
+    assert modal_ir.formulas
+    fallback = modal_ir.formulas[-1]
+    assert fallback.operator.family == "frame"
+    assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
+    assert fallback.metadata["fallback_rule"] == "uscode_section_heading_v1"
+    residual_formulas = [
+        formula
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    ]
+    assert residual_formulas
+    residual_text_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in residual_formulas
+    }
+    assert "Additional provisions." in residual_text_spans
 
 
 def test_spacy_compiler_supports_usc_and_section_symbol_citation_variants_for_sec_headings() -> None:

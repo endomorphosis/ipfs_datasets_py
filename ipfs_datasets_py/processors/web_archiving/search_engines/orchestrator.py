@@ -7,7 +7,7 @@ providing parallel execution, fallback handling, and result aggregation.
 
 import logging
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, TimeoutError, as_completed
 from typing import List, Dict, Optional, Any
 from dataclasses import dataclass, field
 
@@ -202,10 +202,11 @@ class MultiEngineOrchestrator:
             List of successful responses
         """
         responses = []
-        
-        with ThreadPoolExecutor(max_workers=self.config.max_workers) as executor:
+
+        executor = ThreadPoolExecutor(max_workers=self.config.max_workers)
+        future_to_engine = {}
+        try:
             # Submit search tasks
-            future_to_engine = {}
             for engine_name in engines:
                 engine = self.engines[engine_name]
                 future = executor.submit(
@@ -217,25 +218,69 @@ class MultiEngineOrchestrator:
                     **kwargs
                 )
                 future_to_engine[future] = engine_name
-            
-            # Collect results
-            for future in as_completed(
-                future_to_engine.keys(),
-                timeout=self.config.timeout_seconds
-            ):
-                engine_name = future_to_engine[future]
-                try:
-                    response = future.result()
-                    if response:
-                        responses.append(response)
-                        logger.debug(
-                            f"{engine_name} search succeeded: "
-                            f"{len(response.results)} results"
-                        )
-                except Exception as e:
-                    logger.warning(f"{engine_name} search failed: {e}")
+
+            # Collect results up to timeout budget.
+            try:
+                for future in as_completed(
+                    future_to_engine.keys(),
+                    timeout=self.config.timeout_seconds
+                ):
+                    engine_name = future_to_engine[future]
+                    try:
+                        response = future.result()
+                        if response:
+                            responses.append(response)
+                            logger.debug(
+                                f"{engine_name} search succeeded: "
+                                f"{len(response.results)} results"
+                            )
+                    except Exception as e:
+                        logger.warning(f"{engine_name} search failed: {e}")
+            except TimeoutError:
+                logger.warning(
+                    "Parallel search timed out after %ss; "
+                    "continuing with completed engine results only",
+                    self.config.timeout_seconds,
+                )
+        finally:
+            for future in future_to_engine:
+                if not future.done():
+                    future.cancel()
+            # Do not wait for runaway tasks; this avoids daemon stalls when
+            # one backend blocks indefinitely in a network library.
+            executor.shutdown(wait=False, cancel_futures=True)
         
         return responses
+
+    def _search_with_timeout(
+        self,
+        *,
+        engine_name: str,
+        engine: SearchEngineAdapter,
+        query: str,
+        max_results: int,
+        offset: int,
+        **kwargs
+    ) -> SearchEngineResponse:
+        """Run one engine search with an explicit timeout budget."""
+        timeout_seconds = max(1, int(self.config.timeout_seconds))
+        executor = ThreadPoolExecutor(max_workers=1)
+        future = executor.submit(
+            engine.search,
+            query,
+            max_results=max_results,
+            offset=offset,
+            **kwargs,
+        )
+        try:
+            return future.result(timeout=timeout_seconds)
+        except TimeoutError as exc:
+            future.cancel()
+            raise SearchEngineError(
+                f"{engine_name} search timed out after {timeout_seconds}s"
+            ) from exc
+        finally:
+            executor.shutdown(wait=False, cancel_futures=True)
     
     def _sequential_search(
         self,
@@ -263,11 +308,13 @@ class MultiEngineOrchestrator:
             engine = self.engines[engine_name]
             
             try:
-                response = engine.search(
-                    query,
+                response = self._search_with_timeout(
+                    engine_name=engine_name,
+                    engine=engine,
+                    query=query,
                     max_results=max_results,
                     offset=offset,
-                    **kwargs
+                    **kwargs,
                 )
                 responses.append(response)
                 logger.debug(

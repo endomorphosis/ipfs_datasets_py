@@ -876,6 +876,57 @@ class TestParserComplexFormulas:
 
 
 # ============================================================================
+# Legacy Proof-Obligation Compatibility
+# ============================================================================
+
+
+class TestParserLegacyProofObligationCompatibility:
+    """Test parser compatibility with legacy proof-obligation formula shapes."""
+
+    def test_parse_quantifier_without_dot_when_parenthesized(self):
+        """Test parsing legacy quantifier form: forall t (...)."""
+        formula_str = "forall t (true and not(false) -> O(frm:1,t))"
+
+        formula = parse_tdfol(formula_str)
+
+        assert isinstance(formula, QuantifiedFormula)
+        assert formula.quantifier == Quantifier.FORALL
+        assert formula.variable.name == "t"
+        assert "legacy_deontic_target" in formula.get_predicates()
+
+    def test_parse_deontic_frame_reference_single_term(self):
+        """Test parsing O(frm:abc) as a deontic formula."""
+        formula = parse_tdfol("O(frm:abc)")
+
+        assert isinstance(formula, DeonticFormula)
+        assert formula.operator == DeonticOperator.OBLIGATION
+        assert isinstance(formula.formula, Predicate)
+        assert formula.formula.name == "frm:abc"
+
+    def test_parse_deontic_frame_reference_with_time_argument(self):
+        """Test parsing O(frm:1,t) into a deterministic deontic target predicate."""
+        formula = parse_tdfol("O(frm:1,t)")
+
+        assert isinstance(formula, DeonticFormula)
+        assert formula.operator == DeonticOperator.OBLIGATION
+        assert isinstance(formula.formula, Predicate)
+        assert formula.formula.name == "legacy_deontic_target"
+        assert len(formula.formula.arguments) == 2
+        assert formula.formula.arguments[0].to_string() == "frm:1"
+        assert formula.formula.arguments[1].to_string() == "t"
+
+    def test_parse_iso_date_literal_in_temporal_guard(self):
+        """Test parsing YYYY-MM-DD literals inside temporal predicates."""
+        formula_str = "forall t (By(t,2026-03-20) -> O(frm:1,t))"
+
+        formula = parse_tdfol(formula_str)
+
+        assert isinstance(formula, QuantifiedFormula)
+        assert "By" in formula.get_predicates()
+        assert "legacy_deontic_target" in formula.get_predicates()
+
+
+# ============================================================================
 # Error Handling Tests (15 tests)
 # ============================================================================
 

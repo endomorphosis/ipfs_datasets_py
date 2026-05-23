@@ -218,8 +218,9 @@ class DuckDuckGoSearchEngine(SearchEngineAdapter):
         """
         results = []
         
-        # Create DDGS instance
-        with DDGS() as ddgs:
+        # Create DDGS instance with explicit timeout budget so slow network
+        # paths don't block legal scraper daemons indefinitely.
+        with DDGS(timeout=max(1, int(self.config.timeout_seconds))) as ddgs:
             # DuckDuckGo doesn't support offset directly
             # We need to fetch more results and slice
             fetch_count = min(max_results + offset, 100)

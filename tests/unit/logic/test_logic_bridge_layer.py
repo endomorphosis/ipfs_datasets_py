@@ -523,6 +523,19 @@ def test_tdfol_bridge_coerce_parses_textual_logical_connectives() -> None:
     assert "O_t" in coerced.get_predicates()
 
 
+def test_tdfol_bridge_coerce_parses_legacy_proof_obligation_formula() -> None:
+    from ipfs_datasets_py.logic.TDFOL.tdfol_core import QuantifiedFormula
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
+
+    formula = "forall t (true and By(t,2026-03-20) and not(false) -> O(frm:1,t))"
+
+    coerced = coerce_tdfol_formula(formula)
+
+    assert isinstance(coerced, QuantifiedFormula)
+    assert "By" in coerced.get_predicates()
+    assert "legacy_deontic_target" in coerced.get_predicates()
+
+
 def test_cec_dcec_bridge_evaluates_event_formulas_and_graph() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
@@ -681,6 +694,76 @@ def test_cec_dcec_bridge_emits_parse_profile_for_fallback_event_formulas() -> No
     )
 
 
+def test_cec_dcec_bridge_normalizes_exported_rule_style_event_formulas(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge import cec_dcec as cec_dcec_mod
+
+    class _NormResult:
+        success = True
+        metadata = {
+            "legal_norm_irs": [
+                {
+                    "source_id": "bridge:rule:1",
+                    "actor": "Agency",
+                    "action": "publish notice",
+                    "modality": "obligated",
+                }
+            ]
+        }
+
+    class _NormConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _NormResult()
+
+    def _fake_event_formula_exports(_norms):
+        return {
+            "bridge:rule:1": [
+                {
+                    "event_calculus_formula": (
+                        "HoldsAt(O(happens(agency,publish_notice,t0)), t) "
+                        ":- Happens(legal_norm(bridge_rule_1), t)."
+                    ),
+                    "event_formula_source": "deontic.prover_syntax",
+                    "event_formula_syntax_valid": False,
+                }
+            ]
+        }
+
+    monkeypatch.setattr(
+        cec_dcec_mod,
+        "_event_formula_exports_from_norms",
+        _fake_event_formula_exports,
+    )
+
+    adapter = cec_dcec_mod.CecDcecBridgeAdapter(converter=_NormConverter())
+    report = adapter.evaluate(
+        "The agency shall publish notice.",
+        document_id="cec-bridge-export-rule-style",
+        citation="CEC Bridge Export Rule Style",
+    )
+
+    event_record = report.ir_document.views["event_calculus"].payload["records"][0]
+    assert event_record["event_formula_source"] == "deontic.prover_syntax"
+    assert event_record["event_formula_syntax_valid"] is True
+    assert (
+        event_record["event_formula_target_parse_profile"]["target_parse_profile_complete"]
+        is True
+    )
+    assert event_record["event_formula_target_parse_profile"]["top_level_symbol"] == "HoldsAt"
+    assert event_record["event_formula_target_parse_profile"]["top_level_connector"] == ":-"
+    assert (
+        event_record["event_formula_target_components"]["uses_event_calculus_wrapper"]
+        is True
+    )
+    assert (
+        event_record["event_formula_target_quality_gate"]["requires_validation"]
+        is False
+    )
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
 def test_external_prover_router_bridge_uses_native_prover_gate() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
@@ -832,6 +915,64 @@ def test_external_prover_router_bridge_recovers_formulas_from_legacy_proof_input
     assert report.proof_gate.details[0]["reason"] == "no_provers_available"
 
 
+def test_external_prover_router_bridge_sanitizes_reserved_term_prefix_formulas(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge.external_prover_router import (
+        ExternalProverRouterBridgeAdapter,
+    )
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
+
+    class _NoProverRouter:
+        @staticmethod
+        def get_available_provers() -> list[str]:
+            return []
+
+    class _ReservedTermFolAdapter(FolTdfolBridgeAdapter):
+        def encode(self, *args, **kwargs):
+            document, context = super().encode(*args, **kwargs)
+            formula_records = list(context["formula_records"])
+            assert formula_records
+            patched = dict(formula_records[0])
+            patched.pop("formula_object", None)
+            patched["formula"] = "O(in_that_event_maintain_reserves(or_said_banks))"
+            patched["proof_input"] = patched["formula"]
+            return (
+                document,
+                {
+                    **dict(context),
+                    "formula_records": [patched],
+                },
+            )
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.bridge.external_prover_router._build_router",
+        lambda **_kwargs: _NoProverRouter(),
+    )
+
+    adapter = ExternalProverRouterBridgeAdapter(
+        tdfol_adapter=_ReservedTermFolAdapter(),
+        enable_native=False,
+        enable_external_binaries=False,
+    )
+    report = adapter.evaluate(
+        "The agency shall maintain reserves.",
+        document_id="external-prover-bridge-sanitized-term-prefix",
+        citation="External Prover Bridge Sanitized Term Prefix",
+    )
+
+    formulas_view = report.ir_document.views["prover_formulas"]
+    records = formulas_view.payload["records"]
+    assert records and records[0]["formula"]
+    assert records[0]["formula_parse_ok"] is True
+    assert records[0]["formula_sanitized"] is True
+    assert "term_or_said_banks" in records[0]["formula"]
+    assert formulas_view.metadata["sanitized_formula_count"] == 1
+    assert formulas_view.metadata["text_fallback_formula_count"] == 0
+    assert report.ir_document.metadata["router_sanitized_formula_count"] == 1
+    assert report.ir_document.metadata["router_text_fallback_formula_count"] == 0
+
+
 def test_external_prover_router_bridge_proof_gate_supports_legacy_prove_signature(
     monkeypatch,
 ) -> None:
@@ -936,6 +1077,48 @@ def test_external_prover_router_bridge_soft_passes_when_no_provers_available(
     assert report.proof_gate.details[0]["bridge_soft_pass"] is True
     assert report.proof_gate.details[0]["reason"] == "no_provers_available"
     assert report.round_trip.extra_losses["external_prover_unavailable_loss"] == 1.0
+
+
+def test_external_prover_router_bridge_soft_passes_when_available_router_cannot_route(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge.external_prover_router import (
+        ExternalProverRouterBridgeAdapter,
+    )
+
+    class _UnavailableRouteRouter:
+        @staticmethod
+        def get_available_provers() -> list[str]:
+            return ["native"]
+
+        @staticmethod
+        def route(_formula, **_kwargs):
+            raise RuntimeError("native_router_temporarily_unavailable")
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.bridge.external_prover_router._build_router",
+        lambda **_kwargs: _UnavailableRouteRouter(),
+    )
+
+    adapter = ExternalProverRouterBridgeAdapter(
+        enable_native=True,
+        enable_external_binaries=False,
+    )
+    report = adapter.evaluate(
+        "12 U.S.C. 466: The term reserve bank means a Federal reserve bank.",
+        document_id="external-prover-bridge-unavailable-route-soft-pass",
+        citation="12 U.S.C. 466",
+    )
+
+    assert report.status == "ok"
+    assert report.metadata["proof_gate_soft_pass"] is True
+    assert report.metadata["proof_gate_soft_pass_reason"] == "router_compatibility_soft_pass"
+    assert report.proof_gate.compiles is True
+    assert report.proof_gate.valid_count == report.proof_gate.attempted_count
+    assert report.proof_gate.details[0]["bridge_soft_pass"] is True
+    assert report.proof_gate.details[0]["reason"] == "router_unavailable"
+    assert "external_provers:compat_softpass" in report.proof_gate.verified_by
+    assert report.round_trip.extra_losses["external_prover_failure_ratio"] == 0.0
 
 
 def test_external_prover_router_bridge_supports_route_signature_without_axioms(
@@ -1075,6 +1258,16 @@ def test_external_prover_router_bridge_falls_back_to_inventory_only_router(
     assert report.proof_gate.details[0]["prover_used"] == "native"
     assert "external_provers:native" in report.proof_gate.verified_by
     assert report.round_trip.extra_losses["external_prover_unavailable_loss"] == 0.0
+
+
+def test_fol_tdfol_coerce_formula_sanitizes_reserved_term_prefixes() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
+
+    formula = "O(with_the_consent_of_the_board(or_said_banks))"
+    parsed = coerce_tdfol_formula(formula)
+
+    assert parsed is not None
+    assert "term_or_said_banks" in parsed.to_string()
 
 
 def test_zkp_attestation_bridge_evaluates_proof_attestations_and_graph() -> None:

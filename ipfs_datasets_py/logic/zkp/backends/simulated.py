@@ -17,6 +17,7 @@ import time
 
 from .. import ZKPError, ZKPProof
 from ..canonicalization import axioms_commitment_hex, normalize_text, theorem_hash_hex
+from ..circuits import build_proof_attestation_view
 from ..statement import format_circuit_ref, parse_circuit_ref_lenient
 
 
@@ -89,17 +90,30 @@ class SimulatedBackend:
 
         output_metadata = {**metadata_dict}
         output_metadata.setdefault("simulated_proof_layout", self._simulated_proof_layout_metadata())
+        public_inputs = {
+            "theorem": theorem,
+            "theorem_hash": theorem_hash_hex(theorem),
+            "axioms_commitment": axioms_commitment_hex(private_axioms),
+            "circuit_ref": circuit_ref,
+            "circuit_version": circuit_version,
+            "ruleset_id": ruleset_id,
+        }
+        attestation_view = build_proof_attestation_view(
+            proof_data=proof_data,
+            public_inputs=public_inputs,
+            metadata={
+                **output_metadata,
+                "backend": self.backend_id,
+                "proof_system": "Groth16 (simulated)",
+            },
+        )
+        public_inputs["attestation_ref"] = attestation_view["attestation_ref"]
+        public_inputs["attestation_view_version"] = int(attestation_view["attestation_view_version"])
+        output_metadata.setdefault("attestation_view", attestation_view)
 
         return ZKPProof(
             proof_data=proof_data,
-            public_inputs={
-                "theorem": theorem,
-                "theorem_hash": theorem_hash_hex(theorem),
-                "axioms_commitment": axioms_commitment_hex(private_axioms),
-                "circuit_ref": circuit_ref,
-                "circuit_version": circuit_version,
-                "ruleset_id": ruleset_id,
-            },
+            public_inputs=public_inputs,
             metadata={
                 **output_metadata,
                 "proof_system": "Groth16 (simulated)",

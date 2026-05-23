@@ -21,6 +21,7 @@ from functools import lru_cache
 import jsonschema
 
 from ipfs_datasets_py.logic.zkp import ZKPProof
+from ipfs_datasets_py.logic.zkp.circuits import build_proof_attestation_view
 
 logger = logging.getLogger(__name__)
 
@@ -408,16 +409,26 @@ class Groth16Backend(ZKPBackend):
         
         # Reconstruct proof (would be properly decoded from Rust)
         proof_hex = json.dumps(proof_data).encode()
+        metadata = {
+            'backend': 'groth16',
+            'curve': 'BN254',
+            'version': proof_data.get('version', 1),
+            'security_level': int(witness.get('security_level', 0)),
+            'proof_system': 'Groth16',
+        }
+        attestation_view = build_proof_attestation_view(
+            proof_data=proof_hex,
+            public_inputs=public_inputs,
+            metadata=metadata,
+        )
+        public_inputs["attestation_ref"] = attestation_view["attestation_ref"]
+        public_inputs["attestation_view_version"] = int(attestation_view["attestation_view_version"])
+        metadata["attestation_view"] = attestation_view
         
         return Groth16Proof(
             proof_data=proof_hex,
             public_inputs=public_inputs,
-            metadata={
-                'backend': 'groth16',
-                'curve': 'BN254',
-                'version': proof_data.get('version', 1),
-                'security_level': int(witness.get('security_level', 0)),
-            },
+            metadata=metadata,
             timestamp=proof_data.get('timestamp', 0),
             size_bytes=len(proof_hex),
         )

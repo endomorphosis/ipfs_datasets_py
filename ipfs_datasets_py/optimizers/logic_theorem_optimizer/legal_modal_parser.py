@@ -179,6 +179,8 @@ _USCODE_SHORT_RESIDUAL_HEADING_SIGNAL_TOKENS = frozenset(
         "historical",
         "notice",
         "notes",
+        "provision",
+        "provisions",
         "procedure",
         "procedures",
         "records",

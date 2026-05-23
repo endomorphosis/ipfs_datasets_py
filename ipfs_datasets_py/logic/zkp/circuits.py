@@ -5,15 +5,139 @@ Defines arithmetic circuits that can be used to create zero-knowledge
 proofs for various logic operations, and MVP circuits for statement proving.
 """
 
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Mapping
 from dataclasses import dataclass
-from typing import Any, Dict
+import json
 
 from .canonicalization import canonicalize_axioms, hash_axioms_commitment, tdfol_v1_axioms_commitment_hex_v2
 from .canonicalization import hash_theorem
-from .statement import Statement, Witness
+from .statement import Statement, Witness, format_circuit_ref, parse_circuit_ref_lenient
 from .legal_theorem_semantics import parse_tdfol_v1_axiom, parse_tdfol_v1_theorem
 import hashlib
+
+_SIMZKP_MAGIC = b"SIMZKP\x00\x01"
+_SIMZKP_PROOF_LENGTH = 160
+_ATTESTATION_VIEW_VERSION = 1
+
+
+def _bytes_from_proof_data(proof_data: object) -> bytes:
+    """Best-effort conversion of proof_data to bytes for deterministic hashing."""
+    if isinstance(proof_data, bytes):
+        return proof_data
+    if isinstance(proof_data, bytearray):
+        return bytes(proof_data)
+    if isinstance(proof_data, memoryview):
+        return proof_data.tobytes()
+    if proof_data is None:
+        return b""
+    return str(proof_data).encode("utf-8")
+
+
+def decode_simulated_proof_layout(proof_data: object) -> Dict[str, Any]:
+    """Decode the fixed SIMZKP/1 byte layout when present.
+
+    Returns a deterministic dictionary for attestation views. Unknown/non-simulated
+    proof layouts are represented with ``valid=False`` and best-effort metadata.
+    """
+    raw = _bytes_from_proof_data(proof_data)
+    decoded: Dict[str, Any] = {
+        "byte_length": len(raw),
+        "format": "opaque",
+        "valid": False,
+    }
+    if len(raw) != _SIMZKP_PROOF_LENGTH:
+        return decoded
+    if raw[:8] != _SIMZKP_MAGIC:
+        return decoded
+
+    proof_hash = raw[8:40]
+    circuit_hash = raw[40:72]
+    witness_hash = raw[72:104]
+    padding = raw[104:160]
+    decoded.update(
+        {
+            "format": "SIMZKP/1",
+            "magic_hex": raw[:8].hex(),
+            "proof_hash_hex": proof_hash.hex(),
+            "circuit_hash_hex": circuit_hash.hex(),
+            "witness_hash_hex": witness_hash.hex(),
+            "padding_sha256": hashlib.sha256(padding).hexdigest(),
+            "valid": True,
+        }
+    )
+    return decoded
+
+
+def _mapping_dict(value: object) -> Dict[str, Any]:
+    if isinstance(value, dict):
+        return dict(value)
+    if isinstance(value, Mapping):
+        return dict(value)
+    return {}
+
+
+def _resolve_circuit_identity(public_inputs: Mapping[str, Any]) -> tuple[str, int]:
+    raw_ref = str(public_inputs.get("circuit_ref") or "").strip()
+    raw_version = public_inputs.get("circuit_version")
+    fallback_version = 1
+    if isinstance(raw_version, int) and not isinstance(raw_version, bool) and raw_version >= 0:
+        fallback_version = raw_version
+
+    if raw_ref:
+        try:
+            circuit_id, version = parse_circuit_ref_lenient(
+                raw_ref,
+                legacy_default_version=fallback_version,
+            )
+            return circuit_id, version
+        except Exception:
+            pass
+
+    return "knowledge_of_axioms", fallback_version
+
+
+def build_proof_attestation_view(
+    *,
+    proof_data: object,
+    public_inputs: Mapping[str, Any],
+    metadata: Mapping[str, Any] | None = None,
+) -> Dict[str, Any]:
+    """Build a deterministic proof-attestation view from proof components."""
+    public_inputs_dict = _mapping_dict(public_inputs)
+    metadata_dict = _mapping_dict(metadata)
+    proof_bytes = _bytes_from_proof_data(proof_data)
+    layout = decode_simulated_proof_layout(proof_bytes)
+    circuit_id, circuit_version = _resolve_circuit_identity(public_inputs_dict)
+    circuit_ref = format_circuit_ref(circuit_id, circuit_version)
+    theorem_hash = str(public_inputs_dict.get("theorem_hash") or "")
+    axioms_commitment = str(public_inputs_dict.get("axioms_commitment") or "")
+    ruleset_id = str(public_inputs_dict.get("ruleset_id") or "")
+    proof_digest = hashlib.sha256(proof_bytes).hexdigest()
+
+    attestation_basis = {
+        "axioms_commitment": axioms_commitment,
+        "circuit_ref": circuit_ref,
+        "proof_digest": proof_digest,
+        "ruleset_id": ruleset_id,
+        "theorem_hash": theorem_hash,
+    }
+    attestation_ref = hashlib.sha256(
+        json.dumps(attestation_basis, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+
+    return {
+        "attestation_ref": attestation_ref,
+        "attestation_view_version": _ATTESTATION_VIEW_VERSION,
+        "axioms_commitment": axioms_commitment,
+        "backend": str(metadata_dict.get("backend") or ""),
+        "circuit_ref": circuit_ref,
+        "circuit_version": circuit_version,
+        "layout": layout,
+        "proof_digest": proof_digest,
+        "proof_system": str(metadata_dict.get("proof_system") or ""),
+        "ruleset_id": ruleset_id,
+        "theorem_hash": theorem_hash,
+    }
 
 
 @dataclass

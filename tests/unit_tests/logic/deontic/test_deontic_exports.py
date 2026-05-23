@@ -5114,6 +5114,31 @@ def test_metrics_clear_numbered_reference_with_prompt_context_same_document_sect
     assert parser_element_has_active_repair(projected[0]) is False
 
 
+def test_metrics_projection_resolves_us_code_self_numbered_reference_exception():
+    """USC-style source IDs/citations should resolve same-section self-references."""
+
+    element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 18791."
+    )[0]
+    element = dict(element)
+    element["canonical_citation"] = "42 U.S.C. 18791."
+    element["source_id"] = "us-code-42-18791.-fa3f6f298b46c6e4"
+
+    projected = parser_elements_for_metrics([element])
+
+    assert projected[0]["active_repair_required"] is False
+    assert projected[0]["repair_required"] is False
+    assert projected[0]["export_readiness"]["formula_repair_required"] is False
+    assert projected[0]["export_readiness"]["deterministic_resolution"]["type"] == (
+        "resolved_same_document_reference_exception"
+    )
+    assert projected[0]["resolved_cross_references"][0]["same_document"] is True
+    assert projected[0]["resolved_cross_references"][0]["resolution_scope"] == (
+        "same_document"
+    )
+    assert parser_element_has_active_repair(projected[0]) is False
+
+
 def test_metrics_projection_recovers_same_document_section_from_context_only_document_text():
     """Context-only document text should resolve references without becoming a metric row."""
 

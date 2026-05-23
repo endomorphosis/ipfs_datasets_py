@@ -41,6 +41,7 @@ from ..canonicalization import (
     hash_theorem,
     tdfol_v1_axioms_commitment_hex_v2,
 )
+from ..circuits import build_proof_attestation_view
 from ..legal_theorem_semantics import derive_tdfol_v1_trace
 from ..statement import format_circuit_ref, parse_circuit_ref_lenient
 
@@ -121,7 +122,27 @@ class Groth16Backend:
         seed = metadata_dict.get("seed")
 
         try:
-            return self._ffi().generate_proof(json.dumps(witness), seed=seed)
+            proof = self._ffi().generate_proof(json.dumps(witness), seed=seed)
+            public_inputs = proof.public_inputs if isinstance(getattr(proof, "public_inputs", None), dict) else {}
+            metadata_out = proof.metadata if isinstance(getattr(proof, "metadata", None), dict) else {}
+            attestation_view = build_proof_attestation_view(
+                proof_data=getattr(proof, "proof_data", b""),
+                public_inputs=public_inputs,
+                metadata={
+                    **metadata_out,
+                    "backend": self.backend_id,
+                    "proof_system": str(metadata_out.get("proof_system") or "Groth16"),
+                },
+            )
+            if isinstance(public_inputs, dict):
+                public_inputs.setdefault("attestation_ref", attestation_view["attestation_ref"])
+                public_inputs.setdefault(
+                    "attestation_view_version",
+                    int(attestation_view["attestation_view_version"]),
+                )
+            if isinstance(metadata_out, dict):
+                metadata_out.setdefault("attestation_view", attestation_view)
+            return proof
         except Exception as e:
             # Convert backend failures to ZKPError (fail-closed).
             raise ZKPError(

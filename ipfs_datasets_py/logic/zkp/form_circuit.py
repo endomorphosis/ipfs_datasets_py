@@ -218,12 +218,25 @@ class FormCompletionCertificate:
 
     def to_dict(self) -> Dict[str, Any]:
         proof_dict = self.proof.to_dict() if self.proof else {}
+        attestation: Dict[str, Any] = {}
+        if self.proof is not None:
+            try:
+                from ipfs_datasets_py.logic.zkp.circuits import build_proof_attestation_view
+
+                attestation = build_proof_attestation_view(
+                    proof_data=getattr(self.proof, "proof_data", b""),
+                    public_inputs=getattr(self.proof, "public_inputs", {}),
+                    metadata=getattr(self.proof, "metadata", {}),
+                )
+            except Exception:
+                attestation = {}
         return {
             "form_id": self.form_id,
             "source_pdf": self.source_pdf,
             "ipfs_cid": self.ipfs_cid,
             "verification_summary": self.verification_summary,
             "public_inputs": self.public_inputs,
+            "zkp_attestation": attestation,
             "timestamp": self.timestamp,
             "is_simulated": self.is_simulated,
             "proof": proof_dict,

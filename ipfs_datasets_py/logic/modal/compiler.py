@@ -26,6 +26,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     compiler_ambiguity_policy_targets,
+    compiler_refined_modal_family_cue_margin_buffer,
     compiler_required_adaptive_ambiguity_targets,
     DEFAULT_MODAL_REGISTRY,
     is_compiler_ambiguity_policy_pair,
@@ -155,6 +156,23 @@ def _compiler_ambiguity_policy_targets(family: str) -> Sequence[str]:
         compiler_ambiguity_policy_targets,
     )
     return tuple(resolver(family))
+
+
+def _compiler_refined_modal_family_cue_margin_buffer(
+    predicted_family: str,
+    target_family: str,
+) -> float:
+    resolver = _current_compiler_attr(
+        "compiler_refined_modal_family_cue_margin_buffer",
+        compiler_refined_modal_family_cue_margin_buffer,
+    )
+    try:
+        resolved = float(resolver(predicted_family, target_family))
+    except (TypeError, ValueError):
+        return 0.0
+    if not math.isfinite(resolved):
+        return 0.0
+    return max(0.0, resolved)
 
 
 def _is_priority_signal_free_adaptive_ambiguity_pair(
@@ -949,35 +967,43 @@ class DeterministicModalCompiler:
                 continue
         return leaf_pipe.lower().replace("-", "_").replace(" ", "_")
 
+    @staticmethod
+    def _canonical_registered_modal_family_name(
+        value: Any,
+        *,
+        prefer_target_side: bool = False,
+    ) -> str:
+        """Resolve a canonical modal family only when it is registry-backed."""
+        canonical_name = DeterministicModalCompiler._canonical_modal_family_name(
+            value,
+            prefer_target_side=prefer_target_side,
+        )
+        if not canonical_name:
+            return ""
+        try:
+            return ModalLogicFamily(canonical_name).value
+        except ValueError:
+            return ""
+
     def _adaptive_policy_families(
         self,
         ambiguity: ModalCompilationAmbiguity,
     ) -> tuple[str, str, bool]:
         """Resolve canonical predicted/target family names from ambiguity metadata."""
         metadata = ambiguity.metadata if isinstance(ambiguity.metadata, dict) else {}
-        predicted_family = self._canonical_modal_family_name(
+        predicted_family = self._canonical_registered_modal_family_name(
             metadata.get("predicted_family")
         )
-        target_family_raw = str(metadata.get("target_family") or "").strip()
-        if "->" in target_family_raw:
-            _, directional_target_family = target_family_raw.split("->", maxsplit=1)
-            target_family = self._canonical_modal_family_name(
-                directional_target_family
-            )
-        else:
-            target_family = self._canonical_modal_family_name(
-                metadata.get("target_family")
-            )
-        target_family = self._canonical_modal_family_name(
+        target_family = self._canonical_registered_modal_family_name(
             metadata.get("target_family"),
             prefer_target_side=True,
         )
         if not predicted_family and ambiguity.candidate_ids:
-            predicted_family = self._canonical_modal_family_name(
+            predicted_family = self._canonical_registered_modal_family_name(
                 ambiguity.candidate_ids[0]
             )
         if not target_family and len(ambiguity.candidate_ids) > 1:
-            target_family = self._canonical_modal_family_name(
+            target_family = self._canonical_registered_modal_family_name(
                 ambiguity.candidate_ids[1],
                 prefer_target_side=True,
             )
@@ -986,9 +1012,11 @@ class DeterministicModalCompiler:
         if "->" in policy_pair:
             policy_predicted, policy_target = policy_pair.split("->", maxsplit=1)
             if not predicted_family:
-                predicted_family = self._canonical_modal_family_name(policy_predicted)
+                predicted_family = self._canonical_registered_modal_family_name(
+                    policy_predicted
+                )
             if not target_family:
-                target_family = self._canonical_modal_family_name(
+                target_family = self._canonical_registered_modal_family_name(
                     policy_target,
                     prefer_target_side=True,
                 )
@@ -1056,12 +1084,23 @@ class DeterministicModalCompiler:
         predicted_family = self._canonical_modal_family_name(
             ranking[0].get("family")
         ) or str(ranking[0]["family"])
+        predicted_family_shares_in_ranking = self._family_shares_in_ranking(
+            ranking=ranking,
+            family=predicted_family,
+        )
+        duplicate_predicted_family_share = (
+            predicted_family_shares_in_ranking[1]
+            if len(predicted_family_shares_in_ranking) > 1
+            else None
+        )
         predicted_share = float(
             canonical_family_shares.get(
                 predicted_family,
                 self._ranking_share(ranking[0]),
             )
         )
+        if duplicate_predicted_family_share is not None:
+            predicted_share = self._ranking_share(ranking[0])
         runner_up_family: Optional[str] = None
         runner_up_share = 0.0
         predicted_margin_to_runner_up: Optional[float] = None
@@ -1134,35 +1173,63 @@ class DeterministicModalCompiler:
         for target_family in ordered_target_families:
             has_signal = bool(target_signal_by_family.get(target_family, False))
             is_self_pair = target_family == predicted_family
+            pair_threshold = self._adaptive_pair_margin_threshold(
+                predicted_family=predicted_family,
+                target_family=target_family,
+                base_threshold=threshold,
+            )
+            pair_margin_buffer = max(0.0, pair_threshold - threshold)
             self_pair_margin = (
-                predicted_margin_to_runner_up
-                if predicted_margin_to_runner_up is not None
-                else predicted_share
+                duplicate_predicted_family_share - predicted_share
+                if (
+                    is_self_pair
+                    and duplicate_predicted_family_share is not None
+                )
+                else (
+                    predicted_margin_to_runner_up
+                    if predicted_margin_to_runner_up is not None
+                    else predicted_share
+                )
+            )
+            runner_up_family_value = (
+                predicted_family
+                if (
+                    is_self_pair
+                    and duplicate_predicted_family_share is not None
+                )
+                else runner_up_family
             )
             runner_up_is_priority_policy_pair = bool(
                 is_self_pair
-                and runner_up_family is not None
+                and runner_up_family_value is not None
                 and _is_priority_signal_free_adaptive_ambiguity_pair(
                     predicted_family,
-                    runner_up_family,
+                    runner_up_family_value,
                 )
             )
             runner_up_is_compiler_required_policy_pair = bool(
                 is_self_pair
-                and runner_up_family is not None
+                and runner_up_family_value is not None
                 and _is_compiler_required_adaptive_ambiguity_pair(
                     predicted_family,
-                    runner_up_family,
+                    runner_up_family_value,
                 )
             )
             if is_self_pair and (
                 not self._adaptive_margin_within_threshold(
                     family_margin=self_pair_margin,
-                    threshold=threshold,
+                    threshold=pair_threshold,
                 )
             ):
                 continue
-            target_share = float(canonical_family_shares.get(target_family, 0.0))
+            target_share = (
+                duplicate_predicted_family_share
+                if (
+                    is_self_pair
+                    and duplicate_predicted_family_share is not None
+                )
+                else float(canonical_family_shares.get(target_family, 0.0))
+            )
             has_compiled_target_family_formula = target_family in compiled_modal_families
             has_target_signal_evidence = bool(
                 has_signal
@@ -1200,7 +1267,7 @@ class DeterministicModalCompiler:
             )
             if not self._adaptive_margin_within_threshold(
                 family_margin=family_margin,
-                threshold=threshold,
+                threshold=pair_threshold,
             ):
                 continue
             margin_direction = self._adaptive_margin_direction(
@@ -1234,10 +1301,10 @@ class DeterministicModalCompiler:
             )
             runner_up_is_compiler_ambiguity_bundle_pair = bool(
                 is_self_pair
-                and runner_up_family is not None
+                and runner_up_family_value is not None
                 and _is_compiler_ambiguity_policy_pair(
                     predicted_family,
-                    runner_up_family,
+                    runner_up_family_value,
                 )
             )
             effective_is_compiler_ambiguity_bundle_pair = (
@@ -1245,22 +1312,30 @@ class DeterministicModalCompiler:
                 or runner_up_is_compiler_ambiguity_bundle_pair
             )
             effective_compiler_ambiguity_policy_pair = (
-                f"{predicted_family}->{runner_up_family}"
+                f"{predicted_family}->{runner_up_family_value}"
                 if runner_up_is_compiler_ambiguity_bundle_pair
-                and runner_up_family is not None
+                and runner_up_family_value is not None
                 else f"{predicted_family}->{target_family}"
             )
             adaptive_priority = self._adaptive_margin_priority(
                 family_margin=family_margin,
                 threshold=threshold,
             )
+            runner_up_share_value = (
+                duplicate_predicted_family_share
+                if (
+                    is_self_pair
+                    and duplicate_predicted_family_share is not None
+                )
+                else (runner_up_share if runner_up_family is not None else None)
+            )
             predicted_margin_to_runner_up_value = (
-                self_pair_margin
-                if is_self_pair and predicted_margin_to_runner_up is None
-                else predicted_margin_to_runner_up
+                self_pair_margin if is_self_pair else predicted_margin_to_runner_up
             )
             base_metadata = {
                 "adaptive_family_margin_threshold": threshold,
+                "adaptive_effective_family_margin_threshold": pair_threshold,
+                "adaptive_pair_margin_buffer": pair_margin_buffer,
                 "adaptive_margin_direction": margin_direction,
                 "adaptive_margin_abs": abs(family_margin),
                 "adaptive_priority": adaptive_priority,
@@ -1313,13 +1388,11 @@ class DeterministicModalCompiler:
                     if predicted_margin_to_runner_up_value is not None
                     else None
                 ),
-                "runner_up_family": runner_up_family,
-                "runner_up_share_raw": (
-                    runner_up_share if runner_up_family is not None else None
-                ),
+                "runner_up_family": runner_up_family_value,
+                "runner_up_share_raw": runner_up_share_value,
                 "runner_up_share": (
-                    round(runner_up_share, 6)
-                    if runner_up_family is not None
+                    round(runner_up_share_value, 6)
+                    if runner_up_share_value is not None
                     else None
                 ),
                 "predicted_share_raw": predicted_share,
@@ -1468,6 +1541,25 @@ class DeterministicModalCompiler:
             else:
                 canonical_shares[canonical_family] = candidate_share
         return canonical_shares
+
+    def _family_shares_in_ranking(
+        self,
+        *,
+        ranking: Sequence[Dict[str, Any]],
+        family: str,
+    ) -> List[float]:
+        """Return ordered shares for one family as they appear in ranking."""
+        canonical_family = self._canonical_modal_family_name(family) or str(family)
+        shares: List[float] = []
+        for candidate in ranking:
+            candidate_family = (
+                self._canonical_modal_family_name(candidate.get("family"))
+                or str(candidate.get("family", ""))
+            )
+            if candidate_family != canonical_family:
+                continue
+            shares.append(self._ranking_share(candidate))
+        return shares
 
     @staticmethod
     def _ordered_adaptive_target_families(
@@ -1642,6 +1734,14 @@ class DeterministicModalCompiler:
                     signals.get("has_temporal_scope")
                 ),
             }
+        elif predicted_family == ModalLogicFamily.DOXASTIC.value:
+            target_signal_by_family = {
+                ModalLogicFamily.EPISTEMIC.value: bool(
+                    signals.get("has_epistemic_scope")
+                    or signals.get("has_epistemic_cue")
+                    or signals.get("has_epistemic_scope_phrase")
+                ),
+            }
         elif predicted_family == ModalLogicFamily.FRAME.value:
             target_signal_by_family = {
                 ModalLogicFamily.CONDITIONAL_NORMATIVE.value: bool(
@@ -1795,9 +1895,15 @@ class DeterministicModalCompiler:
             if is_self_pair and runner_up_share is not None
             else primary_share - competing_share
         )
+        pair_threshold = self._adaptive_pair_margin_threshold(
+            predicted_family=resolved_compiled_primary_family,
+            target_family=resolved_competing_family,
+            base_threshold=threshold,
+        )
+        pair_margin_buffer = max(0.0, pair_threshold - threshold)
         if not self._adaptive_margin_within_threshold(
             family_margin=family_margin,
-            threshold=threshold,
+            threshold=pair_threshold,
         ):
             return []
         target_signal_by_family = self._adaptive_target_signal_by_family(
@@ -1906,6 +2012,8 @@ class DeterministicModalCompiler:
         )
         base_metadata = {
             "adaptive_family_margin_threshold": threshold,
+            "adaptive_effective_family_margin_threshold": pair_threshold,
+            "adaptive_pair_margin_buffer": pair_margin_buffer,
             "adaptive_margin_direction": margin_direction,
             "adaptive_margin_abs": abs(family_margin),
             "adaptive_priority": adaptive_priority,
@@ -2042,6 +2150,15 @@ class DeterministicModalCompiler:
             resolved_compiled_primary_family,
         ):
             return []
+        compiled_primary_family_shares_in_ranking = self._family_shares_in_ranking(
+            ranking=ranking,
+            family=resolved_compiled_primary_family,
+        )
+        duplicate_compiled_primary_family_share = (
+            compiled_primary_family_shares_in_ranking[1]
+            if len(compiled_primary_family_shares_in_ranking) > 1
+            else None
+        )
         runner_up = max(
             (
                 candidate
@@ -2058,35 +2175,62 @@ class DeterministicModalCompiler:
             ),
             default=None,
         )
-        if runner_up is None:
+        if runner_up is None and duplicate_compiled_primary_family_share is None:
             return []
-        primary_share = float(
-            canonical_family_shares.get(resolved_compiled_primary_family, 0.0)
+        primary_share = (
+            compiled_primary_family_shares_in_ranking[0]
+            if compiled_primary_family_shares_in_ranking
+            else float(canonical_family_shares.get(resolved_compiled_primary_family, 0.0))
         )
         runner_up_family = (
             self._canonical_modal_family_name(runner_up.get("family"))
             or str(runner_up["family"])
-        )
-        runner_up_share = float(
-            canonical_family_shares.get(
-                runner_up_family,
-                self._ranking_share(runner_up),
+        ) if runner_up is not None else None
+        runner_up_share = (
+            float(
+                canonical_family_shares.get(
+                    runner_up_family,
+                    self._ranking_share(runner_up),
+                )
             )
+            if runner_up is not None and runner_up_family is not None
+            else 0.0
+        )
+        family_margin = (
+            duplicate_compiled_primary_family_share - primary_share
+            if duplicate_compiled_primary_family_share is not None
+            else primary_share - runner_up_share
+        )
+        runner_up_family_value = (
+            resolved_compiled_primary_family
+            if duplicate_compiled_primary_family_share is not None
+            else runner_up_family
+        )
+        runner_up_share_value = (
+            duplicate_compiled_primary_family_share
+            if duplicate_compiled_primary_family_share is not None
+            else (runner_up_share if runner_up_family is not None else None)
         )
         family_margin = primary_share - runner_up_share
+        pair_threshold = self._adaptive_pair_margin_threshold(
+            predicted_family=resolved_compiled_primary_family,
+            target_family=resolved_compiled_primary_family,
+            base_threshold=threshold,
+        )
+        pair_margin_buffer = max(0.0, pair_threshold - threshold)
         if not self._adaptive_margin_within_threshold(
             family_margin=family_margin,
-            threshold=threshold,
+            threshold=pair_threshold,
         ):
             return []
         runner_up_is_priority_policy_pair = _is_priority_signal_free_adaptive_ambiguity_pair(
             resolved_compiled_primary_family,
-            runner_up_family,
+            runner_up_family_value or "",
         )
         runner_up_is_compiler_required_policy_pair = (
             _is_compiler_required_adaptive_ambiguity_pair(
                 resolved_compiled_primary_family,
-                runner_up_family,
+                runner_up_family_value or "",
             )
         )
         direct_is_priority_policy_pair = _is_priority_signal_free_adaptive_ambiguity_pair(
@@ -2121,7 +2265,6 @@ class DeterministicModalCompiler:
             margin_direction,
         )
         primary_share_display = round(primary_share, 6)
-        runner_up_share_display = round(runner_up_share, 6)
         family_margin_display = round(family_margin, 6)
         has_compiled_target_family_formula = resolved_compiled_primary_family in (
             canonical_compiled_modal_families
@@ -2140,19 +2283,21 @@ class DeterministicModalCompiler:
         )
         runner_up_is_compiler_ambiguity_bundle_pair = _is_compiler_ambiguity_policy_pair(
             resolved_compiled_primary_family,
-            runner_up_family,
+            runner_up_family_value or "",
         )
         effective_is_compiler_ambiguity_bundle_pair = (
             is_compiler_ambiguity_bundle_pair
             or runner_up_is_compiler_ambiguity_bundle_pair
         )
         effective_compiler_ambiguity_policy_pair = (
-            f"{resolved_compiled_primary_family}->{runner_up_family}"
+            f"{resolved_compiled_primary_family}->{runner_up_family_value}"
             if runner_up_is_compiler_ambiguity_bundle_pair
             else f"{resolved_compiled_primary_family}->{resolved_compiled_primary_family}"
         )
         base_metadata = {
             "adaptive_family_margin_threshold": threshold,
+            "adaptive_effective_family_margin_threshold": pair_threshold,
+            "adaptive_pair_margin_buffer": pair_margin_buffer,
             "adaptive_margin_direction": margin_direction,
             "adaptive_margin_abs": abs(family_margin),
             "adaptive_priority": adaptive_priority,
@@ -2162,7 +2307,7 @@ class DeterministicModalCompiler:
                 f"{resolved_compiled_primary_family}->{resolved_compiled_primary_family}"
             ),
             "adaptive_runner_up_policy_pair": (
-                f"{resolved_compiled_primary_family}->{runner_up_family}"
+                f"{resolved_compiled_primary_family}->{runner_up_family_value}"
             ),
             "explicit_ambiguity_type": explicit_type,
             "family_margin_raw": family_margin,
@@ -2205,14 +2350,26 @@ class DeterministicModalCompiler:
             "predicted_family": resolved_compiled_primary_family,
             "predicted_margin_to_runner_up_raw": family_margin,
             "predicted_margin_to_runner_up": family_margin_display,
-            "runner_up_family": runner_up_family,
-            "runner_up_share_raw": runner_up_share,
-            "runner_up_share": runner_up_share_display,
+            "runner_up_family": runner_up_family_value,
+            "runner_up_share_raw": runner_up_share_value,
+            "runner_up_share": (
+                round(runner_up_share_value, 6)
+                if runner_up_share_value is not None
+                else None
+            ),
             "predicted_share_raw": primary_share,
             "predicted_share": primary_share_display,
             "target_family": resolved_compiled_primary_family,
-            "target_share_raw": primary_share,
-            "target_share": primary_share_display,
+            "target_share_raw": (
+                duplicate_compiled_primary_family_share
+                if duplicate_compiled_primary_family_share is not None
+                else primary_share
+            ),
+            "target_share": (
+                round(duplicate_compiled_primary_family_share, 6)
+                if duplicate_compiled_primary_family_share is not None
+                else primary_share_display
+            ),
             "is_self_pair": True,
         }
         return [
@@ -2344,6 +2501,21 @@ class DeterministicModalCompiler:
         resolved_threshold = float(threshold)
         resolved_epsilon = max(0.0, float(epsilon))
         return resolved_margin <= (resolved_threshold + resolved_epsilon)
+
+    def _adaptive_pair_margin_threshold(
+        self,
+        *,
+        predicted_family: str,
+        target_family: str,
+        base_threshold: float,
+    ) -> float:
+        """Return per-pair adaptive threshold with refined cue-policy buffer."""
+        resolved_threshold = float(base_threshold)
+        margin_buffer = _compiler_refined_modal_family_cue_margin_buffer(
+            predicted_family,
+            target_family,
+        )
+        return resolved_threshold + margin_buffer
 
     def _supports_signal_free_adaptive_pair(
         self,
