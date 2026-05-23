@@ -209,6 +209,14 @@ _CANONICAL_MODAL_OPERATOR_LABEL_ALIASES: Mapping[str, str] = {
     "framed as": "frame",
     "frame": "frame",
 }
+_CUE_REGISTRY_BRIDGE_FAMILIES: frozenset[str] = frozenset(
+    {"conditional_normative", "deontic", "temporal"}
+)
+_CUE_REGISTRY_BRIDGE_FAMILY_PRIORITY: Mapping[str, int] = {
+    "deontic": 0,
+    "temporal": 1,
+    "conditional_normative": 2,
+}
 _PROVENANCE_NUMERIC_ALIGNMENT_SIGNATURES: tuple[str, ...] = (
     "leading_digit",
     "parity",
@@ -3632,6 +3640,54 @@ def _canonical_cue_operator_symbol(
     return matching_symbols[0]
 
 
+def _registry_cue_operator_match(
+    formula: ModalIRFormula,
+    *,
+    cue: str,
+) -> Tuple[str, str]:
+    cue_value = _clean_text(cue).lower()
+    if not cue_value:
+        return "", ""
+    formula_family = _clean_text(formula.operator.family).lower()
+    formula_symbol = _clean_text(formula.operator.symbol)
+    matching_pairs: List[Tuple[str, str]] = []
+    for profile in DEFAULT_MODAL_REGISTRY.all_profiles():
+        profile_family = _clean_text(profile.family.value).lower()
+        if profile_family not in _CUE_REGISTRY_BRIDGE_FAMILIES:
+            continue
+        for operator in profile.operators:
+            if not any(
+                _cue_matches_registry_term(cue_value, cue_term)
+                for cue_term in operator.cue_terms
+            ):
+                continue
+            operator_symbol = _clean_text(operator.symbol)
+            if not operator_symbol:
+                continue
+            pair = (profile_family, operator_symbol)
+            if pair not in matching_pairs:
+                matching_pairs.append(pair)
+    if not matching_pairs:
+        return "", ""
+    if formula_family and formula_symbol and (formula_family, formula_symbol) in matching_pairs:
+        return formula_family, formula_symbol
+    if formula_family:
+        for profile_family, operator_symbol in matching_pairs:
+            if profile_family == formula_family:
+                return profile_family, operator_symbol
+    return sorted(
+        matching_pairs,
+        key=lambda item: (
+            _CUE_REGISTRY_BRIDGE_FAMILY_PRIORITY.get(
+                item[0],
+                len(_CUE_REGISTRY_BRIDGE_FAMILY_PRIORITY),
+            ),
+            item[0],
+            item[1],
+        ),
+    )[0]
+
+
 def _cue_matches_registry_term(
     cue_value: str,
     cue_term: str,
@@ -3716,6 +3772,42 @@ def _modal_lexeme_slots(
                 "aligned" if canonical_symbol == symbol else "divergent",
             )
         )
+    registry_family, registry_symbol = _registry_cue_operator_match(
+        formula,
+        cue=cue_value,
+    )
+    if registry_family and registry_symbol:
+        registry_signature = f"{registry_family}:{registry_symbol}:{cue_value}"
+        if registry_family == family and registry_symbol == symbol:
+            registry_alignment = "aligned"
+        elif registry_family == family:
+            registry_alignment = "operator_shift"
+        else:
+            registry_alignment = "family_shift"
+        slots.append((f"{normalized_slot_prefix}_registry_family", registry_family))
+        slots.append((f"{normalized_slot_prefix}_registry_operator", registry_symbol))
+        slots.append((f"{normalized_slot_prefix}_registry_signature", registry_signature))
+        slots.append((f"{normalized_slot_prefix}_registry_alignment", registry_alignment))
+        if registry_family != family or registry_symbol != symbol:
+            bridged_value = f"{registry_symbol}:{cue_value}"
+            slots.append((f"{normalized_slot_prefix}_{registry_family}", bridged_value))
+            slots.append(
+                (
+                    f"{normalized_slot_prefix}_{registry_family}_signature",
+                    registry_signature,
+                )
+            )
+            if normalized_slot_prefix.endswith("_modal"):
+                alias_prefix = _clean_text(
+                    normalized_slot_prefix[: -len("_modal")]
+                )
+                if alias_prefix:
+                    slots.append(
+                        (
+                            f"{alias_prefix}_{registry_family}",
+                            bridged_value,
+                        )
+                    )
     if symbol == "O|":
         conditional_normative_value = f"{symbol}:{cue_value}"
         slots.append(

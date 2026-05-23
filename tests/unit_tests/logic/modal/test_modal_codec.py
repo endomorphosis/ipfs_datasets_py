@@ -12486,6 +12486,13 @@ def test_modal_decompiler_recovers_condition_exception_and_citation_slots() -> N
     assert slot_texts["condition_if"] == ["the application is complete"]
     assert slot_texts["exception_prefix"] == ["unless"]
     assert slot_texts["exception_unless"] == ["waived"]
+    assert "deontic:O:must" in slot_texts["cue_modal_registry_signature"]
+    assert "conditional_normative:O|:if" in slot_texts["condition_modal_registry_signature"]
+    assert "conditional_normative:O|:unless" in slot_texts[
+        "exception_modal_registry_signature"
+    ]
+    assert "family_shift" in slot_texts["condition_modal_registry_alignment"]
+    assert "family_shift" in slot_texts["exception_modal_registry_alignment"]
     assert slot_texts["citation"] == ["5 U.S.C. 552"]
     assert slot_texts["citation_canonical"] == ["5 U.S.C. 552"]
     assert slot_texts["citation_title"] == ["5"]
@@ -12523,6 +12530,31 @@ def test_modal_decompiler_recovers_condition_exception_and_citation_slots() -> N
     assert any(
         triple["predicate"] == "condition_if"
         and triple["object"] == "the application is complete"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "cue_modal_registry_signature"
+        and triple["object"] == "deontic:O:must"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "condition_modal_registry_signature"
+        and triple["object"] == "conditional_normative:O|:if"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "exception_modal_registry_signature"
+        and triple["object"] == "conditional_normative:O|:unless"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "condition_modal_registry_alignment"
+        and triple["object"] == "family_shift"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "exception_modal_registry_alignment"
+        and triple["object"] == "family_shift"
         for triple in triples
     )
     assert any(
