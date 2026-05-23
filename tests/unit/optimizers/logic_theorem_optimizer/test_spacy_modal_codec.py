@@ -3048,6 +3048,45 @@ def test_spacy_refined_pair_balance_reinforces_frame_for_purpose_scoped_deontic_
     assert counts["frame"] >= 0.6
 
 
+def test_spacy_refined_pair_balance_reinforces_epistemic_for_temporal_statutory_competition() -> None:
+    counts = {
+        "temporal": 2.4,
+        "deontic": 1.2,
+        "epistemic": 0.05,
+        "frame": 0.2,
+    }
+    signals = {
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": True,
+        "has_temporal_scope_token": True,
+        "has_temporal_within_scope": False,
+        "has_temporal_status_scope": False,
+        "has_temporal_deadline_cue": True,
+        "has_calendar_date_scope": True,
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": False,
+        "has_deontic_cue": True,
+        "has_epistemic_scope": True,
+        "has_epistemic_scope_phrase": True,
+        "has_epistemic_cue": False,
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": False,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": True,
+        "has_conditional_scope_token": False,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": False,
+        "has_frame_editorial_scope_phrase": False,
+        "has_frame_cue": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["epistemic"] >= 0.35
+    assert counts["epistemic"] > 0.05
+
+
 def test_spacy_temporal_scope_boost_is_stronger_with_deontic_cue_competition() -> None:
     base_signals = {
         "has_temporal_scope": True,

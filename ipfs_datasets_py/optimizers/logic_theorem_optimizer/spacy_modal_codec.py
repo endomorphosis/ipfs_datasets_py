@@ -4497,11 +4497,13 @@ def _apply_refined_modal_family_cue_pair_balance(
     temporal_family = ModalLogicFamily.TEMPORAL.value
     conditional_family = ModalLogicFamily.CONDITIONAL_NORMATIVE.value
     frame_family = ModalLogicFamily.FRAME.value
+    epistemic_family = ModalLogicFamily.EPISTEMIC.value
 
     deontic_count = float(counts.get(deontic_family, 0.0))
     temporal_count = float(counts.get(temporal_family, 0.0))
     conditional_count = float(counts.get(conditional_family, 0.0))
     frame_count = float(counts.get(frame_family, 0.0))
+    epistemic_count = float(counts.get(epistemic_family, 0.0))
 
     has_deontic_scope = bool(
         signals.get("has_deontic_scope")
@@ -4538,6 +4540,14 @@ def _apply_refined_modal_family_cue_pair_balance(
     has_explicit_conditional_scope = _has_explicit_conditional_scope(signals)
     has_statutory_scope_reference = bool(
         signals.get("has_statutory_scope_reference")
+    )
+    has_epistemic_scope = bool(
+        signals.get("has_epistemic_scope")
+        or signals.get("has_epistemic_cue")
+    )
+    has_strong_epistemic_scope = bool(
+        signals.get("has_epistemic_scope_phrase")
+        or signals.get("has_epistemic_cue")
     )
     has_frame_scope_context = bool(
         signals.get("has_frame_context")
@@ -4737,6 +4747,47 @@ def _apply_refined_modal_family_cue_pair_balance(
             deontic_count + deontic_increment,
         )
         deontic_count = float(counts.get(deontic_family, 0.0))
+
+    # temporal -> epistemic:
+    # temporal-heavy statutory clauses can still encode epistemic predicates
+    # ("determines", "finds", "deemed"), so preserve runner-up epistemic signal.
+    if (
+        temporal_count > epistemic_count
+        and temporal_count >= _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT
+        and has_temporal_scope
+        and has_epistemic_scope
+        and (
+            has_statutory_scope_reference
+            or bool(signals.get("has_frame_scope_phrase"))
+            or bool(signals.get("has_frame_editorial_scope_phrase"))
+            or bool(signals.get("has_frame_cue"))
+            or has_structural_conditional_scope
+        )
+    ):
+        epistemic_floor = _scaled_competing_scope_backfill(
+            source_count=max(temporal_count, deontic_count),
+            ratio=_TEMPORAL_COMPETING_SCOPE_BACKFILL_RATIO,
+            minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            maximum=_TEMPORAL_TO_EPISTEMIC_SCOPE_REINFORCEMENT_MAX,
+        )
+        if has_strong_epistemic_scope:
+            epistemic_floor = max(
+                epistemic_floor,
+                _STRONG_SCOPE_BACKFILL_WEIGHT,
+            )
+        if (
+            bool(signals.get("has_deontic_cue"))
+            and not bool(signals.get("has_deontic_scope_phrase"))
+        ):
+            epistemic_floor = max(
+                epistemic_floor,
+                _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            )
+        counts[epistemic_family] = max(
+            epistemic_count,
+            epistemic_floor,
+        )
+        epistemic_count = float(counts.get(epistemic_family, 0.0))
 
     # temporal -> frame:
     # delegation/authority clauses with statutory conditions can be primarily
