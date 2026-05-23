@@ -607,6 +607,41 @@ def _low_information_fallback_surface_sample_document() -> ModalIRDocument:
     )
 
 
+def _compilation_preamble_fallback_surface_sample_document() -> ModalIRDocument:
+    source_id = "us-code-25-1300h-3-259e36c7e802ffdb"
+    normalized_text = (
+        "U.S.C. Title 25 - INDIANS 25 U.S.C. United States Code, 2024 Edition "
+        "Title 25 - INDIANS Sec. 1300h-3. Administrative notice and hearing. "
+        "From the U.S. Government Publishing Office, www.gpo.gov"
+    )
+    formula = ModalIRFormula(
+        formula_id="f-compilation-preamble-fallback-surface",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(name="uscode_section_heading_fallback"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(normalized_text),
+            citation="25 U.S.C. 1300h-3",
+        ),
+        metadata={
+            "cue": "__uscode_section_heading_fallback__",
+            "fallback_rule": "uscode_section_heading_v1",
+        },
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
 def _typed_clause_scope_sample_document() -> ModalIRDocument:
     source_id = "us-code-7-6409-502d7cea35400f08"
     normalized_text = (
@@ -3678,6 +3713,40 @@ def test_modal_ir_to_flogic_triples_avoid_low_information_fallback_surface_text(
     assert objects("fallback_surface_text") == ["repealed"]
     assert objects("fallback_surface_text_token") == ["repealed"]
     assert "sec" not in objects("fallback_surface_text_token")
+
+
+def test_decode_modal_ir_document_trims_compilation_preamble_from_fallback_surface() -> None:
+    decoded = decode_modal_ir_document(
+        _compilation_preamble_fallback_surface_sample_document()
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["fallback_surface_text"] == ["Administrative notice and hearing"]
+    assert slot_map["fallback_surface_text_token_prefix"] == ["administrative"]
+    assert slot_map["fallback_surface_text_token_suffix"] == ["hearing"]
+    assert "united" not in slot_map["fallback_surface_text_token"]
+    assert "states" not in slot_map["fallback_surface_text_token"]
+    assert "edition" not in slot_map["fallback_surface_text_token"]
+
+
+def test_modal_ir_to_flogic_triples_trim_compilation_preamble_from_fallback_surface() -> None:
+    triples = modal_ir_to_flogic_triples(
+        _compilation_preamble_fallback_surface_sample_document()
+    )
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("fallback_surface_text") == ["Administrative notice and hearing"]
+    assert objects("fallback_surface_text_token_prefix") == ["administrative"]
+    assert objects("fallback_surface_text_token_suffix") == ["hearing"]
+    assert "united" not in objects("fallback_surface_text_token")
+    assert "states" not in objects("fallback_surface_text_token")
+    assert "edition" not in objects("fallback_surface_text_token")
 
 
 def test_decode_modal_ir_document_emits_procedural_keyword_slots() -> None:

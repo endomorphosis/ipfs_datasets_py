@@ -149,6 +149,15 @@ _USCODE_STATUS_LEADING_SECTION_LABEL_RE = re.compile(
     r"^\s*(?:(?:this|such)\s+)?(?:sections?|sec\.?)\b\s*[,.:;\-–—]*\s*",
     re.IGNORECASE,
 )
+_USCODE_INLINE_SECTION_REF_RE = re.compile(
+    r"(?<!\w)(?:§{1,2}\s*|sec\.?\s*|section\s+)"
+    r"\d[0-9A-Za-z.\-]*(?:\([^)]+\))*",
+    re.IGNORECASE,
+)
+_USCODE_GPO_ATTRIBUTION_RE = re.compile(
+    r"\bfrom\s+the\s+u\.?\s*s\.?\s+government\s+publishing\s+office\b.*$",
+    re.IGNORECASE,
+)
 _SECTION_HEADING_TAIL_SPLIT_RE = re.compile(r"[.;:\n]")
 _STATUTORY_SCOPE_UNITS: tuple[str, ...] = (
     "subparagraph",
@@ -5503,6 +5512,10 @@ def _fallback_surface_text(
         _USCODE_LEADING_SECTION_REF_RE.sub("", span_text)
     )
     normalized = _TRAILING_SECTION_PUNCT_RE.sub("", normalized)
+    normalized = _trim_uscode_compilation_surface_text(
+        normalized,
+        max_tokens=max_tokens,
+    )
     if not normalized:
         return ""
     status_keyword = _status_keyword_value(
@@ -5526,6 +5539,51 @@ def _fallback_surface_text(
     if not tokens or len(tokens) > max_tokens:
         return ""
     return normalized
+
+
+def _trim_uscode_compilation_surface_text(
+    text: str,
+    *,
+    max_tokens: int,
+) -> str:
+    normalized = _clean_non_empty_string(text)
+    if not normalized:
+        return ""
+    lowered = normalized.lower()
+    likely_compilation = (
+        "united states code" in lowered
+        or lowered.startswith("u.s.c. title")
+        or lowered.startswith("usc title")
+        or "gpo.gov" in lowered
+        or "government publishing office" in lowered
+    )
+    if not likely_compilation:
+        return normalized
+    section_match = _USCODE_INLINE_SECTION_REF_RE.search(normalized)
+    if section_match is None:
+        return ""
+    candidate = _clean_non_empty_string(
+        normalized[section_match.end() :].lstrip(" \t\r\n-–—:;,.")
+    )
+    if not candidate:
+        return ""
+    candidate = _clean_non_empty_string(_USCODE_GPO_ATTRIBUTION_RE.sub("", candidate))
+    candidate = _TRAILING_SECTION_PUNCT_RE.sub("", candidate)
+    if not candidate:
+        return ""
+    tokens = _SLOT_FEATURE_TOKEN_RE.findall(candidate.lower())
+    if not tokens:
+        return ""
+    if len(tokens) <= max_tokens:
+        return candidate
+    heading_candidate = _clean_non_empty_string(
+        _SECTION_HEADING_TAIL_SPLIT_RE.split(candidate, maxsplit=1)[0]
+    )
+    heading_candidate = _TRAILING_SECTION_PUNCT_RE.sub("", heading_candidate)
+    heading_tokens = _SLOT_FEATURE_TOKEN_RE.findall(heading_candidate.lower())
+    if heading_tokens and len(heading_tokens) <= max_tokens:
+        return heading_candidate
+    return ""
 
 
 def _is_low_information_section_marker(text: str) -> bool:
