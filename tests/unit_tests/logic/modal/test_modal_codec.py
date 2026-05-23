@@ -13965,6 +13965,49 @@ def test_modal_decompiler_surfaces_ranked_frame_candidate_slots() -> None:
     assert slot_texts["selected_frame_stem"] == ["administrative_notice_hearing"]
 
 
+def test_modal_decompiler_filters_non_informative_frame_candidate_terms() -> None:
+    formula = ModalIRFormula(
+        formula_id="frame-candidate-filter-doc:f0001",
+        operator=ModalIROperator(
+            family="deontic",
+            system="D",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(
+            name="must_provide_notice",
+            role="clause",
+        ),
+        provenance=ModalIRProvenance(
+            source_id="frame-candidate-filter-doc",
+            start_char=0,
+            end_char=32,
+            citation="5 U.S.C. 552",
+        ),
+    )
+    document = ModalIRDocument(
+        document_id="frame-candidate-filter-doc",
+        source="us_code",
+        normalized_text="The agency must provide notice.",
+        formulas=[formula],
+        frame_candidates=[
+            ModalIRFrame(
+                frame_id="administrative_notice_hearing",
+                score=0.93,
+                matched_terms=["notice", "and", "the", "hearing"],
+            ),
+        ],
+        metadata={"selected_frame": "administrative_notice_hearing"},
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_texts["frame_candidate_term"] == ["notice", "hearing"]
+    assert "and" not in slot_texts["frame_candidate_term_token"]
+    assert "the" not in slot_texts["frame_candidate_term_token"]
+
+
 def test_modal_codec_supports_autoencoder_feature_codec_protocol() -> None:
     codec = DeterministicModalLogicCodec(
         ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)

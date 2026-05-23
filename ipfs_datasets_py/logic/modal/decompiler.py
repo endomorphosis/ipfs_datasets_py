@@ -2809,7 +2809,9 @@ def _frame_candidate_phrases(document: ModalIRDocument) -> List[DecodedModalPhra
                     provenance_only=True,
                 )
             )
-        for term in _phrase_values(getattr(candidate, "matched_terms", ()) or ()):
+        for term in _informative_frame_candidate_terms(
+            _phrase_values(getattr(candidate, "matched_terms", ()) or ())
+        ):
             phrases.append(
                 DecodedModalPhrase(
                     text=term,
@@ -2829,6 +2831,21 @@ def _frame_candidate_phrases(document: ModalIRDocument) -> List[DecodedModalPhra
                     )
                 )
     return phrases
+
+
+def _informative_frame_candidate_terms(terms: Sequence[str]) -> List[str]:
+    informative_terms: List[str] = []
+    for raw_term in terms:
+        cleaned_term = _clean_text(raw_term)
+        if not cleaned_term:
+            continue
+        # Keep only terms that survive ontology normalization; this drops
+        # low-information stopword fragments such as "and"/"the".
+        if not normalize_frame_ontology_term(cleaned_term):
+            continue
+        if cleaned_term not in informative_terms:
+            informative_terms.append(cleaned_term)
+    return informative_terms
 
 
 def _frame_ontology_phrases(document: ModalIRDocument) -> List[DecodedModalPhrase]:
