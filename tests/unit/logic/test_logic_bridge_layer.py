@@ -2088,6 +2088,50 @@ def test_dense_contract_rebalance_keeps_deontic_lane_for_scaffolded_conditional_
     assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
 
 
+def test_dense_contract_rebalance_separates_scaffolded_temporal_conditionals() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_dense_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.24,
+        "TDFOL.prover": 0.22,
+        "deontic.ir": 0.19,
+        "knowledge_graphs.neo4j_compat": 0.18,
+        "zkp.circuits": 0.17,
+    }
+
+    temporal_conditional = _rebalance_dense_contract_distribution(
+        distribution,
+        text=(
+            "U.S.C. Title 2 - THE CONGRESS CHAPTER 3 Sec. 46f-1 - Repealed. "
+            "Statutory Notes Effective Date of Repeal provided that the amendments "
+            "shall take effect as of noon on January 3, 1956."
+        ),
+    )
+    scaffold_frame = _rebalance_dense_contract_distribution(
+        distribution,
+        text=(
+            "U.S.C. Title 34 - CRIME CONTROL. From the U.S. Government "
+            "Publishing Office. The Attorney General shall establish a national "
+            "network. Editorial Notes Codification Section was formerly "
+            "classified. Amendments 2022 effective date."
+        ),
+    )
+
+    assert temporal_conditional["TDFOL.prover"] >= 0.24
+    assert temporal_conditional["deontic.ir"] >= 0.24
+    assert temporal_conditional["TDFOL.prover"] > scaffold_frame["TDFOL.prover"]
+    assert temporal_conditional["deontic.ir"] > scaffold_frame["deontic.ir"]
+    assert temporal_conditional["CEC.native"] < scaffold_frame["CEC.native"]
+    assert (
+        temporal_conditional["knowledge_graphs.neo4j_compat"]
+        < scaffold_frame["knowledge_graphs.neo4j_compat"]
+    )
+    assert abs(sum(temporal_conditional.values()) - 1.0) < 1e-9
+    assert abs(sum(scaffold_frame.values()) - 1.0) < 1e-9
+
+
 def test_multiview_bridge_accepts_citation_prefixed_statutory_text() -> None:
     from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
 

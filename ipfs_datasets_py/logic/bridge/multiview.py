@@ -1007,6 +1007,25 @@ def _rebalance_dense_contract_distribution(
         caps["TDFOL.prover"] = min(caps.get("TDFOL.prover", 1.0), 0.17)
         caps["deontic.ir"] = min(caps.get("deontic.ir", 1.0), 0.64)
         caps["zkp.circuits"] = min(caps.get("zkp.circuits", 1.0), 0.12)
+        if (
+            has_conditional_cue
+            and has_deontic_cue
+            and has_temporal_cue
+            and (
+                strong_temporal_cue_count > 0
+                or has_explicit_temporal_deadline_cue
+            )
+        ):
+            # Keep scaffold-heavy temporal norms from collapsing into a static
+            # frame-dominant lane mix.
+            caps["CEC.native"] = min(caps["CEC.native"], 0.20)
+            caps["knowledge_graphs.neo4j_compat"] = min(
+                caps["knowledge_graphs.neo4j_compat"],
+                0.16,
+            )
+            caps["deontic.ir"] = min(caps.get("deontic.ir", 1.0), 0.58)
+            caps["TDFOL.prover"] = max(caps.get("TDFOL.prover", 0.0), 0.24)
+            caps["zkp.circuits"] = min(caps.get("zkp.circuits", 1.0), 0.10)
         if has_deontic_cue and deontic_cue_count > temporal_cue_count:
             # Preserve deontic signal for clearly normative statutory passages.
             caps["deontic.ir"] = min(caps["deontic.ir"], 0.68)
@@ -1075,6 +1094,21 @@ def _rebalance_dense_contract_distribution(
     elif has_frame_cue:
         if has_dense_statute_scaffold:
             if (
+                has_conditional_cue
+                and has_deontic_cue
+                and has_temporal_cue
+                and (
+                    strong_temporal_cue_count > 0
+                    or has_explicit_temporal_deadline_cue
+                )
+            ):
+                target_mix = (
+                    ("deontic.ir", 0.50),
+                    ("TDFOL.prover", 0.32),
+                    ("CEC.native", 0.11),
+                    ("knowledge_graphs.neo4j_compat", 0.07),
+                )
+            elif (
                 has_conditional_cue
                 and has_deontic_cue
                 and not has_temporal_cue
