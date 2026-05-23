@@ -4686,6 +4686,29 @@ def _apply_refined_modal_family_cue_pair_balance(
         )
         deontic_count = float(counts.get(deontic_family, 0.0))
 
+    # conditional_normative -> deontic:
+    # clause-level "if/unless" scaffolding can overindex conditional cues in
+    # operative obligations; preserve explicit deontic force in that pattern.
+    if (
+        conditional_count >= deontic_count
+        and has_conditional_clause_scope
+        and not has_conditional_scope_phrase
+        and has_deontic_scope
+        and has_explicit_deontic_scope
+        and not has_temporal_scope
+    ):
+        deontic_increment = _scaled_competing_scope_backfill(
+            source_count=conditional_count,
+            ratio=0.18,
+            minimum=0.0,
+            maximum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
+        counts[deontic_family] = max(
+            deontic_count,
+            deontic_count + deontic_increment,
+        )
+        deontic_count = float(counts.get(deontic_family, 0.0))
+
     # deontic -> temporal / conditional_normative:
     # preserve competing scope evidence when obligation terms and temporal/conditional
     # lexemes co-occur in the same clause.
@@ -4735,6 +4758,36 @@ def _apply_refined_modal_family_cue_pair_balance(
             conditional_floor,
         )
         conditional_count = float(counts.get(conditional_family, 0.0))
+
+    # deontic -> temporal:
+    # statutory purpose definitions can mix deontic verbs with strong temporal
+    # status/effective-date context; keep temporal evidence visible there.
+    if (
+        deontic_count > temporal_count
+        and has_deontic_scope
+        and has_explicit_deontic_scope
+        and has_temporal_scope
+        and has_strong_temporal_scope
+        and has_structural_conditional_scope
+        and has_purpose_scope_phrase
+        and has_statutory_scope_reference
+        and (
+            has_editorial_frame_context
+            or bool(signals.get("has_temporal_status_scope"))
+            or bool(signals.get("has_calendar_date_scope"))
+        )
+    ):
+        temporal_increment = _scaled_competing_scope_backfill(
+            source_count=max(deontic_count, conditional_count),
+            ratio=0.14,
+            minimum=0.0,
+            maximum=_FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
+        counts[temporal_family] = max(
+            temporal_count,
+            temporal_count + temporal_increment,
+        )
+        temporal_count = float(counts.get(temporal_family, 0.0))
 
     # deontic -> conditional_normative:
     # phrase-only statutory scope (e.g., "with respect to") should still register a
