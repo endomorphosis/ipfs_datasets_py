@@ -2003,6 +2003,91 @@ def test_dense_contract_rebalance_treats_on_and_after_date_as_strong_temporal() 
     assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
 
 
+def test_dense_contract_rebalance_prioritizes_temporal_lane_for_repealed_scaffold_text() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_dense_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.24,
+        "TDFOL.prover": 0.22,
+        "deontic.ir": 0.19,
+        "knowledge_graphs.neo4j_compat": 0.18,
+        "zkp.circuits": 0.17,
+    }
+
+    rebalanced = _rebalance_dense_contract_distribution(
+        distribution,
+        text=(
+            "U.S.C. Title 16 - CONSERVATION CHAPTER 79 SUBCHAPTER II "
+            "Sec. 5933 - Repealed."
+        ),
+    )
+
+    assert rebalanced["TDFOL.prover"] >= 0.24
+    assert rebalanced["TDFOL.prover"] > rebalanced["CEC.native"]
+    assert rebalanced["deontic.ir"] <= 0.20
+    assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
+
+
+def test_dense_contract_rebalance_treats_authorized_empowered_discretion_as_frame_signal() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_dense_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.24,
+        "TDFOL.prover": 0.22,
+        "deontic.ir": 0.19,
+        "knowledge_graphs.neo4j_compat": 0.18,
+        "zkp.circuits": 0.17,
+    }
+
+    rebalanced = _rebalance_dense_contract_distribution(
+        distribution,
+        text=(
+            "The Secretary of the Interior is authorized and empowered, in his "
+            "discretion in so far as the authorization made herein will permit, "
+            "to discover, develop, protect, and regulate water holes."
+        ),
+    )
+
+    assert rebalanced["deontic.ir"] <= 0.21
+    assert rebalanced["CEC.native"] >= 0.26
+    assert rebalanced["knowledge_graphs.neo4j_compat"] >= 0.20
+    assert rebalanced["CEC.native"] > rebalanced["deontic.ir"]
+    assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
+
+
+def test_dense_contract_rebalance_keeps_deontic_lane_for_scaffolded_conditional_norms() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_dense_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.24,
+        "TDFOL.prover": 0.22,
+        "deontic.ir": 0.19,
+        "knowledge_graphs.neo4j_compat": 0.18,
+        "zkp.circuits": 0.17,
+    }
+
+    rebalanced = _rebalance_dense_contract_distribution(
+        distribution,
+        text=(
+            "U.S.C. Title 10 - ARMED FORCES Subtitle A - General Military Law "
+            "CHAPTER 47 Sec. 856. Provided that the Secretary shall issue rules "
+            "if there is good cause."
+        ),
+    )
+
+    assert rebalanced["deontic.ir"] >= 0.32
+    assert rebalanced["deontic.ir"] > rebalanced["CEC.native"]
+    assert rebalanced["knowledge_graphs.neo4j_compat"] <= 0.16
+    assert rebalanced["zkp.circuits"] <= 0.13
+    assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
+
+
 def test_multiview_bridge_accepts_citation_prefixed_statutory_text() -> None:
     from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
 

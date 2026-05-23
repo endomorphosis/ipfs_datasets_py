@@ -81,7 +81,9 @@ _BRIDGE_CONTRACT_FRAME_DEFINITION_CUE_RE = re.compile(
     flags=re.IGNORECASE,
 )
 _BRIDGE_CONTRACT_FRAME_AUTHORITY_CUE_RE = re.compile(
-    r"\b(?:delegation\s+of\s+authority|delegated|powers?\s+vested|vested\s+in)\b",
+    r"\b(?:delegation\s+of\s+authority|delegated|powers?\s+vested|vested\s+in|"
+    r"authorized\s+and\s+empowered|in\s+(?:his|her|its|their|the)\s+discretion|"
+    r"in\s+the\s+discretion\s+of)\b",
     flags=re.IGNORECASE,
 )
 _BRIDGE_CONTRACT_FRAME_ENFORCEMENT_CUE_RE = re.compile(
@@ -883,9 +885,23 @@ def _rebalance_dense_contract_distribution(
         or has_authority_frame_cue
         or has_enforcement_frame_cue
     )
+    has_structural_only_frame_cue = (
+        has_structural_frame_cue
+        and not has_frame_definition_cue
+        and not has_authority_frame_cue
+        and not has_enforcement_frame_cue
+    )
     has_epistemic_cue = bool(_BRIDGE_CONTRACT_EPISTEMIC_CUE_RE.search(normalized_text))
     has_dense_statute_scaffold = (
         statute_scaffold_cue_count > 0 and structural_frame_cue_count >= 2
+    )
+    has_temporal_priority_without_normative_cue = (
+        has_temporal_cue
+        and not has_deontic_cue
+        and (
+            strong_temporal_cue_count > 0
+            or has_explicit_temporal_deadline_cue
+        )
     )
     has_permission_only_deontic_signal = (
         has_deontic_cue
@@ -914,6 +930,18 @@ def _rebalance_dense_contract_distribution(
             caps["CEC.native"] = max(caps["CEC.native"], 0.23)
             caps["deontic.ir"] = min(caps["deontic.ir"], 0.62)
             caps["TDFOL.prover"] = min(caps.get("TDFOL.prover", 1.0), 0.18)
+        if (
+            has_authority_frame_cue
+            and has_permission_only_deontic_signal
+            and not has_temporal_cue
+        ):
+            caps["knowledge_graphs.neo4j_compat"] = max(
+                caps["knowledge_graphs.neo4j_compat"],
+                0.23,
+            )
+            caps["CEC.native"] = max(caps["CEC.native"], 0.25)
+            caps["deontic.ir"] = min(caps["deontic.ir"], 0.24)
+            caps["TDFOL.prover"] = min(caps.get("TDFOL.prover", 1.0), 0.17)
     elif has_epistemic_cue and not has_temporal_cue:
         caps["knowledge_graphs.neo4j_compat"] = max(
             caps["knowledge_graphs.neo4j_compat"],
@@ -953,6 +981,21 @@ def _rebalance_dense_contract_distribution(
             if has_conditional_cue and has_explicit_temporal_deadline_cue:
                 caps["deontic.ir"] = min(caps["deontic.ir"], 0.68)
                 caps["TDFOL.prover"] = max(caps["TDFOL.prover"], 0.24)
+    if (
+        has_conditional_cue
+        and has_deontic_cue
+        and not has_temporal_cue
+        and not has_dense_statute_scaffold
+        and not has_authority_frame_cue
+        and not has_enforcement_frame_cue
+    ):
+        caps["CEC.native"] = min(caps["CEC.native"], 0.17)
+        caps["knowledge_graphs.neo4j_compat"] = min(
+            caps["knowledge_graphs.neo4j_compat"],
+            0.12,
+        )
+        caps["TDFOL.prover"] = min(caps.get("TDFOL.prover", 1.0), 0.16)
+        caps["zkp.circuits"] = min(caps.get("zkp.circuits", 1.0), 0.13)
     if has_conditional_cue or has_deontic_cue or has_temporal_cue:
         caps["zkp.circuits"] = min(caps["zkp.circuits"], 0.15)
     if has_dense_statute_scaffold:
@@ -968,6 +1011,32 @@ def _rebalance_dense_contract_distribution(
             # Preserve deontic signal for clearly normative statutory passages.
             caps["deontic.ir"] = min(caps["deontic.ir"], 0.68)
             caps["TDFOL.prover"] = min(caps["TDFOL.prover"], 0.18)
+        if (
+            has_conditional_cue
+            and has_deontic_cue
+            and not has_temporal_cue
+            and not has_authority_frame_cue
+            and not has_enforcement_frame_cue
+        ):
+            caps["CEC.native"] = min(caps["CEC.native"], 0.18)
+            caps["knowledge_graphs.neo4j_compat"] = min(
+                caps["knowledge_graphs.neo4j_compat"],
+                0.13,
+            )
+            caps["TDFOL.prover"] = min(caps.get("TDFOL.prover", 1.0), 0.14)
+            caps["zkp.circuits"] = min(caps.get("zkp.circuits", 1.0), 0.10)
+            caps["deontic.ir"] = min(caps.get("deontic.ir", 1.0), 0.74)
+        if (
+            has_temporal_priority_without_normative_cue
+            and has_structural_only_frame_cue
+        ):
+            caps["CEC.native"] = min(caps["CEC.native"], 0.19)
+            caps["knowledge_graphs.neo4j_compat"] = min(
+                caps["knowledge_graphs.neo4j_compat"],
+                0.15,
+            )
+            caps["deontic.ir"] = min(caps.get("deontic.ir", 1.0), 0.14)
+            caps["TDFOL.prover"] = max(caps.get("TDFOL.prover", 0.0), 0.24)
 
     adjusted = dict(lanes)
     excess_mass = 0.0
@@ -982,9 +1051,43 @@ def _rebalance_dense_contract_distribution(
     if excess_mass <= 0.0:
         return adjusted
 
-    if has_frame_cue:
+    if (
+        has_temporal_priority_without_normative_cue
+        and (not has_frame_cue or has_structural_only_frame_cue)
+    ):
+        target_mix = (
+            ("TDFOL.prover", 0.74),
+            ("CEC.native", 0.16),
+            ("knowledge_graphs.neo4j_compat", 0.07),
+            ("deontic.ir", 0.03),
+        )
+    elif (
+        has_authority_frame_cue
+        and has_permission_only_deontic_signal
+        and not has_temporal_cue
+    ):
+        target_mix = (
+            ("knowledge_graphs.neo4j_compat", 0.40),
+            ("CEC.native", 0.42),
+            ("deontic.ir", 0.10),
+            ("TDFOL.prover", 0.08),
+        )
+    elif has_frame_cue:
         if has_dense_statute_scaffold:
-            if has_deontic_cue and deontic_cue_count > temporal_cue_count:
+            if (
+                has_conditional_cue
+                and has_deontic_cue
+                and not has_temporal_cue
+                and not has_authority_frame_cue
+                and not has_enforcement_frame_cue
+            ):
+                target_mix = (
+                    ("deontic.ir", 0.64),
+                    ("CEC.native", 0.18),
+                    ("knowledge_graphs.neo4j_compat", 0.12),
+                    ("TDFOL.prover", 0.06),
+                )
+            elif has_deontic_cue and deontic_cue_count > temporal_cue_count:
                 target_mix = (
                     ("CEC.native", 0.38),
                     ("knowledge_graphs.neo4j_compat", 0.34),
@@ -999,12 +1102,26 @@ def _rebalance_dense_contract_distribution(
                     ("deontic.ir", 0.06),
                 )
         else:
-            target_mix = (
-                ("knowledge_graphs.neo4j_compat", 0.45),
-                ("CEC.native", 0.30),
-                ("deontic.ir", 0.15),
-                ("TDFOL.prover", 0.10),
-            )
+            if (
+                has_conditional_cue
+                and has_deontic_cue
+                and not has_temporal_cue
+                and not has_authority_frame_cue
+                and not has_enforcement_frame_cue
+            ):
+                target_mix = (
+                    ("deontic.ir", 0.60),
+                    ("CEC.native", 0.22),
+                    ("knowledge_graphs.neo4j_compat", 0.12),
+                    ("TDFOL.prover", 0.06),
+                )
+            else:
+                target_mix = (
+                    ("knowledge_graphs.neo4j_compat", 0.45),
+                    ("CEC.native", 0.30),
+                    ("deontic.ir", 0.15),
+                    ("TDFOL.prover", 0.10),
+                )
     elif has_epistemic_cue and not has_temporal_cue:
         target_mix = (
             ("CEC.native", 0.45),
