@@ -3674,6 +3674,14 @@ def test_decode_modal_ir_document_normalizes_status_heading_section_label() -> N
     assert slot_map["fallback_surface_text_alnum_segment_kind_positioned"] == [
         "1:alpha"
     ]
+    assert slot_map["fallback_surface_text_modal_signature"] == [
+        "frame:Frame:transferred"
+    ]
+    assert slot_map["fallback_surface_text_modal_bridge_signature"] == [
+        "dynamic:[a]:transferred"
+    ]
+    assert slot_map["fallback_surface_text_modal_bridge_family"] == ["dynamic"]
+    assert slot_map["fallback_surface_text_modal_bridge_operator"] == ["[a]"]
 
 
 def test_modal_ir_to_flogic_triples_normalizes_status_heading_section_label() -> None:
@@ -3694,6 +3702,14 @@ def test_modal_ir_to_flogic_triples_normalizes_status_heading_section_label() ->
     assert objects("fallback_surface_text_alnum_segment_kind_positioned") == [
         "1:alpha"
     ]
+    assert objects("fallback_surface_text_modal_signature") == [
+        "frame:Frame:transferred"
+    ]
+    assert objects("fallback_surface_text_modal_bridge_signature") == [
+        "dynamic:[a]:transferred"
+    ]
+    assert objects("fallback_surface_text_modal_bridge_family") == ["dynamic"]
+    assert objects("fallback_surface_text_modal_bridge_operator") == ["[a]"]
 
 
 def test_decode_modal_ir_document_emits_canonical_operator_label_slot() -> None:

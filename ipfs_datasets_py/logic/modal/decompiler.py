@@ -195,6 +195,7 @@ _CANONICAL_MODAL_OPERATOR_LABELS: Mapping[Tuple[str, str], str] = {
     ("temporal", "X"): "next",
     ("epistemic", "K"): "knowledge",
     ("doxastic", "B"): "belief",
+    ("dynamic", "[a]"): "after_action",
     ("frame", "Frame"): "frame",
 }
 _CANONICAL_MODAL_OPERATOR_LABEL_ALIASES: Mapping[str, str] = {
@@ -215,11 +216,20 @@ _CANONICAL_MODAL_OPERATOR_LABEL_ALIASES: Mapping[str, str] = {
     "knowledge": "knowledge",
     "believed": "belief",
     "belief": "belief",
+    "after action": "after_action",
+    "after_action": "after_action",
     "framed as": "frame",
     "frame": "frame",
 }
 _CUE_REGISTRY_BRIDGE_FAMILIES: frozenset[str] = frozenset(
-    {"conditional_normative", "deontic", "temporal", "epistemic", "doxastic"}
+    {
+        "conditional_normative",
+        "deontic",
+        "temporal",
+        "epistemic",
+        "doxastic",
+        "dynamic",
+    }
 )
 _CUE_REGISTRY_BRIDGE_FAMILY_PRIORITY: Mapping[str, int] = {
     "deontic": 0,
@@ -227,6 +237,7 @@ _CUE_REGISTRY_BRIDGE_FAMILY_PRIORITY: Mapping[str, int] = {
     "conditional_normative": 2,
     "epistemic": 3,
     "doxastic": 4,
+    "dynamic": 5,
 }
 _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...]] = {
     "if": (("conditional_normative", "O|"),),
@@ -272,6 +283,14 @@ _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...
     "must": (("deontic", "O"),),
     "authorized": (("deontic", "P"),),
     "may": (("deontic", "P"),),
+    "transfer": (("dynamic", "[a]"),),
+    "transfers": (("dynamic", "[a]"),),
+    "transferred": (("dynamic", "[a]"),),
+    "transferring": (("dynamic", "[a]"),),
+    "vest": (("dynamic", "[a]"),),
+    "vests": (("dynamic", "[a]"),),
+    "vested": (("dynamic", "[a]"),),
+    "vesting": (("dynamic", "[a]"),),
     "fiscal_year": (("temporal", "F"),),
     "fiscal_years": (("temporal", "F"),),
     "calendar_year": (("temporal", "F"),),
@@ -302,6 +321,7 @@ _CROSS_FAMILY_BRIDGE_FAMILY_PRIORITY: Mapping[str, int] = {
     "temporal": 3,
     "epistemic": 4,
     "doxastic": 5,
+    "dynamic": 6,
 }
 _PROVENANCE_NUMERIC_ALIGNMENT_SIGNATURES: tuple[str, ...] = (
     "leading_digit",
