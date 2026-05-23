@@ -415,6 +415,7 @@ def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
     source_phrases, modal_span_coverage = _source_reconstruction_phrases(document)
     phrases: List[DecodedModalPhrase] = [
         *source_phrases,
+        *_source_span_slot_phrases(source_phrases),
         *_document_span_metric_phrases(
             document=document,
             modal_span_coverage=modal_span_coverage,
@@ -3316,6 +3317,92 @@ def _source_reconstruction_phrases(
     return phrases, round(min(1.0, max(0.0, coverage)), 6)
 
 
+def _source_span_slot_phrases(
+    source_phrases: Sequence[DecodedModalPhrase],
+) -> List[DecodedModalPhrase]:
+    phrases: List[DecodedModalPhrase] = []
+    seen: set[Tuple[str, str, Tuple[Tuple[int, int], ...]]] = set()
+    for source_phrase in source_phrases:
+        slot_prefix = _clean_text(source_phrase.slot)
+        text = _clean_text(source_phrase.text)
+        if slot_prefix not in {"modal_source_span", "source_context_span"} or not text:
+            continue
+        spans = source_phrase.spans
+        span_marker = tuple(
+            (int(start), int(end))
+            for start, end in (
+                (span[0], span[1])
+                for span in spans
+                if isinstance(span, Sequence) and len(span) == 2
+            )
+            if isinstance(start, int) and isinstance(end, int)
+        )
+        for slot, value in _typed_identifier_slots(
+            text,
+            slot_prefix=slot_prefix,
+        ):
+            marker = (slot, value, span_marker)
+            if marker in seen:
+                continue
+            seen.add(marker)
+            phrases.append(
+                DecodedModalPhrase(
+                    text=value,
+                    slot=slot,
+                    spans=spans,
+                    provenance_only=True,
+                )
+            )
+        for cue in _bridge_cues_from_text(text):
+            cue_marker = (f"{slot_prefix}_bridge_cue", cue, span_marker)
+            if cue_marker not in seen:
+                seen.add(cue_marker)
+                phrases.append(
+                    DecodedModalPhrase(
+                        text=cue,
+                        slot=f"{slot_prefix}_bridge_cue",
+                        spans=spans,
+                        provenance_only=True,
+                    )
+                )
+            modal_cue_marker = (f"{slot_prefix}_modal_bridge_cue", cue, span_marker)
+            if modal_cue_marker not in seen:
+                seen.add(modal_cue_marker)
+                phrases.append(
+                    DecodedModalPhrase(
+                        text=cue,
+                        slot=f"{slot_prefix}_modal_bridge_cue",
+                        spans=spans,
+                        provenance_only=True,
+                    )
+                )
+            for bridge_family, bridge_symbol in _cue_bridge_operator_pairs(cue):
+                bridge_signature = f"{bridge_family}:{bridge_symbol}:{cue}"
+                bridge_value = f"{bridge_symbol}:{cue}"
+                for bridge_slot, bridge_value_text in (
+                    (f"{slot_prefix}_bridge_modal_family", bridge_family),
+                    (f"{slot_prefix}_bridge_modal_operator", bridge_symbol),
+                    (f"{slot_prefix}_bridge_modal_signature", bridge_signature),
+                    (
+                        f"{slot_prefix}_bridge_modal_{bridge_family}",
+                        bridge_value,
+                    ),
+                ):
+                    bridge_marker = (bridge_slot, bridge_value_text, span_marker)
+                    if bridge_marker in seen:
+                        continue
+                    seen.add(bridge_marker)
+                    phrases.append(
+                        DecodedModalPhrase(
+                            text=bridge_value_text,
+                            slot=bridge_slot,
+                            spans=spans,
+                            provenance_only=True,
+                        )
+                    )
+    return phrases
+
+
 def _document_span_metric_phrases(
     *,
     document: ModalIRDocument,
@@ -4227,6 +4314,23 @@ def _formula_bridge_cues(formula: ModalIRFormula) -> List[str]:
         if not cue_surface:
             continue
         if re.search(rf"(?<!\w){re.escape(cue_surface)}(?!\w)", searchable_text):
+            cues.append(cue_key)
+    return cues
+
+
+def _bridge_cues_from_text(text: str) -> List[str]:
+    normalized_text = _clean_text(text).replace("_", " ").lower()
+    if not normalized_text:
+        return []
+    cues: List[str] = []
+    for cue_key in sorted(
+        _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS,
+        key=lambda item: (-len(item), item),
+    ):
+        cue_surface = cue_key.replace("_", " ")
+        if not cue_surface:
+            continue
+        if re.search(rf"(?<!\w){re.escape(cue_surface)}(?!\w)", normalized_text):
             cues.append(cue_key)
     return cues
 

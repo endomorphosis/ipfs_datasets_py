@@ -12548,6 +12548,7 @@ def test_modal_decompiler_preserves_context_without_formula_style_text() -> None
     )
 
     result = codec.encode(source, document_id="context-doc")
+    slot_texts = decoded_modal_phrase_slot_text_map(result.decoded_modal_text)
     semantic_slot_texts = decoded_modal_phrase_slot_text_map(
         result.decoded_modal_text,
         include_provenance_only=False,
@@ -12564,6 +12565,12 @@ def test_modal_decompiler_preserves_context_without_formula_style_text() -> None
     assert semantic_slot_texts["modal_source_span"] == [
         "The agency must provide notice within 30 days."
     ]
+    assert slot_texts["modal_source_span_token_prefix"] == ["the"]
+    assert slot_texts["modal_source_span_token_suffix"] == ["days."]
+    assert "must" in slot_texts["modal_source_span_token"]
+    assert "definitions." in slot_texts["source_context_span_token"]
+    assert "must" in slot_texts["modal_source_span_bridge_cue"]
+    assert "deontic:O:must" in slot_texts["modal_source_span_bridge_modal_signature"]
     assert "O[deontic:D]" not in result.decoded_text
     assert "obligatory" not in result.decoded_text
     assert modal_text_token_similarity(source, result.decoded_text) == 1.0
