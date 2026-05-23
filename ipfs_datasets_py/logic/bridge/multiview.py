@@ -36,7 +36,8 @@ _BRIDGE_CONTRACT_CONDITIONAL_CUE_RE = re.compile(
     flags=re.IGNORECASE,
 )
 _BRIDGE_CONTRACT_DEONTIC_CUE_RE = re.compile(
-    r"\b(?:shall|must|may|required|prohibited|forbidden|authorized|entitled)\b",
+    r"\b(?:shall|must|may|required|prohibited|forbidden|authorized|entitled|"
+    r"authoriz(?:e|es|ed|ation|ations)|permit(?:s|ted|ting)?|allow(?:s|ed|ing)?)\b",
     flags=re.IGNORECASE,
 )
 _BRIDGE_CONTRACT_TEMPORAL_CUE_RE = re.compile(
@@ -791,7 +792,12 @@ def _rebalance_dense_contract_distribution(
         )
         caps["CEC.native"] = max(caps["CEC.native"], 0.22)
     if has_deontic_cue:
-        caps["CEC.native"] = min(caps["CEC.native"], 0.18)
+        caps["CEC.native"] = min(caps["CEC.native"], 0.17)
+        if not has_temporal_cue and not has_frame_cue:
+            caps["knowledge_graphs.neo4j_compat"] = min(
+                caps["knowledge_graphs.neo4j_compat"],
+                0.12,
+            )
     if has_deontic_cue and has_temporal_cue:
         caps["TDFOL.prover"] = min(caps["TDFOL.prover"], 0.18)
         caps["deontic.ir"] = min(caps.get("deontic.ir", 1.0), 0.76)
@@ -802,7 +808,7 @@ def _rebalance_dense_contract_distribution(
             caps["deontic.ir"] = min(caps["deontic.ir"], 0.72)
             caps["TDFOL.prover"] = max(caps["TDFOL.prover"], 0.20)
     if has_conditional_cue or has_deontic_cue or has_temporal_cue:
-        caps["zkp.circuits"] = min(caps["zkp.circuits"], 0.16)
+        caps["zkp.circuits"] = min(caps["zkp.circuits"], 0.15)
 
     adjusted = dict(lanes)
     excess_mass = 0.0

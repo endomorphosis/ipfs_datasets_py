@@ -1752,6 +1752,34 @@ def test_dense_contract_rebalance_biases_deontic_lane_for_underspecified_statute
     assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
 
 
+def test_dense_contract_rebalance_treats_authorization_headings_as_deontic_cues() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_dense_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.24,
+        "TDFOL.prover": 0.22,
+        "deontic.ir": 0.19,
+        "knowledge_graphs.neo4j_compat": 0.18,
+        "zkp.circuits": 0.17,
+    }
+
+    rebalanced = _rebalance_dense_contract_distribution(
+        distribution,
+        text=(
+            "7 U.S.C. 2204-5 Authorization of appropriations for cooperative "
+            "research projects."
+        ),
+    )
+
+    assert rebalanced["deontic.ir"] > 0.32
+    assert rebalanced["CEC.native"] <= 0.19
+    assert rebalanced["knowledge_graphs.neo4j_compat"] <= 0.12
+    assert rebalanced["zkp.circuits"] <= 0.15
+    assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
+
+
 def test_dense_contract_rebalance_treats_structural_statute_cues_as_frame_evidence() -> None:
     from ipfs_datasets_py.logic.bridge.multiview import (
         _rebalance_dense_contract_distribution,
