@@ -12,6 +12,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec impor
     _apply_directional_modal_family_pair_backfill,
     _apply_dynamic_competing_scope_soft_cap,
     _apply_frame_competing_scope_soft_cap,
+    _apply_refined_modal_family_cue_pair_balance,
     _apply_temporal_competing_scope_soft_cap,
     _frame_logit_bonus,
     _scope_signal_family_logit_boosts,
@@ -2487,6 +2488,94 @@ def test_spacy_directional_backfill_reinforces_deontic_to_temporal_for_strong_te
     _apply_directional_modal_family_pair_backfill(counts, signals)
 
     assert counts["temporal"] >= 0.7
+
+
+def test_spacy_refined_pair_balance_reinforces_temporal_and_conditional_for_deontic_temporal_conditional_competition() -> None:
+    counts = {
+        "deontic": 2.8,
+        "temporal": 0.04,
+        "conditional_normative": 0.05,
+    }
+    signals = {
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": False,
+        "has_deontic_cue": True,
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": True,
+        "has_temporal_scope_token": True,
+        "has_temporal_within_scope": False,
+        "has_temporal_status_scope": False,
+        "has_calendar_date_scope": True,
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": True,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": True,
+        "has_conditional_scope_token": False,
+        "has_statutory_scope_reference": True,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["temporal"] >= 0.7
+    assert counts["conditional_normative"] >= 0.6
+
+
+def test_spacy_refined_pair_balance_reinforces_deontic_for_temporal_status_scope_competition() -> None:
+    counts = {
+        "temporal": 2.0,
+        "deontic": 0.05,
+    }
+    signals = {
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": False,
+        "has_temporal_scope_token": False,
+        "has_temporal_within_scope": False,
+        "has_temporal_status_scope": True,
+        "has_calendar_date_scope": False,
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": False,
+        "has_deontic_cue": True,
+        "has_condition_or_exception_scope": False,
+        "has_condition_clause": False,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": False,
+        "has_conditional_scope_token": False,
+        "has_statutory_scope_reference": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["deontic"] >= 0.44
+
+
+def test_spacy_refined_pair_balance_reinforces_deontic_and_temporal_for_structural_conditional_scope() -> None:
+    counts = {
+        "conditional_normative": 2.2,
+        "deontic": 0.05,
+        "temporal": 0.03,
+    }
+    signals = {
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": False,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": False,
+        "has_conditional_scope_token": False,
+        "has_statutory_scope_reference": True,
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": False,
+        "has_deontic_cue": True,
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": True,
+        "has_temporal_scope_token": True,
+        "has_temporal_within_scope": False,
+        "has_temporal_status_scope": False,
+        "has_calendar_date_scope": True,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["deontic"] >= 0.52
+    assert counts["temporal"] >= 0.52
 
 
 def test_spacy_temporal_scope_boost_is_stronger_with_deontic_cue_competition() -> None:

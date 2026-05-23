@@ -1791,6 +1791,10 @@ def _weighted_modal_family_counts(
         counts,
         resolved_signals,
     )
+    _apply_refined_modal_family_cue_pair_balance(
+        counts,
+        resolved_signals,
+    )
     _apply_competing_deontic_temporal_scope_phrase_reinforcement(
         counts,
         resolved_signals,
@@ -4423,6 +4427,143 @@ def _apply_directional_modal_family_pair_backfill(
             )
         counts[frame_family] = max(frame_count, frame_top_up)
         frame_count = float(counts.get(frame_family, 0.0))
+
+
+def _apply_refined_modal_family_cue_pair_balance(
+    counts: Dict[str, float],
+    signals: Mapping[str, bool],
+) -> None:
+    """Balance near-neighbor family cues for known deontic/temporal/conditional drift."""
+    deontic_family = ModalLogicFamily.DEONTIC.value
+    temporal_family = ModalLogicFamily.TEMPORAL.value
+    conditional_family = ModalLogicFamily.CONDITIONAL_NORMATIVE.value
+
+    deontic_count = float(counts.get(deontic_family, 0.0))
+    temporal_count = float(counts.get(temporal_family, 0.0))
+    conditional_count = float(counts.get(conditional_family, 0.0))
+
+    has_deontic_scope = bool(
+        signals.get("has_deontic_scope")
+        or signals.get("has_deontic_cue")
+    )
+    has_explicit_deontic_scope = bool(
+        signals.get("has_deontic_scope_phrase")
+        or signals.get("has_deontic_cue")
+    )
+    has_temporal_scope = bool(signals.get("has_temporal_scope"))
+    has_strong_temporal_scope = _has_strong_temporal_scope_signal(signals)
+    has_structural_conditional_scope = bool(
+        signals.get("has_condition_or_exception_scope")
+    )
+    has_explicit_conditional_scope = _has_explicit_conditional_scope(signals)
+    has_statutory_scope_reference = bool(
+        signals.get("has_statutory_scope_reference")
+    )
+
+    # deontic -> temporal / conditional_normative:
+    # preserve competing scope evidence when obligation terms and temporal/conditional
+    # lexemes co-occur in the same clause.
+    if (
+        deontic_count > 0.0
+        and has_temporal_scope
+        and has_strong_temporal_scope
+        and has_structural_conditional_scope
+        and has_explicit_conditional_scope
+    ):
+        temporal_floor = _scaled_competing_scope_backfill(
+            source_count=deontic_count,
+            ratio=0.28,
+            minimum=_STRONG_SCOPE_BACKFILL_WEIGHT,
+            maximum=_STRONG_TEMPORAL_COMPETING_SCOPE_BACKFILL_MAX,
+        )
+        counts[temporal_family] = max(
+            temporal_count,
+            temporal_floor,
+        )
+        temporal_count = float(counts.get(temporal_family, 0.0))
+
+        conditional_floor = _scaled_competing_scope_backfill(
+            source_count=deontic_count,
+            ratio=0.22,
+            minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            maximum=_STATUTORY_GENERIC_FRAME_CONDITIONAL_SCOPE_MAX,
+        )
+        counts[conditional_family] = max(
+            conditional_count,
+            conditional_floor,
+        )
+        conditional_count = float(counts.get(conditional_family, 0.0))
+
+    # temporal -> deontic:
+    # prevent status/date-only temporal context from masking clear deontic force.
+    temporal_status_only_scope = bool(
+        has_temporal_scope
+        and signals.get("has_temporal_status_scope")
+        and not (
+            signals.get("has_calendar_date_scope")
+            or signals.get("has_temporal_scope_phrase")
+            or signals.get("has_temporal_within_scope")
+            or signals.get("has_temporal_scope_token")
+        )
+    )
+    if (
+        temporal_count > 0.0
+        and has_deontic_scope
+        and temporal_status_only_scope
+    ):
+        deontic_maximum = (
+            _DEONTIC_COMPETING_SCOPE_BACKFILL_MAX
+            if not has_explicit_deontic_scope
+            else _STATUTORY_GENERIC_FRAME_DEONTIC_SCOPE_MAX
+        )
+        deontic_floor = _scaled_competing_scope_backfill(
+            source_count=temporal_count,
+            ratio=0.22,
+            minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            maximum=deontic_maximum,
+        )
+        counts[deontic_family] = max(
+            deontic_count,
+            deontic_floor,
+        )
+        deontic_count = float(counts.get(deontic_family, 0.0))
+
+    # conditional_normative -> deontic / temporal:
+    # statutory-reference conditionals without explicit "if/unless" clauses are often
+    # mixed-scope scaffolding, so keep competing deontic and temporal evidence visible.
+    if (
+        conditional_count > 0.0
+        and has_structural_conditional_scope
+        and not has_explicit_conditional_scope
+    ):
+        if has_deontic_scope:
+            deontic_maximum = (
+                _DEONTIC_COMPETING_SCOPE_BACKFILL_MAX
+                if not has_statutory_scope_reference
+                else _STATUTORY_GENERIC_FRAME_DEONTIC_SCOPE_MAX
+            )
+            deontic_floor = _scaled_competing_scope_backfill(
+                source_count=conditional_count,
+                ratio=0.24,
+                minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                maximum=deontic_maximum,
+            )
+            counts[deontic_family] = max(
+                float(counts.get(deontic_family, 0.0)),
+                deontic_floor,
+            )
+            deontic_count = float(counts.get(deontic_family, 0.0))
+        if has_temporal_scope and has_strong_temporal_scope:
+            temporal_floor = _scaled_competing_scope_backfill(
+                source_count=conditional_count,
+                ratio=0.24,
+                minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                maximum=_STRONG_TEMPORAL_COMPETING_SCOPE_BACKFILL_MAX,
+            )
+            counts[temporal_family] = max(
+                float(counts.get(temporal_family, 0.0)),
+                temporal_floor,
+            )
 
 
 def _apply_competing_deontic_temporal_scope_phrase_reinforcement(
