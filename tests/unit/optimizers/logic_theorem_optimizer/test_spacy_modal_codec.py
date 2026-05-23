@@ -4869,6 +4869,41 @@ def test_spacy_encoder_avoids_alethic_may_be_cue_in_permission_context() -> None
     )
 
 
+def test_spacy_signals_mark_authorized_and_empowered_as_structural_frame_scope() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        (
+            "The Secretary is authorized and empowered, in his discretion, "
+            "to conduct the survey."
+        ),
+        document_id="sample-authorized-empowered-structural-frame-scope",
+    )
+
+    signals = modal_ambiguity_signals(encoding)
+    assert signals["has_deontic_cue"] is True
+    assert signals["has_frame_context"] is True
+    assert signals["has_frame_structural_authority_scope_phrase"] is True
+
+
+def test_directional_backfill_reinforces_deontic_to_frame_for_structural_authority_scope() -> None:
+    counts = {
+        "deontic": 1.0,
+        "frame": 0.0,
+    }
+    signals = {
+        "has_deontic_scope": True,
+        "has_deontic_cue": True,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": False,
+        "has_frame_editorial_scope_phrase": False,
+        "has_frame_structural_authority_scope_phrase": True,
+        "has_statutory_scope_reference": False,
+    }
+
+    _apply_directional_modal_family_pair_backfill(counts, signals)
+    assert counts["frame"] == pytest.approx(0.2)
+
+
 def test_spacy_encoder_treats_the_following_as_non_temporal_list_intro() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     encoding = encoder.encode(

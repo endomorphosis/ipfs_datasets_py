@@ -690,6 +690,12 @@ _FRAME_SCOPE_PHRASES = (
     "transferred to section",
     "was formerly classified",
 )
+_FRAME_STRUCTURAL_AUTHORITY_SCOPE_PHRASES = (
+    "authorized and directed to",
+    "authorized and empowered",
+    "is authorized and directed to",
+    "is authorized and empowered",
+)
 _FRAME_EDITORIAL_SCOPE_PHRASES = (
     "codification section",
     "editorial notes",
@@ -3697,6 +3703,7 @@ def _apply_directional_modal_family_pair_backfill(
         signals.get("has_frame_context")
         or signals.get("has_frame_scope_phrase")
         or signals.get("has_frame_editorial_scope_phrase")
+        or signals.get("has_frame_structural_authority_scope_phrase")
         or signals.get("has_frame_cue")
     )
     # Treat statutory cross-references as weak frame scope in this directional
@@ -3707,6 +3714,9 @@ def _apply_directional_modal_family_pair_backfill(
     )
     has_editorial_frame_scope = bool(
         signals.get("has_frame_editorial_scope_phrase")
+    )
+    has_structural_authority_frame_scope = bool(
+        signals.get("has_frame_structural_authority_scope_phrase")
     )
     has_explicit_conditional_scope = bool(
         signals.get("has_condition_clause")
@@ -4431,6 +4441,7 @@ def _apply_directional_modal_family_pair_backfill(
         and (
             has_statutory_scope_reference
             or has_editorial_frame_scope
+            or has_structural_authority_frame_scope
         )
     ):
         frame_top_up = _scaled_competing_scope_backfill(
@@ -5451,6 +5462,9 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
     frame_scope_phrase = _contains_scope_phrase(
         normalized_text, _FRAME_SCOPE_PHRASES
     )
+    frame_structural_authority_scope_phrase = _contains_scope_phrase(
+        normalized_text, _FRAME_STRUCTURAL_AUTHORITY_SCOPE_PHRASES
+    )
     frame_procedural_scope_phrase = _contains_scope_phrase(
         normalized_text, _FRAME_PROCEDURAL_SCOPE_PHRASES
     )
@@ -5460,6 +5474,7 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
     frame_context = (
         bool(token_terms & _FRAME_CONTEXT_TOKENS)
         or bool(frame_scope_phrase)
+        or bool(frame_structural_authority_scope_phrase)
         or bool(frame_procedural_scope_phrase)
         or bool(frame_editorial_scope_phrase)
     )
@@ -5504,6 +5519,9 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         "has_frame_editorial_scope_phrase": bool(frame_editorial_scope_phrase),
         "has_frame_procedural_scope_phrase": bool(frame_procedural_scope_phrase),
         "has_frame_scope_phrase": bool(frame_scope_phrase),
+        "has_frame_structural_authority_scope_phrase": bool(
+            frame_structural_authority_scope_phrase
+        ),
         "has_frame_cue": ModalLogicFamily.FRAME.value in cue_families,
     }
 
