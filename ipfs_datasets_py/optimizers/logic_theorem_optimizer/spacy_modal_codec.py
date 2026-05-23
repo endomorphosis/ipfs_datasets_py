@@ -4476,6 +4476,9 @@ def _apply_refined_modal_family_cue_pair_balance(
         or signals.get("has_temporal_within_scope")
         or signals.get("has_calendar_date_scope")
     )
+    has_editorial_frame_context = bool(
+        signals.get("has_frame_editorial_scope_phrase")
+    )
     has_structural_conditional_scope = bool(
         signals.get("has_condition_or_exception_scope")
     )
@@ -4596,6 +4599,30 @@ def _apply_refined_modal_family_cue_pair_balance(
         )
         deontic_count = float(counts.get(deontic_family, 0.0))
 
+    # conditional_normative -> temporal:
+    # when statutory structural conditionals only carry weak temporal cue tokens,
+    # preserve temporal evidence so conditional scaffolding does not dominate.
+    if (
+        conditional_count > 0.0
+        and has_structural_conditional_scope
+        and not has_explicit_conditional_scope
+        and has_temporal_scope
+        and bool(signals.get("has_temporal_cue"))
+        and has_deontic_scope
+        and has_statutory_scope_reference
+    ):
+        temporal_increment = _scaled_competing_scope_backfill(
+            source_count=max(deontic_count, conditional_count),
+            ratio=0.3,
+            minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            maximum=_TEMPORAL_COMPETING_SCOPE_BACKFILL_MAX,
+        )
+        counts[temporal_family] = temporal_count + min(
+            _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            temporal_increment,
+        )
+        temporal_count = float(counts.get(temporal_family, 0.0))
+
     # temporal -> deontic:
     # damp non-deadline temporal pressure when explicit deontic force co-occurs.
     if (
@@ -4606,6 +4633,10 @@ def _apply_refined_modal_family_cue_pair_balance(
         and has_statutory_scope_reference
         and not has_temporal_deadline_scope
         and not has_explicit_conditional_scope
+        and not (
+            has_structural_conditional_scope
+            and bool(signals.get("has_temporal_cue"))
+        )
     ):
         temporal_cap = max(
             deontic_count,
@@ -4615,6 +4646,29 @@ def _apply_refined_modal_family_cue_pair_balance(
             temporal_overflow = temporal_count - temporal_cap
             counts[temporal_family] = temporal_cap + (
                 0.25 * math.log1p(temporal_overflow)
+            )
+            temporal_count = float(counts.get(temporal_family, 0.0))
+
+    # temporal -> deontic:
+    # editorial effective-date boilerplate can overinflate temporal weight in
+    # statutory notes even when deontic force governs the operative clause.
+    if (
+        temporal_count > deontic_count
+        and has_temporal_scope
+        and has_deontic_scope
+        and has_statutory_scope_reference
+        and has_editorial_frame_context
+        and not bool(signals.get("has_deontic_scope_phrase"))
+        and not has_explicit_conditional_scope
+    ):
+        editorial_temporal_cap = max(
+            deontic_count + _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
+        if temporal_count > editorial_temporal_cap:
+            temporal_overflow = temporal_count - editorial_temporal_cap
+            counts[temporal_family] = editorial_temporal_cap + (
+                0.2 * math.log1p(temporal_overflow)
             )
             temporal_count = float(counts.get(temporal_family, 0.0))
 
@@ -5255,6 +5309,21 @@ def _frame_logit_bonus(signals: Mapping[str, bool]) -> float:
         ):
             frame_cue_bonus = 1.5
         bonus += frame_cue_bonus
+    if (
+        bool(signals.get("has_deontic_scope"))
+        and bool(signals.get("has_condition_or_exception_scope"))
+        and _has_explicit_conditional_scope(signals)
+        and bool(signals.get("has_statutory_scope_reference"))
+        and has_editorial_or_direct_frame_signal
+    ):
+        reinforced_frame_bonus = 1.2
+        if bool(signals.get("has_frame_scope_phrase")):
+            reinforced_frame_bonus += 0.5
+        if bool(signals.get("has_frame_editorial_scope_phrase")):
+            reinforced_frame_bonus += 0.5
+        if bool(signals.get("has_temporal_scope")):
+            reinforced_frame_bonus += 0.3
+        bonus += reinforced_frame_bonus
     return bonus
 
 
@@ -5273,7 +5342,23 @@ def _debias_frame_bonus_for_generic_cues(signals: Mapping[str, bool]) -> float:
         structural_bonus += 2.2
     if structural_bonus <= 0.0:
         return 0.0
-    return structural_bonus * _GENERIC_FRAME_STRUCTURAL_BONUS_DEBIAS_FACTOR
+    debiased_bonus = structural_bonus * _GENERIC_FRAME_STRUCTURAL_BONUS_DEBIAS_FACTOR
+    if (
+        bool(signals.get("has_deontic_scope"))
+        and bool(signals.get("has_condition_or_exception_scope"))
+        and _has_explicit_conditional_scope(signals)
+        and bool(signals.get("has_statutory_scope_reference"))
+        and bool(
+            signals.get("has_frame_scope_phrase")
+            or signals.get("has_frame_editorial_scope_phrase")
+            or signals.get("has_frame_cue")
+        )
+    ):
+        reinforced_bonus = 1.4
+        if bool(signals.get("has_temporal_scope")):
+            reinforced_bonus += 0.3
+        debiased_bonus += reinforced_bonus
+    return debiased_bonus
 
 
 def _contains_scope_phrase(text: str, phrases: Sequence[str]) -> bool:

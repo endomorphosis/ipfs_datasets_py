@@ -10,6 +10,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon impor
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec import (
     _apply_competing_scope_backfill,
     _apply_directional_modal_family_pair_backfill,
+    _debias_frame_bonus_for_generic_cues,
     _apply_dynamic_competing_scope_soft_cap,
     _apply_frame_competing_scope_soft_cap,
     _apply_refined_modal_family_cue_pair_balance,
@@ -2713,6 +2714,73 @@ def test_spacy_refined_pair_balance_caps_non_deadline_temporal_pressure_against_
     assert counts["deontic"] == 0.5
 
 
+def test_spacy_refined_pair_balance_reinforces_temporal_for_structural_statutory_conditional_scope_with_temporal_cue() -> None:
+    counts = {
+        "conditional_normative": 0.62,
+        "deontic": 1.0,
+        "temporal": 1.0,
+    }
+    signals = {
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": False,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": False,
+        "has_conditional_scope_token": False,
+        "has_statutory_scope_reference": True,
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": False,
+        "has_deontic_cue": True,
+        "has_temporal_scope": True,
+        "has_temporal_cue": True,
+        "has_temporal_scope_phrase": False,
+        "has_temporal_scope_token": False,
+        "has_temporal_within_scope": False,
+        "has_temporal_status_scope": False,
+        "has_temporal_deadline_cue": False,
+        "has_calendar_date_scope": False,
+        "has_frame_editorial_scope_phrase": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["temporal"] > 1.25
+
+
+def test_spacy_refined_pair_balance_caps_editorial_temporal_status_pressure_for_statutory_deontic_scope() -> None:
+    counts = {
+        "temporal": 3.26160091167848,
+        "deontic": 1.35,
+        "conditional_normative": 1.35,
+    }
+    signals = {
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": True,
+        "has_temporal_scope_token": False,
+        "has_temporal_within_scope": False,
+        "has_temporal_status_scope": True,
+        "has_calendar_date_scope": True,
+        "has_temporal_deadline_cue": True,
+        "has_temporal_cue": True,
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": False,
+        "has_deontic_cue": True,
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": False,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": False,
+        "has_conditional_scope_token": False,
+        "has_statutory_scope_reference": True,
+        "has_frame_editorial_scope_phrase": True,
+    }
+    baseline_temporal = counts["temporal"]
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["temporal"] < baseline_temporal
+    assert counts["temporal"] < 2.0
+    assert counts["deontic"] == pytest.approx(1.35)
+
+
 def test_spacy_temporal_scope_boost_is_stronger_with_deontic_cue_competition() -> None:
     base_signals = {
         "has_temporal_scope": True,
@@ -2789,6 +2857,56 @@ def test_spacy_frame_bonus_recognizes_procedural_frame_scope_signal() -> None:
     }
 
     assert _frame_logit_bonus(procedural_signals) > _frame_logit_bonus(baseline_signals)
+
+
+def test_spacy_frame_bonus_reinforces_deontic_conditional_statutory_frame_competition() -> None:
+    baseline_signals = {
+        "has_deontic_scope": True,
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": False,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": False,
+        "has_conditional_scope_token": False,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_frame_editorial_scope_phrase": True,
+        "has_frame_cue": True,
+        "has_temporal_scope": True,
+    }
+    competing_signals = {
+        **baseline_signals,
+        "has_condition_clause": True,
+        "has_conditional_scope_phrase": True,
+    }
+
+    assert _frame_logit_bonus(competing_signals) > _frame_logit_bonus(baseline_signals) + 2.0
+
+
+def test_spacy_generic_frame_debias_bonus_reinforces_deontic_conditional_statutory_competition() -> None:
+    baseline_signals = {
+        "has_deontic_scope": True,
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": False,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": False,
+        "has_conditional_scope_token": False,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_frame_editorial_scope_phrase": True,
+        "has_frame_cue": True,
+        "has_temporal_scope": True,
+    }
+    competing_signals = {
+        **baseline_signals,
+        "has_condition_clause": True,
+        "has_conditional_scope_phrase": True,
+    }
+
+    assert _debias_frame_bonus_for_generic_cues(competing_signals) > _debias_frame_bonus_for_generic_cues(
+        baseline_signals
+    ) + 1.0
 
 
 def test_spacy_deontic_boost_reinforces_explicit_deontic_scope_in_procedural_frame_context() -> None:
