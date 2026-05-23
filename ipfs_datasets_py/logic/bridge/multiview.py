@@ -35,6 +35,10 @@ _BRIDGE_CONTRACT_CONDITIONAL_CUE_RE = re.compile(
     r"\b(?:if|provided\s+that|unless|subject\s+to|with\s+respect\s+to)\b",
     flags=re.IGNORECASE,
 )
+_BRIDGE_CONTRACT_FOR_PURPOSES_CUE_RE = re.compile(
+    r"\bfor\s+purposes?\s+of\b",
+    flags=re.IGNORECASE,
+)
 _BRIDGE_CONTRACT_DEONTIC_CUE_RE = re.compile(
     r"\b(?:shall|must|may|required|prohibited|forbidden|authorized|entitled|"
     r"authoriz(?:e|es|ed|ation|ations)|permit(?:s|ted|ting)?|allow(?:s|ed|ing)?)\b",
@@ -49,7 +53,11 @@ _BRIDGE_CONTRACT_STRONG_TEMPORAL_CUE_RE = re.compile(
     flags=re.IGNORECASE,
 )
 _BRIDGE_CONTRACT_FRAME_DEFINITION_CUE_RE = re.compile(
-    r"\b(?:means|defined\s+as|for\s+purposes\s+of|in\s+this\s+section)\b",
+    r"\b(?:means|defined\s+as|in\s+this\s+section)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_FRAME_AUTHORITY_CUE_RE = re.compile(
+    r"\b(?:delegation\s+of\s+authority|delegated|powers?\s+vested|vested\s+in)\b",
     flags=re.IGNORECASE,
 )
 _BRIDGE_CONTRACT_STRUCTURAL_FRAME_CUE_RE = re.compile(
@@ -752,7 +760,15 @@ def _rebalance_dense_contract_distribution(
         return lanes
 
     normalized_text = " ".join(str(text or "").split()).lower()
-    conditional_cue_count = _cue_count(_BRIDGE_CONTRACT_CONDITIONAL_CUE_RE, normalized_text)
+    conditional_cue_count = _cue_count(
+        _BRIDGE_CONTRACT_CONDITIONAL_CUE_RE,
+        normalized_text,
+    )
+    for_purposes_cue_count = _cue_count(
+        _BRIDGE_CONTRACT_FOR_PURPOSES_CUE_RE,
+        normalized_text,
+    )
+    conditional_cue_count += for_purposes_cue_count
     deontic_cue_count = _cue_count(_BRIDGE_CONTRACT_DEONTIC_CUE_RE, normalized_text)
     temporal_cue_count = _cue_count(_BRIDGE_CONTRACT_TEMPORAL_CUE_RE, normalized_text)
     strong_temporal_cue_count = _cue_count(
@@ -767,9 +783,25 @@ def _rebalance_dense_contract_distribution(
     has_conditional_cue = conditional_cue_count > 0
     has_deontic_cue = deontic_cue_count > 0
     has_temporal_cue = temporal_cue_count > 0
-    has_frame_definition_cue = bool(_BRIDGE_CONTRACT_FRAME_DEFINITION_CUE_RE.search(normalized_text))
+    has_frame_definition_cue = bool(
+        _BRIDGE_CONTRACT_FRAME_DEFINITION_CUE_RE.search(normalized_text)
+    )
+    has_authority_frame_cue = bool(
+        _BRIDGE_CONTRACT_FRAME_AUTHORITY_CUE_RE.search(normalized_text)
+    )
+    if (
+        for_purposes_cue_count > 0
+        and not has_frame_definition_cue
+        and not has_deontic_cue
+        and not has_temporal_cue
+    ):
+        has_frame_definition_cue = True
     has_structural_frame_cue = structural_frame_cue_count > 0
-    has_frame_cue = has_frame_definition_cue or has_structural_frame_cue
+    has_frame_cue = (
+        has_frame_definition_cue
+        or has_structural_frame_cue
+        or has_authority_frame_cue
+    )
     has_epistemic_cue = bool(_BRIDGE_CONTRACT_EPISTEMIC_CUE_RE.search(normalized_text))
 
     caps = dict(_BRIDGE_CONTRACT_DENSE_LANE_CAPS)
@@ -785,6 +817,14 @@ def _rebalance_dense_contract_distribution(
         )
         caps["CEC.native"] = max(caps["CEC.native"], 0.22)
         caps["deontic.ir"] = min(caps.get("deontic.ir", 1.0), 0.68)
+        if has_authority_frame_cue and has_deontic_cue and not has_conditional_cue:
+            caps["knowledge_graphs.neo4j_compat"] = max(
+                caps["knowledge_graphs.neo4j_compat"],
+                0.20,
+            )
+            caps["CEC.native"] = max(caps["CEC.native"], 0.23)
+            caps["deontic.ir"] = min(caps["deontic.ir"], 0.62)
+            caps["TDFOL.prover"] = min(caps.get("TDFOL.prover", 1.0), 0.18)
     elif has_epistemic_cue and not has_temporal_cue:
         caps["knowledge_graphs.neo4j_compat"] = max(
             caps["knowledge_graphs.neo4j_compat"],
@@ -792,12 +832,23 @@ def _rebalance_dense_contract_distribution(
         )
         caps["CEC.native"] = max(caps["CEC.native"], 0.22)
     if has_deontic_cue:
-        caps["CEC.native"] = min(caps["CEC.native"], 0.17)
-        if not has_temporal_cue and not has_frame_cue:
+        if not has_frame_cue:
+            caps["CEC.native"] = min(caps["CEC.native"], 0.17)
+            if not has_temporal_cue:
+                caps["knowledge_graphs.neo4j_compat"] = min(
+                    caps["knowledge_graphs.neo4j_compat"],
+                    0.12,
+                )
+        if (
+            for_purposes_cue_count > 0
+            and not has_temporal_cue
+            and not has_frame_definition_cue
+        ):
             caps["knowledge_graphs.neo4j_compat"] = min(
                 caps["knowledge_graphs.neo4j_compat"],
-                0.12,
+                0.11,
             )
+            caps["CEC.native"] = min(caps["CEC.native"], 0.16)
     if has_deontic_cue and has_temporal_cue:
         caps["TDFOL.prover"] = min(caps["TDFOL.prover"], 0.18)
         caps["deontic.ir"] = min(caps.get("deontic.ir", 1.0), 0.76)

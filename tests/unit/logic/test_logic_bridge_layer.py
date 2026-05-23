@@ -1806,6 +1806,61 @@ def test_dense_contract_rebalance_treats_structural_statute_cues_as_frame_eviden
     assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
 
 
+def test_dense_contract_rebalance_treats_for_purposes_deontic_scope_as_normative() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_dense_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.24,
+        "TDFOL.prover": 0.22,
+        "deontic.ir": 0.19,
+        "knowledge_graphs.neo4j_compat": 0.18,
+        "zkp.circuits": 0.17,
+    }
+
+    rebalanced = _rebalance_dense_contract_distribution(
+        distribution,
+        text=(
+            "For purposes of this section, the Secretary shall apply the credit "
+            "to covered transfers."
+        ),
+    )
+
+    assert rebalanced["deontic.ir"] >= 0.35
+    assert rebalanced["knowledge_graphs.neo4j_compat"] <= 0.11
+    assert rebalanced["deontic.ir"] > rebalanced["CEC.native"]
+    assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
+
+
+def test_dense_contract_rebalance_treats_delegation_authority_as_frame_signal() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_dense_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.24,
+        "TDFOL.prover": 0.22,
+        "deontic.ir": 0.19,
+        "knowledge_graphs.neo4j_compat": 0.18,
+        "zkp.circuits": 0.17,
+    }
+
+    rebalanced = _rebalance_dense_contract_distribution(
+        distribution,
+        text=(
+            "Delegation of authority by Comptroller. The powers vested in the "
+            "Comptroller may be delegated."
+        ),
+    )
+
+    assert rebalanced["CEC.native"] >= 0.23
+    assert rebalanced["knowledge_graphs.neo4j_compat"] >= 0.20
+    assert rebalanced["deontic.ir"] <= 0.21
+    assert rebalanced["CEC.native"] > rebalanced["deontic.ir"]
+    assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
+
+
 def test_multiview_bridge_accepts_citation_prefixed_statutory_text() -> None:
     from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
 
