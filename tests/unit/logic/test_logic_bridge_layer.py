@@ -1727,6 +1727,33 @@ def test_dense_contract_rebalance_downweights_auxiliary_lanes_for_conditional_no
     assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
 
 
+def test_dense_contract_rebalance_uses_calendar_deadline_cues_for_temporal_shift() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_dense_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.22,
+        "TDFOL.prover": 0.21,
+        "deontic.ir": 0.23,
+        "knowledge_graphs.neo4j_compat": 0.16,
+        "zkp.circuits": 0.18,
+    }
+
+    rebalanced = _rebalance_dense_contract_distribution(
+        distribution,
+        text=(
+            "Provided that the Secretary shall submit a report by October 1 of each year."
+        ),
+    )
+
+    assert rebalanced["TDFOL.prover"] >= 0.24
+    assert rebalanced["deontic.ir"] <= 0.31
+    assert rebalanced["deontic.ir"] > rebalanced["CEC.native"]
+    assert rebalanced["knowledge_graphs.neo4j_compat"] <= 0.12
+    assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
+
+
 def test_dense_contract_rebalance_biases_deontic_lane_for_underspecified_statute_text() -> None:
     from ipfs_datasets_py.logic.bridge.multiview import (
         _rebalance_dense_contract_distribution,

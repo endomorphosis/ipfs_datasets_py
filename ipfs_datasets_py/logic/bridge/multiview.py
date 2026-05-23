@@ -52,6 +52,28 @@ _BRIDGE_CONTRACT_STRONG_TEMPORAL_CUE_RE = re.compile(
     r"\b(?:not\s+later\s+than|no\s+later\s+than|as\s+soon\s+as\s+practicable|beginning\s+on|ending\s+on|effective\s+date|fiscal\s+year)\b",
     flags=re.IGNORECASE,
 )
+_BRIDGE_CONTRACT_MONTH_TEMPORAL_CUE_RE = re.compile(
+    r"\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|jun(?:e)?|"
+    r"jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|"
+    r"dec(?:ember)?)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_BY_DATE_TEMPORAL_CUE_RE = re.compile(
+    r"\bby\s+(?:"
+    r"(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|"
+    r"jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|"
+    r"dec(?:ember)?)(?:\s+\d{1,2}(?:,\s*\d{4})?)?"
+    r"|the\s+end\s+of\s+(?:the\s+)?(?:fiscal|calendar|taxable)\s+year"
+    r"|the\s+date\b"
+    r"|the\s+first\s+day\s+of\b"
+    r"|\d{1,2}/\d{1,2}/\d{2,4}"
+    r")\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_REPEAL_TEMPORAL_CUE_RE = re.compile(
+    r"\b(?:repeal(?:ed|s|ing)?|sunset(?:ted|s)?|terminate(?:d|s|ion)?|expired|expiration)\b",
+    flags=re.IGNORECASE,
+)
 _BRIDGE_CONTRACT_FRAME_DEFINITION_CUE_RE = re.compile(
     r"\b(?:means|defined\s+as|in\s+this\s+section)\b",
     flags=re.IGNORECASE,
@@ -781,7 +803,24 @@ def _rebalance_dense_contract_distribution(
         _BRIDGE_CONTRACT_STRONG_TEMPORAL_CUE_RE,
         normalized_text,
     )
+    month_temporal_cue_count = _cue_count(
+        _BRIDGE_CONTRACT_MONTH_TEMPORAL_CUE_RE,
+        normalized_text,
+    )
+    by_date_temporal_cue_count = _cue_count(
+        _BRIDGE_CONTRACT_BY_DATE_TEMPORAL_CUE_RE,
+        normalized_text,
+    )
+    repeal_temporal_cue_count = _cue_count(
+        _BRIDGE_CONTRACT_REPEAL_TEMPORAL_CUE_RE,
+        normalized_text,
+    )
     temporal_cue_count += strong_temporal_cue_count
+    temporal_cue_count += month_temporal_cue_count
+    temporal_cue_count += by_date_temporal_cue_count
+    temporal_cue_count += repeal_temporal_cue_count
+    strong_temporal_cue_count += by_date_temporal_cue_count
+    strong_temporal_cue_count += repeal_temporal_cue_count
     structural_frame_cue_count = _cue_count(
         _BRIDGE_CONTRACT_STRUCTURAL_FRAME_CUE_RE,
         normalized_text,
@@ -793,6 +832,10 @@ def _rebalance_dense_contract_distribution(
     has_conditional_cue = conditional_cue_count > 0
     has_deontic_cue = deontic_cue_count > 0
     has_temporal_cue = temporal_cue_count > 0
+    has_explicit_temporal_deadline_cue = (
+        by_date_temporal_cue_count > 0
+        or repeal_temporal_cue_count > 0
+    )
     has_frame_definition_cue = bool(
         _BRIDGE_CONTRACT_FRAME_DEFINITION_CUE_RE.search(normalized_text)
     )
@@ -871,6 +914,9 @@ def _rebalance_dense_contract_distribution(
         ):
             caps["deontic.ir"] = min(caps["deontic.ir"], 0.72)
             caps["TDFOL.prover"] = max(caps["TDFOL.prover"], 0.20)
+            if has_conditional_cue and has_explicit_temporal_deadline_cue:
+                caps["deontic.ir"] = min(caps["deontic.ir"], 0.68)
+                caps["TDFOL.prover"] = max(caps["TDFOL.prover"], 0.24)
     if has_conditional_cue or has_deontic_cue or has_temporal_cue:
         caps["zkp.circuits"] = min(caps["zkp.circuits"], 0.15)
     if has_dense_statute_scaffold:
@@ -947,11 +993,18 @@ def _rebalance_dense_contract_distribution(
             strong_temporal_cue_count > 0
             or temporal_cue_count > deontic_cue_count
         ):
-            target_mix = (
-                ("deontic.ir", 0.66),
-                ("TDFOL.prover", 0.24),
-                ("CEC.native", 0.10),
-            )
+            if has_conditional_cue and has_explicit_temporal_deadline_cue:
+                target_mix = (
+                    ("deontic.ir", 0.60),
+                    ("TDFOL.prover", 0.30),
+                    ("CEC.native", 0.10),
+                )
+            else:
+                target_mix = (
+                    ("deontic.ir", 0.66),
+                    ("TDFOL.prover", 0.24),
+                    ("CEC.native", 0.10),
+                )
         elif has_conditional_cue or has_epistemic_cue:
             target_mix = (
                 ("deontic.ir", 0.70),
