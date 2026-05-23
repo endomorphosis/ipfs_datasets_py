@@ -12683,6 +12683,70 @@ def test_modal_decompiler_and_triples_surface_temporal_for_purposes_bridge_slots
     )
 
 
+def test_modal_decompiler_and_triples_surface_subject_to_frame_and_scope_bridge_slots() -> None:
+    source_id = "us-code-6-314-a0a9a6dc41d25a7f"
+    source_text = (
+        "The Secretary shall award grants for fiscal year 2027 subject to the Secretary "
+        "determines that compliance is adequate."
+    )
+    formula = ModalIRFormula(
+        formula_id=f"{source_id}:f0001",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="shall_award_grants_for_fiscal_year"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="6 U.S.C. 314",
+        ),
+        conditions=["subject to the secretary determines that compliance is adequate"],
+        metadata={"cue": "shall"},
+    )
+    document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(document)
+
+    assert "subject_to" in slot_texts["condition_prefix_key"]
+    assert "frame:Frame:subject_to" in slot_texts["condition_modal_bridge_signature"]
+    assert "fiscal_year" in slot_texts["bridge_cue"]
+    assert "determines" in slot_texts["bridge_cue"]
+    assert "temporal:F:fiscal_year" in slot_texts["bridge_modal_bridge_signature"]
+    assert "epistemic:K:determines" in slot_texts["bridge_modal_bridge_signature"]
+    assert "doxastic:B:determines" in slot_texts["bridge_modal_bridge_signature"]
+    assert any(
+        triple["predicate"] == "condition_modal_bridge_signature"
+        and triple["object"] == "frame:Frame:subject_to"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "bridge_modal_bridge_signature"
+        and triple["object"] == "temporal:F:fiscal_year"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "bridge_modal_bridge_signature"
+        and triple["object"] == "epistemic:K:determines"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "bridge_modal_bridge_signature"
+        and triple["object"] == "doxastic:B:determines"
+        for triple in triples
+    )
+
+
 def test_modal_decompiler_surfaces_metadata_citation_slots_without_formulas() -> None:
     document = ModalIRDocument(
         document_id="metadata-citation-only-doc",
