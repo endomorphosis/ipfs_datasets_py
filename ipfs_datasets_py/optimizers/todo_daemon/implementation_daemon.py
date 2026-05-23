@@ -46,7 +46,7 @@ RECENT_NO_CHANGE_COOLDOWN_SECONDS = 1800.0
 NO_CHANGE_SELECTION_PENALTY = 50
 UNRESOLVED_MERGE_SELECTION_PENALTY = 1000
 SHARED_WORKTREE_PATHS = ("wallet_interface/ui/node_modules",)
-WORKTREE_SUBMODULE_PATHS = ("ipfs_datasets_py", "swissknife")
+WORKTREE_SUBMODULE_PATHS = ("hallucinate_app", "ipfs_datasets_py", "swissknife")
 EPHEMERAL_WORKTREE_PATHS = (
     *SHARED_WORKTREE_PATHS,
     ".pytest_cache",
@@ -466,8 +466,10 @@ class PortalImplementationDaemon:
         strategy = self.load_strategy()
         now = utc_now()
         status_completed_task_ids = {task.task_id for task in tasks if task.status == "completed"}
-        merge_reconciliation = self._reconcile_failed_merges(skip_task_ids=status_completed_task_ids)
-        unresolved_merge_failures = self._unresolved_merge_failures_by_task(skip_task_ids=status_completed_task_ids)
+        strategy_blocked_task_ids = {str(task_id) for task_id in strategy.get("blocked_tasks", [])}
+        merge_skip_task_ids = status_completed_task_ids | strategy_blocked_task_ids
+        merge_reconciliation = self._reconcile_failed_merges(skip_task_ids=merge_skip_task_ids)
+        unresolved_merge_failures = self._unresolved_merge_failures_by_task(skip_task_ids=merge_skip_task_ids)
         recent_outcomes = self._latest_implementation_finished_by_task()
         successfully_merged_task_ids = self._successfully_merged_task_ids()
         live_inflight_implementation = self._find_live_inflight_implementation()
@@ -1313,6 +1315,7 @@ class PortalImplementationDaemon:
     def _commit_worktree_changes(self, worktree_path: Path, task: PortalTask, attempt: int) -> dict[str, Any]:
         submodule_results = self._commit_worktree_submodule_changes(worktree_path, task, attempt)
         self._restore_ephemeral_worktree_paths_for_commit(worktree_path)
+        self._restore_uncommitted_submodule_pointers(worktree_path, submodule_results)
         self._run_git(["add", "-A"], cwd=worktree_path)
         self._remove_generated_paths_from_index(worktree_path)
         status = self._run_git(["status", "--porcelain"], cwd=worktree_path).stdout.strip()
@@ -1382,6 +1385,25 @@ class PortalImplementationDaemon:
             commit_ref = self._run_git(["rev-parse", "HEAD"], cwd=target).stdout.strip()
             results.append({"path": relative, "committed": True, "commit": commit_ref, "status": status})
         return results
+
+    def _restore_uncommitted_submodule_pointers(
+        self,
+        worktree_path: Path,
+        submodule_results: list[dict[str, Any]],
+    ) -> None:
+        for result in submodule_results:
+            if result.get("committed", False):
+                continue
+            relative = str(result.get("path") or "")
+            if relative not in WORKTREE_SUBMODULE_PATHS or not self._repo_relative_path_safe(relative):
+                continue
+            subprocess.run(
+                ["git", "restore", "--source=HEAD", "--staged", "--worktree", "--", relative],
+                cwd=worktree_path,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
 
     def _preserve_failed_validation_worktree(
         self,

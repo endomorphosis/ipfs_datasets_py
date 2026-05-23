@@ -243,6 +243,15 @@ class PortalImplementationSupervisor:
             return False, ""
         if state.active_task_id and state.ready_count > 0 and progress_age > stale:
             return True, f"no progress on active task {state.active_task_id}"
+        if (
+            state.active_task_id
+            and state.last_implementation_task_id == state.active_task_id
+            and state.last_implementation_commit
+            and state.last_merge_returncode not in (None, 0)
+            and not state.last_merge_commit
+        ):
+            detail = state.last_merge_error or "merge failed without a merge commit"
+            return True, f"unresolved merge failure on active task {state.active_task_id}: {detail}"
         return False, ""
 
     def rewrite_strategy(self, state: PortalTaskState, reason: str) -> dict[str, Any]:
