@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import inspect
 import math
+import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, Mapping, Optional, Sequence
 
@@ -23,6 +24,28 @@ _BRIDGE_CONTRACT_EXCLUDED_COMPONENTS = (
     "external_provers.router",
 )
 _BRIDGE_VIEW_SIGNAL_WEIGHT_CAP = 2.0
+_BRIDGE_CONTRACT_DENSE_LANE_MIN_COUNT = 4
+_BRIDGE_CONTRACT_DENSE_LANE_CAPS = {
+    "CEC.native": 0.21,
+    "TDFOL.prover": 0.21,
+    "knowledge_graphs.neo4j_compat": 0.16,
+}
+_BRIDGE_CONTRACT_CONDITIONAL_CUE_RE = re.compile(
+    r"\b(?:if|provided\s+that|unless|subject\s+to|with\s+respect\s+to)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_DEONTIC_CUE_RE = re.compile(
+    r"\b(?:shall|must|may|required|prohibited|forbidden|authorized|entitled)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_TEMPORAL_CUE_RE = re.compile(
+    r"\b(?:before|after|until|when|within|during|deadline|transition|effective|implementation|takes\s+effect)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_FRAME_DEFINITION_CUE_RE = re.compile(
+    r"\b(?:means|defined\s+as|for\s+purposes\s+of|in\s+this\s+section)\b",
+    flags=re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -321,9 +344,20 @@ class MultiViewLegalIRReport:
         total = sum(kept.values())
         if total <= 0.0:
             return {}
-        return {
+        normalized = {
             lane: weight / total
             for lane, weight in sorted(kept.items())
+        }
+        rebalanced = _rebalance_dense_contract_distribution(
+            normalized,
+            text=self.document.normalized_text or self.document.source_text,
+        )
+        rebalance_total = sum(rebalanced.values())
+        if rebalance_total <= 0.0:
+            return normalized
+        return {
+            lane: weight / rebalance_total
+            for lane, weight in sorted(rebalanced.items())
         }
 
     def _round_trip_mean(self, metric_name: str) -> float:
@@ -675,6 +709,106 @@ def _view_signal_weight(view: LogicIRView) -> float:
         return 1.0
     strongest = max(0.0, max(signal_values))
     return 1.0 + min(_BRIDGE_VIEW_SIGNAL_WEIGHT_CAP, math.log1p(strongest))
+
+
+def _rebalance_dense_contract_distribution(
+    distribution: Mapping[str, float],
+    *,
+    text: str,
+) -> Dict[str, float]:
+    """Reduce dense-lane entropy for bridge.contracts targets.
+
+    Multi-adapter samples can yield nearly-uniform lane mass across
+    ``deontic.ir``, ``TDFOL.prover``, ``CEC.native``, and
+    ``knowledge_graphs.neo4j_compat``.  The autoencoder receives stronger and
+    more stable guidance when auxiliary lanes are softly capped and excess mass
+    is redistributed to semantic lanes based on deterministic statutory cues.
+    """
+
+    lanes = {
+        str(name): max(0.0, float(value))
+        for name, value in dict(distribution or {}).items()
+        if float(value) > 0.0
+    }
+    if len(lanes) < _BRIDGE_CONTRACT_DENSE_LANE_MIN_COUNT:
+        return lanes
+
+    normalized_text = " ".join(str(text or "").split()).lower()
+    has_conditional_cue = bool(_BRIDGE_CONTRACT_CONDITIONAL_CUE_RE.search(normalized_text))
+    has_deontic_cue = bool(_BRIDGE_CONTRACT_DEONTIC_CUE_RE.search(normalized_text))
+    has_temporal_cue = bool(_BRIDGE_CONTRACT_TEMPORAL_CUE_RE.search(normalized_text))
+    has_frame_definition_cue = bool(
+        _BRIDGE_CONTRACT_FRAME_DEFINITION_CUE_RE.search(normalized_text)
+    )
+
+    caps = dict(_BRIDGE_CONTRACT_DENSE_LANE_CAPS)
+    if has_conditional_cue and not has_frame_definition_cue:
+        caps["knowledge_graphs.neo4j_compat"] = min(
+            caps["knowledge_graphs.neo4j_compat"],
+            0.14,
+        )
+    if has_deontic_cue:
+        caps["CEC.native"] = min(caps["CEC.native"], 0.20)
+    if has_deontic_cue and has_temporal_cue:
+        caps["TDFOL.prover"] = min(caps["TDFOL.prover"], 0.20)
+
+    adjusted = dict(lanes)
+    excess_mass = 0.0
+    for lane, cap in caps.items():
+        if lane not in adjusted:
+            continue
+        value = adjusted[lane]
+        if value <= cap:
+            continue
+        excess_mass += value - cap
+        adjusted[lane] = cap
+    if excess_mass <= 0.0:
+        return adjusted
+
+    if has_temporal_cue and not has_deontic_cue:
+        target_mix = (
+            ("TDFOL.prover", 0.55),
+            ("CEC.native", 0.30),
+            ("deontic.ir", 0.15),
+        )
+    elif has_deontic_cue and not has_temporal_cue:
+        target_mix = (
+            ("deontic.ir", 0.65),
+            ("CEC.native", 0.20),
+            ("TDFOL.prover", 0.15),
+        )
+    elif has_deontic_cue and has_temporal_cue:
+        target_mix = (
+            ("deontic.ir", 0.50),
+            ("TDFOL.prover", 0.30),
+            ("CEC.native", 0.20),
+        )
+    else:
+        target_mix = (
+            ("deontic.ir", 0.45),
+            ("TDFOL.prover", 0.35),
+            ("CEC.native", 0.20),
+        )
+
+    present_targets = [
+        (lane, weight)
+        for lane, weight in target_mix
+        if lane in adjusted
+    ]
+    if not present_targets:
+        top_lane = max(adjusted.items(), key=lambda item: (item[1], item[0]))[0]
+        adjusted[top_lane] += excess_mass
+        return adjusted
+
+    weight_total = sum(weight for _lane, weight in present_targets)
+    if weight_total <= 0.0:
+        top_lane = max(adjusted.items(), key=lambda item: (item[1], item[0]))[0]
+        adjusted[top_lane] += excess_mass
+        return adjusted
+
+    for lane, weight in present_targets:
+        adjusted[lane] += excess_mass * (weight / weight_total)
+    return adjusted
 
 
 def _metadata_signal_values(metadata: Mapping[str, Any]) -> list[float]:

@@ -1640,6 +1640,42 @@ def test_multiview_training_target_distribution_prunes_non_contract_tail_lanes()
     assert abs(sum(target_distribution.values()) - 1.0) < 1e-9
 
 
+def test_multiview_training_target_distribution_rebalances_dense_contract_lanes() -> None:
+    from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
+
+    report = evaluate_legal_ir_multiview(
+        (
+            "Provided that the agency shall publish notice before the permit takes effect, "
+            "the Secretary may issue certification."
+        ),
+        bridge_names=(
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router",
+            "zkp_attestation",
+        ),
+        document_id="multiview-bridge-contract-rebalance",
+        citation="Multiview Bridge Contract Rebalance",
+        cache=False,
+    )
+
+    target_distribution = report.training_target().view_distribution
+    assert set(target_distribution) == {
+        "CEC.native",
+        "TDFOL.prover",
+        "deontic.ir",
+        "knowledge_graphs.neo4j_compat",
+        "zkp.circuits",
+    }
+    assert target_distribution["knowledge_graphs.neo4j_compat"] <= 0.145
+    assert target_distribution["CEC.native"] <= 0.212
+    assert target_distribution["TDFOL.prover"] <= 0.212
+    assert target_distribution["deontic.ir"] > target_distribution["knowledge_graphs.neo4j_compat"]
+    assert abs(sum(target_distribution.values()) - 1.0) < 1e-9
+
+
 def test_multiview_bridge_accepts_citation_prefixed_statutory_text() -> None:
     from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
 
