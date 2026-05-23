@@ -851,6 +851,19 @@ _DEONTIC_SCOPE_TOKENS = frozenset(
         "violations",
     }
 )
+_DEONTIC_REQUIRED_ONLY_SCOPE_TOKENS = frozenset(
+    {
+        "require",
+        "required",
+        "requires",
+        "requirement",
+        "requirements",
+    }
+)
+_NON_DEONTIC_REQUIRED_CONTEXT_RE = re.compile(
+    r"\b(?:codification|editorial|historical|reclassified|renumbered|repealed|transferred|formerly)\b",
+    re.IGNORECASE,
+)
 _DEONTIC_SCOPE_PHRASES = (
     "it is the policy of",
     "it shall be the policy of",
@@ -1087,6 +1100,16 @@ class SpaCyLegalEncoder:
                             )
                         ):
                             continue
+                        if (
+                            profile.family == ModalLogicFamily.DEONTIC
+                            and cue.lower() == "required"
+                            and self._is_non_deontic_required_cue(
+                                normalized_text=normalized,
+                                start_char=match.start(),
+                                end_char=match.end(),
+                            )
+                        ):
+                            continue
                         if profile.family == ModalLogicFamily.TEMPORAL:
                             lowered_cue = cue.lower()
                             if lowered_cue in _NON_TEMPORAL_PROCEDURAL_AFTER_CUES:
@@ -1178,6 +1201,24 @@ class SpaCyLegalEncoder:
             if re.search(rf"{re.escape(prefix)}\s+$", leading_window):
                 return True
         return False
+
+    def _is_non_deontic_required_cue(
+        self,
+        *,
+        normalized_text: str,
+        start_char: int,
+        end_char: int,
+    ) -> bool:
+        """Treat bare `required` as non-deontic in editorial/status contexts."""
+        trailing = normalized_text[end_char : end_char + 24]
+        if re.match(r"^\s+to\b", trailing, re.IGNORECASE):
+            return False
+        context_window = normalized_text[
+            max(0, start_char - 96) : min(len(normalized_text), end_char + 96)
+        ].lower()
+        if _contains_scope_phrase(context_window, _FRAME_EDITORIAL_SCOPE_PHRASES):
+            return True
+        return bool(_NON_DEONTIC_REQUIRED_CONTEXT_RE.search(context_window))
 
     def _is_temporal_deadline_by_cue(
         self,
@@ -3687,15 +3728,7 @@ def _apply_directional_modal_family_pair_backfill(
     conditional_family = ModalLogicFamily.CONDITIONAL_NORMATIVE.value
     epistemic_family = ModalLogicFamily.EPISTEMIC.value
 
-    has_strong_temporal_scope = bool(
-        signals.get("has_calendar_date_scope")
-        or signals.get("has_temporal_scope_phrase")
-        or signals.get("has_temporal_within_scope")
-        or (
-            bool(signals.get("has_temporal_scope_token"))
-            and bool(signals.get("has_statutory_scope_reference"))
-        )
-    )
+    has_strong_temporal_scope = _has_strong_temporal_scope_signal(signals)
     has_statutory_scope_reference = bool(
         signals.get("has_statutory_scope_reference")
     )
@@ -5529,6 +5562,19 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         or bool(frame_procedural_scope_phrase)
         or bool(frame_editorial_scope_phrase)
     )
+    deontic_scope_terms = token_terms & _DEONTIC_SCOPE_TOKENS
+    has_required_only_deontic_scope = bool(deontic_scope_terms) and deontic_scope_terms.issubset(
+        _DEONTIC_REQUIRED_ONLY_SCOPE_TOKENS
+    )
+    if (
+        deontic_scope
+        and has_required_only_deontic_scope
+        and temporal_status_scope_token
+        and frame_context
+        and not bool(deontic_scope_phrase)
+        and ModalLogicFamily.DEONTIC.value not in cue_families
+    ):
+        deontic_scope = False
     return {
         "has_alethic_cue": ModalLogicFamily.ALETHIC.value in cue_families,
         "has_alethic_scope": alethic_scope or ModalLogicFamily.ALETHIC.value in cue_families,

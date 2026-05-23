@@ -546,6 +546,49 @@ def test_spacy_encoder_treats_repealed_status_as_temporal_scope_signal() -> None
     assert repealed_logits["temporal"] > baseline_logits["temporal"]
 
 
+def test_spacy_encoder_treats_editorial_required_as_non_deontic_scope() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="22",
+        section="277d-39",
+        text=(
+            "Section was required and later repealed. Editorial Notes Codification "
+            "Section was formerly classified to section 83 of this title prior to "
+            "editorial reclassification and renumbering."
+        ),
+    )
+
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+
+    assert not any(
+        cue.family == "deontic" and cue.cue.lower() == "required"
+        for cue in encoding.cues
+    )
+    assert signals["has_frame_editorial_scope_phrase"] is True
+    assert signals["has_temporal_status_scope"] is True
+    assert signals["has_deontic_scope"] is False
+
+
+def test_directional_backfill_treats_temporal_status_scope_as_strong_temporal_signal() -> None:
+    counts = {
+        "deontic": 1.0,
+        "temporal": 0.0,
+        "frame": 0.0,
+    }
+    signals = {
+        "has_temporal_scope": True,
+        "has_temporal_status_scope": True,
+        "has_frame_context": True,
+    }
+
+    _apply_directional_modal_family_pair_backfill(counts, signals)
+    assert counts["temporal"] >= 0.18
+
+
 def test_spacy_encoder_treats_extended_over_status_as_temporal_scope_signal() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
