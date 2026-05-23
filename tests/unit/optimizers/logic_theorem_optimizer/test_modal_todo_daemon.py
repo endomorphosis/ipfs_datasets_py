@@ -1043,6 +1043,8 @@ def test_program_synthesis_generator_clusters_stable_autoencoder_residuals() -> 
     assert all(todo.metadata["support_count"] >= 2 for todo in todos)
     assert all(todo.metadata["hint_evidence"] for todo in todos)
     assert all(todo.metadata["residual_signatures"] for todo in todos)
+    assert all(todo.metadata["target_metrics"] for todo in todos)
+    assert all(todo.metadata["validation_commands"] for todo in todos)
     for todo in todos:
         assert {
             evidence["hint_id"] for evidence in todo.metadata["hint_evidence"]
@@ -1084,6 +1086,10 @@ def test_program_synthesis_generator_uses_legal_ir_view_introspection() -> None:
     assert by_action["repair_deontic_bridge_quality_gate"].metadata[
         "program_synthesis_scope"
     ] == "deontic"
+    assert by_action["repair_multiview_legal_ir_loss"].metadata["target_metrics"]
+    assert by_action["repair_multiview_legal_ir_loss"].metadata[
+        "validation_commands"
+    ]
 
 
 def test_program_synthesis_generator_fans_out_legal_ir_view_introspection() -> None:
@@ -1099,12 +1105,12 @@ def test_program_synthesis_generator_fans_out_legal_ir_view_introspection() -> N
             sample.sample_id: SimpleNamespace(
                 losses={"legal_ir_multiview_total_loss": 0.5},
                 view_distribution={
-                    "CEC.native": 0.14,
-                    "TDFOL.prover": 0.12,
-                    "deontic.ir": 0.10,
-                    "external_provers.router": 0.08,
-                    "knowledge_graphs.neo4j_compat": 0.18,
-                    "zkp.circuits": 0.10,
+                    "CEC.native": 0.40,
+                    "TDFOL.prover": 0.25,
+                    "deontic.ir": 0.30,
+                    "external_provers.router": 0.03,
+                    "knowledge_graphs.neo4j_compat": 0.55,
+                    "zkp.circuits": 0.03,
                 },
             )
         },
@@ -1124,15 +1130,13 @@ def test_program_synthesis_generator_fans_out_legal_ir_view_introspection() -> N
         for todo in seeded
         if todo.metadata["optimizer_role"] == "program_synthesis"
     }
-    assert {
-        "bridge",
-        "cec",
-        "deontic",
-        "external_provers",
-        "knowledge_graphs",
-        "tdfol",
-        "zkp",
-    } <= scopes
+    assert "bridge" in scopes
+    assert "cec" in scopes
+    assert "deontic" in scopes
+    assert "knowledge_graphs" in scopes
+    assert "tdfol" in scopes
+    assert "external_provers" not in scopes
+    assert "zkp" not in scopes
 
 
 def test_supervisor_optimizes_autoencoder_first_and_leaves_program_synthesis_backlog() -> None:

@@ -10,6 +10,7 @@ import pytest
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import build_us_code_sample
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import (
     AdaptiveModalAutoencoder,
+    AutoencoderEvaluation,
     CodexCallCache,
     CodexCallGateConfig,
     ModalAutoencoderBaseline,
@@ -23,6 +24,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder impor
     frame_ranking_loss,
     mse_loss,
     symbolic_validity_penalty,
+    _evaluation_improved_for_training,
 )
 
 
@@ -231,6 +233,77 @@ def test_adaptive_autoencoder_generalizable_projection_uses_holdout_without_samp
     assert autoencoder.state.decoded_embeddings == {}
     assert autoencoder.state.feature_family_logits
     assert autoencoder.state.feature_embedding_weights
+
+
+def test_generalizable_projection_acceptance_rejects_cosine_regression() -> None:
+    before = AutoencoderEvaluation(
+        sample_count=1,
+        embedding_cosine_similarity=0.5,
+        cosine_loss=0.5,
+        reconstruction_loss=0.2,
+        cross_entropy_loss=2.0,
+        frame_ranking_loss=0.0,
+        symbolic_validity_penalty=0.0,
+        decoded_embeddings={},
+    )
+    after_ce_only = AutoencoderEvaluation(
+        sample_count=1,
+        embedding_cosine_similarity=0.1,
+        cosine_loss=0.9,
+        reconstruction_loss=0.2,
+        cross_entropy_loss=1.0,
+        frame_ranking_loss=0.0,
+        symbolic_validity_penalty=0.0,
+        decoded_embeddings={},
+    )
+    after_pareto = AutoencoderEvaluation(
+        sample_count=1,
+        embedding_cosine_similarity=0.55,
+        cosine_loss=0.45,
+        reconstruction_loss=0.19,
+        cross_entropy_loss=1.5,
+        frame_ranking_loss=0.0,
+        symbolic_validity_penalty=0.0,
+        decoded_embeddings={},
+    )
+
+    assert _evaluation_improved_for_training(before, after_ce_only) is False
+    assert _evaluation_improved_for_training(before, after_pareto) is True
+
+
+def test_legal_ir_component_gap_focus_routes_only_underrepresented_views() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall make final opinions available to the public.",
+    )
+    autoencoder = AdaptiveModalAutoencoder()
+    focus = autoencoder._synthesis_focus_for(
+        sample,
+        target_family="deontic",
+        predicted_family="deontic",
+        target_probability=0.9,
+        reconstruction_loss=0.0,
+        legal_ir_view_cross_entropy_loss=1.0,
+        legal_ir_view_distribution={
+            "CEC.native": 0.15,
+            "external_provers.router": 0.05,
+            "knowledge_graphs.neo4j_compat": 0.18,
+            "zkp.circuits": 0.05,
+        },
+        legal_ir_predicted_view_distribution={
+            "CEC.native": 0.06,
+            "external_provers.router": 0.08,
+            "knowledge_graphs.neo4j_compat": 0.07,
+            "zkp.circuits": 0.08,
+        },
+    )
+
+    assert "repair_multiview_legal_ir_loss" in focus
+    assert "repair_cec_dcec_bridge" in focus
+    assert "repair_multiview_legal_ir_graph_projection" in focus
+    assert "repair_external_prover_router" not in focus
+    assert "repair_zkp_attestation_bridge" not in focus
 
 
 def test_adaptive_autoencoder_cross_entropy_uses_mixed_family_targets() -> None:

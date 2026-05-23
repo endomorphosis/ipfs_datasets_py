@@ -120,6 +120,9 @@ def residual_signature_for_hint(hint: ModalProgramSynthesisHint) -> str:
         ],
         "frame_features": sorted(map(str, evidence.get("frame_features", []) or []))[:8],
         "target_component": hint.target_component,
+        "underrepresented_components": sorted(
+            map(str, evidence.get("legal_ir_underrepresented_components", []) or [])
+        )[:8],
         "top_embedding_features": sorted(
             map(str, evidence.get("top_embedding_features", []) or [])
         )[:8],
@@ -175,6 +178,12 @@ def synthesis_hints_from_autoencoder_introspection(
                     ),
                     "top_family_features": _feature_names(
                         introspection.get("top_family_contributions", [])
+                    ),
+                    "legal_ir_component_gaps": dict(
+                        introspection.get("legal_ir_component_gaps") or {}
+                    ),
+                    "legal_ir_underrepresented_components": list(
+                        introspection.get("legal_ir_underrepresented_components") or []
                     ),
                 },
             )
@@ -252,6 +261,12 @@ def synthesis_hints_from_autoencoder_introspection(
                 ),
                 evidence={
                     "legal_ir_predicted_view_distribution": predicted_distribution,
+                    "legal_ir_component_gaps": dict(
+                        introspection.get("legal_ir_component_gaps") or {}
+                    ),
+                    "legal_ir_underrepresented_components": list(
+                        introspection.get("legal_ir_underrepresented_components") or []
+                    ),
                     "legal_ir_view_cross_entropy_loss": introspection.get(
                         "legal_ir_view_cross_entropy_loss"
                     ),
@@ -453,8 +468,14 @@ def _logic_view_hint(
             float(introspection.get("legal_ir_view_cross_entropy_loss") or 0.0),
         ),
         evidence={
+            "legal_ir_component_gaps": dict(
+                introspection.get("legal_ir_component_gaps") or {}
+            ),
             "legal_ir_predicted_view_distribution": dict(
                 introspection.get("legal_ir_predicted_view_distribution") or {}
+            ),
+            "legal_ir_underrepresented_components": list(
+                introspection.get("legal_ir_underrepresented_components") or []
             ),
             "legal_ir_view_cross_entropy_loss": introspection.get(
                 "legal_ir_view_cross_entropy_loss"

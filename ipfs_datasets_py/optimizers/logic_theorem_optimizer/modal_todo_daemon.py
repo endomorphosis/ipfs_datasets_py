@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import heapq
 import json
+import sys
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -71,6 +72,118 @@ PROGRAM_SYNTHESIS_ACTION_TARGETS = {
     "repair_flogic_ontology_constraints": "modal.frame_logic",
     "repair_tdfol_bridge_parse": "TDFOL.prover",
     "repair_zkp_attestation_bridge": "zkp.circuits",
+}
+PROGRAM_SYNTHESIS_ACTION_TARGET_METRICS = {
+    "add_deterministic_parser_rule": ("symbolic_validity_penalty", "modal_span_coverage_loss"),
+    "add_or_review_modal_ambiguity_policy": ("cross_entropy_loss",),
+    "audit_frame_logic_terms": ("flogic_similarity_loss", "ontology_violation_count"),
+    "improve_bm25_frame_selector": ("frame_ranking_loss",),
+    "improve_flogic_frame_alignment": ("flogic_similarity_loss",),
+    "increase_modal_ir_span_coverage": ("modal_span_coverage_loss",),
+    "refine_modal_family_cue_rules": ("cross_entropy_loss",),
+    "refine_semantic_decompiler_reconstruction": ("text_reconstruction_loss",),
+    "refine_typed_ir_or_decompiler_slots": (
+        "embedding_cosine_similarity",
+        "reconstruction_loss",
+        "legal_ir_multiview_cosine_loss",
+        "legal_ir_multiview_reconstruction_loss",
+    ),
+    "repair_cec_dcec_bridge": (
+        "cec_dcec_event_formula_invalid_ratio",
+        "cec_dcec_validation_failure_ratio",
+        "legal_ir_view_cross_entropy_loss",
+    ),
+    "repair_deontic_bridge_quality_gate": (
+        "deontic_decoder_slot_loss",
+        "deontic_quality_requires_validation_loss",
+        "legal_ir_view_cross_entropy_loss",
+    ),
+    "repair_deontic_graph_bridge": ("deontic_graph_failure_penalty",),
+    "repair_deontic_prover_bridge": ("deontic_proof_failure_ratio",),
+    "repair_external_prover_router": (
+        "external_prover_unavailable_loss",
+        "legal_ir_multiview_proof_failure_ratio",
+    ),
+    "repair_multiview_legal_ir_acceptance": ("legal_ir_multiview_acceptance_loss",),
+    "repair_multiview_legal_ir_graph_projection": (
+        "legal_ir_multiview_graph_failure_penalty",
+        "legal_ir_view_cross_entropy_loss",
+    ),
+    "repair_multiview_legal_ir_loss": (
+        "legal_ir_view_cross_entropy_loss",
+        "legal_ir_multiview_cross_entropy_loss",
+        "legal_ir_multiview_total_loss",
+    ),
+    "repair_multiview_legal_ir_prover_gate": (
+        "legal_ir_multiview_proof_failure_ratio",
+    ),
+    "repair_multiview_legal_ir_view_coverage": (
+        "legal_ir_multiview_view_coverage_loss",
+    ),
+    "repair_flogic_ontology_constraints": (
+        "flogic_similarity_loss",
+        "ontology_violation_count",
+    ),
+    "repair_tdfol_bridge_parse": (
+        "tdfol_parse_failure_ratio",
+        "tdfol_no_formula_loss",
+        "legal_ir_view_cross_entropy_loss",
+    ),
+    "repair_zkp_attestation_bridge": (
+        "zkp_verification_failure_ratio",
+        "zkp_attestation_missing_loss",
+        "legal_ir_view_cross_entropy_loss",
+    ),
+}
+PROGRAM_SYNTHESIS_SCOPE_VALIDATION_TESTS = {
+    "bridge": (
+        "tests/unit/logic/test_logic_bridge_layer.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
+    ),
+    "cec": (
+        "tests/unit/logic/test_logic_bridge_layer.py",
+    ),
+    "compiler_ambiguity": (
+        "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py",
+        "tests/unit_tests/logic/modal/test_modal_codec.py",
+    ),
+    "compiler_parser": (
+        "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py",
+        "tests/unit_tests/logic/modal/test_modal_codec.py",
+    ),
+    "compiler_registry": (
+        "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py",
+        "tests/unit_tests/logic/modal/test_modal_codec.py",
+    ),
+    "deontic": (
+        "tests/unit/logic/test_deontic_graph.py",
+        "tests/unit/logic/test_deontic_knowledge_base.py",
+        "tests/unit/logic/test_logic_bridge_layer.py",
+    ),
+    "external_provers": (
+        "tests/unit/logic/test_logic_bridge_layer.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
+    ),
+    "frame_logic": (
+        "ipfs_datasets_py/logic/test_flogic_optimizer.py",
+        "tests/unit/logic/test_flogic_integration.py",
+        "tests/unit/logic/test_logic_bridge_layer.py",
+    ),
+    "ir_decompiler": (
+        "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py",
+        "tests/unit_tests/logic/modal/test_modal_codec.py",
+    ),
+    "knowledge_graphs": (
+        "tests/unit/logic/test_logic_bridge_layer.py",
+    ),
+    "tdfol": (
+        "tests/unit/logic/TDFOL/test_formula_dependency_graph.py",
+        "tests/unit/logic/test_logic_bridge_layer.py",
+    ),
+    "zkp": (
+        "tests/unit/logic/test_flogic_cache_zkp.py",
+        "tests/unit/logic/test_logic_bridge_layer.py",
+    ),
 }
 
 AUTOENCODER_TRAINABLE_ACTIONS = {
@@ -930,6 +1043,16 @@ class ModalProgramSynthesisTodoGenerator:
                 "support_count": len(sample_ids),
                 "target_component": target_component,
             }
+            metadata["target_metrics"] = _program_synthesis_target_metrics(
+                action=action,
+                target_component=target_component,
+            )
+            metadata["validation_commands"] = _program_synthesis_validation_commands(
+                action=action,
+                target_component=target_component,
+                program_synthesis_scope=program_synthesis_scope,
+            )
+            metadata["residual_cluster_stage"] = "post_sgd_or_current_state"
             metadata["semantic_bundle_key"] = _program_todo_bundle_signature(
                 action=action,
                 target_component=target_component,
@@ -1910,11 +2033,6 @@ class ModalTodoSupervisor:
         bridge_loss_failure_count = int(self.last_bridge_loss_failure_count)
         bridge_loss_sample_count = int(self.last_bridge_loss_sample_count)
         bridge_loss_signal_count = int(self.last_bridge_loss_signal_count)
-        program_synthesis_seeded = self.seed_program_synthesis_from_introspection(
-            sample_list,
-            autoencoder=autoencoder,
-        )
-        program_synthesis_deduped = int(self.last_program_synthesis_deduped_count)
         self.queue.deduplicate_autoencoder(
             optimizer_role=self.policy.autoencoder_role,
         )
@@ -1997,6 +2115,11 @@ class ModalTodoSupervisor:
             if validation_list
             else None
         )
+        program_synthesis_seeded = self.seed_program_synthesis_from_introspection(
+            sample_list,
+            autoencoder=autoencoder,
+        )
+        program_synthesis_deduped = int(self.last_program_synthesis_deduped_count)
 
         return ModalOptimizationStep(
             iteration=iteration,
@@ -2613,6 +2736,61 @@ def _sample_id_from_hint(hint: ModalProgramSynthesisHint) -> str:
     return str(hint.evidence.get("sample_id") or "").strip()
 
 
+def _program_synthesis_target_metrics(
+    *,
+    action: str,
+    target_component: str,
+) -> List[str]:
+    """Return metrics a Codex patch for this synthesis TODO should improve."""
+    metrics = list(PROGRAM_SYNTHESIS_ACTION_TARGET_METRICS.get(str(action), ()))
+    component_defaults = {
+        "bridge.contracts": (
+            "legal_ir_view_cross_entropy_loss",
+            "legal_ir_multiview_total_loss",
+        ),
+        "CEC.native": ("cec_dcec_validation_failure_ratio",),
+        "TDFOL.prover": ("tdfol_parse_failure_ratio",),
+        "deontic.ir": ("deontic_decoder_slot_loss",),
+        "external_provers.router": ("legal_ir_multiview_proof_failure_ratio",),
+        "knowledge_graphs.neo4j_compat": (
+            "legal_ir_multiview_graph_failure_penalty",
+        ),
+        "modal.compiler": ("symbolic_validity_penalty",),
+        "modal.compiler.ambiguity": ("cross_entropy_loss",),
+        "modal.compiler.registry": ("cross_entropy_loss",),
+        "modal.frame_logic": ("flogic_similarity_loss",),
+        "modal.ir_decompiler": (
+            "embedding_cosine_similarity",
+            "reconstruction_loss",
+        ),
+        "zkp.circuits": ("zkp_verification_failure_ratio",),
+    }
+    metrics.extend(component_defaults.get(str(target_component), ()))
+    return _unique_preserve_order(str(metric) for metric in metrics if str(metric))
+
+
+def _program_synthesis_validation_commands(
+    *,
+    action: str,
+    target_component: str,
+    program_synthesis_scope: str,
+) -> List[str]:
+    """Return targeted validation commands for a generated Codex TODO."""
+    tests = list(
+        PROGRAM_SYNTHESIS_SCOPE_VALIDATION_TESTS.get(str(program_synthesis_scope), ())
+    )
+    if not tests:
+        tests = [
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py"
+        ]
+    if str(target_component).startswith("modal.") or str(action).startswith("refine_"):
+        tests.append(
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py"
+        )
+    tests = _unique_preserve_order(str(path) for path in tests if str(path))
+    return [f"{sys.executable} -m pytest -q {' '.join(tests)}"]
+
+
 def _compact_hint_evidence(hint: ModalProgramSynthesisHint) -> Dict[str, Any]:
     """Keep the autoencoder evidence needed for later deterministic repair."""
     evidence = dict(hint.evidence)
@@ -2624,6 +2802,8 @@ def _compact_hint_evidence(hint: ModalProgramSynthesisHint) -> Dict[str, Any]:
         "cosine_similarity",
         "family_margin",
         "frame_features",
+        "legal_ir_component_gaps",
+        "legal_ir_underrepresented_components",
         "predicted_family",
         "reconstruction_loss",
         "sample_id",
@@ -2706,9 +2886,20 @@ def _todo_validation(
 
 def _evaluation_improved(before: AutoencoderEvaluation, after: AutoencoderEvaluation) -> bool:
     """Return whether the aggregate objective moved in the desired direction."""
-    return bool(
-        after.cross_entropy_loss < before.cross_entropy_loss
-        or after.embedding_cosine_similarity > before.embedding_cosine_similarity
+    return (
+        _evaluation_objective(after) < _evaluation_objective(before)
+        and after.embedding_cosine_similarity + 0.01 >= before.embedding_cosine_similarity
+        and after.reconstruction_loss <= before.reconstruction_loss + 0.02
+        and after.cross_entropy_loss <= before.cross_entropy_loss
+    )
+
+
+def _evaluation_objective(evaluation: AutoencoderEvaluation) -> float:
+    return (
+        evaluation.cross_entropy_loss
+        + evaluation.reconstruction_loss
+        + max(0.0, 1.0 - evaluation.embedding_cosine_similarity)
+        + sum(max(0.0, float(value)) for value in evaluation.legal_ir_losses.values())
     )
 
 

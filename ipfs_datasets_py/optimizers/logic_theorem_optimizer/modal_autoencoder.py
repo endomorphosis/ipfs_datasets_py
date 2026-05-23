@@ -7,6 +7,7 @@ import hashlib
 import math
 import os
 import re
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -14,6 +15,10 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 
 from .legal_samples import LegalSample
 from .modal_registry import ModalLogicFamily
+
+_LEGAL_IR_TARGET_CACHE_MAX = 2048
+_LEGAL_IR_TARGET_CACHE_LOCK = threading.Lock()
+_LEGAL_IR_TARGET_CACHE: Dict[str, Any] = {}
 
 
 def cosine_similarity(left: Sequence[float], right: Sequence[float]) -> float:
@@ -145,6 +150,9 @@ class AutoencoderIntrospection:
     top_embedding_contributions: List[AutoencoderFeatureContribution] = field(default_factory=list)
     synthesis_focus: List[str] = field(default_factory=list)
     legal_ir_view_cross_entropy_loss: float = 0.0
+    legal_ir_component_gaps: Dict[str, float] = field(default_factory=dict)
+    legal_ir_underrepresented_components: List[str] = field(default_factory=list)
+    legal_ir_overrepresented_components: List[str] = field(default_factory=list)
     legal_ir_view_distribution: Dict[str, float] = field(default_factory=dict)
     legal_ir_predicted_view_distribution: Dict[str, float] = field(default_factory=dict)
 
@@ -157,6 +165,13 @@ class AutoencoderIntrospection:
             "feature_count": self.feature_count,
             "legal_ir_predicted_view_distribution": dict(
                 sorted(self.legal_ir_predicted_view_distribution.items())
+            ),
+            "legal_ir_component_gaps": dict(sorted(self.legal_ir_component_gaps.items())),
+            "legal_ir_overrepresented_components": list(
+                self.legal_ir_overrepresented_components
+            ),
+            "legal_ir_underrepresented_components": list(
+                self.legal_ir_underrepresented_components
             ),
             "legal_ir_view_cross_entropy_loss": self.legal_ir_view_cross_entropy_loss,
             "legal_ir_view_distribution": dict(sorted(self.legal_ir_view_distribution.items())),
@@ -811,6 +826,18 @@ class AdaptiveModalAutoencoder:
                 legal_ir_predicted_view_distribution,
                 legal_ir_view_distribution,
             )
+        legal_ir_component_gaps = _legal_ir_component_gaps(
+            legal_ir_view_distribution,
+            legal_ir_predicted_view_distribution,
+        )
+        legal_ir_underrepresented_components = _top_legal_ir_component_gaps(
+            legal_ir_component_gaps,
+            positive=True,
+        )
+        legal_ir_overrepresented_components = _top_legal_ir_component_gaps(
+            legal_ir_component_gaps,
+            positive=False,
+        )
         return AutoencoderIntrospection(
             sample_id=sample.sample_id,
             target_family=target_family,
@@ -828,6 +855,12 @@ class AdaptiveModalAutoencoder:
             top_family_contributions=family_contributions[:max(top_k, 0)],
             top_embedding_contributions=embedding_contributions[:max(top_k, 0)],
             legal_ir_view_cross_entropy_loss=round(legal_ir_view_cross_entropy_loss, 12),
+            legal_ir_component_gaps={
+                key: round(float(value), 12)
+                for key, value in sorted(legal_ir_component_gaps.items())
+            },
+            legal_ir_underrepresented_components=legal_ir_underrepresented_components,
+            legal_ir_overrepresented_components=legal_ir_overrepresented_components,
             legal_ir_view_distribution={
                 key: round(float(value), 12)
                 for key, value in sorted(legal_ir_view_distribution.items())
@@ -1068,6 +1101,10 @@ class AdaptiveModalAutoencoder:
         epochs: int = 3,
         learning_rate: float = 0.35,
         l2_regularization: float = 0.0,
+        max_cosine_regression: float = 0.01,
+        max_reconstruction_regression: float = 0.02,
+        max_cross_entropy_regression: float = 0.0,
+        max_legal_ir_loss_regression: float = 0.02,
     ) -> Dict[str, Any]:
         """Train feature-level weights with rollback on holdout regression.
 
@@ -1103,7 +1140,26 @@ class AdaptiveModalAutoencoder:
                 )
             self._regularize_feature_state(l2_regularization)
             after = self.evaluate(target_samples, use_sample_memory=False)
-            improved = _evaluation_improved_for_training(best, after)
+            regressions = _evaluation_regressions_for_training(
+                best,
+                after,
+                max_cosine_regression=max_cosine_regression,
+                max_reconstruction_regression=max_reconstruction_regression,
+                max_cross_entropy_regression=max_cross_entropy_regression,
+                max_legal_ir_loss_regression=max_legal_ir_loss_regression,
+            )
+            objective_delta = (
+                _evaluation_objective_for_training(best)
+                - _evaluation_objective_for_training(after)
+            )
+            improved = _evaluation_improved_for_training(
+                best,
+                after,
+                max_cosine_regression=max_cosine_regression,
+                max_reconstruction_regression=max_reconstruction_regression,
+                max_cross_entropy_regression=max_cross_entropy_regression,
+                max_legal_ir_loss_regression=max_legal_ir_loss_regression,
+            )
             epoch_reports.append(
                 {
                     "accepted": improved,
@@ -1113,6 +1169,8 @@ class AdaptiveModalAutoencoder:
                         - best.embedding_cosine_similarity
                     ),
                     "epoch": epoch,
+                    "objective_delta": objective_delta,
+                    "pareto_regressions": regressions,
                     "reconstruction_delta": best.reconstruction_loss - after.reconstruction_loss,
                 }
             )
@@ -1777,13 +1835,16 @@ def _legal_ir_program_synthesis_focus(
         str(name): max(0.0, float(value))
         for name, value in dict(predicted_distribution or {}).items()
     }
+    component_gaps = _legal_ir_component_gaps(target, predicted)
 
     def needs_attention(component: str) -> bool:
         target_value = float(target.get(component, 0.0))
         if target_value <= 0.0:
             return False
-        predicted_value = float(predicted.get(component, 0.0))
-        return target_value >= 0.03 or predicted_value + 0.01 < target_value
+        gap = float(component_gaps.get(component, 0.0))
+        if gap <= 0.0:
+            return False
+        return gap >= 0.02 or (target_value >= 0.03 and gap / target_value >= 0.20)
 
     def has_component(*prefixes: str) -> bool:
         return any(
@@ -1808,6 +1869,48 @@ def _legal_ir_program_synthesis_focus(
     if has_component("zkp."):
         focus.append("repair_zkp_attestation_bridge")
     return focus
+
+
+def _legal_ir_component_gaps(
+    target_distribution: Mapping[str, float],
+    predicted_distribution: Mapping[str, float],
+) -> Dict[str, float]:
+    """Return target-minus-predicted mass for each LegalIR view component."""
+    names = sorted(
+        set(map(str, dict(target_distribution or {}).keys()))
+        | set(map(str, dict(predicted_distribution or {}).keys()))
+    )
+    return {
+        name: _float_or_zero(target_distribution.get(name, 0.0))
+        - _float_or_zero(predicted_distribution.get(name, 0.0))
+        for name in names
+    }
+
+
+def _top_legal_ir_component_gaps(
+    component_gaps: Mapping[str, float],
+    *,
+    positive: bool,
+    limit: int = 8,
+    min_abs_gap: float = 0.01,
+) -> List[str]:
+    """Return largest under- or over-represented LegalIR view components."""
+    scored = []
+    for component, gap in dict(component_gaps or {}).items():
+        gap = _float_or_zero(gap)
+        if positive and gap <= 0.0:
+            continue
+        if not positive and gap >= 0.0:
+            continue
+        if abs(gap) < min_abs_gap:
+            continue
+        scored.append((abs(gap), str(component)))
+    return [
+        component
+        for _gap, component in sorted(scored, key=lambda item: (-item[0], item[1]))[
+            : max(0, int(limit))
+        ]
+    ]
 
 
 def _observed_family_distribution(sample: LegalSample) -> Dict[str, float]:
@@ -1912,6 +2015,15 @@ def _legal_ir_target_items(
     from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
 
     def evaluate_sample(sample: LegalSample) -> tuple[str, Any]:
+        cache_key = _legal_ir_target_cache_key(
+            sample,
+            bridge_names=names,
+            evaluate_provers=evaluate_provers,
+        )
+        with _LEGAL_IR_TARGET_CACHE_LOCK:
+            cached = _LEGAL_IR_TARGET_CACHE.get(cache_key)
+        if cached is not None:
+            return sample.sample_id, cached
         report = evaluate_legal_ir_multiview(
             sample.text,
             bridge_names=names,
@@ -1921,7 +2033,12 @@ def _legal_ir_target_items(
             source=sample.source,
             source_embedding=sample.embedding_vector,
         )
-        return sample.sample_id, report.training_target()
+        target = report.training_target()
+        with _LEGAL_IR_TARGET_CACHE_LOCK:
+            if len(_LEGAL_IR_TARGET_CACHE) >= _LEGAL_IR_TARGET_CACHE_MAX:
+                _LEGAL_IR_TARGET_CACHE.pop(next(iter(_LEGAL_IR_TARGET_CACHE)), None)
+            _LEGAL_IR_TARGET_CACHE[cache_key] = target
+        return sample.sample_id, target
 
     worker_count = _legal_ir_parallel_worker_count(
         requested=parallel_workers,
@@ -1967,6 +2084,25 @@ def _normalise_bridge_names(bridge_names: Sequence[str] | str) -> tuple[str, ...
             if str(name).strip() and str(name).strip().lower() not in {"none", "off", "false"}
         )
     )
+
+
+def _legal_ir_target_cache_key(
+    sample: LegalSample,
+    *,
+    bridge_names: Sequence[str],
+    evaluate_provers: Optional[bool],
+) -> str:
+    payload = {
+        "bridge_names": list(bridge_names),
+        "citation": sample.citation,
+        "evaluate_provers": evaluate_provers,
+        "sample_id": sample.sample_id,
+        "source": sample.source,
+        "text_hash": hashlib.sha256(sample.text.encode("utf-8")).hexdigest(),
+    }
+    return hashlib.sha256(
+        json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+    ).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -2242,20 +2378,68 @@ def _float_or_zero(value: Any) -> float:
 def _evaluation_improved_for_training(
     before: AutoencoderEvaluation,
     after: AutoencoderEvaluation,
+    *,
+    max_cosine_regression: float = 0.01,
+    max_reconstruction_regression: float = 0.02,
+    max_cross_entropy_regression: float = 0.0,
+    max_legal_ir_loss_regression: float = 0.02,
 ) -> bool:
-    """Return true when a feature-level update improves any guarded metric."""
-    if after.cross_entropy_loss < before.cross_entropy_loss:
-        return True
-    if after.embedding_cosine_similarity > before.embedding_cosine_similarity:
-        return True
-    if after.reconstruction_loss < before.reconstruction_loss:
-        return True
-    legal_ir_names = set(before.legal_ir_losses) | set(after.legal_ir_losses)
-    return any(
-        float(after.legal_ir_losses.get(name, 0.0))
-        < float(before.legal_ir_losses.get(name, 0.0))
-        for name in legal_ir_names
+    """Return true when a feature update improves total loss without regressions."""
+    if _evaluation_regressions_for_training(
+        before,
+        after,
+        max_cosine_regression=max_cosine_regression,
+        max_reconstruction_regression=max_reconstruction_regression,
+        max_cross_entropy_regression=max_cross_entropy_regression,
+        max_legal_ir_loss_regression=max_legal_ir_loss_regression,
+    ):
+        return False
+    return (
+        _evaluation_objective_for_training(after)
+        < _evaluation_objective_for_training(before)
     )
+
+
+def _evaluation_objective_for_training(evaluation: AutoencoderEvaluation) -> float:
+    """Return a scalar objective where lower is better for guarded training."""
+    return (
+        evaluation.cross_entropy_loss
+        + evaluation.reconstruction_loss
+        + max(0.0, 1.0 - evaluation.embedding_cosine_similarity)
+        + sum(max(0.0, float(value)) for value in evaluation.legal_ir_losses.values())
+    )
+
+
+def _evaluation_regressions_for_training(
+    before: AutoencoderEvaluation,
+    after: AutoencoderEvaluation,
+    *,
+    max_cosine_regression: float = 0.01,
+    max_reconstruction_regression: float = 0.02,
+    max_cross_entropy_regression: float = 0.0,
+    max_legal_ir_loss_regression: float = 0.02,
+) -> Dict[str, float]:
+    """Return metric regressions that exceed the guarded training tolerances."""
+    regressions: Dict[str, float] = {}
+    cosine_regression = (
+        before.embedding_cosine_similarity - after.embedding_cosine_similarity
+    )
+    if cosine_regression > max(0.0, float(max_cosine_regression)):
+        regressions["embedding_cosine_similarity"] = cosine_regression
+    reconstruction_regression = after.reconstruction_loss - before.reconstruction_loss
+    if reconstruction_regression > max(0.0, float(max_reconstruction_regression)):
+        regressions["reconstruction_loss"] = reconstruction_regression
+    cross_entropy_regression = after.cross_entropy_loss - before.cross_entropy_loss
+    if cross_entropy_regression > max(0.0, float(max_cross_entropy_regression)):
+        regressions["cross_entropy_loss"] = cross_entropy_regression
+    for name in sorted(set(before.legal_ir_losses) | set(after.legal_ir_losses)):
+        regression = (
+            float(after.legal_ir_losses.get(name, 0.0))
+            - float(before.legal_ir_losses.get(name, 0.0))
+        )
+        if regression > max(0.0, float(max_legal_ir_loss_regression)):
+            regressions[f"legal_ir:{name}"] = regression
+    return regressions
 
 
 def _vector_norm(values: Sequence[float]) -> float:
