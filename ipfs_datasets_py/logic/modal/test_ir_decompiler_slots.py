@@ -639,6 +639,38 @@ def _typed_clause_scope_sample_document() -> ModalIRDocument:
     )
 
 
+def _temporal_for_purposes_bridge_sample_document() -> ModalIRDocument:
+    source_id = "us-code-42-1395rr-fd726267510ffffe"
+    normalized_text = (
+        "For purposes of this section, benefits are available during fiscal years 2025 "
+        "through 2027."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-temporal-for-purposes-bridge",
+        operator=ModalIROperator(
+            family="temporal",
+            system="ltl",
+            symbol="F",
+            label="eventually",
+        ),
+        predicate=ModalIRPredicate(name="authorize_benefits"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(normalized_text),
+            citation="42 U.S.C. 1395rr",
+        ),
+        conditions=["for purposes of this section"],
+        metadata={"cue": "fiscal years"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
 def _exception_only_condition_proxy_sample_document() -> ModalIRDocument:
     source_id = "us-code-42-1395c.-da5383050c7a2c5e"
     normalized_text = (
@@ -3688,6 +3720,10 @@ def test_decode_modal_ir_document_emits_condition_exception_scope_slots() -> Non
     assert slot_map["condition_modal_family"] == ["deontic"]
     assert slot_map["condition_modal_operator"] == ["O"]
     assert slot_map["condition_modal_lexeme"] == ["provided_that"]
+    assert slot_map["condition_modal_bridge_signature"] == [
+        "conditional_normative:O|:provided_that"
+    ]
+    assert slot_map["condition_modal_bridge_family"] == ["conditional_normative"]
     assert slot_map["condition_provided_that"] == ["the applicant submits annual reports"]
     assert slot_map["condition_scope"] == ["the applicant submits annual reports"]
     assert slot_map["condition_scope_token_suffix"] == ["reports"]
@@ -3725,6 +3761,10 @@ def test_modal_ir_to_flogic_triples_emits_condition_exception_scope_slots() -> N
     assert objects("condition_modal_family") == ["deontic"]
     assert objects("condition_modal_operator") == ["O"]
     assert objects("condition_modal_lexeme") == ["provided_that"]
+    assert objects("condition_modal_bridge_signature") == [
+        "conditional_normative:O|:provided_that"
+    ]
+    assert objects("condition_modal_bridge_family") == ["conditional_normative"]
     assert objects("condition_provided_that") == ["the applicant submits annual reports"]
     assert objects("condition_scope") == ["the applicant submits annual reports"]
     assert objects("condition_scope_token_suffix") == ["reports"]
@@ -3742,6 +3782,54 @@ def test_modal_ir_to_flogic_triples_emits_condition_exception_scope_slots() -> N
     assert objects("exception_scope") == ["in subsection (b)"]
     assert objects("exception_scope_token_count") == ["3"]
     assert objects("exception_scope_token_suffix") == ["(b)"]
+
+
+def test_decode_modal_ir_document_emits_temporal_for_purposes_bridge_slots() -> None:
+    decoded = decode_modal_ir_document(_temporal_for_purposes_bridge_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["condition_modal_signature"] == ["temporal:F:for_purposes_of"]
+    assert slot_map["condition_modal_bridge_signature"] == [
+        "conditional_normative:O|:for_purposes_of",
+        "frame:Frame:for_purposes_of",
+    ]
+    assert slot_map["condition_modal_bridge_family"] == [
+        "conditional_normative",
+        "frame",
+    ]
+    assert slot_map["condition_modal_bridge_operator"] == ["O|", "Frame"]
+    assert "for_purposes_of" in slot_map["bridge_cue"]
+    assert slot_map["bridge_modal_bridge_signature"] == [
+        "conditional_normative:O|:for_purposes_of",
+        "frame:Frame:for_purposes_of",
+    ]
+
+
+def test_modal_ir_to_flogic_triples_emit_temporal_for_purposes_bridge_slots() -> None:
+    triples = modal_ir_to_flogic_triples(_temporal_for_purposes_bridge_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("condition_modal_signature") == ["temporal:F:for_purposes_of"]
+    assert objects("condition_modal_bridge_signature") == [
+        "conditional_normative:O|:for_purposes_of",
+        "frame:Frame:for_purposes_of",
+    ]
+    assert objects("condition_modal_bridge_family") == [
+        "conditional_normative",
+        "frame",
+    ]
+    assert objects("condition_modal_bridge_operator") == ["O|", "Frame"]
+    assert "for_purposes_of" in objects("bridge_cue")
+    assert objects("bridge_modal_bridge_signature") == [
+        "conditional_normative:O|:for_purposes_of",
+        "frame:Frame:for_purposes_of",
+    ]
 
 
 def test_decode_modal_ir_document_emits_condition_proxy_slots_for_exception_only_formula() -> None:

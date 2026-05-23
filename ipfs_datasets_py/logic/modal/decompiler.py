@@ -217,6 +217,51 @@ _CUE_REGISTRY_BRIDGE_FAMILY_PRIORITY: Mapping[str, int] = {
     "temporal": 1,
     "conditional_normative": 2,
 }
+_CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...]] = {
+    "if": (("conditional_normative", "O|"),),
+    "unless": (("conditional_normative", "O|"),),
+    "except": (("conditional_normative", "O|"),),
+    "except_as": (("conditional_normative", "O|"),),
+    "except_that": (("conditional_normative", "O|"),),
+    "except_as_otherwise_provided": (("conditional_normative", "O|"),),
+    "except_to_the_extent": (("conditional_normative", "O|"),),
+    "provided_that": (
+        ("conditional_normative", "O|"),
+        ("deontic", "O"),
+    ),
+    "subject_to": (
+        ("conditional_normative", "O|"),
+        ("deontic", "O"),
+    ),
+    "notwithstanding": (
+        ("conditional_normative", "O|"),
+        ("deontic", "O"),
+    ),
+    "to_the_extent_provided": (("conditional_normative", "O|"),),
+    "in_the_event_that": (("conditional_normative", "O|"),),
+    "in_the_case_of": (
+        ("conditional_normative", "O|"),
+        ("frame", "Frame"),
+    ),
+    "for_purposes_of": (
+        ("conditional_normative", "O|"),
+        ("frame", "Frame"),
+    ),
+    "for_the_purposes_of": (
+        ("conditional_normative", "O|"),
+        ("frame", "Frame"),
+    ),
+    "with_respect_to": (
+        ("conditional_normative", "O|"),
+        ("frame", "Frame"),
+    ),
+}
+_CROSS_FAMILY_BRIDGE_FAMILY_PRIORITY: Mapping[str, int] = {
+    "conditional_normative": 0,
+    "deontic": 1,
+    "frame": 2,
+    "temporal": 3,
+}
 _PROVENANCE_NUMERIC_ALIGNMENT_SIGNATURES: tuple[str, ...] = (
     "leading_digit",
     "parity",
@@ -599,6 +644,37 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
                         provenance_only=True,
                     )
                 )
+    for bridge_cue in _formula_bridge_cues(formula):
+        bridge_spans = _span_from_values(cue_start, cue_end) or spans
+        phrases.append(
+            DecodedModalPhrase(
+                text=bridge_cue,
+                slot="bridge_cue",
+                spans=bridge_spans,
+                provenance_only=True,
+            )
+        )
+        phrases.append(
+            DecodedModalPhrase(
+                text=bridge_cue,
+                slot="modal_bridge_cue",
+                spans=bridge_spans,
+                provenance_only=True,
+            )
+        )
+        for bridge_slot, bridge_value in _modal_lexeme_slots(
+            formula,
+            cue=bridge_cue,
+            slot_prefix="bridge_modal",
+        ):
+            phrases.append(
+                DecodedModalPhrase(
+                    text=bridge_value,
+                    slot=bridge_slot,
+                    spans=bridge_spans,
+                    provenance_only=True,
+                )
+            )
     if argument_values:
         phrases.append(
             DecodedModalPhrase(
@@ -3645,11 +3721,27 @@ def _registry_cue_operator_match(
     *,
     cue: str,
 ) -> Tuple[str, str]:
-    cue_value = _clean_text(cue).lower()
-    if not cue_value:
-        return "", ""
+    matching_pairs = _registry_cue_operator_matches(cue=cue)
+    if not matching_pairs:
+        return ("", "")
     formula_family = _clean_text(formula.operator.family).lower()
     formula_symbol = _clean_text(formula.operator.symbol)
+    if formula_family and formula_symbol and (formula_family, formula_symbol) in matching_pairs:
+        return formula_family, formula_symbol
+    if formula_family:
+        for profile_family, operator_symbol in matching_pairs:
+            if profile_family == formula_family:
+                return profile_family, operator_symbol
+    return matching_pairs[0]
+
+
+def _registry_cue_operator_matches(
+    *,
+    cue: str,
+) -> List[Tuple[str, str]]:
+    cue_value = _clean_text(cue).lower()
+    if not cue_value:
+        return []
     matching_pairs: List[Tuple[str, str]] = []
     for profile in DEFAULT_MODAL_REGISTRY.all_profiles():
         profile_family = _clean_text(profile.family.value).lower()
@@ -3667,14 +3759,6 @@ def _registry_cue_operator_match(
             pair = (profile_family, operator_symbol)
             if pair not in matching_pairs:
                 matching_pairs.append(pair)
-    if not matching_pairs:
-        return "", ""
-    if formula_family and formula_symbol and (formula_family, formula_symbol) in matching_pairs:
-        return formula_family, formula_symbol
-    if formula_family:
-        for profile_family, operator_symbol in matching_pairs:
-            if profile_family == formula_family:
-                return profile_family, operator_symbol
     return sorted(
         matching_pairs,
         key=lambda item: (
@@ -3685,7 +3769,40 @@ def _registry_cue_operator_match(
             item[0],
             item[1],
         ),
-    )[0]
+    )
+
+
+def _cue_bridge_operator_pairs(
+    cue: str,
+) -> List[Tuple[str, str]]:
+    normalized_cue = _clean_text(cue).lower()
+    if not normalized_cue:
+        return []
+    cue_key = normalized_cue.replace(" ", "_")
+    candidates: List[Tuple[str, str]] = []
+    candidates.extend(_registry_cue_operator_matches(cue=normalized_cue))
+    candidates.extend(_CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS.get(cue_key, ()))
+    unique_pairs: List[Tuple[str, str]] = []
+    for family, symbol in sorted(
+        candidates,
+        key=lambda item: (
+            _CROSS_FAMILY_BRIDGE_FAMILY_PRIORITY.get(
+                item[0],
+                len(_CROSS_FAMILY_BRIDGE_FAMILY_PRIORITY),
+            ),
+            item[0],
+            item[1],
+        ),
+    ):
+        pair = (_clean_text(family).lower(), _clean_text(symbol))
+        if (
+            not pair[0]
+            or not pair[1]
+            or pair in unique_pairs
+        ):
+            continue
+        unique_pairs.append(pair)
+    return unique_pairs
 
 
 def _cue_matches_registry_term(
@@ -3808,6 +3925,23 @@ def _modal_lexeme_slots(
                             bridged_value,
                         )
                     )
+    for bridge_family, bridge_symbol in _cue_bridge_operator_pairs(cue_value):
+        if bridge_family == family and bridge_symbol == symbol:
+            continue
+        bridge_signature = f"{bridge_family}:{bridge_symbol}:{cue_value}"
+        bridge_value = f"{bridge_symbol}:{cue_value}"
+        slots.append((f"{normalized_slot_prefix}_bridge_family", bridge_family))
+        slots.append((f"{normalized_slot_prefix}_bridge_operator", bridge_symbol))
+        slots.append((f"{normalized_slot_prefix}_bridge_signature", bridge_signature))
+        slots.append((f"{normalized_slot_prefix}_bridge_{bridge_family}", bridge_value))
+        if normalized_slot_prefix.endswith("_modal"):
+            alias_prefix = _clean_text(
+                normalized_slot_prefix[: -len("_modal")]
+            )
+            if alias_prefix:
+                slots.append((f"{alias_prefix}_bridge_family", bridge_family))
+                slots.append((f"{alias_prefix}_bridge_signature", bridge_signature))
+                slots.append((f"{alias_prefix}_{bridge_family}", bridge_value))
     if symbol == "O|":
         conditional_normative_value = f"{symbol}:{cue_value}"
         slots.append(
@@ -3855,6 +3989,32 @@ def _text_has_prefix(text: str, prefix: str) -> bool:
         return True
     suffix_char = normalized_text[len(normalized_prefix)]
     return not suffix_char.isalnum()
+
+
+def _formula_bridge_cues(formula: ModalIRFormula) -> List[str]:
+    searchable_segments: List[str] = []
+    predicate_text = _clean_text(formula.predicate.name).replace("_", " ").lower()
+    if predicate_text:
+        searchable_segments.append(predicate_text)
+    searchable_segments.extend(
+        _clean_text(value).replace("_", " ").lower()
+        for value in (*formula.conditions, *formula.exceptions)
+        if _clean_text(value)
+    )
+    if not searchable_segments:
+        return []
+    searchable_text = " ".join(searchable_segments)
+    cues: List[str] = []
+    for cue_key in sorted(
+        _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS,
+        key=lambda item: (-len(item), item),
+    ):
+        cue_surface = cue_key.replace("_", " ")
+        if not cue_surface:
+            continue
+        if re.search(rf"(?<!\w){re.escape(cue_surface)}(?!\w)", searchable_text):
+            cues.append(cue_key)
+    return cues
 
 
 def _append_statutory_scope_phrases(

@@ -12491,6 +12491,12 @@ def test_modal_decompiler_recovers_condition_exception_and_citation_slots() -> N
     assert "conditional_normative:O|:unless" in slot_texts[
         "exception_modal_registry_signature"
     ]
+    assert "conditional_normative:O|:if" in slot_texts["condition_modal_bridge_signature"]
+    assert "conditional_normative" in slot_texts["condition_modal_bridge_family"]
+    assert "conditional_normative:O|:unless" in slot_texts[
+        "exception_modal_bridge_signature"
+    ]
+    assert "conditional_normative" in slot_texts["exception_modal_bridge_family"]
     assert "family_shift" in slot_texts["condition_modal_registry_alignment"]
     assert "family_shift" in slot_texts["exception_modal_registry_alignment"]
     assert slot_texts["citation"] == ["5 U.S.C. 552"]
@@ -12548,6 +12554,16 @@ def test_modal_decompiler_recovers_condition_exception_and_citation_slots() -> N
         for triple in triples
     )
     assert any(
+        triple["predicate"] == "condition_modal_bridge_signature"
+        and triple["object"] == "conditional_normative:O|:if"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "exception_modal_bridge_signature"
+        and triple["object"] == "conditional_normative:O|:unless"
+        for triple in triples
+    )
+    assert any(
         triple["predicate"] == "condition_modal_registry_alignment"
         and triple["object"] == "family_shift"
         for triple in triples
@@ -12600,6 +12616,68 @@ def test_modal_decompiler_recovers_condition_exception_and_citation_slots() -> N
     assert any(
         triple["predicate"] == "citation_section_number"
         and triple["object"] == "552"
+        for triple in triples
+    )
+
+
+def test_modal_decompiler_and_triples_surface_temporal_for_purposes_bridge_slots() -> None:
+    source_id = "us-code-42-1395rr-fd726267510ffffe"
+    source_text = (
+        "For purposes of this section, benefits are available during fiscal years 2025 "
+        "through 2027."
+    )
+    formula = ModalIRFormula(
+        formula_id=f"{source_id}:f0001",
+        operator=ModalIROperator(
+            family="temporal",
+            system="ltl",
+            symbol="F",
+            label="eventually",
+        ),
+        predicate=ModalIRPredicate(name="authorize_benefits"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="42 U.S.C. 1395rr",
+        ),
+        conditions=["for purposes of this section"],
+        metadata={"cue": "fiscal years"},
+    )
+    document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(document)
+
+    assert slot_texts["condition_modal_signature"] == ["temporal:F:for_purposes_of"]
+    assert slot_texts["condition_modal_bridge_signature"] == [
+        "conditional_normative:O|:for_purposes_of",
+        "frame:Frame:for_purposes_of",
+    ]
+    assert slot_texts["condition_modal_bridge_family"] == [
+        "conditional_normative",
+        "frame",
+    ]
+    assert slot_texts["condition_modal_bridge_operator"] == ["O|", "Frame"]
+    assert "for_purposes_of" in slot_texts["bridge_cue"]
+    assert slot_texts["bridge_modal_bridge_signature"] == [
+        "conditional_normative:O|:for_purposes_of",
+        "frame:Frame:for_purposes_of",
+    ]
+    assert any(
+        triple["predicate"] == "condition_modal_bridge_signature"
+        and triple["object"] == "frame:Frame:for_purposes_of"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "bridge_modal_bridge_signature"
+        and triple["object"] == "conditional_normative:O|:for_purposes_of"
         for triple in triples
     )
 
