@@ -49,7 +49,9 @@ _BRIDGE_CONTRACT_TEMPORAL_CUE_RE = re.compile(
     flags=re.IGNORECASE,
 )
 _BRIDGE_CONTRACT_STRONG_TEMPORAL_CUE_RE = re.compile(
-    r"\b(?:not\s+later\s+than|no\s+later\s+than|as\s+soon\s+as\s+practicable|beginning\s+on|ending\s+on|effective\s+date|fiscal\s+year)\b",
+    r"\b(?:not\s+later\s+than|no\s+later\s+than|as\s+soon\s+as\s+practicable|"
+    r"beginning\s+on|ending\s+on|effective\s+date|fiscal\s+year|"
+    r"on\s+and\s+after|on\s+or\s+after|from\s+and\s+after|not\s+earlier\s+than)\b",
     flags=re.IGNORECASE,
 )
 _BRIDGE_CONTRACT_MONTH_TEMPORAL_CUE_RE = re.compile(
@@ -82,6 +84,11 @@ _BRIDGE_CONTRACT_FRAME_AUTHORITY_CUE_RE = re.compile(
     r"\b(?:delegation\s+of\s+authority|delegated|powers?\s+vested|vested\s+in)\b",
     flags=re.IGNORECASE,
 )
+_BRIDGE_CONTRACT_FRAME_ENFORCEMENT_CUE_RE = re.compile(
+    r"\b(?:criminal\s+penalt(?:y|ies)|civil\s+penalt(?:y|ies)|penalt(?:y|ies)|"
+    r"enforcement|violation(?:s)?|sanction(?:s)?|fine(?:s)?|preemption)\b",
+    flags=re.IGNORECASE,
+)
 _BRIDGE_CONTRACT_STRUCTURAL_FRAME_CUE_RE = re.compile(
     r"\b(?:definitions?|editorial\s+notes?|codification|reclassified|transferred)\b",
     flags=re.IGNORECASE,
@@ -92,6 +99,15 @@ _BRIDGE_CONTRACT_STATUTE_STRUCTURE_CUE_RE = re.compile(
 )
 _BRIDGE_CONTRACT_EPISTEMIC_CUE_RE = re.compile(
     r"\b(?:determine(?:s|d)?|find(?:s|ing)?|certif(?:y|ies|ied)|conclude(?:s|d)?)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_PERMISSION_DEONTIC_CUE_RE = re.compile(
+    r"\b(?:may|authorized|entitled|authoriz(?:e|es|ed|ation|ations)|"
+    r"permit(?:s|ted|ting)?|allow(?:s|ed|ing)?)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_OBLIGATION_DEONTIC_CUE_RE = re.compile(
+    r"\b(?:shall|must|required|prohibited|forbidden)\b",
     flags=re.IGNORECASE,
 )
 _BRIDGE_CONTRACT_STATUTE_SCAFFOLD_CUE_RE = re.compile(
@@ -798,6 +814,14 @@ def _rebalance_dense_contract_distribution(
     )
     conditional_cue_count += for_purposes_cue_count
     deontic_cue_count = _cue_count(_BRIDGE_CONTRACT_DEONTIC_CUE_RE, normalized_text)
+    permission_deontic_cue_count = _cue_count(
+        _BRIDGE_CONTRACT_PERMISSION_DEONTIC_CUE_RE,
+        normalized_text,
+    )
+    obligation_deontic_cue_count = _cue_count(
+        _BRIDGE_CONTRACT_OBLIGATION_DEONTIC_CUE_RE,
+        normalized_text,
+    )
     temporal_cue_count = _cue_count(_BRIDGE_CONTRACT_TEMPORAL_CUE_RE, normalized_text)
     strong_temporal_cue_count = _cue_count(
         _BRIDGE_CONTRACT_STRONG_TEMPORAL_CUE_RE,
@@ -842,6 +866,9 @@ def _rebalance_dense_contract_distribution(
     has_authority_frame_cue = bool(
         _BRIDGE_CONTRACT_FRAME_AUTHORITY_CUE_RE.search(normalized_text)
     )
+    has_enforcement_frame_cue = bool(
+        _BRIDGE_CONTRACT_FRAME_ENFORCEMENT_CUE_RE.search(normalized_text)
+    )
     if (
         for_purposes_cue_count > 0
         and not has_frame_definition_cue
@@ -854,10 +881,16 @@ def _rebalance_dense_contract_distribution(
         has_frame_definition_cue
         or has_structural_frame_cue
         or has_authority_frame_cue
+        or has_enforcement_frame_cue
     )
     has_epistemic_cue = bool(_BRIDGE_CONTRACT_EPISTEMIC_CUE_RE.search(normalized_text))
     has_dense_statute_scaffold = (
         statute_scaffold_cue_count > 0 and structural_frame_cue_count >= 2
+    )
+    has_permission_only_deontic_signal = (
+        has_deontic_cue
+        and permission_deontic_cue_count > 0
+        and obligation_deontic_cue_count == 0
     )
 
     caps = dict(_BRIDGE_CONTRACT_DENSE_LANE_CAPS)
@@ -914,6 +947,9 @@ def _rebalance_dense_contract_distribution(
         ):
             caps["deontic.ir"] = min(caps["deontic.ir"], 0.72)
             caps["TDFOL.prover"] = max(caps["TDFOL.prover"], 0.20)
+            if has_permission_only_deontic_signal:
+                caps["deontic.ir"] = min(caps["deontic.ir"], 0.68)
+                caps["TDFOL.prover"] = max(caps["TDFOL.prover"], 0.22)
             if has_conditional_cue and has_explicit_temporal_deadline_cue:
                 caps["deontic.ir"] = min(caps["deontic.ir"], 0.68)
                 caps["TDFOL.prover"] = max(caps["TDFOL.prover"], 0.24)
@@ -995,15 +1031,23 @@ def _rebalance_dense_contract_distribution(
         ):
             if has_conditional_cue and has_explicit_temporal_deadline_cue:
                 target_mix = (
-                    ("deontic.ir", 0.60),
-                    ("TDFOL.prover", 0.30),
+                    ("deontic.ir", 0.54),
+                    ("TDFOL.prover", 0.34),
+                    ("CEC.native", 0.12),
+                )
+            elif has_permission_only_deontic_signal:
+                target_mix = (
+                    ("deontic.ir", 0.54),
+                    ("TDFOL.prover", 0.28),
                     ("CEC.native", 0.10),
+                    ("knowledge_graphs.neo4j_compat", 0.08),
                 )
             else:
                 target_mix = (
-                    ("deontic.ir", 0.66),
+                    ("deontic.ir", 0.62),
                     ("TDFOL.prover", 0.24),
                     ("CEC.native", 0.10),
+                    ("knowledge_graphs.neo4j_compat", 0.04),
                 )
         elif has_conditional_cue or has_epistemic_cue:
             target_mix = (

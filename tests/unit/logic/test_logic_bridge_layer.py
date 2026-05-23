@@ -1950,6 +1950,59 @@ def test_dense_contract_rebalance_treats_delegation_authority_as_frame_signal() 
     assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
 
 
+def test_dense_contract_rebalance_treats_penalty_enforcement_as_frame_signal() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_dense_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.24,
+        "TDFOL.prover": 0.22,
+        "deontic.ir": 0.19,
+        "knowledge_graphs.neo4j_compat": 0.18,
+        "zkp.circuits": 0.17,
+    }
+
+    rebalanced = _rebalance_dense_contract_distribution(
+        distribution,
+        text=(
+            "Criminal penalty enforcement for violations shall be imposed in "
+            "accordance with this section."
+        ),
+    )
+
+    assert rebalanced["knowledge_graphs.neo4j_compat"] >= 0.20
+    assert rebalanced["CEC.native"] >= 0.24
+    assert rebalanced["deontic.ir"] <= 0.21
+    assert rebalanced["zkp.circuits"] <= 0.15
+    assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
+
+
+def test_dense_contract_rebalance_treats_on_and_after_date_as_strong_temporal() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_dense_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.24,
+        "TDFOL.prover": 0.22,
+        "deontic.ir": 0.19,
+        "knowledge_graphs.neo4j_compat": 0.18,
+        "zkp.circuits": 0.17,
+    }
+
+    rebalanced = _rebalance_dense_contract_distribution(
+        distribution,
+        text="Refunds may be credited to the fund on and after October 11, 2000.",
+    )
+
+    assert rebalanced["TDFOL.prover"] >= 0.25
+    assert rebalanced["deontic.ir"] <= 0.28
+    assert rebalanced["knowledge_graphs.neo4j_compat"] >= 0.14
+    assert rebalanced["zkp.circuits"] <= 0.15
+    assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
+
+
 def test_multiview_bridge_accepts_citation_prefixed_statutory_text() -> None:
     from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
 
