@@ -764,6 +764,205 @@ def test_cec_dcec_bridge_normalizes_exported_rule_style_event_formulas(
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
 
 
+def test_cec_dcec_bridge_normalizes_unicode_arrow_event_formulas(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge import cec_dcec as cec_dcec_mod
+
+    class _NormResult:
+        success = True
+        metadata = {
+            "legal_norm_irs": [
+                {
+                    "source_id": "bridge:unicode:1",
+                    "actor": "Agency",
+                    "action": "publish notice",
+                    "modality": "obligated",
+                }
+            ]
+        }
+
+    class _NormConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _NormResult()
+
+    def _fake_event_formula_exports(_norms):
+        return {
+            "bridge:unicode:1": [
+                {
+                    "event_calculus_formula": (
+                        "Happens(legal_norm(bridge_unicode_1), t) "
+                        "→ HoldsAt(O(happens(agency,publish_notice,t0)), t)."
+                    ),
+                    "event_formula_source": "deontic.prover_syntax",
+                    "event_formula_syntax_valid": False,
+                }
+            ]
+        }
+
+    monkeypatch.setattr(
+        cec_dcec_mod,
+        "_event_formula_exports_from_norms",
+        _fake_event_formula_exports,
+    )
+
+    adapter = cec_dcec_mod.CecDcecBridgeAdapter(converter=_NormConverter())
+    report = adapter.evaluate(
+        "The agency shall publish notice.",
+        document_id="cec-bridge-unicode-arrow",
+        citation="CEC Bridge Unicode Arrow",
+    )
+
+    event_record = report.ir_document.views["event_calculus"].payload["records"][0]
+    assert event_record["event_formula_syntax_valid"] is True
+    assert (
+        event_record["event_formula_target_parse_profile"]["top_level_connector"] == "=>"
+    )
+    assert (
+        event_record["event_formula_target_parse_profile"]["target_parse_profile_complete"]
+        is True
+    )
+    assert (
+        event_record["event_formula_target_quality_gate"]["requires_validation"]
+        is False
+    )
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
+def test_cec_dcec_bridge_accepts_temporal_wrapper_event_formulas(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge import cec_dcec as cec_dcec_mod
+
+    class _NormResult:
+        success = True
+        metadata = {
+            "legal_norm_irs": [
+                {
+                    "source_id": "bridge:always:1",
+                    "actor": "Agency",
+                    "action": "publish notice",
+                    "modality": "obligated",
+                }
+            ]
+        }
+
+    class _NormConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _NormResult()
+
+    def _fake_event_formula_exports(_norms):
+        return {
+            "bridge:always:1": [
+                {
+                    "event_calculus_formula": (
+                        "always(Happens(legal_norm(bridge_always_1), t) "
+                        "=> HoldsAt(O(happens(agency,publish_notice,t0)), t))."
+                    ),
+                    "event_formula_source": "deontic.prover_syntax",
+                    "event_formula_syntax_valid": False,
+                }
+            ]
+        }
+
+    monkeypatch.setattr(
+        cec_dcec_mod,
+        "_event_formula_exports_from_norms",
+        _fake_event_formula_exports,
+    )
+
+    adapter = cec_dcec_mod.CecDcecBridgeAdapter(converter=_NormConverter())
+    report = adapter.evaluate(
+        "The agency shall publish notice.",
+        document_id="cec-bridge-temporal-wrapper",
+        citation="CEC Bridge Temporal Wrapper",
+    )
+
+    event_record = report.ir_document.views["event_calculus"].payload["records"][0]
+    assert event_record["event_formula_syntax_valid"] is True
+    assert (
+        event_record["event_formula_target_parse_profile"]["top_level_symbol"] == "always"
+    )
+    assert (
+        event_record["event_formula_target_parse_profile"]["target_parse_profile_complete"]
+        is True
+    )
+    assert (
+        event_record["event_formula_target_quality_gate"]["requires_validation"]
+        is False
+    )
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
+def test_cec_dcec_bridge_accepts_bracketed_event_formula_wrappers(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge import cec_dcec as cec_dcec_mod
+
+    class _NormResult:
+        success = True
+        metadata = {
+            "legal_norm_irs": [
+                {
+                    "source_id": "bridge:brackets:1",
+                    "actor": "Agency",
+                    "action": "publish notice",
+                    "modality": "obligated",
+                }
+            ]
+        }
+
+    class _NormConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _NormResult()
+
+    def _fake_event_formula_exports(_norms):
+        return {
+            "bridge:brackets:1": [
+                {
+                    "event_calculus_formula": (
+                        "Happens[legal_norm(bridge_brackets_1), t] => "
+                        "HoldsAt(O[happens(agency,publish_notice,t0)], t)."
+                    ),
+                    "event_formula_source": "deontic.prover_syntax",
+                    "event_formula_syntax_valid": False,
+                }
+            ]
+        }
+
+    monkeypatch.setattr(
+        cec_dcec_mod,
+        "_event_formula_exports_from_norms",
+        _fake_event_formula_exports,
+    )
+
+    adapter = cec_dcec_mod.CecDcecBridgeAdapter(converter=_NormConverter())
+    report = adapter.evaluate(
+        "The agency shall publish notice.",
+        document_id="cec-bridge-bracketed-wrappers",
+        citation="CEC Bridge Bracketed Wrappers",
+    )
+
+    event_record = report.ir_document.views["event_calculus"].payload["records"][0]
+    assert event_record["event_formula_syntax_valid"] is True
+    assert (
+        event_record["event_formula_target_parse_profile"]["top_level_symbol"]
+        == "Happens"
+    )
+    assert event_record["event_formula_target_parse_profile"]["event_predicates"] == [
+        "Happens",
+        "HoldsAt",
+    ]
+    assert (
+        event_record["event_formula_target_parse_profile"]["target_parse_profile_complete"]
+        is True
+    )
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
 def test_external_prover_router_bridge_uses_native_prover_gate() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 

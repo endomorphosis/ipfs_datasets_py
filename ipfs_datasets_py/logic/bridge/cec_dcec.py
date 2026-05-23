@@ -37,6 +37,27 @@ _EVENT_FORMULA_WRAPPER_CANONICAL_BY_LOWER = {
     "p": "P",
     "f": "F",
 }
+_EVENT_FORMULA_CONNECTOR_CANONICAL_BY_TOKEN = {
+    "=>": "=>",
+    "->": "->",
+    ":-": ":-",
+    "<-": "<-",
+}
+_EVENT_FORMULA_CONNECTOR_REPLACEMENTS = {
+    "⟹": "=>",
+    "⇒": "=>",
+    "→": "=>",
+    "⟶": "=>",
+    "⊃": "=>",
+    "←": "<-",
+    "⟵": "<-",
+    "⇐": "<-",
+    "¬": " not ",
+    "∧": " and ",
+    "∨": " or ",
+    "∀": "forall ",
+    "∃": "exists ",
+}
 
 
 @dataclass
@@ -803,12 +824,14 @@ def _source_symbol(source_id: str) -> str:
 
 
 def _event_formula_parse_profile(formula: str) -> dict[str, Any]:
-    text = _strip_event_formula_clause_terminator(str(formula or "").strip())
+    text = _canonicalize_event_formula_text(
+        _strip_event_formula_clause_terminator(str(formula or "").strip())
+    )
     top_level_connector, connector_index = _top_level_connector(text)
     quantifier_variables = _quantifier_variables(text)
     wrappers = [
         _canonical_wrapper_symbol(match.group(1))
-        for match in re.finditer(r"\b([A-Za-z][A-Za-z0-9_]*)\s*\(", text)
+        for match in re.finditer(r"\b([A-Za-z][A-Za-z0-9_]*)\s*[\(\[]", text)
         if _canonical_wrapper_symbol(match.group(1))
     ]
     event_predicates = _event_predicates(text)
@@ -853,6 +876,8 @@ def _event_formula_parse_profile_complete(
         return bool(left and right)
     if top_level_symbol in {"forall", "exists"}:
         return bool(quantifier_variables)
+    if top_level_symbol in {"always", "O", "P", "F"}:
+        return bool(event_predicates)
     return top_level_symbol in _EVENT_PREDICATE_SET
 
 
@@ -874,13 +899,21 @@ def _balanced_delimiters(text: str) -> bool:
 
 
 def _top_level_symbol(text: str) -> str:
-    match = re.match(r"^\s*([A-Za-z][A-Za-z0-9_]*)\s*\(", text)
+    match = re.match(r"^\s*([A-Za-z][A-Za-z0-9_]*)\s*[\(\[]", text)
     if match:
         token = match.group(1)
-        return _canonical_event_predicate(token) or token
-    if re.match(r"^\s*forall\s+[A-Za-z][A-Za-z0-9_]*\.", text, flags=re.IGNORECASE):
+        return _canonical_event_predicate(token) or _canonical_wrapper_symbol(token) or token
+    if re.match(
+        r"^\s*forall\s+[A-Za-z][A-Za-z0-9_]*\s*(?:\.|:|\()",
+        text,
+        flags=re.IGNORECASE,
+    ):
         return "forall"
-    if re.match(r"^\s*exists\s+[A-Za-z][A-Za-z0-9_]*\.", text, flags=re.IGNORECASE):
+    if re.match(
+        r"^\s*exists\s+[A-Za-z][A-Za-z0-9_]*\s*(?:\.|:|\()",
+        text,
+        flags=re.IGNORECASE,
+    ):
         return "exists"
     return ""
 
@@ -888,7 +921,7 @@ def _top_level_symbol(text: str) -> str:
 def _quantifier_variables(text: str) -> list[str]:
     variables: list[str] = []
     for variable in re.findall(
-        r"\b(?:forall|exists)\s+([A-Za-z][A-Za-z0-9_]*)\.",
+        r"\b(?:forall|exists)\s+([A-Za-z][A-Za-z0-9_]*)\s*(?:\.|:|\()",
         text,
         flags=re.IGNORECASE,
     ):
@@ -908,7 +941,7 @@ def _canonical_event_predicate(token: str) -> str:
 
 def _event_predicates(text: str) -> list[str]:
     predicates: list[str] = []
-    for token in re.findall(r"\b([A-Za-z][A-Za-z0-9_]*)\s*\(", text):
+    for token in re.findall(r"\b([A-Za-z][A-Za-z0-9_]*)\s*[\(\[]", text):
         canonical = _canonical_event_predicate(token)
         if canonical and canonical not in predicates:
             predicates.append(canonical)
@@ -933,13 +966,17 @@ def _top_level_connector(text: str) -> tuple[str, int]:
             continue
         if depth != 0:
             continue
-        if text.startswith("=>", index):
-            return ("=>", index)
-        if text.startswith("->", index):
-            return ("->", index)
-        if text.startswith(":-", index):
-            return (":-", index)
+        for token in ("=>", "->", ":-", "<-"):
+            if text.startswith(token, index):
+                return (_EVENT_FORMULA_CONNECTOR_CANONICAL_BY_TOKEN.get(token, token), index)
     return ("", -1)
+
+
+def _canonicalize_event_formula_text(text: str) -> str:
+    normalized = str(text or "")
+    for token, replacement in _EVENT_FORMULA_CONNECTOR_REPLACEMENTS.items():
+        normalized = normalized.replace(token, replacement)
+    return " ".join(normalized.split())
 
 
 def _normalize_event_formula_fields(
