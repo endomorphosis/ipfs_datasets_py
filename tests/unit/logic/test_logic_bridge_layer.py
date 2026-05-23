@@ -1270,6 +1270,24 @@ def test_fol_tdfol_coerce_formula_sanitizes_reserved_term_prefixes() -> None:
     assert "term_or_said_banks" in parsed.to_string()
 
 
+def test_fol_tdfol_coerce_formula_sanitizes_keyword_prefixed_identifiers() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
+
+    notification_formula = "O(register_notification(notification))"
+    section_formula = (
+        "O(be_construed_to_contravene_any_applicable_state_law("
+        "nothing_in_this_section))"
+    )
+
+    parsed_notification = coerce_tdfol_formula(notification_formula)
+    parsed_section = coerce_tdfol_formula(section_formula)
+
+    assert parsed_notification is not None
+    assert "term_notification" in parsed_notification.to_string()
+    assert parsed_section is not None
+    assert "term_nothing_in_this_section" in parsed_section.to_string()
+
+
 def test_zkp_attestation_bridge_evaluates_proof_attestations_and_graph() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 

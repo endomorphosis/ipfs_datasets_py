@@ -16,8 +16,16 @@ from .types import (
     RoundTripMetrics,
 )
 
+_RESERVED_TDFOL_TERM_PREFIXES = (
+    "or",
+    "and",
+    "not",
+    "iff",
+    "implies",
+    "xor",
+)
 _RESERVED_TDFOL_TERM_PREFIX = re.compile(
-    r"([\(\,]\s*)(or|and|not|iff|implies|xor)_",
+    r"([\(\,]\s*)(" + "|".join(_RESERVED_TDFOL_TERM_PREFIXES) + r")(?=[A-Za-z0-9_])",
     flags=re.IGNORECASE,
 )
 
@@ -392,11 +400,11 @@ def _sanitize_tdfol_formula_text(text: str) -> str:
     normalized = str(text or "").strip()
     if not normalized:
         return ""
-    # Some legal source text yields terms like "(or_said_banks)" where "or"
-    # is interpreted as a logical connective token by the parser. Prefix these
-    # term names deterministically so they remain parseable symbols.
+    # The TDFOL lexer greedily tokenizes short logical keywords ("or", "and",
+    # "not", ...) before reading identifiers. Prefix term symbols that begin
+    # with those fragments so deterministic bridge formulas remain parseable.
     return _RESERVED_TDFOL_TERM_PREFIX.sub(
-        lambda match: f"{match.group(1)}term_{match.group(2).lower()}_",
+        lambda match: f"{match.group(1)}term_{match.group(2).lower()}",
         normalized,
     )
 
@@ -499,8 +507,17 @@ def _predicate_name(value: Any) -> str:
     if not name:
         return "act"
     if not name[0].isalpha():
-        return f"n_{name}"
-    return name
+        name = f"n_{name}"
+    return _tdfol_safe_identifier(name)
+
+
+def _tdfol_safe_identifier(name: str) -> str:
+    candidate = str(name or "").strip().lower()
+    if not candidate:
+        return "term_symbol"
+    if any(candidate.startswith(prefix) for prefix in _RESERVED_TDFOL_TERM_PREFIXES):
+        return f"term_{candidate}"
+    return candidate
 
 
 def _symbol(value: Any) -> str:
