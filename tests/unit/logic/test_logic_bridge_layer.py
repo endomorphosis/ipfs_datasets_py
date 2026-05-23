@@ -1806,6 +1806,68 @@ def test_dense_contract_rebalance_treats_structural_statute_cues_as_frame_eviden
     assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
 
 
+def test_dense_contract_rebalance_boosts_statute_scaffold_frame_lanes() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_dense_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.24,
+        "TDFOL.prover": 0.22,
+        "deontic.ir": 0.19,
+        "knowledge_graphs.neo4j_compat": 0.18,
+        "zkp.circuits": 0.17,
+    }
+
+    rebalanced = _rebalance_dense_contract_distribution(
+        distribution,
+        text=(
+            "U.S.C. Title 34 - CRIME CONTROL 34 U.S.C. United States Code, 2024 "
+            "Edition Sec. 50502 - Blue Alert communications network From the "
+            "U.S. Government Publishing Office. The Attorney General shall establish "
+            "a national network. Editorial Notes Codification Section was formerly "
+            "classified. Amendments 2022 effective date."
+        ),
+    )
+
+    assert rebalanced["CEC.native"] >= 0.27
+    assert rebalanced["knowledge_graphs.neo4j_compat"] >= 0.22
+    assert rebalanced["TDFOL.prover"] <= 0.180001
+    assert rebalanced["zkp.circuits"] <= 0.12
+    assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
+
+
+def test_dense_contract_rebalance_keeps_deontic_signal_for_scaffolded_norms() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_dense_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.24,
+        "TDFOL.prover": 0.22,
+        "deontic.ir": 0.19,
+        "knowledge_graphs.neo4j_compat": 0.18,
+        "zkp.circuits": 0.17,
+    }
+
+    rebalanced = _rebalance_dense_contract_distribution(
+        distribution,
+        text=(
+            "U.S.C. Title 6 - DOMESTIC SECURITY 6 U.S.C. United States Code, 2024 "
+            "Edition Sec. 656 - NET Guard From the U.S. Government Publishing "
+            "Office. The Director may establish NET Guard and shall coordinate "
+            "implementation. Editorial Notes Codification Section was formerly "
+            "classified."
+        ),
+    )
+
+    assert rebalanced["deontic.ir"] >= 0.20
+    assert rebalanced["deontic.ir"] > rebalanced["TDFOL.prover"]
+    assert rebalanced["CEC.native"] >= 0.27
+    assert rebalanced["zkp.circuits"] <= 0.12
+    assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
+
+
 def test_dense_contract_rebalance_treats_for_purposes_deontic_scope_as_normative() -> None:
     from ipfs_datasets_py.logic.bridge.multiview import (
         _rebalance_dense_contract_distribution,
