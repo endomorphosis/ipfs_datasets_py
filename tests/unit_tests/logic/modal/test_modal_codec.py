@@ -12879,6 +12879,48 @@ def test_modal_decompiler_and_triples_surface_temporal_after_cross_family_bridge
     )
 
 
+def test_modal_decompiler_and_triples_reinforce_deontic_bridge_for_temporal_condition_cues() -> None:
+    source_id = "us-code-42-7385t-90217fde9b59d41a"
+    source_text = "After transfer, the Secretary shall pay benefits."
+    formula = ModalIRFormula(
+        formula_id=f"{source_id}:f0001",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="shall_pay_benefits"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="42 U.S.C. 7385t",
+        ),
+        conditions=["after transfer"],
+        metadata={"cue": "shall"},
+    )
+    document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(document)
+
+    assert "after" in slot_texts["condition_prefix_key"]
+    assert "deontic:O:after" in slot_texts["condition_modal_bridge_signature"]
+    assert "deontic->deontic" in slot_texts["condition_modal_bridge_family_pair"]
+    assert any(
+        triple["predicate"] == "condition_modal_bridge_signature"
+        and triple["object"] == "deontic:O:after"
+        for triple in triples
+    )
+
+
 def test_modal_decompiler_and_triples_surface_subject_to_frame_and_scope_bridge_slots() -> None:
     source_id = "us-code-6-314-a0a9a6dc41d25a7f"
     source_text = (
@@ -12992,6 +13034,9 @@ def test_modal_decompiler_and_triples_surface_in_accordance_with_bridge_slots() 
     assert "conditional_normative:O|:in_accordance_with" in slot_texts[
         "condition_modal_bridge_signature"
     ]
+    assert "deontic:O:in_accordance_with" in slot_texts[
+        "condition_modal_bridge_signature"
+    ]
     assert "frame:Frame:in_accordance_with" in slot_texts[
         "condition_modal_bridge_signature"
     ]
@@ -13003,6 +13048,11 @@ def test_modal_decompiler_and_triples_surface_in_accordance_with_bridge_slots() 
     assert any(
         triple["predicate"] == "bridge_modal_bridge_signature"
         and triple["object"] == "conditional_normative:O|:in_accordance_with"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "condition_modal_bridge_signature"
+        and triple["object"] == "deontic:O:in_accordance_with"
         for triple in triples
     )
 

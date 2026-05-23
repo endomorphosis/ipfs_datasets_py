@@ -471,6 +471,19 @@ _CROSS_FAMILY_BRIDGE_FAMILY_PRIORITY: Mapping[str, int] = {
     "doxastic": 5,
     "dynamic": 6,
 }
+_DEONTIC_BRIDGE_REINFORCEMENT_OPERATORS: frozenset[str] = frozenset(
+    {
+        "O",
+        "P",
+        "F",
+    }
+)
+_DEONTIC_BRIDGE_REINFORCEMENT_CUES: frozenset[str] = frozenset(
+    {
+        "in_accordance_with",
+        "with_respect_to",
+    }
+)
 _PROVENANCE_NUMERIC_ALIGNMENT_SIGNATURES: tuple[str, ...] = (
     "leading_digit",
     "parity",
@@ -2371,6 +2384,47 @@ def _cue_bridge_operator_pairs(
     return unique_pairs
 
 
+def _augment_deontic_bridge_pairs(
+    *,
+    bridge_pairs: Sequence[tuple[str, str]],
+    formula_family: str,
+    formula_symbol: str,
+    cue: str,
+) -> List[tuple[str, str]]:
+    normalized_family = _clean_non_empty_string(formula_family).lower()
+    normalized_symbol = _clean_non_empty_string(formula_symbol)
+    normalized_cue = _clean_non_empty_string(cue).lower()
+    pairs: List[tuple[str, str]] = []
+    for family, symbol in bridge_pairs:
+        normalized_pair = (
+            _clean_non_empty_string(family).lower(),
+            _clean_non_empty_string(symbol),
+        )
+        if (
+            not normalized_pair[0]
+            or not normalized_pair[1]
+            or normalized_pair in pairs
+        ):
+            continue
+        pairs.append(normalized_pair)
+    if not normalized_cue:
+        return pairs
+    cue_key = normalized_cue.replace(" ", "_")
+    if cue_key in _DEONTIC_BRIDGE_REINFORCEMENT_CUES:
+        deontic_scope_pair = ("deontic", "O")
+        if deontic_scope_pair not in pairs:
+            pairs.append(deontic_scope_pair)
+    if (
+        normalized_family == "deontic"
+        and normalized_symbol in _DEONTIC_BRIDGE_REINFORCEMENT_OPERATORS
+        and _temporal_clause_prefix_relation(cue_key)
+    ):
+        deontic_temporal_pair = ("deontic", normalized_symbol)
+        if deontic_temporal_pair not in pairs:
+            pairs.append(deontic_temporal_pair)
+    return pairs
+
+
 def _cue_matches_registry_term(
     cue_value: str,
     cue_term: str,
@@ -2434,6 +2488,15 @@ def _modal_lexeme_components(
     alias_prefix = ""
     if normalized_slot_prefix.endswith("_modal"):
         alias_prefix = _clean_non_empty_string(normalized_slot_prefix[: -len("_modal")])
+    cue_key = cue_value.replace(" ", "_")
+    reinforce_deontic_self_bridge = (
+        family == "deontic"
+        and symbol in _DEONTIC_BRIDGE_REINFORCEMENT_OPERATORS
+        and (
+            cue_key in _DEONTIC_BRIDGE_REINFORCEMENT_CUES
+            or bool(_temporal_clause_prefix_relation(cue_key))
+        )
+    )
     signature = f"{family}:{symbol}:{cue_value}"
     components: List[tuple[str, str]] = [
         (f"{normalized_slot_prefix}_signature", signature),
@@ -2502,7 +2565,12 @@ def _modal_lexeme_components(
                         bridged_value,
                     )
                 )
-    for bridge_family, bridge_symbol in _cue_bridge_operator_pairs(cue_value):
+    for bridge_family, bridge_symbol in _augment_deontic_bridge_pairs(
+        bridge_pairs=_cue_bridge_operator_pairs(cue_value),
+        formula_family=family,
+        formula_symbol=symbol,
+        cue=cue_value,
+    ):
         bridge_signature = f"{bridge_family}:{bridge_symbol}:{cue_value}"
         bridge_family_pair = f"{family}->{bridge_family}"
         bridge_operator_pair = f"{symbol}->{bridge_symbol}"
@@ -2527,7 +2595,8 @@ def _modal_lexeme_components(
             if alias_prefix:
                 components.append((f"{alias_prefix}_self_bridge_family", bridge_family))
                 components.append((f"{alias_prefix}_self_bridge_signature", bridge_signature))
-            continue
+            if not reinforce_deontic_self_bridge:
+                continue
         bridge_value = f"{bridge_symbol}:{cue_value}"
         components.append((f"{normalized_slot_prefix}_bridge_family", bridge_family))
         components.append((f"{normalized_slot_prefix}_bridge_operator", bridge_symbol))
@@ -2833,7 +2902,12 @@ def _refined_contextual_modal_transition_components(
                 ("refined_modal_signature", source_signature),
             )
         )
-        for bridge_family, bridge_symbol in _refined_cue_bridge_operator_pairs(normalized_cue):
+        for bridge_family, bridge_symbol in _augment_deontic_bridge_pairs(
+            bridge_pairs=_refined_cue_bridge_operator_pairs(normalized_cue),
+            formula_family=formula_family,
+            formula_symbol=formula_symbol,
+            cue=normalized_cue,
+        ):
             pair = f"{formula_family}->{bridge_family}"
             bridge_signature = f"{bridge_family}:{bridge_symbol}:{normalized_cue}"
             components.extend(
