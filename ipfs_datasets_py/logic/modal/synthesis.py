@@ -156,6 +156,7 @@ def synthesis_hints_from_autoencoder_introspection(
     """Convert one introspection record into typed synthesis hints."""
     sample_id = str(introspection.get("sample_id") or "")
     focus = [str(value) for value in introspection.get("synthesis_focus", [])]
+    legal_ir_losses = dict(introspection.get("legal_ir_losses") or {})
     hints: List[ModalProgramSynthesisHint] = []
     routed_loss_names = [
         "cross_entropy_loss",
@@ -169,11 +170,23 @@ def synthesis_hints_from_autoencoder_introspection(
 
     for loss_name in routed_loss_names:
         value = introspection.get(loss_name)
+        if value in (None, ""):
+            value = legal_ir_losses.get(loss_name)
         if value in (None, "", 0, 0.0):
             continue
         route = route_autoencoder_residual(loss_name, focus=focus)
         if route is None:
             continue
+        target_distribution = dict(introspection.get("legal_ir_view_distribution") or {})
+        predicted_distribution = dict(
+            introspection.get("legal_ir_predicted_view_distribution") or {}
+        )
+        component_gaps = dict(introspection.get("legal_ir_component_gaps") or {})
+        primary_view = _primary_view_for_component(
+            route.target_component,
+            target_distribution,
+            component_gaps,
+        )
         hints.append(
             _hint(
                 sample_id,
@@ -207,6 +220,18 @@ def synthesis_hints_from_autoencoder_introspection(
                     "legal_ir_underrepresented_components": list(
                         introspection.get("legal_ir_underrepresented_components") or []
                     ),
+                    "predicted_view": _primary_view_for_component(
+                        route.target_component,
+                        predicted_distribution,
+                        component_gaps,
+                    ),
+                    "primary_legal_ir_component_gap": _component_gap_value(
+                        primary_view,
+                        component_gaps,
+                    ),
+                    "target_view": primary_view,
+                    "top_predicted_views": _top_distribution_names(predicted_distribution),
+                    "top_target_views": _top_distribution_names(target_distribution),
                 },
             )
         )

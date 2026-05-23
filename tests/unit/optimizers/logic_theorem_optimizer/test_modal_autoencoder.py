@@ -99,6 +99,8 @@ def test_autoencoder_evaluation_carries_legal_ir_training_target_losses() -> Non
     payload = evaluation.to_dict()
     assert payload["legal_ir_losses"]["legal_ir_multiview_total_loss"] > 0.0
     assert payload["legal_ir_predicted_view_distribution"]
+    introspection = autoencoder.introspect_sample(sample).to_dict()
+    assert introspection["legal_ir_losses"]["legal_ir_multiview_total_loss"] > 0.0
 
 
 def test_legal_ir_target_cache_key_uses_source_text_not_citation_identity() -> None:

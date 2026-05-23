@@ -1695,12 +1695,28 @@ class ModalTodoSupervisor:
         samples: Sequence[LegalSample],
         *,
         autoencoder: AdaptiveModalAutoencoder,
+        residual_before: Optional[AutoencoderEvaluation] = None,
+        residual_after: Optional[AutoencoderEvaluation] = None,
+        residual_stage: str = "current_state",
+        require_residual_survival: bool = False,
     ) -> List[ModalTodo]:
         """Seed Codex/program-repair TODOs from stable autoencoder evidence."""
         todos = self.program_synthesis_generator.generate(
             list(samples),
             autoencoder=autoencoder,
         )
+        if residual_before is not None and residual_after is not None:
+            annotated: List[ModalTodo] = []
+            for todo in todos:
+                survives = _annotate_post_sgd_residual_evidence(
+                    todo,
+                    before=residual_before,
+                    after=residual_after,
+                    residual_stage=residual_stage,
+                )
+                if survives or not require_residual_survival:
+                    annotated.append(todo)
+            todos = annotated
         self.last_program_synthesis_deduped_count = 0
         todos = self._bounded_new_todos(todos, track_program_deduped=True)
         self.queue.add_many(todos)
@@ -1776,24 +1792,32 @@ class ModalTodoSupervisor:
                     continue
                 autoencoder_capacity -= 1
             if role == self.policy.program_synthesis_role:
-                if self.queue.has_semantic_duplicate(
+                duplicate = self.queue.find_semantic_duplicate(
                     todo,
                     optimizer_role=self.policy.program_synthesis_role,
                     near_duplicate_jaccard=self.policy.program_synthesis_near_duplicate_jaccard,
                     include_bundle_key=True,
-                ):
+                )
+                if duplicate is not None:
+                    _merge_program_todo_evidence(duplicate, todo)
                     if track_program_deduped:
                         program_deduped_count += 1
                     continue
-                if any(
-                    _program_todos_duplicate_for_repair(
-                        existing,
-                        todo,
-                        jaccard_threshold=self.policy.program_synthesis_near_duplicate_jaccard,
-                    )
-                    for existing in selected
-                    if _todo_optimizer_role(existing) == self.policy.program_synthesis_role
-                ):
+                selected_duplicate = next(
+                    (
+                        existing
+                        for existing in selected
+                        if _todo_optimizer_role(existing) == self.policy.program_synthesis_role
+                        and _program_todos_duplicate_for_repair(
+                            existing,
+                            todo,
+                            jaccard_threshold=self.policy.program_synthesis_near_duplicate_jaccard,
+                        )
+                    ),
+                    None,
+                )
+                if selected_duplicate is not None:
+                    _merge_program_todo_evidence(selected_duplicate, todo)
                     if track_program_deduped:
                         program_deduped_count += 1
                     continue
@@ -2167,6 +2191,10 @@ class ModalTodoSupervisor:
         program_synthesis_seeded = self.seed_program_synthesis_from_introspection(
             sample_list,
             autoencoder=autoencoder,
+            residual_before=before,
+            residual_after=after,
+            residual_stage="post_sgd" if claimed else "current_state_no_sgd",
+            require_residual_survival=bool(claimed),
         )
         program_synthesis_deduped = int(self.last_program_synthesis_deduped_count)
 
@@ -2421,6 +2449,104 @@ def _program_synthesis_validation_gate(
         "target_metrics": targeted_metrics,
         "validation_status": str(report.get("status") or "not_measured"),
     }
+
+
+def _annotate_post_sgd_residual_evidence(
+    todo: ModalTodo,
+    *,
+    before: AutoencoderEvaluation,
+    after: AutoencoderEvaluation,
+    residual_stage: str,
+) -> bool:
+    """Record before/after SGD metric deltas and whether Codex work remains."""
+    target_metrics = _unique_preserve_order(
+        str(metric)
+        for metric in _as_list(todo.metadata.get("target_metrics", []))
+        if str(metric)
+    )
+    before_metrics: Dict[str, float] = {}
+    after_metrics: Dict[str, float] = {}
+    metric_deltas: Dict[str, float] = {}
+    resolved_metrics: List[str] = []
+    surviving_metrics: List[str] = []
+    unmeasured_metrics: List[str] = []
+
+    for metric in target_metrics:
+        before_value = _metric_value(before, metric)
+        after_value = _metric_value(after, metric)
+        if before_value is None or after_value is None:
+            unmeasured_metrics.append(metric)
+            continue
+        before_metrics[metric] = round(float(before_value), 9)
+        after_metrics[metric] = round(float(after_value), 9)
+        delta = _metric_improvement_delta(
+            metric,
+            before_value=float(before_value),
+            after_value=float(after_value),
+        )
+        metric_deltas[metric] = round(delta, 9)
+        if _metric_residual_survives(metric, float(after_value)):
+            surviving_metrics.append(metric)
+        else:
+            resolved_metrics.append(metric)
+
+    survives = bool(surviving_metrics)
+    if target_metrics and len(unmeasured_metrics) == len(target_metrics):
+        survives = True
+    todo.metadata["post_sgd_metric_after"] = after_metrics
+    todo.metadata["post_sgd_metric_before"] = before_metrics
+    todo.metadata["post_sgd_metric_deltas"] = metric_deltas
+    todo.metadata["post_sgd_residual_resolved_metrics"] = resolved_metrics
+    todo.metadata["post_sgd_residual_surviving_metrics"] = surviving_metrics
+    todo.metadata["post_sgd_residual_unmeasured_metrics"] = unmeasured_metrics
+    todo.metadata["post_sgd_requires_codex"] = survives
+    todo.metadata["residual_cluster_stage"] = residual_stage
+    return survives
+
+
+def _metric_improvement_delta(
+    metric_name: str,
+    *,
+    before_value: float,
+    after_value: float,
+) -> float:
+    if _metric_higher_is_better(metric_name):
+        return after_value - before_value
+    return before_value - after_value
+
+
+def _metric_residual_survives(metric_name: str, value: float) -> bool:
+    threshold = _metric_residual_threshold(metric_name)
+    if _metric_higher_is_better(metric_name):
+        return float(value) < threshold
+    return float(value) > threshold
+
+
+def _metric_higher_is_better(metric_name: str) -> bool:
+    normalized = str(metric_name)
+    return (
+        normalized in {"embedding_cosine_similarity", "cosine_similarity"}
+        or normalized.endswith("_similarity")
+        or normalized.endswith("_score")
+        or normalized.endswith("_rate")
+    ) and not normalized.endswith("_loss")
+
+
+def _metric_residual_threshold(metric_name: str) -> float:
+    normalized = str(metric_name)
+    if _metric_higher_is_better(normalized):
+        return 0.98
+    thresholds = dict(ModalLossTodoGenerator.DEFAULT_THRESHOLDS)
+    thresholds.update(
+        {
+            "cosine_loss": 0.02,
+            "embedding_cosine_similarity": 0.98,
+            "legal_ir_multiview_cross_entropy_loss": 0.05,
+            "legal_ir_multiview_total_loss": 0.05,
+            "legal_ir_view_cross_entropy_loss": 0.05,
+        }
+    )
+    return float(thresholds.get(normalized, 0.0))
 
 
 def _program_todo_id(

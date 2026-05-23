@@ -151,6 +151,7 @@ class AutoencoderIntrospection:
     synthesis_focus: List[str] = field(default_factory=list)
     legal_ir_view_cross_entropy_loss: float = 0.0
     legal_ir_component_gaps: Dict[str, float] = field(default_factory=dict)
+    legal_ir_losses: Dict[str, float] = field(default_factory=dict)
     legal_ir_underrepresented_components: List[str] = field(default_factory=list)
     legal_ir_overrepresented_components: List[str] = field(default_factory=list)
     legal_ir_view_distribution: Dict[str, float] = field(default_factory=dict)
@@ -167,6 +168,7 @@ class AutoencoderIntrospection:
                 sorted(self.legal_ir_predicted_view_distribution.items())
             ),
             "legal_ir_component_gaps": dict(sorted(self.legal_ir_component_gaps.items())),
+            "legal_ir_losses": dict(sorted(self.legal_ir_losses.items())),
             "legal_ir_overrepresented_components": list(
                 self.legal_ir_overrepresented_components
             ),
@@ -632,6 +634,7 @@ class AdaptiveModalAutoencoder:
             self._torch,
         ) = _resolve_vector_compute_backend(compute_device)
         self._sample_feature_cache: Dict[tuple[str, int], Dict[str, Any]] = {}
+        self._legal_ir_loss_target_cache: Dict[str, Dict[str, float]] = {}
         self._legal_ir_view_target_cache: Dict[str, Dict[str, float]] = {}
 
     def evaluate(
@@ -666,6 +669,9 @@ class AdaptiveModalAutoencoder:
         )
         legal_ir_target_distributions: Mapping[str, Mapping[str, float]] = legal_ir_payload[
             "target_view_distributions_by_sample"
+        ]
+        legal_ir_target_losses: Mapping[str, Mapping[str, float]] = legal_ir_payload[
+            "target_losses_by_sample"
         ]
 
         cosine_scores: List[float] = []
@@ -703,6 +709,16 @@ class AdaptiveModalAutoencoder:
                 self._legal_ir_view_target_cache[
                     _sample_content_cache_id(sample)
                 ] = cached_distribution
+            target_losses = legal_ir_target_losses.get(sample.sample_id)
+            if target_losses:
+                cached_losses = {
+                    str(name): float(value)
+                    for name, value in target_losses.items()
+                }
+                self._legal_ir_loss_target_cache[sample.sample_id] = cached_losses
+                self._legal_ir_loss_target_cache[
+                    _sample_content_cache_id(sample)
+                ] = cached_losses
 
         cosine_scores, reconstruction_losses = self._embedding_metrics(
             target_vectors,
@@ -821,6 +837,10 @@ class AdaptiveModalAutoencoder:
             sample.sample_id,
             self._legal_ir_view_target_cache.get(_sample_content_cache_id(sample), {}),
         )
+        legal_ir_losses = self._legal_ir_loss_target_cache.get(
+            sample.sample_id,
+            self._legal_ir_loss_target_cache.get(_sample_content_cache_id(sample), {}),
+        )
         legal_ir_predicted_view_distribution: Dict[str, float] = {}
         legal_ir_view_cross_entropy_loss = 0.0
         if legal_ir_view_distribution:
@@ -865,6 +885,10 @@ class AdaptiveModalAutoencoder:
             legal_ir_component_gaps={
                 key: round(float(value), 12)
                 for key, value in sorted(legal_ir_component_gaps.items())
+            },
+            legal_ir_losses={
+                key: round(float(value), 12)
+                for key, value in sorted(legal_ir_losses.items())
             },
             legal_ir_underrepresented_components=legal_ir_underrepresented_components,
             legal_ir_overrepresented_components=legal_ir_overrepresented_components,
@@ -1947,13 +1971,19 @@ def _legal_ir_target_payload(
         parallel_workers=parallel_workers,
     )
     loss_values: Dict[str, List[float]] = {}
+    target_losses_by_sample: Dict[str, Dict[str, float]] = {}
     view_distribution_values: Dict[str, List[float]] = {}
     target_view_distributions_by_sample: Dict[str, Dict[str, float]] = {}
     target_hashes: Dict[str, str] = {}
 
     for sample_id, target in target_items:
+        sample_losses: Dict[str, float] = {}
         for name, value in dict(getattr(target, "losses", {}) or {}).items():
-            loss_values.setdefault(str(name), []).append(_float_or_zero(value))
+            safe_value = _float_or_zero(value)
+            loss_values.setdefault(str(name), []).append(safe_value)
+            sample_losses[str(name)] = safe_value
+        if sample_id and sample_losses:
+            target_losses_by_sample[str(sample_id)] = dict(sorted(sample_losses.items()))
         target_view_distribution: Dict[str, float] = {}
         for name, value in dict(getattr(target, "view_distribution", {}) or {}).items():
             view_value = _float_or_zero(value)
@@ -1977,6 +2007,7 @@ def _legal_ir_target_payload(
         "target_view_distributions_by_sample": dict(
             sorted(target_view_distributions_by_sample.items())
         ),
+        "target_losses_by_sample": dict(sorted(target_losses_by_sample.items())),
         "target_count": len(target_items),
         "target_hashes": dict(sorted(target_hashes.items())),
         "view_distribution": {

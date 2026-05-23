@@ -70,7 +70,10 @@ def test_loss_generator_turns_high_losses_into_actionable_todos() -> None:
     assert todos[0].sample_ids == [sample.sample_id]
     assert todos[0].citations == ["5 U.S.C. 552"]
     assert todos[0].metadata["optimizer_role"] == "program_synthesis"
-    assert todos[0].metadata["target_metrics"] == ["frame_ranking_loss"]
+    assert todos[0].metadata["target_metrics"] == [
+        "frame_ranking_loss",
+        "flogic_similarity_loss",
+    ]
     assert todos[0].metadata["validation_commands"]
     assert todos[1].metadata["optimizer_role"] == "autoencoder_sgd"
 
@@ -1234,9 +1237,13 @@ def test_supervisor_optimizes_autoencoder_first_and_leaves_program_synthesis_bac
     assert step.completed_count >= 1
     assert step.program_synthesis_seeded_count >= 1
     assert step.program_synthesis_pending_count >= 1
+    program_todos = supervisor.queue.pending(optimizer_role="program_synthesis")
+    assert all(todo.metadata["residual_cluster_stage"] == "post_sgd" for todo in program_todos)
+    assert all("post_sgd_metric_deltas" in todo.metadata for todo in program_todos)
+    assert all(todo.metadata["post_sgd_requires_codex"] is True for todo in program_todos)
     assert all(
         todo.metadata["optimizer_role"] == "program_synthesis"
-        for todo in supervisor.queue.pending(optimizer_role="program_synthesis")
+        for todo in program_todos
     )
 
 

@@ -14750,6 +14750,18 @@ def test_autoencoder_legal_ir_hint_signatures_include_component_gap_lane() -> No
     assert hint.evidence["primary_legal_ir_component_gap"] == 0.24
     assert residual_signature_for_hint(shifted_hint) != base_signature
 
+    failure_routed = synthesis_hints_from_autoencoder_introspection(
+        {
+            "sample_id": "us-code-5-552-deadbeefdeadbeef",
+            "legal_ir_losses": {"legal_ir_multiview_proof_failure_ratio": 0.5},
+        }
+    )
+
+    assert any(
+        hint.action == "repair_multiview_legal_ir_prover_gate"
+        for hint in failure_routed
+    )
+
 
 def test_logic_extractor_uses_logic_layer_modal_codec_without_llm() -> None:
     class FailingBackend:
