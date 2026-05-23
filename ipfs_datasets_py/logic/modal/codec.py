@@ -91,6 +91,8 @@ _CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("for the purposes of", "for_the_purposes_of"),
     ("for purposes of", "for_purposes_of"),
     ("with respect to", "with_respect_to"),
+    ("in accordance with", "in_accordance_with"),
+    ("as provided in", "as_provided_in"),
     ("to the extent provided", "to_the_extent_provided"),
     ("not later than", "not_later_than"),
     ("no later than", "no_later_than"),
@@ -104,9 +106,12 @@ _CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
 )
 _EXCEPTION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("except as otherwise provided", "except_as_otherwise_provided"),
+    ("except as provided in", "except_as_provided_in"),
     ("except to the extent", "except_to_the_extent"),
     ("except that", "except_that"),
     ("except as", "except_as"),
+    ("provided that", "provided_that"),
+    ("provided", "provided"),
     ("unless", "unless"),
     ("except", "except"),
 )
@@ -273,9 +278,15 @@ _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...
     "unless": (("conditional_normative", "O|"),),
     "except": (("conditional_normative", "O|"),),
     "except_as": (("conditional_normative", "O|"),),
+    "except_as_provided_in": (("conditional_normative", "O|"),),
     "except_that": (("conditional_normative", "O|"),),
     "except_as_otherwise_provided": (("conditional_normative", "O|"),),
     "except_to_the_extent": (("conditional_normative", "O|"),),
+    "provided": (
+        ("conditional_normative", "O|"),
+        ("deontic", "O"),
+        ("frame", "Frame"),
+    ),
     "provided_that": (
         ("conditional_normative", "O|"),
         ("deontic", "O"),
@@ -291,6 +302,14 @@ _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...
         ("deontic", "O"),
     ),
     "to_the_extent_provided": (("conditional_normative", "O|"),),
+    "in_accordance_with": (
+        ("conditional_normative", "O|"),
+        ("frame", "Frame"),
+    ),
+    "as_provided_in": (
+        ("conditional_normative", "O|"),
+        ("frame", "Frame"),
+    ),
     "in_the_event_that": (("conditional_normative", "O|"),),
     "in_the_case_of": (
         ("conditional_normative", "O|"),
@@ -310,8 +329,14 @@ _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...
     ),
     "shall": (("deontic", "O"),),
     "must": (("deontic", "O"),),
+    "required": (("deontic", "O"),),
+    "require": (("deontic", "O"),),
     "authorized": (("deontic", "P"),),
     "may": (("deontic", "P"),),
+    "authority": (
+        ("frame", "Frame"),
+        ("deontic", "O"),
+    ),
     "transfer": (("dynamic", "[a]"),),
     "transfers": (("dynamic", "[a]"),),
     "transferred": (("dynamic", "[a]"),),

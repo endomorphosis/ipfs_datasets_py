@@ -12847,6 +12847,111 @@ def test_modal_decompiler_and_triples_surface_subject_to_frame_and_scope_bridge_
     )
 
 
+def test_modal_decompiler_and_triples_surface_in_accordance_with_bridge_slots() -> None:
+    source_id = "us-code-42-12835.-efafc5db287e34c3"
+    source_text = (
+        "The Secretary shall ensure compliance in accordance with section 12707 "
+        "of this title."
+    )
+    formula = ModalIRFormula(
+        formula_id=f"{source_id}:f0001",
+        operator=ModalIROperator(
+            family="temporal",
+            system="ltl",
+            symbol="F",
+            label="eventually",
+        ),
+        predicate=ModalIRPredicate(name="ensure_compliance"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="42 U.S.C. 12835.",
+        ),
+        conditions=["in accordance with section 12707 of this title"],
+        metadata={"cue": "shall"},
+    )
+    document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(document)
+
+    assert "in_accordance_with" in slot_texts["condition_prefix_key"]
+    assert "in_accordance_with" in slot_texts["bridge_cue"]
+    assert "conditional_normative:O|:in_accordance_with" in slot_texts[
+        "condition_modal_bridge_signature"
+    ]
+    assert "frame:Frame:in_accordance_with" in slot_texts[
+        "condition_modal_bridge_signature"
+    ]
+    assert any(
+        triple["predicate"] == "condition_modal_bridge_signature"
+        and triple["object"] == "frame:Frame:in_accordance_with"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "bridge_modal_bridge_signature"
+        and triple["object"] == "conditional_normative:O|:in_accordance_with"
+        for triple in triples
+    )
+
+
+def test_modal_decompiler_and_triples_surface_authority_and_required_bridge_cues() -> None:
+    source_id = "us-code-16-580f-d159c17cca2fb07b"
+    source_text = (
+        "Transfer authority is required for approval by the Secretary."
+    )
+    formula = ModalIRFormula(
+        formula_id=f"{source_id}:f0001",
+        operator=ModalIROperator(
+            family="temporal",
+            system="ltl",
+            symbol="F",
+            label="eventually",
+        ),
+        predicate=ModalIRPredicate(name="transfer_authority_for_approval"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="16 U.S.C. 580f",
+        ),
+        conditions=["required for approval"],
+        metadata={"cue": "authority"},
+    )
+    document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(document)
+
+    assert "authority" in slot_texts["cue"]
+    assert "frame:Frame:authority" in slot_texts["cue_modal_bridge_signature"]
+    assert "required" in slot_texts["bridge_cue"]
+    assert "deontic:O:required" in slot_texts["bridge_modal_bridge_signature"]
+    assert any(
+        triple["predicate"] == "cue_modal_bridge_signature"
+        and triple["object"] == "frame:Frame:authority"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "bridge_modal_bridge_signature"
+        and triple["object"] == "deontic:O:required"
+        for triple in triples
+    )
+
+
 def test_modal_decompiler_surfaces_metadata_citation_slots_without_formulas() -> None:
     document = ModalIRDocument(
         document_id="metadata-citation-only-doc",
