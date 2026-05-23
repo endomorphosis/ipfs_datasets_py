@@ -4576,6 +4576,28 @@ def _apply_refined_modal_family_cue_pair_balance(
                 0.3 * math.log1p(deontic_overflow)
             )
             deontic_count = float(counts.get(deontic_family, 0.0))
+    # conditional_normative -> deontic:
+    # qualifier-style conditional scaffolding (for example, "subject to ..." or
+    # "for purposes of ...") should not flatten explicit deontic force to a tie.
+    if (
+        conditional_count > 0.0
+        and has_structural_conditional_scope
+        and has_conditional_scope_phrase
+        and has_deontic_scope
+        and has_explicit_deontic_scope
+        and not has_temporal_scope
+    ):
+        deontic_increment = _scaled_competing_scope_backfill(
+            source_count=conditional_count,
+            ratio=0.2,
+            minimum=0.0,
+            maximum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
+        counts[deontic_family] = max(
+            deontic_count,
+            deontic_count + deontic_increment,
+        )
+        deontic_count = float(counts.get(deontic_family, 0.0))
 
     # deontic -> temporal / conditional_normative:
     # preserve competing scope evidence when obligation terms and temporal/conditional
@@ -4598,6 +4620,22 @@ def _apply_refined_modal_family_cue_pair_balance(
             temporal_floor,
         )
         temporal_count = float(counts.get(temporal_family, 0.0))
+        if (
+            bool(signals.get("has_temporal_deadline_cue"))
+            and has_conditional_clause_scope
+            and not has_conditional_scope_phrase
+        ):
+            temporal_increment = _scaled_competing_scope_backfill(
+                source_count=max(deontic_count, conditional_count),
+                ratio=0.16,
+                minimum=0.0,
+                maximum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            )
+            counts[temporal_family] = max(
+                temporal_count,
+                temporal_count + temporal_increment,
+            )
+            temporal_count = float(counts.get(temporal_family, 0.0))
 
         conditional_floor = _scaled_competing_scope_backfill(
             source_count=deontic_count,

@@ -2682,6 +2682,36 @@ def test_spacy_refined_pair_balance_reinforces_conditional_for_phrase_only_statu
     assert counts["conditional_normative"] >= 0.4
 
 
+def test_spacy_refined_pair_balance_reinforces_deontic_for_conditional_scope_phrase_with_explicit_deontic_force() -> None:
+    counts = {
+        "conditional_normative": 1.0,
+        "deontic": 1.0,
+    }
+    signals = {
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": True,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": True,
+        "has_conditional_scope_token": False,
+        "has_purpose_scope_phrase": True,
+        "has_statutory_scope_reference": True,
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": True,
+        "has_deontic_cue": True,
+        "has_temporal_scope": False,
+        "has_temporal_scope_phrase": False,
+        "has_temporal_scope_token": False,
+        "has_temporal_within_scope": False,
+        "has_temporal_status_scope": False,
+        "has_temporal_deadline_cue": False,
+        "has_calendar_date_scope": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["deontic"] > 1.0
+
+
 def test_spacy_encoder_treats_to_the_extent_possible_as_deontic_qualifier_not_alethic_cue() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     encoding = encoder.encode(
@@ -2923,6 +2953,37 @@ def test_spacy_refined_pair_balance_reinforces_temporal_for_structural_statutory
     _apply_refined_modal_family_cue_pair_balance(counts, signals)
 
     assert counts["temporal"] > 1.25
+
+
+def test_spacy_refined_pair_balance_reinforces_temporal_for_deadline_condition_clause_competition() -> None:
+    counts = {
+        "conditional_normative": 1.0,
+        "deontic": 1.0,
+        "temporal": 1.0,
+    }
+    signals = {
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": True,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": False,
+        "has_conditional_scope_token": False,
+        "has_statutory_scope_reference": True,
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": True,
+        "has_deontic_cue": True,
+        "has_temporal_scope": True,
+        "has_temporal_cue": True,
+        "has_temporal_scope_phrase": True,
+        "has_temporal_scope_token": True,
+        "has_temporal_within_scope": False,
+        "has_temporal_status_scope": False,
+        "has_temporal_deadline_cue": True,
+        "has_calendar_date_scope": True,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["temporal"] > 1.0
 
 
 def test_spacy_refined_pair_balance_caps_editorial_temporal_status_pressure_for_statutory_deontic_scope() -> None:
