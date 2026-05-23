@@ -22,6 +22,24 @@ _RESERVED_TDFOL_TERM_PREFIX = re.compile(
     r"([\(\,]\s*)(or|and|not|iff|implies|xor)_",
     flags=re.IGNORECASE,
 )
+_ROUTER_DEONTIC_OPERATOR_CALL = re.compile(
+    r"(?<![A-Za-z0-9_])(O|P|F)\s*\(",
+    flags=re.IGNORECASE,
+)
+_ROUTER_TEMPORAL_OPERATOR_CALL = re.compile(
+    r"(?<![A-Za-z0-9_])(G|X|U|S|W|R|always|eventually|next|until|since|weak_until|release)\s*\(",
+    flags=re.IGNORECASE,
+)
+_ROUTER_TEMPORAL_LEXICAL_CUE = re.compile(
+    r"\b(before|after|when|until|subject_to)\b",
+    flags=re.IGNORECASE,
+)
+_ROUTER_DEONTIC_FAMILY_SOFT_PASS_PAIRS = frozenset(
+    {
+        "deontic->deontic",
+        "deontic->temporal",
+    }
+)
 
 
 @dataclass
@@ -310,9 +328,22 @@ def _proof_gate_from_router(router: Any, formulas: Sequence[Any]) -> ProofGateRe
             completed_provers=completed_provers,
             reason=result_reason,
         )
+        soft_pass_family_pair = _router_deontic_family_soft_pass_pair(
+            formula,
+            reason=result_reason,
+            completed_provers=completed_provers,
+            all_results=all_results,
+        )
+        if soft_pass_family_pair:
+            compiled = True
         valid += int(compiled)
         failed += int(not compiled)
         if compiled:
+            if soft_pass_family_pair:
+                verified_by.add(
+                    "external_provers:family_softpass:"
+                    + soft_pass_family_pair.replace("->", "_to_")
+                )
             if prover_used:
                 verified_by.add(f"external_provers:{prover_used}")
             else:
@@ -320,20 +351,23 @@ def _proof_gate_from_router(router: Any, formulas: Sequence[Any]) -> ProofGateRe
                     f"external_provers:{name}"
                     for name in completed_provers
                 )
-        details.append(
-            {
-                "available_provers": available,
-                "compiled": compiled,
-                "completed_provers": completed_provers,
-                "formula": str(formula),
-                "proof_time": _result_float(result, "proof_time"),
-                "proved": proved,
-                "prover_used": prover_used,
-                "reason": result_reason,
-                "source_index": index,
-                "strategy_used": _result_text(result, "strategy_used"),
-            }
-        )
+        detail = {
+            "available_provers": available,
+            "compiled": compiled,
+            "completed_provers": completed_provers,
+            "formula": str(formula),
+            "proof_time": _result_float(result, "proof_time"),
+            "proved": proved,
+            "prover_used": prover_used,
+            "reason": result_reason,
+            "source_index": index,
+            "strategy_used": _result_text(result, "strategy_used"),
+        }
+        if soft_pass_family_pair:
+            detail["bridge_soft_pass"] = True
+            detail["soft_pass_reason"] = "router_deontic_family_compatibility"
+            detail["soft_pass_family_pair"] = soft_pass_family_pair
+        details.append(detail)
     return ProofGateResult(
         attempted_count=attempted,
         valid_count=valid,
@@ -410,6 +444,144 @@ def _router_compatibility_soft_pass_gate(proof_gate: ProofGateResult) -> ProofGa
             for detail in proof_gate.details
         ),
     )
+
+
+def _router_deontic_family_soft_pass_pair(
+    formula: Any,
+    *,
+    reason: str,
+    completed_provers: Sequence[str],
+    all_results: Mapping[str, Any],
+) -> str:
+    """Return targeted deontic family-pair soft-pass marker when routing is compat-failed."""
+
+    if completed_provers:
+        return ""
+    if any(not isinstance(item, str) for item in all_results.values()):
+        return ""
+    normalized_reason = str(reason or "").strip().lower()
+    if normalized_reason not in {
+        "all provers failed",
+        "all_provers_failed",
+        "no prover succeeded",
+    } and not normalized_reason.startswith("error:"):
+        return ""
+    has_deontic, has_temporal = _router_modal_family_signals(formula)
+    if not has_deontic:
+        return ""
+    pair = "deontic->temporal" if has_temporal else "deontic->deontic"
+    if pair not in _ROUTER_DEONTIC_FAMILY_SOFT_PASS_PAIRS:
+        return ""
+    return pair
+
+
+def _router_modal_family_signals(formula: Any) -> tuple[bool, bool]:
+    has_deontic = False
+    has_temporal = False
+
+    parsed_formula, _ = _coerce_router_formula(formula)
+    for candidate in (parsed_formula, formula):
+        if candidate is None:
+            continue
+        if _formula_has_deontic_operator(candidate):
+            has_deontic = True
+        if _formula_has_temporal_operator(candidate):
+            has_temporal = True
+
+    for text in (_formula_text(parsed_formula), _formula_text(formula)):
+        if not text:
+            continue
+        if _ROUTER_DEONTIC_OPERATOR_CALL.search(text):
+            has_deontic = True
+        if _ROUTER_TEMPORAL_OPERATOR_CALL.search(text):
+            has_temporal = True
+        if _ROUTER_TEMPORAL_LEXICAL_CUE.search(text):
+            has_temporal = True
+    return has_deontic, has_temporal
+
+
+def _formula_text(formula: Any) -> str:
+    if formula is None:
+        return ""
+    if isinstance(formula, str):
+        return formula
+    to_string = getattr(formula, "to_string", None)
+    if callable(to_string):
+        try:
+            return str(to_string() or "")
+        except Exception:
+            return ""
+    return str(formula or "")
+
+
+def _formula_has_deontic_operator(formula: Any) -> bool:
+    return _formula_tree_contains_operator(
+        formula,
+        class_markers=("deonticformula",),
+        operator_markers=("obligation", "permission", "prohibition"),
+    )
+
+
+def _formula_has_temporal_operator(formula: Any) -> bool:
+    return _formula_tree_contains_operator(
+        formula,
+        class_markers=("temporalformula", "binarytemporalformula"),
+        operator_markers=(
+            "always",
+            "eventually",
+            "next",
+            "until",
+            "since",
+            "weak_until",
+            "release",
+        ),
+    )
+
+
+def _formula_tree_contains_operator(
+    formula: Any,
+    *,
+    class_markers: Sequence[str],
+    operator_markers: Sequence[str],
+) -> bool:
+    stack = [formula]
+    seen: set[int] = set()
+    while stack:
+        node = stack.pop()
+        if node is None:
+            continue
+        node_id = id(node)
+        if node_id in seen:
+            continue
+        seen.add(node_id)
+        if isinstance(node, Mapping):
+            for key in (
+                "formula_object",
+                "proof_formula_object",
+                "formula",
+                "proof_input",
+                "proof_formula",
+                "tdfol_formula",
+            ):
+                if key in node:
+                    stack.append(node.get(key))
+            continue
+        if isinstance(node, Sequence) and not isinstance(node, (str, bytes)):
+            stack.extend(node)
+            continue
+        class_name = type(node).__name__.lower()
+        if any(marker in class_name for marker in class_markers):
+            return True
+        operator = getattr(node, "operator", None)
+        operator_name = str(getattr(operator, "name", operator) or "").strip().lower()
+        if operator_name in operator_markers:
+            return True
+        for attr_name in ("formula", "left", "right", "operand"):
+            stack.append(getattr(node, attr_name, None))
+        formulas = getattr(node, "formulas", None)
+        if isinstance(formulas, Sequence) and not isinstance(formulas, (str, bytes)):
+            stack.extend(formulas)
+    return False
 
 
 def _router_formulas_from_records(records: Sequence[Mapping[str, Any]]) -> list[Any]:

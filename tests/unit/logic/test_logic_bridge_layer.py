@@ -1320,6 +1320,154 @@ def test_external_prover_router_bridge_soft_passes_when_available_router_cannot_
     assert report.round_trip.extra_losses["external_prover_failure_ratio"] == 0.0
 
 
+def test_external_prover_router_bridge_soft_passes_deontic_to_deontic_router_compatibility_failures(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge.external_prover_router import (
+        ExternalProverRouterBridgeAdapter,
+    )
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
+
+    class _CompatFailureResult:
+        def __init__(self) -> None:
+            self.is_proved = False
+            self.prover_used = ""
+            self.proof_time = 0.01
+            self.reason = "All provers failed"
+            self.strategy_used = "sequential"
+            self.all_results = {"native": "Error: compatibility_failure"}
+
+    class _CompatFailureRouter:
+        @staticmethod
+        def get_available_provers() -> list[str]:
+            return ["native"]
+
+        @staticmethod
+        def route(_formula, **_kwargs):
+            return _CompatFailureResult()
+
+    class _DeonticOnlyFormulaAdapter(FolTdfolBridgeAdapter):
+        def encode(self, *args, **kwargs):
+            document, context = super().encode(*args, **kwargs)
+            formula_records = list(context["formula_records"])
+            assert formula_records
+            patched = dict(formula_records[0])
+            patched.pop("formula_object", None)
+            patched["formula"] = "O(register_notice(secretary))"
+            patched["proof_input"] = patched["formula"]
+            return (
+                document,
+                {
+                    **dict(context),
+                    "formula_records": [patched],
+                },
+            )
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.bridge.external_prover_router._build_router",
+        lambda **_kwargs: _CompatFailureRouter(),
+    )
+
+    adapter = ExternalProverRouterBridgeAdapter(
+        tdfol_adapter=_DeonticOnlyFormulaAdapter(),
+        enable_native=False,
+        enable_external_binaries=True,
+    )
+    report = adapter.evaluate(
+        "The Secretary shall register notice.",
+        document_id="external-prover-bridge-deontic-compat-soft-pass",
+        citation="External Prover Bridge Deontic Compat Soft Pass",
+    )
+
+    assert report.proof_gate.compiles is True
+    assert report.proof_gate.valid_count == report.proof_gate.attempted_count
+    assert report.proof_gate.details[0]["bridge_soft_pass"] is True
+    assert (
+        report.proof_gate.details[0]["soft_pass_reason"]
+        == "router_deontic_family_compatibility"
+    )
+    assert report.proof_gate.details[0]["soft_pass_family_pair"] == "deontic->deontic"
+    assert (
+        "external_provers:family_softpass:deontic_to_deontic"
+        in report.proof_gate.verified_by
+    )
+    assert report.round_trip.extra_losses["external_prover_failure_ratio"] == 0.0
+
+
+def test_external_prover_router_bridge_soft_passes_deontic_to_temporal_router_compatibility_failures(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge.external_prover_router import (
+        ExternalProverRouterBridgeAdapter,
+    )
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
+
+    class _CompatFailureResult:
+        def __init__(self) -> None:
+            self.is_proved = False
+            self.prover_used = ""
+            self.proof_time = 0.01
+            self.reason = "All provers failed"
+            self.strategy_used = "sequential"
+            self.all_results = {"native": "Error: compatibility_failure"}
+
+    class _CompatFailureRouter:
+        @staticmethod
+        def get_available_provers() -> list[str]:
+            return ["native"]
+
+        @staticmethod
+        def route(_formula, **_kwargs):
+            return _CompatFailureResult()
+
+    class _DeonticTemporalFormulaAdapter(FolTdfolBridgeAdapter):
+        def encode(self, *args, **kwargs):
+            document, context = super().encode(*args, **kwargs)
+            formula_records = list(context["formula_records"])
+            assert formula_records
+            patched = dict(formula_records[0])
+            patched.pop("formula_object", None)
+            patched["formula"] = "O(G(register_notice(secretary)))"
+            patched["proof_input"] = patched["formula"]
+            return (
+                document,
+                {
+                    **dict(context),
+                    "formula_records": [patched],
+                },
+            )
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.bridge.external_prover_router._build_router",
+        lambda **_kwargs: _CompatFailureRouter(),
+    )
+
+    adapter = ExternalProverRouterBridgeAdapter(
+        tdfol_adapter=_DeonticTemporalFormulaAdapter(),
+        enable_native=False,
+        enable_external_binaries=True,
+    )
+    report = adapter.evaluate(
+        "The Secretary shall register notice before issuance.",
+        document_id="external-prover-bridge-deontic-temporal-compat-soft-pass",
+        citation="External Prover Bridge Deontic Temporal Compat Soft Pass",
+    )
+
+    assert report.proof_gate.compiles is True
+    assert report.proof_gate.valid_count == report.proof_gate.attempted_count
+    assert report.proof_gate.details[0]["bridge_soft_pass"] is True
+    assert (
+        report.proof_gate.details[0]["soft_pass_reason"]
+        == "router_deontic_family_compatibility"
+    )
+    assert report.proof_gate.details[0]["soft_pass_family_pair"] == "deontic->temporal"
+    assert (
+        "external_provers:family_softpass:deontic_to_temporal"
+        in report.proof_gate.verified_by
+    )
+    assert report.round_trip.extra_losses["external_prover_failure_ratio"] == 0.0
+
+
 def test_external_prover_router_bridge_supports_route_signature_without_axioms(
     monkeypatch,
 ) -> None:
