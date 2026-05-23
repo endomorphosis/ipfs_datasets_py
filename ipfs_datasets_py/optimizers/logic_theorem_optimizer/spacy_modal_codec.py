@@ -135,6 +135,10 @@ _ALETHIC_SCOPE_PHRASES = (
     "not possible",
     "unable to",
 )
+_NON_ALETHIC_POSSIBLE_SCOPE_PREFIXES = (
+    "as far as",
+    "to the extent",
+)
 _TEMPORAL_SCOPE_TOKENS = frozenset(
     {
         "after",
@@ -1068,6 +1072,15 @@ class SpaCyLegalEncoder:
                             end_char=match.end(),
                         ):
                             continue
+                        if (
+                            profile.family == ModalLogicFamily.ALETHIC
+                            and cue.lower() == "possible"
+                            and self._is_non_alethic_possible_cue(
+                                normalized_text=normalized,
+                                start_char=match.start(),
+                            )
+                        ):
+                            continue
                         if profile.family == ModalLogicFamily.TEMPORAL:
                             lowered_cue = cue.lower()
                             if lowered_cue in _NON_TEMPORAL_PROCEDURAL_AFTER_CUES:
@@ -1146,6 +1159,19 @@ class SpaCyLegalEncoder:
             return False
         trailing = normalized_text[end_char:]
         return bool(re.match(r"^\s+\d{1,2}(?:,\s*|\s+)\d{4}\b", trailing))
+
+    def _is_non_alethic_possible_cue(
+        self,
+        *,
+        normalized_text: str,
+        start_char: int,
+    ) -> bool:
+        """Treat qualified effort phrases as deontic scope, not alethic possibility."""
+        leading_window = normalized_text[max(0, start_char - 48) : start_char].lower()
+        for prefix in _NON_ALETHIC_POSSIBLE_SCOPE_PREFIXES:
+            if re.search(rf"{re.escape(prefix)}\s+$", leading_window):
+                return True
+        return False
 
     def _is_temporal_deadline_by_cue(
         self,
@@ -4575,6 +4601,57 @@ def _apply_refined_modal_family_cue_pair_balance(
             conditional_floor,
         )
         conditional_count = float(counts.get(conditional_family, 0.0))
+
+    # temporal -> deontic:
+    # phrase-only structural qualifiers (e.g., "with respect to") often carry
+    # operative deontic force even when temporal deadlines are present.
+    if (
+        temporal_count > deontic_count
+        and has_temporal_scope
+        and has_phrase_only_conditional_scope
+        and has_explicit_deontic_scope
+    ):
+        deontic_floor = _scaled_competing_scope_backfill(
+            source_count=temporal_count,
+            ratio=0.24,
+            minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            maximum=_STATUTORY_GENERIC_FRAME_DEONTIC_SCOPE_MAX,
+        )
+        deontic_increment = _scaled_competing_scope_backfill(
+            source_count=temporal_count,
+            ratio=0.1,
+            minimum=0.0,
+            maximum=_FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
+        counts[deontic_family] = max(
+            deontic_count,
+            deontic_floor,
+            deontic_count + deontic_increment,
+        )
+        deontic_count = float(counts.get(deontic_family, 0.0))
+
+    # temporal -> frame:
+    # delegation/authority clauses with statutory conditions can be primarily
+    # structural frame semantics despite nearby temporal qualifiers.
+    if (
+        temporal_count > frame_count
+        and has_temporal_scope
+        and has_frame_scope_context
+        and has_statutory_scope_reference
+        and has_explicit_deontic_scope
+        and not has_temporal_deadline_scope
+    ):
+        frame_floor = _scaled_competing_scope_backfill(
+            source_count=max(temporal_count, deontic_count),
+            ratio=0.24,
+            minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            maximum=_STATUTORY_GENERIC_FRAME_COMPETING_SCOPE_MAX,
+        )
+        counts[frame_family] = max(
+            frame_count,
+            frame_floor,
+        )
+        frame_count = float(counts.get(frame_family, 0.0))
 
     # temporal -> deontic:
     # prevent status/date-only temporal context from masking clear deontic force.
