@@ -6563,6 +6563,11 @@ def _selected_frame(document: ModalIRDocument) -> str:
         frame_id = _clean_text(getattr(frame, "frame_id", "") or "")
         if frame_id:
             return frame_id
+    frame_terms_by_frame = _frame_ontology_terms_by_frame(document)
+    for frame_id in sorted(frame_terms_by_frame):
+        normalized = _clean_text(frame_id)
+        if normalized:
+            return normalized
     return ""
 
 

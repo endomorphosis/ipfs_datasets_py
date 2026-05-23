@@ -1184,6 +1184,18 @@ def _metadata_only_frame_terms_sample_document() -> ModalIRDocument:
     )
 
 
+def _metadata_only_frame_terms_without_selected_frame_sample_document() -> ModalIRDocument:
+    base = _metadata_only_frame_terms_sample_document()
+    return ModalIRDocument(
+        document_id=base.document_id,
+        source=base.source,
+        normalized_text=base.normalized_text,
+        formulas=list(base.formulas),
+        frame_candidates=[],
+        metadata=dict(base.metadata),
+    )
+
+
 def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
     decoded = decode_modal_ir_document(_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
@@ -3235,6 +3247,37 @@ def test_decode_modal_ir_document_infers_selected_frame_terms_from_metadata() ->
         "appeal",
         "deadline",
     ]
+
+
+def test_decode_modal_ir_document_infers_selected_frame_from_metadata_terms_without_frame_logic() -> None:
+    decoded = decode_modal_ir_document(
+        _metadata_only_frame_terms_without_selected_frame_sample_document()
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["selected_frame"] == ["administrative_notice_hearing"]
+    assert slot_map["selected_ontology_frame"] == ["administrative_notice_hearing"]
+    assert slot_map["selected_frame_modal_family"] == ["temporal"]
+    assert slot_map["selected_frame_modal_family_count_value"] == ["1"]
+    assert slot_map["selected_frame_modal_family_temporal_parity"] == ["odd"]
+
+
+def test_modal_ir_to_flogic_triples_infers_selected_frame_from_metadata_terms_without_frame_logic() -> None:
+    triples = modal_ir_to_flogic_triples(
+        _metadata_only_frame_terms_without_selected_frame_sample_document()
+    )
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("selected_ontology_frame") == ["administrative_notice_hearing"]
+    assert objects("selected_frame_modal_family") == ["temporal"]
+    assert objects("selected_frame_modal_family_count_value") == ["1"]
+    assert objects("selected_frame_modal_family_temporal_parity") == ["odd"]
 
 
 def test_modal_ir_to_flogic_triples_emits_document_citation_slots_when_no_formulas() -> None:
