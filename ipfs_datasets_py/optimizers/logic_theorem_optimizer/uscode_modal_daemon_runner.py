@@ -2820,6 +2820,266 @@ def _run_codex_apply_validation(
     return {"commands": results, "status": "passed"}
 
 
+def _codex_packet_metric_sample_payloads(
+    packet: Mapping[str, Any],
+    *,
+    max_samples: int = 8,
+) -> List[Dict[str, Any]]:
+    """Return unique legal sample payloads carried by claimed TODO metadata."""
+    payloads: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+    for todo in packet.get("todos", []):
+        if not isinstance(todo, Mapping):
+            continue
+        metadata = dict(todo.get("metadata", {}) or {})
+        for payload in metadata.get("metric_sample_payloads", []) or []:
+            if not isinstance(payload, Mapping):
+                continue
+            sample_id = str(payload.get("sample_id") or "")
+            key = sample_id or hashlib.sha256(
+                json.dumps(dict(payload), sort_keys=True, default=str).encode("utf-8")
+            ).hexdigest()
+            if key in seen:
+                continue
+            seen.add(key)
+            payloads.append(dict(payload))
+            if len(payloads) >= max(0, int(max_samples)):
+                return payloads
+    return payloads
+
+
+def _codex_packet_target_metric_names(packet: Mapping[str, Any]) -> List[str]:
+    """Return target metrics declared by claimed TODO metadata."""
+    metrics: List[str] = []
+    for todo in packet.get("todos", []):
+        if not isinstance(todo, Mapping):
+            continue
+        metadata = dict(todo.get("metadata", {}) or {})
+        metrics.extend(str(metric) for metric in metadata.get("target_metrics", []) or [])
+    return list(dict.fromkeys(metric for metric in metrics if metric))
+
+
+def _codex_packet_target_metric_snapshot(
+    packet: Mapping[str, Any],
+    repo_root: Path,
+    *,
+    timeout_seconds: float = 120.0,
+) -> Dict[str, Any]:
+    """Measure target metrics in a fresh subprocess using packet sample payloads."""
+    sample_payloads = _codex_packet_metric_sample_payloads(packet)
+    target_metrics = _codex_packet_target_metric_names(packet)
+    if not sample_payloads or not target_metrics:
+        return {
+            "metric_count": 0,
+            "metrics": {},
+            "sample_count": len(sample_payloads),
+            "status": "skipped",
+            "target_metrics": target_metrics,
+        }
+    script = r'''
+import json
+import sys
+
+from ipfs_datasets_py.logic.bridge import DEFAULT_LEGAL_IR_BRIDGE_NAMES
+from ipfs_datasets_py.logic.modal import DeterministicModalLogicCodec, ModalLogicCodecConfig
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import build_us_code_sample
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_runner import (
+    bridge_ir_metric_block,
+    compiler_ir_metric_block,
+)
+
+payload = json.loads(sys.stdin.read())
+samples = []
+for item in payload.get("samples", []):
+    samples.append(
+        build_us_code_sample(
+            title=str(item.get("title") or ""),
+            section=str(item.get("section") or ""),
+            citation=str(item.get("citation") or "") or None,
+            text=str(item.get("text") or ""),
+            embedding_vector=item.get("embedding_vector") or None,
+        )
+    )
+codec = DeterministicModalLogicCodec(ModalLogicCodecConfig())
+compiler = compiler_ir_metric_block(samples, codec)
+bridge = bridge_ir_metric_block(
+    samples,
+    DEFAULT_LEGAL_IR_BRIDGE_NAMES,
+    evaluate_provers=False,
+    parallel_workers=1,
+)
+metrics = {}
+for key, value in compiler.items():
+    if isinstance(value, (int, float)):
+        metrics[str(key)] = float(value)
+if "cosine_similarity" in metrics:
+    metrics["embedding_cosine_similarity"] = metrics["cosine_similarity"]
+canonical = dict(bridge.get("canonical_ir", {}) or {})
+canonical_losses = dict(canonical.get("losses", {}) or {})
+for key, value in canonical_losses.items():
+    if isinstance(value, (int, float)):
+        metrics[str(key)] = float(value)
+canonical_map = {
+    "legal_ir_multiview_total_loss": "total_loss",
+    "legal_ir_multiview_graph_failure_penalty": "graph_failure_penalty",
+    "legal_ir_multiview_proof_failure_ratio": "proof_failure_ratio",
+    "legal_ir_multiview_view_coverage_loss": "view_coverage_loss",
+}
+for metric_name, source_key in canonical_map.items():
+    value = canonical.get(source_key)
+    if isinstance(value, (int, float)):
+        metrics[metric_name] = float(value)
+target_metrics = list(payload.get("target_metrics") or [])
+selected = {
+    metric: metrics[metric]
+    for metric in target_metrics
+    if metric in metrics
+}
+print(json.dumps({
+    "compiler": compiler,
+    "metric_count": len(selected),
+    "metrics": selected,
+    "sample_count": len(samples),
+    "status": "measured",
+    "target_metrics": target_metrics,
+}, sort_keys=True))
+'''
+    payload = {"samples": sample_payloads, "target_metrics": target_metrics}
+    try:
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            cwd=repo_root,
+            input=json.dumps(payload, ensure_ascii=True),
+            capture_output=True,
+            env=_codex_apply_validation_env(),
+            text=True,
+            timeout=max(1.0, float(timeout_seconds)),
+        )
+    except subprocess.TimeoutExpired as exc:
+        return {
+            "metric_count": 0,
+            "metrics": {},
+            "sample_count": len(sample_payloads),
+            "status": "timeout",
+            "stderr_tail": _process_text(exc.stderr)[-500:],
+            "stdout_tail": _process_text(exc.stdout)[-500:],
+            "target_metrics": target_metrics,
+            "timeout_seconds": float(timeout_seconds),
+        }
+    if result.returncode != 0:
+        return {
+            "exit_code": result.returncode,
+            "metric_count": 0,
+            "metrics": {},
+            "sample_count": len(sample_payloads),
+            "status": "failed",
+            "stderr_tail": (result.stderr or "")[-500:],
+            "stdout_tail": (result.stdout or "")[-500:],
+            "target_metrics": target_metrics,
+        }
+    try:
+        stdout_lines = [line for line in (result.stdout or "").splitlines() if line.strip()]
+        snapshot = json.loads(stdout_lines[-1] if stdout_lines else "")
+    except json.JSONDecodeError:
+        return {
+            "exit_code": result.returncode,
+            "metric_count": 0,
+            "metrics": {},
+            "sample_count": len(sample_payloads),
+            "status": "invalid_json",
+            "stderr_tail": (result.stderr or "")[-500:],
+            "stdout_tail": (result.stdout or "")[-500:],
+            "target_metrics": target_metrics,
+        }
+    snapshot["stderr_tail"] = (result.stderr or "")[-500:]
+    return snapshot
+
+
+def _codex_packet_should_measure_target_metrics(
+    packet: Mapping[str, Any],
+    *,
+    target_files: Sequence[str],
+) -> bool:
+    """Return true when packet metadata and changed files justify metric checks."""
+    if not _codex_packet_metric_sample_payloads(packet):
+        return False
+    if not _codex_packet_target_metric_names(packet):
+        return False
+    return any(
+        str(path).startswith(("ipfs_datasets_py/", "tests/", "tests/unit_tests/"))
+        for path in target_files
+    )
+
+
+def _codex_target_metric_validation_report(
+    *,
+    before: Mapping[str, Any],
+    after: Mapping[str, Any],
+) -> Dict[str, Any]:
+    """Compare before/after target metrics with positive deltas meaning better."""
+    target_metrics = list(dict.fromkeys(list(before.get("target_metrics", []) or [])))
+    before_metrics = dict(before.get("metrics", {}) or {})
+    after_metrics = dict(after.get("metrics", {}) or {})
+    metric_deltas: Dict[str, float] = {}
+    improved_metrics: List[str] = []
+    regressed_metrics: List[str] = []
+    missing_metrics: List[str] = []
+    for metric in target_metrics:
+        if metric not in before_metrics or metric not in after_metrics:
+            missing_metrics.append(str(metric))
+            continue
+        delta = _target_metric_improvement_delta(
+            metric,
+            before_value=float(before_metrics[metric]),
+            after_value=float(after_metrics[metric]),
+        )
+        metric_deltas[str(metric)] = round(delta, 9)
+        if delta > 0.0:
+            improved_metrics.append(str(metric))
+        elif delta < 0.0:
+            regressed_metrics.append(str(metric))
+    before_status = str(before.get("status") or "")
+    after_status = str(after.get("status") or "")
+    status = (
+        "skipped"
+        if before_status == "skipped" or after_status == "skipped"
+        else "unavailable"
+        if before_status != "measured" or after_status != "measured"
+        else "regressed"
+        if regressed_metrics
+        else "passed"
+    )
+    return {
+        "after": dict(after),
+        "before": dict(before),
+        "improved_metrics": improved_metrics,
+        "metric_deltas": metric_deltas,
+        "missing_metrics": missing_metrics,
+        "regressed_metrics": regressed_metrics,
+        "status": status,
+        "target_metrics": target_metrics,
+    }
+
+
+def _target_metric_improvement_delta(
+    metric_name: str,
+    *,
+    before_value: float,
+    after_value: float,
+) -> float:
+    """Return positive when the metric improved."""
+    normalized = str(metric_name)
+    higher_is_better = (
+        normalized in {"embedding_cosine_similarity", "cosine_similarity"}
+        or normalized.endswith("_similarity")
+        or normalized.endswith("_score")
+        or normalized.endswith("_rate")
+    ) and not normalized.endswith("_loss")
+    if higher_is_better:
+        return after_value - before_value
+    return before_value - after_value
+
+
 def _commit_codex_main_changes(
     repo_root: Path,
     *,
@@ -3081,6 +3341,27 @@ def apply_codex_worktree_changes_to_main(
             _save_packet_if_possible(updated, packet_path)
             return updated
 
+    measure_target_metrics = _codex_packet_should_measure_target_metrics(
+        updated,
+        target_files=target_files,
+    )
+    target_metric_before = (
+        _codex_packet_target_metric_snapshot(
+            updated,
+            source_repo_root,
+            timeout_seconds=min(float(validation_timeout_seconds), 120.0),
+        )
+        if measure_target_metrics
+        else {
+            "metric_count": 0,
+            "metrics": {},
+            "sample_count": 0,
+            "status": "skipped",
+            "target_metrics": _codex_packet_target_metric_names(updated),
+        }
+    )
+    updated["target_metric_baseline"] = target_metric_before
+
     apply_result = _run_git_apply_stdin(source_repo_root, diff_content)
     updated["main_apply_result"] = {
         "exit_code": apply_result.returncode,
@@ -3148,6 +3429,50 @@ def apply_codex_worktree_changes_to_main(
                 else "main_apply_validation_failed_rollback_failed"
             )
             updated["patch_error"] = f"validation {validation['status']}"
+        updated["main_apply_error"] = updated["patch_error"]
+        _save_packet_if_possible(updated, packet_path)
+        return updated
+
+    target_metric_after = (
+        _codex_packet_target_metric_snapshot(
+            updated,
+            source_repo_root,
+            timeout_seconds=min(float(validation_timeout_seconds), 120.0),
+        )
+        if measure_target_metrics
+        else {
+            "metric_count": 0,
+            "metrics": {},
+            "sample_count": 0,
+            "status": "skipped",
+            "target_metrics": _codex_packet_target_metric_names(updated),
+        }
+    )
+    target_metric_validation = _codex_target_metric_validation_report(
+        before=target_metric_before,
+        after=target_metric_after,
+    )
+    updated["target_metric_validation"] = target_metric_validation
+    updated["metric_deltas"] = dict(target_metric_validation.get("metric_deltas", {}))
+    if target_metric_validation["status"] == "regressed":
+        rollback = _run_git_apply_stdin(source_repo_root, diff_content, "-R")
+        updated["main_apply_rollback"] = {
+            "exit_code": rollback.returncode,
+            "stderr_tail": (rollback.stderr or "")[-500:],
+            "stdout_tail": (rollback.stdout or "")[-500:],
+        }
+        patch_path = _save_codex_packet_diff_patch(
+            updated,
+            diff_content=diff_content,
+            reason="target-metric-regression",
+        )
+        updated["patch_path"] = str(patch_path) if patch_path is not None else None
+        updated["patch_status"] = (
+            "main_apply_target_metric_regression_rolled_back"
+            if rollback.returncode == 0
+            else "main_apply_target_metric_regression_rollback_failed"
+        )
+        updated["patch_error"] = "target metric regression"
         updated["main_apply_error"] = updated["patch_error"]
         _save_packet_if_possible(updated, packet_path)
         return updated
@@ -3518,15 +3843,18 @@ def _codex_packet_validation_report(packet: Mapping[str, Any]) -> Dict[str, Any]
     """Summarize packet validation/apply evidence for queue finalization."""
     main_validation = dict(packet.get("main_apply_validation", {}) or {})
     baseline_validation = dict(packet.get("main_apply_baseline_validation", {}) or {})
+    target_metric_validation = dict(packet.get("target_metric_validation", {}) or {})
     return {
         "baseline_status": baseline_validation.get("status"),
         "main_apply_status": packet.get("main_apply_status"),
         "metric_deltas": dict(packet.get("metric_deltas", {}) or {}),
         "patch_status": packet.get("patch_status"),
+        "regressed_metrics": list(target_metric_validation.get("regressed_metrics", []) or []),
         "status": main_validation.get("status")
         or packet.get("main_apply_status")
         or packet.get("patch_status")
         or "not_measured",
+        "target_metric_status": target_metric_validation.get("status"),
     }
 
 

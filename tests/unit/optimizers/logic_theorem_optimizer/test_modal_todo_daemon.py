@@ -1045,6 +1045,7 @@ def test_program_synthesis_generator_clusters_stable_autoencoder_residuals() -> 
     assert all(todo.metadata["residual_signatures"] for todo in todos)
     assert all(todo.metadata["target_metrics"] for todo in todos)
     assert all(todo.metadata["validation_commands"] for todo in todos)
+    assert all(todo.metadata["metric_sample_payloads"] for todo in todos)
     for todo in todos:
         assert {
             evidence["hint_id"] for evidence in todo.metadata["hint_evidence"]
@@ -1390,6 +1391,10 @@ def test_codex_runner_extracts_todo_validation_commands_and_packet_report() -> N
             "main_apply_validation": {"status": "passed"},
             "metric_deltas": {"cross_entropy_loss": 0.1},
             "patch_status": "applied_to_main",
+            "target_metric_validation": {
+                "regressed_metrics": [],
+                "status": "passed",
+            },
         }
     )
 
@@ -1397,6 +1402,46 @@ def test_codex_runner_extracts_todo_validation_commands_and_packet_report() -> N
     assert report["status"] == "passed"
     assert report["main_apply_status"] == "applied"
     assert report["metric_deltas"] == {"cross_entropy_loss": 0.1}
+    assert report["target_metric_status"] == "passed"
+
+
+def test_codex_target_metric_validation_reports_regressions() -> None:
+    before = {
+        "metrics": {
+            "cross_entropy_loss": 1.0,
+            "embedding_cosine_similarity": 0.5,
+        },
+        "status": "measured",
+        "target_metrics": [
+            "cross_entropy_loss",
+            "embedding_cosine_similarity",
+            "missing_metric",
+        ],
+    }
+    after = {
+        "metrics": {
+            "cross_entropy_loss": 0.8,
+            "embedding_cosine_similarity": 0.25,
+        },
+        "status": "measured",
+        "target_metrics": [
+            "cross_entropy_loss",
+            "embedding_cosine_similarity",
+            "missing_metric",
+        ],
+    }
+
+    report = runner._codex_target_metric_validation_report(
+        before=before,
+        after=after,
+    )
+
+    assert report["metric_deltas"]["cross_entropy_loss"] == pytest.approx(0.2)
+    assert report["metric_deltas"]["embedding_cosine_similarity"] == pytest.approx(-0.25)
+    assert report["improved_metrics"] == ["cross_entropy_loss"]
+    assert report["regressed_metrics"] == ["embedding_cosine_similarity"]
+    assert report["missing_metrics"] == ["missing_metric"]
+    assert report["status"] == "regressed"
 
 
 def test_supervisor_finalize_program_synthesis_batch_applies_queue_transitions() -> None:
@@ -1442,6 +1487,38 @@ def test_supervisor_finalize_program_synthesis_batch_applies_queue_transitions()
     assert completed_todo.status == "completed"
     assert completed_todo.metadata["validation_gate"]["accepted"] is True
     assert completed_todo.metadata["validation_gate"]["improved_metrics"] == [
+        "cross_entropy_loss"
+    ]
+
+    supervisor_regression = ModalTodoSupervisor(
+        policy=ModalOptimizerPolicy(program_synthesis_min_support=2)
+    )
+    supervisor_regression.seed_program_synthesis_from_introspection(
+        samples,
+        autoencoder=AdaptiveModalAutoencoder(feature_family_logit_scale=1.0),
+    )
+    claimed_regression = supervisor_regression.claim_program_synthesis_batch(
+        worker_id="codex-worker",
+        max_items=1,
+    )
+    claimed_regression[0].metadata["target_metrics"] = ["cross_entropy_loss"]
+    regression = supervisor_regression.finalize_program_synthesis_batch(
+        claimed_regression,
+        codex_exec_status="succeeded",
+        patch_status="created",
+        validation_report={
+            "metric_deltas": {"cross_entropy_loss": -0.2},
+            "status": "passed",
+        },
+    )
+    regression_todo = supervisor_regression.queue.get(claimed_regression[0].todo_id)
+    assert regression["updated"] is True
+    assert regression["completed_count"] == 0
+    assert regression["failed_validation_count"] == 1
+    assert regression["reason"] == "target_metric_regression"
+    assert regression_todo.status == "failed_validation"
+    assert regression_todo.metadata["validation_gate"]["accepted"] is False
+    assert regression_todo.metadata["validation_gate"]["regressed_metrics"] == [
         "cross_entropy_loss"
     ]
 

@@ -1052,6 +1052,10 @@ class ModalProgramSynthesisTodoGenerator:
                 target_component=target_component,
                 program_synthesis_scope=program_synthesis_scope,
             )
+            metadata["metric_sample_payloads"] = _program_synthesis_sample_payloads(
+                sample_ids,
+                samples_by_id=samples_by_id,
+            )
             metadata["residual_cluster_stage"] = "post_sgd_or_current_state"
             metadata["semantic_bundle_key"] = _program_todo_bundle_signature(
                 action=action,
@@ -1944,14 +1948,32 @@ class ModalTodoSupervisor:
         }:
             for todo_id in todo_ids:
                 todo = self.queue.get(todo_id)
+                validation_gate = None
                 if todo is not None:
-                    todo.metadata["validation_gate"] = _program_synthesis_validation_gate(
+                    validation_gate = _program_synthesis_validation_gate(
                         todo,
                         patch_status=normalized_patch_status,
                         validation_report=validation_report,
                     )
+                    todo.metadata["validation_gate"] = validation_gate
+                if validation_gate is not None and not validation_gate.get("accepted"):
+                    reason = (
+                        "target_metric_regression"
+                        if validation_gate.get("regressed_metrics")
+                        else "program_synthesis_validation_rejected"
+                    )
+                    failed_validation_count += int(
+                        self.queue.fail_validation(todo_id, reason=reason)
+                    )
+                    continue
                 completed_count += int(self.queue.complete(todo_id))
-            outcome = "completed"
+            outcome = (
+                "partial"
+                if completed_count and failed_validation_count
+                else "failed_validation"
+                if failed_validation_count
+                else "completed"
+            )
         elif normalized_patch_status.startswith("main_apply_baseline_validation_failed"):
             reason = "main_apply_baseline_validation_failed"
             for todo_id in todo_ids:
@@ -2351,6 +2373,11 @@ def _program_synthesis_validation_gate(
         for metric in targeted_metrics
         if float(metric_deltas.get(metric, 0.0) or 0.0) > 0.0
     ]
+    regressed_metrics = [
+        metric
+        for metric in targeted_metrics
+        if float(metric_deltas.get(metric, 0.0) or 0.0) < 0.0
+    ]
     deterministic_fix = str(report.get("status") or "").lower() in {
         "passed",
         "skipped",
@@ -2358,11 +2385,12 @@ def _program_synthesis_validation_gate(
         "",
     }
     return {
-        "accepted": bool(improved_metrics or deterministic_fix),
+        "accepted": bool(improved_metrics or (deterministic_fix and not regressed_metrics)),
         "deterministic_validation_fix": deterministic_fix,
         "improved_metrics": improved_metrics,
         "metric_deltas": metric_deltas,
         "patch_status": patch_status,
+        "regressed_metrics": regressed_metrics,
         "target_metrics": targeted_metrics,
         "validation_status": str(report.get("status") or "not_measured"),
     }
@@ -2789,6 +2817,35 @@ def _program_synthesis_validation_commands(
         )
     tests = _unique_preserve_order(str(path) for path in tests if str(path))
     return [f"{sys.executable} -m pytest -q {' '.join(tests)}"]
+
+
+def _program_synthesis_sample_payloads(
+    sample_ids: Sequence[str],
+    *,
+    samples_by_id: Mapping[str, LegalSample],
+    max_samples: int = 8,
+) -> List[Dict[str, Any]]:
+    """Return compact legal sample payloads for patch metric revalidation."""
+    payloads: List[Dict[str, Any]] = []
+    for sample_id in sample_ids:
+        sample = samples_by_id.get(str(sample_id))
+        if sample is None:
+            continue
+        payloads.append(
+            {
+                "citation": sample.citation,
+                "embedding_model": sample.embedding_model,
+                "embedding_vector": [float(value) for value in sample.embedding_vector],
+                "sample_id": sample.sample_id,
+                "section": sample.section,
+                "source": sample.source,
+                "text": sample.text,
+                "title": sample.title,
+            }
+        )
+        if len(payloads) >= max(0, int(max_samples)):
+            break
+    return payloads
 
 
 def _compact_hint_evidence(hint: ModalProgramSynthesisHint) -> Dict[str, Any]:
