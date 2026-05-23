@@ -1094,11 +1094,29 @@ def _collect_state_rate_analytics(
     # Merge partial checkpoint signals so stalled-state detection still works
     # when shard log files are sparse or redirected elsewhere.
     for state, checkpoint_payload in partial_checkpoints.items():
+        checkpoint_path_str = str(checkpoint_payload.get("_path") or "").strip()
+        checkpoint_path = Path(checkpoint_path_str) if checkpoint_path_str else None
         row = log_data.setdefault(state, _new_state_log_row())
+
+        updated_epoch = _coerce_epoch(checkpoint_payload.get("updated_at"))
+        if updated_epoch is None and checkpoint_path is not None:
+            try:
+                updated_epoch = float(checkpoint_path.stat().st_mtime)
+            except Exception:
+                updated_epoch = None
+        # Ignore stale checkpoint rows from previous daemon generations when
+        # the current scrape attempt has a newer live-progress start marker.
+        if (
+            signal_mode == "live_progress"
+            and progress_started_epoch is not None
+            and updated_epoch is not None
+            and updated_epoch < (progress_started_epoch - 1.0)
+        ):
+            continue
+
         row["started"] = True
         row["line_count"] = max(1, _safe_int(row.get("line_count"), 0))
 
-        updated_epoch = _coerce_epoch(checkpoint_payload.get("updated_at"))
         if updated_epoch is not None:
             prev_seen = row.get("last_seen_epoch")
             if prev_seen is None or updated_epoch >= float(prev_seen):

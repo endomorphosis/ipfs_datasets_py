@@ -3887,6 +3887,89 @@ def _packet_description_from_dict(packet: Mapping[str, Any]) -> str:
     return "Codex modal program synthesis: " + ", ".join(actions)
 
 
+def _todo_metric_guidance_lines(todo: ModalTodo, *, indent: str = "  ") -> List[str]:
+    """Return compact target-metric and sample guidance for Codex task files."""
+    lines: List[str] = []
+    target_metrics = [
+        str(metric)
+        for metric in _metadata_sequence(todo.metadata.get("target_metrics", []))
+        if str(metric)
+    ]
+    if target_metrics:
+        lines.append(f"{indent}target_metrics: `{', '.join(target_metrics)}`")
+    validation_commands = [
+        str(command)
+        for command in _metadata_sequence(todo.metadata.get("validation_commands", []))
+        if str(command)
+    ]
+    if validation_commands:
+        lines.append(f"{indent}validation: `{validation_commands[0]}`")
+    sample_payloads = [
+        payload
+        for payload in _metadata_sequence(todo.metadata.get("metric_sample_payloads", []))
+        if isinstance(payload, Mapping)
+    ]
+    if sample_payloads:
+        lines.append(f"{indent}metric_samples: `{len(sample_payloads)}`")
+    for payload in sample_payloads[:2]:
+        citation = str(payload.get("citation") or "").strip()
+        if not citation:
+            title = str(payload.get("title") or "").strip()
+            section = str(payload.get("section") or "").strip()
+            citation = f"{title} U.S.C. {section}".strip()
+        text = _compact_markdown_inline(str(payload.get("text") or ""), max_chars=240)
+        if text:
+            prefix = f"{citation}: " if citation else ""
+            lines.append(f"{indent}sample_text: {prefix}{text}")
+    return lines
+
+
+def _packet_metric_guidance_lines(todos: Sequence[ModalTodo]) -> List[str]:
+    target_metrics: List[str] = []
+    sample_count = 0
+    for todo in todos:
+        target_metrics.extend(
+            str(metric)
+            for metric in _metadata_sequence(todo.metadata.get("target_metrics", []))
+            if str(metric)
+        )
+        sample_count += len(
+            [
+                payload
+                for payload in _metadata_sequence(todo.metadata.get("metric_sample_payloads", []))
+                if isinstance(payload, Mapping)
+            ]
+        )
+    unique_metrics = list(dict.fromkeys(target_metrics))
+    if not unique_metrics and not sample_count:
+        return []
+    lines = [
+        "## Metric Guard",
+        "The daemon remeasures these target metrics before and after applying the worktree diff.",
+        "A patch that regresses any targeted metric is rolled back and marked failed_validation.",
+    ]
+    if unique_metrics:
+        lines.append(f"- Target metrics: `{', '.join(unique_metrics)}`")
+    if sample_count:
+        lines.append(f"- Metric sample payloads: `{sample_count}` across claimed TODOs")
+    return lines
+
+
+def _compact_markdown_inline(value: str, *, max_chars: int) -> str:
+    text = " ".join(str(value).split())
+    if len(text) <= max_chars:
+        return text
+    return text[: max(0, int(max_chars) - 3)].rstrip() + "..."
+
+
+def _metadata_sequence(value: Any) -> List[Any]:
+    if value is None:
+        return []
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        return list(value)
+    return [value]
+
+
 def _todo_list_markdown(
     *,
     todos: Sequence[ModalTodo],
@@ -3919,6 +4002,7 @@ def _todo_list_markdown(
                 f"  samples: `{', '.join(todo.sample_ids)}`",
             ]
         )
+        lines.extend(_todo_metric_guidance_lines(todo))
         for evidence in todo.metadata.get("hint_evidence", [])[:4]:
             lines.append(f"  evidence: `{json.dumps(evidence, sort_keys=True)}`")
     return "\n".join(lines) + "\n"
@@ -3954,6 +4038,9 @@ def _codex_task_markdown(
     lines.extend(f"- `{file_path}`" for file_path in suggested_files)
     if not suggested_files:
         lines.append("- No direct target file hint was available.")
+    metric_guidance = _packet_metric_guidance_lines(todos)
+    if metric_guidance:
+        lines.extend(["", *metric_guidance])
     lines.extend(["", "## TODOs"])
     for todo in todos:
         lines.extend(
@@ -3967,6 +4054,7 @@ def _codex_task_markdown(
                 f"  support: {todo.metadata.get('support_count', '')}",
             ]
         )
+        lines.extend(_todo_metric_guidance_lines(todo))
         for evidence in todo.metadata.get("hint_evidence", [])[:4]:
             lines.append(f"  evidence: `{json.dumps(evidence, sort_keys=True)}`")
     lines.extend(

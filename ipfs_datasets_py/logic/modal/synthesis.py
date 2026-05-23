@@ -114,20 +114,33 @@ def residual_signature_for_hint(hint: ModalProgramSynthesisHint) -> str:
     evidence = dict(hint.evidence or {})
     payload = {
         "action": hint.action,
+        "bridge_failure_name": evidence.get("bridge_failure_name")
+        or evidence.get("loss_name"),
+        "component_gap": evidence.get("primary_legal_ir_component_gap"),
         "family_pair": [
             evidence.get("predicted_family"),
             evidence.get("target_family"),
         ],
         "frame_features": sorted(map(str, evidence.get("frame_features", []) or []))[:8],
+        "target_file_lane": evidence.get("target_file_lane")
+        or _target_file_lane(hint.target_component, hint.action),
         "target_component": hint.target_component,
+        "target_view": evidence.get("target_view"),
+        "predicted_view": evidence.get("predicted_view"),
         "underrepresented_components": sorted(
             map(str, evidence.get("legal_ir_underrepresented_components", []) or [])
         )[:8],
+        "component_gaps": _top_component_gap_items(
+            evidence.get("legal_ir_component_gaps", {}),
+        ),
         "top_embedding_features": sorted(
             map(str, evidence.get("top_embedding_features", []) or [])
         )[:8],
         "top_family_features": sorted(
             map(str, evidence.get("top_family_features", []) or [])
+        )[:8],
+        "top_predicted_views": sorted(
+            map(str, evidence.get("top_predicted_views", []) or [])
         )[:8],
         "top_target_views": sorted(map(str, evidence.get("top_target_views", []) or []))[:8],
     }
@@ -171,8 +184,17 @@ def synthesis_hints_from_autoencoder_introspection(
                 evidence={
                     "loss_name": loss_name,
                     "loss_value": value,
+                    "bridge_failure_name": _bridge_failure_name_for_route(
+                        route.action,
+                        route.target_component,
+                        loss_name=loss_name,
+                    ),
                     "predicted_family": introspection.get("predicted_family"),
                     "target_family": introspection.get("target_family"),
+                    "target_file_lane": _target_file_lane(
+                        route.target_component,
+                        route.action,
+                    ),
                     "top_embedding_features": _feature_names(
                         introspection.get("top_embedding_contributions", [])
                     ),
@@ -200,6 +222,10 @@ def synthesis_hints_from_autoencoder_introspection(
                 evidence={
                     "target_family": introspection.get("target_family"),
                     "predicted_family": introspection.get("predicted_family"),
+                    "target_file_lane": _target_file_lane(
+                        "modal.compiler",
+                        "add_deterministic_parser_rule",
+                    ),
                 },
             )
         )
@@ -216,6 +242,10 @@ def synthesis_hints_from_autoencoder_introspection(
                     "family_margin": introspection.get("family_margin"),
                     "predicted_family": introspection.get("predicted_family"),
                     "target_family": introspection.get("target_family"),
+                    "target_file_lane": _target_file_lane(
+                        "modal.compiler.registry",
+                        "refine_modal_family_cue_rules",
+                    ),
                     "target_probability": introspection.get("target_probability"),
                     "top_family_features": _feature_names(
                         introspection.get("top_family_contributions", [])
@@ -235,6 +265,10 @@ def synthesis_hints_from_autoencoder_introspection(
                 evidence={
                     "cosine_similarity": introspection.get("cosine_similarity"),
                     "reconstruction_loss": introspection.get("reconstruction_loss"),
+                    "target_file_lane": _target_file_lane(
+                        "modal.ir_decompiler",
+                        "refine_typed_ir_or_decompiler_slots",
+                    ),
                     "top_embedding_features": _feature_names(
                         introspection.get("top_embedding_contributions", [])
                     ),
@@ -248,6 +282,11 @@ def synthesis_hints_from_autoencoder_introspection(
         )
         predicted_distribution = dict(
             introspection.get("legal_ir_predicted_view_distribution") or {}
+        )
+        primary_view = _primary_view_for_component(
+            "bridge.contracts",
+            target_distribution,
+            introspection.get("legal_ir_component_gaps") or {},
         )
         hints.append(
             _hint(
@@ -264,6 +303,7 @@ def synthesis_hints_from_autoencoder_introspection(
                     "legal_ir_component_gaps": dict(
                         introspection.get("legal_ir_component_gaps") or {}
                     ),
+                    "bridge_failure_name": "legal_ir_view_cross_entropy_loss",
                     "legal_ir_underrepresented_components": list(
                         introspection.get("legal_ir_underrepresented_components") or []
                     ),
@@ -271,6 +311,20 @@ def synthesis_hints_from_autoencoder_introspection(
                         "legal_ir_view_cross_entropy_loss"
                     ),
                     "legal_ir_view_distribution": target_distribution,
+                    "predicted_view": _primary_view_for_component(
+                        "bridge.contracts",
+                        predicted_distribution,
+                        introspection.get("legal_ir_component_gaps") or {},
+                    ),
+                    "primary_legal_ir_component_gap": _component_gap_value(
+                        primary_view,
+                        introspection.get("legal_ir_component_gaps") or {},
+                    ),
+                    "target_file_lane": _target_file_lane(
+                        "bridge.contracts",
+                        "repair_multiview_legal_ir_loss",
+                    ),
+                    "target_view": primary_view,
                     "top_predicted_views": _top_distribution_names(
                         predicted_distribution,
                     ),
@@ -383,6 +437,10 @@ def synthesis_hints_from_autoencoder_introspection(
                 priority=max(0.05, float(introspection.get("reconstruction_loss") or 0.0)),
                 evidence={
                     "frame_features": frame_features,
+                    "target_file_lane": _target_file_lane(
+                        "modal.frame_logic",
+                        "audit_frame_logic_terms",
+                    ),
                     "top_family_features": _feature_names(
                         introspection.get("top_family_contributions", [])
                     ),
@@ -402,6 +460,10 @@ def synthesis_hints_from_autoencoder_introspection(
                     "family_margin": introspection.get("family_margin"),
                     "predicted_family": introspection.get("predicted_family"),
                     "target_family": introspection.get("target_family"),
+                    "target_file_lane": _target_file_lane(
+                        "modal.compiler.ambiguity",
+                        "add_or_review_modal_ambiguity_policy",
+                    ),
                 },
             )
         )
@@ -458,6 +520,16 @@ def _logic_view_hint(
     target_component: str,
     rationale: str,
 ) -> ModalProgramSynthesisHint:
+    target_distribution = dict(introspection.get("legal_ir_view_distribution") or {})
+    predicted_distribution = dict(
+        introspection.get("legal_ir_predicted_view_distribution") or {}
+    )
+    component_gaps = dict(introspection.get("legal_ir_component_gaps") or {})
+    target_view = _primary_view_for_component(
+        target_component,
+        target_distribution,
+        component_gaps,
+    )
     return _hint(
         sample_id,
         action=action,
@@ -468,11 +540,15 @@ def _logic_view_hint(
             float(introspection.get("legal_ir_view_cross_entropy_loss") or 0.0),
         ),
         evidence={
+            "bridge_failure_name": _bridge_failure_name_for_route(
+                action,
+                target_component,
+            ),
             "legal_ir_component_gaps": dict(
-                introspection.get("legal_ir_component_gaps") or {}
+                component_gaps
             ),
             "legal_ir_predicted_view_distribution": dict(
-                introspection.get("legal_ir_predicted_view_distribution") or {}
+                predicted_distribution
             ),
             "legal_ir_underrepresented_components": list(
                 introspection.get("legal_ir_underrepresented_components") or []
@@ -481,8 +557,21 @@ def _logic_view_hint(
                 "legal_ir_view_cross_entropy_loss"
             ),
             "legal_ir_view_distribution": dict(
-                introspection.get("legal_ir_view_distribution") or {}
+                target_distribution
             ),
+            "predicted_view": _primary_view_for_component(
+                target_component,
+                predicted_distribution,
+                component_gaps,
+            ),
+            "primary_legal_ir_component_gap": _component_gap_value(
+                target_view,
+                component_gaps,
+            ),
+            "target_file_lane": _target_file_lane(target_component, action),
+            "target_view": target_view,
+            "top_predicted_views": _top_distribution_names(predicted_distribution),
+            "top_target_views": _top_distribution_names(target_distribution),
         },
     )
 
@@ -520,6 +609,142 @@ def _top_distribution_names(distribution: Mapping[str, Any], *, limit: int = 5) 
         name
         for _value, name in sorted(scored, key=lambda item: (-item[0], item[1]))[:limit]
     ]
+
+
+def _top_component_gap_items(value: Any, *, limit: int = 8) -> List[List[Any]]:
+    if not isinstance(value, Mapping):
+        return []
+    scored: List[tuple[float, str]] = []
+    for name, gap in value.items():
+        try:
+            numeric_gap = float(gap)
+        except (TypeError, ValueError):
+            continue
+        if numeric_gap <= 0.0:
+            continue
+        scored.append((numeric_gap, str(name)))
+    return [
+        [name, round(gap, 6)]
+        for gap, name in sorted(scored, key=lambda item: (-item[0], item[1]))[:limit]
+    ]
+
+
+def _primary_view_for_component(
+    target_component: str,
+    distribution: Mapping[str, Any],
+    component_gaps: Mapping[str, Any],
+) -> str:
+    prefixes = _component_prefixes(target_component)
+    candidates: List[tuple[float, float, str]] = []
+    for name, raw_value in dict(distribution or {}).items():
+        component = str(name)
+        if prefixes and not any(
+            component == prefix or component.startswith(prefix)
+            for prefix in prefixes
+        ):
+            continue
+        try:
+            value = float(raw_value)
+        except (TypeError, ValueError):
+            value = 0.0
+        candidates.append(
+            (_component_gap_value(component, component_gaps), value, component)
+        )
+    if not candidates:
+        for component, raw_gap in dict(component_gaps or {}).items():
+            component_name = str(component)
+            if prefixes and not any(
+                component_name == prefix or component_name.startswith(prefix)
+                for prefix in prefixes
+            ):
+                continue
+            try:
+                gap = float(raw_gap)
+            except (TypeError, ValueError):
+                gap = 0.0
+            candidates.append((gap, 0.0, component_name))
+    if not candidates:
+        names = _top_distribution_names(distribution, limit=1)
+        return names[0] if names else str(target_component)
+    return sorted(candidates, key=lambda item: (-item[0], -item[1], item[2]))[0][2]
+
+
+def _component_gap_value(component: str, component_gaps: Mapping[str, Any]) -> float:
+    try:
+        return round(float(dict(component_gaps or {}).get(str(component), 0.0)), 6)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _component_prefixes(target_component: str) -> List[str]:
+    component = str(target_component or "")
+    mapping = {
+        "bridge.contracts": [
+            "deontic.",
+            "TDFOL.",
+            "CEC.",
+            "external_provers.",
+            "knowledge_graphs.",
+            "zkp.",
+        ],
+        "CEC.native": ["CEC."],
+        "TDFOL.prover": ["TDFOL.", "fol."],
+        "deontic.ir": ["deontic."],
+        "external_provers.router": ["external_provers."],
+        "knowledge_graphs.neo4j_compat": ["knowledge_graphs."],
+        "modal.frame_logic": ["modal.frame_logic", "frame_logic"],
+        "zkp.circuits": ["zkp."],
+    }
+    return mapping.get(component, [component] if component else [])
+
+
+def _target_file_lane(target_component: str, action: str) -> str:
+    component = str(target_component or "")
+    if component == "modal.compiler":
+        return "compiler_parser"
+    if component == "modal.compiler.registry":
+        return "compiler_registry"
+    if component == "modal.compiler.ambiguity":
+        return "compiler_ambiguity"
+    if component == "modal.ir_decompiler":
+        return "ir_decompiler"
+    if component == "modal.frame_logic":
+        return "frame_logic"
+    if component == "bridge.contracts":
+        return "bridge"
+    if component.startswith("deontic."):
+        return "deontic"
+    if component.startswith("TDFOL.") or component.startswith("fol."):
+        return "tdfol"
+    if component.startswith("CEC."):
+        return "cec"
+    if component.startswith("external_provers."):
+        return "external_provers"
+    if component.startswith("knowledge_graphs."):
+        return "knowledge_graph"
+    if component.startswith("zkp."):
+        return "zkp"
+    return str(action or component or "unknown")
+
+
+def _bridge_failure_name_for_route(
+    action: str,
+    target_component: str,
+    *,
+    loss_name: str = "",
+) -> str:
+    if loss_name:
+        return str(loss_name)
+    return {
+        "repair_cec_dcec_bridge": "cec_dcec_validation_failure_ratio",
+        "repair_deontic_bridge_quality_gate": "deontic_decoder_slot_loss",
+        "repair_external_prover_router": "legal_ir_multiview_proof_failure_ratio",
+        "repair_flogic_ontology_constraints": "flogic_similarity_loss",
+        "repair_multiview_legal_ir_graph_projection": "legal_ir_multiview_graph_failure_penalty",
+        "repair_multiview_legal_ir_loss": "legal_ir_view_cross_entropy_loss",
+        "repair_tdfol_bridge_parse": "tdfol_parse_failure_ratio",
+        "repair_zkp_attestation_bridge": "zkp_verification_failure_ratio",
+    }.get(str(action), str(target_component))
 
 
 def _priority_from_probability_gap(introspection: Mapping[str, Any]) -> float:

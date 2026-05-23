@@ -695,10 +695,14 @@ class AdaptiveModalAutoencoder:
             symbolic_penalties.append(symbolic_validity_penalty(sample))
             target_view_distribution = legal_ir_target_distributions.get(sample.sample_id)
             if target_view_distribution:
-                self._legal_ir_view_target_cache[sample.sample_id] = {
+                cached_distribution = {
                     str(name): float(value)
                     for name, value in target_view_distribution.items()
                 }
+                self._legal_ir_view_target_cache[sample.sample_id] = cached_distribution
+                self._legal_ir_view_target_cache[
+                    _sample_content_cache_id(sample)
+                ] = cached_distribution
 
         cosine_scores, reconstruction_losses = self._embedding_metrics(
             target_vectors,
@@ -813,7 +817,10 @@ class AdaptiveModalAutoencoder:
             residual,
             dimensions=len(sample.embedding_vector),
         )
-        legal_ir_view_distribution = self._legal_ir_view_target_cache.get(sample.sample_id, {})
+        legal_ir_view_distribution = self._legal_ir_view_target_cache.get(
+            sample.sample_id,
+            self._legal_ir_view_target_cache.get(_sample_content_cache_id(sample), {}),
+        )
         legal_ir_predicted_view_distribution: Dict[str, float] = {}
         legal_ir_view_cross_entropy_loss = 0.0
         if legal_ir_view_distribution:
@@ -1685,7 +1692,7 @@ class AdaptiveModalAutoencoder:
 
     def _sample_cache_for(self, sample: LegalSample) -> Dict[str, Any]:
         return self._sample_feature_cache.setdefault(
-            (sample.sample_id, len(sample.embedding_vector)),
+            (_sample_content_cache_id(sample), len(sample.embedding_vector)),
             {},
         )
 
@@ -1958,9 +1965,8 @@ def _legal_ir_target_payload(
                 sorted(target_view_distribution.items())
             )
         document = getattr(target, "document", None)
-        document_id = str(getattr(document, "document_id", "") or "")
-        if document_id and hasattr(document, "canonical_hash"):
-            target_hashes[document_id] = str(document.canonical_hash())
+        if sample_id and document is not None and hasattr(document, "canonical_hash"):
+            target_hashes[str(sample_id)] = str(document.canonical_hash())
 
     return {
         "losses": {
@@ -2094,15 +2100,52 @@ def _legal_ir_target_cache_key(
 ) -> str:
     payload = {
         "bridge_names": list(bridge_names),
-        "citation": sample.citation,
+        "embedding_hash": _embedding_vector_hash(sample.embedding_vector),
         "evaluate_provers": evaluate_provers,
-        "sample_id": sample.sample_id,
+        "sample_content_hash": _sample_content_cache_id(sample),
         "source": sample.source,
-        "text_hash": hashlib.sha256(sample.text.encode("utf-8")).hexdigest(),
+        "text_hash": _text_hash(sample.normalized_text or sample.text),
     }
     return hashlib.sha256(
         json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
     ).hexdigest()
+
+
+def _sample_content_cache_id(sample: LegalSample) -> str:
+    """Return a stable cache id for source text plus deterministic parser signals."""
+    formula_signatures = []
+    for formula in sample.modal_ir.formulas:
+        metadata = dict(getattr(formula, "metadata", {}) or {})
+        formula_signatures.append(
+            {
+                "cue": str(metadata.get("cue") or ""),
+                "family": str(getattr(formula.operator, "family", "")),
+                "symbol": str(getattr(formula.operator, "symbol", "")),
+            }
+        )
+    payload = {
+        "embedding_hash": _embedding_vector_hash(sample.embedding_vector),
+        "embedding_model": sample.embedding_model,
+        "formula_signatures": formula_signatures,
+        "normalized_text_hash": _text_hash(sample.normalized_text),
+        "selected_frame": sample.selected_frame,
+        "source": sample.source,
+        "text_hash": _text_hash(sample.text),
+    }
+    return hashlib.sha256(
+        json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+    ).hexdigest()
+
+
+def _embedding_vector_hash(values: Sequence[float]) -> str:
+    normalized = [round(float(value), 12) for value in values]
+    return hashlib.sha256(
+        json.dumps(normalized, ensure_ascii=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+
+
+def _text_hash(value: str) -> str:
+    return hashlib.sha256(str(value or "").encode("utf-8")).hexdigest()
 
 
 @dataclass(frozen=True)

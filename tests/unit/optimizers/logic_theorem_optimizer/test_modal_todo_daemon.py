@@ -70,6 +70,8 @@ def test_loss_generator_turns_high_losses_into_actionable_todos() -> None:
     assert todos[0].sample_ids == [sample.sample_id]
     assert todos[0].citations == ["5 U.S.C. 552"]
     assert todos[0].metadata["optimizer_role"] == "program_synthesis"
+    assert todos[0].metadata["target_metrics"] == ["frame_ranking_loss"]
+    assert todos[0].metadata["validation_commands"]
     assert todos[1].metadata["optimizer_role"] == "autoencoder_sgd"
 
 
@@ -387,6 +389,68 @@ def test_queue_semantic_dedupe_removes_near_duplicate_program_synthesis_items() 
     assert removed == 1
     assert queue.get("program-a") is not None
     assert queue.get("program-b") is None
+
+
+def test_queue_add_many_merges_program_synthesis_duplicate_metric_evidence() -> None:
+    first = ModalTodo(
+        todo_id="program-a",
+        action="refine_typed_ir_or_decompiler_slots",
+        objective="first",
+        sample_ids=["a"],
+        citations=["1 U.S.C. 1"],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=10.0,
+        metadata={
+            "dedupe_signature": "same-decompiler-gap",
+            "metric_sample_payloads": [{"sample_id": "a", "text": "alpha"}],
+            "optimizer_role": "program_synthesis",
+            "semantic_bundle_key": "decompiler:shall",
+            "target_component": "modal.ir_decompiler",
+            "target_metrics": ["embedding_cosine_similarity"],
+            "validation_commands": ["python -m pytest -q tests/a.py"],
+        },
+    )
+    second = ModalTodo(
+        todo_id="program-b",
+        action="refine_typed_ir_or_decompiler_slots",
+        objective="second",
+        sample_ids=["b"],
+        citations=["2 U.S.C. 2"],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=2.0,
+        priority=5.0,
+        metadata={
+            "dedupe_signature": "same-decompiler-gap",
+            "metric_sample_payloads": [{"sample_id": "b", "text": "beta"}],
+            "optimizer_role": "program_synthesis",
+            "semantic_bundle_key": "decompiler:shall",
+            "target_component": "modal.ir_decompiler",
+            "target_metrics": ["reconstruction_loss"],
+            "validation_commands": ["python -m pytest -q tests/b.py"],
+        },
+    )
+
+    queue = ModalTodoQueue()
+    added = queue.add_many([first, second])
+
+    assert added == 1
+    representative = queue.get("program-a")
+    assert representative is not None
+    assert representative.sample_ids == ["a", "b"]
+    assert representative.citations == ["1 U.S.C. 1", "2 U.S.C. 2"]
+    assert representative.metadata["target_metrics"] == [
+        "embedding_cosine_similarity",
+        "reconstruction_loss",
+    ]
+    assert representative.metadata["validation_commands"] == [
+        "python -m pytest -q tests/a.py",
+        "python -m pytest -q tests/b.py",
+    ]
+    assert [
+        payload["sample_id"]
+        for payload in representative.metadata["metric_sample_payloads"]
+    ] == ["a", "b"]
 
 
 def test_queue_semantic_dedupe_rejects_completed_bundle_duplicates() -> None:
@@ -2836,6 +2900,9 @@ def test_codex_work_packet_creates_git_worktree_and_patch_slot(tmp_path) -> None
     assert (tmp_path / "codex-work" / "packet-000001" / "TODO_LIST.md").exists()
     task_text = (tmp_path / "codex-work" / "packet-000001" / "CODEX_TASK.md").read_text()
     assert "autoencoder/supervisor output" in task_text
+    assert "## Metric Guard" in task_text
+    assert "target_metrics:" in task_text
+    assert "sample_text:" in task_text
     packet_data = json.loads((tmp_path / "codex-work" / "packet-000001" / "packet.json").read_text())
     assert packet_data["worktree_path"] == packet["worktree_path"]
     assert packet_data["todos"][0]["metadata"]["hint_evidence"]

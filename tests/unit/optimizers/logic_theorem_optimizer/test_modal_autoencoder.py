@@ -25,6 +25,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder impor
     mse_loss,
     symbolic_validity_penalty,
     _evaluation_improved_for_training,
+    _legal_ir_target_cache_key,
 )
 
 
@@ -98,6 +99,37 @@ def test_autoencoder_evaluation_carries_legal_ir_training_target_losses() -> Non
     payload = evaluation.to_dict()
     assert payload["legal_ir_losses"]["legal_ir_multiview_total_loss"] > 0.0
     assert payload["legal_ir_predicted_view_distribution"]
+
+
+def test_legal_ir_target_cache_key_uses_source_text_not_citation_identity() -> None:
+    text = "The agency shall publish notice before the permit takes effect."
+    first = build_us_code_sample(title="5", section="552", text=text)
+    second = build_us_code_sample(title="12", section="1841", text=text)
+    third = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency may publish notice before the permit takes effect.",
+    )
+
+    first_key = _legal_ir_target_cache_key(
+        first,
+        bridge_names=("deontic_norms", "fol_tdfol"),
+        evaluate_provers=False,
+    )
+    second_key = _legal_ir_target_cache_key(
+        second,
+        bridge_names=("deontic_norms", "fol_tdfol"),
+        evaluate_provers=False,
+    )
+    third_key = _legal_ir_target_cache_key(
+        third,
+        bridge_names=("deontic_norms", "fol_tdfol"),
+        evaluate_provers=False,
+    )
+
+    assert first.sample_id != second.sample_id
+    assert first_key == second_key
+    assert first_key != third_key
 
 
 def test_adaptive_autoencoder_sgd_lowers_legal_ir_view_cross_entropy() -> None:

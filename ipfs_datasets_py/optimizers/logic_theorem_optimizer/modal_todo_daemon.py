@@ -943,6 +943,15 @@ class ModalLossTodoGenerator:
                 program_synthesis_scope=str(metadata["program_synthesis_scope"]),
                 family_pairs=[],
             )
+            metadata["target_metrics"] = _program_synthesis_target_metrics(
+                action=action,
+                target_component=str(target_component or ""),
+            )
+            metadata["validation_commands"] = _program_synthesis_validation_commands(
+                action=action,
+                target_component=str(target_component or ""),
+                program_synthesis_scope=str(metadata["program_synthesis_scope"]),
+            )
         return ModalTodo(
             todo_id=todo_id,
             action=action,
@@ -1096,11 +1105,40 @@ class ModalTodoQueue:
         for todo in todos:
             if todo.todo_id in self._todos:
                 continue
-            if self.has_semantic_duplicate(todo):
+            duplicate = self.find_semantic_duplicate(todo)
+            if duplicate is not None:
+                _merge_program_todo_evidence(duplicate, todo)
                 continue
             self._todos[todo.todo_id] = todo
             added += 1
         return added
+
+    def find_semantic_duplicate(
+        self,
+        todo: ModalTodo,
+        *,
+        optimizer_role: Optional[str] = None,
+        near_duplicate_jaccard: float = PROGRAM_SYNTHESIS_NEAR_DUPLICATE_JACCARD,
+        include_bundle_key: bool = False,
+    ) -> Optional[ModalTodo]:
+        """Return existing program-repair TODO that already covers ``todo``."""
+        role = optimizer_role or _todo_optimizer_role(todo)
+        if role != PROGRAM_SYNTHESIS_ROLE:
+            return None
+        for existing in self._todos.values():
+            if _todo_optimizer_role(existing) != role:
+                continue
+            if existing.todo_id == todo.todo_id:
+                return existing
+            if _program_todos_near_duplicate(
+                existing,
+                todo,
+                jaccard_threshold=near_duplicate_jaccard,
+            ):
+                return existing
+            if include_bundle_key and _program_todos_share_semantic_bundle(existing, todo):
+                return existing
+        return None
 
     def merge_from(
         self,
@@ -1131,23 +1169,12 @@ class ModalTodoQueue:
         include_bundle_key: bool = False,
     ) -> bool:
         """Return whether a queue item already covers the same synthesis work."""
-        role = optimizer_role or _todo_optimizer_role(todo)
-        if role != PROGRAM_SYNTHESIS_ROLE:
-            return False
-        for existing in self._todos.values():
-            if _todo_optimizer_role(existing) != role:
-                continue
-            if existing.todo_id == todo.todo_id:
-                return True
-            if _program_todos_near_duplicate(
-                existing,
-                todo,
-                jaccard_threshold=near_duplicate_jaccard,
-            ):
-                return True
-            if include_bundle_key and _program_todos_share_semantic_bundle(existing, todo):
-                return True
-        return False
+        return self.find_semantic_duplicate(
+            todo,
+            optimizer_role=optimizer_role,
+            near_duplicate_jaccard=near_duplicate_jaccard,
+            include_bundle_key=include_bundle_key,
+        ) is not None
 
     def deduplicate_semantic(
         self,
@@ -2723,11 +2750,71 @@ def _merge_program_todo_evidence(target: ModalTodo, duplicate: ModalTodo) -> Non
     )
     if evidence:
         target.metadata["hint_evidence"] = evidence
+    for key, limit in (
+        ("target_metrics", 32),
+        ("validation_commands", 16),
+        ("residual_signatures", 32),
+    ):
+        merged_values = _merge_jsonish_metadata_values(
+            target.metadata.get(key, []),
+            duplicate.metadata.get(key, []),
+            limit=limit,
+        )
+        if merged_values:
+            target.metadata[key] = merged_values
+    metric_payloads = _merge_jsonish_metadata_values(
+        target.metadata.get("metric_sample_payloads", []),
+        duplicate.metadata.get("metric_sample_payloads", []),
+        limit=16,
+        identity_key="sample_id",
+    )
+    if metric_payloads:
+        target.metadata["metric_sample_payloads"] = metric_payloads
     if target.sample_ids:
         target.metadata["support_count"] = max(
             int(target.metadata.get("support_count", 0) or 0),
             len(target.sample_ids),
         )
+
+
+def _merge_jsonish_metadata_values(
+    left: Any,
+    right: Any,
+    *,
+    limit: int,
+    identity_key: Optional[str] = None,
+) -> List[Any]:
+    """Merge metadata lists while preserving order and JSON-stable identity."""
+    merged: List[Any] = []
+    seen: set[str] = set()
+    for item in [*_as_list(left), *_as_list(right)]:
+        key = _jsonish_metadata_identity(item, identity_key=identity_key)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        merged.append(item)
+        if len(merged) >= max(0, int(limit)):
+            break
+    return merged
+
+
+def _as_list(value: Any) -> List[Any]:
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return value
+    return [value]
+
+
+def _jsonish_metadata_identity(item: Any, *, identity_key: Optional[str]) -> str:
+    if identity_key and isinstance(item, Mapping):
+        identity_value = str(item.get(identity_key) or "").strip()
+        if identity_value:
+            return f"{identity_key}:{identity_value}"
+    try:
+        return json.dumps(item, ensure_ascii=True, sort_keys=True, default=str)
+    except TypeError:
+        return str(item)
 
 
 def _merge_hint_evidence(left: Sequence[Any], right: Sequence[Any]) -> List[Any]:
@@ -2826,6 +2913,9 @@ def _program_synthesis_sample_payloads(
     max_samples: int = 8,
 ) -> List[Dict[str, Any]]:
     """Return compact legal sample payloads for patch metric revalidation."""
+    limit = max(0, int(max_samples))
+    if limit < 1:
+        return []
     payloads: List[Dict[str, Any]] = []
     for sample_id in sample_ids:
         sample = samples_by_id.get(str(sample_id))
@@ -2843,7 +2933,7 @@ def _program_synthesis_sample_payloads(
                 "title": sample.title,
             }
         )
-        if len(payloads) >= max(0, int(max_samples)):
+        if len(payloads) >= limit:
             break
     return payloads
 

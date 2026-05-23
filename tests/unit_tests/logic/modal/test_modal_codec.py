@@ -23,6 +23,7 @@ from ipfs_datasets_py.logic.modal import (
     modal_text_token_similarity,
     synthesis_hints_from_autoencoder_introspection,
 )
+from ipfs_datasets_py.logic.modal.synthesis import residual_signature_for_hint
 from ipfs_datasets_py.logic.modal.codec import (
     _frame_decoder_audit_features,
     _frame_ontology_audit_feature_keys,
@@ -14704,6 +14705,50 @@ def test_autoencoder_synthesis_hint_extracts_frame_linked_feature_variants() -> 
         "flogic:source_id:us-code-5-552-deadbeefdeadbeef",
         "flogic:belongs_to_document:us-code-46-30525.-99a6422ab828fa0c",
     ]
+
+
+def test_autoencoder_legal_ir_hint_signatures_include_component_gap_lane() -> None:
+    hints = synthesis_hints_from_autoencoder_introspection(
+        {
+            "sample_id": "us-code-5-552-deadbeefdeadbeef",
+            "synthesis_focus": ["repair_tdfol_bridge_parse"],
+            "legal_ir_component_gaps": {
+                "TDFOL.prover": 0.24,
+                "CEC.native": 0.01,
+            },
+            "legal_ir_predicted_view_distribution": {
+                "TDFOL.prover": 0.02,
+                "CEC.native": 0.10,
+            },
+            "legal_ir_underrepresented_components": ["TDFOL.prover"],
+            "legal_ir_view_cross_entropy_loss": 1.2,
+            "legal_ir_view_distribution": {
+                "TDFOL.prover": 0.26,
+                "CEC.native": 0.11,
+            },
+        }
+    )
+
+    hint = next(hint for hint in hints if hint.action == "repair_tdfol_bridge_parse")
+    base_signature = residual_signature_for_hint(hint)
+    shifted_hint = type(hint)(
+        hint_id=hint.hint_id,
+        action=hint.action,
+        target_component=hint.target_component,
+        rationale=hint.rationale,
+        priority=hint.priority,
+        evidence={
+            **hint.evidence,
+            "target_file_lane": "cec",
+        },
+    )
+
+    assert hint.evidence["bridge_failure_name"] == "tdfol_parse_failure_ratio"
+    assert hint.evidence["target_file_lane"] == "tdfol"
+    assert hint.evidence["target_view"] == "TDFOL.prover"
+    assert hint.evidence["predicted_view"] == "TDFOL.prover"
+    assert hint.evidence["primary_legal_ir_component_gap"] == 0.24
+    assert residual_signature_for_hint(shifted_hint) != base_signature
 
 
 def test_logic_extractor_uses_logic_layer_modal_codec_without_llm() -> None:
