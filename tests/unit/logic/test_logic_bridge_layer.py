@@ -1676,6 +1676,57 @@ def test_multiview_training_target_distribution_rebalances_dense_contract_lanes(
     assert abs(sum(target_distribution.values()) - 1.0) < 1e-9
 
 
+def test_dense_contract_rebalance_promotes_frame_definition_lanes() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_dense_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.24,
+        "TDFOL.prover": 0.22,
+        "deontic.ir": 0.19,
+        "knowledge_graphs.neo4j_compat": 0.18,
+        "zkp.circuits": 0.17,
+    }
+
+    rebalanced = _rebalance_dense_contract_distribution(
+        distribution,
+        text="The term Secretary means the Secretary of State.",
+    )
+
+    assert rebalanced["knowledge_graphs.neo4j_compat"] >= 0.19
+    assert rebalanced["CEC.native"] >= rebalanced["TDFOL.prover"]
+    assert rebalanced["zkp.circuits"] <= 0.19
+    assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
+
+
+def test_dense_contract_rebalance_downweights_auxiliary_lanes_for_conditional_norms() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_dense_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.22,
+        "TDFOL.prover": 0.21,
+        "deontic.ir": 0.23,
+        "knowledge_graphs.neo4j_compat": 0.16,
+        "zkp.circuits": 0.18,
+    }
+
+    rebalanced = _rebalance_dense_contract_distribution(
+        distribution,
+        text=(
+            "Provided that the agency shall publish notice before the permit takes "
+            "effect, the Secretary may issue certification."
+        ),
+    )
+
+    assert rebalanced["knowledge_graphs.neo4j_compat"] <= 0.14
+    assert rebalanced["zkp.circuits"] <= 0.17
+    assert rebalanced["deontic.ir"] > rebalanced["CEC.native"]
+    assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
+
+
 def test_multiview_bridge_accepts_citation_prefixed_statutory_text() -> None:
     from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
 
