@@ -67,3 +67,34 @@ def test_frame_ontology_terms_include_contextualized_parity_audit_features() -> 
     assert "citation_title_number_parity_even" in metadata[
         "frame_ontology_high_signal_terms"
     ]
+
+
+def test_frame_ontology_terms_contextualize_condition_modal_family_and_operator() -> None:
+    result = _optimizer().evaluate(
+        source_text="s",
+        decoded_text="d",
+        source_embedding=[0.0, 1.0],
+        decoded_embedding=[0.0, 1.0],
+        kg_triples=[],
+        frame_feature_keys=[
+            "flogic:citation_title_section_primary_number_span_thousands_block:2",
+            "slot:citation_title_section_primary_number_span_thousands_block:2",
+            "flogic:condition_modal_family:frame",
+            "slot:condition_modal_operator:frame",
+            "flogic:condition_scope_token:thereof",
+        ],
+    )
+
+    metadata = result.metadata
+    assert "condition_modal_family_frame" in metadata["frame_ontology_terms"]
+    assert "condition_modal_operator_frame" in metadata["frame_ontology_terms"]
+    assert (
+        "citation_title_section_primary_number_span_thousands_block_2"
+        in metadata["frame_ontology_terms"]
+    )
+    assert "condition_modal_family_frame" in metadata[
+        "frame_ontology_contextualized_terms"
+    ]
+    assert "condition_modal_operator_frame" in metadata[
+        "frame_ontology_contextualized_terms"
+    ]

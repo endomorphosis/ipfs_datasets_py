@@ -349,6 +349,10 @@ _FRAME_ONTOLOGY_STRUCTURAL_CONTEXTUAL_PREDICATE_SUFFIXES: tuple[str, ...] = (
 )
 _FRAME_ONTOLOGY_CONTEXTUAL_ALWAYS_PREDICATE_FRAGMENTS: tuple[str, ...] = (
     "modal_cue",
+    "condition_modal_family",
+    "condition_modal_operator",
+    "exception_modal_family",
+    "exception_modal_operator",
     "_conditional_normative",
     "_distance_profile",
     "_magnitude_bucket",

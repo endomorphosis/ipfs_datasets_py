@@ -959,11 +959,12 @@ class TestFLogicSemanticOptimizer:
                 },
             ],
         )
-        assert result.metadata["frame_ontology_term_count"] == 4
+        assert result.metadata["frame_ontology_term_count"] == 5
         assert result.metadata["frame_ontology_terms"] == [
             "5_552",
             "actor_agency",
             "may",
+            "modal_cue_may",
             "unless_written_notice_provided",
         ]
         assert result.metadata["frame_ontology_terms_from_feature_keys_count"] == 0
