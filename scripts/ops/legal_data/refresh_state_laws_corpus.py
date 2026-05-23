@@ -433,6 +433,53 @@ def _reconcile_state_results_from_partial_checkpoints(
     }
 
 
+def _eligible_timeout_recovery_states(
+    *,
+    states: Sequence[str],
+    progress_state: Mapping[str, Any],
+) -> List[str]:
+    """Return timeout error states that should be retried with larger budgets."""
+
+    state_results = progress_state.get("state_results")
+    if not isinstance(state_results, Mapping):
+        return []
+
+    candidates: List[str] = []
+    for state_code in states:
+        entry = state_results.get(state_code)
+        if not isinstance(entry, Mapping):
+            continue
+        status = str(entry.get("status") or "").strip().lower()
+        if status != "error":
+            continue
+
+        timeout_classification = str(entry.get("timeout_classification") or "").strip().lower()
+        if not timeout_classification and isinstance(entry.get("timeout_diagnostics"), Mapping):
+            timeout_classification = str(
+                (entry.get("timeout_diagnostics") or {}).get("classification") or ""
+            ).strip().lower()
+        if not timeout_classification.startswith("timeout_"):
+            continue
+
+        timeout_work_remaining = entry.get("timeout_work_remaining")
+        if not isinstance(timeout_work_remaining, bool) and isinstance(entry.get("timeout_diagnostics"), Mapping):
+            timeout_work_remaining = (entry.get("timeout_diagnostics") or {}).get("work_remaining")
+        if timeout_work_remaining is False:
+            # Already classified as timeout with no remaining work.
+            continue
+
+        candidates.append(str(state_code).upper())
+
+    deduped: List[str] = []
+    seen = set()
+    for state_code in candidates:
+        if state_code in seen:
+            continue
+        deduped.append(state_code)
+        seen.add(state_code)
+    return deduped
+
+
 def _normalize_states(value: str, *, include_dc: bool = False) -> List[str]:
     raw = str(value or "all").strip()
     if not raw or raw.lower() == "all":
@@ -1222,6 +1269,34 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                     state_entry["error"] = error_text
                 results = progress_state.setdefault("state_results", {})
                 if isinstance(results, dict):
+                    existing_entry = results.get(state_code)
+                    if isinstance(existing_entry, Mapping):
+                        existing_status = str(existing_entry.get("status") or "").strip().lower()
+                        try:
+                            existing_count = int(existing_entry.get("statutes_count") or 0)
+                        except Exception:
+                            existing_count = 0
+
+                        # Never downgrade a previously successful state to error.
+                        if existing_status == "success" and state_status != "success":
+                            state_entry = dict(existing_entry)
+                            state_entry["retry_result_disposition"] = "kept_prior_success"
+                            state_entry["last_retry_completed_at"] = _utc_now_iso()
+                        else:
+                            # Preserve the best observed statute count across retries.
+                            if existing_count > int(state_entry.get("statutes_count") or 0):
+                                state_entry["statutes_count"] = existing_count
+                            # Keep prior timeout diagnostics when the new attempt
+                            # has a weaker payload.
+                            for key in (
+                                "timeout_diagnostics",
+                                "timeout_classification",
+                                "timeout_signal_kind",
+                                "timeout_work_remaining",
+                                "timeout_original_error",
+                            ):
+                                if key not in state_entry and key in existing_entry:
+                                    state_entry[key] = existing_entry.get(key)
                     results[state_code] = state_entry
                 _recompute_progress_counts()
                 _write_progress_state()
@@ -1299,6 +1374,7 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
     scrape_result: Dict[str, Any] | None = None
     full_corpus_guard_audit: Dict[str, Any] | None = None
     checkpoint_reconciliation: Dict[str, Any] | None = None
+    timeout_recovery_history: List[Dict[str, Any]] = []
     scrape_max_statutes_for_run: Optional[int] = None
     progress_heartbeat_stop: asyncio.Event | None = None
     progress_heartbeat_task: asyncio.Task[Any] | None = None
@@ -1382,6 +1458,79 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
         _write_progress_state()
         _write_completed_states_registry_snapshot()
 
+        timeout_recovery_rounds = max(0, int(getattr(args, "timeout_recovery_rounds", 0) or 0))
+        timeout_recovery_multiplier = max(1.0, float(getattr(args, "timeout_recovery_timeout_multiplier", 1.5) or 1.5))
+        timeout_recovery_timeout_cap = max(0.0, float(getattr(args, "timeout_recovery_timeout_cap_seconds", 0.0) or 0.0))
+        timeout_recovery_retry_attempts = max(
+            int(args.per_state_retry_attempts or 0),
+            int(getattr(args, "timeout_recovery_retry_attempts", 0) or 0),
+        )
+        timeout_recovery_parallel_workers = int(getattr(args, "timeout_recovery_parallel_workers", 0) or 0)
+        if timeout_recovery_parallel_workers <= 0:
+            timeout_recovery_parallel_workers = max(1, int(args.parallel_workers or 1))
+
+        base_timeout_seconds = max(0.0, float(args.per_state_timeout_seconds or 0.0))
+        for round_idx in range(timeout_recovery_rounds):
+            retry_states = _eligible_timeout_recovery_states(
+                states=states,
+                progress_state=progress_state,
+            )
+            if not retry_states:
+                break
+
+            round_timeout_seconds = base_timeout_seconds
+            if round_idx >= 0:
+                round_timeout_seconds = base_timeout_seconds * (timeout_recovery_multiplier ** float(round_idx + 1))
+            if timeout_recovery_timeout_cap > 0:
+                round_timeout_seconds = min(round_timeout_seconds, timeout_recovery_timeout_cap)
+            round_timeout_seconds = max(base_timeout_seconds, round_timeout_seconds)
+
+            round_started_at = _utc_now_iso()
+            round_result = await scrape_state_laws(
+                states=retry_states,
+                legal_areas=None,
+                output_format="json",
+                include_metadata=True,
+                rate_limit_delay=float(args.rate_limit_delay),
+                max_statutes=scrape_max_statutes_for_run,
+                use_state_specific_scrapers=True,
+                allow_justia_fallback=bool(args.allow_justia_fallback),
+                output_dir=str(output_root),
+                write_jsonld=True,
+                strict_full_text=bool(args.strict_full_text),
+                min_full_text_chars=int(args.min_full_text_chars),
+                hydrate_statute_text=not bool(args.no_hydrate_statute_text),
+                parallel_workers=int(timeout_recovery_parallel_workers),
+                per_state_retry_attempts=int(timeout_recovery_retry_attempts),
+                retry_zero_statute_states=True,
+                per_state_timeout_seconds=float(round_timeout_seconds),
+                state_completion_callback=_on_state_complete,
+                retain_state_data=not bool(publish_to_hf and incremental_state_publish),
+            )
+
+            round_reconciliation = _reconcile_state_results_from_partial_checkpoints(
+                progress_state=progress_state,
+                checkpoint_dir=output_root / "partial_checkpoints",
+            )
+            _recompute_progress_counts()
+            _write_progress_state()
+            _write_completed_states_registry_snapshot()
+
+            timeout_recovery_history.append(
+                {
+                    "round": int(round_idx + 1),
+                    "started_at": round_started_at,
+                    "finished_at": _utc_now_iso(),
+                    "states": list(retry_states),
+                    "state_count": len(retry_states),
+                    "per_state_timeout_seconds": float(round_timeout_seconds),
+                    "parallel_workers": int(timeout_recovery_parallel_workers),
+                    "per_state_retry_attempts": int(timeout_recovery_retry_attempts),
+                    "scrape_status": str((round_result or {}).get("status") or ""),
+                    "round_reconciliation": round_reconciliation,
+                }
+            )
+
     build_result = build_state_laws_parquet_artifacts(
         states=requested_states,
         jsonld_dir=jsonld_dir,
@@ -1440,6 +1589,11 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
         "startup_sync": startup_sync_result,
         "full_corpus_guard_audit": full_corpus_guard_audit,
         "checkpoint_reconciliation": checkpoint_reconciliation,
+        "timeout_recovery": {
+            "enabled": bool(args.scrape and int(getattr(args, "timeout_recovery_rounds", 0) or 0) > 0),
+            "round_count": len(timeout_recovery_history),
+            "rounds": timeout_recovery_history,
+        },
         "progress_path": str(progress_path),
         "incremental_state_publish": {
             "enabled": bool(publish_to_hf and incremental_state_publish),
@@ -1474,6 +1628,36 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--parallel-workers", type=int, default=4)
     parser.add_argument("--per-state-retry-attempts", type=int, default=1)
     parser.add_argument("--per-state-timeout-seconds", type=float, default=900.0)
+    parser.add_argument(
+        "--timeout-recovery-rounds",
+        type=int,
+        default=0,
+        help="After the main scrape pass, retry timeout-error states for this many additional rounds.",
+    )
+    parser.add_argument(
+        "--timeout-recovery-timeout-multiplier",
+        type=float,
+        default=1.5,
+        help="Per recovery round timeout multiplier applied to --per-state-timeout-seconds.",
+    )
+    parser.add_argument(
+        "--timeout-recovery-timeout-cap-seconds",
+        type=float,
+        default=0.0,
+        help="Optional cap for recovery round per-state timeout; 0 disables cap.",
+    )
+    parser.add_argument(
+        "--timeout-recovery-retry-attempts",
+        type=int,
+        default=2,
+        help="Per-state retry attempts used during timeout-recovery rounds.",
+    )
+    parser.add_argument(
+        "--timeout-recovery-parallel-workers",
+        type=int,
+        default=0,
+        help="Parallel workers for timeout-recovery rounds; 0 uses --parallel-workers.",
+    )
     parser.add_argument("--strict-full-text", action="store_true")
     parser.add_argument("--min-full-text-chars", type=int, default=300)
     parser.add_argument("--no-hydrate-statute-text", action="store_true")

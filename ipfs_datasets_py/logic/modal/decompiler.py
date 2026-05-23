@@ -4745,11 +4745,44 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
     )
     if numeric_relation is not None:
         relation, span = numeric_relation
+        primary_span_slot = "citation_section_primary_terminal_number_span"
+        primary_profile_slot = "citation_section_primary_terminal_number_distance_profile"
         slots.append(("citation_section_primary_terminal_number_relation", relation))
-        slots.append(("citation_section_primary_terminal_number_span", span))
+        slots.append((primary_span_slot, span))
+        slots.extend(
+            _numeric_span_signature_slots(
+                slot_prefix=primary_span_slot,
+                span=span,
+            )
+        )
+        relation_profile = _relation_span_profile(relation=relation, span=span)
+        if relation_profile:
+            slots.append((primary_profile_slot, relation_profile))
+            slots.extend(
+                _typed_identifier_slots(
+                    relation_profile,
+                    slot_prefix=primary_profile_slot,
+                )
+            )
         if is_range:
             slots.append(("citation_section_range_number_relation", relation))
-            slots.append(("citation_section_range_number_span", span))
+            range_span_slot = "citation_section_range_number_span"
+            range_profile_slot = "citation_section_range_number_distance_profile"
+            slots.append((range_span_slot, span))
+            slots.extend(
+                _numeric_span_signature_slots(
+                    slot_prefix=range_span_slot,
+                    span=span,
+                )
+            )
+            if relation_profile:
+                slots.append((range_profile_slot, relation_profile))
+                slots.extend(
+                    _typed_identifier_slots(
+                        relation_profile,
+                        slot_prefix=range_profile_slot,
+                    )
+                )
     slots.extend(
         _primary_terminal_suffix_relation_slots(
             primary_suffix=primary_suffix,

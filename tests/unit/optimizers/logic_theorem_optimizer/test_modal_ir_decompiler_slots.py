@@ -585,6 +585,87 @@ def test_modal_slots_emit_terminal_and_profile_alignment_slots_for_todo_cluster_
             assert triple_values == expected[predicate]
 
 
+def test_modal_slots_emit_primary_terminal_number_distance_profiles() -> None:
+    expected_by_section = {
+        ("42", "18791."): ("equal_lt_1k", "1k"),
+        ("50", "31 to 39."): ("ascending_lt_1k", "1k"),
+    }
+    predicates = (
+        "citation_section_primary_terminal_number_distance_profile",
+        "citation_section_primary_terminal_number_distance_profile_token_suffix",
+        "citation_section_primary_terminal_number_span_digit_count_bucket",
+        "citation_section_primary_terminal_number_span_magnitude_bucket",
+        "source_id_section_primary_terminal_number_distance_profile",
+        "source_id_section_primary_terminal_number_distance_profile_token_suffix",
+        "source_id_section_primary_terminal_number_span_digit_count_bucket",
+        "source_id_section_primary_terminal_number_span_magnitude_bucket",
+    )
+
+    for (title, section), (distance_profile, token_suffix) in expected_by_section.items():
+        expected = {
+            "citation_section_primary_terminal_number_distance_profile": [
+                distance_profile
+            ],
+            "citation_section_primary_terminal_number_distance_profile_token_suffix": [
+                token_suffix
+            ],
+            "citation_section_primary_terminal_number_span_digit_count_bucket": [
+                "1_digit"
+            ],
+            "citation_section_primary_terminal_number_span_magnitude_bucket": ["lt_1k"],
+            "source_id_section_primary_terminal_number_distance_profile": [
+                distance_profile
+            ],
+            "source_id_section_primary_terminal_number_distance_profile_token_suffix": [
+                token_suffix
+            ],
+            "source_id_section_primary_terminal_number_span_digit_count_bucket": [
+                "1_digit"
+            ],
+            "source_id_section_primary_terminal_number_span_magnitude_bucket": ["lt_1k"],
+        }
+        for predicate in predicates:
+            slot_values, triple_values = _slot_and_triple_values_for_predicate(
+                section,
+                title=title,
+                predicate=predicate,
+            )
+            assert slot_values == expected[predicate]
+            assert triple_values == expected[predicate]
+
+
+def test_modal_slots_emit_range_number_distance_profiles_for_range_sections() -> None:
+    predicates = (
+        "citation_section_range_number_distance_profile",
+        "citation_section_range_number_distance_profile_token_suffix",
+        "citation_section_range_number_span_digit_count_bucket",
+        "citation_section_range_number_span_magnitude_bucket",
+        "source_id_section_range_number_distance_profile",
+        "source_id_section_range_number_distance_profile_token_suffix",
+        "source_id_section_range_number_span_digit_count_bucket",
+        "source_id_section_range_number_span_magnitude_bucket",
+    )
+    expected = {
+        "citation_section_range_number_distance_profile": ["ascending_lt_1k"],
+        "citation_section_range_number_distance_profile_token_suffix": ["1k"],
+        "citation_section_range_number_span_digit_count_bucket": ["1_digit"],
+        "citation_section_range_number_span_magnitude_bucket": ["lt_1k"],
+        "source_id_section_range_number_distance_profile": ["ascending_lt_1k"],
+        "source_id_section_range_number_distance_profile_token_suffix": ["1k"],
+        "source_id_section_range_number_span_digit_count_bucket": ["1_digit"],
+        "source_id_section_range_number_span_magnitude_bucket": ["lt_1k"],
+    }
+
+    for predicate in predicates:
+        slot_values, triple_values = _slot_and_triple_values_for_predicate(
+            "31 to 39.",
+            title="50",
+            predicate=predicate,
+        )
+        assert slot_values == expected[predicate]
+        assert triple_values == expected[predicate]
+
+
 def test_modal_slots_compact_status_surface_text_when_us_abbreviation_truncates_span() -> None:
     compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
     compiled = compiler.compile(

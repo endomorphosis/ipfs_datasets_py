@@ -40,6 +40,12 @@ PROGRAM_SYNTHESIS_DEDUPE_KEEP_RANK = {
     "claimed": 2,
     "completed": 3,
 }
+AUTOENCODER_DEDUPE_KEEP_RANK = {
+    "failed_validation": 0,
+    "pending": 1,
+    "claimed": 2,
+    "completed": 3,
+}
 PROGRAM_SYNTHESIS_NEAR_DUPLICATE_JACCARD = 0.8
 PROGRAM_SYNTHESIS_ACTION_TARGETS = {
     "add_deterministic_parser_rule": "modal.compiler",
@@ -91,6 +97,7 @@ class ModalOptimizerPolicy:
     program_synthesis_role: str = PROGRAM_SYNTHESIS_ROLE
     program_synthesis_min_support: int = 2
     enable_program_synthesis_todos: bool = True
+    max_autoencoder_pending: int = 256
     max_program_synthesis_pending: int = 512
     program_synthesis_near_duplicate_jaccard: float = PROGRAM_SYNTHESIS_NEAR_DUPLICATE_JACCARD
 
@@ -1059,6 +1066,64 @@ class ModalTodoQueue:
         self._todos = {todo.todo_id: todo for todo in kept}
         return len(removed_ids)
 
+    def find_autoencoder_duplicate(
+        self,
+        todo: ModalTodo,
+        *,
+        optimizer_role: str = AUTOENCODER_SGD_ROLE,
+    ) -> Optional[ModalTodo]:
+        """Return an existing trainable TODO that covers the same optimizer work."""
+        signature = _autoencoder_todo_signature(todo)
+        if not signature:
+            return None
+        for existing in self._todos.values():
+            if _todo_optimizer_role(existing) != optimizer_role:
+                continue
+            if _autoencoder_todo_signature(existing) == signature:
+                return existing
+        return None
+
+    def deduplicate_autoencoder(
+        self,
+        *,
+        optimizer_role: str = AUTOENCODER_SGD_ROLE,
+    ) -> int:
+        """Collapse duplicate autoencoder SGD TODOs into batchable representatives."""
+        kept: List[ModalTodo] = []
+        removed_ids: List[str] = []
+        for todo in sorted(
+            self._todos.values(),
+            key=lambda item: (
+                -AUTOENCODER_DEDUPE_KEEP_RANK.get(item.status, 0),
+                -item.priority,
+                item.created_at,
+                item.todo_id,
+            ),
+        ):
+            if _todo_optimizer_role(todo) != optimizer_role:
+                kept.append(todo)
+                continue
+            signature = _autoencoder_todo_signature(todo)
+            duplicate = next(
+                (
+                    existing
+                    for existing in kept
+                    if _todo_optimizer_role(existing) == optimizer_role
+                    and _autoencoder_todo_signature(existing) == signature
+                ),
+                None,
+            )
+            if duplicate is None:
+                todo.metadata["autoencoder_bundle_signature"] = signature
+                kept.append(todo)
+                continue
+            _merge_autoencoder_todo_evidence(duplicate, todo)
+            removed_ids.append(todo.todo_id)
+        if not removed_ids:
+            return 0
+        self._todos = {todo.todo_id: todo for todo in kept}
+        return len(removed_ids)
+
     def pending(self, *, optimizer_role: Optional[str] = None) -> List[ModalTodo]:
         return self._by_priority(status="pending", optimizer_role=optimizer_role)
 
@@ -1433,6 +1498,17 @@ class ModalTodoSupervisor:
         track_program_deduped: bool = False,
     ) -> List[ModalTodo]:
         """Drop duplicates and keep program-repair work within the pending cap."""
+        todos = _coalesce_autoencoder_todos(
+            list(todos),
+            optimizer_role=self.policy.autoencoder_role,
+        )
+        autoencoder_capacity = max(
+            0,
+            int(self.policy.max_autoencoder_pending)
+            - self.queue.pending_count(
+                optimizer_role=self.policy.autoencoder_role,
+            ),
+        )
         program_capacity = max(
             0,
             int(self.policy.max_program_synthesis_pending)
@@ -1448,6 +1524,31 @@ class ModalTodoSupervisor:
                 if track_program_deduped and role == self.policy.program_synthesis_role:
                     program_deduped_count += 1
                 continue
+            if role == self.policy.autoencoder_role:
+                duplicate = self.queue.find_autoencoder_duplicate(
+                    todo,
+                    optimizer_role=self.policy.autoencoder_role,
+                )
+                if duplicate is not None:
+                    if duplicate.status == "pending":
+                        _merge_autoencoder_todo_evidence(duplicate, todo)
+                    continue
+                duplicate = next(
+                    (
+                        existing
+                        for existing in selected
+                        if _todo_optimizer_role(existing) == self.policy.autoencoder_role
+                        and _autoencoder_todo_signature(existing)
+                        == _autoencoder_todo_signature(todo)
+                    ),
+                    None,
+                )
+                if duplicate is not None:
+                    _merge_autoencoder_todo_evidence(duplicate, todo)
+                    continue
+                if autoencoder_capacity < 1:
+                    continue
+                autoencoder_capacity -= 1
             if role == self.policy.program_synthesis_role:
                 if self.queue.has_semantic_duplicate(
                     todo,
@@ -1698,6 +1799,9 @@ class ModalTodoSupervisor:
             autoencoder=autoencoder,
         )
         program_synthesis_deduped = int(self.last_program_synthesis_deduped_count)
+        self.queue.deduplicate_autoencoder(
+            optimizer_role=self.policy.autoencoder_role,
+        )
         claimed = self.claim_next_batch(
             worker_id=worker_id,
             max_items=max_items,
@@ -1712,25 +1816,15 @@ class ModalTodoSupervisor:
         applied_updates: List[Dict[str, Any]] = []
         completed_ids: List[str] = []
         failed_validation_ids: List[str] = []
-        for todo in claimed:
-            state_before_todo = autoencoder.state.copy()
-            todo_before = self._autoencoder_evaluation(autoencoder, sample_list)
-            todo_validation_before = (
-                self._autoencoder_evaluation(
-                    autoencoder,
-                    validation_list,
-                    use_sample_memory=False,
-                )
-                if validation_list
-                else None
-            )
-            update_report = autoencoder.apply_todo(
-                todo,
+        if claimed:
+            state_before_batch = autoencoder.state.copy()
+            batch_updates = autoencoder.apply_todos(
+                claimed,
                 samples_by_id,
                 learning_rate=learning_rate,
             )
-            todo_after = self._autoencoder_evaluation(autoencoder, sample_list)
-            todo_validation_after = (
+            attempted_after = self._autoencoder_evaluation(autoencoder, sample_list)
+            attempted_validation_after = (
                 self._autoencoder_evaluation(
                     autoencoder,
                     validation_list,
@@ -1739,23 +1833,43 @@ class ModalTodoSupervisor:
                 if validation_list
                 else None
             )
-            completion_before = todo_validation_before or todo_before
-            completion_after = todo_validation_after or todo_after
-            validation = _todo_validation(todo, before=completion_before, after=completion_after)
-            validation["scope"] = validation_scope
-            todo.metadata["validation"] = validation
-            if validation["improved"]:
-                self.queue.complete(todo.todo_id)
-                completed_ids.append(todo.todo_id)
-                applied_updates.append(update_report)
-            elif validation_scope == "validation":
-                autoencoder.state = state_before_todo
-                validation["rolled_back"] = True
-                self.queue.fail_validation(
-                    todo.todo_id,
-                    reason="held-out validation metric did not improve",
+            completion_before = validation_before or before
+            completion_after = attempted_validation_after or attempted_after
+            validations: List[Dict[str, Any]] = []
+            for todo in claimed:
+                validation = _todo_validation(
+                    todo,
+                    before=completion_before,
+                    after=completion_after,
                 )
-                failed_validation_ids.append(todo.todo_id)
+                validation["scope"] = validation_scope
+                validation["batch_size"] = len(claimed)
+                todo.metadata["validation"] = validation
+                validations.append(validation)
+
+            batch_improved = _evaluation_improved(completion_before, completion_after) or any(
+                bool(validation.get("improved")) for validation in validations
+            )
+            if batch_improved:
+                applied_updates.extend(batch_updates)
+                for todo in claimed:
+                    self.queue.complete(todo.todo_id)
+                    completed_ids.append(todo.todo_id)
+            else:
+                autoencoder.state = state_before_batch
+                for todo in claimed:
+                    validation = dict(todo.metadata.get("validation", {}))
+                    validation["rolled_back"] = True
+                    todo.metadata["validation"] = validation
+                    self.queue.fail_validation(
+                        todo.todo_id,
+                        reason=(
+                            "held-out validation metric did not improve"
+                            if validation_scope == "validation"
+                            else "training metric did not improve"
+                        ),
+                    )
+                    failed_validation_ids.append(todo.todo_id)
 
         after = self._autoencoder_evaluation(autoencoder, sample_list)
         validation_after = (
@@ -1908,6 +2022,75 @@ class ModalTodoSupervisor:
 def _todo_id(action: str, sample_id: str, loss_name: str, loss_value: float) -> str:
     payload = f"{action}:{sample_id}:{loss_name}:{loss_value:.6f}"
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
+
+
+def _autoencoder_todo_signature(todo: ModalTodo) -> str:
+    """Return the optimizer-work signature used to batch trainable TODOs."""
+    if (
+        todo.action not in AUTOENCODER_TRAINABLE_ACTIONS
+        and todo.loss_name not in AUTOENCODER_TRAINABLE_LOSSES
+    ):
+        return ""
+    payload = {
+        "action": str(todo.action),
+        "loss_name": str(todo.loss_name),
+        "selected_frame": str(todo.metadata.get("selected_frame") or ""),
+    }
+    return hashlib.sha256(
+        json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+    ).hexdigest()[:16]
+
+
+def _coalesce_autoencoder_todos(
+    todos: Iterable[ModalTodo],
+    *,
+    optimizer_role: str = AUTOENCODER_SGD_ROLE,
+) -> List[ModalTodo]:
+    """Merge equivalent trainable TODOs so SGD sees batches instead of drips."""
+    selected: List[ModalTodo] = []
+    by_signature: Dict[str, ModalTodo] = {}
+    for todo in todos:
+        if _todo_optimizer_role(todo) != optimizer_role:
+            selected.append(todo)
+            continue
+        signature = _autoencoder_todo_signature(todo)
+        representative = by_signature.get(signature)
+        if representative is None:
+            todo.metadata["autoencoder_bundle_signature"] = signature
+            by_signature[signature] = todo
+            selected.append(todo)
+            continue
+        _merge_autoencoder_todo_evidence(representative, todo)
+    return selected
+
+
+def _merge_autoencoder_todo_evidence(target: ModalTodo, duplicate: ModalTodo) -> None:
+    """Merge trainable TODO evidence while preserving the representative status."""
+    duplicate_count = int(target.metadata.get("deduped_duplicate_count", 0)) + 1
+    duplicate_count += int(duplicate.metadata.get("deduped_duplicate_count", 0))
+    target.metadata["deduped_duplicate_count"] = duplicate_count
+
+    duplicate_ids = [duplicate.todo_id]
+    duplicate_ids.extend(list(target.metadata.get("deduped_todo_ids", [])))
+    duplicate_ids.extend(list(duplicate.metadata.get("deduped_todo_ids", [])))
+    target.metadata["deduped_todo_ids"] = _unique_preserve_order(
+        str(todo_id) for todo_id in duplicate_ids if str(todo_id)
+    )[:256]
+
+    target.sample_ids = _unique_preserve_order(
+        [*target.sample_ids, *duplicate.sample_ids]
+    )
+    target.citations = _unique_preserve_order(
+        [*target.citations, *duplicate.citations]
+    )
+    target.loss_value = max(float(target.loss_value), float(duplicate.loss_value))
+    target.priority = max(float(target.priority), float(duplicate.priority))
+    target.metadata["autoencoder_bundle_signature"] = _autoencoder_todo_signature(target)
+    target.metadata["support_count"] = len(target.sample_ids)
+    if duplicate.status == "failed_validation":
+        target.metadata["deduped_failed_validation_count"] = (
+            int(target.metadata.get("deduped_failed_validation_count", 0)) + 1
+        )
 
 
 def _program_todo_id(
@@ -2367,6 +2550,14 @@ def _todo_validation(
         "before_cosine_similarity": before.embedding_cosine_similarity,
         "improved": improved,
     }
+
+
+def _evaluation_improved(before: AutoencoderEvaluation, after: AutoencoderEvaluation) -> bool:
+    """Return whether the aggregate objective moved in the desired direction."""
+    return bool(
+        after.cross_entropy_loss < before.cross_entropy_loss
+        or after.embedding_cosine_similarity > before.embedding_cosine_similarity
+    )
 
 
 def _metric_value(evaluation: AutoencoderEvaluation, name: str) -> Optional[float]:

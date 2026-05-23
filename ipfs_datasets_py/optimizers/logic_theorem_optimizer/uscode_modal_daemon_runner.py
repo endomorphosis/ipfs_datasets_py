@@ -95,6 +95,47 @@ CODEX_TARGET_FILE_HINTS = {
     for key, value in logic_optimizer_target_file_hints().items()
 }
 CODEX_TARGET_FILE_HINTS.update({
+    "logic.optimizer.autoencoder": [
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
+    ],
+    "logic.optimizer.backlog": [
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
+    ],
+    "logic.optimizer.codex_bundler": [
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
+    ],
+    "logic.optimizer.residual_clusterer": [
+        "ipfs_datasets_py/logic/modal/synthesis.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
+    ],
+    "logic.optimizer.residual_router": [
+        "ipfs_datasets_py/logic/modal/synthesis.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
+    ],
+    "logic.optimizer.supervisor": [
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
+    ],
+    "logic.optimizer.validation_gate": [
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
+    ],
     "CEC.native": [
         "ipfs_datasets_py/logic/bridge/cec_dcec.py",
         "ipfs_datasets_py/logic/bridge/types.py",

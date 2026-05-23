@@ -409,6 +409,47 @@ def test_queue_semantic_dedupe_rejects_completed_bundle_duplicates() -> None:
     assert representative.metadata["deduped_duplicate_count"] == 1
 
 
+def test_queue_autoencoder_dedupe_batches_equivalent_sgd_todos() -> None:
+    metadata = {
+        "execution_target": "adaptive_autoencoder",
+        "optimizer_role": "autoencoder_sgd",
+        "selected_frame": "agency_duty",
+    }
+    first = ModalTodo(
+        todo_id="sgd-a",
+        action="improve_encoder_decoder_reconstruction",
+        objective="improve reconstruction",
+        sample_ids=["a"],
+        citations=["1 U.S.C. 1"],
+        loss_name="cosine_loss",
+        loss_value=0.5,
+        priority=10.0,
+        metadata=dict(metadata),
+    )
+    second = ModalTodo(
+        todo_id="sgd-b",
+        action="improve_encoder_decoder_reconstruction",
+        objective="improve reconstruction",
+        sample_ids=["b"],
+        citations=["2 U.S.C. 2"],
+        loss_name="cosine_loss",
+        loss_value=0.8,
+        priority=20.0,
+        metadata=dict(metadata),
+    )
+    queue = ModalTodoQueue([first, second])
+
+    removed = queue.deduplicate_autoencoder()
+
+    assert removed == 1
+    representative = queue.get("sgd-b")
+    assert representative is not None
+    assert queue.get("sgd-a") is None
+    assert representative.sample_ids == ["b", "a"]
+    assert representative.metadata["support_count"] == 2
+    assert representative.metadata["autoencoder_bundle_signature"]
+
+
 def test_supervisor_can_claim_program_synthesis_by_ast_scope() -> None:
     compiler = ModalTodo(
         todo_id="program-compiler",

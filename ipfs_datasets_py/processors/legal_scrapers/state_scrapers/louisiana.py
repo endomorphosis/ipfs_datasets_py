@@ -6,6 +6,7 @@ This module contains the scraper for Louisiana statutes from the official state 
 import re
 import json
 import os
+import time
 import urllib.request
 import urllib.parse
 from html import unescape
@@ -59,7 +60,17 @@ class LouisianaScraper(BaseStateScraper):
         """
         limit = self._effective_scrape_limit(max_statutes, default=160)
         return_threshold = limit if limit is not None else 1000000
-        toc = await self._scrape_live_toc_pages(code_name=code_name, max_statutes=return_threshold)
+        skip_live_toc = str(os.getenv("STATE_SCRAPER_LA_SKIP_LIVE_TOC", "1") or "1").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+        toc: List[NormalizedStatute] = []
+        if skip_live_toc:
+            self.logger.info("Louisiana live TOC discovery skipped (STATE_SCRAPER_LA_SKIP_LIVE_TOC enabled)")
+        else:
+            toc = await self._scrape_live_toc_pages(code_name=code_name, max_statutes=return_threshold)
         if toc:
             return toc[:limit] if limit is not None else toc
         if not self._full_corpus_enabled() or max_statutes is not None:
@@ -146,9 +157,35 @@ class LouisianaScraper(BaseStateScraper):
             if url not in candidate_urls:
                 candidate_urls.append(url)
 
-        for law_url in candidate_urls:
+        heartbeat_every_raw = str(os.getenv("STATE_SCRAPER_LA_ARCHIVE_SCAN_HEARTBEAT_EVERY", "") or "").strip()
+        try:
+            heartbeat_every = int(heartbeat_every_raw) if heartbeat_every_raw else 50
+        except Exception:
+            heartbeat_every = 50
+        heartbeat_every = max(10, min(2000, heartbeat_every))
+        discovered_total = len(candidate_urls)
+
+        for law_index, law_url in enumerate(candidate_urls, start=1):
             if len(statutes) >= max_statutes:
                 break
+            if law_index == 1 or law_index % heartbeat_every == 0:
+                self.logger.info(
+                    "Louisiana archival crawl: scanned_laws=%s/%s statutes_so_far=%s",
+                    law_index,
+                    discovered_total,
+                    len(statutes),
+                )
+                self._write_partial_checkpoint(
+                    statutes,
+                    code_name=code_name,
+                    stage_label="louisiana:archival-law-scan",
+                    extra={
+                        "scanned_laws": int(law_index),
+                        "discovered_laws": int(discovered_total),
+                        "codes_completed": 0,
+                        "codes_total": 1,
+                    },
+                )
 
             law_html = await self._request_text(law_url=law_url, headers=headers, timeout=45)
             if not law_html:
@@ -180,7 +217,18 @@ class LouisianaScraper(BaseStateScraper):
             )
             statutes.append(statute)
             seen_sections.add(section_number)
-
+        self._write_partial_checkpoint(
+            statutes,
+            code_name=code_name,
+            stage_label="louisiana:archival-complete",
+            force=True,
+            extra={
+                "scanned_laws": int(discovered_total),
+                "discovered_laws": int(discovered_total),
+                "codes_completed": 1,
+                "codes_total": 1,
+            },
+        )
         return statutes
 
     async def _scrape_law_page_urls(
@@ -317,6 +365,20 @@ class LouisianaScraper(BaseStateScraper):
 
         root_url = f"{self.get_base_url()}/legis/Laws_Toc.aspx?folder=75&level=Parent"
 
+        heartbeat_every_raw = str(os.getenv("STATE_SCRAPER_LA_TOC_HEARTBEAT_EVERY", "") or "").strip()
+        try:
+            heartbeat_every = int(heartbeat_every_raw) if heartbeat_every_raw else 25
+        except Exception:
+            heartbeat_every = 25
+        heartbeat_every = max(5, min(250, heartbeat_every))
+
+        timeout_raw = str(os.getenv("STATE_SCRAPER_LA_TOC_DISCOVERY_TIMEOUT_SECONDS", "") or "").strip()
+        try:
+            discovery_timeout_seconds = float(timeout_raw) if timeout_raw else 600.0
+        except Exception:
+            discovery_timeout_seconds = 600.0
+        discovery_timeout_seconds = max(30.0, min(7200.0, discovery_timeout_seconds))
+
         def _crawl() -> List[str]:
             session = requests.Session()
             response = session.get(root_url, timeout=30, headers={"User-Agent": "Mozilla/5.0"})
@@ -345,7 +407,20 @@ class LouisianaScraper(BaseStateScraper):
             law_urls: List[str] = []
             seen_laws = set()
             title_limit = len(event_targets) if self._full_corpus_enabled() and limit >= 1000000 else min(len(event_targets), max(1, limit))
-            for target in event_targets[:title_limit]:
+            for title_index, target in enumerate(event_targets[:title_limit], start=1):
+                if title_index == 1 or title_index % heartbeat_every == 0:
+                    self._write_partial_checkpoint(
+                        [],
+                        code_name="Louisiana Revised Statutes",
+                        stage_label="louisiana:toc-discovery",
+                        extra={
+                            "titles_scanned": int(title_index),
+                            "discovered_titles": int(title_limit),
+                            "discovered_laws": int(len(law_urls)),
+                            "codes_completed": 0,
+                            "codes_total": 1,
+                        },
+                    )
                 payload = dict(base_payload)
                 payload["__EVENTTARGET"] = target
                 payload["__EVENTARGUMENT"] = ""
@@ -372,12 +447,55 @@ class LouisianaScraper(BaseStateScraper):
             return law_urls
 
         try:
-            law_urls = await asyncio.to_thread(_crawl)
+            started_at = time.time()
+            law_urls = await asyncio.wait_for(
+                asyncio.to_thread(_crawl),
+                timeout=discovery_timeout_seconds,
+            )
+            elapsed = max(0.0, time.time() - started_at)
         except Exception as exc:
-            self.logger.debug(f"Louisiana live TOC discovery failed: {exc}")
+            if isinstance(exc, TimeoutError):
+                self.logger.warning(
+                    "Louisiana live TOC discovery timed out after %.1fs; falling back to alternate sources",
+                    discovery_timeout_seconds,
+                )
+            else:
+                self.logger.debug(f"Louisiana live TOC discovery failed: {exc}")
+            self._write_partial_checkpoint(
+                [],
+                code_name="Louisiana Revised Statutes",
+                stage_label="louisiana:toc-discovery-failed",
+                force=True,
+                extra={
+                    "titles_scanned": 0,
+                    "discovered_titles": 0,
+                    "discovered_laws": 0,
+                    "codes_completed": 0,
+                    "codes_total": 1,
+                },
+            )
             return []
 
-        self.logger.info("Louisiana live TOC: discovered %s law pages", len(law_urls))
+        self.logger.info(
+            "Louisiana live TOC: discovered %s law pages in %.1fs",
+            len(law_urls),
+            elapsed,
+        )
+        self._write_partial_checkpoint(
+            [],
+            code_name="Louisiana Revised Statutes",
+            stage_label="louisiana:toc-discovery-complete",
+            force=True,
+            extra={
+                "titles_scanned": int(max(1, len(law_urls))),
+                "discovered_titles": int(max(1, len(law_urls))),
+                "discovered_laws": int(len(law_urls)),
+                "codes_completed": 0,
+                "codes_total": 1,
+            },
+        )
+        if not law_urls:
+            self.logger.debug("Louisiana live TOC discovery completed with zero law urls")
         return law_urls
 
     async def _discover_archived_law_urls(self, limit: int = 120) -> List[str]:
@@ -456,6 +574,12 @@ class LouisianaScraper(BaseStateScraper):
 
         for candidate in candidates:
             try:
+                if "web.archive.org/web/" in candidate:
+                    req = urllib.request.Request(candidate, headers=headers)
+                    with urllib.request.urlopen(req, timeout=max(1, int(timeout))) as resp:
+                        payload = resp.read()
+                    if payload:
+                        return payload.decode("utf-8", errors="replace")
                 payload = await self._fetch_page_content_with_archival_fallback(
                     candidate,
                     timeout_seconds=timeout,

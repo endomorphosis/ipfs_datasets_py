@@ -1174,6 +1174,7 @@ def _collect_state_rate_analytics(
     stalled_states: List[Dict[str, Any]] = []
     high_confidence_stalled_states: List[Dict[str, Any]] = []
     possibly_stalled_states: List[Dict[str, Any]] = []
+    timeout_retry_recommended_states: List[Dict[str, Any]] = []
     low_confidence_inactive_state_count = 0
 
     for state in all_states:
@@ -1401,6 +1402,19 @@ def _collect_state_rate_analytics(
             state_entry["timeout_work_remaining"] = timeout_work_remaining
         if timeout_promoted_to_success:
             state_entry["timeout_promoted_to_success"] = True
+        timeout_retry_recommended = bool(
+            is_completed
+            and progress_status in {"error", "zero_statutes"}
+            and timeout_classification.startswith("timeout_")
+            and not timeout_promoted_to_success
+            and timeout_work_remaining is not False
+        )
+        if timeout_retry_recommended:
+            timeout_retry_reason = "timeout_with_remaining_or_unknown_work_after_completion"
+            if timeout_classification == "timeout_without_progress_signal":
+                timeout_retry_reason = "timeout_without_progress_signal_after_completion"
+            state_entry["timeout_retry_recommended"] = True
+            state_entry["timeout_retry_reason"] = timeout_retry_reason
         state_rows.append(state_entry)
 
         if likely_stalled:
@@ -1450,6 +1464,22 @@ def _collect_state_rate_analytics(
                 }
             )
             low_confidence_inactive_state_count += 1
+        if timeout_retry_recommended:
+            timeout_retry_recommended_states.append(
+                {
+                    "state": state,
+                    "shard": shard_name,
+                    "reason": state_entry.get("timeout_retry_reason") or "",
+                    "progress_status": progress_status,
+                    "timeout_classification": timeout_classification,
+                    "timeout_work_remaining": timeout_work_remaining,
+                    "max_counter": max_counter,
+                    "progress_event_count": progress_event_count,
+                    "work_signal_kind": work_signal_kind,
+                    "work_scanned": work_scanned,
+                    "work_discovered": work_discovered,
+                }
+            )
 
     stalled_states.sort(
         key=lambda row: (
@@ -1501,11 +1531,13 @@ def _collect_state_rate_analytics(
         "timeout_while_work_remaining_count": int(timeout_while_work_remaining_count),
         "timeout_no_remaining_work_count": int(timeout_no_remaining_work_count),
         "timeout_unknown_count": int(timeout_unknown_count),
+        "timeout_retry_recommended_count": len(timeout_retry_recommended_states),
         "started_states": started_states,
         "completed_states": completed_from_progress,
         "inflight_states": inflight_states,
         "stalled_states": stalled_states,
         "possibly_stalled_states": possibly_stalled_states,
+        "timeout_retry_recommended_states": timeout_retry_recommended_states,
         "states": state_rows,
     }
 
@@ -1537,8 +1569,10 @@ def _collect_parallel_watch_payload(
             "stalled_state_count": 0,
             "high_confidence_stalled_state_count": 0,
             "possibly_stalled_state_count": 0,
+            "timeout_retry_recommended_count": 0,
             "possibly_stalled_states": [],
             "stalled_states": [],
+            "timeout_retry_recommended_states": [],
         }
 
     daemon_rows = _list_legal_scraper_daemons()
@@ -1554,6 +1588,8 @@ def _collect_parallel_watch_payload(
     high_confidence_stalled_count = 0
     possibly_stalled_states: List[Dict[str, Any]] = []
     possibly_stalled_count = 0
+    timeout_retry_recommended_states: List[Dict[str, Any]] = []
+    timeout_retry_recommended_count = 0
     low_confidence_inactive_state_count = 0
 
     for output_dir in sorted(run_dir.glob(parallel_output_glob)):
@@ -1656,6 +1692,14 @@ def _collect_parallel_watch_payload(
         for row in possible_rows:
             if isinstance(row, dict):
                 possibly_stalled_states.append(row)
+        timeout_retry_rows = list(state_rate_analytics.get("timeout_retry_recommended_states") or [])
+        timeout_retry_recommended_count += _safe_int(
+            state_rate_analytics.get("timeout_retry_recommended_count"),
+            len(timeout_retry_rows),
+        )
+        for row in timeout_retry_rows:
+            if isinstance(row, dict):
+                timeout_retry_recommended_states.append(row)
         for stalled in list(state_rate_analytics.get("stalled_states") or []):
             if not isinstance(stalled, dict):
                 continue
@@ -1702,8 +1746,10 @@ def _collect_parallel_watch_payload(
         "high_confidence_stalled_state_count": int(high_confidence_stalled_count),
         "possibly_stalled_state_count": int(possibly_stalled_count),
         "low_confidence_inactive_state_count": int(low_confidence_inactive_state_count),
+        "timeout_retry_recommended_count": int(timeout_retry_recommended_count),
         "possibly_stalled_states": possibly_stalled_states[:80],
         "stalled_states": stalled_states[:80],
+        "timeout_retry_recommended_states": timeout_retry_recommended_states[:80],
     }
 
 
@@ -1824,17 +1870,20 @@ def _ingest_watch_status(
         stalled_state_count = _safe_int(watch_payload.get("stalled_state_count"), 0)
         high_conf_stalled_state_count = _safe_int(watch_payload.get("high_confidence_stalled_state_count"), 0)
         possibly_stalled_state_count = _safe_int(watch_payload.get("possibly_stalled_state_count"), 0)
+        timeout_retry_recommended_count = _safe_int(watch_payload.get("timeout_retry_recommended_count"), 0)
         low_conf_inactive_state_count = _safe_int(watch_payload.get("low_confidence_inactive_state_count"), 0)
         heartbeat_age = _safe_float(watch_payload.get("heartbeat_age_seconds"), -1.0)
         shards = list(watch_payload.get("shards") or [])
         stalled_states = list(watch_payload.get("stalled_states") or [])
         possibly_stalled_states = list(watch_payload.get("possibly_stalled_states") or [])
+        timeout_retry_recommended_states = list(watch_payload.get("timeout_retry_recommended_states") or [])
         daemon_pids = [int(pid) for pid in list(watch_payload.get("daemon_pids") or []) if _safe_int(pid, 0) > 0]
         active_stale_shard_task_ids: set[str] = set()
         active_dead_shard_task_ids: set[str] = set()
         active_missing_phase_task_ids: set[str] = set()
         active_state_stall_task_ids: set[str] = set()
         active_state_possible_stall_task_ids: set[str] = set()
+        active_timeout_retry_task_ids: set[str] = set()
         parallel_run_not_detected_active = status in {"missing_parallel_run_dir", "no_shards"}
 
         for shard in shards:
@@ -1986,6 +2035,39 @@ def _ingest_watch_status(
                 },
                 reopen_complete=reopen_complete,
             )
+        for retry_row in timeout_retry_recommended_states[:80]:
+            if not isinstance(retry_row, dict):
+                continue
+            state = str(retry_row.get("state") or "").strip().upper()
+            shard_name = str(retry_row.get("shard") or "unknown").strip() or "unknown"
+            if len(state) != 2:
+                continue
+            task_id = f"ops:state-timeout-retry:{shard_name}:{state}"
+            active_timeout_retry_task_ids.add(task_id)
+            _upsert_task(
+                backlog,
+                {
+                    "task_id": task_id,
+                    "title": f"Retry timeout-completed state scrape for {state} on {shard_name}.",
+                    "status": "in-progress",
+                    "priority": 6,
+                    "category": "ops",
+                    "source": "watch_status",
+                    "states": [state],
+                    "evidence": [
+                        f"shard={shard_name}",
+                        f"reason={retry_row.get('reason')}",
+                        f"progress_status={retry_row.get('progress_status')}",
+                        f"timeout_classification={retry_row.get('timeout_classification')}",
+                        f"timeout_work_remaining={retry_row.get('timeout_work_remaining')}",
+                        f"max_counter={_safe_int(retry_row.get('max_counter'), 0)}",
+                        f"work_signal_kind={retry_row.get('work_signal_kind')}",
+                        f"work_scanned={_safe_int(retry_row.get('work_scanned'), 0)}",
+                        f"work_discovered={_safe_int(retry_row.get('work_discovered'), 0)}",
+                    ],
+                },
+                reopen_complete=reopen_complete,
+            )
 
         if parallel_run_not_detected_active:
             _upsert_task(
@@ -2035,6 +2117,12 @@ def _ingest_watch_status(
             active_task_ids=active_state_possible_stall_task_ids,
             note="Auto-resolved: state is no longer marked possibly stalled in latest watch status.",
         )
+        _complete_watch_tasks_with_prefix(
+            backlog,
+            prefix="ops:state-timeout-retry:",
+            active_task_ids=active_timeout_retry_task_ids,
+            note="Auto-resolved: state no longer requires timeout-recovery retry in latest watch status.",
+        )
         _complete_watch_task_if_inactive(
             backlog,
             task_id="ops:parallel-run-not-detected",
@@ -2058,9 +2146,11 @@ def _ingest_watch_status(
             "stalled_state_count": stalled_state_count,
             "high_confidence_stalled_state_count": high_conf_stalled_state_count,
             "possibly_stalled_state_count": possibly_stalled_state_count,
+            "timeout_retry_recommended_count": timeout_retry_recommended_count,
             "low_confidence_inactive_state_count": low_conf_inactive_state_count,
             "stalled_states": stalled_states,
             "possibly_stalled_states": possibly_stalled_states,
+            "timeout_retry_recommended_states": timeout_retry_recommended_states,
             "parallel_run_dir": str(watch_payload.get("parallel_run_dir") or ""),
             "shards": shards,
         }
@@ -2352,6 +2442,7 @@ def _collect_metrics(
         "parallel_stalled_state_count": _safe_int(watch_status.get("stalled_state_count"), 0),
         "parallel_high_confidence_stalled_state_count": _safe_int(watch_status.get("high_confidence_stalled_state_count"), 0),
         "parallel_possibly_stalled_state_count": _safe_int(watch_status.get("possibly_stalled_state_count"), 0),
+        "parallel_timeout_retry_recommended_count": _safe_int(watch_status.get("timeout_retry_recommended_count"), 0),
         "parallel_low_confidence_inactive_state_count": _safe_int(watch_status.get("low_confidence_inactive_state_count"), 0),
     }
 

@@ -769,7 +769,7 @@ class DeterministicModalLogicCodec:
     ) -> Optional[FLogicOptimizerResult]:
         if not self.config.use_flogic:
             return None
-        return self.flogic_optimizer.evaluate(
+        result = self.flogic_optimizer.evaluate(
             source_text=source_text,
             decoded_text=decoded_text,
             source_embedding=source_embedding,
@@ -777,6 +777,8 @@ class DeterministicModalLogicCodec:
             kg_triples=kg_triples,
             frame_feature_keys=frame_feature_keys,
         )
+        _normalize_flogic_result_frame_terms(result)
+        return result
 
 
 def decode_modal_ir_text(modal_ir: ModalIRDocument) -> str:
@@ -4142,11 +4144,46 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
     )
     if numeric_relation is not None:
         relation, span = numeric_relation
+        primary_span_component = "citation_section_primary_terminal_number_span"
+        primary_profile_component = (
+            "citation_section_primary_terminal_number_distance_profile"
+        )
         components.append(("citation_section_primary_terminal_number_relation", relation))
-        components.append(("citation_section_primary_terminal_number_span", span))
+        components.append((primary_span_component, span))
+        components.extend(
+            _numeric_span_signature_components(
+                slot_prefix=primary_span_component,
+                span=span,
+            )
+        )
+        relation_profile = _relation_span_profile(relation=relation, span=span)
+        if relation_profile:
+            components.append((primary_profile_component, relation_profile))
+            components.extend(
+                _typed_identifier_components(
+                    relation_profile,
+                    slot_prefix=primary_profile_component,
+                )
+            )
         if is_range:
             components.append(("citation_section_range_number_relation", relation))
-            components.append(("citation_section_range_number_span", span))
+            range_span_component = "citation_section_range_number_span"
+            range_profile_component = "citation_section_range_number_distance_profile"
+            components.append((range_span_component, span))
+            components.extend(
+                _numeric_span_signature_components(
+                    slot_prefix=range_span_component,
+                    span=span,
+                )
+            )
+            if relation_profile:
+                components.append((range_profile_component, relation_profile))
+                components.extend(
+                    _typed_identifier_components(
+                        relation_profile,
+                        slot_prefix=range_profile_component,
+                    )
+                )
     components.extend(
         _primary_terminal_suffix_relation_components(
             primary_suffix=primary_suffix,
@@ -5280,6 +5317,8 @@ def _slot_features(decoded: DecodedModalText) -> List[str]:
     for slot, values in sorted(slot_text_map.items()):
         if slot in _SLOT_FEATURE_EXCLUDED_SLOTS:
             continue
+        if slot.endswith("_distance_profile_token_suffix"):
+            continue
         features.append(f"slot:{slot}")
         for value in values:
             encoded_value = _slot_feature_value(value)
@@ -5742,10 +5781,35 @@ def _frame_ontology_audit_terms(
         )
     )
     return sorted(_unique_preserve_order(
-        feature_terms
-        + triple_terms
-        + contextualized_terms
+        _normalize_frame_ontology_audit_term(term)
+        for term in feature_terms + triple_terms + contextualized_terms
     ))
+
+
+def _normalize_frame_ontology_audit_term(term: str) -> str:
+    """Collapse legacy positioned bucket terms before ontology-term audits merge."""
+    normalized = _clean_non_empty_string(term)
+    if re.fullmatch(r"\d+_digits?", normalized):
+        return "digit"
+    return normalized
+
+
+def _normalize_flogic_result_frame_terms(result: Optional[FLogicOptimizerResult]) -> None:
+    """Normalize frame-term metadata emitted by the F-logic optimizer in place."""
+    if result is None or not isinstance(result.metadata, dict):
+        return
+    for key, value in list(result.metadata.items()):
+        if "frame_ontology" not in str(key) or "terms" not in str(key):
+            continue
+        if not isinstance(value, list):
+            continue
+        normalized_values = sorted(
+            _unique_preserve_order(
+                _normalize_frame_ontology_audit_term(str(term))
+                for term in value
+            )
+        )
+        result.metadata[key] = normalized_values
 
 
 def _selected_frame_modal_families(modal_ir: ModalIRDocument) -> List[str]:
