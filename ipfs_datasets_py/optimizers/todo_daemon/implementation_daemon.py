@@ -77,6 +77,11 @@ UNTRACKED_WORKTREE_CONTEXT_PREFIXES = (
     "tests/",
     "wallet_interface/",
 )
+GENERATED_ADD_ADD_CONFLICT_PREFIXES = (
+    "data/",
+    "docs/",
+    "implementation_plan/",
+)
 
 
 def utc_now() -> str:
@@ -839,9 +844,186 @@ class PortalImplementationDaemon:
             self._record_event("todo_status_update_failed", result)
             return result
 
+        commit_result = self._commit_generated_file_update(
+            todo_path,
+            task_id=task_id,
+            subject=f"{task_id}: mark todo completed",
+        )
         result = {"updated": True, "task_id": task_id, "path": str(todo_path)}
+        if commit_result:
+            result["commit_result"] = commit_result
         self._record_event("todo_status_updated", result)
         return result
+
+    def _commit_generated_file_update(self, path: Path, *, task_id: str, subject: str) -> dict[str, Any]:
+        """Commit a daemon-owned generated file and any parent gitlink updates."""
+
+        repo = self._git_toplevel_for_path(path.parent)
+        if repo is None:
+            return {"committed": False, "reason": "not_in_git_repo", "path": str(path)}
+        relative = self._relative_to_repo(repo, path)
+        if not relative:
+            return {"committed": False, "reason": "path_outside_repo", "path": str(path), "repo": str(repo)}
+
+        result = self._commit_specific_path(repo, relative, subject=subject)
+        parent_results: list[dict[str, Any]] = []
+        if result.get("committed"):
+            parent_results = self._commit_parent_gitlink_updates(repo, task_id=task_id)
+        if parent_results:
+            result["parent_gitlink_commits"] = parent_results
+        return result
+
+    def _commit_parent_gitlink_updates(self, child_repo: Path, *, task_id: str) -> list[dict[str, Any]]:
+        results: list[dict[str, Any]] = []
+        current = child_repo.resolve()
+        repo_root = self.repo_root.resolve()
+        while current != repo_root:
+            parent = self._parent_git_toplevel_for_repo(current)
+            if parent is None:
+                break
+            relative = self._relative_to_repo(parent, current)
+            if not relative:
+                break
+            result = self._commit_specific_path(
+                parent,
+                relative,
+                subject=f"{task_id}: update generated submodule pointer",
+            )
+            results.append(result)
+            current = parent.resolve()
+        return results
+
+    def _commit_specific_path(self, repo: Path, relative: str, *, subject: str) -> dict[str, Any]:
+        if not self._repo_relative_path_safe(relative):
+            return {"committed": False, "reason": "unsafe_path", "repo": str(repo), "path": relative}
+        unmerged = self._unmerged_worktree_paths(repo)
+        if unmerged and relative not in unmerged:
+            return {
+                "committed": False,
+                "reason": "repo_has_unrelated_unmerged_paths",
+                "repo": str(repo),
+                "path": relative,
+                "unmerged_paths": sorted(unmerged),
+            }
+        status = self._path_status(repo, relative)
+        if not status:
+            return {"committed": False, "reason": "no_changes", "repo": str(repo), "path": relative}
+        add = subprocess.run(
+            ["git", "add", "--", relative],
+            cwd=repo,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if add.returncode != 0:
+            return {
+                "committed": False,
+                "reason": "git_add_failed",
+                "repo": str(repo),
+                "path": relative,
+                "returncode": add.returncode,
+                "stdout": add.stdout[-4000:],
+                "stderr": add.stderr[-4000:],
+            }
+        staged = subprocess.run(
+            ["git", "diff", "--cached", "--quiet", "--", relative],
+            cwd=repo,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if staged.returncode == 0:
+            return {"committed": False, "reason": "no_staged_changes", "repo": str(repo), "path": relative}
+        commit = subprocess.run(
+            [
+                "git",
+                "-c",
+                "user.name=Implementation Daemon",
+                "-c",
+                "user.email=implementation-daemon@example.invalid",
+                "commit",
+                "-m",
+                subject,
+                "--",
+                relative,
+            ],
+            cwd=repo,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if commit.returncode != 0:
+            return {
+                "committed": False,
+                "reason": "git_commit_failed",
+                "repo": str(repo),
+                "path": relative,
+                "returncode": commit.returncode,
+                "stdout": commit.stdout[-4000:],
+                "stderr": commit.stderr[-4000:],
+            }
+        commit_ref = self._run_git(["rev-parse", "HEAD"], cwd=repo).stdout.strip()
+        return {
+            "committed": True,
+            "repo": str(repo),
+            "path": relative,
+            "commit": commit_ref,
+            "status": status,
+        }
+
+    def _git_toplevel_for_path(self, cwd: Path) -> Path | None:
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            cwd=cwd,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if result.returncode != 0 or not result.stdout.strip():
+            return None
+        return Path(result.stdout.strip()).resolve()
+
+    def _parent_git_toplevel_for_repo(self, repo: Path) -> Path | None:
+        parent_dir = repo.resolve().parent
+        parent = self._git_toplevel_for_path(parent_dir)
+        if parent is None or parent.resolve() == repo.resolve():
+            return None
+        try:
+            repo.resolve().relative_to(parent.resolve())
+        except ValueError:
+            return None
+        return parent
+
+    @staticmethod
+    def _relative_to_repo(repo: Path, path: Path) -> str:
+        try:
+            return path.resolve().relative_to(repo.resolve()).as_posix()
+        except ValueError:
+            return ""
+
+    def _path_status(self, repo: Path, relative: str) -> str:
+        result = subprocess.run(
+            ["git", "status", "--porcelain", "--untracked-files=all", "--", relative],
+            cwd=repo,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            return ""
+        return result.stdout.strip()
+
+    def _unmerged_worktree_paths(self, repo: Path) -> set[str]:
+        result = subprocess.run(
+            ["git", "diff", "--name-only", "--diff-filter=U"],
+            cwd=repo,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            return set()
+        return {line.strip() for line in result.stdout.splitlines() if line.strip()}
 
     def _run_implementation_in_ephemeral_worktree(
         self,
@@ -1969,6 +2151,7 @@ class PortalImplementationDaemon:
 
             merge_workspace = Path(str(workspace_result["path"]))
             merge_workspace_ephemeral = bool(workspace_result.get("ephemeral", False))
+            resolved_add_add_conflicts = self._resolve_generated_add_add_conflicts(cwd=merge_workspace)
             identical_untracked_paths = self._identical_untracked_merge_paths(branch_name, cwd=merge_workspace)
             dirty_overlap = self._dirty_merge_conflict_paths(
                 branch_name,
@@ -1992,6 +2175,7 @@ class PortalImplementationDaemon:
                     "main_worktree_path": str(merge_workspace),
                     "used_ephemeral_main_worktree": merge_workspace_ephemeral,
                     "identical_untracked_paths": identical_untracked_paths,
+                    "resolved_generated_conflicts": resolved_add_add_conflicts,
                     "submodule_merge_results": [],
                 }
                 self._record_event("merge_finished", result)
@@ -2008,6 +2192,7 @@ class PortalImplementationDaemon:
                     "main_worktree_path": str(merge_workspace),
                     "used_ephemeral_main_worktree": merge_workspace_ephemeral,
                     "started_at": started_at,
+                    "resolved_generated_conflicts": resolved_add_add_conflicts,
                 },
             )
             command = [
@@ -2050,6 +2235,7 @@ class PortalImplementationDaemon:
                 "main_worktree_path": str(merge_workspace),
                 "used_ephemeral_main_worktree": merge_workspace_ephemeral,
                 "identical_untracked_paths": identical_untracked_paths,
+                "resolved_generated_conflicts": resolved_add_add_conflicts,
                 "submodule_merge_results": submodule_merge_results,
             }
             if failed_submodules:
@@ -2335,6 +2521,101 @@ class PortalImplementationDaemon:
         if ignore_paths:
             overlap -= ignore_paths
         return sorted(overlap)
+
+    def _resolve_generated_add_add_conflicts(self, *, cwd: Path | None = None) -> list[dict[str, Any]]:
+        workspace = cwd or self.repo_root
+        results: list[dict[str, Any]] = []
+        for relative in self._unmerged_add_add_paths(workspace):
+            if not self._generated_add_add_conflict_path_allowed(relative):
+                continue
+            ours = self._conflict_stage_blob(workspace, relative, stage=2)
+            theirs = self._conflict_stage_blob(workspace, relative, stage=3)
+            selected = self._select_generated_conflict_blob(ours, theirs)
+            if selected is None:
+                results.append(
+                    {
+                        "path": relative,
+                        "resolved": False,
+                        "reason": "contents_not_equivalent_or_contained",
+                    }
+                )
+                continue
+            target = workspace / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(selected)
+            add = subprocess.run(
+                ["git", "add", "--", relative],
+                cwd=workspace,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            results.append(
+                {
+                    "path": relative,
+                    "resolved": add.returncode == 0,
+                    "reason": "selected_equivalent_generated_content" if add.returncode == 0 else "git_add_failed",
+                    "returncode": add.returncode,
+                    "stdout": add.stdout[-4000:],
+                    "stderr": add.stderr[-4000:],
+                }
+            )
+        if results:
+            self._record_event(
+                "generated_add_add_conflict_repair",
+                {"main_worktree_path": str(workspace), "results": results},
+            )
+        return results
+
+    def _unmerged_add_add_paths(self, cwd: Path) -> list[str]:
+        result = subprocess.run(
+            ["git", "status", "--porcelain", "-z"],
+            cwd=cwd,
+            capture_output=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            return []
+        paths: list[str] = []
+        for raw_entry in result.stdout.split(b"\0"):
+            if not raw_entry or len(raw_entry) < 4:
+                continue
+            status = raw_entry[:2].decode("ascii", errors="ignore")
+            if status != "AA":
+                continue
+            relative = raw_entry[3:].decode("utf-8", errors="surrogateescape")
+            if relative:
+                paths.append(relative)
+        return paths
+
+    def _generated_add_add_conflict_path_allowed(self, relative: str) -> bool:
+        if not self._repo_relative_path_safe(relative):
+            return False
+        normalized = relative.strip("/")
+        return any(self._path_matches_prefix(normalized, prefix) for prefix in GENERATED_ADD_ADD_CONFLICT_PREFIXES)
+
+    def _conflict_stage_blob(self, cwd: Path, relative: str, *, stage: int) -> bytes | None:
+        result = subprocess.run(
+            ["git", "show", f":{stage}:{relative}"],
+            cwd=cwd,
+            capture_output=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            return None
+        return result.stdout
+
+    @staticmethod
+    def _select_generated_conflict_blob(ours: bytes | None, theirs: bytes | None) -> bytes | None:
+        if ours is None or theirs is None:
+            return None
+        if ours == theirs:
+            return ours
+        if ours and ours in theirs:
+            return theirs
+        if theirs and theirs in ours:
+            return ours
+        return None
 
     def _identical_untracked_merge_paths(self, branch_name: str, *, cwd: Path | None = None) -> list[str]:
         workspace = cwd or self.repo_root
