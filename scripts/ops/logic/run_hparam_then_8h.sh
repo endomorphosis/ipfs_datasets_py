@@ -48,6 +48,10 @@ COMMON_ARGS=(
   --autoencoder-max-compiler-latent-profile-features 48
   --autoencoder-max-round-trip-bridge-features 64
   --autoencoder-max-clause-topology-features 64
+  --autoencoder-max-legal-semantic-frame-features 64
+  --autoencoder-max-normative-polarity-features 48
+  --autoencoder-max-compiler-contract-features 64
+  --autoencoder-max-decompiler-surface-template-features 48
   --autoencoder-max-semantic-slot-interactions 24
   --autoencoder-feature-activity-reference 64
   --autoencoder-feature-logit-clip 24.0

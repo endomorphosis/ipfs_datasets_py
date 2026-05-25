@@ -1861,6 +1861,14 @@ def build_paired_daemon_commands(
         str(getattr(args, "autoencoder_max_round_trip_bridge_features", 64)),
         "--autoencoder-max-clause-topology-features",
         str(getattr(args, "autoencoder_max_clause_topology_features", 64)),
+        "--autoencoder-max-legal-semantic-frame-features",
+        str(getattr(args, "autoencoder_max_legal_semantic_frame_features", 64)),
+        "--autoencoder-max-normative-polarity-features",
+        str(getattr(args, "autoencoder_max_normative_polarity_features", 48)),
+        "--autoencoder-max-compiler-contract-features",
+        str(getattr(args, "autoencoder_max_compiler_contract_features", 64)),
+        "--autoencoder-max-decompiler-surface-template-features",
+        str(getattr(args, "autoencoder_max_decompiler_surface_template_features", 48)),
         "--autoencoder-embedding-head-update-normalization",
         str(getattr(args, "autoencoder_embedding_head_update_normalization", 0.5)),
         "--autoencoder-family-logit-head-update-normalization",
@@ -4796,6 +4804,46 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--autoencoder-max-legal-semantic-frame-features",
+        type=int,
+        default=64,
+        help=(
+            "Maximum canonical legal semantic frame features to expose to the "
+            "feature decoder. These map actors, legal acts, objects, "
+            "conditions, exceptions, and KG relations into reusable classes."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-max-normative-polarity-features",
+        type=int,
+        default=48,
+        help=(
+            "Maximum deontic force and polarity features to expose to the "
+            "feature decoder. These distinguish obligation, permission, "
+            "prohibition, negated scope, exceptions, and modal operators."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-max-compiler-contract-features",
+        type=int,
+        default=64,
+        help=(
+            "Maximum composite compiler-contract features to expose to the "
+            "feature decoder. These combine source semantic frame, deontic "
+            "force/polarity/scope, and compiled IR operator shape."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-max-decompiler-surface-template-features",
+        type=int,
+        default=48,
+        help=(
+            "Maximum IR-to-text surface template features to expose to the "
+            "feature decoder. These encode role order, force lexeme, negation "
+            "placement, scope realizers, and modal operator realization."
+        ),
+    )
+    parser.add_argument(
         "--autoencoder-family-embedding-weight-scale",
         type=float,
         default=0.5,
@@ -5839,6 +5887,18 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         max_clause_topology_features=int(
             getattr(args, "autoencoder_max_clause_topology_features", 64)
         ),
+        max_legal_semantic_frame_features=int(
+            getattr(args, "autoencoder_max_legal_semantic_frame_features", 64)
+        ),
+        max_normative_polarity_features=int(
+            getattr(args, "autoencoder_max_normative_polarity_features", 48)
+        ),
+        max_compiler_contract_features=int(
+            getattr(args, "autoencoder_max_compiler_contract_features", 64)
+        ),
+        max_decompiler_surface_template_features=int(
+            getattr(args, "autoencoder_max_decompiler_surface_template_features", 48)
+        ),
         feature_activity_reference=int(
             getattr(args, "autoencoder_feature_activity_reference", 64)
         ),
@@ -5981,6 +6041,18 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     )
     summary["autoencoder_max_clause_topology_features"] = int(
         getattr(args, "autoencoder_max_clause_topology_features", 64)
+    )
+    summary["autoencoder_max_legal_semantic_frame_features"] = int(
+        getattr(args, "autoencoder_max_legal_semantic_frame_features", 64)
+    )
+    summary["autoencoder_max_normative_polarity_features"] = int(
+        getattr(args, "autoencoder_max_normative_polarity_features", 48)
+    )
+    summary["autoencoder_max_compiler_contract_features"] = int(
+        getattr(args, "autoencoder_max_compiler_contract_features", 64)
+    )
+    summary["autoencoder_max_decompiler_surface_template_features"] = int(
+        getattr(args, "autoencoder_max_decompiler_surface_template_features", 48)
     )
     summary["autoencoder_feature_activity_reference"] = int(
         getattr(args, "autoencoder_feature_activity_reference", 64)

@@ -157,7 +157,11 @@ class IndianaScraper(BaseStateScraper):
 
         root_url = "https://web.archive.org/web/20241203192652/https://law.justia.com/codes/indiana/2010/"
         try:
-            payload = await self._fetch_page_content_with_archival_fallback(root_url, timeout_seconds=35)
+            payload = await self._fetch_archived_indiana_page(
+                root_url,
+                timeout_seconds=35,
+                allow_archival_fallback=True,
+            )
         except Exception:
             return []
         if not payload:
@@ -200,7 +204,11 @@ class IndianaScraper(BaseStateScraper):
                 )
             else:
                 try:
-                    title_payload = await self._fetch_page_content_with_archival_fallback(title_url, timeout_seconds=35)
+                    title_payload = await self._fetch_archived_indiana_page(
+                        title_url,
+                        timeout_seconds=35,
+                        allow_archival_fallback=True,
+                    )
                 except Exception:
                     continue
                 if not title_payload:
@@ -302,7 +310,7 @@ class IndianaScraper(BaseStateScraper):
                     },
                 )
             try:
-                payload = await self._fetch_page_content_with_archival_fallback(page_url, timeout_seconds=35)
+                payload = await self._fetch_archived_indiana_page(page_url, timeout_seconds=35)
             except Exception:
                 payload = b""
             if not payload:
@@ -425,7 +433,7 @@ class IndianaScraper(BaseStateScraper):
                 pages_seen += 1
                 global_pages_seen += 1
                 try:
-                    payload = await self._fetch_page_content_with_archival_fallback(page_url, timeout_seconds=35)
+                    payload = await self._fetch_archived_indiana_page(page_url, timeout_seconds=35)
                 except Exception:
                     payload = b""
                 if not payload:
@@ -539,7 +547,7 @@ class IndianaScraper(BaseStateScraper):
             return None
 
         try:
-            payload = await self._fetch_page_content_with_archival_fallback(source_url, timeout_seconds=35)
+            payload = await self._fetch_archived_indiana_page(source_url, timeout_seconds=35)
         except Exception:
             payload = b""
         if not payload:
@@ -827,6 +835,51 @@ class IndianaScraper(BaseStateScraper):
     @staticmethod
     def _env_flag(name: str) -> bool:
         return str(os.getenv(name, "")).strip().lower() in {"1", "true", "yes", "on"}
+
+    async def _fetch_archived_indiana_page(
+        self,
+        url: str,
+        timeout_seconds: int = 35,
+        *,
+        allow_archival_fallback: bool = False,
+    ) -> bytes:
+        """Fetch archived Indiana/Justia pages with a fast direct-first path.
+
+        Indiana full-corpus runs can appear stalled when archive/search fallback
+        loops hit repeated 429s across many Justia candidate URLs. For Wayback
+        pages, we first try direct replay candidates and only use the heavier
+        archival/search chain when explicitly enabled.
+        """
+        fetch_url = self._canonical_fetch_url(url)
+        if not fetch_url:
+            return b""
+
+        if "web.archive.org/web/" not in fetch_url:
+            return await self._fetch_page_content_with_archival_fallback(
+                fetch_url,
+                timeout_seconds=timeout_seconds,
+            )
+
+        headers = {
+            "User-Agent": "ipfs-datasets-state-scraper/2.0",
+            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+        }
+        timeout = max(5, int(timeout_seconds or 35))
+        for candidate_url in self._wayback_replay_candidates(fetch_url):
+            try:
+                payload = await self._request_bytes_direct(candidate_url, headers=headers, timeout=timeout)
+            except Exception:
+                payload = b""
+            if not payload or self._is_object_moved_placeholder(payload):
+                continue
+            return payload
+
+        if allow_archival_fallback or self._env_flag("INDIANA_ALLOW_ARCHIVAL_FETCH_FALLBACK"):
+            return await self._fetch_page_content_with_archival_fallback(
+                fetch_url,
+                timeout_seconds=timeout_seconds,
+            )
+        return b""
 
     async def _request_bytes_direct(self, url: str, headers: Dict[str, str], timeout: int) -> bytes:
         cached = await self._load_page_bytes_from_any_cache(url)
