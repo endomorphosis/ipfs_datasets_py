@@ -1827,6 +1827,16 @@ def build_paired_daemon_commands(
         str(getattr(args, "autoencoder_feature_family_logit_scale", 1.0)),
         "--autoencoder-feature-embedding-weight-scale",
         str(getattr(args, "autoencoder_feature_embedding_weight_scale", 0.5)),
+        "--autoencoder-compiler-quality-embedding-weight-scale",
+        str(getattr(args, "autoencoder_compiler_quality_embedding_weight_scale", 0.5)),
+        "--autoencoder-compiler-quality-family-logit-scale",
+        str(getattr(args, "autoencoder_compiler_quality_family_logit_scale", 1.0)),
+        "--autoencoder-logic-signature-embedding-weight-scale",
+        str(getattr(args, "autoencoder_logic_signature_embedding_weight_scale", 0.5)),
+        "--autoencoder-logic-signature-family-logit-scale",
+        str(getattr(args, "autoencoder_logic_signature_family_logit_scale", 1.0)),
+        "--autoencoder-logic-signature-legal-ir-view-logit-scale",
+        str(getattr(args, "autoencoder_logic_signature_legal_ir_view_logit_scale", 1.0)),
         "--autoencoder-family-embedding-weight-scale",
         str(getattr(args, "autoencoder_family_embedding_weight_scale", 0.5)),
         "--autoencoder-family-semantic-slot-embedding-weight-scale",
@@ -4566,6 +4576,52 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--autoencoder-compiler-quality-embedding-weight-scale",
+        type=float,
+        default=0.5,
+        help=(
+            "Scale compiler-quality decoder prototypes for transferable failure "
+            "modes such as missing symbolic formulas, frame uncertainty, and "
+            "LegalIR bridge losses."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-compiler-quality-family-logit-scale",
+        type=float,
+        default=1.0,
+        help=(
+            "Scale compiler-quality modal-family logits so validation can learn "
+            "from parser and bridge diagnostics, not only lexical cues."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-logic-signature-embedding-weight-scale",
+        type=float,
+        default=0.5,
+        help=(
+            "Scale clause-schema decoder prototypes built from operator, role, "
+            "arity, condition/exception, frame, and KG signature features."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-logic-signature-family-logit-scale",
+        type=float,
+        default=1.0,
+        help=(
+            "Scale clause-schema modal-family logits for cross-entropy transfer "
+            "across different legal wording with the same formal IR shape."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-logic-signature-legal-ir-view-logit-scale",
+        type=float,
+        default=1.0,
+        help=(
+            "Scale clause-schema LegalIR-view logits so frame, event, graph, "
+            "and prover targets can specialize by formal clause shape."
+        ),
+    )
+    parser.add_argument(
         "--autoencoder-family-embedding-weight-scale",
         type=float,
         default=0.5,
@@ -5004,6 +5060,21 @@ def load_warm_start_state(paths: Sequence[Path]) -> tuple[ModalAutoencoderTraini
 
     averaged = ModalAutoencoderTrainingState.average_generalizable(loaded_states)
     return averaged, {
+        "compiler_quality_embedding_weight_entries": len(
+            averaged.compiler_quality_embedding_weights
+        ),
+        "compiler_quality_family_logit_entries": len(
+            averaged.compiler_quality_family_logits
+        ),
+        "logic_signature_embedding_weight_entries": len(
+            averaged.logic_signature_embedding_weights
+        ),
+        "logic_signature_family_logit_entries": len(
+            averaged.logic_signature_family_logits
+        ),
+        "logic_signature_legal_ir_view_logit_entries": len(
+            averaged.logic_signature_legal_ir_view_logits
+        ),
         "family_embedding_weight_entries": len(averaged.family_embedding_weights),
         "family_semantic_slot_embedding_weight_entries": len(
             averaged.family_semantic_slot_embedding_weights
@@ -5433,6 +5504,21 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         state=state,
         feature_codec=feature_codec,
         compute_device=args.autoencoder_device,
+        compiler_quality_embedding_weight_scale=float(
+            getattr(args, "autoencoder_compiler_quality_embedding_weight_scale", 0.5)
+        ),
+        compiler_quality_family_logit_scale=float(
+            getattr(args, "autoencoder_compiler_quality_family_logit_scale", 1.0)
+        ),
+        logic_signature_embedding_weight_scale=float(
+            getattr(args, "autoencoder_logic_signature_embedding_weight_scale", 0.5)
+        ),
+        logic_signature_family_logit_scale=float(
+            getattr(args, "autoencoder_logic_signature_family_logit_scale", 1.0)
+        ),
+        logic_signature_legal_ir_view_logit_scale=float(
+            getattr(args, "autoencoder_logic_signature_legal_ir_view_logit_scale", 1.0)
+        ),
         feature_embedding_weight_scale=float(
             getattr(args, "autoencoder_feature_embedding_weight_scale", 0.5)
         ),
@@ -5519,6 +5605,21 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     )
     summary["autoencoder_feature_embedding_weight_scale"] = float(
         getattr(args, "autoencoder_feature_embedding_weight_scale", 0.5)
+    )
+    summary["autoencoder_compiler_quality_embedding_weight_scale"] = float(
+        getattr(args, "autoencoder_compiler_quality_embedding_weight_scale", 0.5)
+    )
+    summary["autoencoder_compiler_quality_family_logit_scale"] = float(
+        getattr(args, "autoencoder_compiler_quality_family_logit_scale", 1.0)
+    )
+    summary["autoencoder_logic_signature_embedding_weight_scale"] = float(
+        getattr(args, "autoencoder_logic_signature_embedding_weight_scale", 0.5)
+    )
+    summary["autoencoder_logic_signature_family_logit_scale"] = float(
+        getattr(args, "autoencoder_logic_signature_family_logit_scale", 1.0)
+    )
+    summary["autoencoder_logic_signature_legal_ir_view_logit_scale"] = float(
+        getattr(args, "autoencoder_logic_signature_legal_ir_view_logit_scale", 1.0)
     )
     summary["autoencoder_family_embedding_weight_scale"] = float(
         getattr(args, "autoencoder_family_embedding_weight_scale", 0.5)
@@ -6053,6 +6154,21 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["stopped_by_signal"] = stop_signal
         summary.update(autoencoder.compute_backend_metadata())
         summary["applied_todo_ids"] = len(autoencoder.state.applied_todo_ids)
+        summary["compiler_quality_embedding_weight_entries"] = len(
+            autoencoder.state.compiler_quality_embedding_weights
+        )
+        summary["compiler_quality_family_logit_entries"] = len(
+            autoencoder.state.compiler_quality_family_logits
+        )
+        summary["logic_signature_embedding_weight_entries"] = len(
+            autoencoder.state.logic_signature_embedding_weights
+        )
+        summary["logic_signature_family_logit_entries"] = len(
+            autoencoder.state.logic_signature_family_logits
+        )
+        summary["logic_signature_legal_ir_view_logit_entries"] = len(
+            autoencoder.state.logic_signature_legal_ir_view_logits
+        )
         summary["decoded_embedding_entries"] = len(autoencoder.state.decoded_embeddings)
         summary["elapsed_seconds"] = round(time.time() - started_at, 3)
         summary["family_embedding_weight_entries"] = len(

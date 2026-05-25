@@ -1157,6 +1157,7 @@ def test_family_semantic_slot_legal_ir_view_embedding_head_transfers_cosine_to_h
         family_legal_ir_view_embedding_weight_scale=0.0,
         legal_ir_view_embedding_weight_scale=0.0,
         semantic_slot_embedding_weight_scale=0.0,
+        compiler_quality_embedding_weight_scale=0.0,
         family_semantic_slot_legal_ir_view_embedding_weight_scale=8.0,
         cosine_reconstruction_weight=0.0,
     )
@@ -1184,6 +1185,87 @@ def test_family_semantic_slot_legal_ir_view_embedding_head_transfers_cosine_to_h
     assert any(
         contribution.contribution_type
         == "family_semantic_slot_legal_ir_view_embedding_weight"
+        for contribution in introspection.top_embedding_contributions
+    )
+
+
+def test_compiler_quality_family_head_lowers_missing_formula_holdout_ce() -> None:
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency publishes records.",
+    )
+    validation = build_us_code_sample(
+        title="5",
+        section="553",
+        text="The agency keeps records.",
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        feature_family_logit_scale=0.0,
+        semantic_slot_family_logit_scale=0.0,
+        legal_ir_view_family_logit_scale=0.0,
+        semantic_slot_legal_ir_view_family_logit_scale=0.0,
+        compiler_quality_family_logit_scale=8.0,
+    )
+    before = autoencoder.evaluate([validation], use_sample_memory=False)
+
+    autoencoder._nudge_family_logits(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after = autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert train.modal_ir.formulas == []
+    assert validation.modal_ir.formulas == []
+    assert autoencoder.state.compiler_quality_family_logits
+    assert after.cross_entropy_loss < before.cross_entropy_loss
+    introspection = autoencoder.introspect_sample(validation)
+    assert any(
+        contribution.contribution_type == "compiler_quality_family_logit"
+        for contribution in introspection.top_family_contributions
+    )
+
+
+def test_compiler_quality_embedding_head_transfers_cosine_to_holdout() -> None:
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency publishes records.",
+        embedding_vector=[0.0, 1.0],
+    )
+    validation = build_us_code_sample(
+        title="5",
+        section="553",
+        text="The agency keeps records.",
+        embedding_vector=[0.0, 1.0],
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        feature_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=0.0,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        compiler_quality_embedding_weight_scale=8.0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before = autoencoder.evaluate([validation], use_sample_memory=False)
+
+    autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after = autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert autoencoder.state.compiler_quality_embedding_weights
+    assert after.embedding_cosine_similarity > before.embedding_cosine_similarity
+    introspection = autoencoder.introspect_sample(validation)
+    assert any(
+        contribution.contribution_type == "compiler_quality_embedding_weight"
         for contribution in introspection.top_embedding_contributions
     )
 
@@ -1268,6 +1350,7 @@ def test_family_semantic_slot_embedding_head_transfers_cosine_to_holdout() -> No
         legal_ir_view_embedding_weight_scale=0.0,
         semantic_slot_embedding_weight_scale=0.0,
         family_legal_ir_view_embedding_weight_scale=0.0,
+        compiler_quality_embedding_weight_scale=0.0,
         family_semantic_slot_embedding_weight_scale=8.0,
         cosine_reconstruction_weight=0.0,
     )
@@ -1733,6 +1816,12 @@ def test_adaptive_autoencoder_state_roundtrip(tmp_path) -> None:
     state = ModalAutoencoderTrainingState(
         decoded_embeddings={"sample": [0.1, 0.2]},
         family_logits={"sample": {"deontic": 1.0}},
+        compiler_quality_embedding_weights={
+            "quality:symbolic:missing-formula": [0.21, 0.22]
+        },
+        compiler_quality_family_logits={
+            "quality:symbolic:missing-formula": {"hybrid": 0.31}
+        },
         feature_embedding_weights={"token:agency": [0.01, -0.01]},
         family_embedding_weights={"deontic": [0.03, 0.04]},
         family_semantic_slot_embedding_weights={
@@ -1784,6 +1873,12 @@ def test_generalizable_state_copy_drops_sample_specific_memory() -> None:
     state = ModalAutoencoderTrainingState(
         decoded_embeddings={"sample": [0.1, 0.2]},
         family_logits={"sample": {"deontic": 1.0}},
+        compiler_quality_embedding_weights={
+            "quality:symbolic:missing-formula": [0.21, 0.22]
+        },
+        compiler_quality_family_logits={
+            "quality:symbolic:missing-formula": {"hybrid": 0.31}
+        },
         feature_embedding_weights={"token:agency": [0.01, -0.01]},
         family_embedding_weights={"deontic": [0.03, 0.04]},
         family_semantic_slot_embedding_weights={
@@ -1827,6 +1922,14 @@ def test_generalizable_state_copy_drops_sample_specific_memory() -> None:
     assert generalizable.decoded_embeddings == {}
     assert generalizable.family_logits == {}
     assert generalizable.applied_todo_ids == []
+    assert (
+        generalizable.compiler_quality_embedding_weights
+        == state.compiler_quality_embedding_weights
+    )
+    assert (
+        generalizable.compiler_quality_family_logits
+        == state.compiler_quality_family_logits
+    )
     assert generalizable.feature_embedding_weights == state.feature_embedding_weights
     assert generalizable.family_embedding_weights == state.family_embedding_weights
     assert (
@@ -1882,6 +1985,12 @@ def test_average_generalizable_state_reuses_prior_feature_learning() -> None:
     first = ModalAutoencoderTrainingState(
         decoded_embeddings={"sample-a": [1.0, 1.0]},
         family_logits={"sample-a": {"deontic": 4.0}},
+        compiler_quality_embedding_weights={
+            "quality:symbolic:missing-formula": [0.2, 0.6]
+        },
+        compiler_quality_family_logits={
+            "quality:symbolic:missing-formula": {"hybrid": 0.8}
+        },
         feature_embedding_weights={"token:agency": [0.2, -0.2]},
         family_embedding_weights={"deontic": [0.2, 0.4]},
         family_semantic_slot_embedding_weights={
@@ -1921,6 +2030,12 @@ def test_average_generalizable_state_reuses_prior_feature_learning() -> None:
     second = ModalAutoencoderTrainingState(
         decoded_embeddings={"sample-b": [2.0, 2.0]},
         family_logits={"sample-b": {"temporal": 4.0}},
+        compiler_quality_embedding_weights={
+            "quality:symbolic:missing-formula": [0.4, 1.0]
+        },
+        compiler_quality_family_logits={
+            "quality:symbolic:missing-formula": {"hybrid": 0.4}
+        },
         feature_embedding_weights={"token:agency": [0.4, -0.4]},
         family_embedding_weights={"deontic": [0.4, 0.8]},
         family_semantic_slot_embedding_weights={
@@ -1962,6 +2077,12 @@ def test_average_generalizable_state_reuses_prior_feature_learning() -> None:
 
     assert averaged.decoded_embeddings == {}
     assert averaged.family_logits == {}
+    assert averaged.compiler_quality_embedding_weights[
+        "quality:symbolic:missing-formula"
+    ] == pytest.approx([0.3, 0.8])
+    assert averaged.compiler_quality_family_logits[
+        "quality:symbolic:missing-formula"
+    ]["hybrid"] == pytest.approx(0.6)
     assert averaged.feature_embedding_weights["token:agency"] == pytest.approx([0.3, -0.3])
     assert averaged.family_embedding_weights["deontic"] == pytest.approx([0.3, 0.6])
     assert averaged.family_semantic_slot_embedding_weights[

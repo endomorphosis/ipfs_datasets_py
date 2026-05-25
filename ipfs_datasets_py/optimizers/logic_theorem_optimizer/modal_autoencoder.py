@@ -356,6 +356,9 @@ class ModalAutoencoderTrainingState:
     family_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
     compiler_quality_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
     compiler_quality_family_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    logic_signature_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
+    logic_signature_family_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    logic_signature_legal_ir_view_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
     feature_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
     family_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
     family_semantic_slot_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
@@ -394,6 +397,24 @@ class ModalAutoencoderTrainingState:
             "compiler_quality_family_logits": {
                 slot: dict(sorted(logits.items()))
                 for slot, logits in sorted(self.compiler_quality_family_logits.items())
+            },
+            "logic_signature_embedding_weights": {
+                signature: list(vector)
+                for signature, vector in sorted(
+                    self.logic_signature_embedding_weights.items()
+                )
+            },
+            "logic_signature_family_logits": {
+                signature: dict(sorted(logits.items()))
+                for signature, logits in sorted(
+                    self.logic_signature_family_logits.items()
+                )
+            },
+            "logic_signature_legal_ir_view_logits": {
+                signature: dict(sorted(logits.items()))
+                for signature, logits in sorted(
+                    self.logic_signature_legal_ir_view_logits.items()
+                )
             },
             "feature_legal_ir_view_logits": {
                 feature: dict(sorted(logits.items()))
@@ -495,6 +516,18 @@ class ModalAutoencoderTrainingState:
                 slot: dict(logits)
                 for slot, logits in self.compiler_quality_family_logits.items()
             },
+            logic_signature_embedding_weights={
+                signature: list(vector)
+                for signature, vector in self.logic_signature_embedding_weights.items()
+            },
+            logic_signature_family_logits={
+                signature: dict(logits)
+                for signature, logits in self.logic_signature_family_logits.items()
+            },
+            logic_signature_legal_ir_view_logits={
+                signature: dict(logits)
+                for signature, logits in self.logic_signature_legal_ir_view_logits.items()
+            },
             feature_embedding_weights={
                 feature: list(vector)
                 for feature, vector in self.feature_embedding_weights.items()
@@ -572,6 +605,18 @@ class ModalAutoencoderTrainingState:
                 ]
                 continue
             current = self.compiler_quality_embedding_weights[slot]
+            if len(current) != len(vector):
+                continue
+            for index, value in enumerate(vector):
+                current[index] += float(value) * scale
+
+        for signature, vector in other.logic_signature_embedding_weights.items():
+            if signature not in self.logic_signature_embedding_weights:
+                self.logic_signature_embedding_weights[signature] = [
+                    float(value) * scale for value in vector
+                ]
+                continue
+            current = self.logic_signature_embedding_weights[signature]
             if len(current) != len(vector):
                 continue
             for index, value in enumerate(vector):
@@ -687,6 +732,13 @@ class ModalAutoencoderTrainingState:
                     float(value) * scale
                 )
 
+        for signature, logits in other.logic_signature_family_logits.items():
+            current_logits = self.logic_signature_family_logits.setdefault(signature, {})
+            for family, value in logits.items():
+                current_logits[family] = current_logits.get(family, 0.0) + (
+                    float(value) * scale
+                )
+
         for slot, logits in other.semantic_slot_family_logits.items():
             current_logits = self.semantic_slot_family_logits.setdefault(slot, {})
             for family, value in logits.items():
@@ -696,6 +748,16 @@ class ModalAutoencoderTrainingState:
 
         for slot, logits in other.semantic_slot_legal_ir_view_logits.items():
             current_logits = self.semantic_slot_legal_ir_view_logits.setdefault(slot, {})
+            for view, value in logits.items():
+                current_logits[view] = current_logits.get(view, 0.0) + (
+                    float(value) * scale
+                )
+
+        for signature, logits in other.logic_signature_legal_ir_view_logits.items():
+            current_logits = self.logic_signature_legal_ir_view_logits.setdefault(
+                signature,
+                {},
+            )
             for view, value in logits.items():
                 current_logits[view] = current_logits.get(view, 0.0) + (
                     float(value) * scale
@@ -752,6 +814,7 @@ class ModalAutoencoderTrainingState:
 
         merged = cls()
         compiler_quality_vector_counts: Dict[str, int] = {}
+        logic_signature_vector_counts: Dict[str, int] = {}
         vector_counts: Dict[str, int] = {}
         family_vector_counts: Dict[str, int] = {}
         legal_view_vector_counts: Dict[str, int] = {}
@@ -762,6 +825,8 @@ class ModalAutoencoderTrainingState:
         semantic_slot_vector_counts: Dict[str, int] = {}
         logit_counts: Dict[tuple[str, str], int] = {}
         compiler_quality_logit_counts: Dict[tuple[str, str], int] = {}
+        logic_signature_logit_counts: Dict[tuple[str, str], int] = {}
+        logic_signature_legal_view_counts: Dict[tuple[str, str], int] = {}
         semantic_slot_logit_counts: Dict[tuple[str, str], int] = {}
         family_semantic_slot_legal_view_counts: Dict[tuple[str, str], int] = {}
         legal_view_counts: Dict[str, int] = {}
@@ -783,6 +848,19 @@ class ModalAutoencoderTrainingState:
                 for index, value in enumerate(vector):
                     current[index] += float(value)
                 compiler_quality_vector_counts[slot] += 1
+
+            for signature, vector in state.logic_signature_embedding_weights.items():
+                if signature not in merged.logic_signature_embedding_weights:
+                    merged.logic_signature_embedding_weights[signature] = [
+                        0.0 for _ in vector
+                    ]
+                    logic_signature_vector_counts[signature] = 0
+                current = merged.logic_signature_embedding_weights[signature]
+                if len(current) != len(vector):
+                    continue
+                for index, value in enumerate(vector):
+                    current[index] += float(value)
+                logic_signature_vector_counts[signature] += 1
 
             for feature, vector in state.feature_embedding_weights.items():
                 if feature not in merged.feature_embedding_weights:
@@ -894,6 +972,17 @@ class ModalAutoencoderTrainingState:
                         compiler_quality_logit_counts.get((slot, family), 0) + 1
                     )
 
+            for signature, logits in state.logic_signature_family_logits.items():
+                current_logits = merged.logic_signature_family_logits.setdefault(
+                    signature,
+                    {},
+                )
+                for family, value in logits.items():
+                    current_logits[family] = current_logits.get(family, 0.0) + float(value)
+                    logic_signature_logit_counts[(signature, family)] = (
+                        logic_signature_logit_counts.get((signature, family), 0) + 1
+                    )
+
             for slot, logits in state.semantic_slot_family_logits.items():
                 current_logits = merged.semantic_slot_family_logits.setdefault(slot, {})
                 for family, value in logits.items():
@@ -911,6 +1000,17 @@ class ModalAutoencoderTrainingState:
                     current_logits[view] = current_logits.get(view, 0.0) + float(value)
                     semantic_slot_legal_view_counts[(slot, view)] = (
                         semantic_slot_legal_view_counts.get((slot, view), 0) + 1
+                    )
+
+            for signature, logits in state.logic_signature_legal_ir_view_logits.items():
+                current_logits = merged.logic_signature_legal_ir_view_logits.setdefault(
+                    signature,
+                    {},
+                )
+                for view, value in logits.items():
+                    current_logits[view] = current_logits.get(view, 0.0) + float(value)
+                    logic_signature_legal_view_counts[(signature, view)] = (
+                        logic_signature_legal_view_counts.get((signature, view), 0) + 1
                     )
 
             for key, logits in state.family_semantic_slot_legal_ir_view_logits.items():
@@ -966,6 +1066,13 @@ class ModalAutoencoderTrainingState:
             merged.compiler_quality_embedding_weights[slot] = [
                 value / count
                 for value in merged.compiler_quality_embedding_weights[slot]
+            ]
+        for signature, count in logic_signature_vector_counts.items():
+            if count <= 0:
+                continue
+            merged.logic_signature_embedding_weights[signature] = [
+                value / count
+                for value in merged.logic_signature_embedding_weights[signature]
             ]
         for feature, count in vector_counts.items():
             if count <= 0:
@@ -1029,11 +1136,21 @@ class ModalAutoencoderTrainingState:
                 count = compiler_quality_logit_counts.get((slot, family), 0)
                 if count > 0:
                     logits[family] = value / count
+        for signature, logits in merged.logic_signature_family_logits.items():
+            for family, value in list(logits.items()):
+                count = logic_signature_logit_counts.get((signature, family), 0)
+                if count > 0:
+                    logits[family] = value / count
         for slot, logits in merged.semantic_slot_family_logits.items():
             for family, value in list(logits.items()):
                 count = semantic_slot_logit_counts.get((slot, family), 0)
                 if count > 0:
                     logits[family] = value / count
+        for signature, logits in merged.logic_signature_legal_ir_view_logits.items():
+            for view, value in list(logits.items()):
+                count = logic_signature_legal_view_counts.get((signature, view), 0)
+                if count > 0:
+                    logits[view] = value / count
         for slot, logits in merged.semantic_slot_legal_ir_view_logits.items():
             for view, value in list(logits.items()):
                 count = semantic_slot_legal_view_counts.get((slot, view), 0)
@@ -1080,6 +1197,42 @@ class ModalAutoencoderTrainingState:
             family_logits={
                 str(sample_id): {str(name): float(value) for name, value in dict(logits).items()}
                 for sample_id, logits in dict(data.get("family_logits", {})).items()
+            },
+            compiler_quality_embedding_weights={
+                str(slot): [float(value) for value in vector]
+                for slot, vector in dict(
+                    data.get("compiler_quality_embedding_weights", {})
+                ).items()
+            },
+            compiler_quality_family_logits={
+                str(slot): {str(name): float(value) for name, value in dict(logits).items()}
+                for slot, logits in dict(
+                    data.get("compiler_quality_family_logits", {})
+                ).items()
+            },
+            logic_signature_embedding_weights={
+                str(signature): [float(value) for value in vector]
+                for signature, vector in dict(
+                    data.get("logic_signature_embedding_weights", {})
+                ).items()
+            },
+            logic_signature_family_logits={
+                str(signature): {
+                    str(name): float(value)
+                    for name, value in dict(logits).items()
+                }
+                for signature, logits in dict(
+                    data.get("logic_signature_family_logits", {})
+                ).items()
+            },
+            logic_signature_legal_ir_view_logits={
+                str(signature): {
+                    str(name): float(value)
+                    for name, value in dict(logits).items()
+                }
+                for signature, logits in dict(
+                    data.get("logic_signature_legal_ir_view_logits", {})
+                ).items()
             },
             feature_embedding_weights={
                 str(feature): [float(value) for value in vector]
@@ -1287,6 +1440,11 @@ class AdaptiveModalAutoencoder:
         initial_embedding_scale: float = 0.0,
         modal_families: Optional[Sequence[str]] = None,
         feature_codec: Optional[Any] = None,
+        compiler_quality_embedding_weight_scale: float = 0.5,
+        compiler_quality_family_logit_scale: float = 0.0,
+        logic_signature_embedding_weight_scale: float = 0.5,
+        logic_signature_family_logit_scale: float = 0.0,
+        logic_signature_legal_ir_view_logit_scale: float = 0.0,
         feature_embedding_weight_scale: float = 0.5,
         family_embedding_weight_scale: float = 0.5,
         family_semantic_slot_embedding_weight_scale: float = 0.5,
@@ -1319,6 +1477,26 @@ class AdaptiveModalAutoencoder:
         self.initial_embedding_scale = float(initial_embedding_scale)
         self.modal_families = tuple(modal_families or _all_modal_families())
         self.feature_codec = feature_codec
+        self.compiler_quality_embedding_weight_scale = max(
+            0.0,
+            float(compiler_quality_embedding_weight_scale),
+        )
+        self.compiler_quality_family_logit_scale = max(
+            0.0,
+            float(compiler_quality_family_logit_scale),
+        )
+        self.logic_signature_embedding_weight_scale = max(
+            0.0,
+            float(logic_signature_embedding_weight_scale),
+        )
+        self.logic_signature_family_logit_scale = max(
+            0.0,
+            float(logic_signature_family_logit_scale),
+        )
+        self.logic_signature_legal_ir_view_logit_scale = max(
+            0.0,
+            float(logic_signature_legal_ir_view_logit_scale),
+        )
         self.feature_embedding_weight_scale = max(
             0.0,
             float(feature_embedding_weight_scale),
@@ -2198,6 +2376,14 @@ class AdaptiveModalAutoencoder:
         if stored is not None and len(stored) == len(sample.embedding_vector):
             return list(stored)
         base = self._base_decoded_for(sample)
+        compiler_quality_adjustment = self._compiler_quality_embedding_adjustment(
+            sample,
+            dimensions=len(base),
+        )
+        logic_signature_adjustment = self._logic_signature_embedding_adjustment(
+            sample,
+            dimensions=len(base),
+        )
         family_adjustment = self._family_embedding_adjustment(
             sample,
             dimensions=len(base),
@@ -2244,6 +2430,8 @@ class AdaptiveModalAutoencoder:
         return [
             (
                 base_value
+                + compiler_quality_value
+                + logic_signature_value
                 + family_value
                 + slot_value
                 + family_slot_value
@@ -2253,8 +2441,10 @@ class AdaptiveModalAutoencoder:
                 + view_value
                 + adjustment_value
             )
-            for base_value, family_value, slot_value, family_slot_value, slot_view_value, family_slot_view_value, joint_value, view_value, adjustment_value in zip(
+            for base_value, compiler_quality_value, logic_signature_value, family_value, slot_value, family_slot_value, slot_view_value, family_slot_view_value, joint_value, view_value, adjustment_value in zip(
                 base,
+                compiler_quality_adjustment,
+                logic_signature_adjustment,
                 family_adjustment,
                 semantic_slot_adjustment,
                 family_semantic_slot_adjustment,
@@ -2330,6 +2520,12 @@ class AdaptiveModalAutoencoder:
             ]
             + [
                 str(family)
+                for logits in self.state.logic_signature_legal_ir_view_logits.values()
+                for family in logits.keys()
+                if self._is_legal_ir_view_family(str(family))
+            ]
+            + [
+                str(family)
                 for family in self.state.family_logits.get(sample.sample_id, {}).keys()
                 if self._is_legal_ir_view_family(str(family))
             ]
@@ -2397,6 +2593,12 @@ class AdaptiveModalAutoencoder:
                 for view in logits.keys()
                 if self._is_legal_ir_view_family(str(view))
             ]
+            + [
+                str(view)
+                for logits in self.state.logic_signature_legal_ir_view_logits.values()
+                for view in logits.keys()
+                if self._is_legal_ir_view_family(str(view))
+            ]
         )
         if not families:
             return {}
@@ -2407,6 +2609,187 @@ class AdaptiveModalAutoencoder:
                 use_sample_memory=use_sample_memory,
             )
         )
+
+    def _compiler_quality_loss_targets_for_sample(
+        self,
+        sample: LegalSample,
+    ) -> Dict[str, float]:
+        losses = self._legal_ir_loss_target_cache.get(
+            sample.sample_id,
+            self._legal_ir_loss_target_cache.get(_sample_content_cache_id(sample), {}),
+        )
+        return {
+            str(name): _float_or_zero(value)
+            for name, value in dict(losses or {}).items()
+            if _float_or_zero(value) > 0.0
+        }
+
+    def _compiler_quality_slot_distribution_for(
+        self,
+        sample: LegalSample,
+    ) -> Dict[str, float]:
+        counts: Dict[str, float] = {}
+
+        def bump(slot: str, weight: float = 1.0) -> None:
+            normalized_weight = max(0.0, float(weight))
+            if normalized_weight <= 0.0:
+                return
+            counts[str(slot)] = counts.get(str(slot), 0.0) + normalized_weight
+
+        formula_count = len(sample.modal_ir.formulas)
+        frame_loss = frame_ranking_loss(sample)
+        bump("quality:bias", 1.0)
+        bump(f"quality:formula-count:{_count_bucket(formula_count)}", 0.5)
+        bump(
+            f"quality:symbolic-penalty:{_quality_loss_bucket(symbolic_validity_penalty(sample))}",
+            0.5,
+        )
+        if formula_count:
+            bump("quality:symbolic:has-formula", 1.0)
+        else:
+            bump("quality:symbolic:missing-formula", 2.0)
+            bump("quality:todo:add-deterministic-parser-rule", 1.25)
+
+        if not sample.frame_candidates or sample.selected_frame is None:
+            bump("quality:frame:missing", 1.25)
+        elif frame_loss <= 0.0:
+            bump("quality:frame:rank-top", 0.75)
+        else:
+            bump(
+                f"quality:frame:rank-off-top:{_count_bucket(int(math.ceil(frame_loss)))}",
+                1.0,
+            )
+        bump(f"quality:frame-candidate-count:{_count_bucket(len(sample.frame_candidates))}", 0.4)
+        if sample.selected_frame:
+            frame = _feature_atom(sample.selected_frame, max_tokens=6)
+            if frame:
+                bump(f"quality:frame:selected:{frame}", 0.4)
+
+        frame_logic = getattr(sample.modal_ir, "frame_logic", None)
+        if frame_logic is None:
+            bump("quality:frame-logic:missing", 0.5)
+        else:
+            triples = list(getattr(frame_logic, "triples", []) or [])
+            bump(f"quality:frame-logic-triples:{_count_bucket(len(triples))}", 0.4)
+            if not triples:
+                bump("quality:frame-logic:empty", 0.5)
+
+        for name, value in sorted(
+            self._compiler_quality_loss_targets_for_sample(sample).items()
+        ):
+            if value <= 0.0:
+                continue
+            loss_name = _feature_atom(name, max_tokens=6)
+            if not loss_name:
+                continue
+            bump(
+                f"quality:legal-ir-loss:{loss_name}:{_quality_loss_bucket(value)}",
+                min(2.0, 0.25 + value),
+            )
+
+        return _normalized_distribution(counts)
+
+    def _logic_signature_distribution_for(
+        self,
+        sample: LegalSample,
+    ) -> Dict[str, float]:
+        cache = self._sample_cache_for(sample)
+        cached = cache.get("logic_signature_distribution")
+        if isinstance(cached, dict):
+            return {str(name): float(value) for name, value in cached.items()}
+
+        counts: Dict[str, float] = {}
+
+        def bump(signature: str, weight: float = 1.0) -> None:
+            normalized_weight = max(0.0, float(weight))
+            if not signature or normalized_weight <= 0.0:
+                return
+            counts[str(signature)] = counts.get(str(signature), 0.0) + normalized_weight
+
+        bump("signature:bias", 0.5)
+        bump(f"signature:formula-count:{_count_bucket(len(sample.modal_ir.formulas))}", 0.4)
+        if sample.selected_frame:
+            frame = _feature_atom(sample.selected_frame, max_tokens=6)
+            if frame:
+                bump(f"signature:frame:{frame}", 0.5)
+
+        frame_logic = sample.modal_ir.frame_logic
+        if frame_logic is not None:
+            ontology = _feature_atom(getattr(frame_logic, "ontology_name", ""))
+            if ontology:
+                bump(f"signature:frame-logic-ontology:{ontology}", 0.5)
+            triples = list(getattr(frame_logic, "triples", []) or [])
+            bump(f"signature:frame-logic-triples:{_count_bucket(len(triples))}", 0.4)
+            relation_names = [
+                _feature_atom(relation)
+                for relation in sorted(
+                    getattr(frame_logic, "neo4j_relationship_types", []) or []
+                )[:4]
+            ]
+            for relation in relation_names:
+                if relation:
+                    bump(f"signature:kg-relation:{relation}", 0.35)
+
+        if not sample.modal_ir.formulas:
+            bump("signature:no-modal-formula", 1.0)
+
+        family_sequence: List[str] = []
+        operator_sequence: List[str] = []
+        for formula in sample.modal_ir.formulas:
+            family = _feature_atom(formula.operator.family)
+            system = _feature_atom(formula.operator.system)
+            symbol = _feature_atom(formula.operator.symbol)
+            predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
+            predicate_role = _feature_atom(
+                getattr(formula.predicate, "role", "") or "none"
+            )
+            arguments = list(getattr(formula.predicate, "arguments", []) or [])
+            conditions = list(getattr(formula, "conditions", []) or [])
+            exceptions = list(getattr(formula, "exceptions", []) or [])
+            arity_bucket = _count_bucket(len(arguments))
+            condition_bucket = _count_bucket(len(conditions))
+            exception_bucket = _count_bucket(len(exceptions))
+
+            if family:
+                family_sequence.append(family)
+                bump(f"signature:family:{family}", 1.0)
+                bump(
+                    f"signature:constraint-shape:{family}:c{condition_bucket}:e{exception_bucket}",
+                    1.0,
+                )
+                if sample.selected_frame:
+                    frame = _feature_atom(sample.selected_frame, max_tokens=6)
+                    if frame:
+                        bump(f"signature:frame-family:{frame}:{family}", 0.75)
+            if family and system and symbol:
+                operator_sequence.append(f"{family}:{system}:{symbol}")
+                bump(f"signature:operator:{family}:{system}:{symbol}", 1.25)
+            if family and predicate_role:
+                bump(
+                    f"signature:role-schema:{family}:{predicate_role}:arity:{arity_bucket}",
+                    1.25,
+                )
+                bump(
+                    f"signature:role-constraint:{family}:{predicate_role}:c{condition_bucket}:e{exception_bucket}",
+                    0.9,
+                )
+            if family and predicate_name:
+                predicate_head = predicate_name.split("_", 1)[0]
+                if predicate_head:
+                    bump(f"signature:predicate-head:{family}:{predicate_head}", 0.5)
+            cue = formula.metadata.get("cue") if formula.metadata else None
+            cue_name = _feature_atom(cue)
+            if family and cue_name:
+                bump(f"signature:cue-family:{cue_name}:{family}", 0.75)
+
+        for left_family, right_family in zip(family_sequence, family_sequence[1:]):
+            bump(f"signature:family-transition:{left_family}->{right_family}", 0.75)
+        for left_operator, right_operator in zip(operator_sequence, operator_sequence[1:]):
+            bump(f"signature:operator-transition:{left_operator}->{right_operator}", 0.75)
+
+        result = _normalized_distribution(counts)
+        cache["logic_signature_distribution"] = dict(result)
+        return result
 
     def _family_semantic_slot_distribution_for_embedding(
         self,
@@ -2600,6 +2983,26 @@ class AdaptiveModalAutoencoder:
                         * float(slot_weight)
                         * self.semantic_slot_legal_ir_view_logit_scale
                     )
+        if self.logic_signature_legal_ir_view_logit_scale > 0.0:
+            for signature, signature_weight in (
+                self._logic_signature_distribution_for(sample).items()
+            ):
+                normalized_weight = max(0.0, float(signature_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                for family, value in (
+                    self.state.logic_signature_legal_ir_view_logits.get(
+                        signature,
+                        {},
+                    ).items()
+                ):
+                    family = str(family)
+                    if family in logits and self._is_legal_ir_view_family(family):
+                        logits[family] += (
+                            float(value)
+                            * normalized_weight
+                            * self.logic_signature_legal_ir_view_logit_scale
+                        )
         if self.family_semantic_slot_legal_ir_view_logit_scale > 0.0:
             for key, pair_weight in (
                 self._family_semantic_slot_distribution_for_legal_ir_view(sample).items()
@@ -2671,6 +3074,46 @@ class AdaptiveModalAutoencoder:
                         * self.semantic_slot_legal_ir_view_family_logit_scale
                     )
 
+    def _apply_compiler_quality_family_logits(
+        self,
+        sample: LegalSample,
+        logits: Dict[str, float],
+    ) -> None:
+        if self.compiler_quality_family_logit_scale <= 0.0:
+            return
+        for slot, slot_weight in self._compiler_quality_slot_distribution_for(sample).items():
+            normalized_weight = max(0.0, float(slot_weight))
+            if normalized_weight <= 0.0:
+                continue
+            for family, value in self.state.compiler_quality_family_logits.get(slot, {}).items():
+                family = str(family)
+                if family in logits:
+                    logits[family] += (
+                        float(value)
+                        * normalized_weight
+                        * self.compiler_quality_family_logit_scale
+                    )
+
+    def _apply_logic_signature_family_logits(
+        self,
+        sample: LegalSample,
+        logits: Dict[str, float],
+    ) -> None:
+        if self.logic_signature_family_logit_scale <= 0.0:
+            return
+        for signature, signature_weight in self._logic_signature_distribution_for(sample).items():
+            normalized_weight = max(0.0, float(signature_weight))
+            if normalized_weight <= 0.0:
+                continue
+            for family, value in self.state.logic_signature_family_logits.get(signature, {}).items():
+                family = str(family)
+                if family in logits:
+                    logits[family] += (
+                        float(value)
+                        * normalized_weight
+                        * self.logic_signature_family_logit_scale
+                    )
+
     def _logits_for(
         self,
         sample: LegalSample,
@@ -2696,6 +3139,8 @@ class AdaptiveModalAutoencoder:
                         * float(slot_weight)
                         * self.semantic_slot_family_logit_scale
                     )
+        self._apply_compiler_quality_family_logits(sample, logits)
+        self._apply_logic_signature_family_logits(sample, logits)
         self._apply_legal_ir_view_family_logits(
             sample,
             logits,
@@ -2739,6 +3184,8 @@ class AdaptiveModalAutoencoder:
                         * float(slot_weight)
                         * self.semantic_slot_family_logit_scale
                     )
+        self._apply_compiler_quality_family_logits(sample, logits)
+        self._apply_logic_signature_family_logits(sample, logits)
         self._apply_legal_ir_view_family_logits(
             sample,
             logits,
@@ -3149,6 +3596,38 @@ class AdaptiveModalAutoencoder:
                 sample.embedding_vector,
                 step=step,
             )
+        if self.compiler_quality_embedding_weight_scale > 0.0:
+            for slot, slot_weight in self._compiler_quality_slot_distribution_for(sample).items():
+                normalized_weight = max(0.0, float(slot_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                weights = self.state.compiler_quality_embedding_weights.setdefault(
+                    slot,
+                    [0.0 for _ in sample.embedding_vector],
+                )
+                if len(weights) != len(sample.embedding_vector):
+                    weights[:] = [0.0 for _ in sample.embedding_vector]
+                weights[:] = self._add_scaled_vector(
+                    weights,
+                    error,
+                    scale=step * normalized_weight,
+                )
+        if self.logic_signature_embedding_weight_scale > 0.0:
+            for signature, signature_weight in self._logic_signature_distribution_for(sample).items():
+                normalized_weight = max(0.0, float(signature_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                weights = self.state.logic_signature_embedding_weights.setdefault(
+                    signature,
+                    [0.0 for _ in sample.embedding_vector],
+                )
+                if len(weights) != len(sample.embedding_vector):
+                    weights[:] = [0.0 for _ in sample.embedding_vector]
+                weights[:] = self._add_scaled_vector(
+                    weights,
+                    error,
+                    scale=step * normalized_weight,
+                )
         target_distribution = _observed_family_distribution(sample)
         for family, target_weight in target_distribution.items():
             normalized_weight = max(0.0, float(target_weight))
@@ -3314,6 +3793,38 @@ class AdaptiveModalAutoencoder:
                     predicted.get(family, 0.0)
                 )
                 logits[family] = logits.get(family, 0.0) + (2.0 * step * gradient)
+        if self.compiler_quality_family_logit_scale > 0.0:
+            for slot, slot_weight in self._compiler_quality_slot_distribution_for(sample).items():
+                normalized_weight = max(0.0, float(slot_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                slot_logits = self.state.compiler_quality_family_logits.setdefault(
+                    slot,
+                    {},
+                )
+                for family in families:
+                    gradient = float(target_distribution.get(family, 0.0)) - float(
+                        predicted.get(family, 0.0)
+                    )
+                    slot_logits[family] = slot_logits.get(family, 0.0) + (
+                        2.0 * step * normalized_weight * gradient
+                    )
+        if self.logic_signature_family_logit_scale > 0.0:
+            for signature, signature_weight in self._logic_signature_distribution_for(sample).items():
+                normalized_weight = max(0.0, float(signature_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                signature_logits = self.state.logic_signature_family_logits.setdefault(
+                    signature,
+                    {},
+                )
+                for family in families:
+                    gradient = float(target_distribution.get(family, 0.0)) - float(
+                        predicted.get(family, 0.0)
+                    )
+                    signature_logits[family] = signature_logits.get(family, 0.0) + (
+                        2.0 * step * normalized_weight * gradient
+                    )
         feature_keys = self._feature_keys_for(sample)
         if not feature_keys:
             return
@@ -3441,6 +3952,26 @@ class AdaptiveModalAutoencoder:
                 slot_logits[family] = slot_logits.get(family, 0.0) + (
                     2.0 * step * normalized_weight * gradient
                 )
+        if self.logic_signature_legal_ir_view_logit_scale > 0.0:
+            for signature, signature_weight in (
+                self._logic_signature_distribution_for(sample).items()
+            ):
+                normalized_weight = max(0.0, float(signature_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                signature_logits = (
+                    self.state.logic_signature_legal_ir_view_logits.setdefault(
+                        signature,
+                        {},
+                    )
+                )
+                for family in families:
+                    gradient = float(target_distribution.get(family, 0.0)) - float(
+                        predicted.get(family, 0.0)
+                    )
+                    signature_logits[family] = signature_logits.get(family, 0.0) + (
+                        2.0 * step * normalized_weight * gradient
+                    )
         if self.family_semantic_slot_legal_ir_view_logit_scale > 0.0:
             for key, pair_weight in (
                 self._family_semantic_slot_distribution_for_legal_ir_view(sample).items()
@@ -3467,6 +3998,14 @@ class AdaptiveModalAutoencoder:
         factor = max(0.0, 1.0 - max(0.0, float(l2_regularization)))
         if factor >= 1.0:
             return
+        for slot, vector in list(self.state.compiler_quality_embedding_weights.items()):
+            self.state.compiler_quality_embedding_weights[slot] = [
+                float(value) * factor for value in vector
+            ]
+        for signature, vector in list(self.state.logic_signature_embedding_weights.items()):
+            self.state.logic_signature_embedding_weights[signature] = [
+                float(value) * factor for value in vector
+            ]
         for feature, vector in list(self.state.feature_embedding_weights.items()):
             self.state.feature_embedding_weights[feature] = [
                 float(value) * factor for value in vector
@@ -3512,10 +4051,27 @@ class AdaptiveModalAutoencoder:
                 family: float(value) * factor
                 for family, value in logits.items()
             }
+        for slot, logits in list(self.state.compiler_quality_family_logits.items()):
+            self.state.compiler_quality_family_logits[slot] = {
+                family: float(value) * factor
+                for family, value in logits.items()
+            }
+        for signature, logits in list(self.state.logic_signature_family_logits.items()):
+            self.state.logic_signature_family_logits[signature] = {
+                family: float(value) * factor
+                for family, value in logits.items()
+            }
         for slot, logits in list(self.state.semantic_slot_family_logits.items()):
             self.state.semantic_slot_family_logits[slot] = {
                 family: float(value) * factor
                 for family, value in logits.items()
+            }
+        for signature, logits in list(
+            self.state.logic_signature_legal_ir_view_logits.items()
+        ):
+            self.state.logic_signature_legal_ir_view_logits[signature] = {
+                view: float(value) * factor
+                for view, value in logits.items()
             }
         for slot, logits in list(self.state.semantic_slot_legal_ir_view_logits.items()):
             self.state.semantic_slot_legal_ir_view_logits[slot] = {
@@ -3550,6 +4106,90 @@ class AdaptiveModalAutoencoder:
                 view: float(value) * factor
                 for view, value in logits.items()
             }
+
+    def _compiler_quality_embedding_adjustment(
+        self,
+        sample: LegalSample,
+        *,
+        dimensions: int,
+    ) -> List[float]:
+        if self.compiler_quality_embedding_weight_scale <= 0.0:
+            return [0.0 for _ in range(dimensions)]
+        weighted_vectors = [
+            (float(weight), weights)
+            for slot, weight in self._compiler_quality_slot_distribution_for(sample).items()
+            for weights in [self.state.compiler_quality_embedding_weights.get(slot)]
+            if float(weight) > 0.0 and weights is not None and len(weights) == dimensions
+        ]
+        if not weighted_vectors:
+            return [0.0 for _ in range(dimensions)]
+        if self._torch is not None and self.compute_device is not None:
+            with self._torch.no_grad():
+                weights_tensor = self._torch.tensor(
+                    [weight for weight, _ in weighted_vectors],
+                    dtype=self._torch.float64,
+                    device=self.compute_device,
+                ).reshape(-1, 1)
+                vector_tensor = self._torch.tensor(
+                    [vector for _, vector in weighted_vectors],
+                    dtype=self._torch.float64,
+                    device=self.compute_device,
+                )
+                adjustment = (weights_tensor * vector_tensor).sum(dim=0) * float(
+                    self.compiler_quality_embedding_weight_scale
+                )
+                return [float(value) for value in adjustment.detach().cpu().tolist()]
+        adjustment = [0.0 for _ in range(dimensions)]
+        for weight, vector in weighted_vectors:
+            for index, value in enumerate(vector):
+                adjustment[index] += (
+                    weight
+                    * float(value)
+                    * self.compiler_quality_embedding_weight_scale
+                )
+        return adjustment
+
+    def _logic_signature_embedding_adjustment(
+        self,
+        sample: LegalSample,
+        *,
+        dimensions: int,
+    ) -> List[float]:
+        if self.logic_signature_embedding_weight_scale <= 0.0:
+            return [0.0 for _ in range(dimensions)]
+        weighted_vectors = [
+            (float(weight), weights)
+            for signature, weight in self._logic_signature_distribution_for(sample).items()
+            for weights in [self.state.logic_signature_embedding_weights.get(signature)]
+            if float(weight) > 0.0 and weights is not None and len(weights) == dimensions
+        ]
+        if not weighted_vectors:
+            return [0.0 for _ in range(dimensions)]
+        if self._torch is not None and self.compute_device is not None:
+            with self._torch.no_grad():
+                weights_tensor = self._torch.tensor(
+                    [weight for weight, _ in weighted_vectors],
+                    dtype=self._torch.float64,
+                    device=self.compute_device,
+                ).reshape(-1, 1)
+                vector_tensor = self._torch.tensor(
+                    [vector for _, vector in weighted_vectors],
+                    dtype=self._torch.float64,
+                    device=self.compute_device,
+                )
+                adjustment = (weights_tensor * vector_tensor).sum(dim=0) * float(
+                    self.logic_signature_embedding_weight_scale
+                )
+                return [float(value) for value in adjustment.detach().cpu().tolist()]
+        adjustment = [0.0 for _ in range(dimensions)]
+        for weight, vector in weighted_vectors:
+            for index, value in enumerate(vector):
+                adjustment[index] += (
+                    weight
+                    * float(value)
+                    * self.logic_signature_embedding_weight_scale
+                )
+        return adjustment
 
     def _family_embedding_adjustment(
         self,
@@ -4514,6 +5154,40 @@ class AdaptiveModalAutoencoder:
                         },
                     )
                 )
+        for slot, slot_weight in self._compiler_quality_slot_distribution_for(sample).items():
+            logits = self.state.compiler_quality_family_logits.get(slot, {})
+            for family, value in logits.items():
+                if family not in self.modal_families:
+                    continue
+                family_value = (
+                    float(value)
+                    * float(slot_weight)
+                    * self.compiler_quality_family_logit_scale
+                )
+                contributions.append(
+                    AutoencoderFeatureContribution(
+                        feature=slot,
+                        contribution_type="compiler_quality_family_logit",
+                        family=family,
+                        value=round(family_value, 12),
+                        magnitude=round(abs(family_value), 12),
+                        metadata={
+                            "raw_value": round(float(value), 12),
+                            "compiler_quality_family_logit_scale": (
+                                self.compiler_quality_family_logit_scale
+                            ),
+                            "compiler_quality_slot_probability": round(
+                                float(slot_weight),
+                                12,
+                            ),
+                            "supports_target": target_distribution.get(family, 0.0) > 0.0,
+                            "target_probability": round(
+                                float(target_distribution.get(family, 0.0)),
+                                12,
+                            ),
+                        },
+                    )
+                )
         for view, view_weight in self._legal_ir_view_distribution_for_embedding(
             sample,
             use_sample_memory=use_sample_memory,
@@ -4543,6 +5217,73 @@ class AdaptiveModalAutoencoder:
                             "supports_target": target_distribution.get(family, 0.0) > 0.0,
                             "target_probability": round(
                                 float(target_distribution.get(family, 0.0)),
+                                12,
+                            ),
+                        },
+                    )
+                )
+        for signature, signature_weight in self._logic_signature_distribution_for(
+            sample
+        ).items():
+            logits = self.state.logic_signature_family_logits.get(signature, {})
+            for family, value in logits.items():
+                if family not in self.modal_families:
+                    continue
+                family_value = (
+                    float(value)
+                    * float(signature_weight)
+                    * self.logic_signature_family_logit_scale
+                )
+                contributions.append(
+                    AutoencoderFeatureContribution(
+                        feature=signature,
+                        contribution_type="logic_signature_family_logit",
+                        family=family,
+                        value=round(family_value, 12),
+                        magnitude=round(abs(family_value), 12),
+                        metadata={
+                            "raw_value": round(float(value), 12),
+                            "logic_signature_family_logit_scale": (
+                                self.logic_signature_family_logit_scale
+                            ),
+                            "logic_signature_probability": round(
+                                float(signature_weight),
+                                12,
+                            ),
+                            "supports_target": target_distribution.get(family, 0.0) > 0.0,
+                            "target_probability": round(
+                                float(target_distribution.get(family, 0.0)),
+                                12,
+                            ),
+                        },
+                    )
+                )
+            view_logits = self.state.logic_signature_legal_ir_view_logits.get(
+                signature,
+                {},
+            )
+            for view, value in view_logits.items():
+                if not self._is_legal_ir_view_family(str(view)):
+                    continue
+                view_value = (
+                    float(value)
+                    * float(signature_weight)
+                    * self.logic_signature_legal_ir_view_logit_scale
+                )
+                contributions.append(
+                    AutoencoderFeatureContribution(
+                        feature=signature,
+                        contribution_type="logic_signature_legal_ir_view_logit",
+                        family=str(view),
+                        value=round(view_value, 12),
+                        magnitude=round(abs(view_value), 12),
+                        metadata={
+                            "raw_value": round(float(value), 12),
+                            "logic_signature_legal_ir_view_logit_scale": (
+                                self.logic_signature_legal_ir_view_logit_scale
+                            ),
+                            "logic_signature_probability": round(
+                                float(signature_weight),
                                 12,
                             ),
                         },
@@ -4685,6 +5426,76 @@ class AdaptiveModalAutoencoder:
                         "alignment_with_residual": round(normalized_alignment, 12),
                         "family_embedding_probability": round(float(probability), 12),
                         "family_embedding_weight_scale": self.family_embedding_weight_scale,
+                    },
+                )
+            )
+        for slot, probability in self._compiler_quality_slot_distribution_for(sample).items():
+            weights = self.state.compiler_quality_embedding_weights.get(slot)
+            if weights is None or len(weights) != dimensions:
+                continue
+            scaled_weights = [
+                float(value)
+                * float(probability)
+                * self.compiler_quality_embedding_weight_scale
+                for value in weights
+            ]
+            alignment = sum(
+                float(left) * float(right)
+                for left, right in zip(residual, scaled_weights)
+            )
+            weight_norm = _vector_norm(scaled_weights)
+            normalized_alignment = alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            contributions.append(
+                AutoencoderFeatureContribution(
+                    feature=slot,
+                    contribution_type="compiler_quality_embedding_weight",
+                    value=round(alignment, 12),
+                    magnitude=round(weight_norm, 12),
+                    metadata={
+                        "alignment_with_residual": round(normalized_alignment, 12),
+                        "compiler_quality_slot_probability": round(
+                            float(probability),
+                            12,
+                        ),
+                        "compiler_quality_embedding_weight_scale": (
+                            self.compiler_quality_embedding_weight_scale
+                        ),
+                    },
+                )
+            )
+        for signature, probability in self._logic_signature_distribution_for(
+            sample
+        ).items():
+            weights = self.state.logic_signature_embedding_weights.get(signature)
+            if weights is None or len(weights) != dimensions:
+                continue
+            scaled_weights = [
+                float(value)
+                * float(probability)
+                * self.logic_signature_embedding_weight_scale
+                for value in weights
+            ]
+            alignment = sum(
+                float(left) * float(right)
+                for left, right in zip(residual, scaled_weights)
+            )
+            weight_norm = _vector_norm(scaled_weights)
+            normalized_alignment = alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            contributions.append(
+                AutoencoderFeatureContribution(
+                    feature=signature,
+                    contribution_type="logic_signature_embedding_weight",
+                    value=round(alignment, 12),
+                    magnitude=round(weight_norm, 12),
+                    metadata={
+                        "alignment_with_residual": round(normalized_alignment, 12),
+                        "logic_signature_probability": round(
+                            float(probability),
+                            12,
+                        ),
+                        "logic_signature_embedding_weight_scale": (
+                            self.logic_signature_embedding_weight_scale
+                        ),
                     },
                 )
             )
@@ -5618,6 +6429,21 @@ def _count_bucket(value: int) -> str:
     if count <= 31:
         return "16-31"
     return "32+"
+
+
+def _quality_loss_bucket(value: float) -> str:
+    loss = max(0.0, _float_or_zero(value))
+    if loss <= 0.0:
+        return "0"
+    if loss <= 0.01:
+        return "tiny"
+    if loss <= 0.05:
+        return "small"
+    if loss <= 0.2:
+        return "medium"
+    if loss <= 1.0:
+        return "large"
+    return "huge"
 
 
 def _unique_preserve_order(values: Iterable[str]) -> List[str]:
