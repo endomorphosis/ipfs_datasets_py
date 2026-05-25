@@ -168,6 +168,82 @@ def test_deontic_bridge_phase8_quality_gate_uses_present_optional_slots_only() -
     assert report.round_trip.extra_losses["deontic_phase8_quality_incomplete_loss"] == 0.0
 
 
+def test_deontic_bridge_treats_reconstruction_neutral_warning_bundle_as_quality_complete() -> None:
+    from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
+
+    long_source = (
+        "Section heading and codification notes. "
+        "Historical amendments and editorial notes. "
+        "The Secretary shall publish notice. "
+        "Additional historical notes and statutory metadata for codification context. "
+        "Further editorial material and unrelated publication notes."
+    )
+
+    class _FakeResult:
+        success = True
+        metadata = {
+            "parser_element": {
+                "schema_version": "legal_norm_ir-v1",
+                "source_id": "legacy:deontic:warning-bundle",
+                "canonical_citation": "42 U.S.C. 2000dd-1",
+                "deontic_operator": "shall",
+                "subject": ["Secretary"],
+                "action": ["publish notice"],
+                "text": long_source,
+                "source_text": long_source,
+                "support_text": "The Secretary shall publish notice.",
+                "support_span": [0, 33],
+                "norm_type": "obligation",
+                "promotable_to_theorem": False,
+                "parser_warnings": [
+                    "enumerated_clause_requires_item_level_review",
+                    "cross_reference_requires_resolution",
+                    "overlong_action_span",
+                ],
+                "export_readiness": {
+                    "blockers": [
+                        "enumerated_clause_requires_item_level_review",
+                        "cross_reference_requires_resolution",
+                        "overlong_action_span",
+                        "llm_repair_required",
+                    ]
+                },
+                "field_spans": {
+                    "subject": [4, 13],
+                    "modality": [14, 19],
+                    "action": [20, 33],
+                },
+            }
+        }
+
+    class _FakeConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _FakeResult()
+
+    adapter = DeonticNormsBridgeAdapter(converter=_FakeConverter())
+    report = adapter.evaluate(
+        "The Secretary shall publish notice.",
+        document_id="deontic-bridge-reconstruction-warning-bundle",
+        citation="Deontic Bridge Reconstruction Warning Bundle",
+    )
+
+    decoder_record = report.ir_document.views["deontic_decoder_reconstructions"].payload["records"][0]
+    assert decoder_record["requires_validation"] is False
+
+    formula_record = report.ir_document.views["deontic_formula_records"].payload["records"][0]
+    assert formula_record["proof_ready"] is True
+    assert formula_record["requires_validation"] is False
+    assert formula_record["deterministic_resolution"]["type"] == (
+        "source_grounded_reconstruction_warning_bundle"
+    )
+
+    phase8_record = report.ir_document.views["deontic_phase8_quality"].payload["records"][0]
+    assert phase8_record["phase8_quality_complete"] is True
+    assert phase8_record["requires_validation"] is False
+    assert report.round_trip.extra_losses["deontic_quality_requires_validation_loss"] == 0.0
+
+
 def test_deontic_bridge_soft_accepts_non_normative_statutory_text() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 

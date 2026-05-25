@@ -3,9 +3,11 @@
 This module contains the scraper for Nebraska statutes from the official state legislative website.
 """
 
+import asyncio
+import os
 import re
 import urllib.request
-from typing import List, Dict, Optional
+from typing import Callable, List, Dict, Optional
 from urllib.parse import urljoin, urlparse, parse_qs
 from .base_scraper import BaseStateScraper, NormalizedStatute
 from .registry import StateScraperRegistry
@@ -63,10 +65,37 @@ class NebraskaScraper(BaseStateScraper):
         code_name: str,
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
+        limit = max(1, int(max_statutes)) if max_statutes is not None else None
+        resumed = self._load_partial_checkpoint_statutes(code_name=code_name, max_statutes=limit)
         chapter_urls = await self._discover_chapter_urls()
         self.logger.info("Nebraska official index: discovered %s chapter urls", len(chapter_urls))
         statutes: List[NormalizedStatute] = []
-        limit = max(1, int(max_statutes)) if max_statutes is not None else None
+        seen_source_urls: set[str] = set()
+        seen_keys: set[str] = set()
+
+        def _extend_unique(batch: List[NormalizedStatute]) -> None:
+            for statute in batch:
+                source_url = str(statute.source_url or "").strip()
+                key = str(statute.statute_id or source_url).strip().lower()
+                if source_url and source_url in seen_source_urls:
+                    continue
+                if key and key in seen_keys:
+                    continue
+                if source_url:
+                    seen_source_urls.add(source_url)
+                if key:
+                    seen_keys.add(key)
+                statutes.append(statute)
+                if limit is not None and len(statutes) >= limit:
+                    break
+
+        if resumed:
+            _extend_unique(resumed)
+            self.logger.info(
+                "Nebraska official index: resumed %s statutes from checkpoint",
+                len(statutes),
+            )
+
         self._write_partial_checkpoint(
             statutes,
             code_name=code_name,
@@ -82,13 +111,47 @@ class NebraskaScraper(BaseStateScraper):
             if limit is not None and len(statutes) >= limit:
                 break
             section_urls = await self._discover_section_urls(chapter_url)
+            if seen_source_urls:
+                section_urls = [url for url in section_urls if url not in seen_source_urls]
+            if chapter_index == 1 or chapter_index % 10 == 0 or chapter_index == len(chapter_urls):
+                self.logger.info(
+                    "Nebraska official index: chapter=%s/%s discovered_sections=%s statutes_so_far=%s",
+                    chapter_index,
+                    len(chapter_urls),
+                    len(section_urls),
+                    len(statutes),
+                )
             parsed = await self._scrape_section_urls(
                 code_name,
                 section_urls,
                 max_statutes=(None if limit is None else max(0, limit - len(statutes))),
                 discovery_method="official_chapter_index_sections",
+                progress_hook=(
+                    lambda scanned_sections, total_sections, partial_batch, chapter_index=chapter_index: (
+                        self._write_partial_checkpoint(
+                            statutes + partial_batch,
+                            code_name=code_name,
+                            stage_label="nebraska:section-scan",
+                            extra={
+                                "chapters_scanned": int(max(0, chapter_index - 1)),
+                                "current_chapter": int(chapter_index),
+                                "discovered_chapters": int(len(chapter_urls)),
+                                "sections_scanned": int(scanned_sections),
+                                "discovered_sections": int(total_sections),
+                                "codes_completed": 0,
+                                "codes_total": 1,
+                            },
+                        )
+                        if (
+                            scanned_sections == 1
+                            or scanned_sections % 200 == 0
+                            or scanned_sections == total_sections
+                        )
+                        else None
+                    )
+                ),
             )
-            statutes.extend(parsed)
+            _extend_unique(parsed)
             if chapter_index == 1 or chapter_index % 25 == 0 or chapter_index == len(chapter_urls):
                 self.logger.info(
                     "Nebraska official index: chapter=%s/%s sections=%s statutes_so_far=%s",
@@ -192,6 +255,7 @@ class NebraskaScraper(BaseStateScraper):
         *,
         max_statutes: Optional[int],
         discovery_method: str,
+        progress_hook: Optional[Callable[[int, int, List[NormalizedStatute]], None]] = None,
     ) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
@@ -200,46 +264,93 @@ class NebraskaScraper(BaseStateScraper):
 
         out: List[NormalizedStatute] = []
         limit = max(1, int(max_statutes)) if max_statutes is not None else None
-        for source_url in section_urls:
-            if limit is not None and len(out) >= limit:
-                break
+        concurrency = max(1, int(os.getenv("NEBRASKA_SECTION_CONCURRENCY", "6") or "6"))
+        sem = asyncio.Semaphore(concurrency)
+
+        async def _parse_source_url(source_url: str) -> Optional[NormalizedStatute]:
             html = await self._request_text_direct(source_url, timeout=20)
             if not html:
-                continue
+                return None
             soup = BeautifulSoup(html, "html.parser")
-            statute_panel = soup.select_one("div.statute") or soup.select_one("div.card-body")
+            statute_panel = (
+                soup.select_one("div.statute")
+                or soup.select_one("div.card-body")
+                or soup.select_one("main")
+                or soup.select_one("div#main-content")
+                or soup.find("body")
+            )
             if statute_panel is None:
-                continue
-            for tag in statute_panel(["script", "style", "nav", "header", "footer"]):
+                return None
+            for tag in statute_panel(["script", "style", "nav", "header", "footer", "aside"]):
                 tag.decompose()
-            section_number = self._normalize_legal_text((statute_panel.find("h2") or statute_panel).get_text(" ", strip=True)).rstrip(".")
+            heading_node = statute_panel.find("h2") or statute_panel.find("h1") or statute_panel
+            section_number = self._normalize_legal_text(heading_node.get_text(" ", strip=True)).rstrip(".")
             if not self._NE_SECTION_NUMBER_RE.match(section_number):
                 section_number = self._section_number_from_url(source_url)
             if not self._NE_SECTION_NUMBER_RE.match(section_number):
-                continue
+                return None
             section_name = self._normalize_legal_text((statute_panel.find("h3") or statute_panel).get_text(" ", strip=True))
             full_text = self._normalize_legal_text(statute_panel.get_text(" ", strip=True))
-            if len(full_text) < 40:
-                continue
-            out.append(
-                NormalizedStatute(
-                    state_code=self.state_code,
-                    state_name=self.state_name,
-                    statute_id=f"{code_name} § {section_number}",
-                    code_name=code_name,
-                    section_number=section_number,
-                    section_name=(section_name or f"Section {section_number}")[:200],
-                    full_text=full_text[:14000],
-                    legal_area=self._identify_legal_area(section_name or full_text[:800]),
-                    source_url=source_url,
-                    official_cite=f"Neb. Rev. Stat. § {section_number}",
-                    structured_data={
-                        "source_kind": "official_nebraska_statutes_html",
-                        "discovery_method": discovery_method,
-                        "skip_hydrate": True,
-                    },
-                )
+            if not section_name:
+                section_name = f"Section {section_number}"
+            if len(full_text) < 60:
+                return None
+            return NormalizedStatute(
+                state_code=self.state_code,
+                state_name=self.state_name,
+                statute_id=f"{code_name} § {section_number}",
+                code_name=code_name,
+                section_number=section_number,
+                section_name=(section_name or f"Section {section_number}")[:200],
+                full_text=full_text[:14000],
+                legal_area=self._identify_legal_area(section_name or full_text[:800]),
+                source_url=source_url,
+                official_cite=f"Neb. Rev. Stat. § {section_number}",
+                structured_data={
+                    "source_kind": "official_nebraska_statutes_html",
+                    "discovery_method": discovery_method,
+                    "skip_hydrate": True,
+                },
             )
+
+        async def _bounded_parse(source_url: str) -> Optional[NormalizedStatute]:
+            async with sem:
+                try:
+                    return await _parse_source_url(source_url)
+                except Exception:
+                    return None
+
+        tasks = [asyncio.create_task(_bounded_parse(source_url)) for source_url in section_urls]
+        total_sections = len(tasks)
+        cancelled_early = False
+        for scanned_sections, task in enumerate(asyncio.as_completed(tasks), start=1):
+            statute = await task
+            if statute is not None:
+                out.append(statute)
+            if progress_hook is not None:
+                try:
+                    progress_hook(scanned_sections, total_sections, out)
+                except Exception:
+                    pass
+            if (
+                scanned_sections == 1
+                or scanned_sections % 50 == 0
+                or scanned_sections == total_sections
+            ):
+                self.logger.info(
+                    "Nebraska official index: scanned_sections=%s/%s statutes_so_far=%s",
+                    scanned_sections,
+                    total_sections,
+                    len(out),
+                )
+            if limit is not None and len(out) >= limit:
+                cancelled_early = True
+                for pending_task in tasks:
+                    if not pending_task.done():
+                        pending_task.cancel()
+                break
+        if cancelled_early:
+            await asyncio.gather(*tasks, return_exceptions=True)
         return out
 
     def _section_number_from_url(self, url: str) -> str:
@@ -250,17 +361,31 @@ class NebraskaScraper(BaseStateScraper):
         return value
 
     async def _request_text_direct(self, url: str, timeout: int = 18) -> str:
+        canonical = self._canonicalize_statute_url(url)
+        for _ in range(2):
+            try:
+                payload = await self._fetch_page_content_with_archival_fallback(
+                    canonical,
+                    timeout_seconds=max(5, int(timeout)),
+                )
+            except Exception:
+                payload = b""
+            if payload:
+                try:
+                    return payload.decode("utf-8", errors="replace")
+                except Exception:
+                    return ""
+            await asyncio.sleep(0.3)
+
         def _request() -> str:
             try:
-                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                req = urllib.request.Request(canonical, headers={"User-Agent": "Mozilla/5.0"})
                 with urllib.request.urlopen(req, timeout=timeout) as resp:
                     return resp.read().decode("utf-8", errors="replace")
             except Exception:
                 return ""
 
         try:
-            import asyncio
-
             return await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 2)
         except Exception:
             return ""

@@ -150,7 +150,7 @@ def test_adaptive_autoencoder_sgd_lowers_legal_ir_view_cross_entropy() -> None:
         source=sample.source,
         source_embedding=sample.embedding_vector,
     ).training_target()
-    autoencoder = AdaptiveModalAutoencoder(feature_family_logit_scale=1.0)
+    autoencoder = AdaptiveModalAutoencoder()
     before = autoencoder.evaluate(
         [sample],
         legal_ir_targets={sample.sample_id: target},
@@ -184,6 +184,64 @@ def test_adaptive_autoencoder_sgd_lowers_legal_ir_view_cross_entropy() -> None:
     )
     assert "repair_multiview_legal_ir_loss" in introspection.synthesis_focus
     assert introspection.legal_ir_view_distribution
+
+
+def test_generalizable_projection_lowers_legal_ir_view_ce_on_holdout() -> None:
+    from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
+
+    train_sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall publish notice before the permit takes effect.",
+    )
+    validation_sample = build_us_code_sample(
+        title="5",
+        section="553",
+        text="The agency shall publish notice before a rule takes effect.",
+    )
+    targets = {}
+    for sample in (train_sample, validation_sample):
+        targets[sample.sample_id] = evaluate_legal_ir_multiview(
+            sample.text,
+            bridge_names=("deontic_norms", "fol_tdfol"),
+            document_id=sample.sample_id,
+            citation=sample.citation,
+            source=sample.source,
+            source_embedding=sample.embedding_vector,
+        ).training_target()
+    autoencoder = AdaptiveModalAutoencoder()
+    before = autoencoder.evaluate(
+        [validation_sample],
+        legal_ir_targets=targets,
+        use_sample_memory=False,
+    )
+
+    report = autoencoder.train_generalizable_projection(
+        [train_sample],
+        validation_samples=[validation_sample],
+        legal_ir_targets=targets,
+        epochs=5,
+        learning_rate=0.5,
+    )
+    after = autoencoder.evaluate(
+        [validation_sample],
+        legal_ir_targets=targets,
+        use_sample_memory=False,
+    )
+
+    assert report["accepted_epochs"] >= 1
+    assert report["epoch_reports"][0]["selected_update"] == "legal_ir_view_logits"
+    assert any(
+        candidate["update"] == "combined"
+        and candidate["pareto_regressions"]
+        for candidate in report["epoch_reports"][0]["candidate_reports"]
+    )
+    assert (
+        after.legal_ir_losses["legal_ir_view_cross_entropy_loss"]
+        < before.legal_ir_losses["legal_ir_view_cross_entropy_loss"]
+    )
+    assert autoencoder.state.family_logits == {}
+    assert autoencoder.state.feature_legal_ir_view_logits
 
 
 def test_modal_autoencoder_empty_dataset_returns_zero_metrics() -> None:
@@ -267,6 +325,47 @@ def test_adaptive_autoencoder_generalizable_projection_uses_holdout_without_samp
     assert autoencoder.state.decoded_embeddings == {}
     assert autoencoder.state.feature_family_logits
     assert autoencoder.state.feature_embedding_weights
+
+
+def test_generalizable_projection_supports_objective_weights_and_hard_example_fraction() -> None:
+    train_a = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice within 30 days.",
+    )
+    train_b = build_us_code_sample(
+        title="5",
+        section="553",
+        text="The agency may provide notice before adopting a rule.",
+    )
+    validation = build_us_code_sample(
+        title="5",
+        section="554",
+        text="The agency must provide notice before final action.",
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        feature_embedding_weight_scale=1.0,
+        feature_family_logit_scale=1.0,
+    )
+
+    report = autoencoder.train_generalizable_projection(
+        [train_a, train_b],
+        validation_samples=[validation],
+        epochs=1,
+        learning_rate=0.5,
+        objective_cross_entropy_weight=2.0,
+        objective_reconstruction_weight=0.5,
+        objective_cosine_gap_weight=0.25,
+        objective_legal_ir_weight=1.5,
+        hard_example_fraction=0.5,
+    )
+
+    assert report["objective_weights"]["cross_entropy"] == pytest.approx(2.0)
+    assert report["objective_weights"]["reconstruction"] == pytest.approx(0.5)
+    assert report["objective_weights"]["cosine_gap"] == pytest.approx(0.25)
+    assert report["objective_weights"]["legal_ir"] == pytest.approx(1.5)
+    assert report["epoch_reports"][0]["hard_example_count"] == 1
+    assert report["epoch_reports"][0]["hard_example_fraction"] == pytest.approx(0.5)
 
 
 def test_generalizable_projection_acceptance_rejects_cosine_regression() -> None:
@@ -496,6 +595,94 @@ def test_feature_family_updates_can_be_opted_into_for_experiments() -> None:
     assert after.cross_entropy_loss < before.cross_entropy_loss
 
 
+def test_feature_codec_keys_are_augmented_with_fallback_modal_features() -> None:
+    class SparseFeatureCodec:
+        def feature_keys_for_sample(self, sample):
+            return [f"codec-only:{sample.sample_id}"]
+
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must make records promptly available.",
+    )
+    validation = build_us_code_sample(
+        title="5",
+        section="553",
+        text="The agency must make notices promptly available.",
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        feature_codec=SparseFeatureCodec(),
+        feature_family_logit_scale=1.0,
+    )
+    before = autoencoder.evaluate([validation])
+    todo = type(
+        "Todo",
+        (),
+        {
+            "action": "improve_modal_family_classifier",
+            "loss_name": "cross_entropy_loss",
+            "sample_ids": [train.sample_id],
+            "todo_id": "ce-feature-codec-augmented",
+        },
+    )()
+
+    autoencoder.apply_todos([todo], {train.sample_id: train}, learning_rate=0.5)
+    after = autoencoder.evaluate([validation])
+    validation_features = autoencoder._feature_keys_for(validation)
+
+    assert f"codec-only:{validation.sample_id}" in validation_features
+    assert "modal-family:deontic" in validation_features
+    assert "token:agency" in validation_features
+    assert after.cross_entropy_loss < before.cross_entropy_loss
+
+
+def test_sparse_codec_noise_does_not_drown_fallback_family_updates() -> None:
+    class NoisyFeatureCodec:
+        def feature_keys_for_sample(self, sample):
+            return [
+                f"codec-noise:{sample.sample_id}:{index}"
+                for index in range(100)
+            ]
+
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must make records promptly available.",
+    )
+    validation = build_us_code_sample(
+        title="5",
+        section="553",
+        text="The agency must make notices promptly available.",
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        feature_codec=NoisyFeatureCodec(),
+        feature_family_logit_scale=1.0,
+    )
+    before = autoencoder.evaluate([validation])
+    todo = type(
+        "Todo",
+        (),
+        {
+            "action": "improve_modal_family_classifier",
+            "loss_name": "cross_entropy_loss",
+            "sample_ids": [train.sample_id],
+            "todo_id": "ce-feature-noisy-codec",
+        },
+    )()
+
+    autoencoder.apply_todos([todo], {train.sample_id: train}, learning_rate=0.5)
+    after = autoencoder.evaluate([validation])
+    fallback_logit = autoencoder.state.feature_family_logits["modal-family:deontic"][
+        "deontic"
+    ]
+    noisy_logit = autoencoder.state.feature_family_logits[
+        f"codec-noise:{train.sample_id}:0"
+    ]["deontic"]
+
+    assert fallback_logit > noisy_logit
+    assert after.cross_entropy_loss < before.cross_entropy_loss
+
+
 def test_adaptive_autoencoder_skips_program_synthesis_todos() -> None:
     sample = build_us_code_sample(
         title="5",
@@ -647,6 +834,8 @@ def test_adaptive_autoencoder_state_roundtrip(tmp_path) -> None:
         family_logits={"sample": {"deontic": 1.0}},
         feature_embedding_weights={"token:agency": [0.01, -0.01]},
         feature_family_logits={"modal-family:deontic": {"deontic": 0.2}},
+        legal_ir_view_logits={"deontic.ir": 0.3},
+        feature_legal_ir_view_logits={"legal-ir:cue:deontic": {"deontic.ir": 0.4}},
         applied_todo_ids=["todo-1"],
     )
     path = tmp_path / "state.json"
@@ -665,6 +854,8 @@ def test_generalizable_state_copy_drops_sample_specific_memory() -> None:
         family_logits={"sample": {"deontic": 1.0}},
         feature_embedding_weights={"token:agency": [0.01, -0.01]},
         feature_family_logits={"modal-family:deontic": {"deontic": 0.2}},
+        legal_ir_view_logits={"deontic.ir": 0.3},
+        feature_legal_ir_view_logits={"legal-ir:cue:deontic": {"deontic.ir": 0.4}},
         applied_todo_ids=["todo-1"],
     )
 
@@ -675,6 +866,11 @@ def test_generalizable_state_copy_drops_sample_specific_memory() -> None:
     assert generalizable.applied_todo_ids == []
     assert generalizable.feature_embedding_weights == state.feature_embedding_weights
     assert generalizable.feature_family_logits == state.feature_family_logits
+    assert generalizable.legal_ir_view_logits == state.legal_ir_view_logits
+    assert (
+        generalizable.feature_legal_ir_view_logits
+        == state.feature_legal_ir_view_logits
+    )
 
 
 def test_average_generalizable_state_reuses_prior_feature_learning() -> None:
@@ -683,12 +879,16 @@ def test_average_generalizable_state_reuses_prior_feature_learning() -> None:
         family_logits={"sample-a": {"deontic": 4.0}},
         feature_embedding_weights={"token:agency": [0.2, -0.2]},
         feature_family_logits={"modal-family:deontic": {"deontic": 0.6}},
+        legal_ir_view_logits={"deontic.ir": 0.6},
+        feature_legal_ir_view_logits={"legal-ir:cue:deontic": {"deontic.ir": 0.8}},
     )
     second = ModalAutoencoderTrainingState(
         decoded_embeddings={"sample-b": [2.0, 2.0]},
         family_logits={"sample-b": {"temporal": 4.0}},
         feature_embedding_weights={"token:agency": [0.4, -0.4]},
         feature_family_logits={"modal-family:deontic": {"deontic": 0.2}},
+        legal_ir_view_logits={"deontic.ir": 0.2},
+        feature_legal_ir_view_logits={"legal-ir:cue:deontic": {"deontic.ir": 0.4}},
     )
 
     averaged = ModalAutoencoderTrainingState.average_generalizable([first, second])
@@ -697,6 +897,11 @@ def test_average_generalizable_state_reuses_prior_feature_learning() -> None:
     assert averaged.family_logits == {}
     assert averaged.feature_embedding_weights["token:agency"] == pytest.approx([0.3, -0.3])
     assert averaged.feature_family_logits["modal-family:deontic"]["deontic"] == pytest.approx(0.4)
+    assert averaged.legal_ir_view_logits["deontic.ir"] == pytest.approx(0.4)
+    assert (
+        averaged.feature_legal_ir_view_logits["legal-ir:cue:deontic"]["deontic.ir"]
+        == pytest.approx(0.6)
+    )
 
 
 def test_frame_and_symbolic_penalties_for_valid_sample() -> None:

@@ -1431,6 +1431,9 @@ _FIELD_SPAN_ALIASES = {
 
 _DECODER_WARNING_NON_BLOCKERS = {
     "cross_reference_requires_resolution",
+    "enumerated_clause_requires_item_level_review",
+    "exception_requires_scope_review",
+    "overlong_action_span",
 }
 
 

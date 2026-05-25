@@ -167,6 +167,15 @@ _USCODE_10_1095C_TODO_TEXT = (
 _USCODE_19_2113_TODO_TEXT = (
     "Administrative notice and hearing procedures are established for import petitions."
 )
+_USCODE_25_57_RESIDUAL_SPAN_TODO_TEXT = (
+    "U.S.C. Title 25 - INDIANS 25 U.S.C. United States Code, 2024 Edition "
+    "Title 25 - INDIANS CHAPTER 2 - OFFICERS OF INDIAN AFFAIRS Sec. 57 - "
+    "Omitted From the U.S. Government Publishing Office, www.gpo.gov §57. "
+    "Omitted Editorial Notes Codification Section, act Mar. 3, 1925, ch. 462, "
+    "43 Stat. 1147, which authorized the Secretary of the Interior to allow "
+    "employees in the Indian Service heat and light for quarters without "
+    "charge, was not repeated in subsequent appropriation acts."
+)
 _USCODE_2_5602_SYMBOLIC_VALIDITY_TODO_TEXT = (
     "U.S.C. Title 2 - THE CONGRESS 2 U.S.C. United States Code, 2024 Edition "
     "Title 2 - THE CONGRESS CHAPTER 55 - HOUSE OF REPRESENTATIVES OFFICERS AND "
@@ -5775,6 +5784,37 @@ def test_spacy_compiler_adds_short_residual_heading_span_coverage_for_42_18791_t
         for formula in residual_formulas
     }
     assert "Additional provisions." in residual_text_spans
+
+
+def test_spacy_compiler_adds_residual_span_coverage_for_25_57_todo_shape() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    encoding = encoder.encode(
+        _USCODE_25_57_RESIDUAL_SPAN_TODO_TEXT,
+        document_id="us-code-25-57-884a228276a417f6",
+        citation="25 U.S.C. 57",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    assert modal_ir.document_id == "us-code-25-57-884a228276a417f6"
+    assert modal_ir.formulas
+    residual_formulas = [
+        formula
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    ]
+    assert residual_formulas
+    residual_text_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in residual_formulas
+    }
+    assert any(
+        "U.S.C. Title 25 - INDIANS 25 U.S.C." in span for span in residual_text_spans
+    )
+    assert any("43 Stat." in span for span in residual_text_spans)
 
 
 def test_spacy_compiler_supports_usc_and_section_symbol_citation_variants_for_sec_headings() -> None:

@@ -189,6 +189,19 @@ _USCODE_SHORT_RESIDUAL_HEADING_SIGNAL_TOKENS = frozenset(
     }
 )
 _USCODE_MAX_RESIDUAL_SPAN_FORMULAS = 3
+_USCODE_RESIDUAL_COALESCE_SEGMENT_MAX_TOKENS = 12
+_USCODE_RESIDUAL_HEADER_MIN_TOKENS = 10
+_USCODE_RESIDUAL_HEADER_SCOPE_PHRASES = (
+    "from the u.s. government publishing office",
+    "u.s.c.",
+    "united states code",
+    "www.gpo.gov",
+)
+_USCODE_RESIDUAL_STATUTORY_FRAGMENT_MAX_TOKENS = 10
+_USCODE_RESIDUAL_STATUTORY_FRAGMENT_HINT_RE = re.compile(
+    r"\b(?:ch|chapter|pub|stat)\b",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -525,6 +538,10 @@ class LegalModalParser:
         candidate_segments = (
             list(self.segment(normalized)) if segments is None else list(segments)
         )
+        candidate_segments = self._coalesce_short_residual_segments(
+            candidate_segments,
+            normalized_text=normalized,
+        )
         if not candidate_segments:
             return []
         formulas: List[ModalIRFormula] = []
@@ -577,6 +594,12 @@ class LegalModalParser:
         lowered = normalized.lower()
         tokens = _TOKEN_RE.findall(lowered)
         token_count = len(tokens)
+        if self.extract_cues(normalized):
+            return False
+        if self._is_uscode_header_residual_candidate(normalized, tokens):
+            return True
+        if self._is_uscode_statutory_fragment_residual_candidate(normalized, tokens):
+            return True
         is_short_heading_candidate = self._is_short_residual_heading_coverage_candidate(
             tokens
         )
@@ -586,8 +609,6 @@ class LegalModalParser:
         ):
             if not is_short_heading_candidate:
                 return False
-        if self.extract_cues(normalized):
-            return False
         if (
             self._looks_like_heading_without_section_reference(normalized)
             and not is_short_heading_candidate
@@ -614,6 +635,93 @@ class LegalModalParser:
         return bool(
             set(tokens) & _USCODE_SHORT_RESIDUAL_HEADING_SIGNAL_TOKENS
         )
+
+    def _coalesce_short_residual_segments(
+        self,
+        segments: Sequence[LegalSegment],
+        *,
+        normalized_text: str,
+    ) -> List[LegalSegment]:
+        """Join contiguous short residual fragments split by abbreviation punctuation."""
+        if len(segments) < 2:
+            return list(segments)
+        coalesced: List[LegalSegment] = []
+        index = 0
+        while index < len(segments):
+            segment = segments[index]
+            start = index
+            end = index + 1
+            total_tokens = len(_TOKEN_RE.findall(segment.text.lower()))
+            if total_tokens > _USCODE_RESIDUAL_COALESCE_SEGMENT_MAX_TOKENS:
+                coalesced.append(segment)
+                index += 1
+                continue
+            while end < len(segments):
+                next_segment = segments[end]
+                if next_segment.start_char > segments[end - 1].end_char + 1:
+                    break
+                next_tokens = len(_TOKEN_RE.findall(next_segment.text.lower()))
+                if next_tokens > _USCODE_RESIDUAL_COALESCE_SEGMENT_MAX_TOKENS:
+                    break
+                if (
+                    total_tokens + next_tokens
+                    > _USCODE_RESIDUAL_SPAN_MAX_TOKENS
+                ):
+                    break
+                if (
+                    total_tokens > _USCODE_RESIDUAL_COALESCE_SEGMENT_MAX_TOKENS
+                    and next_tokens > _USCODE_RESIDUAL_COALESCE_SEGMENT_MAX_TOKENS
+                ):
+                    break
+                total_tokens += next_tokens
+                end += 1
+            if end - start <= 1:
+                coalesced.append(segment)
+                index += 1
+                continue
+            merged_start = segments[start].start_char
+            merged_end = segments[end - 1].end_char
+            merged_text = normalized_text[merged_start:merged_end]
+            coalesced.append(
+                LegalSegment(
+                    text=merged_text,
+                    start_char=merged_start,
+                    end_char=merged_end,
+                    role=segments[start].role,
+                )
+            )
+            index = end
+        return coalesced
+
+    def _is_uscode_header_residual_candidate(
+        self,
+        normalized_segment_text: str,
+        tokens: Sequence[str],
+    ) -> bool:
+        token_count = len(tokens)
+        if token_count < _USCODE_RESIDUAL_HEADER_MIN_TOKENS:
+            return False
+        if token_count > _USCODE_RESIDUAL_SPAN_MAX_TOKENS:
+            return False
+        lowered = normalized_segment_text.lower()
+        return any(
+            phrase in lowered for phrase in _USCODE_RESIDUAL_HEADER_SCOPE_PHRASES
+        )
+
+    def _is_uscode_statutory_fragment_residual_candidate(
+        self,
+        normalized_segment_text: str,
+        tokens: Sequence[str],
+    ) -> bool:
+        token_count = len(tokens)
+        if token_count < 1:
+            return False
+        if token_count > _USCODE_RESIDUAL_STATUTORY_FRAGMENT_MAX_TOKENS:
+            return False
+        lowered = normalized_segment_text.lower()
+        if not any(character.isdigit() for character in lowered):
+            return False
+        return bool(_USCODE_RESIDUAL_STATUTORY_FRAGMENT_HINT_RE.search(lowered))
 
     def _residual_span_coverage_formula(
         self,

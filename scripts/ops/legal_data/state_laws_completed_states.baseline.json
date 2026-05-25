@@ -1,7 +1,23 @@
 {
   "schema": "ipfs_datasets_py.state_laws_refresh.completed_states.v1",
-  "updated_at": "2026-05-22T14:40:00+00:00",
+  "updated_at": "2026-05-25T00:00:00+00:00",
   "states": {
+    "CT": {
+      "status": "success",
+      "statutes_count": 26627,
+      "completed_at": "2026-05-23T12:55:59.851511+00:00",
+      "first_completed_at": "2026-05-23T12:55:59.851511+00:00",
+      "updated_at": "2026-05-25T00:00:00+00:00",
+      "completion_mode": "checkpoint_reconciled_complete_baseline"
+    },
+    "MD": {
+      "status": "success",
+      "statutes_count": 8099,
+      "completed_at": "2026-05-23T10:47:18.274596+00:00",
+      "first_completed_at": "2026-05-23T10:47:18.274596+00:00",
+      "updated_at": "2026-05-23T14:41:51+00:00",
+      "completion_mode": "confirmed_live_run_baseline"
+    },
     "MN": {
       "status": "success",
       "statutes_count": 16389,
@@ -9,6 +25,14 @@
       "first_completed_at": "2026-05-20T00:34:51+00:00",
       "updated_at": "2026-05-22T14:40:00+00:00",
       "completion_mode": "confirmed_full_corpus_baseline"
+    },
+    "NC": {
+      "status": "success",
+      "statutes_count": 35245,
+      "completed_at": "2026-05-23T05:25:10.754278+00:00",
+      "first_completed_at": "2026-05-23T05:25:10.754278+00:00",
+      "updated_at": "2026-05-23T14:41:51+00:00",
+      "completion_mode": "confirmed_live_run_baseline"
     },
     "OK": {
       "status": "success",

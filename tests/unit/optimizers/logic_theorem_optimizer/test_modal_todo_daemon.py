@@ -17,7 +17,10 @@ from ipfs_datasets_py.logic.modal import (
 )
 from ipfs_datasets_py.logic.modal.synthesis import route_autoencoder_residual
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import build_us_code_sample
-from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import AdaptiveModalAutoencoder
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import (
+    AdaptiveModalAutoencoder,
+)
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import modal_todo_daemon as daemon
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import (
     LossSnapshot,
     ModalLossTodoGenerator,
@@ -987,6 +990,60 @@ def test_bridge_loss_evaluator_for_names_runs_deontic_adapter() -> None:
     assert "deontic_graph_failure_penalty" not in losses[sample.sample_id]
 
 
+def test_bridge_loss_evaluator_caches_multiview_diagnostics(monkeypatch) -> None:
+    from ipfs_datasets_py.logic import bridge as bridge_module
+
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall publish notice before the permit takes effect.",
+    )
+    calls = {"count": 0}
+
+    class FakeDocument:
+        def canonical_hash(self) -> str:
+            return "fake-canonical-hash"
+
+    class FakeMultiview:
+        acceptance_rate = 1.0
+        document = FakeDocument()
+        failures = {}
+        graph_failure_penalty = 0.0
+        proof_failure_ratio = 0.0
+        reports = {}
+        total_loss = 0.25
+        view_count = 1
+
+        def training_target(self):
+            return SimpleNamespace(
+                losses={"legal_ir_multiview_total_loss": 0.25},
+                view_distribution={"deontic.ir": 1.0},
+            )
+
+        def view_coverage_loss(self) -> float:
+            return 0.0
+
+    def fake_evaluate_legal_ir_multiview(*args, **kwargs):
+        calls["count"] += 1
+        return FakeMultiview()
+
+    with daemon._BRIDGE_LOSS_CACHE_LOCK:
+        daemon._BRIDGE_LOSS_CACHE.clear()
+    monkeypatch.setattr(
+        bridge_module,
+        "evaluate_legal_ir_multiview",
+        fake_evaluate_legal_ir_multiview,
+    )
+    evaluator = bridge_loss_evaluator_for_names(["deontic_norms"], evaluate_provers=False)
+
+    first = evaluator([sample])
+    second = evaluator([sample])
+
+    assert calls["count"] == 1
+    assert first == second
+    assert first[sample.sample_id]["legal_ir_multiview_total_loss"] == 0.25
+
+
 def test_default_bridge_loss_adapters_cover_registered_logic_views() -> None:
     from ipfs_datasets_py.logic.bridge import DEFAULT_LEGAL_IR_BRIDGE_NAMES
 
@@ -1001,6 +1058,59 @@ def test_default_bridge_loss_adapters_cover_registered_logic_views() -> None:
         "external_prover_router",
         "zkp_attestation",
     ]
+
+
+def test_bridge_ir_metric_block_caches_multiview_reports(monkeypatch) -> None:
+    from ipfs_datasets_py.logic import bridge as bridge_module
+
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall publish notice before the permit takes effect.",
+    )
+    calls = {"count": 0}
+
+    class FakeDocument:
+        def canonical_hash(self) -> str:
+            return "fake-canonical-hash"
+
+    class FakeMultiview:
+        acceptance_rate = 1.0
+        document = FakeDocument()
+        failures = {}
+        graph_failure_penalty = 0.0
+        proof_failure_ratio = 0.0
+        reports = {}
+        total_loss = 0.25
+        view_count = 1
+
+        def training_target(self):
+            return SimpleNamespace(
+                losses={"legal_ir_multiview_total_loss": 0.25},
+                view_distribution={"deontic.ir": 1.0},
+            )
+
+        def view_coverage_loss(self) -> float:
+            return 0.0
+
+    def fake_evaluate_legal_ir_multiview(*args, **kwargs):
+        calls["count"] += 1
+        return FakeMultiview()
+
+    with runner._BRIDGE_IR_REPORT_CACHE_LOCK:
+        runner._BRIDGE_IR_REPORT_CACHE.clear()
+    monkeypatch.setattr(
+        bridge_module,
+        "evaluate_legal_ir_multiview",
+        fake_evaluate_legal_ir_multiview,
+    )
+
+    first = bridge_ir_metric_block([sample], ["deontic_norms"], evaluate_provers=False)
+    second = bridge_ir_metric_block([sample], ["deontic_norms"], evaluate_provers=False)
+
+    assert calls["count"] == 1
+    assert first["canonical_ir"] == second["canonical_ir"]
+    assert first["canonical_ir"]["total_loss"] == 0.25
 
 
 def test_supervisor_seeds_canonical_multiview_loss_todos() -> None:
@@ -1032,6 +1142,32 @@ def test_supervisor_seeds_canonical_multiview_loss_todos() -> None:
     assert by_action["repair_multiview_legal_ir_loss"].metadata[
         "program_synthesis_scope"
     ] == "bridge"
+
+
+def test_generic_legal_ir_loss_backs_off_when_specific_bridge_loss_exists() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall publish notice before the permit takes effect.",
+    )
+
+    def fake_bridge_evaluator(samples):
+        return {
+            samples[0].sample_id: {
+                "deontic_decoder_slot_loss": 0.5,
+                "legal_ir_multiview_total_loss": 0.5,
+            }
+        }
+
+    supervisor = ModalTodoSupervisor(bridge_loss_evaluator=fake_bridge_evaluator)
+
+    seeded = supervisor.seed_from_evaluation([sample])
+
+    by_action = {todo.action: todo for todo in seeded}
+    generic = by_action["repair_multiview_legal_ir_loss"]
+    specific = by_action["repair_deontic_bridge_quality_gate"]
+    assert generic.metadata["generic_bridge_priority_backoff"] is True
+    assert generic.priority < specific.priority
 
 
 def test_supervisor_seeds_legal_ir_view_cross_entropy_sgd_todo() -> None:
@@ -1154,6 +1290,16 @@ def test_program_synthesis_generator_uses_legal_ir_view_introspection() -> None:
     assert by_action["repair_deontic_bridge_quality_gate"].metadata[
         "program_synthesis_scope"
     ] == "deontic"
+    assert (
+        by_action["repair_multiview_legal_ir_loss"].priority
+        < by_action["repair_deontic_bridge_quality_gate"].priority
+    )
+    deontic_evidence = by_action["repair_deontic_bridge_quality_gate"].metadata[
+        "hint_evidence"
+    ][0]
+    assert deontic_evidence["target_view"].startswith("deontic.")
+    assert deontic_evidence["predicted_view"].startswith("deontic.")
+    assert deontic_evidence["bridge_failure_name"] == "deontic_decoder_slot_loss"
     assert by_action["repair_multiview_legal_ir_loss"].metadata["target_metrics"]
     assert by_action["repair_multiview_legal_ir_loss"].metadata[
         "validation_commands"
@@ -1205,6 +1351,36 @@ def test_program_synthesis_generator_fans_out_legal_ir_view_introspection() -> N
     assert "tdfol" in scopes
     assert "external_provers" not in scopes
     assert "zkp" not in scopes
+
+
+def test_program_synthesis_residual_persistence_occurrence_counting() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice before adopting a rule.",
+    )
+    autoencoder = AdaptiveModalAutoencoder(feature_family_logit_scale=1.0)
+    supervisor = ModalTodoSupervisor(
+        policy=ModalOptimizerPolicy(
+            program_synthesis_min_support=1,
+            program_synthesis_min_residual_occurrences=2,
+            program_synthesis_min_residual_survival_score=0.0,
+        ),
+    )
+    todos = supervisor.program_synthesis_generator.generate(
+        [sample],
+        autoencoder=autoencoder,
+    )
+    assert todos
+    candidate = todos[0]
+    assert supervisor._residual_signature_occurrences(candidate) == 1
+    supervisor.queue.add_many(todos)
+    duplicate_todos = supervisor.program_synthesis_generator.generate(
+        [sample],
+        autoencoder=autoencoder,
+    )
+    assert duplicate_todos
+    assert supervisor._residual_signature_occurrences(duplicate_todos[0]) >= 2
 
 
 def test_supervisor_optimizes_autoencoder_first_and_leaves_program_synthesis_backlog() -> None:
@@ -1850,12 +2026,48 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
     assert paired["codex_command"][duration_index + 1] == "420.0"
     apply_index = paired["codex_command"].index("--codex-apply-mode")
     assert paired["codex_command"][apply_index + 1] == "apply_to_main"
+    scale_index = paired["autoencoder_command"].index(
+        "--autoencoder-feature-family-logit-scale"
+    )
+    assert paired["autoencoder_command"][scale_index + 1] == "1.0"
     commit_index = paired["codex_command"].index("--codex-commit-mode")
     assert paired["codex_command"][commit_index + 1] == "commit_applied"
     scope_index = paired["codex_command"].index("--codex-scope")
     assert paired["codex_command"][scope_index + 1] == "frame_logic"
     assert paired["autoencoder_command"].count("--warm-start-run-id") == 2
     assert paired["autoencoder_command"].count("--warm-start-state") == 1
+    assert "--generalizable-projection-max-cosine-regression" in paired["autoencoder_command"]
+    assert "--generalizable-projection-max-reconstruction-regression" in paired["autoencoder_command"]
+    assert "--generalizable-projection-max-cross-entropy-regression" in paired["autoencoder_command"]
+    assert "--generalizable-projection-max-legal-ir-loss-regression" in paired["autoencoder_command"]
+    assert "--learning-rate-floor-ratio" in paired["autoencoder_command"]
+    assert "--learning-rate-cap-ratio" in paired["autoencoder_command"]
+    assert "--learning-rate-plateau-delta" in paired["autoencoder_command"]
+
+
+def test_cycle_learning_rate_reacts_to_plateau_and_cosine_regression() -> None:
+    args = SimpleNamespace(
+        learning_rate=0.3,
+        learning_rate_floor_ratio=0.25,
+        learning_rate_cap_ratio=1.5,
+        learning_rate_plateau_delta=1.0e-5,
+    )
+    baseline_lr, baseline_policy = runner._cycle_learning_rate(args, {})
+    plateau_lr, plateau_policy = runner._cycle_learning_rate(
+        args,
+        {"learning_rate_plateau_streak": 4, "learning_rate_cosine_regression_streak": 0},
+    )
+    regressed_lr, regressed_policy = runner._cycle_learning_rate(
+        args,
+        {"learning_rate_plateau_streak": 4, "learning_rate_cosine_regression_streak": 2},
+    )
+
+    assert baseline_lr == pytest.approx(0.3)
+    assert plateau_lr > baseline_lr
+    assert regressed_lr < plateau_lr
+    assert baseline_policy["plateau_streak"] == 0
+    assert plateau_policy["plateau_streak"] == 4
+    assert regressed_policy["cosine_regression_streak"] == 2
 
 
 def test_build_paired_daemon_commands_respect_custom_child_run_ids_and_model() -> None:

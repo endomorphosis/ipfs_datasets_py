@@ -1,0 +1,16 @@
+{
+  "compiler_parser|modal.compiler|{\"action\":\"increase_modal_ir_span_coverage\",\"family_pairs\":[],\"program_synthesis_scope\":\"compiler_parser\",\"target_component\":\"modal.compiler\"}": {
+    "anchor_id": "6fefac006c0eba3a",
+    "expires_at": "2026-05-23T23:04:39+00:00",
+    "expires_at_epoch": 1779577479.9562836,
+    "selected_count": 1,
+    "worker_id": "codex-compiler_parser"
+  },
+  "deontic|deontic.ir|{\"action\":\"repair_deontic_bridge_quality_gate\",\"family_pairs\":[],\"program_synthesis_scope\":\"deontic\",\"target_component\":\"deontic.ir\"}": {
+    "anchor_id": "064a3b06937cb154",
+    "expires_at": "2026-05-23T23:04:39+00:00",
+    "expires_at_epoch": 1779577479.9684908,
+    "selected_count": 1,
+    "worker_id": "codex-deontic"
+  }
+}

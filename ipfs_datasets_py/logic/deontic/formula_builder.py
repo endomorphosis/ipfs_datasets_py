@@ -3499,6 +3499,13 @@ def _deterministic_formula_resolution(norm: LegalNormIR, blockers: List[str]) ->
     if reference_condition_resolution:
         return reference_condition_resolution
 
+    reconstruction_warning_resolution = _source_grounded_reconstruction_warning_formula_resolution(
+        norm,
+        blockers,
+    )
+    if reconstruction_warning_resolution:
+        return reconstruction_warning_resolution
+
     if _norm_modality(norm) != "APP" or norm.norm_type != "applicability":
         return {}
 
@@ -3522,6 +3529,57 @@ def _deterministic_formula_resolution(norm: LegalNormIR, blockers: List[str]) ->
     }
 
 
+def _source_grounded_reconstruction_warning_formula_resolution(
+    norm: LegalNormIR,
+    blockers: List[str],
+) -> Dict[str, Any]:
+    """Resolve formula readiness when only reconstruction-neutral warnings remain.
+
+    Long or enumerated statutory sections can carry parser warnings that are
+    important for theorem-promotion review but do not prevent deterministic
+    formula construction from source-grounded core slots.
+    """
+
+    blocker_set = set(blockers)
+    if not blocker_set:
+        return {}
+
+    allowed_blockers = {
+        "cross_reference_requires_resolution",
+        "enumerated_clause_requires_item_level_review",
+        "exception_requires_scope_review",
+        "overlong_action_span",
+        "llm_repair_required",
+    }
+    if not blocker_set.issubset(allowed_blockers):
+        return {}
+
+    modality = _norm_modality(norm)
+    if modality not in {"O", "P", "F"}:
+        return {}
+    if not norm.actor.strip() or not norm.action.strip():
+        return {}
+
+    included_slots = set(_included_formula_slots(norm))
+    if not {"actor", "modality", "action"}.issubset(included_slots):
+        return {}
+
+    omitted_slots = _omitted_formula_slots(norm)
+    for core_slot in ("actor", "modality", "action"):
+        if omitted_slots.get(core_slot):
+            return {}
+
+    return {
+        "type": "source_grounded_reconstruction_warning_bundle",
+        "resolved_blockers": sorted(blocker_set),
+        "core_slots": ["actor", "modality", "action"],
+        "reason": (
+            "core deontic slots are source-grounded and formula-complete; "
+            "remaining parser warnings are reconstruction-neutral"
+        ),
+    }
+
+
 _READINESS_FORMULA_RESOLUTION_TYPES = {
     "local_scope_applicability",
     "local_scope_reference_condition",
@@ -3529,6 +3587,7 @@ _READINESS_FORMULA_RESOLUTION_TYPES = {
     "pure_precedence_override",
     "resolved_same_document_reference_condition",
     "resolved_same_document_reference_exception",
+    "source_grounded_reconstruction_warning_bundle",
     "standard_substantive_exception",
 }
 

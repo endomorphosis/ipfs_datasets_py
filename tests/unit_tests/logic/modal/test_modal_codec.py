@@ -12676,10 +12676,131 @@ def test_modal_decompiler_preserves_context_without_formula_style_text() -> None
     assert "must" in slot_texts["modal_source_span_token"]
     assert "definitions." in slot_texts["source_context_span_token"]
     assert "must" in slot_texts["modal_source_span_bridge_cue"]
+    assert "within" in slot_texts["modal_source_span_bridge_cue"]
     assert "deontic:O:must" in slot_texts["modal_source_span_bridge_modal_signature"]
+    assert "temporal:F:within" in slot_texts["modal_source_span_bridge_modal_signature"]
     assert "O[deontic:D]" not in result.decoded_text
     assert "obligatory" not in result.decoded_text
     assert modal_text_token_similarity(source, result.decoded_text) == 1.0
+
+
+def test_modal_decompiler_surfaces_source_span_modal_transition_slots() -> None:
+    source_id = "us-code-5-552-source-span-transitions"
+    source_text = (
+        "The Secretary shall issue payments on or after January 1, 2030, "
+        "subject to section 552."
+    )
+    formula = ModalIRFormula(
+        formula_id=f"{source_id}:f0001",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="shall_issue_payments"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="5 U.S.C. 552",
+        ),
+        metadata={"cue": "shall"},
+    )
+    document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "deontic:O" in slot_texts["modal_source_span_bridge_modal_formula_signature"]
+    assert "deontic->temporal" in slot_texts["modal_source_span_bridge_modal_family_pair"]
+    assert (
+        "deontic->conditional_normative"
+        in slot_texts["modal_source_span_bridge_modal_family_pair"]
+    )
+    assert "deontic->frame" in slot_texts["modal_source_span_bridge_modal_family_pair"]
+    assert (
+        "deontic:O->temporal:F:on_or_after"
+        in slot_texts["modal_source_span_bridge_modal_transition_signature"]
+    )
+    assert (
+        "deontic:O->frame:Frame:subject_to"
+        in slot_texts["modal_source_span_bridge_modal_transition_signature"]
+    )
+def test_modal_decompiler_source_spans_emit_refined_directional_family_pairs() -> None:
+    source = (
+        "Authorities shall determine findings before certification for this section."
+    )
+    span_end = len(source)
+    modal_ir = ModalIRDocument(
+        document_id="refined-family-pairs-source-span",
+        source="us_code",
+        normalized_text=source,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-frame",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="frame",
+                    symbol="Frame",
+                    label="framed as",
+                ),
+                predicate=ModalIRPredicate(name="governance_context"),
+                provenance=ModalIRProvenance(
+                    source_id="refined-family-pairs-source-span",
+                    start_char=0,
+                    end_char=span_end,
+                    citation="2 U.S.C. 6622",
+                ),
+            ),
+            ModalIRFormula(
+                formula_id="f-deontic",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="kd",
+                    symbol="O",
+                    label="obligatory",
+                ),
+                predicate=ModalIRPredicate(name="perform_certification"),
+                provenance=ModalIRProvenance(
+                    source_id="refined-family-pairs-source-span",
+                    start_char=0,
+                    end_char=span_end,
+                    citation="2 U.S.C. 6622",
+                ),
+            ),
+            ModalIRFormula(
+                formula_id="f-conditional",
+                operator=ModalIROperator(
+                    family="conditional_normative",
+                    system="dyadic",
+                    symbol="O|",
+                    label="conditionally obligatory",
+                ),
+                predicate=ModalIRPredicate(name="determine_certification_scope"),
+                provenance=ModalIRProvenance(
+                    source_id="refined-family-pairs-source-span",
+                    start_char=0,
+                    end_char=span_end,
+                    citation="2 U.S.C. 6622",
+                ),
+            ),
+        ],
+    )
+
+    decoded = decode_modal_ir_document(modal_ir)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert {
+        "frame->deontic",
+        "deontic->temporal",
+        "conditional_normative->epistemic",
+    }.issubset(set(slot_texts["modal_source_span_refined_modal_family_pair"]))
 
 
 def test_modal_decompiler_recovers_condition_exception_and_citation_slots() -> None:
@@ -12879,19 +13000,32 @@ def test_modal_decompiler_and_triples_surface_temporal_for_purposes_bridge_slots
         "frame",
     ]
     assert slot_texts["condition_modal_bridge_operator"] == ["O|", "Frame"]
+    assert slot_texts["condition_modal_bridge_operator_pair"] == ["F->O|", "F->Frame"]
+    assert slot_texts["condition_bridge_operator_pair"] == ["F->O|", "F->Frame"]
     assert "for_purposes_of" in slot_texts["bridge_cue"]
     assert slot_texts["bridge_modal_bridge_signature"] == [
         "conditional_normative:O|:for_purposes_of",
         "frame:Frame:for_purposes_of",
     ]
+    assert slot_texts["bridge_bridge_operator_pair"] == ["F->O|", "F->Frame"]
     assert any(
         triple["predicate"] == "condition_modal_bridge_signature"
         and triple["object"] == "frame:Frame:for_purposes_of"
         for triple in triples
     )
     assert any(
+        triple["predicate"] == "condition_bridge_operator_pair"
+        and triple["object"] == "F->Frame"
+        for triple in triples
+    )
+    assert any(
         triple["predicate"] == "bridge_modal_bridge_signature"
         and triple["object"] == "conditional_normative:O|:for_purposes_of"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "bridge_bridge_operator_pair"
+        and triple["object"] == "F->O|"
         for triple in triples
     )
 
@@ -12952,6 +13086,94 @@ def test_modal_decompiler_and_triples_surface_temporal_after_cross_family_bridge
     )
 
 
+def test_modal_decompiler_and_triples_surface_operator_pair_keys_for_temporal_conditional_bridges() -> None:
+    source_id = "us-code-42-7385x-operator-pair-conditional"
+    source_text = "If a transfer occurs, benefits follow."
+    formula = ModalIRFormula(
+        formula_id=f"{source_id}:f0001",
+        operator=ModalIROperator(
+            family="temporal",
+            system="ltl",
+            symbol="X",
+            label="next",
+        ),
+        predicate=ModalIRPredicate(name="follow_benefits"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="42 U.S.C. 7385x",
+        ),
+        conditions=["if a transfer occurs"],
+        metadata={"cue": "after"},
+    )
+    document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(document)
+
+    assert "X->O|" in slot_texts["condition_modal_registry_operator_pair"]
+    assert "x_to_o_pipe" in slot_texts["condition_modal_registry_operator_pair_key"]
+    assert "x_to_o_pipe" in slot_texts["condition_modal_bridge_operator_pair_key"]
+    assert any(
+        triple["predicate"] == "condition_modal_registry_operator_pair_key"
+        and triple["object"] == "x_to_o_pipe"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "condition_modal_bridge_operator_pair_key"
+        and triple["object"] == "x_to_o_pipe"
+        for triple in triples
+    )
+
+
+def test_modal_decompiler_and_triples_surface_operator_pair_keys_for_temporal_deontic_bridges() -> None:
+    source_id = "us-code-42-7385y-operator-pair-deontic"
+    source_text = "Required transfer follows."
+    formula = ModalIRFormula(
+        formula_id=f"{source_id}:f0001",
+        operator=ModalIROperator(
+            family="temporal",
+            system="ltl",
+            symbol="X",
+            label="next",
+        ),
+        predicate=ModalIRPredicate(name="required_transfer_follows"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="42 U.S.C. 7385y",
+        ),
+        metadata={"cue": "after"},
+    )
+    document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(document)
+
+    assert "required" in slot_texts["bridge_cue"]
+    assert "X->O" in slot_texts["bridge_modal_bridge_operator_pair"]
+    assert "x_to_o" in slot_texts["bridge_modal_bridge_operator_pair_key"]
+    assert any(
+        triple["predicate"] == "bridge_modal_bridge_operator_pair_key"
+        and triple["object"] == "x_to_o"
+        for triple in triples
+    )
+
+
 def test_modal_decompiler_and_triples_reinforce_deontic_bridge_for_temporal_condition_cues() -> None:
     source_id = "us-code-42-7385t-90217fde9b59d41a"
     source_text = "After transfer, the Secretary shall pay benefits."
@@ -12990,6 +13212,62 @@ def test_modal_decompiler_and_triples_reinforce_deontic_bridge_for_temporal_cond
     assert any(
         triple["predicate"] == "condition_modal_bridge_signature"
         and triple["object"] == "deontic:O:after"
+        for triple in triples
+    )
+
+
+def test_modal_decompiler_and_triples_surface_deontic_epistemic_bridge_for_believed_cues() -> None:
+    source_id = "us-code-42-2000dd-bridge-believed-8fcb91f1595a3cde"
+    source_text = (
+        "A person may be penalized if the agency believed the report was false."
+    )
+    formula = ModalIRFormula(
+        formula_id=f"{source_id}:f0001",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="P",
+            label="permitted",
+        ),
+        predicate=ModalIRPredicate(name="may_penalize_person"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="42 U.S.C. 2000dd",
+        ),
+        conditions=["if the agency believed the report was false"],
+        metadata={"cue": "may"},
+    )
+    document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(document)
+
+    assert "deontic:P:may" in slot_texts["cue_modal_bridge_signature"]
+    assert "believed" in slot_texts["bridge_cue"]
+    assert "epistemic:K:believed" in slot_texts["bridge_modal_bridge_signature"]
+    assert "doxastic:B:believed" in slot_texts["bridge_modal_bridge_signature"]
+    assert "deontic->epistemic" in slot_texts["bridge_modal_bridge_family_pair"]
+    assert any(
+        triple["predicate"] == "cue_modal_bridge_signature"
+        and triple["object"] == "deontic:P:may"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "bridge_modal_bridge_signature"
+        and triple["object"] == "epistemic:K:believed"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "bridge_modal_bridge_signature"
+        and triple["object"] == "doxastic:B:believed"
         for triple in triples
     )
 
@@ -13040,6 +13318,13 @@ def test_modal_decompiler_and_triples_surface_subject_to_frame_and_scope_bridge_
     assert "temporal:F:fiscal_year" in slot_texts["bridge_modal_bridge_signature"]
     assert "epistemic:K:determines" in slot_texts["bridge_modal_bridge_signature"]
     assert "doxastic:B:determines" in slot_texts["bridge_modal_bridge_signature"]
+    assert "deontic->temporal" in slot_texts[
+        "predicate_refined_temporal_bridge_family_pair"
+    ]
+    assert "temporal:F:shall" in slot_texts[
+        "predicate_refined_temporal_bridge_signature"
+    ]
+    assert "fiscal_year" in slot_texts["predicate_refined_temporal_bridge_context"]
     assert any(
         triple["predicate"] == "condition_modal_bridge_signature"
         and triple["object"] == "frame:Frame:subject_to"
@@ -13063,6 +13348,127 @@ def test_modal_decompiler_and_triples_surface_subject_to_frame_and_scope_bridge_
     assert any(
         triple["predicate"] == "bridge_modal_bridge_signature"
         and triple["object"] == "doxastic:B:determines"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "predicate_refined_temporal_bridge_family_pair"
+        and triple["object"] == "deontic->temporal"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "predicate_refined_temporal_bridge_context"
+        and triple["object"] == "fiscal_year"
+        for triple in triples
+    )
+
+
+def test_modal_decompiler_and_triples_surface_frame_to_temporal_snapshot_bridge_slots() -> None:
+    source_id = "us-code-12-630-frame-to-temporal-bridge"
+    source_text = (
+        "U.S.C. Title 12 - BANKS AND BANKING 12 U.S.C. United States Code, 2024 Edition "
+        "Title 12 - BANKS AND BANKING CHAPTER 6 - FOREIGN BANKING."
+    )
+    formula = ModalIRFormula(
+        formula_id=f"{source_id}:f0001",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame_bm25",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(name="title_12_2024_edition_chapter_6_scope"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="12 U.S.C. 630",
+        ),
+        metadata={"cue": "__uscode_residual_span_fallback__"},
+    )
+    document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(document)
+
+    assert "frame->temporal" in slot_texts[
+        "predicate_refined_temporal_bridge_family_pair"
+    ]
+    assert "temporal:F:title" in slot_texts["predicate_refined_temporal_bridge_signature"]
+    assert "edition_year" in slot_texts["predicate_refined_temporal_bridge_context"]
+    assert any(
+        triple["predicate"] == "predicate_refined_temporal_bridge_family_pair"
+        and triple["object"] == "frame->temporal"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "predicate_refined_temporal_bridge_context"
+        and triple["object"] == "edition_year"
+        for triple in triples
+    )
+
+
+def test_modal_decompiler_and_triples_surface_subject_to_section_specific_bridge_slots() -> None:
+    source_id = "us-code-6-314-subject-to-section"
+    source_text = (
+        "The Secretary shall provide notice subject to section 314 of this title."
+    )
+    formula = ModalIRFormula(
+        formula_id=f"{source_id}:f0001",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="shall_provide_notice"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="6 U.S.C. 314",
+        ),
+        conditions=["subject to section 314 of this title"],
+        metadata={"cue": "shall"},
+    )
+    document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(document)
+
+    assert slot_texts["condition_prefix_key"] == ["subject_to_section"]
+    assert slot_texts["condition_modal_signature"] == [
+        "deontic:O:subject_to_section"
+    ]
+    assert slot_texts["condition_modal_bridge_signature"] == [
+        "conditional_normative:O|:subject_to_section",
+        "frame:Frame:subject_to_section",
+    ]
+    assert "subject_to_section" in slot_texts["bridge_cue"]
+    assert any(
+        triple["predicate"] == "condition_prefix_key"
+        and triple["object"] == "subject_to_section"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "condition_modal_bridge_signature"
+        and triple["object"] == "conditional_normative:O|:subject_to_section"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "condition_modal_bridge_signature"
+        and triple["object"] == "frame:Frame:subject_to_section"
         for triple in triples
     )
 
@@ -13177,6 +13583,57 @@ def test_modal_decompiler_and_triples_surface_as_described_in_bridge_slots() -> 
     assert any(
         triple["predicate"] == "condition_modal_bridge_signature"
         and triple["object"] == "frame:Frame:as_described_in"
+        for triple in triples
+    )
+
+
+def test_modal_decompiler_and_triples_infer_condition_slots_from_source_span_when_missing() -> None:
+    source_id = "us-code-42-5189h-inferred-condition"
+    source_text = (
+        "Not later than 5 days after an award of a public assistance grant is made under "
+        "section 5172, the Administrator shall post notice."
+    )
+    formula = ModalIRFormula(
+        formula_id=f"{source_id}:f0001",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="post_notice"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="42 U.S.C. 5189h",
+        ),
+        metadata={"cue": "shall"},
+    )
+    document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(document)
+
+    assert "made" in slot_texts["condition_scope_token"]
+    assert "after" in slot_texts["condition_prefix_key"]
+    assert "deontic->conditional_normative" in slot_texts[
+        "condition_modal_bridge_family_pair"
+    ]
+    assert any(
+        triple["predicate"] == "condition_scope_token"
+        and triple["object"] == "made"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "condition_modal_bridge_family_pair"
+        and triple["object"] == "deontic->conditional_normative"
         for triple in triples
     )
 
@@ -14198,6 +14655,50 @@ def test_modal_decompiler_normalizes_secs_status_fallback_surface_text() -> None
     assert any(
         triple["predicate"] == "fallback_surface_text"
         and triple["object"].lower() == "repealed"
+        for triple in triples
+    )
+
+
+def test_modal_decompiler_and_triples_skip_low_information_numeric_fallback_surface_text() -> None:
+    source_text = "U.S.C. Title 5 - GOVERNMENT ORGANIZATION CHAPTER 4 -"
+    chapter_digit_start = source_text.index("4")
+    chapter_digit_end = chapter_digit_start + 1
+    document = ModalIRDocument(
+        document_id="us-code-5-409-793df5caffd4b933",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="us-code-5-409-793df5caffd4b933:f0001",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="F",
+                    symbol="Frame",
+                    label="ontology_frame",
+                ),
+                predicate=ModalIRPredicate(name="uscode_residual_span_fallback"),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-5-409-793df5caffd4b933",
+                    start_char=chapter_digit_start,
+                    end_char=chapter_digit_end,
+                    citation="5 U.S.C. 409",
+                ),
+                metadata={
+                    "cue": "__uscode_residual_span_fallback__",
+                    "fallback_rule": "uscode_residual_span_coverage_v1",
+                },
+            )
+        ],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(document)
+
+    assert "fallback_surface_text" not in slot_texts
+    assert "fallback_surface_text_token" not in slot_texts
+    assert all(
+        triple.get("predicate") != "fallback_surface_text"
         for triple in triples
     )
 

@@ -206,9 +206,23 @@ class NewHampshireScraper(BaseStateScraper):
         return out
 
     async def _request_text_direct(self, url: str, timeout: int = 20) -> str:
+        canonical = self._normalize_wayback_like_url(url)
+        try:
+            payload = await self._fetch_page_content_with_archival_fallback(
+                canonical,
+                timeout_seconds=max(5, int(timeout)),
+            )
+        except Exception:
+            payload = b""
+        if payload:
+            try:
+                return payload.decode("utf-8", errors="replace")
+            except Exception:
+                return ""
+
         def _request() -> str:
             try:
-                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                req = urllib.request.Request(canonical, headers={"User-Agent": "Mozilla/5.0"})
                 with urllib.request.urlopen(req, timeout=timeout) as resp:
                     return resp.read().decode("utf-8", errors="replace")
             except Exception:
@@ -587,7 +601,7 @@ class NewHampshireScraper(BaseStateScraper):
                 )
 
             section_statutes: List[NormalizedStatute] = []
-            for section_number, section_title, section_url in section_links:
+            for section_index, (section_number, section_title, section_url) in enumerate(section_links, start=1):
                 try:
                     section_payload = await self._fetch_page_content_with_archival_fallback(section_url, timeout_seconds=35)
                 except Exception:
@@ -618,6 +632,27 @@ class NewHampshireScraper(BaseStateScraper):
                         len(section_statutes),
                         len(section_links),
                         len(section_statutes),
+                    )
+                if checkpoint is not None and (
+                    section_index == 1
+                    or section_index % 200 == 0
+                    or section_index == len(section_links)
+                ):
+                    checkpoint.maybe_write(
+                        [],
+                        code_name=code_name,
+                        stage_label=f"chapter-progress:{chapter_id}:{section_index}",
+                        progress={
+                            "titles_scanned": int(total_titles),
+                            "discovered_titles": int(total_titles),
+                            "chapters_scanned": 0,
+                            "discovered_chapters": int(len(chapter_urls)),
+                            "chapter_id": str(chapter_id),
+                            "sections_scanned": int(section_index),
+                            "discovered_sections": int(len(section_links)),
+                            "codes_completed": 0,
+                            "codes_total": 1,
+                        },
                     )
                 if _limit_reached(len(section_statutes)):
                     break
@@ -661,18 +696,27 @@ class NewHampshireScraper(BaseStateScraper):
                         "codes_total": 1,
                     },
                 )
-        chapter_batches = await asyncio.gather(
-            *[
-                _bounded_fetch(chapter_id, chapter_name, chapter_url)
-                for chapter_id, chapter_name, chapter_url in chapters_to_fetch
-            ],
-            return_exceptions=True,
-        )
-        for chapter_index, ((chapter_id, _chapter_name, _chapter_url), section_batch) in enumerate(
-            zip(chapters_to_fetch, chapter_batches),
-            start=1,
-        ):
-            if isinstance(section_batch, Exception):
+        async def _bounded_fetch_with_meta(
+            chapter_id: str,
+            chapter_name: str,
+            chapter_url: str,
+        ) -> tuple[str, list[NormalizedStatute], Optional[Exception]]:
+            try:
+                section_batch = await _bounded_fetch(chapter_id, chapter_name, chapter_url)
+                return chapter_id, section_batch, None
+            except Exception as exc:  # pragma: no cover - defensive guard
+                return chapter_id, [], exc
+
+        chapter_tasks = [
+            asyncio.create_task(_bounded_fetch_with_meta(chapter_id, chapter_name, chapter_url))
+            for chapter_id, chapter_name, chapter_url in chapters_to_fetch
+        ]
+        completed_chapters = 0
+        for completed_task in asyncio.as_completed(chapter_tasks):
+            chapter_id, section_batch, section_error = await completed_task
+            completed_chapters += 1
+            chapter_index = completed_chapters
+            if section_error is not None:
                 continue
             if checkpoint is not None and (
                 chapter_index == 1
@@ -890,6 +934,7 @@ class _NewHampshireCheckpoint:
         self.interval = max(1, int(float(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_INTERVAL", "500") or 500)))
         self.last_count = 0
         self.last_write_ts = 0.0
+        self.last_stage_label = ""
 
     def load(
         self,
@@ -939,11 +984,19 @@ class _NewHampshireCheckpoint:
     ) -> None:
         count = len(statutes)
         has_progress = isinstance(progress, dict) and bool(progress)
+        current_stage_label = str(stage_label or "").strip()
         if not self.path:
             return
         if count <= 0 and not has_progress:
             return
-        if count - self.last_count < self.interval and time.time() - self.last_write_ts < 120:
+        now_ts = time.time()
+        stage_changed = bool(current_stage_label) and current_stage_label != self.last_stage_label
+        min_seconds = 30 if has_progress else 120
+        if (
+            not stage_changed
+            and count - self.last_count < self.interval
+            and now_ts - self.last_write_ts < min_seconds
+        ):
             return
         self.write(statutes, code_name=code_name, stage_label=stage_label, progress=progress)
 
@@ -972,6 +1025,7 @@ class _NewHampshireCheckpoint:
         tmp_path.replace(self.path)
         self.last_count = len(statutes)
         self.last_write_ts = time.time()
+        self.last_stage_label = str(stage_label or "").strip()
 
 
 # Register this scraper with the registry

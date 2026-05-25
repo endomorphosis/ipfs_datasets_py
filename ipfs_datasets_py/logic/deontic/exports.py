@@ -1276,13 +1276,15 @@ def build_prover_syntax_target_coverage_records_from_irs(
     visible as coverage blockers and do not change parser proof-readiness gates.
     """
 
+    resolved_norms = _with_same_document_reference_resolutions(list(norms))
+
     return [
         build_prover_syntax_target_coverage_record(
             norm.source_id,
             build_prover_syntax_records_from_ir(norm),
             required_targets,
         )
-        for norm in norms
+        for norm in resolved_norms
     ]
 
 

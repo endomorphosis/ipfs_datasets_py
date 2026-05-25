@@ -141,6 +141,15 @@ _USCODE_10_1095C_TODO_TEXT = (
 _USCODE_19_2113_TODO_TEXT = (
     "Administrative notice and hearing procedures are established for import petitions."
 )
+_USCODE_25_57_RESIDUAL_SPAN_TODO_TEXT = (
+    "U.S.C. Title 25 - INDIANS 25 U.S.C. United States Code, 2024 Edition "
+    "Title 25 - INDIANS CHAPTER 2 - OFFICERS OF INDIAN AFFAIRS Sec. 57 - "
+    "Omitted From the U.S. Government Publishing Office, www.gpo.gov §57. "
+    "Omitted Editorial Notes Codification Section, act Mar. 3, 1925, ch. 462, "
+    "43 Stat. 1147, which authorized the Secretary of the Interior to allow "
+    "employees in the Indian Service heat and light for quarters without "
+    "charge, was not repeated in subsequent appropriation acts."
+)
 _USCODE_7_7913_TEXT = (
     "U.S.C. Title 7 - AGRICULTURE 7 U.S.C. United States Code, 2024 Edition "
     "Title 7 - AGRICULTURE CHAPTER 106 - COMMODITY PROGRAMS SUBCHAPTER I - "
@@ -1190,6 +1199,35 @@ def test_parser_adds_short_residual_heading_span_coverage_for_42_18791_todo_shap
         for formula in residual_formulas
     }
     assert "Additional provisions." in residual_text_spans
+
+
+def test_parser_adds_residual_span_coverage_for_25_57_todo_shape() -> None:
+    parser = LegalModalParser()
+    document = parser.parse(
+        _USCODE_25_57_RESIDUAL_SPAN_TODO_TEXT,
+        document_id="us-code-25-57-884a228276a417f6",
+        source="us_code",
+        citation="25 U.S.C. 57",
+    )
+
+    assert document.document_id == "us-code-25-57-884a228276a417f6"
+    assert document.formulas
+    residual_formulas = [
+        formula
+        for formula in document.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    ]
+    assert residual_formulas
+    residual_text_spans = {
+        document.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in residual_formulas
+    }
+    assert any(
+        "U.S.C. Title 25 - INDIANS 25 U.S.C." in span for span in residual_text_spans
+    )
+    assert any("43 Stat." in span for span in residual_text_spans)
 
 
 def test_parser_replays_heading_only_zero_formula_cases_for_25_422_48_1572_and_42_6323() -> None:

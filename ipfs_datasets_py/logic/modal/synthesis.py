@@ -174,6 +174,11 @@ def synthesis_hints_from_autoencoder_introspection(
             value = legal_ir_losses.get(loss_name)
         if value in (None, "", 0, 0.0):
             continue
+        if (
+            loss_name == "legal_ir_view_cross_entropy_loss"
+            and _legal_ir_specific_focus_items(focus)
+        ):
+            continue
         route = route_autoencoder_residual(loss_name, focus=focus)
         if route is None:
             continue
@@ -308,6 +313,13 @@ def synthesis_hints_from_autoencoder_introspection(
         predicted_distribution = dict(
             introspection.get("legal_ir_predicted_view_distribution") or {}
         )
+        generic_priority = max(
+            0.05,
+            float(introspection.get("legal_ir_view_cross_entropy_loss") or 0.0),
+        )
+        generic_bridge_priority_backoff = bool(_legal_ir_specific_focus_items(focus))
+        if generic_bridge_priority_backoff:
+            generic_priority = max(0.05, generic_priority * 0.35)
         primary_view = _primary_view_for_component(
             "bridge.contracts",
             target_distribution,
@@ -319,11 +331,9 @@ def synthesis_hints_from_autoencoder_introspection(
                 action="repair_multiview_legal_ir_loss",
                 target_component="bridge.contracts",
                 rationale="Adaptive LegalIR evidence shows the compiler/decompiler view distribution is not aligned with the canonical multiview target.",
-                priority=max(
-                    0.05,
-                    float(introspection.get("legal_ir_view_cross_entropy_loss") or 0.0),
-                ),
+                priority=generic_priority,
                 evidence={
+                    "generic_bridge_priority_backoff": generic_bridge_priority_backoff,
                     "legal_ir_predicted_view_distribution": predicted_distribution,
                     "legal_ir_component_gaps": dict(
                         introspection.get("legal_ir_component_gaps") or {}
@@ -362,26 +372,12 @@ def synthesis_hints_from_autoencoder_introspection(
 
     if "repair_deontic_bridge_quality_gate" in focus:
         hints.append(
-            _hint(
+            _logic_view_hint(
                 sample_id,
+                introspection,
                 action="repair_deontic_bridge_quality_gate",
                 target_component="deontic.ir",
                 rationale="The canonical multiview LegalIR target includes deontic structure that the adaptive view model cannot yet reconstruct confidently.",
-                priority=max(
-                    0.05,
-                    float(introspection.get("legal_ir_view_cross_entropy_loss") or 0.0),
-                ),
-                evidence={
-                    "legal_ir_predicted_view_distribution": dict(
-                        introspection.get("legal_ir_predicted_view_distribution") or {}
-                    ),
-                    "legal_ir_view_cross_entropy_loss": introspection.get(
-                        "legal_ir_view_cross_entropy_loss"
-                    ),
-                    "legal_ir_view_distribution": dict(
-                        introspection.get("legal_ir_view_distribution") or {}
-                    ),
-                },
             )
         )
 
@@ -652,6 +648,34 @@ def _top_component_gap_items(value: Any, *, limit: int = 8) -> List[List[Any]]:
         [name, round(gap, 6)]
         for gap, name in sorted(scored, key=lambda item: (-item[0], item[1]))[:limit]
     ]
+
+
+def _legal_ir_specific_focus_items(focus: Sequence[str]) -> List[str]:
+    """Return LegalIR repair focus items that name a concrete bridge lane."""
+    generic = {
+        "repair_multiview_legal_ir_loss",
+        "repair_multiview_legal_ir_view_coverage",
+    }
+    component_specific_prefixes = (
+        "repair_cec_",
+        "repair_deontic_",
+        "repair_external_prover_",
+        "repair_flogic_",
+        "repair_tdfol_",
+        "repair_zkp_",
+    )
+    component_specific_names = {
+        "repair_multiview_legal_ir_graph_projection",
+        "repair_multiview_legal_ir_prover_gate",
+    }
+    items: List[str] = []
+    for raw_item in focus:
+        item = str(raw_item)
+        if item in generic:
+            continue
+        if item in component_specific_names or item.startswith(component_specific_prefixes):
+            items.append(item)
+    return items
 
 
 def _primary_view_for_component(

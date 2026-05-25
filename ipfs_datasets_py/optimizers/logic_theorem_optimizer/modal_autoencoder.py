@@ -356,6 +356,8 @@ class ModalAutoencoderTrainingState:
     family_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
     feature_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
     feature_family_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    legal_ir_view_logits: Dict[str, float] = field(default_factory=dict)
+    feature_legal_ir_view_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
     applied_todo_ids: List[str] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -369,6 +371,10 @@ class ModalAutoencoderTrainingState:
                 sample_id: dict(sorted(logits.items()))
                 for sample_id, logits in sorted(self.family_logits.items())
             },
+            "feature_legal_ir_view_logits": {
+                feature: dict(sorted(logits.items()))
+                for feature, logits in sorted(self.feature_legal_ir_view_logits.items())
+            },
             "feature_embedding_weights": {
                 feature: list(vector)
                 for feature, vector in sorted(self.feature_embedding_weights.items())
@@ -377,6 +383,7 @@ class ModalAutoencoderTrainingState:
                 feature: dict(sorted(logits.items()))
                 for feature, logits in sorted(self.feature_family_logits.items())
             },
+            "legal_ir_view_logits": dict(sorted(self.legal_ir_view_logits.items())),
         }
 
     def to_json(self) -> str:
@@ -401,6 +408,11 @@ class ModalAutoencoderTrainingState:
             feature_family_logits={
                 feature: dict(logits)
                 for feature, logits in self.feature_family_logits.items()
+            },
+            legal_ir_view_logits=dict(self.legal_ir_view_logits),
+            feature_legal_ir_view_logits={
+                feature: dict(logits)
+                for feature, logits in self.feature_legal_ir_view_logits.items()
             },
         )
 
@@ -430,6 +442,18 @@ class ModalAutoencoderTrainingState:
                     float(value) * scale
                 )
 
+        for view, value in other.legal_ir_view_logits.items():
+            self.legal_ir_view_logits[view] = self.legal_ir_view_logits.get(view, 0.0) + (
+                float(value) * scale
+            )
+
+        for feature, logits in other.feature_legal_ir_view_logits.items():
+            current_logits = self.feature_legal_ir_view_logits.setdefault(feature, {})
+            for view, value in logits.items():
+                current_logits[view] = current_logits.get(view, 0.0) + (
+                    float(value) * scale
+                )
+
     @classmethod
     def average_generalizable(
         cls,
@@ -443,6 +467,8 @@ class ModalAutoencoderTrainingState:
         merged = cls()
         vector_counts: Dict[str, int] = {}
         logit_counts: Dict[tuple[str, str], int] = {}
+        legal_view_counts: Dict[str, int] = {}
+        feature_legal_view_counts: Dict[tuple[str, str], int] = {}
 
         for state in state_list:
             for feature, vector in state.feature_embedding_weights.items():
@@ -462,6 +488,20 @@ class ModalAutoencoderTrainingState:
                     current_logits[family] = current_logits.get(family, 0.0) + float(value)
                     logit_counts[(feature, family)] = logit_counts.get((feature, family), 0) + 1
 
+            for view, value in state.legal_ir_view_logits.items():
+                merged.legal_ir_view_logits[view] = (
+                    merged.legal_ir_view_logits.get(view, 0.0) + float(value)
+                )
+                legal_view_counts[view] = legal_view_counts.get(view, 0) + 1
+
+            for feature, logits in state.feature_legal_ir_view_logits.items():
+                current_logits = merged.feature_legal_ir_view_logits.setdefault(feature, {})
+                for view, value in logits.items():
+                    current_logits[view] = current_logits.get(view, 0.0) + float(value)
+                    feature_legal_view_counts[(feature, view)] = (
+                        feature_legal_view_counts.get((feature, view), 0) + 1
+                    )
+
         for feature, count in vector_counts.items():
             if count <= 0:
                 continue
@@ -473,6 +513,15 @@ class ModalAutoencoderTrainingState:
                 count = logit_counts.get((feature, family), 0)
                 if count > 0:
                     logits[family] = value / count
+        for view, value in list(merged.legal_ir_view_logits.items()):
+            count = legal_view_counts.get(view, 0)
+            if count > 0:
+                merged.legal_ir_view_logits[view] = value / count
+        for feature, logits in merged.feature_legal_ir_view_logits.items():
+            for view, value in list(logits.items()):
+                count = feature_legal_view_counts.get((feature, view), 0)
+                if count > 0:
+                    logits[view] = value / count
         return merged
 
     def save_json(self, path: str | Path) -> None:
@@ -498,6 +547,16 @@ class ModalAutoencoderTrainingState:
             feature_family_logits={
                 str(feature): {str(name): float(value) for name, value in dict(logits).items()}
                 for feature, logits in dict(data.get("feature_family_logits", {})).items()
+            },
+            legal_ir_view_logits={
+                str(name): float(value)
+                for name, value in dict(data.get("legal_ir_view_logits", {})).items()
+            },
+            feature_legal_ir_view_logits={
+                str(feature): {str(name): float(value) for name, value in dict(logits).items()}
+                for feature, logits in dict(
+                    data.get("feature_legal_ir_view_logits", {})
+                ).items()
             },
             applied_todo_ids=[str(value) for value in data.get("applied_todo_ids", [])],
         )
@@ -616,6 +675,7 @@ class AdaptiveModalAutoencoder:
         feature_codec: Optional[Any] = None,
         feature_embedding_weight_scale: float = 0.5,
         feature_family_logit_scale: float = 0.0,
+        legal_ir_view_logit_scale: float = 1.0,
         compute_device: str = "auto",
     ) -> None:
         self.state = state or ModalAutoencoderTrainingState()
@@ -627,6 +687,7 @@ class AdaptiveModalAutoencoder:
             float(feature_embedding_weight_scale),
         )
         self.feature_family_logit_scale = max(0.0, float(feature_family_logit_scale))
+        self.legal_ir_view_logit_scale = max(0.0, float(legal_ir_view_logit_scale))
         (
             self.compute_device_request,
             self.compute_backend,
@@ -1129,6 +1190,10 @@ class AdaptiveModalAutoencoder:
         samples: Sequence[LegalSample],
         *,
         validation_samples: Optional[Sequence[LegalSample]] = None,
+        legal_ir_bridge_names: Sequence[str] = (),
+        legal_ir_evaluate_provers: Optional[bool] = None,
+        legal_ir_targets: Optional[Mapping[str, Any] | Sequence[Any]] = None,
+        legal_ir_parallel_workers: Optional[int] = None,
         epochs: int = 3,
         learning_rate: float = 0.35,
         l2_regularization: float = 0.0,
@@ -1136,6 +1201,11 @@ class AdaptiveModalAutoencoder:
         max_reconstruction_regression: float = 0.02,
         max_cross_entropy_regression: float = 0.0,
         max_legal_ir_loss_regression: float = 0.02,
+        objective_cross_entropy_weight: float = 1.0,
+        objective_reconstruction_weight: float = 1.0,
+        objective_cosine_gap_weight: float = 1.0,
+        objective_legal_ir_weight: float = 1.0,
+        hard_example_fraction: float = 1.0,
     ) -> Dict[str, Any]:
         """Train feature-level weights with rollback on holdout regression.
 
@@ -1145,73 +1215,181 @@ class AdaptiveModalAutoencoder:
         sample_list = list(samples)
         validation_list = list(validation_samples or [])
         target_samples = validation_list or sample_list
-        before = self.evaluate(target_samples, use_sample_memory=False)
+        evaluation_kwargs: Dict[str, Any] = {
+            "legal_ir_bridge_names": legal_ir_bridge_names,
+            "legal_ir_evaluate_provers": legal_ir_evaluate_provers,
+            "legal_ir_targets": legal_ir_targets,
+            "legal_ir_parallel_workers": legal_ir_parallel_workers,
+            "use_sample_memory": False,
+        }
+        before = self.evaluate(target_samples, **evaluation_kwargs)
+        if sample_list and validation_list:
+            # Prime LegalIR target caches for training samples before feature-level
+            # nudges.  Validation-only evaluation intentionally does not touch
+            # training sample cache entries.
+            self.evaluate(sample_list, **evaluation_kwargs)
         best_state = self.state.copy()
         best = before
         accepted_epochs = 0
         epoch_reports: List[Dict[str, Any]] = []
+        objective_weights = {
+            "cross_entropy": max(0.0, float(objective_cross_entropy_weight)),
+            "reconstruction": max(0.0, float(objective_reconstruction_weight)),
+            "cosine_gap": max(0.0, float(objective_cosine_gap_weight)),
+            "legal_ir": max(0.0, float(objective_legal_ir_weight)),
+        }
+        hard_fraction = max(0.0, min(1.0, float(hard_example_fraction)))
+
+        candidate_updates = (
+            ("family_logits", ("family_logits",)),
+            ("decoded_embedding", ("decoded_embedding",)),
+            ("legal_ir_view_logits", ("legal_ir_view_logits",)),
+            (
+                "combined",
+                ("family_logits", "decoded_embedding", "legal_ir_view_logits"),
+            ),
+        )
 
         for epoch in range(1, max(0, int(epochs)) + 1):
             epoch_before_state = self.state.copy()
-            for sample in sample_list:
-                self._nudge_family_logits(
-                    sample,
-                    learning_rate=learning_rate,
-                    update_sample_memory=False,
-                )
-                self._nudge_decoded_embedding(
-                    sample,
-                    learning_rate=learning_rate,
-                    update_sample_memory=False,
-                )
-                self._nudge_legal_ir_view_logits(
-                    sample,
-                    learning_rate=learning_rate,
-                    update_sample_memory=False,
-                )
-            self._regularize_feature_state(l2_regularization)
-            after = self.evaluate(target_samples, use_sample_memory=False)
-            regressions = _evaluation_regressions_for_training(
-                best,
-                after,
-                max_cosine_regression=max_cosine_regression,
-                max_reconstruction_regression=max_reconstruction_regression,
-                max_cross_entropy_regression=max_cross_entropy_regression,
-                max_legal_ir_loss_regression=max_legal_ir_loss_regression,
+            candidate_reports: List[Dict[str, Any]] = []
+            selected: Optional[tuple[float, AutoencoderEvaluation, ModalAutoencoderTrainingState, str]] = None
+            update_samples = self._select_hard_examples_for_projection(
+                sample_list,
+                hard_example_fraction=hard_fraction,
+                objective_weights=objective_weights,
             )
-            objective_delta = (
-                _evaluation_objective_for_training(best)
-                - _evaluation_objective_for_training(after)
-            )
-            improved = _evaluation_improved_for_training(
-                best,
-                after,
-                max_cosine_regression=max_cosine_regression,
-                max_reconstruction_regression=max_reconstruction_regression,
-                max_cross_entropy_regression=max_cross_entropy_regression,
-                max_legal_ir_loss_regression=max_legal_ir_loss_regression,
+
+            for update_name, update_targets in candidate_updates:
+                self.state = epoch_before_state.copy()
+                for sample in update_samples:
+                    if "family_logits" in update_targets:
+                        self._nudge_family_logits(
+                            sample,
+                            learning_rate=learning_rate,
+                            update_sample_memory=False,
+                        )
+                    if "decoded_embedding" in update_targets:
+                        self._nudge_decoded_embedding(
+                            sample,
+                            learning_rate=learning_rate,
+                            update_sample_memory=False,
+                        )
+                    if "legal_ir_view_logits" in update_targets:
+                        self._nudge_legal_ir_view_logits(
+                            sample,
+                            learning_rate=learning_rate,
+                            update_sample_memory=False,
+                        )
+                self._regularize_feature_state(l2_regularization)
+                after = self.evaluate(target_samples, **evaluation_kwargs)
+                regressions = _evaluation_regressions_for_training(
+                    best,
+                    after,
+                    max_cosine_regression=max_cosine_regression,
+                    max_reconstruction_regression=max_reconstruction_regression,
+                    max_cross_entropy_regression=max_cross_entropy_regression,
+                    max_legal_ir_loss_regression=max_legal_ir_loss_regression,
+                )
+                objective_delta = (
+                    _evaluation_objective_for_training(
+                        best,
+                        **objective_weights,
+                    )
+                    - _evaluation_objective_for_training(
+                        after,
+                        **objective_weights,
+                    )
+                )
+                improved = _evaluation_improved_for_training(
+                    best,
+                    after,
+                    max_cosine_regression=max_cosine_regression,
+                    max_reconstruction_regression=max_reconstruction_regression,
+                    max_cross_entropy_regression=max_cross_entropy_regression,
+                    max_legal_ir_loss_regression=max_legal_ir_loss_regression,
+                )
+                candidate_reports.append(
+                    {
+                        "accepted": improved,
+                        "cross_entropy_delta": best.cross_entropy_loss
+                        - after.cross_entropy_loss,
+                        "hard_example_count": len(update_samples),
+                        "hard_example_fraction": hard_fraction,
+                        "cosine_similarity_delta": (
+                            after.embedding_cosine_similarity
+                            - best.embedding_cosine_similarity
+                        ),
+                        "legal_ir_view_cross_entropy_delta": (
+                            float(
+                                best.legal_ir_losses.get(
+                                    "legal_ir_view_cross_entropy_loss",
+                                    0.0,
+                                )
+                            )
+                            - float(
+                                after.legal_ir_losses.get(
+                                    "legal_ir_view_cross_entropy_loss",
+                                    0.0,
+                                )
+                            )
+                        ),
+                        "objective_delta": objective_delta,
+                        "pareto_regressions": regressions,
+                        "reconstruction_delta": best.reconstruction_loss
+                        - after.reconstruction_loss,
+                        "update": update_name,
+                    }
+                )
+                if improved and (
+                    selected is None or objective_delta > selected[0]
+                ):
+                    selected = (
+                        objective_delta,
+                        after,
+                        self.state.copy(),
+                        update_name,
+                    )
+
+            if selected is None:
+                self.state = epoch_before_state
+                epoch_reports.append(
+                    {
+                        "accepted": False,
+                        "candidate_reports": candidate_reports,
+                        "epoch": epoch,
+                        "objective_delta": max(
+                            (
+                                float(report.get("objective_delta", 0.0))
+                                for report in candidate_reports
+                            ),
+                            default=0.0,
+                        ),
+                        "selected_update": None,
+                    }
+                )
+                break
+
+            objective_delta, after, selected_state, update_name = selected
+            self.state = selected_state
+            best = after
+            best_state = self.state.copy()
+            accepted_epochs += 1
+            selected_report = next(
+                report
+                for report in candidate_reports
+                if report["update"] == update_name
             )
             epoch_reports.append(
                 {
-                    "accepted": improved,
-                    "cross_entropy_delta": best.cross_entropy_loss - after.cross_entropy_loss,
-                    "cosine_similarity_delta": (
-                        after.embedding_cosine_similarity
-                        - best.embedding_cosine_similarity
-                    ),
+                    **selected_report,
+                    "accepted": True,
+                    "candidate_reports": candidate_reports,
                     "epoch": epoch,
                     "objective_delta": objective_delta,
-                    "pareto_regressions": regressions,
-                    "reconstruction_delta": best.reconstruction_loss - after.reconstruction_loss,
+                    "selected_update": update_name,
                 }
             )
-            if improved:
-                best = after
-                best_state = self.state.copy()
-                accepted_epochs += 1
-                continue
-            self.state = epoch_before_state
-            break
 
         self.state = best_state
         return {
@@ -1220,9 +1398,72 @@ class AdaptiveModalAutoencoder:
             "before": before.to_dict(),
             "compute_backend": self.compute_backend_metadata(),
             "epoch_reports": epoch_reports,
+            "objective_weights": dict(objective_weights),
             "sample_memory_used": False,
             "validation_sample_count": len(target_samples),
         }
+
+    def _select_hard_examples_for_projection(
+        self,
+        samples: Sequence[LegalSample],
+        *,
+        hard_example_fraction: float,
+        objective_weights: Mapping[str, float],
+    ) -> List[LegalSample]:
+        if not samples:
+            return []
+        if hard_example_fraction >= 1.0 or len(samples) == 1:
+            return list(samples)
+        ranked = sorted(
+            (
+                (
+                    self._sample_training_objective(
+                        sample,
+                        objective_weights=objective_weights,
+                    ),
+                    sample,
+                )
+                for sample in samples
+            ),
+            key=lambda item: item[0],
+            reverse=True,
+        )
+        keep = max(1, int(math.ceil(len(ranked) * hard_example_fraction)))
+        return [sample for _, sample in ranked[:keep]]
+
+    def _sample_training_objective(
+        self,
+        sample: LegalSample,
+        *,
+        objective_weights: Mapping[str, float],
+    ) -> float:
+        ce_weight = max(0.0, float(objective_weights.get("cross_entropy", 1.0)))
+        rec_weight = max(0.0, float(objective_weights.get("reconstruction", 1.0)))
+        cos_weight = max(0.0, float(objective_weights.get("cosine_gap", 1.0)))
+        legal_weight = max(0.0, float(objective_weights.get("legal_ir", 1.0)))
+
+        decoded = self._decoded_for(sample, use_sample_memory=False)
+        reconstruction = mse_loss(sample.embedding_vector, decoded)
+        cosine_gap = max(0.0, 1.0 - cosine_similarity(sample.embedding_vector, decoded))
+        distribution = self._family_distribution(sample, use_sample_memory=False)
+        cross_entropy = cross_entropy_loss(distribution, _target_family(sample))
+
+        legal_ir_loss = 0.0
+        target_distribution = self._legal_ir_view_target_cache.get(sample.sample_id)
+        if target_distribution:
+            predicted = self._legal_ir_view_distribution(
+                sample,
+                target_distribution,
+                use_sample_memory=False,
+            )
+            legal_ir_loss = cross_entropy_distribution_loss(predicted, target_distribution)
+
+        return (
+            (ce_weight * cross_entropy)
+            + (rec_weight * reconstruction)
+            + (cos_weight * cosine_gap)
+            + (legal_weight * legal_ir_loss)
+        )
 
     def _decoded_for(self, sample: LegalSample, *, use_sample_memory: bool = True) -> List[float]:
         stored = self.state.decoded_embeddings.get(sample.sample_id) if use_sample_memory else None
@@ -1276,6 +1517,17 @@ class AdaptiveModalAutoencoder:
             [str(name) for name in target_distribution.keys()]
             + [
                 str(family)
+                for family in self.state.legal_ir_view_logits.keys()
+                if self._is_legal_ir_view_family(str(family))
+            ]
+            + [
+                str(family)
+                for logits in self.state.feature_legal_ir_view_logits.values()
+                for family in logits.keys()
+                if self._is_legal_ir_view_family(str(family))
+            ]
+            + [
+                str(family)
                 for logits in self.state.feature_family_logits.values()
                 for family in logits.keys()
                 if self._is_legal_ir_view_family(str(family))
@@ -1286,7 +1538,7 @@ class AdaptiveModalAutoencoder:
                 if self._is_legal_ir_view_family(str(family))
             ]
         )
-        logits = self._logits_for_families(
+        logits = self._legal_ir_view_logits_for(
             sample,
             families,
             use_sample_memory=use_sample_memory,
@@ -1295,6 +1547,39 @@ class AdaptiveModalAutoencoder:
 
     def _is_legal_ir_view_family(self, family: str) -> bool:
         return str(family) not in self.modal_families
+
+    def _legal_ir_view_logits_for(
+        self,
+        sample: LegalSample,
+        families: Sequence[str],
+        *,
+        use_sample_memory: bool,
+    ) -> Dict[str, float]:
+        """Return logits from the dedicated LegalIR view head."""
+        logits = {
+            str(family): float(self.state.legal_ir_view_logits.get(str(family), 0.0))
+            * self.legal_ir_view_logit_scale
+            for family in families
+        }
+        for feature in self._legal_ir_view_feature_keys_for(sample):
+            for family, value in self.state.feature_legal_ir_view_logits.get(feature, {}).items():
+                family = str(family)
+                if family in logits:
+                    logits[family] += float(value) * self.legal_ir_view_logit_scale
+            # Backwards compatibility: older warm-starts stored LegalIR view
+            # logits in the modal feature bucket, where the default modal scale
+            # is zero.  Read those legal-view entries through the dedicated
+            # scale so prior useful work remains visible.
+            for family, value in self.state.feature_family_logits.get(feature, {}).items():
+                family = str(family)
+                if family in logits and self._is_legal_ir_view_family(family):
+                    logits[family] += float(value) * self.legal_ir_view_logit_scale
+        if use_sample_memory:
+            for family, value in self.state.family_logits.get(sample.sample_id, {}).items():
+                family = str(family)
+                if family in logits and self._is_legal_ir_view_family(family):
+                    logits[family] += float(value)
+        return logits
 
     def _logits_for(
         self,
@@ -1367,6 +1652,64 @@ class AdaptiveModalAutoencoder:
         cache["base_logits"] = dict(result)
         return result
 
+    def _legal_ir_view_feature_keys_for(self, sample: LegalSample) -> List[str]:
+        cache = self._sample_cache_for(sample)
+        cached = cache.get("legal_ir_view_feature_keys")
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+
+        keys = self._legal_ir_view_core_feature_keys_for(sample)
+        # Include the legacy modal feature keys so warm-started LegalIR view
+        # logits written before the dedicated head remain reusable.
+        keys.extend(self._feature_keys_for(sample))
+        result = _unique_preserve_order(keys)
+        cache["legal_ir_view_feature_keys"] = list(result)
+        return result
+
+    def _legal_ir_view_core_feature_keys_for(self, sample: LegalSample) -> List[str]:
+        cache = self._sample_cache_for(sample)
+        cached = cache.get("legal_ir_view_core_feature_keys")
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        keys: List[str] = ["legal-ir:bias"]
+        if sample.title:
+            keys.append(f"legal-ir:title:{sample.title}")
+        if sample.section:
+            section_prefix = str(sample.section).split(".", 1)[0].split("-", 1)[0]
+            if section_prefix:
+                keys.append(f"legal-ir:section-prefix:{section_prefix}")
+        if sample.selected_frame:
+            keys.append(f"legal-ir:frame:{sample.selected_frame}")
+
+        cue_patterns = {
+            "conditional": _LEGAL_IR_CONDITIONAL_CUE_RE,
+            "deontic": _LEGAL_IR_DEONTIC_CUE_RE,
+            "obligation": _LEGAL_IR_OBLIGATION_CUE_RE,
+            "permission": _LEGAL_IR_PERMISSION_CUE_RE,
+            "temporal": _LEGAL_IR_TEMPORAL_CUE_RE,
+            "definition": _LEGAL_IR_DEFINITION_CUE_RE,
+            "authority": _LEGAL_IR_AUTHORITY_CUE_RE,
+            "enforcement": _LEGAL_IR_ENFORCEMENT_CUE_RE,
+            "exception": _LEGAL_IR_EXCEPTION_CUE_RE,
+        }
+        for cue_name, pattern in cue_patterns.items():
+            if pattern.search(text):
+                keys.append(f"legal-ir:cue:{cue_name}")
+
+        for formula in sample.modal_ir.formulas:
+            keys.append(f"legal-ir:modal-family:{formula.operator.family}")
+            keys.append(f"legal-ir:modal-operator:{formula.operator.family}:{formula.operator.symbol}")
+            cue = formula.metadata.get("cue") if formula.metadata else None
+            if cue:
+                keys.append(f"legal-ir:modal-cue:{str(cue).lower()}")
+
+        keys.extend(f"legal-ir:token:{token}" for token in _token_features(text)[:24])
+        result = _unique_preserve_order(keys)
+        cache["legal_ir_view_core_feature_keys"] = list(result)
+        return result
+
     def _nudge_decoded_embedding(
         self,
         sample: LegalSample,
@@ -1388,15 +1731,18 @@ class AdaptiveModalAutoencoder:
         feature_keys = self._feature_keys_for(sample)
         if not feature_keys:
             return
-        feature_step = step / len(feature_keys)
-        for feature in feature_keys:
-            weights = self.state.feature_embedding_weights.setdefault(
-                feature,
-                [0.0 for _ in sample.embedding_vector],
-            )
-            if len(weights) != len(sample.embedding_vector):
-                weights[:] = [0.0 for _ in sample.embedding_vector]
-            weights[:] = self._add_scaled_vector(weights, error, scale=feature_step)
+        for group_keys, feature_step in self._feature_update_groups_for(
+            sample,
+            step=step,
+        ):
+            for feature in group_keys:
+                weights = self.state.feature_embedding_weights.setdefault(
+                    feature,
+                    [0.0 for _ in sample.embedding_vector],
+                )
+                if len(weights) != len(sample.embedding_vector):
+                    weights[:] = [0.0 for _ in sample.embedding_vector]
+                weights[:] = self._add_scaled_vector(weights, error, scale=feature_step)
 
     def _nudge_family_logits(
         self,
@@ -1418,15 +1764,20 @@ class AdaptiveModalAutoencoder:
         feature_keys = self._feature_keys_for(sample)
         if not feature_keys:
             return
-        feature_step = step / len(feature_keys)
-        for feature in feature_keys:
-            feature_logits = self.state.feature_family_logits.setdefault(feature, {})
-            feature_logits[target] = feature_logits.get(target, 0.0) + (2.0 * feature_step)
-            for family in self.modal_families:
-                if family != target:
-                    feature_logits[family] = feature_logits.get(family, 0.0) - (
-                        feature_step / max(len(self.modal_families) - 1, 1)
-                    )
+        for group_keys, feature_step in self._feature_update_groups_for(
+            sample,
+            step=step,
+        ):
+            for feature in group_keys:
+                feature_logits = self.state.feature_family_logits.setdefault(feature, {})
+                feature_logits[target] = feature_logits.get(target, 0.0) + (
+                    2.0 * feature_step
+                )
+                for family in self.modal_families:
+                    if family != target:
+                        feature_logits[family] = feature_logits.get(family, 0.0) - (
+                            feature_step / max(len(self.modal_families) - 1, 1)
+                        )
 
     def _nudge_legal_ir_view_logits(
         self,
@@ -1447,6 +1798,14 @@ class AdaptiveModalAutoencoder:
         families = _unique_preserve_order(
             list(predicted.keys()) + list(target_distribution.keys())
         )
+        for family in families:
+            gradient = float(target_distribution.get(family, 0.0)) - float(
+                predicted.get(family, 0.0)
+            )
+            self.state.legal_ir_view_logits[family] = (
+                self.state.legal_ir_view_logits.get(family, 0.0)
+                + (step * gradient)
+            )
         if update_sample_memory:
             logits = self.state.family_logits.setdefault(sample.sample_id, {})
             for family in families:
@@ -1455,19 +1814,19 @@ class AdaptiveModalAutoencoder:
                 )
                 logits[family] = logits.get(family, 0.0) + (2.0 * step * gradient)
 
-        feature_keys = self._feature_keys_for(sample)
-        if not feature_keys:
-            return True
-        feature_step = step / len(feature_keys)
-        for feature in feature_keys:
-            feature_logits = self.state.feature_family_logits.setdefault(feature, {})
-            for family in families:
-                gradient = float(target_distribution.get(family, 0.0)) - float(
-                    predicted.get(family, 0.0)
-                )
-                feature_logits[family] = feature_logits.get(family, 0.0) + (
-                    2.0 * feature_step * gradient
-                )
+        for group_keys, feature_step in self._legal_ir_view_feature_update_groups_for(
+            sample,
+            step=step,
+        ):
+            for feature in group_keys:
+                feature_logits = self.state.feature_legal_ir_view_logits.setdefault(feature, {})
+                for family in families:
+                    gradient = float(target_distribution.get(family, 0.0)) - float(
+                        predicted.get(family, 0.0)
+                    )
+                    feature_logits[family] = feature_logits.get(family, 0.0) + (
+                        2.0 * feature_step * gradient
+                    )
         return True
 
     def _regularize_feature_state(self, l2_regularization: float) -> None:
@@ -1482,6 +1841,15 @@ class AdaptiveModalAutoencoder:
             self.state.feature_family_logits[feature] = {
                 family: float(value) * factor
                 for family, value in logits.items()
+            }
+        self.state.legal_ir_view_logits = {
+            view: float(value) * factor
+            for view, value in self.state.legal_ir_view_logits.items()
+        }
+        for feature, logits in list(self.state.feature_legal_ir_view_logits.items()):
+            self.state.feature_legal_ir_view_logits[feature] = {
+                view: float(value) * factor
+                for view, value in logits.items()
             }
 
     def _feature_embedding_adjustment(self, sample: LegalSample, *, dimensions: int) -> List[float]:
@@ -1690,16 +2058,22 @@ class AdaptiveModalAutoencoder:
         if isinstance(cached, list):
             return [str(value) for value in cached]
 
+        keys: List[str] = []
         if self.feature_codec is not None and hasattr(
             self.feature_codec,
             "feature_keys_for_sample",
         ):
-            keys = _unique_preserve_order(
+            keys.extend(
                 str(value)
                 for value in self.feature_codec.feature_keys_for_sample(sample)
             )
-            cache["feature_keys"] = list(keys)
-            return keys
+        keys.extend(self._fallback_feature_keys_for(sample))
+        result = _unique_preserve_order(keys)
+        cache["feature_keys"] = list(result)
+        return result
+
+    def _fallback_feature_keys_for(self, sample: LegalSample) -> List[str]:
+        """Return codec-independent features that make SGD updates portable."""
         keys: List[str] = []
         if sample.selected_frame:
             keys.append(f"frame:{sample.selected_frame}")
@@ -1710,9 +2084,57 @@ class AdaptiveModalAutoencoder:
             if cue:
                 keys.append(f"modal-cue:{str(cue).lower()}")
         keys.extend(f"token:{token}" for token in _token_features(sample.normalized_text))
-        result = _unique_preserve_order(keys)
-        cache["feature_keys"] = list(result)
-        return result
+        return keys
+
+    def _feature_update_groups_for(
+        self,
+        sample: LegalSample,
+        *,
+        step: float,
+    ) -> List[tuple[List[str], float]]:
+        all_keys = self._feature_keys_for(sample)
+        if not all_keys:
+            return []
+        all_key_set = set(all_keys)
+        fallback_keys = [
+            key
+            for key in _unique_preserve_order(self._fallback_feature_keys_for(sample))
+            if key in all_key_set
+        ]
+        if (
+            self.feature_codec is None
+            or not fallback_keys
+            or set(fallback_keys) == set(all_keys)
+        ):
+            return [(all_keys, step / len(all_keys))]
+        return [
+            (all_keys, (step * 0.5) / len(all_keys)),
+            (fallback_keys, (step * 0.5) / len(fallback_keys)),
+        ]
+
+    def _legal_ir_view_feature_update_groups_for(
+        self,
+        sample: LegalSample,
+        *,
+        step: float,
+    ) -> List[tuple[List[str], float]]:
+        all_keys = self._legal_ir_view_feature_keys_for(sample)
+        if not all_keys:
+            return []
+        all_key_set = set(all_keys)
+        core_keys = [
+            key
+            for key in _unique_preserve_order(
+                self._legal_ir_view_core_feature_keys_for(sample)
+            )
+            if key in all_key_set
+        ]
+        if not core_keys or set(core_keys) == set(all_keys):
+            return [(all_keys, step / len(all_keys))]
+        return [
+            (all_keys, (step * 0.5) / len(all_keys)),
+            (core_keys, (step * 0.5) / len(core_keys)),
+        ]
 
     def _sample_cache_for(self, sample: LegalSample) -> Dict[str, Any]:
         return self._sample_feature_cache.setdefault(
@@ -2281,6 +2703,42 @@ def _all_modal_families() -> List[str]:
 
 
 _TOKEN_RE = re.compile(r"[a-z0-9]+")
+_LEGAL_IR_CONDITIONAL_CUE_RE = re.compile(
+    r"\b(if|when|whenever|unless|provided|subject\s+to|condition|conditions|before|after)\b",
+    re.IGNORECASE,
+)
+_LEGAL_IR_DEONTIC_CUE_RE = re.compile(
+    r"\b(shall|must|may|required|requires|prohibited|authorized|eligible|entitled|permit|license)\b",
+    re.IGNORECASE,
+)
+_LEGAL_IR_OBLIGATION_CUE_RE = re.compile(
+    r"\b(shall|must|required|requires|duty|obligation|responsible)\b",
+    re.IGNORECASE,
+)
+_LEGAL_IR_PERMISSION_CUE_RE = re.compile(
+    r"\b(may|authorized|permitted|eligible|entitled|discretion|approval)\b",
+    re.IGNORECASE,
+)
+_LEGAL_IR_TEMPORAL_CUE_RE = re.compile(
+    r"\b(within|before|after|until|during|effective|expires?|repealed|deadline|days?|months?|years?)\b",
+    re.IGNORECASE,
+)
+_LEGAL_IR_DEFINITION_CUE_RE = re.compile(
+    r"\b(means|defined|definition|term|for\s+purposes\s+of|includes?)\b",
+    re.IGNORECASE,
+)
+_LEGAL_IR_AUTHORITY_CUE_RE = re.compile(
+    r"\b(secretary|administrator|agency|commission|authority|jurisdiction|regulation|rulemaking)\b",
+    re.IGNORECASE,
+)
+_LEGAL_IR_ENFORCEMENT_CUE_RE = re.compile(
+    r"\b(penalty|violation|fine|liable|liability|enforce|enforcement|action|remedy|sanction)\b",
+    re.IGNORECASE,
+)
+_LEGAL_IR_EXCEPTION_CUE_RE = re.compile(
+    r"\b(except|exception|notwithstanding|waiver|exemption|excluded?)\b",
+    re.IGNORECASE,
+)
 _STOPWORDS = {
     "a",
     "an",
@@ -2474,14 +2932,58 @@ def _evaluation_improved_for_training(
     )
 
 
-def _evaluation_objective_for_training(evaluation: AutoencoderEvaluation) -> float:
+def _evaluation_objective_for_training(
+    evaluation: AutoencoderEvaluation,
+    *,
+    cross_entropy: float = 1.0,
+    reconstruction: float = 1.0,
+    cosine_gap: float = 1.0,
+    legal_ir: float = 1.0,
+) -> float:
     """Return a scalar objective where lower is better for guarded training."""
     return (
-        evaluation.cross_entropy_loss
-        + evaluation.reconstruction_loss
-        + max(0.0, 1.0 - evaluation.embedding_cosine_similarity)
-        + sum(max(0.0, float(value)) for value in evaluation.legal_ir_losses.values())
+        (max(0.0, float(cross_entropy)) * evaluation.cross_entropy_loss)
+        + (max(0.0, float(reconstruction)) * evaluation.reconstruction_loss)
+        + (
+            max(0.0, float(cosine_gap))
+            * max(0.0, 1.0 - evaluation.embedding_cosine_similarity)
+        )
+        + (
+            max(0.0, float(legal_ir))
+            * _legal_ir_objective_component(evaluation.legal_ir_losses)
+        )
     )
+
+
+def _legal_ir_objective_component(losses: Mapping[str, float]) -> float:
+    """Return a normalized LegalIR objective component.
+
+    LegalIR exposes overlapping diagnostics: total loss, view cross entropy,
+    proof ratios, graph penalties, and adapter-specific losses.  Summing every
+    raw value lets one dense diagnostic swamp cosine/reconstruction.  This
+    component keeps the important residuals visible while capping duplicate
+    bridge detail.
+    """
+    values = {str(name): max(0.0, float(value)) for name, value in dict(losses).items()}
+    if not values:
+        return 0.0
+    component = 0.0
+    component += min(1.0, values.get("legal_ir_multiview_total_loss", 0.0))
+    component += min(1.0, values.get("legal_ir_view_cross_entropy_loss", 0.0) / 3.0)
+    component += min(1.0, values.get("legal_ir_multiview_proof_failure_ratio", 0.0))
+    component += min(1.0, values.get("legal_ir_multiview_graph_failure_penalty", 0.0))
+    detail = 0.0
+    for name, value in values.items():
+        if name in {
+            "legal_ir_multiview_total_loss",
+            "legal_ir_view_cross_entropy_loss",
+            "legal_ir_multiview_proof_failure_ratio",
+            "legal_ir_multiview_graph_failure_penalty",
+        }:
+            continue
+        if name.startswith("legal_ir_") or name.startswith(("deontic_", "tdfol_", "cec_", "zkp_", "external_prover_")):
+            detail += min(0.25, value)
+    return component + min(1.0, detail)
 
 
 def _evaluation_regressions_for_training(

@@ -776,6 +776,31 @@ _RECONSTRUCTION_TOKEN_STOPWORDS = {
     "to",
 }
 
+_RECONSTRUCTION_NEUTRAL_WARNING_BUNDLE = {
+    "cross_reference_requires_resolution",
+    "enumerated_clause_requires_item_level_review",
+    "exception_requires_scope_review",
+    "overlong_action_span",
+}
+
+_RECONSTRUCTION_TOKEN_EQUIVALENTS = {
+    "allow": {"allowed", "authorized", "authorize", "authorization", "may", "permitted"},
+    "allowed": {"allow", "authorized", "authorize", "authorization", "may", "permitted"},
+    "authorization": {"authorized", "authorize", "may", "permitted"},
+    "authorize": {"authorized", "authorization", "may", "permitted"},
+    "authorized": {"authorization", "authorize", "may", "permitted"},
+    "entitled": {"entitlement", "may", "permitted"},
+    "entitlement": {"entitled", "may", "permitted"},
+    "except": {"exception", "exempt", "other", "than", "unless"},
+    "exception": {"except", "exempt", "other", "than", "unless"},
+    "exempt": {"except", "exception", "other", "than", "unless"},
+    "may": {"allow", "allowed", "authorized", "authorize", "authorization", "entitled", "entitlement", "permitted"},
+    "other": {"except", "exception", "exempt", "than", "unless"},
+    "permitted": {"allow", "allowed", "authorized", "authorize", "authorization", "entitled", "entitlement", "may"},
+    "than": {"except", "exception", "exempt", "other", "unless"},
+    "unless": {"except", "exception", "exempt", "other", "than"},
+}
+
 
 def _reconstruction_token_profile(
     target: str,
@@ -784,38 +809,83 @@ def _reconstruction_token_profile(
 ) -> Dict[str, Any]:
     """Compare source and decoded salient legal tokens for Phase 8 audits."""
 
-    source_text = str(norm.source_text or norm.support_text or "").strip()
-    source_tokens = _salient_reconstruction_tokens(source_text)
+    source_text = str(norm.source_text or "").strip()
+    support_text = str(norm.support_text or "").strip()
+    source_tokens = _salient_reconstruction_tokens(source_text or support_text)
+    support_tokens = _salient_reconstruction_tokens(support_text)
+    if not support_tokens:
+        support_tokens = list(source_tokens)
     decoded_tokens = _salient_reconstruction_tokens(decoded_text)
     source_set = set(source_tokens)
     decoded_set = set(decoded_tokens)
-    matched_tokens = [token for token in source_tokens if token in decoded_set]
-    unreconstructed_tokens = [token for token in source_tokens if token not in decoded_set]
-    added_tokens = [token for token in decoded_tokens if token not in source_set]
-    coverage_rate = round(len(matched_tokens) / len(source_tokens), 6) if source_tokens else 1.0
+    warning_bundle = {
+        str(warning).strip()
+        for warning in (norm.quality.parser_warnings or [])
+        if str(warning).strip()
+    }
+    reconstruction_neutral_warning_bundle = bool(warning_bundle) and warning_bundle.issubset(
+        _RECONSTRUCTION_NEUTRAL_WARNING_BUNDLE
+    )
+    use_support_basis = bool(support_tokens) and (
+        (
+            bool(source_tokens)
+            and len(source_tokens) > (3 * len(support_tokens))
+        )
+        or reconstruction_neutral_warning_bundle
+    )
+    basis_tokens = support_tokens if use_support_basis else source_tokens
+    basis_set = set(basis_tokens)
+    reference_source_set = source_set or basis_set
+    matched_tokens = [
+        token
+        for token in basis_tokens
+        if _token_matches_with_equivalents(token, decoded_set)
+    ]
+    unreconstructed_tokens = [
+        token
+        for token in basis_tokens
+        if not _token_matches_with_equivalents(token, decoded_set)
+    ]
+    added_tokens = [token for token in decoded_tokens if token not in basis_set]
+    out_of_source_tokens = [
+        token
+        for token in decoded_tokens
+        if not _token_matches_with_equivalents(token, reference_source_set)
+    ]
+    coverage_rate = round(len(matched_tokens) / len(basis_tokens), 6) if basis_tokens else 1.0
     precision_rate = round(
-        sum(1 for token in decoded_tokens if token in source_set) / len(decoded_tokens),
+        sum(1 for token in decoded_tokens if token in reference_source_set) / len(decoded_tokens),
         6,
     ) if decoded_tokens else 1.0
-    complete = not unreconstructed_tokens and not added_tokens
+    complete = not unreconstructed_tokens and not out_of_source_tokens
+    source_text_basis = (
+        "support_text"
+        if use_support_basis
+        else "source_text"
+        if source_text
+        else "support_text"
+    )
     fingerprint = _stable_fingerprint(
         target,
         norm.source_id,
-        "|".join(source_tokens),
+        source_text_basis,
+        "|".join(basis_tokens),
         "|".join(decoded_tokens),
         "|".join(unreconstructed_tokens),
         "|".join(added_tokens),
+        "|".join(out_of_source_tokens),
         str(complete),
     )
     return {
         "target": target,
-        "source_text_basis": "source_text" if norm.source_text else "support_text",
-        "source_salient_tokens": source_tokens,
+        "source_text_basis": source_text_basis,
+        "source_salient_tokens": basis_tokens,
         "decoded_salient_tokens": decoded_tokens,
         "matched_salient_tokens": matched_tokens,
         "unreconstructed_source_tokens": unreconstructed_tokens,
         "added_decoded_tokens": added_tokens,
-        "source_salient_token_count": len(source_tokens),
+        "decoded_out_of_source_tokens": out_of_source_tokens,
+        "source_salient_token_count": len(basis_tokens),
         "decoded_salient_token_count": len(decoded_tokens),
         "matched_salient_token_count": len(matched_tokens),
         "salient_token_coverage_rate": coverage_rate,
@@ -833,6 +903,18 @@ def _salient_reconstruction_tokens(text: str) -> List[str]:
         if token not in tokens:
             tokens.append(token)
     return tokens
+
+
+def _token_matches_with_equivalents(token: str, candidates: set[str]) -> bool:
+    token_value = str(token or "").strip().lower()
+    if not token_value:
+        return False
+    if token_value in candidates:
+        return True
+    for equivalent in _RECONSTRUCTION_TOKEN_EQUIVALENTS.get(token_value, set()):
+        if equivalent in candidates:
+            return True
+    return False
 
 
 def _target_parse_profile(target: str, exported_formula: str) -> Dict[str, Any]:

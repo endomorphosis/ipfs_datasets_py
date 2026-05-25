@@ -19,6 +19,7 @@ import signal
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack, contextmanager
@@ -242,6 +243,9 @@ CODEX_APPLY_VALIDATION_TESTS = (
     "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py",
     "tests/unit_tests/logic/modal/test_modal_codec.py",
 )
+BRIDGE_IR_REPORT_CACHE_MAX = 4096
+_BRIDGE_IR_REPORT_CACHE_LOCK = threading.Lock()
+_BRIDGE_IR_REPORT_CACHE: Dict[str, Any] = {}
 _ACTIVE_CODEX_EXEC_PROCESSES: List[subprocess.Popen[str]] = []
 CODEX_WORKTREE_ARTIFACT_FILENAMES = {"changes.patch"}
 
@@ -606,7 +610,8 @@ def sample_train_validation_rows(
     *,
     train_count: int,
     validation_count: int,
-    blocked_validation_sample_ids: set[str],
+    blocked_train_sample_ids: AbstractSet[str] = frozenset(),
+    blocked_validation_sample_ids: AbstractSet[str] = frozenset(),
     max_sample_text_chars: int = 0,
 ):
     selected_indices: set[int] = set()
@@ -619,6 +624,7 @@ def sample_train_validation_rows(
             laws_table,
             rng,
             selected_indices=selected_indices,
+            blocked_sample_ids=blocked_train_sample_ids,
             max_sample_text_chars=max_sample_text_chars,
             max_attempts=max_train_attempts,
         )
@@ -836,7 +842,16 @@ def bridge_ir_metric_block(
     from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
 
     def evaluate_sample(sample: Any) -> Any:
-        return evaluate_legal_ir_multiview(
+        cache_key = _bridge_ir_report_cache_key(
+            sample,
+            bridge_names=adapter_names,
+            evaluate_provers=evaluate_provers,
+        )
+        with _BRIDGE_IR_REPORT_CACHE_LOCK:
+            cached = _BRIDGE_IR_REPORT_CACHE.get(cache_key)
+        if cached is not None:
+            return cached
+        report = evaluate_legal_ir_multiview(
             sample.text,
             bridge_names=adapter_names,
             document_id=sample.sample_id,
@@ -845,6 +860,11 @@ def bridge_ir_metric_block(
             source=sample.source,
             source_embedding=sample.embedding_vector,
         )
+        with _BRIDGE_IR_REPORT_CACHE_LOCK:
+            if len(_BRIDGE_IR_REPORT_CACHE) >= BRIDGE_IR_REPORT_CACHE_MAX:
+                _BRIDGE_IR_REPORT_CACHE.pop(next(iter(_BRIDGE_IR_REPORT_CACHE)), None)
+            _BRIDGE_IR_REPORT_CACHE[cache_key] = report
+        return report
 
     worker_count = _parallel_worker_count(
         requested=parallel_workers,
@@ -1051,6 +1071,36 @@ def _parallel_worker_count(
         except ValueError:
             return 1
     return max(1, min(int(requested), int(item_count)))
+
+
+def _bridge_ir_report_cache_key(
+    sample: Any,
+    *,
+    bridge_names: Sequence[str],
+    evaluate_provers: Optional[bool],
+) -> str:
+    """Return a stable key for cached bridge/prover/KG diagnostics."""
+    embedding = [
+        round(float(value), 12)
+        for value in list(getattr(sample, "embedding_vector", []) or [])
+    ]
+    embedding_hash = hashlib.sha256(
+        json.dumps(embedding, ensure_ascii=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    payload = {
+        "bridge_names": list(bridge_names),
+        "citation": str(getattr(sample, "citation", "") or ""),
+        "embedding_hash": embedding_hash,
+        "evaluate_provers": evaluate_provers,
+        "sample_id": str(getattr(sample, "sample_id", "") or ""),
+        "source": str(getattr(sample, "source", "") or ""),
+        "text_hash": hashlib.sha256(
+            str(getattr(sample, "text", "") or "").encode("utf-8")
+        ).hexdigest(),
+    }
+    return hashlib.sha256(
+        json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+    ).hexdigest()
 
 
 def _float_or_zero(value: Any) -> float:
@@ -1755,6 +1805,8 @@ def build_paired_daemon_commands(
         str(args.train_count),
         "--validation-count",
         str(args.validation_count),
+        "--validation-canary-count",
+        str(getattr(args, "validation_canary_count", 4)),
         "--max-sample-text-chars",
         str(getattr(args, "max_sample_text_chars", 0)),
         "--max-inner-iterations",
@@ -1763,12 +1815,40 @@ def build_paired_daemon_commands(
         str(args.max_items),
         "--learning-rate",
         str(args.learning_rate),
+        "--generalizable-projection-epochs",
+        str(getattr(args, "generalizable_projection_epochs", 1)),
         "--bridge-loss-adapters",
         str(getattr(args, "bridge_loss_adapters", DEFAULT_BRIDGE_LOSS_ADAPTERS)),
         "--bridge-evaluate-provers",
         str(getattr(args, "bridge_evaluate_provers", True)).lower(),
         "--autoencoder-device",
         str(getattr(args, "autoencoder_device", "auto")),
+        "--autoencoder-feature-family-logit-scale",
+        str(getattr(args, "autoencoder_feature_family_logit_scale", 1.0)),
+        "--generalizable-projection-max-cosine-regression",
+        str(getattr(args, "generalizable_projection_max_cosine_regression", 0.005)),
+        "--generalizable-projection-max-reconstruction-regression",
+        str(getattr(args, "generalizable_projection_max_reconstruction_regression", 0.01)),
+        "--generalizable-projection-max-cross-entropy-regression",
+        str(getattr(args, "generalizable_projection_max_cross_entropy_regression", 0.0)),
+        "--generalizable-projection-max-legal-ir-loss-regression",
+        str(getattr(args, "generalizable_projection_max_legal_ir_loss_regression", 0.01)),
+        "--generalizable-projection-objective-cross-entropy-weight",
+        str(getattr(args, "generalizable_projection_objective_cross_entropy_weight", 1.0)),
+        "--generalizable-projection-objective-reconstruction-weight",
+        str(getattr(args, "generalizable_projection_objective_reconstruction_weight", 1.0)),
+        "--generalizable-projection-objective-cosine-gap-weight",
+        str(getattr(args, "generalizable_projection_objective_cosine_gap_weight", 1.0)),
+        "--generalizable-projection-objective-legal-ir-weight",
+        str(getattr(args, "generalizable_projection_objective_legal_ir_weight", 1.0)),
+        "--generalizable-projection-hard-example-fraction",
+        str(getattr(args, "generalizable_projection_hard_example_fraction", 1.0)),
+        "--learning-rate-floor-ratio",
+        str(getattr(args, "learning_rate_floor_ratio", 0.25)),
+        "--learning-rate-cap-ratio",
+        str(getattr(args, "learning_rate_cap_ratio", 1.5)),
+        "--learning-rate-plateau-delta",
+        str(getattr(args, "learning_rate_plateau_delta", 1.0e-5)),
         "--autoencoder-bridge-workers",
         str(getattr(args, "autoencoder_bridge_workers", 1)),
         "--test-every-cycles",
@@ -4229,6 +4309,42 @@ def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Pat
         "train_cosine_improved_cycles": 0,
         "validation_ce_improved_cycles": 0,
         "validation_cosine_improved_cycles": 0,
+        "learning_rate_plateau_streak": 0,
+        "learning_rate_cosine_regression_streak": 0,
+        "learning_rate_applied": float(getattr(args, "learning_rate", 0.35)),
+    }
+
+
+def _cycle_learning_rate(args: argparse.Namespace, summary: Mapping[str, Any]) -> tuple[float, Dict[str, Any]]:
+    """Return per-cycle learning rate using simple plateau/regression feedback."""
+    base = max(1e-6, float(getattr(args, "learning_rate", 0.35)))
+    floor_ratio = max(0.05, float(getattr(args, "learning_rate_floor_ratio", 0.25)))
+    cap_ratio = max(1.0, float(getattr(args, "learning_rate_cap_ratio", 1.5)))
+    plateau_streak = max(0, int(summary.get("learning_rate_plateau_streak", 0) or 0))
+    cosine_regression_streak = max(
+        0,
+        int(summary.get("learning_rate_cosine_regression_streak", 0) or 0),
+    )
+    plateau_threshold = max(
+        1e-9,
+        float(getattr(args, "learning_rate_plateau_delta", 1e-5)),
+    )
+    scale = 1.0
+    if plateau_streak >= 3:
+        scale *= 1.1
+    if cosine_regression_streak > 0:
+        scale *= 0.85 ** float(cosine_regression_streak)
+    lr = base * scale
+    lr = max(base * floor_ratio, min(base * cap_ratio, lr))
+    return lr, {
+        "base_learning_rate": base,
+        "applied_learning_rate": lr,
+        "cap_ratio": cap_ratio,
+        "cosine_regression_streak": cosine_regression_streak,
+        "floor_ratio": floor_ratio,
+        "plateau_delta_threshold": plateau_threshold,
+        "plateau_streak": plateau_streak,
+        "scale": scale,
     }
 
 
@@ -4250,6 +4366,16 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--train-count", type=int, default=4)
     parser.add_argument("--validation-count", type=int, default=4)
     parser.add_argument(
+        "--validation-canary-count",
+        type=int,
+        default=4,
+        help=(
+            "Sample this many fixed holdout rows once per run and use them for "
+            "autoencoder acceptance so validation deltas are comparable across cycles. "
+            "Zero keeps the prior rotating-validation behavior."
+        ),
+    )
+    parser.add_argument(
         "--max-sample-text-chars",
         type=int,
         default=0,
@@ -4261,6 +4387,90 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-inner-iterations", type=int, default=3)
     parser.add_argument("--max-items", type=int, default=8)
     parser.add_argument("--learning-rate", type=float, default=0.35)
+    parser.add_argument(
+        "--learning-rate-floor-ratio",
+        type=float,
+        default=0.25,
+        help="Lower bound for adaptive per-cycle learning rate as a ratio of --learning-rate.",
+    )
+    parser.add_argument(
+        "--learning-rate-cap-ratio",
+        type=float,
+        default=1.5,
+        help="Upper bound for adaptive per-cycle learning rate as a ratio of --learning-rate.",
+    )
+    parser.add_argument(
+        "--learning-rate-plateau-delta",
+        type=float,
+        default=1.0e-5,
+        help="Validation CE delta treated as plateau when absolute improvement is below this threshold.",
+    )
+    parser.add_argument(
+        "--generalizable-projection-epochs",
+        type=int,
+        default=1,
+        help=(
+            "Feature-level pretraining epochs per daemon cycle before TODO claiming. "
+            "Accepted epochs must improve the guarded holdout objective."
+        ),
+    )
+    parser.add_argument(
+        "--generalizable-projection-max-cosine-regression",
+        type=float,
+        default=0.005,
+        help="Maximum tolerated holdout cosine-similarity regression during feature projection.",
+    )
+    parser.add_argument(
+        "--generalizable-projection-max-reconstruction-regression",
+        type=float,
+        default=0.01,
+        help="Maximum tolerated holdout reconstruction-loss regression during feature projection.",
+    )
+    parser.add_argument(
+        "--generalizable-projection-max-cross-entropy-regression",
+        type=float,
+        default=0.0,
+        help="Maximum tolerated holdout cross-entropy-loss regression during feature projection.",
+    )
+    parser.add_argument(
+        "--generalizable-projection-max-legal-ir-loss-regression",
+        type=float,
+        default=0.01,
+        help="Maximum tolerated holdout LegalIR loss regression during feature projection.",
+    )
+    parser.add_argument(
+        "--generalizable-projection-objective-cross-entropy-weight",
+        type=float,
+        default=1.0,
+        help="Weight for CE in feature-projection objective ranking/selection.",
+    )
+    parser.add_argument(
+        "--generalizable-projection-objective-reconstruction-weight",
+        type=float,
+        default=1.0,
+        help="Weight for reconstruction loss in feature-projection objective.",
+    )
+    parser.add_argument(
+        "--generalizable-projection-objective-cosine-gap-weight",
+        type=float,
+        default=1.0,
+        help="Weight for cosine gap (1-cosine) in feature-projection objective.",
+    )
+    parser.add_argument(
+        "--generalizable-projection-objective-legal-ir-weight",
+        type=float,
+        default=1.0,
+        help="Weight for LegalIR objective component in feature-projection objective.",
+    )
+    parser.add_argument(
+        "--generalizable-projection-hard-example-fraction",
+        type=float,
+        default=1.0,
+        help=(
+            "Fraction of highest-loss train samples to update per projection epoch. "
+            "Use values below one for hard-example curriculum."
+        ),
+    )
     parser.add_argument(
         "--bridge-loss-adapters",
         default=DEFAULT_BRIDGE_LOSS_ADAPTERS,
@@ -4284,6 +4494,16 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         help=(
             "Vector math device for the adaptive autoencoder: auto, python, "
             "cpu, cuda, or a specific CUDA device such as cuda:0."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-feature-family-logit-scale",
+        type=float,
+        default=1.0,
+        help=(
+            "Scale reusable feature-level modal-family logits during daemon "
+            "validation. The guarded projection trainer rolls back family updates "
+            "that regress the holdout objective."
         ),
     )
     parser.add_argument(
@@ -4922,6 +5142,12 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         state=state,
         feature_codec=feature_codec,
         compute_device=args.autoencoder_device,
+        feature_family_logit_scale=float(
+            getattr(args, "autoencoder_feature_family_logit_scale", 1.0)
+        ),
+    )
+    summary["autoencoder_feature_family_logit_scale"] = float(
+        getattr(args, "autoencoder_feature_family_logit_scale", 1.0)
     )
     summary.update(autoencoder.compute_backend_metadata())
     save_summary(summary_path, summary)
@@ -4952,11 +5178,76 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         args.run_id,
         {"event": "detached_dataset_loaded", "row_count": laws_table.num_rows},
     )
+    validation_canary_count = max(
+        0,
+        int(getattr(args, "validation_canary_count", 0) or 0),
+    )
+    validation_canary_indices: List[int] = []
+    validation_canary_samples: List[Any] = []
+    validation_canary_sampling_attempts = 0
+    if validation_canary_count > 0:
+        stored_canary_indices: List[int] = []
+        for raw_index in list(summary.get("validation_canary_indices", []) or []):
+            try:
+                index = int(raw_index)
+            except (TypeError, ValueError):
+                continue
+            if 0 <= index < laws_table.num_rows:
+                stored_canary_indices.append(index)
+        for index in stored_canary_indices[:validation_canary_count]:
+            row = laws_table.take([index]).to_pylist()[0]
+            if not _row_text_within_limit(
+                row,
+                int(getattr(args, "max_sample_text_chars", 0) or 0),
+            ):
+                continue
+            validation_canary_indices.append(index)
+            validation_canary_samples.append(row_to_sample(row))
+        if len(validation_canary_samples) < validation_canary_count:
+            (
+                _unused_train_indices,
+                _unused_train_samples,
+                validation_canary_indices,
+                validation_canary_samples,
+                validation_canary_sampling_attempts,
+            ) = sample_train_validation_rows(
+                laws_table,
+                rng,
+                train_count=0,
+                validation_count=validation_canary_count,
+                blocked_validation_sample_ids=blocked_validation_sample_ids,
+                max_sample_text_chars=int(
+                    getattr(args, "max_sample_text_chars", 0) or 0
+                ),
+            )
+        validation_canary_sample_ids = {
+            sample.sample_id for sample in validation_canary_samples
+        }
+        blocked_validation_sample_ids.update(validation_canary_sample_ids)
+        summary["validation_canary_count"] = len(validation_canary_samples)
+        summary["validation_canary_indices"] = list(validation_canary_indices)
+        summary["validation_canary_sampling_attempts"] = validation_canary_sampling_attempts
+        save_summary(summary_path, summary)
+        append_event(
+            log_path,
+            args.run_id,
+            {
+                "event": "validation_canary_selected",
+                "sample_count": len(validation_canary_samples),
+                "sampling_attempts": validation_canary_sampling_attempts,
+                "validation_canary_indices": validation_canary_indices,
+            },
+        )
+    else:
+        validation_canary_sample_ids = set()
+        summary["validation_canary_count"] = 0
+        summary["validation_canary_indices"] = []
 
     try:
         while not stop_requested and time.time() + 8.0 < end_at:
             cycle = int(summary.get("cycles", 0)) + 1
             cycle_started = time.time()
+            cycle_learning_rate, cycle_lr_policy = _cycle_learning_rate(args, summary)
             (
                 train_indices,
                 train_samples,
@@ -4968,8 +5259,16 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 rng,
                 train_count=args.train_count,
                 validation_count=args.validation_count,
+                blocked_train_sample_ids=validation_canary_sample_ids,
                 blocked_validation_sample_ids=blocked_validation_sample_ids,
                 max_sample_text_chars=int(getattr(args, "max_sample_text_chars", 0) or 0),
+            )
+            acceptance_validation_samples = validation_canary_samples or validation_samples
+            acceptance_validation_indices = validation_canary_indices or validation_indices
+            validation_mode = (
+                "fixed_canary"
+                if validation_canary_samples
+                else "rotating_holdout"
             )
             before_train = autoencoder.evaluate(
                 train_samples,
@@ -4978,7 +5277,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 legal_ir_parallel_workers=bridge_parallel_workers,
             )
             before_validation = autoencoder.evaluate(
-                validation_samples,
+                acceptance_validation_samples,
                 legal_ir_bridge_names=bridge_adapters,
                 legal_ir_evaluate_provers=bridge_evaluate_provers,
                 legal_ir_parallel_workers=bridge_parallel_workers,
@@ -4986,7 +5285,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             )
             compiler_ir_train = compiler_ir_metric_block(train_samples, feature_codec)
             compiler_ir_validation = compiler_ir_metric_block(
-                validation_samples,
+                acceptance_validation_samples,
                 feature_codec,
             )
             bridge_ir_train = bridge_ir_metric_block(
@@ -4996,18 +5295,96 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 parallel_workers=bridge_parallel_workers,
             )
             bridge_ir_validation = bridge_ir_metric_block(
-                validation_samples,
+                acceptance_validation_samples,
                 bridge_adapters,
                 evaluate_provers=bridge_evaluate_provers,
                 parallel_workers=bridge_parallel_workers,
             )
+            feature_projection_report: Dict[str, Any] = {}
+            generalizable_projection_epochs = max(
+                0,
+                int(getattr(args, "generalizable_projection_epochs", 0) or 0),
+            )
+            if generalizable_projection_epochs > 0 and train_samples:
+                feature_projection_report = autoencoder.train_generalizable_projection(
+                    train_samples,
+                    validation_samples=acceptance_validation_samples,
+                    epochs=generalizable_projection_epochs,
+                    learning_rate=cycle_learning_rate,
+                    legal_ir_bridge_names=bridge_adapters,
+                    legal_ir_evaluate_provers=bridge_evaluate_provers,
+                    legal_ir_parallel_workers=bridge_parallel_workers,
+                    max_cosine_regression=float(
+                        getattr(
+                            args,
+                            "generalizable_projection_max_cosine_regression",
+                            0.005,
+                        )
+                    ),
+                    max_reconstruction_regression=float(
+                        getattr(
+                            args,
+                            "generalizable_projection_max_reconstruction_regression",
+                            0.01,
+                        )
+                    ),
+                    max_cross_entropy_regression=float(
+                        getattr(
+                            args,
+                            "generalizable_projection_max_cross_entropy_regression",
+                            0.0,
+                        )
+                    ),
+                    max_legal_ir_loss_regression=float(
+                        getattr(
+                            args,
+                            "generalizable_projection_max_legal_ir_loss_regression",
+                            0.01,
+                        )
+                    ),
+                    objective_cross_entropy_weight=float(
+                        getattr(
+                            args,
+                            "generalizable_projection_objective_cross_entropy_weight",
+                            1.0,
+                        )
+                    ),
+                    objective_reconstruction_weight=float(
+                        getattr(
+                            args,
+                            "generalizable_projection_objective_reconstruction_weight",
+                            1.0,
+                        )
+                    ),
+                    objective_cosine_gap_weight=float(
+                        getattr(
+                            args,
+                            "generalizable_projection_objective_cosine_gap_weight",
+                            1.0,
+                        )
+                    ),
+                    objective_legal_ir_weight=float(
+                        getattr(
+                            args,
+                            "generalizable_projection_objective_legal_ir_weight",
+                            1.0,
+                        )
+                    ),
+                    hard_example_fraction=float(
+                        getattr(
+                            args,
+                            "generalizable_projection_hard_example_fraction",
+                            1.0,
+                        )
+                    ),
+                )
             run = supervisor.optimize(
                 train_samples,
-                validation_samples=validation_samples,
+                validation_samples=acceptance_validation_samples,
                 autoencoder=autoencoder,
                 worker_id="random-uscode-daemon-detached",
                 max_items=args.max_items,
-                learning_rate=args.learning_rate,
+                learning_rate=cycle_learning_rate,
                 max_iterations=args.max_inner_iterations,
                 target_cross_entropy_loss=0.001,
                 target_cosine_similarity=0.999999,
@@ -5019,7 +5396,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 legal_ir_parallel_workers=bridge_parallel_workers,
             )
             after_validation = autoencoder.evaluate(
-                validation_samples,
+                acceptance_validation_samples,
                 legal_ir_bridge_names=bridge_adapters,
                 legal_ir_evaluate_provers=bridge_evaluate_provers,
                 legal_ir_parallel_workers=bridge_parallel_workers,
@@ -5054,6 +5431,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary.update(autoencoder.compute_backend_metadata())
             summary["latest_queue_counts"] = supervisor.queue.status_counts()
             summary["latest_role_queue_counts"] = supervisor.queue.role_status_counts()
+            summary["latest_feature_projection_report"] = feature_projection_report
+            summary["validation_mode"] = validation_mode
             program_synthesis_status = update_program_synthesis_summary(
                 summary,
                 supervisor.queue,
@@ -5104,6 +5483,24 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["validation_ce_improved_cycles"] = int(summary.get("validation_ce_improved_cycles", 0)) + int(validation_ce_delta > 0.0)
             summary["train_cosine_improved_cycles"] = int(summary.get("train_cosine_improved_cycles", 0)) + int(train_cos_delta > 0.0)
             summary["validation_cosine_improved_cycles"] = int(summary.get("validation_cosine_improved_cycles", 0)) + int(validation_cos_delta > 0.0)
+            plateau_threshold = max(
+                1e-9,
+                float(getattr(args, "learning_rate_plateau_delta", 1.0e-5)),
+            )
+            if validation_ce_delta <= plateau_threshold:
+                summary["learning_rate_plateau_streak"] = int(
+                    summary.get("learning_rate_plateau_streak", 0)
+                ) + 1
+            else:
+                summary["learning_rate_plateau_streak"] = 0
+            if validation_cos_delta < 0.0:
+                summary["learning_rate_cosine_regression_streak"] = int(
+                    summary.get("learning_rate_cosine_regression_streak", 0)
+                ) + 1
+            else:
+                summary["learning_rate_cosine_regression_streak"] = 0
+            summary["learning_rate_applied"] = float(cycle_learning_rate)
+            summary["learning_rate_policy"] = cycle_lr_policy
             summary["best_validation_ce"] = min(summary.get("best_validation_ce"), after_validation.cross_entropy_loss)
             summary["best_validation_ir_ce"] = min(
                 summary.get("best_validation_ir_ce", 1.0e12),
@@ -5163,6 +5560,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "duration_seconds": round(time.time() - cycle_started, 3),
                     "event": "cycle",
                     "failed_validation_count": sum(step.failed_validation_count for step in run.steps),
+                    "feature_projection_report": feature_projection_report,
+                    "learning_rate_applied": float(cycle_learning_rate),
+                    "learning_rate_policy": cycle_lr_policy,
                     "bridge_loss_failure_count": bridge_loss_failures,
                     "bridge_loss_sample_count": bridge_loss_samples,
                     "bridge_loss_signal_count": bridge_loss_signals,
@@ -5188,7 +5588,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "validation_sampling_attempts": validation_sampling_attempts,
                     "validation_cosine_delta": round(validation_cos_delta, 9),
                     "validation_cross_entropy_delta": round(validation_ce_delta, 9),
-                    "validation_indices": validation_indices,
+                    "validation_indices": acceptance_validation_indices,
+                    "validation_mode": validation_mode,
+                    "rotating_validation_indices": validation_indices,
                 },
             )
             save_summary(summary_path, summary)
@@ -5209,7 +5611,13 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         summary["family_logit_entries"] = len(autoencoder.state.family_logits)
         summary["feature_embedding_weight_entries"] = len(autoencoder.state.feature_embedding_weights)
         summary["feature_family_logit_entries"] = len(autoencoder.state.feature_family_logits)
+        summary["feature_legal_ir_view_logit_entries"] = len(
+            autoencoder.state.feature_legal_ir_view_logits
+        )
         summary["finished_at"] = utc_now()
+        summary["legal_ir_view_logit_entries"] = len(
+            autoencoder.state.legal_ir_view_logits
+        )
         summary["latest_queue_counts"] = supervisor.queue.status_counts()
         summary["latest_role_queue_counts"] = supervisor.queue.role_status_counts()
         update_program_synthesis_summary(

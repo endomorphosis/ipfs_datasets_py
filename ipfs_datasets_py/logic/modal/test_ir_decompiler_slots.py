@@ -706,6 +706,69 @@ def _fallback_surface_contextual_modal_cue_sample_document() -> ModalIRDocument:
     )
 
 
+def _frame_fallback_refined_cross_family_cue_sample_document() -> ModalIRDocument:
+    source_id = "us-code-49-32916-fallback-aa11bb22cc33dd44"
+    normalized_text = (
+        "Sec. 32916. Reports shall be submitted not later than January 15."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-frame-fallback-refined-cross-family-cues",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(name="uscode_section_heading_fallback"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(normalized_text),
+            citation="49 U.S.C. 32916",
+        ),
+        metadata={
+            "cue": "__uscode_section_heading_fallback__",
+            "fallback_rule": "uscode_section_heading_v1",
+        },
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
+def _non_frame_structural_title_noise_sample_document() -> ModalIRDocument:
+    source_id = "us-code-49-32916-title-noise-1122334455667788"
+    normalized_text = "Not later than January 15, title updates are published."
+    formula = ModalIRFormula(
+        formula_id="f-non-frame-structural-title-noise",
+        operator=ModalIROperator(
+            family="temporal",
+            system="ltl",
+            symbol="X",
+            label="next",
+        ),
+        predicate=ModalIRPredicate(
+            name="publish_reports",
+            arguments=["title"],
+        ),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(normalized_text),
+            citation="49 U.S.C. 32916",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
 def _typed_clause_scope_sample_document() -> ModalIRDocument:
     source_id = "us-code-7-6409-502d7cea35400f08"
     normalized_text = (
@@ -1076,6 +1139,36 @@ def _string_offset_span_metrics_sample_document() -> ModalIRDocument:
                     citation="38 U.S.C. 3325",
                 ),
             ),
+        ],
+    )
+
+
+def _whitespace_preserving_span_sample_document() -> ModalIRDocument:
+    source_id = "us-code-5-552-whitespace-span-38f5f8b9e5d2fd4a"
+    source_text = "alpha  beta\nmust  comply  now"
+    modal_span_start = source_text.index("must")
+    modal_span_end = modal_span_start + len("must  comply")
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-whitespace-span-1",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="kd",
+                    symbol="O",
+                    label="obligatory",
+                ),
+                predicate=ModalIRPredicate(name="must_comply"),
+                provenance=ModalIRProvenance(
+                    source_id=source_id,
+                    start_char=modal_span_start,
+                    end_char=modal_span_end,
+                    citation="5 U.S.C. 552",
+                ),
+            )
         ],
     )
 
@@ -3998,6 +4091,68 @@ def test_modal_ir_to_flogic_triples_emit_contextual_modal_cues_for_fallback_surf
     }.issubset(set(objects("fallback_surface_text_modal_bridge_signature")))
 
 
+def test_decode_modal_ir_document_emits_refined_cross_family_slots_for_frame_fallback_surface() -> None:
+    decoded = decode_modal_ir_document(
+        _frame_fallback_refined_cross_family_cue_sample_document()
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "shall" in slot_map["fallback_surface_text_refined_modal_cue"]
+    assert "not_later_than" in slot_map["fallback_surface_text_refined_modal_cue"]
+    assert "frame->deontic" in slot_map["fallback_surface_text_refined_modal_family_pair"]
+    assert "frame->temporal" in slot_map["fallback_surface_text_refined_modal_family_pair"]
+    assert "deontic:O:shall" in slot_map["fallback_surface_text_refined_modal_bridge_signature"]
+    assert (
+        "temporal:F:not_later_than"
+        in slot_map["fallback_surface_text_refined_modal_bridge_signature"]
+    )
+
+
+def test_modal_ir_to_flogic_triples_emit_refined_cross_family_slots_for_frame_fallback_surface() -> None:
+    triples = modal_ir_to_flogic_triples(
+        _frame_fallback_refined_cross_family_cue_sample_document()
+    )
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert "shall" in objects("fallback_surface_text_refined_modal_cue")
+    assert "not_later_than" in objects("fallback_surface_text_refined_modal_cue")
+    assert "frame->deontic" in objects("fallback_surface_text_refined_modal_family_pair")
+    assert "frame->temporal" in objects("fallback_surface_text_refined_modal_family_pair")
+    assert "deontic:O:shall" in objects("fallback_surface_text_refined_modal_bridge_signature")
+    assert (
+        "temporal:F:not_later_than"
+        in objects("fallback_surface_text_refined_modal_bridge_signature")
+    )
+
+
+def test_decode_modal_ir_document_ignores_structural_title_refined_cue_for_non_frame_formula() -> None:
+    decoded = decode_modal_ir_document(_non_frame_structural_title_noise_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "title" not in slot_map.get("argument_refined_modal_cue", [])
+    assert "temporal:X:title" not in slot_map.get("argument_refined_modal_signature", [])
+
+
+def test_modal_ir_to_flogic_triples_ignore_structural_title_refined_cue_for_non_frame_formula() -> None:
+    triples = modal_ir_to_flogic_triples(_non_frame_structural_title_noise_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert "title" not in objects("argument_refined_modal_cue")
+    assert "temporal:X:title" not in objects("argument_refined_modal_signature")
+
+
 def test_decode_modal_ir_document_emits_procedural_keyword_slots() -> None:
     decoded = decode_modal_ir_document(_procedural_keyword_fallback_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
@@ -5950,6 +6105,50 @@ def test_modal_ir_to_flogic_triples_emits_span_metric_slots() -> None:
     assert objects("modal_span_char_count_digit_count_bucket") == ["2_digit"]
     assert objects("modal_span_coverage_percent_prefix_two_digits") == ["55"]
     assert objects("source_context_span_count_parity") == ["even"]
+
+
+def test_decode_modal_ir_document_uses_raw_source_offsets_for_whitespace_preserving_spans() -> None:
+    decoded = decode_modal_ir_document(_whitespace_preserving_span_sample_document())
+    semantic_slot_map = decoded_modal_phrase_slot_text_map(
+        decoded,
+        include_provenance_only=False,
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert semantic_slot_map["modal_source_span"] == ["must comply"]
+    assert semantic_slot_map["source_context_span"] == ["alpha beta", "now"]
+    assert slot_map["source_text_char_count"] == ["29"]
+    assert slot_map["modal_span_count"] == ["1"]
+    assert slot_map["modal_span_char_count"] == ["12"]
+    assert slot_map["source_context_span_count"] == ["2"]
+    assert slot_map["source_context_span_char_count"] == ["17"]
+    assert slot_map["support_span_start_char"] == ["12"]
+    assert slot_map["support_span_end_char"] == ["24"]
+    assert slot_map["support_span_width"] == ["12"]
+    assert slot_map["modal_span_coverage_percent"] == ["41"]
+    assert slot_map["modal_span_coverage_bucket"] == ["partial_coverage"]
+
+
+def test_modal_ir_to_flogic_triples_uses_raw_source_offsets_for_whitespace_preserving_spans() -> None:
+    triples = modal_ir_to_flogic_triples(_whitespace_preserving_span_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("source_text_char_count") == ["29"]
+    assert objects("modal_span_count") == ["1"]
+    assert objects("modal_span_char_count") == ["12"]
+    assert objects("source_context_span_count") == ["2"]
+    assert objects("source_context_span_char_count") == ["17"]
+    assert objects("support_span_start_char") == ["12"]
+    assert objects("support_span_end_char") == ["24"]
+    assert objects("support_span_width") == ["12"]
+    assert objects("modal_span_coverage_percent") == ["41"]
+    assert objects("modal_span_coverage_bucket") == ["partial_coverage"]
 
 
 def test_decode_modal_ir_document_emits_numeric_support_span_slots_for_string_offsets() -> None:

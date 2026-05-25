@@ -7,7 +7,7 @@ Indiana General Assembly static-document chapter PDFs.
 import re
 import subprocess
 import os
-from urllib.parse import quote, urljoin
+from urllib.parse import quote, urljoin, urlparse
 from typing import Dict, List, Optional
 
 from ipfs_datasets_py.utils import anyio_compat as asyncio
@@ -63,6 +63,10 @@ class IndianaScraper(BaseStateScraper):
         return_threshold = self._bounded_return_threshold(160)
         if max_statutes is not None:
             return_threshold = max(1, min(return_threshold, int(max_statutes)))
+        resumed = self._load_partial_checkpoint_statutes(
+            code_name=code_name,
+            max_statutes=(None if max_statutes is None else int(max_statutes)),
+        )
         if return_threshold < 30 and max_statutes is None:
             seed_pdfs = await self._scrape_seed_archive_pdfs(
                 code_name=code_name,
@@ -88,12 +92,15 @@ class IndianaScraper(BaseStateScraper):
 
         def _merge(items: List[NormalizedStatute]) -> None:
             for statute in items:
-                key = str(statute.statute_id or statute.source_url or "").strip().lower()
+                source_url = str(statute.source_url or "").strip().lower()
+                statute_id = str(statute.statute_id or "").strip().lower()
+                key = source_url or statute_id
                 if not key or key in merged_keys:
                     continue
                 merged_keys.add(key)
                 merged.append(statute)
 
+        _merge(resumed)
         _merge(archival)
         _merge(justia_titles)
         _merge(title_page_statutes)
@@ -328,9 +335,7 @@ class IndianaScraper(BaseStateScraper):
                 if not looks_statutory:
                     continue
 
-                section_number = self._extract_section_number(label)
-                if not section_number:
-                    section_number = self._derive_section_number_from_url(abs_url)
+                section_number = self._derive_indiana_section_number(label=label, source_url=abs_url)
                 if not section_number:
                     section_number = f"Justia-{len(out) + 1}"
 
@@ -451,9 +456,7 @@ class IndianaScraper(BaseStateScraper):
                     if not looks_statutory:
                         continue
 
-                    section_number = self._extract_section_number(label)
-                    if not section_number:
-                        section_number = self._derive_section_number_from_url(abs_url)
+                    section_number = self._derive_indiana_section_number(label=label, source_url=abs_url)
                     if not section_number:
                         continue
 
@@ -558,6 +561,48 @@ class IndianaScraper(BaseStateScraper):
                 "skip_hydrate": True,
             },
         )
+
+    def _derive_indiana_section_number(self, *, label: str, source_url: str) -> str:
+        """Extract a stable Indiana section identifier from Justia/Wayback links."""
+        normalized_label = self._normalize_legal_text(label)
+        normalized_url = self._canonicalize_statute_url(source_url)
+        parsed = urlparse(normalized_url)
+        lower_path = str(parsed.path or "").lower()
+
+        # Prefer explicit section URLs when available.
+        section_url_match = re.search(r"/section-([0-9a-z.\-]+)(?:/|$)", lower_path)
+        if section_url_match:
+            return str(section_url_match.group(1)).strip("-")
+
+        # Indiana Code citation in link label (e.g., IC 32-28-3-1).
+        ic_label_match = re.search(
+            r"\b(?:ic|ind\.\s*code)\s*([0-9]+(?:-[0-9]+){1,})\b",
+            normalized_label,
+            flags=re.IGNORECASE,
+        )
+        if ic_label_match:
+            return str(ic_label_match.group(1)).strip()
+
+        # Some archived URLs end with section-like numeric paths.
+        section_path_match = re.search(r"/([0-9]+(?:-[0-9]+){2,})(?:\.html)?$", lower_path)
+        if section_path_match:
+            return str(section_path_match.group(1)).strip()
+
+        title_match = re.search(r"/title([0-9]+(?:\.[0-9]+)?)", lower_path)
+        article_match = re.search(r"/ar([0-9]+(?:\.[0-9]+)?)", lower_path)
+        chapter_match = re.search(r"/ch([0-9]+(?:\.[0-9]+)?)", lower_path)
+        if title_match and article_match and chapter_match:
+            return f"{title_match.group(1)}-{article_match.group(1)}-{chapter_match.group(1)}"
+
+        fallback = self._derive_section_number_from_url(normalized_url)
+        if fallback:
+            return str(fallback).strip()
+
+        # Avoid overly broad chapter/title-only numbers unless nothing else exists.
+        numeric_label_match = re.search(r"\b([0-9]+(?:-[0-9]+){2,})\b", normalized_label)
+        if numeric_label_match:
+            return str(numeric_label_match.group(1)).strip()
+        return ""
 
     async def _discover_archived_title_urls(self, limit: int = 160) -> List[str]:
         cdx_url = (

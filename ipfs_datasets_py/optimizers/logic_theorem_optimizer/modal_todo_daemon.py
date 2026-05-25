@@ -6,6 +6,7 @@ import hashlib
 import heapq
 import json
 import sys
+import threading
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -185,6 +186,9 @@ PROGRAM_SYNTHESIS_SCOPE_VALIDATION_TESTS = {
         "tests/unit/logic/test_logic_bridge_layer.py",
     ),
 }
+BRIDGE_LOSS_CACHE_MAX = 4096
+_BRIDGE_LOSS_CACHE_LOCK = threading.Lock()
+_BRIDGE_LOSS_CACHE: Dict[str, Dict[str, float]] = {}
 
 AUTOENCODER_TRAINABLE_ACTIONS = {
     "improve_encoder_decoder_reconstruction",
@@ -214,6 +218,8 @@ class ModalOptimizerPolicy:
     max_autoencoder_pending: int = 256
     max_program_synthesis_pending: int = 512
     program_synthesis_near_duplicate_jaccard: float = PROGRAM_SYNTHESIS_NEAR_DUPLICATE_JACCARD
+    program_synthesis_min_residual_occurrences: int = 1
+    program_synthesis_min_residual_survival_score: float = 0.0
 
     def role_for(self, *, action: str, loss_name: str = "") -> str:
         if (
@@ -335,6 +341,16 @@ def bridge_loss_evaluator_for_names(
 
         for sample in samples:
             sample_losses: Dict[str, float] = {}
+            cache_key = _bridge_loss_cache_key(
+                sample,
+                bridge_names=names,
+                evaluate_provers=evaluate_provers,
+            )
+            with _BRIDGE_LOSS_CACHE_LOCK:
+                cached_losses = _BRIDGE_LOSS_CACHE.get(cache_key)
+            if cached_losses is not None:
+                losses_by_sample[sample.sample_id] = dict(cached_losses)
+                continue
             try:
                 multiview = evaluate_legal_ir_multiview(
                     sample.text,
@@ -349,10 +365,46 @@ def bridge_loss_evaluator_for_names(
             except Exception:
                 sample_losses["legal_ir_multiview_bridge_evaluation_failure_loss"] = 1.0
             if sample_losses:
+                sample_losses = dict(sorted(sample_losses.items()))
+                with _BRIDGE_LOSS_CACHE_LOCK:
+                    if len(_BRIDGE_LOSS_CACHE) >= BRIDGE_LOSS_CACHE_MAX:
+                        _BRIDGE_LOSS_CACHE.pop(next(iter(_BRIDGE_LOSS_CACHE)), None)
+                    _BRIDGE_LOSS_CACHE[cache_key] = dict(sample_losses)
                 losses_by_sample[sample.sample_id] = dict(sorted(sample_losses.items()))
         return losses_by_sample
 
     return evaluate
+
+
+def _bridge_loss_cache_key(
+    sample: LegalSample,
+    *,
+    bridge_names: Sequence[str],
+    evaluate_provers: Optional[bool],
+) -> str:
+    """Return a stable key for optimizer-visible bridge diagnostics."""
+    embedding = [
+        round(float(value), 12)
+        for value in list(getattr(sample, "embedding_vector", []) or [])
+    ]
+    payload = {
+        "bridge_names": list(bridge_names),
+        "citation": str(getattr(sample, "citation", "") or ""),
+        "embedding_hash": hashlib.sha256(
+            json.dumps(embedding, ensure_ascii=True, separators=(",", ":")).encode(
+                "utf-8"
+            )
+        ).hexdigest(),
+        "evaluate_provers": evaluate_provers,
+        "sample_id": str(getattr(sample, "sample_id", "") or ""),
+        "source": str(getattr(sample, "source", "") or ""),
+        "text_hash": hashlib.sha256(
+            str(getattr(sample, "text", "") or "").encode("utf-8")
+        ).hexdigest(),
+    }
+    return hashlib.sha256(
+        json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+    ).hexdigest()
 
 
 def _multiview_losses_for_optimizer(multiview: Any) -> Dict[str, float]:
@@ -927,6 +979,13 @@ class ModalLossTodoGenerator:
         }
         if target_component:
             metadata["target_component"] = target_component
+        if (
+            action == "repair_multiview_legal_ir_loss"
+            and target_component == "bridge.contracts"
+            and _snapshot_has_component_specific_program_loss(snapshot)
+        ):
+            priority = round(priority * 0.35, 6)
+            metadata["generic_bridge_priority_backoff"] = True
         if metadata.get("optimizer_role") == PROGRAM_SYNTHESIS_ROLE:
             metadata["program_synthesis_scope"] = _program_synthesis_scope(
                 action=action,
@@ -963,6 +1022,28 @@ class ModalLossTodoGenerator:
             priority=priority,
             metadata=metadata,
         )
+
+
+def _snapshot_has_component_specific_program_loss(snapshot: LossSnapshot) -> bool:
+    """Return true when a broad LegalIR TODO would duplicate a narrower repair."""
+    specific_loss_names = {
+        "legal_ir_multiview_graph_failure_penalty",
+        "legal_ir_multiview_proof_failure_ratio",
+    }
+    specific_prefixes = (
+        "cec_",
+        "deontic_",
+        "external_prover_",
+        "tdfol_",
+        "zkp_",
+    )
+    for loss_name, value in dict(snapshot.losses or {}).items():
+        if float(value or 0.0) <= 0.0:
+            continue
+        normalized = str(loss_name)
+        if normalized in specific_loss_names or normalized.startswith(specific_prefixes):
+            return True
+    return False
 
 
 class ModalProgramSynthesisTodoGenerator:
@@ -1714,13 +1795,56 @@ class ModalTodoSupervisor:
                     after=residual_after,
                     residual_stage=residual_stage,
                 )
-                if survives or not require_residual_survival:
+                signature_occurrences = self._residual_signature_occurrences(todo)
+                todo.metadata["residual_signature_occurrences"] = signature_occurrences
+                min_occurrences = max(
+                    1,
+                    int(self.policy.program_synthesis_min_residual_occurrences),
+                )
+                survival_score = _safe_float(
+                    todo.metadata.get("post_sgd_residual_survival_score", 0.0)
+                )
+                min_survival_score = max(
+                    0.0,
+                    float(self.policy.program_synthesis_min_residual_survival_score),
+                )
+                persistent = signature_occurrences >= min_occurrences
+                sufficiently_surviving = survival_score >= min_survival_score
+                todo.metadata["post_sgd_residual_persistent"] = persistent
+                todo.metadata["post_sgd_residual_survival_gate_passed"] = (
+                    sufficiently_surviving
+                )
+                if not require_residual_survival:
+                    annotated.append(todo)
+                    continue
+                if survives and persistent and sufficiently_surviving:
                     annotated.append(todo)
             todos = annotated
         self.last_program_synthesis_deduped_count = 0
         todos = self._bounded_new_todos(todos, track_program_deduped=True)
         self.queue.add_many(todos)
         return todos
+
+    def _residual_signature_occurrences(self, todo: ModalTodo) -> int:
+        signatures = {
+            str(signature)
+            for signature in _as_list(todo.metadata.get("residual_signatures", []))
+            if str(signature)
+        }
+        if not signatures:
+            return 1
+        matches = 1
+        for existing in self.queue.all():
+            existing_signatures = {
+                str(signature)
+                for signature in _as_list(
+                    existing.metadata.get("residual_signatures", [])
+                )
+                if str(signature)
+            }
+            if signatures.intersection(existing_signatures):
+                matches += 1
+        return matches
 
     def compact_autoencoder_backlog(
         self,
@@ -2500,6 +2624,15 @@ def _annotate_post_sgd_residual_evidence(
     todo.metadata["post_sgd_residual_surviving_metrics"] = surviving_metrics
     todo.metadata["post_sgd_residual_unmeasured_metrics"] = unmeasured_metrics
     todo.metadata["post_sgd_requires_codex"] = survives
+    measured_count = max(1, len(before_metrics))
+    todo.metadata["post_sgd_residual_survival_score"] = round(
+        len(surviving_metrics) / measured_count,
+        9,
+    )
+    todo.metadata["post_sgd_residual_resolved_score"] = round(
+        len(resolved_metrics) / measured_count,
+        9,
+    )
     todo.metadata["residual_cluster_stage"] = residual_stage
     return survives
 
@@ -3072,16 +3205,21 @@ def _compact_hint_evidence(hint: ModalProgramSynthesisHint) -> Dict[str, Any]:
         "priority": hint.priority,
     }
     for key in (
+        "bridge_failure_name",
         "cosine_similarity",
         "family_margin",
         "frame_features",
+        "generic_bridge_priority_backoff",
         "legal_ir_component_gaps",
         "legal_ir_underrepresented_components",
         "predicted_family",
+        "predicted_view",
         "reconstruction_loss",
         "sample_id",
+        "target_file_lane",
         "target_family",
         "target_probability",
+        "target_view",
         "top_embedding_features",
         "top_family_features",
     ):
@@ -3172,8 +3310,33 @@ def _evaluation_objective(evaluation: AutoencoderEvaluation) -> float:
         evaluation.cross_entropy_loss
         + evaluation.reconstruction_loss
         + max(0.0, 1.0 - evaluation.embedding_cosine_similarity)
-        + sum(max(0.0, float(value)) for value in evaluation.legal_ir_losses.values())
+        + _legal_ir_objective_component(evaluation.legal_ir_losses)
     )
+
+
+def _legal_ir_objective_component(losses: Mapping[str, float]) -> float:
+    values = {str(name): max(0.0, float(value)) for name, value in dict(losses).items()}
+    if not values:
+        return 0.0
+    component = 0.0
+    component += min(1.0, values.get("legal_ir_multiview_total_loss", 0.0))
+    component += min(1.0, values.get("legal_ir_view_cross_entropy_loss", 0.0) / 3.0)
+    component += min(1.0, values.get("legal_ir_multiview_proof_failure_ratio", 0.0))
+    component += min(1.0, values.get("legal_ir_multiview_graph_failure_penalty", 0.0))
+    detail = 0.0
+    for name, value in values.items():
+        if name in {
+            "legal_ir_multiview_total_loss",
+            "legal_ir_view_cross_entropy_loss",
+            "legal_ir_multiview_proof_failure_ratio",
+            "legal_ir_multiview_graph_failure_penalty",
+        }:
+            continue
+        if name.startswith("legal_ir_") or name.startswith(
+            ("deontic_", "tdfol_", "cec_", "zkp_", "external_prover_")
+        ):
+            detail += min(0.25, value)
+    return component + min(1.0, detail)
 
 
 def _metric_value(evaluation: AutoencoderEvaluation, name: str) -> Optional[float]:

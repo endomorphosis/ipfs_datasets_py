@@ -432,15 +432,14 @@ def _deontic_export_context_from_parser_elements(
         return context
 
     from ipfs_datasets_py.logic.deontic.exports import (
+        build_document_export_tables_from_ir,
         build_decoder_records_from_irs,
         build_ir_slot_provenance_audit_record,
         build_ir_slot_provenance_audit_records,
         build_phase8_quality_summary_record,
         build_phase8_quality_summary_records,
-        build_proof_obligation_record_from_ir,
         build_prover_syntax_records_from_ir,
         build_reconstruction_slot_loss_records,
-        build_repair_queue_record_from_ir,
         summarize_ir_slot_provenance_audit_records,
         summarize_phase8_quality_records,
         summarize_reconstruction_slot_loss,
@@ -495,16 +494,16 @@ def _deontic_export_context_from_parser_elements(
         prover_syntax_records = []
 
     try:
-        proof_records = [
-            build_proof_obligation_record_from_ir(norm)
-            for norm in norm_objects
-        ]
-        context["proof_obligation_records"] = proof_records
-        context["repair_queue_records"] = [
-            build_repair_queue_record_from_ir(norm)
-            for norm, proof_record in zip(norm_objects, proof_records)
-            if proof_record.get("requires_validation") is True
-        ]
+        # Keep proof/repair rows aligned with the batch export path, which
+        # applies deterministic same-document reference resolution before
+        # formula-level validation.
+        document_export_tables = build_document_export_tables_from_ir(norm_objects)
+        context["proof_obligation_records"] = list(
+            document_export_tables.get("proof_obligations", [])
+        )
+        context["repair_queue_records"] = list(
+            document_export_tables.get("repair_queue", [])
+        )
     except Exception as exc:  # pragma: no cover - diagnostics only
         _record_export_context_error(context, "proof_and_repair_records", exc)
 
