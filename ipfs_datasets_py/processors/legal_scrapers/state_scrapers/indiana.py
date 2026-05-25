@@ -363,8 +363,8 @@ class IndianaScraper(BaseStateScraper):
                     continue
 
                 section_number = self._derive_indiana_section_number(label=label, source_url=abs_url)
-                if not section_number:
-                    section_number = f"Justia-{len(out) + 1}"
+                if not self._looks_like_indiana_section_number(section_number):
+                    continue
 
                 key = f"{section_number}|{abs_url}".lower()
                 if key in seen_records:
@@ -619,7 +619,7 @@ class IndianaScraper(BaseStateScraper):
 
         # Indiana Code citation in link label (e.g., IC 32-28-3-1).
         ic_label_match = re.search(
-            r"\b(?:ic|ind\.\s*code)\s*([0-9]+(?:-[0-9]+){1,})\b",
+            r"\b(?:ic|ind\.\s*code)\s*([0-9]+(?:-[0-9]+){3,})\b",
             normalized_label,
             flags=re.IGNORECASE,
         )
@@ -627,25 +627,30 @@ class IndianaScraper(BaseStateScraper):
             return str(ic_label_match.group(1)).strip()
 
         # Some archived URLs end with section-like numeric paths.
-        section_path_match = re.search(r"/([0-9]+(?:-[0-9]+){2,})(?:\.html)?$", lower_path)
+        section_path_match = re.search(r"/([0-9]+(?:-[0-9]+){3,})(?:\.html)?$", lower_path)
         if section_path_match:
             return str(section_path_match.group(1)).strip()
-
-        title_match = re.search(r"/title([0-9]+(?:\.[0-9]+)?)", lower_path)
-        article_match = re.search(r"/ar([0-9]+(?:\.[0-9]+)?)", lower_path)
-        chapter_match = re.search(r"/ch([0-9]+(?:\.[0-9]+)?)", lower_path)
-        if title_match and article_match and chapter_match:
-            return f"{title_match.group(1)}-{article_match.group(1)}-{chapter_match.group(1)}"
 
         fallback = self._derive_section_number_from_url(normalized_url)
         if fallback:
             return str(fallback).strip()
 
-        # Avoid overly broad chapter/title-only numbers unless nothing else exists.
-        numeric_label_match = re.search(r"\b([0-9]+(?:-[0-9]+){2,})\b", normalized_label)
+        # Avoid title/article/chapter-only identifiers; section citations
+        # typically have at least four numeric segments.
+        numeric_label_match = re.search(r"\b([0-9]+(?:-[0-9]+){3,})\b", normalized_label)
         if numeric_label_match:
             return str(numeric_label_match.group(1)).strip()
         return ""
+
+    def _looks_like_indiana_section_number(self, section_number: str) -> bool:
+        value = str(section_number or "").strip().lower()
+        if not value:
+            return False
+        if re.fullmatch(r"\d+(?:-\d+){3,}[a-z0-9.\-]*", value):
+            return True
+        if re.fullmatch(r"\d+[a-z]?(?:\.\d+){3,}[a-z]?", value):
+            return True
+        return False
 
     async def _discover_archived_title_urls(self, limit: int = 160) -> List[str]:
         cdx_url = (

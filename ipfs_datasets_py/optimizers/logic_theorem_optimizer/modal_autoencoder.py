@@ -7302,6 +7302,160 @@ class AdaptiveModalAutoencoder:
         cache[cache_key] = list(result)
         return result
 
+    def _discourse_flow_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "discourse-flow",
+    ) -> List[str]:
+        """Clause-order contracts for condition, force, exception, and time flow."""
+        normalized_prefix = str(prefix or "discourse-flow").strip(":")
+        cache_key = f"discourse_flow_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_discourse_flow_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        subject_classes = role_classes.get("subject", [])
+        action_classes = role_classes.get("action", [])
+        object_classes = role_classes.get("object", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        def cue_phase(cue: str) -> str:
+            cue_atom = _feature_atom(cue)
+            if cue_atom in {"if", "when", "whenever", "unless", "provided", "subject_to"}:
+                return "condition"
+            if cue_atom in {"except", "exception", "notwithstanding", "waiver", "exemption"}:
+                return "exception"
+            if cue_atom in {"before", "after", "within", "until", "during"}:
+                return "temporal"
+            if cue_atom in {"may", "authorized", "authorize", "permitted", "eligible", "entitled"}:
+                return "permission"
+            if cue_atom in {"shall", "must", "required", "requires"}:
+                return "obligation"
+            if cue_atom in {"must_not", "not", "no", "prohibited", "prohibit", "unlawful"}:
+                return "prohibition"
+            if cue_atom in {"means", "defined", "definition", "include", "includes"}:
+                return "definition"
+            return "cue"
+
+        subject_class = first_or_none(subject_classes)
+        action_class = first_or_none(action_classes)
+        object_class = first_or_none(object_classes)
+        role_signature = f"{subject_class}:{action_class}:{object_class}"
+        cue_events: List[tuple[int, str, str, str, str, str]] = []
+        for formula in list(sample.modal_ir.formulas or [])[:12]:
+            cue = _feature_atom(formula.metadata.get("cue") if formula.metadata else "")
+            if not cue:
+                continue
+            cue_start = formula.metadata.get("cue_start_char") if formula.metadata else None
+            start = int(cue_start) if cue_start is not None else int(
+                getattr(formula.provenance, "start_char", 0)
+            )
+            family = _feature_atom(formula.operator.family)
+            symbol = _feature_atom(formula.operator.symbol)
+            predicate_role = _feature_atom(
+                getattr(formula.predicate, "role", "") or "none"
+            )
+            cue_events.append(
+                (start, cue, cue_phase(cue), family, symbol, predicate_role)
+            )
+        cue_events = sorted(cue_events, key=lambda item: (item[0], item[1], item[3], item[4]))
+        phase_sequence = "->".join(event[2] for event in cue_events[:8]) or "none"
+        cue_sequence = "->".join(event[1] for event in cue_events[:8]) or "none"
+
+        role_positions: List[tuple[int, str]] = []
+        for role, anchor in source_anchors.items():
+            anchor_atom = _feature_atom(anchor, max_tokens=3)
+            if not anchor_atom:
+                continue
+            position = text.find(anchor_atom.replace("_", " "))
+            if position >= 0:
+                role_positions.append((position, str(role)))
+        role_order = "->".join(
+            role for _position, role in sorted(role_positions)
+        ) or "none"
+
+        add("bias")
+        add(f"scope:{scope_signature}")
+        add(f"role-flow:{role_signature}:{role_order}:{scope_signature}")
+        add(f"phase-sequence:{phase_sequence}")
+        add(f"cue-sequence:{cue_sequence}")
+        add(f"cue-count:{_count_bucket(len(cue_events))}")
+        for left_event, right_event in zip(cue_events, cue_events[1:]):
+            add(f"phase-transition:{left_event[2]}->{right_event[2]}:{scope_signature}")
+            add(f"cue-transition:{left_event[1]}->{right_event[1]}:{scope_signature}")
+        for _start, cue, phase, family, symbol, predicate_role in cue_events[:8]:
+            if family and symbol:
+                add(f"cue-operator-flow:{cue}:{family}:{symbol}:{phase}:{predicate_role}")
+                add(f"phase-operator-flow:{phase}:{family}:{symbol}:{predicate_role}")
+        for force in force_tags[:2]:
+            for polarity in polarity_tags[:2]:
+                add(
+                    f"force-discourse:{force}:{polarity}:"
+                    f"{phase_sequence}:{role_signature}:{scope_signature}"
+                )
+        for formula in list(sample.modal_ir.formulas or [])[:8]:
+            family = _feature_atom(formula.operator.family)
+            symbol = _feature_atom(formula.operator.symbol)
+            predicate_role = _feature_atom(
+                getattr(formula.predicate, "role", "") or "none"
+            )
+            conditions = list(getattr(formula, "conditions", []) or [])
+            exceptions = list(getattr(formula, "exceptions", []) or [])
+            shape = (
+                f"c{'yes' if conditions else 'no'}:"
+                f"e{'yes' if exceptions else 'no'}:{predicate_role}"
+            )
+            if family and symbol:
+                add(
+                    f"operator-discourse:{family}:{symbol}:{shape}:"
+                    f"{phase_sequence}:{role_order}"
+                )
+                add(
+                    f"decompiler-flow:{role_signature}:{scope_signature}:"
+                    f"{family}:{symbol}:{phase_sequence}"
+                )
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:flow-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_discourse_flow_features]
+        cache[cache_key] = list(result)
+        return result
+
     def _compiler_latent_profile_feature_keys_for(
         self,
         sample: LegalSample,
