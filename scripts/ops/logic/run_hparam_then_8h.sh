@@ -56,6 +56,9 @@ COMMON_ARGS=(
   --autoencoder-max-cycle-consistency-features 64
   --autoencoder-max-equivalence-prototype-features 48
   --autoencoder-max-contrastive-ir-boundary-features 64
+  --autoencoder-max-repair-plan-features 64
+  --autoencoder-max-logic-view-contract-features 64
+  --autoencoder-max-objective-residual-features 64
   --autoencoder-max-semantic-slot-interactions 24
   --autoencoder-feature-activity-reference 64
   --autoencoder-feature-logit-clip 24.0

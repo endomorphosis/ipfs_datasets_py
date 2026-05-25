@@ -32,6 +32,10 @@ class IndianaScraper(BaseStateScraper):
         re.IGNORECASE,
     )
     _JUSTIA_TITLE_RE = re.compile(r"title\s*(\d+(?:\.\d+)?)", re.IGNORECASE)
+    _WAYBACK_REPLAY_RE = re.compile(
+        r"https?://web\.archive\.org/web/(?P<ts>\d+)(?:if_|id_)?/(?P<original>https?://.+)$",
+        re.IGNORECASE,
+    )
 
     def get_base_url(self) -> str:
         """Return the base URL for Indiana's legislative website."""
@@ -76,6 +80,7 @@ class IndianaScraper(BaseStateScraper):
             code_name=code_name,
             max_statutes=int(target_statutes),
         )
+        self._mark_skip_hydrate_for_archived_justia_records(resumed)
         if target_statutes < 30 and max_statutes is None:
             seed_pdfs = await self._scrape_seed_archive_pdfs(
                 code_name=code_name,
@@ -112,6 +117,7 @@ class IndianaScraper(BaseStateScraper):
         _merge(archival)
         _merge(justia_titles)
         _merge(title_page_statutes)
+        self._mark_skip_hydrate_for_archived_justia_records(merged)
 
         min_full_corpus_records = int(os.getenv("INDIANA_FULL_CORPUS_MIN_RECORDS", "30") or "30")
         if merged and (not full_corpus or len(merged) >= min_full_corpus_records):
@@ -324,6 +330,7 @@ class IndianaScraper(BaseStateScraper):
                     continue
 
                 abs_url = href if href.startswith("http") else urljoin(page_url, href)
+                abs_url = self._normalize_wayback_child_url(page_url=page_url, candidate_url=abs_url)
                 abs_url = self._canonicalize_statute_url(abs_url)
                 lower_url = abs_url.lower()
                 lower_label = label.lower()
@@ -341,6 +348,10 @@ class IndianaScraper(BaseStateScraper):
                 )
                 if is_index and abs_url not in seen_pages and len(seen_pages) + len(queue) < crawl_limit:
                     queue.append(abs_url)
+
+                is_section_like = self._is_probable_indiana_section_url(lower_url)
+                if is_index and not is_section_like:
+                    continue
 
                 looks_statutory = (
                     self._is_probable_statute_link(label, abs_url, page_url)
@@ -376,6 +387,9 @@ class IndianaScraper(BaseStateScraper):
                             "source_kind": "archived_justia_indiana_code",
                             "discovery_method": "wayback_justia_link_graph",
                             "record_type": "archived_justia_link",
+                            # Link-graph records are often index-like stubs;
+                            # avoid expensive hydrate fallback loops.
+                            "skip_hydrate": True,
                         },
                     )
                 )
@@ -452,6 +466,7 @@ class IndianaScraper(BaseStateScraper):
                         continue
 
                     abs_url = href if href.startswith("http") else urljoin(page_url, href)
+                    abs_url = self._normalize_wayback_child_url(page_url=page_url, candidate_url=abs_url)
                     abs_url = self._canonicalize_statute_url(abs_url)
                     lower_url = abs_url.lower()
                     lower_label = label.lower()
@@ -468,6 +483,10 @@ class IndianaScraper(BaseStateScraper):
                     if is_index and abs_url not in queued and len(queued) < crawl_limit:
                         queued.add(abs_url)
                         queue.append(abs_url)
+
+                    is_section_like = self._is_probable_indiana_section_url(lower_url)
+                    if is_index and not is_section_like:
+                        continue
 
                     looks_statutory = (
                         self._is_probable_statute_link(label, abs_url, page_url)
@@ -854,6 +873,10 @@ class IndianaScraper(BaseStateScraper):
         if not fetch_url:
             return b""
 
+        rewritten_wayback = self._rewrite_plain_wayback_url(fetch_url)
+        if rewritten_wayback:
+            fetch_url = rewritten_wayback
+
         if "web.archive.org/web/" not in fetch_url:
             return await self._fetch_page_content_with_archival_fallback(
                 fetch_url,
@@ -880,6 +903,110 @@ class IndianaScraper(BaseStateScraper):
                 timeout_seconds=timeout_seconds,
             )
         return b""
+
+    def _normalize_wayback_child_url(self, *, page_url: str, candidate_url: str) -> str:
+        """Normalize child links under Wayback replay pages to replay URLs."""
+        normalized = str(candidate_url or "").strip()
+        if not normalized:
+            return normalized
+        if "web.archive.org/web/" in normalized:
+            return normalized
+
+        replay_match = self._WAYBACK_REPLAY_RE.search(str(page_url or "").strip())
+        if replay_match is None:
+            return normalized
+
+        timestamp = str(replay_match.group("ts") or "").strip()
+        parent_original = str(replay_match.group("original") or "").strip()
+        if not timestamp or not parent_original:
+            return normalized
+
+        try:
+            parent_original_parsed = urlparse(parent_original)
+            parsed = urlparse(normalized)
+        except Exception:
+            return normalized
+
+        if not parent_original_parsed.scheme or not parent_original_parsed.netloc:
+            return normalized
+
+        path = str(parsed.path or "").strip()
+        query = f"?{parsed.query}" if parsed.query else ""
+        host = str(parsed.netloc or "").strip().lower()
+
+        if host in {"web.archive.org", "www.web.archive.org"} and "/web/" in path:
+            return normalized
+
+        if host in {"web.archive.org", "www.web.archive.org"}:
+            original_url = f"{parent_original_parsed.scheme}://{parent_original_parsed.netloc}{path}{query}"
+        elif host:
+            original_url = normalized
+        else:
+            original_url = f"{parent_original_parsed.scheme}://{parent_original_parsed.netloc}{path}{query}"
+
+        return f"https://web.archive.org/web/{timestamp}/{quote(original_url, safe=':/?=&._-')}"
+
+    def _rewrite_plain_wayback_url(self, url: str) -> str:
+        """Rewrite plain web.archive paths to timestamped replay URLs."""
+        value = str(url or "").strip()
+        if not value:
+            return value
+        if "web.archive.org/web/" in value:
+            return value
+
+        try:
+            parsed = urlparse(value)
+        except Exception:
+            return value
+
+        host = str(parsed.netloc or "").strip().lower()
+        path = str(parsed.path or "")
+        if host not in {"web.archive.org", "www.web.archive.org"}:
+            return value
+        if not path.startswith("/codes/indiana/"):
+            return value
+
+        replay_ts = str(os.getenv("INDIANA_WAYBACK_FALLBACK_TIMESTAMP", "20241203192652") or "").strip()
+        if not replay_ts:
+            replay_ts = "20241203192652"
+        original_url = f"https://law.justia.com{path}"
+        if parsed.query:
+            original_url += f"?{parsed.query}"
+        return f"https://web.archive.org/web/{replay_ts}/{quote(original_url, safe=':/?=&._-')}"
+
+    def _is_probable_indiana_section_url(self, lower_url: str) -> bool:
+        value = str(lower_url or "").strip().lower()
+        if not value:
+            return False
+        if "/section-" in value:
+            return True
+        if re.search(r"/\d+(?:-\d+){2,}(?:\.html)?(?:/)?$", value):
+            return True
+        if value.endswith("/index.html"):
+            return False
+        # Article/chapter index pages frequently end in `.../chX.html` and are
+        # high-noise placeholders. Keep them crawlable, but do not emit them as
+        # statutes.
+        if re.search(r"/title\d+(?:\.\d+)?/(?:ar\d+(?:\.\d+)?/)?ch\d+(?:\.\d+)?\.html$", value):
+            return False
+        return bool(re.search(r"/title\d+(?:\.\d+)?/(?:ar\d+(?:\.\d+)?/)?(?:ch\d+(?:\.\d+)?/)?[^/]+\.html$", value))
+
+    def _mark_skip_hydrate_for_archived_justia_records(self, statutes: List[NormalizedStatute]) -> None:
+        """Prevent costly hydrate retries for archived Justia placeholder URLs."""
+        for statute in statutes or []:
+            if not isinstance(statute, NormalizedStatute):
+                continue
+            source_url = self._canonicalize_statute_url(str(statute.source_url or "").strip())
+            if not source_url:
+                continue
+            lower_url = source_url.lower()
+            structured = statute.structured_data if isinstance(statute.structured_data, dict) else {}
+            source_kind = str(structured.get("source_kind") or "").strip().lower()
+            if "archived_justia_indiana" not in source_kind and "law.justia.com/codes/indiana/" not in lower_url:
+                continue
+            structured_update = dict(structured)
+            structured_update["skip_hydrate"] = True
+            statute.structured_data = structured_update
 
     async def _request_bytes_direct(self, url: str, headers: Dict[str, str], timeout: int) -> bytes:
         cached = await self._load_page_bytes_from_any_cache(url)

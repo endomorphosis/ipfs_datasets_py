@@ -319,6 +319,89 @@ async def test_indiana_archived_justia_titles_prefers_link_graph_rows(monkeypatc
     assert statutes[0].structured_data["discovery_method"] == "wayback_justia_link_graph"
 
 
+def test_indiana_normalize_wayback_child_url_uses_parent_replay_timestamp():
+    scraper = IndianaScraper("IN", "Indiana")
+    replay_parent = "https://web.archive.org/web/20241203192652/https://law.justia.com/codes/indiana/2010/"
+    child = "https://web.archive.org/codes/indiana/2010/title27/ar17/index.html"
+
+    normalized = scraper._normalize_wayback_child_url(page_url=replay_parent, candidate_url=child)
+
+    assert normalized.startswith("https://web.archive.org/web/20241203192652/")
+    assert "law.justia.com/codes/indiana/2010/title27/ar17/index.html" in normalized
+
+
+def test_indiana_rewrite_plain_wayback_url_maps_codes_path_to_replay():
+    scraper = IndianaScraper("IN", "Indiana")
+    rewritten = scraper._rewrite_plain_wayback_url("https://web.archive.org/codes/indiana/2010/title27/ar17/index.html")
+    assert rewritten.startswith("https://web.archive.org/web/20241203192652/")
+    assert "law.justia.com/codes/indiana/2010/title27/ar17/index.html" in rewritten
+
+
+def test_indiana_marks_archived_justia_rows_skip_hydrate():
+    scraper = IndianaScraper("IN", "Indiana")
+    archived = NormalizedStatute(
+        state_code="IN",
+        state_name="Indiana",
+        statute_id="Indiana Code § 35-42-1-1",
+        code_name="Indiana Code",
+        section_number="35-42-1-1",
+        section_name="Sample",
+        full_text="Section 35-42-1-1: Sample",
+        source_url="https://web.archive.org/web/20241203192652/https://law.justia.com/codes/indiana/2010/title35/chapter-42/section-35-42-1-1/",
+        official_cite="Ind. Code § 35-42-1-1",
+        metadata=StatuteMetadata(),
+        structured_data={"source_kind": "archived_justia_indiana_code"},
+    )
+    live = NormalizedStatute(
+        state_code="IN",
+        state_name="Indiana",
+        statute_id="Indiana Code § live",
+        code_name="Indiana Code",
+        section_number="live",
+        section_name="Live",
+        full_text="Live statute text",
+        source_url="https://iga.in.gov/legislative/laws/2024/ic/titles/",
+        official_cite="Ind. Code live",
+        metadata=StatuteMetadata(),
+        structured_data={},
+    )
+
+    scraper._mark_skip_hydrate_for_archived_justia_records([archived, live])
+
+    assert archived.structured_data.get("skip_hydrate") is True
+    assert "skip_hydrate" not in live.structured_data
+
+
+@pytest.mark.anyio
+async def test_indiana_link_graph_rows_mark_skip_hydrate_and_replay_urls(monkeypatch: pytest.MonkeyPatch):
+    replay_seed = "https://web.archive.org/web/20241203192652/https://law.justia.com/codes/indiana/2010/title35/title35.html"
+
+    async def _fake_fetch(self, url: str, timeout_seconds: int = 35, allow_archival_fallback: bool = False):
+        if "title35/title35.html" in url:
+            return (
+                "<html><body>"
+                "<a href=\"/codes/indiana/2010/title35/chapter-42/section-35-42-1-1/\">"
+                "IC 35-42-1-1 Sample section"
+                "</a>"
+                "</body></html>"
+            ).encode("utf-8")
+        return b"<html><body></body></html>"
+
+    monkeypatch.setattr(IndianaScraper, "_fetch_archived_indiana_page", _fake_fetch)
+
+    scraper = IndianaScraper("IN", "Indiana")
+    rows = await scraper._crawl_archived_justia_link_graph(
+        code_name="Indiana Code",
+        seed_urls=[replay_seed],
+        max_statutes=2,
+    )
+
+    assert rows
+    first = rows[0]
+    assert first.structured_data.get("skip_hydrate") is True
+    assert str(first.source_url).startswith("https://web.archive.org/web/20241203192652/")
+
+
 @pytest.mark.anyio
 async def test_georgia_custom_scrape_records_fetch_analytics(monkeypatch: pytest.MonkeyPatch):
     async def _fake_unified_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
