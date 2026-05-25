@@ -372,6 +372,59 @@ def test_indiana_marks_archived_justia_rows_skip_hydrate():
     assert "skip_hydrate" not in live.structured_data
 
 
+def test_indiana_section_number_derivation_avoids_title_chapter_indexes():
+    scraper = IndianaScraper("IN", "Indiana")
+    chapter_index = "https://web.archive.org/web/20241203192652/https://law.justia.com/codes/indiana/2010/title35/ar42/ch1/index.html"
+    section_url = "https://web.archive.org/web/20241203192652/https://law.justia.com/codes/indiana/2010/title35/chapter-42/section-35-42-1-1/"
+
+    chapter_value = scraper._derive_indiana_section_number(
+        label="Chapter 1",
+        source_url=chapter_index,
+    )
+    section_value = scraper._derive_indiana_section_number(
+        label="IC 35-42-1-1",
+        source_url=section_url,
+    )
+
+    assert chapter_value == ""
+    assert section_value == "35-42-1-1"
+    assert scraper._looks_like_indiana_section_number(chapter_value) is False
+    assert scraper._looks_like_indiana_section_number(section_value) is True
+
+
+def test_indiana_substantive_filter_rejects_title_index_placeholders():
+    scraper = IndianaScraper("IN", "Indiana")
+    title_index = NormalizedStatute(
+        state_code="IN",
+        state_name="Indiana",
+        statute_id="Indiana Code § Title 1",
+        code_name="Indiana Code",
+        section_number="Title 1",
+        section_name="TITLE 1. GENERAL PROVISIONS",
+        full_text="TITLE 1. GENERAL PROVISIONS",
+        source_url="https://web.archive.org/web/20241203192652/https://law.justia.com/codes/indiana/2010/title1/title1.html",
+        official_cite="Ind. Code Title 1",
+        metadata=StatuteMetadata(),
+        structured_data={"record_type": "archived_justia_title_index", "source_kind": "archived_justia_indiana_title_index"},
+    )
+    section_record = NormalizedStatute(
+        state_code="IN",
+        state_name="Indiana",
+        statute_id="Indiana Code § 35-42-1-1",
+        code_name="Indiana Code",
+        section_number="35-42-1-1",
+        section_name="Sample Section",
+        full_text="IC 35-42-1-1. Sample statute text body with substantive legal content.",
+        source_url="https://web.archive.org/web/20241203192652/https://law.justia.com/codes/indiana/2010/title35/chapter-42/section-35-42-1-1/",
+        official_cite="Ind. Code § 35-42-1-1",
+        metadata=StatuteMetadata(),
+        structured_data={"record_type": "archived_justia_link", "source_kind": "archived_justia_indiana_code"},
+    )
+
+    assert scraper._is_substantive_indiana_record(title_index) is False
+    assert scraper._is_substantive_indiana_record(section_record) is True
+
+
 @pytest.mark.anyio
 async def test_indiana_link_graph_rows_mark_skip_hydrate_and_replay_urls(monkeypatch: pytest.MonkeyPatch):
     replay_seed = "https://web.archive.org/web/20241203192652/https://law.justia.com/codes/indiana/2010/title35/title35.html"

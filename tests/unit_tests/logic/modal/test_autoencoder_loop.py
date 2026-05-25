@@ -89,6 +89,7 @@ def test_autoencoder_loop_gate_includes_multiview_legal_ir_losses() -> None:
         "fol_tdfol",
         "cec_dcec",
         "external_prover_router",
+        "zkp_attestation",
     )
     assert metrics["legal_ir_target_count"] == 1.0
     assert metrics["legal_ir_multiview_total_loss"] > 0.0

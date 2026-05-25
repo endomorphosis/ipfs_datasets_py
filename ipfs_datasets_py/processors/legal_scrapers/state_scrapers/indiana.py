@@ -119,23 +119,31 @@ class IndianaScraper(BaseStateScraper):
         _merge(title_page_statutes)
         self._mark_skip_hydrate_for_archived_justia_records(merged)
 
-        min_full_corpus_records = int(os.getenv("INDIANA_FULL_CORPUS_MIN_RECORDS", "30") or "30")
-        if merged and (not full_corpus or len(merged) >= min_full_corpus_records):
-            self.logger.info(f"Indiana archival fallback: Scraped {len(merged)} sections")
-            return merged
-
-        if full_corpus and merged:
-            self.logger.warning(
-                "Indiana archive/title recovery found only %s sections in full-corpus mode; trying generic recovery before accepting partial corpus",
-                len(merged),
+        substantive = [statute for statute in merged if self._is_substantive_indiana_record(statute)]
+        if len(substantive) != len(merged):
+            self.logger.info(
+                "Indiana filtering removed %s non-substantive fallback records",
+                max(0, len(merged) - len(substantive)),
             )
 
-        if full_corpus or self._env_flag("INDIANA_GENERIC_FALLBACK"):
+        min_full_corpus_records = int(os.getenv("INDIANA_FULL_CORPUS_MIN_RECORDS", "30") or "30")
+        if substantive and (not full_corpus or len(substantive) >= min_full_corpus_records):
+            self.logger.info(f"Indiana archival fallback: Scraped {len(substantive)} sections")
+            return substantive
+
+        if full_corpus and substantive:
+            self.logger.warning(
+                "Indiana archive/title recovery found only %s sections in full-corpus mode; trying generic recovery before accepting partial corpus",
+                len(substantive),
+            )
+
+        if self._env_flag("INDIANA_GENERIC_FALLBACK"):
             generic = await self._generic_scrape(code_name, code_url, "Ind. Code")
             _merge(generic)
-            if merged:
-                self.logger.info(f"Indiana recovery fallback: Scraped {len(merged)} sections")
-                return merged
+            substantive = [statute for statute in merged if self._is_substantive_indiana_record(statute)]
+            if substantive:
+                self.logger.info(f"Indiana recovery fallback: Scraped {len(substantive)} sections")
+                return substantive
 
         self.logger.warning("Indiana official/archive direct crawl returned no statutes; skipping search/generic recovery fallback")
         return []
@@ -649,6 +657,27 @@ class IndianaScraper(BaseStateScraper):
         if re.fullmatch(r"\d+(?:-\d+){3,}[a-z0-9.\-]*", value):
             return True
         if re.fullmatch(r"\d+[a-z]?(?:\.\d+){3,}[a-z]?", value):
+            return True
+        return False
+
+    def _is_substantive_indiana_record(self, statute: NormalizedStatute) -> bool:
+        if not isinstance(statute, NormalizedStatute):
+            return False
+        section_number = str(statute.section_number or "").strip()
+        full_text = self._normalize_legal_text(str(statute.full_text or ""))
+        structured = statute.structured_data if isinstance(statute.structured_data, dict) else {}
+        record_type = str(structured.get("record_type") or "").strip().lower()
+        source_kind = str(structured.get("source_kind") or "").strip().lower()
+
+        if record_type == "archived_justia_title_index":
+            return False
+        if section_number.lower().startswith("title "):
+            return False
+        if source_kind == "official_indiana_archived_chapter_pdf":
+            return True
+        if self._looks_like_indiana_section_number(section_number):
+            return True
+        if self._contains_statute_signals(full_text) and not self._looks_like_shallow_stub_text(full_text):
             return True
         return False
 

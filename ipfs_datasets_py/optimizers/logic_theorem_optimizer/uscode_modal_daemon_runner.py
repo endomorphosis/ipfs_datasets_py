@@ -1885,6 +1885,10 @@ def build_paired_daemon_commands(
         str(getattr(args, "autoencoder_max_objective_residual_features", 64)),
         "--autoencoder-max-provenance-alignment-features",
         str(getattr(args, "autoencoder_max_provenance_alignment_features", 64)),
+        "--autoencoder-max-discourse-flow-features",
+        str(getattr(args, "autoencoder_max_discourse_flow_features", 64)),
+        "--autoencoder-max-proof-obligation-features",
+        str(getattr(args, "autoencoder_max_proof_obligation_features", 64)),
         "--autoencoder-embedding-head-update-normalization",
         str(getattr(args, "autoencoder_embedding_head_update_normalization", 0.5)),
         "--autoencoder-family-logit-head-update-normalization",
@@ -4950,6 +4954,28 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--autoencoder-max-discourse-flow-features",
+        type=int,
+        default=64,
+        help=(
+            "Maximum discourse-flow features to expose to the feature decoder. "
+            "These bind source cue order, clause scope, modal operators, and "
+            "compiler/decompiler route hints so condition/force/exception/time "
+            "choreography transfers across paraphrased legal text."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-max-proof-obligation-features",
+        type=int,
+        default=64,
+        help=(
+            "Maximum proof-obligation features to expose to the feature "
+            "decoder. These bind source roles, modal operators, bridge "
+            "adapters, external prover routes, and ZKP/proof obligations into "
+            "a shared compiler/decompiler proof plan."
+        ),
+    )
+    parser.add_argument(
         "--autoencoder-family-embedding-weight-scale",
         type=float,
         default=0.5,
@@ -6029,6 +6055,12 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         max_provenance_alignment_features=int(
             getattr(args, "autoencoder_max_provenance_alignment_features", 64)
         ),
+        max_discourse_flow_features=int(
+            getattr(args, "autoencoder_max_discourse_flow_features", 64)
+        ),
+        max_proof_obligation_features=int(
+            getattr(args, "autoencoder_max_proof_obligation_features", 64)
+        ),
         feature_activity_reference=int(
             getattr(args, "autoencoder_feature_activity_reference", 64)
         ),
@@ -6207,6 +6239,12 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     )
     summary["autoencoder_max_provenance_alignment_features"] = int(
         getattr(args, "autoencoder_max_provenance_alignment_features", 64)
+    )
+    summary["autoencoder_max_discourse_flow_features"] = int(
+        getattr(args, "autoencoder_max_discourse_flow_features", 64)
+    )
+    summary["autoencoder_max_proof_obligation_features"] = int(
+        getattr(args, "autoencoder_max_proof_obligation_features", 64)
     )
     summary["autoencoder_feature_activity_reference"] = int(
         getattr(args, "autoencoder_feature_activity_reference", 64)

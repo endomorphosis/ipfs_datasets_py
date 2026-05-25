@@ -1919,6 +1919,7 @@ class AdaptiveModalAutoencoder:
         max_objective_residual_features: int = 64,
         max_provenance_alignment_features: int = 64,
         max_discourse_flow_features: int = 64,
+        max_proof_obligation_features: int = 64,
         embedding_head_update_normalization: float = 0.0,
         family_logit_head_update_normalization: float = 0.0,
         legal_ir_view_head_update_normalization: float = 0.0,
@@ -2121,6 +2122,10 @@ class AdaptiveModalAutoencoder:
         self.max_discourse_flow_features = max(
             0,
             int(max_discourse_flow_features),
+        )
+        self.max_proof_obligation_features = max(
+            0,
+            int(max_proof_obligation_features),
         )
         self.embedding_head_update_normalization = max(
             0.0,
@@ -4666,6 +4671,12 @@ class AdaptiveModalAutoencoder:
             self._discourse_flow_feature_keys_for(
                 sample,
                 prefix="legal-ir:discourse-flow",
+            )
+        )
+        keys.extend(
+            self._proof_obligation_feature_keys_for(
+                sample,
+                prefix="legal-ir:proof-obligation",
             )
         )
         keys.extend(
@@ -7354,7 +7365,15 @@ class AdaptiveModalAutoencoder:
 
         def cue_phase(cue: str) -> str:
             cue_atom = _feature_atom(cue)
-            if cue_atom in {"if", "when", "whenever", "unless", "provided", "subject_to"}:
+            if cue_atom in {
+                "if",
+                "when",
+                "whenever",
+                "unless",
+                "provided",
+                "provided_that",
+                "subject_to",
+            }:
                 return "condition"
             if cue_atom in {"except", "exception", "notwithstanding", "waiver", "exemption"}:
                 return "exception"
@@ -7370,12 +7389,27 @@ class AdaptiveModalAutoencoder:
                 return "definition"
             return "cue"
 
+        def formula_phase(cue: str, family: str) -> str:
+            phase = cue_phase(cue)
+            if phase == "cue" and family == "dynamic":
+                return "event"
+            return phase
+
         subject_class = first_or_none(subject_classes)
         action_class = first_or_none(action_classes)
         object_class = first_or_none(object_classes)
         role_signature = f"{subject_class}:{action_class}:{object_class}"
+        formula_profiles: List[tuple[int, int, str, str, str]] = []
         cue_events: List[tuple[int, str, str, str, str, str]] = []
         for formula in list(sample.modal_ir.formulas or [])[:12]:
+            raw_start = int(getattr(formula.provenance, "start_char", 0))
+            raw_end = int(getattr(formula.provenance, "end_char", raw_start))
+            family = _feature_atom(formula.operator.family)
+            symbol = _feature_atom(formula.operator.symbol)
+            predicate_role = _feature_atom(
+                getattr(formula.predicate, "role", "") or "none"
+            )
+            formula_profiles.append((raw_start, raw_end, family, symbol, predicate_role))
             cue = _feature_atom(formula.metadata.get("cue") if formula.metadata else "")
             if not cue:
                 continue
@@ -7383,14 +7417,82 @@ class AdaptiveModalAutoencoder:
             start = int(cue_start) if cue_start is not None else int(
                 getattr(formula.provenance, "start_char", 0)
             )
-            family = _feature_atom(formula.operator.family)
-            symbol = _feature_atom(formula.operator.symbol)
-            predicate_role = _feature_atom(
-                getattr(formula.predicate, "role", "") or "none"
-            )
             cue_events.append(
-                (start, cue, cue_phase(cue), family, symbol, predicate_role)
+                (start, cue, formula_phase(cue, family), family, symbol, predicate_role)
             )
+
+        def operator_context_for_position(position: int) -> tuple[str, str, str]:
+            if not formula_profiles:
+                return ("", "", "none")
+            for start, end, family, symbol, predicate_role in formula_profiles:
+                if start <= position <= max(start, end):
+                    return (family, symbol, predicate_role)
+            nearest = min(
+                formula_profiles,
+                key=lambda item: min(abs(position - item[0]), abs(position - item[1])),
+            )
+            return (nearest[2], nearest[3], nearest[4])
+
+        seen_cue_positions = {
+            (start, cue)
+            for start, cue, _phase, _family, _symbol, _predicate_role in cue_events
+        }
+        occupied_text_cue_ranges: List[tuple[int, int]] = []
+        text_cue_patterns = (
+            ("subject_to", re.compile(r"\bsubject\s+to\b")),
+            ("provided_that", re.compile(r"\bprovided\s+that\b")),
+            ("must_not", re.compile(r"\bmust\s+not\b")),
+            ("if", re.compile(r"\bif\b")),
+            ("when", re.compile(r"\bwhen\b")),
+            ("whenever", re.compile(r"\bwhenever\b")),
+            ("unless", re.compile(r"\bunless\b")),
+            ("provided", re.compile(r"\bprovided\b")),
+            ("except", re.compile(r"\bexcept\b")),
+            ("exception", re.compile(r"\bexception\b")),
+            ("notwithstanding", re.compile(r"\bnotwithstanding\b")),
+            ("waiver", re.compile(r"\bwaiver\b")),
+            ("exemption", re.compile(r"\bexemption\b")),
+            ("before", re.compile(r"\bbefore\b")),
+            ("after", re.compile(r"\bafter\b")),
+            ("within", re.compile(r"\bwithin\b")),
+            ("until", re.compile(r"\buntil\b")),
+            ("during", re.compile(r"\bduring\b")),
+            ("may", re.compile(r"\bmay\b")),
+            ("authorized", re.compile(r"\bauthorized\b")),
+            ("authorize", re.compile(r"\bauthorize\b")),
+            ("permitted", re.compile(r"\bpermitted\b")),
+            ("eligible", re.compile(r"\beligible\b")),
+            ("entitled", re.compile(r"\bentitled\b")),
+            ("shall", re.compile(r"\bshall\b")),
+            ("must", re.compile(r"\bmust\b")),
+            ("required", re.compile(r"\brequired\b")),
+            ("requires", re.compile(r"\brequires\b")),
+            ("prohibited", re.compile(r"\bprohibited\b")),
+            ("prohibit", re.compile(r"\bprohibit\b")),
+            ("unlawful", re.compile(r"\bunlawful\b")),
+            ("means", re.compile(r"\bmeans\b")),
+            ("defined", re.compile(r"\bdefined\b")),
+            ("definition", re.compile(r"\bdefinition\b")),
+            ("include", re.compile(r"\binclude\b")),
+            ("includes", re.compile(r"\bincludes\b")),
+        )
+        for cue, pattern in text_cue_patterns:
+            for match in pattern.finditer(text):
+                start = int(match.start())
+                end = int(match.end())
+                if (start, cue) in seen_cue_positions:
+                    continue
+                if any(
+                    start < occupied_end and end > occupied_start
+                    for occupied_start, occupied_end in occupied_text_cue_ranges
+                ):
+                    continue
+                family, symbol, predicate_role = operator_context_for_position(start)
+                cue_events.append(
+                    (start, cue, cue_phase(cue), family, symbol, predicate_role)
+                )
+                seen_cue_positions.add((start, cue))
+                occupied_text_cue_ranges.append((start, end))
         cue_events = sorted(cue_events, key=lambda item: (item[0], item[1], item[3], item[4]))
         phase_sequence = "->".join(event[2] for event in cue_events[:8]) or "none"
         cue_sequence = "->".join(event[1] for event in cue_events[:8]) or "none"
@@ -7403,6 +7505,10 @@ class AdaptiveModalAutoencoder:
             position = text.find(anchor_atom.replace("_", " "))
             if position >= 0:
                 role_positions.append((position, str(role)))
+        position_by_role = {
+            role: position
+            for position, role in sorted(role_positions)
+        }
         role_order = "->".join(
             role for _position, role in sorted(role_positions)
         ) or "none"
@@ -7410,16 +7516,34 @@ class AdaptiveModalAutoencoder:
         add("bias")
         add(f"scope:{scope_signature}")
         add(f"role-flow:{role_signature}:{role_order}:{scope_signature}")
+        add(f"role-order:{role_order}")
         add(f"phase-sequence:{phase_sequence}")
         add(f"cue-sequence:{cue_sequence}")
+        add(f"decompiler-order:{phase_sequence}:{role_order}:{scope_signature}")
+        add(f"compiler-flow-contract:{phase_sequence}:{role_signature}:{scope_signature}")
+        add(f"todo-route:refine_semantic_decompiler_reconstruction:{phase_sequence}:{role_order}")
         add(f"cue-count:{_count_bucket(len(cue_events))}")
         for left_event, right_event in zip(cue_events, cue_events[1:]):
             add(f"phase-transition:{left_event[2]}->{right_event[2]}:{scope_signature}")
             add(f"cue-transition:{left_event[1]}->{right_event[1]}:{scope_signature}")
         for _start, cue, phase, family, symbol, predicate_role in cue_events[:8]:
+            add(f"source-cue-flow:{cue}:{phase}:{role_signature}:{scope_signature}")
+            add(f"source-phase-flow:{phase}:{role_order}:{scope_signature}")
             if family and symbol:
                 add(f"cue-operator-flow:{cue}:{family}:{symbol}:{phase}:{predicate_role}")
                 add(f"phase-operator-flow:{phase}:{family}:{symbol}:{predicate_role}")
+                add(
+                    f"operator-phase-flow:{family}:{symbol}:{phase}:"
+                    f"{scope_signature}"
+                )
+        action_position = position_by_role.get("action")
+        if action_position is not None:
+            for scope_role in ("condition", "exception", "temporal"):
+                role_position = position_by_role.get(scope_role)
+                if role_position is None:
+                    continue
+                relation = "before-action" if role_position < action_position else "after-action"
+                add(f"scope-order:{scope_role}:{relation}:{scope_signature}")
         for force in force_tags[:2]:
             for polarity in polarity_tags[:2]:
                 add(
@@ -7453,6 +7577,267 @@ class AdaptiveModalAutoencoder:
         ).hexdigest()[:16]
         keys.insert(1, f"{normalized_prefix}:flow-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_discourse_flow_features]
+        cache[cache_key] = list(result)
+        return result
+
+    def _proof_obligation_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "proof-obligation",
+    ) -> List[str]:
+        """Bridge-specific proof obligations inferred from source roles and IR."""
+        normalized_prefix = str(prefix or "proof-obligation").strip(":")
+        cache_key = f"proof_obligation_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_proof_obligation_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        subject_classes = role_classes.get("subject", [])
+        action_classes = role_classes.get("action", [])
+        object_classes = role_classes.get("object", [])
+        condition_classes = role_classes.get("condition", [])
+        exception_classes = role_classes.get("exception", [])
+        temporal_classes = role_classes.get("temporal", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        source_has_condition = "conditioned" in scope_tags
+        source_has_exception = "excepted" in scope_tags
+        source_has_temporal = "temporal" in scope_tags
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        def route_atom(route: str) -> str:
+            return _feature_atom(route, max_tokens=6) or "unknown_route"
+
+        def repair_route_for(route: str) -> str:
+            normalized = str(route or "").lower()
+            if "deontic" in normalized:
+                return "repair_deontic_bridge_quality_gate"
+            if "fol" in normalized or "tdfol" in normalized:
+                return "repair_tdfol_bridge_parse"
+            if "cec" in normalized:
+                return "repair_cec_dcec_bridge"
+            if "external_prover" in normalized:
+                return "repair_multiview_legal_ir_prover_gate"
+            if "zkp" in normalized:
+                return "repair_zkp_attestation_bridge"
+            if "modal_frame_logic" in normalized:
+                return "repair_flogic_ontology_constraints"
+            return "repair_multiview_legal_ir_view_coverage"
+
+        def proof_goal_for(
+            family: str,
+            symbol: str,
+            *,
+            condition_state: bool,
+            exception_state: bool,
+        ) -> str:
+            if family == "dynamic":
+                return "prove-event-transition"
+            if family == "temporal":
+                return "prove-temporal-order"
+            if family in {"first_order", "alethic"}:
+                return "prove-predicate-entailment"
+            if family == "conditional_normative" or condition_state or exception_state:
+                if symbol == "p":
+                    return "prove-guarded-permission"
+                if symbol == "f":
+                    return "prove-guarded-prohibition"
+                return "prove-guarded-duty"
+            if symbol == "p":
+                return "prove-permission"
+            if symbol == "f":
+                return "prove-prohibition"
+            if symbol == "o":
+                return "prove-duty"
+            return "prove-modal-claim"
+
+        def routes_for_formula(
+            family: str,
+            symbol: str,
+            *,
+            condition_state: bool,
+            exception_state: bool,
+        ) -> List[str]:
+            routes = ["modal_frame_logic"]
+            if (
+                family in {"deontic", "conditional_normative"}
+                or symbol in {"o", "p", "f"}
+            ):
+                routes.append("deontic_norms")
+            if (
+                family in {"conditional_normative", "first_order"}
+                or condition_state
+                or exception_state
+                or source_has_condition
+                or source_has_exception
+            ):
+                routes.append("fol_tdfol")
+            if family in {"dynamic", "temporal"} or source_has_temporal:
+                routes.append("cec_dcec")
+            if family or symbol:
+                routes.append("external_prover_router")
+            if any(
+                route in {"deontic_norms", "fol_tdfol", "cec_dcec", "external_prover_router"}
+                for route in routes
+            ):
+                routes.append("zkp_attestation")
+            return _unique_preserve_order(routes)
+
+        subject_class = first_or_none(subject_classes)
+        action_class = first_or_none(action_classes)
+        object_class = first_or_none(object_classes)
+        condition_class = first_or_none(condition_classes)
+        exception_class = first_or_none(exception_classes)
+        temporal_class = first_or_none(temporal_classes)
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        formulas = list(sample.modal_ir.formulas or [])
+        route_signature_parts: List[str] = []
+        goal_signature_parts: List[str] = []
+
+        add("bias")
+        add(f"source-proof-contract:{role_signature}:{scope_signature}")
+        for force in force_tags[:2]:
+            for polarity in polarity_tags[:2]:
+                add(
+                    f"source-obligation:{force}:{polarity}:"
+                    f"{scope_signature}:{role_signature}"
+                )
+        if not formulas:
+            add(f"route-signature:none:{scope_signature}")
+            add(f"todo-route:add_deterministic_parser_rule:{role_signature}:{scope_signature}")
+
+        for formula in formulas[:10]:
+            family = _feature_atom(formula.operator.family)
+            system = _feature_atom(formula.operator.system)
+            symbol = _feature_atom(formula.operator.symbol)
+            predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
+            predicate_role = _feature_atom(
+                getattr(formula.predicate, "role", "") or "none"
+            )
+            predicate_head = predicate_name.split("_", 1)[0] if predicate_name else ""
+            predicate_classes = self._legal_semantic_classes_for(
+                predicate_head,
+                role="predicate",
+            )
+            predicate_class = first_or_none(predicate_classes) or action_class
+            arguments = list(getattr(formula.predicate, "arguments", []) or [])
+            conditions = list(getattr(formula, "conditions", []) or [])
+            exceptions = list(getattr(formula, "exceptions", []) or [])
+            condition_state = bool(conditions)
+            exception_state = bool(exceptions)
+            arity_bucket = _count_bucket(len(arguments))
+            goal = proof_goal_for(
+                family,
+                symbol,
+                condition_state=condition_state,
+                exception_state=exception_state,
+            )
+            routes = routes_for_formula(
+                family,
+                symbol,
+                condition_state=condition_state,
+                exception_state=exception_state,
+            )
+            formula_route_signature = "+".join(route_atom(route) for route in routes)
+            route_signature_parts.extend(routes)
+            goal_signature_parts.append(goal)
+
+            if family and symbol:
+                add(
+                    f"formula-proof:{goal}:{family}:{symbol}:{predicate_role}:"
+                    f"c{'yes' if condition_state else 'no'}:"
+                    f"e{'yes' if exception_state else 'no'}:a{arity_bucket}"
+                )
+                add(
+                    f"decompiler-proof-slot:{goal}:{role_signature}:"
+                    f"{scope_signature}:{predicate_role}"
+                )
+                if system:
+                    add(
+                        f"prover-contract:{family}:{system}:{symbol}:"
+                        f"{formula_route_signature}:{goal}"
+                    )
+                for route in routes:
+                    route_name = route_atom(route)
+                    add(
+                        f"proof-route:{route_name}:{goal}:{family}:{symbol}:"
+                        f"{predicate_class}:{scope_signature}"
+                    )
+                    add(
+                        f"todo-route:{repair_route_for(route)}:"
+                        f"{route_name}:{goal}:{scope_signature}"
+                    )
+                if condition_state or exception_state or source_has_condition or source_has_exception:
+                    add(
+                        f"guarded-proof:{goal}:"
+                        f"source-c{'yes' if source_has_condition else 'no'}:"
+                        f"source-e{'yes' if source_has_exception else 'no'}:"
+                        f"ir-c{'yes' if condition_state else 'no'}:"
+                        f"ir-e{'yes' if exception_state else 'no'}:"
+                        f"{formula_route_signature}"
+                    )
+                if source_has_temporal or family in {"dynamic", "temporal"}:
+                    add(
+                        f"event-proof:{goal}:{action_class}:{temporal_class}:"
+                        f"{formula_route_signature}"
+                    )
+
+        route_signature = "+".join(
+            route_atom(route)
+            for route in _unique_preserve_order(route_signature_parts)
+        )
+        goal_signature = "+".join(_unique_preserve_order(goal_signature_parts)) or "none"
+        if route_signature:
+            add(f"route-signature:{route_signature}:{scope_signature}")
+        add(f"goal-signature:{goal_signature}:{scope_signature}")
+        for route in _unique_preserve_order(route_signature_parts):
+            route_name = route_atom(route)
+            add(f"bridge-proof-target:{route_name}:{scope_signature}:{role_signature}")
+        if route_signature and goal_signature:
+            add(
+                f"compiler-proof-plan:{goal_signature}:"
+                f"{route_signature}:{role_signature}:{scope_signature}"
+            )
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:proof-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_proof_obligation_features]
         cache[cache_key] = list(result)
         return result
 
@@ -10007,6 +10392,7 @@ class AdaptiveModalAutoencoder:
         keys.extend(self._objective_residual_feature_keys_for(sample))
         keys.extend(self._provenance_alignment_feature_keys_for(sample))
         keys.extend(self._discourse_flow_feature_keys_for(sample))
+        keys.extend(self._proof_obligation_feature_keys_for(sample))
         keys.extend(
             f"semantic-slot:{slot.removeprefix('slot:')}"
             for slot in self._semantic_slot_distribution_for(sample).keys()
@@ -10214,6 +10600,7 @@ class AdaptiveModalAutoencoder:
             "predicate-arity-bin:",
             "predicate-role:",
             "provenance-alignment:",
+            "proof-obligation:",
             "repair-plan:",
             "round-trip-bridge:",
             "section-cue:",

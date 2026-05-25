@@ -60,6 +60,8 @@ COMMON_ARGS=(
   --autoencoder-max-logic-view-contract-features 64
   --autoencoder-max-objective-residual-features 64
   --autoencoder-max-provenance-alignment-features 64
+  --autoencoder-max-discourse-flow-features 64
+  --autoencoder-max-proof-obligation-features 64
   --autoencoder-max-semantic-slot-interactions 24
   --autoencoder-feature-activity-reference 64
   --autoencoder-feature-logit-clip 24.0
