@@ -356,7 +356,9 @@ class ModalAutoencoderTrainingState:
     family_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
     feature_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
     family_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
+    semantic_slot_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
     feature_family_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    semantic_slot_family_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
     legal_ir_view_logits: Dict[str, float] = field(default_factory=dict)
     legal_ir_view_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
     feature_legal_ir_view_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
@@ -394,6 +396,14 @@ class ModalAutoencoderTrainingState:
                 for view, vector in sorted(self.legal_ir_view_embedding_weights.items())
             },
             "legal_ir_view_logits": dict(sorted(self.legal_ir_view_logits.items())),
+            "semantic_slot_embedding_weights": {
+                slot: list(vector)
+                for slot, vector in sorted(self.semantic_slot_embedding_weights.items())
+            },
+            "semantic_slot_family_logits": {
+                slot: dict(sorted(logits.items()))
+                for slot, logits in sorted(self.semantic_slot_family_logits.items())
+            },
         }
 
     def to_json(self) -> str:
@@ -422,6 +432,14 @@ class ModalAutoencoderTrainingState:
             feature_family_logits={
                 feature: dict(logits)
                 for feature, logits in self.feature_family_logits.items()
+            },
+            semantic_slot_embedding_weights={
+                slot: list(vector)
+                for slot, vector in self.semantic_slot_embedding_weights.items()
+            },
+            semantic_slot_family_logits={
+                slot: dict(logits)
+                for slot, logits in self.semantic_slot_family_logits.items()
             },
             legal_ir_view_logits=dict(self.legal_ir_view_logits),
             legal_ir_view_embedding_weights={
@@ -477,8 +495,27 @@ class ModalAutoencoderTrainingState:
             for index, value in enumerate(vector):
                 current[index] += float(value) * scale
 
+        for slot, vector in other.semantic_slot_embedding_weights.items():
+            if slot not in self.semantic_slot_embedding_weights:
+                self.semantic_slot_embedding_weights[slot] = [
+                    float(value) * scale for value in vector
+                ]
+                continue
+            current = self.semantic_slot_embedding_weights[slot]
+            if len(current) != len(vector):
+                continue
+            for index, value in enumerate(vector):
+                current[index] += float(value) * scale
+
         for feature, logits in other.feature_family_logits.items():
             current_logits = self.feature_family_logits.setdefault(feature, {})
+            for family, value in logits.items():
+                current_logits[family] = current_logits.get(family, 0.0) + (
+                    float(value) * scale
+                )
+
+        for slot, logits in other.semantic_slot_family_logits.items():
+            current_logits = self.semantic_slot_family_logits.setdefault(slot, {})
             for family, value in logits.items():
                 current_logits[family] = current_logits.get(family, 0.0) + (
                     float(value) * scale
@@ -510,7 +547,9 @@ class ModalAutoencoderTrainingState:
         vector_counts: Dict[str, int] = {}
         family_vector_counts: Dict[str, int] = {}
         legal_view_vector_counts: Dict[str, int] = {}
+        semantic_slot_vector_counts: Dict[str, int] = {}
         logit_counts: Dict[tuple[str, str], int] = {}
+        semantic_slot_logit_counts: Dict[tuple[str, str], int] = {}
         legal_view_counts: Dict[str, int] = {}
         feature_legal_view_counts: Dict[tuple[str, str], int] = {}
 
@@ -548,11 +587,30 @@ class ModalAutoencoderTrainingState:
                     current[index] += float(value)
                 legal_view_vector_counts[view] += 1
 
+            for slot, vector in state.semantic_slot_embedding_weights.items():
+                if slot not in merged.semantic_slot_embedding_weights:
+                    merged.semantic_slot_embedding_weights[slot] = [0.0 for _ in vector]
+                    semantic_slot_vector_counts[slot] = 0
+                current = merged.semantic_slot_embedding_weights[slot]
+                if len(current) != len(vector):
+                    continue
+                for index, value in enumerate(vector):
+                    current[index] += float(value)
+                semantic_slot_vector_counts[slot] += 1
+
             for feature, logits in state.feature_family_logits.items():
                 current_logits = merged.feature_family_logits.setdefault(feature, {})
                 for family, value in logits.items():
                     current_logits[family] = current_logits.get(family, 0.0) + float(value)
                     logit_counts[(feature, family)] = logit_counts.get((feature, family), 0) + 1
+
+            for slot, logits in state.semantic_slot_family_logits.items():
+                current_logits = merged.semantic_slot_family_logits.setdefault(slot, {})
+                for family, value in logits.items():
+                    current_logits[family] = current_logits.get(family, 0.0) + float(value)
+                    semantic_slot_logit_counts[(slot, family)] = (
+                        semantic_slot_logit_counts.get((slot, family), 0) + 1
+                    )
 
             for view, value in state.legal_ir_view_logits.items():
                 merged.legal_ir_view_logits[view] = (
@@ -586,9 +644,20 @@ class ModalAutoencoderTrainingState:
             merged.legal_ir_view_embedding_weights[view] = [
                 value / count for value in merged.legal_ir_view_embedding_weights[view]
             ]
+        for slot, count in semantic_slot_vector_counts.items():
+            if count <= 0:
+                continue
+            merged.semantic_slot_embedding_weights[slot] = [
+                value / count for value in merged.semantic_slot_embedding_weights[slot]
+            ]
         for feature, logits in merged.feature_family_logits.items():
             for family, value in list(logits.items()):
                 count = logit_counts.get((feature, family), 0)
+                if count > 0:
+                    logits[family] = value / count
+        for slot, logits in merged.semantic_slot_family_logits.items():
+            for family, value in list(logits.items()):
+                count = semantic_slot_logit_counts.get((slot, family), 0)
                 if count > 0:
                     logits[family] = value / count
         for view, value in list(merged.legal_ir_view_logits.items()):
@@ -638,6 +707,18 @@ class ModalAutoencoderTrainingState:
                 str(view): [float(value) for value in vector]
                 for view, vector in dict(
                     data.get("legal_ir_view_embedding_weights", {})
+                ).items()
+            },
+            semantic_slot_embedding_weights={
+                str(slot): [float(value) for value in vector]
+                for slot, vector in dict(
+                    data.get("semantic_slot_embedding_weights", {})
+                ).items()
+            },
+            semantic_slot_family_logits={
+                str(slot): {str(name): float(value) for name, value in dict(logits).items()}
+                for slot, logits in dict(
+                    data.get("semantic_slot_family_logits", {})
                 ).items()
             },
             feature_legal_ir_view_logits={
@@ -763,7 +844,11 @@ class AdaptiveModalAutoencoder:
         feature_codec: Optional[Any] = None,
         feature_embedding_weight_scale: float = 0.5,
         family_embedding_weight_scale: float = 0.5,
+        semantic_slot_embedding_weight_scale: float = 0.5,
         feature_family_logit_scale: float = 0.0,
+        semantic_slot_family_logit_scale: float = 0.0,
+        semantic_slot_interaction_weight: float = 0.35,
+        max_semantic_slot_interactions: int = 24,
         legal_ir_view_logit_scale: float = 1.0,
         legal_ir_view_embedding_weight_scale: float = 0.5,
         cosine_reconstruction_weight: float = 0.25,
@@ -789,7 +874,23 @@ class AdaptiveModalAutoencoder:
             0.0,
             float(family_embedding_weight_scale),
         )
+        self.semantic_slot_embedding_weight_scale = max(
+            0.0,
+            float(semantic_slot_embedding_weight_scale),
+        )
         self.feature_family_logit_scale = max(0.0, float(feature_family_logit_scale))
+        self.semantic_slot_family_logit_scale = max(
+            0.0,
+            float(semantic_slot_family_logit_scale),
+        )
+        self.semantic_slot_interaction_weight = max(
+            0.0,
+            float(semantic_slot_interaction_weight),
+        )
+        self.max_semantic_slot_interactions = max(
+            0,
+            int(max_semantic_slot_interactions),
+        )
         self.legal_ir_view_logit_scale = max(0.0, float(legal_ir_view_logit_scale))
         self.legal_ir_view_embedding_weight_scale = max(
             0.0,
@@ -1617,6 +1718,10 @@ class AdaptiveModalAutoencoder:
             dimensions=len(base),
             use_sample_memory=use_sample_memory,
         )
+        semantic_slot_adjustment = self._semantic_slot_embedding_adjustment(
+            sample,
+            dimensions=len(base),
+        )
         legal_ir_view_adjustment = self._legal_ir_view_embedding_adjustment(
             sample,
             dimensions=len(base),
@@ -1624,10 +1729,11 @@ class AdaptiveModalAutoencoder:
         )
         adjustment = self._feature_embedding_adjustment(sample, dimensions=len(base))
         return [
-            base_value + family_value + view_value + adjustment_value
-            for base_value, family_value, view_value, adjustment_value in zip(
+            base_value + family_value + slot_value + view_value + adjustment_value
+            for base_value, family_value, slot_value, view_value, adjustment_value in zip(
                 base,
                 family_adjustment,
+                semantic_slot_adjustment,
                 legal_ir_view_adjustment,
                 adjustment,
             )
@@ -1826,6 +1932,14 @@ class AdaptiveModalAutoencoder:
                         * self.feature_family_logit_scale
                         * feature_scale
                     )
+        for slot, slot_weight in self._semantic_slot_distribution_for(sample).items():
+            for family, value in self.state.semantic_slot_family_logits.get(slot, {}).items():
+                if family in logits:
+                    logits[family] += (
+                        float(value)
+                        * float(slot_weight)
+                        * self.semantic_slot_family_logit_scale
+                    )
         if use_sample_memory:
             for family, value in self.state.family_logits.get(sample.sample_id, {}).items():
                 if family in logits:
@@ -1854,6 +1968,15 @@ class AdaptiveModalAutoencoder:
                         float(value)
                         * self.feature_family_logit_scale
                         * feature_scale
+                    )
+        for slot, slot_weight in self._semantic_slot_distribution_for(sample).items():
+            for family, value in self.state.semantic_slot_family_logits.get(slot, {}).items():
+                family = str(family)
+                if family in logits:
+                    logits[family] += (
+                        float(value)
+                        * float(slot_weight)
+                        * self.semantic_slot_family_logit_scale
                     )
         if use_sample_memory:
             for family, value in self.state.family_logits.get(sample.sample_id, {}).items():
@@ -1957,6 +2080,10 @@ class AdaptiveModalAutoencoder:
             keys.append(f"legal-ir:operator-transition:{left_operator}->{right_operator}")
 
         keys.extend(self._modal_ir_structural_feature_keys_for(sample, prefix="legal-ir"))
+        keys.extend(
+            f"legal-ir:semantic-slot:{slot.removeprefix('slot:')}"
+            for slot in self._semantic_slot_distribution_for(sample).keys()
+        )
         keys.extend(
             f"legal-ir:token:{token}"
             for token in tokens[:self.max_legal_ir_token_features]
@@ -2085,6 +2212,159 @@ class AdaptiveModalAutoencoder:
 
         return _unique_preserve_order(keys)
 
+    def _semantic_slot_distribution_for(self, sample: LegalSample) -> Dict[str, float]:
+        cache = self._sample_cache_for(sample)
+        cached = cache.get("semantic_slot_distribution")
+        if isinstance(cached, dict):
+            return {str(name): float(value) for name, value in cached.items()}
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        counts: Dict[str, float] = {}
+
+        def bump(slot: str, weight: float = 1.0) -> None:
+            if not slot or weight <= 0.0:
+                return
+            counts[slot] = counts.get(slot, 0.0) + float(weight)
+
+        bump("slot:bias")
+        bump(f"slot:formula-count:{_count_bucket(len(sample.modal_ir.formulas))}")
+        if sample.selected_frame:
+            bump(f"slot:selected-frame:{_feature_atom(sample.selected_frame)}")
+        for cue_name in self._cue_names_for_text(text):
+            bump(f"slot:text-cue:{cue_name}")
+
+        frame_logic = sample.modal_ir.frame_logic
+        if frame_logic is not None:
+            ontology = _feature_atom(getattr(frame_logic, "ontology_name", ""))
+            if ontology:
+                bump(f"slot:frame-logic-ontology:{ontology}")
+            triples = list(getattr(frame_logic, "triples", []) or [])
+            bump(f"slot:frame-logic-triples:{_count_bucket(len(triples))}")
+            for label in sorted(getattr(frame_logic, "neo4j_node_labels", []) or [])[:6]:
+                label_atom = _feature_atom(label)
+                if label_atom:
+                    bump(f"slot:kg-node-label:{label_atom}")
+            for relation in sorted(
+                getattr(frame_logic, "neo4j_relationship_types", []) or []
+            )[:6]:
+                relation_atom = _feature_atom(relation)
+                if relation_atom:
+                    bump(f"slot:kg-relation:{relation_atom}")
+            for triple in triples[:8]:
+                predicate = _feature_atom(getattr(triple, "predicate", ""))
+                if predicate:
+                    bump(f"slot:frame-logic-predicate:{predicate}")
+
+        if not sample.modal_ir.formulas:
+            bump("slot:no-modal-formula")
+
+        for formula in sample.modal_ir.formulas:
+            family = _feature_atom(formula.operator.family)
+            system = _feature_atom(formula.operator.system)
+            symbol = _feature_atom(formula.operator.symbol)
+            label = _feature_atom(formula.operator.label)
+            predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
+            predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
+            arguments = list(getattr(formula.predicate, "arguments", []) or [])
+            conditions = list(getattr(formula, "conditions", []) or [])
+            exceptions = list(getattr(formula, "exceptions", []) or [])
+
+            if family:
+                bump(f"slot:modal-family:{family}")
+            if family and system and symbol:
+                bump(f"slot:modal-operator:{family}:{system}:{symbol}", weight=1.5)
+            if family and label:
+                bump(f"slot:operator-label:{family}:{label}")
+            if predicate_role:
+                bump(f"slot:predicate-role:{predicate_role}")
+                if family:
+                    bump(f"slot:family-role:{family}:{predicate_role}")
+            if predicate_name:
+                predicate_tokens = predicate_name.split("_")
+                bump(
+                    f"slot:predicate-token-count:{_count_bucket(len(predicate_tokens))}",
+                    weight=0.5,
+                )
+                if predicate_tokens:
+                    bump(f"slot:predicate-head:{predicate_tokens[0]}", weight=0.5)
+            bump(f"slot:predicate-arity:{_count_bucket(len(arguments))}", weight=0.5)
+            bump(f"slot:conditions:{_count_bucket(len(conditions))}")
+            bump(f"slot:exceptions:{_count_bucket(len(exceptions))}")
+            if conditions:
+                bump("slot:condition-present", weight=1.5)
+                if family:
+                    bump(f"slot:family-condition-present:{family}")
+            if exceptions:
+                bump("slot:exception-present", weight=1.5)
+                if family:
+                    bump(f"slot:family-exception-present:{family}")
+            cue = formula.metadata.get("cue") if formula.metadata else None
+            cue_name = _feature_atom(cue)
+            if cue_name:
+                bump(f"slot:modal-cue:{cue_name}")
+                if family:
+                    bump(f"slot:cue-family:{cue_name}:{family}")
+
+        for slot, weight in self._semantic_slot_interactions_for(counts):
+            bump(slot, weight)
+
+        result = _normalized_distribution(counts)
+        cache["semantic_slot_distribution"] = dict(result)
+        return result
+
+    def _semantic_slot_interactions_for(
+        self,
+        counts: Mapping[str, float],
+    ) -> List[tuple[str, float]]:
+        if (
+            self.semantic_slot_interaction_weight <= 0.0
+            or self.max_semantic_slot_interactions <= 0
+        ):
+            return []
+        excluded_prefixes = (
+            "slot:bias",
+            "slot:formula-count:",
+            "slot:frame-logic-triples:",
+            "slot:predicate-token-count:",
+            "slot:predicate-arity:",
+        )
+        anchors = [
+            (slot, max(0.0, float(weight)))
+            for slot, weight in counts.items()
+            if max(0.0, float(weight)) > 0.0
+            and not str(slot).startswith(excluded_prefixes)
+            and not str(slot).startswith("slot-pair:")
+        ]
+        anchors = sorted(
+            anchors,
+            key=lambda item: (-item[1], item[0]),
+        )[:10]
+        interactions: List[tuple[str, float]] = []
+        for left_index, (left_slot, left_weight) in enumerate(anchors):
+            for right_slot, right_weight in anchors[left_index + 1 :]:
+                left_kind = _semantic_slot_kind(left_slot)
+                right_kind = _semantic_slot_kind(right_slot)
+                if left_kind == right_kind:
+                    continue
+                pair_name = "|".join(
+                    sorted(
+                        [
+                            left_slot.removeprefix("slot:"),
+                            right_slot.removeprefix("slot:"),
+                        ]
+                    )
+                )
+                interactions.append(
+                    (
+                        f"slot-pair:{pair_name}",
+                        self.semantic_slot_interaction_weight
+                        * math.sqrt(left_weight * right_weight),
+                    )
+                )
+                if len(interactions) >= self.max_semantic_slot_interactions:
+                    return interactions
+        return interactions
+
     def _nudge_decoded_embedding(
         self,
         sample: LegalSample,
@@ -2110,6 +2390,21 @@ class AdaptiveModalAutoencoder:
                 continue
             weights = self.state.family_embedding_weights.setdefault(
                 family,
+                [0.0 for _ in sample.embedding_vector],
+            )
+            if len(weights) != len(sample.embedding_vector):
+                weights[:] = [0.0 for _ in sample.embedding_vector]
+            weights[:] = self._add_scaled_vector(
+                weights,
+                error,
+                scale=step * normalized_weight,
+            )
+        for slot, slot_weight in self._semantic_slot_distribution_for(sample).items():
+            normalized_weight = max(0.0, float(slot_weight))
+            if normalized_weight <= 0.0:
+                continue
+            weights = self.state.semantic_slot_embedding_weights.setdefault(
+                slot,
                 [0.0 for _ in sample.embedding_vector],
             )
             if len(weights) != len(sample.embedding_vector):
@@ -2194,6 +2489,18 @@ class AdaptiveModalAutoencoder:
                     feature_logits[family] = feature_logits.get(family, 0.0) + (
                         2.0 * feature_step * gradient
                     )
+        for slot, slot_weight in self._semantic_slot_distribution_for(sample).items():
+            normalized_weight = max(0.0, float(slot_weight))
+            if normalized_weight <= 0.0:
+                continue
+            slot_logits = self.state.semantic_slot_family_logits.setdefault(slot, {})
+            for family in families:
+                gradient = float(target_distribution.get(family, 0.0)) - float(
+                    predicted.get(family, 0.0)
+                )
+                slot_logits[family] = slot_logits.get(family, 0.0) + (
+                    2.0 * step * normalized_weight * gradient
+                )
 
     def _nudge_legal_ir_view_logits(
         self,
@@ -2261,8 +2568,17 @@ class AdaptiveModalAutoencoder:
             self.state.legal_ir_view_embedding_weights[view] = [
                 float(value) * factor for value in vector
             ]
+        for slot, vector in list(self.state.semantic_slot_embedding_weights.items()):
+            self.state.semantic_slot_embedding_weights[slot] = [
+                float(value) * factor for value in vector
+            ]
         for feature, logits in list(self.state.feature_family_logits.items()):
             self.state.feature_family_logits[feature] = {
+                family: float(value) * factor
+                for family, value in logits.items()
+            }
+        for slot, logits in list(self.state.semantic_slot_family_logits.items()):
+            self.state.semantic_slot_family_logits[slot] = {
                 family: float(value) * factor
                 for family, value in logits.items()
             }
@@ -2318,6 +2634,48 @@ class AdaptiveModalAutoencoder:
             for index, value in enumerate(vector):
                 adjustment[index] += (
                     weight * float(value) * self.family_embedding_weight_scale
+                )
+        return adjustment
+
+    def _semantic_slot_embedding_adjustment(
+        self,
+        sample: LegalSample,
+        *,
+        dimensions: int,
+    ) -> List[float]:
+        if self.semantic_slot_embedding_weight_scale <= 0.0:
+            return [0.0 for _ in range(dimensions)]
+        weighted_vectors = [
+            (float(weight), weights)
+            for slot, weight in self._semantic_slot_distribution_for(sample).items()
+            for weights in [self.state.semantic_slot_embedding_weights.get(slot)]
+            if float(weight) > 0.0 and weights is not None and len(weights) == dimensions
+        ]
+        if not weighted_vectors:
+            return [0.0 for _ in range(dimensions)]
+        if self._torch is not None and self.compute_device is not None:
+            with self._torch.no_grad():
+                weights_tensor = self._torch.tensor(
+                    [weight for weight, _ in weighted_vectors],
+                    dtype=self._torch.float64,
+                    device=self.compute_device,
+                ).reshape(-1, 1)
+                vector_tensor = self._torch.tensor(
+                    [vector for _, vector in weighted_vectors],
+                    dtype=self._torch.float64,
+                    device=self.compute_device,
+                )
+                adjustment = (weights_tensor * vector_tensor).sum(dim=0) * float(
+                    self.semantic_slot_embedding_weight_scale
+                )
+                return [float(value) for value in adjustment.detach().cpu().tolist()]
+        adjustment = [0.0 for _ in range(dimensions)]
+        for weight, vector in weighted_vectors:
+            for index, value in enumerate(vector):
+                adjustment[index] += (
+                    weight
+                    * float(value)
+                    * self.semantic_slot_embedding_weight_scale
                 )
         return adjustment
 
@@ -2673,6 +3031,10 @@ class AdaptiveModalAutoencoder:
             keys.append(f"operator-transition:{left_operator}->{right_operator}")
 
         keys.extend(self._modal_ir_structural_feature_keys_for(sample))
+        keys.extend(
+            f"semantic-slot:{slot.removeprefix('slot:')}"
+            for slot in self._semantic_slot_distribution_for(sample).keys()
+        )
         keys.extend(f"token:{token}" for token in tokens[:self.max_token_features])
         keys.extend(
             _token_ngram_features(
@@ -2864,6 +3226,7 @@ class AdaptiveModalAutoencoder:
             "predicate-role:",
             "section-cue:",
             "section-prefix:",
+            "semantic-slot:",
             "title:",
         )
         return str(feature).startswith(core_prefixes)
@@ -2965,6 +3328,37 @@ class AdaptiveModalAutoencoder:
                             "feature_family_logit_scale": self.feature_family_logit_scale,
                             "feature_activity_scale": feature_scale,
                             "raw_value": round(float(value), 12),
+                            "supports_target": target_distribution.get(family, 0.0) > 0.0,
+                            "target_probability": round(
+                                float(target_distribution.get(family, 0.0)),
+                                12,
+                            ),
+                        },
+                    )
+                )
+        for slot, slot_weight in self._semantic_slot_distribution_for(sample).items():
+            logits = self.state.semantic_slot_family_logits.get(slot, {})
+            for family, value in logits.items():
+                if family not in self.modal_families:
+                    continue
+                family_value = (
+                    float(value)
+                    * float(slot_weight)
+                    * self.semantic_slot_family_logit_scale
+                )
+                contributions.append(
+                    AutoencoderFeatureContribution(
+                        feature=slot,
+                        contribution_type="semantic_slot_family_logit",
+                        family=family,
+                        value=round(family_value, 12),
+                        magnitude=round(abs(family_value), 12),
+                        metadata={
+                            "raw_value": round(float(value), 12),
+                            "semantic_slot_family_logit_scale": (
+                                self.semantic_slot_family_logit_scale
+                            ),
+                            "semantic_slot_probability": round(float(slot_weight), 12),
                             "supports_target": target_distribution.get(family, 0.0) > 0.0,
                             "target_probability": round(
                                 float(target_distribution.get(family, 0.0)),
@@ -3076,6 +3470,40 @@ class AdaptiveModalAutoencoder:
                         "legal_ir_view_embedding_probability": round(float(probability), 12),
                         "legal_ir_view_embedding_weight_scale": (
                             self.legal_ir_view_embedding_weight_scale
+                        ),
+                    },
+                )
+            )
+        for slot, probability in self._semantic_slot_distribution_for(sample).items():
+            weights = self.state.semantic_slot_embedding_weights.get(slot)
+            if weights is None or len(weights) != dimensions:
+                continue
+            scaled_weights = [
+                float(value)
+                * float(probability)
+                * self.semantic_slot_embedding_weight_scale
+                for value in weights
+            ]
+            alignment = sum(
+                float(left) * float(right)
+                for left, right in zip(residual, scaled_weights)
+            )
+            weight_norm = _vector_norm(scaled_weights)
+            normalized_alignment = alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            contributions.append(
+                AutoencoderFeatureContribution(
+                    feature=slot,
+                    contribution_type="semantic_slot_embedding_weight",
+                    value=round(alignment, 12),
+                    magnitude=round(weight_norm, 12),
+                    metadata={
+                        "alignment_with_residual": round(normalized_alignment, 12),
+                        "semantic_slot_embedding_probability": round(
+                            float(probability),
+                            12,
+                        ),
+                        "semantic_slot_embedding_weight_scale": (
+                            self.semantic_slot_embedding_weight_scale
                         ),
                     },
                 )
@@ -3679,6 +4107,15 @@ def _feature_atom(value: Any, *, max_tokens: int = 4) -> str:
     if max_tokens > 0:
         tokens = tokens[:max_tokens]
     return "_".join(tokens)
+
+
+def _semantic_slot_kind(slot: str) -> str:
+    value = str(slot or "")
+    if value.startswith("slot-pair:"):
+        return "slot-pair"
+    if value.startswith("slot:"):
+        value = value[len("slot:") :]
+    return value.split(":", 1)[0]
 
 
 def _token_ngram_features(

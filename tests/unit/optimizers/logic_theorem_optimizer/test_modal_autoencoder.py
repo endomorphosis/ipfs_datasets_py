@@ -632,6 +632,145 @@ def test_family_embedding_prototype_head_transfers_cosine_to_holdout() -> None:
     )
 
 
+def test_semantic_slot_family_head_lowers_cross_entropy_on_holdout() -> None:
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice before final action.",
+    )
+    validation = build_us_code_sample(
+        title="5",
+        section="553",
+        text="The agency shall publish notice before final action.",
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        feature_family_logit_scale=0.0,
+        semantic_slot_family_logit_scale=8.0,
+    )
+    before = autoencoder.evaluate([validation], use_sample_memory=False)
+
+    autoencoder._nudge_family_logits(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after = autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert autoencoder.state.semantic_slot_family_logits
+    assert autoencoder.state.family_logits == {}
+    assert after.cross_entropy_loss < before.cross_entropy_loss
+    introspection = autoencoder.introspect_sample(validation)
+    assert any(
+        contribution.contribution_type == "semantic_slot_family_logit"
+        for contribution in introspection.top_family_contributions
+    )
+
+
+def test_semantic_slot_embedding_head_transfers_cosine_to_holdout() -> None:
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice before final action.",
+        embedding_vector=[1.0, 0.0],
+    )
+    validation = build_us_code_sample(
+        title="5",
+        section="553",
+        text="The agency shall publish notice before final action.",
+        embedding_vector=[1.0, 0.0],
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        feature_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=6.0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before = autoencoder.evaluate([validation], use_sample_memory=False)
+
+    autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after = autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert autoencoder.state.semantic_slot_embedding_weights
+    assert after.embedding_cosine_similarity > before.embedding_cosine_similarity
+    introspection = autoencoder.introspect_sample(validation)
+    assert any(
+        contribution.contribution_type == "semantic_slot_embedding_weight"
+        for contribution in introspection.top_embedding_contributions
+    )
+
+
+def test_semantic_slot_interactions_capture_compositional_ir() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text=(
+            "If the applicant files notice, the agency must approve the permit "
+            "except when records are incomplete."
+        ),
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        semantic_slot_interaction_weight=0.5,
+        max_semantic_slot_interactions=3,
+    )
+
+    distribution = autoencoder._semantic_slot_distribution_for(sample)
+    pair_slots = [
+        slot for slot in distribution if slot.startswith("slot-pair:")
+    ]
+
+    assert len(pair_slots) == 3
+    assert any("condition-present" in slot for slot in pair_slots)
+    assert any("exception-present" in slot for slot in pair_slots)
+
+    disabled = AdaptiveModalAutoencoder(
+        semantic_slot_interaction_weight=0.0,
+        max_semantic_slot_interactions=3,
+    )
+    assert not any(
+        slot.startswith("slot-pair:")
+        for slot in disabled._semantic_slot_distribution_for(sample)
+    )
+
+
+def test_semantic_slot_pair_logits_can_drive_compositional_family_ce() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="If the applicant files notice, the agency must approve the permit.",
+    )
+    probe = AdaptiveModalAutoencoder(
+        semantic_slot_interaction_weight=0.5,
+        max_semantic_slot_interactions=8,
+    )
+    pair_slot = next(
+        slot
+        for slot in probe._semantic_slot_distribution_for(sample)
+        if slot.startswith("slot-pair:")
+        and "condition-present" in slot
+        and "modal-operator:conditional_normative" in slot
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        semantic_slot_family_logit_scale=8.0,
+        semantic_slot_interaction_weight=0.5,
+        max_semantic_slot_interactions=8,
+        state=ModalAutoencoderTrainingState(
+            semantic_slot_family_logits={
+                pair_slot: {"conditional_normative": 2.0}
+            }
+        ),
+    )
+
+    before = AdaptiveModalAutoencoder().evaluate([sample], use_sample_memory=False)
+    after = autoencoder.evaluate([sample], use_sample_memory=False)
+
+    assert after.cross_entropy_loss < before.cross_entropy_loss
+
+
 def test_legal_ir_view_embedding_prototype_head_transfers_cosine_to_holdout() -> None:
     class DummyDocument:
         def canonical_hash(self):
@@ -920,6 +1059,8 @@ def test_fallback_features_include_structural_and_ngram_signals() -> None:
     assert "condition-count-bin:2-3" in features
     assert "exception-count-bin:1" in features
     assert "frame-logic-ontology:modal_flogic_ir" in features
+    assert any(feature.startswith("semantic-slot:modal-operator:") for feature in features)
+    assert any(feature.startswith("semantic-slot:slot-pair:") for feature in features)
 
     legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(sample)
     assert any(
@@ -928,6 +1069,14 @@ def test_fallback_features_include_structural_and_ngram_signals() -> None:
     )
     assert "legal-ir:condition-count-bin:2-3" in legal_ir_features
     assert "legal-ir:exception-count-bin:1" in legal_ir_features
+    assert any(
+        feature.startswith("legal-ir:semantic-slot:modal-operator:")
+        for feature in legal_ir_features
+    )
+    assert any(
+        feature.startswith("legal-ir:semantic-slot:slot-pair:")
+        for feature in legal_ir_features
+    )
 
 
 def test_feature_update_groups_prioritize_structural_fallback_over_noisy_codec_keys() -> None:
@@ -1129,7 +1278,9 @@ def test_adaptive_autoencoder_state_roundtrip(tmp_path) -> None:
         family_logits={"sample": {"deontic": 1.0}},
         feature_embedding_weights={"token:agency": [0.01, -0.01]},
         family_embedding_weights={"deontic": [0.03, 0.04]},
+        semantic_slot_embedding_weights={"slot:modal-operator:deontic:d:o": [0.07, 0.08]},
         feature_family_logits={"modal-family:deontic": {"deontic": 0.2}},
+        semantic_slot_family_logits={"slot:modal-operator:deontic:d:o": {"deontic": 0.5}},
         legal_ir_view_logits={"deontic.ir": 0.3},
         legal_ir_view_embedding_weights={"knowledge_graphs.neo4j_compat": [0.05, 0.06]},
         feature_legal_ir_view_logits={"legal-ir:cue:deontic": {"deontic.ir": 0.4}},
@@ -1151,7 +1302,9 @@ def test_generalizable_state_copy_drops_sample_specific_memory() -> None:
         family_logits={"sample": {"deontic": 1.0}},
         feature_embedding_weights={"token:agency": [0.01, -0.01]},
         family_embedding_weights={"deontic": [0.03, 0.04]},
+        semantic_slot_embedding_weights={"slot:modal-operator:deontic:d:o": [0.07, 0.08]},
         feature_family_logits={"modal-family:deontic": {"deontic": 0.2}},
+        semantic_slot_family_logits={"slot:modal-operator:deontic:d:o": {"deontic": 0.5}},
         legal_ir_view_logits={"deontic.ir": 0.3},
         legal_ir_view_embedding_weights={"knowledge_graphs.neo4j_compat": [0.05, 0.06]},
         feature_legal_ir_view_logits={"legal-ir:cue:deontic": {"deontic.ir": 0.4}},
@@ -1172,6 +1325,11 @@ def test_generalizable_state_copy_drops_sample_specific_memory() -> None:
         == state.legal_ir_view_embedding_weights
     )
     assert (
+        generalizable.semantic_slot_embedding_weights
+        == state.semantic_slot_embedding_weights
+    )
+    assert generalizable.semantic_slot_family_logits == state.semantic_slot_family_logits
+    assert (
         generalizable.feature_legal_ir_view_logits
         == state.feature_legal_ir_view_logits
     )
@@ -1183,7 +1341,9 @@ def test_average_generalizable_state_reuses_prior_feature_learning() -> None:
         family_logits={"sample-a": {"deontic": 4.0}},
         feature_embedding_weights={"token:agency": [0.2, -0.2]},
         family_embedding_weights={"deontic": [0.2, 0.4]},
+        semantic_slot_embedding_weights={"slot:modal-operator:deontic:d:o": [0.1, 0.3]},
         feature_family_logits={"modal-family:deontic": {"deontic": 0.6}},
+        semantic_slot_family_logits={"slot:modal-operator:deontic:d:o": {"deontic": 0.9}},
         legal_ir_view_logits={"deontic.ir": 0.6},
         legal_ir_view_embedding_weights={"knowledge_graphs.neo4j_compat": [0.2, 0.6]},
         feature_legal_ir_view_logits={"legal-ir:cue:deontic": {"deontic.ir": 0.8}},
@@ -1193,7 +1353,9 @@ def test_average_generalizable_state_reuses_prior_feature_learning() -> None:
         family_logits={"sample-b": {"temporal": 4.0}},
         feature_embedding_weights={"token:agency": [0.4, -0.4]},
         family_embedding_weights={"deontic": [0.4, 0.8]},
+        semantic_slot_embedding_weights={"slot:modal-operator:deontic:d:o": [0.3, 0.7]},
         feature_family_logits={"modal-family:deontic": {"deontic": 0.2}},
+        semantic_slot_family_logits={"slot:modal-operator:deontic:d:o": {"deontic": 0.3}},
         legal_ir_view_logits={"deontic.ir": 0.2},
         legal_ir_view_embedding_weights={"knowledge_graphs.neo4j_compat": [0.4, 1.0]},
         feature_legal_ir_view_logits={"legal-ir:cue:deontic": {"deontic.ir": 0.4}},
@@ -1208,7 +1370,13 @@ def test_average_generalizable_state_reuses_prior_feature_learning() -> None:
     assert averaged.legal_ir_view_embedding_weights[
         "knowledge_graphs.neo4j_compat"
     ] == pytest.approx([0.3, 0.8])
+    assert averaged.semantic_slot_embedding_weights[
+        "slot:modal-operator:deontic:d:o"
+    ] == pytest.approx([0.2, 0.5])
     assert averaged.feature_family_logits["modal-family:deontic"]["deontic"] == pytest.approx(0.4)
+    assert averaged.semantic_slot_family_logits[
+        "slot:modal-operator:deontic:d:o"
+    ]["deontic"] == pytest.approx(0.6)
     assert averaged.legal_ir_view_logits["deontic.ir"] == pytest.approx(0.4)
     assert (
         averaged.feature_legal_ir_view_logits["legal-ir:cue:deontic"]["deontic.ir"]

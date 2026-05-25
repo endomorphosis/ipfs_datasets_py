@@ -1829,6 +1829,14 @@ def build_paired_daemon_commands(
         str(getattr(args, "autoencoder_feature_embedding_weight_scale", 0.5)),
         "--autoencoder-family-embedding-weight-scale",
         str(getattr(args, "autoencoder_family_embedding_weight_scale", 0.5)),
+        "--autoencoder-semantic-slot-family-logit-scale",
+        str(getattr(args, "autoencoder_semantic_slot_family_logit_scale", 1.0)),
+        "--autoencoder-semantic-slot-embedding-weight-scale",
+        str(getattr(args, "autoencoder_semantic_slot_embedding_weight_scale", 0.5)),
+        "--autoencoder-semantic-slot-interaction-weight",
+        str(getattr(args, "autoencoder_semantic_slot_interaction_weight", 0.35)),
+        "--autoencoder-max-semantic-slot-interactions",
+        str(getattr(args, "autoencoder_max_semantic_slot_interactions", 24)),
         "--autoencoder-legal-ir-view-logit-scale",
         str(getattr(args, "autoencoder_legal_ir_view_logit_scale", 1.0)),
         "--autoencoder-legal-ir-view-embedding-weight-scale",
@@ -4551,6 +4559,40 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--autoencoder-semantic-slot-family-logit-scale",
+        type=float,
+        default=1.0,
+        help=(
+            "Scale the compact semantic-slot classifier head for modal-family "
+            "cross entropy. Slots summarize operators, predicate roles, conditions, "
+            "exceptions, frame logic, and graph structure."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-semantic-slot-embedding-weight-scale",
+        type=float,
+        default=0.5,
+        help=(
+            "Scale compact semantic-slot prototype vectors in the decoder so "
+            "reconstruction can transfer through logical IR structure."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-semantic-slot-interaction-weight",
+        type=float,
+        default=0.35,
+        help=(
+            "Weight bounded pairwise semantic-slot interactions, allowing "
+            "operator+condition or exception+predicate-role compositions to learn."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-max-semantic-slot-interactions",
+        type=int,
+        default=24,
+        help="Maximum semantic-slot pair features generated per sample.",
+    )
+    parser.add_argument(
         "--autoencoder-legal-ir-view-logit-scale",
         type=float,
         default=1.0,
@@ -4877,6 +4919,12 @@ def load_warm_start_state(paths: Sequence[Path]) -> tuple[ModalAutoencoderTraini
             averaged.legal_ir_view_embedding_weights
         ),
         "missing_paths": missing_paths,
+        "semantic_slot_embedding_weight_entries": len(
+            averaged.semantic_slot_embedding_weights
+        ),
+        "semantic_slot_family_logit_entries": len(
+            averaged.semantic_slot_family_logits
+        ),
         "source_count": len(loaded_states),
     }
 
@@ -5274,8 +5322,20 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         family_embedding_weight_scale=float(
             getattr(args, "autoencoder_family_embedding_weight_scale", 0.5)
         ),
+        semantic_slot_embedding_weight_scale=float(
+            getattr(args, "autoencoder_semantic_slot_embedding_weight_scale", 0.5)
+        ),
         feature_family_logit_scale=float(
             getattr(args, "autoencoder_feature_family_logit_scale", 1.0)
+        ),
+        semantic_slot_family_logit_scale=float(
+            getattr(args, "autoencoder_semantic_slot_family_logit_scale", 1.0)
+        ),
+        semantic_slot_interaction_weight=float(
+            getattr(args, "autoencoder_semantic_slot_interaction_weight", 0.35)
+        ),
+        max_semantic_slot_interactions=int(
+            getattr(args, "autoencoder_max_semantic_slot_interactions", 24)
         ),
         legal_ir_view_logit_scale=float(
             getattr(args, "autoencoder_legal_ir_view_logit_scale", 1.0)
@@ -5317,6 +5377,18 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     )
     summary["autoencoder_family_embedding_weight_scale"] = float(
         getattr(args, "autoencoder_family_embedding_weight_scale", 0.5)
+    )
+    summary["autoencoder_semantic_slot_family_logit_scale"] = float(
+        getattr(args, "autoencoder_semantic_slot_family_logit_scale", 1.0)
+    )
+    summary["autoencoder_semantic_slot_embedding_weight_scale"] = float(
+        getattr(args, "autoencoder_semantic_slot_embedding_weight_scale", 0.5)
+    )
+    summary["autoencoder_semantic_slot_interaction_weight"] = float(
+        getattr(args, "autoencoder_semantic_slot_interaction_weight", 0.35)
+    )
+    summary["autoencoder_max_semantic_slot_interactions"] = int(
+        getattr(args, "autoencoder_max_semantic_slot_interactions", 24)
     )
     summary["autoencoder_legal_ir_view_logit_scale"] = float(
         getattr(args, "autoencoder_legal_ir_view_logit_scale", 1.0)
@@ -5821,6 +5893,12 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         )
         summary["legal_ir_view_embedding_weight_entries"] = len(
             autoencoder.state.legal_ir_view_embedding_weights
+        )
+        summary["semantic_slot_embedding_weight_entries"] = len(
+            autoencoder.state.semantic_slot_embedding_weights
+        )
+        summary["semantic_slot_family_logit_entries"] = len(
+            autoencoder.state.semantic_slot_family_logits
         )
         summary["finished_at"] = utc_now()
         summary["legal_ir_view_logit_entries"] = len(

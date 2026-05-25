@@ -3,7 +3,7 @@
 This module contains the scraper for Mississippi statutes from the official state legislative website.
 """
 
-from ipfs_datasets_py.utils import anyio_compat as asyncio
+import asyncio
 import inspect
 import json
 import os
@@ -451,8 +451,8 @@ class MississippiScraper(BaseStateScraper):
             html = await self._request_text(
                 index_url,
                 headers=headers,
-                timeout=15 if max_statutes <= 10 else 60,
-                attempts=1 if max_statutes <= 10 else 3,
+                timeout=30 if max_statutes <= 10 else 60,
+                attempts=2 if max_statutes <= 10 else 3,
             )
             if not html:
                 continue
@@ -646,8 +646,8 @@ class MississippiScraper(BaseStateScraper):
         html = await self._request_text(
             history_url,
             headers=headers,
-            timeout=15 if headers.get("X-Bounded-Scrape") == "1" else 60,
-            attempts=1 if headers.get("X-Bounded-Scrape") == "1" else 3,
+            timeout=30 if headers.get("X-Bounded-Scrape") == "1" else 60,
+            attempts=2 if headers.get("X-Bounded-Scrape") == "1" else 3,
         )
         if not html:
             return None
