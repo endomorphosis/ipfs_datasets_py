@@ -1910,6 +1910,10 @@ class AdaptiveModalAutoencoder:
         max_normative_polarity_features: int = 48,
         max_compiler_contract_features: int = 64,
         max_decompiler_surface_template_features: int = 48,
+        max_canonical_ir_graph_features: int = 64,
+        max_cycle_consistency_features: int = 64,
+        max_equivalence_prototype_features: int = 48,
+        max_contrastive_ir_boundary_features: int = 64,
         embedding_head_update_normalization: float = 0.0,
         family_logit_head_update_normalization: float = 0.0,
         legal_ir_view_head_update_normalization: float = 0.0,
@@ -2079,6 +2083,22 @@ class AdaptiveModalAutoencoder:
         self.max_decompiler_surface_template_features = max(
             0,
             int(max_decompiler_surface_template_features),
+        )
+        self.max_canonical_ir_graph_features = max(
+            0,
+            int(max_canonical_ir_graph_features),
+        )
+        self.max_cycle_consistency_features = max(
+            0,
+            int(max_cycle_consistency_features),
+        )
+        self.max_equivalence_prototype_features = max(
+            0,
+            int(max_equivalence_prototype_features),
+        )
+        self.max_contrastive_ir_boundary_features = max(
+            0,
+            int(max_contrastive_ir_boundary_features),
         )
         self.embedding_head_update_normalization = max(
             0.0,
@@ -4561,6 +4581,30 @@ class AdaptiveModalAutoencoder:
             )
         )
         keys.extend(
+            self._canonical_ir_graph_feature_keys_for(
+                sample,
+                prefix="legal-ir:canonical-ir",
+            )
+        )
+        keys.extend(
+            self._cycle_consistency_feature_keys_for(
+                sample,
+                prefix="legal-ir:cycle-consistency",
+            )
+        )
+        keys.extend(
+            self._equivalence_prototype_feature_keys_for(
+                sample,
+                prefix="legal-ir:equivalence-prototype",
+            )
+        )
+        keys.extend(
+            self._contrastive_ir_boundary_feature_keys_for(
+                sample,
+                prefix="legal-ir:contrastive-ir",
+            )
+        )
+        keys.extend(
             f"legal-ir:semantic-slot:{slot.removeprefix('slot:')}"
             for slot in self._semantic_slot_distribution_for(sample).keys()
         )
@@ -5603,6 +5647,805 @@ class AdaptiveModalAutoencoder:
 
         result = _unique_preserve_order(keys)[
             : self.max_decompiler_surface_template_features
+        ]
+        cache[cache_key] = list(result)
+        return result
+
+    def _canonical_ir_graph_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "canonical-ir",
+    ) -> List[str]:
+        """Canonical text-independent graph skeleton for legal IR round trips."""
+        normalized_prefix = str(prefix or "canonical-ir").strip(":")
+        cache_key = f"canonical_ir_graph_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_canonical_ir_graph_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        subject_classes = role_classes.get("subject", [])
+        action_classes = role_classes.get("action", [])
+        object_classes = role_classes.get("object", [])
+        condition_classes = list(role_classes.get("condition", []))
+        exception_classes = list(role_classes.get("exception", []))
+        temporal_classes = role_classes.get("temporal", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        canonical_nodes: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+
+        def extend_classes(values: Sequence[Any], *, role: str) -> List[str]:
+            classes: List[str] = []
+            for value in values[:4]:
+                classes.extend(self._legal_semantic_classes_for(value, role=role))
+            return _unique_preserve_order(classes)
+
+        add("bias")
+        add(f"formula-count:{_count_bucket(len(sample.modal_ir.formulas))}")
+        add(f"scope:{scope_signature}")
+        for force in force_tags[:2]:
+            for polarity in polarity_tags[:2]:
+                add(f"normative-signature:{force}:{polarity}:{scope_signature}")
+        for subject_class in subject_classes[:2]:
+            for action_class in action_classes[:2]:
+                add(f"source-edge:subject-action:{subject_class}->{action_class}")
+        for action_class in action_classes[:2]:
+            for object_class in object_classes[:2]:
+                add(f"source-edge:action-object:{action_class}->{object_class}")
+        for temporal_class in temporal_classes[:2]:
+            for action_class in action_classes[:2]:
+                add(f"source-edge:temporal-action:{temporal_class}->{action_class}")
+
+        formulas = list(sample.modal_ir.formulas or [])
+        if not formulas:
+            add("empty-graph")
+
+        for formula in formulas[:8]:
+            family = _feature_atom(formula.operator.family)
+            system = _feature_atom(formula.operator.system)
+            symbol = _feature_atom(formula.operator.symbol)
+            label = _feature_atom(formula.operator.label)
+            predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
+            predicate_role = _feature_atom(
+                getattr(formula.predicate, "role", "") or "none"
+            )
+            predicate_head = predicate_name.split("_", 1)[0] if predicate_name else ""
+            predicate_classes = self._legal_semantic_classes_for(
+                predicate_head,
+                role="predicate",
+            )
+            arguments = list(getattr(formula.predicate, "arguments", []) or [])
+            argument_classes = extend_classes(arguments, role="object")
+            conditions = list(getattr(formula, "conditions", []) or [])
+            exceptions = list(getattr(formula, "exceptions", []) or [])
+            condition_classes = _unique_preserve_order(
+                condition_classes + extend_classes(conditions, role="condition")
+            )
+            exception_classes = _unique_preserve_order(
+                exception_classes + extend_classes(exceptions, role="exception")
+            )
+            arity_bucket = _count_bucket(len(arguments))
+            condition_bucket = _count_bucket(len(conditions))
+            exception_bucket = _count_bucket(len(exceptions))
+            condition_state = "yes" if conditions else "no"
+            exception_state = "yes" if exceptions else "no"
+
+            if family and system and symbol and predicate_role:
+                node = (
+                    f"{family}:{system}:{symbol}:{predicate_role}:"
+                    f"a{arity_bucket}:c{condition_bucket}:e{exception_bucket}"
+                )
+                canonical_nodes.append(node)
+                add(f"ir-node:{node}")
+                if label:
+                    add(f"ir-node-label:{family}:{symbol}:{label}")
+                add(
+                    f"ir-node-scope:{family}:{symbol}:{predicate_role}:"
+                    f"c{condition_state}:e{exception_state}:{scope_signature}"
+                )
+            for force in force_tags[:2]:
+                for polarity in polarity_tags[:2]:
+                    if family and symbol and predicate_role:
+                        add(
+                            f"force-node:{force}:{polarity}:"
+                            f"{family}:{symbol}:{predicate_role}:{scope_signature}"
+                        )
+            for action_class in action_classes[:2]:
+                if family and symbol:
+                    add(f"action-node:{action_class}:{family}:{symbol}")
+                for object_class in _unique_preserve_order(
+                    list(object_classes[:2]) + list(argument_classes[:2])
+                ):
+                    if family and symbol and predicate_role:
+                        add(
+                            f"semantic-node:{action_class}:{object_class}:"
+                            f"{family}:{symbol}:{predicate_role}"
+                        )
+                    for force in force_tags[:2]:
+                        for polarity in polarity_tags[:2]:
+                            if family and symbol and predicate_role:
+                                add(
+                                    f"canonical-formula:{family}:{symbol}:"
+                                    f"{predicate_role}:{action_class}:{object_class}:"
+                                    f"{force}:{polarity}:{scope_signature}"
+                                )
+                for predicate_class in predicate_classes[:2]:
+                    if family and symbol:
+                        add(
+                            f"predicate-class-node:{predicate_class}:"
+                            f"{action_class}:{family}:{symbol}"
+                        )
+            for subject_class in subject_classes[:2]:
+                if family and symbol:
+                    add(f"subject-node:{subject_class}:{family}:{symbol}")
+            for condition_class in condition_classes[:2]:
+                if family and symbol and predicate_role:
+                    add(
+                        f"condition-edge:{condition_class}->"
+                        f"{family}:{symbol}:{predicate_role}"
+                    )
+            for exception_class in exception_classes[:2]:
+                if family and symbol and predicate_role:
+                    add(
+                        f"exception-edge:{exception_class}->"
+                        f"{family}:{symbol}:{predicate_role}"
+                    )
+            if conditions and exceptions and family and symbol:
+                add(f"scope-lattice:condition-exception:{family}:{symbol}")
+
+        for left_node, right_node in zip(canonical_nodes, canonical_nodes[1:]):
+            add(f"ordered-edge:{left_node}->{right_node}")
+        if canonical_nodes:
+            sorted_nodes = sorted(set(canonical_nodes))
+            add(f"graph-multiset:{'|'.join(sorted_nodes[:4])}")
+            digest = hashlib.sha256(
+                "|".join(sorted_nodes).encode("utf-8")
+            ).hexdigest()[:12]
+            add(f"graph-signature:{digest}")
+
+        frame_logic = getattr(sample.modal_ir, "frame_logic", None)
+        if frame_logic is None:
+            add("kg:missing")
+        else:
+            triples = list(getattr(frame_logic, "triples", []) or [])
+            relation_types = list(getattr(frame_logic, "neo4j_relationship_types", []) or [])
+            node_labels = list(getattr(frame_logic, "neo4j_node_labels", []) or [])
+            add(
+                f"kg-shape:t{_count_bucket(len(triples))}:"
+                f"r{_count_bucket(len(relation_types))}:"
+                f"n{_count_bucket(len(node_labels))}"
+            )
+            for relation in sorted(relation_types)[:6]:
+                relation_atom = _feature_atom(relation)
+                relation_classes = self._legal_semantic_classes_for(
+                    relation_atom,
+                    role="kg",
+                )
+                for relation_class in relation_classes[:2]:
+                    add(f"kg-relation-class:{relation_class}")
+                    for action_class in action_classes[:2]:
+                        add(f"kg-action-edge:{action_class}->{relation_class}")
+            for triple in triples[:8]:
+                predicate = _feature_atom(getattr(triple, "predicate", ""))
+                subject = _feature_atom(getattr(triple, "subject", ""))
+                object_value = _feature_atom(getattr(triple, "object", ""))
+                if predicate:
+                    add(f"kg-predicate:{predicate}")
+                if subject and predicate:
+                    add(f"kg-subject-edge:{subject}->{predicate}")
+                if predicate and object_value:
+                    add(f"kg-object-edge:{predicate}->{object_value}")
+
+        result = _unique_preserve_order(keys)[: self.max_canonical_ir_graph_features]
+        cache[cache_key] = list(result)
+        return result
+
+    def _cycle_consistency_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "cycle-consistency",
+    ) -> List[str]:
+        """Compiler/decompiler round-trip invariants for reusable TODO signals."""
+        normalized_prefix = str(prefix or "cycle-consistency").strip(":")
+        cache_key = f"cycle_consistency_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_cycle_consistency_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        subject_classes = role_classes.get("subject", [])
+        action_classes = role_classes.get("action", [])
+        object_classes = role_classes.get("object", [])
+        condition_classes = role_classes.get("condition", [])
+        exception_classes = role_classes.get("exception", [])
+        temporal_classes = role_classes.get("temporal", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        source_scope = "+".join(scope_tags)
+        explicit_condition_scope = bool(
+            re.search(
+                r"\b(if|when|whenever|unless|provided|subject\s+to|conditions?)\b",
+                text,
+            )
+        )
+        source_has_condition = bool(
+            source_anchors.get("condition") or explicit_condition_scope
+        )
+        source_has_exception = bool(
+            source_anchors.get("exception") or "exception" in cue_names
+        )
+        source_has_temporal = bool(
+            source_anchors.get("temporal") or "temporal" in cue_names
+        )
+        keys: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+
+        def primary_class(classes: Sequence[str], fallback: str) -> str:
+            return _feature_atom(classes[0] if classes else fallback) or "none"
+
+        subject_class = primary_class(subject_classes, source_anchors.get("subject", ""))
+        action_class = primary_class(action_classes, source_anchors.get("action", ""))
+        object_class = primary_class(object_classes, source_anchors.get("object", ""))
+        condition_class = primary_class(
+            condition_classes,
+            source_anchors.get("condition", ""),
+        )
+        exception_class = primary_class(
+            exception_classes,
+            source_anchors.get("exception", ""),
+        )
+        temporal_class = primary_class(temporal_classes, source_anchors.get("temporal", ""))
+        source_role_signature = (
+            f"s:{subject_class}|a:{action_class}|o:{object_class}|"
+            f"c:{condition_class}|e:{exception_class}|t:{temporal_class}"
+        )
+
+        add("bias")
+        add(f"source-role-signature:{source_role_signature}")
+        add(f"source-scope:{source_scope}")
+        for force in force_tags[:2]:
+            for polarity in polarity_tags[:2]:
+                add(f"source-force-cycle:{force}:{polarity}:{source_scope}")
+                add(
+                    f"source-frame-cycle:{subject_class}:{action_class}:"
+                    f"{object_class}:{force}:{polarity}:{source_scope}"
+                )
+
+        formulas = list(sample.modal_ir.formulas or [])
+        if not formulas:
+            add("cycle-gap:no-compiled-formula")
+
+        for formula in formulas[:8]:
+            family = _feature_atom(formula.operator.family)
+            system = _feature_atom(formula.operator.system)
+            symbol = _feature_atom(formula.operator.symbol)
+            predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
+            predicate_role = _feature_atom(
+                getattr(formula.predicate, "role", "") or "none"
+            )
+            predicate_head = predicate_name.split("_", 1)[0] if predicate_name else ""
+            predicate_classes = self._legal_semantic_classes_for(
+                predicate_head,
+                role="predicate",
+            )
+            arguments = list(getattr(formula.predicate, "arguments", []) or [])
+            conditions = list(getattr(formula, "conditions", []) or [])
+            exceptions = list(getattr(formula, "exceptions", []) or [])
+            compiled_scope_parts: List[str] = []
+            if conditions:
+                compiled_scope_parts.append("conditioned")
+            if exceptions:
+                compiled_scope_parts.append("excepted")
+            if source_has_temporal:
+                compiled_scope_parts.append("temporal")
+            compiled_scope = "+".join(compiled_scope_parts) or "unscoped"
+            arity_bucket = _count_bucket(len(arguments))
+            condition_state = "yes" if conditions else "no"
+            exception_state = "yes" if exceptions else "no"
+            source_condition_state = "yes" if source_has_condition else "no"
+            source_exception_state = "yes" if source_has_exception else "no"
+
+            if family and system and symbol:
+                add(
+                    f"operator-cycle:{family}:{system}:{symbol}:"
+                    f"{source_scope}->{compiled_scope}"
+                )
+                for force in force_tags[:2]:
+                    for polarity in polarity_tags[:2]:
+                        add(
+                            f"force-operator-cycle:{force}:{polarity}:"
+                            f"{family}:{symbol}:{predicate_role}"
+                        )
+                        add(
+                            f"source-ir-cycle:{subject_class}:{action_class}:"
+                            f"{object_class}:{force}:{polarity}:"
+                            f"{family}:{symbol}:{predicate_role}:"
+                            f"{source_scope}:c{condition_state}:e{exception_state}"
+                        )
+            if family and predicate_role:
+                add(
+                    f"role-cycle:{source_role_signature}:"
+                    f"{family}:{predicate_role}:a{arity_bucket}"
+                )
+                add(
+                    f"scope-cycle:{family}:{predicate_role}:"
+                    f"{source_scope}->{compiled_scope}"
+                )
+                add(
+                    f"condition-cycle:source-{source_condition_state}:"
+                    f"ir-{condition_state}:{family}:{predicate_role}"
+                )
+                add(
+                    f"exception-cycle:source-{source_exception_state}:"
+                    f"ir-{exception_state}:{family}:{predicate_role}"
+                )
+            if family and symbol and action_class != "none":
+                add(f"action-cycle:{action_class}:{family}:{symbol}:{predicate_role}")
+            if family and symbol and object_class != "none":
+                add(f"object-cycle:{object_class}:{family}:{symbol}:{predicate_role}")
+            for predicate_class in predicate_classes[:2]:
+                add(
+                    f"predicate-class-cycle:{action_class}:{predicate_class}:"
+                    f"{family}:{symbol}"
+                )
+            cue_name = _feature_atom(formula.metadata.get("cue") if formula.metadata else "")
+            if cue_name and family and symbol:
+                add(f"cue-cycle:{cue_name}:{family}:{symbol}:{predicate_role}")
+            if source_has_condition and not conditions and family and predicate_role:
+                add(f"cycle-gap:source-condition-missing-ir:{family}:{predicate_role}")
+            if source_has_exception and not exceptions and family and predicate_role:
+                add(f"cycle-gap:source-exception-missing-ir:{family}:{predicate_role}")
+
+        frame_logic = getattr(sample.modal_ir, "frame_logic", None)
+        if frame_logic is None:
+            add("kg-cycle:missing")
+        else:
+            triples = list(getattr(frame_logic, "triples", []) or [])
+            relation_types = list(getattr(frame_logic, "neo4j_relationship_types", []) or [])
+            add(
+                f"kg-cycle-shape:t{_count_bucket(len(triples))}:"
+                f"r{_count_bucket(len(relation_types))}:{source_role_signature}"
+            )
+            for relation in sorted(relation_types)[:4]:
+                relation_atom = _feature_atom(relation)
+                relation_classes = self._legal_semantic_classes_for(
+                    relation_atom,
+                    role="kg",
+                )
+                for relation_class in relation_classes[:2]:
+                    add(f"kg-cycle:{action_class}:{relation_class}:{source_scope}")
+
+        result = _unique_preserve_order(keys)[: self.max_cycle_consistency_features]
+        cache[cache_key] = list(result)
+        return result
+
+    def _equivalence_prototype_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "equivalence-prototype",
+    ) -> List[str]:
+        """Paraphrase-stable prototype keys for logically equivalent IR cycles."""
+        normalized_prefix = str(prefix or "equivalence-prototype").strip(":")
+        cache_key = f"equivalence_prototype_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_equivalence_prototype_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        subject_classes = role_classes.get("subject", [])
+        action_classes = role_classes.get("action", [])
+        object_classes = role_classes.get("object", [])
+        condition_classes = role_classes.get("condition", [])
+        exception_classes = role_classes.get("exception", [])
+        temporal_classes = role_classes.get("temporal", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        source_scope = "+".join(scope_tags)
+        temporal_state = "temporal" if "temporal" in scope_tags else "atemporal"
+        condition_state = "conditioned" if "conditioned" in scope_tags else "unconditioned"
+        exception_state = "excepted" if "excepted" in scope_tags else "unexcepted"
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+
+        def atom_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        subject_class = atom_or_none(subject_classes)
+        action_class = atom_or_none(action_classes)
+        object_class = atom_or_none(object_classes)
+        condition_class = atom_or_none(condition_classes)
+        exception_class = atom_or_none(exception_classes)
+        temporal_class = atom_or_none(temporal_classes) if temporal_classes else temporal_state
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+
+        add("bias")
+        add(f"role-prototype:{role_signature}")
+        add(f"scope-prototype:{condition_state}:{exception_state}:{temporal_state}")
+        digest_atoms.append(f"roles:{role_signature}")
+        digest_atoms.append(f"scope:{condition_state}:{exception_state}:{temporal_state}")
+        for force in force_tags[:2]:
+            for polarity in polarity_tags[:2]:
+                add(f"force-prototype:{force}:{polarity}:{source_scope}")
+                add(
+                    f"semantic-force-prototype:{subject_class}:{action_class}:"
+                    f"{object_class}:{force}:{polarity}:{source_scope}"
+                )
+                digest_atoms.append(f"force:{force}:{polarity}:{source_scope}")
+
+        formulas = list(sample.modal_ir.formulas or [])
+        add(f"formula-count:{_count_bucket(len(formulas))}")
+        digest_atoms.append(f"formula-count:{_count_bucket(len(formulas))}")
+        if not formulas:
+            add("empty-ir-prototype")
+            digest_atoms.append("empty-ir")
+
+        operator_nodes: List[str] = []
+        for formula in formulas[:8]:
+            family = _feature_atom(formula.operator.family)
+            system = _feature_atom(formula.operator.system)
+            symbol = _feature_atom(formula.operator.symbol)
+            label = _feature_atom(formula.operator.label)
+            predicate_role = _feature_atom(
+                getattr(formula.predicate, "role", "") or "none"
+            )
+            predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
+            predicate_head = predicate_name.split("_", 1)[0] if predicate_name else ""
+            predicate_classes = self._legal_semantic_classes_for(
+                predicate_head,
+                role="predicate",
+            )
+            arguments = list(getattr(formula.predicate, "arguments", []) or [])
+            conditions = list(getattr(formula, "conditions", []) or [])
+            exceptions = list(getattr(formula, "exceptions", []) or [])
+            arity_bucket = _count_bucket(len(arguments))
+            ir_condition_state = "conditioned" if conditions else "unconditioned"
+            ir_exception_state = "excepted" if exceptions else "unexcepted"
+            compiled_scope_parts = [ir_condition_state, ir_exception_state]
+            if temporal_state == "temporal":
+                compiled_scope_parts.append("temporal")
+            compiled_scope = "+".join(compiled_scope_parts)
+
+            if family and system and symbol:
+                operator_node = (
+                    f"{family}:{system}:{symbol}:{predicate_role}:"
+                    f"a{arity_bucket}:{ir_condition_state}:{ir_exception_state}"
+                )
+                operator_nodes.append(operator_node)
+                add(f"operator-prototype:{operator_node}")
+                add(f"operator-scope-prototype:{family}:{symbol}:{source_scope}->{compiled_scope}")
+                if label:
+                    add(f"operator-label-prototype:{family}:{symbol}:{label}")
+                digest_atoms.append(f"operator:{operator_node}")
+                digest_atoms.append(f"operator-scope:{family}:{symbol}:{compiled_scope}")
+
+            for force in force_tags[:2]:
+                for polarity in polarity_tags[:2]:
+                    if family and symbol and predicate_role:
+                        add(
+                            f"round-trip-prototype:{subject_class}:{action_class}:"
+                            f"{object_class}:{force}:{polarity}:{family}:"
+                            f"{symbol}:{predicate_role}:{source_scope}:"
+                            f"{ir_condition_state}:{ir_exception_state}"
+                        )
+                        digest_atoms.append(
+                            f"round-trip:{subject_class}:{action_class}:"
+                            f"{object_class}:{force}:{polarity}:{family}:"
+                            f"{symbol}:{predicate_role}:{source_scope}:"
+                            f"{ir_condition_state}:{ir_exception_state}"
+                        )
+            for predicate_class in predicate_classes[:2]:
+                if family and symbol:
+                    add(
+                        f"predicate-prototype:{action_class}:{predicate_class}:"
+                        f"{family}:{symbol}"
+                    )
+                    digest_atoms.append(
+                        f"predicate:{action_class}:{predicate_class}:{family}:{symbol}"
+                    )
+
+        if operator_nodes:
+            operator_signature = "|".join(sorted(set(operator_nodes))[:4])
+            add(f"operator-multiset:{operator_signature}")
+            digest_atoms.append(f"operators:{operator_signature}")
+
+        frame_logic = getattr(sample.modal_ir, "frame_logic", None)
+        if frame_logic is None:
+            add("kg-prototype:missing")
+            digest_atoms.append("kg:missing")
+        else:
+            triples = list(getattr(frame_logic, "triples", []) or [])
+            relation_types = list(getattr(frame_logic, "neo4j_relationship_types", []) or [])
+            kg_shape = (
+                f"t{_count_bucket(len(triples))}:r{_count_bucket(len(relation_types))}"
+            )
+            add(f"kg-prototype:{kg_shape}")
+            digest_atoms.append(f"kg:{kg_shape}")
+            for relation in sorted(relation_types)[:4]:
+                relation_atom = _feature_atom(relation)
+                relation_classes = self._legal_semantic_classes_for(
+                    relation_atom,
+                    role="kg",
+                )
+                for relation_class in relation_classes[:2]:
+                    add(f"kg-relation-prototype:{action_class}:{relation_class}")
+                    digest_atoms.append(f"kg-relation:{action_class}:{relation_class}")
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:equivalence-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_equivalence_prototype_features]
+        cache[cache_key] = list(result)
+        return result
+
+    def _contrastive_ir_boundary_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "contrastive-ir",
+    ) -> List[str]:
+        """Discriminative boundaries for confusable legal IR minimal pairs."""
+        normalized_prefix = str(prefix or "contrastive-ir").strip(":")
+        cache_key = f"contrastive_ir_boundary_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_contrastive_ir_boundary_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        subject_classes = role_classes.get("subject", [])
+        action_classes = role_classes.get("action", [])
+        object_classes = role_classes.get("object", [])
+        condition_classes = role_classes.get("condition", [])
+        exception_classes = role_classes.get("exception", [])
+        temporal_classes = role_classes.get("temporal", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        force_palette = (
+            "obligation",
+            "permission",
+            "prohibition",
+            "definition",
+            "enforcement",
+            "assertive",
+        )
+        polarity_palette = (
+            "negative_scope",
+            "restrictive",
+            "enabling",
+            "mandatory",
+            "neutral",
+        )
+        keys: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        subject_class = first_or_none(subject_classes)
+        action_class = first_or_none(action_classes)
+        object_class = first_or_none(object_classes)
+        condition_class = first_or_none(condition_classes)
+        exception_class = first_or_none(exception_classes)
+        temporal_class = first_or_none(temporal_classes)
+        negation_state = (
+            "negated"
+            if any(tag in {"negative_scope", "restrictive"} for tag in polarity_tags)
+            else "positive"
+        )
+        scope_state = (
+            f"c{'yes' if 'conditioned' in scope_tags else 'no'}:"
+            f"e{'yes' if 'excepted' in scope_tags else 'no'}:"
+            f"t{'yes' if 'temporal' in scope_tags else 'no'}"
+        )
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+
+        add("bias")
+        add(f"role-boundary:{role_signature}")
+        add(f"scope-boundary:{scope_state}:{scope_signature}")
+        add(f"negation-boundary:{negation_state}:{scope_signature}")
+        for force in force_tags[:2]:
+            alternatives = "+".join(
+                value for value in force_palette if value != force
+            )
+            add(f"force-axis:{force}:vs-{alternatives}")
+            add(
+                f"semantic-force-boundary:{role_signature}:"
+                f"{force}:{scope_signature}"
+            )
+            for polarity in polarity_tags[:2]:
+                polarity_alternatives = "+".join(
+                    value for value in polarity_palette if value != polarity
+                )
+                add(f"polarity-axis:{polarity}:vs-{polarity_alternatives}")
+                add(
+                    f"minimal-pair-boundary:{subject_class}:{action_class}:"
+                    f"{object_class}:{force}:{polarity}:{scope_state}"
+                )
+                add(
+                    f"force-polarity-boundary:{force}:{polarity}:"
+                    f"{negation_state}:{scope_signature}"
+                )
+
+        for formula in list(sample.modal_ir.formulas or [])[:8]:
+            family = _feature_atom(formula.operator.family)
+            system = _feature_atom(formula.operator.system)
+            symbol = _feature_atom(formula.operator.symbol)
+            label = _feature_atom(formula.operator.label)
+            predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
+            predicate_role = _feature_atom(
+                getattr(formula.predicate, "role", "") or "none"
+            )
+            predicate_head = predicate_name.split("_", 1)[0] if predicate_name else ""
+            predicate_classes = self._legal_semantic_classes_for(
+                predicate_head,
+                role="predicate",
+            )
+            arguments = list(getattr(formula.predicate, "arguments", []) or [])
+            conditions = list(getattr(formula, "conditions", []) or [])
+            exceptions = list(getattr(formula, "exceptions", []) or [])
+            arity_bucket = _count_bucket(len(arguments))
+            ir_scope_state = (
+                f"c{'yes' if conditions else 'no'}:"
+                f"e{'yes' if exceptions else 'no'}:"
+                f"t{'yes' if 'temporal' in scope_tags else 'no'}"
+            )
+            if family and system and symbol:
+                add(
+                    f"operator-axis:{family}:{system}:{symbol}:"
+                    f"{predicate_role}:a{arity_bucket}:{ir_scope_state}"
+                )
+                if label:
+                    add(f"operator-label-axis:{family}:{symbol}:{label}")
+                for force in force_tags[:2]:
+                    for polarity in polarity_tags[:2]:
+                        add(
+                            f"operator-force-boundary:{family}:{symbol}:"
+                            f"{force}:{polarity}:{predicate_role}:{ir_scope_state}"
+                        )
+                        add(
+                            f"semantic-operator-boundary:"
+                            f"{subject_class}:{action_class}:{object_class}:"
+                            f"{family}:{symbol}:{force}:{polarity}:{scope_state}"
+                        )
+            for predicate_class in predicate_classes[:2]:
+                if family and symbol:
+                    add(
+                        f"predicate-class-boundary:{predicate_class}:"
+                        f"{action_class}:{family}:{symbol}:{negation_state}"
+                    )
+            for cue_name in cue_names[:4]:
+                if family and symbol:
+                    add(
+                        f"cue-operator-boundary:{cue_name}:"
+                        f"{family}:{symbol}:{predicate_role}:{scope_state}"
+                    )
+
+        frame_logic = getattr(sample.modal_ir, "frame_logic", None)
+        if frame_logic is None:
+            add("kg-boundary:missing")
+        else:
+            triples = list(getattr(frame_logic, "triples", []) or [])
+            relation_types = list(getattr(frame_logic, "neo4j_relationship_types", []) or [])
+            add(
+                f"kg-boundary:t{_count_bucket(len(triples))}:"
+                f"r{_count_bucket(len(relation_types))}:{role_signature}"
+            )
+            for relation in sorted(relation_types)[:4]:
+                relation_atom = _feature_atom(relation)
+                relation_classes = self._legal_semantic_classes_for(
+                    relation_atom,
+                    role="kg",
+                )
+                for relation_class in relation_classes[:2]:
+                    add(
+                        f"kg-relation-boundary:"
+                        f"{action_class}:{relation_class}:{scope_state}"
+                    )
+
+        result = _unique_preserve_order(keys)[
+            : self.max_contrastive_ir_boundary_features
         ]
         cache[cache_key] = list(result)
         return result
@@ -8149,6 +8992,10 @@ class AdaptiveModalAutoencoder:
         keys.extend(self._normative_polarity_feature_keys_for(sample))
         keys.extend(self._compiler_contract_feature_keys_for(sample))
         keys.extend(self._decompiler_surface_template_feature_keys_for(sample))
+        keys.extend(self._canonical_ir_graph_feature_keys_for(sample))
+        keys.extend(self._cycle_consistency_feature_keys_for(sample))
+        keys.extend(self._equivalence_prototype_feature_keys_for(sample))
+        keys.extend(self._contrastive_ir_boundary_feature_keys_for(sample))
         keys.extend(
             f"semantic-slot:{slot.removeprefix('slot:')}"
             for slot in self._semantic_slot_distribution_for(sample).keys()
@@ -8314,11 +9161,15 @@ class AdaptiveModalAutoencoder:
     def _is_core_modal_feature_key(self, feature: str) -> bool:
         core_prefixes = (
             "bias:",
+            "canonical-ir:",
             "clause-topology:",
             "compiler-contract:",
+            "contrastive-ir:",
             "cue:",
             "cue-family:",
+            "cycle-consistency:",
             "decompiler-surface:",
+            "equivalence-prototype:",
             "condition:",
             "condition-count-bin:",
             "compiler-profile:",

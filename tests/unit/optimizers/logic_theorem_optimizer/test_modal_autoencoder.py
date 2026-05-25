@@ -1561,6 +1561,668 @@ def test_decompiler_surface_template_feature_head_transfers_permission_holdout()
     assert after_cosine.embedding_cosine_similarity > before_cosine.embedding_cosine_similarity
 
 
+def test_canonical_ir_graph_features_normalize_surface_paraphrases() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency may issue the license before final action.",
+    )
+    paraphrase = build_us_code_sample(
+        title="12",
+        section="1841",
+        text="The board may grant the permit before final action.",
+    )
+    conditional = build_us_code_sample(
+        title="5",
+        section="553",
+        text=(
+            "If the applicant files notice, the agency must approve the permit "
+            "except when records are incomplete."
+        ),
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        max_canonical_ir_graph_features=128,
+    )
+
+    graph_features = autoencoder._canonical_ir_graph_feature_keys_for(sample)
+    paraphrase_features = autoencoder._canonical_ir_graph_feature_keys_for(paraphrase)
+    conditional_features = autoencoder._canonical_ir_graph_feature_keys_for(conditional)
+    fallback_features = autoencoder._fallback_feature_keys_for(sample)
+    legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(sample)
+
+    assert (
+        "canonical-ir:canonical-formula:"
+        "deontic:p:clause:grant_authorization:authorization_instrument:"
+        "permission:enabling:conditioned+temporal"
+        in graph_features
+    )
+    assert (
+        "canonical-ir:semantic-node:"
+        "grant_authorization:authorization_instrument:deontic:p:clause"
+        in graph_features
+    )
+    assert "canonical-ir:ir-node:deontic:d:p:clause:a0:c0:e0" in graph_features
+    assert (
+        "canonical-ir:canonical-formula:"
+        "deontic:p:clause:grant_authorization:authorization_instrument:"
+        "permission:enabling:conditioned+temporal"
+        in paraphrase_features
+    )
+    assert (
+        "canonical-ir:condition-edge:"
+        "eligibility_condition->conditional_normative:o:condition"
+        in conditional_features
+    )
+    assert (
+        "canonical-ir:exception-edge:record_exception->deontic:o:condition"
+        in conditional_features
+    )
+    assert "canonical-ir:ir-node:deontic:d:p:clause:a0:c0:e0" in fallback_features
+    assert (
+        "legal-ir:canonical-ir:ir-node:deontic:d:p:clause:a0:c0:e0"
+        in legal_ir_features
+    )
+
+
+def test_canonical_ir_graph_feature_head_transfers_permission_holdout() -> None:
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency may issue the license before final action.",
+        embedding_vector=[1.0, 0.0],
+    )
+    validation = build_us_code_sample(
+        title="12",
+        section="1841",
+        text="The board may grant the permit before final action.",
+        embedding_vector=[1.0, 0.0],
+    )
+    family_autoencoder = AdaptiveModalAutoencoder(
+        feature_family_logit_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=128,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+    )
+    shared_graph_features = set(
+        family_autoencoder._canonical_ir_graph_feature_keys_for(train)
+    ).intersection(
+        family_autoencoder._canonical_ir_graph_feature_keys_for(validation)
+    )
+    before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    family_autoencoder._nudge_family_logits(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert (
+        "canonical-ir:canonical-formula:"
+        "deontic:p:clause:grant_authorization:authorization_instrument:"
+        "permission:enabling:conditioned+temporal"
+        in shared_graph_features
+    )
+    assert any(
+        feature.startswith("canonical-ir:")
+        for feature in family_autoencoder.state.feature_family_logits
+    )
+    assert after_ce.cross_entropy_loss < before_ce.cross_entropy_loss
+
+    embedding_autoencoder = AdaptiveModalAutoencoder(
+        compiler_quality_embedding_weight_scale=0.0,
+        logic_signature_embedding_weight_scale=0.0,
+        round_trip_signal_embedding_weight_scale=0.0,
+        decompiler_plan_embedding_weight_scale=0.0,
+        predicate_argument_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=0.0,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        feature_embedding_weight_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=128,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before_cosine = embedding_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    embedding_autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_cosine = embedding_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert any(
+        feature.startswith("canonical-ir:")
+        for feature in embedding_autoencoder.state.feature_embedding_weights
+    )
+    assert after_cosine.embedding_cosine_similarity > before_cosine.embedding_cosine_similarity
+
+
+def test_cycle_consistency_features_bind_source_ir_and_decompiler_scope() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency may issue the license before final action.",
+    )
+    conditional = build_us_code_sample(
+        title="5",
+        section="553",
+        text=(
+            "If the applicant files notice, the agency must approve the permit "
+            "except when records are incomplete."
+        ),
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        max_cycle_consistency_features=128,
+    )
+
+    cycle_features = autoencoder._cycle_consistency_feature_keys_for(sample)
+    conditional_cycle_features = autoencoder._cycle_consistency_feature_keys_for(
+        conditional
+    )
+    fallback_features = autoencoder._fallback_feature_keys_for(sample)
+    legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(sample)
+
+    assert (
+        "cycle-consistency:source-ir-cycle:"
+        "government_actor:grant_authorization:authorization_instrument:"
+        "permission:enabling:deontic:p:clause:conditioned+temporal:cno:eno"
+        in cycle_features
+    )
+    assert (
+        "cycle-consistency:condition-cycle:source-no:ir-no:deontic:clause"
+        in cycle_features
+    )
+    assert (
+        "cycle-consistency:scope-cycle:"
+        "deontic:clause:conditioned+temporal->temporal"
+        in cycle_features
+    )
+    assert (
+        "cycle-consistency:condition-cycle:"
+        "source-yes:ir-yes:conditional_normative:condition"
+        in conditional_cycle_features
+    )
+    assert (
+        "cycle-consistency:exception-cycle:source-yes:ir-yes:deontic:condition"
+        in conditional_cycle_features
+    )
+    assert (
+        "cycle-consistency:source-ir-cycle:"
+        "government_actor:grant_authorization:authorization_instrument:"
+        "permission:enabling:deontic:p:clause:conditioned+temporal:cno:eno"
+        in fallback_features
+    )
+    assert (
+        "legal-ir:cycle-consistency:condition-cycle:"
+        "source-no:ir-no:deontic:clause"
+        in legal_ir_features
+    )
+
+
+def test_cycle_consistency_feature_head_transfers_permission_holdout() -> None:
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency may issue the license before final action.",
+        embedding_vector=[1.0, 0.0],
+    )
+    validation = build_us_code_sample(
+        title="12",
+        section="1841",
+        text="The board may grant the permit before final action.",
+        embedding_vector=[1.0, 0.0],
+    )
+    family_autoencoder = AdaptiveModalAutoencoder(
+        feature_family_logit_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=128,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+    )
+    shared_cycle_features = set(
+        family_autoencoder._cycle_consistency_feature_keys_for(train)
+    ).intersection(
+        family_autoencoder._cycle_consistency_feature_keys_for(validation)
+    )
+    before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    family_autoencoder._nudge_family_logits(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert (
+        "cycle-consistency:source-ir-cycle:"
+        "government_actor:grant_authorization:authorization_instrument:"
+        "permission:enabling:deontic:p:clause:conditioned+temporal:cno:eno"
+        in shared_cycle_features
+    )
+    assert any(
+        feature.startswith("cycle-consistency:")
+        for feature in family_autoencoder.state.feature_family_logits
+    )
+    assert after_ce.cross_entropy_loss < before_ce.cross_entropy_loss
+
+    embedding_autoencoder = AdaptiveModalAutoencoder(
+        compiler_quality_embedding_weight_scale=0.0,
+        logic_signature_embedding_weight_scale=0.0,
+        round_trip_signal_embedding_weight_scale=0.0,
+        decompiler_plan_embedding_weight_scale=0.0,
+        predicate_argument_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=0.0,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        feature_embedding_weight_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=128,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before_cosine = embedding_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    embedding_autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_cosine = embedding_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert any(
+        feature.startswith("cycle-consistency:")
+        for feature in embedding_autoencoder.state.feature_embedding_weights
+    )
+    assert after_cosine.embedding_cosine_similarity > before_cosine.embedding_cosine_similarity
+
+
+def test_equivalence_prototype_features_share_logical_paraphrase_class() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency may issue the license before final action.",
+    )
+    paraphrase = build_us_code_sample(
+        title="12",
+        section="1841",
+        text="The board may grant the permit before final action.",
+    )
+    conditional = build_us_code_sample(
+        title="5",
+        section="553",
+        text=(
+            "If the applicant files notice, the agency must approve the permit "
+            "except when records are incomplete."
+        ),
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        max_equivalence_prototype_features=128,
+    )
+
+    prototype_features = autoencoder._equivalence_prototype_feature_keys_for(sample)
+    paraphrase_features = autoencoder._equivalence_prototype_feature_keys_for(
+        paraphrase
+    )
+    conditional_features = autoencoder._equivalence_prototype_feature_keys_for(
+        conditional
+    )
+    shared_equivalence_classes = {
+        feature
+        for feature in prototype_features
+        if feature.startswith("equivalence-prototype:equivalence-class:")
+    }.intersection(paraphrase_features)
+    fallback_features = autoencoder._fallback_feature_keys_for(sample)
+    legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(sample)
+
+    assert shared_equivalence_classes
+    assert (
+        "equivalence-prototype:round-trip-prototype:"
+        "government_actor:grant_authorization:authorization_instrument:"
+        "permission:enabling:deontic:p:clause:conditioned+temporal:"
+        "unconditioned:unexcepted"
+        in prototype_features
+    )
+    assert (
+        "equivalence-prototype:role-prototype:"
+        "government_actor:grant_authorization:authorization_instrument:"
+        "eligibility_condition:record_exception:atemporal"
+        in conditional_features
+    )
+    assert (
+        "equivalence-prototype:operator-prototype:"
+        "deontic:d:p:clause:a0:unconditioned:unexcepted"
+        in fallback_features
+    )
+    assert (
+        "legal-ir:equivalence-prototype:operator-prototype:"
+        "deontic:d:p:clause:a0:unconditioned:unexcepted"
+        in legal_ir_features
+    )
+
+
+def test_equivalence_prototype_feature_head_transfers_permission_holdout() -> None:
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency may issue the license before final action.",
+        embedding_vector=[1.0, 0.0],
+    )
+    validation = build_us_code_sample(
+        title="12",
+        section="1841",
+        text="The board may grant the permit before final action.",
+        embedding_vector=[1.0, 0.0],
+    )
+    family_autoencoder = AdaptiveModalAutoencoder(
+        feature_family_logit_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=128,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+    )
+    shared_prototype_features = set(
+        family_autoencoder._equivalence_prototype_feature_keys_for(train)
+    ).intersection(
+        family_autoencoder._equivalence_prototype_feature_keys_for(validation)
+    )
+    before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    family_autoencoder._nudge_family_logits(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert any(
+        feature.startswith("equivalence-prototype:equivalence-class:")
+        for feature in shared_prototype_features
+    )
+    assert (
+        "equivalence-prototype:round-trip-prototype:"
+        "government_actor:grant_authorization:authorization_instrument:"
+        "permission:enabling:deontic:p:clause:conditioned+temporal:"
+        "unconditioned:unexcepted"
+        in shared_prototype_features
+    )
+    assert any(
+        feature.startswith("equivalence-prototype:")
+        for feature in family_autoencoder.state.feature_family_logits
+    )
+    assert after_ce.cross_entropy_loss < before_ce.cross_entropy_loss
+
+    embedding_autoencoder = AdaptiveModalAutoencoder(
+        compiler_quality_embedding_weight_scale=0.0,
+        logic_signature_embedding_weight_scale=0.0,
+        round_trip_signal_embedding_weight_scale=0.0,
+        decompiler_plan_embedding_weight_scale=0.0,
+        predicate_argument_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=0.0,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        feature_embedding_weight_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=128,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before_cosine = embedding_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    embedding_autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_cosine = embedding_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert any(
+        feature.startswith("equivalence-prototype:")
+        for feature in embedding_autoencoder.state.feature_embedding_weights
+    )
+    assert after_cosine.embedding_cosine_similarity > before_cosine.embedding_cosine_similarity
+
+
+def test_contrastive_ir_boundary_features_separate_minimal_pairs() -> None:
+    permission = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency may issue the license before final action.",
+    )
+    obligation = build_us_code_sample(
+        title="5",
+        section="553",
+        text="The agency must issue the license before final action.",
+    )
+    negated = build_us_code_sample(
+        title="5",
+        section="554",
+        text="The agency must not issue the license unless fees are paid.",
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        max_contrastive_ir_boundary_features=128,
+    )
+
+    permission_features = autoencoder._contrastive_ir_boundary_feature_keys_for(
+        permission
+    )
+    obligation_features = autoencoder._contrastive_ir_boundary_feature_keys_for(
+        obligation
+    )
+    negated_features = autoencoder._contrastive_ir_boundary_feature_keys_for(negated)
+    fallback_features = autoencoder._fallback_feature_keys_for(permission)
+    legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(permission)
+
+    assert (
+        "contrastive-ir:force-axis:"
+        "permission:vs-obligation+prohibition+definition+enforcement+assertive"
+        in permission_features
+    )
+    assert (
+        "contrastive-ir:force-axis:"
+        "obligation:vs-permission+prohibition+definition+enforcement+assertive"
+        in obligation_features
+    )
+    assert "contrastive-ir:operator-axis:deontic:d:p:clause:a0:cno:eno:tyes" in (
+        permission_features
+    )
+    assert "contrastive-ir:operator-axis:deontic:d:o:clause:a0:cno:eno:tyes" in (
+        obligation_features
+    )
+    assert (
+        "contrastive-ir:minimal-pair-boundary:"
+        "government_actor:grant_authorization:authorization_instrument:"
+        "permission:enabling:cyes:eno:tyes"
+        in permission_features
+    )
+    assert (
+        "contrastive-ir:negation-boundary:negated:conditioned"
+        in negated_features
+    )
+    assert (
+        "contrastive-ir:operator-axis:deontic:d:p:clause:a0:cno:eno:tyes"
+        not in obligation_features
+    )
+    assert (
+        "contrastive-ir:force-axis:"
+        "permission:vs-obligation+prohibition+definition+enforcement+assertive"
+        in fallback_features
+    )
+    assert (
+        "legal-ir:contrastive-ir:force-axis:"
+        "permission:vs-obligation+prohibition+definition+enforcement+assertive"
+        in legal_ir_features
+    )
+
+
+def test_contrastive_ir_boundary_feature_head_transfers_permission_holdout() -> None:
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency may issue the license before final action.",
+        embedding_vector=[1.0, 0.0],
+    )
+    validation = build_us_code_sample(
+        title="12",
+        section="1841",
+        text="The board may grant the permit before final action.",
+        embedding_vector=[1.0, 0.0],
+    )
+    family_autoencoder = AdaptiveModalAutoencoder(
+        feature_family_logit_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=128,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+    )
+    shared_boundary_features = set(
+        family_autoencoder._contrastive_ir_boundary_feature_keys_for(train)
+    ).intersection(
+        family_autoencoder._contrastive_ir_boundary_feature_keys_for(validation)
+    )
+    before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    family_autoencoder._nudge_family_logits(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert (
+        "contrastive-ir:semantic-operator-boundary:"
+        "government_actor:grant_authorization:authorization_instrument:"
+        "deontic:p:permission:enabling:cyes:eno:tyes"
+        in shared_boundary_features
+    )
+    assert any(
+        feature.startswith("contrastive-ir:")
+        for feature in family_autoencoder.state.feature_family_logits
+    )
+    assert after_ce.cross_entropy_loss < before_ce.cross_entropy_loss
+
+    embedding_autoencoder = AdaptiveModalAutoencoder(
+        compiler_quality_embedding_weight_scale=0.0,
+        logic_signature_embedding_weight_scale=0.0,
+        round_trip_signal_embedding_weight_scale=0.0,
+        decompiler_plan_embedding_weight_scale=0.0,
+        predicate_argument_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=0.0,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        feature_embedding_weight_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=128,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before_cosine = embedding_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    embedding_autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_cosine = embedding_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert any(
+        feature.startswith("contrastive-ir:")
+        for feature in embedding_autoencoder.state.feature_embedding_weights
+    )
+    assert after_cosine.embedding_cosine_similarity > before_cosine.embedding_cosine_similarity
+
+
 def test_family_embedding_prototype_head_transfers_cosine_to_holdout() -> None:
     train = build_us_code_sample(
         title="5",

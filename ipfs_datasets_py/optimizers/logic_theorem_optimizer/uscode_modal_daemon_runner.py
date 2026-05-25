@@ -1869,6 +1869,14 @@ def build_paired_daemon_commands(
         str(getattr(args, "autoencoder_max_compiler_contract_features", 64)),
         "--autoencoder-max-decompiler-surface-template-features",
         str(getattr(args, "autoencoder_max_decompiler_surface_template_features", 48)),
+        "--autoencoder-max-canonical-ir-graph-features",
+        str(getattr(args, "autoencoder_max_canonical_ir_graph_features", 64)),
+        "--autoencoder-max-cycle-consistency-features",
+        str(getattr(args, "autoencoder_max_cycle_consistency_features", 64)),
+        "--autoencoder-max-equivalence-prototype-features",
+        str(getattr(args, "autoencoder_max_equivalence_prototype_features", 48)),
+        "--autoencoder-max-contrastive-ir-boundary-features",
+        str(getattr(args, "autoencoder_max_contrastive_ir_boundary_features", 64)),
         "--autoencoder-embedding-head-update-normalization",
         str(getattr(args, "autoencoder_embedding_head_update_normalization", 0.5)),
         "--autoencoder-family-logit-head-update-normalization",
@@ -4844,6 +4852,50 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--autoencoder-max-canonical-ir-graph-features",
+        type=int,
+        default=64,
+        help=(
+            "Maximum canonical IR graph features to expose to the feature "
+            "decoder. These normalize formula nodes, semantic role edges, "
+            "condition/exception scope, and KG shape for paraphrase-stable "
+            "compiler/decompiler transfer."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-max-cycle-consistency-features",
+        type=int,
+        default=64,
+        help=(
+            "Maximum compiler/decompiler cycle-consistency features to expose "
+            "to the feature decoder. These align source roles, modal force, "
+            "IR operator shape, condition/exception scope, and KG shape so "
+            "round-trip TODOs generalize across paraphrases."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-max-equivalence-prototype-features",
+        type=int,
+        default=48,
+        help=(
+            "Maximum canonical equivalence-prototype features to expose to "
+            "the feature decoder. These pool paraphrases that share the same "
+            "legal IR role, operator, scope, force, and KG shape into one "
+            "learnable latent prototype."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-max-contrastive-ir-boundary-features",
+        type=int,
+        default=64,
+        help=(
+            "Maximum contrastive legal IR boundary features to expose to the "
+            "feature decoder. These separate confusable clauses that share "
+            "actors and objects but differ in legal force, polarity, scope, "
+            "operator, cue, or KG shape."
+        ),
+    )
+    parser.add_argument(
         "--autoencoder-family-embedding-weight-scale",
         type=float,
         default=0.5,
@@ -5899,6 +5951,18 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         max_decompiler_surface_template_features=int(
             getattr(args, "autoencoder_max_decompiler_surface_template_features", 48)
         ),
+        max_canonical_ir_graph_features=int(
+            getattr(args, "autoencoder_max_canonical_ir_graph_features", 64)
+        ),
+        max_cycle_consistency_features=int(
+            getattr(args, "autoencoder_max_cycle_consistency_features", 64)
+        ),
+        max_equivalence_prototype_features=int(
+            getattr(args, "autoencoder_max_equivalence_prototype_features", 48)
+        ),
+        max_contrastive_ir_boundary_features=int(
+            getattr(args, "autoencoder_max_contrastive_ir_boundary_features", 64)
+        ),
         feature_activity_reference=int(
             getattr(args, "autoencoder_feature_activity_reference", 64)
         ),
@@ -6053,6 +6117,18 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     )
     summary["autoencoder_max_decompiler_surface_template_features"] = int(
         getattr(args, "autoencoder_max_decompiler_surface_template_features", 48)
+    )
+    summary["autoencoder_max_canonical_ir_graph_features"] = int(
+        getattr(args, "autoencoder_max_canonical_ir_graph_features", 64)
+    )
+    summary["autoencoder_max_cycle_consistency_features"] = int(
+        getattr(args, "autoencoder_max_cycle_consistency_features", 64)
+    )
+    summary["autoencoder_max_equivalence_prototype_features"] = int(
+        getattr(args, "autoencoder_max_equivalence_prototype_features", 48)
+    )
+    summary["autoencoder_max_contrastive_ir_boundary_features"] = int(
+        getattr(args, "autoencoder_max_contrastive_ir_boundary_features", 64)
     )
     summary["autoencoder_feature_activity_reference"] = int(
         getattr(args, "autoencoder_feature_activity_reference", 64)

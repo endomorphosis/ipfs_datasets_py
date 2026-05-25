@@ -52,6 +52,10 @@ COMMON_ARGS=(
   --autoencoder-max-normative-polarity-features 48
   --autoencoder-max-compiler-contract-features 64
   --autoencoder-max-decompiler-surface-template-features 48
+  --autoencoder-max-canonical-ir-graph-features 64
+  --autoencoder-max-cycle-consistency-features 64
+  --autoencoder-max-equivalence-prototype-features 48
+  --autoencoder-max-contrastive-ir-boundary-features 64
   --autoencoder-max-semantic-slot-interactions 24
   --autoencoder-feature-activity-reference 64
   --autoencoder-feature-logit-clip 24.0
