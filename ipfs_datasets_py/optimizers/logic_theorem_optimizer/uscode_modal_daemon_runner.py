@@ -1837,6 +1837,36 @@ def build_paired_daemon_commands(
         str(getattr(args, "autoencoder_logic_signature_family_logit_scale", 1.0)),
         "--autoencoder-logic-signature-legal-ir-view-logit-scale",
         str(getattr(args, "autoencoder_logic_signature_legal_ir_view_logit_scale", 1.0)),
+        "--autoencoder-round-trip-signal-embedding-weight-scale",
+        str(getattr(args, "autoencoder_round_trip_signal_embedding_weight_scale", 0.5)),
+        "--autoencoder-round-trip-signal-family-logit-scale",
+        str(getattr(args, "autoencoder_round_trip_signal_family_logit_scale", 1.0)),
+        "--autoencoder-round-trip-signal-legal-ir-view-logit-scale",
+        str(getattr(args, "autoencoder_round_trip_signal_legal_ir_view_logit_scale", 1.0)),
+        "--autoencoder-decompiler-plan-embedding-weight-scale",
+        str(getattr(args, "autoencoder_decompiler_plan_embedding_weight_scale", 0.5)),
+        "--autoencoder-decompiler-plan-family-logit-scale",
+        str(getattr(args, "autoencoder_decompiler_plan_family_logit_scale", 1.0)),
+        "--autoencoder-decompiler-plan-legal-ir-view-logit-scale",
+        str(getattr(args, "autoencoder_decompiler_plan_legal_ir_view_logit_scale", 1.0)),
+        "--autoencoder-predicate-argument-embedding-weight-scale",
+        str(getattr(args, "autoencoder_predicate_argument_embedding_weight_scale", 0.5)),
+        "--autoencoder-predicate-argument-family-logit-scale",
+        str(getattr(args, "autoencoder_predicate_argument_family_logit_scale", 1.0)),
+        "--autoencoder-predicate-argument-legal-ir-view-logit-scale",
+        str(getattr(args, "autoencoder_predicate_argument_legal_ir_view_logit_scale", 1.0)),
+        "--autoencoder-max-compiler-latent-profile-features",
+        str(getattr(args, "autoencoder_max_compiler_latent_profile_features", 48)),
+        "--autoencoder-max-round-trip-bridge-features",
+        str(getattr(args, "autoencoder_max_round_trip_bridge_features", 64)),
+        "--autoencoder-max-clause-topology-features",
+        str(getattr(args, "autoencoder_max_clause_topology_features", 64)),
+        "--autoencoder-embedding-head-update-normalization",
+        str(getattr(args, "autoencoder_embedding_head_update_normalization", 0.5)),
+        "--autoencoder-family-logit-head-update-normalization",
+        str(getattr(args, "autoencoder_family_logit_head_update_normalization", 0.5)),
+        "--autoencoder-legal-ir-view-head-update-normalization",
+        str(getattr(args, "autoencoder_legal_ir_view_head_update_normalization", 0.5)),
         "--autoencoder-family-embedding-weight-scale",
         str(getattr(args, "autoencoder_family_embedding_weight_scale", 0.5)),
         "--autoencoder-family-semantic-slot-embedding-weight-scale",
@@ -4622,6 +4652,150 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--autoencoder-round-trip-signal-embedding-weight-scale",
+        type=float,
+        default=0.5,
+        help=(
+            "Scale source-only round-trip risk decoder prototypes built from "
+            "base classifier uncertainty, parser ambiguity, frame ambiguity, "
+            "and frame/KG structure."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-round-trip-signal-family-logit-scale",
+        type=float,
+        default=1.0,
+        help=(
+            "Scale source-only round-trip risk modal-family logits for "
+            "cross-entropy transfer when similarly ambiguous clauses compile "
+            "to the same formal family."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-round-trip-signal-legal-ir-view-logit-scale",
+        type=float,
+        default=1.0,
+        help=(
+            "Scale source-only round-trip risk LegalIR-view logits so hard "
+            "compile/decompile cases can specialize frame, graph, and prover "
+            "view predictions."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-decompiler-plan-embedding-weight-scale",
+        type=float,
+        default=0.5,
+        help=(
+            "Scale normalized source-clause decompiler-plan decoder prototypes "
+            "built from modality cues, subject/action/object anchors, and "
+            "condition/exception/temporal surface roles."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-decompiler-plan-family-logit-scale",
+        type=float,
+        default=1.0,
+        help=(
+            "Scale normalized source-clause decompiler-plan modal-family logits "
+            "for transfer across equivalent legal wording."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-decompiler-plan-legal-ir-view-logit-scale",
+        type=float,
+        default=1.0,
+        help=(
+            "Scale normalized source-clause decompiler-plan LegalIR-view logits "
+            "for frame, graph, event, and prover view transfer."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-predicate-argument-embedding-weight-scale",
+        type=float,
+        default=0.5,
+        help=(
+            "Scale predicate/argument skeleton decoder prototypes built from "
+            "compiled predicate roles, argument positions, arity, and attached "
+            "conditions or exceptions."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-predicate-argument-family-logit-scale",
+        type=float,
+        default=1.0,
+        help=(
+            "Scale predicate/argument skeleton modal-family logits for "
+            "cross-entropy transfer across clauses with equivalent IR roles."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-predicate-argument-legal-ir-view-logit-scale",
+        type=float,
+        default=1.0,
+        help=(
+            "Scale predicate/argument skeleton LegalIR-view logits for "
+            "decompiler, KG, event, frame, and prover view transfer."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-embedding-head-update-normalization",
+        type=float,
+        default=0.5,
+        help=(
+            "Normalize decoder embedding update size by the number of active "
+            "generalizable embedding heads. 0 disables normalization; 1 shares "
+            "a fixed update budget equally across active heads."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-family-logit-head-update-normalization",
+        type=float,
+        default=0.5,
+        help=(
+            "Normalize modal-family cross-entropy update size by the number of "
+            "active generalizable family-logit heads."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-legal-ir-view-head-update-normalization",
+        type=float,
+        default=0.5,
+        help=(
+            "Normalize LegalIR-view cross-entropy update size by the number of "
+            "active view-logit heads."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-max-compiler-latent-profile-features",
+        type=int,
+        default=48,
+        help=(
+            "Maximum shared compiler-latent profile features to expose to the "
+            "feature decoder. These compact source/IR bridge features combine "
+            "modal cues, predicate roles, argument shape, frames, and KG shape."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-max-round-trip-bridge-features",
+        type=int,
+        default=64,
+        help=(
+            "Maximum round-trip bridge features to expose to the feature "
+            "decoder. These bidirectional source/IR invariants align source "
+            "roles with compiled families, predicates, arguments, and KG atoms."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-max-clause-topology-features",
+        type=int,
+        default=64,
+        help=(
+            "Maximum abstract clause topology features to expose to the feature "
+            "decoder. These encode source role graph shape, modal scope, IR "
+            "arity/condition/exception topology, and KG projection shape."
+        ),
+    )
+    parser.add_argument(
         "--autoencoder-family-embedding-weight-scale",
         type=float,
         default=0.5,
@@ -5075,6 +5249,33 @@ def load_warm_start_state(paths: Sequence[Path]) -> tuple[ModalAutoencoderTraini
         "logic_signature_legal_ir_view_logit_entries": len(
             averaged.logic_signature_legal_ir_view_logits
         ),
+        "round_trip_signal_embedding_weight_entries": len(
+            averaged.round_trip_signal_embedding_weights
+        ),
+        "round_trip_signal_family_logit_entries": len(
+            averaged.round_trip_signal_family_logits
+        ),
+        "round_trip_signal_legal_ir_view_logit_entries": len(
+            averaged.round_trip_signal_legal_ir_view_logits
+        ),
+        "decompiler_plan_embedding_weight_entries": len(
+            averaged.decompiler_plan_embedding_weights
+        ),
+        "decompiler_plan_family_logit_entries": len(
+            averaged.decompiler_plan_family_logits
+        ),
+        "decompiler_plan_legal_ir_view_logit_entries": len(
+            averaged.decompiler_plan_legal_ir_view_logits
+        ),
+        "predicate_argument_embedding_weight_entries": len(
+            averaged.predicate_argument_embedding_weights
+        ),
+        "predicate_argument_family_logit_entries": len(
+            averaged.predicate_argument_family_logits
+        ),
+        "predicate_argument_legal_ir_view_logit_entries": len(
+            averaged.predicate_argument_legal_ir_view_logits
+        ),
         "family_embedding_weight_entries": len(averaged.family_embedding_weights),
         "family_semantic_slot_embedding_weight_entries": len(
             averaged.family_semantic_slot_embedding_weights
@@ -5519,6 +5720,42 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         logic_signature_legal_ir_view_logit_scale=float(
             getattr(args, "autoencoder_logic_signature_legal_ir_view_logit_scale", 1.0)
         ),
+        round_trip_signal_embedding_weight_scale=float(
+            getattr(args, "autoencoder_round_trip_signal_embedding_weight_scale", 0.5)
+        ),
+        round_trip_signal_family_logit_scale=float(
+            getattr(args, "autoencoder_round_trip_signal_family_logit_scale", 1.0)
+        ),
+        round_trip_signal_legal_ir_view_logit_scale=float(
+            getattr(args, "autoencoder_round_trip_signal_legal_ir_view_logit_scale", 1.0)
+        ),
+        decompiler_plan_embedding_weight_scale=float(
+            getattr(args, "autoencoder_decompiler_plan_embedding_weight_scale", 0.5)
+        ),
+        decompiler_plan_family_logit_scale=float(
+            getattr(args, "autoencoder_decompiler_plan_family_logit_scale", 1.0)
+        ),
+        decompiler_plan_legal_ir_view_logit_scale=float(
+            getattr(args, "autoencoder_decompiler_plan_legal_ir_view_logit_scale", 1.0)
+        ),
+        predicate_argument_embedding_weight_scale=float(
+            getattr(args, "autoencoder_predicate_argument_embedding_weight_scale", 0.5)
+        ),
+        predicate_argument_family_logit_scale=float(
+            getattr(args, "autoencoder_predicate_argument_family_logit_scale", 1.0)
+        ),
+        predicate_argument_legal_ir_view_logit_scale=float(
+            getattr(args, "autoencoder_predicate_argument_legal_ir_view_logit_scale", 1.0)
+        ),
+        embedding_head_update_normalization=float(
+            getattr(args, "autoencoder_embedding_head_update_normalization", 0.5)
+        ),
+        family_logit_head_update_normalization=float(
+            getattr(args, "autoencoder_family_logit_head_update_normalization", 0.5)
+        ),
+        legal_ir_view_head_update_normalization=float(
+            getattr(args, "autoencoder_legal_ir_view_head_update_normalization", 0.5)
+        ),
         feature_embedding_weight_scale=float(
             getattr(args, "autoencoder_feature_embedding_weight_scale", 0.5)
         ),
@@ -5593,6 +5830,15 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         max_legal_ir_token_trigram_features=int(
             getattr(args, "autoencoder_max_legal_ir_token_trigram_features", 8)
         ),
+        max_compiler_latent_profile_features=int(
+            getattr(args, "autoencoder_max_compiler_latent_profile_features", 48)
+        ),
+        max_round_trip_bridge_features=int(
+            getattr(args, "autoencoder_max_round_trip_bridge_features", 64)
+        ),
+        max_clause_topology_features=int(
+            getattr(args, "autoencoder_max_clause_topology_features", 64)
+        ),
         feature_activity_reference=int(
             getattr(args, "autoencoder_feature_activity_reference", 64)
         ),
@@ -5620,6 +5866,42 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     )
     summary["autoencoder_logic_signature_legal_ir_view_logit_scale"] = float(
         getattr(args, "autoencoder_logic_signature_legal_ir_view_logit_scale", 1.0)
+    )
+    summary["autoencoder_round_trip_signal_embedding_weight_scale"] = float(
+        getattr(args, "autoencoder_round_trip_signal_embedding_weight_scale", 0.5)
+    )
+    summary["autoencoder_round_trip_signal_family_logit_scale"] = float(
+        getattr(args, "autoencoder_round_trip_signal_family_logit_scale", 1.0)
+    )
+    summary["autoencoder_round_trip_signal_legal_ir_view_logit_scale"] = float(
+        getattr(args, "autoencoder_round_trip_signal_legal_ir_view_logit_scale", 1.0)
+    )
+    summary["autoencoder_decompiler_plan_embedding_weight_scale"] = float(
+        getattr(args, "autoencoder_decompiler_plan_embedding_weight_scale", 0.5)
+    )
+    summary["autoencoder_decompiler_plan_family_logit_scale"] = float(
+        getattr(args, "autoencoder_decompiler_plan_family_logit_scale", 1.0)
+    )
+    summary["autoencoder_decompiler_plan_legal_ir_view_logit_scale"] = float(
+        getattr(args, "autoencoder_decompiler_plan_legal_ir_view_logit_scale", 1.0)
+    )
+    summary["autoencoder_predicate_argument_embedding_weight_scale"] = float(
+        getattr(args, "autoencoder_predicate_argument_embedding_weight_scale", 0.5)
+    )
+    summary["autoencoder_predicate_argument_family_logit_scale"] = float(
+        getattr(args, "autoencoder_predicate_argument_family_logit_scale", 1.0)
+    )
+    summary["autoencoder_predicate_argument_legal_ir_view_logit_scale"] = float(
+        getattr(args, "autoencoder_predicate_argument_legal_ir_view_logit_scale", 1.0)
+    )
+    summary["autoencoder_embedding_head_update_normalization"] = float(
+        getattr(args, "autoencoder_embedding_head_update_normalization", 0.5)
+    )
+    summary["autoencoder_family_logit_head_update_normalization"] = float(
+        getattr(args, "autoencoder_family_logit_head_update_normalization", 0.5)
+    )
+    summary["autoencoder_legal_ir_view_head_update_normalization"] = float(
+        getattr(args, "autoencoder_legal_ir_view_head_update_normalization", 0.5)
     )
     summary["autoencoder_family_embedding_weight_scale"] = float(
         getattr(args, "autoencoder_family_embedding_weight_scale", 0.5)
@@ -5690,6 +5972,15 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     )
     summary["autoencoder_max_legal_ir_token_trigram_features"] = int(
         getattr(args, "autoencoder_max_legal_ir_token_trigram_features", 8)
+    )
+    summary["autoencoder_max_compiler_latent_profile_features"] = int(
+        getattr(args, "autoencoder_max_compiler_latent_profile_features", 48)
+    )
+    summary["autoencoder_max_round_trip_bridge_features"] = int(
+        getattr(args, "autoencoder_max_round_trip_bridge_features", 64)
+    )
+    summary["autoencoder_max_clause_topology_features"] = int(
+        getattr(args, "autoencoder_max_clause_topology_features", 64)
     )
     summary["autoencoder_feature_activity_reference"] = int(
         getattr(args, "autoencoder_feature_activity_reference", 64)
@@ -6168,6 +6459,33 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         )
         summary["logic_signature_legal_ir_view_logit_entries"] = len(
             autoencoder.state.logic_signature_legal_ir_view_logits
+        )
+        summary["round_trip_signal_embedding_weight_entries"] = len(
+            autoencoder.state.round_trip_signal_embedding_weights
+        )
+        summary["round_trip_signal_family_logit_entries"] = len(
+            autoencoder.state.round_trip_signal_family_logits
+        )
+        summary["round_trip_signal_legal_ir_view_logit_entries"] = len(
+            autoencoder.state.round_trip_signal_legal_ir_view_logits
+        )
+        summary["decompiler_plan_embedding_weight_entries"] = len(
+            autoencoder.state.decompiler_plan_embedding_weights
+        )
+        summary["decompiler_plan_family_logit_entries"] = len(
+            autoencoder.state.decompiler_plan_family_logits
+        )
+        summary["decompiler_plan_legal_ir_view_logit_entries"] = len(
+            autoencoder.state.decompiler_plan_legal_ir_view_logits
+        )
+        summary["predicate_argument_embedding_weight_entries"] = len(
+            autoencoder.state.predicate_argument_embedding_weights
+        )
+        summary["predicate_argument_family_logit_entries"] = len(
+            autoencoder.state.predicate_argument_family_logits
+        )
+        summary["predicate_argument_legal_ir_view_logit_entries"] = len(
+            autoencoder.state.predicate_argument_legal_ir_view_logits
         )
         summary["decoded_embedding_entries"] = len(autoencoder.state.decoded_embeddings)
         summary["elapsed_seconds"] = round(time.time() - started_at, 3)

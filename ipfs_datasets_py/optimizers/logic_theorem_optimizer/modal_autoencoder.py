@@ -359,6 +359,15 @@ class ModalAutoencoderTrainingState:
     logic_signature_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
     logic_signature_family_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
     logic_signature_legal_ir_view_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    round_trip_signal_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
+    round_trip_signal_family_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    round_trip_signal_legal_ir_view_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    decompiler_plan_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
+    decompiler_plan_family_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    decompiler_plan_legal_ir_view_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    predicate_argument_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
+    predicate_argument_family_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    predicate_argument_legal_ir_view_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
     feature_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
     family_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
     family_semantic_slot_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
@@ -414,6 +423,58 @@ class ModalAutoencoderTrainingState:
                 signature: dict(sorted(logits.items()))
                 for signature, logits in sorted(
                     self.logic_signature_legal_ir_view_logits.items()
+                )
+            },
+            "round_trip_signal_embedding_weights": {
+                signal: list(vector)
+                for signal, vector in sorted(
+                    self.round_trip_signal_embedding_weights.items()
+                )
+            },
+            "round_trip_signal_family_logits": {
+                signal: dict(sorted(logits.items()))
+                for signal, logits in sorted(
+                    self.round_trip_signal_family_logits.items()
+                )
+            },
+            "round_trip_signal_legal_ir_view_logits": {
+                signal: dict(sorted(logits.items()))
+                for signal, logits in sorted(
+                    self.round_trip_signal_legal_ir_view_logits.items()
+                )
+            },
+            "decompiler_plan_embedding_weights": {
+                plan: list(vector)
+                for plan, vector in sorted(
+                    self.decompiler_plan_embedding_weights.items()
+                )
+            },
+            "decompiler_plan_family_logits": {
+                plan: dict(sorted(logits.items()))
+                for plan, logits in sorted(self.decompiler_plan_family_logits.items())
+            },
+            "decompiler_plan_legal_ir_view_logits": {
+                plan: dict(sorted(logits.items()))
+                for plan, logits in sorted(
+                    self.decompiler_plan_legal_ir_view_logits.items()
+                )
+            },
+            "predicate_argument_embedding_weights": {
+                signature: list(vector)
+                for signature, vector in sorted(
+                    self.predicate_argument_embedding_weights.items()
+                )
+            },
+            "predicate_argument_family_logits": {
+                signature: dict(sorted(logits.items()))
+                for signature, logits in sorted(
+                    self.predicate_argument_family_logits.items()
+                )
+            },
+            "predicate_argument_legal_ir_view_logits": {
+                signature: dict(sorted(logits.items()))
+                for signature, logits in sorted(
+                    self.predicate_argument_legal_ir_view_logits.items()
                 )
             },
             "feature_legal_ir_view_logits": {
@@ -528,6 +589,42 @@ class ModalAutoencoderTrainingState:
                 signature: dict(logits)
                 for signature, logits in self.logic_signature_legal_ir_view_logits.items()
             },
+            round_trip_signal_embedding_weights={
+                signal: list(vector)
+                for signal, vector in self.round_trip_signal_embedding_weights.items()
+            },
+            round_trip_signal_family_logits={
+                signal: dict(logits)
+                for signal, logits in self.round_trip_signal_family_logits.items()
+            },
+            round_trip_signal_legal_ir_view_logits={
+                signal: dict(logits)
+                for signal, logits in self.round_trip_signal_legal_ir_view_logits.items()
+            },
+            decompiler_plan_embedding_weights={
+                plan: list(vector)
+                for plan, vector in self.decompiler_plan_embedding_weights.items()
+            },
+            decompiler_plan_family_logits={
+                plan: dict(logits)
+                for plan, logits in self.decompiler_plan_family_logits.items()
+            },
+            decompiler_plan_legal_ir_view_logits={
+                plan: dict(logits)
+                for plan, logits in self.decompiler_plan_legal_ir_view_logits.items()
+            },
+            predicate_argument_embedding_weights={
+                signature: list(vector)
+                for signature, vector in self.predicate_argument_embedding_weights.items()
+            },
+            predicate_argument_family_logits={
+                signature: dict(logits)
+                for signature, logits in self.predicate_argument_family_logits.items()
+            },
+            predicate_argument_legal_ir_view_logits={
+                signature: dict(logits)
+                for signature, logits in self.predicate_argument_legal_ir_view_logits.items()
+            },
             feature_embedding_weights={
                 feature: list(vector)
                 for feature, vector in self.feature_embedding_weights.items()
@@ -617,6 +714,42 @@ class ModalAutoencoderTrainingState:
                 ]
                 continue
             current = self.logic_signature_embedding_weights[signature]
+            if len(current) != len(vector):
+                continue
+            for index, value in enumerate(vector):
+                current[index] += float(value) * scale
+
+        for signal, vector in other.round_trip_signal_embedding_weights.items():
+            if signal not in self.round_trip_signal_embedding_weights:
+                self.round_trip_signal_embedding_weights[signal] = [
+                    float(value) * scale for value in vector
+                ]
+                continue
+            current = self.round_trip_signal_embedding_weights[signal]
+            if len(current) != len(vector):
+                continue
+            for index, value in enumerate(vector):
+                current[index] += float(value) * scale
+
+        for plan, vector in other.decompiler_plan_embedding_weights.items():
+            if plan not in self.decompiler_plan_embedding_weights:
+                self.decompiler_plan_embedding_weights[plan] = [
+                    float(value) * scale for value in vector
+                ]
+                continue
+            current = self.decompiler_plan_embedding_weights[plan]
+            if len(current) != len(vector):
+                continue
+            for index, value in enumerate(vector):
+                current[index] += float(value) * scale
+
+        for signature, vector in other.predicate_argument_embedding_weights.items():
+            if signature not in self.predicate_argument_embedding_weights:
+                self.predicate_argument_embedding_weights[signature] = [
+                    float(value) * scale for value in vector
+                ]
+                continue
+            current = self.predicate_argument_embedding_weights[signature]
             if len(current) != len(vector):
                 continue
             for index, value in enumerate(vector):
@@ -739,6 +872,27 @@ class ModalAutoencoderTrainingState:
                     float(value) * scale
                 )
 
+        for signal, logits in other.round_trip_signal_family_logits.items():
+            current_logits = self.round_trip_signal_family_logits.setdefault(signal, {})
+            for family, value in logits.items():
+                current_logits[family] = current_logits.get(family, 0.0) + (
+                    float(value) * scale
+                )
+
+        for plan, logits in other.decompiler_plan_family_logits.items():
+            current_logits = self.decompiler_plan_family_logits.setdefault(plan, {})
+            for family, value in logits.items():
+                current_logits[family] = current_logits.get(family, 0.0) + (
+                    float(value) * scale
+                )
+
+        for signature, logits in other.predicate_argument_family_logits.items():
+            current_logits = self.predicate_argument_family_logits.setdefault(signature, {})
+            for family, value in logits.items():
+                current_logits[family] = current_logits.get(family, 0.0) + (
+                    float(value) * scale
+                )
+
         for slot, logits in other.semantic_slot_family_logits.items():
             current_logits = self.semantic_slot_family_logits.setdefault(slot, {})
             for family, value in logits.items():
@@ -755,6 +909,36 @@ class ModalAutoencoderTrainingState:
 
         for signature, logits in other.logic_signature_legal_ir_view_logits.items():
             current_logits = self.logic_signature_legal_ir_view_logits.setdefault(
+                signature,
+                {},
+            )
+            for view, value in logits.items():
+                current_logits[view] = current_logits.get(view, 0.0) + (
+                    float(value) * scale
+                )
+
+        for signal, logits in other.round_trip_signal_legal_ir_view_logits.items():
+            current_logits = self.round_trip_signal_legal_ir_view_logits.setdefault(
+                signal,
+                {},
+            )
+            for view, value in logits.items():
+                current_logits[view] = current_logits.get(view, 0.0) + (
+                    float(value) * scale
+                )
+
+        for plan, logits in other.decompiler_plan_legal_ir_view_logits.items():
+            current_logits = self.decompiler_plan_legal_ir_view_logits.setdefault(
+                plan,
+                {},
+            )
+            for view, value in logits.items():
+                current_logits[view] = current_logits.get(view, 0.0) + (
+                    float(value) * scale
+                )
+
+        for signature, logits in other.predicate_argument_legal_ir_view_logits.items():
+            current_logits = self.predicate_argument_legal_ir_view_logits.setdefault(
                 signature,
                 {},
             )
@@ -815,6 +999,9 @@ class ModalAutoencoderTrainingState:
         merged = cls()
         compiler_quality_vector_counts: Dict[str, int] = {}
         logic_signature_vector_counts: Dict[str, int] = {}
+        round_trip_signal_vector_counts: Dict[str, int] = {}
+        decompiler_plan_vector_counts: Dict[str, int] = {}
+        predicate_argument_vector_counts: Dict[str, int] = {}
         vector_counts: Dict[str, int] = {}
         family_vector_counts: Dict[str, int] = {}
         legal_view_vector_counts: Dict[str, int] = {}
@@ -827,6 +1014,12 @@ class ModalAutoencoderTrainingState:
         compiler_quality_logit_counts: Dict[tuple[str, str], int] = {}
         logic_signature_logit_counts: Dict[tuple[str, str], int] = {}
         logic_signature_legal_view_counts: Dict[tuple[str, str], int] = {}
+        round_trip_signal_logit_counts: Dict[tuple[str, str], int] = {}
+        round_trip_signal_legal_view_counts: Dict[tuple[str, str], int] = {}
+        decompiler_plan_logit_counts: Dict[tuple[str, str], int] = {}
+        decompiler_plan_legal_view_counts: Dict[tuple[str, str], int] = {}
+        predicate_argument_logit_counts: Dict[tuple[str, str], int] = {}
+        predicate_argument_legal_view_counts: Dict[tuple[str, str], int] = {}
         semantic_slot_logit_counts: Dict[tuple[str, str], int] = {}
         family_semantic_slot_legal_view_counts: Dict[tuple[str, str], int] = {}
         legal_view_counts: Dict[str, int] = {}
@@ -861,6 +1054,45 @@ class ModalAutoencoderTrainingState:
                 for index, value in enumerate(vector):
                     current[index] += float(value)
                 logic_signature_vector_counts[signature] += 1
+
+            for signal, vector in state.round_trip_signal_embedding_weights.items():
+                if signal not in merged.round_trip_signal_embedding_weights:
+                    merged.round_trip_signal_embedding_weights[signal] = [
+                        0.0 for _ in vector
+                    ]
+                    round_trip_signal_vector_counts[signal] = 0
+                current = merged.round_trip_signal_embedding_weights[signal]
+                if len(current) != len(vector):
+                    continue
+                for index, value in enumerate(vector):
+                    current[index] += float(value)
+                round_trip_signal_vector_counts[signal] += 1
+
+            for plan, vector in state.decompiler_plan_embedding_weights.items():
+                if plan not in merged.decompiler_plan_embedding_weights:
+                    merged.decompiler_plan_embedding_weights[plan] = [
+                        0.0 for _ in vector
+                    ]
+                    decompiler_plan_vector_counts[plan] = 0
+                current = merged.decompiler_plan_embedding_weights[plan]
+                if len(current) != len(vector):
+                    continue
+                for index, value in enumerate(vector):
+                    current[index] += float(value)
+                decompiler_plan_vector_counts[plan] += 1
+
+            for signature, vector in state.predicate_argument_embedding_weights.items():
+                if signature not in merged.predicate_argument_embedding_weights:
+                    merged.predicate_argument_embedding_weights[signature] = [
+                        0.0 for _ in vector
+                    ]
+                    predicate_argument_vector_counts[signature] = 0
+                current = merged.predicate_argument_embedding_weights[signature]
+                if len(current) != len(vector):
+                    continue
+                for index, value in enumerate(vector):
+                    current[index] += float(value)
+                predicate_argument_vector_counts[signature] += 1
 
             for feature, vector in state.feature_embedding_weights.items():
                 if feature not in merged.feature_embedding_weights:
@@ -983,6 +1215,39 @@ class ModalAutoencoderTrainingState:
                         logic_signature_logit_counts.get((signature, family), 0) + 1
                     )
 
+            for signal, logits in state.round_trip_signal_family_logits.items():
+                current_logits = merged.round_trip_signal_family_logits.setdefault(
+                    signal,
+                    {},
+                )
+                for family, value in logits.items():
+                    current_logits[family] = current_logits.get(family, 0.0) + float(value)
+                    round_trip_signal_logit_counts[(signal, family)] = (
+                        round_trip_signal_logit_counts.get((signal, family), 0) + 1
+                    )
+
+            for plan, logits in state.decompiler_plan_family_logits.items():
+                current_logits = merged.decompiler_plan_family_logits.setdefault(
+                    plan,
+                    {},
+                )
+                for family, value in logits.items():
+                    current_logits[family] = current_logits.get(family, 0.0) + float(value)
+                    decompiler_plan_logit_counts[(plan, family)] = (
+                        decompiler_plan_logit_counts.get((plan, family), 0) + 1
+                    )
+
+            for signature, logits in state.predicate_argument_family_logits.items():
+                current_logits = merged.predicate_argument_family_logits.setdefault(
+                    signature,
+                    {},
+                )
+                for family, value in logits.items():
+                    current_logits[family] = current_logits.get(family, 0.0) + float(value)
+                    predicate_argument_logit_counts[(signature, family)] = (
+                        predicate_argument_logit_counts.get((signature, family), 0) + 1
+                    )
+
             for slot, logits in state.semantic_slot_family_logits.items():
                 current_logits = merged.semantic_slot_family_logits.setdefault(slot, {})
                 for family, value in logits.items():
@@ -1011,6 +1276,43 @@ class ModalAutoencoderTrainingState:
                     current_logits[view] = current_logits.get(view, 0.0) + float(value)
                     logic_signature_legal_view_counts[(signature, view)] = (
                         logic_signature_legal_view_counts.get((signature, view), 0) + 1
+                    )
+
+            for signal, logits in state.round_trip_signal_legal_ir_view_logits.items():
+                current_logits = merged.round_trip_signal_legal_ir_view_logits.setdefault(
+                    signal,
+                    {},
+                )
+                for view, value in logits.items():
+                    current_logits[view] = current_logits.get(view, 0.0) + float(value)
+                    round_trip_signal_legal_view_counts[(signal, view)] = (
+                        round_trip_signal_legal_view_counts.get((signal, view), 0)
+                        + 1
+                    )
+
+            for plan, logits in state.decompiler_plan_legal_ir_view_logits.items():
+                current_logits = merged.decompiler_plan_legal_ir_view_logits.setdefault(
+                    plan,
+                    {},
+                )
+                for view, value in logits.items():
+                    current_logits[view] = current_logits.get(view, 0.0) + float(value)
+                    decompiler_plan_legal_view_counts[(plan, view)] = (
+                        decompiler_plan_legal_view_counts.get((plan, view), 0) + 1
+                    )
+
+            for signature, logits in state.predicate_argument_legal_ir_view_logits.items():
+                current_logits = (
+                    merged.predicate_argument_legal_ir_view_logits.setdefault(
+                        signature,
+                        {},
+                    )
+                )
+                for view, value in logits.items():
+                    current_logits[view] = current_logits.get(view, 0.0) + float(value)
+                    predicate_argument_legal_view_counts[(signature, view)] = (
+                        predicate_argument_legal_view_counts.get((signature, view), 0)
+                        + 1
                     )
 
             for key, logits in state.family_semantic_slot_legal_ir_view_logits.items():
@@ -1073,6 +1375,27 @@ class ModalAutoencoderTrainingState:
             merged.logic_signature_embedding_weights[signature] = [
                 value / count
                 for value in merged.logic_signature_embedding_weights[signature]
+            ]
+        for signal, count in round_trip_signal_vector_counts.items():
+            if count <= 0:
+                continue
+            merged.round_trip_signal_embedding_weights[signal] = [
+                value / count
+                for value in merged.round_trip_signal_embedding_weights[signal]
+            ]
+        for plan, count in decompiler_plan_vector_counts.items():
+            if count <= 0:
+                continue
+            merged.decompiler_plan_embedding_weights[plan] = [
+                value / count
+                for value in merged.decompiler_plan_embedding_weights[plan]
+            ]
+        for signature, count in predicate_argument_vector_counts.items():
+            if count <= 0:
+                continue
+            merged.predicate_argument_embedding_weights[signature] = [
+                value / count
+                for value in merged.predicate_argument_embedding_weights[signature]
             ]
         for feature, count in vector_counts.items():
             if count <= 0:
@@ -1141,6 +1464,21 @@ class ModalAutoencoderTrainingState:
                 count = logic_signature_logit_counts.get((signature, family), 0)
                 if count > 0:
                     logits[family] = value / count
+        for signal, logits in merged.round_trip_signal_family_logits.items():
+            for family, value in list(logits.items()):
+                count = round_trip_signal_logit_counts.get((signal, family), 0)
+                if count > 0:
+                    logits[family] = value / count
+        for plan, logits in merged.decompiler_plan_family_logits.items():
+            for family, value in list(logits.items()):
+                count = decompiler_plan_logit_counts.get((plan, family), 0)
+                if count > 0:
+                    logits[family] = value / count
+        for signature, logits in merged.predicate_argument_family_logits.items():
+            for family, value in list(logits.items()):
+                count = predicate_argument_logit_counts.get((signature, family), 0)
+                if count > 0:
+                    logits[family] = value / count
         for slot, logits in merged.semantic_slot_family_logits.items():
             for family, value in list(logits.items()):
                 count = semantic_slot_logit_counts.get((slot, family), 0)
@@ -1149,6 +1487,21 @@ class ModalAutoencoderTrainingState:
         for signature, logits in merged.logic_signature_legal_ir_view_logits.items():
             for view, value in list(logits.items()):
                 count = logic_signature_legal_view_counts.get((signature, view), 0)
+                if count > 0:
+                    logits[view] = value / count
+        for signal, logits in merged.round_trip_signal_legal_ir_view_logits.items():
+            for view, value in list(logits.items()):
+                count = round_trip_signal_legal_view_counts.get((signal, view), 0)
+                if count > 0:
+                    logits[view] = value / count
+        for plan, logits in merged.decompiler_plan_legal_ir_view_logits.items():
+            for view, value in list(logits.items()):
+                count = decompiler_plan_legal_view_counts.get((plan, view), 0)
+                if count > 0:
+                    logits[view] = value / count
+        for signature, logits in merged.predicate_argument_legal_ir_view_logits.items():
+            for view, value in list(logits.items()):
+                count = predicate_argument_legal_view_counts.get((signature, view), 0)
                 if count > 0:
                     logits[view] = value / count
         for slot, logits in merged.semantic_slot_legal_ir_view_logits.items():
@@ -1232,6 +1585,78 @@ class ModalAutoencoderTrainingState:
                 }
                 for signature, logits in dict(
                     data.get("logic_signature_legal_ir_view_logits", {})
+                ).items()
+            },
+            round_trip_signal_embedding_weights={
+                str(signal): [float(value) for value in vector]
+                for signal, vector in dict(
+                    data.get("round_trip_signal_embedding_weights", {})
+                ).items()
+            },
+            round_trip_signal_family_logits={
+                str(signal): {
+                    str(name): float(value)
+                    for name, value in dict(logits).items()
+                }
+                for signal, logits in dict(
+                    data.get("round_trip_signal_family_logits", {})
+                ).items()
+            },
+            round_trip_signal_legal_ir_view_logits={
+                str(signal): {
+                    str(name): float(value)
+                    for name, value in dict(logits).items()
+                }
+                for signal, logits in dict(
+                    data.get("round_trip_signal_legal_ir_view_logits", {})
+                ).items()
+            },
+            decompiler_plan_embedding_weights={
+                str(plan): [float(value) for value in vector]
+                for plan, vector in dict(
+                    data.get("decompiler_plan_embedding_weights", {})
+                ).items()
+            },
+            decompiler_plan_family_logits={
+                str(plan): {
+                    str(name): float(value)
+                    for name, value in dict(logits).items()
+                }
+                for plan, logits in dict(
+                    data.get("decompiler_plan_family_logits", {})
+                ).items()
+            },
+            decompiler_plan_legal_ir_view_logits={
+                str(plan): {
+                    str(name): float(value)
+                    for name, value in dict(logits).items()
+                }
+                for plan, logits in dict(
+                    data.get("decompiler_plan_legal_ir_view_logits", {})
+                ).items()
+            },
+            predicate_argument_embedding_weights={
+                str(signature): [float(value) for value in vector]
+                for signature, vector in dict(
+                    data.get("predicate_argument_embedding_weights", {})
+                ).items()
+            },
+            predicate_argument_family_logits={
+                str(signature): {
+                    str(name): float(value)
+                    for name, value in dict(logits).items()
+                }
+                for signature, logits in dict(
+                    data.get("predicate_argument_family_logits", {})
+                ).items()
+            },
+            predicate_argument_legal_ir_view_logits={
+                str(signature): {
+                    str(name): float(value)
+                    for name, value in dict(logits).items()
+                }
+                for signature, logits in dict(
+                    data.get("predicate_argument_legal_ir_view_logits", {})
                 ).items()
             },
             feature_embedding_weights={
@@ -1445,6 +1870,15 @@ class AdaptiveModalAutoencoder:
         logic_signature_embedding_weight_scale: float = 0.5,
         logic_signature_family_logit_scale: float = 0.0,
         logic_signature_legal_ir_view_logit_scale: float = 0.0,
+        round_trip_signal_embedding_weight_scale: float = 0.5,
+        round_trip_signal_family_logit_scale: float = 0.0,
+        round_trip_signal_legal_ir_view_logit_scale: float = 0.0,
+        decompiler_plan_embedding_weight_scale: float = 0.5,
+        decompiler_plan_family_logit_scale: float = 0.0,
+        decompiler_plan_legal_ir_view_logit_scale: float = 0.0,
+        predicate_argument_embedding_weight_scale: float = 0.5,
+        predicate_argument_family_logit_scale: float = 0.0,
+        predicate_argument_legal_ir_view_logit_scale: float = 0.0,
         feature_embedding_weight_scale: float = 0.5,
         family_embedding_weight_scale: float = 0.5,
         family_semantic_slot_embedding_weight_scale: float = 0.5,
@@ -1469,6 +1903,12 @@ class AdaptiveModalAutoencoder:
         max_legal_ir_token_features: int = 24,
         max_legal_ir_token_bigram_features: int = 12,
         max_legal_ir_token_trigram_features: int = 8,
+        max_compiler_latent_profile_features: int = 48,
+        max_round_trip_bridge_features: int = 64,
+        max_clause_topology_features: int = 64,
+        embedding_head_update_normalization: float = 0.0,
+        family_logit_head_update_normalization: float = 0.0,
+        legal_ir_view_head_update_normalization: float = 0.0,
         feature_activity_reference: int = 64,
         feature_logit_clip: float = 24.0,
         compute_device: str = "auto",
@@ -1496,6 +1936,42 @@ class AdaptiveModalAutoencoder:
         self.logic_signature_legal_ir_view_logit_scale = max(
             0.0,
             float(logic_signature_legal_ir_view_logit_scale),
+        )
+        self.round_trip_signal_embedding_weight_scale = max(
+            0.0,
+            float(round_trip_signal_embedding_weight_scale),
+        )
+        self.round_trip_signal_family_logit_scale = max(
+            0.0,
+            float(round_trip_signal_family_logit_scale),
+        )
+        self.round_trip_signal_legal_ir_view_logit_scale = max(
+            0.0,
+            float(round_trip_signal_legal_ir_view_logit_scale),
+        )
+        self.decompiler_plan_embedding_weight_scale = max(
+            0.0,
+            float(decompiler_plan_embedding_weight_scale),
+        )
+        self.decompiler_plan_family_logit_scale = max(
+            0.0,
+            float(decompiler_plan_family_logit_scale),
+        )
+        self.decompiler_plan_legal_ir_view_logit_scale = max(
+            0.0,
+            float(decompiler_plan_legal_ir_view_logit_scale),
+        )
+        self.predicate_argument_embedding_weight_scale = max(
+            0.0,
+            float(predicate_argument_embedding_weight_scale),
+        )
+        self.predicate_argument_family_logit_scale = max(
+            0.0,
+            float(predicate_argument_family_logit_scale),
+        )
+        self.predicate_argument_legal_ir_view_logit_scale = max(
+            0.0,
+            float(predicate_argument_legal_ir_view_logit_scale),
         )
         self.feature_embedding_weight_scale = max(
             0.0,
@@ -1571,6 +2047,30 @@ class AdaptiveModalAutoencoder:
         self.max_legal_ir_token_trigram_features = max(
             0,
             int(max_legal_ir_token_trigram_features),
+        )
+        self.max_compiler_latent_profile_features = max(
+            0,
+            int(max_compiler_latent_profile_features),
+        )
+        self.max_round_trip_bridge_features = max(
+            0,
+            int(max_round_trip_bridge_features),
+        )
+        self.max_clause_topology_features = max(
+            0,
+            int(max_clause_topology_features),
+        )
+        self.embedding_head_update_normalization = max(
+            0.0,
+            float(embedding_head_update_normalization),
+        )
+        self.family_logit_head_update_normalization = max(
+            0.0,
+            float(family_logit_head_update_normalization),
+        )
+        self.legal_ir_view_head_update_normalization = max(
+            0.0,
+            float(legal_ir_view_head_update_normalization),
         )
         self.feature_activity_reference = max(8, int(feature_activity_reference))
         self.feature_logit_clip = max(0.0, float(feature_logit_clip))
@@ -2384,6 +2884,18 @@ class AdaptiveModalAutoencoder:
             sample,
             dimensions=len(base),
         )
+        round_trip_signal_adjustment = self._round_trip_signal_embedding_adjustment(
+            sample,
+            dimensions=len(base),
+        )
+        decompiler_plan_adjustment = self._decompiler_plan_embedding_adjustment(
+            sample,
+            dimensions=len(base),
+        )
+        predicate_argument_adjustment = self._predicate_argument_embedding_adjustment(
+            sample,
+            dimensions=len(base),
+        )
         family_adjustment = self._family_embedding_adjustment(
             sample,
             dimensions=len(base),
@@ -2432,6 +2944,9 @@ class AdaptiveModalAutoencoder:
                 base_value
                 + compiler_quality_value
                 + logic_signature_value
+                + round_trip_signal_value
+                + decompiler_plan_value
+                + predicate_argument_value
                 + family_value
                 + slot_value
                 + family_slot_value
@@ -2441,10 +2956,13 @@ class AdaptiveModalAutoencoder:
                 + view_value
                 + adjustment_value
             )
-            for base_value, compiler_quality_value, logic_signature_value, family_value, slot_value, family_slot_value, slot_view_value, family_slot_view_value, joint_value, view_value, adjustment_value in zip(
+            for base_value, compiler_quality_value, logic_signature_value, round_trip_signal_value, decompiler_plan_value, predicate_argument_value, family_value, slot_value, family_slot_value, slot_view_value, family_slot_view_value, joint_value, view_value, adjustment_value in zip(
                 base,
                 compiler_quality_adjustment,
                 logic_signature_adjustment,
+                round_trip_signal_adjustment,
+                decompiler_plan_adjustment,
+                predicate_argument_adjustment,
                 family_adjustment,
                 semantic_slot_adjustment,
                 family_semantic_slot_adjustment,
@@ -2526,6 +3044,24 @@ class AdaptiveModalAutoencoder:
             ]
             + [
                 str(family)
+                for logits in self.state.round_trip_signal_legal_ir_view_logits.values()
+                for family in logits.keys()
+                if self._is_legal_ir_view_family(str(family))
+            ]
+            + [
+                str(family)
+                for logits in self.state.decompiler_plan_legal_ir_view_logits.values()
+                for family in logits.keys()
+                if self._is_legal_ir_view_family(str(family))
+            ]
+            + [
+                str(family)
+                for logits in self.state.predicate_argument_legal_ir_view_logits.values()
+                for family in logits.keys()
+                if self._is_legal_ir_view_family(str(family))
+            ]
+            + [
+                str(family)
                 for family in self.state.family_logits.get(sample.sample_id, {}).keys()
                 if self._is_legal_ir_view_family(str(family))
             ]
@@ -2596,6 +3132,24 @@ class AdaptiveModalAutoencoder:
             + [
                 str(view)
                 for logits in self.state.logic_signature_legal_ir_view_logits.values()
+                for view in logits.keys()
+                if self._is_legal_ir_view_family(str(view))
+            ]
+            + [
+                str(view)
+                for logits in self.state.round_trip_signal_legal_ir_view_logits.values()
+                for view in logits.keys()
+                if self._is_legal_ir_view_family(str(view))
+            ]
+            + [
+                str(view)
+                for logits in self.state.decompiler_plan_legal_ir_view_logits.values()
+                for view in logits.keys()
+                if self._is_legal_ir_view_family(str(view))
+            ]
+            + [
+                str(view)
+                for logits in self.state.predicate_argument_legal_ir_view_logits.values()
                 for view in logits.keys()
                 if self._is_legal_ir_view_family(str(view))
             ]
@@ -2789,6 +3343,527 @@ class AdaptiveModalAutoencoder:
 
         result = _normalized_distribution(counts)
         cache["logic_signature_distribution"] = dict(result)
+        return result
+
+    def _round_trip_signal_distribution_for(
+        self,
+        sample: LegalSample,
+    ) -> Dict[str, float]:
+        cache = self._sample_cache_for(sample)
+        cached = cache.get("round_trip_signal_distribution")
+        if isinstance(cached, dict):
+            return {str(name): float(value) for name, value in cached.items()}
+
+        counts: Dict[str, float] = {}
+
+        def bump(signal: str, weight: float = 1.0) -> None:
+            normalized_weight = max(0.0, float(weight))
+            if not signal or normalized_weight <= 0.0:
+                return
+            counts[str(signal)] = counts.get(str(signal), 0.0) + normalized_weight
+
+        base_distribution = _softmax(self._base_logits_for(sample))
+        ranked_families = sorted(
+            base_distribution.items(),
+            key=lambda item: (-float(item[1]), str(item[0])),
+        )
+        top_family, top_probability = (
+            ranked_families[0] if ranked_families else (ModalLogicFamily.HYBRID.value, 0.0)
+        )
+        second_family, second_probability = (
+            ranked_families[1] if len(ranked_families) > 1 else ("none", 0.0)
+        )
+        entropy = 0.0
+        for value in base_distribution.values():
+            probability = max(float(value), 1e-12)
+            entropy += -probability * math.log(probability)
+        max_entropy = math.log(max(2, len(base_distribution)))
+        normalized_entropy = entropy / max_entropy if max_entropy > 0.0 else 0.0
+        margin = max(0.0, float(top_probability) - float(second_probability))
+
+        bump("round-trip:bias", 0.5)
+        bump(f"round-trip:base-top-family:{top_family}", 1.0)
+        bump(f"round-trip:base-runner-up-family:{second_family}", 0.5)
+        bump(f"round-trip:base-confidence:{_ratio_bucket(float(top_probability))}", 0.75)
+        bump(f"round-trip:base-margin:{_ratio_bucket(margin)}", 0.75)
+        bump(f"round-trip:base-entropy:{_ratio_bucket(normalized_entropy)}", 0.75)
+        if margin <= 0.10:
+            bump("round-trip:modal-family-ambiguous", 1.25)
+
+        formula_families = [
+            _feature_atom(formula.operator.family)
+            for formula in sample.modal_ir.formulas
+            if _feature_atom(formula.operator.family)
+        ]
+        distinct_formula_families = sorted(set(formula_families))
+        bump(
+            f"round-trip:formula-count:{_count_bucket(len(sample.modal_ir.formulas))}",
+            0.5,
+        )
+        bump(
+            f"round-trip:observed-family-count:{_count_bucket(len(distinct_formula_families))}",
+            0.5,
+        )
+        if not sample.modal_ir.formulas:
+            bump("round-trip:no-modal-formula", 1.25)
+        if len(distinct_formula_families) > 1:
+            bump("round-trip:mixed-modal-families", 1.0)
+        for family in distinct_formula_families[:4]:
+            bump(f"round-trip:observed-family:{family}", 0.5)
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cues = self._cue_names_for_text(text)
+        bump(f"round-trip:cue-count:{_count_bucket(len(cues))}", 0.4)
+        if len(cues) > 1:
+            bump("round-trip:multiple-modal-cues", 0.75)
+        for cue in cues[:4]:
+            bump(f"round-trip:cue:{cue}", 0.4)
+
+        frame_candidates = list(sample.frame_candidates or [])
+        bump(
+            f"round-trip:frame-candidate-count:{_count_bucket(len(frame_candidates))}",
+            0.4,
+        )
+        if sample.selected_frame:
+            frame = _feature_atom(sample.selected_frame, max_tokens=6)
+            if frame:
+                bump(f"round-trip:selected-frame:{frame}", 0.5)
+        scores = sorted(
+            [
+                max(0.0, _float_or_zero(candidate.get("score", 0.0)))
+                for candidate in frame_candidates
+                if isinstance(candidate, Mapping)
+            ],
+            reverse=True,
+        )
+        if scores:
+            frame_margin = scores[0] - (scores[1] if len(scores) > 1 else 0.0)
+            bump(f"round-trip:frame-score-margin:{_ratio_bucket(frame_margin)}", 0.5)
+            if len(scores) > 1 and frame_margin <= 0.05:
+                bump("round-trip:frame-choice-ambiguous", 1.0)
+
+        frame_logic = getattr(sample.modal_ir, "frame_logic", None)
+        if frame_logic is None:
+            bump("round-trip:frame-logic-missing", 0.75)
+        else:
+            triples = list(getattr(frame_logic, "triples", []) or [])
+            bump(
+                f"round-trip:frame-logic-triples:{_count_bucket(len(triples))}",
+                0.5,
+            )
+            if not triples:
+                bump("round-trip:frame-logic-empty", 0.75)
+            for relation in sorted(
+                getattr(frame_logic, "neo4j_relationship_types", []) or []
+            )[:4]:
+                relation_atom = _feature_atom(relation)
+                if relation_atom:
+                    bump(f"round-trip:kg-relation:{relation_atom}", 0.35)
+
+        result = _normalized_distribution(counts)
+        cache["round_trip_signal_distribution"] = dict(result)
+        return result
+
+    def _decompiler_plan_distribution_for(
+        self,
+        sample: LegalSample,
+    ) -> Dict[str, float]:
+        cache = self._sample_cache_for(sample)
+        cached = cache.get("decompiler_plan_distribution")
+        if isinstance(cached, dict):
+            return {str(name): float(value) for name, value in cached.items()}
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        raw_tokens = _TOKEN_RE.findall(text)
+        content_tokens = _token_features(text, max_tokens=32)
+        cues = self._cue_names_for_text(text)
+        counts: Dict[str, float] = {}
+
+        def bump(plan: str, weight: float = 1.0) -> None:
+            normalized_weight = max(0.0, float(weight))
+            if not plan or normalized_weight <= 0.0:
+                return
+            counts[str(plan)] = counts.get(str(plan), 0.0) + normalized_weight
+
+        cue_markers = {
+            "shall",
+            "must",
+            "may",
+            "required",
+            "requires",
+            "prohibited",
+            "authorized",
+            "permitted",
+            "eligible",
+            "entitled",
+            "means",
+            "defined",
+            "within",
+            "before",
+            "after",
+            "until",
+            "during",
+            "except",
+            "notwithstanding",
+        }
+
+        def role_tokens(tokens: Sequence[str]) -> List[str]:
+            return [
+                token
+                for token in tokens
+                if len(token) > 2
+                and token not in _STOPWORDS
+                and token not in cue_markers
+            ]
+
+        cue_index = next(
+            (index for index, token in enumerate(raw_tokens) if token in cue_markers),
+            -1,
+        )
+        source_anchors = self._source_role_anchors_for(sample)
+        if cue_index >= 0:
+            subject_candidates = role_tokens(raw_tokens[:cue_index])
+            predicate_candidates = role_tokens(raw_tokens[cue_index + 1 :])
+        else:
+            subject_candidates = role_tokens(raw_tokens[:2])
+            predicate_candidates = role_tokens(raw_tokens[1:])
+
+        subject_anchor = (
+            source_anchors.get("subject")
+            or (subject_candidates[-1] if subject_candidates else "")
+        )
+        action_anchor = (
+            source_anchors.get("action")
+            or (predicate_candidates[0] if predicate_candidates else "")
+        )
+        object_anchor = (
+            source_anchors.get("object")
+            or (predicate_candidates[1] if len(predicate_candidates) > 1 else "")
+        )
+        condition_anchor = source_anchors.get("condition", "")
+        exception_anchor = source_anchors.get("exception", "")
+        temporal_anchor = source_anchors.get("temporal", "")
+
+        bump("decompiler-plan:bias", 0.75)
+        bump(f"decompiler-plan:token-count:{_count_bucket(len(content_tokens))}", 0.35)
+        bump(f"decompiler-plan:cue-count:{_count_bucket(len(cues))}", 0.35)
+        if not cues:
+            bump("decompiler-plan:no-explicit-modal-cue", 0.75)
+        for cue in cues[:5]:
+            bump(f"decompiler-plan:cue:{cue}", 0.9)
+        if cues:
+            bump(f"decompiler-plan:first-cue:{cues[0]}", 0.65)
+            bump(f"decompiler-plan:cue-signature:{'|'.join(cues[:4])}", 0.6)
+        for left_cue, right_cue in zip(cues, cues[1:]):
+            bump(f"decompiler-plan:cue-transition:{left_cue}->{right_cue}", 0.4)
+
+        if subject_anchor:
+            bump(f"decompiler-plan:subject-anchor:{subject_anchor}", 0.55)
+        if action_anchor:
+            bump(f"decompiler-plan:action-anchor:{action_anchor}", 0.75)
+        if object_anchor:
+            bump(f"decompiler-plan:object-anchor:{object_anchor}", 0.55)
+        if subject_anchor and action_anchor:
+            bump(
+                f"decompiler-plan:subject-action:{subject_anchor}->{action_anchor}",
+                0.5,
+            )
+        if action_anchor and object_anchor:
+            bump(
+                f"decompiler-plan:action-object:{action_anchor}->{object_anchor}",
+                0.5,
+            )
+        for role_name, anchor in sorted(source_anchors.items()):
+            bump(f"decompiler-plan:source-role:{role_name}:{anchor}", 0.5)
+
+        if any(cue in cues for cue in ("conditional",)):
+            bump("decompiler-plan:condition-surface-present", 0.75)
+        if any(cue in cues for cue in ("exception",)):
+            bump("decompiler-plan:exception-surface-present", 0.75)
+        if any(cue in cues for cue in ("temporal",)):
+            bump("decompiler-plan:temporal-surface-present", 0.75)
+        if sample.selected_frame:
+            frame = _feature_atom(sample.selected_frame, max_tokens=6)
+            if frame:
+                bump(f"decompiler-plan:selected-frame:{frame}", 0.45)
+                if action_anchor:
+                    bump(
+                        f"decompiler-plan:frame-action:{frame}:{action_anchor}",
+                        0.35,
+                    )
+        section_prefix = _section_prefix(sample.section)
+        if section_prefix and cues:
+            bump(f"decompiler-plan:section-cue:{section_prefix}:{cues[0]}", 0.35)
+
+        bump(
+            f"decompiler-plan:formula-count:{_count_bucket(len(sample.modal_ir.formulas))}",
+            0.35,
+        )
+        if not sample.modal_ir.formulas:
+            bump("decompiler-plan:no-compiled-formula", 0.65)
+        for formula in sample.modal_ir.formulas[:4]:
+            family = _feature_atom(formula.operator.family)
+            system = _feature_atom(formula.operator.system)
+            symbol = _feature_atom(formula.operator.symbol)
+            predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
+            predicate_head = predicate_name.split("_", 1)[0] if predicate_name else ""
+            role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
+            arguments = list(getattr(formula.predicate, "arguments", []) or [])
+            conditions = list(getattr(formula, "conditions", []) or [])
+            exceptions = list(getattr(formula, "exceptions", []) or [])
+            arity_bucket = _count_bucket(len(arguments))
+            if family:
+                bump(f"decompiler-plan:compiled-family:{family}", 0.45)
+            if family and symbol:
+                bump(f"decompiler-plan:compiled-operator:{family}:{symbol}", 0.45)
+            if family and role:
+                bump(f"decompiler-plan:compiled-role:{family}:{role}", 0.45)
+                bump(
+                    f"decompiler-plan:compiled-role-shape:{family}:{role}:a{arity_bucket}",
+                    0.35,
+                )
+            if family and system and symbol:
+                bump(
+                    f"decompiler-plan:compiled-system-operator:{family}:{system}:{symbol}",
+                    0.35,
+                )
+            if family and predicate_head:
+                bump(
+                    f"decompiler-plan:compiled-predicate-head:{family}:{predicate_head}",
+                    0.35,
+                )
+            if family and action_anchor:
+                bump(f"decompiler-plan:source-action-family:{action_anchor}:{family}", 0.75)
+                if role:
+                    bump(
+                        f"decompiler-plan:source-action-role:{action_anchor}:{role}",
+                        0.65,
+                    )
+                if symbol:
+                    bump(
+                        f"decompiler-plan:source-action-operator:{action_anchor}:{family}:{symbol}",
+                        0.45,
+                    )
+                if predicate_head:
+                    bump(
+                        f"decompiler-plan:source-action-predicate:{action_anchor}:{predicate_head}",
+                        0.55,
+                    )
+            if family and object_anchor:
+                bump(f"decompiler-plan:source-object-family:{object_anchor}:{family}", 0.55)
+                if role:
+                    bump(
+                        f"decompiler-plan:source-object-role:{object_anchor}:{role}",
+                        0.45,
+                    )
+                if predicate_head:
+                    bump(
+                        f"decompiler-plan:source-object-predicate:{object_anchor}:{predicate_head}",
+                        0.5,
+                    )
+            if family and subject_anchor and role:
+                bump(
+                    f"decompiler-plan:source-subject-role:{subject_anchor}:{role}",
+                    0.35,
+                )
+            if family and condition_anchor:
+                bump(
+                    f"decompiler-plan:source-condition-family:{condition_anchor}:{family}",
+                    0.4,
+                )
+            if family and exception_anchor:
+                bump(
+                    f"decompiler-plan:source-exception-family:{exception_anchor}:{family}",
+                    0.4,
+                )
+            if family and temporal_anchor:
+                bump(
+                    f"decompiler-plan:source-temporal-family:{temporal_anchor}:{family}",
+                    0.4,
+                )
+            if conditions:
+                bump(f"decompiler-plan:compiled-condition:{family}", 0.35)
+            if exceptions:
+                bump(f"decompiler-plan:compiled-exception:{family}", 0.35)
+
+        result = _normalized_distribution(counts)
+        cache["decompiler_plan_distribution"] = dict(result)
+        return result
+
+    def _predicate_argument_distribution_for(
+        self,
+        sample: LegalSample,
+    ) -> Dict[str, float]:
+        cache = self._sample_cache_for(sample)
+        cached = cache.get("predicate_argument_distribution")
+        if isinstance(cached, dict):
+            return {str(name): float(value) for name, value in cached.items()}
+
+        counts: Dict[str, float] = {}
+
+        def bump(signature: str, weight: float = 1.0) -> None:
+            normalized_weight = max(0.0, float(weight))
+            if not signature or normalized_weight <= 0.0:
+                return
+            counts[str(signature)] = counts.get(str(signature), 0.0) + normalized_weight
+
+        def argument_atom(argument: Any) -> str:
+            candidates: List[Any] = []
+            if isinstance(argument, Mapping):
+                for key in ("role", "name", "value", "text", "entity", "label"):
+                    if key in argument:
+                        candidates.append(argument.get(key))
+            else:
+                for key in ("role", "name", "value", "text", "entity", "label"):
+                    if hasattr(argument, key):
+                        candidates.append(getattr(argument, key))
+            for candidate in candidates:
+                atom = _feature_atom(candidate, max_tokens=4)
+                if atom:
+                    return atom
+            return _feature_atom(argument, max_tokens=4)
+
+        source_anchors = self._source_role_anchors_for(sample)
+        action_anchor = source_anchors.get("action", "")
+        object_anchor = source_anchors.get("object", "")
+        subject_anchor = source_anchors.get("subject", "")
+        condition_anchor = source_anchors.get("condition", "")
+        exception_anchor = source_anchors.get("exception", "")
+        temporal_anchor = source_anchors.get("temporal", "")
+        formulas = list(sample.modal_ir.formulas or [])
+        bump("predicate-argument:bias", 0.75)
+        bump(f"predicate-argument:formula-count:{_count_bucket(len(formulas))}", 0.4)
+        if not formulas:
+            bump("predicate-argument:no-formula", 0.75)
+        for role_name, anchor in sorted(source_anchors.items()):
+            bump(f"predicate-argument:source-role:{role_name}:{anchor}", 0.35)
+
+        for formula in formulas[:6]:
+            family = _feature_atom(formula.operator.family)
+            system = _feature_atom(formula.operator.system)
+            symbol = _feature_atom(formula.operator.symbol)
+            predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
+            predicate_role = _feature_atom(
+                getattr(formula.predicate, "role", "") or "none"
+            )
+            arguments = list(getattr(formula.predicate, "arguments", []) or [])
+            conditions = list(getattr(formula, "conditions", []) or [])
+            exceptions = list(getattr(formula, "exceptions", []) or [])
+            arity_bucket = _count_bucket(len(arguments))
+            condition_bucket = _count_bucket(len(conditions))
+            exception_bucket = _count_bucket(len(exceptions))
+
+            if family:
+                bump(f"predicate-argument:family:{family}", 0.45)
+            if family and predicate_role:
+                bump(f"predicate-argument:role:{family}:{predicate_role}", 1.0)
+                bump(
+                    f"predicate-argument:role-arity:{family}:{predicate_role}:{arity_bucket}",
+                    1.0,
+                )
+                bump(
+                    f"predicate-argument:role-shape:{family}:{predicate_role}:c{condition_bucket}:e{exception_bucket}",
+                    0.8,
+                )
+            if family and system and symbol:
+                bump(f"predicate-argument:operator:{family}:{system}:{symbol}", 0.7)
+            if family and predicate_name:
+                predicate_head = predicate_name.split("_", 1)[0]
+                if predicate_head:
+                    bump(
+                        f"predicate-argument:predicate-head:{family}:{predicate_head}",
+                        0.5,
+                    )
+                    if action_anchor:
+                        bump(
+                            f"predicate-argument:source-action-predicate:{action_anchor}:{predicate_head}",
+                            0.65,
+                        )
+                    if object_anchor:
+                        bump(
+                            f"predicate-argument:source-object-predicate:{object_anchor}:{predicate_head}",
+                            0.55,
+                        )
+            if family and action_anchor:
+                bump(f"predicate-argument:source-action-family:{action_anchor}:{family}", 0.65)
+                if predicate_role:
+                    bump(
+                        f"predicate-argument:source-action-role:{action_anchor}:{predicate_role}",
+                        0.7,
+                    )
+            if family and object_anchor:
+                bump(f"predicate-argument:source-object-family:{object_anchor}:{family}", 0.5)
+                if predicate_role:
+                    bump(
+                        f"predicate-argument:source-object-role:{object_anchor}:{predicate_role}",
+                        0.45,
+                    )
+            if family and subject_anchor and predicate_role:
+                bump(
+                    f"predicate-argument:source-subject-role:{subject_anchor}:{predicate_role}",
+                    0.4,
+                )
+            if family and condition_anchor:
+                bump(
+                    f"predicate-argument:source-condition-family:{condition_anchor}:{family}",
+                    0.35,
+                )
+            if family and exception_anchor:
+                bump(
+                    f"predicate-argument:source-exception-family:{exception_anchor}:{family}",
+                    0.35,
+                )
+            if family and temporal_anchor:
+                bump(
+                    f"predicate-argument:source-temporal-family:{temporal_anchor}:{family}",
+                    0.35,
+                )
+            if not arguments:
+                bump(f"predicate-argument:no-arguments:{family or 'unknown'}", 0.5)
+            for index, argument in enumerate(arguments[:4]):
+                atom = argument_atom(argument)
+                if not atom:
+                    continue
+                position = f"arg{index}"
+                bump(
+                    f"predicate-argument:position:{family}:{predicate_role}:{position}:{atom}",
+                    0.8,
+                )
+                bump(f"predicate-argument:argument:{family}:{atom}", 0.45)
+                if predicate_role:
+                    bump(
+                        f"predicate-argument:role-argument:{predicate_role}:{atom}",
+                        0.55,
+                    )
+                if index > 0:
+                    previous = argument_atom(arguments[index - 1])
+                    if previous:
+                        bump(
+                            f"predicate-argument:argument-transition:{previous}->{atom}",
+                            0.35,
+                        )
+            if conditions:
+                bump(f"predicate-argument:conditioned-role:{family}:{predicate_role}", 0.7)
+            if exceptions:
+                bump(f"predicate-argument:excepted-role:{family}:{predicate_role}", 0.7)
+
+        frame_logic = getattr(sample.modal_ir, "frame_logic", None)
+        if frame_logic is not None:
+            triples = list(getattr(frame_logic, "triples", []) or [])
+            bump(f"predicate-argument:kg-triples:{_count_bucket(len(triples))}", 0.35)
+            for triple in triples[:6]:
+                predicate = _feature_atom(getattr(triple, "predicate", ""))
+                subject = _feature_atom(getattr(triple, "subject", ""))
+                obj = _feature_atom(getattr(triple, "object", ""))
+                if predicate:
+                    bump(f"predicate-argument:kg-predicate:{predicate}", 0.3)
+                if predicate and subject:
+                    bump(f"predicate-argument:kg-subject:{predicate}:{subject}", 0.25)
+                if predicate and obj:
+                    bump(f"predicate-argument:kg-object:{predicate}:{obj}", 0.25)
+
+        result = _normalized_distribution(counts)
+        cache["predicate_argument_distribution"] = dict(result)
         return result
 
     def _family_semantic_slot_distribution_for_embedding(
@@ -3003,6 +4078,66 @@ class AdaptiveModalAutoencoder:
                             * normalized_weight
                             * self.logic_signature_legal_ir_view_logit_scale
                         )
+        if self.round_trip_signal_legal_ir_view_logit_scale > 0.0:
+            for signal, signal_weight in (
+                self._round_trip_signal_distribution_for(sample).items()
+            ):
+                normalized_weight = max(0.0, float(signal_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                for family, value in (
+                    self.state.round_trip_signal_legal_ir_view_logits.get(
+                        signal,
+                        {},
+                    ).items()
+                ):
+                    family = str(family)
+                    if family in logits and self._is_legal_ir_view_family(family):
+                        logits[family] += (
+                            float(value)
+                            * normalized_weight
+                            * self.round_trip_signal_legal_ir_view_logit_scale
+                        )
+        if self.decompiler_plan_legal_ir_view_logit_scale > 0.0:
+            for plan, plan_weight in (
+                self._decompiler_plan_distribution_for(sample).items()
+            ):
+                normalized_weight = max(0.0, float(plan_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                for family, value in (
+                    self.state.decompiler_plan_legal_ir_view_logits.get(
+                        plan,
+                        {},
+                    ).items()
+                ):
+                    family = str(family)
+                    if family in logits and self._is_legal_ir_view_family(family):
+                        logits[family] += (
+                            float(value)
+                            * normalized_weight
+                            * self.decompiler_plan_legal_ir_view_logit_scale
+                        )
+        if self.predicate_argument_legal_ir_view_logit_scale > 0.0:
+            for signature, signature_weight in (
+                self._predicate_argument_distribution_for(sample).items()
+            ):
+                normalized_weight = max(0.0, float(signature_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                for family, value in (
+                    self.state.predicate_argument_legal_ir_view_logits.get(
+                        signature,
+                        {},
+                    ).items()
+                ):
+                    family = str(family)
+                    if family in logits and self._is_legal_ir_view_family(family):
+                        logits[family] += (
+                            float(value)
+                            * normalized_weight
+                            * self.predicate_argument_legal_ir_view_logit_scale
+                        )
         if self.family_semantic_slot_legal_ir_view_logit_scale > 0.0:
             for key, pair_weight in (
                 self._family_semantic_slot_distribution_for_legal_ir_view(sample).items()
@@ -3114,6 +4249,70 @@ class AdaptiveModalAutoencoder:
                         * self.logic_signature_family_logit_scale
                     )
 
+    def _apply_round_trip_signal_family_logits(
+        self,
+        sample: LegalSample,
+        logits: Dict[str, float],
+    ) -> None:
+        if self.round_trip_signal_family_logit_scale <= 0.0:
+            return
+        for signal, signal_weight in self._round_trip_signal_distribution_for(sample).items():
+            normalized_weight = max(0.0, float(signal_weight))
+            if normalized_weight <= 0.0:
+                continue
+            for family, value in self.state.round_trip_signal_family_logits.get(signal, {}).items():
+                family = str(family)
+                if family in logits:
+                    logits[family] += (
+                        float(value)
+                        * normalized_weight
+                        * self.round_trip_signal_family_logit_scale
+                    )
+
+    def _apply_decompiler_plan_family_logits(
+        self,
+        sample: LegalSample,
+        logits: Dict[str, float],
+    ) -> None:
+        if self.decompiler_plan_family_logit_scale <= 0.0:
+            return
+        for plan, plan_weight in self._decompiler_plan_distribution_for(sample).items():
+            normalized_weight = max(0.0, float(plan_weight))
+            if normalized_weight <= 0.0:
+                continue
+            for family, value in self.state.decompiler_plan_family_logits.get(plan, {}).items():
+                family = str(family)
+                if family in logits:
+                    logits[family] += (
+                        float(value)
+                        * normalized_weight
+                        * self.decompiler_plan_family_logit_scale
+                    )
+
+    def _apply_predicate_argument_family_logits(
+        self,
+        sample: LegalSample,
+        logits: Dict[str, float],
+    ) -> None:
+        if self.predicate_argument_family_logit_scale <= 0.0:
+            return
+        for signature, signature_weight in (
+            self._predicate_argument_distribution_for(sample).items()
+        ):
+            normalized_weight = max(0.0, float(signature_weight))
+            if normalized_weight <= 0.0:
+                continue
+            for family, value in (
+                self.state.predicate_argument_family_logits.get(signature, {}).items()
+            ):
+                family = str(family)
+                if family in logits:
+                    logits[family] += (
+                        float(value)
+                        * normalized_weight
+                        * self.predicate_argument_family_logit_scale
+                    )
+
     def _logits_for(
         self,
         sample: LegalSample,
@@ -3141,6 +4340,9 @@ class AdaptiveModalAutoencoder:
                     )
         self._apply_compiler_quality_family_logits(sample, logits)
         self._apply_logic_signature_family_logits(sample, logits)
+        self._apply_round_trip_signal_family_logits(sample, logits)
+        self._apply_decompiler_plan_family_logits(sample, logits)
+        self._apply_predicate_argument_family_logits(sample, logits)
         self._apply_legal_ir_view_family_logits(
             sample,
             logits,
@@ -3186,6 +4388,9 @@ class AdaptiveModalAutoencoder:
                     )
         self._apply_compiler_quality_family_logits(sample, logits)
         self._apply_logic_signature_family_logits(sample, logits)
+        self._apply_round_trip_signal_family_logits(sample, logits)
+        self._apply_decompiler_plan_family_logits(sample, logits)
+        self._apply_predicate_argument_family_logits(sample, logits)
         self._apply_legal_ir_view_family_logits(
             sample,
             logits,
@@ -3294,6 +4499,24 @@ class AdaptiveModalAutoencoder:
 
         keys.extend(self._modal_ir_structural_feature_keys_for(sample, prefix="legal-ir"))
         keys.extend(
+            self._compiler_latent_profile_feature_keys_for(
+                sample,
+                prefix="legal-ir:compiler-profile",
+            )
+        )
+        keys.extend(
+            self._round_trip_bridge_feature_keys_for(
+                sample,
+                prefix="legal-ir:round-trip-bridge",
+            )
+        )
+        keys.extend(
+            self._clause_topology_feature_keys_for(
+                sample,
+                prefix="legal-ir:clause-topology",
+            )
+        )
+        keys.extend(
             f"legal-ir:semantic-slot:{slot.removeprefix('slot:')}"
             for slot in self._semantic_slot_distribution_for(sample).keys()
         )
@@ -3326,6 +4549,615 @@ class AdaptiveModalAutoencoder:
 
         result = _unique_preserve_order(keys)
         cache["legal_ir_view_core_feature_keys"] = list(result)
+        return result
+
+    def _source_role_anchors_for(self, sample: LegalSample) -> Dict[str, str]:
+        cache = self._sample_cache_for(sample)
+        cached = cache.get("source_role_anchors")
+        if isinstance(cached, dict):
+            return {str(name): str(value) for name, value in cached.items() if value}
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        raw_tokens = _TOKEN_RE.findall(text)
+        cue_markers = {
+            "shall",
+            "must",
+            "may",
+            "required",
+            "requires",
+            "prohibited",
+            "authorized",
+            "permitted",
+            "eligible",
+            "entitled",
+            "means",
+            "defined",
+            "within",
+            "before",
+            "after",
+            "until",
+            "during",
+            "except",
+            "notwithstanding",
+        }
+        condition_markers = {"if", "when", "whenever", "unless", "provided", "subject"}
+        exception_markers = {"except", "exception", "notwithstanding", "waiver", "exemption"}
+        temporal_markers = {"before", "after", "within", "until", "during"}
+
+        def role_tokens(tokens: Sequence[str]) -> List[str]:
+            return [
+                token
+                for token in tokens
+                if len(token) > 2
+                and token not in _STOPWORDS
+                and token not in cue_markers
+                and token not in condition_markers
+                and token not in exception_markers
+                and token not in temporal_markers
+            ]
+
+        def first_after(markers: set[str]) -> str:
+            for index, token in enumerate(raw_tokens):
+                if token in markers:
+                    candidates = role_tokens(raw_tokens[index + 1 : index + 6])
+                    if candidates:
+                        return candidates[0]
+            return ""
+
+        cue_index = next(
+            (index for index, token in enumerate(raw_tokens) if token in cue_markers),
+            -1,
+        )
+        if cue_index >= 0:
+            subject_candidates = role_tokens(raw_tokens[:cue_index])
+            predicate_candidates = role_tokens(raw_tokens[cue_index + 1 :])
+        else:
+            subject_candidates = role_tokens(raw_tokens[:2])
+            predicate_candidates = role_tokens(raw_tokens[1:])
+
+        anchors = {
+            "subject": subject_candidates[-1] if subject_candidates else "",
+            "action": predicate_candidates[0] if predicate_candidates else "",
+            "object": predicate_candidates[1] if len(predicate_candidates) > 1 else "",
+            "condition": first_after(condition_markers),
+            "exception": first_after(exception_markers),
+            "temporal": first_after(temporal_markers),
+        }
+        result = {name: value for name, value in anchors.items() if value}
+        cache["source_role_anchors"] = dict(result)
+        return result
+
+    def _compiler_latent_profile_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "compiler-profile",
+    ) -> List[str]:
+        """Compact clause profile shared by embedding, family, and LegalIR heads."""
+        normalized_prefix = str(prefix or "compiler-profile").strip(":")
+        cache_key = f"compiler_latent_profile_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_compiler_latent_profile_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        tokens = _token_features(text, max_tokens=16)
+        section_prefix = _section_prefix(sample.section)
+        keys: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+
+        add("bias")
+        add(f"formula-count:{_count_bucket(len(sample.modal_ir.formulas))}")
+        add(f"text-token-count:{_count_bucket(len(tokens))}")
+        if sample.title:
+            add(f"title:{sample.title}")
+        if section_prefix:
+            add(f"section-prefix:{section_prefix}")
+        if sample.selected_frame:
+            frame = _feature_atom(sample.selected_frame, max_tokens=6)
+            if frame:
+                add(f"frame:{frame}")
+
+        for cue in cue_names[:5]:
+            add(f"source-cue:{cue}")
+        if any(token in {"if", "unless", "when", "where", "provided"} for token in tokens):
+            add("source-role:condition")
+        if any(token in {"except", "exception", "notwithstanding"} for token in tokens):
+            add("source-role:exception")
+        if any(token in {"before", "after", "within", "until", "during"} for token in tokens):
+            add("source-role:temporal")
+        source_anchors = self._source_role_anchors_for(sample)
+        for role, anchor in sorted(source_anchors.items()):
+            add(f"source-role:{role}:{anchor}")
+        subject_anchor = source_anchors.get("subject", "")
+        action_anchor = source_anchors.get("action", "")
+        object_anchor = source_anchors.get("object", "")
+        condition_anchor = source_anchors.get("condition", "")
+        exception_anchor = source_anchors.get("exception", "")
+        temporal_anchor = source_anchors.get("temporal", "")
+        if subject_anchor and action_anchor:
+            add(f"source-role-path:subject-action:{subject_anchor}->{action_anchor}")
+        if action_anchor and object_anchor:
+            add(f"source-role-path:action-object:{action_anchor}->{object_anchor}")
+
+        family_sequence: List[str] = []
+        role_sequence: List[str] = []
+        for formula in list(sample.modal_ir.formulas or [])[:6]:
+            family = _feature_atom(formula.operator.family)
+            system = _feature_atom(formula.operator.system)
+            symbol = _feature_atom(formula.operator.symbol)
+            predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
+            predicate_role = _feature_atom(
+                getattr(formula.predicate, "role", "") or "none"
+            )
+            predicate_head = predicate_name.split("_", 1)[0] if predicate_name else ""
+            arguments = list(getattr(formula.predicate, "arguments", []) or [])
+            conditions = list(getattr(formula, "conditions", []) or [])
+            exceptions = list(getattr(formula, "exceptions", []) or [])
+            arity_bucket = _count_bucket(len(arguments))
+            condition_bucket = _count_bucket(len(conditions))
+            exception_bucket = _count_bucket(len(exceptions))
+            formula_cue = _feature_atom(formula.metadata.get("cue") if formula.metadata else "")
+
+            if family:
+                family_sequence.append(family)
+                add(f"family:{family}")
+                add(
+                    f"family-shape:{family}:a{arity_bucket}:c{condition_bucket}:e{exception_bucket}"
+                )
+            if predicate_role:
+                role_sequence.append(predicate_role)
+                add(f"role:{predicate_role}")
+            if family and predicate_role:
+                add(f"family-role:{family}:{predicate_role}")
+                add(
+                    f"role-shape:{family}:{predicate_role}:a{arity_bucket}:c{condition_bucket}:e{exception_bucket}"
+                )
+            if family and system and symbol:
+                add(f"operator:{family}:{system}:{symbol}")
+            if family and predicate_head:
+                add(f"predicate-head:{family}:{predicate_head}")
+            if family and action_anchor:
+                add(f"source-action-family:{action_anchor}:{family}")
+                if predicate_role:
+                    add(f"source-action-role:{action_anchor}:{predicate_role}")
+            if family and object_anchor:
+                add(f"source-object-family:{object_anchor}:{family}")
+                if predicate_head:
+                    add(f"source-object-predicate:{object_anchor}:{predicate_head}")
+            if family and condition_anchor:
+                add(f"source-condition-family:{condition_anchor}:{family}")
+            if family and exception_anchor:
+                add(f"source-exception-family:{exception_anchor}:{family}")
+            if family and temporal_anchor:
+                add(f"source-temporal-family:{temporal_anchor}:{family}")
+            if formula_cue:
+                add(f"ir-cue:{formula_cue}")
+                if family:
+                    add(f"ir-cue-family:{formula_cue}:{family}")
+                if predicate_role:
+                    add(f"ir-cue-role:{formula_cue}:{predicate_role}")
+            for source_cue in cue_names[:4]:
+                if family:
+                    add(f"source-cue-family:{source_cue}:{family}")
+                if predicate_role:
+                    add(f"source-cue-role:{source_cue}:{predicate_role}")
+                if predicate_head:
+                    add(f"source-cue-predicate:{source_cue}:{predicate_head}")
+            if conditions:
+                add(f"conditioned-role:{family or 'unknown'}:{predicate_role or 'none'}")
+            if exceptions:
+                add(f"excepted-role:{family or 'unknown'}:{predicate_role or 'none'}")
+            if sample.selected_frame and family:
+                frame = _feature_atom(sample.selected_frame, max_tokens=6)
+                if frame:
+                    add(f"frame-family:{frame}:{family}")
+                    if predicate_role:
+                        add(f"frame-role:{frame}:{predicate_role}")
+
+        for left_family, right_family in zip(family_sequence, family_sequence[1:]):
+            add(f"family-transition:{left_family}->{right_family}")
+        for left_role, right_role in zip(role_sequence, role_sequence[1:]):
+            add(f"role-transition:{left_role}->{right_role}")
+
+        frame_logic = getattr(sample.modal_ir, "frame_logic", None)
+        if frame_logic is None:
+            add("frame-logic:missing")
+        else:
+            triples = list(getattr(frame_logic, "triples", []) or [])
+            add(f"frame-logic-triples:{_count_bucket(len(triples))}")
+            if not triples:
+                add("frame-logic:empty")
+            for relation in sorted(
+                getattr(frame_logic, "neo4j_relationship_types", []) or []
+            )[:6]:
+                relation_atom = _feature_atom(relation)
+                if relation_atom:
+                    add(f"kg-relation:{relation_atom}")
+            for triple in triples[:6]:
+                predicate = _feature_atom(getattr(triple, "predicate", ""))
+                subject = _feature_atom(getattr(triple, "subject", ""))
+                obj = _feature_atom(getattr(triple, "object", ""))
+                if predicate:
+                    add(f"kg-predicate:{predicate}")
+                if subject and predicate:
+                    add(f"kg-subject-predicate:{subject}:{predicate}")
+                if predicate and obj:
+                    add(f"kg-predicate-object:{predicate}:{obj}")
+
+        result = _unique_preserve_order(keys)[: self.max_compiler_latent_profile_features]
+        cache[cache_key] = list(result)
+        return result
+
+    def _round_trip_bridge_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "round-trip-bridge",
+    ) -> List[str]:
+        """Surface/IR invariants used by both compiler and decompiler heads."""
+        normalized_prefix = str(prefix or "round-trip-bridge").strip(":")
+        cache_key = f"round_trip_bridge_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_round_trip_bridge_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        subject_anchor = source_anchors.get("subject", "")
+        action_anchor = source_anchors.get("action", "")
+        object_anchor = source_anchors.get("object", "")
+        condition_anchor = source_anchors.get("condition", "")
+        exception_anchor = source_anchors.get("exception", "")
+        temporal_anchor = source_anchors.get("temporal", "")
+        keys: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+
+        add("bias")
+        add(f"formula-count:{_count_bucket(len(sample.modal_ir.formulas))}")
+        if cue_names:
+            add(f"surface-cue-signature:{'|'.join(cue_names[:4])}")
+        for cue_name in cue_names[:5]:
+            add(f"surface-cue:{cue_name}")
+        for role, anchor in sorted(source_anchors.items()):
+            add(f"surface-role:{role}:{anchor}")
+        if subject_anchor and action_anchor:
+            add(f"surface-path:subject-action:{subject_anchor}->{action_anchor}")
+        if action_anchor and object_anchor:
+            add(f"surface-path:action-object:{action_anchor}->{object_anchor}")
+
+        family_sequence: List[str] = []
+        predicate_sequence: List[str] = []
+        for formula in list(sample.modal_ir.formulas or [])[:6]:
+            family = _feature_atom(formula.operator.family)
+            system = _feature_atom(formula.operator.system)
+            symbol = _feature_atom(formula.operator.symbol)
+            predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
+            predicate_role = _feature_atom(
+                getattr(formula.predicate, "role", "") or "none"
+            )
+            predicate_head = predicate_name.split("_", 1)[0] if predicate_name else ""
+            arguments = list(getattr(formula.predicate, "arguments", []) or [])
+            conditions = list(getattr(formula, "conditions", []) or [])
+            exceptions = list(getattr(formula, "exceptions", []) or [])
+            arity_bucket = _count_bucket(len(arguments))
+            condition_bucket = _count_bucket(len(conditions))
+            exception_bucket = _count_bucket(len(exceptions))
+            formula_cue = _feature_atom(formula.metadata.get("cue") if formula.metadata else "")
+
+            if family:
+                family_sequence.append(family)
+                add(f"ir-family:{family}")
+                add(
+                    f"ir-shape:{family}:a{arity_bucket}:c{condition_bucket}:e{exception_bucket}"
+                )
+            if predicate_role:
+                add(f"ir-role:{predicate_role}")
+            if family and predicate_role:
+                add(f"ir-family-role:{family}:{predicate_role}")
+                add(
+                    f"ir-role-shape:{family}:{predicate_role}:a{arity_bucket}:c{condition_bucket}:e{exception_bucket}"
+                )
+            if family and system and symbol:
+                add(f"ir-operator:{family}:{system}:{symbol}")
+            if predicate_head:
+                predicate_sequence.append(predicate_head)
+                if family:
+                    add(f"ir-predicate-head:{family}:{predicate_head}")
+                if predicate_role:
+                    add(f"ir-role-predicate:{predicate_role}:{predicate_head}")
+
+            if family and action_anchor:
+                add(f"surface-action-to-family:{action_anchor}:{family}")
+                if symbol:
+                    add(f"surface-action-to-operator:{action_anchor}:{family}:{symbol}")
+                if predicate_role:
+                    add(f"surface-action-to-role:{action_anchor}:{predicate_role}")
+            if action_anchor and predicate_head:
+                add(f"surface-action-to-predicate:{action_anchor}:{predicate_head}")
+            if family and object_anchor:
+                add(f"surface-object-to-family:{object_anchor}:{family}")
+            if object_anchor and predicate_head:
+                add(f"surface-object-to-predicate:{object_anchor}:{predicate_head}")
+            if subject_anchor and predicate_role:
+                add(f"surface-subject-to-role:{subject_anchor}:{predicate_role}")
+            if action_anchor and object_anchor and family and predicate_head:
+                add(
+                    f"compile-path:{action_anchor}->{object_anchor}:{family}:{predicate_head}"
+                )
+            if subject_anchor and action_anchor and predicate_role:
+                add(
+                    f"decompile-path:{subject_anchor}->{action_anchor}:{predicate_role}"
+                )
+
+            for cue_name in cue_names[:4]:
+                if family:
+                    add(f"surface-cue-to-family:{cue_name}:{family}")
+                if predicate_role:
+                    add(f"surface-cue-to-role:{cue_name}:{predicate_role}")
+                if predicate_head:
+                    add(f"surface-cue-to-predicate:{cue_name}:{predicate_head}")
+                if formula_cue:
+                    add(f"cue-round-trip:{cue_name}:{formula_cue}")
+            if formula_cue and family:
+                add(f"ir-cue-to-family:{formula_cue}:{family}")
+            if condition_anchor and family:
+                add(
+                    f"surface-condition-to-family:{condition_anchor}:{family}:c{condition_bucket}"
+                )
+            if exception_anchor and family:
+                add(
+                    f"surface-exception-to-family:{exception_anchor}:{family}:e{exception_bucket}"
+                )
+            if temporal_anchor and family:
+                add(f"surface-temporal-to-family:{temporal_anchor}:{family}")
+            if conditions and predicate_role:
+                add(f"ir-conditioned-role:{family or 'unknown'}:{predicate_role}")
+            if exceptions and predicate_role:
+                add(f"ir-excepted-role:{family or 'unknown'}:{predicate_role}")
+
+            for index, argument in enumerate(arguments[:4]):
+                argument_atom = _feature_atom(argument, max_tokens=4)
+                if not argument_atom:
+                    continue
+                add(f"ir-argument:{predicate_head or 'predicate'}:arg{index}:{argument_atom}")
+                if action_anchor:
+                    add(f"surface-action-to-argument:{action_anchor}:arg{index}:{argument_atom}")
+                if object_anchor:
+                    add(f"surface-object-to-argument:{object_anchor}:arg{index}:{argument_atom}")
+
+        for left_family, right_family in zip(family_sequence, family_sequence[1:]):
+            add(f"ir-family-transition:{left_family}->{right_family}")
+        for left_predicate, right_predicate in zip(
+            predicate_sequence,
+            predicate_sequence[1:],
+        ):
+            add(f"ir-predicate-transition:{left_predicate}->{right_predicate}")
+
+        frame_logic = getattr(sample.modal_ir, "frame_logic", None)
+        if frame_logic is None:
+            add("kg:missing")
+        else:
+            triples = list(getattr(frame_logic, "triples", []) or [])
+            add(f"kg-triples:{_count_bucket(len(triples))}")
+            for relation in sorted(
+                getattr(frame_logic, "neo4j_relationship_types", []) or []
+            )[:6]:
+                relation_atom = _feature_atom(relation)
+                if relation_atom:
+                    add(f"kg-relation:{relation_atom}")
+                    if action_anchor:
+                        add(f"surface-action-to-kg-relation:{action_anchor}:{relation_atom}")
+                    if object_anchor:
+                        add(f"surface-object-to-kg-relation:{object_anchor}:{relation_atom}")
+            for triple in triples[:6]:
+                predicate = _feature_atom(getattr(triple, "predicate", ""))
+                subject = _feature_atom(getattr(triple, "subject", ""))
+                obj = _feature_atom(getattr(triple, "object", ""))
+                if predicate and action_anchor:
+                    add(f"surface-action-to-kg-predicate:{action_anchor}:{predicate}")
+                if predicate and object_anchor:
+                    add(f"surface-object-to-kg-predicate:{object_anchor}:{predicate}")
+                if subject and predicate:
+                    add(f"kg-subject-predicate:{subject}:{predicate}")
+                if predicate and obj:
+                    add(f"kg-predicate-object:{predicate}:{obj}")
+
+        result = _unique_preserve_order(keys)[: self.max_round_trip_bridge_features]
+        cache[cache_key] = list(result)
+        return result
+
+    def _clause_topology_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "clause-topology",
+    ) -> List[str]:
+        """Abstract source/IR graph shape for cross-clause generalization."""
+        normalized_prefix = str(prefix or "clause-topology").strip(":")
+        cache_key = f"clause_topology_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_clause_topology_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        keys: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+
+        scope_tags: List[str] = []
+        if "conditional" in cue_names or source_anchors.get("condition"):
+            scope_tags.append("conditional")
+        if "exception" in cue_names or source_anchors.get("exception"):
+            scope_tags.append("exception")
+        if "temporal" in cue_names or source_anchors.get("temporal"):
+            scope_tags.append("temporal")
+        if any(
+            cue in cue_names
+            for cue in (
+                "deontic",
+                "permission",
+                "prohibition",
+                "authorization",
+                "requirement",
+            )
+        ):
+            scope_tags.append("normative")
+        if "definition" in cue_names:
+            scope_tags.append("definition")
+        if not scope_tags:
+            scope_tags.append("assertive")
+        scope_signature = "+".join(scope_tags)
+
+        ordered_roles = [
+            role
+            for role in ("condition", "subject", "action", "object", "temporal", "exception")
+            if source_anchors.get(role)
+        ]
+        role_signature = "+".join(ordered_roles) if ordered_roles else "none"
+
+        add("bias")
+        add(f"surface-role-set:{role_signature}")
+        add(f"surface-scope:{scope_signature}")
+        add(f"formula-count:{_count_bucket(len(sample.modal_ir.formulas))}")
+        if cue_names:
+            add(f"cue-count:{_count_bucket(len(cue_names))}")
+        for left_role, right_role in zip(ordered_roles, ordered_roles[1:]):
+            add(f"surface-role-transition:{left_role}->{right_role}")
+        if "subject" in source_anchors and "action" in source_anchors:
+            add("surface-role-edge:subject->action")
+        if "action" in source_anchors and "object" in source_anchors:
+            add("surface-role-edge:action->object")
+        if "condition" in source_anchors and "action" in source_anchors:
+            add("surface-role-edge:condition->action")
+        if "exception" in source_anchors and "action" in source_anchors:
+            add("surface-role-edge:exception->action")
+        if "temporal" in source_anchors and "action" in source_anchors:
+            add("surface-role-edge:temporal->action")
+
+        family_sequence: List[str] = []
+        role_sequence: List[str] = []
+        predicate_presence = "absent"
+        for formula in list(sample.modal_ir.formulas or [])[:6]:
+            family = _feature_atom(formula.operator.family)
+            system = _feature_atom(formula.operator.system)
+            symbol = _feature_atom(formula.operator.symbol)
+            predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
+            predicate_role = _feature_atom(
+                getattr(formula.predicate, "role", "") or "none"
+            )
+            arguments = list(getattr(formula.predicate, "arguments", []) or [])
+            conditions = list(getattr(formula, "conditions", []) or [])
+            exceptions = list(getattr(formula, "exceptions", []) or [])
+            arity_bucket = _count_bucket(len(arguments))
+            condition_state = "yes" if conditions else "no"
+            exception_state = "yes" if exceptions else "no"
+            predicate_presence = "present" if predicate_name else predicate_presence
+
+            if family:
+                family_sequence.append(family)
+                add(f"ir-family:{family}")
+                add(
+                    f"ir-scope:{family}:condition:{condition_state}:exception:{exception_state}"
+                )
+                add(
+                    f"surface-scope-to-family:{scope_signature}:{family}"
+                )
+                add(
+                    f"surface-role-set-to-family:{role_signature}:{family}"
+                )
+            if predicate_role:
+                role_sequence.append(predicate_role)
+                add(f"ir-role:{predicate_role}")
+            if family and predicate_role:
+                add(f"ir-family-role:{family}:{predicate_role}")
+                add(
+                    f"ir-topology:{family}:{predicate_role}:a{arity_bucket}:c{condition_state}:e{exception_state}"
+                )
+                add(
+                    f"surface-topology-to-ir:{scope_signature}:{role_signature}:{family}:{predicate_role}"
+                )
+            if family and system and symbol:
+                add(f"ir-operator:{family}:{system}:{symbol}")
+                add(
+                    f"surface-scope-to-operator:{scope_signature}:{family}:{symbol}"
+                )
+            if predicate_name:
+                add(f"predicate-presence:{predicate_presence}")
+                if family:
+                    add(f"predicate-shape:{family}:a{arity_bucket}")
+            if "action" in source_anchors and family:
+                add(f"edge:surface-action->ir-family:{family}")
+            if "action" in source_anchors and predicate_role:
+                add(f"edge:surface-action->ir-role:{predicate_role}")
+            if "object" in source_anchors:
+                add(f"edge:surface-object->ir-arity:{arity_bucket}")
+            if conditions and family:
+                add(f"edge:surface-condition->ir-condition:{family}")
+            if exceptions and family:
+                add(f"edge:surface-exception->ir-exception:{family}")
+            for cue in cue_names[:4]:
+                if family:
+                    add(f"cue-topology:{cue}:{family}:{scope_signature}")
+                if predicate_role:
+                    add(f"cue-role-topology:{cue}:{predicate_role}:{role_signature}")
+
+        if predicate_presence == "absent":
+            add("predicate-presence:absent")
+        for left_family, right_family in zip(family_sequence, family_sequence[1:]):
+            add(f"ir-family-transition:{left_family}->{right_family}")
+        for left_role, right_role in zip(role_sequence, role_sequence[1:]):
+            add(f"ir-role-transition:{left_role}->{right_role}")
+
+        frame_logic = getattr(sample.modal_ir, "frame_logic", None)
+        if frame_logic is None:
+            add("kg-shape:missing")
+        else:
+            triples = list(getattr(frame_logic, "triples", []) or [])
+            relation_count = len(getattr(frame_logic, "neo4j_relationship_types", []) or [])
+            label_count = len(getattr(frame_logic, "neo4j_node_labels", []) or [])
+            add(
+                f"kg-shape:t{_count_bucket(len(triples))}:r{_count_bucket(relation_count)}:n{_count_bucket(label_count)}"
+            )
+            if triples:
+                add(f"edge:ir->kg:triples:{_count_bucket(len(triples))}")
+            for relation in sorted(
+                getattr(frame_logic, "neo4j_relationship_types", []) or []
+            )[:4]:
+                relation_atom = _feature_atom(relation)
+                if relation_atom:
+                    add(f"kg-relation-role:{relation_atom}:{role_signature}")
+                    add(f"kg-relation-scope:{relation_atom}:{scope_signature}")
+
+        result = _unique_preserve_order(keys)[: self.max_clause_topology_features]
+        cache[cache_key] = list(result)
         return result
 
     def _modal_ir_structural_feature_keys_for(
@@ -3578,6 +5410,164 @@ class AdaptiveModalAutoencoder:
                     return interactions
         return interactions
 
+    def _head_update_scale(self, active_heads: int, normalization: float) -> float:
+        strength = max(0.0, float(normalization))
+        if active_heads <= 1 or strength <= 0.0:
+            return 1.0
+        return float(active_heads) ** -strength
+
+    def _active_embedding_update_head_count(self, sample: LegalSample) -> int:
+        count = 0
+        if (
+            self.compiler_quality_embedding_weight_scale > 0.0
+            and self._compiler_quality_slot_distribution_for(sample)
+        ):
+            count += 1
+        if (
+            self.logic_signature_embedding_weight_scale > 0.0
+            and self._logic_signature_distribution_for(sample)
+        ):
+            count += 1
+        if (
+            self.round_trip_signal_embedding_weight_scale > 0.0
+            and self._round_trip_signal_distribution_for(sample)
+        ):
+            count += 1
+        if (
+            self.decompiler_plan_embedding_weight_scale > 0.0
+            and self._decompiler_plan_distribution_for(sample)
+        ):
+            count += 1
+        if (
+            self.predicate_argument_embedding_weight_scale > 0.0
+            and self._predicate_argument_distribution_for(sample)
+        ):
+            count += 1
+        if self.family_embedding_weight_scale > 0.0 and _observed_family_distribution(sample):
+            count += 1
+        if (
+            self.semantic_slot_embedding_weight_scale > 0.0
+            and self._semantic_slot_distribution_for(sample)
+        ):
+            count += 1
+        if (
+            self.family_semantic_slot_embedding_weight_scale > 0.0
+            and self._target_family_semantic_slot_distribution_for_sample(sample)
+        ):
+            count += 1
+        if (
+            self.semantic_slot_legal_ir_view_embedding_weight_scale > 0.0
+            and self._target_semantic_slot_legal_ir_view_distribution_for_sample(sample)
+        ):
+            count += 1
+        if (
+            self.family_semantic_slot_legal_ir_view_embedding_weight_scale > 0.0
+            and self._target_family_semantic_slot_legal_ir_view_distribution_for_sample(
+                sample
+            )
+        ):
+            count += 1
+        if (
+            self.legal_ir_view_embedding_weight_scale > 0.0
+            and self._legal_ir_view_target_distribution_for_sample(sample)
+        ):
+            count += 1
+        if (
+            self.family_legal_ir_view_embedding_weight_scale > 0.0
+            and self._target_family_legal_ir_view_distribution_for_sample(sample)
+        ):
+            count += 1
+        if self.feature_embedding_weight_scale > 0.0 and self._feature_keys_for(sample):
+            count += 1
+        return count
+
+    def _active_family_logit_update_head_count(self, sample: LegalSample) -> int:
+        count = 0
+        if (
+            self.compiler_quality_family_logit_scale > 0.0
+            and self._compiler_quality_slot_distribution_for(sample)
+        ):
+            count += 1
+        if (
+            self.logic_signature_family_logit_scale > 0.0
+            and self._logic_signature_distribution_for(sample)
+        ):
+            count += 1
+        if (
+            self.round_trip_signal_family_logit_scale > 0.0
+            and self._round_trip_signal_distribution_for(sample)
+        ):
+            count += 1
+        if (
+            self.decompiler_plan_family_logit_scale > 0.0
+            and self._decompiler_plan_distribution_for(sample)
+        ):
+            count += 1
+        if (
+            self.predicate_argument_family_logit_scale > 0.0
+            and self._predicate_argument_distribution_for(sample)
+        ):
+            count += 1
+        if self.feature_family_logit_scale > 0.0 and self._feature_keys_for(sample):
+            count += 1
+        if (
+            self.semantic_slot_family_logit_scale > 0.0
+            and self._semantic_slot_distribution_for(sample)
+        ):
+            count += 1
+        if (
+            self.legal_ir_view_family_logit_scale > 0.0
+            and self._legal_ir_view_target_distribution_for_sample(sample)
+        ):
+            count += 1
+        if (
+            self.semantic_slot_legal_ir_view_family_logit_scale > 0.0
+            and self._target_semantic_slot_legal_ir_view_distribution_for_sample(sample)
+        ):
+            count += 1
+        return count
+
+    def _active_legal_ir_view_logit_update_head_count(
+        self,
+        sample: LegalSample,
+    ) -> int:
+        count = 0
+        if self.legal_ir_view_logit_scale > 0.0:
+            count += 1
+            if self._legal_ir_view_feature_keys_for(sample):
+                count += 1
+        if (
+            self.semantic_slot_legal_ir_view_logit_scale > 0.0
+            and self._semantic_slot_distribution_for(sample)
+        ):
+            count += 1
+        if (
+            self.logic_signature_legal_ir_view_logit_scale > 0.0
+            and self._logic_signature_distribution_for(sample)
+        ):
+            count += 1
+        if (
+            self.round_trip_signal_legal_ir_view_logit_scale > 0.0
+            and self._round_trip_signal_distribution_for(sample)
+        ):
+            count += 1
+        if (
+            self.decompiler_plan_legal_ir_view_logit_scale > 0.0
+            and self._decompiler_plan_distribution_for(sample)
+        ):
+            count += 1
+        if (
+            self.predicate_argument_legal_ir_view_logit_scale > 0.0
+            and self._predicate_argument_distribution_for(sample)
+        ):
+            count += 1
+        if (
+            self.family_semantic_slot_legal_ir_view_logit_scale > 0.0
+            and self._family_semantic_slot_distribution_for_legal_ir_view(sample)
+        ):
+            count += 1
+        return count
+
     def _nudge_decoded_embedding(
         self,
         sample: LegalSample,
@@ -3590,6 +5580,10 @@ class AdaptiveModalAutoencoder:
         if len(current) != len(sample.embedding_vector):
             current = [0.0 for _ in sample.embedding_vector]
         error = self._embedding_training_error(sample.embedding_vector, current)
+        embedding_update_scale = self._head_update_scale(
+            self._active_embedding_update_head_count(sample),
+            self.embedding_head_update_normalization,
+        )
         if update_sample_memory:
             self.state.decoded_embeddings[sample.sample_id] = self._blend_toward(
                 current,
@@ -3610,7 +5604,7 @@ class AdaptiveModalAutoencoder:
                 weights[:] = self._add_scaled_vector(
                     weights,
                     error,
-                    scale=step * normalized_weight,
+                    scale=step * embedding_update_scale * normalized_weight,
                 )
         if self.logic_signature_embedding_weight_scale > 0.0:
             for signature, signature_weight in self._logic_signature_distribution_for(sample).items():
@@ -3626,7 +5620,57 @@ class AdaptiveModalAutoencoder:
                 weights[:] = self._add_scaled_vector(
                     weights,
                     error,
-                    scale=step * normalized_weight,
+                    scale=step * embedding_update_scale * normalized_weight,
+                )
+        if self.round_trip_signal_embedding_weight_scale > 0.0:
+            for signal, signal_weight in self._round_trip_signal_distribution_for(sample).items():
+                normalized_weight = max(0.0, float(signal_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                weights = self.state.round_trip_signal_embedding_weights.setdefault(
+                    signal,
+                    [0.0 for _ in sample.embedding_vector],
+                )
+                if len(weights) != len(sample.embedding_vector):
+                    weights[:] = [0.0 for _ in sample.embedding_vector]
+                weights[:] = self._add_scaled_vector(
+                    weights,
+                    error,
+                    scale=step * embedding_update_scale * normalized_weight,
+                )
+        if self.decompiler_plan_embedding_weight_scale > 0.0:
+            for plan, plan_weight in self._decompiler_plan_distribution_for(sample).items():
+                normalized_weight = max(0.0, float(plan_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                weights = self.state.decompiler_plan_embedding_weights.setdefault(
+                    plan,
+                    [0.0 for _ in sample.embedding_vector],
+                )
+                if len(weights) != len(sample.embedding_vector):
+                    weights[:] = [0.0 for _ in sample.embedding_vector]
+                weights[:] = self._add_scaled_vector(
+                    weights,
+                    error,
+                    scale=step * embedding_update_scale * normalized_weight,
+                )
+        if self.predicate_argument_embedding_weight_scale > 0.0:
+            for signature, signature_weight in (
+                self._predicate_argument_distribution_for(sample).items()
+            ):
+                normalized_weight = max(0.0, float(signature_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                weights = self.state.predicate_argument_embedding_weights.setdefault(
+                    signature,
+                    [0.0 for _ in sample.embedding_vector],
+                )
+                if len(weights) != len(sample.embedding_vector):
+                    weights[:] = [0.0 for _ in sample.embedding_vector]
+                weights[:] = self._add_scaled_vector(
+                    weights,
+                    error,
+                    scale=step * embedding_update_scale * normalized_weight,
                 )
         target_distribution = _observed_family_distribution(sample)
         for family, target_weight in target_distribution.items():
@@ -3642,7 +5686,7 @@ class AdaptiveModalAutoencoder:
             weights[:] = self._add_scaled_vector(
                 weights,
                 error,
-                scale=step * normalized_weight,
+                scale=step * embedding_update_scale * normalized_weight,
             )
         for slot, slot_weight in self._semantic_slot_distribution_for(sample).items():
             normalized_weight = max(0.0, float(slot_weight))
@@ -3657,7 +5701,7 @@ class AdaptiveModalAutoencoder:
             weights[:] = self._add_scaled_vector(
                 weights,
                 error,
-                scale=step * normalized_weight,
+                scale=step * embedding_update_scale * normalized_weight,
             )
         for key, target_weight in (
             self._target_family_semantic_slot_distribution_for_sample(sample).items()
@@ -3674,7 +5718,7 @@ class AdaptiveModalAutoencoder:
             weights[:] = self._add_scaled_vector(
                 weights,
                 error,
-                scale=step * normalized_weight,
+                scale=step * embedding_update_scale * normalized_weight,
             )
         if self.semantic_slot_legal_ir_view_embedding_weight_scale > 0.0:
             for key, target_weight in (
@@ -3694,7 +5738,7 @@ class AdaptiveModalAutoencoder:
                 weights[:] = self._add_scaled_vector(
                     weights,
                     error,
-                    scale=step * normalized_weight,
+                    scale=step * embedding_update_scale * normalized_weight,
                 )
         for key, target_weight in (
             self._target_family_semantic_slot_legal_ir_view_distribution_for_sample(
@@ -3715,7 +5759,7 @@ class AdaptiveModalAutoencoder:
             weights[:] = self._add_scaled_vector(
                 weights,
                 error,
-                scale=step * normalized_weight,
+                scale=step * embedding_update_scale * normalized_weight,
             )
         legal_ir_view_distribution = _normalized_distribution(
             self._legal_ir_view_target_distribution_for_sample(sample)
@@ -3733,7 +5777,7 @@ class AdaptiveModalAutoencoder:
             weights[:] = self._add_scaled_vector(
                 weights,
                 error,
-                scale=step * normalized_weight,
+                scale=step * embedding_update_scale * normalized_weight,
             )
         for key, target_weight in (
             self._target_family_legal_ir_view_distribution_for_sample(sample).items()
@@ -3750,14 +5794,14 @@ class AdaptiveModalAutoencoder:
             weights[:] = self._add_scaled_vector(
                 weights,
                 error,
-                scale=step * normalized_weight,
+                scale=step * embedding_update_scale * normalized_weight,
             )
         feature_keys = self._feature_keys_for(sample)
         if not feature_keys:
             return
         for group_keys, feature_step in self._feature_update_groups_for(
             sample,
-            step=step,
+            step=step * embedding_update_scale,
         ):
             for feature in group_keys:
                 weights = self.state.feature_embedding_weights.setdefault(
@@ -3786,6 +5830,10 @@ class AdaptiveModalAutoencoder:
             + list(target_distribution.keys())
             + list(predicted.keys())
         )
+        family_update_scale = self._head_update_scale(
+            self._active_family_logit_update_head_count(sample),
+            self.family_logit_head_update_normalization,
+        )
         if update_sample_memory:
             logits = self.state.family_logits.setdefault(sample.sample_id, {})
             for family in families:
@@ -3807,7 +5855,7 @@ class AdaptiveModalAutoencoder:
                         predicted.get(family, 0.0)
                     )
                     slot_logits[family] = slot_logits.get(family, 0.0) + (
-                        2.0 * step * normalized_weight * gradient
+                        2.0 * step * family_update_scale * normalized_weight * gradient
                     )
         if self.logic_signature_family_logit_scale > 0.0:
             for signature, signature_weight in self._logic_signature_distribution_for(sample).items():
@@ -3823,14 +5871,64 @@ class AdaptiveModalAutoencoder:
                         predicted.get(family, 0.0)
                     )
                     signature_logits[family] = signature_logits.get(family, 0.0) + (
-                        2.0 * step * normalized_weight * gradient
+                        2.0 * step * family_update_scale * normalized_weight * gradient
+                    )
+        if self.round_trip_signal_family_logit_scale > 0.0:
+            for signal, signal_weight in self._round_trip_signal_distribution_for(sample).items():
+                normalized_weight = max(0.0, float(signal_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                signal_logits = self.state.round_trip_signal_family_logits.setdefault(
+                    signal,
+                    {},
+                )
+                for family in families:
+                    gradient = float(target_distribution.get(family, 0.0)) - float(
+                        predicted.get(family, 0.0)
+                    )
+                    signal_logits[family] = signal_logits.get(family, 0.0) + (
+                        2.0 * step * family_update_scale * normalized_weight * gradient
+                    )
+        if self.decompiler_plan_family_logit_scale > 0.0:
+            for plan, plan_weight in self._decompiler_plan_distribution_for(sample).items():
+                normalized_weight = max(0.0, float(plan_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                plan_logits = self.state.decompiler_plan_family_logits.setdefault(
+                    plan,
+                    {},
+                )
+                for family in families:
+                    gradient = float(target_distribution.get(family, 0.0)) - float(
+                        predicted.get(family, 0.0)
+                    )
+                    plan_logits[family] = plan_logits.get(family, 0.0) + (
+                        2.0 * step * family_update_scale * normalized_weight * gradient
+                    )
+        if self.predicate_argument_family_logit_scale > 0.0:
+            for signature, signature_weight in (
+                self._predicate_argument_distribution_for(sample).items()
+            ):
+                normalized_weight = max(0.0, float(signature_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                signature_logits = self.state.predicate_argument_family_logits.setdefault(
+                    signature,
+                    {},
+                )
+                for family in families:
+                    gradient = float(target_distribution.get(family, 0.0)) - float(
+                        predicted.get(family, 0.0)
+                    )
+                    signature_logits[family] = signature_logits.get(family, 0.0) + (
+                        2.0 * step * family_update_scale * normalized_weight * gradient
                     )
         feature_keys = self._feature_keys_for(sample)
         if not feature_keys:
             return
         for group_keys, feature_step in self._feature_update_groups_for(
             sample,
-            step=step,
+            step=step * family_update_scale,
         ):
             for feature in group_keys:
                 feature_logits = self.state.feature_family_logits.setdefault(feature, {})
@@ -3851,7 +5949,7 @@ class AdaptiveModalAutoencoder:
                     predicted.get(family, 0.0)
                 )
                 slot_logits[family] = slot_logits.get(family, 0.0) + (
-                    2.0 * step * normalized_weight * gradient
+                    2.0 * step * family_update_scale * normalized_weight * gradient
                 )
         legal_ir_view_distribution = _normalized_distribution(
             self._legal_ir_view_target_distribution_for_sample(sample)
@@ -3866,7 +5964,7 @@ class AdaptiveModalAutoencoder:
                     predicted.get(family, 0.0)
                 )
                 view_logits[family] = view_logits.get(family, 0.0) + (
-                    2.0 * step * normalized_weight * gradient
+                    2.0 * step * family_update_scale * normalized_weight * gradient
                 )
         if self.semantic_slot_legal_ir_view_family_logit_scale > 0.0:
             for key, pair_weight in (
@@ -3886,7 +5984,7 @@ class AdaptiveModalAutoencoder:
                         predicted.get(family, 0.0)
                     )
                     pair_logits[family] = pair_logits.get(family, 0.0) + (
-                        2.0 * step * normalized_weight * gradient
+                        2.0 * step * family_update_scale * normalized_weight * gradient
                     )
 
     def _nudge_legal_ir_view_logits(
@@ -3908,13 +6006,17 @@ class AdaptiveModalAutoencoder:
         families = _unique_preserve_order(
             list(predicted.keys()) + list(target_distribution.keys())
         )
+        legal_view_update_scale = self._head_update_scale(
+            self._active_legal_ir_view_logit_update_head_count(sample),
+            self.legal_ir_view_head_update_normalization,
+        )
         for family in families:
             gradient = float(target_distribution.get(family, 0.0)) - float(
                 predicted.get(family, 0.0)
             )
             self.state.legal_ir_view_logits[family] = (
                 self.state.legal_ir_view_logits.get(family, 0.0)
-                + (step * gradient)
+                + (step * legal_view_update_scale * gradient)
             )
         if update_sample_memory:
             logits = self.state.family_logits.setdefault(sample.sample_id, {})
@@ -3926,7 +6028,7 @@ class AdaptiveModalAutoencoder:
 
         for group_keys, feature_step in self._legal_ir_view_feature_update_groups_for(
             sample,
-            step=step,
+            step=step * legal_view_update_scale,
         ):
             for feature in group_keys:
                 feature_logits = self.state.feature_legal_ir_view_logits.setdefault(feature, {})
@@ -3950,7 +6052,7 @@ class AdaptiveModalAutoencoder:
                     predicted.get(family, 0.0)
                 )
                 slot_logits[family] = slot_logits.get(family, 0.0) + (
-                    2.0 * step * normalized_weight * gradient
+                    2.0 * step * legal_view_update_scale * normalized_weight * gradient
                 )
         if self.logic_signature_legal_ir_view_logit_scale > 0.0:
             for signature, signature_weight in (
@@ -3970,7 +6072,67 @@ class AdaptiveModalAutoencoder:
                         predicted.get(family, 0.0)
                     )
                     signature_logits[family] = signature_logits.get(family, 0.0) + (
-                        2.0 * step * normalized_weight * gradient
+                        2.0 * step * legal_view_update_scale * normalized_weight * gradient
+                    )
+        if self.round_trip_signal_legal_ir_view_logit_scale > 0.0:
+            for signal, signal_weight in (
+                self._round_trip_signal_distribution_for(sample).items()
+            ):
+                normalized_weight = max(0.0, float(signal_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                signal_logits = (
+                    self.state.round_trip_signal_legal_ir_view_logits.setdefault(
+                        signal,
+                        {},
+                    )
+                )
+                for family in families:
+                    gradient = float(target_distribution.get(family, 0.0)) - float(
+                        predicted.get(family, 0.0)
+                    )
+                    signal_logits[family] = signal_logits.get(family, 0.0) + (
+                        2.0 * step * legal_view_update_scale * normalized_weight * gradient
+                    )
+        if self.decompiler_plan_legal_ir_view_logit_scale > 0.0:
+            for plan, plan_weight in (
+                self._decompiler_plan_distribution_for(sample).items()
+            ):
+                normalized_weight = max(0.0, float(plan_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                plan_logits = (
+                    self.state.decompiler_plan_legal_ir_view_logits.setdefault(
+                        plan,
+                        {},
+                    )
+                )
+                for family in families:
+                    gradient = float(target_distribution.get(family, 0.0)) - float(
+                        predicted.get(family, 0.0)
+                    )
+                    plan_logits[family] = plan_logits.get(family, 0.0) + (
+                        2.0 * step * legal_view_update_scale * normalized_weight * gradient
+                    )
+        if self.predicate_argument_legal_ir_view_logit_scale > 0.0:
+            for signature, signature_weight in (
+                self._predicate_argument_distribution_for(sample).items()
+            ):
+                normalized_weight = max(0.0, float(signature_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                signature_logits = (
+                    self.state.predicate_argument_legal_ir_view_logits.setdefault(
+                        signature,
+                        {},
+                    )
+                )
+                for family in families:
+                    gradient = float(target_distribution.get(family, 0.0)) - float(
+                        predicted.get(family, 0.0)
+                    )
+                    signature_logits[family] = signature_logits.get(family, 0.0) + (
+                        2.0 * step * legal_view_update_scale * normalized_weight * gradient
                     )
         if self.family_semantic_slot_legal_ir_view_logit_scale > 0.0:
             for key, pair_weight in (
@@ -3990,7 +6152,7 @@ class AdaptiveModalAutoencoder:
                         predicted.get(family, 0.0)
                     )
                     pair_logits[family] = pair_logits.get(family, 0.0) + (
-                        2.0 * step * normalized_weight * gradient
+                        2.0 * step * legal_view_update_scale * normalized_weight * gradient
                     )
         return True
 
@@ -4004,6 +6166,20 @@ class AdaptiveModalAutoencoder:
             ]
         for signature, vector in list(self.state.logic_signature_embedding_weights.items()):
             self.state.logic_signature_embedding_weights[signature] = [
+                float(value) * factor for value in vector
+            ]
+        for signal, vector in list(self.state.round_trip_signal_embedding_weights.items()):
+            self.state.round_trip_signal_embedding_weights[signal] = [
+                float(value) * factor for value in vector
+            ]
+        for plan, vector in list(self.state.decompiler_plan_embedding_weights.items()):
+            self.state.decompiler_plan_embedding_weights[plan] = [
+                float(value) * factor for value in vector
+            ]
+        for signature, vector in list(
+            self.state.predicate_argument_embedding_weights.items()
+        ):
+            self.state.predicate_argument_embedding_weights[signature] = [
                 float(value) * factor for value in vector
             ]
         for feature, vector in list(self.state.feature_embedding_weights.items()):
@@ -4061,6 +6237,23 @@ class AdaptiveModalAutoencoder:
                 family: float(value) * factor
                 for family, value in logits.items()
             }
+        for signal, logits in list(self.state.round_trip_signal_family_logits.items()):
+            self.state.round_trip_signal_family_logits[signal] = {
+                family: float(value) * factor
+                for family, value in logits.items()
+            }
+        for plan, logits in list(self.state.decompiler_plan_family_logits.items()):
+            self.state.decompiler_plan_family_logits[plan] = {
+                family: float(value) * factor
+                for family, value in logits.items()
+            }
+        for signature, logits in list(
+            self.state.predicate_argument_family_logits.items()
+        ):
+            self.state.predicate_argument_family_logits[signature] = {
+                family: float(value) * factor
+                for family, value in logits.items()
+            }
         for slot, logits in list(self.state.semantic_slot_family_logits.items()):
             self.state.semantic_slot_family_logits[slot] = {
                 family: float(value) * factor
@@ -4070,6 +6263,27 @@ class AdaptiveModalAutoencoder:
             self.state.logic_signature_legal_ir_view_logits.items()
         ):
             self.state.logic_signature_legal_ir_view_logits[signature] = {
+                view: float(value) * factor
+                for view, value in logits.items()
+            }
+        for signal, logits in list(
+            self.state.round_trip_signal_legal_ir_view_logits.items()
+        ):
+            self.state.round_trip_signal_legal_ir_view_logits[signal] = {
+                view: float(value) * factor
+                for view, value in logits.items()
+            }
+        for plan, logits in list(
+            self.state.decompiler_plan_legal_ir_view_logits.items()
+        ):
+            self.state.decompiler_plan_legal_ir_view_logits[plan] = {
+                view: float(value) * factor
+                for view, value in logits.items()
+            }
+        for signature, logits in list(
+            self.state.predicate_argument_legal_ir_view_logits.items()
+        ):
+            self.state.predicate_argument_legal_ir_view_logits[signature] = {
                 view: float(value) * factor
                 for view, value in logits.items()
             }
@@ -4188,6 +6402,136 @@ class AdaptiveModalAutoencoder:
                     weight
                     * float(value)
                     * self.logic_signature_embedding_weight_scale
+                )
+        return adjustment
+
+    def _round_trip_signal_embedding_adjustment(
+        self,
+        sample: LegalSample,
+        *,
+        dimensions: int,
+    ) -> List[float]:
+        if self.round_trip_signal_embedding_weight_scale <= 0.0:
+            return [0.0 for _ in range(dimensions)]
+        weighted_vectors = [
+            (float(weight), weights)
+            for signal, weight in self._round_trip_signal_distribution_for(sample).items()
+            for weights in [self.state.round_trip_signal_embedding_weights.get(signal)]
+            if float(weight) > 0.0 and weights is not None and len(weights) == dimensions
+        ]
+        if not weighted_vectors:
+            return [0.0 for _ in range(dimensions)]
+        if self._torch is not None and self.compute_device is not None:
+            with self._torch.no_grad():
+                weights_tensor = self._torch.tensor(
+                    [weight for weight, _ in weighted_vectors],
+                    dtype=self._torch.float64,
+                    device=self.compute_device,
+                ).reshape(-1, 1)
+                vector_tensor = self._torch.tensor(
+                    [vector for _, vector in weighted_vectors],
+                    dtype=self._torch.float64,
+                    device=self.compute_device,
+                )
+                adjustment = (weights_tensor * vector_tensor).sum(dim=0) * float(
+                    self.round_trip_signal_embedding_weight_scale
+                )
+                return [float(value) for value in adjustment.detach().cpu().tolist()]
+        adjustment = [0.0 for _ in range(dimensions)]
+        for weight, vector in weighted_vectors:
+            for index, value in enumerate(vector):
+                adjustment[index] += (
+                    weight
+                    * float(value)
+                    * self.round_trip_signal_embedding_weight_scale
+                )
+        return adjustment
+
+    def _decompiler_plan_embedding_adjustment(
+        self,
+        sample: LegalSample,
+        *,
+        dimensions: int,
+    ) -> List[float]:
+        if self.decompiler_plan_embedding_weight_scale <= 0.0:
+            return [0.0 for _ in range(dimensions)]
+        weighted_vectors = [
+            (float(weight), weights)
+            for plan, weight in self._decompiler_plan_distribution_for(sample).items()
+            for weights in [self.state.decompiler_plan_embedding_weights.get(plan)]
+            if float(weight) > 0.0 and weights is not None and len(weights) == dimensions
+        ]
+        if not weighted_vectors:
+            return [0.0 for _ in range(dimensions)]
+        if self._torch is not None and self.compute_device is not None:
+            with self._torch.no_grad():
+                weights_tensor = self._torch.tensor(
+                    [weight for weight, _ in weighted_vectors],
+                    dtype=self._torch.float64,
+                    device=self.compute_device,
+                ).reshape(-1, 1)
+                vector_tensor = self._torch.tensor(
+                    [vector for _, vector in weighted_vectors],
+                    dtype=self._torch.float64,
+                    device=self.compute_device,
+                )
+                adjustment = (weights_tensor * vector_tensor).sum(dim=0) * float(
+                    self.decompiler_plan_embedding_weight_scale
+                )
+                return [float(value) for value in adjustment.detach().cpu().tolist()]
+        adjustment = [0.0 for _ in range(dimensions)]
+        for weight, vector in weighted_vectors:
+            for index, value in enumerate(vector):
+                adjustment[index] += (
+                    weight
+                    * float(value)
+                    * self.decompiler_plan_embedding_weight_scale
+                )
+        return adjustment
+
+    def _predicate_argument_embedding_adjustment(
+        self,
+        sample: LegalSample,
+        *,
+        dimensions: int,
+    ) -> List[float]:
+        if self.predicate_argument_embedding_weight_scale <= 0.0:
+            return [0.0 for _ in range(dimensions)]
+        weighted_vectors = [
+            (float(weight), weights)
+            for signature, weight in self._predicate_argument_distribution_for(
+                sample
+            ).items()
+            for weights in [
+                self.state.predicate_argument_embedding_weights.get(signature)
+            ]
+            if float(weight) > 0.0 and weights is not None and len(weights) == dimensions
+        ]
+        if not weighted_vectors:
+            return [0.0 for _ in range(dimensions)]
+        if self._torch is not None and self.compute_device is not None:
+            with self._torch.no_grad():
+                weights_tensor = self._torch.tensor(
+                    [weight for weight, _ in weighted_vectors],
+                    dtype=self._torch.float64,
+                    device=self.compute_device,
+                ).reshape(-1, 1)
+                vector_tensor = self._torch.tensor(
+                    [vector for _, vector in weighted_vectors],
+                    dtype=self._torch.float64,
+                    device=self.compute_device,
+                )
+                adjustment = (weights_tensor * vector_tensor).sum(dim=0) * float(
+                    self.predicate_argument_embedding_weight_scale
+                )
+                return [float(value) for value in adjustment.detach().cpu().tolist()]
+        adjustment = [0.0 for _ in range(dimensions)]
+        for weight, vector in weighted_vectors:
+            for index, value in enumerate(vector):
+                adjustment[index] += (
+                    weight
+                    * float(value)
+                    * self.predicate_argument_embedding_weight_scale
                 )
         return adjustment
 
@@ -4818,6 +7162,9 @@ class AdaptiveModalAutoencoder:
             keys.append(f"operator-transition:{left_operator}->{right_operator}")
 
         keys.extend(self._modal_ir_structural_feature_keys_for(sample))
+        keys.extend(self._compiler_latent_profile_feature_keys_for(sample))
+        keys.extend(self._round_trip_bridge_feature_keys_for(sample))
+        keys.extend(self._clause_topology_feature_keys_for(sample))
         keys.extend(
             f"semantic-slot:{slot.removeprefix('slot:')}"
             for slot in self._semantic_slot_distribution_for(sample).keys()
@@ -4983,10 +7330,12 @@ class AdaptiveModalAutoencoder:
     def _is_core_modal_feature_key(self, feature: str) -> bool:
         core_prefixes = (
             "bias:",
+            "clause-topology:",
             "cue:",
             "cue-family:",
             "condition:",
             "condition-count-bin:",
+            "compiler-profile:",
             "exception:",
             "exception-count-bin:",
             "family-condition:",
@@ -5011,6 +7360,7 @@ class AdaptiveModalAutoencoder:
             "predicate-argument:",
             "predicate-arity-bin:",
             "predicate-role:",
+            "round-trip-bridge:",
             "section-cue:",
             "section-prefix:",
             "semantic-slot:",
@@ -5289,6 +7639,205 @@ class AdaptiveModalAutoencoder:
                         },
                     )
                 )
+        for signal, signal_weight in self._round_trip_signal_distribution_for(
+            sample
+        ).items():
+            logits = self.state.round_trip_signal_family_logits.get(signal, {})
+            for family, value in logits.items():
+                if family not in self.modal_families:
+                    continue
+                family_value = (
+                    float(value)
+                    * float(signal_weight)
+                    * self.round_trip_signal_family_logit_scale
+                )
+                contributions.append(
+                    AutoencoderFeatureContribution(
+                        feature=signal,
+                        contribution_type="round_trip_signal_family_logit",
+                        family=family,
+                        value=round(family_value, 12),
+                        magnitude=round(abs(family_value), 12),
+                        metadata={
+                            "raw_value": round(float(value), 12),
+                            "round_trip_signal_family_logit_scale": (
+                                self.round_trip_signal_family_logit_scale
+                            ),
+                            "round_trip_signal_probability": round(
+                                float(signal_weight),
+                                12,
+                            ),
+                            "supports_target": target_distribution.get(family, 0.0) > 0.0,
+                            "target_probability": round(
+                                float(target_distribution.get(family, 0.0)),
+                                12,
+                            ),
+                        },
+                    )
+                )
+            view_logits = self.state.round_trip_signal_legal_ir_view_logits.get(
+                signal,
+                {},
+            )
+            for view, value in view_logits.items():
+                if not self._is_legal_ir_view_family(str(view)):
+                    continue
+                view_value = (
+                    float(value)
+                    * float(signal_weight)
+                    * self.round_trip_signal_legal_ir_view_logit_scale
+                )
+                contributions.append(
+                    AutoencoderFeatureContribution(
+                        feature=signal,
+                        contribution_type="round_trip_signal_legal_ir_view_logit",
+                        family=str(view),
+                        value=round(view_value, 12),
+                        magnitude=round(abs(view_value), 12),
+                        metadata={
+                            "raw_value": round(float(value), 12),
+                            "round_trip_signal_legal_ir_view_logit_scale": (
+                                self.round_trip_signal_legal_ir_view_logit_scale
+                            ),
+                            "round_trip_signal_probability": round(
+                                float(signal_weight),
+                                12,
+                            ),
+                        },
+                    )
+                )
+        for plan, plan_weight in self._decompiler_plan_distribution_for(sample).items():
+            logits = self.state.decompiler_plan_family_logits.get(plan, {})
+            for family, value in logits.items():
+                if family not in self.modal_families:
+                    continue
+                family_value = (
+                    float(value)
+                    * float(plan_weight)
+                    * self.decompiler_plan_family_logit_scale
+                )
+                contributions.append(
+                    AutoencoderFeatureContribution(
+                        feature=plan,
+                        contribution_type="decompiler_plan_family_logit",
+                        family=family,
+                        value=round(family_value, 12),
+                        magnitude=round(abs(family_value), 12),
+                        metadata={
+                            "raw_value": round(float(value), 12),
+                            "decompiler_plan_family_logit_scale": (
+                                self.decompiler_plan_family_logit_scale
+                            ),
+                            "decompiler_plan_probability": round(
+                                float(plan_weight),
+                                12,
+                            ),
+                            "supports_target": target_distribution.get(family, 0.0) > 0.0,
+                            "target_probability": round(
+                                float(target_distribution.get(family, 0.0)),
+                                12,
+                            ),
+                        },
+                    )
+                )
+            view_logits = self.state.decompiler_plan_legal_ir_view_logits.get(
+                plan,
+                {},
+            )
+            for view, value in view_logits.items():
+                if not self._is_legal_ir_view_family(str(view)):
+                    continue
+                view_value = (
+                    float(value)
+                    * float(plan_weight)
+                    * self.decompiler_plan_legal_ir_view_logit_scale
+                )
+                contributions.append(
+                    AutoencoderFeatureContribution(
+                        feature=plan,
+                        contribution_type="decompiler_plan_legal_ir_view_logit",
+                        family=str(view),
+                        value=round(view_value, 12),
+                        magnitude=round(abs(view_value), 12),
+                        metadata={
+                            "raw_value": round(float(value), 12),
+                            "decompiler_plan_legal_ir_view_logit_scale": (
+                                self.decompiler_plan_legal_ir_view_logit_scale
+                            ),
+                            "decompiler_plan_probability": round(
+                                float(plan_weight),
+                                12,
+                            ),
+                        },
+                    )
+                )
+        for signature, signature_weight in self._predicate_argument_distribution_for(
+            sample
+        ).items():
+            logits = self.state.predicate_argument_family_logits.get(signature, {})
+            for family, value in logits.items():
+                if family not in self.modal_families:
+                    continue
+                family_value = (
+                    float(value)
+                    * float(signature_weight)
+                    * self.predicate_argument_family_logit_scale
+                )
+                contributions.append(
+                    AutoencoderFeatureContribution(
+                        feature=signature,
+                        contribution_type="predicate_argument_family_logit",
+                        family=family,
+                        value=round(family_value, 12),
+                        magnitude=round(abs(family_value), 12),
+                        metadata={
+                            "raw_value": round(float(value), 12),
+                            "predicate_argument_family_logit_scale": (
+                                self.predicate_argument_family_logit_scale
+                            ),
+                            "predicate_argument_probability": round(
+                                float(signature_weight),
+                                12,
+                            ),
+                            "supports_target": target_distribution.get(family, 0.0) > 0.0,
+                            "target_probability": round(
+                                float(target_distribution.get(family, 0.0)),
+                                12,
+                            ),
+                        },
+                    )
+                )
+            view_logits = self.state.predicate_argument_legal_ir_view_logits.get(
+                signature,
+                {},
+            )
+            for view, value in view_logits.items():
+                if not self._is_legal_ir_view_family(str(view)):
+                    continue
+                view_value = (
+                    float(value)
+                    * float(signature_weight)
+                    * self.predicate_argument_legal_ir_view_logit_scale
+                )
+                contributions.append(
+                    AutoencoderFeatureContribution(
+                        feature=signature,
+                        contribution_type="predicate_argument_legal_ir_view_logit",
+                        family=str(view),
+                        value=round(view_value, 12),
+                        magnitude=round(abs(view_value), 12),
+                        metadata={
+                            "raw_value": round(float(value), 12),
+                            "predicate_argument_legal_ir_view_logit_scale": (
+                                self.predicate_argument_legal_ir_view_logit_scale
+                            ),
+                            "predicate_argument_probability": round(
+                                float(signature_weight),
+                                12,
+                            ),
+                        },
+                    )
+                )
         for key, pair_weight in self._family_semantic_slot_distribution_for_legal_ir_view(
             sample
         ).items():
@@ -5495,6 +8044,110 @@ class AdaptiveModalAutoencoder:
                         ),
                         "logic_signature_embedding_weight_scale": (
                             self.logic_signature_embedding_weight_scale
+                        ),
+                    },
+                )
+            )
+        for signal, probability in self._round_trip_signal_distribution_for(sample).items():
+            weights = self.state.round_trip_signal_embedding_weights.get(signal)
+            if weights is None or len(weights) != dimensions:
+                continue
+            scaled_weights = [
+                float(value)
+                * float(probability)
+                * self.round_trip_signal_embedding_weight_scale
+                for value in weights
+            ]
+            alignment = sum(
+                float(left) * float(right)
+                for left, right in zip(residual, scaled_weights)
+            )
+            weight_norm = _vector_norm(scaled_weights)
+            normalized_alignment = alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            contributions.append(
+                AutoencoderFeatureContribution(
+                    feature=signal,
+                    contribution_type="round_trip_signal_embedding_weight",
+                    value=round(alignment, 12),
+                    magnitude=round(weight_norm, 12),
+                    metadata={
+                        "alignment_with_residual": round(normalized_alignment, 12),
+                        "round_trip_signal_probability": round(
+                            float(probability),
+                            12,
+                        ),
+                        "round_trip_signal_embedding_weight_scale": (
+                            self.round_trip_signal_embedding_weight_scale
+                        ),
+                    },
+                )
+            )
+        for plan, probability in self._decompiler_plan_distribution_for(sample).items():
+            weights = self.state.decompiler_plan_embedding_weights.get(plan)
+            if weights is None or len(weights) != dimensions:
+                continue
+            scaled_weights = [
+                float(value)
+                * float(probability)
+                * self.decompiler_plan_embedding_weight_scale
+                for value in weights
+            ]
+            alignment = sum(
+                float(left) * float(right)
+                for left, right in zip(residual, scaled_weights)
+            )
+            weight_norm = _vector_norm(scaled_weights)
+            normalized_alignment = alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            contributions.append(
+                AutoencoderFeatureContribution(
+                    feature=plan,
+                    contribution_type="decompiler_plan_embedding_weight",
+                    value=round(alignment, 12),
+                    magnitude=round(weight_norm, 12),
+                    metadata={
+                        "alignment_with_residual": round(normalized_alignment, 12),
+                        "decompiler_plan_probability": round(
+                            float(probability),
+                            12,
+                        ),
+                        "decompiler_plan_embedding_weight_scale": (
+                            self.decompiler_plan_embedding_weight_scale
+                        ),
+                    },
+                )
+            )
+        for signature, probability in self._predicate_argument_distribution_for(
+            sample
+        ).items():
+            weights = self.state.predicate_argument_embedding_weights.get(signature)
+            if weights is None or len(weights) != dimensions:
+                continue
+            scaled_weights = [
+                float(value)
+                * float(probability)
+                * self.predicate_argument_embedding_weight_scale
+                for value in weights
+            ]
+            alignment = sum(
+                float(left) * float(right)
+                for left, right in zip(residual, scaled_weights)
+            )
+            weight_norm = _vector_norm(scaled_weights)
+            normalized_alignment = alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            contributions.append(
+                AutoencoderFeatureContribution(
+                    feature=signature,
+                    contribution_type="predicate_argument_embedding_weight",
+                    value=round(alignment, 12),
+                    magnitude=round(weight_norm, 12),
+                    metadata={
+                        "alignment_with_residual": round(normalized_alignment, 12),
+                        "predicate_argument_probability": round(
+                            float(probability),
+                            12,
+                        ),
+                        "predicate_argument_embedding_weight_scale": (
+                            self.predicate_argument_embedding_weight_scale
                         ),
                     },
                 )
@@ -6444,6 +9097,23 @@ def _quality_loss_bucket(value: float) -> str:
     if loss <= 1.0:
         return "large"
     return "huge"
+
+
+def _ratio_bucket(value: float) -> str:
+    ratio = min(1.0, max(0.0, _float_or_zero(value)))
+    if ratio <= 0.0:
+        return "0"
+    if ratio <= 0.01:
+        return "tiny"
+    if ratio <= 0.05:
+        return "small"
+    if ratio <= 0.15:
+        return "medium"
+    if ratio <= 0.35:
+        return "large"
+    if ratio <= 0.65:
+        return "high"
+    return "very-high"
 
 
 def _unique_preserve_order(values: Iterable[str]) -> List[str]:

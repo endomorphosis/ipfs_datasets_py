@@ -45,6 +45,9 @@ COMMON_ARGS=(
   --autoencoder-max-legal-ir-token-features 24
   --autoencoder-max-legal-ir-token-bigram-features 12
   --autoencoder-max-legal-ir-token-trigram-features 8
+  --autoencoder-max-compiler-latent-profile-features 48
+  --autoencoder-max-round-trip-bridge-features 64
+  --autoencoder-max-clause-topology-features 64
   --autoencoder-max-semantic-slot-interactions 24
   --autoencoder-feature-activity-reference 64
   --autoencoder-feature-logit-clip 24.0
@@ -74,12 +77,12 @@ PAIRED_ARGS=(
 )
 
 CONFIGS=(
-  "lr=0.28 ce=1.75 rec=0.60 cos=0.60 legal=1.35 hard=0.55 fam=1.05 emb=0.45 qemb=0.50 qfam=1.05 sigemb=0.50 sigfam=1.10 sigview=1.05 proto=0.55 famslot=0.55 triemb=0.45 joint=0.55 slotfam=1.10 viewfam=1.05 triview=1.00 slotviewfam=1.05 slotemb=0.55 slotviewemb=0.55 slotpair=0.30 slotview=1.05 view=1.00 viewemb=0.55 cossgd=0.25"
-  "lr=0.30 ce=1.50 rec=0.70 cos=0.70 legal=1.25 hard=0.60 fam=0.95 emb=0.55 qemb=0.65 qfam=1.25 sigemb=0.70 sigfam=1.30 sigview=1.25 proto=0.50 famslot=0.70 triemb=0.65 joint=0.65 slotfam=1.25 viewfam=1.20 triview=1.25 slotviewfam=1.25 slotemb=0.65 slotviewemb=0.70 slotpair=0.40 slotview=1.20 view=1.10 viewemb=0.65 cossgd=0.35"
-  "lr=0.33 ce=1.35 rec=0.80 cos=0.80 legal=1.15 hard=0.70 fam=1.15 emb=0.50 qemb=0.45 qfam=0.95 sigemb=0.45 sigfam=0.95 sigview=0.90 proto=0.65 famslot=0.45 triemb=0.40 joint=0.50 slotfam=0.95 viewfam=0.90 triview=0.85 slotviewfam=0.90 slotemb=0.50 slotviewemb=0.45 slotpair=0.25 slotview=0.95 view=0.95 viewemb=0.50 cossgd=0.20"
-  "lr=0.26 ce=2.00 rec=0.50 cos=0.50 legal=1.50 hard=0.45 fam=0.85 emb=0.65 qemb=0.75 qfam=1.35 sigemb=0.80 sigfam=1.45 sigview=1.40 proto=0.45 famslot=0.80 triemb=0.80 joint=0.75 slotfam=1.35 viewfam=1.35 triview=1.45 slotviewfam=1.40 slotemb=0.75 slotviewemb=0.80 slotpair=0.50 slotview=1.35 view=1.20 viewemb=0.75 cossgd=0.40"
-  "lr=0.31 ce=1.60 rec=0.65 cos=0.75 legal=1.40 hard=0.50 fam=1.10 emb=0.40 qemb=0.55 qfam=1.15 sigemb=0.60 sigfam=1.20 sigview=1.15 proto=0.70 famslot=0.60 triemb=0.55 joint=0.60 slotfam=1.20 viewfam=1.10 triview=1.10 slotviewfam=1.15 slotemb=0.60 slotviewemb=0.60 slotpair=0.35 slotview=1.15 view=1.05 viewemb=0.60 cossgd=0.30"
-  "lr=0.29 ce=1.40 rec=0.75 cos=0.65 legal=1.30 hard=0.65 fam=1.00 emb=0.60 qemb=0.40 qfam=0.90 sigemb=0.40 sigfam=0.90 sigview=0.90 proto=0.55 famslot=0.40 triemb=0.35 joint=0.45 slotfam=1.00 viewfam=0.95 triview=0.90 slotviewfam=0.95 slotemb=0.45 slotviewemb=0.40 slotpair=0.20 slotview=0.90 view=0.90 viewemb=0.45 cossgd=0.25"
+  "lr=0.28 ce=1.75 rec=0.60 cos=0.60 legal=1.35 hard=0.55 fam=1.05 emb=0.45 qemb=0.50 qfam=1.05 sigemb=0.50 sigfam=1.10 sigview=1.05 rtemb=0.50 rtfam=1.10 rtview=1.05 planemb=0.50 planfam=1.10 planview=1.05 argemb=0.50 argfam=1.10 argview=1.05 embnorm=0.50 famnorm=0.50 viewnorm=0.50 proto=0.55 famslot=0.55 triemb=0.45 joint=0.55 slotfam=1.10 viewfam=1.05 triview=1.00 slotviewfam=1.05 slotemb=0.55 slotviewemb=0.55 slotpair=0.30 slotview=1.05 view=1.00 viewemb=0.55 cossgd=0.25"
+  "lr=0.30 ce=1.50 rec=0.70 cos=0.70 legal=1.25 hard=0.60 fam=0.95 emb=0.55 qemb=0.65 qfam=1.25 sigemb=0.70 sigfam=1.30 sigview=1.25 rtemb=0.70 rtfam=1.30 rtview=1.25 planemb=0.70 planfam=1.30 planview=1.25 argemb=0.70 argfam=1.30 argview=1.25 embnorm=0.65 famnorm=0.55 viewnorm=0.55 proto=0.50 famslot=0.70 triemb=0.65 joint=0.65 slotfam=1.25 viewfam=1.20 triview=1.25 slotviewfam=1.25 slotemb=0.65 slotviewemb=0.70 slotpair=0.40 slotview=1.20 view=1.10 viewemb=0.65 cossgd=0.35"
+  "lr=0.33 ce=1.35 rec=0.80 cos=0.80 legal=1.15 hard=0.70 fam=1.15 emb=0.50 qemb=0.45 qfam=0.95 sigemb=0.45 sigfam=0.95 sigview=0.90 rtemb=0.45 rtfam=0.95 rtview=0.90 planemb=0.45 planfam=0.95 planview=0.90 argemb=0.45 argfam=0.95 argview=0.90 embnorm=0.35 famnorm=0.45 viewnorm=0.45 proto=0.65 famslot=0.45 triemb=0.40 joint=0.50 slotfam=0.95 viewfam=0.90 triview=0.85 slotviewfam=0.90 slotemb=0.50 slotviewemb=0.45 slotpair=0.25 slotview=0.95 view=0.95 viewemb=0.50 cossgd=0.20"
+  "lr=0.26 ce=2.00 rec=0.50 cos=0.50 legal=1.50 hard=0.45 fam=0.85 emb=0.65 qemb=0.75 qfam=1.35 sigemb=0.80 sigfam=1.45 sigview=1.40 rtemb=0.80 rtfam=1.45 rtview=1.40 planemb=0.80 planfam=1.45 planview=1.40 argemb=0.80 argfam=1.45 argview=1.40 embnorm=0.75 famnorm=0.65 viewnorm=0.65 proto=0.45 famslot=0.80 triemb=0.80 joint=0.75 slotfam=1.35 viewfam=1.35 triview=1.45 slotviewfam=1.40 slotemb=0.75 slotviewemb=0.80 slotpair=0.50 slotview=1.35 view=1.20 viewemb=0.75 cossgd=0.40"
+  "lr=0.31 ce=1.60 rec=0.65 cos=0.75 legal=1.40 hard=0.50 fam=1.10 emb=0.40 qemb=0.55 qfam=1.15 sigemb=0.60 sigfam=1.20 sigview=1.15 rtemb=0.60 rtfam=1.20 rtview=1.15 planemb=0.60 planfam=1.20 planview=1.15 argemb=0.60 argfam=1.20 argview=1.15 embnorm=0.50 famnorm=0.60 viewnorm=0.55 proto=0.70 famslot=0.60 triemb=0.55 joint=0.60 slotfam=1.20 viewfam=1.10 triview=1.10 slotviewfam=1.15 slotemb=0.60 slotviewemb=0.60 slotpair=0.35 slotview=1.15 view=1.05 viewemb=0.60 cossgd=0.30"
+  "lr=0.29 ce=1.40 rec=0.75 cos=0.65 legal=1.30 hard=0.65 fam=1.00 emb=0.60 qemb=0.40 qfam=0.90 sigemb=0.40 sigfam=0.90 sigview=0.90 rtemb=0.40 rtfam=0.90 rtview=0.90 planemb=0.40 planfam=0.90 planview=0.90 argemb=0.40 argfam=0.90 argview=0.90 embnorm=0.25 famnorm=0.40 viewnorm=0.40 proto=0.55 famslot=0.40 triemb=0.35 joint=0.45 slotfam=1.00 viewfam=0.95 triview=0.90 slotviewfam=0.95 slotemb=0.45 slotviewemb=0.40 slotpair=0.20 slotview=0.90 view=0.90 viewemb=0.45 cossgd=0.25"
 )
 
 if (( TRIAL_COUNT < ${#CONFIGS[@]} )); then
@@ -114,6 +117,18 @@ for idx in "${!CONFIGS[@]}"; do
   sigemb="0.5"
   sigfam="1.0"
   sigview="1.0"
+  rtemb="0.5"
+  rtfam="1.0"
+  rtview="1.0"
+  planemb="0.5"
+  planfam="1.0"
+  planview="1.0"
+  argemb="0.5"
+  argfam="1.0"
+  argview="1.0"
+  embnorm="0.5"
+  famnorm="0.5"
+  viewnorm="0.5"
   proto="0.5"
   famslot="0.5"
   triemb="0.5"
@@ -146,6 +161,18 @@ for idx in "${!CONFIGS[@]}"; do
       sigemb) sigemb="${val}" ;;
       sigfam) sigfam="${val}" ;;
       sigview) sigview="${val}" ;;
+      rtemb) rtemb="${val}" ;;
+      rtfam) rtfam="${val}" ;;
+      rtview) rtview="${val}" ;;
+      planemb) planemb="${val}" ;;
+      planfam) planfam="${val}" ;;
+      planview) planview="${val}" ;;
+      argemb) argemb="${val}" ;;
+      argfam) argfam="${val}" ;;
+      argview) argview="${val}" ;;
+      embnorm) embnorm="${val}" ;;
+      famnorm) famnorm="${val}" ;;
+      viewnorm) viewnorm="${val}" ;;
       proto) proto="${val}" ;;
       famslot) famslot="${val}" ;;
       triemb) triemb="${val}" ;;
@@ -181,6 +208,18 @@ for idx in "${!CONFIGS[@]}"; do
     --autoencoder-logic-signature-embedding-weight-scale "${sigemb}"
     --autoencoder-logic-signature-family-logit-scale "${sigfam}"
     --autoencoder-logic-signature-legal-ir-view-logit-scale "${sigview}"
+    --autoencoder-round-trip-signal-embedding-weight-scale "${rtemb}"
+    --autoencoder-round-trip-signal-family-logit-scale "${rtfam}"
+    --autoencoder-round-trip-signal-legal-ir-view-logit-scale "${rtview}"
+    --autoencoder-decompiler-plan-embedding-weight-scale "${planemb}"
+    --autoencoder-decompiler-plan-family-logit-scale "${planfam}"
+    --autoencoder-decompiler-plan-legal-ir-view-logit-scale "${planview}"
+    --autoencoder-predicate-argument-embedding-weight-scale "${argemb}"
+    --autoencoder-predicate-argument-family-logit-scale "${argfam}"
+    --autoencoder-predicate-argument-legal-ir-view-logit-scale "${argview}"
+    --autoencoder-embedding-head-update-normalization "${embnorm}"
+    --autoencoder-family-logit-head-update-normalization "${famnorm}"
+    --autoencoder-legal-ir-view-head-update-normalization "${viewnorm}"
     --autoencoder-family-embedding-weight-scale "${proto}"
     --autoencoder-family-semantic-slot-embedding-weight-scale "${famslot}"
     --autoencoder-family-semantic-slot-legal-ir-view-embedding-weight-scale "${triemb}"
@@ -282,6 +321,18 @@ qfam="1.0"
 sigemb="0.5"
 sigfam="1.0"
 sigview="1.0"
+rtemb="0.5"
+rtfam="1.0"
+rtview="1.0"
+planemb="0.5"
+planfam="1.0"
+planview="1.0"
+argemb="0.5"
+argfam="1.0"
+argview="1.0"
+embnorm="0.5"
+famnorm="0.5"
+viewnorm="0.5"
 proto="0.5"
 famslot="0.5"
 triemb="0.5"
@@ -314,6 +365,18 @@ for kv in ${best_cfg}; do
     sigemb) sigemb="${val}" ;;
     sigfam) sigfam="${val}" ;;
     sigview) sigview="${val}" ;;
+    rtemb) rtemb="${val}" ;;
+    rtfam) rtfam="${val}" ;;
+    rtview) rtview="${val}" ;;
+    planemb) planemb="${val}" ;;
+    planfam) planfam="${val}" ;;
+    planview) planview="${val}" ;;
+    argemb) argemb="${val}" ;;
+    argfam) argfam="${val}" ;;
+    argview) argview="${val}" ;;
+    embnorm) embnorm="${val}" ;;
+    famnorm) famnorm="${val}" ;;
+    viewnorm) viewnorm="${val}" ;;
     proto) proto="${val}" ;;
     famslot) famslot="${val}" ;;
     triemb) triemb="${val}" ;;
@@ -350,6 +413,18 @@ final_args=(
   --autoencoder-logic-signature-embedding-weight-scale "${sigemb}"
   --autoencoder-logic-signature-family-logit-scale "${sigfam}"
   --autoencoder-logic-signature-legal-ir-view-logit-scale "${sigview}"
+  --autoencoder-round-trip-signal-embedding-weight-scale "${rtemb}"
+  --autoencoder-round-trip-signal-family-logit-scale "${rtfam}"
+  --autoencoder-round-trip-signal-legal-ir-view-logit-scale "${rtview}"
+  --autoencoder-decompiler-plan-embedding-weight-scale "${planemb}"
+  --autoencoder-decompiler-plan-family-logit-scale "${planfam}"
+  --autoencoder-decompiler-plan-legal-ir-view-logit-scale "${planview}"
+  --autoencoder-predicate-argument-embedding-weight-scale "${argemb}"
+  --autoencoder-predicate-argument-family-logit-scale "${argfam}"
+  --autoencoder-predicate-argument-legal-ir-view-logit-scale "${argview}"
+  --autoencoder-embedding-head-update-normalization "${embnorm}"
+  --autoencoder-family-logit-head-update-normalization "${famnorm}"
+  --autoencoder-legal-ir-view-head-update-normalization "${viewnorm}"
   --autoencoder-family-embedding-weight-scale "${proto}"
   --autoencoder-family-semantic-slot-embedding-weight-scale "${famslot}"
   --autoencoder-family-semantic-slot-legal-ir-view-embedding-weight-scale "${triemb}"
