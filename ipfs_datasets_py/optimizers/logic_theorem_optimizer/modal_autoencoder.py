@@ -354,14 +354,24 @@ class ModalAutoencoderTrainingState:
 
     decoded_embeddings: Dict[str, List[float]] = field(default_factory=dict)
     family_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    compiler_quality_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
+    compiler_quality_family_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
     feature_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
     family_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
+    family_semantic_slot_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
+    family_semantic_slot_legal_ir_view_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
+    family_legal_ir_view_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
     semantic_slot_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
     feature_family_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
     semantic_slot_family_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
     legal_ir_view_logits: Dict[str, float] = field(default_factory=dict)
     legal_ir_view_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
+    legal_ir_view_family_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
     feature_legal_ir_view_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    family_semantic_slot_legal_ir_view_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    semantic_slot_legal_ir_view_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
+    semantic_slot_legal_ir_view_family_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    semantic_slot_legal_ir_view_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
     applied_todo_ids: List[str] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -375,6 +385,16 @@ class ModalAutoencoderTrainingState:
                 sample_id: dict(sorted(logits.items()))
                 for sample_id, logits in sorted(self.family_logits.items())
             },
+            "compiler_quality_embedding_weights": {
+                slot: list(vector)
+                for slot, vector in sorted(
+                    self.compiler_quality_embedding_weights.items()
+                )
+            },
+            "compiler_quality_family_logits": {
+                slot: dict(sorted(logits.items()))
+                for slot, logits in sorted(self.compiler_quality_family_logits.items())
+            },
             "feature_legal_ir_view_logits": {
                 feature: dict(sorted(logits.items()))
                 for feature, logits in sorted(self.feature_legal_ir_view_logits.items())
@@ -387,6 +407,24 @@ class ModalAutoencoderTrainingState:
                 family: list(vector)
                 for family, vector in sorted(self.family_embedding_weights.items())
             },
+            "family_semantic_slot_embedding_weights": {
+                key: list(vector)
+                for key, vector in sorted(
+                    self.family_semantic_slot_embedding_weights.items()
+                )
+            },
+            "family_semantic_slot_legal_ir_view_embedding_weights": {
+                key: list(vector)
+                for key, vector in sorted(
+                    self.family_semantic_slot_legal_ir_view_embedding_weights.items()
+                )
+            },
+            "family_legal_ir_view_embedding_weights": {
+                key: list(vector)
+                for key, vector in sorted(
+                    self.family_legal_ir_view_embedding_weights.items()
+                )
+            },
             "feature_family_logits": {
                 feature: dict(sorted(logits.items()))
                 for feature, logits in sorted(self.feature_family_logits.items())
@@ -394,6 +432,10 @@ class ModalAutoencoderTrainingState:
             "legal_ir_view_embedding_weights": {
                 view: list(vector)
                 for view, vector in sorted(self.legal_ir_view_embedding_weights.items())
+            },
+            "legal_ir_view_family_logits": {
+                view: dict(sorted(logits.items()))
+                for view, logits in sorted(self.legal_ir_view_family_logits.items())
             },
             "legal_ir_view_logits": dict(sorted(self.legal_ir_view_logits.items())),
             "semantic_slot_embedding_weights": {
@@ -403,6 +445,30 @@ class ModalAutoencoderTrainingState:
             "semantic_slot_family_logits": {
                 slot: dict(sorted(logits.items()))
                 for slot, logits in sorted(self.semantic_slot_family_logits.items())
+            },
+            "family_semantic_slot_legal_ir_view_logits": {
+                key: dict(sorted(logits.items()))
+                for key, logits in sorted(
+                    self.family_semantic_slot_legal_ir_view_logits.items()
+                )
+            },
+            "semantic_slot_legal_ir_view_embedding_weights": {
+                key: list(vector)
+                for key, vector in sorted(
+                    self.semantic_slot_legal_ir_view_embedding_weights.items()
+                )
+            },
+            "semantic_slot_legal_ir_view_family_logits": {
+                key: dict(sorted(logits.items()))
+                for key, logits in sorted(
+                    self.semantic_slot_legal_ir_view_family_logits.items()
+                )
+            },
+            "semantic_slot_legal_ir_view_logits": {
+                slot: dict(sorted(logits.items()))
+                for slot, logits in sorted(
+                    self.semantic_slot_legal_ir_view_logits.items()
+                )
             },
         }
 
@@ -421,6 +487,14 @@ class ModalAutoencoderTrainingState:
         can contaminate future validation if carried into a fresh run.
         """
         return ModalAutoencoderTrainingState(
+            compiler_quality_embedding_weights={
+                slot: list(vector)
+                for slot, vector in self.compiler_quality_embedding_weights.items()
+            },
+            compiler_quality_family_logits={
+                slot: dict(logits)
+                for slot, logits in self.compiler_quality_family_logits.items()
+            },
             feature_embedding_weights={
                 feature: list(vector)
                 for feature, vector in self.feature_embedding_weights.items()
@@ -428,6 +502,18 @@ class ModalAutoencoderTrainingState:
             family_embedding_weights={
                 family: list(vector)
                 for family, vector in self.family_embedding_weights.items()
+            },
+            family_semantic_slot_embedding_weights={
+                key: list(vector)
+                for key, vector in self.family_semantic_slot_embedding_weights.items()
+            },
+            family_semantic_slot_legal_ir_view_embedding_weights={
+                key: list(vector)
+                for key, vector in self.family_semantic_slot_legal_ir_view_embedding_weights.items()
+            },
+            family_legal_ir_view_embedding_weights={
+                key: list(vector)
+                for key, vector in self.family_legal_ir_view_embedding_weights.items()
             },
             feature_family_logits={
                 feature: dict(logits)
@@ -441,10 +527,30 @@ class ModalAutoencoderTrainingState:
                 slot: dict(logits)
                 for slot, logits in self.semantic_slot_family_logits.items()
             },
+            family_semantic_slot_legal_ir_view_logits={
+                key: dict(logits)
+                for key, logits in self.family_semantic_slot_legal_ir_view_logits.items()
+            },
+            semantic_slot_legal_ir_view_embedding_weights={
+                key: list(vector)
+                for key, vector in self.semantic_slot_legal_ir_view_embedding_weights.items()
+            },
+            semantic_slot_legal_ir_view_family_logits={
+                key: dict(logits)
+                for key, logits in self.semantic_slot_legal_ir_view_family_logits.items()
+            },
+            semantic_slot_legal_ir_view_logits={
+                slot: dict(logits)
+                for slot, logits in self.semantic_slot_legal_ir_view_logits.items()
+            },
             legal_ir_view_logits=dict(self.legal_ir_view_logits),
             legal_ir_view_embedding_weights={
                 view: list(vector)
                 for view, vector in self.legal_ir_view_embedding_weights.items()
+            },
+            legal_ir_view_family_logits={
+                view: dict(logits)
+                for view, logits in self.legal_ir_view_family_logits.items()
             },
             feature_legal_ir_view_logits={
                 feature: dict(logits)
@@ -459,6 +565,18 @@ class ModalAutoencoderTrainingState:
         scale: float = 1.0,
     ) -> None:
         """Add feature-level weights from ``other`` into this state."""
+        for slot, vector in other.compiler_quality_embedding_weights.items():
+            if slot not in self.compiler_quality_embedding_weights:
+                self.compiler_quality_embedding_weights[slot] = [
+                    float(value) * scale for value in vector
+                ]
+                continue
+            current = self.compiler_quality_embedding_weights[slot]
+            if len(current) != len(vector):
+                continue
+            for index, value in enumerate(vector):
+                current[index] += float(value) * scale
+
         for feature, vector in other.feature_embedding_weights.items():
             if feature not in self.feature_embedding_weights:
                 self.feature_embedding_weights[feature] = [
@@ -495,6 +613,54 @@ class ModalAutoencoderTrainingState:
             for index, value in enumerate(vector):
                 current[index] += float(value) * scale
 
+        for key, vector in other.family_semantic_slot_embedding_weights.items():
+            if key not in self.family_semantic_slot_embedding_weights:
+                self.family_semantic_slot_embedding_weights[key] = [
+                    float(value) * scale for value in vector
+                ]
+                continue
+            current = self.family_semantic_slot_embedding_weights[key]
+            if len(current) != len(vector):
+                continue
+            for index, value in enumerate(vector):
+                current[index] += float(value) * scale
+
+        for key, vector in other.family_semantic_slot_legal_ir_view_embedding_weights.items():
+            if key not in self.family_semantic_slot_legal_ir_view_embedding_weights:
+                self.family_semantic_slot_legal_ir_view_embedding_weights[key] = [
+                    float(value) * scale for value in vector
+                ]
+                continue
+            current = self.family_semantic_slot_legal_ir_view_embedding_weights[key]
+            if len(current) != len(vector):
+                continue
+            for index, value in enumerate(vector):
+                current[index] += float(value) * scale
+
+        for key, vector in other.family_legal_ir_view_embedding_weights.items():
+            if key not in self.family_legal_ir_view_embedding_weights:
+                self.family_legal_ir_view_embedding_weights[key] = [
+                    float(value) * scale for value in vector
+                ]
+                continue
+            current = self.family_legal_ir_view_embedding_weights[key]
+            if len(current) != len(vector):
+                continue
+            for index, value in enumerate(vector):
+                current[index] += float(value) * scale
+
+        for key, vector in other.semantic_slot_legal_ir_view_embedding_weights.items():
+            if key not in self.semantic_slot_legal_ir_view_embedding_weights:
+                self.semantic_slot_legal_ir_view_embedding_weights[key] = [
+                    float(value) * scale for value in vector
+                ]
+                continue
+            current = self.semantic_slot_legal_ir_view_embedding_weights[key]
+            if len(current) != len(vector):
+                continue
+            for index, value in enumerate(vector):
+                current[index] += float(value) * scale
+
         for slot, vector in other.semantic_slot_embedding_weights.items():
             if slot not in self.semantic_slot_embedding_weights:
                 self.semantic_slot_embedding_weights[slot] = [
@@ -514,8 +680,49 @@ class ModalAutoencoderTrainingState:
                     float(value) * scale
                 )
 
+        for slot, logits in other.compiler_quality_family_logits.items():
+            current_logits = self.compiler_quality_family_logits.setdefault(slot, {})
+            for family, value in logits.items():
+                current_logits[family] = current_logits.get(family, 0.0) + (
+                    float(value) * scale
+                )
+
         for slot, logits in other.semantic_slot_family_logits.items():
             current_logits = self.semantic_slot_family_logits.setdefault(slot, {})
+            for family, value in logits.items():
+                current_logits[family] = current_logits.get(family, 0.0) + (
+                    float(value) * scale
+                )
+
+        for slot, logits in other.semantic_slot_legal_ir_view_logits.items():
+            current_logits = self.semantic_slot_legal_ir_view_logits.setdefault(slot, {})
+            for view, value in logits.items():
+                current_logits[view] = current_logits.get(view, 0.0) + (
+                    float(value) * scale
+                )
+
+        for key, logits in other.family_semantic_slot_legal_ir_view_logits.items():
+            current_logits = self.family_semantic_slot_legal_ir_view_logits.setdefault(
+                key,
+                {},
+            )
+            for view, value in logits.items():
+                current_logits[view] = current_logits.get(view, 0.0) + (
+                    float(value) * scale
+                )
+
+        for view, logits in other.legal_ir_view_family_logits.items():
+            current_logits = self.legal_ir_view_family_logits.setdefault(view, {})
+            for family, value in logits.items():
+                current_logits[family] = current_logits.get(family, 0.0) + (
+                    float(value) * scale
+                )
+
+        for key, logits in other.semantic_slot_legal_ir_view_family_logits.items():
+            current_logits = self.semantic_slot_legal_ir_view_family_logits.setdefault(
+                key,
+                {},
+            )
             for family, value in logits.items():
                 current_logits[family] = current_logits.get(family, 0.0) + (
                     float(value) * scale
@@ -544,16 +751,39 @@ class ModalAutoencoderTrainingState:
             return cls()
 
         merged = cls()
+        compiler_quality_vector_counts: Dict[str, int] = {}
         vector_counts: Dict[str, int] = {}
         family_vector_counts: Dict[str, int] = {}
         legal_view_vector_counts: Dict[str, int] = {}
+        family_semantic_slot_vector_counts: Dict[str, int] = {}
+        family_semantic_slot_legal_view_vector_counts: Dict[str, int] = {}
+        family_legal_view_vector_counts: Dict[str, int] = {}
+        semantic_slot_legal_view_embedding_counts: Dict[str, int] = {}
         semantic_slot_vector_counts: Dict[str, int] = {}
         logit_counts: Dict[tuple[str, str], int] = {}
+        compiler_quality_logit_counts: Dict[tuple[str, str], int] = {}
         semantic_slot_logit_counts: Dict[tuple[str, str], int] = {}
+        family_semantic_slot_legal_view_counts: Dict[tuple[str, str], int] = {}
         legal_view_counts: Dict[str, int] = {}
+        legal_view_family_counts: Dict[tuple[str, str], int] = {}
+        semantic_slot_legal_view_family_counts: Dict[tuple[str, str], int] = {}
         feature_legal_view_counts: Dict[tuple[str, str], int] = {}
+        semantic_slot_legal_view_counts: Dict[tuple[str, str], int] = {}
 
         for state in state_list:
+            for slot, vector in state.compiler_quality_embedding_weights.items():
+                if slot not in merged.compiler_quality_embedding_weights:
+                    merged.compiler_quality_embedding_weights[slot] = [
+                        0.0 for _ in vector
+                    ]
+                    compiler_quality_vector_counts[slot] = 0
+                current = merged.compiler_quality_embedding_weights[slot]
+                if len(current) != len(vector):
+                    continue
+                for index, value in enumerate(vector):
+                    current[index] += float(value)
+                compiler_quality_vector_counts[slot] += 1
+
             for feature, vector in state.feature_embedding_weights.items():
                 if feature not in merged.feature_embedding_weights:
                     merged.feature_embedding_weights[feature] = [0.0 for _ in vector]
@@ -587,6 +817,58 @@ class ModalAutoencoderTrainingState:
                     current[index] += float(value)
                 legal_view_vector_counts[view] += 1
 
+            for key, vector in state.family_semantic_slot_embedding_weights.items():
+                if key not in merged.family_semantic_slot_embedding_weights:
+                    merged.family_semantic_slot_embedding_weights[key] = [
+                        0.0 for _ in vector
+                    ]
+                    family_semantic_slot_vector_counts[key] = 0
+                current = merged.family_semantic_slot_embedding_weights[key]
+                if len(current) != len(vector):
+                    continue
+                for index, value in enumerate(vector):
+                    current[index] += float(value)
+                family_semantic_slot_vector_counts[key] += 1
+
+            for key, vector in state.family_semantic_slot_legal_ir_view_embedding_weights.items():
+                if key not in merged.family_semantic_slot_legal_ir_view_embedding_weights:
+                    merged.family_semantic_slot_legal_ir_view_embedding_weights[key] = [
+                        0.0 for _ in vector
+                    ]
+                    family_semantic_slot_legal_view_vector_counts[key] = 0
+                current = merged.family_semantic_slot_legal_ir_view_embedding_weights[key]
+                if len(current) != len(vector):
+                    continue
+                for index, value in enumerate(vector):
+                    current[index] += float(value)
+                family_semantic_slot_legal_view_vector_counts[key] += 1
+
+            for key, vector in state.family_legal_ir_view_embedding_weights.items():
+                if key not in merged.family_legal_ir_view_embedding_weights:
+                    merged.family_legal_ir_view_embedding_weights[key] = [
+                        0.0 for _ in vector
+                    ]
+                    family_legal_view_vector_counts[key] = 0
+                current = merged.family_legal_ir_view_embedding_weights[key]
+                if len(current) != len(vector):
+                    continue
+                for index, value in enumerate(vector):
+                    current[index] += float(value)
+                family_legal_view_vector_counts[key] += 1
+
+            for key, vector in state.semantic_slot_legal_ir_view_embedding_weights.items():
+                if key not in merged.semantic_slot_legal_ir_view_embedding_weights:
+                    merged.semantic_slot_legal_ir_view_embedding_weights[key] = [
+                        0.0 for _ in vector
+                    ]
+                    semantic_slot_legal_view_embedding_counts[key] = 0
+                current = merged.semantic_slot_legal_ir_view_embedding_weights[key]
+                if len(current) != len(vector):
+                    continue
+                for index, value in enumerate(vector):
+                    current[index] += float(value)
+                semantic_slot_legal_view_embedding_counts[key] += 1
+
             for slot, vector in state.semantic_slot_embedding_weights.items():
                 if slot not in merged.semantic_slot_embedding_weights:
                     merged.semantic_slot_embedding_weights[slot] = [0.0 for _ in vector]
@@ -604,6 +886,14 @@ class ModalAutoencoderTrainingState:
                     current_logits[family] = current_logits.get(family, 0.0) + float(value)
                     logit_counts[(feature, family)] = logit_counts.get((feature, family), 0) + 1
 
+            for slot, logits in state.compiler_quality_family_logits.items():
+                current_logits = merged.compiler_quality_family_logits.setdefault(slot, {})
+                for family, value in logits.items():
+                    current_logits[family] = current_logits.get(family, 0.0) + float(value)
+                    compiler_quality_logit_counts[(slot, family)] = (
+                        compiler_quality_logit_counts.get((slot, family), 0) + 1
+                    )
+
             for slot, logits in state.semantic_slot_family_logits.items():
                 current_logits = merged.semantic_slot_family_logits.setdefault(slot, {})
                 for family, value in logits.items():
@@ -612,20 +902,71 @@ class ModalAutoencoderTrainingState:
                         semantic_slot_logit_counts.get((slot, family), 0) + 1
                     )
 
+            for slot, logits in state.semantic_slot_legal_ir_view_logits.items():
+                current_logits = merged.semantic_slot_legal_ir_view_logits.setdefault(
+                    slot,
+                    {},
+                )
+                for view, value in logits.items():
+                    current_logits[view] = current_logits.get(view, 0.0) + float(value)
+                    semantic_slot_legal_view_counts[(slot, view)] = (
+                        semantic_slot_legal_view_counts.get((slot, view), 0) + 1
+                    )
+
+            for key, logits in state.family_semantic_slot_legal_ir_view_logits.items():
+                current_logits = merged.family_semantic_slot_legal_ir_view_logits.setdefault(
+                    key,
+                    {},
+                )
+                for view, value in logits.items():
+                    current_logits[view] = current_logits.get(view, 0.0) + float(value)
+                    family_semantic_slot_legal_view_counts[(key, view)] = (
+                        family_semantic_slot_legal_view_counts.get((key, view), 0) + 1
+                    )
+
             for view, value in state.legal_ir_view_logits.items():
                 merged.legal_ir_view_logits[view] = (
                     merged.legal_ir_view_logits.get(view, 0.0) + float(value)
                 )
                 legal_view_counts[view] = legal_view_counts.get(view, 0) + 1
 
+            for view, logits in state.legal_ir_view_family_logits.items():
+                current_logits = merged.legal_ir_view_family_logits.setdefault(
+                    view,
+                    {},
+                )
+                for family, value in logits.items():
+                    current_logits[family] = current_logits.get(family, 0.0) + float(value)
+                    legal_view_family_counts[(view, family)] = (
+                        legal_view_family_counts.get((view, family), 0) + 1
+                    )
+
+            for key, logits in state.semantic_slot_legal_ir_view_family_logits.items():
+                current_logits = merged.semantic_slot_legal_ir_view_family_logits.setdefault(
+                    key,
+                    {},
+                )
+                for family, value in logits.items():
+                    current_logits[family] = current_logits.get(family, 0.0) + float(value)
+                    semantic_slot_legal_view_family_counts[(key, family)] = (
+                        semantic_slot_legal_view_family_counts.get((key, family), 0) + 1
+                    )
+
             for feature, logits in state.feature_legal_ir_view_logits.items():
                 current_logits = merged.feature_legal_ir_view_logits.setdefault(feature, {})
                 for view, value in logits.items():
                     current_logits[view] = current_logits.get(view, 0.0) + float(value)
                     feature_legal_view_counts[(feature, view)] = (
-                        feature_legal_view_counts.get((feature, view), 0) + 1
-                    )
+                    feature_legal_view_counts.get((feature, view), 0) + 1
+                )
 
+        for slot, count in compiler_quality_vector_counts.items():
+            if count <= 0:
+                continue
+            merged.compiler_quality_embedding_weights[slot] = [
+                value / count
+                for value in merged.compiler_quality_embedding_weights[slot]
+            ]
         for feature, count in vector_counts.items():
             if count <= 0:
                 continue
@@ -644,6 +985,34 @@ class ModalAutoencoderTrainingState:
             merged.legal_ir_view_embedding_weights[view] = [
                 value / count for value in merged.legal_ir_view_embedding_weights[view]
             ]
+        for key, count in family_semantic_slot_vector_counts.items():
+            if count <= 0:
+                continue
+            merged.family_semantic_slot_embedding_weights[key] = [
+                value / count
+                for value in merged.family_semantic_slot_embedding_weights[key]
+            ]
+        for key, count in family_semantic_slot_legal_view_vector_counts.items():
+            if count <= 0:
+                continue
+            merged.family_semantic_slot_legal_ir_view_embedding_weights[key] = [
+                value / count
+                for value in merged.family_semantic_slot_legal_ir_view_embedding_weights[key]
+            ]
+        for key, count in family_legal_view_vector_counts.items():
+            if count <= 0:
+                continue
+            merged.family_legal_ir_view_embedding_weights[key] = [
+                value / count
+                for value in merged.family_legal_ir_view_embedding_weights[key]
+            ]
+        for key, count in semantic_slot_legal_view_embedding_counts.items():
+            if count <= 0:
+                continue
+            merged.semantic_slot_legal_ir_view_embedding_weights[key] = [
+                value / count
+                for value in merged.semantic_slot_legal_ir_view_embedding_weights[key]
+            ]
         for slot, count in semantic_slot_vector_counts.items():
             if count <= 0:
                 continue
@@ -655,15 +1024,40 @@ class ModalAutoencoderTrainingState:
                 count = logit_counts.get((feature, family), 0)
                 if count > 0:
                     logits[family] = value / count
+        for slot, logits in merged.compiler_quality_family_logits.items():
+            for family, value in list(logits.items()):
+                count = compiler_quality_logit_counts.get((slot, family), 0)
+                if count > 0:
+                    logits[family] = value / count
         for slot, logits in merged.semantic_slot_family_logits.items():
             for family, value in list(logits.items()):
                 count = semantic_slot_logit_counts.get((slot, family), 0)
                 if count > 0:
                     logits[family] = value / count
+        for slot, logits in merged.semantic_slot_legal_ir_view_logits.items():
+            for view, value in list(logits.items()):
+                count = semantic_slot_legal_view_counts.get((slot, view), 0)
+                if count > 0:
+                    logits[view] = value / count
+        for key, logits in merged.family_semantic_slot_legal_ir_view_logits.items():
+            for view, value in list(logits.items()):
+                count = family_semantic_slot_legal_view_counts.get((key, view), 0)
+                if count > 0:
+                    logits[view] = value / count
         for view, value in list(merged.legal_ir_view_logits.items()):
             count = legal_view_counts.get(view, 0)
             if count > 0:
                 merged.legal_ir_view_logits[view] = value / count
+        for view, logits in merged.legal_ir_view_family_logits.items():
+            for family, value in list(logits.items()):
+                count = legal_view_family_counts.get((view, family), 0)
+                if count > 0:
+                    logits[family] = value / count
+        for key, logits in merged.semantic_slot_legal_ir_view_family_logits.items():
+            for family, value in list(logits.items()):
+                count = semantic_slot_legal_view_family_counts.get((key, family), 0)
+                if count > 0:
+                    logits[family] = value / count
         for feature, logits in merged.feature_legal_ir_view_logits.items():
             for view, value in list(logits.items()):
                 count = feature_legal_view_counts.get((feature, view), 0)
@@ -695,6 +1089,27 @@ class ModalAutoencoderTrainingState:
                 str(family): [float(value) for value in vector]
                 for family, vector in dict(data.get("family_embedding_weights", {})).items()
             },
+            family_semantic_slot_embedding_weights={
+                str(key): [float(value) for value in vector]
+                for key, vector in dict(
+                    data.get("family_semantic_slot_embedding_weights", {})
+                ).items()
+            },
+            family_semantic_slot_legal_ir_view_embedding_weights={
+                str(key): [float(value) for value in vector]
+                for key, vector in dict(
+                    data.get(
+                        "family_semantic_slot_legal_ir_view_embedding_weights",
+                        {},
+                    )
+                ).items()
+            },
+            family_legal_ir_view_embedding_weights={
+                str(key): [float(value) for value in vector]
+                for key, vector in dict(
+                    data.get("family_legal_ir_view_embedding_weights", {})
+                ).items()
+            },
             feature_family_logits={
                 str(feature): {str(name): float(value) for name, value in dict(logits).items()}
                 for feature, logits in dict(data.get("feature_family_logits", {})).items()
@@ -709,6 +1124,12 @@ class ModalAutoencoderTrainingState:
                     data.get("legal_ir_view_embedding_weights", {})
                 ).items()
             },
+            legal_ir_view_family_logits={
+                str(view): {str(name): float(value) for name, value in dict(logits).items()}
+                for view, logits in dict(
+                    data.get("legal_ir_view_family_logits", {})
+                ).items()
+            },
             semantic_slot_embedding_weights={
                 str(slot): [float(value) for value in vector]
                 for slot, vector in dict(
@@ -719,6 +1140,30 @@ class ModalAutoencoderTrainingState:
                 str(slot): {str(name): float(value) for name, value in dict(logits).items()}
                 for slot, logits in dict(
                     data.get("semantic_slot_family_logits", {})
+                ).items()
+            },
+            family_semantic_slot_legal_ir_view_logits={
+                str(key): {str(name): float(value) for name, value in dict(logits).items()}
+                for key, logits in dict(
+                    data.get("family_semantic_slot_legal_ir_view_logits", {})
+                ).items()
+            },
+            semantic_slot_legal_ir_view_embedding_weights={
+                str(key): [float(value) for value in vector]
+                for key, vector in dict(
+                    data.get("semantic_slot_legal_ir_view_embedding_weights", {})
+                ).items()
+            },
+            semantic_slot_legal_ir_view_family_logits={
+                str(key): {str(name): float(value) for name, value in dict(logits).items()}
+                for key, logits in dict(
+                    data.get("semantic_slot_legal_ir_view_family_logits", {})
+                ).items()
+            },
+            semantic_slot_legal_ir_view_logits={
+                str(slot): {str(name): float(value) for name, value in dict(logits).items()}
+                for slot, logits in dict(
+                    data.get("semantic_slot_legal_ir_view_logits", {})
                 ).items()
             },
             feature_legal_ir_view_logits={
@@ -844,13 +1289,21 @@ class AdaptiveModalAutoencoder:
         feature_codec: Optional[Any] = None,
         feature_embedding_weight_scale: float = 0.5,
         family_embedding_weight_scale: float = 0.5,
+        family_semantic_slot_embedding_weight_scale: float = 0.5,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale: float = 0.5,
+        family_legal_ir_view_embedding_weight_scale: float = 0.5,
         semantic_slot_embedding_weight_scale: float = 0.5,
         feature_family_logit_scale: float = 0.0,
         semantic_slot_family_logit_scale: float = 0.0,
+        legal_ir_view_family_logit_scale: float = 0.0,
+        semantic_slot_legal_ir_view_family_logit_scale: float = 0.0,
+        family_semantic_slot_legal_ir_view_logit_scale: float = 0.0,
         semantic_slot_interaction_weight: float = 0.35,
         max_semantic_slot_interactions: int = 24,
         legal_ir_view_logit_scale: float = 1.0,
+        semantic_slot_legal_ir_view_logit_scale: float = 0.0,
         legal_ir_view_embedding_weight_scale: float = 0.5,
+        semantic_slot_legal_ir_view_embedding_weight_scale: float = 0.5,
         cosine_reconstruction_weight: float = 0.25,
         max_token_features: int = 48,
         max_token_bigram_features: int = 24,
@@ -874,6 +1327,18 @@ class AdaptiveModalAutoencoder:
             0.0,
             float(family_embedding_weight_scale),
         )
+        self.family_semantic_slot_embedding_weight_scale = max(
+            0.0,
+            float(family_semantic_slot_embedding_weight_scale),
+        )
+        self.family_semantic_slot_legal_ir_view_embedding_weight_scale = max(
+            0.0,
+            float(family_semantic_slot_legal_ir_view_embedding_weight_scale),
+        )
+        self.family_legal_ir_view_embedding_weight_scale = max(
+            0.0,
+            float(family_legal_ir_view_embedding_weight_scale),
+        )
         self.semantic_slot_embedding_weight_scale = max(
             0.0,
             float(semantic_slot_embedding_weight_scale),
@@ -882,6 +1347,18 @@ class AdaptiveModalAutoencoder:
         self.semantic_slot_family_logit_scale = max(
             0.0,
             float(semantic_slot_family_logit_scale),
+        )
+        self.legal_ir_view_family_logit_scale = max(
+            0.0,
+            float(legal_ir_view_family_logit_scale),
+        )
+        self.semantic_slot_legal_ir_view_family_logit_scale = max(
+            0.0,
+            float(semantic_slot_legal_ir_view_family_logit_scale),
+        )
+        self.family_semantic_slot_legal_ir_view_logit_scale = max(
+            0.0,
+            float(family_semantic_slot_legal_ir_view_logit_scale),
         )
         self.semantic_slot_interaction_weight = max(
             0.0,
@@ -892,9 +1369,17 @@ class AdaptiveModalAutoencoder:
             int(max_semantic_slot_interactions),
         )
         self.legal_ir_view_logit_scale = max(0.0, float(legal_ir_view_logit_scale))
+        self.semantic_slot_legal_ir_view_logit_scale = max(
+            0.0,
+            float(semantic_slot_legal_ir_view_logit_scale),
+        )
         self.legal_ir_view_embedding_weight_scale = max(
             0.0,
             float(legal_ir_view_embedding_weight_scale),
+        )
+        self.semantic_slot_legal_ir_view_embedding_weight_scale = max(
+            0.0,
+            float(semantic_slot_legal_ir_view_embedding_weight_scale),
         )
         self.cosine_reconstruction_weight = max(0.0, float(cosine_reconstruction_weight))
         self.max_token_features = max(0, int(max_token_features))
@@ -1722,6 +2207,34 @@ class AdaptiveModalAutoencoder:
             sample,
             dimensions=len(base),
         )
+        family_semantic_slot_adjustment = (
+            self._family_semantic_slot_embedding_adjustment(
+                sample,
+                dimensions=len(base),
+                use_sample_memory=use_sample_memory,
+            )
+        )
+        semantic_slot_legal_ir_view_adjustment = (
+            self._semantic_slot_legal_ir_view_embedding_adjustment(
+                sample,
+                dimensions=len(base),
+                use_sample_memory=use_sample_memory,
+            )
+        )
+        family_semantic_slot_legal_ir_view_adjustment = (
+            self._family_semantic_slot_legal_ir_view_embedding_adjustment(
+                sample,
+                dimensions=len(base),
+                use_sample_memory=use_sample_memory,
+            )
+        )
+        family_legal_ir_view_adjustment = (
+            self._family_legal_ir_view_embedding_adjustment(
+                sample,
+                dimensions=len(base),
+                use_sample_memory=use_sample_memory,
+            )
+        )
         legal_ir_view_adjustment = self._legal_ir_view_embedding_adjustment(
             sample,
             dimensions=len(base),
@@ -1729,11 +2242,25 @@ class AdaptiveModalAutoencoder:
         )
         adjustment = self._feature_embedding_adjustment(sample, dimensions=len(base))
         return [
-            base_value + family_value + slot_value + view_value + adjustment_value
-            for base_value, family_value, slot_value, view_value, adjustment_value in zip(
+            (
+                base_value
+                + family_value
+                + slot_value
+                + family_slot_value
+                + slot_view_value
+                + family_slot_view_value
+                + joint_value
+                + view_value
+                + adjustment_value
+            )
+            for base_value, family_value, slot_value, family_slot_value, slot_view_value, family_slot_view_value, joint_value, view_value, adjustment_value in zip(
                 base,
                 family_adjustment,
                 semantic_slot_adjustment,
+                family_semantic_slot_adjustment,
+                semantic_slot_legal_ir_view_adjustment,
+                family_semantic_slot_legal_ir_view_adjustment,
+                family_legal_ir_view_adjustment,
                 legal_ir_view_adjustment,
                 adjustment,
             )
@@ -1792,6 +2319,12 @@ class AdaptiveModalAutoencoder:
             + [
                 str(family)
                 for logits in self.state.feature_family_logits.values()
+                for family in logits.keys()
+                if self._is_legal_ir_view_family(str(family))
+            ]
+            + [
+                str(family)
+                for logits in self.state.semantic_slot_legal_ir_view_logits.values()
                 for family in logits.keys()
                 if self._is_legal_ir_view_family(str(family))
             ]
@@ -1858,6 +2391,12 @@ class AdaptiveModalAutoencoder:
                 for view in logits.keys()
                 if self._is_legal_ir_view_family(str(view))
             ]
+            + [
+                str(view)
+                for logits in self.state.semantic_slot_legal_ir_view_logits.values()
+                for view in logits.keys()
+                if self._is_legal_ir_view_family(str(view))
+            ]
         )
         if not families:
             return {}
@@ -1867,6 +2406,150 @@ class AdaptiveModalAutoencoder:
                 families,
                 use_sample_memory=use_sample_memory,
             )
+        )
+
+    def _family_semantic_slot_distribution_for_embedding(
+        self,
+        sample: LegalSample,
+        *,
+        use_sample_memory: bool,
+    ) -> Dict[str, float]:
+        if self.family_semantic_slot_embedding_weight_scale <= 0.0:
+            return {}
+        return _joint_distribution(
+            self._family_distribution(
+                sample,
+                use_sample_memory=use_sample_memory,
+            ),
+            self._semantic_slot_distribution_for(sample),
+            key_fn=_family_semantic_slot_key,
+        )
+
+    def _target_family_semantic_slot_distribution_for_sample(
+        self,
+        sample: LegalSample,
+    ) -> Dict[str, float]:
+        if self.family_semantic_slot_embedding_weight_scale <= 0.0:
+            return {}
+        return _joint_distribution(
+            _observed_family_distribution(sample),
+            self._semantic_slot_distribution_for(sample),
+            key_fn=_family_semantic_slot_key,
+        )
+
+    def _semantic_slot_legal_ir_view_distribution_for_embedding(
+        self,
+        sample: LegalSample,
+        *,
+        use_sample_memory: bool,
+    ) -> Dict[str, float]:
+        if (
+            self.semantic_slot_legal_ir_view_embedding_weight_scale <= 0.0
+            and self.semantic_slot_legal_ir_view_family_logit_scale <= 0.0
+        ):
+            return {}
+        return _joint_distribution(
+            self._semantic_slot_distribution_for(sample),
+            self._legal_ir_view_distribution_for_embedding(
+                sample,
+                use_sample_memory=use_sample_memory,
+            ),
+            key_fn=_semantic_slot_legal_ir_view_key,
+        )
+
+    def _target_semantic_slot_legal_ir_view_distribution_for_sample(
+        self,
+        sample: LegalSample,
+    ) -> Dict[str, float]:
+        if (
+            self.semantic_slot_legal_ir_view_embedding_weight_scale <= 0.0
+            and self.semantic_slot_legal_ir_view_family_logit_scale <= 0.0
+        ):
+            return {}
+        return _joint_distribution(
+            self._semantic_slot_distribution_for(sample),
+            self._legal_ir_view_target_distribution_for_sample(sample),
+            key_fn=_semantic_slot_legal_ir_view_key,
+        )
+
+    def _family_semantic_slot_distribution_for_legal_ir_view(
+        self,
+        sample: LegalSample,
+    ) -> Dict[str, float]:
+        if self.family_semantic_slot_legal_ir_view_logit_scale <= 0.0:
+            return {}
+        return _joint_distribution(
+            _observed_family_distribution(sample),
+            self._semantic_slot_distribution_for(sample),
+            key_fn=_family_semantic_slot_key,
+        )
+
+    def _family_semantic_slot_legal_ir_view_distribution_for_embedding(
+        self,
+        sample: LegalSample,
+        *,
+        use_sample_memory: bool,
+    ) -> Dict[str, float]:
+        if self.family_semantic_slot_legal_ir_view_embedding_weight_scale <= 0.0:
+            return {}
+        return _triple_distribution(
+            self._family_distribution(
+                sample,
+                use_sample_memory=use_sample_memory,
+            ),
+            self._semantic_slot_distribution_for(sample),
+            self._legal_ir_view_distribution_for_embedding(
+                sample,
+                use_sample_memory=use_sample_memory,
+            ),
+            key_fn=_family_semantic_slot_legal_ir_view_key,
+        )
+
+    def _target_family_semantic_slot_legal_ir_view_distribution_for_sample(
+        self,
+        sample: LegalSample,
+    ) -> Dict[str, float]:
+        if self.family_semantic_slot_legal_ir_view_embedding_weight_scale <= 0.0:
+            return {}
+        return _triple_distribution(
+            _observed_family_distribution(sample),
+            self._semantic_slot_distribution_for(sample),
+            self._legal_ir_view_target_distribution_for_sample(sample),
+            key_fn=_family_semantic_slot_legal_ir_view_key,
+        )
+
+    def _family_legal_ir_view_distribution_for_embedding(
+        self,
+        sample: LegalSample,
+        *,
+        use_sample_memory: bool,
+    ) -> Dict[str, float]:
+        if self.family_legal_ir_view_embedding_weight_scale <= 0.0:
+            return {}
+        family_distribution = self._family_distribution(
+            sample,
+            use_sample_memory=use_sample_memory,
+        )
+        view_distribution = self._legal_ir_view_distribution_for_embedding(
+            sample,
+            use_sample_memory=use_sample_memory,
+        )
+        return _joint_distribution(
+            family_distribution,
+            view_distribution,
+            key_fn=_family_legal_ir_view_key,
+        )
+
+    def _target_family_legal_ir_view_distribution_for_sample(
+        self,
+        sample: LegalSample,
+    ) -> Dict[str, float]:
+        if self.family_legal_ir_view_embedding_weight_scale <= 0.0:
+            return {}
+        return _joint_distribution(
+            _observed_family_distribution(sample),
+            self._legal_ir_view_target_distribution_for_sample(sample),
+            key_fn=_family_legal_ir_view_key,
         )
 
     def _is_legal_ir_view_family(self, family: str) -> bool:
@@ -1908,12 +2591,85 @@ class AdaptiveModalAutoencoder:
                         * self.legal_ir_view_logit_scale
                         * feature_scale
                     )
+        for slot, slot_weight in self._semantic_slot_distribution_for(sample).items():
+            for family, value in self.state.semantic_slot_legal_ir_view_logits.get(slot, {}).items():
+                family = str(family)
+                if family in logits and self._is_legal_ir_view_family(family):
+                    logits[family] += (
+                        float(value)
+                        * float(slot_weight)
+                        * self.semantic_slot_legal_ir_view_logit_scale
+                    )
+        if self.family_semantic_slot_legal_ir_view_logit_scale > 0.0:
+            for key, pair_weight in (
+                self._family_semantic_slot_distribution_for_legal_ir_view(sample).items()
+            ):
+                normalized_weight = max(0.0, float(pair_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                for family, value in (
+                    self.state.family_semantic_slot_legal_ir_view_logits.get(
+                        key,
+                        {},
+                    ).items()
+                ):
+                    family = str(family)
+                    if family in logits and self._is_legal_ir_view_family(family):
+                        logits[family] += (
+                            float(value)
+                            * normalized_weight
+                            * self.family_semantic_slot_legal_ir_view_logit_scale
+                        )
         if use_sample_memory:
             for family, value in self.state.family_logits.get(sample.sample_id, {}).items():
                 family = str(family)
                 if family in logits and self._is_legal_ir_view_family(family):
                     logits[family] += float(value)
         return self._clip_logits(logits)
+
+    def _apply_legal_ir_view_family_logits(
+        self,
+        sample: LegalSample,
+        logits: Dict[str, float],
+        *,
+        use_sample_memory: bool,
+    ) -> None:
+        if self.legal_ir_view_family_logit_scale <= 0.0:
+            view_distribution: Dict[str, float] = {}
+        else:
+            view_distribution = self._legal_ir_view_distribution_for_embedding(
+                sample,
+                use_sample_memory=use_sample_memory,
+            )
+            for view, view_weight in view_distribution.items():
+                normalized_weight = max(0.0, float(view_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                for family, value in self.state.legal_ir_view_family_logits.get(view, {}).items():
+                    family = str(family)
+                    if family in logits:
+                        logits[family] += (
+                            float(value)
+                            * normalized_weight
+                            * self.legal_ir_view_family_logit_scale
+                        )
+        if self.semantic_slot_legal_ir_view_family_logit_scale <= 0.0:
+            return
+        for key, pair_weight in self._semantic_slot_legal_ir_view_distribution_for_embedding(
+            sample,
+            use_sample_memory=use_sample_memory,
+        ).items():
+            normalized_weight = max(0.0, float(pair_weight))
+            if normalized_weight <= 0.0:
+                continue
+            for family, value in self.state.semantic_slot_legal_ir_view_family_logits.get(key, {}).items():
+                family = str(family)
+                if family in logits:
+                    logits[family] += (
+                        float(value)
+                        * normalized_weight
+                        * self.semantic_slot_legal_ir_view_family_logit_scale
+                    )
 
     def _logits_for(
         self,
@@ -1940,6 +2696,11 @@ class AdaptiveModalAutoencoder:
                         * float(slot_weight)
                         * self.semantic_slot_family_logit_scale
                     )
+        self._apply_legal_ir_view_family_logits(
+            sample,
+            logits,
+            use_sample_memory=use_sample_memory,
+        )
         if use_sample_memory:
             for family, value in self.state.family_logits.get(sample.sample_id, {}).items():
                 if family in logits:
@@ -1978,6 +2739,11 @@ class AdaptiveModalAutoencoder:
                         * float(slot_weight)
                         * self.semantic_slot_family_logit_scale
                     )
+        self._apply_legal_ir_view_family_logits(
+            sample,
+            logits,
+            use_sample_memory=use_sample_memory,
+        )
         if use_sample_memory:
             for family, value in self.state.family_logits.get(sample.sample_id, {}).items():
                 family = str(family)
@@ -2414,6 +3180,64 @@ class AdaptiveModalAutoencoder:
                 error,
                 scale=step * normalized_weight,
             )
+        for key, target_weight in (
+            self._target_family_semantic_slot_distribution_for_sample(sample).items()
+        ):
+            normalized_weight = max(0.0, float(target_weight))
+            if normalized_weight <= 0.0:
+                continue
+            weights = self.state.family_semantic_slot_embedding_weights.setdefault(
+                key,
+                [0.0 for _ in sample.embedding_vector],
+            )
+            if len(weights) != len(sample.embedding_vector):
+                weights[:] = [0.0 for _ in sample.embedding_vector]
+            weights[:] = self._add_scaled_vector(
+                weights,
+                error,
+                scale=step * normalized_weight,
+            )
+        if self.semantic_slot_legal_ir_view_embedding_weight_scale > 0.0:
+            for key, target_weight in (
+                self._target_semantic_slot_legal_ir_view_distribution_for_sample(sample).items()
+            ):
+                normalized_weight = max(0.0, float(target_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                weights = (
+                    self.state.semantic_slot_legal_ir_view_embedding_weights.setdefault(
+                        key,
+                        [0.0 for _ in sample.embedding_vector],
+                    )
+                )
+                if len(weights) != len(sample.embedding_vector):
+                    weights[:] = [0.0 for _ in sample.embedding_vector]
+                weights[:] = self._add_scaled_vector(
+                    weights,
+                    error,
+                    scale=step * normalized_weight,
+                )
+        for key, target_weight in (
+            self._target_family_semantic_slot_legal_ir_view_distribution_for_sample(
+                sample
+            ).items()
+        ):
+            normalized_weight = max(0.0, float(target_weight))
+            if normalized_weight <= 0.0:
+                continue
+            weights = (
+                self.state.family_semantic_slot_legal_ir_view_embedding_weights.setdefault(
+                    key,
+                    [0.0 for _ in sample.embedding_vector],
+                )
+            )
+            if len(weights) != len(sample.embedding_vector):
+                weights[:] = [0.0 for _ in sample.embedding_vector]
+            weights[:] = self._add_scaled_vector(
+                weights,
+                error,
+                scale=step * normalized_weight,
+            )
         legal_ir_view_distribution = _normalized_distribution(
             self._legal_ir_view_target_distribution_for_sample(sample)
         )
@@ -2423,6 +3247,23 @@ class AdaptiveModalAutoencoder:
                 continue
             weights = self.state.legal_ir_view_embedding_weights.setdefault(
                 view,
+                [0.0 for _ in sample.embedding_vector],
+            )
+            if len(weights) != len(sample.embedding_vector):
+                weights[:] = [0.0 for _ in sample.embedding_vector]
+            weights[:] = self._add_scaled_vector(
+                weights,
+                error,
+                scale=step * normalized_weight,
+            )
+        for key, target_weight in (
+            self._target_family_legal_ir_view_distribution_for_sample(sample).items()
+        ):
+            normalized_weight = max(0.0, float(target_weight))
+            if normalized_weight <= 0.0:
+                continue
+            weights = self.state.family_legal_ir_view_embedding_weights.setdefault(
+                key,
                 [0.0 for _ in sample.embedding_vector],
             )
             if len(weights) != len(sample.embedding_vector):
@@ -2501,6 +3342,41 @@ class AdaptiveModalAutoencoder:
                 slot_logits[family] = slot_logits.get(family, 0.0) + (
                     2.0 * step * normalized_weight * gradient
                 )
+        legal_ir_view_distribution = _normalized_distribution(
+            self._legal_ir_view_target_distribution_for_sample(sample)
+        )
+        for view, view_weight in legal_ir_view_distribution.items():
+            normalized_weight = max(0.0, float(view_weight))
+            if normalized_weight <= 0.0:
+                continue
+            view_logits = self.state.legal_ir_view_family_logits.setdefault(view, {})
+            for family in families:
+                gradient = float(target_distribution.get(family, 0.0)) - float(
+                    predicted.get(family, 0.0)
+                )
+                view_logits[family] = view_logits.get(family, 0.0) + (
+                    2.0 * step * normalized_weight * gradient
+                )
+        if self.semantic_slot_legal_ir_view_family_logit_scale > 0.0:
+            for key, pair_weight in (
+                self._target_semantic_slot_legal_ir_view_distribution_for_sample(sample).items()
+            ):
+                normalized_weight = max(0.0, float(pair_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                pair_logits = (
+                    self.state.semantic_slot_legal_ir_view_family_logits.setdefault(
+                        key,
+                        {},
+                    )
+                )
+                for family in families:
+                    gradient = float(target_distribution.get(family, 0.0)) - float(
+                        predicted.get(family, 0.0)
+                    )
+                    pair_logits[family] = pair_logits.get(family, 0.0) + (
+                        2.0 * step * normalized_weight * gradient
+                    )
 
     def _nudge_legal_ir_view_logits(
         self,
@@ -2550,6 +3426,41 @@ class AdaptiveModalAutoencoder:
                     feature_logits[family] = feature_logits.get(family, 0.0) + (
                         2.0 * feature_step * gradient
                     )
+        for slot, slot_weight in self._semantic_slot_distribution_for(sample).items():
+            normalized_weight = max(0.0, float(slot_weight))
+            if normalized_weight <= 0.0:
+                continue
+            slot_logits = self.state.semantic_slot_legal_ir_view_logits.setdefault(
+                slot,
+                {},
+            )
+            for family in families:
+                gradient = float(target_distribution.get(family, 0.0)) - float(
+                    predicted.get(family, 0.0)
+                )
+                slot_logits[family] = slot_logits.get(family, 0.0) + (
+                    2.0 * step * normalized_weight * gradient
+                )
+        if self.family_semantic_slot_legal_ir_view_logit_scale > 0.0:
+            for key, pair_weight in (
+                self._family_semantic_slot_distribution_for_legal_ir_view(sample).items()
+            ):
+                normalized_weight = max(0.0, float(pair_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                pair_logits = (
+                    self.state.family_semantic_slot_legal_ir_view_logits.setdefault(
+                        key,
+                        {},
+                    )
+                )
+                for family in families:
+                    gradient = float(target_distribution.get(family, 0.0)) - float(
+                        predicted.get(family, 0.0)
+                    )
+                    pair_logits[family] = pair_logits.get(family, 0.0) + (
+                        2.0 * step * normalized_weight * gradient
+                    )
         return True
 
     def _regularize_feature_state(self, l2_regularization: float) -> None:
@@ -2568,6 +3479,30 @@ class AdaptiveModalAutoencoder:
             self.state.legal_ir_view_embedding_weights[view] = [
                 float(value) * factor for value in vector
             ]
+        for key, vector in list(
+            self.state.family_semantic_slot_embedding_weights.items()
+        ):
+            self.state.family_semantic_slot_embedding_weights[key] = [
+                float(value) * factor for value in vector
+            ]
+        for key, vector in list(
+            self.state.family_semantic_slot_legal_ir_view_embedding_weights.items()
+        ):
+            self.state.family_semantic_slot_legal_ir_view_embedding_weights[key] = [
+                float(value) * factor for value in vector
+            ]
+        for key, vector in list(
+            self.state.family_legal_ir_view_embedding_weights.items()
+        ):
+            self.state.family_legal_ir_view_embedding_weights[key] = [
+                float(value) * factor for value in vector
+            ]
+        for key, vector in list(
+            self.state.semantic_slot_legal_ir_view_embedding_weights.items()
+        ):
+            self.state.semantic_slot_legal_ir_view_embedding_weights[key] = [
+                float(value) * factor for value in vector
+            ]
         for slot, vector in list(self.state.semantic_slot_embedding_weights.items()):
             self.state.semantic_slot_embedding_weights[slot] = [
                 float(value) * factor for value in vector
@@ -2581,6 +3516,30 @@ class AdaptiveModalAutoencoder:
             self.state.semantic_slot_family_logits[slot] = {
                 family: float(value) * factor
                 for family, value in logits.items()
+            }
+        for slot, logits in list(self.state.semantic_slot_legal_ir_view_logits.items()):
+            self.state.semantic_slot_legal_ir_view_logits[slot] = {
+                view: float(value) * factor
+                for view, value in logits.items()
+            }
+        for view, logits in list(self.state.legal_ir_view_family_logits.items()):
+            self.state.legal_ir_view_family_logits[view] = {
+                family: float(value) * factor
+                for family, value in logits.items()
+            }
+        for key, logits in list(
+            self.state.semantic_slot_legal_ir_view_family_logits.items()
+        ):
+            self.state.semantic_slot_legal_ir_view_family_logits[key] = {
+                family: float(value) * factor
+                for family, value in logits.items()
+            }
+        for key, logits in list(
+            self.state.family_semantic_slot_legal_ir_view_logits.items()
+        ):
+            self.state.family_semantic_slot_legal_ir_view_logits[key] = {
+                view: float(value) * factor
+                for view, value in logits.items()
             }
         self.state.legal_ir_view_logits = {
             view: float(value) * factor
@@ -2676,6 +3635,194 @@ class AdaptiveModalAutoencoder:
                     weight
                     * float(value)
                     * self.semantic_slot_embedding_weight_scale
+                )
+        return adjustment
+
+    def _family_semantic_slot_embedding_adjustment(
+        self,
+        sample: LegalSample,
+        *,
+        dimensions: int,
+        use_sample_memory: bool,
+    ) -> List[float]:
+        if self.family_semantic_slot_embedding_weight_scale <= 0.0:
+            return [0.0 for _ in range(dimensions)]
+        weighted_vectors = [
+            (float(weight), weights)
+            for key, weight in self._family_semantic_slot_distribution_for_embedding(
+                sample,
+                use_sample_memory=use_sample_memory,
+            ).items()
+            for weights in [self.state.family_semantic_slot_embedding_weights.get(key)]
+            if float(weight) > 0.0 and weights is not None and len(weights) == dimensions
+        ]
+        if not weighted_vectors:
+            return [0.0 for _ in range(dimensions)]
+        if self._torch is not None and self.compute_device is not None:
+            with self._torch.no_grad():
+                weights_tensor = self._torch.tensor(
+                    [weight for weight, _ in weighted_vectors],
+                    dtype=self._torch.float64,
+                    device=self.compute_device,
+                ).reshape(-1, 1)
+                vector_tensor = self._torch.tensor(
+                    [vector for _, vector in weighted_vectors],
+                    dtype=self._torch.float64,
+                    device=self.compute_device,
+                )
+                adjustment = (weights_tensor * vector_tensor).sum(dim=0) * float(
+                    self.family_semantic_slot_embedding_weight_scale
+                )
+                return [float(value) for value in adjustment.detach().cpu().tolist()]
+        adjustment = [0.0 for _ in range(dimensions)]
+        for weight, vector in weighted_vectors:
+            for index, value in enumerate(vector):
+                adjustment[index] += (
+                    weight
+                    * float(value)
+                    * self.family_semantic_slot_embedding_weight_scale
+                )
+        return adjustment
+
+    def _semantic_slot_legal_ir_view_embedding_adjustment(
+        self,
+        sample: LegalSample,
+        *,
+        dimensions: int,
+        use_sample_memory: bool,
+    ) -> List[float]:
+        if self.semantic_slot_legal_ir_view_embedding_weight_scale <= 0.0:
+            return [0.0 for _ in range(dimensions)]
+        weighted_vectors = [
+            (float(weight), weights)
+            for key, weight in self._semantic_slot_legal_ir_view_distribution_for_embedding(
+                sample,
+                use_sample_memory=use_sample_memory,
+            ).items()
+            for weights in [self.state.semantic_slot_legal_ir_view_embedding_weights.get(key)]
+            if float(weight) > 0.0 and weights is not None and len(weights) == dimensions
+        ]
+        if not weighted_vectors:
+            return [0.0 for _ in range(dimensions)]
+        if self._torch is not None and self.compute_device is not None:
+            with self._torch.no_grad():
+                weights_tensor = self._torch.tensor(
+                    [weight for weight, _ in weighted_vectors],
+                    dtype=self._torch.float64,
+                    device=self.compute_device,
+                ).reshape(-1, 1)
+                vector_tensor = self._torch.tensor(
+                    [vector for _, vector in weighted_vectors],
+                    dtype=self._torch.float64,
+                    device=self.compute_device,
+                )
+                adjustment = (weights_tensor * vector_tensor).sum(dim=0) * float(
+                    self.semantic_slot_legal_ir_view_embedding_weight_scale
+                )
+                return [float(value) for value in adjustment.detach().cpu().tolist()]
+        adjustment = [0.0 for _ in range(dimensions)]
+        for weight, vector in weighted_vectors:
+            for index, value in enumerate(vector):
+                adjustment[index] += (
+                    weight
+                    * float(value)
+                    * self.semantic_slot_legal_ir_view_embedding_weight_scale
+                )
+        return adjustment
+
+    def _family_semantic_slot_legal_ir_view_embedding_adjustment(
+        self,
+        sample: LegalSample,
+        *,
+        dimensions: int,
+        use_sample_memory: bool,
+    ) -> List[float]:
+        if self.family_semantic_slot_legal_ir_view_embedding_weight_scale <= 0.0:
+            return [0.0 for _ in range(dimensions)]
+        weighted_vectors = [
+            (float(weight), weights)
+            for key, weight in self._family_semantic_slot_legal_ir_view_distribution_for_embedding(
+                sample,
+                use_sample_memory=use_sample_memory,
+            ).items()
+            for weights in [
+                self.state.family_semantic_slot_legal_ir_view_embedding_weights.get(
+                    key
+                )
+            ]
+            if float(weight) > 0.0 and weights is not None and len(weights) == dimensions
+        ]
+        if not weighted_vectors:
+            return [0.0 for _ in range(dimensions)]
+        if self._torch is not None and self.compute_device is not None:
+            with self._torch.no_grad():
+                weights_tensor = self._torch.tensor(
+                    [weight for weight, _ in weighted_vectors],
+                    dtype=self._torch.float64,
+                    device=self.compute_device,
+                ).reshape(-1, 1)
+                vector_tensor = self._torch.tensor(
+                    [vector for _, vector in weighted_vectors],
+                    dtype=self._torch.float64,
+                    device=self.compute_device,
+                )
+                adjustment = (weights_tensor * vector_tensor).sum(dim=0) * float(
+                    self.family_semantic_slot_legal_ir_view_embedding_weight_scale
+                )
+                return [float(value) for value in adjustment.detach().cpu().tolist()]
+        adjustment = [0.0 for _ in range(dimensions)]
+        for weight, vector in weighted_vectors:
+            for index, value in enumerate(vector):
+                adjustment[index] += (
+                    weight
+                    * float(value)
+                    * self.family_semantic_slot_legal_ir_view_embedding_weight_scale
+                )
+        return adjustment
+
+    def _family_legal_ir_view_embedding_adjustment(
+        self,
+        sample: LegalSample,
+        *,
+        dimensions: int,
+        use_sample_memory: bool,
+    ) -> List[float]:
+        if self.family_legal_ir_view_embedding_weight_scale <= 0.0:
+            return [0.0 for _ in range(dimensions)]
+        weighted_vectors = [
+            (float(weight), weights)
+            for key, weight in self._family_legal_ir_view_distribution_for_embedding(
+                sample,
+                use_sample_memory=use_sample_memory,
+            ).items()
+            for weights in [self.state.family_legal_ir_view_embedding_weights.get(key)]
+            if float(weight) > 0.0 and weights is not None and len(weights) == dimensions
+        ]
+        if not weighted_vectors:
+            return [0.0 for _ in range(dimensions)]
+        if self._torch is not None and self.compute_device is not None:
+            with self._torch.no_grad():
+                weights_tensor = self._torch.tensor(
+                    [weight for weight, _ in weighted_vectors],
+                    dtype=self._torch.float64,
+                    device=self.compute_device,
+                ).reshape(-1, 1)
+                vector_tensor = self._torch.tensor(
+                    [vector for _, vector in weighted_vectors],
+                    dtype=self._torch.float64,
+                    device=self.compute_device,
+                )
+                adjustment = (weights_tensor * vector_tensor).sum(dim=0) * float(
+                    self.family_legal_ir_view_embedding_weight_scale
+                )
+                return [float(value) for value in adjustment.detach().cpu().tolist()]
+        adjustment = [0.0 for _ in range(dimensions)]
+        for weight, vector in weighted_vectors:
+            for index, value in enumerate(vector):
+                adjustment[index] += (
+                    weight
+                    * float(value)
+                    * self.family_legal_ir_view_embedding_weight_scale
                 )
         return adjustment
 
@@ -3367,6 +4514,108 @@ class AdaptiveModalAutoencoder:
                         },
                     )
                 )
+        for view, view_weight in self._legal_ir_view_distribution_for_embedding(
+            sample,
+            use_sample_memory=use_sample_memory,
+        ).items():
+            logits = self.state.legal_ir_view_family_logits.get(view, {})
+            for family, value in logits.items():
+                if family not in self.modal_families:
+                    continue
+                family_value = (
+                    float(value)
+                    * float(view_weight)
+                    * self.legal_ir_view_family_logit_scale
+                )
+                contributions.append(
+                    AutoencoderFeatureContribution(
+                        feature=f"legal-ir-view:{view}",
+                        contribution_type="legal_ir_view_family_logit",
+                        family=family,
+                        value=round(family_value, 12),
+                        magnitude=round(abs(family_value), 12),
+                        metadata={
+                            "raw_value": round(float(value), 12),
+                            "legal_ir_view_family_logit_scale": (
+                                self.legal_ir_view_family_logit_scale
+                            ),
+                            "legal_ir_view_probability": round(float(view_weight), 12),
+                            "supports_target": target_distribution.get(family, 0.0) > 0.0,
+                            "target_probability": round(
+                                float(target_distribution.get(family, 0.0)),
+                                12,
+                            ),
+                        },
+                    )
+                )
+        for key, pair_weight in self._family_semantic_slot_distribution_for_legal_ir_view(
+            sample
+        ).items():
+            logits = self.state.family_semantic_slot_legal_ir_view_logits.get(key, {})
+            for view, value in logits.items():
+                if not self._is_legal_ir_view_family(str(view)):
+                    continue
+                view_value = (
+                    float(value)
+                    * float(pair_weight)
+                    * self.family_semantic_slot_legal_ir_view_logit_scale
+                )
+                contributions.append(
+                    AutoencoderFeatureContribution(
+                        feature=f"family-semantic-slot:{key}",
+                        contribution_type="family_semantic_slot_legal_ir_view_logit",
+                        family=str(view),
+                        value=round(view_value, 12),
+                        magnitude=round(abs(view_value), 12),
+                        metadata={
+                            "raw_value": round(float(value), 12),
+                            "family_semantic_slot_legal_ir_view_logit_scale": (
+                                self.family_semantic_slot_legal_ir_view_logit_scale
+                            ),
+                            "family_semantic_slot_probability": round(
+                                float(pair_weight),
+                                12,
+                            ),
+                        },
+                    )
+                )
+        for key, pair_weight in self._semantic_slot_legal_ir_view_distribution_for_embedding(
+            sample,
+            use_sample_memory=use_sample_memory,
+        ).items():
+            logits = self.state.semantic_slot_legal_ir_view_family_logits.get(key, {})
+            for family, value in logits.items():
+                if family not in self.modal_families:
+                    continue
+                family_value = (
+                    float(value)
+                    * float(pair_weight)
+                    * self.semantic_slot_legal_ir_view_family_logit_scale
+                )
+                contributions.append(
+                    AutoencoderFeatureContribution(
+                        feature=f"semantic-slot-legal-ir-view:{key}",
+                        contribution_type="semantic_slot_legal_ir_view_family_logit",
+                        family=family,
+                        value=round(family_value, 12),
+                        magnitude=round(abs(family_value), 12),
+                        metadata={
+                            "raw_value": round(float(value), 12),
+                            "semantic_slot_legal_ir_view_family_logit_scale": (
+                                self.semantic_slot_legal_ir_view_family_logit_scale
+                            ),
+                            "semantic_slot_legal_ir_view_probability": round(
+                                float(pair_weight),
+                                12,
+                            ),
+                            "supports_target": target_distribution.get(family, 0.0) > 0.0,
+                            "target_probability": round(
+                                float(target_distribution.get(family, 0.0)),
+                                12,
+                            ),
+                        },
+                    )
+                )
         if use_sample_memory:
             for family, value in self.state.family_logits.get(sample.sample_id, {}).items():
                 family_value = float(value)
@@ -3439,6 +4688,43 @@ class AdaptiveModalAutoencoder:
                     },
                 )
             )
+        for key, probability in self._family_semantic_slot_distribution_for_embedding(
+            sample,
+            use_sample_memory=use_sample_memory,
+        ).items():
+            weights = self.state.family_semantic_slot_embedding_weights.get(key)
+            if weights is None or len(weights) != dimensions:
+                continue
+            scaled_weights = [
+                float(value)
+                * float(probability)
+                * self.family_semantic_slot_embedding_weight_scale
+                for value in weights
+            ]
+            alignment = sum(
+                float(left) * float(right)
+                for left, right in zip(residual, scaled_weights)
+            )
+            weight_norm = _vector_norm(scaled_weights)
+            normalized_alignment = alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            contributions.append(
+                AutoencoderFeatureContribution(
+                    feature=f"family-semantic-slot-prototype:{key}",
+                    contribution_type="family_semantic_slot_embedding_weight",
+                    value=round(alignment, 12),
+                    magnitude=round(weight_norm, 12),
+                    metadata={
+                        "alignment_with_residual": round(normalized_alignment, 12),
+                        "family_semantic_slot_embedding_probability": round(
+                            float(probability),
+                            12,
+                        ),
+                        "family_semantic_slot_embedding_weight_scale": (
+                            self.family_semantic_slot_embedding_weight_scale
+                        ),
+                    },
+                )
+            )
         for view, probability in self._legal_ir_view_distribution_for_embedding(
             sample,
             use_sample_memory=use_sample_memory,
@@ -3470,6 +4756,121 @@ class AdaptiveModalAutoencoder:
                         "legal_ir_view_embedding_probability": round(float(probability), 12),
                         "legal_ir_view_embedding_weight_scale": (
                             self.legal_ir_view_embedding_weight_scale
+                        ),
+                    },
+                )
+            )
+        for key, probability in self._semantic_slot_legal_ir_view_distribution_for_embedding(
+            sample,
+            use_sample_memory=use_sample_memory,
+        ).items():
+            weights = self.state.semantic_slot_legal_ir_view_embedding_weights.get(key)
+            if weights is None or len(weights) != dimensions:
+                continue
+            scaled_weights = [
+                float(value)
+                * float(probability)
+                * self.semantic_slot_legal_ir_view_embedding_weight_scale
+                for value in weights
+            ]
+            alignment = sum(
+                float(left) * float(right)
+                for left, right in zip(residual, scaled_weights)
+            )
+            weight_norm = _vector_norm(scaled_weights)
+            normalized_alignment = alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            contributions.append(
+                AutoencoderFeatureContribution(
+                    feature=f"semantic-slot-legal-ir-view-prototype:{key}",
+                    contribution_type="semantic_slot_legal_ir_view_embedding_weight",
+                    value=round(alignment, 12),
+                    magnitude=round(weight_norm, 12),
+                    metadata={
+                        "alignment_with_residual": round(normalized_alignment, 12),
+                        "semantic_slot_legal_ir_view_embedding_probability": round(
+                            float(probability),
+                            12,
+                        ),
+                        "semantic_slot_legal_ir_view_embedding_weight_scale": (
+                            self.semantic_slot_legal_ir_view_embedding_weight_scale
+                        ),
+                    },
+                )
+            )
+        for key, probability in (
+            self._family_semantic_slot_legal_ir_view_distribution_for_embedding(
+                sample,
+                use_sample_memory=use_sample_memory,
+            ).items()
+        ):
+            weights = self.state.family_semantic_slot_legal_ir_view_embedding_weights.get(
+                key
+            )
+            if weights is None or len(weights) != dimensions:
+                continue
+            scaled_weights = [
+                float(value)
+                * float(probability)
+                * self.family_semantic_slot_legal_ir_view_embedding_weight_scale
+                for value in weights
+            ]
+            alignment = sum(
+                float(left) * float(right)
+                for left, right in zip(residual, scaled_weights)
+            )
+            weight_norm = _vector_norm(scaled_weights)
+            normalized_alignment = alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            contributions.append(
+                AutoencoderFeatureContribution(
+                    feature=f"family-semantic-slot-legal-ir-view-prototype:{key}",
+                    contribution_type="family_semantic_slot_legal_ir_view_embedding_weight",
+                    value=round(alignment, 12),
+                    magnitude=round(weight_norm, 12),
+                    metadata={
+                        "alignment_with_residual": round(normalized_alignment, 12),
+                        "family_semantic_slot_legal_ir_view_embedding_probability": round(
+                            float(probability),
+                            12,
+                        ),
+                        "family_semantic_slot_legal_ir_view_embedding_weight_scale": (
+                            self.family_semantic_slot_legal_ir_view_embedding_weight_scale
+                        ),
+                    },
+                )
+            )
+        for key, probability in self._family_legal_ir_view_distribution_for_embedding(
+            sample,
+            use_sample_memory=use_sample_memory,
+        ).items():
+            weights = self.state.family_legal_ir_view_embedding_weights.get(key)
+            if weights is None or len(weights) != dimensions:
+                continue
+            scaled_weights = [
+                float(value)
+                * float(probability)
+                * self.family_legal_ir_view_embedding_weight_scale
+                for value in weights
+            ]
+            alignment = sum(
+                float(left) * float(right)
+                for left, right in zip(residual, scaled_weights)
+            )
+            weight_norm = _vector_norm(scaled_weights)
+            normalized_alignment = alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            contributions.append(
+                AutoencoderFeatureContribution(
+                    feature=f"family-legal-ir-view-prototype:{key}",
+                    contribution_type="family_legal_ir_view_embedding_weight",
+                    value=round(alignment, 12),
+                    magnitude=round(weight_norm, 12),
+                    metadata={
+                        "alignment_with_residual": round(normalized_alignment, 12),
+                        "family_legal_ir_view_embedding_probability": round(
+                            float(probability),
+                            12,
+                        ),
+                        "family_legal_ir_view_embedding_weight_scale": (
+                            self.family_legal_ir_view_embedding_weight_scale
                         ),
                     },
                 )
@@ -3696,6 +5097,69 @@ def _normalized_distribution(distribution: Mapping[str, float]) -> Dict[str, flo
         for name, value in sorted(positive.items())
         if value > 0.0
     }
+
+
+def _joint_distribution(
+    left: Mapping[str, float],
+    right: Mapping[str, float],
+    *,
+    key_fn: Any,
+) -> Dict[str, float]:
+    left_distribution = _normalized_distribution(left)
+    right_distribution = _normalized_distribution(right)
+    if not left_distribution or not right_distribution:
+        return {}
+    return _normalized_distribution(
+        {
+            key_fn(left_key, right_key): left_value * right_value
+            for left_key, left_value in left_distribution.items()
+            for right_key, right_value in right_distribution.items()
+        }
+    )
+
+
+def _triple_distribution(
+    first: Mapping[str, float],
+    second: Mapping[str, float],
+    third: Mapping[str, float],
+    *,
+    key_fn: Any,
+) -> Dict[str, float]:
+    first_distribution = _normalized_distribution(first)
+    second_distribution = _normalized_distribution(second)
+    third_distribution = _normalized_distribution(third)
+    if not first_distribution or not second_distribution or not third_distribution:
+        return {}
+    return _normalized_distribution(
+        {
+            key_fn(first_key, second_key, third_key): first_value
+            * second_value
+            * third_value
+            for first_key, first_value in first_distribution.items()
+            for second_key, second_value in second_distribution.items()
+            for third_key, third_value in third_distribution.items()
+        }
+    )
+
+
+def _family_semantic_slot_key(family: str, slot: str) -> str:
+    return f"{str(family)}||{str(slot)}"
+
+
+def _semantic_slot_legal_ir_view_key(slot: str, view: str) -> str:
+    return f"{str(slot)}||{str(view)}"
+
+
+def _family_semantic_slot_legal_ir_view_key(
+    family: str,
+    slot: str,
+    view: str,
+) -> str:
+    return f"{str(family)}||{str(slot)}||{str(view)}"
+
+
+def _family_legal_ir_view_key(family: str, view: str) -> str:
+    return f"{str(family)}||{str(view)}"
 
 
 def _legal_ir_target_payload(

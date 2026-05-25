@@ -1829,18 +1829,34 @@ def build_paired_daemon_commands(
         str(getattr(args, "autoencoder_feature_embedding_weight_scale", 0.5)),
         "--autoencoder-family-embedding-weight-scale",
         str(getattr(args, "autoencoder_family_embedding_weight_scale", 0.5)),
+        "--autoencoder-family-semantic-slot-embedding-weight-scale",
+        str(getattr(args, "autoencoder_family_semantic_slot_embedding_weight_scale", 0.5)),
+        "--autoencoder-family-semantic-slot-legal-ir-view-embedding-weight-scale",
+        str(getattr(args, "autoencoder_family_semantic_slot_legal_ir_view_embedding_weight_scale", 0.5)),
+        "--autoencoder-family-legal-ir-view-embedding-weight-scale",
+        str(getattr(args, "autoencoder_family_legal_ir_view_embedding_weight_scale", 0.5)),
         "--autoencoder-semantic-slot-family-logit-scale",
         str(getattr(args, "autoencoder_semantic_slot_family_logit_scale", 1.0)),
+        "--autoencoder-legal-ir-view-family-logit-scale",
+        str(getattr(args, "autoencoder_legal_ir_view_family_logit_scale", 1.0)),
+        "--autoencoder-family-semantic-slot-legal-ir-view-logit-scale",
+        str(getattr(args, "autoencoder_family_semantic_slot_legal_ir_view_logit_scale", 1.0)),
+        "--autoencoder-semantic-slot-legal-ir-view-family-logit-scale",
+        str(getattr(args, "autoencoder_semantic_slot_legal_ir_view_family_logit_scale", 1.0)),
         "--autoencoder-semantic-slot-embedding-weight-scale",
         str(getattr(args, "autoencoder_semantic_slot_embedding_weight_scale", 0.5)),
         "--autoencoder-semantic-slot-interaction-weight",
         str(getattr(args, "autoencoder_semantic_slot_interaction_weight", 0.35)),
         "--autoencoder-max-semantic-slot-interactions",
         str(getattr(args, "autoencoder_max_semantic_slot_interactions", 24)),
+        "--autoencoder-semantic-slot-legal-ir-view-logit-scale",
+        str(getattr(args, "autoencoder_semantic_slot_legal_ir_view_logit_scale", 1.0)),
         "--autoencoder-legal-ir-view-logit-scale",
         str(getattr(args, "autoencoder_legal_ir_view_logit_scale", 1.0)),
         "--autoencoder-legal-ir-view-embedding-weight-scale",
         str(getattr(args, "autoencoder_legal_ir_view_embedding_weight_scale", 0.5)),
+        "--autoencoder-semantic-slot-legal-ir-view-embedding-weight-scale",
+        str(getattr(args, "autoencoder_semantic_slot_legal_ir_view_embedding_weight_scale", 0.5)),
         "--autoencoder-cosine-reconstruction-weight",
         str(getattr(args, "autoencoder_cosine_reconstruction_weight", 0.25)),
         "--autoencoder-max-token-features",
@@ -4559,6 +4575,36 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--autoencoder-family-semantic-slot-embedding-weight-scale",
+        type=float,
+        default=0.5,
+        help=(
+            "Scale joint modal-family plus semantic-slot decoder prototypes. "
+            "This lets conditions, exceptions, roles, frame terms, and graph "
+            "slots reconstruct differently for deontic, temporal, constitutive, "
+            "and other modal families."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-family-semantic-slot-legal-ir-view-embedding-weight-scale",
+        type=float,
+        default=0.5,
+        help=(
+            "Scale sparse modal-family plus semantic-slot plus LegalIR-view "
+            "decoder prototypes for view-specific legal semantics."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-family-legal-ir-view-embedding-weight-scale",
+        type=float,
+        default=0.5,
+        help=(
+            "Scale joint modal-family plus LegalIR-view decoder prototypes. "
+            "This lets reconstruction distinguish, for example, deontic KG "
+            "targets from deontic prover targets."
+        ),
+    )
+    parser.add_argument(
         "--autoencoder-semantic-slot-family-logit-scale",
         type=float,
         default=1.0,
@@ -4566,6 +4612,34 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
             "Scale the compact semantic-slot classifier head for modal-family "
             "cross entropy. Slots summarize operators, predicate roles, conditions, "
             "exceptions, frame logic, and graph structure."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-legal-ir-view-family-logit-scale",
+        type=float,
+        default=1.0,
+        help=(
+            "Scale LegalIR-view-to-modal-family logits so compiler/decompiler "
+            "view evidence can reduce modal-family cross entropy."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-family-semantic-slot-legal-ir-view-logit-scale",
+        type=float,
+        default=1.0,
+        help=(
+            "Scale modal-family plus semantic-slot LegalIR-view logits, letting "
+            "the LegalIR view classifier specialize by legal modality and slot."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-semantic-slot-legal-ir-view-family-logit-scale",
+        type=float,
+        default=1.0,
+        help=(
+            "Scale joint semantic-slot plus LegalIR-view modal-family logits, "
+            "letting bridge evidence disambiguate slots such as conditions and "
+            "exceptions differently by target IR view."
         ),
     )
     parser.add_argument(
@@ -4593,6 +4667,15 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         help="Maximum semantic-slot pair features generated per sample.",
     )
     parser.add_argument(
+        "--autoencoder-semantic-slot-legal-ir-view-logit-scale",
+        type=float,
+        default=1.0,
+        help=(
+            "Scale the compact semantic-slot LegalIR-view classifier head for "
+            "multiview cross-entropy optimization."
+        ),
+    )
+    parser.add_argument(
         "--autoencoder-legal-ir-view-logit-scale",
         type=float,
         default=1.0,
@@ -4608,6 +4691,16 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         help=(
             "Scale LegalIR-view prototype vectors in the decoder so reconstruction "
             "can transfer through frame logic, event calculus, prover, and graph views."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-semantic-slot-legal-ir-view-embedding-weight-scale",
+        type=float,
+        default=0.5,
+        help=(
+            "Scale joint semantic-slot plus LegalIR-view decoder prototypes. "
+            "This lets the same condition, exception, role, or graph slot "
+            "reconstruct differently for KG, prover, frame-logic, and CEC views."
         ),
     )
     parser.add_argument(
@@ -4912,11 +5005,23 @@ def load_warm_start_state(paths: Sequence[Path]) -> tuple[ModalAutoencoderTraini
     averaged = ModalAutoencoderTrainingState.average_generalizable(loaded_states)
     return averaged, {
         "family_embedding_weight_entries": len(averaged.family_embedding_weights),
+        "family_semantic_slot_embedding_weight_entries": len(
+            averaged.family_semantic_slot_embedding_weights
+        ),
+        "family_semantic_slot_legal_ir_view_embedding_weight_entries": len(
+            averaged.family_semantic_slot_legal_ir_view_embedding_weights
+        ),
+        "family_legal_ir_view_embedding_weight_entries": len(
+            averaged.family_legal_ir_view_embedding_weights
+        ),
         "feature_embedding_weight_entries": len(averaged.feature_embedding_weights),
         "feature_family_logit_entries": len(averaged.feature_family_logits),
         "loaded_paths": loaded_paths,
         "legal_ir_view_embedding_weight_entries": len(
             averaged.legal_ir_view_embedding_weights
+        ),
+        "legal_ir_view_family_logit_entries": len(
+            averaged.legal_ir_view_family_logits
         ),
         "missing_paths": missing_paths,
         "semantic_slot_embedding_weight_entries": len(
@@ -4924,6 +5029,18 @@ def load_warm_start_state(paths: Sequence[Path]) -> tuple[ModalAutoencoderTraini
         ),
         "semantic_slot_family_logit_entries": len(
             averaged.semantic_slot_family_logits
+        ),
+        "family_semantic_slot_legal_ir_view_logit_entries": len(
+            averaged.family_semantic_slot_legal_ir_view_logits
+        ),
+        "semantic_slot_legal_ir_view_embedding_weight_entries": len(
+            averaged.semantic_slot_legal_ir_view_embedding_weights
+        ),
+        "semantic_slot_legal_ir_view_family_logit_entries": len(
+            averaged.semantic_slot_legal_ir_view_family_logits
+        ),
+        "semantic_slot_legal_ir_view_logit_entries": len(
+            averaged.semantic_slot_legal_ir_view_logits
         ),
         "source_count": len(loaded_states),
     }
@@ -5322,6 +5439,19 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         family_embedding_weight_scale=float(
             getattr(args, "autoencoder_family_embedding_weight_scale", 0.5)
         ),
+        family_semantic_slot_embedding_weight_scale=float(
+            getattr(args, "autoencoder_family_semantic_slot_embedding_weight_scale", 0.5)
+        ),
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=float(
+            getattr(
+                args,
+                "autoencoder_family_semantic_slot_legal_ir_view_embedding_weight_scale",
+                0.5,
+            )
+        ),
+        family_legal_ir_view_embedding_weight_scale=float(
+            getattr(args, "autoencoder_family_legal_ir_view_embedding_weight_scale", 0.5)
+        ),
         semantic_slot_embedding_weight_scale=float(
             getattr(args, "autoencoder_semantic_slot_embedding_weight_scale", 0.5)
         ),
@@ -5330,6 +5460,15 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         ),
         semantic_slot_family_logit_scale=float(
             getattr(args, "autoencoder_semantic_slot_family_logit_scale", 1.0)
+        ),
+        legal_ir_view_family_logit_scale=float(
+            getattr(args, "autoencoder_legal_ir_view_family_logit_scale", 1.0)
+        ),
+        family_semantic_slot_legal_ir_view_logit_scale=float(
+            getattr(args, "autoencoder_family_semantic_slot_legal_ir_view_logit_scale", 1.0)
+        ),
+        semantic_slot_legal_ir_view_family_logit_scale=float(
+            getattr(args, "autoencoder_semantic_slot_legal_ir_view_family_logit_scale", 1.0)
         ),
         semantic_slot_interaction_weight=float(
             getattr(args, "autoencoder_semantic_slot_interaction_weight", 0.35)
@@ -5340,8 +5479,14 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         legal_ir_view_logit_scale=float(
             getattr(args, "autoencoder_legal_ir_view_logit_scale", 1.0)
         ),
+        semantic_slot_legal_ir_view_logit_scale=float(
+            getattr(args, "autoencoder_semantic_slot_legal_ir_view_logit_scale", 1.0)
+        ),
         legal_ir_view_embedding_weight_scale=float(
             getattr(args, "autoencoder_legal_ir_view_embedding_weight_scale", 0.5)
+        ),
+        semantic_slot_legal_ir_view_embedding_weight_scale=float(
+            getattr(args, "autoencoder_semantic_slot_legal_ir_view_embedding_weight_scale", 0.5)
         ),
         cosine_reconstruction_weight=float(
             getattr(args, "autoencoder_cosine_reconstruction_weight", 0.25)
@@ -5378,8 +5523,30 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     summary["autoencoder_family_embedding_weight_scale"] = float(
         getattr(args, "autoencoder_family_embedding_weight_scale", 0.5)
     )
+    summary["autoencoder_family_semantic_slot_embedding_weight_scale"] = float(
+        getattr(args, "autoencoder_family_semantic_slot_embedding_weight_scale", 0.5)
+    )
+    summary["autoencoder_family_semantic_slot_legal_ir_view_embedding_weight_scale"] = float(
+        getattr(
+            args,
+            "autoencoder_family_semantic_slot_legal_ir_view_embedding_weight_scale",
+            0.5,
+        )
+    )
+    summary["autoencoder_family_legal_ir_view_embedding_weight_scale"] = float(
+        getattr(args, "autoencoder_family_legal_ir_view_embedding_weight_scale", 0.5)
+    )
     summary["autoencoder_semantic_slot_family_logit_scale"] = float(
         getattr(args, "autoencoder_semantic_slot_family_logit_scale", 1.0)
+    )
+    summary["autoencoder_legal_ir_view_family_logit_scale"] = float(
+        getattr(args, "autoencoder_legal_ir_view_family_logit_scale", 1.0)
+    )
+    summary["autoencoder_family_semantic_slot_legal_ir_view_logit_scale"] = float(
+        getattr(args, "autoencoder_family_semantic_slot_legal_ir_view_logit_scale", 1.0)
+    )
+    summary["autoencoder_semantic_slot_legal_ir_view_family_logit_scale"] = float(
+        getattr(args, "autoencoder_semantic_slot_legal_ir_view_family_logit_scale", 1.0)
     )
     summary["autoencoder_semantic_slot_embedding_weight_scale"] = float(
         getattr(args, "autoencoder_semantic_slot_embedding_weight_scale", 0.5)
@@ -5390,11 +5557,17 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     summary["autoencoder_max_semantic_slot_interactions"] = int(
         getattr(args, "autoencoder_max_semantic_slot_interactions", 24)
     )
+    summary["autoencoder_semantic_slot_legal_ir_view_logit_scale"] = float(
+        getattr(args, "autoencoder_semantic_slot_legal_ir_view_logit_scale", 1.0)
+    )
     summary["autoencoder_legal_ir_view_logit_scale"] = float(
         getattr(args, "autoencoder_legal_ir_view_logit_scale", 1.0)
     )
     summary["autoencoder_legal_ir_view_embedding_weight_scale"] = float(
         getattr(args, "autoencoder_legal_ir_view_embedding_weight_scale", 0.5)
+    )
+    summary["autoencoder_semantic_slot_legal_ir_view_embedding_weight_scale"] = float(
+        getattr(args, "autoencoder_semantic_slot_legal_ir_view_embedding_weight_scale", 0.5)
     )
     summary["autoencoder_cosine_reconstruction_weight"] = float(
         getattr(args, "autoencoder_cosine_reconstruction_weight", 0.25)
@@ -5885,6 +6058,15 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         summary["family_embedding_weight_entries"] = len(
             autoencoder.state.family_embedding_weights
         )
+        summary["family_semantic_slot_embedding_weight_entries"] = len(
+            autoencoder.state.family_semantic_slot_embedding_weights
+        )
+        summary["family_semantic_slot_legal_ir_view_embedding_weight_entries"] = len(
+            autoencoder.state.family_semantic_slot_legal_ir_view_embedding_weights
+        )
+        summary["family_legal_ir_view_embedding_weight_entries"] = len(
+            autoencoder.state.family_legal_ir_view_embedding_weights
+        )
         summary["family_logit_entries"] = len(autoencoder.state.family_logits)
         summary["feature_embedding_weight_entries"] = len(autoencoder.state.feature_embedding_weights)
         summary["feature_family_logit_entries"] = len(autoencoder.state.feature_family_logits)
@@ -5894,11 +6076,26 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         summary["legal_ir_view_embedding_weight_entries"] = len(
             autoencoder.state.legal_ir_view_embedding_weights
         )
+        summary["legal_ir_view_family_logit_entries"] = len(
+            autoencoder.state.legal_ir_view_family_logits
+        )
         summary["semantic_slot_embedding_weight_entries"] = len(
             autoencoder.state.semantic_slot_embedding_weights
         )
         summary["semantic_slot_family_logit_entries"] = len(
             autoencoder.state.semantic_slot_family_logits
+        )
+        summary["family_semantic_slot_legal_ir_view_logit_entries"] = len(
+            autoencoder.state.family_semantic_slot_legal_ir_view_logits
+        )
+        summary["semantic_slot_legal_ir_view_embedding_weight_entries"] = len(
+            autoencoder.state.semantic_slot_legal_ir_view_embedding_weights
+        )
+        summary["semantic_slot_legal_ir_view_family_logit_entries"] = len(
+            autoencoder.state.semantic_slot_legal_ir_view_family_logits
+        )
+        summary["semantic_slot_legal_ir_view_logit_entries"] = len(
+            autoencoder.state.semantic_slot_legal_ir_view_logits
         )
         summary["finished_at"] = utc_now()
         summary["legal_ir_view_logit_entries"] = len(

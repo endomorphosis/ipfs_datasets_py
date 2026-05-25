@@ -771,6 +771,234 @@ def test_semantic_slot_pair_logits_can_drive_compositional_family_ce() -> None:
     assert after.cross_entropy_loss < before.cross_entropy_loss
 
 
+def test_semantic_slot_legal_ir_view_head_lowers_holdout_ce() -> None:
+    class DummyDocument:
+        def canonical_hash(self):
+            return "dummy-semantic-slot-view-target"
+
+    class DummyTarget:
+        document = DummyDocument()
+        losses = {"legal_ir_multiview_total_loss": 0.1}
+        view_distribution = {
+            "CEC.native": 0.2,
+            "knowledge_graphs.neo4j_compat": 0.8,
+        }
+
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice before final action.",
+    )
+    validation = build_us_code_sample(
+        title="5",
+        section="553",
+        text="The agency shall publish notice before final action.",
+    )
+    targets = {
+        train.sample_id: DummyTarget(),
+        validation.sample_id: DummyTarget(),
+    }
+    autoencoder = AdaptiveModalAutoencoder(
+        legal_ir_view_logit_scale=0.0,
+        semantic_slot_legal_ir_view_logit_scale=8.0,
+    )
+    before = autoencoder.evaluate(
+        [validation],
+        legal_ir_targets=targets,
+        use_sample_memory=False,
+    )
+
+    autoencoder.evaluate([train], legal_ir_targets=targets, use_sample_memory=False)
+    autoencoder._nudge_legal_ir_view_logits(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after = autoencoder.evaluate(
+        [validation],
+        legal_ir_targets=targets,
+        use_sample_memory=False,
+    )
+
+    assert autoencoder.state.semantic_slot_legal_ir_view_logits
+    assert (
+        after.legal_ir_losses["legal_ir_view_cross_entropy_loss"]
+        < before.legal_ir_losses["legal_ir_view_cross_entropy_loss"]
+    )
+
+
+def test_legal_ir_view_family_head_lowers_holdout_family_ce() -> None:
+    class DummyDocument:
+        def canonical_hash(self):
+            return "dummy-view-family-target"
+
+    class DummyTarget:
+        document = DummyDocument()
+        losses = {"legal_ir_multiview_total_loss": 0.1}
+        view_distribution = {"knowledge_graphs.neo4j_compat": 1.0}
+
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice before final action.",
+    )
+    validation = build_us_code_sample(
+        title="5",
+        section="553",
+        text="The agency shall publish notice before final action.",
+    )
+    targets = {
+        train.sample_id: DummyTarget(),
+        validation.sample_id: DummyTarget(),
+    }
+    autoencoder = AdaptiveModalAutoencoder(
+        feature_family_logit_scale=0.0,
+        semantic_slot_family_logit_scale=0.0,
+        legal_ir_view_family_logit_scale=8.0,
+        legal_ir_view_logit_scale=0.0,
+    )
+    before = autoencoder.evaluate(
+        [validation],
+        legal_ir_targets=targets,
+        use_sample_memory=False,
+    )
+
+    autoencoder.evaluate([train], legal_ir_targets=targets, use_sample_memory=False)
+    autoencoder._nudge_family_logits(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after = autoencoder.evaluate(
+        [validation],
+        legal_ir_targets=targets,
+        use_sample_memory=False,
+    )
+
+    assert autoencoder.state.legal_ir_view_family_logits
+    assert after.cross_entropy_loss < before.cross_entropy_loss
+    introspection = autoencoder.introspect_sample(validation)
+    assert any(
+        contribution.contribution_type == "legal_ir_view_family_logit"
+        for contribution in introspection.top_family_contributions
+    )
+
+
+def test_semantic_slot_legal_ir_view_family_head_lowers_holdout_family_ce() -> None:
+    class DummyDocument:
+        def canonical_hash(self):
+            return "dummy-slot-view-family-target"
+
+    class DummyTarget:
+        document = DummyDocument()
+        losses = {"legal_ir_multiview_total_loss": 0.1}
+        view_distribution = {"knowledge_graphs.neo4j_compat": 1.0}
+
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice before final action.",
+    )
+    validation = build_us_code_sample(
+        title="5",
+        section="553",
+        text="The agency shall publish notice before final action.",
+    )
+    targets = {
+        train.sample_id: DummyTarget(),
+        validation.sample_id: DummyTarget(),
+    }
+    autoencoder = AdaptiveModalAutoencoder(
+        feature_family_logit_scale=0.0,
+        semantic_slot_family_logit_scale=0.0,
+        legal_ir_view_family_logit_scale=0.0,
+        semantic_slot_legal_ir_view_family_logit_scale=8.0,
+        legal_ir_view_logit_scale=0.0,
+    )
+    before = autoencoder.evaluate(
+        [validation],
+        legal_ir_targets=targets,
+        use_sample_memory=False,
+    )
+
+    autoencoder.evaluate([train], legal_ir_targets=targets, use_sample_memory=False)
+    autoencoder._nudge_family_logits(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after = autoencoder.evaluate(
+        [validation],
+        legal_ir_targets=targets,
+        use_sample_memory=False,
+    )
+
+    assert autoencoder.state.semantic_slot_legal_ir_view_family_logits
+    assert after.cross_entropy_loss < before.cross_entropy_loss
+    introspection = autoencoder.introspect_sample(validation)
+    assert any(
+        contribution.contribution_type == "semantic_slot_legal_ir_view_family_logit"
+        for contribution in introspection.top_family_contributions
+    )
+
+
+def test_family_semantic_slot_legal_ir_view_head_lowers_holdout_view_ce() -> None:
+    class DummyDocument:
+        def canonical_hash(self):
+            return "dummy-family-slot-view-target"
+
+    class DummyTarget:
+        document = DummyDocument()
+        losses = {"legal_ir_multiview_total_loss": 0.1}
+        view_distribution = {
+            "CEC.native": 0.2,
+            "knowledge_graphs.neo4j_compat": 0.8,
+        }
+
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice before final action.",
+    )
+    validation = build_us_code_sample(
+        title="5",
+        section="553",
+        text="The agency shall publish notice before final action.",
+    )
+    targets = {
+        train.sample_id: DummyTarget(),
+        validation.sample_id: DummyTarget(),
+    }
+    autoencoder = AdaptiveModalAutoencoder(
+        legal_ir_view_logit_scale=0.0,
+        semantic_slot_legal_ir_view_logit_scale=0.0,
+        family_semantic_slot_legal_ir_view_logit_scale=8.0,
+    )
+    before = autoencoder.evaluate(
+        [validation],
+        legal_ir_targets=targets,
+        use_sample_memory=False,
+    )
+
+    autoencoder.evaluate([train], legal_ir_targets=targets, use_sample_memory=False)
+    autoencoder._nudge_legal_ir_view_logits(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after = autoencoder.evaluate(
+        [validation],
+        legal_ir_targets=targets,
+        use_sample_memory=False,
+    )
+
+    assert autoencoder.state.family_semantic_slot_legal_ir_view_logits
+    assert (
+        after.legal_ir_losses["legal_ir_view_cross_entropy_loss"]
+        < before.legal_ir_losses["legal_ir_view_cross_entropy_loss"]
+    )
+
+
 def test_legal_ir_view_embedding_prototype_head_transfers_cosine_to_holdout() -> None:
     class DummyDocument:
         def canonical_hash(self):
@@ -828,6 +1056,235 @@ def test_legal_ir_view_embedding_prototype_head_transfers_cosine_to_holdout() ->
     introspection = autoencoder.introspect_sample(validation)
     assert any(
         contribution.contribution_type == "legal_ir_view_embedding_weight"
+        for contribution in introspection.top_embedding_contributions
+    )
+
+
+def test_semantic_slot_legal_ir_view_embedding_head_transfers_cosine_to_holdout() -> None:
+    class DummyDocument:
+        def canonical_hash(self):
+            return "dummy-slot-view-embedding-target"
+
+    class DummyTarget:
+        document = DummyDocument()
+        losses = {"legal_ir_multiview_total_loss": 0.1}
+        view_distribution = {"knowledge_graphs.neo4j_compat": 1.0}
+
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice before final action.",
+        embedding_vector=[0.0, 1.0],
+    )
+    validation = build_us_code_sample(
+        title="5",
+        section="553",
+        text="The agency shall publish notice before final action.",
+        embedding_vector=[0.0, 1.0],
+    )
+    targets = {
+        train.sample_id: DummyTarget(),
+        validation.sample_id: DummyTarget(),
+    }
+    autoencoder = AdaptiveModalAutoencoder(
+        feature_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        semantic_slot_legal_ir_view_embedding_weight_scale=8.0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before = autoencoder.evaluate(
+        [validation],
+        legal_ir_targets=targets,
+        use_sample_memory=False,
+    )
+
+    autoencoder.evaluate([train], legal_ir_targets=targets, use_sample_memory=False)
+    autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after = autoencoder.evaluate(
+        [validation],
+        legal_ir_targets=targets,
+        use_sample_memory=False,
+    )
+
+    assert autoencoder.state.semantic_slot_legal_ir_view_embedding_weights
+    assert after.embedding_cosine_similarity > before.embedding_cosine_similarity
+    introspection = autoencoder.introspect_sample(validation)
+    assert any(
+        contribution.contribution_type == "semantic_slot_legal_ir_view_embedding_weight"
+        for contribution in introspection.top_embedding_contributions
+    )
+
+
+def test_family_semantic_slot_legal_ir_view_embedding_head_transfers_cosine_to_holdout() -> None:
+    class DummyDocument:
+        def canonical_hash(self):
+            return "dummy-family-slot-view-embedding-target"
+
+    class DummyTarget:
+        document = DummyDocument()
+        losses = {"legal_ir_multiview_total_loss": 0.1}
+        view_distribution = {"knowledge_graphs.neo4j_compat": 1.0}
+
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice before final action.",
+        embedding_vector=[1.0, 0.0],
+    )
+    validation = build_us_code_sample(
+        title="5",
+        section="553",
+        text="The agency shall publish notice before final action.",
+        embedding_vector=[1.0, 0.0],
+    )
+    targets = {
+        train.sample_id: DummyTarget(),
+        validation.sample_id: DummyTarget(),
+    }
+    autoencoder = AdaptiveModalAutoencoder(
+        feature_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=0.0,
+        semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=8.0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before = autoencoder.evaluate(
+        [validation],
+        legal_ir_targets=targets,
+        use_sample_memory=False,
+    )
+
+    autoencoder.evaluate([train], legal_ir_targets=targets, use_sample_memory=False)
+    autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after = autoencoder.evaluate(
+        [validation],
+        legal_ir_targets=targets,
+        use_sample_memory=False,
+    )
+
+    assert autoencoder.state.family_semantic_slot_legal_ir_view_embedding_weights
+    assert after.embedding_cosine_similarity > before.embedding_cosine_similarity
+    introspection = autoencoder.introspect_sample(validation)
+    assert any(
+        contribution.contribution_type
+        == "family_semantic_slot_legal_ir_view_embedding_weight"
+        for contribution in introspection.top_embedding_contributions
+    )
+
+
+def test_family_legal_ir_view_joint_embedding_head_transfers_cosine_to_holdout() -> None:
+    class DummyDocument:
+        def canonical_hash(self):
+            return "dummy-family-view-target"
+
+    class DummyTarget:
+        document = DummyDocument()
+        losses = {"legal_ir_multiview_total_loss": 0.1}
+        view_distribution = {"knowledge_graphs.neo4j_compat": 1.0}
+
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice.",
+        embedding_vector=[1.0, 0.0],
+    )
+    validation = build_us_code_sample(
+        title="5",
+        section="553",
+        text="The agency shall publish notice.",
+        embedding_vector=[1.0, 0.0],
+    )
+    targets = {
+        train.sample_id: DummyTarget(),
+        validation.sample_id: DummyTarget(),
+    }
+    autoencoder = AdaptiveModalAutoencoder(
+        feature_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=4.0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before = autoencoder.evaluate(
+        [validation],
+        legal_ir_targets=targets,
+        use_sample_memory=False,
+    )
+
+    autoencoder.evaluate([train], legal_ir_targets=targets, use_sample_memory=False)
+    autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after = autoencoder.evaluate(
+        [validation],
+        legal_ir_targets=targets,
+        use_sample_memory=False,
+    )
+
+    assert autoencoder.state.family_legal_ir_view_embedding_weights
+    assert after.embedding_cosine_similarity > before.embedding_cosine_similarity
+    introspection = autoencoder.introspect_sample(validation)
+    assert any(
+        contribution.contribution_type == "family_legal_ir_view_embedding_weight"
+        for contribution in introspection.top_embedding_contributions
+    )
+
+
+def test_family_semantic_slot_embedding_head_transfers_cosine_to_holdout() -> None:
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice before final action.",
+        embedding_vector=[0.0, 1.0],
+    )
+    validation = build_us_code_sample(
+        title="5",
+        section="553",
+        text="The agency shall publish notice before final action.",
+        embedding_vector=[0.0, 1.0],
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        feature_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=8.0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before = autoencoder.evaluate([validation], use_sample_memory=False)
+
+    autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after = autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert autoencoder.state.family_semantic_slot_embedding_weights
+    assert after.embedding_cosine_similarity > before.embedding_cosine_similarity
+    introspection = autoencoder.introspect_sample(validation)
+    assert any(
+        contribution.contribution_type == "family_semantic_slot_embedding_weight"
         for contribution in introspection.top_embedding_contributions
     )
 
@@ -1278,12 +1735,39 @@ def test_adaptive_autoencoder_state_roundtrip(tmp_path) -> None:
         family_logits={"sample": {"deontic": 1.0}},
         feature_embedding_weights={"token:agency": [0.01, -0.01]},
         family_embedding_weights={"deontic": [0.03, 0.04]},
+        family_semantic_slot_embedding_weights={
+            "deontic||slot:condition-present": [0.11, 0.12]
+        },
+        family_semantic_slot_legal_ir_view_embedding_weights={
+            "deontic||slot:condition-present||knowledge_graphs.neo4j_compat": [
+                0.15,
+                0.16,
+            ]
+        },
+        family_legal_ir_view_embedding_weights={
+            "deontic||knowledge_graphs.neo4j_compat": [0.09, 0.1]
+        },
         semantic_slot_embedding_weights={"slot:modal-operator:deontic:d:o": [0.07, 0.08]},
         feature_family_logits={"modal-family:deontic": {"deontic": 0.2}},
         semantic_slot_family_logits={"slot:modal-operator:deontic:d:o": {"deontic": 0.5}},
+        family_semantic_slot_legal_ir_view_logits={
+            "deontic||slot:condition-present": {"knowledge_graphs.neo4j_compat": 0.95}
+        },
         legal_ir_view_logits={"deontic.ir": 0.3},
         legal_ir_view_embedding_weights={"knowledge_graphs.neo4j_compat": [0.05, 0.06]},
+        legal_ir_view_family_logits={
+            "knowledge_graphs.neo4j_compat": {"deontic": 0.8}
+        },
         feature_legal_ir_view_logits={"legal-ir:cue:deontic": {"deontic.ir": 0.4}},
+        semantic_slot_legal_ir_view_embedding_weights={
+            "slot:condition-present||knowledge_graphs.neo4j_compat": [0.13, 0.14]
+        },
+        semantic_slot_legal_ir_view_family_logits={
+            "slot:condition-present||knowledge_graphs.neo4j_compat": {"deontic": 0.9}
+        },
+        semantic_slot_legal_ir_view_logits={
+            "slot:modal-operator:deontic:d:o": {"knowledge_graphs.neo4j_compat": 0.7}
+        },
         applied_todo_ids=["todo-1"],
     )
     path = tmp_path / "state.json"
@@ -1302,12 +1786,39 @@ def test_generalizable_state_copy_drops_sample_specific_memory() -> None:
         family_logits={"sample": {"deontic": 1.0}},
         feature_embedding_weights={"token:agency": [0.01, -0.01]},
         family_embedding_weights={"deontic": [0.03, 0.04]},
+        family_semantic_slot_embedding_weights={
+            "deontic||slot:condition-present": [0.11, 0.12]
+        },
+        family_semantic_slot_legal_ir_view_embedding_weights={
+            "deontic||slot:condition-present||knowledge_graphs.neo4j_compat": [
+                0.15,
+                0.16,
+            ]
+        },
+        family_legal_ir_view_embedding_weights={
+            "deontic||knowledge_graphs.neo4j_compat": [0.09, 0.1]
+        },
         semantic_slot_embedding_weights={"slot:modal-operator:deontic:d:o": [0.07, 0.08]},
         feature_family_logits={"modal-family:deontic": {"deontic": 0.2}},
         semantic_slot_family_logits={"slot:modal-operator:deontic:d:o": {"deontic": 0.5}},
+        family_semantic_slot_legal_ir_view_logits={
+            "deontic||slot:condition-present": {"knowledge_graphs.neo4j_compat": 0.95}
+        },
         legal_ir_view_logits={"deontic.ir": 0.3},
         legal_ir_view_embedding_weights={"knowledge_graphs.neo4j_compat": [0.05, 0.06]},
+        legal_ir_view_family_logits={
+            "knowledge_graphs.neo4j_compat": {"deontic": 0.8}
+        },
         feature_legal_ir_view_logits={"legal-ir:cue:deontic": {"deontic.ir": 0.4}},
+        semantic_slot_legal_ir_view_embedding_weights={
+            "slot:condition-present||knowledge_graphs.neo4j_compat": [0.13, 0.14]
+        },
+        semantic_slot_legal_ir_view_family_logits={
+            "slot:condition-present||knowledge_graphs.neo4j_compat": {"deontic": 0.9}
+        },
+        semantic_slot_legal_ir_view_logits={
+            "slot:modal-operator:deontic:d:o": {"knowledge_graphs.neo4j_compat": 0.7}
+        },
         applied_todo_ids=["todo-1"],
     )
 
@@ -1318,6 +1829,18 @@ def test_generalizable_state_copy_drops_sample_specific_memory() -> None:
     assert generalizable.applied_todo_ids == []
     assert generalizable.feature_embedding_weights == state.feature_embedding_weights
     assert generalizable.family_embedding_weights == state.family_embedding_weights
+    assert (
+        generalizable.family_semantic_slot_embedding_weights
+        == state.family_semantic_slot_embedding_weights
+    )
+    assert (
+        generalizable.family_semantic_slot_legal_ir_view_embedding_weights
+        == state.family_semantic_slot_legal_ir_view_embedding_weights
+    )
+    assert (
+        generalizable.family_legal_ir_view_embedding_weights
+        == state.family_legal_ir_view_embedding_weights
+    )
     assert generalizable.feature_family_logits == state.feature_family_logits
     assert generalizable.legal_ir_view_logits == state.legal_ir_view_logits
     assert (
@@ -1325,10 +1848,30 @@ def test_generalizable_state_copy_drops_sample_specific_memory() -> None:
         == state.legal_ir_view_embedding_weights
     )
     assert (
+        generalizable.legal_ir_view_family_logits
+        == state.legal_ir_view_family_logits
+    )
+    assert (
         generalizable.semantic_slot_embedding_weights
         == state.semantic_slot_embedding_weights
     )
     assert generalizable.semantic_slot_family_logits == state.semantic_slot_family_logits
+    assert (
+        generalizable.family_semantic_slot_legal_ir_view_logits
+        == state.family_semantic_slot_legal_ir_view_logits
+    )
+    assert (
+        generalizable.semantic_slot_legal_ir_view_embedding_weights
+        == state.semantic_slot_legal_ir_view_embedding_weights
+    )
+    assert (
+        generalizable.semantic_slot_legal_ir_view_family_logits
+        == state.semantic_slot_legal_ir_view_family_logits
+    )
+    assert (
+        generalizable.semantic_slot_legal_ir_view_logits
+        == state.semantic_slot_legal_ir_view_logits
+    )
     assert (
         generalizable.feature_legal_ir_view_logits
         == state.feature_legal_ir_view_logits
@@ -1341,24 +1884,78 @@ def test_average_generalizable_state_reuses_prior_feature_learning() -> None:
         family_logits={"sample-a": {"deontic": 4.0}},
         feature_embedding_weights={"token:agency": [0.2, -0.2]},
         family_embedding_weights={"deontic": [0.2, 0.4]},
+        family_semantic_slot_embedding_weights={
+            "deontic||slot:condition-present": [0.4, 0.8]
+        },
+        family_semantic_slot_legal_ir_view_embedding_weights={
+            "deontic||slot:condition-present||knowledge_graphs.neo4j_compat": [
+                0.8,
+                1.2,
+            ]
+        },
+        family_legal_ir_view_embedding_weights={
+            "deontic||knowledge_graphs.neo4j_compat": [0.2, 0.8]
+        },
         semantic_slot_embedding_weights={"slot:modal-operator:deontic:d:o": [0.1, 0.3]},
         feature_family_logits={"modal-family:deontic": {"deontic": 0.6}},
         semantic_slot_family_logits={"slot:modal-operator:deontic:d:o": {"deontic": 0.9}},
+        family_semantic_slot_legal_ir_view_logits={
+            "deontic||slot:condition-present": {"knowledge_graphs.neo4j_compat": 1.2}
+        },
         legal_ir_view_logits={"deontic.ir": 0.6},
         legal_ir_view_embedding_weights={"knowledge_graphs.neo4j_compat": [0.2, 0.6]},
+        legal_ir_view_family_logits={
+            "knowledge_graphs.neo4j_compat": {"deontic": 0.6}
+        },
         feature_legal_ir_view_logits={"legal-ir:cue:deontic": {"deontic.ir": 0.8}},
+        semantic_slot_legal_ir_view_embedding_weights={
+            "slot:condition-present||knowledge_graphs.neo4j_compat": [0.6, 1.0]
+        },
+        semantic_slot_legal_ir_view_family_logits={
+            "slot:condition-present||knowledge_graphs.neo4j_compat": {"deontic": 1.0}
+        },
+        semantic_slot_legal_ir_view_logits={
+            "slot:modal-operator:deontic:d:o": {"knowledge_graphs.neo4j_compat": 0.9}
+        },
     )
     second = ModalAutoencoderTrainingState(
         decoded_embeddings={"sample-b": [2.0, 2.0]},
         family_logits={"sample-b": {"temporal": 4.0}},
         feature_embedding_weights={"token:agency": [0.4, -0.4]},
         family_embedding_weights={"deontic": [0.4, 0.8]},
+        family_semantic_slot_embedding_weights={
+            "deontic||slot:condition-present": [0.8, 1.2]
+        },
+        family_semantic_slot_legal_ir_view_embedding_weights={
+            "deontic||slot:condition-present||knowledge_graphs.neo4j_compat": [
+                0.4,
+                0.8,
+            ]
+        },
+        family_legal_ir_view_embedding_weights={
+            "deontic||knowledge_graphs.neo4j_compat": [0.4, 1.2]
+        },
         semantic_slot_embedding_weights={"slot:modal-operator:deontic:d:o": [0.3, 0.7]},
         feature_family_logits={"modal-family:deontic": {"deontic": 0.2}},
         semantic_slot_family_logits={"slot:modal-operator:deontic:d:o": {"deontic": 0.3}},
+        family_semantic_slot_legal_ir_view_logits={
+            "deontic||slot:condition-present": {"knowledge_graphs.neo4j_compat": 0.8}
+        },
         legal_ir_view_logits={"deontic.ir": 0.2},
         legal_ir_view_embedding_weights={"knowledge_graphs.neo4j_compat": [0.4, 1.0]},
+        legal_ir_view_family_logits={
+            "knowledge_graphs.neo4j_compat": {"deontic": 0.2}
+        },
         feature_legal_ir_view_logits={"legal-ir:cue:deontic": {"deontic.ir": 0.4}},
+        semantic_slot_legal_ir_view_embedding_weights={
+            "slot:condition-present||knowledge_graphs.neo4j_compat": [0.2, 0.4]
+        },
+        semantic_slot_legal_ir_view_family_logits={
+            "slot:condition-present||knowledge_graphs.neo4j_compat": {"deontic": 0.4}
+        },
+        semantic_slot_legal_ir_view_logits={
+            "slot:modal-operator:deontic:d:o": {"knowledge_graphs.neo4j_compat": 0.5}
+        },
     )
 
     averaged = ModalAutoencoderTrainingState.average_generalizable([first, second])
@@ -1367,9 +1964,21 @@ def test_average_generalizable_state_reuses_prior_feature_learning() -> None:
     assert averaged.family_logits == {}
     assert averaged.feature_embedding_weights["token:agency"] == pytest.approx([0.3, -0.3])
     assert averaged.family_embedding_weights["deontic"] == pytest.approx([0.3, 0.6])
+    assert averaged.family_semantic_slot_embedding_weights[
+        "deontic||slot:condition-present"
+    ] == pytest.approx([0.6, 1.0])
+    assert averaged.family_semantic_slot_legal_ir_view_embedding_weights[
+        "deontic||slot:condition-present||knowledge_graphs.neo4j_compat"
+    ] == pytest.approx([0.6, 1.0])
+    assert averaged.family_legal_ir_view_embedding_weights[
+        "deontic||knowledge_graphs.neo4j_compat"
+    ] == pytest.approx([0.3, 1.0])
     assert averaged.legal_ir_view_embedding_weights[
         "knowledge_graphs.neo4j_compat"
     ] == pytest.approx([0.3, 0.8])
+    assert averaged.legal_ir_view_family_logits[
+        "knowledge_graphs.neo4j_compat"
+    ]["deontic"] == pytest.approx(0.4)
     assert averaged.semantic_slot_embedding_weights[
         "slot:modal-operator:deontic:d:o"
     ] == pytest.approx([0.2, 0.5])
@@ -1377,6 +1986,18 @@ def test_average_generalizable_state_reuses_prior_feature_learning() -> None:
     assert averaged.semantic_slot_family_logits[
         "slot:modal-operator:deontic:d:o"
     ]["deontic"] == pytest.approx(0.6)
+    assert averaged.family_semantic_slot_legal_ir_view_logits[
+        "deontic||slot:condition-present"
+    ]["knowledge_graphs.neo4j_compat"] == pytest.approx(1.0)
+    assert averaged.semantic_slot_legal_ir_view_embedding_weights[
+        "slot:condition-present||knowledge_graphs.neo4j_compat"
+    ] == pytest.approx([0.4, 0.7])
+    assert averaged.semantic_slot_legal_ir_view_family_logits[
+        "slot:condition-present||knowledge_graphs.neo4j_compat"
+    ]["deontic"] == pytest.approx(0.7)
+    assert averaged.semantic_slot_legal_ir_view_logits[
+        "slot:modal-operator:deontic:d:o"
+    ]["knowledge_graphs.neo4j_compat"] == pytest.approx(0.7)
     assert averaged.legal_ir_view_logits["deontic.ir"] == pytest.approx(0.4)
     assert (
         averaged.feature_legal_ir_view_logits["legal-ir:cue:deontic"]["deontic.ir"]
