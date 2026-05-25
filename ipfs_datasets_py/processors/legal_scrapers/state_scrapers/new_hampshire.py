@@ -466,11 +466,14 @@ class NewHampshireScraper(BaseStateScraper):
             )
 
         out: List[NormalizedStatute] = list(title_stubs)
-        seen_output_keys = {
-            str(statute.statute_id or statute.source_url or "").strip().lower()
-            for statute in out
-            if str(statute.statute_id or statute.source_url or "").strip()
-        }
+        seen_output_keys: set[str] = set()
+        for statute in out:
+            statute_id_key = str(statute.statute_id or "").strip().lower()
+            source_key = str(statute.source_url or "").strip().lower()
+            if statute_id_key:
+                seen_output_keys.add(statute_id_key)
+            if source_key:
+                seen_output_keys.add(source_key)
         seen_chapters = set()
         chapter_urls: List[tuple[str, str, str]] = []
 
@@ -554,6 +557,12 @@ class NewHampshireScraper(BaseStateScraper):
         if _limit_reached(len(out)):
             return out[:max_statutes]
 
+        section_concurrency = max(
+            1,
+            int(os.getenv("STATE_SCRAPER_NH_SECTION_CONCURRENCY", "6") or "6"),
+        )
+        section_sem = asyncio.Semaphore(section_concurrency)
+
         async def _fetch_chapter_sections(chapter_id: str, chapter_name: str, chapter_url: str) -> List[NormalizedStatute]:
             try:
                 chapter_payload = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=35)
@@ -592,6 +601,10 @@ class NewHampshireScraper(BaseStateScraper):
                 if section_key in seen_local:
                     continue
                 seen_local.add(section_key)
+                statute_id_key = f"{code_name} § {section_number}".strip().lower()
+                source_key = str(section_url or "").strip().lower()
+                if statute_id_key in seen_output_keys or source_key in seen_output_keys:
+                    continue
                 section_links.append(
                     (
                         section_number,
@@ -601,17 +614,23 @@ class NewHampshireScraper(BaseStateScraper):
                 )
 
             section_statutes: List[NormalizedStatute] = []
-            for section_index, (section_number, section_title, section_url) in enumerate(section_links, start=1):
-                try:
-                    section_payload = await self._fetch_page_content_with_archival_fallback(section_url, timeout_seconds=35)
-                except Exception:
-                    continue
-                section_text = self._extract_statute_text(section_payload)
-                if len(section_text) < 160:
-                    continue
-                section_name = f"Section {section_number} {section_title}".strip()
-                section_statutes.append(
-                    NormalizedStatute(
+            seen_local_statute_keys: set[str] = set()
+
+            async def _fetch_section(
+                section_number: str,
+                section_title: str,
+                section_url: str,
+            ) -> Optional[NormalizedStatute]:
+                async with section_sem:
+                    try:
+                        section_payload = await self._fetch_page_content_with_archival_fallback(section_url, timeout_seconds=35)
+                    except Exception:
+                        return None
+                    section_text = self._extract_statute_text(section_payload)
+                    if len(section_text) < 160:
+                        return None
+                    section_name = f"Section {section_number} {section_title}".strip()
+                    return NormalizedStatute(
                         state_code=self.state_code,
                         state_name=self.state_name,
                         statute_id=f"{code_name} § {section_number}",
@@ -624,7 +643,23 @@ class NewHampshireScraper(BaseStateScraper):
                         official_cite=f"N.H. Rev. Stat. § {section_number}",
                         metadata=StatuteMetadata(),
                     )
-                )
+
+            tasks = [
+                asyncio.create_task(_fetch_section(section_number, section_title, section_url))
+                for section_number, section_title, section_url in section_links
+            ]
+            scanned_sections = 0
+            for task in asyncio.as_completed(tasks):
+                scanned_sections += 1
+                statute = await task
+                if statute is None:
+                    continue
+                local_key = str(statute.statute_id or statute.source_url or "").strip().lower()
+                if local_key and local_key in seen_local_statute_keys:
+                    continue
+                if local_key:
+                    seen_local_statute_keys.add(local_key)
+                section_statutes.append(statute)
                 if len(section_statutes) == 1 or len(section_statutes) % 40 == 0:
                     self.logger.info(
                         "New Hampshire archived index: chapter=%s scanned_sections=%s/%s statutes_so_far=%s",
@@ -634,21 +669,21 @@ class NewHampshireScraper(BaseStateScraper):
                         len(section_statutes),
                     )
                 if checkpoint is not None and (
-                    section_index == 1
-                    or section_index % 200 == 0
-                    or section_index == len(section_links)
+                    scanned_sections == 1
+                    or scanned_sections % 200 == 0
+                    or scanned_sections == len(section_links)
                 ):
                     checkpoint.maybe_write(
                         [],
                         code_name=code_name,
-                        stage_label=f"chapter-progress:{chapter_id}:{section_index}",
+                        stage_label=f"chapter-progress:{chapter_id}:{scanned_sections}",
                         progress={
                             "titles_scanned": int(total_titles),
                             "discovered_titles": int(total_titles),
                             "chapters_scanned": 0,
                             "discovered_chapters": int(len(chapter_urls)),
                             "chapter_id": str(chapter_id),
-                            "sections_scanned": int(section_index),
+                            "sections_scanned": int(scanned_sections),
                             "discovered_sections": int(len(section_links)),
                             "codes_completed": 0,
                             "codes_total": 1,
@@ -656,6 +691,11 @@ class NewHampshireScraper(BaseStateScraper):
                     )
                 if _limit_reached(len(section_statutes)):
                     break
+            for pending in tasks:
+                if not pending.done():
+                    pending.cancel()
+            if tasks:
+                await asyncio.gather(*tasks, return_exceptions=True)
             if section_links:
                 self.logger.info(
                     "New Hampshire archived index: chapter=%s scanned_sections=%s/%s statutes_so_far=%s",
@@ -737,10 +777,16 @@ class NewHampshireScraper(BaseStateScraper):
                     },
                 )
             for statute in section_batch:
-                key = str(statute.statute_id or statute.source_url or "").strip().lower()
-                if not key or key in seen_output_keys:
+                statute_id_key = str(statute.statute_id or "").strip().lower()
+                source_key = str(statute.source_url or "").strip().lower()
+                if (statute_id_key and statute_id_key in seen_output_keys) or (
+                    source_key and source_key in seen_output_keys
+                ):
                     continue
-                seen_output_keys.add(key)
+                if statute_id_key:
+                    seen_output_keys.add(statute_id_key)
+                if source_key:
+                    seen_output_keys.add(source_key)
                 out.append(statute)
                 if checkpoint is not None and (len(out) == 1 or len(out) % 40 == 0):
                     checkpoint.maybe_write(

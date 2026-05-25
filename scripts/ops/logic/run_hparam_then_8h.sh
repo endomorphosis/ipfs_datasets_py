@@ -38,8 +38,15 @@ COMMON_ARGS=(
   --max-inner-iterations 3
   --max-items 8
   --autoencoder-device auto
-  --autoencoder-feature-family-logit-scale 1.0
   --autoencoder-bridge-workers 2
+  --autoencoder-max-token-features 48
+  --autoencoder-max-token-bigram-features 24
+  --autoencoder-max-token-trigram-features 12
+  --autoencoder-max-legal-ir-token-features 24
+  --autoencoder-max-legal-ir-token-bigram-features 12
+  --autoencoder-max-legal-ir-token-trigram-features 8
+  --autoencoder-feature-activity-reference 64
+  --autoencoder-feature-logit-clip 24.0
   --generalizable-projection-max-cosine-regression 0.005
   --generalizable-projection-max-reconstruction-regression 0.01
   --generalizable-projection-max-cross-entropy-regression 0.0
@@ -66,12 +73,12 @@ PAIRED_ARGS=(
 )
 
 CONFIGS=(
-  "lr=0.28 ce=1.75 rec=0.60 cos=0.60 legal=1.35 hard=0.55"
-  "lr=0.30 ce=1.50 rec=0.70 cos=0.70 legal=1.25 hard=0.60"
-  "lr=0.33 ce=1.35 rec=0.80 cos=0.80 legal=1.15 hard=0.70"
-  "lr=0.26 ce=2.00 rec=0.50 cos=0.50 legal=1.50 hard=0.45"
-  "lr=0.31 ce=1.60 rec=0.65 cos=0.75 legal=1.40 hard=0.50"
-  "lr=0.29 ce=1.40 rec=0.75 cos=0.65 legal=1.30 hard=0.65"
+  "lr=0.28 ce=1.75 rec=0.60 cos=0.60 legal=1.35 hard=0.55 fam=1.05 emb=0.45 proto=0.55 view=1.00 viewemb=0.55 cossgd=0.25"
+  "lr=0.30 ce=1.50 rec=0.70 cos=0.70 legal=1.25 hard=0.60 fam=0.95 emb=0.55 proto=0.50 view=1.10 viewemb=0.65 cossgd=0.35"
+  "lr=0.33 ce=1.35 rec=0.80 cos=0.80 legal=1.15 hard=0.70 fam=1.15 emb=0.50 proto=0.65 view=0.95 viewemb=0.50 cossgd=0.20"
+  "lr=0.26 ce=2.00 rec=0.50 cos=0.50 legal=1.50 hard=0.45 fam=0.85 emb=0.65 proto=0.45 view=1.20 viewemb=0.75 cossgd=0.40"
+  "lr=0.31 ce=1.60 rec=0.65 cos=0.75 legal=1.40 hard=0.50 fam=1.10 emb=0.40 proto=0.70 view=1.05 viewemb=0.60 cossgd=0.30"
+  "lr=0.29 ce=1.40 rec=0.75 cos=0.65 legal=1.30 hard=0.65 fam=1.00 emb=0.60 proto=0.55 view=0.90 viewemb=0.45 cossgd=0.25"
 )
 
 if (( TRIAL_COUNT < ${#CONFIGS[@]} )); then
@@ -99,6 +106,12 @@ for idx in "${!CONFIGS[@]}"; do
   cos=""
   legal=""
   hard=""
+  fam="1.0"
+  emb="0.5"
+  proto="0.5"
+  view="1.0"
+  viewemb="0.5"
+  cossgd="0.25"
   for kv in ${cfg}; do
     key="${kv%%=*}"
     val="${kv#*=}"
@@ -109,6 +122,12 @@ for idx in "${!CONFIGS[@]}"; do
       cos) cos="${val}" ;;
       legal) legal="${val}" ;;
       hard) hard="${val}" ;;
+      fam) fam="${val}" ;;
+      emb) emb="${val}" ;;
+      proto) proto="${val}" ;;
+      view) view="${val}" ;;
+      viewemb) viewemb="${val}" ;;
+      cossgd) cossgd="${val}" ;;
     esac
   done
 
@@ -122,6 +141,12 @@ for idx in "${!CONFIGS[@]}"; do
     --generalizable-projection-objective-cosine-gap-weight "${cos}"
     --generalizable-projection-objective-legal-ir-weight "${legal}"
     --generalizable-projection-hard-example-fraction "${hard}"
+    --autoencoder-feature-family-logit-scale "${fam}"
+    --autoencoder-feature-embedding-weight-scale "${emb}"
+    --autoencoder-family-embedding-weight-scale "${proto}"
+    --autoencoder-legal-ir-view-logit-scale "${view}"
+    --autoencoder-legal-ir-view-embedding-weight-scale "${viewemb}"
+    --autoencoder-cosine-reconstruction-weight "${cossgd}"
     --generalizable-projection-epochs "${SWEEP_PROJECTION_EPOCHS}"
     --test-every-cycles "${SWEEP_TEST_EVERY_CYCLES}"
     "${COMMON_ARGS[@]}"
@@ -201,6 +226,12 @@ rec=""
 cos=""
 legal=""
 hard=""
+fam="1.0"
+emb="0.5"
+proto="0.5"
+view="1.0"
+viewemb="0.5"
+cossgd="0.25"
 for kv in ${best_cfg}; do
   key="${kv%%=*}"
   val="${kv#*=}"
@@ -211,6 +242,12 @@ for kv in ${best_cfg}; do
     cos) cos="${val}" ;;
     legal) legal="${val}" ;;
     hard) hard="${val}" ;;
+    fam) fam="${val}" ;;
+    emb) emb="${val}" ;;
+    proto) proto="${val}" ;;
+    view) view="${val}" ;;
+    viewemb) viewemb="${val}" ;;
+    cossgd) cossgd="${val}" ;;
   esac
 done
 
@@ -225,6 +262,12 @@ final_args=(
   --generalizable-projection-objective-cosine-gap-weight "${cos}"
   --generalizable-projection-objective-legal-ir-weight "${legal}"
   --generalizable-projection-hard-example-fraction "${hard}"
+  --autoencoder-feature-family-logit-scale "${fam}"
+  --autoencoder-feature-embedding-weight-scale "${emb}"
+  --autoencoder-family-embedding-weight-scale "${proto}"
+  --autoencoder-legal-ir-view-logit-scale "${view}"
+  --autoencoder-legal-ir-view-embedding-weight-scale "${viewemb}"
+  --autoencoder-cosine-reconstruction-weight "${cossgd}"
   --generalizable-projection-epochs "${FINAL_PROJECTION_EPOCHS}"
   --test-every-cycles "${FINAL_TEST_EVERY_CYCLES}"
   "${COMMON_ARGS[@]}"

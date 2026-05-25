@@ -484,6 +484,215 @@ def test_adaptive_autoencoder_cross_entropy_uses_mixed_family_targets() -> None:
     assert evaluation.cross_entropy_loss > cross_entropy_loss(predicted, "deontic")
 
 
+def test_hard_example_objective_uses_mixed_family_cross_entropy_targets() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice within 30 days.",
+    )
+    first_formula = sample.modal_ir.formulas[0]
+    temporal_formula = replace(
+        first_formula,
+        formula_id=f"{first_formula.formula_id}-temporal-hard-example",
+        operator=replace(
+            first_formula.operator,
+            family="temporal",
+            system="LTL",
+            symbol="G",
+            label="always",
+        ),
+    )
+    mixed_sample = replace(
+        sample,
+        modal_ir=replace(sample.modal_ir, formulas=[first_formula, temporal_formula]),
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        feature_family_logit_scale=1.0,
+        state=ModalAutoencoderTrainingState(
+            feature_family_logits={
+                "modal-family:deontic": {
+                    "deontic": 4.0,
+                    "temporal": -4.0,
+                }
+            }
+        )
+    )
+    distribution = autoencoder._family_distribution(
+        mixed_sample,
+        use_sample_memory=False,
+    )
+
+    objective = autoencoder._sample_training_objective(
+        mixed_sample,
+        objective_weights={
+            "cross_entropy": 1.0,
+            "reconstruction": 0.0,
+            "cosine_gap": 0.0,
+            "legal_ir": 0.0,
+        },
+    )
+
+    assert objective == pytest.approx(
+        cross_entropy_distribution_loss(
+            distribution,
+            {"deontic": 0.5, "temporal": 0.5},
+        )
+    )
+    assert objective > cross_entropy_loss(distribution, "deontic")
+
+
+def test_family_logit_updates_follow_mixed_family_distribution() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice within 30 days.",
+    )
+    first_formula = sample.modal_ir.formulas[0]
+    temporal_formula = replace(
+        first_formula,
+        formula_id=f"{first_formula.formula_id}-temporal-update",
+        operator=replace(
+            first_formula.operator,
+            family="temporal",
+            system="LTL",
+            symbol="G",
+            label="always",
+        ),
+    )
+    mixed_sample = replace(
+        sample,
+        modal_ir=replace(sample.modal_ir, formulas=[first_formula, temporal_formula]),
+    )
+    autoencoder = AdaptiveModalAutoencoder(feature_family_logit_scale=1.0)
+    before = autoencoder.evaluate([mixed_sample])
+
+    todo = type(
+        "Todo",
+        (),
+        {
+            "action": "improve_modal_family_classifier",
+            "loss_name": "cross_entropy_loss",
+            "sample_ids": [mixed_sample.sample_id],
+            "todo_id": "mixed-ce-update",
+        },
+    )()
+    autoencoder.apply_todo(
+        todo,
+        {mixed_sample.sample_id: mixed_sample},
+        learning_rate=0.5,
+    )
+    after = autoencoder.evaluate([mixed_sample])
+
+    sample_logits = autoencoder.state.family_logits[mixed_sample.sample_id]
+    assert after.cross_entropy_loss < before.cross_entropy_loss
+    assert sample_logits["deontic"] > 0.0
+    assert sample_logits["temporal"] > 0.0
+    assert sample_logits["alethic"] < 0.0
+
+
+def test_family_embedding_prototype_head_transfers_cosine_to_holdout() -> None:
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice.",
+        embedding_vector=[1.0, 0.0],
+    )
+    validation = build_us_code_sample(
+        title="5",
+        section="553",
+        text="The agency must publish notice.",
+        embedding_vector=[1.0, 0.0],
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        feature_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=4.0,
+        feature_family_logit_scale=1.0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before = autoencoder.evaluate([validation], use_sample_memory=False)
+
+    autoencoder._nudge_family_logits(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after = autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert autoencoder.state.family_embedding_weights["deontic"]
+    assert after.embedding_cosine_similarity > before.embedding_cosine_similarity
+    introspection = autoencoder.introspect_sample(validation)
+    assert any(
+        contribution.contribution_type == "family_embedding_weight"
+        for contribution in introspection.top_embedding_contributions
+    )
+
+
+def test_legal_ir_view_embedding_prototype_head_transfers_cosine_to_holdout() -> None:
+    class DummyDocument:
+        def canonical_hash(self):
+            return "dummy-legal-ir-target"
+
+    class DummyTarget:
+        document = DummyDocument()
+        losses = {"legal_ir_multiview_total_loss": 0.1}
+        view_distribution = {"knowledge_graphs.neo4j_compat": 1.0}
+
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice.",
+        embedding_vector=[0.0, 1.0],
+    )
+    validation = build_us_code_sample(
+        title="5",
+        section="553",
+        text="The agency shall publish notice.",
+        embedding_vector=[0.0, 1.0],
+    )
+    targets = {
+        train.sample_id: DummyTarget(),
+        validation.sample_id: DummyTarget(),
+    }
+    autoencoder = AdaptiveModalAutoencoder(
+        feature_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=4.0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before = autoencoder.evaluate(
+        [validation],
+        legal_ir_targets=targets,
+        use_sample_memory=False,
+    )
+
+    autoencoder.evaluate([train], legal_ir_targets=targets, use_sample_memory=False)
+    autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after = autoencoder.evaluate(
+        [validation],
+        legal_ir_targets=targets,
+        use_sample_memory=False,
+    )
+
+    assert autoencoder.state.legal_ir_view_embedding_weights[
+        "knowledge_graphs.neo4j_compat"
+    ]
+    assert after.embedding_cosine_similarity > before.embedding_cosine_similarity
+    introspection = autoencoder.introspect_sample(validation)
+    assert any(
+        contribution.contribution_type == "legal_ir_view_embedding_weight"
+        for contribution in introspection.top_embedding_contributions
+    )
+
+
 def test_adaptive_autoencoder_introspection_explains_feature_level_decisions() -> None:
     sample = build_us_code_sample(
         title="5",
@@ -683,6 +892,92 @@ def test_sparse_codec_noise_does_not_drown_fallback_family_updates() -> None:
     assert after.cross_entropy_loss < before.cross_entropy_loss
 
 
+def test_fallback_features_include_structural_and_ngram_signals() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552(a)",
+        text=(
+            "If the applicant files notice, the agency must approve the permit "
+            "except when records are incomplete."
+        ),
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        max_token_features=8,
+        max_token_bigram_features=8,
+        max_token_trigram_features=4,
+    )
+
+    features = autoencoder._fallback_feature_keys_for(sample)
+
+    assert "title:5" in features
+    assert "section-prefix:552" in features
+    assert "cue:deontic" in features
+    assert "token:agency" in features
+    assert "token2:agency_must" in features
+    assert any(feature.startswith("modal-family:") for feature in features)
+    assert any(feature.startswith("frame-family:") for feature in features)
+    assert any(feature.startswith("predicate:") for feature in features)
+    assert "condition-count-bin:2-3" in features
+    assert "exception-count-bin:1" in features
+    assert "frame-logic-ontology:modal_flogic_ir" in features
+
+    legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(sample)
+    assert any(
+        feature.startswith("legal-ir:predicate:")
+        for feature in legal_ir_features
+    )
+    assert "legal-ir:condition-count-bin:2-3" in legal_ir_features
+    assert "legal-ir:exception-count-bin:1" in legal_ir_features
+
+
+def test_feature_update_groups_prioritize_structural_fallback_over_noisy_codec_keys() -> None:
+    class NoisyFeatureCodec:
+        def feature_keys_for_sample(self, sample):
+            return [f"codec-noise:{index}" for index in range(100)]
+
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice before final action.",
+    )
+    autoencoder = AdaptiveModalAutoencoder(feature_codec=NoisyFeatureCodec())
+
+    groups = autoencoder._feature_update_groups_for(sample, step=1.0)
+    per_feature_step = {
+        feature: feature_step
+        for keys, feature_step in groups
+        for feature in keys
+    }
+
+    assert per_feature_step["modal-family:deontic"] > per_feature_step["token:agency"]
+    assert per_feature_step["token:agency"] > per_feature_step["codec-noise:0"]
+
+
+def test_feature_logit_clip_bounds_large_feature_aggregates() -> None:
+    class DenseFeatureCodec:
+        def feature_keys_for_sample(self, sample):
+            return [f"dense:{index}" for index in range(400)]
+
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice before final action.",
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        feature_codec=DenseFeatureCodec(),
+        feature_family_logit_scale=1.0,
+        max_token_features=0,
+        feature_activity_reference=64,
+        feature_logit_clip=3.0,
+    )
+    for feature in autoencoder._feature_keys_for(sample):
+        autoencoder.state.feature_family_logits[feature] = {"deontic": 10.0}
+
+    logits = autoencoder._logits_for(sample, use_sample_memory=False)
+
+    assert logits["deontic"] == pytest.approx(3.0)
+
+
 def test_adaptive_autoencoder_skips_program_synthesis_todos() -> None:
     sample = build_us_code_sample(
         title="5",
@@ -833,8 +1128,10 @@ def test_adaptive_autoencoder_state_roundtrip(tmp_path) -> None:
         decoded_embeddings={"sample": [0.1, 0.2]},
         family_logits={"sample": {"deontic": 1.0}},
         feature_embedding_weights={"token:agency": [0.01, -0.01]},
+        family_embedding_weights={"deontic": [0.03, 0.04]},
         feature_family_logits={"modal-family:deontic": {"deontic": 0.2}},
         legal_ir_view_logits={"deontic.ir": 0.3},
+        legal_ir_view_embedding_weights={"knowledge_graphs.neo4j_compat": [0.05, 0.06]},
         feature_legal_ir_view_logits={"legal-ir:cue:deontic": {"deontic.ir": 0.4}},
         applied_todo_ids=["todo-1"],
     )
@@ -853,8 +1150,10 @@ def test_generalizable_state_copy_drops_sample_specific_memory() -> None:
         decoded_embeddings={"sample": [0.1, 0.2]},
         family_logits={"sample": {"deontic": 1.0}},
         feature_embedding_weights={"token:agency": [0.01, -0.01]},
+        family_embedding_weights={"deontic": [0.03, 0.04]},
         feature_family_logits={"modal-family:deontic": {"deontic": 0.2}},
         legal_ir_view_logits={"deontic.ir": 0.3},
+        legal_ir_view_embedding_weights={"knowledge_graphs.neo4j_compat": [0.05, 0.06]},
         feature_legal_ir_view_logits={"legal-ir:cue:deontic": {"deontic.ir": 0.4}},
         applied_todo_ids=["todo-1"],
     )
@@ -865,8 +1164,13 @@ def test_generalizable_state_copy_drops_sample_specific_memory() -> None:
     assert generalizable.family_logits == {}
     assert generalizable.applied_todo_ids == []
     assert generalizable.feature_embedding_weights == state.feature_embedding_weights
+    assert generalizable.family_embedding_weights == state.family_embedding_weights
     assert generalizable.feature_family_logits == state.feature_family_logits
     assert generalizable.legal_ir_view_logits == state.legal_ir_view_logits
+    assert (
+        generalizable.legal_ir_view_embedding_weights
+        == state.legal_ir_view_embedding_weights
+    )
     assert (
         generalizable.feature_legal_ir_view_logits
         == state.feature_legal_ir_view_logits
@@ -878,16 +1182,20 @@ def test_average_generalizable_state_reuses_prior_feature_learning() -> None:
         decoded_embeddings={"sample-a": [1.0, 1.0]},
         family_logits={"sample-a": {"deontic": 4.0}},
         feature_embedding_weights={"token:agency": [0.2, -0.2]},
+        family_embedding_weights={"deontic": [0.2, 0.4]},
         feature_family_logits={"modal-family:deontic": {"deontic": 0.6}},
         legal_ir_view_logits={"deontic.ir": 0.6},
+        legal_ir_view_embedding_weights={"knowledge_graphs.neo4j_compat": [0.2, 0.6]},
         feature_legal_ir_view_logits={"legal-ir:cue:deontic": {"deontic.ir": 0.8}},
     )
     second = ModalAutoencoderTrainingState(
         decoded_embeddings={"sample-b": [2.0, 2.0]},
         family_logits={"sample-b": {"temporal": 4.0}},
         feature_embedding_weights={"token:agency": [0.4, -0.4]},
+        family_embedding_weights={"deontic": [0.4, 0.8]},
         feature_family_logits={"modal-family:deontic": {"deontic": 0.2}},
         legal_ir_view_logits={"deontic.ir": 0.2},
+        legal_ir_view_embedding_weights={"knowledge_graphs.neo4j_compat": [0.4, 1.0]},
         feature_legal_ir_view_logits={"legal-ir:cue:deontic": {"deontic.ir": 0.4}},
     )
 
@@ -896,6 +1204,10 @@ def test_average_generalizable_state_reuses_prior_feature_learning() -> None:
     assert averaged.decoded_embeddings == {}
     assert averaged.family_logits == {}
     assert averaged.feature_embedding_weights["token:agency"] == pytest.approx([0.3, -0.3])
+    assert averaged.family_embedding_weights["deontic"] == pytest.approx([0.3, 0.6])
+    assert averaged.legal_ir_view_embedding_weights[
+        "knowledge_graphs.neo4j_compat"
+    ] == pytest.approx([0.3, 0.8])
     assert averaged.feature_family_logits["modal-family:deontic"]["deontic"] == pytest.approx(0.4)
     assert averaged.legal_ir_view_logits["deontic.ir"] == pytest.approx(0.4)
     assert (

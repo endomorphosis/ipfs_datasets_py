@@ -1,54 +1,334 @@
 {
   "schema": "ipfs_datasets_py.state_laws_refresh.completed_states.v1",
-  "updated_at": "2026-05-25T00:00:00+00:00",
   "states": {
+    "AK": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 65,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
+    },
+    "AL": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 42547,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
+    },
+    "AR": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 442,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
+    },
+    "AZ": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 24632,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
+    },
+    "CA": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 3098,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
+    },
+    "CO": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 5,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
+    },
     "CT": {
+      "completed_at": "2026-05-23T12:55:59.851511+00:00",
+      "completion_mode": "checkpoint_reconciled_complete_baseline",
+      "first_completed_at": "2026-05-23T12:55:59.851511+00:00",
       "status": "success",
       "statutes_count": 26627,
-      "completed_at": "2026-05-23T12:55:59.851511+00:00",
-      "first_completed_at": "2026-05-23T12:55:59.851511+00:00",
-      "updated_at": "2026-05-25T00:00:00+00:00",
-      "completion_mode": "checkpoint_reconciled_complete_baseline"
+      "updated_at": "2026-05-25T00:00:00+00:00"
+    },
+    "DE": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 8826,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
+    },
+    "FL": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 24866,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
+    },
+    "GA": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 2,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
+    },
+    "IA": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 287,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
+    },
+    "ID": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 20571,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
+    },
+    "IL": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 72607,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
+    },
+    "KS": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 22299,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
+    },
+    "KY": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 35242,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
+    },
+    "LA": {
+      "completed_at": "2026-05-23T07:45:16.532876+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-23T03:07:04.178160+00:00",
+      "status": "success",
+      "statutes_count": 4,
+      "updated_at": "2026-05-23T12:27:36.208162+00:00"
+    },
+    "MA": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 14,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
     },
     "MD": {
+      "completed_at": "2026-05-23T10:47:18.274596+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-23T05:29:27.445173+00:00",
       "status": "success",
       "statutes_count": 8099,
-      "completed_at": "2026-05-23T10:47:18.274596+00:00",
-      "first_completed_at": "2026-05-23T10:47:18.274596+00:00",
-      "updated_at": "2026-05-23T14:41:51+00:00",
-      "completion_mode": "confirmed_live_run_baseline"
+      "updated_at": "2026-05-23T12:27:36.208162+00:00"
+    },
+    "MI": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 1490,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
     },
     "MN": {
+      "completed_at": "2026-05-20T00:34:51.312659+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-20T00:34:51.312659+00:00",
       "status": "success",
       "statutes_count": 16389,
-      "completed_at": "2026-05-20T00:34:51+00:00",
-      "first_completed_at": "2026-05-20T00:34:51+00:00",
-      "updated_at": "2026-05-22T14:40:00+00:00",
-      "completion_mode": "confirmed_full_corpus_baseline"
+      "updated_at": "2026-05-22T08:52:55.625856+00:00"
+    },
+    "MO": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 469,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
+    },
+    "MT": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 10,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
     },
     "NC": {
+      "completed_at": "2026-05-23T05:25:10.754278+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-23T05:25:10.754278+00:00",
       "status": "success",
       "statutes_count": 35245,
-      "completed_at": "2026-05-23T05:25:10.754278+00:00",
-      "first_completed_at": "2026-05-23T05:25:10.754278+00:00",
-      "updated_at": "2026-05-23T14:41:51+00:00",
-      "completion_mode": "confirmed_live_run_baseline"
+      "updated_at": "2026-05-23T05:42:13.191549+00:00"
+    },
+    "ND": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 1738,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
+    },
+    "NJ": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 1,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
+    },
+    "NM": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 3140,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
+    },
+    "NV": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 47334,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
+    },
+    "NY": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 26,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
+    },
+    "OH": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 10,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
     },
     "OK": {
+      "completed_at": "2026-05-22T07:15:38+00:00",
+      "completion_mode": "confirmed_live_run_baseline",
+      "first_completed_at": "2026-05-22T07:15:38+00:00",
       "status": "success",
       "statutes_count": 36,
-      "completed_at": "2026-05-22T07:15:38+00:00",
-      "first_completed_at": "2026-05-22T07:15:38+00:00",
-      "updated_at": "2026-05-22T14:40:00+00:00",
-      "completion_mode": "confirmed_live_run_baseline"
+      "updated_at": "2026-05-22T14:40:00+00:00"
+    },
+    "OR": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 1789,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
+    },
+    "PA": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 10719,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
+    },
+    "SC": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 39720,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
+    },
+    "SD": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 4266,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
+    },
+    "TN": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 278,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
+    },
+    "TX": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 85100,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
+    },
+    "UT": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 22178,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
+    },
+    "VT": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 4707,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
+    },
+    "WI": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 12894,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
     },
     "WV": {
+      "completed_at": "2026-05-22T07:15:38+00:00",
+      "completion_mode": "confirmed_live_run_baseline",
+      "first_completed_at": "2026-05-22T07:15:38+00:00",
       "status": "success",
       "statutes_count": 96,
-      "completed_at": "2026-05-22T07:15:38+00:00",
-      "first_completed_at": "2026-05-22T07:15:38+00:00",
-      "updated_at": "2026-05-22T14:40:00+00:00",
-      "completion_mode": "confirmed_live_run_baseline"
+      "updated_at": "2026-05-22T14:40:00+00:00"
+    },
+    "WY": {
+      "completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
+      "first_completed_at": "2026-05-19T16:00:16.198547+00:00",
+      "status": "success",
+      "statutes_count": 11830,
+      "updated_at": "2026-05-19T16:00:16.198547+00:00"
     }
-  }
+  },
+  "updated_at": "2026-05-25T19:38:55+00:00"
 }

@@ -264,7 +264,7 @@ class NebraskaScraper(BaseStateScraper):
 
         out: List[NormalizedStatute] = []
         limit = max(1, int(max_statutes)) if max_statutes is not None else None
-        concurrency = max(1, int(os.getenv("NEBRASKA_SECTION_CONCURRENCY", "6") or "6"))
+        concurrency = max(1, int(os.getenv("NEBRASKA_SECTION_CONCURRENCY", "10") or "10"))
         sem = asyncio.Semaphore(concurrency)
 
         async def _parse_source_url(source_url: str) -> Optional[NormalizedStatute]:

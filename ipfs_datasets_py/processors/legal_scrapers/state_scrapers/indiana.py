@@ -63,29 +63,37 @@ class IndianaScraper(BaseStateScraper):
         return_threshold = self._bounded_return_threshold(160)
         if max_statutes is not None:
             return_threshold = max(1, min(return_threshold, int(max_statutes)))
+        full_corpus = self._full_corpus_enabled()
+        if full_corpus and max_statutes is None:
+            full_target = max(
+                500,
+                int(os.getenv("INDIANA_FULL_CORPUS_TARGET", "25000") or "25000"),
+            )
+            target_statutes = full_target
+        else:
+            target_statutes = max(1, int(return_threshold))
         resumed = self._load_partial_checkpoint_statutes(
             code_name=code_name,
-            max_statutes=(None if max_statutes is None else int(max_statutes)),
+            max_statutes=int(target_statutes),
         )
-        if return_threshold < 30 and max_statutes is None:
+        if target_statutes < 30 and max_statutes is None:
             seed_pdfs = await self._scrape_seed_archive_pdfs(
                 code_name=code_name,
-                max_statutes=return_threshold,
+                max_statutes=target_statutes,
             )
             if seed_pdfs:
                 return seed_pdfs
 
-        archival = await self._scrape_archived_chapter_pdfs(code_name=code_name, max_statutes=max(10, return_threshold))
+        archival = await self._scrape_archived_chapter_pdfs(code_name=code_name, max_statutes=max(10, target_statutes))
         justia_titles: List[NormalizedStatute] = []
         title_page_statutes: List[NormalizedStatute] = []
-        full_corpus = self._full_corpus_enabled()
         bounded_probe = max_statutes is not None
         justia_enabled = full_corpus or bounded_probe or self._env_flag("INDIANA_JUSTIA_ENABLE")
         title_pages_enabled = full_corpus or bounded_probe or self._env_flag("INDIANA_ARCHIVED_TITLE_PAGES_ENABLE")
         if justia_enabled:
-            justia_titles = await self._scrape_archived_justia_titles(code_name=code_name, max_statutes=max(10, return_threshold))
+            justia_titles = await self._scrape_archived_justia_titles(code_name=code_name, max_statutes=max(10, target_statutes))
         if title_pages_enabled:
-            title_page_statutes = await self._scrape_archived_title_pages(code_name=code_name, max_statutes=max(10, return_threshold))
+            title_page_statutes = await self._scrape_archived_title_pages(code_name=code_name, max_statutes=max(10, target_statutes))
 
         merged: List[NormalizedStatute] = []
         merged_keys = set()
@@ -387,6 +395,11 @@ class IndianaScraper(BaseStateScraper):
         seen = set()
         queued = set()
         crawl_limit = int(os.getenv("INDIANA_JUSTIA_CRAWL_PAGE_LIMIT", "2000") or "2000")
+        global_page_budget = max(
+            crawl_limit,
+            int(os.getenv("INDIANA_ARCHIVED_TITLE_PAGES_TOTAL_LIMIT", "25000") or "25000"),
+        )
+        global_pages_seen = 0
         self._write_partial_checkpoint(
             out,
             code_name=code_name,
@@ -407,9 +420,10 @@ class IndianaScraper(BaseStateScraper):
             queue = [title_url]
             queued.add(title_url)
             pages_seen = 0
-            while queue and len(out) < max_statutes and pages_seen < crawl_limit:
+            while queue and len(out) < max_statutes and pages_seen < crawl_limit and global_pages_seen < global_page_budget:
                 page_url = queue.pop(0)
                 pages_seen += 1
+                global_pages_seen += 1
                 try:
                     payload = await self._fetch_page_content_with_archival_fallback(page_url, timeout_seconds=35)
                 except Exception:
@@ -492,6 +506,8 @@ class IndianaScraper(BaseStateScraper):
                             "codes_total": 1,
                         },
                     )
+            if global_pages_seen >= global_page_budget:
+                break
 
         self._write_partial_checkpoint(
             out,
@@ -643,7 +659,12 @@ class IndianaScraper(BaseStateScraper):
         seen_ids = set()
 
         candidate_urls = list(self._ARCHIVE_CHAPTER_PDFS)
-        for discovered_url in await self._discover_archived_pdf_urls(limit=max(max_statutes * 8, 200)):
+        pdf_discovery_limit_cap = max(
+            500,
+            int(os.getenv("INDIANA_ARCHIVED_PDF_DISCOVERY_LIMIT", "12000") or "12000"),
+        )
+        pdf_discovery_limit = min(pdf_discovery_limit_cap, max(max_statutes * 8, 200))
+        for discovered_url in await self._discover_archived_pdf_urls(limit=pdf_discovery_limit):
             if discovered_url not in candidate_urls:
                 candidate_urls.append(discovered_url)
         self._write_partial_checkpoint(

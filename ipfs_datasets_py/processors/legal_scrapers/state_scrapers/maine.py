@@ -3,6 +3,7 @@
 This module contains the scraper for Maine statutes from the official state legislative website.
 """
 
+import asyncio
 from typing import List, Dict, Optional
 import re
 from urllib.parse import urljoin
@@ -132,8 +133,33 @@ class MaineScraper(BaseStateScraper):
         root_html = root_raw.decode("utf-8", errors="replace") if isinstance(root_raw, bytes) else str(root_raw)
         root_soup = BeautifulSoup(root_html, "html.parser")
 
+        resumed = self._load_partial_checkpoint_statutes(code_name=code_name, max_statutes=max_statutes)
         statutes: List[NormalizedStatute] = []
-        seen_sections = set()
+        seen_sections: set[str] = set()
+        seen_keys: set[str] = set()
+
+        def _extend_unique(batch: List[NormalizedStatute]) -> None:
+            for statute in batch:
+                key = str(statute.statute_id or statute.source_url or "").strip().lower()
+                source_url = str(statute.source_url or "").strip()
+                if key and key in seen_keys:
+                    continue
+                if source_url and source_url in seen_sections:
+                    continue
+                if key:
+                    seen_keys.add(key)
+                if source_url:
+                    seen_sections.add(source_url)
+                statutes.append(statute)
+                if len(statutes) >= max_statutes:
+                    break
+
+        if resumed:
+            _extend_unique(resumed)
+            self.logger.info(
+                "Maine official tree: resumed %s statutes from partial checkpoint",
+                len(statutes),
+            )
         title_urls = []
         seen_titles = set()
         for link in root_soup.find_all("a", href=True):
@@ -164,6 +190,9 @@ class MaineScraper(BaseStateScraper):
         )
 
         processed_chapters = 0
+        section_concurrency = max(1, int(self._env_int("STATE_SCRAPER_ME_SECTION_CONCURRENCY", default=8)))
+        section_sem = asyncio.Semaphore(section_concurrency)
+
         for title_index, title_url in enumerate(title_urls, start=1):
             if len(statutes) >= max_statutes:
                 break
@@ -212,17 +241,32 @@ class MaineScraper(BaseStateScraper):
                     continue
                 chapter_html = chapter_raw.decode("utf-8", errors="replace") if isinstance(chapter_raw, bytes) else str(chapter_raw)
                 chapter_soup = BeautifulSoup(chapter_html, "html.parser")
+                section_candidates: List[str] = []
+                seen_local_candidates: set[str] = set()
                 for link in chapter_soup.find_all("a", href=True):
                     href = str(link.get("href") or "").strip()
                     if not re.search(r"title[0-9A-Za-z\-]+sec[0-9A-Za-z\-]+\.html$", href, re.IGNORECASE):
                         continue
                     section_url = urljoin(chapter_url, href)
-                    if section_url in seen_sections or section_url.endswith("sec0.html"):
+                    if section_url.endswith("sec0.html"):
                         continue
-                    seen_sections.add(section_url)
-                    statute = await self._build_official_section_statute(code_name, section_url)
+                    if section_url in seen_sections or section_url in seen_local_candidates:
+                        continue
+                    seen_local_candidates.add(section_url)
+                    section_candidates.append(section_url)
+
+                async def _parse_section_url(section_url: str) -> Optional[NormalizedStatute]:
+                    async with section_sem:
+                        return await self._build_official_section_statute(code_name, section_url)
+
+                tasks = [asyncio.create_task(_parse_section_url(section_url)) for section_url in section_candidates]
+                scanned_sections = 0
+                cancelled_early = False
+                for task in asyncio.as_completed(tasks):
+                    scanned_sections += 1
+                    statute = await task
                     if statute is not None:
-                        statutes.append(statute)
+                        _extend_unique([statute])
                         if len(statutes) == 1 or len(statutes) % 25 == 0:
                             self.logger.info(
                                 "Maine official tree: chapters_processed=%s statutes_so_far=%s",
@@ -235,12 +279,36 @@ class MaineScraper(BaseStateScraper):
                                 stage_label="maine:section-scan",
                                 extra={
                                     "chapters_scanned": int(processed_chapters),
+                                    "sections_scanned": int(scanned_sections),
+                                    "discovered_sections": int(len(section_candidates)),
                                     "codes_completed": 0,
                                     "codes_total": 1,
                                 },
                             )
-                        if len(statutes) >= max_statutes:
-                            break
+                    if len(statutes) >= max_statutes:
+                        cancelled_early = True
+                        for pending in tasks:
+                            if not pending.done():
+                                pending.cancel()
+                        break
+                if cancelled_early:
+                    await asyncio.gather(*tasks, return_exceptions=True)
+                if scanned_sections and (
+                    scanned_sections == len(section_candidates)
+                    or scanned_sections % 200 == 0
+                ):
+                    self._write_partial_checkpoint(
+                        statutes,
+                        code_name=code_name,
+                        stage_label="maine:section-scan",
+                        extra={
+                            "chapters_scanned": int(processed_chapters),
+                            "sections_scanned": int(scanned_sections),
+                            "discovered_sections": int(len(section_candidates)),
+                            "codes_completed": 0,
+                            "codes_total": 1,
+                        },
+                    )
 
         self._write_partial_checkpoint(
             statutes,

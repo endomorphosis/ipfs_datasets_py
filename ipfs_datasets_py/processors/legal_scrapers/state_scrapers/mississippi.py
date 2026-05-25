@@ -391,6 +391,17 @@ class MississippiScraper(BaseStateScraper):
         seed_statutes: Optional[List[NormalizedStatute]] = None,
         checkpoint: Optional["_MississippiCheckpoint"] = None,
     ) -> List[NormalizedStatute]:
+        archive_target_cap = max(
+            100,
+            int(
+                os.getenv("STATE_SCRAPER_MS_ARCHIVE_TARGET", "25000")
+                or "25000"
+            ),
+        )
+        if self._full_corpus_enabled():
+            max_statutes = min(max(1, int(max_statutes)), archive_target_cap)
+        else:
+            max_statutes = max(1, int(max_statutes))
         headers = {"User-Agent": "Mozilla/5.0"}
         bounded_scrape = max_statutes <= 10
         if bounded_scrape:
@@ -398,6 +409,29 @@ class MississippiScraper(BaseStateScraper):
         statutes: List[NormalizedStatute] = []
         seen_history_urls = set()
         seen_statute_keys = set()
+        history_concurrency = max(
+            1,
+            int(
+                os.getenv(
+                    "STATE_SCRAPER_MS_HISTORY_CONCURRENCY",
+                    "8" if self._full_corpus_enabled() else "4",
+                )
+                or ("8" if self._full_corpus_enabled() else "4")
+            ),
+        )
+        history_batch_size = max(
+            history_concurrency,
+            min(
+                400,
+                int(
+                    os.getenv(
+                        "STATE_SCRAPER_MS_HISTORY_BATCH_SIZE",
+                        str(history_concurrency * 20),
+                    )
+                    or str(history_concurrency * 20)
+                ),
+            ),
+        )
 
         for statute in list(seed_statutes or []):
             statute_key = _statute_dedupe_key(statute)
@@ -438,49 +472,77 @@ class MississippiScraper(BaseStateScraper):
                 len(statutes),
             )
 
-            for history_index, history_url in enumerate(history_urls, start=1):
-                if len(statutes) >= max_statutes:
-                    break
+            candidate_history_urls: List[str] = []
+            for history_url in history_urls:
                 if history_url in seen_history_urls:
                     continue
                 seen_history_urls.add(history_url)
+                candidate_history_urls.append(history_url)
+            if not candidate_history_urls:
+                continue
 
-                statute = await self._build_statute_from_history_url(
-                    code_name=code_name,
-                    history_url=history_url,
-                    headers=headers,
-                )
-                if statute is None:
-                    if history_index == 1 or history_index % 100 == 0:
+            sem = asyncio.Semaphore(history_concurrency)
+
+            async def _fetch_history(history_url: str) -> Optional[NormalizedStatute]:
+                async with sem:
+                    return await self._build_statute_from_history_url(
+                        code_name=code_name,
+                        history_url=history_url,
+                        headers=headers,
+                    )
+
+            scanned_from_index = 0
+            cancelled_early = False
+            for batch_start in range(0, len(candidate_history_urls), history_batch_size):
+                if len(statutes) >= max_statutes:
+                    cancelled_early = True
+                    break
+                batch_urls = candidate_history_urls[batch_start : batch_start + history_batch_size]
+                tasks = [asyncio.create_task(_fetch_history(history_url)) for history_url in batch_urls]
+                for task in asyncio.as_completed(tasks):
+                    scanned_from_index += 1
+                    statute = await task
+                    if statute is None:
+                        if scanned_from_index == 1 or scanned_from_index % 100 == 0:
+                            self.logger.info(
+                                "Mississippi archive history: scanned=%s/%s statutes_so_far=%s",
+                                scanned_from_index,
+                                len(candidate_history_urls),
+                                len(statutes),
+                            )
+                        continue
+                    statute_key = _statute_dedupe_key(statute)
+                    if statute_key and statute_key in seen_statute_keys:
+                        continue
+                    if statute_key:
+                        seen_statute_keys.add(statute_key)
+                    statutes.append(statute)
+                    if checkpoint is not None:
+                        checkpoint.maybe_write(
+                            statutes,
+                            code_name=code_name,
+                            scanned_history_urls=len(seen_history_urls),
+                            discovered_history_urls=len(history_urls),
+                        )
+                    if len(statutes) == 1 or len(statutes) % 25 == 0:
                         self.logger.info(
                             "Mississippi archive history: scanned=%s/%s statutes_so_far=%s",
-                            history_index,
-                            len(history_urls),
+                            scanned_from_index,
+                            len(candidate_history_urls),
                             len(statutes),
                         )
-                    continue
-                statute_key = _statute_dedupe_key(statute)
-                if statute_key and statute_key in seen_statute_keys:
-                    continue
-                if statute_key:
-                    seen_statute_keys.add(statute_key)
-                statutes.append(statute)
-                if checkpoint is not None:
-                    checkpoint.maybe_write(
-                        statutes,
-                        code_name=code_name,
-                        scanned_history_urls=len(seen_history_urls),
-                        discovered_history_urls=len(history_urls),
-                    )
-                if len(statutes) == 1 or len(statutes) % 25 == 0:
-                    self.logger.info(
-                        "Mississippi archive history: scanned=%s/%s statutes_so_far=%s",
-                        history_index,
-                        len(history_urls),
-                        len(statutes),
-                    )
+                    if len(statutes) >= max_statutes:
+                        cancelled_early = True
+                        for pending in tasks:
+                            if not pending.done():
+                                pending.cancel()
+                        break
+                if cancelled_early:
+                    await asyncio.gather(*tasks, return_exceptions=True)
+                    break
 
-            if statutes:
+            # In bounded probes, stop as soon as one index yields usable statutes.
+            if statutes and not self._full_corpus_enabled():
                 break
 
         if checkpoint is not None:

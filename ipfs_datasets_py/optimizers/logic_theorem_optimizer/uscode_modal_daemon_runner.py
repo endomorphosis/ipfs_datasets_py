@@ -1825,6 +1825,32 @@ def build_paired_daemon_commands(
         str(getattr(args, "autoencoder_device", "auto")),
         "--autoencoder-feature-family-logit-scale",
         str(getattr(args, "autoencoder_feature_family_logit_scale", 1.0)),
+        "--autoencoder-feature-embedding-weight-scale",
+        str(getattr(args, "autoencoder_feature_embedding_weight_scale", 0.5)),
+        "--autoencoder-family-embedding-weight-scale",
+        str(getattr(args, "autoencoder_family_embedding_weight_scale", 0.5)),
+        "--autoencoder-legal-ir-view-logit-scale",
+        str(getattr(args, "autoencoder_legal_ir_view_logit_scale", 1.0)),
+        "--autoencoder-legal-ir-view-embedding-weight-scale",
+        str(getattr(args, "autoencoder_legal_ir_view_embedding_weight_scale", 0.5)),
+        "--autoencoder-cosine-reconstruction-weight",
+        str(getattr(args, "autoencoder_cosine_reconstruction_weight", 0.25)),
+        "--autoencoder-max-token-features",
+        str(getattr(args, "autoencoder_max_token_features", 48)),
+        "--autoencoder-max-token-bigram-features",
+        str(getattr(args, "autoencoder_max_token_bigram_features", 24)),
+        "--autoencoder-max-token-trigram-features",
+        str(getattr(args, "autoencoder_max_token_trigram_features", 12)),
+        "--autoencoder-max-legal-ir-token-features",
+        str(getattr(args, "autoencoder_max_legal_ir_token_features", 24)),
+        "--autoencoder-max-legal-ir-token-bigram-features",
+        str(getattr(args, "autoencoder_max_legal_ir_token_bigram_features", 12)),
+        "--autoencoder-max-legal-ir-token-trigram-features",
+        str(getattr(args, "autoencoder_max_legal_ir_token_trigram_features", 8)),
+        "--autoencoder-feature-activity-reference",
+        str(getattr(args, "autoencoder_feature_activity_reference", 64)),
+        "--autoencoder-feature-logit-clip",
+        str(getattr(args, "autoencoder_feature_logit_clip", 24.0)),
         "--generalizable-projection-max-cosine-regression",
         str(getattr(args, "generalizable_projection_max_cosine_regression", 0.005)),
         "--generalizable-projection-max-reconstruction-regression",
@@ -4507,6 +4533,102 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--autoencoder-feature-embedding-weight-scale",
+        type=float,
+        default=0.5,
+        help=(
+            "Scale reusable feature-level embedding adjustments during decode. "
+            "Higher values fit reconstruction faster but can overfit lexical noise."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-family-embedding-weight-scale",
+        type=float,
+        default=0.5,
+        help=(
+            "Scale modal-family prototype vectors in the decoder. This lets "
+            "reconstruction transfer through family predictions, not only exact text features."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-legal-ir-view-logit-scale",
+        type=float,
+        default=1.0,
+        help=(
+            "Scale the dedicated LegalIR-view feature head used for multiview "
+            "cross-entropy optimization."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-legal-ir-view-embedding-weight-scale",
+        type=float,
+        default=0.5,
+        help=(
+            "Scale LegalIR-view prototype vectors in the decoder so reconstruction "
+            "can transfer through frame logic, event calculus, prover, and graph views."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-cosine-reconstruction-weight",
+        type=float,
+        default=0.25,
+        help=(
+            "Blend cosine-direction error into decoder feature/prototype updates "
+            "alongside raw reconstruction error."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-max-token-features",
+        type=int,
+        default=48,
+        help="Maximum unigram lexical features per sample in the modal head.",
+    )
+    parser.add_argument(
+        "--autoencoder-max-token-bigram-features",
+        type=int,
+        default=24,
+        help="Maximum bigram lexical features per sample in the modal head.",
+    )
+    parser.add_argument(
+        "--autoencoder-max-token-trigram-features",
+        type=int,
+        default=12,
+        help="Maximum trigram lexical features per sample in the modal head.",
+    )
+    parser.add_argument(
+        "--autoencoder-max-legal-ir-token-features",
+        type=int,
+        default=24,
+        help="Maximum unigram lexical features per sample in the LegalIR view head.",
+    )
+    parser.add_argument(
+        "--autoencoder-max-legal-ir-token-bigram-features",
+        type=int,
+        default=12,
+        help="Maximum bigram lexical features per sample in the LegalIR view head.",
+    )
+    parser.add_argument(
+        "--autoencoder-max-legal-ir-token-trigram-features",
+        type=int,
+        default=8,
+        help="Maximum trigram lexical features per sample in the LegalIR view head.",
+    )
+    parser.add_argument(
+        "--autoencoder-feature-activity-reference",
+        type=int,
+        default=64,
+        help=(
+            "Feature-count reference before adaptive feature contribution "
+            "down-scaling starts."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-feature-logit-clip",
+        type=float,
+        default=24.0,
+        help="Absolute clamp for modal and LegalIR logits after feature aggregation.",
+    )
+    parser.add_argument(
         "--autoencoder-bridge-workers",
         type=int,
         default=int(os.environ.get("IPFS_DATASETS_LEGAL_IR_PARALLEL_WORKERS", "1") or 1),
@@ -4747,9 +4869,13 @@ def load_warm_start_state(paths: Sequence[Path]) -> tuple[ModalAutoencoderTraini
 
     averaged = ModalAutoencoderTrainingState.average_generalizable(loaded_states)
     return averaged, {
+        "family_embedding_weight_entries": len(averaged.family_embedding_weights),
         "feature_embedding_weight_entries": len(averaged.feature_embedding_weights),
         "feature_family_logit_entries": len(averaged.feature_family_logits),
         "loaded_paths": loaded_paths,
+        "legal_ir_view_embedding_weight_entries": len(
+            averaged.legal_ir_view_embedding_weights
+        ),
         "missing_paths": missing_paths,
         "source_count": len(loaded_states),
     }
@@ -5142,12 +5268,88 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         state=state,
         feature_codec=feature_codec,
         compute_device=args.autoencoder_device,
+        feature_embedding_weight_scale=float(
+            getattr(args, "autoencoder_feature_embedding_weight_scale", 0.5)
+        ),
+        family_embedding_weight_scale=float(
+            getattr(args, "autoencoder_family_embedding_weight_scale", 0.5)
+        ),
         feature_family_logit_scale=float(
             getattr(args, "autoencoder_feature_family_logit_scale", 1.0)
+        ),
+        legal_ir_view_logit_scale=float(
+            getattr(args, "autoencoder_legal_ir_view_logit_scale", 1.0)
+        ),
+        legal_ir_view_embedding_weight_scale=float(
+            getattr(args, "autoencoder_legal_ir_view_embedding_weight_scale", 0.5)
+        ),
+        cosine_reconstruction_weight=float(
+            getattr(args, "autoencoder_cosine_reconstruction_weight", 0.25)
+        ),
+        max_token_features=int(getattr(args, "autoencoder_max_token_features", 48)),
+        max_token_bigram_features=int(
+            getattr(args, "autoencoder_max_token_bigram_features", 24)
+        ),
+        max_token_trigram_features=int(
+            getattr(args, "autoencoder_max_token_trigram_features", 12)
+        ),
+        max_legal_ir_token_features=int(
+            getattr(args, "autoencoder_max_legal_ir_token_features", 24)
+        ),
+        max_legal_ir_token_bigram_features=int(
+            getattr(args, "autoencoder_max_legal_ir_token_bigram_features", 12)
+        ),
+        max_legal_ir_token_trigram_features=int(
+            getattr(args, "autoencoder_max_legal_ir_token_trigram_features", 8)
+        ),
+        feature_activity_reference=int(
+            getattr(args, "autoencoder_feature_activity_reference", 64)
+        ),
+        feature_logit_clip=float(
+            getattr(args, "autoencoder_feature_logit_clip", 24.0)
         ),
     )
     summary["autoencoder_feature_family_logit_scale"] = float(
         getattr(args, "autoencoder_feature_family_logit_scale", 1.0)
+    )
+    summary["autoencoder_feature_embedding_weight_scale"] = float(
+        getattr(args, "autoencoder_feature_embedding_weight_scale", 0.5)
+    )
+    summary["autoencoder_family_embedding_weight_scale"] = float(
+        getattr(args, "autoencoder_family_embedding_weight_scale", 0.5)
+    )
+    summary["autoencoder_legal_ir_view_logit_scale"] = float(
+        getattr(args, "autoencoder_legal_ir_view_logit_scale", 1.0)
+    )
+    summary["autoencoder_legal_ir_view_embedding_weight_scale"] = float(
+        getattr(args, "autoencoder_legal_ir_view_embedding_weight_scale", 0.5)
+    )
+    summary["autoencoder_cosine_reconstruction_weight"] = float(
+        getattr(args, "autoencoder_cosine_reconstruction_weight", 0.25)
+    )
+    summary["autoencoder_max_token_features"] = int(
+        getattr(args, "autoencoder_max_token_features", 48)
+    )
+    summary["autoencoder_max_token_bigram_features"] = int(
+        getattr(args, "autoencoder_max_token_bigram_features", 24)
+    )
+    summary["autoencoder_max_token_trigram_features"] = int(
+        getattr(args, "autoencoder_max_token_trigram_features", 12)
+    )
+    summary["autoencoder_max_legal_ir_token_features"] = int(
+        getattr(args, "autoencoder_max_legal_ir_token_features", 24)
+    )
+    summary["autoencoder_max_legal_ir_token_bigram_features"] = int(
+        getattr(args, "autoencoder_max_legal_ir_token_bigram_features", 12)
+    )
+    summary["autoencoder_max_legal_ir_token_trigram_features"] = int(
+        getattr(args, "autoencoder_max_legal_ir_token_trigram_features", 8)
+    )
+    summary["autoencoder_feature_activity_reference"] = int(
+        getattr(args, "autoencoder_feature_activity_reference", 64)
+    )
+    summary["autoencoder_feature_logit_clip"] = float(
+        getattr(args, "autoencoder_feature_logit_clip", 24.0)
     )
     summary.update(autoencoder.compute_backend_metadata())
     save_summary(summary_path, summary)
@@ -5608,11 +5810,17 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         summary["applied_todo_ids"] = len(autoencoder.state.applied_todo_ids)
         summary["decoded_embedding_entries"] = len(autoencoder.state.decoded_embeddings)
         summary["elapsed_seconds"] = round(time.time() - started_at, 3)
+        summary["family_embedding_weight_entries"] = len(
+            autoencoder.state.family_embedding_weights
+        )
         summary["family_logit_entries"] = len(autoencoder.state.family_logits)
         summary["feature_embedding_weight_entries"] = len(autoencoder.state.feature_embedding_weights)
         summary["feature_family_logit_entries"] = len(autoencoder.state.feature_family_logits)
         summary["feature_legal_ir_view_logit_entries"] = len(
             autoencoder.state.feature_legal_ir_view_logits
+        )
+        summary["legal_ir_view_embedding_weight_entries"] = len(
+            autoencoder.state.legal_ir_view_embedding_weights
         )
         summary["finished_at"] = utc_now()
         summary["legal_ir_view_logit_entries"] = len(

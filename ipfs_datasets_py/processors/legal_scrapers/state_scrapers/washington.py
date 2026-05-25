@@ -3,6 +3,7 @@
 This module contains the scraper for Washington statutes from the official state legislative website.
 """
 
+import asyncio
 from typing import List, Dict, Optional, Tuple
 import re
 from urllib.parse import parse_qs, urljoin, urlparse
@@ -136,7 +137,31 @@ class WashingtonScraper(BaseStateScraper):
     ) -> List[NormalizedStatute]:
         title_links = await self._discover_title_links()
         self.logger.info("Washington official index: discovered %s title links", len(title_links))
+        resumed = self._load_partial_checkpoint_statutes(code_name=code_name, max_statutes=max_statutes)
         statutes: List[NormalizedStatute] = []
+        seen_keys: set[str] = set()
+        seen_urls: set[str] = set()
+
+        def _extend_unique(batch: List[NormalizedStatute]) -> None:
+            for statute in batch:
+                key = str(statute.statute_id or statute.source_url or "").strip().lower()
+                source_url = str(statute.source_url or "").strip().lower()
+                if key and key in seen_keys:
+                    continue
+                if source_url and source_url in seen_urls:
+                    continue
+                if key:
+                    seen_keys.add(key)
+                if source_url:
+                    seen_urls.add(source_url)
+                statutes.append(statute)
+
+        _extend_unique(resumed)
+        if resumed:
+            self.logger.info(
+                "Washington official index: resumed %s statutes from partial checkpoint",
+                len(statutes),
+            )
         limit = max(1, int(max_statutes)) if max_statutes is not None else None
         self._write_partial_checkpoint(
             statutes,
@@ -177,6 +202,12 @@ class WashingtonScraper(BaseStateScraper):
                 if limit is not None and len(statutes) >= limit:
                     break
                 section_links = await self._discover_section_links(chapter_url)
+                if seen_urls:
+                    section_links = [
+                        (url, section_number)
+                        for url, section_number in section_links
+                        if str(url or "").strip().lower() not in seen_urls
+                    ]
                 if chapter_index == 1 or chapter_index % 10 == 0 or chapter_index == len(chapter_links):
                     self.logger.info(
                         "Washington official index: title=%s chapter=%s/%s sections=%s statutes_so_far=%s",
@@ -205,7 +236,7 @@ class WashingtonScraper(BaseStateScraper):
                     max_statutes=(None if limit is None else max(0, limit - len(statutes))),
                     discovery_method="official_title_chapter_section_index",
                 )
-                statutes.extend(parsed)
+                _extend_unique(parsed)
         self._write_partial_checkpoint(
             statutes,
             code_name=code_name,
@@ -323,38 +354,27 @@ class WashingtonScraper(BaseStateScraper):
         limit = max(1, int(max_statutes)) if max_statutes is not None else None
         checkpoint_every = self._env_int("STATE_SCRAPER_WA_SECTION_CHECKPOINT_EVERY", default=20)
         checkpoint_every = max(5, min(200, int(checkpoint_every or 20)))
+        concurrency = max(1, int(self._env_int("STATE_SCRAPER_WA_SECTION_CONCURRENCY", default=8)))
+        sem = asyncio.Semaphore(concurrency)
         total_sections = len(section_urls)
-        for section_index, (url, section_number) in enumerate(section_urls, start=1):
-            if limit is not None and len(out) >= limit:
-                break
-            if section_index == 1 or section_index % checkpoint_every == 0:
-                self._write_partial_checkpoint(
-                    out,
-                    code_name=code_name,
-                    stage_label="washington:section-scan",
-                    extra={
-                        "sections_scanned": int(section_index),
-                        "discovered_sections": int(total_sections),
-                        "codes_completed": 0,
-                        "codes_total": 1,
-                        "discovery_method": discovery_method,
-                    },
-                )
-            raw = await self._fetch_page_content_with_archival_fallback(url, timeout_seconds=25)
-            if not raw:
-                continue
-            soup = BeautifulSoup(raw, "html.parser")
-            citation_node = soup.select_one("#ContentPlaceHolder1_pnlTitleBlock h1")
-            caption_node = soup.select_one("#ContentPlaceHolder1_pnlTitleBlock h2")
-            content_node = soup.select_one("#contentWrapper")
-            citation_text = self._normalize_legal_text(citation_node.get_text(" ", strip=True) if citation_node else "")
-            caption = self._normalize_legal_text(caption_node.get_text(" ", strip=True) if caption_node else "")
-            body = self._normalize_legal_text(content_node.get_text(" ", strip=True) if content_node else "")
-            if len(body) < 220:
-                continue
-            full_text = self._normalize_legal_text(f"{citation_text} {caption} {body}")
-            out.append(
-                NormalizedStatute(
+        seen_keys: set[str] = set()
+
+        async def _parse_section(url: str, section_number: str) -> Optional[NormalizedStatute]:
+            async with sem:
+                raw = await self._fetch_page_content_with_archival_fallback(url, timeout_seconds=25)
+                if not raw:
+                    return None
+                soup = BeautifulSoup(raw, "html.parser")
+                citation_node = soup.select_one("#ContentPlaceHolder1_pnlTitleBlock h1")
+                caption_node = soup.select_one("#ContentPlaceHolder1_pnlTitleBlock h2")
+                content_node = soup.select_one("#contentWrapper")
+                citation_text = self._normalize_legal_text(citation_node.get_text(" ", strip=True) if citation_node else "")
+                caption = self._normalize_legal_text(caption_node.get_text(" ", strip=True) if caption_node else "")
+                body = self._normalize_legal_text(content_node.get_text(" ", strip=True) if content_node else "")
+                if len(body) < 220:
+                    return None
+                full_text = self._normalize_legal_text(f"{citation_text} {caption} {body}")
+                return NormalizedStatute(
                     state_code=self.state_code,
                     state_name=self.state_name,
                     statute_id=f"{code_name} § {section_number}",
@@ -373,14 +393,51 @@ class WashingtonScraper(BaseStateScraper):
                         "skip_hydrate": True,
                     },
                 )
-            )
+
+        tasks = [
+            asyncio.create_task(_parse_section(url, section_number))
+            for url, section_number in section_urls
+        ]
+        scanned_sections = 0
+        cancelled_early = False
+        for task in asyncio.as_completed(tasks):
+            scanned_sections += 1
+            if scanned_sections == 1 or scanned_sections % checkpoint_every == 0:
+                self._write_partial_checkpoint(
+                    out,
+                    code_name=code_name,
+                    stage_label="washington:section-scan",
+                    extra={
+                        "sections_scanned": int(scanned_sections),
+                        "discovered_sections": int(total_sections),
+                        "codes_completed": 0,
+                        "codes_total": 1,
+                        "discovery_method": discovery_method,
+                    },
+                )
+            statute = await task
+            if statute is not None:
+                key = str(statute.statute_id or statute.source_url or "").strip().lower()
+                if key and key in seen_keys:
+                    continue
+                if key:
+                    seen_keys.add(key)
+                out.append(statute)
+            if limit is not None and len(out) >= limit:
+                cancelled_early = True
+                for pending in tasks:
+                    if not pending.done():
+                        pending.cancel()
+                break
+        if cancelled_early:
+            await asyncio.gather(*tasks, return_exceptions=True)
         self._write_partial_checkpoint(
             out,
             code_name=code_name,
             stage_label="washington:section-scan-complete",
             force=True,
             extra={
-                "sections_scanned": int(min(total_sections, len(section_urls))),
+                "sections_scanned": int(min(total_sections, scanned_sections)),
                 "discovered_sections": int(total_sections),
                 "codes_completed": 0,
                 "codes_total": 1,
