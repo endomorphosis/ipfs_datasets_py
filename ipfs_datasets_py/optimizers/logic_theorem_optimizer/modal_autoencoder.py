@@ -1917,6 +1917,8 @@ class AdaptiveModalAutoencoder:
         max_repair_plan_features: int = 64,
         max_logic_view_contract_features: int = 64,
         max_objective_residual_features: int = 64,
+        max_provenance_alignment_features: int = 64,
+        max_discourse_flow_features: int = 64,
         embedding_head_update_normalization: float = 0.0,
         family_logit_head_update_normalization: float = 0.0,
         legal_ir_view_head_update_normalization: float = 0.0,
@@ -2111,6 +2113,14 @@ class AdaptiveModalAutoencoder:
         self.max_objective_residual_features = max(
             0,
             int(max_objective_residual_features),
+        )
+        self.max_provenance_alignment_features = max(
+            0,
+            int(max_provenance_alignment_features),
+        )
+        self.max_discourse_flow_features = max(
+            0,
+            int(max_discourse_flow_features),
         )
         self.embedding_head_update_normalization = max(
             0.0,
@@ -4647,6 +4657,18 @@ class AdaptiveModalAutoencoder:
             )
         )
         keys.extend(
+            self._provenance_alignment_feature_keys_for(
+                sample,
+                prefix="legal-ir:provenance-alignment",
+            )
+        )
+        keys.extend(
+            self._discourse_flow_feature_keys_for(
+                sample,
+                prefix="legal-ir:discourse-flow",
+            )
+        )
+        keys.extend(
             f"legal-ir:semantic-slot:{slot.removeprefix('slot:')}"
             for slot in self._semantic_slot_distribution_for(sample).keys()
         )
@@ -7115,6 +7137,168 @@ class AdaptiveModalAutoencoder:
         ).hexdigest()[:16]
         keys.insert(1, f"{normalized_prefix}:objective-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_objective_residual_features]
+        cache[cache_key] = list(result)
+        return result
+
+    def _provenance_alignment_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "provenance-alignment",
+    ) -> List[str]:
+        """Source-span and cue provenance contracts for compiler/decompiler repair."""
+        normalized_prefix = str(prefix or "provenance-alignment").strip(":")
+        cache_key = f"provenance_alignment_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_provenance_alignment_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        text_length = max(1, len(str(sample.normalized_text or sample.text or "")))
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        subject_class = _feature_atom(
+            (role_classes.get("subject") or [source_anchors.get("subject", "")])[0]
+        ) or "none"
+        action_class = _feature_atom(
+            (role_classes.get("action") or [source_anchors.get("action", "")])[0]
+        ) or "none"
+        object_class = _feature_atom(
+            (role_classes.get("object") or [source_anchors.get("object", "")])[0]
+        ) or "none"
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        role_signature = f"{subject_class}:{action_class}:{object_class}"
+        formulas = list(sample.modal_ir.formulas or [])
+        spans: List[tuple[int, int]] = []
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def span_text(start: int, end: int) -> str:
+            return str(sample.normalized_text or sample.text or "")[start:end].lower()
+
+        def role_coverage_for(segment: str) -> str:
+            covered_roles = []
+            for role in ("subject", "action", "object", "condition", "exception", "temporal"):
+                anchor = _feature_atom(source_anchors.get(role, ""), max_tokens=3)
+                if anchor and anchor.replace("_", " ") in segment:
+                    covered_roles.append(role)
+            return "-".join(covered_roles) or "none"
+
+        add("bias")
+        add(f"formula-count:{_count_bucket(len(formulas))}")
+        if not formulas:
+            add("coverage:none")
+            add(f"todo-route:add_deterministic_parser_rule:{role_signature}:{scope_signature}")
+
+        previous_start = -1
+        overlap_count = 0
+        monotonic = True
+        for formula in formulas[:10]:
+            raw_start = int(getattr(formula.provenance, "start_char", 0))
+            raw_end = int(getattr(formula.provenance, "end_char", raw_start))
+            start = min(max(0, raw_start), text_length)
+            end = min(max(start, raw_end), text_length)
+            if start < previous_start:
+                monotonic = False
+            previous_start = start
+            for left_start, left_end in spans:
+                if start < left_end and end > left_start:
+                    overlap_count += 1
+                    break
+            spans.append((start, end))
+            length_ratio = (end - start) / text_length
+            start_ratio = start / text_length
+            family = _feature_atom(formula.operator.family)
+            system = _feature_atom(formula.operator.system)
+            symbol = _feature_atom(formula.operator.symbol)
+            predicate_role = _feature_atom(
+                getattr(formula.predicate, "role", "") or "none"
+            )
+            cue = _feature_atom(formula.metadata.get("cue") if formula.metadata else "")
+            cue_start = formula.metadata.get("cue_start_char") if formula.metadata else None
+            cue_end = formula.metadata.get("cue_end_char") if formula.metadata else None
+            cue_inside = "unknown"
+            if cue_start is not None and cue_end is not None:
+                cue_start_int = int(cue_start)
+                cue_end_int = int(cue_end)
+                cue_inside = "inside" if start <= cue_start_int and cue_end_int <= end else "outside"
+            segment = span_text(start, end)
+            role_coverage = role_coverage_for(segment)
+
+            if family and symbol:
+                add(
+                    f"operator-span:{family}:{symbol}:{predicate_role}:"
+                    f"start-{_ratio_bucket(start_ratio)}:len-{_ratio_bucket(length_ratio)}"
+                )
+                add(
+                    f"span-role-contract:{role_coverage}:"
+                    f"{family}:{symbol}:{predicate_role}:{scope_signature}"
+                )
+                if system:
+                    add(f"operator-system-span:{family}:{system}:{symbol}:{cue_inside}")
+            if cue and family and symbol:
+                add(f"cue-span:{cue}:{family}:{symbol}:{cue_inside}")
+                add(
+                    f"cue-position:{cue}:{_ratio_bucket(start_ratio)}:"
+                    f"{_ratio_bucket(length_ratio)}"
+                )
+            if family and symbol and role_coverage != "none":
+                add(
+                    f"decompiler-span-role:{role_coverage}:"
+                    f"{role_signature}:{family}:{symbol}:{predicate_role}"
+                )
+
+        merged: List[tuple[int, int]] = []
+        for start, end in sorted(spans):
+            if not merged or start > merged[-1][1]:
+                merged.append((start, end))
+            else:
+                merged[-1] = (merged[-1][0], max(merged[-1][1], end))
+        covered_chars = sum(max(0, end - start) for start, end in merged)
+        coverage_ratio = min(1.0, covered_chars / text_length)
+        uncovered_ratio = max(0.0, 1.0 - coverage_ratio)
+        order_state = "overlap" if overlap_count else ("monotonic" if monotonic else "reordered")
+
+        add(f"coverage:{_ratio_bucket(coverage_ratio)}")
+        add(f"uncovered:{_ratio_bucket(uncovered_ratio)}")
+        add(f"span-count:{_count_bucket(len(spans))}")
+        add(f"span-order:{order_state}")
+        add(
+            f"decompiler-span-contract:{role_signature}:{scope_signature}:"
+            f"coverage-{_ratio_bucket(coverage_ratio)}"
+        )
+        if uncovered_ratio > 0.05 or not formulas:
+            add(
+                f"todo-route:increase_modal_ir_span_coverage:"
+                f"{_ratio_bucket(uncovered_ratio)}:{role_signature}:{scope_signature}"
+            )
+        if overlap_count:
+            add(f"span-overlap:{_count_bucket(overlap_count)}:{role_signature}")
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:provenance-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_provenance_alignment_features]
         cache[cache_key] = list(result)
         return result
 
@@ -9667,6 +9851,8 @@ class AdaptiveModalAutoencoder:
         keys.extend(self._repair_plan_feature_keys_for(sample))
         keys.extend(self._logic_view_contract_feature_keys_for(sample))
         keys.extend(self._objective_residual_feature_keys_for(sample))
+        keys.extend(self._provenance_alignment_feature_keys_for(sample))
+        keys.extend(self._discourse_flow_feature_keys_for(sample))
         keys.extend(
             f"semantic-slot:{slot.removeprefix('slot:')}"
             for slot in self._semantic_slot_distribution_for(sample).keys()
@@ -9840,6 +10026,7 @@ class AdaptiveModalAutoencoder:
             "cue-family:",
             "cycle-consistency:",
             "decompiler-surface:",
+            "discourse-flow:",
             "equivalence-prototype:",
             "condition:",
             "condition-count-bin:",
@@ -9872,6 +10059,7 @@ class AdaptiveModalAutoencoder:
             "predicate-argument:",
             "predicate-arity-bin:",
             "predicate-role:",
+            "provenance-alignment:",
             "repair-plan:",
             "round-trip-bridge:",
             "section-cue:",

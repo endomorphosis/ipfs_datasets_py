@@ -2974,6 +2974,189 @@ def test_objective_residual_feature_head_transfers_loss_profile_holdout() -> Non
     )
 
 
+def test_provenance_alignment_features_encode_span_and_cue_contracts() -> None:
+    permission = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency may issue the license before final action.",
+    )
+    conditional = build_us_code_sample(
+        title="5",
+        section="553",
+        text=(
+            "If the applicant files notice, the agency must approve the permit "
+            "except when records are incomplete."
+        ),
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        max_provenance_alignment_features=180,
+    )
+
+    permission_features = autoencoder._provenance_alignment_feature_keys_for(
+        permission
+    )
+    conditional_features = autoencoder._provenance_alignment_feature_keys_for(
+        conditional
+    )
+    fallback_features = autoencoder._fallback_feature_keys_for(permission)
+    legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(permission)
+
+    assert (
+        "provenance-alignment:operator-span:"
+        "deontic:p:clause:start-0:len-very-high"
+        in permission_features
+    )
+    assert "provenance-alignment:cue-span:may:deontic:p:inside" in (
+        permission_features
+    )
+    assert (
+        "provenance-alignment:span-role-contract:"
+        "subject-action-object-temporal:deontic:p:clause:conditioned+temporal"
+        in permission_features
+    )
+    assert (
+        "provenance-alignment:decompiler-span-contract:"
+        "government_actor:grant_authorization:authorization_instrument:"
+        "conditioned+temporal:coverage-very-high"
+        in permission_features
+    )
+    assert "provenance-alignment:coverage:very-high" in permission_features
+    assert "provenance-alignment:span-order:monotonic" in permission_features
+    assert (
+        "provenance-alignment:span-role-contract:"
+        "subject-action-object-condition-exception:"
+        "conditional_normative:o:condition:conditioned+excepted"
+        in conditional_features
+    )
+    assert "provenance-alignment:span-order:overlap" in conditional_features
+    assert (
+        "provenance-alignment:operator-span:"
+        "deontic:p:clause:start-0:len-very-high"
+        in fallback_features
+    )
+    assert (
+        "legal-ir:provenance-alignment:operator-span:"
+        "deontic:p:clause:start-0:len-very-high"
+        in legal_ir_features
+    )
+
+
+def test_provenance_alignment_feature_head_transfers_permission_holdout() -> None:
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency may issue the license before final action.",
+        embedding_vector=[1.0, 0.0],
+    )
+    validation = build_us_code_sample(
+        title="12",
+        section="1841",
+        text="The board may grant the permit before final action.",
+        embedding_vector=[1.0, 0.0],
+    )
+    family_autoencoder = AdaptiveModalAutoencoder(
+        feature_family_logit_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=180,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+    )
+    shared_provenance_features = set(
+        family_autoencoder._provenance_alignment_feature_keys_for(train)
+    ).intersection(
+        family_autoencoder._provenance_alignment_feature_keys_for(validation)
+    )
+    before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    family_autoencoder._nudge_family_logits(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert (
+        "provenance-alignment:decompiler-span-contract:"
+        "government_actor:grant_authorization:authorization_instrument:"
+        "conditioned+temporal:coverage-very-high"
+        in shared_provenance_features
+    )
+    assert any(
+        feature.startswith("provenance-alignment:")
+        for feature in family_autoencoder.state.feature_family_logits
+    )
+    assert after_ce.cross_entropy_loss < before_ce.cross_entropy_loss
+
+    embedding_autoencoder = AdaptiveModalAutoencoder(
+        compiler_quality_embedding_weight_scale=0.0,
+        logic_signature_embedding_weight_scale=0.0,
+        round_trip_signal_embedding_weight_scale=0.0,
+        decompiler_plan_embedding_weight_scale=0.0,
+        predicate_argument_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=0.0,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        feature_embedding_weight_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=180,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    embedding_autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    assert any(
+        feature.startswith("provenance-alignment:")
+        for feature in embedding_autoencoder.state.feature_embedding_weights
+    )
+    assert after_cosine.embedding_cosine_similarity > before_cosine.embedding_cosine_similarity
+
+
 def test_family_embedding_prototype_head_transfers_cosine_to_holdout() -> None:
     train = build_us_code_sample(
         title="5",

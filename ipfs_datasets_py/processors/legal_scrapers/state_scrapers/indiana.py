@@ -755,7 +755,13 @@ class IndianaScraper(BaseStateScraper):
         )
 
         try:
-            payload = await self._fetch_page_content_with_archival_fallback(cdx_url, timeout_seconds=35)
+            # CDX is already the archive API surface; skip multi-engine search
+            # fallback here to avoid long 429/throttle stalls.
+            payload = await self._request_bytes_direct(
+                cdx_url,
+                headers={"User-Agent": "Mozilla/5.0"},
+                timeout=35,
+            )
             rows = self._parse_json_rows(payload)
         except Exception:
             return []

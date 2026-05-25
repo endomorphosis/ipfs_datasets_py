@@ -1883,6 +1883,8 @@ def build_paired_daemon_commands(
         str(getattr(args, "autoencoder_max_logic_view_contract_features", 64)),
         "--autoencoder-max-objective-residual-features",
         str(getattr(args, "autoencoder_max_objective_residual_features", 64)),
+        "--autoencoder-max-provenance-alignment-features",
+        str(getattr(args, "autoencoder_max_provenance_alignment_features", 64)),
         "--autoencoder-embedding-head-update-normalization",
         str(getattr(args, "autoencoder_embedding_head_update_normalization", 0.5)),
         "--autoencoder-family-logit-head-update-normalization",
@@ -4937,6 +4939,17 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--autoencoder-max-provenance-alignment-features",
+        type=int,
+        default=64,
+        help=(
+            "Maximum provenance-alignment features to expose to the feature "
+            "decoder. These bind source span coverage, cue placement, role "
+            "anchors, and formula provenance to compiler/decompiler repair "
+            "routes such as modal span coverage and semantic reconstruction."
+        ),
+    )
+    parser.add_argument(
         "--autoencoder-family-embedding-weight-scale",
         type=float,
         default=0.5,
@@ -6013,6 +6026,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         max_objective_residual_features=int(
             getattr(args, "autoencoder_max_objective_residual_features", 64)
         ),
+        max_provenance_alignment_features=int(
+            getattr(args, "autoencoder_max_provenance_alignment_features", 64)
+        ),
         feature_activity_reference=int(
             getattr(args, "autoencoder_feature_activity_reference", 64)
         ),
@@ -6188,6 +6204,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     )
     summary["autoencoder_max_objective_residual_features"] = int(
         getattr(args, "autoencoder_max_objective_residual_features", 64)
+    )
+    summary["autoencoder_max_provenance_alignment_features"] = int(
+        getattr(args, "autoencoder_max_provenance_alignment_features", 64)
     )
     summary["autoencoder_feature_activity_reference"] = int(
         getattr(args, "autoencoder_feature_activity_reference", 64)
