@@ -918,10 +918,23 @@ class IndianaScraper(BaseStateScraper):
             fetch_url = rewritten_wayback
 
         if "web.archive.org/web/" not in fetch_url:
-            return await self._fetch_page_content_with_archival_fallback(
-                fetch_url,
-                timeout_seconds=timeout_seconds,
-            )
+            headers = {
+                "User-Agent": "ipfs-datasets-state-scraper/2.0",
+                "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+            }
+            timeout = max(5, int(timeout_seconds or 35))
+            try:
+                payload = await self._request_bytes_direct(fetch_url, headers=headers, timeout=timeout)
+            except Exception:
+                payload = b""
+            if payload and not self._is_object_moved_placeholder(payload):
+                return payload
+            if allow_archival_fallback or self._env_flag("INDIANA_ALLOW_ARCHIVAL_FETCH_FALLBACK"):
+                return await self._fetch_page_content_with_archival_fallback(
+                    fetch_url,
+                    timeout_seconds=timeout_seconds,
+                )
+            return b""
 
         headers = {
             "User-Agent": "ipfs-datasets-state-scraper/2.0",

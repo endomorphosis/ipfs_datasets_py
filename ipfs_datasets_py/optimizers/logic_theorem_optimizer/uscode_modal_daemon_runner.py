@@ -1889,6 +1889,8 @@ def build_paired_daemon_commands(
         str(getattr(args, "autoencoder_max_discourse_flow_features", 64)),
         "--autoencoder-max-proof-obligation-features",
         str(getattr(args, "autoencoder_max_proof_obligation_features", 64)),
+        "--autoencoder-max-entity-binding-features",
+        str(getattr(args, "autoencoder_max_entity_binding_features", 64)),
         "--autoencoder-embedding-head-update-normalization",
         str(getattr(args, "autoencoder_embedding_head_update_normalization", 0.5)),
         "--autoencoder-family-logit-head-update-normalization",
@@ -4976,6 +4978,17 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--autoencoder-max-entity-binding-features",
+        type=int,
+        default=64,
+        help=(
+            "Maximum entity-binding features to expose to the feature decoder. "
+            "These bind source actors, actions, objects, conditions, "
+            "exceptions, temporal anchors, predicate arguments, and logical "
+            "variable slots into a reusable compiler/decompiler binding graph."
+        ),
+    )
+    parser.add_argument(
         "--autoencoder-family-embedding-weight-scale",
         type=float,
         default=0.5,
@@ -6061,6 +6074,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         max_proof_obligation_features=int(
             getattr(args, "autoencoder_max_proof_obligation_features", 64)
         ),
+        max_entity_binding_features=int(
+            getattr(args, "autoencoder_max_entity_binding_features", 64)
+        ),
         feature_activity_reference=int(
             getattr(args, "autoencoder_feature_activity_reference", 64)
         ),
@@ -6245,6 +6261,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     )
     summary["autoencoder_max_proof_obligation_features"] = int(
         getattr(args, "autoencoder_max_proof_obligation_features", 64)
+    )
+    summary["autoencoder_max_entity_binding_features"] = int(
+        getattr(args, "autoencoder_max_entity_binding_features", 64)
     )
     summary["autoencoder_feature_activity_reference"] = int(
         getattr(args, "autoencoder_feature_activity_reference", 64)

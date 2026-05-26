@@ -1920,6 +1920,7 @@ class AdaptiveModalAutoencoder:
         max_provenance_alignment_features: int = 64,
         max_discourse_flow_features: int = 64,
         max_proof_obligation_features: int = 64,
+        max_entity_binding_features: int = 64,
         embedding_head_update_normalization: float = 0.0,
         family_logit_head_update_normalization: float = 0.0,
         legal_ir_view_head_update_normalization: float = 0.0,
@@ -2126,6 +2127,10 @@ class AdaptiveModalAutoencoder:
         self.max_proof_obligation_features = max(
             0,
             int(max_proof_obligation_features),
+        )
+        self.max_entity_binding_features = max(
+            0,
+            int(max_entity_binding_features),
         )
         self.embedding_head_update_normalization = max(
             0.0,
@@ -4677,6 +4682,12 @@ class AdaptiveModalAutoencoder:
             self._proof_obligation_feature_keys_for(
                 sample,
                 prefix="legal-ir:proof-obligation",
+            )
+        )
+        keys.extend(
+            self._entity_binding_feature_keys_for(
+                sample,
+                prefix="legal-ir:entity-binding",
             )
         )
         keys.extend(
@@ -7841,6 +7852,246 @@ class AdaptiveModalAutoencoder:
         cache[cache_key] = list(result)
         return result
 
+    def _entity_binding_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "entity-binding",
+    ) -> List[str]:
+        """Role/variable binding graph shared by compiler and decompiler heads."""
+        normalized_prefix = str(prefix or "entity-binding").strip(":")
+        cache_key = f"entity_binding_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_entity_binding_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        action_classes = role_classes.get("action", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        def argument_atom(argument: Any) -> str:
+            candidates: List[Any] = []
+            if isinstance(argument, Mapping):
+                for key in ("role", "name", "value", "text", "entity", "label"):
+                    if key in argument:
+                        candidates.append(argument.get(key))
+            else:
+                for key in ("role", "name", "value", "text", "entity", "label"):
+                    if hasattr(argument, key):
+                        candidates.append(getattr(argument, key))
+            for candidate in candidates:
+                atom = _feature_atom(candidate, max_tokens=4)
+                if atom:
+                    return atom
+            return _feature_atom(argument, max_tokens=4)
+
+        def role_class(role: str) -> str:
+            return first_or_none(role_classes.get(role, []))
+
+        def quantifier_frame(
+            family: str,
+            symbol: str,
+            *,
+            condition_state: bool,
+            exception_state: bool,
+        ) -> str:
+            guarded = condition_state or exception_state or "conditioned" in scope_tags
+            if family == "dynamic":
+                return "guarded-event-exists" if guarded else "event-exists"
+            if family == "temporal":
+                return "temporal-order"
+            if family in {"first_order", "alethic"}:
+                return "universal-predicate"
+            if symbol == "p":
+                return "guarded-permission-exists" if guarded else "permission-exists"
+            if symbol == "f":
+                return "guarded-prohibition-forall" if guarded else "prohibition-forall"
+            if symbol == "o":
+                return "guarded-duty-forall" if guarded else "duty-forall"
+            return "modal-claim"
+
+        subject_class = role_class("subject")
+        action_class = role_class("action")
+        object_class = role_class("object")
+        condition_class = role_class("condition")
+        exception_class = role_class("exception")
+        temporal_class = role_class("temporal")
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        ordered_roles = [
+            role
+            for role in ("subject", "action", "object", "condition", "exception", "temporal")
+            if source_anchors.get(role)
+        ]
+        role_path = "->".join(ordered_roles) or "none"
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_sequence: List[str] = []
+        quantifier_sequence: List[str] = []
+
+        add("bias")
+        add(f"source-binding:{role_signature}:{scope_signature}")
+        add(f"role-path:{role_path}:{scope_signature}")
+        for role in ordered_roles:
+            add(
+                f"logical-variable-map:{role}:{role_class(role)}:"
+                f"v_{_feature_atom(role, max_tokens=2)}"
+            )
+        if subject_class != "none" and action_class != "none":
+            add(f"binding-edge:subject->action:{subject_class}->{action_class}")
+        if action_class != "none" and object_class != "none":
+            add(f"binding-edge:action->object:{action_class}->{object_class}")
+        if condition_class != "none":
+            add(f"binding-edge:condition->action:{condition_class}->{action_class}")
+        if exception_class != "none":
+            add(f"binding-edge:exception->action:{exception_class}->{action_class}")
+        if temporal_class != "none":
+            add(f"binding-edge:temporal->action:{temporal_class}->{action_class}")
+        for force in force_tags[:2]:
+            for polarity in polarity_tags[:2]:
+                add(f"norm-binding:{force}:{polarity}:{role_signature}:{scope_signature}")
+
+        for formula in formulas[:10]:
+            family = _feature_atom(formula.operator.family)
+            system = _feature_atom(formula.operator.system)
+            symbol = _feature_atom(formula.operator.symbol)
+            predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
+            predicate_role = _feature_atom(
+                getattr(formula.predicate, "role", "") or "none"
+            )
+            predicate_head = predicate_name.split("_", 1)[0] if predicate_name else ""
+            predicate_classes = self._legal_semantic_classes_for(
+                predicate_head,
+                role="predicate",
+            )
+            predicate_class = first_or_none(predicate_classes) or action_class
+            arguments = list(getattr(formula.predicate, "arguments", []) or [])
+            conditions = list(getattr(formula, "conditions", []) or [])
+            exceptions = list(getattr(formula, "exceptions", []) or [])
+            condition_state = bool(conditions)
+            exception_state = bool(exceptions)
+            arity_bucket = _count_bucket(len(arguments))
+            quantifier = quantifier_frame(
+                family,
+                symbol,
+                condition_state=condition_state,
+                exception_state=exception_state,
+            )
+            if family and symbol:
+                operator_sequence.append(f"{family}:{symbol}")
+                quantifier_sequence.append(quantifier)
+                add(
+                    f"formula-binding:{family}:{symbol}:{predicate_role}:"
+                    f"{predicate_class}:a{arity_bucket}:"
+                    f"c{'yes' if condition_state else 'no'}:"
+                    f"e{'yes' if exception_state else 'no'}:{role_signature}"
+                )
+                add(
+                    f"operator-variable-binding:{family}:{symbol}:"
+                    f"actor-{subject_class}:action-{action_class}:"
+                    f"object-{object_class}:scope-{scope_signature}"
+                )
+                add(
+                    f"quantifier-binding:{quantifier}:{family}:{symbol}:"
+                    f"{role_signature}:{scope_signature}"
+                )
+                if system:
+                    add(
+                        f"system-binding:{system}:{family}:{symbol}:"
+                        f"{quantifier}:{predicate_role}"
+                    )
+                for role in ordered_roles:
+                    add(
+                        f"source-ir-role:{role}:{role_class(role)}:"
+                        f"{family}:{symbol}:{predicate_role}"
+                    )
+            for index, argument in enumerate(arguments[:4]):
+                atom = argument_atom(argument)
+                argument_classes = self._legal_semantic_classes_for(
+                    atom,
+                    role="argument",
+                )
+                argument_class = first_or_none(argument_classes) or atom or "none"
+                add(
+                    f"argument-binding:{family or 'none'}:{symbol or 'none'}:"
+                    f"{predicate_role}:arg{index}:{argument_class}"
+                )
+            for condition in conditions[:3]:
+                condition_atom = _feature_atom(condition, max_tokens=4)
+                condition_classes = self._legal_semantic_classes_for(
+                    condition_atom,
+                    role="condition",
+                )
+                condition_value = first_or_none(condition_classes) or condition_class
+                add(
+                    f"condition-binding:{condition_value}:{family or 'none'}:"
+                    f"{symbol or 'none'}:{predicate_role}"
+                )
+            for exception in exceptions[:3]:
+                exception_atom = _feature_atom(exception, max_tokens=4)
+                exception_classes = self._legal_semantic_classes_for(
+                    exception_atom,
+                    role="exception",
+                )
+                exception_value = first_or_none(exception_classes) or exception_class
+                add(
+                    f"exception-binding:{exception_value}:{family or 'none'}:"
+                    f"{symbol or 'none'}:{predicate_role}"
+                )
+
+        operator_path = "->".join(operator_sequence[:8]) or "none"
+        quantifier_path = "->".join(_unique_preserve_order(quantifier_sequence)) or "none"
+        add(f"operator-binding-path:{operator_path}:{role_signature}:{scope_signature}")
+        add(f"quantifier-path:{quantifier_path}:{scope_signature}")
+        add(
+            f"decompiler-binding-plan:{quantifier_path}:"
+            f"{role_path}:{role_signature}:{operator_path}"
+        )
+        add(
+            f"todo-route:refine_predicate_argument_binding:"
+            f"{role_signature}:{operator_path}:{scope_signature}"
+        )
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:binding-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_entity_binding_features]
+        cache[cache_key] = list(result)
+        return result
+
     def _compiler_latent_profile_feature_keys_for(
         self,
         sample: LegalSample,
@@ -10393,6 +10644,7 @@ class AdaptiveModalAutoencoder:
         keys.extend(self._provenance_alignment_feature_keys_for(sample))
         keys.extend(self._discourse_flow_feature_keys_for(sample))
         keys.extend(self._proof_obligation_feature_keys_for(sample))
+        keys.extend(self._entity_binding_feature_keys_for(sample))
         keys.extend(
             f"semantic-slot:{slot.removeprefix('slot:')}"
             for slot in self._semantic_slot_distribution_for(sample).keys()
@@ -10567,6 +10819,7 @@ class AdaptiveModalAutoencoder:
             "cycle-consistency:",
             "decompiler-surface:",
             "discourse-flow:",
+            "entity-binding:",
             "equivalence-prototype:",
             "condition:",
             "condition-count-bin:",

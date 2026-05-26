@@ -3350,6 +3350,214 @@ def test_discourse_flow_feature_head_transfers_permission_holdout() -> None:
     assert after_cosine.embedding_cosine_similarity > before_cosine.embedding_cosine_similarity
 
 
+def test_proof_obligation_features_encode_bridge_and_prover_routes() -> None:
+    permission = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency may issue the license before final action.",
+    )
+    conditional = build_us_code_sample(
+        title="5",
+        section="553",
+        text=(
+            "If the applicant files notice, the agency must approve the permit "
+            "except when records are incomplete."
+        ),
+    )
+    autoencoder = AdaptiveModalAutoencoder(max_proof_obligation_features=220)
+
+    permission_features = autoencoder._proof_obligation_feature_keys_for(permission)
+    conditional_features = autoencoder._proof_obligation_feature_keys_for(conditional)
+    fallback_features = autoencoder._fallback_feature_keys_for(permission)
+    legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(permission)
+
+    assert (
+        "proof-obligation:formula-proof:"
+        "prove-permission:deontic:p:clause:cno:eno:a0"
+        in permission_features
+    )
+    assert (
+        "proof-obligation:proof-route:"
+        "deontic_norms:prove-permission:deontic:p:"
+        "grant_authorization:conditioned+temporal"
+        in permission_features
+    )
+    assert (
+        "proof-obligation:proof-route:"
+        "zkp_attestation:prove-permission:deontic:p:"
+        "grant_authorization:conditioned+temporal"
+        in permission_features
+    )
+    assert (
+        "proof-obligation:compiler-proof-plan:"
+        "prove-permission:"
+        "modal_frame_logic+deontic_norms+fol_tdfol+cec_dcec+"
+        "external_prover_router+zkp_attestation:"
+        "government_actor:grant_authorization:authorization_instrument:"
+        "none:none:none:conditioned+temporal"
+        in permission_features
+    )
+    assert (
+        "proof-obligation:formula-proof:"
+        "prove-event-transition:dynamic:a:condition:cyes:eyes:a0"
+        in conditional_features
+    )
+    assert (
+        "proof-obligation:proof-route:"
+        "cec_dcec:prove-event-transition:dynamic:a:"
+        "disclose_or_notify:conditioned+excepted"
+        in conditional_features
+    )
+    assert (
+        "proof-obligation:guarded-proof:"
+        "prove-guarded-duty:source-cyes:source-eyes:ir-cyes:ir-eyes:"
+        "modal_frame_logic+deontic_norms+fol_tdfol+"
+        "external_prover_router+zkp_attestation"
+        in conditional_features
+    )
+    assert (
+        "proof-obligation:todo-route:"
+        "repair_zkp_attestation_bridge:zkp_attestation:"
+        "prove-guarded-duty:conditioned+excepted"
+        in conditional_features
+    )
+    assert (
+        "proof-obligation:proof-route:"
+        "deontic_norms:prove-permission:deontic:p:"
+        "grant_authorization:conditioned+temporal"
+        in fallback_features
+    )
+    assert (
+        "legal-ir:proof-obligation:proof-route:"
+        "deontic_norms:prove-permission:deontic:p:"
+        "grant_authorization:conditioned+temporal"
+        in legal_ir_features
+    )
+
+
+def test_proof_obligation_feature_head_transfers_permission_holdout() -> None:
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency may issue the license before final action.",
+        embedding_vector=[1.0, 0.0],
+    )
+    validation = build_us_code_sample(
+        title="12",
+        section="1841",
+        text="The board may grant the permit before final action.",
+        embedding_vector=[1.0, 0.0],
+    )
+    family_autoencoder = AdaptiveModalAutoencoder(
+        feature_family_logit_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=220,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+    )
+    shared_proof_features = set(
+        family_autoencoder._proof_obligation_feature_keys_for(train)
+    ).intersection(
+        family_autoencoder._proof_obligation_feature_keys_for(validation)
+    )
+    before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    family_autoencoder._nudge_family_logits(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert (
+        "proof-obligation:compiler-proof-plan:"
+        "prove-permission:"
+        "modal_frame_logic+deontic_norms+fol_tdfol+cec_dcec+"
+        "external_prover_router+zkp_attestation:"
+        "government_actor:grant_authorization:authorization_instrument:"
+        "none:none:none:conditioned+temporal"
+        in shared_proof_features
+    )
+    assert any(
+        feature.startswith("proof-obligation:")
+        for feature in family_autoencoder.state.feature_family_logits
+    )
+    assert after_ce.cross_entropy_loss < before_ce.cross_entropy_loss
+
+    embedding_autoencoder = AdaptiveModalAutoencoder(
+        compiler_quality_embedding_weight_scale=0.0,
+        logic_signature_embedding_weight_scale=0.0,
+        round_trip_signal_embedding_weight_scale=0.0,
+        decompiler_plan_embedding_weight_scale=0.0,
+        predicate_argument_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=0.0,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        feature_embedding_weight_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=220,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    embedding_autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    assert any(
+        feature.startswith("proof-obligation:")
+        for feature in embedding_autoencoder.state.feature_embedding_weights
+    )
+    assert after_cosine.embedding_cosine_similarity > before_cosine.embedding_cosine_similarity
+
+
 def test_family_embedding_prototype_head_transfers_cosine_to_holdout() -> None:
     train = build_us_code_sample(
         title="5",
