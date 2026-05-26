@@ -1925,6 +1925,8 @@ def build_paired_daemon_commands(
         str(getattr(args, "autoencoder_max_coreference_binding_features", 64)),
         "--autoencoder-max-logical-connective-features",
         str(getattr(args, "autoencoder_max_logical_connective_features", 64)),
+        "--autoencoder-max-enumeration-hierarchy-features",
+        str(getattr(args, "autoencoder_max_enumeration_hierarchy_features", 64)),
         "--autoencoder-embedding-head-update-normalization",
         str(getattr(args, "autoencoder_embedding_head_update_normalization", 0.5)),
         "--autoencoder-family-logit-head-update-normalization",
@@ -5213,6 +5215,19 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--autoencoder-max-enumeration-hierarchy-features",
+        type=int,
+        default=64,
+        help=(
+            "Maximum enumeration-hierarchy features to expose to the feature "
+            "decoder. These bind statutory subdivision markers such as "
+            "(1), (A), and (i), following-list openings, and paragraph/clause "
+            "cross-references to compiler list nodes, frame-logic hierarchy "
+            "slots, KG enumeration edges, and decompiler list-scope repair "
+            "routes."
+        ),
+    )
+    parser.add_argument(
         "--autoencoder-family-embedding-weight-scale",
         type=float,
         default=0.5,
@@ -6352,6 +6367,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         max_logical_connective_features=int(
             getattr(args, "autoencoder_max_logical_connective_features", 64)
         ),
+        max_enumeration_hierarchy_features=int(
+            getattr(args, "autoencoder_max_enumeration_hierarchy_features", 64)
+        ),
         feature_activity_reference=int(
             getattr(args, "autoencoder_feature_activity_reference", 64)
         ),
@@ -6590,6 +6608,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     )
     summary["autoencoder_max_logical_connective_features"] = int(
         getattr(args, "autoencoder_max_logical_connective_features", 64)
+    )
+    summary["autoencoder_max_enumeration_hierarchy_features"] = int(
+        getattr(args, "autoencoder_max_enumeration_hierarchy_features", 64)
     )
     summary["autoencoder_feature_activity_reference"] = int(
         getattr(args, "autoencoder_feature_activity_reference", 64)

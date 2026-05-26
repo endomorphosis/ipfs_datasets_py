@@ -7756,6 +7756,245 @@ def test_logical_connective_feature_head_transfers_boolean_holdout() -> None:
     assert after_cosine.embedding_cosine_similarity > before_cosine.embedding_cosine_similarity
 
 
+def test_enumeration_hierarchy_features_encode_numbered_list_scope() -> None:
+    numbered = build_us_code_sample(
+        title="5",
+        section="552",
+        text=(
+            "The person shall do any of the following: "
+            "(1) file an application; (2) pay the fee."
+        ),
+    )
+    nested = build_us_code_sample(
+        title="5",
+        section="553",
+        text=(
+            "The application must include: "
+            "(1) filing instructions; (A) records; (B) notices."
+        ),
+    )
+    crossref = build_us_code_sample(
+        title="5",
+        section="554",
+        text=(
+            "The requirements of paragraphs (1) and (2) shall apply to "
+            "clauses (i) and (ii)."
+        ),
+    )
+    autoencoder = AdaptiveModalAutoencoder(max_enumeration_hierarchy_features=240)
+
+    numbered_features = autoencoder._enumeration_hierarchy_feature_keys_for(numbered)
+    nested_features = autoencoder._enumeration_hierarchy_feature_keys_for(nested)
+    crossref_features = autoencoder._enumeration_hierarchy_feature_keys_for(crossref)
+    fallback_features = autoencoder._fallback_feature_keys_for(numbered)
+    legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(numbered)
+
+    numbered_signature = (
+        "numbered_list:paragraph_level:application_or_proof+payment_or_fee:"
+        "any:2-3:positive_enumeration:list_scope"
+    )
+    assert (
+        f"enumeration-hierarchy:enumeration-signature:{numbered_signature}"
+        in numbered_features
+    )
+    assert (
+        "enumeration-hierarchy:compiler-enumeration-node:"
+        "numbered_list:paragraph_level:application_or_proof+payment_or_fee:"
+        "any:2-3"
+        in numbered_features
+    )
+    assert (
+        "enumeration-hierarchy:frame-logic-enumeration-slot:"
+        "paragraph_level:application_or_proof+payment_or_fee:list_scope"
+        in numbered_features
+    )
+    assert (
+        f"enumeration-hierarchy:decompiler-enumeration-plan:{numbered_signature}"
+        in fallback_features
+    )
+    assert (
+        f"legal-ir:enumeration-hierarchy:decompiler-enumeration-plan:"
+        f"{numbered_signature}"
+        in legal_ir_features
+    )
+
+    assert (
+        "enumeration-hierarchy:enumeration-signature:"
+        "numbered_list:paragraph_level->subparagraph_level:"
+        "application_or_proof+notice_or_record:"
+        "unspecified:2-3:positive_enumeration:inline_scope"
+        in nested_features
+    )
+    assert (
+        "enumeration-hierarchy:reference-target:"
+        "paragraph_reference:paragraph_level:2-3"
+        in crossref_features
+    )
+    assert (
+        "enumeration-hierarchy:reference-target:"
+        "clause_reference:clause_level:2-3"
+        in crossref_features
+    )
+
+
+def test_enumeration_hierarchy_feature_head_transfers_numbered_holdout() -> None:
+    shared_plan_feature = (
+        "enumeration-hierarchy:decompiler-enumeration-plan:"
+        "numbered_list:paragraph_level:application_or_proof+payment_or_fee:"
+        "any:2-3:positive_enumeration:list_scope"
+    )
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text=(
+            "The person shall do any of the following: "
+            "(1) file an application; (2) pay the fee."
+        ),
+        embedding_vector=[1.0, 0.0],
+    )
+    validation = build_us_code_sample(
+        title="12",
+        section="1841",
+        text=(
+            "The individual must perform any of the following: "
+            "(1) submit a claim; (2) pay the payment."
+        ),
+        embedding_vector=[1.0, 0.0],
+    )
+    family_autoencoder = AdaptiveModalAutoencoder(
+        feature_family_logit_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=0,
+        max_entity_binding_features=0,
+        max_defeasible_priority_features=0,
+        max_constraint_grounding_features=0,
+        max_quantitative_formula_features=0,
+        max_definition_grounding_features=0,
+        max_quantifier_scope_features=0,
+        max_procedural_lifecycle_features=0,
+        max_enforcement_remedy_features=0,
+        max_reference_dependency_features=0,
+        max_authority_jurisdiction_features=0,
+        max_temporal_validity_features=0,
+        max_evidentiary_burden_features=0,
+        max_legal_relation_features=0,
+        max_status_transition_features=0,
+        max_condition_consequence_features=0,
+        max_applicability_scope_features=0,
+        max_coreference_binding_features=0,
+        max_logical_connective_features=0,
+        max_enumeration_hierarchy_features=240,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+    )
+    shared_enumeration_features = set(
+        family_autoencoder._enumeration_hierarchy_feature_keys_for(train)
+    ).intersection(
+        family_autoencoder._enumeration_hierarchy_feature_keys_for(validation)
+    )
+    before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    family_autoencoder._nudge_family_logits(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert shared_plan_feature in shared_enumeration_features
+    assert shared_plan_feature in family_autoencoder.state.feature_family_logits
+    assert after_ce.cross_entropy_loss < before_ce.cross_entropy_loss
+
+    embedding_autoencoder = AdaptiveModalAutoencoder(
+        compiler_quality_embedding_weight_scale=0.0,
+        logic_signature_embedding_weight_scale=0.0,
+        round_trip_signal_embedding_weight_scale=0.0,
+        decompiler_plan_embedding_weight_scale=0.0,
+        predicate_argument_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=0.0,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        feature_embedding_weight_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=0,
+        max_entity_binding_features=0,
+        max_defeasible_priority_features=0,
+        max_constraint_grounding_features=0,
+        max_quantitative_formula_features=0,
+        max_definition_grounding_features=0,
+        max_quantifier_scope_features=0,
+        max_procedural_lifecycle_features=0,
+        max_enforcement_remedy_features=0,
+        max_reference_dependency_features=0,
+        max_authority_jurisdiction_features=0,
+        max_temporal_validity_features=0,
+        max_evidentiary_burden_features=0,
+        max_legal_relation_features=0,
+        max_status_transition_features=0,
+        max_condition_consequence_features=0,
+        max_applicability_scope_features=0,
+        max_coreference_binding_features=0,
+        max_logical_connective_features=0,
+        max_enumeration_hierarchy_features=240,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    embedding_autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    assert shared_plan_feature in embedding_autoencoder.state.feature_embedding_weights
+    assert after_cosine.embedding_cosine_similarity > before_cosine.embedding_cosine_similarity
+
+
 def test_family_embedding_prototype_head_transfers_cosine_to_holdout() -> None:
     train = build_us_code_sample(
         title="5",

@@ -1938,6 +1938,7 @@ class AdaptiveModalAutoencoder:
         max_applicability_scope_features: int = 64,
         max_coreference_binding_features: int = 64,
         max_logical_connective_features: int = 64,
+        max_enumeration_hierarchy_features: int = 64,
         embedding_head_update_normalization: float = 0.0,
         family_logit_head_update_normalization: float = 0.0,
         legal_ir_view_head_update_normalization: float = 0.0,
@@ -2216,6 +2217,10 @@ class AdaptiveModalAutoencoder:
         self.max_logical_connective_features = max(
             0,
             int(max_logical_connective_features),
+        )
+        self.max_enumeration_hierarchy_features = max(
+            0,
+            int(max_enumeration_hierarchy_features),
         )
         self.embedding_head_update_normalization = max(
             0.0,
@@ -4875,6 +4880,12 @@ class AdaptiveModalAutoencoder:
             self._logical_connective_feature_keys_for(
                 sample,
                 prefix="legal-ir:logical-connective",
+            )
+        )
+        keys.extend(
+            self._enumeration_hierarchy_feature_keys_for(
+                sample,
+                prefix="legal-ir:enumeration-hierarchy",
             )
         )
         keys.extend(
@@ -14417,6 +14428,439 @@ class AdaptiveModalAutoencoder:
         cache[cache_key] = list(result)
         return result
 
+    def _enumeration_hierarchy_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "enumeration-hierarchy",
+    ) -> List[str]:
+        """Numbered subdivision and cross-reference contracts for legal IR lists."""
+        normalized_prefix = str(prefix or "enumeration-hierarchy").strip(":")
+        cache_key = f"enumeration_hierarchy_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_enumeration_hierarchy_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        action_classes = role_classes.get("action", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        roman_markers = {
+            "i",
+            "ii",
+            "iii",
+            "iv",
+            "v",
+            "vi",
+            "vii",
+            "viii",
+            "ix",
+            "x",
+            "xi",
+            "xii",
+            "xiii",
+            "xiv",
+            "xv",
+            "xvi",
+            "xvii",
+            "xviii",
+            "xix",
+            "xx",
+        }
+
+        def marker_token_for(marker: str) -> str:
+            return str(marker or "").strip().strip("()").lower()
+
+        def is_enumeration_marker(marker: str) -> bool:
+            token = marker_token_for(marker)
+            if not token:
+                return False
+            return bool(
+                token.isdigit()
+                or token in roman_markers
+                or re.fullmatch(r"[a-z]", token)
+                or re.fullmatch(r"[a-z]{2}", token)
+            )
+
+        def marker_level_for(marker: str) -> str:
+            token = marker_token_for(marker)
+            if token.isdigit():
+                return "paragraph_level"
+            if token in roman_markers:
+                return "clause_level"
+            if re.fullmatch(r"[a-z]", token):
+                return "subparagraph_level"
+            if re.fullmatch(r"[a-z]{2}", token):
+                return "subclause_level"
+            return "enumeration_level"
+
+        def item_class_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            tokens = set(_TOKEN_RE.findall(normalized))
+            if tokens.intersection(
+                {
+                    "file",
+                    "files",
+                    "filing",
+                    "filings",
+                    "submit",
+                    "submits",
+                    "application",
+                    "claim",
+                    "petition",
+                    "proof",
+                    "instruction",
+                    "instructions",
+                }
+            ):
+                return "application_or_proof"
+            if tokens.intersection(
+                {"pay", "pays", "fee", "fees", "payment", "payments", "tax", "fine"}
+            ):
+                return "payment_or_fee"
+            if tokens.intersection(
+                {
+                    "record",
+                    "records",
+                    "document",
+                    "documents",
+                    "report",
+                    "reports",
+                    "notice",
+                    "notices",
+                    "information",
+                }
+            ):
+                return "notice_or_record"
+            if tokens.intersection(
+                {"hearing", "appeal", "proceeding", "order", "action", "review"}
+            ):
+                return "proceeding_or_order"
+            if tokens.intersection(
+                {"license", "permit", "certificate", "approval", "authorization", "waiver"}
+            ):
+                return "authorization_instrument"
+            if tokens.intersection(
+                {"person", "persons", "entity", "entities", "applicant", "licensee", "recipient", "individual"}
+            ):
+                return "covered_party"
+            classes: List[str] = []
+            for role_name in ("action", "object", "condition", "predicate", "kg"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            classes = _unique_preserve_order(classes)
+            return classes[0] if classes else "legal_item"
+
+        def quantifier_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\b(?:all|each|every)\s+of\s+the\s+following\b", normalized):
+                return "all"
+            if re.search(r"\b(?:any|one|either)\s+of\s+the\s+following\b", normalized):
+                return "any"
+            if re.search(r"\bno\s+following\b|\bnone\s+of\s+the\s+following\b", normalized):
+                return "none"
+            return "unspecified"
+
+        def force_class_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\bshall\s+not\b|\bmay\s+not\b|\bmust\s+not\b|\bno\b|\bnone\b", normalized):
+                return "prohibition"
+            if re.search(r"\bshall\b|\bmust\b|\brequired\b", normalized):
+                return "obligation"
+            if re.search(r"\bmay\b|\bauthorized\b|\bpermitted\b", normalized):
+                return "permission"
+            return _feature_atom(force_tags[0] if force_tags else "assertive") or "assertive"
+
+        def polarity_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\b(?:shall|may|must)\s+not\b|\bno\b|\bnone\b|\bwithout\b", normalized):
+                return "negative_enumeration"
+            return "positive_enumeration"
+
+        def cross_reference_kind(kind: str) -> str:
+            normalized = _feature_atom(kind, max_tokens=2)
+            singular = {
+                "paragraphs": "paragraph",
+                "subparagraphs": "subparagraph",
+                "clauses": "clause",
+                "subclauses": "subclause",
+                "items": "item",
+            }.get(normalized, normalized)
+            return f"{singular or 'item'}_reference"
+
+        marker_pattern = re.compile(
+            r"(?P<marker>\([a-z0-9]{1,4}\))\s*(?P<body>.*?)"
+            r"(?=(?:\s*\([a-z0-9]{1,4}\)\s*)|[.;]\s|$)"
+        )
+        marker_items: List[tuple[int, str, str, str, str]] = []
+        for match in marker_pattern.finditer(text):
+            marker = match.group("marker")
+            body = " ".join(match.group("body").split())
+            before_marker = text[max(0, int(match.start()) - 56) : int(match.start())]
+            if re.search(
+                r"\b(?:paragraphs?|subparagraphs?|clauses?|subclauses?|items?)\s+"
+                r"(?:\([a-z0-9]{1,4}\)\s+(?:and|or)\s+)?$",
+                before_marker,
+            ):
+                continue
+            if not is_enumeration_marker(marker) or len(body) < 2:
+                continue
+            if re.fullmatch(r"(?:of|and|or|to|from|by|under)\b.*", body):
+                continue
+            marker_items.append(
+                (
+                    int(match.start()),
+                    marker,
+                    marker_level_for(marker),
+                    item_class_for(body),
+                    _feature_atom(body, max_tokens=5) or "item",
+                )
+            )
+
+        following_match = re.search(
+            r"\b(?:(?P<quantifier>any|each|all|one|either)\s+of\s+the\s+)?following\b",
+            text,
+        )
+        crossref_pattern = re.compile(
+            r"\b(?P<kind>paragraphs?|subparagraphs?|clauses?|subclauses?|items?)\s+"
+            r"(?P<first>\([a-z0-9]{1,4}\))"
+            r"(?:\s+(?P<join>and|or)\s+(?P<second>\([a-z0-9]{1,4}\)))?"
+        )
+
+        enumeration_events: List[
+            tuple[int, str, str, str, str, str, str, str, str, str, str]
+        ] = []
+        if marker_items:
+            levels = _unique_preserve_order(item[2] for item in marker_items)
+            level_path = "->".join(levels[:6]) or "enumeration_level"
+            item_signature = "+".join(
+                _unique_preserve_order(item[3] for item in marker_items)[:6]
+            ) or "legal_item"
+            marker_signature = "+".join(
+                _feature_atom(marker_token_for(item[1])) for item in marker_items[:8]
+            ) or "implicit"
+            item_atom_signature = "+".join(
+                _unique_preserve_order(item[4] for item in marker_items)[:6]
+            ) or "item"
+            enumeration_scope = "list_scope" if following_match else "inline_scope"
+            context_start = max(0, marker_items[0][0] - 160)
+            context_end = min(len(text), marker_items[-1][0] + 240)
+            context = text[context_start:context_end]
+            enumeration_events.append(
+                (
+                    marker_items[0][0],
+                    "numbered_list",
+                    level_path,
+                    item_signature,
+                    quantifier_for(context),
+                    _count_bucket(len(marker_items)),
+                    "inline_items",
+                    polarity_for(context),
+                    enumeration_scope,
+                    marker_signature,
+                    item_atom_signature,
+                )
+            )
+
+        for match in crossref_pattern.finditer(text):
+            markers = [
+                marker
+                for marker in (match.group("first"), match.groupdict().get("second"))
+                if marker and is_enumeration_marker(marker)
+            ]
+            if not markers:
+                continue
+            levels = _unique_preserve_order(marker_level_for(marker) for marker in markers)
+            level_path = "->".join(levels[:4]) or "enumeration_level"
+            join = match.groupdict().get("join") or ""
+            enumeration_events.append(
+                (
+                    int(match.start()),
+                    "cross_reference",
+                    level_path,
+                    "reference_target",
+                    "any" if join == "or" else "all",
+                    _count_bucket(len(markers)),
+                    cross_reference_kind(match.group("kind")),
+                    polarity_for(match.group(0)),
+                    "reference_scope",
+                    "+".join(_feature_atom(marker_token_for(marker)) for marker in markers),
+                    _feature_atom(match.group("kind"), max_tokens=2) or "item",
+                )
+            )
+
+        if following_match and not marker_items:
+            context_start = max(0, int(following_match.start()) - 120)
+            context_end = min(len(text), int(following_match.end()) + 200)
+            context = text[context_start:context_end]
+            enumeration_events.append(
+                (
+                    int(following_match.start()),
+                    "following_opening",
+                    "implicit_list",
+                    "legal_item",
+                    quantifier_for(context),
+                    "0",
+                    "implicit_items",
+                    polarity_for(context),
+                    "list_scope",
+                    "implicit",
+                    "item",
+                )
+            )
+
+        enumeration_events = sorted(
+            _unique_preserve_order(enumeration_events),
+            key=lambda item: (item[0], item[1], item[2], item[3], item[4], item[5]),
+        )
+        if not enumeration_events:
+            cache[cache_key] = []
+            return []
+
+        enumeration_signature = "+".join(
+            f"{event_kind}:{level_path}:{item_signature}:"
+            f"{quantifier}:{arity}:{polarity}:{enumeration_scope}"
+            for (
+                _start,
+                event_kind,
+                level_path,
+                item_signature,
+                quantifier,
+                arity,
+                _reference_kind,
+                polarity,
+                enumeration_scope,
+                _marker_signature,
+                _item_atom_signature,
+            ) in enumeration_events[:8]
+        )
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        force_signature = "+".join(force_tags[:3]) or "none"
+        polarity_signature = "+".join(polarity_tags[:3]) or "none"
+
+        add("bias")
+        add(f"source-enumeration:{role_signature}:{scope_signature}")
+        add(f"enumeration-count:{_count_bucket(len(enumeration_events))}")
+        add(f"enumeration-signature:{enumeration_signature}")
+        add(f"force-enumeration:{force_signature}:{polarity_signature}:{scope_signature}")
+
+        for (
+            _start,
+            event_kind,
+            level_path,
+            item_signature,
+            quantifier,
+            arity,
+            reference_kind,
+            polarity,
+            enumeration_scope,
+            marker_signature,
+            item_atom_signature,
+        ) in enumeration_events[:10]:
+            add(
+                f"enumeration-edge:{event_kind}:{level_path}:"
+                f"{item_signature}:{quantifier}:{polarity}"
+            )
+            add(
+                f"compiler-enumeration-node:{event_kind}:{level_path}:"
+                f"{item_signature}:{quantifier}:{arity}"
+            )
+            add(
+                f"frame-logic-enumeration-slot:"
+                f"{level_path}:{item_signature}:{enumeration_scope}"
+            )
+            add(
+                f"kg-enumeration-edge:{event_kind}:{item_signature}:"
+                f"{reference_kind}:{polarity}"
+            )
+            add(
+                f"event-calculus-enumeration:"
+                f"{event_kind}:{level_path}:{force_class_for(text)}:{polarity}"
+            )
+            add(
+                f"decompiler-enumeration-slot:"
+                f"{level_path}:{item_signature}:{arity}"
+            )
+            add(
+                f"enumeration-exact:{marker_signature}:"
+                f"{item_atom_signature}:{event_kind}"
+            )
+            if reference_kind.endswith("_reference"):
+                add(f"reference-target:{reference_kind}:{level_path}:{arity}")
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-enumeration:{family}:{symbol}:{predicate_role}:"
+                        f"{event_kind}:{level_path}:{item_signature}"
+                    )
+
+        add(f"decompiler-enumeration-plan:{enumeration_signature}")
+        add(
+            f"operator-enumeration-plan:{enumeration_signature}:"
+            f"{role_signature}:{operator_signature}"
+        )
+        add(
+            f"todo-route:refine_enumeration_hierarchy:"
+            f"{enumeration_signature}:{role_signature}"
+        )
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:enumeration-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_enumeration_hierarchy_features]
+        cache[cache_key] = list(result)
+        return result
+
     def _compiler_latent_profile_feature_keys_for(
         self,
         sample: LegalSample,
@@ -16987,6 +17431,7 @@ class AdaptiveModalAutoencoder:
         keys.extend(self._applicability_scope_feature_keys_for(sample))
         keys.extend(self._coreference_binding_feature_keys_for(sample))
         keys.extend(self._logical_connective_feature_keys_for(sample))
+        keys.extend(self._enumeration_hierarchy_feature_keys_for(sample))
         keys.extend(
             f"semantic-slot:{slot.removeprefix('slot:')}"
             for slot in self._semantic_slot_distribution_for(sample).keys()
@@ -17170,6 +17615,7 @@ class AdaptiveModalAutoencoder:
             "entity-binding:",
             "equivalence-prototype:",
             "evidentiary-burden:",
+            "enumeration-hierarchy:",
             "legal-relation:",
             "logical-connective:",
             "status-transition:",

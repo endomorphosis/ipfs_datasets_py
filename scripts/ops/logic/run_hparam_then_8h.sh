@@ -80,6 +80,7 @@ COMMON_ARGS=(
   --autoencoder-max-applicability-scope-features 64
   --autoencoder-max-coreference-binding-features 64
   --autoencoder-max-logical-connective-features 64
+  --autoencoder-max-enumeration-hierarchy-features 64
   --autoencoder-max-semantic-slot-interactions 24
   --autoencoder-feature-activity-reference 64
   --autoencoder-feature-logit-clip 24.0
