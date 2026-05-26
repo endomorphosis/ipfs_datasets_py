@@ -1899,6 +1899,8 @@ def build_paired_daemon_commands(
         str(getattr(args, "autoencoder_max_definition_grounding_features", 64)),
         "--autoencoder-max-quantifier-scope-features",
         str(getattr(args, "autoencoder_max_quantifier_scope_features", 64)),
+        "--autoencoder-max-procedural-lifecycle-features",
+        str(getattr(args, "autoencoder_max_procedural_lifecycle_features", 64)),
         "--autoencoder-embedding-head-update-normalization",
         str(getattr(args, "autoencoder_embedding_head_update_normalization", 0.5)),
         "--autoencoder-family-logit-head-update-normalization",
@@ -5040,6 +5042,17 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--autoencoder-max-procedural-lifecycle-features",
+        type=int,
+        default=64,
+        help=(
+            "Maximum procedural-lifecycle features to expose to the feature "
+            "decoder. These bind filing, notice, hearing, decision, "
+            "effective-date, and review stages to event-calculus transitions "
+            "and decompiler repair routes."
+        ),
+    )
+    parser.add_argument(
         "--autoencoder-family-embedding-weight-scale",
         type=float,
         default=0.5,
@@ -6140,6 +6153,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         max_quantifier_scope_features=int(
             getattr(args, "autoencoder_max_quantifier_scope_features", 64)
         ),
+        max_procedural_lifecycle_features=int(
+            getattr(args, "autoencoder_max_procedural_lifecycle_features", 64)
+        ),
         feature_activity_reference=int(
             getattr(args, "autoencoder_feature_activity_reference", 64)
         ),
@@ -6339,6 +6355,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     )
     summary["autoencoder_max_quantifier_scope_features"] = int(
         getattr(args, "autoencoder_max_quantifier_scope_features", 64)
+    )
+    summary["autoencoder_max_procedural_lifecycle_features"] = int(
+        getattr(args, "autoencoder_max_procedural_lifecycle_features", 64)
     )
     summary["autoencoder_feature_activity_reference"] = int(
         getattr(args, "autoencoder_feature_activity_reference", 64)

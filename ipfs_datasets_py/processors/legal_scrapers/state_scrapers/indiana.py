@@ -36,6 +36,15 @@ class IndianaScraper(BaseStateScraper):
         r"https?://web\.archive\.org/web/(?P<ts>\d+)(?:if_|id_)?/(?P<original>https?://.+)$",
         re.IGNORECASE,
     )
+    _IGA_JS_SHELL_RE = re.compile(
+        r"you need to enable javascript to run this app\.",
+        re.IGNORECASE,
+    )
+    _IGA_ROOT_DIV_RE = re.compile(r"<div\s+id=['\"]root['\"]", re.IGNORECASE)
+    _WAYBACK_SHELL_RE = re.compile(
+        r"<title>\s*wayback machine\s*</title>",
+        re.IGNORECASE,
+    )
 
     def get_base_url(self) -> str:
         """Return the base URL for Indiana's legislative website."""
@@ -290,6 +299,9 @@ class IndianaScraper(BaseStateScraper):
         seen_pages = set()
         queue = list(seed_urls)
         crawl_limit = int(os.getenv("INDIANA_JUSTIA_CRAWL_PAGE_LIMIT", "2000") or "2000")
+        recovery_enabled = self._env_flag("INDIANA_JUSTIA_ALLOW_RECOVERY_FETCH")
+        recovery_budget = max(0, int(os.getenv("INDIANA_JUSTIA_RECOVERY_FETCH_LIMIT", "64") or "64"))
+        recovery_used = 0
         self._write_partial_checkpoint(
             out,
             code_name=code_name,
@@ -331,7 +343,25 @@ class IndianaScraper(BaseStateScraper):
                 payload = await self._fetch_archived_indiana_page(page_url, timeout_seconds=35)
             except Exception:
                 payload = b""
+            if (
+                (not payload or self._looks_like_wayback_shell_payload(payload))
+                and recovery_enabled
+                and recovery_used < recovery_budget
+            ):
+                try:
+                    recovered = await self._fetch_archived_indiana_page(
+                        page_url,
+                        timeout_seconds=35,
+                        allow_archival_fallback=True,
+                    )
+                except Exception:
+                    recovered = b""
+                if recovered:
+                    payload = recovered
+                recovery_used += 1
             if not payload:
+                continue
+            if self._looks_like_wayback_shell_payload(payload):
                 continue
 
             soup = BeautifulSoup(payload, "html.parser")
@@ -349,6 +379,8 @@ class IndianaScraper(BaseStateScraper):
                 if "accounts.justia.com" in lower_url or "/signin" in lower_url:
                     continue
                 if "*" in abs_url:
+                    continue
+                if "/web/*/" in lower_url:
                     continue
                 if "/codes/indiana/2010/" not in lower_url:
                     continue
@@ -428,6 +460,9 @@ class IndianaScraper(BaseStateScraper):
         out: List[NormalizedStatute] = []
         seen = set()
         queued = set()
+        recovery_enabled = self._env_flag("INDIANA_JUSTIA_ALLOW_RECOVERY_FETCH")
+        recovery_budget = max(0, int(os.getenv("INDIANA_JUSTIA_RECOVERY_FETCH_LIMIT", "64") or "64"))
+        recovery_used = 0
         crawl_limit = int(os.getenv("INDIANA_JUSTIA_CRAWL_PAGE_LIMIT", "2000") or "2000")
         global_page_budget = max(
             crawl_limit,
@@ -462,7 +497,25 @@ class IndianaScraper(BaseStateScraper):
                     payload = await self._fetch_archived_indiana_page(page_url, timeout_seconds=35)
                 except Exception:
                     payload = b""
+                if (
+                    (not payload or self._looks_like_wayback_shell_payload(payload))
+                    and recovery_enabled
+                    and recovery_used < recovery_budget
+                ):
+                    try:
+                        recovered = await self._fetch_archived_indiana_page(
+                            page_url,
+                            timeout_seconds=35,
+                            allow_archival_fallback=True,
+                        )
+                    except Exception:
+                        recovered = b""
+                    if recovered:
+                        payload = recovered
+                    recovery_used += 1
                 if not payload:
+                    continue
+                if self._looks_like_wayback_shell_payload(payload):
                     continue
 
                 try:
@@ -485,6 +538,8 @@ class IndianaScraper(BaseStateScraper):
                     if "accounts.justia.com" in lower_url or "/signin" in lower_url:
                         continue
                     if "/codes/indiana/2010/" not in lower_url:
+                        continue
+                    if "/web/*/" in lower_url:
                         continue
 
                     is_index = any(part in lower_url for part in ("/title", "/ar", "/ch")) and (
@@ -931,7 +986,11 @@ class IndianaScraper(BaseStateScraper):
                 payload = await self._request_bytes_direct(fetch_url, headers=headers, timeout=timeout)
             except Exception:
                 payload = b""
-            if payload and not self._is_object_moved_placeholder(payload):
+            if (
+                payload
+                and not self._is_object_moved_placeholder(payload)
+                and not self._looks_like_javascript_shell_payload(payload)
+            ):
                 return payload
             if allow_archival_fallback or self._env_flag("INDIANA_ALLOW_ARCHIVAL_FETCH_FALLBACK"):
                 return await self._fetch_page_content_with_archival_fallback(
@@ -952,6 +1011,8 @@ class IndianaScraper(BaseStateScraper):
                 payload = b""
             if not payload or self._is_object_moved_placeholder(payload):
                 continue
+            if self._looks_like_wayback_shell_payload(payload):
+                continue
             return payload
 
         if allow_archival_fallback or self._env_flag("INDIANA_ALLOW_ARCHIVAL_FETCH_FALLBACK"):
@@ -960,6 +1021,34 @@ class IndianaScraper(BaseStateScraper):
                 timeout_seconds=timeout_seconds,
             )
         return b""
+
+    def _looks_like_javascript_shell_payload(self, payload: bytes) -> bool:
+        if not payload:
+            return False
+        try:
+            text = payload.decode("utf-8", errors="ignore")
+        except Exception:
+            return False
+        if len(text) > 120000:
+            # Rich pages can still include this sentence in inline assets;
+            # avoid over-classifying large payloads as shells.
+            return False
+        lower = text.lower()
+        return bool(
+            self._IGA_JS_SHELL_RE.search(lower)
+            and self._IGA_ROOT_DIV_RE.search(lower)
+            and "indiana general assembly" in lower
+        )
+
+    def _looks_like_wayback_shell_payload(self, payload: bytes) -> bool:
+        if not payload:
+            return False
+        try:
+            text = payload.decode("utf-8", errors="ignore")
+        except Exception:
+            return False
+        lower = text.lower()
+        return bool(self._WAYBACK_SHELL_RE.search(lower))
 
     def _normalize_wayback_child_url(self, *, page_url: str, candidate_url: str) -> str:
         """Normalize child links under Wayback replay pages to replay URLs."""

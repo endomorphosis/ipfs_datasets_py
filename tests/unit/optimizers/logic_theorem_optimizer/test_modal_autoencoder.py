@@ -4623,6 +4623,205 @@ def test_quantifier_scope_feature_head_transfers_universal_holdout() -> None:
     assert after_cosine.embedding_cosine_similarity > before_cosine.embedding_cosine_similarity
 
 
+def test_procedural_lifecycle_features_encode_ordered_event_stages() -> None:
+    procedure = build_us_code_sample(
+        title="5",
+        section="552",
+        text=(
+            "After the applicant files an application, the agency shall provide "
+            "notice, hold a hearing, and issue an order before the permit "
+            "becomes effective."
+        ),
+    )
+    review = build_us_code_sample(
+        title="5",
+        section="553",
+        text=(
+            "A person may appeal the order and seek judicial review after the "
+            "agency issues a final decision."
+        ),
+    )
+    autoencoder = AdaptiveModalAutoencoder(max_procedural_lifecycle_features=240)
+
+    procedure_features = autoencoder._procedural_lifecycle_feature_keys_for(procedure)
+    review_features = autoencoder._procedural_lifecycle_feature_keys_for(review)
+    fallback_features = autoencoder._fallback_feature_keys_for(procedure)
+    legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(procedure)
+
+    assert (
+        "procedural-lifecycle:stage-sequence:"
+        "initiate_filing->notice->hearing->decision->effectiveness"
+        in procedure_features
+    )
+    assert (
+        "procedural-lifecycle:stage-class-signature:"
+        "initiate_filing:application_or_proof+"
+        "notice:notice_or_record+hearing:proceeding_or_order+"
+        "decision:proceeding_or_order+effectiveness:authorization_instrument"
+        in procedure_features
+    )
+    assert (
+        "procedural-lifecycle:event-calculus-transition:"
+        "hearing->decision:filing_to_decision"
+        in procedure_features
+    )
+    assert (
+        "procedural-lifecycle:decompiler-lifecycle-plan:"
+        "initiate_filing->notice->hearing->decision->effectiveness:"
+        "filing_to_decision:none:none:none:none:none:none"
+        in fallback_features
+    )
+    assert (
+        "legal-ir:procedural-lifecycle:decompiler-lifecycle-plan:"
+        "initiate_filing->notice->hearing->decision->effectiveness:"
+        "filing_to_decision:none:none:none:none:none:none"
+        in legal_ir_features
+    )
+    assert (
+        "procedural-lifecycle:stage-sequence:appeal_review"
+        in review_features
+    )
+    assert (
+        "procedural-lifecycle:event-calculus-review:"
+        "private_party:proceeding_or_order:conditioned+temporal"
+        in review_features
+    )
+
+
+def test_procedural_lifecycle_feature_head_transfers_process_holdout() -> None:
+    shared_plan_feature = (
+        "procedural-lifecycle:decompiler-lifecycle-plan:"
+        "initiate_filing->notice->hearing->decision->effectiveness:"
+        "filing_to_decision:none:none:none:none:none:none"
+    )
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text=(
+            "After the applicant files an application, the agency shall provide "
+            "notice, hold a hearing, and issue an order before the permit "
+            "becomes effective."
+        ),
+        embedding_vector=[1.0, 0.0],
+    )
+    validation = build_us_code_sample(
+        title="12",
+        section="1841",
+        text=(
+            "After the owner submits a claim, the department must publish "
+            "notice, conduct a hearing, and grant approval before the license "
+            "becomes effective."
+        ),
+        embedding_vector=[1.0, 0.0],
+    )
+    family_autoencoder = AdaptiveModalAutoencoder(
+        feature_family_logit_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=0,
+        max_entity_binding_features=0,
+        max_defeasible_priority_features=0,
+        max_constraint_grounding_features=0,
+        max_definition_grounding_features=0,
+        max_quantifier_scope_features=0,
+        max_procedural_lifecycle_features=240,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+    )
+    shared_lifecycle_features = set(
+        family_autoencoder._procedural_lifecycle_feature_keys_for(train)
+    ).intersection(
+        family_autoencoder._procedural_lifecycle_feature_keys_for(validation)
+    )
+    before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    family_autoencoder._nudge_family_logits(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert shared_plan_feature in shared_lifecycle_features
+    assert shared_plan_feature in family_autoencoder.state.feature_family_logits
+    assert after_ce.cross_entropy_loss < before_ce.cross_entropy_loss
+
+    embedding_autoencoder = AdaptiveModalAutoencoder(
+        compiler_quality_embedding_weight_scale=0.0,
+        logic_signature_embedding_weight_scale=0.0,
+        round_trip_signal_embedding_weight_scale=0.0,
+        decompiler_plan_embedding_weight_scale=0.0,
+        predicate_argument_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=0.0,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        feature_embedding_weight_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=0,
+        max_entity_binding_features=0,
+        max_defeasible_priority_features=0,
+        max_constraint_grounding_features=0,
+        max_definition_grounding_features=0,
+        max_quantifier_scope_features=0,
+        max_procedural_lifecycle_features=240,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    embedding_autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    assert shared_plan_feature in embedding_autoencoder.state.feature_embedding_weights
+    assert after_cosine.embedding_cosine_similarity > before_cosine.embedding_cosine_similarity
+
+
 def test_family_embedding_prototype_head_transfers_cosine_to_holdout() -> None:
     train = build_us_code_sample(
         title="5",

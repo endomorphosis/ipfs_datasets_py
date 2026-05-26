@@ -1925,6 +1925,7 @@ class AdaptiveModalAutoencoder:
         max_constraint_grounding_features: int = 64,
         max_definition_grounding_features: int = 64,
         max_quantifier_scope_features: int = 64,
+        max_procedural_lifecycle_features: int = 64,
         embedding_head_update_normalization: float = 0.0,
         family_logit_head_update_normalization: float = 0.0,
         legal_ir_view_head_update_normalization: float = 0.0,
@@ -2151,6 +2152,10 @@ class AdaptiveModalAutoencoder:
         self.max_quantifier_scope_features = max(
             0,
             int(max_quantifier_scope_features),
+        )
+        self.max_procedural_lifecycle_features = max(
+            0,
+            int(max_procedural_lifecycle_features),
         )
         self.embedding_head_update_normalization = max(
             0.0,
@@ -4732,6 +4737,12 @@ class AdaptiveModalAutoencoder:
             self._quantifier_scope_feature_keys_for(
                 sample,
                 prefix="legal-ir:quantifier-scope",
+            )
+        )
+        keys.extend(
+            self._procedural_lifecycle_feature_keys_for(
+                sample,
+                prefix="legal-ir:procedural-lifecycle",
             )
         )
         keys.extend(
@@ -9355,6 +9366,360 @@ class AdaptiveModalAutoencoder:
         cache[cache_key] = list(result)
         return result
 
+    def _procedural_lifecycle_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "procedural-lifecycle",
+    ) -> List[str]:
+        """Ordered filing, notice, hearing, decision, effective, and review stages."""
+        normalized_prefix = str(prefix or "procedural-lifecycle").strip(":")
+        cache_key = f"procedural_lifecycle_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_procedural_lifecycle_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        action_classes = role_classes.get("action", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        def content_tokens(value: str, *, max_tokens: int = 6) -> List[str]:
+            tokens = [
+                token
+                for token in _TOKEN_RE.findall(str(value or "").lower())
+                if token
+                and token not in _STOPWORDS
+                and token
+                not in {
+                    "after",
+                    "before",
+                    "within",
+                    "shall",
+                    "must",
+                    "may",
+                    "hold",
+                    "conduct",
+                    "provide",
+                    "publish",
+                    "issue",
+                    "grant",
+                    "file",
+                    "files",
+                    "submit",
+                    "submits",
+                }
+            ]
+            return _unique_preserve_order(tokens)[:max_tokens]
+
+        def class_for_text(value: str, *, role: str) -> str:
+            classes: List[str] = []
+            for role_name in (role, "object", "kg", "predicate", "subject"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            classes = _unique_preserve_order(classes)
+            if classes:
+                return classes[0]
+            tokens = set(content_tokens(value, max_tokens=10))
+            if tokens.intersection({"applicant", "applicants", "owner", "person"}):
+                return "private_party"
+            if tokens.intersection({"agency", "board", "commission", "department"}):
+                return "government_actor"
+            if tokens.intersection({"application", "claim", "filing", "proof"}):
+                return "application_or_proof"
+            if tokens.intersection({"notice", "record", "information", "report"}):
+                return "notice_or_record"
+            if tokens.intersection({"hearing", "order", "decision", "action"}):
+                return "proceeding_or_order"
+            if tokens.intersection({"permit", "license", "approval", "authorization"}):
+                return "authorization_instrument"
+            if tokens.intersection({"fee", "payment", "fine", "penalty"}):
+                return "payment_or_fee"
+            return "procedure_entity"
+
+        actor_tokens = {
+            "agency",
+            "board",
+            "commission",
+            "department",
+            "applicant",
+            "applicants",
+            "owner",
+            "person",
+            "court",
+            "officer",
+        }
+
+        def actor_class_for_position(position: int) -> str:
+            left_context = text[max(0, int(position) - 80) : int(position)]
+            candidates = [
+                token
+                for token in _TOKEN_RE.findall(left_context)
+                if token in actor_tokens
+            ]
+            if candidates:
+                return class_for_text(candidates[-1], role="subject")
+            return first_or_none(role_classes.get("subject", []))
+
+        def stage_object_class(stage: str, span: str, raw_object: str) -> str:
+            if stage == "initiate_filing":
+                return "application_or_proof"
+            if stage == "notice":
+                return "notice_or_record"
+            if stage == "hearing":
+                return "proceeding_or_order"
+            if stage in {"decision", "appeal_review"}:
+                explicit_class = class_for_text(raw_object, role="object")
+                if explicit_class != "procedure_entity":
+                    return explicit_class
+                explicit_class = class_for_text(span, role="object")
+                if explicit_class != "procedure_entity":
+                    return explicit_class
+                return "proceeding_or_order"
+            if stage == "payment":
+                return "payment_or_fee"
+            if stage == "effectiveness":
+                return "authorization_instrument"
+            return class_for_text(span, role="object")
+
+        stage_patterns: tuple[tuple[str, str, re.Pattern[str]], ...] = (
+            (
+                "initiate_filing",
+                "filing",
+                re.compile(
+                    r"\b(?P<verb>file|files|filed|submit|submits|submitted|"
+                    r"apply|applies|register|registers)\s+"
+                    r"(?P<object>(?:an?\s+|the\s+)?(?:application|claim|notice|"
+                    r"report|registration|filing|proof))\b"
+                ),
+            ),
+            (
+                "notice",
+                "notice",
+                re.compile(
+                    r"\b(?P<verb>provide|provides|publish|publishes|send|sends|"
+                    r"give|gives|furnish|furnishes|notify|notifies)\s+"
+                    r"(?P<object>(?:an?\s+|the\s+)?(?:notice|record|report|"
+                    r"information|statement))\b"
+                ),
+            ),
+            (
+                "hearing",
+                "hearing",
+                re.compile(
+                    r"\b(?P<verb>hold|holds|conduct|conducts|schedule|schedules)\s+"
+                    r"(?P<object>(?:an?\s+|the\s+)?hearing)\b|\b(?P<object2>hearing)\b"
+                ),
+            ),
+            (
+                "decision",
+                "decision",
+                re.compile(
+                    r"\b(?P<verb>issue|issues|grant|grants|approve|approves|"
+                    r"deny|denies|determine|determines)\s+"
+                    r"(?P<object>(?:an?\s+|the\s+)?(?:order|decision|permit|"
+                    r"license|approval|authorization|claim|application))\b"
+                ),
+            ),
+            (
+                "payment",
+                "payment",
+                re.compile(
+                    r"\b(?P<verb>pay|pays|paid|collect|collects)\s+"
+                    r"(?P<object>(?:an?\s+|the\s+)?(?:fee|payment|fine|penalty|tax))\b"
+                ),
+            ),
+            (
+                "effectiveness",
+                "effective",
+                re.compile(
+                    r"\b(?P<verb>becomes?|is|remain|remains)\s+"
+                    r"(?P<object>effective|operative|valid)\b|"
+                    r"\b(?P<object2>effective\s+date|expiration|expires?)\b"
+                ),
+            ),
+            (
+                "appeal_review",
+                "review",
+                re.compile(
+                    r"\b(?P<verb>appeal|appeals|review|reviews|reconsider|"
+                    r"reconsiders|seek|seeks)\s+"
+                    r"(?P<object>(?:judicial\s+)?(?:review|appeal|reconsideration))\b"
+                ),
+            ),
+        )
+
+        stages: List[tuple[int, str, str, str, str, str]] = []
+        occupied_ranges: List[tuple[int, int, str]] = []
+        for stage, _label, pattern in stage_patterns:
+            for match in pattern.finditer(text):
+                start, end = int(match.start()), int(match.end())
+                if any(
+                    start < occupied_end
+                    and end > occupied_start
+                    and stage == occupied_stage
+                    for occupied_start, occupied_end, occupied_stage in occupied_ranges
+                ):
+                    continue
+                raw_object = (
+                    match.groupdict().get("object")
+                    or match.groupdict().get("object2")
+                    or stage
+                )
+                raw_verb = match.groupdict().get("verb") or stage
+                span = text[max(0, start - 48) : min(len(text), end + 64)]
+                object_class = stage_object_class(stage, span or raw_object, raw_object)
+                actor_class = actor_class_for_position(start) or "none"
+                object_atom = (
+                    _feature_atom(" ".join(content_tokens(raw_object, max_tokens=4)), max_tokens=4)
+                    or _feature_atom(raw_object, max_tokens=4)
+                    or object_class
+                )
+                stages.append(
+                    (
+                        start,
+                        stage,
+                        actor_class,
+                        object_class,
+                        _feature_atom(raw_verb, max_tokens=3) or stage,
+                        object_atom,
+                    )
+                )
+                occupied_ranges.append((start, end, stage))
+
+        stages = sorted(
+            _unique_preserve_order(stages),
+            key=lambda item: (item[0], item[1], item[3], item[4]),
+        )
+        stage_sequence_values = [stage for _start, stage, *_rest in stages[:10]]
+        stage_sequence = "->".join(stage_sequence_values) or "none"
+        stage_class_signature = "+".join(
+            f"{stage}:{object_class}"
+            for _start, stage, _actor_class, object_class, _verb, _object_atom in stages[:8]
+        ) or "none"
+        lifecycle_kind = (
+            "filing_to_decision"
+            if "initiate_filing" in stage_sequence_values and "decision" in stage_sequence_values
+            else "notice_to_decision"
+            if "notice" in stage_sequence_values and "decision" in stage_sequence_values
+            else "review_path"
+            if "appeal_review" in stage_sequence_values
+            else "procedure_path"
+        )
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        force_signature = "+".join(force_tags[:3]) or "none"
+        polarity_signature = "+".join(polarity_tags[:3]) or "none"
+
+        add("bias")
+        add(f"source-lifecycle:{role_signature}:{scope_signature}")
+        add(f"lifecycle-count:{_count_bucket(len(stages))}")
+        add(f"lifecycle-kind:{lifecycle_kind}:{scope_signature}")
+        add(f"stage-sequence:{stage_sequence}")
+        add(f"stage-class-signature:{stage_class_signature}")
+        add(f"force-lifecycle:{force_signature}:{polarity_signature}:{scope_signature}")
+        if not stages:
+            add(f"lifecycle-coverage:none:{role_signature}:{scope_signature}")
+
+        for (
+            _start,
+            stage,
+            actor_class,
+            object_class,
+            verb,
+            object_atom,
+        ) in stages[:10]:
+            add(f"stage:{stage}:{actor_class}:{object_class}:{scope_signature}")
+            add(f"stage-exact:{stage}:{verb}:{object_atom}")
+            add(f"event-calculus-stage:{stage}:{actor_class}:{object_class}")
+            add(f"stage-role:{stage}:{actor_class}:{object_class}:{action_class}")
+            if stage == "initiate_filing":
+                add(f"event-calculus-initiates:procedure:{actor_class}:{object_class}")
+            if stage in {"decision", "effectiveness"}:
+                add(f"event-calculus-completes:procedure:{actor_class}:{object_class}")
+            if stage == "appeal_review":
+                add(f"event-calculus-review:{actor_class}:{object_class}:{scope_signature}")
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-stage:{family}:{symbol}:{predicate_role}:"
+                        f"{stage}:{actor_class}:{object_class}"
+                    )
+
+        for left, right in zip(stages, stages[1:]):
+            left_stage = left[1]
+            right_stage = right[1]
+            add(f"stage-transition:{left_stage}->{right_stage}:{scope_signature}")
+            add(f"event-calculus-transition:{left_stage}->{right_stage}:{lifecycle_kind}")
+
+        add(
+            f"decompiler-lifecycle-plan:{stage_sequence}:"
+            f"{lifecycle_kind}:{role_signature}"
+        )
+        add(
+            f"operator-lifecycle-plan:{stage_sequence}:"
+            f"{lifecycle_kind}:{role_signature}:{operator_signature}"
+        )
+        add(
+            f"todo-route:refine_procedural_lifecycle:"
+            f"{stage_sequence}:{lifecycle_kind}:{role_signature}"
+        )
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:lifecycle-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_procedural_lifecycle_features]
+        cache[cache_key] = list(result)
+        return result
+
     def _compiler_latent_profile_feature_keys_for(
         self,
         sample: LegalSample,
@@ -11912,6 +12277,7 @@ class AdaptiveModalAutoencoder:
         keys.extend(self._constraint_grounding_feature_keys_for(sample))
         keys.extend(self._definition_grounding_feature_keys_for(sample))
         keys.extend(self._quantifier_scope_feature_keys_for(sample))
+        keys.extend(self._procedural_lifecycle_feature_keys_for(sample))
         keys.extend(
             f"semantic-slot:{slot.removeprefix('slot:')}"
             for slot in self._semantic_slot_distribution_for(sample).keys()
@@ -12122,6 +12488,7 @@ class AdaptiveModalAutoencoder:
             "predicate-argument:",
             "predicate-arity-bin:",
             "predicate-role:",
+            "procedural-lifecycle:",
             "quantifier-scope:",
             "provenance-alignment:",
             "proof-obligation:",

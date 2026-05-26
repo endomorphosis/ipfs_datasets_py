@@ -403,6 +403,86 @@ def test_indiana_marks_archived_justia_rows_skip_hydrate():
     assert "skip_hydrate" not in live.structured_data
 
 
+@pytest.mark.anyio
+async def test_indiana_non_wayback_js_shell_requires_archival_fallback(monkeypatch: pytest.MonkeyPatch):
+    shell_payload = (
+        "<!doctype html><html><head><title>Indiana General Assembly</title></head>"
+        "<body><noscript>You need to enable JavaScript to run this app.</noscript>"
+        "<div id='root'></div></body></html>"
+    ).encode("utf-8")
+    fallback_calls = []
+
+    async def _fake_request_bytes_direct(self, url: str, headers: dict, timeout: int):
+        return shell_payload
+
+    async def _fake_fetch_page_content_with_archival_fallback(self, url: str, timeout_seconds: int = 35):
+        fallback_calls.append((url, timeout_seconds))
+        return b"<html><body>Recovered Indiana content</body></html>"
+
+    monkeypatch.setattr(IndianaScraper, "_request_bytes_direct", _fake_request_bytes_direct)
+    monkeypatch.setattr(
+        IndianaScraper,
+        "_fetch_page_content_with_archival_fallback",
+        _fake_fetch_page_content_with_archival_fallback,
+    )
+
+    scraper = IndianaScraper("IN", "Indiana")
+    no_recovery = await scraper._fetch_archived_indiana_page(
+        "https://iga.in.gov/laws/current/ic/",
+        timeout_seconds=20,
+        allow_archival_fallback=False,
+    )
+    with_recovery = await scraper._fetch_archived_indiana_page(
+        "https://iga.in.gov/laws/current/ic/",
+        timeout_seconds=20,
+        allow_archival_fallback=True,
+    )
+
+    assert no_recovery == b""
+    assert b"Recovered Indiana content" in with_recovery
+    assert len(fallback_calls) == 1
+
+
+@pytest.mark.anyio
+async def test_indiana_wayback_shell_payload_is_not_treated_as_content(monkeypatch: pytest.MonkeyPatch):
+    shell_payload = (
+        "<html><head><title>Wayback Machine</title></head>"
+        "<body><div id='wm-ipp'></div></body></html>"
+    ).encode("utf-8")
+    fallback_calls = []
+
+    async def _fake_request_bytes_direct(self, url: str, headers: dict, timeout: int):
+        return shell_payload
+
+    async def _fake_fetch_page_content_with_archival_fallback(self, url: str, timeout_seconds: int = 35):
+        fallback_calls.append((url, timeout_seconds))
+        return b"<html><body>Recovered replay</body></html>"
+
+    monkeypatch.setattr(IndianaScraper, "_request_bytes_direct", _fake_request_bytes_direct)
+    monkeypatch.setattr(
+        IndianaScraper,
+        "_fetch_page_content_with_archival_fallback",
+        _fake_fetch_page_content_with_archival_fallback,
+    )
+
+    scraper = IndianaScraper("IN", "Indiana")
+    replay_url = "https://web.archive.org/web/20241203192652/https://law.justia.com/codes/indiana/2010/title1/title1.html"
+    no_recovery = await scraper._fetch_archived_indiana_page(
+        replay_url,
+        timeout_seconds=20,
+        allow_archival_fallback=False,
+    )
+    with_recovery = await scraper._fetch_archived_indiana_page(
+        replay_url,
+        timeout_seconds=20,
+        allow_archival_fallback=True,
+    )
+
+    assert no_recovery == b""
+    assert b"Recovered replay" in with_recovery
+    assert len(fallback_calls) == 1
+
+
 def test_indiana_section_number_derivation_avoids_title_chapter_indexes():
     scraper = IndianaScraper("IN", "Indiana")
     chapter_index = "https://web.archive.org/web/20241203192652/https://law.justia.com/codes/indiana/2010/title35/ar42/ch1/index.html"
@@ -484,6 +564,36 @@ async def test_indiana_link_graph_rows_mark_skip_hydrate_and_replay_urls(monkeyp
     first = rows[0]
     assert first.structured_data.get("skip_hydrate") is True
     assert str(first.source_url).startswith("https://web.archive.org/web/20241203192652/")
+
+
+@pytest.mark.anyio
+async def test_indiana_link_graph_skips_wayback_wildcard_children(monkeypatch: pytest.MonkeyPatch):
+    replay_seed = "https://web.archive.org/web/20241203192652/https://law.justia.com/codes/indiana/2010/title35/title35.html"
+    fetch_calls: list[str] = []
+
+    async def _fake_fetch(self, url: str, timeout_seconds: int = 35, allow_archival_fallback: bool = False):
+        fetch_calls.append(url)
+        if "title35/title35.html" in url:
+            return (
+                "<html><body>"
+                "<a href=\"/web/*/http://law.justia.com/codes/indiana/2010/title35/ar42/*\">wildcard</a>"
+                "<a href=\"/codes/indiana/2010/title35/chapter-42/section-35-42-1-1/\">IC 35-42-1-1</a>"
+                "</body></html>"
+            ).encode("utf-8")
+        return b"<html><body></body></html>"
+
+    monkeypatch.setattr(IndianaScraper, "_fetch_archived_indiana_page", _fake_fetch)
+
+    scraper = IndianaScraper("IN", "Indiana")
+    rows = await scraper._crawl_archived_justia_link_graph(
+        code_name="Indiana Code",
+        seed_urls=[replay_seed],
+        max_statutes=2,
+    )
+
+    assert rows
+    assert all("/web/*/" not in str(row.source_url) for row in rows)
+    assert all("/web/*/" not in str(url) for url in fetch_calls)
 
 
 @pytest.mark.anyio
