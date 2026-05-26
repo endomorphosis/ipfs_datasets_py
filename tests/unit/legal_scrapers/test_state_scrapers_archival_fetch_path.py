@@ -1,4 +1,5 @@
 import io
+import json
 import zipfile
 import urllib.request
 
@@ -4365,6 +4366,158 @@ async def test_mississippi_full_corpus_prefers_justia_crawl_before_archive(monke
 
     assert len(statutes) == 1
     assert statutes[0].structured_data["source_kind"] == "justia_mississippi_code_html"
+
+
+@pytest.mark.anyio
+async def test_mississippi_full_corpus_prefers_wayback_justia_before_archive_when_direct_blocked(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+
+    async def _fake_common_crawl(self, code_name: str, max_statutes: int):
+        return []
+
+    async def _fake_seed(self, code_name: str, max_statutes: int = 1):
+        return []
+
+    async def _fake_direct_justia(self, code_name: str, max_statutes: int = 30000):
+        return []
+
+    async def _fake_wayback_justia(self, code_name: str, max_statutes: int = 30000):
+        return [
+            NormalizedStatute(
+                state_code="MS",
+                state_name="Mississippi",
+                statute_id=f"{code_name} § 97-3-7",
+                code_name=code_name,
+                section_number="97-3-7",
+                section_name="Simple assault; aggravated assault",
+                full_text="Wayback Justia section text " * 20,
+                source_url="https://law.justia.com/codes/mississippi/title-97/chapter-3/section-97-3-7/",
+                official_cite="Miss. Code Ann. § 97-3-7",
+                structured_data={
+                    "source_kind": "wayback_justia_mississippi_code_html",
+                    "discovery_method": "justia_wayback_title_chapter_section",
+                    "archive_url": "https://web.archive.org/web/20250329184729/https://law.justia.com/codes/mississippi/title-97/chapter-3/section-97-3-7/",
+                    "skip_hydrate": True,
+                },
+            )
+        ]
+
+    async def _fake_archive(self, code_name: str, max_statutes: int, **kwargs):
+        raise AssertionError("archive fallback should not run when Justia Wayback path yields rows")
+
+    monkeypatch.setattr(MississippiScraper, "_scrape_common_crawl_code_sections", _fake_common_crawl)
+    monkeypatch.setattr(MississippiScraper, "_scrape_jina_justia_seed_sections", _fake_seed)
+    monkeypatch.setattr(MississippiScraper, "_scrape_justia_code_sections", _fake_direct_justia)
+    monkeypatch.setattr(MississippiScraper, "_scrape_justia_wayback_code_sections", _fake_wayback_justia)
+    monkeypatch.setattr(MississippiScraper, "_scrape_archived_bill_history", _fake_archive)
+
+    scraper = MississippiScraper("MS", "Mississippi")
+    statutes = await scraper.scrape_code("Mississippi Code", "https://www.legislature.ms.gov/legislation/")
+
+    assert len(statutes) == 1
+    assert statutes[0].structured_data["source_kind"] == "wayback_justia_mississippi_code_html"
+
+
+@pytest.mark.anyio
+async def test_mississippi_discover_justia_wayback_snapshot_urls_parses_cdx_rows(monkeypatch: pytest.MonkeyPatch):
+    cdx_payload = json.dumps(
+        [
+            ["timestamp", "original", "statuscode", "mimetype"],
+            ["20250329184729", "https://law.justia.com/codes/mississippi/2024/", "200", "text/html"],
+            ["20250402220022", "https://law.justia.com/codes/mississippi/2024/", "200", "text/html"],
+        ]
+    )
+
+    async def _fake_request(self, url: str, timeout: int = 30, attempts: int = 3):
+        return cdx_payload
+
+    monkeypatch.setattr(MississippiScraper, "_request_text_direct_with_retries", _fake_request)
+    scraper = MississippiScraper("MS", "Mississippi")
+    snapshots = await scraper._discover_justia_wayback_snapshot_urls(
+        "https://law.justia.com/codes/mississippi/2024/",
+        max_snapshots=2,
+    )
+    assert snapshots == [
+        "https://web.archive.org/web/20250402220022/https://law.justia.com/codes/mississippi/2024/",
+        "https://web.archive.org/web/20250329184729/https://law.justia.com/codes/mississippi/2024/",
+    ]
+
+
+@pytest.mark.anyio
+async def test_mississippi_wayback_title_chapter_uses_cdx_fallback_for_missing_snapshot(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    index_original = "https://law.justia.com/codes/mississippi/2024/"
+    title_original = "https://law.justia.com/codes/mississippi/title-97/"
+    chapter_original = "https://law.justia.com/codes/mississippi/title-97/chapter-3/"
+    section_original = "https://law.justia.com/codes/mississippi/title-97/chapter-3/section-97-3-7/"
+
+    index_snapshot = "https://web.archive.org/web/20250429174032/https://law.justia.com/codes/mississippi/2024/"
+    title_primary_missing = "https://web.archive.org/web/20250429174032/https://law.justia.com/codes/mississippi/title-97/"
+    title_fallback_snapshot = "https://web.archive.org/web/20250329184729/https://law.justia.com/codes/mississippi/title-97/"
+    chapter_fallback_snapshot = "https://web.archive.org/web/20250329184729/https://law.justia.com/codes/mississippi/title-97/chapter-3/"
+    section_fallback_snapshot = "https://web.archive.org/web/20250329184729/https://law.justia.com/codes/mississippi/title-97/chapter-3/section-97-3-7/"
+
+    index_html = """
+    <html><body>
+      <a href="https://law.justia.com/codes/mississippi/title-97/">Title 97</a>
+    </body></html>
+    """
+    title_html = """
+    <html><body>
+      <a href="https://law.justia.com/codes/mississippi/title-97/chapter-3/">Chapter 3</a>
+    </body></html>
+    """
+    chapter_html = """
+    <html><body>
+      <a href="https://law.justia.com/codes/mississippi/title-97/chapter-3/section-97-3-7/">Section 97-3-7</a>
+    </body></html>
+    """
+    section_html = """
+    <html><body>
+      <h1>Mississippi Code § 97-3-7 - Example section</h1>
+      <div id="codes-content">
+        This section text is intentionally long enough to pass the parser threshold.
+        It includes substantive legal language and penalties. This section text is intentionally long enough to pass
+        the parser threshold with additional repeated content for deterministic test behavior.
+      </div>
+    </body></html>
+    """
+
+    async def _fake_discover(self, original_url: str, *, max_snapshots: int = 2):
+        value = str(original_url or "").strip()
+        if value == index_original:
+            return [index_snapshot]
+        if value == title_original:
+            return [title_fallback_snapshot]
+        if value == chapter_original:
+            return [chapter_fallback_snapshot]
+        if value == section_original:
+            return [section_fallback_snapshot]
+        return []
+
+    async def _fake_request(self, url: str, timeout: int = 30, attempts: int = 3):
+        payload_by_url = {
+            index_snapshot: index_html,
+            title_primary_missing: "",
+            title_fallback_snapshot: title_html,
+            chapter_fallback_snapshot: chapter_html,
+            section_fallback_snapshot: section_html,
+        }
+        return payload_by_url.get(str(url or "").strip(), "")
+
+    monkeypatch.setattr(MississippiScraper, "_discover_justia_wayback_snapshot_urls", _fake_discover)
+    monkeypatch.setattr(MississippiScraper, "_request_text_direct_with_retries", _fake_request)
+
+    scraper = MississippiScraper("MS", "Mississippi")
+    statutes = await scraper._scrape_justia_wayback_code_sections("Mississippi Code", max_statutes=5)
+
+    assert len(statutes) == 1
+    assert statutes[0].section_number == "97-3-7"
+    assert statutes[0].structured_data.get("source_kind") == "wayback_justia_mississippi_code_html"
+    assert statutes[0].structured_data.get("archive_url") == section_fallback_snapshot
 
 
 @pytest.mark.anyio

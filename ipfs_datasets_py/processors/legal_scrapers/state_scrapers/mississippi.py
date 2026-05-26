@@ -15,7 +15,7 @@ from datetime import datetime
 from html import unescape
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-from urllib.parse import urljoin
+from urllib.parse import urlencode, urljoin
 import urllib.request
 
 from bs4 import BeautifulSoup
@@ -44,7 +44,21 @@ class MississippiScraper(BaseStateScraper):
         "https://law.justia.com/codes/mississippi/2025/",
     )
     _JUSTIA_SECTION_URL_RE = re.compile(
-        r"/codes/mississippi/\d{4}/title-[^/]+/chapter-[^/]+/section-[^/]+/?$",
+        r"/codes/mississippi/(?:\d{4}/)?title-[^/]+(?:/[^/]+)*/section-[^/]+/?$",
+        re.IGNORECASE,
+    )
+    _JUSTIA_CHAPTER_URL_RE = re.compile(
+        r"/codes/mississippi/(?:\d{4}/)?title-[^/]+/(?:chapter-[^/]+|article-[^/]+|part-[^/]+|subpart-[^/]+|general-provisions)/?$",
+        re.IGNORECASE,
+    )
+    _JUSTIA_TITLE_URL_RE = re.compile(
+        r"/codes/mississippi/(?:\d{4}/)?title-[^/]+/?$",
+        re.IGNORECASE,
+    )
+    _JUSTIA_WAYBACK_CDX_ENDPOINT = "https://web.archive.org/cdx/search/cdx"
+    _JUSTIA_WAYBACK_FETCH_ROOT = "https://web.archive.org/web/"
+    _JUSTIA_BLOCKED_TEXT_RE = re.compile(
+        r"(performing security verification|this website uses a security service|just a moment\.\.\.|target url returned error 403)",
         re.IGNORECASE,
     )
     
@@ -204,6 +218,28 @@ class MississippiScraper(BaseStateScraper):
                     len(justia_statutes),
                 )
                 return justia_statutes[:limit] if limit is not None else justia_statutes
+
+            wayback_statutes = await self._scrape_justia_wayback_code_sections(
+                code_name=code_name,
+                max_statutes=justia_target,
+            )
+            if wayback_statutes:
+                checkpoint.write_progress(
+                    statutes=wayback_statutes,
+                    code_name=code_name,
+                    stage_label="mississippi:justia-wayback:complete",
+                    scanned_history_urls=len(wayback_statutes),
+                    discovered_history_urls=len(wayback_statutes),
+                    extra_progress={
+                        "codes_total": 1,
+                        "codes_completed": 1,
+                    },
+                )
+                self.logger.info(
+                    "Mississippi full-corpus Justia Wayback path: statutes_so_far=%s",
+                    len(wayback_statutes),
+                )
+                return wayback_statutes[:limit] if limit is not None else wayback_statutes
 
         archival_kwargs: Dict[str, Any] = {}
         try:
@@ -554,6 +590,436 @@ class MississippiScraper(BaseStateScraper):
                     "Mississippi Justia crawl: scanned_sections=%s/%s statutes_so_far=%s",
                     scanned,
                     len(section_urls),
+                    len(statutes),
+                )
+            if len(statutes) >= target:
+                for pending in tasks:
+                    if not pending.done():
+                        pending.cancel()
+                break
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
+        return statutes[:target]
+
+    def _extract_original_justia_url_from_wayback(self, url: str) -> str:
+        value = str(url or "").strip()
+        if not value:
+            return ""
+        lower = value.lower()
+        if "web.archive.org" not in lower or "/web/" not in lower:
+            return value
+        _, _, tail = value.partition("/web/")
+        if not tail:
+            return value
+        _, sep, remainder = tail.partition("/")
+        if not sep or not remainder:
+            return value
+        remainder = remainder.strip()
+        if remainder.startswith("http://") or remainder.startswith("https://"):
+            return remainder
+        return value
+
+    def _is_justia_blocked_payload(self, html: str) -> bool:
+        hay = str(html or "")
+        if not hay:
+            return True
+        lower = hay.lower()
+        if "law.justia.com" not in lower:
+            return False
+        return bool(self._JUSTIA_BLOCKED_TEXT_RE.search(hay))
+
+    async def _request_text_direct_with_retries(
+        self,
+        url: str,
+        *,
+        timeout: int = 30,
+        attempts: int = 3,
+    ) -> str:
+        attempts_n = max(1, int(attempts or 1))
+        for attempt in range(attempts_n):
+            text = await self._request_text_direct(url, timeout=timeout)
+            if text:
+                return text
+            if attempt + 1 < attempts_n:
+                await asyncio.sleep(min(1.5, 0.35 * float(attempt + 1)))
+        return ""
+
+    async def _discover_justia_wayback_snapshot_urls(
+        self,
+        original_url: str,
+        *,
+        max_snapshots: int = 2,
+    ) -> List[str]:
+        params = [
+            ("url", str(original_url or "").strip()),
+            ("output", "json"),
+            ("fl", "timestamp,original,statuscode,mimetype"),
+            ("filter", "statuscode:200"),
+            ("filter", "mimetype:text/html"),
+            ("limit", "24"),
+        ]
+        cdx_url = f"{self._JUSTIA_WAYBACK_CDX_ENDPOINT}?{urlencode(params, doseq=True)}"
+        payload = await self._request_text_direct_with_retries(
+            cdx_url,
+            timeout=35,
+            attempts=3,
+        )
+        if not payload:
+            return []
+        try:
+            rows = json.loads(payload)
+        except Exception:
+            return []
+        if not isinstance(rows, list):
+            return []
+
+        snapshots: List[str] = []
+        seen = set()
+        for row in reversed(rows[1:] if rows else []):
+            if not isinstance(row, list) or len(row) < 2:
+                continue
+            timestamp = str(row[0] or "").strip()
+            archived_original = str(row[1] or "").strip()
+            if not timestamp or not archived_original:
+                continue
+            snapshot_url = f"{self._JUSTIA_WAYBACK_FETCH_ROOT}{timestamp}/{archived_original}"
+            if snapshot_url in seen:
+                continue
+            seen.add(snapshot_url)
+            snapshots.append(snapshot_url)
+            if len(snapshots) >= max(1, int(max_snapshots or 1)):
+                break
+        return snapshots
+
+    async def _scrape_justia_wayback_code_sections(
+        self,
+        code_name: str,
+        max_statutes: int = 30000,
+    ) -> List[NormalizedStatute]:
+        target = max(1, int(max_statutes or 1))
+        snapshot_indexes: List[str] = []
+        seen_snapshot_indexes: set[str] = set()
+        for index_url in self._JUSTIA_INDEX_URLS:
+            discovered = await self._discover_justia_wayback_snapshot_urls(
+                index_url,
+                max_snapshots=8,
+            )
+            for snapshot_url in discovered:
+                value = str(snapshot_url or "").strip()
+                if not value or value in seen_snapshot_indexes:
+                    continue
+                seen_snapshot_indexes.add(value)
+                snapshot_indexes.append(value)
+
+        if not snapshot_indexes:
+            return []
+
+        title_fetch_urls: List[str] = []
+        chapter_fetch_urls: List[str] = []
+        section_fetch_urls: List[str] = []
+        title_original_url_by_fetch_url: Dict[str, str] = {}
+        chapter_original_url_by_fetch_url: Dict[str, str] = {}
+        section_original_url_by_fetch_url: Dict[str, str] = {}
+
+        seen_title_original_urls: set[str] = set()
+        seen_chapter_original_urls: set[str] = set()
+        seen_section_original_urls: set[str] = set()
+        seen_section_fetch_urls: set[str] = set()
+
+        def _classify_link(base_url: str, href: str) -> tuple[str, str]:
+            full_url = urljoin(str(base_url or ""), str(href or "").strip()).split("#", 1)[0].strip()
+            if not full_url:
+                return "", ""
+            if "/web/" in full_url and "*/" in full_url:
+                return "", ""
+            original_url = self._extract_original_justia_url_from_wayback(full_url).split("#", 1)[0].strip()
+            if not original_url:
+                return "", ""
+            if "/codes/mississippi/" not in original_url.lower():
+                return "", ""
+            return full_url, original_url
+
+        def _add_title(fetch_url: str, original_url: str) -> None:
+            original_value = str(original_url or "").strip()
+            fetch_value = str(fetch_url or "").strip()
+            if not original_value or original_value in seen_title_original_urls:
+                return
+            seen_title_original_urls.add(original_value)
+            if not fetch_value:
+                return
+            title_fetch_urls.append(fetch_value)
+            title_original_url_by_fetch_url[fetch_value] = original_value
+
+        def _add_chapter(fetch_url: str, original_url: str) -> None:
+            original_value = str(original_url or "").strip()
+            fetch_value = str(fetch_url or "").strip()
+            if not original_value or original_value in seen_chapter_original_urls:
+                return
+            seen_chapter_original_urls.add(original_value)
+            if not fetch_value:
+                return
+            chapter_fetch_urls.append(fetch_value)
+            chapter_original_url_by_fetch_url[fetch_value] = original_value
+
+        def _add_section(fetch_url: str, original_url: str) -> None:
+            original_value = str(original_url or "").strip()
+            fetch_value = str(fetch_url or "").strip()
+            if not original_value or not fetch_value:
+                return
+            if not self._JUSTIA_SECTION_URL_RE.search(original_value):
+                return
+            if original_value in seen_section_original_urls:
+                return
+            seen_section_original_urls.add(original_value)
+            if fetch_value in seen_section_fetch_urls:
+                return
+            seen_section_fetch_urls.add(fetch_value)
+            section_fetch_urls.append(fetch_value)
+            section_original_url_by_fetch_url[fetch_value] = original_value
+
+        for snapshot_index_url in snapshot_indexes:
+            html = await self._request_text_direct_with_retries(
+                snapshot_index_url,
+                timeout=45,
+                attempts=3,
+            )
+            if not html or self._is_justia_blocked_payload(html):
+                continue
+            soup = BeautifulSoup(html, "html.parser")
+            for anchor in soup.find_all("a", href=True):
+                fetch_url, original_url = _classify_link(snapshot_index_url, str(anchor.get("href") or ""))
+                if not fetch_url or not original_url:
+                    continue
+                lower = original_url.lower()
+                if self._JUSTIA_SECTION_URL_RE.search(original_url):
+                    _add_section(fetch_url, original_url)
+                elif self._JUSTIA_CHAPTER_URL_RE.search(original_url):
+                    _add_chapter(fetch_url, original_url)
+                elif self._JUSTIA_TITLE_URL_RE.search(original_url):
+                    _add_title(fetch_url, original_url)
+                elif "/title-" in lower and "/section-" not in lower and "/chapter-" not in lower:
+                    _add_title(fetch_url, original_url)
+
+        if not title_fetch_urls and not chapter_fetch_urls and not section_fetch_urls:
+            return []
+
+        section_scan_cap = max(target * 3, 1500)
+        page_snapshot_candidates_cache: Dict[str, List[str]] = {}
+
+        def _wayback_raw_variant(snapshot_url: str) -> str:
+            value = str(snapshot_url or "").strip()
+            if not value or "/web/" not in value:
+                return ""
+            prefix, _, tail = value.partition("/web/")
+            if not tail:
+                return ""
+            timestamp, sep, remainder = tail.partition("/")
+            if not sep or not timestamp or not remainder:
+                return ""
+            if timestamp.endswith("id_"):
+                return ""
+            return f"{prefix}/web/{timestamp}id_/{remainder}"
+
+        async def _fetch_wayback_html_with_snapshot_fallback(
+            fetch_url: str,
+            original_url: str,
+            *,
+            timeout: int = 45,
+            attempts: int = 3,
+            max_snapshots: int = 4,
+        ) -> tuple[str, str]:
+            fetch_value = str(fetch_url or "").strip()
+            original_value = str(original_url or "").strip() or fetch_value
+            candidate_fetch_urls: List[str] = [fetch_value]
+            seen_candidates: set[str] = {fetch_value}
+
+            if original_value:
+                cached_candidates = page_snapshot_candidates_cache.get(original_value)
+                if cached_candidates is None:
+                    discovered_snapshot_urls = await self._discover_justia_wayback_snapshot_urls(
+                        original_value,
+                        max_snapshots=max(2, int(max_snapshots or 2)),
+                    )
+                    expanded_snapshot_urls: List[str] = []
+                    seen_snapshot_candidates: set[str] = set()
+                    for snapshot_url in discovered_snapshot_urls:
+                        snapshot_value = str(snapshot_url or "").strip()
+                        if not snapshot_value:
+                            continue
+                        if snapshot_value not in seen_snapshot_candidates:
+                            seen_snapshot_candidates.add(snapshot_value)
+                            expanded_snapshot_urls.append(snapshot_value)
+                        raw_variant = _wayback_raw_variant(snapshot_value)
+                        if raw_variant and raw_variant not in seen_snapshot_candidates:
+                            seen_snapshot_candidates.add(raw_variant)
+                            expanded_snapshot_urls.append(raw_variant)
+                    cached_candidates = expanded_snapshot_urls
+                    page_snapshot_candidates_cache[original_value] = cached_candidates
+                for snapshot_candidate in cached_candidates:
+                    candidate_value = str(snapshot_candidate or "").strip()
+                    if not candidate_value or candidate_value in seen_candidates:
+                        continue
+                    seen_candidates.add(candidate_value)
+                    candidate_fetch_urls.append(candidate_value)
+
+            for candidate_fetch_url in candidate_fetch_urls:
+                html = await self._request_text_direct_with_retries(
+                    candidate_fetch_url,
+                    timeout=timeout,
+                    attempts=attempts,
+                )
+                if not html or self._is_justia_blocked_payload(html):
+                    continue
+                return html, candidate_fetch_url
+            return "", fetch_value
+
+        for title_fetch_url in list(title_fetch_urls):
+            title_original_url = (
+                title_original_url_by_fetch_url.get(title_fetch_url)
+                or self._extract_original_justia_url_from_wayback(title_fetch_url)
+            )
+            html, resolved_title_fetch_url = await _fetch_wayback_html_with_snapshot_fallback(
+                title_fetch_url,
+                title_original_url,
+                timeout=45,
+                attempts=3,
+                max_snapshots=4,
+            )
+            if not html:
+                continue
+            soup = BeautifulSoup(html, "html.parser")
+            for anchor in soup.find_all("a", href=True):
+                fetch_url, original_url = _classify_link(resolved_title_fetch_url, str(anchor.get("href") or ""))
+                if not fetch_url or not original_url:
+                    continue
+                if self._JUSTIA_SECTION_URL_RE.search(original_url):
+                    _add_section(fetch_url, original_url)
+                elif self._JUSTIA_CHAPTER_URL_RE.search(original_url):
+                    _add_chapter(fetch_url, original_url)
+
+        for chapter_fetch_url in list(chapter_fetch_urls):
+            if len(section_fetch_urls) >= section_scan_cap:
+                break
+            chapter_original_url = (
+                chapter_original_url_by_fetch_url.get(chapter_fetch_url)
+                or self._extract_original_justia_url_from_wayback(chapter_fetch_url)
+            )
+            html, resolved_chapter_fetch_url = await _fetch_wayback_html_with_snapshot_fallback(
+                chapter_fetch_url,
+                chapter_original_url,
+                timeout=45,
+                attempts=3,
+                max_snapshots=4,
+            )
+            if not html:
+                continue
+            soup = BeautifulSoup(html, "html.parser")
+            for anchor in soup.find_all("a", href=True):
+                fetch_url, original_url = _classify_link(resolved_chapter_fetch_url, str(anchor.get("href") or ""))
+                if not fetch_url or not original_url:
+                    continue
+                _add_section(fetch_url, original_url)
+
+        if not section_fetch_urls:
+            return []
+
+        self.logger.info(
+            "Mississippi Justia Wayback crawl: discovered_titles=%s discovered_chapters=%s discovered_sections=%s",
+            len(title_fetch_urls),
+            len(chapter_fetch_urls),
+            len(section_fetch_urls),
+        )
+
+        statutes: List[NormalizedStatute] = []
+        seen_statute_keys: set[str] = set()
+        wayback_concurrency_default = str(
+            os.getenv(
+                "STATE_SCRAPER_MS_WAYBACK_SECTION_CONCURRENCY",
+                os.getenv("STATE_SCRAPER_MS_JUSTIA_SECTION_CONCURRENCY", "2"),
+            )
+            or "2"
+        )
+        section_concurrency = max(
+            1,
+            int(wayback_concurrency_default),
+        )
+        section_sem = asyncio.Semaphore(section_concurrency)
+
+        async def _fetch_section(fetch_url: str) -> Optional[NormalizedStatute]:
+            source_url = section_original_url_by_fetch_url.get(fetch_url) or fetch_url
+            async with section_sem:
+                html, resolved_archive_url = await _fetch_wayback_html_with_snapshot_fallback(
+                    fetch_url,
+                    source_url,
+                    timeout=45,
+                    attempts=3,
+                    max_snapshots=3,
+                )
+
+            if not html:
+                return None
+            soup = BeautifulSoup(html, "html.parser")
+            for tag in soup(["script", "style", "noscript"]):
+                tag.decompose()
+            content_node = (
+                soup.select_one("div#codes-content")
+                or soup.select_one("div[itemprop='articleBody']")
+                or soup.select_one("article")
+                or soup.select_one("main")
+                or soup.body
+            )
+            if content_node is None:
+                return None
+            text = self._normalize_legal_text(content_node.get_text(" ", strip=True))
+            if len(text) < 140:
+                return None
+            section_number = self._extract_ms_section_number_from_justia_url(source_url)
+            if not section_number:
+                section_number = self._extract_section_number(text) or ""
+            if not section_number:
+                return None
+            heading = ""
+            heading_node = soup.find(["h1", "h2"])
+            if heading_node is not None:
+                heading = self._normalize_legal_text(heading_node.get_text(" ", strip=True))
+            section_name = heading or f"Section {section_number}"
+            return NormalizedStatute(
+                state_code=self.state_code,
+                state_name=self.state_name,
+                statute_id=f"{code_name} § {section_number}",
+                code_name=code_name,
+                section_number=section_number,
+                section_name=section_name[:200],
+                full_text=text[:14000],
+                legal_area=self._identify_legal_area(f"{section_name} {text[:800]}"),
+                source_url=source_url,
+                official_cite=f"Miss. Code Ann. § {section_number}",
+                structured_data={
+                    "source_kind": "wayback_justia_mississippi_code_html",
+                    "discovery_method": "justia_wayback_title_chapter_section",
+                    "archive_url": resolved_archive_url,
+                    "skip_hydrate": True,
+                },
+            )
+
+        tasks = [asyncio.create_task(_fetch_section(url)) for url in section_fetch_urls]
+        scanned = 0
+        for task in asyncio.as_completed(tasks):
+            scanned += 1
+            statute = await task
+            if statute is None:
+                continue
+            statute_key = _statute_dedupe_key(statute)
+            if statute_key and statute_key in seen_statute_keys:
+                continue
+            if statute_key:
+                seen_statute_keys.add(statute_key)
+            statutes.append(statute)
+            if len(statutes) == 1 or len(statutes) % 100 == 0:
+                self.logger.info(
+                    "Mississippi Justia Wayback crawl: scanned_sections=%s/%s statutes_so_far=%s",
+                    scanned,
+                    len(section_fetch_urls),
                     len(statutes),
                 )
             if len(statutes) >= target:

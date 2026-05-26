@@ -235,6 +235,8 @@ Notes:
 	`AK`, `AL`, `AR`, `AZ`, `CA`, `CO`, `CT`, `DE`, `FL`, `GA`, `IA`, `ID`, `IL`, `IN`, `KS`,
 	`KY`, `LA`, `MA`, `MD`, `MI`, `MN`, `MO`, `MT`, `NC`, `ND`, `NJ`, `NM`, `NV`, `NY`,
 	`OH`, `OK`, `OR`, `PA`, `SC`, `SD`, `TN`, `TX`, `UT`, `VT`, `WI`, `WV`, `WY`).
+	Indiana (`IN`) was re-verified as full-corpus complete on 2026-05-26
+	(`statutes_count=73194`) and is intentionally baseline-skipped in later runs.
 	Unresolved/non-baselined states as of 2026-05-26: `HI`, `ME`, `MS`, `NE`, `NH`, `RI`, `VA`, `WA`.
 	Only add states to this baseline after an uncapped/full-corpus confirmation.
 	Do not promote bounded probe runs (for example `--max-statutes 120/200`) to
