@@ -54,6 +54,14 @@ _QUALITY_NAV_URL_RE = re.compile(
     r"/(?:calendar|meeting|roster|blog|news|jobs|photo|links?|home|bulletin|live|staff|contact|interim|committee|reports?|member|media)\b",
     re.IGNORECASE,
 )
+_QUALITY_BILL_HISTORY_RE = re.compile(
+    r"\bhistory of actions(?:/background)?\b",
+    re.IGNORECASE,
+)
+_QUALITY_BILL_NUMBER_RE = re.compile(
+    r"\b(?:house|senate)\s+bill\s+\d+\b|\bHB\s*\d+\b|\bSB\s*\d+\b",
+    re.IGNORECASE,
+)
 _QUALITY_LEGAL_METADATA_RE = re.compile(
     r"\b(?:authority|implementing|history|rule history|relevant notices|relevant mar notices|references|referenced by|rule version|active version|effective|statutory authority|citation(?:s)?)\b",
     re.IGNORECASE,
@@ -68,6 +76,15 @@ def _env_float(name: str, default: float) -> float:
         return float(raw)
     except Exception:
         return float(default)
+
+
+def _env_full_corpus_enabled() -> bool:
+    return str(os.getenv("STATE_SCRAPER_FULL_CORPUS", "") or "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
 
 
 def _derive_bounded_scraper_timeouts(per_state_timeout_seconds: float) -> Dict[str, float]:
@@ -1090,12 +1107,14 @@ def _compute_state_quality_metrics(statutes: List[Dict[str, Any]]) -> Dict[str, 
             "fallback_section_ratio": 0.0,
             "numeric_section_name_ratio": 0.0,
             "scaffold_ratio": 0.0,
+            "bill_history_ratio": 0.0,
         }
 
     nav_like = 0
     fallback_section = 0
     numeric_section_name = 0
     scaffold = 0
+    bill_history = 0
 
     for statute in statutes:
         if not isinstance(statute, dict):
@@ -1104,6 +1123,7 @@ def _compute_state_quality_metrics(statutes: List[Dict[str, Any]]) -> Dict[str, 
         text = str(statute.get("full_text") or statute.get("text") or "")
         section_number = str(statute.get("section_number") or statute.get("sectionNumber") or "")
         section_name = str(statute.get("section_name") or statute.get("sectionName") or "")
+        source_url = str(statute.get("source_url") or statute.get("sourceUrl") or "").lower()
         has_quality_legal_signal = _has_quality_legal_signal(statute)
 
         # Treat nav markers as quality failures only when the text is mostly chrome/boilerplate.
@@ -1115,6 +1135,14 @@ def _compute_state_quality_metrics(statutes: List[Dict[str, Any]]) -> Dict[str, 
             numeric_section_name += 1
         if _is_scaffold_or_navigation_record(statute):
             scaffold += 1
+        history_text = bool(_QUALITY_BILL_HISTORY_RE.search(text))
+        bill_number_text = bool(_QUALITY_BILL_NUMBER_RE.search(text))
+        bill_history_url = "/history/" in source_url and (
+            "billstatus.ls.state.ms.us" in source_url
+            or "legislature.ms.gov" in source_url
+        )
+        if history_text and (bill_number_text or bill_history_url):
+            bill_history += 1
 
     return {
         "total": total,
@@ -1122,6 +1150,7 @@ def _compute_state_quality_metrics(statutes: List[Dict[str, Any]]) -> Dict[str, 
         "fallback_section_ratio": round(fallback_section / total, 3),
         "numeric_section_name_ratio": round(numeric_section_name / total, 3),
         "scaffold_ratio": round(scaffold / total, 3),
+        "bill_history_ratio": round(bill_history / total, 3),
     }
 
 
@@ -1131,9 +1160,20 @@ def _should_flag_quality(quality_metrics: Dict[str, Any]) -> bool:
     fallback_q = float(quality_metrics.get("fallback_section_ratio", 0.0) or 0.0)
     numeric_q = float(quality_metrics.get("numeric_section_name_ratio", 0.0) or 0.0)
     scaffold_q = float(quality_metrics.get("scaffold_ratio", 0.0) or 0.0)
+    bill_history_q = float(quality_metrics.get("bill_history_ratio", 0.0) or 0.0)
 
     fallback_problem = (total_q >= 10 and fallback_q >= 0.7 and numeric_q <= 0.2)
-    if total_q >= 10 and (nav_q >= 0.2 or fallback_problem or numeric_q <= 0.2 or scaffold_q >= 0.2):
+    if total_q >= 10 and (
+        nav_q >= 0.2
+        or fallback_problem
+        or numeric_q <= 0.2
+        or scaffold_q >= 0.2
+        or bill_history_q >= 0.25
+    ):
+        return True
+    if total_q >= 5 and bill_history_q >= 0.5:
+        return True
+    if 1 <= total_q < 5 and bill_history_q >= 0.8:
         return True
     if 1 <= total_q < 10 and nav_q >= 0.5:
         return True
@@ -1146,9 +1186,10 @@ def _format_quality_warning(state_code: str, quality_metrics: Dict[str, Any]) ->
     fallback_q = float(quality_metrics.get("fallback_section_ratio", 0.0) or 0.0)
     numeric_q = float(quality_metrics.get("numeric_section_name_ratio", 0.0) or 0.0)
     scaffold_q = float(quality_metrics.get("scaffold_ratio", 0.0) or 0.0)
+    bill_history_q = float(quality_metrics.get("bill_history_ratio", 0.0) or 0.0)
     return (
         f"{state_code} quality gate triggered "
-        f"(total={total_q}, nav={nav_q}, fallback={fallback_q}, numeric={numeric_q}, scaffold={scaffold_q})"
+        f"(total={total_q}, nav={nav_q}, fallback={fallback_q}, numeric={numeric_q}, scaffold={scaffold_q}, bill_history={bill_history_q})"
     )
 
 
@@ -1514,6 +1555,7 @@ async def _scrape_state_with_retries(
 ) -> Dict[str, Any]:
     attempts = 1 + max(0, int(retry_attempts or 0))
     best: Optional[Dict[str, Any]] = None
+    full_corpus_mode = bool(max_statutes is None and _env_full_corpus_enabled())
 
     for attempt_idx in range(attempts):
         try:
@@ -1621,6 +1663,22 @@ async def _scrape_state_with_retries(
                         "timeout_diagnostics": timeout_diagnostics,
                     },
                 }
+
+        low_quality = bool(result.get("low_quality"))
+        statutes_count = int(result.get("statutes_count") or 0)
+        if full_corpus_mode and low_quality and statutes_count > 0 and not result.get("error"):
+            quality = result.get("quality_metrics") or {}
+            quality_msg = (
+                f"{state_code} full-corpus quality gate failed; likely non-substantive scrape "
+                f"(total={quality.get('total')}, bill_history={quality.get('bill_history_ratio')}, "
+                f"scaffold={quality.get('scaffold_ratio')}, nav={quality.get('nav_like_ratio')})"
+            )
+            logger.warning(quality_msg)
+            result = dict(result)
+            result["error"] = quality_msg
+            warnings = list(result.get("warnings") or [])
+            warnings.append(quality_msg)
+            result["warnings"] = warnings
 
         if best is None:
             best = result

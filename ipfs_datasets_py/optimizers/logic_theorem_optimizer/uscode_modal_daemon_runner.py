@@ -1895,6 +1895,8 @@ def build_paired_daemon_commands(
         str(getattr(args, "autoencoder_max_defeasible_priority_features", 64)),
         "--autoencoder-max-constraint-grounding-features",
         str(getattr(args, "autoencoder_max_constraint_grounding_features", 64)),
+        "--autoencoder-max-quantitative-formula-features",
+        str(getattr(args, "autoencoder_max_quantitative_formula_features", 64)),
         "--autoencoder-max-definition-grounding-features",
         str(getattr(args, "autoencoder_max_definition_grounding_features", 64)),
         "--autoencoder-max-quantifier-scope-features",
@@ -1909,6 +1911,20 @@ def build_paired_daemon_commands(
         str(getattr(args, "autoencoder_max_authority_jurisdiction_features", 64)),
         "--autoencoder-max-temporal-validity-features",
         str(getattr(args, "autoencoder_max_temporal_validity_features", 64)),
+        "--autoencoder-max-evidentiary-burden-features",
+        str(getattr(args, "autoencoder_max_evidentiary_burden_features", 64)),
+        "--autoencoder-max-legal-relation-features",
+        str(getattr(args, "autoencoder_max_legal_relation_features", 64)),
+        "--autoencoder-max-status-transition-features",
+        str(getattr(args, "autoencoder_max_status_transition_features", 64)),
+        "--autoencoder-max-condition-consequence-features",
+        str(getattr(args, "autoencoder_max_condition_consequence_features", 64)),
+        "--autoencoder-max-applicability-scope-features",
+        str(getattr(args, "autoencoder_max_applicability_scope_features", 64)),
+        "--autoencoder-max-coreference-binding-features",
+        str(getattr(args, "autoencoder_max_coreference_binding_features", 64)),
+        "--autoencoder-max-logical-connective-features",
+        str(getattr(args, "autoencoder_max_logical_connective_features", 64)),
         "--autoencoder-embedding-head-update-normalization",
         str(getattr(args, "autoencoder_embedding_head_update_normalization", 0.5)),
         "--autoencoder-family-logit-head-update-normalization",
@@ -5039,6 +5055,18 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--autoencoder-max-quantitative-formula-features",
+        type=int,
+        default=64,
+        help=(
+            "Maximum quantitative-formula features to expose to the feature "
+            "decoder. These bind greater-of, lesser-of, caps, floors, "
+            "per-period rates, multipliers, and sums to compiler arithmetic "
+            "nodes, frame-logic arithmetic slots, KG amount edges, and "
+            "decompiler formula repair routes."
+        ),
+    )
+    parser.add_argument(
         "--autoencoder-max-quantifier-scope-features",
         type=int,
         default=64,
@@ -5102,6 +5130,86 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
             "decoder. These bind effective dates, sunset and expiration "
             "rules, retroactivity, transition windows, applicability dates, "
             "and decompiler versioning repair routes."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-max-evidentiary-burden-features",
+        type=int,
+        default=64,
+        help=(
+            "Maximum evidentiary-burden features to expose to the feature "
+            "decoder. These bind burden holders, issues, standards of proof, "
+            "presumptions, prima facie evidence, rebuttal burdens, and "
+            "decompiler proof-contract repair routes."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-max-legal-relation-features",
+        type=int,
+        default=64,
+        help=(
+            "Maximum Hohfeld-style legal-relation features to expose to the "
+            "feature decoder. These bind rights, duties, privileges, powers, "
+            "liabilities, immunities, correlatives, and decompiler relation "
+            "repair routes."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-max-status-transition-features",
+        type=int,
+        default=64,
+        help=(
+            "Maximum legal status-transition features to expose to the "
+            "feature decoder. These bind authorization, eligibility, validity, "
+            "revocation, suspension, expiration, and decompiler state-machine "
+            "repair routes."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-max-condition-consequence-features",
+        type=int,
+        default=64,
+        help=(
+            "Maximum condition-consequence features to expose to the feature "
+            "decoder. These bind if/when/unless/proviso antecedents to "
+            "consequents, event-calculus preconditions, frame-logic guard "
+            "slots, and decompiler guarded-rule repair routes."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-max-applicability-scope-features",
+        type=int,
+        default=64,
+        help=(
+            "Maximum applicability-scope features to expose to the feature "
+            "decoder. These bind applies-to, does-not-apply, exempt-from, "
+            "for-purposes-of, in-the-case-of, and with-respect-to scopes to "
+            "frame-logic domains, KG applicability edges, and decompiler "
+            "scope repair routes."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-max-coreference-binding-features",
+        type=int,
+        default=64,
+        help=(
+            "Maximum coreference-binding features to expose to the feature "
+            "decoder. These bind such/that/the-same/thereof/therein/"
+            "thereunder references to compiler variables, frame-logic same-as "
+            "edges, KG coreference edges, and decompiler reference repair "
+            "routes."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-max-logical-connective-features",
+        type=int,
+        default=64,
+        help=(
+            "Maximum logical-connective features to expose to the feature "
+            "decoder. These bind and/or/either-or/neither-nor/both-and/list "
+            "connectives to compiler Boolean nodes, frame-logic connective "
+            "slots, KG connective edges, and decompiler list/Boolean repair "
+            "routes."
         ),
     )
     parser.add_argument(
@@ -6199,6 +6307,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         max_constraint_grounding_features=int(
             getattr(args, "autoencoder_max_constraint_grounding_features", 64)
         ),
+        max_quantitative_formula_features=int(
+            getattr(args, "autoencoder_max_quantitative_formula_features", 64)
+        ),
         max_definition_grounding_features=int(
             getattr(args, "autoencoder_max_definition_grounding_features", 64)
         ),
@@ -6219,6 +6330,27 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         ),
         max_temporal_validity_features=int(
             getattr(args, "autoencoder_max_temporal_validity_features", 64)
+        ),
+        max_evidentiary_burden_features=int(
+            getattr(args, "autoencoder_max_evidentiary_burden_features", 64)
+        ),
+        max_legal_relation_features=int(
+            getattr(args, "autoencoder_max_legal_relation_features", 64)
+        ),
+        max_status_transition_features=int(
+            getattr(args, "autoencoder_max_status_transition_features", 64)
+        ),
+        max_condition_consequence_features=int(
+            getattr(args, "autoencoder_max_condition_consequence_features", 64)
+        ),
+        max_applicability_scope_features=int(
+            getattr(args, "autoencoder_max_applicability_scope_features", 64)
+        ),
+        max_coreference_binding_features=int(
+            getattr(args, "autoencoder_max_coreference_binding_features", 64)
+        ),
+        max_logical_connective_features=int(
+            getattr(args, "autoencoder_max_logical_connective_features", 64)
         ),
         feature_activity_reference=int(
             getattr(args, "autoencoder_feature_activity_reference", 64)
@@ -6414,6 +6546,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     summary["autoencoder_max_constraint_grounding_features"] = int(
         getattr(args, "autoencoder_max_constraint_grounding_features", 64)
     )
+    summary["autoencoder_max_quantitative_formula_features"] = int(
+        getattr(args, "autoencoder_max_quantitative_formula_features", 64)
+    )
     summary["autoencoder_max_definition_grounding_features"] = int(
         getattr(args, "autoencoder_max_definition_grounding_features", 64)
     )
@@ -6434,6 +6569,27 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     )
     summary["autoencoder_max_temporal_validity_features"] = int(
         getattr(args, "autoencoder_max_temporal_validity_features", 64)
+    )
+    summary["autoencoder_max_evidentiary_burden_features"] = int(
+        getattr(args, "autoencoder_max_evidentiary_burden_features", 64)
+    )
+    summary["autoencoder_max_legal_relation_features"] = int(
+        getattr(args, "autoencoder_max_legal_relation_features", 64)
+    )
+    summary["autoencoder_max_status_transition_features"] = int(
+        getattr(args, "autoencoder_max_status_transition_features", 64)
+    )
+    summary["autoencoder_max_condition_consequence_features"] = int(
+        getattr(args, "autoencoder_max_condition_consequence_features", 64)
+    )
+    summary["autoencoder_max_applicability_scope_features"] = int(
+        getattr(args, "autoencoder_max_applicability_scope_features", 64)
+    )
+    summary["autoencoder_max_coreference_binding_features"] = int(
+        getattr(args, "autoencoder_max_coreference_binding_features", 64)
+    )
+    summary["autoencoder_max_logical_connective_features"] = int(
+        getattr(args, "autoencoder_max_logical_connective_features", 64)
     )
     summary["autoencoder_feature_activity_reference"] = int(
         getattr(args, "autoencoder_feature_activity_reference", 64)

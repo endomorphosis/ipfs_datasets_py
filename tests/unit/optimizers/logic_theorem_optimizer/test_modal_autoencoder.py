@@ -4195,6 +4195,259 @@ def test_constraint_grounding_feature_head_transfers_deadline_holdout() -> None:
     assert after_cosine.embedding_cosine_similarity > before_cosine.embedding_cosine_similarity
 
 
+def test_quantitative_formula_features_encode_arithmetic_ir_nodes() -> None:
+    greater = build_us_code_sample(
+        title="5",
+        section="552",
+        text=(
+            "The penalty shall be the greater of $500 or 10 percent of the "
+            "payment."
+        ),
+    )
+    lesser = build_us_code_sample(
+        title="5",
+        section="553",
+        text="The fee shall be the lesser of $500 and actual damages.",
+    )
+    cap = build_us_code_sample(
+        title="5",
+        section="554",
+        text="The civil penalty may not exceed $100 per day.",
+    )
+    multiplier = build_us_code_sample(
+        title="5",
+        section="555",
+        text="The refund must equal twice the amount paid.",
+    )
+    summation = build_us_code_sample(
+        title="5",
+        section="556",
+        text="The total payment shall be the sum of $100 and costs.",
+    )
+    autoencoder = AdaptiveModalAutoencoder(max_quantitative_formula_features=240)
+
+    greater_features = autoencoder._quantitative_formula_feature_keys_for(greater)
+    lesser_features = autoencoder._quantitative_formula_feature_keys_for(lesser)
+    cap_features = autoencoder._quantitative_formula_feature_keys_for(cap)
+    multiplier_features = autoencoder._quantitative_formula_feature_keys_for(
+        multiplier
+    )
+    sum_features = autoencoder._quantitative_formula_feature_keys_for(summation)
+    fallback_features = autoencoder._fallback_feature_keys_for(greater)
+    legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(greater)
+
+    greater_signature = (
+        "greater_of_formula:monetary_amount+percentage_amount->"
+        "penalty_amount:obligation:computed_amount:lump_sum"
+    )
+    assert (
+        f"quantitative-formula:formula-signature:{greater_signature}"
+        in greater_features
+    )
+    assert (
+        "quantitative-formula:compiler-arithmetic-node:"
+        "greater_of_formula:monetary_amount+percentage_amount:"
+        "penalty_amount:obligation"
+        in greater_features
+    )
+    assert (
+        "quantitative-formula:frame-logic-arithmetic-slot:"
+        "greater_of_formula:penalty_amount:monetary_amount:"
+        "percentage_amount:lump_sum"
+        in greater_features
+    )
+    assert (
+        f"quantitative-formula:decompiler-formula-plan:{greater_signature}"
+        in fallback_features
+    )
+    assert (
+        f"legal-ir:quantitative-formula:decompiler-formula-plan:"
+        f"{greater_signature}"
+        in legal_ir_features
+    )
+
+    assert (
+        "quantitative-formula:formula-signature:"
+        "lesser_of_formula:monetary_amount+damages_amount->"
+        "fee_amount:obligation:upper_bound:lump_sum"
+        in lesser_features
+    )
+    assert (
+        "quantitative-formula:formula-signature:"
+        "cap_formula:monetary_amount+period_amount->"
+        "penalty_amount:prohibition:upper_bound:per_day"
+        in cap_features
+    )
+    assert (
+        "quantitative-formula:formula-signature:"
+        "multiplier_formula:multiplier_amount+payment_amount->"
+        "refund_amount:obligation:computed_amount:lump_sum"
+        in multiplier_features
+    )
+    assert (
+        "quantitative-formula:formula-signature:"
+        "sum_formula:monetary_amount+cost_amount->"
+        "payment_amount:obligation:computed_amount:lump_sum"
+        in sum_features
+    )
+
+
+def test_quantitative_formula_feature_head_transfers_arithmetic_holdout() -> None:
+    shared_plan_feature = (
+        "quantitative-formula:decompiler-formula-plan:"
+        "greater_of_formula:monetary_amount+percentage_amount->"
+        "penalty_amount:obligation:computed_amount:lump_sum"
+    )
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text=(
+            "The penalty shall be the greater of $500 or 10 percent of the "
+            "payment."
+        ),
+        embedding_vector=[1.0, 0.0],
+    )
+    validation = build_us_code_sample(
+        title="12",
+        section="1841",
+        text=(
+            "The civil fine must equal the greater of $500 or 10 percent of "
+            "the payment."
+        ),
+        embedding_vector=[1.0, 0.0],
+    )
+    family_autoencoder = AdaptiveModalAutoencoder(
+        feature_family_logit_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=0,
+        max_entity_binding_features=0,
+        max_defeasible_priority_features=0,
+        max_constraint_grounding_features=0,
+        max_quantitative_formula_features=240,
+        max_definition_grounding_features=0,
+        max_quantifier_scope_features=0,
+        max_procedural_lifecycle_features=0,
+        max_enforcement_remedy_features=0,
+        max_reference_dependency_features=0,
+        max_authority_jurisdiction_features=0,
+        max_temporal_validity_features=0,
+        max_evidentiary_burden_features=0,
+        max_legal_relation_features=0,
+        max_status_transition_features=0,
+        max_condition_consequence_features=0,
+        max_applicability_scope_features=0,
+        max_coreference_binding_features=0,
+        max_logical_connective_features=0,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+    )
+    shared_formula_features = set(
+        family_autoencoder._quantitative_formula_feature_keys_for(train)
+    ).intersection(
+        family_autoencoder._quantitative_formula_feature_keys_for(validation)
+    )
+    before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    family_autoencoder._nudge_family_logits(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert shared_plan_feature in shared_formula_features
+    assert shared_plan_feature in family_autoencoder.state.feature_family_logits
+    assert after_ce.cross_entropy_loss < before_ce.cross_entropy_loss
+
+    embedding_autoencoder = AdaptiveModalAutoencoder(
+        compiler_quality_embedding_weight_scale=0.0,
+        logic_signature_embedding_weight_scale=0.0,
+        round_trip_signal_embedding_weight_scale=0.0,
+        decompiler_plan_embedding_weight_scale=0.0,
+        predicate_argument_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=0.0,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        feature_embedding_weight_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=0,
+        max_entity_binding_features=0,
+        max_defeasible_priority_features=0,
+        max_constraint_grounding_features=0,
+        max_quantitative_formula_features=240,
+        max_definition_grounding_features=0,
+        max_quantifier_scope_features=0,
+        max_procedural_lifecycle_features=0,
+        max_enforcement_remedy_features=0,
+        max_reference_dependency_features=0,
+        max_authority_jurisdiction_features=0,
+        max_temporal_validity_features=0,
+        max_evidentiary_burden_features=0,
+        max_legal_relation_features=0,
+        max_status_transition_features=0,
+        max_condition_consequence_features=0,
+        max_applicability_scope_features=0,
+        max_coreference_binding_features=0,
+        max_logical_connective_features=0,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    embedding_autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    assert shared_plan_feature in embedding_autoencoder.state.feature_embedding_weights
+    assert after_cosine.embedding_cosine_similarity > before_cosine.embedding_cosine_similarity
+
+
 def test_definition_grounding_features_encode_terms_inclusions_and_exclusions() -> None:
     means = build_us_code_sample(
         title="5",
@@ -5734,6 +5987,1751 @@ def test_temporal_validity_feature_head_transfers_effective_date_holdout() -> No
         max_reference_dependency_features=0,
         max_authority_jurisdiction_features=0,
         max_temporal_validity_features=240,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    embedding_autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    assert shared_plan_feature in embedding_autoencoder.state.feature_embedding_weights
+    assert after_cosine.embedding_cosine_similarity > before_cosine.embedding_cosine_similarity
+
+
+def test_evidentiary_burden_features_encode_standards_and_presumptions() -> None:
+    burden = build_us_code_sample(
+        title="5",
+        section="552",
+        text=(
+            "The applicant bears the burden of proof to establish eligibility "
+            "by a preponderance of the evidence."
+        ),
+    )
+    presumption = build_us_code_sample(
+        title="5",
+        section="553",
+        text=(
+            "A record is presumed valid unless rebutted by clear and "
+            "convincing evidence."
+        ),
+    )
+    prima_facie = build_us_code_sample(
+        title="5",
+        section="554",
+        text="The certificate is prima facie evidence of compliance.",
+    )
+    government_proof = build_us_code_sample(
+        title="15",
+        section="78u",
+        text="The agency must prove a violation by substantial evidence.",
+    )
+    exception_burden = build_us_code_sample(
+        title="15",
+        section="78v",
+        text="The party asserting an exception bears the burden of proof.",
+    )
+    autoencoder = AdaptiveModalAutoencoder(max_evidentiary_burden_features=240)
+
+    burden_features = autoencoder._evidentiary_burden_feature_keys_for(burden)
+    presumption_features = autoencoder._evidentiary_burden_feature_keys_for(
+        presumption
+    )
+    prima_facie_features = autoencoder._evidentiary_burden_feature_keys_for(
+        prima_facie
+    )
+    government_features = autoencoder._evidentiary_burden_feature_keys_for(
+        government_proof
+    )
+    exception_features = autoencoder._evidentiary_burden_feature_keys_for(
+        exception_burden
+    )
+    fallback_features = autoencoder._fallback_feature_keys_for(burden)
+    legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(burden)
+
+    burden_signature = (
+        "burden_of_proof:private_party:eligibility_issue:"
+        "preponderance:persuasion_burden"
+    )
+    assert (
+        f"evidentiary-burden:burden-signature:{burden_signature}"
+        in burden_features
+    )
+    assert (
+        "evidentiary-burden:proof-burden:"
+        "private_party:eligibility_issue:preponderance:persuasion_burden"
+        in burden_features
+    )
+    assert (
+        "evidentiary-burden:standard-of-proof:"
+        "preponderance:burden_of_proof:private_party:eligibility_issue"
+        in burden_features
+    )
+    assert (
+        f"evidentiary-burden:decompiler-burden-plan:{burden_signature}"
+        in fallback_features
+    )
+    assert (
+        f"legal-ir:evidentiary-burden:decompiler-burden-plan:"
+        f"{burden_signature}"
+        in legal_ir_features
+    )
+
+    assert (
+        "evidentiary-burden:presumption:"
+        "rebuttable_presumption:record_issue:"
+        "clear_and_convincing:rebuttal_burden"
+        in presumption_features
+    )
+    assert (
+        "evidentiary-burden:evidence-rule:"
+        "prima_facie_evidence:compliance_issue:"
+        "prima_facie:production_burden"
+        in prima_facie_features
+    )
+    assert (
+        "evidentiary-burden:proof-burden:"
+        "government_actor:violation_issue:"
+        "substantial_evidence:persuasion_burden"
+        in government_features
+    )
+    assert (
+        "evidentiary-burden:proof-burden:"
+        "private_party:exception_issue:"
+        "unspecified_standard:persuasion_burden"
+        in exception_features
+    )
+
+
+def test_evidentiary_burden_feature_head_transfers_burden_holdout() -> None:
+    shared_plan_feature = (
+        "evidentiary-burden:decompiler-burden-plan:"
+        "burden_of_proof:private_party:eligibility_issue:"
+        "preponderance:persuasion_burden"
+    )
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text=(
+            "The applicant bears the burden of proof to establish eligibility "
+            "by a preponderance of the evidence."
+        ),
+        embedding_vector=[1.0, 0.0],
+    )
+    validation = build_us_code_sample(
+        title="12",
+        section="1841",
+        text=(
+            "An owner has the burden to prove eligibility by a preponderance "
+            "of the evidence."
+        ),
+        embedding_vector=[1.0, 0.0],
+    )
+    family_autoencoder = AdaptiveModalAutoencoder(
+        feature_family_logit_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=0,
+        max_entity_binding_features=0,
+        max_defeasible_priority_features=0,
+        max_constraint_grounding_features=0,
+        max_definition_grounding_features=0,
+        max_quantifier_scope_features=0,
+        max_procedural_lifecycle_features=0,
+        max_enforcement_remedy_features=0,
+        max_reference_dependency_features=0,
+        max_authority_jurisdiction_features=0,
+        max_temporal_validity_features=0,
+        max_evidentiary_burden_features=240,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+    )
+    shared_burden_features = set(
+        family_autoencoder._evidentiary_burden_feature_keys_for(train)
+    ).intersection(
+        family_autoencoder._evidentiary_burden_feature_keys_for(validation)
+    )
+    before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    family_autoencoder._nudge_family_logits(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert shared_plan_feature in shared_burden_features
+    assert shared_plan_feature in family_autoencoder.state.feature_family_logits
+    assert after_ce.cross_entropy_loss < before_ce.cross_entropy_loss
+
+    embedding_autoencoder = AdaptiveModalAutoencoder(
+        compiler_quality_embedding_weight_scale=0.0,
+        logic_signature_embedding_weight_scale=0.0,
+        round_trip_signal_embedding_weight_scale=0.0,
+        decompiler_plan_embedding_weight_scale=0.0,
+        predicate_argument_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=0.0,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        feature_embedding_weight_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=0,
+        max_entity_binding_features=0,
+        max_defeasible_priority_features=0,
+        max_constraint_grounding_features=0,
+        max_definition_grounding_features=0,
+        max_quantifier_scope_features=0,
+        max_procedural_lifecycle_features=0,
+        max_enforcement_remedy_features=0,
+        max_reference_dependency_features=0,
+        max_authority_jurisdiction_features=0,
+        max_temporal_validity_features=0,
+        max_evidentiary_burden_features=240,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    embedding_autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    assert shared_plan_feature in embedding_autoencoder.state.feature_embedding_weights
+    assert after_cosine.embedding_cosine_similarity > before_cosine.embedding_cosine_similarity
+
+
+def test_legal_relation_features_encode_hohfeld_correlatives() -> None:
+    right = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The applicant has a right to inspect records from the agency.",
+    )
+    duty = build_us_code_sample(
+        title="5",
+        section="553",
+        text="The agency shall provide notice to the applicant.",
+    )
+    privilege = build_us_code_sample(
+        title="5",
+        section="554",
+        text="A person may file an appeal.",
+    )
+    power = build_us_code_sample(
+        title="7",
+        section="13",
+        text="The Secretary may revoke a license.",
+    )
+    liability = build_us_code_sample(
+        title="7",
+        section="14",
+        text="The licensee is subject to revocation.",
+    )
+    immunity = build_us_code_sample(
+        title="28",
+        section="2679",
+        text="The officer is immune from liability.",
+    )
+    disability = build_us_code_sample(
+        title="42",
+        section="1983",
+        text="The agency may not revoke a license.",
+    )
+    autoencoder = AdaptiveModalAutoencoder(max_legal_relation_features=240)
+
+    right_features = autoencoder._legal_relation_feature_keys_for(right)
+    duty_features = autoencoder._legal_relation_feature_keys_for(duty)
+    privilege_features = autoencoder._legal_relation_feature_keys_for(privilege)
+    power_features = autoencoder._legal_relation_feature_keys_for(power)
+    liability_features = autoencoder._legal_relation_feature_keys_for(liability)
+    immunity_features = autoencoder._legal_relation_feature_keys_for(immunity)
+    disability_features = autoencoder._legal_relation_feature_keys_for(disability)
+    fallback_features = autoencoder._fallback_feature_keys_for(right)
+    legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(right)
+
+    right_signature = (
+        "right_duty:private_party:government_actor:notice_or_record:"
+        "investigate_or_enforce:positive:general_scope"
+    )
+    assert (
+        f"legal-relation:relation-signature:{right_signature}"
+        in right_features
+    )
+    assert (
+        "legal-relation:hohfeld-relation:"
+        "right_duty:private_party:government_actor:"
+        "notice_or_record:investigate_or_enforce:positive"
+        in right_features
+    )
+    assert (
+        "legal-relation:correlative:right->duty:"
+        "private_party->government_actor:"
+        "notice_or_record:investigate_or_enforce"
+        in right_features
+    )
+    assert (
+        "legal-relation:claim-right:"
+        "private_party:government_actor:"
+        "notice_or_record:investigate_or_enforce"
+        in right_features
+    )
+    assert (
+        f"legal-relation:decompiler-relation-plan:{right_signature}"
+        in fallback_features
+    )
+    assert (
+        f"legal-ir:legal-relation:decompiler-relation-plan:{right_signature}"
+        in legal_ir_features
+    )
+
+    assert (
+        "legal-relation:legal-duty:government_actor:private_party:"
+        "notice_or_record:disclose_or_notify"
+        in duty_features
+    )
+    assert (
+        "legal-relation:privilege-liberty:"
+        "private_party:proceeding_or_order:submit_or_file:positive"
+        in privilege_features
+    )
+    assert (
+        "legal-relation:legal-power:government_actor:private_party:"
+        "authorization_instrument:deny_or_revoke"
+        in power_features
+    )
+    assert (
+        "legal-relation:legal-liability:private_party:government_actor:"
+        "authorization_instrument:deny_or_revoke"
+        in liability_features
+    )
+    assert (
+        "legal-relation:legal-immunity:government_actor:private_party:"
+        "liability_or_penalty:enforcement_liability"
+        in immunity_features
+    )
+    assert (
+        "legal-relation:legal-disability:government_actor:private_party:"
+        "authorization_instrument:deny_or_revoke"
+        in disability_features
+    )
+
+
+def test_legal_relation_feature_head_transfers_privilege_holdout() -> None:
+    shared_plan_feature = (
+        "legal-relation:decompiler-relation-plan:"
+        "privilege_no_right:private_party:government_actor:"
+        "proceeding_or_order:submit_or_file:positive:general_scope"
+    )
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="A person may file an appeal.",
+        embedding_vector=[1.0, 0.0],
+    )
+    validation = build_us_code_sample(
+        title="12",
+        section="1841",
+        text="An owner may submit an appeal.",
+        embedding_vector=[1.0, 0.0],
+    )
+    family_autoencoder = AdaptiveModalAutoencoder(
+        feature_family_logit_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=0,
+        max_entity_binding_features=0,
+        max_defeasible_priority_features=0,
+        max_constraint_grounding_features=0,
+        max_definition_grounding_features=0,
+        max_quantifier_scope_features=0,
+        max_procedural_lifecycle_features=0,
+        max_enforcement_remedy_features=0,
+        max_reference_dependency_features=0,
+        max_authority_jurisdiction_features=0,
+        max_temporal_validity_features=0,
+        max_evidentiary_burden_features=0,
+        max_legal_relation_features=240,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+    )
+    shared_relation_features = set(
+        family_autoencoder._legal_relation_feature_keys_for(train)
+    ).intersection(
+        family_autoencoder._legal_relation_feature_keys_for(validation)
+    )
+    before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    family_autoencoder._nudge_family_logits(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert shared_plan_feature in shared_relation_features
+    assert shared_plan_feature in family_autoencoder.state.feature_family_logits
+    assert after_ce.cross_entropy_loss < before_ce.cross_entropy_loss
+
+    embedding_autoencoder = AdaptiveModalAutoencoder(
+        compiler_quality_embedding_weight_scale=0.0,
+        logic_signature_embedding_weight_scale=0.0,
+        round_trip_signal_embedding_weight_scale=0.0,
+        decompiler_plan_embedding_weight_scale=0.0,
+        predicate_argument_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=0.0,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        feature_embedding_weight_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=0,
+        max_entity_binding_features=0,
+        max_defeasible_priority_features=0,
+        max_constraint_grounding_features=0,
+        max_definition_grounding_features=0,
+        max_quantifier_scope_features=0,
+        max_procedural_lifecycle_features=0,
+        max_enforcement_remedy_features=0,
+        max_reference_dependency_features=0,
+        max_authority_jurisdiction_features=0,
+        max_temporal_validity_features=0,
+        max_evidentiary_burden_features=0,
+        max_legal_relation_features=240,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    embedding_autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    assert shared_plan_feature in embedding_autoencoder.state.feature_embedding_weights
+    assert after_cosine.embedding_cosine_similarity > before_cosine.embedding_cosine_similarity
+
+
+def test_status_transition_features_encode_legal_state_machines() -> None:
+    revoke = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency may revoke a license.",
+    )
+    issue = build_us_code_sample(
+        title="5",
+        section="553",
+        text="The agency shall issue a license.",
+    )
+    effective = build_us_code_sample(
+        title="5",
+        section="554",
+        text="The permit becomes effective.",
+    )
+    expiration = build_us_code_sample(
+        title="5",
+        section="555",
+        text="The certificate expires after five years.",
+    )
+    eligible = build_us_code_sample(
+        title="42",
+        section="1437f",
+        text="The applicant is eligible for the benefit.",
+    )
+    ineligible = build_us_code_sample(
+        title="42",
+        section="1437g",
+        text="The owner is ineligible for the license.",
+    )
+    suspend = build_us_code_sample(
+        title="7",
+        section="13",
+        text="The commission may suspend a registration.",
+    )
+    autoencoder = AdaptiveModalAutoencoder(max_status_transition_features=240)
+
+    revoke_features = autoencoder._status_transition_feature_keys_for(revoke)
+    issue_features = autoencoder._status_transition_feature_keys_for(issue)
+    effective_features = autoencoder._status_transition_feature_keys_for(effective)
+    expiration_features = autoencoder._status_transition_feature_keys_for(expiration)
+    eligible_features = autoencoder._status_transition_feature_keys_for(eligible)
+    ineligible_features = autoencoder._status_transition_feature_keys_for(ineligible)
+    suspend_features = autoencoder._status_transition_feature_keys_for(suspend)
+    fallback_features = autoencoder._fallback_feature_keys_for(revoke)
+    legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(revoke)
+
+    revoke_signature = (
+        "authorization_status:government_actor:authorization_instrument:"
+        "active_authorization->terminated_authorization:"
+        "authorization_termination:permission:affirmed:instrument_scope"
+    )
+    assert (
+        f"status-transition:transition-signature:{revoke_signature}"
+        in revoke_features
+    )
+    assert (
+        "status-transition:status-state:authorization_status:"
+        "authorization_instrument:active_authorization->"
+        "terminated_authorization:authorization_termination:affirmed"
+        in revoke_features
+    )
+    assert (
+        "status-transition:event-calculus-terminates-status:"
+        "active_authorization:government_actor:authorization_instrument"
+        in revoke_features
+    )
+    assert (
+        f"status-transition:decompiler-status-plan:{revoke_signature}"
+        in fallback_features
+    )
+    assert (
+        f"legal-ir:status-transition:decompiler-status-plan:{revoke_signature}"
+        in legal_ir_features
+    )
+
+    assert (
+        "status-transition:event-calculus-initiates-status:"
+        "active_authorization:government_actor:authorization_instrument"
+        in issue_features
+    )
+    assert (
+        "status-transition:status-state:authorization_status:"
+        "authorization_instrument:pending_authorization->"
+        "active_authorization:effectiveness_activation:affirmed"
+        in effective_features
+    )
+    assert (
+        "status-transition:event-calculus-terminates-status:"
+        "active_authorization:status_actor:authorization_instrument"
+        in expiration_features
+    )
+    assert (
+        "status-transition:event-calculus-initiates-status:"
+        "eligible_status:private_party:eligibility_status"
+        in eligible_features
+    )
+    assert (
+        "status-transition:event-calculus-terminates-status:"
+        "eligible_status:private_party:eligibility_status"
+        in ineligible_features
+    )
+    assert (
+        "status-transition:status-state:authorization_status:"
+        "authorization_instrument:active_authorization->"
+        "suspended_authorization:authorization_suspension:affirmed"
+        in suspend_features
+    )
+
+
+def test_status_transition_feature_head_transfers_termination_holdout() -> None:
+    shared_plan_feature = (
+        "status-transition:decompiler-status-plan:"
+        "authorization_status:government_actor:authorization_instrument:"
+        "active_authorization->terminated_authorization:"
+        "authorization_termination:permission:affirmed:instrument_scope"
+    )
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency may revoke a license.",
+        embedding_vector=[1.0, 0.0],
+    )
+    validation = build_us_code_sample(
+        title="12",
+        section="1841",
+        text="The board may terminate a permit.",
+        embedding_vector=[1.0, 0.0],
+    )
+    family_autoencoder = AdaptiveModalAutoencoder(
+        feature_family_logit_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=0,
+        max_entity_binding_features=0,
+        max_defeasible_priority_features=0,
+        max_constraint_grounding_features=0,
+        max_definition_grounding_features=0,
+        max_quantifier_scope_features=0,
+        max_procedural_lifecycle_features=0,
+        max_enforcement_remedy_features=0,
+        max_reference_dependency_features=0,
+        max_authority_jurisdiction_features=0,
+        max_temporal_validity_features=0,
+        max_evidentiary_burden_features=0,
+        max_legal_relation_features=0,
+        max_status_transition_features=240,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+    )
+    shared_status_features = set(
+        family_autoencoder._status_transition_feature_keys_for(train)
+    ).intersection(
+        family_autoencoder._status_transition_feature_keys_for(validation)
+    )
+    before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    family_autoencoder._nudge_family_logits(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert shared_plan_feature in shared_status_features
+    assert shared_plan_feature in family_autoencoder.state.feature_family_logits
+    assert after_ce.cross_entropy_loss < before_ce.cross_entropy_loss
+
+    embedding_autoencoder = AdaptiveModalAutoencoder(
+        compiler_quality_embedding_weight_scale=0.0,
+        logic_signature_embedding_weight_scale=0.0,
+        round_trip_signal_embedding_weight_scale=0.0,
+        decompiler_plan_embedding_weight_scale=0.0,
+        predicate_argument_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=0.0,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        feature_embedding_weight_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=0,
+        max_entity_binding_features=0,
+        max_defeasible_priority_features=0,
+        max_constraint_grounding_features=0,
+        max_definition_grounding_features=0,
+        max_quantifier_scope_features=0,
+        max_procedural_lifecycle_features=0,
+        max_enforcement_remedy_features=0,
+        max_reference_dependency_features=0,
+        max_authority_jurisdiction_features=0,
+        max_temporal_validity_features=0,
+        max_evidentiary_burden_features=0,
+        max_legal_relation_features=0,
+        max_status_transition_features=240,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    embedding_autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    assert shared_plan_feature in embedding_autoencoder.state.feature_embedding_weights
+    assert after_cosine.embedding_cosine_similarity > before_cosine.embedding_cosine_similarity
+
+
+def test_condition_consequence_features_encode_guarded_rule_edges() -> None:
+    sufficient = build_us_code_sample(
+        title="5",
+        section="552",
+        text=(
+            "If the applicant files an application, the agency shall approve "
+            "the permit."
+        ),
+    )
+    exception = build_us_code_sample(
+        title="5",
+        section="553",
+        text="The agency shall not issue the license unless the fee is paid.",
+    )
+    necessary = build_us_code_sample(
+        title="5",
+        section="554",
+        text="A person may file an appeal only if the notice is timely.",
+    )
+    proviso = build_us_code_sample(
+        title="5",
+        section="555",
+        text=(
+            "The agency may grant a waiver provided that the application is "
+            "complete."
+        ),
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        max_condition_consequence_features=240
+    )
+
+    sufficient_features = autoencoder._condition_consequence_feature_keys_for(
+        sufficient
+    )
+    exception_features = autoencoder._condition_consequence_feature_keys_for(
+        exception
+    )
+    necessary_features = autoencoder._condition_consequence_feature_keys_for(
+        necessary
+    )
+    proviso_features = autoencoder._condition_consequence_feature_keys_for(proviso)
+    fallback_features = autoencoder._fallback_feature_keys_for(sufficient)
+    legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(sufficient)
+
+    sufficient_signature = (
+        "sufficient_condition:application_or_proof->grant_authorization:"
+        "government_actor:authorization_instrument:obligation:"
+        "positive_consequence:instrument_scope"
+    )
+    assert (
+        f"condition-consequence:guard-signature:{sufficient_signature}"
+        in sufficient_features
+    )
+    assert (
+        "condition-consequence:event-calculus-precondition:"
+        "application_or_proof->grant_authorization:authorization_instrument"
+        in sufficient_features
+    )
+    assert (
+        "condition-consequence:operator-guard:"
+        "deontic:o:condition:sufficient_condition:"
+        "application_or_proof->grant_authorization"
+        in sufficient_features
+    )
+    assert (
+        f"condition-consequence:decompiler-guard-plan:{sufficient_signature}"
+        in fallback_features
+    )
+    assert (
+        f"legal-ir:condition-consequence:decompiler-guard-plan:"
+        f"{sufficient_signature}"
+        in legal_ir_features
+    )
+
+    assert (
+        "condition-consequence:guard-signature:"
+        "exception_guard:payment_or_fee->grant_authorization:"
+        "government_actor:authorization_instrument:obligation:"
+        "exception_consequence:instrument_scope"
+        in exception_features
+    )
+    assert (
+        "condition-consequence:guard-signature:"
+        "necessary_condition:notice_or_record->submit_or_file:"
+        "private_party:proceeding_or_order:permission:"
+        "positive_consequence:procedure_scope"
+        in necessary_features
+    )
+    assert (
+        "condition-consequence:guard-signature:"
+        "proviso_guard:application_or_proof->grant_authorization:"
+        "government_actor:authorization_instrument:permission:"
+        "positive_consequence:instrument_scope"
+        in proviso_features
+    )
+
+
+def test_condition_consequence_feature_head_transfers_guard_holdout() -> None:
+    shared_plan_feature = (
+        "condition-consequence:decompiler-guard-plan:"
+        "necessary_condition:notice_or_record->submit_or_file:"
+        "private_party:proceeding_or_order:permission:"
+        "positive_consequence:procedure_scope"
+    )
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="A person may file an appeal only if the notice is timely.",
+        embedding_vector=[1.0, 0.0],
+    )
+    validation = build_us_code_sample(
+        title="12",
+        section="1841",
+        text="An owner may submit an appeal only if the record is timely.",
+        embedding_vector=[1.0, 0.0],
+    )
+    family_autoencoder = AdaptiveModalAutoencoder(
+        feature_family_logit_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=0,
+        max_entity_binding_features=0,
+        max_defeasible_priority_features=0,
+        max_constraint_grounding_features=0,
+        max_definition_grounding_features=0,
+        max_quantifier_scope_features=0,
+        max_procedural_lifecycle_features=0,
+        max_enforcement_remedy_features=0,
+        max_reference_dependency_features=0,
+        max_authority_jurisdiction_features=0,
+        max_temporal_validity_features=0,
+        max_evidentiary_burden_features=0,
+        max_legal_relation_features=0,
+        max_status_transition_features=0,
+        max_condition_consequence_features=240,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+    )
+    shared_guard_features = set(
+        family_autoencoder._condition_consequence_feature_keys_for(train)
+    ).intersection(
+        family_autoencoder._condition_consequence_feature_keys_for(validation)
+    )
+    before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    family_autoencoder._nudge_family_logits(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert shared_plan_feature in shared_guard_features
+    assert shared_plan_feature in family_autoencoder.state.feature_family_logits
+    assert after_ce.cross_entropy_loss < before_ce.cross_entropy_loss
+
+    embedding_autoencoder = AdaptiveModalAutoencoder(
+        compiler_quality_embedding_weight_scale=0.0,
+        logic_signature_embedding_weight_scale=0.0,
+        round_trip_signal_embedding_weight_scale=0.0,
+        decompiler_plan_embedding_weight_scale=0.0,
+        predicate_argument_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=0.0,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        feature_embedding_weight_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=0,
+        max_entity_binding_features=0,
+        max_defeasible_priority_features=0,
+        max_constraint_grounding_features=0,
+        max_definition_grounding_features=0,
+        max_quantifier_scope_features=0,
+        max_procedural_lifecycle_features=0,
+        max_enforcement_remedy_features=0,
+        max_reference_dependency_features=0,
+        max_authority_jurisdiction_features=0,
+        max_temporal_validity_features=0,
+        max_evidentiary_burden_features=0,
+        max_legal_relation_features=0,
+        max_status_transition_features=0,
+        max_condition_consequence_features=240,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    embedding_autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    assert shared_plan_feature in embedding_autoencoder.state.feature_embedding_weights
+    assert after_cosine.embedding_cosine_similarity > before_cosine.embedding_cosine_similarity
+
+
+def test_applicability_scope_features_encode_domain_and_exception_edges() -> None:
+    inclusion = build_us_code_sample(
+        title="5",
+        section="552",
+        text="This section applies to each covered entity.",
+    )
+    exclusion = build_us_code_sample(
+        title="5",
+        section="553",
+        text="This subsection does not apply to an employee of the agency.",
+    )
+    respect = build_us_code_sample(
+        title="5",
+        section="554",
+        text=(
+            "This section applies with respect to any record maintained by "
+            "the agency."
+        ),
+    )
+    purpose = build_us_code_sample(
+        title="5",
+        section="555",
+        text=(
+            "For purposes of this section, a covered entity includes any "
+            "recipient."
+        ),
+    )
+    case_scope = build_us_code_sample(
+        title="5",
+        section="556",
+        text=(
+            "In the case of a licensee, this subsection applies to the "
+            "renewal."
+        ),
+    )
+    autoencoder = AdaptiveModalAutoencoder(max_applicability_scope_features=240)
+
+    inclusion_features = autoencoder._applicability_scope_feature_keys_for(
+        inclusion
+    )
+    exclusion_features = autoencoder._applicability_scope_feature_keys_for(
+        exclusion
+    )
+    respect_features = autoencoder._applicability_scope_feature_keys_for(
+        respect
+    )
+    purpose_features = autoencoder._applicability_scope_feature_keys_for(
+        purpose
+    )
+    case_features = autoencoder._applicability_scope_feature_keys_for(case_scope)
+    fallback_features = autoencoder._fallback_feature_keys_for(inclusion)
+    legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(inclusion)
+
+    inclusion_signature = (
+        "inclusion_scope:positive_applicability:"
+        "current_section->regulated_entity:entity_scope"
+    )
+    assert (
+        f"applicability-scope:applicability-signature:{inclusion_signature}"
+        in inclusion_features
+    )
+    assert (
+        "applicability-scope:frame-logic-domain-slot:"
+        "inclusion_scope:regulated_entity:entity_scope:current_section"
+        in inclusion_features
+    )
+    assert (
+        "applicability-scope:kg-applicability-edge:"
+        "current_section:inclusion_scope:regulated_entity:positive_applicability"
+        in inclusion_features
+    )
+    assert (
+        f"applicability-scope:decompiler-applicability-plan:"
+        f"{inclusion_signature}"
+        in fallback_features
+    )
+    assert (
+        f"legal-ir:applicability-scope:decompiler-applicability-plan:"
+        f"{inclusion_signature}"
+        in legal_ir_features
+    )
+
+    assert (
+        "applicability-scope:applicability-signature:"
+        "exclusion_scope:negative_applicability:"
+        "current_subsection->affiliated_person:entity_scope"
+        in exclusion_features
+    )
+    assert (
+        "applicability-scope:defeasible-applicability-exception:"
+        "current_subsection->affiliated_person:entity_scope"
+        in exclusion_features
+    )
+    assert (
+        "applicability-scope:applicability-signature:"
+        "respect_scope:scoped_applicability:"
+        "current_section->notice_or_record:record_scope"
+        in respect_features
+    )
+    assert (
+        "applicability-scope:applicability-signature:"
+        "purpose_scope:scoped_applicability:"
+        "current_section->regulated_entity:entity_scope"
+        in purpose_features
+    )
+    assert (
+        "applicability-scope:applicability-signature:"
+        "case_scope:scoped_applicability:"
+        "current_subsection->benefit_participant:entity_scope"
+        in case_features
+    )
+
+
+def test_applicability_scope_feature_head_transfers_domain_holdout() -> None:
+    shared_plan_feature = (
+        "applicability-scope:decompiler-applicability-plan:"
+        "inclusion_scope:positive_applicability:"
+        "current_section->regulated_entity:entity_scope"
+    )
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="This section shall apply to each covered entity.",
+        embedding_vector=[1.0, 0.0],
+    )
+    validation = build_us_code_sample(
+        title="12",
+        section="1841",
+        text=(
+            "The requirements of this section shall apply to every regulated "
+            "entity."
+        ),
+        embedding_vector=[1.0, 0.0],
+    )
+    family_autoencoder = AdaptiveModalAutoencoder(
+        feature_family_logit_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=0,
+        max_entity_binding_features=0,
+        max_defeasible_priority_features=0,
+        max_constraint_grounding_features=0,
+        max_definition_grounding_features=0,
+        max_quantifier_scope_features=0,
+        max_procedural_lifecycle_features=0,
+        max_enforcement_remedy_features=0,
+        max_reference_dependency_features=0,
+        max_authority_jurisdiction_features=0,
+        max_temporal_validity_features=0,
+        max_evidentiary_burden_features=0,
+        max_legal_relation_features=0,
+        max_status_transition_features=0,
+        max_condition_consequence_features=0,
+        max_applicability_scope_features=240,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+    )
+    shared_scope_features = set(
+        family_autoencoder._applicability_scope_feature_keys_for(train)
+    ).intersection(
+        family_autoencoder._applicability_scope_feature_keys_for(validation)
+    )
+    before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    family_autoencoder._nudge_family_logits(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert shared_plan_feature in shared_scope_features
+    assert shared_plan_feature in family_autoencoder.state.feature_family_logits
+    assert after_ce.cross_entropy_loss < before_ce.cross_entropy_loss
+
+    embedding_autoencoder = AdaptiveModalAutoencoder(
+        compiler_quality_embedding_weight_scale=0.0,
+        logic_signature_embedding_weight_scale=0.0,
+        round_trip_signal_embedding_weight_scale=0.0,
+        decompiler_plan_embedding_weight_scale=0.0,
+        predicate_argument_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=0.0,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        feature_embedding_weight_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=0,
+        max_entity_binding_features=0,
+        max_defeasible_priority_features=0,
+        max_constraint_grounding_features=0,
+        max_definition_grounding_features=0,
+        max_quantifier_scope_features=0,
+        max_procedural_lifecycle_features=0,
+        max_enforcement_remedy_features=0,
+        max_reference_dependency_features=0,
+        max_authority_jurisdiction_features=0,
+        max_temporal_validity_features=0,
+        max_evidentiary_burden_features=0,
+        max_legal_relation_features=0,
+        max_status_transition_features=0,
+        max_condition_consequence_features=0,
+        max_applicability_scope_features=240,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    embedding_autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    assert shared_plan_feature in embedding_autoencoder.state.feature_embedding_weights
+    assert after_cosine.embedding_cosine_similarity > before_cosine.embedding_cosine_similarity
+
+
+def test_coreference_binding_features_encode_deictic_reference_edges() -> None:
+    such_person = build_us_code_sample(
+        title="5",
+        section="552",
+        text=(
+            "A person may request a permit. Such person shall file the "
+            "application."
+        ),
+    )
+    that_license = build_us_code_sample(
+        title="5",
+        section="553",
+        text=(
+            "The agency shall issue a license. That license expires after "
+            "one year."
+        ),
+    )
+    therein_record = build_us_code_sample(
+        title="5",
+        section="554",
+        text=(
+            "The applicant shall file a record. Data contained therein shall "
+            "be protected."
+        ),
+    )
+    that_subsection = build_us_code_sample(
+        title="5",
+        section="555",
+        text=(
+            "Subsection (b) applies to the claim. An appeal under that "
+            "subsection may be filed."
+        ),
+    )
+    autoencoder = AdaptiveModalAutoencoder(max_coreference_binding_features=240)
+
+    person_features = autoencoder._coreference_binding_feature_keys_for(
+        such_person
+    )
+    license_features = autoencoder._coreference_binding_feature_keys_for(
+        that_license
+    )
+    record_features = autoencoder._coreference_binding_feature_keys_for(
+        therein_record
+    )
+    subsection_features = autoencoder._coreference_binding_feature_keys_for(
+        that_subsection
+    )
+    fallback_features = autoencoder._fallback_feature_keys_for(such_person)
+    legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(such_person)
+
+    person_signature = (
+        "such_reference:private_party->private_party:"
+        "cross_sentence:class_preserving"
+    )
+    assert (
+        f"coreference-binding:coreference-signature:{person_signature}"
+        in person_features
+    )
+    assert (
+        "coreference-binding:compiler-variable-binding:"
+        "private_party->private_party:such_reference:cross_sentence"
+        in person_features
+    )
+    assert (
+        "coreference-binding:frame-logic-same-as:"
+        "private_party:private_party:such_reference:class_preserving"
+        in person_features
+    )
+    assert (
+        f"coreference-binding:decompiler-coreference-plan:{person_signature}"
+        in fallback_features
+    )
+    assert (
+        f"legal-ir:coreference-binding:decompiler-coreference-plan:"
+        f"{person_signature}"
+        in legal_ir_features
+    )
+
+    assert (
+        "coreference-binding:coreference-signature:"
+        "that_reference:authorization_instrument->authorization_instrument:"
+        "cross_sentence:class_preserving"
+        in license_features
+    )
+    assert (
+        "coreference-binding:coreference-signature:"
+        "therein_reference:notice_or_record->notice_or_record:"
+        "cross_sentence:class_preserving"
+        in record_features
+    )
+    assert (
+        "coreference-binding:coreference-signature:"
+        "under_that_reference:statutory_reference->statutory_reference:"
+        "cross_sentence:class_preserving"
+        in subsection_features
+    )
+
+
+def test_coreference_binding_feature_head_transfers_deictic_holdout() -> None:
+    shared_plan_feature = (
+        "coreference-binding:decompiler-coreference-plan:"
+        "such_reference:private_party->private_party:"
+        "cross_sentence:class_preserving"
+    )
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="A person shall file an application. Such person shall keep records.",
+        embedding_vector=[1.0, 0.0],
+    )
+    validation = build_us_code_sample(
+        title="12",
+        section="1841",
+        text=(
+            "An individual must submit a claim. Such individual must maintain "
+            "records."
+        ),
+        embedding_vector=[1.0, 0.0],
+    )
+    family_autoencoder = AdaptiveModalAutoencoder(
+        feature_family_logit_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=0,
+        max_entity_binding_features=0,
+        max_defeasible_priority_features=0,
+        max_constraint_grounding_features=0,
+        max_definition_grounding_features=0,
+        max_quantifier_scope_features=0,
+        max_procedural_lifecycle_features=0,
+        max_enforcement_remedy_features=0,
+        max_reference_dependency_features=0,
+        max_authority_jurisdiction_features=0,
+        max_temporal_validity_features=0,
+        max_evidentiary_burden_features=0,
+        max_legal_relation_features=0,
+        max_status_transition_features=0,
+        max_condition_consequence_features=0,
+        max_applicability_scope_features=0,
+        max_coreference_binding_features=240,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+    )
+    shared_coreference_features = set(
+        family_autoencoder._coreference_binding_feature_keys_for(train)
+    ).intersection(
+        family_autoencoder._coreference_binding_feature_keys_for(validation)
+    )
+    before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    family_autoencoder._nudge_family_logits(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert shared_plan_feature in shared_coreference_features
+    assert shared_plan_feature in family_autoencoder.state.feature_family_logits
+    assert after_ce.cross_entropy_loss < before_ce.cross_entropy_loss
+
+    embedding_autoencoder = AdaptiveModalAutoencoder(
+        compiler_quality_embedding_weight_scale=0.0,
+        logic_signature_embedding_weight_scale=0.0,
+        round_trip_signal_embedding_weight_scale=0.0,
+        decompiler_plan_embedding_weight_scale=0.0,
+        predicate_argument_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=0.0,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        feature_embedding_weight_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=0,
+        max_entity_binding_features=0,
+        max_defeasible_priority_features=0,
+        max_constraint_grounding_features=0,
+        max_definition_grounding_features=0,
+        max_quantifier_scope_features=0,
+        max_procedural_lifecycle_features=0,
+        max_enforcement_remedy_features=0,
+        max_reference_dependency_features=0,
+        max_authority_jurisdiction_features=0,
+        max_temporal_validity_features=0,
+        max_evidentiary_burden_features=0,
+        max_legal_relation_features=0,
+        max_status_transition_features=0,
+        max_condition_consequence_features=0,
+        max_applicability_scope_features=0,
+        max_coreference_binding_features=240,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    embedding_autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    assert shared_plan_feature in embedding_autoencoder.state.feature_embedding_weights
+    assert after_cosine.embedding_cosine_similarity > before_cosine.embedding_cosine_similarity
+
+
+def test_logical_connective_features_encode_boolean_ir_edges() -> None:
+    conjunction = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The person shall file an application and pay the fee.",
+    )
+    disjunction = build_us_code_sample(
+        title="5",
+        section="553",
+        text="The applicant may request a hearing or submit a written statement.",
+    )
+    negative = build_us_code_sample(
+        title="5",
+        section="554",
+        text="The agency shall neither disclose the record nor publish the notice.",
+    )
+    cumulative = build_us_code_sample(
+        title="5",
+        section="555",
+        text="The licensee shall both maintain records and submit reports.",
+    )
+    enumerated = build_us_code_sample(
+        title="5",
+        section="556",
+        text="The applicant shall provide any of the following: a record; a notice.",
+    )
+    autoencoder = AdaptiveModalAutoencoder(max_logical_connective_features=240)
+
+    conjunction_features = autoencoder._logical_connective_feature_keys_for(
+        conjunction
+    )
+    disjunction_features = autoencoder._logical_connective_feature_keys_for(
+        disjunction
+    )
+    negative_features = autoencoder._logical_connective_feature_keys_for(negative)
+    cumulative_features = autoencoder._logical_connective_feature_keys_for(
+        cumulative
+    )
+    enumerated_features = autoencoder._logical_connective_feature_keys_for(
+        enumerated
+    )
+    fallback_features = autoencoder._fallback_feature_keys_for(conjunction)
+    legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(conjunction)
+
+    conjunction_signature = (
+        "conjunction:application_or_proof+payment_or_fee:"
+        "obligation:positive_connective:modal_scope:2-3"
+    )
+    assert (
+        f"logical-connective:connective-signature:{conjunction_signature}"
+        in conjunction_features
+    )
+    assert (
+        "logical-connective:compiler-boolean-node:"
+        "conjunction:application_or_proof+payment_or_fee:modal_scope:2-3"
+        in conjunction_features
+    )
+    assert (
+        "logical-connective:frame-logic-connective-slot:"
+        "conjunction:application_or_proof:payment_or_fee:modal_scope"
+        in conjunction_features
+    )
+    assert (
+        f"logical-connective:decompiler-connective-plan:"
+        f"{conjunction_signature}"
+        in fallback_features
+    )
+    assert (
+        f"legal-ir:logical-connective:decompiler-connective-plan:"
+        f"{conjunction_signature}"
+        in legal_ir_features
+    )
+
+    assert (
+        "logical-connective:connective-signature:"
+        "inclusive_disjunction:proceeding_or_order+application_or_proof:"
+        "permission:positive_connective:modal_scope:2-3"
+        in disjunction_features
+    )
+    assert (
+        "logical-connective:connective-signature:"
+        "negative_conjunction:notice_or_record+notice_or_record:"
+        "prohibition:negative_connective:same_role_scope:2-3"
+        in negative_features
+    )
+    assert (
+        "logical-connective:connective-signature:"
+        "cumulative_conjunction:notice_or_record+application_or_proof:"
+        "obligation:positive_connective:mixed_role_scope:2-3"
+        in cumulative_features
+    )
+    assert (
+        "logical-connective:connective-signature:"
+        "enumerated_disjunction:notice_or_record+notice_or_record:"
+        "obligation:positive_connective:enumeration_scope:2-3"
+        in enumerated_features
+    )
+
+
+def test_logical_connective_feature_head_transfers_boolean_holdout() -> None:
+    shared_plan_feature = (
+        "logical-connective:decompiler-connective-plan:"
+        "conjunction:application_or_proof+payment_or_fee:"
+        "obligation:positive_connective:modal_scope:2-3"
+    )
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The person shall file an application and pay the fee.",
+        embedding_vector=[1.0, 0.0],
+    )
+    validation = build_us_code_sample(
+        title="12",
+        section="1841",
+        text="The individual must submit a claim and pay the payment.",
+        embedding_vector=[1.0, 0.0],
+    )
+    family_autoencoder = AdaptiveModalAutoencoder(
+        feature_family_logit_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=0,
+        max_entity_binding_features=0,
+        max_defeasible_priority_features=0,
+        max_constraint_grounding_features=0,
+        max_definition_grounding_features=0,
+        max_quantifier_scope_features=0,
+        max_procedural_lifecycle_features=0,
+        max_enforcement_remedy_features=0,
+        max_reference_dependency_features=0,
+        max_authority_jurisdiction_features=0,
+        max_temporal_validity_features=0,
+        max_evidentiary_burden_features=0,
+        max_legal_relation_features=0,
+        max_status_transition_features=0,
+        max_condition_consequence_features=0,
+        max_applicability_scope_features=0,
+        max_coreference_binding_features=0,
+        max_logical_connective_features=240,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+    )
+    shared_connective_features = set(
+        family_autoencoder._logical_connective_feature_keys_for(train)
+    ).intersection(
+        family_autoencoder._logical_connective_feature_keys_for(validation)
+    )
+    before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    family_autoencoder._nudge_family_logits(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert shared_plan_feature in shared_connective_features
+    assert shared_plan_feature in family_autoencoder.state.feature_family_logits
+    assert after_ce.cross_entropy_loss < before_ce.cross_entropy_loss
+
+    embedding_autoencoder = AdaptiveModalAutoencoder(
+        compiler_quality_embedding_weight_scale=0.0,
+        logic_signature_embedding_weight_scale=0.0,
+        round_trip_signal_embedding_weight_scale=0.0,
+        decompiler_plan_embedding_weight_scale=0.0,
+        predicate_argument_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=0.0,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        feature_embedding_weight_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=0,
+        max_entity_binding_features=0,
+        max_defeasible_priority_features=0,
+        max_constraint_grounding_features=0,
+        max_definition_grounding_features=0,
+        max_quantifier_scope_features=0,
+        max_procedural_lifecycle_features=0,
+        max_enforcement_remedy_features=0,
+        max_reference_dependency_features=0,
+        max_authority_jurisdiction_features=0,
+        max_temporal_validity_features=0,
+        max_evidentiary_burden_features=0,
+        max_legal_relation_features=0,
+        max_status_transition_features=0,
+        max_condition_consequence_features=0,
+        max_applicability_scope_features=0,
+        max_coreference_binding_features=0,
+        max_logical_connective_features=240,
         max_token_features=0,
         max_token_bigram_features=0,
         max_token_trigram_features=0,

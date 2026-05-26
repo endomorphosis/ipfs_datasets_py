@@ -296,3 +296,79 @@ def test_state_laws_scraper_timeout_checkpoint_diagnostics_no_work_remaining(tmp
     assert diag.get("classification") == "timeout_with_no_detectable_remaining_work"
     assert diag.get("work_remaining") is False
     assert diag.get("signal_kind") == "codes_progress"
+
+
+def test_state_laws_scraper_quality_flags_bill_history_noise():
+    statutes = [
+        {
+            "section_number": "25-3-33",
+            "section_name": "Commissioner of Public Safety; remove from omnibus pay section.",
+            "source_url": "https://web.archive.org/web/19980110154920/http://billstatus.ls.state.ms.us/1997/history/HB/HB0006.htm",
+            "full_text": (
+                "HB 6 - History of Actions/Background Mississippi Legislature 1997 Regular Session "
+                "House Bill 6 [Introduced] History of Actions: ..."
+            ),
+        },
+        {
+            "section_number": "27-33-77",
+            "section_name": "Homestead exemption; reimburse cities.",
+            "source_url": "https://web.archive.org/web/19980110154920/http://billstatus.ls.state.ms.us/1997/history/HB/HB0378.htm",
+            "full_text": (
+                "HB 378 - History of Actions/Background Mississippi Legislature 1997 Regular Session "
+                "House Bill 378 [Introduced] History of Actions: ..."
+            ),
+        },
+    ]
+    metrics = scraper_module._compute_state_quality_metrics(statutes)
+    assert metrics["bill_history_ratio"] >= 0.5
+    assert scraper_module._should_flag_quality(metrics) is True
+
+
+@pytest.mark.asyncio
+async def test_state_laws_scraper_full_corpus_low_quality_is_promoted_to_error(monkeypatch):
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+
+    async def _fake_run_sync_scrape_on_daemon_thread(**_kwargs):
+        return {
+            "state_code": "MS",
+            "state_name": "Mississippi",
+            "error": None,
+            "statutes_count": 10,
+            "zero_statute": False,
+            "low_quality": True,
+            "quality_metrics": {
+                "total": 10,
+                "nav_like_ratio": 0.0,
+                "fallback_section_ratio": 0.0,
+                "numeric_section_name_ratio": 0.9,
+                "scaffold_ratio": 0.0,
+                "bill_history_ratio": 0.8,
+            },
+            "warnings": [],
+            "statute_data": {
+                "state_code": "MS",
+                "state_name": "Mississippi",
+                "title": "Mississippi Laws",
+                "source": "Official State Legislative Website",
+                "scraped_at": "2026-05-26T00:00:00",
+                "statutes": [{"statute_id": "MS-1"}],
+            },
+        }
+
+    monkeypatch.setattr(scraper_module, "_run_sync_scrape_on_daemon_thread", _fake_run_sync_scrape_on_daemon_thread)
+
+    result = await scraper_module._scrape_state_with_retries(
+        state_code="MS",
+        legal_areas=None,
+        rate_limit_delay=0.0,
+        max_statutes=None,
+        strict_full_text=False,
+        min_full_text_chars=0,
+        hydrate_statute_text=True,
+        retry_attempts=0,
+        retry_zero_statute_states=True,
+        per_state_timeout_seconds=0.0,
+    )
+
+    assert result.get("error")
+    assert "full-corpus quality gate failed" in str(result.get("error"))

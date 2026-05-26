@@ -1923,6 +1923,7 @@ class AdaptiveModalAutoencoder:
         max_entity_binding_features: int = 64,
         max_defeasible_priority_features: int = 64,
         max_constraint_grounding_features: int = 64,
+        max_quantitative_formula_features: int = 64,
         max_definition_grounding_features: int = 64,
         max_quantifier_scope_features: int = 64,
         max_procedural_lifecycle_features: int = 64,
@@ -1930,6 +1931,13 @@ class AdaptiveModalAutoencoder:
         max_reference_dependency_features: int = 64,
         max_authority_jurisdiction_features: int = 64,
         max_temporal_validity_features: int = 64,
+        max_evidentiary_burden_features: int = 64,
+        max_legal_relation_features: int = 64,
+        max_status_transition_features: int = 64,
+        max_condition_consequence_features: int = 64,
+        max_applicability_scope_features: int = 64,
+        max_coreference_binding_features: int = 64,
+        max_logical_connective_features: int = 64,
         embedding_head_update_normalization: float = 0.0,
         family_logit_head_update_normalization: float = 0.0,
         legal_ir_view_head_update_normalization: float = 0.0,
@@ -2149,6 +2157,10 @@ class AdaptiveModalAutoencoder:
             0,
             int(max_constraint_grounding_features),
         )
+        self.max_quantitative_formula_features = max(
+            0,
+            int(max_quantitative_formula_features),
+        )
         self.max_definition_grounding_features = max(
             0,
             int(max_definition_grounding_features),
@@ -2176,6 +2188,34 @@ class AdaptiveModalAutoencoder:
         self.max_temporal_validity_features = max(
             0,
             int(max_temporal_validity_features),
+        )
+        self.max_evidentiary_burden_features = max(
+            0,
+            int(max_evidentiary_burden_features),
+        )
+        self.max_legal_relation_features = max(
+            0,
+            int(max_legal_relation_features),
+        )
+        self.max_status_transition_features = max(
+            0,
+            int(max_status_transition_features),
+        )
+        self.max_condition_consequence_features = max(
+            0,
+            int(max_condition_consequence_features),
+        )
+        self.max_applicability_scope_features = max(
+            0,
+            int(max_applicability_scope_features),
+        )
+        self.max_coreference_binding_features = max(
+            0,
+            int(max_coreference_binding_features),
+        )
+        self.max_logical_connective_features = max(
+            0,
+            int(max_logical_connective_features),
         )
         self.embedding_head_update_normalization = max(
             0.0,
@@ -4748,6 +4788,12 @@ class AdaptiveModalAutoencoder:
             )
         )
         keys.extend(
+            self._quantitative_formula_feature_keys_for(
+                sample,
+                prefix="legal-ir:quantitative-formula",
+            )
+        )
+        keys.extend(
             self._definition_grounding_feature_keys_for(
                 sample,
                 prefix="legal-ir:definition-grounding",
@@ -4787,6 +4833,48 @@ class AdaptiveModalAutoencoder:
             self._temporal_validity_feature_keys_for(
                 sample,
                 prefix="legal-ir:temporal-validity",
+            )
+        )
+        keys.extend(
+            self._evidentiary_burden_feature_keys_for(
+                sample,
+                prefix="legal-ir:evidentiary-burden",
+            )
+        )
+        keys.extend(
+            self._legal_relation_feature_keys_for(
+                sample,
+                prefix="legal-ir:legal-relation",
+            )
+        )
+        keys.extend(
+            self._status_transition_feature_keys_for(
+                sample,
+                prefix="legal-ir:status-transition",
+            )
+        )
+        keys.extend(
+            self._condition_consequence_feature_keys_for(
+                sample,
+                prefix="legal-ir:condition-consequence",
+            )
+        )
+        keys.extend(
+            self._applicability_scope_feature_keys_for(
+                sample,
+                prefix="legal-ir:applicability-scope",
+            )
+        )
+        keys.extend(
+            self._coreference_binding_feature_keys_for(
+                sample,
+                prefix="legal-ir:coreference-binding",
+            )
+        )
+        keys.extend(
+            self._logical_connective_feature_keys_for(
+                sample,
+                prefix="legal-ir:logical-connective",
             )
         )
         keys.extend(
@@ -8768,6 +8856,363 @@ class AdaptiveModalAutoencoder:
         cache[cache_key] = list(result)
         return result
 
+    def _quantitative_formula_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "quantitative-formula",
+    ) -> List[str]:
+        """Arithmetic formula contracts for legal amounts, caps, and rates."""
+        normalized_prefix = str(prefix or "quantitative-formula").strip(":")
+        cache_key = f"quantitative_formula_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_quantitative_formula_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        action_classes = role_classes.get("action", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        def money_bucket(raw: str) -> str:
+            normalized = str(raw or "").replace(",", "")
+            try:
+                amount = float(normalized)
+            except ValueError:
+                return "unknown"
+            if amount <= 0.0:
+                return "0"
+            if amount < 100.0:
+                return "under_100"
+            if amount < 1000.0:
+                return "100_1k"
+            if amount < 10000.0:
+                return "1k_10k"
+            if amount < 100000.0:
+                return "10k_100k"
+            return "100k_plus"
+
+        def percent_bucket(raw: str) -> str:
+            try:
+                value = float(str(raw or ""))
+            except ValueError:
+                return "unknown"
+            if value <= 1.0:
+                return "0_1"
+            if value <= 10.0:
+                return "2_10"
+            if value <= 25.0:
+                return "11_25"
+            if value <= 50.0:
+                return "26_50"
+            return "51_100"
+
+        def operand_kind_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            tokens = set(_TOKEN_RE.findall(normalized))
+            if re.search(r"\$\s*\d|\d[\d,]*(?:\.\d+)?\s+dollars?\b", normalized):
+                return "monetary_amount"
+            if re.search(r"\d+(?:\.\d+)?\s*(?:percent|%)\b", normalized):
+                return "percentage_amount"
+            if re.search(r"\b(?:twice|double|triple|three\s+times|four\s+times)\b", normalized):
+                return "multiplier_amount"
+            if tokens.intersection({"damage", "damages", "loss", "losses"}):
+                return "damages_amount"
+            if tokens.intersection({"cost", "costs", "expense", "expenses"}):
+                return "cost_amount"
+            if tokens.intersection({"fee", "fees", "charge", "charges"}):
+                return "fee_amount"
+            if tokens.intersection({"payment", "payments", "paid"}):
+                return "payment_amount"
+            if tokens.intersection({"day", "days", "month", "months", "year", "years"}):
+                return "period_amount"
+            return "legal_amount"
+
+        def result_kind_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            tokens = set(_TOKEN_RE.findall(normalized))
+            if tokens.intersection({"penalty", "penalties", "fine", "fines", "forfeiture"}):
+                return "penalty_amount"
+            if tokens.intersection({"fee", "fees", "charge", "charges"}):
+                return "fee_amount"
+            if tokens.intersection({"refund", "rebate", "credit"}):
+                return "refund_amount"
+            if tokens.intersection({"payment", "payments", "amount", "sum", "total"}):
+                return "payment_amount"
+            if tokens.intersection({"damages", "damage", "loss", "losses"}):
+                return "damages_amount"
+            return first_or_none(role_classes.get("object", [])) or "legal_amount"
+
+        def force_class_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\bshall\s+not\b|\bmay\s+not\b|\bmust\s+not\b|\bnot\s+exceed\b", normalized):
+                return "prohibition"
+            if re.search(r"\bshall\b|\bmust\b|\brequired\b", normalized):
+                return "obligation"
+            if re.search(r"\bmay\b|\bauthorized\b|\bpermitted\b", normalized):
+                return "permission"
+            return _feature_atom(force_tags[0] if force_tags else "assertive") or "assertive"
+
+        def polarity_for(kind: str, context: str) -> str:
+            normalized = " ".join(str(context or "").lower().split())
+            if kind in {"cap_formula", "lesser_of_formula"} or re.search(
+                r"\bnot\s+exceed\b|\bno\s+more\s+than\b|\bat\s+most\b",
+                normalized,
+            ):
+                return "upper_bound"
+            if kind == "floor_formula" or re.search(
+                r"\bnot\s+less\s+than\b|\bat\s+least\b",
+                normalized,
+            ):
+                return "lower_bound"
+            return "computed_amount"
+
+        def rate_unit_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\bper\s+day\b|\bfor\s+each\s+day\b", normalized):
+                return "per_day"
+            if re.search(r"\bper\s+month\b|\bfor\s+each\s+month\b", normalized):
+                return "per_month"
+            if re.search(r"\bper\s+year\b|\bannually\b", normalized):
+                return "per_year"
+            return "lump_sum"
+
+        formula_events: List[
+            tuple[int, str, str, str, str, str, str, str, str, str, str]
+        ] = []
+
+        def add_formula(
+            *,
+            start: int,
+            kind: str,
+            left_text: str,
+            right_text: str,
+            result_text: str,
+            context_text: str,
+        ) -> None:
+            left_kind = operand_kind_for(left_text)
+            right_kind = operand_kind_for(right_text)
+            result_kind = result_kind_for(result_text or context_text)
+            force_class = force_class_for(context_text)
+            polarity = polarity_for(kind, context_text)
+            rate_unit = rate_unit_for(context_text)
+            formula_events.append(
+                (
+                    int(start),
+                    kind,
+                    left_kind,
+                    right_kind,
+                    result_kind,
+                    force_class,
+                    polarity,
+                    rate_unit,
+                    _feature_atom(left_text, max_tokens=5) or left_kind,
+                    _feature_atom(right_text, max_tokens=5) or right_kind,
+                    _feature_atom(result_text or context_text, max_tokens=5) or result_kind,
+                )
+            )
+
+        greater_pattern = re.compile(
+            r"\b(?P<result>[^.;]{0,120}?)\b(?:shall|must|may|is|are)?\s*"
+            r"(?:be|equal|equals|mean|means)?\s*the\s+greater\s+of\s+"
+            r"(?P<left>[^.;,]{1,120})\s+(?:or|and)\s+(?P<right>[^.;]{1,160})"
+        )
+        lesser_pattern = re.compile(
+            r"\b(?P<result>[^.;]{0,120}?)\b(?:shall|must|may|is|are)?\s*"
+            r"(?:be|equal|equals|mean|means)?\s*the\s+lesser\s+of\s+"
+            r"(?P<left>[^.;,]{1,120})\s+(?:or|and)\s+(?P<right>[^.;]{1,160})"
+        )
+        cap_pattern = re.compile(
+            r"\b(?P<result>[^.;]{0,120}?)\s+"
+            r"(?:may\s+not|shall\s+not|must\s+not|does\s+not|not\s+to)\s+"
+            r"(?:exceed|be\s+more\s+than)\s+"
+            r"(?P<left>\$\s*\d[\d,]*(?:\.\d+)?|\d[\d,]*(?:\.\d+)?\s+dollars?)"
+            r"(?P<right>\s+per\s+(?:day|month|year)|\s+for\s+each\s+(?:day|month|year))?"
+        )
+        floor_pattern = re.compile(
+            r"\b(?P<result>[^.;]{0,120}?)\s+"
+            r"(?:shall|must|is|are)?\s*(?:be\s+)?"
+            r"(?:not\s+less\s+than|at\s+least)\s+"
+            r"(?P<left>\$\s*\d[\d,]*(?:\.\d+)?|\d[\d,]*(?:\.\d+)?\s+dollars?)"
+            r"(?P<right>\s+per\s+(?:day|month|year)|\s+for\s+each\s+(?:day|month|year))?"
+        )
+        multiplier_pattern = re.compile(
+            r"\b(?P<result>[^.;]{0,120}?)\s+"
+            r"(?:shall|must|is|are)?\s*(?:be\s+)?"
+            r"(?:equal|equals|be|pay|paid)\s+"
+            r"(?P<left>twice|double|triple|three\s+times|four\s+times)\s+"
+            r"(?:the\s+)?(?P<right>amount\s+paid|payment|fee|damages|loss)"
+        )
+        sum_pattern = re.compile(
+            r"\b(?P<result>[^.;]{0,120}?)\s+"
+            r"(?:shall|must|is|are)?\s*(?:be\s+)?"
+            r"(?:equal|equals|be)?\s*the\s+sum\s+of\s+"
+            r"(?P<left>[^.;,]{1,120})\s+and\s+(?P<right>[^.;]{1,160})"
+        )
+        for pattern, kind in (
+            (greater_pattern, "greater_of_formula"),
+            (lesser_pattern, "lesser_of_formula"),
+            (cap_pattern, "cap_formula"),
+            (floor_pattern, "floor_formula"),
+            (multiplier_pattern, "multiplier_formula"),
+            (sum_pattern, "sum_formula"),
+        ):
+            for match in pattern.finditer(text):
+                right = match.groupdict().get("right") or "lump sum"
+                add_formula(
+                    start=match.start(),
+                    kind=kind,
+                    left_text=match.group("left"),
+                    right_text=right,
+                    result_text=match.group("result"),
+                    context_text=match.group(0),
+                )
+
+        formula_events = sorted(
+            _unique_preserve_order(formula_events),
+            key=lambda item: (item[0], item[1], item[2], item[3], item[4], item[7]),
+        )
+        formula_signature = "+".join(
+            f"{kind}:{left_kind}+{right_kind}->{result_kind}:"
+            f"{force_class}:{polarity}:{rate_unit}"
+            for (
+                _start,
+                kind,
+                left_kind,
+                right_kind,
+                result_kind,
+                force_class,
+                polarity,
+                rate_unit,
+                _left_atom,
+                _right_atom,
+                _result_atom,
+            ) in formula_events[:8]
+        ) or "none"
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        force_signature = "+".join(force_tags[:3]) or "none"
+        polarity_signature = "+".join(polarity_tags[:3]) or "none"
+
+        add("bias")
+        add(f"source-quantitative-formula:{role_signature}:{scope_signature}")
+        add(f"formula-count:{_count_bucket(len(formula_events))}")
+        add(f"formula-signature:{formula_signature}")
+        add(f"force-formula:{force_signature}:{polarity_signature}:{scope_signature}")
+        if not formula_events:
+            add(f"formula-coverage:none:{role_signature}:{scope_signature}")
+
+        for (
+            _start,
+            kind,
+            left_kind,
+            right_kind,
+            result_kind,
+            force_class,
+            polarity,
+            rate_unit,
+            left_atom,
+            right_atom,
+            result_atom,
+        ) in formula_events[:10]:
+            add(
+                f"arithmetic-edge:{kind}:{left_kind}+{right_kind}->"
+                f"{result_kind}:{polarity}:{rate_unit}"
+            )
+            add(
+                f"compiler-arithmetic-node:{kind}:{left_kind}+{right_kind}:"
+                f"{result_kind}:{force_class}"
+            )
+            add(
+                f"frame-logic-arithmetic-slot:"
+                f"{kind}:{result_kind}:{left_kind}:{right_kind}:{rate_unit}"
+            )
+            add(
+                f"kg-quantitative-formula-edge:"
+                f"{left_kind}:{kind}:{right_kind}:{result_kind}"
+            )
+            add(
+                f"event-calculus-amount-fluent:"
+                f"{kind}:{result_kind}:{polarity}:{rate_unit}"
+            )
+            add(
+                f"decompiler-formula-slot:"
+                f"{kind}:{result_kind}:{left_kind}:{right_kind}:{rate_unit}"
+            )
+            add(
+                f"formula-exact:{kind}:"
+                f"{left_atom}+{right_atom}->{result_atom}"
+            )
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-formula:{family}:{symbol}:{predicate_role}:"
+                        f"{kind}:{result_kind}:{polarity}"
+                    )
+
+        add(f"decompiler-formula-plan:{formula_signature}")
+        add(
+            f"operator-formula-plan:{formula_signature}:"
+            f"{role_signature}:{operator_signature}"
+        )
+        add(f"todo-route:refine_quantitative_formula:{formula_signature}:{role_signature}")
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:formula-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_quantitative_formula_features]
+        cache[cache_key] = list(result)
+        return result
+
     def _definition_grounding_feature_keys_for(
         self,
         sample: LegalSample,
@@ -11135,6 +11580,2840 @@ class AdaptiveModalAutoencoder:
         ).hexdigest()[:16]
         keys.insert(1, f"{normalized_prefix}:validity-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_temporal_validity_features]
+        cache[cache_key] = list(result)
+        return result
+
+    def _evidentiary_burden_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "evidentiary-burden",
+    ) -> List[str]:
+        """Burden holders, standards of proof, presumptions, and evidence rules."""
+        normalized_prefix = str(prefix or "evidentiary-burden").strip(":")
+        cache_key = f"evidentiary_burden_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_evidentiary_burden_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        action_classes = role_classes.get("action", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        def actor_class_for(value: str) -> str:
+            tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
+            if tokens.intersection({"agency", "department", "commission", "board", "secretary"}):
+                return "government_actor"
+            if tokens.intersection({"court", "judge", "tribunal"}):
+                return "judicial_actor"
+            if tokens.intersection(
+                {
+                    "applicant",
+                    "owner",
+                    "person",
+                    "party",
+                    "claimant",
+                    "licensee",
+                    "recipient",
+                    "respondent",
+                    "petitioner",
+                }
+            ):
+                return "private_party"
+            classes: List[str] = []
+            for role_name in ("subject", "object", "predicate", "kg"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            for class_name in _unique_preserve_order(classes):
+                if class_name in {"government_actor", "judicial_actor", "private_party"}:
+                    return class_name
+            return "burden_holder"
+
+        def issue_class_for(value: str) -> str:
+            tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
+            if tokens.intersection({"eligible", "eligibility", "qualified", "qualify"}):
+                return "eligibility_issue"
+            if tokens.intersection({"violation", "violates", "noncompliance", "breach"}):
+                return "violation_issue"
+            if tokens.intersection({"exception", "exemption", "waiver", "defense"}):
+                return "exception_issue"
+            if tokens.intersection({"compliance", "comply", "compliant"}):
+                return "compliance_issue"
+            if tokens.intersection({"record", "certificate", "notice", "document"}):
+                return "record_issue"
+            if tokens.intersection({"claim", "claims", "action", "relief"}):
+                return "claim_issue"
+            if tokens.intersection({"fact", "facts", "finding", "determination"}):
+                return "fact_issue"
+            return "legal_issue"
+
+        def proof_standard_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if "clear and convincing" in normalized:
+                return "clear_and_convincing"
+            if "beyond a reasonable doubt" in normalized or "beyond reasonable doubt" in normalized:
+                return "beyond_reasonable_doubt"
+            if "preponderance" in normalized:
+                return "preponderance"
+            if "substantial evidence" in normalized:
+                return "substantial_evidence"
+            if "probable cause" in normalized:
+                return "probable_cause"
+            if "prima facie" in normalized:
+                return "prima_facie"
+            if "competent evidence" in normalized or "credible evidence" in normalized:
+                return "competent_evidence"
+            return "unspecified_standard"
+
+        def burden_phase_for(kind: str, context: str) -> str:
+            normalized = " ".join(str(context or "").lower().split())
+            if "rebut" in normalized or "unless" in normalized:
+                return "rebuttal_burden"
+            if kind in {"prima_facie_evidence", "rebuttable_presumption"}:
+                return "production_burden"
+            if "burden of production" in normalized:
+                return "production_burden"
+            if "burden of persuasion" in normalized:
+                return "persuasion_burden"
+            return "persuasion_burden"
+
+        def presumption_kind_for(context: str) -> str:
+            normalized = " ".join(str(context or "").lower().split())
+            if "conclusive" in normalized or "irrebuttable" in normalized:
+                return "conclusive_presumption"
+            if "rebuttable" in normalized or "unless rebutted" in normalized or "may be rebutted" in normalized:
+                return "rebuttable_presumption"
+            return "presumption"
+
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        force_signature = "+".join(force_tags[:3]) or "none"
+        polarity_signature = "+".join(polarity_tags[:3]) or "none"
+        burden_events: List[tuple[int, str, str, str, str, str, str, str]] = []
+        occupied_ranges: List[tuple[int, int]] = []
+
+        holder = (
+            r"applicant|owner|person|party|claimant|licensee|recipient|"
+            r"respondent|petitioner|agency|department|commission|board|secretary"
+        )
+        issue = r"[^.;]{0,96}"
+        standard_expr = (
+            r"preponderance\s+of\s+the\s+evidence|clear\s+and\s+convincing\s+evidence|"
+            r"beyond\s+(?:a\s+)?reasonable\s+doubt|substantial\s+evidence|"
+            r"probable\s+cause|prima\s+facie\s+evidence|competent\s+evidence|"
+            r"credible\s+evidence"
+        )
+        burden_pattern = re.compile(
+            rf"\b(?P<holder>{holder})\s+"
+            rf"(?P<verb>bears?|has|carries|shall\s+have|must\s+prove|shall\s+prove)\s+"
+            rf"(?:the\s+)?(?P<burden>burden(?:\s+of\s+(?:proof|production|persuasion))?|"
+            rf"responsibility\s+to\s+prove|obligation\s+to\s+prove|prove)\s*"
+            rf"(?:to\s+(?:establish|prove|show)\s+)?(?P<issue>{issue}?)"
+            rf"(?:\s+by\s+(?P<standard>{standard_expr}))?\b"
+        )
+        asserting_burden_pattern = re.compile(
+            rf"\b(?P<holder>{holder})\s+(?P<issue>asserting\s+(?:an?\s+)?"
+            rf"(?:exception|exemption|defense|claim)[^.;]{{0,48}}?)\s+"
+            rf"(?P<verb>bears?|has|carries|shall\s+have)\s+(?:the\s+)?"
+            rf"(?P<burden>burden(?:\s+of\s+(?:proof|production|persuasion))?)"
+            rf"(?:\s+by\s+(?P<standard>{standard_expr}))?\b"
+        )
+        proof_by_pattern = re.compile(
+            rf"\b(?P<holder>{holder})\s+(?P<modal>must|shall)\s+prove\s+"
+            rf"(?P<issue>{issue}?)\s+by\s+(?P<standard>{standard_expr})\b"
+        )
+        burden_on_pattern = re.compile(
+            rf"\bthe\s+burden(?:\s+of\s+(?:proof|production|persuasion))?\s+"
+            rf"(?:is|shall\s+be)\s+on\s+(?:the\s+)?(?P<holder>{holder})\s+"
+            rf"(?:to\s+(?:establish|prove|show)\s+)?(?P<issue>{issue}?)"
+            rf"(?:\s+by\s+(?P<standard>{standard_expr}))?\b"
+        )
+        presumption_pattern = re.compile(
+            rf"\b(?P<issue>[^.;]{{1,80}}?)\s+"
+            rf"(?P<verb>is|are|shall\s+be)\s+"
+            rf"(?P<presumption>presumed|rebuttably\s+presumed|conclusively\s+presumed)\s+"
+            rf"(?P<state>[^.;]{{0,80}}?)"
+            rf"(?:\s+(?:unless|until)\s+rebutted\s+by\s+(?P<standard>{standard_expr}))?"
+        )
+        rebuttable_presumption_pattern = re.compile(
+            rf"\bthere\s+is\s+a\s+(?P<presumption>rebuttable|conclusive)?\s*"
+            rf"presumption\s+that\s+(?P<issue>[^.;]{{1,96}})"
+            rf"(?:\s+by\s+(?P<standard>{standard_expr}))?"
+        )
+        prima_facie_pattern = re.compile(
+            rf"\b(?P<issue>[^.;]{{1,80}}?)\s+"
+            rf"(?P<verb>is|are|shall\s+be)\s+prima\s+facie\s+evidence\s+of\s+"
+            rf"(?P<object>[^.;]{{1,80}})"
+        )
+
+        def add_burden(
+            *,
+            start: int,
+            end: int,
+            kind: str,
+            holder_text: str,
+            issue_text: str,
+            standard_text: str,
+        ) -> None:
+            context = text[max(0, start - 80) : min(len(text), end + 96)]
+            standard = proof_standard_for(f"{standard_text} {context}")
+            actor_class = actor_class_for(holder_text)
+            issue_source = (
+                issue_text
+                if _TOKEN_RE.findall(str(issue_text or ""))
+                else context
+            )
+            issue_class = issue_class_for(issue_source)
+            phase = burden_phase_for(kind, context)
+            burden_events.append(
+                (
+                    int(start),
+                    kind,
+                    actor_class,
+                    issue_class,
+                    standard,
+                    phase,
+                    _feature_atom(holder_text, max_tokens=4) or "holder",
+                    _feature_atom(issue_source, max_tokens=5) or "issue",
+                )
+            )
+
+        def add_presumption(
+            *,
+            start: int,
+            end: int,
+            issue_text: str,
+            standard_text: str,
+            kind_text: str,
+            prima_object: str = "",
+        ) -> None:
+            context = text[max(0, start - 80) : min(len(text), end + 96)]
+            kind = "prima_facie_evidence" if prima_object else presumption_kind_for(
+                f"{kind_text} {context}"
+            )
+            standard = proof_standard_for(f"{standard_text} {context}")
+            if standard == "unspecified_standard" and kind == "prima_facie_evidence":
+                standard = "prima_facie"
+            issue_class = issue_class_for(f"{issue_text} {prima_object}")
+            phase = burden_phase_for(kind, context)
+            burden_events.append(
+                (
+                    int(start),
+                    kind,
+                    "evidence_rule",
+                    issue_class,
+                    standard,
+                    phase,
+                    _feature_atom(kind_text, max_tokens=4) or kind,
+                    _feature_atom(f"{issue_text} {prima_object}", max_tokens=5) or "issue",
+                )
+            )
+
+        for pattern in (
+            asserting_burden_pattern,
+            proof_by_pattern,
+            burden_on_pattern,
+            burden_pattern,
+        ):
+            for match in pattern.finditer(text):
+                start, end = int(match.start()), int(match.end())
+                if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                    continue
+                add_burden(
+                    start=start,
+                    end=end,
+                    kind="burden_of_proof",
+                    holder_text=match.group("holder"),
+                    issue_text=match.group("issue") or "",
+                    standard_text=match.groupdict().get("standard") or "",
+                )
+                occupied_ranges.append((start, end))
+
+        for pattern in (presumption_pattern, rebuttable_presumption_pattern):
+            for match in pattern.finditer(text):
+                start, end = int(match.start()), int(match.end())
+                if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                    continue
+                add_presumption(
+                    start=start,
+                    end=end,
+                    issue_text=match.group("issue") or "",
+                    standard_text=match.groupdict().get("standard") or "",
+                    kind_text=match.groupdict().get("presumption") or "presumption",
+                )
+                occupied_ranges.append((start, end))
+
+        for match in prima_facie_pattern.finditer(text):
+            start, end = int(match.start()), int(match.end())
+            if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                continue
+            add_presumption(
+                start=start,
+                end=end,
+                issue_text=match.group("issue") or "",
+                standard_text="prima facie evidence",
+                kind_text="prima_facie",
+                prima_object=match.group("object") or "",
+            )
+
+        burden_events = sorted(
+            _unique_preserve_order(burden_events),
+            key=lambda item: (item[0], item[1], item[2], item[3], item[4], item[5]),
+        )
+        burden_signature = "+".join(
+            f"{kind}:{holder_class}:{issue_class}:{standard}:{phase}"
+            for (
+                _start,
+                kind,
+                holder_class,
+                issue_class,
+                standard,
+                phase,
+                _holder_atom,
+                _issue_atom,
+            ) in burden_events[:8]
+        ) or "none"
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+
+        add("bias")
+        add(f"source-burden:{role_signature}:{scope_signature}")
+        add(f"burden-count:{_count_bucket(len(burden_events))}")
+        add(f"burden-signature:{burden_signature}")
+        add(f"force-burden:{force_signature}:{polarity_signature}:{scope_signature}")
+        if not burden_events:
+            add(f"burden-coverage:none:{role_signature}:{scope_signature}")
+
+        for (
+            _start,
+            kind,
+            holder_class,
+            issue_class,
+            standard,
+            phase,
+            holder_atom,
+            issue_atom,
+        ) in burden_events[:10]:
+            add(f"proof-burden:{holder_class}:{issue_class}:{standard}:{phase}")
+            add(f"burden-exact:{kind}:{holder_atom}:{issue_atom}:{standard}")
+            add(f"standard-of-proof:{standard}:{kind}:{holder_class}:{issue_class}")
+            add(f"proof-phase:{phase}:{kind}:{holder_class}:{issue_class}")
+            add(f"event-calculus-evidence:{kind}->{phase}:{standard}:{issue_class}")
+            add(f"compiler-proof-burden-edge:{holder_class}->{issue_class}:{standard}:{phase}")
+            add(f"decompiler-burden-slot:{kind}:{holder_class}:{issue_class}:{standard}")
+            if kind in {"rebuttable_presumption", "conclusive_presumption", "presumption"}:
+                add(f"presumption:{kind}:{issue_class}:{standard}:{phase}")
+            if kind == "prima_facie_evidence":
+                add(f"evidence-rule:prima_facie_evidence:{issue_class}:{standard}:{phase}")
+            if phase == "rebuttal_burden":
+                add(f"rebuttal-burden:{holder_class}:{issue_class}:{standard}:{kind}")
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-burden:{family}:{symbol}:{predicate_role}:"
+                        f"{kind}:{holder_class}:{issue_class}:{standard}"
+                    )
+
+        add(f"decompiler-burden-plan:{burden_signature}")
+        add(
+            f"operator-burden-plan:{burden_signature}:"
+            f"{role_signature}:{operator_signature}"
+        )
+        add(
+            f"todo-route:refine_evidentiary_burden:"
+            f"{burden_signature}:{role_signature}"
+        )
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:burden-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_evidentiary_burden_features]
+        cache[cache_key] = list(result)
+        return result
+
+    def _legal_relation_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "legal-relation",
+    ) -> List[str]:
+        """Hohfeld-style rights, duties, powers, liabilities, and immunities."""
+        normalized_prefix = str(prefix or "legal-relation").strip(":")
+        cache_key = f"legal_relation_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_legal_relation_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        action_classes = role_classes.get("action", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        party_source = (
+            r"applicant|owner|person|party|claimant|licensee|recipient|"
+            r"employee|employer|contractor|agency|department|commission|"
+            r"board|secretary|administrator|officer|court|judge|state"
+        )
+        holder_expr = rf"(?:the\s+|an?\s+|any\s+)?(?P<holder>{party_source})"
+        object_tail = r"(?P<object>[^.;]{1,120})"
+
+        def actor_class_for(value: str) -> str:
+            tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
+            if tokens.intersection(
+                {
+                    "agency",
+                    "department",
+                    "commission",
+                    "board",
+                    "secretary",
+                    "administrator",
+                    "officer",
+                    "state",
+                }
+            ):
+                return "government_actor"
+            if tokens.intersection({"court", "judge", "tribunal"}):
+                return "judicial_actor"
+            if tokens.intersection(
+                {
+                    "applicant",
+                    "owner",
+                    "person",
+                    "party",
+                    "claimant",
+                    "licensee",
+                    "recipient",
+                    "employee",
+                    "employer",
+                    "contractor",
+                }
+            ):
+                return "private_party"
+            classes: List[str] = []
+            for role_name in ("subject", "object", "predicate", "kg"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            for class_name in _unique_preserve_order(classes):
+                if class_name in {"government_actor", "judicial_actor", "private_party"}:
+                    return class_name
+            return "relation_counterparty"
+
+        def action_class_for(value: str) -> str:
+            tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
+            if tokens.intersection({"revoke", "revocation", "suspend", "terminate", "deny"}):
+                return "deny_or_revoke"
+            if tokens.intersection({"issue", "grant", "approve", "prescribe", "adopt"}):
+                return "grant_authorization"
+            if tokens.intersection({"inspect", "investigate", "audit", "enforce"}):
+                return "investigate_or_enforce"
+            classes: List[str] = []
+            for role_name in ("action", "predicate", "kg"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            classes = _unique_preserve_order(classes)
+            if classes:
+                return classes[0]
+            if tokens.intersection(
+                {"provide", "notify", "notice", "disclose", "furnish", "send", "receive"}
+            ):
+                return "disclose_or_notify"
+            if tokens.intersection({"file", "submit", "appeal", "apply", "petition"}):
+                return "submit_or_file"
+            if tokens.intersection({"comply", "maintain", "pay", "perform"}):
+                return "require_compliance"
+            if tokens.intersection({"liable", "liability", "penalty", "damages"}):
+                return "enforcement_liability"
+            return "legal_action"
+
+        def object_class_for(value: str) -> str:
+            tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
+            if tokens.intersection({"license", "permit", "certificate", "approval"}):
+                return "authorization_instrument"
+            if tokens.intersection({"revocation", "suspension", "termination"}):
+                return "authorization_instrument"
+            if tokens.intersection({"liability", "liable", "penalty", "damages"}):
+                return "liability_or_penalty"
+            classes: List[str] = []
+            for role_name in ("object", "kg", "predicate"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            classes = _unique_preserve_order(classes)
+            if classes:
+                return classes[0]
+            if tokens.intersection({"record", "records", "notice", "information", "document"}):
+                return "notice_or_record"
+            if tokens.intersection({"appeal", "action", "hearing", "proceeding", "claim"}):
+                return "proceeding_or_order"
+            if tokens.intersection({"fee", "payment", "tax", "fine"}):
+                return "payment_or_fee"
+            return "legal_object"
+
+        def relation_scope_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\bthis\s+(?:section|subsection|chapter|subchapter|title)\b", normalized):
+                return "local_statutory_scope"
+            if re.search(r"\bunder\s+(?:section|chapter|title)\b", normalized):
+                return "external_statutory_scope"
+            if re.search(r"\bthe\s+(?:license|permit|order|contract)\b", normalized):
+                return "instrument_scope"
+            return "general_scope"
+
+        def polarity_for(value: str, *, default: str = "positive") -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\b(?:no|not|never|without)\b", normalized):
+                return "negative"
+            if re.search(r"\b(?:prohibited|forbidden|unlawful|barred)\b", normalized):
+                return "negative"
+            return default
+
+        def clean_object_text(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            normalized = re.split(
+                rf"\b(?:from|against|by|to|over)\s+"
+                rf"(?:the\s+|an?\s+|any\s+)?(?:{party_source})\b",
+                normalized,
+                maxsplit=1,
+            )[0]
+            normalized = re.split(
+                r"\bunder\s+this\s+(?:section|subsection|chapter|subchapter|title)\b",
+                normalized,
+                maxsplit=1,
+            )[0]
+            return normalized.strip() or str(value or "").strip()
+
+        def explicit_counterparty_class_for(value: str) -> str:
+            for match in re.finditer(
+                rf"\b(?:from|against|by|to|over)\s+"
+                rf"(?:the\s+|an?\s+|any\s+)?(?P<party>{party_source})\b",
+                str(value or "").lower(),
+            ):
+                actor_class = actor_class_for(match.group("party"))
+                if actor_class != "relation_counterparty":
+                    return actor_class
+            return "relation_counterparty"
+
+        def default_counterparty_for(
+            kind: str,
+            holder_class: str,
+            context: str,
+        ) -> str:
+            explicit = explicit_counterparty_class_for(context)
+            if explicit != "relation_counterparty":
+                return explicit
+            if kind in {"right_duty", "privilege_no_right", "liability_power"}:
+                if holder_class in {"government_actor", "judicial_actor"}:
+                    return "private_party"
+                return "government_actor"
+            if kind in {"duty_right", "power_liability", "disability_immunity"}:
+                if holder_class in {"government_actor", "judicial_actor"}:
+                    return "private_party"
+                return "government_actor"
+            if kind == "immunity_disability":
+                if holder_class in {"government_actor", "judicial_actor"}:
+                    return "private_party"
+                return "government_actor"
+            return "relation_counterparty"
+
+        def correlative_for(kind: str) -> tuple[str, str]:
+            return {
+                "right_duty": ("right", "duty"),
+                "duty_right": ("duty", "right"),
+                "privilege_no_right": ("privilege", "no_right"),
+                "power_liability": ("power", "liability"),
+                "liability_power": ("liability", "power"),
+                "immunity_disability": ("immunity", "disability"),
+                "disability_immunity": ("disability", "immunity"),
+            }.get(kind, ("relation", "correlative"))
+
+        relation_events: List[tuple[int, str, str, str, str, str, str, str, str]] = []
+        occupied_ranges: List[tuple[int, int]] = []
+
+        def add_relation(
+            *,
+            start: int,
+            end: int,
+            kind: str,
+            holder_text: str,
+            action_text: str,
+            object_text: str,
+            default_polarity: str = "positive",
+        ) -> None:
+            context = text[max(0, start - 96) : min(len(text), end + 120)]
+            object_clean = clean_object_text(object_text)
+            holder_class = actor_class_for(holder_text)
+            action_class = action_class_for(f"{action_text} {object_clean}")
+            object_class = object_class_for(object_clean or action_text)
+            relation_kind = kind
+            if (
+                relation_kind == "privilege_no_right"
+                and holder_class in {"government_actor", "judicial_actor"}
+                and action_class in {"grant_authorization", "deny_or_revoke", "investigate_or_enforce"}
+            ):
+                relation_kind = "power_liability"
+            counterparty_class = default_counterparty_for(
+                relation_kind,
+                holder_class,
+                f"{object_text} {context}",
+            )
+            polarity = polarity_for(context, default=default_polarity)
+            scope = relation_scope_for(f"{object_text} {context}")
+            relation_events.append(
+                (
+                    int(start),
+                    relation_kind,
+                    holder_class,
+                    counterparty_class,
+                    object_class,
+                    action_class,
+                    polarity,
+                    scope,
+                    _feature_atom(object_clean, max_tokens=5) or "object",
+                )
+            )
+
+        relation_patterns: tuple[tuple[re.Pattern[str], str, str], ...] = (
+            (
+                re.compile(
+                    rf"\b{holder_expr}\s+(?:has|have|shall\s+have)\s+"
+                    rf"(?:a\s+)?right\s+to\s+(?P<action>[a-z]+)\s+{object_tail}"
+                ),
+                "right_duty",
+                "positive",
+            ),
+            (
+                re.compile(
+                    rf"\b{holder_expr}\s+(?:is|are|shall\s+be)\s+"
+                    rf"entitled\s+to\s+(?P<action>[a-z]+)\s+{object_tail}"
+                ),
+                "right_duty",
+                "positive",
+            ),
+            (
+                re.compile(
+                    rf"\b{holder_expr}\s+(?:may\s+not|shall\s+not|must\s+not)\s+"
+                    rf"(?P<action>revoke|suspend|terminate|deny|impose|enforce)\s+"
+                    rf"{object_tail}"
+                ),
+                "disability_immunity",
+                "negative",
+            ),
+            (
+                re.compile(
+                    rf"\b{holder_expr}\s+(?:may|is\s+authorized\s+to|are\s+authorized\s+to)\s+"
+                    rf"(?P<action>prescribe|promulgate|adopt|issue|grant|approve|"
+                    rf"deny|revoke|suspend|terminate|modify|waive|order|enforce)\s+"
+                    rf"{object_tail}"
+                ),
+                "power_liability",
+                "positive",
+            ),
+            (
+                re.compile(
+                    rf"\b{holder_expr}\s+(?:may|is\s+permitted\s+to|are\s+permitted\s+to)\s+"
+                    rf"(?P<action>[a-z]+)\s+{object_tail}"
+                ),
+                "privilege_no_right",
+                "positive",
+            ),
+            (
+                re.compile(
+                    rf"\b{holder_expr}\s+(?:shall|must|is\s+required\s+to|"
+                    rf"are\s+required\s+to|has\s+a\s+duty\s+to|have\s+a\s+duty\s+to)\s+"
+                    rf"(?P<action>[a-z]+)\s+{object_tail}"
+                ),
+                "duty_right",
+                "positive",
+            ),
+            (
+                re.compile(
+                    rf"\b{holder_expr}\s+(?:is|are|shall\s+be)\s+"
+                    rf"(?:liable\s+for|subject\s+to)\s+{object_tail}"
+                ),
+                "liability_power",
+                "positive",
+            ),
+            (
+                re.compile(
+                    rf"\b{holder_expr}\s+(?:is|are|shall\s+be)\s+"
+                    rf"(?:immune\s+from|not\s+liable\s+for)\s+{object_tail}"
+                ),
+                "immunity_disability",
+                "positive",
+            ),
+            (
+                re.compile(
+                    rf"\bno\s+(?P<holder>{party_source})\s+shall\s+be\s+"
+                    rf"liable\s+for\s+{object_tail}"
+                ),
+                "immunity_disability",
+                "negative",
+            ),
+        )
+
+        for pattern, kind, default_polarity in relation_patterns:
+            for match in pattern.finditer(text):
+                start, end = int(match.start()), int(match.end())
+                if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                    continue
+                action_text = match.groupdict().get("action") or kind
+                add_relation(
+                    start=start,
+                    end=end,
+                    kind=kind,
+                    holder_text=match.group("holder"),
+                    action_text=action_text,
+                    object_text=match.group("object"),
+                    default_polarity=default_polarity,
+                )
+                occupied_ranges.append((start, end))
+
+        relation_events = sorted(
+            _unique_preserve_order(relation_events),
+            key=lambda item: (item[0], item[1], item[2], item[3], item[4], item[5]),
+        )
+        relation_signature = "+".join(
+            f"{kind}:{holder_class}:{counterparty_class}:{object_class}:"
+            f"{action_class}:{polarity}:{scope}"
+            for (
+                _start,
+                kind,
+                holder_class,
+                counterparty_class,
+                object_class,
+                action_class,
+                polarity,
+                scope,
+                _object_atom,
+            ) in relation_events[:8]
+        ) or "none"
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        force_signature = "+".join(force_tags[:3]) or "none"
+        polarity_signature = "+".join(polarity_tags[:3]) or "none"
+
+        add("bias")
+        add(f"source-relation:{role_signature}:{scope_signature}")
+        add(f"relation-count:{_count_bucket(len(relation_events))}")
+        add(f"relation-signature:{relation_signature}")
+        add(f"force-relation:{force_signature}:{polarity_signature}:{scope_signature}")
+        if not relation_events:
+            add(f"relation-coverage:none:{role_signature}:{scope_signature}")
+
+        for (
+            _start,
+            kind,
+            holder_class,
+            counterparty_class,
+            object_class,
+            action_class,
+            polarity,
+            scope,
+            object_atom,
+        ) in relation_events[:10]:
+            primary, correlative = correlative_for(kind)
+            add(
+                f"hohfeld-relation:{kind}:{holder_class}:{counterparty_class}:"
+                f"{object_class}:{action_class}:{polarity}"
+            )
+            add(
+                f"correlative:{primary}->{correlative}:"
+                f"{holder_class}->{counterparty_class}:{object_class}:{action_class}"
+            )
+            add(
+                f"compiler-relation-edge:{holder_class}->{counterparty_class}:"
+                f"{action_class}:{object_class}:{kind}:{polarity}"
+            )
+            add(f"event-calculus-relation:{kind}:{action_class}:{object_class}:{scope}")
+            add(f"frame-logic-relation-slot:{primary}:{holder_class}:{object_class}:{scope}")
+            add(f"kg-relation:{kind}:{holder_class}:{counterparty_class}:{object_class}")
+            add(f"decompiler-relation-slot:{kind}:{holder_class}:{object_class}:{action_class}")
+            add(f"relation-object-exact:{kind}:{object_atom}:{scope}")
+            if kind == "right_duty":
+                add(f"claim-right:{holder_class}:{counterparty_class}:{object_class}:{action_class}")
+            if kind == "duty_right":
+                add(f"legal-duty:{holder_class}:{counterparty_class}:{object_class}:{action_class}")
+            if kind == "privilege_no_right":
+                add(f"privilege-liberty:{holder_class}:{object_class}:{action_class}:{polarity}")
+            if kind == "power_liability":
+                add(f"legal-power:{holder_class}:{counterparty_class}:{object_class}:{action_class}")
+            if kind == "liability_power":
+                add(f"legal-liability:{holder_class}:{counterparty_class}:{object_class}:{action_class}")
+            if kind == "immunity_disability":
+                add(f"legal-immunity:{holder_class}:{counterparty_class}:{object_class}:{action_class}")
+            if kind == "disability_immunity":
+                add(f"legal-disability:{holder_class}:{counterparty_class}:{object_class}:{action_class}")
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-relation:{family}:{symbol}:{predicate_role}:"
+                        f"{kind}:{holder_class}:{counterparty_class}:{action_class}"
+                    )
+
+        add(f"decompiler-relation-plan:{relation_signature}")
+        add(
+            f"operator-relation-plan:{relation_signature}:"
+            f"{role_signature}:{operator_signature}"
+        )
+        add(f"todo-route:refine_legal_relation:{relation_signature}:{role_signature}")
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:relation-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_legal_relation_features]
+        cache[cache_key] = list(result)
+        return result
+
+    def _status_transition_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "status-transition",
+    ) -> List[str]:
+        """Legal status state machines for authorizations and eligibility."""
+        normalized_prefix = str(prefix or "status-transition").strip(":")
+        cache_key = f"status_transition_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_status_transition_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        actor_expr = (
+            r"agency|department|commission|board|secretary|administrator|"
+            r"officer|court|applicant|owner|person|party|licensee|recipient"
+        )
+        object_expr = (
+            r"license|permit|certificate|certification|approval|authorization|"
+            r"registration|application|claim|eligibility|status|benefit"
+        )
+
+        def actor_class_for(value: str) -> str:
+            tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
+            if tokens.intersection(
+                {
+                    "agency",
+                    "department",
+                    "commission",
+                    "board",
+                    "secretary",
+                    "administrator",
+                    "officer",
+                }
+            ):
+                return "government_actor"
+            if tokens.intersection({"court", "judge", "tribunal"}):
+                return "judicial_actor"
+            if tokens.intersection(
+                {
+                    "applicant",
+                    "owner",
+                    "person",
+                    "party",
+                    "licensee",
+                    "recipient",
+                }
+            ):
+                return "private_party"
+            classes: List[str] = []
+            for role_name in ("subject", "object", "predicate", "kg"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            for class_name in _unique_preserve_order(classes):
+                if class_name in {"government_actor", "judicial_actor", "private_party"}:
+                    return class_name
+            return "status_actor"
+
+        def object_class_for(value: str) -> str:
+            tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
+            if tokens.intersection(
+                {
+                    "license",
+                    "permit",
+                    "certificate",
+                    "certification",
+                    "approval",
+                    "authorization",
+                    "registration",
+                }
+            ):
+                return "authorization_instrument"
+            if tokens.intersection({"application", "claim"}):
+                return "application_or_proof"
+            if tokens.intersection(
+                {
+                    "eligible",
+                    "eligibility",
+                    "ineligible",
+                    "qualified",
+                    "disqualified",
+                    "benefit",
+                }
+            ):
+                return "eligibility_status"
+            classes: List[str] = []
+            for role_name in ("object", "kg", "predicate", "condition"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            classes = _unique_preserve_order(classes)
+            if classes:
+                return classes[0]
+            return "legal_status"
+
+        def trigger_kind_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\b(?:issue|grant|approve|authorize|certify)\b", normalized):
+                return "authorization_activation"
+            if re.search(r"\b(?:renew|reinstate|restore|reissue)\b", normalized):
+                return "authorization_reactivation"
+            if re.search(r"\b(?:revoke|terminate|cancel|rescind)\b", normalized):
+                return "authorization_termination"
+            if re.search(r"\b(?:suspend|stay)\b", normalized):
+                return "authorization_suspension"
+            if re.search(r"\b(?:expire|expires|lapse|sunset)\b", normalized):
+                return "authorization_expiration"
+            if re.search(r"\b(?:deny|reject|disapprove)\b", normalized):
+                return "authorization_denial"
+            if re.search(r"\b(?:effective|operative|takes?\s+effect)\b", normalized):
+                return "effectiveness_activation"
+            if re.search(r"\b(?:eligible|qualified)\b", normalized):
+                return "eligibility_activation"
+            if re.search(r"\b(?:ineligible|disqualified)\b", normalized):
+                return "eligibility_termination"
+            if re.search(r"\b(?:valid|good\s+standing)\b", normalized):
+                return "validity_confirmation"
+            if re.search(r"\b(?:invalid|void)\b", normalized):
+                return "validity_termination"
+            return "status_change"
+
+        def state_pair_for(trigger: str, object_class: str) -> tuple[str, str, str]:
+            if trigger in {"authorization_activation", "effectiveness_activation"}:
+                return ("authorization_status", "pending_authorization", "active_authorization")
+            if trigger == "authorization_reactivation":
+                return ("authorization_status", "inactive_authorization", "active_authorization")
+            if trigger == "authorization_termination":
+                return ("authorization_status", "active_authorization", "terminated_authorization")
+            if trigger == "authorization_suspension":
+                return ("authorization_status", "active_authorization", "suspended_authorization")
+            if trigger == "authorization_expiration":
+                return ("authorization_status", "active_authorization", "expired_authorization")
+            if trigger == "authorization_denial":
+                return ("authorization_status", "pending_authorization", "denied_authorization")
+            if trigger == "eligibility_activation":
+                return ("eligibility_status", "unqualified_status", "eligible_status")
+            if trigger == "eligibility_termination":
+                return ("eligibility_status", "eligible_status", "ineligible_status")
+            if trigger == "validity_confirmation":
+                return ("validity_status", "uncertain_status", "valid_status")
+            if trigger == "validity_termination":
+                return ("validity_status", "valid_status", "invalid_status")
+            if object_class == "eligibility_status":
+                return ("eligibility_status", "uncertain_status", "eligible_status")
+            return ("legal_status", "prior_status", "new_status")
+
+        def status_scope_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\bthis\s+(?:section|subsection|chapter|subchapter|title)\b", normalized):
+                return "local_statutory_scope"
+            if re.search(r"\bunder\s+(?:section|chapter|title)\b", normalized):
+                return "external_statutory_scope"
+            if re.search(r"\b(?:license|permit|certificate|approval|authorization)\b", normalized):
+                return "instrument_scope"
+            return "general_scope"
+
+        def force_class_for(context: str) -> str:
+            normalized = " ".join(str(context or "").lower().split())
+            if re.search(r"\bmay\b|\bauthorized\b|\bpermitted\b", normalized):
+                return "permission"
+            if re.search(r"\bshall\b|\bmust\b|\brequired\b", normalized):
+                return "obligation"
+            return "assertive"
+
+        def event_polarity_for(context: str) -> str:
+            normalized = " ".join(str(context or "").lower().split())
+            if re.search(r"\b(?:may\s+not|shall\s+not|must\s+not|not|no|without)\b", normalized):
+                return "blocked"
+            return "affirmed"
+
+        transition_events: List[
+            tuple[int, str, str, str, str, str, str, str, str, str]
+        ] = []
+        occupied_ranges: List[tuple[int, int]] = []
+
+        def add_transition(
+            *,
+            start: int,
+            end: int,
+            actor_text: str,
+            object_text: str,
+            context_text: str,
+        ) -> None:
+            context = text[max(0, start - 96) : min(len(text), end + 120)]
+            merged = f"{context_text} {object_text} {context}"
+            actor_class = actor_class_for(actor_text)
+            object_class = object_class_for(object_text or context_text)
+            trigger = trigger_kind_for(merged)
+            status_kind, from_state, to_state = state_pair_for(trigger, object_class)
+            force_class = force_class_for(context)
+            event_polarity = event_polarity_for(context)
+            scope = status_scope_for(merged)
+            transition_events.append(
+                (
+                    int(start),
+                    status_kind,
+                    actor_class,
+                    object_class,
+                    from_state,
+                    to_state,
+                    trigger,
+                    force_class,
+                    event_polarity,
+                    scope,
+                )
+            )
+
+        actor_action_pattern = re.compile(
+            rf"\b(?P<actor>{actor_expr})\s+"
+            rf"(?P<modal>may|shall|must|is\s+authorized\s+to|are\s+authorized\s+to)?\s*"
+            rf"(?P<verb>issue|grant|approve|authorize|certify|renew|reinstate|restore|"
+            rf"reissue|revoke|terminate|cancel|rescind|suspend|deny|reject)\s+"
+            rf"(?:an?\s+|the\s+)?(?P<object>{object_expr})\b"
+        )
+        passive_pattern = re.compile(
+            rf"\b(?:an?\s+|the\s+)?(?P<object>{object_expr})\s+"
+            rf"(?P<verb>is|are|shall\s+be|may\s+be|must\s+be)?\s*"
+            rf"(?P<state>issued|granted|approved|renewed|reinstated|restored|"
+            rf"revoked|terminated|cancelled|canceled|rescinded|suspended|denied|"
+            rf"effective|valid|invalid|void|expired)\b"
+        )
+        effective_pattern = re.compile(
+            rf"\b(?:an?\s+|the\s+)?(?P<object>{object_expr})\s+"
+            rf"(?P<verb>becomes?|takes?)\s+"
+            rf"(?P<state>effective|operative|valid|effect)\b"
+        )
+        expiration_pattern = re.compile(
+            rf"\b(?:an?\s+|the\s+)?(?P<object>{object_expr})\s+"
+            rf"(?P<verb>expires?|lapses?|terminates?)\b"
+        )
+        eligibility_pattern = re.compile(
+            rf"\b(?P<actor>{actor_expr})\s+"
+            rf"(?P<verb>is|are|becomes?|remains?|shall\s+be|must\s+be)\s+"
+            rf"(?P<state>eligible|ineligible|qualified|disqualified)\b"
+        )
+
+        for pattern in (
+            actor_action_pattern,
+            passive_pattern,
+            effective_pattern,
+            expiration_pattern,
+            eligibility_pattern,
+        ):
+            for match in pattern.finditer(text):
+                start, end = int(match.start()), int(match.end())
+                if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                    continue
+                groups = match.groupdict()
+                object_text = groups.get("object") or groups.get("state") or "status"
+                actor_text = groups.get("actor") or first_or_none(role_classes.get("subject", []))
+                add_transition(
+                    start=start,
+                    end=end,
+                    actor_text=actor_text,
+                    object_text=object_text,
+                    context_text=match.group(0),
+                )
+                occupied_ranges.append((start, end))
+
+        transition_events = sorted(
+            _unique_preserve_order(transition_events),
+            key=lambda item: (item[0], item[1], item[2], item[3], item[4], item[5]),
+        )
+        transition_signature = "+".join(
+            f"{status_kind}:{actor_class}:{object_class}:{from_state}->{to_state}:"
+            f"{trigger}:{force_class}:{event_polarity}:{scope}"
+            for (
+                _start,
+                status_kind,
+                actor_class,
+                object_class,
+                from_state,
+                to_state,
+                trigger,
+                force_class,
+                event_polarity,
+                scope,
+            ) in transition_events[:8]
+        ) or "none"
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+
+        add("bias")
+        add(f"source-status:{role_signature}:{scope_signature}")
+        add(f"transition-count:{_count_bucket(len(transition_events))}")
+        add(f"transition-signature:{transition_signature}")
+        if not transition_events:
+            add(f"transition-coverage:none:{role_signature}:{scope_signature}")
+
+        for (
+            _start,
+            status_kind,
+            actor_class,
+            object_class,
+            from_state,
+            to_state,
+            trigger,
+            force_class,
+            event_polarity,
+            scope,
+        ) in transition_events[:10]:
+            add(
+                f"status-state:{status_kind}:{object_class}:"
+                f"{from_state}->{to_state}:{trigger}:{event_polarity}"
+            )
+            add(
+                f"compiler-status-edge:{actor_class}->{object_class}:"
+                f"{from_state}->{to_state}:{trigger}:{force_class}"
+            )
+            add(f"event-calculus-status-transition:{from_state}->{to_state}:{object_class}")
+            if to_state in {
+                "active_authorization",
+                "eligible_status",
+                "valid_status",
+            }:
+                add(f"event-calculus-initiates-status:{to_state}:{actor_class}:{object_class}")
+            if to_state in {
+                "terminated_authorization",
+                "suspended_authorization",
+                "expired_authorization",
+                "denied_authorization",
+                "ineligible_status",
+                "invalid_status",
+            }:
+                add(f"event-calculus-terminates-status:{from_state}:{actor_class}:{object_class}")
+            add(f"frame-logic-status-slot:{status_kind}:{object_class}:{to_state}:{scope}")
+            add(f"kg-status-edge:{actor_class}:{trigger}:{object_class}:{to_state}")
+            add(f"decompiler-status-slot:{status_kind}:{object_class}:{to_state}:{trigger}")
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-status:{family}:{symbol}:{predicate_role}:"
+                        f"{status_kind}:{trigger}:{object_class}:{to_state}"
+                    )
+
+        add(f"decompiler-status-plan:{transition_signature}")
+        add(
+            f"operator-status-plan:{transition_signature}:"
+            f"{role_signature}:{operator_signature}"
+        )
+        add(f"todo-route:refine_status_transition:{transition_signature}:{role_signature}")
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:transition-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_status_transition_features]
+        cache[cache_key] = list(result)
+        return result
+
+    def _condition_consequence_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "condition-consequence",
+    ) -> List[str]:
+        """Antecedent-to-consequent contracts for guarded legal rules."""
+        normalized_prefix = str(prefix or "condition-consequence").strip(":")
+        cache_key = f"condition_consequence_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_condition_consequence_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        action_classes = role_classes.get("action", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        def condition_class_for(value: str) -> str:
+            tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
+            if tokens.intersection({"file", "files", "submit", "submits", "application", "claim", "proof"}):
+                return "application_or_proof"
+            if tokens.intersection({"fee", "payment", "paid", "tax", "fine"}):
+                return "payment_or_fee"
+            if tokens.intersection({"notice", "record", "records", "document", "information"}):
+                return "notice_or_record"
+            if tokens.intersection({"timely", "deadline", "date", "days", "period", "before", "after", "within"}):
+                return "deadline_condition"
+            if tokens.intersection({"eligible", "eligibility", "qualified", "complete", "incomplete"}):
+                return "eligibility_condition"
+            if tokens.intersection({"comply", "compliance", "violate", "violation", "breach"}):
+                return "compliance_condition"
+            classes: List[str] = []
+            for role_name in ("condition", "object", "predicate", "kg"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            classes = _unique_preserve_order(classes)
+            return classes[0] if classes else "legal_condition"
+
+        def consequence_class_for(value: str) -> str:
+            tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
+            if tokens.intersection({"approve", "grant", "issue", "authorize", "certify", "license", "permit"}):
+                return "grant_authorization"
+            if tokens.intersection({"deny", "revoke", "suspend", "terminate", "cancel"}):
+                return "deny_or_revoke"
+            if tokens.intersection({"provide", "publish", "notify", "notice", "disclose", "furnish", "send"}):
+                return "disclose_or_notify"
+            if tokens.intersection({"file", "submit", "appeal", "petition", "apply"}):
+                return "submit_or_file"
+            if tokens.intersection({"pay", "maintain", "comply", "perform"}):
+                return "require_compliance"
+            if tokens.intersection({"not", "no", "prohibit", "prohibited", "unlawful", "barred"}):
+                return "prohibit_conduct"
+            classes: List[str] = []
+            for role_name in ("action", "predicate", "kg"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            classes = _unique_preserve_order(classes)
+            return classes[0] if classes else "legal_consequence"
+
+        def object_class_for(value: str) -> str:
+            tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
+            if tokens.intersection({"license", "permit", "certificate", "approval", "authorization", "waiver"}):
+                return "authorization_instrument"
+            if tokens.intersection({"notice", "record", "records", "document", "information"}):
+                return "notice_or_record"
+            if tokens.intersection({"application", "claim", "proof", "filing"}):
+                return "application_or_proof"
+            if tokens.intersection({"appeal", "hearing", "action", "order", "proceeding"}):
+                return "proceeding_or_order"
+            if tokens.intersection({"fee", "payment", "tax", "fine"}):
+                return "payment_or_fee"
+            return "legal_object"
+
+        def actor_class_for(value: str) -> str:
+            tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
+            if tokens.intersection({"agency", "department", "commission", "board", "secretary", "administrator"}):
+                return "government_actor"
+            if tokens.intersection({"court", "judge", "tribunal"}):
+                return "judicial_actor"
+            if tokens.intersection({"applicant", "owner", "person", "party", "claimant", "licensee", "recipient"}):
+                return "private_party"
+            return first_or_none(role_classes.get("subject", [])) or "rule_actor"
+
+        def actor_for_consequence(value: str) -> str:
+            actor_match = re.search(
+                r"\b(?P<actor>agency|department|commission|board|secretary|"
+                r"administrator|court|applicant|owner|person|party|claimant|"
+                r"licensee|recipient)\b",
+                str(value or "").lower(),
+            )
+            if actor_match:
+                return actor_class_for(actor_match.group("actor"))
+            return actor_class_for("")
+
+        def guard_kind_for(marker: str) -> str:
+            normalized = _feature_atom(marker)
+            if normalized == "unless":
+                return "exception_guard"
+            if normalized == "only_if":
+                return "necessary_condition"
+            if normalized in {"provided", "provided_that", "subject_to"}:
+                return "proviso_guard"
+            if normalized in {"when", "whenever", "where"}:
+                return "trigger_condition"
+            return "sufficient_condition"
+
+        def force_class_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\bmay\b|\bauthorized\b|\bpermitted\b", normalized):
+                return "permission"
+            if re.search(r"\bshall\b|\bmust\b|\brequired\b", normalized):
+                return "obligation"
+            if re.search(r"\bshall\s+not\b|\bmay\s+not\b|\bmust\s+not\b|\bprohibited\b", normalized):
+                return "prohibition"
+            return _feature_atom(force_tags[0] if force_tags else "assertive") or "assertive"
+
+        def consequence_polarity_for(value: str, marker: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if _feature_atom(marker) == "unless":
+                return "exception_consequence"
+            if re.search(r"\b(?:shall|may|must)\s+not\b|\bno\b|\bnot\b|\bwithout\b", normalized):
+                return "negative_consequence"
+            return "positive_consequence"
+
+        def consequence_scope_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\bthis\s+(?:section|subsection|chapter|subchapter|title)\b", normalized):
+                return "local_statutory_scope"
+            if re.search(r"\b(?:license|permit|certificate|approval|authorization|waiver)\b", normalized):
+                return "instrument_scope"
+            if re.search(r"\b(?:appeal|hearing|action|order|proceeding)\b", normalized):
+                return "procedure_scope"
+            return "general_scope"
+
+        guard_events: List[tuple[int, str, str, str, str, str, str, str, str, str, str]] = []
+        occupied_ranges: List[tuple[int, int]] = []
+
+        def add_guard(
+            *,
+            start: int,
+            end: int,
+            marker: str,
+            condition_text: str,
+            consequence_text: str,
+        ) -> None:
+            guard_kind = guard_kind_for(marker)
+            condition_class = condition_class_for(condition_text)
+            consequence_class = consequence_class_for(consequence_text)
+            object_class = object_class_for(consequence_text)
+            if object_class == "legal_object":
+                object_class = object_class_for(f"{consequence_text} {condition_text}")
+            actor_class = actor_for_consequence(consequence_text)
+            force_class = force_class_for(consequence_text)
+            polarity = consequence_polarity_for(consequence_text, marker)
+            scope = consequence_scope_for(f"{consequence_text} {condition_text}")
+            guard_events.append(
+                (
+                    int(start),
+                    guard_kind,
+                    condition_class,
+                    consequence_class,
+                    actor_class,
+                    object_class,
+                    force_class,
+                    polarity,
+                    scope,
+                    _feature_atom(condition_text, max_tokens=5) or "condition",
+                    _feature_atom(consequence_text, max_tokens=5) or "consequence",
+                )
+            )
+
+        patterns: tuple[tuple[re.Pattern[str], str], ...] = (
+            (
+                re.compile(
+                    r"\b(?P<marker>provided\s+that|subject\s+to|whenever|when|"
+                    r"where|if|provided)\s+(?P<condition>[^.;,]{1,140}),\s*"
+                    r"(?P<consequence>[^.;]{1,180})"
+                ),
+                "prefix",
+            ),
+            (
+                re.compile(
+                    r"\b(?P<consequence>[^.;]{1,160})\s+only\s+if\s+"
+                    r"(?P<condition>[^.;]{1,140})"
+                ),
+                "only if",
+            ),
+            (
+                re.compile(
+                    r"\b(?P<consequence>[^.;]{1,160})\s+unless\s+"
+                    r"(?P<condition>[^.;]{1,140})"
+                ),
+                "unless",
+            ),
+            (
+                re.compile(
+                    r"\b(?P<consequence>[^.;]{1,160})\s+provided\s+that\s+"
+                    r"(?P<condition>[^.;]{1,140})"
+                ),
+                "provided that",
+            ),
+        )
+        for pattern, default_marker in patterns:
+            for match in pattern.finditer(text):
+                start, end = int(match.start()), int(match.end())
+                if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                    continue
+                marker = match.groupdict().get("marker") or default_marker
+                add_guard(
+                    start=start,
+                    end=end,
+                    marker=marker,
+                    condition_text=match.group("condition"),
+                    consequence_text=match.group("consequence"),
+                )
+                occupied_ranges.append((start, end))
+
+        guard_events = sorted(
+            _unique_preserve_order(guard_events),
+            key=lambda item: (item[0], item[1], item[2], item[3], item[4], item[5]),
+        )
+        guard_signature = "+".join(
+            f"{guard_kind}:{condition_class}->{consequence_class}:"
+            f"{actor_class}:{object_class}:{force_class}:{polarity}:{scope}"
+            for (
+                _start,
+                guard_kind,
+                condition_class,
+                consequence_class,
+                actor_class,
+                object_class,
+                force_class,
+                polarity,
+                scope,
+                _condition_atom,
+                _consequence_atom,
+            ) in guard_events[:8]
+        ) or "none"
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        force_signature = "+".join(force_tags[:3]) or "none"
+        polarity_signature = "+".join(polarity_tags[:3]) or "none"
+
+        add("bias")
+        add(f"source-condition-consequence:{role_signature}:{scope_signature}")
+        add(f"guard-count:{_count_bucket(len(guard_events))}")
+        add(f"guard-signature:{guard_signature}")
+        add(f"force-guard:{force_signature}:{polarity_signature}:{scope_signature}")
+        if not guard_events:
+            add(f"guard-coverage:none:{role_signature}:{scope_signature}")
+
+        for (
+            _start,
+            guard_kind,
+            condition_class,
+            consequence_class,
+            actor_class,
+            object_class,
+            force_class,
+            polarity,
+            scope,
+            condition_atom,
+            consequence_atom,
+        ) in guard_events[:10]:
+            add(
+                f"guard-edge:{guard_kind}:{condition_class}->{consequence_class}:"
+                f"{actor_class}:{object_class}:{force_class}:{polarity}"
+            )
+            add(
+                f"compiler-antecedent-edge:{condition_class}->{consequence_class}:"
+                f"{object_class}:{scope}"
+            )
+            add(f"condition-exact:{guard_kind}:{condition_atom}:{condition_class}")
+            add(f"consequence-exact:{guard_kind}:{consequence_atom}:{consequence_class}")
+            add(f"event-calculus-precondition:{condition_class}->{consequence_class}:{object_class}")
+            add(f"frame-logic-guard-slot:{guard_kind}:{condition_class}:{consequence_class}:{scope}")
+            add(f"kg-guard-edge:{condition_class}:{guard_kind}:{consequence_class}:{object_class}")
+            add(f"decompiler-guard-slot:{guard_kind}:{condition_class}:{consequence_class}:{object_class}")
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-guard:{family}:{symbol}:{predicate_role}:"
+                        f"{guard_kind}:{condition_class}->{consequence_class}"
+                    )
+
+        add(f"decompiler-guard-plan:{guard_signature}")
+        add(
+            f"operator-guard-plan:{guard_signature}:"
+            f"{role_signature}:{operator_signature}"
+        )
+        add(f"todo-route:refine_condition_consequence:{guard_signature}:{role_signature}")
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:guard-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_condition_consequence_features]
+        cache[cache_key] = list(result)
+        return result
+
+    def _applicability_scope_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "applicability-scope",
+    ) -> List[str]:
+        """Applicability, exclusion, purpose, and domain-scope contracts."""
+        normalized_prefix = str(prefix or "applicability-scope").strip(":")
+        cache_key = f"applicability_scope_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_applicability_scope_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        action_classes = role_classes.get("action", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        def source_scope_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\bthis\s+title\b", normalized):
+                return "current_title"
+            if re.search(r"\bthis\s+chapter\b", normalized):
+                return "current_chapter"
+            if re.search(r"\bthis\s+subchapter\b", normalized):
+                return "current_subchapter"
+            if re.search(r"\bthis\s+section\b", normalized):
+                return "current_section"
+            if re.search(r"\bthis\s+subsection\b", normalized):
+                return "current_subsection"
+            if re.search(r"\bsection\s+\d", normalized):
+                return "statutory_section"
+            if re.search(r"\bchapter\s+\d", normalized):
+                return "statutory_chapter"
+            if re.search(r"\bsubsection\s+\([a-z0-9]+\)", normalized):
+                return "local_subsection"
+            if re.search(r"\brequirements?\b|\bprovisions?\b|\brules?\b", normalized):
+                return "rule_set"
+            return "current_rule"
+
+        def target_class_for(value: str) -> str:
+            tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
+            if tokens.intersection(
+                {
+                    "covered",
+                    "entity",
+                    "entities",
+                    "regulated",
+                    "company",
+                    "companies",
+                    "corporation",
+                    "corporations",
+                    "bank",
+                    "banks",
+                    "carrier",
+                    "carriers",
+                    "institution",
+                    "institutions",
+                    "organization",
+                    "organizations",
+                }
+            ):
+                return "regulated_entity"
+            if tokens.intersection(
+                {"employee", "employees", "officer", "officers", "director", "directors"}
+            ):
+                return "affiliated_person"
+            if tokens.intersection(
+                {
+                    "applicant",
+                    "applicants",
+                    "licensee",
+                    "licensees",
+                    "recipient",
+                    "recipients",
+                    "claimant",
+                    "claimants",
+                    "beneficiary",
+                    "beneficiaries",
+                }
+            ):
+                return "benefit_participant"
+            if tokens.intersection({"record", "records", "document", "documents", "information", "notice"}):
+                return "notice_or_record"
+            if tokens.intersection({"license", "licenses", "permit", "permits", "certificate", "renewal"}):
+                return "authorization_instrument"
+            if tokens.intersection({"fee", "fees", "payment", "payments", "tax", "taxes"}):
+                return "payment_or_fee"
+            if tokens.intersection({"property", "facility", "facilities", "vehicle", "vehicles"}):
+                return "regulated_object"
+            if tokens.intersection({"agency", "department", "commission", "board"}):
+                return "government_actor"
+            if tokens.intersection({"person", "persons", "individual", "individuals", "party", "parties"}):
+                return "private_party"
+            classes: List[str] = []
+            for role_name in ("subject", "object", "condition", "kg"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            classes = _unique_preserve_order(classes)
+            return classes[0] if classes else "covered_subject"
+
+        def domain_class_for(value: str, target_class: str) -> str:
+            tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
+            if target_class in {
+                "regulated_entity",
+                "affiliated_person",
+                "benefit_participant",
+                "government_actor",
+                "private_party",
+            }:
+                return "entity_scope"
+            if target_class in {"notice_or_record"} or tokens.intersection(
+                {"record", "records", "document", "documents", "information", "notice"}
+            ):
+                return "record_scope"
+            if target_class in {"authorization_instrument"} or tokens.intersection(
+                {"license", "permit", "certificate", "renewal", "authorization"}
+            ):
+                return "authorization_scope"
+            if target_class in {"payment_or_fee"} or tokens.intersection(
+                {"fee", "payment", "tax", "assessment", "fine"}
+            ):
+                return "payment_scope"
+            if target_class in {"regulated_object"}:
+                return "object_scope"
+            if tokens.intersection({"proceeding", "hearing", "appeal", "action", "case"}):
+                return "procedure_scope"
+            return "general_scope"
+
+        def scope_kind_for(marker: str, negative: bool) -> str:
+            marker_atom = _feature_atom(marker)
+            if negative or marker_atom in {"not_applicable", "exempt_from"}:
+                return "exclusion_scope"
+            if marker_atom == "for_purposes_of":
+                return "purpose_scope"
+            if marker_atom == "in_the_case_of":
+                return "case_scope"
+            if marker_atom == "with_respect_to":
+                return "respect_scope"
+            return "inclusion_scope"
+
+        def polarity_for(scope_kind: str, negative: bool) -> str:
+            if negative or scope_kind == "exclusion_scope":
+                return "negative_applicability"
+            if scope_kind in {"purpose_scope", "case_scope", "respect_scope"}:
+                return "scoped_applicability"
+            return "positive_applicability"
+
+        def object_class_for(value: str) -> str:
+            tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
+            if tokens.intersection({"record", "records", "document", "documents", "information", "notice"}):
+                return "notice_or_record"
+            if tokens.intersection({"license", "permit", "certificate", "renewal", "authorization"}):
+                return "authorization_instrument"
+            if tokens.intersection({"fee", "payment", "tax", "assessment", "fine"}):
+                return "payment_or_fee"
+            if tokens.intersection({"appeal", "hearing", "proceeding", "order", "action"}):
+                return "proceeding_or_order"
+            return first_or_none(role_classes.get("object", [])) or "legal_object"
+
+        def actor_class_for(target_class: str) -> str:
+            if target_class in {
+                "regulated_entity",
+                "affiliated_person",
+                "benefit_participant",
+                "government_actor",
+                "private_party",
+            }:
+                return target_class
+            return first_or_none(role_classes.get("subject", [])) or "scope_actor"
+
+        def force_class_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\bshall\s+not\b|\bdoes\s+not\b|\bnot\s+applicable\b|\bexempt\b", normalized):
+                return "exclusion"
+            if re.search(r"\bshall\b|\bmust\b|\brequired\b", normalized):
+                return "obligation"
+            if re.search(r"\bmay\b|\bauthorized\b|\bpermitted\b", normalized):
+                return "permission"
+            if re.search(r"\bapply|applies|applicable\b", normalized):
+                return "applicability"
+            return _feature_atom(force_tags[0] if force_tags else "assertive") or "assertive"
+
+        applicability_events: List[
+            tuple[int, str, str, str, str, str, str, str, str, str, str]
+        ] = []
+        occupied_ranges: List[tuple[int, int]] = []
+
+        def add_applicability(
+            *,
+            start: int,
+            end: int,
+            marker: str,
+            source_text: str,
+            target_text: str,
+            context_text: str = "",
+            negative: bool = False,
+        ) -> None:
+            combined = " ".join(
+                part for part in (source_text, target_text, context_text) if part
+            )
+            source_scope = source_scope_for(source_text or context_text)
+            target_class = target_class_for(target_text)
+            domain_class = domain_class_for(combined, target_class)
+            scope_kind = scope_kind_for(marker, negative)
+            polarity = polarity_for(scope_kind, negative)
+            actor_class = actor_class_for(target_class)
+            object_class = object_class_for(combined)
+            force_class = force_class_for(combined)
+            applicability_events.append(
+                (
+                    int(start),
+                    scope_kind,
+                    polarity,
+                    source_scope,
+                    target_class,
+                    domain_class,
+                    actor_class,
+                    object_class,
+                    force_class,
+                    _feature_atom(source_text, max_tokens=4) or source_scope,
+                    _feature_atom(target_text, max_tokens=5) or target_class,
+                )
+            )
+
+        source_pattern = (
+            r"this\s+(?:title|chapter|subchapter|section|subsection)|"
+            r"(?:the\s+)?(?:requirements?|provisions?|rules?)\s+of\s+this\s+"
+            r"(?:title|chapter|subchapter|section|subsection)|"
+            r"section\s+\d+[a-z0-9().-]*|chapter\s+\d+[a-z0-9().-]*|"
+            r"subsection\s+\([a-z0-9]+\)"
+        )
+        apply_pattern = re.compile(
+            rf"\b(?P<source>{source_pattern})\s+"
+            r"(?P<neg>does\s+not\s+|shall\s+not\s+|is\s+not\s+)?"
+            r"(?P<aux>shall\s+|must\s+|may\s+|will\s+|is\s+|are\s+)?"
+            r"(?P<verb>apply|applies|be\s+applicable|applicable)\s+"
+            r"(?P<marker>to|with\s+respect\s+to)\s+"
+            r"(?P<target>[^.;,]{1,140})"
+        )
+        exempt_pattern = re.compile(
+            rf"\b(?P<target>[^.;,]{{1,120}}?)\s+"
+            r"(?P<neg>is|are)\s+exempt\s+from\s+"
+            rf"(?P<source>{source_pattern})"
+        )
+        purpose_pattern = re.compile(
+            rf"\bfor\s+purposes\s+of\s+(?P<source>{source_pattern}),\s*"
+            r"(?P<target>[^.;]{1,160})"
+        )
+        case_pattern = re.compile(
+            rf"\bin\s+the\s+case\s+of\s+(?P<target>[^,.;]{{1,120}}),\s*"
+            rf"(?P<context>[^.;]{{0,180}}?(?P<source>{source_pattern})[^.;]{{0,120}})"
+        )
+        respect_pattern = re.compile(
+            r"\bwith\s+respect\s+to\s+(?P<target>[^.;,]{1,140})"
+        )
+
+        for match in purpose_pattern.finditer(text):
+            start, end = int(match.start()), int(match.end())
+            if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                continue
+            add_applicability(
+                start=start,
+                end=end,
+                marker="for_purposes_of",
+                source_text=match.group("source"),
+                target_text=match.group("target"),
+                context_text=match.group(0),
+            )
+            occupied_ranges.append((start, end))
+
+        for match in case_pattern.finditer(text):
+            start, end = int(match.start()), int(match.end())
+            if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                continue
+            add_applicability(
+                start=start,
+                end=end,
+                marker="in_the_case_of",
+                source_text=match.group("source"),
+                target_text=match.group("target"),
+                context_text=match.group("context"),
+            )
+            occupied_ranges.append((start, end))
+
+        for match in apply_pattern.finditer(text):
+            start, end = int(match.start()), int(match.end())
+            if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                continue
+            negative = bool(match.group("neg")) or "not applicable" in match.group(0)
+            marker = "with_respect_to" if "respect" in match.group("marker") else "apply_to"
+            add_applicability(
+                start=start,
+                end=end,
+                marker=marker,
+                source_text=match.group("source"),
+                target_text=match.group("target"),
+                context_text=match.group(0),
+                negative=negative,
+            )
+            occupied_ranges.append((start, end))
+
+        for match in exempt_pattern.finditer(text):
+            start, end = int(match.start()), int(match.end())
+            if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                continue
+            add_applicability(
+                start=start,
+                end=end,
+                marker="exempt_from",
+                source_text=match.group("source"),
+                target_text=match.group("target"),
+                context_text=match.group(0),
+                negative=True,
+            )
+            occupied_ranges.append((start, end))
+
+        for match in respect_pattern.finditer(text):
+            start, end = int(match.start()), int(match.end())
+            if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                continue
+            add_applicability(
+                start=start,
+                end=end,
+                marker="with_respect_to",
+                source_text="current rule",
+                target_text=match.group("target"),
+                context_text=match.group(0),
+            )
+            occupied_ranges.append((start, end))
+
+        applicability_events = sorted(
+            _unique_preserve_order(applicability_events),
+            key=lambda item: (item[0], item[1], item[2], item[3], item[4], item[5]),
+        )
+        applicability_signature = "+".join(
+            f"{scope_kind}:{polarity}:{source_scope}->{target_class}:{domain_class}"
+            for (
+                _start,
+                scope_kind,
+                polarity,
+                source_scope,
+                target_class,
+                domain_class,
+                _actor_class,
+                _object_class,
+                _force_class,
+                _source_atom,
+                _target_atom,
+            ) in applicability_events[:8]
+        ) or "none"
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        force_signature = "+".join(force_tags[:3]) or "none"
+        polarity_signature = "+".join(polarity_tags[:3]) or "none"
+
+        add("bias")
+        add(f"source-applicability:{role_signature}:{scope_signature}")
+        add(f"applicability-count:{_count_bucket(len(applicability_events))}")
+        add(f"applicability-signature:{applicability_signature}")
+        add(f"force-applicability:{force_signature}:{polarity_signature}:{scope_signature}")
+        if not applicability_events:
+            add(f"applicability-coverage:none:{role_signature}:{scope_signature}")
+
+        for (
+            _start,
+            scope_kind,
+            polarity,
+            source_scope,
+            target_class,
+            domain_class,
+            actor_class,
+            object_class,
+            force_class,
+            source_atom,
+            target_atom,
+        ) in applicability_events[:10]:
+            add(
+                f"scope-edge:{scope_kind}:{source_scope}->{target_class}:"
+                f"{polarity}:{domain_class}"
+            )
+            add(
+                f"compiler-domain-edge:{source_scope}->{target_class}:"
+                f"{scope_kind}:{polarity}:{domain_class}"
+            )
+            add(
+                f"applicability-exact:{scope_kind}:{source_atom}:"
+                f"{target_atom}:{target_class}"
+            )
+            add(
+                f"frame-logic-domain-slot:{scope_kind}:"
+                f"{target_class}:{domain_class}:{source_scope}"
+            )
+            add(
+                f"kg-applicability-edge:{source_scope}:"
+                f"{scope_kind}:{target_class}:{polarity}"
+            )
+            add(
+                f"event-calculus-applicability:"
+                f"{scope_kind}:{target_class}:{polarity}:{domain_class}"
+            )
+            add(
+                f"decompiler-applicability-slot:"
+                f"{scope_kind}:{target_class}:{source_scope}:{polarity}"
+            )
+            add(
+                f"scope-role-binding:{scope_kind}:{actor_class}:"
+                f"{object_class}:{force_class}"
+            )
+            if scope_kind == "exclusion_scope":
+                add(
+                    f"defeasible-applicability-exception:"
+                    f"{source_scope}->{target_class}:{domain_class}"
+                )
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-applicability:{family}:{symbol}:{predicate_role}:"
+                        f"{scope_kind}:{target_class}:{source_scope}"
+                    )
+
+        add(f"decompiler-applicability-plan:{applicability_signature}")
+        add(
+            f"operator-applicability-plan:{applicability_signature}:"
+            f"{role_signature}:{operator_signature}"
+        )
+        add(f"todo-route:refine_applicability_scope:{applicability_signature}:{role_signature}")
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:applicability-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_applicability_scope_features]
+        cache[cache_key] = list(result)
+        return result
+
+    def _coreference_binding_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "coreference-binding",
+    ) -> List[str]:
+        """Deictic reference and same-entity bindings across legal clauses."""
+        normalized_prefix = str(prefix or "coreference-binding").strip(":")
+        cache_key = f"coreference_binding_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_coreference_binding_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        action_classes = role_classes.get("action", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        def entity_class_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            tokens = set(_TOKEN_RE.findall(normalized))
+            if re.search(
+                r"\b(?:section|subsection|paragraph|subparagraph|chapter|title)\b",
+                normalized,
+            ):
+                return "statutory_reference"
+            if tokens.intersection(
+                {
+                    "covered",
+                    "regulated",
+                    "entity",
+                    "entities",
+                    "company",
+                    "companies",
+                    "institution",
+                    "institutions",
+                    "organization",
+                    "organizations",
+                }
+            ):
+                return "regulated_entity"
+            if tokens.intersection(
+                {"employee", "employees", "officer", "officers", "director", "directors"}
+            ):
+                return "affiliated_person"
+            if tokens.intersection(
+                {
+                    "applicant",
+                    "applicants",
+                    "licensee",
+                    "licensees",
+                    "recipient",
+                    "recipients",
+                    "claimant",
+                    "claimants",
+                    "beneficiary",
+                    "beneficiaries",
+                }
+            ):
+                return "benefit_participant"
+            if tokens.intersection({"person", "persons", "individual", "individuals", "party", "parties"}):
+                return "private_party"
+            if tokens.intersection({"agency", "department", "commission", "board", "secretary"}):
+                return "government_actor"
+            if tokens.intersection({"license", "licenses", "permit", "permits", "certificate", "approval"}):
+                return "authorization_instrument"
+            if tokens.intersection({"application", "claim", "petition", "proof", "filing"}):
+                return "application_or_proof"
+            if tokens.intersection({"record", "records", "document", "documents", "information", "notice"}):
+                return "notice_or_record"
+            if tokens.intersection({"fee", "fees", "payment", "payments", "tax", "taxes"}):
+                return "payment_or_fee"
+            if tokens.intersection({"appeal", "hearing", "order", "proceeding", "action"}):
+                return "proceeding_or_order"
+            classes: List[str] = []
+            for role_name in ("subject", "object", "condition", "predicate", "kg"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            classes = _unique_preserve_order(classes)
+            return classes[0] if classes else "legal_entity"
+
+        def reference_kind_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if normalized.startswith("such "):
+                return "such_reference"
+            if normalized.startswith("that "):
+                return "that_reference"
+            if normalized.startswith("the same "):
+                return "same_reference"
+            if normalized.startswith("under that "):
+                return "under_that_reference"
+            if normalized in {"thereof", "therein"}:
+                return f"{normalized}_reference"
+            if normalized in {"thereunder", "hereunder", "herein"}:
+                return "statutory_deictic_reference"
+            return "deictic_reference"
+
+        def reference_scope_for(antecedent_end: int, reference_start: int) -> str:
+            between = text[max(0, antecedent_end) : max(0, reference_start)]
+            if re.search(r"[.;]", between):
+                return "cross_sentence"
+            if "," in between:
+                return "same_sentence"
+            return "same_clause"
+
+        mention_pattern = re.compile(
+            r"\b(?P<mention>"
+            r"(?:covered|regulated)\s+entity|"
+            r"(?:a|an|the|each|any|every)\s+"
+            r"(?:person|individual|party|applicant|recipient|licensee|"
+            r"employee|entity|agency|department|commission|board|license|"
+            r"permit|certificate|application|claim|petition|proof|record|"
+            r"document|notice|fee|payment|appeal|hearing|order|proceeding)|"
+            r"(?:this|that)\s+"
+            r"(?:section|subsection|paragraph|subparagraph|chapter|title)|"
+            r"(?:section|subsection|paragraph|subparagraph|chapter|title)\s+"
+            r"(?:\([a-z0-9]+\)|[a-z0-9][a-z0-9().-]*)"
+            r")(?=\W|$)"
+        )
+        reference_patterns: tuple[tuple[re.Pattern[str], str], ...] = (
+            (
+                re.compile(
+                    r"\bunder\s+that\s+"
+                    r"(?P<head>section|subsection|paragraph|subparagraph|chapter|title)\b"
+                ),
+                "under_that_reference",
+            ),
+            (
+                re.compile(
+                    r"\bsuch\s+"
+                    r"(?P<head>person|individual|party|applicant|recipient|licensee|"
+                    r"employee|entity|agency|department|commission|board|license|"
+                    r"permit|certificate|application|claim|petition|proof|record|"
+                    r"document|notice|fee|payment|appeal|hearing|order|proceeding|"
+                    r"section|subsection|paragraph|subparagraph|chapter|title)\b"
+                ),
+                "such_reference",
+            ),
+            (
+                re.compile(
+                    r"\bthat\s+"
+                    r"(?P<head>person|individual|party|applicant|recipient|licensee|"
+                    r"employee|entity|agency|department|commission|board|license|"
+                    r"permit|certificate|application|claim|petition|proof|record|"
+                    r"document|notice|fee|payment|appeal|hearing|order|proceeding|"
+                    r"section|subsection|paragraph|subparagraph|chapter|title)\b"
+                ),
+                "that_reference",
+            ),
+            (
+                re.compile(
+                    r"\bthe\s+same\s+"
+                    r"(?P<head>person|individual|party|applicant|recipient|licensee|"
+                    r"employee|entity|agency|department|commission|board|license|"
+                    r"permit|certificate|application|claim|petition|proof|record|"
+                    r"document|notice|fee|payment|appeal|hearing|order|proceeding)\b"
+                ),
+                "same_reference",
+            ),
+            (
+                re.compile(r"\b(?P<head>thereof|therein|thereunder|hereunder|herein)\b"),
+                "there_reference",
+            ),
+        )
+        mentions: List[tuple[int, int, str, str]] = []
+        for match in mention_pattern.finditer(text):
+            mention = match.group("mention")
+            mentions.append(
+                (
+                    int(match.start()),
+                    int(match.end()),
+                    entity_class_for(mention),
+                    _feature_atom(mention, max_tokens=5) or "mention",
+                )
+            )
+
+        reference_events: List[
+            tuple[int, str, str, str, str, str, str, str]
+        ] = []
+        occupied_ranges: List[tuple[int, int]] = []
+
+        def nearest_antecedent(
+            reference_start: int,
+            referent_class: str,
+        ) -> tuple[int, int, str, str] | None:
+            prior_mentions = [
+                mention for mention in mentions if mention[1] <= reference_start
+            ]
+            if not prior_mentions:
+                return None
+            same_class = [
+                mention for mention in prior_mentions if mention[2] == referent_class
+            ]
+            if same_class:
+                return same_class[-1]
+            return prior_mentions[-1]
+
+        def add_reference(
+            *,
+            start: int,
+            end: int,
+            reference_text: str,
+            default_kind: str,
+            head_text: str,
+        ) -> None:
+            referent_class = (
+                entity_class_for(head_text)
+                if head_text not in {"thereof", "therein", "thereunder", "hereunder", "herein"}
+                else "legal_entity"
+            )
+            antecedent = nearest_antecedent(start, referent_class)
+            if antecedent is None:
+                return
+            antecedent_start, antecedent_end, antecedent_class, antecedent_atom = antecedent
+            if referent_class == "legal_entity":
+                referent_class = antecedent_class
+            identity_state = (
+                "class_preserving"
+                if antecedent_class == referent_class
+                else "bridged_reference"
+            )
+            reference_scope = reference_scope_for(antecedent_end, start)
+            reference_kind = reference_kind_for(reference_text) or default_kind
+            reference_events.append(
+                (
+                    int(start),
+                    reference_kind,
+                    antecedent_class,
+                    referent_class,
+                    reference_scope,
+                    identity_state,
+                    antecedent_atom,
+                    _feature_atom(reference_text, max_tokens=5) or "reference",
+                )
+            )
+
+        for pattern, default_kind in reference_patterns:
+            for match in pattern.finditer(text):
+                start, end = int(match.start()), int(match.end())
+                if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                    continue
+                add_reference(
+                    start=start,
+                    end=end,
+                    reference_text=match.group(0),
+                    default_kind=default_kind,
+                    head_text=match.group("head"),
+                )
+                occupied_ranges.append((start, end))
+
+        reference_events = sorted(
+            _unique_preserve_order(reference_events),
+            key=lambda item: (item[0], item[1], item[2], item[3], item[4], item[5]),
+        )
+        coreference_signature = "+".join(
+            f"{kind}:{antecedent_class}->{referent_class}:"
+            f"{reference_scope}:{identity_state}"
+            for (
+                _start,
+                kind,
+                antecedent_class,
+                referent_class,
+                reference_scope,
+                identity_state,
+                _antecedent_atom,
+                _reference_atom,
+            ) in reference_events[:8]
+        ) or "none"
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        force_signature = "+".join(force_tags[:3]) or "none"
+        polarity_signature = "+".join(polarity_tags[:3]) or "none"
+
+        add("bias")
+        add(f"source-coreference:{role_signature}:{scope_signature}")
+        add(f"coreference-count:{_count_bucket(len(reference_events))}")
+        add(f"coreference-signature:{coreference_signature}")
+        add(f"force-coreference:{force_signature}:{polarity_signature}:{scope_signature}")
+        if not reference_events:
+            add(f"coreference-coverage:none:{role_signature}:{scope_signature}")
+
+        for (
+            _start,
+            kind,
+            antecedent_class,
+            referent_class,
+            reference_scope,
+            identity_state,
+            antecedent_atom,
+            reference_atom,
+        ) in reference_events[:10]:
+            add(
+                f"reference-edge:{kind}:{antecedent_class}->{referent_class}:"
+                f"{reference_scope}:{identity_state}"
+            )
+            add(
+                f"compiler-variable-binding:{antecedent_class}->{referent_class}:"
+                f"{kind}:{reference_scope}"
+            )
+            add(
+                f"frame-logic-same-as:{antecedent_class}:"
+                f"{referent_class}:{kind}:{identity_state}"
+            )
+            add(f"kg-coreference-edge:{antecedent_class}:{kind}:{referent_class}")
+            add(
+                f"event-calculus-reference-binding:"
+                f"{kind}:{antecedent_class}->{referent_class}:{reference_scope}"
+            )
+            add(
+                f"decompiler-reference-slot:"
+                f"{kind}:{referent_class}:{reference_scope}:{identity_state}"
+            )
+            add(
+                f"coreference-exact:{kind}:"
+                f"{antecedent_atom}->{reference_atom}:{referent_class}"
+            )
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-coreference:{family}:{symbol}:{predicate_role}:"
+                        f"{kind}:{antecedent_class}->{referent_class}"
+                    )
+
+        add(f"decompiler-coreference-plan:{coreference_signature}")
+        add(
+            f"operator-coreference-plan:{coreference_signature}:"
+            f"{role_signature}:{operator_signature}"
+        )
+        add(f"todo-route:refine_coreference_binding:{coreference_signature}:{role_signature}")
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:coreference-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_coreference_binding_features]
+        cache[cache_key] = list(result)
+        return result
+
+    def _logical_connective_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "logical-connective",
+    ) -> List[str]:
+        """Boolean connective and list-scope contracts for legal IR formulas."""
+        normalized_prefix = str(prefix or "logical-connective").strip(":")
+        cache_key = f"logical_connective_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_logical_connective_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        action_classes = role_classes.get("action", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        def segment_class_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            tokens = set(_TOKEN_RE.findall(normalized))
+            if tokens.intersection({"file", "files", "submit", "submits", "application", "claim", "petition", "proof"}):
+                return "application_or_proof"
+            if tokens.intersection({"pay", "pays", "fee", "fees", "payment", "tax", "fine"}):
+                return "payment_or_fee"
+            if tokens.intersection({"record", "records", "document", "documents", "report", "reports", "notice", "information"}):
+                return "notice_or_record"
+            if tokens.intersection({"hearing", "appeal", "proceeding", "order", "action", "review"}):
+                return "proceeding_or_order"
+            if tokens.intersection({"license", "permit", "certificate", "approval", "authorization", "waiver"}):
+                return "authorization_instrument"
+            if tokens.intersection({"maintain", "keep", "retain", "preserve", "comply", "perform"}):
+                return "compliance_action"
+            if tokens.intersection({"disclose", "publish", "notify", "provide", "send", "furnish"}):
+                return "disclosure_action"
+            if tokens.intersection({"deny", "revoke", "suspend", "terminate", "cancel"}):
+                return "status_action"
+            if tokens.intersection({"eligible", "qualified", "complete"}):
+                return "eligibility_condition"
+            classes: List[str] = []
+            for role_name in ("action", "object", "condition", "predicate", "kg"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            classes = _unique_preserve_order(classes)
+            return classes[0] if classes else "legal_operand"
+
+        def connective_kind_for(marker: str, context: str) -> str:
+            marker_atom = _feature_atom(marker)
+            normalized = " ".join(str(context or "").lower().split())
+            if marker_atom == "neither_nor":
+                return "negative_conjunction"
+            if marker_atom == "either_or":
+                return "exclusive_or"
+            if marker_atom == "both_and":
+                return "cumulative_conjunction"
+            if marker_atom in {"any_of_following", "one_of_following"}:
+                return "enumerated_disjunction"
+            if marker_atom in {"all_of_following", "each_of_following"}:
+                return "enumerated_conjunction"
+            if marker_atom == "or":
+                if re.search(r"\b(?:any|one)\s+of\s+the\s+following\b", normalized):
+                    return "enumerated_disjunction"
+                return "inclusive_disjunction"
+            return "conjunction"
+
+        def arity_for(context: str, default: int = 2) -> str:
+            normalized = str(context or "").lower()
+            enumerator_count = len(
+                re.findall(
+                    r"(?:^|[;:]\s*|\s)\([a-z0-9]+\)\s+|"
+                    r"(?:^|[;:]\s*)\d+\.\s+",
+                    normalized,
+                )
+            )
+            comma_items = normalized.count(",") + 1 if "," in normalized else default
+            return _count_bucket(max(default, enumerator_count, comma_items))
+
+        def force_class_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\bshall\s+not\b|\bmay\s+not\b|\bmust\s+not\b|\bneither\b|\bnor\b", normalized):
+                return "prohibition"
+            if re.search(r"\bshall\b|\bmust\b|\brequired\b", normalized):
+                return "obligation"
+            if re.search(r"\bmay\b|\bauthorized\b|\bpermitted\b", normalized):
+                return "permission"
+            return _feature_atom(force_tags[0] if force_tags else "assertive") or "assertive"
+
+        def polarity_for(kind: str, context: str) -> str:
+            normalized = " ".join(str(context or "").lower().split())
+            if kind == "negative_conjunction" or re.search(
+                r"\b(?:shall|may|must)\s+not\b|\bno\b|\bnot\b|\bwithout\b",
+                normalized,
+            ):
+                return "negative_connective"
+            return "positive_connective"
+
+        def connective_scope_for(left: str, right: str, context: str) -> str:
+            normalized = " ".join(str(context or "").lower().split())
+            if re.search(r"\bif\b|\bwhen\b|\bunless\b|\bprovided\s+that\b", normalized):
+                return "condition_scope"
+            if re.search(r"\bshall\b|\bmust\b|\bmay\b", normalized):
+                return "modal_scope"
+            if re.search(r"\bany\s+of\s+the\s+following\b|\ball\s+of\s+the\s+following\b", normalized):
+                return "enumeration_scope"
+            if segment_class_for(left) == segment_class_for(right):
+                return "same_role_scope"
+            return "mixed_role_scope"
+
+        connective_events: List[
+            tuple[int, str, str, str, str, str, str, str, str, str, str]
+        ] = []
+        occupied_ranges: List[tuple[int, int]] = []
+
+        def add_connective(
+            *,
+            start: int,
+            end: int,
+            marker: str,
+            left_text: str,
+            right_text: str,
+            context_text: str,
+        ) -> None:
+            kind = connective_kind_for(marker, context_text)
+            left_class = segment_class_for(left_text)
+            right_class = segment_class_for(right_text)
+            force_class = force_class_for(context_text)
+            polarity = polarity_for(kind, context_text)
+            connective_scope = connective_scope_for(left_text, right_text, context_text)
+            connective_arity = arity_for(context_text)
+            connective_events.append(
+                (
+                    int(start),
+                    kind,
+                    left_class,
+                    right_class,
+                    force_class,
+                    polarity,
+                    connective_scope,
+                    connective_arity,
+                    _feature_atom(marker, max_tokens=3) or "and",
+                    _feature_atom(left_text, max_tokens=5) or "left",
+                    _feature_atom(right_text, max_tokens=5) or "right",
+                )
+            )
+
+        patterns: tuple[tuple[re.Pattern[str], str], ...] = (
+            (
+                re.compile(
+                    r"\bneither\s+(?P<left>[^.;,]{1,120})\s+nor\s+"
+                    r"(?P<right>[^.;]{1,160})"
+                ),
+                "neither_nor",
+            ),
+            (
+                re.compile(
+                    r"\beither\s+(?P<left>[^.;,]{1,120})\s+or\s+"
+                    r"(?P<right>[^.;]{1,160})"
+                ),
+                "either_or",
+            ),
+            (
+                re.compile(
+                    r"\bboth\s+(?P<left>[^.;,]{1,120})\s+and\s+"
+                    r"(?P<right>[^.;]{1,160})"
+                ),
+                "both_and",
+            ),
+            (
+                re.compile(
+                    r"\b(?P<marker>any|one|all|each)\s+of\s+the\s+following:"
+                    r"\s*(?P<left>[^;.\n]{1,160})[;,\s]+(?:and\s+|or\s+)?"
+                    r"(?P<right>[^.;\n]{1,160})"
+                ),
+                "following_list",
+            ),
+            (
+                re.compile(
+                    r"\b(?P<left>[^.;,]{1,140})\s+and\s+"
+                    r"(?P<right>[^.;]{1,180})"
+                ),
+                "and",
+            ),
+            (
+                re.compile(
+                    r"\b(?P<left>[^.;,]{1,140})\s+or\s+"
+                    r"(?P<right>[^.;]{1,180})"
+                ),
+                "or",
+            ),
+        )
+        for pattern, default_marker in patterns:
+            for match in pattern.finditer(text):
+                start, end = int(match.start()), int(match.end())
+                if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                    continue
+                marker = match.groupdict().get("marker") or default_marker
+                if default_marker == "following_list":
+                    marker = f"{_feature_atom(marker)}_of_following"
+                add_connective(
+                    start=start,
+                    end=end,
+                    marker=marker,
+                    left_text=match.group("left"),
+                    right_text=match.group("right"),
+                    context_text=match.group(0),
+                )
+                occupied_ranges.append((start, end))
+
+        connective_events = sorted(
+            _unique_preserve_order(connective_events),
+            key=lambda item: (item[0], item[1], item[2], item[3], item[4], item[5]),
+        )
+        connective_signature = "+".join(
+            f"{kind}:{left_class}+{right_class}:"
+            f"{force_class}:{polarity}:{connective_scope}:{connective_arity}"
+            for (
+                _start,
+                kind,
+                left_class,
+                right_class,
+                force_class,
+                polarity,
+                connective_scope,
+                connective_arity,
+                _marker_atom,
+                _left_atom,
+                _right_atom,
+            ) in connective_events[:8]
+        ) or "none"
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        force_signature = "+".join(force_tags[:3]) or "none"
+        polarity_signature = "+".join(polarity_tags[:3]) or "none"
+
+        add("bias")
+        add(f"source-connective:{role_signature}:{scope_signature}")
+        add(f"connective-count:{_count_bucket(len(connective_events))}")
+        add(f"connective-signature:{connective_signature}")
+        add(f"force-connective:{force_signature}:{polarity_signature}:{scope_signature}")
+        if not connective_events:
+            add(f"connective-coverage:none:{role_signature}:{scope_signature}")
+
+        for (
+            _start,
+            kind,
+            left_class,
+            right_class,
+            force_class,
+            polarity,
+            connective_scope,
+            connective_arity,
+            marker_atom,
+            left_atom,
+            right_atom,
+        ) in connective_events[:10]:
+            add(
+                f"boolean-edge:{kind}:{left_class}+{right_class}:"
+                f"{force_class}:{polarity}:{connective_scope}"
+            )
+            add(
+                f"compiler-boolean-node:{kind}:{left_class}+{right_class}:"
+                f"{connective_scope}:{connective_arity}"
+            )
+            add(
+                f"frame-logic-connective-slot:"
+                f"{kind}:{left_class}:{right_class}:{connective_scope}"
+            )
+            add(
+                f"kg-connective-edge:{left_class}:{kind}:{right_class}:"
+                f"{polarity}"
+            )
+            add(
+                f"event-calculus-connective:"
+                f"{kind}:{left_class}+{right_class}:{force_class}:{polarity}"
+            )
+            add(
+                f"decompiler-connective-slot:"
+                f"{kind}:{left_class}:{right_class}:{connective_arity}"
+            )
+            add(
+                f"connective-exact:{marker_atom}:"
+                f"{left_atom}->{right_atom}:{kind}"
+            )
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-connective:{family}:{symbol}:{predicate_role}:"
+                        f"{kind}:{left_class}+{right_class}"
+                    )
+
+        add(f"decompiler-connective-plan:{connective_signature}")
+        add(
+            f"operator-connective-plan:{connective_signature}:"
+            f"{role_signature}:{operator_signature}"
+        )
+        add(f"todo-route:refine_logical_connective:{connective_signature}:{role_signature}")
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:connective-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_logical_connective_features]
         cache[cache_key] = list(result)
         return result
 
@@ -13693,6 +16972,7 @@ class AdaptiveModalAutoencoder:
         keys.extend(self._entity_binding_feature_keys_for(sample))
         keys.extend(self._defeasible_priority_feature_keys_for(sample))
         keys.extend(self._constraint_grounding_feature_keys_for(sample))
+        keys.extend(self._quantitative_formula_feature_keys_for(sample))
         keys.extend(self._definition_grounding_feature_keys_for(sample))
         keys.extend(self._quantifier_scope_feature_keys_for(sample))
         keys.extend(self._procedural_lifecycle_feature_keys_for(sample))
@@ -13700,6 +16980,13 @@ class AdaptiveModalAutoencoder:
         keys.extend(self._reference_dependency_feature_keys_for(sample))
         keys.extend(self._authority_jurisdiction_feature_keys_for(sample))
         keys.extend(self._temporal_validity_feature_keys_for(sample))
+        keys.extend(self._evidentiary_burden_feature_keys_for(sample))
+        keys.extend(self._legal_relation_feature_keys_for(sample))
+        keys.extend(self._status_transition_feature_keys_for(sample))
+        keys.extend(self._condition_consequence_feature_keys_for(sample))
+        keys.extend(self._applicability_scope_feature_keys_for(sample))
+        keys.extend(self._coreference_binding_feature_keys_for(sample))
+        keys.extend(self._logical_connective_feature_keys_for(sample))
         keys.extend(
             f"semantic-slot:{slot.removeprefix('slot:')}"
             for slot in self._semantic_slot_distribution_for(sample).keys()
@@ -13866,10 +17153,12 @@ class AdaptiveModalAutoencoder:
         core_prefixes = (
             "bias:",
             "authority-jurisdiction:",
+            "applicability-scope:",
             "canonical-ir:",
             "clause-topology:",
             "compiler-contract:",
             "contrastive-ir:",
+            "coreference-binding:",
             "constraint-grounding:",
             "cue:",
             "cue-family:",
@@ -13880,6 +17169,11 @@ class AdaptiveModalAutoencoder:
             "discourse-flow:",
             "entity-binding:",
             "equivalence-prototype:",
+            "evidentiary-burden:",
+            "legal-relation:",
+            "logical-connective:",
+            "status-transition:",
+            "condition-consequence:",
             "condition:",
             "condition-count-bin:",
             "compiler-profile:",
@@ -13917,6 +17211,7 @@ class AdaptiveModalAutoencoder:
             "reference-dependency:",
             "provenance-alignment:",
             "proof-obligation:",
+            "quantitative-formula:",
             "repair-plan:",
             "round-trip-bridge:",
             "section-cue:",
