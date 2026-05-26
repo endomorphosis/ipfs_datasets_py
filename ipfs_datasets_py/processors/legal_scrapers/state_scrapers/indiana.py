@@ -207,6 +207,10 @@ class IndianaScraper(BaseStateScraper):
             )
             if link_graph_rows:
                 return link_graph_rows[:max_statutes]
+            if self._full_corpus_enabled():
+                # In full-corpus mode, do not downgrade to title-level index
+                # placeholders when section-level traversal yielded nothing.
+                return []
 
         statutes: List[NormalizedStatute] = []
         crawl_limit = int(os.getenv("INDIANA_JUSTIA_CRAWL_PAGE_LIMIT", "2000") or "2000")
@@ -221,7 +225,7 @@ class IndianaScraper(BaseStateScraper):
                     title_payload = await self._fetch_archived_indiana_page(
                         title_url,
                         timeout_seconds=35,
-                        allow_archival_fallback=True,
+                        allow_archival_fallback=False,
                     )
                 except Exception:
                     continue

@@ -1921,6 +1921,7 @@ class AdaptiveModalAutoencoder:
         max_discourse_flow_features: int = 64,
         max_proof_obligation_features: int = 64,
         max_entity_binding_features: int = 64,
+        max_defeasible_priority_features: int = 64,
         embedding_head_update_normalization: float = 0.0,
         family_logit_head_update_normalization: float = 0.0,
         legal_ir_view_head_update_normalization: float = 0.0,
@@ -2131,6 +2132,10 @@ class AdaptiveModalAutoencoder:
         self.max_entity_binding_features = max(
             0,
             int(max_entity_binding_features),
+        )
+        self.max_defeasible_priority_features = max(
+            0,
+            int(max_defeasible_priority_features),
         )
         self.embedding_head_update_normalization = max(
             0.0,
@@ -4688,6 +4693,12 @@ class AdaptiveModalAutoencoder:
             self._entity_binding_feature_keys_for(
                 sample,
                 prefix="legal-ir:entity-binding",
+            )
+        )
+        keys.extend(
+            self._defeasible_priority_feature_keys_for(
+                sample,
+                prefix="legal-ir:defeasible-priority",
             )
         )
         keys.extend(
@@ -8092,6 +8103,260 @@ class AdaptiveModalAutoencoder:
         cache[cache_key] = list(result)
         return result
 
+    def _defeasible_priority_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "defeasible-priority",
+    ) -> List[str]:
+        """Exception, proviso, and override priority contracts for legal norms."""
+        normalized_prefix = str(prefix or "defeasible-priority").strip(":")
+        cache_key = f"defeasible_priority_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_defeasible_priority_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        subject_classes = role_classes.get("subject", [])
+        action_classes = role_classes.get("action", [])
+        object_classes = role_classes.get("object", [])
+        condition_classes = role_classes.get("condition", [])
+        exception_classes = role_classes.get("exception", [])
+        temporal_classes = role_classes.get("temporal", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        source_has_condition = "conditioned" in scope_tags
+        source_has_exception = "excepted" in scope_tags
+        source_has_temporal = "temporal" in scope_tags
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        def priority_atom(value: str) -> str:
+            return _feature_atom(value, max_tokens=6) or "base"
+
+        def priority_for(
+            *,
+            cue: str,
+            family: str,
+            symbol: str,
+            condition_state: bool,
+            exception_state: bool,
+        ) -> str:
+            cue_atom = _feature_atom(cue)
+            if "notwithstanding" in text or cue_atom == "notwithstanding":
+                return "express-override"
+            if exception_state or source_has_exception or cue_atom in {
+                "except",
+                "exception",
+                "unless",
+                "waiver",
+                "exemption",
+            }:
+                return "exception-overrides"
+            if cue_atom in {"subject_to", "provided", "provided_that"}:
+                return "proviso-guard"
+            if source_has_temporal or family in {"temporal", "dynamic"}:
+                return "temporal-guard"
+            if condition_state or source_has_condition or family == "conditional_normative":
+                return "conditional-guard"
+            if symbol == "f":
+                return "prohibition-default"
+            if symbol == "p":
+                return "permission-default"
+            if symbol == "o":
+                return "obligation-default"
+            return "base-default"
+
+        subject_class = first_or_none(subject_classes)
+        action_class = first_or_none(action_classes)
+        object_class = first_or_none(object_classes)
+        condition_class = first_or_none(condition_classes)
+        exception_class = first_or_none(exception_classes)
+        temporal_class = first_or_none(temporal_classes)
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        force_signature = "+".join(force_tags[:3]) or "none"
+        polarity_signature = "+".join(polarity_tags[:3]) or "none"
+        source_markers: List[str] = []
+        marker_patterns = (
+            ("notwithstanding", r"\bnotwithstanding\b"),
+            ("except", r"\bexcept\b"),
+            ("unless", r"\bunless\b"),
+            ("subject_to", r"\bsubject\s+to\b"),
+            ("provided_that", r"\bprovided\s+that\b"),
+            ("provided", r"\bprovided\b"),
+            ("waiver", r"\bwaiver\b"),
+            ("exemption", r"\bexemption\b"),
+            ("before", r"\bbefore\b"),
+            ("after", r"\bafter\b"),
+            ("within", r"\bwithin\b"),
+        )
+        for marker, pattern in marker_patterns:
+            if re.search(pattern, text):
+                source_markers.append(marker)
+
+        formulas = list(sample.modal_ir.formulas or [])
+        priority_sequence: List[str] = []
+        operator_sequence: List[str] = []
+        default_ops: List[str] = []
+        override_ops: List[str] = []
+
+        add("bias")
+        add(f"source-priority:{role_signature}:{scope_signature}")
+        add(f"force-priority:{force_signature}:{polarity_signature}:{scope_signature}")
+        for marker in source_markers[:6]:
+            marker_priority = (
+                "express-override"
+                if marker == "notwithstanding"
+                else (
+                    "exception-overrides"
+                    if marker in {"except", "unless", "waiver", "exemption"}
+                    else (
+                        "proviso-guard"
+                        if marker in {"subject_to", "provided", "provided_that"}
+                        else "temporal-guard"
+                    )
+                )
+            )
+            add(f"source-priority-marker:{marker}:{marker_priority}:{scope_signature}")
+        if not formulas:
+            add(f"priority-sequence:none:{scope_signature}")
+            add(f"todo-route:add_deterministic_parser_rule:{role_signature}:{scope_signature}")
+
+        for formula in formulas[:10]:
+            family = _feature_atom(formula.operator.family)
+            system = _feature_atom(formula.operator.system)
+            symbol = _feature_atom(formula.operator.symbol)
+            predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
+            predicate_role = _feature_atom(
+                getattr(formula.predicate, "role", "") or "none"
+            )
+            predicate_head = predicate_name.split("_", 1)[0] if predicate_name else ""
+            predicate_classes = self._legal_semantic_classes_for(
+                predicate_head,
+                role="predicate",
+            )
+            predicate_class = first_or_none(predicate_classes) or action_class
+            conditions = list(getattr(formula, "conditions", []) or [])
+            exceptions = list(getattr(formula, "exceptions", []) or [])
+            condition_state = bool(conditions)
+            exception_state = bool(exceptions)
+            cue = _feature_atom(formula.metadata.get("cue") if formula.metadata else "")
+            priority = priority_for(
+                cue=cue,
+                family=family,
+                symbol=symbol,
+                condition_state=condition_state,
+                exception_state=exception_state,
+            )
+            operator = f"{family}:{symbol}" if family and symbol else "none"
+            priority_sequence.append(priority)
+            operator_sequence.append(operator)
+            if priority in {"exception-overrides", "express-override"}:
+                override_ops.append(operator)
+            else:
+                default_ops.append(operator)
+
+            if family and symbol:
+                add(
+                    f"rule-priority:{priority}:{family}:{symbol}:{predicate_role}:"
+                    f"{predicate_class}:c{'yes' if condition_state else 'no'}:"
+                    f"e{'yes' if exception_state else 'no'}:{scope_signature}"
+                )
+                add(
+                    f"operator-priority:{family}:{symbol}:{priority}:"
+                    f"{role_signature}"
+                )
+                if system:
+                    add(
+                        f"prover-priority-contract:{system}:{family}:{symbol}:"
+                        f"{priority}:{scope_signature}"
+                    )
+                if condition_state:
+                    add(
+                        f"condition-priority:{priority}:{condition_class}:"
+                        f"{family}:{symbol}:{predicate_role}"
+                    )
+                if exception_state:
+                    add(
+                        f"exception-priority:{priority}:{exception_class}:"
+                        f"{family}:{symbol}:{predicate_role}"
+                    )
+                if source_has_temporal:
+                    add(
+                        f"temporal-priority:{priority}:{temporal_class}:"
+                        f"{family}:{symbol}:{predicate_role}"
+                    )
+
+        priority_path = "->".join(_unique_preserve_order(priority_sequence)) or "none"
+        operator_path = "->".join(operator_sequence[:8]) or "none"
+        add(f"priority-sequence:{priority_path}:{scope_signature}")
+        add(f"operator-priority-path:{operator_path}:{priority_path}:{scope_signature}")
+        for default_op in _unique_preserve_order(default_ops)[:4]:
+            for override_op in _unique_preserve_order(override_ops)[:4]:
+                add(
+                    f"defeasible-edge:override:{default_op}->{override_op}:"
+                    f"{exception_class}:{scope_signature}"
+                )
+        if source_has_exception and not override_ops:
+            for default_op in _unique_preserve_order(default_ops)[:4]:
+                add(
+                    f"defeasible-edge:source-exception-overrides:{default_op}:"
+                    f"{exception_class}:{scope_signature}"
+                )
+        if source_has_condition:
+            add(f"guard-contract:{priority_path}:{condition_class}:{role_signature}")
+        if source_has_exception:
+            add(f"exception-contract:{priority_path}:{exception_class}:{role_signature}")
+        if source_has_temporal:
+            add(f"temporal-contract:{priority_path}:{temporal_class}:{role_signature}")
+        add(
+            f"decompiler-priority-plan:{priority_path}:"
+            f"{operator_path}:{role_signature}:{scope_signature}"
+        )
+        add(
+            f"todo-route:refine_defeasible_priority_scope:"
+            f"{priority_path}:{role_signature}:{scope_signature}"
+        )
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:priority-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_defeasible_priority_features]
+        cache[cache_key] = list(result)
+        return result
+
     def _compiler_latent_profile_feature_keys_for(
         self,
         sample: LegalSample,
@@ -10645,6 +10910,7 @@ class AdaptiveModalAutoencoder:
         keys.extend(self._discourse_flow_feature_keys_for(sample))
         keys.extend(self._proof_obligation_feature_keys_for(sample))
         keys.extend(self._entity_binding_feature_keys_for(sample))
+        keys.extend(self._defeasible_priority_feature_keys_for(sample))
         keys.extend(
             f"semantic-slot:{slot.removeprefix('slot:')}"
             for slot in self._semantic_slot_distribution_for(sample).keys()
@@ -10817,6 +11083,7 @@ class AdaptiveModalAutoencoder:
             "cue:",
             "cue-family:",
             "cycle-consistency:",
+            "defeasible-priority:",
             "decompiler-surface:",
             "discourse-flow:",
             "entity-binding:",

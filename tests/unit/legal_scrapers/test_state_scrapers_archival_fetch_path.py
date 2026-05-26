@@ -319,6 +319,37 @@ async def test_indiana_archived_justia_titles_prefers_link_graph_rows(monkeypatc
     assert statutes[0].structured_data["discovery_method"] == "wayback_justia_link_graph"
 
 
+@pytest.mark.anyio
+async def test_indiana_archived_justia_titles_no_title_fallback_in_full_corpus_when_link_graph_empty(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    root_html = """
+    <html><body>
+      <a href="/codes/indiana/2010/title1/title1.html">TITLE 1. GENERAL PROVISIONS</a>
+    </body></html>
+    """
+
+    fetch_calls = []
+
+    async def _fake_fetch_archived_indiana_page(self, url: str, timeout_seconds: int = 35, allow_archival_fallback: bool = False):
+        fetch_calls.append((url, allow_archival_fallback))
+        return root_html.encode("utf-8")
+
+    async def _fake_crawl_archived_justia_link_graph(self, *, code_name: str, seed_urls: list[str], max_statutes: int):
+        return []
+
+    monkeypatch.setattr(IndianaScraper, "_fetch_archived_indiana_page", _fake_fetch_archived_indiana_page)
+    monkeypatch.setattr(IndianaScraper, "_crawl_archived_justia_link_graph", _fake_crawl_archived_justia_link_graph)
+    monkeypatch.setattr(IndianaScraper, "_full_corpus_enabled", lambda self: True)
+
+    scraper = IndianaScraper("IN", "Indiana")
+    statutes = await scraper._scrape_archived_justia_titles("Indiana Code", max_statutes=5)
+
+    assert statutes == []
+    assert len(fetch_calls) == 1
+    assert fetch_calls[0][1] is True
+
+
 def test_indiana_normalize_wayback_child_url_uses_parent_replay_timestamp():
     scraper = IndianaScraper("IN", "Indiana")
     replay_parent = "https://web.archive.org/web/20241203192652/https://law.justia.com/codes/indiana/2010/"

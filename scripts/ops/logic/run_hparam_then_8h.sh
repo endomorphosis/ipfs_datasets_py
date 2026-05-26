@@ -63,6 +63,7 @@ COMMON_ARGS=(
   --autoencoder-max-discourse-flow-features 64
   --autoencoder-max-proof-obligation-features 64
   --autoencoder-max-entity-binding-features 64
+  --autoencoder-max-defeasible-priority-features 64
   --autoencoder-max-semantic-slot-interactions 24
   --autoencoder-feature-activity-reference 64
   --autoencoder-feature-logit-clip 24.0
