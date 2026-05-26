@@ -632,6 +632,37 @@ def frame_ontology_terms_from_feature_keys(
         term_entries.append(
             (normalized, _priority_for_frame_ontology_term(priority, normalized))
         )
+        for (
+            additional_raw_value,
+            additional_allow_numeric_tokens,
+            additional_allow_single_char_alpha_tokens,
+            additional_priority,
+        ) in _additional_frame_ontology_values_from_feature(feature):
+            additional_coordinate_value = _frame_ontology_coordinate_value(
+                additional_raw_value
+            )
+            if additional_coordinate_value:
+                additional_raw_value = additional_coordinate_value
+                additional_allow_numeric_tokens = True
+            additional_normalized = normalize_frame_ontology_term(
+                additional_raw_value,
+                keep_numeric_tokens=additional_allow_numeric_tokens,
+                keep_single_char_alpha_tokens=(
+                    additional_allow_single_char_alpha_tokens
+                ),
+                keep_stopword_tokens=allow_stopword_tokens,
+            )
+            if not additional_normalized:
+                continue
+            term_entries.append(
+                (
+                    additional_normalized,
+                    _priority_for_frame_ontology_term(
+                        additional_priority,
+                        additional_normalized,
+                    ),
+                )
+            )
     return _bounded_ontology_values(
         term_entries,
         max_items=max_terms,
@@ -1545,6 +1576,107 @@ def _feature_allows_stopword_ontology_tokens(feature: str) -> bool:
     if _is_contextual_frame_ontology_predicate(predicate):
         return _predicate_allows_stopword_ontology_tokens(predicate)
     return False
+
+
+def _additional_frame_ontology_values_from_feature(
+    feature: str,
+) -> List[tuple[str, bool, bool, int]]:
+    """Return deterministic supplemental values for frame-linked features."""
+    lowered = str(feature or "").lower()
+    if not lowered.startswith("predicate-argument:"):
+        return []
+    _prefix, _separator, tail = str(feature or "").partition(":")
+    signature_type, separator, signature_value = tail.partition(":")
+    if not separator:
+        return []
+    normalized_signature_type = _normalized_frame_ontology_predicate(signature_type)
+    if not normalized_signature_type:
+        return []
+    if normalized_signature_type == "operator":
+        return _predicate_argument_operator_ontology_values(signature_value)
+    if normalized_signature_type.endswith("_family"):
+        return _predicate_argument_anchor_family_ontology_values(signature_value)
+    if (
+        normalized_signature_type.endswith("_role")
+        or normalized_signature_type.endswith("_predicate")
+    ):
+        return _predicate_argument_anchor_ontology_values(signature_value)
+    return []
+
+
+def _predicate_argument_operator_ontology_values(
+    signature_value: str,
+) -> List[tuple[str, bool, bool, int]]:
+    segments = [segment.strip() for segment in str(signature_value or "").split(":")]
+    segments = [segment for segment in segments if segment]
+    if not segments:
+        return []
+    family = segments[0]
+    values: List[tuple[str, bool, bool, int]] = [
+        (
+            family,
+            False,
+            False,
+            _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
+        )
+    ]
+    if len(segments) >= 3:
+        values.append(
+            (
+                ":".join(segments[:3]),
+                False,
+                True,
+                _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
+            )
+        )
+    return values
+
+
+def _predicate_argument_anchor_family_ontology_values(
+    signature_value: str,
+) -> List[tuple[str, bool, bool, int]]:
+    segments = [segment.strip() for segment in str(signature_value or "").split(":")]
+    segments = [segment for segment in segments if segment]
+    if not segments:
+        return []
+    anchor = segments[0]
+    values: List[tuple[str, bool, bool, int]] = [
+        (
+            anchor,
+            False,
+            False,
+            _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
+        )
+    ]
+    if len(segments) >= 2:
+        family = segments[1]
+        values.append(
+            (
+                f"{anchor}:{family}",
+                False,
+                False,
+                _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
+            )
+        )
+    return values
+
+
+def _predicate_argument_anchor_ontology_values(
+    signature_value: str,
+) -> List[tuple[str, bool, bool, int]]:
+    segments = [segment.strip() for segment in str(signature_value or "").split(":")]
+    segments = [segment for segment in segments if segment]
+    if not segments:
+        return []
+    anchor = segments[0]
+    return [
+        (
+            anchor,
+            False,
+            False,
+            _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
+        )
+    ]
 
 
 def _normalized_frame_ontology_cue_value(value: str) -> str:

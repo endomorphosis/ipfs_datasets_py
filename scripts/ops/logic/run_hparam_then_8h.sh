@@ -20,15 +20,20 @@ BASE_RUN_ID="${1:-legal-ir-hparam-$(date -u +%Y%m%dT%H%M%SZ)}"
 LOG_DIR="${ROOT_DIR}/workspace/test-logs"
 mkdir -p "${LOG_DIR}"
 
-TRIAL_SECONDS="${TRIAL_SECONDS:-600}"
 TRIAL_COUNT="${TRIAL_COUNT:-6}"
-TRIAL_PARALLELISM="${TRIAL_PARALLELISM:-1}"
-TRIAL_PARALLEL_HEARTBEAT_SECONDS="${TRIAL_PARALLEL_HEARTBEAT_SECONDS:-30}"
+TRIAL_PARALLELISM="${TRIAL_PARALLELISM:-4}"
+TRIAL_PARALLEL_HEARTBEAT_SECONDS="${TRIAL_PARALLEL_HEARTBEAT_SECONDS:-20}"
+HYPERPARAM_SWEEP_WALL_SECONDS="${HYPERPARAM_SWEEP_WALL_SECONDS:-3600}"
 if (( TRIAL_PARALLELISM < 1 )); then
   TRIAL_PARALLELISM=1
 fi
+TRIAL_WAVES=$(((TRIAL_COUNT + TRIAL_PARALLELISM - 1) / TRIAL_PARALLELISM))
+if (( TRIAL_WAVES < 1 )); then
+  TRIAL_WAVES=1
+fi
+TRIAL_SECONDS="${TRIAL_SECONDS:-$(((HYPERPARAM_SWEEP_WALL_SECONDS + TRIAL_WAVES - 1) / TRIAL_WAVES))}"
 TOTAL_TRIAL_SECONDS=$((TRIAL_SECONDS * TRIAL_COUNT))
-TOTAL_TRIAL_WALL_SECONDS=$(((TOTAL_TRIAL_SECONDS + TRIAL_PARALLELISM - 1) / TRIAL_PARALLELISM))
+TOTAL_TRIAL_WALL_SECONDS=$((TRIAL_SECONDS * TRIAL_WAVES))
 FINAL_SECONDS="${FINAL_SECONDS:-$((8 * 60 * 60))}"
 SWEEP_LOOP_ROLE="${SWEEP_LOOP_ROLE:-autoencoder}"
 SWEEP_TEST_EVERY_CYCLES="${SWEEP_TEST_EVERY_CYCLES:-48}"
@@ -37,24 +42,29 @@ SWEEP_PROJECTION_EPOCHS="${SWEEP_PROJECTION_EPOCHS:-1}"
 FINAL_PROJECTION_EPOCHS="${FINAL_PROJECTION_EPOCHS:-2}"
 FINAL_RECOVERY_MIN_CYCLES="${FINAL_RECOVERY_MIN_CYCLES:-1}"
 BRIDGE_EVALUATE_PROVERS="${BRIDGE_EVALUATE_PROVERS:-false}"
-BRIDGE_LOSS_ADAPTERS="${BRIDGE_LOSS_ADAPTERS:-none}"
+BRIDGE_LOSS_ADAPTERS="${BRIDGE_LOSS_ADAPTERS:-modal_frame_logic,deontic_norms}"
 MAX_SAMPLE_TEXT_CHARS="${MAX_SAMPLE_TEXT_CHARS:-4096}"
+TRAIN_COUNT="${TRAIN_COUNT:-8}"
+VALIDATION_COUNT="${VALIDATION_COUNT:-8}"
+MAX_INNER_ITERATIONS="${MAX_INNER_ITERATIONS:-3}"
+MAX_ITEMS="${MAX_ITEMS:-8}"
+VALIDATION_CANARY_INDICES="${VALIDATION_CANARY_INDICES:-28380,25280,18192,38585}"
 AUTOENCODER_DEVICE="${AUTOENCODER_DEVICE:-cpu}"
-AUTOENCODER_BRIDGE_WORKERS="${AUTOENCODER_BRIDGE_WORKERS:-2}"
-BRIDGE_ADAPTER_WORKERS="${BRIDGE_ADAPTER_WORKERS:-${AUTOENCODER_BRIDGE_WORKERS}}"
+AUTOENCODER_BRIDGE_WORKERS="${AUTOENCODER_BRIDGE_WORKERS:-12}"
+BRIDGE_ADAPTER_WORKERS="${BRIDGE_ADAPTER_WORKERS:-4}"
 CODEX_PARALLEL_SCOPES="${CODEX_PARALLEL_SCOPES:-all}"
 CODEX_SCOPE_WORKERS="${CODEX_SCOPE_WORKERS:-1}"
-CODEX_SCOPE_WORKER_MAP="${CODEX_SCOPE_WORKER_MAP:-compiler_parser=2,compiler_registry=2,compiler_ambiguity=2,ir_decompiler=2,frame_logic=2,bridge=2,deontic=2,modal=2,tdfol=2,cec=2,knowledge_graphs=2}"
+CODEX_SCOPE_WORKER_MAP="${CODEX_SCOPE_WORKER_MAP:-compiler_parser=3,compiler_registry=3,compiler_ambiguity=3,ir_decompiler=4,frame_logic=3,bridge=3,deontic=3,modal=3,flogic=2,tdfol=3,cec=3,knowledge_graphs=3,external_provers=1,fol=1,loss=1,batch=1,benchmark=1,types=1,common=1,integration=1,integrations=1,observability=1,security=1,zkp=1,compatibility=1,external_binary=1}"
 CODEX_APPLY_MODE="${CODEX_APPLY_MODE:-apply_to_main}"
 CODEX_COMMIT_MODE="${CODEX_COMMIT_MODE:-none}"
 CODEX_MODEL="${CODEX_MODEL:-gpt-5.3-codex}"
 CODEX_BUNDLE_MODE="${CODEX_BUNDLE_MODE:-vector}"
-CODEX_VECTOR_MIN_SIMILARITY="${CODEX_VECTOR_MIN_SIMILARITY:-0.65}"
-CODEX_VECTOR_FILL_MIN_SIMILARITY="${CODEX_VECTOR_FILL_MIN_SIMILARITY:-0.45}"
+CODEX_VECTOR_MIN_SIMILARITY="${CODEX_VECTOR_MIN_SIMILARITY:-0.62}"
+CODEX_VECTOR_FILL_MIN_SIMILARITY="${CODEX_VECTOR_FILL_MIN_SIMILARITY:-0.40}"
 CODEX_VECTOR_MIN_BUNDLE_SIZE="${CODEX_VECTOR_MIN_BUNDLE_SIZE:-3}"
-CODEX_VECTOR_MAX_BUNDLE_WAIT_SECONDS="${CODEX_VECTOR_MAX_BUNDLE_WAIT_SECONDS:-180}"
+CODEX_VECTOR_MAX_BUNDLE_WAIT_SECONDS="${CODEX_VECTOR_MAX_BUNDLE_WAIT_SECONDS:-120}"
 CODEX_VECTOR_STALE_DRAIN_COOLDOWN_SECONDS="${CODEX_VECTOR_STALE_DRAIN_COOLDOWN_SECONDS:-120}"
-CODEX_TARGET_FILE_LANE_LOCK_SECONDS="${CODEX_TARGET_FILE_LANE_LOCK_SECONDS:-1200}"
+CODEX_TARGET_FILE_LANE_LOCK_SECONDS="${CODEX_TARGET_FILE_LANE_LOCK_SECONDS:-900}"
 CODEX_TARGET_FILE_LANE_LOCK_SCOPES="${CODEX_TARGET_FILE_LANE_LOCK_SCOPES:-all}"
 CODEX_LANE_LOCK_MODE="${CODEX_LANE_LOCK_MODE:-hybrid}"
 CODEX_TASK_EMBEDDINGS_PROVIDER="${CODEX_TASK_EMBEDDINGS_PROVIDER:-local_adapter}"
@@ -71,12 +81,13 @@ fi
 export IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS="${BRIDGE_ADAPTER_WORKERS}"
 
 COMMON_ARGS=(
-  --train-count 4
-  --validation-count 4
+  --train-count "${TRAIN_COUNT}"
+  --validation-count "${VALIDATION_COUNT}"
   --validation-canary-count 4
+  --validation-canary-indices "${VALIDATION_CANARY_INDICES}"
   --max-sample-text-chars "${MAX_SAMPLE_TEXT_CHARS}"
-  --max-inner-iterations 3
-  --max-items 8
+  --max-inner-iterations "${MAX_INNER_ITERATIONS}"
+  --max-items "${MAX_ITEMS}"
   --bridge-loss-adapters "${BRIDGE_LOSS_ADAPTERS}"
   --bridge-evaluate-provers "${BRIDGE_EVALUATE_PROVERS}"
   --autoencoder-device "${AUTOENCODER_DEVICE}"
@@ -181,12 +192,18 @@ echo "[pipeline] base_run_id=${BASE_RUN_ID}"
 echo "[pipeline] codex_exec_mode=${CODEX_EXEC_MODE}"
 echo "[pipeline] sweep_loop_role=${SWEEP_LOOP_ROLE}"
 echo "[pipeline] hyperparam_budget_seconds=${TOTAL_TRIAL_SECONDS}"
+echo "[pipeline] hyperparam_wall_budget_seconds=${HYPERPARAM_SWEEP_WALL_SECONDS}"
 echo "[pipeline] hyperparam_parallelism=${TRIAL_PARALLELISM}"
 echo "[pipeline] hyperparam_estimated_wall_seconds=${TOTAL_TRIAL_WALL_SECONDS}"
 echo "[pipeline] final_run_seconds=${FINAL_SECONDS}"
 echo "[pipeline] bridge_loss_adapters=${BRIDGE_LOSS_ADAPTERS}"
 echo "[pipeline] bridge_evaluate_provers=${BRIDGE_EVALUATE_PROVERS}"
 echo "[pipeline] max_sample_text_chars=${MAX_SAMPLE_TEXT_CHARS}"
+echo "[pipeline] train_count=${TRAIN_COUNT}"
+echo "[pipeline] validation_count=${VALIDATION_COUNT}"
+echo "[pipeline] max_inner_iterations=${MAX_INNER_ITERATIONS}"
+echo "[pipeline] max_items=${MAX_ITEMS}"
+echo "[pipeline] validation_canary_indices=${VALIDATION_CANARY_INDICES}"
 echo "[pipeline] autoencoder_device=${AUTOENCODER_DEVICE}"
 echo "[pipeline] autoencoder_bridge_workers=${AUTOENCODER_BRIDGE_WORKERS}"
 echo "[pipeline] bridge_adapter_workers=${BRIDGE_ADAPTER_WORKERS}"
@@ -203,6 +220,7 @@ best_run_id=""
 best_cfg=""
 best_ce="1000000000000000000000000"
 best_cos="-1000000000"
+best_score="1000000000000000000000000"
 
 trial_id_for_index() {
   local idx="$1"
@@ -394,48 +412,88 @@ score_trial_index() {
     return 0
   fi
 
-  local ce_score cos_score
-  read -r ce_score cos_score < <(
+  local ce_score cos_score ir_ce_score ir_cos_score bridge_score source_copy_score structural_text_score trial_score
+  read -r ce_score cos_score ir_ce_score ir_cos_score bridge_score source_copy_score structural_text_score trial_score < <(
     "${PYTHON_BIN}" - "${summary_path}" <<'PY'
 import json
+import math
 import sys
 path = sys.argv[1]
 with open(path, "r", encoding="utf-8") as handle:
     data = json.load(handle)
-ce = float(data.get("best_validation_ce", 1e9))
-cos = float(data.get("best_validation_cosine", -1.0))
-print(f"{ce} {cos}")
+
+def finite(name, default):
+    try:
+        value = float(data.get(name, default))
+    except (TypeError, ValueError):
+        return float(default)
+    if math.isnan(value) or math.isinf(value):
+        return float(default)
+    return value
+
+ce = finite("best_validation_ce", 1e12)
+cos = finite("best_validation_cosine", -1.0)
+ir_ce = finite("best_validation_ir_ce", 1e12)
+ir_cos = finite("best_validation_ir_cosine", -1.0)
+bridge = finite("best_validation_logic_bridge_total_loss", 0.0)
+if bridge > 1e11:
+    bridge = 0.0
+source_copy = finite("best_validation_ir_source_copy_loss", 0.0)
+if source_copy > 1e11:
+    source_copy = 0.0
+structural_text = finite("best_validation_ir_structural_text_reconstruction", 0.0)
+if structural_text > 1e11:
+    structural_text = 0.0
+score = (
+    ce
+    + (0.90 * ir_ce)
+    + (0.40 * bridge)
+    + (0.70 * source_copy)
+    + (0.40 * structural_text)
+    - (0.50 * cos)
+    - (0.80 * ir_cos)
+)
+print(f"{ce} {cos} {ir_ce} {ir_cos} {bridge} {source_copy} {structural_text} {score}")
 PY
   )
   local valid_trial
   valid_trial="$("${PYTHON_BIN}" - <<PY
 ce = float("${ce_score}")
 cos = float("${cos_score}")
-print("1" if ce < 1e11 and cos > -0.99 else "0")
+ir_ce = float("${ir_ce_score}")
+score = float("${trial_score}")
+print("1" if ce < 1e11 and ir_ce < 1e11 and cos > -0.99 and score < 1e11 else "0")
 PY
 )"
   if [[ "${valid_trial}" != "1" ]]; then
-    echo "[trial] skipped_invalid_score run_id=${trial_id} ce=${ce_score} cos=${cos_score}"
+    echo "[trial] skipped_invalid_score run_id=${trial_id} ce=${ce_score} cos=${cos_score} ir_ce=${ir_ce_score} ir_cos=${ir_cos_score} score=${trial_score}"
     return 0
   fi
-  echo "[trial] score run_id=${trial_id} best_validation_ce=${ce_score} best_validation_cosine=${cos_score}"
+  echo "[trial] score run_id=${trial_id} score=${trial_score} best_validation_ce=${ce_score} best_validation_cosine=${cos_score} best_validation_ir_ce=${ir_ce_score} best_validation_ir_cosine=${ir_cos_score} best_validation_ir_source_copy_loss=${source_copy_score} best_validation_ir_structural_text_reconstruction=${structural_text_score} best_validation_logic_bridge_total_loss=${bridge_score}"
 
   local better
   better="$("${PYTHON_BIN}" - <<PY
+best_score = float("${best_score}")
+score = float("${trial_score}")
 best_ce = float("${best_ce}")
-best_cos = float("${best_cos}")
 ce = float("${ce_score}")
+best_cos = float("${best_cos}")
 cos = float("${cos_score}")
-is_better = (ce < best_ce) or (abs(ce - best_ce) <= 1e-12 and cos > best_cos)
+is_better = (
+    score < best_score
+    or (abs(score - best_score) <= 1e-12 and ce < best_ce)
+    or (abs(score - best_score) <= 1e-12 and abs(ce - best_ce) <= 1e-12 and cos > best_cos)
+)
 print("1" if is_better else "0")
 PY
 )"
   if [[ "${better}" == "1" ]]; then
     best_ce="${ce_score}"
     best_cos="${cos_score}"
+    best_score="${trial_score}"
     best_run_id="${trial_id}"
     best_cfg="${cfg}"
-    echo "[trial] new_best run_id=${best_run_id} ce=${best_ce} cos=${best_cos}"
+    echo "[trial] new_best run_id=${best_run_id} score=${best_score} ce=${best_ce} cos=${best_cos} ir_ce=${ir_ce_score} ir_cos=${ir_cos_score}"
   fi
 }
 
@@ -500,7 +558,7 @@ if [[ -z "${best_run_id}" ]]; then
   exit 1
 fi
 
-echo "[pipeline] best_trial=${best_run_id} cfg=${best_cfg} ce=${best_ce} cos=${best_cos}"
+echo "[pipeline] best_trial=${best_run_id} cfg=${best_cfg} score=${best_score} ce=${best_ce} cos=${best_cos}"
 
 final_run_id="${BASE_RUN_ID}-best-8h"
 lr=""

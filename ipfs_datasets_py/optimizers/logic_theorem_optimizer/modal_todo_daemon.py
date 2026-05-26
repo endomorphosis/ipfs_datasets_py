@@ -82,7 +82,11 @@ PROGRAM_SYNTHESIS_ACTION_TARGET_METRICS = {
     "improve_flogic_frame_alignment": ("flogic_similarity_loss",),
     "increase_modal_ir_span_coverage": ("modal_span_coverage_loss",),
     "refine_modal_family_cue_rules": ("cross_entropy_loss",),
-    "refine_semantic_decompiler_reconstruction": ("text_reconstruction_loss",),
+    "refine_semantic_decompiler_reconstruction": (
+        "source_copy_loss",
+        "structural_text_reconstruction_loss",
+        "text_reconstruction_loss",
+    ),
     "refine_typed_ir_or_decompiler_slots": (
         "embedding_cosine_similarity",
         "reconstruction_loss",
@@ -725,6 +729,8 @@ class ModalLossTodoGenerator:
         "modal_span_coverage_loss": 0.0,
         "ontology_violation_count": 0.0,
         "reconstruction_loss": 0.05,
+        "source_copy_loss": 0.35,
+        "structural_text_reconstruction_loss": 0.50,
         "symbolic_validity_penalty": 0.0,
         "tdfol_no_formula_loss": 0.0,
         "tdfol_parse_failure_ratio": 0.0,
@@ -802,6 +808,14 @@ class ModalLossTodoGenerator:
             "text_reconstruction_loss": (
                 "refine_semantic_decompiler_reconstruction",
                 "Fix deterministic decompiler reconstruction so source semantics survive the IR round trip.",
+            ),
+            "source_copy_loss": (
+                "refine_semantic_decompiler_reconstruction",
+                "Reduce provenance-span copying so decompiler quality comes from typed IR slots rather than replayed source text.",
+            ),
+            "structural_text_reconstruction_loss": (
+                "refine_semantic_decompiler_reconstruction",
+                "Improve structural decompiler text reconstructed from modal/frame/deontic IR slots with copied source spans removed.",
             ),
             "cec_dcec_no_formula_loss": (
                 "repair_cec_dcec_bridge",

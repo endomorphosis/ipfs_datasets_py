@@ -1,0 +1,16 @@
+{
+  "compiler_registry|modal.compiler.registry|{\"action\":\"refine_modal_family_cue_rules\",\"family_pairs\":[\"deontic->frame\",\"frame->deontic\"],\"program_synthesis_scope\":\"compiler_registry\",\"target_component\":\"modal.compiler.registry\"}": {
+    "anchor_id": "program-5d2b8c46e00a1cbb",
+    "expires_at": "2026-05-26T17:47:42+00:00",
+    "expires_at_epoch": 1779817662.3736353,
+    "selected_count": 1,
+    "worker_id": "codex-compiler_registry-06"
+  },
+  "ir_decompiler|modal.ir_decompiler|{\"action\":\"refine_typed_ir_or_decompiler_slots\",\"family_pairs\":[\"conditional_normative->conditional_normative\",\"deontic->frame\",\"frame->deontic\",\"temporal->temporal\"],\"program_synthesis_scope\":\"ir_decompiler\",\"target_component\":\"modal.ir_decompiler\"}": {
+    "anchor_id": "program-7b67c639cb5ee998",
+    "expires_at": "2026-05-26T17:49:37+00:00",
+    "expires_at_epoch": 1779817777.4323509,
+    "selected_count": 2,
+    "worker_id": "codex-ir_decompiler-05"
+  }
+}

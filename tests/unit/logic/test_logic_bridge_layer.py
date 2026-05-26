@@ -168,6 +168,23 @@ def test_deontic_bridge_phase8_quality_gate_uses_present_optional_slots_only() -
     assert report.round_trip.extra_losses["deontic_phase8_quality_incomplete_loss"] == 0.0
 
 
+def test_deontic_bridge_decoder_slot_loss_uses_present_optional_slots_only() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("deontic_norms")
+    report = adapter.evaluate(
+        "The electors shall vote for President and Vice President, respectively, in the manner directed by the Constitution.",
+        document_id="deontic-bridge-decoder-slot-scope",
+        citation="Deontic Bridge Decoder Slot Scope",
+    )
+
+    summary = report.ir_document.views["deontic_reconstruction_slot_loss"].payload["summary"]
+    assert summary["required_slots"] == ["actor", "modality", "action"]
+    assert summary["missing_required_slots"] == []
+    assert summary["slot_reconstruction_complete"] is True
+    assert report.round_trip.extra_losses["deontic_decoder_slot_loss"] == 0.0
+
+
 def test_deontic_bridge_treats_reconstruction_neutral_warning_bundle_as_quality_complete() -> None:
     from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
 

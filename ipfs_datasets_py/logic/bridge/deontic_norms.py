@@ -426,7 +426,8 @@ def _deontic_export_context_from_parser_elements(
 ) -> dict[str, Any]:
     context = _empty_deontic_export_context()
     norm_objects = _legal_norm_objects_from_parser_elements(parser_elements)
-    required_slots_by_source = _phase8_required_slots_by_source(norm_objects)
+    provenance_required_slots_by_source = _phase8_required_slots_by_source(norm_objects)
+    decoder_required_slots_by_source = _decoder_required_slots_by_source(norm_objects)
     context["norm_count"] = len(norm_objects)
     if not norm_objects:
         return context
@@ -439,6 +440,7 @@ def _deontic_export_context_from_parser_elements(
         build_phase8_quality_summary_record,
         build_phase8_quality_summary_records,
         build_prover_syntax_records_from_ir,
+        build_reconstruction_slot_loss_record,
         build_reconstruction_slot_loss_records,
         summarize_ir_slot_provenance_audit_records,
         summarize_phase8_quality_records,
@@ -448,22 +450,28 @@ def _deontic_export_context_from_parser_elements(
     try:
         decoder_records = build_decoder_records_from_irs(norm_objects)
         context["decoder_records"] = decoder_records
-        context["reconstruction_slot_loss_records"] = (
-            build_reconstruction_slot_loss_records(decoder_records)
+        (
+            reconstruction_slot_loss_records,
+            reconstruction_slot_loss_summary,
+        ) = _reconstruction_slot_loss_from_decoder_records(
+            decoder_records,
+            required_slots_by_source=decoder_required_slots_by_source,
+            build_record=build_reconstruction_slot_loss_record,
+            build_records=build_reconstruction_slot_loss_records,
+            summarize=summarize_reconstruction_slot_loss,
         )
-        context["reconstruction_slot_loss_summary"] = (
-            summarize_reconstruction_slot_loss(decoder_records)
-        )
+        context["reconstruction_slot_loss_records"] = reconstruction_slot_loss_records
+        context["reconstruction_slot_loss_summary"] = reconstruction_slot_loss_summary
     except Exception as exc:  # pragma: no cover - diagnostics only
         _record_export_context_error(context, "decoder_reconstruction", exc)
         decoder_records = []
 
     try:
-        if required_slots_by_source:
+        if provenance_required_slots_by_source:
             ir_slot_provenance_records = []
             for norm in norm_objects:
                 source_id = str(getattr(norm, "source_id", "") or "").strip()
-                slots = required_slots_by_source.get(source_id)
+                slots = provenance_required_slots_by_source.get(source_id)
                 if slots:
                     ir_slot_provenance_records.append(
                         build_ir_slot_provenance_audit_record(norm, slots=slots)
@@ -508,7 +516,12 @@ def _deontic_export_context_from_parser_elements(
         _record_export_context_error(context, "proof_and_repair_records", exc)
 
     try:
-        if required_slots_by_source:
+        phase8_required_slots_by_source = (
+            decoder_required_slots_by_source
+            if decoder_required_slots_by_source
+            else provenance_required_slots_by_source
+        )
+        if phase8_required_slots_by_source:
             decoder_by_source = _group_records_by_source(decoder_records)
             prover_by_source = _group_records_by_source(prover_syntax_records)
             provenance_by_source = _group_records_by_source(ir_slot_provenance_records)
@@ -523,7 +536,7 @@ def _deontic_export_context_from_parser_elements(
                     decoder_records=decoder_by_source.get(source_id, []),
                     prover_syntax_records=prover_by_source.get(source_id, []),
                     ir_slot_provenance_records=provenance_by_source.get(source_id, []),
-                    required_slots=required_slots_by_source.get(source_id, ()),
+                    required_slots=phase8_required_slots_by_source.get(source_id, ()),
                 )
                 for source_id in source_ids
             ]
@@ -630,6 +643,85 @@ def _phase8_required_slots_by_source(
     return required_by_source
 
 
+def _decoder_required_slots_by_source(
+    norm_objects: Sequence[Any],
+) -> dict[str, tuple[str, ...]]:
+    """Return source-keyed decoder slot requirements by deontic family.
+
+    The decoder emits family-specific phrase slots: definition/applicability
+    connectors are fixed text and should not force a missing ``modality`` slot
+    in reconstruction loss. This helper keeps core deontic checks strict for
+    O/P/F clauses while using decoder-native requirements for other families.
+    """
+
+    if not norm_objects:
+        return {}
+
+    required_by_source: dict[str, tuple[str, ...]] = {}
+    optional_slots = (
+        "conditions",
+        "exceptions",
+        "temporal_constraints",
+        "cross_references",
+    )
+    for norm in norm_objects:
+        source_id = str(getattr(norm, "source_id", "") or "").strip()
+        if not source_id:
+            continue
+
+        merged = list(required_by_source.get(source_id, ()))
+        for slot_name in _decoder_required_core_slots_for_norm(norm):
+            if slot_name and slot_name not in merged:
+                merged.append(slot_name)
+
+        for slot_name in optional_slots:
+            if slot_name in merged:
+                continue
+            slot_value = _decoder_slot_value(norm, slot_name)
+            if _slot_value_present(slot_value):
+                merged.append(slot_name)
+
+        required_by_source[source_id] = tuple(merged)
+    return required_by_source
+
+
+def _decoder_required_core_slots_for_norm(norm: Any) -> tuple[str, ...]:
+    norm_type = str(getattr(norm, "norm_type", "") or "").strip().lower()
+    modality = str(getattr(norm, "modality", "") or "").strip().upper()
+
+    if norm_type == "definition" or modality == "DEF":
+        return ("actor",)
+    if norm_type in {"applicability", "exemption", "instrument_lifecycle"} or modality in {
+        "APP",
+        "EXEMPT",
+        "LIFE",
+    }:
+        return ("actor", "action")
+    return ("actor", "modality", "action")
+
+
+def _decoder_slot_value(norm: Any, slot_name: str) -> Any:
+    if slot_name == "cross_references":
+        references = list(getattr(norm, "cross_references", ()) or ())
+        references.extend(
+            reference
+            for reference in list(getattr(norm, "resolved_cross_references", ()) or ())
+            if reference not in references
+        )
+        return references
+    return getattr(norm, slot_name, None)
+
+
+def _slot_value_present(value: Any) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, str):
+        return bool(value.strip())
+    if isinstance(value, (list, tuple, set, dict)):
+        return len(value) > 0
+    return True
+
+
 def _group_records_by_source(
     records: Sequence[Mapping[str, Any]],
 ) -> dict[str, list[dict[str, Any]]]:
@@ -642,6 +734,165 @@ def _group_records_by_source(
             continue
         grouped.setdefault(source_id, []).append(dict(record))
     return grouped
+
+
+def _reconstruction_slot_loss_from_decoder_records(
+    decoder_records: Sequence[Mapping[str, Any]],
+    *,
+    required_slots_by_source: Mapping[str, Sequence[str]],
+    build_record: Any,
+    build_records: Any,
+    summarize: Any,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Build reconstruction slot-loss rows with per-source required slots.
+
+    The bridge already derives per-source Phase 8 required slots from typed IR
+    (core slots plus only optional slots that are present). Reuse those
+    requirements for decoder slot-loss rows so missing optional structures do
+    not inflate reconstruction loss for otherwise complete clauses.
+    """
+
+    if not decoder_records:
+        return [], {}
+
+    if not required_slots_by_source:
+        return (
+            list(build_records(decoder_records)),
+            dict(summarize(decoder_records)),
+        )
+
+    grouped = _group_records_by_source(decoder_records)
+    rows: list[dict[str, Any]] = []
+    for source_id in sorted(grouped):
+        source_slots = tuple(
+            slot
+            for slot in (
+                str(slot_name or "").strip()
+                for slot_name in required_slots_by_source.get(source_id, ())
+            )
+            if slot
+        )
+        if source_slots:
+            rows.append(
+                build_record(
+                    source_id,
+                    grouped[source_id],
+                    required_slots=source_slots,
+                )
+            )
+            continue
+        rows.append(build_record(source_id, grouped[source_id]))
+
+    return rows, _summarize_reconstruction_slot_loss_rows(rows)
+
+
+def _summarize_reconstruction_slot_loss_rows(
+    rows: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Aggregate source-level reconstruction rows into bridge summary metrics."""
+
+    if not rows:
+        return {}
+
+    source_ids: set[str] = set()
+    required_slots: list[str] = []
+    grounded_required_slots: list[str] = []
+    missing_required_slots: list[str] = []
+    ungrounded_required_slots: list[str] = []
+    extra_ungrounded_slots: list[str] = []
+    blockers: set[str] = set()
+
+    record_count = 0
+    required_slot_count = 0
+    grounded_required_slot_count = 0
+    missing_required_slot_count = 0
+    ungrounded_slot_count = 0
+    all_complete = True
+
+    for row in rows:
+        if not isinstance(row, Mapping):
+            continue
+
+        summary = row.get("coverage_summary")
+        summary_mapping = summary if isinstance(summary, Mapping) else row
+
+        source_id = str(row.get("source_id") or "").strip()
+        if source_id:
+            source_ids.add(source_id)
+
+        record_count += int(summary_mapping.get("record_count") or 0)
+        required_slot_count += int(summary_mapping.get("required_slot_count") or 0)
+        grounded_required_slot_count += int(
+            summary_mapping.get("grounded_required_slot_count") or 0
+        )
+        missing_required_slot_count += int(
+            summary_mapping.get("missing_required_slot_count") or 0
+        )
+        ungrounded_slot_count += int(summary_mapping.get("ungrounded_slot_count") or 0)
+
+        _append_unique_strings(required_slots, summary_mapping.get("required_slots"))
+        _append_unique_strings(
+            grounded_required_slots,
+            summary_mapping.get("grounded_required_slots"),
+        )
+        _append_unique_strings(
+            missing_required_slots,
+            summary_mapping.get("missing_required_slots"),
+        )
+        _append_unique_strings(
+            ungrounded_required_slots,
+            summary_mapping.get("ungrounded_required_slots"),
+        )
+        _append_unique_strings(
+            extra_ungrounded_slots,
+            summary_mapping.get("extra_ungrounded_slots"),
+        )
+        blockers.update(_list_of_strings(row.get("coverage_blockers")))
+        blockers.update(_list_of_strings(summary_mapping.get("coverage_blockers")))
+
+        if summary_mapping.get("slot_reconstruction_complete") is not True:
+            all_complete = False
+
+    if record_count <= 0:
+        record_count = len(
+            [row for row in rows if isinstance(row, Mapping)]
+        )
+
+    grounded_required_slot_rate = (
+        round(grounded_required_slot_count / required_slot_count, 6)
+        if required_slot_count
+        else 0.0
+    )
+    grounded_or_ungrounded = grounded_required_slot_count + ungrounded_slot_count
+    ungrounded_decoded_slot_rate = (
+        round(ungrounded_slot_count / grounded_or_ungrounded, 6)
+        if grounded_or_ungrounded
+        else 0.0
+    )
+
+    return {
+        "source_ids": sorted(source_ids),
+        "record_count": record_count,
+        "required_slots": required_slots,
+        "grounded_required_slots": grounded_required_slots,
+        "missing_required_slots": missing_required_slots,
+        "ungrounded_required_slots": ungrounded_required_slots,
+        "extra_ungrounded_slots": extra_ungrounded_slots,
+        "required_slot_count": required_slot_count,
+        "grounded_required_slot_count": grounded_required_slot_count,
+        "missing_required_slot_count": missing_required_slot_count,
+        "ungrounded_slot_count": ungrounded_slot_count,
+        "slot_reconstruction_complete": bool(rows) and all_complete,
+        "grounded_required_slot_rate": grounded_required_slot_rate,
+        "ungrounded_decoded_slot_rate": ungrounded_decoded_slot_rate,
+        "coverage_blockers": sorted(blockers),
+    }
+
+
+def _append_unique_strings(target: list[str], value: Any) -> None:
+    for item in _list_of_strings(value):
+        if item not in target:
+            target.append(item)
 
 
 def _phase8_summary_from_records(

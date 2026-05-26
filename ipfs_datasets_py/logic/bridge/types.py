@@ -105,6 +105,10 @@ class RoundTripMetrics:
             "frame_ranking_loss",
             "flogic_similarity_score",
             "flogic_similarity_loss",
+            "raw_source_embedding_cosine_similarity",
+            "source_span_copy_ratio",
+            "source_span_text_reconstruction_loss",
+            "structural_text_reconstruction_similarity",
             "symbolic_validity_penalty",
         }
         return cls(

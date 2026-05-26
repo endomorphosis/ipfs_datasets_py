@@ -94,6 +94,11 @@ _BRIDGE_CONTRACT_LEGISLATIVE_HISTORY_CUE_RE = re.compile(
     r"pub\.\s*l\.",
     flags=re.IGNORECASE,
 )
+_BRIDGE_CONTRACT_STATUS_OPERATION_CUE_RE = re.compile(
+    r"\b(?:declared|declare(?:d|s)?\s+to\s+be|abandon(?:ed|s|ing)?|"
+    r"transferred|reclassified|renumbered|omitted|reserved)\b",
+    flags=re.IGNORECASE,
+)
 _BRIDGE_CONTRACT_FRAME_DEFINITION_CUE_RE = re.compile(
     r"\b(?:means|defined\s+as|in\s+this\s+section)\b",
     flags=re.IGNORECASE,
@@ -1026,12 +1031,24 @@ def _rebalance_dense_contract_distribution(
     has_repeated_normative_deontic_signal = (
         permission_deontic_cue_count + obligation_deontic_cue_count
     ) >= 3
+    status_operation_cue_count = _cue_count(
+        _BRIDGE_CONTRACT_STATUS_OPERATION_CUE_RE,
+        normalized_text,
+    )
+    has_status_operation_cue = status_operation_cue_count > 0
     has_scaffolded_normative_operations = (
         has_dense_statute_scaffold
         and has_repeated_normative_deontic_signal
         and has_deontic_cue
         and not has_epistemic_heading_cue
         and not has_frame_definition_cue
+        and not has_authority_frame_cue
+        and not has_enforcement_frame_cue
+    )
+    has_structural_status_operation_signal = (
+        has_dense_statute_scaffold
+        and has_status_operation_cue
+        and has_structural_only_frame_cue
         and not has_authority_frame_cue
         and not has_enforcement_frame_cue
     )
@@ -1144,15 +1161,23 @@ def _rebalance_dense_contract_distribution(
             caps["TDFOL.prover"] = min(caps.get("TDFOL.prover", 1.0), 0.16)
             caps["zkp.circuits"] = min(caps.get("zkp.circuits", 1.0), 0.11)
         if has_scaffolded_normative_operations:
-            caps["CEC.native"] = min(caps["CEC.native"], 0.20)
+            caps["CEC.native"] = min(caps["CEC.native"], 0.18)
             caps["knowledge_graphs.neo4j_compat"] = min(
                 caps["knowledge_graphs.neo4j_compat"],
-                0.16,
+                0.14,
             )
             caps["TDFOL.prover"] = max(
                 caps.get("TDFOL.prover", 0.0),
                 0.20 if has_temporal_cue else 0.15,
             )
+            caps["zkp.circuits"] = min(caps.get("zkp.circuits", 1.0), 0.10)
+        if has_structural_status_operation_signal and not has_repealed_history_frame_cue:
+            caps["CEC.native"] = min(caps["CEC.native"], 0.22)
+            caps["knowledge_graphs.neo4j_compat"] = min(
+                caps["knowledge_graphs.neo4j_compat"],
+                0.20,
+            )
+            caps["TDFOL.prover"] = min(caps.get("TDFOL.prover", 1.0), 0.16)
             caps["zkp.circuits"] = min(caps.get("zkp.circuits", 1.0), 0.10)
         if (
             has_conditional_cue
@@ -1250,18 +1275,25 @@ def _rebalance_dense_contract_distribution(
             elif has_scaffolded_normative_operations:
                 if has_temporal_cue:
                     target_mix = (
-                        ("deontic.ir", 0.52),
+                        ("deontic.ir", 0.60),
                         ("TDFOL.prover", 0.24),
-                        ("CEC.native", 0.16),
-                        ("knowledge_graphs.neo4j_compat", 0.08),
+                        ("CEC.native", 0.11),
+                        ("knowledge_graphs.neo4j_compat", 0.05),
                     )
                 else:
                     target_mix = (
-                        ("deontic.ir", 0.60),
-                        ("CEC.native", 0.22),
+                        ("deontic.ir", 0.66),
+                        ("CEC.native", 0.18),
                         ("TDFOL.prover", 0.10),
-                        ("knowledge_graphs.neo4j_compat", 0.08),
+                        ("knowledge_graphs.neo4j_compat", 0.06),
                     )
+            elif has_structural_status_operation_signal and not has_repealed_history_frame_cue:
+                target_mix = (
+                    ("deontic.ir", 0.44),
+                    ("CEC.native", 0.30),
+                    ("knowledge_graphs.neo4j_compat", 0.18),
+                    ("TDFOL.prover", 0.08),
+                )
             elif (
                 has_conditional_cue
                 and has_deontic_cue

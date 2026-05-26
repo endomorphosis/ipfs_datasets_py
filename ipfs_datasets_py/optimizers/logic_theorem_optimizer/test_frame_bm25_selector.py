@@ -532,3 +532,34 @@ def test_frame_ontology_contextualized_terms_contextualize_modal_cues_and_low_si
     assert "citation_title_number_leading_digit_2" in terms
     assert "source_id_title_number_leading_digit_2" in terms
     assert "modal_cue_after" in terms
+
+
+def test_frame_ontology_terms_extract_predicate_argument_anchor_terms() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "predicate-argument:source-object-role:education:clause",
+            "predicate-argument:source-object-family:education:frame",
+            "predicate-argument:source-action-role:being:clause",
+            "predicate-argument:operator:deontic:d:o",
+            "predicate-argument:source-object-role:appointed:clause",
+            "predicate-argument:source-action-family:being:deontic",
+            "predicate-argument:source-action-role:meaning:clause",
+            "predicate-argument:source-object-role:constitution:clause",
+            "predicate-argument:source-subject-role:states:clause",
+            "predicate-argument:source-object-family:conservation:frame",
+        ]
+    )
+
+    assert "source_object_role_education_clause" in terms
+    assert "source_object_family_conservation_frame" in terms
+    assert "education" in terms
+    assert "education_frame" in terms
+    assert "being" in terms
+    assert "appointed" in terms
+    assert "meaning" in terms
+    assert "constitution" in terms
+    assert "states" in terms
+    assert "conservation" in terms
+    assert "conservation_frame" in terms
+    assert "deontic" in terms
+    assert "deontic_d_o" in terms

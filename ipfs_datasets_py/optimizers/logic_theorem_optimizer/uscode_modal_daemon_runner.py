@@ -725,7 +725,13 @@ def compiler_ir_metric_block(
         "frame_ranking_loss": [],
         "modal_span_coverage_loss": [],
         "ontology_violation_count": [],
+        "raw_source_embedding_cosine_similarity": [],
         "reconstruction_loss": [],
+        "source_copy_loss": [],
+        "source_span_copy_ratio": [],
+        "source_span_text_reconstruction_loss": [],
+        "structural_text_reconstruction_loss": [],
+        "structural_text_reconstruction_similarity": [],
         "symbolic_validity_penalty": [],
         "text_reconstruction_loss": [],
     }
@@ -776,6 +782,11 @@ def compiler_ir_metric_block(
     if "text_reconstruction_loss" in block:
         block["text_reconstruction_similarity"] = round(
             1.0 - float(block["text_reconstruction_loss"]),
+            9,
+        )
+    if "structural_text_reconstruction_loss" in block:
+        block["structural_text_reconstruction_similarity"] = round(
+            1.0 - float(block["structural_text_reconstruction_loss"]),
             9,
         )
     return block
@@ -1807,6 +1818,8 @@ def build_paired_daemon_commands(
         str(args.validation_count),
         "--validation-canary-count",
         str(getattr(args, "validation_canary_count", 4)),
+        "--validation-canary-indices",
+        str(getattr(args, "validation_canary_indices", "")),
         "--max-sample-text-chars",
         str(getattr(args, "max_sample_text_chars", 0)),
         "--max-inner-iterations",
@@ -4432,6 +4445,8 @@ def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Pat
         "best_validation_ir_ce": 1.0e12,
         "best_validation_ir_cosine": -1.0,
         "best_validation_ir_reconstruction": 1.0e12,
+        "best_validation_ir_source_copy_loss": 1.0e12,
+        "best_validation_ir_structural_text_reconstruction": 1.0e12,
         "best_validation_ir_text_reconstruction": 1.0e12,
         "best_validation_reconstruction": 1.0e12,
         "best_validation_logic_bridge_acceptance": -1.0,
@@ -4535,6 +4550,15 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
             "Sample this many fixed holdout rows once per run and use them for "
             "autoencoder acceptance so validation deltas are comparable across cycles. "
             "Zero keeps the prior rotating-validation behavior."
+        ),
+    )
+    parser.add_argument(
+        "--validation-canary-indices",
+        default="",
+        help=(
+            "Optional comma-separated U.S. Code row indices to reuse as the "
+            "fixed validation canary set. This makes hyperparameter trials "
+            "directly comparable on IR and autoencoder metrics."
         ),
     )
     parser.add_argument(
@@ -6143,6 +6167,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     summary.setdefault("bridge_loss_samples", 0)
     summary.setdefault("bridge_loss_signals", 0)
     summary.setdefault("bridge_metric_failures", 0)
+    summary.setdefault("best_validation_ir_source_copy_loss", 1.0e12)
+    summary.setdefault("best_validation_ir_structural_text_reconstruction", 1.0e12)
     summary.setdefault("best_validation_logic_bridge_acceptance", -1.0)
     summary.setdefault("best_validation_logic_bridge_proof_failure_ratio", 1.0e12)
     summary.setdefault("best_validation_logic_bridge_total_loss", 1.0e12)
@@ -6724,12 +6750,23 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     validation_canary_sampling_attempts = 0
     if validation_canary_count > 0:
         stored_canary_indices: List[int] = []
+        raw_canary_indices = str(
+            getattr(args, "validation_canary_indices", "") or ""
+        ).strip()
+        if raw_canary_indices:
+            for item in raw_canary_indices.split(","):
+                try:
+                    index = int(item.strip())
+                except (TypeError, ValueError):
+                    continue
+                if 0 <= index < laws_table.num_rows:
+                    stored_canary_indices.append(index)
         for raw_index in list(summary.get("validation_canary_indices", []) or []):
             try:
                 index = int(raw_index)
             except (TypeError, ValueError):
                 continue
-            if 0 <= index < laws_table.num_rows:
+            if 0 <= index < laws_table.num_rows and index not in stored_canary_indices:
                 stored_canary_indices.append(index)
         for index in stored_canary_indices[:validation_canary_count]:
             row = laws_table.take([index]).to_pylist()[0]
@@ -7050,6 +7087,19 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["best_validation_ir_reconstruction"] = min(
                 summary.get("best_validation_ir_reconstruction", 1.0e12),
                 float(compiler_ir_validation.get("reconstruction_loss", 1.0e12)),
+            )
+            summary["best_validation_ir_source_copy_loss"] = min(
+                summary.get("best_validation_ir_source_copy_loss", 1.0e12),
+                float(compiler_ir_validation.get("source_copy_loss", 1.0e12)),
+            )
+            summary["best_validation_ir_structural_text_reconstruction"] = min(
+                summary.get("best_validation_ir_structural_text_reconstruction", 1.0e12),
+                float(
+                    compiler_ir_validation.get(
+                        "structural_text_reconstruction_loss",
+                        1.0e12,
+                    )
+                ),
             )
             summary["best_validation_ir_text_reconstruction"] = min(
                 summary.get("best_validation_ir_text_reconstruction", 1.0e12),

@@ -202,6 +202,186 @@ _USCODE_RESIDUAL_STATUTORY_FRAGMENT_HINT_RE = re.compile(
     r"\b(?:ch|chapter|pub|stat)\b",
     re.IGNORECASE,
 )
+_MONTH_NAME_TOKENS = frozenset(
+    {
+        "jan",
+        "january",
+        "feb",
+        "february",
+        "mar",
+        "march",
+        "apr",
+        "april",
+        "may",
+        "jun",
+        "june",
+        "jul",
+        "july",
+        "aug",
+        "august",
+        "sep",
+        "sept",
+        "september",
+        "oct",
+        "october",
+        "nov",
+        "november",
+        "dec",
+        "december",
+    }
+)
+_MONTH_DAY_RE = re.compile(
+    r"\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|"
+    r"jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|"
+    r"dec(?:ember)?)(?:\.)?\s+\d{1,2}(?:st|nd|rd|th)?(?:,\s*\d{4}|\s+\d{4})?\b",
+    re.IGNORECASE,
+)
+_TEMPORAL_BY_PHRASE_RE = re.compile(
+    r"^\s+(?:"
+    r"\d{1,4}\b|"
+    r"(?:the\s+)?(?:end|close|beginning|start|deadline|expiration)\b|"
+    r"(?:no|not)\s+later\s+than\b|"
+    r"(?:next|following)\b"
+    r")",
+    re.IGNORECASE,
+)
+_TEMPORAL_WITHIN_PHRASE_RE = re.compile(
+    r"^\s+(?:"
+    r"\d{1,4}\b|"
+    r"(?:a|an)\s+(?:day|days|month|months|year|years|week|weeks|hour|hours)\b|"
+    r"(?:the\s+)?(?:end|close|beginning|start|deadline|expiration)\b|"
+    r"(?:next|following)\b"
+    r")",
+    re.IGNORECASE,
+)
+_NON_TEMPORAL_BY_PREFIX_TOKENS = frozenset(
+    {
+        "the",
+        "this",
+        "that",
+        "these",
+        "those",
+        "such",
+    }
+)
+_NON_TEMPORAL_BY_CONTEXT_TOKENS = frozenset(
+    {
+        "act",
+        "administrator",
+        "agency",
+        "article",
+        "chapter",
+        "clause",
+        "code",
+        "commissioner",
+        "department",
+        "director",
+        "division",
+        "governor",
+        "law",
+        "paragraph",
+        "part",
+        "president",
+        "public",
+        "pub",
+        "rule",
+        "rules",
+        "secretary",
+        "section",
+        "sections",
+        "statute",
+        "subchapter",
+        "subparagraph",
+        "subpart",
+        "subsection",
+        "subtitle",
+        "title",
+    }
+)
+_NON_TEMPORAL_BY_PHRASE_RE = re.compile(
+    r"^\s+(?:(?:the|this|that|these|those|such)\s+)?(?:"
+    r"act|administrator|agency|article|chapter|clause|code|commissioner|department|"
+    r"director|division|governor|law|paragraph|part|president|public\s+law|pub(?:lic)?\.?\s*l\.?|"
+    r"rule|rules|secretary|section|sections|statute|subchapter|subparagraph|subpart|"
+    r"subsection|subtitle|title"
+    r")\b",
+    re.IGNORECASE,
+)
+_NON_TEMPORAL_WITHIN_PREFIX_TOKENS = frozenset(
+    {
+        "the",
+        "this",
+        "that",
+        "these",
+        "those",
+        "such",
+        "its",
+        "their",
+        "our",
+    }
+)
+_NON_TEMPORAL_WITHIN_CONTEXT_TOKENS = frozenset(
+    {
+        "agency",
+        "authority",
+        "boundaries",
+        "chapter",
+        "control",
+        "custody",
+        "department",
+        "district",
+        "jurisdiction",
+        "limits",
+        "meaning",
+        "office",
+        "paragraph",
+        "possession",
+        "scope",
+        "state",
+        "states",
+        "subchapter",
+        "subparagraph",
+        "subsection",
+        "supervision",
+        "territory",
+        "title",
+        "united",
+    }
+)
+_NON_TEMPORAL_WITHIN_PHRASE_RE = re.compile(
+    r"^\s+(?:the\s+)?(?:"
+    r"agency|authority|boundaries|chapter|control|custody|department|district|"
+    r"jurisdiction|limits|meaning|office|paragraph|possession|scope|"
+    r"state|states|subchapter|subparagraph|subsection|supervision|territory|"
+    r"title|united\s+states"
+    r")\b",
+    re.IGNORECASE,
+)
+_TEMPORAL_DURATION_TOKENS = frozenset(
+    {
+        "day",
+        "days",
+        "deadline",
+        "deadlines",
+        "expiration",
+        "hour",
+        "hours",
+        "month",
+        "months",
+        "period",
+        "periods",
+        "quarter",
+        "quarters",
+        "term",
+        "terms",
+        "time",
+        "times",
+        "week",
+        "weeks",
+        "year",
+        "years",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -297,6 +477,137 @@ class LegalModalParser:
             return False
         trailing = normalized_text[end_char:]
         return bool(re.match(r"^\s+\d{1,2}(?:,\s*|\s+)\d{4}\b", trailing))
+
+    def _should_ignore_non_temporal_temporal_cue(
+        self,
+        *,
+        normalized_text: str,
+        cue: str,
+        start_char: int,
+        end_char: int,
+    ) -> bool:
+        lowered = cue.lower()
+        if lowered == "by":
+            return not self._is_temporal_deadline_by_cue(
+                normalized_text=normalized_text,
+                start_char=start_char,
+                end_char=end_char,
+            )
+        if lowered == "within":
+            return not self._is_temporal_duration_within_cue(
+                normalized_text=normalized_text,
+                start_char=start_char,
+                end_char=end_char,
+            )
+        return False
+
+    def _is_temporal_deadline_by_cue(
+        self,
+        *,
+        normalized_text: str,
+        start_char: int,
+        end_char: int,
+    ) -> bool:
+        """Treat temporal `by` as a deadline cue only in time-like contexts."""
+        trailing = normalized_text[end_char : end_char + 80]
+        if _NON_TEMPORAL_BY_PHRASE_RE.match(trailing):
+            return False
+        if _TEMPORAL_BY_PHRASE_RE.match(trailing):
+            return True
+        if _MONTH_DAY_RE.search(trailing):
+            return True
+        lookahead = self._lookahead_tokens(trailing, limit=4)
+        if not lookahead:
+            return False
+        first = lookahead[0]
+        second = lookahead[1] if len(lookahead) > 1 else ""
+        if first in _NON_TEMPORAL_BY_CONTEXT_TOKENS:
+            return False
+        if (
+            first in _NON_TEMPORAL_BY_PREFIX_TOKENS
+            and second in _NON_TEMPORAL_BY_CONTEXT_TOKENS
+        ):
+            return False
+        for index, token in enumerate(lookahead):
+            if token in _NON_TEMPORAL_BY_CONTEXT_TOKENS:
+                return False
+            if token in _TEMPORAL_DURATION_TOKENS:
+                return True
+            if token in _MONTH_NAME_TOKENS:
+                return True
+            if token.isdigit():
+                previous = lookahead[index - 1] if index > 0 else ""
+                if previous in _NON_TEMPORAL_BY_CONTEXT_TOKENS:
+                    continue
+                return True
+        return False
+
+    def _is_temporal_duration_within_cue(
+        self,
+        *,
+        normalized_text: str,
+        start_char: int,
+        end_char: int,
+    ) -> bool:
+        """Treat temporal `within` as duration/deadline only in time-like contexts."""
+        trailing = normalized_text[end_char : end_char + 80]
+        if _NON_TEMPORAL_WITHIN_PHRASE_RE.match(trailing):
+            return False
+        if _TEMPORAL_WITHIN_PHRASE_RE.match(trailing):
+            return True
+        if _MONTH_DAY_RE.search(trailing):
+            return True
+        lookahead = self._lookahead_tokens(trailing, limit=4)
+        if not lookahead:
+            return False
+        first = lookahead[0]
+        second = lookahead[1] if len(lookahead) > 1 else ""
+        if first in _NON_TEMPORAL_WITHIN_CONTEXT_TOKENS:
+            return False
+        if (
+            first in _NON_TEMPORAL_WITHIN_PREFIX_TOKENS
+            and second in _NON_TEMPORAL_WITHIN_CONTEXT_TOKENS
+        ):
+            return False
+        for token in lookahead:
+            if token in _NON_TEMPORAL_WITHIN_CONTEXT_TOKENS:
+                return False
+            if token in _TEMPORAL_DURATION_TOKENS:
+                return True
+            if token in _MONTH_NAME_TOKENS:
+                return True
+            if token.isdigit():
+                return True
+        return False
+
+    def _lookahead_tokens(
+        self,
+        text: str,
+        *,
+        limit: int,
+    ) -> List[str]:
+        tokens = [token.lower() for token in _TOKEN_RE.findall(text)]
+        if limit < 1:
+            return []
+        return tokens[:limit]
+
+    def _has_blocking_residual_modal_cues(
+        self,
+        normalized_text: str,
+    ) -> bool:
+        for cue in self.extract_cues(normalized_text):
+            if (
+                cue.family == ModalLogicFamily.TEMPORAL
+                and self._should_ignore_non_temporal_temporal_cue(
+                    normalized_text=normalized_text,
+                    cue=cue.cue,
+                    start_char=cue.start_char,
+                    end_char=cue.end_char,
+                )
+            ):
+                continue
+            return True
+        return False
 
     def parse(
         self,
@@ -594,7 +905,7 @@ class LegalModalParser:
         lowered = normalized.lower()
         tokens = _TOKEN_RE.findall(lowered)
         token_count = len(tokens)
-        if self.extract_cues(normalized):
+        if self._has_blocking_residual_modal_cues(normalized):
             return False
         if self._is_uscode_header_residual_candidate(normalized, tokens):
             return True
@@ -616,8 +927,15 @@ class LegalModalParser:
             return False
         if (
             _USCODE_CODIFICATION_HINT_RE.search(lowered)
-            or _USCODE_EDITORIAL_STATUS_HINT_RE.search(lowered)
             or _USCODE_DECLARATIVE_STATEMENT_HINT_RE.search(lowered)
+        ):
+            return False
+        if (
+            _USCODE_EDITORIAL_STATUS_HINT_RE.search(lowered)
+            and (
+                token_count <= _USCODE_HEADING_ONLY_EXTENDED_MAX_TOKENS
+                or self._looks_like_heading_without_section_reference(normalized)
+            )
         ):
             return False
         return True

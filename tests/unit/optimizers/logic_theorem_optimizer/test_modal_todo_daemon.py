@@ -141,6 +141,31 @@ def test_loss_generator_routes_text_roundtrip_losses_to_program_synthesis() -> N
     assert all(todo.metadata["execution_target"] == "codex_program_repair" for todo in todos)
 
 
+def test_loss_generator_routes_source_copy_reward_hacking_to_decompiler_scope() -> None:
+    snapshot = LossSnapshot(
+        sample_id="sample-source-copy",
+        citation="5 U.S.C. 552",
+        losses={
+            "source_copy_loss": 0.9,
+            "structural_text_reconstruction_loss": 0.8,
+        },
+        selected_frame="administrative_notice_hearing",
+        parser_formula_count=1,
+    )
+
+    todos = ModalLossTodoGenerator().generate([snapshot])
+
+    assert [todo.action for todo in todos] == [
+        "refine_semantic_decompiler_reconstruction",
+        "refine_semantic_decompiler_reconstruction",
+    ]
+    assert {todo.loss_name for todo in todos} == {
+        "source_copy_loss",
+        "structural_text_reconstruction_loss",
+    }
+    assert all(todo.metadata["program_synthesis_scope"] == "ir_decompiler" for todo in todos)
+
+
 def test_loss_generator_routes_deontic_bridge_losses_to_deontic_scope() -> None:
     snapshot = LossSnapshot(
         sample_id="sample-deontic",
@@ -4041,6 +4066,9 @@ def test_compiler_ir_metric_block_reports_deterministic_codec_losses() -> None:
     assert "cross_entropy_loss" in block
     assert "cosine_similarity" in block
     assert "reconstruction_loss" in block
+    assert "source_copy_loss" in block
+    assert "source_span_copy_ratio" in block
+    assert "structural_text_reconstruction_loss" in block
     assert "text_reconstruction_loss" in block
     assert "modal_span_coverage" in block
 

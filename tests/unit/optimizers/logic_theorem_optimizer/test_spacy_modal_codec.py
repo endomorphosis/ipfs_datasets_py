@@ -432,6 +432,83 @@ def test_spacy_encoder_detects_of_this_title_as_statutory_scope_reference() -> N
     assert signals["has_deontic_scope"] is True
 
 
+def test_spacy_encoder_detects_structural_authority_frame_scope_for_jurisdiction_and_executive_authority() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    jurisdiction_encoding = encoder.encode(
+        (
+            "The United States Court of Federal Claims shall have jurisdiction to "
+            "render judgment under this section."
+        ),
+        document_id="sample-structural-authority-jurisdiction",
+    )
+    authority_encoding = encoder.encode(
+        (
+            "Authority of Executive Agencies under this section shall be exercised "
+            "in accordance with this title."
+        ),
+        document_id="sample-structural-authority-executive",
+    )
+
+    jurisdiction_signals = modal_ambiguity_signals(jurisdiction_encoding)
+    authority_signals = modal_ambiguity_signals(authority_encoding)
+
+    assert jurisdiction_signals["has_frame_structural_authority_scope_phrase"] is True
+    assert authority_signals["has_frame_structural_authority_scope_phrase"] is True
+
+
+def test_refined_pair_balance_boosts_frame_for_structural_authority_statutory_scope() -> None:
+    counts = {
+        "deontic": 2.0,
+        "temporal": 1.35,
+        "conditional_normative": 1.35,
+        "frame": 0.62,
+    }
+    signals = {
+        "has_deontic_scope": True,
+        "has_deontic_cue": True,
+        "has_temporal_scope": True,
+        "has_temporal_status_scope": True,
+        "has_calendar_date_scope": True,
+        "has_condition_or_exception_scope": True,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_frame_editorial_scope_phrase": True,
+        "has_frame_structural_authority_scope_phrase": True,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["frame"] > 0.62
+
+
+def test_refined_pair_balance_boosts_temporal_runner_up_in_statutory_status_context() -> None:
+    counts = {
+        "deontic": 1.75,
+        "temporal": 1.35,
+        "conditional_normative": 0.6,
+        "frame": 0.35,
+    }
+    signals = {
+        "has_deontic_scope": True,
+        "has_deontic_cue": True,
+        "has_deontic_scope_phrase": False,
+        "has_temporal_scope": True,
+        "has_temporal_status_scope": True,
+        "has_calendar_date_scope": True,
+        "has_statutory_scope_reference": True,
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": False,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": False,
+        "has_conditional_scope_token": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["temporal"] > 1.35
+
+
 def test_spacy_decoder_promotes_frame_logits_over_hybrid_for_editorial_scope_text() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
@@ -2654,6 +2731,114 @@ def test_spacy_refined_pair_balance_reinforces_deontic_for_temporal_status_scope
     assert counts["deontic"] >= 0.44
 
 
+def test_spacy_refined_pair_balance_reinforces_deontic_for_statutory_repeal_status_scope() -> None:
+    counts = {
+        "temporal": 3.35,
+        "deontic": 1.35,
+        "conditional_normative": 1.35,
+        "frame": 0.75,
+    }
+    signals = {
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": False,
+        "has_deontic_cue": True,
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": True,
+        "has_temporal_scope_token": True,
+        "has_temporal_status_scope": True,
+        "has_temporal_cue": True,
+        "has_temporal_deadline_cue": False,
+        "has_calendar_date_scope": True,
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": False,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": False,
+        "has_conditional_scope_token": False,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_frame_editorial_scope_phrase": False,
+        "has_frame_cue": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["deontic"] >= 2.15
+    assert counts["deontic"] > counts["conditional_normative"]
+
+
+def test_spacy_refined_pair_balance_softens_deontic_overflow_for_statutory_conditional_editorial_scope() -> None:
+    counts = {
+        "deontic": 3.369256,
+        "conditional_normative": 3.0,
+        "temporal": 1.35,
+        "frame": 0.35,
+    }
+    signals = {
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": False,
+        "has_deontic_cue": True,
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": False,
+        "has_temporal_scope_token": True,
+        "has_temporal_status_scope": False,
+        "has_temporal_cue": True,
+        "has_temporal_deadline_cue": True,
+        "has_calendar_date_scope": True,
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": True,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": True,
+        "has_conditional_scope_token": True,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_frame_editorial_scope_phrase": True,
+        "has_frame_cue": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["deontic"] < 3.369256
+    assert counts["conditional_normative"] > 3.0
+    assert (counts["deontic"] - counts["conditional_normative"]) <= 0.13
+
+
+def test_spacy_refined_pair_balance_reinforces_frame_for_statutory_conditional_status_scope() -> None:
+    counts = {
+        "deontic": 3.369256,
+        "conditional_normative": 3.0,
+        "temporal": 2.18,
+        "frame": 0.5,
+    }
+    signals = {
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": False,
+        "has_deontic_cue": True,
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": False,
+        "has_temporal_scope_token": True,
+        "has_temporal_status_scope": True,
+        "has_temporal_cue": True,
+        "has_temporal_deadline_cue": True,
+        "has_calendar_date_scope": True,
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": True,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": False,
+        "has_conditional_scope_token": True,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_frame_editorial_scope_phrase": False,
+        "has_frame_cue": True,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["frame"] >= 1.2
+
+
 def test_spacy_refined_pair_balance_reinforces_deontic_and_temporal_for_structural_conditional_scope() -> None:
     counts = {
         "conditional_normative": 2.2,
@@ -2745,6 +2930,42 @@ def test_spacy_refined_pair_balance_reinforces_conditional_for_phrase_only_statu
     _apply_refined_modal_family_cue_pair_balance(counts, signals)
 
     assert counts["conditional_normative"] >= 0.4
+
+
+def test_spacy_refined_pair_balance_reinforces_conditional_for_structural_statutory_deontic_scope() -> None:
+    counts = {
+        "deontic": 2.4,
+        "conditional_normative": 0.05,
+        "temporal": 0.45,
+        "frame": 0.35,
+    }
+    signals = {
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": False,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": False,
+        "has_conditional_scope_token": False,
+        "has_purpose_scope_phrase": False,
+        "has_statutory_scope_reference": True,
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": False,
+        "has_deontic_cue": True,
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": False,
+        "has_temporal_scope_token": True,
+        "has_temporal_within_scope": False,
+        "has_temporal_status_scope": False,
+        "has_temporal_deadline_cue": False,
+        "has_calendar_date_scope": False,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": False,
+        "has_frame_editorial_scope_phrase": False,
+        "has_frame_cue": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["conditional_normative"] >= 0.45
 
 
 def test_spacy_refined_pair_balance_reinforces_deontic_for_conditional_scope_phrase_with_explicit_deontic_force() -> None:
@@ -2850,6 +3071,43 @@ def test_spacy_refined_pair_balance_reinforces_deontic_for_phrase_only_structura
     _apply_refined_modal_family_cue_pair_balance(counts, signals)
 
     assert counts["deontic"] >= 0.48
+
+
+def test_spacy_refined_pair_balance_reinforces_deontic_for_temporal_appropriations_authorization_scope() -> None:
+    counts = {
+        "temporal": 2.2,
+        "deontic": 0.08,
+        "conditional_normative": 0.2,
+        "frame": 0.15,
+    }
+    signals = {
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": True,
+        "has_temporal_scope_token": True,
+        "has_temporal_within_scope": False,
+        "has_temporal_status_scope": False,
+        "has_calendar_date_scope": False,
+        "has_temporal_deadline_cue": False,
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": True,
+        "has_deontic_appropriations_scope_phrase": True,
+        "has_deontic_cue": False,
+        "has_condition_or_exception_scope": False,
+        "has_condition_clause": False,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": False,
+        "has_conditional_scope_token": False,
+        "has_statutory_scope_reference": False,
+        "has_frame_context": False,
+        "has_frame_scope_phrase": False,
+        "has_frame_editorial_scope_phrase": False,
+        "has_frame_cue": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["deontic"] >= 0.61
+    assert counts["temporal"] < 2.2
 
 
 def test_spacy_refined_pair_balance_reinforces_frame_for_temporal_deontic_statutory_scope() -> None:
@@ -3254,6 +3512,45 @@ def test_spacy_refined_pair_balance_reinforces_epistemic_for_temporal_statutory_
 
     assert counts["epistemic"] >= 0.35
     assert counts["epistemic"] > 0.05
+
+
+def test_spacy_refined_pair_balance_reinforces_alethic_for_temporal_definition_heading_scope() -> None:
+    counts = {
+        "temporal": 2.1,
+        "alethic": 0.02,
+        "frame": 0.0,
+    }
+    signals = {
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": False,
+        "has_temporal_scope_token": False,
+        "has_temporal_within_scope": False,
+        "has_temporal_status_scope": False,
+        "has_temporal_deadline_cue": False,
+        "has_calendar_date_scope": False,
+        "has_deontic_scope": False,
+        "has_deontic_scope_phrase": False,
+        "has_deontic_cue": False,
+        "has_definition_scope": True,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["alethic"] >= 0.35
+
+
+def test_modal_ambiguity_signals_mark_section_defined_heading_as_definition_scope() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        "Sec. 12 - United States Postal Service defined.",
+        document_id="section-defined-heading-doc",
+    )
+
+    signals = modal_ambiguity_signals(encoding)
+
+    assert signals["has_definition_scope"] is True
+    assert signals["has_alethic_scope"] is True
+    assert signals["has_alethic_scope_phrase"] is False
 
 
 def test_spacy_temporal_scope_boost_is_stronger_with_deontic_cue_competition() -> None:
@@ -4773,6 +5070,32 @@ def test_spacy_codec_treats_as_provided_in_as_explicit_conditional_scope_phrase(
     assert conditional_share > 0.0
 
 
+def test_spacy_codec_treats_provided_comma_that_as_explicit_conditional_scope_phrase() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="43",
+        section="988",
+        text=(
+            "The grant shall not include lands: Provided , That the Secretary may "
+            "issue notice under this section."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+
+    conditional_cues = [
+        cue.cue.lower()
+        for cue in encoding.cues
+        if cue.family == "conditional_normative"
+    ]
+    assert "provided , that" in conditional_cues
+    assert signals["has_conditional_scope_phrase"] is True
+    assert signals["has_condition_or_exception_scope"] is True
+
+
 def test_spacy_codec_backfills_epistemic_share_for_dense_temporal_scope_with_epistemic_tokens() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
@@ -5187,6 +5510,42 @@ def test_spacy_encoder_treats_after_notice_scope_as_non_temporal_cue() -> None:
 
     assert not any(
         cue.family == "temporal" and cue.cue.lower() == "after"
+        for cue in encoding.cues
+    )
+
+
+def test_spacy_encoder_treats_by_secretary_may_as_non_temporal_deadline_cue() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        (
+            "The regulatory authority with approval by the Secretary may authorize "
+            "departures in individual cases."
+        ),
+        document_id="sample-by-secretary-may-non-temporal",
+    )
+
+    assert not any(
+        cue.family == "temporal" and cue.cue.lower() == "by"
+        for cue in encoding.cues
+    )
+    assert any(
+        cue.family == "deontic" and cue.cue.lower() == "may"
+        for cue in encoding.cues
+    )
+
+
+def test_spacy_encoder_treats_by_promulgated_standards_with_citation_date_as_non_temporal_deadline_cue() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        (
+            "The public health protection provided by promulgated standards shall apply. "
+            "(Pub. L. 95-87, title VII, sec. 711, Aug. 3, 1977, 91 Stat. 523.)"
+        ),
+        document_id="sample-by-promulgated-standards-non-temporal",
+    )
+
+    assert not any(
+        cue.family == "temporal" and cue.cue.lower() == "by"
         for cue in encoding.cues
     )
 

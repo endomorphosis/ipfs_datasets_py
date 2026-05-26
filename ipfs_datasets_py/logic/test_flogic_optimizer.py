@@ -98,3 +98,29 @@ def test_frame_ontology_terms_contextualize_condition_modal_family_and_operator(
     assert "condition_modal_operator_frame" in metadata[
         "frame_ontology_contextualized_terms"
     ]
+
+
+def test_frame_ontology_terms_include_predicate_argument_anchor_terms() -> None:
+    result = _optimizer().evaluate(
+        source_text="s",
+        decoded_text="d",
+        source_embedding=[0.0, 1.0],
+        decoded_embedding=[0.0, 1.0],
+        kg_triples=[],
+        frame_feature_keys=[
+            "predicate-argument:source-object-role:education:clause",
+            "predicate-argument:source-object-family:education:frame",
+            "predicate-argument:operator:deontic:d:o",
+            "predicate-argument:source-object-family:conservation:frame",
+        ],
+    )
+
+    metadata = result.metadata
+    assert "source_object_role_education_clause" in metadata["frame_ontology_terms"]
+    assert "source_object_family_conservation_frame" in metadata["frame_ontology_terms"]
+    assert "education" in metadata["frame_ontology_terms"]
+    assert "education_frame" in metadata["frame_ontology_terms"]
+    assert "conservation" in metadata["frame_ontology_terms"]
+    assert "conservation_frame" in metadata["frame_ontology_terms"]
+    assert "deontic" in metadata["frame_ontology_terms"]
+    assert "deontic_d_o" in metadata["frame_ontology_terms"]

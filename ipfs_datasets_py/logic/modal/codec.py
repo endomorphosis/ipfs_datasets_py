@@ -69,6 +69,7 @@ from .decompiler import (
     DecodedModalText,
     decode_modal_ir_document,
     decoded_modal_phrase_slot_text_map,
+    modal_text_token_similarity,
 )
 from .kg_bridge import (
     flogic_ontology_to_dict,
@@ -82,6 +83,10 @@ _SLOT_FEATURE_EXCLUDED_SLOTS = frozenset(
         "modal_source_span",
         "source_context_span",
     }
+)
+_SOURCE_COPY_SLOT_PREFIXES = (
+    "modal_source_span",
+    "source_context_span",
 )
 _CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("provided that", "provided_that"),
@@ -138,6 +143,7 @@ _CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("before", "before"),
     ("by", "by"),
     ("upon", "upon"),
+    ("under", "under"),
 )
 _EXCEPTION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("except as otherwise provided", "except_as_otherwise_provided"),
@@ -205,6 +211,10 @@ _USCODE_INLINE_SECTION_REF_RE = re.compile(
 )
 _USCODE_GPO_ATTRIBUTION_RE = re.compile(
     r"\bfrom\s+the\s+u\.?\s*s\.?\s+government\s+publishing\s+office\b.*$",
+    re.IGNORECASE,
+)
+_USCODE_GPO_ATTRIBUTION_FRAGMENT_RE = re.compile(
+    r"\bfrom\s+the\s+u(?:\s*\.?\s*s(?:\s*\.?\s*c\.?)?)?\b.*$",
     re.IGNORECASE,
 )
 _SECTION_HEADING_TAIL_SPLIT_RE = re.compile(r"[.;:\n]")
@@ -303,13 +313,45 @@ _SOURCE_ROLE_CUE_MARKERS = frozenset(
     }
 )
 _SOURCE_ROLE_CONDITION_MARKERS = frozenset(
-    {"if", "when", "whenever", "unless", "provided", "subject"}
+    {"if", "when", "whenever", "unless", "provided", "subject", "under"}
 )
 _SOURCE_ROLE_EXCEPTION_MARKERS = frozenset(
     {"except", "exception", "notwithstanding", "waiver", "exemption"}
 )
 _SOURCE_ROLE_TEMPORAL_MARKERS = frozenset(
     {"before", "after", "within", "until", "during", "by", "upon"}
+)
+_SOURCE_ROLE_MONTH_TOKENS = frozenset(
+    {
+        "january",
+        "february",
+        "march",
+        "april",
+        "may",
+        "june",
+        "july",
+        "august",
+        "september",
+        "october",
+        "november",
+        "december",
+    }
+)
+_SOURCE_ROLE_TEMPORAL_CONTEXT_TOKENS = frozenset(
+    set(_SOURCE_ROLE_TEMPORAL_MARKERS)
+    | {
+        "calendar",
+        "date",
+        "dates",
+        "deadline",
+        "edition",
+        "effective",
+        "fiscal",
+        "month",
+        "months",
+        "year",
+        "years",
+    }
 )
 _SOURCE_ROLE_NEGATION_MARKERS = frozenset({"not", "no", "never", "without"})
 _SOURCE_ROLE_NOISE_TOKENS = frozenset(
@@ -324,6 +366,45 @@ _SOURCE_ROLE_NOISE_TOKENS = frozenset(
         "paragraph",
         "clause",
         "term",
+        "under",
+    }
+)
+_SOURCE_ROLE_CONNECTIVE_TOKENS = frozenset(
+    {
+        "and",
+        "as",
+        "at",
+        "by",
+        "for",
+        "from",
+        "in",
+        "into",
+        "of",
+        "on",
+        "or",
+        "over",
+        "per",
+        "to",
+        "under",
+        "upon",
+        "via",
+        "with",
+        "within",
+    }
+)
+_SOURCE_ROLE_QUANTIFIER_TOKENS = frozenset(
+    {
+        "all",
+        "any",
+        "each",
+        "either",
+        "every",
+        "many",
+        "most",
+        "much",
+        "neither",
+        "no",
+        "some",
     }
 )
 _STRUCTURAL_FRAME_CUE_TOKENS = frozenset(
@@ -562,6 +643,11 @@ _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...
         ("conditional_normative", "O|"),
         ("frame", "Frame"),
     ),
+    "under": (
+        ("conditional_normative", "O|"),
+        ("deontic", "O"),
+        ("frame", "Frame"),
+    ),
     "in_the_event_that": (("conditional_normative", "O|"),),
     "in_the_case_of": (
         ("conditional_normative", "O|"),
@@ -623,8 +709,20 @@ _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...
     "require": (("deontic", "O"),),
     "requires": (("deontic", "O"),),
     "requiring": (("deontic", "O"),),
+    "is_entitled_to": (("deontic", "O"),),
+    "shall_be_entitled_to": (("deontic", "O"),),
+    "has_a_duty_to": (("deontic", "O"),),
+    "have_a_duty_to": (("deontic", "O"),),
+    "under_an_obligation_to": (("deontic", "O"),),
     "authorized": (("deontic", "P"),),
     "may": (("deontic", "P"),),
+    "allowed": (("deontic", "P"),),
+    "permitted": (("deontic", "P"),),
+    "may_not": (("deontic", "F"),),
+    "must_not": (("deontic", "F"),),
+    "shall_not": (("deontic", "F"),),
+    "prohibited": (("deontic", "F"),),
+    "forbidden": (("deontic", "F"),),
     "authority": (
         ("frame", "Frame"),
         ("deontic", "O"),
@@ -635,10 +733,38 @@ _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...
     "transfers": (("dynamic", "[a]"),),
     "transferred": (("dynamic", "[a]"),),
     "transferring": (("dynamic", "[a]"),),
+    "reclassified": (
+        ("dynamic", "[a]"),
+        ("frame", "Frame"),
+    ),
+    "codification": (
+        ("dynamic", "[a]"),
+        ("frame", "Frame"),
+    ),
+    "renumbered": (
+        ("dynamic", "[a]"),
+        ("frame", "Frame"),
+    ),
     "vest": (("dynamic", "[a]"),),
     "vests": (("dynamic", "[a]"),),
     "vested": (("dynamic", "[a]"),),
     "vesting": (("dynamic", "[a]"),),
+    "repealed": (
+        ("deontic", "F"),
+        ("frame", "Frame"),
+        ("temporal", "F"),
+    ),
+    "omitted": (
+        ("frame", "Frame"),
+        ("temporal", "F"),
+    ),
+    "reserved": (("frame", "Frame"),),
+    "vacant": (("frame", "Frame"),),
+    "terminated": (
+        ("deontic", "F"),
+        ("frame", "Frame"),
+        ("temporal", "F"),
+    ),
     "fiscal_year": (("temporal", "F"),),
     "fiscal_years": (("temporal", "F"),),
     "calendar_year": (("temporal", "F"),),
@@ -704,11 +830,41 @@ _DEONTIC_BRIDGE_REINFORCEMENT_OPERATORS: frozenset[str] = frozenset(
 )
 _DEONTIC_BRIDGE_REINFORCEMENT_CUES: frozenset[str] = frozenset(
     {
+        "as_defined_in",
+        "as_described_in",
+        "as_otherwise_provided_in",
+        "as_provided_in",
+        "as_set_forth_in",
+        "as_otherwise_provided_in",
+        "except_as_otherwise_provided",
         "in_accordance_with",
         "may",
+        "allowed",
+        "permitted",
+        "may_not",
         "must",
+        "pursuant_to",
+        "defined_in",
+        "described_in",
+        "referred_to_in",
+        "must_not",
         "shall",
+        "shall_not",
+        "obligation",
+        "obligated",
+        "obligatory",
+        "required",
+        "require",
+        "requires",
+        "requiring",
         "authorized",
+        "prohibited",
+        "forbidden",
+        "is_entitled_to",
+        "shall_be_entitled_to",
+        "has_a_duty_to",
+        "have_a_duty_to",
+        "under_an_obligation_to",
         "with_respect_to",
     }
 )
@@ -719,6 +875,17 @@ _DEONTIC_EPISTEMIC_BRIDGE_CUES: frozenset[str] = frozenset(
         "believed",
         "believing",
         "reasonably_believes",
+    }
+)
+_DEONTIC_ALETHIC_BRIDGE_CUES: frozenset[str] = frozenset(
+    {
+        "authorized",
+        "can_be",
+        "may",
+        "may_be",
+        "permitted",
+        "possible",
+        "possibly",
     }
 )
 _DEONTIC_TEMPORAL_BRIDGE_CUES: frozenset[str] = frozenset(
@@ -736,6 +903,48 @@ _DEONTIC_TEMPORAL_BRIDGE_CUES: frozenset[str] = frozenset(
         "may",
     }
 )
+_STATUS_KEYWORD_BRIDGE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...]] = {
+    "codification": (
+        ("frame", "Frame"),
+        ("epistemic", "K"),
+    ),
+    "omitted": (
+        ("frame", "Frame"),
+        ("epistemic", "K"),
+    ),
+    "reclassified": (
+        ("frame", "Frame"),
+        ("epistemic", "K"),
+        ("dynamic", "[a]"),
+    ),
+    "renumbered": (
+        ("frame", "Frame"),
+        ("epistemic", "K"),
+        ("dynamic", "[a]"),
+    ),
+    "repealed": (
+        ("frame", "Frame"),
+        ("epistemic", "K"),
+    ),
+    "reserved": (
+        ("frame", "Frame"),
+        ("epistemic", "K"),
+    ),
+    "terminated": (
+        ("frame", "Frame"),
+        ("epistemic", "K"),
+        ("temporal", "F"),
+    ),
+    "transferred": (
+        ("frame", "Frame"),
+        ("epistemic", "K"),
+        ("dynamic", "[a]"),
+    ),
+    "vacant": (
+        ("frame", "Frame"),
+        ("epistemic", "K"),
+    ),
+}
 _FRAME_TEMPORAL_BRIDGE_CUES: frozenset[str] = frozenset(
     _STRUCTURAL_FRAME_CUE_TOKENS
     | {
@@ -745,6 +954,18 @@ _FRAME_TEMPORAL_BRIDGE_CUES: frozenset[str] = frozenset(
 )
 _TEMPORAL_BRIDGE_CONTEXT_TOKENS: frozenset[str] = frozenset(
     {
+        "january",
+        "february",
+        "march",
+        "april",
+        "may",
+        "june",
+        "july",
+        "august",
+        "september",
+        "october",
+        "november",
+        "december",
         "year",
         "day",
         "month",
@@ -773,6 +994,10 @@ _TEMPORAL_BRIDGE_CONTEXT_PHRASES: tuple[tuple[str, str], ...] = (
     ("calendar years", "calendar_year"),
 )
 _TEMPORAL_BRIDGE_YEAR_RE = re.compile(r"(?<!\d)(?:18|19|20)\d{2}(?!\d)")
+_FRAME_STRUCTURAL_DEONTIC_BRIDGE_TRIGGER_RE = re.compile(
+    r"(?<!\w)(?:shall|must|may|required|requires|obligation|obligatory|authorized)(?!\w)",
+    re.IGNORECASE,
+)
 _MODAL_OPERATOR_SYMBOL_FEATURE_KEYS: Mapping[str, str] = {
     "O|": "o_pipe",
     "[a]": "a_box",
@@ -1056,7 +1281,7 @@ class DeterministicModalLogicCodec:
             normalized_text,
             dimensions=self.config.embedding_dimensions,
         )
-        decoded_embedding = self.decoder.decode_embedding(
+        source_feature_embedding = self.decoder.decode_embedding(
             encoding,
             dimensions=len(resolved_source_embedding),
         )
@@ -1145,17 +1370,40 @@ class DeterministicModalLogicCodec:
             },
         )
         decoded_text = decoded_modal_text.text
+        structural_decoded_text = _structural_decoded_text(
+            decoded_modal_text,
+            modal_ir=modal_ir,
+            selected_frame=selected_frame,
+        )
+        decoded_embedding = _decoded_structural_feature_embedding(
+            structural_decoded_text,
+            encoder=self.encoder,
+            decoder=self.decoder,
+            dimensions=len(resolved_source_embedding),
+            document_id=f"{modal_ir.document_id}:structural-decode",
+            citation=citation,
+            source=source,
+        )
+        structural_text_similarity = modal_text_token_similarity(
+            normalized_text,
+            structural_decoded_text,
+        )
+        source_span_copy_ratio = _source_span_copy_ratio(decoded_modal_text)
+        raw_source_embedding_cosine = cosine_similarity(
+            resolved_source_embedding,
+            decoded_embedding,
+        )
         flogic_result = self._evaluate_flogic(
             normalized_text,
             decoded_text,
-            resolved_source_embedding,
+            source_feature_embedding,
             decoded_embedding,
             kg_triples,
             frame_feature_keys=frame_feature_keys,
         )
         losses = {
-            "cosine_loss": cosine_loss(resolved_source_embedding, decoded_embedding),
-            "cosine_similarity": cosine_similarity(resolved_source_embedding, decoded_embedding),
+            "cosine_loss": cosine_loss(source_feature_embedding, decoded_embedding),
+            "cosine_similarity": cosine_similarity(source_feature_embedding, decoded_embedding),
             "cross_entropy_loss": cross_entropy_distribution_loss(
                 family_probabilities,
                 target_family_distribution,
@@ -1165,7 +1413,13 @@ class DeterministicModalLogicCodec:
             "frame_ranking_loss": 0.0 if selected_frame else 1.0,
             "modal_span_coverage_loss": 1.0 - decoded_modal_text.modal_span_coverage,
             "ontology_violation_count": float(len(flogic_result.violations)) if flogic_result else 0.0,
-            "reconstruction_loss": mse_loss(resolved_source_embedding, decoded_embedding),
+            "raw_source_embedding_cosine_similarity": raw_source_embedding_cosine,
+            "reconstruction_loss": mse_loss(source_feature_embedding, decoded_embedding),
+            "source_copy_loss": source_span_copy_ratio,
+            "source_span_copy_ratio": source_span_copy_ratio,
+            "source_span_text_reconstruction_loss": 1.0 - decoded_modal_text.reconstruction_similarity,
+            "structural_text_reconstruction_loss": 1.0 - structural_text_similarity,
+            "structural_text_reconstruction_similarity": structural_text_similarity,
             "symbolic_validity_penalty": 0.0 if modal_ir.formulas else 1.0,
             "text_reconstruction_loss": 1.0 - decoded_modal_text.reconstruction_similarity,
         }
@@ -1178,6 +1432,9 @@ class DeterministicModalLogicCodec:
             "llm_call_count": 0,
             "modal_decompiler_reconstruction_similarity": decoded_modal_text.reconstruction_similarity,
             "modal_decompiler_span_coverage": decoded_modal_text.modal_span_coverage,
+            "modal_decompiler_source_span_copy_ratio": source_span_copy_ratio,
+            "modal_decompiler_structural_text": structural_decoded_text,
+            "modal_decompiler_structural_text_reconstruction_similarity": structural_text_similarity,
             "modal_families": sorted({formula.operator.family for formula in modal_ir.formulas}),
             "modal_systems": sorted({formula.operator.system for formula in modal_ir.formulas}),
             "parser_backend": self.config.parser_backend,
@@ -1928,6 +2185,42 @@ def modal_ir_to_flogic_triples(
                         "object": value,
                     }
                 )
+            fallback_surface_context = _fallback_surface_context_text(
+                modal_ir=modal_ir,
+                formula=formula,
+                surface_text=fallback_surface_text,
+            )
+            if fallback_surface_context:
+                triples.append(
+                    {
+                        "subject": formula.formula_id,
+                        "predicate": "fallback_surface_context",
+                        "object": fallback_surface_context,
+                    }
+                )
+                for predicate, value in _typed_identifier_components(
+                    fallback_surface_context,
+                    slot_prefix="fallback_surface_context",
+                ):
+                    triples.append(
+                        {
+                            "subject": formula.formula_id,
+                            "predicate": predicate,
+                            "object": value,
+                        }
+                    )
+                for predicate, value in _contextual_modal_cue_components(
+                    formula,
+                    text=fallback_surface_context,
+                    slot_prefix="fallback_surface_context",
+                ):
+                    triples.append(
+                        {
+                            "subject": formula.formula_id,
+                            "predicate": predicate,
+                            "object": value,
+                        }
+                    )
         status_keyword = _status_keyword_value(
             formula,
             fallback_rule=fallback_rule,
@@ -1943,6 +2236,17 @@ def modal_ir_to_flogic_triples(
             for predicate, value in _typed_identifier_components(
                 status_keyword,
                 slot_prefix="status_keyword",
+            ):
+                triples.append(
+                    {
+                        "subject": formula.formula_id,
+                        "predicate": predicate,
+                        "object": value,
+                    }
+                )
+            for predicate, value in _status_keyword_modal_components(
+                formula,
+                status_keyword=status_keyword,
             ):
                 triples.append(
                     {
@@ -1993,10 +2297,15 @@ def modal_ir_to_flogic_triples(
                         "object": value,
                     }
                 )
-        for condition in _resolved_formula_conditions(
+        resolved_conditions = _resolved_formula_conditions(
             modal_ir=modal_ir,
             formula=formula,
-        ):
+        )
+        resolved_exceptions = _resolved_formula_exceptions(
+            modal_ir=modal_ir,
+            formula=formula,
+        )
+        for condition in resolved_conditions:
             triples.append(
                 {
                     "subject": formula.formula_id,
@@ -2125,11 +2434,7 @@ def modal_ir_to_flogic_triples(
                                 "object": predicate_value,
                             }
                         )
-        for exception in _unique_preserve_order(
-            str(value).strip()
-            for value in formula.exceptions
-            if str(value or "").strip()
-        ):
+        for exception in resolved_exceptions:
             triples.append(
                 {
                     "subject": formula.formula_id,
@@ -2258,7 +2563,7 @@ def modal_ir_to_flogic_triples(
                                 "object": predicate_value,
                             }
                         )
-            if not formula.conditions:
+            if not resolved_conditions:
                 for (
                     condition_predicate,
                     condition_value,
@@ -2453,6 +2758,10 @@ def _source_role_anchor_components(
         return []
     predicate_role = _clean_non_empty_string(formula.predicate.role).lower()
     predicate_family = _clean_non_empty_string(formula.operator.family).lower()
+    source_family_pairs = _source_anchor_family_pairs(
+        modal_ir=modal_ir,
+        formula=formula,
+    )
     predicate_head = _predicate_head_anchor(formula)
     components: List[tuple[str, str]] = []
     for role_name in ("subject", "action", "object", "condition", "exception", "temporal"):
@@ -2469,6 +2778,11 @@ def _source_role_anchor_components(
         )
         if predicate_family:
             components.append((f"source_{role_name}_family", f"{anchor}:{predicate_family}"))
+            for family_pair in source_family_pairs:
+                components.append((f"source_{role_name}_family_pair", family_pair))
+                components.append(
+                    (f"source_{role_name}_family_pair_anchor", f"{anchor}:{family_pair}")
+                )
         if predicate_role and role_name in {"subject", "action", "object"}:
             components.append((f"source_{role_name}_role", f"{anchor}:{predicate_role}"))
         if predicate_head and role_name in {"action", "object"}:
@@ -2476,12 +2790,42 @@ def _source_role_anchor_components(
     return _unique_preserve_order_tuples(components)
 
 
+def _source_anchor_family_pairs(
+    *,
+    modal_ir: ModalIRDocument,
+    formula: ModalIRFormula,
+) -> List[str]:
+    source_family = _clean_non_empty_string(formula.operator.family).lower()
+    if not source_family:
+        return []
+    distinct_families: List[str] = []
+    for candidate_formula in modal_ir.formulas:
+        candidate_family = _clean_non_empty_string(candidate_formula.operator.family).lower()
+        if not candidate_family or candidate_family in distinct_families:
+            continue
+        distinct_families.append(candidate_family)
+    if source_family not in distinct_families:
+        distinct_families.append(source_family)
+    ordered_targets = sorted(
+        distinct_families,
+        key=lambda family: (
+            0 if family == source_family else 1,
+            _CROSS_FAMILY_BRIDGE_FAMILY_PRIORITY.get(
+                family,
+                len(_CROSS_FAMILY_BRIDGE_FAMILY_PRIORITY),
+            ),
+            family,
+        ),
+    )
+    return [f"{source_family}->{target_family}" for target_family in ordered_targets]
+
+
 def _source_role_anchor_values(
     *,
     modal_ir: ModalIRDocument,
     formula: ModalIRFormula,
 ) -> Dict[str, str]:
-    span_text = _formula_source_span_text(modal_ir=modal_ir, formula=formula)
+    span_text = _semantic_source_span_text(modal_ir=modal_ir, formula=formula)
     predicate_text = _clean_non_empty_string(formula.predicate.name).replace("_", " ")
     raw_tokens = _CUE_TOKEN_RE.findall(span_text.lower())
     if not raw_tokens:
@@ -2522,10 +2866,9 @@ def _source_role_anchor_values(
         modal_ir=modal_ir,
         formula=formula,
     )
-    exception_values = _unique_preserve_order(
-        str(value).strip()
-        for value in formula.exceptions
-        if str(value or "").strip()
+    exception_values = _resolved_formula_exceptions(
+        modal_ir=modal_ir,
+        formula=formula,
     )
     temporal_anchor = _source_anchor_from_clauses(
         clauses=condition_values,
@@ -2538,10 +2881,41 @@ def _source_role_anchor_values(
             clause_type="exception",
             temporal_only=True,
         )
+    subject_anchor = _preferred_anchor_candidate(
+        subject_candidates,
+        default_index=-1,
+    )
+    action_anchor = _preferred_anchor_candidate(
+        predicate_candidates,
+        default_index=0,
+    )
+    object_anchor = _preferred_anchor_candidate(
+        predicate_candidates,
+        default_index=1,
+    )
+    predicate_default_anchor = _preferred_anchor_candidate(
+        predicate_tokens,
+        default_index=0,
+    )
+    if not action_anchor:
+        action_anchor = predicate_default_anchor
+    if (
+        not object_anchor
+        or object_anchor == action_anchor
+        or _is_temporal_anchor_token(object_anchor)
+    ):
+        object_anchor = _preferred_anchor_candidate(
+            [
+                token
+                for token in predicate_tokens
+                if token != action_anchor
+            ],
+            default_index=0,
+        )
     anchors = {
-        "subject": subject_candidates[-1] if subject_candidates else "",
-        "action": predicate_candidates[0] if predicate_candidates else "",
-        "object": predicate_candidates[1] if len(predicate_candidates) > 1 else "",
+        "subject": subject_anchor,
+        "action": action_anchor,
+        "object": object_anchor,
         "condition": _source_anchor_from_clauses(
             clauses=condition_values,
             clause_type="condition",
@@ -2565,6 +2939,8 @@ def _source_anchor_role_tokens(tokens: Sequence[str]) -> List[str]:
         for token in tokens
         if len(token) > 2
         and token not in _SOURCE_ROLE_NOISE_TOKENS
+        and token not in _SOURCE_ROLE_CONNECTIVE_TOKENS
+        and token not in _SOURCE_ROLE_QUANTIFIER_TOKENS
         and token not in _SOURCE_ROLE_CUE_MARKERS
         and token not in _SOURCE_ROLE_CONDITION_MARKERS
         and token not in _SOURCE_ROLE_EXCEPTION_MARKERS
@@ -2572,6 +2948,65 @@ def _source_anchor_role_tokens(tokens: Sequence[str]) -> List[str]:
         and token not in _SOURCE_ROLE_NEGATION_MARKERS
         and not _is_low_information_section_marker(token)
     ]
+
+
+def _is_temporal_anchor_token(token: str) -> bool:
+    normalized_token = _clean_non_empty_string(token).lower()
+    if not normalized_token:
+        return False
+    if _TEMPORAL_BRIDGE_YEAR_RE.fullmatch(normalized_token):
+        return True
+    return (
+        normalized_token in _SOURCE_ROLE_MONTH_TOKENS
+        or normalized_token in _SOURCE_ROLE_TEMPORAL_CONTEXT_TOKENS
+    )
+
+
+def _anchor_candidate_search_order(
+    *,
+    candidate_count: int,
+    default_index: int,
+) -> List[int]:
+    if candidate_count <= 0:
+        return []
+    if default_index < 0:
+        normalized_index = candidate_count + default_index
+    else:
+        normalized_index = default_index
+    normalized_index = min(max(normalized_index, 0), candidate_count - 1)
+    return [
+        normalized_index,
+        *range(normalized_index + 1, candidate_count),
+        *range(normalized_index - 1, -1, -1),
+    ]
+
+
+def _preferred_anchor_candidate(
+    candidates: Sequence[str],
+    *,
+    default_index: int = 0,
+    prefer_temporal: bool = False,
+) -> str:
+    normalized_candidates = [
+        _clean_non_empty_string(candidate).lower()
+        for candidate in candidates
+        if _clean_non_empty_string(candidate)
+    ]
+    if not normalized_candidates:
+        return ""
+    search_order = _anchor_candidate_search_order(
+        candidate_count=len(normalized_candidates),
+        default_index=default_index,
+    )
+    default_candidate = normalized_candidates[search_order[0]]
+    for index in search_order:
+        candidate = normalized_candidates[index]
+        is_temporal = _is_temporal_anchor_token(candidate)
+        if prefer_temporal and is_temporal:
+            return candidate
+        if not prefer_temporal and not is_temporal:
+            return candidate
+    return default_candidate
 
 
 def _source_anchor_first_after(
@@ -2612,7 +3047,11 @@ def _source_anchor_from_clauses(
             continue
         candidates = _source_anchor_role_tokens(_CUE_TOKEN_RE.findall(scoped_text))
         if candidates:
-            return candidates[0]
+            return _preferred_anchor_candidate(
+                candidates,
+                default_index=0,
+                prefer_temporal=temporal_only,
+            )
     return ""
 
 
@@ -2620,7 +3059,15 @@ def _predicate_head_anchor(formula: ModalIRFormula) -> str:
     predicate_tokens = _CUE_TOKEN_RE.findall(
         _clean_non_empty_string(formula.predicate.name).replace("_", " ").lower()
     )
-    return predicate_tokens[0] if predicate_tokens else ""
+    if not predicate_tokens:
+        return ""
+    for token in predicate_tokens:
+        if token in _LOW_INFORMATION_SCOPE_LEADING_TOKENS:
+            continue
+        if _is_low_information_section_marker(token):
+            continue
+        return token
+    return predicate_tokens[0]
 
 
 def _typed_clause_key_value(
@@ -2662,6 +3109,24 @@ def _resolved_formula_conditions(
     )
 
 
+def _resolved_formula_exceptions(
+    *,
+    modal_ir: ModalIRDocument,
+    formula: ModalIRFormula,
+) -> List[str]:
+    explicit_exceptions = _unique_preserve_order(
+        str(value).strip()
+        for value in formula.exceptions
+        if str(value or "").strip()
+    )
+    if explicit_exceptions:
+        return explicit_exceptions
+    return _inferred_exception_values_from_source_span(
+        modal_ir=modal_ir,
+        formula=formula,
+    )
+
+
 def _inferred_condition_values_from_source_span(
     *,
     modal_ir: ModalIRDocument,
@@ -2671,7 +3136,7 @@ def _inferred_condition_values_from_source_span(
 ) -> List[str]:
     if formula.conditions:
         return []
-    span_text = _formula_source_span_text(modal_ir=modal_ir, formula=formula)
+    span_text = _semantic_source_span_text(modal_ir=modal_ir, formula=formula)
     if not span_text:
         return []
     cue_key = _clean_non_empty_string(formula.metadata.get("cue")).lower().replace(
@@ -2680,6 +3145,76 @@ def _inferred_condition_values_from_source_span(
     )
     ordered_prefixes = sorted(
         _CONDITION_PREFIXES,
+        key=lambda item: len(item[0]),
+        reverse=True,
+    )
+    prioritized_prefixes: List[tuple[str, str]] = []
+    if cue_key:
+        for prefix_text, prefix_key in ordered_prefixes:
+            if prefix_key == cue_key:
+                prioritized_prefixes.append((prefix_text, prefix_key))
+    prioritized_prefixes.extend(
+        (prefix_text, prefix_key)
+        for prefix_text, prefix_key in ordered_prefixes
+        if (prefix_text, prefix_key) not in prioritized_prefixes
+    )
+    lowered_span = span_text.lower()
+    inferred: List[str] = []
+    inferred_lower: set[str] = set()
+    for prefix_text, prefix_key in prioritized_prefixes:
+        pattern = re.compile(rf"(?<!\w){re.escape(prefix_text)}(?!\w)", re.IGNORECASE)
+        for match in pattern.finditer(lowered_span):
+            clause = _trim_inferred_condition_clause(span_text[match.start() :])
+            clause = _strip_uscode_gpo_attribution_fragment(clause)
+            clause = _TRAILING_SECTION_PUNCT_RE.sub("", _clean_non_empty_string(clause))
+            if not clause:
+                continue
+            token_count = len(
+                [
+                    token
+                    for token in re.split(
+                        r"[_\s]+",
+                        _clean_non_empty_string(clause).replace("-", "_").lower(),
+                    )
+                    if token
+                ]
+            )
+            if token_count < 2 or token_count > max_tokens:
+                continue
+            typed_clause = _typed_clause_key_value(clause, clause_type="condition")
+            if typed_clause is None:
+                continue
+            parsed_prefix_key, scoped_value = typed_clause
+            if not scoped_value or parsed_prefix_key != prefix_key:
+                continue
+            clause_lower = clause.lower()
+            if clause_lower in inferred_lower:
+                continue
+            inferred.append(clause)
+            inferred_lower.add(clause_lower)
+            if len(inferred) >= max_candidates:
+                return inferred
+    return inferred
+
+
+def _inferred_exception_values_from_source_span(
+    *,
+    modal_ir: ModalIRDocument,
+    formula: ModalIRFormula,
+    max_candidates: int = 2,
+    max_tokens: int = 40,
+) -> List[str]:
+    if formula.exceptions:
+        return []
+    span_text = _formula_source_span_text(modal_ir=modal_ir, formula=formula)
+    if not span_text:
+        return []
+    cue_key = _clean_non_empty_string(formula.metadata.get("cue")).lower().replace(
+        " ",
+        "_",
+    )
+    ordered_prefixes = sorted(
+        _EXCEPTION_PREFIXES,
         key=lambda item: len(item[0]),
         reverse=True,
     )
@@ -2714,11 +3249,22 @@ def _inferred_condition_values_from_source_span(
             )
             if token_count < 2 or token_count > max_tokens:
                 continue
-            typed_clause = _typed_clause_key_value(clause, clause_type="condition")
+            typed_clause = _typed_clause_key_value(clause, clause_type="exception")
             if typed_clause is None:
                 continue
-            parsed_prefix_key, scoped_value = typed_clause
-            if not scoped_value or parsed_prefix_key != prefix_key:
+            parsed_prefix_key, _ = typed_clause
+            if parsed_prefix_key != prefix_key:
+                continue
+            parsed_condition_clause = _typed_clause_key_value(
+                clause,
+                clause_type="condition",
+            )
+            if (
+                parsed_condition_clause is not None
+                and parsed_condition_clause[0] == parsed_prefix_key
+                and not parsed_prefix_key.startswith("except")
+                and parsed_prefix_key != "unless"
+            ):
                 continue
             clause_lower = clause.lower()
             if clause_lower in inferred_lower:
@@ -2741,6 +3287,34 @@ def _formula_source_span_text(
     start = max(0, min(len(source_text), int(formula.provenance.start_char)))
     end = max(start, min(len(source_text), int(formula.provenance.end_char)))
     return _clean_non_empty_string(source_text[start:end])
+
+
+def _semantic_source_span_text(
+    *,
+    modal_ir: ModalIRDocument,
+    formula: ModalIRFormula,
+) -> str:
+    span_text = _formula_source_span_text(modal_ir=modal_ir, formula=formula)
+    if not span_text:
+        return ""
+    normalized = _clean_non_empty_string(_USCODE_LEADING_SECTION_REF_RE.sub("", span_text))
+    normalized = _strip_uscode_gpo_attribution_fragment(normalized)
+    normalized = _TRAILING_SECTION_PUNCT_RE.sub("", normalized)
+    normalized = _trim_uscode_compilation_surface_text(normalized, max_tokens=80)
+    normalized = _clean_non_empty_string(normalized)
+    if normalized and not _is_low_information_section_marker(normalized):
+        return normalized
+    return span_text
+
+
+def _strip_uscode_gpo_attribution_fragment(text: str) -> str:
+    normalized = _clean_non_empty_string(text)
+    if not normalized:
+        return ""
+    stripped = _clean_non_empty_string(_USCODE_GPO_ATTRIBUTION_RE.sub("", normalized))
+    if stripped != normalized:
+        return stripped
+    return _clean_non_empty_string(_USCODE_GPO_ATTRIBUTION_FRAGMENT_RE.sub("", normalized))
 
 
 def _trim_inferred_condition_clause(clause: str) -> str:
@@ -3019,6 +3593,13 @@ def _augment_deontic_bridge_pairs(
         deontic_epistemic_pair = ("epistemic", "K")
         if deontic_epistemic_pair not in pairs:
             pairs.append(deontic_epistemic_pair)
+    if (
+        normalized_family == "deontic"
+        and cue_key in _DEONTIC_ALETHIC_BRIDGE_CUES
+    ):
+        deontic_alethic_pair = ("alethic", "◇")
+        if deontic_alethic_pair not in pairs:
+            pairs.append(deontic_alethic_pair)
     if (
         normalized_family == "deontic"
         and normalized_symbol in _DEONTIC_BRIDGE_REINFORCEMENT_OPERATORS
@@ -3414,19 +3995,29 @@ def _formula_bridge_cues(formula: ModalIRFormula) -> List[str]:
         for value in (*formula.conditions, *formula.exceptions)
         if _clean_non_empty_string(value)
     )
-    if not searchable_segments:
-        return []
-    searchable_text = " ".join(searchable_segments)
     cues: List[str] = []
-    for cue_key in sorted(
-        _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS,
-        key=lambda item: (-len(item), item),
-    ):
-        cue_surface = cue_key.replace("_", " ")
-        if not cue_surface:
+    if searchable_segments:
+        searchable_text = " ".join(searchable_segments)
+        for cue_key in sorted(
+            _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS,
+            key=lambda item: (-len(item), item),
+        ):
+            cue_surface = cue_key.replace("_", " ")
+            if not cue_surface:
+                continue
+            if re.search(rf"(?<!\w){re.escape(cue_surface)}(?!\w)", searchable_text):
+                cues.append(cue_key)
+    if cues:
+        return cues
+    for cue in _formula_cues(formula):
+        cue_key = _clean_non_empty_string(cue).lower().replace(" ", "_")
+        if (
+            not cue_key
+            or cue_key in cues
+            or cue_key not in _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS
+        ):
             continue
-        if re.search(rf"(?<!\w){re.escape(cue_surface)}(?!\w)", searchable_text):
-            cues.append(cue_key)
+        cues.append(cue_key)
     return cues
 
 
@@ -3633,12 +4224,36 @@ def _refined_cue_bridge_operator_pairs(
     return unique_pairs
 
 
+def _should_emit_frame_structural_deontic_bridge(
+    *,
+    formula_family: str,
+    cue: str,
+    text: str,
+) -> bool:
+    if formula_family != "frame":
+        return False
+    normalized_cue = _clean_non_empty_string(cue).lower()
+    if normalized_cue not in _STRUCTURAL_FRAME_CUE_TOKENS:
+        return False
+    normalized_text = _clean_non_empty_string(text).replace("_", " ").lower()
+    if not normalized_text:
+        return False
+    if _temporal_transition_context_cues_from_text(normalized_text):
+        return True
+    if _STATUTORY_SCOPE_REFERENCE_RE.search(normalized_text):
+        return True
+    return (
+        _FRAME_STRUCTURAL_DEONTIC_BRIDGE_TRIGGER_RE.search(normalized_text) is not None
+    )
+
+
 def _refined_contextual_modal_cues_from_text(
     formula: ModalIRFormula,
     *,
     text: str,
 ) -> List[str]:
     formula_family = _clean_non_empty_string(formula.operator.family).lower()
+    temporal_context_cues = _temporal_transition_context_cues_from_text(text)
     cues: List[str] = []
     for cue in _contextual_modal_cues_from_text(formula, text=text):
         if cue and cue not in cues:
@@ -3656,6 +4271,35 @@ def _refined_contextual_modal_cues_from_text(
         for cue in _structural_frame_cues_from_text(text):
             if cue and cue not in cues:
                 cues.append(cue)
+    elif formula_family == "temporal" and temporal_context_cues:
+        # Temporal formulas often carry frame-like statute scaffolding tokens
+        # ("title", "chapter", "subchapter") inside compilation spans.
+        # Only admit those structural cues when the same text also has
+        # temporal context so non-temporal noun noise stays filtered.
+        for cue in _structural_frame_cues_from_text(text):
+            if cue and cue not in cues:
+                cues.append(cue)
+    elif formula_family == "temporal":
+        for cue in _temporal_transition_context_cues_from_text(text):
+            normalized_cue = _clean_non_empty_string(cue).lower()
+            if not normalized_cue or normalized_cue in cues:
+                continue
+            if (
+                normalized_cue in _TEMPORAL_BRIDGE_CONTEXT_TOKENS
+                or normalized_cue
+                in {
+                    "calendar_year",
+                    "edition_year",
+                    "effective_date",
+                    "fiscal_year",
+                    "no_later_than",
+                    "not_later_than",
+                    "on_and_after",
+                    "on_or_after",
+                    "year",
+                }
+            ):
+                cues.append(normalized_cue)
     return cues
 
 
@@ -3684,8 +4328,15 @@ def _refined_contextual_modal_transition_components(
                 ("refined_modal_signature", source_signature),
             )
         )
+        bridge_pairs = list(_refined_cue_bridge_operator_pairs(normalized_cue))
+        if _should_emit_frame_structural_deontic_bridge(
+            formula_family=formula_family,
+            cue=normalized_cue,
+            text=text,
+        ):
+            bridge_pairs.append(("deontic", "O"))
         for bridge_family, bridge_symbol in _augment_deontic_bridge_pairs(
-            bridge_pairs=_refined_cue_bridge_operator_pairs(normalized_cue),
+            bridge_pairs=bridge_pairs,
             formula_family=formula_family,
             formula_symbol=formula_symbol,
             cue=normalized_cue,
@@ -3774,6 +4425,7 @@ def _refined_temporal_transition_components(
         if not (
             _temporal_clause_prefix_relation(normalized_cue)
             or normalized_cue in _TEMPORAL_BRIDGE_CONTEXT_TOKENS
+            or normalized_cue in _STRUCTURAL_FRAME_CUE_TOKENS
             or normalized_cue in {
                 "calendar_year",
                 "edition_year",
@@ -3878,6 +4530,78 @@ def _status_keyword_value(
     }:
         return "transferred"
     return ""
+
+
+def _status_keyword_modal_components(
+    formula: ModalIRFormula,
+    *,
+    status_keyword: str,
+    slot_prefix: str = "status_keyword_modal",
+) -> List[tuple[str, str]]:
+    normalized_keyword = _clean_non_empty_string(status_keyword).lower().replace(" ", "_")
+    normalized_slot_prefix = _clean_non_empty_string(slot_prefix)
+    formula_family = _clean_non_empty_string(formula.operator.family).lower()
+    formula_symbol = _clean_non_empty_string(formula.operator.symbol)
+    if (
+        not normalized_keyword
+        or not normalized_slot_prefix
+        or not formula_family
+        or not formula_symbol
+    ):
+        return []
+    components: List[tuple[str, str]] = list(
+        _modal_lexeme_components(
+            formula,
+            cue=normalized_keyword,
+            slot_prefix=normalized_slot_prefix,
+        )
+    )
+    for bridge_family, bridge_symbol in _STATUS_KEYWORD_BRIDGE_OPERATOR_PAIRS.get(
+        normalized_keyword,
+        (),
+    ):
+        normalized_bridge_family = _clean_non_empty_string(bridge_family).lower()
+        normalized_bridge_symbol = _clean_non_empty_string(bridge_symbol)
+        if not normalized_bridge_family or not normalized_bridge_symbol:
+            continue
+        bridge_signature = (
+            f"{normalized_bridge_family}:{normalized_bridge_symbol}:{normalized_keyword}"
+        )
+        family_pair = f"{formula_family}->{normalized_bridge_family}"
+        operator_pair = f"{formula_symbol}->{normalized_bridge_symbol}"
+        components.extend(
+            (
+                (
+                    f"{normalized_slot_prefix}_status_bridge_family",
+                    normalized_bridge_family,
+                ),
+                (
+                    f"{normalized_slot_prefix}_status_bridge_operator",
+                    normalized_bridge_symbol,
+                ),
+                (
+                    f"{normalized_slot_prefix}_status_bridge_signature",
+                    bridge_signature,
+                ),
+                (
+                    f"{normalized_slot_prefix}_status_bridge_family_pair",
+                    family_pair,
+                ),
+                (
+                    f"{normalized_slot_prefix}_status_bridge_operator_pair",
+                    operator_pair,
+                ),
+                (
+                    f"{normalized_slot_prefix}_status_bridge_pair_cue",
+                    f"{family_pair}:{normalized_keyword}",
+                ),
+                (
+                    f"{normalized_slot_prefix}_status_bridge_{normalized_bridge_family}",
+                    f"{normalized_bridge_symbol}:{normalized_keyword}",
+                ),
+            )
+        )
+    return _unique_preserve_order_tuples(components)
 
 
 def _citation_components(citation: str) -> List[tuple[str, str]]:
@@ -6943,7 +7667,18 @@ def _fallback_section_heading_tail_text(
         return ""
     candidate = _SECTION_HEADING_TAIL_SPLIT_RE.split(trailing, maxsplit=1)[0]
     heading_tail = _clean_non_empty_string(candidate)
+    heading_tail = _strip_uscode_gpo_attribution_fragment(heading_tail)
+    heading_tail = _TRAILING_SECTION_PUNCT_RE.sub("", heading_tail)
     if not heading_tail:
+        return ""
+    if _is_low_information_section_marker(heading_tail):
+        return ""
+    lower_heading_tail = heading_tail.lower()
+    if (
+        lower_heading_tail.startswith("u.s.c. title")
+        or lower_heading_tail.startswith("usc title")
+        or "united states code" in lower_heading_tail
+    ):
         return ""
     tokens = _SLOT_FEATURE_TOKEN_RE.findall(heading_tail.lower())
     if len(tokens) > max_tokens:
@@ -6996,6 +7731,7 @@ def _fallback_surface_text(
     normalized = _clean_non_empty_string(
         _USCODE_LEADING_SECTION_REF_RE.sub("", span_text)
     )
+    normalized = _strip_uscode_gpo_attribution_fragment(normalized)
     normalized = _TRAILING_SECTION_PUNCT_RE.sub("", normalized)
     normalized = _trim_uscode_compilation_surface_text(
         normalized,
@@ -7024,6 +7760,65 @@ def _fallback_surface_text(
     if not tokens or len(tokens) > max_tokens:
         return ""
     return normalized
+
+
+def _fallback_surface_context_text(
+    *,
+    modal_ir: ModalIRDocument,
+    formula: ModalIRFormula,
+    surface_text: str,
+    max_tokens: int = 24,
+    right_context_char_window: int = 360,
+    local_context_char_window: int = 180,
+) -> str:
+    source_text = str(modal_ir.normalized_text or "")
+    if not source_text:
+        return ""
+    surface_value = _clean_non_empty_string(surface_text).lower()
+    if not surface_value:
+        return ""
+    source_length = len(source_text)
+    start = max(0, min(source_length, int(formula.provenance.start_char)))
+    end = max(start, min(source_length, int(formula.provenance.end_char)))
+    right_context = _clean_non_empty_string(
+        source_text[end : min(source_length, end + right_context_char_window)]
+    )
+    local_context = _clean_non_empty_string(
+        source_text[max(0, start - local_context_char_window) : min(
+            source_length,
+            end + local_context_char_window,
+        )]
+    )
+    for raw_context in (right_context, local_context):
+        if not raw_context:
+            continue
+        for segment in _SECTION_HEADING_TAIL_SPLIT_RE.split(raw_context):
+            candidate = _clean_non_empty_string(segment)
+            if not candidate:
+                continue
+            candidate = _clean_non_empty_string(
+                _USCODE_LEADING_SECTION_REF_RE.sub("", candidate)
+            )
+            candidate = candidate.lstrip(" \t\r\n-–—:;,.")
+            candidate = _TRAILING_SECTION_PUNCT_RE.sub("", candidate)
+            candidate = _trim_uscode_compilation_surface_text(
+                candidate,
+                max_tokens=max_tokens,
+            )
+            candidate = _clean_non_empty_string(candidate)
+            if (
+                not candidate
+                or candidate.lower() == surface_value
+                or candidate.lower().startswith(surface_value)
+            ):
+                continue
+            tokens = _SLOT_FEATURE_TOKEN_RE.findall(candidate.lower())
+            if not tokens or len(tokens) > max_tokens:
+                continue
+            if not _contextual_modal_cues_from_text(formula, text=candidate):
+                continue
+            return candidate
+    return ""
 
 
 def _trim_uscode_compilation_surface_text(
@@ -7285,6 +8080,83 @@ def _is_canonical_roman_numeral(value: str) -> bool:
     if not cleaned:
         return False
     return _STRICT_ROMAN_NUMERAL_RE.fullmatch(cleaned) is not None
+
+
+def _is_source_copy_slot(slot: str) -> bool:
+    return any(
+        slot == prefix or slot.startswith(f"{prefix}_")
+        for prefix in _SOURCE_COPY_SLOT_PREFIXES
+    )
+
+
+def _structural_decoded_text(
+    decoded: DecodedModalText,
+    *,
+    modal_ir: ModalIRDocument,
+    selected_frame: Optional[str],
+) -> str:
+    """Render decompiled text without provenance-copied source spans."""
+
+    words: List[str] = []
+    for phrase in decoded.phrases:
+        if phrase.fixed or phrase.provenance_only:
+            continue
+        if _is_source_copy_slot(str(phrase.slot or "")):
+            continue
+        text = _clean_non_empty_string(phrase.text)
+        if text:
+            words.append(text)
+    rendered = _clean_non_empty_string(" ".join(words))
+    if rendered:
+        return rendered
+    formula_text = decode_modal_ir_text(modal_ir)
+    if selected_frame:
+        formula_text = _clean_non_empty_string(
+            f"{formula_text} selected frame {selected_frame}"
+        )
+    return _clean_non_empty_string(formula_text)
+
+
+def _source_span_copy_ratio(decoded: DecodedModalText) -> float:
+    copied_tokens = 0
+    rendered_tokens = 0
+    for phrase in decoded.phrases:
+        if phrase.fixed or phrase.provenance_only:
+            continue
+        text = _clean_non_empty_string(phrase.text)
+        if not text:
+            continue
+        token_count = len(_SLOT_FEATURE_TOKEN_RE.findall(text.lower()))
+        if token_count <= 0:
+            continue
+        rendered_tokens += token_count
+        if _is_source_copy_slot(str(phrase.slot or "")):
+            copied_tokens += token_count
+    if rendered_tokens <= 0:
+        return 0.0
+    return round(copied_tokens / rendered_tokens, 9)
+
+
+def _decoded_structural_feature_embedding(
+    structural_decoded_text: str,
+    *,
+    encoder: SpaCyLegalEncoder,
+    decoder: SpaCyModalDecoder,
+    dimensions: int,
+    document_id: str,
+    citation: Optional[str],
+    source: str,
+) -> List[float]:
+    cleaned = _clean_non_empty_string(structural_decoded_text)
+    if not cleaned:
+        return [0.0 for _ in range(max(0, int(dimensions)))]
+    encoding = encoder.encode(
+        cleaned,
+        document_id=document_id,
+        citation=citation,
+        source=f"{source}:structural_ir_decode",
+    )
+    return decoder.decode_embedding(encoding, dimensions=dimensions)
 
 
 def _slot_features(decoded: DecodedModalText) -> List[str]:
