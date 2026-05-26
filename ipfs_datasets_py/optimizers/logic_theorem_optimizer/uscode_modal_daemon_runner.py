@@ -1909,6 +1909,8 @@ def build_paired_daemon_commands(
         str(getattr(args, "autoencoder_max_mental_state_features", 64)),
         "--autoencoder-max-reference-dependency-features",
         str(getattr(args, "autoencoder_max_reference_dependency_features", 64)),
+        "--autoencoder-max-amendment-operation-features",
+        str(getattr(args, "autoencoder_max_amendment_operation_features", 64)),
         "--autoencoder-max-authority-jurisdiction-features",
         str(getattr(args, "autoencoder_max_authority_jurisdiction_features", 64)),
         "--autoencoder-max-discretion-standard-features",
@@ -5130,6 +5132,17 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--autoencoder-max-amendment-operation-features",
+        type=int,
+        default=64,
+        help=(
+            "Maximum amendment-operation features to expose to the feature "
+            "decoder. These bind strike/insert/add/redesignate/repeal edits "
+            "to compiler amendment nodes, frame-logic amendment slots, KG "
+            "edit edges, and decompiler amendment repair routes."
+        ),
+    )
+    parser.add_argument(
         "--autoencoder-max-authority-jurisdiction-features",
         type=int,
         default=64,
@@ -6373,6 +6386,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         max_reference_dependency_features=int(
             getattr(args, "autoencoder_max_reference_dependency_features", 64)
         ),
+        max_amendment_operation_features=int(
+            getattr(args, "autoencoder_max_amendment_operation_features", 64)
+        ),
         max_authority_jurisdiction_features=int(
             getattr(args, "autoencoder_max_authority_jurisdiction_features", 64)
         ),
@@ -6620,6 +6636,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     )
     summary["autoencoder_max_reference_dependency_features"] = int(
         getattr(args, "autoencoder_max_reference_dependency_features", 64)
+    )
+    summary["autoencoder_max_amendment_operation_features"] = int(
+        getattr(args, "autoencoder_max_amendment_operation_features", 64)
     )
     summary["autoencoder_max_authority_jurisdiction_features"] = int(
         getattr(args, "autoencoder_max_authority_jurisdiction_features", 64)

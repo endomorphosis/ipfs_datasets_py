@@ -25,6 +25,10 @@ FINAL_TEST_EVERY_CYCLES="${FINAL_TEST_EVERY_CYCLES:-96}"
 SWEEP_PROJECTION_EPOCHS="${SWEEP_PROJECTION_EPOCHS:-1}"
 FINAL_PROJECTION_EPOCHS="${FINAL_PROJECTION_EPOCHS:-2}"
 FINAL_RECOVERY_MIN_CYCLES="${FINAL_RECOVERY_MIN_CYCLES:-1}"
+BRIDGE_EVALUATE_PROVERS="${BRIDGE_EVALUATE_PROVERS:-false}"
+BRIDGE_LOSS_ADAPTERS="${BRIDGE_LOSS_ADAPTERS:-none}"
+MAX_SAMPLE_TEXT_CHARS="${MAX_SAMPLE_TEXT_CHARS:-4096}"
+AUTOENCODER_DEVICE="${AUTOENCODER_DEVICE:-cpu}"
 
 CODEX_EXEC_MODE="${CODEX_EXEC_MODE:-codex_cli}"
 if ! command -v codex >/dev/null 2>&1; then
@@ -35,9 +39,12 @@ COMMON_ARGS=(
   --train-count 4
   --validation-count 4
   --validation-canary-count 4
+  --max-sample-text-chars "${MAX_SAMPLE_TEXT_CHARS}"
   --max-inner-iterations 3
   --max-items 8
-  --autoencoder-device auto
+  --bridge-loss-adapters "${BRIDGE_LOSS_ADAPTERS}"
+  --bridge-evaluate-provers "${BRIDGE_EVALUATE_PROVERS}"
+  --autoencoder-device "${AUTOENCODER_DEVICE}"
   --autoencoder-bridge-workers 2
   --autoencoder-max-token-features 48
   --autoencoder-max-token-bigram-features 24
@@ -72,6 +79,7 @@ COMMON_ARGS=(
   --autoencoder-max-enforcement-remedy-features 64
   --autoencoder-max-mental-state-features 64
   --autoencoder-max-reference-dependency-features 64
+  --autoencoder-max-amendment-operation-features 64
   --autoencoder-max-authority-jurisdiction-features 64
   --autoencoder-max-discretion-standard-features 64
   --autoencoder-max-temporal-validity-features 64
@@ -129,6 +137,10 @@ echo "[pipeline] codex_exec_mode=${CODEX_EXEC_MODE}"
 echo "[pipeline] sweep_loop_role=${SWEEP_LOOP_ROLE}"
 echo "[pipeline] hyperparam_budget_seconds=${TOTAL_TRIAL_SECONDS}"
 echo "[pipeline] final_run_seconds=${FINAL_SECONDS}"
+echo "[pipeline] bridge_loss_adapters=${BRIDGE_LOSS_ADAPTERS}"
+echo "[pipeline] bridge_evaluate_provers=${BRIDGE_EVALUATE_PROVERS}"
+echo "[pipeline] max_sample_text_chars=${MAX_SAMPLE_TEXT_CHARS}"
+echo "[pipeline] autoencoder_device=${AUTOENCODER_DEVICE}"
 
 best_run_id=""
 best_cfg=""

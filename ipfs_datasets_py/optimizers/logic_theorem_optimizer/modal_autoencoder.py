@@ -1930,6 +1930,7 @@ class AdaptiveModalAutoencoder:
         max_enforcement_remedy_features: int = 64,
         max_mental_state_features: int = 64,
         max_reference_dependency_features: int = 64,
+        max_amendment_operation_features: int = 64,
         max_authority_jurisdiction_features: int = 64,
         max_discretion_standard_features: int = 64,
         max_temporal_validity_features: int = 64,
@@ -2187,6 +2188,10 @@ class AdaptiveModalAutoencoder:
         self.max_reference_dependency_features = max(
             0,
             int(max_reference_dependency_features),
+        )
+        self.max_amendment_operation_features = max(
+            0,
+            int(max_amendment_operation_features),
         )
         self.max_authority_jurisdiction_features = max(
             0,
@@ -4842,6 +4847,12 @@ class AdaptiveModalAutoencoder:
             self._reference_dependency_feature_keys_for(
                 sample,
                 prefix="legal-ir:reference-dependency",
+            )
+        )
+        keys.extend(
+            self._amendment_operation_feature_keys_for(
+                sample,
+                prefix="legal-ir:amendment-operation",
             )
         )
         keys.extend(
@@ -11269,6 +11280,365 @@ class AdaptiveModalAutoencoder:
         ).hexdigest()[:16]
         keys.insert(1, f"{normalized_prefix}:reference-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_reference_dependency_features]
+        cache[cache_key] = list(result)
+        return result
+
+    def _amendment_operation_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "amendment-operation",
+    ) -> List[str]:
+        """Statutory text-edit operations and structural amendment plans."""
+        normalized_prefix = str(prefix or "amendment-operation").strip(":")
+        cache_key = f"amendment_operation_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_amendment_operation_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        if not re.search(
+            r"\b(amend(?:ed|ing|ment)|strik(?:e|ing)|insert(?:ing)?|"
+            r"add(?:ing)?|redesignat(?:e|ing|ed)|repeal(?:ed|ing)?)\b",
+            text,
+        ):
+            cache[cache_key] = []
+            return []
+
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        action_classes = role_classes.get("action", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        def unit_atom(value: str) -> str:
+            raw = str(value or "").strip().lower()
+            raw = raw.strip("()[]{}.,;:\"'")
+            return _feature_atom(raw, max_tokens=5) or "this"
+
+        def target_parts(value: str) -> tuple[str, str, str]:
+            target = " ".join(str(value or "").lower().split())
+            match = re.match(
+                r"(?P<this>this\s+)?(?P<kind>section|subsection|paragraph|"
+                r"subparagraph|clause|subclause|chapter|subchapter|title)"
+                r"(?:\s+(?P<label>\([a-z0-9]+\)|[a-z0-9][a-z0-9().-]*))?",
+                target,
+            )
+            if not match:
+                return ("legal_unit", "unit", unit_atom(target))
+            kind = _feature_atom(match.group("kind")) or "unit"
+            label = unit_atom(match.group("label") or "")
+            if match.group("this") or label == "this":
+                if kind == "section":
+                    return ("current_section", kind, "this")
+                if kind in {
+                    "subsection",
+                    "paragraph",
+                    "subparagraph",
+                    "clause",
+                    "subclause",
+                }:
+                    return ("current_subdivision", kind, "this")
+                return ("current_container", kind, "this")
+            if kind in {
+                "subsection",
+                "paragraph",
+                "subparagraph",
+                "clause",
+                "subclause",
+            }:
+                return ("local_subdivision", kind, label)
+            if kind == "section":
+                return ("statutory_section", kind, label)
+            if kind in {"chapter", "subchapter", "title"}:
+                return ("statutory_container", kind, label)
+            return ("legal_unit", kind, label)
+
+        def fragment_class_for(value: str, *, absent: str = "none") -> str:
+            fragment = " ".join(str(value or "").lower().split())
+            if not fragment:
+                return absent
+            if re.search(r"\bsubparagraph\s+\([a-z0-9]+\)", fragment):
+                return "subparagraph_reference"
+            if re.search(r"\bparagraph\s+\([a-z0-9]+\)", fragment):
+                return "paragraph_reference"
+            if re.search(r"\bsubsection\s+\([a-z0-9]+\)", fragment):
+                return "subdivision_reference"
+            if re.search(r"\bsection\s+[a-z0-9][a-z0-9().-]*", fragment):
+                return "statutory_reference"
+            if re.search(r"\bfollowing\s+(?:new\s+)?(?:text|paragraph|subsection)", fragment):
+                return "introduced_text"
+            return "text_fragment"
+
+        def operation_scope(op_kind: str) -> str:
+            if op_kind in {"redesignate_subdivision", "repeal_unit"}:
+                return "structural_scope"
+            return "textual_scope"
+
+        def operation_polarity(op_kind: str) -> str:
+            if op_kind in {"strike_text", "repeal_unit"}:
+                return "negative_amendment"
+            if op_kind == "redesignate_subdivision":
+                return "renaming_amendment"
+            return "positive_amendment"
+
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        force_signature = "+".join(force_tags[:3]) or "none"
+        polarity_signature = "+".join(polarity_tags[:3]) or "none"
+        scope_signature = "+".join(scope_tags) or "unscoped"
+        events: List[tuple[int, str, str, str, str, str, str, str, str, str]] = []
+
+        target_pattern = (
+            r"(?:this\s+)?(?:section|subsection|paragraph|subparagraph|clause|"
+            r"subclause|chapter|subchapter|title)"
+            r"(?:\s+(?:\([a-z0-9]+\)|[a-z0-9][a-z0-9().-]*))?"
+        )
+        amended_pattern = re.compile(
+            rf"\b(?P<target>{target_pattern})\s+"
+            r"(?:(?:is|are|be|shall\s+be|must\s+be|may\s+be)\s+)?"
+            r"amended\s+by\s+(?P<body>[^.]{1,360})"
+        )
+        gerund_pattern = re.compile(
+            rf"\bamending\s+(?P<target>{target_pattern})\s+"
+            r"by\s+(?P<body>[^.]{1,360})"
+        )
+        repeal_pattern = re.compile(
+            rf"\b(?P<target>{target_pattern})\s+"
+            r"(?:(?:is|are|shall\s+be|must\s+be)\s+)?repealed\b"
+        )
+        replace_pattern = re.compile(
+            r"\bstriking\s+(?P<old>[^.;]{1,140}?)\s+and\s+"
+            r"inserting\s+(?P<new>[^.;]{1,140})"
+        )
+        strike_pattern = re.compile(r"\bstriking\s+(?P<old>[^.;]{1,140})")
+        insert_pattern = re.compile(r"\binserting\s+(?P<new>[^.;]{1,140})")
+        add_pattern = re.compile(
+            r"\badding(?:\s+at\s+the\s+end)?\s+(?P<new>[^.;]{1,160})"
+        )
+        redesignate_pattern = re.compile(
+            r"\bredesignating\s+"
+            r"(?P<old>(?:subparagraph|paragraph|subsection|clause|subclause)"
+            r"\s+\([a-z0-9]+\))\s+as\s+"
+            r"(?P<new>(?:subparagraph|paragraph|subsection|clause|subclause)"
+            r"\s+\([a-z0-9]+\))"
+        )
+
+        def append_event(
+            *,
+            start: int,
+            target: str,
+            op_kind: str,
+            old_fragment: str = "",
+            new_fragment: str = "",
+        ) -> None:
+            target_class, target_kind, target_label = target_parts(target)
+            old_class = fragment_class_for(old_fragment)
+            new_class = fragment_class_for(new_fragment)
+            scope = operation_scope(op_kind)
+            polarity = operation_polarity(op_kind)
+            events.append(
+                (
+                    int(start),
+                    op_kind,
+                    target_class,
+                    target_kind,
+                    target_label,
+                    old_class,
+                    new_class,
+                    polarity,
+                    scope,
+                    f"{unit_atom(old_fragment)}->{unit_atom(new_fragment)}",
+                )
+            )
+
+        def append_body_events(start: int, target: str, body: str) -> None:
+            body_text = str(body or "")
+            occupied: List[tuple[int, int]] = []
+            for match in redesignate_pattern.finditer(body_text):
+                append_event(
+                    start=start + match.start(),
+                    target=target,
+                    op_kind="redesignate_subdivision",
+                    old_fragment=match.group("old"),
+                    new_fragment=match.group("new"),
+                )
+                occupied.append((match.start(), match.end()))
+            for match in replace_pattern.finditer(body_text):
+                append_event(
+                    start=start + match.start(),
+                    target=target,
+                    op_kind="replace_text",
+                    old_fragment=match.group("old"),
+                    new_fragment=match.group("new"),
+                )
+                occupied.append((match.start(), match.end()))
+            for match in strike_pattern.finditer(body_text):
+                start_pos, end_pos = match.start(), match.end()
+                if any(start_pos < end and end_pos > begin for begin, end in occupied):
+                    continue
+                append_event(
+                    start=start + start_pos,
+                    target=target,
+                    op_kind="strike_text",
+                    old_fragment=match.group("old"),
+                )
+            for match in insert_pattern.finditer(body_text):
+                start_pos, end_pos = match.start(), match.end()
+                if any(start_pos < end and end_pos > begin for begin, end in occupied):
+                    continue
+                append_event(
+                    start=start + start_pos,
+                    target=target,
+                    op_kind="insert_text",
+                    new_fragment=match.group("new"),
+                )
+            for match in add_pattern.finditer(body_text):
+                append_event(
+                    start=start + match.start(),
+                    target=target,
+                    op_kind="add_text",
+                    new_fragment=match.group("new"),
+                )
+
+        for pattern in (amended_pattern, gerund_pattern):
+            for match in pattern.finditer(text):
+                append_body_events(
+                    match.start("body"),
+                    match.group("target"),
+                    match.group("body"),
+                )
+        for match in repeal_pattern.finditer(text):
+            append_event(
+                start=match.start(),
+                target=match.group("target"),
+                op_kind="repeal_unit",
+            )
+
+        events = sorted(
+            _unique_preserve_order(events),
+            key=lambda item: (item[0], item[1], item[2], item[3], item[4]),
+        )
+        if not events:
+            cache[cache_key] = []
+            return []
+
+        amendment_signature = "+".join(
+            f"{op}:{target_class}:{old_class}->{new_class}:{polarity}:{scope}"
+            for (
+                _start,
+                op,
+                target_class,
+                _target_kind,
+                _target_label,
+                old_class,
+                new_class,
+                polarity,
+                scope,
+                _exact,
+            ) in events[:8]
+        )
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:"
+            f"{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+
+        add("bias")
+        add(f"amendment-count:{_count_bucket(len(events))}")
+        add(f"amendment-signature:{amendment_signature}")
+        add(f"force-amendment:{force_signature}:{polarity_signature}:{scope_signature}")
+        add(f"source-amendment:{role_signature}:{scope_signature}")
+        for (
+            _start,
+            op,
+            target_class,
+            target_kind,
+            target_label,
+            old_class,
+            new_class,
+            polarity,
+            scope,
+            exact_fragment,
+        ) in events[:10]:
+            add(f"operation:{op}:{target_class}:{old_class}->{new_class}:{scope}")
+            add(f"operation-exact:{op}:{target_kind}:{target_label}:{exact_fragment}")
+            add(
+                f"compiler-amendment-node:"
+                f"{op}:{target_class}:{old_class}->{new_class}:{scope}"
+            )
+            add(
+                f"frame-logic-amendment-slot:"
+                f"{target_class}:{op}:{old_class}:{new_class}:{scope}"
+            )
+            add(
+                f"kg-amendment-edge:"
+                f"{target_class}:{op}:{old_class}->{new_class}:{polarity}"
+            )
+            if op == "redesignate_subdivision":
+                add(f"structural-redesignation:{target_class}:{old_class}->{new_class}")
+            if op == "repeal_unit":
+                add(f"structural-repeal:{target_class}:{polarity}:{scope}")
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-amendment:{family}:{symbol}:{predicate_role}:"
+                        f"{op}:{target_class}:{polarity}"
+                    )
+
+        add(f"decompiler-amendment-plan:{amendment_signature}")
+        add(
+            f"operator-amendment-plan:{amendment_signature}:"
+            f"{role_signature}:{operator_signature}"
+        )
+        add(f"todo-route:refine_amendment_operation:{amendment_signature}:{role_signature}")
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:amendment-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_amendment_operation_features]
         cache[cache_key] = list(result)
         return result
 
@@ -18219,6 +18589,7 @@ class AdaptiveModalAutoencoder:
         keys.extend(self._enforcement_remedy_feature_keys_for(sample))
         keys.extend(self._mental_state_feature_keys_for(sample))
         keys.extend(self._reference_dependency_feature_keys_for(sample))
+        keys.extend(self._amendment_operation_feature_keys_for(sample))
         keys.extend(self._authority_jurisdiction_feature_keys_for(sample))
         keys.extend(self._discretion_standard_feature_keys_for(sample))
         keys.extend(self._temporal_validity_feature_keys_for(sample))
@@ -18395,6 +18766,7 @@ class AdaptiveModalAutoencoder:
     def _is_core_modal_feature_key(self, feature: str) -> bool:
         core_prefixes = (
             "bias:",
+            "amendment-operation:",
             "authority-jurisdiction:",
             "applicability-scope:",
             "canonical-ir:",

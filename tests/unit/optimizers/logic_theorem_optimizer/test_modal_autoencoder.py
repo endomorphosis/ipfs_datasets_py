@@ -5787,6 +5787,218 @@ def test_reference_dependency_feature_head_transfers_citation_holdout() -> None:
     assert after_cosine.embedding_cosine_similarity > before_cosine.embedding_cosine_similarity
 
 
+def _amendment_operation_only_feature_kwargs() -> dict[str, int]:
+    return {
+        "max_compiler_latent_profile_features": 0,
+        "max_round_trip_bridge_features": 0,
+        "max_clause_topology_features": 0,
+        "max_legal_semantic_frame_features": 0,
+        "max_normative_polarity_features": 0,
+        "max_compiler_contract_features": 0,
+        "max_decompiler_surface_template_features": 0,
+        "max_canonical_ir_graph_features": 0,
+        "max_cycle_consistency_features": 0,
+        "max_equivalence_prototype_features": 0,
+        "max_contrastive_ir_boundary_features": 0,
+        "max_repair_plan_features": 0,
+        "max_logic_view_contract_features": 0,
+        "max_objective_residual_features": 0,
+        "max_provenance_alignment_features": 0,
+        "max_discourse_flow_features": 0,
+        "max_proof_obligation_features": 0,
+        "max_entity_binding_features": 0,
+        "max_defeasible_priority_features": 0,
+        "max_constraint_grounding_features": 0,
+        "max_quantitative_formula_features": 0,
+        "max_definition_grounding_features": 0,
+        "max_quantifier_scope_features": 0,
+        "max_procedural_lifecycle_features": 0,
+        "max_enforcement_remedy_features": 0,
+        "max_mental_state_features": 0,
+        "max_reference_dependency_features": 0,
+        "max_amendment_operation_features": 240,
+        "max_authority_jurisdiction_features": 0,
+        "max_discretion_standard_features": 0,
+        "max_temporal_validity_features": 0,
+        "max_evidentiary_burden_features": 0,
+        "max_legal_relation_features": 0,
+        "max_status_transition_features": 0,
+        "max_condition_consequence_features": 0,
+        "max_applicability_scope_features": 0,
+        "max_coreference_binding_features": 0,
+        "max_logical_connective_features": 0,
+        "max_enumeration_hierarchy_features": 0,
+        "max_token_features": 0,
+        "max_token_bigram_features": 0,
+        "max_token_trigram_features": 0,
+    }
+
+
+def test_amendment_operation_features_encode_text_and_structural_edits() -> None:
+    replacement = build_us_code_sample(
+        title="5",
+        section="552",
+        text=(
+            "Section 552 shall be amended by striking old text and "
+            "inserting new text."
+        ),
+    )
+    addition = build_us_code_sample(
+        title="5",
+        section="553",
+        text="Subsection (a) is amended by adding at the end the following text.",
+    )
+    redesignation = build_us_code_sample(
+        title="5",
+        section="554",
+        text="Section 554 is amended by redesignating paragraph (1) as paragraph (2).",
+    )
+    repeal = build_us_code_sample(
+        title="5",
+        section="555",
+        text="Section 555 is repealed.",
+    )
+    autoencoder = AdaptiveModalAutoencoder(max_amendment_operation_features=240)
+
+    replacement_features = autoencoder._amendment_operation_feature_keys_for(
+        replacement
+    )
+    addition_features = autoencoder._amendment_operation_feature_keys_for(addition)
+    redesignation_features = autoencoder._amendment_operation_feature_keys_for(
+        redesignation
+    )
+    repeal_features = autoencoder._amendment_operation_feature_keys_for(repeal)
+    fallback_features = autoencoder._fallback_feature_keys_for(replacement)
+    legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(replacement)
+
+    replacement_signature = (
+        "replace_text:statutory_section:text_fragment->text_fragment:"
+        "positive_amendment:textual_scope"
+    )
+    assert (
+        f"amendment-operation:amendment-signature:{replacement_signature}"
+        in replacement_features
+    )
+    assert (
+        "amendment-operation:compiler-amendment-node:"
+        "replace_text:statutory_section:text_fragment->text_fragment:textual_scope"
+        in replacement_features
+    )
+    assert (
+        "amendment-operation:operator-amendment:"
+        "deontic:o:clause:replace_text:statutory_section:positive_amendment"
+        in replacement_features
+    )
+    assert (
+        f"amendment-operation:decompiler-amendment-plan:{replacement_signature}"
+        in fallback_features
+    )
+    assert (
+        f"legal-ir:amendment-operation:decompiler-amendment-plan:"
+        f"{replacement_signature}"
+        in legal_ir_features
+    )
+
+    assert (
+        "amendment-operation:operation:"
+        "add_text:local_subdivision:none->introduced_text:textual_scope"
+        in addition_features
+    )
+    assert (
+        "amendment-operation:structural-redesignation:"
+        "statutory_section:paragraph_reference->paragraph_reference"
+        in redesignation_features
+    )
+    assert (
+        "amendment-operation:structural-repeal:"
+        "statutory_section:negative_amendment:structural_scope"
+        in repeal_features
+    )
+
+
+def test_amendment_operation_feature_head_transfers_edit_holdout() -> None:
+    shared_plan_feature = (
+        "amendment-operation:decompiler-amendment-plan:"
+        "replace_text:statutory_section:text_fragment->text_fragment:"
+        "positive_amendment:textual_scope"
+    )
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text=(
+            "Section 552 shall be amended by striking old text and "
+            "inserting new text."
+        ),
+        embedding_vector=[1.0, 0.0],
+    )
+    validation = build_us_code_sample(
+        title="12",
+        section="1841",
+        text=(
+            "Section 1841 shall be amended by striking obsolete language and "
+            "inserting revised language."
+        ),
+        embedding_vector=[1.0, 0.0],
+    )
+    feature_kwargs = _amendment_operation_only_feature_kwargs()
+    family_autoencoder = AdaptiveModalAutoencoder(
+        feature_family_logit_scale=4.0,
+        **feature_kwargs,
+    )
+    shared_amendment_features = set(
+        family_autoencoder._amendment_operation_feature_keys_for(train)
+    ).intersection(
+        family_autoencoder._amendment_operation_feature_keys_for(validation)
+    )
+    before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    family_autoencoder._nudge_family_logits(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert shared_plan_feature in shared_amendment_features
+    assert shared_plan_feature in family_autoencoder.state.feature_family_logits
+    assert after_ce.cross_entropy_loss < before_ce.cross_entropy_loss
+
+    embedding_autoencoder = AdaptiveModalAutoencoder(
+        compiler_quality_embedding_weight_scale=0.0,
+        logic_signature_embedding_weight_scale=0.0,
+        round_trip_signal_embedding_weight_scale=0.0,
+        decompiler_plan_embedding_weight_scale=0.0,
+        predicate_argument_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=0.0,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        feature_embedding_weight_scale=4.0,
+        cosine_reconstruction_weight=0.0,
+        **feature_kwargs,
+    )
+    before_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    embedding_autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    assert shared_plan_feature in embedding_autoencoder.state.feature_embedding_weights
+    assert after_cosine.embedding_cosine_similarity > before_cosine.embedding_cosine_similarity
+
+
 def test_authority_jurisdiction_features_encode_power_scope_and_preemption() -> None:
     rulemaking = build_us_code_sample(
         title="5",
