@@ -126,3 +126,4 @@ workspace/logs/
 workspace/test-reports/
 workspace/test-logs/
 workspace/codex-work/
+ipfs_datasets_py.egg-info/SOURCES.txt
