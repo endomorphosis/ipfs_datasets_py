@@ -30,6 +30,12 @@ class NewHampshireScraper(BaseStateScraper):
     _NH_TITLE_TEXT_RE = re.compile(r"^TITLE\s+([A-Z0-9-]+)\s*:\s*(.+)$", re.IGNORECASE)
     _NH_CHAPTER_TEXT_RE = re.compile(r"^CHAPTER\s+([0-9A-Z-]+)\s*:\s*(.+)$", re.IGNORECASE)
     _NH_SECTION_LINK_RE = re.compile(r"^Section\s+([0-9A-Z:.-]+)\s+(.+)$", re.IGNORECASE)
+
+    _DIRECT_FETCH_HOST_MARKERS = (
+        "web.archive.org/web/",
+        "www.gencourt.state.nh.us/",
+        "gc.nh.gov/",
+    )
     
     def get_base_url(self) -> str:
         """Return the base URL for New Hampshire's legislative website."""
@@ -207,6 +213,27 @@ class NewHampshireScraper(BaseStateScraper):
 
     async def _request_text_direct(self, url: str, timeout: int = 20) -> str:
         canonical = self._normalize_wayback_like_url(url)
+
+        def _request() -> str:
+            try:
+                req = urllib.request.Request(canonical, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req, timeout=timeout) as resp:
+                    return resp.read().decode("utf-8", errors="replace")
+            except Exception:
+                return ""
+
+        try:
+            direct_text = await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 2)
+            if direct_text:
+                return direct_text
+        except Exception:
+            direct_text = ""
+
+        # Avoid expensive archival/search fallbacks for known NH/Wayback URLs.
+        # These paths are best served by direct fetch + replay variants.
+        if self._should_prefer_direct_only_fetch(canonical):
+            return direct_text or ""
+
         try:
             payload = await self._fetch_page_content_with_archival_fallback(
                 canonical,
@@ -219,19 +246,7 @@ class NewHampshireScraper(BaseStateScraper):
                 return payload.decode("utf-8", errors="replace")
             except Exception:
                 return ""
-
-        def _request() -> str:
-            try:
-                req = urllib.request.Request(canonical, headers={"User-Agent": "Mozilla/5.0"})
-                with urllib.request.urlopen(req, timeout=timeout) as resp:
-                    return resp.read().decode("utf-8", errors="replace")
-            except Exception:
-                return ""
-
-        try:
-            return await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 2)
-        except Exception:
-            return ""
+        return ""
 
     async def _fetch_known_rsa_page(self, url: str, timeout_seconds: int = 35) -> bytes:
         # Known official/Wayback RSA pages should be fetched directly before invoking
@@ -254,7 +269,18 @@ class NewHampshireScraper(BaseStateScraper):
                 direct = await self._request_text_direct(candidate, timeout=max(5, timeout_seconds))
                 if direct:
                     return direct.encode("utf-8", errors="replace")
+            # Avoid expensive archival/search fallback loops for known RSA/Wayback
+            # URLs when direct replay fetches miss.
+            return b""
         return await self._fetch_page_content_with_archival_fallback(normalized_url, timeout_seconds=timeout_seconds)
+
+    def _should_prefer_direct_only_fetch(self, url: str) -> bool:
+        value = str(url or "").strip().lower()
+        if not value:
+            return False
+        if "/rsa/html/" not in value:
+            return False
+        return any(marker in value for marker in self._DIRECT_FETCH_HOST_MARKERS)
 
     def _derive_direct_rsa_candidates(self, value: str) -> List[str]:
         url = str(value or "").strip()
@@ -359,7 +385,7 @@ class NewHampshireScraper(BaseStateScraper):
         root_url = "https://web.archive.org/web/20250124114611/https://www.gencourt.state.nh.us/rsa/html/NHTOC.htm"
 
         try:
-            payload = await self._fetch_page_content_with_archival_fallback(root_url, timeout_seconds=35)
+            payload = await self._fetch_known_rsa_page(root_url, timeout_seconds=35)
             if not payload:
                 if checkpoint is not None:
                     checkpoint.write(
@@ -486,7 +512,7 @@ class NewHampshireScraper(BaseStateScraper):
             if chapter_fetch_limit is not None and len(chapter_urls) >= chapter_fetch_limit:
                 break
             try:
-                title_payload = await self._fetch_page_content_with_archival_fallback(title_url, timeout_seconds=35)
+                title_payload = await self._fetch_known_rsa_page(title_url, timeout_seconds=35)
                 if not title_payload:
                     continue
             except Exception:
@@ -565,7 +591,7 @@ class NewHampshireScraper(BaseStateScraper):
 
         async def _fetch_chapter_sections(chapter_id: str, chapter_name: str, chapter_url: str) -> List[NormalizedStatute]:
             try:
-                chapter_payload = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=35)
+                chapter_payload = await self._fetch_known_rsa_page(chapter_url, timeout_seconds=35)
                 if not chapter_payload:
                     return []
             except Exception:
@@ -623,7 +649,7 @@ class NewHampshireScraper(BaseStateScraper):
             ) -> Optional[NormalizedStatute]:
                 async with section_sem:
                     try:
-                        section_payload = await self._fetch_page_content_with_archival_fallback(section_url, timeout_seconds=35)
+                        section_payload = await self._fetch_known_rsa_page(section_url, timeout_seconds=35)
                     except Exception:
                         return None
                     section_text = self._extract_statute_text(section_payload)

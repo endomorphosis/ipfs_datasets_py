@@ -232,10 +232,10 @@ Notes:
 	It also loads a repo-tracked baseline file by default:
 	`scripts/ops/legal_data/state_laws_completed_states.baseline.json`
 	(currently seeded with completed states:
-	`AK`, `AL`, `AR`, `AZ`, `CA`, `CO`, `CT`, `DE`, `FL`, `GA`, `IA`, `ID`, `IL`, `KS`,
+	`AK`, `AL`, `AR`, `AZ`, `CA`, `CO`, `CT`, `DE`, `FL`, `GA`, `IA`, `ID`, `IL`, `IN`, `KS`,
 	`KY`, `LA`, `MA`, `MD`, `MI`, `MN`, `MO`, `MT`, `NC`, `ND`, `NJ`, `NM`, `NV`, `NY`,
 	`OH`, `OK`, `OR`, `PA`, `SC`, `SD`, `TN`, `TX`, `UT`, `VT`, `WI`, `WV`, `WY`).
-	Unresolved/non-baselined states as of 2026-05-25: `HI`, `IN`, `ME`, `MS`, `NE`, `NH`, `RI`, `VA`, `WA`.
+	Unresolved/non-baselined states as of 2026-05-26: `HI`, `ME`, `MS`, `NE`, `NH`, `RI`, `VA`, `WA`.
 	Only add states to this baseline after an uncapped/full-corpus confirmation.
 	Do not promote bounded probe runs (for example `--max-statutes 120/200`) to
 	baseline-complete, because those runs are diagnostic and intentionally partial.

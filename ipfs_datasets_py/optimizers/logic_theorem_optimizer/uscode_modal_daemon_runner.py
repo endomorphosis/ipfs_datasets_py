@@ -1901,6 +1901,14 @@ def build_paired_daemon_commands(
         str(getattr(args, "autoencoder_max_quantifier_scope_features", 64)),
         "--autoencoder-max-procedural-lifecycle-features",
         str(getattr(args, "autoencoder_max_procedural_lifecycle_features", 64)),
+        "--autoencoder-max-enforcement-remedy-features",
+        str(getattr(args, "autoencoder_max_enforcement_remedy_features", 64)),
+        "--autoencoder-max-reference-dependency-features",
+        str(getattr(args, "autoencoder_max_reference_dependency_features", 64)),
+        "--autoencoder-max-authority-jurisdiction-features",
+        str(getattr(args, "autoencoder_max_authority_jurisdiction_features", 64)),
+        "--autoencoder-max-temporal-validity-features",
+        str(getattr(args, "autoencoder_max_temporal_validity_features", 64)),
         "--autoencoder-embedding-head-update-normalization",
         str(getattr(args, "autoencoder_embedding_head_update_normalization", 0.5)),
         "--autoencoder-family-logit-head-update-normalization",
@@ -5053,6 +5061,50 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--autoencoder-max-enforcement-remedy-features",
+        type=int,
+        default=64,
+        help=(
+            "Maximum enforcement-remedy features to expose to the feature "
+            "decoder. These bind violation triggers, liable parties, "
+            "penalties, sanctions, injunctions, enforcement actors, and "
+            "decompiler repair routes."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-max-reference-dependency-features",
+        type=int,
+        default=64,
+        help=(
+            "Maximum reference-dependency features to expose to the feature "
+            "decoder. These bind statutory citations, local references, "
+            "exception imports, authority imports, applicability scope, and "
+            "decompiler dependency-graph repair routes."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-max-authority-jurisdiction-features",
+        type=int,
+        default=64,
+        help=(
+            "Maximum authority-jurisdiction features to expose to the feature "
+            "decoder. These bind delegated powers, rulemaking authority, "
+            "jurisdiction, preemption limits, authority instruments, and "
+            "decompiler power-scope repair routes."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-max-temporal-validity-features",
+        type=int,
+        default=64,
+        help=(
+            "Maximum temporal-validity features to expose to the feature "
+            "decoder. These bind effective dates, sunset and expiration "
+            "rules, retroactivity, transition windows, applicability dates, "
+            "and decompiler versioning repair routes."
+        ),
+    )
+    parser.add_argument(
         "--autoencoder-family-embedding-weight-scale",
         type=float,
         default=0.5,
@@ -6156,6 +6208,18 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         max_procedural_lifecycle_features=int(
             getattr(args, "autoencoder_max_procedural_lifecycle_features", 64)
         ),
+        max_enforcement_remedy_features=int(
+            getattr(args, "autoencoder_max_enforcement_remedy_features", 64)
+        ),
+        max_reference_dependency_features=int(
+            getattr(args, "autoencoder_max_reference_dependency_features", 64)
+        ),
+        max_authority_jurisdiction_features=int(
+            getattr(args, "autoencoder_max_authority_jurisdiction_features", 64)
+        ),
+        max_temporal_validity_features=int(
+            getattr(args, "autoencoder_max_temporal_validity_features", 64)
+        ),
         feature_activity_reference=int(
             getattr(args, "autoencoder_feature_activity_reference", 64)
         ),
@@ -6358,6 +6422,18 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     )
     summary["autoencoder_max_procedural_lifecycle_features"] = int(
         getattr(args, "autoencoder_max_procedural_lifecycle_features", 64)
+    )
+    summary["autoencoder_max_enforcement_remedy_features"] = int(
+        getattr(args, "autoencoder_max_enforcement_remedy_features", 64)
+    )
+    summary["autoencoder_max_reference_dependency_features"] = int(
+        getattr(args, "autoencoder_max_reference_dependency_features", 64)
+    )
+    summary["autoencoder_max_authority_jurisdiction_features"] = int(
+        getattr(args, "autoencoder_max_authority_jurisdiction_features", 64)
+    )
+    summary["autoencoder_max_temporal_validity_features"] = int(
+        getattr(args, "autoencoder_max_temporal_validity_features", 64)
     )
     summary["autoencoder_feature_activity_reference"] = int(
         getattr(args, "autoencoder_feature_activity_reference", 64)

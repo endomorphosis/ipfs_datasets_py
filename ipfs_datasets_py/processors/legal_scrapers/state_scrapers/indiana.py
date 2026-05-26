@@ -7,6 +7,10 @@ Indiana General Assembly static-document chapter PDFs.
 import re
 import subprocess
 import os
+import tempfile
+import zipfile
+from datetime import datetime
+from pathlib import Path
 from urllib.parse import quote, urljoin, urlparse
 from typing import Dict, List, Optional
 
@@ -45,6 +49,8 @@ class IndianaScraper(BaseStateScraper):
         r"<title>\s*wayback machine\s*</title>",
         re.IGNORECASE,
     )
+    _INDIANA_SECTION_CITE_RE = re.compile(r"\bIC\s+(\d+(?:-[0-9.]+){2,})\b", re.IGNORECASE)
+    _INDIANA_TITLE_FILE_RE = re.compile(r"/(\d+)\.html$", re.IGNORECASE)
 
     def get_base_url(self) -> str:
         """Return the base URL for Indiana's legislative website."""
@@ -80,11 +86,13 @@ class IndianaScraper(BaseStateScraper):
         if full_corpus and max_statutes is None:
             full_target = max(
                 500,
-                int(os.getenv("INDIANA_FULL_CORPUS_TARGET", "25000") or "25000"),
+                int(os.getenv("INDIANA_FULL_CORPUS_TARGET", "90000") or "90000"),
             )
             target_statutes = full_target
         else:
             target_statutes = max(1, int(return_threshold))
+        bounded_probe = max_statutes is not None
+        min_full_corpus_records = int(os.getenv("INDIANA_FULL_CORPUS_MIN_RECORDS", "30") or "30")
         resumed = self._load_partial_checkpoint_statutes(
             code_name=code_name,
             max_statutes=int(target_statutes),
@@ -98,10 +106,45 @@ class IndianaScraper(BaseStateScraper):
             if seed_pdfs:
                 return seed_pdfs
 
+        download_bundle_statutes: List[NormalizedStatute] = []
+        download_bundle_enabled = (
+            full_corpus
+            or (bounded_probe and int(target_statutes) >= 25)
+            or self._env_flag("INDIANA_DOWNLOAD_BUNDLE_ENABLE")
+        )
+        if download_bundle_enabled:
+            download_bundle_statutes = await self._scrape_indiana_download_bundle(
+                code_name=code_name,
+                max_statutes=max(10, target_statutes),
+            )
+            merged_download_rows: List[NormalizedStatute] = []
+            merged_download_keys = set()
+            for statute in [*resumed, *download_bundle_statutes]:
+                source_url = str(statute.source_url or "").strip().lower()
+                statute_id = str(statute.statute_id or "").strip().lower()
+                key = source_url or statute_id
+                if not key or key in merged_download_keys:
+                    continue
+                merged_download_keys.add(key)
+                merged_download_rows.append(statute)
+            substantive_download_rows = [
+                statute for statute in merged_download_rows if self._is_substantive_indiana_record(statute)
+            ]
+            if substantive_download_rows and (
+                not full_corpus or len(substantive_download_rows) >= min_full_corpus_records
+            ):
+                self.logger.info(
+                    "Indiana download bundle: Scraped %s sections (year=%s)",
+                    len(substantive_download_rows),
+                    substantive_download_rows[0].structured_data.get("code_year")
+                    if isinstance(substantive_download_rows[0].structured_data, dict)
+                    else "",
+                )
+                return substantive_download_rows
+
         archival = await self._scrape_archived_chapter_pdfs(code_name=code_name, max_statutes=max(10, target_statutes))
         justia_titles: List[NormalizedStatute] = []
         title_page_statutes: List[NormalizedStatute] = []
-        bounded_probe = max_statutes is not None
         justia_enabled = full_corpus or bounded_probe or self._env_flag("INDIANA_JUSTIA_ENABLE")
         title_pages_enabled = full_corpus or bounded_probe or self._env_flag("INDIANA_ARCHIVED_TITLE_PAGES_ENABLE")
         if justia_enabled:
@@ -123,6 +166,7 @@ class IndianaScraper(BaseStateScraper):
                 merged.append(statute)
 
         _merge(resumed)
+        _merge(download_bundle_statutes)
         _merge(archival)
         _merge(justia_titles)
         _merge(title_page_statutes)
@@ -135,7 +179,6 @@ class IndianaScraper(BaseStateScraper):
                 max(0, len(merged) - len(substantive)),
             )
 
-        min_full_corpus_records = int(os.getenv("INDIANA_FULL_CORPUS_MIN_RECORDS", "30") or "30")
         if substantive and (not full_corpus or len(substantive) >= min_full_corpus_records):
             self.logger.info(f"Indiana archival fallback: Scraped {len(substantive)} sections")
             return substantive
@@ -171,6 +214,314 @@ class IndianaScraper(BaseStateScraper):
             seen_ids.add(statute.statute_id)
             statutes.append(statute)
         return statutes
+
+    async def _scrape_indiana_download_bundle(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+        """Scrape section-level Indiana Code rows from official downloadable bundles."""
+        bundle = await self._download_indiana_code_bundle()
+        if bundle is None:
+            return []
+
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        year, bundle_path, bundle_url = bundle
+        if not bundle_path.exists():
+            return []
+
+        out: List[NormalizedStatute] = []
+        seen_sections = set()
+
+        try:
+            archive = zipfile.ZipFile(bundle_path, "r")
+        except Exception as exc:
+            self.logger.warning("Indiana download bundle could not be opened (%s): %s", bundle_path, exc)
+            return []
+
+        with archive:
+            html_members = [
+                name
+                for name in archive.namelist()
+                if "_Indiana_Code_HTML/" in name and name.lower().endswith(".html")
+            ]
+            html_members.sort(
+                key=lambda name: int(self._INDIANA_TITLE_FILE_RE.search(name).group(1))
+                if self._INDIANA_TITLE_FILE_RE.search(name)
+                else 9999
+            )
+
+            if not html_members:
+                self.logger.warning(
+                    "Indiana download bundle had no title HTML members: year=%s path=%s",
+                    year,
+                    bundle_path,
+                )
+                return []
+
+            self._write_partial_checkpoint(
+                out,
+                code_name=code_name,
+                stage_label="indiana:download-bundle:start",
+                extra={
+                    "year": int(year),
+                    "bundle_url": bundle_url,
+                    "bundle_path": str(bundle_path),
+                    "scanned_candidates": 0,
+                    "discovered_candidates": int(len(html_members)),
+                    "codes_completed": 0,
+                    "codes_total": 1,
+                },
+            )
+
+            for member_index, member_name in enumerate(html_members, start=1):
+                if len(out) >= max_statutes:
+                    break
+
+                try:
+                    payload = archive.read(member_name)
+                except Exception:
+                    continue
+
+                soup = BeautifulSoup(payload, "html.parser")
+                title_label = ""
+                title_node = soup.select_one("div.title span#shortdescription")
+                if title_node is not None:
+                    title_label = self._normalize_legal_text(title_node.get_text(" ", strip=True))
+
+                for section_node in soup.select("div.section"):
+                    if len(out) >= max_statutes:
+                        break
+
+                    number_node = section_node.find("span", id="ic_number")
+                    number_text = self._normalize_legal_text(number_node.get_text(" ", strip=True)) if number_node else ""
+                    number_match = self._INDIANA_SECTION_CITE_RE.search(number_text)
+                    if number_match is None:
+                        continue
+                    section_number = str(number_match.group(1) or "").strip()
+                    if not section_number:
+                        continue
+                    if section_number.lower() in seen_sections:
+                        continue
+
+                    short_node = section_node.find("span", id="shortdescription")
+                    section_name = self._normalize_legal_text(short_node.get_text(" ", strip=True)) if short_node else ""
+                    body_text = self._extract_indiana_download_section_text(section_node)
+                    if len(body_text) < 24:
+                        continue
+
+                    title_number = section_number.split("-", 1)[0].strip()
+                    source_url = f"https://iga.in.gov/laws/{year}/ic/titles/{title_number}#{section_number}"
+                    full_text = body_text[:14000]
+                    statute_id = f"{code_name} § {section_number}"
+
+                    out.append(
+                        NormalizedStatute(
+                            state_code=self.state_code,
+                            state_name=self.state_name,
+                            statute_id=statute_id,
+                            code_name=code_name,
+                            title_number=title_number or None,
+                            title_name=title_label[:200] if title_label else None,
+                            section_number=section_number,
+                            section_name=(section_name or f"Section {section_number}")[:200],
+                            full_text=full_text,
+                            legal_area=self._identify_legal_area(
+                                " ".join(part for part in [title_label, section_name, full_text[:500]] if part)
+                            ),
+                            source_url=source_url,
+                            official_cite=f"Ind. Code § {section_number}",
+                            metadata=StatuteMetadata(),
+                            structured_data={
+                                "source_kind": "official_indiana_code_download_bundle",
+                                "discovery_method": "iga_code_download_bundle_html",
+                                "code_year": int(year),
+                                "bundle_url": bundle_url,
+                                "bundle_path": str(bundle_path),
+                                "bundle_member": member_name,
+                                "skip_hydrate": True,
+                            },
+                        )
+                    )
+                    seen_sections.add(section_number.lower())
+
+                if member_index == 1 or member_index % 6 == 0 or member_index >= len(html_members):
+                    self._write_partial_checkpoint(
+                        out,
+                        code_name=code_name,
+                        stage_label="indiana:download-bundle:progress",
+                        extra={
+                            "year": int(year),
+                            "bundle_url": bundle_url,
+                            "bundle_path": str(bundle_path),
+                            "scanned_candidates": int(member_index),
+                            "discovered_candidates": int(len(html_members)),
+                            "codes_completed": 0,
+                            "codes_total": 1,
+                        },
+                    )
+
+        self._write_partial_checkpoint(
+            out,
+            code_name=code_name,
+            stage_label="indiana:download-bundle:complete",
+            force=True,
+            extra={
+                "year": int(year),
+                "bundle_url": bundle_url,
+                "bundle_path": str(bundle_path),
+                "scanned_candidates": int(len(out)),
+                "discovered_candidates": int(len(out)),
+                "codes_completed": 1,
+                "codes_total": 1,
+            },
+        )
+        return out
+
+    async def _download_indiana_code_bundle(self) -> tuple[int, Path, str] | None:
+        """Download or reuse the newest available Indiana Code bundle ZIP."""
+        cache_dir = Path(
+            os.getenv("INDIANA_CODE_ZIP_CACHE_DIR")
+            or (Path.home() / ".ipfs_datasets" / "indiana_code_zip_cache")
+        )
+        try:
+            cache_dir.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            return None
+
+        headers = self._indiana_code_bundle_headers()
+        timeout_connect = max(2, int(os.getenv("INDIANA_CODE_ZIP_CONNECT_TIMEOUT_SECONDS", "8") or "8"))
+        timeout_read = max(10, int(os.getenv("INDIANA_CODE_ZIP_READ_TIMEOUT_SECONDS", "180") or "180"))
+        min_year = int(os.getenv("INDIANA_CODE_MIN_YEAR", "2017") or "2017")
+        current_year = int(datetime.utcnow().year)
+        max_year = int(os.getenv("INDIANA_CODE_MAX_YEAR", str(current_year)) or str(current_year))
+        if max_year < min_year:
+            max_year = min_year
+
+        preferred_year = str(os.getenv("INDIANA_CODE_YEAR", "") or "").strip()
+        year_candidates: List[int]
+        if preferred_year.isdigit():
+            year_candidates = [int(preferred_year)]
+        else:
+            year_candidates = list(range(max_year, min_year - 1, -1))
+
+        def _candidate_urls(year: int) -> List[tuple[str, str]]:
+            return [
+                (f"https://iga.in.gov/ic/{year}/{year}-Indiana-Code-html.zip", "html"),
+                (f"https://iga.in.gov/ic/{year}/{year}-Indiana-Code.zip", "full"),
+            ]
+
+        def _is_zip_file(path: Path) -> bool:
+            try:
+                if not path.exists() or path.stat().st_size < 64:
+                    return False
+                with path.open("rb") as handle:
+                    return handle.read(4) == b"PK\x03\x04"
+            except Exception:
+                return False
+
+        def _download_one(url: str, dest: Path) -> bool:
+            try:
+                import requests
+            except Exception:
+                return False
+
+            tmp_path: Path | None = None
+            try:
+                with requests.get(
+                    url,
+                    headers=headers,
+                    timeout=(timeout_connect, timeout_read),
+                    stream=True,
+                ) as response:
+                    if int(response.status_code or 0) != 200:
+                        return False
+                    with tempfile.NamedTemporaryFile(
+                        mode="wb",
+                        prefix=f"indiana-{dest.stem}-",
+                        suffix=".tmp",
+                        dir=str(cache_dir),
+                        delete=False,
+                    ) as tmp_handle:
+                        tmp_path = Path(tmp_handle.name)
+                        first_prefix = b""
+                        for chunk in response.iter_content(chunk_size=1024 * 1024):
+                            if not chunk:
+                                continue
+                            if not first_prefix:
+                                first_prefix = bytes(chunk[:4])
+                                if first_prefix != b"PK\x03\x04":
+                                    return False
+                            tmp_handle.write(chunk)
+                if tmp_path is None or not _is_zip_file(tmp_path):
+                    return False
+                tmp_path.replace(dest)
+                return True
+            except Exception:
+                return False
+            finally:
+                if tmp_path is not None and tmp_path.exists() and tmp_path != dest:
+                    try:
+                        tmp_path.unlink()
+                    except Exception:
+                        pass
+
+        for year in year_candidates:
+            for url, suffix in _candidate_urls(year):
+                cache_path = cache_dir / f"{year}-indiana-code-{suffix}.zip"
+                if _is_zip_file(cache_path):
+                    self._record_fetch_event(provider="indiana_code_zip_cache", success=True)
+                    return int(year), cache_path, url
+                downloaded = await asyncio.to_thread(_download_one, url, cache_path)
+                self._record_fetch_event(
+                    provider="requests_direct_indiana_code_zip",
+                    success=bool(downloaded),
+                    error=None if downloaded else f"download_failed:{year}:{suffix}",
+                )
+                if downloaded and _is_zip_file(cache_path):
+                    return int(year), cache_path, url
+
+        return None
+
+    @staticmethod
+    def _indiana_code_bundle_headers() -> Dict[str, str]:
+        return {
+            "User-Agent": (
+                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+            ),
+            "Accept": "application/zip,application/octet-stream,*/*",
+            "Referer": "https://iga.in.gov/laws/ic/downloads",
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "same-origin",
+            "Upgrade-Insecure-Requests": "1",
+        }
+
+    def _extract_indiana_download_section_text(self, section_node) -> str:
+        """Extract body text for one Indiana section node from title HTML."""
+        try:
+            from bs4 import NavigableString
+            from bs4.element import Tag
+        except Exception:
+            return ""
+
+        stop_classes = {"section", "article", "chapter", "title"}
+        out: List[str] = []
+        for sibling in section_node.next_siblings:
+            if isinstance(sibling, Tag):
+                sibling_classes = {str(item).strip().lower() for item in (sibling.get("class") or [])}
+                if sibling.name == "div" and sibling_classes.intersection(stop_classes):
+                    break
+                sibling_text = self._normalize_legal_text(sibling.get_text(" ", strip=True))
+                if sibling_text:
+                    out.append(sibling_text)
+            elif isinstance(sibling, NavigableString):
+                sibling_text = self._normalize_legal_text(str(sibling))
+                if sibling_text:
+                    out.append(sibling_text)
+
+        return self._normalize_legal_text(" ".join(out))
 
     async def _scrape_archived_justia_titles(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         try:

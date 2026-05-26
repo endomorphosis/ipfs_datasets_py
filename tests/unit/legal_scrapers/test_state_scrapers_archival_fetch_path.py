@@ -1,5 +1,6 @@
 import io
 import zipfile
+import urllib.request
 
 import pytest
 
@@ -140,6 +141,61 @@ async def test_new_hampshire_fetch_known_rsa_page_prefers_direct_wayback(monkeyp
 
 
 @pytest.mark.anyio
+async def test_new_hampshire_request_text_direct_avoids_archival_fallback_for_wayback(monkeypatch: pytest.MonkeyPatch):
+    class _FakeUrlopenResponse:
+        def __init__(self, payload: bytes):
+            self._payload = payload
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def read(self):
+            return self._payload
+
+    def _fake_urlopen(request_obj, timeout=20):
+        return _FakeUrlopenResponse(b"<html><body>nh-direct-only</body></html>")
+
+    async def _fake_fallback(self, url: str, timeout_seconds: int = 25) -> bytes:
+        raise AssertionError("archival fallback should not run for direct NH wayback fetch")
+
+    monkeypatch.setattr(urllib.request, "urlopen", _fake_urlopen)
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fallback)
+
+    scraper = NewHampshireScraper("NH", "New Hampshire")
+    text = await scraper._request_text_direct(
+        "https://web.archive.org/web/20250124114611/https://www.gencourt.state.nh.us/rsa/html/NHTOC.htm",
+        timeout=12,
+    )
+
+    assert "nh-direct-only" in text
+
+
+@pytest.mark.anyio
+async def test_new_hampshire_fetch_known_rsa_page_skips_archival_fallback_when_direct_misses(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    async def _fake_direct(self, url: str, timeout: int = 20) -> str:
+        return ""
+
+    async def _fake_fallback(self, url: str, timeout_seconds: int = 25) -> bytes:
+        raise AssertionError("archival fallback should not run for known RSA URL when direct replay misses")
+
+    monkeypatch.setattr(NewHampshireScraper, "_request_text_direct", _fake_direct)
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fallback)
+
+    scraper = NewHampshireScraper("NH", "New Hampshire")
+    payload = await scraper._fetch_known_rsa_page(
+        "https://web.archive.org/web/20250124114611/https://www.gencourt.state.nh.us/rsa/html/NHTOC.htm",
+        timeout_seconds=12,
+    )
+
+    assert payload == b""
+
+
+@pytest.mark.anyio
 async def test_oklahoma_request_text_prefers_direct_wayback_before_archival(monkeypatch: pytest.MonkeyPatch):
     async def _fake_live_oscn(self, url: str, headers, timeout: int) -> str:
         return ""
@@ -207,6 +263,103 @@ async def test_indiana_pdf_fetch_records_fetch_analytics(monkeypatch: pytest.Mon
 
     analytics = scraper.get_fetch_analytics_snapshot()
     assert int(analytics.get("attempted") or 0) > 0
+
+
+@pytest.mark.anyio
+async def test_indiana_download_bundle_scrape_parses_section_rows(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path,
+):
+    html_doc = (
+        "<html><body>"
+        "<div class='title'><span id='shortdescription'>TITLE 1. GENERAL PROVISIONS</span></div>"
+        "<div class='section' id='1-1-1-1'>"
+        "<span id='ic_number'>IC 1-1-1-1</span>"
+        "<span id='shortdescription'>Citation</span>"
+        "</div>"
+        "<p>Sec. 1. Citation. The Indiana Code may be cited as IC.</p>"
+        "<div class='section' id='1-1-1-2'>"
+        "<span id='ic_number'>IC 1-1-1-2</span>"
+        "<span id='shortdescription'>Repeal of prior laws</span>"
+        "</div>"
+        "<p>Sec. 2. Prior laws are repealed except as provided.</p>"
+        "</body></html>"
+    )
+    bundle_path = tmp_path / "indiana_code_bundle.zip"
+    with zipfile.ZipFile(bundle_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr(
+            "2024-Indiana-Code-html/2024_Indiana_Code_HTML/1.html",
+            html_doc,
+        )
+
+    async def _fake_download_bundle(self):
+        return (
+            2024,
+            bundle_path,
+            "https://iga.in.gov/ic/2024/2024-Indiana-Code-html.zip",
+        )
+
+    monkeypatch.setattr(IndianaScraper, "_download_indiana_code_bundle", _fake_download_bundle)
+
+    scraper = IndianaScraper("IN", "Indiana")
+    statutes = await scraper._scrape_indiana_download_bundle("Indiana Code", max_statutes=10)
+
+    assert len(statutes) == 2
+    assert statutes[0].section_number == "1-1-1-1"
+    assert statutes[1].section_number == "1-1-1-2"
+    assert statutes[0].structured_data.get("source_kind") == "official_indiana_code_download_bundle"
+    assert statutes[0].structured_data.get("code_year") == 2024
+    assert statutes[0].structured_data.get("skip_hydrate") is True
+
+
+@pytest.mark.anyio
+async def test_indiana_scrape_code_prefers_download_bundle_rows(monkeypatch: pytest.MonkeyPatch):
+    async def _fake_download_bundle(self, code_name: str, max_statutes: int):
+        return [
+            NormalizedStatute(
+                state_code="IN",
+                state_name="Indiana",
+                statute_id=f"{code_name} § 35-42-1-1",
+                code_name=code_name,
+                section_number="35-42-1-1",
+                section_name="Battery",
+                full_text="Sec. 1. Battery statute body text " * 12,
+                source_url="https://iga.in.gov/laws/2025/ic/titles/35#35-42-1-1",
+                official_cite="Ind. Code § 35-42-1-1",
+                metadata=StatuteMetadata(),
+                structured_data={
+                    "source_kind": "official_indiana_code_download_bundle",
+                    "discovery_method": "iga_code_download_bundle_html",
+                    "code_year": 2025,
+                    "skip_hydrate": True,
+                },
+            )
+        ]
+
+    async def _fake_archival_pdfs(self, code_name: str, max_statutes: int):
+        return []
+
+    async def _fake_archived_justia_titles(self, code_name: str, max_statutes: int):
+        return []
+
+    async def _fake_archived_title_pages(self, code_name: str, max_statutes: int):
+        return []
+
+    monkeypatch.setattr(IndianaScraper, "_scrape_indiana_download_bundle", _fake_download_bundle)
+    monkeypatch.setattr(IndianaScraper, "_scrape_archived_chapter_pdfs", _fake_archival_pdfs)
+    monkeypatch.setattr(IndianaScraper, "_scrape_archived_justia_titles", _fake_archived_justia_titles)
+    monkeypatch.setattr(IndianaScraper, "_scrape_archived_title_pages", _fake_archived_title_pages)
+
+    scraper = IndianaScraper("IN", "Indiana")
+    statutes = await scraper.scrape_code(
+        "Indiana Code",
+        "https://iga.in.gov/legislative/laws/2024/ic/titles/",
+        max_statutes=30,
+    )
+
+    assert statutes
+    assert statutes[0].section_number == "35-42-1-1"
+    assert statutes[0].structured_data.get("source_kind") == "official_indiana_code_download_bundle"
 
 
 @pytest.mark.anyio
@@ -1038,16 +1191,16 @@ async def test_new_hampshire_full_corpus_discovers_more_than_twelve_titles(monke
         for i in range(1, 15)
     }
 
-    async def _fake_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
+    async def _fake_direct(self, url: str, timeout: int = 25) -> str:
         self._record_fetch_event(provider="test_fake", success=True)
         if url == root_url:
-            return f"<html><body>{title_links}</body></html>".encode("utf-8")
+            return f"<html><body>{title_links}</body></html>"
         if url in title_pages:
-            return title_pages[url]
-        return b""
+            return title_pages[url].decode("utf-8", errors="ignore")
+        return ""
 
     monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
-    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch)
+    monkeypatch.setattr(NewHampshireScraper, "_request_text_direct", _fake_direct)
 
     scraper = NewHampshireScraper("NH", "New Hampshire")
     statutes = await scraper._scrape_archived_title_stubs("New Hampshire Revised Statutes", max_statutes=None)
@@ -1062,29 +1215,29 @@ async def test_new_hampshire_full_corpus_prefers_section_text_over_index_stubs(m
     chapter_url = "https://web.archive.org/web/20250124114611/https://www.gencourt.state.nh.us/rsa/html/NHTOC/NHTOC-I-1.htm"
     section_url = "https://web.archive.org/web/20100306184310/http://www.gencourt.state.nh.us/rsa/html/I/1/1-1.htm"
 
-    async def _fake_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
+    async def _fake_direct(self, url: str, timeout: int = 25) -> str:
         self._record_fetch_event(provider="test_fake", success=True)
         if url == root_url:
-            return b"<html><body><a href='NHTOC/NHTOC-I.htm'>TITLE I: THE STATE AND ITS GOVERNMENT</a></body></html>"
+            return "<html><body><a href='NHTOC/NHTOC-I.htm'>TITLE I: THE STATE AND ITS GOVERNMENT</a></body></html>"
         if url == title_url:
-            return b"<html><body><a href='NHTOC-I-1.htm'>CHAPTER 1: STATE BOUNDARIES</a></body></html>"
+            return "<html><body><a href='NHTOC-I-1.htm'>CHAPTER 1: STATE BOUNDARIES</a></body></html>"
         if url == chapter_url:
             return (
-                b"<html><body>"
-                b"<a href='/web/20100306184310/http://www.gencourt.state.nh.us/rsa/html/I/1/1-1.htm'>"
-                b"Section 1:1 Perambulation of the New Hampshire Line."
-                b"</a></body></html>"
+                "<html><body>"
+                "<a href='/web/20100306184310/http://www.gencourt.state.nh.us/rsa/html/I/1/1-1.htm'>"
+                "Section 1:1 Perambulation of the New Hampshire Line."
+                "</a></body></html>"
             )
         if url == section_url:
             return (
-                b"<html><body>Section 1:1 Perambulation of the New Hampshire Line. "
-                + (b"Boundary text " * 40)
-                + b"Source. 1901, 1:1.</body></html>"
+                "<html><body>Section 1:1 Perambulation of the New Hampshire Line. "
+                + ("Boundary text " * 40)
+                + "Source. 1901, 1:1.</body></html>"
             )
-        return b""
+        return ""
 
     monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
-    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch)
+    monkeypatch.setattr(NewHampshireScraper, "_request_text_direct", _fake_direct)
 
     scraper = NewHampshireScraper("NH", "New Hampshire")
     statutes = await scraper._scrape_archived_title_stubs("New Hampshire Revised Statutes", max_statutes=5)
@@ -4023,6 +4176,27 @@ async def test_mississippi_request_text_records_fetch_analytics(monkeypatch: pyt
 
 
 @pytest.mark.anyio
+async def test_mississippi_request_text_prefers_direct_only_for_wayback(monkeypatch: pytest.MonkeyPatch):
+    async def _fake_direct(self, url: str, timeout: int = 30) -> str:
+        return "<html><body><h1>History of Actions</h1><p>House Bill 0123</p></body></html>"
+
+    async def _fake_fallback(self, url: str, timeout_seconds: int = 25) -> bytes:
+        raise AssertionError("archival fallback should not run when direct wayback fetch succeeds")
+
+    monkeypatch.setattr(MississippiScraper, "_request_text_direct", _fake_direct)
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fallback)
+
+    scraper = MississippiScraper("MS", "Mississippi")
+    text = await scraper._request_text(
+        "https://web.archive.org/web/19980110154920/http://billstatus.ls.state.ms.us/1997/history/HB/HB0123.htm",
+        headers={},
+        timeout=20,
+    )
+
+    assert "History of Actions" in text
+
+
+@pytest.mark.anyio
 async def test_mississippi_bounded_run_uses_common_crawl_state_backup(monkeypatch: pytest.MonkeyPatch):
     async def _fake_seed(self, code_name: str, max_statutes: int = 1):
         return []
@@ -4146,6 +4320,51 @@ async def test_mississippi_default_run_uses_realistic_recovery_limit(monkeypatch
     assert requested["seed_max_statutes"] == 160
     assert requested["archival_max_statutes"] == 160
     assert all(value == 160 for value in requested["generic_max_sections"])
+
+
+@pytest.mark.anyio
+async def test_mississippi_full_corpus_prefers_justia_crawl_before_archive(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+
+    async def _fake_common_crawl(self, code_name: str, max_statutes: int):
+        return []
+
+    async def _fake_seed(self, code_name: str, max_statutes: int = 1):
+        return []
+
+    async def _fake_justia(self, code_name: str, max_statutes: int = 30000):
+        return [
+            NormalizedStatute(
+                state_code="MS",
+                state_name="Mississippi",
+                statute_id=f"{code_name} § 97-3-7",
+                code_name=code_name,
+                section_number="97-3-7",
+                section_name="Justia corpus row",
+                full_text="Justia corpus section text " * 20,
+                source_url="https://law.justia.com/codes/mississippi/2024/title-97/chapter-3/section-97-3-7/",
+                official_cite="Miss. Code Ann. § 97-3-7",
+                structured_data={
+                    "source_kind": "justia_mississippi_code_html",
+                    "discovery_method": "justia_title_chapter_section",
+                    "skip_hydrate": True,
+                },
+            )
+        ]
+
+    async def _fake_archive(self, code_name: str, max_statutes: int, **kwargs):
+        raise AssertionError("archive fallback should not run when Justia full-corpus path yields rows")
+
+    monkeypatch.setattr(MississippiScraper, "_scrape_common_crawl_code_sections", _fake_common_crawl)
+    monkeypatch.setattr(MississippiScraper, "_scrape_jina_justia_seed_sections", _fake_seed)
+    monkeypatch.setattr(MississippiScraper, "_scrape_justia_code_sections", _fake_justia)
+    monkeypatch.setattr(MississippiScraper, "_scrape_archived_bill_history", _fake_archive)
+
+    scraper = MississippiScraper("MS", "Mississippi")
+    statutes = await scraper.scrape_code("Mississippi Code", "https://www.legislature.ms.gov/legislation/")
+
+    assert len(statutes) == 1
+    assert statutes[0].structured_data["source_kind"] == "justia_mississippi_code_html"
 
 
 @pytest.mark.anyio

@@ -68,6 +68,10 @@ COMMON_ARGS=(
   --autoencoder-max-definition-grounding-features 64
   --autoencoder-max-quantifier-scope-features 64
   --autoencoder-max-procedural-lifecycle-features 64
+  --autoencoder-max-enforcement-remedy-features 64
+  --autoencoder-max-reference-dependency-features 64
+  --autoencoder-max-authority-jurisdiction-features 64
+  --autoencoder-max-temporal-validity-features 64
   --autoencoder-max-semantic-slot-interactions 24
   --autoencoder-feature-activity-reference 64
   --autoencoder-feature-logit-clip 24.0

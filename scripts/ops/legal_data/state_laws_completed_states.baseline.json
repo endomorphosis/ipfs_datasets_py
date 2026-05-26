@@ -105,6 +105,14 @@
       "statutes_count": 72607,
       "updated_at": "2026-05-19T16:00:16.198547+00:00"
     },
+    "IN": {
+      "completed_at": "2026-05-26T01:18:53.809422+00:00",
+      "completion_mode": "download_bundle_full_corpus_verified_2026-05-26",
+      "first_completed_at": "2026-05-26T01:18:53.809422+00:00",
+      "status": "success",
+      "statutes_count": 73194,
+      "updated_at": "2026-05-26T01:18:53.809422+00:00"
+    },
     "KS": {
       "completed_at": "2026-05-19T16:00:16.198547+00:00",
       "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
@@ -330,5 +338,5 @@
       "updated_at": "2026-05-19T16:00:16.198547+00:00"
     }
   },
-  "updated_at": "2026-05-25T19:38:55+00:00"
+  "updated_at": "2026-05-26T01:18:53.809422+00:00"
 }

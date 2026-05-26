@@ -1362,6 +1362,14 @@ def _collect_state_rate_analytics(
                 reason = "inflight_state_inactive_but_completion_status_unknown_without_live_progress"
 
         possible_stall_seconds = max(600.0, min(2400.0, float(state_stall_seconds) * 0.33))
+        no_remaining_work_stall_seconds = max(300.0, min(1500.0, float(state_stall_seconds) * 0.25))
+        no_remaining_work_stalled = (
+            is_inflight
+            and not likely_stalled
+            and not restart_grace_active
+            and work_remaining_estimate is False
+            and last_progress_age >= no_remaining_work_stall_seconds
+        )
         possibly_stalled = (
             is_inflight
             and not likely_stalled
@@ -1369,6 +1377,8 @@ def _collect_state_rate_analytics(
             and last_progress_age >= possible_stall_seconds
             and (rate_per_minute is None or float(rate_per_minute) <= 0.05)
         )
+        if no_remaining_work_stalled:
+            possibly_stalled = True
 
         state_entry = {
             "state": state,
@@ -1403,6 +1413,9 @@ def _collect_state_rate_analytics(
             "possibly_stalled": bool(possibly_stalled),
             "possible_stall_seconds": round(possible_stall_seconds, 1),
         }
+        if no_remaining_work_stalled:
+            state_entry["no_remaining_work_stalled"] = True
+            state_entry["no_remaining_work_stall_seconds"] = round(no_remaining_work_stall_seconds, 1)
         if work_signal_kind and work_discovered > 0:
             state_entry["work_signal_kind"] = work_signal_kind
             state_entry["work_scanned"] = int(work_scanned)
@@ -1461,12 +1474,15 @@ def _collect_state_rate_analytics(
             else:
                 low_confidence_inactive_state_count += 1
         elif possibly_stalled:
+            possible_reason = "slow_or_low_throughput_progress_signal"
+            if no_remaining_work_stalled:
+                possible_reason = "no_remaining_work_signal_but_state_still_inflight"
             possibly_stalled_states.append(
                 {
                     "state": state,
                     "shard": shard_name,
                     "confidence": "low",
-                    "reason": "slow_or_low_throughput_progress_signal",
+                    "reason": possible_reason,
                     "last_seen_age_seconds": round(last_seen_age, 1) if last_seen_age >= 0 else -1.0,
                     "last_progress_age_seconds": round(last_progress_age, 1) if last_progress_age >= 0 else -1.0,
                     "rate_counter_per_minute": rate_per_minute,
@@ -1479,6 +1495,9 @@ def _collect_state_rate_analytics(
                     "counter_mode": counter_mode,
                     "possible_stall_seconds": round(possible_stall_seconds, 1),
                     "restart_grace_active": bool(restart_grace_active),
+                    "work_remaining_estimate": work_remaining_estimate,
+                    "work_coverage_ratio": work_coverage_ratio,
+                    "no_remaining_work_stalled": bool(no_remaining_work_stalled),
                 }
             )
             low_confidence_inactive_state_count += 1

@@ -33,6 +33,20 @@ class MississippiScraper(BaseStateScraper):
         "https://web.archive.org/web/20240414234245/https://billstatus.ls.state.ms.us/1997/all_measures/allmsrs.htm",
     ]
     _INSECURE_TLS_RETRY_DOMAINS = ("legislature.ms.gov", "billstatus.ls.state.ms.us")
+    _DIRECT_FETCH_HOST_MARKERS = (
+        "web.archive.org/web/",
+        "billstatus.ls.state.ms.us/",
+        "www.ls.state.ms.us/",
+        "legislature.ms.gov/",
+    )
+    _JUSTIA_INDEX_URLS = (
+        "https://law.justia.com/codes/mississippi/2024/",
+        "https://law.justia.com/codes/mississippi/2025/",
+    )
+    _JUSTIA_SECTION_URL_RE = re.compile(
+        r"/codes/mississippi/\d{4}/title-[^/]+/chapter-[^/]+/section-[^/]+/?$",
+        re.IGNORECASE,
+    )
     
     def get_base_url(self) -> str:
         """Return the base URL for Mississippi's legislative website."""
@@ -162,6 +176,34 @@ class MississippiScraper(BaseStateScraper):
                         "Mississippi full-corpus bootstrap via non-throttled reader seeds: statutes_so_far=%s",
                         len(seed_statutes),
                     )
+
+            justia_target_raw = str(os.getenv("STATE_SCRAPER_MS_JUSTIA_TARGET", "30000") or "30000").strip()
+            try:
+                justia_target = int(justia_target_raw) if justia_target_raw else 30000
+            except Exception:
+                justia_target = 30000
+            justia_target = max(500, min(80000, justia_target))
+            justia_statutes = await self._scrape_justia_code_sections(
+                code_name=code_name,
+                max_statutes=justia_target,
+            )
+            if justia_statutes:
+                checkpoint.write_progress(
+                    statutes=justia_statutes,
+                    code_name=code_name,
+                    stage_label="mississippi:justia:complete",
+                    scanned_history_urls=len(justia_statutes),
+                    discovered_history_urls=len(justia_statutes),
+                    extra_progress={
+                        "codes_total": 1,
+                        "codes_completed": 1,
+                    },
+                )
+                self.logger.info(
+                    "Mississippi full-corpus Justia path: statutes_so_far=%s",
+                    len(justia_statutes),
+                )
+                return justia_statutes[:limit] if limit is not None else justia_statutes
 
         archival_kwargs: Dict[str, Any] = {}
         try:
@@ -319,6 +361,209 @@ class MississippiScraper(BaseStateScraper):
             },
         )
         return []
+
+    def _extract_ms_section_number_from_justia_url(self, url: str) -> str:
+        value = str(url or "")
+        match = re.search(
+            r"/section-(\d+)-(\d+)-([0-9a-z_]+)",
+            value,
+            flags=re.IGNORECASE,
+        )
+        if not match:
+            return ""
+        title_raw, chapter_raw, section_raw = match.groups()
+        section_token = str(section_raw or "").strip().lower().replace("_", ".")
+        section_token = section_token.lstrip("0") or "0"
+        try:
+            title_part = str(int(title_raw))
+        except Exception:
+            title_part = str(title_raw).lstrip("0") or "0"
+        try:
+            chapter_part = str(int(chapter_raw))
+        except Exception:
+            chapter_part = str(chapter_raw).lstrip("0") or "0"
+        return f"{title_part}-{chapter_part}-{section_token}"
+
+    async def _scrape_justia_code_sections(
+        self,
+        code_name: str,
+        max_statutes: int = 30000,
+    ) -> List[NormalizedStatute]:
+        target = max(1, int(max_statutes or 1))
+        title_urls: List[str] = []
+        chapter_urls: List[str] = []
+        section_urls: List[str] = []
+
+        seen_title_urls: set[str] = set()
+        seen_chapter_urls: set[str] = set()
+        seen_section_urls: set[str] = set()
+
+        def _add_title(url: str) -> None:
+            value = str(url or "").strip()
+            if not value or value in seen_title_urls:
+                return
+            seen_title_urls.add(value)
+            title_urls.append(value)
+
+        def _add_chapter(url: str) -> None:
+            value = str(url or "").strip()
+            if not value or value in seen_chapter_urls:
+                return
+            seen_chapter_urls.add(value)
+            chapter_urls.append(value)
+
+        def _add_section(url: str) -> None:
+            value = str(url or "").strip()
+            if not value or value in seen_section_urls:
+                return
+            if not self._JUSTIA_SECTION_URL_RE.search(value):
+                return
+            seen_section_urls.add(value)
+            section_urls.append(value)
+
+        for index_url in self._JUSTIA_INDEX_URLS:
+            html = await self._request_text_direct(index_url, timeout=30)
+            if not html:
+                continue
+            soup = BeautifulSoup(html, "html.parser")
+            for anchor in soup.find_all("a", href=True):
+                href = str(anchor.get("href") or "").strip()
+                full_url = urljoin(index_url, href)
+                lower = full_url.lower()
+                if "/codes/mississippi/" not in lower:
+                    continue
+                if "/title-" in lower and "/chapter-" not in lower:
+                    _add_title(full_url)
+                if "/chapter-" in lower and "/section-" not in lower:
+                    _add_chapter(full_url)
+                if "/section-" in lower:
+                    _add_section(full_url)
+
+        if not title_urls and not chapter_urls and not section_urls:
+            return []
+
+        for title_url in list(title_urls):
+            html = await self._request_text_direct(title_url, timeout=30)
+            if not html:
+                continue
+            soup = BeautifulSoup(html, "html.parser")
+            for anchor in soup.find_all("a", href=True):
+                href = str(anchor.get("href") or "").strip()
+                full_url = urljoin(title_url, href)
+                lower = full_url.lower()
+                if "/codes/mississippi/" not in lower:
+                    continue
+                if "/chapter-" in lower and "/section-" not in lower:
+                    _add_chapter(full_url)
+                if "/section-" in lower:
+                    _add_section(full_url)
+
+        for chapter_url in list(chapter_urls):
+            if len(section_urls) >= target * 3:
+                break
+            html = await self._request_text_direct(chapter_url, timeout=30)
+            if not html:
+                continue
+            soup = BeautifulSoup(html, "html.parser")
+            for anchor in soup.find_all("a", href=True):
+                href = str(anchor.get("href") or "").strip()
+                full_url = urljoin(chapter_url, href)
+                _add_section(full_url)
+
+        if not section_urls:
+            return []
+
+        self.logger.info(
+            "Mississippi Justia crawl: discovered_titles=%s discovered_chapters=%s discovered_sections=%s",
+            len(title_urls),
+            len(chapter_urls),
+            len(section_urls),
+        )
+
+        statutes: List[NormalizedStatute] = []
+        seen_statute_keys: set[str] = set()
+        section_concurrency = max(
+            1,
+            int(os.getenv("STATE_SCRAPER_MS_JUSTIA_SECTION_CONCURRENCY", "8") or "8"),
+        )
+        section_sem = asyncio.Semaphore(section_concurrency)
+
+        async def _fetch_section(section_url: str) -> Optional[NormalizedStatute]:
+            async with section_sem:
+                html = await self._request_text_direct(section_url, timeout=35)
+            if not html:
+                return None
+            soup = BeautifulSoup(html, "html.parser")
+            for tag in soup(["script", "style", "noscript"]):
+                tag.decompose()
+            content_node = (
+                soup.select_one("div#codes-content")
+                or soup.select_one("div[itemprop='articleBody']")
+                or soup.select_one("article")
+                or soup.select_one("main")
+                or soup.body
+            )
+            if content_node is None:
+                return None
+            text = self._normalize_legal_text(content_node.get_text(" ", strip=True))
+            if len(text) < 140:
+                return None
+            section_number = self._extract_ms_section_number_from_justia_url(section_url)
+            if not section_number:
+                section_number = self._extract_section_number(text) or ""
+            if not section_number:
+                return None
+            heading = ""
+            heading_node = soup.find(["h1", "h2"])
+            if heading_node is not None:
+                heading = self._normalize_legal_text(heading_node.get_text(" ", strip=True))
+            section_name = heading or f"Section {section_number}"
+            return NormalizedStatute(
+                state_code=self.state_code,
+                state_name=self.state_name,
+                statute_id=f"{code_name} § {section_number}",
+                code_name=code_name,
+                section_number=section_number,
+                section_name=section_name[:200],
+                full_text=text[:14000],
+                legal_area=self._identify_legal_area(f"{section_name} {text[:800]}"),
+                source_url=section_url,
+                official_cite=f"Miss. Code Ann. § {section_number}",
+                structured_data={
+                    "source_kind": "justia_mississippi_code_html",
+                    "discovery_method": "justia_title_chapter_section",
+                    "skip_hydrate": True,
+                },
+            )
+
+        tasks = [asyncio.create_task(_fetch_section(url)) for url in section_urls]
+        scanned = 0
+        for task in asyncio.as_completed(tasks):
+            scanned += 1
+            statute = await task
+            if statute is None:
+                continue
+            statute_key = _statute_dedupe_key(statute)
+            if statute_key and statute_key in seen_statute_keys:
+                continue
+            if statute_key:
+                seen_statute_keys.add(statute_key)
+            statutes.append(statute)
+            if len(statutes) == 1 or len(statutes) % 100 == 0:
+                self.logger.info(
+                    "Mississippi Justia crawl: scanned_sections=%s/%s statutes_so_far=%s",
+                    scanned,
+                    len(section_urls),
+                    len(statutes),
+                )
+            if len(statutes) >= target:
+                for pending in tasks:
+                    if not pending.done():
+                        pending.cancel()
+                break
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
+        return statutes[:target]
 
     async def _scrape_jina_justia_seed_sections(self, code_name: str, max_statutes: int = 1) -> List[NormalizedStatute]:
         seeds = [
@@ -722,6 +967,20 @@ class MississippiScraper(BaseStateScraper):
         timeout: int,
         attempts: int = 3,
     ) -> str:
+        prefer_direct_only = self._should_prefer_direct_only_fetch(url)
+        direct_first = await self._request_text_direct(url, timeout=max(5, int(timeout or 30)))
+        if direct_first:
+            return direct_first
+        if prefer_direct_only:
+            insecure_retry = await self._request_text_with_insecure_tls_retry(
+                url=url,
+                headers=headers,
+                timeout=timeout,
+            )
+            if insecure_retry:
+                return insecure_retry
+            return ""
+
         for _ in range(max(1, int(attempts))):
             try:
                 payload = await self._fetch_page_content_with_archival_fallback(
@@ -742,6 +1001,12 @@ class MississippiScraper(BaseStateScraper):
                 return insecure_retry
             await asyncio.sleep(0.7)
         return ""
+
+    def _should_prefer_direct_only_fetch(self, url: str) -> bool:
+        value = str(url or "").strip().lower()
+        if not value:
+            return False
+        return any(marker in value for marker in self._DIRECT_FETCH_HOST_MARKERS)
 
     def _needs_insecure_tls_retry(self, url: str) -> bool:
         value = str(url or "").lower()

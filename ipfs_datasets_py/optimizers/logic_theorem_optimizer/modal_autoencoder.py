@@ -1926,6 +1926,10 @@ class AdaptiveModalAutoencoder:
         max_definition_grounding_features: int = 64,
         max_quantifier_scope_features: int = 64,
         max_procedural_lifecycle_features: int = 64,
+        max_enforcement_remedy_features: int = 64,
+        max_reference_dependency_features: int = 64,
+        max_authority_jurisdiction_features: int = 64,
+        max_temporal_validity_features: int = 64,
         embedding_head_update_normalization: float = 0.0,
         family_logit_head_update_normalization: float = 0.0,
         legal_ir_view_head_update_normalization: float = 0.0,
@@ -2156,6 +2160,22 @@ class AdaptiveModalAutoencoder:
         self.max_procedural_lifecycle_features = max(
             0,
             int(max_procedural_lifecycle_features),
+        )
+        self.max_enforcement_remedy_features = max(
+            0,
+            int(max_enforcement_remedy_features),
+        )
+        self.max_reference_dependency_features = max(
+            0,
+            int(max_reference_dependency_features),
+        )
+        self.max_authority_jurisdiction_features = max(
+            0,
+            int(max_authority_jurisdiction_features),
+        )
+        self.max_temporal_validity_features = max(
+            0,
+            int(max_temporal_validity_features),
         )
         self.embedding_head_update_normalization = max(
             0.0,
@@ -4743,6 +4763,30 @@ class AdaptiveModalAutoencoder:
             self._procedural_lifecycle_feature_keys_for(
                 sample,
                 prefix="legal-ir:procedural-lifecycle",
+            )
+        )
+        keys.extend(
+            self._enforcement_remedy_feature_keys_for(
+                sample,
+                prefix="legal-ir:enforcement-remedy",
+            )
+        )
+        keys.extend(
+            self._reference_dependency_feature_keys_for(
+                sample,
+                prefix="legal-ir:reference-dependency",
+            )
+        )
+        keys.extend(
+            self._authority_jurisdiction_feature_keys_for(
+                sample,
+                prefix="legal-ir:authority-jurisdiction",
+            )
+        )
+        keys.extend(
+            self._temporal_validity_feature_keys_for(
+                sample,
+                prefix="legal-ir:temporal-validity",
             )
         )
         keys.extend(
@@ -9720,6 +9764,1380 @@ class AdaptiveModalAutoencoder:
         cache[cache_key] = list(result)
         return result
 
+    def _enforcement_remedy_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "enforcement-remedy",
+    ) -> List[str]:
+        """Violation, liability, sanction, injunction, and remedy grounding."""
+        normalized_prefix = str(prefix or "enforcement-remedy").strip(":")
+        cache_key = f"enforcement_remedy_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_enforcement_remedy_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        action_classes = role_classes.get("action", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        def content_tokens(value: str, *, max_tokens: int = 6) -> List[str]:
+            tokens = [
+                token
+                for token in _TOKEN_RE.findall(str(value or "").lower())
+                if token
+                and token not in _STOPWORDS
+                and token
+                not in {
+                    "a",
+                    "an",
+                    "any",
+                    "be",
+                    "civil",
+                    "criminal",
+                    "for",
+                    "is",
+                    "of",
+                    "shall",
+                    "subject",
+                    "that",
+                    "the",
+                    "this",
+                    "to",
+                    "who",
+                }
+            ]
+            return _unique_preserve_order(tokens)[:max_tokens]
+
+        def class_for_text(value: str, *, role: str = "object") -> str:
+            classes: List[str] = []
+            for role_name in (role, "object", "kg", "predicate", "subject"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            classes = _unique_preserve_order(classes)
+            if classes:
+                return classes[0]
+            tokens = set(content_tokens(value, max_tokens=10))
+            if tokens.intersection(
+                {
+                    "person",
+                    "persons",
+                    "owner",
+                    "owners",
+                    "applicant",
+                    "applicants",
+                    "licensee",
+                    "licensees",
+                    "recipient",
+                    "recipients",
+                }
+            ):
+                return "private_party"
+            if tokens.intersection(
+                {"agency", "board", "commission", "department", "secretary", "officer"}
+            ):
+                return "government_actor"
+            if tokens.intersection({"court", "judge", "tribunal"}):
+                return "judicial_actor"
+            if tokens.intersection({"fee", "fine", "penalty", "payment", "tax"}):
+                return "payment_or_fee"
+            if tokens.intersection({"order", "decision", "action", "proceeding"}):
+                return "proceeding_or_order"
+            if tokens.intersection({"permit", "license", "approval", "authorization"}):
+                return "authorization_instrument"
+            return "enforcement_entity"
+
+        def scope_atom(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if not normalized:
+                return "unspecified_scope"
+            for candidate in (
+                "this section",
+                "this subsection",
+                "this chapter",
+                "this subchapter",
+                "this title",
+                "the order",
+                "an order",
+                "the permit",
+                "the license",
+            ):
+                if candidate in normalized:
+                    return _feature_atom(candidate, max_tokens=4) or "unspecified_scope"
+            atom = _feature_atom(normalized, max_tokens=4)
+            return atom or "unspecified_scope"
+
+        def trigger_kind_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if "fail" in normalized and "comply" in normalized:
+                return "noncompliance"
+            if "violation" in normalized or "violat" in normalized:
+                return "statutory_violation"
+            if "unlawful" in normalized or "prohibited" in normalized:
+                return "prohibited_conduct"
+            return "enforcement_trigger"
+
+        def remedy_kind_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if "criminal" in normalized:
+                return "criminal_penalty"
+            if "civil" in normalized and ("penalty" in normalized or "fine" in normalized):
+                return "civil_penalty"
+            if "penalty" in normalized or "fine" in normalized:
+                return "monetary_penalty"
+            if "sanction" in normalized:
+                return "administrative_sanction"
+            if "damage" in normalized:
+                return "damages"
+            if "injunction" in normalized or "enjoin" in normalized or "restrain" in normalized:
+                return "injunction"
+            if "review" in normalized or "appeal" in normalized:
+                return "review_remedy"
+            if "action" in normalized:
+                return "enforcement_action"
+            return "remedy"
+
+        def liability_standard_for(value: str) -> str:
+            normalized = str(value or "").lower()
+            if re.search(r"\bknowingly|knowing\b", normalized):
+                return "knowing"
+            if re.search(r"\bwillfully|willful\b", normalized):
+                return "willful"
+            if re.search(r"\bnegligently|negligent\b", normalized):
+                return "negligent"
+            if re.search(r"\bintentionally|intentional\b", normalized):
+                return "intentional"
+            return "strict_or_unspecified"
+
+        party_pattern = re.compile(
+            r"\b(?P<party>person|owner|applicant|licensee|recipient|contractor|"
+            r"agency|board|commission|department|officer)\s+"
+            r"(?:who|that)\s+(?:violates?|fails?\s+to\s+comply)"
+        )
+        trigger_patterns: tuple[re.Pattern[str], ...] = (
+            re.compile(
+                r"\b(?P<verb>violates?|violated|violation\s+of|in\s+violation\s+of)\s+"
+                r"(?P<target>this\s+(?:section|subsection|chapter|subchapter|title)|"
+                r"the\s+order|an\s+order|the\s+permit|the\s+license|[a-z][a-z0-9 -]{0,48})"
+            ),
+            re.compile(
+                r"\b(?P<verb>fails?\s+to\s+comply\s+with|failure\s+to\s+comply\s+with)\s+"
+                r"(?P<target>this\s+(?:section|subsection|chapter|subchapter|title)|"
+                r"the\s+order|an\s+order|the\s+permit|the\s+license|[a-z][a-z0-9 -]{0,48})"
+            ),
+            re.compile(
+                r"\b(?P<verb>unlawful|prohibited)\s+"
+                r"(?P<target>conduct|act|practice|[a-z][a-z0-9 -]{0,32})"
+            ),
+        )
+        remedy_patterns: tuple[re.Pattern[str], ...] = (
+            re.compile(
+                r"\b(?P<verb>liable\s+for|subject\s+to)\s+"
+                r"(?P<remedy>(?:a\s+|an\s+|the\s+)?(?:civil\s+penalty|civil\s+fine|"
+                r"criminal\s+penalty|penalty|fine|sanction|damages|injunction|remedy))"
+            ),
+            re.compile(
+                r"\b(?P<verb>impose|imposes|assess|assesses|collect|collects)\s+"
+                r"(?P<remedy>(?:a\s+|an\s+|the\s+)?(?:civil\s+penalty|civil\s+fine|"
+                r"penalty|fine|sanction))"
+            ),
+            re.compile(
+                r"\b(?P<verb>enjoin|enjoins|restrain|restrains)\s+"
+                r"(?P<remedy>(?:a\s+|an\s+|the\s+)?(?:person|violation|conduct|act))"
+            ),
+            re.compile(
+                r"\b(?P<verb>award|awards|recover|recovers|bring|brings)\s+"
+                r"(?P<remedy>(?:an?\s+|the\s+)?(?:damages|civil\s+action|action|remedy))"
+            ),
+        )
+
+        party_class = "none"
+        matched_party = False
+        for match in party_pattern.finditer(text):
+            parsed_party = class_for_text(match.group("party"), role="subject")
+            if parsed_party != "enforcement_entity":
+                party_class = parsed_party
+                matched_party = True
+                break
+        if not matched_party:
+            subject_party = first_or_none(role_classes.get("subject", []))
+            if subject_party not in {"government_actor", "judicial_actor", "none"}:
+                party_class = subject_party
+
+        triggers: List[tuple[int, str, str, str]] = []
+        occupied_triggers: List[tuple[int, int]] = []
+        for pattern in trigger_patterns:
+            for match in pattern.finditer(text):
+                start, end = int(match.start()), int(match.end())
+                if any(start < old_end and end > old_start for old_start, old_end in occupied_triggers):
+                    continue
+                phrase = match.group(0)
+                triggers.append(
+                    (
+                        start,
+                        trigger_kind_for(phrase),
+                        scope_atom(match.group("target")),
+                        _feature_atom(match.group("verb"), max_tokens=4) or "trigger",
+                    )
+                )
+                occupied_triggers.append((start, end))
+
+        remedies: List[tuple[int, str, str, str, str, str]] = []
+        occupied_remedies: List[tuple[int, int]] = []
+        for pattern in remedy_patterns:
+            for match in pattern.finditer(text):
+                start, end = int(match.start()), int(match.end())
+                if any(start < old_end and end > old_start for old_start, old_end in occupied_remedies):
+                    continue
+                remedy_text = match.group("remedy")
+                verb = _feature_atom(match.group("verb"), max_tokens=4) or "remedy"
+                left_context = text[max(0, start - 80) : start]
+                actor_class = (
+                    "none"
+                    if verb in {"liable_for", "subject_to"}
+                    else class_for_text(left_context, role="subject")
+                )
+                if actor_class in {"enforcement_entity", "private_party"} and verb in {
+                    "liable_for",
+                    "subject_to",
+                }:
+                    actor_class = "none"
+                remedy_kind = remedy_kind_for(f"{match.group('verb')} {remedy_text}")
+                remedy_object_class = class_for_text(remedy_text, role="object")
+                if remedy_kind in {
+                    "civil_penalty",
+                    "criminal_penalty",
+                    "monetary_penalty",
+                }:
+                    remedy_object_class = "payment_or_fee"
+                elif remedy_kind == "administrative_sanction":
+                    remedy_object_class = "administrative_sanction"
+                elif remedy_object_class == "enforcement_entity":
+                    remedy_object_class = (
+                        "private_party"
+                        if remedy_kind == "injunction"
+                        else "proceeding_or_order"
+                    )
+                remedies.append(
+                    (
+                        start,
+                        remedy_kind,
+                        remedy_object_class,
+                        actor_class,
+                        verb,
+                        liability_standard_for(text[max(0, start - 96) : min(len(text), end + 96)]),
+                    )
+                )
+                occupied_remedies.append((start, end))
+
+        triggers = sorted(
+            _unique_preserve_order(triggers),
+            key=lambda item: (item[0], item[1], item[2], item[3]),
+        )
+        remedies = sorted(
+            _unique_preserve_order(remedies),
+            key=lambda item: (item[0], item[1], item[2], item[3]),
+        )
+        trigger_signature = "+".join(
+            f"{kind}:{target_scope}"
+            for _start, kind, target_scope, _verb in triggers[:4]
+        ) or "none"
+        remedy_signature = "+".join(
+            f"{kind}:{object_class}:{actor_class}:{standard}"
+            for _start, kind, object_class, actor_class, _verb, standard in remedies[:4]
+        ) or "none"
+        enforcement_signature = f"{trigger_signature}->{remedy_signature}:{party_class}"
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        force_signature = "+".join(force_tags[:3]) or "none"
+        polarity_signature = "+".join(polarity_tags[:3]) or "none"
+
+        add("bias")
+        add(f"source-enforcement:{role_signature}:{scope_signature}")
+        add(f"trigger-count:{_count_bucket(len(triggers))}")
+        add(f"remedy-count:{_count_bucket(len(remedies))}")
+        add(f"enforcement-signature:{enforcement_signature}")
+        add(f"force-enforcement:{force_signature}:{polarity_signature}:{scope_signature}")
+        if not triggers and not remedies:
+            add(f"enforcement-coverage:none:{role_signature}:{scope_signature}")
+
+        for _start, kind, target_scope, verb in triggers[:6]:
+            add(f"violation-trigger:{kind}:{target_scope}:{party_class}")
+            add(f"trigger-exact:{verb}:{target_scope}")
+            add(f"breach-scope:{kind}:{target_scope}:{scope_signature}")
+        for _start, kind, object_class, actor_class, verb, standard in remedies[:6]:
+            add(f"remedy:{kind}:{object_class}:{actor_class}:{party_class}:{standard}")
+            add(f"remedy-exact:{verb}:{kind}:{object_class}")
+            add(f"liability-standard:{standard}:{party_class}:{kind}")
+            add(f"sanction-class:{kind}:{object_class}:{scope_signature}")
+            if actor_class != "none":
+                add(f"enforcement-actor:{actor_class}:{verb}:{kind}")
+            for trigger in triggers[:4]:
+                trigger_kind = trigger[1]
+                target_scope = trigger[2]
+                add(f"event-calculus-enforcement:{trigger_kind}->{kind}:{target_scope}")
+                add(f"remedy-trigger:{trigger_kind}:{target_scope}:{kind}:{party_class}")
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-enforcement:{family}:{symbol}:{predicate_role}:"
+                        f"{kind}:{object_class}:{party_class}:{standard}"
+                    )
+
+        add(f"decompiler-enforcement-plan:{enforcement_signature}")
+        add(
+            f"operator-enforcement-plan:{enforcement_signature}:"
+            f"{role_signature}:{operator_signature}"
+        )
+        add(f"todo-route:refine_enforcement_remedy:{enforcement_signature}")
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:enforcement-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_enforcement_remedy_features]
+        cache[cache_key] = list(result)
+        return result
+
+    def _reference_dependency_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "reference-dependency",
+    ) -> List[str]:
+        """Citation imports, local references, and applicability dependencies."""
+        normalized_prefix = str(prefix or "reference-dependency").strip(":")
+        cache_key = f"reference_dependency_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_reference_dependency_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        action_classes = role_classes.get("action", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        def normalized_target(value: str) -> str:
+            raw = str(value or "").strip().lower()
+            raw = raw.strip("()[]{}.,;:")
+            return _feature_atom(raw, max_tokens=4) or "this"
+
+        def valid_reference_target(kind: str, target: str) -> bool:
+            target_text = str(target or "").strip().lower()
+            if not target_text:
+                return False
+            if target_text == "this" or target_text.startswith("("):
+                return True
+            if kind in {"subsection", "paragraph", "subparagraph", "clause", "subclause"}:
+                return bool(re.search(r"[a-z0-9]", target_text))
+            return bool(re.search(r"\d", target_text))
+
+        def target_family_for(kind: str, target: str) -> str:
+            kind_atom = _feature_atom(kind)
+            target_atom = normalized_target(target)
+            if target_atom == "this":
+                if kind_atom == "section":
+                    return "current_section"
+                if kind_atom in {
+                    "subsection",
+                    "paragraph",
+                    "subparagraph",
+                    "clause",
+                    "subclause",
+                }:
+                    return "current_subdivision"
+                return "current_container"
+            if kind_atom in {
+                "subsection",
+                "paragraph",
+                "subparagraph",
+                "clause",
+                "subclause",
+            }:
+                return "local_subdivision"
+            if kind_atom == "section":
+                return "statutory_section"
+            if kind_atom in {"chapter", "subchapter", "title"}:
+                return "statutory_container"
+            return "legal_reference"
+
+        def relation_for(trigger: str, context: str) -> str:
+            normalized = " ".join(str(trigger or "").lower().split())
+            context_text = " ".join(str(context or "").lower().split())
+            if "except" in normalized and "provided" in normalized:
+                return "exception_import"
+            if "notwithstanding" in normalized:
+                return "override_reference"
+            if "subject to" in normalized:
+                return "conditional_import"
+            if normalized in {"under", "pursuant to", "in accordance with"}:
+                return "authority_import"
+            if "defined" in normalized or "as used" in normalized or "purposes" in normalized:
+                return "definition_import"
+            if "referred" in normalized or "described" in normalized:
+                return "descriptive_reference"
+            if re.search(r"\bdoes\s+not\s+apply\b|\bnot\s+applicable\b", context_text):
+                return "applicability_exclusion"
+            if re.search(r"\bapply|applies|applicable|requirements?\s+of\b", context_text):
+                return "applicability_scope"
+            if "as provided in" in normalized:
+                return "conditional_import"
+            if normalized == "this":
+                return "current_scope"
+            return "direct_reference"
+
+        def polarity_for(relation: str, context: str) -> str:
+            context_text = str(context or "").lower()
+            if relation in {"exception_import", "override_reference", "applicability_exclusion"}:
+                return "exceptional"
+            if re.search(r"\bdoes\s+not\b|\bnot\s+applicable\b|\bunless\b", context_text):
+                return "negative"
+            return "positive"
+
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        force_signature = "+".join(force_tags[:3]) or "none"
+        polarity_signature = "+".join(polarity_tags[:3]) or "none"
+        section_prefix = _section_prefix(sample.section)
+        title_atom = _feature_atom(sample.title, max_tokens=2) if sample.title else ""
+        current_unit = (
+            f"title_{title_atom}-section_{section_prefix}"
+            if title_atom and section_prefix
+            else (
+                f"section_{section_prefix}"
+                if section_prefix
+                else "current_unit"
+            )
+        )
+        references: List[tuple[int, str, str, str, str, str, str]] = []
+
+        explicit_ref_pattern = re.compile(
+            r"\b(?P<trigger>except\s+as\s+provided\s+in|as\s+provided\s+in|"
+            r"subject\s+to|notwithstanding|pursuant\s+to|"
+            r"in\s+accordance\s+with|under|as\s+defined\s+in|defined\s+in|"
+            r"as\s+used\s+in|for\s+purposes\s+of|referred\s+to\s+in|"
+            r"described\s+in)\s+"
+            r"(?P<kind>section|subsection|paragraph|subparagraph|clause|"
+            r"subclause|chapter|subchapter|title)\s+"
+            r"(?P<target>\([a-z0-9]+\)|[a-z0-9][a-z0-9().-]*)"
+        )
+        direct_ref_pattern = re.compile(
+            r"\b(?P<kind>section|subsection|paragraph|subparagraph|clause|"
+            r"subclause|chapter|subchapter|title)\s+"
+            r"(?P<target>\([a-z0-9]+\)|[a-z0-9][a-z0-9().-]*)"
+        )
+        local_ref_pattern = re.compile(
+            r"\bthis\s+(?P<kind>section|subsection|paragraph|subparagraph|clause|"
+            r"subclause|chapter|subchapter|title)\b"
+        )
+        occupied_ranges: List[tuple[int, int]] = []
+
+        def add_reference(
+            *,
+            start: int,
+            end: int,
+            trigger: str,
+            kind: str,
+            target: str,
+        ) -> None:
+            kind_atom = _feature_atom(kind)
+            target_atom = normalized_target(target)
+            if not kind_atom or not valid_reference_target(kind_atom, target):
+                return
+            context = text[max(0, start - 64) : min(len(text), end + 96)]
+            relation = relation_for(trigger, context)
+            target_family = target_family_for(kind_atom, target_atom)
+            trigger_atom = _feature_atom(trigger, max_tokens=5) or "direct"
+            references.append(
+                (
+                    int(start),
+                    relation,
+                    target_family,
+                    kind_atom,
+                    target_atom,
+                    trigger_atom,
+                    polarity_for(relation, context),
+                )
+            )
+
+        for match in explicit_ref_pattern.finditer(text):
+            add_reference(
+                start=match.start(),
+                end=match.end(),
+                trigger=match.group("trigger"),
+                kind=match.group("kind"),
+                target=match.group("target"),
+            )
+            occupied_ranges.append((match.start(), match.end()))
+
+        for match in local_ref_pattern.finditer(text):
+            add_reference(
+                start=match.start(),
+                end=match.end(),
+                trigger="this",
+                kind=match.group("kind"),
+                target="this",
+            )
+            occupied_ranges.append((match.start(), match.end()))
+
+        for match in direct_ref_pattern.finditer(text):
+            start, end = match.start(), match.end()
+            if any(start < occupied_end and end > occupied_start for occupied_start, occupied_end in occupied_ranges):
+                continue
+            add_reference(
+                start=start,
+                end=end,
+                trigger="direct",
+                kind=match.group("kind"),
+                target=match.group("target"),
+            )
+
+        references = sorted(
+            _unique_preserve_order(references),
+            key=lambda item: (item[0], item[1], item[2], item[3], item[4]),
+        )
+        reference_signature = "+".join(
+            f"{relation}:{target_family}:{scope_signature}"
+            for _start, relation, target_family, _kind, _target, _trigger, _polarity
+            in references[:8]
+        ) or "none"
+        exact_reference_signature = "+".join(
+            f"{relation}:{kind}:{target}"
+            for _start, relation, _target_family, kind, target, _trigger, _polarity
+            in references[:8]
+        ) or "none"
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+
+        add("bias")
+        add(f"source-reference:{role_signature}:{scope_signature}")
+        add(f"reference-count:{_count_bucket(len(references))}")
+        add(f"reference-signature:{reference_signature}")
+        add(f"reference-exact-signature:{exact_reference_signature}")
+        add(f"force-reference:{force_signature}:{polarity_signature}:{scope_signature}")
+        if not references:
+            add(f"reference-coverage:none:{role_signature}:{scope_signature}")
+
+        for _start, relation, target_family, kind, target, trigger, polarity in references[:10]:
+            add(f"reference-target:{relation}:{target_family}:{kind}:{polarity}")
+            add(f"reference-exact:{relation}:{kind}:{target}:{trigger}")
+            add(f"dependency-edge:{current_unit}->{target_family}:{relation}:{polarity}")
+            add(f"kg-reference-edge:{relation}:{current_unit}->{target_family}")
+            add(f"compiler-import-edge:{relation}:{target_family}:{scope_signature}")
+            add(f"decompiler-citation-slot:{relation}:{kind}:{target_family}")
+            if relation == "exception_import":
+                add(f"defeasible-reference:exception:{target_family}:{scope_signature}")
+            if relation == "override_reference":
+                add(f"defeasible-reference:override:{target_family}:{scope_signature}")
+            if relation == "definition_import":
+                add(f"definition-reference:{target_family}:{kind}:{scope_signature}")
+            if relation in {"applicability_scope", "applicability_exclusion"}:
+                add(f"applicability-reference:{relation}:{target_family}:{polarity}")
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-reference:{family}:{symbol}:{predicate_role}:"
+                        f"{relation}:{target_family}"
+                    )
+
+        add(f"decompiler-reference-plan:{reference_signature}")
+        add(
+            f"operator-reference-plan:{reference_signature}:"
+            f"{role_signature}:{operator_signature}"
+        )
+        add(
+            f"todo-route:refine_reference_dependency_graph:"
+            f"{reference_signature}:{role_signature}"
+        )
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:reference-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_reference_dependency_features]
+        cache[cache_key] = list(result)
+        return result
+
+    def _authority_jurisdiction_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "authority-jurisdiction",
+    ) -> List[str]:
+        """Delegated authority, jurisdiction, preemption, and power-scope grounding."""
+        normalized_prefix = str(prefix or "authority-jurisdiction").strip(":")
+        cache_key = f"authority_jurisdiction_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_authority_jurisdiction_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        action_classes = role_classes.get("action", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        def token_set(value: str) -> set[str]:
+            return set(_TOKEN_RE.findall(str(value or "").lower()))
+
+        def actor_class_for(value: str) -> str:
+            tokens = token_set(value)
+            if tokens.intersection({"court", "judge", "tribunal", "magistrate"}):
+                return "judicial_actor"
+            if tokens.intersection({"state", "states"}):
+                return "state_actor"
+            if tokens.intersection({"municipality", "city", "county", "local"}):
+                return "local_government_actor"
+            if tokens.intersection(
+                {
+                    "secretary",
+                    "administrator",
+                    "agency",
+                    "commission",
+                    "department",
+                    "board",
+                    "director",
+                    "officer",
+                }
+            ):
+                return "government_actor"
+            if tokens.intersection(
+                {"person", "applicant", "owner", "licensee", "recipient", "entity"}
+            ):
+                return "private_party"
+            classes: List[str] = []
+            for role_name in ("subject", "object", "predicate", "kg"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            for class_name in _unique_preserve_order(classes):
+                if class_name in {"government_actor", "judicial_actor", "private_party"}:
+                    return class_name
+            return "authority_actor"
+
+        def authority_kind_for(action: str, obj: str, context: str) -> str:
+            merged = " ".join((action, obj, context)).lower()
+            if re.search(r"\bpreempt|supersede|no\s+state\s+may\b", merged):
+                return "preemption_limit"
+            if re.search(r"\bjurisdiction|hear|review|adjudicat|decide\b", merged):
+                return "jurisdiction_authority"
+            if re.search(r"\bdelegat|transfer\s+authority\b", merged):
+                return "delegation_authority"
+            if re.search(r"\bwaiver|waive|exempt|exemption\b", merged):
+                return "waiver_authority"
+            if re.search(r"\bregulation|regulations|rule|rules|prescribe|promulgate|adopt\b", merged):
+                return "rulemaking_authority"
+            if re.search(r"\bpermit|license|approval|approve|grant|issue|certif", merged):
+                return "licensing_authority"
+            if re.search(r"\benforce|administer|investigate|inspect|audit\b", merged):
+                return "enforcement_authority"
+            if re.search(r"\brequirement|standard|condition\b", merged):
+                return "standard_setting_authority"
+            return "general_authority"
+
+        def instrument_kind_for(action: str, obj: str, context: str) -> str:
+            merged = " ".join((action, obj, context)).lower()
+            if re.search(r"\bregulation|regulations|rule|rules|prescribe|promulgate|adopt\b", merged):
+                return "rulemaking_instrument"
+            if re.search(r"\bwaiver|exemption\b", merged):
+                return "waiver_instrument"
+            if re.search(r"\bpermit|license|approval|certificate|certification\b", merged):
+                return "authorization_instrument"
+            if re.search(r"\border|action|proceeding|hearing|review|jurisdiction\b", merged):
+                return "adjudicatory_instrument"
+            if re.search(r"\brequirement|standard|state\s+law|law\b", merged):
+                return "legal_requirement"
+            if re.search(r"\bprogram|administration|enforcement\b", merged):
+                return "administrative_program"
+            return "authority_instrument"
+
+        def jurisdiction_scope_for(context: str) -> str:
+            normalized = " ".join(str(context or "").lower().split())
+            if re.search(r"\binterstate\s+commerce|foreign\s+commerce\b", normalized):
+                return "commerce_scope"
+            if re.search(r"\bwithin\s+(?:the\s+)?(?:state|territory|district)\b", normalized):
+                return "territorial_scope"
+            if re.search(r"\bthis\s+(?:section|subsection|chapter|subchapter|title)\b", normalized):
+                return "local_statutory_scope"
+            if re.search(r"\bunder\s+(?:section|subsection|chapter|title)\b", normalized):
+                return "referenced_statutory_scope"
+            if re.search(r"\bstate\s+law|any\s+state|no\s+state\b", normalized):
+                return "state_law_scope"
+            if re.search(r"\bjurisdiction\s+over\b", normalized):
+                return "forum_scope"
+            return "general_scope"
+
+        def authority_polarity_for(kind: str, context: str) -> str:
+            context_text = str(context or "").lower()
+            if kind == "preemption_limit":
+                return "preemptive"
+            if re.search(r"\bno\s+\w+\s+may\b|\bmay\s+not\b|\bshall\s+not\b|\bprohibit", context_text):
+                return "limited"
+            if re.search(r"\bauthorized\b|\bmay\b|\bhas\s+jurisdiction\b", context_text):
+                return "positive"
+            if re.search(r"\bshall\b|\bmust\b", context_text):
+                return "mandatory"
+            return "positive"
+
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        force_signature = "+".join(force_tags[:3]) or "none"
+        polarity_signature = "+".join(polarity_tags[:3]) or "none"
+        authorities: List[tuple[int, str, str, str, str, str, str, str, str]] = []
+        occupied_ranges: List[tuple[int, int]] = []
+
+        actor_pattern = re.compile(
+            r"\b(?P<actor>secretary|administrator|agency|commission|department|"
+            r"board|director|officer|court|state|municipality|city|county)\s+"
+            r"(?P<cue>may|shall|must|is\s+authorized\s+to|are\s+authorized\s+to|"
+            r"has\s+jurisdiction\s+to|has\s+jurisdiction\s+over)?\s*"
+            r"(?P<action>prescribe|promulgate|issue|adopt|enforce|administer|"
+            r"grant|approve|deny|delegate|waive|exempt|hear|review|decide|"
+            r"establish|carry\s+out)?\s*"
+            r"(?P<object>[^.;]{0,96})"
+        )
+        authorized_pattern = re.compile(
+            r"\b(?P<actor>secretary|administrator|agency|commission|department|"
+            r"board|director|officer|court|state|municipality|city|county)\s+"
+            r"(?:is|are)\s+authorized\s+to\s+"
+            r"(?P<action>prescribe|promulgate|issue|adopt|enforce|administer|"
+            r"grant|approve|deny|delegate|waive|exempt|hear|review|decide|"
+            r"establish|carry\s+out)\s+(?P<object>[^.;]{0,96})"
+        )
+        preemption_pattern = re.compile(
+            r"\b(?:(?P<subject>this\s+(?:chapter|section|title|subchapter))\s+"
+            r"(?P<action>preempts?|supersedes?)\s+(?P<object>[^.;]{0,96})|"
+            r"no\s+(?P<actor>state|municipality|city|county)\s+may\s+"
+            r"(?P<limit_action>establish|enforce|adopt|impose)\s+"
+            r"(?P<limit_object>[^.;]{0,96}))"
+        )
+        jurisdiction_pattern = re.compile(
+            r"\b(?P<actor>court|agency|commission|board)\s+has\s+jurisdiction\s+"
+            r"(?P<action>over|to)\s+(?P<object>[^.;]{0,96})"
+        )
+
+        def add_authority(
+            *,
+            start: int,
+            end: int,
+            actor: str,
+            cue: str,
+            action: str,
+            obj: str,
+        ) -> None:
+            context = text[max(0, start - 64) : min(len(text), end + 128)]
+            actor_class = actor_class_for(actor)
+            kind = authority_kind_for(action, obj, context)
+            instrument = instrument_kind_for(action, obj, context)
+            scope = jurisdiction_scope_for(context)
+            polarity = authority_polarity_for(kind, context)
+            cue_atom = _feature_atom(cue, max_tokens=4) or "source"
+            action_atom = _feature_atom(action, max_tokens=4) or "authority"
+            object_atom = _feature_atom(obj, max_tokens=5) or "object"
+            authorities.append(
+                (
+                    int(start),
+                    kind,
+                    actor_class,
+                    instrument,
+                    scope,
+                    polarity,
+                    cue_atom,
+                    action_atom,
+                    object_atom,
+                )
+            )
+
+        for pattern in (authorized_pattern, jurisdiction_pattern, preemption_pattern, actor_pattern):
+            for match in pattern.finditer(text):
+                start, end = int(match.start()), int(match.end())
+                if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                    continue
+                groupdict = match.groupdict()
+                actor = (
+                    groupdict.get("actor")
+                    or groupdict.get("subject")
+                    or source_anchors.get("subject", "")
+                )
+                action = (
+                    groupdict.get("action")
+                    or groupdict.get("limit_action")
+                    or "authority"
+                )
+                obj = groupdict.get("object") or groupdict.get("limit_object") or ""
+                cue = groupdict.get("cue") or action
+                if not actor and not action:
+                    continue
+                add_authority(
+                    start=start,
+                    end=end,
+                    actor=actor,
+                    cue=cue,
+                    action=action,
+                    obj=obj,
+                )
+                occupied_ranges.append((start, end))
+
+        authorities = [
+            item
+            for item in authorities
+            if item[1] != "general_authority" or item[2] != "authority_actor"
+        ]
+        authorities = sorted(
+            _unique_preserve_order(authorities),
+            key=lambda item: (item[0], item[1], item[2], item[3], item[4]),
+        )
+        authority_signature = "+".join(
+            f"{kind}:{actor_class}:{instrument}:{scope}:{polarity}"
+            for (
+                _start,
+                kind,
+                actor_class,
+                instrument,
+                scope,
+                polarity,
+                _cue,
+                _action,
+                _object,
+            ) in authorities[:8]
+        ) or "none"
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+
+        add("bias")
+        add(f"source-authority:{role_signature}:{scope_signature}")
+        add(f"authority-count:{_count_bucket(len(authorities))}")
+        add(f"authority-signature:{authority_signature}")
+        add(f"force-authority:{force_signature}:{polarity_signature}:{scope_signature}")
+        if not authorities:
+            add(f"authority-coverage:none:{role_signature}:{scope_signature}")
+
+        for (
+            _start,
+            kind,
+            actor_class,
+            instrument,
+            scope,
+            polarity,
+            cue,
+            action,
+            obj,
+        ) in authorities[:10]:
+            add(f"authority-grant:{kind}:{actor_class}:{instrument}:{scope}:{polarity}")
+            add(f"authority-exact:{cue}:{action}:{obj}:{actor_class}")
+            add(f"jurisdiction-scope:{scope}:{actor_class}:{kind}:{polarity}")
+            add(f"compiler-authority-edge:{actor_class}->{instrument}:{kind}:{scope}")
+            add(f"decompiler-power-slot:{kind}:{actor_class}:{instrument}:{scope}")
+            if kind == "delegation_authority":
+                add(f"delegation-edge:{actor_class}->{instrument}:{scope}:{polarity}")
+            if kind == "preemption_limit":
+                add(f"preemption-edge:{actor_class}:{instrument}:{scope}:{polarity}")
+            if kind == "jurisdiction_authority":
+                add(f"forum-authority:{actor_class}:{instrument}:{scope}:{polarity}")
+            if kind == "rulemaking_authority":
+                add(f"rulemaking-power:{actor_class}:{instrument}:{scope}:{polarity}")
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-authority:{family}:{symbol}:{predicate_role}:"
+                        f"{kind}:{actor_class}:{instrument}:{polarity}"
+                    )
+
+        add(f"decompiler-authority-plan:{authority_signature}")
+        add(
+            f"operator-authority-plan:{authority_signature}:"
+            f"{role_signature}:{operator_signature}"
+        )
+        add(
+            f"todo-route:refine_authority_jurisdiction:"
+            f"{authority_signature}:{role_signature}"
+        )
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:authority-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_authority_jurisdiction_features]
+        cache[cache_key] = list(result)
+        return result
+
+    def _temporal_validity_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "temporal-validity",
+    ) -> List[str]:
+        """Effective dates, sunset rules, retroactivity, and applicability windows."""
+        normalized_prefix = str(prefix or "temporal-validity").strip(":")
+        cache_key = f"temporal_validity_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_temporal_validity_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        action_classes = role_classes.get("action", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        def target_class_for(value: str) -> str:
+            tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
+            if tokens.intersection({"authority", "power", "powers"}):
+                return "authority_unit"
+            if tokens.intersection({"claim", "claims", "action", "actions", "case", "cases"}):
+                return "case_or_claim"
+            if tokens.intersection(
+                {"application", "applications", "filing", "filings", "permit", "license"}
+            ):
+                return "application_or_authorization"
+            if tokens.intersection({"amendment", "amendments"}):
+                return "amendment_unit"
+            if tokens.intersection({"rule", "rules", "regulation", "regulations"}):
+                return "rule_unit"
+            if tokens.intersection(
+                {"section", "act", "chapter", "subchapter", "title", "subsection"}
+            ):
+                return "norm_unit"
+            return "legal_unit"
+
+        def date_atom_for(value: str) -> str:
+            cleaned = " ".join(str(value or "").lower().replace("-", " ").split())
+            return _feature_atom(cleaned, max_tokens=8) or "unspecified_date"
+
+        def date_kind_for(value: str) -> str:
+            normalized = " ".join(
+                str(value or "").lower().replace("_", " ").replace("-", " ").split()
+            )
+            if re.search(
+                r"\b(january|february|march|april|may|june|july|august|"
+                r"september|october|november|december)\s+\d{1,2},?\s+\d{4}\b",
+                normalized,
+            ) or re.search(r"\b\d{1,2}/\d{1,2}/\d{2,4}\b", normalized):
+                return "calendar_date"
+            if re.search(r"\b\d+\s*-?\s*(?:day|month|year)s?\b", normalized):
+                return "relative_duration"
+            if "enactment" in normalized:
+                return "enactment_event"
+            return "date_reference"
+
+        def date_bucket_for(value: str) -> str:
+            normalized = " ".join(
+                str(value or "").lower().replace("_", " ").replace("-", " ").split()
+            )
+            match = re.search(r"\b(?P<count>\d+)\s+(?P<unit>day|month|year)s?\b", normalized)
+            if not match:
+                return date_kind_for(value)
+            return f"{_count_bucket(int(match.group('count')))}_{match.group('unit')}"
+
+        def validity_scope_for(context: str, target: str) -> str:
+            merged = " ".join((str(context or ""), str(target or ""))).lower()
+            if re.search(r"\bthis\s+(?:section|subsection|chapter|subchapter|title|act)\b", merged):
+                return "local_statutory_scope"
+            if re.search(r"\bunder\s+(?:section|subsection|chapter|title)\b", merged):
+                return "referenced_statutory_scope"
+            if re.search(r"\bclaim|action|case|filed\b", merged):
+                return "case_or_claim_scope"
+            if re.search(r"\bapplication|submitted|permit|license\b", merged):
+                return "application_scope"
+            if re.search(r"\bauthority|power\b", merged):
+                return "authority_scope"
+            if "enactment" in merged:
+                return "enactment_scope"
+            return "general_validity_scope"
+
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        force_signature = "+".join(force_tags[:3]) or "none"
+        polarity_signature = "+".join(polarity_tags[:3]) or "none"
+        date_expr = (
+            r"(?:january|february|march|april|may|june|july|august|"
+            r"september|october|november|december)\s+\d{1,2},?\s+\d{4}|"
+            r"\d{1,2}/\d{1,2}/\d{2,4}|"
+            r"\d+\s*-?\s*year\s+period\s+after\s+enactment|"
+            r"\d+\s+(?:day|month|year)s?\s+after\s+(?:the\s+date\s+of\s+)?"
+            r"enactment|the\s+date\s+of\s+enactment|enactment"
+        )
+        target_expr = (
+            r"this\s+(?:section|act|chapter|subchapter|title|subsection|amendment)|"
+            r"the\s+(?:rule|regulation|authority|amendment|act)"
+        )
+        effective_pattern = re.compile(
+            rf"\b(?P<target>{target_expr})\s+(?:shall\s+)?"
+            rf"(?P<event>take\s+effect|takes\s+effect|become\s+effective|"
+            rf"becomes\s+effective|be\s+effective|is\s+effective)\s+"
+            rf"(?:on\s+)?(?P<date>{date_expr})"
+        )
+        expiration_pattern = re.compile(
+            rf"\b(?P<target>{target_expr}|the\s+authority\s+under\s+this\s+subsection)"
+            rf"\s+(?:shall\s+)?(?P<event>expires?|terminates?|is\s+repealed|"
+            rf"be\s+repealed|ceases?\s+to\s+be\s+effective)\s+"
+            rf"(?:(?:on|after)\s+)?(?P<date>{date_expr})"
+        )
+        retroactive_pattern = re.compile(
+            rf"\b(?P<target>{target_expr})\s+applies\s+retroactively\s+to\s+"
+            rf"(?P<object>[^.;]{{0,80}}?)\s+"
+            rf"(?P<boundary>before|after|on\s+or\s+after|on\s+or\s+before)\s+"
+            rf"(?P<date>{date_expr})"
+        )
+        applicability_pattern = re.compile(
+            rf"\b(?P<target>{target_expr})\s+applies\s+to\s+"
+            rf"(?P<object>[^.;]{{0,80}}?)\s+"
+            rf"(?P<boundary>before|after|on\s+or\s+after|on\s+or\s+before)\s+"
+            rf"(?P<date>{date_expr})"
+        )
+        transition_pattern = re.compile(
+            rf"\b(?P<target>(?:the\s+)?transition\s+rule|this\s+transition\s+rule)"
+            rf"\s+(?:shall\s+)?appl(?:y|ies)\s+during\s+(?:the\s+)?"
+            rf"(?P<date>{date_expr})"
+        )
+        validity_events: List[tuple[int, str, str, str, str, str, str, str, str]] = []
+        occupied_ranges: List[tuple[int, int]] = []
+
+        def add_validity(
+            *,
+            start: int,
+            end: int,
+            kind: str,
+            target: str,
+            event: str,
+            date_text: str,
+            orientation: str,
+            boundary: str = "none",
+            object_text: str = "",
+        ) -> None:
+            context = text[max(0, start - 64) : min(len(text), end + 96)]
+            target_text = " ".join((target or "", object_text or "")).strip()
+            target_class = target_class_for(target_text)
+            date_kind = date_kind_for(date_text)
+            scope = validity_scope_for(context, target_text)
+            validity_events.append(
+                (
+                    int(start),
+                    kind,
+                    target_class,
+                    date_kind,
+                    orientation,
+                    scope,
+                    _feature_atom(event, max_tokens=5) or kind,
+                    date_atom_for(date_text),
+                    _feature_atom(boundary, max_tokens=4) or "none",
+                )
+            )
+
+        for pattern, kind, orientation in (
+            (effective_pattern, "effective_start", "prospective"),
+            (expiration_pattern, "validity_end", "expiring"),
+        ):
+            for match in pattern.finditer(text):
+                start, end = int(match.start()), int(match.end())
+                add_validity(
+                    start=start,
+                    end=end,
+                    kind=kind,
+                    target=match.group("target"),
+                    event=match.group("event"),
+                    date_text=match.group("date"),
+                    orientation=orientation,
+                )
+                occupied_ranges.append((start, end))
+
+        for pattern, kind, orientation in (
+            (retroactive_pattern, "retroactive_application", "retroactive"),
+            (applicability_pattern, "applicability_window", "prospective"),
+        ):
+            for match in pattern.finditer(text):
+                start, end = int(match.start()), int(match.end())
+                if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                    continue
+                add_validity(
+                    start=start,
+                    end=end,
+                    kind=kind,
+                    target=match.group("target"),
+                    event="applies",
+                    date_text=match.group("date"),
+                    orientation=orientation,
+                    boundary=match.group("boundary"),
+                    object_text=match.group("object"),
+                )
+                occupied_ranges.append((start, end))
+
+        for match in transition_pattern.finditer(text):
+            start, end = int(match.start()), int(match.end())
+            add_validity(
+                start=start,
+                end=end,
+                kind="transition_window",
+                target=match.group("target"),
+                event="transition_rule",
+                date_text=match.group("date"),
+                orientation="transition",
+            )
+
+        validity_events = sorted(
+            _unique_preserve_order(validity_events),
+            key=lambda item: (item[0], item[1], item[2], item[3], item[5]),
+        )
+        validity_signature = "+".join(
+            f"{kind}:{target_class}:{date_kind}:{orientation}:{scope}"
+            for (
+                _start,
+                kind,
+                target_class,
+                date_kind,
+                orientation,
+                scope,
+                _event,
+                _date_atom,
+                _boundary,
+            ) in validity_events[:8]
+        ) or "none"
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+
+        add("bias")
+        add(f"source-validity:{role_signature}:{scope_signature}")
+        add(f"validity-count:{_count_bucket(len(validity_events))}")
+        add(f"validity-signature:{validity_signature}")
+        add(f"force-validity:{force_signature}:{polarity_signature}:{scope_signature}")
+        if not validity_events:
+            add(f"validity-coverage:none:{role_signature}:{scope_signature}")
+
+        for (
+            _start,
+            kind,
+            target_class,
+            date_kind,
+            orientation,
+            scope,
+            event,
+            date_atom,
+            boundary,
+        ) in validity_events[:10]:
+            date_bucket = date_bucket_for(date_atom)
+            add(f"validity-window:{kind}:{target_class}:{date_kind}:{orientation}:{scope}")
+            add(f"validity-exact:{kind}:{event}:{date_atom}:{date_bucket}")
+            add(f"validity-boundary:{kind}:{boundary}:{target_class}:{scope}")
+            add(f"event-calculus-validity:{kind}->{orientation}:{date_kind}:{scope}")
+            add(f"temporal-version-edge:{target_class}:{kind}:{orientation}:{date_kind}")
+            add(f"decompiler-validity-slot:{kind}:{target_class}:{date_kind}:{scope}")
+            if kind == "effective_start":
+                add(f"effective-date:{target_class}:{date_kind}:{scope}:{orientation}")
+            if kind == "validity_end":
+                add(f"sunset-expiration:{target_class}:{date_kind}:{scope}:{orientation}")
+            if kind == "retroactive_application":
+                add(f"retroactivity:{target_class}:{boundary}:{date_kind}:{scope}")
+            if kind == "applicability_window":
+                add(f"applicability-date:{target_class}:{boundary}:{date_kind}:{scope}")
+            if kind == "transition_window":
+                add(f"transition-window:{target_class}:{date_kind}:{scope}:{orientation}")
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-validity:{family}:{symbol}:{predicate_role}:"
+                        f"{kind}:{target_class}:{date_kind}:{orientation}"
+                    )
+
+        add(f"decompiler-validity-plan:{validity_signature}")
+        add(
+            f"operator-validity-plan:{validity_signature}:"
+            f"{role_signature}:{operator_signature}"
+        )
+        add(
+            f"todo-route:refine_temporal_validity:"
+            f"{validity_signature}:{role_signature}"
+        )
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:validity-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_temporal_validity_features]
+        cache[cache_key] = list(result)
+        return result
+
     def _compiler_latent_profile_feature_keys_for(
         self,
         sample: LegalSample,
@@ -12278,6 +13696,10 @@ class AdaptiveModalAutoencoder:
         keys.extend(self._definition_grounding_feature_keys_for(sample))
         keys.extend(self._quantifier_scope_feature_keys_for(sample))
         keys.extend(self._procedural_lifecycle_feature_keys_for(sample))
+        keys.extend(self._enforcement_remedy_feature_keys_for(sample))
+        keys.extend(self._reference_dependency_feature_keys_for(sample))
+        keys.extend(self._authority_jurisdiction_feature_keys_for(sample))
+        keys.extend(self._temporal_validity_feature_keys_for(sample))
         keys.extend(
             f"semantic-slot:{slot.removeprefix('slot:')}"
             for slot in self._semantic_slot_distribution_for(sample).keys()
@@ -12443,6 +13865,7 @@ class AdaptiveModalAutoencoder:
     def _is_core_modal_feature_key(self, feature: str) -> bool:
         core_prefixes = (
             "bias:",
+            "authority-jurisdiction:",
             "canonical-ir:",
             "clause-topology:",
             "compiler-contract:",
@@ -12488,8 +13911,10 @@ class AdaptiveModalAutoencoder:
             "predicate-argument:",
             "predicate-arity-bin:",
             "predicate-role:",
+            "enforcement-remedy:",
             "procedural-lifecycle:",
             "quantifier-scope:",
+            "reference-dependency:",
             "provenance-alignment:",
             "proof-obligation:",
             "repair-plan:",
@@ -12497,6 +13922,7 @@ class AdaptiveModalAutoencoder:
             "section-cue:",
             "section-prefix:",
             "semantic-slot:",
+            "temporal-validity:",
             "title:",
         )
         return str(feature).startswith(core_prefixes)
