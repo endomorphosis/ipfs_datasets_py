@@ -1928,8 +1928,10 @@ class AdaptiveModalAutoencoder:
         max_quantifier_scope_features: int = 64,
         max_procedural_lifecycle_features: int = 64,
         max_enforcement_remedy_features: int = 64,
+        max_mental_state_features: int = 64,
         max_reference_dependency_features: int = 64,
         max_authority_jurisdiction_features: int = 64,
+        max_discretion_standard_features: int = 64,
         max_temporal_validity_features: int = 64,
         max_evidentiary_burden_features: int = 64,
         max_legal_relation_features: int = 64,
@@ -2178,6 +2180,10 @@ class AdaptiveModalAutoencoder:
             0,
             int(max_enforcement_remedy_features),
         )
+        self.max_mental_state_features = max(
+            0,
+            int(max_mental_state_features),
+        )
         self.max_reference_dependency_features = max(
             0,
             int(max_reference_dependency_features),
@@ -2185,6 +2191,10 @@ class AdaptiveModalAutoencoder:
         self.max_authority_jurisdiction_features = max(
             0,
             int(max_authority_jurisdiction_features),
+        )
+        self.max_discretion_standard_features = max(
+            0,
+            int(max_discretion_standard_features),
         )
         self.max_temporal_validity_features = max(
             0,
@@ -4823,6 +4833,12 @@ class AdaptiveModalAutoencoder:
             )
         )
         keys.extend(
+            self._mental_state_feature_keys_for(
+                sample,
+                prefix="legal-ir:mental-state",
+            )
+        )
+        keys.extend(
             self._reference_dependency_feature_keys_for(
                 sample,
                 prefix="legal-ir:reference-dependency",
@@ -4832,6 +4848,12 @@ class AdaptiveModalAutoencoder:
             self._authority_jurisdiction_feature_keys_for(
                 sample,
                 prefix="legal-ir:authority-jurisdiction",
+            )
+        )
+        keys.extend(
+            self._discretion_standard_feature_keys_for(
+                sample,
+                prefix="legal-ir:discretion-standard",
             )
         )
         keys.extend(
@@ -10603,6 +10625,348 @@ class AdaptiveModalAutoencoder:
         cache[cache_key] = list(result)
         return result
 
+    def _mental_state_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "mental-state",
+    ) -> List[str]:
+        """Knowledge, intent, recklessness, and negligence gates for legal IR."""
+        normalized_prefix = str(prefix or "mental-state").strip(":")
+        cache_key = f"mental_state_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_mental_state_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        action_classes = role_classes.get("action", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        def token_set(value: str) -> set[str]:
+            return set(_TOKEN_RE.findall(str(value or "").lower()))
+
+        def actor_class_for(value: str) -> str:
+            tokens = token_set(value)
+            if tokens.intersection(
+                {
+                    "person",
+                    "persons",
+                    "owner",
+                    "owners",
+                    "applicant",
+                    "applicants",
+                    "licensee",
+                    "licensees",
+                    "recipient",
+                    "recipients",
+                    "contractor",
+                    "contractors",
+                    "individual",
+                    "individuals",
+                    "party",
+                    "parties",
+                }
+            ):
+                return "private_party"
+            if tokens.intersection(
+                {"secretary", "administrator", "agency", "commission", "department", "board", "director", "officer"}
+            ):
+                return "government_actor"
+            if tokens.intersection({"court", "judge", "tribunal"}):
+                return "judicial_actor"
+            classes: List[str] = []
+            for role_name in ("subject", "object", "predicate", "kg"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            for class_name in _unique_preserve_order(classes):
+                if class_name in {"private_party", "government_actor", "judicial_actor"}:
+                    return class_name
+            return first_or_none(role_classes.get("subject", [])) or "mental_actor"
+
+        def state_kind_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\bhas\s+reason\s+to\s+know\b|\breason\s+to\s+know\b", normalized):
+                return "reason_to_know"
+            if re.search(r"\bshould\s+have\s+known\b", normalized):
+                return "constructive_knowledge"
+            if re.search(r"\bwithout\s+(?:knowledge|knowing)\b|\bdoes\s+not\s+know\b|\bnot\s+knowingly\b", normalized):
+                return "lack_of_knowledge"
+            if re.search(r"\bwithout\s+intent\b|\bwithout\s+intending\b|\bnot\s+intentionally\b", normalized):
+                return "lack_of_intent"
+            if re.search(r"\bknowingly\b|\bknowing\b|\bknows\b|\bknew\b|\bactual\s+knowledge\b|\bhas\s+knowledge\b", normalized):
+                return "knowing"
+            if re.search(r"\bwillfully\b|\bwillful\b", normalized):
+                return "willful"
+            if re.search(r"\bintentionally\b|\bintentional\b|\bwith\s+intent\s+to\b", normalized):
+                return "intentional"
+            if re.search(r"\brecklessly\b|\breckless\b", normalized):
+                return "reckless"
+            if re.search(r"\bnegligently\b|\bnegligent\b", normalized):
+                return "negligent"
+            return "mental_state"
+
+        def target_class_for(value: str) -> str:
+            tokens = token_set(value)
+            if tokens.intersection({"violate", "violates", "violation", "unlawful", "prohibited"}):
+                return "statutory_violation"
+            if tokens.intersection({"fail", "fails", "comply", "compliance"}):
+                return "noncompliance"
+            if tokens.intersection({"disclose", "discloses", "disclosure", "publish", "provide", "notice", "record", "records", "information"}):
+                return "notice_or_record"
+            if tokens.intersection({"file", "files", "submit", "application", "claim", "report"}):
+                return "application_or_proof"
+            if tokens.intersection({"pay", "fee", "fees", "payment", "tax", "fine", "penalty"}):
+                return "payment_or_fee"
+            if tokens.intersection({"license", "permit", "approval", "authorization", "certificate"}):
+                return "authorization_instrument"
+            if tokens.intersection({"hearing", "appeal", "action", "order", "proceeding"}):
+                return "proceeding_or_order"
+            if tokens.intersection({"material", "fact", "facts", "statement", "statements"}):
+                return "material_fact"
+            classes: List[str] = []
+            for role_name in ("action", "object", "condition", "predicate", "kg"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            classes = _unique_preserve_order(classes)
+            return classes[0] if classes else "legal_conduct"
+
+        def force_class_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\bshall\s+not\b|\bmay\s+not\b|\bmust\s+not\b|\bno\b|\bprohibited\b|\bunlawful\b", normalized):
+                return "prohibition"
+            if re.search(r"\bshall\b|\bmust\b|\brequired\b", normalized):
+                return "obligation"
+            if re.search(r"\bmay\b|\bauthorized\b|\bpermitted\b", normalized):
+                return "permission"
+            return _feature_atom(force_tags[0] if force_tags else "assertive") or "assertive"
+
+        def polarity_for(kind: str) -> str:
+            if kind in {"lack_of_knowledge", "lack_of_intent"}:
+                return "negated_mental_state"
+            return "affirmative_mental_state"
+
+        def scope_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\bliable\b|\bpenalty\b|\bfine\b|\bviolation\b|\bviolates?\b", normalized):
+                return "liability_scope"
+            if re.search(r"\bshall\s+not\b|\bmay\s+not\b|\bprohibited\b|\bunlawful\b", normalized):
+                return "prohibition_scope"
+            if re.search(r"\bnotice\b|\brecord\b|\binformation\b|\bdisclos", normalized):
+                return "disclosure_scope"
+            if re.search(r"\blicense\b|\bpermit\b|\bauthorization\b|\bapproval\b", normalized):
+                return "authorization_scope"
+            return "general_scope"
+
+        actor_pattern = (
+            r"person|owner|applicant|licensee|recipient|contractor|individual|"
+            r"party|officer|agency|commission|department|board|secretary|administrator"
+        )
+        adverb_pattern = re.compile(
+            rf"\b(?P<actor>{actor_pattern})\s+"
+            r"(?:(?:who|that)\s+)?"
+            r"(?P<state>knowingly|willfully|intentionally|recklessly|negligently)\s+"
+            r"(?P<conduct>[^.;]{1,140})"
+        )
+        knowledge_pattern = re.compile(
+            rf"\b(?P<actor>{actor_pattern})\s+"
+            r"(?P<state>knows|knew|has\s+knowledge\s+of|has\s+actual\s+knowledge\s+of|"
+            r"has\s+reason\s+to\s+know|should\s+have\s+known)\s+"
+            r"(?P<conduct>[^.;]{1,140})"
+        )
+        intent_pattern = re.compile(
+            rf"\b(?P<actor>{actor_pattern})\s+"
+            r"(?:acts?\s+)?(?P<state>with\s+intent\s+to)\s+"
+            r"(?P<conduct>[^.;]{1,140})"
+        )
+        negated_pattern = re.compile(
+            r"\b(?P<state>without\s+(?:knowledge|intent)|not\s+knowingly|not\s+intentionally)\s+"
+            r"(?P<conduct>[^.;]{1,140})"
+        )
+        state_events: List[tuple[int, str, str, str, str, str, str, str, str]] = []
+        occupied_ranges: List[tuple[int, int]] = []
+
+        def add_state(
+            *,
+            start: int,
+            end: int,
+            actor: str,
+            state_text: str,
+            conduct: str,
+        ) -> None:
+            context = text[max(0, start - 96) : min(len(text), end + 96)]
+            state_kind = state_kind_for(state_text)
+            actor_class = actor_class_for(actor or source_anchors.get("subject", ""))
+            target_class = target_class_for(conduct)
+            force_class = force_class_for(context)
+            polarity = polarity_for(state_kind)
+            state_scope = scope_for(f"{context} {conduct}")
+            state_events.append(
+                (
+                    int(start),
+                    state_kind,
+                    actor_class,
+                    target_class,
+                    force_class,
+                    polarity,
+                    state_scope,
+                    _feature_atom(state_text, max_tokens=4) or "mental_state",
+                    _feature_atom(conduct, max_tokens=5) or "conduct",
+                )
+            )
+
+        for pattern in (adverb_pattern, knowledge_pattern, intent_pattern, negated_pattern):
+            for match in pattern.finditer(text):
+                start, end = int(match.start()), int(match.end())
+                if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                    continue
+                add_state(
+                    start=start,
+                    end=end,
+                    actor=match.groupdict().get("actor") or "",
+                    state_text=match.group("state"),
+                    conduct=match.group("conduct"),
+                )
+                occupied_ranges.append((start, end))
+
+        state_events = sorted(
+            _unique_preserve_order(state_events),
+            key=lambda item: (item[0], item[1], item[2], item[3], item[4], item[5]),
+        )
+        if not state_events:
+            cache[cache_key] = []
+            return []
+
+        mental_signature = "+".join(
+            f"{state_kind}:{actor_class}:{target_class}:"
+            f"{force_class}:{polarity}:{state_scope}"
+            for (
+                _start,
+                state_kind,
+                actor_class,
+                target_class,
+                force_class,
+                polarity,
+                state_scope,
+                _state_atom,
+                _conduct_atom,
+            ) in state_events[:8]
+        )
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        force_signature = "+".join(force_tags[:3]) or "none"
+        polarity_signature = "+".join(polarity_tags[:3]) or "none"
+
+        add("bias")
+        add(f"source-mental-state:{role_signature}:{scope_signature}")
+        add(f"mental-state-count:{_count_bucket(len(state_events))}")
+        add(f"mental-state-signature:{mental_signature}")
+        add(f"force-mental-state:{force_signature}:{polarity_signature}:{scope_signature}")
+
+        for (
+            _start,
+            state_kind,
+            actor_class,
+            target_class,
+            force_class,
+            polarity,
+            state_scope,
+            state_atom,
+            conduct_atom,
+        ) in state_events[:10]:
+            add(
+                f"culpability-edge:{state_kind}:{actor_class}:"
+                f"{target_class}:{force_class}:{polarity}"
+            )
+            add(
+                f"compiler-mental-state-gate:{state_kind}:"
+                f"{actor_class}:{target_class}:{state_scope}"
+            )
+            add(
+                f"frame-logic-mental-slot:"
+                f"{actor_class}:{state_kind}:{target_class}:{state_scope}"
+            )
+            add(
+                f"kg-mental-state-edge:{actor_class}:"
+                f"{state_kind}:{target_class}:{polarity}"
+            )
+            add(
+                f"modal-culpability-standard:"
+                f"{state_kind}:{target_class}:{force_class}:{state_scope}"
+            )
+            add(
+                f"decompiler-mental-state-slot:"
+                f"{state_kind}:{actor_class}:{target_class}:{state_scope}"
+            )
+            add(f"mental-state-exact:{state_atom}:{conduct_atom}:{actor_class}")
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-mental-state:{family}:{symbol}:{predicate_role}:"
+                        f"{state_kind}:{target_class}:{force_class}:{polarity}"
+                    )
+
+        add(f"decompiler-mental-state-plan:{mental_signature}")
+        add(
+            f"operator-mental-state-plan:{mental_signature}:"
+            f"{role_signature}:{operator_signature}"
+        )
+        add(f"todo-route:refine_mental_state:{mental_signature}:{role_signature}")
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:mental-state-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_mental_state_features]
+        cache[cache_key] = list(result)
+        return result
+
     def _reference_dependency_feature_keys_for(
         self,
         sample: LegalSample,
@@ -11251,6 +11615,438 @@ class AdaptiveModalAutoencoder:
         ).hexdigest()[:16]
         keys.insert(1, f"{normalized_prefix}:authority-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_authority_jurisdiction_features]
+        cache[cache_key] = list(result)
+        return result
+
+    def _discretion_standard_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "discretion-standard",
+    ) -> List[str]:
+        """Discretionary determinations and evaluative standards for legal IR gates."""
+        normalized_prefix = str(prefix or "discretion-standard").strip(":")
+        cache_key = f"discretion_standard_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_discretion_standard_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        action_classes = role_classes.get("action", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        def token_set(value: str) -> set[str]:
+            return set(_TOKEN_RE.findall(str(value or "").lower()))
+
+        def actor_class_for(value: str) -> str:
+            tokens = token_set(value)
+            if tokens.intersection({"court", "judge", "tribunal", "magistrate"}):
+                return "judicial_actor"
+            if tokens.intersection(
+                {
+                    "secretary",
+                    "administrator",
+                    "agency",
+                    "commission",
+                    "department",
+                    "board",
+                    "director",
+                    "officer",
+                }
+            ):
+                return "government_actor"
+            if tokens.intersection(
+                {"person", "applicant", "owner", "licensee", "recipient", "entity"}
+            ):
+                return "private_party"
+            classes: List[str] = []
+            for role_name in ("subject", "object", "predicate", "kg"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            for class_name in _unique_preserve_order(classes):
+                if class_name in {"government_actor", "judicial_actor", "private_party"}:
+                    return class_name
+            return first_or_none(role_classes.get("subject", [])) or "standard_actor"
+
+        def standard_class_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if "good cause" in normalized:
+                return "good_cause_standard"
+            if "public interest" in normalized:
+                return "public_interest_standard"
+            if re.search(r"\bnecessary\b|\bnecessity\b", normalized):
+                return "necessity_standard"
+            if re.search(r"\breasonable\b|\breasonably\b", normalized):
+                return "reasonableness_standard"
+            if re.search(r"\bappropriate\b|\bproper\b", normalized):
+                return "appropriateness_standard"
+            if re.search(r"\bfeasible\b|\bpracticable\b", normalized):
+                return "feasibility_standard"
+            if re.search(r"\bsatisfactory\b|\bsatisfaction\b", normalized):
+                return "satisfaction_standard"
+            if re.search(r"\badequate\b|\bsufficient\b", normalized):
+                return "adequacy_standard"
+            return "discretionary_standard"
+
+        def target_class_for(value: str) -> str:
+            tokens = token_set(value)
+            if tokens.intersection(
+                {
+                    "waiver",
+                    "waivers",
+                    "exemption",
+                    "exemptions",
+                    "license",
+                    "permit",
+                    "certificate",
+                    "approval",
+                    "authorization",
+                }
+            ):
+                return "authorization_instrument"
+            if tokens.intersection({"rule", "rules", "regulation", "regulations"}):
+                return "rulemaking_instrument"
+            if tokens.intersection({"fee", "fees", "payment", "payments", "damages"}):
+                return "payment_or_fee"
+            if tokens.intersection(
+                {"deadline", "deadlines", "period", "days", "date", "extend", "extension"}
+            ):
+                return "deadline_condition"
+            if tokens.intersection({"hearing", "appeal", "action", "order", "proceeding"}):
+                return "proceeding_or_order"
+            if tokens.intersection({"notice", "record", "records", "document", "information"}):
+                return "notice_or_record"
+            if tokens.intersection({"requirement", "standard", "condition"}):
+                return "legal_requirement"
+            classes: List[str] = []
+            for role_name in ("object", "action", "condition", "predicate", "kg"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            classes = _unique_preserve_order(classes)
+            return classes[0] if classes else "legal_target"
+
+        def force_class_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\bshall\s+not\b|\bmay\s+not\b|\bmust\s+not\b|\bno\b", normalized):
+                return "prohibition"
+            if re.search(r"\bmay\b|\bauthorized\b|\bpermitted\b", normalized):
+                return "permission"
+            if re.search(r"\bshall\b|\bmust\b|\brequired\b", normalized):
+                return "obligation"
+            return _feature_atom(force_tags[0] if force_tags else "assertive") or "assertive"
+
+        def scope_for(target: str, standard: str, context: str) -> str:
+            merged = " ".join((target, standard, context)).lower()
+            if re.search(r"\b(?:waiver|exemption|license|permit|certificate|approval|authorization)\b", merged):
+                return "instrument_scope"
+            if re.search(r"\b(?:rule|rules|regulation|regulations)\b", merged):
+                return "rulemaking_scope"
+            if re.search(r"\b(?:fee|fees|payment|payments|damages)\b", merged):
+                return "payment_scope"
+            if re.search(r"\b(?:deadline|period|days|date|extend|extension)\b", merged):
+                return "deadline_scope"
+            if re.search(r"\b(?:hearing|appeal|action|order|proceeding)\b", merged):
+                return "procedure_scope"
+            if "public interest" in merged:
+                return "public_interest_scope"
+            return "general_scope"
+
+        def determination_kind_for(
+            *,
+            actor_class: str,
+            verb: str,
+            standard: str,
+        ) -> str:
+            verb_atom = _feature_atom(verb, max_tokens=2)
+            if standard == "good_cause_standard":
+                return "good_cause_finding"
+            if actor_class == "judicial_actor":
+                return "judicial_finding"
+            if standard == "public_interest_standard":
+                return "public_interest_determination"
+            if verb_atom in {"deem", "deems", "deemed"}:
+                return "legal_deeming"
+            if standard in {"reasonableness_standard", "appropriateness_standard"}:
+                return "evaluative_determination"
+            return "discretionary_determination"
+
+        def gate_kind_for(marker: str, standard: str) -> str:
+            marker_atom = _feature_atom(marker, max_tokens=3)
+            if marker_atom in {"in_discretion", "at_discretion"}:
+                return "discretion_gate"
+            if marker_atom in {"as_determined", "for_good_cause"}:
+                return "evaluative_gate"
+            if marker_atom in {"if", "when", "where", "whenever", "provided_that"}:
+                return "epistemic_gate"
+            if standard in {
+                "good_cause_standard",
+                "public_interest_standard",
+                "reasonableness_standard",
+                "appropriateness_standard",
+            }:
+                return "evaluative_gate"
+            return "epistemic_gate"
+
+        standard_pattern = (
+            r"necessary(?:\s+and\s+appropriate)?|"
+            r"consistent\s+with\s+the\s+public\s+interest|"
+            r"in\s+the\s+public\s+interest|"
+            r"reasonable|appropriate|proper|feasible|practicable|"
+            r"satisfactory|adequate|sufficient"
+        )
+        actor_pattern = (
+            r"secretary|administrator|agency|commission|department|board|"
+            r"director|officer|court|judge"
+        )
+        determination_pattern = re.compile(
+            rf"\b(?:(?P<marker>if|when|where|whenever|provided\s+that)\s+)?"
+            rf"(?:the\s+)?(?P<actor>{actor_pattern})\s+"
+            rf"(?P<verb>determines?|finds?|deems?|concludes?|certifies?|considers?)"
+            rf"\s+(?:that\s+)?(?P<target>[^.;,]{{0,90}}?)\s+"
+            rf"(?:is|are|be|to\s+be)\s+(?P<standard>{standard_pattern})"
+        )
+        as_pattern = re.compile(
+            rf"\b(?P<target>[^.;]{{1,140}}?)\s+as\s+"
+            rf"(?:the\s+)?(?P<actor>{actor_pattern})\s+"
+            rf"(?P<verb>determines?|finds?|deems?)\s+"
+            rf"(?:(?:is|are|to\s+be)\s+)?(?P<standard>{standard_pattern})"
+        )
+        discretion_pattern = re.compile(
+            rf"\b(?P<marker>in|at)\s+(?:the\s+)?"
+            rf"(?P<actor>{actor_pattern})(?:'s)?\s+discretion\b"
+        )
+        good_cause_pattern = re.compile(
+            r"\b(?P<target>[^.;]{0,140}?)\s+(?:for|upon)\s+"
+            r"(?P<standard>good\s+cause)(?:\s+shown)?\b"
+        )
+        satisfaction_pattern = re.compile(
+            rf"\b(?P<target>[^.;]{{0,140}}?)\s+to\s+the\s+satisfaction\s+of\s+"
+            rf"(?:the\s+)?(?P<actor>{actor_pattern})\b"
+        )
+
+        standard_events: List[
+            tuple[int, str, str, str, str, str, str, str, str, str, str]
+        ] = []
+        occupied_ranges: List[tuple[int, int]] = []
+
+        def add_standard(
+            *,
+            start: int,
+            end: int,
+            actor: str,
+            verb: str,
+            target: str,
+            standard_text: str,
+            marker: str,
+        ) -> None:
+            context = text[max(0, start - 128) : min(len(text), end + 96)]
+            actor_class = actor_class_for(actor)
+            standard_class = standard_class_for(standard_text)
+            target_class = target_class_for(target or context)
+            force_class = force_class_for(context)
+            scope = scope_for(target, standard_text, context)
+            determination_kind = determination_kind_for(
+                actor_class=actor_class,
+                verb=verb,
+                standard=standard_class,
+            )
+            gate_kind = gate_kind_for(marker, standard_class)
+            standard_events.append(
+                (
+                    int(start),
+                    determination_kind,
+                    actor_class,
+                    standard_class,
+                    target_class,
+                    force_class,
+                    gate_kind,
+                    scope,
+                    _feature_atom(verb, max_tokens=2) or "determine",
+                    _feature_atom(target, max_tokens=5) or "target",
+                    _feature_atom(standard_text, max_tokens=5) or "standard",
+                )
+            )
+
+        for pattern, default_marker in (
+            (determination_pattern, "determination"),
+            (as_pattern, "as_determined"),
+            (discretion_pattern, "in_discretion"),
+            (good_cause_pattern, "for_good_cause"),
+            (satisfaction_pattern, "satisfaction"),
+        ):
+            for match in pattern.finditer(text):
+                start, end = int(match.start()), int(match.end())
+                if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                    continue
+                groupdict = match.groupdict()
+                actor = groupdict.get("actor") or source_anchors.get("subject", "")
+                verb = groupdict.get("verb") or default_marker
+                target = groupdict.get("target") or text[max(0, start - 96) : start]
+                standard_text = groupdict.get("standard")
+                if not standard_text:
+                    standard_text = (
+                        "satisfaction"
+                        if default_marker == "satisfaction"
+                        else "discretion"
+                    )
+                marker = groupdict.get("marker") or default_marker
+                add_standard(
+                    start=start,
+                    end=end,
+                    actor=actor,
+                    verb=verb,
+                    target=target,
+                    standard_text=standard_text,
+                    marker=marker,
+                )
+                occupied_ranges.append((start, end))
+
+        standard_events = sorted(
+            _unique_preserve_order(standard_events),
+            key=lambda item: (item[0], item[1], item[2], item[3], item[4], item[5]),
+        )
+        if not standard_events:
+            cache[cache_key] = []
+            return []
+
+        standard_signature = "+".join(
+            f"{kind}:{actor_class}:{standard_class}:{target_class}:"
+            f"{force_class}:{gate_kind}:{scope}"
+            for (
+                _start,
+                kind,
+                actor_class,
+                standard_class,
+                target_class,
+                force_class,
+                gate_kind,
+                scope,
+                _verb,
+                _target_atom,
+                _standard_atom,
+            ) in standard_events[:8]
+        )
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        force_signature = "+".join(force_tags[:3]) or "none"
+        polarity_signature = "+".join(polarity_tags[:3]) or "none"
+
+        add("bias")
+        add(f"source-discretion-standard:{role_signature}:{scope_signature}")
+        add(f"standard-count:{_count_bucket(len(standard_events))}")
+        add(f"standard-signature:{standard_signature}")
+        add(f"force-standard:{force_signature}:{polarity_signature}:{scope_signature}")
+
+        for (
+            _start,
+            kind,
+            actor_class,
+            standard_class,
+            target_class,
+            force_class,
+            gate_kind,
+            scope,
+            verb_atom,
+            target_atom,
+            standard_atom,
+        ) in standard_events[:10]:
+            add(
+                f"standard-edge:{kind}:{actor_class}:"
+                f"{standard_class}:{target_class}:{force_class}"
+            )
+            add(
+                f"compiler-discretion-gate:{kind}:{actor_class}:"
+                f"{target_class}:{standard_class}:{gate_kind}"
+            )
+            add(
+                f"frame-logic-standard-slot:"
+                f"{actor_class}:{standard_class}:{target_class}:{scope}"
+            )
+            add(
+                f"kg-standard-edge:{actor_class}:{kind}:"
+                f"{target_class}:{standard_class}"
+            )
+            add(
+                f"modal-epistemic-standard:{kind}:"
+                f"{standard_class}:{force_class}:{gate_kind}"
+            )
+            add(
+                f"decompiler-standard-slot:"
+                f"{kind}:{actor_class}:{standard_class}:{target_class}:{scope}"
+            )
+            add(
+                f"standard-exact:{verb_atom}:{target_atom}:"
+                f"{standard_atom}:{actor_class}"
+            )
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-standard:{family}:{symbol}:{predicate_role}:"
+                        f"{kind}:{standard_class}:{target_class}:{gate_kind}"
+                    )
+
+        add(f"decompiler-standard-plan:{standard_signature}")
+        add(
+            f"operator-standard-plan:{standard_signature}:"
+            f"{role_signature}:{operator_signature}"
+        )
+        add(
+            f"todo-route:refine_discretion_standard:"
+            f"{standard_signature}:{role_signature}"
+        )
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:standard-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_discretion_standard_features]
         cache[cache_key] = list(result)
         return result
 
@@ -17421,8 +18217,10 @@ class AdaptiveModalAutoencoder:
         keys.extend(self._quantifier_scope_feature_keys_for(sample))
         keys.extend(self._procedural_lifecycle_feature_keys_for(sample))
         keys.extend(self._enforcement_remedy_feature_keys_for(sample))
+        keys.extend(self._mental_state_feature_keys_for(sample))
         keys.extend(self._reference_dependency_feature_keys_for(sample))
         keys.extend(self._authority_jurisdiction_feature_keys_for(sample))
+        keys.extend(self._discretion_standard_feature_keys_for(sample))
         keys.extend(self._temporal_validity_feature_keys_for(sample))
         keys.extend(self._evidentiary_burden_feature_keys_for(sample))
         keys.extend(self._legal_relation_feature_keys_for(sample))
@@ -17611,6 +18409,7 @@ class AdaptiveModalAutoencoder:
             "defeasible-priority:",
             "definition-grounding:",
             "decompiler-surface:",
+            "discretion-standard:",
             "discourse-flow:",
             "entity-binding:",
             "equivalence-prototype:",
@@ -17618,6 +18417,7 @@ class AdaptiveModalAutoencoder:
             "enumeration-hierarchy:",
             "legal-relation:",
             "logical-connective:",
+            "mental-state:",
             "status-transition:",
             "condition-consequence:",
             "condition:",

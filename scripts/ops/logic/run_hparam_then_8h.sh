@@ -70,8 +70,10 @@ COMMON_ARGS=(
   --autoencoder-max-quantifier-scope-features 64
   --autoencoder-max-procedural-lifecycle-features 64
   --autoencoder-max-enforcement-remedy-features 64
+  --autoencoder-max-mental-state-features 64
   --autoencoder-max-reference-dependency-features 64
   --autoencoder-max-authority-jurisdiction-features 64
+  --autoencoder-max-discretion-standard-features 64
   --autoencoder-max-temporal-validity-features 64
   --autoencoder-max-evidentiary-burden-features 64
   --autoencoder-max-legal-relation-features 64

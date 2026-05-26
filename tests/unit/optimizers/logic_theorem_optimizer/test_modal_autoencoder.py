@@ -5308,6 +5308,249 @@ def test_enforcement_remedy_feature_head_transfers_liability_holdout() -> None:
     assert after_cosine.embedding_cosine_similarity > before_cosine.embedding_cosine_similarity
 
 
+def test_mental_state_features_encode_culpability_and_knowledge_gates() -> None:
+    knowing = build_us_code_sample(
+        title="15",
+        section="77x",
+        text=(
+            "A person who knowingly violates this section shall be liable "
+            "for a civil penalty."
+        ),
+    )
+    reason_to_know = build_us_code_sample(
+        title="15",
+        section="78u",
+        text="A person has reason to know the statement is false.",
+    )
+    negligent = build_us_code_sample(
+        title="7",
+        section="13a",
+        text="A licensee negligently fails to comply with the order.",
+    )
+    lack_of_intent = build_us_code_sample(
+        title="5",
+        section="552",
+        text="A person may correct the record without intent to deceive.",
+    )
+    autoencoder = AdaptiveModalAutoencoder(max_mental_state_features=240)
+
+    knowing_features = autoencoder._mental_state_feature_keys_for(knowing)
+    reason_features = autoencoder._mental_state_feature_keys_for(reason_to_know)
+    negligent_features = autoencoder._mental_state_feature_keys_for(negligent)
+    lack_features = autoencoder._mental_state_feature_keys_for(lack_of_intent)
+    fallback_features = autoencoder._fallback_feature_keys_for(knowing)
+    legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(knowing)
+
+    knowing_signature = (
+        "knowing:private_party:statutory_violation:obligation:"
+        "affirmative_mental_state:liability_scope"
+    )
+    assert (
+        f"mental-state:mental-state-signature:{knowing_signature}"
+        in knowing_features
+    )
+    assert (
+        "mental-state:compiler-mental-state-gate:"
+        "knowing:private_party:statutory_violation:liability_scope"
+        in knowing_features
+    )
+    assert (
+        "mental-state:frame-logic-mental-slot:"
+        "private_party:knowing:statutory_violation:liability_scope"
+        in knowing_features
+    )
+    assert (
+        f"mental-state:decompiler-mental-state-plan:{knowing_signature}"
+        in fallback_features
+    )
+    assert (
+        f"legal-ir:mental-state:decompiler-mental-state-plan:"
+        f"{knowing_signature}"
+        in legal_ir_features
+    )
+
+    assert (
+        "mental-state:mental-state-signature:"
+        "reason_to_know:private_party:material_fact:assertive:"
+        "affirmative_mental_state:general_scope"
+        in reason_features
+    )
+    assert (
+        "mental-state:culpability-edge:"
+        "negligent:private_party:noncompliance:assertive:"
+        "affirmative_mental_state"
+        in negligent_features
+    )
+    assert (
+        "mental-state:mental-state-signature:"
+        "lack_of_intent:private_party:legal_conduct:permission:"
+        "negated_mental_state:disclosure_scope"
+        in lack_features
+    )
+
+
+def test_mental_state_feature_head_transfers_culpability_holdout() -> None:
+    shared_plan_feature = (
+        "mental-state:decompiler-mental-state-plan:"
+        "knowing:private_party:statutory_violation:obligation:"
+        "affirmative_mental_state:liability_scope"
+    )
+    train = build_us_code_sample(
+        title="15",
+        section="77x",
+        text=(
+            "A person who knowingly violates this section shall be liable "
+            "for a civil penalty."
+        ),
+        embedding_vector=[1.0, 0.0],
+    )
+    validation = build_us_code_sample(
+        title="42",
+        section="1320a-7a",
+        text=(
+            "Any owner that knowingly violates this section shall be subject "
+            "to a civil fine."
+        ),
+        embedding_vector=[1.0, 0.0],
+    )
+    family_autoencoder = AdaptiveModalAutoencoder(
+        feature_family_logit_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=0,
+        max_entity_binding_features=0,
+        max_defeasible_priority_features=0,
+        max_constraint_grounding_features=0,
+        max_quantitative_formula_features=0,
+        max_definition_grounding_features=0,
+        max_quantifier_scope_features=0,
+        max_procedural_lifecycle_features=0,
+        max_enforcement_remedy_features=0,
+        max_mental_state_features=240,
+        max_reference_dependency_features=0,
+        max_authority_jurisdiction_features=0,
+        max_discretion_standard_features=0,
+        max_temporal_validity_features=0,
+        max_evidentiary_burden_features=0,
+        max_legal_relation_features=0,
+        max_status_transition_features=0,
+        max_condition_consequence_features=0,
+        max_applicability_scope_features=0,
+        max_coreference_binding_features=0,
+        max_logical_connective_features=0,
+        max_enumeration_hierarchy_features=0,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+    )
+    shared_mental_features = set(
+        family_autoencoder._mental_state_feature_keys_for(train)
+    ).intersection(
+        family_autoencoder._mental_state_feature_keys_for(validation)
+    )
+    before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    family_autoencoder._nudge_family_logits(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert shared_plan_feature in shared_mental_features
+    assert shared_plan_feature in family_autoencoder.state.feature_family_logits
+    assert after_ce.cross_entropy_loss < before_ce.cross_entropy_loss
+
+    embedding_autoencoder = AdaptiveModalAutoencoder(
+        compiler_quality_embedding_weight_scale=0.0,
+        logic_signature_embedding_weight_scale=0.0,
+        round_trip_signal_embedding_weight_scale=0.0,
+        decompiler_plan_embedding_weight_scale=0.0,
+        predicate_argument_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=0.0,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        feature_embedding_weight_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=0,
+        max_entity_binding_features=0,
+        max_defeasible_priority_features=0,
+        max_constraint_grounding_features=0,
+        max_quantitative_formula_features=0,
+        max_definition_grounding_features=0,
+        max_quantifier_scope_features=0,
+        max_procedural_lifecycle_features=0,
+        max_enforcement_remedy_features=0,
+        max_mental_state_features=240,
+        max_reference_dependency_features=0,
+        max_authority_jurisdiction_features=0,
+        max_discretion_standard_features=0,
+        max_temporal_validity_features=0,
+        max_evidentiary_burden_features=0,
+        max_legal_relation_features=0,
+        max_status_transition_features=0,
+        max_condition_consequence_features=0,
+        max_applicability_scope_features=0,
+        max_coreference_binding_features=0,
+        max_logical_connective_features=0,
+        max_enumeration_hierarchy_features=0,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    embedding_autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    assert shared_plan_feature in embedding_autoencoder.state.feature_embedding_weights
+    assert after_cosine.embedding_cosine_similarity > before_cosine.embedding_cosine_similarity
+
+
 def test_reference_dependency_features_encode_imports_and_applicability() -> None:
     exception_import = build_us_code_sample(
         title="5",
@@ -5752,6 +5995,263 @@ def test_authority_jurisdiction_feature_head_transfers_rulemaking_holdout() -> N
         max_enforcement_remedy_features=0,
         max_reference_dependency_features=0,
         max_authority_jurisdiction_features=240,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    embedding_autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    assert shared_plan_feature in embedding_autoencoder.state.feature_embedding_weights
+    assert after_cosine.embedding_cosine_similarity > before_cosine.embedding_cosine_similarity
+
+
+def test_discretion_standard_features_encode_evaluative_gates() -> None:
+    necessity = build_us_code_sample(
+        title="5",
+        section="552",
+        text=(
+            "The Secretary may grant a waiver if the Secretary determines "
+            "that the waiver is necessary."
+        ),
+    )
+    reasonable = build_us_code_sample(
+        title="28",
+        section="1920",
+        text="The court may award fees as the court determines reasonable.",
+    )
+    good_cause = build_us_code_sample(
+        title="5",
+        section="553",
+        text="The agency may extend the deadline for good cause shown.",
+    )
+    public_interest = build_us_code_sample(
+        title="15",
+        section="78w",
+        text=(
+            "The Commission may issue rules when the Commission finds that "
+            "the rule is in the public interest."
+        ),
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        max_discretion_standard_features=240
+    )
+
+    necessity_features = autoencoder._discretion_standard_feature_keys_for(
+        necessity
+    )
+    reasonable_features = autoencoder._discretion_standard_feature_keys_for(
+        reasonable
+    )
+    good_cause_features = autoencoder._discretion_standard_feature_keys_for(
+        good_cause
+    )
+    public_interest_features = autoencoder._discretion_standard_feature_keys_for(
+        public_interest
+    )
+    fallback_features = autoencoder._fallback_feature_keys_for(necessity)
+    legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(necessity)
+
+    necessity_signature = (
+        "discretionary_determination:government_actor:necessity_standard:"
+        "authorization_instrument:permission:epistemic_gate:instrument_scope"
+    )
+    assert (
+        f"discretion-standard:standard-signature:{necessity_signature}"
+        in necessity_features
+    )
+    assert (
+        "discretion-standard:compiler-discretion-gate:"
+        "discretionary_determination:government_actor:"
+        "authorization_instrument:necessity_standard:epistemic_gate"
+        in necessity_features
+    )
+    assert (
+        "discretion-standard:frame-logic-standard-slot:"
+        "government_actor:necessity_standard:"
+        "authorization_instrument:instrument_scope"
+        in necessity_features
+    )
+    assert (
+        f"discretion-standard:decompiler-standard-plan:{necessity_signature}"
+        in fallback_features
+    )
+    assert (
+        f"legal-ir:discretion-standard:decompiler-standard-plan:"
+        f"{necessity_signature}"
+        in legal_ir_features
+    )
+
+    assert (
+        "discretion-standard:standard-signature:"
+        "judicial_finding:judicial_actor:reasonableness_standard:"
+        "payment_or_fee:permission:evaluative_gate:payment_scope"
+        in reasonable_features
+    )
+    assert (
+        "discretion-standard:standard-edge:"
+        "good_cause_finding:government_actor:good_cause_standard:"
+        "deadline_condition:permission"
+        in good_cause_features
+    )
+    assert (
+        "discretion-standard:standard-signature:"
+        "public_interest_determination:government_actor:"
+        "public_interest_standard:rulemaking_instrument:"
+        "permission:epistemic_gate:rulemaking_scope"
+        in public_interest_features
+    )
+
+
+def test_discretion_standard_feature_head_transfers_determination_holdout() -> None:
+    shared_plan_feature = (
+        "discretion-standard:decompiler-standard-plan:"
+        "discretionary_determination:government_actor:necessity_standard:"
+        "authorization_instrument:permission:epistemic_gate:instrument_scope"
+    )
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text=(
+            "The Secretary may grant a waiver if the Secretary determines "
+            "that the waiver is necessary."
+        ),
+        embedding_vector=[1.0, 0.0],
+    )
+    validation = build_us_code_sample(
+        title="12",
+        section="1841",
+        text=(
+            "The Administrator may issue an exemption if the Administrator "
+            "finds that the exemption is necessary."
+        ),
+        embedding_vector=[1.0, 0.0],
+    )
+    family_autoencoder = AdaptiveModalAutoencoder(
+        feature_family_logit_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=0,
+        max_entity_binding_features=0,
+        max_defeasible_priority_features=0,
+        max_constraint_grounding_features=0,
+        max_quantitative_formula_features=0,
+        max_definition_grounding_features=0,
+        max_quantifier_scope_features=0,
+        max_procedural_lifecycle_features=0,
+        max_enforcement_remedy_features=0,
+        max_reference_dependency_features=0,
+        max_authority_jurisdiction_features=0,
+        max_discretion_standard_features=240,
+        max_temporal_validity_features=0,
+        max_evidentiary_burden_features=0,
+        max_legal_relation_features=0,
+        max_status_transition_features=0,
+        max_condition_consequence_features=0,
+        max_applicability_scope_features=0,
+        max_coreference_binding_features=0,
+        max_logical_connective_features=0,
+        max_enumeration_hierarchy_features=0,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+    )
+    shared_standard_features = set(
+        family_autoencoder._discretion_standard_feature_keys_for(train)
+    ).intersection(
+        family_autoencoder._discretion_standard_feature_keys_for(validation)
+    )
+    before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    family_autoencoder._nudge_family_logits(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert shared_plan_feature in shared_standard_features
+    assert shared_plan_feature in family_autoencoder.state.feature_family_logits
+    assert after_ce.cross_entropy_loss < before_ce.cross_entropy_loss
+
+    embedding_autoencoder = AdaptiveModalAutoencoder(
+        compiler_quality_embedding_weight_scale=0.0,
+        logic_signature_embedding_weight_scale=0.0,
+        round_trip_signal_embedding_weight_scale=0.0,
+        decompiler_plan_embedding_weight_scale=0.0,
+        predicate_argument_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=0.0,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        feature_embedding_weight_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=0,
+        max_entity_binding_features=0,
+        max_defeasible_priority_features=0,
+        max_constraint_grounding_features=0,
+        max_quantitative_formula_features=0,
+        max_definition_grounding_features=0,
+        max_quantifier_scope_features=0,
+        max_procedural_lifecycle_features=0,
+        max_enforcement_remedy_features=0,
+        max_reference_dependency_features=0,
+        max_authority_jurisdiction_features=0,
+        max_discretion_standard_features=240,
+        max_temporal_validity_features=0,
+        max_evidentiary_burden_features=0,
+        max_legal_relation_features=0,
+        max_status_transition_features=0,
+        max_condition_consequence_features=0,
+        max_applicability_scope_features=0,
+        max_coreference_binding_features=0,
+        max_logical_connective_features=0,
+        max_enumeration_hierarchy_features=0,
         max_token_features=0,
         max_token_bigram_features=0,
         max_token_trigram_features=0,

@@ -1905,10 +1905,14 @@ def build_paired_daemon_commands(
         str(getattr(args, "autoencoder_max_procedural_lifecycle_features", 64)),
         "--autoencoder-max-enforcement-remedy-features",
         str(getattr(args, "autoencoder_max_enforcement_remedy_features", 64)),
+        "--autoencoder-max-mental-state-features",
+        str(getattr(args, "autoencoder_max_mental_state_features", 64)),
         "--autoencoder-max-reference-dependency-features",
         str(getattr(args, "autoencoder_max_reference_dependency_features", 64)),
         "--autoencoder-max-authority-jurisdiction-features",
         str(getattr(args, "autoencoder_max_authority_jurisdiction_features", 64)),
+        "--autoencoder-max-discretion-standard-features",
+        str(getattr(args, "autoencoder_max_discretion_standard_features", 64)),
         "--autoencoder-max-temporal-validity-features",
         str(getattr(args, "autoencoder_max_temporal_validity_features", 64)),
         "--autoencoder-max-evidentiary-burden-features",
@@ -5102,6 +5106,19 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--autoencoder-max-mental-state-features",
+        type=int,
+        default=64,
+        help=(
+            "Maximum mental-state features to expose to the feature decoder. "
+            "These bind knowingly, willfully, intentionally, recklessly, "
+            "negligently, reason-to-know, constructive-knowledge, and "
+            "negated-intent/knowledge standards to compiler culpability "
+            "gates, frame-logic mental-state slots, KG knowledge edges, and "
+            "decompiler mental-state repair routes."
+        ),
+    )
+    parser.add_argument(
         "--autoencoder-max-reference-dependency-features",
         type=int,
         default=64,
@@ -5121,6 +5138,19 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
             "decoder. These bind delegated powers, rulemaking authority, "
             "jurisdiction, preemption limits, authority instruments, and "
             "decompiler power-scope repair routes."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-max-discretion-standard-features",
+        type=int,
+        default=64,
+        help=(
+            "Maximum discretion-standard features to expose to the feature "
+            "decoder. These bind discretionary determinations, judicial "
+            "findings, good-cause tests, public-interest standards, and "
+            "reasonableness/necessity standards to compiler epistemic gates, "
+            "frame-logic standard slots, KG evaluative edges, and decompiler "
+            "standard repair routes."
         ),
     )
     parser.add_argument(
@@ -6337,11 +6367,17 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         max_enforcement_remedy_features=int(
             getattr(args, "autoencoder_max_enforcement_remedy_features", 64)
         ),
+        max_mental_state_features=int(
+            getattr(args, "autoencoder_max_mental_state_features", 64)
+        ),
         max_reference_dependency_features=int(
             getattr(args, "autoencoder_max_reference_dependency_features", 64)
         ),
         max_authority_jurisdiction_features=int(
             getattr(args, "autoencoder_max_authority_jurisdiction_features", 64)
+        ),
+        max_discretion_standard_features=int(
+            getattr(args, "autoencoder_max_discretion_standard_features", 64)
         ),
         max_temporal_validity_features=int(
             getattr(args, "autoencoder_max_temporal_validity_features", 64)
@@ -6579,11 +6615,17 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     summary["autoencoder_max_enforcement_remedy_features"] = int(
         getattr(args, "autoencoder_max_enforcement_remedy_features", 64)
     )
+    summary["autoencoder_max_mental_state_features"] = int(
+        getattr(args, "autoencoder_max_mental_state_features", 64)
+    )
     summary["autoencoder_max_reference_dependency_features"] = int(
         getattr(args, "autoencoder_max_reference_dependency_features", 64)
     )
     summary["autoencoder_max_authority_jurisdiction_features"] = int(
         getattr(args, "autoencoder_max_authority_jurisdiction_features", 64)
+    )
+    summary["autoencoder_max_discretion_standard_features"] = int(
+        getattr(args, "autoencoder_max_discretion_standard_features", 64)
     )
     summary["autoencoder_max_temporal_validity_features"] = int(
         getattr(args, "autoencoder_max_temporal_validity_features", 64)
