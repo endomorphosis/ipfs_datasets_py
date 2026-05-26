@@ -48,6 +48,25 @@ TRAIN_COUNT="${TRAIN_COUNT:-8}"
 VALIDATION_COUNT="${VALIDATION_COUNT:-8}"
 MAX_INNER_ITERATIONS="${MAX_INNER_ITERATIONS:-3}"
 MAX_ITEMS="${MAX_ITEMS:-8}"
+SWEEP_TRAIN_COUNT="${SWEEP_TRAIN_COUNT:-${TRAIN_COUNT}}"
+SWEEP_VALIDATION_COUNT="${SWEEP_VALIDATION_COUNT:-${VALIDATION_COUNT}}"
+SWEEP_MAX_INNER_ITERATIONS="${SWEEP_MAX_INNER_ITERATIONS:-${MAX_INNER_ITERATIONS}}"
+SWEEP_MAX_ITEMS="${SWEEP_MAX_ITEMS:-${MAX_ITEMS}}"
+SWEEP_MAX_SAMPLE_TEXT_CHARS="${SWEEP_MAX_SAMPLE_TEXT_CHARS:-${MAX_SAMPLE_TEXT_CHARS}}"
+SWEEP_BRIDGE_LOSS_ADAPTERS="${SWEEP_BRIDGE_LOSS_ADAPTERS:-${BRIDGE_LOSS_ADAPTERS}}"
+SWEEP_BRIDGE_EVALUATE_PROVERS="${SWEEP_BRIDGE_EVALUATE_PROVERS:-${BRIDGE_EVALUATE_PROVERS}}"
+SWEEP_AUTOENCODER_BRIDGE_WORKERS="${SWEEP_AUTOENCODER_BRIDGE_WORKERS:-${AUTOENCODER_BRIDGE_WORKERS:-12}}"
+FINAL_TRAIN_COUNT="${FINAL_TRAIN_COUNT:-${TRAIN_COUNT}}"
+FINAL_VALIDATION_COUNT="${FINAL_VALIDATION_COUNT:-${VALIDATION_COUNT}}"
+FINAL_MAX_INNER_ITERATIONS="${FINAL_MAX_INNER_ITERATIONS:-${MAX_INNER_ITERATIONS}}"
+FINAL_MAX_ITEMS="${FINAL_MAX_ITEMS:-${MAX_ITEMS}}"
+FINAL_MAX_SAMPLE_TEXT_CHARS="${FINAL_MAX_SAMPLE_TEXT_CHARS:-${MAX_SAMPLE_TEXT_CHARS}}"
+FINAL_BRIDGE_LOSS_ADAPTERS="${FINAL_BRIDGE_LOSS_ADAPTERS:-${BRIDGE_LOSS_ADAPTERS}}"
+FINAL_BRIDGE_EVALUATE_PROVERS="${FINAL_BRIDGE_EVALUATE_PROVERS:-${BRIDGE_EVALUATE_PROVERS}}"
+FINAL_AUTOENCODER_BRIDGE_WORKERS="${FINAL_AUTOENCODER_BRIDGE_WORKERS:-${AUTOENCODER_BRIDGE_WORKERS:-12}}"
+VALIDATION_CANARY_COUNT="${VALIDATION_CANARY_COUNT:-4}"
+SWEEP_VALIDATION_CANARY_COUNT="${SWEEP_VALIDATION_CANARY_COUNT:-${VALIDATION_CANARY_COUNT}}"
+FINAL_VALIDATION_CANARY_COUNT="${FINAL_VALIDATION_CANARY_COUNT:-${VALIDATION_CANARY_COUNT}}"
 VALIDATION_CANARY_INDICES="${VALIDATION_CANARY_INDICES:-28380,25280,18192,38585}"
 AUTOENCODER_DEVICE="${AUTOENCODER_DEVICE:-cpu}"
 AUTOENCODER_BRIDGE_WORKERS="${AUTOENCODER_BRIDGE_WORKERS:-12}"
@@ -83,7 +102,7 @@ export IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS="${BRIDGE_ADAPTER_WORKERS}"
 COMMON_ARGS=(
   --train-count "${TRAIN_COUNT}"
   --validation-count "${VALIDATION_COUNT}"
-  --validation-canary-count 4
+  --validation-canary-count "${VALIDATION_CANARY_COUNT}"
   --validation-canary-indices "${VALIDATION_CANARY_INDICES}"
   --max-sample-text-chars "${MAX_SAMPLE_TEXT_CHARS}"
   --max-inner-iterations "${MAX_INNER_ITERATIONS}"
@@ -149,6 +168,30 @@ COMMON_ARGS=(
   --learning-rate-plateau-delta 1e-5
 )
 
+SWEEP_COMMON_OVERRIDES=(
+  --train-count "${SWEEP_TRAIN_COUNT}"
+  --validation-count "${SWEEP_VALIDATION_COUNT}"
+  --validation-canary-count "${SWEEP_VALIDATION_CANARY_COUNT}"
+  --max-sample-text-chars "${SWEEP_MAX_SAMPLE_TEXT_CHARS}"
+  --max-inner-iterations "${SWEEP_MAX_INNER_ITERATIONS}"
+  --max-items "${SWEEP_MAX_ITEMS}"
+  --bridge-loss-adapters "${SWEEP_BRIDGE_LOSS_ADAPTERS}"
+  --bridge-evaluate-provers "${SWEEP_BRIDGE_EVALUATE_PROVERS}"
+  --autoencoder-bridge-workers "${SWEEP_AUTOENCODER_BRIDGE_WORKERS}"
+)
+
+FINAL_COMMON_OVERRIDES=(
+  --train-count "${FINAL_TRAIN_COUNT}"
+  --validation-count "${FINAL_VALIDATION_COUNT}"
+  --validation-canary-count "${FINAL_VALIDATION_CANARY_COUNT}"
+  --max-sample-text-chars "${FINAL_MAX_SAMPLE_TEXT_CHARS}"
+  --max-inner-iterations "${FINAL_MAX_INNER_ITERATIONS}"
+  --max-items "${FINAL_MAX_ITEMS}"
+  --bridge-loss-adapters "${FINAL_BRIDGE_LOSS_ADAPTERS}"
+  --bridge-evaluate-provers "${FINAL_BRIDGE_EVALUATE_PROVERS}"
+  --autoencoder-bridge-workers "${FINAL_AUTOENCODER_BRIDGE_WORKERS}"
+)
+
 PAIRED_ARGS=(
   --paired-poll-seconds 1
   --paired-grace-seconds 20
@@ -203,7 +246,26 @@ echo "[pipeline] train_count=${TRAIN_COUNT}"
 echo "[pipeline] validation_count=${VALIDATION_COUNT}"
 echo "[pipeline] max_inner_iterations=${MAX_INNER_ITERATIONS}"
 echo "[pipeline] max_items=${MAX_ITEMS}"
+echo "[pipeline] sweep_train_count=${SWEEP_TRAIN_COUNT}"
+echo "[pipeline] sweep_validation_count=${SWEEP_VALIDATION_COUNT}"
+echo "[pipeline] sweep_validation_canary_count=${SWEEP_VALIDATION_CANARY_COUNT}"
+echo "[pipeline] sweep_max_inner_iterations=${SWEEP_MAX_INNER_ITERATIONS}"
+echo "[pipeline] sweep_max_items=${SWEEP_MAX_ITEMS}"
+echo "[pipeline] sweep_max_sample_text_chars=${SWEEP_MAX_SAMPLE_TEXT_CHARS}"
+echo "[pipeline] sweep_bridge_loss_adapters=${SWEEP_BRIDGE_LOSS_ADAPTERS}"
+echo "[pipeline] sweep_bridge_evaluate_provers=${SWEEP_BRIDGE_EVALUATE_PROVERS}"
+echo "[pipeline] sweep_autoencoder_bridge_workers=${SWEEP_AUTOENCODER_BRIDGE_WORKERS}"
+echo "[pipeline] final_train_count=${FINAL_TRAIN_COUNT}"
+echo "[pipeline] final_validation_count=${FINAL_VALIDATION_COUNT}"
+echo "[pipeline] final_validation_canary_count=${FINAL_VALIDATION_CANARY_COUNT}"
+echo "[pipeline] final_max_inner_iterations=${FINAL_MAX_INNER_ITERATIONS}"
+echo "[pipeline] final_max_items=${FINAL_MAX_ITEMS}"
+echo "[pipeline] final_max_sample_text_chars=${FINAL_MAX_SAMPLE_TEXT_CHARS}"
+echo "[pipeline] final_bridge_loss_adapters=${FINAL_BRIDGE_LOSS_ADAPTERS}"
+echo "[pipeline] final_bridge_evaluate_provers=${FINAL_BRIDGE_EVALUATE_PROVERS}"
+echo "[pipeline] final_autoencoder_bridge_workers=${FINAL_AUTOENCODER_BRIDGE_WORKERS}"
 echo "[pipeline] validation_canary_indices=${VALIDATION_CANARY_INDICES}"
+echo "[pipeline] validation_canary_count=${VALIDATION_CANARY_COUNT}"
 echo "[pipeline] autoencoder_device=${AUTOENCODER_DEVICE}"
 echo "[pipeline] autoencoder_bridge_workers=${AUTOENCODER_BRIDGE_WORKERS}"
 echo "[pipeline] bridge_adapter_workers=${BRIDGE_ADAPTER_WORKERS}"
@@ -378,6 +440,7 @@ run_trial_index() {
     --generalizable-projection-epochs "${SWEEP_PROJECTION_EPOCHS}"
     --test-every-cycles "${SWEEP_TEST_EVERY_CYCLES}"
     "${COMMON_ARGS[@]}"
+    "${SWEEP_COMMON_OVERRIDES[@]}"
   )
   local summary_path
   if [[ "${SWEEP_LOOP_ROLE}" == "paired" ]]; then
@@ -696,6 +759,7 @@ final_args=(
   --generalizable-projection-epochs "${FINAL_PROJECTION_EPOCHS}"
   --test-every-cycles "${FINAL_TEST_EVERY_CYCLES}"
   "${COMMON_ARGS[@]}"
+  "${FINAL_COMMON_OVERRIDES[@]}"
   "${PAIRED_ARGS[@]}"
 )
 
