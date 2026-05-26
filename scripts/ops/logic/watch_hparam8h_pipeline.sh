@@ -58,6 +58,13 @@ extract_last_trial_id() {
   grep -Eo 'run_id=[^ ]+-trial-[0-9]+' "${PIPELINE_LOG}" | tail -n 1 | sed 's/^run_id=//' || true
 }
 
+extract_trial_ids() {
+  if [[ ! -f "${PIPELINE_LOG}" ]]; then
+    return
+  fi
+  grep -Eo 'run_id=[^ ]+-trial-[0-9]+' "${PIPELINE_LOG}" | sed 's/^run_id=//' | sort -u || true
+}
+
 extract_final_run_id() {
   if [[ ! -f "${PIPELINE_LOG}" ]]; then
     echo ""
@@ -74,9 +81,37 @@ pipeline_pid() {
 
 active_trial_pid_elapsed() {
   ps -eo pid,etimes,args | awk -v run_id="${RUN_ID}" '
-    $0 ~ "uscode_modal_daemon_runner" && $0 ~ "--run-id "run_id"-trial-" {pid=$1; etimes=$2}
+    $0 ~ "uscode_modal_daemon_runner" && $0 ~ "--loop-role autoencoder" && $0 ~ "--run-id "run_id"-trial-" {pid=$1; etimes=$2}
     END {if (pid != "") print pid " " etimes}
   '
+}
+
+active_trial_pid_elapsed_rows() {
+  ps -eo pid,etimes,args | awk -v run_id="${RUN_ID}" '
+    $0 ~ "uscode_modal_daemon_runner" && $0 ~ "--loop-role autoencoder" && $0 ~ "--run-id "run_id"-trial-" {
+      trial_run_id = ""
+      for (idx = 3; idx <= NF; idx++) {
+        if ($idx == "--run-id" && (idx + 1) <= NF) {
+          trial_run_id = $(idx + 1)
+          break
+        }
+      }
+      if (trial_run_id != "") {
+        print trial_run_id " " $1 " " $2
+      }
+    }
+  '
+}
+
+trial_summary_path() {
+  local trial_id="$1"
+  if [[ -f "${LOG_DIR}/${trial_id}.summary" ]]; then
+    echo "${LOG_DIR}/${trial_id}.summary"
+  elif [[ -f "${LOG_DIR}/${trial_id}-autoencoder.summary" ]]; then
+    echo "${LOG_DIR}/${trial_id}-autoencoder.summary"
+  else
+    echo "${LOG_DIR}/${trial_id}.summary"
+  fi
 }
 
 read_cycles_from_summary() {
@@ -167,30 +202,54 @@ while true; do
       write_state "final_run" "running" "final_run_started_waiting_for_summary" "${final_run_id}" false
     fi
   else
-    trial_id="$(extract_last_trial_id)"
-    if [[ -n "${trial_id}" ]]; then
-      trial_summary="${LOG_DIR}/${trial_id}.summary"
-      if [[ -f "${trial_summary}" ]]; then
-        trial_cycles="$(read_cycles_from_summary "${trial_summary}")"
-        trial_runtime="$(active_trial_pid_elapsed || true)"
-        if [[ -n "${trial_runtime}" ]]; then
-          trial_pid="${trial_runtime%% *}"
-          trial_elapsed="${trial_runtime##* }"
-          if (( trial_elapsed > TRIAL_OVERRUN_SECONDS && trial_cycles <= TRIAL_OVERRUN_MAX_CYCLES )); then
-            log_line "problem_detected signature=trial_overrun_no_progress trial_id=${trial_id} trial_pid=${trial_pid} elapsed_seconds=${trial_elapsed} cycles=${trial_cycles}"
-            write_state "sweep" "failed" "trial_overrun_no_progress" "" false
-            exit 6
-          fi
+    active_rows="$(active_trial_pid_elapsed_rows || true)"
+    if [[ -n "${active_rows}" ]]; then
+      active_count=0
+      status_parts=()
+      while read -r trial_run_id trial_pid trial_elapsed; do
+        [[ -n "${trial_run_id:-}" ]] || continue
+        active_count=$((active_count + 1))
+        trial_summary="$(trial_summary_path "${trial_run_id}")"
+        trial_cycles=0
+        if [[ -f "${trial_summary}" ]]; then
+          trial_cycles="$(read_cycles_from_summary "${trial_summary}")"
         fi
-        log_line "sweep_running trial_id=${trial_id} cycles=${trial_cycles} pid=${pid}"
-        write_state "sweep" "running" "sweep_running" "" false
-      else
-        log_line "sweep_running trial_id=${trial_id} waiting_for_summary pid=${pid}"
-        write_state "sweep" "running" "sweep_waiting_for_summary" "" false
-      fi
+        if (( trial_elapsed > TRIAL_OVERRUN_SECONDS && trial_cycles <= TRIAL_OVERRUN_MAX_CYCLES )); then
+          log_line "problem_detected signature=trial_overrun_no_progress trial_id=${trial_run_id} trial_pid=${trial_pid} elapsed_seconds=${trial_elapsed} cycles=${trial_cycles}"
+          write_state "sweep" "failed" "trial_overrun_no_progress" "" false
+          exit 6
+        fi
+        status_parts+=("${trial_run_id}:cycles=${trial_cycles}:elapsed=${trial_elapsed}")
+      done <<< "${active_rows}"
+      log_line "sweep_running active_trials=${active_count} statuses=${status_parts[*]} pid=${pid}"
+      write_state "sweep" "running" "parallel_sweep_running" "" false
     else
-      log_line "sweep_running waiting_for_first_trial pid=${pid}"
-      write_state "sweep" "running" "sweep_waiting_for_first_trial" "" false
+      trial_id="$(extract_last_trial_id)"
+      if [[ -n "${trial_id}" ]]; then
+        trial_summary="$(trial_summary_path "${trial_id}")"
+        if [[ -f "${trial_summary}" ]]; then
+          trial_cycles="$(read_cycles_from_summary "${trial_summary}")"
+          trial_runtime="$(active_trial_pid_elapsed || true)"
+          if [[ -n "${trial_runtime}" ]]; then
+            trial_pid="${trial_runtime%% *}"
+            trial_elapsed="${trial_runtime##* }"
+            if (( trial_elapsed > TRIAL_OVERRUN_SECONDS && trial_cycles <= TRIAL_OVERRUN_MAX_CYCLES )); then
+              log_line "problem_detected signature=trial_overrun_no_progress trial_id=${trial_id} trial_pid=${trial_pid} elapsed_seconds=${trial_elapsed} cycles=${trial_cycles}"
+              write_state "sweep" "failed" "trial_overrun_no_progress" "" false
+              exit 6
+            fi
+          fi
+          log_line "sweep_running trial_id=${trial_id} cycles=${trial_cycles} pid=${pid}"
+          write_state "sweep" "running" "sweep_running" "" false
+        else
+          trial_count="$(extract_trial_ids | wc -l | tr -d ' ')"
+          log_line "sweep_running trial_id=${trial_id} known_trials=${trial_count} waiting_for_summary pid=${pid}"
+          write_state "sweep" "running" "sweep_waiting_for_summary" "" false
+        fi
+      else
+        log_line "sweep_running waiting_for_first_trial pid=${pid}"
+        write_state "sweep" "running" "sweep_waiting_for_first_trial" "" false
+      fi
     fi
   fi
 

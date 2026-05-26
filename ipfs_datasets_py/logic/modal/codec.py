@@ -279,6 +279,53 @@ _LOW_INFORMATION_SCOPE_LEADING_TOKENS = frozenset(
         "such",
     }
 )
+_SOURCE_ROLE_CUE_MARKERS = frozenset(
+    {
+        "shall",
+        "must",
+        "may",
+        "required",
+        "requires",
+        "prohibited",
+        "authorized",
+        "permitted",
+        "eligible",
+        "entitled",
+        "means",
+        "defined",
+        "within",
+        "before",
+        "after",
+        "until",
+        "during",
+        "except",
+        "notwithstanding",
+    }
+)
+_SOURCE_ROLE_CONDITION_MARKERS = frozenset(
+    {"if", "when", "whenever", "unless", "provided", "subject"}
+)
+_SOURCE_ROLE_EXCEPTION_MARKERS = frozenset(
+    {"except", "exception", "notwithstanding", "waiver", "exemption"}
+)
+_SOURCE_ROLE_TEMPORAL_MARKERS = frozenset(
+    {"before", "after", "within", "until", "during", "by", "upon"}
+)
+_SOURCE_ROLE_NEGATION_MARKERS = frozenset({"not", "no", "never", "without"})
+_SOURCE_ROLE_NOISE_TOKENS = frozenset(
+    set(_LOW_INFORMATION_SCOPE_LEADING_TOKENS)
+    | {
+        "code",
+        "title",
+        "chapter",
+        "section",
+        "subchapter",
+        "subsection",
+        "paragraph",
+        "clause",
+        "term",
+    }
+)
 _STRUCTURAL_FRAME_CUE_TOKENS = frozenset(
     {
         "article",
@@ -1721,6 +1768,17 @@ def modal_ir_to_flogic_triples(
                     "object": formula.predicate.role,
                 }
             )
+        for predicate_name, predicate_value in _source_role_anchor_components(
+            modal_ir=modal_ir,
+            formula=formula,
+        ):
+            triples.append(
+                {
+                    "subject": formula.formula_id,
+                    "predicate": predicate_name,
+                    "object": predicate_value,
+                }
+            )
         _append_statutory_scope_triples(
             triples,
             subject=formula.formula_id,
@@ -2383,6 +2441,186 @@ def _typed_argument_key_value(argument: str) -> tuple[str, str] | None:
     if not key or not value:
         return None
     return key, value
+
+
+def _source_role_anchor_components(
+    *,
+    modal_ir: ModalIRDocument,
+    formula: ModalIRFormula,
+) -> List[tuple[str, str]]:
+    anchors = _source_role_anchor_values(modal_ir=modal_ir, formula=formula)
+    if not anchors:
+        return []
+    predicate_role = _clean_non_empty_string(formula.predicate.role).lower()
+    predicate_family = _clean_non_empty_string(formula.operator.family).lower()
+    predicate_head = _predicate_head_anchor(formula)
+    components: List[tuple[str, str]] = []
+    for role_name in ("subject", "action", "object", "condition", "exception", "temporal"):
+        anchor = _clean_non_empty_string(anchors.get(role_name, ""))
+        if not anchor:
+            continue
+        slot_prefix = f"source_{role_name}_anchor"
+        components.append((slot_prefix, anchor))
+        components.extend(
+            _typed_identifier_components(
+                anchor,
+                slot_prefix=slot_prefix,
+            )
+        )
+        if predicate_family:
+            components.append((f"source_{role_name}_family", f"{anchor}:{predicate_family}"))
+        if predicate_role and role_name in {"subject", "action", "object"}:
+            components.append((f"source_{role_name}_role", f"{anchor}:{predicate_role}"))
+        if predicate_head and role_name in {"action", "object"}:
+            components.append((f"source_{role_name}_predicate", f"{anchor}:{predicate_head}"))
+    return _unique_preserve_order_tuples(components)
+
+
+def _source_role_anchor_values(
+    *,
+    modal_ir: ModalIRDocument,
+    formula: ModalIRFormula,
+) -> Dict[str, str]:
+    span_text = _formula_source_span_text(modal_ir=modal_ir, formula=formula)
+    predicate_text = _clean_non_empty_string(formula.predicate.name).replace("_", " ")
+    raw_tokens = _CUE_TOKEN_RE.findall(span_text.lower())
+    if not raw_tokens:
+        raw_tokens = _CUE_TOKEN_RE.findall(predicate_text.lower())
+    if not raw_tokens:
+        return {}
+    cue_tokens: set[str] = set()
+    explicit_cue = _clean_non_empty_string(formula.metadata.get("cue"))
+    cue_tokens.update(
+        _CUE_TOKEN_RE.findall(explicit_cue.replace("_", " ").lower())
+    )
+    for cue in _formula_cues(formula):
+        cue_tokens.update(
+            _CUE_TOKEN_RE.findall(_clean_non_empty_string(cue).replace("_", " ").lower())
+        )
+    cue_index = next(
+        (
+            index
+            for index, token in enumerate(raw_tokens)
+            if token in cue_tokens or token in _SOURCE_ROLE_CUE_MARKERS
+        ),
+        -1,
+    )
+    if cue_index >= 0:
+        subject_candidates = _source_anchor_role_tokens(raw_tokens[:cue_index])
+        predicate_candidates = _source_anchor_role_tokens(raw_tokens[cue_index + 1 :])
+    else:
+        subject_candidates = _source_anchor_role_tokens(raw_tokens[:2])
+        predicate_candidates = _source_anchor_role_tokens(raw_tokens[1:])
+    predicate_tokens = _source_anchor_role_tokens(
+        _CUE_TOKEN_RE.findall(predicate_text.lower())
+    )
+    if not subject_candidates and predicate_tokens:
+        subject_candidates = predicate_tokens[:1]
+    if not predicate_candidates:
+        predicate_candidates = list(predicate_tokens)
+    condition_values = _resolved_formula_conditions(
+        modal_ir=modal_ir,
+        formula=formula,
+    )
+    exception_values = _unique_preserve_order(
+        str(value).strip()
+        for value in formula.exceptions
+        if str(value or "").strip()
+    )
+    temporal_anchor = _source_anchor_from_clauses(
+        clauses=condition_values,
+        clause_type="condition",
+        temporal_only=True,
+    )
+    if not temporal_anchor:
+        temporal_anchor = _source_anchor_from_clauses(
+            clauses=exception_values,
+            clause_type="exception",
+            temporal_only=True,
+        )
+    anchors = {
+        "subject": subject_candidates[-1] if subject_candidates else "",
+        "action": predicate_candidates[0] if predicate_candidates else "",
+        "object": predicate_candidates[1] if len(predicate_candidates) > 1 else "",
+        "condition": _source_anchor_from_clauses(
+            clauses=condition_values,
+            clause_type="condition",
+        ),
+        "exception": _source_anchor_from_clauses(
+            clauses=exception_values,
+            clause_type="exception",
+        ),
+        "temporal": temporal_anchor
+        or _source_anchor_first_after(
+            tokens=raw_tokens,
+            markers=_SOURCE_ROLE_TEMPORAL_MARKERS,
+        ),
+    }
+    return {name: value for name, value in anchors.items() if value}
+
+
+def _source_anchor_role_tokens(tokens: Sequence[str]) -> List[str]:
+    return [
+        token
+        for token in tokens
+        if len(token) > 2
+        and token not in _SOURCE_ROLE_NOISE_TOKENS
+        and token not in _SOURCE_ROLE_CUE_MARKERS
+        and token not in _SOURCE_ROLE_CONDITION_MARKERS
+        and token not in _SOURCE_ROLE_EXCEPTION_MARKERS
+        and token not in _SOURCE_ROLE_TEMPORAL_MARKERS
+        and token not in _SOURCE_ROLE_NEGATION_MARKERS
+        and not _is_low_information_section_marker(token)
+    ]
+
+
+def _source_anchor_first_after(
+    *,
+    tokens: Sequence[str],
+    markers: set[str] | frozenset[str],
+) -> str:
+    for index, token in enumerate(tokens):
+        if token not in markers:
+            continue
+        candidates = _source_anchor_role_tokens(tokens[index + 1 : index + 6])
+        if candidates:
+            return candidates[0]
+    return ""
+
+
+def _source_anchor_from_clauses(
+    *,
+    clauses: Sequence[str],
+    clause_type: str,
+    temporal_only: bool = False,
+) -> str:
+    for clause in clauses:
+        normalized_clause = _clean_non_empty_string(clause).lower()
+        if not normalized_clause:
+            continue
+        typed_clause = _typed_clause_key_value(
+            normalized_clause,
+            clause_type=clause_type,
+        )
+        scoped_text = normalized_clause
+        if typed_clause is not None:
+            prefix_key, scoped_value = typed_clause
+            if temporal_only and not _temporal_clause_prefix_relation(prefix_key):
+                continue
+            scoped_text = scoped_value or scoped_text
+        elif temporal_only:
+            continue
+        candidates = _source_anchor_role_tokens(_CUE_TOKEN_RE.findall(scoped_text))
+        if candidates:
+            return candidates[0]
+    return ""
+
+
+def _predicate_head_anchor(formula: ModalIRFormula) -> str:
+    predicate_tokens = _CUE_TOKEN_RE.findall(
+        _clean_non_empty_string(formula.predicate.name).replace("_", " ").lower()
+    )
+    return predicate_tokens[0] if predicate_tokens else ""
 
 
 def _typed_clause_key_value(
@@ -3408,9 +3646,9 @@ def _refined_contextual_modal_cues_from_text(
     for cue in _stem_refined_modal_cues_from_text(formula, text=text):
         if cue and cue not in cues:
             cues.append(cue)
-    for cue in _structural_frame_cues_from_text(text):
-        if cue and cue not in cues:
-            cues.append(cue)
+    # Structural U.S.C. heading tokens such as "title"/"section" are useful
+    # for frame formulas, but they over-trigger cross-family bridges for
+    # non-frame formulas and dilute deontic/temporal slot semantics.
     if formula_family == "frame":
         for cue in _bridge_registry_cues_from_text(text):
             if cue and cue not in cues:
@@ -3516,10 +3754,11 @@ def _refined_temporal_transition_components(
     normalized_slot_prefix = _clean_non_empty_string(slot_prefix)
     normalized_cue = _clean_non_empty_string(cue).lower()
     formula_family = _clean_non_empty_string(formula.operator.family).lower()
+    formula_symbol = _clean_non_empty_string(formula.operator.symbol)
     if (
         not normalized_slot_prefix
         or not normalized_cue
-        or formula_family not in {"deontic", "frame"}
+        or formula_family not in {"deontic", "frame", "temporal"}
     ):
         return []
     context_cues = _temporal_transition_context_cues_from_text(text)
@@ -3531,9 +3770,26 @@ def _refined_temporal_transition_components(
     elif formula_family == "frame":
         if normalized_cue not in _FRAME_TEMPORAL_BRIDGE_CUES:
             return []
+    elif formula_family == "temporal":
+        if not (
+            _temporal_clause_prefix_relation(normalized_cue)
+            or normalized_cue in _TEMPORAL_BRIDGE_CONTEXT_TOKENS
+            or normalized_cue in {
+                "calendar_year",
+                "edition_year",
+                "effective_date",
+                "fiscal_year",
+                "no_later_than",
+                "not_later_than",
+                "on_and_after",
+                "on_or_after",
+            }
+        ):
+            return []
 
-    pair = f"{formula_family}->temporal"
-    signature = f"temporal:F:{normalized_cue}"
+    pair = "temporal->temporal" if formula_family == "temporal" else f"{formula_family}->temporal"
+    temporal_symbol = formula_symbol if formula_family == "temporal" and formula_symbol else "F"
+    signature = f"temporal:{temporal_symbol}:{normalized_cue}"
     components: List[tuple[str, str]] = [
         (f"{normalized_slot_prefix}_refined_temporal_bridge_family_pair", pair),
         (f"{normalized_slot_prefix}_refined_temporal_bridge_signature", signature),

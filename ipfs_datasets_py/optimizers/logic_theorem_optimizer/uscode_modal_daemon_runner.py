@@ -6131,6 +6131,13 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     summary["bridge_loss_adapters"] = bridge_adapters
     summary["bridge_evaluate_provers"] = bridge_evaluate_provers
     summary["autoencoder_bridge_workers"] = bridge_parallel_workers
+    try:
+        bridge_adapter_workers = int(
+            os.environ.get("IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS", "1") or 1
+        )
+    except ValueError:
+        bridge_adapter_workers = 1
+    summary["bridge_adapter_workers"] = max(1, bridge_adapter_workers)
     summary["max_sample_text_chars"] = int(getattr(args, "max_sample_text_chars", 0) or 0)
     summary.setdefault("bridge_loss_failures", 0)
     summary.setdefault("bridge_loss_samples", 0)

@@ -105,7 +105,7 @@ def test_refresh_state_laws_corpus_dry_run_plans_all_states(tmp_path):
         jsonld_dir="",
         parquet_dir="",
         scrape=False,
-        max_statutes=0,
+        max_statutes=1,
         rate_limit_delay=0.0,
         parallel_workers=1,
         per_state_retry_attempts=0,
@@ -517,7 +517,7 @@ def test_refresh_state_laws_corpus_persists_completed_states_registry(tmp_path, 
         jsonld_dir="",
         parquet_dir="",
         scrape=True,
-        max_statutes=1,
+        max_statutes=0,
         rate_limit_delay=0.0,
         parallel_workers=1,
         per_state_retry_attempts=0,
@@ -598,7 +598,7 @@ def test_refresh_state_laws_corpus_promotes_timeout_without_remaining_work_to_su
         jsonld_dir="",
         parquet_dir="",
         scrape=True,
-        max_statutes=1,
+        max_statutes=0,
         rate_limit_delay=0.0,
         parallel_workers=1,
         per_state_retry_attempts=0,
@@ -639,6 +639,91 @@ def test_refresh_state_laws_corpus_promotes_timeout_without_remaining_work_to_su
     assert ri_registry.get("completion_mode") == "timeout_no_remaining_work"
     assert ri_registry.get("timeout_promoted_to_success") is True
     assert ri_registry.get("timeout_classification") == "timeout_with_no_detectable_remaining_work"
+
+
+def test_refresh_state_laws_corpus_does_not_promote_timeout_success_for_bounded_probe(tmp_path, monkeypatch):
+    registry_path = tmp_path / "state_laws_completed_states.json"
+
+    async def _fake_scrape_state_laws(**kwargs):
+        callback = kwargs["state_completion_callback"]
+        await callback(
+            {
+                "state_code": "MS",
+                "state_name": "Mississippi",
+                "statutes_count": 10,
+                "error": "Failed to scrape Mississippi: timed out after 900 seconds",
+                "timeout_diagnostics": {
+                    "timed_out": True,
+                    "classification": "timeout_with_no_detectable_remaining_work",
+                    "signal_found": True,
+                    "signal_kind": "codes_progress",
+                    "work_remaining": False,
+                    "progress_scanned": 10,
+                    "progress_discovered": 10,
+                    "coverage_ratio": 1.0,
+                },
+                "statute_data": {"state_name": "Mississippi", "statutes": [{"id": "MS-1"}]},
+            }
+        )
+        return {"status": "success", "data": [], "metadata": {"coverage_summary": {"coverage_gap_states": []}}}
+
+    monkeypatch.setattr(refresh_state_laws_corpus, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(
+        refresh_state_laws_corpus,
+        "build_state_laws_parquet_artifacts",
+        lambda **kwargs: {
+            "status": "success",
+            "states": ["MS"],
+            "state_count": 1,
+            "missing_jsonld_states": [],
+            "combined_row_count": 1,
+        },
+    )
+
+    args = argparse.Namespace(
+        states="MS",
+        include_dc=False,
+        output_root=str(tmp_path),
+        jsonld_dir="",
+        parquet_dir="",
+        scrape=True,
+        max_statutes=1,
+        rate_limit_delay=0.0,
+        parallel_workers=1,
+        per_state_retry_attempts=0,
+        per_state_timeout_seconds=1.0,
+        strict_full_text=False,
+        min_full_text_chars=300,
+        no_hydrate_statute_text=False,
+        allow_justia_fallback=False,
+        no_merge_existing_local=False,
+        merge_hf_existing=False,
+        publish_to_hf=False,
+        allow_incomplete_publish=False,
+        repo_id="justicedao/ipfs_state_laws",
+        hf_token="",
+        create_repo=False,
+        verify=False,
+        commit_message="test",
+        dry_run=False,
+        json=True,
+        completed_states_registry=str(registry_path),
+        skip_completed_states=True,
+        persist_completed_states_registry=True,
+    )
+
+    result = asyncio.run(refresh_state_laws_corpus.refresh_state_laws_corpus(args))
+
+    assert result["status"] == "success"
+    progress = json.loads(Path(result["progress_path"]).read_text(encoding="utf-8"))
+    ms_progress = progress.get("state_results", {}).get("MS", {})
+    assert ms_progress.get("status") == "error"
+    assert ms_progress.get("timeout_promoted_to_success") is not True
+    assert ms_progress.get("timeout_classification") == "timeout_with_no_detectable_remaining_work"
+
+    registry = json.loads(registry_path.read_text(encoding="utf-8"))
+    ms_registry = registry.get("states", {}).get("MS", {})
+    assert ms_registry == {}
 
 
 def test_refresh_state_laws_corpus_dry_run_zero_statutes_not_skipped_by_default(tmp_path):

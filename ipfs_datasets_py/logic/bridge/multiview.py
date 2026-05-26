@@ -5,8 +5,11 @@ from __future__ import annotations
 import hashlib
 import inspect
 import math
+import os
 import re
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
+from threading import Lock
 from typing import Any, Dict, Mapping, Optional, Sequence
 
 from .registry import load_logic_bridge_adapter, logic_bridge_spec, logic_bridge_specs
@@ -14,6 +17,7 @@ from .types import BridgeEvaluationReport, LegalIRDocument, LogicIRView
 
 _MULTIVIEW_CACHE_MAX_ITEMS = 1024
 _MULTIVIEW_EVALUATION_CACHE: Dict[str, "MultiViewLegalIRReport"] = {}
+_MULTIVIEW_EVALUATION_CACHE_LOCK = Lock()
 _BRIDGE_CONTRACT_MIN_COMPONENT_WEIGHT = 0.07
 _BRIDGE_CONTRACT_CORE_COMPONENTS = (
     "deontic.ir",
@@ -519,26 +523,48 @@ def evaluate_legal_ir_multiview(
         source_embedding=source_embedding,
     )
     if cache:
-        cached = _MULTIVIEW_EVALUATION_CACHE.get(cache_key)
+        with _MULTIVIEW_EVALUATION_CACHE_LOCK:
+            cached = _MULTIVIEW_EVALUATION_CACHE.get(cache_key)
         if cached is not None:
             return cached
 
     reports: Dict[str, BridgeEvaluationReport] = {}
     failures: Dict[str, str] = {}
-    for name in names:
+
+    def evaluate_name(name: str) -> tuple[str, Optional[BridgeEvaluationReport], Optional[str]]:
         try:
             adapter = load_logic_bridge_adapter(name)
-            reports[name] = _evaluate_adapter(
-                adapter,
-                text,
-                citation=citation,
-                document_id=document_id,
-                evaluate_provers=evaluate_provers,
-                source=source,
-                source_embedding=source_embedding,
+            return (
+                name,
+                _evaluate_adapter(
+                    adapter,
+                    text,
+                    citation=citation,
+                    document_id=document_id,
+                    evaluate_provers=evaluate_provers,
+                    source=source,
+                    source_embedding=source_embedding,
+                ),
+                None,
             )
         except Exception as exc:
-            failures[name] = f"{type(exc).__name__}: {exc}"
+            return name, None, f"{type(exc).__name__}: {exc}"
+
+    adapter_workers = _adapter_worker_count(len(names))
+    if adapter_workers <= 1:
+        adapter_results = [evaluate_name(name) for name in names]
+    else:
+        with ThreadPoolExecutor(
+            max_workers=adapter_workers,
+            thread_name_prefix="legal-ir-bridge-adapters",
+        ) as executor:
+            adapter_results = list(executor.map(evaluate_name, names))
+
+    for name, report, error in adapter_results:
+        if report is not None:
+            reports[name] = report
+        elif error is not None:
+            failures[name] = error
 
     document = _merge_reports_to_document(
         text,
@@ -556,10 +582,24 @@ def evaluate_legal_ir_multiview(
         failures=failures,
     )
     if cache:
-        if len(_MULTIVIEW_EVALUATION_CACHE) >= _MULTIVIEW_CACHE_MAX_ITEMS:
-            _MULTIVIEW_EVALUATION_CACHE.pop(next(iter(_MULTIVIEW_EVALUATION_CACHE)))
-        _MULTIVIEW_EVALUATION_CACHE[cache_key] = result
+        with _MULTIVIEW_EVALUATION_CACHE_LOCK:
+            if len(_MULTIVIEW_EVALUATION_CACHE) >= _MULTIVIEW_CACHE_MAX_ITEMS:
+                _MULTIVIEW_EVALUATION_CACHE.pop(next(iter(_MULTIVIEW_EVALUATION_CACHE)))
+            _MULTIVIEW_EVALUATION_CACHE[cache_key] = result
     return result
+
+
+def _adapter_worker_count(item_count: int) -> int:
+    if item_count <= 1:
+        return 1
+    raw = os.environ.get("IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS", "").strip()
+    if not raw:
+        return 1
+    try:
+        requested = int(raw)
+    except ValueError:
+        return 1
+    return max(1, min(requested, item_count))
 
 
 def _multiview_cache_key(

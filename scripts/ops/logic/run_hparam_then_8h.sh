@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
-trap 'echo "[pipeline] failed line=${LINENO} status=$?"' ERR
+
+restore_err_trap() {
+  trap 'echo "[pipeline] failed line=${LINENO} status=$?"' ERR
+}
+
+restore_err_trap
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 cd "${ROOT_DIR}"
@@ -17,7 +22,13 @@ mkdir -p "${LOG_DIR}"
 
 TRIAL_SECONDS="${TRIAL_SECONDS:-600}"
 TRIAL_COUNT="${TRIAL_COUNT:-6}"
+TRIAL_PARALLELISM="${TRIAL_PARALLELISM:-1}"
+TRIAL_PARALLEL_HEARTBEAT_SECONDS="${TRIAL_PARALLEL_HEARTBEAT_SECONDS:-30}"
+if (( TRIAL_PARALLELISM < 1 )); then
+  TRIAL_PARALLELISM=1
+fi
 TOTAL_TRIAL_SECONDS=$((TRIAL_SECONDS * TRIAL_COUNT))
+TOTAL_TRIAL_WALL_SECONDS=$(((TOTAL_TRIAL_SECONDS + TRIAL_PARALLELISM - 1) / TRIAL_PARALLELISM))
 FINAL_SECONDS="${FINAL_SECONDS:-$((8 * 60 * 60))}"
 SWEEP_LOOP_ROLE="${SWEEP_LOOP_ROLE:-autoencoder}"
 SWEEP_TEST_EVERY_CYCLES="${SWEEP_TEST_EVERY_CYCLES:-48}"
@@ -29,11 +40,35 @@ BRIDGE_EVALUATE_PROVERS="${BRIDGE_EVALUATE_PROVERS:-false}"
 BRIDGE_LOSS_ADAPTERS="${BRIDGE_LOSS_ADAPTERS:-none}"
 MAX_SAMPLE_TEXT_CHARS="${MAX_SAMPLE_TEXT_CHARS:-4096}"
 AUTOENCODER_DEVICE="${AUTOENCODER_DEVICE:-cpu}"
+AUTOENCODER_BRIDGE_WORKERS="${AUTOENCODER_BRIDGE_WORKERS:-2}"
+BRIDGE_ADAPTER_WORKERS="${BRIDGE_ADAPTER_WORKERS:-${AUTOENCODER_BRIDGE_WORKERS}}"
+CODEX_PARALLEL_SCOPES="${CODEX_PARALLEL_SCOPES:-all}"
+CODEX_SCOPE_WORKERS="${CODEX_SCOPE_WORKERS:-1}"
+CODEX_SCOPE_WORKER_MAP="${CODEX_SCOPE_WORKER_MAP:-compiler_parser=2,compiler_registry=2,compiler_ambiguity=2,ir_decompiler=2,frame_logic=2,bridge=2,deontic=2,modal=2,tdfol=2,cec=2,knowledge_graphs=2}"
+CODEX_APPLY_MODE="${CODEX_APPLY_MODE:-apply_to_main}"
+CODEX_COMMIT_MODE="${CODEX_COMMIT_MODE:-none}"
+CODEX_MODEL="${CODEX_MODEL:-gpt-5.3-codex}"
+CODEX_BUNDLE_MODE="${CODEX_BUNDLE_MODE:-vector}"
+CODEX_VECTOR_MIN_SIMILARITY="${CODEX_VECTOR_MIN_SIMILARITY:-0.65}"
+CODEX_VECTOR_FILL_MIN_SIMILARITY="${CODEX_VECTOR_FILL_MIN_SIMILARITY:-0.45}"
+CODEX_VECTOR_MIN_BUNDLE_SIZE="${CODEX_VECTOR_MIN_BUNDLE_SIZE:-3}"
+CODEX_VECTOR_MAX_BUNDLE_WAIT_SECONDS="${CODEX_VECTOR_MAX_BUNDLE_WAIT_SECONDS:-180}"
+CODEX_VECTOR_STALE_DRAIN_COOLDOWN_SECONDS="${CODEX_VECTOR_STALE_DRAIN_COOLDOWN_SECONDS:-120}"
+CODEX_TARGET_FILE_LANE_LOCK_SECONDS="${CODEX_TARGET_FILE_LANE_LOCK_SECONDS:-1200}"
+CODEX_TARGET_FILE_LANE_LOCK_SCOPES="${CODEX_TARGET_FILE_LANE_LOCK_SCOPES:-all}"
+CODEX_LANE_LOCK_MODE="${CODEX_LANE_LOCK_MODE:-hybrid}"
+CODEX_TASK_EMBEDDINGS_PROVIDER="${CODEX_TASK_EMBEDDINGS_PROVIDER:-local_adapter}"
+CODEX_TASK_EMBEDDINGS_BATCH_SIZE="${CODEX_TASK_EMBEDDINGS_BATCH_SIZE:-32}"
+CODEX_VECTOR_FALLBACK_MODE="${CODEX_VECTOR_FALLBACK_MODE:-hash}"
+CODEX_MERGE_REPAIR_MODE="${CODEX_MERGE_REPAIR_MODE:-apply_3way}"
+CODEX_MERGE_REPAIR_ATTEMPTS="${CODEX_MERGE_REPAIR_ATTEMPTS:-1}"
 
 CODEX_EXEC_MODE="${CODEX_EXEC_MODE:-codex_cli}"
 if ! command -v codex >/dev/null 2>&1; then
   CODEX_EXEC_MODE="packet_only"
 fi
+
+export IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS="${BRIDGE_ADAPTER_WORKERS}"
 
 COMMON_ARGS=(
   --train-count 4
@@ -45,7 +80,7 @@ COMMON_ARGS=(
   --bridge-loss-adapters "${BRIDGE_LOSS_ADAPTERS}"
   --bridge-evaluate-provers "${BRIDGE_EVALUATE_PROVERS}"
   --autoencoder-device "${AUTOENCODER_DEVICE}"
-  --autoencoder-bridge-workers 2
+  --autoencoder-bridge-workers "${AUTOENCODER_BRIDGE_WORKERS}"
   --autoencoder-max-token-features 48
   --autoencoder-max-token-bigram-features 24
   --autoencoder-max-token-trigram-features 12
@@ -107,16 +142,26 @@ PAIRED_ARGS=(
   --paired-poll-seconds 1
   --paired-grace-seconds 20
   --codex-exec-mode "${CODEX_EXEC_MODE}"
-  --codex-apply-mode apply_to_main
-  --codex-commit-mode none
-  --codex-model gpt-5.3-codex
-  --codex-parallel-scopes compiler_parser,deontic,ir_decompiler
-  --codex-scope-workers 1
-  --codex-bundle-mode vector
-  --codex-vector-min-similarity 0.65
-  --codex-vector-fill-min-similarity 0.45
-  --codex-vector-min-bundle-size 2
-  --codex-vector-max-bundle-wait-seconds 120
+  --codex-apply-mode "${CODEX_APPLY_MODE}"
+  --codex-commit-mode "${CODEX_COMMIT_MODE}"
+  --codex-model "${CODEX_MODEL}"
+  --codex-parallel-scopes "${CODEX_PARALLEL_SCOPES}"
+  --codex-scope-workers "${CODEX_SCOPE_WORKERS}"
+  --codex-scope-worker-map "${CODEX_SCOPE_WORKER_MAP}"
+  --codex-bundle-mode "${CODEX_BUNDLE_MODE}"
+  --codex-vector-min-similarity "${CODEX_VECTOR_MIN_SIMILARITY}"
+  --codex-vector-fill-min-similarity "${CODEX_VECTOR_FILL_MIN_SIMILARITY}"
+  --codex-vector-min-bundle-size "${CODEX_VECTOR_MIN_BUNDLE_SIZE}"
+  --codex-vector-max-bundle-wait-seconds "${CODEX_VECTOR_MAX_BUNDLE_WAIT_SECONDS}"
+  --codex-vector-stale-drain-cooldown-seconds "${CODEX_VECTOR_STALE_DRAIN_COOLDOWN_SECONDS}"
+  --codex-target-file-lane-lock-seconds "${CODEX_TARGET_FILE_LANE_LOCK_SECONDS}"
+  --codex-target-file-lane-lock-scopes "${CODEX_TARGET_FILE_LANE_LOCK_SCOPES}"
+  --codex-lane-lock-mode "${CODEX_LANE_LOCK_MODE}"
+  --codex-task-embeddings-provider "${CODEX_TASK_EMBEDDINGS_PROVIDER}"
+  --codex-task-embeddings-batch-size "${CODEX_TASK_EMBEDDINGS_BATCH_SIZE}"
+  --codex-vector-fallback-mode "${CODEX_VECTOR_FALLBACK_MODE}"
+  --codex-merge-repair-mode "${CODEX_MERGE_REPAIR_MODE}"
+  --codex-merge-repair-attempts "${CODEX_MERGE_REPAIR_ATTEMPTS}"
 )
 
 CONFIGS=(
@@ -136,61 +181,91 @@ echo "[pipeline] base_run_id=${BASE_RUN_ID}"
 echo "[pipeline] codex_exec_mode=${CODEX_EXEC_MODE}"
 echo "[pipeline] sweep_loop_role=${SWEEP_LOOP_ROLE}"
 echo "[pipeline] hyperparam_budget_seconds=${TOTAL_TRIAL_SECONDS}"
+echo "[pipeline] hyperparam_parallelism=${TRIAL_PARALLELISM}"
+echo "[pipeline] hyperparam_estimated_wall_seconds=${TOTAL_TRIAL_WALL_SECONDS}"
 echo "[pipeline] final_run_seconds=${FINAL_SECONDS}"
 echo "[pipeline] bridge_loss_adapters=${BRIDGE_LOSS_ADAPTERS}"
 echo "[pipeline] bridge_evaluate_provers=${BRIDGE_EVALUATE_PROVERS}"
 echo "[pipeline] max_sample_text_chars=${MAX_SAMPLE_TEXT_CHARS}"
 echo "[pipeline] autoencoder_device=${AUTOENCODER_DEVICE}"
+echo "[pipeline] autoencoder_bridge_workers=${AUTOENCODER_BRIDGE_WORKERS}"
+echo "[pipeline] bridge_adapter_workers=${BRIDGE_ADAPTER_WORKERS}"
+echo "[pipeline] codex_parallel_scopes=${CODEX_PARALLEL_SCOPES}"
+echo "[pipeline] codex_scope_workers=${CODEX_SCOPE_WORKERS}"
+echo "[pipeline] codex_scope_worker_map=${CODEX_SCOPE_WORKER_MAP}"
+echo "[pipeline] codex_bundle_mode=${CODEX_BUNDLE_MODE}"
+echo "[pipeline] codex_vector_min_bundle_size=${CODEX_VECTOR_MIN_BUNDLE_SIZE}"
+echo "[pipeline] codex_vector_max_bundle_wait_seconds=${CODEX_VECTOR_MAX_BUNDLE_WAIT_SECONDS}"
+echo "[pipeline] codex_target_file_lane_lock_scopes=${CODEX_TARGET_FILE_LANE_LOCK_SCOPES}"
+echo "[pipeline] codex_lane_lock_mode=${CODEX_LANE_LOCK_MODE}"
 
 best_run_id=""
 best_cfg=""
 best_ce="1000000000000000000000000"
 best_cos="-1000000000"
 
-for idx in "${!CONFIGS[@]}"; do
-  cfg="${CONFIGS[$idx]}"
-  trial_id="${BASE_RUN_ID}-trial-$(printf "%02d" "$((idx + 1))")"
+trial_id_for_index() {
+  local idx="$1"
+  printf "%s-trial-%02d" "${BASE_RUN_ID}" "$((idx + 1))"
+}
 
-  lr=""
-  ce=""
-  rec=""
-  cos=""
-  legal=""
-  hard=""
-  fam="1.0"
-  emb="0.5"
-  qemb="0.5"
-  qfam="1.0"
-  sigemb="0.5"
-  sigfam="1.0"
-  sigview="1.0"
-  rtemb="0.5"
-  rtfam="1.0"
-  rtview="1.0"
-  planemb="0.5"
-  planfam="1.0"
-  planview="1.0"
-  argemb="0.5"
-  argfam="1.0"
-  argview="1.0"
-  embnorm="0.5"
-  famnorm="0.5"
-  viewnorm="0.5"
-  proto="0.5"
-  famslot="0.5"
-  triemb="0.5"
-  joint="0.5"
-  slotfam="1.0"
-  viewfam="1.0"
-  triview="1.0"
-  slotviewfam="1.0"
-  slotemb="0.5"
-  slotviewemb="0.5"
-  slotpair="0.35"
-  slotview="1.0"
-  view="1.0"
-  viewemb="0.5"
-  cossgd="0.25"
+trial_summary_path_for_id() {
+  local trial_id="$1"
+  if [[ "${SWEEP_LOOP_ROLE}" == "paired" ]]; then
+    printf "%s/%s-autoencoder.summary" "${LOG_DIR}" "${trial_id}"
+  else
+    printf "%s/%s.summary" "${LOG_DIR}" "${trial_id}"
+  fi
+}
+
+run_trial_index() {
+  local idx="$1"
+  local cfg="${CONFIGS[$idx]}"
+  local trial_id
+  trial_id="$(trial_id_for_index "${idx}")"
+
+  local lr=""
+  local ce=""
+  local rec=""
+  local cos=""
+  local legal=""
+  local hard=""
+  local fam="1.0"
+  local emb="0.5"
+  local qemb="0.5"
+  local qfam="1.0"
+  local sigemb="0.5"
+  local sigfam="1.0"
+  local sigview="1.0"
+  local rtemb="0.5"
+  local rtfam="1.0"
+  local rtview="1.0"
+  local planemb="0.5"
+  local planfam="1.0"
+  local planview="1.0"
+  local argemb="0.5"
+  local argfam="1.0"
+  local argview="1.0"
+  local embnorm="0.5"
+  local famnorm="0.5"
+  local viewnorm="0.5"
+  local proto="0.5"
+  local famslot="0.5"
+  local triemb="0.5"
+  local joint="0.5"
+  local slotfam="1.0"
+  local viewfam="1.0"
+  local triview="1.0"
+  local slotviewfam="1.0"
+  local slotemb="0.5"
+  local slotviewemb="0.5"
+  local slotpair="0.35"
+  local slotview="1.0"
+  local view="1.0"
+  local viewemb="0.5"
+  local cossgd="0.25"
+  local kv key val
+
   for kv in ${cfg}; do
     key="${kv%%=*}"
     val="${kv#*=}"
@@ -239,7 +314,7 @@ for idx in "${!CONFIGS[@]}"; do
   done
 
   echo "[trial] run_id=${trial_id} cfg=${cfg}"
-  trial_args=(
+  local -a trial_args=(
     --run-id "${trial_id}"
     --duration-seconds "${TRIAL_SECONDS}"
     --learning-rate "${lr}"
@@ -286,25 +361,40 @@ for idx in "${!CONFIGS[@]}"; do
     --test-every-cycles "${SWEEP_TEST_EVERY_CYCLES}"
     "${COMMON_ARGS[@]}"
   )
+  local summary_path
   if [[ "${SWEEP_LOOP_ROLE}" == "paired" ]]; then
     trial_args=(--loop-role paired "${trial_args[@]}" "${PAIRED_ARGS[@]}")
-    summary_path="${LOG_DIR}/${trial_id}-autoencoder.summary"
+    summary_path="$(trial_summary_path_for_id "${trial_id}")"
   else
     trial_args=(--loop-role autoencoder "${trial_args[@]}")
-    summary_path="${LOG_DIR}/${trial_id}.summary"
+    summary_path="$(trial_summary_path_for_id "${trial_id}")"
   fi
 
+  local trial_exit_code
+  trap - ERR
   set +e
   "${PYTHON_BIN}" -m "${MODULE}" "${trial_args[@]}"
   trial_exit_code=$?
-  set -e
   echo "[trial] exit_code run_id=${trial_id} code=${trial_exit_code}"
-
   if [[ ! -f "${summary_path}" ]]; then
     echo "[trial] missing summary: ${summary_path}"
-    continue
+  fi
+  return "${trial_exit_code}"
+}
+
+score_trial_index() {
+  local idx="$1"
+  local cfg="${CONFIGS[$idx]}"
+  local trial_id
+  trial_id="$(trial_id_for_index "${idx}")"
+  local summary_path
+  summary_path="$(trial_summary_path_for_id "${trial_id}")"
+  if [[ ! -f "${summary_path}" ]]; then
+    echo "[trial] missing summary: ${summary_path}"
+    return 0
   fi
 
+  local ce_score cos_score
   read -r ce_score cos_score < <(
     "${PYTHON_BIN}" - "${summary_path}" <<'PY'
 import json
@@ -317,6 +407,7 @@ cos = float(data.get("best_validation_cosine", -1.0))
 print(f"{ce} {cos}")
 PY
   )
+  local valid_trial
   valid_trial="$("${PYTHON_BIN}" - <<PY
 ce = float("${ce_score}")
 cos = float("${cos_score}")
@@ -325,10 +416,11 @@ PY
 )"
   if [[ "${valid_trial}" != "1" ]]; then
     echo "[trial] skipped_invalid_score run_id=${trial_id} ce=${ce_score} cos=${cos_score}"
-    continue
+    return 0
   fi
   echo "[trial] score run_id=${trial_id} best_validation_ce=${ce_score} best_validation_cosine=${cos_score}"
 
+  local better
   better="$("${PYTHON_BIN}" - <<PY
 best_ce = float("${best_ce}")
 best_cos = float("${best_cos}")
@@ -345,7 +437,63 @@ PY
     best_cfg="${cfg}"
     echo "[trial] new_best run_id=${best_run_id} ce=${best_ce} cos=${best_cos}"
   fi
-done
+}
+
+if (( TRIAL_PARALLELISM <= 1 )); then
+  for idx in "${!CONFIGS[@]}"; do
+    set +e
+    run_trial_index "${idx}"
+    serial_trial_exit_code=$?
+    restore_err_trap
+    set -e
+    echo "[trial] serial_complete run_id=$(trial_id_for_index "${idx}") code=${serial_trial_exit_code}"
+    score_trial_index "${idx}"
+  done
+else
+  if (( TRIAL_PARALLELISM > ${#CONFIGS[@]} )); then
+    TRIAL_PARALLELISM="${#CONFIGS[@]}"
+  fi
+  echo "[pipeline] starting_parallel_sweep trial_parallelism=${TRIAL_PARALLELISM} trial_count=${#CONFIGS[@]}"
+  declare -a trial_pids=()
+  declare -a trial_logs=()
+  for idx in "${!CONFIGS[@]}"; do
+    while (( $(jobs -rp | wc -l) >= TRIAL_PARALLELISM )); do
+      echo "[pipeline] parallel_sweep heartbeat active_trials=$(jobs -rp | wc -l)"
+      sleep "${TRIAL_PARALLEL_HEARTBEAT_SECONDS}"
+    done
+    trial_id="$(trial_id_for_index "${idx}")"
+    trial_log_path="${LOG_DIR}/${trial_id}.launcher.log"
+    trial_exit_path="${LOG_DIR}/${trial_id}.exit"
+    trial_logs[$idx]="${trial_log_path}"
+    echo "[trial] launch_parallel run_id=${trial_id} cfg=${CONFIGS[$idx]} log=${trial_log_path}"
+    (
+      set +e
+      run_trial_index "${idx}"
+      code=$?
+      echo "${code}" > "${trial_exit_path}"
+      exit "${code}"
+    ) > "${trial_log_path}" 2>&1 &
+    trial_pids[$idx]=$!
+  done
+
+  while (( $(jobs -rp | wc -l) > 0 )); do
+    echo "[pipeline] parallel_sweep heartbeat active_trials=$(jobs -rp | wc -l)"
+    sleep "${TRIAL_PARALLEL_HEARTBEAT_SECONDS}"
+  done
+  wait || true
+
+  for idx in "${!CONFIGS[@]}"; do
+    trial_id="$(trial_id_for_index "${idx}")"
+    trial_exit_path="${LOG_DIR}/${trial_id}.exit"
+    trial_log_path="${trial_logs[$idx]}"
+    trial_exit_code="missing"
+    if [[ -f "${trial_exit_path}" ]]; then
+      trial_exit_code="$(tr -d '\n\r' < "${trial_exit_path}")"
+    fi
+    echo "[trial] parallel_complete run_id=${trial_id} code=${trial_exit_code} log=${trial_log_path}"
+    score_trial_index "${idx}"
+  done
+fi
 
 if [[ -z "${best_run_id}" ]]; then
   echo "[pipeline] no successful hyperparameter trial found"
@@ -493,10 +641,12 @@ final_args=(
   "${PAIRED_ARGS[@]}"
 )
 
+trap - ERR
 set +e
 "${PYTHON_BIN}" -m "${MODULE}" "${final_args[@]}"
 final_exit_code=$?
 set -e
+restore_err_trap
 
 if (( final_exit_code != 0 )); then
   final_summary_path="${LOG_DIR}/${final_run_id}-autoencoder.summary"

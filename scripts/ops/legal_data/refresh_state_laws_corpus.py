@@ -1194,6 +1194,11 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
     incremental_publish_results: List[Dict[str, Any]] = []
     incremental_publish_lock = asyncio.Lock()
     progress_heartbeat_seconds = max(10.0, float(getattr(args, "progress_heartbeat_seconds", 60.0)))
+    try:
+        _run_max_statutes_cap = int(getattr(args, "max_statutes", 0) or 0)
+    except Exception:
+        _run_max_statutes_cap = 0
+    bounded_probe_run = _run_max_statutes_cap > 0
 
     async def _progress_heartbeat_loop(stop_event: asyncio.Event) -> None:
         while not stop_event.is_set():
@@ -1231,6 +1236,7 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                     if isinstance(timeout_work_remaining_value, bool)
                     else None
                 )
+                low_quality = bool((state_result or {}).get("low_quality"))
                 timed_out = bool(timeout_diagnostics.get("timed_out")) or ("timed out" in error_text.lower())
                 no_remaining_work_signal = timeout_classification in {
                     "timeout_with_no_detectable_remaining_work",
@@ -1239,6 +1245,8 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                 timeout_promoted_to_success = bool(
                     error_text
                     and timed_out
+                    and (not bounded_probe_run)
+                    and (not low_quality)
                     and timeout_work_remaining is False
                     and (statutes_count > 0 or no_remaining_work_signal)
                 )
