@@ -1893,6 +1893,12 @@ def build_paired_daemon_commands(
         str(getattr(args, "autoencoder_max_entity_binding_features", 64)),
         "--autoencoder-max-defeasible-priority-features",
         str(getattr(args, "autoencoder_max_defeasible_priority_features", 64)),
+        "--autoencoder-max-constraint-grounding-features",
+        str(getattr(args, "autoencoder_max_constraint_grounding_features", 64)),
+        "--autoencoder-max-definition-grounding-features",
+        str(getattr(args, "autoencoder_max_definition_grounding_features", 64)),
+        "--autoencoder-max-quantifier-scope-features",
+        str(getattr(args, "autoencoder_max_quantifier_scope_features", 64)),
         "--autoencoder-embedding-head-update-normalization",
         str(getattr(args, "autoencoder_embedding_head_update_normalization", 0.5)),
         "--autoencoder-family-logit-head-update-normalization",
@@ -5002,6 +5008,38 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--autoencoder-max-constraint-grounding-features",
+        type=int,
+        default=64,
+        help=(
+            "Maximum constraint-grounding features to expose to the feature "
+            "decoder. These bind numeric deadlines, percentages, monetary "
+            "thresholds, cardinalities, and statutory cross-references to "
+            "modal operators and decompiler repair routes."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-max-definition-grounding-features",
+        type=int,
+        default=64,
+        help=(
+            "Maximum definition-grounding features to expose to the feature "
+            "decoder. These bind defined terms, inclusion/exclusion scope, "
+            "knowledge-graph definition edges, and decompiler repair routes."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-max-quantifier-scope-features",
+        type=int,
+        default=64,
+        help=(
+            "Maximum quantifier-scope features to expose to the feature "
+            "decoder. These bind universal, existential, negative, unique, "
+            "and conditional quantifiers to roles, operators, and decompiler "
+            "repair routes."
+        ),
+    )
+    parser.add_argument(
         "--autoencoder-family-embedding-weight-scale",
         type=float,
         default=0.5,
@@ -6093,6 +6131,15 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         max_defeasible_priority_features=int(
             getattr(args, "autoencoder_max_defeasible_priority_features", 64)
         ),
+        max_constraint_grounding_features=int(
+            getattr(args, "autoencoder_max_constraint_grounding_features", 64)
+        ),
+        max_definition_grounding_features=int(
+            getattr(args, "autoencoder_max_definition_grounding_features", 64)
+        ),
+        max_quantifier_scope_features=int(
+            getattr(args, "autoencoder_max_quantifier_scope_features", 64)
+        ),
         feature_activity_reference=int(
             getattr(args, "autoencoder_feature_activity_reference", 64)
         ),
@@ -6283,6 +6330,15 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     )
     summary["autoencoder_max_defeasible_priority_features"] = int(
         getattr(args, "autoencoder_max_defeasible_priority_features", 64)
+    )
+    summary["autoencoder_max_constraint_grounding_features"] = int(
+        getattr(args, "autoencoder_max_constraint_grounding_features", 64)
+    )
+    summary["autoencoder_max_definition_grounding_features"] = int(
+        getattr(args, "autoencoder_max_definition_grounding_features", 64)
+    )
+    summary["autoencoder_max_quantifier_scope_features"] = int(
+        getattr(args, "autoencoder_max_quantifier_scope_features", 64)
     )
     summary["autoencoder_feature_activity_reference"] = int(
         getattr(args, "autoencoder_feature_activity_reference", 64)

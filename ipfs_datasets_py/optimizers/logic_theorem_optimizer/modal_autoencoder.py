@@ -1922,6 +1922,9 @@ class AdaptiveModalAutoencoder:
         max_proof_obligation_features: int = 64,
         max_entity_binding_features: int = 64,
         max_defeasible_priority_features: int = 64,
+        max_constraint_grounding_features: int = 64,
+        max_definition_grounding_features: int = 64,
+        max_quantifier_scope_features: int = 64,
         embedding_head_update_normalization: float = 0.0,
         family_logit_head_update_normalization: float = 0.0,
         legal_ir_view_head_update_normalization: float = 0.0,
@@ -2136,6 +2139,18 @@ class AdaptiveModalAutoencoder:
         self.max_defeasible_priority_features = max(
             0,
             int(max_defeasible_priority_features),
+        )
+        self.max_constraint_grounding_features = max(
+            0,
+            int(max_constraint_grounding_features),
+        )
+        self.max_definition_grounding_features = max(
+            0,
+            int(max_definition_grounding_features),
+        )
+        self.max_quantifier_scope_features = max(
+            0,
+            int(max_quantifier_scope_features),
         )
         self.embedding_head_update_normalization = max(
             0.0,
@@ -4699,6 +4714,24 @@ class AdaptiveModalAutoencoder:
             self._defeasible_priority_feature_keys_for(
                 sample,
                 prefix="legal-ir:defeasible-priority",
+            )
+        )
+        keys.extend(
+            self._constraint_grounding_feature_keys_for(
+                sample,
+                prefix="legal-ir:constraint-grounding",
+            )
+        )
+        keys.extend(
+            self._definition_grounding_feature_keys_for(
+                sample,
+                prefix="legal-ir:definition-grounding",
+            )
+        )
+        keys.extend(
+            self._quantifier_scope_feature_keys_for(
+                sample,
+                prefix="legal-ir:quantifier-scope",
             )
         )
         keys.extend(
@@ -8357,6 +8390,971 @@ class AdaptiveModalAutoencoder:
         cache[cache_key] = list(result)
         return result
 
+    def _constraint_grounding_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "constraint-grounding",
+    ) -> List[str]:
+        """Quantitative, temporal, monetary, and cross-reference grounding."""
+        normalized_prefix = str(prefix or "constraint-grounding").strip(":")
+        cache_key = f"constraint_grounding_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_constraint_grounding_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        action_classes = role_classes.get("action", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        def numeric_value(raw: str) -> Optional[float]:
+            word_numbers = {
+                "zero": 0,
+                "one": 1,
+                "two": 2,
+                "three": 3,
+                "four": 4,
+                "five": 5,
+                "six": 6,
+                "seven": 7,
+                "eight": 8,
+                "nine": 9,
+                "ten": 10,
+                "eleven": 11,
+                "twelve": 12,
+                "thirteen": 13,
+                "fourteen": 14,
+                "fifteen": 15,
+                "sixteen": 16,
+                "seventeen": 17,
+                "eighteen": 18,
+                "nineteen": 19,
+                "twenty": 20,
+                "thirty": 30,
+                "forty": 40,
+                "fifty": 50,
+                "sixty": 60,
+                "seventy": 70,
+                "eighty": 80,
+                "ninety": 90,
+            }
+            normalized = str(raw or "").strip().lower().replace(",", "")
+            if not normalized:
+                return None
+            if normalized in word_numbers:
+                return float(word_numbers[normalized])
+            try:
+                return float(normalized)
+            except ValueError:
+                return None
+
+        def quantity_bucket(value: Optional[float]) -> str:
+            if value is None:
+                return "unknown"
+            amount = max(0.0, float(value))
+            if amount == 0.0:
+                return "0"
+            if amount <= 1.0:
+                return "1"
+            if amount <= 3.0:
+                return "2-3"
+            if amount <= 7.0:
+                return "4-7"
+            if amount <= 15.0:
+                return "8-15"
+            if amount <= 31.0:
+                return "16-31"
+            if amount <= 90.0:
+                return "32-90"
+            if amount <= 365.0:
+                return "91-365"
+            return "366+"
+
+        def money_bucket(value: Optional[float]) -> str:
+            if value is None:
+                return "unknown"
+            amount = max(0.0, float(value))
+            if amount <= 0.0:
+                return "0"
+            if amount < 1000.0:
+                return "under_1k"
+            if amount < 10000.0:
+                return "1k_10k"
+            if amount < 100000.0:
+                return "10k_100k"
+            if amount < 1000000.0:
+                return "100k_1m"
+            return "1m_plus"
+
+        def comparator_atom(value: str) -> str:
+            normalized = _feature_atom(value, max_tokens=4)
+            return normalized or "exact"
+
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        force_signature = "+".join(force_tags[:3]) or "none"
+        polarity_signature = "+".join(polarity_tags[:3]) or "none"
+        constraints: List[tuple[int, str, str, str, str, str]] = []
+
+        temporal_pattern = re.compile(
+            r"\b(?P<comparator>within|not\s+later\s+than|no\s+later\s+than|"
+            r"not\s+earlier\s+than|at\s+least|after|before)\s+"
+            r"(?P<value>\d+(?:,\d{3})*(?:\.\d+)?|zero|one|two|three|four|five|six|"
+            r"seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|"
+            r"sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|"
+            r"sixty|seventy|eighty|ninety)\s+"
+            r"(?P<unit>day|days|month|months|year|years|hour|hours)\b"
+        )
+        percent_pattern = re.compile(
+            r"\b(?:(?P<comparator>at\s+least|not\s+less\s+than|not\s+more\s+than|"
+            r"no\s+more\s+than|more\s+than|less\s+than|at\s+most)\s+)?"
+            r"(?P<value>\d+(?:\.\d+)?)\s*(?P<unit>percent|%)\b"
+        )
+        money_pattern = re.compile(
+            r"(?:(?P<comparator>at\s+least|not\s+less\s+than|not\s+more\s+than|"
+            r"no\s+more\s+than|more\s+than|less\s+than|at\s+most)\s+)?"
+            r"(?:\$\s*(?P<dollar>\d[\d,]*(?:\.\d+)?)|"
+            r"(?P<value>\d[\d,]*(?:\.\d+)?)\s+dollars?)"
+        )
+        count_pattern = re.compile(
+            r"\b(?P<comparator>at\s+least|not\s+less\s+than|not\s+fewer\s+than|"
+            r"no\s+fewer\s+than|not\s+more\s+than|no\s+more\s+than|more\s+than|"
+            r"less\s+than|fewer\s+than|at\s+most)\s+"
+            r"(?P<value>\d+(?:,\d{3})*|one|two|three|four|five|six|seven|eight|nine|"
+            r"ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|"
+            r"eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|"
+            r"eighty|ninety)\s+"
+            r"(?P<unit>persons?|members?|applications?|licenses?|permits?|records?)\b"
+        )
+        crossref_pattern = re.compile(
+            r"\b(?:(?P<trigger>under|pursuant\s+to|as\s+provided\s+in|"
+            r"in\s+accordance\s+with)\s+)?"
+            r"(?P<kind>section|subsection|paragraph|clause|chapter|subchapter|title)\s+"
+            r"(?P<value>\([a-z0-9]+\)|[a-z0-9][a-z0-9.-]*)"
+        )
+        this_ref_pattern = re.compile(
+            r"\bthis\s+(?P<kind>section|subsection|paragraph|chapter|subchapter|title)\b"
+        )
+
+        for match in temporal_pattern.finditer(text):
+            value = numeric_value(match.group("value"))
+            unit = _feature_atom(match.group("unit").rstrip("s"))
+            constraints.append(
+                (
+                    match.start(),
+                    "temporal-deadline",
+                    comparator_atom(match.group("comparator")),
+                    quantity_bucket(value),
+                    unit,
+                    str(int(value)) if value is not None and value.is_integer() else str(value),
+                )
+            )
+        for match in percent_pattern.finditer(text):
+            value = numeric_value(match.group("value"))
+            constraints.append(
+                (
+                    match.start(),
+                    "percentage-threshold",
+                    comparator_atom(match.group("comparator") or "exact"),
+                    quantity_bucket(value),
+                    "percent",
+                    str(int(value)) if value is not None and value.is_integer() else str(value),
+                )
+            )
+        for match in money_pattern.finditer(text):
+            value = numeric_value(match.group("dollar") or match.group("value"))
+            constraints.append(
+                (
+                    match.start(),
+                    "monetary-threshold",
+                    comparator_atom(match.group("comparator") or "exact"),
+                    money_bucket(value),
+                    "usd",
+                    str(int(value)) if value is not None and value.is_integer() else str(value),
+                )
+            )
+        for match in count_pattern.finditer(text):
+            value = numeric_value(match.group("value"))
+            constraints.append(
+                (
+                    match.start(),
+                    "cardinality-threshold",
+                    comparator_atom(match.group("comparator")),
+                    quantity_bucket(value),
+                    _feature_atom(match.group("unit").rstrip("s")),
+                    str(int(value)) if value is not None and value.is_integer() else str(value),
+                )
+            )
+        for match in crossref_pattern.finditer(text):
+            kind = _feature_atom(match.group("kind"))
+            value = _feature_atom(match.group("value"), max_tokens=4) or "local"
+            constraints.append(
+                (
+                    match.start(),
+                    "statutory-crossref",
+                    comparator_atom(match.group("trigger") or "direct"),
+                    value,
+                    kind,
+                    value,
+                )
+            )
+        for match in this_ref_pattern.finditer(text):
+            kind = _feature_atom(match.group("kind"))
+            constraints.append(
+                (
+                    match.start(),
+                    "local-crossref",
+                    "this",
+                    kind,
+                    kind,
+                    "this",
+                )
+            )
+
+        constraints = sorted(
+            _unique_preserve_order(constraints),
+            key=lambda item: (item[0], item[1], item[2], item[3], item[4]),
+        )
+        constraint_signature = "+".join(
+            f"{kind}:{comparator}:{bucket}:{unit}"
+            for _start, kind, comparator, bucket, unit, _exact in constraints[:8]
+        ) or "none"
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+
+        add("bias")
+        add(f"source-constraints:{role_signature}:{scope_signature}")
+        add(f"constraint-count:{_count_bucket(len(constraints))}")
+        add(f"constraint-signature:{constraint_signature}")
+        add(f"force-constraint:{force_signature}:{polarity_signature}:{scope_signature}")
+        if not constraints:
+            add(f"constraint-coverage:none:{role_signature}:{scope_signature}")
+
+        for _start, kind, comparator, bucket, unit, exact in constraints[:10]:
+            add(f"constraint:{kind}:{comparator}:{bucket}:{unit}")
+            add(f"constraint-exact:{kind}:{comparator}:{exact}:{unit}")
+            add(f"constraint-role:{kind}:{action_class}:{object_class}:{scope_signature}")
+            if kind == "temporal-deadline":
+                add(f"event-calculus-constraint:deadline:{comparator}:{bucket}:{unit}:{action_class}")
+            if kind in {"percentage-threshold", "cardinality-threshold"}:
+                add(f"threshold-constraint:{kind}:{comparator}:{bucket}:{unit}:{object_class}")
+            if kind == "monetary-threshold":
+                add(f"monetary-constraint:{comparator}:{bucket}:{action_class}:{object_class}")
+            if kind in {"statutory-crossref", "local-crossref"}:
+                add(f"cross-reference-grounding:{comparator}:{unit}:{bucket}:{scope_signature}")
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-constraint:{family}:{symbol}:{predicate_role}:"
+                        f"{kind}:{comparator}:{bucket}:{unit}"
+                    )
+
+        add(
+            f"decompiler-constraint-plan:{constraint_signature}:"
+            f"{role_signature}:{operator_signature}"
+        )
+        add(
+            f"todo-route:refine_quantitative_crossref_grounding:"
+            f"{constraint_signature}:{role_signature}"
+        )
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:constraint-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_constraint_grounding_features]
+        cache[cache_key] = list(result)
+        return result
+
+    def _definition_grounding_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "definition-grounding",
+    ) -> List[str]:
+        """Defined-term, inclusion, exclusion, and KG-definition grounding."""
+        normalized_prefix = str(prefix or "definition-grounding").strip(":")
+        cache_key = f"definition_grounding_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_definition_grounding_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        action_classes = role_classes.get("action", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        def relation_atom(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if normalized in {
+                "does not include",
+                "shall not include",
+                "does not mean",
+                "exclude",
+                "excludes",
+            }:
+                return "excludes"
+            if normalized in {"include", "includes"}:
+                return "includes"
+            return "means"
+
+        def definition_scope_atom(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if not normalized:
+                for candidate in (
+                    "this section",
+                    "this subsection",
+                    "this chapter",
+                    "this subchapter",
+                    "this title",
+                ):
+                    if candidate in text:
+                        normalized = candidate
+                        break
+            atom = _feature_atom(normalized, max_tokens=5)
+            return atom or "unspecified_scope"
+
+        def content_tokens(value: str, *, max_tokens: int = 8) -> List[str]:
+            tokens = [
+                token
+                for token in _TOKEN_RE.findall(str(value or "").lower())
+                if token not in _STOPWORDS and token not in {"any", "term"}
+            ]
+            return _unique_preserve_order(tokens)[:max_tokens]
+
+        def term_class_for(value: str) -> str:
+            tokens = set(content_tokens(value, max_tokens=12))
+            class_patterns = (
+                (
+                    "government_actor_term",
+                    {
+                        "agency",
+                        "agencies",
+                        "board",
+                        "commission",
+                        "department",
+                        "secretary",
+                        "administrator",
+                    },
+                ),
+                (
+                    "private_party_term",
+                    {
+                        "person",
+                        "individual",
+                        "applicant",
+                        "owner",
+                        "licensee",
+                        "recipient",
+                    },
+                ),
+                (
+                    "authorization_term",
+                    {
+                        "permit",
+                        "license",
+                        "certificate",
+                        "certification",
+                        "approval",
+                        "authorization",
+                        "waiver",
+                    },
+                ),
+                (
+                    "record_term",
+                    {
+                        "record",
+                        "records",
+                        "document",
+                        "documents",
+                        "information",
+                        "data",
+                        "notice",
+                        "report",
+                    },
+                ),
+                (
+                    "filing_term",
+                    {
+                        "application",
+                        "filing",
+                        "claim",
+                        "proof",
+                        "registration",
+                    },
+                ),
+                ("payment_term", {"fee", "fees", "payment", "tax", "fine", "charge"}),
+                (
+                    "proceeding_term",
+                    {"order", "rule", "regulation", "proceeding", "hearing", "action"},
+                ),
+            )
+            for class_name, class_tokens in class_patterns:
+                if tokens.intersection(class_tokens):
+                    return class_name
+            return "defined_term"
+
+        def body_classes_for(value: str) -> List[str]:
+            classes: List[str] = []
+            for role in ("object", "kg", "predicate", "subject", "condition", "exception"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role))
+            return _unique_preserve_order(classes)
+
+        def body_signature_for(value: str) -> str:
+            classes = body_classes_for(value)
+            if classes:
+                return "+".join(classes[:3])
+            tokens = content_tokens(value, max_tokens=3)
+            return "+".join(tokens) if tokens else "none"
+
+        def body_shape_for(value: str, relation: str) -> str:
+            lowered = str(value or "").lower()
+            shape_tags: List[str] = []
+            if relation == "excludes":
+                shape_tags.append("negative_boundary")
+            if "," in lowered or " or " in lowered or " and " in lowered:
+                shape_tags.append("enumerated")
+            if re.search(r"\b(this|section|subsection|paragraph|chapter|title)\b", lowered):
+                shape_tags.append("cross_reference")
+            if re.search(r"\bissued|maintained|provided|filed|submitted|approved\b", lowered):
+                shape_tags.append("event_anchored")
+            if re.search(r"\bif|when|unless|provided\b", lowered):
+                shape_tags.append("conditional")
+            return "+".join(_unique_preserve_order(shape_tags)) or "simple"
+
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        force_signature = "+".join(force_tags[:3]) or "none"
+        polarity_signature = "+".join(polarity_tags[:3]) or "none"
+        definitions: List[tuple[int, str, str, str, str, str, str, str]] = []
+
+        scoped_term_pattern = re.compile(
+            r"\b(?:(?:as\s+used\s+in|for\s+purposes\s+of|in|under)\s+"
+            r"(?P<scope>this\s+(?:section|subsection|chapter|subchapter|title)|"
+            r"section\s+[a-z0-9().-]+|subsection\s+\([a-z0-9]+\)|"
+            r"paragraph\s+\([a-z0-9]+\)|chapter\s+\d+|title\s+\d+),?\s*)?"
+            r"(?:the\s+)?term\s+[\"']?(?P<term>[a-z][a-z0-9 -]{0,60}?)[\"']?\s+"
+            r"(?P<relation>does\s+not\s+include|shall\s+not\s+include|"
+            r"does\s+not\s+mean|is\s+defined\s+as|are\s+defined\s+as|"
+            r"defined\s+as|includes|include|means|mean|excludes|exclude)\s+"
+            r"(?P<body>[^.;]+)"
+        )
+        bare_definition_pattern = re.compile(
+            r"\b[\"']?(?P<term>[a-z][a-z0-9 -]{1,48}?)[\"']?\s+"
+            r"(?P<relation>does\s+not\s+include|shall\s+not\s+include|"
+            r"does\s+not\s+mean|is\s+defined\s+as|are\s+defined\s+as|"
+            r"defined\s+as|includes|include|means|mean|excludes|exclude)\s+"
+            r"(?P<body>[^.;]+)"
+        )
+
+        def add_definition(
+            *,
+            start: int,
+            relation: str,
+            term: str,
+            body: str,
+            scope: str,
+        ) -> None:
+            term_tokens = content_tokens(term, max_tokens=5)
+            if not term_tokens:
+                return
+            term_atom = _feature_atom(" ".join(term_tokens), max_tokens=5)
+            if not term_atom:
+                return
+            normalized_relation = relation_atom(relation)
+            scope_atom = definition_scope_atom(scope)
+            term_class = term_class_for(term)
+            body_signature = body_signature_for(body)
+            body_class = body_signature.split("+", 1)[0] if body_signature else "none"
+            body_shape = body_shape_for(body, normalized_relation)
+            definitions.append(
+                (
+                    int(start),
+                    normalized_relation,
+                    term_atom,
+                    term_class,
+                    body_class,
+                    body_signature,
+                    scope_atom,
+                    body_shape,
+                )
+            )
+
+        occupied_ranges: List[tuple[int, int]] = []
+        for match in scoped_term_pattern.finditer(text):
+            add_definition(
+                start=match.start(),
+                relation=match.group("relation"),
+                term=match.group("term"),
+                body=match.group("body"),
+                scope=match.group("scope") or "",
+            )
+            occupied_ranges.append((match.start(), match.end()))
+        if not definitions:
+            for match in bare_definition_pattern.finditer(text):
+                start, end = match.start(), match.end()
+                if any(start < occupied_end and end > occupied_start for occupied_start, occupied_end in occupied_ranges):
+                    continue
+                candidate_term = " ".join(content_tokens(match.group("term"), max_tokens=6))
+                if not candidate_term or candidate_term in {"this", "section"}:
+                    continue
+                add_definition(
+                    start=start,
+                    relation=match.group("relation"),
+                    term=candidate_term,
+                    body=match.group("body"),
+                    scope="",
+                )
+
+        definitions = sorted(
+            _unique_preserve_order(definitions),
+            key=lambda item: (item[0], item[1], item[2], item[6]),
+        )
+        definition_signature = "+".join(
+            f"{relation}:{term_class}:{body_class}:{scope_atom}:{body_shape}"
+            for (
+                _start,
+                relation,
+                _term_atom,
+                term_class,
+                body_class,
+                _body_signature,
+                scope_atom,
+                body_shape,
+            ) in definitions[:8]
+        ) or "none"
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+
+        add("bias")
+        add(f"source-definitions:{role_signature}:{scope_signature}")
+        add(f"definition-count:{_count_bucket(len(definitions))}")
+        add(f"definition-signature:{definition_signature}")
+        add(f"force-definition:{force_signature}:{polarity_signature}:{scope_signature}")
+        if not definitions:
+            add(f"definition-coverage:none:{role_signature}:{scope_signature}")
+
+        for (
+            _start,
+            relation,
+            term_atom,
+            term_class,
+            body_class,
+            body_signature,
+            definition_scope,
+            body_shape,
+        ) in definitions[:10]:
+            add(f"term:{term_atom}")
+            add(f"term-class:{term_class}")
+            add(f"definition-relation:{relation}:{term_class}:{body_class}:{definition_scope}")
+            add(f"definition:{relation}:{term_class}:{body_class}:{definition_scope}:{body_shape}")
+            add(f"definition-exact:{relation}:{term_atom}:{body_signature}:{definition_scope}")
+            add(f"kg-definition-edge:{term_class}:{relation}:{body_class}")
+            add(f"frame-logic-definition:{term_atom}:{relation}:{body_class}:{definition_scope}")
+            if relation == "includes":
+                add(f"subclass-expansion:{term_class}:{body_class}:{body_shape}")
+            if relation == "excludes":
+                add(f"exclusion-boundary:{term_class}:{body_class}:{definition_scope}")
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-definition:{family}:{symbol}:{predicate_role}:"
+                        f"{relation}:{term_class}:{body_class}:{definition_scope}"
+                    )
+
+        add(
+            f"decompiler-definition-plan:{definition_signature}:"
+            f"{role_signature}:{operator_signature}"
+        )
+        add(
+            f"todo-route:refine_definition_grounding:"
+            f"{definition_signature}:{role_signature}"
+        )
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:definition-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_definition_grounding_features]
+        cache[cache_key] = list(result)
+        return result
+
+    def _quantifier_scope_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "quantifier-scope",
+    ) -> List[str]:
+        """Universal, existential, negative, and conditional quantifier scope."""
+        normalized_prefix = str(prefix or "quantifier-scope").strip(":")
+        cache_key = f"quantifier_scope_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_quantifier_scope_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        action_classes = role_classes.get("action", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        def content_tokens(value: str, *, max_tokens: int = 6) -> List[str]:
+            tokens = [
+                token
+                for token in _TOKEN_RE.findall(str(value or "").lower())
+                if token
+                and token not in _STOPWORDS
+                and token
+                not in {
+                    "any",
+                    "all",
+                    "each",
+                    "every",
+                    "no",
+                    "one",
+                    "more",
+                    "least",
+                    "less",
+                    "than",
+                    "some",
+                    "only",
+                }
+            ]
+            return _unique_preserve_order(tokens)[:max_tokens]
+
+        def quantifier_atom(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if normalized in {"each", "every", "all", "all of", "any", "any of"}:
+                return "universal"
+            if normalized in {"no", "not any"}:
+                return "negative_universal"
+            if normalized in {"one or more", "at least one", "not less than one"}:
+                return "existential_min_one"
+            if normalized in {"some", "a", "an"}:
+                return "existential"
+            if normalized in {"only one", "exactly one"}:
+                return "unique"
+            if normalized == "only if":
+                return "conditional_restriction"
+            return _feature_atom(normalized, max_tokens=4) or "unspecified"
+
+        def fol_quantifier_for(kind: str) -> str:
+            if kind == "negative_universal":
+                return "forall_not"
+            if kind in {"existential", "existential_min_one"}:
+                return "exists"
+            if kind == "unique":
+                return "exists_unique"
+            if kind == "conditional_restriction":
+                return "guarded_forall"
+            return "forall"
+
+        def noun_class_for(value: str) -> str:
+            classes: List[str] = []
+            for role in ("subject", "object", "predicate", "condition", "kg"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role))
+            classes = _unique_preserve_order(classes)
+            if classes:
+                return classes[0]
+            tokens = set(content_tokens(value, max_tokens=8))
+            if tokens.intersection(
+                {
+                    "person",
+                    "persons",
+                    "individual",
+                    "individuals",
+                    "applicant",
+                    "applicants",
+                    "owner",
+                    "owners",
+                    "licensee",
+                    "licensees",
+                    "recipient",
+                    "recipients",
+                }
+            ):
+                return "private_party"
+            if tokens.intersection({"agency", "board", "commission", "department"}):
+                return "government_actor"
+            if tokens.intersection({"record", "records", "notice", "information", "data"}):
+                return "notice_or_record"
+            if tokens.intersection({"permit", "license", "approval", "authorization"}):
+                return "authorization_instrument"
+            return "quantified_entity"
+
+        anchor_positions: List[tuple[str, int]] = []
+        for role, anchor in source_anchors.items():
+            anchor_text = str(anchor or "").lower().replace("_", " ")
+            if not anchor_text:
+                continue
+            position = text.find(anchor_text)
+            if position >= 0:
+                anchor_positions.append((str(role), int(position)))
+
+        def role_for_position(position: int, noun: str) -> str:
+            noun_atom = _feature_atom(noun, max_tokens=4)
+            for role, anchor in source_anchors.items():
+                anchor_atom = _feature_atom(anchor, max_tokens=4)
+                if noun_atom and anchor_atom and (
+                    noun_atom == anchor_atom
+                    or noun_atom in anchor_atom
+                    or anchor_atom in noun_atom
+                ):
+                    return str(role)
+            if anchor_positions:
+                nearest_role, _nearest_position = min(
+                    anchor_positions,
+                    key=lambda item: abs(int(position) - item[1]),
+                )
+                return nearest_role
+            return "scope"
+
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        force_signature = "+".join(force_tags[:3]) or "none"
+        polarity_signature = "+".join(polarity_tags[:3]) or "none"
+        quantifiers: List[tuple[int, str, str, str, str, str]] = []
+
+        quantifier_pattern = re.compile(
+            r"\b(?P<quantifier>one\s+or\s+more|at\s+least\s+one|"
+            r"not\s+less\s+than\s+one|not\s+any|only\s+one|exactly\s+one|"
+            r"each|every|all|any|no|some|an|a)\s+"
+            r"(?:of\s+the\s+)?(?P<noun>[a-z][a-z0-9 -]{0,48}?)(?="
+            r"\s+(?:shall|must|may|is|are|has|have|who|that|which|if|when|"
+            r"unless|before|after|within|under|except|provided|,|;|\.|$)|$)"
+        )
+        only_if_pattern = re.compile(r"\bonly\s+if\b")
+
+        for match in quantifier_pattern.finditer(text):
+            raw_noun = " ".join(content_tokens(match.group("noun"), max_tokens=5))
+            if not raw_noun:
+                continue
+            kind = quantifier_atom(match.group("quantifier"))
+            noun_atom = _feature_atom(raw_noun, max_tokens=5)
+            if not noun_atom:
+                continue
+            role = role_for_position(match.start(), raw_noun)
+            noun_class = noun_class_for(raw_noun)
+            quantifiers.append(
+                (
+                    int(match.start()),
+                    kind,
+                    noun_atom,
+                    noun_class,
+                    _feature_atom(role) or "scope",
+                    scope_signature,
+                )
+            )
+
+        for match in only_if_pattern.finditer(text):
+            condition_anchor = source_anchors.get("condition", "")
+            noun_atom = _feature_atom(condition_anchor, max_tokens=5) or "condition"
+            noun_class = noun_class_for(condition_anchor) if condition_anchor else "condition_scope"
+            quantifiers.append(
+                (
+                    int(match.start()),
+                    "conditional_restriction",
+                    noun_atom,
+                    noun_class,
+                    "condition",
+                    scope_signature,
+                )
+            )
+
+        quantifiers = sorted(
+            _unique_preserve_order(quantifiers),
+            key=lambda item: (item[0], item[1], item[3], item[4]),
+        )
+        quantifier_signature = "+".join(
+            f"{kind}:{noun_class}:{role}:{scope}"
+            for _start, kind, _noun, noun_class, role, scope in quantifiers[:8]
+        ) or "none"
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+
+        add("bias")
+        add(f"source-quantifiers:{role_signature}:{scope_signature}")
+        add(f"quantifier-count:{_count_bucket(len(quantifiers))}")
+        add(f"quantifier-signature:{quantifier_signature}")
+        add(f"force-quantifier:{force_signature}:{polarity_signature}:{scope_signature}")
+        if not quantifiers:
+            add(f"quantifier-coverage:none:{role_signature}:{scope_signature}")
+
+        for _start, kind, noun_atom, noun_class, role, scope in quantifiers[:10]:
+            fol_quantifier = fol_quantifier_for(kind)
+            add(f"quantifier:{kind}:{noun_class}:{role}:{scope}")
+            add(f"quantifier-exact:{kind}:{noun_atom}:{role}:{scope}")
+            add(f"fol-quantifier:{fol_quantifier}:{noun_class}:{role}")
+            add(f"quantifier-role:{kind}:{noun_class}:{role}:{action_class}:{object_class}")
+            add(f"scope-binder:{fol_quantifier}:{noun_class}:{role}:{scope}")
+            if kind == "negative_universal":
+                add(f"negative-scope-binder:{noun_class}:{role}:{scope}")
+            if kind in {"existential", "existential_min_one", "unique"}:
+                add(f"existential-witness:{kind}:{noun_class}:{role}:{scope}")
+            if kind == "conditional_restriction":
+                add(f"guarded-quantifier:{noun_class}:{role}:{scope}")
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-quantifier:{family}:{symbol}:{predicate_role}:"
+                        f"{kind}:{noun_class}:{role}:{scope}"
+                    )
+
+        add(
+            f"decompiler-quantifier-plan:{quantifier_signature}:"
+            f"{role_signature}:{operator_signature}"
+        )
+        add(
+            f"todo-route:refine_quantifier_scope:"
+            f"{quantifier_signature}:{role_signature}"
+        )
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:quantifier-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_quantifier_scope_features]
+        cache[cache_key] = list(result)
+        return result
+
     def _compiler_latent_profile_feature_keys_for(
         self,
         sample: LegalSample,
@@ -10911,6 +11909,9 @@ class AdaptiveModalAutoencoder:
         keys.extend(self._proof_obligation_feature_keys_for(sample))
         keys.extend(self._entity_binding_feature_keys_for(sample))
         keys.extend(self._defeasible_priority_feature_keys_for(sample))
+        keys.extend(self._constraint_grounding_feature_keys_for(sample))
+        keys.extend(self._definition_grounding_feature_keys_for(sample))
+        keys.extend(self._quantifier_scope_feature_keys_for(sample))
         keys.extend(
             f"semantic-slot:{slot.removeprefix('slot:')}"
             for slot in self._semantic_slot_distribution_for(sample).keys()
@@ -11080,10 +12081,12 @@ class AdaptiveModalAutoencoder:
             "clause-topology:",
             "compiler-contract:",
             "contrastive-ir:",
+            "constraint-grounding:",
             "cue:",
             "cue-family:",
             "cycle-consistency:",
             "defeasible-priority:",
+            "definition-grounding:",
             "decompiler-surface:",
             "discourse-flow:",
             "entity-binding:",
@@ -11119,6 +12122,7 @@ class AdaptiveModalAutoencoder:
             "predicate-argument:",
             "predicate-arity-bin:",
             "predicate-role:",
+            "quantifier-scope:",
             "provenance-alignment:",
             "proof-obligation:",
             "repair-plan:",

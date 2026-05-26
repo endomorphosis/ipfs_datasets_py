@@ -3977,6 +3977,652 @@ def test_defeasible_priority_feature_head_transfers_permission_holdout() -> None
     assert after_cosine.embedding_cosine_similarity > before_cosine.embedding_cosine_similarity
 
 
+def test_constraint_grounding_features_encode_deadlines_thresholds_and_crossrefs() -> None:
+    deadline = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice within 30 days under subsection (b).",
+    )
+    percent = build_us_code_sample(
+        title="5",
+        section="553",
+        text=(
+            "The board may approve the permit if at least 60 percent of "
+            "members vote under paragraph (1)."
+        ),
+    )
+    money = build_us_code_sample(
+        title="5",
+        section="554",
+        text="The person must pay $5,000 not later than 30 days after notice.",
+    )
+    autoencoder = AdaptiveModalAutoencoder(max_constraint_grounding_features=240)
+
+    deadline_features = autoencoder._constraint_grounding_feature_keys_for(deadline)
+    percent_features = autoencoder._constraint_grounding_feature_keys_for(percent)
+    money_features = autoencoder._constraint_grounding_feature_keys_for(money)
+    fallback_features = autoencoder._fallback_feature_keys_for(deadline)
+    legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(deadline)
+
+    assert (
+        "constraint-grounding:constraint-signature:"
+        "temporal-deadline:within:16-31:day+"
+        "statutory-crossref:under:b:subsection"
+        in deadline_features
+    )
+    assert (
+        "constraint-grounding:constraint-exact:"
+        "temporal-deadline:within:30:day"
+        in deadline_features
+    )
+    assert (
+        "constraint-grounding:cross-reference-grounding:"
+        "under:subsection:b:temporal"
+        in deadline_features
+    )
+    assert (
+        "constraint-grounding:todo-route:"
+        "refine_quantitative_crossref_grounding:"
+        "temporal-deadline:within:16-31:day+"
+        "statutory-crossref:under:b:subsection:"
+        "government_actor:disclose_or_notify:notice_or_record:"
+        "none:none:deadline_temporal"
+        in fallback_features
+    )
+    assert (
+        "legal-ir:constraint-grounding:todo-route:"
+        "refine_quantitative_crossref_grounding:"
+        "temporal-deadline:within:16-31:day+"
+        "statutory-crossref:under:b:subsection:"
+        "government_actor:disclose_or_notify:notice_or_record:"
+        "none:none:deadline_temporal"
+        in legal_ir_features
+    )
+    assert (
+        "constraint-grounding:constraint-signature:"
+        "percentage-threshold:at_least:32-90:percent+"
+        "statutory-crossref:under:1:paragraph"
+        in percent_features
+    )
+    assert (
+        "constraint-grounding:constraint-exact:"
+        "percentage-threshold:at_least:60:percent"
+        in percent_features
+    )
+    assert (
+        "constraint-grounding:threshold-constraint:"
+        "percentage-threshold:at_least:32-90:percent:"
+        "authorization_instrument"
+        in percent_features
+    )
+    assert (
+        "constraint-grounding:constraint-signature:"
+        "monetary-threshold:exact:1k_10k:usd+"
+        "temporal-deadline:not_later_than:16-31:day"
+        in money_features
+    )
+    assert (
+        "constraint-grounding:constraint-exact:"
+        "monetary-threshold:exact:5000:usd"
+        in money_features
+    )
+    assert (
+        "constraint-grounding:constraint-exact:"
+        "temporal-deadline:not_later_than:30:day"
+        in money_features
+    )
+
+
+def test_constraint_grounding_feature_head_transfers_deadline_holdout() -> None:
+    shared_plan_feature = (
+        "constraint-grounding:decompiler-constraint-plan:"
+        "temporal-deadline:within:16-31:day+"
+        "statutory-crossref:under:b:subsection:"
+        "government_actor:disclose_or_notify:notice_or_record:"
+        "none:none:deadline_temporal:deontic:o->temporal:f"
+    )
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice within 30 days under subsection (b).",
+        embedding_vector=[1.0, 0.0],
+    )
+    validation = build_us_code_sample(
+        title="12",
+        section="1841",
+        text="The board shall publish notice within 30 days under subsection (b).",
+        embedding_vector=[1.0, 0.0],
+    )
+    family_autoencoder = AdaptiveModalAutoencoder(
+        feature_family_logit_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=0,
+        max_entity_binding_features=0,
+        max_defeasible_priority_features=0,
+        max_constraint_grounding_features=240,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+    )
+    shared_constraint_features = set(
+        family_autoencoder._constraint_grounding_feature_keys_for(train)
+    ).intersection(
+        family_autoencoder._constraint_grounding_feature_keys_for(validation)
+    )
+    before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    family_autoencoder._nudge_family_logits(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert shared_plan_feature in shared_constraint_features
+    assert shared_plan_feature in family_autoencoder.state.feature_family_logits
+    assert after_ce.cross_entropy_loss < before_ce.cross_entropy_loss
+
+    embedding_autoencoder = AdaptiveModalAutoencoder(
+        compiler_quality_embedding_weight_scale=0.0,
+        logic_signature_embedding_weight_scale=0.0,
+        round_trip_signal_embedding_weight_scale=0.0,
+        decompiler_plan_embedding_weight_scale=0.0,
+        predicate_argument_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=0.0,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        feature_embedding_weight_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=0,
+        max_entity_binding_features=0,
+        max_defeasible_priority_features=0,
+        max_constraint_grounding_features=240,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    embedding_autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    assert shared_plan_feature in embedding_autoencoder.state.feature_embedding_weights
+    assert after_cosine.embedding_cosine_similarity > before_cosine.embedding_cosine_similarity
+
+
+def test_definition_grounding_features_encode_terms_inclusions_and_exclusions() -> None:
+    means = build_us_code_sample(
+        title="5",
+        section="552",
+        text=(
+            "As used in this section, the term record means any information "
+            "maintained by an agency."
+        ),
+    )
+    includes = build_us_code_sample(
+        title="5",
+        section="553",
+        text=(
+            "The term license includes any permit or certification issued by "
+            "the board."
+        ),
+    )
+    excludes = build_us_code_sample(
+        title="5",
+        section="554",
+        text=(
+            "The term permit does not include a temporary waiver issued under "
+            "this section."
+        ),
+    )
+    autoencoder = AdaptiveModalAutoencoder(max_definition_grounding_features=240)
+
+    means_features = autoencoder._definition_grounding_feature_keys_for(means)
+    includes_features = autoencoder._definition_grounding_feature_keys_for(includes)
+    excludes_features = autoencoder._definition_grounding_feature_keys_for(excludes)
+    fallback_features = autoencoder._fallback_feature_keys_for(means)
+    legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(means)
+
+    assert (
+        "definition-grounding:definition-signature:"
+        "means:record_term:notice_or_record:this_section:event_anchored"
+        in means_features
+    )
+    assert (
+        "definition-grounding:kg-definition-edge:"
+        "record_term:means:notice_or_record"
+        in means_features
+    )
+    assert (
+        "definition-grounding:operator-definition:"
+        "temporal:f:definition:means:record_term:notice_or_record:this_section"
+        in means_features
+    )
+    assert (
+        "definition-grounding:todo-route:"
+        "refine_definition_grounding:"
+        "means:record_term:notice_or_record:this_section:event_anchored:"
+        "none:none:notice_or_record:none:none:none"
+        in fallback_features
+    )
+    assert (
+        "legal-ir:definition-grounding:todo-route:"
+        "refine_definition_grounding:"
+        "means:record_term:notice_or_record:this_section:event_anchored:"
+        "none:none:notice_or_record:none:none:none"
+        in legal_ir_features
+    )
+    assert (
+        "definition-grounding:definition-signature:"
+        "includes:authorization_term:authorization_instrument:"
+        "unspecified_scope:enumerated+event_anchored"
+        in includes_features
+    )
+    assert (
+        "definition-grounding:subclass-expansion:"
+        "authorization_term:authorization_instrument:enumerated+event_anchored"
+        in includes_features
+    )
+    assert (
+        "definition-grounding:definition-signature:"
+        "excludes:authorization_term:authorization_instrument:this_section:"
+        "negative_boundary+cross_reference+event_anchored"
+        in excludes_features
+    )
+    assert (
+        "definition-grounding:exclusion-boundary:"
+        "authorization_term:authorization_instrument:this_section"
+        in excludes_features
+    )
+
+
+def test_definition_grounding_feature_head_transfers_definition_holdout() -> None:
+    shared_plan_feature = (
+        "definition-grounding:decompiler-definition-plan:"
+        "means:record_term:notice_or_record:this_section:event_anchored:"
+        "none:none:notice_or_record:none:none:none:temporal:f"
+    )
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text=(
+            "As used in this section, the term record means any information "
+            "maintained by an agency."
+        ),
+        embedding_vector=[1.0, 0.0],
+    )
+    validation = build_us_code_sample(
+        title="12",
+        section="1841",
+        text=(
+            "As used in this section, the term document means any data "
+            "maintained by a department."
+        ),
+        embedding_vector=[1.0, 0.0],
+    )
+    family_autoencoder = AdaptiveModalAutoencoder(
+        feature_family_logit_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=0,
+        max_entity_binding_features=0,
+        max_defeasible_priority_features=0,
+        max_constraint_grounding_features=0,
+        max_definition_grounding_features=240,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+    )
+    shared_definition_features = set(
+        family_autoencoder._definition_grounding_feature_keys_for(train)
+    ).intersection(
+        family_autoencoder._definition_grounding_feature_keys_for(validation)
+    )
+    before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    family_autoencoder._nudge_family_logits(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert shared_plan_feature in shared_definition_features
+    assert shared_plan_feature in family_autoencoder.state.feature_family_logits
+    assert after_ce.cross_entropy_loss < before_ce.cross_entropy_loss
+
+    embedding_autoencoder = AdaptiveModalAutoencoder(
+        compiler_quality_embedding_weight_scale=0.0,
+        logic_signature_embedding_weight_scale=0.0,
+        round_trip_signal_embedding_weight_scale=0.0,
+        decompiler_plan_embedding_weight_scale=0.0,
+        predicate_argument_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=0.0,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        feature_embedding_weight_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=0,
+        max_entity_binding_features=0,
+        max_defeasible_priority_features=0,
+        max_constraint_grounding_features=0,
+        max_definition_grounding_features=240,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    embedding_autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    assert shared_plan_feature in embedding_autoencoder.state.feature_embedding_weights
+    assert after_cosine.embedding_cosine_similarity > before_cosine.embedding_cosine_similarity
+
+
+def test_quantifier_scope_features_encode_universal_negative_and_existential_scope() -> None:
+    universal = build_us_code_sample(
+        title="5",
+        section="552",
+        text="Each agency must provide notice to every applicant before final action.",
+    )
+    negative = build_us_code_sample(
+        title="5",
+        section="553",
+        text="No person may deny any permit unless the application is incomplete.",
+    )
+    existential = build_us_code_sample(
+        title="5",
+        section="554",
+        text="One or more applicants may file an application only if the fee is paid.",
+    )
+    autoencoder = AdaptiveModalAutoencoder(max_quantifier_scope_features=240)
+
+    universal_features = autoencoder._quantifier_scope_feature_keys_for(universal)
+    negative_features = autoencoder._quantifier_scope_feature_keys_for(negative)
+    existential_features = autoencoder._quantifier_scope_feature_keys_for(existential)
+    fallback_features = autoencoder._fallback_feature_keys_for(universal)
+    legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(universal)
+
+    assert (
+        "quantifier-scope:quantifier-signature:"
+        "universal:government_actor:subject:conditioned+temporal+"
+        "universal:private_party:object:conditioned+temporal"
+        in universal_features
+    )
+    assert (
+        "quantifier-scope:fol-quantifier:forall:government_actor:subject"
+        in universal_features
+    )
+    assert (
+        "quantifier-scope:operator-quantifier:"
+        "deontic:o:clause:universal:private_party:object:conditioned+temporal"
+        in universal_features
+    )
+    assert (
+        "quantifier-scope:todo-route:"
+        "refine_quantifier_scope:"
+        "universal:government_actor:subject:conditioned+temporal+"
+        "universal:private_party:object:conditioned+temporal:"
+        "government_actor:disclose_or_notify:notice_or_record:none:none:none"
+        in fallback_features
+    )
+    assert (
+        "legal-ir:quantifier-scope:todo-route:"
+        "refine_quantifier_scope:"
+        "universal:government_actor:subject:conditioned+temporal+"
+        "universal:private_party:object:conditioned+temporal:"
+        "government_actor:disclose_or_notify:notice_or_record:none:none:none"
+        in legal_ir_features
+    )
+    assert (
+        "quantifier-scope:quantifier-signature:"
+        "negative_universal:private_party:subject:conditioned+"
+        "universal:authorization_instrument:object:conditioned"
+        in negative_features
+    )
+    assert (
+        "quantifier-scope:fol-quantifier:forall_not:private_party:subject"
+        in negative_features
+    )
+    assert (
+        "quantifier-scope:negative-scope-binder:"
+        "private_party:subject:conditioned"
+        in negative_features
+    )
+    assert (
+        "quantifier-scope:quantifier-signature:"
+        "existential_min_one:private_party:subject:conditioned+"
+        "existential:application_or_proof:object:conditioned+"
+        "conditional_restriction:payment_or_fee:condition:conditioned"
+        in existential_features
+    )
+    assert (
+        "quantifier-scope:existential-witness:"
+        "existential_min_one:private_party:subject:conditioned"
+        in existential_features
+    )
+    assert (
+        "quantifier-scope:guarded-quantifier:payment_or_fee:condition:conditioned"
+        in existential_features
+    )
+
+
+def test_quantifier_scope_feature_head_transfers_universal_holdout() -> None:
+    shared_plan_feature = (
+        "quantifier-scope:decompiler-quantifier-plan:"
+        "universal:government_actor:subject:conditioned+temporal+"
+        "universal:private_party:object:conditioned+temporal:"
+        "government_actor:disclose_or_notify:notice_or_record:"
+        "none:none:none:deontic:o"
+    )
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="Each agency must provide notice to every applicant before final action.",
+        embedding_vector=[1.0, 0.0],
+    )
+    validation = build_us_code_sample(
+        title="12",
+        section="1841",
+        text="Every department shall publish notice to each applicant before final action.",
+        embedding_vector=[1.0, 0.0],
+    )
+    family_autoencoder = AdaptiveModalAutoencoder(
+        feature_family_logit_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=0,
+        max_entity_binding_features=0,
+        max_defeasible_priority_features=0,
+        max_constraint_grounding_features=0,
+        max_definition_grounding_features=0,
+        max_quantifier_scope_features=240,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+    )
+    shared_quantifier_features = set(
+        family_autoencoder._quantifier_scope_feature_keys_for(train)
+    ).intersection(
+        family_autoencoder._quantifier_scope_feature_keys_for(validation)
+    )
+    before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    family_autoencoder._nudge_family_logits(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert shared_plan_feature in shared_quantifier_features
+    assert shared_plan_feature in family_autoencoder.state.feature_family_logits
+    assert after_ce.cross_entropy_loss < before_ce.cross_entropy_loss
+
+    embedding_autoencoder = AdaptiveModalAutoencoder(
+        compiler_quality_embedding_weight_scale=0.0,
+        logic_signature_embedding_weight_scale=0.0,
+        round_trip_signal_embedding_weight_scale=0.0,
+        decompiler_plan_embedding_weight_scale=0.0,
+        predicate_argument_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=0.0,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        feature_embedding_weight_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=0,
+        max_clause_topology_features=0,
+        max_legal_semantic_frame_features=0,
+        max_normative_polarity_features=0,
+        max_compiler_contract_features=0,
+        max_decompiler_surface_template_features=0,
+        max_canonical_ir_graph_features=0,
+        max_cycle_consistency_features=0,
+        max_equivalence_prototype_features=0,
+        max_contrastive_ir_boundary_features=0,
+        max_repair_plan_features=0,
+        max_logic_view_contract_features=0,
+        max_objective_residual_features=0,
+        max_provenance_alignment_features=0,
+        max_discourse_flow_features=0,
+        max_proof_obligation_features=0,
+        max_entity_binding_features=0,
+        max_defeasible_priority_features=0,
+        max_constraint_grounding_features=0,
+        max_definition_grounding_features=0,
+        max_quantifier_scope_features=240,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    embedding_autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after_cosine = embedding_autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    assert shared_plan_feature in embedding_autoencoder.state.feature_embedding_weights
+    assert after_cosine.embedding_cosine_similarity > before_cosine.embedding_cosine_similarity
+
+
 def test_family_embedding_prototype_head_transfers_cosine_to_holdout() -> None:
     train = build_us_code_sample(
         title="5",
