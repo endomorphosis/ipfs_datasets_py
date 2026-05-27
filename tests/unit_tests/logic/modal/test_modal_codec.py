@@ -3944,6 +3944,41 @@ def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_003624_pair
         )
 
 
+def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_003164_pairs() -> None:
+    packet_pairs = (
+        ("frame", "deontic"),
+        ("frame", "temporal"),
+        ("temporal", "deontic"),
+        ("frame", "conditional_normative"),
+        ("temporal", "temporal"),
+    )
+    for predicted_family, target_family in packet_pairs:
+        assert (
+            supports_signal_free_adaptive_ambiguity_pair(
+                predicted_family,
+                target_family,
+            )
+            is True
+        )
+        assert (
+            is_compiler_ambiguity_policy_pair(
+                predicted_family,
+                target_family,
+            )
+            is True
+        )
+        assert (
+            abs(
+                compiler_refined_modal_family_cue_margin_buffer(
+                    predicted_family,
+                    target_family,
+                )
+                - 0.0015
+            )
+            < 1e-12
+        )
+
+
 def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_000795_pairs() -> None:
     packet_pairs = (
         ("conditional_normative", "frame"),
@@ -3960,9 +3995,9 @@ def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_000795_pair
     expected_margin_buffer_by_pair = {
         ("conditional_normative", "frame"): 0.0015,
         ("deontic", "deontic"): 0.0015,
-        ("frame", "temporal"): 0.0,
-        ("frame", "conditional_normative"): 0.0,
-        ("frame", "deontic"): 0.0,
+        ("frame", "temporal"): 0.0015,
+        ("frame", "conditional_normative"): 0.0015,
+        ("frame", "deontic"): 0.0015,
         ("temporal", "deontic"): 0.0015,
         ("deontic", "temporal"): 0.0015,
         ("conditional_normative", "deontic"): 0.0015,
@@ -12899,6 +12934,7 @@ def test_modal_decompiler_and_triples_prefer_non_temporal_source_role_anchors() 
         and triple["object"] == "february"
         for triple in triples
     )
+    assert "sanction_deontic" in slot_texts["source_action_role"]
 
 
 def test_modal_decompiler_source_spans_emit_refined_directional_family_pairs() -> None:
@@ -24561,9 +24597,9 @@ def test_modal_compiler_surfaces_packet_000795_compiler_ambiguity_policy_pairs(
     expected_margin_buffer_by_pair = {
         ("conditional_normative", "frame"): 0.0015,
         ("deontic", "deontic"): 0.0015,
-        ("frame", "temporal"): 0.0,
-        ("frame", "conditional_normative"): 0.0,
-        ("frame", "deontic"): 0.0,
+        ("frame", "temporal"): 0.0015,
+        ("frame", "conditional_normative"): 0.0015,
+        ("frame", "deontic"): 0.0015,
         ("temporal", "deontic"): 0.0015,
         ("deontic", "temporal"): 0.0015,
         ("conditional_normative", "deontic"): 0.0015,

@@ -200,7 +200,7 @@ def _validate_target_formula(
     reconstruction_token_profile = _reconstruction_token_profile(
         target,
         norm,
-        decoded.text,
+        decoded,
     )
     target_components = _target_components(
         target,
@@ -805,16 +805,19 @@ _RECONSTRUCTION_TOKEN_EQUIVALENTS = {
 def _reconstruction_token_profile(
     target: str,
     norm: LegalNormIR,
-    decoded_text: str,
+    decoded: Any,
 ) -> Dict[str, Any]:
     """Compare source and decoded salient legal tokens for Phase 8 audits."""
 
+    decoded_text = str(getattr(decoded, "text", "") or "").strip()
     source_text = str(norm.source_text or "").strip()
     support_text = str(norm.support_text or "").strip()
     source_tokens = _salient_reconstruction_tokens(source_text or support_text)
     support_tokens = _salient_reconstruction_tokens(support_text)
     if not support_tokens:
         support_tokens = list(source_tokens)
+    slot_basis_tokens = _decoded_slot_basis_tokens(decoded)
+    fixed_connector_tokens = _decoded_fixed_connector_tokens(decoded)
     decoded_tokens = _salient_reconstruction_tokens(decoded_text)
     source_set = set(source_tokens)
     decoded_set = set(decoded_tokens)
@@ -826,16 +829,31 @@ def _reconstruction_token_profile(
     reconstruction_neutral_warning_bundle = bool(warning_bundle) and warning_bundle.issubset(
         _RECONSTRUCTION_NEUTRAL_WARNING_BUNDLE
     )
-    use_support_basis = bool(support_tokens) and (
+    use_slot_basis = bool(slot_basis_tokens)
+    use_support_basis = (not use_slot_basis) and bool(support_tokens) and (
         (
             bool(source_tokens)
             and len(source_tokens) > (3 * len(support_tokens))
         )
         or reconstruction_neutral_warning_bundle
     )
-    basis_tokens = support_tokens if use_support_basis else source_tokens
+    if use_slot_basis:
+        basis_tokens = slot_basis_tokens
+        source_text_basis = "decoded_slot_basis"
+    else:
+        basis_tokens = support_tokens if use_support_basis else source_tokens
+        source_text_basis = (
+            "support_text"
+            if use_support_basis
+            else "source_text"
+            if source_text
+            else "support_text"
+        )
     basis_set = set(basis_tokens)
-    reference_source_set = source_set or basis_set
+    reference_source_set = set(source_set or basis_set)
+    reference_source_set.update(fixed_connector_tokens)
+    if not reference_source_set:
+        reference_source_set.update(basis_set)
     matched_tokens = [
         token
         for token in basis_tokens
@@ -858,13 +876,6 @@ def _reconstruction_token_profile(
         6,
     ) if decoded_tokens else 1.0
     complete = not unreconstructed_tokens and not out_of_source_tokens
-    source_text_basis = (
-        "support_text"
-        if use_support_basis
-        else "source_text"
-        if source_text
-        else "support_text"
-    )
     fingerprint = _stable_fingerprint(
         target,
         norm.source_id,
@@ -893,6 +904,44 @@ def _reconstruction_token_profile(
         "reconstruction_token_profile_complete": complete,
         "reconstruction_token_profile_fingerprint": fingerprint,
     }
+
+
+def _decoded_slot_basis_tokens(decoded: Any) -> List[str]:
+    """Return ordered tokens from semantic decoded slots only.
+
+    Fixed connectives and provenance-only rows are excluded from this basis.
+    They are validated separately as allowed connective/source additions.
+    """
+
+    tokens: List[str] = []
+    for phrase in getattr(decoded, "phrases", []) or []:
+        if getattr(phrase, "fixed", False):
+            continue
+        if getattr(phrase, "provenance_only", False):
+            continue
+        text = str(getattr(phrase, "text", "") or "").strip()
+        if not text:
+            continue
+        for token in _salient_reconstruction_tokens(text):
+            if token not in tokens:
+                tokens.append(token)
+    return tokens
+
+
+def _decoded_fixed_connector_tokens(decoded: Any) -> List[str]:
+    """Return ordered tokens that come from fixed decoder connectives."""
+
+    tokens: List[str] = []
+    for phrase in getattr(decoded, "phrases", []) or []:
+        if not getattr(phrase, "fixed", False):
+            continue
+        text = str(getattr(phrase, "text", "") or "").strip()
+        if not text:
+            continue
+        for token in _salient_reconstruction_tokens(text):
+            if token not in tokens:
+                tokens.append(token)
+    return tokens
 
 
 def _salient_reconstruction_tokens(text: str) -> List[str]:

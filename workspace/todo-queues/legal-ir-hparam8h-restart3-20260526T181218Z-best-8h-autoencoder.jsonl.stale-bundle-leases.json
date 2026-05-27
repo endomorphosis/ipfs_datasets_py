@@ -1,0 +1,16 @@
+{
+  "bridge|bridge.contracts|{\"action\":\"repair_multiview_legal_ir_loss\",\"family_pairs\":[\"temporal->deontic\"],\"program_synthesis_scope\":\"bridge\",\"target_component\":\"bridge.contracts\"}": {
+    "anchor_id": "program-88c65ceb29178c83",
+    "expires_at": "2026-05-27T00:09:00+00:00",
+    "expires_at_epoch": 1779840540.4555323,
+    "selected_count": 1,
+    "worker_id": "codex-bridge-02"
+  },
+  "ir_decompiler|modal.ir_decompiler|{\"action\":\"refine_typed_ir_or_decompiler_slots\",\"family_pairs\":[\"deontic->deontic\",\"frame->deontic\",\"temporal->deontic\"],\"program_synthesis_scope\":\"ir_decompiler\",\"target_component\":\"modal.ir_decompiler\"}": {
+    "anchor_id": "program-cfdde93e78ffbd45",
+    "expires_at": "2026-05-27T00:07:29+00:00",
+    "expires_at_epoch": 1779840449.298363,
+    "selected_count": 2,
+    "worker_id": "codex-ir_decompiler-02"
+  }
+}

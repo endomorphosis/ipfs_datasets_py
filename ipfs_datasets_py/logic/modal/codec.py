@@ -2804,6 +2804,9 @@ def _source_anchor_family_pairs(
         if not candidate_family or candidate_family in distinct_families:
             continue
         distinct_families.append(candidate_family)
+    for target_family in _cue_derived_target_families(formula):
+        if target_family and target_family not in distinct_families:
+            distinct_families.append(target_family)
     if source_family not in distinct_families:
         distinct_families.append(source_family)
     ordered_targets = sorted(
@@ -2818,6 +2821,23 @@ def _source_anchor_family_pairs(
         ),
     )
     return [f"{source_family}->{target_family}" for target_family in ordered_targets]
+
+
+def _cue_derived_target_families(formula: ModalIRFormula) -> List[str]:
+    derived: List[str] = []
+    source_family = _clean_non_empty_string(formula.operator.family).lower()
+    if source_family == "temporal":
+        derived.append("temporal")
+    for cue in (*_formula_cues(formula), *_formula_bridge_cues(formula)):
+        cue_key = _clean_non_empty_string(cue).lower().replace(" ", "_")
+        if not cue_key:
+            continue
+        for target_family, _ in _cue_bridge_operator_pairs(cue_key):
+            normalized_target = _clean_non_empty_string(target_family).lower()
+            if not normalized_target or normalized_target in derived:
+                continue
+            derived.append(normalized_target)
+    return derived
 
 
 def _source_role_anchor_values(
@@ -2858,6 +2878,11 @@ def _source_role_anchor_values(
     predicate_tokens = _source_anchor_role_tokens(
         _CUE_TOKEN_RE.findall(predicate_text.lower())
     )
+    if _is_probable_uscode_compilation_span(span_text) and predicate_tokens:
+        # Compilation spans carry long heading scaffolding; prefer anchors
+        # derivable from typed predicate slots over heading replay tokens.
+        subject_candidates = list(predicate_tokens)
+        predicate_candidates = list(predicate_tokens)
     if not subject_candidates and predicate_tokens:
         subject_candidates = predicate_tokens[:1]
     if not predicate_candidates:
@@ -2941,6 +2966,7 @@ def _source_anchor_role_tokens(tokens: Sequence[str]) -> List[str]:
         and token not in _SOURCE_ROLE_NOISE_TOKENS
         and token not in _SOURCE_ROLE_CONNECTIVE_TOKENS
         and token not in _SOURCE_ROLE_QUANTIFIER_TOKENS
+        and token not in _LOW_INFORMATION_SCOPE_LEADING_TOKENS
         and token not in _SOURCE_ROLE_CUE_MARKERS
         and token not in _SOURCE_ROLE_CONDITION_MARKERS
         and token not in _SOURCE_ROLE_EXCEPTION_MARKERS
@@ -3305,6 +3331,42 @@ def _semantic_source_span_text(
     if normalized and not _is_low_information_section_marker(normalized):
         return normalized
     return span_text
+
+
+def _is_probable_uscode_compilation_span(text: str) -> bool:
+    normalized = _clean_non_empty_string(text).lower()
+    if not normalized:
+        return False
+    if any(
+        marker in normalized
+        for marker in (
+            "united states code",
+            "u.s.c.",
+            "u s c",
+            "www.gpo.gov",
+            "government publishing office",
+        )
+    ):
+        return True
+    tokens = _CUE_TOKEN_RE.findall(normalized)
+    if len(tokens) < 12:
+        return False
+    scaffolding_tokens = {
+        "title",
+        "chapter",
+        "subchapter",
+        "section",
+        "sec",
+        "subtitle",
+        "part",
+        "subsection",
+        "article",
+        "division",
+        "code",
+        "edition",
+    }
+    scaffold_count = sum(token in scaffolding_tokens for token in tokens)
+    return scaffold_count >= 3
 
 
 def _strip_uscode_gpo_attribution_fragment(text: str) -> str:
@@ -4342,22 +4404,42 @@ def _refined_contextual_modal_transition_components(
             cue=normalized_cue,
         ):
             pair = f"{formula_family}->{bridge_family}"
+            operator_pair = f"{formula_symbol}->{bridge_symbol}"
+            operator_pair_key = _modal_operator_pair_feature_key(
+                formula_symbol,
+                bridge_symbol,
+            )
             bridge_signature = f"{bridge_family}:{bridge_symbol}:{normalized_cue}"
             components.extend(
                 (
                     (f"{normalized_slot_prefix}_refined_modal_family_pair", pair),
+                    (
+                        f"{normalized_slot_prefix}_refined_modal_operator_pair",
+                        operator_pair,
+                    ),
                     (f"{normalized_slot_prefix}_refined_modal_pair_cue", f"{pair}:{normalized_cue}"),
                     (
                         f"{normalized_slot_prefix}_refined_modal_bridge_signature",
                         bridge_signature,
                     ),
                     ("refined_modal_family_pair", pair),
+                    ("refined_modal_operator_pair", operator_pair),
                     ("refined_modal_pair_cue", f"{pair}:{normalized_cue}"),
                     ("refined_modal_bridge_signature", bridge_signature),
                     ("refined_modal_context_slot", normalized_slot_prefix),
                     ("refined_modal_context_pair", f"{normalized_slot_prefix}:{pair}"),
                 )
             )
+            if operator_pair_key:
+                components.extend(
+                    (
+                        (
+                            f"{normalized_slot_prefix}_refined_modal_operator_pair_key",
+                            operator_pair_key,
+                        ),
+                        ("refined_modal_operator_pair_key", operator_pair_key),
+                    )
+                )
         components.extend(
             _refined_temporal_transition_components(
                 formula=formula,
@@ -4441,15 +4523,22 @@ def _refined_temporal_transition_components(
 
     pair = "temporal->temporal" if formula_family == "temporal" else f"{formula_family}->temporal"
     temporal_symbol = formula_symbol if formula_family == "temporal" and formula_symbol else "F"
+    operator_pair = f"{formula_symbol}->{temporal_symbol}"
+    operator_pair_key = _modal_operator_pair_feature_key(
+        formula_symbol,
+        temporal_symbol,
+    )
     signature = f"temporal:{temporal_symbol}:{normalized_cue}"
     components: List[tuple[str, str]] = [
         (f"{normalized_slot_prefix}_refined_temporal_bridge_family_pair", pair),
+        (f"{normalized_slot_prefix}_refined_temporal_bridge_operator_pair", operator_pair),
         (f"{normalized_slot_prefix}_refined_temporal_bridge_signature", signature),
         (
             f"{normalized_slot_prefix}_refined_temporal_bridge_pair_cue",
             f"{pair}:{normalized_cue}",
         ),
         ("refined_temporal_bridge_family_pair", pair),
+        ("refined_temporal_bridge_operator_pair", operator_pair),
         ("refined_temporal_bridge_signature", signature),
         ("refined_temporal_bridge_pair_cue", f"{pair}:{normalized_cue}"),
         ("refined_temporal_bridge_context_slot", normalized_slot_prefix),
@@ -4458,6 +4547,16 @@ def _refined_temporal_transition_components(
             f"{normalized_slot_prefix}:{pair}",
         ),
     ]
+    if operator_pair_key:
+        components.extend(
+            (
+                (
+                    f"{normalized_slot_prefix}_refined_temporal_bridge_operator_pair_key",
+                    operator_pair_key,
+                ),
+                ("refined_temporal_bridge_operator_pair_key", operator_pair_key),
+            )
+        )
     for context_cue in context_cues:
         components.extend(
             (
@@ -8089,6 +8188,122 @@ def _is_source_copy_slot(slot: str) -> bool:
     )
 
 
+def _is_semantic_support_slot(slot: str) -> bool:
+    normalized_slot = _clean_non_empty_string(slot)
+    if not normalized_slot or _is_source_copy_slot(normalized_slot):
+        return False
+    if normalized_slot == "formula":
+        return False
+    if normalized_slot in {
+        "selected_frame",
+        "selected_ontology_frame",
+        "interpreted_in_frame",
+        "fallback_surface_text",
+        "fallback_surface_context",
+        "section_heading_tail",
+        "status_keyword",
+        "role",
+    }:
+        return True
+    if normalized_slot.startswith(
+        (
+            "predicate",
+            "argument",
+            "condition",
+            "exception",
+            "operator",
+            "modal_operator",
+            "modal_family",
+            "modal_system",
+            "modal_cue",
+            "modal_bridge_cue",
+            "bridge_",
+            "source_subject_anchor",
+            "source_action_anchor",
+            "source_object_anchor",
+            "source_condition_anchor",
+            "source_exception_anchor",
+            "source_temporal_anchor",
+            "refined_",
+        )
+    ):
+        return True
+    return "_bridge_" in normalized_slot
+
+
+def _semantic_support_token_count(decoded: DecodedModalText) -> int:
+    semantic_tokens: set[str] = set()
+    for phrase in decoded.phrases:
+        if phrase.fixed or not phrase.provenance_only:
+            continue
+        slot = _clean_non_empty_string(str(phrase.slot or ""))
+        if not _is_semantic_support_slot(slot):
+            continue
+        text = _clean_non_empty_string(phrase.text)
+        if not text:
+            continue
+        for token in _SLOT_FEATURE_TOKEN_RE.findall(text.lower()):
+            if not any(character.isalpha() for character in token):
+                continue
+            semantic_tokens.add(token)
+    return len(semantic_tokens)
+
+
+def _structural_semantic_values(decoded: DecodedModalText) -> List[str]:
+    slot_text_map = decoded_modal_phrase_slot_text_map(
+        decoded,
+        include_fixed=False,
+        include_provenance_only=True,
+    )
+    preferred_slots = (
+        "fallback_surface_text",
+        "fallback_surface_context",
+        "section_heading_tail",
+        "predicate_content",
+        "predicate",
+        "arguments",
+        "argument",
+        "source_subject_anchor",
+        "source_action_anchor",
+        "source_object_anchor",
+        "source_temporal_anchor",
+        "condition_scope",
+        "condition",
+        "exception_scope",
+        "exception",
+        "modal_operator_label_canonical",
+        "modal_operator_label",
+        "modal_family",
+        "modal_operator",
+        "modal_cue",
+        "bridge_cue",
+        "selected_frame",
+    )
+    preferred_slot_set = set(preferred_slots)
+    values: List[str] = []
+    seen: set[str] = set()
+
+    def add(value: str) -> None:
+        normalized_value = _clean_non_empty_string(value)
+        if not normalized_value or normalized_value in seen:
+            return
+        seen.add(normalized_value)
+        values.append(normalized_value)
+
+    for slot in preferred_slots:
+        for value in slot_text_map.get(slot, []):
+            add(value)
+
+    for slot in sorted(slot_text_map):
+        if slot in preferred_slot_set:
+            continue
+        if not _is_semantic_support_slot(slot):
+            continue
+        for value in slot_text_map.get(slot, []):
+            add(value)
+    return values
+
+
 def _structural_decoded_text(
     decoded: DecodedModalText,
     *,
@@ -8109,6 +8324,11 @@ def _structural_decoded_text(
     rendered = _clean_non_empty_string(" ".join(words))
     if rendered:
         return rendered
+    semantic_values = _structural_semantic_values(decoded)
+    if semantic_values:
+        semantic_rendered = _clean_non_empty_string(" ".join(semantic_values))
+        if semantic_rendered:
+            return semantic_rendered
     formula_text = decode_modal_ir_text(modal_ir)
     if selected_frame:
         formula_text = _clean_non_empty_string(
@@ -8134,7 +8354,11 @@ def _source_span_copy_ratio(decoded: DecodedModalText) -> float:
             copied_tokens += token_count
     if rendered_tokens <= 0:
         return 0.0
-    return round(copied_tokens / rendered_tokens, 9)
+    semantic_support_tokens = _semantic_support_token_count(decoded)
+    denominator = rendered_tokens + semantic_support_tokens
+    if denominator <= 0:
+        return 0.0
+    return round(copied_tokens / denominator, 9)
 
 
 def _decoded_structural_feature_embedding(

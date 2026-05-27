@@ -189,6 +189,7 @@ _USCODE_SHORT_RESIDUAL_HEADING_SIGNAL_TOKENS = frozenset(
     }
 )
 _USCODE_MAX_RESIDUAL_SPAN_FORMULAS = 3
+_USCODE_RESIDUAL_SPAN_FORMULA_BUDGET_CAP = 7
 _USCODE_RESIDUAL_COALESCE_SEGMENT_MAX_TOKENS = 12
 _USCODE_RESIDUAL_HEADER_MIN_TOKENS = 10
 _USCODE_RESIDUAL_HEADER_SCOPE_PHRASES = (
@@ -838,7 +839,8 @@ class LegalModalParser:
         normalized = self.normalize_text(text)
         if not normalized.strip():
             return []
-        if max_formulas <= 0:
+        requested_max_formulas = int(max_formulas)
+        if requested_max_formulas <= 0:
             return []
         if not self._is_uscode_citation(citation):
             return []
@@ -855,13 +857,29 @@ class LegalModalParser:
         )
         if not candidate_segments:
             return []
+        eligible_segments = [
+            segment
+            for segment in candidate_segments
+            if self._is_residual_span_coverage_candidate(segment)
+        ]
+        if not eligible_segments:
+            return []
+
+        # Keep the explicit caller cap when provided, but allow the default U.S.C.
+        # residual rule to widen coverage on long editorial/reference tails.
+        resolved_max_formulas = max(1, requested_max_formulas)
+        if requested_max_formulas == _USCODE_MAX_RESIDUAL_SPAN_FORMULAS:
+            resolved_max_formulas = max(
+                resolved_max_formulas,
+                min(
+                    _USCODE_RESIDUAL_SPAN_FORMULA_BUDGET_CAP,
+                    len(eligible_segments),
+                ),
+            )
+
         formulas: List[ModalIRFormula] = []
         next_index = max(1, int(start_index))
-        for segment in candidate_segments:
-            if len(formulas) >= int(max_formulas):
-                break
-            if not self._is_residual_span_coverage_candidate(segment):
-                continue
+        for segment in eligible_segments[:resolved_max_formulas]:
             formulas.append(
                 self._residual_span_coverage_formula(
                     document_id=document_id,

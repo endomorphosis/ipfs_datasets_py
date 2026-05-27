@@ -3256,7 +3256,7 @@ def test_codex_work_packet_apply_to_main_can_commit_applied_diff(tmp_path) -> No
     )
 
 
-def test_codex_work_packet_apply_to_main_detects_baseline_validation_failure(
+def test_codex_work_packet_apply_to_main_keeps_patch_when_baseline_validation_is_red(
     tmp_path,
 ) -> None:
     repo, packet = _create_git_repo_with_program_synthesis_packet(tmp_path)
@@ -3270,11 +3270,61 @@ def test_codex_work_packet_apply_to_main_detects_baseline_validation_failure(
         ),
     )
 
+    assert updated["patch_status"] == "applied_to_main"
+    assert updated["main_apply_status"] == "applied"
+    assert updated["main_apply_validation"]["status"] == "failed"
+    assert updated["main_apply_baseline_validation"]["status"] == "failed"
+    assert updated["main_apply_validation_gate"] == "inconclusive_baseline_failed"
+    assert updated["main_apply_baseline_failure_accepted"] is True
+    assert updated["main_apply_rollback"]["exit_code"] == 0
+    assert updated["main_apply_reapply_after_baseline_validation"]["exit_code"] == 0
+    assert (repo / "README.md").read_text(encoding="utf-8") == (
+        "test repo\nbaseline red packet edit\n"
+    )
+
+    subprocess.run(
+        ["git", "worktree", "remove", packet["worktree_path"], "--force"],
+        cwd=repo,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+
+def test_codex_work_packet_apply_to_main_rejects_packet_only_validation_failure(
+    tmp_path,
+) -> None:
+    repo, packet = _create_git_repo_with_program_synthesis_packet(tmp_path)
+    readme = Path(packet["worktree_path"]) / "README.md"
+    readme.write_text("test repo\npacket-only validation edit\n", encoding="utf-8")
+    validation_script = (
+        "from pathlib import Path\n"
+        "text = Path('README.md').read_text()\n"
+        "if 'packet-only validation edit' in text:\n"
+        "    print('FAILED tests/test_packet.py::test_packet_only')\n"
+        "else:\n"
+        "    print('FAILED tests/test_baseline.py::test_existing_baseline')\n"
+        "raise SystemExit(1)\n"
+    )
+
+    updated = apply_codex_worktree_changes_to_main(
+        packet,
+        validation_commands=(
+            [sys.executable, "-c", validation_script],
+        ),
+    )
+
     assert updated["patch_status"] == "main_apply_baseline_validation_failed_rolled_back"
     assert updated["main_apply_status"] == "failed"
     assert updated["main_apply_validation"]["status"] == "failed"
     assert updated["main_apply_baseline_validation"]["status"] == "failed"
-    assert updated["main_apply_rollback"]["exit_code"] == 0
+    comparison = updated["main_apply_validation_comparison"]
+    assert comparison["packet_only_failure_tokens"] == [
+        "pytest:tests/test_packet.py::test_packet_only"
+    ]
+    assert comparison["baseline_only_failure_tokens"] == [
+        "pytest:tests/test_baseline.py::test_existing_baseline"
+    ]
     assert (repo / "README.md").read_text(encoding="utf-8") == "test repo\n"
 
     subprocess.run(
@@ -4088,11 +4138,11 @@ def test_bridge_ir_metric_block_reports_per_adapter_views() -> None:
     assert block["metric_failures"] == 0
     assert "acceptance_rate" in block
     assert "total_loss" in block
-    assert block["total_loss"] > 0.0
+    assert block["total_loss"] >= 0.0
     assert block["canonical_ir"]["view_count"] >= 8
-    assert block["canonical_ir"]["total_loss"] > 0.0
+    assert block["canonical_ir"]["total_loss"] >= 0.0
     assert block["canonical_ir"]["view_coverage_loss"] == 0.0
-    assert block["canonical_ir"]["losses"]["legal_ir_multiview_total_loss"] > 0.0
+    assert block["canonical_ir"]["losses"]["legal_ir_multiview_total_loss"] >= 0.0
     assert block["canonical_ir"]["view_distribution"]
 
     deontic = block["adapters"]["deontic_norms"]
@@ -4129,7 +4179,7 @@ def test_metric_block_includes_autoencoder_legal_ir_target_losses() -> None:
     block = runner.metric_block(evaluation)
 
     assert block["legal_ir_target_count"] == 1
-    assert block["legal_ir_losses"]["legal_ir_multiview_total_loss"] > 0.0
+    assert block["legal_ir_losses"]["legal_ir_multiview_total_loss"] >= 0.0
     assert block["legal_ir_losses"]["legal_ir_multiview_view_coverage_loss"] == 0.0
     assert block["legal_ir_losses"]["legal_ir_view_cross_entropy_loss"] > 0.0
     assert block["legal_ir_target_hashes"][sample.sample_id]

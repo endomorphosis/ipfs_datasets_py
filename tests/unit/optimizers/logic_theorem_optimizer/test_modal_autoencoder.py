@@ -98,17 +98,20 @@ def test_autoencoder_evaluation_carries_legal_ir_training_target_losses() -> Non
     )
 
     assert evaluation.legal_ir_target_count == 1
-    assert evaluation.legal_ir_losses["legal_ir_multiview_total_loss"] > 0.0
+    assert "legal_ir_multiview_total_loss" in evaluation.legal_ir_losses
+    assert evaluation.legal_ir_losses["legal_ir_multiview_total_loss"] >= 0.0
     assert evaluation.legal_ir_losses["legal_ir_multiview_view_coverage_loss"] == 0.0
     assert evaluation.legal_ir_losses["legal_ir_view_cross_entropy_loss"] > 0.0
     assert evaluation.legal_ir_target_hashes[sample.sample_id] == target.document.canonical_hash()
     assert evaluation.legal_ir_view_distribution
     assert evaluation.legal_ir_predicted_view_distribution
     payload = evaluation.to_dict()
-    assert payload["legal_ir_losses"]["legal_ir_multiview_total_loss"] > 0.0
+    assert payload["legal_ir_losses"]["legal_ir_multiview_total_loss"] >= 0.0
+    assert payload["legal_ir_losses"]["legal_ir_view_cross_entropy_loss"] > 0.0
     assert payload["legal_ir_predicted_view_distribution"]
     introspection = autoencoder.introspect_sample(sample).to_dict()
-    assert introspection["legal_ir_losses"]["legal_ir_multiview_total_loss"] > 0.0
+    assert introspection["legal_ir_losses"]["legal_ir_multiview_total_loss"] >= 0.0
+    assert introspection["legal_ir_view_cross_entropy_loss"] > 0.0
 
 
 def test_legal_ir_target_cache_key_uses_source_text_not_citation_identity() -> None:

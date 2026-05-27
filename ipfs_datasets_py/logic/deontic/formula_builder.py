@@ -3554,30 +3554,51 @@ def _source_grounded_reconstruction_warning_formula_resolution(
     if not blocker_set.issubset(allowed_blockers):
         return {}
 
-    modality = _norm_modality(norm)
-    if modality not in {"O", "P", "F"}:
+    required_slots = _reconstruction_warning_core_slots(norm)
+    if not required_slots:
         return {}
-    if not norm.actor.strip() or not norm.action.strip():
+    for slot_name in required_slots:
+        slot_value = str(getattr(norm, slot_name, "") or "").strip()
+        if slot_value:
+            continue
         return {}
 
     included_slots = set(_included_formula_slots(norm))
-    if not {"actor", "modality", "action"}.issubset(included_slots):
+    if not set(required_slots).issubset(included_slots):
         return {}
 
     omitted_slots = _omitted_formula_slots(norm)
-    for core_slot in ("actor", "modality", "action"):
+    for core_slot in required_slots:
         if omitted_slots.get(core_slot):
             return {}
 
     return {
         "type": "source_grounded_reconstruction_warning_bundle",
         "resolved_blockers": sorted(blocker_set),
-        "core_slots": ["actor", "modality", "action"],
+        "core_slots": list(required_slots),
         "reason": (
             "core deontic slots are source-grounded and formula-complete; "
             "remaining parser warnings are reconstruction-neutral"
         ),
     }
+
+
+def _reconstruction_warning_core_slots(norm: LegalNormIR) -> tuple[str, ...]:
+    """Return family-specific core slots for warning-bundle formula readiness."""
+
+    modality = _norm_modality(norm)
+    norm_type = str(norm.norm_type or "").strip().lower()
+    if modality in {"O", "P", "F"}:
+        return ("actor", "modality", "action")
+    if modality == "DEF" or norm_type == "definition":
+        return ("actor", "action")
+    if modality in {"APP", "EXEMPT", "LIFE"} or norm_type in {
+        "applicability",
+        "exemption",
+        "instrument_lifecycle",
+    }:
+        return ("actor", "action")
+    return ()
 
 
 _READINESS_FORMULA_RESOLUTION_TYPES = {

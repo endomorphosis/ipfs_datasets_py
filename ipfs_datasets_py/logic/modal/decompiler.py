@@ -1925,6 +1925,42 @@ def _semantic_source_span_text(
     return span_text
 
 
+def _is_probable_uscode_compilation_span(text: str) -> bool:
+    normalized = _clean_text(text).lower()
+    if not normalized:
+        return False
+    if any(
+        marker in normalized
+        for marker in (
+            "united states code",
+            "u.s.c.",
+            "u s c",
+            "www.gpo.gov",
+            "government publishing office",
+        )
+    ):
+        return True
+    tokens = _CUE_TOKEN_RE.findall(normalized)
+    if len(tokens) < 12:
+        return False
+    scaffolding_tokens = {
+        "title",
+        "chapter",
+        "subchapter",
+        "section",
+        "sec",
+        "subtitle",
+        "part",
+        "subsection",
+        "article",
+        "division",
+        "code",
+        "edition",
+    }
+    scaffold_count = sum(token in scaffolding_tokens for token in tokens)
+    return scaffold_count >= 3
+
+
 def _strip_uscode_gpo_attribution_fragment(text: str) -> str:
     normalized = _clean_text(text)
     if not normalized:
@@ -4877,6 +4913,11 @@ def _source_role_anchor_phrases(
                 )
         if predicate_role and role_name in {"subject", "action", "object"}:
             add(f"source_{role_name}_role", f"{anchor}:{predicate_role}")
+        if predicate_family and role_name in {"subject", "action", "object"}:
+            # Preserve deterministic role-style features even when predicate.role
+            # is missing or generic; downstream IR views rely on these anchors.
+            add(f"source_{role_name}_role", f"{anchor}_{predicate_family}")
+            add(f"source_{role_name}_role_family", f"{anchor}_{predicate_family}")
         if predicate_head and role_name in {"action", "object"}:
             add(f"source_{role_name}_predicate", f"{anchor}:{predicate_head}")
     return phrases
@@ -4896,6 +4937,9 @@ def _source_anchor_family_pairs(
         if not candidate_family or candidate_family in distinct_families:
             continue
         distinct_families.append(candidate_family)
+    for target_family in _cue_derived_target_families(formula):
+        if target_family and target_family not in distinct_families:
+            distinct_families.append(target_family)
     if source_family not in distinct_families:
         distinct_families.append(source_family)
     ordered_targets = sorted(
@@ -4910,6 +4954,23 @@ def _source_anchor_family_pairs(
         ),
     )
     return [f"{source_family}->{target_family}" for target_family in ordered_targets]
+
+
+def _cue_derived_target_families(formula: ModalIRFormula) -> List[str]:
+    derived: List[str] = []
+    source_family = _clean_text(formula.operator.family).lower()
+    if source_family == "temporal":
+        derived.append("temporal")
+    for cue in (*_formula_cues(formula), *_formula_bridge_cues(formula)):
+        cue_key = _clean_text(cue).lower().replace(" ", "_")
+        if not cue_key:
+            continue
+        for target_family, _ in _cue_bridge_operator_pairs(cue_key):
+            normalized_target = _clean_text(target_family).lower()
+            if not normalized_target or normalized_target in derived:
+                continue
+            derived.append(normalized_target)
+    return derived
 
 
 def _source_role_anchor_values(
@@ -4950,6 +5011,11 @@ def _source_role_anchor_values(
     predicate_tokens = _source_anchor_role_tokens(
         _CUE_TOKEN_RE.findall(predicate_text.lower())
     )
+    if _is_probable_uscode_compilation_span(span_text) and predicate_tokens:
+        # Compilation spans carry long heading scaffolding; prefer anchors
+        # derivable from typed predicate slots over heading replay tokens.
+        subject_candidates = list(predicate_tokens)
+        predicate_candidates = list(predicate_tokens)
     if not subject_candidates and predicate_tokens:
         subject_candidates = predicate_tokens[:1]
     if not predicate_candidates:
@@ -5033,6 +5099,7 @@ def _source_anchor_role_tokens(tokens: Sequence[str]) -> List[str]:
         and token not in _SOURCE_ROLE_NOISE_TOKENS
         and token not in _SOURCE_ROLE_CONNECTIVE_TOKENS
         and token not in _SOURCE_ROLE_QUANTIFIER_TOKENS
+        and token not in _LOW_INFORMATION_SCOPE_LEADING_TOKENS
         and token not in _SOURCE_ROLE_CUE_MARKERS
         and token not in _SOURCE_ROLE_CONDITION_MARKERS
         and token not in _SOURCE_ROLE_EXCEPTION_MARKERS

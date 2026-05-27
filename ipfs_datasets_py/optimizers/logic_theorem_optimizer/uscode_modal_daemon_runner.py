@@ -13,6 +13,7 @@ import hashlib
 import json
 import os
 import random
+import re
 import shlex
 import shutil
 import signal
@@ -3018,6 +3019,93 @@ def _codex_apply_validation_env() -> Dict[str, str]:
     return env
 
 
+_PYTEST_FAILURE_LINE_RE = re.compile(r"(?m)^(?:FAILED|ERROR)\s+([^\s]+)")
+
+
+def _codex_validation_text_summary(text: str, *, limit: int = 2000) -> str:
+    normalized = _process_text(text)
+    return normalized[-max(1, int(limit)) :]
+
+
+def _codex_validation_failure_details(
+    *,
+    command: Sequence[str],
+    command_index: int,
+    status: str,
+    exit_code: Optional[int],
+    stdout: str,
+    stderr: str,
+) -> Dict[str, Any]:
+    combined = "\n".join(part for part in (stdout, stderr) if part)
+    failed_tests = sorted(dict.fromkeys(_PYTEST_FAILURE_LINE_RE.findall(combined)))
+    failure_tokens = [f"pytest:{node_id}" for node_id in failed_tests]
+    if status != "passed" and not failure_tokens:
+        command_key = shlex.join(str(part) for part in command)
+        failure_tokens.append(
+            f"command:{command_index}:{command_key}:status:{status}:exit:{exit_code}"
+        )
+    return {
+        "failed_tests": failed_tests,
+        "failure_tokens": failure_tokens,
+        "stderr_tail": _codex_validation_text_summary(stderr),
+        "stdout_tail": _codex_validation_text_summary(stdout),
+    }
+
+
+def _codex_apply_validation_failure_tokens(
+    validation: Mapping[str, Any],
+) -> List[str]:
+    tokens: List[str] = []
+    for index, command_result in enumerate(validation.get("commands", []) or [], start=1):
+        if not isinstance(command_result, Mapping):
+            continue
+        if str(command_result.get("status") or "") == "passed":
+            continue
+        command_tokens = [
+            str(token)
+            for token in command_result.get("failure_tokens", []) or []
+            if str(token)
+        ]
+        if not command_tokens:
+            command = [str(part) for part in command_result.get("command", []) or []]
+            command_tokens = [
+                "command:"
+                f"{index}:{shlex.join(command)}:"
+                f"status:{command_result.get('status')}:"
+                f"exit:{command_result.get('exit_code')}"
+            ]
+        tokens.extend(command_tokens)
+    return sorted(dict.fromkeys(tokens))
+
+
+def _codex_apply_validation_failure_comparison(
+    validation: Mapping[str, Any],
+    baseline_validation: Mapping[str, Any],
+) -> Dict[str, Any]:
+    packet_tokens = set(_codex_apply_validation_failure_tokens(validation))
+    baseline_tokens = set(_codex_apply_validation_failure_tokens(baseline_validation))
+    shared_tokens = packet_tokens & baseline_tokens
+    packet_only_tokens = packet_tokens - baseline_tokens
+    baseline_only_tokens = baseline_tokens - packet_tokens
+    packet_failed = str(validation.get("status") or "") not in {"passed", "skipped"}
+    baseline_failed = str(baseline_validation.get("status") or "") not in {
+        "passed",
+        "skipped",
+    }
+    return {
+        "baseline_failed": baseline_failed,
+        "baseline_failure_tokens": sorted(baseline_tokens),
+        "baseline_only_failure_tokens": sorted(baseline_only_tokens),
+        "inconclusive_baseline_failed": bool(
+            packet_failed and baseline_failed and not packet_only_tokens
+        ),
+        "packet_failed": packet_failed,
+        "packet_failure_tokens": sorted(packet_tokens),
+        "packet_only_failure_tokens": sorted(packet_only_tokens),
+        "shared_failure_tokens": sorted(shared_tokens),
+    }
+
+
 def _run_codex_apply_validation(
     repo_root: Path,
     packet_dir: Path,
@@ -3057,9 +3145,21 @@ def _run_codex_apply_validation(
                 "stderr_path": str(stderr_path),
                 "stdout_path": str(stdout_path),
             }
+            command_result.update(
+                _codex_validation_failure_details(
+                    command=command,
+                    command_index=index,
+                    status=command_result["status"],
+                    exit_code=result.returncode,
+                    stdout=result.stdout or "",
+                    stderr=result.stderr or "",
+                )
+            )
         except subprocess.TimeoutExpired as exc:
-            stdout_path.write_text(_process_text(exc.stdout), encoding="utf-8")
-            stderr_path.write_text(_process_text(exc.stderr), encoding="utf-8")
+            stdout_text = _process_text(exc.stdout)
+            stderr_text = _process_text(exc.stderr)
+            stdout_path.write_text(stdout_text, encoding="utf-8")
+            stderr_path.write_text(stderr_text, encoding="utf-8")
             command_result = {
                 "command": command,
                 "duration_seconds": round(time.time() - started, 3),
@@ -3069,10 +3169,26 @@ def _run_codex_apply_validation(
                 "stdout_path": str(stdout_path),
                 "timeout_seconds": float(timeout_seconds),
             }
+            command_result.update(
+                _codex_validation_failure_details(
+                    command=command,
+                    command_index=index,
+                    status="timeout",
+                    exit_code=None,
+                    stdout=stdout_text,
+                    stderr=stderr_text,
+                )
+            )
         results.append(command_result)
         if command_result["status"] != "passed":
-            return {"commands": results, "status": command_result["status"]}
-    return {"commands": results, "status": "passed"}
+            return {
+                "commands": results,
+                "failure_tokens": _codex_apply_validation_failure_tokens(
+                    {"commands": results}
+                ),
+                "status": command_result["status"],
+            }
+    return {"commands": results, "failure_tokens": [], "status": "passed"}
 
 
 def _codex_packet_metric_sample_payloads(
@@ -3661,32 +3777,83 @@ def apply_codex_worktree_changes_to_main(
                 timeout_seconds=validation_timeout_seconds,
             )
         updated["main_apply_baseline_validation"] = baseline_validation
-        patch_path = _save_codex_packet_diff_patch(
-            updated,
-            diff_content=diff_content,
-            reason="validation-failed",
+        validation_comparison = _codex_apply_validation_failure_comparison(
+            validation,
+            baseline_validation,
         )
-        updated["patch_path"] = str(patch_path) if patch_path is not None else None
+        updated["main_apply_validation_comparison"] = validation_comparison
         if baseline_validation["status"] not in {"passed", "skipped"}:
-            updated["patch_status"] = (
-                "main_apply_baseline_validation_failed_rolled_back"
-                if rollback.returncode == 0
-                else "main_apply_baseline_validation_failed_rollback_failed"
-            )
-            updated["patch_error"] = (
-                f"baseline validation {baseline_validation['status']} "
-                f"after packet validation {validation['status']}"
-            )
+            if (
+                rollback.returncode == 0
+                and validation_comparison.get("inconclusive_baseline_failed")
+            ):
+                reapply = _run_git_apply_stdin(source_repo_root, diff_content)
+                updated["main_apply_reapply_after_baseline_validation"] = {
+                    "exit_code": reapply.returncode,
+                    "stderr_tail": (reapply.stderr or "")[-500:],
+                    "stdout_tail": (reapply.stdout or "")[-500:],
+                }
+                if reapply.returncode == 0:
+                    updated["main_apply_validation_gate"] = (
+                        "inconclusive_baseline_failed"
+                    )
+                    updated["main_apply_baseline_failure_accepted"] = True
+                else:
+                    patch_path = _save_codex_packet_diff_patch(
+                        updated,
+                        diff_content=diff_content,
+                        reason="baseline-validation-reapply-failed",
+                    )
+                    updated["patch_path"] = (
+                        str(patch_path) if patch_path is not None else None
+                    )
+                    updated["patch_status"] = (
+                        "main_apply_baseline_validation_failed_reapply_failed"
+                    )
+                    updated["patch_error"] = (
+                        "baseline validation failed and reapplying the packet "
+                        "after rollback failed"
+                    )
+                    updated["main_apply_error"] = updated["patch_error"]
+                    _save_packet_if_possible(updated, packet_path)
+                    return updated
+            else:
+                patch_path = _save_codex_packet_diff_patch(
+                    updated,
+                    diff_content=diff_content,
+                    reason="validation-failed",
+                )
+                updated["patch_path"] = (
+                    str(patch_path) if patch_path is not None else None
+                )
+                updated["patch_status"] = (
+                    "main_apply_baseline_validation_failed_rolled_back"
+                    if rollback.returncode == 0
+                    else "main_apply_baseline_validation_failed_rollback_failed"
+                )
+                updated["patch_error"] = (
+                    f"baseline validation {baseline_validation['status']} "
+                    f"after packet validation {validation['status']}"
+                )
+                updated["main_apply_error"] = updated["patch_error"]
+                _save_packet_if_possible(updated, packet_path)
+                return updated
         else:
+            patch_path = _save_codex_packet_diff_patch(
+                updated,
+                diff_content=diff_content,
+                reason="validation-failed",
+            )
+            updated["patch_path"] = str(patch_path) if patch_path is not None else None
             updated["patch_status"] = (
                 "main_apply_validation_failed_rolled_back"
                 if rollback.returncode == 0
                 else "main_apply_validation_failed_rollback_failed"
             )
             updated["patch_error"] = f"validation {validation['status']}"
-        updated["main_apply_error"] = updated["patch_error"]
-        _save_packet_if_possible(updated, packet_path)
-        return updated
+            updated["main_apply_error"] = updated["patch_error"]
+            _save_packet_if_possible(updated, packet_path)
+            return updated
 
     target_metric_after = (
         _codex_packet_target_metric_snapshot(

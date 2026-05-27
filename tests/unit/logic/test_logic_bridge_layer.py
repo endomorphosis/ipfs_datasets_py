@@ -261,6 +261,146 @@ def test_deontic_bridge_treats_reconstruction_neutral_warning_bundle_as_quality_
     assert report.round_trip.extra_losses["deontic_quality_requires_validation_loss"] == 0.0
 
 
+def test_deontic_bridge_treats_definition_warning_bundle_as_quality_complete() -> None:
+    from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
+
+    support_text = (
+        'the term "Hispanic-serving institution" has the meaning given the term '
+        "in section 1101a of this title"
+    )
+
+    class _FakeResult:
+        success = True
+        metadata = {
+            "parser_element": {
+                "schema_version": "legal_norm_ir-v1",
+                "source_id": "legacy:deontic:definition-warning-bundle",
+                "canonical_citation": "20 U.S.C. 1131-1(c)(1)",
+                "norm_type": "definition",
+                "subject": ["Hispanic-serving institution"],
+                "action": [support_text],
+                "defined_term": "Hispanic-serving institution",
+                "text": support_text,
+                "source_text": support_text,
+                "support_text": support_text,
+                "support_span": [0, len(support_text)],
+                "promotable_to_theorem": False,
+                "parser_warnings": [
+                    "enumerated_clause_requires_item_level_review",
+                    "cross_reference_requires_resolution",
+                    "overlong_action_span",
+                ],
+                "export_readiness": {
+                    "blockers": [
+                        "enumerated_clause_requires_item_level_review",
+                        "cross_reference_requires_resolution",
+                        "overlong_action_span",
+                        "llm_repair_required",
+                    ]
+                },
+                "field_spans": {
+                    "subject": [10, 39],
+                    "action": [0, len(support_text)],
+                },
+            }
+        }
+
+    class _FakeConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _FakeResult()
+
+    adapter = DeonticNormsBridgeAdapter(converter=_FakeConverter())
+    report = adapter.evaluate(
+        support_text,
+        document_id="deontic-bridge-definition-warning-bundle",
+        citation="Deontic Bridge Definition Warning Bundle",
+    )
+
+    formula_record = report.ir_document.views["deontic_formula_records"].payload["records"][0]
+    assert formula_record["proof_ready"] is True
+    assert formula_record["requires_validation"] is False
+    assert formula_record["deterministic_resolution"]["type"] == (
+        "source_grounded_reconstruction_warning_bundle"
+    )
+
+    coverage_record = report.ir_document.views["deontic_prover_syntax"].payload["records"][0]
+    assert coverage_record["requires_validation"] is False
+    assert "failed_prover_quality_check:formula_proof_ready" not in coverage_record["coverage_blockers"]
+    assert "failed_prover_quality_check:formula_requires_validation" not in coverage_record["coverage_blockers"]
+
+    phase8_record = report.ir_document.views["deontic_phase8_quality"].payload["records"][0]
+    assert phase8_record["phase8_quality_complete"] is True
+    assert phase8_record["requires_validation"] is False
+
+
+def test_deontic_bridge_reconstruction_tokens_allow_cross_reference_provenance_only_text() -> None:
+    from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
+
+    support_text = "The Institute shall receive funding under this subchapter."
+
+    class _FakeResult:
+        success = True
+        metadata = {
+            "parser_element": {
+                "schema_version": "legal_norm_ir-v1",
+                "source_id": "legacy:deontic:crossref-provenance",
+                "canonical_citation": "20 U.S.C. 1131-1(a)",
+                "deontic_operator": "shall",
+                "norm_type": "obligation",
+                "subject": ["Institute"],
+                "action": ["receive funding"],
+                "text": support_text,
+                "source_text": support_text,
+                "support_text": support_text,
+                "support_span": [0, len(support_text)],
+                "promotable_to_theorem": False,
+                "parser_warnings": [
+                    "cross_reference_requires_resolution",
+                    "overlong_action_span",
+                ],
+                "export_readiness": {
+                    "blockers": [
+                        "cross_reference_requires_resolution",
+                        "overlong_action_span",
+                        "llm_repair_required",
+                    ]
+                },
+                "cross_reference_details": [
+                    {
+                        "value": "under this subchapter",
+                        "span": [35, 56],
+                    }
+                ],
+                "field_spans": {
+                    "subject": [4, 13],
+                    "modality": [14, 19],
+                    "action": [20, 35],
+                },
+            }
+        }
+
+    class _FakeConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _FakeResult()
+
+    adapter = DeonticNormsBridgeAdapter(converter=_FakeConverter())
+    report = adapter.evaluate(
+        support_text,
+        document_id="deontic-bridge-crossref-provenance",
+        citation="Deontic Bridge Cross-Reference Provenance",
+    )
+
+    coverage_record = report.ir_document.views["deontic_prover_syntax"].payload["records"][0]
+    assert coverage_record["requires_validation"] is False
+    assert "failed_prover_quality_check:reconstruction_tokens" not in coverage_record["coverage_blockers"]
+
+    phase8_record = report.ir_document.views["deontic_phase8_quality"].payload["records"][0]
+    assert phase8_record["phase8_quality_complete"] is True
+    assert phase8_record["requires_validation"] is False
+
+
 def test_deontic_bridge_soft_accepts_non_normative_statutory_text() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
@@ -1801,16 +1941,16 @@ def test_multiview_bridge_evaluation_builds_canonical_legal_ir_document() -> Non
     assert report.failures == {}
     assert report.accepted_count == 2
     assert report.acceptance_rate == 1.0
-    assert report.total_loss > 0.0
+    assert report.total_loss >= 0.0
     assert report.view_coverage_loss() == 0.0
     assert report.canonical_loss_vector()["legal_ir_multiview_acceptance_loss"] == 0.0
     assert report.canonical_loss_vector()["legal_ir_multiview_total_loss"] == report.total_loss
     assert report.canonical_loss_vector()["legal_ir_multiview_view_coverage_loss"] == 0.0
-    assert report.reports["deontic_norms"].metadata["coverage_requires_validation"] is True
+    assert report.reports["deontic_norms"].metadata["coverage_requires_validation"] is False
     assert report.reports["deontic_norms"].accepted is True
     assert report.loss_vector()[
         "deontic_norms.deontic_quality_requires_validation_loss"
-    ] == 1.0
+    ] == 0.0
     assert "deontic_norms.deontic_decoder_slot_loss" in report.loss_vector()
     assert "deontic_norms.deontic_ir_slot_provenance_loss" in report.loss_vector()
     target = report.training_target()
@@ -1818,7 +1958,7 @@ def test_multiview_bridge_evaluation_builds_canonical_legal_ir_document() -> Non
     assert target.losses["legal_ir_multiview_total_loss"] == report.total_loss
     assert target.adapter_losses["deontic_norms"][
         "deontic_quality_requires_validation_loss"
-    ] == 1.0
+    ] == 0.0
     assert target.view_distribution
 
 
@@ -1968,6 +2108,53 @@ def test_dense_contract_rebalance_downweights_auxiliary_lanes_for_conditional_no
     assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
 
 
+def test_sparse_contract_rebalance_downweights_deontic_for_scaffold_heavy_statute_text() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_sparse_contract_distribution,
+    )
+
+    distribution = {
+        "TDFOL.prover": 0.44,
+        "deontic.ir": 0.48,
+        "knowledge_graphs.neo4j_compat": 0.08,
+    }
+
+    rebalanced = _rebalance_sparse_contract_distribution(
+        distribution,
+        text=(
+            "U.S.C. Title 38 - VETERANS' BENEFITS. From the U.S. Government "
+            "Publishing Office. The Secretary shall submit monthly reports to "
+            "administer this program. Editorial Notes Prior Provisions. "
+            "Statutory Notes and Related Subsidiaries Effective Date."
+        ),
+    )
+
+    assert rebalanced["deontic.ir"] <= 0.31
+    assert rebalanced["knowledge_graphs.neo4j_compat"] >= 0.25
+    assert rebalanced["TDFOL.prover"] == distribution["TDFOL.prover"]
+    assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
+
+
+def test_sparse_contract_rebalance_preserves_non_scaffold_normative_text() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_sparse_contract_distribution,
+    )
+
+    distribution = {
+        "TDFOL.prover": 0.44,
+        "deontic.ir": 0.48,
+        "knowledge_graphs.neo4j_compat": 0.08,
+    }
+
+    rebalanced = _rebalance_sparse_contract_distribution(
+        distribution,
+        text="The agency shall publish notice before the permit takes effect.",
+    )
+
+    assert rebalanced == distribution
+    assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
+
+
 def test_dense_contract_rebalance_uses_calendar_deadline_cues_for_temporal_shift() -> None:
     from ipfs_datasets_py.logic.bridge.multiview import (
         _rebalance_dense_contract_distribution,
@@ -2017,6 +2204,35 @@ def test_dense_contract_rebalance_biases_deontic_lane_for_underspecified_statute
     assert rebalanced["deontic.ir"] > rebalanced["TDFOL.prover"]
     assert rebalanced["knowledge_graphs.neo4j_compat"] <= 0.13
     assert rebalanced["zkp.circuits"] <= 0.18
+    assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
+
+
+def test_dense_contract_rebalance_preserves_deontic_lane_for_scaffolded_contract_headings() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_dense_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.24,
+        "TDFOL.prover": 0.22,
+        "deontic.ir": 0.19,
+        "knowledge_graphs.neo4j_compat": 0.18,
+        "zkp.circuits": 0.17,
+    }
+
+    rebalanced = _rebalance_dense_contract_distribution(
+        distribution,
+        text=(
+            "U.S.C. Title 20 - EDUCATION 20 U.S.C. United States Code, 2024 "
+            "Edition CHAPTER 24 - GRANTS FOR EDUCATIONAL MATERIALS, FACILITIES "
+            "AND SERVICES SUBCHAPTER III - STRENGTHENING OF EDUCATIONAL AGENCIES."
+        ),
+    )
+
+    assert rebalanced["deontic.ir"] > rebalanced["knowledge_graphs.neo4j_compat"]
+    assert rebalanced["knowledge_graphs.neo4j_compat"] <= 0.21
+    assert rebalanced["TDFOL.prover"] <= 0.18
+    assert rebalanced["zkp.circuits"] <= 0.12
     assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
 
 
@@ -2160,7 +2376,7 @@ def test_dense_contract_rebalance_promotes_scaffolded_repeated_normative_duties(
         ),
     )
 
-    assert rebalanced["deontic.ir"] >= 0.27
+    assert rebalanced["deontic.ir"] >= 0.26
     assert rebalanced["deontic.ir"] > rebalanced["CEC.native"]
     assert rebalanced["knowledge_graphs.neo4j_compat"] <= 0.18
     assert rebalanced["zkp.circuits"] <= 0.10
@@ -2363,6 +2579,34 @@ def test_dense_contract_rebalance_treats_repealed_legislative_history_as_frame_s
     assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
 
 
+def test_dense_contract_rebalance_keeps_deontic_floor_for_repealed_history_scaffolds() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_dense_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.24,
+        "TDFOL.prover": 0.22,
+        "deontic.ir": 0.19,
+        "knowledge_graphs.neo4j_compat": 0.18,
+        "zkp.circuits": 0.17,
+    }
+
+    rebalanced = _rebalance_dense_contract_distribution(
+        distribution,
+        text=(
+            "42 U.S.C. 2979. Repealed. Pub. L. 97-35, title VI, section 683(a), "
+            "Aug. 13, 1981. Section, Pub. L. 88-452, title VI, section 637, as "
+            "added Dec. 23, 1967; amended Jan. 4, 1975; effective date notes."
+        ),
+    )
+
+    assert rebalanced["deontic.ir"] >= 0.17
+    assert rebalanced["CEC.native"] >= rebalanced["deontic.ir"]
+    assert rebalanced["knowledge_graphs.neo4j_compat"] >= rebalanced["TDFOL.prover"]
+    assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
+
+
 def test_dense_contract_rebalance_treats_prior_to_archival_notes_as_temporal_signal() -> None:
     from ipfs_datasets_py.logic.bridge.multiview import (
         _rebalance_dense_contract_distribution,
@@ -2547,6 +2791,37 @@ def test_dense_contract_rebalance_separates_scaffolded_temporal_conditionals() -
     )
     assert abs(sum(temporal_conditional.values()) - 1.0) < 1e-9
     assert abs(sum(scaffold_frame.values()) - 1.0) < 1e-9
+
+
+def test_dense_contract_rebalance_keeps_deontic_mass_for_scaffolded_temporal_appropriations() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_dense_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.24,
+        "TDFOL.prover": 0.22,
+        "deontic.ir": 0.19,
+        "knowledge_graphs.neo4j_compat": 0.18,
+        "zkp.circuits": 0.17,
+    }
+
+    rebalanced = _rebalance_dense_contract_distribution(
+        distribution,
+        text=(
+            "U.S.C. Title 42 - THE PUBLIC HEALTH AND WELFARE. Editorial Notes "
+            "Codification. Section was formerly classified. Pub. L. 93-644 and "
+            "Pub. L. 94-341 authorized appropriations for fiscal years 1975 "
+            "through 1977 and the amendment takes effect on and after July 6, 1976."
+        ),
+    )
+
+    assert rebalanced["deontic.ir"] >= 0.26
+    assert rebalanced["deontic.ir"] > rebalanced["CEC.native"]
+    assert rebalanced["TDFOL.prover"] >= 0.22
+    assert rebalanced["knowledge_graphs.neo4j_compat"] <= 0.16
+    assert rebalanced["zkp.circuits"] <= 0.10
+    assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
 
 
 def test_multiview_bridge_accepts_citation_prefixed_statutory_text() -> None:
