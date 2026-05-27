@@ -255,25 +255,49 @@ def _derive_timeout_diagnostics_from_checkpoint_payload(
         payload.get("discovered_chapters", progress.get("discovered_chapters")),
         0,
     )
+    sections_scanned = _safe_int(
+        payload.get("sections_scanned", progress.get("sections_scanned")),
+        0,
+    )
+    discovered_sections = _safe_int(
+        payload.get("discovered_sections", progress.get("discovered_sections")),
+        0,
+    )
     codes_completed = _safe_int(progress.get("codes_completed", payload.get("codes_completed")), 0)
     codes_total = _safe_int(progress.get("codes_total", payload.get("codes_total")), 0)
 
     signal_kind = ""
     scanned = 0
     discovered = 0
+    best_with_scanned: Optional[tuple[str, int, int]] = None
+    best_any: Optional[tuple[str, int, int]] = None
     for kind, scanned_value, discovered_value in (
         ("candidate_scan", scanned_candidates, discovered_candidates),
         ("history_scan", scanned_history_urls, discovered_history_urls),
         ("law_page_scan", scanned_laws, discovered_laws),
         ("title_scan", titles_scanned, discovered_titles),
         ("chapter_scan", chapters_scanned, discovered_chapters),
+        ("section_scan", sections_scanned, discovered_sections),
         ("codes_progress", codes_completed, codes_total),
     ):
-        if discovered_value > 0:
-            signal_kind = kind
-            scanned = scanned_value
-            discovered = discovered_value
-            break
+        if discovered_value <= 0:
+            continue
+        candidate = (kind, max(0, int(scanned_value)), int(discovered_value))
+        if (
+            best_any is None
+            or candidate[2] > best_any[2]
+            or (candidate[2] == best_any[2] and candidate[1] > best_any[1])
+        ):
+            best_any = candidate
+        if candidate[1] > 0 and (
+            best_with_scanned is None
+            or candidate[2] > best_with_scanned[2]
+            or (candidate[2] == best_with_scanned[2] and candidate[1] > best_with_scanned[1])
+        ):
+            best_with_scanned = candidate
+    selected = best_with_scanned or best_any
+    if selected is not None:
+        signal_kind, scanned, discovered = selected
 
     signal_found = bool(signal_kind)
     work_remaining: Optional[bool] = None
@@ -321,6 +345,8 @@ def _derive_timeout_diagnostics_from_checkpoint_payload(
             "discovered_titles": discovered_titles,
             "chapters_scanned": chapters_scanned,
             "discovered_chapters": discovered_chapters,
+            "sections_scanned": sections_scanned,
+            "discovered_sections": discovered_sections,
             "codes_completed": codes_completed,
             "codes_total": codes_total,
         },

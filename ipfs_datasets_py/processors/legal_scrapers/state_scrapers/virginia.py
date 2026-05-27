@@ -148,7 +148,31 @@ class VirginiaScraper(BaseStateScraper):
     ) -> List[NormalizedStatute]:
         title_links = await self._discover_title_links()
         self.logger.info("Virginia official index: discovered %s title links", len(title_links))
+        resumed = self._load_partial_checkpoint_statutes(code_name=code_name, max_statutes=max_statutes)
         statutes: List[NormalizedStatute] = []
+        seen_keys: set[str] = set()
+        seen_urls: set[str] = set()
+
+        def _extend_unique(batch: List[NormalizedStatute]) -> None:
+            for statute in batch:
+                key = str(statute.statute_id or statute.source_url or "").strip().lower()
+                source_url = str(statute.source_url or "").strip().lower()
+                if key and key in seen_keys:
+                    continue
+                if source_url and source_url in seen_urls:
+                    continue
+                if key:
+                    seen_keys.add(key)
+                if source_url:
+                    seen_urls.add(source_url)
+                statutes.append(statute)
+
+        _extend_unique(resumed)
+        if resumed:
+            self.logger.info(
+                "Virginia official index: resumed %s statutes from partial checkpoint",
+                len(statutes),
+            )
         limit = max(1, int(max_statutes)) if max_statutes is not None else None
         self._write_partial_checkpoint(
             statutes,
@@ -189,6 +213,12 @@ class VirginiaScraper(BaseStateScraper):
                 if limit is not None and len(statutes) >= limit:
                     break
                 section_links = await self._discover_section_links(chapter_url)
+                if seen_urls:
+                    section_links = [
+                        (url, section_label)
+                        for url, section_label in section_links
+                        if str(url or "").strip().lower() not in seen_urls
+                    ]
                 if chapter_index == 1 or chapter_index % 10 == 0 or chapter_index == len(chapter_links):
                     self.logger.info(
                         "Virginia official index: title=%s chapter=%s/%s sections=%s statutes_so_far=%s",
@@ -216,7 +246,7 @@ class VirginiaScraper(BaseStateScraper):
                     section_links,
                     max_statutes=(None if limit is None else max(0, limit - len(statutes))),
                 )
-                statutes.extend(parsed)
+                _extend_unique(parsed)
         self._write_partial_checkpoint(
             statutes,
             code_name=code_name,

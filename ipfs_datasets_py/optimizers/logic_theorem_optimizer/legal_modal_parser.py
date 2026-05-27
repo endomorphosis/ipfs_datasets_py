@@ -188,6 +188,9 @@ _USCODE_SHORT_RESIDUAL_HEADING_SIGNAL_TOKENS = frozenset(
         "revision",
     }
 )
+_USCODE_LONG_RESIDUAL_HEADING_MIN_TOKENS = 6
+_USCODE_LONG_RESIDUAL_HEADING_MAX_TOKENS = _USCODE_HEADING_ONLY_EXTENDED_MAX_TOKENS
+_USCODE_LONG_RESIDUAL_HEADING_MIN_SIGNAL_TOKENS = 2
 _USCODE_MAX_RESIDUAL_SPAN_FORMULAS = 3
 _USCODE_RESIDUAL_SPAN_FORMULA_BUDGET_CAP = 7
 _USCODE_RESIDUAL_COALESCE_SEGMENT_MAX_TOKENS = 12
@@ -940,7 +943,10 @@ class LegalModalParser:
                 return False
         if (
             self._looks_like_heading_without_section_reference(normalized)
-            and not is_short_heading_candidate
+            and not (
+                is_short_heading_candidate
+                or self._is_long_residual_heading_coverage_candidate(tokens)
+            )
         ):
             return False
         if (
@@ -971,6 +977,19 @@ class LegalModalParser:
         return bool(
             set(tokens) & _USCODE_SHORT_RESIDUAL_HEADING_SIGNAL_TOKENS
         )
+
+    def _is_long_residual_heading_coverage_candidate(
+        self,
+        tokens: Sequence[str],
+    ) -> bool:
+        token_count = len(tokens)
+        if (
+            token_count < _USCODE_LONG_RESIDUAL_HEADING_MIN_TOKENS
+            or token_count > _USCODE_LONG_RESIDUAL_HEADING_MAX_TOKENS
+        ):
+            return False
+        signal_count = len(set(tokens) & _USCODE_HEADING_ONLY_EXTENDED_NOUN_HINTS)
+        return signal_count >= _USCODE_LONG_RESIDUAL_HEADING_MIN_SIGNAL_TOKENS
 
     def _coalesce_short_residual_segments(
         self,

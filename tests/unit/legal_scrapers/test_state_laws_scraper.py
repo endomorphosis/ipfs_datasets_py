@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 import time
 
@@ -296,6 +297,52 @@ def test_state_laws_scraper_timeout_checkpoint_diagnostics_no_work_remaining(tmp
     assert diag.get("classification") == "timeout_with_no_detectable_remaining_work"
     assert diag.get("work_remaining") is False
     assert diag.get("signal_kind") == "codes_progress"
+
+
+def test_state_laws_scraper_timeout_checkpoint_prefers_section_signal_over_unscanned_title(tmp_path, monkeypatch):
+    checkpoint_dir = tmp_path / "checkpoints"
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
+    checkpoint_path = checkpoint_dir / "STATE-WA-partial.json"
+    checkpoint_path.write_text(
+        json.dumps(
+            {
+                "state_code": "WA",
+                "progress": {
+                    "titles_scanned": 0,
+                    "discovered_titles": 105,
+                    "sections_scanned": 91,
+                    "discovered_sections": 110,
+                    "codes_completed": 0,
+                    "codes_total": 1,
+                },
+                "updated_at": "2026-05-26T07:56:26+00:00",
+                "statutes": [
+                    {
+                        "statute_id": "wa-1",
+                        "section_number": "1.01.001",
+                        "section_name": "S1",
+                        "full_text": "Section text",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", str(checkpoint_dir))
+
+    result = scraper_module._load_partial_checkpoint_state_result(
+        "WA",
+        "Failed to scrape Washington: timed out after 900 seconds",
+    )
+
+    assert result is not None
+    diag = result.get("timeout_diagnostics") or {}
+    assert diag.get("timed_out") is True
+    assert diag.get("signal_kind") == "section_scan"
+    assert diag.get("work_remaining") is True
+    assert diag.get("progress_scanned") == 91
+    assert diag.get("progress_discovered") == 110
+    assert diag.get("classification") == "timeout_while_work_remaining"
 
 
 def test_state_laws_scraper_quality_flags_bill_history_noise():

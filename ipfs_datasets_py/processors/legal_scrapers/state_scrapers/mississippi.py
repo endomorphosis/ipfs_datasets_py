@@ -205,11 +205,56 @@ class MississippiScraper(BaseStateScraper):
             except Exception:
                 justia_target = 30000
             justia_target = max(500, min(80000, justia_target))
+
+            min_full_corpus_sections_raw = str(
+                os.getenv("STATE_SCRAPER_MS_MIN_FULL_CORPUS_SECTIONS", "500") or "500"
+            ).strip()
+            try:
+                min_full_corpus_sections = (
+                    int(min_full_corpus_sections_raw) if min_full_corpus_sections_raw else 500
+                )
+            except Exception:
+                min_full_corpus_sections = 500
+            min_full_corpus_sections = max(50, min(5000, min_full_corpus_sections))
+
+            def _is_sufficient_full_corpus_batch(batch: List[NormalizedStatute]) -> bool:
+                return len(batch) >= min_full_corpus_sections
+
+            # Prefer reader extraction first in full-corpus mode to avoid
+            # Cloudflare/anti-bot HTML gating on Justia.
+            reader_statutes = await self._scrape_jina_justia_code_sections(
+                code_name=code_name,
+                max_statutes=justia_target,
+            )
+            if reader_statutes:
+                if _is_sufficient_full_corpus_batch(reader_statutes):
+                    checkpoint.write_progress(
+                        statutes=reader_statutes,
+                        code_name=code_name,
+                        stage_label="mississippi:justia-reader:complete",
+                        scanned_history_urls=len(reader_statutes),
+                        discovered_history_urls=len(reader_statutes),
+                        extra_progress={
+                            "codes_total": 1,
+                            "codes_completed": 1,
+                        },
+                    )
+                    self.logger.info(
+                        "Mississippi full-corpus Justia reader path: statutes_so_far=%s",
+                        len(reader_statutes),
+                    )
+                    return reader_statutes[:limit] if limit is not None else reader_statutes
+                self.logger.warning(
+                    "Mississippi Justia reader path returned too few sections for full corpus (%s < %s); falling back to alternate paths",
+                    len(reader_statutes),
+                    min_full_corpus_sections,
+                )
+
             justia_statutes = await self._scrape_justia_code_sections(
                 code_name=code_name,
                 max_statutes=justia_target,
             )
-            if justia_statutes:
+            if justia_statutes and _is_sufficient_full_corpus_batch(justia_statutes):
                 checkpoint.write_progress(
                     statutes=justia_statutes,
                     code_name=code_name,
@@ -226,12 +271,18 @@ class MississippiScraper(BaseStateScraper):
                     len(justia_statutes),
                 )
                 return justia_statutes[:limit] if limit is not None else justia_statutes
+            if justia_statutes:
+                self.logger.warning(
+                    "Mississippi Justia HTML path returned too few sections for full corpus (%s < %s); falling back to alternate paths",
+                    len(justia_statutes),
+                    min_full_corpus_sections,
+                )
 
             wayback_statutes = await self._scrape_justia_wayback_code_sections(
                 code_name=code_name,
                 max_statutes=justia_target,
             )
-            if wayback_statutes:
+            if wayback_statutes and _is_sufficient_full_corpus_batch(wayback_statutes):
                 checkpoint.write_progress(
                     statutes=wayback_statutes,
                     code_name=code_name,
@@ -248,28 +299,12 @@ class MississippiScraper(BaseStateScraper):
                     len(wayback_statutes),
                 )
                 return wayback_statutes[:limit] if limit is not None else wayback_statutes
-
-            reader_statutes = await self._scrape_jina_justia_code_sections(
-                code_name=code_name,
-                max_statutes=justia_target,
-            )
-            if reader_statutes:
-                checkpoint.write_progress(
-                    statutes=reader_statutes,
-                    code_name=code_name,
-                    stage_label="mississippi:justia-reader:complete",
-                    scanned_history_urls=len(reader_statutes),
-                    discovered_history_urls=len(reader_statutes),
-                    extra_progress={
-                        "codes_total": 1,
-                        "codes_completed": 1,
-                    },
+            if wayback_statutes:
+                self.logger.warning(
+                    "Mississippi Justia Wayback path returned too few sections for full corpus (%s < %s); falling back to alternate paths",
+                    len(wayback_statutes),
+                    min_full_corpus_sections,
                 )
-                self.logger.info(
-                    "Mississippi full-corpus Justia reader path: statutes_so_far=%s",
-                    len(reader_statutes),
-                )
-                return reader_statutes[:limit] if limit is not None else reader_statutes
 
         archival_kwargs: Dict[str, Any] = {}
         try:

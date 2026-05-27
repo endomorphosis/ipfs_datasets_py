@@ -5191,6 +5191,58 @@ def _apply_refined_modal_family_cue_pair_balance(
         )
         deontic_count = float(counts.get(deontic_family, 0.0))
 
+    # temporal -> deontic / conditional_normative:
+    # statutory status-style scaffolding can over-index temporal/frame signals
+    # while still carrying operative deontic force and conditional qualifiers.
+    if (
+        temporal_count > 0.0
+        and has_temporal_scope
+        and has_temporal_status_scope
+        and has_statutory_scope_reference
+        and has_frame_scope_context
+        and has_deontic_scope
+        and has_explicit_deontic_scope
+        and not has_temporal_deadline_scope
+    ):
+        deontic_floor = _scaled_competing_scope_backfill(
+            source_count=max(temporal_count, frame_count, conditional_count, 1.0),
+            ratio=0.26,
+            minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            maximum=_STATUTORY_GENERIC_FRAME_DEONTIC_SCOPE_MAX,
+        )
+        counts[deontic_family] = max(deontic_count, deontic_floor)
+        deontic_count = float(counts.get(deontic_family, 0.0))
+
+        conditional_floor = _scaled_competing_scope_backfill(
+            source_count=max(temporal_count, deontic_count, 1.0),
+            ratio=0.22,
+            minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            maximum=_STATUTORY_GENERIC_FRAME_CONDITIONAL_SCOPE_MAX,
+        )
+        counts[conditional_family] = max(conditional_count, conditional_floor)
+        conditional_count = float(counts.get(conditional_family, 0.0))
+
+    # frame -> deontic:
+    # generic frame-heavy statutory context should not suppress explicit
+    # deontic force when temporal status qualifiers are also present.
+    if (
+        frame_count > deontic_count
+        and has_frame_scope_context
+        and has_statutory_scope_reference
+        and has_deontic_scope
+        and has_explicit_deontic_scope
+        and has_temporal_status_scope
+        and not has_editorial_frame_context
+    ):
+        deontic_floor = _scaled_competing_scope_backfill(
+            source_count=max(frame_count, temporal_count, 1.0),
+            ratio=0.25,
+            minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            maximum=_STATUTORY_GENERIC_FRAME_DEONTIC_SCOPE_MAX,
+        )
+        counts[deontic_family] = max(deontic_count, deontic_floor)
+        deontic_count = float(counts.get(deontic_family, 0.0))
+
     # conditional_normative -> temporal:
     # when statutory structural conditionals only carry weak temporal cue tokens,
     # preserve temporal evidence so conditional scaffolding does not dominate.

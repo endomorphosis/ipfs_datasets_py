@@ -2804,6 +2804,77 @@ def test_spacy_refined_pair_balance_softens_deontic_overflow_for_statutory_condi
     assert (counts["deontic"] - counts["conditional_normative"]) <= 0.13
 
 
+def test_spacy_refined_pair_balance_reinforces_temporal_to_conditional_and_deontic_for_statutory_status_scope() -> None:
+    counts = {
+        "temporal": 2.6,
+        "deontic": 0.05,
+        "conditional_normative": 0.04,
+        "frame": 0.95,
+    }
+    signals = {
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": False,
+        "has_temporal_scope_token": False,
+        "has_temporal_within_scope": False,
+        "has_temporal_status_scope": True,
+        "has_temporal_deadline_cue": False,
+        "has_calendar_date_scope": False,
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": True,
+        "has_deontic_cue": True,
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": False,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": True,
+        "has_conditional_scope_token": False,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_frame_editorial_scope_phrase": False,
+        "has_frame_cue": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["deontic"] >= 0.67
+    assert counts["conditional_normative"] >= 0.57
+
+
+def test_spacy_refined_pair_balance_reinforces_frame_to_deontic_for_non_editorial_statutory_status_scope() -> None:
+    counts = {
+        "frame": 2.2,
+        "deontic": 0.05,
+        "temporal": 0.8,
+        "conditional_normative": 0.0,
+    }
+    signals = {
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_frame_editorial_scope_phrase": False,
+        "has_frame_cue": False,
+        "has_statutory_scope_reference": True,
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": True,
+        "has_deontic_cue": True,
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": False,
+        "has_temporal_scope_token": False,
+        "has_temporal_within_scope": False,
+        "has_temporal_status_scope": True,
+        "has_temporal_deadline_cue": False,
+        "has_calendar_date_scope": False,
+        "has_condition_or_exception_scope": False,
+        "has_condition_clause": False,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": False,
+        "has_conditional_scope_token": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["deontic"] >= 0.55
+
+
 def test_spacy_refined_pair_balance_reinforces_frame_for_statutory_conditional_status_scope() -> None:
     counts = {
         "deontic": 3.369256,
@@ -6589,6 +6660,33 @@ def test_spacy_compiler_adds_residual_heading_fallback_when_modal_cues_cover_oth
     assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
     assert fallback.metadata["fallback_rule"] == "uscode_section_heading_v1"
     assert fallback.provenance.citation == "25 U.S.C. 124"
+
+
+def test_spacy_compiler_adds_long_heading_residual_span_coverage_after_section_heading_fallback() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    encoding = encoder.encode(
+        (
+            "Sec. 124 - Administrative hearing notice and review procedures. "
+            "Definitions and application requirements for appeals and petitions. "
+            "The Secretary shall issue a decision within 30 days."
+        ),
+        document_id="us-code-25-124-long-heading-residual",
+        citation="25 U.S.C. 124",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    residual_formulas = [
+        formula
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    ]
+    assert residual_formulas
+    assert any(formula.operator.family == "deontic" for formula in modal_ir.formulas)
+    fallback = modal_ir.formulas[-1]
+    assert fallback.operator.family == "frame"
+    assert fallback.metadata["fallback_rule"] == "uscode_section_heading_v1"
 
 
 def test_spacy_decoder_vector_and_family_logits_are_deterministic() -> None:

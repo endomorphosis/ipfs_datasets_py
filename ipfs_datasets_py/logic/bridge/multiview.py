@@ -44,6 +44,8 @@ _BRIDGE_CONTRACT_SPARSE_DEONTIC_CAP = 0.31
 _BRIDGE_CONTRACT_SPARSE_DEONTIC_FLOOR = 0.20
 _BRIDGE_CONTRACT_SPARSE_KG_MIN = 0.22
 _BRIDGE_CONTRACT_SPARSE_KG_TARGET = 0.26
+_BRIDGE_CONTRACT_SPARSE_REPEAL_DEONTIC_CAP = 0.28
+_BRIDGE_CONTRACT_SPARSE_REPEAL_KG_MIN = 0.26
 _BRIDGE_CONTRACT_SPARSE_SCAFFOLD_MIN_COUNT = 2
 _BRIDGE_CONTRACT_SPARSE_STRUCTURAL_MIN_COUNT = 2
 _BRIDGE_CONTRACT_CONDITIONAL_CUE_RE = re.compile(
@@ -1578,23 +1580,37 @@ def _rebalance_sparse_contract_distribution(
         _BRIDGE_CONTRACT_DEONTIC_CUE_RE,
         normalized_text,
     )
-    if deontic_cue_count <= 0:
+    repeal_cue_count = _cue_count(
+        _BRIDGE_CONTRACT_REPEAL_TEMPORAL_CUE_RE,
+        normalized_text,
+    )
+    has_repeal_scaffold_signal = repeal_cue_count > 0 and scaffold_count >= (
+        _BRIDGE_CONTRACT_SPARSE_SCAFFOLD_MIN_COUNT + 1
+    )
+    if deontic_cue_count <= 0 and not has_repeal_scaffold_signal:
         return lanes
 
     adjusted = dict(lanes)
     deontic_lane = "deontic.ir"
     kg_lane = "knowledge_graphs.neo4j_compat"
-
-    if adjusted.get(deontic_lane, 0.0) > _BRIDGE_CONTRACT_SPARSE_DEONTIC_CAP:
-        excess = adjusted[deontic_lane] - _BRIDGE_CONTRACT_SPARSE_DEONTIC_CAP
-        adjusted[deontic_lane] = _BRIDGE_CONTRACT_SPARSE_DEONTIC_CAP
-        adjusted[kg_lane] = adjusted.get(kg_lane, 0.0) + excess
-
+    deontic_cap = _BRIDGE_CONTRACT_SPARSE_DEONTIC_CAP
     kg_floor = (
         _BRIDGE_CONTRACT_SPARSE_KG_TARGET
         if scaffold_count >= (_BRIDGE_CONTRACT_SPARSE_SCAFFOLD_MIN_COUNT + 2)
         else _BRIDGE_CONTRACT_SPARSE_KG_MIN
     )
+    if has_repeal_scaffold_signal:
+        deontic_cap = min(
+            deontic_cap,
+            _BRIDGE_CONTRACT_SPARSE_REPEAL_DEONTIC_CAP,
+        )
+        kg_floor = max(kg_floor, _BRIDGE_CONTRACT_SPARSE_REPEAL_KG_MIN)
+
+    if adjusted.get(deontic_lane, 0.0) > deontic_cap:
+        excess = adjusted[deontic_lane] - deontic_cap
+        adjusted[deontic_lane] = deontic_cap
+        adjusted[kg_lane] = adjusted.get(kg_lane, 0.0) + excess
+
     if adjusted.get(kg_lane, 0.0) < kg_floor:
         deficit = kg_floor - adjusted[kg_lane]
         shiftable = max(

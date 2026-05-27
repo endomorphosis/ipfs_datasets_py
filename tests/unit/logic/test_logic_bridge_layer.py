@@ -261,6 +261,81 @@ def test_deontic_bridge_treats_reconstruction_neutral_warning_bundle_as_quality_
     assert report.round_trip.extra_losses["deontic_quality_requires_validation_loss"] == 0.0
 
 
+def test_deontic_bridge_phase8_quality_includes_coverage_only_source_records() -> None:
+    from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
+
+    source_text = "The Secretary shall publish notice."
+
+    class _FakeResult:
+        success = True
+        metadata = {
+            "parser_element": {
+                "schema_version": "legal_norm_ir-v1",
+                "source_id": "legacy:deontic:phase8-main",
+                "canonical_citation": "42 U.S.C. 2000dd-1",
+                "deontic_operator": "shall",
+                "subject": ["Secretary"],
+                "action": ["publish notice"],
+                "text": source_text,
+                "source_text": source_text,
+                "support_text": source_text,
+                "support_span": [0, len(source_text)],
+                "norm_type": "obligation",
+                "field_spans": {
+                    "subject": [4, 13],
+                    "modality": [14, 19],
+                    "action": [20, 33],
+                },
+            },
+            "legal_prover_syntax_target_coverage_records": [
+                {
+                    "source_id": "legacy:deontic:phase8-main",
+                    "requires_validation": False,
+                    "coverage_blockers": [],
+                    "coverage_summary": {
+                        "required_targets": ["fol"],
+                        "target_status_by_target": {"fol": "passed"},
+                        "quality_gate_summary": {},
+                        "target_role_matrix_summary": {},
+                    },
+                },
+                {
+                    "source_id": "legacy:deontic:coverage-only",
+                    "requires_validation": True,
+                    "coverage_blockers": ["failed_prover_syntax_target:fol"],
+                    "coverage_summary": {
+                        "required_targets": ["fol"],
+                        "target_status_by_target": {"fol": "failed"},
+                        "quality_gate_summary": {},
+                        "target_role_matrix_summary": {},
+                        "requires_validation": True,
+                    },
+                },
+            ],
+        }
+
+    class _FakeConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _FakeResult()
+
+    adapter = DeonticNormsBridgeAdapter(converter=_FakeConverter())
+    report = adapter.evaluate(
+        source_text,
+        document_id="deontic-bridge-phase8-coverage-only-source",
+        citation="Deontic Bridge Phase8 Coverage Only Source",
+    )
+
+    phase8_records = report.ir_document.views["deontic_phase8_quality"].payload["records"]
+    coverage_only = next(
+        row for row in phase8_records if row.get("source_id") == "legacy:deontic:coverage-only"
+    )
+    assert coverage_only["requires_validation"] is True
+    assert coverage_only["phase8_quality_complete"] is False
+    assert "failed_prover_syntax_target:fol" in coverage_only["coverage_blockers"]
+    assert report.round_trip.extra_losses["deontic_quality_requires_validation_loss"] > 0.0
+
+
 def test_deontic_bridge_treats_definition_warning_bundle_as_quality_complete() -> None:
     from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
 
@@ -2152,6 +2227,31 @@ def test_sparse_contract_rebalance_preserves_non_scaffold_normative_text() -> No
     )
 
     assert rebalanced == distribution
+    assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
+
+
+def test_sparse_contract_rebalance_shifts_repealed_scaffold_text_without_deontic_cues() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_sparse_contract_distribution,
+    )
+
+    distribution = {
+        "TDFOL.prover": 0.44,
+        "deontic.ir": 0.48,
+        "knowledge_graphs.neo4j_compat": 0.08,
+    }
+
+    rebalanced = _rebalance_sparse_contract_distribution(
+        distribution,
+        text=(
+            "U.S.C. Title 7 - AGRICULTURE. Editorial Notes. Statutory Notes and Related "
+            "Subsidiaries. Secs. 343f, 343g - Repealed. Codification and amendments."
+        ),
+    )
+
+    assert rebalanced["deontic.ir"] <= 0.28
+    assert rebalanced["knowledge_graphs.neo4j_compat"] >= 0.26
+    assert rebalanced["TDFOL.prover"] == distribution["TDFOL.prover"]
     assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
 
 

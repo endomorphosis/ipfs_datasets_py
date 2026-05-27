@@ -585,6 +585,26 @@ def test_frame_ontology_terms_from_feature_keys_support_frame_cue_features() -> 
     ]
 
 
+def test_frame_ontology_terms_from_feature_keys_extract_predicate_argument_role_shape_and_role_pairs() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "predicate-argument:source-action-role:appropriations:clause",
+            "predicate-argument:source-object-family:repealed:frame",
+            "predicate-argument:role-shape:conditional_normative:clause:c1:e1",
+        ]
+    )
+
+    assert "source_action_role_appropriations_clause" in terms
+    assert "appropriations" in terms
+    assert "appropriations_clause" in terms
+    assert "source_object_family_repealed_frame" in terms
+    assert "repealed" in terms
+    assert "repealed_frame" in terms
+    assert "role_shape_conditional_normative_clause_c1_e1" in terms
+    assert "conditional_normative" in terms
+    assert "conditional_normative_clause" in terms
+
+
 def test_frame_ontology_terms_from_feature_keys_support_legacy_frame_cues() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [

@@ -765,14 +765,38 @@ _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...
         ("frame", "Frame"),
         ("temporal", "F"),
     ),
-    "fiscal_year": (("temporal", "F"),),
-    "fiscal_years": (("temporal", "F"),),
-    "calendar_year": (("temporal", "F"),),
-    "calendar_years": (("temporal", "F"),),
-    "effective_date": (("temporal", "F"),),
-    "effective_dates": (("temporal", "F"),),
-    "on_and_after": (("temporal", "F"),),
-    "on_or_after": (("temporal", "F"),),
+    "fiscal_year": (
+        ("conditional_normative", "O|"),
+        ("temporal", "F"),
+    ),
+    "fiscal_years": (
+        ("conditional_normative", "O|"),
+        ("temporal", "F"),
+    ),
+    "calendar_year": (
+        ("conditional_normative", "O|"),
+        ("temporal", "F"),
+    ),
+    "calendar_years": (
+        ("conditional_normative", "O|"),
+        ("temporal", "F"),
+    ),
+    "effective_date": (
+        ("conditional_normative", "O|"),
+        ("temporal", "F"),
+    ),
+    "effective_dates": (
+        ("conditional_normative", "O|"),
+        ("temporal", "F"),
+    ),
+    "on_and_after": (
+        ("conditional_normative", "O|"),
+        ("temporal", "F"),
+    ),
+    "on_or_after": (
+        ("conditional_normative", "O|"),
+        ("temporal", "F"),
+    ),
     "determine": (
         ("epistemic", "K"),
         ("doxastic", "B"),
@@ -901,6 +925,33 @@ _DEONTIC_TEMPORAL_BRIDGE_CUES: frozenset[str] = frozenset(
         "requiring",
         "authorized",
         "may",
+    }
+)
+_STATUTORY_SCOPE_BRIDGE_CUES: frozenset[str] = frozenset(
+    {
+        "under",
+        "subject_to",
+        "subject_only_to",
+        "subject_however_to",
+        "subject_to_section",
+        "subject_to_subsection",
+        "subject_to_paragraph",
+        "subject_to_subparagraph",
+        "subject_to_chapter",
+        "subject_to_subchapter",
+        "subject_to_title",
+        "subject_to_the_terms_and_conditions",
+        "subject_to_such_terms_and_conditions",
+        "subject_to_terms_and_conditions",
+        "as_defined_in",
+        "as_described_in",
+        "as_otherwise_provided_in",
+        "as_provided_in",
+        "as_set_forth_in",
+        "defined_in",
+        "described_in",
+        "referred_to_in",
+        "pursuant_to",
     }
 )
 _STATUS_KEYWORD_BRIDGE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...]] = {
@@ -3129,6 +3180,12 @@ def _resolved_formula_conditions(
     )
     if explicit_conditions:
         return explicit_conditions
+    metadata_conditions = _resolved_clause_values_from_metadata(
+        formula,
+        clause_type="condition",
+    )
+    if metadata_conditions:
+        return metadata_conditions
     return _inferred_condition_values_from_source_span(
         modal_ir=modal_ir,
         formula=formula,
@@ -3147,10 +3204,83 @@ def _resolved_formula_exceptions(
     )
     if explicit_exceptions:
         return explicit_exceptions
+    metadata_exceptions = _resolved_clause_values_from_metadata(
+        formula,
+        clause_type="exception",
+    )
+    if metadata_exceptions:
+        return metadata_exceptions
     return _inferred_exception_values_from_source_span(
         modal_ir=modal_ir,
         formula=formula,
     )
+
+
+def _resolved_clause_values_from_metadata(
+    formula: ModalIRFormula,
+    *,
+    clause_type: str,
+) -> List[str]:
+    metadata = formula.metadata if isinstance(formula.metadata, Mapping) else {}
+    slot = "condition" if clause_type == "condition" else "exception"
+    scope_key = f"{slot}_scope"
+    prefix_key_slot = f"{slot}_prefix_key"
+    scoped_prefix = ""
+    scoped_value = ""
+    collected: List[str] = []
+
+    def _append_values(raw_value: Any) -> None:
+        if isinstance(raw_value, (list, tuple, set, frozenset)):
+            for item in raw_value:
+                _append_values(item)
+            return
+        cleaned = _clean_non_empty_string(raw_value)
+        if cleaned:
+            collected.append(cleaned)
+
+    for key, value in metadata.items():
+        key_text = _clean_non_empty_string(key).lower()
+        if not key_text:
+            continue
+        if key_text in {slot, f"{slot}s"}:
+            _append_values(value)
+            continue
+        if key_text == scope_key:
+            scoped_value = _clean_non_empty_string(value)
+            continue
+        if key_text == prefix_key_slot:
+            scoped_prefix = _clean_non_empty_string(value).lower()
+            continue
+        if key_text.startswith(f"{slot}_") and key_text not in {
+            prefix_key_slot,
+            scope_key,
+            f"{slot}_prefix",
+            f"{slot}_prefix_family",
+            f"{slot}_prefix_temporal_relation",
+        }:
+            suffix = key_text[len(f"{slot}_") :]
+            if suffix and not scoped_prefix:
+                scoped_prefix = suffix
+            _append_values(value)
+    if scoped_prefix and scoped_value:
+        collected.append(f"{scoped_prefix.replace('_', ' ')} {scoped_value}")
+
+    resolved: List[str] = []
+    for value in _unique_preserve_order(collected):
+        parsed = _typed_clause_key_value(value, clause_type=clause_type)
+        if parsed is not None:
+            resolved.append(value)
+            continue
+        if scoped_prefix:
+            prefix_text = scoped_prefix.replace("_", " ").strip()
+            value_text = _clean_non_empty_string(value)
+            if not prefix_text or value_text.lower().startswith(prefix_text.lower()):
+                continue
+            prefixed = f"{prefix_text} {value_text}".strip()
+            parsed = _typed_clause_key_value(prefixed, clause_type=clause_type)
+            if parsed is not None and parsed[1]:
+                resolved.append(prefixed)
+    return _unique_preserve_order(resolved)
 
 
 def _inferred_condition_values_from_source_span(
@@ -3670,6 +3800,25 @@ def _augment_deontic_bridge_pairs(
         deontic_temporal_pair = ("deontic", normalized_symbol)
         if deontic_temporal_pair not in pairs:
             pairs.append(deontic_temporal_pair)
+    if cue_key in _STATUTORY_SCOPE_BRIDGE_CUES:
+        # Keep scoped statutory cross-references typed across family lanes
+        # so permission/deadline clauses can round-trip into deontic+frame slots.
+        if normalized_family == "deontic":
+            deontic_scope_pair = ("deontic", "O")
+            if deontic_scope_pair not in pairs:
+                pairs.append(deontic_scope_pair)
+            frame_scope_pair = ("frame", "Frame")
+            if frame_scope_pair not in pairs:
+                pairs.append(frame_scope_pair)
+        if normalized_family == "temporal":
+            temporal_scope_pairs = (
+                ("conditional_normative", "O|"),
+                ("deontic", "O"),
+                ("frame", "Frame"),
+            )
+            for temporal_scope_pair in temporal_scope_pairs:
+                if temporal_scope_pair not in pairs:
+                    pairs.append(temporal_scope_pair)
     return pairs
 
 
@@ -4021,6 +4170,12 @@ def _content_scope_value(text: str) -> str:
     content = _clean_non_empty_string(" ".join(tokens))
     if not content or content.lower() == normalized.lower():
         return ""
+    content_tokens = _CUE_TOKEN_RE.findall(content.lower())
+    if len(content_tokens) == 1 and (
+        content_tokens[0] in _LOW_INFORMATION_SECTION_MARKER_TOKENS
+        or content_tokens[0] in _LOW_INFORMATION_SECTION_MARKER_SINGLE_CHAR_TOKENS
+    ):
+        return ""
     return content
 
 
@@ -4303,6 +4458,13 @@ def _should_emit_frame_structural_deontic_bridge(
     if _temporal_transition_context_cues_from_text(normalized_text):
         return True
     if _STATUTORY_SCOPE_REFERENCE_RE.search(normalized_text):
+        return True
+    structural_heading_cues = {
+        token[:-1] if token.endswith("s") else token
+        for token in _CUE_TOKEN_RE.findall(normalized_text)
+        if token
+    }
+    if len(structural_heading_cues.intersection(_STRUCTURAL_FRAME_CUE_TOKENS)) >= 2:
         return True
     return (
         _FRAME_STRUCTURAL_DEONTIC_BRIDGE_TRIGGER_RE.search(normalized_text) is not None
@@ -8267,8 +8429,12 @@ def _structural_semantic_values(decoded: DecodedModalText) -> List[str]:
         "source_action_anchor",
         "source_object_anchor",
         "source_temporal_anchor",
+        "condition_prefix_family",
+        "condition_prefix_temporal_relation",
         "condition_scope",
         "condition",
+        "exception_prefix_family",
+        "exception_prefix_temporal_relation",
         "exception_scope",
         "exception",
         "modal_operator_label_canonical",
@@ -8277,6 +8443,11 @@ def _structural_semantic_values(decoded: DecodedModalText) -> List[str]:
         "modal_operator",
         "modal_cue",
         "bridge_cue",
+        "refined_modal_family_pair",
+        "refined_modal_bridge_signature",
+        "refined_temporal_bridge_family_pair",
+        "refined_temporal_bridge_signature",
+        "refined_temporal_bridge_context",
         "selected_frame",
     )
     preferred_slot_set = set(preferred_slots)

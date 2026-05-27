@@ -1460,9 +1460,6 @@ def _merge_phase8_validation_from_coverage_records(
     phase8_records: Sequence[Mapping[str, Any]],
     coverage_records: Sequence[Mapping[str, Any]],
 ) -> list[dict[str, Any]]:
-    if not phase8_records:
-        return []
-
     coverage_by_source: dict[str, dict[str, Any]] = {}
     for record in coverage_records or []:
         if not isinstance(record, Mapping):
@@ -1471,10 +1468,19 @@ def _merge_phase8_validation_from_coverage_records(
         if source_id:
             coverage_by_source[source_id] = dict(record)
 
+    if not phase8_records:
+        return [
+            _phase8_record_from_coverage_record(coverage_by_source[source_id])
+            for source_id in sorted(coverage_by_source)
+        ]
+
     merged: list[dict[str, Any]] = []
+    merged_source_ids: set[str] = set()
     for phase8_record in phase8_records:
         row = dict(phase8_record)
         source_id = str(row.get("source_id") or "").strip()
+        if source_id:
+            merged_source_ids.add(source_id)
         coverage_record = coverage_by_source.get(source_id)
         if coverage_record is None:
             merged.append(row)
@@ -1504,7 +1510,34 @@ def _merge_phase8_validation_from_coverage_records(
             row["coverage_summary"] = summary
         merged.append(row)
 
+    for source_id, coverage_record in sorted(coverage_by_source.items()):
+        if source_id in merged_source_ids:
+            continue
+        merged.append(_phase8_record_from_coverage_record(coverage_record))
+
     return merged
+
+
+def _phase8_record_from_coverage_record(record: Mapping[str, Any]) -> dict[str, Any]:
+    """Build a minimal Phase 8 row when only coverage diagnostics are present."""
+
+    source_id = str(record.get("source_id") or "").strip()
+    requires_validation = _coverage_record_requires_validation(record)
+    blockers = sorted(_list_of_strings(record.get("coverage_blockers")))
+    summary = record.get("coverage_summary")
+    coverage_summary = dict(summary) if isinstance(summary, Mapping) else {}
+    coverage_summary["requires_validation"] = requires_validation
+    coverage_summary["phase8_quality_complete"] = not requires_validation
+    summary_blockers = set(_list_of_strings(coverage_summary.get("coverage_blockers")))
+    summary_blockers.update(blockers)
+    coverage_summary["coverage_blockers"] = sorted(summary_blockers)
+    return {
+        "source_id": source_id,
+        "phase8_quality_complete": not requires_validation,
+        "requires_validation": requires_validation,
+        "coverage_blockers": blockers,
+        "coverage_summary": coverage_summary,
+    }
 
 
 def _deontic_proof_gate_soft_pass(

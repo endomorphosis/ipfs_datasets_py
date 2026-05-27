@@ -1594,6 +1594,8 @@ def _additional_frame_ontology_values_from_feature(
         return []
     if normalized_signature_type == "operator":
         return _predicate_argument_operator_ontology_values(signature_value)
+    if normalized_signature_type == "role_shape":
+        return _predicate_argument_role_shape_ontology_values(signature_value)
     if normalized_signature_type.endswith("_family"):
         return _predicate_argument_anchor_family_ontology_values(signature_value)
     if (
@@ -1669,7 +1671,7 @@ def _predicate_argument_anchor_ontology_values(
     if not segments:
         return []
     anchor = segments[0]
-    return [
+    values: List[tuple[str, bool, bool, int]] = [
         (
             anchor,
             False,
@@ -1677,6 +1679,43 @@ def _predicate_argument_anchor_ontology_values(
             _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
         )
     ]
+    if len(segments) >= 2:
+        values.append(
+            (
+                f"{anchor}:{segments[1]}",
+                False,
+                False,
+                _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
+            )
+        )
+    return values
+
+
+def _predicate_argument_role_shape_ontology_values(
+    signature_value: str,
+) -> List[tuple[str, bool, bool, int]]:
+    segments = [segment.strip() for segment in str(signature_value or "").split(":")]
+    segments = [segment for segment in segments if segment]
+    if not segments:
+        return []
+    values: List[tuple[str, bool, bool, int]] = [
+        (
+            segments[0],
+            False,
+            False,
+            _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
+        )
+    ]
+    if len(segments) >= 2:
+        values.append(
+            (
+                f"{segments[0]}:{segments[1]}",
+                False,
+                False,
+                _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
+            )
+        )
+    return values
 
 
 def _normalized_frame_ontology_cue_value(value: str) -> str:

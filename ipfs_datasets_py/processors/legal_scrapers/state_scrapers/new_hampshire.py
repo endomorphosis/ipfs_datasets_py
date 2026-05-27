@@ -162,6 +162,21 @@ class NewHampshireScraper(BaseStateScraper):
         _merge(archived_title_stubs)
         if archived_title_stubs:
             checkpoint.maybe_write(merged, code_name=code_name, stage_label="archived-title-stubs")
+            if full_corpus_unbounded:
+                checkpoint.write(
+                    merged,
+                    code_name=code_name,
+                    stage_label="complete",
+                    progress={
+                        "codes_completed": 1,
+                        "codes_total": 1,
+                    },
+                )
+                self.logger.info(
+                    "New Hampshire full-corpus archived crawl: statutes=%s; skipping generic fallback sweep",
+                    len(merged),
+                )
+                return merged
         if not full_corpus_unbounded and len(merged) >= return_threshold:
             return merged
 
