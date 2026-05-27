@@ -15,7 +15,7 @@ import sys
 import time
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -63,6 +63,67 @@ def _summary_metric(summary: dict[str, Any], key: str, default: str = "n/a") -> 
             return "unset"
         return f"{value:.6g}"
     return str(value)
+
+
+def _distribution_cosine_similarity(
+    left: Mapping[str, Any],
+    right: Mapping[str, Any],
+) -> float:
+    keys = sorted(set(left) | set(right))
+    if not keys:
+        return math.nan
+    left_values = [_finite_float(left.get(key), 0.0) for key in keys]
+    right_values = [_finite_float(right.get(key), 0.0) for key in keys]
+    left_norm = math.sqrt(sum(value * value for value in left_values))
+    right_norm = math.sqrt(sum(value * value for value in right_values))
+    if left_norm <= 0.0 or right_norm <= 0.0:
+        return math.nan
+    return sum(a * b for a, b in zip(left_values, right_values)) / (
+        left_norm * right_norm
+    )
+
+
+def _learned_ir_from_metric_block(block: Mapping[str, Any]) -> dict[str, Any]:
+    legal_ir_losses = (
+        block.get("legal_ir_losses") if isinstance(block.get("legal_ir_losses"), dict) else {}
+    )
+    target_distribution = (
+        block.get("legal_ir_view_distribution")
+        if isinstance(block.get("legal_ir_view_distribution"), dict)
+        else {}
+    )
+    predicted_distribution = (
+        block.get("legal_ir_predicted_view_distribution")
+        if isinstance(block.get("legal_ir_predicted_view_distribution"), dict)
+        else {}
+    )
+    view_ce = _finite_float(
+        legal_ir_losses.get("legal_ir_view_cross_entropy_loss"),
+        math.nan,
+    )
+    return {
+        "target_count": int(block.get("legal_ir_target_count", 0) or 0),
+        "view_cross_entropy_loss": view_ce,
+        "view_cosine_similarity": _distribution_cosine_similarity(
+            predicted_distribution,
+            target_distribution,
+        ),
+    }
+
+
+def _latest_cycle_event(events: list[dict[str, Any]]) -> dict[str, Any]:
+    for event in reversed(events):
+        if event.get("event") == "cycle":
+            return event
+    return {}
+
+
+def _first_metric(*values: Any, default: float = math.nan) -> float:
+    for value in values:
+        result = _finite_float(value, math.nan)
+        if math.isfinite(result):
+            return result
+    return default
 
 
 def _mtime_age_seconds(path: Path) -> float | None:
@@ -180,8 +241,13 @@ def _queue_stats(path: Path) -> dict[str, Any]:
     for event in _iter_jsonl(path):
         total += 1
         status = str(event.get("status") or "missing")
-        role = str(event.get("optimizer_role") or event.get("role") or "missing")
         metadata = event.get("metadata") if isinstance(event.get("metadata"), dict) else {}
+        role = str(
+            metadata.get("optimizer_role")
+            or event.get("optimizer_role")
+            or event.get("role")
+            or "missing"
+        )
         scope = str(metadata.get("program_synthesis_scope") or "missing")
         status_counts[status] += 1
         role_counts[role] += 1
@@ -245,7 +311,85 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
     queue_path = queue_dir / f"{final_run_id}-autoencoder.jsonl"
     if not queue_path.exists():
         queue_path = queue_dir / f"{final_run_id}.jsonl"
-    events = _iter_jsonl(log_dir / f"{final_run_id}-autoencoder.jsonl")
+    event_log_path = log_dir / f"{final_run_id}-autoencoder.jsonl"
+    if not event_log_path.exists():
+        event_log_path = log_dir / f"{final_run_id}.jsonl"
+    events = _iter_jsonl(event_log_path)
+    latest_cycle = _latest_cycle_event(events)
+    latest_autoencoder_validation = summary.get("latest_autoencoder_validation")
+    if not isinstance(latest_autoencoder_validation, dict):
+        latest_autoencoder_validation = (
+            latest_cycle.get("autoencoder_after_validation")
+            if isinstance(latest_cycle.get("autoencoder_after_validation"), dict)
+            else latest_cycle.get("after_validation")
+        )
+    if not isinstance(latest_autoencoder_validation, dict):
+        latest_autoencoder_validation = {}
+    latest_compiler_ir_validation = summary.get("latest_compiler_ir_validation")
+    if not isinstance(latest_compiler_ir_validation, dict):
+        latest_compiler_ir_validation = (
+            latest_cycle.get("compiler_ir_validation")
+            if isinstance(latest_cycle.get("compiler_ir_validation"), dict)
+            else {}
+        )
+    latest_learned_ir_validation = summary.get("latest_learned_ir_validation")
+    if not isinstance(latest_learned_ir_validation, dict):
+        latest_learned_ir_validation = (
+            latest_cycle.get("learned_ir_validation")
+            if isinstance(latest_cycle.get("learned_ir_validation"), dict)
+            else _learned_ir_from_metric_block(latest_autoencoder_validation)
+        )
+    latest_todo_generation = summary.get("latest_todo_generation")
+    if not isinstance(latest_todo_generation, dict):
+        latest_todo_generation = {
+            "claimed": latest_cycle.get("program_synthesis_claimed_count"),
+            "completed": latest_cycle.get("program_synthesis_completed_count"),
+            "deduped_total": latest_cycle.get("program_synthesis_deduped_total"),
+            "execution_mode": latest_cycle.get("program_synthesis_execution_mode"),
+            "pending": latest_cycle.get("program_synthesis_pending_count"),
+            "preinsert_deduped_count": latest_cycle.get(
+                "program_synthesis_preinsert_deduped_count"
+            ),
+            "seeded_count": latest_cycle.get("program_synthesis_seeded_count"),
+            "semantic_deduped_count": latest_cycle.get(
+                "program_synthesis_semantic_deduped_count"
+            ),
+        }
+    learned_ir_history = []
+    for event in events:
+        if event.get("event") != "cycle":
+            continue
+        learned_block = (
+            event.get("learned_ir_validation")
+            if isinstance(event.get("learned_ir_validation"), dict)
+            else None
+        )
+        if learned_block is None:
+            metric_block = (
+                event.get("autoencoder_after_validation")
+                if isinstance(event.get("autoencoder_after_validation"), dict)
+                else event.get("after_validation")
+            )
+            learned_block = (
+                _learned_ir_from_metric_block(metric_block)
+                if isinstance(metric_block, dict)
+                else {}
+            )
+        learned_ir_history.append(learned_block)
+    learned_ir_ce_history = [
+        _finite_float(block.get("view_cross_entropy_loss"), math.nan)
+        for block in learned_ir_history
+    ]
+    learned_ir_ce_history = [
+        value for value in learned_ir_ce_history if math.isfinite(value)
+    ]
+    learned_ir_cosine_history = [
+        _finite_float(block.get("view_cosine_similarity"), math.nan)
+        for block in learned_ir_history
+    ]
+    learned_ir_cosine_history = [
+        value for value in learned_ir_cosine_history if math.isfinite(value)
+    ]
     cycle_durations = [
         _finite_float(event.get("duration_seconds"))
         for event in events
@@ -263,9 +407,97 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
         "best_validation_cosine": summary.get("best_validation_cosine"),
         "best_validation_ir_ce": summary.get("best_validation_ir_ce"),
         "best_validation_ir_cosine": summary.get("best_validation_ir_cosine"),
+        "best_validation_ir_source_copy_loss": summary.get(
+            "best_validation_ir_source_copy_loss"
+        ),
+        "best_validation_learned_ir_view_ce": summary.get(
+            "best_validation_learned_ir_view_ce"
+        )
+        if summary.get("best_validation_learned_ir_view_ce") is not None
+        else (min(learned_ir_ce_history) if learned_ir_ce_history else math.nan),
+        "best_validation_learned_ir_view_cosine": summary.get(
+            "best_validation_learned_ir_view_cosine"
+        )
+        if summary.get("best_validation_learned_ir_view_cosine") is not None
+        else (
+            max(learned_ir_cosine_history)
+            if learned_ir_cosine_history
+            else math.nan
+        ),
+        "latest_validation_ce": _first_metric(
+            summary.get("latest_validation_ce"),
+            latest_autoencoder_validation.get("cross_entropy_loss"),
+        ),
+        "latest_validation_cosine": _first_metric(
+            summary.get("latest_validation_cosine"),
+            latest_autoencoder_validation.get("cosine_similarity"),
+        ),
+        "latest_validation_reconstruction": _first_metric(
+            summary.get("latest_validation_reconstruction"),
+            latest_autoencoder_validation.get("reconstruction_loss"),
+        ),
+        "latest_validation_ce_delta": _first_metric(
+            summary.get("latest_validation_ce_delta"),
+            latest_cycle.get("validation_cross_entropy_delta"),
+        ),
+        "latest_validation_cosine_delta": _first_metric(
+            summary.get("latest_validation_cosine_delta"),
+            latest_cycle.get("validation_cosine_delta"),
+        ),
+        "latest_compiler_ir_ce": _first_metric(
+            summary.get("latest_compiler_ir_ce"),
+            latest_compiler_ir_validation.get("cross_entropy_loss"),
+        ),
+        "latest_compiler_ir_cosine": _first_metric(
+            summary.get("latest_compiler_ir_cosine"),
+            latest_compiler_ir_validation.get("cosine_similarity"),
+        ),
+        "latest_compiler_ir_source_copy_loss": _first_metric(
+            summary.get("latest_compiler_ir_source_copy_loss"),
+            latest_compiler_ir_validation.get("source_copy_loss"),
+        ),
+        "latest_learned_ir_view_ce": _first_metric(
+            summary.get("latest_learned_ir_view_ce"),
+            latest_learned_ir_validation.get("view_cross_entropy_loss"),
+        ),
+        "latest_learned_ir_view_cosine": _first_metric(
+            summary.get("latest_learned_ir_view_cosine"),
+            latest_learned_ir_validation.get("view_cosine_similarity"),
+        ),
+        "learning_rate_plateau_streak": int(
+            summary.get("learning_rate_plateau_streak", 0) or 0
+        ),
+        "latest_feature_projection_accepted_epochs": int(
+            (
+                summary.get("latest_feature_projection_report", {})
+                if isinstance(summary.get("latest_feature_projection_report"), dict)
+                else {}
+            ).get("accepted_epochs", 0)
+            or 0
+        ),
         "program_synthesis_pending": int(summary.get("program_synthesis_pending", 0) or 0),
         "program_synthesis_claimed": int(summary.get("program_synthesis_claimed", 0) or 0),
         "program_synthesis_completed": int(summary.get("program_synthesis_completed", 0) or 0),
+        "program_synthesis_seeded": int(summary.get("program_synthesis_seeded", 0) or 0),
+        "program_synthesis_preinsert_deduped": int(
+            summary.get("program_synthesis_preinsert_deduped", 0) or 0
+        ),
+        "program_synthesis_semantic_deduped": int(
+            summary.get("program_synthesis_semantic_deduped", 0) or 0
+        ),
+        "program_synthesis_deduped_total": int(
+            summary.get("program_synthesis_deduped_total", 0) or 0
+        ),
+        "latest_program_synthesis_seeded_count": int(
+            latest_todo_generation.get("seeded_count") or 0
+        ),
+        "latest_program_synthesis_preinsert_deduped_count": int(
+            latest_todo_generation.get("preinsert_deduped_count") or 0
+        ),
+        "latest_program_synthesis_semantic_deduped_count": int(
+            latest_todo_generation.get("semantic_deduped_count") or 0
+        ),
+        "latest_todo_generation": latest_todo_generation,
         "latest_queue_counts": summary.get("latest_queue_counts", {}),
         "latest_role_queue_counts": summary.get("latest_role_queue_counts", {}),
         "cycle_duration_median": (
@@ -309,6 +541,14 @@ def _recommendation(
         pending = int(final.get("program_synthesis_pending", 0) or 0)
         claimed = int(final.get("program_synthesis_claimed", 0) or 0)
         completed = int(final.get("program_synthesis_completed", 0) or 0)
+        latest_seeded = int(final.get("latest_program_synthesis_seeded_count", 0) or 0)
+        latest_preinsert_deduped = int(
+            final.get("latest_program_synthesis_preinsert_deduped_count", 0) or 0
+        )
+        plateau_streak = int(final.get("learning_rate_plateau_streak", 0) or 0)
+        accepted_epochs = int(
+            final.get("latest_feature_projection_accepted_epochs", 0) or 0
+        )
         cycle_latest = final.get("cycle_duration_latest")
         if pending == 0 and claimed == 0:
             lines.append(
@@ -328,6 +568,17 @@ def _recommendation(
         else:
             lines.append(
                 "Queue depth is roughly matched to Codex capacity; keep Codex workers demand-weighted."
+            )
+        if latest_seeded > 0 and latest_preinsert_deduped >= latest_seeded and pending <= max(5, codex_count):
+            lines.append(
+                "TODO producer is active, but visible backlog can stay flat because current-cycle "
+                "dedupe plus Codex consumption is matching or exceeding seeding."
+            )
+        latest_ce_delta = _finite_float(final.get("latest_validation_ce_delta"), math.nan)
+        if plateau_streak > 0 and math.isfinite(latest_ce_delta) and latest_ce_delta <= 0.0:
+            lines.append(
+                f"Validation CE is plateaued on the latest canary cycle "
+                f"(delta={latest_ce_delta:.6g}, accepted_epochs={accepted_epochs})."
             )
         if isinstance(cycle_latest, (float, int)) and cycle_latest > 600:
             lines.append(
@@ -397,6 +648,40 @@ def _print_report(report: dict[str, Any]) -> None:
             f"pending={final['program_synthesis_pending']} "
             f"claimed={final['program_synthesis_claimed']} "
             f"completed={final['program_synthesis_completed']}"
+        )
+        print(
+            "  autoencoder_validation="
+            f"best_ce={_summary_metric(final, 'best_validation_ce')} "
+            f"latest_ce={_summary_metric(final, 'latest_validation_ce')} "
+            f"ce_delta={_summary_metric(final, 'latest_validation_ce_delta')} "
+            f"best_cos={_summary_metric(final, 'best_validation_cosine')} "
+            f"latest_cos={_summary_metric(final, 'latest_validation_cosine')} "
+            f"cos_delta={_summary_metric(final, 'latest_validation_cosine_delta')}"
+        )
+        print(
+            "  deterministic_compiler_ir="
+            f"best_ce={_summary_metric(final, 'best_validation_ir_ce')} "
+            f"latest_ce={_summary_metric(final, 'latest_compiler_ir_ce')} "
+            f"best_cos={_summary_metric(final, 'best_validation_ir_cosine')} "
+            f"latest_cos={_summary_metric(final, 'latest_compiler_ir_cosine')} "
+            f"source_copy_loss={_summary_metric(final, 'latest_compiler_ir_source_copy_loss')}"
+        )
+        print(
+            "  learned_ir_view="
+            f"best_ce={_summary_metric(final, 'best_validation_learned_ir_view_ce')} "
+            f"latest_ce={_summary_metric(final, 'latest_learned_ir_view_ce')} "
+            f"best_cos={_summary_metric(final, 'best_validation_learned_ir_view_cosine')} "
+            f"latest_cos={_summary_metric(final, 'latest_learned_ir_view_cosine')}"
+        )
+        print(
+            "  todo_generation="
+            f"latest_seeded={final['latest_program_synthesis_seeded_count']} "
+            f"latest_preinsert_deduped={final['latest_program_synthesis_preinsert_deduped_count']} "
+            f"latest_semantic_deduped={final['latest_program_synthesis_semantic_deduped_count']} "
+            f"total_seeded={final['program_synthesis_seeded']} "
+            f"total_deduped={final['program_synthesis_deduped_total']} "
+            f"accepted_epochs={final['latest_feature_projection_accepted_epochs']} "
+            f"plateau_streak={final['learning_rate_plateau_streak']}"
         )
         print(f"  queue_status={final['queue']['status_counts']}")
         print(f"  pending_by_scope={final['queue']['pending_by_scope']}")

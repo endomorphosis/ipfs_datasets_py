@@ -56,6 +56,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_002890_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_002998_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_003624_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_003643_FAMILY_PAIRS,
     COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR,
     compiler_refined_modal_family_cue_margin_buffer,
     is_compiler_ambiguity_policy_pair,
@@ -3995,6 +3996,14 @@ def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_002890_pair
         ("temporal", "frame"),
     )
     assert tuple(COMPILER_AMBIGUITY_PACKET_002890_FAMILY_PAIRS) == packet_pairs
+def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_003643_pairs() -> None:
+    packet_pairs = (
+        ("conditional_normative", "deontic"),
+        ("deontic", "temporal"),
+        ("frame", "conditional_normative"),
+        ("temporal", "deontic"),
+    )
+    assert tuple(COMPILER_AMBIGUITY_PACKET_003643_FAMILY_PAIRS) == packet_pairs
     for predicted_family, target_family in packet_pairs:
         assert (
             supports_signal_free_adaptive_ambiguity_pair(

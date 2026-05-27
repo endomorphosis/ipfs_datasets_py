@@ -4187,6 +4187,26 @@ def test_metric_block_includes_autoencoder_legal_ir_target_losses() -> None:
     assert block["legal_ir_predicted_view_distribution"]
 
 
+def test_learned_ir_metric_block_reports_autoencoder_view_alignment() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall publish notice before the permit takes effect.",
+    )
+    evaluation = AdaptiveModalAutoencoder().evaluate(
+        [sample],
+        legal_ir_bridge_names=("deontic_norms", "fol_tdfol"),
+    )
+
+    block = runner.learned_ir_metric_block(evaluation)
+
+    assert block["target_count"] == 1
+    assert block["view_cross_entropy_loss"] > 0.0
+    assert 0.0 <= block["view_cosine_similarity"] <= 1.0
+    assert block["target_view_distribution"]
+    assert block["predicted_view_distribution"]
+
+
 def test_supervisor_optimization_run_reduces_ce_and_reconstruction_loss(tmp_path) -> None:
     sample = build_us_code_sample(
         title="42",

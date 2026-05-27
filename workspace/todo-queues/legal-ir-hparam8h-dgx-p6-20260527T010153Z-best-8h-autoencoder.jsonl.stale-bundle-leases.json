@@ -1,9 +1,9 @@
 {
-  "compiler_ambiguity|modal.compiler.ambiguity|{\"action\":\"add_or_review_modal_ambiguity_policy\",\"family_pairs\":[\"conditional_normative->deontic\",\"deontic->temporal\",\"frame->conditional_normative\",\"temporal->deontic\"],\"program_synthesis_scope\":\"compiler_ambiguity\",\"target_component\":\"modal.compiler.ambiguity\"}": {
-    "anchor_id": "program-efb48bd23a11e370",
-    "expires_at": "2026-05-27T08:20:43+00:00",
-    "expires_at_epoch": 1779870043.988398,
+  "ir_decompiler|modal.ir_decompiler|{\"action\":\"refine_typed_ir_or_decompiler_slots\",\"family_pairs\":[\"deontic->temporal\",\"frame->deontic\",\"frame->frame\",\"frame->temporal\",\"temporal->deontic\",\"temporal->frame\",\"temporal->temporal\"],\"program_synthesis_scope\":\"ir_decompiler\",\"target_component\":\"modal.ir_decompiler\"}": {
+    "anchor_id": "program-8caeceee62f724e0",
+    "expires_at": "2026-05-27T08:41:31+00:00",
+    "expires_at_epoch": 1779871291.1486897,
     "selected_count": 1,
-    "worker_id": "codex-compiler_ambiguity-02"
+    "worker_id": "codex-ir_decompiler-01"
   }
 }
