@@ -4917,6 +4917,112 @@ def test_modal_ir_to_flogic_triples_emit_source_anchor_family_pair_slots() -> No
     )
 
 
+def test_decode_modal_ir_document_emits_alethic_directional_source_anchor_family_pairs() -> None:
+    source_id = "us-code-11-77-a11e77a11e77a11e"
+    sample_document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="The Secretary may, when necessary, issue guidance.",
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-alethic-anchor",
+                operator=ModalIROperator(
+                    family="alethic",
+                    system="S5",
+                    symbol="□",
+                    label="necessary",
+                ),
+                predicate=ModalIRPredicate(name="issue_guidance"),
+                provenance=ModalIRProvenance(
+                    source_id=source_id,
+                    start_char=0,
+                    end_char=53,
+                    citation="11 U.S.C. 77",
+                ),
+            )
+        ],
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(sample_document)
+    )
+    source_action_pairs = set(slot_map["source_action_family_pair"])
+    assert {
+        "alethic->alethic",
+        "alethic->conditional_normative",
+        "alethic->deontic",
+        "alethic->temporal",
+    }.issubset(source_action_pairs)
+    source_action_pair_anchors = slot_map["source_action_family_pair_anchor"]
+    assert any(
+        value.endswith(":alethic->conditional_normative")
+        for value in source_action_pair_anchors
+    )
+    assert any(
+        value.endswith(":alethic->deontic")
+        for value in source_action_pair_anchors
+    )
+    assert any(
+        value.endswith(":alethic->temporal")
+        for value in source_action_pair_anchors
+    )
+
+
+def test_modal_ir_to_flogic_triples_emit_alethic_directional_source_anchor_family_pairs() -> None:
+    source_id = "us-code-11-77-a11e77a11e77a11e"
+    sample_document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="The Secretary may, when necessary, issue guidance.",
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-alethic-anchor",
+                operator=ModalIROperator(
+                    family="alethic",
+                    system="S5",
+                    symbol="□",
+                    label="necessary",
+                ),
+                predicate=ModalIRPredicate(name="issue_guidance"),
+                provenance=ModalIRProvenance(
+                    source_id=source_id,
+                    start_char=0,
+                    end_char=53,
+                    citation="11 U.S.C. 77",
+                ),
+            )
+        ],
+    )
+    triples = modal_ir_to_flogic_triples(sample_document)
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    source_action_pairs = set(objects("source_action_family_pair"))
+    assert {
+        "alethic->alethic",
+        "alethic->conditional_normative",
+        "alethic->deontic",
+        "alethic->temporal",
+    }.issubset(source_action_pairs)
+    source_action_pair_anchors = objects("source_action_family_pair_anchor")
+    assert any(
+        value.endswith(":alethic->conditional_normative")
+        for value in source_action_pair_anchors
+    )
+    assert any(
+        value.endswith(":alethic->deontic")
+        for value in source_action_pair_anchors
+    )
+    assert any(
+        value.endswith(":alethic->temporal")
+        for value in source_action_pair_anchors
+    )
+
+
 def test_decode_modal_ir_document_derives_modal_cue_from_fallback_frame_predicate() -> None:
     decoded = decode_modal_ir_document(_fallback_frame_authority_cue_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)

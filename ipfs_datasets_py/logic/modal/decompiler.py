@@ -830,6 +830,7 @@ _CROSS_FAMILY_BRIDGE_FAMILY_PRIORITY: Mapping[str, int] = {
     "dynamic": 6,
 }
 _SOURCE_ANCHOR_DIRECTIONAL_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = {
+    "alethic": ("conditional_normative", "deontic", "temporal"),
     "deontic": ("conditional_normative", "deontic"),
     "frame": ("doxastic", "frame", "temporal"),
     "temporal": ("conditional_normative", "deontic"),
@@ -7151,6 +7152,21 @@ def _refined_contextual_modal_cues_from_text(
     for cue in _stem_refined_modal_cues_from_text(formula, text=text):
         if cue and cue not in cues:
             cues.append(cue)
+    # Preserve explicit typed-IR cue semantics when source spans are clipped or
+    # noisy; keep this conservative by only admitting cues recognized by the
+    # bridge vocabulary.
+    for cue in _formula_cues(formula):
+        normalized_cue = _clean_text(cue).replace(" ", "_").lower()
+        if (
+            not normalized_cue
+            or normalized_cue in cues
+            or (
+                normalized_cue not in _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS
+                and normalized_cue not in _registry_bridge_cue_keys()
+            )
+        ):
+            continue
+        cues.append(normalized_cue)
     # Preserve typed IR clause semantics even when source spans are noisy or
     # clipped; this keeps directional family-pair slots aligned with
     # condition/exception prefixes carried in IR.

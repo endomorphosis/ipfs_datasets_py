@@ -17,7 +17,12 @@ class NebraskaScraper(BaseStateScraper):
     """Scraper for Nebraska state laws from https://nebraskalegislature.gov"""
 
     _NE_CHAPTER_URL_RE = re.compile(r"/laws/browse-chapters\.php\?chapter=\d+[A-Za-z]?$", re.IGNORECASE)
-    _NE_SECTION_NUMBER_RE = re.compile(r"^\d+[A-Za-z]?(?:-\d+[A-Za-z]?)+(?:\.\d+)?$")
+    # Nebraska section identifiers frequently include comma-delimited numeric
+    # segments (for example, "2-32,113"). Accept those formats so full-corpus
+    # scans do not silently drop valid sections.
+    _NE_SECTION_NUMBER_RE = re.compile(
+        r"^\d+[A-Za-z]?(?:-\d{1,3}(?:,\d{3})*[A-Za-z]?)+(?:\.\d+)?[A-Za-z]?$"
+    )
     
     def get_base_url(self) -> str:
         """Return the base URL for Nebraska's legislative website."""
@@ -67,6 +72,7 @@ class NebraskaScraper(BaseStateScraper):
     ) -> List[NormalizedStatute]:
         limit = max(1, int(max_statutes)) if max_statutes is not None else None
         resumed = self._load_partial_checkpoint_statutes(code_name=code_name, max_statutes=limit)
+        checkpoint_progress = self._load_partial_checkpoint_progress()
         chapter_urls = await self._discover_chapter_urls()
         self.logger.info("Nebraska official index: discovered %s chapter urls", len(chapter_urls))
         statutes: List[NormalizedStatute] = []
@@ -95,6 +101,13 @@ class NebraskaScraper(BaseStateScraper):
                 "Nebraska official index: resumed %s statutes from checkpoint",
                 len(statutes),
             )
+        resume_chapters_scanned = max(0, int(checkpoint_progress.get("chapters_scanned") or 0))
+        resume_sections_scanned = max(0, int(checkpoint_progress.get("sections_scanned") or 0))
+        resume_discovered_sections = max(0, int(checkpoint_progress.get("discovered_sections") or 0))
+        chapter_rewind = max(0, int(self._env_int("STATE_SCRAPER_NE_RESUME_CHAPTER_REWIND", default=4)))
+        resume_chapter_floor = max(0, resume_chapters_scanned - chapter_rewind)
+        sections_scanned_total = int(max(len(statutes), resume_sections_scanned))
+        sections_discovered_total = int(max(len(statutes), resume_discovered_sections))
 
         self._write_partial_checkpoint(
             statutes,
@@ -103,6 +116,8 @@ class NebraskaScraper(BaseStateScraper):
             extra={
                 "chapters_scanned": 0,
                 "discovered_chapters": int(len(chapter_urls)),
+                "sections_scanned": int(sections_scanned_total),
+                "discovered_sections": int(sections_discovered_total),
                 "codes_completed": 0,
                 "codes_total": 1,
             },
@@ -110,9 +125,12 @@ class NebraskaScraper(BaseStateScraper):
         for chapter_index, chapter_url in enumerate(chapter_urls, start=1):
             if limit is not None and len(statutes) >= limit:
                 break
+            if chapter_index < resume_chapter_floor:
+                continue
             section_urls = await self._discover_section_urls(chapter_url)
             if seen_source_urls:
                 section_urls = [url for url in section_urls if url not in seen_source_urls]
+            sections_discovered_total += len(section_urls)
             if chapter_index == 1 or chapter_index % 10 == 0 or chapter_index == len(chapter_urls):
                 self.logger.info(
                     "Nebraska official index: chapter=%s/%s discovered_sections=%s statutes_so_far=%s",
@@ -121,37 +139,42 @@ class NebraskaScraper(BaseStateScraper):
                     len(section_urls),
                     len(statutes),
                 )
+            def _progress_hook(
+                scanned_sections: int,
+                total_sections: int,
+                partial_batch: List[NormalizedStatute],
+                *,
+                chapter_index_local: int = chapter_index,
+            ) -> None:
+                if (
+                    scanned_sections == 1
+                    or scanned_sections % 200 == 0
+                    or scanned_sections == total_sections
+                ):
+                    cumulative_scanned = int(sections_scanned_total + scanned_sections)
+                    self._write_partial_checkpoint(
+                        statutes + partial_batch,
+                        code_name=code_name,
+                        stage_label="nebraska:section-scan",
+                        extra={
+                            "chapters_scanned": int(max(0, chapter_index_local - 1)),
+                            "current_chapter": int(chapter_index_local),
+                            "discovered_chapters": int(len(chapter_urls)),
+                            "sections_scanned": cumulative_scanned,
+                            "discovered_sections": int(sections_discovered_total),
+                            "codes_completed": 0,
+                            "codes_total": 1,
+                        },
+                    )
             parsed = await self._scrape_section_urls(
                 code_name,
                 section_urls,
                 max_statutes=(None if limit is None else max(0, limit - len(statutes))),
                 discovery_method="official_chapter_index_sections",
-                progress_hook=(
-                    lambda scanned_sections, total_sections, partial_batch, chapter_index=chapter_index: (
-                        self._write_partial_checkpoint(
-                            statutes + partial_batch,
-                            code_name=code_name,
-                            stage_label="nebraska:section-scan",
-                            extra={
-                                "chapters_scanned": int(max(0, chapter_index - 1)),
-                                "current_chapter": int(chapter_index),
-                                "discovered_chapters": int(len(chapter_urls)),
-                                "sections_scanned": int(scanned_sections),
-                                "discovered_sections": int(total_sections),
-                                "codes_completed": 0,
-                                "codes_total": 1,
-                            },
-                        )
-                        if (
-                            scanned_sections == 1
-                            or scanned_sections % 200 == 0
-                            or scanned_sections == total_sections
-                        )
-                        else None
-                    )
-                ),
+                progress_hook=_progress_hook,
             )
             _extend_unique(parsed)
+            sections_scanned_total += len(section_urls)
             if chapter_index == 1 or chapter_index % 25 == 0 or chapter_index == len(chapter_urls):
                 self.logger.info(
                     "Nebraska official index: chapter=%s/%s sections=%s statutes_so_far=%s",
@@ -168,6 +191,8 @@ class NebraskaScraper(BaseStateScraper):
                     extra={
                         "chapters_scanned": int(chapter_index),
                         "discovered_chapters": int(len(chapter_urls)),
+                        "sections_scanned": int(sections_scanned_total),
+                        "discovered_sections": int(sections_discovered_total),
                         "codes_completed": 0,
                         "codes_total": 1,
                     },
@@ -180,6 +205,8 @@ class NebraskaScraper(BaseStateScraper):
             extra={
                 "chapters_scanned": int(len(chapter_urls)),
                 "discovered_chapters": int(len(chapter_urls)),
+                "sections_scanned": int(sections_scanned_total),
+                "discovered_sections": int(sections_discovered_total),
                 "codes_completed": 1,
                 "codes_total": 1,
             },
@@ -298,7 +325,9 @@ class NebraskaScraper(BaseStateScraper):
             full_text = self._normalize_legal_text(statute_panel.get_text(" ", strip=True))
             if not section_name:
                 section_name = f"Section {section_number}"
-            if len(full_text) < 60:
+            # Repealed Nebraska sections can be concise but still substantive
+            # corpus entries when tied to a valid statute identifier.
+            if len(full_text) < 30:
                 return None
             return NormalizedStatute(
                 state_code=self.state_code,

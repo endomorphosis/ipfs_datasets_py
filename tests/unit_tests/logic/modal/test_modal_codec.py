@@ -25,6 +25,7 @@ from ipfs_datasets_py.logic.modal import (
 )
 from ipfs_datasets_py.logic.modal.synthesis import residual_signature_for_hint
 from ipfs_datasets_py.logic.modal.codec import (
+    _enrich_modal_ir_formula_clauses,
     _frame_decoder_audit_features,
     _frame_ontology_audit_feature_keys,
     _frame_ontology_audit_terms,
@@ -49,6 +50,8 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_000139_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000795_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_004009_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_004103_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001551_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_002638_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001472_FAMILY_PAIRS,
@@ -3756,6 +3759,31 @@ def test_modal_registry_supports_packet_001472_compiler_ambiguity_family_pairs()
         )
 
 
+def test_modal_registry_supports_packet_004103_compiler_ambiguity_family_pairs() -> None:
+    packet_pairs = (
+        ("deontic", "frame"),
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("temporal", "deontic"),
+    )
+    assert tuple(COMPILER_AMBIGUITY_PACKET_004103_FAMILY_PAIRS) == packet_pairs
+    for predicted_family, target_family in packet_pairs:
+        assert (
+            supports_signal_free_adaptive_ambiguity_pair(
+                predicted_family,
+                target_family,
+            )
+            is True
+        )
+        assert (
+            is_compiler_ambiguity_policy_pair(
+                predicted_family,
+                target_family,
+            )
+            is True
+        )
+
+
 def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_001558_pairs() -> None:
     packet_pairs = (
         ("conditional_normative", "frame"),
@@ -4114,6 +4142,55 @@ def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_002998_pair
                     target_family,
                 )
                 - 0.0015
+            )
+            < 1e-12
+        )
+
+
+def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_004009_pairs() -> None:
+    packet_pairs = (
+        ("conditional_normative", "alethic"),
+        ("conditional_normative", "deontic"),
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("frame", "temporal"),
+        ("temporal", "deontic"),
+        ("temporal", "frame"),
+        ("temporal", "temporal"),
+    )
+    expected_margin_buffer_by_pair = {
+        ("conditional_normative", "alethic"): 0.0015,
+        ("conditional_normative", "deontic"): 0.0015,
+        ("frame", "conditional_normative"): 0.0015,
+        ("frame", "deontic"): 0.0015,
+        ("frame", "temporal"): 0.0015,
+        ("temporal", "deontic"): 0.0015,
+        ("temporal", "frame"): 0.0015,
+        ("temporal", "temporal"): 0.0015,
+    }
+    assert tuple(COMPILER_AMBIGUITY_PACKET_004009_FAMILY_PAIRS) == packet_pairs
+    for predicted_family, target_family in packet_pairs:
+        assert (
+            supports_signal_free_adaptive_ambiguity_pair(
+                predicted_family,
+                target_family,
+            )
+            is True
+        )
+        assert (
+            is_compiler_ambiguity_policy_pair(
+                predicted_family,
+                target_family,
+            )
+            is True
+        )
+        assert (
+            abs(
+                compiler_refined_modal_family_cue_margin_buffer(
+                    predicted_family,
+                    target_family,
+                )
+                - expected_margin_buffer_by_pair[(predicted_family, target_family)]
             )
             < 1e-12
         )
@@ -14000,6 +14077,43 @@ def test_modal_decompiler_and_triples_reinforce_deontic_bridge_for_temporal_cond
     )
 
 
+def test_modal_decompiler_refined_slots_preserve_metadata_cue_when_source_span_is_noisy() -> None:
+    source_id = "us-code-5-552-metadata-cue-preservation"
+    source_text = "The agency shall issue the records."
+    formula = ModalIRFormula(
+        formula_id=f"{source_id}:f0001",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="shall_issue_records"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="5 U.S.C. 552",
+        ),
+        metadata={"cue": "notwithstanding"},
+    )
+    document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "notwithstanding" in slot_texts["modal_source_span_refined_modal_cue"]
+    assert (
+        "deontic->conditional_normative"
+        in slot_texts["modal_source_span_refined_modal_family_pair"]
+    )
+
+
 def test_modal_decompiler_and_triples_surface_deontic_epistemic_bridge_for_believed_cues() -> None:
     source_id = "us-code-42-2000dd-bridge-believed-8fcb91f1595a3cde"
     source_text = (
@@ -14200,6 +14314,43 @@ def test_modal_decompiler_and_triples_recover_metadata_condition_scope_when_clau
         and triple["object"] == "subject to this section"
         for triple in triples
     )
+
+
+def test_modal_codec_enriches_formula_conditions_from_metadata_scope() -> None:
+    source_id = "us-code-42-7385-metadata-condition-enrichment"
+    source_text = "The Secretary shall pay benefits."
+    formula = ModalIRFormula(
+        formula_id=f"{source_id}:f0001",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="shall_pay_benefits"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="42 U.S.C. 7385",
+        ),
+        metadata={
+            "cue": "shall",
+            "condition_prefix_key": "subject_to",
+            "condition_scope": "this section",
+        },
+    )
+    document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+    enriched = _enrich_modal_ir_formula_clauses(document)
+
+    assert enriched.formulas[0].conditions == ["subject to this section"]
+    assert enriched.formulas[0].exceptions == []
 
 
 def test_modal_decompiler_and_triples_surface_frame_to_temporal_snapshot_bridge_slots() -> None:

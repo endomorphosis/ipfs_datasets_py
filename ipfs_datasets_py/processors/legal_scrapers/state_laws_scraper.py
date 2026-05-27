@@ -163,6 +163,8 @@ def _partial_checkpoint_path_for_state(state_code: str) -> Optional[Path]:
 
 def _partial_checkpoint_progress_signature(payload: Mapping[str, Any]) -> tuple[Any, ...]:
     progress = payload.get("progress") if isinstance(payload.get("progress"), Mapping) else {}
+    # Keep the timeout "progress" signature strictly numeric so stage-label
+    # churn does not look like forward progress when counters are flat.
     counters = (
         _safe_int(payload.get("statutes_count"), 0),
         _safe_int(progress.get("scanned_candidates"), 0),
@@ -175,9 +177,10 @@ def _partial_checkpoint_progress_signature(payload: Mapping[str, Any]) -> tuple[
         _safe_int(progress.get("discovered_titles"), 0),
         _safe_int(progress.get("chapters_scanned"), 0),
         _safe_int(progress.get("discovered_chapters"), 0),
+        _safe_int(progress.get("sections_scanned"), 0),
+        _safe_int(progress.get("discovered_sections"), 0),
         _safe_int(progress.get("codes_completed"), _safe_int(payload.get("codes_completed"), 0)),
         _safe_int(progress.get("codes_total"), _safe_int(payload.get("codes_total"), 0)),
-        str(payload.get("stage_label") or "").strip(),
     )
     return counters
 
@@ -299,10 +302,22 @@ def _derive_timeout_diagnostics_from_checkpoint_payload(
     if selected is not None:
         signal_kind, scanned, discovered = selected
 
+    stage_label = str(payload.get("stage_label") or "").strip().lower()
+    stage_indicates_complete = bool(
+        stage_label == "complete"
+        or stage_label.endswith(":complete")
+        or stage_label.startswith("scrape_all:complete")
+    )
     signal_found = bool(signal_kind)
     work_remaining: Optional[bool] = None
     if signal_found:
         work_remaining = int(scanned) < int(discovered)
+    elif stage_indicates_complete and int(statutes_count) > 0:
+        signal_kind = "checkpoint_stage_complete"
+        signal_found = True
+        scanned = int(statutes_count)
+        discovered = int(statutes_count)
+        work_remaining = False
 
     coverage_ratio: Optional[float] = None
     if signal_found and discovered > 0:

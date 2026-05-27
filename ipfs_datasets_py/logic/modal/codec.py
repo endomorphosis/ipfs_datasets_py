@@ -1327,6 +1327,7 @@ class DeterministicModalLogicCodec:
             selected_frame=selected_frame,
             encoding=encoding,
         )
+        modal_ir = _enrich_modal_ir_formula_clauses(modal_ir)
 
         resolved_source_embedding = list(source_embedding) if source_embedding is not None else stable_mock_embedding(
             normalized_text,
@@ -3168,6 +3169,42 @@ def _typed_clause_key_value(
     return None
 
 
+def _enrich_modal_ir_formula_clauses(modal_ir: ModalIRDocument) -> ModalIRDocument:
+    """Backfill formula clause lists from deterministic metadata/span resolvers."""
+    if not modal_ir.formulas:
+        return modal_ir
+    updated_formulas: List[ModalIRFormula] = []
+    changed = False
+    for formula in modal_ir.formulas:
+        resolved_conditions = list(getattr(formula, "conditions", []) or [])
+        resolved_exceptions = list(getattr(formula, "exceptions", []) or [])
+        if not resolved_conditions:
+            resolved_conditions = _resolved_formula_conditions(
+                modal_ir=modal_ir,
+                formula=formula,
+            )
+        if not resolved_exceptions:
+            resolved_exceptions = _resolved_formula_exceptions(
+                modal_ir=modal_ir,
+                formula=formula,
+            )
+        normalized_formula = formula
+        if (
+            list(getattr(formula, "conditions", []) or []) != resolved_conditions
+            or list(getattr(formula, "exceptions", []) or []) != resolved_exceptions
+        ):
+            normalized_formula = replace(
+                formula,
+                conditions=list(resolved_conditions),
+                exceptions=list(resolved_exceptions),
+            )
+            changed = True
+        updated_formulas.append(normalized_formula)
+    if not changed:
+        return modal_ir
+    return replace(modal_ir, formulas=updated_formulas)
+
+
 def _resolved_formula_conditions(
     *,
     modal_ir: ModalIRDocument,
@@ -3883,6 +3920,28 @@ def _modal_operator_feature_key(symbol: str) -> str:
     return "_".join(tokens)
 
 
+def _slot_safe_family_key(value: str) -> str:
+    normalized = re.sub(
+        r"[^a-z0-9_]+",
+        "_",
+        _clean_non_empty_string(value).lower(),
+    ).strip("_")
+    return normalized
+
+
+def _slot_safe_family_pair_key(value: str) -> str:
+    normalized = _clean_non_empty_string(value).lower()
+    if not normalized:
+        return ""
+    if "->" in normalized:
+        left_raw, right_raw = normalized.split("->", 1)
+        left = _slot_safe_family_key(left_raw)
+        right = _slot_safe_family_key(right_raw)
+        if left and right:
+            return f"{left}_{right}"
+    return _slot_safe_family_key(normalized)
+
+
 def _modal_operator_pair_feature_key(
     source_symbol: str,
     target_symbol: str,
@@ -3964,6 +4023,16 @@ def _modal_lexeme_components(
                 f"{family}->{registry_family}",
             )
         )
+        registry_family_pair_key = _slot_safe_family_pair_key(
+            f"{family}->{registry_family}"
+        )
+        if registry_family_pair_key:
+            components.append(
+                (
+                    f"{normalized_slot_prefix}_registry_family_pair_key",
+                    registry_family_pair_key,
+                )
+            )
         components.append(
             (
                 f"{normalized_slot_prefix}_registry_operator_pair",
@@ -4005,6 +4074,7 @@ def _modal_lexeme_components(
     ):
         bridge_signature = f"{bridge_family}:{bridge_symbol}:{cue_value}"
         bridge_family_pair = f"{family}->{bridge_family}"
+        bridge_family_pair_key = _slot_safe_family_pair_key(bridge_family_pair)
         bridge_operator_pair = f"{symbol}->{bridge_symbol}"
         components.append(
             (
@@ -4012,6 +4082,13 @@ def _modal_lexeme_components(
                 bridge_family_pair,
             )
         )
+        if bridge_family_pair_key:
+            components.append(
+                (
+                    f"{normalized_slot_prefix}_bridge_family_pair_key",
+                    bridge_family_pair_key,
+                )
+            )
         components.append(
             (
                 f"{normalized_slot_prefix}_bridge_operator_pair",
@@ -4031,6 +4108,10 @@ def _modal_lexeme_components(
             )
         if alias_prefix:
             components.append((f"{alias_prefix}_bridge_family_pair", bridge_family_pair))
+            if bridge_family_pair_key:
+                components.append(
+                    (f"{alias_prefix}_bridge_family_pair_key", bridge_family_pair_key)
+                )
             components.append((f"{alias_prefix}_bridge_operator_pair", bridge_operator_pair))
         if bridge_family == family and bridge_symbol == symbol:
             components.append((f"{normalized_slot_prefix}_self_bridge_family", bridge_family))
@@ -4566,6 +4647,7 @@ def _refined_contextual_modal_transition_components(
             cue=normalized_cue,
         ):
             pair = f"{formula_family}->{bridge_family}"
+            pair_key = _slot_safe_family_pair_key(pair)
             operator_pair = f"{formula_symbol}->{bridge_symbol}"
             operator_pair_key = _modal_operator_pair_feature_key(
                 formula_symbol,
@@ -4575,6 +4657,7 @@ def _refined_contextual_modal_transition_components(
             components.extend(
                 (
                     (f"{normalized_slot_prefix}_refined_modal_family_pair", pair),
+                    (f"{normalized_slot_prefix}_refined_modal_family_pair_key", pair_key),
                     (
                         f"{normalized_slot_prefix}_refined_modal_operator_pair",
                         operator_pair,
@@ -4585,6 +4668,7 @@ def _refined_contextual_modal_transition_components(
                         bridge_signature,
                     ),
                     ("refined_modal_family_pair", pair),
+                    ("refined_modal_family_pair_key", pair_key),
                     ("refined_modal_operator_pair", operator_pair),
                     ("refined_modal_pair_cue", f"{pair}:{normalized_cue}"),
                     ("refined_modal_bridge_signature", bridge_signature),
@@ -4684,6 +4768,7 @@ def _refined_temporal_transition_components(
             return []
 
     pair = "temporal->temporal" if formula_family == "temporal" else f"{formula_family}->temporal"
+    pair_key = _slot_safe_family_pair_key(pair)
     temporal_symbol = formula_symbol if formula_family == "temporal" and formula_symbol else "F"
     operator_pair = f"{formula_symbol}->{temporal_symbol}"
     operator_pair_key = _modal_operator_pair_feature_key(
@@ -4693,6 +4778,7 @@ def _refined_temporal_transition_components(
     signature = f"temporal:{temporal_symbol}:{normalized_cue}"
     components: List[tuple[str, str]] = [
         (f"{normalized_slot_prefix}_refined_temporal_bridge_family_pair", pair),
+        (f"{normalized_slot_prefix}_refined_temporal_bridge_family_pair_key", pair_key),
         (f"{normalized_slot_prefix}_refined_temporal_bridge_operator_pair", operator_pair),
         (f"{normalized_slot_prefix}_refined_temporal_bridge_signature", signature),
         (
@@ -4700,6 +4786,7 @@ def _refined_temporal_transition_components(
             f"{pair}:{normalized_cue}",
         ),
         ("refined_temporal_bridge_family_pair", pair),
+        ("refined_temporal_bridge_family_pair_key", pair_key),
         ("refined_temporal_bridge_operator_pair", operator_pair),
         ("refined_temporal_bridge_signature", signature),
         ("refined_temporal_bridge_pair_cue", f"{pair}:{normalized_cue}"),
@@ -4829,6 +4916,7 @@ def _status_keyword_modal_components(
             f"{normalized_bridge_family}:{normalized_bridge_symbol}:{normalized_keyword}"
         )
         family_pair = f"{formula_family}->{normalized_bridge_family}"
+        family_pair_key = _slot_safe_family_pair_key(family_pair)
         operator_pair = f"{formula_symbol}->{normalized_bridge_symbol}"
         components.extend(
             (
@@ -4847,6 +4935,10 @@ def _status_keyword_modal_components(
                 (
                     f"{normalized_slot_prefix}_status_bridge_family_pair",
                     family_pair,
+                ),
+                (
+                    f"{normalized_slot_prefix}_status_bridge_family_pair_key",
+                    family_pair_key,
                 ),
                 (
                     f"{normalized_slot_prefix}_status_bridge_operator_pair",

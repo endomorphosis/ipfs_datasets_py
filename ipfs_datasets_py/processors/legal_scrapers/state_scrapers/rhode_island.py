@@ -74,6 +74,7 @@ class RhodeIslandScraper(BaseStateScraper):
             code_name=code_name,
             max_statutes=max_sections,
         )
+        checkpoint_progress = self._load_partial_checkpoint_progress()
         statutes: List[NormalizedStatute] = []
         seen_urls: set[str] = set()
         seen_keys: set[str] = set()
@@ -100,9 +101,19 @@ class RhodeIslandScraper(BaseStateScraper):
             )
         section_concurrency = max(1, int(self._env_int("STATE_SCRAPER_RI_SECTION_CONCURRENCY", default=10)))
         section_sem = asyncio.Semaphore(section_concurrency)
-        chapters_scanned = 0
-        sections_scanned_total = len(statutes)
-        sections_discovered_total = len(statutes)
+        resume_titles_scanned = max(0, int(checkpoint_progress.get("titles_scanned") or 0))
+        resume_chapters_scanned = max(0, int(checkpoint_progress.get("chapters_scanned") or 0))
+        resume_sections_scanned = max(0, int(checkpoint_progress.get("sections_scanned") or 0))
+        resume_discovered_sections = max(0, int(checkpoint_progress.get("discovered_sections") or 0))
+        title_rewind = max(0, int(self._env_int("STATE_SCRAPER_RI_RESUME_TITLE_REWIND", default=1)))
+        chapter_rewind = max(0, int(self._env_int("STATE_SCRAPER_RI_RESUME_CHAPTER_REWIND", default=20)))
+        resume_title_floor = max(1, resume_titles_scanned - title_rewind)
+        resume_chapter_floor = max(0, resume_chapters_scanned - chapter_rewind)
+        chapters_scanned_total = int(resume_chapters_scanned)
+        chapter_visit_index = 0
+        sections_scanned_total = int(max(len(statutes), resume_sections_scanned))
+        sections_discovered_total = int(max(len(statutes), resume_discovered_sections))
+        last_title_scanned = int(resume_titles_scanned)
 
         try:
             max_title = 60
@@ -126,6 +137,8 @@ class RhodeIslandScraper(BaseStateScraper):
             for title_num in range(1, max_title + 1):
                 if len(statutes) >= max_sections:
                     break
+                if title_num < resume_title_floor:
+                    continue
 
                 title_url = _TITLE_INDEX_URL_TEMPLATE.format(title=title_num)
                 title_bytes = await self._fetch_page_content_with_archival_fallback(title_url, timeout_seconds=30)
@@ -136,6 +149,7 @@ class RhodeIslandScraper(BaseStateScraper):
                         break
                     continue
                 consecutive_missing_titles = 0
+                last_title_scanned = max(last_title_scanned, int(title_num))
 
                 title_soup = BeautifulSoup(title_html, "html.parser")
                 chapter_links = []
@@ -150,6 +164,9 @@ class RhodeIslandScraper(BaseStateScraper):
                     extra={
                         "titles_scanned": int(title_num),
                         "discovered_titles": int(max_title),
+                        "chapters_scanned": int(chapters_scanned_total),
+                        "sections_scanned": int(sections_scanned_total),
+                        "discovered_sections": int(sections_discovered_total),
                         "discovered_chapters": int(len(chapter_links)),
                         "codes_completed": 0,
                         "codes_total": 1,
@@ -160,7 +177,10 @@ class RhodeIslandScraper(BaseStateScraper):
                     if len(statutes) >= max_sections:
                         break
 
-                    chapters_scanned += 1
+                    chapter_visit_index += 1
+                    if chapter_visit_index < resume_chapter_floor:
+                        continue
+                    chapters_scanned_total += 1
                     chapter_bytes = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=30)
                     if not chapter_bytes:
                         continue
@@ -233,11 +253,30 @@ class RhodeIslandScraper(BaseStateScraper):
                         statute = await task
                         if statute is not None:
                             _extend_unique([statute])
+                        if (
+                            scanned_sections == 1
+                            or scanned_sections % 200 == 0
+                            or scanned_sections == len(section_candidates)
+                        ):
+                            self._write_partial_checkpoint(
+                                statutes,
+                                code_name=code_name,
+                                stage_label="rhode-island:section-progress",
+                                extra={
+                                    "titles_scanned": int(title_num),
+                                    "discovered_titles": int(max_title),
+                                    "chapters_scanned": int(chapters_scanned_total),
+                                    "sections_scanned": int(sections_scanned_total),
+                                    "discovered_sections": int(sections_discovered_total),
+                                    "codes_completed": 0,
+                                    "codes_total": 1,
+                                },
+                            )
                         if len(statutes) == 1 or len(statutes) % 25 == 0:
                             self.logger.info(
                                 "Rhode Island custom scraper: title=%s chapters_scanned=%s statutes_so_far=%s",
                                 title_num,
-                                chapters_scanned,
+                                chapters_scanned_total,
                                 len(statutes),
                             )
                             self._write_partial_checkpoint(
@@ -247,7 +286,7 @@ class RhodeIslandScraper(BaseStateScraper):
                                 extra={
                                     "titles_scanned": int(title_num),
                                     "discovered_titles": int(max_title),
-                                    "chapters_scanned": int(chapters_scanned),
+                                    "chapters_scanned": int(chapters_scanned_total),
                                     "sections_scanned": int(sections_scanned_total),
                                     "discovered_sections": int(sections_discovered_total),
                                     "codes_completed": 0,
@@ -271,9 +310,9 @@ class RhodeIslandScraper(BaseStateScraper):
                 stage_label="rhode-island:complete",
                 force=True,
                 extra={
-                    "titles_scanned": int(max_title),
+                    "titles_scanned": int(last_title_scanned),
                     "discovered_titles": int(max_title),
-                    "chapters_scanned": int(chapters_scanned),
+                    "chapters_scanned": int(chapters_scanned_total),
                     "sections_scanned": int(sections_scanned_total),
                     "discovered_sections": int(sections_discovered_total),
                     "codes_completed": 1,

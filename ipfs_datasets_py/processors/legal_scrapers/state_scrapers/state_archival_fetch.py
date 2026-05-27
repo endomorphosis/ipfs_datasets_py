@@ -131,27 +131,41 @@ class ArchivalFetchClient:
         self.delay_seconds = delay_seconds
         self.user_agent = user_agent
 
-    def _stage_backoff_seconds(self, stage: str) -> int:
+    def _stage_backoff_seconds(self, stage: str, *, reason: str = "") -> int:
+        reason_l = str(reason or "").strip().lower()
         if stage == "wayback":
-            return max(0, _env_int("LEGAL_SCRAPER_WAYBACK_BACKOFF_SECONDS", default=900))
+            seconds = max(0, _env_int("LEGAL_SCRAPER_WAYBACK_BACKOFF_SECONDS", default=120))
+            if any(token in reason_l for token in ("connection refused", "timed out", "timeout", "max retries exceeded")):
+                seconds = min(seconds, 60)
+            return seconds
         if stage == "archive_is":
-            return max(0, _env_int("LEGAL_SCRAPER_ARCHIVE_IS_BACKOFF_SECONDS", default=3600))
+            return max(0, _env_int("LEGAL_SCRAPER_ARCHIVE_IS_BACKOFF_SECONDS", default=900))
         return max(0, _env_int("LEGAL_SCRAPER_ARCHIVAL_STAGE_BACKOFF_SECONDS", default=600))
 
-    def _is_stage_backed_off(self, stage: str) -> bool:
-        now = time.time()
-        until = float(self._stage_backoff_until.get(stage, 0.0) or 0.0)
-        return until > now
+    def _stage_backoff_key(self, stage: str, *, url: str = "") -> str:
+        host = str(urlparse(str(url or "")).netloc or "").strip().lower()
+        if host:
+            return f"{stage}:{host}"
+        return stage
 
-    def _mark_stage_backoff(self, stage: str, *, reason: str) -> None:
-        seconds = self._stage_backoff_seconds(stage)
+    def _is_stage_backed_off(self, stage: str, *, url: str = "") -> bool:
+        now = time.time()
+        stage_key = self._stage_backoff_key(stage, url=url)
+        host_until = float(self._stage_backoff_until.get(stage_key, 0.0) or 0.0)
+        global_until = float(self._stage_backoff_until.get(stage, 0.0) or 0.0)
+        return max(host_until, global_until) > now
+
+    def _mark_stage_backoff(self, stage: str, *, reason: str, url: str = "") -> None:
+        seconds = self._stage_backoff_seconds(stage, reason=reason)
         if seconds <= 0:
             return
         until = time.time() + float(seconds)
-        self._stage_backoff_until[stage] = until
+        stage_key = self._stage_backoff_key(stage, url=url)
+        self._stage_backoff_until[stage_key] = until
         logger.warning(
-            "archival_fetch stage=%s backed_off_for_seconds=%s reason=%s",
+            "archival_fetch stage=%s scope=%s backed_off_for_seconds=%s reason=%s",
             stage,
+            stage_key,
             seconds,
             reason[:200],
         )
@@ -264,7 +278,7 @@ class ArchivalFetchClient:
         disable_wayback = _env_flag("LEGAL_SCRAPER_DISABLE_WAYBACK", default=False)
         if disable_wayback:
             logger.info("archival_fetch stage=wayback skipped env=LEGAL_SCRAPER_DISABLE_WAYBACK url=%s", url)
-        elif self._is_stage_backed_off("wayback"):
+        elif self._is_stage_backed_off("wayback", url=url):
             logger.info("archival_fetch stage=wayback skipped backoff_active url=%s", url)
         else:
             logger.info("archival_fetch stage=wayback start url=%s", url)
@@ -277,7 +291,7 @@ class ArchivalFetchClient:
         disable_archive_is = _env_flag("LEGAL_SCRAPER_DISABLE_ARCHIVE_IS", default=False)
         if disable_archive_is:
             logger.info("archival_fetch stage=archive_is skipped env=LEGAL_SCRAPER_DISABLE_ARCHIVE_IS url=%s", url)
-        elif self._is_stage_backed_off("archive_is"):
+        elif self._is_stage_backed_off("archive_is", url=url):
             logger.info("archival_fetch stage=archive_is skipped backoff_active url=%s", url)
         else:
             logger.info("archival_fetch stage=archive_is start url=%s", url)
@@ -519,7 +533,7 @@ class ArchivalFetchClient:
                 output_format="json",
             )
         except Exception as exc:
-            self._mark_stage_backoff("wayback", reason=str(exc))
+            self._mark_stage_backoff("wayback", reason=str(exc), url=lookup_url)
             search_result = {"status": "error", "results": []}
 
         captures = search_result.get("results", []) if isinstance(search_result, dict) else []
@@ -539,7 +553,11 @@ class ArchivalFetchClient:
                     "quota",
                 )
             ):
-                self._mark_stage_backoff("wayback", reason=combined or "wayback_transport_failure")
+                self._mark_stage_backoff(
+                    "wayback",
+                    reason=combined or "wayback_transport_failure",
+                    url=lookup_url,
+                )
 
         for capture in captures:
             timestamp = capture.get("timestamp")
@@ -566,7 +584,7 @@ class ArchivalFetchClient:
             except Exception as exc:
                 err = str(exc).lower()
                 if "timed out" in err or "max retries exceeded" in err or "connection" in err:
-                    self._mark_stage_backoff("wayback", reason=str(exc))
+                    self._mark_stage_backoff("wayback", reason=str(exc), url=lookup_url)
                 continue
 
         return None
@@ -589,7 +607,11 @@ class ArchivalFetchClient:
                 error_text = str((submit_result or {}).get("error") if isinstance(submit_result, dict) else "")
                 combined = f"{status_text} {error_text}".lower()
                 if "429" in combined or "too many" in combined or "rate" in combined or "quota" in combined:
-                    self._mark_stage_backoff("archive_is", reason=combined or "archive_is_submit_rate_limited")
+                    self._mark_stage_backoff(
+                        "archive_is",
+                        reason=combined or "archive_is_submit_rate_limited",
+                        url=url,
+                    )
                 return None
 
             content_result = await get_archive_is_content(archive_url)
@@ -598,7 +620,11 @@ class ArchivalFetchClient:
                 error_text = str(content_result.get("error") or "")
                 combined = f"{status_text} {error_text}".lower()
                 if "429" in combined or "too many" in combined or "rate" in combined or "quota" in combined:
-                    self._mark_stage_backoff("archive_is", reason=combined or "archive_is_content_rate_limited")
+                    self._mark_stage_backoff(
+                        "archive_is",
+                        reason=combined or "archive_is_content_rate_limited",
+                        url=url,
+                    )
                 return None
 
             content = content_result.get("content", b"")
@@ -618,7 +644,7 @@ class ArchivalFetchClient:
         except Exception as exc:
             err = str(exc).lower()
             if "429" in err or "too many" in err or "rate" in err or "quota" in err:
-                self._mark_stage_backoff("archive_is", reason=str(exc))
+                self._mark_stage_backoff("archive_is", reason=str(exc), url=url)
             return None
 
     @staticmethod

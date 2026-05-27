@@ -347,17 +347,48 @@ def _reconcile_state_results_from_partial_checkpoints(
 
     results = progress_state.get("state_results")
     if not isinstance(results, dict):
-        return {"reconciled_states": [], "checked_state_count": 0}
+        results = {}
+        progress_state["state_results"] = results
 
     reconciled_states: List[Dict[str, Any]] = []
     checked_state_count = 0
     checkpoint_root = Path(checkpoint_dir).expanduser().resolve()
-    for state_code, entry in list(results.items()):
+    checkpoint_states: set[str] = set()
+    try:
+        for checkpoint_path in checkpoint_root.glob("STATE-*-partial.json"):
+            stem = str(checkpoint_path.stem or "")
+            if not stem.startswith("STATE-") or not stem.endswith("-partial"):
+                continue
+            state_code = stem[len("STATE-") : -len("-partial")].strip().upper()
+            if state_code:
+                checkpoint_states.add(state_code)
+    except Exception:
+        checkpoint_states = set()
+
+    candidate_states: List[str] = []
+    seen_states: set[str] = set()
+    for state_code in list(results.keys()) + sorted(checkpoint_states):
+        state = str(state_code or "").strip().upper()
+        if not state or state in seen_states:
+            continue
+        seen_states.add(state)
+        candidate_states.append(state)
+
+    for state_code in candidate_states:
+        entry = results.get(state_code)
+        if entry is None:
+            entry = {
+                "state_code": state_code,
+                "state_name": US_STATES.get(state_code, state_code),
+                "status": "missing",
+                "statutes_count": 0,
+            }
+            results[state_code] = entry
         if not isinstance(entry, dict):
             continue
         checked_state_count += 1
         status = str(entry.get("status") or "").strip().lower()
-        if status not in {"error", "zero_statutes"}:
+        if status not in {"error", "zero_statutes", "running", "started", "missing", ""}:
             continue
 
         checkpoint_path = checkpoint_root / f"STATE-{str(state_code or '').upper()}-partial.json"

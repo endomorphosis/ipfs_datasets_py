@@ -4,7 +4,7 @@ This module contains the scraper for Washington statutes from the official state
 """
 
 import asyncio
-from typing import List, Dict, Optional, Tuple
+from typing import Callable, List, Dict, Optional, Tuple
 import re
 from urllib.parse import parse_qs, urljoin, urlparse
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
@@ -138,6 +138,7 @@ class WashingtonScraper(BaseStateScraper):
         title_links = await self._discover_title_links()
         self.logger.info("Washington official index: discovered %s title links", len(title_links))
         resumed = self._load_partial_checkpoint_statutes(code_name=code_name, max_statutes=max_statutes)
+        checkpoint_progress = self._load_partial_checkpoint_progress()
         statutes: List[NormalizedStatute] = []
         seen_keys: set[str] = set()
         seen_urls: set[str] = set()
@@ -162,6 +163,15 @@ class WashingtonScraper(BaseStateScraper):
                 "Washington official index: resumed %s statutes from partial checkpoint",
                 len(statutes),
             )
+        resume_titles_scanned = max(0, int(checkpoint_progress.get("titles_scanned") or 0))
+        resume_chapters_scanned = max(0, int(checkpoint_progress.get("chapters_scanned") or 0))
+        resume_sections_scanned = max(0, int(checkpoint_progress.get("sections_scanned") or 0))
+        resume_discovered_sections = max(0, int(checkpoint_progress.get("discovered_sections") or 0))
+        title_rewind = max(0, int(self._env_int("STATE_SCRAPER_WA_RESUME_TITLE_REWIND", default=1)))
+        resume_title_floor = max(0, resume_titles_scanned - title_rewind)
+        chapters_scanned_total = int(resume_chapters_scanned)
+        sections_scanned_total = int(max(len(statutes), resume_sections_scanned))
+        sections_discovered_total = int(max(len(statutes), resume_discovered_sections))
         limit = max(1, int(max_statutes)) if max_statutes is not None else None
         self._write_partial_checkpoint(
             statutes,
@@ -170,6 +180,9 @@ class WashingtonScraper(BaseStateScraper):
             extra={
                 "titles_scanned": 0,
                 "discovered_titles": int(len(title_links)),
+                "chapters_scanned": int(chapters_scanned_total),
+                "sections_scanned": int(sections_scanned_total),
+                "discovered_sections": int(sections_discovered_total),
                 "codes_completed": 0,
                 "codes_total": 1,
             },
@@ -177,6 +190,8 @@ class WashingtonScraper(BaseStateScraper):
         for title_index, (title_url, title_label) in enumerate(title_links, start=1):
             if limit is not None and len(statutes) >= limit:
                 break
+            if title_index < resume_title_floor:
+                continue
             chapter_links = await self._discover_chapter_links(title_url)
             self.logger.info(
                 "Washington official index: title=%s index=%s/%s chapters=%s statutes_so_far=%s",
@@ -193,6 +208,9 @@ class WashingtonScraper(BaseStateScraper):
                 extra={
                     "titles_scanned": int(title_index),
                     "discovered_titles": int(len(title_links)),
+                    "chapters_scanned": int(chapters_scanned_total),
+                    "sections_scanned": int(sections_scanned_total),
+                    "discovered_sections": int(sections_discovered_total),
                     "discovered_chapters": int(len(chapter_links)),
                     "codes_completed": 0,
                     "codes_total": 1,
@@ -201,6 +219,7 @@ class WashingtonScraper(BaseStateScraper):
             for chapter_index, (chapter_url, chapter_label) in enumerate(chapter_links, start=1):
                 if limit is not None and len(statutes) >= limit:
                     break
+                chapters_scanned_total += 1
                 section_links = await self._discover_section_links(chapter_url)
                 if seen_urls:
                     section_links = [
@@ -208,6 +227,7 @@ class WashingtonScraper(BaseStateScraper):
                         for url, section_number in section_links
                         if str(url or "").strip().lower() not in seen_urls
                     ]
+                sections_discovered_total += len(section_links)
                 if chapter_index == 1 or chapter_index % 10 == 0 or chapter_index == len(chapter_links):
                     self.logger.info(
                         "Washington official index: title=%s chapter=%s/%s sections=%s statutes_so_far=%s",
@@ -224,18 +244,47 @@ class WashingtonScraper(BaseStateScraper):
                         extra={
                             "titles_scanned": int(title_index),
                             "discovered_titles": int(len(title_links)),
-                            "chapters_scanned": int(chapter_index),
+                            "chapters_scanned": int(chapters_scanned_total),
+                            "sections_scanned": int(sections_scanned_total),
+                            "discovered_sections": int(sections_discovered_total),
                             "discovered_chapters": int(len(chapter_links)),
                             "codes_completed": 0,
                             "codes_total": 1,
                         },
                     )
+                def _progress_hook(
+                    scanned_sections: int,
+                    total_sections: int,
+                    partial_batch: List[NormalizedStatute],
+                ) -> None:
+                    if (
+                        scanned_sections == 1
+                        or scanned_sections % 200 == 0
+                        or scanned_sections == total_sections
+                    ):
+                        self._write_partial_checkpoint(
+                            statutes + partial_batch,
+                            code_name=code_name,
+                            stage_label="washington:section-scan",
+                            extra={
+                                "titles_scanned": int(title_index),
+                                "discovered_titles": int(len(title_links)),
+                                "chapters_scanned": int(chapters_scanned_total),
+                                "sections_scanned": int(sections_scanned_total + scanned_sections),
+                                "discovered_sections": int(sections_discovered_total),
+                                "discovered_chapters": int(len(chapter_links)),
+                                "codes_completed": 0,
+                                "codes_total": 1,
+                            },
+                        )
                 parsed = await self._scrape_section_urls(
                     code_name,
                     section_links,
                     max_statutes=(None if limit is None else max(0, limit - len(statutes))),
                     discovery_method="official_title_chapter_section_index",
+                    progress_hook=_progress_hook,
                 )
+                sections_scanned_total += len(section_links)
                 _extend_unique(parsed)
         self._write_partial_checkpoint(
             statutes,
@@ -245,6 +294,9 @@ class WashingtonScraper(BaseStateScraper):
             extra={
                 "titles_scanned": int(len(title_links)),
                 "discovered_titles": int(len(title_links)),
+                "chapters_scanned": int(chapters_scanned_total),
+                "sections_scanned": int(sections_scanned_total),
+                "discovered_sections": int(sections_discovered_total),
                 "codes_completed": 1,
                 "codes_total": 1,
             },
@@ -344,6 +396,7 @@ class WashingtonScraper(BaseStateScraper):
         section_urls: List[Tuple[str, str]],
         max_statutes: Optional[int] = None,
         discovery_method: str = "official_seed_section",
+        progress_hook: Optional[Callable[[int, int, List[NormalizedStatute]], None]] = None,
     ) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
@@ -365,11 +418,22 @@ class WashingtonScraper(BaseStateScraper):
                 soup = BeautifulSoup(raw, "html.parser")
                 citation_node = soup.select_one("#ContentPlaceHolder1_pnlTitleBlock h1")
                 caption_node = soup.select_one("#ContentPlaceHolder1_pnlTitleBlock h2")
-                content_node = soup.select_one("#contentWrapper")
+                content_node = (
+                    soup.select_one("#contentWrapper")
+                    or soup.select_one("#ContentPlaceHolder1_dlSection")
+                    or soup.select_one("main")
+                    or soup.find("body")
+                )
+                if content_node is None:
+                    return None
+                for tag in content_node(["script", "style", "nav", "header", "footer"]):
+                    tag.decompose()
                 citation_text = self._normalize_legal_text(citation_node.get_text(" ", strip=True) if citation_node else "")
                 caption = self._normalize_legal_text(caption_node.get_text(" ", strip=True) if caption_node else "")
                 body = self._normalize_legal_text(content_node.get_text(" ", strip=True) if content_node else "")
-                if len(body) < 220:
+                # Washington has short-but-valid sections; keep those in the
+                # corpus instead of dropping them as false negatives.
+                if len(body) < 120:
                     return None
                 full_text = self._normalize_legal_text(f"{citation_text} {caption} {body}")
                 return NormalizedStatute(
@@ -408,6 +472,11 @@ class WashingtonScraper(BaseStateScraper):
                 if key:
                     seen_keys.add(key)
                 out.append(statute)
+            if progress_hook is not None:
+                try:
+                    progress_hook(scanned_sections, total_sections, out)
+                except Exception:
+                    pass
             if (
                 scanned_sections == 1
                 or scanned_sections % 100 == 0

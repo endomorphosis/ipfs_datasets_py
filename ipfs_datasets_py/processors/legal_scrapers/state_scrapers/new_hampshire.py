@@ -193,6 +193,14 @@ class NewHampshireScraper(BaseStateScraper):
         except Exception:
             full_corpus_stagnation_cap = 20
         full_corpus_stagnation_cap = max(4, min(200, full_corpus_stagnation_cap))
+        bounded_stagnation_cap_raw = str(
+            os.getenv("STATE_SCRAPER_NH_MAX_STAGNANT_CANDIDATES_BOUNDED", "8") or "8"
+        ).strip()
+        try:
+            bounded_stagnation_cap = int(bounded_stagnation_cap_raw) if bounded_stagnation_cap_raw else 8
+        except Exception:
+            bounded_stagnation_cap = 8
+        bounded_stagnation_cap = max(2, min(64, bounded_stagnation_cap))
         stagnant_candidates = 0
 
         for candidate in candidate_urls:
@@ -225,8 +233,28 @@ class NewHampshireScraper(BaseStateScraper):
                         break
                 else:
                     stagnant_candidates = 0
+            else:
+                if len(merged) <= merged_before:
+                    stagnant_candidates += 1
+                    if merged and stagnant_candidates >= bounded_stagnation_cap:
+                        self.logger.info(
+                            "New Hampshire bounded fallback: stopping after %s stagnant candidates with statutes_so_far=%s",
+                            stagnant_candidates,
+                            len(merged),
+                        )
+                        break
+                else:
+                    stagnant_candidates = 0
 
-        checkpoint.write(merged, code_name=code_name, stage_label="complete")
+        checkpoint.write(
+            merged,
+            code_name=code_name,
+            stage_label="complete",
+            progress={
+                "codes_completed": 1 if merged else 0,
+                "codes_total": 1,
+            },
+        )
         return merged
 
     async def _scrape_direct_archived_seed_sections(self, code_name: str, max_statutes: int = 1) -> List[NormalizedStatute]:
@@ -451,10 +479,24 @@ class NewHampshireScraper(BaseStateScraper):
         except ImportError:
             return []
 
-        root_url = "https://web.archive.org/web/20250124114611/https://www.gencourt.state.nh.us/rsa/html/NHTOC.htm"
+        root_candidates = [
+            "https://www.gencourt.state.nh.us/rsa/html/NHTOC.htm",
+            "https://gc.nh.gov/rsa/html/NHTOC.htm",
+            "https://web.archive.org/web/20250124114611/https://www.gencourt.state.nh.us/rsa/html/NHTOC.htm",
+            "https://web.archive.org/web/20250124114611/https://gc.nh.gov/rsa/html/NHTOC.htm",
+        ]
+        root_url = ""
+        payload = b""
 
         try:
-            payload = await self._fetch_known_rsa_page(root_url, timeout_seconds=35)
+            for candidate in root_candidates:
+                candidate_url = self._normalize_wayback_like_url(str(candidate or ""))
+                if not candidate_url:
+                    continue
+                root_url = candidate_url
+                payload = await self._fetch_known_rsa_page(candidate_url, timeout_seconds=35)
+                if payload:
+                    break
             if not payload:
                 if checkpoint is not None:
                     checkpoint.write(
@@ -768,8 +810,9 @@ class NewHampshireScraper(BaseStateScraper):
                     or scanned_sections % 200 == 0
                     or scanned_sections == len(section_links)
                 ):
+                    progress_statutes = list(out) + list(section_statutes)
                     checkpoint.maybe_write(
-                        [],
+                        progress_statutes,
                         code_name=code_name,
                         stage_label=f"chapter-progress:{chapter_id}:{scanned_sections}",
                         progress={
@@ -1164,20 +1207,68 @@ class _NewHampshireCheckpoint:
     ) -> None:
         if not self.path:
             return
+        existing_rows: List[Dict[str, Any]] = []
+        existing_progress: Dict[str, Any] = {}
+        if self.path.exists():
+            try:
+                existing_payload = json.loads(self.path.read_text(encoding="utf-8"))
+            except Exception:
+                existing_payload = {}
+            if isinstance(existing_payload, dict):
+                raw_rows = existing_payload.get("statutes")
+                if isinstance(raw_rows, list):
+                    existing_rows = [row for row in raw_rows if isinstance(row, dict)]
+                raw_progress = existing_payload.get("progress")
+                if isinstance(raw_progress, dict):
+                    existing_progress = dict(raw_progress)
+
+        serialized_rows = [statute.to_dict() for statute in statutes if isinstance(statute, NormalizedStatute)]
+        if not serialized_rows and existing_rows:
+            serialized_rows = list(existing_rows)
+        elif serialized_rows and existing_rows and len(serialized_rows) < len(existing_rows):
+            merged_rows = list(existing_rows)
+            seen_keys: set[str] = set()
+            for row in merged_rows:
+                statute_id = str(row.get("statute_id") or "").strip().lower()
+                source_url = str(row.get("source_url") or "").strip().lower()
+                if statute_id:
+                    seen_keys.add(f"id:{statute_id}")
+                if source_url:
+                    seen_keys.add(f"url:{source_url}")
+            for row in serialized_rows:
+                statute_id = str(row.get("statute_id") or "").strip().lower()
+                source_url = str(row.get("source_url") or "").strip().lower()
+                key_id = f"id:{statute_id}" if statute_id else ""
+                key_url = f"url:{source_url}" if source_url else ""
+                if (key_id and key_id in seen_keys) or (key_url and key_url in seen_keys):
+                    continue
+                if key_id:
+                    seen_keys.add(key_id)
+                if key_url:
+                    seen_keys.add(key_url)
+                merged_rows.append(row)
+            serialized_rows = merged_rows
+
+        progress_payload: Dict[str, Any] = {}
+        if existing_progress:
+            progress_payload.update(existing_progress)
+        if isinstance(progress, dict) and progress:
+            progress_payload.update(progress)
+
         payload = {
             "state_code": self.state_code,
             "updated_at": time.time(),
-            "statutes_count": len(statutes),
+            "statutes_count": len(serialized_rows),
             "code_name": code_name,
             "stage_label": stage_label,
-            "statutes": [statute.to_dict() for statute in statutes],
+            "statutes": serialized_rows,
         }
-        if isinstance(progress, dict) and progress:
-            payload["progress"] = dict(progress)
+        if progress_payload:
+            payload["progress"] = progress_payload
         tmp_path = self.path.with_suffix(".tmp")
         tmp_path.write_text(json.dumps(payload, ensure_ascii=False) + "\n", encoding="utf-8")
         tmp_path.replace(self.path)
-        self.last_count = len(statutes)
+        self.last_count = len(serialized_rows)
         self.last_write_ts = time.time()
         self.last_stage_label = str(stage_label or "").strip()
 

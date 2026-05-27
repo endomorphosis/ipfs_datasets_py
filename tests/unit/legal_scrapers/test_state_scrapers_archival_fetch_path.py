@@ -3713,6 +3713,35 @@ async def test_washington_section_scan_does_not_clobber_global_checkpoint(monkey
 
 
 @pytest.mark.anyio
+async def test_washington_section_scan_keeps_short_valid_sections(monkeypatch: pytest.MonkeyPatch):
+    async def _fake_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
+        return (
+            "<html><body>"
+            "<div id='ContentPlaceHolder1_pnlTitleBlock'>"
+            "<h1>RCW 9A.36.041</h1>"
+            "<h2>Assault in the fourth degree.</h2>"
+            "</div>"
+            "<div id='contentWrapper'>"
+            + ("Short Washington section text. " * 6)
+            + "</div>"
+            "</body></html>"
+        ).encode("utf-8")
+
+    monkeypatch.setattr(WashingtonScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch)
+
+    scraper = WashingtonScraper("WA", "Washington")
+    statutes = await scraper._scrape_section_urls(
+        "Revised Code of Washington",
+        [("https://app.leg.wa.gov/RCW/default.aspx?cite=9A.36.041", "9A.36.041")],
+        max_statutes=None,
+        discovery_method="official_title_chapter_section_index",
+    )
+
+    assert len(statutes) == 1
+    assert statutes[0].section_number == "9A.36.041"
+
+
+@pytest.mark.anyio
 async def test_west_virginia_default_run_uses_realistic_official_limit(monkeypatch: pytest.MonkeyPatch):
     requested = {}
 
@@ -3884,6 +3913,33 @@ async def test_virginia_section_scan_does_not_clobber_global_checkpoint(monkeypa
 
     assert len(statutes) == 1
     assert checkpoint_calls["count"] == 0
+
+
+@pytest.mark.anyio
+async def test_virginia_section_scan_keeps_short_valid_sections(monkeypatch: pytest.MonkeyPatch):
+    async def _fake_fetch(self, url: str, timeout_seconds: int = 15) -> bytes:
+        return (
+            "<html><body>"
+            "<div id='va_code'>"
+            "<h2>§ 1-1. Definitions.</h2>"
+            "<p>"
+            + ("Short Virginia section text. " * 6)
+            + "</p>"
+            "</div>"
+            "</body></html>"
+        ).encode("utf-8")
+
+    monkeypatch.setattr(VirginiaScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch)
+
+    scraper = VirginiaScraper("VA", "Virginia")
+    statutes = await scraper._scrape_section_urls(
+        "Code of Virginia",
+        [("https://law.lis.virginia.gov/vacode/title1/chapter1/section1-1/", "§ 1-1")],
+        max_statutes=None,
+    )
+
+    assert len(statutes) == 1
+    assert statutes[0].section_number == "1-1"
 
 
 @pytest.mark.anyio
@@ -4109,6 +4165,39 @@ async def test_nebraska_default_run_uses_realistic_limit(monkeypatch: pytest.Mon
     assert requested["official_max_statutes"] == 160
     assert requested["direct_max_statutes"] == 160
     assert requested["generic_max_sections"] == 160
+
+
+def test_nebraska_section_number_regex_accepts_comma_segments() -> None:
+    scraper = NebraskaScraper("NE", "Nebraska")
+    assert scraper._NE_SECTION_NUMBER_RE.match("2-32,113")
+    assert scraper._NE_SECTION_NUMBER_RE.match("60-6,197.02")
+    assert scraper._NE_SECTION_NUMBER_RE.match("1-101")
+
+
+@pytest.mark.anyio
+async def test_nebraska_keeps_short_repealed_sections_with_valid_identifier(monkeypatch: pytest.MonkeyPatch):
+    async def _fake_request_text_direct(self, url: str, timeout: int = 18) -> str:
+        return (
+            "<html><body>"
+            "<div class='statute'>"
+            "<h2>2-10,100.</h2>"
+            "<h3>Repealed.</h3>"
+            "<p>Repealed. Laws 2013, LB 68, § 23.</p>"
+            "</div>"
+            "</body></html>"
+        )
+
+    monkeypatch.setattr(NebraskaScraper, "_request_text_direct", _fake_request_text_direct)
+    scraper = NebraskaScraper("NE", "Nebraska")
+    statutes = await scraper._scrape_section_urls(
+        "Nebraska Revised Statutes",
+        ["https://nebraskalegislature.gov/laws/statutes.php?statute=2-10,100"],
+        max_statutes=1,
+        discovery_method="smoke",
+    )
+
+    assert len(statutes) == 1
+    assert statutes[0].section_number == "2-10,100"
 
 
 @pytest.mark.anyio
@@ -4411,12 +4500,17 @@ async def test_mississippi_default_run_uses_realistic_recovery_limit(monkeypatch
         requested["archival_max_statutes"] = max_statutes
         return []
 
+    async def _fake_unicourt(self, code_name: str, max_statutes: int = 50000, checkpoint=None):
+        requested["unicourt_max_statutes"] = max_statutes
+        return []
+
     async def _fake_generic(self, code_name: str, candidate: str, citation_format: str, max_sections: int):
         requested.setdefault("generic_max_sections", []).append(max_sections)
         return []
 
     monkeypatch.setattr(MississippiScraper, "_scrape_common_crawl_code_sections", _fake_common_crawl)
     monkeypatch.setattr(MississippiScraper, "_scrape_jina_justia_seed_sections", _fake_seed)
+    monkeypatch.setattr(MississippiScraper, "_scrape_unicourt_code_sections", _fake_unicourt)
     monkeypatch.setattr(MississippiScraper, "_scrape_archived_bill_history", _fake_archival)
     monkeypatch.setattr(MississippiScraper, "_generic_scrape", _fake_generic)
     monkeypatch.setattr(MississippiScraper, "has_playwright", lambda self: False)
@@ -4426,6 +4520,7 @@ async def test_mississippi_default_run_uses_realistic_recovery_limit(monkeypatch
 
     assert requested["common_crawl_max_statutes"] == 160
     assert requested["seed_max_statutes"] == 160
+    assert requested["unicourt_max_statutes"] == 160
     assert requested["archival_max_statutes"] == 160
     assert all(value == 160 for value in requested["generic_max_sections"])
 
@@ -4440,7 +4535,7 @@ async def test_mississippi_full_corpus_prefers_justia_crawl_before_archive(monke
     async def _fake_seed(self, code_name: str, max_statutes: int = 1):
         return []
 
-    async def _fake_justia(self, code_name: str, max_statutes: int = 30000):
+    async def _fake_justia(self, code_name: str, max_statutes: int = 30000, checkpoint=None):
         return [
             NormalizedStatute(
                 state_code="MS",
@@ -4487,7 +4582,7 @@ async def test_mississippi_full_corpus_prefers_wayback_justia_before_archive_whe
     async def _fake_seed(self, code_name: str, max_statutes: int = 1):
         return []
 
-    async def _fake_direct_justia(self, code_name: str, max_statutes: int = 30000):
+    async def _fake_direct_justia(self, code_name: str, max_statutes: int = 30000, checkpoint=None):
         return []
 
     async def _fake_wayback_justia(self, code_name: str, max_statutes: int = 30000):
@@ -4540,13 +4635,13 @@ async def test_mississippi_full_corpus_prefers_reader_before_archive_by_default(
     async def _fake_seed(self, code_name: str, max_statutes: int = 1):
         return []
 
-    async def _fake_direct_justia(self, code_name: str, max_statutes: int = 30000):
+    async def _fake_direct_justia(self, code_name: str, max_statutes: int = 30000, checkpoint=None):
         return []
 
     async def _fake_wayback_justia(self, code_name: str, max_statutes: int = 30000):
         return []
 
-    async def _fake_reader_justia(self, code_name: str, max_statutes: int = 30000):
+    async def _fake_reader_justia(self, code_name: str, max_statutes: int = 30000, checkpoint=None):
         return [
             NormalizedStatute(
                 state_code="MS",
@@ -4584,9 +4679,71 @@ async def test_mississippi_full_corpus_prefers_reader_before_archive_by_default(
 
 
 @pytest.mark.anyio
+async def test_mississippi_full_corpus_prefers_unicourt_before_archive_by_default(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.delenv("STATE_SCRAPER_MS_ENABLE_ARCHIVE_BILL_HISTORY_FULL_CORPUS", raising=False)
+
+    async def _fake_common_crawl(self, code_name: str, max_statutes: int):
+        return []
+
+    async def _fake_seed(self, code_name: str, max_statutes: int = 1):
+        return []
+
+    async def _fake_direct_justia(self, code_name: str, max_statutes: int = 30000, checkpoint=None):
+        return []
+
+    async def _fake_wayback_justia(self, code_name: str, max_statutes: int = 30000):
+        return []
+
+    async def _fake_reader_justia(self, code_name: str, max_statutes: int = 30000, checkpoint=None):
+        return []
+
+    async def _fake_unicourt(self, code_name: str, max_statutes: int = 50000, checkpoint=None):
+        return [
+            NormalizedStatute(
+                state_code="MS",
+                state_name="Mississippi",
+                statute_id=f"{code_name} § 97-3-7",
+                code_name=code_name,
+                section_number="97-3-7",
+                section_name="Simple assault; aggravated assault",
+                full_text="Unicourt Mississippi section text " * 20,
+                source_url="https://unicourt.github.io/cic-code-ms/transforms/ms/ocms/r78/gov.ms.code.title.97.html#t97c03s97-3-7",
+                official_cite="Miss. Code Ann. § 97-3-7",
+                structured_data={
+                    "source_kind": "unicourt_mississippi_code_html",
+                    "discovery_method": "unicourt_title_html",
+                    "release": "r78",
+                    "skip_hydrate": True,
+                },
+            )
+        ]
+
+    async def _fake_archive(self, code_name: str, max_statutes: int, **kwargs):
+        raise AssertionError("archive fallback should not run when Unicourt full-corpus path yields rows")
+
+    monkeypatch.setattr(MississippiScraper, "_scrape_common_crawl_code_sections", _fake_common_crawl)
+    monkeypatch.setattr(MississippiScraper, "_scrape_jina_justia_seed_sections", _fake_seed)
+    monkeypatch.setattr(MississippiScraper, "_scrape_justia_code_sections", _fake_direct_justia)
+    monkeypatch.setattr(MississippiScraper, "_scrape_justia_wayback_code_sections", _fake_wayback_justia)
+    monkeypatch.setattr(MississippiScraper, "_scrape_jina_justia_code_sections", _fake_reader_justia)
+    monkeypatch.setattr(MississippiScraper, "_scrape_unicourt_code_sections", _fake_unicourt)
+    monkeypatch.setattr(MississippiScraper, "_scrape_archived_bill_history", _fake_archive)
+
+    scraper = MississippiScraper("MS", "Mississippi")
+    statutes = await scraper.scrape_code("Mississippi Code", "https://www.legislature.ms.gov/legislation/")
+
+    assert len(statutes) == 1
+    assert statutes[0].structured_data["source_kind"] == "unicourt_mississippi_code_html"
+
+
+@pytest.mark.anyio
 async def test_mississippi_full_corpus_archive_fallback_can_be_reenabled(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
     monkeypatch.setenv("STATE_SCRAPER_MS_ENABLE_ARCHIVE_BILL_HISTORY_FULL_CORPUS", "1")
+    monkeypatch.setenv("STATE_SCRAPER_MS_ENABLE_UNICOURT_FALLBACK", "0")
     called = {"archive": 0}
 
     async def _fake_common_crawl(self, code_name: str, max_statutes: int):
@@ -4595,13 +4752,13 @@ async def test_mississippi_full_corpus_archive_fallback_can_be_reenabled(monkeyp
     async def _fake_seed(self, code_name: str, max_statutes: int = 1):
         return []
 
-    async def _fake_direct_justia(self, code_name: str, max_statutes: int = 30000):
+    async def _fake_direct_justia(self, code_name: str, max_statutes: int = 30000, checkpoint=None):
         return []
 
     async def _fake_wayback_justia(self, code_name: str, max_statutes: int = 30000):
         return []
 
-    async def _fake_reader_justia(self, code_name: str, max_statutes: int = 30000):
+    async def _fake_reader_justia(self, code_name: str, max_statutes: int = 30000, checkpoint=None):
         return []
 
     async def _fake_archive(self, code_name: str, max_statutes: int, **kwargs):
