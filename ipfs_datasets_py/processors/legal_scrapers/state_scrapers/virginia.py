@@ -314,12 +314,6 @@ class VirginiaScraper(BaseStateScraper):
 
         limit = max(1, int(max_statutes)) if max_statutes is not None else None
         statutes: List[NormalizedStatute] = []
-        checkpoint_every_raw = str(self._env_int("STATE_SCRAPER_VA_SECTION_CHECKPOINT_EVERY", default=20))
-        try:
-            checkpoint_every = int(checkpoint_every_raw or 20)
-        except Exception:
-            checkpoint_every = 20
-        checkpoint_every = max(5, min(200, checkpoint_every))
         concurrency = max(1, int(self._env_int("STATE_SCRAPER_VA_SECTION_CONCURRENCY", default=8)))
         sem = asyncio.Semaphore(concurrency)
         total_sections = len(section_urls)
@@ -365,18 +359,6 @@ class VirginiaScraper(BaseStateScraper):
         cancelled_early = False
         for task in asyncio.as_completed(tasks):
             scanned_sections += 1
-            if scanned_sections == 1 or scanned_sections % checkpoint_every == 0:
-                self._write_partial_checkpoint(
-                    statutes,
-                    code_name=code_name,
-                    stage_label="virginia:section-scan",
-                    extra={
-                        "sections_scanned": int(scanned_sections),
-                        "discovered_sections": int(total_sections),
-                        "codes_completed": 0,
-                        "codes_total": 1,
-                    },
-                )
             statute = await task
             if statute is not None:
                 key = str(statute.statute_id or statute.source_url or "").strip().lower()
@@ -385,6 +367,17 @@ class VirginiaScraper(BaseStateScraper):
                 if key:
                     seen_keys.add(key)
                 statutes.append(statute)
+            if (
+                scanned_sections == 1
+                or scanned_sections % 100 == 0
+                or scanned_sections == total_sections
+            ):
+                self.logger.info(
+                    "Virginia section scan: scanned_sections=%s/%s statutes_so_far=%s",
+                    scanned_sections,
+                    total_sections,
+                    len(statutes),
+                )
             if limit is not None and len(statutes) >= limit:
                 cancelled_early = True
                 for pending in tasks:
@@ -393,18 +386,6 @@ class VirginiaScraper(BaseStateScraper):
                 break
         if cancelled_early:
             await asyncio.gather(*tasks, return_exceptions=True)
-        self._write_partial_checkpoint(
-            statutes,
-            code_name=code_name,
-            stage_label="virginia:section-scan-complete",
-            force=True,
-            extra={
-                "sections_scanned": int(min(total_sections, scanned_sections)),
-                "discovered_sections": int(total_sections),
-                "codes_completed": 0,
-                "codes_total": 1,
-            },
-        )
         return statutes
 
 

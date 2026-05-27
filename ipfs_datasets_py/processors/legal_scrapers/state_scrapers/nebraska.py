@@ -234,6 +234,7 @@ class NebraskaScraper(BaseStateScraper):
         soup = BeautifulSoup(html, "html.parser")
         out: List[str] = []
         seen: set[str] = set()
+        seen_section_numbers: set[str] = set()
         for anchor in soup.find_all("a", href=True):
             href = str(anchor.get("href") or "").strip()
             if "statute=" not in href.lower() or "print=true" in href.lower():
@@ -242,8 +243,12 @@ class NebraskaScraper(BaseStateScraper):
             section_number = self._section_number_from_url(absolute)
             if not self._NE_SECTION_NUMBER_RE.match(section_number):
                 continue
+            section_key = section_number.lower()
+            if section_key in seen_section_numbers:
+                continue
             if absolute in seen:
                 continue
+            seen_section_numbers.add(section_key)
             seen.add(absolute)
             out.append(absolute)
         return out

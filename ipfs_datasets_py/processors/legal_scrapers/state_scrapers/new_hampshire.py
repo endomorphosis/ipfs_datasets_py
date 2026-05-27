@@ -36,6 +36,10 @@ class NewHampshireScraper(BaseStateScraper):
         "www.gencourt.state.nh.us/",
         "gc.nh.gov/",
     )
+    _NH_SECTIONISH_ARCHIVE_RE = re.compile(
+        r"/rsa/html/(?!nhtoc/)(?:[ivxlcdm0-9a-z-]+/){2,}[0-9a-z:.-]+\.htm$",
+        re.IGNORECASE,
+    )
     
     def get_base_url(self) -> str:
         """Return the base URL for New Hampshire's legislative website."""
@@ -90,11 +94,38 @@ class NewHampshireScraper(BaseStateScraper):
         full_corpus_unbounded = self._full_corpus_enabled() and max_statutes is None
         checkpoint = _NewHampshireCheckpoint(self.state_code)
 
-        # Keep archive discovery bounded so state-level scrape timeouts are not exhausted.
-        discovery_limit = max(400, return_threshold * 10) if full_corpus_unbounded else max(10, return_threshold)
-        for archived in await self._discover_archived_rsa_urls(limit=discovery_limit):
-            if archived not in candidate_urls:
-                candidate_urls.append(archived)
+        # Keep archive discovery bounded so full-corpus runs do not request an
+        # effectively unbounded CDX window.
+        if full_corpus_unbounded:
+            full_corpus_discovery_limit_raw = str(
+                os.getenv("STATE_SCRAPER_NH_ARCHIVE_DISCOVERY_LIMIT", "1200") or "1200"
+            ).strip()
+            try:
+                discovery_limit = int(full_corpus_discovery_limit_raw) if full_corpus_discovery_limit_raw else 1200
+            except Exception:
+                discovery_limit = 1200
+            discovery_limit = max(120, min(2500, discovery_limit))
+        else:
+            discovery_limit = max(10, return_threshold)
+        discovered_archive_candidates = await self._discover_archived_rsa_urls(limit=discovery_limit)
+        full_corpus_max_candidates_raw = str(
+            os.getenv("STATE_SCRAPER_NH_FULL_CORPUS_MAX_CANDIDATES", "120") or "120"
+        ).strip()
+        try:
+            full_corpus_max_candidates = int(full_corpus_max_candidates_raw) if full_corpus_max_candidates_raw else 120
+        except Exception:
+            full_corpus_max_candidates = 120
+        full_corpus_max_candidates = max(12, min(800, full_corpus_max_candidates))
+        for archived in discovered_archive_candidates:
+            normalized_archived = self._normalize_wayback_like_url(str(archived or ""))
+            if not normalized_archived:
+                continue
+            if full_corpus_unbounded and not self._is_archived_index_candidate(normalized_archived):
+                continue
+            if normalized_archived not in candidate_urls:
+                candidate_urls.append(normalized_archived)
+            if full_corpus_unbounded and len(candidate_urls) >= full_corpus_max_candidates:
+                break
 
         resumed_statutes = checkpoint.load(
             default_state_name=self.state_name,
@@ -139,10 +170,21 @@ class NewHampshireScraper(BaseStateScraper):
             if direct:
                 return direct[:return_threshold]
 
+        full_corpus_stagnation_cap_raw = str(
+            os.getenv("STATE_SCRAPER_NH_MAX_STAGNANT_CANDIDATES", "20") or "20"
+        ).strip()
+        try:
+            full_corpus_stagnation_cap = int(full_corpus_stagnation_cap_raw) if full_corpus_stagnation_cap_raw else 20
+        except Exception:
+            full_corpus_stagnation_cap = 20
+        full_corpus_stagnation_cap = max(4, min(200, full_corpus_stagnation_cap))
+        stagnant_candidates = 0
+
         for candidate in candidate_urls:
             if candidate in seen:
                 continue
             seen.add(candidate)
+            merged_before = len(merged)
 
             statutes = await self._generic_scrape(
                 code_name,
@@ -156,6 +198,18 @@ class NewHampshireScraper(BaseStateScraper):
                 checkpoint.maybe_write(merged, code_name=code_name, stage_label=f"candidate:{candidate}")
             if not full_corpus_unbounded and len(merged) >= return_threshold:
                 return merged
+            if full_corpus_unbounded:
+                if len(merged) <= merged_before:
+                    stagnant_candidates += 1
+                    if stagnant_candidates >= full_corpus_stagnation_cap:
+                        self.logger.info(
+                            "New Hampshire full-corpus fallback: stopping after %s stagnant candidates with statutes_so_far=%s",
+                            stagnant_candidates,
+                            len(merged),
+                        )
+                        break
+                else:
+                    stagnant_candidates = 0
 
         checkpoint.write(merged, code_name=code_name, stage_label="complete")
         return merged
@@ -944,6 +998,19 @@ class NewHampshireScraper(BaseStateScraper):
         if not isinstance(parsed, list):
             return []
         return [row for row in parsed[1:] if isinstance(row, list)]
+
+    def _is_archived_index_candidate(self, url: str) -> bool:
+        value = self._normalize_wayback_like_url(str(url or ""))
+        lower = value.lower()
+        if "/rsa/html/" not in lower:
+            return False
+        if "/rsa/html/nhtoc" in lower:
+            return True
+        if lower.endswith("/rsa/html") or lower.endswith("/rsa/html/"):
+            return True
+        if self._NH_SECTIONISH_ARCHIVE_RE.search(lower):
+            return False
+        return lower.endswith(".htm")
 
 
 _NORMALIZED_STATUTE_FIELD_NAMES = {field.name for field in dataclass_fields(NormalizedStatute)}

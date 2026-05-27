@@ -11,7 +11,9 @@ fi
 
 RUN_ID="$1"
 LOG_DIR="${ROOT_DIR}/workspace/test-logs"
-PIPELINE_LOG="${LOG_DIR}/${RUN_ID}.pipeline.log"
+PIPELINE_LOG_PRIMARY="${LOG_DIR}/${RUN_ID}.pipeline.log"
+PIPELINE_LOG="${PIPELINE_LOG_PRIMARY}"
+PIPELINE_LOG_FALLBACK="${LOG_DIR}/${RUN_ID}.launcher.log"
 WATCHDOG_LOG="${LOG_DIR}/${RUN_ID}.watchdog.log"
 STATE_JSON="${LOG_DIR}/${RUN_ID}.watchdog.state.json"
 
@@ -29,6 +31,16 @@ timestamp() {
 log_line() {
   local msg="$1"
   echo "$(timestamp) ${msg}" | tee -a "${WATCHDOG_LOG}"
+}
+
+resolve_pipeline_log() {
+  if [[ -f "${PIPELINE_LOG_PRIMARY}" ]]; then
+    echo "${PIPELINE_LOG_PRIMARY}"
+  elif [[ -f "${PIPELINE_LOG_FALLBACK}" ]]; then
+    echo "${PIPELINE_LOG_FALLBACK}"
+  else
+    echo "${PIPELINE_LOG_PRIMARY}"
+  fi
 }
 
 write_state() {
@@ -145,8 +157,9 @@ log_line "watchdog started run_id=${RUN_ID} interval=${INTERVAL_SECONDS}s stale=
 write_state "boot" "running" "watchdog_started" "" false
 
 while true; do
+  PIPELINE_LOG="$(resolve_pipeline_log)"
   if [[ ! -f "${PIPELINE_LOG}" ]]; then
-    log_line "waiting_for_pipeline_log path=${PIPELINE_LOG}"
+    log_line "waiting_for_pipeline_log path=${PIPELINE_LOG} fallback=${PIPELINE_LOG_FALLBACK}"
     write_state "boot" "running" "waiting_for_pipeline_log" "" false
     sleep "${INTERVAL_SECONDS}"
     continue
@@ -173,12 +186,7 @@ while true; do
 
   mtime_epoch="$(stat -c %Y "${PIPELINE_LOG}")"
   now_epoch="$(date +%s)"
-  age_seconds=$((now_epoch - mtime_epoch))
-  if (( age_seconds > STALE_SECONDS )); then
-    log_line "problem_detected signature=stale_pipeline_log age_seconds=${age_seconds} pid=${pid}"
-    write_state "unknown" "failed" "stale_pipeline_log" "" false
-    exit 5
-  fi
+  pipeline_log_age_seconds=$((now_epoch - mtime_epoch))
 
   final_run_id="$(extract_final_run_id)"
   if [[ -n "${final_run_id}" ]]; then
@@ -221,7 +229,7 @@ while true; do
         fi
         status_parts+=("${trial_run_id}:cycles=${trial_cycles}:elapsed=${trial_elapsed}")
       done <<< "${active_rows}"
-      log_line "sweep_running active_trials=${active_count} statuses=${status_parts[*]} pid=${pid}"
+        log_line "sweep_running active_trials=${active_count} statuses=${status_parts[*]} pid=${pid} pipeline_log_age_seconds=${pipeline_log_age_seconds}"
       write_state "sweep" "running" "parallel_sweep_running" "" false
     else
       trial_id="$(extract_last_trial_id)"
@@ -239,14 +247,19 @@ while true; do
               exit 6
             fi
           fi
-          log_line "sweep_running trial_id=${trial_id} cycles=${trial_cycles} pid=${pid}"
+          log_line "sweep_running trial_id=${trial_id} cycles=${trial_cycles} pid=${pid} pipeline_log_age_seconds=${pipeline_log_age_seconds}"
           write_state "sweep" "running" "sweep_running" "" false
         else
           trial_count="$(extract_trial_ids | wc -l | tr -d ' ')"
-          log_line "sweep_running trial_id=${trial_id} known_trials=${trial_count} waiting_for_summary pid=${pid}"
+          log_line "sweep_running trial_id=${trial_id} known_trials=${trial_count} waiting_for_summary pid=${pid} pipeline_log_age_seconds=${pipeline_log_age_seconds}"
           write_state "sweep" "running" "sweep_waiting_for_summary" "" false
         fi
       else
+        if (( pipeline_log_age_seconds > STALE_SECONDS )); then
+          log_line "problem_detected signature=stale_pipeline_log age_seconds=${pipeline_log_age_seconds} pid=${pid}"
+          write_state "unknown" "failed" "stale_pipeline_log" "" false
+          exit 5
+        fi
         log_line "sweep_running waiting_for_first_trial pid=${pid}"
         write_state "sweep" "running" "sweep_waiting_for_first_trial" "" false
       fi

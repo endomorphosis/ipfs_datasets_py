@@ -352,8 +352,6 @@ class WashingtonScraper(BaseStateScraper):
 
         out: List[NormalizedStatute] = []
         limit = max(1, int(max_statutes)) if max_statutes is not None else None
-        checkpoint_every = self._env_int("STATE_SCRAPER_WA_SECTION_CHECKPOINT_EVERY", default=20)
-        checkpoint_every = max(5, min(200, int(checkpoint_every or 20)))
         concurrency = max(1, int(self._env_int("STATE_SCRAPER_WA_SECTION_CONCURRENCY", default=8)))
         sem = asyncio.Semaphore(concurrency)
         total_sections = len(section_urls)
@@ -402,19 +400,6 @@ class WashingtonScraper(BaseStateScraper):
         cancelled_early = False
         for task in asyncio.as_completed(tasks):
             scanned_sections += 1
-            if scanned_sections == 1 or scanned_sections % checkpoint_every == 0:
-                self._write_partial_checkpoint(
-                    out,
-                    code_name=code_name,
-                    stage_label="washington:section-scan",
-                    extra={
-                        "sections_scanned": int(scanned_sections),
-                        "discovered_sections": int(total_sections),
-                        "codes_completed": 0,
-                        "codes_total": 1,
-                        "discovery_method": discovery_method,
-                    },
-                )
             statute = await task
             if statute is not None:
                 key = str(statute.statute_id or statute.source_url or "").strip().lower()
@@ -423,6 +408,18 @@ class WashingtonScraper(BaseStateScraper):
                 if key:
                     seen_keys.add(key)
                 out.append(statute)
+            if (
+                scanned_sections == 1
+                or scanned_sections % 100 == 0
+                or scanned_sections == total_sections
+            ):
+                self.logger.info(
+                    "Washington section scan: scanned_sections=%s/%s statutes_so_far=%s discovery=%s",
+                    scanned_sections,
+                    total_sections,
+                    len(out),
+                    discovery_method,
+                )
             if limit is not None and len(out) >= limit:
                 cancelled_early = True
                 for pending in tasks:
@@ -431,19 +428,6 @@ class WashingtonScraper(BaseStateScraper):
                 break
         if cancelled_early:
             await asyncio.gather(*tasks, return_exceptions=True)
-        self._write_partial_checkpoint(
-            out,
-            code_name=code_name,
-            stage_label="washington:section-scan-complete",
-            force=True,
-            extra={
-                "sections_scanned": int(min(total_sections, scanned_sections)),
-                "discovered_sections": int(total_sections),
-                "codes_completed": 0,
-                "codes_total": 1,
-                "discovery_method": discovery_method,
-            },
-        )
         return out
 
 

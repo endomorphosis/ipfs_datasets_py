@@ -61,6 +61,14 @@ class MississippiScraper(BaseStateScraper):
         r"(performing security verification|this website uses a security service|just a moment\.\.\.|target url returned error 403)",
         re.IGNORECASE,
     )
+    _JUSTIA_READER_LINK_RE = re.compile(
+        r"\((https?://law\.justia\.com/codes/mississippi/[^)\s]+)\)",
+        re.IGNORECASE,
+    )
+    _JUSTIA_READER_RAW_LINK_RE = re.compile(
+        r"https?://law\.justia\.com/codes/mississippi/[^\s)]+",
+        re.IGNORECASE,
+    )
     
     def get_base_url(self) -> str:
         """Return the base URL for Mississippi's legislative website."""
@@ -241,6 +249,28 @@ class MississippiScraper(BaseStateScraper):
                 )
                 return wayback_statutes[:limit] if limit is not None else wayback_statutes
 
+            reader_statutes = await self._scrape_jina_justia_code_sections(
+                code_name=code_name,
+                max_statutes=justia_target,
+            )
+            if reader_statutes:
+                checkpoint.write_progress(
+                    statutes=reader_statutes,
+                    code_name=code_name,
+                    stage_label="mississippi:justia-reader:complete",
+                    scanned_history_urls=len(reader_statutes),
+                    discovered_history_urls=len(reader_statutes),
+                    extra_progress={
+                        "codes_total": 1,
+                        "codes_completed": 1,
+                    },
+                )
+                self.logger.info(
+                    "Mississippi full-corpus Justia reader path: statutes_so_far=%s",
+                    len(reader_statutes),
+                )
+                return reader_statutes[:limit] if limit is not None else reader_statutes
+
         archival_kwargs: Dict[str, Any] = {}
         try:
             archival_params = inspect.signature(self._scrape_archived_bill_history).parameters
@@ -261,11 +291,26 @@ class MississippiScraper(BaseStateScraper):
                 "codes_completed": 0,
             },
         )
-        archival = await self._scrape_archived_bill_history(
-            code_name=code_name,
-            max_statutes=limit or 1000000,
-            **archival_kwargs,
+        allow_archive_full_corpus = str(
+            os.getenv("STATE_SCRAPER_MS_ENABLE_ARCHIVE_BILL_HISTORY_FULL_CORPUS", "0")
+        ).strip().lower() in {"1", "true", "yes", "on"}
+        run_archive_fallback = (
+            not self._full_corpus_enabled()
+            or max_statutes is not None
+            or allow_archive_full_corpus
         )
+        if run_archive_fallback:
+            archival = await self._scrape_archived_bill_history(
+                code_name=code_name,
+                max_statutes=limit or 1000000,
+                **archival_kwargs,
+            )
+        else:
+            archival = []
+            self.logger.info(
+                "Mississippi full-corpus archive bill-history fallback disabled "
+                "(set STATE_SCRAPER_MS_ENABLE_ARCHIVE_BILL_HISTORY_FULL_CORPUS=1 to re-enable)."
+            )
         if archival and (not self._full_corpus_enabled() or max_statutes is not None):
             checkpoint.write_progress(
                 statutes=archival,
@@ -1068,6 +1113,208 @@ class MississippiScraper(BaseStateScraper):
                 )
             )
         return out
+
+    async def _scrape_jina_justia_code_sections(
+        self,
+        code_name: str,
+        max_statutes: int = 30000,
+    ) -> List[NormalizedStatute]:
+        target = max(1, int(max_statutes or 1))
+        title_urls: List[str] = []
+        chapter_urls: List[str] = []
+        section_urls: List[str] = []
+        seen_title_urls: set[str] = set()
+        seen_chapter_urls: set[str] = set()
+        seen_section_urls: set[str] = set()
+
+        def _add_url(bucket: List[str], seen: set[str], url: str) -> None:
+            value = str(url or "").strip()
+            if not value:
+                return
+            value = self._normalize_justia_corpus_url(value)
+            if not value or value in seen:
+                return
+            seen.add(value)
+            bucket.append(value)
+
+        def _classify_reader_links(markdown: str) -> None:
+            for link in self._extract_justia_links_from_reader_markdown(markdown):
+                lower = link.lower()
+                if self._JUSTIA_SECTION_URL_RE.search(link):
+                    _add_url(section_urls, seen_section_urls, link)
+                elif self._JUSTIA_CHAPTER_URL_RE.search(link):
+                    _add_url(chapter_urls, seen_chapter_urls, link)
+                elif self._JUSTIA_TITLE_URL_RE.search(link):
+                    _add_url(title_urls, seen_title_urls, link)
+                elif "/title-" in lower and "/section-" not in lower and "/chapter-" not in lower:
+                    _add_url(title_urls, seen_title_urls, link)
+
+        for index_url in self._JUSTIA_INDEX_URLS:
+            markdown = await self._fetch_justia_reader_markdown(index_url, timeout=40)
+            if not markdown:
+                continue
+            _classify_reader_links(markdown)
+
+        for title_url in list(title_urls):
+            if len(section_urls) >= target * 3:
+                break
+            markdown = await self._fetch_justia_reader_markdown(title_url, timeout=40)
+            if not markdown:
+                continue
+            _classify_reader_links(markdown)
+
+        for chapter_url in list(chapter_urls):
+            if len(section_urls) >= target * 3:
+                break
+            markdown = await self._fetch_justia_reader_markdown(chapter_url, timeout=40)
+            if not markdown:
+                continue
+            _classify_reader_links(markdown)
+
+        if not section_urls:
+            return []
+
+        self.logger.info(
+            "Mississippi Justia reader crawl: discovered_titles=%s discovered_chapters=%s discovered_sections=%s",
+            len(title_urls),
+            len(chapter_urls),
+            len(section_urls),
+        )
+
+        statutes: List[NormalizedStatute] = []
+        seen_keys: set[str] = set()
+        section_concurrency = max(
+            1,
+            int(os.getenv("STATE_SCRAPER_MS_READER_SECTION_CONCURRENCY", "6") or "6"),
+        )
+        section_sem = asyncio.Semaphore(section_concurrency)
+
+        async def _fetch_reader_statute(section_url: str) -> Optional[NormalizedStatute]:
+            async with section_sem:
+                markdown = await self._fetch_justia_reader_markdown(section_url, timeout=45)
+            if not markdown:
+                return None
+            cleaned = self._clean_jina_markdown(markdown)
+            if len(cleaned) < 220:
+                return None
+            section_number = self._extract_ms_section_number_from_justia_url(section_url)
+            if not section_number:
+                section_number = self._extract_ms_reader_section_number(cleaned) or self._extract_section_number(cleaned) or ""
+            if not section_number:
+                return None
+            section_name = self._extract_ms_reader_section_name(cleaned, section_number)
+            return NormalizedStatute(
+                state_code=self.state_code,
+                state_name=self.state_name,
+                statute_id=f"{code_name} § {section_number}",
+                code_name=code_name,
+                section_number=section_number,
+                section_name=section_name[:200],
+                full_text=cleaned[:14000],
+                legal_area=self._identify_legal_area(f"{section_name} {cleaned[:900]}"),
+                source_url=section_url,
+                official_cite=f"Miss. Code Ann. § {section_number}",
+                structured_data={
+                    "source_kind": "jina_reader_justia_mississippi_code",
+                    "discovery_method": "justia_reader_title_chapter_section",
+                    "reader_url": f"https://r.jina.ai/http://{section_url}",
+                    "skip_hydrate": True,
+                },
+            )
+
+        tasks = [asyncio.create_task(_fetch_reader_statute(url)) for url in section_urls]
+        scanned = 0
+        for task in asyncio.as_completed(tasks):
+            scanned += 1
+            statute = await task
+            if statute is None:
+                continue
+            statute_key = _statute_dedupe_key(statute)
+            if statute_key and statute_key in seen_keys:
+                continue
+            if statute_key:
+                seen_keys.add(statute_key)
+            statutes.append(statute)
+            if len(statutes) == 1 or len(statutes) % 100 == 0:
+                self.logger.info(
+                    "Mississippi Justia reader crawl: scanned_sections=%s/%s statutes_so_far=%s",
+                    scanned,
+                    len(section_urls),
+                    len(statutes),
+                )
+            if len(statutes) >= target:
+                for pending in tasks:
+                    if not pending.done():
+                        pending.cancel()
+                break
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
+        return statutes[:target]
+
+    async def _fetch_justia_reader_markdown(self, url: str, *, timeout: int = 40) -> str:
+        source_url = str(url or "").strip()
+        if not source_url:
+            return ""
+        reader_url = f"https://r.jina.ai/http://{source_url}"
+        text = await self._request_text_direct(reader_url, timeout=max(5, int(timeout or 40)))
+        return str(text or "")
+
+    def _extract_justia_links_from_reader_markdown(self, markdown: str) -> List[str]:
+        text = str(markdown or "")
+        if not text:
+            return []
+        out: List[str] = []
+        seen: set[str] = set()
+        for pattern in (self._JUSTIA_READER_LINK_RE, self._JUSTIA_READER_RAW_LINK_RE):
+            for match in pattern.finditer(text):
+                try:
+                    value = match.group(1) if match.lastindex else match.group(0)
+                except Exception:
+                    value = match.group(0)
+                candidate = self._normalize_justia_corpus_url(str(value or "").strip().rstrip(".,;"))
+                if not candidate or candidate in seen:
+                    continue
+                seen.add(candidate)
+                out.append(candidate)
+        return out
+
+    def _normalize_justia_corpus_url(self, url: str) -> str:
+        value = str(url or "").strip()
+        if not value:
+            return ""
+        value = value.split("#", 1)[0].strip()
+        if "/codes/mississippi/" not in value.lower():
+            return ""
+        if not value.startswith("http://") and not value.startswith("https://"):
+            return ""
+        if value.endswith("/") and "/section-" not in value:
+            return value
+        return value.rstrip("/") + "/"
+
+    def _extract_ms_reader_section_number(self, text: str) -> str:
+        value = str(text or "")
+        patterns = [
+            r"Mississippi Code §\s*([0-9]+-[0-9]+-[0-9A-Za-z._-]+)",
+            r"Section\s+([0-9]+-[0-9]+-[0-9A-Za-z._-]+)",
+            r"§\s*([0-9]+-[0-9]+-[0-9A-Za-z._-]+)",
+        ]
+        for pattern in patterns:
+            match = re.search(pattern, value, flags=re.IGNORECASE)
+            if match:
+                return str(match.group(1) or "").strip().replace("_", ".")
+        return ""
+
+    def _extract_ms_reader_section_name(self, text: str, section_number: str) -> str:
+        value = str(text or "")
+        patterns = [
+            rf"Mississippi Code §\s*{re.escape(section_number)}\s*\(\d{{4}}\)\s*-\s*(.+?)(?:\s*::|\n|$)",
+            rf"Section\s+{re.escape(section_number)}\s*-\s*(.+?)(?:\n|$)",
+        ]
+        for pattern in patterns:
+            match = re.search(pattern, value, flags=re.IGNORECASE)
+            if match:
+                return self._normalize_legal_text(match.group(1))[:200]
+        return f"Section {section_number}"
 
     def _clean_jina_markdown(self, text: str) -> str:
         value = str(text or "")
