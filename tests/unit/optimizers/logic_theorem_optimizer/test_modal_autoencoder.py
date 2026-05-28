@@ -394,8 +394,10 @@ def test_generalizable_projection_supports_objective_weights_and_hard_example_fr
     assert report["epoch_reports"][0]["hard_example_count"] == 1
     assert report["epoch_reports"][0]["hard_example_fraction"] == pytest.approx(0.5)
     assert report["rejection_summary"]["attempted_count"] >= 1
+    assert "refinement_attempt_count" in report["rejection_summary"]
     first_candidate = report["epoch_reports"][0]["candidate_reports"][0]
     assert first_candidate["line_search_attempt_count"] >= 6
+    assert "line_search_refinement_attempt_count" in first_candidate
     assert first_candidate["attempt_reports"]
     assert first_candidate["effective_learning_rate"] <= 0.5
 

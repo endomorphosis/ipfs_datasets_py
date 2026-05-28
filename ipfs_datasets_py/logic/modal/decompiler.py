@@ -2783,6 +2783,14 @@ def _compiler_guidance_phrases(
             if route:
                 add("compiler_guidance_todo_route", route)
 
+    overlay_terms = metadata.get("compiler_guidance_semantic_overlay_terms")
+    if isinstance(overlay_terms, Sequence) and not isinstance(
+        overlay_terms,
+        (str, bytes),
+    ):
+        for term in overlay_terms[:8]:
+            add("refined_compiler_guidance_surface_term", term)
+
     before = _clean_text(
         str(metadata.get("compiler_guidance_selected_frame_before") or "")
     )

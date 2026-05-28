@@ -15,6 +15,7 @@ from ipfs_datasets_py.logic.modal import (
     DeterministicModalLogicCodec,
     ModalLogicCodecConfig,
     decoded_modal_phrase_slot_text_map,
+    modal_ir_to_flogic_triples,
 )
 from ipfs_datasets_py.logic.modal.synthesis import route_autoencoder_residual
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import build_us_code_sample
@@ -4310,6 +4311,47 @@ def test_compiler_ir_metric_block_can_apply_autoencoder_guidance() -> None:
     assert "guidance_family_cross_entropy_excess_loss" in block
 
 
+def test_compiler_ir_metric_block_reports_guidance_overlay_terms() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall provide records.",
+    )
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(
+            parser_backend="spacy",
+            spacy_model_name="definitely_missing_legal_model",
+            use_flogic=True,
+        )
+    )
+
+    class SurfaceGuidance:
+        def compiler_guidance_for_sample(self, sample, **_kwargs):
+            return {
+                "feature_groups": {
+                    "decompiler_surface_template": [
+                        "decompiler-surface:force-lexeme:permission:may",
+                        "decompiler-surface:scope-realizer:exception-suffix",
+                    ],
+                },
+                "family_distribution": {"deontic": 1.0},
+            }
+
+    block = compiler_ir_metric_block(
+        [sample],
+        codec,
+        autoencoder=SurfaceGuidance(),
+        use_autoencoder_guidance=True,
+    )
+
+    assert block["autoencoder_guidance_applied_count"] == 1
+    assert block["compiler_guidance_semantic_overlay_count"] == 2.0
+    assert block["compiler_guidance_semantic_overlay_terms"] == {
+        "except": 1,
+        "may": 1,
+    }
+
+
 def test_compiler_guidance_diagnostics_do_not_pad_structural_decode_metrics() -> None:
     sample = build_us_code_sample(
         title="5",
@@ -4366,6 +4408,127 @@ def test_compiler_guidance_diagnostics_do_not_pad_structural_decode_metrics() ->
     ]
     assert guided.losses["source_copy_loss"] == pytest.approx(
         plain.losses["source_copy_loss"]
+    )
+
+
+def test_compiler_guidance_surface_terms_activate_structural_decode() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall provide records.",
+    )
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(
+            parser_backend="spacy",
+            spacy_model_name="definitely_missing_legal_model",
+            use_flogic=True,
+        )
+    )
+    plain = codec.encode(
+        sample.text,
+        document_id=sample.sample_id,
+        citation=sample.citation,
+        source=sample.source,
+        source_embedding=sample.embedding_vector,
+    )
+    guided = codec.encode(
+        sample.text,
+        document_id=sample.sample_id,
+        citation=sample.citation,
+        source=sample.source,
+        source_embedding=sample.embedding_vector,
+        compiler_guidance={
+            "feature_groups": {
+                "decompiler_surface_template": [
+                    "decompiler-surface:force-lexeme:permission:may",
+                    "decompiler-surface:scope-realizer:exception-suffix",
+                    "decompiler-surface:negation-placement:pre-action",
+                    "decompiler-surface:diagnostic-only-token",
+                ],
+            },
+            "family_distribution": {"deontic": 1.0},
+            "legal_ir_predicted_view_distribution": {"modal.frame_logic": 1.0},
+            "legal_ir_target_view_distribution": {"modal.frame_logic": 1.0},
+        },
+    )
+
+    overlay_terms = guided.metadata["compiler_guidance_semantic_overlay_terms"]
+
+    assert overlay_terms == ["may", "except", "not"]
+    assert "diagnostic-only-token" not in overlay_terms
+    assert guided.metadata["modal_decompiler_structural_text"] != (
+        plain.metadata["modal_decompiler_structural_text"]
+    )
+    assert "may except not" in guided.metadata["modal_decompiler_structural_text"]
+    assert guided.decoded_embedding != plain.decoded_embedding
+
+
+def test_compiler_guidance_cue_terms_and_views_reach_deterministic_ir() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall provide records.",
+    )
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(
+            parser_backend="spacy",
+            spacy_model_name="definitely_missing_legal_model",
+            use_flogic=True,
+        )
+    )
+
+    guided = codec.encode(
+        sample.text,
+        document_id=sample.sample_id,
+        citation=sample.citation,
+        source=sample.source,
+        source_embedding=sample.embedding_vector,
+        compiler_guidance={
+            "feature_groups": {
+                "decompiler_surface_template": [
+                    "decompiler-surface:cue-surface-ir:authority:frame:frame:unscoped",
+                    "decompiler-surface:cue-surface-ir:permission:deontic:frame:unscoped",
+                    "decompiler-surface:cue-surface-ir:obligation:deontic:frame:unscoped",
+                    "decompiler-surface:cue-surface-ir:condition:modal:frame:conditioned",
+                    "decompiler-surface:cue-surface-ir:exception:modal:frame:excepted",
+                ],
+            },
+            "family_distribution": {"deontic": 1.0},
+            "legal_ir_predicted_view_distribution": {
+                "deontic.norms": 0.2,
+                "modal.frame_logic": 0.8,
+            },
+            "legal_ir_target_view_distribution": {
+                "deontic.norms": 0.7,
+                "modal.frame_logic": 0.3,
+            },
+        },
+    )
+    triples = modal_ir_to_flogic_triples(guided.modal_ir)
+    triples_by_predicate = {}
+    for triple in triples:
+        triples_by_predicate.setdefault(triple["predicate"], set()).add(
+            triple["object"]
+        )
+
+    assert guided.metadata["compiler_guidance_semantic_overlay_terms"] == [
+        "authority",
+        "may",
+        "shall",
+        "if",
+        "except",
+    ]
+    assert {
+        "deontic.norms",
+        "modal.frame_logic",
+    } <= triples_by_predicate["learned_legal_ir_predicted_view"]
+    assert {
+        "deontic.norms",
+        "modal.frame_logic",
+    } <= triples_by_predicate["learned_legal_ir_target_view"]
+    assert any(
+        value.startswith("deontic.norms:")
+        for value in triples_by_predicate["learned_legal_ir_view_gap"]
     )
 
 
@@ -4534,6 +4697,42 @@ def test_compiler_guidance_distillation_todos_convert_passing_routes() -> None:
     assert todo.metadata["metric_sample_payloads"][0]["text"] == (
         "The agency must provide notice."
     )
+
+
+def test_compiler_guidance_distillation_todos_infer_surface_route() -> None:
+    candidates = compiler_guidance_distillation_candidates(
+        {
+            "compiler_guidance_feature_groups": {
+                "decompiler_surface_template": 1,
+                "logic_view_contract": 1,
+            },
+            "compiler_guidance_surface_features": {
+                "decompiler-surface:force-lexeme:permission:may": 1,
+                "decompiler-surface:scope-realizer:exception-suffix": 1,
+            },
+        },
+        {"applied_count": 1, "quality_gate": "pass"},
+    )
+
+    todos = compiler_guidance_distillation_todos(candidates)
+
+    assert candidates["todo_routes_inferred_from_features"] is True
+    assert candidates["top_todo_routes"] == {
+        "refine_semantic_decompiler_reconstruction": 2
+    }
+    assert candidates["scope_hints"]["scope_counts"] == {"ir_decompiler": 2}
+    assert len(todos) == 1
+    todo = todos[0]
+    assert todo.action == "refine_semantic_decompiler_reconstruction"
+    assert todo.sample_ids == [
+        "compiler-guidance:refine_semantic_decompiler_reconstruction"
+    ]
+    assert todo.metadata["program_synthesis_scope"] == "ir_decompiler"
+    assert todo.metadata["compiler_guidance_todo_routes_inferred_from_features"] is True
+    assert todo.metadata["compiler_guidance_surface_features"] == {
+        "decompiler-surface:force-lexeme:permission:may": 1,
+        "decompiler-surface:scope-realizer:exception-suffix": 1,
+    }
 
 
 def test_compiler_guidance_distillation_todos_skip_blocked_candidates() -> None:

@@ -3078,6 +3078,12 @@ class AdaptiveModalAutoencoder:
             "combined": 0.35,
         }
         line_search_multipliers = (1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125)
+        line_search_refinement_multipliers = (
+            0.015625,
+            0.0078125,
+            0.00390625,
+            0.001953125,
+        )
 
         for epoch in range(1, max(0, int(epochs)) + 1):
             epoch_before_state = self.state.copy()
@@ -3096,7 +3102,13 @@ class AdaptiveModalAutoencoder:
                 best_improved_attempt: Optional[
                     tuple[float, Dict[str, Any], AutoencoderEvaluation, ModalAutoencoderTrainingState]
                 ] = None
-                for line_search_multiplier in line_search_multipliers:
+                multipliers_to_try = list(line_search_multipliers)
+                refinement_added = False
+                for line_search_multiplier in multipliers_to_try:
+                    is_refinement_attempt = (
+                        float(line_search_multiplier)
+                        in line_search_refinement_multipliers
+                    )
                     effective_learning_rate = (
                         learning_rate * head_scale * float(line_search_multiplier)
                     )
@@ -3192,6 +3204,7 @@ class AdaptiveModalAutoencoder:
                             )
                         ),
                         "line_search_multiplier": float(line_search_multiplier),
+                        "line_search_refinement": bool(is_refinement_attempt),
                         "objective_delta": objective_delta,
                         "pareto_regressions": regressions,
                         "reconstruction_delta": best.reconstruction_loss
@@ -3212,6 +3225,13 @@ class AdaptiveModalAutoencoder:
                         or objective_delta > best_improved_attempt[0]
                     ):
                         best_improved_attempt = attempt_tuple
+                    if (
+                        not refinement_added
+                        and best_improved_attempt is None
+                        and len(attempt_reports) == len(line_search_multipliers)
+                    ):
+                        multipliers_to_try.extend(line_search_refinement_multipliers)
+                        refinement_added = True
                 chosen = best_improved_attempt or best_attempt
                 if chosen is None:
                     continue
@@ -3221,6 +3241,11 @@ class AdaptiveModalAutoencoder:
                         **candidate_report,
                         "attempt_reports": attempt_reports,
                         "line_search_attempt_count": len(attempt_reports),
+                        "line_search_refinement_attempt_count": sum(
+                            1
+                            for report in attempt_reports
+                            if report.get("line_search_refinement")
+                        ),
                     }
                 )
                 if candidate_report["accepted"] and (
@@ -21197,6 +21222,7 @@ def _projection_rejection_summary(
     """Summarize why guarded projection attempts were not accepted."""
     attempted_count = 0
     accepted_attempt_count = 0
+    refinement_attempt_count = 0
     rejected_attempt_count = 0
     regression_counts: Dict[str, int] = {}
     best_rejected: Optional[Dict[str, Any]] = None
@@ -21220,6 +21246,8 @@ def _projection_rejection_summary(
                 if not isinstance(attempt, Mapping):
                     continue
                 attempted_count += 1
+                if bool(attempt.get("line_search_refinement")):
+                    refinement_attempt_count += 1
                 accepted = bool(attempt.get("accepted"))
                 if accepted:
                     accepted_attempt_count += 1
@@ -21253,6 +21281,9 @@ def _projection_rejection_summary(
                             _float_or_zero(attempt.get("line_search_multiplier")),
                             12,
                         ),
+                        "line_search_refinement": bool(
+                            attempt.get("line_search_refinement")
+                        ),
                         "objective_delta": round(objective_delta, 12),
                         "pareto_regressions": dict(pareto_regressions)
                         if isinstance(pareto_regressions, Mapping)
@@ -21268,6 +21299,7 @@ def _projection_rejection_summary(
         "attempted_count": attempted_count,
         "best_rejected_attempt": best_rejected or {},
         "pareto_regression_counts": dict(sorted(regression_counts.items())),
+        "refinement_attempt_count": refinement_attempt_count,
         "rejected_attempt_count": rejected_attempt_count,
     }
 

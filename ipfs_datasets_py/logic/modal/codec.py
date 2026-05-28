@@ -1436,6 +1436,113 @@ def _compiler_guidance_feature_strings(
     return _unique_preserve_order(features)
 
 
+_GUIDANCE_SURFACE_FORCE_LEXEMES = {
+    "authorized",
+    "may",
+    "must",
+    "permitted",
+    "prohibited",
+    "required",
+    "requires",
+    "shall",
+}
+_GUIDANCE_SURFACE_SCOPE_TERMS = {
+    "condition-prefix": "if",
+    "exception-suffix": "except",
+    "temporal-suffix": "when",
+}
+_GUIDANCE_SURFACE_SCOPE_SIGNATURE_TERMS = {
+    "conditioned": "if",
+    "excepted": "except",
+    "temporal": "when",
+}
+_GUIDANCE_SURFACE_CUE_TERMS = {
+    "authority": "authority",
+    "condition": "if",
+    "conditional": "if",
+    "definition": "definition",
+    "enforcement": "enforce",
+    "exception": "except",
+    "obligation": "shall",
+    "permission": "may",
+    "prohibition": "not",
+    "temporal": "when",
+}
+
+
+def _compiler_guidance_surface_overlay_terms(
+    guidance_summary: Mapping[str, Any],
+    *,
+    limit: int = 8,
+) -> List[str]:
+    """Convert learned decompiler-surface features into structural legal terms."""
+    if not guidance_summary:
+        return []
+    terms: List[str] = []
+
+    def add(term: str) -> None:
+        cleaned = _clean_non_empty_string(term).lower()
+        if cleaned:
+            terms.append(cleaned)
+
+    for feature in _compiler_guidance_feature_strings(guidance_summary):
+        normalized = _clean_non_empty_string(feature).lower()
+        if not normalized.startswith("decompiler-surface:"):
+            continue
+        parts = [part for part in normalized.split(":") if part]
+        if len(parts) < 2:
+            continue
+        kind = parts[1]
+        if kind == "force-lexeme" and len(parts) >= 4:
+            lexeme = parts[3]
+            if lexeme in _GUIDANCE_SURFACE_FORCE_LEXEMES:
+                add(lexeme)
+        elif kind == "negation-placement":
+            add("not")
+        elif kind == "scope-realizer" and len(parts) >= 3:
+            term = _GUIDANCE_SURFACE_SCOPE_TERMS.get(parts[2])
+            if term:
+                add(term)
+        elif kind == "force-polarity-template" and len(parts) >= 5:
+            polarity = parts[3]
+            scope_signature = parts[4]
+            if polarity == "negative_scope":
+                add("not")
+            for marker, term in _GUIDANCE_SURFACE_SCOPE_SIGNATURE_TERMS.items():
+                if marker in scope_signature:
+                    add(term)
+        elif kind == "cue-surface-ir" and len(parts) >= 3:
+            term = _GUIDANCE_SURFACE_CUE_TERMS.get(parts[2])
+            if term:
+                add(term)
+    return _unique_preserve_order(terms)[: max(0, int(limit))]
+
+
+def _apply_compiler_guidance_surface_overlay(
+    structural_decoded_text: str,
+    overlay_terms: Sequence[str],
+) -> str:
+    """Append curated learned surface terms to the structural IR text view."""
+    rendered = _clean_non_empty_string(structural_decoded_text)
+    if not rendered:
+        return rendered
+    existing_tokens = {
+        token.lower()
+        for token in _SLOT_FEATURE_TOKEN_RE.findall(rendered)
+        if any(character.isalpha() for character in token)
+    }
+    additions = [
+        term
+        for term in _unique_preserve_order(
+            _clean_non_empty_string(value).lower() for value in overlay_terms
+        )
+        if term and term not in existing_tokens
+    ]
+    if not additions:
+        return rendered
+    return _clean_non_empty_string(f"{rendered} {' '.join(additions)}")
+
+
 def _guidance_frame_boost(
     selection: FrameSelection,
     guidance_features: Sequence[str],
@@ -1580,6 +1687,9 @@ class DeterministicModalLogicCodec:
         """Run deterministic text -> encoding -> modal IR -> vector decoding."""
         normalized_text = self.parser.normalize_text(text)
         guidance_summary = _compiler_guidance_summary(compiler_guidance)
+        guidance_surface_overlay_terms = _compiler_guidance_surface_overlay_terms(
+            guidance_summary
+        )
         encoding = self.encoder.encode(
             text,
             document_id=document_id,
@@ -1643,6 +1753,9 @@ class DeterministicModalLogicCodec:
                         {},
                     ),
                     "compiler_guidance_frame_boosts": guidance_frame_boosts,
+                    "compiler_guidance_semantic_overlay_terms": (
+                        guidance_surface_overlay_terms
+                    ),
                     "compiler_guidance_legal_ir_predicted_view_distribution": (
                         guidance_summary.get(
                             "legal_ir_predicted_view_distribution",
@@ -1774,6 +1887,10 @@ class DeterministicModalLogicCodec:
             modal_ir=modal_ir,
             selected_frame=selected_frame,
         )
+        structural_decoded_text = _apply_compiler_guidance_surface_overlay(
+            structural_decoded_text,
+            guidance_surface_overlay_terms,
+        )
         decoded_embedding = _decoded_structural_feature_embedding(
             structural_decoded_text,
             encoder=self.encoder,
@@ -1880,6 +1997,12 @@ class DeterministicModalLogicCodec:
                 _compiler_guidance_feature_strings(guidance_summary)
             ) if guidance_summary else 0,
             "compiler_guidance_frame_boost_count": len(guidance_frame_boosts),
+            "compiler_guidance_semantic_overlay_count": len(
+                guidance_surface_overlay_terms
+            ),
+            "compiler_guidance_semantic_overlay_terms": list(
+                guidance_surface_overlay_terms
+            ),
             "compiler_guidance_selected_frame_after": selected_frame,
             "compiler_guidance_selected_frame_before": selected_frame_before_guidance,
             "deterministic_coverage_ratio": 1.0,
@@ -2125,6 +2248,80 @@ def target_family_distribution_for_modal_ir(modal_ir: ModalIRDocument) -> Dict[s
     }
 
 
+def _learned_legal_ir_view_distribution_triples(
+    modal_ir: ModalIRDocument,
+    *,
+    limit: int = 6,
+) -> List[Dict[str, str]]:
+    """Expose learned LegalIR view distributions to KG/prover bridge adapters."""
+    predicted = _numeric_distribution(
+        modal_ir.metadata.get(
+            "compiler_guidance_legal_ir_predicted_view_distribution"
+        )
+    )
+    target = _numeric_distribution(
+        modal_ir.metadata.get("compiler_guidance_legal_ir_target_view_distribution")
+    )
+    if not predicted and not target:
+        return []
+
+    triples: List[Dict[str, str]] = []
+    ranked_views = sorted(
+        set(predicted) | set(target),
+        key=lambda view: max(predicted.get(view, 0.0), target.get(view, 0.0)),
+        reverse=True,
+    )[: max(0, int(limit))]
+    for rank, view in enumerate(ranked_views, start=1):
+        safe_view = _clean_non_empty_string(view)
+        if not safe_view:
+            continue
+        if view in predicted:
+            triples.append(
+                {
+                    "subject": modal_ir.document_id,
+                    "predicate": "learned_legal_ir_predicted_view",
+                    "object": safe_view,
+                }
+            )
+            triples.append(
+                {
+                    "subject": modal_ir.document_id,
+                    "predicate": "learned_legal_ir_predicted_view_weight",
+                    "object": f"{safe_view}:{predicted[view]:.6f}",
+                }
+            )
+        if view in target:
+            triples.append(
+                {
+                    "subject": modal_ir.document_id,
+                    "predicate": "learned_legal_ir_target_view",
+                    "object": safe_view,
+                }
+            )
+            triples.append(
+                {
+                    "subject": modal_ir.document_id,
+                    "predicate": "learned_legal_ir_target_view_weight",
+                    "object": f"{safe_view}:{target[view]:.6f}",
+                }
+            )
+        triples.extend(
+            [
+                {
+                    "subject": modal_ir.document_id,
+                    "predicate": "learned_legal_ir_view_rank",
+                    "object": f"{rank}:{safe_view}",
+                },
+                {
+                    "subject": modal_ir.document_id,
+                    "predicate": "learned_legal_ir_view_gap",
+                    "object": f"{safe_view}:{target.get(view, 0.0) - predicted.get(view, 0.0):.6f}",
+                },
+            ]
+        )
+    return triples
+
+
 def modal_ir_to_flogic_triples(
     modal_ir: ModalIRDocument,
     *,
@@ -2157,6 +2354,7 @@ def modal_ir_to_flogic_triples(
                 "object": value,
             }
         )
+    triples.extend(_learned_legal_ir_view_distribution_triples(modal_ir))
     if not modal_ir.formulas:
         for predicate, value in _document_source_context_components(modal_ir):
             triples.append(

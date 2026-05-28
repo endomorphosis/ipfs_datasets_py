@@ -844,6 +844,8 @@ def compiler_ir_metric_block(
     guidance_frame_boost_counts: List[float] = []
     guidance_frame_changed_count = 0
     guidance_feature_groups: Counter[str] = Counter()
+    guidance_semantic_overlay_counts: List[float] = []
+    guidance_semantic_overlay_terms: Counter[str] = Counter()
     guidance_surface_features: Counter[str] = Counter()
     guidance_todo_routes: Counter[str] = Counter()
     guidance_todo_route_examples: Dict[str, List[Dict[str, str]]] = {}
@@ -888,6 +890,24 @@ def compiler_ir_metric_block(
             guidance_frame_boost_counts.append(
                 float(result.metadata.get("compiler_guidance_frame_boost_count", 0.0))
             )
+            guidance_semantic_overlay_counts.append(
+                float(
+                    result.metadata.get(
+                        "compiler_guidance_semantic_overlay_count",
+                        0.0,
+                    )
+                )
+            )
+            overlay_terms = result.metadata.get(
+                "compiler_guidance_semantic_overlay_terms"
+            )
+            if isinstance(overlay_terms, Sequence) and not isinstance(
+                overlay_terms,
+                (str, bytes),
+            ):
+                for value in overlay_terms:
+                    if str(value):
+                        guidance_semantic_overlay_terms[str(value)] += 1
             if (
                 result.metadata.get("compiler_guidance_selected_frame_before")
                 != result.metadata.get("compiler_guidance_selected_frame_after")
@@ -970,6 +990,16 @@ def compiler_ir_metric_block(
             9,
         )
         block["compiler_guidance_frame_changed_count"] = guidance_frame_changed_count
+    if guidance_semantic_overlay_counts:
+        block["compiler_guidance_semantic_overlay_count"] = round(
+            sum(guidance_semantic_overlay_counts)
+            / len(guidance_semantic_overlay_counts),
+            9,
+        )
+    if guidance_semantic_overlay_terms:
+        block["compiler_guidance_semantic_overlay_terms"] = dict(
+            guidance_semantic_overlay_terms.most_common(12)
+        )
     if guidance_feature_groups:
         block["compiler_guidance_feature_groups"] = dict(
             guidance_feature_groups.most_common(12)
@@ -1165,6 +1195,39 @@ def _top_numeric_items(
     }
 
 
+def _compiler_guidance_fallback_todo_routes(
+    *,
+    top_feature_groups: Mapping[str, Any],
+    top_surface_features: Mapping[str, Any],
+    limit: int = 8,
+) -> Dict[str, float]:
+    """Infer deterministic repair routes when guidance has features but no route."""
+    route_counts: Counter[str] = Counter()
+    surface_total = sum(
+        float(value)
+        for value in top_surface_features.values()
+        if isinstance(value, (float, int)) and float(value) > 0.0
+    )
+    if surface_total > 0.0:
+        route_counts["refine_semantic_decompiler_reconstruction"] += surface_total
+
+    feature_group_counts = {
+        str(key): float(value)
+        for key, value in top_feature_groups.items()
+        if isinstance(value, (float, int)) and float(value) > 0.0
+    }
+    logic_view_count = feature_group_counts.get("logic_view_contract", 0.0)
+    if logic_view_count > 0.0 and not route_counts:
+        route_counts["repair_multiview_legal_ir_loss"] += logic_view_count
+    compiler_count = max(
+        feature_group_counts.get("compiler_contract", 0.0),
+        feature_group_counts.get("compiler_latent_profile", 0.0),
+    )
+    if compiler_count > 0.0 and not route_counts:
+        route_counts["refine_modal_family_cue_rules"] += compiler_count
+    return _top_numeric_items(route_counts, limit=limit)
+
+
 def compiler_guidance_route_scope(route: str) -> Dict[str, Any]:
     """Map a learned guidance TODO route into a merge-safe Codex AST scope."""
     normalized = _normalized_guidance_route(route)
@@ -1303,6 +1366,14 @@ def compiler_guidance_distillation_candidates(
         todo_routes if isinstance(todo_routes, Mapping) else {},
         limit=max_items,
     )
+    todo_routes_inferred_from_features = False
+    if not top_todo_routes:
+        top_todo_routes = _compiler_guidance_fallback_todo_routes(
+            top_feature_groups=top_feature_groups,
+            top_surface_features=top_surface_features,
+            limit=max_items,
+        )
+        todo_routes_inferred_from_features = bool(top_todo_routes)
     top_todo_route_examples: Dict[str, Any] = {}
     if isinstance(todo_route_examples, Mapping):
         for route in top_todo_routes:
@@ -1313,7 +1384,10 @@ def compiler_guidance_distillation_candidates(
             ):
                 top_todo_route_examples[route] = list(examples[:3])
     scope_hints = compiler_guidance_scope_hints(
-        guided_block,
+        {
+            **dict(guided_block),
+            "compiler_guidance_todo_routes": top_todo_routes,
+        },
         max_scopes=max_items,
     )
     promotion_gate = compiler_guidance_promotion_gate(canary_block)
@@ -1334,6 +1408,7 @@ def compiler_guidance_distillation_candidates(
         "top_surface_features": top_surface_features,
         "top_todo_route_examples": top_todo_route_examples,
         "top_todo_routes": top_todo_routes,
+        "todo_routes_inferred_from_features": todo_routes_inferred_from_features,
     }
 
 
@@ -1579,6 +1654,14 @@ def compiler_guidance_distillation_todos(
             "compiler_guidance_distillation_count": count,
             "compiler_guidance_quality_gate": candidates.get("quality_gate", ""),
             "compiler_guidance_route": action,
+            "compiler_guidance_surface_features": dict(
+                candidates.get("top_surface_features")
+                if isinstance(candidates.get("top_surface_features"), Mapping)
+                else {}
+            ),
+            "compiler_guidance_todo_routes_inferred_from_features": bool(
+                candidates.get("todo_routes_inferred_from_features")
+            ),
             "dedupe_signature": _compiler_guidance_distillation_signature(
                 route=action,
                 target_component=target_component,
@@ -1717,6 +1800,14 @@ def compiler_guidance_activation_todos(
             "compiler_guidance_canary": dict(canary_block),
             "compiler_guidance_quality_gate": canary_block.get("quality_gate", ""),
             "compiler_guidance_route": action,
+            "compiler_guidance_surface_features": dict(
+                candidates.get("top_surface_features")
+                if isinstance(candidates.get("top_surface_features"), Mapping)
+                else {}
+            ),
+            "compiler_guidance_todo_routes_inferred_from_features": bool(
+                candidates.get("todo_routes_inferred_from_features")
+            ),
             "dedupe_signature": _compiler_guidance_activation_signature(
                 route=action,
                 target_component=target_component,
@@ -8693,6 +8784,68 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["latest_compiler_ir_guidance_guardrail_todo_ids"] = list(
                 guidance_guardrail_todo_ids
             )
+            guidance_distillation_seeded_total = int(
+                summary.get("compiler_ir_guidance_distillation_seeded_total", 0)
+                or 0
+            ) + int(guidance_distillation_seeded_count)
+            guidance_distillation_deduped_total = int(
+                summary.get("compiler_ir_guidance_distillation_deduped_total", 0)
+                or 0
+            ) + int(guidance_distillation_deduped_count)
+            guidance_distillation_semantic_deduped_total = int(
+                summary.get(
+                    "compiler_ir_guidance_distillation_semantic_deduped_total",
+                    0,
+                )
+                or 0
+            ) + int(guidance_distillation_semantic_deduped_count)
+            guidance_activation_seeded_total = int(
+                summary.get("compiler_ir_guidance_activation_seeded_total", 0)
+                or 0
+            ) + int(guidance_activation_seeded_count)
+            guidance_activation_deduped_total = int(
+                summary.get("compiler_ir_guidance_activation_deduped_total", 0)
+                or 0
+            ) + int(guidance_activation_deduped_count)
+            guidance_activation_semantic_deduped_total = int(
+                summary.get(
+                    "compiler_ir_guidance_activation_semantic_deduped_total",
+                    0,
+                )
+                or 0
+            ) + int(guidance_activation_semantic_deduped_count)
+            guidance_guardrail_seeded_total = int(
+                summary.get("compiler_ir_guidance_guardrail_seeded_total", 0)
+                or 0
+            ) + int(guidance_guardrail_seeded_count)
+            guidance_guardrail_deduped_total = int(
+                summary.get("compiler_ir_guidance_guardrail_deduped_total", 0)
+                or 0
+            ) + int(guidance_guardrail_deduped_count)
+            summary["compiler_ir_guidance_distillation_seeded_total"] = int(
+                guidance_distillation_seeded_total
+            )
+            summary["compiler_ir_guidance_distillation_deduped_total"] = int(
+                guidance_distillation_deduped_total
+            )
+            summary[
+                "compiler_ir_guidance_distillation_semantic_deduped_total"
+            ] = int(guidance_distillation_semantic_deduped_total)
+            summary["compiler_ir_guidance_activation_seeded_total"] = int(
+                guidance_activation_seeded_total
+            )
+            summary["compiler_ir_guidance_activation_deduped_total"] = int(
+                guidance_activation_deduped_total
+            )
+            summary["compiler_ir_guidance_activation_semantic_deduped_total"] = int(
+                guidance_activation_semantic_deduped_total
+            )
+            summary["compiler_ir_guidance_guardrail_seeded_total"] = int(
+                guidance_guardrail_seeded_total
+            )
+            summary["compiler_ir_guidance_guardrail_deduped_total"] = int(
+                guidance_guardrail_deduped_total
+            )
             summary["latest_failed_validation_rescue_seeded_count"] = int(
                 failed_validation_rescue_seeded_count
             )
@@ -8775,17 +8928,41 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 "compiler_guidance_distillation_seeded_count": int(
                     guidance_distillation_seeded_count
                 ),
+                "compiler_guidance_distillation_seeded_total": int(
+                    guidance_distillation_seeded_total
+                ),
+                "compiler_guidance_distillation_deduped_total": int(
+                    guidance_distillation_deduped_total
+                ),
+                "compiler_guidance_distillation_semantic_deduped_total": int(
+                    guidance_distillation_semantic_deduped_total
+                ),
                 "compiler_guidance_activation_deduped_count": int(
                     guidance_activation_deduped_count
                 ),
                 "compiler_guidance_activation_seeded_count": int(
                     guidance_activation_seeded_count
                 ),
+                "compiler_guidance_activation_seeded_total": int(
+                    guidance_activation_seeded_total
+                ),
+                "compiler_guidance_activation_deduped_total": int(
+                    guidance_activation_deduped_total
+                ),
+                "compiler_guidance_activation_semantic_deduped_total": int(
+                    guidance_activation_semantic_deduped_total
+                ),
                 "compiler_guidance_guardrail_deduped_count": int(
                     guidance_guardrail_deduped_count
                 ),
                 "compiler_guidance_guardrail_seeded_count": int(
                     guidance_guardrail_seeded_count
+                ),
+                "compiler_guidance_guardrail_seeded_total": int(
+                    guidance_guardrail_seeded_total
+                ),
+                "compiler_guidance_guardrail_deduped_total": int(
+                    guidance_guardrail_deduped_total
                 ),
                 "failed_validation_rescue_deduped_count": int(
                     failed_validation_rescue_deduped_count
@@ -8963,6 +9140,15 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "compiler_ir_guidance_distillation_seeded_count": int(
                         guidance_distillation_seeded_count
                     ),
+                    "compiler_ir_guidance_distillation_seeded_total": int(
+                        guidance_distillation_seeded_total
+                    ),
+                    "compiler_ir_guidance_distillation_deduped_total": int(
+                        guidance_distillation_deduped_total
+                    ),
+                    "compiler_ir_guidance_distillation_semantic_deduped_total": int(
+                        guidance_distillation_semantic_deduped_total
+                    ),
                     "compiler_ir_guidance_distillation_todo_ids": list(
                         guidance_distillation_todo_ids
                     ),
@@ -8972,6 +9158,15 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "compiler_ir_guidance_activation_seeded_count": int(
                         guidance_activation_seeded_count
                     ),
+                    "compiler_ir_guidance_activation_seeded_total": int(
+                        guidance_activation_seeded_total
+                    ),
+                    "compiler_ir_guidance_activation_deduped_total": int(
+                        guidance_activation_deduped_total
+                    ),
+                    "compiler_ir_guidance_activation_semantic_deduped_total": int(
+                        guidance_activation_semantic_deduped_total
+                    ),
                     "compiler_ir_guidance_activation_todo_ids": list(
                         guidance_activation_todo_ids
                     ),
@@ -8980,6 +9175,12 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     ),
                     "compiler_ir_guidance_guardrail_seeded_count": int(
                         guidance_guardrail_seeded_count
+                    ),
+                    "compiler_ir_guidance_guardrail_seeded_total": int(
+                        guidance_guardrail_seeded_total
+                    ),
+                    "compiler_ir_guidance_guardrail_deduped_total": int(
+                        guidance_guardrail_deduped_total
                     ),
                     "compiler_ir_guidance_guardrail_todo_ids": list(
                         guidance_guardrail_todo_ids

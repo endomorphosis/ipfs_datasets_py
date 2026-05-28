@@ -2188,6 +2188,14 @@ class ModalTodoSupervisor:
                         if validation_gate.get("regressed_metrics")
                         else "program_synthesis_validation_rejected"
                     )
+                    if todo is not None:
+                        _record_program_synthesis_failure_evidence(
+                            todo,
+                            reason=reason,
+                            validation_report=validation_report,
+                            patch_status=normalized_patch_status,
+                            codex_exec_status=normalized_exec_status,
+                        )
                     failed_validation_count += int(
                         self.queue.fail_validation(todo_id, reason=reason)
                     )
@@ -2207,6 +2215,13 @@ class ModalTodoSupervisor:
                 if todo is None:
                     continue
                 if int(todo.metadata.get("transient_failure_count", 0)) >= 3:
+                    _record_program_synthesis_failure_evidence(
+                        todo,
+                        reason=reason,
+                        validation_report=validation_report,
+                        patch_status=normalized_patch_status,
+                        codex_exec_status=normalized_exec_status,
+                    )
                     failed_validation_count += int(
                         self.queue.fail_validation(todo_id, reason=reason)
                     )
@@ -2221,6 +2236,13 @@ class ModalTodoSupervisor:
                 if todo is None:
                     continue
                 if int(todo.metadata.get("transient_failure_count", 0)) >= 3:
+                    _record_program_synthesis_failure_evidence(
+                        todo,
+                        reason=reason,
+                        validation_report=validation_report,
+                        patch_status=normalized_patch_status,
+                        codex_exec_status=normalized_exec_status,
+                    )
                     failed_validation_count += int(
                         self.queue.fail_validation(todo_id, reason=reason)
                     )
@@ -2231,6 +2253,15 @@ class ModalTodoSupervisor:
         elif normalized_exec_status in {"failed", "timeout"}:
             reason = f"codex_exec_{normalized_exec_status}"
             for todo_id in todo_ids:
+                todo = self.queue.get(todo_id)
+                if todo is not None:
+                    _record_program_synthesis_failure_evidence(
+                        todo,
+                        reason=reason,
+                        validation_report=validation_report,
+                        patch_status=normalized_patch_status,
+                        codex_exec_status=normalized_exec_status,
+                    )
                 failed_validation_count += int(
                     self.queue.fail_validation(todo_id, reason=reason)
                 )
@@ -2238,6 +2269,15 @@ class ModalTodoSupervisor:
         elif normalized_patch_status not in {"created", "applied_to_main"}:
             reason = str(patch_status or "patch_not_created")
             for todo_id in todo_ids:
+                todo = self.queue.get(todo_id)
+                if todo is not None:
+                    _record_program_synthesis_failure_evidence(
+                        todo,
+                        reason=reason,
+                        validation_report=validation_report,
+                        patch_status=normalized_patch_status,
+                        codex_exec_status=normalized_exec_status,
+                    )
                 failed_validation_count += int(
                     self.queue.fail_validation(todo_id, reason=reason)
                 )
@@ -3056,19 +3096,34 @@ def _failed_validation_rescue_evidence(
             regressed_metrics = _as_list(validation_gate.get("regressed_metrics"))
             if regressed_metrics:
                 item["regressed_metrics"] = regressed_metrics[:8]
+        failed_report = todo.metadata.get("failed_validation_report")
+        if isinstance(failed_report, Mapping):
+            item["failed_validation_status"] = failed_report.get("status")
+            item["failed_validation_target_metric_status"] = failed_report.get(
+                "target_metric_status"
+            )
+            regressed_metrics = _as_list(failed_report.get("regressed_metrics"))
+            if regressed_metrics and "regressed_metrics" not in item:
+                item["regressed_metrics"] = regressed_metrics[:8]
+            metric_deltas = failed_report.get("metric_deltas")
+            if isinstance(metric_deltas, Mapping) and metric_deltas:
+                item["metric_deltas"] = {
+                    str(key): metric_deltas[key]
+                    for key in list(metric_deltas)[:8]
+                }
         evidence.append(item)
     return evidence
 
 
 def _failed_validation_rescue_strategy(failure_reason: str) -> str:
     normalized = str(failure_reason or "").strip().lower()
-    if normalized == "main_apply_validation_failed_rolled_back":
-        return "inspect_rolled_back_patch_and_split_risky_delta"
-    if normalized == "target_metric_regression":
+    if "target_metric_regression" in normalized:
         return "preserve_target_metrics_before_expanding_fix"
+    if normalized.startswith("main_apply_validation_failed"):
+        return "inspect_rolled_back_patch_and_split_risky_delta"
     if normalized == "program_synthesis_validation_rejected":
         return "repair_metric_gate_or_validation_contract"
-    if normalized == "main_apply_baseline_validation_failed":
+    if normalized.startswith("main_apply_baseline_validation_failed"):
         return "refresh_baseline_before_retrying_patch"
     return "inspect_failed_patch_evidence"
 
@@ -3601,6 +3656,40 @@ def _compact_hint_evidence(hint: ModalProgramSynthesisHint) -> Dict[str, Any]:
         if value not in (None, "", []):
             summary[key] = value
     return summary
+
+
+def _record_program_synthesis_failure_evidence(
+    todo: ModalTodo,
+    *,
+    reason: str,
+    validation_report: Optional[Mapping[str, Any]],
+    patch_status: str,
+    codex_exec_status: str,
+) -> None:
+    """Persist compact validation evidence before marking a Codex TODO failed."""
+    todo.metadata["failed_validation_reason"] = str(reason or "")
+    todo.metadata["failed_validation_patch_status"] = str(patch_status or "")
+    todo.metadata["failed_validation_codex_exec_status"] = str(
+        codex_exec_status or ""
+    )
+    if not isinstance(validation_report, Mapping):
+        return
+    compact_report = {
+        key: value
+        for key, value in validation_report.items()
+        if key
+        in {
+            "baseline_status",
+            "main_apply_status",
+            "metric_deltas",
+            "patch_status",
+            "regressed_metrics",
+            "status",
+            "target_metric_status",
+        }
+    }
+    if compact_report:
+        todo.metadata["failed_validation_report"] = compact_report
 
 
 def _todo_optimizer_role(todo: ModalTodo) -> str:

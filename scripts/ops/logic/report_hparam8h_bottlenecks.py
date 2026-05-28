@@ -127,6 +127,7 @@ def _projection_rejection_summary(report: Mapping[str, Any]) -> dict[str, Any]:
         return summary
     attempted_count = 0
     accepted_attempt_count = 0
+    refinement_attempt_count = 0
     rejected_attempt_count = 0
     regression_counts: Counter[str] = Counter()
     best_rejected: dict[str, Any] = {}
@@ -143,6 +144,8 @@ def _projection_rejection_summary(report: Mapping[str, Any]) -> dict[str, Any]:
                 if not isinstance(attempt, Mapping):
                     continue
                 attempted_count += 1
+                if bool(attempt.get("line_search_refinement")):
+                    refinement_attempt_count += 1
                 if bool(attempt.get("accepted")):
                     accepted_attempt_count += 1
                     continue
@@ -164,6 +167,9 @@ def _projection_rejection_summary(report: Mapping[str, Any]) -> dict[str, Any]:
                             attempt.get("line_search_multiplier"),
                             0.0,
                         ),
+                        "line_search_refinement": bool(
+                            attempt.get("line_search_refinement")
+                        ),
                         "objective_delta": objective_delta,
                         "pareto_regressions": dict(pareto)
                         if isinstance(pareto, Mapping)
@@ -175,6 +181,7 @@ def _projection_rejection_summary(report: Mapping[str, Any]) -> dict[str, Any]:
         "attempted_count": attempted_count,
         "best_rejected_attempt": best_rejected,
         "pareto_regression_counts": dict(regression_counts.most_common(12)),
+        "refinement_attempt_count": refinement_attempt_count,
         "rejected_attempt_count": rejected_attempt_count,
     }
 
@@ -300,6 +307,7 @@ def _parse_pipeline_final_run_id(pipeline_log: Path) -> str | None:
 
 
 def _queue_stats(path: Path) -> dict[str, Any]:
+    events = _iter_jsonl(path)
     status_counts = Counter()
     role_counts = Counter()
     scope_counts = Counter()
@@ -308,9 +316,26 @@ def _queue_stats(path: Path) -> dict[str, Any]:
     claimed_by_scope = Counter()
     failed_by_action = Counter()
     failed_by_reason = Counter()
+    failed_rescued_by_scope = Counter()
     failed_by_scope = Counter()
+    failed_unrescued_by_scope = Counter()
+    rescue_failed_ids = set()
+    rescue_todo_count = 0
+    rescue_covered_failed_id_count = 0
     total = 0
-    for event in _iter_jsonl(path):
+    for event in events:
+        metadata = event.get("metadata") if isinstance(event.get("metadata"), dict) else {}
+        if (
+            str(event.get("action") or "")
+            == "rescue_failed_program_synthesis_validation"
+            or str(metadata.get("source") or "") == "failed_validation_rescue_v1"
+        ):
+            rescue_todo_count += 1
+            failed_ids = metadata.get("failed_todo_ids")
+            if isinstance(failed_ids, list):
+                rescue_failed_ids.update(str(todo_id) for todo_id in failed_ids if todo_id)
+    rescue_covered_failed_id_count = len(rescue_failed_ids)
+    for event in events:
         total += 1
         status = str(event.get("status") or "missing")
         metadata = event.get("metadata") if isinstance(event.get("metadata"), dict) else {}
@@ -338,6 +363,12 @@ def _queue_stats(path: Path) -> dict[str, Any]:
             failed_by_scope[scope] += 1
             failed_by_action[str(event.get("action") or "missing")] += 1
             failed_by_reason[str(metadata.get("failure_reason") or "missing")] += 1
+            if str(event.get("todo_id") or "") in rescue_failed_ids:
+                failed_rescued_by_scope[scope] += 1
+            else:
+                failed_unrescued_by_scope[scope] += 1
+    failed_validation_rescued_count = sum(failed_rescued_by_scope.values())
+    failed_validation_unrescued_count = sum(failed_unrescued_by_scope.values())
     return {
         "path": str(path),
         "exists": path.exists(),
@@ -350,7 +381,13 @@ def _queue_stats(path: Path) -> dict[str, Any]:
         "claimed_by_scope": dict(claimed_by_scope.most_common(12)),
         "failed_by_action": dict(failed_by_action.most_common(12)),
         "failed_by_reason": dict(failed_by_reason.most_common(12)),
+        "failed_rescued_by_scope": dict(failed_rescued_by_scope.most_common(12)),
         "failed_by_scope": dict(failed_by_scope.most_common(12)),
+        "failed_unrescued_by_scope": dict(failed_unrescued_by_scope.most_common(12)),
+        "failed_validation_rescued_count": failed_validation_rescued_count,
+        "failed_validation_unrescued_count": failed_validation_unrescued_count,
+        "rescue_covered_failed_id_count": rescue_covered_failed_id_count,
+        "rescue_todo_count": rescue_todo_count,
     }
 
 
@@ -495,11 +532,29 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
             "compiler_guidance_activation_seeded_count": latest_cycle.get(
                 "compiler_ir_guidance_activation_seeded_count"
             ),
+            "compiler_guidance_activation_seeded_total": latest_cycle.get(
+                "compiler_ir_guidance_activation_seeded_total"
+            ),
+            "compiler_guidance_activation_deduped_total": latest_cycle.get(
+                "compiler_ir_guidance_activation_deduped_total"
+            ),
             "compiler_guidance_guardrail_deduped_count": latest_cycle.get(
                 "compiler_ir_guidance_guardrail_deduped_count"
             ),
             "compiler_guidance_guardrail_seeded_count": latest_cycle.get(
                 "compiler_ir_guidance_guardrail_seeded_count"
+            ),
+            "compiler_guidance_guardrail_seeded_total": latest_cycle.get(
+                "compiler_ir_guidance_guardrail_seeded_total"
+            ),
+            "compiler_guidance_guardrail_deduped_total": latest_cycle.get(
+                "compiler_ir_guidance_guardrail_deduped_total"
+            ),
+            "compiler_guidance_distillation_seeded_total": latest_cycle.get(
+                "compiler_ir_guidance_distillation_seeded_total"
+            ),
+            "compiler_guidance_distillation_deduped_total": latest_cycle.get(
+                "compiler_ir_guidance_distillation_deduped_total"
             ),
         }
     latest_feature_projection_report = summary.get("latest_feature_projection_report")
@@ -764,6 +819,46 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
             or latest_cycle.get("compiler_ir_guidance_guardrail_seeded_count")
             or 0
         ),
+        "compiler_ir_guidance_distillation_seeded_total": int(
+            summary.get("compiler_ir_guidance_distillation_seeded_total")
+            or latest_todo_generation.get(
+                "compiler_guidance_distillation_seeded_total"
+            )
+            or latest_cycle.get("compiler_ir_guidance_distillation_seeded_total")
+            or 0
+        ),
+        "compiler_ir_guidance_distillation_deduped_total": int(
+            summary.get("compiler_ir_guidance_distillation_deduped_total")
+            or latest_todo_generation.get(
+                "compiler_guidance_distillation_deduped_total"
+            )
+            or latest_cycle.get("compiler_ir_guidance_distillation_deduped_total")
+            or 0
+        ),
+        "compiler_ir_guidance_activation_seeded_total": int(
+            summary.get("compiler_ir_guidance_activation_seeded_total")
+            or latest_todo_generation.get("compiler_guidance_activation_seeded_total")
+            or latest_cycle.get("compiler_ir_guidance_activation_seeded_total")
+            or 0
+        ),
+        "compiler_ir_guidance_activation_deduped_total": int(
+            summary.get("compiler_ir_guidance_activation_deduped_total")
+            or latest_todo_generation.get("compiler_guidance_activation_deduped_total")
+            or latest_cycle.get("compiler_ir_guidance_activation_deduped_total")
+            or 0
+        ),
+        "compiler_ir_guidance_guardrail_seeded_total": int(
+            summary.get("compiler_ir_guidance_guardrail_seeded_total")
+            or latest_todo_generation.get("compiler_guidance_guardrail_seeded_total")
+            or latest_cycle.get("compiler_ir_guidance_guardrail_seeded_total")
+            or 0
+        ),
+        "compiler_ir_guidance_guardrail_deduped_total": int(
+            summary.get("compiler_ir_guidance_guardrail_deduped_total")
+            or latest_todo_generation.get("compiler_guidance_guardrail_deduped_total")
+            or latest_cycle.get("compiler_ir_guidance_guardrail_deduped_total")
+            or 0
+        ),
         "latest_compiler_ir_guidance_distillation": latest_guidance_distillation,
         "latest_compiler_ir_guidance_scope_hints": latest_guidance_scope_hints,
         "latest_compiler_ir_guided_family_ce_excess": _first_metric(
@@ -774,6 +869,11 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
         "latest_compiler_ir_guided_frame_boost_count": _first_metric(
             latest_compiler_ir_guided_validation.get(
                 "compiler_guidance_frame_boost_count"
+            ),
+        ),
+        "latest_compiler_ir_guided_semantic_overlay_count": _first_metric(
+            latest_compiler_ir_guided_validation.get(
+                "compiler_guidance_semantic_overlay_count"
             ),
         ),
         "latest_compiler_ir_guided_frame_changed_count": int(
@@ -804,6 +904,19 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
             if isinstance(
                 latest_compiler_ir_guided_validation.get(
                     "compiler_guidance_surface_features"
+                ),
+                dict,
+            )
+            else {}
+        ),
+        "latest_compiler_ir_guidance_semantic_overlay_terms": (
+            latest_compiler_ir_guided_validation.get(
+                "compiler_guidance_semantic_overlay_terms",
+                {},
+            )
+            if isinstance(
+                latest_compiler_ir_guided_validation.get(
+                    "compiler_guidance_semantic_overlay_terms"
                 ),
                 dict,
             )
@@ -974,11 +1087,15 @@ def _recommendation(
                 )
             best_rejected = rejection_summary.get("best_rejected_attempt")
             if isinstance(best_rejected, dict) and best_rejected:
+                refinement_count = int(
+                    rejection_summary.get("refinement_attempt_count", 0) or 0
+                )
                 lines.append(
                     "Best rejected projection attempt: "
                     f"update={best_rejected.get('update', 'n/a')} "
                     f"lr={_finite_float(best_rejected.get('effective_learning_rate'), 0.0):.6g} "
-                    f"objective_delta={_finite_float(best_rejected.get('objective_delta'), 0.0):.6g}."
+                    f"objective_delta={_finite_float(best_rejected.get('objective_delta'), 0.0):.6g} "
+                    f"refined_attempts={refinement_count}."
                 )
         guidance_applied = int(
             final.get("latest_compiler_ir_guided_applied_count", 0) or 0
@@ -1027,6 +1144,20 @@ def _recommendation(
                         f"Guidance guardrail seeded {guardrail_seeded} repair TODOs "
                         "to keep useful guided gains while fixing the regressed canary metric."
                     )
+                else:
+                    guardrail_seeded_total = int(
+                        final.get(
+                            "compiler_ir_guidance_guardrail_seeded_total",
+                            0,
+                        )
+                        or 0
+                    )
+                    if guardrail_seeded_total > 0:
+                        lines.append(
+                            "Guidance guardrails were already seeded earlier "
+                            f"({guardrail_seeded_total} total); current flat latest "
+                            "counts likely mean the daemon is deduping known repair scopes."
+                        )
             if (
                 math.isfinite(guidance_ce_delta)
                 and math.isfinite(guidance_cosine_delta)
@@ -1037,6 +1168,15 @@ def _recommendation(
                     "Autoencoder guidance is not yet improving deterministic compiler IR; "
                     "prioritize decompiler slot consumption and feature distillation."
                 )
+                overlay_count = _finite_float(
+                    final.get("latest_compiler_ir_guided_semantic_overlay_count"),
+                    0.0,
+                )
+                if overlay_count <= 0.0:
+                    lines.append(
+                        "Guidance produced no semantic overlay terms; prioritize "
+                        "source-grounded decompiler-surface features over neutral diagnostics."
+                    )
                 activation_seeded = int(
                     final.get(
                         "latest_compiler_ir_guidance_activation_seeded_count",
@@ -1049,6 +1189,20 @@ def _recommendation(
                         f"Guidance activation seeded {activation_seeded} Codex TODOs "
                         "because learned routes were produced but the canary metrics were flat."
                     )
+                else:
+                    activation_seeded_total = int(
+                        final.get(
+                            "compiler_ir_guidance_activation_seeded_total",
+                            0,
+                        )
+                        or 0
+                    )
+                    if activation_seeded_total > 0:
+                        lines.append(
+                            "Guidance activation has already produced "
+                            f"{activation_seeded_total} TODOs cumulatively; a zero latest "
+                            "seed count can be normal once those routes are deduped."
+                        )
             elif (
                 (math.isfinite(guidance_ce_delta) and guidance_ce_delta > 0.0)
                 or (
@@ -1084,6 +1238,20 @@ def _recommendation(
                         f"Guidance distillation seeded {seeded} Codex TODOs this cycle; "
                         "watch whether those scopes reduce guided CE/cosine residuals."
                     )
+                else:
+                    seeded_total = int(
+                        final.get(
+                            "compiler_ir_guidance_distillation_seeded_total",
+                            0,
+                        )
+                        or 0
+                    )
+                    if seeded_total > 0:
+                        lines.append(
+                            "Guidance distillation has already seeded "
+                            f"{seeded_total} TODOs cumulatively; latest-cycle dedupe "
+                            "is no longer evidence that todo generation is stalled."
+                        )
             elif promotion_reason and promotion_reason != "n/a":
                 lines.append(
                     f"Guidance promotion remains blocked ({promotion_reason}); keep "
@@ -1254,19 +1422,32 @@ def _print_report(report: dict[str, Any]) -> None:
             f"{final['latest_compiler_ir_guidance_distillation_seeded_count']} "
             "distill_deduped="
             f"{final['latest_compiler_ir_guidance_distillation_deduped_count']} "
+            "distill_total="
+            f"{final['compiler_ir_guidance_distillation_seeded_total']} "
             "activation_seeded="
             f"{final['latest_compiler_ir_guidance_activation_seeded_count']} "
             "activation_deduped="
             f"{final['latest_compiler_ir_guidance_activation_deduped_count']} "
+            "activation_total="
+            f"{final['compiler_ir_guidance_activation_seeded_total']} "
             "guardrail_seeded="
             f"{final['latest_compiler_ir_guidance_guardrail_seeded_count']} "
             "guardrail_deduped="
             f"{final['latest_compiler_ir_guidance_guardrail_deduped_count']} "
+            "guardrail_total="
+            f"{final['compiler_ir_guidance_guardrail_seeded_total']} "
             "guidance_family_ce_excess="
             f"{_summary_metric(final, 'latest_compiler_ir_guided_family_ce_excess')} "
             f"frame_boosts={_summary_metric(final, 'latest_compiler_ir_guided_frame_boost_count')} "
+            "semantic_overlay_count="
+            f"{_summary_metric(final, 'latest_compiler_ir_guided_semantic_overlay_count')} "
             f"frame_changes={final['latest_compiler_ir_guided_frame_changed_count']}"
         )
+        if final["latest_compiler_ir_guidance_semantic_overlay_terms"]:
+            print(
+                "  guidance_semantic_overlay_terms="
+                f"{final['latest_compiler_ir_guidance_semantic_overlay_terms']}"
+            )
         if final["latest_compiler_ir_guidance_surface_features"]:
             print(
                 "  guidance_surface_features="
@@ -1316,6 +1497,7 @@ def _print_report(report: dict[str, Any]) -> None:
                 f"attempted={rejection_summary.get('attempted_count', 0)} "
                 f"accepted_attempts={rejection_summary.get('accepted_attempt_count', 0)} "
                 f"rejected={rejection_summary.get('rejected_attempt_count', 0)} "
+                f"refined={rejection_summary.get('refinement_attempt_count', 0)} "
                 f"pareto={rejection_summary.get('pareto_regression_counts', {})} "
                 f"best_rejected={rejection_summary.get('best_rejected_attempt', {})}"
             )
