@@ -304,6 +304,7 @@ def _queue_stats(path: Path) -> dict[str, Any]:
     role_counts = Counter()
     scope_counts = Counter()
     pending_by_scope = Counter()
+    pending_rescue_by_scope = Counter()
     claimed_by_scope = Counter()
     failed_by_action = Counter()
     failed_by_reason = Counter()
@@ -325,6 +326,12 @@ def _queue_stats(path: Path) -> dict[str, Any]:
         scope_counts[scope] += 1
         if status == "pending":
             pending_by_scope[scope] += 1
+            if (
+                str(event.get("action") or "")
+                == "rescue_failed_program_synthesis_validation"
+                or str(metadata.get("source") or "") == "failed_validation_rescue_v1"
+            ):
+                pending_rescue_by_scope[scope] += 1
         elif status == "claimed":
             claimed_by_scope[scope] += 1
         elif status == "failed_validation":
@@ -339,6 +346,7 @@ def _queue_stats(path: Path) -> dict[str, Any]:
         "role_counts": dict(role_counts),
         "scope_counts": dict(scope_counts.most_common(12)),
         "pending_by_scope": dict(pending_by_scope.most_common(12)),
+        "pending_rescue_by_scope": dict(pending_rescue_by_scope.most_common(12)),
         "claimed_by_scope": dict(claimed_by_scope.most_common(12)),
         "failed_by_action": dict(failed_by_action.most_common(12)),
         "failed_by_reason": dict(failed_by_reason.most_common(12)),
@@ -480,6 +488,12 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
             ),
             "failed_validation_rescue_seeded_count": latest_cycle.get(
                 "failed_validation_rescue_seeded_count"
+            ),
+            "compiler_guidance_guardrail_deduped_count": latest_cycle.get(
+                "compiler_ir_guidance_guardrail_deduped_count"
+            ),
+            "compiler_guidance_guardrail_seeded_count": latest_cycle.get(
+                "compiler_ir_guidance_guardrail_seeded_count"
             ),
         }
     latest_feature_projection_report = summary.get("latest_feature_projection_report")
@@ -718,6 +732,18 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
                 "compiler_ir_guidance_distillation_seeded_count",
                 0,
             )
+            or 0
+        ),
+        "latest_compiler_ir_guidance_guardrail_deduped_count": int(
+            summary.get("latest_compiler_ir_guidance_guardrail_deduped_count")
+            or latest_todo_generation.get("compiler_guidance_guardrail_deduped_count")
+            or latest_cycle.get("compiler_ir_guidance_guardrail_deduped_count")
+            or 0
+        ),
+        "latest_compiler_ir_guidance_guardrail_seeded_count": int(
+            summary.get("latest_compiler_ir_guidance_guardrail_seeded_count")
+            or latest_todo_generation.get("compiler_guidance_guardrail_seeded_count")
+            or latest_cycle.get("compiler_ir_guidance_guardrail_seeded_count")
             or 0
         ),
         "latest_compiler_ir_guidance_distillation": latest_guidance_distillation,
@@ -971,6 +997,18 @@ def _recommendation(
                     "Autoencoder guidance quality gate is failing; keep guidance in canary "
                     "mode until CE/cosine/copy-hack deltas recover."
                 )
+                guardrail_seeded = int(
+                    final.get(
+                        "latest_compiler_ir_guidance_guardrail_seeded_count",
+                        0,
+                    )
+                    or 0
+                )
+                if guardrail_seeded > 0:
+                    lines.append(
+                        f"Guidance guardrail seeded {guardrail_seeded} repair TODOs "
+                        "to keep useful guided gains while fixing the regressed canary metric."
+                    )
             if (
                 math.isfinite(guidance_ce_delta)
                 and math.isfinite(guidance_cosine_delta)
@@ -1041,6 +1079,15 @@ def _recommendation(
                 f"{scope}={count}" for scope, count in queue["pending_by_scope"].items()
             )
             lines.append(f"Hot pending scopes: {hot}.")
+        if queue.get("pending_rescue_by_scope"):
+            rescue_hot = ", ".join(
+                f"{scope}={count}"
+                for scope, count in queue["pending_rescue_by_scope"].items()
+            )
+            lines.append(
+                f"Pending failed-validation rescue scopes: {rescue_hot}. Drain these "
+                "before spending workers on fresh speculative TODOs."
+            )
         failed_count = int(queue.get("status_counts", {}).get("failed_validation", 0) or 0)
         if failed_count > 0:
             failed_scopes = queue.get("failed_by_scope", {})
@@ -1177,6 +1224,10 @@ def _print_report(report: dict[str, Any]) -> None:
             f"{final['latest_compiler_ir_guidance_distillation_seeded_count']} "
             "distill_deduped="
             f"{final['latest_compiler_ir_guidance_distillation_deduped_count']} "
+            "guardrail_seeded="
+            f"{final['latest_compiler_ir_guidance_guardrail_seeded_count']} "
+            "guardrail_deduped="
+            f"{final['latest_compiler_ir_guidance_guardrail_deduped_count']} "
             "guidance_family_ce_excess="
             f"{_summary_metric(final, 'latest_compiler_ir_guided_family_ce_excess')} "
             f"frame_boosts={_summary_metric(final, 'latest_compiler_ir_guided_frame_boost_count')} "
@@ -1236,6 +1287,10 @@ def _print_report(report: dict[str, Any]) -> None:
             )
         print(f"  queue_status={final['queue']['status_counts']}")
         print(f"  pending_by_scope={final['queue']['pending_by_scope']}")
+        if final["queue"].get("pending_rescue_by_scope"):
+            print(
+                f"  pending_rescue_by_scope={final['queue']['pending_rescue_by_scope']}"
+            )
         if final["queue"].get("failed_by_scope"):
             print(f"  failed_by_scope={final['queue']['failed_by_scope']}")
         if final["queue"].get("failed_by_action"):

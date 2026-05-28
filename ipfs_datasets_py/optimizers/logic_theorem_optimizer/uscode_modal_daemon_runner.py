@@ -1482,6 +1482,57 @@ def _compiler_guidance_distillation_signature(
     return json.dumps(payload, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
 
 
+def _compiler_guidance_example_payloads(
+    examples: Any,
+    *,
+    route: str,
+    max_examples: int = 8,
+) -> tuple[List[str], List[str], List[Dict[str, Any]], List[Dict[str, Any]]]:
+    if not isinstance(examples, Sequence) or isinstance(examples, (str, bytes)):
+        examples = []
+    sample_ids: List[str] = []
+    citations: List[str] = []
+    evidence: List[Dict[str, Any]] = []
+    metric_payloads: List[Dict[str, Any]] = []
+    for index, raw_example in enumerate(examples[: max(0, int(max_examples))], start=1):
+        if not isinstance(raw_example, Mapping):
+            continue
+        sample_id = str(raw_example.get("sample_id") or "").strip()
+        citation = str(raw_example.get("citation") or "").strip()
+        text_preview = str(raw_example.get("text_preview") or "").strip()
+        selected_before = str(raw_example.get("selected_frame_before") or "").strip()
+        selected_after = str(raw_example.get("selected_frame_after") or "").strip()
+        if sample_id:
+            sample_ids.append(sample_id)
+        if citation:
+            citations.append(citation)
+        evidence.append(
+            {
+                "citation": citation,
+                "compiler_guidance_route": route,
+                "evidence_rank": index,
+                "sample_id": sample_id,
+                "selected_frame_after": selected_after,
+                "selected_frame_before": selected_before,
+                "text_preview": text_preview,
+            }
+        )
+        if sample_id or text_preview:
+            metric_payloads.append(
+                {
+                    "citation": citation,
+                    "sample_id": sample_id or f"compiler-guidance:{route}:{index}",
+                    "text": text_preview,
+                }
+            )
+    return (
+        list(dict.fromkeys(sample_ids)),
+        list(dict.fromkeys(citations)),
+        evidence,
+        metric_payloads,
+    )
+
+
 def compiler_guidance_distillation_todos(
     candidates: Mapping[str, Any],
     *,
@@ -1514,49 +1565,11 @@ def compiler_guidance_distillation_todos(
         target_component = str(route_scope.get("target_component") or "")
         scope = str(route_scope.get("scope") or "")
         examples = route_examples.get(route)
-        if not isinstance(examples, Sequence) or isinstance(examples, (str, bytes)):
-            examples = []
-        evidence: List[Dict[str, Any]] = []
-        sample_ids: List[str] = []
-        citations: List[str] = []
-        metric_payloads: List[Dict[str, Any]] = []
-        for index, raw_example in enumerate(examples[:8], start=1):
-            if not isinstance(raw_example, Mapping):
-                continue
-            sample_id = str(raw_example.get("sample_id") or "").strip()
-            citation = str(raw_example.get("citation") or "").strip()
-            text_preview = str(raw_example.get("text_preview") or "").strip()
-            selected_before = str(
-                raw_example.get("selected_frame_before") or ""
-            ).strip()
-            selected_after = str(raw_example.get("selected_frame_after") or "").strip()
-            if sample_id:
-                sample_ids.append(sample_id)
-            if citation:
-                citations.append(citation)
-            evidence.append(
-                {
-                    "citation": citation,
-                    "compiler_guidance_route": action,
-                    "evidence_rank": index,
-                    "sample_id": sample_id,
-                    "selected_frame_after": selected_after,
-                    "selected_frame_before": selected_before,
-                    "text_preview": text_preview,
-                }
-            )
-            if sample_id or text_preview:
-                metric_payloads.append(
-                    {
-                        "citation": citation,
-                        "sample_id": sample_id or f"compiler-guidance:{action}:{index}",
-                        "text": text_preview,
-                    }
-                )
-        sample_ids = list(dict.fromkeys(sample_ids))
+        sample_ids, citations, evidence, metric_payloads = (
+            _compiler_guidance_example_payloads(examples, route=action)
+        )
         if not sample_ids:
             sample_ids = [f"compiler-guidance:{action}"]
-        citations = list(dict.fromkeys(citations))
         count = float(raw_count)
         metadata = {
             **optimizer_policy.metadata_for(
@@ -1612,6 +1625,179 @@ def compiler_guidance_distillation_todos(
             )
         )
     return todos
+
+
+def _compiler_guidance_guardrail_todo_id(
+    *,
+    action: str,
+    guardrail_reason: str,
+    sample_ids: Sequence[str],
+    canary_block: Mapping[str, Any],
+) -> str:
+    payload = {
+        "action": action,
+        "copy_hack_delta": canary_block.get("copy_hack_delta"),
+        "cosine_delta": canary_block.get("cosine_delta"),
+        "guardrail_reason": guardrail_reason,
+        "sample_ids": sorted(str(sample_id) for sample_id in sample_ids),
+        "source": "compiler_guidance_guardrail_v1",
+    }
+    digest = hashlib.sha256(
+        json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+    ).hexdigest()[:16]
+    return f"guidance-guardrail-{digest}"
+
+
+def compiler_guidance_guardrail_todos(
+    candidates: Mapping[str, Any],
+    canary_block: Mapping[str, Any],
+    *,
+    policy: Optional[ModalOptimizerPolicy] = None,
+) -> List[ModalTodo]:
+    """Seed guardrail repairs when learned guidance helps one metric but reward-hacks."""
+    if str(canary_block.get("quality_gate") or "") != "fail":
+        return []
+    copy_hack_delta = _metric_value(canary_block, "copy_hack_delta", 0.0)
+    cosine_delta = _metric_value(canary_block, "cosine_delta", 0.0)
+    ce_delta = _metric_value(canary_block, "ce_delta", 0.0)
+    core_deltas = {
+        "ce_delta": ce_delta,
+        "copy_hack_delta": copy_hack_delta,
+        "cosine_delta": cosine_delta,
+    }
+    if not any(value > 0.0 for value in core_deltas.values()) or not any(
+        value < 0.0 for value in core_deltas.values()
+    ):
+        return []
+    if copy_hack_delta < 0.0:
+        action = "refine_semantic_decompiler_reconstruction"
+        guardrail_reason = "copy_hack_regression_with_useful_guidance"
+        target_component = "modal.ir_decompiler"
+        scope = "ir_decompiler"
+        target_metrics = [
+            "source_copy_reward_hack_penalty",
+            "source_copy_loss",
+            "structural_text_reconstruction_loss",
+            "text_reconstruction_loss",
+            "cosine_similarity",
+        ]
+        objective = (
+            "Keep the useful autoencoder compiler-guidance signal while reducing "
+            "source-copy reward hacking in the IR decompiler."
+        )
+        loss_value = abs(float(copy_hack_delta))
+    elif cosine_delta < 0.0:
+        action = "refine_typed_ir_or_decompiler_slots"
+        guardrail_reason = "cosine_regression_with_useful_guidance"
+        target_component = "modal.ir_decompiler"
+        scope = "ir_decompiler"
+        target_metrics = [
+            "cosine_similarity",
+            "reconstruction_loss",
+            "source_copy_reward_hack_penalty",
+            "structural_text_reconstruction_loss",
+        ]
+        objective = (
+            "Keep useful autoencoder compiler-guidance improvements while preserving "
+            "IR cosine similarity and typed decompiler slot alignment."
+        )
+        loss_value = abs(float(cosine_delta))
+    elif ce_delta < 0.0:
+        action = "refine_modal_family_cue_rules"
+        guardrail_reason = "cross_entropy_regression_with_useful_guidance"
+        target_component = "modal.compiler.registry"
+        scope = "compiler_registry"
+        target_metrics = [
+            "cross_entropy_loss",
+            "cosine_similarity",
+            "source_copy_reward_hack_penalty",
+        ]
+        objective = (
+            "Keep useful autoencoder compiler-guidance improvements while preventing "
+            "modal-family cross-entropy regressions."
+        )
+        loss_value = abs(float(ce_delta))
+    else:
+        return []
+    route_examples = candidates.get("top_todo_route_examples")
+    if not isinstance(route_examples, Mapping):
+        route_examples = {}
+    route_counts = candidates.get("top_todo_routes")
+    if not isinstance(route_counts, Mapping):
+        route_counts = {}
+    sample_ids: List[str] = []
+    citations: List[str] = []
+    evidence: List[Dict[str, Any]] = []
+    metric_payloads: List[Dict[str, Any]] = []
+    for route in _top_numeric_items(route_counts, limit=8):
+        route_samples, route_citations, route_evidence, route_payloads = (
+            _compiler_guidance_example_payloads(
+                route_examples.get(route),
+                route=_normalized_guidance_route(route),
+                max_examples=3,
+            )
+        )
+        sample_ids.extend(route_samples)
+        citations.extend(route_citations)
+        evidence.extend(route_evidence)
+        metric_payloads.extend(route_payloads)
+    sample_ids = list(dict.fromkeys(sample_ids)) or ["compiler-guidance:guardrail"]
+    citations = list(dict.fromkeys(citations))
+    optimizer_policy = policy or ModalOptimizerPolicy()
+    metadata = {
+        **optimizer_policy.metadata_for(
+            action=action,
+            loss_name="compiler_guidance_guardrail",
+        ),
+        "compiler_guidance_canary": dict(canary_block),
+        "compiler_guidance_guardrail_reason": guardrail_reason,
+        "compiler_guidance_quality_gate": canary_block.get("quality_gate", ""),
+        "dedupe_signature": json.dumps(
+            {
+                "sample_ids": sorted(sample_ids),
+                "source": "compiler_guidance_guardrail_v1",
+            },
+            ensure_ascii=True,
+            sort_keys=True,
+            separators=(",", ":"),
+        ),
+        "hint_evidence": evidence,
+        "metric_sample_payloads": metric_payloads,
+        "program_synthesis_scope": scope,
+        "semantic_bundle_key": json.dumps(
+            {
+                "program_synthesis_scope": scope,
+                "source": "compiler_guidance_guardrail_v1",
+                "target_component": target_component,
+            },
+            ensure_ascii=True,
+            sort_keys=True,
+            separators=(",", ":"),
+        ),
+        "source": "compiler_guidance_guardrail_v1",
+        "support_count": len(sample_ids),
+        "target_component": target_component,
+        "target_metrics": target_metrics,
+        "validation_commands": _compiler_guidance_validation_commands(scope),
+    }
+    return [
+        ModalTodo(
+            todo_id=_compiler_guidance_guardrail_todo_id(
+                action=action,
+                guardrail_reason=guardrail_reason,
+                sample_ids=sample_ids,
+                canary_block=canary_block,
+            ),
+            action=action,
+            objective=objective,
+            sample_ids=sample_ids,
+            citations=citations,
+            loss_name="compiler_guidance_guardrail",
+            loss_value=loss_value,
+            priority=round(150.0 + (float(loss_value) * 100.0), 6),
+            metadata=metadata,
+        )
+    ]
 
 
 def compiler_guidance_distillation_path(summary_path: Path) -> Path:
@@ -8094,6 +8280,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             guidance_distillation_deduped_count = 0
             guidance_distillation_semantic_deduped_count = 0
             guidance_distillation_todo_ids: List[str] = []
+            guidance_guardrail_seeded_count = 0
+            guidance_guardrail_deduped_count = 0
+            guidance_guardrail_todo_ids: List[str] = []
             guidance_distillation_todo_candidates = compiler_guidance_distillation_todos(
                 guidance_distillation,
                 policy=supervisor.policy,
@@ -8136,6 +8325,40 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     semantic_deduped_count += int(
                         guidance_distillation_semantic_deduped_count
                     )
+                    supervisor.queue.save_jsonl(queue_path)
+                    queue = supervisor.queue
+            guidance_guardrail_candidates = compiler_guidance_guardrail_todos(
+                guidance_distillation,
+                guidance_canary,
+                policy=supervisor.policy,
+            )
+            if guidance_guardrail_candidates:
+                with queue_file_lock(queue_path):
+                    latest_queue = ModalTodoQueue.load_jsonl(queue_path)
+                    latest_queue.merge_from(
+                        supervisor.queue,
+                        preserve_claimed_role=supervisor.policy.program_synthesis_role,
+                    )
+                    supervisor.queue = latest_queue
+                    selected_guardrail_todos = supervisor._bounded_new_todos(
+                        guidance_guardrail_candidates,
+                        track_program_deduped=True,
+                    )
+                    guidance_guardrail_deduped_count = int(
+                        supervisor.last_program_synthesis_deduped_count
+                    )
+                    before_guardrail_todo_ids = {
+                        todo.todo_id for todo in supervisor.queue.all()
+                    }
+                    guidance_guardrail_seeded_count = supervisor.queue.add_many(
+                        selected_guardrail_todos
+                    )
+                    guidance_guardrail_todo_ids = [
+                        todo.todo_id
+                        for todo in selected_guardrail_todos
+                        if todo.todo_id not in before_guardrail_todo_ids
+                        and supervisor.queue.get(todo.todo_id) is not None
+                    ]
                     supervisor.queue.save_jsonl(queue_path)
                     queue = supervisor.queue
             failed_validation_rescue_seeded_count = 0
@@ -8261,6 +8484,15 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["latest_compiler_ir_guidance_distillation_todo_ids"] = list(
                 guidance_distillation_todo_ids
             )
+            summary["latest_compiler_ir_guidance_guardrail_seeded_count"] = int(
+                guidance_guardrail_seeded_count
+            )
+            summary["latest_compiler_ir_guidance_guardrail_deduped_count"] = int(
+                guidance_guardrail_deduped_count
+            )
+            summary["latest_compiler_ir_guidance_guardrail_todo_ids"] = list(
+                guidance_guardrail_todo_ids
+            )
             summary["latest_failed_validation_rescue_seeded_count"] = int(
                 failed_validation_rescue_seeded_count
             )
@@ -8292,6 +8524,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             program_synthesis_seeded_count = sum(
                 step.program_synthesis_seeded_count for step in run.steps
             ) + int(guidance_distillation_seeded_count) + int(
+                guidance_guardrail_seeded_count
+            ) + int(
                 failed_validation_rescue_seeded_count
             )
             summary["program_synthesis_seeded"] = int(
@@ -8300,6 +8534,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             preinsert_deduped_count = sum(
                 step.program_synthesis_deduped_count for step in run.steps
             ) + int(guidance_distillation_deduped_count) + int(
+                guidance_guardrail_deduped_count
+            ) + int(
                 failed_validation_rescue_deduped_count
             )
             summary["program_synthesis_preinsert_deduped"] = int(
@@ -8334,6 +8570,12 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 ),
                 "compiler_guidance_distillation_seeded_count": int(
                     guidance_distillation_seeded_count
+                ),
+                "compiler_guidance_guardrail_deduped_count": int(
+                    guidance_guardrail_deduped_count
+                ),
+                "compiler_guidance_guardrail_seeded_count": int(
+                    guidance_guardrail_seeded_count
                 ),
                 "failed_validation_rescue_deduped_count": int(
                     failed_validation_rescue_deduped_count
@@ -8513,6 +8755,15 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     ),
                     "compiler_ir_guidance_distillation_todo_ids": list(
                         guidance_distillation_todo_ids
+                    ),
+                    "compiler_ir_guidance_guardrail_deduped_count": int(
+                        guidance_guardrail_deduped_count
+                    ),
+                    "compiler_ir_guidance_guardrail_seeded_count": int(
+                        guidance_guardrail_seeded_count
+                    ),
+                    "compiler_ir_guidance_guardrail_todo_ids": list(
+                        guidance_guardrail_todo_ids
                     ),
                     "compiler_ir_guidance_promotion": guidance_promotion_gate,
                     "compiler_ir_guidance_scope_hints": guidance_scope_hints,

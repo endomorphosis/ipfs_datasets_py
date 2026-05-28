@@ -40,6 +40,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_run
     compiler_guidance_canary_block,
     compiler_guidance_distillation_candidates,
     compiler_guidance_distillation_todos,
+    compiler_guidance_guardrail_todos,
     compiler_guidance_promotion_gate,
     compiler_guidance_scope_hints,
     compiler_ir_metric_block,
@@ -4485,6 +4486,84 @@ def test_compiler_guidance_distillation_todos_skip_blocked_candidates() -> None:
     )
 
     assert compiler_guidance_distillation_todos(candidates) == []
+
+
+def test_compiler_guidance_guardrail_todos_convert_copy_hack_regression() -> None:
+    candidates = compiler_guidance_distillation_candidates(
+        {
+            "compiler_guidance_todo_routes": {
+                "repair_deontic_bridge_quality_gate": 1,
+                "repair_multiview_legal_ir_graph_projection": 1,
+            },
+            "compiler_guidance_todo_route_examples": {
+                "repair_deontic_bridge_quality_gate": [
+                    {
+                        "citation": "33 U.S.C. 3609",
+                        "sample_id": "sample-3609",
+                        "selected_frame_after": "administrative_notice_hearing",
+                        "selected_frame_before": "administrative_notice_hearing",
+                        "text_preview": "Congress finds that agencies shall publish notice.",
+                    }
+                ]
+            },
+        },
+        {"applied_count": 1, "quality_gate": "fail"},
+    )
+
+    todos = compiler_guidance_guardrail_todos(
+        candidates,
+        {
+            "applied_count": 1,
+            "ce_delta": 0.0,
+            "copy_hack_delta": -0.02,
+            "cosine_delta": 0.12,
+            "quality_gate": "fail",
+        },
+    )
+
+    assert len(todos) == 1
+    todo = todos[0]
+    assert todo.action == "refine_semantic_decompiler_reconstruction"
+    assert todo.sample_ids == ["sample-3609"]
+    assert todo.metadata["source"] == "compiler_guidance_guardrail_v1"
+    assert todo.metadata["program_synthesis_scope"] == "ir_decompiler"
+    assert todo.metadata["target_component"] == "modal.ir_decompiler"
+    assert todo.metadata["compiler_guidance_guardrail_reason"] == (
+        "copy_hack_regression_with_useful_guidance"
+    )
+    assert "source_copy_reward_hack_penalty" in todo.metadata["target_metrics"]
+
+    assert (
+        compiler_guidance_guardrail_todos(
+            candidates,
+            {
+                "applied_count": 1,
+                "ce_delta": 0.0,
+                "copy_hack_delta": -0.02,
+                "cosine_delta": -0.01,
+                "quality_gate": "fail",
+            },
+        )
+        == []
+    )
+
+    cosine_guardrail = compiler_guidance_guardrail_todos(
+        candidates,
+        {
+            "applied_count": 1,
+            "ce_delta": 0.0,
+            "copy_hack_delta": 0.01,
+            "cosine_delta": -0.12,
+            "quality_gate": "fail",
+        },
+    )
+
+    assert len(cosine_guardrail) == 1
+    assert cosine_guardrail[0].action == "refine_typed_ir_or_decompiler_slots"
+    assert cosine_guardrail[0].metadata["compiler_guidance_guardrail_reason"] == (
+        "cosine_regression_with_useful_guidance"
+    )
+    assert "cosine_similarity" in cosine_guardrail[0].metadata["target_metrics"]
 
 
 def test_bridge_ir_metric_block_reports_per_adapter_views() -> None:
