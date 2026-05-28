@@ -786,11 +786,16 @@ def learned_ir_metric_block(evaluation) -> Dict[str, Any]:
 def compiler_ir_metric_block(
     samples: Sequence[Any],
     codec: DeterministicModalLogicCodec,
+    *,
+    autoencoder: Optional[AdaptiveModalAutoencoder] = None,
+    use_autoencoder_guidance: bool = False,
+    guidance_top_k: int = 16,
 ) -> Dict[str, Any]:
     """Aggregate deterministic compiler/IR/decompiler round-trip metrics."""
     sample_list = list(samples)
     if not sample_list:
         return {
+            "autoencoder_guidance_enabled": bool(use_autoencoder_guidance),
             "evaluated_count": 0,
             "metric_failures": 0,
             "sample_count": 0,
@@ -799,15 +804,23 @@ def compiler_ir_metric_block(
     losses: Dict[str, List[float]] = {
         "cosine_loss": [],
         "cosine_similarity": [],
+        "cross_entropy_entropy_loss": [],
+        "cross_entropy_excess_loss": [],
         "cross_entropy_loss": [],
         "flogic_similarity_loss": [],
         "flogic_similarity_score": [],
         "frame_ranking_loss": [],
+        "guidance_family_cross_entropy_excess_loss": [],
+        "guidance_family_cross_entropy_loss": [],
+        "guidance_legal_ir_view_cross_entropy_excess_loss": [],
+        "guidance_legal_ir_view_cross_entropy_loss": [],
+        "guidance_legal_ir_view_entropy_loss": [],
         "modal_span_coverage_loss": [],
         "ontology_violation_count": [],
         "raw_source_embedding_cosine_similarity": [],
         "reconstruction_loss": [],
         "source_copy_loss": [],
+        "source_copy_reward_hack_penalty": [],
         "source_span_copy_ratio": [],
         "source_span_text_reconstruction_loss": [],
         "structural_text_reconstruction_loss": [],
@@ -819,7 +832,22 @@ def compiler_ir_metric_block(
     frame_candidate_counts: List[float] = []
     llm_call_counts: List[float] = []
     failures = 0
+    guidance_applied_count = 0
+    guidance_failures = 0
+    guidance_frame_boost_counts: List[float] = []
+    guidance_frame_changed_count = 0
     for sample in sample_list:
+        compiler_guidance = None
+        if use_autoencoder_guidance and autoencoder is not None:
+            try:
+                compiler_guidance = autoencoder.compiler_guidance_for_sample(
+                    sample,
+                    use_sample_memory=False,
+                    top_k=guidance_top_k,
+                )
+            except Exception:
+                guidance_failures += 1
+                compiler_guidance = None
         try:
             result = codec.encode(
                 sample.text,
@@ -827,6 +855,7 @@ def compiler_ir_metric_block(
                 citation=sample.citation,
                 source=sample.source,
                 source_embedding=sample.embedding_vector,
+                compiler_guidance=compiler_guidance,
             )
         except Exception:
             failures += 1
@@ -838,8 +867,21 @@ def compiler_ir_metric_block(
         formula_counts.append(float(len(result.modal_ir.formulas)))
         frame_candidate_counts.append(float(len(result.frame_candidates)))
         llm_call_counts.append(float(result.metadata.get("llm_call_count", 0.0)))
+        if result.metadata.get("compiler_guidance_applied"):
+            guidance_applied_count += 1
+            guidance_frame_boost_counts.append(
+                float(result.metadata.get("compiler_guidance_frame_boost_count", 0.0))
+            )
+            if (
+                result.metadata.get("compiler_guidance_selected_frame_before")
+                != result.metadata.get("compiler_guidance_selected_frame_after")
+            ):
+                guidance_frame_changed_count += 1
 
     block: Dict[str, Any] = {
+        "autoencoder_guidance_enabled": bool(use_autoencoder_guidance),
+        "autoencoder_guidance_applied_count": guidance_applied_count,
+        "autoencoder_guidance_failures": guidance_failures,
         "evaluated_count": len(formula_counts),
         "metric_failures": failures,
         "sample_count": len(sample_list),
@@ -854,6 +896,12 @@ def compiler_ir_metric_block(
             9,
         )
         block["llm_call_count"] = round(sum(llm_call_counts) / len(llm_call_counts), 9)
+    if guidance_frame_boost_counts:
+        block["compiler_guidance_frame_boost_count"] = round(
+            sum(guidance_frame_boost_counts) / len(guidance_frame_boost_counts),
+            9,
+        )
+        block["compiler_guidance_frame_changed_count"] = guidance_frame_changed_count
     if "modal_span_coverage_loss" in block:
         block["modal_span_coverage"] = round(
             1.0 - float(block["modal_span_coverage_loss"]),
@@ -7226,6 +7274,18 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 legal_ir_parallel_workers=bridge_parallel_workers,
                 use_sample_memory=False,
             )
+            compiler_ir_guided_train = compiler_ir_metric_block(
+                train_samples,
+                feature_codec,
+                autoencoder=autoencoder,
+                use_autoencoder_guidance=True,
+            )
+            compiler_ir_guided_validation = compiler_ir_metric_block(
+                acceptance_validation_samples,
+                feature_codec,
+                autoencoder=autoencoder,
+                use_autoencoder_guidance=True,
+            )
             blocked_validation_sample_ids.update(sample.sample_id for sample in train_samples)
             with queue_file_lock(queue_path):
                 latest_queue = ModalTodoQueue.load_jsonl(queue_path)
@@ -7267,6 +7327,13 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             latest_compiler_ir_source_copy_loss = float(
                 compiler_ir_validation.get("source_copy_loss", 1.0e12)
             )
+            latest_guided_compiler_ir_ce = float(
+                compiler_ir_guided_validation.get("cross_entropy_excess_loss")
+                or compiler_ir_guided_validation.get("cross_entropy_loss", 1.0e12)
+            )
+            latest_guided_compiler_ir_cosine = float(
+                compiler_ir_guided_validation.get("cosine_similarity", -1.0)
+            )
             latest_learned_ir_view_ce = float(
                 learned_ir_validation.get("view_cross_entropy_loss", 1.0e12)
             )
@@ -7295,9 +7362,13 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["latest_validation_cosine_delta"] = validation_cos_delta
             summary["latest_compiler_ir_train"] = compiler_ir_train
             summary["latest_compiler_ir_validation"] = compiler_ir_validation
+            summary["latest_compiler_ir_guided_train"] = compiler_ir_guided_train
+            summary["latest_compiler_ir_guided_validation"] = compiler_ir_guided_validation
             summary["latest_compiler_ir_ce"] = latest_compiler_ir_ce
             summary["latest_compiler_ir_cosine"] = latest_compiler_ir_cosine
             summary["latest_compiler_ir_source_copy_loss"] = latest_compiler_ir_source_copy_loss
+            summary["latest_compiler_ir_guided_ce"] = latest_guided_compiler_ir_ce
+            summary["latest_compiler_ir_guided_cosine"] = latest_guided_compiler_ir_cosine
             summary["latest_learned_ir_train"] = learned_ir_train
             summary["latest_learned_ir_validation"] = learned_ir_validation
             summary["latest_learned_ir_view_ce"] = latest_learned_ir_view_ce
@@ -7465,6 +7536,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "before_train": before_train_metrics,
                     "before_validation": before_validation_metrics,
                     "completed_count": sum(step.completed_count for step in run.steps),
+                    "compiler_ir_guided_train": compiler_ir_guided_train,
+                    "compiler_ir_guided_validation": compiler_ir_guided_validation,
                     "compiler_ir_train": compiler_ir_train,
                     "compiler_ir_validation": compiler_ir_validation,
                     "learned_ir_before_train": learned_ir_before_train,

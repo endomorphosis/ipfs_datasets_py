@@ -7581,6 +7581,8 @@ class AdaptiveModalAutoencoder:
             if (
                 "cosine" in normalized_name
                 or "reconstruction" in normalized_name
+                or "source_copy" in normalized_name
+                or "copy_hack" in normalized_name
                 or "text" in normalized_name
             ):
                 return "refine_typed_ir_or_decompiler_slots"

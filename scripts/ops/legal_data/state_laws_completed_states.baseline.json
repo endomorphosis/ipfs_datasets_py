@@ -193,6 +193,17 @@
       "statutes_count": 35245,
       "updated_at": "2026-05-23T05:42:13.191549+00:00"
     },
+    "NH": {
+      "completed_at": "2026-05-28T02:37:31.535512+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-28",
+      "first_completed_at": "2026-05-19T19:14:30.359169+00:00",
+      "status": "success",
+      "statutes_count": 1041,
+      "timeout_classification": "checkpoint_complete_promotion",
+      "timeout_signal_kind": "title_scan",
+      "timeout_work_remaining": false,
+      "updated_at": "2026-05-28T02:47:00.480252+00:00"
+    },
     "ND": {
       "completed_at": "2026-05-19T16:00:16.198547+00:00",
       "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
@@ -338,5 +349,5 @@
       "updated_at": "2026-05-19T16:00:16.198547+00:00"
     }
   },
-  "updated_at": "2026-05-26T01:18:53.809422+00:00"
+  "updated_at": "2026-05-28T02:47:00.480252+00:00"
 }

@@ -147,6 +147,7 @@ def test_loss_generator_routes_source_copy_reward_hacking_to_decompiler_scope() 
         citation="5 U.S.C. 552",
         losses={
             "source_copy_loss": 0.9,
+            "source_copy_reward_hack_penalty": 0.4,
             "structural_text_reconstruction_loss": 0.8,
         },
         selected_frame="administrative_notice_hearing",
@@ -158,9 +159,11 @@ def test_loss_generator_routes_source_copy_reward_hacking_to_decompiler_scope() 
     assert [todo.action for todo in todos] == [
         "refine_semantic_decompiler_reconstruction",
         "refine_semantic_decompiler_reconstruction",
+        "refine_semantic_decompiler_reconstruction",
     ]
     assert {todo.loss_name for todo in todos} == {
         "source_copy_loss",
+        "source_copy_reward_hack_penalty",
         "structural_text_reconstruction_loss",
     }
     assert all(todo.metadata["program_synthesis_scope"] == "ir_decompiler" for todo in todos)
@@ -4113,14 +4116,47 @@ def test_compiler_ir_metric_block_reports_deterministic_codec_losses() -> None:
     assert block["evaluated_count"] == 1
     assert block["metric_failures"] == 0
     assert block["llm_call_count"] == 0.0
+    assert "cross_entropy_entropy_loss" in block
+    assert "cross_entropy_excess_loss" in block
     assert "cross_entropy_loss" in block
     assert "cosine_similarity" in block
     assert "reconstruction_loss" in block
     assert "source_copy_loss" in block
+    assert "source_copy_reward_hack_penalty" in block
     assert "source_span_copy_ratio" in block
     assert "structural_text_reconstruction_loss" in block
     assert "text_reconstruction_loss" in block
     assert "modal_span_coverage" in block
+
+
+def test_compiler_ir_metric_block_can_apply_autoencoder_guidance() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide records promptly and may withhold exempt records.",
+    )
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(
+            parser_backend="spacy",
+            spacy_model_name="definitely_missing_legal_model",
+            use_flogic=True,
+        )
+    )
+    autoencoder = AdaptiveModalAutoencoder()
+    autoencoder.evaluate([sample], legal_ir_bridge_names=["modal.frame_logic"])
+
+    block = compiler_ir_metric_block(
+        [sample],
+        codec,
+        autoencoder=autoencoder,
+        use_autoencoder_guidance=True,
+    )
+
+    assert block["autoencoder_guidance_enabled"] is True
+    assert block["autoencoder_guidance_applied_count"] == 1
+    assert block["autoencoder_guidance_failures"] == 0
+    assert block["evaluated_count"] == 1
+    assert "guidance_family_cross_entropy_excess_loss" in block
 
 
 def test_bridge_ir_metric_block_reports_per_adapter_views() -> None:

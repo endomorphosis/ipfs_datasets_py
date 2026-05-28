@@ -84,6 +84,7 @@ PROGRAM_SYNTHESIS_ACTION_TARGET_METRICS = {
     "refine_modal_family_cue_rules": ("cross_entropy_loss",),
     "refine_semantic_decompiler_reconstruction": (
         "source_copy_loss",
+        "source_copy_reward_hack_penalty",
         "structural_text_reconstruction_loss",
         "text_reconstruction_loss",
     ),
@@ -730,6 +731,7 @@ class ModalLossTodoGenerator:
         "ontology_violation_count": 0.0,
         "reconstruction_loss": 0.05,
         "source_copy_loss": 0.35,
+        "source_copy_reward_hack_penalty": 0.10,
         "structural_text_reconstruction_loss": 0.50,
         "symbolic_validity_penalty": 0.0,
         "tdfol_no_formula_loss": 0.0,
@@ -812,6 +814,10 @@ class ModalLossTodoGenerator:
             "source_copy_loss": (
                 "refine_semantic_decompiler_reconstruction",
                 "Reduce provenance-span copying so decompiler quality comes from typed IR slots rather than replayed source text.",
+            ),
+            "source_copy_reward_hack_penalty": (
+                "refine_semantic_decompiler_reconstruction",
+                "Penalize round-trip text similarity that is explained by copied source spans instead of typed IR slots.",
             ),
             "structural_text_reconstruction_loss": (
                 "refine_semantic_decompiler_reconstruction",

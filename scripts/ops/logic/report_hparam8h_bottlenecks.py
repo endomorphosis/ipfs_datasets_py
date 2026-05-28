@@ -342,6 +342,15 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
             if isinstance(latest_cycle.get("compiler_ir_validation"), dict)
             else {}
         )
+    latest_compiler_ir_guided_validation = summary.get(
+        "latest_compiler_ir_guided_validation"
+    )
+    if not isinstance(latest_compiler_ir_guided_validation, dict):
+        latest_compiler_ir_guided_validation = (
+            latest_cycle.get("compiler_ir_guided_validation")
+            if isinstance(latest_cycle.get("compiler_ir_guided_validation"), dict)
+            else {}
+        )
     latest_learned_ir_validation = summary.get("latest_learned_ir_validation")
     if not isinstance(latest_learned_ir_validation, dict):
         latest_learned_ir_validation = (
@@ -459,6 +468,7 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
         ),
         "latest_compiler_ir_ce": _first_metric(
             summary.get("latest_compiler_ir_ce"),
+            latest_compiler_ir_validation.get("cross_entropy_excess_loss"),
             latest_compiler_ir_validation.get("cross_entropy_loss"),
         ),
         "latest_compiler_ir_cosine": _first_metric(
@@ -468,6 +478,42 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
         "latest_compiler_ir_source_copy_loss": _first_metric(
             summary.get("latest_compiler_ir_source_copy_loss"),
             latest_compiler_ir_validation.get("source_copy_loss"),
+        ),
+        "latest_compiler_ir_source_copy_reward_hack_penalty": _first_metric(
+            latest_compiler_ir_validation.get("source_copy_reward_hack_penalty"),
+        ),
+        "latest_compiler_ir_guided_applied_count": int(
+            latest_compiler_ir_guided_validation.get(
+                "autoencoder_guidance_applied_count",
+                0,
+            )
+            or 0
+        ),
+        "latest_compiler_ir_guided_ce": _first_metric(
+            summary.get("latest_compiler_ir_guided_ce"),
+            latest_compiler_ir_guided_validation.get("cross_entropy_excess_loss"),
+            latest_compiler_ir_guided_validation.get("cross_entropy_loss"),
+        ),
+        "latest_compiler_ir_guided_cosine": _first_metric(
+            summary.get("latest_compiler_ir_guided_cosine"),
+            latest_compiler_ir_guided_validation.get("cosine_similarity"),
+        ),
+        "latest_compiler_ir_guided_family_ce_excess": _first_metric(
+            latest_compiler_ir_guided_validation.get(
+                "guidance_family_cross_entropy_excess_loss"
+            ),
+        ),
+        "latest_compiler_ir_guided_frame_boost_count": _first_metric(
+            latest_compiler_ir_guided_validation.get(
+                "compiler_guidance_frame_boost_count"
+            ),
+        ),
+        "latest_compiler_ir_guided_frame_changed_count": int(
+            latest_compiler_ir_guided_validation.get(
+                "compiler_guidance_frame_changed_count",
+                0,
+            )
+            or 0
         ),
         "latest_learned_ir_view_ce": _first_metric(
             summary.get("latest_learned_ir_view_ce"),
@@ -681,7 +727,19 @@ def _print_report(report: dict[str, Any]) -> None:
             f"latest_ce={_summary_metric(final, 'latest_compiler_ir_ce')} "
             f"best_cos={_summary_metric(final, 'best_validation_ir_cosine')} "
             f"latest_cos={_summary_metric(final, 'latest_compiler_ir_cosine')} "
-            f"source_copy_loss={_summary_metric(final, 'latest_compiler_ir_source_copy_loss')}"
+            f"source_copy_loss={_summary_metric(final, 'latest_compiler_ir_source_copy_loss')} "
+            "copy_hack_penalty="
+            f"{_summary_metric(final, 'latest_compiler_ir_source_copy_reward_hack_penalty')}"
+        )
+        print(
+            "  guided_compiler_ir="
+            f"applied={final['latest_compiler_ir_guided_applied_count']} "
+            f"latest_ce={_summary_metric(final, 'latest_compiler_ir_guided_ce')} "
+            f"latest_cos={_summary_metric(final, 'latest_compiler_ir_guided_cosine')} "
+            "guidance_family_ce_excess="
+            f"{_summary_metric(final, 'latest_compiler_ir_guided_family_ce_excess')} "
+            f"frame_boosts={_summary_metric(final, 'latest_compiler_ir_guided_frame_boost_count')} "
+            f"frame_changes={final['latest_compiler_ir_guided_frame_changed_count']}"
         )
         print(
             "  learned_ir_view="

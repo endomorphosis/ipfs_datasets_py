@@ -1378,6 +1378,55 @@ def test_compiler_guidance_exports_learned_contract_representations() -> None:
     )
 
 
+def test_compiler_guidance_flows_into_deterministic_codec_ir() -> None:
+    from ipfs_datasets_py.logic.modal import (
+        DeterministicModalLogicCodec,
+        ModalLogicCodecConfig,
+    )
+
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency may issue the license before final action.",
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        feature_family_logit_scale=2.0,
+        max_compiler_contract_features=128,
+        max_decompiler_surface_template_features=128,
+        max_cycle_consistency_features=128,
+        max_logic_view_contract_features=128,
+    )
+    autoencoder.evaluate([sample], legal_ir_bridge_names=["modal.frame_logic"])
+    autoencoder._nudge_family_logits(
+        sample,
+        learning_rate=0.25,
+        update_sample_memory=False,
+    )
+    guidance = autoencoder.compiler_guidance_for_sample(sample, top_k=12)
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(spacy_model_name="definitely_missing_legal_model")
+    )
+
+    result = codec.encode(
+        sample.text,
+        document_id=sample.sample_id,
+        citation=sample.citation,
+        source=sample.source,
+        source_embedding=sample.embedding_vector,
+        compiler_guidance=guidance,
+    )
+
+    assert result.metadata["compiler_guidance_applied"] is True
+    assert result.metadata["compiler_guidance_feature_count"] > 0
+    assert result.modal_ir.metadata["compiler_guidance_feature_groups"]
+    assert result.modal_ir.metadata["compiler_guidance_ranked_features"]
+    assert result.modal_ir.metadata["frame_selector"] == "bm25_v1+autoencoder_guidance_v1"
+    assert result.modal_ir.frame_logic.metadata["compiler_guidance_applied"] is True
+    assert "cross_entropy_excess_loss" in result.losses
+    assert "guidance_family_cross_entropy_excess_loss" in result.losses
+    assert "source_copy_reward_hack_penalty" in result.losses
+
+
 def test_compiler_contract_feature_head_transfers_permission_holdout() -> None:
     train = build_us_code_sample(
         title="5",
@@ -2750,6 +2799,7 @@ def test_objective_residual_features_bind_loss_profile_to_todo_routes() -> None:
             "legal_ir_multiview_cosine_loss": 0.22,
             "legal_ir_multiview_graph_failure_penalty": 0.5,
             "cec_dcec_validation_failure_ratio": 0.4,
+            "source_copy_reward_hack_penalty": 0.3,
         }
         view_distribution = {
             "deontic_norms": 0.4,
@@ -2793,6 +2843,12 @@ def test_objective_residual_features_bind_loss_profile_to_todo_routes() -> None:
         "objective-residual:loss-route:"
         "refine_typed_ir_or_decompiler_slots:"
         "legal_ir_multiview_cosine_loss:large"
+        in objective_features
+    )
+    assert (
+        "objective-residual:loss-route:"
+        "refine_typed_ir_or_decompiler_slots:"
+        "source_copy_reward_hack_penalty:large"
         in objective_features
     )
     assert (

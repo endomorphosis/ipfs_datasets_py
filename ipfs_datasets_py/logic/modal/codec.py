@@ -45,7 +45,9 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import (
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import (
     cosine_loss,
     cosine_similarity,
+    cross_entropy_excess_distribution_loss,
     cross_entropy_distribution_loss,
+    distribution_entropy_loss,
     mse_loss,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
@@ -88,6 +90,10 @@ _SOURCE_COPY_SLOT_PREFIXES = (
     "modal_source_span",
     "source_context_span",
 )
+_COMPILER_GUIDANCE_MAX_FEATURES = 32
+_COMPILER_GUIDANCE_MAX_GROUP_FEATURES = 16
+_COMPILER_GUIDANCE_MAX_EMBEDDING_VALUES = 32
+_COMPILER_GUIDANCE_FRAME_BOOST_CAP = 1.5
 _CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("provided that", "provided_that"),
     ("subject to this subsection", "subject_to_this_subsection"),
@@ -1258,6 +1264,278 @@ class ModalLogicCodecResult:
         }
 
 
+def _safe_float(value: Any, *, default: float = 0.0) -> float:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return default
+    if not math.isfinite(number):
+        return default
+    return number
+
+
+def _numeric_distribution(value: Any) -> Dict[str, float]:
+    if not isinstance(value, Mapping):
+        return {}
+    weights: Dict[str, float] = {}
+    for key, raw_weight in value.items():
+        weight = max(0.0, _safe_float(raw_weight))
+        if weight > 0.0:
+            weights[str(key)] = weight
+    total = sum(weights.values())
+    if total <= 0.0:
+        return {}
+    return {
+        key: round(weight / total, 12)
+        for key, weight in sorted(weights.items())
+    }
+
+
+def _guidance_feature_value(value: Any) -> str:
+    if isinstance(value, Mapping):
+        return str(value.get("feature") or value.get("name") or "").strip()
+    return str(value or "").strip()
+
+
+def _guidance_feature_list(value: Any, *, limit: int) -> List[str]:
+    if value is None:
+        return []
+    if isinstance(value, Mapping):
+        iterable: Iterable[Any] = value.values()
+    elif isinstance(value, (str, bytes)):
+        iterable = [value]
+    else:
+        try:
+            iterable = list(value)
+        except TypeError:
+            iterable = [value]
+    features: List[str] = []
+    for item in iterable:
+        feature = _guidance_feature_value(item)
+        if feature:
+            features.append(feature)
+        if limit > 0 and len(features) >= limit:
+            break
+    return _unique_preserve_order(features)
+
+
+def _compiler_guidance_summary(
+    compiler_guidance: Optional[Mapping[str, Any]],
+) -> Dict[str, Any]:
+    """Return a compact JSON-ready autoencoder guidance contract."""
+    if not isinstance(compiler_guidance, Mapping):
+        return {}
+    feature_groups: Dict[str, List[str]] = {}
+    raw_groups = compiler_guidance.get("feature_groups")
+    if isinstance(raw_groups, Mapping):
+        for group_name, raw_features in sorted(raw_groups.items()):
+            features = _guidance_feature_list(
+                raw_features,
+                limit=_COMPILER_GUIDANCE_MAX_GROUP_FEATURES,
+            )
+            if features:
+                feature_groups[str(group_name)] = features
+    ranked_guidance_features: List[Dict[str, Any]] = []
+    raw_ranked = compiler_guidance.get("ranked_guidance_features")
+    if isinstance(raw_ranked, Sequence) and not isinstance(raw_ranked, (str, bytes)):
+        for item in raw_ranked[:_COMPILER_GUIDANCE_MAX_FEATURES]:
+            if isinstance(item, Mapping):
+                feature = _guidance_feature_value(item)
+                if not feature:
+                    continue
+                ranked_guidance_features.append(
+                    {
+                        "embedding_weight_norm": round(
+                            _safe_float(item.get("embedding_weight_norm")),
+                            12,
+                        ),
+                        "family_logit_magnitude": round(
+                            _safe_float(item.get("family_logit_magnitude")),
+                            12,
+                        ),
+                        "feature": feature,
+                        "legal_ir_view_logit_magnitude": round(
+                            _safe_float(item.get("legal_ir_view_logit_magnitude")),
+                            12,
+                        ),
+                        "score": round(_safe_float(item.get("score")), 12),
+                    }
+                )
+    decoded_embedding = []
+    raw_decoded_embedding = compiler_guidance.get("decoded_embedding")
+    if isinstance(raw_decoded_embedding, Sequence) and not isinstance(
+        raw_decoded_embedding,
+        (str, bytes),
+    ):
+        decoded_embedding = [
+            round(_safe_float(value), 12)
+            for value in raw_decoded_embedding[:_COMPILER_GUIDANCE_MAX_EMBEDDING_VALUES]
+        ]
+    decoded_embedding_norm = math.sqrt(
+        sum(value * value for value in decoded_embedding)
+    ) if decoded_embedding else 0.0
+    legal_ir_view_metrics: Dict[str, float] = {}
+    raw_view_metrics = compiler_guidance.get("legal_ir_view_metrics")
+    if isinstance(raw_view_metrics, Mapping):
+        legal_ir_view_metrics = {
+            str(key): round(_safe_float(value), 12)
+            for key, value in sorted(raw_view_metrics.items())
+            if math.isfinite(_safe_float(value))
+        }
+    summary = {
+        "decoded_embedding": decoded_embedding,
+        "decoded_embedding_norm": round(decoded_embedding_norm, 12),
+        "family_distribution": _numeric_distribution(
+            compiler_guidance.get("family_distribution")
+        ),
+        "feature_groups": feature_groups,
+        "legal_ir_predicted_view_distribution": _numeric_distribution(
+            compiler_guidance.get("legal_ir_predicted_view_distribution")
+        ),
+        "legal_ir_target_view_distribution": _numeric_distribution(
+            compiler_guidance.get("legal_ir_target_view_distribution")
+        ),
+        "legal_ir_view_metrics": legal_ir_view_metrics,
+        "ranked_guidance_features": ranked_guidance_features,
+        "sample_id": str(compiler_guidance.get("sample_id") or ""),
+        "sample_memory_used": bool(compiler_guidance.get("sample_memory_used")),
+        "synthesis_focus": _guidance_feature_list(
+            compiler_guidance.get("synthesis_focus"),
+            limit=_COMPILER_GUIDANCE_MAX_FEATURES,
+        ),
+    }
+    return {
+        key: value
+        for key, value in summary.items()
+        if value not in ({}, [], "", None)
+    }
+
+
+def _compiler_guidance_feature_strings(
+    guidance_summary: Mapping[str, Any],
+) -> List[str]:
+    features: List[str] = []
+    raw_ranked = guidance_summary.get("ranked_guidance_features")
+    if isinstance(raw_ranked, Sequence) and not isinstance(raw_ranked, (str, bytes)):
+        features.extend(_guidance_feature_list(raw_ranked, limit=0))
+    raw_groups = guidance_summary.get("feature_groups")
+    if isinstance(raw_groups, Mapping):
+        for group_features in raw_groups.values():
+            features.extend(_guidance_feature_list(group_features, limit=0))
+    features.extend(
+        _guidance_feature_list(guidance_summary.get("synthesis_focus"), limit=0)
+    )
+    for prefix, distribution_key in (
+        ("family-distribution", "family_distribution"),
+        ("legal-ir-predicted-view", "legal_ir_predicted_view_distribution"),
+        ("legal-ir-target-view", "legal_ir_target_view_distribution"),
+    ):
+        distribution = guidance_summary.get(distribution_key)
+        if isinstance(distribution, Mapping):
+            features.extend(f"{prefix}:{key}" for key in distribution)
+    return _unique_preserve_order(features)
+
+
+def _guidance_frame_boost(
+    selection: FrameSelection,
+    guidance_features: Sequence[str],
+) -> tuple[float, List[str]]:
+    frame_terms = [
+        selection.frame.frame_id,
+        selection.frame.label,
+        selection.frame.domain,
+        *selection.matched_terms,
+        *frame_ontology_terms(selection.frame, matched_terms=selection.matched_terms),
+    ]
+    normalized_terms = {
+        normalize_frame_ontology_term(term)
+        for term in frame_terms
+        if str(term or "").strip()
+    }
+    normalized_terms = {
+        term
+        for term in normalized_terms
+        if len(term) >= 4 and term not in {"modal", "legal", "frame"}
+    }
+    frame_id = normalize_frame_ontology_term(selection.frame.frame_id)
+    boost = 0.0
+    matched_features: List[str] = []
+    for feature in guidance_features:
+        normalized_feature = normalize_frame_ontology_term(feature)
+        if not normalized_feature:
+            continue
+        feature_boost = 0.0
+        if frame_id and frame_id in normalized_feature:
+            feature_boost += 0.45
+        elif any(term in normalized_feature for term in normalized_terms):
+            feature_boost += 0.08
+        if (
+            "selected_frame" in normalized_feature
+            or "selected_ontology_frame" in normalized_feature
+        ) and any(term in normalized_feature for term in normalized_terms):
+            feature_boost += 0.18
+        if (
+            "modal_frame_logic" in normalized_feature
+            or "knowledge_graphs_neo4j_compat" in normalized_feature
+        ) and any(term in normalized_feature for term in normalized_terms):
+            feature_boost += 0.04
+        if feature_boost > 0.0:
+            boost += feature_boost
+            matched_features.append(feature)
+        if boost >= _COMPILER_GUIDANCE_FRAME_BOOST_CAP:
+            boost = _COMPILER_GUIDANCE_FRAME_BOOST_CAP
+            break
+    return round(boost, 6), matched_features[:8]
+
+
+def _rerank_frame_selections_with_guidance(
+    frame_selections: Sequence[FrameSelection],
+    guidance_summary: Mapping[str, Any],
+    *,
+    top_k: int,
+) -> tuple[List[FrameSelection], Dict[str, Dict[str, Any]]]:
+    guidance_features = _compiler_guidance_feature_strings(guidance_summary)
+    if not guidance_features:
+        return list(frame_selections)[:top_k], {}
+    reranked: List[FrameSelection] = []
+    boosts: Dict[str, Dict[str, Any]] = {}
+    for selection in frame_selections:
+        boost, matched_features = _guidance_frame_boost(selection, guidance_features)
+        if boost > 0.0:
+            frame_id = selection.frame.frame_id
+            boosts[frame_id] = {
+                "boost": boost,
+                "matched_features": matched_features,
+                "original_score": selection.score,
+            }
+            reranked.append(
+                replace(
+                    selection,
+                    score=round(selection.score + boost, 6),
+                    explanation=(
+                        f"{selection.explanation}; autoencoder_guidance_boost={boost:.6f}"
+                    ),
+                )
+            )
+        else:
+            reranked.append(selection)
+    reranked.sort(key=lambda result: (-result.score, result.frame.frame_id))
+    return reranked[:top_k], boosts
+
+
+def _source_copy_reward_hack_penalty(
+    *,
+    source_span_copy_ratio: float,
+    text_reconstruction_similarity: float,
+    structural_text_similarity: float,
+) -> float:
+    copied_similarity_gap = max(
+        0.0,
+        float(text_reconstruction_similarity) - float(structural_text_similarity),
+    )
+    return float(source_span_copy_ratio) * copied_similarity_gap
+
+
 class DeterministicModalLogicCodec:
     """Encode legal text into modal IR and decode it back to vector space."""
 
@@ -1297,9 +1575,11 @@ class DeterministicModalLogicCodec:
         citation: Optional[str] = None,
         source: str = "legal_text",
         source_embedding: Optional[Sequence[float]] = None,
+        compiler_guidance: Optional[Mapping[str, Any]] = None,
     ) -> ModalLogicCodecResult:
         """Run deterministic text -> encoding -> modal IR -> vector decoding."""
         normalized_text = self.parser.normalize_text(text)
+        guidance_summary = _compiler_guidance_summary(compiler_guidance)
         encoding = self.encoder.encode(
             text,
             document_id=document_id,
@@ -1313,11 +1593,29 @@ class DeterministicModalLogicCodec:
             citation=citation,
             source=source,
         )
+        frame_rank_top_k = self.config.top_k_frames
+        if guidance_summary:
+            frame_count = len(getattr(self.frame_selector, "frames", ()) or ())
+            if frame_count > 0:
+                frame_rank_top_k = min(
+                    frame_count,
+                    max(self.config.top_k_frames, self.config.top_k_frames * 3, 12),
+                )
         frame_selections = self.frame_selector.rank(
             normalized_text,
-            top_k=self.config.top_k_frames,
+            top_k=frame_rank_top_k,
             domain=self.config.frame_domain,
         )
+        selected_frame_before_guidance = (
+            frame_selections[0].frame.frame_id if frame_selections else None
+        )
+        guidance_frame_boosts: Dict[str, Dict[str, Any]] = {}
+        if guidance_summary:
+            frame_selections, guidance_frame_boosts = _rerank_frame_selections_with_guidance(
+                frame_selections,
+                guidance_summary,
+                top_k=self.config.top_k_frames,
+            )
         frame_candidates = [selection.to_dict() for selection in frame_selections]
         selected_frame = str(frame_candidates[0]["frame_id"]) if frame_candidates else None
         modal_ir = self._attach_frame_logic(
@@ -1327,6 +1625,54 @@ class DeterministicModalLogicCodec:
             selected_frame=selected_frame,
             encoding=encoding,
         )
+        if guidance_summary:
+            modal_ir = replace(
+                modal_ir,
+                metadata={
+                    **modal_ir.metadata,
+                    "compiler_guidance_applied": True,
+                    "compiler_guidance_family_distribution": guidance_summary.get(
+                        "family_distribution",
+                        {},
+                    ),
+                    "compiler_guidance_feature_count": len(
+                        _compiler_guidance_feature_strings(guidance_summary)
+                    ),
+                    "compiler_guidance_feature_groups": guidance_summary.get(
+                        "feature_groups",
+                        {},
+                    ),
+                    "compiler_guidance_frame_boosts": guidance_frame_boosts,
+                    "compiler_guidance_legal_ir_predicted_view_distribution": (
+                        guidance_summary.get(
+                            "legal_ir_predicted_view_distribution",
+                            {},
+                        )
+                    ),
+                    "compiler_guidance_legal_ir_target_view_distribution": (
+                        guidance_summary.get(
+                            "legal_ir_target_view_distribution",
+                            {},
+                        )
+                    ),
+                    "compiler_guidance_legal_ir_view_metrics": guidance_summary.get(
+                        "legal_ir_view_metrics",
+                        {},
+                    ),
+                    "compiler_guidance_ranked_features": guidance_summary.get(
+                        "ranked_guidance_features",
+                        [],
+                    ),
+                    "compiler_guidance_sample_id": guidance_summary.get("sample_id", ""),
+                    "compiler_guidance_selected_frame_after": selected_frame,
+                    "compiler_guidance_selected_frame_before": selected_frame_before_guidance,
+                    "compiler_guidance_synthesis_focus": guidance_summary.get(
+                        "synthesis_focus",
+                        [],
+                    ),
+                    "frame_selector": "bm25_v1+autoencoder_guidance_v1",
+                },
+            )
         modal_ir = _enrich_modal_ir_formula_clauses(modal_ir)
 
         resolved_source_embedding = list(source_embedding) if source_embedding is not None else stable_mock_embedding(
@@ -1369,6 +1715,7 @@ class DeterministicModalLogicCodec:
             if graph_schema
             else [],
             metadata={
+                "compiler_guidance_applied": bool(guidance_summary),
                 "neo4j_compatible": True,
                 "source": "deterministic_modal_logic_codec_v1",
             },
@@ -1441,6 +1788,11 @@ class DeterministicModalLogicCodec:
             structural_decoded_text,
         )
         source_span_copy_ratio = _source_span_copy_ratio(decoded_modal_text)
+        source_copy_reward_hack_penalty = _source_copy_reward_hack_penalty(
+            source_span_copy_ratio=source_span_copy_ratio,
+            text_reconstruction_similarity=decoded_modal_text.reconstruction_similarity,
+            structural_text_similarity=structural_text_similarity,
+        )
         raw_source_embedding_cosine = cosine_similarity(
             resolved_source_embedding,
             decoded_embedding,
@@ -1456,6 +1808,13 @@ class DeterministicModalLogicCodec:
         losses = {
             "cosine_loss": cosine_loss(source_feature_embedding, decoded_embedding),
             "cosine_similarity": cosine_similarity(source_feature_embedding, decoded_embedding),
+            "cross_entropy_entropy_loss": distribution_entropy_loss(
+                target_family_distribution,
+            ),
+            "cross_entropy_excess_loss": cross_entropy_excess_distribution_loss(
+                family_probabilities,
+                target_family_distribution,
+            ),
             "cross_entropy_loss": cross_entropy_distribution_loss(
                 family_probabilities,
                 target_family_distribution,
@@ -1468,6 +1827,7 @@ class DeterministicModalLogicCodec:
             "raw_source_embedding_cosine_similarity": raw_source_embedding_cosine,
             "reconstruction_loss": mse_loss(source_feature_embedding, decoded_embedding),
             "source_copy_loss": source_span_copy_ratio,
+            "source_copy_reward_hack_penalty": source_copy_reward_hack_penalty,
             "source_span_copy_ratio": source_span_copy_ratio,
             "source_span_text_reconstruction_loss": 1.0 - decoded_modal_text.reconstruction_similarity,
             "structural_text_reconstruction_loss": 1.0 - structural_text_similarity,
@@ -1475,12 +1835,62 @@ class DeterministicModalLogicCodec:
             "symbolic_validity_penalty": 0.0 if modal_ir.formulas else 1.0,
             "text_reconstruction_loss": 1.0 - decoded_modal_text.reconstruction_similarity,
         }
+        guidance_family_distribution = guidance_summary.get("family_distribution")
+        if isinstance(guidance_family_distribution, Mapping) and guidance_family_distribution:
+            losses["guidance_family_cross_entropy_loss"] = cross_entropy_distribution_loss(
+                guidance_family_distribution,
+                target_family_distribution,
+            )
+            losses["guidance_family_cross_entropy_excess_loss"] = (
+                cross_entropy_excess_distribution_loss(
+                    guidance_family_distribution,
+                    target_family_distribution,
+                )
+            )
+        guidance_view_distribution = guidance_summary.get(
+            "legal_ir_predicted_view_distribution"
+        )
+        guidance_target_view_distribution = guidance_summary.get(
+            "legal_ir_target_view_distribution"
+        )
+        if (
+            isinstance(guidance_view_distribution, Mapping)
+            and guidance_view_distribution
+            and isinstance(guidance_target_view_distribution, Mapping)
+            and guidance_target_view_distribution
+        ):
+            losses["guidance_legal_ir_view_cross_entropy_loss"] = (
+                cross_entropy_distribution_loss(
+                    guidance_view_distribution,
+                    guidance_target_view_distribution,
+                )
+            )
+            losses["guidance_legal_ir_view_cross_entropy_excess_loss"] = (
+                cross_entropy_excess_distribution_loss(
+                    guidance_view_distribution,
+                    guidance_target_view_distribution,
+                )
+            )
+            losses["guidance_legal_ir_view_entropy_loss"] = distribution_entropy_loss(
+                guidance_target_view_distribution,
+            )
         metadata = {
+            "compiler_guidance_applied": bool(guidance_summary),
+            "compiler_guidance_feature_count": len(
+                _compiler_guidance_feature_strings(guidance_summary)
+            ) if guidance_summary else 0,
+            "compiler_guidance_frame_boost_count": len(guidance_frame_boosts),
+            "compiler_guidance_selected_frame_after": selected_frame,
+            "compiler_guidance_selected_frame_before": selected_frame_before_guidance,
             "deterministic_coverage_ratio": 1.0,
             "deterministic_decompiler": "modal_decompiler_v2",
             "encoder": "spacy_legal_encoder_v1",
             "flogic_ontology_consistent": bool(flogic_result.ontology_consistent) if flogic_result else True,
-            "frame_selector": "bm25_v1",
+            "frame_selector": (
+                "bm25_v1+autoencoder_guidance_v1"
+                if guidance_summary
+                else "bm25_v1"
+            ),
             "llm_call_count": 0,
             "modal_decompiler_reconstruction_similarity": decoded_modal_text.reconstruction_similarity,
             "modal_decompiler_span_coverage": decoded_modal_text.modal_span_coverage,
@@ -1527,7 +1937,12 @@ class DeterministicModalLogicCodec:
             source=sample.source,
         )
 
-    def compile_sample_ir(self, sample: LegalSample) -> ModalIRDocument:
+    def compile_sample_ir(
+        self,
+        sample: LegalSample,
+        *,
+        compiler_guidance: Optional[Mapping[str, Any]] = None,
+    ) -> ModalIRDocument:
         """Compile a ``LegalSample`` through the canonical modal/F-logic codec."""
         return self.encode(
             sample.text,
@@ -1535,6 +1950,7 @@ class DeterministicModalLogicCodec:
             citation=sample.citation,
             source=sample.source,
             source_embedding=sample.embedding_vector,
+            compiler_guidance=compiler_guidance,
         ).modal_ir
 
     def decode_sample_embedding(self, sample: LegalSample, *, dimensions: int) -> List[float]:
