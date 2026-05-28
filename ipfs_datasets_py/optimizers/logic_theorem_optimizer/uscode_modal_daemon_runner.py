@@ -22,6 +22,7 @@ import sys
 import tempfile
 import threading
 import time
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack, contextmanager
 from datetime import datetime, timezone
@@ -34,6 +35,7 @@ from huggingface_hub import HfFileSystem
 from ipfs_datasets_py.logic.modal import (
     DeterministicModalLogicCodec,
     ModalLogicCodecConfig,
+    decoded_modal_phrase_slot_text_map,
 )
 from ipfs_datasets_py.logic.bridge import DEFAULT_LEGAL_IR_BRIDGE_NAMES
 from ipfs_datasets_py.logic.submodule_registry import (
@@ -836,6 +838,9 @@ def compiler_ir_metric_block(
     guidance_failures = 0
     guidance_frame_boost_counts: List[float] = []
     guidance_frame_changed_count = 0
+    guidance_feature_groups: Counter[str] = Counter()
+    guidance_surface_features: Counter[str] = Counter()
+    guidance_todo_routes: Counter[str] = Counter()
     for sample in sample_list:
         compiler_guidance = None
         if use_autoencoder_guidance and autoencoder is not None:
@@ -877,6 +882,16 @@ def compiler_ir_metric_block(
                 != result.metadata.get("compiler_guidance_selected_frame_after")
             ):
                 guidance_frame_changed_count += 1
+            slot_texts = decoded_modal_phrase_slot_text_map(result.decoded_modal_text)
+            for value in slot_texts.get("compiler_guidance_feature_group", []):
+                guidance_feature_groups[str(value)] += 1
+            for value in slot_texts.get(
+                "compiler_guidance_decompiler_surface_template_feature",
+                [],
+            ):
+                guidance_surface_features[str(value)] += 1
+            for value in slot_texts.get("compiler_guidance_todo_route", []):
+                guidance_todo_routes[str(value)] += 1
 
     block: Dict[str, Any] = {
         "autoencoder_guidance_enabled": bool(use_autoencoder_guidance),
@@ -902,6 +917,18 @@ def compiler_ir_metric_block(
             9,
         )
         block["compiler_guidance_frame_changed_count"] = guidance_frame_changed_count
+    if guidance_feature_groups:
+        block["compiler_guidance_feature_groups"] = dict(
+            guidance_feature_groups.most_common(12)
+        )
+    if guidance_surface_features:
+        block["compiler_guidance_surface_features"] = dict(
+            guidance_surface_features.most_common(12)
+        )
+    if guidance_todo_routes:
+        block["compiler_guidance_todo_routes"] = dict(
+            guidance_todo_routes.most_common(12)
+        )
     if "modal_span_coverage_loss" in block:
         block["modal_span_coverage"] = round(
             1.0 - float(block["modal_span_coverage_loss"]),
@@ -918,6 +945,92 @@ def compiler_ir_metric_block(
             9,
         )
     return block
+
+
+def _metric_value(block: Mapping[str, Any], name: str, default: float = 1.0e12) -> float:
+    try:
+        value = float(block.get(name, default))
+    except (TypeError, ValueError):
+        return default
+    if value != value:
+        return default
+    return value
+
+
+def compiler_guidance_canary_block(
+    deterministic_block: Mapping[str, Any],
+    guided_block: Mapping[str, Any],
+    *,
+    plateau_threshold: float = 1.0e-5,
+) -> Dict[str, Any]:
+    """Compare deterministic compiler IR metrics with guided compiler IR metrics.
+
+    Positive deltas mean guidance improved that metric. This block is intentionally
+    scale-aware: raw cross entropy is compared with raw cross entropy, while CE
+    excess stays a separate KL-style diagnostic.
+    """
+    threshold = max(0.0, float(plateau_threshold))
+    applied_count = int(guided_block.get("autoencoder_guidance_applied_count", 0) or 0)
+    enabled = bool(guided_block.get("autoencoder_guidance_enabled"))
+    plain_ce = _metric_value(deterministic_block, "cross_entropy_loss")
+    guided_ce = _metric_value(guided_block, "cross_entropy_loss")
+    plain_ce_excess = _metric_value(deterministic_block, "cross_entropy_excess_loss")
+    guided_ce_excess = _metric_value(guided_block, "cross_entropy_excess_loss")
+    plain_cosine = _metric_value(deterministic_block, "cosine_similarity", -1.0)
+    guided_cosine = _metric_value(guided_block, "cosine_similarity", -1.0)
+    plain_copy_hack = _metric_value(
+        deterministic_block,
+        "source_copy_reward_hack_penalty",
+    )
+    guided_copy_hack = _metric_value(
+        guided_block,
+        "source_copy_reward_hack_penalty",
+    )
+    plain_source_copy = _metric_value(deterministic_block, "source_copy_loss")
+    guided_source_copy = _metric_value(guided_block, "source_copy_loss")
+    deltas = {
+        "ce_delta": plain_ce - guided_ce,
+        "ce_excess_delta": plain_ce_excess - guided_ce_excess,
+        "copy_hack_delta": plain_copy_hack - guided_copy_hack,
+        "cosine_delta": guided_cosine - plain_cosine,
+        "source_copy_delta": plain_source_copy - guided_source_copy,
+    }
+    core_names = ("ce_delta", "copy_hack_delta", "cosine_delta")
+    improved = enabled and applied_count > 0 and any(
+        deltas[name] > threshold for name in core_names
+    )
+    regressed = enabled and applied_count > 0 and any(
+        deltas[name] < -threshold for name in core_names
+    )
+    if not enabled or applied_count <= 0:
+        quality_gate = "inactive"
+    elif regressed:
+        quality_gate = "fail"
+    elif improved:
+        quality_gate = "pass"
+    else:
+        quality_gate = "warn"
+    return {
+        "applied_count": applied_count,
+        "ce_delta": round(deltas["ce_delta"], 9),
+        "ce_excess_delta": round(deltas["ce_excess_delta"], 9),
+        "copy_hack_delta": round(deltas["copy_hack_delta"], 9),
+        "cosine_delta": round(deltas["cosine_delta"], 9),
+        "enabled": enabled,
+        "frame_boost_count": _metric_value(
+            guided_block,
+            "compiler_guidance_frame_boost_count",
+            0.0,
+        ),
+        "frame_changed_count": int(
+            guided_block.get("compiler_guidance_frame_changed_count", 0) or 0
+        ),
+        "improved": improved,
+        "quality_gate": quality_gate,
+        "regressed": regressed,
+        "source_copy_delta": round(deltas["source_copy_delta"], 9),
+        "threshold": threshold,
+    }
 
 
 BRIDGE_ROUND_TRIP_METRIC_NAMES = (
@@ -4738,6 +4851,10 @@ def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Pat
         "best_validation_cosine": -1.0,
         "best_validation_ir_ce": 1.0e12,
         "best_validation_ir_cosine": -1.0,
+        "best_validation_ir_guided_ce": 1.0e12,
+        "best_validation_ir_guided_ce_excess": 1.0e12,
+        "best_validation_ir_guided_cosine": -1.0,
+        "best_validation_ir_guided_source_copy_reward_hack_penalty": 1.0e12,
         "best_validation_ir_reconstruction": 1.0e12,
         "best_validation_ir_source_copy_loss": 1.0e12,
         "best_validation_ir_structural_text_reconstruction": 1.0e12,
@@ -6463,6 +6580,13 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     summary.setdefault("bridge_loss_samples", 0)
     summary.setdefault("bridge_loss_signals", 0)
     summary.setdefault("bridge_metric_failures", 0)
+    summary.setdefault("best_validation_ir_guided_ce", 1.0e12)
+    summary.setdefault("best_validation_ir_guided_ce_excess", 1.0e12)
+    summary.setdefault("best_validation_ir_guided_cosine", -1.0)
+    summary.setdefault(
+        "best_validation_ir_guided_source_copy_reward_hack_penalty",
+        1.0e12,
+    )
     summary.setdefault("best_validation_ir_source_copy_loss", 1.0e12)
     summary.setdefault("best_validation_ir_structural_text_reconstruction", 1.0e12)
     summary.setdefault("best_validation_learned_ir_view_ce", 1.0e12)
@@ -7321,18 +7445,46 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             latest_compiler_ir_ce = float(
                 compiler_ir_validation.get("cross_entropy_loss", 1.0e12)
             )
+            latest_compiler_ir_ce_excess = float(
+                compiler_ir_validation.get("cross_entropy_excess_loss", 1.0e12)
+            )
             latest_compiler_ir_cosine = float(
                 compiler_ir_validation.get("cosine_similarity", -1.0)
             )
             latest_compiler_ir_source_copy_loss = float(
                 compiler_ir_validation.get("source_copy_loss", 1.0e12)
             )
+            latest_compiler_ir_source_copy_reward_hack_penalty = float(
+                compiler_ir_validation.get("source_copy_reward_hack_penalty", 1.0e12)
+            )
             latest_guided_compiler_ir_ce = float(
-                compiler_ir_guided_validation.get("cross_entropy_excess_loss")
-                or compiler_ir_guided_validation.get("cross_entropy_loss", 1.0e12)
+                compiler_ir_guided_validation.get("cross_entropy_loss", 1.0e12)
+            )
+            latest_guided_compiler_ir_ce_excess = float(
+                compiler_ir_guided_validation.get("cross_entropy_excess_loss", 1.0e12)
             )
             latest_guided_compiler_ir_cosine = float(
                 compiler_ir_guided_validation.get("cosine_similarity", -1.0)
+            )
+            latest_guided_compiler_ir_source_copy_reward_hack_penalty = float(
+                compiler_ir_guided_validation.get(
+                    "source_copy_reward_hack_penalty",
+                    1.0e12,
+                )
+            )
+            guidance_canary = compiler_guidance_canary_block(
+                compiler_ir_validation,
+                compiler_ir_guided_validation,
+                plateau_threshold=float(
+                    getattr(args, "learning_rate_plateau_delta", 1.0e-5)
+                ),
+            )
+            latest_compiler_ir_guidance_ce_delta = float(guidance_canary["ce_delta"])
+            latest_compiler_ir_guidance_cosine_delta = float(
+                guidance_canary["cosine_delta"]
+            )
+            latest_compiler_ir_guidance_copy_hack_delta = float(
+                guidance_canary["copy_hack_delta"]
             )
             latest_learned_ir_view_ce = float(
                 learned_ir_validation.get("view_cross_entropy_loss", 1.0e12)
@@ -7365,10 +7517,33 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["latest_compiler_ir_guided_train"] = compiler_ir_guided_train
             summary["latest_compiler_ir_guided_validation"] = compiler_ir_guided_validation
             summary["latest_compiler_ir_ce"] = latest_compiler_ir_ce
+            summary["latest_compiler_ir_ce_excess"] = latest_compiler_ir_ce_excess
             summary["latest_compiler_ir_cosine"] = latest_compiler_ir_cosine
             summary["latest_compiler_ir_source_copy_loss"] = latest_compiler_ir_source_copy_loss
+            summary["latest_compiler_ir_source_copy_reward_hack_penalty"] = (
+                latest_compiler_ir_source_copy_reward_hack_penalty
+            )
             summary["latest_compiler_ir_guided_ce"] = latest_guided_compiler_ir_ce
+            summary["latest_compiler_ir_guided_ce_excess"] = (
+                latest_guided_compiler_ir_ce_excess
+            )
             summary["latest_compiler_ir_guided_cosine"] = latest_guided_compiler_ir_cosine
+            summary["latest_compiler_ir_guided_source_copy_reward_hack_penalty"] = (
+                latest_guided_compiler_ir_source_copy_reward_hack_penalty
+            )
+            summary["latest_compiler_ir_guidance_canary"] = guidance_canary
+            summary["latest_compiler_ir_guidance_quality_gate"] = guidance_canary[
+                "quality_gate"
+            ]
+            summary["latest_compiler_ir_guidance_ce_delta"] = (
+                latest_compiler_ir_guidance_ce_delta
+            )
+            summary["latest_compiler_ir_guidance_cosine_delta"] = (
+                latest_compiler_ir_guidance_cosine_delta
+            )
+            summary["latest_compiler_ir_guidance_copy_hack_delta"] = (
+                latest_compiler_ir_guidance_copy_hack_delta
+            )
             summary["latest_learned_ir_train"] = learned_ir_train
             summary["latest_learned_ir_validation"] = learned_ir_validation
             summary["latest_learned_ir_view_ce"] = latest_learned_ir_view_ce
@@ -7439,6 +7614,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["metric_failures"] = int(summary.get("metric_failures", 0)) + int(
                 compiler_ir_train.get("metric_failures", 0)
                 + compiler_ir_validation.get("metric_failures", 0)
+                + compiler_ir_guided_train.get("metric_failures", 0)
+                + compiler_ir_guided_validation.get("metric_failures", 0)
                 + bridge_ir_train.get("metric_failures", 0)
                 + bridge_ir_validation.get("metric_failures", 0)
             )
@@ -7462,12 +7639,42 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 ) + 1
             else:
                 summary["learning_rate_cosine_regression_streak"] = 0
+            guidance_improved = bool(guidance_canary.get("improved"))
+            summary["compiler_guidance_improved_cycles"] = int(
+                summary.get("compiler_guidance_improved_cycles", 0)
+            ) + int(guidance_improved)
+            guidance_regressed = bool(guidance_canary.get("regressed"))
+            if guidance_regressed:
+                summary["compiler_guidance_regression_streak"] = int(
+                    summary.get("compiler_guidance_regression_streak", 0)
+                ) + 1
+            else:
+                summary["compiler_guidance_regression_streak"] = 0
             summary["learning_rate_applied"] = float(cycle_learning_rate)
             summary["learning_rate_policy"] = cycle_lr_policy
             summary["best_validation_ce"] = min(summary.get("best_validation_ce"), after_validation.cross_entropy_loss)
             summary["best_validation_ir_ce"] = min(
                 summary.get("best_validation_ir_ce", 1.0e12),
                 latest_compiler_ir_ce,
+            )
+            summary["best_validation_ir_guided_ce"] = min(
+                summary.get("best_validation_ir_guided_ce", 1.0e12),
+                latest_guided_compiler_ir_ce,
+            )
+            summary["best_validation_ir_guided_ce_excess"] = min(
+                summary.get("best_validation_ir_guided_ce_excess", 1.0e12),
+                latest_guided_compiler_ir_ce_excess,
+            )
+            summary["best_validation_ir_guided_cosine"] = max(
+                summary.get("best_validation_ir_guided_cosine", -1.0),
+                latest_guided_compiler_ir_cosine,
+            )
+            summary["best_validation_ir_guided_source_copy_reward_hack_penalty"] = min(
+                summary.get(
+                    "best_validation_ir_guided_source_copy_reward_hack_penalty",
+                    1.0e12,
+                ),
+                latest_guided_compiler_ir_source_copy_reward_hack_penalty,
             )
             summary["best_validation_ir_cosine"] = max(
                 summary.get("best_validation_ir_cosine", -1.0),
@@ -7538,6 +7745,14 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "completed_count": sum(step.completed_count for step in run.steps),
                     "compiler_ir_guided_train": compiler_ir_guided_train,
                     "compiler_ir_guided_validation": compiler_ir_guided_validation,
+                    "compiler_ir_guidance_ce_delta": latest_compiler_ir_guidance_ce_delta,
+                    "compiler_ir_guidance_copy_hack_delta": (
+                        latest_compiler_ir_guidance_copy_hack_delta
+                    ),
+                    "compiler_ir_guidance_cosine_delta": (
+                        latest_compiler_ir_guidance_cosine_delta
+                    ),
+                    "compiler_ir_guidance_canary": guidance_canary,
                     "compiler_ir_train": compiler_ir_train,
                     "compiler_ir_validation": compiler_ir_validation,
                     "learned_ir_before_train": learned_ir_before_train,

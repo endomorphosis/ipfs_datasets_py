@@ -37,6 +37,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_run
     apply_codex_worktree_changes_to_main,
     bridge_ir_metric_block,
     build_paired_daemon_commands,
+    compiler_guidance_canary_block,
     compiler_ir_metric_block,
     create_codex_work_packet,
     execute_codex_work_packet,
@@ -4156,7 +4157,59 @@ def test_compiler_ir_metric_block_can_apply_autoencoder_guidance() -> None:
     assert block["autoencoder_guidance_applied_count"] == 1
     assert block["autoencoder_guidance_failures"] == 0
     assert block["evaluated_count"] == 1
+    assert block["compiler_guidance_feature_groups"]
+    assert block["compiler_guidance_surface_features"]
     assert "guidance_family_cross_entropy_excess_loss" in block
+
+
+def test_compiler_guidance_canary_block_reports_quality_gate() -> None:
+    deterministic = {
+        "cosine_similarity": 0.2,
+        "cross_entropy_excess_loss": 0.4,
+        "cross_entropy_loss": 1.4,
+        "source_copy_loss": 0.5,
+        "source_copy_reward_hack_penalty": 0.3,
+    }
+    guided = {
+        "autoencoder_guidance_applied_count": 1,
+        "autoencoder_guidance_enabled": True,
+        "compiler_guidance_frame_boost_count": 2.0,
+        "compiler_guidance_frame_changed_count": 1,
+        "cosine_similarity": 0.25,
+        "cross_entropy_excess_loss": 0.35,
+        "cross_entropy_loss": 1.2,
+        "source_copy_loss": 0.45,
+        "source_copy_reward_hack_penalty": 0.1,
+    }
+
+    block = compiler_guidance_canary_block(
+        deterministic,
+        guided,
+        plateau_threshold=1.0e-5,
+    )
+
+    assert block["quality_gate"] == "pass"
+    assert block["improved"] is True
+    assert block["regressed"] is False
+    assert block["ce_delta"] == pytest.approx(0.2)
+    assert block["cosine_delta"] == pytest.approx(0.05)
+    assert block["copy_hack_delta"] == pytest.approx(0.2)
+    assert block["frame_boost_count"] == pytest.approx(2.0)
+    assert block["frame_changed_count"] == 1
+
+    regressed = compiler_guidance_canary_block(
+        deterministic,
+        {
+            **guided,
+            "cosine_similarity": 0.1,
+            "cross_entropy_loss": 1.6,
+            "source_copy_reward_hack_penalty": 0.4,
+        },
+        plateau_threshold=1.0e-5,
+    )
+
+    assert regressed["quality_gate"] == "fail"
+    assert regressed["regressed"] is True
 
 
 def test_bridge_ir_metric_block_reports_per_adapter_views() -> None:

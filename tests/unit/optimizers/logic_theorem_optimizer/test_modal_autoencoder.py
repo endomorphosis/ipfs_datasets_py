@@ -1382,6 +1382,7 @@ def test_compiler_guidance_flows_into_deterministic_codec_ir() -> None:
     from ipfs_datasets_py.logic.modal import (
         DeterministicModalLogicCodec,
         ModalLogicCodecConfig,
+        decoded_modal_phrase_slot_text_map,
     )
 
     sample = build_us_code_sample(
@@ -1422,6 +1423,12 @@ def test_compiler_guidance_flows_into_deterministic_codec_ir() -> None:
     assert result.modal_ir.metadata["compiler_guidance_ranked_features"]
     assert result.modal_ir.metadata["frame_selector"] == "bm25_v1+autoencoder_guidance_v1"
     assert result.modal_ir.frame_logic.metadata["compiler_guidance_applied"] is True
+    slot_texts = decoded_modal_phrase_slot_text_map(result.decoded_modal_text)
+    assert slot_texts["compiler_guidance_applied"] == ["true"]
+    assert slot_texts["compiler_guidance_family"]
+    assert slot_texts["compiler_guidance_feature_group"]
+    assert slot_texts["compiler_guidance_feature"]
+    assert slot_texts["compiler_guidance_decompiler_surface_template_feature"]
     assert "cross_entropy_excess_loss" in result.losses
     assert "guidance_family_cross_entropy_excess_loss" in result.losses
     assert "source_copy_reward_hack_penalty" in result.losses

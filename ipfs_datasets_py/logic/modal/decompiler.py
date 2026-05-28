@@ -11,6 +11,7 @@ The decompiler keeps two views separate:
 
 from __future__ import annotations
 
+import math
 import re
 from dataclasses import asdict, dataclass, field
 from functools import lru_cache
@@ -1128,6 +1129,7 @@ def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
         *_document_modal_family_transition_phrases(document),
         *_frame_candidate_phrases(document),
         *_frame_ontology_phrases(document),
+        *_compiler_guidance_phrases(document),
     ]
     if not document.formulas:
         phrases.extend(_document_provenance_alignment_phrases(document))
@@ -2678,6 +2680,156 @@ def _document_modal_family_transition_phrases(
             )
         )
     return phrases
+
+
+def _compiler_guidance_phrases(
+    document: ModalIRDocument,
+) -> List[DecodedModalPhrase]:
+    """Expose learned autoencoder guidance as decompiler semantic slots."""
+    metadata = document.metadata if isinstance(document.metadata, Mapping) else {}
+    if not metadata.get("compiler_guidance_applied"):
+        return []
+    phrases: List[DecodedModalPhrase] = [
+        DecodedModalPhrase(
+            text="true",
+            slot="compiler_guidance_applied",
+            provenance_only=True,
+        )
+    ]
+
+    def add(slot: str, value: Any) -> None:
+        text = _clean_text(str(value or ""))
+        if not text:
+            return
+        phrases.append(
+            DecodedModalPhrase(
+                text=text,
+                slot=slot,
+                provenance_only=True,
+            )
+        )
+
+    def add_distribution(prefix: str, raw_distribution: Any) -> None:
+        if not isinstance(raw_distribution, Mapping):
+            return
+        ranked = sorted(
+            (
+                (_clean_text(str(name)), _safe_float(weight))
+                for name, weight in raw_distribution.items()
+            ),
+            key=lambda item: (-item[1], item[0]),
+        )
+        for rank, (name, weight) in enumerate(ranked[:8], start=1):
+            if not name or weight <= 0.0:
+                continue
+            safe_name = _slot_safe_family_key(name)
+            if not safe_name:
+                continue
+            add(prefix, safe_name)
+            add(f"{prefix}_ranked", f"{rank}:{safe_name}")
+            add(f"{prefix}_weight_bucket", _guidance_weight_bucket(weight))
+
+    add_distribution(
+        "compiler_guidance_family",
+        metadata.get("compiler_guidance_family_distribution"),
+    )
+    add_distribution(
+        "compiler_guidance_legal_ir_predicted_view",
+        metadata.get("compiler_guidance_legal_ir_predicted_view_distribution"),
+    )
+    add_distribution(
+        "compiler_guidance_legal_ir_target_view",
+        metadata.get("compiler_guidance_legal_ir_target_view_distribution"),
+    )
+
+    feature_groups = metadata.get("compiler_guidance_feature_groups")
+    if isinstance(feature_groups, Mapping):
+        for group_name, features in sorted(feature_groups.items()):
+            safe_group = _slot_safe_family_key(str(group_name))
+            if not safe_group:
+                continue
+            add("compiler_guidance_feature_group", safe_group)
+            if isinstance(features, Sequence) and not isinstance(features, (str, bytes)):
+                for index, feature in enumerate(features[:8], start=1):
+                    feature_text = _clean_text(str(feature or ""))
+                    if not feature_text:
+                        continue
+                    add(
+                        f"compiler_guidance_{safe_group}_feature",
+                        feature_text,
+                    )
+                    add(
+                        f"compiler_guidance_{safe_group}_feature_ranked",
+                        f"{index}:{_slot_safe_family_key(feature_text)}",
+                    )
+
+    ranked_features = metadata.get("compiler_guidance_ranked_features")
+    if isinstance(ranked_features, Sequence) and not isinstance(
+        ranked_features,
+        (str, bytes),
+    ):
+        for rank, item in enumerate(ranked_features[:16], start=1):
+            if not isinstance(item, Mapping):
+                continue
+            feature = _clean_text(str(item.get("feature") or ""))
+            if not feature:
+                continue
+            add("compiler_guidance_feature", feature)
+            add(
+                "compiler_guidance_feature_ranked",
+                f"{rank}:{_slot_safe_family_key(feature)}",
+            )
+            route = _guidance_todo_route(feature)
+            if route:
+                add("compiler_guidance_todo_route", route)
+
+    before = _clean_text(
+        str(metadata.get("compiler_guidance_selected_frame_before") or "")
+    )
+    after = _clean_text(
+        str(metadata.get("compiler_guidance_selected_frame_after") or "")
+    )
+    if before:
+        add("compiler_guidance_selected_frame_before", before)
+    if after:
+        add("compiler_guidance_selected_frame_after", after)
+    if before or after:
+        add(
+            "compiler_guidance_frame_selection_changed",
+            "true" if before and after and before != after else "false",
+        )
+
+    return phrases
+
+
+def _safe_float(value: Any) -> float:
+    try:
+        result = float(value)
+    except (TypeError, ValueError):
+        return 0.0
+    return result if math.isfinite(result) else 0.0
+
+
+def _guidance_weight_bucket(value: float) -> str:
+    if value >= 0.75:
+        return "very_high"
+    if value >= 0.5:
+        return "high"
+    if value >= 0.25:
+        return "medium"
+    if value > 0.0:
+        return "low"
+    return "zero"
+
+
+def _guidance_todo_route(feature: str) -> str:
+    normalized = _clean_text(feature).lower()
+    marker = "todo-route:"
+    if marker not in normalized:
+        return ""
+    suffix = normalized.split(marker, 1)[1]
+    route = suffix.split(":", 1)[0]
+    return _slot_safe_family_key(route)
 
 
 def _selected_frame_modal_family_phrases(

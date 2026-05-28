@@ -8888,6 +8888,7 @@ def _is_semantic_support_slot(slot: str) -> bool:
             "modal_cue",
             "modal_bridge_cue",
             "bridge_",
+            "compiler_guidance",
             "source_subject_anchor",
             "source_action_anchor",
             "source_object_anchor",
@@ -8956,6 +8957,11 @@ def _structural_semantic_values(decoded: DecodedModalText) -> List[str]:
         "refined_temporal_bridge_family_pair",
         "refined_temporal_bridge_signature",
         "refined_temporal_bridge_context",
+        "compiler_guidance_family",
+        "compiler_guidance_legal_ir_predicted_view",
+        "compiler_guidance_legal_ir_target_view",
+        "compiler_guidance_todo_route",
+        "compiler_guidance_decompiler_surface_template_feature",
         "selected_frame",
     )
     preferred_slot_set = set(preferred_slots)

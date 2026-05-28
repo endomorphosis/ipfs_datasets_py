@@ -351,6 +351,13 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
             if isinstance(latest_cycle.get("compiler_ir_guided_validation"), dict)
             else {}
         )
+    latest_guidance_canary = summary.get("latest_compiler_ir_guidance_canary")
+    if not isinstance(latest_guidance_canary, dict):
+        latest_guidance_canary = (
+            latest_cycle.get("compiler_ir_guidance_canary")
+            if isinstance(latest_cycle.get("compiler_ir_guidance_canary"), dict)
+            else {}
+        )
     latest_learned_ir_validation = summary.get("latest_learned_ir_validation")
     if not isinstance(latest_learned_ir_validation, dict):
         latest_learned_ir_validation = (
@@ -426,6 +433,13 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
         "best_validation_cosine": summary.get("best_validation_cosine"),
         "best_validation_ir_ce": summary.get("best_validation_ir_ce"),
         "best_validation_ir_cosine": summary.get("best_validation_ir_cosine"),
+        "best_validation_ir_guided_ce": summary.get("best_validation_ir_guided_ce"),
+        "best_validation_ir_guided_ce_excess": summary.get(
+            "best_validation_ir_guided_ce_excess"
+        ),
+        "best_validation_ir_guided_cosine": summary.get(
+            "best_validation_ir_guided_cosine"
+        ),
         "best_validation_ir_source_copy_loss": summary.get(
             "best_validation_ir_source_copy_loss"
         ),
@@ -468,8 +482,11 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
         ),
         "latest_compiler_ir_ce": _first_metric(
             summary.get("latest_compiler_ir_ce"),
-            latest_compiler_ir_validation.get("cross_entropy_excess_loss"),
             latest_compiler_ir_validation.get("cross_entropy_loss"),
+        ),
+        "latest_compiler_ir_ce_excess": _first_metric(
+            summary.get("latest_compiler_ir_ce_excess"),
+            latest_compiler_ir_validation.get("cross_entropy_excess_loss"),
         ),
         "latest_compiler_ir_cosine": _first_metric(
             summary.get("latest_compiler_ir_cosine"),
@@ -491,12 +508,43 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
         ),
         "latest_compiler_ir_guided_ce": _first_metric(
             summary.get("latest_compiler_ir_guided_ce"),
-            latest_compiler_ir_guided_validation.get("cross_entropy_excess_loss"),
             latest_compiler_ir_guided_validation.get("cross_entropy_loss"),
+        ),
+        "latest_compiler_ir_guided_ce_excess": _first_metric(
+            summary.get("latest_compiler_ir_guided_ce_excess"),
+            latest_compiler_ir_guided_validation.get("cross_entropy_excess_loss"),
         ),
         "latest_compiler_ir_guided_cosine": _first_metric(
             summary.get("latest_compiler_ir_guided_cosine"),
             latest_compiler_ir_guided_validation.get("cosine_similarity"),
+        ),
+        "latest_compiler_ir_guided_copy_hack_penalty": _first_metric(
+            summary.get(
+                "latest_compiler_ir_guided_source_copy_reward_hack_penalty"
+            ),
+            latest_compiler_ir_guided_validation.get(
+                "source_copy_reward_hack_penalty"
+            ),
+        ),
+        "latest_compiler_ir_guidance_ce_delta": _first_metric(
+            summary.get("latest_compiler_ir_guidance_ce_delta"),
+            latest_guidance_canary.get("ce_delta"),
+            latest_cycle.get("compiler_ir_guidance_ce_delta"),
+        ),
+        "latest_compiler_ir_guidance_cosine_delta": _first_metric(
+            summary.get("latest_compiler_ir_guidance_cosine_delta"),
+            latest_guidance_canary.get("cosine_delta"),
+            latest_cycle.get("compiler_ir_guidance_cosine_delta"),
+        ),
+        "latest_compiler_ir_guidance_copy_hack_delta": _first_metric(
+            summary.get("latest_compiler_ir_guidance_copy_hack_delta"),
+            latest_guidance_canary.get("copy_hack_delta"),
+            latest_cycle.get("compiler_ir_guidance_copy_hack_delta"),
+        ),
+        "latest_compiler_ir_guidance_quality_gate": str(
+            summary.get("latest_compiler_ir_guidance_quality_gate")
+            or latest_guidance_canary.get("quality_gate")
+            or "n/a"
         ),
         "latest_compiler_ir_guided_family_ce_excess": _first_metric(
             latest_compiler_ir_guided_validation.get(
@@ -514,6 +562,45 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
                 0,
             )
             or 0
+        ),
+        "latest_compiler_ir_guidance_feature_groups": (
+            latest_compiler_ir_guided_validation.get(
+                "compiler_guidance_feature_groups",
+                {},
+            )
+            if isinstance(
+                latest_compiler_ir_guided_validation.get(
+                    "compiler_guidance_feature_groups"
+                ),
+                dict,
+            )
+            else {}
+        ),
+        "latest_compiler_ir_guidance_surface_features": (
+            latest_compiler_ir_guided_validation.get(
+                "compiler_guidance_surface_features",
+                {},
+            )
+            if isinstance(
+                latest_compiler_ir_guided_validation.get(
+                    "compiler_guidance_surface_features"
+                ),
+                dict,
+            )
+            else {}
+        ),
+        "latest_compiler_ir_guidance_todo_routes": (
+            latest_compiler_ir_guided_validation.get(
+                "compiler_guidance_todo_routes",
+                {},
+            )
+            if isinstance(
+                latest_compiler_ir_guided_validation.get(
+                    "compiler_guidance_todo_routes"
+                ),
+                dict,
+            )
+            else {}
         ),
         "latest_learned_ir_view_ce": _first_metric(
             summary.get("latest_learned_ir_view_ce"),
@@ -642,6 +729,47 @@ def _recommendation(
                 f"Validation CE is plateaued on the latest canary cycle "
                 f"(delta={latest_ce_delta:.6g}, accepted_epochs={accepted_epochs})."
             )
+        guidance_applied = int(
+            final.get("latest_compiler_ir_guided_applied_count", 0) or 0
+        )
+        guidance_ce_delta = _finite_float(
+            final.get("latest_compiler_ir_guidance_ce_delta"),
+            math.nan,
+        )
+        guidance_cosine_delta = _finite_float(
+            final.get("latest_compiler_ir_guidance_cosine_delta"),
+            math.nan,
+        )
+        if guidance_applied > 0:
+            guidance_gate = str(
+                final.get("latest_compiler_ir_guidance_quality_gate") or ""
+            )
+            if guidance_gate == "fail":
+                lines.append(
+                    "Autoencoder guidance quality gate is failing; keep guidance in canary "
+                    "mode until CE/cosine/copy-hack deltas recover."
+                )
+            if (
+                math.isfinite(guidance_ce_delta)
+                and math.isfinite(guidance_cosine_delta)
+                and guidance_ce_delta <= 0.0
+                and guidance_cosine_delta <= 0.0
+            ):
+                lines.append(
+                    "Autoencoder guidance is not yet improving deterministic compiler IR; "
+                    "prioritize decompiler slot consumption and feature distillation."
+                )
+            elif (
+                (math.isfinite(guidance_ce_delta) and guidance_ce_delta > 0.0)
+                or (
+                    math.isfinite(guidance_cosine_delta)
+                    and guidance_cosine_delta > 0.0
+                )
+            ):
+                lines.append(
+                    "Autoencoder guidance is improving at least one compiler metric; "
+                    "promote those guided slots into deterministic parser/decompiler rules."
+                )
         if isinstance(cycle_latest, (float, int)) and cycle_latest > 600:
             lines.append(
                 f"Latest autoencoder cycle is long ({cycle_latest:.1f}s); optimize bridge/prover/data "
@@ -725,6 +853,7 @@ def _print_report(report: dict[str, Any]) -> None:
             "  deterministic_compiler_ir="
             f"best_ce={_summary_metric(final, 'best_validation_ir_ce')} "
             f"latest_ce={_summary_metric(final, 'latest_compiler_ir_ce')} "
+            f"latest_ce_excess={_summary_metric(final, 'latest_compiler_ir_ce_excess')} "
             f"best_cos={_summary_metric(final, 'best_validation_ir_cosine')} "
             f"latest_cos={_summary_metric(final, 'latest_compiler_ir_cosine')} "
             f"source_copy_loss={_summary_metric(final, 'latest_compiler_ir_source_copy_loss')} "
@@ -734,13 +863,33 @@ def _print_report(report: dict[str, Any]) -> None:
         print(
             "  guided_compiler_ir="
             f"applied={final['latest_compiler_ir_guided_applied_count']} "
+            f"best_ce={_summary_metric(final, 'best_validation_ir_guided_ce')} "
             f"latest_ce={_summary_metric(final, 'latest_compiler_ir_guided_ce')} "
+            "best_ce_excess="
+            f"{_summary_metric(final, 'best_validation_ir_guided_ce_excess')} "
+            f"latest_ce_excess={_summary_metric(final, 'latest_compiler_ir_guided_ce_excess')} "
+            f"best_cos={_summary_metric(final, 'best_validation_ir_guided_cosine')} "
             f"latest_cos={_summary_metric(final, 'latest_compiler_ir_guided_cosine')} "
+            f"copy_hack_penalty={_summary_metric(final, 'latest_compiler_ir_guided_copy_hack_penalty')} "
+            f"ce_delta={_summary_metric(final, 'latest_compiler_ir_guidance_ce_delta')} "
+            f"cos_delta={_summary_metric(final, 'latest_compiler_ir_guidance_cosine_delta')} "
+            f"copy_hack_delta={_summary_metric(final, 'latest_compiler_ir_guidance_copy_hack_delta')} "
+            f"quality_gate={final['latest_compiler_ir_guidance_quality_gate']} "
             "guidance_family_ce_excess="
             f"{_summary_metric(final, 'latest_compiler_ir_guided_family_ce_excess')} "
             f"frame_boosts={_summary_metric(final, 'latest_compiler_ir_guided_frame_boost_count')} "
             f"frame_changes={final['latest_compiler_ir_guided_frame_changed_count']}"
         )
+        if final["latest_compiler_ir_guidance_surface_features"]:
+            print(
+                "  guidance_surface_features="
+                f"{final['latest_compiler_ir_guidance_surface_features']}"
+            )
+        if final["latest_compiler_ir_guidance_todo_routes"]:
+            print(
+                "  guidance_todo_routes="
+                f"{final['latest_compiler_ir_guidance_todo_routes']}"
+            )
         print(
             "  learned_ir_view="
             f"best_ce={_summary_metric(final, 'best_validation_learned_ir_view_ce')} "
