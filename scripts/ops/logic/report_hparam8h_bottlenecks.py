@@ -247,6 +247,9 @@ def _queue_stats(path: Path) -> dict[str, Any]:
     scope_counts = Counter()
     pending_by_scope = Counter()
     claimed_by_scope = Counter()
+    failed_by_action = Counter()
+    failed_by_reason = Counter()
+    failed_by_scope = Counter()
     total = 0
     for event in _iter_jsonl(path):
         total += 1
@@ -266,6 +269,10 @@ def _queue_stats(path: Path) -> dict[str, Any]:
             pending_by_scope[scope] += 1
         elif status == "claimed":
             claimed_by_scope[scope] += 1
+        elif status == "failed_validation":
+            failed_by_scope[scope] += 1
+            failed_by_action[str(event.get("action") or "missing")] += 1
+            failed_by_reason[str(metadata.get("failure_reason") or "missing")] += 1
     return {
         "path": str(path),
         "exists": path.exists(),
@@ -275,6 +282,9 @@ def _queue_stats(path: Path) -> dict[str, Any]:
         "scope_counts": dict(scope_counts.most_common(12)),
         "pending_by_scope": dict(pending_by_scope.most_common(12)),
         "claimed_by_scope": dict(claimed_by_scope.most_common(12)),
+        "failed_by_action": dict(failed_by_action.most_common(12)),
+        "failed_by_reason": dict(failed_by_reason.most_common(12)),
+        "failed_by_scope": dict(failed_by_scope.most_common(12)),
     }
 
 
@@ -356,6 +366,33 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
         latest_guidance_canary = (
             latest_cycle.get("compiler_ir_guidance_canary")
             if isinstance(latest_cycle.get("compiler_ir_guidance_canary"), dict)
+            else {}
+        )
+    latest_guidance_promotion = summary.get(
+        "latest_compiler_ir_guidance_promotion"
+    )
+    if not isinstance(latest_guidance_promotion, dict):
+        latest_guidance_promotion = (
+            latest_cycle.get("compiler_ir_guidance_promotion")
+            if isinstance(latest_cycle.get("compiler_ir_guidance_promotion"), dict)
+            else {}
+        )
+    latest_guidance_scope_hints = summary.get(
+        "latest_compiler_ir_guidance_scope_hints"
+    )
+    if not isinstance(latest_guidance_scope_hints, dict):
+        latest_guidance_scope_hints = (
+            latest_cycle.get("compiler_ir_guidance_scope_hints")
+            if isinstance(latest_cycle.get("compiler_ir_guidance_scope_hints"), dict)
+            else {}
+        )
+    latest_guidance_distillation = summary.get(
+        "latest_compiler_ir_guidance_distillation"
+    )
+    if not isinstance(latest_guidance_distillation, dict):
+        latest_guidance_distillation = (
+            latest_cycle.get("compiler_ir_guidance_distillation")
+            if isinstance(latest_cycle.get("compiler_ir_guidance_distillation"), dict)
             else {}
         )
     latest_learned_ir_validation = summary.get("latest_learned_ir_validation")
@@ -546,6 +583,39 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
             or latest_guidance_canary.get("quality_gate")
             or "n/a"
         ),
+        "latest_compiler_ir_guidance_promotion_allowed": bool(
+            summary.get("latest_compiler_ir_guidance_promotion_allowed")
+            if summary.get("latest_compiler_ir_guidance_promotion_allowed")
+            is not None
+            else latest_guidance_promotion.get("promotion_allowed", False)
+        ),
+        "latest_compiler_ir_guidance_promotion_block_reason": str(
+            summary.get("latest_compiler_ir_guidance_promotion_block_reason")
+            or latest_guidance_promotion.get("promotion_block_reason")
+            or "n/a"
+        ),
+        "latest_compiler_ir_guidance_distillation_path": str(
+            summary.get("latest_compiler_ir_guidance_distillation_path")
+            or ""
+        ),
+        "latest_compiler_ir_guidance_distillation_deduped_count": int(
+            summary.get("latest_compiler_ir_guidance_distillation_deduped_count")
+            or latest_cycle.get(
+                "compiler_ir_guidance_distillation_deduped_count",
+                0,
+            )
+            or 0
+        ),
+        "latest_compiler_ir_guidance_distillation_seeded_count": int(
+            summary.get("latest_compiler_ir_guidance_distillation_seeded_count")
+            or latest_cycle.get(
+                "compiler_ir_guidance_distillation_seeded_count",
+                0,
+            )
+            or 0
+        ),
+        "latest_compiler_ir_guidance_distillation": latest_guidance_distillation,
+        "latest_compiler_ir_guidance_scope_hints": latest_guidance_scope_hints,
         "latest_compiler_ir_guided_family_ce_excess": _first_metric(
             latest_compiler_ir_guided_validation.get(
                 "guidance_family_cross_entropy_excess_loss"
@@ -770,6 +840,45 @@ def _recommendation(
                     "Autoencoder guidance is improving at least one compiler metric; "
                     "promote those guided slots into deterministic parser/decompiler rules."
                 )
+            promotion_allowed = bool(
+                final.get("latest_compiler_ir_guidance_promotion_allowed")
+            )
+            promotion_reason = str(
+                final.get("latest_compiler_ir_guidance_promotion_block_reason")
+                or ""
+            )
+            if promotion_allowed:
+                lines.append(
+                    "Guidance promotion gate is open; use the distillation artifact as "
+                    "the reviewed source for deterministic compiler/decompiler rules."
+                )
+                seeded = int(
+                    final.get(
+                        "latest_compiler_ir_guidance_distillation_seeded_count",
+                        0,
+                    )
+                    or 0
+                )
+                if seeded > 0:
+                    lines.append(
+                        f"Guidance distillation seeded {seeded} Codex TODOs this cycle; "
+                        "watch whether those scopes reduce guided CE/cosine residuals."
+                    )
+            elif promotion_reason and promotion_reason != "n/a":
+                lines.append(
+                    f"Guidance promotion remains blocked ({promotion_reason}); keep "
+                    "learned slots in canary mode."
+                )
+            scope_hints = final.get("latest_compiler_ir_guidance_scope_hints")
+            if isinstance(scope_hints, dict) and scope_hints.get("scope_counts"):
+                hot_guidance = ", ".join(
+                    f"{scope}={count}"
+                    for scope, count in scope_hints["scope_counts"].items()
+                )
+                lines.append(
+                    f"Learned guidance is pointing at Codex scopes: {hot_guidance}. "
+                    "Rebalance scoped workers there when queue hot scopes agree."
+                )
         if isinstance(cycle_latest, (float, int)) and cycle_latest > 600:
             lines.append(
                 f"Latest autoencoder cycle is long ({cycle_latest:.1f}s); optimize bridge/prover/data "
@@ -780,6 +889,17 @@ def _recommendation(
                 f"{scope}={count}" for scope, count in queue["pending_by_scope"].items()
             )
             lines.append(f"Hot pending scopes: {hot}.")
+        failed_count = int(queue.get("status_counts", {}).get("failed_validation", 0) or 0)
+        if failed_count > 0:
+            failed_scopes = queue.get("failed_by_scope", {})
+            hot_failed = ", ".join(
+                f"{scope}={count}" for scope, count in failed_scopes.items()
+            )
+            suffix = f" Hot failed scopes: {hot_failed}." if hot_failed else ""
+            lines.append(
+                f"{failed_count} failed-validation TODOs need rescue or retirement before "
+                f"worker utilization stats are trustworthy.{suffix}"
+            )
 
     if production:
         lines.append(
@@ -875,6 +995,14 @@ def _print_report(report: dict[str, Any]) -> None:
             f"cos_delta={_summary_metric(final, 'latest_compiler_ir_guidance_cosine_delta')} "
             f"copy_hack_delta={_summary_metric(final, 'latest_compiler_ir_guidance_copy_hack_delta')} "
             f"quality_gate={final['latest_compiler_ir_guidance_quality_gate']} "
+            "promotion="
+            f"{'allowed' if final['latest_compiler_ir_guidance_promotion_allowed'] else 'blocked'} "
+            "promotion_reason="
+            f"{final['latest_compiler_ir_guidance_promotion_block_reason']} "
+            "distill_seeded="
+            f"{final['latest_compiler_ir_guidance_distillation_seeded_count']} "
+            "distill_deduped="
+            f"{final['latest_compiler_ir_guidance_distillation_deduped_count']} "
             "guidance_family_ce_excess="
             f"{_summary_metric(final, 'latest_compiler_ir_guided_family_ce_excess')} "
             f"frame_boosts={_summary_metric(final, 'latest_compiler_ir_guided_frame_boost_count')} "
@@ -890,6 +1018,14 @@ def _print_report(report: dict[str, Any]) -> None:
                 "  guidance_todo_routes="
                 f"{final['latest_compiler_ir_guidance_todo_routes']}"
             )
+        scope_hints = final.get("latest_compiler_ir_guidance_scope_hints")
+        if isinstance(scope_hints, dict) and scope_hints.get("scope_counts"):
+            print(f"  guidance_scope_hints={scope_hints['scope_counts']}")
+        distillation_path = final.get(
+            "latest_compiler_ir_guidance_distillation_path"
+        )
+        if distillation_path:
+            print(f"  guidance_distillation_artifact={distillation_path}")
         print(
             "  learned_ir_view="
             f"best_ce={_summary_metric(final, 'best_validation_learned_ir_view_ce')} "
@@ -910,6 +1046,12 @@ def _print_report(report: dict[str, Any]) -> None:
         )
         print(f"  queue_status={final['queue']['status_counts']}")
         print(f"  pending_by_scope={final['queue']['pending_by_scope']}")
+        if final["queue"].get("failed_by_scope"):
+            print(f"  failed_by_scope={final['queue']['failed_by_scope']}")
+        if final["queue"].get("failed_by_action"):
+            print(f"  failed_by_action={final['queue']['failed_by_action']}")
+        if final["queue"].get("failed_by_reason"):
+            print(f"  failed_by_reason={final['queue']['failed_by_reason']}")
         print()
     gpu = report["gpu"]
     if gpu.get("available"):

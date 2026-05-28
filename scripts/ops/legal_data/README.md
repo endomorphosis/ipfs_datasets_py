@@ -233,13 +233,15 @@ Notes:
 	`scripts/ops/legal_data/state_laws_completed_states.baseline.json`
 	(currently seeded with completed states:
 	`AK`, `AL`, `AR`, `AZ`, `CA`, `CO`, `CT`, `DE`, `FL`, `GA`, `IA`, `ID`, `IL`, `IN`, `KS`,
-	`KY`, `LA`, `MA`, `MD`, `MI`, `MN`, `MO`, `MT`, `NC`, `NH`, `ND`, `NJ`, `NM`, `NV`, `NY`,
-	`OH`, `OK`, `OR`, `PA`, `SC`, `SD`, `TN`, `TX`, `UT`, `VT`, `WI`, `WV`, `WY`).
+	`KY`, `LA`, `MA`, `MD`, `ME`, `MI`, `MN`, `MO`, `MT`, `NC`, `NE`, `NH`, `ND`, `NJ`, `NM`,
+	`NV`, `NY`, `OH`, `OK`, `OR`, `PA`, `SC`, `SD`, `TN`, `TX`, `UT`, `VA`, `VT`, `WI`, `WV`, `WY`).
 	Indiana (`IN`) was re-verified as full-corpus complete on 2026-05-26
 	(`statutes_count=73194`) and is intentionally baseline-skipped in later runs.
 	New Hampshire (`NH`) was promoted into baseline on 2026-05-28
 	(`statutes_count=1041`, `timeout_classification=checkpoint_complete_promotion`).
-	Unresolved/non-baselined states as of 2026-05-28: `HI`, `ME`, `MS`, `NE`, `RI`, `VA`, `WA`.
+	Maine (`ME`), Nebraska (`NE`), and Virginia (`VA`) were promoted into baseline
+	on 2026-05-28 from shared-registry full-corpus confirmations.
+	Unresolved/non-baselined states as of 2026-05-28: `HI`, `MS`, `RI`, `WA`.
 	Only add states to this baseline after an uncapped/full-corpus confirmation.
 	Do not promote bounded probe runs (for example `--max-statutes 120/200`) to
 	baseline-complete, because those runs are diagnostic and intentionally partial.

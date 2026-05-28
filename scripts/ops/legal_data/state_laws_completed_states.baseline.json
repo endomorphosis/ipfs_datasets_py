@@ -153,6 +153,14 @@
       "statutes_count": 8099,
       "updated_at": "2026-05-23T12:27:36.208162+00:00"
     },
+    "ME": {
+      "completed_at": "2026-05-28T00:03:08.040592+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-28",
+      "first_completed_at": "2026-05-28T00:03:08.040592+00:00",
+      "status": "success",
+      "statutes_count": 32508,
+      "updated_at": "2026-05-28T00:03:08.041136+00:00"
+    },
     "MI": {
       "completed_at": "2026-05-19T16:00:16.198547+00:00",
       "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
@@ -192,6 +200,14 @@
       "status": "success",
       "statutes_count": 35245,
       "updated_at": "2026-05-23T05:42:13.191549+00:00"
+    },
+    "NE": {
+      "completed_at": "2026-05-27T21:59:44.187523+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-28",
+      "first_completed_at": "2026-05-27T21:59:44.187523+00:00",
+      "status": "success",
+      "statutes_count": 48768,
+      "updated_at": "2026-05-28T00:03:08.041136+00:00"
     },
     "NH": {
       "completed_at": "2026-05-28T02:37:31.535512+00:00",
@@ -316,6 +332,14 @@
       "statutes_count": 22178,
       "updated_at": "2026-05-19T16:00:16.198547+00:00"
     },
+    "VA": {
+      "completed_at": "2026-05-27T23:34:38.922928+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-28",
+      "first_completed_at": "2026-05-27T23:34:38.922928+00:00",
+      "status": "success",
+      "statutes_count": 28999,
+      "updated_at": "2026-05-28T00:03:08.041136+00:00"
+    },
     "VT": {
       "completed_at": "2026-05-19T16:00:16.198547+00:00",
       "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
@@ -349,5 +373,5 @@
       "updated_at": "2026-05-19T16:00:16.198547+00:00"
     }
   },
-  "updated_at": "2026-05-28T02:47:00.480252+00:00"
+  "updated_at": "2026-05-28T05:12:19.565959+00:00"
 }

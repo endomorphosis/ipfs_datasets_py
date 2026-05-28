@@ -154,11 +154,13 @@ class MississippiScraper(BaseStateScraper):
                 )
                 return []
 
+        # Keep full-corpus phases bounded so stalled upstream providers do not
+        # block progression to alternative recovery paths (for example Unicourt).
         phase_timeout_defaults = {
-            "justia_html": 300.0 if full_corpus_unbounded else 180.0,
-            "justia_wayback": 0.0 if full_corpus_unbounded else 180.0,
-            "justia_reader": 0.0 if full_corpus_unbounded else 240.0,
-            "unicourt": 0.0 if full_corpus_unbounded else 300.0,
+            "justia_html": 240.0 if full_corpus_unbounded else 180.0,
+            "justia_wayback": 120.0 if full_corpus_unbounded else 180.0,
+            "justia_reader": 120.0 if full_corpus_unbounded else 240.0,
+            "unicourt": 420.0 if full_corpus_unbounded else 300.0,
         }
 
         def _phase_timeout_seconds(phase_name: str) -> float:

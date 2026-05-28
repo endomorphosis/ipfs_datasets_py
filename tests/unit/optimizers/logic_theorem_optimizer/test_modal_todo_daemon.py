@@ -38,6 +38,10 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_run
     bridge_ir_metric_block,
     build_paired_daemon_commands,
     compiler_guidance_canary_block,
+    compiler_guidance_distillation_candidates,
+    compiler_guidance_distillation_todos,
+    compiler_guidance_promotion_gate,
+    compiler_guidance_scope_hints,
     compiler_ir_metric_block,
     create_codex_work_packet,
     execute_codex_work_packet,
@@ -4210,6 +4214,136 @@ def test_compiler_guidance_canary_block_reports_quality_gate() -> None:
 
     assert regressed["quality_gate"] == "fail"
     assert regressed["regressed"] is True
+
+
+def test_compiler_guidance_promotion_gate_blocks_failed_canary() -> None:
+    passed = compiler_guidance_promotion_gate(
+        {"applied_count": 3, "quality_gate": "pass"}
+    )
+    failed = compiler_guidance_promotion_gate(
+        {"applied_count": 3, "quality_gate": "fail"}
+    )
+    inactive = compiler_guidance_promotion_gate(
+        {"applied_count": 0, "quality_gate": "inactive"}
+    )
+
+    assert passed["promotion_allowed"] is True
+    assert passed["recommended_mode"] == "promote_deterministic_rules"
+    assert failed["promotion_allowed"] is False
+    assert failed["promotion_block_reason"] == "quality_gate_fail"
+    assert inactive["promotion_allowed"] is False
+    assert inactive["promotion_block_reason"] == "insufficient_guidance_samples"
+
+
+def test_compiler_guidance_scope_hints_route_learned_todos_to_codex_scopes() -> None:
+    hints = compiler_guidance_scope_hints(
+        {
+            "compiler_guidance_todo_routes": {
+                "repair_deontic_bridge_quality_gate": 3,
+                "refine_semantic_decompiler_reconstruction": 2,
+                "repair_tdfol_bridge_parse": 1,
+            }
+        }
+    )
+
+    assert hints["scope_counts"] == {
+        "deontic": 3,
+        "ir_decompiler": 2,
+        "tdfol": 1,
+    }
+    assert hints["recommended_parallel_scopes"] == [
+        "deontic",
+        "ir_decompiler",
+        "tdfol",
+    ]
+    assert hints["route_scope_map"]["repair_deontic_bridge_quality_gate"][
+        "target_component"
+    ] == "deontic.ir"
+
+
+def test_compiler_guidance_distillation_candidates_include_promotion_and_routes() -> None:
+    candidates = compiler_guidance_distillation_candidates(
+        {
+            "compiler_guidance_feature_groups": {"decompiler_plan": 2},
+            "compiler_guidance_surface_features": {"must_provide_notice": 2},
+            "compiler_guidance_todo_routes": {
+                "refine_semantic_decompiler_reconstruction": 2
+            },
+            "compiler_guidance_todo_route_examples": {
+                "refine_semantic_decompiler_reconstruction": [
+                    {
+                        "citation": "5 U.S.C. 552",
+                        "sample_id": "sample-552",
+                        "text_preview": "The agency must provide notice.",
+                    }
+                ]
+            },
+        },
+        {"applied_count": 2, "quality_gate": "pass"},
+    )
+
+    assert candidates["has_candidates"] is True
+    assert candidates["promotion_allowed"] is True
+    assert candidates["recommended_mode"] == "promote_deterministic_rules"
+    assert candidates["top_feature_groups"] == {"decompiler_plan": 2}
+    assert candidates["top_todo_routes"] == {
+        "refine_semantic_decompiler_reconstruction": 2
+    }
+    assert candidates["top_todo_route_examples"][
+        "refine_semantic_decompiler_reconstruction"
+    ][0]["sample_id"] == "sample-552"
+    assert candidates["scope_hints"]["scope_counts"] == {"ir_decompiler": 2}
+
+
+def test_compiler_guidance_distillation_todos_convert_passing_routes() -> None:
+    candidates = compiler_guidance_distillation_candidates(
+        {
+            "compiler_guidance_todo_routes": {
+                "refine_semantic_decompiler_reconstruction": 2
+            },
+            "compiler_guidance_todo_route_examples": {
+                "refine_semantic_decompiler_reconstruction": [
+                    {
+                        "citation": "5 U.S.C. 552",
+                        "sample_id": "sample-552",
+                        "selected_frame_after": "administrative_notice_hearing",
+                        "selected_frame_before": "generic_frame",
+                        "text_preview": "The agency must provide notice.",
+                    }
+                ]
+            },
+        },
+        {"applied_count": 2, "quality_gate": "pass"},
+    )
+
+    todos = compiler_guidance_distillation_todos(candidates)
+
+    assert len(todos) == 1
+    todo = todos[0]
+    assert todo.action == "refine_semantic_decompiler_reconstruction"
+    assert todo.sample_ids == ["sample-552"]
+    assert todo.citations == ["5 U.S.C. 552"]
+    assert todo.metadata["optimizer_role"] == "program_synthesis"
+    assert todo.metadata["program_synthesis_scope"] == "ir_decompiler"
+    assert todo.metadata["target_component"] == "modal.ir_decompiler"
+    assert todo.metadata["source"] == "compiler_guidance_distillation_v1"
+    assert "source_copy_reward_hack_penalty" in todo.metadata["target_metrics"]
+    assert todo.metadata["metric_sample_payloads"][0]["text"] == (
+        "The agency must provide notice."
+    )
+
+
+def test_compiler_guidance_distillation_todos_skip_blocked_candidates() -> None:
+    candidates = compiler_guidance_distillation_candidates(
+        {
+            "compiler_guidance_todo_routes": {
+                "refine_semantic_decompiler_reconstruction": 2
+            },
+        },
+        {"applied_count": 2, "quality_gate": "fail"},
+    )
+
+    assert compiler_guidance_distillation_todos(candidates) == []
 
 
 def test_bridge_ir_metric_block_reports_per_adapter_views() -> None:
