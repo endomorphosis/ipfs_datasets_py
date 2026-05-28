@@ -1627,6 +1627,145 @@ def compiler_guidance_distillation_todos(
     return todos
 
 
+def _compiler_guidance_activation_todo_id(
+    *,
+    route: str,
+    target_component: str,
+    sample_ids: Sequence[str],
+) -> str:
+    payload = {
+        "route": route,
+        "sample_ids": sorted(str(sample_id) for sample_id in sample_ids),
+        "source": "compiler_guidance_activation_v1",
+        "target_component": target_component,
+    }
+    digest = hashlib.sha256(
+        json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+    ).hexdigest()[:16]
+    return f"guidance-activation-{digest}"
+
+
+def _compiler_guidance_activation_signature(
+    *,
+    route: str,
+    target_component: str,
+    sample_ids: Sequence[str],
+) -> str:
+    payload = {
+        "route": route,
+        "sample_ids": sorted(str(sample_id) for sample_id in sample_ids),
+        "source": "compiler_guidance_activation_v1",
+        "target_component": target_component,
+    }
+    return json.dumps(payload, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+
+
+def compiler_guidance_activation_todos(
+    candidates: Mapping[str, Any],
+    canary_block: Mapping[str, Any],
+    *,
+    policy: Optional[ModalOptimizerPolicy] = None,
+    max_routes: int = 4,
+) -> List[ModalTodo]:
+    """Seed TODOs when learned guidance exists but has no compiler effect yet."""
+    if str(canary_block.get("quality_gate") or "") != "warn":
+        return []
+    if int(canary_block.get("applied_count", 0) or 0) <= 0:
+        return []
+    if not candidates.get("has_candidates"):
+        return []
+    route_counts = candidates.get("top_todo_routes")
+    if not isinstance(route_counts, Mapping):
+        return []
+    route_examples = candidates.get("top_todo_route_examples")
+    if not isinstance(route_examples, Mapping):
+        route_examples = {}
+    scope_hints = candidates.get("scope_hints")
+    if not isinstance(scope_hints, Mapping):
+        scope_hints = {}
+    route_scope_map = scope_hints.get("route_scope_map")
+    if not isinstance(route_scope_map, Mapping):
+        route_scope_map = {}
+
+    optimizer_policy = policy or ModalOptimizerPolicy()
+    todos: List[ModalTodo] = []
+    for route, raw_count in _top_numeric_items(route_counts, limit=max_routes).items():
+        route_scope = route_scope_map.get(route)
+        if not isinstance(route_scope, Mapping):
+            route_scope = compiler_guidance_route_scope(route)
+        action = _normalized_guidance_route(route)
+        target_component = str(route_scope.get("target_component") or "")
+        scope = str(route_scope.get("scope") or "")
+        sample_ids, citations, evidence, metric_payloads = (
+            _compiler_guidance_example_payloads(
+                route_examples.get(route),
+                route=action,
+            )
+        )
+        if not sample_ids:
+            sample_ids = [f"compiler-guidance-activation:{action}"]
+        count = float(raw_count)
+        metadata = {
+            **optimizer_policy.metadata_for(
+                action=action,
+                loss_name="compiler_guidance_activation",
+            ),
+            "compiler_guidance_activation_count": count,
+            "compiler_guidance_activation_reason": (
+                "guidance_applied_without_metric_movement"
+            ),
+            "compiler_guidance_canary": dict(canary_block),
+            "compiler_guidance_quality_gate": canary_block.get("quality_gate", ""),
+            "compiler_guidance_route": action,
+            "dedupe_signature": _compiler_guidance_activation_signature(
+                route=action,
+                target_component=target_component,
+                sample_ids=sample_ids,
+            ),
+            "hint_evidence": evidence,
+            "metric_sample_payloads": metric_payloads,
+            "program_synthesis_scope": scope,
+            "semantic_bundle_key": json.dumps(
+                {
+                    "program_synthesis_scope": scope,
+                    "route": action,
+                    "source": "compiler_guidance_activation_v1",
+                    "target_component": target_component,
+                },
+                ensure_ascii=True,
+                sort_keys=True,
+                separators=(",", ":"),
+            ),
+            "source": "compiler_guidance_activation_v1",
+            "support_count": len(sample_ids),
+            "target_component": target_component,
+            "target_metrics": _compiler_guidance_target_metrics(action, scope),
+            "validation_commands": _compiler_guidance_validation_commands(scope),
+        }
+        todos.append(
+            ModalTodo(
+                todo_id=_compiler_guidance_activation_todo_id(
+                    route=action,
+                    target_component=target_component,
+                    sample_ids=sample_ids,
+                ),
+                action=action,
+                objective=(
+                    "Wire autoencoder compiler-guidance evidence into deterministic "
+                    f"{target_component or scope or 'compiler'} behavior so canary "
+                    "IR metrics move without relying on diagnostic-only slots."
+                ),
+                sample_ids=sample_ids,
+                citations=citations,
+                loss_name="compiler_guidance_activation",
+                loss_value=round(count, 9),
+                priority=round(175.0 + (15.0 * count), 6),
+                metadata=metadata,
+            )
+        )
+    return todos
+
+
 def _compiler_guidance_guardrail_todo_id(
     *,
     action: str,
@@ -8280,6 +8419,10 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             guidance_distillation_deduped_count = 0
             guidance_distillation_semantic_deduped_count = 0
             guidance_distillation_todo_ids: List[str] = []
+            guidance_activation_seeded_count = 0
+            guidance_activation_deduped_count = 0
+            guidance_activation_semantic_deduped_count = 0
+            guidance_activation_todo_ids: List[str] = []
             guidance_guardrail_seeded_count = 0
             guidance_guardrail_deduped_count = 0
             guidance_guardrail_todo_ids: List[str] = []
@@ -8324,6 +8467,51 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     )
                     semantic_deduped_count += int(
                         guidance_distillation_semantic_deduped_count
+                    )
+                    supervisor.queue.save_jsonl(queue_path)
+                    queue = supervisor.queue
+            guidance_activation_candidates = compiler_guidance_activation_todos(
+                guidance_distillation,
+                guidance_canary,
+                policy=supervisor.policy,
+            )
+            if guidance_activation_candidates:
+                with queue_file_lock(queue_path):
+                    latest_queue = ModalTodoQueue.load_jsonl(queue_path)
+                    latest_queue.merge_from(
+                        supervisor.queue,
+                        preserve_claimed_role=supervisor.policy.program_synthesis_role,
+                    )
+                    supervisor.queue = latest_queue
+                    selected_activation_todos = supervisor._bounded_new_todos(
+                        guidance_activation_candidates,
+                        track_program_deduped=True,
+                    )
+                    guidance_activation_deduped_count = int(
+                        supervisor.last_program_synthesis_deduped_count
+                    )
+                    before_activation_todo_ids = {
+                        todo.todo_id for todo in supervisor.queue.all()
+                    }
+                    guidance_activation_seeded_count = supervisor.queue.add_many(
+                        selected_activation_todos
+                    )
+                    guidance_activation_todo_ids = [
+                        todo.todo_id
+                        for todo in selected_activation_todos
+                        if todo.todo_id not in before_activation_todo_ids
+                        and supervisor.queue.get(todo.todo_id) is not None
+                    ]
+                    guidance_activation_semantic_deduped_count = (
+                        supervisor.queue.deduplicate_semantic(
+                            optimizer_role=supervisor.policy.program_synthesis_role,
+                            near_duplicate_jaccard=(
+                                supervisor.policy.program_synthesis_near_duplicate_jaccard
+                            ),
+                        )
+                    )
+                    semantic_deduped_count += int(
+                        guidance_activation_semantic_deduped_count
                     )
                     supervisor.queue.save_jsonl(queue_path)
                     queue = supervisor.queue
@@ -8484,6 +8672,18 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["latest_compiler_ir_guidance_distillation_todo_ids"] = list(
                 guidance_distillation_todo_ids
             )
+            summary["latest_compiler_ir_guidance_activation_seeded_count"] = int(
+                guidance_activation_seeded_count
+            )
+            summary["latest_compiler_ir_guidance_activation_deduped_count"] = int(
+                guidance_activation_deduped_count
+            )
+            summary[
+                "latest_compiler_ir_guidance_activation_semantic_deduped_count"
+            ] = int(guidance_activation_semantic_deduped_count)
+            summary["latest_compiler_ir_guidance_activation_todo_ids"] = list(
+                guidance_activation_todo_ids
+            )
             summary["latest_compiler_ir_guidance_guardrail_seeded_count"] = int(
                 guidance_guardrail_seeded_count
             )
@@ -8524,6 +8724,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             program_synthesis_seeded_count = sum(
                 step.program_synthesis_seeded_count for step in run.steps
             ) + int(guidance_distillation_seeded_count) + int(
+                guidance_activation_seeded_count
+            ) + int(
                 guidance_guardrail_seeded_count
             ) + int(
                 failed_validation_rescue_seeded_count
@@ -8534,6 +8736,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             preinsert_deduped_count = sum(
                 step.program_synthesis_deduped_count for step in run.steps
             ) + int(guidance_distillation_deduped_count) + int(
+                guidance_activation_deduped_count
+            ) + int(
                 guidance_guardrail_deduped_count
             ) + int(
                 failed_validation_rescue_deduped_count
@@ -8570,6 +8774,12 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 ),
                 "compiler_guidance_distillation_seeded_count": int(
                     guidance_distillation_seeded_count
+                ),
+                "compiler_guidance_activation_deduped_count": int(
+                    guidance_activation_deduped_count
+                ),
+                "compiler_guidance_activation_seeded_count": int(
+                    guidance_activation_seeded_count
                 ),
                 "compiler_guidance_guardrail_deduped_count": int(
                     guidance_guardrail_deduped_count
@@ -8755,6 +8965,15 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     ),
                     "compiler_ir_guidance_distillation_todo_ids": list(
                         guidance_distillation_todo_ids
+                    ),
+                    "compiler_ir_guidance_activation_deduped_count": int(
+                        guidance_activation_deduped_count
+                    ),
+                    "compiler_ir_guidance_activation_seeded_count": int(
+                        guidance_activation_seeded_count
+                    ),
+                    "compiler_ir_guidance_activation_todo_ids": list(
+                        guidance_activation_todo_ids
                     ),
                     "compiler_ir_guidance_guardrail_deduped_count": int(
                         guidance_guardrail_deduped_count

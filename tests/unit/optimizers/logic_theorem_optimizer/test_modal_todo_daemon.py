@@ -14,6 +14,7 @@ import pytest
 from ipfs_datasets_py.logic.modal import (
     DeterministicModalLogicCodec,
     ModalLogicCodecConfig,
+    decoded_modal_phrase_slot_text_map,
 )
 from ipfs_datasets_py.logic.modal.synthesis import route_autoencoder_residual
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import build_us_code_sample
@@ -38,6 +39,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_run
     bridge_ir_metric_block,
     build_paired_daemon_commands,
     compiler_guidance_canary_block,
+    compiler_guidance_activation_todos,
     compiler_guidance_distillation_candidates,
     compiler_guidance_distillation_todos,
     compiler_guidance_guardrail_todos,
@@ -4308,6 +4310,65 @@ def test_compiler_ir_metric_block_can_apply_autoencoder_guidance() -> None:
     assert "guidance_family_cross_entropy_excess_loss" in block
 
 
+def test_compiler_guidance_diagnostics_do_not_pad_structural_decode_metrics() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide records promptly and may withhold exempt records.",
+    )
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(
+            parser_backend="spacy",
+            spacy_model_name="definitely_missing_legal_model",
+            use_flogic=True,
+        )
+    )
+    plain = codec.encode(
+        sample.text,
+        document_id=sample.sample_id,
+        citation=sample.citation,
+        source=sample.source,
+        source_embedding=sample.embedding_vector,
+    )
+    guided = codec.encode(
+        sample.text,
+        document_id=sample.sample_id,
+        citation=sample.citation,
+        source=sample.source,
+        source_embedding=sample.embedding_vector,
+        compiler_guidance={
+            "family_distribution": {"deontic": 1.0},
+            "feature_groups": {
+                "decompiler_surface_template": [
+                    "decompiler-surface:diagnostic-only-token"
+                ],
+            },
+            "legal_ir_predicted_view_distribution": {"modal.frame_logic": 1.0},
+            "legal_ir_target_view_distribution": {"modal.frame_logic": 1.0},
+            "synthesis_focus": ["repair_deontic_bridge_quality_gate"],
+        },
+    )
+
+    guided_slots = decoded_modal_phrase_slot_text_map(guided.decoded_modal_text)
+
+    assert guided.metadata["compiler_guidance_applied"] is True
+    assert any(
+        "diagnostic-only-token" in value
+        for value in guided_slots[
+            "compiler_guidance_decompiler_surface_template_feature"
+        ]
+    )
+    assert "diagnostic-only-token" not in guided.metadata[
+        "modal_decompiler_structural_text"
+    ]
+    assert "repair_deontic_bridge_quality_gate" not in guided.metadata[
+        "modal_decompiler_structural_text"
+    ]
+    assert guided.losses["source_copy_loss"] == pytest.approx(
+        plain.losses["source_copy_loss"]
+    )
+
+
 def test_compiler_guidance_canary_block_reports_quality_gate() -> None:
     deterministic = {
         "cosine_similarity": 0.2,
@@ -4486,6 +4547,59 @@ def test_compiler_guidance_distillation_todos_skip_blocked_candidates() -> None:
     )
 
     assert compiler_guidance_distillation_todos(candidates) == []
+
+
+def test_compiler_guidance_activation_todos_convert_warn_routes() -> None:
+    candidates = compiler_guidance_distillation_candidates(
+        {
+            "compiler_guidance_todo_routes": {
+                "repair_multiview_legal_ir_graph_projection": 1
+            },
+            "compiler_guidance_todo_route_examples": {
+                "repair_multiview_legal_ir_graph_projection": [
+                    {
+                        "citation": "25 U.S.C. 605",
+                        "sample_id": "sample-605",
+                        "selected_frame_after": "administrative_notice_hearing",
+                        "selected_frame_before": "administrative_notice_hearing",
+                        "text_preview": "The agency shall publish notice.",
+                    }
+                ]
+            },
+        },
+        {"applied_count": 1, "quality_gate": "warn"},
+    )
+
+    todos = compiler_guidance_activation_todos(
+        candidates,
+        {
+            "applied_count": 1,
+            "ce_delta": 0.0,
+            "copy_hack_delta": 0.0,
+            "cosine_delta": 0.0,
+            "quality_gate": "warn",
+        },
+    )
+
+    assert len(todos) == 1
+    todo = todos[0]
+    assert todo.action == "repair_multiview_legal_ir_graph_projection"
+    assert todo.sample_ids == ["sample-605"]
+    assert todo.metadata["source"] == "compiler_guidance_activation_v1"
+    assert todo.metadata["program_synthesis_scope"] == "knowledge_graphs"
+    assert todo.metadata["target_component"] == "knowledge_graphs.neo4j_compat"
+    assert todo.metadata["compiler_guidance_activation_reason"] == (
+        "guidance_applied_without_metric_movement"
+    )
+    assert "legal_ir_view_cross_entropy_loss" in todo.metadata["target_metrics"]
+
+    assert (
+        compiler_guidance_activation_todos(
+            candidates,
+            {"applied_count": 1, "quality_gate": "pass"},
+        )
+        == []
+    )
 
 
 def test_compiler_guidance_guardrail_todos_convert_copy_hack_regression() -> None:

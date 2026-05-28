@@ -489,6 +489,12 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
             "failed_validation_rescue_seeded_count": latest_cycle.get(
                 "failed_validation_rescue_seeded_count"
             ),
+            "compiler_guidance_activation_deduped_count": latest_cycle.get(
+                "compiler_ir_guidance_activation_deduped_count"
+            ),
+            "compiler_guidance_activation_seeded_count": latest_cycle.get(
+                "compiler_ir_guidance_activation_seeded_count"
+            ),
             "compiler_guidance_guardrail_deduped_count": latest_cycle.get(
                 "compiler_ir_guidance_guardrail_deduped_count"
             ),
@@ -732,6 +738,18 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
                 "compiler_ir_guidance_distillation_seeded_count",
                 0,
             )
+            or 0
+        ),
+        "latest_compiler_ir_guidance_activation_deduped_count": int(
+            summary.get("latest_compiler_ir_guidance_activation_deduped_count")
+            or latest_todo_generation.get("compiler_guidance_activation_deduped_count")
+            or latest_cycle.get("compiler_ir_guidance_activation_deduped_count")
+            or 0
+        ),
+        "latest_compiler_ir_guidance_activation_seeded_count": int(
+            summary.get("latest_compiler_ir_guidance_activation_seeded_count")
+            or latest_todo_generation.get("compiler_guidance_activation_seeded_count")
+            or latest_cycle.get("compiler_ir_guidance_activation_seeded_count")
             or 0
         ),
         "latest_compiler_ir_guidance_guardrail_deduped_count": int(
@@ -1019,6 +1037,18 @@ def _recommendation(
                     "Autoencoder guidance is not yet improving deterministic compiler IR; "
                     "prioritize decompiler slot consumption and feature distillation."
                 )
+                activation_seeded = int(
+                    final.get(
+                        "latest_compiler_ir_guidance_activation_seeded_count",
+                        0,
+                    )
+                    or 0
+                )
+                if activation_seeded > 0:
+                    lines.append(
+                        f"Guidance activation seeded {activation_seeded} Codex TODOs "
+                        "because learned routes were produced but the canary metrics were flat."
+                    )
             elif (
                 (math.isfinite(guidance_ce_delta) and guidance_ce_delta > 0.0)
                 or (
@@ -1224,6 +1254,10 @@ def _print_report(report: dict[str, Any]) -> None:
             f"{final['latest_compiler_ir_guidance_distillation_seeded_count']} "
             "distill_deduped="
             f"{final['latest_compiler_ir_guidance_distillation_deduped_count']} "
+            "activation_seeded="
+            f"{final['latest_compiler_ir_guidance_activation_seeded_count']} "
+            "activation_deduped="
+            f"{final['latest_compiler_ir_guidance_activation_deduped_count']} "
             "guardrail_seeded="
             f"{final['latest_compiler_ir_guidance_guardrail_seeded_count']} "
             "guardrail_deduped="

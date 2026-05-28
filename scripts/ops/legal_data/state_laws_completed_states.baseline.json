@@ -185,6 +185,17 @@
       "statutes_count": 469,
       "updated_at": "2026-05-19T16:00:16.198547+00:00"
     },
+    "MS": {
+      "completed_at": "2026-05-28T05:30:22.094541+00:00",
+      "completion_mode": "shared_registry_promoted_baseline_2026-05-28",
+      "first_completed_at": "2026-05-28T05:30:22.094541+00:00",
+      "status": "success",
+      "statutes_count": 28508,
+      "timeout_classification": "checkpoint_complete_promotion",
+      "timeout_signal_kind": "history_scan",
+      "timeout_work_remaining": false,
+      "updated_at": "2026-05-28T05:30:22.110639+00:00"
+    },
     "MT": {
       "completed_at": "2026-05-19T16:00:16.198547+00:00",
       "completion_mode": "shared_registry_promoted_baseline_2026-05-25",
@@ -373,5 +384,5 @@
       "updated_at": "2026-05-19T16:00:16.198547+00:00"
     }
   },
-  "updated_at": "2026-05-28T05:12:19.565959+00:00"
+  "updated_at": "2026-05-28T05:30:22.110639+00:00"
 }
