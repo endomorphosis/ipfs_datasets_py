@@ -837,7 +837,10 @@ def compiler_ir_metric_block(
     llm_call_counts: List[float] = []
     failures = 0
     guidance_applied_count = 0
+    guidance_empty_count = 0
     guidance_failures = 0
+    guidance_produced_count = 0
+    guidance_requested_count = 0
     guidance_frame_boost_counts: List[float] = []
     guidance_frame_changed_count = 0
     guidance_feature_groups: Counter[str] = Counter()
@@ -847,12 +850,17 @@ def compiler_ir_metric_block(
     for sample in sample_list:
         compiler_guidance = None
         if use_autoencoder_guidance and autoencoder is not None:
+            guidance_requested_count += 1
             try:
                 compiler_guidance = autoencoder.compiler_guidance_for_sample(
                     sample,
                     use_sample_memory=False,
                     top_k=guidance_top_k,
                 )
+                if compiler_guidance:
+                    guidance_produced_count += 1
+                else:
+                    guidance_empty_count += 1
             except Exception:
                 guidance_failures += 1
                 compiler_guidance = None
@@ -934,7 +942,14 @@ def compiler_ir_metric_block(
     block: Dict[str, Any] = {
         "autoencoder_guidance_enabled": bool(use_autoencoder_guidance),
         "autoencoder_guidance_applied_count": guidance_applied_count,
+        "autoencoder_guidance_empty_count": guidance_empty_count,
         "autoencoder_guidance_failures": guidance_failures,
+        "autoencoder_guidance_produced_count": guidance_produced_count,
+        "autoencoder_guidance_requested_count": guidance_requested_count,
+        "autoencoder_guidance_unapplied_count": max(
+            0,
+            guidance_produced_count - guidance_applied_count,
+        ),
         "evaluated_count": len(formula_counts),
         "metric_failures": failures,
         "sample_count": len(sample_list),
@@ -8123,6 +8138,41 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     )
                     supervisor.queue.save_jsonl(queue_path)
                     queue = supervisor.queue
+            failed_validation_rescue_seeded_count = 0
+            failed_validation_rescue_deduped_count = 0
+            failed_validation_rescue_todo_ids: List[str] = []
+            if int(supervisor.queue.status_counts().get("failed_validation", 0)) > 0:
+                with queue_file_lock(queue_path):
+                    latest_queue = ModalTodoQueue.load_jsonl(queue_path)
+                    latest_queue.merge_from(
+                        supervisor.queue,
+                        preserve_claimed_role=supervisor.policy.program_synthesis_role,
+                    )
+                    supervisor.queue = latest_queue
+                    before_rescue_todo_ids = {
+                        todo.todo_id for todo in supervisor.queue.all()
+                    }
+                    failed_validation_rescue_todos = (
+                        supervisor.seed_failed_validation_rescue_todos(max_clusters=8)
+                    )
+                    failed_validation_rescue_deduped_count = int(
+                        supervisor.last_program_synthesis_deduped_count
+                    )
+                    failed_validation_rescue_todo_ids = [
+                        todo.todo_id
+                        for todo in failed_validation_rescue_todos
+                        if todo.todo_id not in before_rescue_todo_ids
+                        and supervisor.queue.get(todo.todo_id) is not None
+                    ]
+                    failed_validation_rescue_seeded_count = len(
+                        failed_validation_rescue_todo_ids
+                    )
+                    if (
+                        failed_validation_rescue_seeded_count
+                        or failed_validation_rescue_deduped_count
+                    ):
+                        supervisor.queue.save_jsonl(queue_path)
+                        queue = supervisor.queue
             latest_compiler_ir_guidance_ce_delta = float(guidance_canary["ce_delta"])
             latest_compiler_ir_guidance_cosine_delta = float(
                 guidance_canary["cosine_delta"]
@@ -8211,6 +8261,15 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["latest_compiler_ir_guidance_distillation_todo_ids"] = list(
                 guidance_distillation_todo_ids
             )
+            summary["latest_failed_validation_rescue_seeded_count"] = int(
+                failed_validation_rescue_seeded_count
+            )
+            summary["latest_failed_validation_rescue_deduped_count"] = int(
+                failed_validation_rescue_deduped_count
+            )
+            summary["latest_failed_validation_rescue_todo_ids"] = list(
+                failed_validation_rescue_todo_ids
+            )
             summary["latest_compiler_ir_guidance_ce_delta"] = (
                 latest_compiler_ir_guidance_ce_delta
             )
@@ -8232,13 +8291,17 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             )
             program_synthesis_seeded_count = sum(
                 step.program_synthesis_seeded_count for step in run.steps
-            ) + int(guidance_distillation_seeded_count)
+            ) + int(guidance_distillation_seeded_count) + int(
+                failed_validation_rescue_seeded_count
+            )
             summary["program_synthesis_seeded"] = int(
                 summary.get("program_synthesis_seeded", 0)
             ) + int(program_synthesis_seeded_count)
             preinsert_deduped_count = sum(
                 step.program_synthesis_deduped_count for step in run.steps
-            ) + int(guidance_distillation_deduped_count)
+            ) + int(guidance_distillation_deduped_count) + int(
+                failed_validation_rescue_deduped_count
+            )
             summary["program_synthesis_preinsert_deduped"] = int(
                 summary.get("program_synthesis_preinsert_deduped", 0)
             ) + int(preinsert_deduped_count)
@@ -8271,6 +8334,12 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 ),
                 "compiler_guidance_distillation_seeded_count": int(
                     guidance_distillation_seeded_count
+                ),
+                "failed_validation_rescue_deduped_count": int(
+                    failed_validation_rescue_deduped_count
+                ),
+                "failed_validation_rescue_seeded_count": int(
+                    failed_validation_rescue_seeded_count
                 ),
             }
             bridge_loss_failures = sum(step.bridge_loss_failure_count for step in run.steps)
@@ -8459,6 +8528,15 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "duration_seconds": latest_cycle_seconds,
                     "event": "cycle",
                     "failed_validation_count": sum(step.failed_validation_count for step in run.steps),
+                    "failed_validation_rescue_deduped_count": int(
+                        failed_validation_rescue_deduped_count
+                    ),
+                    "failed_validation_rescue_seeded_count": int(
+                        failed_validation_rescue_seeded_count
+                    ),
+                    "failed_validation_rescue_todo_ids": list(
+                        failed_validation_rescue_todo_ids
+                    ),
                     "feature_projection_report": feature_projection_report,
                     "learning_rate_applied": float(cycle_learning_rate),
                     "learning_rate_policy": cycle_lr_policy,

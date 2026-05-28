@@ -417,6 +417,12 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
             "semantic_deduped_count": latest_cycle.get(
                 "program_synthesis_semantic_deduped_count"
             ),
+            "failed_validation_rescue_deduped_count": latest_cycle.get(
+                "failed_validation_rescue_deduped_count"
+            ),
+            "failed_validation_rescue_seeded_count": latest_cycle.get(
+                "failed_validation_rescue_seeded_count"
+            ),
         }
     learned_ir_history = []
     for event in events:
@@ -539,6 +545,41 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
         "latest_compiler_ir_guided_applied_count": int(
             latest_compiler_ir_guided_validation.get(
                 "autoencoder_guidance_applied_count",
+                0,
+            )
+            or 0
+        ),
+        "latest_compiler_ir_guided_empty_count": int(
+            latest_compiler_ir_guided_validation.get(
+                "autoencoder_guidance_empty_count",
+                0,
+            )
+            or 0
+        ),
+        "latest_compiler_ir_guided_failures": int(
+            latest_compiler_ir_guided_validation.get(
+                "autoencoder_guidance_failures",
+                0,
+            )
+            or 0
+        ),
+        "latest_compiler_ir_guided_produced_count": int(
+            latest_compiler_ir_guided_validation.get(
+                "autoencoder_guidance_produced_count",
+                0,
+            )
+            or 0
+        ),
+        "latest_compiler_ir_guided_requested_count": int(
+            latest_compiler_ir_guided_validation.get(
+                "autoencoder_guidance_requested_count",
+                0,
+            )
+            or 0
+        ),
+        "latest_compiler_ir_guided_unapplied_count": int(
+            latest_compiler_ir_guided_validation.get(
+                "autoencoder_guidance_unapplied_count",
                 0,
             )
             or 0
@@ -716,6 +757,18 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
         "latest_program_synthesis_semantic_deduped_count": int(
             latest_todo_generation.get("semantic_deduped_count") or 0
         ),
+        "latest_failed_validation_rescue_seeded_count": int(
+            summary.get("latest_failed_validation_rescue_seeded_count")
+            or latest_todo_generation.get("failed_validation_rescue_seeded_count")
+            or latest_cycle.get("failed_validation_rescue_seeded_count")
+            or 0
+        ),
+        "latest_failed_validation_rescue_deduped_count": int(
+            summary.get("latest_failed_validation_rescue_deduped_count")
+            or latest_todo_generation.get("failed_validation_rescue_deduped_count")
+            or latest_cycle.get("failed_validation_rescue_deduped_count")
+            or 0
+        ),
         "latest_todo_generation": latest_todo_generation,
         "latest_queue_counts": summary.get("latest_queue_counts", {}),
         "latest_role_queue_counts": summary.get("latest_role_queue_counts", {}),
@@ -802,6 +855,15 @@ def _recommendation(
         guidance_applied = int(
             final.get("latest_compiler_ir_guided_applied_count", 0) or 0
         )
+        guidance_requested = int(
+            final.get("latest_compiler_ir_guided_requested_count", 0) or 0
+        )
+        guidance_produced = int(
+            final.get("latest_compiler_ir_guided_produced_count", 0) or 0
+        )
+        guidance_failures = int(
+            final.get("latest_compiler_ir_guided_failures", 0) or 0
+        )
         guidance_ce_delta = _finite_float(
             final.get("latest_compiler_ir_guidance_ce_delta"),
             math.nan,
@@ -810,6 +872,12 @@ def _recommendation(
             final.get("latest_compiler_ir_guidance_cosine_delta"),
             math.nan,
         )
+        if guidance_requested > 0 and guidance_applied == 0:
+            lines.append(
+                "Autoencoder guidance was requested but did not apply; inspect "
+                f"produced={guidance_produced}, failures={guidance_failures}, "
+                "and codec guidance-summary filtering before tuning guidance metrics."
+            )
         if guidance_applied > 0:
             guidance_gate = str(
                 final.get("latest_compiler_ir_guidance_quality_gate") or ""
@@ -896,10 +964,27 @@ def _recommendation(
                 f"{scope}={count}" for scope, count in failed_scopes.items()
             )
             suffix = f" Hot failed scopes: {hot_failed}." if hot_failed else ""
+            rescue_seeded = int(
+                final.get("latest_failed_validation_rescue_seeded_count", 0) or 0
+            )
+            rescue_deduped = int(
+                final.get("latest_failed_validation_rescue_deduped_count", 0) or 0
+            )
             lines.append(
                 f"{failed_count} failed-validation TODOs need rescue or retirement before "
                 f"worker utilization stats are trustworthy.{suffix}"
             )
+            if rescue_seeded > 0:
+                lines.append(
+                    f"Failed-validation rescue seeded {rescue_seeded} repair TODOs "
+                    "this cycle; route Codex workers to those scopes before adding "
+                    "more generic workers."
+                )
+            elif rescue_deduped > 0:
+                lines.append(
+                    "Failed-validation rescue is merging new failed evidence into "
+                    "existing repair TODOs; prioritize completing those rescue tasks."
+                )
 
     if production:
         lines.append(
@@ -982,7 +1067,12 @@ def _print_report(report: dict[str, Any]) -> None:
         )
         print(
             "  guided_compiler_ir="
+            f"requested={final['latest_compiler_ir_guided_requested_count']} "
+            f"produced={final['latest_compiler_ir_guided_produced_count']} "
             f"applied={final['latest_compiler_ir_guided_applied_count']} "
+            f"empty={final['latest_compiler_ir_guided_empty_count']} "
+            f"failures={final['latest_compiler_ir_guided_failures']} "
+            f"unapplied={final['latest_compiler_ir_guided_unapplied_count']} "
             f"best_ce={_summary_metric(final, 'best_validation_ir_guided_ce')} "
             f"latest_ce={_summary_metric(final, 'latest_compiler_ir_guided_ce')} "
             "best_ce_excess="
@@ -1039,6 +1129,10 @@ def _print_report(report: dict[str, Any]) -> None:
             f"latest_seeded={final['latest_program_synthesis_seeded_count']} "
             f"latest_preinsert_deduped={final['latest_program_synthesis_preinsert_deduped_count']} "
             f"latest_semantic_deduped={final['latest_program_synthesis_semantic_deduped_count']} "
+            "failed_rescue_seeded="
+            f"{final['latest_failed_validation_rescue_seeded_count']} "
+            "failed_rescue_deduped="
+            f"{final['latest_failed_validation_rescue_deduped_count']} "
             f"total_seeded={final['program_synthesis_seeded']} "
             f"total_deduped={final['program_synthesis_deduped_total']} "
             f"accepted_epochs={final['latest_feature_projection_accepted_epochs']} "

@@ -650,6 +650,143 @@ def test_queue_compacts_autoencoder_backlog_without_removing_program_synthesis_h
     assert queue.get("sgd-stale-failed") is None
 
 
+def test_supervisor_seeds_failed_validation_rescue_todos_from_cluster() -> None:
+    metadata = {
+        "execution_target": "codex_program_repair",
+        "failure_reason": "main_apply_validation_failed_rolled_back",
+        "hint_evidence": [
+            {
+                "roundtrip_preview": "must provide notice before final order",
+                "selected_frame": "administrative_notice_hearing",
+            }
+        ],
+        "metric_sample_payloads": [
+            {"sample_id": "sample-a", "text": "The agency must give notice."}
+        ],
+        "optimizer_role": "program_synthesis",
+        "optimizer_stage": "typed_program_synthesis",
+        "program_synthesis_scope": "ir_decompiler",
+        "target_component": "modal.ir_decompiler",
+        "target_metrics": ["embedding_cosine_similarity"],
+        "validation_commands": ["python -m pytest -q tests/example_ir.py"],
+        "validation_gate": {
+            "accepted": False,
+            "regressed_metrics": ["embedding_cosine_similarity"],
+        },
+    }
+    failed_a = ModalTodo(
+        todo_id="failed-a",
+        action="refine_typed_ir_or_decompiler_slots",
+        objective="repair typed slots",
+        sample_ids=["sample-a"],
+        citations=["5 U.S.C. 552"],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=2.0,
+        priority=44.0,
+        status="failed_validation",
+        metadata=dict(metadata),
+    )
+    failed_b = ModalTodo(
+        todo_id="failed-b",
+        action="refine_typed_ir_or_decompiler_slots",
+        objective="repair typed slots",
+        sample_ids=["sample-b"],
+        citations=["5 U.S.C. 553"],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=40.0,
+        status="failed_validation",
+        metadata={
+            **metadata,
+            "metric_sample_payloads": [
+                {"sample_id": "sample-b", "text": "The agency must hold hearing."}
+            ],
+        },
+    )
+    supervisor = ModalTodoSupervisor(queue=ModalTodoQueue([failed_a, failed_b]))
+
+    seeded = supervisor.seed_failed_validation_rescue_todos(max_clusters=4)
+
+    assert len(seeded) == 1
+    rescue = seeded[0]
+    assert rescue.action == daemon.FAILED_VALIDATION_RESCUE_ACTION
+    assert rescue.status == "pending"
+    assert rescue.sample_ids == ["sample-a", "sample-b"]
+    assert rescue.citations == ["5 U.S.C. 552", "5 U.S.C. 553"]
+    assert rescue.metadata["source"] == "failed_validation_rescue_v1"
+    assert rescue.metadata["original_action"] == "refine_typed_ir_or_decompiler_slots"
+    assert rescue.metadata["failed_todo_ids"] == ["failed-a", "failed-b"]
+    assert rescue.metadata["failed_validation_count"] == 2
+    assert rescue.metadata["failed_validation_reason"] == (
+        "main_apply_validation_failed_rolled_back"
+    )
+    assert rescue.metadata["program_synthesis_scope"] == "ir_decompiler"
+    assert rescue.metadata["target_component"] == "modal.ir_decompiler"
+    assert "embedding_cosine_similarity" in rescue.metadata["target_metrics"]
+    assert "reconstruction_loss" in rescue.metadata["target_metrics"]
+    assert "python -m pytest -q tests/example_ir.py" in rescue.metadata[
+        "validation_commands"
+    ]
+    assert len(rescue.metadata["metric_sample_payloads"]) == 2
+    assert rescue.metadata["hint_evidence"][0]["failed_todo_id"] == "failed-a"
+    assert supervisor.queue.get(rescue.todo_id) is rescue
+
+    seeded_again = supervisor.seed_failed_validation_rescue_todos(max_clusters=4)
+
+    assert seeded_again == []
+    assert supervisor.last_program_synthesis_deduped_count == 1
+
+
+def test_supervisor_failed_validation_rescue_filters_scope() -> None:
+    ir_failed = ModalTodo(
+        todo_id="failed-ir",
+        action="refine_typed_ir_or_decompiler_slots",
+        objective="repair typed slots",
+        sample_ids=["ir-sample"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=30.0,
+        status="failed_validation",
+        metadata={
+            "execution_target": "codex_program_repair",
+            "failure_reason": "target_metric_regression",
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "ir_decompiler",
+            "target_component": "modal.ir_decompiler",
+        },
+    )
+    bridge_failed = ModalTodo(
+        todo_id="failed-bridge",
+        action="repair_multiview_legal_ir_loss",
+        objective="repair bridge loss",
+        sample_ids=["bridge-sample"],
+        citations=[],
+        loss_name="legal_ir_multiview_total_loss",
+        loss_value=1.0,
+        priority=20.0,
+        status="failed_validation",
+        metadata={
+            "execution_target": "codex_program_repair",
+            "failure_reason": "target_metric_regression",
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "bridge",
+            "target_component": "bridge.contracts",
+        },
+    )
+    supervisor = ModalTodoSupervisor(queue=ModalTodoQueue([ir_failed, bridge_failed]))
+
+    seeded = supervisor.seed_failed_validation_rescue_todos(
+        max_clusters=4,
+        program_synthesis_scope="bridge",
+    )
+
+    assert len(seeded) == 1
+    assert seeded[0].metadata["program_synthesis_scope"] == "bridge"
+    assert seeded[0].metadata["target_component"] == "bridge.contracts"
+    assert seeded[0].metadata["failed_todo_ids"] == ["failed-bridge"]
+
+
 def test_supervisor_can_claim_program_synthesis_by_ast_scope() -> None:
     compiler = ModalTodo(
         todo_id="program-compiler",
@@ -4159,7 +4296,11 @@ def test_compiler_ir_metric_block_can_apply_autoencoder_guidance() -> None:
 
     assert block["autoencoder_guidance_enabled"] is True
     assert block["autoencoder_guidance_applied_count"] == 1
+    assert block["autoencoder_guidance_empty_count"] == 0
     assert block["autoencoder_guidance_failures"] == 0
+    assert block["autoencoder_guidance_produced_count"] == 1
+    assert block["autoencoder_guidance_requested_count"] == 1
+    assert block["autoencoder_guidance_unapplied_count"] == 0
     assert block["evaluated_count"] == 1
     assert block["compiler_guidance_feature_groups"]
     assert block["compiler_guidance_surface_features"]

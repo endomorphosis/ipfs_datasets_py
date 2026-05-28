@@ -31,6 +31,7 @@ AUTOENCODER_SGD_ROLE = "autoencoder_sgd"
 PROGRAM_SYNTHESIS_ROLE = "program_synthesis"
 AUTOENCODER_EXECUTION_TARGET = "adaptive_autoencoder"
 PROGRAM_SYNTHESIS_EXECUTION_TARGET = "codex_program_repair"
+FAILED_VALIDATION_RESCUE_ACTION = "rescue_failed_program_synthesis_validation"
 TODO_STATUS_RANK = {
     "pending": 0,
     "claimed": 1,
@@ -73,6 +74,7 @@ PROGRAM_SYNTHESIS_ACTION_TARGETS = {
     "repair_flogic_ontology_constraints": "modal.frame_logic",
     "repair_tdfol_bridge_parse": "TDFOL.prover",
     "repair_zkp_attestation_bridge": "zkp.circuits",
+    FAILED_VALIDATION_RESCUE_ACTION: "codex.program_repair",
 }
 PROGRAM_SYNTHESIS_ACTION_TARGET_METRICS = {
     "add_deterministic_parser_rule": ("symbolic_validity_penalty", "modal_span_coverage_loss"),
@@ -140,6 +142,7 @@ PROGRAM_SYNTHESIS_ACTION_TARGET_METRICS = {
         "zkp_attestation_missing_loss",
         "legal_ir_view_cross_entropy_loss",
     ),
+    FAILED_VALIDATION_RESCUE_ACTION: (),
 }
 PROGRAM_SYNTHESIS_SCOPE_VALIDATION_TESTS = {
     "bridge": (
@@ -1845,6 +1848,34 @@ class ModalTodoSupervisor:
         self.queue.add_many(todos)
         return todos
 
+    def seed_failed_validation_rescue_todos(
+        self,
+        *,
+        max_clusters: int = 8,
+        program_synthesis_scope: Optional[str] = None,
+        failure_reason: Optional[str] = None,
+        original_action: Optional[str] = None,
+    ) -> List[ModalTodo]:
+        """Seed repair TODOs that rescue repeated failed Codex validation patches."""
+        rescue_todos = _failed_validation_rescue_todos(
+            self.queue.all(),
+            policy=self.policy,
+            max_clusters=max_clusters,
+            program_synthesis_scope=program_synthesis_scope,
+            failure_reason=failure_reason,
+            original_action=original_action,
+        )
+        if not rescue_todos:
+            self.last_program_synthesis_deduped_count = 0
+            return []
+        self.last_program_synthesis_deduped_count = 0
+        selected = self._bounded_new_todos(
+            rescue_todos,
+            track_program_deduped=True,
+        )
+        self.queue.add_many(selected)
+        return selected
+
     def _residual_signature_occurrences(self, todo: ModalTodo) -> int:
         signatures = {
             str(signature)
@@ -2717,6 +2748,329 @@ def _program_todo_id(
         json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
     ).hexdigest()[:16]
     return f"program-{digest}"
+
+
+def _failed_validation_rescue_todos(
+    todos: Sequence[ModalTodo],
+    *,
+    policy: ModalOptimizerPolicy,
+    max_clusters: int,
+    program_synthesis_scope: Optional[str] = None,
+    failure_reason: Optional[str] = None,
+    original_action: Optional[str] = None,
+) -> List[ModalTodo]:
+    """Build stable rescue TODOs from failed program-synthesis validation clusters."""
+    limit = max(0, int(max_clusters))
+    if limit < 1:
+        return []
+    scope_filter = str(program_synthesis_scope or "").strip()
+    reason_filter = str(failure_reason or "").strip()
+    action_filter = str(original_action or "").strip()
+    clusters: Dict[tuple[str, str, str, str], List[ModalTodo]] = {}
+    for todo in todos:
+        if todo.status != "failed_validation":
+            continue
+        if _todo_optimizer_role(todo) != policy.program_synthesis_role:
+            continue
+        if todo.action == FAILED_VALIDATION_RESCUE_ACTION:
+            continue
+        scope = _program_todo_scope(todo)
+        target_component = _todo_target_component(todo)
+        reason = str(todo.metadata.get("failure_reason") or "").strip()
+        if scope_filter and scope != scope_filter:
+            continue
+        if reason_filter and reason != reason_filter:
+            continue
+        if action_filter and todo.action != action_filter:
+            continue
+        clusters.setdefault((scope, target_component, todo.action, reason), []).append(
+            todo
+        )
+    ranked_clusters = sorted(
+        clusters.items(),
+        key=lambda item: (
+            -len(item[1]),
+            -max(float(todo.priority) for todo in item[1]),
+            item[0],
+        ),
+    )
+    return [
+        _failed_validation_rescue_todo(
+            scope=scope,
+            target_component=target_component,
+            original_action=action,
+            failure_reason=reason,
+            failed_todos=sorted(failed_todos, key=_todo_priority_key),
+            policy=policy,
+        )
+        for (scope, target_component, action, reason), failed_todos in ranked_clusters[
+            :limit
+        ]
+    ]
+
+
+def _failed_validation_rescue_todo(
+    *,
+    scope: str,
+    target_component: str,
+    original_action: str,
+    failure_reason: str,
+    failed_todos: Sequence[ModalTodo],
+    policy: ModalOptimizerPolicy,
+) -> ModalTodo:
+    failed_todo_ids = _unique_preserve_order(todo.todo_id for todo in failed_todos)
+    sample_ids = _unique_preserve_order(
+        sample_id
+        for todo in failed_todos
+        for sample_id in todo.sample_ids
+        if str(sample_id)
+    )[:32]
+    citations = _unique_preserve_order(
+        citation
+        for todo in failed_todos
+        for citation in todo.citations
+        if str(citation)
+    )[:32]
+    target_metrics = _failed_validation_rescue_target_metrics(
+        failed_todos,
+        original_action=original_action,
+        target_component=target_component,
+    )
+    validation_commands = _failed_validation_rescue_validation_commands(
+        failed_todos,
+        original_action=original_action,
+        target_component=target_component,
+        program_synthesis_scope=scope,
+    )
+    metric_payloads = _failed_validation_rescue_metric_payloads(failed_todos)
+    hint_evidence = _failed_validation_rescue_evidence(
+        failed_todos,
+        scope=scope,
+        target_component=target_component,
+        failure_reason=failure_reason,
+    )
+    semantic_key = _failed_validation_rescue_signature(
+        scope=scope,
+        target_component=target_component,
+        original_action=original_action,
+        failure_reason=failure_reason,
+    )
+    count = len(failed_todos)
+    metadata = {
+        **policy.metadata_for(
+            action=FAILED_VALIDATION_RESCUE_ACTION,
+            loss_name="failed_validation_rescue",
+        ),
+        "dedupe_signature": semantic_key,
+        "failed_todo_ids": failed_todo_ids[:64],
+        "failed_validation_count": count,
+        "failed_validation_reason": failure_reason,
+        "hint_evidence": hint_evidence,
+        "original_action": original_action,
+        "program_synthesis_scope": scope,
+        "rescue_recommended_strategy": _failed_validation_rescue_strategy(
+            failure_reason
+        ),
+        "semantic_bundle_key": semantic_key,
+        "source": "failed_validation_rescue_v1",
+        "support_count": len(sample_ids),
+        "target_component": target_component,
+        "target_metrics": target_metrics,
+        "validation_commands": validation_commands,
+    }
+    if metric_payloads:
+        metadata["metric_sample_payloads"] = metric_payloads
+    priority = round(
+        max((float(todo.priority) for todo in failed_todos), default=0.0)
+        + 25.0
+        + (float(count) * 2.0),
+        6,
+    )
+    return ModalTodo(
+        todo_id=_failed_validation_rescue_todo_id(
+            scope=scope,
+            target_component=target_component,
+            original_action=original_action,
+            failure_reason=failure_reason,
+            failed_todo_ids=failed_todo_ids,
+        ),
+        action=FAILED_VALIDATION_RESCUE_ACTION,
+        objective=(
+            f"Rescue {count} failed validation patch"
+            f"{'' if count == 1 else 'es'} for {original_action} in {scope}; "
+            "inspect the failed evidence, narrow or split the fix, and make the "
+            "validation command pass without regressing the target metrics."
+        ),
+        sample_ids=sample_ids,
+        citations=citations,
+        loss_name="failed_validation_rescue",
+        loss_value=float(count),
+        priority=priority,
+        metadata=metadata,
+    )
+
+
+def _failed_validation_rescue_signature(
+    *,
+    scope: str,
+    target_component: str,
+    original_action: str,
+    failure_reason: str,
+) -> str:
+    payload = {
+        "failure_reason": failure_reason,
+        "original_action": original_action,
+        "program_synthesis_scope": scope,
+        "source": "failed_validation_rescue_v1",
+        "target_component": target_component,
+    }
+    return json.dumps(payload, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+
+
+def _failed_validation_rescue_todo_id(
+    *,
+    scope: str,
+    target_component: str,
+    original_action: str,
+    failure_reason: str,
+    failed_todo_ids: Sequence[str],
+) -> str:
+    payload = {
+        "cluster_signature": _failed_validation_rescue_signature(
+            scope=scope,
+            target_component=target_component,
+            original_action=original_action,
+            failure_reason=failure_reason,
+        ),
+        "failed_todo_ids": sorted(
+            str(todo_id) for todo_id in failed_todo_ids if str(todo_id)
+        ),
+    }
+    digest = hashlib.sha256(
+        json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+    ).hexdigest()[:16]
+    return f"program-rescue-{digest}"
+
+
+def _failed_validation_rescue_target_metrics(
+    failed_todos: Sequence[ModalTodo],
+    *,
+    original_action: str,
+    target_component: str,
+) -> List[str]:
+    metrics: List[Any] = []
+    for todo in failed_todos:
+        metrics = _merge_jsonish_metadata_values(
+            metrics,
+            todo.metadata.get("target_metrics", []),
+            limit=32,
+        )
+    metrics = _merge_jsonish_metadata_values(
+        metrics,
+        _program_synthesis_target_metrics(
+            action=original_action,
+            target_component=target_component,
+        ),
+        limit=32,
+    )
+    return [str(metric) for metric in metrics if str(metric)]
+
+
+def _failed_validation_rescue_validation_commands(
+    failed_todos: Sequence[ModalTodo],
+    *,
+    original_action: str,
+    target_component: str,
+    program_synthesis_scope: str,
+) -> List[str]:
+    commands: List[Any] = []
+    for todo in failed_todos:
+        commands = _merge_jsonish_metadata_values(
+            commands,
+            todo.metadata.get("validation_commands", []),
+            limit=16,
+        )
+    commands = _merge_jsonish_metadata_values(
+        commands,
+        _program_synthesis_validation_commands(
+            action=original_action,
+            target_component=target_component,
+            program_synthesis_scope=program_synthesis_scope,
+        ),
+        limit=16,
+    )
+    return [str(command) for command in commands if str(command)]
+
+
+def _failed_validation_rescue_metric_payloads(
+    failed_todos: Sequence[ModalTodo],
+) -> List[Any]:
+    payloads: List[Any] = []
+    for todo in failed_todos:
+        payloads = _merge_jsonish_metadata_values(
+            payloads,
+            todo.metadata.get("metric_sample_payloads", []),
+            limit=16,
+            identity_key="sample_id",
+        )
+    return payloads
+
+
+def _failed_validation_rescue_evidence(
+    failed_todos: Sequence[ModalTodo],
+    *,
+    scope: str,
+    target_component: str,
+    failure_reason: str,
+) -> List[Dict[str, Any]]:
+    evidence: List[Dict[str, Any]] = []
+    for todo in failed_todos[:16]:
+        item: Dict[str, Any] = {
+            "failed_todo_id": todo.todo_id,
+            "failure_reason": failure_reason,
+            "hint_id": f"failed-validation:{todo.todo_id}",
+            "original_action": todo.action,
+            "program_synthesis_scope": scope,
+            "sample_ids": list(todo.sample_ids[:8]),
+            "target_component": target_component,
+            "target_metrics": list(_as_list(todo.metadata.get("target_metrics")))[:8],
+        }
+        source_evidence = [
+            entry
+            for entry in _as_list(todo.metadata.get("hint_evidence"))
+            if isinstance(entry, Mapping)
+        ]
+        if source_evidence:
+            for key in (
+                "predicted_family",
+                "roundtrip_preview",
+                "selected_frame",
+                "target_family",
+            ):
+                value = source_evidence[0].get(key)
+                if value not in (None, "", []):
+                    item[key] = value
+        validation_gate = todo.metadata.get("validation_gate")
+        if isinstance(validation_gate, Mapping):
+            item["validation_gate_accepted"] = bool(validation_gate.get("accepted"))
+            regressed_metrics = _as_list(validation_gate.get("regressed_metrics"))
+            if regressed_metrics:
+                item["regressed_metrics"] = regressed_metrics[:8]
+        evidence.append(item)
+    return evidence
+
+
+def _failed_validation_rescue_strategy(failure_reason: str) -> str:
+    normalized = str(failure_reason or "").strip().lower()
+    if normalized == "main_apply_validation_failed_rolled_back":
+        return "inspect_rolled_back_patch_and_split_risky_delta"
+    if normalized == "target_metric_regression":
+        return "preserve_target_metrics_before_expanding_fix"
+    if normalized == "program_synthesis_validation_rejected":
+        return "repair_metric_gate_or_validation_contract"
+    if normalized == "main_apply_baseline_validation_failed":
+        return "refresh_baseline_before_retrying_patch"
+    return "inspect_failed_patch_evidence"
 
 
 def _program_todo_signature(
