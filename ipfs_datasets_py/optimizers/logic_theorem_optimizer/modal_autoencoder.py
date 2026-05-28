@@ -69,6 +69,34 @@ def cross_entropy_distribution_loss(
     return loss
 
 
+def distribution_entropy_loss(target_distribution: Mapping[str, float]) -> float:
+    """Return the entropy floor for a normalized target distribution."""
+    total_weight = sum(
+        max(0.0, float(weight))
+        for weight in target_distribution.values()
+    )
+    if total_weight <= 0.0:
+        return 0.0
+    loss = 0.0
+    for weight in target_distribution.values():
+        probability = max(0.0, float(weight)) / total_weight
+        if probability > 0.0:
+            loss += probability * -math.log(probability)
+    return loss
+
+
+def cross_entropy_excess_distribution_loss(
+    probabilities: Mapping[str, float],
+    target_distribution: Mapping[str, float],
+) -> float:
+    """Return cross entropy above the target entropy floor, i.e. KL divergence."""
+    excess = cross_entropy_distribution_loss(
+        probabilities,
+        target_distribution,
+    ) - distribution_entropy_loss(target_distribution)
+    return max(0.0, excess)
+
+
 @dataclass(frozen=True)
 class AutoencoderEvaluation:
     """Metrics for one deterministic baseline pass."""
@@ -86,10 +114,14 @@ class AutoencoderEvaluation:
     legal_ir_predicted_view_distribution: Dict[str, float] = field(default_factory=dict)
     legal_ir_target_hashes: Dict[str, str] = field(default_factory=dict)
     legal_ir_view_distribution: Dict[str, float] = field(default_factory=dict)
+    cross_entropy_entropy_loss: float = 0.0
+    cross_entropy_excess_loss: float = 0.0
 
     def to_dict(self) -> Dict[str, object]:
         return {
             "cosine_loss": self.cosine_loss,
+            "cross_entropy_entropy_loss": self.cross_entropy_entropy_loss,
+            "cross_entropy_excess_loss": self.cross_entropy_excess_loss,
             "cross_entropy_loss": self.cross_entropy_loss,
             "decoded_embeddings": self.decoded_embeddings,
             "embedding_cosine_similarity": self.embedding_cosine_similarity,
@@ -150,6 +182,8 @@ class AutoencoderIntrospection:
     top_embedding_contributions: List[AutoencoderFeatureContribution] = field(default_factory=list)
     synthesis_focus: List[str] = field(default_factory=list)
     legal_ir_view_cross_entropy_loss: float = 0.0
+    legal_ir_view_entropy_loss: float = 0.0
+    legal_ir_view_cross_entropy_excess_loss: float = 0.0
     legal_ir_component_gaps: Dict[str, float] = field(default_factory=dict)
     legal_ir_losses: Dict[str, float] = field(default_factory=dict)
     legal_ir_underrepresented_components: List[str] = field(default_factory=list)
@@ -176,6 +210,10 @@ class AutoencoderIntrospection:
                 self.legal_ir_underrepresented_components
             ),
             "legal_ir_view_cross_entropy_loss": self.legal_ir_view_cross_entropy_loss,
+            "legal_ir_view_entropy_loss": self.legal_ir_view_entropy_loss,
+            "legal_ir_view_cross_entropy_excess_loss": (
+                self.legal_ir_view_cross_entropy_excess_loss
+            ),
             "legal_ir_view_distribution": dict(sorted(self.legal_ir_view_distribution.items())),
             "predicted_family": self.predicted_family,
             "predicted_probability": self.predicted_probability,
@@ -1794,6 +1832,8 @@ class ModalAutoencoderBaseline:
         cosine_losses: List[float] = []
         reconstruction_losses: List[float] = []
         ce_losses: List[float] = []
+        ce_entropy_losses: List[float] = []
+        ce_excess_losses: List[float] = []
         frame_losses: List[float] = []
         symbolic_penalties: List[float] = []
         decoded_embeddings: Dict[str, List[float]] = {}
@@ -1804,10 +1844,19 @@ class ModalAutoencoderBaseline:
             cosine_scores.append(cosine_similarity(sample.embedding_vector, decoded))
             cosine_losses.append(cosine_loss(sample.embedding_vector, decoded))
             reconstruction_losses.append(mse_loss(sample.embedding_vector, decoded))
+            predicted_distribution = self._family_distribution(sample)
+            target_distribution = _observed_family_distribution(sample)
             ce_losses.append(
                 cross_entropy_distribution_loss(
-                    self._family_distribution(sample),
-                    _observed_family_distribution(sample),
+                    predicted_distribution,
+                    target_distribution,
+                )
+            )
+            ce_entropy_losses.append(distribution_entropy_loss(target_distribution))
+            ce_excess_losses.append(
+                cross_entropy_excess_distribution_loss(
+                    predicted_distribution,
+                    target_distribution,
                 )
             )
             frame_losses.append(frame_ranking_loss(sample))
@@ -1819,6 +1868,8 @@ class ModalAutoencoderBaseline:
             cosine_loss=_mean(cosine_losses),
             reconstruction_loss=_mean(reconstruction_losses),
             cross_entropy_loss=_mean(ce_losses),
+            cross_entropy_entropy_loss=_mean(ce_entropy_losses),
+            cross_entropy_excess_loss=_mean(ce_excess_losses),
             frame_ranking_loss=_mean(frame_losses),
             symbolic_validity_penalty=_mean(symbolic_penalties),
             decoded_embeddings=decoded_embeddings,
@@ -2338,8 +2389,18 @@ class AdaptiveModalAutoencoder:
             probability_maps,
             target_maps,
         )
+        ce_entropy_losses = [
+            distribution_entropy_loss(target)
+            for target in target_maps
+        ]
+        ce_excess_losses = [
+            cross_entropy_excess_distribution_loss(probabilities, target)
+            for probabilities, target in zip(probability_maps, target_maps)
+        ]
         legal_ir_losses = dict(legal_ir_payload["losses"])
         legal_ir_view_ce_losses: List[float] = []
+        legal_ir_view_entropy_losses: List[float] = []
+        legal_ir_view_excess_losses: List[float] = []
         predicted_view_distributions: List[Mapping[str, float]] = []
         for sample in sample_list:
             target_view_distribution = legal_ir_target_distributions.get(sample.sample_id)
@@ -2357,9 +2418,24 @@ class AdaptiveModalAutoencoder:
                     target_view_distribution,
                 )
             )
+            legal_ir_view_entropy_losses.append(
+                distribution_entropy_loss(target_view_distribution)
+            )
+            legal_ir_view_excess_losses.append(
+                cross_entropy_excess_distribution_loss(
+                    predicted_view_distribution,
+                    target_view_distribution,
+                )
+            )
         if legal_ir_view_ce_losses:
             legal_ir_losses["legal_ir_view_cross_entropy_loss"] = _mean(
                 legal_ir_view_ce_losses
+            )
+            legal_ir_losses["legal_ir_view_entropy_loss"] = _mean(
+                legal_ir_view_entropy_losses
+            )
+            legal_ir_losses["legal_ir_view_cross_entropy_excess_loss"] = _mean(
+                legal_ir_view_excess_losses
             )
 
         return AutoencoderEvaluation(
@@ -2368,6 +2444,8 @@ class AdaptiveModalAutoencoder:
             cosine_loss=_mean(cosine_losses),
             reconstruction_loss=_mean(reconstruction_losses),
             cross_entropy_loss=_mean(ce_losses),
+            cross_entropy_entropy_loss=_mean(ce_entropy_losses),
+            cross_entropy_excess_loss=_mean(ce_excess_losses),
             frame_ranking_loss=_mean(frame_losses),
             symbolic_validity_penalty=_mean(symbolic_penalties),
             decoded_embeddings=decoded_embeddings,
@@ -2496,6 +2574,8 @@ class AdaptiveModalAutoencoder:
         )
         legal_ir_predicted_view_distribution: Dict[str, float] = {}
         legal_ir_view_cross_entropy_loss = 0.0
+        legal_ir_view_entropy_loss = 0.0
+        legal_ir_view_cross_entropy_excess_loss = 0.0
         if legal_ir_view_distribution:
             legal_ir_predicted_view_distribution = self._legal_ir_view_distribution(
                 sample,
@@ -2505,6 +2585,15 @@ class AdaptiveModalAutoencoder:
             legal_ir_view_cross_entropy_loss = cross_entropy_distribution_loss(
                 legal_ir_predicted_view_distribution,
                 legal_ir_view_distribution,
+            )
+            legal_ir_view_entropy_loss = distribution_entropy_loss(
+                legal_ir_view_distribution
+            )
+            legal_ir_view_cross_entropy_excess_loss = (
+                cross_entropy_excess_distribution_loss(
+                    legal_ir_predicted_view_distribution,
+                    legal_ir_view_distribution,
+                )
             )
         legal_ir_component_gaps = _legal_ir_component_gaps(
             legal_ir_view_distribution,
@@ -2535,6 +2624,11 @@ class AdaptiveModalAutoencoder:
             top_family_contributions=family_contributions[:max(top_k, 0)],
             top_embedding_contributions=embedding_contributions[:max(top_k, 0)],
             legal_ir_view_cross_entropy_loss=round(legal_ir_view_cross_entropy_loss, 12),
+            legal_ir_view_entropy_loss=round(legal_ir_view_entropy_loss, 12),
+            legal_ir_view_cross_entropy_excess_loss=round(
+                legal_ir_view_cross_entropy_excess_loss,
+                12,
+            ),
             legal_ir_component_gaps={
                 key: round(float(value), 12)
                 for key, value in sorted(legal_ir_component_gaps.items())
@@ -2564,6 +2658,142 @@ class AdaptiveModalAutoencoder:
                 legal_ir_predicted_view_distribution=legal_ir_predicted_view_distribution,
             ),
         )
+
+    def compiler_guidance_for_sample(
+        self,
+        sample: LegalSample,
+        *,
+        use_sample_memory: bool = False,
+        top_k: int = 16,
+    ) -> Dict[str, Any]:
+        """Export learned compiler/decompiler guidance for deterministic IR code.
+
+        The autoencoder learns reusable feature weights over compiler contracts,
+        decompiler surface templates, cycle-consistency contracts, and LegalIR
+        views.  This method exposes those representations as a compact,
+        serializable contract that deterministic compiler/decompiler stages can
+        consume without depending on sample-specific memory.
+        """
+        limit = max(0, int(top_k))
+        introspection = self.introspect_sample(
+            sample,
+            use_sample_memory=use_sample_memory,
+            top_k=limit,
+        )
+        legal_ir_target_distribution = dict(
+            self._legal_ir_view_target_cache.get(
+                sample.sample_id,
+                self._legal_ir_view_target_cache.get(
+                    _sample_content_cache_id(sample),
+                    {},
+                ),
+            )
+        )
+        legal_ir_predicted_distribution: Dict[str, float] = {}
+        if legal_ir_target_distribution:
+            legal_ir_predicted_distribution = self._legal_ir_view_distribution(
+                sample,
+                legal_ir_target_distribution,
+                use_sample_memory=use_sample_memory,
+            )
+
+        feature_groups = {
+            "compiler_latent_profile": self._compiler_latent_profile_feature_keys_for(sample),
+            "compiler_contract": self._compiler_contract_feature_keys_for(sample),
+            "decompiler_surface_template": self._decompiler_surface_template_feature_keys_for(sample),
+            "cycle_consistency": self._cycle_consistency_feature_keys_for(sample),
+            "logic_view_contract": self._logic_view_contract_feature_keys_for(sample),
+        }
+        ranked_features = self._rank_guidance_features(
+            _unique_preserve_order(
+                feature
+                for features in feature_groups.values()
+                for feature in features
+            ),
+            top_k=limit,
+        )
+        return {
+            "decoded_embedding": list(introspection.decoded_embedding),
+            "family_distribution": {
+                key: round(float(value), 12)
+                for key, value in sorted(
+                    self._family_distribution(
+                        sample,
+                        use_sample_memory=use_sample_memory,
+                    ).items()
+                )
+            },
+            "feature_groups": {
+                name: list(features[:limit] if limit else features)
+                for name, features in sorted(feature_groups.items())
+            },
+            "legal_ir_predicted_view_distribution": {
+                key: round(float(value), 12)
+                for key, value in sorted(legal_ir_predicted_distribution.items())
+            },
+            "legal_ir_target_view_distribution": {
+                key: round(float(value), 12)
+                for key, value in sorted(legal_ir_target_distribution.items())
+            },
+            "legal_ir_view_metrics": {
+                "cross_entropy_excess_loss": (
+                    introspection.legal_ir_view_cross_entropy_excess_loss
+                ),
+                "cross_entropy_loss": introspection.legal_ir_view_cross_entropy_loss,
+                "entropy_loss": introspection.legal_ir_view_entropy_loss,
+            },
+            "ranked_guidance_features": ranked_features,
+            "sample_id": sample.sample_id,
+            "sample_memory_used": use_sample_memory,
+            "synthesis_focus": list(introspection.synthesis_focus),
+            "top_embedding_contributions": [
+                contribution.to_dict()
+                for contribution in introspection.top_embedding_contributions
+            ],
+            "top_family_contributions": [
+                contribution.to_dict()
+                for contribution in introspection.top_family_contributions
+            ],
+        }
+
+    def _rank_guidance_features(
+        self,
+        features: Sequence[str],
+        *,
+        top_k: int,
+    ) -> List[Dict[str, Any]]:
+        scored: List[Dict[str, Any]] = []
+        for feature in _unique_preserve_order(str(feature) for feature in features):
+            embedding_weight_norm = _vector_norm(
+                self.state.feature_embedding_weights.get(feature, [])
+            )
+            family_logit_magnitude = _max_abs_mapping(
+                self.state.feature_family_logits.get(feature, {})
+            )
+            legal_ir_view_logit_magnitude = _max_abs_mapping(
+                self.state.feature_legal_ir_view_logits.get(feature, {})
+            )
+            score = (
+                embedding_weight_norm
+                + family_logit_magnitude
+                + legal_ir_view_logit_magnitude
+            )
+            if score <= 0.0 and not self._is_core_modal_feature_key(feature):
+                continue
+            scored.append(
+                {
+                    "embedding_weight_norm": round(embedding_weight_norm, 12),
+                    "family_logit_magnitude": round(family_logit_magnitude, 12),
+                    "feature": feature,
+                    "legal_ir_view_logit_magnitude": round(
+                        legal_ir_view_logit_magnitude,
+                        12,
+                    ),
+                    "score": round(score, 12),
+                }
+            )
+        scored.sort(key=lambda item: (float(item["score"]), item["feature"]), reverse=True)
+        return scored[:top_k] if top_k else scored
 
     def codex_call_decision(
         self,
@@ -2841,6 +3071,13 @@ class AdaptiveModalAutoencoder:
                 ("family_logits", "decoded_embedding", "legal_ir_view_logits"),
             ),
         )
+        head_learning_rate_scales = {
+            "family_logits": 1.0,
+            "decoded_embedding": 0.5,
+            "legal_ir_view_logits": 0.5,
+            "combined": 0.35,
+        }
+        line_search_multipliers = (1.0, 0.5, 0.25, 0.125)
 
         for epoch in range(1, max(0, int(epochs)) + 1):
             epoch_before_state = self.state.copy()
@@ -2853,61 +3090,74 @@ class AdaptiveModalAutoencoder:
             )
 
             for update_name, update_targets in candidate_updates:
-                self.state = epoch_before_state.copy()
-                for sample in update_samples:
-                    if "family_logits" in update_targets:
-                        self._nudge_family_logits(
-                            sample,
-                            learning_rate=learning_rate,
-                            update_sample_memory=False,
-                        )
-                    if "decoded_embedding" in update_targets:
-                        self._nudge_decoded_embedding(
-                            sample,
-                            learning_rate=learning_rate,
-                            update_sample_memory=False,
-                        )
-                    if "legal_ir_view_logits" in update_targets:
-                        self._nudge_legal_ir_view_logits(
-                            sample,
-                            learning_rate=learning_rate,
-                            update_sample_memory=False,
-                        )
-                self._regularize_feature_state(l2_regularization)
-                after = self.evaluate(target_samples, **evaluation_kwargs)
-                regressions = _evaluation_regressions_for_training(
-                    best,
-                    after,
-                    max_cosine_regression=max_cosine_regression,
-                    max_reconstruction_regression=max_reconstruction_regression,
-                    max_cross_entropy_regression=max_cross_entropy_regression,
-                    max_legal_ir_loss_regression=max_legal_ir_loss_regression,
-                )
-                objective_delta = (
-                    _evaluation_objective_for_training(
+                head_scale = head_learning_rate_scales.get(update_name, 1.0)
+                attempt_reports: List[Dict[str, Any]] = []
+                best_attempt: Optional[tuple[float, Dict[str, Any], AutoencoderEvaluation, ModalAutoencoderTrainingState]] = None
+                best_improved_attempt: Optional[
+                    tuple[float, Dict[str, Any], AutoencoderEvaluation, ModalAutoencoderTrainingState]
+                ] = None
+                for line_search_multiplier in line_search_multipliers:
+                    effective_learning_rate = (
+                        learning_rate * head_scale * float(line_search_multiplier)
+                    )
+                    self.state = epoch_before_state.copy()
+                    for sample in update_samples:
+                        if "family_logits" in update_targets:
+                            self._nudge_family_logits(
+                                sample,
+                                learning_rate=effective_learning_rate,
+                                update_sample_memory=False,
+                            )
+                        if "decoded_embedding" in update_targets:
+                            self._nudge_decoded_embedding(
+                                sample,
+                                learning_rate=effective_learning_rate,
+                                update_sample_memory=False,
+                            )
+                        if "legal_ir_view_logits" in update_targets:
+                            self._nudge_legal_ir_view_logits(
+                                sample,
+                                learning_rate=effective_learning_rate,
+                                update_sample_memory=False,
+                            )
+                    self._regularize_feature_state(l2_regularization)
+                    after = self.evaluate(target_samples, **evaluation_kwargs)
+                    regressions = _evaluation_regressions_for_training(
                         best,
-                        **objective_weights,
-                    )
-                    - _evaluation_objective_for_training(
                         after,
-                        **objective_weights,
+                        max_cosine_regression=max_cosine_regression,
+                        max_reconstruction_regression=max_reconstruction_regression,
+                        max_cross_entropy_regression=max_cross_entropy_regression,
+                        max_legal_ir_loss_regression=max_legal_ir_loss_regression,
                     )
-                )
-                improved = _evaluation_improved_for_training(
-                    best,
-                    after,
-                    max_cosine_regression=max_cosine_regression,
-                    max_reconstruction_regression=max_reconstruction_regression,
-                    max_cross_entropy_regression=max_cross_entropy_regression,
-                    max_legal_ir_loss_regression=max_legal_ir_loss_regression,
-                )
-                candidate_reports.append(
-                    {
+                    objective_delta = (
+                        _evaluation_objective_for_training(
+                            best,
+                            **objective_weights,
+                        )
+                        - _evaluation_objective_for_training(
+                            after,
+                            **objective_weights,
+                        )
+                    )
+                    improved = _evaluation_improved_for_training(
+                        best,
+                        after,
+                        max_cosine_regression=max_cosine_regression,
+                        max_reconstruction_regression=max_reconstruction_regression,
+                        max_cross_entropy_regression=max_cross_entropy_regression,
+                        max_legal_ir_loss_regression=max_legal_ir_loss_regression,
+                    )
+                    attempt_report = {
                         "accepted": improved,
                         "cross_entropy_delta": best.cross_entropy_loss
                         - after.cross_entropy_loss,
+                        "cross_entropy_excess_delta": best.cross_entropy_excess_loss
+                        - after.cross_entropy_excess_loss,
+                        "effective_learning_rate": effective_learning_rate,
                         "hard_example_count": len(update_samples),
                         "hard_example_fraction": hard_fraction,
+                        "head_learning_rate_scale": head_scale,
                         "cosine_similarity_delta": (
                             after.embedding_cosine_similarity
                             - best.embedding_cosine_similarity
@@ -2926,20 +3176,59 @@ class AdaptiveModalAutoencoder:
                                 )
                             )
                         ),
+                        "legal_ir_view_cross_entropy_excess_delta": (
+                            float(
+                                best.legal_ir_losses.get(
+                                    "legal_ir_view_cross_entropy_excess_loss",
+                                    0.0,
+                                )
+                            )
+                            - float(
+                                after.legal_ir_losses.get(
+                                    "legal_ir_view_cross_entropy_excess_loss",
+                                    0.0,
+                                )
+                            )
+                        ),
+                        "line_search_multiplier": float(line_search_multiplier),
                         "objective_delta": objective_delta,
                         "pareto_regressions": regressions,
                         "reconstruction_delta": best.reconstruction_loss
                         - after.reconstruction_loss,
                         "update": update_name,
                     }
+                    attempt_reports.append(attempt_report)
+                    attempt_tuple = (
+                        objective_delta,
+                        attempt_report,
+                        after,
+                        self.state.copy(),
+                    )
+                    if best_attempt is None or objective_delta > best_attempt[0]:
+                        best_attempt = attempt_tuple
+                    if improved and (
+                        best_improved_attempt is None
+                        or objective_delta > best_improved_attempt[0]
+                    ):
+                        best_improved_attempt = attempt_tuple
+                chosen = best_improved_attempt or best_attempt
+                if chosen is None:
+                    continue
+                objective_delta, candidate_report, after, candidate_state = chosen
+                candidate_reports.append(
+                    {
+                        **candidate_report,
+                        "attempt_reports": attempt_reports,
+                        "line_search_attempt_count": len(attempt_reports),
+                    }
                 )
-                if improved and (
+                if candidate_report["accepted"] and (
                     selected is None or objective_delta > selected[0]
                 ):
                     selected = (
                         objective_delta,
                         after,
-                        self.state.copy(),
+                        candidate_state,
                         update_name,
                     )
 
@@ -3038,9 +3327,10 @@ class AdaptiveModalAutoencoder:
         reconstruction = mse_loss(sample.embedding_vector, decoded)
         cosine_gap = max(0.0, 1.0 - cosine_similarity(sample.embedding_vector, decoded))
         distribution = self._family_distribution(sample, use_sample_memory=False)
-        cross_entropy = cross_entropy_distribution_loss(
+        target_family_distribution = _observed_family_distribution(sample)
+        cross_entropy = cross_entropy_excess_distribution_loss(
             distribution,
-            _observed_family_distribution(sample),
+            target_family_distribution,
         )
 
         legal_ir_loss = 0.0
@@ -3051,7 +3341,10 @@ class AdaptiveModalAutoencoder:
                 target_distribution,
                 use_sample_memory=False,
             )
-            legal_ir_loss = cross_entropy_distribution_loss(predicted, target_distribution)
+            legal_ir_loss = cross_entropy_excess_distribution_loss(
+                predicted,
+                target_distribution,
+            )
 
         return (
             (ce_weight * cross_entropy)
@@ -20634,16 +20927,25 @@ def _codex_gate_local_loss(
     prover_signal: Optional[ProverCompilationSignal],
 ) -> float:
     cosine_gap = max(0.0, 1.0 - float(metrics.get("embedding_cosine_similarity", 0.0)))
+    cross_entropy_component = float(
+        metrics.get("cross_entropy_excess_loss", metrics.get("cross_entropy_loss", 0.0))
+    )
     loss = (
         gate.cosine_weight * cosine_gap
-        + gate.cross_entropy_weight * max(0.0, float(metrics.get("cross_entropy_loss", 0.0)))
+        + gate.cross_entropy_weight * max(0.0, cross_entropy_component)
         + gate.reconstruction_weight * max(0.0, float(metrics.get("reconstruction_loss", 0.0)))
         + gate.frame_weight * max(0.0, float(metrics.get("frame_ranking_loss", 0.0)))
         + gate.symbolic_weight * max(0.0, float(metrics.get("symbolic_validity_penalty", 0.0)))
     )
+    legal_ir_view_component = float(
+        metrics.get(
+            "legal_ir_view_cross_entropy_excess_loss",
+            metrics.get("legal_ir_view_cross_entropy_loss", 0.0),
+        )
+    )
     legal_ir_loss = (
         max(0.0, float(metrics.get("legal_ir_multiview_total_loss", 0.0)))
-        + max(0.0, float(metrics.get("legal_ir_view_cross_entropy_loss", 0.0)))
+        + max(0.0, legal_ir_view_component)
         + max(0.0, float(metrics.get("legal_ir_multiview_proof_failure_ratio", 0.0)))
         + max(0.0, float(metrics.get("legal_ir_multiview_graph_failure_penalty", 0.0)))
     )
@@ -20761,8 +21063,19 @@ def _evaluation_objective_for_training(
     legal_ir: float = 1.0,
 ) -> float:
     """Return a scalar objective where lower is better for guarded training."""
+    cross_entropy_component = getattr(
+        evaluation,
+        "cross_entropy_excess_loss",
+        evaluation.cross_entropy_loss,
+    )
+    if (
+        cross_entropy_component <= 0.0
+        and evaluation.cross_entropy_loss > 0.0
+        and getattr(evaluation, "cross_entropy_entropy_loss", 0.0) <= 0.0
+    ):
+        cross_entropy_component = evaluation.cross_entropy_loss
     return (
-        (max(0.0, float(cross_entropy)) * evaluation.cross_entropy_loss)
+        (max(0.0, float(cross_entropy)) * cross_entropy_component)
         + (max(0.0, float(reconstruction)) * evaluation.reconstruction_loss)
         + (
             max(0.0, float(cosine_gap))
@@ -20789,7 +21102,11 @@ def _legal_ir_objective_component(losses: Mapping[str, float]) -> float:
         return 0.0
     component = 0.0
     component += min(1.0, values.get("legal_ir_multiview_total_loss", 0.0))
-    component += min(1.0, values.get("legal_ir_view_cross_entropy_loss", 0.0) / 3.0)
+    view_ce_component = values.get(
+        "legal_ir_view_cross_entropy_excess_loss",
+        values.get("legal_ir_view_cross_entropy_loss", 0.0),
+    )
+    component += min(1.0, view_ce_component / 3.0)
     component += min(1.0, values.get("legal_ir_multiview_proof_failure_ratio", 0.0))
     component += min(1.0, values.get("legal_ir_multiview_graph_failure_penalty", 0.0))
     detail = 0.0
@@ -20797,6 +21114,8 @@ def _legal_ir_objective_component(losses: Mapping[str, float]) -> float:
         if name in {
             "legal_ir_multiview_total_loss",
             "legal_ir_view_cross_entropy_loss",
+            "legal_ir_view_entropy_loss",
+            "legal_ir_view_cross_entropy_excess_loss",
             "legal_ir_multiview_proof_failure_ratio",
             "legal_ir_multiview_graph_failure_penalty",
         }:
@@ -20825,9 +21144,23 @@ def _evaluation_regressions_for_training(
     reconstruction_regression = after.reconstruction_loss - before.reconstruction_loss
     if reconstruction_regression > max(0.0, float(max_reconstruction_regression)):
         regressions["reconstruction_loss"] = reconstruction_regression
-    cross_entropy_regression = after.cross_entropy_loss - before.cross_entropy_loss
+    before_ce = getattr(before, "cross_entropy_excess_loss", before.cross_entropy_loss)
+    after_ce = getattr(after, "cross_entropy_excess_loss", after.cross_entropy_loss)
+    if (
+        before_ce <= 0.0
+        and before.cross_entropy_loss > 0.0
+        and getattr(before, "cross_entropy_entropy_loss", 0.0) <= 0.0
+    ):
+        before_ce = before.cross_entropy_loss
+    if (
+        after_ce <= 0.0
+        and after.cross_entropy_loss > 0.0
+        and getattr(after, "cross_entropy_entropy_loss", 0.0) <= 0.0
+    ):
+        after_ce = after.cross_entropy_loss
+    cross_entropy_regression = after_ce - before_ce
     if cross_entropy_regression > max(0.0, float(max_cross_entropy_regression)):
-        regressions["cross_entropy_loss"] = cross_entropy_regression
+        regressions["cross_entropy_excess_loss"] = cross_entropy_regression
     for name in sorted(set(before.legal_ir_losses) | set(after.legal_ir_losses)):
         regression = (
             float(after.legal_ir_losses.get(name, 0.0))
@@ -20840,6 +21173,12 @@ def _evaluation_regressions_for_training(
 
 def _vector_norm(values: Sequence[float]) -> float:
     return math.sqrt(sum(float(value) * float(value) for value in values))
+
+
+def _max_abs_mapping(values: Mapping[str, float]) -> float:
+    if not values:
+        return 0.0
+    return max(abs(float(value)) for value in values.values())
 
 
 def frame_ranking_loss(sample: LegalSample) -> float:
@@ -20875,8 +21214,10 @@ __all__ = [
     "ProverCompilationSignal",
     "cosine_loss",
     "cosine_similarity",
+    "cross_entropy_excess_distribution_loss",
     "cross_entropy_distribution_loss",
     "cross_entropy_loss",
+    "distribution_entropy_loss",
     "evaluate_modal_prover_compilation",
     "frame_ranking_loss",
     "mse_loss",

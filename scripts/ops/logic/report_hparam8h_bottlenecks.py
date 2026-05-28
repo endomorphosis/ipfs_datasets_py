@@ -101,9 +101,19 @@ def _learned_ir_from_metric_block(block: Mapping[str, Any]) -> dict[str, Any]:
         legal_ir_losses.get("legal_ir_view_cross_entropy_loss"),
         math.nan,
     )
+    view_entropy = _finite_float(
+        legal_ir_losses.get("legal_ir_view_entropy_loss"),
+        math.nan,
+    )
+    view_excess = _finite_float(
+        legal_ir_losses.get("legal_ir_view_cross_entropy_excess_loss"),
+        math.nan,
+    )
     return {
         "target_count": int(block.get("legal_ir_target_count", 0) or 0),
         "view_cross_entropy_loss": view_ce,
+        "view_entropy_loss": view_entropy,
+        "view_cross_entropy_excess_loss": view_excess,
         "view_cosine_similarity": _distribution_cosine_similarity(
             predicted_distribution,
             target_distribution,
@@ -436,6 +446,9 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
             summary.get("latest_validation_reconstruction"),
             latest_autoencoder_validation.get("reconstruction_loss"),
         ),
+        "latest_validation_ce_excess": _first_metric(
+            latest_autoencoder_validation.get("cross_entropy_excess_loss"),
+        ),
         "latest_validation_ce_delta": _first_metric(
             summary.get("latest_validation_ce_delta"),
             latest_cycle.get("validation_cross_entropy_delta"),
@@ -459,6 +472,9 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
         "latest_learned_ir_view_ce": _first_metric(
             summary.get("latest_learned_ir_view_ce"),
             latest_learned_ir_validation.get("view_cross_entropy_loss"),
+        ),
+        "latest_learned_ir_view_ce_excess": _first_metric(
+            latest_learned_ir_validation.get("view_cross_entropy_excess_loss"),
         ),
         "latest_learned_ir_view_cosine": _first_metric(
             summary.get("latest_learned_ir_view_cosine"),
@@ -653,6 +669,7 @@ def _print_report(report: dict[str, Any]) -> None:
             "  autoencoder_validation="
             f"best_ce={_summary_metric(final, 'best_validation_ce')} "
             f"latest_ce={_summary_metric(final, 'latest_validation_ce')} "
+            f"latest_ce_excess={_summary_metric(final, 'latest_validation_ce_excess')} "
             f"ce_delta={_summary_metric(final, 'latest_validation_ce_delta')} "
             f"best_cos={_summary_metric(final, 'best_validation_cosine')} "
             f"latest_cos={_summary_metric(final, 'latest_validation_cosine')} "
@@ -670,6 +687,7 @@ def _print_report(report: dict[str, Any]) -> None:
             "  learned_ir_view="
             f"best_ce={_summary_metric(final, 'best_validation_learned_ir_view_ce')} "
             f"latest_ce={_summary_metric(final, 'latest_learned_ir_view_ce')} "
+            f"latest_ce_excess={_summary_metric(final, 'latest_learned_ir_view_ce_excess')} "
             f"best_cos={_summary_metric(final, 'best_validation_learned_ir_view_cosine')} "
             f"latest_cos={_summary_metric(final, 'latest_learned_ir_view_cosine')}"
         )

@@ -18,8 +18,10 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder impor
     ProverCompilationSignal,
     cosine_loss,
     cosine_similarity,
+    cross_entropy_excess_distribution_loss,
     cross_entropy_distribution_loss,
     cross_entropy_loss,
+    distribution_entropy_loss,
     evaluate_modal_prover_compilation,
     frame_ranking_loss,
     mse_loss,
@@ -46,6 +48,13 @@ def test_embedding_loss_helpers() -> None:
         {"deontic": 0.25, "temporal": 0.75},
         {"deontic": 0.5, "temporal": 0.5},
     ) == pytest.approx(0.5 * -math.log(0.25) + 0.5 * -math.log(0.75))
+    assert distribution_entropy_loss({"deontic": 0.5, "temporal": 0.5}) == pytest.approx(
+        math.log(2.0)
+    )
+    assert cross_entropy_excess_distribution_loss(
+        {"deontic": 0.5, "temporal": 0.5},
+        {"deontic": 0.5, "temporal": 0.5},
+    ) == pytest.approx(0.0)
 
 
 def test_loss_helpers_reject_vector_length_mismatch() -> None:
@@ -68,6 +77,8 @@ def test_modal_autoencoder_baseline_reports_fixture_losses() -> None:
     assert evaluation.cosine_loss == pytest.approx(0.0)
     assert evaluation.reconstruction_loss == pytest.approx(0.0)
     assert evaluation.cross_entropy_loss >= 0.0
+    assert evaluation.cross_entropy_entropy_loss >= 0.0
+    assert evaluation.cross_entropy_excess_loss >= 0.0
     assert evaluation.frame_ranking_loss == pytest.approx(0.0)
     assert evaluation.symbolic_validity_penalty == pytest.approx(0.0)
     assert sample.sample_id in evaluation.decoded_embeddings
@@ -102,16 +113,21 @@ def test_autoencoder_evaluation_carries_legal_ir_training_target_losses() -> Non
     assert evaluation.legal_ir_losses["legal_ir_multiview_total_loss"] >= 0.0
     assert evaluation.legal_ir_losses["legal_ir_multiview_view_coverage_loss"] == 0.0
     assert evaluation.legal_ir_losses["legal_ir_view_cross_entropy_loss"] > 0.0
+    assert evaluation.legal_ir_losses["legal_ir_view_entropy_loss"] >= 0.0
+    assert evaluation.legal_ir_losses["legal_ir_view_cross_entropy_excess_loss"] >= 0.0
     assert evaluation.legal_ir_target_hashes[sample.sample_id] == target.document.canonical_hash()
     assert evaluation.legal_ir_view_distribution
     assert evaluation.legal_ir_predicted_view_distribution
     payload = evaluation.to_dict()
     assert payload["legal_ir_losses"]["legal_ir_multiview_total_loss"] >= 0.0
     assert payload["legal_ir_losses"]["legal_ir_view_cross_entropy_loss"] > 0.0
+    assert payload["cross_entropy_excess_loss"] >= 0.0
     assert payload["legal_ir_predicted_view_distribution"]
     introspection = autoencoder.introspect_sample(sample).to_dict()
     assert introspection["legal_ir_losses"]["legal_ir_multiview_total_loss"] >= 0.0
     assert introspection["legal_ir_view_cross_entropy_loss"] > 0.0
+    assert introspection["legal_ir_view_entropy_loss"] >= 0.0
+    assert introspection["legal_ir_view_cross_entropy_excess_loss"] >= 0.0
 
 
 def test_legal_ir_target_cache_key_uses_source_text_not_citation_identity() -> None:
@@ -377,6 +393,10 @@ def test_generalizable_projection_supports_objective_weights_and_hard_example_fr
     assert report["objective_weights"]["legal_ir"] == pytest.approx(1.5)
     assert report["epoch_reports"][0]["hard_example_count"] == 1
     assert report["epoch_reports"][0]["hard_example_fraction"] == pytest.approx(0.5)
+    first_candidate = report["epoch_reports"][0]["candidate_reports"][0]
+    assert first_candidate["line_search_attempt_count"] >= 2
+    assert first_candidate["attempt_reports"]
+    assert first_candidate["effective_learning_rate"] <= 0.5
 
 
 def test_generalizable_projection_acceptance_rejects_cosine_regression() -> None:
@@ -1314,6 +1334,47 @@ def test_compiler_contract_features_compose_source_and_ir_contract() -> None:
     assert (
         "legal-ir:compiler-contract:ir-contract:deontic:d:p:clause:a0:cno:eno"
         in legal_ir_features
+    )
+
+
+def test_compiler_guidance_exports_learned_contract_representations() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency may issue the license before final action.",
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        feature_family_logit_scale=2.0,
+        max_compiler_contract_features=128,
+        max_decompiler_surface_template_features=128,
+        max_cycle_consistency_features=128,
+        max_logic_view_contract_features=128,
+    )
+    autoencoder._nudge_family_logits(
+        sample,
+        learning_rate=0.25,
+        update_sample_memory=False,
+    )
+
+    guidance = autoencoder.compiler_guidance_for_sample(sample, top_k=12)
+
+    assert guidance["sample_id"] == sample.sample_id
+    assert guidance["sample_memory_used"] is False
+    assert guidance["family_distribution"]
+    assert guidance["decoded_embedding"]
+    assert guidance["feature_groups"]["compiler_contract"]
+    assert guidance["feature_groups"]["decompiler_surface_template"]
+    assert guidance["feature_groups"]["cycle_consistency"]
+    assert guidance["feature_groups"]["logic_view_contract"]
+    assert "cross_entropy_excess_loss" in guidance["legal_ir_view_metrics"]
+    assert guidance["ranked_guidance_features"]
+    assert any(
+        feature.startswith("compiler-contract:")
+        for feature in guidance["feature_groups"]["compiler_contract"]
+    )
+    assert any(
+        feature.startswith("decompiler-surface:")
+        for feature in guidance["feature_groups"]["decompiler_surface_template"]
     )
 
 

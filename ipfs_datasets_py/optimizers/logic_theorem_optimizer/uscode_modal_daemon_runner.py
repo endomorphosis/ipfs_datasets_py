@@ -665,6 +665,14 @@ def metric_block(evaluation) -> Dict[str, Any]:
     block = {
         "cosine_loss": round(evaluation.cosine_loss, 9),
         "cosine_similarity": round(evaluation.embedding_cosine_similarity, 9),
+        "cross_entropy_entropy_loss": round(
+            float(getattr(evaluation, "cross_entropy_entropy_loss", 0.0)),
+            9,
+        ),
+        "cross_entropy_excess_loss": round(
+            float(getattr(evaluation, "cross_entropy_excess_loss", 0.0)),
+            9,
+        ),
         "cross_entropy_loss": round(evaluation.cross_entropy_loss, 9),
         "reconstruction_loss": round(evaluation.reconstruction_loss, 9),
         "sample_count": evaluation.sample_count,
@@ -751,6 +759,12 @@ def learned_ir_metric_block(evaluation) -> Dict[str, Any]:
     view_ce = legal_ir_losses.get("legal_ir_view_cross_entropy_loss")
     if view_ce is not None:
         block["view_cross_entropy_loss"] = round(float(view_ce), 9)
+    view_entropy = legal_ir_losses.get("legal_ir_view_entropy_loss")
+    if view_entropy is not None:
+        block["view_entropy_loss"] = round(float(view_entropy), 9)
+    view_excess = legal_ir_losses.get("legal_ir_view_cross_entropy_excess_loss")
+    if view_excess is not None:
+        block["view_cross_entropy_excess_loss"] = round(float(view_excess), 9)
     if legal_ir_losses:
         block["losses"] = {
             name: round(float(value), 9)
@@ -4742,7 +4756,7 @@ def _cycle_learning_rate(args: argparse.Namespace, summary: Mapping[str, Any]) -
     )
     scale = 1.0
     if plateau_streak >= 3:
-        scale *= 1.1
+        scale *= 0.85 ** float(plateau_streak - 2)
     if cosine_regression_streak > 0:
         scale *= 0.85 ** float(cosine_regression_streak)
     lr = base * scale

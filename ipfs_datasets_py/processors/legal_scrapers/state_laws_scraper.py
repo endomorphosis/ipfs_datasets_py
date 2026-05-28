@@ -66,6 +66,10 @@ _QUALITY_LEGAL_METADATA_RE = re.compile(
     r"\b(?:authority|implementing|history|rule history|relevant notices|relevant mar notices|references|referenced by|rule version|active version|effective|statutory authority|citation(?:s)?)\b",
     re.IGNORECASE,
 )
+_CHECKPOINT_STAGE_LABEL_RE = re.compile(r'"stage_label"\s*:\s*"([^"]*)"')
+_CHECKPOINT_UPDATED_AT_STR_RE = re.compile(r'"updated_at"\s*:\s*"([^"]*)"')
+_CHECKPOINT_UPDATED_AT_NUM_RE = re.compile(r'"updated_at"\s*:\s*([0-9]+(?:\.[0-9]+)?)')
+_CHECKPOINT_STATUTES_COUNT_RE = re.compile(r'"statutes_count"\s*:\s*(-?[0-9]+)')
 
 
 def _env_float(name: str, default: float) -> float:
@@ -185,38 +189,8 @@ def _partial_checkpoint_progress_signature(payload: Mapping[str, Any]) -> tuple[
     return counters
 
 
-def _read_partial_checkpoint_activity(state_code: str) -> Dict[str, Any]:
-    path = _partial_checkpoint_path_for_state(state_code)
-    if path is None or not path.exists():
-        return {"path": str(path) if path else "", "updated_ts": 0.0, "signature": tuple()}
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
-        try:
-            mtime = float(path.stat().st_mtime)
-        except Exception:
-            mtime = 0.0
-        return {"path": str(path), "updated_ts": mtime, "signature": tuple()}
-    updated_ts = _checkpoint_updated_at_to_timestamp(payload.get("updated_at"))
-    if updated_ts <= 0.0:
-        try:
-            updated_ts = float(path.stat().st_mtime)
-        except Exception:
-            updated_ts = 0.0
-    signature: tuple[Any, ...] = tuple()
-    if isinstance(payload, Mapping):
-        signature = _partial_checkpoint_progress_signature(payload)
-    return {"path": str(path), "updated_ts": updated_ts, "signature": signature}
-
-
-def _derive_timeout_diagnostics_from_checkpoint_payload(
-    *,
-    payload: Dict[str, Any],
-    error_msg: str,
-    statutes_count: int,
-) -> Dict[str, Any]:
+def _checkpoint_progress_signal(payload: Mapping[str, Any]) -> Dict[str, Any]:
     progress = payload.get("progress") if isinstance(payload.get("progress"), dict) else {}
-    timed_out = "timed out" in str(error_msg or "").lower()
 
     scanned_candidates = _safe_int(
         payload.get("scanned_candidates", progress.get("scanned_candidates")),
@@ -302,17 +276,259 @@ def _derive_timeout_diagnostics_from_checkpoint_payload(
     if selected is not None:
         signal_kind, scanned, discovered = selected
 
+    signal_found = bool(signal_kind)
+    work_remaining: Optional[bool] = None
+    if signal_found:
+        work_remaining = int(scanned) < int(discovered)
+
+    return {
+        "signal_found": signal_found,
+        "signal_kind": signal_kind,
+        "work_remaining": work_remaining,
+        "progress_scanned": int(scanned) if signal_found else None,
+        "progress_discovered": int(discovered) if signal_found else None,
+        "checkpoint_counters": {
+            "scanned_candidates": scanned_candidates,
+            "discovered_candidates": discovered_candidates,
+            "scanned_history_urls": scanned_history_urls,
+            "discovered_history_urls": discovered_history_urls,
+            "scanned_laws": scanned_laws,
+            "discovered_laws": discovered_laws,
+            "titles_scanned": titles_scanned,
+            "discovered_titles": discovered_titles,
+            "chapters_scanned": chapters_scanned,
+            "discovered_chapters": discovered_chapters,
+            "sections_scanned": sections_scanned,
+            "discovered_sections": discovered_sections,
+            "codes_completed": codes_completed,
+            "codes_total": codes_total,
+        },
+    }
+
+
+def _checkpoint_stage_is_complete(stage_label: Any) -> bool:
+    stage = str(stage_label or "").strip().lower()
+    return bool(
+        stage == "complete"
+        or stage.endswith(":complete")
+        or stage.startswith("scrape_all:complete")
+    )
+
+
+def _checkpoint_parse_max_bytes() -> int:
+    raw = str(os.getenv("STATE_SCRAPER_TIMEOUT_CHECKPOINT_PARSE_MAX_BYTES", "") or "").strip()
+    try:
+        value = int(raw) if raw else (8 * 1024 * 1024)
+    except Exception:
+        value = 8 * 1024 * 1024
+    return max(64 * 1024, min(128 * 1024 * 1024, value))
+
+
+def _checkpoint_metadata_read_bytes() -> int:
+    raw = str(os.getenv("STATE_SCRAPER_TIMEOUT_CHECKPOINT_META_READ_BYTES", "") or "").strip()
+    try:
+        value = int(raw) if raw else (256 * 1024)
+    except Exception:
+        value = 256 * 1024
+    return max(8 * 1024, min(8 * 1024 * 1024, value))
+
+
+def _quick_read_partial_checkpoint_meta(path: Path) -> Dict[str, Any]:
+    try:
+        stat_obj = path.stat()
+        size = int(stat_obj.st_size)
+        mtime = float(stat_obj.st_mtime)
+    except Exception:
+        return {
+            "size_bytes": 0,
+            "mtime_ts": 0.0,
+            "stage_label": "",
+            "stage_complete": False,
+            "statutes_count": 0,
+            "updated_ts": 0.0,
+        }
+
+    read_bytes = min(size, _checkpoint_metadata_read_bytes())
+    text = ""
+    if read_bytes > 0:
+        try:
+            with path.open("rb") as handle:
+                text = handle.read(read_bytes).decode("utf-8", errors="ignore")
+        except Exception:
+            text = ""
+
+    stage_label = ""
+    statutes_count = 0
+    updated_ts = 0.0
+
+    if text:
+        stage_match = _CHECKPOINT_STAGE_LABEL_RE.search(text)
+        if stage_match:
+            stage_label = str(stage_match.group(1) or "").strip()
+
+        count_match = _CHECKPOINT_STATUTES_COUNT_RE.search(text)
+        if count_match:
+            statutes_count = _safe_int(count_match.group(1), 0)
+
+        updated_str_match = _CHECKPOINT_UPDATED_AT_STR_RE.search(text)
+        if updated_str_match:
+            updated_ts = _checkpoint_updated_at_to_timestamp(updated_str_match.group(1))
+        if updated_ts <= 0.0:
+            updated_num_match = _CHECKPOINT_UPDATED_AT_NUM_RE.search(text)
+            if updated_num_match:
+                updated_ts = _checkpoint_updated_at_to_timestamp(updated_num_match.group(1))
+
+    if updated_ts <= 0.0:
+        updated_ts = mtime
+
+    return {
+        "size_bytes": size,
+        "mtime_ts": mtime,
+        "stage_label": stage_label,
+        "stage_complete": _checkpoint_stage_is_complete(stage_label),
+        "statutes_count": max(0, int(statutes_count)),
+        "updated_ts": float(updated_ts),
+    }
+
+
+def _read_partial_checkpoint_activity(state_code: str) -> Dict[str, Any]:
+    path = _partial_checkpoint_path_for_state(state_code)
+    if path is None or not path.exists():
+        return {
+            "path": str(path) if path else "",
+            "updated_ts": 0.0,
+            "signature": tuple(),
+            "signature_mode": "none",
+            "stage_label": "",
+            "stage_complete": False,
+            "signal_found": False,
+            "signal_kind": "",
+            "work_remaining": None,
+            "progress_scanned": None,
+            "progress_discovered": None,
+            "statutes_count": 0,
+            "size_bytes": 0,
+            "mtime_ts": 0.0,
+        }
+
+    quick_meta = _quick_read_partial_checkpoint_meta(path)
+    size_bytes = _safe_int(quick_meta.get("size_bytes"), 0)
+    parse_payload = size_bytes > 0 and size_bytes <= _checkpoint_parse_max_bytes()
+    if not parse_payload:
+        signature = (
+            _safe_int(quick_meta.get("statutes_count"), 0),
+            _safe_int(quick_meta.get("size_bytes"), 0),
+            str(quick_meta.get("stage_label") or ""),
+        )
+        return {
+            "path": str(path),
+            "updated_ts": float(quick_meta.get("updated_ts") or 0.0),
+            "signature": signature,
+            "signature_mode": "meta",
+            "stage_label": str(quick_meta.get("stage_label") or ""),
+            "stage_complete": bool(quick_meta.get("stage_complete")),
+            "signal_found": False,
+            "signal_kind": "",
+            "work_remaining": None,
+            "progress_scanned": None,
+            "progress_discovered": None,
+            "statutes_count": _safe_int(quick_meta.get("statutes_count"), 0),
+            "size_bytes": _safe_int(quick_meta.get("size_bytes"), 0),
+            "mtime_ts": float(quick_meta.get("mtime_ts") or 0.0),
+        }
+
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        signature = (
+            _safe_int(quick_meta.get("statutes_count"), 0),
+            _safe_int(quick_meta.get("size_bytes"), 0),
+            str(quick_meta.get("stage_label") or ""),
+        )
+        return {
+            "path": str(path),
+            "updated_ts": float(quick_meta.get("updated_ts") or 0.0),
+            "signature": signature,
+            "signature_mode": "meta",
+            "stage_label": str(quick_meta.get("stage_label") or ""),
+            "stage_complete": bool(quick_meta.get("stage_complete")),
+            "signal_found": False,
+            "signal_kind": "",
+            "work_remaining": None,
+            "progress_scanned": None,
+            "progress_discovered": None,
+            "statutes_count": _safe_int(quick_meta.get("statutes_count"), 0),
+            "size_bytes": _safe_int(quick_meta.get("size_bytes"), 0),
+            "mtime_ts": float(quick_meta.get("mtime_ts") or 0.0),
+        }
+
+    updated_ts = _checkpoint_updated_at_to_timestamp(payload.get("updated_at"))
+    if updated_ts <= 0.0:
+        updated_ts = float(quick_meta.get("mtime_ts") or 0.0)
+    signature: tuple[Any, ...] = tuple()
+    stage_label = str(quick_meta.get("stage_label") or "")
+    stage_complete = bool(quick_meta.get("stage_complete"))
+    statutes_count = _safe_int(quick_meta.get("statutes_count"), 0)
+    signal = {
+        "signal_found": False,
+        "signal_kind": "",
+        "work_remaining": None,
+        "progress_scanned": None,
+        "progress_discovered": None,
+    }
+    if isinstance(payload, Mapping):
+        signature = _partial_checkpoint_progress_signature(payload)
+        stage_label = str(payload.get("stage_label") or stage_label).strip()
+        stage_complete = _checkpoint_stage_is_complete(stage_label)
+        statutes_count = _safe_int(payload.get("statutes_count"), statutes_count)
+        signal = _checkpoint_progress_signal(payload)
+    if not signal.get("signal_found") and stage_complete and statutes_count > 0:
+        signal = {
+            "signal_found": True,
+            "signal_kind": "checkpoint_stage_complete",
+            "work_remaining": False,
+            "progress_scanned": statutes_count,
+            "progress_discovered": statutes_count,
+        }
+    return {
+        "path": str(path),
+        "updated_ts": updated_ts,
+        "signature": signature,
+        "signature_mode": "full",
+        "stage_label": stage_label,
+        "stage_complete": stage_complete,
+        "signal_found": bool(signal.get("signal_found")),
+        "signal_kind": str(signal.get("signal_kind") or ""),
+        "work_remaining": signal.get("work_remaining"),
+        "progress_scanned": signal.get("progress_scanned"),
+        "progress_discovered": signal.get("progress_discovered"),
+        "statutes_count": max(0, int(statutes_count)),
+        "size_bytes": _safe_int(quick_meta.get("size_bytes"), 0),
+        "mtime_ts": float(quick_meta.get("mtime_ts") or 0.0),
+    }
+
+
+def _derive_timeout_diagnostics_from_checkpoint_payload(
+    *,
+    payload: Dict[str, Any],
+    error_msg: str,
+    statutes_count: int,
+) -> Dict[str, Any]:
+    timed_out = "timed out" in str(error_msg or "").lower()
+    signal = _checkpoint_progress_signal(payload)
+    signal_found = bool(signal.get("signal_found"))
+    signal_kind = str(signal.get("signal_kind") or "")
+    work_remaining = signal.get("work_remaining")
+    scanned = signal.get("progress_scanned")
+    discovered = signal.get("progress_discovered")
+
     stage_label = str(payload.get("stage_label") or "").strip().lower()
     stage_indicates_complete = bool(
         stage_label == "complete"
         or stage_label.endswith(":complete")
         or stage_label.startswith("scrape_all:complete")
     )
-    signal_found = bool(signal_kind)
-    work_remaining: Optional[bool] = None
-    if signal_found:
-        work_remaining = int(scanned) < int(discovered)
-    elif stage_indicates_complete and int(statutes_count) > 0:
+    if (not signal_found) and stage_indicates_complete and int(statutes_count) > 0:
         signal_kind = "checkpoint_stage_complete"
         signal_found = True
         scanned = int(statutes_count)
@@ -349,22 +565,7 @@ def _derive_timeout_diagnostics_from_checkpoint_payload(
         "coverage_ratio": coverage_ratio,
         "checkpoint_updated_at": _coerce_checkpoint_updated_at(payload.get("updated_at")),
         "checkpoint_stage_label": str(payload.get("stage_label") or "").strip(),
-        "checkpoint_counters": {
-            "scanned_candidates": scanned_candidates,
-            "discovered_candidates": discovered_candidates,
-            "scanned_history_urls": scanned_history_urls,
-            "discovered_history_urls": discovered_history_urls,
-            "scanned_laws": scanned_laws,
-            "discovered_laws": discovered_laws,
-            "titles_scanned": titles_scanned,
-            "discovered_titles": discovered_titles,
-            "chapters_scanned": chapters_scanned,
-            "discovered_chapters": discovered_chapters,
-            "sections_scanned": sections_scanned,
-            "discovered_sections": discovered_sections,
-            "codes_completed": codes_completed,
-            "codes_total": codes_total,
-        },
+        "checkpoint_counters": dict(signal.get("checkpoint_counters") or {}),
     }
 
 
@@ -1397,6 +1598,71 @@ def _load_partial_checkpoint_state_result(state_code: str, error_msg: str) -> Op
     }
 
 
+def _load_partial_checkpoint_state_success_result(
+    state_code: str,
+    *,
+    reason: str = "checkpoint_complete_promotion",
+    require_no_remaining_work: bool = False,
+) -> Optional[Dict[str, Any]]:
+    state = str(state_code or "").strip().upper()
+    if not state:
+        return None
+    synthetic_error = f"{reason}: promote checkpoint-complete state"
+    recovered = _load_partial_checkpoint_state_result(state, synthetic_error)
+    if recovered is None:
+        return None
+    statutes_count = _safe_int(recovered.get("statutes_count"), 0)
+    if statutes_count <= 0:
+        return None
+
+    promoted = dict(recovered)
+    promoted["error"] = None
+    promoted["zero_statute"] = False
+    warnings = [str(item) for item in list(promoted.get("warnings") or []) if str(item) != synthetic_error]
+    warnings.append(f"{state} promoted from checkpoint-complete state")
+    promoted["warnings"] = warnings
+
+    diagnostics = dict(promoted.get("timeout_diagnostics") or {})
+    if require_no_remaining_work and diagnostics.get("work_remaining") is not False:
+        return None
+    diagnostics["timed_out"] = False
+    diagnostics["classification"] = "checkpoint_complete_promotion"
+    diagnostics["work_remaining"] = False
+    diagnostics.setdefault("signal_found", True)
+    diagnostics.setdefault("signal_kind", "checkpoint_stage_complete")
+    promoted["timeout_diagnostics"] = diagnostics
+
+    statute_data = dict(promoted.get("statute_data") or {})
+    statute_data["partial_checkpoint_error"] = ""
+    statute_data["timeout_diagnostics"] = diagnostics
+    promoted["statute_data"] = statute_data
+    return promoted
+
+
+def _promote_timeout_checkpoint_result_if_no_remaining_work(
+    state_code: str,
+    checkpoint_result: Optional[Dict[str, Any]],
+    *,
+    reason: str,
+) -> Optional[Dict[str, Any]]:
+    if checkpoint_result is None:
+        return None
+    diagnostics = dict(checkpoint_result.get("timeout_diagnostics") or {})
+    statutes_count = _safe_int(checkpoint_result.get("statutes_count"), 0)
+    if statutes_count <= 0:
+        return checkpoint_result
+    if diagnostics.get("work_remaining") is not False:
+        return checkpoint_result
+    promoted = _load_partial_checkpoint_state_success_result(
+        state_code,
+        reason=reason,
+        require_no_remaining_work=True,
+    )
+    if promoted is not None:
+        return promoted
+    return checkpoint_result
+
+
 async def _run_sync_scrape_on_daemon_thread(
     *,
     state_code: str,
@@ -1508,6 +1774,17 @@ async def _run_sync_scrape_on_daemon_thread(
         except Exception:
             poll_seconds = min(15.0, max(0.01, float(timeout_seconds) / 4.0))
         poll_seconds = max(0.01, min(120.0, poll_seconds))
+        checkpoint_complete_settle_raw = str(
+            os.getenv("STATE_SCRAPER_CHECKPOINT_COMPLETE_SETTLE_SECONDS", "") or ""
+        ).strip()
+        try:
+            if checkpoint_complete_settle_raw:
+                checkpoint_complete_settle_seconds = float(checkpoint_complete_settle_raw)
+            else:
+                checkpoint_complete_settle_seconds = min(180.0, max(20.0, poll_seconds * 6.0))
+        except Exception:
+            checkpoint_complete_settle_seconds = min(180.0, max(20.0, poll_seconds * 6.0))
+        checkpoint_complete_settle_seconds = max(0.05, checkpoint_complete_settle_seconds)
 
         grace_raw = str(os.getenv("STATE_SCRAPER_PROGRESS_GRACE_SECONDS", "") or "").strip()
         try:
@@ -1540,7 +1817,9 @@ async def _run_sync_scrape_on_daemon_thread(
         start_ts = time.time()
         checkpoint_activity = _read_partial_checkpoint_activity(state_code)
         last_signature = checkpoint_activity.get("signature", tuple())
+        last_signature_mode = str(checkpoint_activity.get("signature_mode") or "")
         last_progress_ts = start_ts
+        last_signature_change_ts = start_ts
         initial_checkpoint_updated_ts = float(checkpoint_activity.get("updated_ts") or 0.0)
         if initial_checkpoint_updated_ts > 0.0:
             last_progress_ts = max(last_progress_ts, initial_checkpoint_updated_ts)
@@ -1559,16 +1838,67 @@ async def _run_sync_scrape_on_daemon_thread(
 
             activity = _read_partial_checkpoint_activity(state_code)
             signature = activity.get("signature", tuple())
+            signature_mode = str(activity.get("signature_mode") or "")
+            signature_reliable = signature_mode == "full"
+            last_signature_reliable = last_signature_mode == "full"
             updated_ts = float(activity.get("updated_ts") or 0.0)
-            signature_changed = bool(signature and signature != last_signature)
+            signature_changed = bool(
+                signature_reliable
+                and signature
+                and (
+                    (not last_signature_reliable)
+                    or signature != last_signature
+                )
+            )
+            checkpoint_signal_found = bool(activity.get("signal_found"))
+            checkpoint_work_remaining = activity.get("work_remaining")
+            checkpoint_signal_complete = checkpoint_signal_found and checkpoint_work_remaining is False
             checkpoint_advanced = bool(updated_ts > initial_checkpoint_updated_ts + 1e-6)
             if signature_changed:
                 last_signature = signature
+                last_signature_mode = signature_mode
                 last_progress_ts = now_ts
-            elif checkpoint_advanced and updated_ts > last_progress_ts:
+                last_signature_change_ts = now_ts
+            elif signature_reliable and signature and not last_signature_reliable:
+                # Establish a reliable signature baseline without forcing a reset.
+                last_signature = signature
+                last_signature_mode = signature_mode
+            elif checkpoint_advanced and updated_ts > last_progress_ts and not checkpoint_signal_complete:
                 # Treat checkpoint freshness as weak progress, even if
                 # counters are unchanged.
                 last_progress_ts = updated_ts
+
+            checkpoint_stage_complete = bool(activity.get("stage_complete"))
+            checkpoint_statutes_count = _safe_int(activity.get("statutes_count"), 0)
+            if checkpoint_stage_complete or checkpoint_signal_complete:
+                if checkpoint_statutes_count <= 0:
+                    continue
+                checkpoint_age_seconds = max(0.0, now_ts - updated_ts) if updated_ts > 0 else 0.0
+                signal_stability_age_seconds = max(0.0, now_ts - last_signature_change_ts)
+                settle_age_seconds = max(checkpoint_age_seconds, signal_stability_age_seconds)
+                if settle_age_seconds >= checkpoint_complete_settle_seconds:
+                    promoted = _load_partial_checkpoint_state_success_result(
+                        state_code,
+                        reason=(
+                            "checkpoint_signal_complete_settled"
+                            if checkpoint_signal_complete and not checkpoint_stage_complete
+                            else "checkpoint_complete_settled"
+                        ),
+                        require_no_remaining_work=checkpoint_signal_complete,
+                    )
+                    if promoted is not None:
+                        diagnostics = dict(promoted.get("timeout_diagnostics") or {})
+                        diagnostics["checkpoint_complete_age_seconds"] = round(checkpoint_age_seconds, 3)
+                        diagnostics["checkpoint_signal_stability_age_seconds"] = round(
+                            signal_stability_age_seconds,
+                            3,
+                        )
+                        diagnostics["checkpoint_settle_age_seconds"] = round(settle_age_seconds, 3)
+                        promoted["timeout_diagnostics"] = diagnostics
+                        statute_data = dict(promoted.get("statute_data") or {})
+                        statute_data["timeout_diagnostics"] = diagnostics
+                        promoted["statute_data"] = statute_data
+                        return promoted
 
             elapsed = now_ts - start_ts
             since_progress = now_ts - last_progress_ts
@@ -1620,7 +1950,11 @@ async def _scrape_state_with_retries(
             logger.error(error_msg)
             checkpoint_result = _load_partial_checkpoint_state_result(state_code, error_msg)
             if checkpoint_result is not None:
-                result = checkpoint_result
+                result = _promote_timeout_checkpoint_result_if_no_remaining_work(
+                    state_code,
+                    checkpoint_result,
+                    reason="checkpoint_timeout_no_remaining_work",
+                ) or checkpoint_result
             else:
                 timeout_diagnostics = {
                     "timed_out": True,
@@ -1665,7 +1999,11 @@ async def _scrape_state_with_retries(
             logger.error(error_msg)
             checkpoint_result = _load_partial_checkpoint_state_result(state_code, error_msg)
             if checkpoint_result is not None:
-                result = checkpoint_result
+                result = _promote_timeout_checkpoint_result_if_no_remaining_work(
+                    state_code,
+                    checkpoint_result,
+                    reason="checkpoint_error_no_remaining_work",
+                ) or checkpoint_result
             else:
                 timeout_diagnostics = {
                     "timed_out": "timed out" in str(error_msg).lower(),

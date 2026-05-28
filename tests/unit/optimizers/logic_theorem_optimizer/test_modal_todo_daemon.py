@@ -2088,7 +2088,7 @@ def test_cycle_learning_rate_reacts_to_plateau_and_cosine_regression() -> None:
     )
 
     assert baseline_lr == pytest.approx(0.3)
-    assert plateau_lr > baseline_lr
+    assert plateau_lr < baseline_lr
     assert regressed_lr < plateau_lr
     assert baseline_policy["plateau_streak"] == 0
     assert plateau_policy["plateau_streak"] == 4
