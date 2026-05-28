@@ -121,6 +121,64 @@ def _learned_ir_from_metric_block(block: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
+def _projection_rejection_summary(report: Mapping[str, Any]) -> dict[str, Any]:
+    summary = report.get("rejection_summary")
+    if isinstance(summary, dict):
+        return summary
+    attempted_count = 0
+    accepted_attempt_count = 0
+    rejected_attempt_count = 0
+    regression_counts: Counter[str] = Counter()
+    best_rejected: dict[str, Any] = {}
+    for epoch in report.get("epoch_reports", []) if isinstance(report, Mapping) else []:
+        if not isinstance(epoch, Mapping):
+            continue
+        for candidate in epoch.get("candidate_reports", []):
+            if not isinstance(candidate, Mapping):
+                continue
+            attempts = candidate.get("attempt_reports")
+            if not isinstance(attempts, list):
+                attempts = [candidate]
+            for attempt in attempts:
+                if not isinstance(attempt, Mapping):
+                    continue
+                attempted_count += 1
+                if bool(attempt.get("accepted")):
+                    accepted_attempt_count += 1
+                    continue
+                rejected_attempt_count += 1
+                pareto = attempt.get("pareto_regressions")
+                if isinstance(pareto, Mapping):
+                    regression_counts.update(str(name) for name in pareto)
+                objective_delta = _finite_float(attempt.get("objective_delta"), 0.0)
+                if not best_rejected or objective_delta > _finite_float(
+                    best_rejected.get("objective_delta"),
+                    0.0,
+                ):
+                    best_rejected = {
+                        "effective_learning_rate": _finite_float(
+                            attempt.get("effective_learning_rate"),
+                            0.0,
+                        ),
+                        "line_search_multiplier": _finite_float(
+                            attempt.get("line_search_multiplier"),
+                            0.0,
+                        ),
+                        "objective_delta": objective_delta,
+                        "pareto_regressions": dict(pareto)
+                        if isinstance(pareto, Mapping)
+                        else {},
+                        "update": str(attempt.get("update") or ""),
+                    }
+    return {
+        "accepted_attempt_count": accepted_attempt_count,
+        "attempted_count": attempted_count,
+        "best_rejected_attempt": best_rejected,
+        "pareto_regression_counts": dict(regression_counts.most_common(12)),
+        "rejected_attempt_count": rejected_attempt_count,
+    }
+
+
 def _latest_cycle_event(events: list[dict[str, Any]]) -> dict[str, Any]:
     for event in reversed(events):
         if event.get("event") == "cycle":
@@ -424,6 +482,13 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
                 "failed_validation_rescue_seeded_count"
             ),
         }
+    latest_feature_projection_report = summary.get("latest_feature_projection_report")
+    if not isinstance(latest_feature_projection_report, dict):
+        latest_feature_projection_report = (
+            latest_cycle.get("feature_projection_report")
+            if isinstance(latest_cycle.get("feature_projection_report"), dict)
+            else {}
+        )
     learned_ir_history = []
     for event in events:
         if event.get("event") != "cycle":
@@ -728,12 +793,11 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
             summary.get("learning_rate_plateau_streak", 0) or 0
         ),
         "latest_feature_projection_accepted_epochs": int(
-            (
-                summary.get("latest_feature_projection_report", {})
-                if isinstance(summary.get("latest_feature_projection_report"), dict)
-                else {}
-            ).get("accepted_epochs", 0)
+            latest_feature_projection_report.get("accepted_epochs", 0)
             or 0
+        ),
+        "latest_feature_projection_rejection_summary": _projection_rejection_summary(
+            latest_feature_projection_report
         ),
         "program_synthesis_pending": int(summary.get("program_synthesis_pending", 0) or 0),
         "program_synthesis_claimed": int(summary.get("program_synthesis_claimed", 0) or 0),
@@ -852,6 +916,26 @@ def _recommendation(
                 f"Validation CE is plateaued on the latest canary cycle "
                 f"(delta={latest_ce_delta:.6g}, accepted_epochs={accepted_epochs})."
             )
+        rejection_summary = final.get("latest_feature_projection_rejection_summary")
+        if accepted_epochs == 0 and isinstance(rejection_summary, dict):
+            regression_counts = rejection_summary.get("pareto_regression_counts")
+            if isinstance(regression_counts, dict) and regression_counts:
+                top_regressions = ", ".join(
+                    f"{name}={count}"
+                    for name, count in list(regression_counts.items())[:4]
+                )
+                lines.append(
+                    "Projection guard rejected all feature updates; dominant "
+                    f"regression guards: {top_regressions}."
+                )
+            best_rejected = rejection_summary.get("best_rejected_attempt")
+            if isinstance(best_rejected, dict) and best_rejected:
+                lines.append(
+                    "Best rejected projection attempt: "
+                    f"update={best_rejected.get('update', 'n/a')} "
+                    f"lr={_finite_float(best_rejected.get('effective_learning_rate'), 0.0):.6g} "
+                    f"objective_delta={_finite_float(best_rejected.get('objective_delta'), 0.0):.6g}."
+                )
         guidance_applied = int(
             final.get("latest_compiler_ir_guided_applied_count", 0) or 0
         )
@@ -1138,6 +1222,18 @@ def _print_report(report: dict[str, Any]) -> None:
             f"accepted_epochs={final['latest_feature_projection_accepted_epochs']} "
             f"plateau_streak={final['learning_rate_plateau_streak']}"
         )
+        rejection_summary = final.get("latest_feature_projection_rejection_summary")
+        if isinstance(rejection_summary, dict) and rejection_summary.get(
+            "attempted_count"
+        ):
+            print(
+                "  projection_rejections="
+                f"attempted={rejection_summary.get('attempted_count', 0)} "
+                f"accepted_attempts={rejection_summary.get('accepted_attempt_count', 0)} "
+                f"rejected={rejection_summary.get('rejected_attempt_count', 0)} "
+                f"pareto={rejection_summary.get('pareto_regression_counts', {})} "
+                f"best_rejected={rejection_summary.get('best_rejected_attempt', {})}"
+            )
         print(f"  queue_status={final['queue']['status_counts']}")
         print(f"  pending_by_scope={final['queue']['pending_by_scope']}")
         if final["queue"].get("failed_by_scope"):

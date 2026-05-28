@@ -393,10 +393,55 @@ def test_generalizable_projection_supports_objective_weights_and_hard_example_fr
     assert report["objective_weights"]["legal_ir"] == pytest.approx(1.5)
     assert report["epoch_reports"][0]["hard_example_count"] == 1
     assert report["epoch_reports"][0]["hard_example_fraction"] == pytest.approx(0.5)
+    assert report["rejection_summary"]["attempted_count"] >= 1
     first_candidate = report["epoch_reports"][0]["candidate_reports"][0]
-    assert first_candidate["line_search_attempt_count"] >= 2
+    assert first_candidate["line_search_attempt_count"] >= 6
     assert first_candidate["attempt_reports"]
     assert first_candidate["effective_learning_rate"] <= 0.5
+
+
+def test_projection_acceptance_uses_objective_weights() -> None:
+    before = AutoencoderEvaluation(
+        sample_count=1,
+        embedding_cosine_similarity=0.9,
+        cosine_loss=0.1,
+        reconstruction_loss=0.1,
+        cross_entropy_loss=1.0,
+        frame_ranking_loss=0.0,
+        symbolic_validity_penalty=0.0,
+        decoded_embeddings={},
+    )
+    after = AutoencoderEvaluation(
+        sample_count=1,
+        embedding_cosine_similarity=0.99,
+        cosine_loss=0.01,
+        reconstruction_loss=0.01,
+        cross_entropy_loss=2.0,
+        frame_ranking_loss=0.0,
+        symbolic_validity_penalty=0.0,
+        decoded_embeddings={},
+    )
+
+    assert (
+        _evaluation_improved_for_training(
+            before,
+            after,
+            max_cross_entropy_regression=2.0,
+        )
+        is False
+    )
+    assert (
+        _evaluation_improved_for_training(
+            before,
+            after,
+            max_cross_entropy_regression=2.0,
+            cross_entropy=0.0,
+            reconstruction=1.0,
+            cosine_gap=1.0,
+            legal_ir=0.0,
+        )
+        is True
+    )
 
 
 def test_generalizable_projection_acceptance_rejects_cosine_regression() -> None:

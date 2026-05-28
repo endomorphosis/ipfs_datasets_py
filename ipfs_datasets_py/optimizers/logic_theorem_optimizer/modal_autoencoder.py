@@ -3077,7 +3077,7 @@ class AdaptiveModalAutoencoder:
             "legal_ir_view_logits": 0.5,
             "combined": 0.35,
         }
-        line_search_multipliers = (1.0, 0.5, 0.25, 0.125)
+        line_search_multipliers = (1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125)
 
         for epoch in range(1, max(0, int(epochs)) + 1):
             epoch_before_state = self.state.copy()
@@ -3147,6 +3147,7 @@ class AdaptiveModalAutoencoder:
                         max_reconstruction_regression=max_reconstruction_regression,
                         max_cross_entropy_regression=max_cross_entropy_regression,
                         max_legal_ir_loss_regression=max_legal_ir_loss_regression,
+                        **objective_weights,
                     )
                     attempt_report = {
                         "accepted": improved,
@@ -3280,6 +3281,7 @@ class AdaptiveModalAutoencoder:
             "compute_backend": self.compute_backend_metadata(),
             "epoch_reports": epoch_reports,
             "objective_weights": dict(objective_weights),
+            "rejection_summary": _projection_rejection_summary(epoch_reports),
             "sample_memory_used": False,
             "validation_sample_count": len(target_samples),
         }
@@ -21039,6 +21041,10 @@ def _evaluation_improved_for_training(
     max_reconstruction_regression: float = 0.02,
     max_cross_entropy_regression: float = 0.0,
     max_legal_ir_loss_regression: float = 0.02,
+    cross_entropy: float = 1.0,
+    reconstruction: float = 1.0,
+    cosine_gap: float = 1.0,
+    legal_ir: float = 1.0,
 ) -> bool:
     """Return true when a feature update improves total loss without regressions."""
     if _evaluation_regressions_for_training(
@@ -21051,8 +21057,20 @@ def _evaluation_improved_for_training(
     ):
         return False
     return (
-        _evaluation_objective_for_training(after)
-        < _evaluation_objective_for_training(before)
+        _evaluation_objective_for_training(
+            after,
+            cross_entropy=cross_entropy,
+            reconstruction=reconstruction,
+            cosine_gap=cosine_gap,
+            legal_ir=legal_ir,
+        )
+        < _evaluation_objective_for_training(
+            before,
+            cross_entropy=cross_entropy,
+            reconstruction=reconstruction,
+            cosine_gap=cosine_gap,
+            legal_ir=legal_ir,
+        )
     )
 
 
@@ -21171,6 +21189,87 @@ def _evaluation_regressions_for_training(
         if regression > max(0.0, float(max_legal_ir_loss_regression)):
             regressions[f"legal_ir:{name}"] = regression
     return regressions
+
+
+def _projection_rejection_summary(
+    epoch_reports: Sequence[Mapping[str, Any]],
+) -> Dict[str, Any]:
+    """Summarize why guarded projection attempts were not accepted."""
+    attempted_count = 0
+    accepted_attempt_count = 0
+    rejected_attempt_count = 0
+    regression_counts: Dict[str, int] = {}
+    best_rejected: Optional[Dict[str, Any]] = None
+    for epoch in epoch_reports:
+        candidate_reports = epoch.get("candidate_reports")
+        if not isinstance(candidate_reports, Sequence) or isinstance(
+            candidate_reports,
+            (str, bytes),
+        ):
+            continue
+        for candidate in candidate_reports:
+            if not isinstance(candidate, Mapping):
+                continue
+            attempt_reports = candidate.get("attempt_reports")
+            if not isinstance(attempt_reports, Sequence) or isinstance(
+                attempt_reports,
+                (str, bytes),
+            ):
+                attempt_reports = [candidate]
+            for attempt in attempt_reports:
+                if not isinstance(attempt, Mapping):
+                    continue
+                attempted_count += 1
+                accepted = bool(attempt.get("accepted"))
+                if accepted:
+                    accepted_attempt_count += 1
+                    continue
+                rejected_attempt_count += 1
+                pareto_regressions = attempt.get("pareto_regressions")
+                if isinstance(pareto_regressions, Mapping):
+                    for name in pareto_regressions:
+                        key = str(name)
+                        regression_counts[key] = regression_counts.get(key, 0) + 1
+                objective_delta = _float_or_zero(attempt.get("objective_delta"))
+                if best_rejected is None or objective_delta > _float_or_zero(
+                    best_rejected.get("objective_delta")
+                ):
+                    best_rejected = {
+                        "cross_entropy_delta": round(
+                            _float_or_zero(attempt.get("cross_entropy_delta")),
+                            12,
+                        ),
+                        "effective_learning_rate": round(
+                            _float_or_zero(attempt.get("effective_learning_rate")),
+                            12,
+                        ),
+                        "legal_ir_view_cross_entropy_delta": round(
+                            _float_or_zero(
+                                attempt.get("legal_ir_view_cross_entropy_delta")
+                            ),
+                            12,
+                        ),
+                        "line_search_multiplier": round(
+                            _float_or_zero(attempt.get("line_search_multiplier")),
+                            12,
+                        ),
+                        "objective_delta": round(objective_delta, 12),
+                        "pareto_regressions": dict(pareto_regressions)
+                        if isinstance(pareto_regressions, Mapping)
+                        else {},
+                        "reconstruction_delta": round(
+                            _float_or_zero(attempt.get("reconstruction_delta")),
+                            12,
+                        ),
+                        "update": str(attempt.get("update") or ""),
+                    }
+    return {
+        "accepted_attempt_count": accepted_attempt_count,
+        "attempted_count": attempted_count,
+        "best_rejected_attempt": best_rejected or {},
+        "pareto_regression_counts": dict(sorted(regression_counts.items())),
+        "rejected_attempt_count": rejected_attempt_count,
+    }
 
 
 def _vector_norm(values: Sequence[float]) -> float:
