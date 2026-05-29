@@ -1431,12 +1431,20 @@ class BaseStateScraper(ABC):
                     "User-Agent": "ipfs-datasets-state-scraper/2.0",
                     "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
                 }
+
+                def _blocking_fetch(candidate_url: str) -> tuple[int, bytes]:
+                    request = Request(candidate_url, headers=headers)
+                    with urlopen(request, timeout=max(1, int(timeout_seconds or 25))) as response:
+                        status_code = int(getattr(response, "status", 200) or 200)
+                        content = bytes(response.read() or b"")
+                    return status_code, content
+
                 for candidate_url in self._wayback_replay_candidates(fetch_url):
                     try:
-                        request = Request(candidate_url, headers=headers)
-                        with urlopen(request, timeout=max(1, int(timeout_seconds or 25))) as response:
-                            status_code = int(getattr(response, "status", 200) or 200)
-                            content = bytes(response.read() or b"")
+                        status_code, content = await asyncio.wait_for(
+                            asyncio.to_thread(_blocking_fetch, candidate_url),
+                            timeout=max(2, int(timeout_seconds or 25) + 2),
+                        )
                         if status_code != 200 or not content:
                             continue
                         self._record_fetch_event(provider="requests_direct", success=True)
@@ -1446,6 +1454,8 @@ class BaseStateScraper(ABC):
                             provider="requests_direct",
                         )
                         return content
+                    except asyncio.TimeoutError:
+                        continue
                     except Exception:
                         continue
 

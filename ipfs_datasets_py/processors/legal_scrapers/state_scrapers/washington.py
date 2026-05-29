@@ -405,7 +405,11 @@ class WashingtonScraper(BaseStateScraper):
 
         out: List[NormalizedStatute] = []
         limit = max(1, int(max_statutes)) if max_statutes is not None else None
-        concurrency = max(1, int(self._env_int("STATE_SCRAPER_WA_SECTION_CONCURRENCY", default=8)))
+        default_concurrency = 16 if self._full_corpus_enabled() else 8
+        concurrency = max(
+            1,
+            int(self._env_int("STATE_SCRAPER_WA_SECTION_CONCURRENCY", default=default_concurrency)),
+        )
         sem = asyncio.Semaphore(concurrency)
         total_sections = len(section_urls)
         seen_keys: set[str] = set()
