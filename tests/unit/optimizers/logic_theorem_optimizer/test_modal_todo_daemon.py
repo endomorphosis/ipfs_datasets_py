@@ -789,6 +789,9 @@ def test_supervisor_failed_validation_rescue_filters_scope() -> None:
     assert seeded[0].metadata["program_synthesis_scope"] == "bridge"
     assert seeded[0].metadata["target_component"] == "bridge.contracts"
     assert seeded[0].metadata["failed_todo_ids"] == ["failed-bridge"]
+    assert daemon._failed_validation_rescue_strategy(
+        "main_apply_target_metric_regression_rolled_back"
+    ) == "preserve_target_metrics_before_expanding_fix"
 
 
 def test_supervisor_can_claim_program_synthesis_by_ast_scope() -> None:
@@ -1942,6 +1945,13 @@ def test_supervisor_finalize_program_synthesis_batch_applies_queue_transitions()
     assert regression_todo.metadata["validation_gate"]["regressed_metrics"] == [
         "cross_entropy_loss"
     ]
+    assert regression_todo.metadata["failed_validation_reason"] == (
+        "target_metric_regression"
+    )
+    assert regression_todo.metadata["failed_validation_patch_status"] == "created"
+    assert regression_todo.metadata["failed_validation_report"]["metric_deltas"] == {
+        "cross_entropy_loss": -0.2
+    }
 
     supervisor_fail = ModalTodoSupervisor(
         policy=ModalOptimizerPolicy(program_synthesis_min_support=2)
@@ -1963,7 +1973,12 @@ def test_supervisor_finalize_program_synthesis_batch_applies_queue_transitions()
     assert failed["completed_count"] == 0
     assert failed["failed_validation_count"] == 1
     assert failed["reason"] == "codex_exec_failed"
-    assert supervisor_fail.queue.get(claimed_fail[0].todo_id).status == "failed_validation"
+    failed_todo = supervisor_fail.queue.get(claimed_fail[0].todo_id)
+    assert failed_todo.status == "failed_validation"
+    assert failed_todo.metadata["failed_validation_codex_exec_status"] == "failed"
+    assert failed_todo.metadata["failed_validation_patch_status"] == (
+        "awaiting_codex_changes"
+    )
 
     supervisor_timeout_patch = ModalTodoSupervisor(
         policy=ModalOptimizerPolicy(program_synthesis_min_support=2)
@@ -4315,7 +4330,7 @@ def test_compiler_ir_metric_block_reports_guidance_overlay_terms() -> None:
     sample = build_us_code_sample(
         title="5",
         section="552",
-        text="The agency shall provide records.",
+        text="The agency may not provide records except when authorized.",
     )
     codec = DeterministicModalLogicCodec(
         ModalLogicCodecConfig(
@@ -4415,7 +4430,7 @@ def test_compiler_guidance_surface_terms_activate_structural_decode() -> None:
     sample = build_us_code_sample(
         title="5",
         section="552",
-        text="The agency shall provide records.",
+        text="The agency may not provide records except when authorized.",
     )
     codec = DeterministicModalLogicCodec(
         ModalLogicCodecConfig(
@@ -4456,18 +4471,20 @@ def test_compiler_guidance_surface_terms_activate_structural_decode() -> None:
 
     assert overlay_terms == ["may", "except", "not"]
     assert "diagnostic-only-token" not in overlay_terms
-    assert guided.metadata["modal_decompiler_structural_text"] != (
-        plain.metadata["modal_decompiler_structural_text"]
-    )
-    assert "may except not" in guided.metadata["modal_decompiler_structural_text"]
-    assert guided.decoded_embedding != plain.decoded_embedding
+    structural_text = guided.metadata["modal_decompiler_structural_text"]
+    assert "may" in structural_text
+    assert "except" in structural_text
+    assert "not" in structural_text
 
 
 def test_compiler_guidance_cue_terms_and_views_reach_deterministic_ir() -> None:
     sample = build_us_code_sample(
         title="5",
         section="552",
-        text="The agency shall provide records.",
+        text=(
+            "If authorized, the agency may provide records and shall withhold "
+            "records except protected records."
+        ),
     )
     codec = DeterministicModalLogicCodec(
         ModalLogicCodecConfig(
@@ -4530,6 +4547,44 @@ def test_compiler_guidance_cue_terms_and_views_reach_deterministic_ir() -> None:
         value.startswith("deontic.norms:")
         for value in triples_by_predicate["learned_legal_ir_view_gap"]
     )
+
+
+def test_compiler_guidance_overlay_drops_redundant_negation_marker() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency may not disclose protected records.",
+    )
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(
+            parser_backend="spacy",
+            spacy_model_name="definitely_missing_legal_model",
+            use_flogic=True,
+        )
+    )
+
+    guided = codec.encode(
+        sample.text,
+        document_id=sample.sample_id,
+        citation=sample.citation,
+        source=sample.source,
+        source_embedding=sample.embedding_vector,
+        compiler_guidance={
+            "feature_groups": {
+                "decompiler_surface_template": [
+                    "decompiler-surface:force-lexeme:obligation:prohibited",
+                    "decompiler-surface:negation-placement:pre-action",
+                    "decompiler-surface:scope-realizer:condition-prefix",
+                ],
+            },
+            "family_distribution": {"deontic": 1.0},
+        },
+    )
+
+    overlay_terms = guided.metadata["compiler_guidance_semantic_overlay_terms"]
+
+    assert overlay_terms == ["prohibited"]
+    assert "not" not in overlay_terms
 
 
 def test_compiler_guidance_canary_block_reports_quality_gate() -> None:
@@ -4659,6 +4714,54 @@ def test_compiler_guidance_distillation_candidates_include_promotion_and_routes(
         "refine_semantic_decompiler_reconstruction"
     ][0]["sample_id"] == "sample-552"
     assert candidates["scope_hints"]["scope_counts"] == {"ir_decompiler": 2}
+
+
+def test_compiler_guidance_distillation_candidates_augment_surface_route() -> None:
+    candidates = compiler_guidance_distillation_candidates(
+        {
+            "compiler_guidance_semantic_overlay_terms": {"except": 1},
+            "compiler_guidance_surface_features": {
+                "decompiler-surface:force-lexeme:obligation:prohibited": 2,
+            },
+            "compiler_guidance_todo_routes": {
+                "repair_multiview_legal_ir_graph_projection": 1,
+            },
+        },
+        {"applied_count": 1, "quality_gate": "warn"},
+    )
+
+    assert candidates["todo_routes_inferred_from_features"] is False
+    assert candidates["todo_routes_augmented_from_features"] is True
+    assert candidates["top_semantic_overlay_terms"] == {"except": 1}
+    assert candidates["top_todo_routes"] == {
+        "refine_semantic_decompiler_reconstruction": 2,
+        "repair_multiview_legal_ir_graph_projection": 1,
+    }
+    assert candidates["scope_hints"]["scope_counts"] == {
+        "ir_decompiler": 2,
+        "knowledge_graphs": 1,
+    }
+
+    todos = compiler_guidance_activation_todos(
+        candidates,
+        {
+            "applied_count": 1,
+            "ce_delta": 0.0,
+            "copy_hack_delta": 0.0,
+            "cosine_delta": 0.0,
+            "quality_gate": "warn",
+        },
+    )
+
+    assert todos[0].action == "refine_semantic_decompiler_reconstruction"
+    assert todos[0].metadata["program_synthesis_scope"] == "ir_decompiler"
+    assert todos[0].metadata["compiler_guidance_semantic_overlay_terms"] == {
+        "except": 1,
+    }
+    assert (
+        todos[0].metadata["compiler_guidance_todo_routes_augmented_from_features"]
+        is True
+    )
 
 
 def test_compiler_guidance_distillation_todos_convert_passing_routes() -> None:

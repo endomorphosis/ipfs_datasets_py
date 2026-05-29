@@ -1352,6 +1352,9 @@ def compiler_guidance_distillation_candidates(
     """Build the reviewable learned-to-deterministic compiler distillation block."""
     feature_groups = guided_block.get("compiler_guidance_feature_groups")
     surface_features = guided_block.get("compiler_guidance_surface_features")
+    semantic_overlay_terms = guided_block.get(
+        "compiler_guidance_semantic_overlay_terms"
+    )
     todo_routes = guided_block.get("compiler_guidance_todo_routes")
     todo_route_examples = guided_block.get("compiler_guidance_todo_route_examples")
     top_feature_groups = _top_numeric_items(
@@ -1366,14 +1369,30 @@ def compiler_guidance_distillation_candidates(
         todo_routes if isinstance(todo_routes, Mapping) else {},
         limit=max_items,
     )
+    top_semantic_overlay_terms = _top_numeric_items(
+        semantic_overlay_terms if isinstance(semantic_overlay_terms, Mapping) else {},
+        limit=max_items,
+    )
     todo_routes_inferred_from_features = False
+    todo_routes_augmented_from_features = False
+    fallback_todo_routes = _compiler_guidance_fallback_todo_routes(
+        top_feature_groups=top_feature_groups,
+        top_surface_features=top_surface_features,
+        limit=max_items,
+    )
     if not top_todo_routes:
-        top_todo_routes = _compiler_guidance_fallback_todo_routes(
-            top_feature_groups=top_feature_groups,
-            top_surface_features=top_surface_features,
-            limit=max_items,
-        )
+        top_todo_routes = fallback_todo_routes
         todo_routes_inferred_from_features = bool(top_todo_routes)
+    elif fallback_todo_routes:
+        merged_routes = Counter(
+            {str(route): float(count) for route, count in top_todo_routes.items()}
+        )
+        for route, count in fallback_todo_routes.items():
+            before = float(merged_routes.get(str(route), 0.0))
+            merged_routes[str(route)] = max(before, float(count))
+            if before <= 0.0:
+                todo_routes_augmented_from_features = True
+        top_todo_routes = _top_numeric_items(merged_routes, limit=max_items)
     top_todo_route_examples: Dict[str, Any] = {}
     if isinstance(todo_route_examples, Mapping):
         for route in top_todo_routes:
@@ -1393,6 +1412,7 @@ def compiler_guidance_distillation_candidates(
     promotion_gate = compiler_guidance_promotion_gate(canary_block)
     has_candidates = bool(
         top_feature_groups
+        or top_semantic_overlay_terms
         or top_surface_features
         or top_todo_routes
         or scope_hints.get("scope_counts")
@@ -1404,10 +1424,12 @@ def compiler_guidance_distillation_candidates(
         "quality_gate": promotion_gate["quality_gate"],
         "recommended_mode": promotion_gate["recommended_mode"],
         "scope_hints": scope_hints,
+        "top_semantic_overlay_terms": top_semantic_overlay_terms,
         "top_feature_groups": top_feature_groups,
         "top_surface_features": top_surface_features,
         "top_todo_route_examples": top_todo_route_examples,
         "top_todo_routes": top_todo_routes,
+        "todo_routes_augmented_from_features": todo_routes_augmented_from_features,
         "todo_routes_inferred_from_features": todo_routes_inferred_from_features,
     }
 
@@ -1659,6 +1681,14 @@ def compiler_guidance_distillation_todos(
                 if isinstance(candidates.get("top_surface_features"), Mapping)
                 else {}
             ),
+            "compiler_guidance_semantic_overlay_terms": dict(
+                candidates.get("top_semantic_overlay_terms")
+                if isinstance(candidates.get("top_semantic_overlay_terms"), Mapping)
+                else {}
+            ),
+            "compiler_guidance_todo_routes_augmented_from_features": bool(
+                candidates.get("todo_routes_augmented_from_features")
+            ),
             "compiler_guidance_todo_routes_inferred_from_features": bool(
                 candidates.get("todo_routes_inferred_from_features")
             ),
@@ -1804,6 +1834,14 @@ def compiler_guidance_activation_todos(
                 candidates.get("top_surface_features")
                 if isinstance(candidates.get("top_surface_features"), Mapping)
                 else {}
+            ),
+            "compiler_guidance_semantic_overlay_terms": dict(
+                candidates.get("top_semantic_overlay_terms")
+                if isinstance(candidates.get("top_semantic_overlay_terms"), Mapping)
+                else {}
+            ),
+            "compiler_guidance_todo_routes_augmented_from_features": bool(
+                candidates.get("todo_routes_augmented_from_features")
             ),
             "compiler_guidance_todo_routes_inferred_from_features": bool(
                 candidates.get("todo_routes_inferred_from_features")

@@ -1293,16 +1293,33 @@ def _recommendation(
                 f"{scope}={count}" for scope, count in failed_scopes.items()
             )
             suffix = f" Hot failed scopes: {hot_failed}." if hot_failed else ""
+            rescued_count = int(queue.get("failed_validation_rescued_count", 0) or 0)
+            unrescued_count = int(
+                queue.get("failed_validation_unrescued_count", 0) or 0
+            )
             rescue_seeded = int(
                 final.get("latest_failed_validation_rescue_seeded_count", 0) or 0
             )
             rescue_deduped = int(
                 final.get("latest_failed_validation_rescue_deduped_count", 0) or 0
             )
-            lines.append(
-                f"{failed_count} failed-validation TODOs need rescue or retirement before "
-                f"worker utilization stats are trustworthy.{suffix}"
-            )
+            if unrescued_count > 0:
+                lines.append(
+                    f"{unrescued_count}/{failed_count} failed-validation TODOs still need "
+                    f"rescue or retirement before worker utilization stats are trustworthy."
+                    f"{suffix}"
+                )
+            elif rescued_count > 0:
+                lines.append(
+                    f"All {rescued_count} failed-validation TODOs are covered by "
+                    "existing rescue clusters; prioritize completing those rescue tasks "
+                    "instead of seeding more speculative work."
+                )
+            else:
+                lines.append(
+                    f"{failed_count} failed-validation TODOs need rescue or retirement "
+                    f"before worker utilization stats are trustworthy.{suffix}"
+                )
             if rescue_seeded > 0:
                 lines.append(
                     f"Failed-validation rescue seeded {rescue_seeded} repair TODOs "
@@ -1461,6 +1478,21 @@ def _print_report(report: dict[str, Any]) -> None:
         scope_hints = final.get("latest_compiler_ir_guidance_scope_hints")
         if isinstance(scope_hints, dict) and scope_hints.get("scope_counts"):
             print(f"  guidance_scope_hints={scope_hints['scope_counts']}")
+        distillation = final.get("latest_compiler_ir_guidance_distillation")
+        if isinstance(distillation, dict) and distillation.get("top_todo_routes"):
+            print(
+                "  guidance_distillation_top_routes="
+                f"{distillation['top_todo_routes']} "
+                "augmented_from_features="
+                f"{bool(distillation.get('todo_routes_augmented_from_features'))}"
+            )
+        if isinstance(distillation, dict) and distillation.get(
+            "top_semantic_overlay_terms"
+        ):
+            print(
+                "  guidance_distillation_overlay_terms="
+                f"{distillation['top_semantic_overlay_terms']}"
+            )
         distillation_path = final.get(
             "latest_compiler_ir_guidance_distillation_path"
         )
@@ -1509,6 +1541,16 @@ def _print_report(report: dict[str, Any]) -> None:
             )
         if final["queue"].get("failed_by_scope"):
             print(f"  failed_by_scope={final['queue']['failed_by_scope']}")
+            print(
+                "  failed_validation_rescue_coverage="
+                f"rescued={final['queue'].get('failed_validation_rescued_count', 0)} "
+                f"unrescued={final['queue'].get('failed_validation_unrescued_count', 0)} "
+                f"rescue_todos={final['queue'].get('rescue_todo_count', 0)}"
+            )
+        if final["queue"].get("failed_unrescued_by_scope"):
+            print(
+                f"  failed_unrescued_by_scope={final['queue']['failed_unrescued_by_scope']}"
+            )
         if final["queue"].get("failed_by_action"):
             print(f"  failed_by_action={final['queue']['failed_by_action']}")
         if final["queue"].get("failed_by_reason"):

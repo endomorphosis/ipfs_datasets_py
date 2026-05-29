@@ -1468,6 +1468,74 @@ _GUIDANCE_SURFACE_CUE_TERMS = {
     "prohibition": "not",
     "temporal": "when",
 }
+_GUIDANCE_SURFACE_NEGATING_FORCE_TERMS = {
+    "prohibited",
+}
+_GUIDANCE_SURFACE_SOURCE_ALIASES = {
+    "authority": {"authority", "authorized", "authorizes", "authorize"},
+    "definition": {"definition", "defined", "means", "includes"},
+    "enforce": {"enforce", "enforced", "enforcement"},
+    "except": {"except", "exception", "unless", "notwithstanding"},
+    "if": {"if", "provided", "condition", "conditions", "where"},
+    "may": {"authorized", "may", "permitted"},
+    "not": {"no", "nor", "not", "without"},
+    "prohibited": {"forbidden", "prohibit", "prohibited", "prohibits"},
+    "shall": {"must", "required", "requires", "shall"},
+    "when": {"after", "before", "during", "until", "when", "whenever", "within"},
+}
+
+
+def _normalize_guidance_surface_overlay_terms(terms: Sequence[str]) -> List[str]:
+    """Drop redundant learned surface markers that encode the same legal force."""
+    unique_terms = _unique_preserve_order(
+        _clean_non_empty_string(term).lower() for term in terms
+    )
+    if "not" in unique_terms and any(
+        term in unique_terms for term in _GUIDANCE_SURFACE_NEGATING_FORCE_TERMS
+    ):
+        unique_terms = [term for term in unique_terms if term != "not"]
+    return unique_terms
+
+
+def _guidance_surface_term_source_grounded(
+    term: str,
+    *,
+    source_tokens: set[str],
+    source_text: str,
+) -> bool:
+    aliases = _GUIDANCE_SURFACE_SOURCE_ALIASES.get(term, {term})
+    if any(alias in source_tokens for alias in aliases):
+        return True
+    if term == "prohibited" and any(
+        phrase in source_text
+        for phrase in ("may not", "shall not", "must not", "is not authorized")
+    ):
+        return True
+    return False
+
+
+def _source_grounded_guidance_surface_overlay_terms(
+    terms: Sequence[str],
+    *,
+    source_text: str,
+) -> List[str]:
+    source_rendered = _clean_non_empty_string(source_text).lower()
+    source_tokens = {
+        token.lower()
+        for token in _SLOT_FEATURE_TOKEN_RE.findall(source_rendered)
+        if any(character.isalpha() for character in token)
+    }
+    if not source_tokens:
+        return list(terms)
+    return [
+        term
+        for term in terms
+        if _guidance_surface_term_source_grounded(
+            str(term),
+            source_tokens=source_tokens,
+            source_text=source_rendered,
+        )
+    ]
 
 
 def _compiler_guidance_surface_overlay_terms(
@@ -1515,12 +1583,14 @@ def _compiler_guidance_surface_overlay_terms(
             term = _GUIDANCE_SURFACE_CUE_TERMS.get(parts[2])
             if term:
                 add(term)
-    return _unique_preserve_order(terms)[: max(0, int(limit))]
+    return _normalize_guidance_surface_overlay_terms(terms)[: max(0, int(limit))]
 
 
 def _apply_compiler_guidance_surface_overlay(
     structural_decoded_text: str,
     overlay_terms: Sequence[str],
+    *,
+    source_text: Optional[str] = None,
 ) -> str:
     """Append curated learned surface terms to the structural IR text view."""
     rendered = _clean_non_empty_string(structural_decoded_text)
@@ -1531,12 +1601,27 @@ def _apply_compiler_guidance_surface_overlay(
         for token in _SLOT_FEATURE_TOKEN_RE.findall(rendered)
         if any(character.isalpha() for character in token)
     }
+    source_rendered = _clean_non_empty_string(source_text or "").lower()
+    source_tokens = {
+        token.lower()
+        for token in _SLOT_FEATURE_TOKEN_RE.findall(source_rendered)
+        if any(character.isalpha() for character in token)
+    }
     additions = [
         term
         for term in _unique_preserve_order(
             _clean_non_empty_string(value).lower() for value in overlay_terms
         )
-        if term and term not in existing_tokens
+        if term
+        and term not in existing_tokens
+        and (
+            not source_tokens
+            or _guidance_surface_term_source_grounded(
+                term,
+                source_tokens=source_tokens,
+                source_text=source_rendered,
+            )
+        )
     ]
     if not additions:
         return rendered
@@ -1689,6 +1774,10 @@ class DeterministicModalLogicCodec:
         guidance_summary = _compiler_guidance_summary(compiler_guidance)
         guidance_surface_overlay_terms = _compiler_guidance_surface_overlay_terms(
             guidance_summary
+        )
+        guidance_surface_overlay_terms = _source_grounded_guidance_surface_overlay_terms(
+            guidance_surface_overlay_terms,
+            source_text=normalized_text,
         )
         encoding = self.encoder.encode(
             text,
@@ -1890,6 +1979,7 @@ class DeterministicModalLogicCodec:
         structural_decoded_text = _apply_compiler_guidance_surface_overlay(
             structural_decoded_text,
             guidance_surface_overlay_terms,
+            source_text=normalized_text,
         )
         decoded_embedding = _decoded_structural_feature_embedding(
             structural_decoded_text,
