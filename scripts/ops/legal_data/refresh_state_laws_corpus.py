@@ -244,6 +244,22 @@ def _completed_states_to_skip(states: Sequence[str], registry: Mapping[str, Any]
     return skipped
 
 
+def _completed_states_missing_canonical_jsonld(
+    *,
+    states: Sequence[str],
+    jsonld_dir: Path,
+) -> List[str]:
+    missing: List[str] = []
+    for state in states:
+        state_code = str(state or "").strip().upper()
+        if not state_code:
+            continue
+        state_jsonld = Path(jsonld_dir).expanduser().resolve() / f"STATE-{state_code}.jsonld"
+        if not state_jsonld.exists():
+            missing.append(state_code)
+    return missing
+
+
 def _prefill_state_results_from_registry(
     *,
     states: Sequence[str],
@@ -1100,6 +1116,15 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
         if skip_completed_states
         else []
     )
+    reopened_missing_canonical_states = _completed_states_missing_canonical_jsonld(
+        states=skipped_completed_states,
+        jsonld_dir=jsonld_dir,
+    )
+    if reopened_missing_canonical_states:
+        reopened_set = set(reopened_missing_canonical_states)
+        skipped_completed_states = [
+            state for state in skipped_completed_states if state not in reopened_set
+        ]
     states = [state for state in requested_states if state not in set(skipped_completed_states)]
     needs_hf_token = bool(args.merge_hf_existing or args.publish_to_hf or args.verify)
     hf_token = (
@@ -1115,6 +1140,8 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
         "state_count": len(states),
         "skipped_completed_states": skipped_completed_states,
         "skipped_completed_count": len(skipped_completed_states),
+        "reopened_missing_canonical_states": reopened_missing_canonical_states,
+        "reopened_missing_canonical_count": len(reopened_missing_canonical_states),
         "skip_completed_states": skip_completed_states,
         "completed_states_registry_path": str(completed_states_registry_path),
         "completed_states_baseline_path": str(completed_states_baseline_path),
