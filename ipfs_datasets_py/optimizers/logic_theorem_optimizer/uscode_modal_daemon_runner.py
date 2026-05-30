@@ -769,6 +769,23 @@ def learned_ir_metric_block(evaluation) -> Dict[str, Any]:
     view_excess = legal_ir_losses.get("legal_ir_view_cross_entropy_excess_loss")
     if view_excess is not None:
         block["view_cross_entropy_excess_loss"] = round(float(view_excess), 9)
+    family_ce = legal_ir_losses.get("legal_ir_view_family_cross_entropy_loss")
+    if family_ce is not None:
+        block["family_cross_entropy_loss"] = round(float(family_ce), 9)
+    family_ce_excess = legal_ir_losses.get(
+        "legal_ir_view_family_cross_entropy_excess_loss"
+    )
+    if family_ce_excess is not None:
+        block["family_cross_entropy_excess_loss"] = round(
+            float(family_ce_excess),
+            9,
+        )
+    family_cosine_gap = legal_ir_losses.get("legal_ir_view_family_cosine_gap_loss")
+    if family_cosine_gap is not None:
+        block["family_cosine_gap_loss"] = round(float(family_cosine_gap), 9)
+    family_gap_block = _learned_ir_family_gap_block(legal_ir_losses)
+    if family_gap_block:
+        block.update(family_gap_block)
     if legal_ir_losses:
         block["losses"] = {
             name: round(float(value), 9)
@@ -787,6 +804,76 @@ def learned_ir_metric_block(evaluation) -> Dict[str, Any]:
     return block
 
 
+def _learned_ir_family_gap_block(
+    legal_ir_losses: Mapping[str, Any],
+) -> Dict[str, Any]:
+    """Summarize worst LegalIR family gaps without averaging them away."""
+
+    ce_excess_by_family: Dict[str, float] = {}
+    cosine_gap_by_family: Dict[str, float] = {}
+    prefix = "legal_ir_view_family_"
+    for raw_name, raw_value in dict(legal_ir_losses or {}).items():
+        name = str(raw_name)
+        if not name.startswith(prefix):
+            continue
+        family_metric = name[len(prefix) :]
+        if family_metric in {
+            "cross_entropy_loss",
+            "entropy_loss",
+            "cross_entropy_excess_loss",
+            "cosine_gap_loss",
+        }:
+            continue
+        try:
+            value = float(raw_value)
+        except (TypeError, ValueError):
+            continue
+        if value != value:
+            continue
+        if family_metric.endswith("_cross_entropy_excess_loss"):
+            family = family_metric[: -len("_cross_entropy_excess_loss")]
+            ce_excess_by_family[family] = max(0.0, value)
+        elif family_metric.endswith("_cosine_gap_loss"):
+            family = family_metric[: -len("_cosine_gap_loss")]
+            cosine_gap_by_family[family] = max(0.0, value)
+
+    block: Dict[str, Any] = {}
+    if ce_excess_by_family:
+        worst_family, worst_value = max(
+            ce_excess_by_family.items(),
+            key=lambda item: (item[1], item[0]),
+        )
+        block["family_cross_entropy_excess_by_family"] = {
+            family: round(value, 9)
+            for family, value in sorted(ce_excess_by_family.items())
+        }
+        block["worst_family_cross_entropy_excess_loss"] = round(worst_value, 9)
+        block["worst_family_cross_entropy_excess_name"] = worst_family
+    if cosine_gap_by_family:
+        worst_family, worst_value = max(
+            cosine_gap_by_family.items(),
+            key=lambda item: (item[1], item[0]),
+        )
+        block["family_cosine_gap_by_family"] = {
+            family: round(value, 9)
+            for family, value in sorted(cosine_gap_by_family.items())
+        }
+        block["worst_family_cosine_gap_loss"] = round(worst_value, 9)
+        block["worst_family_cosine_gap_name"] = worst_family
+    return block
+
+
+COMPILER_GUIDANCE_CANARY_METRICS = (
+    "cross_entropy_loss",
+    "cross_entropy_excess_loss",
+    "cosine_similarity",
+    "source_copy_loss",
+    "source_copy_reward_hack_penalty",
+    "structural_text_reconstruction_loss",
+    "text_reconstruction_loss",
+)
+
+
 def compiler_ir_metric_block(
     samples: Sequence[Any],
     codec: DeterministicModalLogicCodec,
@@ -794,6 +881,7 @@ def compiler_ir_metric_block(
     autoencoder: Optional[AdaptiveModalAutoencoder] = None,
     use_autoencoder_guidance: bool = False,
     guidance_top_k: int = 16,
+    max_sample_metric_records: int = 32,
 ) -> Dict[str, Any]:
     """Aggregate deterministic compiler/IR/decompiler round-trip metrics."""
     sample_list = list(samples)
@@ -844,11 +932,13 @@ def compiler_ir_metric_block(
     guidance_frame_boost_counts: List[float] = []
     guidance_frame_changed_count = 0
     guidance_feature_groups: Counter[str] = Counter()
+    guidance_legal_ir_view_gaps: Counter[str] = Counter()
     guidance_semantic_overlay_counts: List[float] = []
     guidance_semantic_overlay_terms: Counter[str] = Counter()
     guidance_surface_features: Counter[str] = Counter()
     guidance_todo_routes: Counter[str] = Counter()
     guidance_todo_route_examples: Dict[str, List[Dict[str, str]]] = {}
+    sample_metric_records: List[Dict[str, Any]] = []
     for sample in sample_list:
         compiler_guidance = None
         if use_autoencoder_guidance and autoencoder is not None:
@@ -885,6 +975,21 @@ def compiler_ir_metric_block(
         formula_counts.append(float(len(result.modal_ir.formulas)))
         frame_candidate_counts.append(float(len(result.frame_candidates)))
         llm_call_counts.append(float(result.metadata.get("llm_call_count", 0.0)))
+        sample_record: Dict[str, Any] = {
+            "citation": str(getattr(sample, "citation", "") or ""),
+            "compiler_guidance_applied": bool(
+                result.metadata.get("compiler_guidance_applied")
+            ),
+            "compiler_guidance_legal_ir_view_gaps": [],
+            "compiler_guidance_semantic_overlay_terms": [],
+            "compiler_guidance_todo_routes": [],
+            "metrics": {
+                name: round(float(result.losses[name]), 9)
+                for name in COMPILER_GUIDANCE_CANARY_METRICS
+                if name in result.losses and result.losses.get(name) is not None
+            },
+            "sample_id": str(getattr(sample, "sample_id", "") or ""),
+        }
         if result.metadata.get("compiler_guidance_applied"):
             guidance_applied_count += 1
             guidance_frame_boost_counts.append(
@@ -908,6 +1013,9 @@ def compiler_ir_metric_block(
                 for value in overlay_terms:
                     if str(value):
                         guidance_semantic_overlay_terms[str(value)] += 1
+                sample_record["compiler_guidance_semantic_overlay_terms"] = [
+                    str(value) for value in overlay_terms if str(value)
+                ]
             if (
                 result.metadata.get("compiler_guidance_selected_frame_before")
                 != result.metadata.get("compiler_guidance_selected_frame_after")
@@ -916,6 +1024,19 @@ def compiler_ir_metric_block(
             slot_texts = decoded_modal_phrase_slot_text_map(result.decoded_modal_text)
             for value in slot_texts.get("compiler_guidance_feature_group", []):
                 guidance_feature_groups[str(value)] += 1
+            sample_view_gaps = [
+                str(value)
+                for value in slot_texts.get(
+                    "compiler_guidance_legal_ir_view_gap_direction",
+                    [],
+                )
+                if str(value)
+            ]
+            sample_record["compiler_guidance_legal_ir_view_gaps"] = list(
+                dict.fromkeys(sample_view_gaps)
+            )
+            for value in sample_view_gaps:
+                guidance_legal_ir_view_gaps[value] += 1
             for value in slot_texts.get(
                 "compiler_guidance_decompiler_surface_template_feature",
                 [],
@@ -926,6 +1047,9 @@ def compiler_ir_metric_block(
                 for value in slot_texts.get("compiler_guidance_todo_route", [])
                 if str(value)
             ]
+            sample_record["compiler_guidance_todo_routes"] = list(
+                dict.fromkeys(sample_todo_routes)
+            )
             for value in sample_todo_routes:
                 guidance_todo_routes[value] += 1
             for route in dict.fromkeys(sample_todo_routes):
@@ -958,6 +1082,8 @@ def compiler_ir_metric_block(
                         "text_preview": text_preview,
                     }
                 )
+        if len(sample_metric_records) < max(0, int(max_sample_metric_records)):
+            sample_metric_records.append(sample_record)
 
     block: Dict[str, Any] = {
         "autoencoder_guidance_enabled": bool(use_autoencoder_guidance),
@@ -1004,6 +1130,10 @@ def compiler_ir_metric_block(
         block["compiler_guidance_feature_groups"] = dict(
             guidance_feature_groups.most_common(12)
         )
+    if guidance_legal_ir_view_gaps:
+        block["compiler_guidance_legal_ir_view_gaps"] = dict(
+            guidance_legal_ir_view_gaps.most_common(12)
+        )
     if guidance_surface_features:
         block["compiler_guidance_surface_features"] = dict(
             guidance_surface_features.most_common(12)
@@ -1017,6 +1147,8 @@ def compiler_ir_metric_block(
             for route, _ in guidance_todo_routes.most_common(12)
             if guidance_todo_route_examples.get(route)
         }
+    if sample_metric_records:
+        block["sample_metric_records"] = sample_metric_records
     if "modal_span_coverage_loss" in block:
         block["modal_span_coverage"] = round(
             1.0 - float(block["modal_span_coverage_loss"]),
@@ -1043,6 +1175,267 @@ def _metric_value(block: Mapping[str, Any], name: str, default: float = 1.0e12) 
     if value != value:
         return default
     return value
+
+
+def _record_metric_value(
+    record: Mapping[str, Any],
+    name: str,
+    default: float = 1.0e12,
+) -> float:
+    metrics = record.get("metrics")
+    if not isinstance(metrics, Mapping):
+        return default
+    try:
+        value = float(metrics.get(name, default))
+    except (TypeError, ValueError):
+        return default
+    if value != value:
+        return default
+    return value
+
+
+def _sample_metric_records_by_id(
+    block: Mapping[str, Any],
+) -> Dict[str, Mapping[str, Any]]:
+    records = block.get("sample_metric_records")
+    if not isinstance(records, Sequence) or isinstance(records, (str, bytes)):
+        return {}
+    keyed: Dict[str, Mapping[str, Any]] = {}
+    for record in records:
+        if not isinstance(record, Mapping):
+            continue
+        sample_id = str(record.get("sample_id") or "").strip()
+        citation = str(record.get("citation") or "").strip()
+        key = sample_id or citation
+        if key:
+            keyed[key] = record
+    return keyed
+
+
+def _guidance_count_mapping(value: Any) -> Dict[str, float]:
+    if not isinstance(value, Mapping):
+        return {}
+    counts: Dict[str, float] = {}
+    for raw_key, raw_value in value.items():
+        key = str(raw_key or "").strip()
+        if not key:
+            continue
+        try:
+            count = float(raw_value)
+        except (TypeError, ValueError):
+            continue
+        if count > 0.0 and count == count:
+            counts[key] = count
+    return counts
+
+
+def _guidance_record_items(record: Mapping[str, Any], key: str) -> List[str]:
+    values = record.get(key)
+    if not isinstance(values, Sequence) or isinstance(values, (str, bytes)):
+        return []
+    return list(dict.fromkeys(str(value) for value in values if str(value)))
+
+
+def _record_canary_deltas(
+    plain_record: Mapping[str, Any],
+    guided_record: Mapping[str, Any],
+) -> Dict[str, float]:
+    plain_ce = _record_metric_value(plain_record, "cross_entropy_loss")
+    guided_ce = _record_metric_value(guided_record, "cross_entropy_loss")
+    plain_ce_excess = _record_metric_value(plain_record, "cross_entropy_excess_loss")
+    guided_ce_excess = _record_metric_value(guided_record, "cross_entropy_excess_loss")
+    plain_cosine = _record_metric_value(plain_record, "cosine_similarity", -1.0)
+    guided_cosine = _record_metric_value(guided_record, "cosine_similarity", -1.0)
+    plain_copy_hack = _record_metric_value(
+        plain_record,
+        "source_copy_reward_hack_penalty",
+    )
+    guided_copy_hack = _record_metric_value(
+        guided_record,
+        "source_copy_reward_hack_penalty",
+    )
+    plain_source_copy = _record_metric_value(plain_record, "source_copy_loss")
+    guided_source_copy = _record_metric_value(guided_record, "source_copy_loss")
+    return {
+        "ce_delta": plain_ce - guided_ce,
+        "ce_excess_delta": plain_ce_excess - guided_ce_excess,
+        "copy_hack_delta": plain_copy_hack - guided_copy_hack,
+        "cosine_delta": guided_cosine - plain_cosine,
+        "source_copy_delta": plain_source_copy - guided_source_copy,
+    }
+
+
+def _finalize_guidance_attribution(
+    stats: Mapping[str, Dict[str, float]],
+    *,
+    threshold: float,
+    limit: int = 12,
+) -> Dict[str, Dict[str, Any]]:
+    rows: List[tuple[str, Dict[str, Any]]] = []
+    for key, values in stats.items():
+        count = max(1.0, float(values.get("count", 0.0) or 0.0))
+        row = {
+            "ce_delta": round(float(values.get("ce_delta", 0.0)) / count, 9),
+            "ce_excess_delta": round(
+                float(values.get("ce_excess_delta", 0.0)) / count,
+                9,
+            ),
+            "copy_hack_delta": round(
+                float(values.get("copy_hack_delta", 0.0)) / count,
+                9,
+            ),
+            "cosine_delta": round(
+                float(values.get("cosine_delta", 0.0)) / count,
+                9,
+            ),
+            "count": int(count) if count.is_integer() else round(count, 9),
+            "source_copy_delta": round(
+                float(values.get("source_copy_delta", 0.0)) / count,
+                9,
+            ),
+        }
+        core = (row["ce_delta"], row["copy_hack_delta"], row["cosine_delta"])
+        if any(value < -threshold for value in core):
+            gate = "fail"
+        elif any(value > threshold for value in core):
+            gate = "pass"
+        else:
+            gate = "warn"
+        row["quality_gate"] = gate
+        row["objective_delta"] = round(
+            float(row["ce_delta"])
+            + float(row["copy_hack_delta"])
+            + float(row["cosine_delta"]),
+            9,
+        )
+        rows.append((str(key), row))
+    rows.sort(
+        key=lambda item: (
+            -float(item[1].get("objective_delta", 0.0)),
+            -float(item[1].get("count", 0.0)),
+            item[0],
+        )
+    )
+    return {key: row for key, row in rows[: max(0, int(limit))]}
+
+
+def _compiler_guidance_canary_attribution(
+    deterministic_block: Mapping[str, Any],
+    guided_block: Mapping[str, Any],
+    canary_block: Mapping[str, Any],
+    *,
+    threshold: float,
+) -> Dict[str, Any]:
+    plain_records = _sample_metric_records_by_id(deterministic_block)
+    guided_records = _sample_metric_records_by_id(guided_block)
+    gap_stats: Dict[str, Dict[str, float]] = {}
+    term_stats: Dict[str, Dict[str, float]] = {}
+    route_stats: Dict[str, Dict[str, float]] = {}
+    matched_count = 0
+    for key, guided_record in guided_records.items():
+        if not guided_record.get("compiler_guidance_applied"):
+            continue
+        plain_record = plain_records.get(key)
+        if not plain_record:
+            continue
+        deltas = _record_canary_deltas(plain_record, guided_record)
+        matched_count += 1
+        for item_key, stats in (
+            (
+                "compiler_guidance_semantic_overlay_terms",
+                term_stats,
+            ),
+            ("compiler_guidance_legal_ir_view_gaps", gap_stats),
+            ("compiler_guidance_todo_routes", route_stats),
+        ):
+            for item in _guidance_record_items(guided_record, item_key):
+                bucket = stats.setdefault(item, {"count": 0.0})
+                bucket["count"] = float(bucket.get("count", 0.0)) + 1.0
+                for delta_name, delta_value in deltas.items():
+                    bucket[delta_name] = float(bucket.get(delta_name, 0.0)) + float(
+                        delta_value
+                    )
+
+    basis = "sample_records" if matched_count > 0 else "aggregate_counts"
+    if matched_count <= 0:
+        aggregate_deltas = {
+            name: float(canary_block.get(name, 0.0) or 0.0)
+            for name in (
+                "ce_delta",
+                "ce_excess_delta",
+                "copy_hack_delta",
+                "cosine_delta",
+                "source_copy_delta",
+            )
+        }
+        for mapping_name, stats in (
+            ("compiler_guidance_semantic_overlay_terms", term_stats),
+            ("compiler_guidance_legal_ir_view_gaps", gap_stats),
+            ("compiler_guidance_todo_routes", route_stats),
+        ):
+            for item, count in _guidance_count_mapping(
+                guided_block.get(mapping_name)
+            ).items():
+                bucket = stats.setdefault(item, {"count": 0.0})
+                bucket["count"] = float(bucket.get("count", 0.0)) + count
+                for delta_name, delta_value in aggregate_deltas.items():
+                    bucket[delta_name] = float(bucket.get(delta_name, 0.0)) + (
+                        float(delta_value) * count
+                    )
+
+    terms = _finalize_guidance_attribution(
+        term_stats,
+        threshold=threshold,
+    )
+    routes = _finalize_guidance_attribution(
+        route_stats,
+        threshold=threshold,
+    )
+    gaps = _finalize_guidance_attribution(
+        gap_stats,
+        threshold=threshold,
+    )
+    return {
+        "basis": basis,
+        "has_attribution": bool(gaps or terms or routes),
+        "legal_ir_view_gaps": gaps,
+        "matched_sample_count": matched_count,
+        "semantic_overlay_terms": terms,
+        "todo_routes": routes,
+    }
+
+
+def _guidance_attribution_summary(attribution: Mapping[str, Any]) -> Dict[str, Any]:
+    """Compact pass/warn/fail buckets for TODO prompts and reports."""
+    if not isinstance(attribution, Mapping):
+        return {}
+    summary: Dict[str, Any] = {}
+    for source_key, prefix in (
+        ("legal_ir_view_gaps", "legal_ir_view_gaps"),
+        ("semantic_overlay_terms", "semantic_overlay_terms"),
+        ("todo_routes", "todo_routes"),
+    ):
+        rows = attribution.get(source_key)
+        if not isinstance(rows, Mapping):
+            continue
+        gates: Dict[str, List[str]] = {"fail": [], "pass": [], "warn": []}
+        for key, row in rows.items():
+            if not isinstance(row, Mapping):
+                continue
+            gate = str(row.get("quality_gate") or "warn")
+            if gate not in gates:
+                gate = "warn"
+            gates[gate].append(str(key))
+        for gate, values in gates.items():
+            if values:
+                summary[f"{gate}_{prefix}"] = values
+    if attribution.get("basis"):
+        summary["basis"] = str(attribution.get("basis"))
+    if attribution.get("matched_sample_count") is not None:
+        summary["matched_sample_count"] = int(
+            attribution.get("matched_sample_count") or 0
+        )
+    return summary
 
 
 def compiler_guidance_canary_block(
@@ -1098,7 +1491,7 @@ def compiler_guidance_canary_block(
         quality_gate = "pass"
     else:
         quality_gate = "warn"
-    return {
+    block = {
         "applied_count": applied_count,
         "ce_delta": round(deltas["ce_delta"], 9),
         "ce_excess_delta": round(deltas["ce_excess_delta"], 9),
@@ -1119,6 +1512,15 @@ def compiler_guidance_canary_block(
         "source_copy_delta": round(deltas["source_copy_delta"], 9),
         "threshold": threshold,
     }
+    attribution = _compiler_guidance_canary_attribution(
+        deterministic_block,
+        guided_block,
+        block,
+        threshold=threshold,
+    )
+    if attribution.get("has_attribution"):
+        block["attribution"] = attribution
+    return block
 
 
 GUIDANCE_ROUTE_TARGET_OVERRIDES = {
@@ -1198,11 +1600,18 @@ def _top_numeric_items(
 def _compiler_guidance_fallback_todo_routes(
     *,
     top_feature_groups: Mapping[str, Any],
+    top_legal_ir_view_gaps: Optional[Mapping[str, Any]] = None,
     top_surface_features: Mapping[str, Any],
     limit: int = 8,
 ) -> Dict[str, float]:
     """Infer deterministic repair routes when guidance has features but no route."""
     route_counts: Counter[str] = Counter()
+    for route, count in _compiler_guidance_legal_ir_view_gap_todo_routes(
+        top_legal_ir_view_gaps or {},
+        limit=limit,
+    ).items():
+        route_counts[str(route)] += float(count)
+
     surface_total = sum(
         float(value)
         for value in top_surface_features.values()
@@ -1226,6 +1635,62 @@ def _compiler_guidance_fallback_todo_routes(
     if compiler_count > 0.0 and not route_counts:
         route_counts["refine_modal_family_cue_rules"] += compiler_count
     return _top_numeric_items(route_counts, limit=limit)
+
+
+def _compiler_guidance_legal_ir_view_gap_todo_routes(
+    top_legal_ir_view_gaps: Mapping[str, Any],
+    *,
+    limit: int = 8,
+) -> Dict[str, float]:
+    """Route signed learned LegalIR view gaps to concrete compiler scopes."""
+    route_counts: Counter[str] = Counter()
+    for raw_gap, raw_count in _top_numeric_items(
+        top_legal_ir_view_gaps,
+        limit=32,
+    ).items():
+        gap = str(raw_gap or "").strip()
+        if not gap:
+            continue
+        view, _, direction = gap.partition(":")
+        route = _compiler_guidance_route_for_legal_ir_view_gap(
+            view,
+            direction=direction,
+        )
+        if route:
+            route_counts[route] += float(raw_count)
+    return _top_numeric_items(route_counts, limit=limit)
+
+
+def _compiler_guidance_route_for_legal_ir_view_gap(
+    view: str,
+    *,
+    direction: str = "",
+) -> str:
+    normalized_view = _normalized_guidance_route(view)
+    normalized_direction = _normalized_guidance_route(direction)
+    if not normalized_view:
+        return ""
+    if "deontic" in normalized_view or "norm" in normalized_view:
+        return "repair_deontic_bridge_quality_gate"
+    if "tdfol" in normalized_view or "fol" in normalized_view:
+        return "repair_tdfol_bridge_parse"
+    if "cec" in normalized_view or "dcec" in normalized_view:
+        return "repair_cec_dcec_bridge"
+    if "zkp" in normalized_view or "circuit" in normalized_view:
+        return "repair_zkp_attestation_bridge"
+    if "external" in normalized_view or "prover" in normalized_view:
+        return "repair_multiview_legal_ir_prover_gate"
+    if (
+        "knowledge_graph" in normalized_view
+        or "neo4j" in normalized_view
+        or normalized_view.endswith("_kg")
+    ):
+        return "repair_multiview_legal_ir_graph_projection"
+    if "frame_logic" in normalized_view or "flogic" in normalized_view:
+        return "repair_flogic_ontology_constraints"
+    if normalized_direction == "underrepresented":
+        return "repair_multiview_legal_ir_view_coverage"
+    return "repair_multiview_legal_ir_loss"
 
 
 def compiler_guidance_route_scope(route: str) -> Dict[str, Any]:
@@ -1268,7 +1733,26 @@ def compiler_guidance_scope_hints(
 ) -> Dict[str, Any]:
     """Summarize learned guidance routes as Codex worker rebalance hints."""
     todo_routes = guided_block.get("compiler_guidance_todo_routes")
-    if not isinstance(todo_routes, Mapping):
+    if not isinstance(todo_routes, Mapping) or not todo_routes:
+        feature_groups = guided_block.get("compiler_guidance_feature_groups")
+        surface_features = guided_block.get("compiler_guidance_surface_features")
+        legal_ir_view_gaps = guided_block.get("compiler_guidance_legal_ir_view_gaps")
+        todo_routes = _compiler_guidance_fallback_todo_routes(
+            top_feature_groups=_top_numeric_items(
+                feature_groups if isinstance(feature_groups, Mapping) else {},
+                limit=max_scopes,
+            ),
+            top_legal_ir_view_gaps=_top_numeric_items(
+                legal_ir_view_gaps if isinstance(legal_ir_view_gaps, Mapping) else {},
+                limit=max_scopes,
+            ),
+            top_surface_features=_top_numeric_items(
+                surface_features if isinstance(surface_features, Mapping) else {},
+                limit=max_scopes,
+            ),
+            limit=max_scopes,
+        )
+    if not isinstance(todo_routes, Mapping) or not todo_routes:
         return {
             "recommended_parallel_scopes": [],
             "route_scope_map": {},
@@ -1352,6 +1836,7 @@ def compiler_guidance_distillation_candidates(
     """Build the reviewable learned-to-deterministic compiler distillation block."""
     feature_groups = guided_block.get("compiler_guidance_feature_groups")
     surface_features = guided_block.get("compiler_guidance_surface_features")
+    legal_ir_view_gaps = guided_block.get("compiler_guidance_legal_ir_view_gaps")
     semantic_overlay_terms = guided_block.get(
         "compiler_guidance_semantic_overlay_terms"
     )
@@ -1363,6 +1848,10 @@ def compiler_guidance_distillation_candidates(
     )
     top_surface_features = _top_numeric_items(
         surface_features if isinstance(surface_features, Mapping) else {},
+        limit=max_items,
+    )
+    top_legal_ir_view_gaps = _top_numeric_items(
+        legal_ir_view_gaps if isinstance(legal_ir_view_gaps, Mapping) else {},
         limit=max_items,
     )
     top_todo_routes = _top_numeric_items(
@@ -1377,6 +1866,7 @@ def compiler_guidance_distillation_candidates(
     todo_routes_augmented_from_features = False
     fallback_todo_routes = _compiler_guidance_fallback_todo_routes(
         top_feature_groups=top_feature_groups,
+        top_legal_ir_view_gaps=top_legal_ir_view_gaps,
         top_surface_features=top_surface_features,
         limit=max_items,
     )
@@ -1409,9 +1899,18 @@ def compiler_guidance_distillation_candidates(
         },
         max_scopes=max_items,
     )
+    guidance_attribution = (
+        dict(canary_block.get("attribution"))
+        if isinstance(canary_block.get("attribution"), Mapping)
+        else {}
+    )
+    guidance_attribution_summary = _guidance_attribution_summary(
+        guidance_attribution
+    )
     promotion_gate = compiler_guidance_promotion_gate(canary_block)
     has_candidates = bool(
         top_feature_groups
+        or top_legal_ir_view_gaps
         or top_semantic_overlay_terms
         or top_surface_features
         or top_todo_routes
@@ -1423,9 +1922,12 @@ def compiler_guidance_distillation_candidates(
         "promotion_block_reason": promotion_gate["promotion_block_reason"],
         "quality_gate": promotion_gate["quality_gate"],
         "recommended_mode": promotion_gate["recommended_mode"],
+        "guidance_attribution": guidance_attribution,
+        "guidance_attribution_summary": guidance_attribution_summary,
         "scope_hints": scope_hints,
         "top_semantic_overlay_terms": top_semantic_overlay_terms,
         "top_feature_groups": top_feature_groups,
+        "top_legal_ir_view_gaps": top_legal_ir_view_gaps,
         "top_surface_features": top_surface_features,
         "top_todo_route_examples": top_todo_route_examples,
         "top_todo_routes": top_todo_routes,
@@ -1676,6 +2178,21 @@ def compiler_guidance_distillation_todos(
             "compiler_guidance_distillation_count": count,
             "compiler_guidance_quality_gate": candidates.get("quality_gate", ""),
             "compiler_guidance_route": action,
+            "compiler_guidance_attribution": dict(
+                candidates.get("guidance_attribution")
+                if isinstance(candidates.get("guidance_attribution"), Mapping)
+                else {}
+            ),
+            "compiler_guidance_attribution_summary": dict(
+                candidates.get("guidance_attribution_summary")
+                if isinstance(candidates.get("guidance_attribution_summary"), Mapping)
+                else {}
+            ),
+            "compiler_guidance_legal_ir_view_gaps": dict(
+                candidates.get("top_legal_ir_view_gaps")
+                if isinstance(candidates.get("top_legal_ir_view_gaps"), Mapping)
+                else {}
+            ),
             "compiler_guidance_surface_features": dict(
                 candidates.get("top_surface_features")
                 if isinstance(candidates.get("top_surface_features"), Mapping)
@@ -1830,6 +2347,21 @@ def compiler_guidance_activation_todos(
             "compiler_guidance_canary": dict(canary_block),
             "compiler_guidance_quality_gate": canary_block.get("quality_gate", ""),
             "compiler_guidance_route": action,
+            "compiler_guidance_attribution": dict(
+                candidates.get("guidance_attribution")
+                if isinstance(candidates.get("guidance_attribution"), Mapping)
+                else {}
+            ),
+            "compiler_guidance_attribution_summary": dict(
+                candidates.get("guidance_attribution_summary")
+                if isinstance(candidates.get("guidance_attribution_summary"), Mapping)
+                else {}
+            ),
+            "compiler_guidance_legal_ir_view_gaps": dict(
+                candidates.get("top_legal_ir_view_gaps")
+                if isinstance(candidates.get("top_legal_ir_view_gaps"), Mapping)
+                else {}
+            ),
             "compiler_guidance_surface_features": dict(
                 candidates.get("top_surface_features")
                 if isinstance(candidates.get("top_surface_features"), Mapping)
@@ -2143,10 +2675,16 @@ def bridge_ir_metric_block(
     canonical_view_distribution_values: Dict[str, List[float]] = {}
     reports_by_adapter: Dict[str, List[Any]] = {name: [] for name in adapter_names}
     failures_by_adapter: Dict[str, int] = {name: 0 for name in adapter_names}
+    cache_hits = 0
+    cache_misses = 0
+    evaluation_seconds: List[float] = []
+    cache_stats_lock = threading.Lock()
 
     from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
 
     def evaluate_sample(sample: Any) -> Any:
+        nonlocal cache_hits, cache_misses
+        started = time.time()
         cache_key = _bridge_ir_report_cache_key(
             sample,
             bridge_names=adapter_names,
@@ -2155,7 +2693,12 @@ def bridge_ir_metric_block(
         with _BRIDGE_IR_REPORT_CACHE_LOCK:
             cached = _BRIDGE_IR_REPORT_CACHE.get(cache_key)
         if cached is not None:
+            with cache_stats_lock:
+                cache_hits += 1
+                evaluation_seconds.append(time.time() - started)
             return cached
+        with cache_stats_lock:
+            cache_misses += 1
         report = evaluate_legal_ir_multiview(
             sample.text,
             bridge_names=adapter_names,
@@ -2169,6 +2712,8 @@ def bridge_ir_metric_block(
             if len(_BRIDGE_IR_REPORT_CACHE) >= BRIDGE_IR_REPORT_CACHE_MAX:
                 _BRIDGE_IR_REPORT_CACHE.pop(next(iter(_BRIDGE_IR_REPORT_CACHE)), None)
             _BRIDGE_IR_REPORT_CACHE[cache_key] = report
+        with cache_stats_lock:
+            evaluation_seconds.append(time.time() - started)
         return report
 
     worker_count = _parallel_worker_count(
@@ -2183,6 +2728,13 @@ def bridge_ir_metric_block(
             thread_name_prefix="bridge-ir-metrics",
         ) as executor:
             multiview_reports = list(executor.map(evaluate_sample, sample_list))
+    with _BRIDGE_IR_REPORT_CACHE_LOCK:
+        cache_size = len(_BRIDGE_IR_REPORT_CACHE)
+    block["cache_hits"] = cache_hits
+    block["cache_misses"] = cache_misses
+    block["cache_size"] = cache_size
+    block["evaluation_seconds_max"] = max(evaluation_seconds) if evaluation_seconds else 0.0
+    block["evaluation_seconds_mean"] = _mean(evaluation_seconds)
 
     for multiview in multiview_reports:
         canonical_values["acceptance_rate"].append(multiview.acceptance_rate)
@@ -5912,8 +6464,11 @@ def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Pat
         "best_validation_ir_source_copy_loss": 1.0e12,
         "best_validation_ir_structural_text_reconstruction": 1.0e12,
         "best_validation_ir_text_reconstruction": 1.0e12,
+        "best_validation_learned_ir_family_ce_excess": 1.0e12,
         "best_validation_learned_ir_view_ce": 1.0e12,
         "best_validation_learned_ir_view_cosine": -1.0,
+        "best_validation_learned_ir_worst_family_ce_excess": 1.0e12,
+        "best_validation_learned_ir_worst_family_cosine_gap": 1.0e12,
         "best_validation_reconstruction": 1.0e12,
         "best_validation_logic_bridge_acceptance": -1.0,
         "best_validation_logic_bridge_proof_failure_ratio": 1.0e12,
@@ -7621,6 +8176,14 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     summary["bridge_loss_adapters"] = bridge_adapters
     summary["bridge_evaluate_provers"] = bridge_evaluate_provers
     summary["autoencoder_bridge_workers"] = bridge_parallel_workers
+    summary["active_cycle"] = None
+    summary["active_cycle_bridge_loss_adapters"] = []
+    summary["active_cycle_elapsed_seconds"] = 0.0
+    summary["active_cycle_last_heartbeat_at"] = None
+    summary["active_cycle_phase"] = None
+    summary["active_cycle_started_at"] = None
+    summary["active_cycle_train_count"] = 0
+    summary["active_cycle_validation_count"] = 0
     try:
         bridge_adapter_workers = int(
             os.environ.get("IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS", "1") or 1
@@ -7642,13 +8205,18 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     )
     summary.setdefault("best_validation_ir_source_copy_loss", 1.0e12)
     summary.setdefault("best_validation_ir_structural_text_reconstruction", 1.0e12)
+    summary.setdefault("best_validation_learned_ir_family_ce_excess", 1.0e12)
     summary.setdefault("best_validation_learned_ir_view_ce", 1.0e12)
     summary.setdefault("best_validation_learned_ir_view_cosine", -1.0)
+    summary.setdefault("best_validation_learned_ir_worst_family_ce_excess", 1.0e12)
+    summary.setdefault("best_validation_learned_ir_worst_family_cosine_gap", 1.0e12)
     summary.setdefault("best_validation_logic_bridge_acceptance", -1.0)
     summary.setdefault("best_validation_logic_bridge_proof_failure_ratio", 1.0e12)
     summary.setdefault("best_validation_logic_bridge_total_loss", 1.0e12)
     started_at = parse_utc(summary["started_at"])
     end_at = started_at + args.duration_seconds
+    cycle_start_margin_seconds = 8.0
+    summary["autoencoder_cycle_start_margin_seconds"] = cycle_start_margin_seconds
     state = ModalAutoencoderTrainingState.load_json(state_path)
     warm_start_paths = resolve_warm_start_state_paths(args, queue_dir)
     if warm_start_paths:
@@ -8292,11 +8860,76 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         summary["validation_canary_count"] = 0
         summary["validation_canary_indices"] = []
 
+    def mark_active_autoencoder_cycle(
+        *,
+        cycle: int,
+        cycle_started: float,
+        cycle_started_at: str,
+        phase: str,
+        train_count: int | None = None,
+        validation_count: int | None = None,
+        train_indices: Sequence[int] | None = None,
+        validation_indices: Sequence[int] | None = None,
+    ) -> None:
+        summary["active_cycle"] = int(cycle)
+        summary["active_cycle_bridge_loss_adapters"] = list(bridge_adapters)
+        summary["active_cycle_elapsed_seconds"] = round(time.time() - cycle_started, 3)
+        summary["active_cycle_last_heartbeat_at"] = utc_now()
+        summary["active_cycle_phase"] = phase
+        summary["active_cycle_started_at"] = cycle_started_at
+        summary["active_cycle_train_count"] = (
+            int(args.train_count) if train_count is None else int(train_count)
+        )
+        summary["active_cycle_validation_count"] = (
+            int(args.validation_count)
+            if validation_count is None
+            else int(validation_count)
+        )
+        if train_indices is not None:
+            summary["active_cycle_train_indices"] = list(train_indices)
+        if validation_indices is not None:
+            summary["active_cycle_validation_indices"] = list(validation_indices)
+        save_summary(summary_path, summary)
+
+    def clear_active_autoencoder_cycle() -> None:
+        summary["active_cycle"] = None
+        summary["active_cycle_bridge_loss_adapters"] = []
+        summary["active_cycle_elapsed_seconds"] = 0.0
+        summary["active_cycle_last_heartbeat_at"] = None
+        summary["active_cycle_phase"] = None
+        summary["active_cycle_started_at"] = None
+        summary["active_cycle_train_count"] = 0
+        summary["active_cycle_validation_count"] = 0
+        summary["active_cycle_train_indices"] = []
+        summary["active_cycle_validation_indices"] = []
+
     try:
-        while not stop_requested and time.time() + 8.0 < end_at:
+        while not stop_requested and time.time() + cycle_start_margin_seconds < end_at:
             cycle = int(summary.get("cycles", 0)) + 1
             cycle_started = time.time()
+            cycle_started_at = utc_now()
             cycle_learning_rate, cycle_lr_policy = _cycle_learning_rate(args, summary)
+            mark_active_autoencoder_cycle(
+                cycle=cycle,
+                cycle_started=cycle_started,
+                cycle_started_at=cycle_started_at,
+                phase="sampling",
+            )
+            append_event(
+                log_path,
+                args.run_id,
+                {
+                    "bridge_loss_adapters": bridge_adapters,
+                    "bridge_evaluate_provers": bridge_evaluate_provers,
+                    "cycle": cycle,
+                    "cycle_started_at": cycle_started_at,
+                    "event": "autoencoder_cycle_started",
+                    "learning_rate_applied": float(cycle_learning_rate),
+                    "learning_rate_policy": cycle_lr_policy,
+                    "train_count": int(args.train_count),
+                    "validation_count": int(args.validation_count),
+                },
+            )
             (
                 train_indices,
                 train_samples,
@@ -8319,11 +8952,31 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 if validation_canary_samples
                 else "rotating_holdout"
             )
+            mark_active_autoencoder_cycle(
+                cycle=cycle,
+                cycle_started=cycle_started,
+                cycle_started_at=cycle_started_at,
+                phase="before_train_evaluation",
+                train_count=len(train_samples),
+                validation_count=len(acceptance_validation_samples),
+                train_indices=train_indices,
+                validation_indices=acceptance_validation_indices,
+            )
             before_train = autoencoder.evaluate(
                 train_samples,
                 legal_ir_bridge_names=bridge_adapters,
                 legal_ir_evaluate_provers=bridge_evaluate_provers,
                 legal_ir_parallel_workers=bridge_parallel_workers,
+            )
+            mark_active_autoencoder_cycle(
+                cycle=cycle,
+                cycle_started=cycle_started,
+                cycle_started_at=cycle_started_at,
+                phase="before_validation_evaluation",
+                train_count=len(train_samples),
+                validation_count=len(acceptance_validation_samples),
+                train_indices=train_indices,
+                validation_indices=acceptance_validation_indices,
             )
             before_validation = autoencoder.evaluate(
                 acceptance_validation_samples,
@@ -8332,10 +8985,30 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 legal_ir_parallel_workers=bridge_parallel_workers,
                 use_sample_memory=False,
             )
+            mark_active_autoencoder_cycle(
+                cycle=cycle,
+                cycle_started=cycle_started,
+                cycle_started_at=cycle_started_at,
+                phase="compiler_ir_metrics",
+                train_count=len(train_samples),
+                validation_count=len(acceptance_validation_samples),
+                train_indices=train_indices,
+                validation_indices=acceptance_validation_indices,
+            )
             compiler_ir_train = compiler_ir_metric_block(train_samples, feature_codec)
             compiler_ir_validation = compiler_ir_metric_block(
                 acceptance_validation_samples,
                 feature_codec,
+            )
+            mark_active_autoencoder_cycle(
+                cycle=cycle,
+                cycle_started=cycle_started,
+                cycle_started_at=cycle_started_at,
+                phase="logic_bridge_metrics",
+                train_count=len(train_samples),
+                validation_count=len(acceptance_validation_samples),
+                train_indices=train_indices,
+                validation_indices=acceptance_validation_indices,
             )
             bridge_ir_train = bridge_ir_metric_block(
                 train_samples,
@@ -8355,6 +9028,16 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 int(getattr(args, "generalizable_projection_epochs", 0) or 0),
             )
             if generalizable_projection_epochs > 0 and train_samples:
+                mark_active_autoencoder_cycle(
+                    cycle=cycle,
+                    cycle_started=cycle_started,
+                    cycle_started_at=cycle_started_at,
+                    phase="generalizable_projection",
+                    train_count=len(train_samples),
+                    validation_count=len(acceptance_validation_samples),
+                    train_indices=train_indices,
+                    validation_indices=acceptance_validation_indices,
+                )
                 feature_projection_report = autoencoder.train_generalizable_projection(
                     train_samples,
                     validation_samples=acceptance_validation_samples,
@@ -8427,6 +9110,16 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                         )
                     ),
                 )
+            mark_active_autoencoder_cycle(
+                cycle=cycle,
+                cycle_started=cycle_started,
+                cycle_started_at=cycle_started_at,
+                phase="todo_supervisor_optimization",
+                train_count=len(train_samples),
+                validation_count=len(acceptance_validation_samples),
+                train_indices=train_indices,
+                validation_indices=acceptance_validation_indices,
+            )
             run = supervisor.optimize(
                 train_samples,
                 validation_samples=acceptance_validation_samples,
@@ -8438,11 +9131,31 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 target_cross_entropy_loss=0.001,
                 target_cosine_similarity=0.999999,
             )
+            mark_active_autoencoder_cycle(
+                cycle=cycle,
+                cycle_started=cycle_started,
+                cycle_started_at=cycle_started_at,
+                phase="after_train_evaluation",
+                train_count=len(train_samples),
+                validation_count=len(acceptance_validation_samples),
+                train_indices=train_indices,
+                validation_indices=acceptance_validation_indices,
+            )
             after_train = autoencoder.evaluate(
                 train_samples,
                 legal_ir_bridge_names=bridge_adapters,
                 legal_ir_evaluate_provers=bridge_evaluate_provers,
                 legal_ir_parallel_workers=bridge_parallel_workers,
+            )
+            mark_active_autoencoder_cycle(
+                cycle=cycle,
+                cycle_started=cycle_started,
+                cycle_started_at=cycle_started_at,
+                phase="after_validation_evaluation",
+                train_count=len(train_samples),
+                validation_count=len(acceptance_validation_samples),
+                train_indices=train_indices,
+                validation_indices=acceptance_validation_indices,
             )
             after_validation = autoencoder.evaluate(
                 acceptance_validation_samples,
@@ -8450,6 +9163,16 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 legal_ir_evaluate_provers=bridge_evaluate_provers,
                 legal_ir_parallel_workers=bridge_parallel_workers,
                 use_sample_memory=False,
+            )
+            mark_active_autoencoder_cycle(
+                cycle=cycle,
+                cycle_started=cycle_started,
+                cycle_started_at=cycle_started_at,
+                phase="guided_compiler_ir_metrics",
+                train_count=len(train_samples),
+                validation_count=len(acceptance_validation_samples),
+                train_indices=train_indices,
+                validation_indices=acceptance_validation_indices,
             )
             compiler_ir_guided_train = compiler_ir_metric_block(
                 train_samples,
@@ -8462,6 +9185,16 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 feature_codec,
                 autoencoder=autoencoder,
                 use_autoencoder_guidance=True,
+            )
+            mark_active_autoencoder_cycle(
+                cycle=cycle,
+                cycle_started=cycle_started,
+                cycle_started_at=cycle_started_at,
+                phase="queue_merge_and_state_save",
+                train_count=len(train_samples),
+                validation_count=len(acceptance_validation_samples),
+                train_indices=train_indices,
+                validation_indices=acceptance_validation_indices,
             )
             blocked_validation_sample_ids.update(sample.sample_id for sample in train_samples)
             with queue_file_lock(queue_path):
@@ -8726,7 +9459,21 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             latest_learned_ir_view_cosine = float(
                 learned_ir_validation.get("view_cosine_similarity", -1.0)
             )
+            latest_learned_ir_family_ce_excess = _metric_value(
+                learned_ir_validation,
+                "family_cross_entropy_excess_loss",
+            )
+            latest_learned_ir_worst_family_ce_excess = _metric_value(
+                learned_ir_validation,
+                "worst_family_cross_entropy_excess_loss",
+            )
+            latest_learned_ir_worst_family_cosine_gap = _metric_value(
+                learned_ir_validation,
+                "worst_family_cosine_gap_loss",
+            )
             latest_cycle_seconds = round(time.time() - cycle_started, 3)
+            clear_active_autoencoder_cycle()
+            summary["last_completed_cycle"] = cycle
             summary["cycles"] = cycle
             summary["latest_stop_reason"] = run.stopped_reason
             summary.update(autoencoder.compute_backend_metadata())
@@ -8904,8 +9651,23 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             )
             summary["latest_learned_ir_train"] = learned_ir_train
             summary["latest_learned_ir_validation"] = learned_ir_validation
+            summary["latest_learned_ir_family_ce_excess"] = (
+                latest_learned_ir_family_ce_excess
+            )
             summary["latest_learned_ir_view_ce"] = latest_learned_ir_view_ce
             summary["latest_learned_ir_view_cosine"] = latest_learned_ir_view_cosine
+            summary["latest_learned_ir_worst_family_ce_excess"] = (
+                latest_learned_ir_worst_family_ce_excess
+            )
+            summary["latest_learned_ir_worst_family_ce_excess_name"] = (
+                learned_ir_validation.get("worst_family_cross_entropy_excess_name")
+            )
+            summary["latest_learned_ir_worst_family_cosine_gap"] = (
+                latest_learned_ir_worst_family_cosine_gap
+            )
+            summary["latest_learned_ir_worst_family_cosine_gap_name"] = (
+                learned_ir_validation.get("worst_family_cosine_gap_name")
+            )
             summary["validation_mode"] = validation_mode
             program_synthesis_status = update_program_synthesis_summary(
                 summary,
@@ -9139,6 +9901,24 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 summary.get("best_validation_learned_ir_view_cosine", -1.0),
                 latest_learned_ir_view_cosine,
             )
+            summary["best_validation_learned_ir_family_ce_excess"] = min(
+                summary.get("best_validation_learned_ir_family_ce_excess", 1.0e12),
+                latest_learned_ir_family_ce_excess,
+            )
+            summary["best_validation_learned_ir_worst_family_ce_excess"] = min(
+                summary.get(
+                    "best_validation_learned_ir_worst_family_ce_excess",
+                    1.0e12,
+                ),
+                latest_learned_ir_worst_family_ce_excess,
+            )
+            summary["best_validation_learned_ir_worst_family_cosine_gap"] = min(
+                summary.get(
+                    "best_validation_learned_ir_worst_family_cosine_gap",
+                    1.0e12,
+                ),
+                latest_learned_ir_worst_family_cosine_gap,
+            )
             summary["best_validation_cosine"] = max(
                 summary.get("best_validation_cosine"),
                 after_validation.embedding_cosine_similarity,
@@ -9284,6 +10064,29 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 summary["test_failures"] = int(summary.get("test_failures", 0)) + int(test_result["exit_code"] != 0)
                 append_event(log_path, args.run_id, test_result)
                 save_summary(summary_path, summary)
+        if not stop_requested and int(summary.get("cycles", 0) or 0) <= 0:
+            now = time.time()
+            remaining_seconds = max(0.0, end_at - now)
+            stop_reason = (
+                "startup_budget_exhausted"
+                if now + cycle_start_margin_seconds >= end_at
+                else "no_autoencoder_cycles"
+            )
+            summary["latest_stop_reason"] = stop_reason
+            summary["remaining_seconds_at_stop"] = round(remaining_seconds, 3)
+            summary["startup_seconds"] = round(now - started_at, 3)
+            append_event(
+                log_path,
+                args.run_id,
+                {
+                    "cycle_start_margin_seconds": cycle_start_margin_seconds,
+                    "event": "autoencoder_no_cycle",
+                    "remaining_seconds": round(remaining_seconds, 3),
+                    "startup_seconds": round(now - started_at, 3),
+                    "stop_reason": stop_reason,
+                },
+            )
+            save_summary(summary_path, summary)
     finally:
         if stop_requested:
             summary["latest_stop_reason"] = f"signal_{stop_signal}"

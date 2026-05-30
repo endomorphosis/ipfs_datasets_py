@@ -1286,6 +1286,11 @@ def test_bridge_ir_metric_block_caches_multiview_reports(monkeypatch) -> None:
     second = bridge_ir_metric_block([sample], ["deontic_norms"], evaluate_provers=False)
 
     assert calls["count"] == 1
+    assert first["cache_hits"] == 0
+    assert first["cache_misses"] == 1
+    assert second["cache_hits"] == 1
+    assert second["cache_misses"] == 0
+    assert second["cache_size"] >= 1
     assert first["canonical_ir"] == second["canonical_ir"]
     assert first["canonical_ir"]["total_loss"] == 0.25
 
@@ -4350,6 +4355,8 @@ def test_compiler_ir_metric_block_reports_guidance_overlay_terms() -> None:
                     ],
                 },
                 "family_distribution": {"deontic": 1.0},
+                "legal_ir_predicted_view_distribution": {"modal.frame_logic": 1.0},
+                "legal_ir_target_view_distribution": {"deontic.norms": 1.0},
             }
 
     block = compiler_ir_metric_block(
@@ -4364,6 +4371,10 @@ def test_compiler_ir_metric_block_reports_guidance_overlay_terms() -> None:
     assert block["compiler_guidance_semantic_overlay_terms"] == {
         "except": 1,
         "may": 1,
+    }
+    assert block["compiler_guidance_legal_ir_view_gaps"] == {
+        "deontic_norms:underrepresented": 1,
+        "modal_frame_logic:overrepresented": 1,
     }
 
 
@@ -4535,6 +4546,10 @@ def test_compiler_guidance_cue_terms_and_views_reach_deterministic_ir() -> None:
         "if",
         "except",
     ]
+    assert guided.metadata["compiler_guidance_legal_ir_view_gap_distribution"] == {
+        "deontic.norms": pytest.approx(0.5),
+        "modal.frame_logic": pytest.approx(-0.5),
+    }
     assert {
         "deontic.norms",
         "modal.frame_logic",
@@ -4546,6 +4561,75 @@ def test_compiler_guidance_cue_terms_and_views_reach_deterministic_ir() -> None:
     assert any(
         value.startswith("deontic.norms:")
         for value in triples_by_predicate["learned_legal_ir_view_gap"]
+    )
+    slot_texts = decoded_modal_phrase_slot_text_map(guided.decoded_modal_text)
+    assert "deontic_norms" in slot_texts["compiler_guidance_legal_ir_view_gap"]
+    assert (
+        "deontic_norms:underrepresented"
+        in slot_texts["compiler_guidance_legal_ir_view_gap_direction"]
+    )
+
+
+def test_compiler_guidance_promotes_exception_and_prohibition_to_typed_ir() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text=(
+            "The agency may not disclose protected records except as authorized "
+            "by subsection (b)."
+        ),
+    )
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(
+            parser_backend="spacy",
+            spacy_model_name="definitely_missing_legal_model",
+            use_flogic=True,
+        )
+    )
+
+    guided = codec.encode(
+        sample.text,
+        document_id=sample.sample_id,
+        citation=sample.citation,
+        source=sample.source,
+        source_embedding=sample.embedding_vector,
+        compiler_guidance={
+            "feature_groups": {
+                "decompiler_surface_template": [
+                    "decompiler-surface:cue-surface-ir:prohibition:deontic:frame:excepted",
+                    "decompiler-surface:cue-surface-ir:exception:modal:frame:excepted",
+                ],
+            },
+            "family_distribution": {"deontic": 1.0},
+        },
+    )
+    triples = modal_ir_to_flogic_triples(guided.modal_ir)
+    triples_by_predicate = {}
+    for triple in triples:
+        triples_by_predicate.setdefault(triple["predicate"], set()).add(
+            triple["object"]
+        )
+
+    typed_semantics = guided.modal_ir.metadata["compiler_guidance_typed_semantics"]
+    assert guided.metadata["compiler_guidance_semantic_overlay_terms"] == [
+        "not",
+        "except",
+    ]
+    assert typed_semantics["exception_formula_count"] >= 1
+    assert typed_semantics["prohibition_formula_count"] >= 1
+    assert any(formula.exceptions for formula in guided.modal_ir.formulas)
+    assert any(
+        formula.metadata.get("compiler_guidance_typed_prohibition") is True
+        for formula in guided.modal_ir.formulas
+    )
+    assert {"exception", "prohibition"} <= triples_by_predicate[
+        "compiler_guidance_typed_semantic"
+    ]
+    assert "negative" in triples_by_predicate["compiler_guidance_force_polarity"]
+    assert "prohibition" in triples_by_predicate["compiler_guidance_deontic_force"]
+    assert any(
+        value.lower().startswith("except")
+        for value in triples_by_predicate["exception"]
     )
 
 
@@ -4592,6 +4676,18 @@ def test_compiler_guidance_canary_block_reports_quality_gate() -> None:
         "cosine_similarity": 0.2,
         "cross_entropy_excess_loss": 0.4,
         "cross_entropy_loss": 1.4,
+        "sample_metric_records": [
+            {
+                "metrics": {
+                    "cosine_similarity": 0.2,
+                    "cross_entropy_excess_loss": 0.4,
+                    "cross_entropy_loss": 1.4,
+                    "source_copy_loss": 0.5,
+                    "source_copy_reward_hack_penalty": 0.3,
+                },
+                "sample_id": "sample-guidance",
+            }
+        ],
         "source_copy_loss": 0.5,
         "source_copy_reward_hack_penalty": 0.3,
     }
@@ -4600,6 +4696,26 @@ def test_compiler_guidance_canary_block_reports_quality_gate() -> None:
         "autoencoder_guidance_enabled": True,
         "compiler_guidance_frame_boost_count": 2.0,
         "compiler_guidance_frame_changed_count": 1,
+        "sample_metric_records": [
+            {
+                "compiler_guidance_applied": True,
+                "compiler_guidance_legal_ir_view_gaps": [
+                    "deontic_norms:underrepresented"
+                ],
+                "compiler_guidance_semantic_overlay_terms": ["shall"],
+                "compiler_guidance_todo_routes": [
+                    "refine_semantic_decompiler_reconstruction"
+                ],
+                "metrics": {
+                    "cosine_similarity": 0.25,
+                    "cross_entropy_excess_loss": 0.35,
+                    "cross_entropy_loss": 1.2,
+                    "source_copy_loss": 0.45,
+                    "source_copy_reward_hack_penalty": 0.1,
+                },
+                "sample_id": "sample-guidance",
+            }
+        ],
         "cosine_similarity": 0.25,
         "cross_entropy_excess_loss": 0.35,
         "cross_entropy_loss": 1.2,
@@ -4621,6 +4737,23 @@ def test_compiler_guidance_canary_block_reports_quality_gate() -> None:
     assert block["copy_hack_delta"] == pytest.approx(0.2)
     assert block["frame_boost_count"] == pytest.approx(2.0)
     assert block["frame_changed_count"] == 1
+    assert block["attribution"]["basis"] == "sample_records"
+    assert block["attribution"]["matched_sample_count"] == 1
+    assert block["attribution"]["semantic_overlay_terms"]["shall"][
+        "quality_gate"
+    ] == "pass"
+    assert block["attribution"]["semantic_overlay_terms"]["shall"][
+        "ce_delta"
+    ] == pytest.approx(0.2)
+    assert block["attribution"]["legal_ir_view_gaps"][
+        "deontic_norms:underrepresented"
+    ]["quality_gate"] == "pass"
+    assert block["attribution"]["legal_ir_view_gaps"][
+        "deontic_norms:underrepresented"
+    ]["copy_hack_delta"] == pytest.approx(0.2)
+    assert block["attribution"]["todo_routes"][
+        "refine_semantic_decompiler_reconstruction"
+    ]["cosine_delta"] == pytest.approx(0.05)
 
     regressed = compiler_guidance_canary_block(
         deterministic,
@@ -4682,6 +4815,53 @@ def test_compiler_guidance_scope_hints_route_learned_todos_to_codex_scopes() -> 
     ] == "deontic.ir"
 
 
+def test_compiler_guidance_signed_view_gaps_route_to_codex_scopes() -> None:
+    guided_block = {
+        "compiler_guidance_legal_ir_view_gaps": {
+            "deontic_norms:underrepresented": 3,
+            "modal_frame_logic:overrepresented": 2,
+            "TDFOL_prover:underrepresented": 1,
+        }
+    }
+
+    hints = compiler_guidance_scope_hints(guided_block)
+    candidates = compiler_guidance_distillation_candidates(
+        guided_block,
+        {"applied_count": 3, "quality_gate": "pass"},
+    )
+
+    assert hints["scope_counts"] == {
+        "deontic": 3,
+        "frame_logic": 2,
+        "tdfol": 1,
+    }
+    assert candidates["top_legal_ir_view_gaps"] == {
+        "deontic_norms:underrepresented": 3,
+        "modal_frame_logic:overrepresented": 2,
+        "TDFOL_prover:underrepresented": 1,
+    }
+    assert candidates["todo_routes_inferred_from_features"] is True
+    assert candidates["top_todo_routes"] == {
+        "repair_deontic_bridge_quality_gate": 3,
+        "repair_flogic_ontology_constraints": 2,
+        "repair_tdfol_bridge_parse": 1,
+    }
+
+    todos = compiler_guidance_distillation_todos(candidates)
+
+    assert [todo.action for todo in todos[:3]] == [
+        "repair_deontic_bridge_quality_gate",
+        "repair_flogic_ontology_constraints",
+        "repair_tdfol_bridge_parse",
+    ]
+    assert todos[0].metadata["compiler_guidance_legal_ir_view_gaps"] == {
+        "deontic_norms:underrepresented": 3,
+        "modal_frame_logic:overrepresented": 2,
+        "TDFOL_prover:underrepresented": 1,
+    }
+    assert todos[0].metadata["program_synthesis_scope"] == "deontic"
+
+
 def test_compiler_guidance_distillation_candidates_include_promotion_and_routes() -> None:
     candidates = compiler_guidance_distillation_candidates(
         {
@@ -4727,11 +4907,33 @@ def test_compiler_guidance_distillation_candidates_augment_surface_route() -> No
                 "repair_multiview_legal_ir_graph_projection": 1,
             },
         },
-        {"applied_count": 1, "quality_gate": "warn"},
+        {
+            "applied_count": 1,
+            "attribution": {
+                "basis": "sample_records",
+                "matched_sample_count": 1,
+                "semantic_overlay_terms": {
+                    "except": {
+                        "ce_delta": 0.0,
+                        "copy_hack_delta": 0.0,
+                        "cosine_delta": 0.0,
+                        "count": 1,
+                        "quality_gate": "warn",
+                    }
+                },
+            },
+            "quality_gate": "warn",
+        },
     )
 
     assert candidates["todo_routes_inferred_from_features"] is False
     assert candidates["todo_routes_augmented_from_features"] is True
+    assert candidates["guidance_attribution"]["basis"] == "sample_records"
+    assert candidates["guidance_attribution_summary"] == {
+        "basis": "sample_records",
+        "matched_sample_count": 1,
+        "warn_semantic_overlay_terms": ["except"],
+    }
     assert candidates["top_semantic_overlay_terms"] == {"except": 1}
     assert candidates["top_todo_routes"] == {
         "refine_semantic_decompiler_reconstruction": 2,
@@ -4758,6 +4960,12 @@ def test_compiler_guidance_distillation_candidates_augment_surface_route() -> No
     assert todos[0].metadata["compiler_guidance_semantic_overlay_terms"] == {
         "except": 1,
     }
+    assert todos[0].metadata["compiler_guidance_attribution"]["basis"] == (
+        "sample_records"
+    )
+    assert todos[0].metadata["compiler_guidance_attribution_summary"][
+        "warn_semantic_overlay_terms"
+    ] == ["except"]
     assert (
         todos[0].metadata["compiler_guidance_todo_routes_augmented_from_features"]
         is True
@@ -4993,6 +5201,9 @@ def test_bridge_ir_metric_block_reports_per_adapter_views() -> None:
 
     assert block["sample_count"] == 1
     assert block["adapter_count"] == 2
+    assert block["cache_hits"] >= 0
+    assert block["cache_misses"] >= 0
+    assert block["evaluation_seconds_max"] >= 0.0
     assert block["evaluated_count"] == 2
     assert block["metric_failures"] == 0
     assert "acceptance_rate" in block
@@ -5062,6 +5273,11 @@ def test_learned_ir_metric_block_reports_autoencoder_view_alignment() -> None:
     assert block["target_count"] == 1
     assert block["view_cross_entropy_loss"] > 0.0
     assert 0.0 <= block["view_cosine_similarity"] <= 1.0
+    assert block["family_cross_entropy_excess_loss"] >= 0.0
+    assert block["worst_family_cross_entropy_excess_loss"] >= 0.0
+    assert block["worst_family_cross_entropy_excess_name"]
+    assert block["worst_family_cosine_gap_loss"] >= 0.0
+    assert block["family_cross_entropy_excess_by_family"]
     assert block["target_view_distribution"]
     assert block["predicted_view_distribution"]
 

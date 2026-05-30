@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import replace
+from types import SimpleNamespace
 
 import pytest
 
@@ -128,6 +129,49 @@ def test_autoencoder_evaluation_carries_legal_ir_training_target_losses() -> Non
     assert introspection["legal_ir_view_cross_entropy_loss"] > 0.0
     assert introspection["legal_ir_view_entropy_loss"] >= 0.0
     assert introspection["legal_ir_view_cross_entropy_excess_loss"] >= 0.0
+
+
+def test_adaptive_autoencoder_reports_legal_ir_view_family_losses() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text=(
+            "The agency may not disclose protected records except as authorized "
+            "before the permit hearing."
+        ),
+    )
+    target = SimpleNamespace(
+        losses={},
+        view_distribution={
+            "deontic.ir": 0.20,
+            "modal.frame_logic": 0.15,
+            "TDFOL.prover": 0.20,
+            "knowledge_graphs.neo4j_compat": 0.15,
+            "CEC.native": 0.15,
+            "external_provers.router": 0.15,
+        },
+        document=SimpleNamespace(canonical_hash=lambda: "family-target-hash"),
+    )
+    autoencoder = AdaptiveModalAutoencoder()
+
+    evaluation = autoencoder.evaluate(
+        [sample],
+        legal_ir_targets={sample.sample_id: target},
+    )
+
+    losses = evaluation.legal_ir_losses
+    assert losses["legal_ir_view_family_cross_entropy_loss"] > 0.0
+    assert losses["legal_ir_view_family_cross_entropy_excess_loss"] >= 0.0
+    assert 0.0 <= losses["legal_ir_view_family_cosine_gap_loss"] <= 1.0
+    for family in ("deontic", "frame_logic", "tdfol", "kg", "cec", "prover"):
+        assert f"legal_ir_view_family_{family}_cross_entropy_loss" in losses
+        assert f"legal_ir_view_family_{family}_cross_entropy_excess_loss" in losses
+        assert f"legal_ir_view_family_{family}_cosine_gap_loss" in losses
+    introspection = autoencoder.introspect_sample(sample).to_dict()
+    assert (
+        introspection["legal_ir_losses"]["legal_ir_view_family_deontic_cosine_gap_loss"]
+        >= 0.0
+    )
 
 
 def test_legal_ir_target_cache_key_uses_source_text_not_citation_identity() -> None:
@@ -269,6 +313,53 @@ def test_generalizable_projection_lowers_legal_ir_view_ce_on_holdout() -> None:
     )
     assert autoencoder.state.family_logits == {}
     assert autoencoder.state.feature_legal_ir_view_logits
+
+
+def test_legal_ir_view_global_projection_isolates_core_heads() -> None:
+    from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
+
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall publish notice before the permit takes effect.",
+    )
+    targets = {
+        sample.sample_id: evaluate_legal_ir_multiview(
+            sample.text,
+            bridge_names=("deontic_norms", "fol_tdfol"),
+            document_id=sample.sample_id,
+            citation=sample.citation,
+            source=sample.source,
+            source_embedding=sample.embedding_vector,
+        ).training_target()
+    }
+    autoencoder = AdaptiveModalAutoencoder()
+    before = autoencoder.evaluate(
+        [sample],
+        legal_ir_targets=targets,
+        use_sample_memory=False,
+    )
+
+    changed = autoencoder._nudge_legal_ir_view_global_logits(
+        sample,
+        learning_rate=0.5,
+    )
+    after = autoencoder.evaluate(
+        [sample],
+        legal_ir_targets=targets,
+        use_sample_memory=False,
+    )
+
+    assert changed is True
+    assert (
+        after.legal_ir_losses["legal_ir_view_cross_entropy_loss"]
+        < before.legal_ir_losses["legal_ir_view_cross_entropy_loss"]
+    )
+    assert autoencoder.state.legal_ir_view_logits
+    assert autoencoder.state.family_logits == {}
+    assert autoencoder.state.feature_family_logits == {}
+    assert autoencoder.state.feature_legal_ir_view_logits == {}
+    assert autoencoder.state.feature_embedding_weights == {}
 
 
 def test_modal_autoencoder_empty_dataset_returns_zero_metrics() -> None:
@@ -611,6 +702,14 @@ def test_hard_example_objective_uses_mixed_family_cross_entropy_targets() -> Non
     )
 
     assert objective == pytest.approx(
+        cross_entropy_excess_distribution_loss(
+            distribution,
+            {"deontic": 0.5, "temporal": 0.5},
+        )
+    )
+    assert objective + distribution_entropy_loss(
+        {"deontic": 0.5, "temporal": 0.5}
+    ) == pytest.approx(
         cross_entropy_distribution_loss(
             distribution,
             {"deontic": 0.5, "temporal": 0.5},
@@ -1444,13 +1543,25 @@ def test_compiler_guidance_flows_into_deterministic_codec_ir() -> None:
         max_cycle_consistency_features=128,
         max_logic_view_contract_features=128,
     )
-    autoencoder.evaluate([sample], legal_ir_bridge_names=["modal.frame_logic"])
+    autoencoder.evaluate(
+        [sample],
+        legal_ir_targets={
+            sample.sample_id: SimpleNamespace(
+                losses={"legal_ir_multiview_total_loss": 0.25},
+                view_distribution={
+                    "deontic.norms": 0.1,
+                    "modal.frame_logic": 0.9,
+                },
+            )
+        },
+    )
     autoencoder._nudge_family_logits(
         sample,
         learning_rate=0.25,
         update_sample_memory=False,
     )
     guidance = autoencoder.compiler_guidance_for_sample(sample, top_k=12)
+    assert guidance["legal_ir_view_gap_distribution"]
     codec = DeterministicModalLogicCodec(
         ModalLogicCodecConfig(spacy_model_name="definitely_missing_legal_model")
     )
@@ -1466,7 +1577,9 @@ def test_compiler_guidance_flows_into_deterministic_codec_ir() -> None:
 
     assert result.metadata["compiler_guidance_applied"] is True
     assert result.metadata["compiler_guidance_feature_count"] > 0
+    assert result.metadata["compiler_guidance_legal_ir_view_gap_distribution"]
     assert result.modal_ir.metadata["compiler_guidance_feature_groups"]
+    assert result.modal_ir.metadata["compiler_guidance_legal_ir_view_gap_distribution"]
     assert result.modal_ir.metadata["compiler_guidance_ranked_features"]
     assert result.modal_ir.metadata["frame_selector"] == "bm25_v1+autoencoder_guidance_v1"
     assert result.modal_ir.frame_logic.metadata["compiler_guidance_applied"] is True
@@ -1476,6 +1589,8 @@ def test_compiler_guidance_flows_into_deterministic_codec_ir() -> None:
     assert slot_texts["compiler_guidance_feature_group"]
     assert slot_texts["compiler_guidance_feature"]
     assert slot_texts["compiler_guidance_decompiler_surface_template_feature"]
+    assert slot_texts["compiler_guidance_legal_ir_view_gap"]
+    assert slot_texts["compiler_guidance_legal_ir_view_gap_direction"]
     assert "cross_entropy_excess_loss" in result.losses
     assert "guidance_family_cross_entropy_excess_loss" in result.losses
     assert "source_copy_reward_hack_penalty" in result.losses

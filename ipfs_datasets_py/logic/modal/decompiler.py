@@ -2729,6 +2729,28 @@ def _compiler_guidance_phrases(
             add(f"{prefix}_ranked", f"{rank}:{safe_name}")
             add(f"{prefix}_weight_bucket", _guidance_weight_bucket(weight))
 
+    def add_signed_distribution(prefix: str, raw_distribution: Any) -> None:
+        if not isinstance(raw_distribution, Mapping):
+            return
+        ranked = sorted(
+            (
+                (_clean_text(str(name)), _safe_float(weight))
+                for name, weight in raw_distribution.items()
+            ),
+            key=lambda item: (-abs(item[1]), item[0]),
+        )
+        for rank, (name, weight) in enumerate(ranked[:8], start=1):
+            if not name or abs(weight) <= 1.0e-12:
+                continue
+            safe_name = _slot_safe_family_key(name)
+            if not safe_name:
+                continue
+            direction = "underrepresented" if weight > 0.0 else "overrepresented"
+            add(prefix, safe_name)
+            add(f"{prefix}_direction", f"{safe_name}:{direction}")
+            add(f"{prefix}_ranked", f"{rank}:{direction}:{safe_name}")
+            add(f"{prefix}_weight_bucket", _guidance_weight_bucket(abs(weight)))
+
     add_distribution(
         "compiler_guidance_family",
         metadata.get("compiler_guidance_family_distribution"),
@@ -2740,6 +2762,10 @@ def _compiler_guidance_phrases(
     add_distribution(
         "compiler_guidance_legal_ir_target_view",
         metadata.get("compiler_guidance_legal_ir_target_view_distribution"),
+    )
+    add_signed_distribution(
+        "compiler_guidance_legal_ir_view_gap",
+        metadata.get("compiler_guidance_legal_ir_view_gap_distribution"),
     )
 
     feature_groups = metadata.get("compiler_guidance_feature_groups")

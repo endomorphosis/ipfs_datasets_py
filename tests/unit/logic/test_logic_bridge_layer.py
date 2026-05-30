@@ -2063,7 +2063,7 @@ def test_multiview_bridge_distribution_uses_canonical_component_lanes() -> None:
     assert abs(sum(distribution.values()) - 1.0) < 1e-9
 
 
-def test_multiview_training_target_distribution_prunes_non_contract_tail_lanes() -> None:
+def test_multiview_training_target_distribution_preserves_core_family_lanes() -> None:
     from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
 
     report = evaluate_legal_ir_multiview(
@@ -2084,15 +2084,20 @@ def test_multiview_training_target_distribution_prunes_non_contract_tail_lanes()
     canonical_distribution = report.view_distribution()
     target_distribution = report.training_target().view_distribution
     assert "modal.frame_logic" in canonical_distribution
-    assert "modal.frame_logic" not in target_distribution
-    assert "external_provers.router" not in target_distribution
+    assert "external_provers.router" in canonical_distribution
+    assert "modal.frame_logic" in target_distribution
+    assert "external_provers.router" in target_distribution
     assert set(target_distribution) == {
         "CEC.native",
         "TDFOL.prover",
         "deontic.ir",
+        "external_provers.router",
         "knowledge_graphs.neo4j_compat",
+        "modal.frame_logic",
         "zkp.circuits",
     }
+    assert target_distribution["external_provers.router"] <= 0.125
+    assert target_distribution["modal.frame_logic"] > 0.10
     assert abs(sum(target_distribution.values()) - 1.0) < 1e-9
 
 
@@ -2122,12 +2127,16 @@ def test_multiview_training_target_distribution_rebalances_dense_contract_lanes(
         "CEC.native",
         "TDFOL.prover",
         "deontic.ir",
+        "external_provers.router",
         "knowledge_graphs.neo4j_compat",
+        "modal.frame_logic",
         "zkp.circuits",
     }
     assert target_distribution["knowledge_graphs.neo4j_compat"] <= 0.145
     assert target_distribution["CEC.native"] <= 0.212
     assert target_distribution["TDFOL.prover"] <= 0.212
+    assert target_distribution["external_provers.router"] <= 0.125
+    assert target_distribution["modal.frame_logic"] > target_distribution["knowledge_graphs.neo4j_compat"]
     assert target_distribution["deontic.ir"] > target_distribution["knowledge_graphs.neo4j_compat"]
     assert abs(sum(target_distribution.values()) - 1.0) < 1e-9
 

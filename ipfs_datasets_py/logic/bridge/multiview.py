@@ -20,20 +20,23 @@ _MULTIVIEW_EVALUATION_CACHE: Dict[str, "MultiViewLegalIRReport"] = {}
 _MULTIVIEW_EVALUATION_CACHE_LOCK = Lock()
 _BRIDGE_CONTRACT_MIN_COMPONENT_WEIGHT = 0.07
 _BRIDGE_CONTRACT_CORE_COMPONENTS = (
+    "CEC.native",
     "deontic.ir",
+    "external_provers.router",
+    "modal.frame_logic",
     "TDFOL.prover",
     "knowledge_graphs.neo4j_compat",
 )
-_BRIDGE_CONTRACT_EXCLUDED_COMPONENTS = (
-    "external_provers.router",
-)
+_BRIDGE_CONTRACT_EXCLUDED_COMPONENTS: tuple[str, ...] = ()
 _BRIDGE_VIEW_SIGNAL_WEIGHT_CAP = 2.0
 _BRIDGE_CONTRACT_DENSE_LANE_MIN_COUNT = 4
 _BRIDGE_CONTRACT_DENSE_LANE_CAPS = {
-    "CEC.native": 0.19,
-    "TDFOL.prover": 0.19,
+    "CEC.native": 0.18,
+    "TDFOL.prover": 0.18,
+    "external_provers.router": 0.12,
     "knowledge_graphs.neo4j_compat": 0.13,
-    "zkp.circuits": 0.18,
+    "modal.frame_logic": 0.22,
+    "zkp.circuits": 0.14,
 }
 _BRIDGE_CONTRACT_SPARSE_CORE_LANES = (
     "TDFOL.prover",
@@ -436,11 +439,11 @@ class MultiViewLegalIRReport:
     def contract_view_distribution(self) -> Dict[str, float]:
         """Return a compact bridge-contract view distribution for autoencoder targets.
 
-        The multiview report keeps modal and auxiliary adapter lanes in
-        ``view_distribution()`` for diagnostics.  For optimizer-facing
-        ``bridge.contracts`` routing, we keep only cross-bridge lanes and prune
-        very small tail mass to reduce distribution entropy and make the target
-        less noisy across samples.
+        The multiview report keeps raw adapter lanes in ``view_distribution()``
+        for diagnostics.  For optimizer-facing ``bridge.contracts`` routing, we
+        collapse adapter-specific outputs into stable legal-IR family lanes and
+        prune very small tail mass to reduce distribution entropy without hiding
+        frame-logic or prover gaps from the autoencoder.
         """
 
         canonical = self.view_distribution()
@@ -832,6 +835,7 @@ def _bridge_contract_lane_component(component: str) -> str:
         return ""
     lane_prefixes = (
         ("deontic.", "deontic.ir"),
+        ("modal.", "modal.frame_logic"),
         ("TDFOL.", "TDFOL.prover"),
         ("fol.", "TDFOL.prover"),
         ("CEC.", "CEC.native"),
@@ -1469,8 +1473,8 @@ def _rebalance_dense_contract_distribution(
         )
     elif has_deontic_cue and not has_temporal_cue:
         target_mix = (
-            ("deontic.ir", 0.80),
-            ("CEC.native", 0.10),
+            ("deontic.ir", 0.82),
+            ("CEC.native", 0.08),
             ("TDFOL.prover", 0.08),
         )
     elif has_deontic_cue and has_temporal_cue:
@@ -1517,6 +1521,13 @@ def _rebalance_dense_contract_distribution(
             ("CEC.native", 0.12),
         )
 
+    target_mix = _contract_target_mix_with_auxiliary_lanes(
+        target_mix,
+        adjusted,
+        frame_weight=0.16 if has_frame_cue else 0.08,
+        prover_weight=0.06 if has_conditional_cue or has_temporal_cue else 0.04,
+    )
+
     present_targets = [
         (lane, weight)
         for lane, weight in target_mix
@@ -1536,6 +1547,27 @@ def _rebalance_dense_contract_distribution(
     for lane, weight in present_targets:
         adjusted[lane] += excess_mass * (weight / weight_total)
     return adjusted
+
+
+def _contract_target_mix_with_auxiliary_lanes(
+    target_mix: Sequence[tuple[str, float]],
+    lanes: Mapping[str, float],
+    *,
+    frame_weight: float,
+    prover_weight: float,
+) -> tuple[tuple[str, float], ...]:
+    """Keep deterministic frame/prover lanes eligible for excess redistribution."""
+
+    augmented = list(target_mix)
+    present = {lane for lane, _weight in augmented}
+    if "modal.frame_logic" in lanes and "modal.frame_logic" not in present:
+        augmented.append(("modal.frame_logic", max(0.0, float(frame_weight))))
+    if (
+        "external_provers.router" in lanes
+        and "external_provers.router" not in present
+    ):
+        augmented.append(("external_provers.router", max(0.0, float(prover_weight))))
+    return tuple(augmented)
 
 
 def _rebalance_sparse_contract_distribution(

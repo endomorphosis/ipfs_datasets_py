@@ -83,6 +83,54 @@ def _distribution_cosine_similarity(
     )
 
 
+def _learned_ir_family_gap_block(losses: Mapping[str, Any]) -> dict[str, Any]:
+    ce_excess_by_family: dict[str, float] = {}
+    cosine_gap_by_family: dict[str, float] = {}
+    prefix = "legal_ir_view_family_"
+    for raw_name, raw_value in dict(losses or {}).items():
+        name = str(raw_name)
+        if not name.startswith(prefix):
+            continue
+        family_metric = name[len(prefix) :]
+        if family_metric in {
+            "cross_entropy_loss",
+            "entropy_loss",
+            "cross_entropy_excess_loss",
+            "cosine_gap_loss",
+        }:
+            continue
+        value = _finite_float(raw_value, math.nan)
+        if not math.isfinite(value):
+            continue
+        if family_metric.endswith("_cross_entropy_excess_loss"):
+            family = family_metric[: -len("_cross_entropy_excess_loss")]
+            ce_excess_by_family[family] = max(0.0, value)
+        elif family_metric.endswith("_cosine_gap_loss"):
+            family = family_metric[: -len("_cosine_gap_loss")]
+            cosine_gap_by_family[family] = max(0.0, value)
+
+    block: dict[str, Any] = {}
+    if ce_excess_by_family:
+        worst_family, worst_value = max(
+            ce_excess_by_family.items(),
+            key=lambda item: (item[1], item[0]),
+        )
+        block["family_cross_entropy_excess_by_family"] = dict(
+            sorted(ce_excess_by_family.items())
+        )
+        block["worst_family_cross_entropy_excess_loss"] = worst_value
+        block["worst_family_cross_entropy_excess_name"] = worst_family
+    if cosine_gap_by_family:
+        worst_family, worst_value = max(
+            cosine_gap_by_family.items(),
+            key=lambda item: (item[1], item[0]),
+        )
+        block["family_cosine_gap_by_family"] = dict(sorted(cosine_gap_by_family.items()))
+        block["worst_family_cosine_gap_loss"] = worst_value
+        block["worst_family_cosine_gap_name"] = worst_family
+    return block
+
+
 def _learned_ir_from_metric_block(block: Mapping[str, Any]) -> dict[str, Any]:
     legal_ir_losses = (
         block.get("legal_ir_losses") if isinstance(block.get("legal_ir_losses"), dict) else {}
@@ -109,16 +157,26 @@ def _learned_ir_from_metric_block(block: Mapping[str, Any]) -> dict[str, Any]:
         legal_ir_losses.get("legal_ir_view_cross_entropy_excess_loss"),
         math.nan,
     )
-    return {
+    result = {
         "target_count": int(block.get("legal_ir_target_count", 0) or 0),
         "view_cross_entropy_loss": view_ce,
         "view_entropy_loss": view_entropy,
         "view_cross_entropy_excess_loss": view_excess,
+        "family_cross_entropy_excess_loss": _finite_float(
+            legal_ir_losses.get("legal_ir_view_family_cross_entropy_excess_loss"),
+            math.nan,
+        ),
+        "family_cosine_gap_loss": _finite_float(
+            legal_ir_losses.get("legal_ir_view_family_cosine_gap_loss"),
+            math.nan,
+        ),
         "view_cosine_similarity": _distribution_cosine_similarity(
             predicted_distribution,
             target_distribution,
         ),
     }
+    result.update(_learned_ir_family_gap_block(legal_ir_losses))
+    return result
 
 
 def _projection_rejection_summary(report: Mapping[str, Any]) -> dict[str, Any]:
@@ -408,6 +466,15 @@ def _trial_reports(log_dir: Path, run_id: str) -> list[dict[str, Any]]:
                 "run_id": summary.get("run_id") or path.stem,
                 "summary_path": str(path),
                 "cycles": int(summary.get("cycles", 0) or 0),
+                "active_cycle": summary.get("active_cycle"),
+                "active_cycle_elapsed_seconds": _finite_float(
+                    summary.get("active_cycle_elapsed_seconds"),
+                    math.nan,
+                ),
+                "active_cycle_last_heartbeat_at": summary.get(
+                    "active_cycle_last_heartbeat_at"
+                ),
+                "active_cycle_phase": summary.get("active_cycle_phase"),
                 "age_seconds": _mtime_age_seconds(path),
                 "bridge_workers": int(summary.get("autoencoder_bridge_workers", 0) or 0),
                 "best_validation_ce": summary.get("best_validation_ce"),
@@ -462,6 +529,13 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
         latest_compiler_ir_guided_validation = (
             latest_cycle.get("compiler_ir_guided_validation")
             if isinstance(latest_cycle.get("compiler_ir_guided_validation"), dict)
+            else {}
+        )
+    latest_logic_bridge_validation = summary.get("latest_logic_bridge_validation")
+    if not isinstance(latest_logic_bridge_validation, dict):
+        latest_logic_bridge_validation = (
+            latest_cycle.get("logic_bridge_validation")
+            if isinstance(latest_cycle.get("logic_bridge_validation"), dict)
             else {}
         )
     latest_guidance_canary = summary.get("latest_compiler_ir_guidance_canary")
@@ -599,6 +673,31 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
     learned_ir_cosine_history = [
         value for value in learned_ir_cosine_history if math.isfinite(value)
     ]
+    learned_ir_family_ce_excess_history = [
+        _finite_float(block.get("family_cross_entropy_excess_loss"), math.nan)
+        for block in learned_ir_history
+    ]
+    learned_ir_family_ce_excess_history = [
+        value for value in learned_ir_family_ce_excess_history if math.isfinite(value)
+    ]
+    learned_ir_worst_family_ce_excess_history = [
+        _finite_float(block.get("worst_family_cross_entropy_excess_loss"), math.nan)
+        for block in learned_ir_history
+    ]
+    learned_ir_worst_family_ce_excess_history = [
+        value
+        for value in learned_ir_worst_family_ce_excess_history
+        if math.isfinite(value)
+    ]
+    learned_ir_worst_family_cosine_gap_history = [
+        _finite_float(block.get("worst_family_cosine_gap_loss"), math.nan)
+        for block in learned_ir_history
+    ]
+    learned_ir_worst_family_cosine_gap_history = [
+        value
+        for value in learned_ir_worst_family_cosine_gap_history
+        if math.isfinite(value)
+    ]
     cycle_durations = [
         _finite_float(event.get("duration_seconds"))
         for event in events
@@ -610,6 +709,15 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
         "summary_path": str(summary_path),
         "summary_exists": bool(summary),
         "cycles": int(summary.get("cycles", 0) or 0),
+        "active_cycle": summary.get("active_cycle"),
+        "active_cycle_elapsed_seconds": _finite_float(
+            summary.get("active_cycle_elapsed_seconds"),
+            math.nan,
+        ),
+        "active_cycle_last_heartbeat_at": summary.get(
+            "active_cycle_last_heartbeat_at"
+        ),
+        "active_cycle_phase": summary.get("active_cycle_phase"),
         "age_seconds": _mtime_age_seconds(summary_path) if summary_path.exists() else None,
         "bridge_workers": int(summary.get("autoencoder_bridge_workers", 0) or 0),
         "best_validation_ce": summary.get("best_validation_ce"),
@@ -622,6 +730,23 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
         ),
         "best_validation_ir_guided_cosine": summary.get(
             "best_validation_ir_guided_cosine"
+        ),
+        "latest_logic_bridge_cache_hits": int(
+            latest_logic_bridge_validation.get("cache_hits", 0) or 0
+        ),
+        "latest_logic_bridge_cache_misses": int(
+            latest_logic_bridge_validation.get("cache_misses", 0) or 0
+        ),
+        "latest_logic_bridge_cache_size": int(
+            latest_logic_bridge_validation.get("cache_size", 0) or 0
+        ),
+        "latest_logic_bridge_evaluation_seconds_max": _finite_float(
+            latest_logic_bridge_validation.get("evaluation_seconds_max"),
+            math.nan,
+        ),
+        "latest_logic_bridge_evaluation_seconds_mean": _finite_float(
+            latest_logic_bridge_validation.get("evaluation_seconds_mean"),
+            math.nan,
         ),
         "best_validation_ir_source_copy_loss": summary.get(
             "best_validation_ir_source_copy_loss"
@@ -638,6 +763,33 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
         else (
             max(learned_ir_cosine_history)
             if learned_ir_cosine_history
+            else math.nan
+        ),
+        "best_validation_learned_ir_family_ce_excess": summary.get(
+            "best_validation_learned_ir_family_ce_excess"
+        )
+        if summary.get("best_validation_learned_ir_family_ce_excess") is not None
+        else (
+            min(learned_ir_family_ce_excess_history)
+            if learned_ir_family_ce_excess_history
+            else math.nan
+        ),
+        "best_validation_learned_ir_worst_family_ce_excess": summary.get(
+            "best_validation_learned_ir_worst_family_ce_excess"
+        )
+        if summary.get("best_validation_learned_ir_worst_family_ce_excess") is not None
+        else (
+            min(learned_ir_worst_family_ce_excess_history)
+            if learned_ir_worst_family_ce_excess_history
+            else math.nan
+        ),
+        "best_validation_learned_ir_worst_family_cosine_gap": summary.get(
+            "best_validation_learned_ir_worst_family_cosine_gap"
+        )
+        if summary.get("best_validation_learned_ir_worst_family_cosine_gap") is not None
+        else (
+            min(learned_ir_worst_family_cosine_gap_history)
+            if learned_ir_worst_family_cosine_gap_history
             else math.nan
         ),
         "latest_validation_ce": _first_metric(
@@ -763,6 +915,11 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
             summary.get("latest_compiler_ir_guidance_quality_gate")
             or latest_guidance_canary.get("quality_gate")
             or "n/a"
+        ),
+        "latest_compiler_ir_guidance_attribution": (
+            latest_guidance_canary.get("attribution")
+            if isinstance(latest_guidance_canary.get("attribution"), dict)
+            else {}
         ),
         "latest_compiler_ir_guidance_promotion_allowed": bool(
             summary.get("latest_compiler_ir_guidance_promotion_allowed")
@@ -896,6 +1053,19 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
             )
             else {}
         ),
+        "latest_compiler_ir_guidance_legal_ir_view_gaps": (
+            latest_compiler_ir_guided_validation.get(
+                "compiler_guidance_legal_ir_view_gaps",
+                {},
+            )
+            if isinstance(
+                latest_compiler_ir_guided_validation.get(
+                    "compiler_guidance_legal_ir_view_gaps"
+                ),
+                dict,
+            )
+            else {}
+        ),
         "latest_compiler_ir_guidance_surface_features": (
             latest_compiler_ir_guided_validation.get(
                 "compiler_guidance_surface_features",
@@ -945,6 +1115,30 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
         "latest_learned_ir_view_cosine": _first_metric(
             summary.get("latest_learned_ir_view_cosine"),
             latest_learned_ir_validation.get("view_cosine_similarity"),
+        ),
+        "latest_learned_ir_family_ce_excess": _first_metric(
+            summary.get("latest_learned_ir_family_ce_excess"),
+            latest_learned_ir_validation.get("family_cross_entropy_excess_loss"),
+        ),
+        "latest_learned_ir_worst_family_ce_excess": _first_metric(
+            summary.get("latest_learned_ir_worst_family_ce_excess"),
+            latest_learned_ir_validation.get("worst_family_cross_entropy_excess_loss"),
+        ),
+        "latest_learned_ir_worst_family_ce_excess_name": (
+            summary.get("latest_learned_ir_worst_family_ce_excess_name")
+            or latest_learned_ir_validation.get(
+                "worst_family_cross_entropy_excess_name"
+            )
+            or ""
+        ),
+        "latest_learned_ir_worst_family_cosine_gap": _first_metric(
+            summary.get("latest_learned_ir_worst_family_cosine_gap"),
+            latest_learned_ir_validation.get("worst_family_cosine_gap_loss"),
+        ),
+        "latest_learned_ir_worst_family_cosine_gap_name": (
+            summary.get("latest_learned_ir_worst_family_cosine_gap_name")
+            or latest_learned_ir_validation.get("worst_family_cosine_gap_name")
+            or ""
         ),
         "learning_rate_plateau_streak": int(
             summary.get("learning_rate_plateau_streak", 0) or 0
@@ -1377,6 +1571,18 @@ def _print_report(report: dict[str, Any]) -> None:
                 f"best_ir_cos={_summary_metric(trial, 'best_validation_ir_cosine')} "
                 f"summary_age={age_text}"
             )
+            if trial.get("active_cycle") is not None:
+                active_elapsed = _summary_metric(
+                    trial,
+                    "active_cycle_elapsed_seconds",
+                )
+                print(
+                    "  active_cycle="
+                    f"{trial.get('active_cycle')} "
+                    f"phase={trial.get('active_cycle_phase') or 'n/a'} "
+                    f"elapsed={active_elapsed}s "
+                    f"heartbeat={trial.get('active_cycle_last_heartbeat_at') or 'n/a'}"
+                )
         print()
     final = report["final"]
     if final.get("summary_exists"):
@@ -1389,6 +1595,25 @@ def _print_report(report: dict[str, Any]) -> None:
             f"pending={final['program_synthesis_pending']} "
             f"claimed={final['program_synthesis_claimed']} "
             f"completed={final['program_synthesis_completed']}"
+        )
+        if final.get("active_cycle") is not None:
+            active_elapsed = _summary_metric(final, "active_cycle_elapsed_seconds")
+            print(
+                "  active_cycle="
+                f"{final.get('active_cycle')} "
+                f"phase={final.get('active_cycle_phase') or 'n/a'} "
+                f"elapsed={active_elapsed}s "
+                f"heartbeat={final.get('active_cycle_last_heartbeat_at') or 'n/a'}"
+            )
+        print(
+            "  logic_bridge_cache="
+            f"hits={final['latest_logic_bridge_cache_hits']} "
+            f"misses={final['latest_logic_bridge_cache_misses']} "
+            f"size={final['latest_logic_bridge_cache_size']} "
+            "eval_mean_seconds="
+            f"{_summary_metric(final, 'latest_logic_bridge_evaluation_seconds_mean')} "
+            "eval_max_seconds="
+            f"{_summary_metric(final, 'latest_logic_bridge_evaluation_seconds_max')}"
         )
         print(
             "  autoencoder_validation="
@@ -1470,6 +1695,11 @@ def _print_report(report: dict[str, Any]) -> None:
                 "  guidance_surface_features="
                 f"{final['latest_compiler_ir_guidance_surface_features']}"
             )
+        if final["latest_compiler_ir_guidance_legal_ir_view_gaps"]:
+            print(
+                "  guidance_legal_ir_view_gaps="
+                f"{final['latest_compiler_ir_guidance_legal_ir_view_gaps']}"
+            )
         if final["latest_compiler_ir_guidance_todo_routes"]:
             print(
                 "  guidance_todo_routes="
@@ -1478,7 +1708,30 @@ def _print_report(report: dict[str, Any]) -> None:
         scope_hints = final.get("latest_compiler_ir_guidance_scope_hints")
         if isinstance(scope_hints, dict) and scope_hints.get("scope_counts"):
             print(f"  guidance_scope_hints={scope_hints['scope_counts']}")
+        attribution = final.get("latest_compiler_ir_guidance_attribution")
+        if isinstance(attribution, dict) and attribution.get("legal_ir_view_gaps"):
+            print(
+                "  guidance_attribution_legal_ir_view_gaps="
+                f"{attribution['legal_ir_view_gaps']}"
+            )
+        if isinstance(attribution, dict) and attribution.get("semantic_overlay_terms"):
+            print(
+                "  guidance_attribution_overlay_terms="
+                f"{attribution['semantic_overlay_terms']}"
+            )
+        if isinstance(attribution, dict) and attribution.get("todo_routes"):
+            print(
+                "  guidance_attribution_todo_routes="
+                f"{attribution['todo_routes']}"
+            )
         distillation = final.get("latest_compiler_ir_guidance_distillation")
+        if isinstance(distillation, dict) and distillation.get(
+            "guidance_attribution_summary"
+        ):
+            print(
+                "  guidance_attribution_summary="
+                f"{distillation['guidance_attribution_summary']}"
+            )
         if isinstance(distillation, dict) and distillation.get("top_todo_routes"):
             print(
                 "  guidance_distillation_top_routes="
@@ -1504,7 +1757,14 @@ def _print_report(report: dict[str, Any]) -> None:
             f"latest_ce={_summary_metric(final, 'latest_learned_ir_view_ce')} "
             f"latest_ce_excess={_summary_metric(final, 'latest_learned_ir_view_ce_excess')} "
             f"best_cos={_summary_metric(final, 'best_validation_learned_ir_view_cosine')} "
-            f"latest_cos={_summary_metric(final, 'latest_learned_ir_view_cosine')}"
+            f"latest_cos={_summary_metric(final, 'latest_learned_ir_view_cosine')} "
+            f"best_family_ce_excess={_summary_metric(final, 'best_validation_learned_ir_family_ce_excess')} "
+            f"latest_family_ce_excess={_summary_metric(final, 'latest_learned_ir_family_ce_excess')} "
+            f"best_worst_family_ce_excess={_summary_metric(final, 'best_validation_learned_ir_worst_family_ce_excess')} "
+            f"latest_worst_family_ce_excess={_summary_metric(final, 'latest_learned_ir_worst_family_ce_excess')}"
+            f"[{final.get('latest_learned_ir_worst_family_ce_excess_name') or 'n/a'}] "
+            f"latest_worst_family_cosine_gap={_summary_metric(final, 'latest_learned_ir_worst_family_cosine_gap')}"
+            f"[{final.get('latest_learned_ir_worst_family_cosine_gap_name') or 'n/a'}]"
         )
         print(
             "  todo_generation="

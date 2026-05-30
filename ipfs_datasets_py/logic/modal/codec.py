@@ -1291,6 +1291,17 @@ def _numeric_distribution(value: Any) -> Dict[str, float]:
     }
 
 
+def _numeric_signed_mapping(value: Any) -> Dict[str, float]:
+    if not isinstance(value, Mapping):
+        return {}
+    weights: Dict[str, float] = {}
+    for key, raw_weight in value.items():
+        weight = _safe_float(raw_weight)
+        if abs(weight) > 1.0e-12:
+            weights[str(key)] = round(weight, 12)
+    return dict(sorted(weights.items()))
+
+
 def _guidance_feature_value(value: Any) -> str:
     if isinstance(value, Mapping):
         return str(value.get("feature") or value.get("name") or "").strip()
@@ -1382,6 +1393,34 @@ def _compiler_guidance_summary(
             for key, value in sorted(raw_view_metrics.items())
             if math.isfinite(_safe_float(value))
         }
+    legal_ir_predicted_view_distribution = _numeric_distribution(
+        compiler_guidance.get("legal_ir_predicted_view_distribution")
+    )
+    legal_ir_target_view_distribution = _numeric_distribution(
+        compiler_guidance.get("legal_ir_target_view_distribution")
+    )
+    legal_ir_view_gap_distribution = _numeric_signed_mapping(
+        compiler_guidance.get("legal_ir_view_gap_distribution")
+    )
+    if not legal_ir_view_gap_distribution and (
+        legal_ir_predicted_view_distribution or legal_ir_target_view_distribution
+    ):
+        legal_ir_view_gap_distribution = {
+            key: round(
+                float(legal_ir_target_view_distribution.get(key, 0.0))
+                - float(legal_ir_predicted_view_distribution.get(key, 0.0)),
+                12,
+            )
+            for key in sorted(
+                set(legal_ir_predicted_view_distribution)
+                | set(legal_ir_target_view_distribution)
+            )
+            if abs(
+                float(legal_ir_target_view_distribution.get(key, 0.0))
+                - float(legal_ir_predicted_view_distribution.get(key, 0.0))
+            )
+            > 1.0e-12
+        }
     summary = {
         "decoded_embedding": decoded_embedding,
         "decoded_embedding_norm": round(decoded_embedding_norm, 12),
@@ -1389,12 +1428,9 @@ def _compiler_guidance_summary(
             compiler_guidance.get("family_distribution")
         ),
         "feature_groups": feature_groups,
-        "legal_ir_predicted_view_distribution": _numeric_distribution(
-            compiler_guidance.get("legal_ir_predicted_view_distribution")
-        ),
-        "legal_ir_target_view_distribution": _numeric_distribution(
-            compiler_guidance.get("legal_ir_target_view_distribution")
-        ),
+        "legal_ir_predicted_view_distribution": legal_ir_predicted_view_distribution,
+        "legal_ir_target_view_distribution": legal_ir_target_view_distribution,
+        "legal_ir_view_gap_distribution": legal_ir_view_gap_distribution,
         "legal_ir_view_metrics": legal_ir_view_metrics,
         "ranked_guidance_features": ranked_guidance_features,
         "sample_id": str(compiler_guidance.get("sample_id") or ""),
@@ -1433,6 +1469,13 @@ def _compiler_guidance_feature_strings(
         distribution = guidance_summary.get(distribution_key)
         if isinstance(distribution, Mapping):
             features.extend(f"{prefix}:{key}" for key in distribution)
+    gap_distribution = guidance_summary.get("legal_ir_view_gap_distribution")
+    if isinstance(gap_distribution, Mapping):
+        for key, value in gap_distribution.items():
+            direction = (
+                "underrepresented" if _safe_float(value) > 0.0 else "overrepresented"
+            )
+            features.append(f"legal-ir-view-gap:{direction}:{key}")
     return _unique_preserve_order(features)
 
 
@@ -1626,6 +1669,112 @@ def _apply_compiler_guidance_surface_overlay(
     if not additions:
         return rendered
     return _clean_non_empty_string(f"{rendered} {' '.join(additions)}")
+
+
+def _apply_compiler_guidance_typed_semantics(
+    modal_ir: ModalIRDocument,
+    overlay_terms: Sequence[str],
+    *,
+    source_text: str,
+) -> ModalIRDocument:
+    """Promote learned guidance terms into typed IR metadata/clauses."""
+    terms = {
+        _clean_non_empty_string(term).lower()
+        for term in overlay_terms
+        if _clean_non_empty_string(term)
+    }
+    wants_exception = bool(terms.intersection({"except", "unless"}))
+    wants_prohibition = bool(terms.intersection({"not", "prohibited"}))
+    if not modal_ir.formulas or not (wants_exception or wants_prohibition):
+        return modal_ir
+
+    updated_formulas: List[ModalIRFormula] = []
+    exception_count = 0
+    prohibition_count = 0
+    changed = False
+    for formula in modal_ir.formulas:
+        metadata = dict(formula.metadata)
+        exceptions = list(getattr(formula, "exceptions", []) or [])
+        formula_changed = False
+        if wants_exception:
+            inferred_exceptions = exceptions or _inferred_exception_values_from_source_span(
+                modal_ir=modal_ir,
+                formula=formula,
+            )
+            if not inferred_exceptions:
+                inferred_exceptions = _compiler_guidance_exception_clauses_from_text(
+                    source_text,
+                )
+            if inferred_exceptions:
+                exceptions = _unique_preserve_order([*exceptions, *inferred_exceptions])
+                metadata["compiler_guidance_typed_exception"] = True
+                metadata["compiler_guidance_typed_exception_source"] = (
+                    "autoencoder_guidance_v1"
+                )
+                exception_count += 1
+                formula_changed = True
+        if wants_prohibition:
+            metadata["compiler_guidance_force_polarity"] = "negative"
+            metadata["compiler_guidance_deontic_force"] = "prohibition"
+            metadata["compiler_guidance_typed_prohibition"] = True
+            metadata["compiler_guidance_typed_prohibition_source"] = (
+                "autoencoder_guidance_v1"
+            )
+            prohibition_count += 1
+            formula_changed = True
+        if formula_changed:
+            updated_formulas.append(
+                replace(
+                    formula,
+                    exceptions=exceptions,
+                    metadata=metadata,
+                )
+            )
+            changed = True
+        else:
+            updated_formulas.append(formula)
+    if not changed:
+        return modal_ir
+    typed_semantics = {
+        "exception_formula_count": exception_count,
+        "prohibition_formula_count": prohibition_count,
+        "source": "autoencoder_guidance_v1",
+    }
+    return replace(
+        modal_ir,
+        formulas=updated_formulas,
+        metadata={
+            **modal_ir.metadata,
+            "compiler_guidance_typed_semantics": typed_semantics,
+        },
+    )
+
+
+def _compiler_guidance_exception_clauses_from_text(
+    source_text: str,
+    *,
+    max_candidates: int = 2,
+) -> List[str]:
+    source = _clean_non_empty_string(source_text)
+    if not source:
+        return []
+    inferred: List[str] = []
+    lowered = source.lower()
+    for prefix_text, _prefix_key in sorted(
+        _EXCEPTION_PREFIXES,
+        key=lambda item: len(item[0]),
+        reverse=True,
+    ):
+        pattern = re.compile(rf"(?<!\w){re.escape(prefix_text)}(?!\w)", re.IGNORECASE)
+        for match in pattern.finditer(lowered):
+            clause = _trim_inferred_condition_clause(source[match.start() :])
+            clause = _TRAILING_SECTION_PUNCT_RE.sub("", _clean_non_empty_string(clause))
+            if not clause or _typed_clause_key_value(clause, clause_type="exception") is None:
+                continue
+            inferred.append(clause)
+            if len(inferred) >= max_candidates:
+                return _unique_preserve_order(inferred)
+    return _unique_preserve_order(inferred)
 
 
 def _guidance_frame_boost(
@@ -1857,6 +2006,12 @@ class DeterministicModalLogicCodec:
                             {},
                         )
                     ),
+                    "compiler_guidance_legal_ir_view_gap_distribution": (
+                        guidance_summary.get(
+                            "legal_ir_view_gap_distribution",
+                            {},
+                        )
+                    ),
                     "compiler_guidance_legal_ir_view_metrics": guidance_summary.get(
                         "legal_ir_view_metrics",
                         {},
@@ -1874,6 +2029,11 @@ class DeterministicModalLogicCodec:
                     ),
                     "frame_selector": "bm25_v1+autoencoder_guidance_v1",
                 },
+            )
+            modal_ir = _apply_compiler_guidance_typed_semantics(
+                modal_ir,
+                guidance_surface_overlay_terms,
+                source_text=normalized_text,
             )
         modal_ir = _enrich_modal_ir_formula_clauses(modal_ir)
 
@@ -2092,6 +2252,9 @@ class DeterministicModalLogicCodec:
             ),
             "compiler_guidance_semantic_overlay_terms": list(
                 guidance_surface_overlay_terms
+            ),
+            "compiler_guidance_legal_ir_view_gap_distribution": (
+                guidance_summary.get("legal_ir_view_gap_distribution", {})
             ),
             "compiler_guidance_selected_frame_after": selected_frame,
             "compiler_guidance_selected_frame_before": selected_frame_before_guidance,
@@ -2352,13 +2515,20 @@ def _learned_legal_ir_view_distribution_triples(
     target = _numeric_distribution(
         modal_ir.metadata.get("compiler_guidance_legal_ir_target_view_distribution")
     )
-    if not predicted and not target:
+    gaps = _numeric_signed_mapping(
+        modal_ir.metadata.get("compiler_guidance_legal_ir_view_gap_distribution")
+    )
+    if not predicted and not target and not gaps:
         return []
 
     triples: List[Dict[str, str]] = []
     ranked_views = sorted(
-        set(predicted) | set(target),
-        key=lambda view: max(predicted.get(view, 0.0), target.get(view, 0.0)),
+        set(predicted) | set(target) | set(gaps),
+        key=lambda view: max(
+            predicted.get(view, 0.0),
+            target.get(view, 0.0),
+            abs(gaps.get(view, 0.0)),
+        ),
         reverse=True,
     )[: max(0, int(limit))]
     for rank, view in enumerate(ranked_views, start=1):
@@ -2405,7 +2575,10 @@ def _learned_legal_ir_view_distribution_triples(
                 {
                     "subject": modal_ir.document_id,
                     "predicate": "learned_legal_ir_view_gap",
-                    "object": f"{safe_view}:{target.get(view, 0.0) - predicted.get(view, 0.0):.6f}",
+                    "object": (
+                        f"{safe_view}:"
+                        f"{gaps.get(view, target.get(view, 0.0) - predicted.get(view, 0.0)):.6f}"
+                    ),
                 },
             ]
         )
@@ -2428,6 +2601,19 @@ def modal_ir_to_flogic_triples(
         {"subject": modal_ir.document_id, "predicate": "type", "object": "legal_modal_document"},
         {"subject": modal_ir.document_id, "predicate": "source", "object": modal_ir.source},
     ]
+    typed_semantics = modal_ir.metadata.get("compiler_guidance_typed_semantics")
+    if isinstance(typed_semantics, Mapping):
+        for name, value in sorted(typed_semantics.items()):
+            cleaned_value = _clean_non_empty_string(value)
+            if not cleaned_value:
+                continue
+            triples.append(
+                {
+                    "subject": modal_ir.document_id,
+                    "predicate": f"compiler_guidance_typed_semantics_{name}",
+                    "object": cleaned_value,
+                }
+            )
     for predicate, value in _document_modal_family_count_components(modal_ir):
         triples.append(
             {
@@ -2592,6 +2778,67 @@ def modal_ir_to_flogic_triples(
                 },
             ]
         )
+        formula_metadata = dict(getattr(formula, "metadata", {}) or {})
+        if bool(formula_metadata.get("compiler_guidance_typed_exception")):
+            triples.append(
+                {
+                    "subject": formula.formula_id,
+                    "predicate": "compiler_guidance_typed_semantic",
+                    "object": "exception",
+                }
+            )
+            source = _clean_non_empty_string(
+                formula_metadata.get("compiler_guidance_typed_exception_source")
+            )
+            if source:
+                triples.append(
+                    {
+                        "subject": formula.formula_id,
+                        "predicate": "compiler_guidance_typed_exception_source",
+                        "object": source,
+                    }
+                )
+        if bool(formula_metadata.get("compiler_guidance_typed_prohibition")):
+            triples.append(
+                {
+                    "subject": formula.formula_id,
+                    "predicate": "compiler_guidance_typed_semantic",
+                    "object": "prohibition",
+                }
+            )
+            source = _clean_non_empty_string(
+                formula_metadata.get("compiler_guidance_typed_prohibition_source")
+            )
+            if source:
+                triples.append(
+                    {
+                        "subject": formula.formula_id,
+                        "predicate": "compiler_guidance_typed_prohibition_source",
+                        "object": source,
+                    }
+                )
+        guidance_polarity = _clean_non_empty_string(
+            formula_metadata.get("compiler_guidance_force_polarity")
+        )
+        if guidance_polarity:
+            triples.append(
+                {
+                    "subject": formula.formula_id,
+                    "predicate": "compiler_guidance_force_polarity",
+                    "object": guidance_polarity,
+                }
+            )
+        guidance_force = _clean_non_empty_string(
+            formula_metadata.get("compiler_guidance_deontic_force")
+        )
+        if guidance_force:
+            triples.append(
+                {
+                    "subject": formula.formula_id,
+                    "predicate": "compiler_guidance_deontic_force",
+                    "object": guidance_force,
+                }
+            )
         source_id = _clean_non_empty_string(formula.provenance.source_id)
         if source_id:
             for predicate, value in _source_id_components(source_id):

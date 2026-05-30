@@ -2402,6 +2402,7 @@ class AdaptiveModalAutoencoder:
         legal_ir_view_entropy_losses: List[float] = []
         legal_ir_view_excess_losses: List[float] = []
         predicted_view_distributions: List[Mapping[str, float]] = []
+        legal_ir_view_family_loss_values: Dict[str, List[float]] = {}
         for sample in sample_list:
             target_view_distribution = legal_ir_target_distributions.get(sample.sample_id)
             if not target_view_distribution:
@@ -2427,6 +2428,13 @@ class AdaptiveModalAutoencoder:
                     target_view_distribution,
                 )
             )
+            for name, value in _legal_ir_view_family_loss_metrics(
+                predicted_view_distribution,
+                target_view_distribution,
+            ).items():
+                legal_ir_view_family_loss_values.setdefault(name, []).append(
+                    _float_or_zero(value)
+                )
         if legal_ir_view_ce_losses:
             legal_ir_losses["legal_ir_view_cross_entropy_loss"] = _mean(
                 legal_ir_view_ce_losses
@@ -2437,6 +2445,9 @@ class AdaptiveModalAutoencoder:
             legal_ir_losses["legal_ir_view_cross_entropy_excess_loss"] = _mean(
                 legal_ir_view_excess_losses
             )
+        for name, values in sorted(legal_ir_view_family_loss_values.items()):
+            if values:
+                legal_ir_losses[name] = _mean(values)
 
         return AutoencoderEvaluation(
             sample_count=len(sample_list),
@@ -2576,6 +2587,7 @@ class AdaptiveModalAutoencoder:
         legal_ir_view_cross_entropy_loss = 0.0
         legal_ir_view_entropy_loss = 0.0
         legal_ir_view_cross_entropy_excess_loss = 0.0
+        legal_ir_view_family_losses: Dict[str, float] = {}
         if legal_ir_view_distribution:
             legal_ir_predicted_view_distribution = self._legal_ir_view_distribution(
                 sample,
@@ -2594,6 +2606,10 @@ class AdaptiveModalAutoencoder:
                     legal_ir_predicted_view_distribution,
                     legal_ir_view_distribution,
                 )
+            )
+            legal_ir_view_family_losses = _legal_ir_view_family_loss_metrics(
+                legal_ir_predicted_view_distribution,
+                legal_ir_view_distribution,
             )
         legal_ir_component_gaps = _legal_ir_component_gaps(
             legal_ir_view_distribution,
@@ -2635,7 +2651,12 @@ class AdaptiveModalAutoencoder:
             },
             legal_ir_losses={
                 key: round(float(value), 12)
-                for key, value in sorted(legal_ir_losses.items())
+                for key, value in sorted(
+                    {
+                        **dict(legal_ir_losses),
+                        **legal_ir_view_family_losses,
+                    }.items()
+                )
             },
             legal_ir_underrepresented_components=legal_ir_underrepresented_components,
             legal_ir_overrepresented_components=legal_ir_overrepresented_components,
@@ -2696,6 +2717,22 @@ class AdaptiveModalAutoencoder:
                 legal_ir_target_distribution,
                 use_sample_memory=use_sample_memory,
             )
+        legal_ir_view_gap_distribution = {
+            key: round(
+                float(legal_ir_target_distribution.get(key, 0.0))
+                - float(legal_ir_predicted_distribution.get(key, 0.0)),
+                12,
+            )
+            for key in sorted(
+                set(legal_ir_target_distribution)
+                | set(legal_ir_predicted_distribution)
+            )
+            if abs(
+                float(legal_ir_target_distribution.get(key, 0.0))
+                - float(legal_ir_predicted_distribution.get(key, 0.0))
+            )
+            > 1.0e-12
+        }
 
         feature_groups = {
             "compiler_latent_profile": self._compiler_latent_profile_feature_keys_for(sample),
@@ -2735,12 +2772,18 @@ class AdaptiveModalAutoencoder:
                 key: round(float(value), 12)
                 for key, value in sorted(legal_ir_target_distribution.items())
             },
+            "legal_ir_view_gap_distribution": legal_ir_view_gap_distribution,
             "legal_ir_view_metrics": {
                 "cross_entropy_excess_loss": (
                     introspection.legal_ir_view_cross_entropy_excess_loss
                 ),
                 "cross_entropy_loss": introspection.legal_ir_view_cross_entropy_loss,
                 "entropy_loss": introspection.legal_ir_view_entropy_loss,
+                "view_family_losses": {
+                    key: round(float(value), 12)
+                    for key, value in sorted(introspection.legal_ir_losses.items())
+                    if key.startswith("legal_ir_view_family_")
+                },
             },
             "ranked_guidance_features": ranked_features,
             "sample_id": sample.sample_id,
@@ -3065,6 +3108,7 @@ class AdaptiveModalAutoencoder:
         candidate_updates = (
             ("family_logits", ("family_logits",)),
             ("decoded_embedding", ("decoded_embedding",)),
+            ("legal_ir_view_global_logits", ("legal_ir_view_global_logits",)),
             ("legal_ir_view_logits", ("legal_ir_view_logits",)),
             (
                 "combined",
@@ -3074,6 +3118,7 @@ class AdaptiveModalAutoencoder:
         head_learning_rate_scales = {
             "family_logits": 1.0,
             "decoded_embedding": 0.5,
+            "legal_ir_view_global_logits": 0.5,
             "legal_ir_view_logits": 0.5,
             "combined": 0.35,
         }
@@ -3131,6 +3176,11 @@ class AdaptiveModalAutoencoder:
                                 sample,
                                 learning_rate=effective_learning_rate,
                                 update_sample_memory=False,
+                            )
+                        if "legal_ir_view_global_logits" in update_targets:
+                            self._nudge_legal_ir_view_global_logits(
+                                sample,
+                                learning_rate=effective_learning_rate,
                             )
                     self._regularize_feature_state(l2_regularization)
                     after = self.evaluate(target_samples, **evaluation_kwargs)
@@ -3199,6 +3249,48 @@ class AdaptiveModalAutoencoder:
                             - float(
                                 after.legal_ir_losses.get(
                                     "legal_ir_view_cross_entropy_excess_loss",
+                                    0.0,
+                                )
+                            )
+                        ),
+                        "legal_ir_view_family_cross_entropy_delta": (
+                            float(
+                                best.legal_ir_losses.get(
+                                    "legal_ir_view_family_cross_entropy_loss",
+                                    0.0,
+                                )
+                            )
+                            - float(
+                                after.legal_ir_losses.get(
+                                    "legal_ir_view_family_cross_entropy_loss",
+                                    0.0,
+                                )
+                            )
+                        ),
+                        "legal_ir_view_family_cross_entropy_excess_delta": (
+                            float(
+                                best.legal_ir_losses.get(
+                                    "legal_ir_view_family_cross_entropy_excess_loss",
+                                    0.0,
+                                )
+                            )
+                            - float(
+                                after.legal_ir_losses.get(
+                                    "legal_ir_view_family_cross_entropy_excess_loss",
+                                    0.0,
+                                )
+                            )
+                        ),
+                        "legal_ir_view_family_cosine_gap_delta": (
+                            float(
+                                best.legal_ir_losses.get(
+                                    "legal_ir_view_family_cosine_gap_loss",
+                                    0.0,
+                                )
+                            )
+                            - float(
+                                after.legal_ir_losses.get(
+                                    "legal_ir_view_family_cosine_gap_loss",
                                     0.0,
                                 )
                             )
@@ -17878,6 +17970,49 @@ class AdaptiveModalAutoencoder:
                     )
         return True
 
+    def _nudge_legal_ir_view_global_logits(
+        self,
+        sample: LegalSample,
+        *,
+        learning_rate: float,
+    ) -> bool:
+        """Update only corpus-level LegalIR view logits.
+
+        This projection head is intentionally isolated from embedding, family,
+        and feature-specific LegalIR heads, so holdout CE/cosine/reconstruction
+        Pareto guards can accept useful LegalIR-view movement without also
+        accepting broader architectural drift.
+        """
+        target_distribution = self._legal_ir_view_target_cache.get(sample.sample_id)
+        if not target_distribution:
+            return False
+        step = _clamp_learning_rate(learning_rate)
+        predicted = self._legal_ir_view_distribution(
+            sample,
+            target_distribution,
+            use_sample_memory=False,
+        )
+        families = _unique_preserve_order(
+            list(predicted.keys()) + list(target_distribution.keys())
+        )
+        legal_view_update_scale = self._head_update_scale(
+            1,
+            self.legal_ir_view_head_update_normalization,
+        )
+        changed = False
+        for family in families:
+            gradient = float(target_distribution.get(family, 0.0)) - float(
+                predicted.get(family, 0.0)
+            )
+            if abs(gradient) <= 1.0e-12:
+                continue
+            self.state.legal_ir_view_logits[family] = (
+                self.state.legal_ir_view_logits.get(family, 0.0)
+                + (step * legal_view_update_scale * gradient)
+            )
+            changed = True
+        return changed
+
     def _regularize_feature_state(self, l2_regularization: float) -> None:
         factor = max(0.0, 1.0 - max(0.0, float(l2_regularization)))
         if factor >= 1.0:
@@ -20357,6 +20492,163 @@ def _normalized_distribution(distribution: Mapping[str, float]) -> Dict[str, flo
     }
 
 
+_LEGAL_IR_VIEW_FAMILY_RANK = {
+    "deontic": 0,
+    "frame_logic": 1,
+    "tdfol": 2,
+    "kg": 3,
+    "cec": 4,
+    "prover": 5,
+    "zkp": 6,
+    "other": 7,
+}
+
+
+def _legal_ir_view_family_name(view: str) -> str:
+    """Collapse fine-grained LegalIR views into optimizer-facing families."""
+    normalized = str(view or "").strip().lower().replace("-", "_")
+    if not normalized:
+        return "other"
+    compact = normalized.replace("::", ".").replace("/", ".")
+    if (
+        compact.startswith("deontic")
+        or ".deontic" in compact
+        or "norm" in compact
+    ):
+        return "deontic"
+    if (
+        compact.startswith("modal.frame_logic")
+        or compact.startswith("frame_logic")
+        or "frame_logic" in compact
+        or "flogic" in compact
+    ):
+        return "frame_logic"
+    if compact.startswith("tdfol") or compact.startswith("fol.") or "tdfol" in compact:
+        return "tdfol"
+    if (
+        compact.startswith("knowledge_graph")
+        or compact.startswith("kg")
+        or "neo4j" in compact
+        or ".graph" in compact
+    ):
+        return "kg"
+    if compact.startswith("cec") or compact.startswith("dcec") or "event_calculus" in compact:
+        return "cec"
+    if (
+        compact.startswith("external_provers")
+        or compact.startswith("prover")
+        or compact.startswith(("z3", "cvc5", "lean", "coq", "smt"))
+        or ".prover" in compact
+        or "router" in compact
+    ):
+        return "prover"
+    if compact.startswith("zkp") or "zero_knowledge" in compact or "circuit" in compact:
+        return "zkp"
+    return "other"
+
+
+def _legal_ir_view_family_distribution(
+    distribution: Mapping[str, float],
+) -> Dict[str, float]:
+    family_weights: Dict[str, float] = {}
+    for view, value in dict(distribution or {}).items():
+        weight = max(0.0, _float_or_zero(value))
+        if weight <= 0.0:
+            continue
+        family = _legal_ir_view_family_name(str(view))
+        family_weights[family] = family_weights.get(family, 0.0) + weight
+    return _normalized_distribution(family_weights)
+
+
+def _distribution_cosine_similarity(
+    left: Mapping[str, float],
+    right: Mapping[str, float],
+) -> float:
+    keys = sorted(set(left) | set(right))
+    if not keys:
+        return 0.0
+    return cosine_similarity(
+        [float(left.get(key, 0.0)) for key in keys],
+        [float(right.get(key, 0.0)) for key in keys],
+    )
+
+
+def _binary_mass_distribution(name: str, mass: float) -> Dict[str, float]:
+    bounded = min(1.0, max(0.0, _float_or_zero(mass)))
+    return {
+        name: bounded,
+        f"not_{name}": 1.0 - bounded,
+    }
+
+
+def _legal_ir_view_family_sort_key(name: str) -> tuple[int, str]:
+    family = str(name)
+    return (_LEGAL_IR_VIEW_FAMILY_RANK.get(family, 99), family)
+
+
+def _legal_ir_view_family_loss_metrics(
+    predicted_distribution: Mapping[str, float],
+    target_distribution: Mapping[str, float],
+) -> Dict[str, float]:
+    predicted_family_distribution = _legal_ir_view_family_distribution(
+        predicted_distribution
+    )
+    target_family_distribution = _legal_ir_view_family_distribution(target_distribution)
+    if not predicted_family_distribution and not target_family_distribution:
+        return {}
+
+    metrics: Dict[str, float] = {}
+    if target_family_distribution:
+        metrics["legal_ir_view_family_cross_entropy_loss"] = (
+            cross_entropy_distribution_loss(
+                predicted_family_distribution,
+                target_family_distribution,
+            )
+        )
+        metrics["legal_ir_view_family_entropy_loss"] = distribution_entropy_loss(
+            target_family_distribution
+        )
+        metrics["legal_ir_view_family_cross_entropy_excess_loss"] = (
+            cross_entropy_excess_distribution_loss(
+                predicted_family_distribution,
+                target_family_distribution,
+            )
+        )
+    metrics["legal_ir_view_family_cosine_gap_loss"] = max(
+        0.0,
+        1.0
+        - _distribution_cosine_similarity(
+            predicted_family_distribution,
+            target_family_distribution,
+        ),
+    )
+
+    for family in sorted(
+        set(predicted_family_distribution) | set(target_family_distribution),
+        key=_legal_ir_view_family_sort_key,
+    ):
+        predicted_mass = float(predicted_family_distribution.get(family, 0.0))
+        target_mass = float(target_family_distribution.get(family, 0.0))
+        predicted_binary = _binary_mass_distribution(family, predicted_mass)
+        target_binary = _binary_mass_distribution(family, target_mass)
+        prefix = f"legal_ir_view_family_{family}"
+        metrics[f"{prefix}_cross_entropy_loss"] = cross_entropy_distribution_loss(
+            predicted_binary,
+            target_binary,
+        )
+        metrics[f"{prefix}_cross_entropy_excess_loss"] = (
+            cross_entropy_excess_distribution_loss(
+                predicted_binary,
+                target_binary,
+            )
+        )
+        metrics[f"{prefix}_cosine_gap_loss"] = max(
+            0.0,
+            1.0 - _distribution_cosine_similarity(predicted_binary, target_binary),
+        )
+    return metrics
+
+
 def _joint_distribution(
     left: Mapping[str, float],
     right: Mapping[str, float],
@@ -21152,6 +21444,12 @@ def _legal_ir_objective_component(losses: Mapping[str, float]) -> float:
         values.get("legal_ir_view_cross_entropy_loss", 0.0),
     )
     component += min(1.0, view_ce_component / 3.0)
+    view_family_component = values.get(
+        "legal_ir_view_family_cross_entropy_excess_loss",
+        values.get("legal_ir_view_family_cross_entropy_loss", 0.0),
+    )
+    component += min(1.0, view_family_component / 3.0)
+    component += min(1.0, values.get("legal_ir_view_family_cosine_gap_loss", 0.0))
     component += min(1.0, values.get("legal_ir_multiview_proof_failure_ratio", 0.0))
     component += min(1.0, values.get("legal_ir_multiview_graph_failure_penalty", 0.0))
     detail = 0.0
@@ -21161,11 +21459,23 @@ def _legal_ir_objective_component(losses: Mapping[str, float]) -> float:
             "legal_ir_view_cross_entropy_loss",
             "legal_ir_view_entropy_loss",
             "legal_ir_view_cross_entropy_excess_loss",
+            "legal_ir_view_family_cross_entropy_loss",
+            "legal_ir_view_family_entropy_loss",
+            "legal_ir_view_family_cross_entropy_excess_loss",
+            "legal_ir_view_family_cosine_gap_loss",
             "legal_ir_multiview_proof_failure_ratio",
             "legal_ir_multiview_graph_failure_penalty",
         }:
             continue
-        if name.startswith("legal_ir_") or name.startswith(("deontic_", "tdfol_", "cec_", "zkp_", "external_prover_")):
+        if name.endswith("_entropy_loss"):
+            continue
+        if name.startswith("legal_ir_view_family_") and name.endswith(
+            "_cross_entropy_loss"
+        ):
+            continue
+        if name.startswith("legal_ir_") or name.startswith(
+            ("deontic_", "tdfol_", "cec_", "zkp_", "external_prover_")
+        ):
             detail += min(0.25, value)
     return component + min(1.0, detail)
 
