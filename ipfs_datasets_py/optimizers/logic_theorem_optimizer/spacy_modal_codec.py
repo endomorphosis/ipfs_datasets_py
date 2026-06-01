@@ -323,6 +323,18 @@ _TEMPORAL_EXPENDED_SCOPE_PHRASES = (
     "available until expended",
     "remain available until expended",
 )
+_TEMPORAL_FISCAL_SCOPE_PHRASES = (
+    "for any fiscal year",
+    "for each fiscal year",
+    "for each succeeding fiscal year",
+    "for each subsequent fiscal year",
+    "for each of fiscal years",
+    "for fiscal years",
+    "for the first fiscal year",
+    "for the subsequent fiscal year",
+    "for that fiscal year",
+    "fiscal year",
+)
 _TEMPORAL_DEADLINE_CUE_TERMS = frozenset(
     {
         "by",
@@ -939,6 +951,12 @@ _DEONTIC_APPROPRIATIONS_SCOPE_PHRASES = (
     "are authorized to be appropriated",
     "is authorized to be appropriated",
     "there are authorized to be appropriated",
+)
+_DEONTIC_AUTHORIZATION_SCOPE_PHRASES = (
+    "there is authorized to be appropriated",
+    "is authorized to be appropriated",
+    "are authorized to be appropriated",
+    "authorized to be appropriated",
 )
 
 
@@ -3787,6 +3805,17 @@ def _apply_directional_modal_family_pair_backfill(
     epistemic_family = ModalLogicFamily.EPISTEMIC.value
 
     has_strong_temporal_scope = _has_strong_temporal_scope_signal(signals)
+    has_temporal_fiscal_scope_phrase = bool(
+        signals.get("has_temporal_fiscal_scope_phrase")
+    )
+    has_deontic_authorization_scope_phrase = bool(
+        signals.get("has_deontic_authorization_scope_phrase")
+    )
+    has_non_deadline_temporal_scope = bool(
+        signals.get("has_temporal_scope")
+        and not signals.get("has_temporal_deadline_cue")
+        and not signals.get("has_temporal_within_scope")
+    )
     has_statutory_scope_reference = bool(
         signals.get("has_statutory_scope_reference")
     )
@@ -3845,6 +3874,11 @@ def _apply_directional_modal_family_pair_backfill(
     has_epistemic_scope = bool(
         signals.get("has_epistemic_scope")
         or signals.get("has_epistemic_cue")
+    )
+    has_fiscal_authorization_temporal_deontic_competition = bool(
+        has_temporal_fiscal_scope_phrase
+        and has_deontic_authorization_scope_phrase
+        and has_non_deadline_temporal_scope
     )
 
     frame_count = float(counts.get(frame_family, 0.0))
@@ -4008,6 +4042,7 @@ def _apply_directional_modal_family_pair_backfill(
         and (
             has_statutory_scope_reference
             or has_frame_scope_signal
+            or has_fiscal_authorization_temporal_deontic_competition
         )
     ):
         deontic_top_up_max = (
@@ -4015,12 +4050,18 @@ def _apply_directional_modal_family_pair_backfill(
             if has_explicit_deontic_scope
             else _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT
         )
+        if has_fiscal_authorization_temporal_deontic_competition:
+            deontic_top_up_max = max(
+                deontic_top_up_max,
+                _TEMPORAL_TO_DEONTIC_STRONG_SCOPE_BACKFILL_MAX,
+            )
         if (
             has_strong_temporal_scope
             and has_explicit_deontic_scope
             and (
                 has_statutory_scope_reference
                 or has_frame_scope_signal
+                or has_fiscal_authorization_temporal_deontic_competition
             )
         ):
             deontic_top_up_max = max(
@@ -4112,6 +4153,7 @@ def _apply_directional_modal_family_pair_backfill(
         and (
             has_statutory_scope_reference
             or has_frame_scope_signal
+            or has_fiscal_authorization_temporal_deontic_competition
         )
     ):
         deontic_top_up_max = (
@@ -4120,11 +4162,20 @@ def _apply_directional_modal_family_pair_backfill(
             else _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT
         )
         if (
+            has_fiscal_authorization_temporal_deontic_competition
+            and has_explicit_deontic_scope
+        ):
+            deontic_top_up_max = max(
+                deontic_top_up_max,
+                _TEMPORAL_TO_DEONTIC_SCOPE_REINFORCEMENT_MAX,
+            )
+        if (
             has_strong_temporal_scope
             and has_explicit_deontic_scope
             and (
                 has_statutory_scope_reference
                 or has_frame_scope_signal
+                or has_fiscal_authorization_temporal_deontic_competition
             )
         ):
             deontic_top_up_max = max(
@@ -4149,6 +4200,19 @@ def _apply_directional_modal_family_pair_backfill(
                         if has_explicit_deontic_scope
                         else _STATUTORY_GENERIC_FRAME_DEONTIC_SCOPE_MAX
                     ),
+                ),
+            )
+        if (
+            has_fiscal_authorization_temporal_deontic_competition
+            and has_explicit_deontic_scope
+        ):
+            deontic_top_up = max(
+                deontic_top_up,
+                _scaled_competing_scope_backfill(
+                    source_count=max(temporal_count, frame_count),
+                    ratio=_STATUTORY_GENERIC_FRAME_COMPETING_SCOPE_RATIO,
+                    minimum=_STRONG_SCOPE_BACKFILL_WEIGHT,
+                    maximum=_TEMPORAL_TO_DEONTIC_SCOPE_REINFORCEMENT_MAX,
                 ),
             )
         if has_strong_temporal_scope and has_explicit_deontic_scope:
@@ -5488,10 +5552,24 @@ def _apply_competing_deontic_temporal_scope_phrase_reinforcement(
         return
     has_strong_temporal_scope = _has_strong_temporal_scope_signal(signals)
     has_deontic_scope_phrase = bool(signals.get("has_deontic_scope_phrase"))
+    has_deontic_authorization_scope_phrase = bool(
+        signals.get("has_deontic_authorization_scope_phrase")
+    )
+    has_temporal_fiscal_scope_phrase = bool(
+        signals.get("has_temporal_fiscal_scope_phrase")
+    )
+    has_temporal_deadline_cue = bool(signals.get("has_temporal_deadline_cue"))
     has_temporal_expended_scope_phrase = bool(
         signals.get("has_temporal_expended_scope_phrase")
     )
     if has_deontic_scope_phrase and not has_strong_temporal_scope:
+        counts[deontic_family] = deontic_count + _DEONTIC_SCOPE_PHRASE_REINFORCEMENT
+        deontic_count = float(counts.get(deontic_family, 0.0))
+    if (
+        has_deontic_authorization_scope_phrase
+        and has_temporal_fiscal_scope_phrase
+        and not has_temporal_deadline_cue
+    ):
         counts[deontic_family] = deontic_count + _DEONTIC_SCOPE_PHRASE_REINFORCEMENT
         deontic_count = float(counts.get(deontic_family, 0.0))
     if has_temporal_expended_scope_phrase:
@@ -5919,11 +5997,17 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
     deontic_appropriations_scope_phrase = _contains_scope_phrase(
         normalized_text, _DEONTIC_APPROPRIATIONS_SCOPE_PHRASES
     )
+    deontic_authorization_scope_phrase = _contains_scope_phrase(
+        normalized_text, _DEONTIC_AUTHORIZATION_SCOPE_PHRASES
+    )
     epistemic_scope_phrase = _contains_scope_phrase(
         normalized_text, _EPISTEMIC_SCOPE_PHRASES
     )
     temporal_scope_phrase = _contains_scope_phrase(
         normalized_text, _TEMPORAL_SCOPE_PHRASES
+    )
+    temporal_fiscal_scope_phrase = _contains_scope_phrase(
+        normalized_text, _TEMPORAL_FISCAL_SCOPE_PHRASES
     )
     temporal_expended_scope_phrase = _contains_scope_phrase(
         normalized_text, _TEMPORAL_EXPENDED_SCOPE_PHRASES
@@ -6039,6 +6123,9 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         "has_deontic_appropriations_scope_phrase": bool(
             deontic_appropriations_scope_phrase
         ),
+        "has_deontic_authorization_scope_phrase": bool(
+            deontic_authorization_scope_phrase
+        ),
         "has_doxastic_cue": ModalLogicFamily.DOXASTIC.value in cue_families,
         "has_doxastic_scope": doxastic_scope,
         "has_dynamic_cue": ModalLogicFamily.DYNAMIC.value in cue_families,
@@ -6050,6 +6137,7 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         "has_temporal_scope": temporal_scope or ModalLogicFamily.TEMPORAL.value in cue_families,
         "has_temporal_cue": ModalLogicFamily.TEMPORAL.value in cue_families,
         "has_temporal_scope_phrase": bool(temporal_scope_phrase),
+        "has_temporal_fiscal_scope_phrase": bool(temporal_fiscal_scope_phrase),
         "has_temporal_deadline_cue": temporal_deadline_cue,
         "has_temporal_expended_scope_phrase": bool(temporal_expended_scope_phrase),
         "has_temporal_scope_token": temporal_scope_token,

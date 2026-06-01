@@ -7,10 +7,38 @@ from dataclasses import asdict, dataclass, field
 from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 
+def _coerce_text_value(value: Any) -> str:
+    """Return a stable text projection for mixed legacy/parser slot values."""
+
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value
+    if isinstance(value, Mapping):
+        normalized = _with_value_alias(dict(value))
+        for key in (
+            "value",
+            "normalized_text",
+            "raw_text",
+            "text",
+            "name",
+            "term",
+        ):
+            text = str(normalized.get(key) or "").strip()
+            if text:
+                return text
+        return ""
+    return str(value)
+
+
 def _first_text(value: Any) -> str:
     if isinstance(value, list):
-        return str(value[0]) if value else ""
-    return str(value or "")
+        for item in value:
+            text = _coerce_text_value(item).strip()
+            if text:
+                return text
+        return ""
+    return _coerce_text_value(value)
 
 
 def _list_of_dicts(value: Any) -> List[Dict[str, Any]]:
@@ -21,8 +49,14 @@ def _list_of_dicts(value: Any) -> List[Dict[str, Any]]:
 
 def _list_of_strings(value: Any) -> List[str]:
     if not isinstance(value, list):
-        return [str(value)] if value else []
-    return [str(item) for item in value if item is not None]
+        text = _coerce_text_value(value).strip()
+        return [text] if text else []
+    values: List[str] = []
+    for item in value:
+        text = _coerce_text_value(item).strip()
+        if text:
+            values.append(text)
+    return values
 
 
 def _actor_texts(value: Any) -> List[str]:

@@ -6878,6 +6878,73 @@ def test_spacy_codec_strengthens_temporal_share_for_dense_deontic_scope_statutor
     assert temporal_share > 0.12
 
 
+def test_spacy_signals_mark_authorized_appropriation_fiscal_scope() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        (
+            "There is authorized to be appropriated $25,000,000 for each of the fiscal "
+            "years 1978 and 1979, and $20,000,000 for fiscal year 1980."
+        ),
+        document_id="authorized-appropriation-fiscal-scope-signals",
+    )
+
+    signals = modal_ambiguity_signals(encoding)
+
+    assert signals["has_deontic_authorization_scope_phrase"] is True
+    assert signals["has_temporal_fiscal_scope_phrase"] is True
+    assert signals["has_temporal_deadline_cue"] is False
+
+
+def test_spacy_codec_boosts_deontic_share_for_authorized_appropriation_fiscal_scope() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    with_phrase = build_us_code_sample(
+        title="42",
+        section="6931",
+        text=(
+            "There is authorized to be appropriated $25,000,000 for each of the fiscal "
+            "years 1978 and 1979, and $20,000,000 for fiscal year 1980."
+        ),
+    )
+    without_phrase = build_us_code_sample(
+        title="42",
+        section="6931",
+        text=(
+            "The program is authorized for each of the fiscal years 1978 and 1979, and "
+            "for fiscal year 1980."
+        ),
+    )
+
+    with_phrase_ranking = ranked_modal_families(codec.encode_sample(with_phrase))
+    without_phrase_ranking = ranked_modal_families(codec.encode_sample(without_phrase))
+
+    with_phrase_deontic_share = next(
+        float(item["share"])
+        for item in with_phrase_ranking
+        if item["family"] == "deontic"
+    )
+    without_phrase_deontic_share = next(
+        float(item["share"])
+        for item in without_phrase_ranking
+        if item["family"] == "deontic"
+    )
+    with_phrase_temporal_share = next(
+        float(item["share"])
+        for item in with_phrase_ranking
+        if item["family"] == "temporal"
+    )
+    without_phrase_temporal_share = next(
+        float(item["share"])
+        for item in without_phrase_ranking
+        if item["family"] == "temporal"
+    )
+
+    assert with_phrase_deontic_share > without_phrase_deontic_share
+    assert with_phrase_temporal_share < without_phrase_temporal_share
+
+
 def test_supervisor_with_spacy_codec_improves_loss_and_cosine() -> None:
     sample = build_us_code_sample(
         title="5",

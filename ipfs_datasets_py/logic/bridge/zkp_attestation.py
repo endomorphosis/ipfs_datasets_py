@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import warnings
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Optional, Sequence
@@ -57,6 +58,17 @@ class ZkpAttestationBridgeAdapter:
             source_embedding=source_embedding,
         )
         formula_records = list(context.get("formula_records") or [])
+        if not formula_records:
+            normalized_text = " ".join(str(text or "").split())
+            if normalized_text:
+                fallback_source_id = f"{document_id or _document_id('zkp', text)}:fallback:0"
+                formula_records = [
+                    {
+                        "formula": normalized_text,
+                        "predicates": (),
+                        "source_id": fallback_source_id,
+                    }
+                ]
         resolved_document_id = document_id or _document_id("zkp", text)
         attestations = _zkp_attestation_records(
             formula_records,
@@ -229,6 +241,8 @@ def _zkp_attestation_records(
             continue
         source_id = str(formula_record.get("source_id") or f"zkp:formula:{index}")
         axioms = _private_axioms_for_formula(formula_record, theorem=theorem)
+        guidance_contract = _compiler_guidance_contract(formula_record)
+        guidance_ref = _compiler_guidance_ref(guidance_contract)
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", UserWarning)
@@ -239,8 +253,13 @@ def _zkp_attestation_records(
                         "circuit_ref": "legal_ir_zkp_attestation@v1",
                         "circuit_version": 1,
                         "ruleset_id": "LegalIR_TDFOL_v1",
+                        "compiler_guidance_contract": guidance_contract,
+                        "compiler_guidance_ref": guidance_ref,
                     },
                 )
+                if guidance_ref:
+                    proof.public_inputs["compiler_guidance_ref"] = guidance_ref
+                    proof.public_inputs["compiler_guidance_version"] = 1
                 verified = bool(verifier.verify_proof(proof))
             proof_dict = proof.to_dict()
             proof_hash = hashlib.sha256(proof.proof_data).hexdigest()
@@ -262,6 +281,7 @@ def _zkp_attestation_records(
                 "source_id": source_id,
                 "theorem": theorem,
                 "verified": verified,
+                "compiler_guidance_ref": guidance_ref,
             }
         )
     return records
@@ -355,6 +375,7 @@ def _public_attestation_record(record: Mapping[str, Any]) -> dict[str, Any]:
         "error": record.get("error") or "",
         "proof_hash": record.get("proof_hash") or "",
         "proof_size_bytes": int(proof.get("size_bytes") or 0),
+        "compiler_guidance_ref": record.get("compiler_guidance_ref") or "",
         "public_inputs": public_inputs,
         "source_id": record.get("source_id") or "",
         "theorem": record.get("theorem") or "",
@@ -365,6 +386,41 @@ def _public_attestation_record(record: Mapping[str, Any]) -> dict[str, Any]:
 def _document_id(prefix: str, text: str) -> str:
     digest = hashlib.sha256(str(text or "").encode("utf-8")).hexdigest()[:16]
     return f"{prefix}:{digest}"
+
+
+def _compiler_guidance_contract(formula_record: Mapping[str, Any]) -> dict[str, Any]:
+    source_norm = formula_record.get("source_norm")
+    source_norm_mapping = source_norm if isinstance(source_norm, Mapping) else {}
+    selected: dict[str, Any] = {}
+    for key in sorted(source_norm_mapping.keys(), key=str):
+        name = str(key)
+        if name.startswith("compiler_guidance_"):
+            selected[name] = _to_json_compatible(source_norm_mapping.get(key))
+    for key in sorted(formula_record.keys(), key=str):
+        name = str(key)
+        if name.startswith("compiler_guidance_"):
+            selected[name] = _to_json_compatible(formula_record.get(key))
+    return selected
+
+
+def _compiler_guidance_ref(contract: Mapping[str, Any]) -> str:
+    if not contract:
+        return ""
+    payload = json.dumps(dict(contract), sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _to_json_compatible(value: Any) -> Any:
+    if value is None or isinstance(value, (bool, int, float, str)):
+        return value
+    if isinstance(value, Mapping):
+        return {
+            str(key): _to_json_compatible(item)
+            for key, item in sorted(value.items(), key=lambda entry: str(entry[0]))
+        }
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        return [_to_json_compatible(item) for item in value]
+    return str(value)
 
 
 __all__ = ["ZkpAttestationBridgeAdapter"]

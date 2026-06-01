@@ -14,6 +14,7 @@ import subprocess
 import sys
 import time
 from collections import Counter, defaultdict
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -266,6 +267,21 @@ def _mtime_age_seconds(path: Path) -> float | None:
         return None
 
 
+def _iso_age_seconds(value: Any) -> float:
+    text = str(value or "").strip()
+    if not text:
+        return math.nan
+    if text.endswith("Z"):
+        text = f"{text[:-1]}+00:00"
+    try:
+        parsed = datetime.fromisoformat(text)
+    except ValueError:
+        return math.nan
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return max(0.0, datetime.now(timezone.utc).timestamp() - parsed.timestamp())
+
+
 def _run_ps() -> list[dict[str, Any]]:
     try:
         output = subprocess.check_output(
@@ -461,12 +477,16 @@ def _trial_reports(log_dir: Path, run_id: str) -> list[dict[str, Any]]:
             if event.get("event") == "cycle"
         ]
         cycle_durations = [value for value in cycle_durations if math.isfinite(value)]
+        active_heartbeat_age = _iso_age_seconds(
+            summary.get("active_cycle_last_heartbeat_at")
+        )
         reports.append(
             {
                 "run_id": summary.get("run_id") or path.stem,
                 "summary_path": str(path),
                 "cycles": int(summary.get("cycles", 0) or 0),
                 "active_cycle": summary.get("active_cycle"),
+                "active_cycle_heartbeat_age_seconds": active_heartbeat_age,
                 "active_cycle_elapsed_seconds": _finite_float(
                     summary.get("active_cycle_elapsed_seconds"),
                     math.nan,
@@ -475,6 +495,13 @@ def _trial_reports(log_dir: Path, run_id: str) -> list[dict[str, Any]]:
                     "active_cycle_last_heartbeat_at"
                 ),
                 "active_cycle_phase": summary.get("active_cycle_phase"),
+                "active_cycle_stale": bool(
+                    summary.get("active_cycle") is not None
+                    and (
+                        not math.isfinite(active_heartbeat_age)
+                        or active_heartbeat_age > 600.0
+                    )
+                ),
                 "age_seconds": _mtime_age_seconds(path),
                 "bridge_workers": int(summary.get("autoencoder_bridge_workers", 0) or 0),
                 "best_validation_ce": summary.get("best_validation_ce"),
@@ -704,12 +731,16 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
         if event.get("event") == "cycle"
     ]
     cycle_durations = [value for value in cycle_durations if math.isfinite(value)]
+    active_heartbeat_age = _iso_age_seconds(
+        summary.get("active_cycle_last_heartbeat_at")
+    )
     return {
         "run_id": final_run_id,
         "summary_path": str(summary_path),
         "summary_exists": bool(summary),
         "cycles": int(summary.get("cycles", 0) or 0),
         "active_cycle": summary.get("active_cycle"),
+        "active_cycle_heartbeat_age_seconds": active_heartbeat_age,
         "active_cycle_elapsed_seconds": _finite_float(
             summary.get("active_cycle_elapsed_seconds"),
             math.nan,
@@ -718,6 +749,13 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
             "active_cycle_last_heartbeat_at"
         ),
         "active_cycle_phase": summary.get("active_cycle_phase"),
+        "active_cycle_stale": bool(
+            summary.get("active_cycle") is not None
+            and (
+                not math.isfinite(active_heartbeat_age)
+                or active_heartbeat_age > 600.0
+            )
+        ),
         "age_seconds": _mtime_age_seconds(summary_path) if summary_path.exists() else None,
         "bridge_workers": int(summary.get("autoencoder_bridge_workers", 0) or 0),
         "best_validation_ce": summary.get("best_validation_ce"),
@@ -1237,6 +1275,11 @@ def _recommendation(
             final.get("latest_feature_projection_accepted_epochs", 0) or 0
         )
         cycle_latest = final.get("cycle_duration_latest")
+        if final.get("active_cycle_stale") and not counts:
+            lines.append(
+                "Final summary has a stale active-cycle heartbeat and no matching "
+                "processes; treat the prior run as stopped unexpectedly, not active."
+            )
         if pending == 0 and claimed == 0:
             lines.append(
                 "Final loop has no Codex backlog; extra Codex workers would idle. "
@@ -1576,12 +1619,18 @@ def _print_report(report: dict[str, Any]) -> None:
                     trial,
                     "active_cycle_elapsed_seconds",
                 )
+                active_age = _summary_metric(
+                    trial,
+                    "active_cycle_heartbeat_age_seconds",
+                )
+                stale_text = " stale" if trial.get("active_cycle_stale") else ""
                 print(
                     "  active_cycle="
                     f"{trial.get('active_cycle')} "
                     f"phase={trial.get('active_cycle_phase') or 'n/a'} "
                     f"elapsed={active_elapsed}s "
-                    f"heartbeat={trial.get('active_cycle_last_heartbeat_at') or 'n/a'}"
+                    f"heartbeat={trial.get('active_cycle_last_heartbeat_at') or 'n/a'} "
+                    f"heartbeat_age={active_age}s{stale_text}"
                 )
         print()
     final = report["final"]
@@ -1598,12 +1647,18 @@ def _print_report(report: dict[str, Any]) -> None:
         )
         if final.get("active_cycle") is not None:
             active_elapsed = _summary_metric(final, "active_cycle_elapsed_seconds")
+            active_age = _summary_metric(
+                final,
+                "active_cycle_heartbeat_age_seconds",
+            )
+            stale_text = " stale" if final.get("active_cycle_stale") else ""
             print(
                 "  active_cycle="
                 f"{final.get('active_cycle')} "
                 f"phase={final.get('active_cycle_phase') or 'n/a'} "
                 f"elapsed={active_elapsed}s "
-                f"heartbeat={final.get('active_cycle_last_heartbeat_at') or 'n/a'}"
+                f"heartbeat={final.get('active_cycle_last_heartbeat_at') or 'n/a'} "
+                f"heartbeat_age={active_age}s{stale_text}"
             )
         print(
             "  logic_bridge_cache="

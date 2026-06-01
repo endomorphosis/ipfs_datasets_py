@@ -57,9 +57,15 @@ class FolTdfolBridgeAdapter:
     ) -> tuple[LegalIRDocument, Mapping[str, Any]]:
         """Encode legal text into a TDFOL bridge document."""
 
-        norms = _deontic_norms_from_text(text, converter=self._converter())
+        bridge_inputs = _bridge_inputs_from_text(text, converter=self._converter())
+        norms = bridge_inputs["norms"]
         resolved_document_id = document_id or _document_id("tdfol", text)
-        formula_records = _tdfol_formula_records(norms)
+        formula_records = _merge_formula_records(
+            _formula_records_from_proof_obligation_rows(
+                bridge_inputs["proof_obligation_rows"]
+            ),
+            _tdfol_formula_records(norms),
+        )
         triples = tuple(
             _tdfol_frame_logic_triples(
                 resolved_document_id,
@@ -69,11 +75,14 @@ class FolTdfolBridgeAdapter:
         graph_data = _graph_data_from_triples(
             triples,
             graph_id=f"{resolved_document_id}:tdfol-flogic",
-            metadata={
-                "source": "tdfol_bridge_ir",
-                "tdfol_formula_count": len(formula_records),
-            },
-        )
+                metadata={
+                    "source": "tdfol_bridge_ir",
+                    "tdfol_formula_count": len(formula_records),
+                    "guidance_formula_count": len(
+                        bridge_inputs["proof_obligation_rows"]
+                    ),
+                },
+            )
         views = {
             "tdfol_formula": LogicIRView(
                 name="tdfol_formula",
@@ -135,12 +144,16 @@ class FolTdfolBridgeAdapter:
                 metadata={
                     "deontic_norm_count": len(norms),
                     "tdfol_formula_count": len(formula_records),
+                    "guidance_formula_count": len(
+                        bridge_inputs["proof_obligation_rows"]
+                    ),
                 },
             ),
             {
                 "formula_records": formula_records,
                 "graph_data": graph_data,
                 "norms": norms,
+                "proof_obligation_rows": bridge_inputs["proof_obligation_rows"],
             },
         )
 
@@ -206,9 +219,25 @@ class FolTdfolBridgeAdapter:
         return self.converter
 
 
-def _deontic_norms_from_text(text: str, *, converter: Any) -> list[dict[str, Any]]:
+def _bridge_inputs_from_text(text: str, *, converter: Any) -> dict[str, list[dict[str, Any]]]:
     result = converter.convert(text)
     metadata = dict(getattr(result, "metadata", {}) or {})
+    proof_obligation_rows = _proof_obligation_rows_from_metadata(metadata)
+    norms = _deontic_norms_from_metadata(metadata, fallback_text=text)
+    if not norms:
+        synthesized = _synthesized_norm_from_text(text)
+        norms = [synthesized] if synthesized is not None else []
+    return {
+        "norms": norms,
+        "proof_obligation_rows": proof_obligation_rows,
+    }
+
+
+def _deontic_norms_from_metadata(
+    metadata: Mapping[str, Any],
+    *,
+    fallback_text: str,
+) -> list[dict[str, Any]]:
     norms = _list_of_dicts(metadata.get("legal_norm_irs"))
     if norms:
         return norms
@@ -229,15 +258,14 @@ def _deontic_norms_from_text(text: str, *, converter: Any) -> list[dict[str, Any
             _norm_from_parser_element(
                 parser_element,
                 index=index,
-                fallback_text=text,
+                fallback_text=fallback_text,
             )
             for index, parser_element in enumerate(parser_elements)
         ]
     if norms:
         return norms
 
-    synthesized = _synthesized_norm_from_text(text)
-    return [synthesized] if synthesized is not None else []
+    return []
 
 
 def _tdfol_formula_records(norms: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
@@ -258,6 +286,84 @@ def _tdfol_formula_records(norms: Sequence[Mapping[str, Any]]) -> list[dict[str,
             }
         )
     return records
+
+
+def _formula_records_from_proof_obligation_rows(
+    rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    for index, row in enumerate(rows):
+        formula_text = str(row.get("formula") or row.get("proof_input") or "").strip()
+        if not formula_text:
+            continue
+        formula_object = coerce_tdfol_formula(
+            row.get("formula_object") or row.get("proof_formula_object") or formula_text
+        )
+        parse_ok = formula_object is not None
+        predicates = sorted(formula_object.get_predicates()) if formula_object is not None else []
+        source_id = str(
+            row.get("source_id")
+            or row.get("proof_obligation_id")
+            or f"tdfol:guidance:{index}"
+        )
+        records.append(
+            {
+                "formula": formula_text,
+                "proof_input": formula_text,
+                "formula_object": formula_object,
+                "parse_ok": parse_ok,
+                "predicates": predicates,
+                "source_id": source_id,
+                "source_norm": dict(row),
+            }
+        )
+    return records
+
+
+def _merge_formula_records(
+    guidance_records: Sequence[Mapping[str, Any]],
+    norm_records: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    merged: list[dict[str, Any]] = []
+    seen: set[tuple[str, str]] = set()
+    for record in tuple(guidance_records) + tuple(norm_records):
+        source_id = str(record.get("source_id") or "")
+        formula = str(record.get("formula") or "")
+        key = (source_id, formula)
+        if key in seen:
+            continue
+        seen.add(key)
+        merged.append(dict(record))
+    return merged
+
+
+def _proof_obligation_rows_from_metadata(metadata: Mapping[str, Any]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    candidate_keys = (
+        "proof_obligations",
+        "proof_obligation_records",
+        "deontic_proof_obligations",
+        "document_export_tables",
+    )
+    for key in candidate_keys:
+        value = metadata.get(key)
+        if key == "document_export_tables" and isinstance(value, Mapping):
+            value = value.get("proof_obligations")
+        rows.extend(_proof_obligation_rows_from_value(value))
+    return rows
+
+
+def _proof_obligation_rows_from_value(value: Any) -> list[dict[str, Any]]:
+    if isinstance(value, Mapping):
+        records = value.get("records")
+        if isinstance(records, Sequence) and not isinstance(records, (str, bytes)):
+            return [dict(item) for item in records if isinstance(item, Mapping)]
+        if "formula" in value or "proof_input" in value:
+            return [dict(value)]
+        return []
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
+        return []
+    return [dict(item) for item in value if isinstance(item, Mapping)]
 
 
 def _tdfol_formula_from_norm(norm: Mapping[str, Any]) -> Any:
@@ -385,6 +491,7 @@ def _tdfol_parse_candidates(text: str) -> list[str]:
     if sanitized != normalized:
         _add(sanitized)
     _add(normalized)
+    _add(_normalize_tdfol_export_formula(normalized))
 
     if normalized.endswith("."):
         stripped = normalized[:-1].rstrip()
@@ -392,6 +499,7 @@ def _tdfol_parse_candidates(text: str) -> list[str]:
         if sanitized_stripped != stripped:
             _add(sanitized_stripped)
         _add(stripped)
+        _add(_normalize_tdfol_export_formula(stripped))
 
     return candidates
 
@@ -407,6 +515,23 @@ def _sanitize_tdfol_formula_text(text: str) -> str:
         lambda match: f"{match.group(1)}term_{match.group(2).lower()}",
         normalized,
     )
+
+
+def _normalize_tdfol_export_formula(text: str) -> str:
+    normalized = str(text or "").strip()
+    if not normalized:
+        return ""
+    normalized = normalized.strip("`\"'").strip()
+    normalized = re.sub(r"^\s*formula\s*[:=]\s*", "", normalized, flags=re.IGNORECASE)
+    normalized = re.sub(r"^\s*proof_formula\s*[:=]\s*", "", normalized, flags=re.IGNORECASE)
+    normalized = re.sub(r"^\s*tdfol_formula\s*[:=]\s*", "", normalized, flags=re.IGNORECASE)
+    normalized = re.sub(
+        r"\b([OPF])\s*\[\s*(.*?)\s*\]",
+        lambda match: f"{match.group(1)}({match.group(2)})",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    return normalized.strip()
 
 
 def _tdfol_parse_ok(formula: str) -> bool:

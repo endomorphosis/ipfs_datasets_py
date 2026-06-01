@@ -143,6 +143,10 @@ class CecDcecBridgeAdapter:
                             "event_formula_target_quality_gate": _mapping(
                                 record.get("event_formula_target_quality_gate")
                             ),
+                            "selected_frame": str(record.get("selected_frame") or ""),
+                            "selected_frame_source": str(
+                                record.get("selected_frame_source") or ""
+                            ),
                             "modality": record["modality"],
                             "source_id": record["source_id"],
                         }
@@ -151,6 +155,9 @@ class CecDcecBridgeAdapter:
                 },
                 metadata={
                     "state_formula_count": len(records),
+                    "selected_frame_count": sum(
+                        1 for record in records if str(record.get("selected_frame") or "")
+                    ),
                     "syntax_valid_count": sum(
                         1
                         for record in records
@@ -224,6 +231,9 @@ class CecDcecBridgeAdapter:
                     "dcec_formula_count": len(records),
                     "deontic_norm_count": len(norms),
                     "event_formula_count": len(records),
+                    "event_formula_selected_frame_count": sum(
+                        1 for record in records if str(record.get("selected_frame") or "")
+                    ),
                     "event_formula_syntax_valid_count": sum(
                         1
                         for record in records
@@ -435,6 +445,9 @@ def _dcec_records(norms: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
         event = _symbol(norm.get("action") or norm.get("predicate"), fallback="act")
         modality = _dcec_modality(norm)
         source_id = str(norm.get("source_id") or f"dcec:norm:{index}")
+        frame_guidance = _frame_guidance_from_norm(norm)
+        selected_frame = str(frame_guidance.get("selected_frame") or "")
+        selected_frame_source = str(frame_guidance.get("selected_frame_source") or "")
         formula_object = _native_dcec_event_formula(
             actor=actor,
             event=event,
@@ -512,6 +525,8 @@ def _dcec_records(norms: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
             target_quality_gate=event_formula_target_quality_gate,
             source_id=source_id,
             modality=modality,
+            selected_frame=selected_frame,
+            selected_frame_source=selected_frame_source,
         )
         event_formula_fingerprint = _stable_short_hash(event_calculus_formula)
         valid, validation_reason = _compile_dcec_proof_input(formula_object)
@@ -528,6 +543,8 @@ def _dcec_records(norms: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
                 "event_formula_target_components": event_formula_target_components,
                 "event_formula_target_quality_gate": event_formula_target_quality_gate,
                 "event_formula_fingerprint": event_formula_fingerprint,
+                "selected_frame": selected_frame,
+                "selected_frame_source": selected_frame_source,
                 "formula_object": formula_object,
                 "modality": modality,
                 "source_id": source_id,
@@ -616,6 +633,16 @@ def _dcec_frame_logic_triples(
                     "subject": source_id,
                     "predicate": "event_formula_fingerprint",
                     "object": str(record.get("event_formula_fingerprint") or ""),
+                },
+                {
+                    "subject": source_id,
+                    "predicate": "selected_frame",
+                    "object": str(record.get("selected_frame") or ""),
+                },
+                {
+                    "subject": source_id,
+                    "predicate": "selected_frame_source",
+                    "object": str(record.get("selected_frame_source") or ""),
                 },
             ]
         )
@@ -902,6 +929,9 @@ def _top_level_symbol(text: str) -> str:
     match = re.match(r"^\s*([A-Za-z][A-Za-z0-9_]*)\s*[\(\[]", text)
     if match:
         token = match.group(1)
+        lowered = token.lower()
+        if lowered in {"forall", "exists"}:
+            return lowered
         return _canonical_event_predicate(token) or _canonical_wrapper_symbol(token) or token
     if re.match(
         r"^\s*forall\s+[A-Za-z][A-Za-z0-9_]*\s*(?:\.|:|\()",
@@ -920,14 +950,19 @@ def _top_level_symbol(text: str) -> str:
 
 def _quantifier_variables(text: str) -> list[str]:
     variables: list[str] = []
-    for variable in re.findall(
+    quantifier_patterns = (
         r"\b(?:forall|exists)\s+([A-Za-z][A-Za-z0-9_]*)\s*(?:\.|:|\()",
-        text,
-        flags=re.IGNORECASE,
-    ):
-        symbol = str(variable).strip()
-        if symbol and symbol not in variables:
-            variables.append(symbol)
+        r"\b(?:forall|exists)\s*\(\s*([A-Za-z][A-Za-z0-9_]*)\s*(?:[,):])",
+    )
+    for pattern in quantifier_patterns:
+        for variable in re.findall(
+            pattern,
+            text,
+            flags=re.IGNORECASE,
+        ):
+            symbol = str(variable).strip()
+            if symbol and symbol not in variables:
+                variables.append(symbol)
     return variables
 
 
@@ -988,6 +1023,8 @@ def _normalize_event_formula_fields(
     target_quality_gate: Mapping[str, Any],
     source_id: str,
     modality: str,
+    selected_frame: str,
+    selected_frame_source: str,
 ) -> tuple[bool, dict[str, Any], dict[str, Any], dict[str, Any]]:
     derived_parse_profile = _event_formula_parse_profile(formula)
     merged_parse_profile = _merge_event_formula_parse_profile(
@@ -1008,6 +1045,8 @@ def _normalize_event_formula_fields(
         parse_profile=merged_parse_profile,
         source_id=source_id,
         modality=modality,
+        selected_frame=selected_frame,
+        selected_frame_source=selected_frame_source,
     )
     quality_gate = _mapping(target_quality_gate)
     resolved_quality_gate = {
@@ -1063,6 +1102,8 @@ def _merge_event_formula_target_components(
     parse_profile: Mapping[str, Any],
     source_id: str,
     modality: str,
+    selected_frame: str,
+    selected_frame_source: str,
 ) -> dict[str, Any]:
     merged = dict(base)
     for key, value in dict(derived).items():
@@ -1079,6 +1120,10 @@ def _merge_event_formula_target_components(
     merged["uses_event_calculus_wrapper"] = bool(
         list(parse_profile.get("event_predicates") or [])
     )
+    if selected_frame:
+        merged["selected_frame"] = selected_frame
+    if selected_frame_source:
+        merged["selected_frame_source"] = selected_frame_source
     return merged
 
 
@@ -1101,6 +1146,53 @@ def _event_formula_target_components(
             list(parse_profile.get("event_predicates") or [])
         ),
     }
+
+
+def _frame_guidance_from_norm(norm: Mapping[str, Any]) -> dict[str, str]:
+    logic_frame = _mapping(norm.get("logic_frame"))
+    legal_frame = _mapping(norm.get("legal_frame"))
+    prompt_context = _mapping(norm.get("prompt_context"))
+    for source, value in (
+        ("norm.selected_frame", norm.get("selected_frame")),
+        ("norm.logic_frame.selected_frame", logic_frame.get("selected_frame")),
+        ("norm.logic_frame.frame_name", logic_frame.get("frame_name")),
+        ("norm.legal_frame.selected_frame", legal_frame.get("selected_frame")),
+        ("norm.prompt_context.selected_frame", prompt_context.get("selected_frame")),
+        ("norm.legal_frame.category", legal_frame.get("category")),
+    ):
+        canonical = _canonical_frame_symbol(value)
+        if canonical:
+            return {
+                "selected_frame": canonical,
+                "selected_frame_source": source,
+            }
+    inferred = _infer_selected_frame_from_norm_text(norm)
+    if inferred:
+        return {
+            "selected_frame": inferred,
+            "selected_frame_source": "norm.text_inference",
+        }
+    return {}
+
+
+def _canonical_frame_symbol(value: Any) -> str:
+    token = _symbol(value, fallback="")
+    return token[:96] if token else ""
+
+
+def _infer_selected_frame_from_norm_text(norm: Mapping[str, Any]) -> str:
+    corpus = " ".join(
+        _first_text_value(
+            norm.get("support_text"),
+            norm.get("source_text"),
+            norm.get("text"),
+            norm.get("action"),
+            fallback="",
+        ).lower().split()
+    )
+    if corpus and "notice" in corpus and "hearing" in corpus:
+        return "administrative_notice_hearing"
+    return ""
 
 
 def _stable_short_hash(value: str) -> str:

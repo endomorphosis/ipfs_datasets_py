@@ -285,9 +285,9 @@ class FLogicSemanticOptimizer:
         # Group triples by subject to build frames
         subject_map: Dict[str, Dict[str, str]] = {}
         for triple in kg_triples:
-            subj = triple.get("subject", "")
-            pred = triple.get("predicate", "")
-            obj = triple.get("object", "")
+            subj = str(triple.get("subject", "")).strip()
+            pred = str(triple.get("predicate", "")).strip()
+            obj = str(triple.get("object", "")).strip()
             if not subj:
                 continue
             if subj not in subject_map:

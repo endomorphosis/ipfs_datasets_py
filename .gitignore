@@ -126,4 +126,6 @@ workspace/logs/
 workspace/test-reports/
 workspace/test-logs/
 workspace/codex-work/
+workspace/todo-queues/legal-ir-hparam8h-20260530T230404Z-*
+workspace/todo-queues/legal-ir-hparam8h-rerun-20260531T073020Z-*
 ipfs_datasets_py.egg-info/SOURCES.txt

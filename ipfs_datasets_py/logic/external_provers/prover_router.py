@@ -238,6 +238,11 @@ class ProverRouter:
                 timeout = float(timeout_ms) / 1000.0
             except (TypeError, ValueError):
                 timeout = None
+        elif timeout is not None:
+            try:
+                timeout = float(timeout)
+            except (TypeError, ValueError):
+                timeout = None
 
         axioms = kwargs.pop("axioms", None)
         if kwargs:
@@ -287,7 +292,9 @@ class ProverRouter:
     ) -> Any:
         """Call one prover while normalizing signature differences."""
 
-        timeout_seconds = float(timeout or self.default_timeout)
+        timeout_seconds = float(
+            self.default_timeout if timeout is None else timeout
+        )
         timeout_ms = max(1, int(timeout_seconds * 1000.0))
         normalized_formula = formula
         normalized_axioms = axioms
@@ -452,7 +459,7 @@ class ProverRouter:
             RouterProofResult with proof status
         """
         strategy = self._coerce_strategy(strategy or self.default_strategy)
-        timeout = timeout or self.default_timeout
+        timeout = self.default_timeout if timeout is None else float(timeout)
         
         if strategy == ProverStrategy.AUTO:
             return self._prove_auto(formula, axioms, timeout)

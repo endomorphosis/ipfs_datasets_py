@@ -206,6 +206,11 @@ _USCODE_RESIDUAL_STATUTORY_FRAGMENT_HINT_RE = re.compile(
     r"\b(?:ch|chapter|pub|stat)\b",
     re.IGNORECASE,
 )
+_GENERIC_LEGAL_REFERENCE_HINT_RE = re.compile(
+    r"\b(?:section|sections|sec|secs|chapter|subchapter|title|subsection|"
+    r"paragraph|stat|statutes?|public\s+law|pub\.?\s*l\.?)\b",
+    re.IGNORECASE,
+)
 _MONTH_NAME_TOKENS = frozenset(
     {
         "jan",
@@ -845,8 +850,7 @@ class LegalModalParser:
         requested_max_formulas = int(max_formulas)
         if requested_max_formulas <= 0:
             return []
-        if not self._is_uscode_citation(citation):
-            return []
+        use_uscode_rule = self._is_uscode_citation(citation)
         profile = self.registry.get_profile(ModalLogicFamily.FRAME)
         if not profile.operators:
             return []
@@ -860,18 +864,25 @@ class LegalModalParser:
         )
         if not candidate_segments:
             return []
-        eligible_segments = [
-            segment
-            for segment in candidate_segments
-            if self._is_residual_span_coverage_candidate(segment)
-        ]
+        if use_uscode_rule:
+            eligible_segments = [
+                segment
+                for segment in candidate_segments
+                if self._is_residual_span_coverage_candidate(segment)
+            ]
+        else:
+            eligible_segments = [
+                segment
+                for segment in candidate_segments
+                if self._is_generic_legal_reference_residual_candidate(segment)
+            ]
         if not eligible_segments:
             return []
 
         # Keep the explicit caller cap when provided, but allow the default U.S.C.
         # residual rule to widen coverage on long editorial/reference tails.
         resolved_max_formulas = max(1, requested_max_formulas)
-        if requested_max_formulas == _USCODE_MAX_RESIDUAL_SPAN_FORMULAS:
+        if use_uscode_rule and requested_max_formulas == _USCODE_MAX_RESIDUAL_SPAN_FORMULAS:
             resolved_max_formulas = max(
                 resolved_max_formulas,
                 min(
@@ -879,6 +890,9 @@ class LegalModalParser:
                     len(eligible_segments),
                 ),
             )
+        if not use_uscode_rule:
+            # Keep non-U.S.C. fallback conservative to avoid over-typing broad prose.
+            resolved_max_formulas = 1
 
         formulas: List[ModalIRFormula] = []
         next_index = max(1, int(start_index))
@@ -961,6 +975,26 @@ class LegalModalParser:
                 or self._looks_like_heading_without_section_reference(normalized)
             )
         ):
+            return False
+        return True
+
+    def _is_generic_legal_reference_residual_candidate(
+        self,
+        segment: LegalSegment,
+    ) -> bool:
+        normalized = self.normalize_text(segment.text)
+        if not normalized:
+            return False
+        lowered = normalized.lower()
+        if self._has_blocking_residual_modal_cues(normalized):
+            return False
+        tokens = _TOKEN_RE.findall(lowered)
+        token_count = len(tokens)
+        if token_count < 4 or token_count > 36:
+            return False
+        if not _GENERIC_LEGAL_REFERENCE_HINT_RE.search(lowered):
+            return False
+        if not any(character.isdigit() for character in lowered):
             return False
         return True
 
@@ -1116,8 +1150,16 @@ class LegalModalParser:
             conditions=conditions,
             exceptions=exceptions,
             metadata={
-                "cue": "__uscode_residual_span_fallback__",
-                "fallback_rule": "uscode_residual_span_coverage_v1",
+                "cue": (
+                    "__uscode_residual_span_fallback__"
+                    if self._is_uscode_citation(citation)
+                    else "__legal_reference_residual_span_fallback__"
+                ),
+                "fallback_rule": (
+                    "uscode_residual_span_coverage_v1"
+                    if self._is_uscode_citation(citation)
+                    else "legal_reference_residual_span_coverage_v1"
+                ),
                 "residual_segment_role": segment.role,
                 "residual_token_count": token_count,
             },

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import inspect
+import json
 import math
 import os
 import re
@@ -27,6 +28,9 @@ _BRIDGE_CONTRACT_CORE_COMPONENTS = (
     "TDFOL.prover",
     "knowledge_graphs.neo4j_compat",
 )
+_BRIDGE_CONTRACT_TAIL_PRESERVED_COMPONENTS = (
+    "zkp.circuits",
+)
 _BRIDGE_CONTRACT_EXCLUDED_COMPONENTS: tuple[str, ...] = ()
 _BRIDGE_VIEW_SIGNAL_WEIGHT_CAP = 2.0
 _BRIDGE_CONTRACT_DENSE_LANE_MIN_COUNT = 4
@@ -49,6 +53,9 @@ _BRIDGE_CONTRACT_SPARSE_KG_MIN = 0.22
 _BRIDGE_CONTRACT_SPARSE_KG_TARGET = 0.26
 _BRIDGE_CONTRACT_SPARSE_REPEAL_DEONTIC_CAP = 0.28
 _BRIDGE_CONTRACT_SPARSE_REPEAL_KG_MIN = 0.26
+_BRIDGE_CONTRACT_CITATION_FRAME_DEONTIC_FLOOR = 0.20
+_BRIDGE_CONTRACT_CITATION_FRAME_STRUCTURE_MIN_COUNT = 3
+_BRIDGE_CONTRACT_NORMATIVE_DEONTIC_FLOOR = 0.30
 _BRIDGE_CONTRACT_SPARSE_SCAFFOLD_MIN_COUNT = 2
 _BRIDGE_CONTRACT_SPARSE_STRUCTURAL_MIN_COUNT = 2
 _BRIDGE_CONTRACT_CONDITIONAL_CUE_RE = re.compile(
@@ -122,7 +129,8 @@ _BRIDGE_CONTRACT_FRAME_DEFINITION_CUE_RE = re.compile(
 _BRIDGE_CONTRACT_FRAME_AUTHORITY_CUE_RE = re.compile(
     r"\b(?:delegation\s+of\s+authority|delegated|powers?\s+vested|vested\s+in|"
     r"authorized\s+and\s+empowered|in\s+(?:his|her|its|their|the)\s+discretion|"
-    r"in\s+the\s+discretion\s+of)\b",
+    r"in\s+the\s+discretion\s+of|through\s+(?:its|their)\s+legislative\s+assembly|"
+    r"government\s+and\s+municipalit(?:y|ies)|such\s+authority)\b",
     flags=re.IGNORECASE,
 )
 _BRIDGE_CONTRACT_FRAME_ENFORCEMENT_CUE_RE = re.compile(
@@ -167,10 +175,22 @@ _BRIDGE_CONTRACT_NORMATIVE_SCOPE_CUE_RE = re.compile(
     r"allowances?|eligibility|entitlement|programs?)\b",
     flags=re.IGNORECASE,
 )
+_BRIDGE_CONTRACT_FRAME_TO_FRAME_CEC_CUE_RE = re.compile(
+    r"\b(?:ascertainment|collection|recovery|administrative\s+provisions|"
+    r"customs\s+duties|tariff\s+act)\b",
+    flags=re.IGNORECASE,
+)
 _BRIDGE_CONTRACT_STATUTE_SCAFFOLD_CUE_RE = re.compile(
     r"\b(?:united\s+states\s+code|u\.s\.\s+government\s+publishing\s+office|"
     r"historical\s+and\s+revision\s+notes|statutory\s+notes(?:\s+and\s+related\s+subsidiaries)?|"
     r"amendments?|codification|effective\s+date|references\s+in\s+text)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_ADMIN_NOTICE_HEARING_CUE_RE = re.compile(
+    r"\b(?:administrative|agency|secretary|commission|board|director)\b.{0,80}\b"
+    r"(?:notice|hearing|rulemaking|comment|petition)\b"
+    r"|\b(?:notice|hearing|rulemaking|comment|petition)\b.{0,80}\b"
+    r"(?:administrative|agency|secretary|commission|board|director)\b",
     flags=re.IGNORECASE,
 )
 _BRIDGE_CONTRACT_GOVERNANCE_CROSS_REFERENCE_CUE_RE = re.compile(
@@ -180,6 +200,14 @@ _BRIDGE_CONTRACT_GOVERNANCE_CROSS_REFERENCE_CUE_RE = re.compile(
 )
 _BRIDGE_CONTRACT_MAY_DATE_SUFFIX_RE = re.compile(
     r"^\s+\d{1,2}(?:st|nd|rd|th)?(?:,\s*\d{4})?\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_CITATION_PREFIX_RE = re.compile(
+    r"\b(?:\d+\s+u\.?\s*s\.?\s*c\.?|sec(?:tion)?\.?)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_CITATION_TOKEN_RE = re.compile(
+    r"\b\d+[a-z0-9\-\.]*\b",
     flags=re.IGNORECASE,
 )
 
@@ -467,6 +495,7 @@ class MultiViewLegalIRReport:
             for lane, weight in lane_weights.items()
             if (
                 lane in _BRIDGE_CONTRACT_CORE_COMPONENTS
+                or lane in _BRIDGE_CONTRACT_TAIL_PRESERVED_COMPONENTS
                 or weight >= _BRIDGE_CONTRACT_MIN_COMPONENT_WEIGHT
             )
         }
@@ -543,6 +572,7 @@ def evaluate_legal_ir_multiview(
     citation: Optional[str] = None,
     document_id: Optional[str] = None,
     evaluate_provers: Optional[bool] = None,
+    compiler_guidance: Optional[Mapping[str, Any]] = None,
     source: str = "us_code",
     source_embedding: Optional[Sequence[float]] = None,
 ) -> MultiViewLegalIRReport:
@@ -555,6 +585,7 @@ def evaluate_legal_ir_multiview(
         citation=citation,
         document_id=document_id,
         evaluate_provers=evaluate_provers,
+        compiler_guidance=compiler_guidance,
         source=source,
         source_embedding=source_embedding,
     )
@@ -578,6 +609,7 @@ def evaluate_legal_ir_multiview(
                     citation=citation,
                     document_id=document_id,
                     evaluate_provers=evaluate_provers,
+                    compiler_guidance=compiler_guidance,
                     source=source,
                     source_embedding=source_embedding,
                 ),
@@ -645,6 +677,7 @@ def _multiview_cache_key(
     citation: Optional[str],
     document_id: Optional[str],
     evaluate_provers: Optional[bool],
+    compiler_guidance: Optional[Mapping[str, Any]],
     source: str,
     source_embedding: Optional[Sequence[float]],
 ) -> str:
@@ -654,6 +687,7 @@ def _multiview_cache_key(
         citation or "",
         document_id or "",
         str(evaluate_provers),
+        _compiler_guidance_digest(compiler_guidance),
         source,
         text or "",
         _source_embedding_digest(source_embedding),
@@ -676,6 +710,20 @@ def _source_embedding_digest(source_embedding: Optional[Sequence[float]]) -> str
     return digest.hexdigest()
 
 
+def _compiler_guidance_digest(compiler_guidance: Optional[Mapping[str, Any]]) -> str:
+    if not isinstance(compiler_guidance, Mapping) or not compiler_guidance:
+        return ""
+    try:
+        return json.dumps(
+            dict(compiler_guidance),
+            ensure_ascii=True,
+            sort_keys=True,
+            default=str,
+        )
+    except Exception:
+        return str(compiler_guidance)
+
+
 def _evaluate_adapter(
     adapter: Any,
     text: str,
@@ -683,6 +731,7 @@ def _evaluate_adapter(
     citation: Optional[str],
     document_id: Optional[str],
     evaluate_provers: Optional[bool],
+    compiler_guidance: Optional[Mapping[str, Any]],
     source: str,
     source_embedding: Optional[Sequence[float]],
 ) -> BridgeEvaluationReport:
@@ -699,6 +748,17 @@ def _evaluate_adapter(
             parameters = {}
         if "evaluate_provers" in parameters:
             kwargs["evaluate_provers"] = bool(evaluate_provers)
+    if compiler_guidance:
+        try:
+            parameters = inspect.signature(adapter.evaluate).parameters
+        except (TypeError, ValueError):
+            parameters = {}
+        accepts_kwargs = any(
+            parameter.kind == inspect.Parameter.VAR_KEYWORD
+            for parameter in parameters.values()
+        )
+        if "compiler_guidance" in parameters or accepts_kwargs:
+            kwargs["compiler_guidance"] = dict(compiler_guidance)
     return adapter.evaluate(text, **kwargs)
 
 
@@ -966,10 +1026,14 @@ def _rebalance_dense_contract_distribution(
     strong_temporal_cue_count += by_date_temporal_cue_count
     strong_temporal_cue_count += repeal_temporal_cue_count
     strong_temporal_cue_count += prior_to_temporal_cue_count
+    statute_structure_cue_count = _cue_count(
+        _BRIDGE_CONTRACT_STATUTE_STRUCTURE_CUE_RE,
+        normalized_text,
+    )
     structural_frame_cue_count = _cue_count(
         _BRIDGE_CONTRACT_STRUCTURAL_FRAME_CUE_RE,
         normalized_text,
-    ) + _cue_count(_BRIDGE_CONTRACT_STATUTE_STRUCTURE_CUE_RE, normalized_text)
+    ) + statute_structure_cue_count
     statute_scaffold_cue_count = _cue_count(
         _BRIDGE_CONTRACT_STATUTE_SCAFFOLD_CUE_RE,
         normalized_text,
@@ -990,6 +1054,9 @@ def _rebalance_dense_contract_distribution(
     has_enforcement_frame_cue = bool(
         _BRIDGE_CONTRACT_FRAME_ENFORCEMENT_CUE_RE.search(normalized_text)
     )
+    has_admin_notice_hearing_frame_cue = bool(
+        _BRIDGE_CONTRACT_ADMIN_NOTICE_HEARING_CUE_RE.search(normalized_text)
+    )
     if (
         for_purposes_cue_count > 0
         and not has_frame_definition_cue
@@ -1003,12 +1070,14 @@ def _rebalance_dense_contract_distribution(
         or has_structural_frame_cue
         or has_authority_frame_cue
         or has_enforcement_frame_cue
+        or has_admin_notice_hearing_frame_cue
     )
     has_structural_only_frame_cue = (
         has_structural_frame_cue
         and not has_frame_definition_cue
         and not has_authority_frame_cue
         and not has_enforcement_frame_cue
+        and not has_admin_notice_hearing_frame_cue
     )
     has_epistemic_cue = bool(_BRIDGE_CONTRACT_EPISTEMIC_CUE_RE.search(normalized_text))
     has_dense_statute_scaffold = (
@@ -1016,6 +1085,9 @@ def _rebalance_dense_contract_distribution(
     )
     has_governance_cross_reference_cue = bool(
         _BRIDGE_CONTRACT_GOVERNANCE_CROSS_REFERENCE_CUE_RE.search(normalized_text)
+    )
+    has_frame_to_frame_cec_cue = bool(
+        _BRIDGE_CONTRACT_FRAME_TO_FRAME_CEC_CUE_RE.search(normalized_text)
     )
     if (
         has_governance_cross_reference_cue
@@ -1040,6 +1112,7 @@ def _rebalance_dense_contract_distribution(
             or has_explicit_temporal_deadline_cue
         )
     )
+    has_sparse_statutory_reference = _has_sparse_statutory_reference(normalized_text)
     legislative_history_cue_count = _cue_count(
         _BRIDGE_CONTRACT_LEGISLATIVE_HISTORY_CUE_RE,
         normalized_text,
@@ -1048,6 +1121,12 @@ def _rebalance_dense_contract_distribution(
         repeal_temporal_cue_count > 0
         and legislative_history_cue_count >= 2
         and has_structural_only_frame_cue
+        and not has_deontic_cue
+    )
+    has_repealed_legislative_history_signal = (
+        repeal_temporal_cue_count > 0
+        and legislative_history_cue_count > 0
+        and has_structural_frame_cue
         and not has_deontic_cue
     )
     if has_repealed_history_frame_cue:
@@ -1099,8 +1178,29 @@ def _rebalance_dense_contract_distribution(
         and not has_status_operation_cue
         and not has_repealed_history_frame_cue
     )
+    has_conditional_structural_normative_signal = (
+        has_structural_status_operation_signal
+        and has_conditional_cue
+        and has_deontic_cue
+        and not has_temporal_cue
+        and (permission_deontic_cue_count + obligation_deontic_cue_count) >= 2
+    )
 
     caps = dict(_BRIDGE_CONTRACT_DENSE_LANE_CAPS)
+    if has_repealed_history_frame_cue:
+        caps["CEC.native"] = max(caps.get("CEC.native", 0.0), 0.24)
+        caps["knowledge_graphs.neo4j_compat"] = max(
+            caps.get("knowledge_graphs.neo4j_compat", 0.0),
+            0.21,
+        )
+        caps["TDFOL.prover"] = min(caps.get("TDFOL.prover", 1.0), 0.20)
+    elif has_repealed_legislative_history_signal:
+        caps["CEC.native"] = max(caps.get("CEC.native", 0.0), 0.24)
+        caps["knowledge_graphs.neo4j_compat"] = max(
+            caps.get("knowledge_graphs.neo4j_compat", 0.0),
+            0.21,
+        )
+        caps["TDFOL.prover"] = min(caps.get("TDFOL.prover", 1.0), 0.20)
     if has_conditional_cue and not has_frame_cue:
         caps["knowledge_graphs.neo4j_compat"] = min(
             caps["knowledge_graphs.neo4j_compat"],
@@ -1113,6 +1213,14 @@ def _rebalance_dense_contract_distribution(
         )
         caps["CEC.native"] = max(caps["CEC.native"], 0.22)
         caps["deontic.ir"] = min(caps.get("deontic.ir", 1.0), 0.68)
+        if has_admin_notice_hearing_frame_cue:
+            caps["knowledge_graphs.neo4j_compat"] = max(
+                caps["knowledge_graphs.neo4j_compat"],
+                0.21,
+            )
+            caps["CEC.native"] = max(caps["CEC.native"], 0.24)
+            caps["deontic.ir"] = min(caps["deontic.ir"], 0.58)
+            caps["TDFOL.prover"] = min(caps.get("TDFOL.prover", 1.0), 0.17)
         if has_authority_frame_cue and has_deontic_cue and not has_conditional_cue:
             caps["knowledge_graphs.neo4j_compat"] = max(
                 caps["knowledge_graphs.neo4j_compat"],
@@ -1133,6 +1241,14 @@ def _rebalance_dense_contract_distribution(
             caps["CEC.native"] = max(caps["CEC.native"], 0.25)
             caps["deontic.ir"] = min(caps["deontic.ir"], 0.24)
             caps["TDFOL.prover"] = min(caps.get("TDFOL.prover", 1.0), 0.17)
+        if (
+            has_permission_only_deontic_signal
+            and has_authority_frame_cue
+            and not has_temporal_cue
+        ):
+            # Preserve deontic->frame supervision signal for delegated authority
+            # passages where permissive norm text co-occurs with frame semantics.
+            caps["deontic.ir"] = max(caps.get("deontic.ir", 0.0), 0.12)
     elif has_epistemic_cue and not has_temporal_cue:
         caps["knowledge_graphs.neo4j_compat"] = max(
             caps["knowledge_graphs.neo4j_compat"],
@@ -1172,6 +1288,12 @@ def _rebalance_dense_contract_distribution(
             if has_conditional_cue and has_explicit_temporal_deadline_cue:
                 caps["deontic.ir"] = min(caps["deontic.ir"], 0.68)
                 caps["TDFOL.prover"] = max(caps["TDFOL.prover"], 0.24)
+    if has_conditional_cue and has_deontic_cue and not has_frame_cue:
+        # Keep conditional_normative->deontic targets stable in non-frame text.
+        caps["deontic.ir"] = max(caps.get("deontic.ir", 0.0), 0.60)
+    if has_temporal_cue and strong_temporal_cue_count > 0:
+        # Preserve temporal->temporal routing when strong deadline/repeal cues fire.
+        caps["TDFOL.prover"] = max(caps.get("TDFOL.prover", 0.0), 0.22)
     if (
         has_conditional_cue
         and has_deontic_cue
@@ -1234,6 +1356,15 @@ def _rebalance_dense_contract_distribution(
                 0.20,
             )
             caps["TDFOL.prover"] = min(caps.get("TDFOL.prover", 1.0), 0.16)
+            caps["zkp.circuits"] = min(caps.get("zkp.circuits", 1.0), 0.10)
+        if has_conditional_structural_normative_signal:
+            caps["CEC.native"] = min(caps["CEC.native"], 0.19)
+            caps["knowledge_graphs.neo4j_compat"] = min(
+                caps["knowledge_graphs.neo4j_compat"],
+                0.15,
+            )
+            caps["deontic.ir"] = min(caps.get("deontic.ir", 1.0), 0.62)
+            caps["TDFOL.prover"] = min(caps.get("TDFOL.prover", 1.0), 0.14)
             caps["zkp.circuits"] = min(caps.get("zkp.circuits", 1.0), 0.10)
         if (
             has_conditional_cue
@@ -1311,6 +1442,21 @@ def _rebalance_dense_contract_distribution(
         excess_mass += value - cap
         adjusted[lane] = cap
     if excess_mass <= 0.0:
+        if has_dense_statute_scaffold and has_structural_status_operation_signal:
+            return _enforce_contract_lane_floors(
+                adjusted,
+                floors={
+                    "CEC.native": 0.22,
+                    "deontic.ir": 0.20,
+                    "TDFOL.prover": 0.10,
+                },
+                donor_priority=(
+                    "zkp.circuits",
+                    "external_provers.router",
+                    "modal.frame_logic",
+                    "knowledge_graphs.neo4j_compat",
+                ),
+            )
         return adjusted
 
     if (
@@ -1322,6 +1468,20 @@ def _rebalance_dense_contract_distribution(
             ("CEC.native", 0.16),
             ("knowledge_graphs.neo4j_compat", 0.07),
             ("deontic.ir", 0.03),
+        )
+    elif (
+        has_sparse_statutory_reference
+        and not has_deontic_cue
+        and not has_temporal_cue
+    ):
+        # Short citation-heavy references are usually structural/contextual.
+        # Keep CEC + graph lanes prominent so bridge.contracts targets do not
+        # collapse into a deontic-default mix.
+        target_mix = (
+            ("CEC.native", 0.52),
+            ("knowledge_graphs.neo4j_compat", 0.34),
+            ("TDFOL.prover", 0.10),
+            ("deontic.ir", 0.04),
         )
     elif (
         has_authority_frame_cue
@@ -1336,12 +1496,33 @@ def _rebalance_dense_contract_distribution(
         )
     elif has_frame_cue:
         if has_dense_statute_scaffold:
-            if has_epistemic_heading_cue and not has_explicit_temporal_deadline_cue:
+            if has_admin_notice_hearing_frame_cue:
+                target_mix = (
+                    ("CEC.native", 0.42),
+                    ("knowledge_graphs.neo4j_compat", 0.32),
+                    ("deontic.ir", 0.18),
+                    ("TDFOL.prover", 0.08),
+                )
+            elif has_epistemic_heading_cue and not has_explicit_temporal_deadline_cue:
                 target_mix = (
                     ("CEC.native", 0.44),
                     ("knowledge_graphs.neo4j_compat", 0.34),
                     ("deontic.ir", 0.16),
                     ("TDFOL.prover", 0.06),
+                )
+            elif (
+                has_structural_only_frame_cue
+                and not has_deontic_cue
+                and not has_temporal_cue
+                and not has_status_operation_cue
+                and not has_authority_frame_cue
+                and not has_enforcement_frame_cue
+            ):
+                target_mix = (
+                    ("CEC.native", 0.38),
+                    ("deontic.ir", 0.33),
+                    ("knowledge_graphs.neo4j_compat", 0.21),
+                    ("TDFOL.prover", 0.08),
                 )
             elif has_scaffolded_normative_operations:
                 if has_temporal_cue:
@@ -1382,6 +1563,13 @@ def _rebalance_dense_contract_distribution(
                     ("deontic.ir", 0.18),
                     ("TDFOL.prover", 0.10),
                 )
+            elif has_conditional_structural_normative_signal:
+                target_mix = (
+                    ("deontic.ir", 0.58),
+                    ("CEC.native", 0.20),
+                    ("knowledge_graphs.neo4j_compat", 0.14),
+                    ("TDFOL.prover", 0.08),
+                )
             elif (
                 has_conditional_cue
                 and has_deontic_cue
@@ -1392,10 +1580,10 @@ def _rebalance_dense_contract_distribution(
                 )
             ):
                 target_mix = (
-                    ("deontic.ir", 0.50),
-                    ("TDFOL.prover", 0.32),
-                    ("CEC.native", 0.11),
-                    ("knowledge_graphs.neo4j_compat", 0.07),
+                    ("deontic.ir", 0.48),
+                    ("TDFOL.prover", 0.30),
+                    ("CEC.native", 0.16),
+                    ("knowledge_graphs.neo4j_compat", 0.06),
                 )
             elif (
                 has_appropriation_norm_cue
@@ -1429,6 +1617,19 @@ def _rebalance_dense_contract_distribution(
                     ("knowledge_graphs.neo4j_compat", 0.34),
                     ("deontic.ir", 0.20),
                     ("TDFOL.prover", 0.08),
+                )
+            elif (
+                has_frame_to_frame_cec_cue
+                and not has_deontic_cue
+                and not has_temporal_cue
+                and has_structural_only_frame_cue
+                and not has_repealed_history_frame_cue
+            ):
+                target_mix = (
+                    ("CEC.native", 0.48),
+                    ("knowledge_graphs.neo4j_compat", 0.34),
+                    ("TDFOL.prover", 0.10),
+                    ("deontic.ir", 0.08),
                 )
             else:
                 target_mix = (
@@ -1546,6 +1747,86 @@ def _rebalance_dense_contract_distribution(
 
     for lane, weight in present_targets:
         adjusted[lane] += excess_mass * (weight / weight_total)
+
+    if has_repealed_legislative_history_signal:
+        kg_lane = "knowledge_graphs.neo4j_compat"
+        kg_floor = 0.21
+        if adjusted.get(kg_lane, 0.0) < kg_floor:
+            deficit = kg_floor - adjusted.get(kg_lane, 0.0)
+            for donor_lane in ("TDFOL.prover", "deontic.ir", "zkp.circuits", "CEC.native"):
+                donor_value = adjusted.get(donor_lane, 0.0)
+                if donor_value <= 0.0 or deficit <= 0.0:
+                    continue
+                shift = min(deficit, max(0.0, donor_value - 0.08))
+                if shift <= 0.0:
+                    continue
+                adjusted[donor_lane] = donor_value - shift
+                adjusted[kg_lane] = adjusted.get(kg_lane, 0.0) + shift
+                deficit -= shift
+        tdfol_lane = "TDFOL.prover"
+        tdfol_cap = 0.20
+        if adjusted.get(tdfol_lane, 0.0) > tdfol_cap:
+            excess = adjusted[tdfol_lane] - tdfol_cap
+            adjusted[tdfol_lane] = tdfol_cap
+            adjusted["CEC.native"] = adjusted.get("CEC.native", 0.0) + (0.6 * excess)
+            adjusted[kg_lane] = adjusted.get(kg_lane, 0.0) + (0.4 * excess)
+
+    if (
+        has_frame_cue
+        and not has_conditional_cue
+        and not has_deontic_cue
+        and not has_temporal_cue
+        and statute_scaffold_cue_count > 0
+        and statute_structure_cue_count >= _BRIDGE_CONTRACT_CITATION_FRAME_STRUCTURE_MIN_COUNT
+    ):
+        deontic_floor = _BRIDGE_CONTRACT_CITATION_FRAME_DEONTIC_FLOOR
+        deontic_value = adjusted.get("deontic.ir", 0.0)
+        if deontic_value < deontic_floor:
+            deficit = deontic_floor - deontic_value
+            donor_lanes = [
+                "knowledge_graphs.neo4j_compat",
+                "CEC.native",
+                "modal.frame_logic",
+                "external_provers.router",
+                "zkp.circuits",
+                "TDFOL.prover",
+            ]
+            for donor_lane in donor_lanes:
+                donor_value = adjusted.get(donor_lane, 0.0)
+                if donor_value <= 0.0:
+                    continue
+                shift = min(deficit, donor_value)
+                if shift <= 0.0:
+                    continue
+                adjusted[donor_lane] = donor_value - shift
+                deontic_value += shift
+                deficit -= shift
+                if deficit <= 1e-12:
+                    break
+            adjusted["deontic.ir"] = deontic_value
+    adjusted = _enforce_dense_normative_deontic_floor(
+        adjusted,
+        has_deontic_cue=has_deontic_cue,
+        has_conditional_cue=has_conditional_cue,
+        has_temporal_cue=has_temporal_cue,
+        has_dense_statute_scaffold=has_dense_statute_scaffold,
+        has_repealed_history_frame_cue=has_repealed_history_frame_cue,
+    )
+    if (
+        has_conditional_cue
+        and has_deontic_cue
+        and not has_dense_statute_scaffold
+        and not has_authority_frame_cue
+        and not has_enforcement_frame_cue
+    ):
+        kg_lane = "knowledge_graphs.neo4j_compat"
+        kg_cap = 0.14
+        kg_value = adjusted.get(kg_lane, 0.0)
+        if kg_value > kg_cap:
+            adjusted[kg_lane] = kg_cap
+            adjusted["deontic.ir"] = adjusted.get("deontic.ir", 0.0) + (
+                kg_value - kg_cap
+            )
     return adjusted
 
 
@@ -1568,6 +1849,110 @@ def _contract_target_mix_with_auxiliary_lanes(
     ):
         augmented.append(("external_provers.router", max(0.0, float(prover_weight))))
     return tuple(augmented)
+
+
+def _enforce_contract_lane_floors(
+    distribution: Mapping[str, float],
+    *,
+    floors: Mapping[str, float],
+    donor_priority: Sequence[str],
+) -> Dict[str, float]:
+    """Apply deterministic lane floors by shifting mass from donor lanes."""
+
+    adjusted = {
+        str(name): max(0.0, float(value))
+        for name, value in dict(distribution or {}).items()
+    }
+    if not adjusted:
+        return adjusted
+
+    present_floors = {
+        lane: max(0.0, float(floor))
+        for lane, floor in dict(floors or {}).items()
+        if lane in adjusted and float(floor) > 0.0
+    }
+    if not present_floors:
+        return adjusted
+
+    # First pass: bring lanes up to floor values from prioritized donors.
+    for lane, floor in present_floors.items():
+        deficit = floor - adjusted.get(lane, 0.0)
+        if deficit <= 0.0:
+            continue
+        for donor in donor_priority:
+            if donor == lane or donor not in adjusted:
+                continue
+            available = adjusted[donor]
+            if available <= 0.0:
+                continue
+            shift = min(deficit, available)
+            adjusted[donor] -= shift
+            adjusted[lane] += shift
+            deficit -= shift
+            if deficit <= 0.0:
+                break
+
+    total = sum(adjusted.values())
+    if total <= 0.0:
+        return adjusted
+    return {lane: value / total for lane, value in adjusted.items()}
+
+
+def _enforce_dense_normative_deontic_floor(
+    lanes: Mapping[str, float],
+    *,
+    has_deontic_cue: bool,
+    has_conditional_cue: bool,
+    has_temporal_cue: bool,
+    has_dense_statute_scaffold: bool,
+    has_repealed_history_frame_cue: bool,
+) -> Dict[str, float]:
+    """Keep deontic mass visible for scaffolded normative conditionals."""
+
+    adjusted = {
+        str(name): max(0.0, float(value))
+        for name, value in dict(lanes or {}).items()
+        if float(value) > 0.0
+    }
+    if "deontic.ir" not in adjusted:
+        return adjusted
+    if has_repealed_history_frame_cue:
+        return adjusted
+    if not has_deontic_cue:
+        return adjusted
+    if not (has_conditional_cue and has_temporal_cue):
+        return adjusted
+    if not has_dense_statute_scaffold:
+        return adjusted
+
+    deontic_value = adjusted.get("deontic.ir", 0.0)
+    if deontic_value >= _BRIDGE_CONTRACT_NORMATIVE_DEONTIC_FLOOR:
+        return adjusted
+
+    deficit = _BRIDGE_CONTRACT_NORMATIVE_DEONTIC_FLOOR - deontic_value
+    donors = (
+        "CEC.native",
+        "knowledge_graphs.neo4j_compat",
+        "TDFOL.prover",
+        "zkp.circuits",
+        "modal.frame_logic",
+        "external_provers.router",
+    )
+    moved = 0.0
+    for lane in donors:
+        available = adjusted.get(lane, 0.0)
+        if available <= 0.0:
+            continue
+        shift = min(deficit - moved, available)
+        if shift <= 0.0:
+            continue
+        adjusted[lane] = available - shift
+        moved += shift
+        if moved >= deficit:
+            break
+    if moved > 0.0:
+        adjusted["deontic.ir"] = deontic_value + moved
+    return adjusted
 
 
 def _rebalance_sparse_contract_distribution(
@@ -1703,6 +2088,25 @@ def _contextual_modal_cue_count(pattern: re.Pattern[str], text: str) -> int:
             continue
         count += 1
     return count
+
+
+def _has_sparse_statutory_reference(text: str) -> bool:
+    lowered = str(text or "").lower()
+    words = re.findall(r"[a-z0-9\-]+", lowered)
+    if not words or len(words) > 18:
+        return False
+    if _BRIDGE_CONTRACT_CITATION_PREFIX_RE.search(text) is None:
+        return False
+    numeric_tokens = _BRIDGE_CONTRACT_CITATION_TOKEN_RE.findall(text)
+    if len(numeric_tokens) < 2:
+        return False
+    residue = re.sub(r"\b\d+[a-z0-9\-\.]*\b", " ", lowered)
+    residue_tokens = [
+        token
+        for token in re.findall(r"[a-z]+", residue)
+        if token not in {"u", "s", "c", "usc", "sec", "section"}
+    ]
+    return len(residue_tokens) <= 2
 
 
 def _float_or_zero(value: Any) -> float:

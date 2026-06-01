@@ -257,7 +257,7 @@ class GraphProjectionResult:
         metadata = dict(getattr(graph_data, "metadata", {}) or {})
         return cls(
             graph_id=str(metadata.get("graph_id") or ""),
-            neo4j_compatible=bool(metadata.get("neo4j_compatible")),
+            neo4j_compatible=_coerce_bool(metadata.get("neo4j_compatible")),
             node_count=int(getattr(graph_data, "node_count", 0) or 0),
             relationship_count=int(getattr(graph_data, "relationship_count", 0) or 0),
             node_labels=tuple(getattr(schema, "node_labels", ()) or ()),
@@ -334,6 +334,20 @@ def _coerce_float(value: Any) -> float:
         return float(value)
     except (TypeError, ValueError):
         return 0.0
+
+
+def _coerce_bool(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return value != 0
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"1", "true", "yes", "y", "on"}:
+            return True
+        if normalized in {"0", "false", "no", "n", "off", ""}:
+            return False
+    return bool(value)
 
 
 def _extra_loss_penalty(values: Sequence[float]) -> float:

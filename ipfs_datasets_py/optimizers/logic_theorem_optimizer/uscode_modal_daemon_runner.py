@@ -7888,6 +7888,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         "codex_run_id": paired["codex_run_id"],
         "codex_stderr_path": str(codex_stderr_path),
         "codex_stdout_path": str(codex_stdout_path),
+        "child_process_group_mode": "start_new_session",
         "duration_seconds": float(args.duration_seconds),
         "final": False,
         "log_path": str(log_path),
@@ -7948,6 +7949,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                 cwd=root,
                 stdout=auto_stdout,
                 stderr=auto_stderr,
+                start_new_session=True,
                 text=True,
             )
             append_event(
@@ -7978,6 +7980,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                     cwd=root,
                     stdout=child_stdout,
                     stderr=child_stderr,
+                    start_new_session=True,
                     text=True,
                 )
                 codex_processes[child_run_id] = process
@@ -8002,6 +8005,8 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                     for run_id, process in codex_processes.items()
                 }
                 summary["elapsed_seconds"] = round(time.time() - started, 3)
+                summary["heartbeat_at"] = utc_now()
+                summary["latest_stop_reason"] = "running"
                 summary["autoencoder_pid"] = auto_process.pid
                 summary["codex_pids"] = {
                     run_id: process.pid for run_id, process in codex_processes.items()
@@ -8038,7 +8043,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
             if process is None or process.poll() is not None:
                 continue
             runner_terminated_children.add(child_run_id)
-            process.terminate()
+            _terminate_process_group(process, signal.SIGTERM)
 
         termination_wait_seconds = max(
             10.0,
@@ -8051,7 +8056,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                 process.wait(timeout=termination_wait_seconds)
             except subprocess.TimeoutExpired:
                 runner_terminated_children.add(child_run_id)
-                process.kill()
+                _terminate_process_group(process, signal.SIGKILL)
                 process.wait(timeout=5.0)
 
         if auto_process is not None:

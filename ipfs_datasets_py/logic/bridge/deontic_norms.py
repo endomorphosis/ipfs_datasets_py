@@ -1448,12 +1448,31 @@ def _coverage_validation_metrics(records: Sequence[Mapping[str, Any]]) -> dict[s
 
 
 def _coverage_record_requires_validation(record: Mapping[str, Any]) -> bool:
-    if bool(record.get("requires_validation")):
+    if _truthy_flag(record.get("requires_validation")):
         return True
     summary = record.get("coverage_summary")
-    if isinstance(summary, Mapping) and bool(summary.get("requires_validation")):
+    if isinstance(summary, Mapping) and _truthy_flag(summary.get("requires_validation")):
         return True
     return False
+
+
+def _truthy_flag(value: Any) -> bool:
+    """Coerce legacy boolean-like values without treating ``\"false\"`` as true."""
+
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return False
+    if isinstance(value, (int, float)):
+        return value != 0
+    text = str(value).strip().lower()
+    if not text:
+        return False
+    if text in {"0", "false", "no", "n", "off"}:
+        return False
+    if text in {"1", "true", "yes", "y", "on"}:
+        return True
+    return True
 
 
 def _merge_phase8_validation_from_coverage_records(

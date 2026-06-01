@@ -41,6 +41,7 @@ TRIAL_TIMEOUT_GRACE_SECONDS="${TRIAL_TIMEOUT_GRACE_SECONDS:-120}"
 TRIAL_TIMEOUT_SECONDS="${TRIAL_TIMEOUT_SECONDS:-$((TRIAL_SECONDS + TRIAL_TIMEOUT_GRACE_SECONDS))}"
 FINAL_TIMEOUT_GRACE_SECONDS="${FINAL_TIMEOUT_GRACE_SECONDS:-300}"
 FINAL_TIMEOUT_SECONDS="${FINAL_TIMEOUT_SECONDS:-$((FINAL_SECONDS + FINAL_TIMEOUT_GRACE_SECONDS))}"
+PAIRED_GRACE_SECONDS="${PAIRED_GRACE_SECONDS:-${FINAL_TIMEOUT_GRACE_SECONDS}}"
 SWEEP_LOOP_ROLE="${SWEEP_LOOP_ROLE:-autoencoder}"
 SWEEP_TEST_EVERY_CYCLES="${SWEEP_TEST_EVERY_CYCLES:-48}"
 FINAL_TEST_EVERY_CYCLES="${FINAL_TEST_EVERY_CYCLES:-96}"
@@ -82,12 +83,12 @@ VALIDATION_CANARY_INDICES="${VALIDATION_CANARY_INDICES:-28380,25280,18192,38585}
 AUTOENCODER_DEVICE="${AUTOENCODER_DEVICE:-cpu}"
 AUTOENCODER_BRIDGE_WORKERS="${AUTOENCODER_BRIDGE_WORKERS:-8}"
 BRIDGE_ADAPTER_WORKERS="${BRIDGE_ADAPTER_WORKERS:-4}"
-CODEX_PARALLEL_SCOPES="${CODEX_PARALLEL_SCOPES:-compiler_ambiguity,compiler_registry,ir_decompiler,bridge,compiler_parser,frame_logic,deontic}"
+CODEX_PARALLEL_SCOPES="${CODEX_PARALLEL_SCOPES:-compiler_ambiguity,compiler_registry,ir_decompiler,bridge,compiler_parser,frame_logic,deontic,cec,tdfol,knowledge_graphs,external_provers,zkp}"
 CODEX_SCOPE_WORKERS="${CODEX_SCOPE_WORKERS:-1}"
 # The paired final run has one stateful autoencoder producer. Codex workers are
-# demand-weighted from observed legal-IR TODO queues, leaving CPU headroom for
-# bridge evaluation, apply validation, and the IDE/session daemons on 20-core hosts.
-CODEX_SCOPE_WORKER_MAP="${CODEX_SCOPE_WORKER_MAP:-compiler_ambiguity=3,compiler_registry=3,ir_decompiler=3,bridge=2,compiler_parser=1,frame_logic=1,deontic=1}"
+# demand-weighted from observed legal-IR TODO queues and cover every family scope
+# the autoencoder can seed, while bridge workers keep the deterministic metrics fed.
+CODEX_SCOPE_WORKER_MAP="${CODEX_SCOPE_WORKER_MAP:-compiler_ambiguity=3,compiler_registry=3,ir_decompiler=3,bridge=2,compiler_parser=2,frame_logic=2,deontic=2,cec=3,tdfol=2,knowledge_graphs=3,external_provers=2,zkp=2}"
 CODEX_APPLY_MODE="${CODEX_APPLY_MODE:-apply_to_main}"
 if [[ "${CODEX_APPLY_MODE}" == "packet_only" ]]; then
   CODEX_APPLY_MODE="patch_only"
@@ -207,7 +208,7 @@ FINAL_COMMON_OVERRIDES=(
 
 PAIRED_ARGS=(
   --paired-poll-seconds 1
-  --paired-grace-seconds 20
+  --paired-grace-seconds "${PAIRED_GRACE_SECONDS}"
   --codex-exec-mode "${CODEX_EXEC_MODE}"
   --codex-apply-mode "${CODEX_APPLY_MODE}"
   --codex-commit-mode "${CODEX_COMMIT_MODE}"
@@ -254,6 +255,7 @@ echo "[pipeline] hyperparam_estimated_wall_seconds=${TOTAL_TRIAL_WALL_SECONDS}"
 echo "[pipeline] final_run_seconds=${FINAL_SECONDS}"
 echo "[pipeline] trial_timeout_seconds=${TRIAL_TIMEOUT_SECONDS}"
 echo "[pipeline] final_timeout_seconds=${FINAL_TIMEOUT_SECONDS}"
+echo "[pipeline] paired_grace_seconds=${PAIRED_GRACE_SECONDS}"
 echo "[pipeline] bridge_loss_adapters=${BRIDGE_LOSS_ADAPTERS}"
 echo "[pipeline] bridge_evaluate_provers=${BRIDGE_EVALUATE_PROVERS}"
 echo "[pipeline] projection_max_regressions=cosine:${GENERALIZABLE_PROJECTION_MAX_COSINE_REGRESSION},reconstruction:${GENERALIZABLE_PROJECTION_MAX_RECONSTRUCTION_REGRESSION},cross_entropy:${GENERALIZABLE_PROJECTION_MAX_CROSS_ENTROPY_REGRESSION},legal_ir:${GENERALIZABLE_PROJECTION_MAX_LEGAL_IR_LOSS_REGRESSION}"

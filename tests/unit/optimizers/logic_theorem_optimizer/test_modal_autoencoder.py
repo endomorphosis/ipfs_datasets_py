@@ -1596,6 +1596,51 @@ def test_compiler_guidance_flows_into_deterministic_codec_ir() -> None:
     assert "source_copy_reward_hack_penalty" in result.losses
 
 
+def test_compiler_guidance_surfaces_underrepresented_legal_ir_views() -> None:
+    from ipfs_datasets_py.logic.modal import (
+        DeterministicModalLogicCodec,
+        ModalLogicCodecConfig,
+        decoded_modal_phrase_slot_text_map,
+    )
+
+    sample = build_us_code_sample(
+        title="19",
+        section="1521",
+        text="Administrative notice and hearing procedures are established.",
+    )
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(spacy_model_name="definitely_missing_legal_model")
+    )
+    guidance = {
+        "sample_id": sample.sample_id,
+        "sample_memory_used": False,
+        "family_distribution": {"frame": 0.8, "deontic": 0.2},
+        "decoded_embedding": [0.1, 0.2, 0.3],
+        "feature_groups": {"logic_view_contract": ["legal-ir-view:CEC.native"]},
+        "legal_ir_predicted_view_distribution": {"deontic.ir": 0.9, "CEC.native": 0.1},
+        "legal_ir_target_view_distribution": {"deontic.ir": 0.6, "CEC.native": 0.4},
+        "legal_ir_view_gap_distribution": {"deontic.ir": -0.3, "CEC.native": 0.3},
+        "legal_ir_view_metrics": {"cross_entropy_excess_loss": 0.1},
+        "ranked_guidance_features": [{"feature": "legal-ir-view:CEC.native", "weight": 0.3}],
+    }
+
+    result = codec.encode(
+        sample.text,
+        document_id=sample.sample_id,
+        citation=sample.citation,
+        source=sample.source,
+        source_embedding=sample.embedding_vector,
+        compiler_guidance=guidance,
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(result.decoded_modal_text)
+    assert slot_texts["compiler_guidance_legal_ir_underrepresented_view"] == ["cec_native"]
+    assert (
+        slot_texts["compiler_guidance_legal_ir_underrepresented_view_ranked"]
+        == ["1:cec_native"]
+    )
+
+
 def test_compiler_contract_feature_head_transfers_permission_holdout() -> None:
     train = build_us_code_sample(
         title="5",

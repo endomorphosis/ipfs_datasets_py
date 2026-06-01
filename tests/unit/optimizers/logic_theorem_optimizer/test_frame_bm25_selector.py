@@ -585,6 +585,21 @@ def test_frame_ontology_terms_from_feature_keys_support_frame_cue_features() -> 
     ]
 
 
+def test_frame_ontology_terms_from_feature_keys_support_legal_ir_view_features() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "legal-ir-view:modal.frame_logic",
+            "legal_ir_view:deontic.ir",
+            "token:agency",
+        ]
+    )
+
+    assert terms == [
+        "modal_frame_logic",
+        "deontic_ir",
+    ]
+
+
 def test_frame_ontology_terms_from_feature_keys_extract_predicate_argument_role_shape_and_role_pairs() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [

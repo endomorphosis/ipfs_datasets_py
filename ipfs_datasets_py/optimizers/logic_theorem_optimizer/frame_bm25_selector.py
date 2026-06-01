@@ -277,6 +277,10 @@ _FRAME_ONTOLOGY_SLOT_FRAME_SEMANTIC_VALUE_ALIASES = {
     ("role", "frame"): "frame",
 }
 _FRAME_ONTOLOGY_CUE_FEATURE_PREFIX = "cue:frame:"
+_FRAME_ONTOLOGY_LEGAL_IR_VIEW_PREFIXES: tuple[str, ...] = (
+    "legal-ir-view:",
+    "legal_ir_view:",
+)
 _FRAME_ONTOLOGY_CUE_VALUE_ALIASES = {
     "is a": "isa",
 }
@@ -1310,6 +1314,14 @@ def _frame_ontology_value_from_feature(
     feature: str,
 ) -> tuple[str, bool, bool, int]:
     lowered = feature.lower()
+    for prefix in _FRAME_ONTOLOGY_LEGAL_IR_VIEW_PREFIXES:
+        if lowered.startswith(prefix):
+            return (
+                feature[len(prefix) :].strip(),
+                False,
+                False,
+                _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL,
+            )
 
     for prefix in _FRAME_FAMILY_FEATURE_PREFIXES:
         if lowered == prefix or lowered.startswith(f"{prefix}:"):

@@ -4866,6 +4866,7 @@ def test_decode_modal_ir_document_emits_source_anchor_family_pair_slots() -> Non
     assert {
         "deontic->deontic",
         "deontic->temporal",
+        "temporal->epistemic",
         "temporal->temporal",
     }.issubset(set(mixed_slot_map["source_action_family_pair"]))
     assert any(
@@ -4900,7 +4901,12 @@ def test_modal_ir_to_flogic_triples_emit_source_anchor_family_pair_slots() -> No
         ]
 
     mixed_pairs = objects(mixed_triples, "source_action_family_pair")
-    assert {"deontic->deontic", "deontic->temporal", "temporal->temporal"}.issubset(
+    assert {
+        "deontic->deontic",
+        "deontic->temporal",
+        "temporal->epistemic",
+        "temporal->temporal",
+    }.issubset(
         set(mixed_pairs)
     )
     mixed_pair_anchors = objects(mixed_triples, "source_action_family_pair_anchor")
