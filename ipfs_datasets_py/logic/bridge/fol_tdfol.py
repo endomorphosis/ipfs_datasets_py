@@ -300,6 +300,11 @@ def _formula_records_from_proof_obligation_rows(
             row.get("formula_object") or row.get("proof_formula_object") or formula_text
         )
         parse_ok = formula_object is not None
+        proof_input = (
+            formula_object.to_string()
+            if formula_object is not None and hasattr(formula_object, "to_string")
+            else formula_text
+        )
         predicates = sorted(formula_object.get_predicates()) if formula_object is not None else []
         source_id = str(
             row.get("source_id")
@@ -308,8 +313,8 @@ def _formula_records_from_proof_obligation_rows(
         )
         records.append(
             {
-                "formula": formula_text,
-                "proof_input": formula_text,
+                "formula": proof_input,
+                "proof_input": proof_input,
                 "formula_object": formula_object,
                 "parse_ok": parse_ok,
                 "predicates": predicates,
@@ -490,16 +495,16 @@ def _tdfol_parse_candidates(text: str) -> list[str]:
     sanitized = _sanitize_tdfol_formula_text(normalized)
     if sanitized != normalized:
         _add(sanitized)
-    _add(normalized)
     _add(_normalize_tdfol_export_formula(normalized))
+    _add(normalized)
 
     if normalized.endswith("."):
         stripped = normalized[:-1].rstrip()
         sanitized_stripped = _sanitize_tdfol_formula_text(stripped)
         if sanitized_stripped != stripped:
             _add(sanitized_stripped)
-        _add(stripped)
         _add(_normalize_tdfol_export_formula(stripped))
+        _add(stripped)
 
     return candidates
 
@@ -522,9 +527,14 @@ def _normalize_tdfol_export_formula(text: str) -> str:
     if not normalized:
         return ""
     normalized = normalized.strip("`\"'").strip()
-    normalized = re.sub(r"^\s*formula\s*[:=]\s*", "", normalized, flags=re.IGNORECASE)
-    normalized = re.sub(r"^\s*proof_formula\s*[:=]\s*", "", normalized, flags=re.IGNORECASE)
-    normalized = re.sub(r"^\s*tdfol_formula\s*[:=]\s*", "", normalized, flags=re.IGNORECASE)
+    normalized = re.sub(
+        r"^\s*(?:formula|proof_formula|proof\s+formula|tdfol_formula|"
+        r"tdfol\s+formula|proof_input|proof\s+input|proof_obligation|"
+        r"proof\s+obligation|obligation)\s*[:=]\s*",
+        "",
+        normalized,
+        flags=re.IGNORECASE,
+    )
     normalized = re.sub(
         r"\b([OPF])\s*\[\s*(.*?)\s*\]",
         lambda match: f"{match.group(1)}({match.group(2)})",

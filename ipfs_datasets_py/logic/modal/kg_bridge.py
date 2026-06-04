@@ -95,6 +95,36 @@ _CITATION_TOKENS = (
     "title",
     "usc",
 )
+_EDITORIAL_STATUS_PREDICATES = {
+    "status_keyword",
+}
+_EDITORIAL_STATUS_PREDICATE_PREFIXES = (
+    "status_keyword_",
+)
+_EDITORIAL_STATUS_TOKENS = (
+    "repeal",
+    "repealed",
+    "status_bridge",
+    "transferred",
+)
+_SECTION_STRUCTURE_PREDICATE_PREFIXES = (
+    "section_component_",
+    "section_profile_",
+    "section_range_",
+    "section_style_",
+)
+_SECTION_STRUCTURE_TOKENS = (
+    "chapter",
+    "part",
+    "section_component",
+    "section_marker",
+    "section_profile",
+    "section_range",
+    "section_style",
+    "subchapter",
+    "subtitle",
+    "title",
+)
 _IDENTIFIER_RE = re.compile(r"[^A-Za-z0-9_]+")
 
 
@@ -468,10 +498,18 @@ def _projection_view_for_predicate(predicate: str) -> str:
         return "fact"
     if normalized == "type":
         return "type_assertion"
+    if normalized in _EDITORIAL_STATUS_PREDICATES or normalized.startswith(
+        _EDITORIAL_STATUS_PREDICATE_PREFIXES
+    ):
+        return "editorial_status"
+    if any(token in normalized for token in _EDITORIAL_STATUS_TOKENS):
+        return "editorial_status"
     if normalized in _FRAME_PREDICATES or normalized.startswith(_FRAME_PREDICATE_PREFIXES):
         return "frame_link"
     if "ontology_term" in normalized:
         return "ontology_term"
+    if normalized.startswith(_SECTION_STRUCTURE_PREDICATE_PREFIXES):
+        return "section_structure"
     if normalized in _MODAL_SEMANTIC_PREDICATES or normalized.startswith(
         _MODAL_SEMANTIC_PREDICATE_PREFIXES
     ):
@@ -488,6 +526,8 @@ def _projection_view_for_predicate(predicate: str) -> str:
         return "citation_structure"
     if any(token in normalized for token in _CITATION_TOKENS):
         return "citation_structure"
+    if any(token in normalized for token in _SECTION_STRUCTURE_TOKENS):
+        return "section_structure"
     return "fact"
 
 

@@ -164,6 +164,34 @@ _USCODE_PROCEDURAL_CLAUSE_VERB_RE = re.compile(
 )
 _USCODE_PROCEDURAL_CLAUSE_MIN_TOKENS = 6
 _USCODE_PROCEDURAL_CLAUSE_MAX_TOKENS = 42
+_USCODE_ADMINISTRATIVE_PROCEDURE_RESIDUAL_MAX_TOKENS = 96
+_USCODE_ADMINISTRATIVE_PROCEDURE_PHRASE_RE = re.compile(
+    r"\b(?:administrative\s+(?:notice|review|hearing|procedure|procedures)|"
+    r"notice\s+and\s+hearing|hearing\s+(?:procedure|procedures|requirements)|"
+    r"review\s+(?:procedure|procedures|requirements)|"
+    r"appeal\s+(?:procedure|procedures|rights)|"
+    r"petition\s+(?:procedure|procedures)|"
+    r"adjudication\s+(?:procedure|procedures|requirements))\b",
+    re.IGNORECASE,
+)
+_USCODE_ADMINISTRATIVE_PROCEDURE_SIGNAL_TOKENS = frozenset(
+    {
+        "administrative",
+        "adjudication",
+        "adjudications",
+        "appeal",
+        "appeals",
+        "hearing",
+        "hearings",
+        "notice",
+        "petition",
+        "petitions",
+        "procedure",
+        "procedures",
+        "requirements",
+        "review",
+    }
+)
 _USCODE_RESIDUAL_SPAN_MIN_TOKENS = 6
 _USCODE_RESIDUAL_SPAN_MAX_TOKENS = 120
 _USCODE_SHORT_RESIDUAL_HEADING_MIN_TOKENS = 1
@@ -946,6 +974,11 @@ class LegalModalParser:
             return True
         if self._is_uscode_statutory_fragment_residual_candidate(normalized, tokens):
             return True
+        if self._is_uscode_administrative_procedure_residual_candidate(
+            normalized,
+            tokens,
+        ):
+            return True
         is_short_heading_candidate = self._is_short_residual_heading_coverage_candidate(
             tokens
         )
@@ -1111,6 +1144,44 @@ class LegalModalParser:
         if not any(character.isdigit() for character in lowered):
             return False
         return bool(_USCODE_RESIDUAL_STATUTORY_FRAGMENT_HINT_RE.search(lowered))
+
+    def _is_uscode_administrative_procedure_residual_candidate(
+        self,
+        normalized_segment_text: str,
+        tokens: Sequence[str],
+    ) -> bool:
+        """Recover procedural frame spans that have no explicit modal cue."""
+        token_count = len(tokens)
+        if token_count < 2:
+            return False
+        if token_count > _USCODE_ADMINISTRATIVE_PROCEDURE_RESIDUAL_MAX_TOKENS:
+            return False
+        lowered = normalized_segment_text.lower()
+        if (
+            _USCODE_CODIFICATION_HINT_RE.search(lowered)
+            or _USCODE_EDITORIAL_STATUS_HINT_RE.search(lowered)
+            or _USCODE_DECLARATIVE_STATEMENT_HINT_RE.search(lowered)
+        ):
+            return False
+        if _USCODE_ADMINISTRATIVE_PROCEDURE_PHRASE_RE.search(lowered):
+            return True
+        signal_count = len(
+            set(tokens) & _USCODE_ADMINISTRATIVE_PROCEDURE_SIGNAL_TOKENS
+        )
+        return signal_count >= 2 and bool(
+            set(tokens)
+            & {
+                "administrative",
+                "adjudication",
+                "adjudications",
+                "appeal",
+                "appeals",
+                "hearing",
+                "hearings",
+                "notice",
+                "review",
+            }
+        )
 
     def _residual_span_coverage_formula(
         self,

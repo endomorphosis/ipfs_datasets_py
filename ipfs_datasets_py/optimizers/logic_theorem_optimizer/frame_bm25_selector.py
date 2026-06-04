@@ -66,6 +66,8 @@ _FRAME_ONTOLOGY_STOPWORDS = frozenset(
 )
 _FRAME_ONTOLOGY_TERM_PREDICATES = frozenset(
     {
+        "audited_high_signal_ontology_term",
+        "audited_ontology_term",
         "candidate_ontology_term",
         "selected_ontology_term",
         "interpreted_in_frame_term",
@@ -308,7 +310,14 @@ _FRAME_ONTOLOGY_VALUE_KEY_FEATURE_PREFIXES = {
     "selected_ontology_frame": "frame:",
     "selected_ontology_term": "selected-frame-term:",
     "target_family": "family:selected_frame:",
+    "target_component": "legal-ir-view:",
+    "target_file_lane": "legal-ir-view:",
 }
+_FRAME_ONTOLOGY_HINT_ID_KEYS = frozenset({"hint_id", "hint_ids"})
+_FRAME_ONTOLOGY_HINT_ID_PREFIX_RE = re.compile(
+    r"^\s*(?P<prefix>[A-Za-z][A-Za-z0-9_-]*?)-(?P<digest>[0-9a-f]{12,})\s*$",
+    re.IGNORECASE,
+)
 _FRAME_ONTOLOGY_TERM_PRIORITY_NONE = 0
 _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL_STRUCTURAL = 1
 _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL = 2
@@ -802,7 +811,8 @@ def _synthetic_frame_feature_candidates_from_key_value(
     if not normalized_key:
         return []
     prefix = _FRAME_ONTOLOGY_VALUE_KEY_FEATURE_PREFIXES.get(normalized_key)
-    if not prefix:
+    is_hint_id_key = normalized_key in _FRAME_ONTOLOGY_HINT_ID_KEYS
+    if not prefix and not is_hint_id_key:
         return []
     candidates: List[str] = []
     values: Sequence[Any]
@@ -821,8 +831,26 @@ def _synthetic_frame_feature_candidates_from_key_value(
         if is_frame_ontology_feature_key(text):
             candidates.append(text)
             continue
+        if is_hint_id_key:
+            hint_term = _frame_ontology_hint_id_audit_value(text)
+            if hint_term:
+                candidates.append(f"flogic:statement_hint:{hint_term}")
+            continue
         candidates.append(f"{prefix}{text}")
     return candidates
+
+
+def _frame_ontology_hint_id_audit_value(value: str) -> str:
+    """Keep deterministic hint families while dropping opaque digest suffixes."""
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    match = _FRAME_ONTOLOGY_HINT_ID_PREFIX_RE.match(text)
+    if match:
+        return str(match.group("prefix") or "").strip()
+    if re.fullmatch(r"[0-9a-f]{12,}", text, re.IGNORECASE):
+        return ""
+    return text
 
 
 def _parsed_frame_ontology_feature_value(text: str) -> Any | None:

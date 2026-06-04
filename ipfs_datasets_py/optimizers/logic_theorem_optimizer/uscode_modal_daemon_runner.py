@@ -248,6 +248,9 @@ CODEX_APPLY_VALIDATION_TESTS = (
     "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py",
     "tests/unit_tests/logic/modal/test_modal_codec.py",
 )
+CODEX_MAIN_APPLY_LOCK_TIMEOUT_SECONDS = 600.0
+CODEX_TARGET_METRIC_TIMEOUT_SECONDS = 30.0
+CODEX_TARGET_METRIC_MAX_SAMPLES = 2
 BRIDGE_IR_REPORT_CACHE_MAX = 4096
 _BRIDGE_IR_REPORT_CACHE_LOCK = threading.Lock()
 _BRIDGE_IR_REPORT_CACHE: Dict[str, Any] = {}
@@ -257,6 +260,28 @@ CODEX_WORKTREE_ARTIFACT_FILENAMES = {"changes.patch"}
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def _env_float(name: str, default: float, *, minimum: float = 0.0) -> float:
+    raw = os.environ.get(name)
+    if raw is None or str(raw).strip() == "":
+        return float(default)
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        return float(default)
+    return max(float(minimum), value)
+
+
+def _env_int(name: str, default: int, *, minimum: int = 0) -> int:
+    raw = os.environ.get(name)
+    if raw is None or str(raw).strip() == "":
+        return int(default)
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        return int(default)
+    return max(int(minimum), value)
 
 
 def parse_utc(value: str) -> float:
@@ -549,7 +574,11 @@ def queue_file_lock(queue_path: Path) -> Iterator[None]:
 
 
 @contextmanager
-def codex_main_apply_lock(packet: Mapping[str, Any]) -> Iterator[None]:
+def codex_main_apply_lock(
+    packet: Mapping[str, Any],
+    *,
+    timeout_seconds: Optional[float] = None,
+) -> Iterator[None]:
     """Serialize apply/validate/commit for parallel Codex worktree packets."""
     import fcntl
 
@@ -563,12 +592,62 @@ def codex_main_apply_lock(packet: Mapping[str, Any]) -> Iterator[None]:
     lock_dir = git_dir if git_dir.is_dir() else source_repo_root
     lock_path = lock_dir / "codex-main-apply.lock"
     lock_path.parent.mkdir(parents=True, exist_ok=True)
-    with lock_path.open("w", encoding="utf-8") as handle:
-        fcntl.flock(handle, fcntl.LOCK_EX)
+    timeout = (
+        _env_float(
+            "IPFS_DATASETS_CODEX_MAIN_APPLY_LOCK_TIMEOUT_SECONDS",
+            CODEX_MAIN_APPLY_LOCK_TIMEOUT_SECONDS,
+            minimum=1.0,
+        )
+        if timeout_seconds is None
+        else max(1.0, float(timeout_seconds))
+    )
+    started = time.time()
+    with lock_path.open("a+", encoding="utf-8") as handle:
+        while True:
+            try:
+                fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError as exc:
+                elapsed = time.time() - started
+                if elapsed >= timeout:
+                    handle.seek(0)
+                    owner = handle.read(2000)
+                    raise TimeoutError(
+                        f"Timed out after {elapsed:.1f}s waiting for {lock_path}; "
+                        f"owner={owner.strip() or 'unknown'}"
+                    ) from exc
+                time.sleep(min(1.0, max(0.05, timeout - elapsed)))
+        owner = {
+            "acquired_at": utc_now(),
+            "packet_id": packet.get("packet_id"),
+            "pid": os.getpid(),
+            "run_id": packet.get("run_id"),
+            "timeout_seconds": timeout,
+            "worker_id": packet.get("worker_id"),
+        }
+        handle.seek(0)
+        handle.truncate()
+        handle.write(json.dumps(owner, sort_keys=True))
+        handle.flush()
+        os.fsync(handle.fileno())
         try:
             yield
         finally:
-            fcntl.flock(handle, fcntl.LOCK_UN)
+            try:
+                handle.seek(0)
+                handle.truncate()
+                handle.write(
+                    json.dumps(
+                        {
+                            **owner,
+                            "released_at": utc_now(),
+                        },
+                        sort_keys=True,
+                    )
+                )
+                handle.flush()
+            finally:
+                fcntl.flock(handle, fcntl.LOCK_UN)
 
 
 def row_to_sample(row: Mapping[str, Any]):
@@ -3619,6 +3698,14 @@ def _build_codex_child_command(
         str(getattr(args, "codex_merge_repair_mode", "apply_3way")),
         "--codex-merge-repair-attempts",
         str(getattr(args, "codex_merge_repair_attempts", 1)),
+        "--codex-main-apply-lock-timeout-seconds",
+        str(
+            getattr(
+                args,
+                "codex_main_apply_lock_timeout_seconds",
+                CODEX_MAIN_APPLY_LOCK_TIMEOUT_SECONDS,
+            )
+        ),
     ]
     if getattr(args, "codex_vector_index_path", None):
         command.extend(["--codex-vector-index-path", str(args.codex_vector_index_path)])
@@ -5039,9 +5126,20 @@ def _run_codex_apply_validation(
 def _codex_packet_metric_sample_payloads(
     packet: Mapping[str, Any],
     *,
-    max_samples: int = 8,
+    max_samples: Optional[int] = None,
 ) -> List[Dict[str, Any]]:
     """Return unique legal sample payloads carried by claimed TODO metadata."""
+    sample_limit = (
+        _env_int(
+            "IPFS_DATASETS_CODEX_TARGET_METRIC_MAX_SAMPLES",
+            CODEX_TARGET_METRIC_MAX_SAMPLES,
+            minimum=0,
+        )
+        if max_samples is None
+        else max(0, int(max_samples))
+    )
+    if sample_limit <= 0:
+        return []
     payloads: List[Dict[str, Any]] = []
     seen: set[str] = set()
     for todo in packet.get("todos", []):
@@ -5059,7 +5157,7 @@ def _codex_packet_metric_sample_payloads(
                 continue
             seen.add(key)
             payloads.append(dict(payload))
-            if len(payloads) >= max(0, int(max_samples)):
+            if len(payloads) >= sample_limit:
                 return payloads
     return payloads
 
@@ -5079,7 +5177,7 @@ def _codex_packet_target_metric_snapshot(
     packet: Mapping[str, Any],
     repo_root: Path,
     *,
-    timeout_seconds: float = 120.0,
+    timeout_seconds: Optional[float] = None,
 ) -> Dict[str, Any]:
     """Measure target metrics in a fresh subprocess using packet sample payloads."""
     sample_payloads = _codex_packet_metric_sample_payloads(packet)
@@ -5159,55 +5257,101 @@ print(json.dumps({
     "status": "measured",
     "target_metrics": target_metrics,
 }, sort_keys=True))
-'''
+    '''
     payload = {"samples": sample_payloads, "target_metrics": target_metrics}
+    timeout = (
+        _env_float(
+            "IPFS_DATASETS_CODEX_TARGET_METRIC_TIMEOUT_SECONDS",
+            CODEX_TARGET_METRIC_TIMEOUT_SECONDS,
+            minimum=1.0,
+        )
+        if timeout_seconds is None
+        else max(1.0, float(timeout_seconds))
+    )
+    process: Optional[subprocess.Popen[str]] = None
     try:
-        result = subprocess.run(
+        process = subprocess.Popen(
             [sys.executable, "-c", script],
             cwd=repo_root,
-            input=json.dumps(payload, ensure_ascii=True),
-            capture_output=True,
             env=_codex_apply_validation_env(),
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            start_new_session=True,
             text=True,
-            timeout=max(1.0, float(timeout_seconds)),
         )
-    except subprocess.TimeoutExpired as exc:
+        stdout, stderr = process.communicate(
+            input=json.dumps(payload, ensure_ascii=True),
+            timeout=timeout,
+        )
+    except OSError as exc:
+        return {
+            "metric_count": 0,
+            "metrics": {},
+            "sample_count": len(sample_payloads),
+            "status": "failed",
+            "stderr_tail": str(exc)[-500:],
+            "stdout_tail": "",
+            "target_metrics": target_metrics,
+        }
+    except subprocess.TimeoutExpired:
+        if process is not None:
+            _terminate_process_group(process, signal.SIGTERM)
+            try:
+                stdout, stderr = process.communicate(timeout=5.0)
+            except subprocess.TimeoutExpired:
+                _terminate_process_group(process, signal.SIGKILL)
+                stdout, stderr = process.communicate()
+        else:
+            stdout, stderr = "", ""
         return {
             "metric_count": 0,
             "metrics": {},
             "sample_count": len(sample_payloads),
             "status": "timeout",
-            "stderr_tail": _process_text(exc.stderr)[-500:],
-            "stdout_tail": _process_text(exc.stdout)[-500:],
+            "stderr_tail": _process_text(stderr)[-500:],
+            "stdout_tail": _process_text(stdout)[-500:],
             "target_metrics": target_metrics,
-            "timeout_seconds": float(timeout_seconds),
+            "timeout_seconds": float(timeout),
         }
-    if result.returncode != 0:
+    if process is None:
         return {
-            "exit_code": result.returncode,
             "metric_count": 0,
             "metrics": {},
             "sample_count": len(sample_payloads),
             "status": "failed",
-            "stderr_tail": (result.stderr or "")[-500:],
-            "stdout_tail": (result.stdout or "")[-500:],
+            "stderr_tail": "target metric subprocess did not start",
+            "stdout_tail": "",
+            "target_metrics": target_metrics,
+        }
+    returncode = process.returncode
+    if returncode != 0:
+        return {
+            "exit_code": returncode,
+            "metric_count": 0,
+            "metrics": {},
+            "sample_count": len(sample_payloads),
+            "status": "failed",
+            "stderr_tail": (stderr or "")[-500:],
+            "stdout_tail": (stdout or "")[-500:],
             "target_metrics": target_metrics,
         }
     try:
-        stdout_lines = [line for line in (result.stdout or "").splitlines() if line.strip()]
+        stdout_lines = [line for line in (stdout or "").splitlines() if line.strip()]
         snapshot = json.loads(stdout_lines[-1] if stdout_lines else "")
     except json.JSONDecodeError:
         return {
-            "exit_code": result.returncode,
+            "exit_code": returncode,
             "metric_count": 0,
             "metrics": {},
             "sample_count": len(sample_payloads),
             "status": "invalid_json",
-            "stderr_tail": (result.stderr or "")[-500:],
-            "stdout_tail": (result.stdout or "")[-500:],
+            "stderr_tail": (stderr or "")[-500:],
+            "stdout_tail": (stdout or "")[-500:],
             "target_metrics": target_metrics,
         }
-    snapshot["stderr_tail"] = (result.stderr or "")[-500:]
+    snapshot["stderr_tail"] = (stderr or "")[-500:]
+    snapshot["timeout_seconds"] = float(timeout)
     return snapshot
 
 
@@ -5565,7 +5709,6 @@ def apply_codex_worktree_changes_to_main(
         _codex_packet_target_metric_snapshot(
             updated,
             source_repo_root,
-            timeout_seconds=min(float(validation_timeout_seconds), 120.0),
         )
         if measure_target_metrics
         else {
@@ -5704,7 +5847,6 @@ def apply_codex_worktree_changes_to_main(
         _codex_packet_target_metric_snapshot(
             updated,
             source_repo_root,
-            timeout_seconds=min(float(validation_timeout_seconds), 120.0),
         )
         if measure_target_metrics
         else {
@@ -5792,6 +5934,27 @@ def apply_codex_worktree_changes_to_main(
     return updated
 
 
+def _codex_main_apply_lock_timeout_packet(
+    packet: Mapping[str, Any],
+    exc: BaseException,
+) -> Dict[str, Any]:
+    """Record a bounded apply-lock wait as transient and keep a rescue patch."""
+    packet_path_value = packet.get("packet_path")
+    packet_path = Path(str(packet_path_value)) if packet_path_value else None
+    try:
+        updated = refresh_codex_work_packet_patch(packet)
+    except (OSError, RuntimeError, subprocess.SubprocessError, TypeError, ValueError) as patch_exc:
+        updated = dict(packet)
+        updated["main_apply_patch_refresh_error"] = str(patch_exc)
+    updated["codex_apply_mode"] = "apply_to_main"
+    updated["main_apply_error"] = str(exc)
+    updated["main_apply_status"] = "lock_timeout"
+    updated["patch_error"] = str(exc)
+    updated["patch_status"] = "main_apply_lock_timeout"
+    _save_packet_if_possible(updated, packet_path)
+    return updated
+
+
 def execute_codex_work_packet(
     packet: Mapping[str, Any],
     *,
@@ -5803,6 +5966,7 @@ def execute_codex_work_packet(
     model: Optional[str] = None,
     sandbox: str = "workspace-write",
     timeout_seconds: float = 900.0,
+    main_apply_lock_timeout_seconds: Optional[float] = None,
     validation_commands: Optional[Sequence[Sequence[str]]] = None,
     validation_timeout_seconds: float = 300.0,
 ) -> Dict[str, Any]:
@@ -5844,15 +6008,21 @@ def execute_codex_work_packet(
     _save_packet_if_possible(updated, packet_path)
     normalized_apply_mode = str(apply_mode).strip().lower()
     if normalized_apply_mode == "apply_to_main":
-        with codex_main_apply_lock(updated):
-            refreshed = apply_codex_worktree_changes_to_main(
+        try:
+            with codex_main_apply_lock(
                 updated,
-                commit_mode=commit_mode,
-                merge_repair_attempts=merge_repair_attempts,
-                merge_repair_mode=merge_repair_mode,
-                validation_commands=validation_commands,
-                validation_timeout_seconds=validation_timeout_seconds,
-            )
+                timeout_seconds=main_apply_lock_timeout_seconds,
+            ):
+                refreshed = apply_codex_worktree_changes_to_main(
+                    updated,
+                    commit_mode=commit_mode,
+                    merge_repair_attempts=merge_repair_attempts,
+                    merge_repair_mode=merge_repair_mode,
+                    validation_commands=validation_commands,
+                    validation_timeout_seconds=validation_timeout_seconds,
+                )
+        except TimeoutError as exc:
+            refreshed = _codex_main_apply_lock_timeout_packet(updated, exc)
     else:
         refreshed = refresh_codex_work_packet_patch(updated)
     exec_result["attempt_count"] = 1
@@ -5883,15 +6053,21 @@ def execute_codex_work_packet(
         refreshed["codex_exec"] = fallback_result
         _save_packet_if_possible(refreshed, packet_path)
         if normalized_apply_mode == "apply_to_main":
-            with codex_main_apply_lock(refreshed):
-                refreshed = apply_codex_worktree_changes_to_main(
+            try:
+                with codex_main_apply_lock(
                     refreshed,
-                    commit_mode=commit_mode,
-                    merge_repair_attempts=merge_repair_attempts,
-                    merge_repair_mode=merge_repair_mode,
-                    validation_commands=validation_commands,
-                    validation_timeout_seconds=validation_timeout_seconds,
-                )
+                    timeout_seconds=main_apply_lock_timeout_seconds,
+                ):
+                    refreshed = apply_codex_worktree_changes_to_main(
+                        refreshed,
+                        commit_mode=commit_mode,
+                        merge_repair_attempts=merge_repair_attempts,
+                        merge_repair_mode=merge_repair_mode,
+                        validation_commands=validation_commands,
+                        validation_timeout_seconds=validation_timeout_seconds,
+                    )
+            except TimeoutError as exc:
+                refreshed = _codex_main_apply_lock_timeout_packet(refreshed, exc)
         else:
             refreshed = refresh_codex_work_packet_patch(refreshed)
     return refreshed
@@ -6075,6 +6251,8 @@ def _codex_packet_should_requeue_transient(packet: Mapping[str, Any]) -> bool:
     main_apply_status = str(packet.get("main_apply_status") or "").strip().lower()
     if patch_status in CODEX_COMPLETED_WORK_STATUSES or main_apply_status == "applied":
         return False
+    if patch_status == "main_apply_lock_timeout" or main_apply_status == "lock_timeout":
+        return True
     if exec_status not in {"failed", "timeout"}:
         return False
     return _codex_exec_logs_indicate_transient_failure(exec_result)
@@ -6693,6 +6871,25 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         help=(
             "Whether bridge scoring should run expensive theorem-prover gates. "
             "Use false for daemon health checks that need fast compiler/KG/TODO cycles."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-bootstrap-program-synthesis-todos",
+        type=parse_bool_flag,
+        default=True,
+        help=(
+            "Seed a small Codex/program-synthesis queue from autoencoder "
+            "introspection immediately after sampling, before bridge-heavy "
+            "projection phases can delay the first completed cycle."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-bootstrap-min-pending",
+        type=int,
+        default=1,
+        help=(
+            "Only run the early program-synthesis bootstrap when fewer than this "
+            "many program-synthesis TODOs are already pending or claimed."
         ),
     )
     parser.add_argument(
@@ -7532,7 +7729,7 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         help="For the Codex loop, either only create work packets or run codex exec in each packet worktree.",
     )
     parser.add_argument("--codex-command", default="codex")
-    parser.add_argument("--codex-model", default="gpt-5.3-codex")
+    parser.add_argument("--codex-model", default="gpt-5.5")
     parser.add_argument(
         "--codex-apply-mode",
         choices=("patch_only", "apply_to_main"),
@@ -7703,6 +7900,15 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         type=int,
         default=1,
         help="Maximum automatic merge-repair attempts for one packet apply.",
+    )
+    parser.add_argument(
+        "--codex-main-apply-lock-timeout-seconds",
+        type=float,
+        default=CODEX_MAIN_APPLY_LOCK_TIMEOUT_SECONDS,
+        help=(
+            "Maximum time a Codex worker waits for the serialized main apply lock "
+            "before saving a rescue patch and requeueing the TODO as transient."
+        ),
     )
     parser.add_argument(
         "--codex-sandbox",
@@ -8181,6 +8387,17 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     summary["bridge_loss_adapters"] = bridge_adapters
     summary["bridge_evaluate_provers"] = bridge_evaluate_provers
     summary["autoencoder_bridge_workers"] = bridge_parallel_workers
+    summary["autoencoder_bootstrap_program_synthesis_todos"] = bool(
+        getattr(args, "autoencoder_bootstrap_program_synthesis_todos", True)
+    )
+    summary["autoencoder_bootstrap_min_pending"] = max(
+        0,
+        int(getattr(args, "autoencoder_bootstrap_min_pending", 1) or 0),
+    )
+    summary.setdefault("program_synthesis_bootstrap_attempts", 0)
+    summary.setdefault("program_synthesis_bootstrap_deduped_total", 0)
+    summary.setdefault("program_synthesis_bootstrap_seeded_total", 0)
+    summary.setdefault("program_synthesis_bootstrap_semantic_deduped_total", 0)
     summary["active_cycle"] = None
     summary["active_cycle_bridge_loss_adapters"] = []
     summary["active_cycle_elapsed_seconds"] = 0.0
@@ -8908,6 +9125,143 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         summary["active_cycle_train_indices"] = []
         summary["active_cycle_validation_indices"] = []
 
+    def bootstrap_program_synthesis_todos(
+        *,
+        cycle: int,
+        cycle_started: float,
+        cycle_started_at: str,
+        train_samples: Sequence[Any],
+        train_indices: Sequence[int],
+        validation_indices: Sequence[int],
+    ) -> Dict[str, Any]:
+        """Seed Codex work before bridge-heavy training can delay cycle 1."""
+        nonlocal queue
+        enabled = bool(
+            getattr(args, "autoencoder_bootstrap_program_synthesis_todos", True)
+        )
+        min_pending = max(
+            0,
+            int(getattr(args, "autoencoder_bootstrap_min_pending", 1) or 0),
+        )
+        status = supervisor.program_synthesis_status(
+            execution_mode="queued_for_external_codex_worker"
+        )
+        open_count = int(status.get("pending", 0) or 0) + int(
+            status.get("claimed", 0) or 0
+        )
+        if not enabled or not train_samples or open_count >= min_pending:
+            return {
+                "attempted": False,
+                "deduped_count": 0,
+                "open_count_before": open_count,
+                "reason": (
+                    "disabled"
+                    if not enabled
+                    else "no_train_samples"
+                    if not train_samples
+                    else "open_program_synthesis_queue_already_available"
+                ),
+                "seeded_count": 0,
+                "semantic_deduped_count": 0,
+                "todo_ids": [],
+            }
+
+        mark_active_autoencoder_cycle(
+            cycle=cycle,
+            cycle_started=cycle_started,
+            cycle_started_at=cycle_started_at,
+            phase="program_synthesis_bootstrap",
+            train_count=len(train_samples),
+            validation_count=summary.get("active_cycle_validation_count", 0),
+            train_indices=train_indices,
+            validation_indices=validation_indices,
+        )
+        with queue_file_lock(queue_path):
+            latest_queue = ModalTodoQueue.load_jsonl(queue_path)
+            latest_queue.merge_from(
+                supervisor.queue,
+                preserve_claimed_role=supervisor.policy.program_synthesis_role,
+            )
+            supervisor.queue = latest_queue
+            before_ids = {todo.todo_id for todo in supervisor.queue.all()}
+            seeded = supervisor.seed_program_synthesis_from_introspection(
+                train_samples,
+                autoencoder=autoencoder,
+                residual_stage="cycle_bootstrap_pre_projection",
+                require_residual_survival=False,
+            )
+            deduped_count = int(supervisor.last_program_synthesis_deduped_count)
+            semantic_deduped_count = supervisor.queue.deduplicate_semantic(
+                optimizer_role=supervisor.policy.program_synthesis_role,
+                near_duplicate_jaccard=(
+                    supervisor.policy.program_synthesis_near_duplicate_jaccard
+                ),
+            )
+            todo_ids = [
+                todo.todo_id
+                for todo in seeded
+                if todo.todo_id not in before_ids
+                and supervisor.queue.get(todo.todo_id) is not None
+            ]
+            if seeded or deduped_count or semantic_deduped_count:
+                supervisor.queue.save_jsonl(queue_path)
+            queue = supervisor.queue
+
+        update_program_synthesis_summary(
+            summary,
+            supervisor.queue,
+            supervisor.policy,
+            execution_mode="queued_for_external_codex_worker",
+        )
+        summary["program_synthesis_bootstrap_attempts"] = int(
+            summary.get("program_synthesis_bootstrap_attempts", 0) or 0
+        ) + 1
+        summary["program_synthesis_bootstrap_deduped_total"] = int(
+            summary.get("program_synthesis_bootstrap_deduped_total", 0) or 0
+        ) + deduped_count
+        summary["program_synthesis_bootstrap_seeded_total"] = int(
+            summary.get("program_synthesis_bootstrap_seeded_total", 0) or 0
+        ) + len(todo_ids)
+        summary["program_synthesis_bootstrap_semantic_deduped_total"] = int(
+            summary.get(
+                "program_synthesis_bootstrap_semantic_deduped_total",
+                0,
+            )
+            or 0
+        ) + semantic_deduped_count
+        summary["latest_program_synthesis_bootstrap"] = {
+            "cycle": int(cycle),
+            "deduped_count": deduped_count,
+            "open_count_before": open_count,
+            "seeded_count": len(todo_ids),
+            "semantic_deduped_count": int(semantic_deduped_count),
+            "todo_ids": list(todo_ids),
+        }
+        summary["latest_queue_counts"] = supervisor.queue.status_counts()
+        summary["latest_role_queue_counts"] = supervisor.queue.role_status_counts()
+        save_summary(summary_path, summary)
+        append_event(
+            log_path,
+            args.run_id,
+            {
+                "cycle": cycle,
+                "deduped_count": deduped_count,
+                "event": "program_synthesis_bootstrap_seeded",
+                "open_count_before": open_count,
+                "seeded_count": len(todo_ids),
+                "semantic_deduped_count": int(semantic_deduped_count),
+                "todo_ids": list(todo_ids),
+            },
+        )
+        return {
+            "attempted": True,
+            "deduped_count": deduped_count,
+            "open_count_before": open_count,
+            "seeded_count": len(todo_ids),
+            "semantic_deduped_count": int(semantic_deduped_count),
+            "todo_ids": list(todo_ids),
+        }
+
     try:
         while not stop_requested and time.time() + cycle_start_margin_seconds < end_at:
             cycle = int(summary.get("cycles", 0)) + 1
@@ -8956,6 +9310,14 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 "fixed_canary"
                 if validation_canary_samples
                 else "rotating_holdout"
+            )
+            bootstrap_report = bootstrap_program_synthesis_todos(
+                cycle=cycle,
+                cycle_started=cycle_started,
+                cycle_started_at=cycle_started_at,
+                train_samples=train_samples,
+                train_indices=train_indices,
+                validation_indices=acceptance_validation_indices,
             )
             mark_active_autoencoder_cycle(
                 cycle=cycle,
@@ -9485,6 +9847,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["latest_queue_counts"] = supervisor.queue.status_counts()
             summary["latest_role_queue_counts"] = supervisor.queue.role_status_counts()
             summary["latest_feature_projection_report"] = feature_projection_report
+            summary["latest_program_synthesis_bootstrap"] = bootstrap_report
             summary["latest_cycle_seconds"] = latest_cycle_seconds
             summary["latest_autoencoder_train"] = after_train_metrics
             summary["latest_autoencoder_validation"] = after_validation_metrics
@@ -10245,6 +10608,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             "codex_commit_mode": args.codex_commit_mode,
             "codex_exec_mode": args.codex_exec_mode,
             "codex_lane_lock_mode": args.codex_lane_lock_mode,
+            "codex_main_apply_lock_timeout_seconds": args.codex_main_apply_lock_timeout_seconds,
             "codex_merge_repair_attempts": args.codex_merge_repair_attempts,
             "codex_merge_repair_mode": args.codex_merge_repair_mode,
             "codex_scope": args.codex_scope,
@@ -10384,6 +10748,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                         model=args.codex_model,
                         sandbox=args.codex_sandbox,
                         timeout_seconds=args.codex_timeout_seconds,
+                        main_apply_lock_timeout_seconds=args.codex_main_apply_lock_timeout_seconds,
                         validation_commands=_codex_validation_commands_for_todos(claimed),
                     )
                     exec_status = str(

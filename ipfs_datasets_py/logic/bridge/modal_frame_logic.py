@@ -187,6 +187,9 @@ class ModalFrameLogicBridgeAdapter:
                 source_component="knowledge_graphs.neo4j_compat",
                 payload=graph_payload,
                 metadata={
+                    **_graph_view_alignment_metadata(
+                        getattr(graph_data, "metadata", {}) or {}
+                    ),
                     "node_count": getattr(graph_data, "node_count", 0),
                     "relationship_count": getattr(graph_data, "relationship_count", 0),
                 },
@@ -273,6 +276,27 @@ def _citation_from_modal_ir(modal_ir: Any) -> str:
             return str(citation)
     metadata = getattr(modal_ir, "metadata", {}) or {}
     return str(metadata.get("citation") or modal_ir.document_id)
+
+
+def _graph_view_alignment_metadata(metadata: Mapping[str, Any]) -> dict[str, Any]:
+    """Expose graph/frame alignment fields without changing view weighting."""
+
+    allowed = {
+        "frame_logic_projection_aligned",
+        "frame_logic_projection_has_duplicate_facts",
+        "frame_logic_projection_input_aligned",
+        "frame_logic_projection_normalized_aligned",
+        "frame_logic_projection_view_distribution",
+        "frame_logic_projection_views",
+        "frame_logic_selected_frame",
+        "graph_id",
+        "neo4j_compatible",
+    }
+    return {
+        str(key): value
+        for key, value in dict(metadata or {}).items()
+        if str(key) in allowed
+    }
 
 
 _SPARSE_CITATION_LOSS_SCALE = 0.25

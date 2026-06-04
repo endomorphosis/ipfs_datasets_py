@@ -79,6 +79,7 @@ _CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("to the extent provided", "to_the_extent_provided"),
     ("not later than", "not_later_than"),
     ("no later than", "no_later_than"),
+    ("which", "which"),
     ("if", "if"),
     ("when", "when"),
     ("until", "until"),
@@ -736,6 +737,10 @@ _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...
         ("conditional_normative", "O|"),
         ("temporal", "F"),
     ),
+    "which": (
+        ("conditional_normative", "O|"),
+        ("deontic", "O"),
+    ),
     "shall": (("deontic", "O"),),
     "must": (("deontic", "O"),),
     "obligation": (("deontic", "O"),),
@@ -1235,6 +1240,7 @@ def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
     formula_order = tuple(sorted(document.formulas, key=lambda item: item.formula_id))
     phrases: List[DecodedModalPhrase] = [
         *source_phrases,
+        *_typed_ir_reconstruction_phrases(document, formula_order),
         *_source_span_slot_phrases(
             source_phrases,
             formulas=document.formulas,
@@ -1567,6 +1573,40 @@ def _decode_formula_phrases(
                     provenance_only=True,
                 )
             )
+        phrases.append(
+            DecodedModalPhrase(
+                text=canonical_operator_label,
+                slot="text_cue",
+                spans=operator_spans,
+                provenance_only=True,
+            )
+        )
+        phrases.append(
+            DecodedModalPhrase(
+                text=f"{canonical_operator_label}:{formula.operator.family}",
+                slot="text_cue_family",
+                spans=operator_spans,
+                provenance_only=True,
+            )
+        )
+    predicate_head = _predicate_head_anchor(formula)
+    if predicate_head:
+        phrases.append(
+            DecodedModalPhrase(
+                text=predicate_head,
+                slot="predicate_head",
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+        phrases.append(
+            DecodedModalPhrase(
+                text=f"{formula.operator.family}:{predicate_head}",
+                slot="predicate_head_family",
+                spans=spans,
+                provenance_only=True,
+            )
+        )
     operator_signature = _modal_operator_signature(
         formula,
         operator_label=operator_label,
@@ -1682,6 +1722,20 @@ def _decode_formula_phrases(
                 provenance_only=True,
             )
         )
+    for polarity_slot, polarity_value in _modal_polarity_slots(
+        formula,
+        condition_values=condition_values,
+        exception_values=exception_values,
+        document=document,
+    ):
+        phrases.append(
+            DecodedModalPhrase(
+                text=polarity_value,
+                slot=polarity_slot,
+                spans=spans,
+                provenance_only=True,
+            )
+        )
     if argument_values:
         phrases.append(
             DecodedModalPhrase(
@@ -1714,18 +1768,15 @@ def _decode_formula_phrases(
                 spans=spans,
             )
         )
-        typed_argument_slot = _typed_argument_slot(argument)
-        if typed_argument_slot is None:
-            continue
-        slot, value = typed_argument_slot
-        phrases.append(
-            DecodedModalPhrase(
-                text=value,
-                slot=slot,
-                spans=spans,
-                provenance_only=True,
+        for slot, value in _typed_argument_slots(argument):
+            phrases.append(
+                DecodedModalPhrase(
+                    text=value,
+                    slot=slot,
+                    spans=spans,
+                    provenance_only=True,
+                )
             )
-        )
     if formula.predicate.role:
         phrases.append(
             DecodedModalPhrase(
@@ -2983,7 +3034,10 @@ def _document_modal_family_transition_phrases(
     document: ModalIRDocument,
 ) -> List[DecodedModalPhrase]:
     phrases: List[DecodedModalPhrase] = []
-    for slot, value in _modal_family_transition_slots(document.formulas):
+    for slot, value in _modal_family_transition_slots(
+        document.formulas,
+        document=document,
+    ):
         phrases.append(
             DecodedModalPhrase(
                 text=value,
@@ -3298,6 +3352,8 @@ def _modal_family_count_slots(
 
 def _modal_family_transition_slots(
     formulas: Sequence[ModalIRFormula],
+    *,
+    document: ModalIRDocument | None = None,
 ) -> List[Tuple[str, str]]:
     slots: List[Tuple[str, str]] = []
     for formula in formulas:
@@ -3318,14 +3374,24 @@ def _modal_family_transition_slots(
         # ``condition_prefix_key=subject_to`` + ``condition_scope=this section``)
         # so family transition slots preserve inferred deontic/conditional links
         # even when explicit condition/exception arrays are empty.
-        resolved_conditions = _resolved_clause_values_from_metadata(
-            formula,
-            clause_type="condition",
-        )
-        resolved_exceptions = _resolved_clause_values_from_metadata(
-            formula,
-            clause_type="exception",
-        )
+        if document is None:
+            resolved_conditions = _resolved_clause_values_from_metadata(
+                formula,
+                clause_type="condition",
+            )
+            resolved_exceptions = _resolved_clause_values_from_metadata(
+                formula,
+                clause_type="exception",
+            )
+        else:
+            resolved_conditions = _resolved_formula_conditions(
+                document=document,
+                formula=formula,
+            )
+            resolved_exceptions = _resolved_formula_exceptions(
+                document=document,
+                formula=formula,
+            )
         cues: List[str] = []
         for cue_value in (
             *_formula_cues(formula),
@@ -5206,6 +5272,8 @@ def _sentence_from_phrases(phrases: Sequence[DecodedModalPhrase]) -> str:
     for phrase in phrases:
         if phrase.fixed or phrase.provenance_only:
             continue
+        if _clean_text(phrase.slot) == "typed_ir_reconstruction":
+            continue
         text = _clean_text(phrase.text)
         if not text:
             continue
@@ -5262,6 +5330,60 @@ def _source_reconstruction_phrases(
 
     coverage = covered_chars / len(source_text) if source_text else 0.0
     return phrases, round(min(1.0, max(0.0, coverage)), 6)
+
+
+def _typed_ir_reconstruction_phrases(
+    document: ModalIRDocument,
+    formulas: Sequence[ModalIRFormula],
+) -> List[DecodedModalPhrase]:
+    """Render a semantic surface from typed IR slots, not copied spans."""
+
+    phrases: List[DecodedModalPhrase] = []
+    seen: set[str] = set()
+    for formula in formulas:
+        spans = [[formula.provenance.start_char, formula.provenance.end_char]]
+        values: List[str] = []
+        predicate_text = _predicate_phrase(formula)
+        if predicate_text:
+            values.append(predicate_text)
+        values.extend(_phrase_values(formula.predicate.arguments))
+        values.extend(
+            _resolved_formula_conditions(
+                document=document,
+                formula=formula,
+            )
+        )
+        values.extend(
+            _resolved_formula_exceptions(
+                document=document,
+                formula=formula,
+            )
+        )
+        anchors = _source_role_anchor_values(document=document, formula=formula)
+        for role_name in (
+            "subject",
+            "action",
+            "object",
+            "condition",
+            "exception",
+            "temporal",
+        ):
+            anchor = _clean_text(anchors.get(role_name, ""))
+            if anchor:
+                values.append(anchor)
+        rendered = _clean_text(" ".join(_unique_preserve_order(values)))
+        if not rendered or rendered in seen:
+            continue
+        seen.add(rendered)
+        phrases.append(
+            DecodedModalPhrase(
+                text=rendered,
+                slot="typed_ir_reconstruction",
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+    return phrases
 
 
 def _source_span_slot_phrases(
@@ -5341,7 +5463,7 @@ def _source_span_slot_phrases(
                 )
             )
         semantic_text = _semantic_source_phrase_text(text)
-        if semantic_text and semantic_text.lower() != text.lower():
+        if semantic_text:
             semantic_slot_prefix = f"{slot_prefix}_semantic"
             aggregate_text_by_slot[semantic_slot_prefix].append(semantic_text)
             aggregate_spans_by_slot[semantic_slot_prefix].extend(
@@ -5368,6 +5490,24 @@ def _source_span_slot_phrases(
                         provenance_only=True,
                     )
                 )
+            for formula in formulas:
+                for refined_slot, refined_value in _refined_contextual_modal_transition_slots(
+                    formula,
+                    text=semantic_text,
+                    slot_prefix=semantic_slot_prefix,
+                ):
+                    refined_marker = (refined_slot, refined_value, span_marker)
+                    if refined_marker in seen:
+                        continue
+                    seen.add(refined_marker)
+                    phrases.append(
+                        DecodedModalPhrase(
+                            text=refined_value,
+                            slot=refined_slot,
+                            spans=spans,
+                            provenance_only=True,
+                        )
+                    )
             for slot, value in _typed_identifier_slots(
                 semantic_text,
                 slot_prefix=semantic_slot_prefix,
@@ -5669,6 +5809,24 @@ def _source_span_slot_phrases(
                         provenance_only=True,
                     )
                 )
+            for formula in formulas:
+                for refined_slot, refined_value in _refined_contextual_modal_transition_slots(
+                    formula,
+                    text=semantic_aggregate_text,
+                    slot_prefix=semantic_slot_prefix,
+                ):
+                    refined_marker = (refined_slot, refined_value, span_marker)
+                    if refined_marker in seen:
+                        continue
+                    seen.add(refined_marker)
+                    phrases.append(
+                        DecodedModalPhrase(
+                            text=refined_value,
+                            slot=refined_slot,
+                            spans=aggregate_spans,
+                            provenance_only=True,
+                        )
+                    )
             for cue in _bridge_cues_from_text(semantic_aggregate_text):
                 cue_marker = (f"{semantic_slot_prefix}_bridge_cue", cue, span_marker)
                 if cue_marker in seen:
@@ -6388,6 +6546,36 @@ def _typed_argument_slot(argument: str) -> Tuple[str, str] | None:
     return f"argument_{key}", value
 
 
+def _typed_argument_slots(argument: str) -> List[Tuple[str, str]]:
+    cleaned = _clean_text(argument)
+    if not cleaned or ":" not in cleaned:
+        return []
+    slots: List[Tuple[str, str]] = []
+    seen: set[Tuple[str, str]] = set()
+    for match in re.finditer(
+        r"(?:(?<=^)|(?<=[,;]))\s*(?P<key>[A-Za-z][A-Za-z0-9_ -]*)\s*:\s*"
+        r"(?P<value>.*?)(?=\s*[,;]\s*[A-Za-z][A-Za-z0-9_ -]*\s*:|$)",
+        cleaned,
+    ):
+        key = re.sub(
+            r"[^a-z0-9_]+",
+            "_",
+            _clean_text(match.group("key")).lower(),
+        ).strip("_")
+        value = _clean_text(match.group("value")).replace("_", " ")
+        if not key or not value:
+            continue
+        marker = (f"argument_{key}", value)
+        if marker in seen:
+            continue
+        seen.add(marker)
+        slots.append(marker)
+    if slots:
+        return slots
+    fallback = _typed_argument_slot(cleaned)
+    return [fallback] if fallback is not None else []
+
+
 def _source_role_anchor_phrases(
     *,
     document: ModalIRDocument,
@@ -6404,6 +6592,13 @@ def _source_role_anchor_phrases(
         formula=formula,
     )
     predicate_head = _predicate_head_anchor(formula)
+    structural_roles = [
+        role_name
+        for role_name in ("subject", "action", "object")
+        if _clean_text(anchors.get(role_name, ""))
+    ]
+    role_set = "+".join(structural_roles)
+    role_path = "->".join(structural_roles)
     phrases: List[DecodedModalPhrase] = []
     seen: set[Tuple[str, str]] = set()
 
@@ -6421,6 +6616,26 @@ def _source_role_anchor_phrases(
                 spans=spans,
                 provenance_only=True,
             )
+        )
+
+    if role_set:
+        add("source_role_set", role_set)
+        add("source_surface_role_set", role_set)
+        if predicate_family:
+            add("source_role_set_family", f"{role_set}:{predicate_family}")
+            add("source_surface_role_set_to_family", f"{role_set}:{predicate_family}")
+    if role_path:
+        add("source_role_path", role_path)
+        add("source_role_path_scope", f"{role_path}:unscoped")
+        if predicate_family:
+            add("source_role_path_family", f"{role_path}:{predicate_family}")
+    for role_name in ("subject", "action", "object"):
+        anchor = _clean_text(anchors.get(role_name, "")) or "none"
+        variable_name = f"v_{role_name}"
+        add("source_logical_variable_map", f"{role_name}:{anchor}:{variable_name}")
+        add(
+            f"source_{role_name}_logical_variable_map",
+            f"{role_name}:{anchor}:{variable_name}",
         )
 
     for role_name in ("subject", "action", "object", "condition", "exception", "temporal"):
@@ -7931,6 +8146,125 @@ def _modal_transition_slots(formula: ModalIRFormula) -> List[Tuple[str, str]]:
                 )
             )
     return _unique_slot_values(slots)
+
+
+def _modal_polarity_slots(
+    formula: ModalIRFormula,
+    *,
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
+    document: ModalIRDocument | None = None,
+) -> List[Tuple[str, str]]:
+    source_family = _clean_text(formula.operator.family).lower()
+    source_operator = _clean_text(formula.operator.symbol)
+    if not source_family or not source_operator:
+        return []
+    force = _modal_force_label(formula)
+    polarity = _modal_scope_polarity(
+        formula,
+        condition_values=condition_values,
+        exception_values=exception_values,
+        document=document,
+    )
+    scope = "conditioned" if condition_values or exception_values else "unconditioned"
+    slots: List[Tuple[str, str]] = [
+        ("modal_force", force),
+        ("modal_scope_polarity", polarity),
+        ("modal_force_scope", f"{force}:{scope}"),
+        ("modal_polarity_scope", f"{polarity}:{scope}"),
+        (
+            "modal_force_polarity",
+            f"{force}:{polarity}",
+        ),
+        (
+            "modal_force_polarity_family",
+            f"{force}:{polarity}:{source_family}",
+        ),
+        (
+            "modal_force_polarity_signature",
+            f"{force}:{polarity}:{source_family}:{source_operator.lower()}:{scope}",
+        ),
+    ]
+    if polarity == "negative_scope":
+        slots.extend(
+            (
+                ("compiler_contract_force_polarity", f"{force}:negative_scope"),
+                (
+                    "compiler_contract_force_polarity_family",
+                    f"{force}:negative_scope:{source_family}",
+                ),
+                ("normative_polarity", "negative_scope"),
+                ("normative_force_polarity", f"{force}:negative_scope"),
+                ("normative_force_scope", f"{force}:{scope}"),
+                ("normative_polarity_scope", f"negative_scope:{scope}"),
+            )
+        )
+    return _unique_slot_values(slots)
+
+
+def _modal_force_label(formula: ModalIRFormula) -> str:
+    symbol = _clean_text(formula.operator.symbol)
+    label = _clean_text(formula.operator.label).lower()
+    metadata = formula.metadata if isinstance(formula.metadata, Mapping) else {}
+    guided_force = _clean_text(
+        metadata.get("compiler_guidance_deontic_force")
+        or metadata.get("deontic_force")
+        or metadata.get("force")
+        or ""
+    ).lower()
+    if guided_force in {"permission", "obligation", "prohibition"}:
+        return guided_force
+    if symbol == "P" or label in {"permission", "permitted"}:
+        return "permission"
+    if symbol == "F" or label in {"prohibition", "prohibited", "forbidden"}:
+        return "prohibition"
+    if symbol in {"O", "O|"} or label in {
+        "obligation",
+        "obligatory",
+        "conditional_obligation",
+        "conditionally obligatory",
+    }:
+        return "obligation"
+    return label.replace(" ", "_") or symbol.lower()
+
+
+def _modal_scope_polarity(
+    formula: ModalIRFormula,
+    *,
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
+    document: ModalIRDocument | None = None,
+) -> str:
+    metadata = formula.metadata if isinstance(formula.metadata, Mapping) else {}
+    guided_polarity = _clean_text(
+        metadata.get("compiler_guidance_force_polarity")
+        or metadata.get("force_polarity")
+        or metadata.get("polarity")
+        or ""
+    ).lower()
+    if guided_polarity in {"negative", "negative_scope", "negated"}:
+        return "negative_scope"
+    if guided_polarity in {"positive", "positive_scope", "affirmative"}:
+        return "positive_scope"
+    if _clean_text(formula.operator.symbol) == "F":
+        return "negative_scope"
+    polarity_text = " ".join(
+        value
+        for value in (
+            _clean_text(formula.operator.label),
+            _clean_text(metadata.get("cue") or ""),
+            _predicate_phrase(formula),
+            " ".join(_phrase_values(condition_values)),
+            " ".join(_phrase_values(exception_values)),
+            _semantic_source_span_text(document=document, formula=formula)
+            if document is not None
+            else "",
+        )
+        if value
+    ).lower()
+    if re.search(r"(?<!\w)(?:not|no|never|without|prohibited|forbidden)(?!\w)", polarity_text):
+        return "negative_scope"
+    return "positive_scope"
 
 
 def _bridge_cues_from_text(text: str) -> List[str]:

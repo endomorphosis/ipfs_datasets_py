@@ -365,7 +365,13 @@ class TDFOLParser:
     
     def parse(self) -> Formula:
         """Parse a formula."""
-        return self.parse_formula()
+        formula = self.parse_formula()
+        if self.current_token().type != TokenType.EOF:
+            token = self.current_token()
+            raise ValueError(
+                f"Unexpected trailing token {token.type} at position {token.position}"
+            )
+        return formula
     
     def parse_formula(self) -> Formula:
         """Parse a formula (handles precedence)."""

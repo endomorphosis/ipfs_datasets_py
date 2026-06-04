@@ -71,6 +71,7 @@ from .decompiler import (
     DecodedModalText,
     decode_modal_ir_document,
     decoded_modal_phrase_slot_text_map,
+    _modal_polarity_slots,
     modal_text_token_similarity,
 )
 from .kg_bridge import (
@@ -142,6 +143,7 @@ _CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("to the extent provided", "to_the_extent_provided"),
     ("not later than", "not_later_than"),
     ("no later than", "no_later_than"),
+    ("which", "which"),
     ("if", "if"),
     ("when", "when"),
     ("until", "until"),
@@ -754,6 +756,10 @@ _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...
     "not_later_than": (
         ("conditional_normative", "O|"),
         ("temporal", "F"),
+    ),
+    "which": (
+        ("conditional_normative", "O|"),
+        ("deontic", "O"),
     ),
     "shall": (("deontic", "O"),),
     "must": (("deontic", "O"),),
@@ -2240,10 +2246,67 @@ class DeterministicModalLogicCodec:
             frame_audit_terms,
             max_terms=_FRAME_ONTOLOGY_AUDIT_MAX_TERMS,
         )
+        audited_kg_triples = _frame_ontology_audit_triples(
+            document_id=modal_ir.document_id,
+            kg_triples=kg_triples,
+            frame_audit_terms=frame_audit_terms,
+            frame_high_signal_audit_terms=frame_high_signal_audit_terms,
+        )
+        if len(audited_kg_triples) != len(kg_triples):
+            kg_triples = audited_kg_triples
+            flogic_ontology = flogic_triples_to_ontology(
+                kg_triples,
+                name=f"{modal_ir.document_id}_flogic",
+            )
+            neo4j_graph_data = flogic_triples_to_graph_data(
+                kg_triples,
+                graph_id=f"{modal_ir.document_id}:flogic",
+                metadata={
+                    "modal_ir_document_id": modal_ir.document_id,
+                    "modal_ir_hash": modal_ir.canonical_hash(),
+                    "modal_ir_version": modal_ir.version,
+                },
+            )
+            graph_schema = neo4j_graph_data.schema
+            frame_logic = ModalIRFrameLogic.from_triples(
+                kg_triples,
+                ontology_name=flogic_ontology.name,
+                selected_frame=selected_frame,
+                graph_id=neo4j_graph_data.metadata.get("graph_id"),
+                neo4j_node_labels=graph_schema.node_labels if graph_schema else [],
+                neo4j_relationship_types=graph_schema.relationship_types
+                if graph_schema
+                else [],
+                metadata={
+                    "compiler_guidance_applied": bool(guidance_summary),
+                    "frame_ontology_audit_projected": True,
+                    "neo4j_compatible": True,
+                    "source": "deterministic_modal_logic_codec_v1",
+                },
+            )
+            modal_ir = replace(
+                modal_ir,
+                frame_logic=frame_logic,
+                metadata={
+                    **modal_ir.metadata,
+                    "flogic_ontology": flogic_ontology_to_dict(flogic_ontology),
+                    "flogic_triple_count": len(kg_triples),
+                    "flogic_triples": list(kg_triples),
+                    "neo4j_graph": {
+                        "graph_id": neo4j_graph_data.metadata.get("graph_id"),
+                        "node_count": neo4j_graph_data.node_count,
+                        "relationship_count": neo4j_graph_data.relationship_count,
+                        "schema": neo4j_graph_data.schema.to_dict()
+                        if neo4j_graph_data.schema
+                        else None,
+                    },
+                },
+            )
         modal_ir = replace(
             modal_ir,
             metadata={
                 **modal_ir.metadata,
+                "frame_ontology_audit_projected": True,
                 "frame_ontology_term_audit_count": len(frame_audit_terms),
                 "frame_ontology_term_audit_terms": frame_audit_terms,
                 "frame_ontology_high_signal_term_audit_count": len(
@@ -3497,6 +3560,19 @@ def modal_ir_to_flogic_triples(
             modal_ir=modal_ir,
             formula=formula,
         )
+        for predicate_name, predicate_value in _modal_polarity_slots(
+            formula,
+            condition_values=resolved_conditions,
+            exception_values=resolved_exceptions,
+            document=modal_ir,
+        ):
+            triples.append(
+                {
+                    "subject": formula.formula_id,
+                    "predicate": predicate_name,
+                    "object": predicate_value,
+                }
+            )
         for condition in resolved_conditions:
             triples.append(
                 {
@@ -4035,6 +4111,38 @@ def _source_role_anchor_components(
     )
     predicate_head = _predicate_head_anchor(formula)
     components: List[tuple[str, str]] = []
+    structural_roles = [
+        role_name
+        for role_name in ("subject", "action", "object")
+        if _clean_non_empty_string(anchors.get(role_name, ""))
+    ]
+    role_set = "+".join(structural_roles)
+    role_path = "->".join(structural_roles)
+    if role_set:
+        components.append(("source_role_set", role_set))
+        components.append(("source_surface_role_set", role_set))
+        if predicate_family:
+            components.append(("source_role_set_family", f"{role_set}:{predicate_family}"))
+            components.append(
+                ("source_surface_role_set_to_family", f"{role_set}:{predicate_family}")
+            )
+    if role_path:
+        components.append(("source_role_path", role_path))
+        components.append(("source_role_path_scope", f"{role_path}:unscoped"))
+        if predicate_family:
+            components.append(("source_role_path_family", f"{role_path}:{predicate_family}"))
+    for role_name in ("subject", "action", "object"):
+        anchor = _clean_non_empty_string(anchors.get(role_name, "")) or "none"
+        variable_name = f"v_{role_name}"
+        components.append(
+            ("source_logical_variable_map", f"{role_name}:{anchor}:{variable_name}")
+        )
+        components.append(
+            (
+                f"source_{role_name}_logical_variable_map",
+                f"{role_name}:{anchor}:{variable_name}",
+            )
+        )
     for role_name in ("subject", "action", "object", "condition", "exception", "temporal"):
         anchor = _clean_non_empty_string(anchors.get(role_name, ""))
         if not anchor:
@@ -9981,6 +10089,7 @@ def _is_semantic_support_slot(slot: str) -> bool:
         "fallback_surface_context",
         "section_heading_tail",
         "status_keyword",
+        "typed_ir_reconstruction",
         "role",
     }:
         return True
@@ -10003,6 +10112,9 @@ def _is_semantic_support_slot(slot: str) -> bool:
             "source_condition_anchor",
             "source_exception_anchor",
             "source_temporal_anchor",
+            "source_role_",
+            "source_surface_role_",
+            "source_logical_variable_map",
             "refined_",
         )
     ):
@@ -10040,6 +10152,10 @@ def _structural_semantic_values(decoded: DecodedModalText) -> List[str]:
         "section_heading_tail",
         "predicate_content",
         "predicate",
+        "argument_actor",
+        "argument_scope",
+        "argument_object",
+        "argument_target",
         "arguments",
         "argument",
         "source_subject_anchor",
@@ -10112,6 +10228,16 @@ def _structural_decoded_text(
     rendered = _clean_non_empty_string(" ".join(words))
     if rendered:
         return rendered
+    slot_text_map = decoded_modal_phrase_slot_text_map(
+        decoded,
+        include_fixed=False,
+        include_provenance_only=True,
+    )
+    typed_ir_rendered = _clean_non_empty_string(
+        " ".join(slot_text_map.get("typed_ir_reconstruction", ()))
+    )
+    if typed_ir_rendered:
+        return typed_ir_rendered
     semantic_values = _structural_semantic_values(decoded)
     if semantic_values:
         semantic_rendered = _clean_non_empty_string(" ".join(semantic_values))
@@ -10644,6 +10770,55 @@ def _frame_ontology_audit_terms(
         _normalize_frame_ontology_audit_term(term)
         for term in feature_terms + triple_terms + contextualized_terms
     ))
+
+
+def _frame_ontology_audit_triples(
+    *,
+    document_id: str,
+    kg_triples: Sequence[Mapping[str, str]],
+    frame_audit_terms: Sequence[str],
+    frame_high_signal_audit_terms: Sequence[str],
+) -> List[Dict[str, str]]:
+    """Project frame-linked audit terms into first-class ontology facts."""
+    triples: List[Dict[str, str]] = [
+        {
+            "subject": str(triple.get("subject", "")).strip(),
+            "predicate": str(triple.get("predicate", "")).strip(),
+            "object": str(triple.get("object", "")).strip(),
+        }
+        for triple in kg_triples
+        if str(triple.get("subject", "")).strip()
+        and str(triple.get("predicate", "")).strip()
+        and str(triple.get("object", "")).strip()
+    ]
+    seen = {
+        (
+            triple["subject"],
+            triple["predicate"],
+            triple["object"],
+        )
+        for triple in triples
+    }
+    for predicate, terms in (
+        ("audited_ontology_term", frame_audit_terms),
+        ("audited_high_signal_ontology_term", frame_high_signal_audit_terms),
+    ):
+        for term in terms[:_FRAME_ONTOLOGY_AUDIT_MAX_TERMS]:
+            normalized = _normalize_frame_ontology_audit_term(str(term))
+            if not normalized:
+                continue
+            triple_key = (document_id, predicate, normalized)
+            if triple_key in seen:
+                continue
+            seen.add(triple_key)
+            triples.append(
+                {
+                    "subject": document_id,
+                    "predicate": predicate,
+                    "object": normalized,
+                }
+            )
+    return triples
 
 
 def _normalize_frame_ontology_audit_term(term: str) -> str:

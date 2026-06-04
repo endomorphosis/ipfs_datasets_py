@@ -49,6 +49,7 @@ SWEEP_PROJECTION_EPOCHS="${SWEEP_PROJECTION_EPOCHS:-1}"
 FINAL_PROJECTION_EPOCHS="${FINAL_PROJECTION_EPOCHS:-2}"
 FINAL_RECOVERY_MIN_CYCLES="${FINAL_RECOVERY_MIN_CYCLES:-1}"
 ALLOW_FINAL_FALLBACK_ON_SWEEP_FAILURE="${ALLOW_FINAL_FALLBACK_ON_SWEEP_FAILURE:-1}"
+SKIP_HPARAM_SWEEP="${SKIP_HPARAM_SWEEP:-0}"
 BRIDGE_EVALUATE_PROVERS="${BRIDGE_EVALUATE_PROVERS:-false}"
 BRIDGE_LOSS_ADAPTERS="${BRIDGE_LOSS_ADAPTERS:-modal_frame_logic,deontic_norms,fol_tdfol,cec_dcec,external_prover_router,zkp_attestation}"
 GENERALIZABLE_PROJECTION_MAX_COSINE_REGRESSION="${GENERALIZABLE_PROJECTION_MAX_COSINE_REGRESSION:-0.005}"
@@ -95,12 +96,12 @@ if [[ "${CODEX_APPLY_MODE}" == "packet_only" ]]; then
   CODEX_APPLY_MODE="patch_only"
 fi
 CODEX_COMMIT_MODE="${CODEX_COMMIT_MODE:-none}"
-CODEX_MODEL="${CODEX_MODEL:-gpt-5.3-codex}"
+CODEX_MODEL="${CODEX_MODEL:-gpt-5.5}"
 CODEX_BUNDLE_MODE="${CODEX_BUNDLE_MODE:-vector}"
 CODEX_VECTOR_MIN_SIMILARITY="${CODEX_VECTOR_MIN_SIMILARITY:-0.62}"
 CODEX_VECTOR_FILL_MIN_SIMILARITY="${CODEX_VECTOR_FILL_MIN_SIMILARITY:-0.40}"
-CODEX_VECTOR_MIN_BUNDLE_SIZE="${CODEX_VECTOR_MIN_BUNDLE_SIZE:-3}"
-CODEX_VECTOR_MAX_BUNDLE_WAIT_SECONDS="${CODEX_VECTOR_MAX_BUNDLE_WAIT_SECONDS:-120}"
+CODEX_VECTOR_MIN_BUNDLE_SIZE="${CODEX_VECTOR_MIN_BUNDLE_SIZE:-1}"
+CODEX_VECTOR_MAX_BUNDLE_WAIT_SECONDS="${CODEX_VECTOR_MAX_BUNDLE_WAIT_SECONDS:-30}"
 CODEX_VECTOR_STALE_DRAIN_COOLDOWN_SECONDS="${CODEX_VECTOR_STALE_DRAIN_COOLDOWN_SECONDS:-120}"
 CODEX_TARGET_FILE_LANE_LOCK_SECONDS="${CODEX_TARGET_FILE_LANE_LOCK_SECONDS:-900}"
 CODEX_TARGET_FILE_LANE_LOCK_SCOPES="${CODEX_TARGET_FILE_LANE_LOCK_SCOPES:-all}"
@@ -110,13 +111,19 @@ CODEX_TASK_EMBEDDINGS_BATCH_SIZE="${CODEX_TASK_EMBEDDINGS_BATCH_SIZE:-32}"
 CODEX_VECTOR_FALLBACK_MODE="${CODEX_VECTOR_FALLBACK_MODE:-hash}"
 CODEX_MERGE_REPAIR_MODE="${CODEX_MERGE_REPAIR_MODE:-apply_3way}"
 CODEX_MERGE_REPAIR_ATTEMPTS="${CODEX_MERGE_REPAIR_ATTEMPTS:-1}"
+CODEX_MAIN_APPLY_LOCK_TIMEOUT_SECONDS="${CODEX_MAIN_APPLY_LOCK_TIMEOUT_SECONDS:-600}"
+CODEX_TARGET_METRIC_TIMEOUT_SECONDS="${CODEX_TARGET_METRIC_TIMEOUT_SECONDS:-30}"
+CODEX_TARGET_METRIC_MAX_SAMPLES="${CODEX_TARGET_METRIC_MAX_SAMPLES:-2}"
 
 CODEX_EXEC_MODE="${CODEX_EXEC_MODE:-codex_cli}"
 if ! command -v codex >/dev/null 2>&1; then
   CODEX_EXEC_MODE="packet_only"
 fi
+CODEX_SANDBOX="${CODEX_SANDBOX:-danger-full-access}"
 
 export IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS="${BRIDGE_ADAPTER_WORKERS}"
+export IPFS_DATASETS_CODEX_TARGET_METRIC_TIMEOUT_SECONDS="${CODEX_TARGET_METRIC_TIMEOUT_SECONDS}"
+export IPFS_DATASETS_CODEX_TARGET_METRIC_MAX_SAMPLES="${CODEX_TARGET_METRIC_MAX_SAMPLES}"
 
 COMMON_ARGS=(
   --train-count "${TRAIN_COUNT}"
@@ -214,6 +221,7 @@ PAIRED_ARGS=(
   --codex-apply-mode "${CODEX_APPLY_MODE}"
   --codex-commit-mode "${CODEX_COMMIT_MODE}"
   --codex-model "${CODEX_MODEL}"
+  --codex-sandbox "${CODEX_SANDBOX}"
   --codex-parallel-scopes "${CODEX_PARALLEL_SCOPES}"
   --codex-scope-workers "${CODEX_SCOPE_WORKERS}"
   --codex-scope-worker-map "${CODEX_SCOPE_WORKER_MAP}"
@@ -231,6 +239,7 @@ PAIRED_ARGS=(
   --codex-vector-fallback-mode "${CODEX_VECTOR_FALLBACK_MODE}"
   --codex-merge-repair-mode "${CODEX_MERGE_REPAIR_MODE}"
   --codex-merge-repair-attempts "${CODEX_MERGE_REPAIR_ATTEMPTS}"
+  --codex-main-apply-lock-timeout-seconds "${CODEX_MAIN_APPLY_LOCK_TIMEOUT_SECONDS}"
 )
 
 CONFIGS=(
@@ -246,10 +255,12 @@ if (( TRIAL_COUNT < ${#CONFIGS[@]} )); then
   CONFIGS=("${CONFIGS[@]:0:${TRIAL_COUNT}}")
 fi
 FALLBACK_HPARAM_CFG="${FALLBACK_HPARAM_CFG:-${CONFIGS[0]}}"
+PRESELECTED_HPARAM_CFG="${PRESELECTED_HPARAM_CFG:-${FALLBACK_HPARAM_CFG}}"
 
 echo "[pipeline] base_run_id=${BASE_RUN_ID}"
 echo "[pipeline] codex_exec_mode=${CODEX_EXEC_MODE}"
 echo "[pipeline] sweep_loop_role=${SWEEP_LOOP_ROLE}"
+echo "[pipeline] skip_hparam_sweep=${SKIP_HPARAM_SWEEP}"
 echo "[pipeline] hyperparam_budget_seconds=${TOTAL_TRIAL_SECONDS}"
 echo "[pipeline] hyperparam_wall_budget_seconds=${HYPERPARAM_SWEEP_WALL_SECONDS}"
 echo "[pipeline] hyperparam_parallelism=${TRIAL_PARALLELISM}"
@@ -295,11 +306,15 @@ echo "[pipeline] bridge_adapter_workers=${BRIDGE_ADAPTER_WORKERS}"
 echo "[pipeline] codex_parallel_scopes=${CODEX_PARALLEL_SCOPES}"
 echo "[pipeline] codex_scope_workers=${CODEX_SCOPE_WORKERS}"
 echo "[pipeline] codex_scope_worker_map=${CODEX_SCOPE_WORKER_MAP}"
+echo "[pipeline] codex_sandbox=${CODEX_SANDBOX}"
 echo "[pipeline] codex_bundle_mode=${CODEX_BUNDLE_MODE}"
 echo "[pipeline] codex_vector_min_bundle_size=${CODEX_VECTOR_MIN_BUNDLE_SIZE}"
 echo "[pipeline] codex_vector_max_bundle_wait_seconds=${CODEX_VECTOR_MAX_BUNDLE_WAIT_SECONDS}"
 echo "[pipeline] codex_target_file_lane_lock_scopes=${CODEX_TARGET_FILE_LANE_LOCK_SCOPES}"
 echo "[pipeline] codex_lane_lock_mode=${CODEX_LANE_LOCK_MODE}"
+echo "[pipeline] codex_main_apply_lock_timeout_seconds=${CODEX_MAIN_APPLY_LOCK_TIMEOUT_SECONDS}"
+echo "[pipeline] codex_target_metric_timeout_seconds=${CODEX_TARGET_METRIC_TIMEOUT_SECONDS}"
+echo "[pipeline] codex_target_metric_max_samples=${CODEX_TARGET_METRIC_MAX_SAMPLES}"
 
 best_run_id=""
 best_cfg=""
@@ -675,7 +690,14 @@ PY
   fi
 }
 
-if (( TRIAL_PARALLELISM <= 1 )); then
+if [[ "${SKIP_HPARAM_SWEEP}" == "1" ]]; then
+  best_run_id="${BASE_RUN_ID}-preselected"
+  best_cfg="${PRESELECTED_HPARAM_CFG}"
+  best_score="preselected"
+  best_ce="nan"
+  best_cos="nan"
+  echo "[pipeline] hparam_sweep_skipped action=use_preselected cfg=${best_cfg}"
+elif (( TRIAL_PARALLELISM <= 1 )); then
   for idx in "${!CONFIGS[@]}"; do
     trap - ERR
     set +e

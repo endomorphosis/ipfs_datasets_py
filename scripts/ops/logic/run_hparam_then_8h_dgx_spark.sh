@@ -27,6 +27,7 @@ export SWEEP_AUTOENCODER_BRIDGE_WORKERS="${SWEEP_AUTOENCODER_BRIDGE_WORKERS:-4}"
 export TRIAL_TIMEOUT_GRACE_SECONDS="${TRIAL_TIMEOUT_GRACE_SECONDS:-600}"
 
 export FINAL_AUTOENCODER_BRIDGE_WORKERS="${FINAL_AUTOENCODER_BRIDGE_WORKERS:-8}"
+export FINAL_PROJECTION_EPOCHS="${FINAL_PROJECTION_EPOCHS:-1}"
 export BRIDGE_ADAPTER_WORKERS="${BRIDGE_ADAPTER_WORKERS:-4}"
 export CODEX_PARALLEL_SCOPES="${CODEX_PARALLEL_SCOPES:-compiler_ambiguity,compiler_registry,ir_decompiler,bridge,compiler_parser,frame_logic,deontic}"
 export CODEX_SCOPE_WORKER_MAP="${CODEX_SCOPE_WORKER_MAP:-compiler_ambiguity=3,compiler_registry=3,ir_decompiler=3,bridge=2,compiler_parser=1,frame_logic=1,deontic=1}"

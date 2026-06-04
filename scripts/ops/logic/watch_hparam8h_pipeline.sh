@@ -23,6 +23,7 @@ FINAL_VERIFY_MIN_CYCLES="${FINAL_VERIFY_MIN_CYCLES:-1}"
 STOP_AFTER_FINAL_VERIFY="${STOP_AFTER_FINAL_VERIFY:-1}"
 TRIAL_OVERRUN_SECONDS="${TRIAL_OVERRUN_SECONDS:-900}"
 TRIAL_OVERRUN_MAX_CYCLES="${TRIAL_OVERRUN_MAX_CYCLES:-0}"
+FINAL_QUEUE_STARVATION_SECONDS="${FINAL_QUEUE_STARVATION_SECONDS:-300}"
 
 timestamp() {
   date -u +"%Y-%m-%dT%H:%M:%SZ"
@@ -88,6 +89,7 @@ extract_final_run_id() {
 pipeline_pid() {
   ps -eo pid,args | awk -v run_id="${RUN_ID}" '
     $0 ~ "run_hparam_then_8h.sh "run_id"$" {print $1; exit}
+    $0 ~ "uscode_modal_daemon_runner" && $0 ~ "--loop-role paired" && $0 ~ "--run-id "run_id"-best-8h" {print $1; exit}
   '
 }
 
@@ -134,6 +136,48 @@ path=sys.argv[1]
 with open(path, 'r', encoding='utf-8') as h:
     data=json.load(h)
 print(int(data.get("cycles", 0) or 0))
+PY
+}
+
+read_final_status_from_summary() {
+  local summary_path="$1"
+  python3 - "${summary_path}" <<'PY' 2>/dev/null || echo $'0\t0\tunknown\t0\t0\t0\t0\t0\t'
+import json
+import sys
+from datetime import datetime, timezone
+
+path = sys.argv[1]
+with open(path, "r", encoding="utf-8") as handle:
+    data = json.load(handle)
+
+now = datetime.now(timezone.utc).timestamp()
+
+def as_int(value, default=0):
+    try:
+        return int(float(value))
+    except (TypeError, ValueError):
+        return default
+
+def age_seconds(value):
+    if not value:
+        return 0
+    try:
+        return max(0, int(now - datetime.fromisoformat(str(value)).timestamp()))
+    except (TypeError, ValueError):
+        return 0
+
+values = [
+    as_int(data.get("cycles", 0)),
+    as_int(data.get("active_cycle", 0)),
+    str(data.get("active_cycle_phase") or "none").replace("\t", "_").replace(" ", "_"),
+    as_int(data.get("active_cycle_elapsed_seconds", 0)),
+    age_seconds(data.get("active_cycle_last_heartbeat_at")),
+    as_int(data.get("program_synthesis_pending", 0)),
+    as_int(data.get("program_synthesis_claimed", 0)),
+    as_int(data.get("program_synthesis_completed", 0)),
+    str(data.get("updated_at") or ""),
+]
+print("\t".join(str(value) for value in values))
 PY
 }
 
@@ -192,9 +236,11 @@ while true; do
   if [[ -n "${final_run_id}" ]]; then
     final_summary="${LOG_DIR}/${final_run_id}-autoencoder.summary"
     if [[ -f "${final_summary}" ]]; then
-      cycles="$(read_cycles_from_summary "${final_summary}")"
+      IFS=$'\t' read -r cycles active_cycle active_phase active_elapsed active_heartbeat_age program_pending program_claimed program_completed summary_updated < <(
+        read_final_status_from_summary "${final_summary}"
+      )
       if (( cycles >= FINAL_VERIFY_MIN_CYCLES )); then
-        log_line "final_run_verified_working run_id=${final_run_id} cycles=${cycles} pid=${pid}"
+        log_line "final_run_verified_working run_id=${final_run_id} cycles=${cycles} program_pending=${program_pending} program_claimed=${program_claimed} program_completed=${program_completed} pid=${pid}"
         write_state "final_run" "running" "final_run_verified_working" "${final_run_id}" true
         if [[ "${STOP_AFTER_FINAL_VERIFY}" == "1" ]]; then
           log_line "verification_complete run_id=${final_run_id} cycles=${cycles}"
@@ -202,8 +248,13 @@ while true; do
           exit 0
         fi
       else
-        log_line "final_run_started_waiting_for_cycles run_id=${final_run_id} cycles=${cycles} pid=${pid}"
-        write_state "final_run" "running" "final_run_started_waiting_for_cycles" "${final_run_id}" false
+        log_line "final_run_started_waiting_for_cycles run_id=${final_run_id} cycles=${cycles} active_cycle=${active_cycle} active_phase=${active_phase} active_elapsed=${active_elapsed} active_heartbeat_age=${active_heartbeat_age} program_pending=${program_pending} program_claimed=${program_claimed} program_completed=${program_completed} pid=${pid}"
+        if (( cycles == 0 && program_pending == 0 && program_claimed == 0 && active_heartbeat_age > FINAL_QUEUE_STARVATION_SECONDS )); then
+          log_line "warning_detected signature=final_codex_queue_starved run_id=${final_run_id} active_cycle=${active_cycle} active_phase=${active_phase} active_heartbeat_age=${active_heartbeat_age}"
+          write_state "final_run" "running" "final_codex_queue_starved" "${final_run_id}" false
+        else
+          write_state "final_run" "running" "final_run_started_waiting_for_cycles" "${final_run_id}" false
+        fi
       fi
     else
       log_line "final_run_started_waiting_for_summary run_id=${final_run_id} pid=${pid}"

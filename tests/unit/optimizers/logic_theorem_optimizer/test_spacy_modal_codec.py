@@ -81,6 +81,10 @@ _USCODE_50_2523B_RESIDUAL_SPAN_TEXT = (
     "procedures are established for this section. Editorial Notes Codification Section "
     "2523b was editorially reclassified as section 3373b of this title."
 )
+_USCODE_10_3101_ADMINISTRATIVE_RESIDUAL_SPAN_TEXT = (
+    "Sec. 3101 - General provisions. Administrative notice and hearing procedures "
+    "for eligibility review and petition records."
+)
 _USCODE_25_5396_TODO_TEXT = (
     "U.S.C. Title 25 - INDIANS 25 U.S.C. United States Code, 2024 Edition Title 25 - INDIANS CHAPTER 46 - INDIAN SE"
     "LF-DETERMINATION AND EDUCATION ASSISTANCE SUBCHAPTER V - TRIBAL SELF-GOVERNANCE-INDIAN HEALTH SERVICE Sec. 539"
@@ -642,7 +646,32 @@ def test_spacy_encoder_treats_repealed_status_as_temporal_scope_signal() -> None
     assert repealed_signals["has_temporal_scope"] is True
     assert repealed_signals["has_temporal_status_scope"] is True
     assert repealed_signals["has_frame_scope_phrase"] is True
+    assert repealed_signals["has_statutory_status_frame_scope"] is True
     assert repealed_logits["temporal"] > baseline_logits["temporal"]
+
+
+def test_spacy_encoder_marks_repealed_statutory_sections_as_status_frame_scope() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="43",
+        section="356.",
+        text=(
+            "Sec. 356. Repealed. Pub. L. 94-579, title VII, Sec. 703(a), "
+            "Oct. 21, 1976, 90 Stat. 2789 Section, act Sept. 22, 1922, "
+            "extended time for development of underground water supplies with "
+            "reclamation grants."
+        ),
+    )
+
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+
+    assert signals["has_temporal_status_scope"] is True
+    assert signals["has_frame_context"] is True
+    assert signals["has_statutory_status_frame_scope"] is True
 
 
 def test_spacy_encoder_treats_editorial_required_as_non_deontic_scope() -> None:
@@ -5892,6 +5921,40 @@ def test_spacy_compiler_adds_residual_span_coverage_before_codification_fallback
     assert residual_formulas
     assert all(
         formula.provenance.citation == "50 U.S.C. 2523b."
+        for formula in modal_ir.formulas
+    )
+
+
+def test_spacy_compiler_adds_administrative_notice_hearing_residual_span_coverage() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    encoding = encoder.encode(
+        _USCODE_10_3101_ADMINISTRATIVE_RESIDUAL_SPAN_TEXT,
+        document_id="us-code-10-3101-000d4c508496a464",
+        citation="10 U.S.C. 3101",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    assert modal_ir.formulas
+    residual_formulas = [
+        formula
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    ]
+    assert residual_formulas
+    residual_text_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in residual_formulas
+    }
+    assert (
+        "Administrative notice and hearing procedures for eligibility review and petition records."
+        in residual_text_spans
+    )
+    assert all(
+        formula.provenance.citation == "10 U.S.C. 3101"
         for formula in modal_ir.formulas
     )
 

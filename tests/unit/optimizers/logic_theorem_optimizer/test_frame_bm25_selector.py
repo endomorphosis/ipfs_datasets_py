@@ -142,6 +142,25 @@ def test_frame_ontology_terms_from_triples_include_frame_predicates() -> None:
     assert terms == ["administrative_notice_hearing", "final_order"]
 
 
+def test_frame_ontology_terms_from_triples_include_audited_term_predicates() -> None:
+    terms = frame_ontology_terms_from_triples(
+        [
+            {
+                "subject": "doc-1",
+                "predicate": "audited_ontology_term",
+                "object": "agency notice",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "audited_high_signal_ontology_term",
+                "object": "hearing rights",
+            },
+        ]
+    )
+
+    assert terms == ["agency_notice", "hearing_rights"]
+
+
 def test_frame_ontology_terms_from_feature_keys_extract_frame_linked_values() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [
@@ -1824,6 +1843,7 @@ def test_frame_ontology_feature_keys_from_values_extracts_nested_hint_evidence()
     )
 
     assert keys == [
+        "flogic:statement_hint:modal-synthesis",
         "us-code-26-307-c04b9c0813def639",
         "selected-frame-term:26 U.S.C. 307",
         "us-code-42-300i-0102d16fb9d986ee",
@@ -1904,6 +1924,42 @@ def test_frame_ontology_feature_keys_from_values_synthesizes_family_alias_fields
         "epistemic",
         "dynamic",
         "frame",
+    ]
+
+
+def test_frame_ontology_feature_keys_from_values_audits_packet_frame_logic_evidence() -> None:
+    keys = frame_ontology_feature_keys_from_values(
+        {
+            "evidence": [
+                {
+                    "hint_id": "modal-synthesis-02d179558f02b764",
+                    "priority": 0.232604288682,
+                    "sample_id": "us-code-42-13109.-4f7ff54b08bbaf31",
+                    "target_file_lane": "frame_logic",
+                },
+                {
+                    "hint_id": "modal-synthesis-57f3dda89389e0d9",
+                    "priority": 0.662409005364,
+                    "sample_id": "us-code-7-450h-ca4b03be437fbbde",
+                    "target_component": "modal.frame_logic",
+                },
+            ],
+        }
+    )
+
+    assert keys == [
+        "flogic:statement_hint:modal-synthesis",
+        "us-code-42-13109.-4f7ff54b08bbaf31",
+        "legal-ir-view:frame_logic",
+        "us-code-7-450h-ca4b03be437fbbde",
+        "legal-ir-view:modal.frame_logic",
+    ]
+    assert frame_ontology_terms_from_feature_keys(keys) == [
+        "modal_synthesis",
+        "42_13109",
+        "frame_logic",
+        "7_450h",
+        "modal_frame_logic",
     ]
 
 

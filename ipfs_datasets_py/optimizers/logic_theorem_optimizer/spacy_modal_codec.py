@@ -1715,6 +1715,45 @@ class SpaCyModalDecoder:
             logits[ModalLogicFamily.FRAME.value] = (
                 max(logits[ModalLogicFamily.FRAME.value], 0.5) + frame_bonus
             )
+        if (
+            ModalLogicFamily.DEONTIC.value in logits
+            and 0.0
+            < float(raw_counts.get(ModalLogicFamily.DEONTIC.value, 0.0))
+            <= 2.0
+            and bool(signals.get("has_deontic_cue"))
+            and bool(
+                signals.get("has_calendar_date_scope")
+                or signals.get("has_temporal_status_scope")
+                or signals.get("has_temporal_scope_token")
+            )
+            and not bool(
+                signals.get("has_temporal_cue")
+                or (
+                    signals.get("has_temporal_scope_phrase")
+                    and not signals.get("has_temporal_status_scope")
+                )
+                or signals.get("has_temporal_within_scope")
+                or signals.get("has_temporal_deadline_cue")
+            )
+            and not bool(signals.get("has_statutory_scope_reference"))
+        ):
+            logits[ModalLogicFamily.DEONTIC.value] = (
+                float(logits[ModalLogicFamily.DEONTIC.value]) + 0.55
+            )
+        if (
+            ModalLogicFamily.TEMPORAL.value in logits
+            and bool(signals.get("has_temporal_fiscal_scope_phrase"))
+            and bool(signals.get("has_frame_editorial_scope_phrase"))
+            and bool(signals.get("has_statutory_scope_reference"))
+            and not bool(
+                signals.get("has_deontic_scope")
+                or signals.get("has_deontic_cue")
+            )
+            and not _has_explicit_conditional_scope(signals)
+        ):
+            logits[ModalLogicFamily.TEMPORAL.value] = (
+                float(logits[ModalLogicFamily.TEMPORAL.value]) + 0.4
+            )
         if not raw_counts and ModalLogicFamily.HYBRID.value in logits:
             if frame_bonus <= 0.0:
                 logits[ModalLogicFamily.HYBRID.value] = 1.0
@@ -5841,6 +5880,8 @@ def _scope_signal_family_logit_boosts(signals: Mapping[str, bool]) -> Dict[str, 
             and has_structural_scope_context
         ):
             deontic_bonus += 0.2
+            if not bool(signals.get("has_statutory_scope_reference")):
+                deontic_bonus += 0.45
         boosts[ModalLogicFamily.DEONTIC.value] = deontic_bonus
     temporal_bonus = 0.0
     if bool(signals.get("has_temporal_scope")):
@@ -5918,6 +5959,18 @@ def _scope_signal_family_logit_boosts(signals: Mapping[str, bool]) -> Dict[str, 
         temporal_bonus = max(0.0, temporal_bonus - 0.35)
     if has_strong_temporal_scope:
         temporal_bonus += 0.3
+    if (
+        temporal_bonus > 0.0
+        and bool(signals.get("has_temporal_fiscal_scope_phrase"))
+        and has_editorial_frame_context
+        and bool(signals.get("has_statutory_scope_reference"))
+        and not bool(
+            signals.get("has_deontic_scope")
+            or signals.get("has_deontic_cue")
+        )
+        and not explicit_conditional_scope
+    ):
+        temporal_bonus += 0.4
     if temporal_bonus > 0.0:
         boosts[ModalLogicFamily.TEMPORAL.value] = temporal_bonus
     if bool(signals.get("has_epistemic_scope")):
@@ -6085,6 +6138,20 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         or bool(frame_procedural_scope_phrase)
         or bool(frame_editorial_scope_phrase)
     )
+    statutory_status_frame_scope = bool(
+        frame_context
+        and (
+            statutory_scope_reference
+            or temporal_status_scope_token
+            or frame_editorial_scope_phrase
+            or frame_scope_phrase
+        )
+        and (
+            temporal_status_scope_token
+            or frame_editorial_scope_phrase
+            or frame_scope_phrase
+        )
+    )
     deontic_scope_terms = token_terms & _DEONTIC_SCOPE_TOKENS
     has_required_only_deontic_scope = bool(deontic_scope_terms) and deontic_scope_terms.issubset(
         _DEONTIC_REQUIRED_ONLY_SCOPE_TOKENS
@@ -6150,6 +6217,7 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         "has_frame_structural_authority_scope_phrase": bool(
             frame_structural_authority_scope_phrase
         ),
+        "has_statutory_status_frame_scope": statutory_status_frame_scope,
         "has_frame_cue": ModalLogicFamily.FRAME.value in cue_families,
     }
 
@@ -6227,6 +6295,17 @@ def _frame_logit_bonus(signals: Mapping[str, bool]) -> float:
             frame_cue_bonus = 1.5
         bonus += frame_cue_bonus
     if (
+        bool(signals.get("has_frame_cue"))
+        and bool(signals.get("has_frame_editorial_scope_phrase"))
+        and bool(signals.get("has_frame_scope_phrase"))
+        and bool(signals.get("has_condition_or_exception_scope"))
+        and _has_explicit_conditional_scope(signals)
+        and bool(signals.get("has_temporal_status_scope"))
+        and bool(signals.get("has_statutory_scope_reference"))
+        and not bool(signals.get("has_temporal_deadline_cue"))
+    ):
+        bonus += 1.9
+    if (
         bool(signals.get("has_deontic_scope"))
         and bool(signals.get("has_condition_or_exception_scope"))
         and _has_explicit_conditional_scope(signals)
@@ -6275,6 +6354,17 @@ def _debias_frame_bonus_for_generic_cues(signals: Mapping[str, bool]) -> float:
         if bool(signals.get("has_temporal_scope")):
             reinforced_bonus += 0.3
         debiased_bonus += reinforced_bonus
+    if (
+        bool(signals.get("has_frame_cue"))
+        and bool(signals.get("has_frame_editorial_scope_phrase"))
+        and bool(signals.get("has_frame_scope_phrase"))
+        and bool(signals.get("has_condition_or_exception_scope"))
+        and _has_explicit_conditional_scope(signals)
+        and bool(signals.get("has_temporal_status_scope"))
+        and bool(signals.get("has_statutory_scope_reference"))
+        and not bool(signals.get("has_temporal_deadline_cue"))
+    ):
+        debiased_bonus += 1.9
     return debiased_bonus
 
 

@@ -761,7 +761,9 @@ def _proof_input_formula_text(*, actor: str, event: str, modality: str) -> str:
 def _event_formula_exports_from_norms(
     norms: Sequence[Mapping[str, Any]],
 ) -> dict[str, list[dict[str, Any]]]:
-    exports: dict[str, list[dict[str, Any]]] = {}
+    exports: dict[str, list[dict[str, Any]]] = (
+        _direct_event_formula_exports_from_norms(norms)
+    )
     if not norms:
         return exports
     try:
@@ -790,6 +792,8 @@ def _event_formula_exports_from_norms(
             exported_formula = str(record.get("exported_formula") or "").strip()
             if not exported_formula:
                 continue
+            if exports.get(source_id):
+                continue
             exports.setdefault(source_id, []).append(
                 {
                     "event_calculus_formula": exported_formula,
@@ -809,6 +813,106 @@ def _event_formula_exports_from_norms(
             )
             break
     return exports
+
+
+def _direct_event_formula_exports_from_norms(
+    norms: Sequence[Mapping[str, Any]],
+) -> dict[str, list[dict[str, Any]]]:
+    exports: dict[str, list[dict[str, Any]]] = {}
+    for index, norm in enumerate(norms):
+        if not isinstance(norm, Mapping):
+            continue
+        source_id = str(norm.get("source_id") or f"dcec:norm:{index}").strip()
+        formula_record = _direct_event_formula_export_from_norm(norm)
+        if not source_id or not formula_record:
+            continue
+        exports.setdefault(source_id, []).append(formula_record)
+    return exports
+
+
+def _direct_event_formula_export_from_norm(
+    norm: Mapping[str, Any],
+) -> Optional[dict[str, Any]]:
+    formula = _first_direct_event_formula_text(norm)
+    if not formula:
+        return None
+    parse_profile = _event_formula_parse_profile(formula)
+    if not (
+        parse_profile.get("event_predicates")
+        and parse_profile.get("target_parse_profile_complete") is True
+    ):
+        return None
+    syntax_valid = bool(
+        _boolish(norm.get("event_formula_syntax_valid"))
+        or _boolish(norm.get("syntax_valid"))
+        or parse_profile.get("target_parse_profile_complete") is True
+    )
+    source = _first_text_value(
+        norm.get("event_formula_source"),
+        norm.get("formula_source"),
+        fallback="legal_norm_ir.event_calculus_formula",
+    )
+    return {
+        "event_calculus_formula": formula,
+        "event_formula_fingerprint": _stable_short_hash(formula),
+        "event_formula_source": source,
+        "event_formula_syntax_valid": syntax_valid,
+        "event_formula_target_components": _mapping(
+            norm.get("event_formula_target_components")
+            or norm.get("target_components")
+        ),
+        "event_formula_target_parse_profile": _mapping(
+            norm.get("event_formula_target_parse_profile")
+            or norm.get("target_parse_profile")
+        ),
+        "event_formula_target_quality_gate": _mapping(
+            norm.get("event_formula_target_quality_gate")
+            or norm.get("target_quality_gate")
+        ),
+    }
+
+
+def _first_direct_event_formula_text(norm: Mapping[str, Any]) -> str:
+    for key in (
+        "event_calculus_formula",
+        "dcec_event_calculus_formula",
+        "cec_event_calculus_formula",
+        "event_formula",
+        "cec_event_formula",
+    ):
+        value = str(norm.get(key) or "").strip()
+        if value:
+            return value
+
+    for record_key in (
+        "prover_syntax_records",
+        "local_prover_syntax_records",
+        "target_syntax_records",
+    ):
+        for record in _list_of_dicts(norm.get(record_key)):
+            target = str(record.get("target") or record.get("target_logic") or "").strip()
+            if not _is_cec_event_formula_target(target):
+                continue
+            value = str(
+                record.get("exported_formula")
+                or record.get("event_calculus_formula")
+                or record.get("target_formula")
+                or record.get("formula")
+                or ""
+            ).strip()
+            if value:
+                return value
+    return ""
+
+
+def _is_cec_event_formula_target(target: str) -> bool:
+    normalized = str(target or "").strip().lower()
+    return normalized in {
+        "cec.native",
+        "deontic_cec",
+        "event_calculus",
+        "event_calculus_state",
+    }
 
 
 def _take_event_formula_export(
@@ -1300,6 +1404,16 @@ def _mapping(value: Any) -> dict[str, Any]:
     if isinstance(value, Mapping):
         return dict(value)
     return {}
+
+
+def _boolish(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "y"}
+    return False
 
 
 def _first_text_value(*values: Any, fallback: str = "") -> str:

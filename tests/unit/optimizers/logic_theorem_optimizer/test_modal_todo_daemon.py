@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import fcntl
 import json
 import signal
 import subprocess
@@ -4015,6 +4016,56 @@ def test_codex_work_packet_executor_can_apply_changes_to_main(tmp_path, monkeypa
     assert (repo / "README.md").read_text(encoding="utf-8") == (
         "test repo\nexecutor applied this packet\n"
     )
+
+    subprocess.run(
+        ["git", "worktree", "remove", packet["worktree_path"], "--force"],
+        cwd=repo,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+
+def test_codex_work_packet_executor_requeues_when_main_apply_lock_times_out(
+    tmp_path,
+) -> None:
+    repo, packet = _create_git_repo_with_program_synthesis_packet(tmp_path)
+    codex_stub = tmp_path / "codex-stub.py"
+    codex_stub.write_text(
+        "#!/usr/bin/env python3\n"
+        "import sys\n"
+        "from pathlib import Path\n"
+        "args = sys.argv\n"
+        "worktree = Path(args[args.index('--cd') + 1])\n"
+        "sys.stdin.read()\n"
+        "(worktree / 'README.md').write_text("
+        "'test repo\\nlock timeout packet\\n', encoding='utf-8')\n"
+        "print('ok')\n",
+        encoding="utf-8",
+    )
+    codex_stub.chmod(0o755)
+
+    lock_path = repo / ".git" / "codex-main-apply.lock"
+    with lock_path.open("a+", encoding="utf-8") as handle:
+        fcntl.flock(handle, fcntl.LOCK_EX)
+        try:
+            updated = execute_codex_work_packet(
+                packet,
+                apply_mode="apply_to_main",
+                codex_command=str(codex_stub),
+                main_apply_lock_timeout_seconds=0.01,
+                timeout_seconds=1.0,
+                validation_commands=(),
+            )
+        finally:
+            fcntl.flock(handle, fcntl.LOCK_UN)
+
+    assert updated["codex_exec"]["status"] == "succeeded"
+    assert updated["main_apply_status"] == "lock_timeout"
+    assert updated["patch_status"] == "main_apply_lock_timeout"
+    assert updated["patch_path"]
+    assert runner._codex_packet_should_requeue_transient(updated) is True
+    assert (repo / "README.md").read_text(encoding="utf-8") == "test repo\n"
 
     subprocess.run(
         ["git", "worktree", "remove", packet["worktree_path"], "--force"],

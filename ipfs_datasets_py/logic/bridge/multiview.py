@@ -126,6 +126,10 @@ _BRIDGE_CONTRACT_FRAME_DEFINITION_CUE_RE = re.compile(
     r"\b(?:means|defined\s+as|in\s+this\s+section)\b",
     flags=re.IGNORECASE,
 )
+_BRIDGE_CONTRACT_STATUTORY_DEFINITION_SECTION_RE = re.compile(
+    r"\bdefinitions?\b.{0,160}\b(?:for\s+purposes?\s+of|the\s+term|means)\b",
+    flags=re.IGNORECASE,
+)
 _BRIDGE_CONTRACT_FRAME_AUTHORITY_CUE_RE = re.compile(
     r"\b(?:delegation\s+of\s+authority|delegated|powers?\s+vested|vested\s+in|"
     r"authorized\s+and\s+empowered|in\s+(?:his|her|its|their|the)\s+discretion|"
@@ -164,6 +168,11 @@ _BRIDGE_CONTRACT_APPROPRIATION_NORM_CUE_RE = re.compile(
     r"\b(?:authoriz(?:e|es|ed|ation|ations)\s+appropriation(?:s)?|"
     r"appropriation(?:s)?\s+(?:is|are)\s+authorized|"
     r"authorized\s+to\s+be\s+appropriated|appropriated)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_DIRECT_APPROPRIATION_AUTHORIZATION_RE = re.compile(
+    r"\b(?:there\s+is\s+)?authorized\s+to\s+be\s+appropriated\b"
+    r".{0,240}\b(?:administrator|secretary|agency|commission|director|fund|program)\b",
     flags=re.IGNORECASE,
 )
 _BRIDGE_CONTRACT_OBLIGATION_DEONTIC_CUE_RE = re.compile(
@@ -1139,6 +1148,12 @@ def _rebalance_dense_contract_distribution(
     has_appropriation_norm_cue = bool(
         _BRIDGE_CONTRACT_APPROPRIATION_NORM_CUE_RE.search(normalized_text)
     )
+    has_direct_appropriation_authorization = bool(
+        _BRIDGE_CONTRACT_DIRECT_APPROPRIATION_AUTHORIZATION_RE.search(normalized_text)
+    )
+    has_statutory_definition_section = bool(
+        _BRIDGE_CONTRACT_STATUTORY_DEFINITION_SECTION_RE.search(normalized_text)
+    )
     has_epistemic_heading_cue = bool(
         _BRIDGE_CONTRACT_EPISTEMIC_HEADING_CUE_RE.search(normalized_text)
     )
@@ -1276,6 +1291,8 @@ def _rebalance_dense_contract_distribution(
     if has_deontic_cue and has_temporal_cue:
         caps["TDFOL.prover"] = min(caps["TDFOL.prover"], 0.18)
         caps["deontic.ir"] = min(caps.get("deontic.ir", 1.0), 0.76)
+        if has_direct_appropriation_authorization:
+            caps["CEC.native"] = max(caps.get("CEC.native", 0.0), 0.22)
         if (
             strong_temporal_cue_count > 0
             or temporal_cue_count > deontic_cue_count
@@ -1302,7 +1319,10 @@ def _rebalance_dense_contract_distribution(
         and not has_authority_frame_cue
         and not has_enforcement_frame_cue
     ):
-        caps["CEC.native"] = min(caps["CEC.native"], 0.17)
+        if has_direct_appropriation_authorization:
+            caps["CEC.native"] = max(caps["CEC.native"], 0.22)
+        else:
+            caps["CEC.native"] = min(caps["CEC.native"], 0.17)
         caps["knowledge_graphs.neo4j_compat"] = min(
             caps["knowledge_graphs.neo4j_compat"],
             0.12,
@@ -1394,7 +1414,10 @@ def _rebalance_dense_contract_distribution(
         ):
             caps["deontic.ir"] = min(caps.get("deontic.ir", 1.0), 0.66)
             caps["TDFOL.prover"] = max(caps.get("TDFOL.prover", 0.0), 0.22)
-            caps["CEC.native"] = min(caps.get("CEC.native", 1.0), 0.20)
+            if has_direct_appropriation_authorization:
+                caps["CEC.native"] = max(caps.get("CEC.native", 0.0), 0.22)
+            else:
+                caps["CEC.native"] = min(caps.get("CEC.native", 1.0), 0.20)
             caps["knowledge_graphs.neo4j_compat"] = min(
                 caps.get("knowledge_graphs.neo4j_compat", 1.0),
                 0.15,
@@ -1592,12 +1615,20 @@ def _rebalance_dense_contract_distribution(
                 and not has_authority_frame_cue
                 and not has_enforcement_frame_cue
             ):
-                target_mix = (
-                    ("deontic.ir", 0.56),
-                    ("TDFOL.prover", 0.26),
-                    ("CEC.native", 0.12),
-                    ("knowledge_graphs.neo4j_compat", 0.06),
-                )
+                if has_direct_appropriation_authorization:
+                    target_mix = (
+                        ("deontic.ir", 0.44),
+                        ("TDFOL.prover", 0.24),
+                        ("CEC.native", 0.24),
+                        ("knowledge_graphs.neo4j_compat", 0.08),
+                    )
+                else:
+                    target_mix = (
+                        ("deontic.ir", 0.56),
+                        ("TDFOL.prover", 0.26),
+                        ("CEC.native", 0.12),
+                        ("knowledge_graphs.neo4j_compat", 0.06),
+                    )
             elif (
                 has_conditional_cue
                 and has_deontic_cue
@@ -1652,6 +1683,18 @@ def _rebalance_dense_contract_distribution(
                     ("knowledge_graphs.neo4j_compat", 0.12),
                     ("TDFOL.prover", 0.06),
                 )
+            elif (
+                has_statutory_definition_section
+                and has_frame_definition_cue
+                and not has_deontic_cue
+                and not has_temporal_cue
+            ):
+                target_mix = (
+                    ("CEC.native", 0.42),
+                    ("knowledge_graphs.neo4j_compat", 0.32),
+                    ("deontic.ir", 0.18),
+                    ("TDFOL.prover", 0.08),
+                )
             else:
                 target_mix = (
                     ("knowledge_graphs.neo4j_compat", 0.45),
@@ -1672,6 +1715,13 @@ def _rebalance_dense_contract_distribution(
             ("CEC.native", 0.22),
             ("deontic.ir", 0.13),
         )
+    elif has_direct_appropriation_authorization and has_deontic_cue:
+        target_mix = (
+            ("deontic.ir", 0.44),
+            ("CEC.native", 0.30),
+            ("TDFOL.prover", 0.18),
+            ("knowledge_graphs.neo4j_compat", 0.08),
+        )
     elif has_deontic_cue and not has_temporal_cue:
         target_mix = (
             ("deontic.ir", 0.82),
@@ -1683,7 +1733,14 @@ def _rebalance_dense_contract_distribution(
             strong_temporal_cue_count > 0
             or temporal_cue_count > deontic_cue_count
         ):
-            if has_conditional_cue and has_explicit_temporal_deadline_cue:
+            if has_direct_appropriation_authorization:
+                target_mix = (
+                    ("deontic.ir", 0.44),
+                    ("TDFOL.prover", 0.24),
+                    ("CEC.native", 0.24),
+                    ("knowledge_graphs.neo4j_compat", 0.08),
+                )
+            elif has_conditional_cue and has_explicit_temporal_deadline_cue:
                 target_mix = (
                     ("deontic.ir", 0.54),
                     ("TDFOL.prover", 0.34),

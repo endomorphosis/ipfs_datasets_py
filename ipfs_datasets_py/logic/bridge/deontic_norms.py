@@ -1448,12 +1448,83 @@ def _coverage_validation_metrics(records: Sequence[Mapping[str, Any]]) -> dict[s
 
 
 def _coverage_record_requires_validation(record: Mapping[str, Any]) -> bool:
+    if _coverage_record_validated_by_quality_gate(record):
+        return False
     if _truthy_flag(record.get("requires_validation")):
         return True
     summary = record.get("coverage_summary")
     if isinstance(summary, Mapping) and _truthy_flag(summary.get("requires_validation")):
         return True
     return False
+
+
+def _coverage_record_validated_by_quality_gate(record: Mapping[str, Any]) -> bool:
+    """Return whether bridge-level target quality clears stale validation flags."""
+
+    if _list_of_strings(record.get("coverage_blockers")):
+        return False
+
+    summary = record.get("coverage_summary")
+    if not isinstance(summary, Mapping):
+        return False
+    if _list_of_strings(summary.get("coverage_blockers")):
+        return False
+
+    quality_summary = summary.get("quality_gate_summary")
+    if not isinstance(quality_summary, Mapping):
+        quality_summary = record.get("quality_gate_summary")
+    if not isinstance(quality_summary, Mapping):
+        return False
+
+    required_targets = _normalized_target_names(
+        summary.get("required_targets") or record.get("required_targets")
+    )
+    passed_targets = _normalized_target_names(summary.get("passed_targets"))
+    if (
+        _normalized_target_names(summary.get("failed_targets"))
+        or _normalized_target_names(summary.get("missing_targets"))
+        or _normalized_target_names(summary.get("skipped_targets"))
+    ):
+        return False
+    target_status = summary.get("target_status_by_target")
+    if not passed_targets and required_targets and isinstance(target_status, Mapping):
+        passed_targets = [
+            target
+            for target in required_targets
+            if str(target_status.get(target) or "").strip().lower()
+            in {"passed", "pass", "valid", "ok"}
+        ]
+
+    all_required_passed = bool(summary.get("all_required_passed") is True)
+    if required_targets:
+        all_required_passed = all_required_passed or all(
+            target in passed_targets for target in required_targets
+        )
+    if not all_required_passed:
+        return False
+
+    if quality_summary.get("quality_gate_all_targets_complete") is not True:
+        return False
+    if int(quality_summary.get("failed_quality_check_count") or 0) > 0:
+        return False
+    failed_distribution = quality_summary.get("failed_quality_check_distribution")
+    if isinstance(failed_distribution, Mapping) and any(
+        int(count or 0) > 0 for count in failed_distribution.values()
+    ):
+        return False
+
+    role_summary = summary.get("target_role_matrix_summary")
+    if not isinstance(role_summary, Mapping):
+        role_summary = record.get("target_role_matrix_summary")
+    if isinstance(role_summary, Mapping):
+        if role_summary.get("target_role_matrix_complete") is False:
+            return False
+        if _truthy_flag(role_summary.get("target_role_matrix_requires_validation")):
+            return False
+        if _list_of_strings(role_summary.get("target_role_matrix_blockers")):
+            return False
+
+    return True
 
 
 def _truthy_flag(value: Any) -> bool:
