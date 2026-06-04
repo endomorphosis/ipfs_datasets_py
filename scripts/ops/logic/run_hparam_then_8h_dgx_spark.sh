@@ -13,7 +13,18 @@ export AUTOENCODER_DEVICE="${AUTOENCODER_DEVICE:-cuda}"
 # the one-hour wall budget while running the six built-in configs in serial waves.
 # Bump to 2 only after the bottleneck report shows sustained low GPU utilization.
 export TRIAL_PARALLELISM="${TRIAL_PARALLELISM:-1}"
-export SWEEP_AUTOENCODER_BRIDGE_WORKERS="${SWEEP_AUTOENCODER_BRIDGE_WORKERS:-8}"
+# Sweep trials must finish at least one train/validation cycle inside a short
+# serial wave. Keep final-grade bridge coverage for the long paired run, but use
+# a lean bridge mix and smaller samples for candidate ranking.
+export SWEEP_TRAIN_COUNT="${SWEEP_TRAIN_COUNT:-2}"
+export SWEEP_VALIDATION_COUNT="${SWEEP_VALIDATION_COUNT:-2}"
+export SWEEP_VALIDATION_CANARY_COUNT="${SWEEP_VALIDATION_CANARY_COUNT:-1}"
+export SWEEP_MAX_INNER_ITERATIONS="${SWEEP_MAX_INNER_ITERATIONS:-1}"
+export SWEEP_MAX_ITEMS="${SWEEP_MAX_ITEMS:-2}"
+export SWEEP_MAX_SAMPLE_TEXT_CHARS="${SWEEP_MAX_SAMPLE_TEXT_CHARS:-2048}"
+export SWEEP_BRIDGE_LOSS_ADAPTERS="${SWEEP_BRIDGE_LOSS_ADAPTERS:-modal_frame_logic,deontic_norms,fol_tdfol}"
+export SWEEP_AUTOENCODER_BRIDGE_WORKERS="${SWEEP_AUTOENCODER_BRIDGE_WORKERS:-4}"
+export TRIAL_TIMEOUT_GRACE_SECONDS="${TRIAL_TIMEOUT_GRACE_SECONDS:-600}"
 
 export FINAL_AUTOENCODER_BRIDGE_WORKERS="${FINAL_AUTOENCODER_BRIDGE_WORKERS:-8}"
 export BRIDGE_ADAPTER_WORKERS="${BRIDGE_ADAPTER_WORKERS:-4}"

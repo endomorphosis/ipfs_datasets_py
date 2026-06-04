@@ -139,7 +139,7 @@ PY
 
 has_failure_signature() {
   [[ -f "${PIPELINE_LOG}" ]] || return 1
-  if grep -Eq '\[pipeline\] failed|no successful hyperparameter trial found' "${PIPELINE_LOG}"; then
+  if grep -Eq '\[pipeline\] hparam_sweep_no_successful_trial action=abort|\[pipeline\] final_nonzero_exit_unrecovered|\[pipeline\] final_nonzero_exit_missing_summary' "${PIPELINE_LOG}"; then
     return 0
   fi
   return 1
@@ -223,9 +223,8 @@ while true; do
           trial_cycles="$(read_cycles_from_summary "${trial_summary}")"
         fi
         if (( trial_elapsed > TRIAL_OVERRUN_SECONDS && trial_cycles <= TRIAL_OVERRUN_MAX_CYCLES )); then
-          log_line "problem_detected signature=trial_overrun_no_progress trial_id=${trial_run_id} trial_pid=${trial_pid} elapsed_seconds=${trial_elapsed} cycles=${trial_cycles}"
-          write_state "sweep" "failed" "trial_overrun_no_progress" "" false
-          exit 6
+          log_line "warning_detected signature=trial_overrun_no_progress trial_id=${trial_run_id} trial_pid=${trial_pid} elapsed_seconds=${trial_elapsed} cycles=${trial_cycles}"
+          write_state "sweep" "running" "trial_overrun_no_progress" "" false
         fi
         status_parts+=("${trial_run_id}:cycles=${trial_cycles}:elapsed=${trial_elapsed}")
       done <<< "${active_rows}"
@@ -242,9 +241,8 @@ while true; do
             trial_pid="${trial_runtime%% *}"
             trial_elapsed="${trial_runtime##* }"
             if (( trial_elapsed > TRIAL_OVERRUN_SECONDS && trial_cycles <= TRIAL_OVERRUN_MAX_CYCLES )); then
-              log_line "problem_detected signature=trial_overrun_no_progress trial_id=${trial_id} trial_pid=${trial_pid} elapsed_seconds=${trial_elapsed} cycles=${trial_cycles}"
-              write_state "sweep" "failed" "trial_overrun_no_progress" "" false
-              exit 6
+              log_line "warning_detected signature=trial_overrun_no_progress trial_id=${trial_id} trial_pid=${trial_pid} elapsed_seconds=${trial_elapsed} cycles=${trial_cycles}"
+              write_state "sweep" "running" "trial_overrun_no_progress" "" false
             fi
           fi
           log_line "sweep_running trial_id=${trial_id} cycles=${trial_cycles} pid=${pid} pipeline_log_age_seconds=${pipeline_log_age_seconds}"

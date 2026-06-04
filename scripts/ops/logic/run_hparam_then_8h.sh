@@ -2,7 +2,7 @@
 set -euo pipefail
 
 restore_err_trap() {
-  trap 'echo "[pipeline] failed line=${LINENO} status=$?"' ERR
+  trap 'echo "[pipeline] command_failed line=${LINENO} status=$?"' ERR
 }
 
 restore_err_trap
@@ -48,6 +48,7 @@ FINAL_TEST_EVERY_CYCLES="${FINAL_TEST_EVERY_CYCLES:-96}"
 SWEEP_PROJECTION_EPOCHS="${SWEEP_PROJECTION_EPOCHS:-1}"
 FINAL_PROJECTION_EPOCHS="${FINAL_PROJECTION_EPOCHS:-2}"
 FINAL_RECOVERY_MIN_CYCLES="${FINAL_RECOVERY_MIN_CYCLES:-1}"
+ALLOW_FINAL_FALLBACK_ON_SWEEP_FAILURE="${ALLOW_FINAL_FALLBACK_ON_SWEEP_FAILURE:-1}"
 BRIDGE_EVALUATE_PROVERS="${BRIDGE_EVALUATE_PROVERS:-false}"
 BRIDGE_LOSS_ADAPTERS="${BRIDGE_LOSS_ADAPTERS:-modal_frame_logic,deontic_norms,fol_tdfol,cec_dcec,external_prover_router,zkp_attestation}"
 GENERALIZABLE_PROJECTION_MAX_COSINE_REGRESSION="${GENERALIZABLE_PROJECTION_MAX_COSINE_REGRESSION:-0.005}"
@@ -244,6 +245,7 @@ CONFIGS=(
 if (( TRIAL_COUNT < ${#CONFIGS[@]} )); then
   CONFIGS=("${CONFIGS[@]:0:${TRIAL_COUNT}}")
 fi
+FALLBACK_HPARAM_CFG="${FALLBACK_HPARAM_CFG:-${CONFIGS[0]}}"
 
 echo "[pipeline] base_run_id=${BASE_RUN_ID}"
 echo "[pipeline] codex_exec_mode=${CODEX_EXEC_MODE}"
@@ -256,6 +258,9 @@ echo "[pipeline] final_run_seconds=${FINAL_SECONDS}"
 echo "[pipeline] trial_timeout_seconds=${TRIAL_TIMEOUT_SECONDS}"
 echo "[pipeline] final_timeout_seconds=${FINAL_TIMEOUT_SECONDS}"
 echo "[pipeline] paired_grace_seconds=${PAIRED_GRACE_SECONDS}"
+echo "[pipeline] sweep_projection_epochs=${SWEEP_PROJECTION_EPOCHS}"
+echo "[pipeline] final_projection_epochs=${FINAL_PROJECTION_EPOCHS}"
+echo "[pipeline] allow_final_fallback_on_sweep_failure=${ALLOW_FINAL_FALLBACK_ON_SWEEP_FAILURE}"
 echo "[pipeline] bridge_loss_adapters=${BRIDGE_LOSS_ADAPTERS}"
 echo "[pipeline] bridge_evaluate_provers=${BRIDGE_EVALUATE_PROVERS}"
 echo "[pipeline] projection_max_regressions=cosine:${GENERALIZABLE_PROJECTION_MAX_COSINE_REGRESSION},reconstruction:${GENERALIZABLE_PROJECTION_MAX_RECONSTRUCTION_REGRESSION},cross_entropy:${GENERALIZABLE_PROJECTION_MAX_CROSS_ENTROPY_REGRESSION},legal_ir:${GENERALIZABLE_PROJECTION_MAX_LEGAL_IR_LOSS_REGRESSION}"
@@ -672,11 +677,12 @@ PY
 
 if (( TRIAL_PARALLELISM <= 1 )); then
   for idx in "${!CONFIGS[@]}"; do
+    trap - ERR
     set +e
     run_trial_index "${idx}"
     serial_trial_exit_code=$?
-    restore_err_trap
     set -e
+    restore_err_trap
     echo "[trial] serial_complete run_id=$(trial_id_for_index "${idx}") code=${serial_trial_exit_code}"
     score_trial_index "${idx}"
   done
@@ -698,6 +704,7 @@ else
     trial_logs[$idx]="${trial_log_path}"
     echo "[trial] launch_parallel run_id=${trial_id} cfg=${CONFIGS[$idx]} log=${trial_log_path}"
     (
+      trap - ERR
       set +e
       run_trial_index "${idx}"
       code=$?
@@ -727,8 +734,17 @@ else
 fi
 
 if [[ -z "${best_run_id}" ]]; then
-  echo "[pipeline] no successful hyperparameter trial found"
-  exit 1
+  if [[ "${ALLOW_FINAL_FALLBACK_ON_SWEEP_FAILURE}" == "1" ]]; then
+    best_run_id="${BASE_RUN_ID}-fallback"
+    best_cfg="${FALLBACK_HPARAM_CFG}"
+    best_score="fallback"
+    best_ce="nan"
+    best_cos="nan"
+    echo "[pipeline] hparam_sweep_no_successful_trial action=use_fallback cfg=${best_cfg}"
+  else
+    echo "[pipeline] hparam_sweep_no_successful_trial action=abort"
+    exit 1
+  fi
 fi
 
 echo "[pipeline] best_trial=${best_run_id} cfg=${best_cfg} score=${best_score} ce=${best_ce} cos=${best_cos}"
