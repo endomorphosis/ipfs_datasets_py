@@ -8,6 +8,8 @@ import re
 import sys
 
 from ipfs_datasets_py.logic.modal import (
+    DecodedModalPhrase,
+    DecodedModalText,
     DeterministicModalCompiler,
     DeterministicModalLogicCodec,
     ModalCompilationAmbiguity,
@@ -29,6 +31,7 @@ from ipfs_datasets_py.logic.modal.codec import (
     _frame_decoder_audit_features,
     _frame_ontology_audit_feature_keys,
     _frame_ontology_audit_terms,
+    _structural_decoded_text,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector import (
     BM25FrameSelector,
@@ -65,6 +68,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_004164_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_004926_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_004997_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_005687_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_004147_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001551_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_002638_FAMILY_PAIRS,
@@ -4474,6 +4478,14 @@ def test_modal_registry_supports_rescued_packet_pair_tables() -> None:
                 ("frame", "temporal"),
                 ("temporal", "deontic"),
                 ("temporal", "temporal"),
+            ),
+        ),
+        (
+            COMPILER_AMBIGUITY_PACKET_005687_FAMILY_PAIRS,
+            (
+                ("conditional_normative", "temporal"),
+                ("frame", "deontic"),
+                ("temporal", "deontic"),
             ),
         ),
     )
@@ -17022,6 +17034,74 @@ def test_modal_decompiler_and_triples_surface_transferred_status_keyword_slot() 
     )
 
 
+def test_modal_decompiler_structural_text_prefers_legal_atoms_over_gpo_boilerplate() -> None:
+    spans = [[0, 74]]
+    decoded = DecodedModalText(
+        source_id="us-code-15-688-gpo-rescue",
+        text="Transferred From the U.S. Government Publishing Office, www.gpo.gov.",
+        phrases=[
+            DecodedModalPhrase(
+                text="Transferred From the U.S. Government Publishing Office, www.gpo.gov.",
+                slot="fallback_surface_text",
+                spans=spans,
+                provenance_only=True,
+            ),
+            DecodedModalPhrase(
+                text="From the U.S. Government Publishing Office, www.gpo.gov.",
+                slot="fallback_surface_context",
+                spans=spans,
+                provenance_only=True,
+            ),
+            DecodedModalPhrase(
+                text="transferred",
+                slot="legal_semantic_atom",
+                spans=spans,
+                provenance_only=True,
+            ),
+            DecodedModalPhrase(
+                text="transferred",
+                slot="status_keyword",
+                spans=spans,
+                provenance_only=True,
+            ),
+        ],
+        support_span=[0, 74],
+    )
+    document = ModalIRDocument(
+        document_id="us-code-15-688-gpo-rescue",
+        source="us_code",
+        normalized_text=decoded.text,
+        formulas=[],
+    )
+
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    ).lower()
+
+    assert structural_text == "transferred"
+    assert "government publishing office" not in structural_text
+    assert "gpo" not in structural_text
+
+
+def test_modal_decompiler_surfaces_legal_semantic_atoms_for_transferred_heading() -> None:
+    compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
+    compiled = compiler.compile(
+        "\u00a7688. Transferred.",
+        document_id="us-code-15-688-legal-semantic-atom",
+        citation="15 U.S.C. 688",
+        source="us_code",
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(compiled.modal_ir)
+    )
+
+    assert "transferred" in slot_texts["legal_semantic_atom"]
+    assert "transferred" in slot_texts["fallback_surface_text_legal_semantic_atom"]
+
+
 def test_modal_decompiler_and_triples_surface_editorial_fallback_slots() -> None:
     compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
     compiled = compiler.compile(
@@ -27573,6 +27653,109 @@ def test_modal_compiler_surfaces_packet_000003_compiler_ambiguity_policy_pairs(
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == candidate_ids
+            and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+            and ambiguity.metadata["adaptive_base_ambiguity_type"]
+            == "adaptive_family_margin_low"
+            for ambiguity in ambiguities
+        )
+
+
+def test_modal_compiler_surfaces_packet_005687_compiler_ambiguity_policy_pairs(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+    scenarios = (
+        ("conditional_normative", "temporal", -0.065396072248),
+        ("temporal", "deontic", -0.377761726913),
+        ("temporal", "deontic", -0.039070600997),
+        ("conditional_normative", "temporal", -0.079275499465),
+        ("frame", "deontic", -0.1),
+    )
+
+    for index, (predicted_family, target_family, family_margin) in enumerate(
+        scenarios,
+        start=1,
+    ):
+        predicted_share = 0.9
+        target_share = predicted_share + family_margin
+        if target_share < 0.0:
+            predicted_share = min(0.99, abs(family_margin) + 0.05)
+            target_share = predicted_share + family_margin
+        ranking = [
+            {
+                "family": predicted_family,
+                "count": 0,
+                "share_raw": predicted_share,
+                "share": predicted_share,
+            },
+            {
+                "family": target_family,
+                "count": 0,
+                "share_raw": target_share,
+                "share": target_share,
+            },
+        ]
+        family_shares = {
+            str(candidate["family"]): float(candidate["share_raw"])
+            for candidate in ranking
+        }
+        encoding = SpaCyLegalEncoding(
+            document_id=f"packet-005687-adaptive-evidence-{index}",
+            text=f"Synthetic {predicted_family} ambiguity evidence.",
+            normalized_text=f"Synthetic {predicted_family} ambiguity evidence.",
+            tokens=[],
+            sentences=[],
+            cues=[],
+        )
+        modal_ir = ModalIRDocument(
+            document_id=f"packet-005687-adaptive-evidence-{index}",
+            source="us_code",
+            normalized_text=encoding.normalized_text,
+            formulas=[],
+        )
+
+        ambiguities = compiler._adaptive_family_margin_ambiguities(
+            encoding,
+            modal_ir=modal_ir,
+            ranking=ranking,
+            family_shares=family_shares,
+            predicted_family_source="adaptive_logits",
+        )
+
+        policy_pair = f"{predicted_family}->{target_family}"
+        base_ambiguity = next(
+            ambiguity
+            for ambiguity in ambiguities
+            if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+            and ambiguity.candidate_ids == [predicted_family, target_family]
+            and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+        )
+        assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
+        assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+        assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
+        assert base_ambiguity.metadata["signal_free_pair_policy_applied"] is False
+        assert (
+            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
+            < 1e-12
+        )
+        assert base_ambiguity.severity == "requires_rule"
+        expected_explicit_type = (
+            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
+        )
+        assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
+        assert any(
+            ambiguity.ambiguity_type == expected_explicit_type
+            and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
             and ambiguity.metadata["adaptive_base_ambiguity_type"]
             == "adaptive_family_margin_low"

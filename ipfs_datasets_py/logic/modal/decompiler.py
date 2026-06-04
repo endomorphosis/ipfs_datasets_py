@@ -121,6 +121,30 @@ _USCODE_FALLBACK_STATUS_KEYWORDS: tuple[str, ...] = (
     "renumbered",
     "terminated",
 )
+_LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
+    ("administrative notice hearing", "administrative_notice_hearing"),
+    ("notice hearing", "notice_hearing"),
+    ("review appeal", "review_appeal"),
+    ("records report", "records_report"),
+    ("applications", "application"),
+    ("application", "application"),
+    ("procedures", "procedure"),
+    ("procedure", "procedure"),
+    ("stationery room", "stationery_room"),
+    ("specifications", "specification"),
+    ("specification", "specification"),
+    ("memorial amphitheater", "memorial_amphitheater"),
+    ("amphitheater", "amphitheater"),
+    ("reclassified", "reclassified"),
+    ("transferred", "transferred"),
+    ("codification", "codification"),
+    ("repealed", "repealed"),
+    ("omitted", "omitted"),
+    ("reserved", "reserved"),
+    ("vacant", "vacant"),
+    ("renumbered", "renumbered"),
+    ("terminated", "terminated"),
+)
 _USCODE_STATUS_DERIVATION_RULES = frozenset(
     {
         "uscode_transferred_heading_v1",
@@ -2190,6 +2214,13 @@ def _fallback_section_heading_tail_phrases(
             )
         )
     phrases.extend(
+        _legal_semantic_atom_phrases(
+            text=heading_tail,
+            slot_prefix="section_heading_tail",
+            spans=spans,
+        )
+    )
+    phrases.extend(
         _contextual_modal_cue_phrases(
             formula=formula,
             text=heading_tail,
@@ -2585,6 +2616,13 @@ def _fallback_surface_text_phrases(
             )
         )
     phrases.extend(
+        _legal_semantic_atom_phrases(
+            text=surface_text,
+            slot_prefix="fallback_surface_text",
+            spans=spans,
+        )
+    )
+    phrases.extend(
         _contextual_modal_cue_phrases(
             formula=formula,
             text=surface_text,
@@ -2616,8 +2654,15 @@ def _fallback_surface_text_phrases(
                     slot=slot,
                     spans=spans,
                     provenance_only=True,
-                )
             )
+        )
+        phrases.extend(
+            _legal_semantic_atom_phrases(
+                text=context_text,
+                slot_prefix="fallback_surface_context",
+                spans=spans,
+            )
+        )
         phrases.extend(
             _contextual_modal_cue_phrases(
                 formula=formula,
@@ -2627,6 +2672,48 @@ def _fallback_surface_text_phrases(
             )
         )
     return phrases
+
+
+def _legal_semantic_atom_phrases(
+    *,
+    text: str,
+    slot_prefix: str,
+    spans: List[List[int]],
+) -> List[DecodedModalPhrase]:
+    phrases: List[DecodedModalPhrase] = []
+    prefix = _clean_text(slot_prefix).replace(" ", "_")
+    slots = ["legal_semantic_atom"]
+    if prefix:
+        slots.append(f"{prefix}_legal_semantic_atom")
+    for atom in _legal_semantic_atoms_from_text(text):
+        for slot in slots:
+            phrases.append(
+                DecodedModalPhrase(
+                    text=atom,
+                    slot=slot,
+                    spans=spans,
+                    provenance_only=True,
+                )
+            )
+    return phrases
+
+
+def _legal_semantic_atoms_from_text(text: str) -> List[str]:
+    normalized = _clean_text(text).lower()
+    if not normalized:
+        return []
+    tokens = set(_CUE_TOKEN_RE.findall(normalized))
+    atoms: List[str] = []
+    seen: set[str] = set()
+    for phrase, atom in _LEGAL_SEMANTIC_ATOM_PHRASES:
+        phrase_tokens = _CUE_TOKEN_RE.findall(phrase)
+        if phrase in normalized or (
+            phrase_tokens and all(token in tokens for token in phrase_tokens)
+        ):
+            if atom not in seen:
+                seen.add(atom)
+                atoms.append(atom)
+    return atoms
 
 
 def _fallback_surface_context_text(

@@ -10088,6 +10088,10 @@ def _is_semantic_support_slot(slot: str) -> bool:
         "fallback_surface_text",
         "fallback_surface_context",
         "section_heading_tail",
+        "legal_semantic_atom",
+        "fallback_surface_text_legal_semantic_atom",
+        "fallback_surface_context_legal_semantic_atom",
+        "section_heading_tail_legal_semantic_atom",
         "status_keyword",
         "typed_ir_reconstruction",
         "role",
@@ -10147,11 +10151,16 @@ def _structural_semantic_values(decoded: DecodedModalText) -> List[str]:
         include_provenance_only=True,
     )
     preferred_slots = (
+        "legal_semantic_atom",
+        "status_keyword",
+        "section_heading_tail_legal_semantic_atom",
+        "fallback_surface_text_legal_semantic_atom",
+        "fallback_surface_context_legal_semantic_atom",
         "fallback_surface_text",
         "fallback_surface_context",
         "section_heading_tail",
-        "predicate_content",
         "predicate",
+        "predicate_content",
         "argument_actor",
         "argument_scope",
         "argument_object",
@@ -10187,16 +10196,20 @@ def _structural_semantic_values(decoded: DecodedModalText) -> List[str]:
     values: List[str] = []
     seen: set[str] = set()
 
-    def add(value: str) -> None:
+    def add(slot: str, value: str) -> None:
         normalized_value = _clean_non_empty_string(value)
-        if not normalized_value or normalized_value in seen:
+        if (
+            not normalized_value
+            or normalized_value in seen
+            or _is_structural_boilerplate_slot_value(slot, normalized_value)
+        ):
             return
         seen.add(normalized_value)
         values.append(normalized_value)
 
     for slot in preferred_slots:
         for value in slot_text_map.get(slot, []):
-            add(value)
+            add(slot, value)
 
     for slot in sorted(slot_text_map):
         if slot in preferred_slot_set:
@@ -10204,8 +10217,59 @@ def _structural_semantic_values(decoded: DecodedModalText) -> List[str]:
         if not _is_semantic_support_slot(slot):
             continue
         for value in slot_text_map.get(slot, []):
-            add(value)
+            add(slot, value)
     return values
+
+
+def _is_structural_boilerplate_slot_value(slot: str, value: str) -> bool:
+    normalized_slot = _clean_non_empty_string(slot)
+    normalized_value = _clean_non_empty_string(value)
+    if not normalized_slot or not normalized_value:
+        return False
+    lowered = normalized_value.lower()
+    if any(
+        marker in lowered
+        for marker in (
+            "government publishing office",
+            "gpo.gov",
+            "www.gpo",
+            "from the u.s.",
+            "from the u s",
+        )
+    ):
+        return True
+    if lowered in {
+        "government",
+        "publishing",
+        "office",
+        "gpo",
+        "gov",
+        "www",
+        "u.s.",
+        "u.s",
+    }:
+        return True
+    if ":" in lowered:
+        _, _, suffix = lowered.partition(":")
+        if suffix in {
+            "government",
+            "publishing",
+            "office",
+            "gpo",
+            "gov",
+            "www",
+        }:
+            return True
+    if normalized_slot.startswith(
+        (
+            "fallback_surface_text",
+            "fallback_surface_context",
+            "section_heading_tail",
+            "predicate",
+        )
+    ) and _is_probable_uscode_compilation_span(normalized_value):
+        return True
+    return False
 
 
 def _structural_decoded_text(
