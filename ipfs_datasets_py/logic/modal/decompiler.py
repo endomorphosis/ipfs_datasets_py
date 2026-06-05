@@ -6376,6 +6376,22 @@ def _source_span_slot_phrases(
                         provenance_only=True,
                     )
                 )
+            for slot, value in _typed_identifier_slots(
+                semantic_aggregate_text,
+                slot_prefix=semantic_slot_prefix,
+            ):
+                marker = (slot, value, span_marker)
+                if marker in seen:
+                    continue
+                seen.add(marker)
+                phrases.append(
+                    DecodedModalPhrase(
+                        text=value,
+                        slot=slot,
+                        spans=aggregate_spans,
+                        provenance_only=True,
+                    )
+                )
             for formula in formulas:
                 for refined_slot, refined_value in _refined_contextual_modal_transition_slots(
                     formula,
