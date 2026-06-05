@@ -80,6 +80,7 @@ __all__ = [
     'create_implication_circuit',
     'build_proof_attestation_view',
     'decode_simulated_proof_layout',
+    'proof_attestation_view_from_proof_dict',
 ]
 
 _SIMULATION_WARNING = (
@@ -194,12 +195,14 @@ def __getattr__(name: str):
         "create_implication_circuit",
         "build_proof_attestation_view",
         "decode_simulated_proof_layout",
+        "proof_attestation_view_from_proof_dict",
     }:
         mod = importlib.import_module(f"{__name__}.circuits")
         if name in {
             "create_implication_circuit",
             "build_proof_attestation_view",
             "decode_simulated_proof_layout",
+            "proof_attestation_view_from_proof_dict",
         }:
             value = getattr(mod, name)
             globals()[name] = value

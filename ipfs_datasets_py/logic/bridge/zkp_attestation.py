@@ -368,17 +368,59 @@ def _graph_data_from_triples(
 
 
 def _public_attestation_record(record: Mapping[str, Any]) -> dict[str, Any]:
+    from ipfs_datasets_py.logic.zkp.circuits import proof_attestation_view_from_proof_dict
+
     proof = dict(record.get("proof") or {})
     public_inputs = dict(record.get("public_inputs") or {})
+    proof_metadata = proof.get("metadata")
+    if not isinstance(proof_metadata, Mapping):
+        proof_metadata = {}
+    attestation_view = proof_attestation_view_from_proof_dict(proof)
     return {
+        "attestation_ref": str(
+            public_inputs.get("attestation_ref")
+            or attestation_view.get("attestation_ref")
+            or ""
+        ),
+        "attestation_view": dict(attestation_view),
+        "attestation_view_version": int(
+            public_inputs.get("attestation_view_version")
+            or attestation_view.get("attestation_view_version")
+            or 0
+        ),
         "axiom_count": int(record.get("axiom_count") or 0),
+        "axioms_commitment": str(
+            public_inputs.get("axioms_commitment")
+            or attestation_view.get("axioms_commitment")
+            or ""
+        ),
+        "circuit_ref": str(
+            public_inputs.get("circuit_ref")
+            or attestation_view.get("circuit_ref")
+            or ""
+        ),
         "error": record.get("error") or "",
         "proof_hash": record.get("proof_hash") or "",
+        "proof_system": str(
+            attestation_view.get("proof_system")
+            or proof_metadata.get("proof_system")
+            or ""
+        ),
         "proof_size_bytes": int(proof.get("size_bytes") or 0),
         "compiler_guidance_ref": record.get("compiler_guidance_ref") or "",
         "public_inputs": public_inputs,
+        "ruleset_id": str(
+            public_inputs.get("ruleset_id")
+            or attestation_view.get("ruleset_id")
+            or ""
+        ),
         "source_id": record.get("source_id") or "",
         "theorem": record.get("theorem") or "",
+        "theorem_hash": str(
+            public_inputs.get("theorem_hash")
+            or attestation_view.get("theorem_hash")
+            or ""
+        ),
         "verified": bool(record.get("verified")),
     }
 

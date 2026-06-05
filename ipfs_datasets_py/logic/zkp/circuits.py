@@ -140,6 +140,38 @@ def build_proof_attestation_view(
     }
 
 
+def proof_attestation_view_from_proof_dict(proof: Mapping[str, Any]) -> Dict[str, Any]:
+    """Return the canonical attestation view embedded in a serialized proof.
+
+    Older callers may only have a proof dictionary, not a ``ZKPProof`` object.
+    Prefer the backend-produced ``metadata.attestation_view`` when present, and
+    otherwise rebuild the same deterministic view from serialized proof bytes,
+    public inputs, and metadata.
+    """
+    if not isinstance(proof, Mapping):
+        return {}
+
+    metadata = proof.get("metadata")
+    metadata_dict = _mapping_dict(metadata)
+    embedded = metadata_dict.get("attestation_view")
+    if isinstance(embedded, Mapping):
+        return dict(embedded)
+
+    proof_data = proof.get("proof_data")
+    proof_bytes: object = proof_data
+    if isinstance(proof_data, str):
+        try:
+            proof_bytes = bytes.fromhex(proof_data)
+        except ValueError:
+            proof_bytes = proof_data
+
+    return build_proof_attestation_view(
+        proof_data=proof_bytes,
+        public_inputs=_mapping_dict(proof.get("public_inputs")),
+        metadata=metadata_dict,
+    )
+
+
 @dataclass
 class CircuitGate:
     """

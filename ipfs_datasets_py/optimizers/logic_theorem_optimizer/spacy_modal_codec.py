@@ -4751,11 +4751,14 @@ def _apply_refined_modal_family_cue_pair_balance(
         signals.get("has_epistemic_scope_phrase")
         or signals.get("has_epistemic_cue")
     )
-    has_frame_scope_context = bool(
+    has_direct_frame_scope_context = bool(
         signals.get("has_frame_context")
         or signals.get("has_frame_scope_phrase")
         or signals.get("has_frame_editorial_scope_phrase")
         or signals.get("has_frame_cue")
+    )
+    has_frame_scope_context = bool(
+        has_direct_frame_scope_context
         or has_statutory_scope_reference
     )
     has_structural_authority_frame_scope = bool(
@@ -5346,6 +5349,46 @@ def _apply_refined_modal_family_cue_pair_balance(
         counts[deontic_family] = max(deontic_count, deontic_floor)
         deontic_count = float(counts.get(deontic_family, 0.0))
 
+    # frame -> deontic / temporal:
+    # generic structural frame cues in statutory references often describe the
+    # venue for an operative rule.  Preserve explicit deontic and temporal
+    # target evidence even when the frame cue count is dominant.
+    if (
+        frame_count > 0.0
+        and has_frame_scope_context
+        and (
+            has_statutory_scope_reference
+            or has_structural_authority_frame_scope
+            or has_editorial_frame_context
+        )
+    ):
+        if (
+            frame_count > deontic_count
+            and has_deontic_scope
+            and has_explicit_deontic_scope
+        ):
+            deontic_floor = _scaled_competing_scope_backfill(
+                source_count=max(frame_count, temporal_count, conditional_count, 1.0),
+                ratio=0.32,
+                minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                maximum=_FRAME_TO_DEONTIC_SCOPE_REINFORCEMENT_MAX,
+            )
+            counts[deontic_family] = max(deontic_count, deontic_floor)
+            deontic_count = float(counts.get(deontic_family, 0.0))
+        if (
+            frame_count > temporal_count
+            and has_temporal_scope
+            and has_strong_temporal_scope
+        ):
+            temporal_floor = _scaled_competing_scope_backfill(
+                source_count=max(frame_count, deontic_count, conditional_count, 1.0),
+                ratio=0.3,
+                minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                maximum=_FRAME_TO_TEMPORAL_SCOPE_REINFORCEMENT_MAX,
+            )
+            counts[temporal_family] = max(temporal_count, temporal_floor)
+            temporal_count = float(counts.get(temporal_family, 0.0))
+
     # conditional_normative -> temporal:
     # when statutory structural conditionals only carry weak temporal cue tokens,
     # preserve temporal evidence so conditional scaffolding does not dominate.
@@ -5369,6 +5412,64 @@ def _apply_refined_modal_family_cue_pair_balance(
             temporal_increment,
         )
         temporal_count = float(counts.get(temporal_family, 0.0))
+
+    # temporal -> conditional_normative / deontic:
+    # year/date/status metadata in statutory text can dominate the family counts
+    # while the legal force is carried by conditional cross-references or
+    # obligation phrases.  Keep those target families visible for ambiguity
+    # selection instead of treating temporal evidence as exclusive.
+    if (
+        temporal_count > 0.0
+        and has_temporal_scope
+        and (
+            has_statutory_scope_reference
+            or has_frame_scope_context
+            or has_temporal_status_scope
+            or has_calendar_date_scope
+        )
+    ):
+        if (
+            temporal_count > conditional_count
+            and has_structural_conditional_scope
+            and (
+                has_explicit_conditional_scope
+                or has_statutory_scope_reference
+                or has_purpose_scope_phrase
+            )
+        ):
+            conditional_floor = _scaled_competing_scope_backfill(
+                source_count=max(temporal_count, deontic_count, frame_count, 1.0),
+                ratio=0.3,
+                minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                maximum=_TEMPORAL_TO_CONDITIONAL_SCOPE_REINFORCEMENT_MAX,
+            )
+            counts[conditional_family] = max(conditional_count, conditional_floor)
+            conditional_count = float(counts.get(conditional_family, 0.0))
+        if (
+            temporal_count > deontic_count
+            and has_deontic_scope
+            and (
+                has_explicit_deontic_scope
+                or has_temporal_status_scope
+                or has_calendar_date_scope
+                or has_direct_frame_scope_context
+                or has_structural_authority_frame_scope
+            )
+            and (
+                has_direct_frame_scope_context
+                or has_temporal_status_scope
+                or has_calendar_date_scope
+                or has_structural_authority_frame_scope
+            )
+        ):
+            deontic_floor = _scaled_competing_scope_backfill(
+                source_count=max(temporal_count, conditional_count, frame_count, 1.0),
+                ratio=0.3,
+                minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                maximum=_TEMPORAL_TO_DEONTIC_SCOPE_REINFORCEMENT_MAX,
+            )
+            counts[deontic_family] = max(deontic_count, deontic_floor)
+            deontic_count = float(counts.get(deontic_family, 0.0))
 
     # temporal -> deontic:
     # damp non-deadline temporal pressure when explicit deontic force co-occurs.
@@ -5569,6 +5670,56 @@ def _apply_refined_modal_family_cue_pair_balance(
             frame_count,
             frame_floor,
         )
+        frame_count = float(counts.get(frame_family, 0.0))
+
+    # frame -> deontic / conditional_normative:
+    # repeated generic frame cues ("authority", "jurisdiction", corporate
+    # structure) can dominate statutory clauses that still contain operative
+    # deontic force under conditional scope. Keep the typed normative evidence
+    # competitive instead of letting structural frame context become the only
+    # high-probability family.
+    if (
+        frame_count > max(deontic_count, conditional_count)
+        and has_frame_scope_context
+        and has_statutory_scope_reference
+        and has_deontic_scope
+        and has_structural_conditional_scope
+        and (
+            has_explicit_deontic_scope
+            or has_conditional_scope_phrase
+            or has_conditional_clause_scope
+        )
+    ):
+        normative_anchor = max(
+            deontic_count,
+            conditional_count,
+            _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
+        deontic_floor = _scaled_competing_scope_backfill(
+            source_count=max(frame_count, normative_anchor),
+            ratio=0.42,
+            minimum=_FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            maximum=_STATUTORY_GENERIC_FRAME_DEONTIC_SCOPE_MAX,
+        )
+        conditional_floor = _scaled_competing_scope_backfill(
+            source_count=max(frame_count, normative_anchor),
+            ratio=0.38,
+            minimum=_FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            maximum=_STATUTORY_GENERIC_FRAME_CONDITIONAL_SCOPE_MAX,
+        )
+        counts[deontic_family] = max(deontic_count, deontic_floor)
+        counts[conditional_family] = max(conditional_count, conditional_floor)
+        deontic_count = float(counts.get(deontic_family, 0.0))
+        conditional_count = float(counts.get(conditional_family, 0.0))
+
+        frame_cap = max(
+            max(deontic_count, conditional_count)
+            + _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
+        if frame_count > frame_cap:
+            frame_overflow = frame_count - frame_cap
+            counts[frame_family] = frame_cap + (0.2 * math.log1p(frame_overflow))
 
 
 def _apply_competing_deontic_temporal_scope_phrase_reinforcement(

@@ -2500,6 +2500,12 @@ def test_zkp_attestation_bridge_evaluates_proof_attestations_and_graph() -> None
     assert report.round_trip.extra_losses["zkp_attestation_missing_loss"] == 0.0
     assert report.round_trip.extra_losses["zkp_verification_failure_ratio"] == 0.0
     assert "zkp:simulated" in report.proof_gate.verified_by
+    record = report.ir_document.views["zkp_attestations"].payload["records"][0]
+    assert record["attestation_ref"] == record["public_inputs"]["attestation_ref"]
+    assert record["attestation_view"]["attestation_ref"] == record["attestation_ref"]
+    assert record["attestation_view_version"] == 1
+    assert record["circuit_ref"].startswith("legal_ir_zkp_attestation@v")
+    assert record["theorem_hash"] == record["public_inputs"]["theorem_hash"]
 
 
 def test_zkp_attestation_bridge_records_are_deterministic_for_same_input() -> None:

@@ -14,6 +14,13 @@ from ipfs_datasets_py.logic.modal import (
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import (
     build_us_code_sample,
 )
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
+    ModalIRDocument,
+    ModalIRFormula,
+    ModalIROperator,
+    ModalIRPredicate,
+    ModalIRProvenance,
+)
 
 
 def _predicate_values(sample_section: str, *, title: str) -> dict[str, list[str]]:
@@ -786,3 +793,75 @@ def test_modal_slots_derive_modal_operator_label_and_signature_for_temporal_next
     assert "temporal:X:next" in triple_values["modal_operator_signature"]
     assert "next" in triple_values["modal_operator_label_token"]
     assert "temporal_x_next" in triple_values["modal_operator_signature_stem"]
+
+
+def test_modal_decompiler_refines_condition_scope_bridge_slots() -> None:
+    formula = ModalIRFormula(
+        formula_id="f_condition_bridge",
+        operator=ModalIROperator(
+            family="deontic",
+            system="D",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="provide_notice", arguments=[]),
+        provenance=ModalIRProvenance(
+            source_id="condition-bridge-doc",
+            start_char=0,
+            end_char=64,
+            citation="5 U.S.C. 552",
+        ),
+        conditions=["not later than the hearing date"],
+    )
+    document = ModalIRDocument(
+        document_id="condition-bridge-doc",
+        source="us_code",
+        normalized_text="Not later than the hearing date, the agency shall provide notice.",
+        formulas=[formula],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+
+    assert "o_to_o" in slot_texts["condition_scope_refined_modal_operator_pair_key"]
+    assert "not_later_than:deadline" in slot_texts[
+        "condition_scope_refined_temporal_bridge_context"
+    ]
+    assert "condition:not_later_than:deadline" in slot_texts[
+        "refined_temporal_bridge_context"
+    ]
+
+
+def test_modal_decompiler_refines_deontic_exception_negative_scope_slots() -> None:
+    formula = ModalIRFormula(
+        formula_id="f_exception_negative",
+        operator=ModalIROperator(
+            family="deontic",
+            system="D",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="disclose_records", arguments=[]),
+        provenance=ModalIRProvenance(
+            source_id="exception-negative-doc",
+            start_char=0,
+            end_char=56,
+            citation="22 U.S.C. 282k",
+        ),
+        exceptions=["except as authorized"],
+        metadata={"polarity": "negative_scope"},
+    )
+    document = ModalIRDocument(
+        document_id="exception-negative-doc",
+        source="us_code",
+        normalized_text="The agency may not disclose records except as authorized.",
+        formulas=[formula],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+
+    assert "o_to_o" in slot_texts["exception_scope_refined_modal_operator_pair_key"]
+    assert "obligation:negative_scope:excepted" in slot_texts[
+        "compiler_contract_force_polarity_exception"
+    ]
+    assert "mandatory:excepted" in slot_texts["normative_polarity_scope"]
+    assert "negative_scope:excepted" in slot_texts["normative_polarity_scope"]
