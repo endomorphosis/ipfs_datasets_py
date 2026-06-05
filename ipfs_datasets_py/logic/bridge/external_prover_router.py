@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from dataclasses import dataclass
 import re
 from typing import Any, Mapping, Optional, Sequence
@@ -467,33 +468,98 @@ def _router_guidance_signal(
     compiler_guidance: Optional[Mapping[str, Any]],
 ) -> dict[str, Any]:
     if not isinstance(compiler_guidance, Mapping):
-        return {"active": False, "prover_gate_hint": False}
-    routes: set[str] = set()
-    for key in (
-        "compiler_guidance_todo_routes",
-        "top_todo_routes",
-    ):
-        value = compiler_guidance.get(key)
-        if isinstance(value, Mapping):
-            routes.update(
-                str(route or "").strip().lower()
-                for route in value.keys()
-            )
-        elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
-            routes.update(
-                str(route or "").strip().lower()
-                for route in value
-            )
-    single_route = str(compiler_guidance.get("route") or "").strip().lower()
-    if single_route:
-        routes.add(single_route)
+        return {"active": False, "prover_gate_hint": False, "routes": ()}
+    routes = _router_guidance_routes(compiler_guidance)
     return {
         "active": True,
         "prover_gate_hint": any(
             route in _ROUTER_GUIDANCE_PROVER_ROUTE_HINTS
             for route in routes
         ),
+        "routes": tuple(sorted(routes)),
     }
+
+
+def _router_guidance_routes(compiler_guidance: Mapping[str, Any]) -> set[str]:
+    """Extract deterministic route hints from daemon and packet metadata shapes."""
+
+    routes: set[str] = set()
+
+    def add_route(value: Any) -> None:
+        route = str(value or "").strip().lower()
+        if route:
+            routes.add(route)
+
+    def collect(value: Any) -> None:
+        if isinstance(value, Mapping):
+            for route in value.keys():
+                add_route(route)
+            return
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            for route in value:
+                if isinstance(route, Mapping):
+                    for nested_key in ("route", "action", "compiler_guidance_route"):
+                        add_route(route.get(nested_key))
+                else:
+                    add_route(route)
+            return
+        add_route(value)
+
+    for key in (
+        "compiler_guidance_todo_routes",
+        "top_todo_routes",
+        "todo_routes",
+    ):
+        value = compiler_guidance.get(key)
+        if value is not None:
+            collect(value)
+
+    for key in (
+        "route",
+        "action",
+        "compiler_guidance_route",
+    ):
+        add_route(compiler_guidance.get(key))
+
+    for key in (
+        "bundle",
+        "semantic_bundle_key",
+        "compiler_guidance_bundle",
+    ):
+        bundle = _router_guidance_mapping(compiler_guidance.get(key))
+        if bundle:
+            for nested_key in ("route", "action", "compiler_guidance_route"):
+                add_route(bundle.get(nested_key))
+            for nested_routes_key in (
+                "compiler_guidance_todo_routes",
+                "top_todo_routes",
+                "todo_routes",
+            ):
+                if nested_routes_key in bundle:
+                    collect(bundle.get(nested_routes_key))
+
+    attribution = compiler_guidance.get("compiler_guidance_attribution")
+    if isinstance(attribution, Mapping):
+        collect(attribution.get("todo_routes"))
+
+    return routes
+
+
+def _router_guidance_mapping(value: Any) -> dict[str, Any]:
+    if isinstance(value, Mapping):
+        return dict(value)
+    if not isinstance(value, str):
+        return {}
+    text = value.strip()
+    if not text:
+        return {}
+    try:
+        parsed = json.loads(text)
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return {}
+    if isinstance(parsed, Mapping):
+        return dict(parsed)
+    return {}
 
 
 def _supports_router_guidance_prover_gate_soft_pass(

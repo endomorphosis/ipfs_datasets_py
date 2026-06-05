@@ -1321,6 +1321,17 @@ _FRAME_ONTOLOGY_METADATA_OPAQUE_ID_HEX_RE = re.compile(
     r"[0-9a-f]{12,}",
     re.IGNORECASE,
 )
+_FLOGIC_ONTOLOGY_GUIDANCE_ROUTES = frozenset(
+    {
+        "repair_flogic_ontology_constraints",
+    }
+)
+_FLOGIC_ONTOLOGY_GUIDANCE_FEATURES = (
+    "legal-ir-view:modal.frame_logic",
+    "flogic:statement_hint:repair_flogic_ontology_constraints",
+    "flogic:statement_hint:modal_frame_logic",
+    "flogic:modal_family:frame",
+)
 
 
 @dataclass(frozen=True)
@@ -10128,6 +10139,30 @@ def _is_semantic_support_slot(slot: str) -> bool:
 
 def _semantic_support_token_count(decoded: DecodedModalText) -> int:
     semantic_tokens: set[str] = set()
+    core_semantic_token_count = 0
+    core_semantic_slots = {
+        "typed_ir_reconstruction",
+        "predicate",
+        "predicate_content",
+        "argument",
+        "arguments",
+        "argument_actor",
+        "argument_scope",
+        "argument_object",
+        "argument_target",
+        "condition",
+        "condition_scope",
+        "exception",
+        "exception_scope",
+        "legal_semantic_atom",
+        "status_keyword",
+        "source_subject_anchor",
+        "source_action_anchor",
+        "source_object_anchor",
+        "source_condition_anchor",
+        "source_exception_anchor",
+        "source_temporal_anchor",
+    }
     for phrase in decoded.phrases:
         if phrase.fixed or not phrase.provenance_only:
             continue
@@ -10141,7 +10176,9 @@ def _semantic_support_token_count(decoded: DecodedModalText) -> int:
             if not any(character.isalpha() for character in token):
                 continue
             semantic_tokens.add(token)
-    return len(semantic_tokens)
+            if slot in core_semantic_slots:
+                core_semantic_token_count += 1
+    return len(semantic_tokens) + core_semantic_token_count
 
 
 def _structural_semantic_values(decoded: DecodedModalText) -> List[str]:
@@ -10755,6 +10792,7 @@ def _frame_ontology_audit_metadata_feature_keys(
         metadata.get("top_family_contributions"),
         metadata.get("top_family_features"),
     ]
+    metadata_values.extend(_compiler_guidance_frame_ontology_feature_values(metadata))
     frame_logic_metadata = (
         modal_ir.frame_logic.metadata
         if isinstance(modal_ir.frame_logic.metadata, Mapping)
@@ -10790,6 +10828,9 @@ def _frame_ontology_audit_metadata_feature_keys(
             frame_logic_metadata.get("top_family_features"),
         ]
     )
+    metadata_values.extend(
+        _compiler_guidance_frame_ontology_feature_values(frame_logic_metadata)
+    )
     for source_metadata in (metadata, frame_logic_metadata):
         for family_field in (
             "family",
@@ -10804,6 +10845,34 @@ def _frame_ontology_audit_metadata_feature_keys(
         metadata_values,
         max_keys=_FRAME_ONTOLOGY_AUDIT_MAX_FEATURE_KEYS,
     )
+
+
+def _compiler_guidance_frame_ontology_feature_values(
+    metadata: Mapping[str, Any],
+) -> List[Any]:
+    """Translate compiler guidance routes into deterministic frame audit keys."""
+    if not isinstance(metadata, Mapping):
+        return []
+
+    values: List[Any] = [
+        metadata.get("compiler_guidance_feature_groups"),
+        metadata.get("compiler_guidance_ranked_features"),
+        metadata.get("compiler_guidance_legal_ir_predicted_view_distribution"),
+        metadata.get("compiler_guidance_legal_ir_target_view_distribution"),
+        metadata.get("compiler_guidance_legal_ir_view_gap_distribution"),
+        metadata.get("compiler_guidance_semantic_overlay_terms"),
+        metadata.get("compiler_guidance_selected_frame_after"),
+        metadata.get("compiler_guidance_selected_frame_before"),
+    ]
+    synthesis_focus = metadata.get("compiler_guidance_synthesis_focus")
+    values.append(synthesis_focus)
+    focus_terms = {
+        _clean_non_empty_string(term).lower()
+        for term in _guidance_feature_list(synthesis_focus, limit=0)
+    }
+    if focus_terms & _FLOGIC_ONTOLOGY_GUIDANCE_ROUTES:
+        values.extend(_FLOGIC_ONTOLOGY_GUIDANCE_FEATURES)
+    return values
 
 
 def _frame_ontology_audit_terms(

@@ -137,6 +137,13 @@ _BRIDGE_CONTRACT_FRAME_AUTHORITY_CUE_RE = re.compile(
     r"government\s+and\s+municipalit(?:y|ies)|such\s+authority)\b",
     flags=re.IGNORECASE,
 )
+_BRIDGE_CONTRACT_EFFECT_ON_EXISTING_LAW_CUE_RE = re.compile(
+    r"\b(?:effect\s+on\s+existing\s+law|nothing\s+in\s+this\s+"
+    r"(?:section|chapter|subchapter|part)\b.{0,220}\b"
+    r"(?:affect(?:s|ing)?|limit(?:s|ing)?|alter(?:s|ing)?)"
+    r".{0,120}\bauthority\s+of)\b",
+    flags=re.IGNORECASE,
+)
 _BRIDGE_CONTRACT_FRAME_ENFORCEMENT_CUE_RE = re.compile(
     r"\b(?:criminal\s+penalt(?:y|ies)|civil\s+penalt(?:y|ies)|penalt(?:y|ies)|"
     r"enforcement|violation(?:s)?|sanction(?:s)?|fine(?:s)?|preemption)\b",
@@ -171,7 +178,7 @@ _BRIDGE_CONTRACT_APPROPRIATION_NORM_CUE_RE = re.compile(
     flags=re.IGNORECASE,
 )
 _BRIDGE_CONTRACT_DIRECT_APPROPRIATION_AUTHORIZATION_RE = re.compile(
-    r"\b(?:there\s+is\s+)?authorized\s+to\s+be\s+appropriated\b"
+    r"\b(?:there\s+(?:is|are)\s+)?authorized\s+to\s+be\s+appropriated\b"
     r".{0,240}\b(?:administrator|secretary|agency|commission|director|fund|program)\b",
     flags=re.IGNORECASE,
 )
@@ -1060,6 +1067,9 @@ def _rebalance_dense_contract_distribution(
     has_authority_frame_cue = bool(
         _BRIDGE_CONTRACT_FRAME_AUTHORITY_CUE_RE.search(normalized_text)
     )
+    has_effect_on_existing_law_frame_cue = bool(
+        _BRIDGE_CONTRACT_EFFECT_ON_EXISTING_LAW_CUE_RE.search(normalized_text)
+    )
     has_enforcement_frame_cue = bool(
         _BRIDGE_CONTRACT_FRAME_ENFORCEMENT_CUE_RE.search(normalized_text)
     )
@@ -1078,6 +1088,7 @@ def _rebalance_dense_contract_distribution(
         has_frame_definition_cue
         or has_structural_frame_cue
         or has_authority_frame_cue
+        or has_effect_on_existing_law_frame_cue
         or has_enforcement_frame_cue
         or has_admin_notice_hearing_frame_cue
     )
@@ -1085,6 +1096,7 @@ def _rebalance_dense_contract_distribution(
         has_structural_frame_cue
         and not has_frame_definition_cue
         and not has_authority_frame_cue
+        and not has_effect_on_existing_law_frame_cue
         and not has_enforcement_frame_cue
         and not has_admin_notice_hearing_frame_cue
     )
@@ -1244,6 +1256,14 @@ def _rebalance_dense_contract_distribution(
             caps["CEC.native"] = max(caps["CEC.native"], 0.23)
             caps["deontic.ir"] = min(caps["deontic.ir"], 0.62)
             caps["TDFOL.prover"] = min(caps.get("TDFOL.prover", 1.0), 0.18)
+        if has_effect_on_existing_law_frame_cue:
+            caps["knowledge_graphs.neo4j_compat"] = max(
+                caps["knowledge_graphs.neo4j_compat"],
+                0.22,
+            )
+            caps["CEC.native"] = max(caps["CEC.native"], 0.25)
+            caps["deontic.ir"] = min(caps["deontic.ir"], 0.26)
+            caps["TDFOL.prover"] = min(caps.get("TDFOL.prover", 1.0), 0.17)
         if (
             has_authority_frame_cue
             and has_permission_only_deontic_signal
@@ -1586,6 +1606,13 @@ def _rebalance_dense_contract_distribution(
                     ("deontic.ir", 0.18),
                     ("TDFOL.prover", 0.10),
                 )
+            elif has_effect_on_existing_law_frame_cue:
+                target_mix = (
+                    ("CEC.native", 0.42),
+                    ("knowledge_graphs.neo4j_compat", 0.32),
+                    ("deontic.ir", 0.16),
+                    ("TDFOL.prover", 0.10),
+                )
             elif has_conditional_structural_normative_signal:
                 target_mix = (
                     ("deontic.ir", 0.58),
@@ -1618,8 +1645,8 @@ def _rebalance_dense_contract_distribution(
                 if has_direct_appropriation_authorization:
                     target_mix = (
                         ("deontic.ir", 0.44),
-                        ("TDFOL.prover", 0.24),
-                        ("CEC.native", 0.24),
+                        ("CEC.native", 0.30),
+                        ("TDFOL.prover", 0.18),
                         ("knowledge_graphs.neo4j_compat", 0.08),
                     )
                 else:
@@ -1695,6 +1722,13 @@ def _rebalance_dense_contract_distribution(
                     ("deontic.ir", 0.18),
                     ("TDFOL.prover", 0.08),
                 )
+            elif has_effect_on_existing_law_frame_cue:
+                target_mix = (
+                    ("CEC.native", 0.44),
+                    ("knowledge_graphs.neo4j_compat", 0.30),
+                    ("deontic.ir", 0.16),
+                    ("TDFOL.prover", 0.10),
+                )
             else:
                 target_mix = (
                     ("knowledge_graphs.neo4j_compat", 0.45),
@@ -1736,8 +1770,8 @@ def _rebalance_dense_contract_distribution(
             if has_direct_appropriation_authorization:
                 target_mix = (
                     ("deontic.ir", 0.44),
-                    ("TDFOL.prover", 0.24),
-                    ("CEC.native", 0.24),
+                    ("CEC.native", 0.30),
+                    ("TDFOL.prover", 0.18),
                     ("knowledge_graphs.neo4j_compat", 0.08),
                 )
             elif has_conditional_cue and has_explicit_temporal_deadline_cue:
@@ -1804,6 +1838,22 @@ def _rebalance_dense_contract_distribution(
 
     for lane, weight in present_targets:
         adjusted[lane] += excess_mass * (weight / weight_total)
+
+    if _should_project_flat_dense_contract_distribution(
+        lanes,
+        has_conditional_structural_normative_signal=has_conditional_structural_normative_signal,
+        has_dense_statute_scaffold=has_dense_statute_scaffold,
+        has_direct_appropriation_authorization=has_direct_appropriation_authorization,
+        has_effect_on_existing_law_frame_cue=has_effect_on_existing_law_frame_cue,
+        has_scaffolded_normative_operations=has_scaffolded_normative_operations,
+        has_scaffolded_scope_norm_hint=has_scaffolded_scope_norm_hint,
+        has_structural_status_operation_signal=has_structural_status_operation_signal,
+    ):
+        adjusted = _project_contract_distribution_toward_target(
+            adjusted,
+            target_mix,
+            strength=0.38,
+        )
 
     if has_repealed_legislative_history_signal:
         kg_lane = "knowledge_graphs.neo4j_compat"
@@ -1906,6 +1956,86 @@ def _contract_target_mix_with_auxiliary_lanes(
     ):
         augmented.append(("external_provers.router", max(0.0, float(prover_weight))))
     return tuple(augmented)
+
+
+def _should_project_flat_dense_contract_distribution(
+    lanes: Mapping[str, float],
+    *,
+    has_conditional_structural_normative_signal: bool,
+    has_dense_statute_scaffold: bool,
+    has_direct_appropriation_authorization: bool,
+    has_effect_on_existing_law_frame_cue: bool,
+    has_scaffolded_normative_operations: bool,
+    has_scaffolded_scope_norm_hint: bool,
+    has_structural_status_operation_signal: bool,
+) -> bool:
+    """Return whether a flat dense mix should be pulled toward semantic cues."""
+
+    values = [max(0.0, float(value)) for value in dict(lanes or {}).values()]
+    if len(values) < 6:
+        return False
+    if not values:
+        return False
+    if max(values) - min(values) > 0.09:
+        return False
+    return (
+        has_dense_statute_scaffold
+        or has_effect_on_existing_law_frame_cue
+        or has_direct_appropriation_authorization
+        or has_scaffolded_normative_operations
+        or has_scaffolded_scope_norm_hint
+        or has_structural_status_operation_signal
+        or has_conditional_structural_normative_signal
+    )
+
+
+def _project_contract_distribution_toward_target(
+    distribution: Mapping[str, float],
+    target_mix: Sequence[tuple[str, float]],
+    *,
+    strength: float,
+) -> Dict[str, float]:
+    """Blend a flat bridge-contract distribution toward deterministic cues."""
+
+    adjusted = {
+        str(name): max(0.0, float(value))
+        for name, value in dict(distribution or {}).items()
+        if float(value) > 0.0
+    }
+    if not adjusted:
+        return adjusted
+
+    present_target_weights = {
+        str(lane): max(0.0, float(weight))
+        for lane, weight in target_mix
+        if str(lane) in adjusted and float(weight) > 0.0
+    }
+    target_total = sum(present_target_weights.values())
+    if target_total <= 0.0:
+        return adjusted
+
+    target_distribution = {
+        lane: weight / target_total
+        for lane, weight in present_target_weights.items()
+    }
+    total = sum(adjusted.values())
+    if total <= 0.0:
+        return adjusted
+
+    normalized = {lane: value / total for lane, value in adjusted.items()}
+    blend = max(0.0, min(1.0, float(strength)))
+    projected: Dict[str, float] = {}
+    for lane, value in normalized.items():
+        target_value = target_distribution.get(lane, value)
+        projected[lane] = ((1.0 - blend) * value) + (blend * target_value)
+
+    projected_total = sum(projected.values())
+    if projected_total <= 0.0:
+        return adjusted
+    return {
+        lane: value / projected_total
+        for lane, value in projected.items()
+    }
 
 
 def _enforce_contract_lane_floors(

@@ -100,6 +100,35 @@ def test_frame_ontology_terms_contextualize_condition_modal_family_and_operator(
     ]
 
 
+def test_frame_ontology_terms_audit_zero_digit_predicates_as_contextual_terms() -> None:
+    result = _optimizer().evaluate(
+        source_text="s",
+        decoded_text="d",
+        source_embedding=[1.0, 0.0],
+        decoded_embedding=[1.0, 0.0],
+        kg_triples=[],
+        frame_feature_keys=[
+            "flogic:citation_title_section_primary_number_span_has_zero_digit:false",
+            "flogic:citation_title_section_primary_number_span_zero_digit_count:0",
+            "flogic:citation_title_section_terminal_number_span_has_zero_digit:false",
+            "flogic:citation_section_primary_number_trailing_zero_count:100",
+        ],
+    )
+
+    metadata = result.metadata
+    expected_terms = {
+        "citation_title_section_primary_number_span_has_zero_digit_false",
+        "citation_title_section_primary_number_span_zero_digit_count_0",
+        "citation_title_section_terminal_number_span_has_zero_digit_false",
+        "citation_section_primary_number_trailing_zero_count_100",
+    }
+    assert expected_terms.issubset(set(metadata["frame_ontology_terms"]))
+    assert expected_terms.issubset(set(metadata["frame_ontology_high_signal_terms"]))
+    assert expected_terms.issubset(
+        set(metadata["frame_ontology_high_signal_terms_from_contextualized"])
+    )
+
+
 def test_frame_ontology_terms_include_predicate_argument_anchor_terms() -> None:
     result = _optimizer().evaluate(
         source_text="s",

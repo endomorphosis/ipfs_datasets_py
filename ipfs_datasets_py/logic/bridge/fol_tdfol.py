@@ -54,13 +54,20 @@ class FolTdfolBridgeAdapter:
         citation: Optional[str] = None,
         source: str = "us_code",
         source_embedding: Optional[Sequence[float]] = None,
+        compiler_guidance: Optional[Mapping[str, Any]] = None,
     ) -> tuple[LegalIRDocument, Mapping[str, Any]]:
         """Encode legal text into a TDFOL bridge document."""
 
         bridge_inputs = _bridge_inputs_from_text(text, converter=self._converter())
         norms = bridge_inputs["norms"]
         resolved_document_id = document_id or _document_id("tdfol", text)
+        compiler_guidance_records = _formula_records_from_compiler_guidance(
+            text,
+            compiler_guidance,
+            norms=norms,
+        )
         formula_records = _merge_formula_records(
+            compiler_guidance_records,
             _formula_records_from_proof_obligation_rows(
                 bridge_inputs["proof_obligation_rows"]
             ),
@@ -75,14 +82,17 @@ class FolTdfolBridgeAdapter:
         graph_data = _graph_data_from_triples(
             triples,
             graph_id=f"{resolved_document_id}:tdfol-flogic",
-                metadata={
-                    "source": "tdfol_bridge_ir",
-                    "tdfol_formula_count": len(formula_records),
-                    "guidance_formula_count": len(
-                        bridge_inputs["proof_obligation_rows"]
-                    ),
-                },
-            )
+            metadata={
+                "source": "tdfol_bridge_ir",
+                "tdfol_formula_count": len(formula_records),
+                "compiler_guidance_formula_count": len(
+                    compiler_guidance_records
+                ),
+                "guidance_formula_count": len(
+                    bridge_inputs["proof_obligation_rows"]
+                ),
+            },
+        )
         views = {
             "tdfol_formula": LogicIRView(
                 name="tdfol_formula",
@@ -144,6 +154,9 @@ class FolTdfolBridgeAdapter:
                 metadata={
                     "deontic_norm_count": len(norms),
                     "tdfol_formula_count": len(formula_records),
+                    "compiler_guidance_formula_count": len(
+                        compiler_guidance_records
+                    ),
                     "guidance_formula_count": len(
                         bridge_inputs["proof_obligation_rows"]
                     ),
@@ -153,6 +166,7 @@ class FolTdfolBridgeAdapter:
                 "formula_records": formula_records,
                 "graph_data": graph_data,
                 "norms": norms,
+                "compiler_guidance_records": compiler_guidance_records,
                 "proof_obligation_rows": bridge_inputs["proof_obligation_rows"],
             },
         )
@@ -165,6 +179,7 @@ class FolTdfolBridgeAdapter:
         citation: Optional[str] = None,
         source: str = "us_code",
         source_embedding: Optional[Sequence[float]] = None,
+        compiler_guidance: Optional[Mapping[str, Any]] = None,
         **_: Any,
     ) -> BridgeEvaluationReport:
         """Run the TDFOL bridge and return optimizer-visible diagnostics."""
@@ -175,6 +190,7 @@ class FolTdfolBridgeAdapter:
             citation=citation,
             source=source,
             source_embedding=source_embedding,
+            compiler_guidance=compiler_guidance,
         )
         formula_records = list(context["formula_records"])
         proof_gate = _proof_gate_from_tdfol_records(formula_records)
@@ -207,7 +223,12 @@ class FolTdfolBridgeAdapter:
                 for record in formula_records
             ),
             status=status,
-            metadata={"adapter": "fol_tdfol_bridge_v1"},
+            metadata={
+                "adapter": "fol_tdfol_bridge_v1",
+                "compiler_guidance_applied": bool(
+                    context["compiler_guidance_records"]
+                ),
+            },
         )
 
     def _converter(self) -> Any:
@@ -326,19 +347,19 @@ def _formula_records_from_proof_obligation_rows(
 
 
 def _merge_formula_records(
-    guidance_records: Sequence[Mapping[str, Any]],
-    norm_records: Sequence[Mapping[str, Any]],
+    *record_groups: Sequence[Mapping[str, Any]],
 ) -> list[dict[str, Any]]:
     merged: list[dict[str, Any]] = []
     seen: set[tuple[str, str]] = set()
-    for record in tuple(guidance_records) + tuple(norm_records):
-        source_id = str(record.get("source_id") or "")
-        formula = str(record.get("formula") or "")
-        key = (source_id, formula)
-        if key in seen:
-            continue
-        seen.add(key)
-        merged.append(dict(record))
+    for records in record_groups:
+        for record in records:
+            source_id = str(record.get("source_id") or "")
+            formula = str(record.get("formula") or "")
+            key = (source_id, formula)
+            if key in seen:
+                continue
+            seen.add(key)
+            merged.append(dict(record))
     return merged
 
 
@@ -399,6 +420,213 @@ def _tdfol_formula_from_norm(norm: Mapping[str, Any]) -> Any:
     if any(token in temporal_text for token in ("before", "after", "when", "until")):
         inner = TemporalFormula(TemporalOperator.ALWAYS, predicate)
     return DeonticFormula(operator, inner, agent=Constant(actor))
+
+
+def _formula_records_from_compiler_guidance(
+    text: str,
+    compiler_guidance: Optional[Mapping[str, Any]],
+    *,
+    norms: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    guidance = _tdfol_compiler_guidance_signal(compiler_guidance)
+    if not guidance["active"]:
+        return []
+    formula = _tdfol_guidance_formula(
+        text,
+        norms=norms,
+        guidance=guidance,
+    )
+    formula_text = formula.to_string()
+    parse_ok = _tdfol_parse_ok(formula_text)
+    source_id = f"tdfol:compiler_guidance:{guidance['route']}"
+    return [
+        {
+            "formula": formula_text,
+            "proof_input": formula_text,
+            "formula_object": formula,
+            "parse_ok": parse_ok,
+            "predicates": sorted(formula.get_predicates()),
+            "source_id": source_id,
+            "source_norm": {
+                "compiler_guidance_route": guidance["route"],
+                "compiler_guidance_semantic_overlay_terms": tuple(
+                    guidance["semantic_terms"]
+                ),
+                "compiler_guidance_surface_features": tuple(
+                    guidance["surface_features"]
+                ),
+            },
+            "compiler_guidance_route": guidance["route"],
+            "compiler_guidance_semantic_overlay_terms": tuple(
+                guidance["semantic_terms"]
+            ),
+            "compiler_guidance_surface_features": tuple(
+                guidance["surface_features"]
+            ),
+        }
+    ]
+
+
+def _tdfol_compiler_guidance_signal(
+    compiler_guidance: Optional[Mapping[str, Any]],
+) -> dict[str, Any]:
+    if not isinstance(compiler_guidance, Mapping):
+        return {
+            "active": False,
+            "route": "",
+            "semantic_terms": (),
+            "surface_features": (),
+        }
+
+    routes: set[str] = set()
+    for key in ("compiler_guidance_todo_routes", "top_todo_routes"):
+        value = compiler_guidance.get(key)
+        if isinstance(value, Mapping):
+            routes.update(
+                _normalized_guidance_token(route) for route in value.keys()
+            )
+        elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            routes.update(_normalized_guidance_token(route) for route in value)
+    single_route = _normalized_guidance_token(compiler_guidance.get("route"))
+    if single_route:
+        routes.add(single_route)
+
+    semantic_terms = _guidance_tokens(
+        compiler_guidance.get("compiler_guidance_semantic_overlay_terms")
+    )
+    surface_features = _guidance_tokens(
+        compiler_guidance.get("compiler_guidance_surface_features")
+    )
+    route = "repair_tdfol_bridge_parse"
+    has_route = route in routes
+    conditioned_temporal = any(
+        term in {"if", "when"} for term in semantic_terms
+    ) or any("conditioned+temporal" in feature for feature in surface_features)
+    has_deontic_surface = (
+        "shall" in semantic_terms
+        or "may" in semantic_terms
+        or any("polarity-template:" in feature for feature in surface_features)
+    )
+    return {
+        "active": bool(has_route and conditioned_temporal and has_deontic_surface),
+        "route": route if has_route else "",
+        "semantic_terms": tuple(sorted(semantic_terms)),
+        "surface_features": tuple(sorted(surface_features)),
+    }
+
+
+def _tdfol_guidance_formula(
+    text: str,
+    *,
+    norms: Sequence[Mapping[str, Any]],
+    guidance: Mapping[str, Any],
+) -> Any:
+    from ipfs_datasets_py.logic.TDFOL.tdfol_core import (
+        BinaryFormula,
+        Constant,
+        DeonticFormula,
+        DeonticOperator,
+        LogicOperator,
+        Predicate,
+        TemporalFormula,
+        TemporalOperator,
+        UnaryFormula,
+    )
+
+    source_norm = norms[0] if norms else _synthesized_norm_from_text(text) or {}
+    actor = _symbol(source_norm.get("actor") or _infer_actor_from_text(text))
+    action_hint = (
+        source_norm.get("action")
+        if not str(source_norm.get("source_id") or "").startswith("tdfol:text:")
+        else ""
+    )
+    action = _predicate_name(
+        action_hint
+        or source_norm.get("predicate")
+        or _infer_guidance_action_from_text(text)
+    )
+    condition_name = _predicate_name(
+        source_norm.get("condition") or _infer_condition_from_text(text)
+    )
+    consequence: Any = Predicate(action, (Constant(actor),))
+    semantic_terms = set(guidance.get("semantic_terms") or ())
+    surface_features = set(guidance.get("surface_features") or ())
+    negative_scope = "not" in semantic_terms or any(
+        "negative_scope" in feature for feature in surface_features
+    )
+    if negative_scope:
+        consequence = UnaryFormula(LogicOperator.NOT, consequence)
+
+    modality_text = " ".join(
+        (
+            str(source_norm.get("modality") or source_norm.get("norm_type") or ""),
+            " ".join(sorted(semantic_terms)),
+            " ".join(sorted(surface_features)),
+        )
+    ).lower()
+    if "permission" in modality_text or "may" in semantic_terms:
+        deontic_operator = DeonticOperator.PERMISSION
+    elif "obligation" in modality_text or "shall" in semantic_terms:
+        deontic_operator = DeonticOperator.OBLIGATION
+    elif "prohibition" in modality_text or "prohibit" in modality_text:
+        deontic_operator = DeonticOperator.PROHIBITION
+    else:
+        deontic_operator = DeonticOperator.OBLIGATION
+
+    implication = BinaryFormula(
+        LogicOperator.IMPLIES,
+        Predicate(condition_name, (Constant("context"),)),
+        DeonticFormula(deontic_operator, consequence, agent=Constant(actor)),
+    )
+    return TemporalFormula(TemporalOperator.ALWAYS, implication)
+
+
+def _guidance_tokens(value: Any) -> set[str]:
+    if isinstance(value, Mapping):
+        return {
+            token
+            for token in (_normalized_guidance_token(item) for item in value.keys())
+            if token
+        }
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        return {
+            token
+            for token in (_normalized_guidance_token(item) for item in value)
+            if token
+        }
+    token = _normalized_guidance_token(value)
+    return {token} if token else set()
+
+
+def _normalized_guidance_token(value: Any) -> str:
+    return str(value or "").strip().lower()
+
+
+def _infer_condition_from_text(text: str) -> str:
+    normalized = " ".join(str(text or "").split())
+    lowered = normalized.lower()
+    match = re.search(
+        r"\b(?:if|when)\s+(.+?)(?:,\s*|\s+shall\b|\s+must\b|\s+may\b)",
+        lowered,
+    )
+    if match:
+        return match.group(1)
+    if " when " in f" {lowered} ":
+        return "when_condition"
+    if " if " in f" {lowered} ":
+        return "if_condition"
+    return "guidance_condition"
+
+
+def _infer_guidance_action_from_text(text: str) -> str:
+    lowered = " ".join(str(text or "").lower().split())
+    match = re.search(
+        r"\b(?:shall|must|may)\s+(?:not\s+)?(.+?)(?:\.|;|$)",
+        lowered,
+    )
+    if match:
+        return match.group(1)
+    return _infer_action_from_text(text)
 
 
 def coerce_tdfol_formula(formula: Any) -> Optional[Any]:

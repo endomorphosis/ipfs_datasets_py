@@ -147,7 +147,7 @@ def flogic_triples_to_graph_data(
         subject = triple["subject"]
         predicate = triple["predicate"]
         obj = triple["object"]
-        projection_view = _projection_view_for_predicate(predicate)
+        projection_view = _projection_view_for_triple(predicate, obj)
         subject_node = _ensure_node(node_map, subject, labels=[FLOGIC_RESOURCE_LABEL])
         object_labels = [FLOGIC_VALUE_LABEL]
         if predicate == "type":
@@ -492,7 +492,7 @@ def _selected_frame_from_triples(triples: Sequence[Mapping[str, str]]) -> str:
     return ""
 
 
-def _projection_view_for_predicate(predicate: str) -> str:
+def _projection_view_for_triple(predicate: str, obj: str = "") -> str:
     normalized = str(predicate or "").strip().lower()
     if not normalized:
         return "fact"

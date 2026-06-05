@@ -63,15 +63,29 @@ class DeonticNormsBridgeAdapter:
         coverage_records = _list_of_dicts(
             metadata.get("legal_prover_syntax_target_coverage_records")
         )
+        embedded_prover_records = _prover_syntax_records_by_source_from_norm_rows(
+            norms or deontic_source_rows
+        )
         capability_records = _list_of_dicts(
             metadata.get("legal_parser_capability_profile_records")
         )
         if not formula_records and norm_objects:
             formula_records = _formula_records_from_norm_objects(norm_objects)
-        if not coverage_records and norm_objects:
-            coverage_records = _coverage_records_from_norm_objects(norm_objects)
-        elif _coverage_records_need_rebuild(coverage_records) and norm_objects:
-            coverage_records = _coverage_records_from_norm_objects(norm_objects)
+        if not coverage_records:
+            if embedded_prover_records:
+                coverage_records = _coverage_records_from_embedded_prover_records(
+                    embedded_prover_records
+                )
+            elif norm_objects:
+                coverage_records = _coverage_records_from_norm_objects(norm_objects)
+        elif _coverage_records_need_rebuild(coverage_records):
+            if embedded_prover_records:
+                coverage_records = _coverage_records_from_embedded_prover_records(
+                    embedded_prover_records
+                )
+            elif norm_objects:
+                coverage_records = _coverage_records_from_norm_objects(norm_objects)
+        coverage_records = _normalize_coverage_validation_records(coverage_records)
         if not capability_records and norm_objects:
             capability_records = _capability_records_from_norm_objects(norm_objects)
         deontic_exports = _deontic_export_context_from_parser_elements(
@@ -371,6 +385,47 @@ def _coverage_records_from_norm_objects(norm_objects: Sequence[Any]) -> list[dic
     )
 
     return build_prover_syntax_target_coverage_records_from_irs(norm_objects)
+
+
+def _coverage_records_from_embedded_prover_records(
+    records_by_source: Mapping[str, Sequence[Mapping[str, Any]]],
+) -> list[dict[str, Any]]:
+    """Summarize nested target-level prover rows into bridge coverage reports."""
+
+    if not records_by_source:
+        return []
+    from ipfs_datasets_py.logic.deontic.exports import (
+        build_prover_syntax_target_coverage_record,
+    )
+
+    return [
+        build_prover_syntax_target_coverage_record(source_id, records)
+        for source_id, records in sorted(records_by_source.items())
+        if source_id and records
+    ]
+
+
+def _prover_syntax_records_by_source_from_norm_rows(
+    rows: Sequence[Mapping[str, Any]],
+) -> dict[str, list[dict[str, Any]]]:
+    """Extract target-level prover syntax rows embedded in LegalNormIR metadata."""
+
+    records_by_source: dict[str, list[dict[str, Any]]] = {}
+    for row in rows or []:
+        if not isinstance(row, Mapping):
+            continue
+        source_id = str(row.get("source_id") or "").strip()
+        if not source_id:
+            continue
+        records: list[dict[str, Any]] = []
+        for key in ("prover_syntax_records", "local_prover_syntax_records"):
+            records.extend(_list_of_dicts(row.get(key)))
+        for record in records:
+            record_source_id = str(record.get("source_id") or "").strip()
+            if not record_source_id:
+                record["source_id"] = source_id
+            records_by_source.setdefault(source_id, []).append(record)
+    return records_by_source
 
 
 def _coverage_records_need_rebuild(records: Sequence[Mapping[str, Any]]) -> bool:
@@ -1458,6 +1513,33 @@ def _coverage_record_requires_validation(record: Mapping[str, Any]) -> bool:
     return False
 
 
+def _normalize_coverage_validation_records(
+    records: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    """Clear stale validation flags when a complete quality gate validates a row."""
+
+    normalized: list[dict[str, Any]] = []
+    for record in records or []:
+        if not isinstance(record, Mapping):
+            continue
+        row = dict(record)
+        summary = row.get("coverage_summary")
+        if isinstance(summary, Mapping):
+            row["coverage_summary"] = dict(summary)
+
+        if _coverage_record_validated_by_quality_gate(row):
+            row["requires_validation"] = False
+            row["validated_by_quality_gate"] = True
+            if isinstance(row.get("coverage_summary"), Mapping):
+                coverage_summary = dict(row["coverage_summary"])
+                coverage_summary["requires_validation"] = False
+                coverage_summary["validated_by_quality_gate"] = True
+                row["coverage_summary"] = coverage_summary
+
+        normalized.append(row)
+    return normalized
+
+
 def _coverage_record_validated_by_quality_gate(record: Mapping[str, Any]) -> bool:
     """Return whether bridge-level target quality clears stale validation flags."""
 
@@ -1474,7 +1556,7 @@ def _coverage_record_validated_by_quality_gate(record: Mapping[str, Any]) -> boo
     if not isinstance(quality_summary, Mapping):
         quality_summary = record.get("quality_gate_summary")
     if not isinstance(quality_summary, Mapping):
-        return False
+        quality_summary = {}
 
     required_targets = _normalized_target_names(
         summary.get("required_targets") or record.get("required_targets")
@@ -1503,7 +1585,13 @@ def _coverage_record_validated_by_quality_gate(record: Mapping[str, Any]) -> boo
     if not all_required_passed:
         return False
 
-    if quality_summary.get("quality_gate_all_targets_complete") is not True:
+    quality_complete = quality_summary.get("quality_gate_all_targets_complete")
+    legacy_complete_without_quality_summary = (
+        not quality_summary
+        and all_required_passed
+        and bool(required_targets)
+    )
+    if quality_complete is not True and not legacy_complete_without_quality_summary:
         return False
     if int(quality_summary.get("failed_quality_check_count") or 0) > 0:
         return False
@@ -1579,9 +1667,9 @@ def _merge_phase8_validation_from_coverage_records(
         blockers = set(_list_of_strings(row.get("coverage_blockers")))
         blockers.update(_list_of_strings(coverage_record.get("coverage_blockers")))
 
-        requires_validation = bool(row.get("requires_validation")) or _coverage_record_requires_validation(
-            coverage_record
-        )
+        requires_validation = _truthy_flag(
+            row.get("requires_validation")
+        ) or _coverage_record_requires_validation(coverage_record)
         row["coverage_blockers"] = sorted(blockers)
         row["requires_validation"] = requires_validation
         row["phase8_quality_complete"] = (

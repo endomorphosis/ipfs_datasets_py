@@ -207,7 +207,13 @@ class ZKPProver:
             'security_level': self.security_level,
         }
         if metadata:
-            for key in ("seed", "circuit_version", "ruleset_id"):
+            for key in (
+                "seed",
+                "circuit_version",
+                "ruleset_id",
+                "compiler_guidance_ref",
+                "compiler_guidance_version",
+            ):
                 if key in metadata:
                     meta_ctx[key] = metadata.get(key)
 
@@ -255,4 +261,3 @@ class ZKPProver:
             private_axioms=private_axioms,
             metadata=metadata,
         )
-

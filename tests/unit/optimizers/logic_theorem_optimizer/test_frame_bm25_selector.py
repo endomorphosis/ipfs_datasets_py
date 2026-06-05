@@ -1206,6 +1206,24 @@ def test_frame_ontology_contextualized_terms_contextualize_predicate_token_and_m
     assert "citation_section_primary_number_magnitude_bucket_lt_1k" in terms
 
 
+def test_frame_ontology_contextualized_terms_audit_zero_digit_predicates_by_context() -> None:
+    terms = frame_ontology_contextualized_terms(
+        feature_keys=[
+            "flogic:citation_title_section_primary_number_span_has_zero_digit:false",
+            "flogic:citation_title_section_primary_number_span_zero_digit_count:0",
+            "flogic:citation_title_section_terminal_number_span_has_zero_digit:false",
+            "flogic:citation_section_number_trailing_zero_count_positioned:1:0",
+            "flogic:citation_section_primary_number_trailing_zero_count:100",
+        ]
+    )
+
+    assert "citation_title_section_primary_number_span_has_zero_digit_false" in terms
+    assert "citation_title_section_primary_number_span_zero_digit_count_0" in terms
+    assert "citation_title_section_terminal_number_span_has_zero_digit_false" in terms
+    assert "citation_section_number_trailing_zero_count_positioned_0" in terms
+    assert "citation_section_primary_number_trailing_zero_count_100" in terms
+
+
 def test_frame_ontology_contextualized_terms_contextualize_modal_cues_and_low_signal_digit_signatures() -> None:
     terms = frame_ontology_contextualized_terms(
         feature_keys=[

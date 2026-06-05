@@ -35,6 +35,7 @@ class ModalFrameLogicBridgeAdapter:
         citation: Optional[str] = None,
         source: str = "us_code",
         source_embedding: Optional[Sequence[float]] = None,
+        compiler_guidance: Optional[Mapping[str, Any]] = None,
     ) -> tuple[LegalIRDocument, Any]:
         """Encode legal text into the canonical bridge IR envelope."""
 
@@ -45,6 +46,7 @@ class ModalFrameLogicBridgeAdapter:
             citation=citation,
             source=source,
             source_embedding=source_embedding,
+            compiler_guidance=compiler_guidance,
         )
         return self._ir_document_from_codec_result(
             codec_result,
@@ -71,6 +73,7 @@ class ModalFrameLogicBridgeAdapter:
         title: str = "modal",
         section: Optional[str] = None,
         source_embedding: Optional[Sequence[float]] = None,
+        compiler_guidance: Optional[Mapping[str, Any]] = None,
         evaluate_provers: Optional[bool] = None,
     ) -> BridgeEvaluationReport:
         """Run the full bridge: encode, graph-project, and proof-gate."""
@@ -81,6 +84,7 @@ class ModalFrameLogicBridgeAdapter:
             citation=citation,
             source=source,
             source_embedding=source_embedding,
+            compiler_guidance=compiler_guidance,
         )
         graph_result = GraphProjectionResult.from_graph_data(codec_result.neo4j_graph_data)
         proof_gate = ProofGateResult()

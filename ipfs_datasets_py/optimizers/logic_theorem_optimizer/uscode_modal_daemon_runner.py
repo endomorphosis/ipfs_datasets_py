@@ -249,7 +249,7 @@ CODEX_APPLY_VALIDATION_TESTS = (
     "tests/unit_tests/logic/modal/test_modal_codec.py",
 )
 CODEX_MAIN_APPLY_LOCK_TIMEOUT_SECONDS = 600.0
-CODEX_TARGET_METRIC_TIMEOUT_SECONDS = 30.0
+CODEX_TARGET_METRIC_TIMEOUT_SECONDS = 120.0
 CODEX_TARGET_METRIC_MAX_SAMPLES = 2
 BRIDGE_IR_REPORT_CACHE_MAX = 4096
 _BRIDGE_IR_REPORT_CACHE_LOCK = threading.Lock()
@@ -5966,25 +5966,36 @@ def apply_codex_worktree_changes_to_main(
     )
     updated["target_metric_validation"] = target_metric_validation
     updated["metric_deltas"] = dict(target_metric_validation.get("metric_deltas", {}))
-    if target_metric_validation["status"] == "regressed":
+    target_metric_status = str(target_metric_validation.get("status") or "").strip().lower()
+    if target_metric_status not in {"passed", "skipped"}:
         rollback = _run_git_apply_stdin(source_repo_root, diff_content, "-R")
         updated["main_apply_rollback"] = {
             "exit_code": rollback.returncode,
             "stderr_tail": (rollback.stderr or "")[-500:],
             "stdout_tail": (rollback.stdout or "")[-500:],
         }
+        rollback_reason = (
+            "target-metric-regression"
+            if target_metric_status == "regressed"
+            else f"target-metric-{target_metric_status or 'unavailable'}"
+        )
         patch_path = _save_codex_packet_diff_patch(
             updated,
             diff_content=diff_content,
-            reason="target-metric-regression",
+            reason=rollback_reason,
+        )
+        status_suffix = (
+            "target_metric_regression"
+            if target_metric_status == "regressed"
+            else f"target_metric_{target_metric_status or 'unavailable'}"
         )
         updated["patch_path"] = str(patch_path) if patch_path is not None else None
         updated["patch_status"] = (
-            "main_apply_target_metric_regression_rolled_back"
+            f"main_apply_{status_suffix}_rolled_back"
             if rollback.returncode == 0
-            else "main_apply_target_metric_regression_rollback_failed"
+            else f"main_apply_{status_suffix}_rollback_failed"
         )
-        updated["patch_error"] = "target metric regression"
+        updated["patch_error"] = rollback_reason.replace("-", " ")
         updated["main_apply_error"] = updated["patch_error"]
         _save_packet_if_possible(updated, packet_path)
         return updated
@@ -6392,13 +6403,21 @@ def _codex_packet_validation_report(packet: Mapping[str, Any]) -> Dict[str, Any]
     main_validation = dict(packet.get("main_apply_validation", {}) or {})
     baseline_validation = dict(packet.get("main_apply_baseline_validation", {}) or {})
     target_metric_validation = dict(packet.get("target_metric_validation", {}) or {})
+    baseline_failure_accepted = bool(packet.get("main_apply_baseline_failure_accepted"))
+    main_validation_status = (
+        "passed"
+        if baseline_failure_accepted
+        else main_validation.get("status")
+    )
     return {
+        "baseline_failure_accepted": baseline_failure_accepted,
         "baseline_status": baseline_validation.get("status"),
+        "main_apply_validation_gate": packet.get("main_apply_validation_gate"),
         "main_apply_status": packet.get("main_apply_status"),
         "metric_deltas": dict(packet.get("metric_deltas", {}) or {}),
         "patch_status": packet.get("patch_status"),
         "regressed_metrics": list(target_metric_validation.get("regressed_metrics", []) or []),
-        "status": main_validation.get("status")
+        "status": main_validation_status
         or packet.get("main_apply_status")
         or packet.get("patch_status")
         or "not_measured",

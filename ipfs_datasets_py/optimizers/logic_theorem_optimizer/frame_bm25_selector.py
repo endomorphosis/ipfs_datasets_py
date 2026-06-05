@@ -374,6 +374,9 @@ _FRAME_ONTOLOGY_CONTEXTUAL_ALWAYS_PREDICATE_FRAGMENTS: tuple[str, ...] = (
     "predicate_token",
     "_terminal_number_digit_count_bucket",
     "_terminal_number_span_digit_count_bucket",
+    "_has_zero_digit",
+    "_trailing_zero_count",
+    "_zero_digit_count",
 )
 _FRAME_ONTOLOGY_FEATURE_VALUE_MAX_DEPTH = 6
 _FRAME_ONTOLOGY_FEATURE_VALUE_MAX_VALUES = 2048

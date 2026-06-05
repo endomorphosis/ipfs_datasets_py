@@ -473,6 +473,40 @@ _LEGAL_IR_VIEW_PROTOTYPES: tuple[str, ...] = (
     "CEC.native",
     "zkp.circuits",
 )
+_COMPILER_GUIDANCE_PROMOTED_SURFACE_MODAL_SLOTS: Mapping[
+    str,
+    tuple[tuple[str, str, str], ...],
+] = {
+    "if": (("conditional_normative", "O|", "condition"),),
+    "not": (("deontic", "F", "negative_scope"),),
+    "when": (
+        ("conditional_normative", "O|", "condition"),
+        ("temporal", "X", "temporal_scope"),
+    ),
+}
+_COMPILER_GUIDANCE_BLOCKED_SURFACE_TERMS: frozenset[str] = frozenset(
+    {
+        "may",
+        "shall",
+    }
+)
+_COMPILER_GUIDANCE_PROMOTED_LEGAL_IR_VIEW_GAPS: frozenset[str] = frozenset(
+    {
+        "cec_native:overrepresented",
+        "deontic_ir:underrepresented",
+        "external_provers_router:overrepresented",
+        "knowledge_graphs_neo4j_compat:overrepresented",
+        "modal_frame_logic:underrepresented",
+        "tdfol_prover:underrepresented",
+        "zkp_circuits:underrepresented",
+    }
+)
+_COMPILER_GUIDANCE_PROMOTED_TODO_ROUTES: frozenset[str] = frozenset(
+    {
+        "repair_cec_dcec_bridge",
+        "repair_multiview_legal_ir_graph_projection",
+    }
+)
 _CANONICAL_MODAL_OPERATOR_LABELS: Mapping[Tuple[str, str], str] = {
     ("deontic", "O"): "obligation",
     ("deontic", "P"): "permission",
@@ -938,14 +972,13 @@ _CROSS_FAMILY_BRIDGE_FAMILY_PRIORITY: Mapping[str, int] = {
 _SOURCE_ANCHOR_DIRECTIONAL_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = {
     "alethic": ("conditional_normative", "deontic", "temporal"),
     "deontic": ("conditional_normative", "deontic", "temporal"),
-    "frame": ("deontic", "doxastic", "frame", "temporal"),
-    "deontic": ("conditional_normative", "deontic"),
     "frame": ("conditional_normative", "deontic", "doxastic", "frame", "temporal"),
     "temporal": ("conditional_normative", "deontic", "epistemic", "temporal"),
 }
 _DECOMPILER_REFINED_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = {
+    "alethic": ("deontic",),
     "conditional_normative": ("temporal",),
-    "deontic": ("conditional_normative",),
+    "deontic": ("conditional_normative", "temporal"),
     "frame": ("conditional_normative", "deontic", "frame", "temporal"),
     "temporal": ("deontic",),
 }
@@ -1205,9 +1238,10 @@ _REFINED_HEADING_BRIDGE_SOURCE_FAMILIES: frozenset[str] = frozenset(
     }
 )
 _TYPED_IR_REFINED_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = {
+    "alethic": ("deontic",),
     "conditional_normative": ("conditional_normative",),
-    "deontic": ("deontic",),
-    "frame": ("deontic", "frame"),
+    "deontic": ("deontic", "temporal"),
+    "frame": ("deontic", "frame", "temporal"),
     "temporal": ("deontic", "temporal"),
 }
 _REFINED_HEADING_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[
@@ -3643,6 +3677,29 @@ def _compiler_guidance_phrases(
     ):
         for term in overlay_terms[:8]:
             add("refined_compiler_guidance_surface_term", term)
+    for term in _compiler_guidance_promoted_surface_terms(metadata):
+        add("compiler_guidance_promoted_surface_term", term)
+        for family, symbol, semantic_role in (
+            _COMPILER_GUIDANCE_PROMOTED_SURFACE_MODAL_SLOTS.get(term, ())
+        ):
+            add("compiler_guidance_promoted_surface_term_family", f"{term}:{family}")
+            add(
+                "compiler_guidance_promoted_modal_bridge_signature",
+                f"{family}:{symbol}:{term}",
+            )
+            add(
+                "compiler_guidance_promoted_semantic_role",
+                f"{term}:{semantic_role}",
+            )
+            if semantic_role == "negative_scope":
+                add("compiler_guidance_promoted_force_polarity", semantic_role)
+    for gap in _compiler_guidance_promoted_legal_ir_view_gaps(metadata):
+        view, direction = gap.split(":", 1)
+        add("compiler_guidance_promoted_legal_ir_view_gap", gap)
+        add("compiler_guidance_promoted_legal_ir_view_gap_direction", gap)
+        add(f"compiler_guidance_promoted_legal_ir_{direction}_view", view)
+    for route in _compiler_guidance_promoted_todo_routes(metadata):
+        add("compiler_guidance_promoted_todo_route", route)
 
     before = _clean_text(
         str(metadata.get("compiler_guidance_selected_frame_before") or "")
@@ -3661,6 +3718,136 @@ def _compiler_guidance_phrases(
         )
 
     return phrases
+
+
+def _compiler_guidance_attribution_summary(
+    metadata: Mapping[str, Any],
+) -> Mapping[str, Any]:
+    summary = metadata.get("compiler_guidance_attribution_summary")
+    return summary if isinstance(summary, Mapping) else {}
+
+
+def _compiler_guidance_summary_values(
+    metadata: Mapping[str, Any],
+    key: str,
+) -> List[str]:
+    summary = _compiler_guidance_attribution_summary(metadata)
+    raw_values = summary.get(key)
+    if isinstance(raw_values, Mapping):
+        iterable: Sequence[Any] = tuple(raw_values)
+    elif isinstance(raw_values, Sequence) and not isinstance(raw_values, (str, bytes)):
+        iterable = raw_values
+    elif raw_values is None:
+        iterable = ()
+    else:
+        iterable = (raw_values,)
+    values: List[str] = []
+    for value in iterable:
+        cleaned = _slot_safe_family_key(_clean_text(str(value or "")).lower())
+        if cleaned and cleaned not in values:
+            values.append(cleaned)
+    return values
+
+
+def _compiler_guidance_promoted_surface_terms(
+    metadata: Mapping[str, Any],
+) -> List[str]:
+    pass_terms = _compiler_guidance_summary_values(
+        metadata,
+        "pass_semantic_overlay_terms",
+    )
+    fail_terms = set(
+        _compiler_guidance_summary_values(metadata, "fail_semantic_overlay_terms")
+    )
+    if not pass_terms:
+        raw_terms = metadata.get("compiler_guidance_semantic_overlay_terms")
+        if isinstance(raw_terms, Sequence) and not isinstance(raw_terms, (str, bytes)):
+            pass_terms = [
+                _slot_safe_family_key(_clean_text(str(term or "")).lower())
+                for term in raw_terms
+            ]
+    blocked_terms = fail_terms | set(_COMPILER_GUIDANCE_BLOCKED_SURFACE_TERMS)
+    return [
+        term
+        for term in _unique_preserve_order(pass_terms)
+        if term
+        and term in _COMPILER_GUIDANCE_PROMOTED_SURFACE_MODAL_SLOTS
+        and term not in blocked_terms
+    ]
+
+
+def _compiler_guidance_promoted_legal_ir_view_gaps(
+    metadata: Mapping[str, Any],
+) -> List[str]:
+    summary = _compiler_guidance_attribution_summary(metadata)
+    raw_pass_gaps = summary.get("pass_legal_ir_view_gaps")
+    if isinstance(raw_pass_gaps, Mapping):
+        raw_gap_values: Sequence[Any] = tuple(raw_pass_gaps)
+    elif isinstance(raw_pass_gaps, Sequence) and not isinstance(
+        raw_pass_gaps,
+        (str, bytes),
+    ):
+        raw_gap_values = raw_pass_gaps
+    elif raw_pass_gaps is None:
+        raw_gap_values = ()
+    else:
+        raw_gap_values = (raw_pass_gaps,)
+    pass_gaps = [
+        _compiler_guidance_gap_key(value)
+        for value in raw_gap_values
+        if _compiler_guidance_gap_key(value)
+    ]
+    if not pass_gaps:
+        raw_gaps = metadata.get("compiler_guidance_legal_ir_view_gap_distribution")
+        if isinstance(raw_gaps, Mapping):
+            pass_gaps = [
+                f"{_slot_safe_family_key(_clean_text(str(view or '')).lower())}:"
+                f"{'underrepresented' if _safe_float(weight) > 0.0 else 'overrepresented'}"
+                for view, weight in raw_gaps.items()
+                if _slot_safe_family_key(_clean_text(str(view or "")).lower())
+                and abs(_safe_float(weight)) > 1.0e-12
+            ]
+    return [
+        gap
+        for gap in _unique_preserve_order(pass_gaps)
+        if gap in _COMPILER_GUIDANCE_PROMOTED_LEGAL_IR_VIEW_GAPS
+    ]
+
+
+def _compiler_guidance_gap_key(value: Any) -> str:
+    cleaned = _clean_text(str(value or "")).lower()
+    if ":" not in cleaned:
+        return ""
+    view, direction = cleaned.split(":", 1)
+    safe_view = _slot_safe_family_key(view)
+    safe_direction = _slot_safe_family_key(direction)
+    if not safe_view or safe_direction not in {"overrepresented", "underrepresented"}:
+        return ""
+    return f"{safe_view}:{safe_direction}"
+
+
+def _compiler_guidance_promoted_todo_routes(
+    metadata: Mapping[str, Any],
+) -> List[str]:
+    routes = _compiler_guidance_summary_values(metadata, "pass_todo_routes")
+    if not routes:
+        raw_features = metadata.get("compiler_guidance_ranked_features")
+        if isinstance(raw_features, Sequence) and not isinstance(
+            raw_features,
+            (str, bytes),
+        ):
+            routes = [
+                route
+                for item in raw_features
+                if isinstance(item, Mapping)
+                for route in [_guidance_todo_route(str(item.get("feature") or ""))]
+                if route
+            ]
+    return [
+        route
+        for route in _unique_preserve_order(routes)
+        if route in _COMPILER_GUIDANCE_PROMOTED_TODO_ROUTES
+    ]
 
 
 def _safe_float(value: Any) -> float:
@@ -5864,36 +6051,7 @@ def _typed_ir_reconstruction_phrases(
     seen: set[str] = set()
     for formula in formulas:
         spans = [[formula.provenance.start_char, formula.provenance.end_char]]
-        values: List[str] = []
-        predicate_text = _predicate_phrase(formula)
-        if predicate_text:
-            values.append(predicate_text)
-        values.extend(_phrase_values(formula.predicate.arguments))
-        values.extend(
-            _resolved_formula_conditions(
-                document=document,
-                formula=formula,
-            )
-        )
-        values.extend(
-            _resolved_formula_exceptions(
-                document=document,
-                formula=formula,
-            )
-        )
-        anchors = _source_role_anchor_values(document=document, formula=formula)
-        for role_name in (
-            "subject",
-            "action",
-            "object",
-            "condition",
-            "exception",
-            "temporal",
-        ):
-            anchor = _clean_text(anchors.get(role_name, ""))
-            if anchor:
-                values.append(anchor)
-        rendered = _clean_text(" ".join(_unique_preserve_order(values)))
+        rendered = _typed_formula_surface_text(document=document, formula=formula)
         if not rendered or rendered in seen:
             continue
         seen.add(rendered)
@@ -5906,6 +6064,67 @@ def _typed_ir_reconstruction_phrases(
             )
         )
     return phrases
+
+
+def _typed_formula_surface_text(
+    *,
+    document: ModalIRDocument,
+    formula: ModalIRFormula,
+) -> str:
+    """Compose a clause-like surface from typed formula slots."""
+
+    anchors = _source_role_anchor_values(document=document, formula=formula)
+    subject = _clean_text(anchors.get("subject", ""))
+    cue = _clean_text(formula.metadata.get("cue") or "")
+    predicate_text = _predicate_phrase(formula)
+    action = _clean_text(anchors.get("action", ""))
+    object_text = _clean_text(anchors.get("object", ""))
+    temporal = _clean_text(anchors.get("temporal", ""))
+
+    predicate_parts: List[str] = []
+    if action:
+        predicate_parts.append(action)
+    if object_text and object_text.lower() not in {
+        value.lower() for value in predicate_parts
+    }:
+        predicate_parts.append(object_text)
+    if not predicate_parts and predicate_text:
+        predicate_parts.append(predicate_text)
+    predicate_surface = _clean_text(" ".join(predicate_parts))
+    if predicate_text and (
+        not predicate_surface
+        or len(_tokenize_for_similarity(predicate_surface))
+        < max(1, len(_tokenize_for_similarity(predicate_text)) // 2)
+    ):
+        predicate_surface = predicate_text
+
+    values: List[str] = []
+    if subject:
+        values.append(subject)
+    if cue:
+        values.append(cue)
+    if predicate_surface:
+        values.append(predicate_surface)
+    if temporal and temporal.lower() not in _clean_text(" ".join(values)).lower():
+        values.append(temporal)
+    values.extend(_phrase_values(formula.predicate.arguments))
+    values.extend(
+        _resolved_formula_conditions(
+            document=document,
+            formula=formula,
+        )
+    )
+    values.extend(
+        _resolved_formula_exceptions(
+            document=document,
+            formula=formula,
+        )
+    )
+    for role_name in ("condition", "exception"):
+        anchor = _clean_text(anchors.get(role_name, ""))
+        if anchor:
+            values.append(anchor)
+    return _clean_text(" ".join(_unique_preserve_order(values)))
 
 
 def _source_span_slot_phrases(
@@ -7294,6 +7513,57 @@ def _source_role_anchor_phrases(
             )
         )
 
+    def add_legal_ir_view_role_prototypes(
+        *,
+        role_name: str,
+        anchor: str,
+    ) -> None:
+        if not predicate_family:
+            return
+        role_key = _slot_safe_family_key(role_name)
+        anchor_key = _slot_safe_family_key(anchor)
+        if not role_key or not anchor_key:
+            return
+        role_label = _slot_safe_family_key(predicate_role_label or "clause")
+        slot_values: List[Tuple[str, str]] = [
+            (
+                f"source-{role_key}-family",
+                f"{predicate_family}||slot:source-{role_key}-family:{anchor_key}",
+            ),
+            (
+                f"source-{role_key}-role",
+                (
+                    f"{predicate_family}||slot:source-{role_key}-role:"
+                    f"{anchor_key}:{role_label}"
+                ),
+            ),
+        ]
+        if predicate_head and role_key in {"action", "object"}:
+            slot_values.append(
+                (
+                    f"source-{role_key}-predicate",
+                    (
+                        f"{predicate_family}||slot:source-{role_key}-predicate:"
+                        f"{anchor_key}:{predicate_head}"
+                    ),
+                )
+            )
+        for slot_name, slot_value in _unique_slot_values(slot_values):
+            add("family_semantic_slot_prototype", slot_value)
+            for view_name in _LEGAL_IR_VIEW_PROTOTYPES:
+                view_key = view_name.replace(".", "_")
+                add(
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    f"{slot_value}||{view_name}",
+                )
+                add(
+                    (
+                        "family_semantic_slot_legal_ir_view_prototype_"
+                        f"{predicate_family}_{slot_name}_{view_key}"
+                    ),
+                    slot_value,
+                )
+
     if role_set:
         add("source_role_set", role_set)
         add("source_surface_role_set", role_set)
@@ -7340,6 +7610,11 @@ def _source_role_anchor_phrases(
                 add(
                     f"source_{role_name}_family_pair_anchor",
                     f"{anchor}:{family_pair}",
+                )
+            if role_name in {"subject", "action", "object", "condition", "temporal"}:
+                add_legal_ir_view_role_prototypes(
+                    role_name=role_name,
+                    anchor=anchor,
                 )
         if predicate_role and role_name in {"subject", "action", "object"}:
             add(f"source_{role_name}_role", f"{anchor}:{predicate_role}")
@@ -7486,15 +7761,6 @@ def _typed_decompiler_bridge_phrases(
         if document is not None
         else [f"{family}->{family}"]
     )
-    legal_ir_views = (
-        "deontic.ir",
-        "TDFOL.prover",
-        "modal.frame_logic",
-        "external_provers.router",
-        "knowledge_graphs.neo4j_compat",
-        "CEC.native",
-        "zkp.circuits",
-    )
     phrases: List[DecodedModalPhrase] = []
     seen: set[Tuple[str, str]] = set()
 
@@ -7515,16 +7781,56 @@ def _typed_decompiler_bridge_phrases(
         )
 
     add("typed_decompiler_family", family)
+    source_operator = _clean_text(formula.operator.symbol)
+    source_system = _clean_text(formula.operator.system)
     for family_pair in source_family_pairs:
         pair_key = _slot_safe_family_pair_key(family_pair)
         add("typed_decompiler_family_pair", family_pair)
         if pair_key:
             add("typed_decompiler_family_pair_key", pair_key)
+        if "->" in family_pair:
+            source_family, target_family = (
+                _clean_text(part).lower()
+                for part in family_pair.split("->", 1)
+            )
+        else:
+            source_family = family
+            target_family = family
+        if not source_family or not target_family:
+            continue
+        target_operator = _typed_ir_refined_target_symbol(
+            target_family,
+            fallback_symbol=source_operator,
+        )
+        if source_operator and target_operator:
+            operator_pair = f"{source_operator}->{target_operator}"
+            add("typed_decompiler_operator_pair", operator_pair)
+            operator_pair_key = _modal_operator_pair_feature_key(
+                source_operator,
+                target_operator,
+            )
+            if operator_pair_key:
+                add("typed_decompiler_operator_pair_key", operator_pair_key)
+            bridge_signature = (
+                f"{source_family}:{source_system.lower()}:{source_operator}->"
+                f"{target_family}:{target_operator}:typed_decompiler"
+            )
+            add("typed_decompiler_bridge_signature", bridge_signature)
+            add(
+                f"typed_decompiler_{target_family}_bridge_signature",
+                bridge_signature,
+            )
+            if target_family == "temporal":
+                add("typed_decompiler_temporal_bridge_family_pair", family_pair)
+                add("typed_decompiler_temporal_bridge_signature", bridge_signature)
+            if target_family == "deontic":
+                add("typed_decompiler_deontic_bridge_family_pair", family_pair)
+                add("typed_decompiler_deontic_bridge_signature", bridge_signature)
     if predicate_head:
         semantic_slot = f"{family}||slot:predicate-head:{predicate_head}"
         add("family_semantic_slot_prototype", semantic_slot)
         add("typed_decompiler_predicate_head_family", f"{family}:{predicate_head}")
-        for view in legal_ir_views:
+        for view in _LEGAL_IR_VIEW_PROTOTYPES:
             add(
                 "family_semantic_slot_legal_ir_view_prototype",
                 f"{semantic_slot}||{view}",
@@ -7545,6 +7851,22 @@ def _typed_decompiler_bridge_phrases(
                         f"{clause_slot}_scope_family_pair",
                         f"{normalized_prefix}:{family_pair}",
                     )
+                    if "->" in family_pair:
+                        _, target_family = (
+                            _clean_text(part).lower()
+                            for part in family_pair.split("->", 1)
+                        )
+                    else:
+                        target_family = family
+                    target_operator = _typed_ir_refined_target_symbol(
+                        target_family,
+                        fallback_symbol=source_operator,
+                    )
+                    if target_family and target_operator:
+                        add(
+                            f"{clause_slot}_scope_typed_decompiler_target",
+                            f"{normalized_prefix}:{target_family}:{target_operator}",
+                        )
             content_value = _content_scope_value(scoped_value)
             if not content_value:
                 continue
@@ -9960,7 +10282,11 @@ def _typed_ir_refined_family_pair_slots(
                     ("refined_temporal_bridge_signature", signature),
                 )
             )
-        if target_family == "deontic" and formula_family in {"frame", "temporal"}:
+        if target_family == "deontic" and formula_family in {
+            "alethic",
+            "frame",
+            "temporal",
+        }:
             slots.extend(
                 (
                     ("typed_ir_refined_deontic_bridge_family_pair", pair),
@@ -9983,7 +10309,7 @@ def _typed_ir_refined_target_symbol(
     if normalized_family == "frame":
         return "Frame"
     if normalized_family == "temporal":
-        return fallback_symbol or "F"
+        return fallback_symbol if fallback_symbol in {"F", "G", "X"} else "F"
     return fallback_symbol
 
 

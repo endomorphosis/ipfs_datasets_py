@@ -98,6 +98,12 @@ class SimulatedBackend:
             "circuit_version": circuit_version,
             "ruleset_id": ruleset_id,
         }
+        guidance_ref = str(metadata_dict.get("compiler_guidance_ref") or "")
+        if guidance_ref:
+            public_inputs["compiler_guidance_ref"] = guidance_ref
+            public_inputs["compiler_guidance_version"] = int(
+                metadata_dict.get("compiler_guidance_version") or 1
+            )
         attestation_view = build_proof_attestation_view(
             proof_data=proof_data,
             public_inputs=public_inputs,

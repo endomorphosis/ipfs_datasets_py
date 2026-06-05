@@ -118,6 +118,12 @@ class Groth16Backend:
             "ruleset_id": ruleset_id,
             "circuit_ref": circuit_ref,
         }
+        guidance_ref = str(metadata_dict.get("compiler_guidance_ref") or "")
+        if guidance_ref:
+            witness["compiler_guidance_ref"] = guidance_ref
+            witness["compiler_guidance_version"] = int(
+                metadata_dict.get("compiler_guidance_version") or 1
+            )
 
         seed = metadata_dict.get("seed")
 
@@ -125,6 +131,13 @@ class Groth16Backend:
             proof = self._ffi().generate_proof(json.dumps(witness), seed=seed)
             public_inputs = proof.public_inputs if isinstance(getattr(proof, "public_inputs", None), dict) else {}
             metadata_out = proof.metadata if isinstance(getattr(proof, "metadata", None), dict) else {}
+            guidance_ref = str(metadata_dict.get("compiler_guidance_ref") or "")
+            if guidance_ref and isinstance(public_inputs, dict):
+                public_inputs.setdefault("compiler_guidance_ref", guidance_ref)
+                public_inputs.setdefault(
+                    "compiler_guidance_version",
+                    int(metadata_dict.get("compiler_guidance_version") or 1),
+                )
             attestation_view = build_proof_attestation_view(
                 proof_data=getattr(proof, "proof_data", b""),
                 public_inputs=public_inputs,

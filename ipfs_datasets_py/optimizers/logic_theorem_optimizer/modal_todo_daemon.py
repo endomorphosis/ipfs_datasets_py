@@ -2239,6 +2239,33 @@ class ModalTodoSupervisor:
                 todo.requeue(reason)
                 requeued_count += 1
             outcome = "requeued" if requeued_count else "failed_validation"
+        elif (
+            normalized_patch_status.startswith("main_apply_target_metric_")
+            and normalized_patch_status.endswith("_rolled_back")
+            and "regression" not in normalized_patch_status
+        ):
+            reason = normalized_patch_status.removeprefix("main_apply_").removesuffix(
+                "_rolled_back"
+            )
+            for todo_id in todo_ids:
+                todo = self.queue.get(todo_id)
+                if todo is None:
+                    continue
+                if int(todo.metadata.get("transient_failure_count", 0)) >= 3:
+                    _record_program_synthesis_failure_evidence(
+                        todo,
+                        reason=reason,
+                        validation_report=validation_report,
+                        patch_status=normalized_patch_status,
+                        codex_exec_status=normalized_exec_status,
+                    )
+                    failed_validation_count += int(
+                        self.queue.fail_validation(todo_id, reason=reason)
+                    )
+                    continue
+                todo.requeue(reason)
+                requeued_count += 1
+            outcome = "requeued" if requeued_count else "failed_validation"
         elif normalized_exec_status == "transient_failure":
             reason = "codex_exec_transient_failure"
             for todo_id in todo_ids:
@@ -3825,7 +3852,9 @@ def _record_program_synthesis_failure_evidence(
         for key, value in validation_report.items()
         if key
         in {
+            "baseline_failure_accepted",
             "baseline_status",
+            "main_apply_validation_gate",
             "main_apply_status",
             "metric_deltas",
             "patch_status",

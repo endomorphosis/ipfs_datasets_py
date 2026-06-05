@@ -3722,6 +3722,22 @@ def _apply_competing_scope_backfill(
             float(counts.get(alethic_family, 0.0)),
             _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
         )
+        alethic_count = float(counts.get(alethic_family, 0.0))
+    if (
+        temporal_count >= _TEMPORAL_ALETHIC_SCOPE_REINFORCEMENT_TRIGGER
+        and alethic_count <= _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT
+        and bool(signals.get("has_alethic_scope_phrase"))
+    ):
+        counts[alethic_family] = max(
+            float(counts.get(alethic_family, 0.0)),
+            _scaled_competing_scope_backfill(
+                source_count=temporal_count,
+                ratio=_REINFORCED_COMPETING_SCOPE_BACKFILL_RATIO,
+                minimum=_FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                maximum=_TEMPORAL_TO_ALETHIC_SCOPE_REINFORCEMENT_MAX,
+            ),
+        )
+        alethic_count = float(counts.get(alethic_family, 0.0))
     if (
         temporal_count >= _TEMPORAL_ALETHIC_SCOPE_REINFORCEMENT_TRIGGER
         and 0.0 < alethic_count <= _LOW_COMPETING_SCOPE_REINFORCEMENT_LIMIT
@@ -5042,6 +5058,33 @@ def _apply_refined_modal_family_cue_pair_balance(
         )
         temporal_count = float(counts.get(temporal_family, 0.0))
 
+    # deontic -> temporal:
+    # fee and appropriations clauses can repeat operative "shall/may" language
+    # while fiscal-year or until-expended terms carry the typed temporal scope.
+    if (
+        deontic_count > temporal_count
+        and has_deontic_scope
+        and has_temporal_scope
+        and has_statutory_scope_reference
+        and has_structural_conditional_scope
+        and (
+            bool(signals.get("has_temporal_fiscal_scope_phrase"))
+            or bool(signals.get("has_temporal_expended_scope_phrase"))
+        )
+        and not has_temporal_deadline_scope
+    ):
+        temporal_increment = _scaled_competing_scope_backfill(
+            source_count=max(deontic_count, conditional_count, 1.0),
+            ratio=0.1,
+            minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            maximum=_STRONG_TEMPORAL_COMPETING_SCOPE_BACKFILL_MAX,
+        )
+        counts[temporal_family] = max(
+            temporal_count,
+            temporal_count + temporal_increment,
+        )
+        temporal_count = float(counts.get(temporal_family, 0.0))
+
     # deontic -> conditional_normative:
     # phrase-only statutory scope (e.g., "with respect to") should still register a
     # conditional runner-up when deontic cues dominate.
@@ -5233,6 +5276,23 @@ def _apply_refined_modal_family_cue_pair_balance(
             ratio=0.24,
             minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
             maximum=_FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
+        counts[alethic_family] = max(
+            alethic_count,
+            alethic_floor,
+        )
+        alethic_count = float(counts.get(alethic_family, 0.0))
+    if (
+        temporal_count > alethic_count
+        and temporal_count >= _TEMPORAL_ALETHIC_SCOPE_REINFORCEMENT_TRIGGER
+        and has_temporal_scope
+        and bool(signals.get("has_alethic_scope_phrase"))
+    ):
+        alethic_floor = _scaled_competing_scope_backfill(
+            source_count=temporal_count,
+            ratio=_REINFORCED_COMPETING_SCOPE_BACKFILL_RATIO,
+            minimum=_FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            maximum=_TEMPORAL_TO_ALETHIC_SCOPE_REINFORCEMENT_MAX,
         )
         counts[alethic_family] = max(
             alethic_count,

@@ -85,6 +85,9 @@ _USCODE_10_3101_ADMINISTRATIVE_RESIDUAL_SPAN_TEXT = (
     "Sec. 3101 - General provisions. Administrative notice and hearing procedures "
     "for eligibility review and petition records."
 )
+_USCODE_44_3558_REPORTS_RESIDUAL_SPAN_TEXT = (
+    "Sec. 3558 - Major incident reporting. Congressional notification and reports."
+)
 _USCODE_25_5396_TODO_TEXT = (
     "U.S.C. Title 25 - INDIANS 25 U.S.C. United States Code, 2024 Edition Title 25 - INDIANS CHAPTER 46 - INDIAN SE"
     "LF-DETERMINATION AND EDUCATION ASSISTANCE SUBCHAPTER V - TRIBAL SELF-GOVERNANCE-INDIAN HEALTH SERVICE Sec. 539"
@@ -511,6 +514,27 @@ def test_refined_pair_balance_boosts_temporal_runner_up_in_statutory_status_cont
     _apply_refined_modal_family_cue_pair_balance(counts, signals)
 
     assert counts["temporal"] > 1.35
+
+
+def test_refined_pair_balance_preserves_alethic_scope_under_temporal_dominance() -> None:
+    counts = {
+        "temporal": 2.25,
+        "alethic": 0.0,
+        "deontic": 1.0,
+        "frame": 0.35,
+    }
+    signals = {
+        "has_temporal_scope": True,
+        "has_temporal_status_scope": True,
+        "has_alethic_scope": True,
+        "has_alethic_scope_phrase": True,
+        "has_deontic_scope": True,
+        "has_deontic_cue": True,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["alethic"] >= 1.0
 
 
 def test_spacy_decoder_promotes_frame_logits_over_hybrid_for_editorial_scope_text() -> None:
@@ -3682,6 +3706,43 @@ def test_spacy_refined_pair_balance_reinforces_temporal_for_purpose_scoped_stron
     assert counts["temporal"] > 0.9
 
 
+def test_spacy_refined_pair_balance_reinforces_temporal_for_fiscal_until_expended_scope() -> None:
+    counts = {
+        "deontic": 5.0,
+        "conditional_normative": 2.5,
+        "temporal": 1.0,
+        "frame": 0.4,
+    }
+    signals = {
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": False,
+        "has_deontic_cue": True,
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": True,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": True,
+        "has_conditional_scope_token": False,
+        "has_statutory_scope_reference": True,
+        "has_temporal_scope": True,
+        "has_temporal_cue": True,
+        "has_temporal_scope_phrase": True,
+        "has_temporal_fiscal_scope_phrase": True,
+        "has_temporal_expended_scope_phrase": True,
+        "has_temporal_scope_token": True,
+        "has_temporal_within_scope": False,
+        "has_temporal_status_scope": False,
+        "has_temporal_deadline_cue": False,
+        "has_calendar_date_scope": False,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_frame_editorial_scope_phrase": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["temporal"] >= 1.3
+
+
 def test_spacy_refined_pair_balance_reinforces_epistemic_for_temporal_statutory_competition() -> None:
     counts = {
         "temporal": 2.4,
@@ -6098,6 +6159,31 @@ def test_spacy_compiler_adds_administrative_notice_hearing_residual_span_coverag
         formula.provenance.citation == "10 U.S.C. 3101"
         for formula in modal_ir.formulas
     )
+
+
+def test_spacy_compiler_adds_report_heading_residual_span_coverage() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    encoding = encoder.encode(
+        _USCODE_44_3558_REPORTS_RESIDUAL_SPAN_TEXT,
+        document_id="us-code-44-3558.-9af6ffad8db763d4",
+        citation="44 U.S.C. 3558.",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    residual_formulas = [
+        formula
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    ]
+    residual_text_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in residual_formulas
+    }
+    assert "Congressional notification and reports." in residual_text_spans
 
 
 def test_spacy_compiler_replays_sec_prefixed_heading_zero_formula_sample_for_15_1693l() -> None:

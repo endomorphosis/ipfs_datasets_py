@@ -285,6 +285,86 @@ def test_compiler_spacy_backend_adds_residual_span_coverage_after_residual_fallb
     assert result.modal_ir.formulas[-1].metadata.get("fallback_rule") == "uscode_procedural_clause_v1"
 
 
+def test_parser_types_compact_uncovered_uscode_topic_headings_as_frame_spans() -> None:
+    parser = LegalModalParser()
+    modal_ir = parser.parse(
+        (
+            "The Secretary shall issue guidance. "
+            "Congressional declaration of purpose. "
+            "Authorization of appropriations. "
+            "Notification and information sharing."
+        ),
+        document_id="us-code-42-300ff-compact-topic-headings",
+        citation="42 U.S.C. 300ff",
+    )
+
+    residual_formulas = [
+        formula
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    ]
+
+    assert residual_formulas
+    residual_text = " ".join(
+        modal_ir.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ].lower()
+        for formula in residual_formulas
+    )
+    frame_text = " ".join(
+        modal_ir.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ].lower()
+        for formula in modal_ir.formulas
+        if formula.operator.family == ModalLogicFamily.FRAME.value
+    )
+    assert "congressional declaration of purpose" in frame_text
+    assert "authorization of appropriations" in residual_text
+    assert "notification and information sharing" in residual_text
+    assert all(formula.operator.family == ModalLogicFamily.FRAME.value for formula in residual_formulas)
+
+
+def test_compiler_spacy_backend_types_compact_uncovered_uscode_topic_headings_as_frame_spans() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+    result = compiler.compile(
+        (
+            "The Secretary shall issue guidance. "
+            "Congressional declaration of purpose. "
+            "Authorization of appropriations. "
+            "Notification and information sharing."
+        ),
+        document_id="us-code-42-300ff-compact-topic-headings",
+        citation="42 U.S.C. 300ff",
+    )
+
+    residual_formulas = [
+        formula
+        for formula in result.modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    ]
+
+    assert residual_formulas
+    residual_text = " ".join(
+        result.modal_ir.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ].lower()
+        for formula in residual_formulas
+    )
+    frame_text = " ".join(
+        result.modal_ir.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ].lower()
+        for formula in result.modal_ir.formulas
+        if formula.operator.family == ModalLogicFamily.FRAME.value
+    )
+    assert "congressional declaration of purpose" in frame_text
+    assert "authorization of appropriations" in residual_text
+    assert "notification and information sharing" in residual_text
+    assert all(formula.operator.family == ModalLogicFamily.FRAME.value for formula in residual_formulas)
+
+
 def test_compiler_spacy_backend_recovers_editorial_status_fallback_when_strict_fallback_is_cue_blocked() -> None:
     compiler = DeterministicModalCompiler(
         config=ModalCompilerConfig(parser_backend="spacy")

@@ -18,6 +18,12 @@ import hashlib
 _SIMZKP_MAGIC = b"SIMZKP\x00\x01"
 _SIMZKP_PROOF_LENGTH = 160
 _ATTESTATION_VIEW_VERSION = 1
+_DERIVED_PUBLIC_INPUT_KEYS = frozenset(
+    {
+        "attestation_ref",
+        "attestation_view_version",
+    }
+)
 
 
 def _bytes_from_proof_data(proof_data: object) -> bytes:
@@ -96,6 +102,40 @@ def _resolve_circuit_identity(public_inputs: Mapping[str, Any]) -> tuple[str, in
     return "knowledge_of_axioms", fallback_version
 
 
+def _json_safe_public_input(value: Any) -> Any:
+    if value is None or isinstance(value, (bool, int, float, str)):
+        return value
+    if isinstance(value, bytes):
+        return value.hex()
+    if isinstance(value, bytearray):
+        return bytes(value).hex()
+    if isinstance(value, memoryview):
+        return value.tobytes().hex()
+    if isinstance(value, Mapping):
+        return {
+            str(key): _json_safe_public_input(item)
+            for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))
+        }
+    if isinstance(value, (list, tuple)):
+        return [_json_safe_public_input(item) for item in value]
+    return str(value)
+
+
+def _canonical_public_inputs(public_inputs: Mapping[str, Any]) -> Dict[str, Any]:
+    """Return public inputs suitable for stable attestation-view commitments."""
+    return {
+        str(key): _json_safe_public_input(value)
+        for key, value in sorted(public_inputs.items(), key=lambda pair: str(pair[0]))
+        if str(key) not in _DERIVED_PUBLIC_INPUT_KEYS
+    }
+
+
+def _public_input_commitment(public_inputs: Mapping[str, Any]) -> tuple[Dict[str, Any], str]:
+    canonical = _canonical_public_inputs(public_inputs)
+    payload = json.dumps(canonical, sort_keys=True, separators=(",", ":"))
+    return canonical, hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
 def build_proof_attestation_view(
     *,
     proof_data: object,
@@ -112,7 +152,19 @@ def build_proof_attestation_view(
     theorem_hash = str(public_inputs_dict.get("theorem_hash") or "")
     axioms_commitment = str(public_inputs_dict.get("axioms_commitment") or "")
     ruleset_id = str(public_inputs_dict.get("ruleset_id") or "")
+    compiler_guidance_ref = str(
+        public_inputs_dict.get("compiler_guidance_ref")
+        or metadata_dict.get("compiler_guidance_ref")
+        or ""
+    )
+    compiler_guidance_version = _non_negative_int(
+        public_inputs_dict.get("compiler_guidance_version")
+        or metadata_dict.get("compiler_guidance_version")
+    )
     proof_digest = hashlib.sha256(proof_bytes).hexdigest()
+    canonical_public_inputs, public_inputs_commitment = _public_input_commitment(
+        public_inputs_dict
+    )
 
     attestation_basis = {
         "axioms_commitment": axioms_commitment,
@@ -121,11 +173,14 @@ def build_proof_attestation_view(
         "ruleset_id": ruleset_id,
         "theorem_hash": theorem_hash,
     }
+    if compiler_guidance_ref:
+        attestation_basis["compiler_guidance_ref"] = compiler_guidance_ref
+        attestation_basis["compiler_guidance_version"] = compiler_guidance_version
     attestation_ref = hashlib.sha256(
         json.dumps(attestation_basis, sort_keys=True, separators=(",", ":")).encode("utf-8")
     ).hexdigest()
 
-    return {
+    view = {
         "attestation_ref": attestation_ref,
         "attestation_view_version": _ATTESTATION_VIEW_VERSION,
         "axioms_commitment": axioms_commitment,
@@ -134,10 +189,27 @@ def build_proof_attestation_view(
         "circuit_version": circuit_version,
         "layout": layout,
         "proof_digest": proof_digest,
+        "public_input_count": len(canonical_public_inputs),
+        "public_input_keys": list(canonical_public_inputs.keys()),
+        "public_inputs_commitment": public_inputs_commitment,
         "proof_system": str(metadata_dict.get("proof_system") or ""),
         "ruleset_id": ruleset_id,
         "theorem_hash": theorem_hash,
     }
+    if compiler_guidance_ref:
+        view["compiler_guidance_ref"] = compiler_guidance_ref
+        view["compiler_guidance_version"] = compiler_guidance_version
+    return view
+
+
+def _non_negative_int(value: object, default: int = 1) -> int:
+    if isinstance(value, bool):
+        return default
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return default
+    return parsed if parsed >= 0 else default
 
 
 def proof_attestation_view_from_proof_dict(proof: Mapping[str, Any]) -> Dict[str, Any]:
@@ -155,7 +227,11 @@ def proof_attestation_view_from_proof_dict(proof: Mapping[str, Any]) -> Dict[str
     metadata_dict = _mapping_dict(metadata)
     embedded = metadata_dict.get("attestation_view")
     if isinstance(embedded, Mapping):
-        return dict(embedded)
+        public_inputs = _mapping_dict(proof.get("public_inputs"))
+        _, expected_public_inputs_commitment = _public_input_commitment(public_inputs)
+        embedded_dict = dict(embedded)
+        if embedded_dict.get("public_inputs_commitment") == expected_public_inputs_commitment:
+            return embedded_dict
 
     proof_data = proof.get("proof_data")
     proof_bytes: object = proof_data

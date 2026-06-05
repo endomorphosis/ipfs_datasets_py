@@ -84,12 +84,13 @@ class CecDcecBridgeAdapter:
         citation: Optional[str] = None,
         source: str = "us_code",
         source_embedding: Optional[Sequence[float]] = None,
+        compiler_guidance: Optional[Mapping[str, Any]] = None,
     ) -> tuple[LegalIRDocument, Mapping[str, Any]]:
         """Encode legal text into a DCEC bridge document."""
 
         norms = _deontic_norms_from_text(text, converter=self._converter())
         resolved_document_id = document_id or _document_id("dcec", text)
-        records = _dcec_records(norms)
+        records = _dcec_records(norms, compiler_guidance=compiler_guidance)
         triples = tuple(
             _dcec_frame_logic_triples(
                 resolved_document_id,
@@ -146,6 +147,9 @@ class CecDcecBridgeAdapter:
                             "selected_frame": str(record.get("selected_frame") or ""),
                             "selected_frame_source": str(
                                 record.get("selected_frame_source") or ""
+                            ),
+                            "compiler_guidance_source": str(
+                                record.get("compiler_guidance_source") or ""
                             ),
                             "modality": record["modality"],
                             "source_id": record["source_id"],
@@ -234,6 +238,10 @@ class CecDcecBridgeAdapter:
                     "event_formula_selected_frame_count": sum(
                         1 for record in records if str(record.get("selected_frame") or "")
                     ),
+                    "compiler_guidance_applied": any(
+                        str(record.get("compiler_guidance_source") or "")
+                        for record in records
+                    ),
                     "event_formula_syntax_valid_count": sum(
                         1
                         for record in records
@@ -256,6 +264,7 @@ class CecDcecBridgeAdapter:
         citation: Optional[str] = None,
         source: str = "us_code",
         source_embedding: Optional[Sequence[float]] = None,
+        compiler_guidance: Optional[Mapping[str, Any]] = None,
         **_: Any,
     ) -> BridgeEvaluationReport:
         """Run the CEC/DCEC bridge and return optimizer-visible diagnostics."""
@@ -266,6 +275,7 @@ class CecDcecBridgeAdapter:
             citation=citation,
             source=source,
             source_embedding=source_embedding,
+            compiler_guidance=compiler_guidance,
         )
         records = list(context["records"])
         proof_gate = _proof_gate_from_dcec_records(records)
@@ -319,7 +329,13 @@ class CecDcecBridgeAdapter:
                 for record in records
             ),
             status=status,
-            metadata={"adapter": "cec_dcec_bridge_v1"},
+            metadata={
+                "adapter": "cec_dcec_bridge_v1",
+                "compiler_guidance_applied": any(
+                    str(record.get("compiler_guidance_source") or "")
+                    for record in records
+                ),
+            },
         )
 
     def _converter(self) -> Any:
@@ -433,7 +449,11 @@ def _minimal_norm_from_parser_element(
     return row
 
 
-def _dcec_records(norms: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+def _dcec_records(
+    norms: Sequence[Mapping[str, Any]],
+    *,
+    compiler_guidance: Optional[Mapping[str, Any]] = None,
+) -> list[dict[str, Any]]:
     event_formula_exports = _event_formula_exports_from_norms(norms)
     pending_event_formula_exports = {
         source_id: list(records)
@@ -445,9 +465,13 @@ def _dcec_records(norms: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
         event = _symbol(norm.get("action") or norm.get("predicate"), fallback="act")
         modality = _dcec_modality(norm)
         source_id = str(norm.get("source_id") or f"dcec:norm:{index}")
-        frame_guidance = _frame_guidance_from_norm(norm)
+        frame_guidance = _frame_guidance_from_norm(
+            norm,
+            compiler_guidance=compiler_guidance,
+        )
         selected_frame = str(frame_guidance.get("selected_frame") or "")
         selected_frame_source = str(frame_guidance.get("selected_frame_source") or "")
+        compiler_guidance_source = str(frame_guidance.get("compiler_guidance_source") or "")
         formula_object = _native_dcec_event_formula(
             actor=actor,
             event=event,
@@ -513,6 +537,7 @@ def _dcec_records(norms: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
                 "requires_validation": not bool(event_formula_syntax_valid),
             }
         (
+            event_calculus_formula,
             event_formula_syntax_valid,
             event_formula_target_parse_profile,
             event_formula_target_components,
@@ -545,6 +570,7 @@ def _dcec_records(norms: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
                 "event_formula_fingerprint": event_formula_fingerprint,
                 "selected_frame": selected_frame,
                 "selected_frame_source": selected_frame_source,
+                "compiler_guidance_source": compiler_guidance_source,
                 "formula_object": formula_object,
                 "modality": modality,
                 "source_id": source_id,
@@ -643,6 +669,11 @@ def _dcec_frame_logic_triples(
                     "subject": source_id,
                     "predicate": "selected_frame_source",
                     "object": str(record.get("selected_frame_source") or ""),
+                },
+                {
+                    "subject": source_id,
+                    "predicate": "compiler_guidance_source",
+                    "object": str(record.get("compiler_guidance_source") or ""),
                 },
             ]
         )
@@ -955,9 +986,7 @@ def _source_symbol(source_id: str) -> str:
 
 
 def _event_formula_parse_profile(formula: str) -> dict[str, Any]:
-    text = _canonicalize_event_formula_text(
-        _strip_event_formula_clause_terminator(str(formula or "").strip())
-    )
+    text = _normalize_event_formula_text(formula)
     top_level_connector, connector_index = _top_level_connector(text)
     quantifier_variables = _quantifier_variables(text)
     wrappers = [
@@ -1115,7 +1144,32 @@ def _canonicalize_event_formula_text(text: str) -> str:
     normalized = str(text or "")
     for token, replacement in _EVENT_FORMULA_CONNECTOR_REPLACEMENTS.items():
         normalized = normalized.replace(token, replacement)
+    normalized = _normalize_event_formula_brackets(normalized)
     return " ".join(normalized.split())
+
+
+def _normalize_event_formula_text(formula: str) -> str:
+    return _canonicalize_event_formula_text(
+        _strip_event_formula_clause_terminator(str(formula or "").strip())
+    )
+
+
+def _normalize_event_formula_brackets(text: str) -> str:
+    normalized = str(text or "")
+    for wrapper in ("O", "P", "F", "Happens", "HoldsAt", "Initiates", "Terminates"):
+        normalized = re.sub(
+            rf"\b{wrapper}\s*\[",
+            f"{wrapper}(",
+            normalized,
+            flags=(
+                re.IGNORECASE
+                if wrapper in {"Happens", "HoldsAt", "Initiates", "Terminates"}
+                else 0
+            ),
+        )
+    if "[" not in normalized and "]" not in normalized:
+        return normalized
+    return normalized.replace("[", "(").replace("]", ")")
 
 
 def _normalize_event_formula_fields(
@@ -1129,8 +1183,9 @@ def _normalize_event_formula_fields(
     modality: str,
     selected_frame: str,
     selected_frame_source: str,
-) -> tuple[bool, dict[str, Any], dict[str, Any], dict[str, Any]]:
-    derived_parse_profile = _event_formula_parse_profile(formula)
+) -> tuple[str, bool, dict[str, Any], dict[str, Any], dict[str, Any]]:
+    normalized_formula = _normalize_event_formula_text(formula)
+    derived_parse_profile = _event_formula_parse_profile(normalized_formula)
     merged_parse_profile = _merge_event_formula_parse_profile(
         base=_mapping(target_parse_profile),
         derived=derived_parse_profile,
@@ -1139,7 +1194,7 @@ def _normalize_event_formula_fields(
         syntax_valid or merged_parse_profile.get("target_parse_profile_complete") is True
     )
     derived_components = _event_formula_target_components(
-        formula,
+        normalized_formula,
         source_id=source_id,
         modality=modality,
     )
@@ -1164,6 +1219,7 @@ def _normalize_event_formula_fields(
         ),
     }
     return (
+        normalized_formula,
         resolved_syntax_valid,
         merged_parse_profile,
         merged_components,
@@ -1252,7 +1308,11 @@ def _event_formula_target_components(
     }
 
 
-def _frame_guidance_from_norm(norm: Mapping[str, Any]) -> dict[str, str]:
+def _frame_guidance_from_norm(
+    norm: Mapping[str, Any],
+    *,
+    compiler_guidance: Optional[Mapping[str, Any]] = None,
+) -> dict[str, str]:
     logic_frame = _mapping(norm.get("logic_frame"))
     legal_frame = _mapping(norm.get("legal_frame"))
     prompt_context = _mapping(norm.get("prompt_context"))
@@ -1270,6 +1330,13 @@ def _frame_guidance_from_norm(norm: Mapping[str, Any]) -> dict[str, str]:
                 "selected_frame": canonical,
                 "selected_frame_source": source,
             }
+    guided_frame = _selected_frame_from_compiler_guidance(compiler_guidance)
+    if guided_frame:
+        return {
+            "selected_frame": guided_frame["selected_frame"],
+            "selected_frame_source": guided_frame["selected_frame_source"],
+            "compiler_guidance_source": guided_frame["compiler_guidance_source"],
+        }
     inferred = _infer_selected_frame_from_norm_text(norm)
     if inferred:
         return {
@@ -1277,6 +1344,95 @@ def _frame_guidance_from_norm(norm: Mapping[str, Any]) -> dict[str, str]:
             "selected_frame_source": "norm.text_inference",
         }
     return {}
+
+
+def _selected_frame_from_compiler_guidance(
+    compiler_guidance: Optional[Mapping[str, Any]],
+) -> dict[str, str]:
+    guidance = _mapping(compiler_guidance)
+    if not guidance or not _compiler_guidance_has_cec_bridge_route(guidance):
+        return {}
+
+    for source, value in _compiler_guidance_frame_candidates(guidance):
+        canonical = _canonical_frame_symbol(value)
+        if canonical:
+            return {
+                "selected_frame": canonical,
+                "selected_frame_source": f"compiler_guidance.{source}",
+                "compiler_guidance_source": "repair_cec_dcec_bridge",
+            }
+    return {}
+
+
+def _compiler_guidance_has_cec_bridge_route(guidance: Mapping[str, Any]) -> bool:
+    route_tokens = {
+        "repair_cec_dcec_bridge",
+        "cec_dcec",
+        "cec.native",
+        "deontic_cec",
+    }
+    for key in (
+        "route",
+        "compiler_guidance_route",
+        "target_component",
+        "target",
+    ):
+        token = str(guidance.get(key) or "").strip().lower()
+        if token in route_tokens:
+            return True
+
+    for key in (
+        "compiler_guidance_todo_routes",
+        "todo_routes",
+        "routes",
+    ):
+        value = guidance.get(key)
+        if isinstance(value, Mapping):
+            if any(str(route).strip().lower() in route_tokens for route in value):
+                return True
+        elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            if any(str(route).strip().lower() in route_tokens for route in value):
+                return True
+    return False
+
+
+def _compiler_guidance_frame_candidates(
+    guidance: Mapping[str, Any],
+) -> list[tuple[str, Any]]:
+    candidates: list[tuple[str, Any]] = []
+    for key in (
+        "selected_frame_after",
+        "selected_frame",
+        "compiler_guidance_selected_frame",
+        "frame_after",
+        "frame",
+    ):
+        candidates.append((key, guidance.get(key)))
+
+    for collection_key in (
+        "evidence",
+        "guidance_evidence",
+        "compiler_guidance_evidence",
+        "samples",
+    ):
+        value = guidance.get(collection_key)
+        rows: list[Mapping[str, Any]] = []
+        if isinstance(value, Mapping):
+            rows = [value]
+        elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            rows = [row for row in value if isinstance(row, Mapping)]
+        for row in sorted(
+            rows,
+            key=lambda item: int(item.get("evidence_rank") or item.get("rank") or 999999),
+        ):
+            for key in (
+                "selected_frame_after",
+                "selected_frame",
+                "frame_after",
+                "frame",
+            ):
+                candidates.append((f"{collection_key}.{key}", row.get(key)))
+    return candidates
 
 
 def _canonical_frame_symbol(value: Any) -> str:
