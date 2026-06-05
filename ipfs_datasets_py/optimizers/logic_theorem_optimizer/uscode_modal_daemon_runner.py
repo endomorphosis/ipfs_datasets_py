@@ -3071,6 +3071,109 @@ def update_program_synthesis_summary(
     )
 
 
+def paired_program_synthesis_health(
+    *,
+    queue_path: Path,
+    codex_summary_paths: Sequence[Path],
+    policy: Optional[ModalOptimizerPolicy] = None,
+) -> Dict[str, Any]:
+    """Return paired-run queue and Codex-worker health from shared artifacts."""
+
+    optimizer_policy = policy or ModalOptimizerPolicy()
+    health: Dict[str, Any] = {
+        "codex_claimed_total": 0,
+        "codex_execution_count": 0,
+        "codex_worker_summary_count": 0,
+        "codex_workers_waiting_for_todos_count": 0,
+        "queue_exists": queue_path.exists(),
+        "queue_path": str(queue_path),
+    }
+    if queue_path.exists():
+        try:
+            with queue_file_lock(queue_path):
+                queue = ModalTodoQueue.load_jsonl(queue_path)
+            status = program_synthesis_status_block(queue, optimizer_policy)
+            health.update(
+                {
+                    "program_synthesis_claimed": int(status.get("claimed", 0)),
+                    "program_synthesis_completed": int(status.get("completed", 0)),
+                    "program_synthesis_failed_validation": int(
+                        status.get("failed_validation", 0)
+                    ),
+                    "program_synthesis_pending": int(status.get("pending", 0)),
+                    "queue_counts": queue.status_counts(),
+                    "role_queue_counts": queue.role_status_counts(),
+                }
+            )
+        except Exception as exc:
+            health["queue_error"] = f"{type(exc).__name__}: {exc}"
+    else:
+        health.update(
+            {
+                "program_synthesis_claimed": 0,
+                "program_synthesis_completed": 0,
+                "program_synthesis_failed_validation": 0,
+                "program_synthesis_pending": 0,
+                "queue_counts": {},
+                "role_queue_counts": {},
+            }
+        )
+
+    scope_counts: Counter[str] = Counter()
+    worker_waiting = 0
+    worker_claimed_total = 0
+    worker_execution_count = 0
+    worker_summaries = 0
+    worker_latest_reasons: Counter[str] = Counter()
+    for path in codex_summary_paths:
+        if not path.exists():
+            continue
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        worker_summaries += 1
+        scope = str(data.get("codex_scope") or "unscoped")
+        scope_counts[scope] += 1
+        latest_reason = str(data.get("latest_stop_reason") or "")
+        if latest_reason:
+            worker_latest_reasons[latest_reason] += 1
+        if latest_reason == "waiting_for_program_synthesis_todos":
+            worker_waiting += 1
+        try:
+            worker_claimed_total += int(data.get("codex_claimed_total", 0) or 0)
+        except (TypeError, ValueError):
+            pass
+        try:
+            worker_execution_count += int(data.get("codex_execution_count", 0) or 0)
+        except (TypeError, ValueError):
+            pass
+    pending = int(health.get("program_synthesis_pending", 0) or 0)
+    claimed = int(health.get("program_synthesis_claimed", 0) or 0)
+    failed_validation = int(health.get("program_synthesis_failed_validation", 0) or 0)
+    completed = int(health.get("program_synthesis_completed", 0) or 0)
+    health.update(
+        {
+            "codex_claimed_total": worker_claimed_total,
+            "codex_execution_count": worker_execution_count,
+            "codex_queue_open_count": pending + claimed,
+            "codex_queue_starved": bool(
+                health.get("queue_exists")
+                and pending == 0
+                and claimed == 0
+                and (failed_validation > 0 or completed > 0)
+            ),
+            "codex_scope_worker_counts": dict(sorted(scope_counts.items())),
+            "codex_worker_latest_stop_reasons": dict(
+                sorted(worker_latest_reasons.items())
+            ),
+            "codex_worker_summary_count": worker_summaries,
+            "codex_workers_waiting_for_todos_count": worker_waiting,
+        }
+    )
+    return health
+
+
 def bridge_loss_adapter_names(args: argparse.Namespace) -> List[str]:
     """Return bridge adapters that should feed optimizer loss TODOs."""
 
@@ -8082,6 +8185,10 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         )
     codex_stdout_path = Path(str(codex_child_summaries[0]["stdout_path"]))
     codex_stderr_path = Path(str(codex_child_summaries[0]["stderr_path"]))
+    queue_path = root / "workspace" / "todo-queues" / f"{paired['queue_run_id']}.jsonl"
+    codex_summary_paths = [
+        log_dir / f"{str(child['run_id'])}.summary" for child in codex_child_summaries
+    ]
 
     summary: Dict[str, Any] = {
         "autoencoder_command": list(paired["autoencoder_command"]),
@@ -8101,6 +8208,11 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         "loop_role": "paired",
         "paired_grace_seconds": float(args.paired_grace_seconds),
         "paired_poll_seconds": float(args.paired_poll_seconds),
+        "program_synthesis_health": paired_program_synthesis_health(
+            queue_path=queue_path,
+            codex_summary_paths=codex_summary_paths,
+        ),
+        "program_synthesis_queue_path": str(queue_path),
         "queue_run_id": paired["queue_run_id"],
         "run_id": args.run_id,
         "started_at": utc_now(),
@@ -8145,6 +8257,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         str(child["run_id"]): None for child in codex_child_summaries
     }
     runner_terminated_children: set[str] = set()
+    last_codex_queue_starved = False
 
     try:
         with ExitStack() as stack:
@@ -8221,6 +8334,43 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                 summary["autoencoder_exit_code"] = auto_exit_code
                 summary["codex_exit_codes"] = codex_exit_codes
                 summary["codex_exit_code"] = next(iter(codex_exit_codes.values()), None)
+                program_synthesis_health = paired_program_synthesis_health(
+                    queue_path=queue_path,
+                    codex_summary_paths=codex_summary_paths,
+                )
+                summary["program_synthesis_health"] = program_synthesis_health
+                for key in (
+                    "program_synthesis_pending",
+                    "program_synthesis_claimed",
+                    "program_synthesis_completed",
+                    "program_synthesis_failed_validation",
+                    "codex_queue_open_count",
+                    "codex_queue_starved",
+                    "codex_workers_waiting_for_todos_count",
+                    "codex_worker_summary_count",
+                    "codex_claimed_total",
+                    "codex_execution_count",
+                ):
+                    if key in program_synthesis_health:
+                        summary[key] = program_synthesis_health[key]
+                codex_queue_starved = bool(
+                    program_synthesis_health.get("codex_queue_starved", False)
+                )
+                if codex_queue_starved != last_codex_queue_starved:
+                    append_event(
+                        log_path,
+                        args.run_id,
+                        {
+                            "event": (
+                                "paired_codex_queue_starved"
+                                if codex_queue_starved
+                                else "paired_codex_queue_resumed"
+                            ),
+                            "program_synthesis_health": program_synthesis_health,
+                            "queue_run_id": paired["queue_run_id"],
+                        },
+                    )
+                    last_codex_queue_starved = codex_queue_starved
                 summary["child_status"] = {
                     "autoencoder": "running" if auto_exit_code is None else "exited",
                     "codex": {
@@ -8280,6 +8430,25 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         summary["codex_exit_codes"] = codex_exit_codes
         summary["codex_exit_code"] = next(iter(codex_exit_codes.values()), None)
         summary["runner_terminated_children"] = sorted(runner_terminated_children)
+        program_synthesis_health = paired_program_synthesis_health(
+            queue_path=queue_path,
+            codex_summary_paths=codex_summary_paths,
+        )
+        summary["program_synthesis_health"] = program_synthesis_health
+        for key in (
+            "program_synthesis_pending",
+            "program_synthesis_claimed",
+            "program_synthesis_completed",
+            "program_synthesis_failed_validation",
+            "codex_queue_open_count",
+            "codex_queue_starved",
+            "codex_workers_waiting_for_todos_count",
+            "codex_worker_summary_count",
+            "codex_claimed_total",
+            "codex_execution_count",
+        ):
+            if key in program_synthesis_health:
+                summary[key] = program_synthesis_health[key]
         summary["child_status"] = {
             "autoencoder": "running" if auto_exit_code is None else "exited",
             "codex": {

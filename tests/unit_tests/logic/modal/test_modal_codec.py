@@ -70,6 +70,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_004997_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_005687_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_005886_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_012436_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_004147_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001551_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_002638_FAMILY_PAIRS,
@@ -28256,6 +28257,45 @@ def test_modal_compiler_surfaces_packet_005886_refined_modal_family_cue_pairs(
         )
 
 
+def test_modal_registry_surfaces_packet_012436_rescue_family_pairs() -> None:
+    packet_pairs = (
+        ("frame", "conditional_normative"),
+        ("frame", "temporal"),
+        ("frame", "deontic"),
+        ("temporal", "deontic"),
+    )
+    assert COMPILER_AMBIGUITY_PACKET_012436_FAMILY_PAIRS == packet_pairs
+    for predicted_family, target_family in packet_pairs:
+        assert (
+            supports_signal_free_adaptive_ambiguity_pair(
+                predicted_family,
+                target_family,
+            )
+            is True
+        )
+        assert (
+            is_compiler_ambiguity_policy_pair(
+                predicted_family,
+                target_family,
+            )
+            is True
+        )
+        assert (
+            is_compiler_required_adaptive_ambiguity_pair(
+                predicted_family,
+                target_family,
+            )
+            is True
+        )
+        assert (
+            is_priority_signal_free_adaptive_ambiguity_pair(
+                predicted_family,
+                target_family,
+            )
+            is True
+        )
+
+
 def test_decode_modal_ir_document_aggregates_semantic_source_span_slots() -> None:
     source_text = (
         "Sec. 2459a. Administrative review procedures are established. "
@@ -28506,6 +28546,71 @@ def test_decode_modal_ir_document_refines_temporal_source_context_family_pair_ke
     ]
     assert "F->O" in slot_texts["source_context_span_refined_modal_operator_pair"]
     assert "F->Frame" in slot_texts["source_context_span_refined_modal_operator_pair"]
+
+
+def test_decode_modal_ir_document_summarizes_formula_provenance_coordinates() -> None:
+    source_text = (
+        "Sec. 423c. Exchange of unpatented entries. Settlers retain preference "
+        "rights under this section."
+    )
+    document = ModalIRDocument(
+        document_id="us-code-43-423c.-795e5b0c921e4ab9",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-provenance-summary",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="FRAME_BM25",
+                    symbol="Frame",
+                    label="frame",
+                ),
+                predicate=ModalIRPredicate(
+                    name="exchange_unpatented_entries",
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-43-423c.-795e5b0c921e4ab9",
+                    start_char=0,
+                    end_char=source_text.index("Settlers"),
+                    citation="43 U.S.C. 423c.",
+                ),
+            )
+        ],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+
+    assert "43:423c" in slot_texts["semantic_provenance_title_section_key"]
+    assert "423c" in slot_texts["semantic_provenance_section"]
+    assert "frame:43:423c" in slot_texts[
+        "semantic_provenance_family_title_section_key"
+    ]
+    assert "frame:single_alphanumeric_alpha_lower_trailing_punct" in slot_texts[
+        "semantic_provenance_family_section_style"
+    ]
+
+
+def test_decode_modal_ir_document_summarizes_inferred_no_formula_provenance() -> None:
+    source_text = (
+        "24 U.S.C. 295a: U.S.C. Title 24 - HOSPITALS AND ASYLUMS Sec. 295a - "
+        "Arlington Memorial Amphitheater."
+    )
+    document = ModalIRDocument(
+        document_id="us-code-24-295a-16dcd47733b0e7d4",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+
+    assert "24:295a" in slot_texts["semantic_provenance_title_section_key"]
+    assert "24 U.S.C. 295a" in slot_texts["semantic_provenance_citation"]
+    assert "no_formula:24:295a" in slot_texts[
+        "semantic_provenance_family_title_section_key"
+    ]
 
 
 def _token_overlap_ratio(left: str, right: str) -> float:

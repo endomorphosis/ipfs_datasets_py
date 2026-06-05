@@ -742,6 +742,62 @@ def test_supervisor_seeds_failed_validation_rescue_todos_from_cluster() -> None:
     assert supervisor.last_program_synthesis_deduped_count == 1
 
 
+def test_supervisor_retries_terminal_failed_validation_rescue_todos() -> None:
+    failed = ModalTodo(
+        todo_id="failed-ir",
+        action="refine_typed_ir_or_decompiler_slots",
+        objective="repair typed slots",
+        sample_ids=["sample-a"],
+        citations=["5 U.S.C. 552"],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=2.0,
+        priority=44.0,
+        status="failed_validation",
+        metadata={
+            "execution_target": "codex_program_repair",
+            "failure_reason": "main_apply_validation_failed_rolled_back",
+            "optimizer_role": "program_synthesis",
+            "optimizer_stage": "typed_program_synthesis",
+            "program_synthesis_scope": "ir_decompiler",
+            "target_component": "modal.ir_decompiler",
+        },
+    )
+    supervisor = ModalTodoSupervisor(queue=ModalTodoQueue([failed]))
+
+    first = supervisor.seed_failed_validation_rescue_todos(max_clusters=4)
+    assert len(first) == 1
+    assert supervisor.queue.fail_validation(
+        first[0].todo_id,
+        reason="main_apply_validation_failed_rolled_back",
+    )
+
+    retry = supervisor.seed_failed_validation_rescue_todos(max_clusters=4)
+
+    assert len(retry) == 1
+    assert retry[0].todo_id != first[0].todo_id
+    assert retry[0].status == "pending"
+    assert retry[0].metadata["source"] == "failed_validation_rescue_retry_v1"
+    assert retry[0].metadata["rescue_attempt"] == 2
+    assert retry[0].metadata["previous_rescue_todo_ids"] == [first[0].todo_id]
+    assert retry[0].metadata["root_rescue_signature"] == first[0].metadata[
+        "dedupe_signature"
+    ]
+
+    while retry:
+        assert supervisor.queue.fail_validation(
+            retry[0].todo_id,
+            reason="main_apply_validation_failed_rolled_back",
+        )
+        retry = supervisor.seed_failed_validation_rescue_todos(max_clusters=4)
+
+    attempts = [
+        todo
+        for todo in supervisor.queue.all()
+        if todo.action == daemon.FAILED_VALIDATION_RESCUE_ACTION
+    ]
+    assert len(attempts) == daemon.FAILED_VALIDATION_RESCUE_MAX_ATTEMPTS
+
+
 def test_supervisor_failed_validation_rescue_filters_scope() -> None:
     ir_failed = ModalTodo(
         todo_id="failed-ir",
@@ -2577,6 +2633,64 @@ def test_paired_autoencoder_status_requires_own_clean_stop() -> None:
         autoencoder_exit_code=1,
         runner_terminated_children=set(),
     )
+
+
+def test_paired_program_synthesis_health_detects_starved_codex_queue(tmp_path: Path) -> None:
+    metadata = {
+        "optimizer_role": "program_synthesis",
+        "program_synthesis_scope": "ir_decompiler",
+    }
+    completed = ModalTodo(
+        todo_id="completed",
+        action="refine_typed_ir_or_decompiler_slots",
+        objective="completed",
+        sample_ids=["a"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=2.0,
+        status="completed",
+        metadata=dict(metadata),
+    )
+    failed = ModalTodo(
+        todo_id="failed",
+        action="refine_typed_ir_or_decompiler_slots",
+        objective="failed",
+        sample_ids=["b"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=1.0,
+        status="failed_validation",
+        metadata=dict(metadata),
+    )
+    queue_path = tmp_path / "queue.jsonl"
+    ModalTodoQueue([completed, failed]).save_jsonl(queue_path)
+    child_summary = tmp_path / "codex.summary"
+    child_summary.write_text(
+        json.dumps(
+            {
+                "codex_claimed_total": 2,
+                "codex_execution_count": 2,
+                "codex_scope": "ir_decompiler",
+                "latest_stop_reason": "waiting_for_program_synthesis_todos",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    health = runner.paired_program_synthesis_health(
+        queue_path=queue_path,
+        codex_summary_paths=[child_summary],
+    )
+
+    assert health["program_synthesis_pending"] == 0
+    assert health["program_synthesis_claimed"] == 0
+    assert health["program_synthesis_completed"] == 1
+    assert health["program_synthesis_failed_validation"] == 1
+    assert health["codex_queue_starved"] is True
+    assert health["codex_workers_waiting_for_todos_count"] == 1
+    assert health["codex_claimed_total"] == 2
 
 
 def test_codex_transient_failure_detection_reads_exec_logs(tmp_path) -> None:

@@ -181,6 +181,75 @@ print("\t".join(str(value) for value in values))
 PY
 }
 
+read_queue_status() {
+  local queue_path="$1"
+  python3 - "${queue_path}" <<'PY' 2>/dev/null || echo $'0\t0\t0\t0\t0'
+import json
+import sys
+from collections import Counter
+
+path = sys.argv[1]
+counts = Counter()
+try:
+    with open(path, "r", encoding="utf-8") as handle:
+        for line in handle:
+            line = line.strip()
+            if not line:
+                continue
+            item = json.loads(line)
+            metadata = item.get("metadata") or {}
+            if metadata.get("optimizer_role") != "program_synthesis":
+                continue
+            counts[str(item.get("status") or "")] += 1
+except FileNotFoundError:
+    pass
+
+values = [
+    counts.get("pending", 0),
+    counts.get("claimed", 0),
+    counts.get("completed", 0),
+    counts.get("failed_validation", 0),
+    sum(counts.values()),
+]
+print("\t".join(str(value) for value in values))
+PY
+}
+
+read_codex_worker_status() {
+  local final_run_id="$1"
+  python3 - "${LOG_DIR}" "${final_run_id}" <<'PY' 2>/dev/null || echo $'0\t0\t0\t0'
+import glob
+import json
+import os
+import sys
+
+log_dir, run_id = sys.argv[1], sys.argv[2]
+summary_count = 0
+waiting_count = 0
+claimed_total = 0
+execution_total = 0
+for path in glob.glob(os.path.join(log_dir, f"{run_id}-codex-*.summary")):
+    try:
+        with open(path, "r", encoding="utf-8") as handle:
+            data = json.load(handle)
+    except (OSError, json.JSONDecodeError):
+        continue
+    summary_count += 1
+    if data.get("latest_stop_reason") == "waiting_for_program_synthesis_todos":
+        waiting_count += 1
+    try:
+        claimed_total += int(data.get("codex_claimed_total") or 0)
+    except (TypeError, ValueError):
+        pass
+    try:
+        execution_total += int(data.get("codex_execution_count") or 0)
+    except (TypeError, ValueError):
+        pass
+
+print(f"{summary_count}\t{waiting_count}\t{claimed_total}\t{execution_total}")
+PY
+}
+
 has_failure_signature() {
   [[ -f "${PIPELINE_LOG}" ]] || return 1
   if grep -Eq '\[pipeline\] hparam_sweep_no_successful_trial action=abort|\[pipeline\] final_nonzero_exit_unrecovered|\[pipeline\] final_nonzero_exit_missing_summary' "${PIPELINE_LOG}"; then
@@ -239,16 +308,35 @@ while true; do
       IFS=$'\t' read -r cycles active_cycle active_phase active_elapsed active_heartbeat_age program_pending program_claimed program_completed summary_updated < <(
         read_final_status_from_summary "${final_summary}"
       )
-      if (( cycles >= FINAL_VERIFY_MIN_CYCLES )); then
-        log_line "final_run_verified_working run_id=${final_run_id} cycles=${cycles} program_pending=${program_pending} program_claimed=${program_claimed} program_completed=${program_completed} pid=${pid}"
+      final_queue="${ROOT_DIR}/workspace/todo-queues/${final_run_id}-autoencoder.jsonl"
+      IFS=$'\t' read -r queue_pending queue_claimed queue_completed queue_failed queue_total < <(
+        read_queue_status "${final_queue}"
+      )
+      if (( queue_total > 0 )); then
+        program_pending="${queue_pending}"
+        program_claimed="${queue_claimed}"
+        program_completed="${queue_completed}"
+      fi
+      IFS=$'\t' read -r codex_summary_count codex_waiting_count codex_claimed_total codex_execution_total < <(
+        read_codex_worker_status "${final_run_id}"
+      )
+      queue_starved=0
+      if (( queue_total > 0 && queue_pending == 0 && queue_claimed == 0 && codex_summary_count > 0 && codex_waiting_count > 0 )); then
+        queue_starved=1
+      fi
+      if (( cycles >= FINAL_VERIFY_MIN_CYCLES && queue_starved == 0 )); then
+        log_line "final_run_verified_working run_id=${final_run_id} cycles=${cycles} program_pending=${program_pending} program_claimed=${program_claimed} program_completed=${program_completed} codex_workers=${codex_summary_count} codex_waiting=${codex_waiting_count} codex_claimed_total=${codex_claimed_total} pid=${pid}"
         write_state "final_run" "running" "final_run_verified_working" "${final_run_id}" true
         if [[ "${STOP_AFTER_FINAL_VERIFY}" == "1" ]]; then
           log_line "verification_complete run_id=${final_run_id} cycles=${cycles}"
           write_state "completed" "succeeded" "final_run_verified_working" "${final_run_id}" true
           exit 0
         fi
+      elif (( queue_starved == 1 )); then
+        log_line "warning_detected signature=final_codex_queue_starved run_id=${final_run_id} cycles=${cycles} queue_pending=${queue_pending} queue_claimed=${queue_claimed} queue_completed=${queue_completed} queue_failed=${queue_failed} codex_workers=${codex_summary_count} codex_waiting=${codex_waiting_count} codex_claimed_total=${codex_claimed_total} active_cycle=${active_cycle} active_phase=${active_phase}"
+        write_state "final_run" "running" "final_codex_queue_starved" "${final_run_id}" false
       else
-        log_line "final_run_started_waiting_for_cycles run_id=${final_run_id} cycles=${cycles} active_cycle=${active_cycle} active_phase=${active_phase} active_elapsed=${active_elapsed} active_heartbeat_age=${active_heartbeat_age} program_pending=${program_pending} program_claimed=${program_claimed} program_completed=${program_completed} pid=${pid}"
+        log_line "final_run_started_waiting_for_cycles run_id=${final_run_id} cycles=${cycles} active_cycle=${active_cycle} active_phase=${active_phase} active_elapsed=${active_elapsed} active_heartbeat_age=${active_heartbeat_age} program_pending=${program_pending} program_claimed=${program_claimed} program_completed=${program_completed} codex_workers=${codex_summary_count} codex_waiting=${codex_waiting_count} pid=${pid}"
         if (( cycles == 0 && program_pending == 0 && program_claimed == 0 && active_heartbeat_age > FINAL_QUEUE_STARVATION_SECONDS )); then
           log_line "warning_detected signature=final_codex_queue_starved run_id=${final_run_id} active_cycle=${active_cycle} active_phase=${active_phase} active_heartbeat_age=${active_heartbeat_age}"
           write_state "final_run" "running" "final_codex_queue_starved" "${final_run_id}" false

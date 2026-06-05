@@ -1312,6 +1312,7 @@ def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
         ),
         *_source_identifier_phrases(document),
         *_document_citation_phrases(document),
+        *_document_provenance_summary_phrases(document),
         *_document_modal_family_count_phrases(document),
         *_document_modal_family_transition_phrases(document),
         *_document_semantic_slot_summary_phrases(document),
@@ -3188,6 +3189,155 @@ def _document_provenance_alignment_phrases(
                 )
             )
     return phrases
+
+
+def _document_provenance_summary_phrases(
+    document: ModalIRDocument,
+) -> List[DecodedModalPhrase]:
+    provenance_maps = _document_provenance_slot_maps(document)
+    if not provenance_maps:
+        return []
+
+    families = _document_provenance_families(document)
+    phrases: List[DecodedModalPhrase] = []
+    seen: set[Tuple[str, str]] = set()
+
+    def add(slot: str, value: str) -> None:
+        normalized_slot = _clean_text(slot)
+        normalized_value = _clean_text(value)
+        marker = (normalized_slot, normalized_value)
+        if not normalized_slot or not normalized_value or marker in seen:
+            return
+        seen.add(marker)
+        phrases.append(
+            DecodedModalPhrase(
+                text=normalized_value,
+                slot=normalized_slot,
+                provenance_only=True,
+            )
+        )
+
+    for slot_map in provenance_maps:
+        title = _clean_text(
+            slot_map.get("source_id_title")
+            or slot_map.get("citation_title")
+            or ""
+        )
+        section = _clean_text(
+            slot_map.get("source_id_section_normalized")
+            or slot_map.get("source_id_section")
+            or slot_map.get("citation_section_normalized")
+            or slot_map.get("citation_section")
+            or ""
+        )
+        title_section_key = _clean_text(
+            slot_map.get("source_id_title_section_key_normalized")
+            or slot_map.get("source_id_title_section_key")
+            or slot_map.get("citation_title_section_key_normalized")
+            or slot_map.get("citation_title_section_key")
+            or ""
+        )
+        canonical = _clean_text(
+            slot_map.get("source_id_citation_canonical")
+            or slot_map.get("citation_canonical")
+            or ""
+        )
+        section_style = _clean_text(
+            slot_map.get("source_id_section_style_canonical")
+            or slot_map.get("source_id_section_style")
+            or slot_map.get("citation_section_style_canonical")
+            or slot_map.get("citation_section_style")
+            or ""
+        )
+        if title:
+            add("semantic_provenance_title", title)
+        if section:
+            add("semantic_provenance_section", section)
+        if title_section_key:
+            add("semantic_provenance_title_section_key", title_section_key)
+            for slot, value in _typed_identifier_slots(
+                title_section_key.replace(":", "_"),
+                slot_prefix="semantic_provenance_title_section_key",
+            ):
+                add(slot, value)
+        if canonical:
+            add("semantic_provenance_citation", canonical)
+        if section_style:
+            add("semantic_provenance_section_style", section_style)
+
+        coordinate = title_section_key or (
+            _title_section_coordinate(title, section) if title and section else ""
+        )
+        if not coordinate:
+            continue
+        normalized_coordinate = coordinate.lower()
+        for family in families:
+            add(
+                "semantic_provenance_family_title_section_key",
+                f"{family}:{normalized_coordinate}",
+            )
+            if section_style:
+                add(
+                    "semantic_provenance_family_section_style",
+                    f"{family}:{section_style}",
+                )
+
+    return phrases
+
+
+def _document_provenance_slot_maps(
+    document: ModalIRDocument,
+) -> List[Dict[str, str]]:
+    slot_maps: List[Dict[str, str]] = []
+    seen_keys: set[Tuple[str, str]] = set()
+
+    def add_slots(slots: Sequence[Tuple[str, str]]) -> None:
+        slot_map = _slot_value_map(slots)
+        key = (
+            _clean_text(
+                slot_map.get("source_id_title_section_key_normalized")
+                or slot_map.get("source_id_title_section_key")
+                or slot_map.get("citation_title_section_key_normalized")
+                or slot_map.get("citation_title_section_key")
+                or ""
+            ).lower(),
+            _clean_text(
+                slot_map.get("source_id_citation_canonical")
+                or slot_map.get("citation_canonical")
+                or ""
+            ).lower(),
+        )
+        if not any(key) or key in seen_keys:
+            return
+        seen_keys.add(key)
+        slot_maps.append(slot_map)
+
+    for source_id in _document_source_ids(document):
+        add_slots(_source_id_slots(source_id))
+    citation = _clean_text(document.metadata.get("citation") or "")
+    if citation:
+        add_slots(_citation_slots(citation))
+    for formula in document.formulas:
+        formula_citation = _clean_text(formula.provenance.citation or "")
+        if formula_citation:
+            add_slots(_citation_slots(formula_citation))
+    if not citation and not document.formulas:
+        for inferred_citation in _inferred_citations_from_source_ids(
+            _document_source_ids(document)
+        ):
+            add_slots(_citation_slots(inferred_citation))
+    return slot_maps
+
+
+def _document_provenance_families(document: ModalIRDocument) -> List[str]:
+    families: List[str] = []
+    for formula in document.formulas:
+        family = _slot_safe_family_key(_clean_text(formula.operator.family).lower())
+        if family and family not in families:
+            families.append(family)
+    if not families:
+        families.append("no_formula")
+    return families
 
 
 def _document_modal_family_count_phrases(

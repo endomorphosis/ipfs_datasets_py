@@ -32,6 +32,7 @@ PROGRAM_SYNTHESIS_ROLE = "program_synthesis"
 AUTOENCODER_EXECUTION_TARGET = "adaptive_autoencoder"
 PROGRAM_SYNTHESIS_EXECUTION_TARGET = "codex_program_repair"
 FAILED_VALIDATION_RESCUE_ACTION = "rescue_failed_program_synthesis_validation"
+FAILED_VALIDATION_RESCUE_MAX_ATTEMPTS = 4
 TODO_STATUS_RANK = {
     "pending": 0,
     "claimed": 1,
@@ -1868,6 +1869,15 @@ class ModalTodoSupervisor:
         if not rescue_todos:
             self.last_program_synthesis_deduped_count = 0
             return []
+        raw_rescue_count = len(rescue_todos)
+        rescue_todos = _refresh_failed_validation_rescue_retries(
+            rescue_todos,
+            self.queue.all(),
+            max_attempts=FAILED_VALIDATION_RESCUE_MAX_ATTEMPTS,
+        )
+        if not rescue_todos:
+            self.last_program_synthesis_deduped_count = raw_rescue_count
+            return []
         self.last_program_synthesis_deduped_count = 0
         selected = self._bounded_new_todos(
             rescue_todos,
@@ -2950,6 +2960,140 @@ def _failed_validation_rescue_todo(
     )
 
 
+def _refresh_failed_validation_rescue_retries(
+    rescue_todos: Sequence[ModalTodo],
+    existing_todos: Sequence[ModalTodo],
+    *,
+    max_attempts: int,
+) -> List[ModalTodo]:
+    """Return rescue TODOs, retrying terminal rescue clusters with bounded IDs."""
+
+    refreshed: List[ModalTodo] = []
+    for rescue in rescue_todos:
+        root_signature = _failed_validation_rescue_root_signature(rescue)
+        if not root_signature:
+            refreshed.append(rescue)
+            continue
+        attempts = [
+            todo
+            for todo in existing_todos
+            if todo.action == FAILED_VALIDATION_RESCUE_ACTION
+            and _failed_validation_rescue_root_signature(todo) == root_signature
+        ]
+        if not attempts:
+            refreshed.append(rescue)
+            continue
+        if any(todo.status in {"pending", "claimed"} for todo in attempts):
+            continue
+        if any(todo.status == "completed" for todo in attempts):
+            continue
+        next_attempt = max(
+            [_failed_validation_rescue_attempt(todo) for todo in attempts] or [1]
+        ) + 1
+        if next_attempt > max(1, int(max_attempts)):
+            continue
+        refreshed.append(
+            _failed_validation_rescue_retry_todo(
+                rescue,
+                attempts=attempts,
+                next_attempt=next_attempt,
+                max_attempts=max_attempts,
+                root_signature=root_signature,
+            )
+        )
+    return refreshed
+
+
+def _failed_validation_rescue_root_signature(todo: ModalTodo) -> str:
+    metadata = todo.metadata or {}
+    return str(
+        metadata.get("root_rescue_signature")
+        or metadata.get("rescue_cluster_signature")
+        or metadata.get("dedupe_signature")
+        or metadata.get("semantic_bundle_key")
+        or ""
+    ).strip()
+
+
+def _failed_validation_rescue_attempt(todo: ModalTodo) -> int:
+    try:
+        return max(1, int(todo.metadata.get("rescue_attempt", 1)))
+    except (TypeError, ValueError):
+        return 1
+
+
+def _failed_validation_rescue_retry_todo(
+    rescue: ModalTodo,
+    *,
+    attempts: Sequence[ModalTodo],
+    next_attempt: int,
+    max_attempts: int,
+    root_signature: str,
+) -> ModalTodo:
+    retry_signature = _failed_validation_rescue_retry_signature(
+        root_signature=root_signature,
+        attempt=next_attempt,
+    )
+    previous_rescue_ids = _unique_preserve_order(
+        todo.todo_id
+        for todo in sorted(attempts, key=lambda item: item.created_at)
+        if todo.todo_id
+    )
+    failed_todo_ids = [
+        str(todo_id)
+        for todo_id in list(rescue.metadata.get("failed_todo_ids", []))
+        if str(todo_id)
+    ]
+    metadata = dict(rescue.metadata)
+    metadata.update(
+        {
+            "dedupe_signature": retry_signature,
+            "previous_rescue_todo_ids": previous_rescue_ids[:16],
+            "rescue_attempt": int(next_attempt),
+            "rescue_max_attempts": int(max_attempts),
+            "rescue_retry_reason": "previous_rescue_failed_validation",
+            "root_rescue_signature": root_signature,
+            "semantic_bundle_key": retry_signature,
+            "source": "failed_validation_rescue_retry_v1",
+        }
+    )
+    digest_payload = {
+        "attempt": int(next_attempt),
+        "failed_todo_ids": sorted(failed_todo_ids),
+        "root_signature": root_signature,
+    }
+    digest = hashlib.sha256(
+        json.dumps(digest_payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+    ).hexdigest()[:16]
+    return ModalTodo(
+        todo_id=f"program-rescue-retry-{digest}",
+        action=rescue.action,
+        objective=(
+            f"Retry failed-validation rescue attempt {next_attempt}/{max_attempts}; "
+            f"{rescue.objective}"
+        ),
+        sample_ids=list(rescue.sample_ids),
+        citations=list(rescue.citations),
+        loss_name=rescue.loss_name,
+        loss_value=float(rescue.loss_value),
+        priority=round(float(rescue.priority) + float(next_attempt), 6),
+        metadata=metadata,
+    )
+
+
+def _failed_validation_rescue_retry_signature(
+    *,
+    root_signature: str,
+    attempt: int,
+) -> str:
+    payload = {
+        "attempt": int(attempt),
+        "root_rescue_signature": root_signature,
+        "source": "failed_validation_rescue_retry_v1",
+    }
+    return json.dumps(payload, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+
+
 def _failed_validation_rescue_signature(
     *,
     scope: str,
@@ -3366,6 +3510,8 @@ def _program_todos_near_duplicate(
     candidate_signature = str(candidate.metadata.get("dedupe_signature") or "")
     if existing_signature and candidate_signature and existing_signature == candidate_signature:
         return True
+    if existing.action == FAILED_VALIDATION_RESCUE_ACTION:
+        return False
     existing_samples = set(existing.sample_ids)
     candidate_samples = set(candidate.sample_ids)
     if not existing_samples or not candidate_samples:
