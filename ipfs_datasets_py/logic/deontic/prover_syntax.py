@@ -851,6 +851,7 @@ def _reconstruction_token_profile(
         )
     basis_set = set(basis_tokens)
     reference_source_set = set(source_set or basis_set)
+    reference_source_set.update(basis_set)
     reference_source_set.update(fixed_connector_tokens)
     if not reference_source_set:
         reference_source_set.update(basis_set)
@@ -1484,7 +1485,9 @@ def _to_ascii_logic(formula: str) -> str:
 
 def _to_frame_logic_atom(formula: str) -> str:
     text = _to_ascii_logic(formula)
-    return re.sub(r"\s+", "_", text).strip("_") or "formula"
+    text = re.sub(r"\s+", "_", text)
+    text = re.sub(r"[^0-9A-Za-z_().,\->=]+", "_", text)
+    return text.strip("_") or "formula"
 
 
 def _is_frame_style_formula(formula: str) -> bool:

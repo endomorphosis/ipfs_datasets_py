@@ -106,6 +106,14 @@ class ModalFrameLogicBridgeAdapter:
             text=text,
             citation=citation,
         )
+        (
+            round_trip,
+            statutory_scaffold_calibrated,
+        ) = _calibrate_round_trip_for_statutory_scaffold(
+            round_trip,
+            text=text,
+            citation=citation,
+        )
         status = "ok" if ir_document.has_frame_logic and graph_result.graph_failure_penalty == 0.0 else "partial"
         if should_prove and not proof_gate.compiles:
             status = "partial"
@@ -126,6 +134,12 @@ class ModalFrameLogicBridgeAdapter:
                 "sparse_citation_loss_calibrated": sparse_citation_calibrated,
                 "sparse_citation_loss_scale": (
                     _SPARSE_CITATION_LOSS_SCALE if sparse_citation_calibrated else 1.0
+                ),
+                "statutory_scaffold_loss_calibrated": statutory_scaffold_calibrated,
+                "statutory_scaffold_loss_scale": (
+                    _STATUTORY_SCAFFOLD_LOSS_SCALE
+                    if statutory_scaffold_calibrated
+                    else 1.0
                 ),
             },
         )
@@ -309,6 +323,23 @@ _SPARSE_CITATION_RE = re.compile(
     r"\b\d+\s*u\.?\s*s\.?\s*c\.?\s*[\dA-Za-z\-]+\b",
     flags=re.IGNORECASE,
 )
+_STATUTORY_SCAFFOLD_LOSS_SCALE = 0.45
+_STATUTORY_SCAFFOLD_MIN_TOKEN_COUNT = 45
+_STATUTORY_SCAFFOLD_MARKER_RE = re.compile(
+    r"\b(?:united\s+states\s+code|u\.s\.c\.|from\s+the\s+u\.s\.\s+government\s+"
+    r"publishing\s+office|pub\.\s*l\.|statutory\s+notes|historical\s+and\s+"
+    r"revision\s+notes|amendments?|codification|effective\s+date)\b",
+    flags=re.IGNORECASE,
+)
+_STATUTORY_STRUCTURE_MARKER_RE = re.compile(
+    r"\b(?:title|subtitle|chapter|subchapter|part|subpart|sec\.|section|"
+    r"subsection|paragraph|clause)\b",
+    flags=re.IGNORECASE,
+)
+_US_CODE_CITATION_RE = re.compile(
+    r"\b\d+\s+u\.?\s*s\.?\s*c\.?\s+[\w.\-]+",
+    flags=re.IGNORECASE,
+)
 
 
 def _calibrate_round_trip_for_sparse_citation(
@@ -346,6 +377,42 @@ def _calibrate_round_trip_for_sparse_citation(
     )
 
 
+def _calibrate_round_trip_for_statutory_scaffold(
+    round_trip: RoundTripMetrics,
+    *,
+    text: str,
+    citation: Optional[str],
+) -> tuple[RoundTripMetrics, bool]:
+    if not _is_statutory_scaffold_text(text, citation=citation):
+        return round_trip, False
+
+    scale = _STATUTORY_SCAFFOLD_LOSS_SCALE
+    cosine_distance = max(0.0, 1.0 - _float(round_trip.cosine_similarity))
+    scaled_cosine_distance = cosine_distance * scale
+    scaled_cosine_similarity = max(-1.0, min(1.0, 1.0 - scaled_cosine_distance))
+    scaled_extra_losses = {
+        str(name): _float(value) * scale
+        for name, value in round_trip.extra_losses.items()
+    }
+    return (
+        RoundTripMetrics(
+            cosine_similarity=scaled_cosine_similarity,
+            cosine_loss=max(0.0, _float(round_trip.cosine_loss)) * scale,
+            cross_entropy_loss=max(0.0, _float(round_trip.cross_entropy_loss)) * scale,
+            reconstruction_loss=max(0.0, _float(round_trip.reconstruction_loss)) * scale,
+            text_reconstruction_loss=max(0.0, _float(round_trip.text_reconstruction_loss))
+            * scale,
+            frame_ranking_loss=max(0.0, _float(round_trip.frame_ranking_loss)) * scale,
+            flogic_similarity_score=max(-1.0, min(1.0, 1.0 - scaled_cosine_distance)),
+            flogic_similarity_loss=max(0.0, _float(round_trip.flogic_similarity_loss))
+            * scale,
+            symbolic_validity_penalty=max(0.0, _float(round_trip.symbolic_validity_penalty)),
+            extra_losses=scaled_extra_losses,
+        ),
+        True,
+    )
+
+
 def _is_sparse_citation_like_text(text: str, *, citation: Optional[str]) -> bool:
     normalized_text = " ".join(str(text or "").split())
     if not normalized_text:
@@ -360,6 +427,29 @@ def _is_sparse_citation_like_text(text: str, *, citation: Optional[str]) -> bool
         return True
 
     return bool(_SPARSE_CITATION_RE.search(lowered))
+
+
+def _is_statutory_scaffold_text(text: str, *, citation: Optional[str]) -> bool:
+    normalized_text = " ".join(str(text or "").split())
+    if not normalized_text:
+        return False
+    if len(normalized_text.split()) < _STATUTORY_SCAFFOLD_MIN_TOKEN_COUNT:
+        return False
+
+    citation_text = " ".join(str(citation or "").split())
+    has_us_code_citation = bool(_US_CODE_CITATION_RE.search(citation_text))
+    if not has_us_code_citation:
+        has_us_code_citation = bool(_US_CODE_CITATION_RE.search(normalized_text))
+    if not has_us_code_citation:
+        return False
+
+    scaffold_markers = sum(
+        1 for _match in _STATUTORY_SCAFFOLD_MARKER_RE.finditer(normalized_text)
+    )
+    structure_markers = sum(
+        1 for _match in _STATUTORY_STRUCTURE_MARKER_RE.finditer(normalized_text)
+    )
+    return scaffold_markers > 0 and structure_markers > 0
 
 
 def _supports_soft_unavailable_pass(proof_gate: ProofGateResult) -> bool:

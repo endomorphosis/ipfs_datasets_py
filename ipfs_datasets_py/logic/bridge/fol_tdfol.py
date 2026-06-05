@@ -723,7 +723,11 @@ def _tdfol_parse_candidates(text: str) -> list[str]:
     sanitized = _sanitize_tdfol_formula_text(normalized)
     if sanitized != normalized:
         _add(sanitized)
-    _add(_normalize_tdfol_export_formula(normalized))
+    export_normalized = _normalize_tdfol_export_formula(normalized)
+    _add(export_normalized)
+    export_sanitized = _sanitize_tdfol_formula_text(export_normalized)
+    if export_sanitized != export_normalized:
+        _add(export_sanitized)
     _add(normalized)
 
     if normalized.endswith("."):
@@ -731,7 +735,11 @@ def _tdfol_parse_candidates(text: str) -> list[str]:
         sanitized_stripped = _sanitize_tdfol_formula_text(stripped)
         if sanitized_stripped != stripped:
             _add(sanitized_stripped)
-        _add(_normalize_tdfol_export_formula(stripped))
+        stripped_export = _normalize_tdfol_export_formula(stripped)
+        _add(stripped_export)
+        stripped_export_sanitized = _sanitize_tdfol_formula_text(stripped_export)
+        if stripped_export_sanitized != stripped_export:
+            _add(stripped_export_sanitized)
         _add(stripped)
 
     return candidates
@@ -755,6 +763,7 @@ def _normalize_tdfol_export_formula(text: str) -> str:
     if not normalized:
         return ""
     normalized = normalized.strip("`\"'").strip()
+    normalized = _strip_tdfol_line_comment(normalized)
     normalized = re.sub(
         r"^\s*(?:formula|proof_formula|proof\s+formula|tdfol_formula|"
         r"tdfol\s+formula|proof_input|proof\s+input|proof_obligation|"
@@ -763,13 +772,54 @@ def _normalize_tdfol_export_formula(text: str) -> str:
         normalized,
         flags=re.IGNORECASE,
     )
+    normalized = normalized.strip("`\"'").strip()
+    normalized = _unwrap_tdfol_export_wrapper(normalized)
     normalized = re.sub(
         r"\b([OPF])\s*\[\s*(.*?)\s*\]",
         lambda match: f"{match.group(1)}({match.group(2)})",
         normalized,
         flags=re.IGNORECASE,
     )
+    normalized = re.sub(r",\s*(?=\))", "", normalized)
+    normalized = re.sub(r"(:[0-9A-Za-z_-]+)\.(?=\s*[\),])", r"\1", normalized)
     return normalized.strip()
+
+
+def _strip_tdfol_line_comment(text: str) -> str:
+    for marker in ("#", "%"):
+        index = text.find(marker)
+        if index >= 0:
+            return text[:index].rstrip()
+    return text
+
+
+def _unwrap_tdfol_export_wrapper(text: str) -> str:
+    """Extract the formula argument from TPTP-style fof/tff/cnf wrappers."""
+
+    match = re.match(r"^\s*(?:fof|tff|cnf)\s*\(", text, flags=re.IGNORECASE)
+    if not match or not text.rstrip().endswith(")"):
+        return text
+    inner = text[match.end() :].rstrip()
+    if inner.endswith("."):
+        inner = inner[:-1].rstrip()
+    if not inner.endswith(")"):
+        return text
+    inner = inner[:-1]
+    parts: list[str] = []
+    start = 0
+    depth = 0
+    for index, char in enumerate(inner):
+        if char == "(":
+            depth += 1
+        elif char == ")":
+            depth = max(0, depth - 1)
+        elif char == "," and depth == 0:
+            parts.append(inner[start:index].strip())
+            start = index + 1
+    parts.append(inner[start:].strip())
+    if len(parts) < 3:
+        return text
+    return parts[2].strip()
 
 
 def _tdfol_parse_ok(formula: str) -> bool:

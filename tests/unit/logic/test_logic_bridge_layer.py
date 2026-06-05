@@ -152,6 +152,29 @@ def test_modal_frame_logic_bridge_projects_flogic_repair_guidance_to_ontology_te
     )
 
 
+def test_modal_frame_logic_bridge_bounds_flogic_similarity_loss_for_heading_samples() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("modal_frame_logic")
+    report = adapter.evaluate(
+        (
+            "7 U.S.C. 2242b: U.S.C. Title 7 - AGRICULTURE 7 U.S.C. United "
+            "States Code, 2024 Edition Title 7 - AGRICULTURE CHAPTER 55 - "
+            "DEPARTMENT OF AGRICULTURE Sec. 2242b - Translation of "
+            "publications into foreign languages From the U.S. Government "
+            "Publishing Office"
+        ),
+        document_id="bridge-layer-heading-flogic-loss-bound",
+        citation="7 U.S.C. 2242b",
+        evaluate_provers=False,
+    )
+
+    assert report.ir_document.has_frame_logic is True
+    assert 0.0 <= report.round_trip.flogic_similarity_score <= 1.0
+    assert 0.0 <= report.round_trip.flogic_similarity_loss <= 1.0
+    assert report.round_trip.extra_losses["ontology_violation_count"] == 0.0
+
+
 def test_graph_projection_parses_string_boolean_metadata() -> None:
     from ipfs_datasets_py.logic.bridge.types import GraphProjectionResult
 
@@ -166,6 +189,29 @@ def test_graph_projection_parses_string_boolean_metadata() -> None:
 
     assert result.neo4j_compatible is False
     assert result.graph_failure_penalty == 1.0
+
+
+def test_graph_projection_infers_neo4j_shape_when_metadata_flag_missing() -> None:
+    from ipfs_datasets_py.logic.bridge.types import GraphProjectionResult
+
+    graph_data = SimpleNamespace(
+        metadata={"graph_id": "g1"},
+        node_count=2,
+        relationship_count=1,
+        nodes=(
+            SimpleNamespace(id="n1"),
+            SimpleNamespace(id="n2"),
+        ),
+        relationships=(
+            SimpleNamespace(type="CITES", start_node="n1", end_node="n2"),
+        ),
+        schema=SimpleNamespace(node_labels=("LegalNode",), relationship_types=("CITES",)),
+    )
+
+    result = GraphProjectionResult.from_graph_data(graph_data)
+
+    assert result.neo4j_compatible is True
+    assert result.graph_failure_penalty == 0.0
 
 
 def test_modal_frame_logic_bridge_projects_repealed_status_as_graph_view() -> None:
@@ -233,6 +279,66 @@ def test_modal_frame_logic_bridge_preserves_selected_frame_without_splitting_vie
     )
 
 
+def test_modal_frame_logic_bridge_projects_us_code_source_id_components_to_legal_views() -> None:
+    from ipfs_datasets_py.logic.modal.kg_bridge import flogic_triples_to_graph_data
+
+    graph_data = flogic_triples_to_graph_data(
+        [
+            {
+                "subject": "us-code-28-1655",
+                "predicate": "source_id",
+                "object": "us-code-28-1655",
+            },
+            {
+                "subject": "us-code-28-1655",
+                "predicate": "source_id_title",
+                "object": "28",
+            },
+            {
+                "subject": "us-code-28-1655",
+                "predicate": "source_id_citation_canonical",
+                "object": "28 U.S.C. 1655",
+            },
+            {
+                "subject": "us-code-28-1655",
+                "predicate": "source_id_section_normalized",
+                "object": "1655",
+            },
+            {
+                "subject": "us-code-28-1655",
+                "predicate": "citation_section_component_profile",
+                "object": "numeric",
+            },
+            {
+                "subject": "us-code-28-1655",
+                "predicate": "citation_source_id_section_profile_match",
+                "object": "true",
+            },
+        ],
+        graph_id="us-code-28-1655:flogic",
+    )
+
+    view_by_predicate = {
+        rel.properties["flogic_predicate"]: rel.properties["frame_logic_projection_view"]
+        for rel in graph_data.relationships
+    }
+
+    assert view_by_predicate["source_id"] == "document_scope"
+    assert view_by_predicate["source_id_title"] == "citation_structure"
+    assert view_by_predicate["source_id_citation_canonical"] == "citation_structure"
+    assert view_by_predicate["source_id_section_normalized"] == "section_structure"
+    assert view_by_predicate["citation_section_component_profile"] == "section_structure"
+    assert (
+        view_by_predicate["citation_source_id_section_profile_match"]
+        == "section_structure"
+    )
+    assert graph_data.metadata["frame_logic_projection_view_distribution"] == {
+        "citation_structure": 2,
+        "document_scope": 1,
+        "section_structure": 3,
+    }
+
+
 def test_modal_frame_logic_bridge_scales_sparse_citation_loss() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
@@ -248,6 +354,60 @@ def test_modal_frame_logic_bridge_scales_sparse_citation_loss() -> None:
     assert report.total_loss < 2.0
     assert report.metadata["sparse_citation_loss_calibrated"] is True
     assert report.metadata["sparse_citation_loss_scale"] < 1.0
+
+
+def test_modal_frame_logic_bridge_scales_us_code_scaffold_loss() -> None:
+    from ipfs_datasets_py.logic.bridge.modal_frame_logic import (
+        _calibrate_round_trip_for_statutory_scaffold,
+    )
+    from ipfs_datasets_py.logic.bridge.types import RoundTripMetrics
+
+    round_trip = RoundTripMetrics(
+        cosine_similarity=0.2,
+        cosine_loss=0.8,
+        cross_entropy_loss=2.0,
+        reconstruction_loss=1.0,
+        text_reconstruction_loss=0.5,
+        extra_losses={"cross_entropy_excess_loss": 1.5},
+    )
+
+    calibrated, did_calibrate = _calibrate_round_trip_for_statutory_scaffold(
+        round_trip,
+        citation="28 U.S.C. 1655",
+        text=(
+            "U.S.C. Title 28 - JUDICIARY AND JUDICIAL PROCEDURE 28 U.S.C. "
+            "United States Code, 2024 Edition Title 28 - JUDICIARY AND "
+            "JUDICIAL PROCEDURE PART V - PROCEDURE CHAPTER 111 - GENERAL "
+            "PROVISIONS Sec. 1655 - Lien enforcement; absent defendants "
+            "From the U.S. Government Publishing Office. In an action in a "
+            "district court to enforce any lien upon or claim to property, "
+            "the court may order the absent defendant to appear or plead by "
+            "a day certain. Pub. L. 85-699, title III, section 361."
+        ),
+    )
+
+    assert did_calibrate is True
+    assert calibrated.cross_entropy_loss < round_trip.cross_entropy_loss
+    assert calibrated.reconstruction_loss < round_trip.reconstruction_loss
+    assert calibrated.extra_losses["cross_entropy_excess_loss"] < 1.5
+
+
+def test_modal_frame_logic_bridge_does_not_scale_short_statutory_sentence() -> None:
+    from ipfs_datasets_py.logic.bridge.modal_frame_logic import (
+        _calibrate_round_trip_for_statutory_scaffold,
+    )
+    from ipfs_datasets_py.logic.bridge.types import RoundTripMetrics
+
+    round_trip = RoundTripMetrics(cross_entropy_loss=2.0)
+
+    calibrated, did_calibrate = _calibrate_round_trip_for_statutory_scaffold(
+        round_trip,
+        citation="5 U.S.C. 552",
+        text="The agency shall publish notice before the permit takes effect.",
+    )
+
+    assert did_calibrate is False
+    assert calibrated is round_trip
 
 
 def test_deontic_bridge_evaluates_legal_norm_ir_and_prover_syntax() -> None:
@@ -1278,6 +1438,19 @@ def test_tdfol_bridge_coerce_parses_legacy_proof_obligation_formula() -> None:
     assert "legacy_deontic_target" in coerced.get_predicates()
 
 
+def test_tdfol_bridge_coerce_parses_legal_id_proof_obligation_formula() -> None:
+    from ipfs_datasets_py.logic.TDFOL.tdfol_core import QuantifiedFormula
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
+
+    formula = "forall t (true and By(t,2026-03-20) -> O(frm:10-2851a,t))"
+
+    coerced = coerce_tdfol_formula(formula)
+
+    assert isinstance(coerced, QuantifiedFormula)
+    assert "By" in coerced.get_predicates()
+    assert "legacy_deontic_target" in coerced.get_predicates()
+
+
 def test_tdfol_bridge_coerce_normalizes_bracketed_deontic_export_formula() -> None:
     from ipfs_datasets_py.logic.TDFOL.tdfol_core import DeonticFormula, DeonticOperator
     from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
@@ -1446,6 +1619,41 @@ def test_cec_dcec_bridge_synthesizes_fallback_formula_when_norm_extraction_is_em
     assert report.round_trip.extra_losses["cec_dcec_no_formula_loss"] == 0.0
     assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
+def test_cec_dcec_bridge_uses_lifecycle_fallback_when_converter_output_is_formula() -> None:
+    from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
+
+    class _FormulaLikeOutput:
+        proposition = "forall x. (Actor(x) -> Vacant(x))"
+        operator = None
+        agent = None
+
+    class _FormulaLikeResult:
+        success = True
+        output = _FormulaLikeOutput()
+        metadata = {}
+
+    class _FormulaLikeConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _FormulaLikeResult()
+
+    adapter = CecDcecBridgeAdapter(converter=_FormulaLikeConverter())
+    report = adapter.evaluate(
+        "Sec. 3475 - Vacant. This section was repealed by public law.",
+        document_id="cec-bridge-vacant-fallback",
+        citation="CEC Bridge Vacant Fallback",
+    )
+
+    event_record = report.ir_document.views["cec_events"].payload["events"][0]
+    assert event_record["actor"] == "statute_section"
+    assert event_record["event"] == "mark_section_vacant"
+    formula_record = report.ir_document.views["dcec_formula"].payload["records"][0]
+    assert "forall" not in formula_record["proof_input"]
+    assert "mark_section_vacant" in formula_record["proof_input"]
+    assert report.proof_gate.compiles is True
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
 
 
 def test_cec_dcec_bridge_recovers_norms_from_legacy_parser_element_metadata() -> None:
@@ -1871,6 +2079,71 @@ def test_cec_dcec_bridge_normalizes_exported_rule_style_event_formulas(
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
 
 
+def test_cec_dcec_bridge_promotes_labeled_deontic_event_exports(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge import cec_dcec as cec_dcec_mod
+
+    class _NormResult:
+        success = True
+        metadata = {
+            "legal_norm_irs": [
+                {
+                    "source_id": "bridge:proof-obligation:1",
+                    "actor": "Agency",
+                    "action": "publish notice",
+                    "modality": "obligated",
+                }
+            ]
+        }
+
+    class _NormConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _NormResult()
+
+    def _fake_event_formula_exports(_norms):
+        return {
+            "bridge:proof-obligation:1": [
+                {
+                    "event_calculus_formula": (
+                        "proof obligation: O(happens(agency,publish_notice,t0))."
+                    ),
+                    "event_formula_source": "deontic.prover_syntax",
+                    "event_formula_syntax_valid": False,
+                }
+            ]
+        }
+
+    monkeypatch.setattr(
+        cec_dcec_mod,
+        "_event_formula_exports_from_norms",
+        _fake_event_formula_exports,
+    )
+
+    adapter = cec_dcec_mod.CecDcecBridgeAdapter(converter=_NormConverter())
+    report = adapter.evaluate(
+        "The agency shall publish notice.",
+        document_id="cec-bridge-labeled-proof-obligation",
+        citation="CEC Bridge Labeled Proof Obligation",
+    )
+
+    event_record = report.ir_document.views["event_calculus"].payload["records"][0]
+    assert event_record["event_calculus_formula"] == (
+        "Happens(legal_norm(bridge_proof_obligation_1), t) "
+        "=> HoldsAt(O(happens(agency,publish_notice,t0)), t)"
+    )
+    assert event_record["event_formula_syntax_valid"] is True
+    assert (
+        event_record["event_formula_target_parse_profile"]["top_level_connector"] == "=>"
+    )
+    assert (
+        event_record["event_formula_target_quality_gate"]["requires_validation"]
+        is False
+    )
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
 def test_cec_dcec_bridge_normalizes_unicode_arrow_event_formulas(
     monkeypatch,
 ) -> None:
@@ -2133,6 +2406,88 @@ def test_cec_dcec_bridge_accepts_capitalized_function_style_quantifier_formulas(
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
 
 
+def test_cec_dcec_bridge_repairs_export_component_slot_alignment_metadata(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge import cec_dcec as cec_dcec_mod
+
+    class _NormResult:
+        success = True
+        metadata = {
+            "legal_norm_irs": [
+                {
+                    "source_id": "bridge:recipient-slot:1",
+                    "actor": "Selecting official",
+                    "action": "provide employee written notification",
+                    "modality": "obligated",
+                }
+            ]
+        }
+
+    class _NormConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _NormResult()
+
+    def _fake_event_formula_exports(_norms):
+        return {
+            "bridge:recipient-slot:1": [
+                {
+                    "event_calculus_formula": (
+                        "Happens(legal_norm(bridge_recipient_slot_1), t) => "
+                        "HoldsAt(O(forall x. "
+                        "(SelectingOfficial(x) -> "
+                        "ProvideEmployeeWrittenNotification(x))), t)."
+                    ),
+                    "event_formula_source": "deontic.prover_syntax",
+                    "event_formula_syntax_valid": False,
+                    "event_formula_target_components": {
+                        "target": "deontic_cec",
+                        "slot_alignment_complete": False,
+                        "decoded_missing_grounded_ir_slots": ["recipient"],
+                        "formula_missing_decoded_slots": [],
+                        "formula_ungrounded_slots": [],
+                        "target_symbol_alignment_complete": True,
+                        "target_dialect_profile_complete": True,
+                        "reconstruction_token_profile_complete": True,
+                        "unreconstructed_source_tokens": [],
+                    },
+                    "event_formula_target_quality_gate": {
+                        "slot_alignment_complete": False,
+                        "failed_quality_checks": ["slot_alignment"],
+                    },
+                }
+            ]
+        }
+
+    monkeypatch.setattr(
+        cec_dcec_mod,
+        "_event_formula_exports_from_norms",
+        _fake_event_formula_exports,
+    )
+
+    adapter = cec_dcec_mod.CecDcecBridgeAdapter(converter=_NormConverter())
+    report = adapter.evaluate(
+        "The selecting official shall provide the employee written notification.",
+        document_id="cec-bridge-recipient-slot-repair",
+        citation="CEC Bridge Recipient Slot Repair",
+    )
+
+    event_record = report.ir_document.views["event_calculus"].payload["records"][0]
+    components = event_record["event_formula_target_components"]
+    quality_gate = event_record["event_formula_target_quality_gate"]
+
+    assert event_record["event_formula_syntax_valid"] is True
+    assert components["slot_alignment_complete"] is True
+    assert components["decoded_missing_grounded_ir_slots"] == []
+    assert components["cec_dcec_slot_alignment_repaired"] is True
+    assert components["cec_dcec_slot_alignment_repaired_slots"] == ["recipient"]
+    assert quality_gate["slot_alignment_complete"] is True
+    assert quality_gate["failed_quality_checks"] == []
+    assert quality_gate["cec_dcec_slot_alignment_repaired"] is True
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
 def test_external_prover_router_bridge_uses_native_prover_gate() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
@@ -2149,6 +2504,39 @@ def test_external_prover_router_bridge_uses_native_prover_gate() -> None:
     assert report.graph_projection.neo4j_compatible is True
     assert report.proof_gate.attempted_count >= 1
     assert "external_prover_unavailable_loss" in report.round_trip.extra_losses
+
+
+def test_external_prover_router_uses_syntactic_native_fallback_when_tdfol_unavailable(
+    monkeypatch,
+) -> None:
+    import builtins
+
+    from ipfs_datasets_py.logic.external_provers.prover_router import ProverRouter
+
+    real_import = builtins.__import__
+
+    def blocked_tdfol_import(name, *args, **kwargs):
+        if str(name).endswith("TDFOL.tdfol_prover"):
+            raise ImportError("tdfol unavailable for router fallback test")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", blocked_tdfol_import)
+
+    router = ProverRouter(
+        enable_cache=False,
+        enable_cvc5=False,
+        enable_coq=False,
+        enable_lean=False,
+        enable_native=True,
+        enable_symbolicai=False,
+        enable_z3=False,
+    )
+    result = router.prove("O(register_notice(secretary))", strategy="sequential")
+
+    assert router.get_available_provers() == ["native_syntactic"]
+    assert result.is_proved is False
+    assert result.prover_used is None
+    assert result.all_results["native_syntactic"].is_valid is True
 
 
 def test_external_prover_router_bridge_proof_gate_routes_external_when_native_disabled(
@@ -2754,6 +3142,87 @@ def test_external_prover_router_bridge_accepts_packet_shaped_guidance_route(
     assert report.round_trip.extra_losses["external_prover_failure_ratio"] == 0.0
 
 
+def test_external_prover_router_bridge_accepts_rescue_original_action_guidance(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge.external_prover_router import (
+        ExternalProverRouterBridgeAdapter,
+    )
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
+
+    class _GuidedFailureResult:
+        def __init__(self) -> None:
+            self.is_proved = False
+            self.prover_used = ""
+            self.proof_time = 0.01
+            self.reason = "Error: compatibility_failure"
+            self.strategy_used = "sequential"
+            self.all_results = {"native": "Error: compatibility_failure"}
+
+    class _GuidedFailureRouter:
+        @staticmethod
+        def get_available_provers() -> list[str]:
+            return ["native"]
+
+        @staticmethod
+        def route(_formula, **_kwargs):
+            return _GuidedFailureResult()
+
+    class _PlainFolAdapter(FolTdfolBridgeAdapter):
+        def encode(self, *args, **kwargs):
+            document, context = super().encode(*args, **kwargs)
+            formula_records = list(context["formula_records"])
+            assert formula_records
+            patched = dict(formula_records[0])
+            patched.pop("formula_object", None)
+            patched["formula"] = "publish_notice(agency)"
+            patched["proof_input"] = patched["formula"]
+            return (
+                document,
+                {
+                    **dict(context),
+                    "formula_records": [patched],
+                },
+            )
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.bridge.external_prover_router._build_router",
+        lambda **_kwargs: _GuidedFailureRouter(),
+    )
+
+    guidance = {
+        "semantic_bundle_key": (
+            '{"failure_reason":"main_apply_validation_failed_rolled_back",'
+            '"original_action":"repair_external_prover_router",'
+            '"program_synthesis_scope":"external_provers",'
+            '"source":"failed_validation_rescue_v1",'
+            '"target_component":"external_provers.router"}'
+        ),
+        "target_component": "external_provers.router",
+    }
+
+    adapter = ExternalProverRouterBridgeAdapter(
+        tdfol_adapter=_PlainFolAdapter(),
+        enable_native=True,
+        enable_external_binaries=False,
+    )
+    report = adapter.evaluate(
+        "The agency shall publish notice before the permit takes effect.",
+        document_id="external-prover-bridge-rescue-original-action-guidance",
+        citation="External Prover Bridge Rescue Original Action Guidance",
+        compiler_guidance=guidance,
+    )
+
+    assert report.status == "ok"
+    assert report.metadata["compiler_guidance_prover_gate_hint"] is True
+    assert report.metadata["proof_gate_soft_pass"] is True
+    assert report.metadata["proof_gate_soft_pass_reason"] == (
+        "router_compatibility_soft_pass"
+    )
+    assert report.proof_gate.compiles is True
+    assert report.round_trip.extra_losses["external_prover_failure_ratio"] == 0.0
+
+
 def test_external_prover_router_bridge_supports_route_signature_without_axioms(
     monkeypatch,
 ) -> None:
@@ -2921,6 +3390,28 @@ def test_fol_tdfol_coerce_formula_sanitizes_keyword_prefixed_identifiers() -> No
     assert "term_nothing_in_this_section" in parsed_section.to_string()
 
 
+def test_fol_tdfol_coerce_formula_normalizes_noisy_prover_exports() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
+
+    cases = {
+        "O(make_report(person,))": "O(make_report(person))",
+        "O(make_report(person)) # source: 49 U.S.C. 21311": (
+            "O(make_report(person))"
+        ),
+        "fof(ax_1, axiom, O(make_report(person))).": "O(make_report(person))",
+        "tdfol_formula = `O(register_notification(notification))`": (
+            "O(register_notification(term_notification))"
+        ),
+        "O(qualified(section:12574.))": "O(qualified(section:12574))",
+    }
+
+    for formula, expected in cases.items():
+        parsed = coerce_tdfol_formula(formula)
+
+        assert parsed is not None
+        assert parsed.to_string() == expected
+
+
 def test_zkp_attestation_bridge_evaluates_proof_attestations_and_graph() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
@@ -3057,6 +3548,78 @@ def test_zkp_prover_cache_separates_compiler_guidance_attestations() -> None:
         second.metadata["attestation_view"]["compiler_guidance_ref"]
         == second.public_inputs["compiler_guidance_ref"]
     )
+
+
+def test_zkp_verifier_rejects_stale_attestation_view() -> None:
+    from ipfs_datasets_py.logic.zkp import ZKPProver, ZKPVerifier
+
+    prover = ZKPProver(backend="simulated", enable_caching=False)
+    proof = prover.generate_proof(
+        "O(publish_notice(agency))",
+        ["O(publish_notice(agency))", "uses_predicate(publish_notice)"],
+        metadata={"circuit_ref": "legal_ir_zkp_attestation@v1", "circuit_version": 1},
+    )
+    proof.metadata["attestation_view"] = {
+        **proof.metadata["attestation_view"],
+        "attestation_ref": "0" * 64,
+    }
+
+    verifier = ZKPVerifier(backend="simulated")
+
+    assert verifier.verify_proof(proof) is False
+
+
+def test_zkp_prover_cached_whitespace_variant_refreshes_attestation_view() -> None:
+    from ipfs_datasets_py.logic.zkp import ZKPProver, ZKPVerifier
+
+    prover = ZKPProver(backend="simulated", enable_caching=True)
+    prover.generate_proof(
+        "O(publish_notice(agency))",
+        ["O(publish_notice(agency))", "uses_predicate(publish_notice)"],
+        metadata={"circuit_ref": "legal_ir_zkp_attestation@v1", "circuit_version": 1},
+    )
+    cached = prover.generate_proof(
+        "  O(publish_notice(agency))\n",
+        ["O(publish_notice(agency))", "uses_predicate(publish_notice)"],
+        metadata={"circuit_ref": "legal_ir_zkp_attestation@v1", "circuit_version": 1},
+    )
+    verifier = ZKPVerifier(backend="simulated")
+
+    assert cached.public_inputs["theorem"] == "  O(publish_notice(agency))\n"
+    assert (
+        cached.metadata["attestation_view"]["public_inputs_commitment"]
+        != ""
+    )
+    assert verifier.verify_proof(cached) is True
+def test_zkp_prover_cache_separates_circuit_attestations() -> None:
+    from ipfs_datasets_py.logic.zkp import ZKPProver
+
+    prover = ZKPProver(backend="simulated", enable_caching=True)
+    theorem = "O(publish_notice(agency))"
+    axioms = [theorem, "uses_predicate(publish_notice)"]
+
+    first = prover.generate_proof(
+        theorem,
+        axioms,
+        metadata={
+            "circuit_ref": "legal_ir_zkp_attestation@v1",
+            "circuit_version": 1,
+        },
+    )
+    second = prover.generate_proof(
+        theorem,
+        axioms,
+        metadata={
+            "circuit_ref": "legal_ir_zkp_attestation_guided@v1",
+            "circuit_version": 1,
+        },
+    )
+
+    assert first.public_inputs["circuit_ref"] == "legal_ir_zkp_attestation@v1"
+    assert second.public_inputs["circuit_ref"] == "legal_ir_zkp_attestation_guided@v1"
+    assert first.public_inputs["attestation_ref"] != second.public_inputs["attestation_ref"]
+    assert first.metadata["attestation_view"]["circuit_ref"] == first.public_inputs["circuit_ref"]
+    assert second.metadata["attestation_view"]["circuit_ref"] == second.public_inputs["circuit_ref"]
 
 
 def test_multiview_bridge_evaluation_builds_canonical_legal_ir_document() -> None:
@@ -3209,6 +3772,51 @@ def test_multiview_training_target_distribution_preserves_zkp_tail_lane() -> Non
     assert "zkp.circuits" in distribution
     assert distribution["zkp.circuits"] > 0.0
     assert abs(sum(distribution.values()) - 1.0) < 1e-9
+
+
+def test_multiview_training_target_compacts_official_usc_excerpt_auxiliary_lanes() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _compact_official_usc_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.17,
+        "TDFOL.prover": 0.19,
+        "deontic.ir": 0.28,
+        "external_provers.router": 0.10,
+        "knowledge_graphs.neo4j_compat": 0.14,
+        "modal.frame_logic": 0.06,
+        "zkp.circuits": 0.06,
+    }
+    text = (
+        "U.S.C. Title 42 - THE PUBLIC HEALTH AND WELFARE 42 U.S.C. "
+        "United States Code, 2024 Edition CHAPTER 129 - NATIONAL AND "
+        "COMMUNITY SERVICE Sec. 12574 - Types of program assistance From "
+        "the U.S. Government Publishing Office, www.gpo.gov §12574. Types "
+        "of program assistance The Corporation may provide assistance under "
+        "section 12571 of this title to a qualified applicant. Assistance "
+        "provided in accordance with this subsection may cover a period of "
+        "not more than 1 year. Editorial Notes Prior Provisions A prior "
+        "section 12574 related to terms of service prior to the general "
+        "amendment of subtitle D of title I of Pub. L. 101-610. Statutory "
+        "Notes and Related Subsidiaries Effective Date Section effective "
+        "Oct. 1, 1993, see section 123 of Pub. L. 103-82, set out as an "
+        "Effective Date note under section 1701 of Title 16, Conservation."
+    )
+
+    compacted = _compact_official_usc_contract_distribution(
+        distribution,
+        text=text,
+    )
+
+    assert set(compacted) == {
+        "CEC.native",
+        "TDFOL.prover",
+        "deontic.ir",
+        "knowledge_graphs.neo4j_compat",
+    }
+    assert compacted["deontic.ir"] > compacted["CEC.native"]
+    assert abs(sum(compacted.values()) - 1.0) < 1e-9
 
 
 def test_multiview_training_target_distribution_rebalances_dense_contract_lanes() -> None:
@@ -4389,6 +4997,38 @@ def test_dense_contract_rebalance_promotes_cec_for_sparse_statutory_references()
     assert rebalanced["CEC.native"] >= 0.27
     assert rebalanced["knowledge_graphs.neo4j_compat"] >= 0.19
     assert rebalanced["deontic.ir"] <= 0.20
+    assert rebalanced["CEC.native"] > rebalanced["deontic.ir"]
+    assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
+
+
+def test_dense_contract_rebalance_projects_omitted_codification_to_graph_and_cec() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_dense_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.24,
+        "TDFOL.prover": 0.22,
+        "deontic.ir": 0.19,
+        "knowledge_graphs.neo4j_compat": 0.18,
+        "zkp.circuits": 0.17,
+    }
+
+    rebalanced = _rebalance_dense_contract_distribution(
+        distribution,
+        text=(
+            "Sections 8751 to 8755. Omitted Editorial Notes Codification. "
+            "Sections 8751 to 8755 were omitted from the Code in view of "
+            "termination of United States Synthetic Fuels Corporation. Section "
+            "8751 related to issue by Corporation of obligations purchasable "
+            "by United States only."
+        ),
+    )
+
+    assert rebalanced["CEC.native"] >= 0.29
+    assert rebalanced["knowledge_graphs.neo4j_compat"] >= 0.21
+    assert rebalanced["deontic.ir"] <= 0.24
+    assert rebalanced["TDFOL.prover"] <= 0.19
     assert rebalanced["CEC.native"] > rebalanced["deontic.ir"]
     assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
 

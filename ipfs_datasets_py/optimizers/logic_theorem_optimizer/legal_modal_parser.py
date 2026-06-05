@@ -179,11 +179,16 @@ _USCODE_PROCEDURAL_CLAUSE_MAX_TOKENS = 42
 _USCODE_ADMINISTRATIVE_PROCEDURE_RESIDUAL_MAX_TOKENS = 96
 _USCODE_ADMINISTRATIVE_PROCEDURE_PHRASE_RE = re.compile(
     r"\b(?:administrative\s+(?:notice|review|hearing|procedure|procedures)|"
-    r"notice\s+and\s+hearing|hearing\s+(?:procedure|procedures|requirements)|"
+    r"administrative\s+(?:proceeding|proceedings|record|records)|"
+    r"notice\s+and\s+hearing|notice\s+of\s+(?:hearing|proceeding|proceedings)|"
+    r"opportunity\s+for\s+hearing|public\s+hearing|"
+    r"hearing\s+(?:procedure|procedures|requirements|record|records)|"
     r"review\s+(?:procedure|procedures|requirements)|"
     r"appeal\s+(?:procedure|procedures|rights)|"
     r"petition\s+(?:procedure|procedures)|"
-    r"adjudication\s+(?:procedure|procedures|requirements))\b",
+    r"adjudication\s+(?:procedure|procedures|requirements|record|records)|"
+    r"(?:record|records)\s+of\s+(?:hearing|proceeding|proceedings)|"
+    r"(?:hearing|proceeding|proceedings)\s+(?:record|records|evidence|testimony))\b",
     re.IGNORECASE,
 )
 _USCODE_ADMINISTRATIVE_PROCEDURE_SIGNAL_TOKENS = frozenset(
@@ -195,13 +200,20 @@ _USCODE_ADMINISTRATIVE_PROCEDURE_SIGNAL_TOKENS = frozenset(
         "appeals",
         "hearing",
         "hearings",
+        "investigation",
+        "investigations",
         "notice",
         "petition",
         "petitions",
+        "proceeding",
+        "proceedings",
         "procedure",
         "procedures",
+        "record",
+        "records",
         "requirements",
         "review",
+        "testimony",
     }
 )
 _USCODE_RESIDUAL_SPAN_MIN_TOKENS = 6
@@ -260,14 +272,22 @@ _USCODE_LONG_RESIDUAL_HEADING_MIN_TOKENS = 6
 _USCODE_LONG_RESIDUAL_HEADING_MAX_TOKENS = _USCODE_HEADING_ONLY_EXTENDED_MAX_TOKENS
 _USCODE_LONG_RESIDUAL_HEADING_MIN_SIGNAL_TOKENS = 2
 _USCODE_MAX_RESIDUAL_SPAN_FORMULAS = 3
-_USCODE_RESIDUAL_SPAN_FORMULA_BUDGET_CAP = 7
+_USCODE_RESIDUAL_SPAN_FORMULA_BUDGET_CAP = 8
 _USCODE_RESIDUAL_COALESCE_SEGMENT_MAX_TOKENS = 12
 _USCODE_RESIDUAL_HEADER_MIN_TOKENS = 10
+_USCODE_RESIDUAL_SHORT_HEADER_MIN_TOKENS = 4
 _USCODE_RESIDUAL_HEADER_SCOPE_PHRASES = (
     "from the u.s. government publishing office",
     "u.s.c.",
     "united states code",
     "www.gpo.gov",
+)
+_USCODE_DEFINITION_RESIDUAL_HINT_RE = re.compile(
+    r"\b(?:the\s+term\s+[^.;:]{0,160}?\s+(?:means|has\s+the\s+meaning\s+given)|"
+    r"terms?\s+[^.;:]{0,160}?\s+(?:mean|means|have\s+the\s+meaning\s+given)|"
+    r"has\s+the\s+meaning\s+given\s+that\s+term|"
+    r"means\s+[^.;:]{1,120})\b",
+    re.IGNORECASE,
 )
 _USCODE_RESIDUAL_STATUTORY_FRAGMENT_MAX_TOKENS = 10
 _USCODE_RESIDUAL_STATUTORY_FRAGMENT_HINT_RE = re.compile(
@@ -537,7 +557,51 @@ class LegalModalParser:
                                 end_char=match.end(),
                             )
                         )
-        return sorted(found, key=lambda cue: (cue.start_char, cue.end_char, cue.family.value, cue.operator.symbol))
+        return self._prune_contained_cues(found)
+
+    def _prune_contained_cues(
+        self,
+        cues: Sequence[ModalCueSpan],
+    ) -> List[ModalCueSpan]:
+        """Prefer prohibition over bare permission for `may not` cue collisions."""
+        accepted: List[ModalCueSpan] = []
+        for cue in sorted(
+            cues,
+            key=lambda item: (
+                item.start_char,
+                -(item.end_char - item.start_char),
+                item.end_char,
+                item.family.value,
+                item.operator.symbol,
+                item.cue.lower(),
+            ),
+        ):
+            if any(
+                existing.start_char <= cue.start_char
+                and cue.end_char <= existing.end_char
+                and cue.cue.lower() == "may"
+                and existing.cue.lower() == "may not"
+                and (
+                    existing.start_char,
+                    existing.end_char,
+                )
+                != (
+                    cue.start_char,
+                    cue.end_char,
+                )
+                for existing in accepted
+            ):
+                continue
+            accepted.append(cue)
+        return sorted(
+            accepted,
+            key=lambda cue: (
+                cue.start_char,
+                cue.end_char,
+                cue.family.value,
+                cue.operator.symbol,
+            ),
+        )
 
     def _is_calendar_month_may_cue(
         self,
@@ -1019,6 +1083,8 @@ class LegalModalParser:
             tokens,
         ):
             return True
+        if self._is_uscode_definition_residual_candidate(normalized, tokens):
+            return True
         is_short_heading_candidate = self._is_short_residual_heading_coverage_candidate(
             tokens
         )
@@ -1161,14 +1227,19 @@ class LegalModalParser:
         tokens: Sequence[str],
     ) -> bool:
         token_count = len(tokens)
-        if token_count < _USCODE_RESIDUAL_HEADER_MIN_TOKENS:
-            return False
         if token_count > _USCODE_RESIDUAL_SPAN_MAX_TOKENS:
             return False
         lowered = normalized_segment_text.lower()
-        return any(
+        has_header_scope = any(
             phrase in lowered for phrase in _USCODE_RESIDUAL_HEADER_SCOPE_PHRASES
         )
+        if not has_header_scope:
+            return False
+        if token_count >= _USCODE_RESIDUAL_HEADER_MIN_TOKENS:
+            return True
+        if token_count < _USCODE_RESIDUAL_SHORT_HEADER_MIN_TOKENS:
+            return False
+        return "u.s.c." in lowered or "united states code" in lowered
 
     def _is_uscode_statutory_fragment_residual_candidate(
         self,
@@ -1218,10 +1289,35 @@ class LegalModalParser:
                 "appeals",
                 "hearing",
                 "hearings",
+                "investigation",
+                "investigations",
                 "notice",
+                "proceeding",
+                "proceedings",
+                "record",
+                "records",
                 "review",
             }
         )
+
+    def _is_uscode_definition_residual_candidate(
+        self,
+        normalized_segment_text: str,
+        tokens: Sequence[str],
+    ) -> bool:
+        token_count = len(tokens)
+        if token_count < 4 or token_count > _USCODE_RESIDUAL_SPAN_MAX_TOKENS:
+            return False
+        lowered = normalized_segment_text.lower()
+        if (
+            _USCODE_CODIFICATION_HINT_RE.search(lowered)
+            or _USCODE_EDITORIAL_STATUS_HINT_RE.search(lowered)
+            or _USCODE_DECLARATIVE_STATEMENT_HINT_RE.search(lowered)
+        ):
+            return False
+        if "term" not in set(tokens) and "terms" not in set(tokens):
+            return False
+        return bool(_USCODE_DEFINITION_RESIDUAL_HINT_RE.search(lowered))
 
     def _residual_span_coverage_formula(
         self,
@@ -1318,19 +1414,52 @@ class LegalModalParser:
     ) -> List[LegalSegment]:
         if not spans:
             return list(segments)
-        return [
-            segment
-            for segment in segments
-            if not any(
-                self._spans_overlap(
-                    segment.start_char,
-                    segment.end_char,
-                    span_start,
-                    span_end,
-                )
+        normalized_spans = sorted(
+            (
+                (max(0, int(span_start)), max(0, int(span_end)))
                 for span_start, span_end in spans
+                if int(span_end) > int(span_start)
             )
-        ]
+        )
+        residual_segments: List[LegalSegment] = []
+        for segment in segments:
+            pieces: List[tuple[int, int]] = [(segment.start_char, segment.end_char)]
+            for span_start, span_end in normalized_spans:
+                next_pieces: List[tuple[int, int]] = []
+                for piece_start, piece_end in pieces:
+                    if not self._spans_overlap(
+                        piece_start,
+                        piece_end,
+                        span_start,
+                        span_end,
+                    ):
+                        next_pieces.append((piece_start, piece_end))
+                        continue
+                    if piece_start < span_start:
+                        next_pieces.append((piece_start, min(piece_end, span_start)))
+                    if span_end < piece_end:
+                        next_pieces.append((max(piece_start, span_end), piece_end))
+                pieces = next_pieces
+                if not pieces:
+                    break
+            for piece_start, piece_end in pieces:
+                piece_text = segment.text[
+                    max(0, piece_start - segment.start_char) : max(
+                        0,
+                        piece_end - segment.start_char,
+                    )
+                ]
+                if not self.normalize_text(piece_text):
+                    continue
+                residual_segments.append(
+                    LegalSegment(
+                        text=piece_text,
+                        start_char=piece_start,
+                        end_char=piece_end,
+                        role=segment.role,
+                    )
+                )
+        return residual_segments
 
     @staticmethod
     def _spans_overlap(

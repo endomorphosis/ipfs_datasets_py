@@ -217,6 +217,19 @@ def _decode_definition(norm: LegalNormIR) -> tuple[List[DecodedPhrase], List[str
         phrases.append(_phrase(body, "definition_body", norm))
     else:
         missing.append("definition_body")
+
+    rendered_conditions = 0
+    for condition in norm.conditions:
+        condition_text = _condition_phrase_text(condition)
+        if condition_text:
+            phrases.append(_fixed_phrase(
+                _condition_connector(condition, rendered_conditions),
+                "condition_connector",
+            ))
+            phrases.append(_detail_phrase(condition_text, "conditions", condition, norm))
+            rendered_conditions += 1
+
+    _append_cross_reference_provenance(phrases, norm)
     return phrases, missing
 
 
@@ -574,6 +587,20 @@ def _temporal_phrase_text(record: Mapping[str, Any]) -> str:
     value = _slot_text(record)
     if not value:
         return ""
+    raw_text = _clean_text(str(record.get("raw_text") or record.get("normalized_text") or ""))
+    if raw_text and raw_text.lower().startswith(
+        (
+            "on ",
+            "on and after ",
+            "after ",
+            "before ",
+            "by ",
+            "not later than ",
+            "no later than ",
+            "within ",
+        )
+    ):
+        return raw_text
     lowered = value.lower()
     if lowered.startswith(("within ", "by ", "before ", "after ", "not later than ", "no later than ")):
         return value

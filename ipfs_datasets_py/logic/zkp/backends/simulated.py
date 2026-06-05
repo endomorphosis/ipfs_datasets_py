@@ -17,7 +17,7 @@ import time
 
 from .. import ZKPError, ZKPProof
 from ..canonicalization import axioms_commitment_hex, normalize_text, theorem_hash_hex
-from ..circuits import build_proof_attestation_view
+from ..circuits import attestation_view_matches_proof, build_proof_attestation_view
 from ..statement import format_circuit_ref, parse_circuit_ref_lenient
 
 
@@ -151,6 +151,17 @@ class SimulatedBackend:
         if hasattr(proof, 'metadata') and isinstance(proof.metadata, dict):
             # Verify proof_system field exists (for clarity)
             if 'proof_system' not in proof.metadata:
+                return False
+
+            if (
+                "attestation_ref" in proof.public_inputs
+                or "attestation_view_version" in proof.public_inputs
+                or isinstance(proof.metadata.get("attestation_view"), dict)
+            ) and not attestation_view_matches_proof(
+                proof_data=proof.proof_data,
+                public_inputs=proof.public_inputs,
+                metadata=proof.metadata,
+            ):
                 return False
 
         return True

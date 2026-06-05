@@ -202,6 +202,83 @@ def build_proof_attestation_view(
     return view
 
 
+def _proof_bytes_from_serialized(proof_data: object) -> object:
+    if isinstance(proof_data, str):
+        try:
+            return bytes.fromhex(proof_data)
+        except ValueError:
+            return proof_data
+    return proof_data
+
+
+def attestation_view_matches_proof(
+    *,
+    proof_data: object,
+    public_inputs: Mapping[str, Any],
+    metadata: Mapping[str, Any] | None = None,
+    attestation_view: Mapping[str, Any] | None = None,
+) -> bool:
+    """Return True when public attestation fields match the proof bytes.
+
+    The attestation view is a bridge-facing commitment over proof bytes,
+    public inputs, circuit identity, and compiler guidance.  Verification
+    should fail closed when a serialized proof carries stale or missing
+    attestation fields.
+    """
+    try:
+        public_inputs_dict = _mapping_dict(public_inputs)
+        if not public_inputs_dict:
+            return False
+        metadata_dict = _mapping_dict(metadata)
+        embedded = _mapping_dict(
+            attestation_view
+            if attestation_view is not None
+            else metadata_dict.get("attestation_view")
+        )
+
+        expected = build_proof_attestation_view(
+            proof_data=_proof_bytes_from_serialized(proof_data),
+            public_inputs=public_inputs_dict,
+            metadata=metadata_dict,
+        )
+
+        if public_inputs_dict.get("attestation_ref") != expected["attestation_ref"]:
+            return False
+        if int(public_inputs_dict.get("attestation_view_version") or 0) != int(
+            expected["attestation_view_version"]
+        ):
+            return False
+        if not embedded:
+            return False
+
+        for key in (
+            "attestation_ref",
+            "attestation_view_version",
+            "proof_digest",
+            "public_inputs_commitment",
+            "circuit_ref",
+            "theorem_hash",
+            "axioms_commitment",
+            "ruleset_id",
+        ):
+            if embedded.get(key) != expected.get(key):
+                return False
+
+        if "compiler_guidance_ref" in expected:
+            if embedded.get("compiler_guidance_ref") != expected["compiler_guidance_ref"]:
+                return False
+            if int(embedded.get("compiler_guidance_version") or 0) != int(
+                expected["compiler_guidance_version"]
+            ):
+                return False
+        elif embedded.get("compiler_guidance_ref"):
+            return False
+
+        return True
+    except (TypeError, ValueError, AttributeError):
+        return False
+
+
 def _non_negative_int(value: object, default: int = 1) -> int:
     if isinstance(value, bool):
         return default
@@ -226,26 +303,24 @@ def proof_attestation_view_from_proof_dict(proof: Mapping[str, Any]) -> Dict[str
     metadata = proof.get("metadata")
     metadata_dict = _mapping_dict(metadata)
     embedded = metadata_dict.get("attestation_view")
-    if isinstance(embedded, Mapping):
-        public_inputs = _mapping_dict(proof.get("public_inputs"))
-        _, expected_public_inputs_commitment = _public_input_commitment(public_inputs)
-        embedded_dict = dict(embedded)
-        if embedded_dict.get("public_inputs_commitment") == expected_public_inputs_commitment:
-            return embedded_dict
 
     proof_data = proof.get("proof_data")
-    proof_bytes: object = proof_data
-    if isinstance(proof_data, str):
-        try:
-            proof_bytes = bytes.fromhex(proof_data)
-        except ValueError:
-            proof_bytes = proof_data
-
-    return build_proof_attestation_view(
+    proof_bytes = _proof_bytes_from_serialized(proof_data)
+    public_inputs = _mapping_dict(proof.get("public_inputs"))
+    rebuilt = build_proof_attestation_view(
         proof_data=proof_bytes,
-        public_inputs=_mapping_dict(proof.get("public_inputs")),
+        public_inputs=public_inputs,
         metadata=metadata_dict,
     )
+    if isinstance(embedded, Mapping) and attestation_view_matches_proof(
+        proof_data=proof_bytes,
+        public_inputs=public_inputs,
+        metadata=metadata_dict,
+        attestation_view=embedded,
+    ):
+        return dict(embedded)
+
+    return rebuilt
 
 
 @dataclass

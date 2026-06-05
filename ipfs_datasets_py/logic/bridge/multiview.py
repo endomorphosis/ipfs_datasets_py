@@ -122,6 +122,15 @@ _BRIDGE_CONTRACT_STATUS_OPERATION_CUE_RE = re.compile(
     r"transferred|reclassified|renumbered|omitted|reserved)\b",
     flags=re.IGNORECASE,
 )
+_BRIDGE_CONTRACT_OMITTED_CODIFICATION_CUE_RE = re.compile(
+    r"\b(?:omitted\s+editorial\s+notes?\s+codification|"
+    r"omitted\s+from\s+the\s+code|"
+    r"sections?\s+[\w\s,\.\-]+?\s+were\s+omitted\b|"
+    r"was\s+omitted\s+from\s+the\s+code|"
+    r"in\s+view\s+of\s+termination\s+of|"
+    r"special\s+and\s+not\s+general\s+application)\b",
+    flags=re.IGNORECASE,
+)
 _BRIDGE_CONTRACT_FRAME_DEFINITION_CUE_RE = re.compile(
     r"\b(?:means|defined\s+as|in\s+this\s+section)\b",
     flags=re.IGNORECASE,
@@ -225,6 +234,26 @@ _BRIDGE_CONTRACT_CITATION_PREFIX_RE = re.compile(
 _BRIDGE_CONTRACT_CITATION_TOKEN_RE = re.compile(
     r"\b\d+[a-z0-9\-\.]*\b",
     flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_OFFICIAL_USC_EXCERPT_RE = re.compile(
+    r"\b(?:u\.?\s*s\.?\s*c\.?\s+title|united\s+states\s+code|"
+    r"u\.s\.\s+government\s+publishing\s+office|pub\.\s*l\.|"
+    r"statutory\s+notes(?:\s+and\s+related\s+subsidiaries)?|"
+    r"historical\s+and\s+revision\s+notes|editorial\s+notes)\b|"
+    r"^\s*§\s*\d+[a-z0-9\-\.]*\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_OFFICIAL_USC_MIN_CHARS = 520
+_BRIDGE_CONTRACT_PRIMARY_AUTOENCODER_LANES = (
+    "CEC.native",
+    "TDFOL.prover",
+    "deontic.ir",
+    "knowledge_graphs.neo4j_compat",
+)
+_BRIDGE_CONTRACT_AUXILIARY_AUTOENCODER_LANES = (
+    "external_provers.router",
+    "modal.frame_logic",
+    "zkp.circuits",
 )
 
 
@@ -534,6 +563,10 @@ class MultiViewLegalIRReport:
             text=self.document.normalized_text or self.document.source_text,
         )
         rebalanced = _rebalance_sparse_contract_distribution(
+            rebalanced,
+            text=self.document.normalized_text or self.document.source_text,
+        )
+        rebalanced = _compact_official_usc_contract_distribution(
             rebalanced,
             text=self.document.normalized_text or self.document.source_text,
         )
@@ -1177,6 +1210,9 @@ def _rebalance_dense_contract_distribution(
         normalized_text,
     )
     has_status_operation_cue = status_operation_cue_count > 0
+    has_omitted_codification_cue = bool(
+        _BRIDGE_CONTRACT_OMITTED_CODIFICATION_CUE_RE.search(normalized_text)
+    )
     has_scaffolded_normative_operations = (
         has_dense_statute_scaffold
         and has_repeated_normative_deontic_signal
@@ -1390,12 +1426,21 @@ def _rebalance_dense_contract_distribution(
             )
             caps["zkp.circuits"] = min(caps.get("zkp.circuits", 1.0), 0.10)
         if has_structural_status_operation_signal and not has_repealed_history_frame_cue:
-            caps["CEC.native"] = min(caps["CEC.native"], 0.22)
-            caps["knowledge_graphs.neo4j_compat"] = min(
-                caps["knowledge_graphs.neo4j_compat"],
-                0.20,
-            )
-            caps["TDFOL.prover"] = min(caps.get("TDFOL.prover", 1.0), 0.16)
+            if has_omitted_codification_cue and not has_deontic_cue:
+                caps["CEC.native"] = max(caps["CEC.native"], 0.28)
+                caps["knowledge_graphs.neo4j_compat"] = max(
+                    caps["knowledge_graphs.neo4j_compat"],
+                    0.24,
+                )
+                caps["deontic.ir"] = min(caps.get("deontic.ir", 1.0), 0.24)
+                caps["TDFOL.prover"] = min(caps.get("TDFOL.prover", 1.0), 0.18)
+            else:
+                caps["CEC.native"] = min(caps["CEC.native"], 0.22)
+                caps["knowledge_graphs.neo4j_compat"] = min(
+                    caps["knowledge_graphs.neo4j_compat"],
+                    0.20,
+                )
+                caps["TDFOL.prover"] = min(caps.get("TDFOL.prover", 1.0), 0.16)
             caps["zkp.circuits"] = min(caps.get("zkp.circuits", 1.0), 0.10)
         if has_conditional_structural_normative_signal:
             caps["CEC.native"] = min(caps["CEC.native"], 0.19)
@@ -1588,6 +1633,17 @@ def _rebalance_dense_contract_distribution(
                     ("CEC.native", 0.27),
                     ("knowledge_graphs.neo4j_compat", 0.19),
                     ("TDFOL.prover", 0.08),
+                )
+            elif (
+                has_omitted_codification_cue
+                and has_structural_status_operation_signal
+                and not has_deontic_cue
+            ):
+                target_mix = (
+                    ("CEC.native", 0.48),
+                    ("knowledge_graphs.neo4j_compat", 0.32),
+                    ("TDFOL.prover", 0.12),
+                    ("deontic.ir", 0.08),
                 )
             elif has_structural_status_operation_signal and not has_repealed_history_frame_cue:
                 target_mix = (
@@ -2227,6 +2283,50 @@ def _rebalance_sparse_contract_distribution(
             adjusted[kg_lane] += shift
 
     return adjusted
+
+
+def _compact_official_usc_contract_distribution(
+    distribution: Mapping[str, float],
+    *,
+    text: str,
+) -> Dict[str, float]:
+    """Prune auxiliary lanes from long official U.S.C. training targets.
+
+    Raw multiview diagnostics still expose modal/prover/ZKP views.  For
+    autoencoder-facing ``bridge.contracts`` targets, long GPO-style statute
+    excerpts are better represented by the primary semantic lanes; otherwise
+    every sample becomes a broad seven-way target and the view CE floor is
+    dominated by adapter plumbing rather than legal content.
+    """
+
+    lanes = {
+        str(name): max(0.0, float(value))
+        for name, value in dict(distribution or {}).items()
+        if float(value) > 0.0
+    }
+    if not lanes:
+        return lanes
+    normalized_text = " ".join(str(text or "").split())
+    if len(normalized_text) < _BRIDGE_CONTRACT_OFFICIAL_USC_MIN_CHARS:
+        return lanes
+    if _BRIDGE_CONTRACT_OFFICIAL_USC_EXCERPT_RE.search(normalized_text) is None:
+        return lanes
+    primary = {
+        lane: lanes[lane]
+        for lane in _BRIDGE_CONTRACT_PRIMARY_AUTOENCODER_LANES
+        if lane in lanes and lanes[lane] > 0.0
+    }
+    if len(primary) < 3:
+        return lanes
+    if not any(lane in lanes for lane in _BRIDGE_CONTRACT_AUXILIARY_AUTOENCODER_LANES):
+        return lanes
+    total = sum(primary.values())
+    if total <= 0.0:
+        return lanes
+    return {
+        lane: value / total
+        for lane, value in sorted(primary.items())
+    }
 
 
 def _metadata_signal_values(metadata: Mapping[str, Any]) -> list[float]:

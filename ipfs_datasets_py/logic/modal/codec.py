@@ -138,6 +138,9 @@ _CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("referred to in", "referred_to_in"),
     ("described in", "described_in"),
     ("defined in", "defined_in"),
+    ("including", "including"),
+    ("includes", "includes"),
+    ("include", "include"),
     ("pursuant to", "pursuant_to"),
     ("to the extent", "to_the_extent"),
     ("to the extent provided", "to_the_extent_provided"),
@@ -2368,6 +2371,7 @@ class DeterministicModalLogicCodec:
             kg_triples,
             frame_feature_keys=frame_feature_keys,
         )
+        flogic_similarity_score = _normalized_flogic_similarity_score(flogic_result)
         losses = {
             "cosine_loss": cosine_loss(source_feature_embedding, decoded_embedding),
             "cosine_similarity": cosine_similarity(source_feature_embedding, decoded_embedding),
@@ -2382,8 +2386,8 @@ class DeterministicModalLogicCodec:
                 family_probabilities,
                 target_family_distribution,
             ),
-            "flogic_similarity_loss": 1.0 - (flogic_result.similarity_score if flogic_result else 0.0),
-            "flogic_similarity_score": flogic_result.similarity_score if flogic_result else 0.0,
+            "flogic_similarity_loss": 1.0 - flogic_similarity_score,
+            "flogic_similarity_score": flogic_similarity_score,
             "frame_ranking_loss": 0.0 if selected_frame else 1.0,
             "modal_span_coverage_loss": 1.0 - decoded_modal_text.modal_span_coverage,
             "ontology_violation_count": float(len(flogic_result.violations)) if flogic_result else 0.0,
@@ -10096,6 +10100,7 @@ def _is_semantic_support_slot(slot: str) -> bool:
         "selected_frame",
         "selected_ontology_frame",
         "interpreted_in_frame",
+        "document_section_heading_tail",
         "fallback_surface_text",
         "fallback_surface_context",
         "section_heading_tail",
@@ -10155,6 +10160,7 @@ def _semantic_support_token_count(decoded: DecodedModalText) -> int:
         "exception",
         "exception_scope",
         "legal_semantic_atom",
+        "document_section_heading_tail",
         "status_keyword",
         "source_subject_anchor",
         "source_action_anchor",
@@ -10261,7 +10267,7 @@ def _structural_semantic_values(decoded: DecodedModalText) -> List[str]:
 def _is_structural_boilerplate_slot_value(slot: str, value: str) -> bool:
     normalized_slot = _clean_non_empty_string(slot)
     normalized_value = _clean_non_empty_string(value)
-    if not normalized_slot or not normalized_value:
+    if not normalized_value:
         return False
     lowered = normalized_value.lower()
     if any(
@@ -10275,6 +10281,8 @@ def _is_structural_boilerplate_slot_value(slot: str, value: str) -> bool:
         )
     ):
         return True
+    if not normalized_slot:
+        return False
     if lowered in {
         "government",
         "publishing",
@@ -10899,10 +10907,10 @@ def _frame_ontology_audit_terms(
             max_terms=_FRAME_ONTOLOGY_AUDIT_MAX_TERMS,
         )
     )
-    return sorted(_unique_preserve_order(
+    return _unique_preserve_order(
         _normalize_frame_ontology_audit_term(term)
         for term in feature_terms + triple_terms + contextualized_terms
-    ))
+    )
 
 
 def _frame_ontology_audit_triples(
@@ -10960,6 +10968,21 @@ def _normalize_frame_ontology_audit_term(term: str) -> str:
     if re.fullmatch(r"\d+_digits?", normalized):
         return "digit"
     return normalized
+
+
+def _normalized_flogic_similarity_score(
+    result: Optional[FLogicOptimizerResult],
+) -> float:
+    """Return a bounded frame-logic similarity metric from raw cosine output."""
+    if result is None:
+        return 0.0
+    try:
+        raw_score = float(result.similarity_score)
+    except (TypeError, ValueError):
+        return 0.0
+    if not math.isfinite(raw_score):
+        return 0.0
+    return max(0.0, min(1.0, (raw_score + 1.0) / 2.0))
 
 
 def _normalize_flogic_result_frame_terms(result: Optional[FLogicOptimizerResult]) -> None:

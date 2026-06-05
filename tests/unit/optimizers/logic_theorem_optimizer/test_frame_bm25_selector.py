@@ -619,6 +619,24 @@ def test_frame_ontology_terms_from_feature_keys_support_legal_ir_view_features()
     ]
 
 
+def test_frame_ontology_contextualized_terms_audit_legal_ir_view_features() -> None:
+    terms = frame_ontology_contextualized_terms(
+        feature_keys=[
+            "legal-ir-view:modal.frame_logic",
+            "legal-ir-view:TDFOL.prover",
+            "legal-ir-view:knowledge_graphs.neo4j_compat",
+            "legal-ir-view:CEC.native",
+        ],
+    )
+
+    assert terms == [
+        "legal_ir_view_modal_frame_logic",
+        "legal_ir_view_tdfol_prover",
+        "legal_ir_view_knowledge_graphs_neo4j_compat",
+        "legal_ir_view_cec_native",
+    ]
+
+
 def test_frame_ontology_terms_from_feature_keys_extract_predicate_argument_role_shape_and_role_pairs() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [
@@ -1978,6 +1996,49 @@ def test_frame_ontology_feature_keys_from_values_audits_packet_frame_logic_evide
         "frame_logic",
         "7_450h",
         "modal_frame_logic",
+    ]
+
+
+def test_frame_ontology_feature_keys_from_values_audits_packet_view_family_features() -> None:
+    keys = frame_ontology_feature_keys_from_values(
+        {
+            "frame_features": [
+                "legal-ir-view:deontic.ir",
+                "legal-ir-view:modal.frame_logic",
+                "legal-ir-view:TDFOL.prover",
+                "legal-ir-view:knowledge_graphs.neo4j_compat",
+                "legal-ir-view:CEC.native",
+                "flogic:fallback_surface_text_alnum_segment_kind_positioned:4:numeric",
+                "slot:fallback_surface_text_alnum_segment_kind_positioned:4_numeric",
+            ],
+            "top_family_features": [
+                "legal-ir-view:deontic.ir",
+                "legal-ir-view:modal.frame_logic",
+                "legal-ir-view:TDFOL.prover",
+                "legal-ir-view:knowledge_graphs.neo4j_compat",
+                "quality:bias",
+                "quality:symbolic:has-formula",
+                "legal-ir-view:CEC.native",
+            ],
+        }
+    )
+
+    assert keys == [
+        "legal-ir-view:deontic.ir",
+        "legal-ir-view:modal.frame_logic",
+        "legal-ir-view:TDFOL.prover",
+        "legal-ir-view:knowledge_graphs.neo4j_compat",
+        "legal-ir-view:CEC.native",
+        "flogic:fallback_surface_text_alnum_segment_kind_positioned:4:numeric",
+        "slot:fallback_surface_text_alnum_segment_kind_positioned:4_numeric",
+    ]
+    assert frame_ontology_contextualized_terms(feature_keys=keys) == [
+        "legal_ir_view_deontic_ir",
+        "legal_ir_view_modal_frame_logic",
+        "legal_ir_view_tdfol_prover",
+        "legal_ir_view_knowledge_graphs_neo4j_compat",
+        "legal_ir_view_cec_native",
+        "fallback_surface_text_alnum_segment_kind_positioned_numeric",
     ]
 
 

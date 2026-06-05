@@ -1606,7 +1606,31 @@ def _ir_slot_spans(norm: LegalNormIR, slot: str, value: Any) -> List[List[int]]:
     ):
         spans.extend(_normalized_span_records(norm.support_span.to_list()))
     spans.extend(_nested_slot_spans(value))
+    if not spans and slot in {"actor", "action"}:
+        spans.extend(_text_value_spans(norm, value))
     return _dedupe_spans(spans)
+
+
+def _text_value_spans(norm: LegalNormIR, value: Any) -> List[List[int]]:
+    """Return a support/source span for scalar slot text when fields are legacy-empty."""
+
+    text = str(value or "").strip()
+    if not text:
+        return []
+
+    support_text = str(norm.support_text or "")
+    support_span = norm.support_span.to_list()
+    if support_text and len(support_span) == 2:
+        offset = support_text.lower().find(text.lower())
+        if offset >= 0:
+            return [[support_span[0] + offset, support_span[0] + offset + len(text)]]
+
+    source_text = str(norm.source_text or "")
+    if source_text:
+        offset = source_text.lower().find(text.lower())
+        if offset >= 0:
+            return [[offset, offset + len(text)]]
+    return []
 
 
 def _mental_state_span_from_action(norm: LegalNormIR) -> List[List[int]]:

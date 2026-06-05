@@ -61,6 +61,38 @@ class RouterProofResult:
         return self.all_results.get(prover_name)
 
 
+@dataclass(frozen=True)
+class SyntacticProofResult:
+    """Compile-only fallback result for router environments without TDFOL."""
+
+    formula: Any
+    is_valid: bool
+    message: str
+    method: str = "syntactic_native_fallback"
+
+    def is_proved(self) -> bool:
+        """The fallback validates routing syntax but never asserts a theorem."""
+
+        return False
+
+
+class SyntacticNativeFallbackProver:
+    """Minimal native prover substitute used when the full TDFOL prover is absent."""
+
+    def prove(self, goal: Any, **_: Any) -> SyntacticProofResult:
+        formula = ProverRouter._coerce_native_formula(goal)
+        is_valid = formula is not None and bool(str(formula).strip())
+        return SyntacticProofResult(
+            formula=formula,
+            is_valid=is_valid,
+            message=(
+                "formula accepted by syntactic native fallback"
+                if is_valid
+                else "formula rejected by syntactic native fallback"
+            ),
+        )
+
+
 class ProverRouter:
     """Router for selecting and coordinating multiple theorem provers.
     
@@ -195,7 +227,7 @@ class ProverRouter:
                 from ..TDFOL.tdfol_prover import TDFOLProver
                 self.provers['native'] = TDFOLProver()
             except ImportError:
-                pass
+                self.provers['native_syntactic'] = SyntacticNativeFallbackProver()
     
     def get_available_provers(self) -> List[str]:
         """Get list of available provers."""

@@ -14,6 +14,18 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_extractor import 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_critic import LogicCritic
 
 
+def test_legal_modal_parser_prefers_negated_permission_cue() -> None:
+    parser = LegalModalParser()
+
+    cues = parser.extract_cues(
+        "The requirements for serving as a director may not discriminate."
+    )
+
+    cue_labels = {(cue.operator.symbol, cue.cue.lower()) for cue in cues}
+    assert ("F", "may not") in cue_labels
+    assert ("P", "may") not in cue_labels
+
+
 _USCODE_2_31A_2B_TEXT = (
     "U.S.C. Title 2 - THE CONGRESS 2 U.S.C. United States Code, 2024 Edition "
     "Title 2 - THE CONGRESS CHAPTER 3 - COMPENSATION AND ALLOWANCES OF MEMBERS "
@@ -149,6 +161,14 @@ _USCODE_25_57_RESIDUAL_SPAN_TODO_TEXT = (
     "43 Stat. 1147, which authorized the Secretary of the Interior to allow "
     "employees in the Indian Service heat and light for quarters without "
     "charge, was not repeated in subsequent appropriation acts."
+)
+_USCODE_42_8502_DEFINITION_RESIDUAL_TEXT = (
+    "§8502. Definitions For purposes of this chapter— (1) The term "
+    "\"severe energy supply interruption\" means a shortage which the President "
+    "determines— (A) may cause major adverse impact; and (B) results from an "
+    "interruption. (2) The term \"international energy program\" has the meaning "
+    "given that term in section 6202(7) of this title. (3) The term "
+    "\"motor fuel\" means gasoline and diesel fuel."
 )
 _USCODE_7_7913_TEXT = (
     "U.S.C. Title 7 - AGRICULTURE 7 U.S.C. United States Code, 2024 Edition "
@@ -1228,6 +1248,32 @@ def test_parser_adds_residual_span_coverage_for_25_57_todo_shape() -> None:
         "U.S.C. Title 25 - INDIANS 25 U.S.C." in span for span in residual_text_spans
     )
     assert any("43 Stat." in span for span in residual_text_spans)
+
+
+def test_parser_adds_definition_residual_span_coverage_for_8502_style_text() -> None:
+    parser = LegalModalParser()
+    document = parser.parse(
+        _USCODE_42_8502_DEFINITION_RESIDUAL_TEXT,
+        document_id="us-code-42-8502.-fcb0ba12cbbe5b77",
+        source="us_code",
+        citation="42 U.S.C. 8502.",
+    )
+
+    residual_formulas = [
+        formula
+        for formula in document.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    ]
+    residual_text_spans = {
+        document.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in residual_formulas
+    }
+    assert any(
+        "international energy program" in span and "has the meaning given" in span
+        for span in residual_text_spans
+    )
 
 
 def test_parser_replays_heading_only_zero_formula_cases_for_25_422_48_1572_and_42_6323() -> None:

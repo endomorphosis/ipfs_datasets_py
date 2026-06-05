@@ -8,10 +8,11 @@ import math
 import os
 import re
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
+from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence
 
 from .legal_samples import LegalSample
 from .modal_registry import ModalLogicFamily
@@ -597,7 +598,55 @@ class ModalAutoencoderTrainingState:
 
     def copy(self) -> "ModalAutoencoderTrainingState":
         """Return a deep copy suitable for transactional optimizer rollback."""
-        return self.from_dict(self.to_dict())
+        copied = self.generalizable_copy()
+        copied.decoded_embeddings = {
+            sample_id: list(vector)
+            for sample_id, vector in self.decoded_embeddings.items()
+        }
+        copied.family_logits = {
+            sample_id: dict(logits)
+            for sample_id, logits in self.family_logits.items()
+        }
+        copied.applied_todo_ids = list(self.applied_todo_ids)
+        return copied
+
+    def generalizable_entry_count(self) -> int:
+        """Return a cheap size estimate for reusable projection state."""
+        return sum(
+            len(mapping)
+            for mapping in (
+                self.compiler_quality_embedding_weights,
+                self.compiler_quality_family_logits,
+                self.logic_signature_embedding_weights,
+                self.logic_signature_family_logits,
+                self.logic_signature_legal_ir_view_logits,
+                self.round_trip_signal_embedding_weights,
+                self.round_trip_signal_family_logits,
+                self.round_trip_signal_legal_ir_view_logits,
+                self.decompiler_plan_embedding_weights,
+                self.decompiler_plan_family_logits,
+                self.decompiler_plan_legal_ir_view_logits,
+                self.predicate_argument_embedding_weights,
+                self.predicate_argument_family_logits,
+                self.predicate_argument_legal_ir_view_logits,
+                self.feature_embedding_weights,
+                self.family_embedding_weights,
+                self.family_semantic_slot_embedding_weights,
+                self.family_semantic_slot_legal_ir_view_embedding_weights,
+                self.family_legal_ir_view_embedding_weights,
+                self.semantic_slot_embedding_weights,
+                self.feature_family_logits,
+                self.semantic_slot_family_logits,
+                self.legal_ir_view_logits,
+                self.legal_ir_view_embedding_weights,
+                self.legal_ir_view_family_logits,
+                self.feature_legal_ir_view_logits,
+                self.family_semantic_slot_legal_ir_view_logits,
+                self.semantic_slot_legal_ir_view_embedding_weights,
+                self.semantic_slot_legal_ir_view_family_logits,
+                self.semantic_slot_legal_ir_view_logits,
+            )
+        )
 
     def generalizable_copy(self) -> "ModalAutoencoderTrainingState":
         """Return only feature-level state safe to reuse across samples.
@@ -3071,15 +3120,43 @@ class AdaptiveModalAutoencoder:
         objective_cosine_gap_weight: float = 1.0,
         objective_legal_ir_weight: float = 1.0,
         hard_example_fraction: float = 1.0,
+        max_seconds: Optional[float] = None,
+        max_line_search_attempts: Optional[int] = None,
+        progress_callback: Optional[Callable[[Mapping[str, Any]], None]] = None,
     ) -> Dict[str, Any]:
         """Train feature-level weights with rollback on holdout regression.
 
         This guarded path keeps sample-memory disabled for updates, so any
         accepted improvement must come from reusable feature embeddings/logits.
         """
+        started_at = time.time()
         sample_list = list(samples)
         validation_list = list(validation_samples or [])
         target_samples = validation_list or sample_list
+
+        def elapsed_seconds() -> float:
+            return max(0.0, time.time() - started_at)
+
+        def timed_out() -> bool:
+            return (
+                max_seconds is not None
+                and float(max_seconds) > 0.0
+                and elapsed_seconds() >= float(max_seconds)
+            )
+
+        def emit_progress(stage: str, **payload: Any) -> None:
+            if progress_callback is None:
+                return
+            progress: Dict[str, Any] = {
+                "elapsed_seconds": round(elapsed_seconds(), 3),
+                "stage": stage,
+            }
+            progress.update(payload)
+            try:
+                progress_callback(progress)
+            except Exception:
+                pass
+
         evaluation_kwargs: Dict[str, Any] = {
             "legal_ir_bridge_names": legal_ir_bridge_names,
             "legal_ir_evaluate_provers": legal_ir_evaluate_provers,
@@ -3087,16 +3164,28 @@ class AdaptiveModalAutoencoder:
             "legal_ir_parallel_workers": legal_ir_parallel_workers,
             "use_sample_memory": False,
         }
+        emit_progress(
+            "before_holdout_evaluation",
+            sample_count=len(sample_list),
+            validation_sample_count=len(target_samples),
+        )
         before = self.evaluate(target_samples, **evaluation_kwargs)
         if sample_list and validation_list:
             # Prime LegalIR target caches for training samples before feature-level
             # nudges.  Validation-only evaluation intentionally does not touch
             # training sample cache entries.
+            emit_progress(
+                "training_cache_prime",
+                sample_count=len(sample_list),
+                validation_sample_count=len(target_samples),
+            )
             self.evaluate(sample_list, **evaluation_kwargs)
+        emit_progress("initial_state_snapshot")
         best_state = self.state.copy()
         best = before
         accepted_epochs = 0
         epoch_reports: List[Dict[str, Any]] = []
+        projection_stopped_reason: Optional[str] = None
         objective_weights = {
             "cross_entropy": max(0.0, float(objective_cross_entropy_weight)),
             "reconstruction": max(0.0, float(objective_reconstruction_weight)),
@@ -3129,11 +3218,31 @@ class AdaptiveModalAutoencoder:
             0.00390625,
             0.001953125,
         )
+        state_entry_count = self.state.generalizable_entry_count()
+        effective_max_line_search_attempts = max(
+            0,
+            int(max_line_search_attempts or 0),
+        )
+        if effective_max_line_search_attempts <= 0 and state_entry_count >= 100_000:
+            effective_max_line_search_attempts = len(line_search_multipliers)
 
         for epoch in range(1, max(0, int(epochs)) + 1):
+            if timed_out():
+                projection_stopped_reason = "projection_timeout"
+                break
+            emit_progress(
+                "epoch_snapshot",
+                epoch=epoch,
+                state_entry_count=state_entry_count,
+            )
             epoch_before_state = self.state.copy()
             candidate_reports: List[Dict[str, Any]] = []
             selected: Optional[tuple[float, AutoencoderEvaluation, ModalAutoencoderTrainingState, str]] = None
+            emit_progress(
+                "hard_example_selection",
+                epoch=epoch,
+                hard_example_fraction=hard_fraction,
+            )
             update_samples = self._select_hard_examples_for_projection(
                 sample_list,
                 hard_example_fraction=hard_fraction,
@@ -3141,6 +3250,9 @@ class AdaptiveModalAutoencoder:
             )
 
             for update_name, update_targets in candidate_updates:
+                if timed_out():
+                    projection_stopped_reason = "projection_timeout"
+                    break
                 head_scale = head_learning_rate_scales.get(update_name, 1.0)
                 attempt_reports: List[Dict[str, Any]] = []
                 best_attempt: Optional[tuple[float, Dict[str, Any], AutoencoderEvaluation, ModalAutoencoderTrainingState]] = None
@@ -3150,12 +3262,30 @@ class AdaptiveModalAutoencoder:
                 multipliers_to_try = list(line_search_multipliers)
                 refinement_added = False
                 for line_search_multiplier in multipliers_to_try:
+                    if timed_out():
+                        projection_stopped_reason = "projection_timeout"
+                        break
+                    if (
+                        effective_max_line_search_attempts > 0
+                        and len(attempt_reports) >= effective_max_line_search_attempts
+                    ):
+                        break
                     is_refinement_attempt = (
                         float(line_search_multiplier)
                         in line_search_refinement_multipliers
                     )
                     effective_learning_rate = (
                         learning_rate * head_scale * float(line_search_multiplier)
+                    )
+                    emit_progress(
+                        "line_search_attempt",
+                        effective_learning_rate=effective_learning_rate,
+                        epoch=epoch,
+                        hard_example_count=len(update_samples),
+                        line_search_attempt=len(attempt_reports) + 1,
+                        line_search_multiplier=float(line_search_multiplier),
+                        state_entry_count=state_entry_count,
+                        update=update_name,
                     )
                     self.state = epoch_before_state.copy()
                     for sample in update_samples:
@@ -3183,6 +3313,12 @@ class AdaptiveModalAutoencoder:
                                 learning_rate=effective_learning_rate,
                             )
                     self._regularize_feature_state(l2_regularization)
+                    emit_progress(
+                        "line_search_evaluation",
+                        epoch=epoch,
+                        line_search_attempt=len(attempt_reports) + 1,
+                        update=update_name,
+                    )
                     after = self.evaluate(target_samples, **evaluation_kwargs)
                     regressions = _evaluation_regressions_for_training(
                         best,
@@ -3321,9 +3457,15 @@ class AdaptiveModalAutoencoder:
                         not refinement_added
                         and best_improved_attempt is None
                         and len(attempt_reports) == len(line_search_multipliers)
+                        and (
+                            effective_max_line_search_attempts <= 0
+                            or len(attempt_reports) < effective_max_line_search_attempts
+                        )
                     ):
                         multipliers_to_try.extend(line_search_refinement_multipliers)
                         refinement_added = True
+                if projection_stopped_reason:
+                    break
                 chosen = best_improved_attempt or best_attempt
                 if chosen is None:
                     continue
@@ -3350,6 +3492,25 @@ class AdaptiveModalAutoencoder:
                         update_name,
                     )
 
+            if projection_stopped_reason:
+                self.state = epoch_before_state
+                epoch_reports.append(
+                    {
+                        "accepted": False,
+                        "candidate_reports": candidate_reports,
+                        "epoch": epoch,
+                        "objective_delta": max(
+                            (
+                                float(report.get("objective_delta", 0.0))
+                                for report in candidate_reports
+                            ),
+                            default=0.0,
+                        ),
+                        "selected_update": None,
+                        "stopped_reason": projection_stopped_reason,
+                    }
+                )
+                break
             if selected is None:
                 self.state = epoch_before_state
                 epoch_reports.append(
@@ -3391,15 +3552,24 @@ class AdaptiveModalAutoencoder:
             )
 
         self.state = best_state
+        emit_progress(
+            "finished",
+            accepted_epochs=accepted_epochs,
+            stopped_reason=projection_stopped_reason,
+        )
         return {
             "accepted_epochs": accepted_epochs,
             "after": best.to_dict(),
             "before": before.to_dict(),
             "compute_backend": self.compute_backend_metadata(),
             "epoch_reports": epoch_reports,
+            "elapsed_seconds": round(elapsed_seconds(), 3),
+            "effective_max_line_search_attempts": effective_max_line_search_attempts,
             "objective_weights": dict(objective_weights),
             "rejection_summary": _projection_rejection_summary(epoch_reports),
             "sample_memory_used": False,
+            "state_entry_count": state_entry_count,
+            "stopped_reason": projection_stopped_reason,
             "validation_sample_count": len(target_samples),
         }
 

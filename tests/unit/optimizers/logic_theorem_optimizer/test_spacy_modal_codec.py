@@ -85,6 +85,10 @@ _USCODE_10_3101_ADMINISTRATIVE_RESIDUAL_SPAN_TEXT = (
     "Sec. 3101 - General provisions. Administrative notice and hearing procedures "
     "for eligibility review and petition records."
 )
+_USCODE_ADMINISTRATIVE_PROCEEDING_RESIDUAL_SPAN_TEXT = (
+    "Sec. 1116 - Administrative record. Notice of proceeding and hearing records "
+    "for investigation testimony."
+)
 _USCODE_44_3558_REPORTS_RESIDUAL_SPAN_TEXT = (
     "Sec. 3558 - Major incident reporting. Congressional notification and reports."
 )
@@ -295,6 +299,34 @@ def test_spacy_encoder_ignores_calendar_month_may_as_permission_cue() -> None:
     assert len(may_cues) == 1
     assert may_cues[0].family == "deontic"
     assert any(cue.family == "temporal" and cue.cue.lower() == "after" for cue in encoding.cues)
+
+
+def test_spacy_encoder_refines_packet_000317_registry_family_cues() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+
+    prohibition = encoder.encode(
+        "No member of the armed forces may be placed in confinement.",
+        document_id="packet-000317-prohibition",
+    )
+    assert any(
+        cue.family == "deontic" and cue.symbol == "F" and cue.cue.lower() == "no member"
+        for cue in prohibition.cues
+    )
+
+    appropriations = encoder.encode(
+        "Amounts available for obligation shall remain available without fiscal year limitation "
+        "when determined by the Secretary.",
+        document_id="packet-000317-appropriations",
+    )
+    assert any(
+        cue.family == "temporal"
+        and cue.cue.lower() == "available without fiscal year limitation"
+        for cue in appropriations.cues
+    )
+    assert any(
+        cue.family == "epistemic" and cue.cue.lower() == "determined"
+        for cue in appropriations.cues
+    )
 
 
 def test_spacy_encoder_treats_non_deadline_by_as_non_temporal_cue() -> None:
@@ -696,6 +728,30 @@ def test_spacy_encoder_marks_repealed_statutory_sections_as_status_frame_scope()
     assert signals["has_temporal_status_scope"] is True
     assert signals["has_frame_context"] is True
     assert signals["has_statutory_status_frame_scope"] is True
+
+
+def test_spacy_encoder_marks_vacant_sections_as_frame_status_scope() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="38",
+        section="3475",
+        text=(
+            "Sec. 3475 - Vacant From the U.S. Government Publishing Office. "
+            "[§3475. Vacant] Editorial Notes Codification Prior section was repealed."
+        ),
+    )
+
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+
+    assert signals["has_vacant_section_scope"] is True
+    assert signals["has_frame_context"] is True
+    assert signals["has_statutory_status_frame_scope"] is True
+    assert ranking[0]["family"] == "frame"
 
 
 def test_spacy_encoder_treats_editorial_required_as_non_deontic_scope() -> None:
@@ -6161,6 +6217,35 @@ def test_spacy_compiler_adds_administrative_notice_hearing_residual_span_coverag
     )
 
 
+def test_spacy_compiler_adds_administrative_proceeding_record_residual_span_coverage() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    encoding = encoder.encode(
+        _USCODE_ADMINISTRATIVE_PROCEEDING_RESIDUAL_SPAN_TEXT,
+        document_id="us-code-45-1116.-5646808ce5a8b0a2",
+        citation="45 U.S.C. 1116.",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    residual_formulas = [
+        formula
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    ]
+    assert residual_formulas
+    residual_text_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in residual_formulas
+    }
+    assert (
+        "Notice of proceeding and hearing records for investigation testimony."
+        in residual_text_spans
+    )
+
+
 def test_spacy_compiler_adds_report_heading_residual_span_coverage() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()
@@ -7233,6 +7318,52 @@ def test_spacy_codec_boosts_deontic_share_for_authorized_appropriation_fiscal_sc
 
     assert with_phrase_deontic_share > without_phrase_deontic_share
     assert with_phrase_temporal_share < without_phrase_temporal_share
+
+
+def test_spacy_codec_refines_packet_002939_mixed_scope_family_evidence() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    samples = {
+        "removal_frame": (
+            "Sec. 1450 - Attachment or sequestration; securities. Whenever any "
+            "action is removed from a State court to a district court of the "
+            "United States, any attachment or sequestration shall remain valid "
+            "until dissolved or modified by the district court. Historical and "
+            "Revision Notes changes were made in phraseology."
+        ),
+        "approval_deontic": (
+            "Sec. 6395 - Secretarial approval; peer review. The Secretary shall "
+            "approve each State application that meets the requirements of this "
+            "part and may review such application. Editorial Notes Effective "
+            "Date of 2015 Amendment effective Dec. 10, 2015, see section 6301 "
+            "of this title."
+        ),
+        "repeal_deontic": (
+            "Sec. 3342 - Repealed. Section related to Federal participants and "
+            "prohibited details of employees except for temporary duty provided "
+            "for by law. Effective Date of Repeal effective Oct. 1, 1991, see "
+            "section 6303 of this title."
+        ),
+        "membership_conditional": (
+            "Sec. 286w - Denial of membership or other status. It is the policy "
+            "that the organization should not be given membership or observer "
+            "status. In the event that the Fund provides membership, such action "
+            "would result in a serious diminution of support. Upon review, the "
+            "President would be required to report recommendations to Congress."
+        ),
+    }
+
+    shares_by_sample = {}
+    for sample_id, text in samples.items():
+        ranking = ranked_modal_families(encoder.encode(text, document_id=sample_id))
+        shares_by_sample[sample_id] = {
+            str(item["family"]): float(item["share_raw"])
+            for item in ranking
+        }
+
+    assert shares_by_sample["removal_frame"]["frame"] > 0.14
+    assert shares_by_sample["approval_deontic"]["deontic"] > 0.34
+    assert shares_by_sample["repeal_deontic"]["deontic"] > 0.28
+    assert shares_by_sample["membership_conditional"]["conditional_normative"] > 0.4
 
 
 def test_supervisor_with_spacy_codec_improves_loss_and_cosine() -> None:

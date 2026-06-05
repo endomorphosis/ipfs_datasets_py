@@ -27,6 +27,15 @@ def _utc_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
+def _utc_timestamp(value: Any) -> Optional[float]:
+    if value is None or str(value).strip() == "":
+        return None
+    try:
+        return datetime.fromisoformat(str(value)).timestamp()
+    except (TypeError, ValueError):
+        return None
+
+
 AUTOENCODER_SGD_ROLE = "autoencoder_sgd"
 PROGRAM_SYNTHESIS_ROLE = "program_synthesis"
 AUTOENCODER_EXECUTION_TARGET = "adaptive_autoencoder"
@@ -1607,6 +1616,78 @@ class ModalTodoQueue:
             return False
         todo.fail_validation(reason)
         return True
+
+    def requeue_stale_claims(
+        self,
+        *,
+        max_age_seconds: float,
+        optimizer_role: Optional[str] = None,
+        reason: str = "stale_claim_requeued",
+        claimed_by: Optional[Iterable[str]] = None,
+        now: Optional[float] = None,
+    ) -> Dict[str, Any]:
+        """Return stale claimed TODOs to pending so abandoned workers cannot starve a lane."""
+        threshold = float(max_age_seconds)
+        if threshold <= 0.0:
+            return {
+                "checked_count": 0,
+                "claimed_by": [],
+                "max_age_seconds": threshold,
+                "requeued_count": 0,
+                "requeued_ids": [],
+                "reason": reason,
+            }
+        claimed_by_filter = (
+            {str(worker_id) for worker_id in claimed_by if str(worker_id)}
+            if claimed_by is not None
+            else None
+        )
+        now_epoch = (
+            float(now)
+            if now is not None
+            else datetime.now(timezone.utc).timestamp()
+        )
+        checked_count = 0
+        requeued_ids: List[str] = []
+        requeued_by: Dict[str, int] = {}
+        for todo in self._todos.values():
+            if not _todo_matches(
+                todo,
+                status="claimed",
+                optimizer_role=optimizer_role,
+            ):
+                continue
+            worker_id = str(todo.claimed_by or "")
+            if claimed_by_filter is not None and worker_id not in claimed_by_filter:
+                continue
+            checked_count += 1
+            claimed_timestamp = _utc_timestamp(todo.claimed_at)
+            if claimed_timestamp is None:
+                age_seconds = threshold
+                stale_reason = f"{reason}:missing_claimed_at"
+            else:
+                age_seconds = max(0.0, now_epoch - claimed_timestamp)
+                stale_reason = reason
+            if age_seconds < threshold:
+                continue
+            todo.metadata["stale_claim_age_seconds"] = round(age_seconds, 3)
+            todo.metadata["stale_claim_previous_claimed_at"] = todo.claimed_at
+            todo.metadata["stale_claim_previous_claimed_by"] = todo.claimed_by
+            todo.metadata["stale_claim_requeued_at"] = _utc_now()
+            todo.metadata["stale_claim_requeue_reason"] = stale_reason
+            todo.requeue(stale_reason)
+            requeued_ids.append(todo.todo_id)
+            if worker_id:
+                requeued_by[worker_id] = requeued_by.get(worker_id, 0) + 1
+        return {
+            "checked_count": checked_count,
+            "claimed_by": sorted(claimed_by_filter or []),
+            "max_age_seconds": threshold,
+            "reason": reason,
+            "requeued_by_worker": dict(sorted(requeued_by.items())),
+            "requeued_count": len(requeued_ids),
+            "requeued_ids": requeued_ids,
+        }
 
     def save_jsonl(self, path: str | Path) -> None:
         destination = Path(path)

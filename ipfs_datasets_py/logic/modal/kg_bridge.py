@@ -108,10 +108,27 @@ _EDITORIAL_STATUS_TOKENS = (
     "transferred",
 )
 _SECTION_STRUCTURE_PREDICATE_PREFIXES = (
+    "citation_section_",
+    "citation_source_id_section_",
+    "citation_source_id_title_section_",
+    "citation_title_section_",
     "section_component_",
     "section_profile_",
     "section_range_",
     "section_style_",
+    "source_id_section_",
+    "source_id_title_section_",
+)
+_SOURCE_ID_CITATION_STRUCTURE_PREDICATES = {
+    "source_id_citation_canonical",
+    "source_id_scheme",
+    "source_id_title",
+    "source_id_title_number",
+    "source_id_title_section_key",
+}
+_SOURCE_ID_CITATION_STRUCTURE_PREDICATE_PREFIXES = (
+    "source_id_citation_",
+    "source_id_title_",
 )
 _SECTION_STRUCTURE_TOKENS = (
     "chapter",
@@ -510,6 +527,11 @@ def _projection_view_for_triple(predicate: str, obj: str = "") -> str:
         return "ontology_term"
     if normalized.startswith(_SECTION_STRUCTURE_PREDICATE_PREFIXES):
         return "section_structure"
+    if (
+        normalized in _SOURCE_ID_CITATION_STRUCTURE_PREDICATES
+        or normalized.startswith(_SOURCE_ID_CITATION_STRUCTURE_PREDICATE_PREFIXES)
+    ):
+        return "citation_structure"
     if normalized in _MODAL_SEMANTIC_PREDICATES or normalized.startswith(
         _MODAL_SEMANTIC_PREDICATE_PREFIXES
     ):

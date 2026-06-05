@@ -434,6 +434,11 @@ _SECTION_DEFINED_SCOPE_RE = re.compile(
     r"\b(?:sec\.|section|§)\s*[0-9A-Za-z().-]+[^.\n]{0,100}\bdefined\b",
     re.IGNORECASE,
 )
+_VACANT_SECTION_STATUS_RE = re.compile(
+    r"(?:\bsec(?:tion)?s?\.?\s+[a-z0-9_.-]+\s*[-.]?\s*|\[\s*§?\s*[a-z0-9_.-]+\s*\.\s*)"
+    r"vacant\b|\bvacant\s*\]",
+    re.IGNORECASE,
+)
 _MONTH_NAME_TOKENS = frozenset(
     {
         "jan",
@@ -1937,13 +1942,16 @@ def _weighted_modal_family_counts(
     signals: Optional[Mapping[str, bool]] = None,
 ) -> Dict[str, float]:
     counts = _overlap_aware_modal_family_counts(encoding)
-    if not counts:
-        return {}
     resolved_signals: Mapping[str, bool]
     if signals is None:
         resolved_signals = modal_ambiguity_signals(encoding)
     else:
         resolved_signals = signals
+    if not counts:
+        if bool(resolved_signals.get("has_vacant_section_scope")):
+            counts = {ModalLogicFamily.FRAME.value: 1.2}
+        else:
+            return {}
     has_generic_frame_debias_context = _is_generic_frame_cue_debias_context(
         encoding,
         resolved_signals,
@@ -1989,6 +1997,10 @@ def _weighted_modal_family_counts(
         resolved_signals,
     )
     _apply_statutory_reference_frame_scope_backfill(
+        counts,
+        resolved_signals,
+    )
+    _apply_vacant_section_frame_scope_backfill(
         counts,
         resolved_signals,
     )
@@ -3848,6 +3860,20 @@ def _apply_statutory_reference_frame_scope_backfill(
         )
 
 
+def _apply_vacant_section_frame_scope_backfill(
+    counts: Dict[str, float],
+    signals: Mapping[str, bool],
+) -> None:
+    """Treat vacant section headings as frame/status scope, not operative timing."""
+    if not bool(signals.get("has_vacant_section_scope")):
+        return
+    frame_family = ModalLogicFamily.FRAME.value
+    counts[frame_family] = max(
+        float(counts.get(frame_family, 0.0)),
+        1.2,
+    )
+
+
 def _apply_directional_modal_family_pair_backfill(
     counts: Dict[str, float],
     signals: Mapping[str, bool],
@@ -5323,6 +5349,35 @@ def _apply_refined_modal_family_cue_pair_balance(
         )
         frame_count = float(counts.get(frame_family, 0.0))
 
+    # temporal -> frame:
+    # removal/jurisdiction and status-note sections often collect date and
+    # status cues in editorial text while the typed semantics are the court or
+    # statutory frame that scopes the operative rule.
+    if (
+        temporal_count > frame_count
+        and frame_count > 0.0
+        and has_temporal_scope
+        and has_frame_scope_context
+        and has_direct_frame_scope_context
+        and (
+            has_editorial_frame_context
+            or has_structural_authority_frame_scope
+        )
+        and (
+            has_statutory_scope_reference
+            or has_structural_conditional_scope
+            or has_deontic_scope
+        )
+    ):
+        frame_floor = _scaled_competing_scope_backfill(
+            source_count=max(temporal_count, deontic_count, conditional_count, 1.0),
+            ratio=0.32,
+            minimum=_FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            maximum=_TEMPORAL_TO_FRAME_SCOPE_REINFORCEMENT_MAX,
+        )
+        counts[frame_family] = max(frame_count, frame_floor)
+        frame_count = float(counts.get(frame_family, 0.0))
+
     # temporal -> deontic:
     # prevent status/date-only temporal context from masking clear deontic force.
     temporal_status_only_scope = bool(
@@ -5378,6 +5433,17 @@ def _apply_refined_modal_family_cue_pair_balance(
         )
         counts[deontic_family] = max(deontic_count, deontic_floor)
         deontic_count = float(counts.get(deontic_family, 0.0))
+        deontic_increment = _scaled_competing_scope_backfill(
+            source_count=max(temporal_count, frame_count, conditional_count, 1.0),
+            ratio=0.12,
+            minimum=0.0,
+            maximum=_FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
+        counts[deontic_family] = max(
+            deontic_count,
+            deontic_count + deontic_increment,
+        )
+        deontic_count = float(counts.get(deontic_family, 0.0))
 
         conditional_floor = _scaled_competing_scope_backfill(
             source_count=max(temporal_count, deontic_count, 1.0),
@@ -5387,6 +5453,43 @@ def _apply_refined_modal_family_cue_pair_balance(
         )
         counts[conditional_family] = max(conditional_count, conditional_floor)
         conditional_count = float(counts.get(conditional_family, 0.0))
+
+    # temporal/frame -> deontic:
+    # effective-date and amendment scaffolding can make temporal/frame context
+    # dominate sections whose live rule is approval, prohibition, or required
+    # reporting. Raise deontic support without erasing the competing scope.
+    if (
+        temporal_count > deontic_count
+        and has_deontic_scope
+        and has_temporal_scope
+        and has_temporal_status_scope
+        and has_frame_scope_context
+        and frame_count > 0.0
+        and (
+            has_statutory_scope_reference
+            or has_editorial_frame_context
+            or has_calendar_date_scope
+        )
+    ):
+        deontic_floor = _scaled_competing_scope_backfill(
+            source_count=max(temporal_count, frame_count, conditional_count, 1.0),
+            ratio=0.36,
+            minimum=_FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            maximum=_TEMPORAL_TO_DEONTIC_SCOPE_REINFORCEMENT_MAX,
+        )
+        counts[deontic_family] = max(deontic_count, deontic_floor)
+        deontic_count = float(counts.get(deontic_family, 0.0))
+        deontic_increment = _scaled_competing_scope_backfill(
+            source_count=max(temporal_count, frame_count, conditional_count, 1.0),
+            ratio=0.12,
+            minimum=0.0,
+            maximum=_FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
+        counts[deontic_family] = max(
+            deontic_count,
+            deontic_count + deontic_increment,
+        )
+        deontic_count = float(counts.get(deontic_family, 0.0))
 
     # frame -> deontic:
     # generic frame-heavy statutory context should not suppress explicit
@@ -5448,6 +5551,31 @@ def _apply_refined_modal_family_cue_pair_balance(
             )
             counts[temporal_family] = max(temporal_count, temporal_floor)
             temporal_count = float(counts.get(temporal_family, 0.0))
+
+    # frame -> conditional_normative:
+    # membership/status provisions often describe institutional frame context,
+    # but "in the event", "upon review", and similar clause scaffolding carry
+    # the typed conditional force. Keep that conditional family above generic
+    # frame evidence when both are present.
+    if (
+        frame_count > 0.0
+        and has_frame_scope_context
+        and has_structural_conditional_scope
+        and has_explicit_conditional_scope
+        and (
+            has_statutory_scope_reference
+            or has_temporal_status_scope
+            or has_calendar_date_scope
+        )
+    ):
+        conditional_floor = _scaled_competing_scope_backfill(
+            source_count=max(frame_count, deontic_count, temporal_count, 1.0),
+            ratio=0.4,
+            minimum=_FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            maximum=_STATUTORY_GENERIC_FRAME_CONDITIONAL_SCOPE_MAX,
+        )
+        counts[conditional_family] = max(conditional_count, conditional_floor)
+        conditional_count = float(counts.get(conditional_family, 0.0))
 
     # conditional_normative -> temporal:
     # when statutory structural conditionals only carry weak temporal cue tokens,
@@ -6301,6 +6429,9 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
     section_defined_scope = bool(
         _SECTION_DEFINED_SCOPE_RE.search(encoding.normalized_text)
     )
+    vacant_section_scope = bool(
+        _VACANT_SECTION_STATUS_RE.search(encoding.normalized_text)
+    )
     alethic_scope = (
         bool(token_terms & _ALETHIC_SCOPE_TOKENS)
         or bool(alethic_scope_phrase)
@@ -6345,6 +6476,7 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
     frame_context = (
         bool(token_terms & _FRAME_CONTEXT_TOKENS)
         or bool(frame_scope_phrase)
+        or vacant_section_scope
         or bool(frame_structural_authority_scope_phrase)
         or bool(frame_procedural_scope_phrase)
         or bool(frame_editorial_scope_phrase)
@@ -6354,11 +6486,13 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         and (
             statutory_scope_reference
             or temporal_status_scope_token
+            or vacant_section_scope
             or frame_editorial_scope_phrase
             or frame_scope_phrase
         )
         and (
             temporal_status_scope_token
+            or vacant_section_scope
             or frame_editorial_scope_phrase
             or frame_scope_phrase
         )
@@ -6381,6 +6515,7 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         "has_alethic_scope": alethic_scope or ModalLogicFamily.ALETHIC.value in cue_families,
         "has_alethic_scope_phrase": bool(alethic_scope_phrase),
         "has_definition_scope": section_defined_scope,
+        "has_vacant_section_scope": vacant_section_scope,
         "has_condition_clause": condition_clauses,
         "has_conditional_scope_token": conditional_scope_token,
         "has_conditional_scope_phrase": conditional_scope_phrase,

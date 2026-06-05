@@ -153,3 +153,44 @@ def test_frame_ontology_terms_include_predicate_argument_anchor_terms() -> None:
     assert "conservation_frame" in metadata["frame_ontology_terms"]
     assert "deontic" in metadata["frame_ontology_terms"]
     assert "deontic_d_o" in metadata["frame_ontology_terms"]
+
+
+def test_frame_ontology_terms_contextualize_legal_ir_view_family_features() -> None:
+    result = _optimizer().evaluate(
+        source_text="s",
+        decoded_text="d",
+        source_embedding=[1.0, 0.0],
+        decoded_embedding=[1.0, 0.0],
+        kg_triples=[],
+        frame_feature_keys=[
+            {
+                "frame_features": [
+                    "legal-ir-view:deontic.ir",
+                    "legal-ir-view:modal.frame_logic",
+                    "legal-ir-view:TDFOL.prover",
+                    "legal-ir-view:knowledge_graphs.neo4j_compat",
+                    "legal-ir-view:CEC.native",
+                    "flogic:fallback_surface_text_alnum_segment_kind_positioned:4:numeric",
+                    "slot:fallback_surface_text_alnum_segment_kind_positioned:4_numeric",
+                ],
+                "top_family_features": [
+                    "legal-ir-view:deontic.ir",
+                    "legal-ir-view:modal.frame_logic",
+                    "legal-ir-view:TDFOL.prover",
+                    "legal-ir-view:knowledge_graphs.neo4j_compat",
+                    "quality:bias",
+                    "quality:symbolic:has-formula",
+                    "legal-ir-view:CEC.native",
+                ],
+            }
+        ],
+    )
+
+    metadata = result.metadata
+    assert "modal_frame_logic" in metadata["frame_ontology_terms"]
+    assert "legal_ir_view_modal_frame_logic" in metadata["frame_ontology_terms"]
+    assert "legal_ir_view_tdfol_prover" in metadata["frame_ontology_high_signal_terms"]
+    assert (
+        "fallback_surface_text_alnum_segment_kind_positioned_numeric"
+        in metadata["frame_ontology_high_signal_terms_from_contextualized"]
+    )

@@ -315,6 +315,32 @@ def test_generalizable_projection_lowers_legal_ir_view_ce_on_holdout() -> None:
     assert autoencoder.state.feature_legal_ir_view_logits
 
 
+def test_generalizable_projection_reports_progress_and_attempt_cap() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall publish notice before the permit takes effect.",
+    )
+    autoencoder = AdaptiveModalAutoencoder()
+    progress: list[dict[str, object]] = []
+
+    report = autoencoder.train_generalizable_projection(
+        [sample],
+        epochs=1,
+        learning_rate=0.1,
+        max_line_search_attempts=1,
+        progress_callback=progress.append,
+    )
+
+    stages = [item.get("stage") for item in progress]
+    assert report["effective_max_line_search_attempts"] == 1
+    assert report["elapsed_seconds"] >= 0.0
+    assert report["state_entry_count"] >= 0
+    assert "before_holdout_evaluation" in stages
+    assert "line_search_attempt" in stages
+    assert stages[-1] == "finished"
+
+
 def test_legal_ir_view_global_projection_isolates_core_heads() -> None:
     from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
 
@@ -11306,6 +11332,32 @@ def test_generalizable_state_copy_drops_sample_specific_memory() -> None:
         generalizable.feature_legal_ir_view_logits
         == state.feature_legal_ir_view_logits
     )
+
+
+def test_training_state_copy_avoids_sorted_serialization(monkeypatch) -> None:
+    state = ModalAutoencoderTrainingState(
+        decoded_embeddings={"sample": [0.1, 0.2]},
+        family_logits={"sample": {"deontic": 1.0}},
+        feature_embedding_weights={"token:agency": [0.3, -0.1]},
+        feature_family_logits={"modal-family:deontic": {"deontic": 0.2}},
+        applied_todo_ids=["todo-1"],
+    )
+
+    def fail_to_dict(self: ModalAutoencoderTrainingState) -> dict[str, object]:
+        raise AssertionError("copy() must not use sorted JSON serialization")
+
+    monkeypatch.setattr(ModalAutoencoderTrainingState, "to_dict", fail_to_dict)
+
+    copied = state.copy()
+    copied.decoded_embeddings["sample"][0] = 9.0
+    copied.feature_embedding_weights["token:agency"][0] = 8.0
+    copied.family_logits["sample"]["deontic"] = 7.0
+    copied.applied_todo_ids.append("todo-2")
+
+    assert state.decoded_embeddings["sample"] == [0.1, 0.2]
+    assert state.feature_embedding_weights["token:agency"] == [0.3, -0.1]
+    assert state.family_logits["sample"]["deontic"] == 1.0
+    assert state.applied_todo_ids == ["todo-1"]
 
 
 def test_average_generalizable_state_reuses_prior_feature_learning() -> None:

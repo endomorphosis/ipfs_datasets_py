@@ -7,6 +7,7 @@ import json
 import signal
 import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -1156,6 +1157,68 @@ def test_queue_jsonl_roundtrip_preserves_claim_state(tmp_path) -> None:
     assert loaded.claimed()[0].claimed_by == "worker-a"
 
 
+def test_queue_requeues_stale_program_synthesis_claims() -> None:
+    stale = ModalTodo(
+        todo_id="program-stale-claim",
+        action="repair_multiview_legal_ir_loss",
+        objective="repair stale bridge claim",
+        sample_ids=["sample-1"],
+        citations=["5 U.S.C. 552"],
+        loss_name="legal_ir_multiview_total_loss",
+        loss_value=1.0,
+        priority=10.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "bridge",
+        },
+    )
+    fresh = ModalTodo(
+        todo_id="program-fresh-claim",
+        action="repair_cec_dcec_bridge",
+        objective="repair fresh CEC claim",
+        sample_ids=["sample-2"],
+        citations=["5 U.S.C. 553"],
+        loss_name="cec_dcec_validation_failure_ratio",
+        loss_value=1.0,
+        priority=9.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "cec",
+        },
+    )
+    queue = ModalTodoQueue([stale, fresh])
+    queue.claim_todo_ids(
+        worker_id="codex-bridge-01",
+        todo_ids=["program-stale-claim"],
+        optimizer_role="program_synthesis",
+    )
+    queue.claim_todo_ids(
+        worker_id="codex-cec-01",
+        todo_ids=["program-fresh-claim"],
+        optimizer_role="program_synthesis",
+    )
+    queue.get("program-stale-claim").claimed_at = "2026-06-05T00:00:00+00:00"
+    queue.get("program-fresh-claim").claimed_at = "2026-06-05T00:01:30+00:00"
+
+    report = queue.requeue_stale_claims(
+        max_age_seconds=60.0,
+        optimizer_role="program_synthesis",
+        reason="stale_codex_worker_heartbeat",
+        claimed_by=["codex-bridge-01"],
+        now=datetime.fromisoformat("2026-06-05T00:02:00+00:00").timestamp(),
+    )
+
+    assert report["requeued_count"] == 1
+    assert report["requeued_ids"] == ["program-stale-claim"]
+    assert queue.get("program-stale-claim").status == "pending"
+    assert queue.get("program-stale-claim").claimed_by is None
+    assert (
+        queue.get("program-stale-claim").metadata["stale_claim_previous_claimed_by"]
+        == "codex-bridge-01"
+    )
+    assert queue.get("program-fresh-claim").status == "claimed"
+
+
 def test_supervisor_seeds_and_claims_loss_todos_from_samples() -> None:
     sample = build_us_code_sample(
         title="42",
@@ -1590,6 +1653,55 @@ def test_program_synthesis_generator_fans_out_legal_ir_view_introspection() -> N
     assert "tdfol" in scopes
     assert "external_provers" not in scopes
     assert "zkp" not in scopes
+
+
+def test_fast_program_synthesis_bootstrap_todos_cover_parallel_scopes() -> None:
+    samples = [
+        build_us_code_sample(
+            title="5",
+            section="552",
+            text="The agency shall publish notice before the permit takes effect.",
+        ),
+        build_us_code_sample(
+            title="5",
+            section="553",
+            text="The agency may not adopt a final rule without public comment.",
+        ),
+    ]
+
+    todos = runner.fast_program_synthesis_bootstrap_todos(
+        samples,
+        policy=ModalOptimizerPolicy(),
+        cycle=7,
+    )
+
+    expected_scopes = {
+        "bridge",
+        "cec",
+        "compiler_ambiguity",
+        "compiler_parser",
+        "compiler_registry",
+        "deontic",
+        "external_provers",
+        "frame_logic",
+        "ir_decompiler",
+        "knowledge_graphs",
+        "tdfol",
+        "zkp",
+    }
+    scopes = {todo.metadata["program_synthesis_scope"] for todo in todos}
+    assert expected_scopes <= scopes
+    assert all(todo.loss_name == "program_synthesis_bootstrap" for todo in todos)
+    assert all(todo.metadata["optimizer_role"] == "program_synthesis" for todo in todos)
+    assert all(todo.metadata["execution_target"] == "codex_program_repair" for todo in todos)
+    assert all(todo.metadata["source"] == "modal_program_synthesis_fast_bootstrap_v1" for todo in todos)
+    assert all(todo.metadata["support_count"] == len(samples) for todo in todos)
+    assert all(todo.metadata["hint_evidence"] for todo in todos)
+    assert all(todo.metadata["metric_sample_payloads"] for todo in todos)
+    assert all(todo.metadata["target_metrics"] for todo in todos)
+    assert all(todo.metadata["validation_commands"] for todo in todos)
+    assert all(todo.metadata["dedupe_signature"] for todo in todos)
+    assert all(todo.metadata["semantic_bundle_key"] for todo in todos)
 
 
 def test_program_synthesis_residual_persistence_occurrence_counting() -> None:
@@ -2662,6 +2774,85 @@ def test_build_paired_daemon_commands_pass_vector_bundle_options_to_children() -
         assert command[command.index("--codex-vector-index-path") + 1] == "/tmp/codex-task-vectors.json"
 
 
+def test_build_paired_daemon_commands_pass_projection_bounds_to_autoencoder() -> None:
+    args = SimpleNamespace(
+        run_id="projection-root",
+        autoencoder_run_id=None,
+        codex_run_id=None,
+        duration_seconds=60.0,
+        train_count=2,
+        validation_count=1,
+        max_inner_iterations=1,
+        max_items=3,
+        learning_rate=0.1,
+        generalizable_projection_timeout_seconds=123.0,
+        generalizable_projection_max_line_search_attempts=4,
+        autoencoder_bootstrap_mode="fast",
+        test_every_cycles=50,
+        poll_seconds=2.0,
+        worker_id="codex-worker",
+        codex_exec_mode="codex_cli",
+        codex_command="codex",
+        codex_model="gpt-5.3-codex",
+        codex_apply_mode="apply_to_main",
+        codex_commit_mode="commit_applied",
+        codex_scope=None,
+        codex_parallel_scopes="",
+        codex_scope_workers=1,
+        codex_bundle_mode="semantic",
+        codex_sandbox="workspace-write",
+        codex_timeout_seconds=45.0,
+        paired_grace_seconds=120.0,
+        warm_start_run_id=[],
+        warm_start_state=[],
+    )
+
+    paired = build_paired_daemon_commands(
+        args,
+        module_name="ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_runner",
+    )
+
+    command = paired["autoencoder_command"]
+    assert command[command.index("--generalizable-projection-timeout-seconds") + 1] == "123.0"
+    assert (
+        command[command.index("--generalizable-projection-max-line-search-attempts") + 1]
+        == "4"
+    )
+    assert command[command.index("--autoencoder-bootstrap-mode") + 1] == "fast"
+
+
+def test_paired_autoencoder_child_health_detects_stale_projection(tmp_path) -> None:
+    summary_path = tmp_path / "autoencoder.summary"
+    summary_path.write_text(
+        json.dumps(
+            {
+                "active_cycle": 4,
+                "active_cycle_elapsed_seconds": 1200.0,
+                "active_cycle_last_heartbeat_at": "2026-06-05T00:00:00+00:00",
+                "active_cycle_phase": "generalizable_projection",
+                "active_cycle_projection_progress": {"stage": "line_search_attempt"},
+                "active_cycle_projection_stage": "line_search_attempt",
+                "cycles": 3,
+                "latest_stop_reason": "running",
+                "updated_at": "2026-06-05T00:00:05+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    health = runner.paired_autoencoder_child_health(
+        summary_path,
+        now=runner.parse_utc("2026-06-05T00:20:00+00:00"),
+    )
+
+    assert health["autoencoder_summary_exists"] is True
+    assert health["autoencoder_active_cycle"] == 4
+    assert health["autoencoder_active_cycle_phase"] == "generalizable_projection"
+    assert health["autoencoder_active_cycle_heartbeat_age_seconds"] == pytest.approx(1200.0)
+    assert health["autoencoder_effective_heartbeat_age_seconds"] == pytest.approx(1200.0)
+    assert health["autoencoder_summary_age_seconds"] == pytest.approx(1195.0)
+
+
 def test_paired_codex_status_accepts_runner_terminated_children() -> None:
     assert runner._paired_codex_children_succeeded(
         {
@@ -2711,6 +2902,55 @@ def test_paired_autoencoder_status_requires_own_clean_stop() -> None:
         autoencoder_exit_code=1,
         runner_terminated_children=set(),
     )
+
+
+def test_paired_accelerate_style_restart_policy_replaces_only_crashed_children() -> None:
+    assert runner._paired_child_exit_should_restart(
+        exit_code=2,
+        restart_count=0,
+        restart_limit=3,
+    )
+    assert runner._paired_child_exit_should_restart(
+        exit_code=-signal.SIGKILL,
+        restart_count=2,
+        restart_limit=3,
+    )
+    assert not runner._paired_child_exit_should_restart(
+        exit_code=0,
+        restart_count=0,
+        restart_limit=3,
+    )
+    assert not runner._paired_child_exit_should_restart(
+        exit_code=None,
+        restart_count=0,
+        restart_limit=3,
+    )
+    assert not runner._paired_child_exit_should_restart(
+        exit_code=2,
+        restart_count=3,
+        restart_limit=3,
+    )
+    assert not runner._paired_child_exit_should_restart(
+        exit_code=2,
+        restart_count=0,
+        restart_limit=3,
+        stop_requested=True,
+    )
+
+
+def test_paired_supervisor_backend_defaults_to_accelerate_style() -> None:
+    args = runner.build_uscode_modal_daemon_arg_parser().parse_args(
+        [
+            "--run-id",
+            "paired-default",
+            "--duration-seconds",
+            "1",
+            "--loop-role",
+            "paired",
+        ]
+    )
+
+    assert args.paired_supervisor_backend == "accelerate_style"
 
 
 def test_paired_program_synthesis_health_detects_starved_codex_queue(tmp_path: Path) -> None:
@@ -2771,6 +3011,92 @@ def test_paired_program_synthesis_health_detects_starved_codex_queue(tmp_path: P
     assert health["codex_claimed_total"] == 2
 
 
+def test_paired_program_synthesis_health_detects_stale_claimed_codex_worker(
+    tmp_path: Path,
+) -> None:
+    claimed = ModalTodo(
+        todo_id="claimed-bridge",
+        action="repair_multiview_legal_ir_loss",
+        objective="claimed bridge repair",
+        sample_ids=["sample-a"],
+        citations=[],
+        loss_name="legal_ir_multiview_total_loss",
+        loss_value=1.0,
+        priority=3.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "bridge",
+        },
+    )
+    queue = ModalTodoQueue([claimed])
+    queue.claim_batch(
+        worker_id="codex-bridge-01",
+        max_items=1,
+        optimizer_role="program_synthesis",
+    )
+    queue_path = tmp_path / "queue.jsonl"
+    queue.save_jsonl(queue_path)
+    child_summary = tmp_path / "codex-bridge-01.summary"
+    child_summary.write_text(
+        json.dumps(
+            {
+                "codex_claimed_total": 1,
+                "codex_execution_count": 0,
+                "codex_scope": "bridge",
+                "heartbeat_at": "2026-06-05T00:00:00+00:00",
+                "latest_stop_reason": "claimed_program_synthesis_todos",
+                "worker_id": "codex-bridge-01",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    health = runner.paired_program_synthesis_health(
+        queue_path=queue_path,
+        codex_summary_paths=[child_summary],
+        codex_worker_stale_seconds=60.0,
+    )
+
+    assert health["program_synthesis_claimed"] == 1
+    assert health["program_synthesis_claimed_by_worker"] == {"codex-bridge-01": 1}
+    assert health["codex_worker_stale_count"] == 1
+    assert health["codex_idle_worker_stale_count"] == 0
+    assert health["stale_claimed_codex_worker_ids"] == ["codex-bridge-01"]
+
+
+def test_paired_program_synthesis_health_separates_stale_idle_codex_worker(
+    tmp_path: Path,
+) -> None:
+    queue_path = tmp_path / "queue.jsonl"
+    ModalTodoQueue([]).save_jsonl(queue_path)
+    child_summary = tmp_path / "codex-bridge-01.summary"
+    child_summary.write_text(
+        json.dumps(
+            {
+                "codex_claimed_total": 1,
+                "codex_execution_count": 1,
+                "codex_scope": "bridge",
+                "heartbeat_at": "2026-06-05T00:00:00+00:00",
+                "latest_stop_reason": "waiting_for_program_synthesis_todos",
+                "worker_id": "codex-bridge-01",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    health = runner.paired_program_synthesis_health(
+        queue_path=queue_path,
+        codex_summary_paths=[child_summary],
+        codex_worker_stale_seconds=60.0,
+    )
+
+    assert health["program_synthesis_claimed"] == 0
+    assert health["codex_worker_stale_count"] == 0
+    assert health["codex_idle_worker_stale_count"] == 1
+    assert health["stale_claimed_codex_worker_ids"] == []
+    assert health["stale_idle_codex_worker_ids"] == ["codex-bridge-01"]
+
+
 def test_codex_transient_failure_detection_reads_exec_logs(tmp_path) -> None:
     stderr_path = tmp_path / "codex-stderr.log"
     stderr_path.write_text(
@@ -2829,6 +3155,25 @@ def test_run_codex_exec_attempt_timeout_returns_promptly(tmp_path) -> None:
     assert result["status"] == "timeout"
     assert result["duration_seconds"] < 6
     assert str(codex_stub) in result["command"]
+
+
+def test_codex_apply_validation_timeout_returns_promptly(tmp_path) -> None:
+    result = runner._run_codex_apply_validation(
+        tmp_path,
+        tmp_path,
+        validation_commands=[
+            [
+                sys.executable,
+                "-c",
+                "import time; time.sleep(10)",
+            ]
+        ],
+        timeout_seconds=0.1,
+    )
+
+    assert result["status"] == "timeout"
+    assert result["commands"][0]["status"] == "timeout"
+    assert result["commands"][0]["duration_seconds"] < 6
 
 
 def test_codex_task_vector_index_uses_embeddings_router_and_cache(tmp_path, monkeypatch) -> None:

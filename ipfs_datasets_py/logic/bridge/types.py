@@ -255,9 +255,13 @@ class GraphProjectionResult:
             return cls(metadata={"reason": "graph projection disabled"})
         schema = getattr(graph_data, "schema", None)
         metadata = dict(getattr(graph_data, "metadata", {}) or {})
+        if "neo4j_compatible" in metadata:
+            neo4j_compatible = _coerce_bool(metadata.get("neo4j_compatible"))
+        else:
+            neo4j_compatible = _graph_data_has_neo4j_shape(graph_data)
         return cls(
             graph_id=str(metadata.get("graph_id") or ""),
-            neo4j_compatible=_coerce_bool(metadata.get("neo4j_compatible")),
+            neo4j_compatible=neo4j_compatible,
             node_count=int(getattr(graph_data, "node_count", 0) or 0),
             relationship_count=int(getattr(graph_data, "relationship_count", 0) or 0),
             node_labels=tuple(getattr(schema, "node_labels", ()) or ()),
@@ -348,6 +352,31 @@ def _coerce_bool(value: Any) -> bool:
         if normalized in {"0", "false", "no", "n", "off", ""}:
             return False
     return bool(value)
+
+
+def _graph_data_has_neo4j_shape(graph_data: Any) -> bool:
+    """Infer compatibility for structural GraphData emitted without metadata."""
+
+    nodes = tuple(getattr(graph_data, "nodes", ()) or ())
+    relationships = tuple(getattr(graph_data, "relationships", ()) or ())
+    if not nodes or not relationships:
+        return False
+
+    node_ids = {
+        str(getattr(node, "id", "") or "")
+        for node in nodes
+        if str(getattr(node, "id", "") or "")
+    }
+    if len(node_ids) != len(nodes):
+        return False
+
+    for relationship in relationships:
+        rel_type = str(getattr(relationship, "type", "") or "").strip()
+        start_node = str(getattr(relationship, "start_node", "") or "")
+        end_node = str(getattr(relationship, "end_node", "") or "")
+        if not rel_type or start_node not in node_ids or end_node not in node_ids:
+            return False
+    return True
 
 
 def _extra_loss_penalty(values: Sequence[float]) -> float:

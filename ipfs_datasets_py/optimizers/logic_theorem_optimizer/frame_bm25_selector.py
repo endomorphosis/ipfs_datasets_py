@@ -361,6 +361,7 @@ _FRAME_ONTOLOGY_STRUCTURAL_CONTEXTUAL_PREDICATE_SUFFIXES: tuple[str, ...] = (
     "_unique_char_count",
 )
 _FRAME_ONTOLOGY_CONTEXTUAL_ALWAYS_PREDICATE_FRAGMENTS: tuple[str, ...] = (
+    "legal_ir_view",
     "modal_cue",
     "condition_modal_family",
     "condition_modal_operator",
@@ -1839,6 +1840,10 @@ def _frame_ontology_contextual_predicate_from_feature(feature_key: str) -> str:
     head, separator, tail = str(feature_key or "").partition(":")
     if not separator:
         return ""
+    lowered = str(feature_key or "").strip().lower()
+    for prefix in _FRAME_ONTOLOGY_LEGAL_IR_VIEW_PREFIXES:
+        if lowered.startswith(prefix):
+            return "legal_ir_view"
     if _is_contextual_frame_ontology_predicate(head):
         return _normalized_frame_ontology_predicate(head)
     namespace = head.strip().lower()

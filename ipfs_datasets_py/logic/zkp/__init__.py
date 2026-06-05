@@ -79,6 +79,7 @@ __all__ = [
     'ZKPError',
     'create_implication_circuit',
     'build_proof_attestation_view',
+    'attestation_view_matches_proof',
     'decode_simulated_proof_layout',
     'proof_attestation_view_from_proof_dict',
 ]
@@ -194,6 +195,7 @@ def __getattr__(name: str):
         "BooleanCircuit",
         "create_implication_circuit",
         "build_proof_attestation_view",
+        "attestation_view_matches_proof",
         "decode_simulated_proof_layout",
         "proof_attestation_view_from_proof_dict",
     }:
@@ -201,6 +203,7 @@ def __getattr__(name: str):
         if name in {
             "create_implication_circuit",
             "build_proof_attestation_view",
+            "attestation_view_matches_proof",
             "decode_simulated_proof_layout",
             "proof_attestation_view_from_proof_dict",
         }:

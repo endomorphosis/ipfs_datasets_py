@@ -497,22 +497,30 @@ class DeterministicModalCompiler:
         if not ranking:
             if not encoding.normalized_text:
                 return []
+            ambiguities = self._vacant_section_scope_ambiguities(
+                encoding,
+                modal_ir=modal_ir,
+                ranking=(),
+            )
             adaptive_ranking = self._adaptive_family_ranking_from_logits(encoding)
             if not adaptive_ranking:
-                return []
+                return ambiguities
             adaptive_family_shares = {
                 str(candidate["family"]): self._ranking_share(candidate)
                 for candidate in adaptive_ranking
             }
             return self._ensure_explicit_adaptive_ambiguities(
-                self._adaptive_family_margin_ambiguities(
-                    encoding,
-                    modal_ir=modal_ir,
-                    ranking=adaptive_ranking,
-                    family_shares=adaptive_family_shares,
-                    frame_selections=frame_selections,
-                    predicted_family_source="adaptive_logits_fallback",
-                )
+                [
+                    *ambiguities,
+                    *self._adaptive_family_margin_ambiguities(
+                        encoding,
+                        modal_ir=modal_ir,
+                        ranking=adaptive_ranking,
+                        family_shares=adaptive_family_shares,
+                        frame_selections=frame_selections,
+                        predicted_family_source="adaptive_logits_fallback",
+                    ),
+                ]
             )
 
         ambiguities: List[ModalCompilationAmbiguity] = []
@@ -644,6 +652,13 @@ class DeterministicModalCompiler:
             )
         )
         ambiguities.extend(
+            self._vacant_section_scope_ambiguities(
+                encoding,
+                modal_ir=modal_ir,
+                ranking=ranking,
+            )
+        )
+        ambiguities.extend(
             self._adaptive_family_margin_ambiguities(
                 encoding,
                 modal_ir=modal_ir,
@@ -752,6 +767,51 @@ class DeterministicModalCompiler:
                         )
                     )
 
+            frame_family = ModalLogicFamily.FRAME.value
+            temporal_family = ModalLogicFamily.TEMPORAL.value
+            top_family = (
+                self._canonical_modal_family_name(ranking[0].get("family"))
+                or str(ranking[0]["family"])
+            )
+            if (
+                top_family != frame_family
+                and temporal_family in self._ordered_policy_target_families(frame_family)
+            ):
+                frame_temporal_signals = _modal_ambiguity_signals(encoding)
+                has_frame_bm25_support = self._has_frame_bm25_support(frame_selections)
+                compiled_modal_families = {
+                    self._canonical_modal_family_name(formula.operator.family)
+                    or str(formula.operator.family)
+                    for formula in modal_ir.formulas
+                }
+                has_temporal_evidence = bool(
+                    family_shares.get(temporal_family, 0.0) > 0.0
+                    or temporal_family in compiled_modal_families
+                    or frame_temporal_signals.get("has_temporal_scope")
+                )
+                if has_temporal_evidence:
+                    ambiguities.extend(
+                        self._compiled_primary_family_adaptive_pair_ambiguities(
+                            compiled_primary_family=frame_family,
+                            competing_family=temporal_family,
+                            ranking=ranking,
+                            family_shares=family_shares,
+                            threshold=self.config.modal_adaptive_family_margin,
+                            signals=frame_temporal_signals,
+                            has_frame_scope=bool(
+                                frame_temporal_signals.get("has_frame_context")
+                                or frame_temporal_signals.get("has_frame_cue")
+                                or frame_temporal_signals.get(
+                                    "has_statutory_scope_reference"
+                                )
+                                or has_frame_bm25_support
+                            ),
+                            has_frame_bm25_support=has_frame_bm25_support,
+                            compiled_modal_families=compiled_modal_families,
+                            predicted_family_source="compiled_frame_family",
+                        )
+                    )
+
         strong_contenders = [
             candidate
             for candidate in ranking
@@ -788,6 +848,43 @@ class DeterministicModalCompiler:
                 )
             )
         return self._ensure_explicit_adaptive_ambiguities(ambiguities)
+
+    def _vacant_section_scope_ambiguities(
+        self,
+        encoding: SpaCyLegalEncoding,
+        *,
+        modal_ir: ModalIRDocument,
+        ranking: Sequence[Dict[str, Any]],
+    ) -> List[ModalCompilationAmbiguity]:
+        signals = _modal_ambiguity_signals(encoding)
+        if not bool(signals.get("has_vacant_section_scope")):
+            return []
+        compiled_families = sorted(
+            {
+                self._canonical_modal_family_name(formula.operator.family)
+                or str(formula.operator.family)
+                for formula in modal_ir.formulas
+            }
+        )
+        candidate_ids = compiled_families or [ModalLogicFamily.FRAME.value]
+        return [
+            ModalCompilationAmbiguity(
+                ambiguity_type="vacant_section_modal_scope",
+                message=(
+                    "A vacant statutory section contains editorial/status text; "
+                    "compiled modal cues should be reviewed as non-operative scope."
+                ),
+                candidate_ids=candidate_ids,
+                severity="requires_rule",
+                metadata={
+                    "ambiguity_policy_bundle": "compiler_ambiguity",
+                    "compiled_modal_families": compiled_families,
+                    "family_ranking": list(ranking),
+                    "lexical_signals": dict(sorted(signals.items())),
+                    "target_family": ModalLogicFamily.FRAME.value,
+                },
+            )
+        ]
 
     @staticmethod
     def _adaptive_explicit_ambiguity_key(
@@ -1846,6 +1943,7 @@ class DeterministicModalCompiler:
         has_frame_scope: bool,
         has_frame_bm25_support: bool,
         compiled_modal_families: Sequence[str],
+        predicted_family_source: str = "compiled_primary_family",
     ) -> List[ModalCompilationAmbiguity]:
         resolved_compiled_primary_family = (
             self._canonical_modal_family_name(compiled_primary_family)
@@ -2022,7 +2120,7 @@ class DeterministicModalCompiler:
             "adaptive_margin_abs": abs(family_margin),
             "adaptive_priority": adaptive_priority,
             "priority": adaptive_priority,
-            "adaptive_predicted_family_source": "compiled_primary_family",
+            "adaptive_predicted_family_source": predicted_family_source,
             "adaptive_policy_pair": (
                 f"{resolved_compiled_primary_family}->{resolved_competing_family}"
             ),

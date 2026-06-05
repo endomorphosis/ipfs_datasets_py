@@ -212,14 +212,29 @@ class TDFOLLexer:
     def read_identifier(self) -> str:
         """Read an identifier."""
         start = self.position
-        while self.current_char() and (self.current_char().isalnum() or self.current_char() == "_"):
+        while self.current_char() and (
+            self.current_char().isalnum()
+            or self.current_char() == "_"
+            or (
+                self.current_char() == "-"
+                and self.peek_char()
+                and self.peek_char().isalnum()
+            )
+        ):
             self.advance()
         return self.text[start:self.position]
     
     def read_number(self) -> str:
         """Read a number."""
         start = self.position
-        while self.current_char() and self.current_char().isdigit():
+        while self.current_char() and (
+            self.current_char().isalnum()
+            or (
+                self.current_char() == "-"
+                and self.peek_char()
+                and self.peek_char().isalnum()
+            )
+        ):
             self.advance()
         return self.text[start:self.position]
 

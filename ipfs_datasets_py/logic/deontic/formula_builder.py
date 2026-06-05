@@ -3550,6 +3550,7 @@ def _source_grounded_reconstruction_warning_formula_resolution(
         "exception_requires_scope_review",
         "overlong_action_span",
         "llm_repair_required",
+        "normative_conflict_requires_resolution",
     }
     if not blocker_set.issubset(allowed_blockers):
         return {}

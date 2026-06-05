@@ -490,6 +490,13 @@ def _router_guidance_routes(compiler_guidance: Mapping[str, Any]) -> set[str]:
         if route:
             routes.add(route)
 
+    route_keys = (
+        "route",
+        "action",
+        "original_action",
+        "compiler_guidance_route",
+    )
+
     def collect(value: Any) -> None:
         if isinstance(value, Mapping):
             for route in value.keys():
@@ -498,7 +505,7 @@ def _router_guidance_routes(compiler_guidance: Mapping[str, Any]) -> set[str]:
         if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
             for route in value:
                 if isinstance(route, Mapping):
-                    for nested_key in ("route", "action", "compiler_guidance_route"):
+                    for nested_key in route_keys:
                         add_route(route.get(nested_key))
                 else:
                     add_route(route)
@@ -514,11 +521,7 @@ def _router_guidance_routes(compiler_guidance: Mapping[str, Any]) -> set[str]:
         if value is not None:
             collect(value)
 
-    for key in (
-        "route",
-        "action",
-        "compiler_guidance_route",
-    ):
+    for key in route_keys:
         add_route(compiler_guidance.get(key))
 
     for key in (
@@ -528,7 +531,7 @@ def _router_guidance_routes(compiler_guidance: Mapping[str, Any]) -> set[str]:
     ):
         bundle = _router_guidance_mapping(compiler_guidance.get(key))
         if bundle:
-            for nested_key in ("route", "action", "compiler_guidance_route"):
+            for nested_key in route_keys:
                 add_route(bundle.get(nested_key))
             for nested_routes_key in (
                 "compiler_guidance_todo_routes",

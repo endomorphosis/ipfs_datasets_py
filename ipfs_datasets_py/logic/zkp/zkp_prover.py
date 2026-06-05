@@ -18,6 +18,7 @@ import warnings
 from . import ZKPProof, ZKPError
 from .backends import get_backend
 from .canonicalization import canonicalize_axioms, canonicalize_theorem, theorem_hash_hex
+from .circuits import build_proof_attestation_view
 
 
 class ZKPProver:
@@ -184,7 +185,28 @@ class ZKPProver:
             if "theorem_hash" in updated_public_inputs:
                 updated_public_inputs["theorem_hash"] = theorem_hash_hex(theorem)
 
-            return replace(proof, public_inputs=updated_public_inputs)
+            updated_metadata = dict(proof.metadata or {})
+            if (
+                "attestation_ref" in updated_public_inputs
+                or "attestation_view_version" in updated_public_inputs
+                or isinstance(updated_metadata.get("attestation_view"), dict)
+            ):
+                attestation_view = build_proof_attestation_view(
+                    proof_data=proof.proof_data,
+                    public_inputs=updated_public_inputs,
+                    metadata=updated_metadata,
+                )
+                updated_public_inputs["attestation_ref"] = attestation_view["attestation_ref"]
+                updated_public_inputs["attestation_view_version"] = int(
+                    attestation_view["attestation_view_version"]
+                )
+                updated_metadata["attestation_view"] = attestation_view
+
+            return replace(
+                proof,
+                public_inputs=updated_public_inputs,
+                metadata=updated_metadata,
+            )
         except Exception:
             return proof
     
@@ -208,7 +230,12 @@ class ZKPProver:
         }
         if metadata:
             for key in (
+                "backend",
+                "circuit_id",
+                "circuit_ref",
                 "seed",
+                "circuit_id",
+                "circuit_ref",
                 "circuit_version",
                 "ruleset_id",
                 "compiler_guidance_ref",
