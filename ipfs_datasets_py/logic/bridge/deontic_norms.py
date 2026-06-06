@@ -605,6 +605,7 @@ def _deontic_export_context_from_parser_elements(
             phase8_records,
             coverage_records,
         )
+        _apply_phase8_quality_to_proof_and_repair_records(context, phase8_records)
         context["phase8_quality_records"] = phase8_records
         raw_phase8_summary = summarize_phase8_quality_records(
             decoder_records=decoder_records,
@@ -997,6 +998,71 @@ def _phase8_summary_from_records(
         }
     )
     return summary
+
+
+def _apply_phase8_quality_to_proof_and_repair_records(
+    context: dict[str, Any],
+    phase8_records: Sequence[Mapping[str, Any]],
+) -> None:
+    """Clear stale proof repair flags for source-level validated Phase 8 rows."""
+
+    validated_source_ids = _phase8_quality_validated_source_ids(phase8_records)
+    if not validated_source_ids:
+        return
+
+    proof_records: list[dict[str, Any]] = []
+    for record in _list_of_dicts(context.get("proof_obligation_records")):
+        source_id = str(record.get("source_id") or "").strip()
+        if source_id in validated_source_ids:
+            record = _phase8_quality_validated_proof_record(record)
+        proof_records.append(record)
+    context["proof_obligation_records"] = proof_records
+
+    repair_records: list[dict[str, Any]] = []
+    for record in _list_of_dicts(context.get("repair_queue_records")):
+        source_id = str(record.get("source_id") or "").strip()
+        if source_id in validated_source_ids:
+            continue
+        repair_records.append(record)
+    context["repair_queue_records"] = repair_records
+
+
+def _phase8_quality_validated_source_ids(
+    records: Sequence[Mapping[str, Any]],
+) -> set[str]:
+    source_ids: set[str] = set()
+    for record in records or []:
+        if not isinstance(record, Mapping):
+            continue
+        source_id = str(record.get("source_id") or "").strip()
+        if not source_id:
+            continue
+        if record.get("phase8_quality_complete") is not True:
+            continue
+        if _truthy_flag(record.get("requires_validation")):
+            continue
+        if _list_of_strings(record.get("coverage_blockers")):
+            continue
+        source_ids.add(source_id)
+    return source_ids
+
+
+def _phase8_quality_validated_proof_record(
+    record: Mapping[str, Any],
+) -> dict[str, Any]:
+    row = dict(record)
+    row["requires_validation"] = False
+    row["repair_required"] = False
+    row["theorem_candidate"] = True
+    row["proof_ready"] = True
+    row["validated_by_phase8_quality_gate"] = True
+    resolution = dict(row.get("deterministic_resolution") or {})
+    if not resolution:
+        resolution = {"type": "phase8_quality_gate_validated"}
+    else:
+        resolution.setdefault("phase8_quality_gate_validated", True)
+    row["deterministic_resolution"] = resolution
+    return row
 
 
 def _deontic_graph_payload_from_norm_objects(

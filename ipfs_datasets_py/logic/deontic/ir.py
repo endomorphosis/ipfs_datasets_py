@@ -41,6 +41,173 @@ def _first_text(value: Any) -> str:
     return _coerce_text_value(value)
 
 
+def _value_is_present(value: Any) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, str):
+        return bool(value.strip())
+    if isinstance(value, (list, tuple, dict, set)):
+        return len(value) > 0
+    return True
+
+
+def _copy_slot_value(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return dict(value)
+    if isinstance(value, list):
+        return list(value)
+    return value
+
+
+def _fill_empty_field(target: Dict[str, Any], source: Mapping[str, Any], key: str) -> None:
+    if _value_is_present(target.get(key)):
+        return
+    value = source.get(key)
+    if _value_is_present(value):
+        target[key] = _copy_slot_value(value)
+
+
+def _fill_list_field_from_aliases(
+    target: Dict[str, Any],
+    source: Mapping[str, Any],
+    target_key: str,
+    aliases: Sequence[str],
+) -> None:
+    if _value_is_present(target.get(target_key)):
+        return
+    for alias in aliases:
+        value = source.get(alias)
+        if not _value_is_present(value):
+            continue
+        if isinstance(value, list):
+            target[target_key] = list(value)
+        else:
+            target[target_key] = [value]
+        return
+
+
+def _fill_scalar_field_from_aliases(
+    target: Dict[str, Any],
+    source: Mapping[str, Any],
+    target_key: str,
+    aliases: Sequence[str],
+) -> None:
+    if _value_is_present(target.get(target_key)):
+        return
+    for alias in aliases:
+        value = source.get(alias)
+        if _value_is_present(value):
+            target[target_key] = _copy_slot_value(value)
+            return
+
+
+def _hydrate_parser_element_from_nested_context(element: Mapping[str, Any]) -> Dict[str, Any]:
+    """Fill absent IR slots from deterministic nested parser context.
+
+    Metric and repair payloads sometimes retain source-grounded parser slots in
+    ``llm_repair.prompt_context`` or ``legal_frame`` while the top-level row is
+    reduced to diagnostics. This hydration is fill-only so explicit parser rows
+    keep precedence, but decoder and provenance gates can still see recovered
+    actor/modality/action slots and spans.
+    """
+
+    hydrated = dict(element)
+    prompt_context = _prompt_context_mapping(hydrated)
+    legal_frame = hydrated.get("legal_frame")
+    context_sources = []
+    if isinstance(prompt_context, Mapping):
+        context_sources.append(prompt_context)
+        nested_legal_frame = prompt_context.get("legal_frame")
+        if isinstance(nested_legal_frame, Mapping):
+            context_sources.append(nested_legal_frame)
+    if isinstance(legal_frame, Mapping):
+        context_sources.append(legal_frame)
+
+    for source in context_sources:
+        for key in (
+            "schema_version",
+            "source_id",
+            "canonical_citation",
+            "support_text",
+            "support_span",
+            "source_span",
+            "field_spans",
+            "norm_type",
+            "deontic_operator",
+            "modality",
+            "parser_warnings",
+            "export_readiness",
+            "formal_terms",
+            "legal_frame",
+            "section_context",
+            "definition_scope",
+        ):
+            _fill_empty_field(hydrated, source, key)
+        if not _value_is_present(hydrated.get("text")):
+            hydrated["text"] = (
+                source.get("text")
+                or source.get("source_text")
+                or source.get("support_text")
+                or ""
+            )
+        _fill_list_field_from_aliases(
+            hydrated,
+            source,
+            "subject",
+            ("subject", "actor", "legal_actor", "regulated_entity", "entity"),
+        )
+        _fill_list_field_from_aliases(
+            hydrated,
+            source,
+            "action",
+            (
+                "action",
+                "action_text",
+                "required_action",
+                "permitted_action",
+                "prohibited_action",
+                "regulated_activity",
+                "regulated_conduct",
+                "conduct",
+            ),
+        )
+        _fill_scalar_field_from_aliases(
+            hydrated,
+            source,
+            "action_recipient",
+            ("action_recipient", "recipient", "beneficiary"),
+        )
+
+        for key in (
+            "actor_details",
+            "subject_details",
+            "regulated_entity_details",
+            "action_details",
+            "action_verb_details",
+            "action_object_details",
+            "recipient_details",
+            "action_recipient_details",
+            "regulated_activity_details",
+            "condition_details",
+            "exception_details",
+            "override_clause_details",
+            "temporal_constraint_details",
+            "cross_reference_details",
+            "resolved_cross_references",
+            "defined_term_refs",
+            "defined_terms",
+            "ontology_terms",
+            "kg_relationship_hints",
+        ):
+            _fill_empty_field(hydrated, source, key)
+
+    if not _value_is_present(hydrated.get("deontic_operator")) and _value_is_present(
+        hydrated.get("modality")
+    ):
+        hydrated["deontic_operator"] = hydrated.get("modality")
+    return hydrated
+
+
 def _list_of_dicts(value: Any) -> List[Dict[str, Any]]:
     if not isinstance(value, list):
         return []
@@ -507,6 +674,63 @@ def _action_object_text(element: Dict[str, Any]) -> str:
                 value = str(normalized.get(key) or "").strip()
                 if value:
                     return value
+
+    return ""
+
+
+def _generic_action_text(element: Dict[str, Any]) -> str:
+    """Return a source-grounded action phrase from common scalar aliases."""
+
+    flat_value = _first_text(element.get("action")).strip()
+    if flat_value:
+        return flat_value
+
+    for key in (
+        "action_text",
+        "required_action",
+        "permitted_action",
+        "prohibited_action",
+        "regulated_activity",
+        "regulated_conduct",
+        "conduct",
+        "predicate",
+    ):
+        value = str(element.get(key) or "").strip()
+        if value:
+            return value
+
+    legal_frame = element.get("legal_frame")
+    if isinstance(legal_frame, Mapping):
+        for key in (
+            "action",
+            "action_text",
+            "required_action",
+            "permitted_action",
+            "prohibited_action",
+            "regulated_activity",
+            "regulated_conduct",
+            "conduct",
+            "predicate",
+        ):
+            value = _first_text(legal_frame.get(key)).strip()
+            if value:
+                return value
+
+    prompt_context = _prompt_context_mapping(element)
+    for key in (
+        "action",
+        "action_text",
+        "required_action",
+        "permitted_action",
+        "prohibited_action",
+        "regulated_activity",
+        "regulated_conduct",
+        "conduct",
+        "predicate",
+    ):
+        value = _first_text(prompt_context.get(key)).strip()
+        if value:
+            return value
 
     return ""
 
@@ -1306,6 +1530,7 @@ class LegalNormIR:
     @classmethod
     def from_parser_element(cls, element: Dict[str, Any]) -> "LegalNormIR":
         """Build a deterministic IR from a parser element dictionary."""
+        element = _hydrate_parser_element_from_nested_context(element)
         source_span_value = element.get("source_span") or element.get("support_span")
 
         enumeration_label = str(element.get("enumeration_label") or "")
@@ -1339,7 +1564,7 @@ class LegalNormIR:
                 or _exemption_action_text(element)
                 or _instrument_lifecycle_action_text(element)
                 or _penalty_action_text(element)
-                or _first_text(element.get("action"))
+                or _generic_action_text(element)
             ),
             mental_state=_mental_state_text(element),
             action_verb=_action_verb_text(element),

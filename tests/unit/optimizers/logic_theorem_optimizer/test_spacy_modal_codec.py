@@ -901,6 +901,29 @@ def test_spacy_codec_debiases_generic_frame_cues_when_deontic_force_is_present()
     assert deontic_share > frame_share
 
 
+def test_spacy_codec_reinforces_statutory_structural_frame_cues_without_erasing_deontic_force() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        "The corporation may not issue stock. A director or officer may not "
+        "receive a dividend."
+    )
+
+    ranking = ranked_modal_families(encoding)
+
+    assert any(cue.cue == "corporation" and cue.family == "frame" for cue in encoding.cues)
+    assert any(
+        cue.cue == "director or officer" and cue.family == "frame"
+        for cue in encoding.cues
+    )
+    assert ranking[0]["family"] == "deontic"
+    frame_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "frame"
+    )
+    assert frame_share > 0.3
+
+
 def test_spacy_decoder_debiases_generic_frame_logits_when_deontic_force_is_present() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
@@ -6271,6 +6294,69 @@ def test_spacy_compiler_adds_report_heading_residual_span_coverage() -> None:
     assert "Congressional notification and reports." in residual_text_spans
 
 
+def test_spacy_compiler_adds_modal_heading_prefix_coverage_for_penalty_heading() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    text = (
+        "§542. Unauthorized aids to maritime navigation; penalty "
+        "No person shall establish an aid without authority."
+    )
+    encoding = encoder.encode(
+        text,
+        document_id="us-code-14-542-heading-prefix",
+        citation="14 U.S.C. 542",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    prefix_formulas = [
+        formula
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule")
+        == "uscode_modal_heading_prefix_coverage_v1"
+    ]
+    assert prefix_formulas
+    prefix_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in prefix_formulas
+    }
+    assert "Unauthorized aids to maritime navigation;" in prefix_spans
+
+
+def test_spacy_compiler_adds_modal_heading_prefix_coverage_for_security_evaluations() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    text = (
+        "§2210d. Security evaluations (a) Security response evaluations "
+        "Not less often than once every 3 years, the Commission shall "
+        "conduct security evaluations."
+    )
+    encoding = encoder.encode(
+        text,
+        document_id="us-code-42-2210d-heading-prefix",
+        citation="42 U.S.C. 2210d.",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    prefix_formulas = [
+        formula
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule")
+        == "uscode_modal_heading_prefix_coverage_v1"
+    ]
+    assert prefix_formulas
+    prefix_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in prefix_formulas
+    }
+    assert "Security response evaluations" in prefix_spans
+
+
 def test_spacy_compiler_replays_sec_prefixed_heading_zero_formula_sample_for_15_1693l() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()
@@ -7318,6 +7404,28 @@ def test_spacy_codec_boosts_deontic_share_for_authorized_appropriation_fiscal_sc
 
     assert with_phrase_deontic_share > without_phrase_deontic_share
     assert with_phrase_temporal_share < without_phrase_temporal_share
+
+
+def test_spacy_codec_refines_packet_001882_authorized_appropriation_conditional_cue() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        (
+            "For the purposes of this part, there is authorized to be appropriated "
+            "to the Secretary not to exceed $98,000,000 for the period beginning "
+            "October 1, 1978, and ending September 30, 1981."
+        ),
+        document_id="packet-001882-authorized-appropriation-conditional",
+    )
+    ranking = ranked_modal_families(encoding)
+    shares = {str(item["family"]): float(item["share_raw"]) for item in ranking}
+
+    assert any(
+        cue.family == "conditional_normative"
+        and cue.cue.lower() == "there is authorized to be appropriated"
+        for cue in encoding.cues
+    )
+    assert shares["conditional_normative"] > shares["temporal"]
+    assert shares["conditional_normative"] > 0.34
 
 
 def test_spacy_codec_refines_packet_002939_mixed_scope_family_evidence() -> None:

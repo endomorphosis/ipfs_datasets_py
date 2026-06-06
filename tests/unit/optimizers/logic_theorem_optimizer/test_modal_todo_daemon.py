@@ -799,6 +799,115 @@ def test_supervisor_retries_terminal_failed_validation_rescue_todos() -> None:
     assert len(attempts) == daemon.FAILED_VALIDATION_RESCUE_MAX_ATTEMPTS
 
 
+def test_supervisor_supersedes_failures_covered_by_completed_rescue() -> None:
+    failed = ModalTodo(
+        todo_id="failed-ir",
+        action="refine_typed_ir_or_decompiler_slots",
+        objective="repair typed slots",
+        sample_ids=["sample-a"],
+        citations=["5 U.S.C. 552"],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=2.0,
+        priority=44.0,
+        status="failed_validation",
+        metadata={
+            "execution_target": "codex_program_repair",
+            "failure_reason": "main_apply_validation_failed_rolled_back",
+            "optimizer_role": "program_synthesis",
+            "optimizer_stage": "typed_program_synthesis",
+            "program_synthesis_scope": "ir_decompiler",
+            "target_component": "modal.ir_decompiler",
+        },
+    )
+    supervisor = ModalTodoSupervisor(queue=ModalTodoQueue([failed]))
+    first = supervisor.seed_failed_validation_rescue_todos(max_clusters=4)[0]
+    assert supervisor.queue.fail_validation(
+        first.todo_id,
+        reason="main_apply_validation_failed_rolled_back",
+    )
+    retry = supervisor.seed_failed_validation_rescue_todos(max_clusters=4)[0]
+    assert supervisor.queue.complete(retry.todo_id)
+
+    seeded = supervisor.seed_failed_validation_rescue_todos(max_clusters=4)
+
+    assert seeded == []
+    assert supervisor.last_failed_validation_superseded_count == 2
+    assert supervisor.queue.get("failed-ir").status == "superseded"
+    assert supervisor.queue.get(first.todo_id).status == "superseded"
+    assert supervisor.queue.get("failed-ir").metadata[
+        "superseded_by_rescue_todo_id"
+    ] == retry.todo_id
+    assert supervisor.program_synthesis_status()["failed_validation"] == 0
+
+
+def test_supervisor_refreshes_rescue_for_new_failures_after_completed_rescue() -> None:
+    metadata = {
+        "execution_target": "codex_program_repair",
+        "failure_reason": "main_apply_validation_failed_rolled_back",
+        "optimizer_role": "program_synthesis",
+        "optimizer_stage": "typed_program_synthesis",
+        "program_synthesis_scope": "compiler_registry",
+        "target_component": "modal.compiler.registry",
+    }
+    old_failed = ModalTodo(
+        todo_id="failed-old",
+        action="refine_modal_family_cue_rules",
+        objective="old failed registry repair",
+        sample_ids=["sample-old"],
+        citations=["5 U.S.C. 552"],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=2.0,
+        priority=40.0,
+        status="failed_validation",
+        metadata=dict(metadata),
+    )
+    completed_rescue = ModalTodo(
+        todo_id="rescue-completed",
+        action=daemon.FAILED_VALIDATION_RESCUE_ACTION,
+        objective="completed old rescue",
+        sample_ids=["sample-old"],
+        citations=["5 U.S.C. 552"],
+        loss_name="failed_validation_rescue",
+        loss_value=1.0,
+        priority=60.0,
+        metadata={
+            **metadata,
+            "failed_todo_ids": ["failed-old"],
+            "original_action": "refine_modal_family_cue_rules",
+            "source": "failed_validation_rescue_v1",
+        },
+    )
+    completed_rescue.complete()
+    new_failed = ModalTodo(
+        todo_id="failed-new",
+        action="refine_modal_family_cue_rules",
+        objective="new failed registry repair",
+        sample_ids=["sample-new"],
+        citations=["5 U.S.C. 553"],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=2.0,
+        priority=42.0,
+        status="failed_validation",
+        metadata=dict(metadata),
+    )
+    supervisor = ModalTodoSupervisor(
+        queue=ModalTodoQueue([old_failed, completed_rescue, new_failed])
+    )
+
+    seeded = supervisor.seed_failed_validation_rescue_todos(max_clusters=4)
+
+    assert len(seeded) == 1
+    assert seeded[0].metadata["source"] == "failed_validation_rescue_refresh_v1"
+    assert seeded[0].metadata["failed_todo_ids"] == ["failed-new"]
+    assert seeded[0].metadata["previous_completed_rescue_todo_ids"] == [
+        "rescue-completed"
+    ]
+    assert supervisor.last_failed_validation_superseded_count == 1
+    assert supervisor.queue.get("failed-old").status == "superseded"
+    assert supervisor.queue.get("failed-new").status == "failed_validation"
+    assert supervisor.program_synthesis_status()["pending"] == 1
+
+
 def test_supervisor_failed_validation_rescue_filters_scope() -> None:
     ir_failed = ModalTodo(
         todo_id="failed-ir",
@@ -2828,13 +2937,13 @@ def test_paired_autoencoder_child_health_detects_stale_projection(tmp_path) -> N
             {
                 "active_cycle": 4,
                 "active_cycle_elapsed_seconds": 1200.0,
-                "active_cycle_last_heartbeat_at": "2026-06-05T00:00:00+00:00",
+                "active_cycle_last_heartbeat_at": "2026-06-05T00:00:00Z",
                 "active_cycle_phase": "generalizable_projection",
                 "active_cycle_projection_progress": {"stage": "line_search_attempt"},
                 "active_cycle_projection_stage": "line_search_attempt",
                 "cycles": 3,
                 "latest_stop_reason": "running",
-                "updated_at": "2026-06-05T00:00:05+00:00",
+                "updated_at": "2026-06-05T00:00:05Z",
             }
         ),
         encoding="utf-8",
@@ -3009,6 +3118,238 @@ def test_paired_program_synthesis_health_detects_starved_codex_queue(tmp_path: P
     assert health["codex_queue_starved"] is True
     assert health["codex_workers_waiting_for_todos_count"] == 1
     assert health["codex_claimed_total"] == 2
+
+
+def test_paired_program_synthesis_health_treats_active_packet_as_working(
+    tmp_path: Path,
+) -> None:
+    metadata = {
+        "optimizer_role": "program_synthesis",
+        "program_synthesis_scope": "bridge",
+    }
+    claimed = ModalTodo(
+        todo_id="claimed",
+        action="repair_multiview_legal_ir_loss",
+        objective="claimed",
+        sample_ids=["a"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=2.0,
+        status="claimed",
+        claimed_by="codex-bridge-01",
+        metadata=dict(metadata),
+    )
+    queue_path = tmp_path / "queue.jsonl"
+    ModalTodoQueue([claimed]).save_jsonl(queue_path)
+    child_summary = tmp_path / "codex.summary"
+    child_summary.write_text(
+        json.dumps(
+            {
+                "active_packet_claimed_todo_ids": ["claimed"],
+                "active_packet_phase": "executing_codex_packet",
+                "codex_claimed_total": 0,
+                "codex_execution_count": 0,
+                "codex_scope": "bridge",
+                "latest_stop_reason": "waiting_for_program_synthesis_todos",
+                "worker_id": "codex-bridge-01",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    health = runner.paired_program_synthesis_health(
+        queue_path=queue_path,
+        codex_summary_paths=[child_summary],
+    )
+
+    assert health["program_synthesis_claimed"] == 1
+    assert health["codex_workers_active_packet_count"] == 1
+    assert health["codex_workers_waiting_for_todos_count"] == 0
+    assert health["codex_queue_starved"] is False
+
+
+def test_paired_failed_validation_rescue_should_seed_starved_queue() -> None:
+    health = {
+        "codex_queue_starved": True,
+        "program_synthesis_claimed": 0,
+        "program_synthesis_failed_validation": 3,
+        "program_synthesis_pending": 0,
+        "queue_exists": True,
+    }
+
+    assert runner._paired_failed_validation_rescue_should_seed(
+        health,
+        mode="auto",
+        last_seed_at=10.0,
+        interval_seconds=30.0,
+        now=41.0,
+    )
+    assert not runner._paired_failed_validation_rescue_should_seed(
+        health,
+        mode="off",
+        last_seed_at=10.0,
+        interval_seconds=30.0,
+        now=41.0,
+    )
+    assert not runner._paired_failed_validation_rescue_should_seed(
+        {**health, "program_synthesis_pending": 1},
+        mode="auto",
+        last_seed_at=10.0,
+        interval_seconds=30.0,
+        now=41.0,
+    )
+    busy_health = {
+        **health,
+        "codex_queue_starved": False,
+        "codex_worker_summary_count": 4,
+        "codex_workers_active_packet_count": 2,
+        "codex_workers_waiting_for_todos_count": 2,
+        "program_synthesis_claimed": 1,
+        "program_synthesis_pending": 2,
+    }
+    assert runner._paired_failed_validation_rescue_should_seed(
+        busy_health,
+        mode="auto",
+        last_seed_at=10.0,
+        interval_seconds=30.0,
+        now=41.0,
+    )
+    assert not runner._paired_failed_validation_rescue_should_seed(
+        busy_health,
+        mode="starved",
+        last_seed_at=10.0,
+        interval_seconds=30.0,
+        now=41.0,
+    )
+    assert not runner._paired_failed_validation_rescue_should_seed(
+        busy_health,
+        mode="auto",
+        last_seed_at=20.0,
+        interval_seconds=30.0,
+        now=41.0,
+    )
+
+
+def test_paired_supervisor_seeds_failed_validation_rescue_for_starved_queue(
+    tmp_path: Path,
+) -> None:
+    failed = ModalTodo(
+        todo_id="failed-ir",
+        action="refine_typed_ir_or_decompiler_slots",
+        objective="repair typed slots",
+        sample_ids=["sample-a"],
+        citations=["5 U.S.C. 552"],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=2.0,
+        priority=44.0,
+        status="failed_validation",
+        metadata={
+            "execution_target": "codex_program_repair",
+            "failure_reason": "main_apply_validation_failed_rolled_back",
+            "optimizer_role": "program_synthesis",
+            "optimizer_stage": "typed_program_synthesis",
+            "program_synthesis_scope": "ir_decompiler",
+            "target_component": "modal.ir_decompiler",
+        },
+    )
+    queue_path = tmp_path / "queue.jsonl"
+    ModalTodoQueue([failed]).save_jsonl(queue_path)
+
+    report = runner.seed_failed_validation_rescue_todos_for_queue(
+        queue_path=queue_path,
+        max_clusters=4,
+    )
+
+    queue = ModalTodoQueue.load_jsonl(queue_path)
+    rescue_todos = [
+        todo
+        for todo in queue.pending(optimizer_role="program_synthesis")
+        if todo.action == daemon.FAILED_VALIDATION_RESCUE_ACTION
+    ]
+    health = runner.paired_program_synthesis_health(
+        queue_path=queue_path,
+        codex_summary_paths=[],
+    )
+
+    assert report["seeded_count"] == 1
+    assert report["deduped_count"] == 0
+    assert report["seeded_todo_ids"] == [rescue_todos[0].todo_id]
+    assert report["before"]["failed_validation"] == 1
+    assert report["after"]["pending"] == 1
+    assert len(rescue_todos) == 1
+    assert rescue_todos[0].metadata["source"] == "failed_validation_rescue_v1"
+    assert health["codex_queue_starved"] is False
+    assert health["program_synthesis_pending"] == 1
+
+    duplicate_report = runner.seed_failed_validation_rescue_todos_for_queue(
+        queue_path=queue_path,
+        max_clusters=4,
+    )
+
+    assert duplicate_report["seeded_count"] == 0
+    assert duplicate_report["deduped_count"] == 1
+
+
+def test_paired_supervisor_supersedes_completed_rescue_backlog(
+    tmp_path: Path,
+) -> None:
+    failed = ModalTodo(
+        todo_id="failed-ir",
+        action="refine_typed_ir_or_decompiler_slots",
+        objective="repair typed slots",
+        sample_ids=["sample-a"],
+        citations=["5 U.S.C. 552"],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=2.0,
+        priority=44.0,
+        status="failed_validation",
+        metadata={
+            "execution_target": "codex_program_repair",
+            "failure_reason": "main_apply_validation_failed_rolled_back",
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "ir_decompiler",
+            "target_component": "modal.ir_decompiler",
+        },
+    )
+    rescue = ModalTodo(
+        todo_id="rescue-completed",
+        action=daemon.FAILED_VALIDATION_RESCUE_ACTION,
+        objective="completed rescue",
+        sample_ids=["sample-a"],
+        citations=["5 U.S.C. 552"],
+        loss_name="failed_validation_rescue",
+        loss_value=1.0,
+        priority=50.0,
+        metadata={
+            "failed_todo_ids": ["failed-ir"],
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "ir_decompiler",
+            "target_component": "modal.ir_decompiler",
+        },
+    )
+    rescue.complete()
+    queue_path = tmp_path / "queue.jsonl"
+    ModalTodoQueue([failed, rescue]).save_jsonl(queue_path)
+
+    report = runner.seed_failed_validation_rescue_todos_for_queue(
+        queue_path=queue_path,
+        max_clusters=4,
+    )
+    health = runner.paired_program_synthesis_health(
+        queue_path=queue_path,
+        codex_summary_paths=[],
+    )
+    queue = ModalTodoQueue.load_jsonl(queue_path)
+
+    assert report["seeded_count"] == 0
+    assert report["superseded_count"] == 1
+    assert report["reason"] == "resolved_by_completed_rescue"
+    assert queue.get("failed-ir").status == "superseded"
+    assert health["program_synthesis_failed_validation"] == 0
+    assert health["program_synthesis_superseded"] == 1
+    assert health["codex_queue_drained"] is True
+    assert health["codex_queue_starved"] is False
 
 
 def test_paired_program_synthesis_health_detects_stale_claimed_codex_worker(

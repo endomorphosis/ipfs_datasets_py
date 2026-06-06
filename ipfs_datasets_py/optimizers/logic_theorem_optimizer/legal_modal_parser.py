@@ -225,6 +225,8 @@ _USCODE_SHORT_RESIDUAL_HEADING_SIGNAL_TOKENS = frozenset(
         "activities",
         "activity",
         "administrative",
+        "aid",
+        "aids",
         "amendment",
         "amendments",
         "appropriation",
@@ -233,6 +235,8 @@ _USCODE_SHORT_RESIDUAL_HEADING_SIGNAL_TOKENS = frozenset(
         "authorizations",
         "compensation",
         "declaration",
+        "evaluation",
+        "evaluations",
         "expense",
         "expenses",
         "finding",
@@ -248,7 +252,10 @@ _USCODE_SHORT_RESIDUAL_HEADING_SIGNAL_TOKENS = frozenset(
         "notification",
         "notifications",
         "notes",
+        "navigation",
         "policy",
+        "penalty",
+        "penalties",
         "program",
         "programs",
         "project",
@@ -258,6 +265,8 @@ _USCODE_SHORT_RESIDUAL_HEADING_SIGNAL_TOKENS = frozenset(
         "purpose",
         "procedure",
         "procedures",
+        "regulation",
+        "regulations",
         "report",
         "reporting",
         "reports",
@@ -266,11 +275,13 @@ _USCODE_SHORT_RESIDUAL_HEADING_SIGNAL_TOKENS = frozenset(
         "reports",
         "review",
         "revision",
+        "security",
     }
 )
 _USCODE_LONG_RESIDUAL_HEADING_MIN_TOKENS = 6
 _USCODE_LONG_RESIDUAL_HEADING_MAX_TOKENS = _USCODE_HEADING_ONLY_EXTENDED_MAX_TOKENS
 _USCODE_LONG_RESIDUAL_HEADING_MIN_SIGNAL_TOKENS = 2
+_USCODE_MODAL_HEADING_PREFIX_MAX_TOKENS = 18
 _USCODE_MAX_RESIDUAL_SPAN_FORMULAS = 3
 _USCODE_RESIDUAL_SPAN_FORMULA_BUDGET_CAP = 8
 _USCODE_RESIDUAL_COALESCE_SEGMENT_MAX_TOKENS = 12
@@ -801,6 +812,16 @@ class LegalModalParser:
                 )
             )
 
+        def _prefix_formulas(start_index: int) -> List[ModalIRFormula]:
+            return self.modal_heading_prefix_coverage_formulas(
+                document_id=resolved_document_id,
+                text=normalized,
+                citation=citation,
+                start_index=start_index,
+                segments=segments,
+                cues=cues,
+            )
+
         fallback_formula = self.fallback_formula(
             document_id=resolved_document_id,
             text=normalized,
@@ -836,6 +857,7 @@ class LegalModalParser:
                 )
                 if reindexed_fallback is not None:
                     fallback_formula = reindexed_fallback
+            formulas.extend(_prefix_formulas(len(formulas) + 1))
             formulas.append(fallback_formula)
         elif formulas:
             residual_segments = self._segments_excluding_spans(
@@ -875,6 +897,7 @@ class LegalModalParser:
                         segments=residual_segments_after_fallback,
                     )
                 )
+                formulas.extend(_prefix_formulas(len(formulas) + 1))
                 formulas.append(residual_fallback_formula)
             else:
                 formulas.extend(
@@ -886,6 +909,7 @@ class LegalModalParser:
                         segments=residual_segments,
                     )
                 )
+                formulas.extend(_prefix_formulas(len(formulas) + 1))
 
         return ModalIRDocument(
             document_id=resolved_document_id,
@@ -1042,6 +1066,70 @@ class LegalModalParser:
             next_index += 1
         return formulas
 
+    def modal_heading_prefix_coverage_formulas(
+        self,
+        *,
+        document_id: str,
+        text: str,
+        citation: Optional[str],
+        start_index: int = 1,
+        segments: Optional[Sequence[LegalSegment]] = None,
+        cues: Optional[Sequence[ModalCueSpan]] = None,
+        max_formulas: int = 2,
+    ) -> List[ModalIRFormula]:
+        """Emit bounded frame formulas for U.S.C. headings before modal cues."""
+        if not self._is_uscode_citation(citation):
+            return []
+        normalized = self.normalize_text(text)
+        if not normalized.strip() or max_formulas <= 0:
+            return []
+        profile = self.registry.get_profile(ModalLogicFamily.FRAME)
+        if not profile.operators:
+            return []
+        operator = profile.operators[0]
+        candidate_segments = (
+            list(self.segment(normalized)) if segments is None else list(segments)
+        )
+        candidate_cues = list(self.extract_cues(normalized) if cues is None else cues)
+        formulas: List[ModalIRFormula] = []
+        next_index = max(1, int(start_index))
+        for index, segment in enumerate(candidate_segments):
+            prefix = self._modal_heading_prefix_segment(segment, candidate_cues)
+            if prefix is None and index + 1 < len(candidate_segments):
+                next_segment = candidate_segments[index + 1]
+                next_has_cue = any(
+                    next_segment.start_char < cue.start_char < next_segment.end_char
+                    for cue in candidate_cues
+                )
+                if (
+                    next_has_cue
+                    and next_segment.start_char <= segment.end_char + 1
+                    and self._is_residual_span_coverage_candidate(segment)
+                ):
+                    prefix = LegalSegment(
+                        text=segment.text,
+                        start_char=segment.start_char,
+                        end_char=segment.end_char,
+                        role="heading",
+                    )
+            if prefix is None:
+                continue
+            formulas.append(
+                self._residual_span_coverage_formula(
+                    document_id=document_id,
+                    citation=citation,
+                    segment=prefix,
+                    start_index=next_index,
+                    operator=operator,
+                    profile=profile,
+                    fallback_rule="uscode_modal_heading_prefix_coverage_v1",
+                )
+            )
+            next_index += 1
+            if len(formulas) >= max_formulas:
+                break
+        return formulas
+
     def _classify_segment_role(self, text: str) -> str:
         lowered = text.lower()
         if lowered.startswith(("if ", "unless ", "except ", "provided that ", "subject to ")):
@@ -1163,6 +1251,69 @@ class LegalModalParser:
             return False
         signal_count = len(set(tokens) & _USCODE_HEADING_ONLY_EXTENDED_NOUN_HINTS)
         return signal_count >= _USCODE_LONG_RESIDUAL_HEADING_MIN_SIGNAL_TOKENS
+
+    def _modal_heading_prefix_segment(
+        self,
+        segment: LegalSegment,
+        cues: Sequence[ModalCueSpan],
+    ) -> Optional[LegalSegment]:
+        segment_cues = [
+            cue
+            for cue in cues
+            if segment.start_char < cue.start_char < segment.end_char
+        ]
+        if not segment_cues:
+            return None
+        first_cue = min(segment_cues, key=lambda cue: cue.start_char)
+        prefix_text = segment.text[: first_cue.start_char - segment.start_char].strip()
+        if not prefix_text:
+            return None
+        prefix_text = re.sub(
+            rf"^\s*{_USCODE_OPTIONAL_SECTION_REF_PREFIX_RE}[0-9A-Za-z.\-]+"
+            rf"{_USCODE_SECTION_REF_SUFFIX_RE}\s*",
+            "",
+            prefix_text,
+            flags=re.IGNORECASE,
+        ).strip(" .;:\u2014-")
+        subsection_match = re.search(
+            r"\((?:[a-z]{1,3}|[0-9]{1,3}|[ivxlcdm]{1,6})\)\s+",
+            prefix_text,
+            flags=re.IGNORECASE,
+        )
+        if subsection_match is not None:
+            prefix_text = prefix_text[subsection_match.end() :].strip(" .;:\u2014-")
+        prefix_text = re.split(
+            r"\b(?:not\s+less\s+often\s+than|not\s+later\s+than|"
+            r"within\s+\d+|the\s+(?:secretary|commission|administrator)\b)",
+            prefix_text,
+            maxsplit=1,
+            flags=re.IGNORECASE,
+        )[0].strip(" .;:\u2014-")
+        if not prefix_text:
+            return None
+        if self._has_blocking_residual_modal_cues(prefix_text):
+            return None
+        tokens = _TOKEN_RE.findall(prefix_text.lower())
+        token_count = len(tokens)
+        if token_count < 2 or token_count > _USCODE_MODAL_HEADING_PREFIX_MAX_TOKENS:
+            return None
+        if not (
+            self._is_short_residual_heading_coverage_candidate(tokens)
+            or self._is_long_residual_heading_coverage_candidate(tokens)
+            or self._is_uscode_administrative_procedure_residual_candidate(
+                prefix_text,
+                tokens,
+            )
+        ):
+            return None
+        stripped_segment_start = segment.end_char - len(segment.text)
+        prefix_start = stripped_segment_start + segment.text.index(prefix_text)
+        return LegalSegment(
+            text=prefix_text,
+            start_char=prefix_start,
+            end_char=prefix_start + len(prefix_text),
+            role="heading",
+        )
 
     def _coalesce_short_residual_segments(
         self,
@@ -1328,6 +1479,7 @@ class LegalModalParser:
         start_index: int,
         operator: ModalOperatorSpec,
         profile: ModalParseProfile,
+        fallback_rule: Optional[str] = None,
     ) -> ModalIRFormula:
         predicate = self._predicate_from_segment(
             segment.text,
@@ -1362,7 +1514,8 @@ class LegalModalParser:
                     if self._is_uscode_citation(citation)
                     else "__legal_reference_residual_span_fallback__"
                 ),
-                "fallback_rule": (
+                "fallback_rule": fallback_rule
+                or (
                     "uscode_residual_span_coverage_v1"
                     if self._is_uscode_citation(citation)
                     else "legal_reference_residual_span_coverage_v1"

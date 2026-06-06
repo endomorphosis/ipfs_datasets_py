@@ -175,8 +175,8 @@ class ProverRouter:
                         timeout=self.default_timeout,
                         enable_cache=self.enable_cache
                     )
-            except ImportError:
-                pass
+            except Exception:
+                logger.debug("Z3 prover unavailable during router init", exc_info=True)
         
         # CVC5
         if self.enable_cvc5:
@@ -185,8 +185,8 @@ class ProverRouter:
 
                 if cvc5_prover_bridge._ensure_cvc5_available():
                     self.provers['cvc5'] = cvc5_prover_bridge.CVC5ProverBridge(timeout=self.default_timeout)
-            except ImportError:
-                pass
+            except Exception:
+                logger.debug("CVC5 prover unavailable during router init", exc_info=True)
         
         # Lean
         if self.enable_lean:
@@ -195,8 +195,8 @@ class ProverRouter:
 
                 if lean_prover_bridge._ensure_lean_available():
                     self.provers['lean'] = lean_prover_bridge.LeanProverBridge(timeout=self.default_timeout)
-            except ImportError:
-                pass
+            except Exception:
+                logger.debug("Lean prover unavailable during router init", exc_info=True)
         
         # Coq
         if self.enable_coq:
@@ -205,8 +205,8 @@ class ProverRouter:
 
                 if coq_prover_bridge._ensure_coq_available():
                     self.provers['coq'] = coq_prover_bridge.CoqProverBridge(timeout=self.default_timeout)
-            except ImportError:
-                pass
+            except Exception:
+                logger.debug("Coq prover unavailable during router init", exc_info=True)
         
         # SymbolicAI
         if self.enable_symbolicai:
@@ -218,15 +218,19 @@ class ProverRouter:
                         timeout=self.default_timeout,
                         enable_cache=self.enable_cache
                     )
-            except ImportError:
-                pass
+            except Exception:
+                logger.debug("SymbolicAI prover unavailable during router init", exc_info=True)
         
         # Native prover
         if self.enable_native:
             try:
                 from ..TDFOL.tdfol_prover import TDFOLProver
                 self.provers['native'] = TDFOLProver()
-            except ImportError:
+            except Exception:
+                logger.debug(
+                    "Native TDFOL prover unavailable; using syntactic fallback",
+                    exc_info=True,
+                )
                 self.provers['native_syntactic'] = SyntacticNativeFallbackProver()
     
     def get_available_provers(self) -> List[str]:
@@ -463,6 +467,10 @@ class ProverRouter:
         if 'native' in self.provers:
             logger.info("Fallback to native prover")
             return 'native'
+
+        if 'native_syntactic' in self.provers:
+            logger.info("Fallback to syntactic native prover")
+            return 'native_syntactic'
         
         # Use first available
         if self.provers:
@@ -675,13 +683,27 @@ class ProverRouter:
                 all_results[prover_name] = f"Error: {str(e)}"
         
         proof_time = time.time() - start_time
+        first_non_error = next(
+            (
+                prover_name
+                for prover_name, result in all_results.items()
+                if not isinstance(result, str)
+            ),
+            None,
+        )
+        if first_non_error:
+            reason = f"Used {first_non_error} (no proof)"
+        elif all_results:
+            reason = "All provers failed"
+        else:
+            reason = "No provers available"
         return RouterProofResult(
             is_proved=False,
-            prover_used=None,
+            prover_used=first_non_error,
             proof_time=proof_time,
             all_results=all_results,
             strategy_used="sequential",
-            reason="All provers failed"
+            reason=reason,
         )
     
     def _prove_fastest(
@@ -725,7 +747,7 @@ class ProverRouter:
     ) -> RouterProofResult:
         """Prove with most capable prover (Lean/Coq preferred)."""
         # Prefer Lean or Coq as most capable
-        for prover_name in ['lean', 'coq', 'cvc5', 'z3', 'native']:
+        for prover_name in ['lean', 'coq', 'cvc5', 'z3', 'native', 'native_syntactic']:
             if prover_name in self.provers:
                 start_time = time.time()
                 try:

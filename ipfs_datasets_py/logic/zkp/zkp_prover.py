@@ -18,7 +18,7 @@ import warnings
 from . import ZKPProof, ZKPError
 from .backends import get_backend
 from .canonicalization import canonicalize_axioms, canonicalize_theorem, theorem_hash_hex
-from .circuits import build_proof_attestation_view
+from .circuits import build_proof_attestation_view, compiler_guidance_ref_from_metadata
 
 
 class ZKPProver:
@@ -243,6 +243,9 @@ class ZKPProver:
             ):
                 if key in metadata:
                     meta_ctx[key] = metadata.get(key)
+            guidance_ref = compiler_guidance_ref_from_metadata(metadata)
+            if guidance_ref:
+                meta_ctx["compiler_guidance_ref"] = guidance_ref
 
         key_data = json.dumps(
             {

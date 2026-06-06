@@ -406,9 +406,24 @@ def _tdfol_formula_from_norm(norm: Mapping[str, Any]) -> Any:
     action = _predicate_name(norm.get("action") or norm.get("predicate") or "act")
     predicate = Predicate(action, (Constant(actor),))
     modality = str(norm.get("modality") or norm.get("norm_type") or "").lower()
-    if "prohib" in modality or "forbid" in modality:
+    operator_context = " ".join(
+        str(norm.get(key) or "") for key in ("modality", "norm_type", "action")
+    ).lower()
+    prohibition_context = " ".join(
+        str(norm.get(key) or "")
+        for key in ("modality", "norm_type", "action", "source_text")
+    ).lower()
+    if (
+        "prohib" in prohibition_context
+        or "forbid" in prohibition_context
+        or re.search(r"\b(?:shall|must|may)\s+not\b", prohibition_context)
+    ):
         operator = DeonticOperator.PROHIBITION
-    elif "permit" in modality or "may" in modality:
+    elif (
+        "permit" in operator_context
+        or re.search(r"\bmay\b", operator_context)
+        or re.search(r"\bauthori[sz]ed\b", operator_context)
+    ):
         operator = DeonticOperator.PERMISSION
     else:
         operator = DeonticOperator.OBLIGATION
@@ -764,10 +779,17 @@ def _normalize_tdfol_export_formula(text: str) -> str:
         return ""
     normalized = normalized.strip("`\"'").strip()
     normalized = _strip_tdfol_line_comment(normalized)
+    normalized = _unwrap_tdfol_key_value_export(normalized)
     normalized = re.sub(
         r"^\s*(?:formula|proof_formula|proof\s+formula|tdfol_formula|"
         r"tdfol\s+formula|proof_input|proof\s+input|proof_obligation|"
         r"proof\s+obligation|obligation)\s*[:=]\s*",
+        "",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    normalized = re.sub(
+        r"^\s*(?:TDFOL(?:\.prover)?|target_component\s*[:=]\s*TDFOL(?:\.prover)?)\s*[:=]\s*",
         "",
         normalized,
         flags=re.IGNORECASE,
@@ -780,9 +802,52 @@ def _normalize_tdfol_export_formula(text: str) -> str:
         normalized,
         flags=re.IGNORECASE,
     )
+    normalized = re.sub(
+        r"\b([OPF])\s*\{\s*(.*?)\s*\}",
+        lambda match: f"{match.group(1)}({match.group(2)})",
+        normalized,
+        flags=re.IGNORECASE,
+    )
     normalized = re.sub(r",\s*(?=\))", "", normalized)
     normalized = re.sub(r"(:[0-9A-Za-z_-]+)\.(?=\s*[\),])", r"\1", normalized)
     return normalized.strip()
+
+
+def _unwrap_tdfol_key_value_export(text: str) -> str:
+    """Extract formula=... from proof-obligation key/value wrappers."""
+
+    normalized = str(text or "").strip()
+    match = re.match(
+        r"^\s*(?:proof_obligation|proof\s+obligation|tdfol_formula|"
+        r"tdfol\s+formula|obligation)\s*\(",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    if not match or not normalized.endswith(")"):
+        return normalized
+    inner = normalized[match.end() : -1].strip()
+    value = _extract_tdfol_key_value(inner, "formula")
+    if value is None:
+        value = _extract_tdfol_key_value(inner, "proof_input")
+    return value.strip("`\"'").strip() if value else normalized
+
+
+def _extract_tdfol_key_value(text: str, key: str) -> Optional[str]:
+    pattern = re.compile(rf"(?i)(?:^|,)\s*{re.escape(key)}\s*=")
+    match = pattern.search(text)
+    if match is None:
+        return None
+    start = match.end()
+    depth = 0
+    for index in range(start, len(text)):
+        char = text[index]
+        if char in "([{":
+            depth += 1
+        elif char in ")]}":
+            depth = max(0, depth - 1)
+        elif char == "," and depth == 0:
+            return text[start:index].strip()
+    return text[start:].strip()
 
 
 def _strip_tdfol_line_comment(text: str) -> str:

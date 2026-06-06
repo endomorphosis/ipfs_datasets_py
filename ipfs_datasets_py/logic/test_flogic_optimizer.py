@@ -194,3 +194,38 @@ def test_frame_ontology_terms_contextualize_legal_ir_view_family_features() -> N
         "fallback_surface_text_alnum_segment_kind_positioned_numeric"
         in metadata["frame_ontology_high_signal_terms_from_contextualized"]
     )
+
+
+def test_frame_ontology_terms_skip_low_signal_positioned_alnum_segments() -> None:
+    result = _optimizer().evaluate(
+        source_text="s",
+        decoded_text="d",
+        source_embedding=[1.0, 0.0],
+        decoded_embedding=[1.0, 0.0],
+        kg_triples=[],
+        frame_feature_keys=[
+            "flogic:condition_alnum_segment_positioned:15:in",
+            "flogic:condition_scope_alnum_segment_positioned:14:in",
+            "slot:condition_alnum_segment_positioned:15_in",
+            "slot:condition_scope_alnum_segment_positioned:14_in",
+            "flogic:fallback_surface_text_alnum_segment_positioned:3:91",
+            "slot:fallback_surface_text_alnum_segment_positioned:3_91",
+            "flogic:fallback_surface_text_alnum_segment_kind_positioned:4:numeric",
+            "flogic:fallback_surface_text_alnum_segment_positioned:4:voucher",
+        ],
+    )
+
+    metadata = result.metadata
+    assert "in" not in metadata["frame_ontology_terms"]
+    assert "91" not in metadata["frame_ontology_terms"]
+    assert "condition_alnum_segment_positioned_in" not in metadata[
+        "frame_ontology_contextualized_terms"
+    ]
+    assert "fallback_surface_text_alnum_segment_positioned_91" not in metadata[
+        "frame_ontology_high_signal_terms_from_contextualized"
+    ]
+    assert "voucher" in metadata["frame_ontology_terms"]
+    assert (
+        "fallback_surface_text_alnum_segment_kind_positioned_numeric"
+        in metadata["frame_ontology_high_signal_terms_from_contextualized"]
+    )

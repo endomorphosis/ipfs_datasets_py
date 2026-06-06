@@ -768,11 +768,37 @@ _GENERIC_FRAME_CUE_TERMS = frozenset(
     {
         "administered by",
         "authority",
+        "authority of",
+        "authority under",
+        "board of directors",
+        "class of licensed facilities",
+        "corporation",
+        "director or officer",
+        "does not apply",
         "is a",
         "jurisdiction",
+        "licensed facility",
+        "mechanisms to evaluate",
         "part of",
+        "this chapter applies",
     }
 )
+_STATUTORY_STRUCTURAL_FRAME_CUE_TERMS = frozenset(
+    {
+        "authority of",
+        "authority under",
+        "board of directors",
+        "class of licensed facilities",
+        "corporation",
+        "director or officer",
+        "does not apply",
+        "licensed facility",
+        "mechanisms to evaluate",
+        "this chapter applies",
+    }
+)
+_STATUTORY_STRUCTURAL_FRAME_CUE_WEIGHT = 0.5
+_STATUTORY_STRUCTURAL_FRAME_CUE_MAX = 3.0
 _GENERIC_FRAME_DEBIASED_LOGIT_BASE = 0.5
 _GENERIC_FRAME_CUE_DEBIAS_FACTOR = 0.2
 _GENERIC_FRAME_STRUCTURAL_BONUS_DEBIAS_FACTOR = 0.25
@@ -1537,6 +1563,14 @@ class SpaCyModalIRCompiler:
                 )
             )
         if encoding.normalized_text:
+            def _prefix_formulas(start_index: int) -> List[ModalIRFormula]:
+                return self._fallback_parser.modal_heading_prefix_coverage_formulas(
+                    document_id=encoding.document_id,
+                    text=encoding.normalized_text,
+                    citation=encoding.citation,
+                    start_index=start_index,
+                )
+
             if not formulas:
                 fallback_allow_modal_cues = False
                 fallback_formula = self._fallback_parser.fallback_formula(
@@ -1584,6 +1618,7 @@ class SpaCyModalIRCompiler:
                         )
                         if reindexed_fallback is not None:
                             fallback_formula = reindexed_fallback
+                    formulas.extend(_prefix_formulas(len(formulas) + 1))
                     formulas.append(fallback_formula)
                 else:
                     formulas.extend(
@@ -1633,6 +1668,7 @@ class SpaCyModalIRCompiler:
                             segments=residual_segments_after_fallback,
                         )
                     )
+                    formulas.extend(_prefix_formulas(len(formulas) + 1))
                     formulas.append(residual_fallback_formula)
                 else:
                     formulas.extend(
@@ -1644,6 +1680,7 @@ class SpaCyModalIRCompiler:
                             segments=residual_segments,
                         )
                     )
+                    formulas.extend(_prefix_formulas(len(formulas) + 1))
         return ModalIRDocument(
             document_id=encoding.document_id,
             source=encoding.source,
@@ -1964,6 +2001,11 @@ def _weighted_modal_family_counts(
             counts,
             resolved_signals,
         )
+        _apply_statutory_structural_frame_cue_reinforcement(
+            counts,
+            encoding,
+            resolved_signals,
+        )
         _apply_generic_frame_scope_backfill(
             counts,
             resolved_signals,
@@ -2080,6 +2122,35 @@ def _apply_generic_frame_normative_scope_soft_cap(
     if not has_competing_scope:
         return
     counts[frame_family] = _GENERIC_FRAME_NORMATIVE_SCOPE_SOFT_CAP
+
+
+def _apply_statutory_structural_frame_cue_reinforcement(
+    counts: Dict[str, float],
+    encoding: SpaCyLegalEncoding,
+    signals: Mapping[str, bool],
+) -> None:
+    """Restore bounded frame evidence for explicit statutory structure cues."""
+    if (
+        bool(signals.get("has_conditional_scope_token"))
+        and bool(signals.get("has_statutory_scope_reference"))
+        and not bool(signals.get("has_deontic_cue"))
+    ):
+        return
+    structural_cue_count = 0
+    for cue in encoding.cues:
+        if (
+            cue.family == ModalLogicFamily.FRAME.value
+            and cue.cue.lower() in _STATUTORY_STRUCTURAL_FRAME_CUE_TERMS
+        ):
+            structural_cue_count += 1
+    if structural_cue_count <= 0:
+        return
+    frame_family = ModalLogicFamily.FRAME.value
+    reinforcement = min(
+        float(structural_cue_count) * _STATUTORY_STRUCTURAL_FRAME_CUE_WEIGHT,
+        _STATUTORY_STRUCTURAL_FRAME_CUE_MAX,
+    )
+    counts[frame_family] = float(counts.get(frame_family, 0.0)) + reinforcement
 
 
 def _apply_deontic_competing_scope_soft_cap(
@@ -4817,6 +4888,113 @@ def _apply_refined_modal_family_cue_pair_balance(
         and not has_conditional_clause_scope
         and not has_conditional_scope_token
     )
+
+    # frame -> deontic / temporal / conditional_normative:
+    # U.S.C. headers and statutory cross-references often contribute generic
+    # frame evidence.  When the same passage has explicit non-frame modal
+    # scope, keep the typed cue family close enough to contest frame instead of
+    # letting structural scaffolding dominate the family distribution.
+    has_generic_statutory_frame_scope = bool(
+        frame_count > 0.0
+        and has_frame_scope_context
+        and has_statutory_scope_reference
+        and not has_editorial_frame_context
+        and not has_definition_scope
+        and not has_structural_authority_frame_scope
+    )
+    if has_generic_statutory_frame_scope:
+        strongest_non_frame = max(
+            deontic_count,
+            temporal_count,
+            conditional_count,
+            epistemic_count,
+            alethic_count,
+        )
+        if (
+            frame_count > deontic_count
+            and has_deontic_scope
+            and has_explicit_deontic_scope
+        ):
+            deontic_floor = _scaled_competing_scope_backfill(
+                source_count=frame_count,
+                ratio=0.94,
+                minimum=max(
+                    deontic_count,
+                    _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                ),
+                maximum=max(
+                    frame_count,
+                    _STATUTORY_GENERIC_FRAME_DEONTIC_SCOPE_MAX,
+                ),
+            )
+            counts[deontic_family] = max(deontic_count, deontic_floor)
+            deontic_count = float(counts.get(deontic_family, 0.0))
+        if (
+            frame_count > temporal_count
+            and has_temporal_scope
+            and (
+                has_strong_temporal_scope
+                or has_temporal_deadline_scope
+                or has_temporal_status_scope
+                or has_calendar_date_scope
+            )
+        ):
+            temporal_floor = _scaled_competing_scope_backfill(
+                source_count=frame_count,
+                ratio=0.92,
+                minimum=max(
+                    temporal_count,
+                    _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                ),
+                maximum=max(
+                    frame_count,
+                    _STATUTORY_GENERIC_FRAME_STRONG_TEMPORAL_SCOPE_MAX,
+                ),
+            )
+            counts[temporal_family] = max(temporal_count, temporal_floor)
+            temporal_count = float(counts.get(temporal_family, 0.0))
+        if (
+            frame_count > conditional_count
+            and has_structural_conditional_scope
+            and (
+                has_explicit_conditional_scope
+                or has_conditional_scope_phrase
+                or has_conditional_clause_scope
+            )
+        ):
+            conditional_floor = _scaled_competing_scope_backfill(
+                source_count=frame_count,
+                ratio=0.9,
+                minimum=max(
+                    conditional_count,
+                    _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                ),
+                maximum=max(
+                    frame_count,
+                    _STATUTORY_GENERIC_FRAME_CONDITIONAL_SCOPE_MAX,
+                ),
+            )
+            counts[conditional_family] = max(
+                conditional_count,
+                conditional_floor,
+            )
+            conditional_count = float(counts.get(conditional_family, 0.0))
+        strongest_non_frame = max(
+            strongest_non_frame,
+            deontic_count,
+            temporal_count,
+            conditional_count,
+        )
+        if strongest_non_frame > 0.0 and frame_count > strongest_non_frame:
+            frame_cap = (
+                strongest_non_frame
+                + _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT
+            )
+            if frame_count > frame_cap:
+                counts[frame_family] = frame_cap + (
+                    0.2 * math.log1p(frame_count - frame_cap)
+                )
+                frame_count = float(counts.get(frame_family, 0.0))
 
     # temporal -> deontic:
     # repeal-style statutory notes can surface dense date/status tokens that

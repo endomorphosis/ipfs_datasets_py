@@ -244,6 +244,15 @@ _BRIDGE_CONTRACT_OFFICIAL_USC_EXCERPT_RE = re.compile(
     flags=re.IGNORECASE,
 )
 _BRIDGE_CONTRACT_OFFICIAL_USC_MIN_CHARS = 520
+_BRIDGE_CONTRACT_SHORT_OFFICIAL_USC_MIN_CHARS = 160
+_BRIDGE_CONTRACT_USC_SECTION_MARKER_RE = re.compile(
+    r"^\s*(?:§|\u00a7)\s*\d+[a-z0-9\-\.]*\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_STATUTES_AT_LARGE_CUE_RE = re.compile(
+    r"\b\d+\s+stat\.\s+\d+\b",
+    flags=re.IGNORECASE,
+)
 _BRIDGE_CONTRACT_PRIMARY_AUTOENCODER_LANES = (
     "CEC.native",
     "TDFOL.prover",
@@ -254,6 +263,18 @@ _BRIDGE_CONTRACT_AUXILIARY_AUTOENCODER_LANES = (
     "external_provers.router",
     "modal.frame_logic",
     "zkp.circuits",
+)
+_BRIDGE_CONTRACT_ADMIN_RULEMAKING_SCHEDULE_RE = re.compile(
+    r"\b(?:administrator|secretary|agency|commission|board|director)\b.{0,180}\b"
+    r"(?:promulgate|petition|notice|comment|determines?|phase\s+out|phasing\s+out)\b"
+    r"|\b(?:promulgate|petition|notice|comment|determines?|phase\s+out|phasing\s+out)\b"
+    r".{0,180}\b(?:administrator|secretary|agency|commission|board|director)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_ENFORCEMENT_PENALTY_PROVISION_RE = re.compile(
+    r"\b(?:penalt(?:y|ies)|misdemeanor|without\s+first\s+obtaining\s+authority|"
+    r"shall\s+be\s+guilty)\b",
+    flags=re.IGNORECASE,
 )
 
 
@@ -2307,9 +2328,21 @@ def _compact_official_usc_contract_distribution(
     if not lanes:
         return lanes
     normalized_text = " ".join(str(text or "").split())
-    if len(normalized_text) < _BRIDGE_CONTRACT_OFFICIAL_USC_MIN_CHARS:
-        return lanes
-    if _BRIDGE_CONTRACT_OFFICIAL_USC_EXCERPT_RE.search(normalized_text) is None:
+    is_long_official_excerpt = (
+        len(normalized_text) >= _BRIDGE_CONTRACT_OFFICIAL_USC_MIN_CHARS
+        and _BRIDGE_CONTRACT_OFFICIAL_USC_EXCERPT_RE.search(normalized_text) is not None
+    )
+    is_short_official_section = (
+        len(normalized_text) >= _BRIDGE_CONTRACT_SHORT_OFFICIAL_USC_MIN_CHARS
+        and _BRIDGE_CONTRACT_USC_SECTION_MARKER_RE.search(normalized_text) is not None
+        and (
+            _BRIDGE_CONTRACT_LEGISLATIVE_HISTORY_CUE_RE.search(normalized_text)
+            is not None
+            or _BRIDGE_CONTRACT_STATUTES_AT_LARGE_CUE_RE.search(normalized_text)
+            is not None
+        )
+    )
+    if not (is_long_official_excerpt or is_short_official_section):
         return lanes
     primary = {
         lane: lanes[lane]
@@ -2323,10 +2356,119 @@ def _compact_official_usc_contract_distribution(
     total = sum(primary.values())
     if total <= 0.0:
         return lanes
-    return {
+    compacted = {
         lane: value / total
         for lane, value in sorted(primary.items())
     }
+    return _project_official_usc_primary_contract_distribution(
+        compacted,
+        text=normalized_text,
+    )
+
+
+def _project_official_usc_primary_contract_distribution(
+    distribution: Mapping[str, float],
+    *,
+    text: str,
+) -> Dict[str, float]:
+    """Tighten primary-lane targets for long official U.S.C. excerpts."""
+
+    lanes = {
+        str(name): max(0.0, float(value))
+        for name, value in dict(distribution or {}).items()
+        if float(value) > 0.0
+    }
+    if len(lanes) < 3:
+        return lanes
+
+    normalized_text = " ".join(str(text or "").split()).lower()
+    deontic_cue_count = _contextual_modal_cue_count(
+        _BRIDGE_CONTRACT_DEONTIC_CUE_RE,
+        normalized_text,
+    )
+    temporal_cue_count = _cue_count(
+        _BRIDGE_CONTRACT_TEMPORAL_CUE_RE,
+        normalized_text,
+    ) + _cue_count(
+        _BRIDGE_CONTRACT_STRONG_TEMPORAL_CUE_RE,
+        normalized_text,
+    ) + _cue_count(
+        _BRIDGE_CONTRACT_REPEAL_TEMPORAL_CUE_RE,
+        normalized_text,
+    )
+    legislative_history_cue_count = _cue_count(
+        _BRIDGE_CONTRACT_LEGISLATIVE_HISTORY_CUE_RE,
+        normalized_text,
+    )
+    structural_frame_cue_count = _cue_count(
+        _BRIDGE_CONTRACT_STRUCTURAL_FRAME_CUE_RE,
+        normalized_text,
+    ) + _cue_count(
+        _BRIDGE_CONTRACT_STATUTE_STRUCTURE_CUE_RE,
+        normalized_text,
+    )
+    has_repealed_history_scaffold = (
+        _cue_count(_BRIDGE_CONTRACT_REPEAL_TEMPORAL_CUE_RE, normalized_text) > 0
+        and legislative_history_cue_count >= 2
+        and structural_frame_cue_count >= 2
+    )
+    has_admin_rulemaking_schedule = bool(
+        _BRIDGE_CONTRACT_ADMIN_RULEMAKING_SCHEDULE_RE.search(normalized_text)
+    )
+    has_enforcement_penalty_provision = bool(
+        _BRIDGE_CONTRACT_ENFORCEMENT_PENALTY_PROVISION_RE.search(normalized_text)
+    )
+
+    target_mix: Sequence[tuple[str, float]]
+    strength = 0.0
+    if has_enforcement_penalty_provision and deontic_cue_count > 0:
+        target_mix = (
+            ("deontic.ir", 0.46),
+            ("knowledge_graphs.neo4j_compat", 0.30),
+            ("TDFOL.prover", 0.18),
+            ("CEC.native", 0.06),
+        )
+        strength = 0.34
+    elif has_admin_rulemaking_schedule and deontic_cue_count > 0:
+        target_mix = (
+            ("CEC.native", 0.34),
+            ("TDFOL.prover", 0.30),
+            ("deontic.ir", 0.28),
+            ("knowledge_graphs.neo4j_compat", 0.08),
+        )
+        strength = 0.42
+    elif has_repealed_history_scaffold:
+        target_mix = (
+            ("deontic.ir", 0.46),
+            ("TDFOL.prover", 0.28),
+            ("CEC.native", 0.20),
+            ("knowledge_graphs.neo4j_compat", 0.06),
+        )
+        strength = 0.30
+    elif deontic_cue_count >= 2 and temporal_cue_count > 0:
+        target_mix = (
+            ("deontic.ir", 0.50),
+            ("TDFOL.prover", 0.28),
+            ("CEC.native", 0.16),
+            ("knowledge_graphs.neo4j_compat", 0.06),
+        )
+        strength = 0.28
+    elif deontic_cue_count >= 2:
+        target_mix = (
+            ("deontic.ir", 0.52),
+            ("TDFOL.prover", 0.26),
+            ("CEC.native", 0.16),
+            ("knowledge_graphs.neo4j_compat", 0.06),
+        )
+        strength = 0.24
+    else:
+        return lanes
+
+    return _project_contract_distribution_toward_target(
+        lanes,
+        target_mix,
+        strength=strength,
+    )
 
 
 def _metadata_signal_values(metadata: Mapping[str, Any]) -> list[float]:

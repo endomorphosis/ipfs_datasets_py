@@ -47,15 +47,18 @@ TODO_STATUS_RANK = {
     "claimed": 1,
     "completed": 2,
     "failed_validation": 2,
+    "superseded": 2,
 }
 PROGRAM_SYNTHESIS_DEDUPE_KEEP_RANK = {
     "failed_validation": 0,
+    "superseded": 0,
     "pending": 1,
     "claimed": 2,
     "completed": 3,
 }
 AUTOENCODER_DEDUPE_KEEP_RANK = {
     "failed_validation": 0,
+    "superseded": 0,
     "pending": 1,
     "claimed": 2,
     "completed": 3,
@@ -1617,6 +1620,50 @@ class ModalTodoQueue:
         todo.fail_validation(reason)
         return True
 
+    def supersede_rescued_failed_validations(
+        self,
+        *,
+        optimizer_role: str = PROGRAM_SYNTHESIS_ROLE,
+    ) -> Dict[str, Any]:
+        """Mark failed TODOs covered by completed rescue TODOs as superseded."""
+
+        completed_rescues = [
+            todo
+            for todo in self._todos.values()
+            if todo.action == FAILED_VALIDATION_RESCUE_ACTION
+            and todo.status == "completed"
+            and _todo_optimizer_role(todo) == optimizer_role
+        ]
+        superseded_ids: List[str] = []
+        superseded_by: Dict[str, str] = {}
+        for rescue in sorted(completed_rescues, key=lambda item: item.completed_at or item.created_at):
+            covered_ids = _failed_validation_rescue_covered_todo_ids(rescue)
+            for covered_id in covered_ids:
+                todo = self._todos.get(covered_id)
+                if todo is None:
+                    continue
+                if todo.status != "failed_validation":
+                    continue
+                if _todo_optimizer_role(todo) != optimizer_role:
+                    continue
+                todo.status = "superseded"
+                todo.completed_at = rescue.completed_at or _utc_now()
+                todo.claimed_by = None
+                todo.claimed_at = None
+                todo.metadata["superseded_at"] = _utc_now()
+                todo.metadata["superseded_by_rescue_todo_id"] = rescue.todo_id
+                todo.metadata["superseded_reason"] = (
+                    "completed_failed_validation_rescue"
+                )
+                superseded_ids.append(todo.todo_id)
+                superseded_by[todo.todo_id] = rescue.todo_id
+        return {
+            "completed_rescue_count": len(completed_rescues),
+            "superseded_by_rescue": dict(sorted(superseded_by.items())),
+            "superseded_count": len(superseded_ids),
+            "superseded_todo_ids": sorted(superseded_ids),
+        }
+
     def requeue_stale_claims(
         self,
         *,
@@ -1802,6 +1849,7 @@ class ModalTodoSupervisor:
         self.last_bridge_loss_failure_count = 0
         self.last_bridge_loss_sample_count = 0
         self.last_bridge_loss_signal_count = 0
+        self.last_failed_validation_superseded_count = 0
         self.last_program_synthesis_deduped_count = 0
 
     def seed_from_evaluation(
@@ -1939,6 +1987,12 @@ class ModalTodoSupervisor:
         original_action: Optional[str] = None,
     ) -> List[ModalTodo]:
         """Seed repair TODOs that rescue repeated failed Codex validation patches."""
+        superseded_report = self.queue.supersede_rescued_failed_validations(
+            optimizer_role=self.policy.program_synthesis_role,
+        )
+        self.last_failed_validation_superseded_count = int(
+            superseded_report.get("superseded_count", 0)
+        )
         rescue_todos = _failed_validation_rescue_todos(
             self.queue.all(),
             policy=self.policy,
@@ -3093,7 +3147,39 @@ def _refresh_failed_validation_rescue_retries(
             continue
         if any(todo.status in {"pending", "claimed"} for todo in attempts):
             continue
-        if any(todo.status == "completed" for todo in attempts):
+        current_failed_ids = set(
+            str(todo_id)
+            for todo_id in _as_list(rescue.metadata.get("failed_todo_ids"))
+            if str(todo_id)
+        )
+        completed_attempts = [todo for todo in attempts if todo.status == "completed"]
+        completed_covered_ids = {
+            todo_id
+            for attempt in completed_attempts
+            for todo_id in _failed_validation_rescue_covered_todo_ids(attempt)
+        }
+        if completed_attempts and current_failed_ids.issubset(completed_covered_ids):
+            continue
+        if completed_attempts:
+            metadata = dict(rescue.metadata)
+            metadata.update(
+                {
+                    "previous_completed_rescue_todo_ids": [
+                        todo.todo_id
+                        for todo in sorted(
+                            completed_attempts,
+                            key=lambda item: item.completed_at or item.created_at,
+                        )
+                    ][:16],
+                    "rescue_refresh_reason": (
+                        "new_failed_validation_ids_after_completed_rescue"
+                    ),
+                    "root_rescue_signature": root_signature,
+                    "source": "failed_validation_rescue_refresh_v1",
+                }
+            )
+            rescue.metadata = metadata
+            refreshed.append(rescue)
             continue
         next_attempt = max(
             [_failed_validation_rescue_attempt(todo) for todo in attempts] or [1]
@@ -3114,13 +3200,43 @@ def _refresh_failed_validation_rescue_retries(
 
 def _failed_validation_rescue_root_signature(todo: ModalTodo) -> str:
     metadata = todo.metadata or {}
-    return str(
+    stored = str(
         metadata.get("root_rescue_signature")
         or metadata.get("rescue_cluster_signature")
         or metadata.get("dedupe_signature")
         or metadata.get("semantic_bundle_key")
         or ""
     ).strip()
+    if stored:
+        return stored
+    if todo.action != FAILED_VALIDATION_RESCUE_ACTION:
+        return ""
+    original_action = str(metadata.get("original_action") or "").strip()
+    scope = str(metadata.get("program_synthesis_scope") or "").strip()
+    target_component = str(metadata.get("target_component") or "").strip()
+    failure_reason = str(
+        metadata.get("failed_validation_reason")
+        or metadata.get("failure_reason")
+        or ""
+    ).strip()
+    if not (original_action and scope and target_component):
+        return ""
+    return _failed_validation_rescue_signature(
+        scope=scope,
+        target_component=target_component,
+        original_action=original_action,
+        failure_reason=failure_reason,
+    )
+
+
+def _failed_validation_rescue_covered_todo_ids(todo: ModalTodo) -> List[str]:
+    """Return failed TODO ids that a completed rescue attempt is meant to cover."""
+
+    metadata = todo.metadata or {}
+    covered: List[str] = []
+    for key in ("failed_todo_ids", "previous_rescue_todo_ids"):
+        covered.extend(str(todo_id) for todo_id in _as_list(metadata.get(key)) if str(todo_id))
+    return _unique_preserve_order(covered)
 
 
 def _failed_validation_rescue_attempt(todo: ModalTodo) -> int:
@@ -3614,12 +3730,21 @@ def _program_todos_near_duplicate(
         return False
     if _todo_target_component(existing) != _todo_target_component(candidate):
         return False
+    if existing.action == FAILED_VALIDATION_RESCUE_ACTION:
+        existing_failed_ids = set(_failed_validation_rescue_covered_todo_ids(existing))
+        candidate_failed_ids = set(_failed_validation_rescue_covered_todo_ids(candidate))
+        return bool(
+            existing.todo_id == candidate.todo_id
+            or (
+                existing_failed_ids
+                and candidate_failed_ids
+                and existing_failed_ids == candidate_failed_ids
+            )
+        )
     existing_signature = str(existing.metadata.get("dedupe_signature") or "")
     candidate_signature = str(candidate.metadata.get("dedupe_signature") or "")
     if existing_signature and candidate_signature and existing_signature == candidate_signature:
         return True
-    if existing.action == FAILED_VALIDATION_RESCUE_ACTION:
-        return False
     existing_samples = set(existing.sample_ids)
     candidate_samples = set(candidate.sample_ids)
     if not existing_samples or not candidate_samples:
@@ -3650,6 +3775,8 @@ def _program_todos_share_semantic_bundle(existing: ModalTodo, candidate: ModalTo
     """Return True for same action/component/scope/family-pair repair requests."""
 
     if existing.action != candidate.action:
+        return False
+    if existing.action == FAILED_VALIDATION_RESCUE_ACTION:
         return False
     if _todo_target_component(existing) != _todo_target_component(candidate):
         return False

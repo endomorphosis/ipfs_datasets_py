@@ -17,7 +17,11 @@ import time
 
 from .. import ZKPError, ZKPProof
 from ..canonicalization import axioms_commitment_hex, normalize_text, theorem_hash_hex
-from ..circuits import attestation_view_matches_proof, build_proof_attestation_view
+from ..circuits import (
+    attestation_view_matches_proof,
+    build_proof_attestation_view,
+    compiler_guidance_ref_from_metadata,
+)
 from ..statement import format_circuit_ref, parse_circuit_ref_lenient
 
 
@@ -98,7 +102,7 @@ class SimulatedBackend:
             "circuit_version": circuit_version,
             "ruleset_id": ruleset_id,
         }
-        guidance_ref = str(metadata_dict.get("compiler_guidance_ref") or "")
+        guidance_ref = compiler_guidance_ref_from_metadata(metadata_dict)
         if guidance_ref:
             public_inputs["compiler_guidance_ref"] = guidance_ref
             public_inputs["compiler_guidance_version"] = int(

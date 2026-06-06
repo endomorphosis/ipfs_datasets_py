@@ -300,13 +300,24 @@ def _graph_view_alignment_metadata(metadata: Mapping[str, Any]) -> dict[str, Any
     """Expose graph/frame alignment fields without changing view weighting."""
 
     allowed = {
+        "canonical_legal_ir_projection_components",
+        "canonical_legal_ir_projection_view_distribution",
+        "canonical_legal_ir_projection_view_total",
         "frame_logic_projection_aligned",
         "frame_logic_projection_has_duplicate_facts",
         "frame_logic_projection_input_aligned",
+        "frame_logic_projection_legal_view_coverage_complete",
+        "frame_logic_projection_legal_view_coverage_ratio",
+        "frame_logic_projection_legal_view_missing",
+        "frame_logic_projection_legal_view_required",
         "frame_logic_projection_normalized_aligned",
         "frame_logic_projection_view_distribution",
         "frame_logic_projection_views",
         "frame_logic_selected_frame",
+        "frame_logic_to_neo4j_alignment_total",
+        "frame_logic_to_neo4j_component_pair",
+        "frame_logic_to_neo4j_source_component",
+        "frame_logic_to_neo4j_target_component",
         "graph_id",
         "neo4j_compatible",
     }

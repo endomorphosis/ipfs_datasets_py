@@ -29,6 +29,41 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import AbstractSet, Any, Dict, Iterable, Iterator, List, Mapping, Optional, Sequence
 
+
+def _ensure_sibling_ipfs_accelerate_py_on_path() -> None:
+    """Make a sibling ipfs_accelerate_py checkout importable when it is not installed."""
+
+    for parent in Path(__file__).resolve().parents:
+        candidate = parent / "ipfs_accelerate_py"
+        runtime_path = (
+            candidate
+            / "ipfs_accelerate_py"
+            / "agent_supervisor"
+            / "todo_daemon"
+            / "supervisor_runtime.py"
+        )
+        if runtime_path.is_file():
+            candidate_text = str(candidate)
+            if candidate_text not in sys.path:
+                sys.path.insert(0, candidate_text)
+            return
+
+
+_ensure_sibling_ipfs_accelerate_py_on_path()
+from ipfs_accelerate_py.agent_supervisor.todo_daemon.supervisor_runtime import (
+    ChildSummaryHealthSpec,
+    child_exit_should_restart as accelerate_child_exit_should_restart,
+    install_stop_signal_handlers as accelerate_install_stop_signal_handlers,
+    launch_process_child as accelerate_launch_process_child,
+    supervised_child_group_succeeded as accelerate_supervised_child_group_succeeded,
+    supervised_child_succeeded as accelerate_supervised_child_succeeded,
+    summarize_child_summary_files as accelerate_summarize_child_summary_files,
+    terminate_process_group as accelerate_terminate_process_group,
+    terminate_processes_with_grace as accelerate_terminate_processes_with_grace,
+    terminate_process_with_grace as accelerate_terminate_process_with_grace,
+    timestamp_age_seconds as accelerate_timestamp_age_seconds,
+)
+
 import pyarrow.parquet as pq
 from huggingface_hub import HfFileSystem
 
@@ -3150,26 +3185,127 @@ def requeue_stale_program_synthesis_claims(
     return report
 
 
-def _summary_age_seconds(path: Path, data: Mapping[str, Any]) -> Optional[float]:
-    now = time.time()
-    for key in (
-        "heartbeat_at",
-        "active_packet_last_heartbeat_at",
-        "finished_at",
-        "created_at",
-        "started_at",
-    ):
-        value = data.get(key)
-        if value is None:
-            continue
-        try:
-            return max(0.0, now - parse_utc(str(value)))
-        except (TypeError, ValueError):
-            continue
-    try:
-        return max(0.0, now - path.stat().st_mtime)
-    except OSError:
-        return None
+def seed_failed_validation_rescue_todos_for_queue(
+    *,
+    queue_path: Path,
+    policy: Optional[ModalOptimizerPolicy] = None,
+    max_clusters: int = 8,
+    program_synthesis_scope: Optional[str] = None,
+    failure_reason: Optional[str] = None,
+    original_action: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Seed failed-validation rescue TODOs under the shared queue lock."""
+
+    optimizer_policy = policy or ModalOptimizerPolicy()
+    report: Dict[str, Any] = {
+        "deduped_count": 0,
+        "max_clusters": max(0, int(max_clusters)),
+        "queue_exists": queue_path.exists(),
+        "queue_path": str(queue_path),
+        "seeded_count": 0,
+        "seeded_todo_ids": [],
+        "superseded_count": 0,
+    }
+    if max(0, int(max_clusters)) < 1:
+        report["reason"] = "max_clusters_disabled"
+        return report
+    if not queue_path.exists():
+        report["reason"] = "queue_missing"
+        return report
+
+    with queue_file_lock(queue_path):
+        queue = ModalTodoQueue.load_jsonl(queue_path)
+        supervisor = ModalTodoSupervisor(queue=queue, policy=optimizer_policy)
+        before_todo_ids = {todo.todo_id for todo in queue.all()}
+        before_status = supervisor.program_synthesis_status()
+        rescue_todos = supervisor.seed_failed_validation_rescue_todos(
+            max_clusters=max_clusters,
+            program_synthesis_scope=program_synthesis_scope,
+            failure_reason=failure_reason,
+            original_action=original_action,
+        )
+        superseded_count = int(
+            getattr(supervisor, "last_failed_validation_superseded_count", 0)
+        )
+        seeded_todo_ids = [
+            todo.todo_id
+            for todo in rescue_todos
+            if todo.todo_id not in before_todo_ids and queue.get(todo.todo_id) is not None
+        ]
+        deduped_count = int(supervisor.last_program_synthesis_deduped_count)
+        after_status = supervisor.program_synthesis_status()
+        if seeded_todo_ids or deduped_count or superseded_count:
+            queue.save_jsonl(queue_path)
+
+    report.update(
+        {
+            "after": after_status,
+            "before": before_status,
+            "deduped_count": deduped_count,
+            "failure_reason": str(failure_reason or ""),
+            "original_action": str(original_action or ""),
+            "program_synthesis_scope": str(program_synthesis_scope or ""),
+            "seeded_count": len(seeded_todo_ids),
+            "seeded_todo_ids": seeded_todo_ids,
+            "superseded_count": superseded_count,
+        }
+    )
+    if not seeded_todo_ids:
+        report["reason"] = (
+            "resolved_by_completed_rescue"
+            if superseded_count
+            else
+            "existing_or_exhausted_rescue"
+            if deduped_count
+            else "no_failed_validation_clusters"
+        )
+    return report
+
+
+def _paired_failed_validation_rescue_should_seed(
+    program_synthesis_health: Mapping[str, Any],
+    *,
+    mode: str,
+    last_seed_at: float,
+    interval_seconds: float,
+    now: Optional[float] = None,
+) -> bool:
+    """Return whether paired supervision should recover failed validation work."""
+
+    rescue_mode = str(mode or "auto").strip().lower()
+    if rescue_mode == "off":
+        return False
+    if not bool(program_synthesis_health.get("queue_exists", False)):
+        return False
+    if int(program_synthesis_health.get("program_synthesis_failed_validation", 0) or 0) < 1:
+        return False
+    current_time = time.time() if now is None else float(now)
+    interval_ready = (current_time - float(last_seed_at or 0.0)) >= max(
+        0.0,
+        float(interval_seconds),
+    )
+    if not interval_ready:
+        return False
+    pending = int(program_synthesis_health.get("program_synthesis_pending", 0) or 0)
+    claimed = int(program_synthesis_health.get("program_synthesis_claimed", 0) or 0)
+    if bool(program_synthesis_health.get("codex_queue_starved", False)):
+        return pending == 0 and claimed == 0
+    if rescue_mode == "starved":
+        return pending == 0 and claimed == 0
+    waiting_workers = int(
+        program_synthesis_health.get("codex_workers_waiting_for_todos_count", 0) or 0
+    )
+    active_workers = int(
+        program_synthesis_health.get("codex_workers_active_packet_count", 0) or 0
+    )
+    worker_count = int(program_synthesis_health.get("codex_worker_summary_count", 0) or 0)
+    has_idle_capacity = bool(
+        waiting_workers > 0
+        or (worker_count > 0 and active_workers < worker_count)
+    )
+    if rescue_mode in {"auto", "eager"}:
+        return has_idle_capacity
+    return False
 
 
 def paired_program_synthesis_health(
@@ -3187,6 +3323,7 @@ def paired_program_synthesis_health(
         "codex_execution_count": 0,
         "codex_worker_stale_seconds": max(0.0, float(codex_worker_stale_seconds)),
         "codex_worker_summary_count": 0,
+        "codex_workers_active_packet_count": 0,
         "codex_workers_waiting_for_todos_count": 0,
         "queue_exists": queue_path.exists(),
         "queue_path": str(queue_path),
@@ -3196,6 +3333,11 @@ def paired_program_synthesis_health(
             with queue_file_lock(queue_path):
                 queue = ModalTodoQueue.load_jsonl(queue_path)
             status = program_synthesis_status_block(queue, optimizer_policy)
+            role_queue_counts = queue.role_status_counts()
+            program_role_counts = role_queue_counts.get(
+                optimizer_policy.program_synthesis_role,
+                {},
+            )
             claimed_by_counts: Counter[str] = Counter(
                 str(todo.claimed_by or "unknown")
                 for todo in queue.claimed(
@@ -3213,8 +3355,11 @@ def paired_program_synthesis_health(
                         status.get("failed_validation", 0)
                     ),
                     "program_synthesis_pending": int(status.get("pending", 0)),
+                    "program_synthesis_superseded": int(
+                        program_role_counts.get("superseded", 0)
+                    ),
                     "queue_counts": queue.status_counts(),
-                    "role_queue_counts": queue.role_status_counts(),
+                    "role_queue_counts": role_queue_counts,
                 }
             )
         except Exception as exc:
@@ -3227,53 +3372,44 @@ def paired_program_synthesis_health(
                 "program_synthesis_completed": 0,
                 "program_synthesis_failed_validation": 0,
                 "program_synthesis_pending": 0,
+                "program_synthesis_superseded": 0,
                 "queue_counts": {},
                 "role_queue_counts": {},
             }
         )
 
-    scope_counts: Counter[str] = Counter()
-    worker_waiting = 0
-    worker_claimed_total = 0
-    worker_execution_count = 0
-    worker_summaries = 0
-    worker_summary_age_seconds: Dict[str, float] = {}
-    worker_latest_reasons: Counter[str] = Counter()
-    stale_worker_ids: set[str] = set()
-    worker_stale_seconds = max(0.0, float(codex_worker_stale_seconds))
-    for path in codex_summary_paths:
-        if not path.exists():
-            continue
-        try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            continue
-        worker_summaries += 1
-        scope = str(data.get("codex_scope") or "unscoped")
-        scope_counts[scope] += 1
-        worker_id = str(data.get("worker_id") or path.stem)
-        age_seconds = _summary_age_seconds(path, data)
-        if age_seconds is not None:
-            worker_summary_age_seconds[worker_id] = round(float(age_seconds), 3)
-            if worker_stale_seconds > 0.0 and age_seconds >= worker_stale_seconds:
-                stale_worker_ids.add(worker_id)
-        latest_reason = str(data.get("latest_stop_reason") or "")
-        if latest_reason:
-            worker_latest_reasons[latest_reason] += 1
-        if latest_reason == "waiting_for_program_synthesis_todos":
-            worker_waiting += 1
-        try:
-            worker_claimed_total += int(data.get("codex_claimed_total", 0) or 0)
-        except (TypeError, ValueError):
-            pass
-        try:
-            worker_execution_count += int(data.get("codex_execution_count", 0) or 0)
-        except (TypeError, ValueError):
-            pass
+    child_health = accelerate_summarize_child_summary_files(
+        codex_summary_paths,
+        spec=ChildSummaryHealthSpec(
+            numeric_total_fields=("codex_claimed_total", "codex_execution_count"),
+            scope_field="codex_scope",
+            waiting_reasons=frozenset({"waiting_for_program_synthesis_todos"}),
+        ),
+        stale_seconds=max(0.0, float(codex_worker_stale_seconds)),
+    )
+    child_numeric_totals = dict(child_health.get("numeric_totals", {}) or {})
+    scope_counts = dict(child_health.get("scope_counts", {}) or {})
+    worker_waiting = int(child_health.get("waiting_count", 0) or 0)
+    worker_claimed_total = int(child_numeric_totals.get("codex_claimed_total", 0) or 0)
+    worker_execution_count = int(
+        child_numeric_totals.get("codex_execution_count", 0) or 0
+    )
+    worker_summaries = int(child_health.get("summary_count", 0) or 0)
+    worker_summary_age_seconds = dict(
+        child_health.get("summary_age_seconds", {}) or {}
+    )
+    worker_latest_reasons = dict(child_health.get("latest_stop_reasons", {}) or {})
+    stale_worker_ids = {
+        str(worker_id)
+        for worker_id in list(child_health.get("stale_child_ids", []) or [])
+        if str(worker_id)
+    }
+    worker_active_packets = int(child_health.get("active_count", 0) or 0)
     pending = int(health.get("program_synthesis_pending", 0) or 0)
     claimed = int(health.get("program_synthesis_claimed", 0) or 0)
     failed_validation = int(health.get("program_synthesis_failed_validation", 0) or 0)
     completed = int(health.get("program_synthesis_completed", 0) or 0)
+    superseded = int(health.get("program_synthesis_superseded", 0) or 0)
     claimed_by_workers = set(
         str(worker_id)
         for worker_id in dict(
@@ -3288,16 +3424,24 @@ def paired_program_synthesis_health(
             "codex_claimed_total": worker_claimed_total,
             "codex_execution_count": worker_execution_count,
             "codex_queue_open_count": pending + claimed,
+            "codex_queue_drained": bool(
+                health.get("queue_exists")
+                and pending == 0
+                and claimed == 0
+                and failed_validation == 0
+                and (completed > 0 or superseded > 0)
+            ),
             "codex_queue_starved": bool(
                 health.get("queue_exists")
                 and pending == 0
                 and claimed == 0
-                and (failed_validation > 0 or completed > 0)
+                and failed_validation > 0
             ),
             "codex_scope_worker_counts": dict(sorted(scope_counts.items())),
             "codex_worker_latest_stop_reasons": dict(
                 sorted(worker_latest_reasons.items())
             ),
+            "codex_workers_active_packet_count": worker_active_packets,
             "codex_idle_worker_stale_count": len(stale_idle_workers),
             "codex_worker_stale_count": len(stale_claimed_workers),
             "codex_worker_summary_count": worker_summaries,
@@ -3311,16 +3455,6 @@ def paired_program_synthesis_health(
         }
     )
     return health
-
-
-def _utc_age_seconds(value: Any, *, now: Optional[float] = None) -> Optional[float]:
-    if value is None or str(value).strip() == "":
-        return None
-    try:
-        timestamp = parse_utc(str(value))
-    except (TypeError, ValueError):
-        return None
-    return max(0.0, float(now if now is not None else time.time()) - timestamp)
 
 
 def paired_autoencoder_child_health(
@@ -3352,7 +3486,7 @@ def paired_autoencoder_child_health(
             "autoencoder_active_cycle_elapsed_seconds": data.get(
                 "active_cycle_elapsed_seconds"
             ),
-            "autoencoder_active_cycle_heartbeat_age_seconds": _utc_age_seconds(
+            "autoencoder_active_cycle_heartbeat_age_seconds": accelerate_timestamp_age_seconds(
                 active_heartbeat_at,
                 now=now_epoch,
             ),
@@ -3366,12 +3500,15 @@ def paired_autoencoder_child_health(
                 "active_cycle_projection_stage"
             ),
             "autoencoder_cycles": data.get("cycles"),
-            "autoencoder_effective_heartbeat_age_seconds": _utc_age_seconds(
+            "autoencoder_effective_heartbeat_age_seconds": accelerate_timestamp_age_seconds(
                 heartbeat_at,
                 now=now_epoch,
             ),
             "autoencoder_latest_stop_reason": data.get("latest_stop_reason"),
-            "autoencoder_summary_age_seconds": _utc_age_seconds(updated_at, now=now_epoch),
+            "autoencoder_summary_age_seconds": accelerate_timestamp_age_seconds(
+                updated_at,
+                now=now_epoch,
+            ),
             "autoencoder_summary_updated_at": updated_at,
         }
     )
@@ -4489,17 +4626,12 @@ def _paired_codex_children_succeeded(
 
     if not codex_exit_codes or autoencoder_exit_code != 0:
         return False
-    for run_id, exit_code in codex_exit_codes.items():
-        if exit_code == 0:
-            continue
-        runner_stopped_child = (
-            not stop_requested
-            and run_id in runner_terminated_children
-            and exit_code in {-signal.SIGTERM, -signal.SIGKILL}
-        )
-        if not runner_stopped_child:
-            return False
-    return True
+    return accelerate_supervised_child_group_succeeded(
+        codex_exit_codes,
+        runner_terminated_child_ids=tuple(runner_terminated_children),
+        stop_requested=stop_requested,
+        allow_runner_terminated=True,
+    )
 
 
 def _paired_autoencoder_succeeded(
@@ -4510,7 +4642,12 @@ def _paired_autoencoder_succeeded(
 ) -> bool:
     """Return whether the paired autoencoder child reached its own clean stop."""
 
-    return autoencoder_exit_code == 0 and autoencoder_run_id not in runner_terminated_children
+    return accelerate_supervised_child_succeeded(
+        child_id=autoencoder_run_id,
+        exit_code=autoencoder_exit_code,
+        runner_terminated_child_ids=tuple(runner_terminated_children),
+        allow_runner_terminated=False,
+    )
 
 
 def _paired_child_exit_should_restart(
@@ -4522,11 +4659,11 @@ def _paired_child_exit_should_restart(
 ) -> bool:
     """Return whether accelerate-style supervision should replace a dead child."""
 
-    return bool(
-        exit_code is not None
-        and exit_code != 0
-        and not stop_requested
-        and int(restart_count) < int(restart_limit)
+    return accelerate_child_exit_should_restart(
+        exit_code=exit_code,
+        restart_count=restart_count,
+        restart_limit=restart_limit,
+        stop_requested=stop_requested,
     )
 
 
@@ -5707,18 +5844,19 @@ for item in payload.get("samples", []):
     )
 codec = DeterministicModalLogicCodec(ModalLogicCodecConfig())
 compiler = compiler_ir_metric_block(samples, codec)
-bridge = bridge_ir_metric_block(
-    samples,
-    DEFAULT_LEGAL_IR_BRIDGE_NAMES,
-    evaluate_provers=False,
-    parallel_workers=1,
-)
 metrics = {}
 for key, value in compiler.items():
     if isinstance(value, (int, float)):
         metrics[str(key)] = float(value)
 if "cosine_similarity" in metrics:
     metrics["embedding_cosine_similarity"] = metrics["cosine_similarity"]
+target_metrics = list(payload.get("target_metrics") or [])
+bridge = bridge_ir_metric_block(
+    samples,
+    DEFAULT_LEGAL_IR_BRIDGE_NAMES,
+    evaluate_provers=False,
+    parallel_workers=min(4, max(1, len(samples))),
+)
 canonical = dict(bridge.get("canonical_ir", {}) or {})
 canonical_losses = dict(canonical.get("losses", {}) or {})
 for key, value in canonical_losses.items():
@@ -5734,7 +5872,6 @@ for metric_name, source_key in canonical_map.items():
     value = canonical.get(source_key)
     if isinstance(value, (int, float)):
         metrics[metric_name] = float(value)
-target_metrics = list(payload.get("target_metrics") or [])
 selected = {
     metric: metrics[metric]
     for metric in target_metrics
@@ -6584,17 +6721,21 @@ def _process_text(value: Any) -> str:
 
 
 def _terminate_process_group(process: subprocess.Popen[str], signum: int) -> None:
-    if process.poll() is not None:
-        return
-    try:
-        os.killpg(process.pid, signum)
-    except ProcessLookupError:
-        return
-    except OSError:
-        try:
-            process.terminate()
-        except OSError:
-            return
+    accelerate_terminate_process_group(process, signum)
+
+
+def _terminate_process_with_grace(
+    process: subprocess.Popen[str],
+    *,
+    grace_seconds: float,
+    kill_wait_seconds: float = 5.0,
+) -> Optional[int]:
+    result = accelerate_terminate_process_with_grace(
+        process,
+        grace_seconds=grace_seconds,
+        kill_wait_seconds=kill_wait_seconds,
+    )
+    return result.final_exit_code
 
 
 def _terminate_active_codex_exec_processes(signum: int = signal.SIGTERM) -> None:
@@ -8518,6 +8659,28 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--paired-failed-validation-rescue-mode",
+        choices=("auto", "off"),
+        default="auto",
+        help=(
+            "In paired accelerate-style supervision, seed rescue TODOs when "
+            "Codex workers are alive but the program-synthesis queue is drained "
+            "into failed_validation terminal items."
+        ),
+    )
+    parser.add_argument(
+        "--paired-failed-validation-rescue-max-clusters",
+        type=int,
+        default=8,
+        help="Maximum failed-validation clusters to rescue per paired supervisor pass.",
+    )
+    parser.add_argument(
+        "--paired-failed-validation-rescue-interval-seconds",
+        type=float,
+        default=30.0,
+        help="Minimum seconds between paired supervisor failed-validation rescue passes.",
+    )
+    parser.add_argument(
         "--warm-start-run-id",
         action="append",
         default=[],
@@ -8704,6 +8867,24 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         or "accelerate_style"
     )
     accelerate_style_supervision = supervisor_backend == "accelerate_style"
+    failed_validation_rescue_mode = str(
+        getattr(args, "paired_failed_validation_rescue_mode", "auto") or "auto"
+    ).strip().lower()
+    failed_validation_rescue_max_clusters = max(
+        0,
+        int(getattr(args, "paired_failed_validation_rescue_max_clusters", 8) or 0),
+    )
+    failed_validation_rescue_interval_seconds = max(
+        0.0,
+        float(
+            getattr(
+                args,
+                "paired_failed_validation_rescue_interval_seconds",
+                30.0,
+            )
+            or 0.0
+        ),
+    )
 
     summary: Dict[str, Any] = {
         "autoencoder_command": list(paired["autoencoder_command"]),
@@ -8734,10 +8915,24 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         "paired_grace_seconds": float(args.paired_grace_seconds),
         "paired_poll_seconds": float(args.paired_poll_seconds),
         "paired_codex_worker_stale_seconds": codex_worker_stale_seconds,
+        "paired_failed_validation_rescue_deduped_total": 0,
+        "paired_failed_validation_rescue_interval_seconds": (
+            failed_validation_rescue_interval_seconds
+        ),
+        "paired_failed_validation_rescue_max_clusters": (
+            failed_validation_rescue_max_clusters
+        ),
+        "paired_failed_validation_rescue_mode": failed_validation_rescue_mode,
+        "paired_failed_validation_rescue_seeded_total": 0,
         "paired_supervisor_backend": supervisor_backend,
         "paired_supervisor_features": {
             "bounded_restarts": True,
             "dead_child_pruning": accelerate_style_supervision,
+            "failed_validation_rescue": bool(
+                accelerate_style_supervision
+                and failed_validation_rescue_mode != "off"
+                and failed_validation_rescue_max_clusters > 0
+            ),
             "process_group_shutdown": True,
             "stale_claim_requeue": True,
         },
@@ -8753,19 +8948,10 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
     }
     save_summary(summary_path, summary)
 
-    stop_requested = False
-    stop_signal: int | None = None
-    previous_signal_handlers: Dict[int, Any] = {}
-
     def request_stop(signum: int, frame: Any) -> None:
-        nonlocal stop_requested, stop_signal
-        stop_requested = True
-        stop_signal = signum
         _terminate_active_codex_exec_processes(signal.SIGTERM)
 
-    for signum in (signal.SIGINT, signal.SIGTERM):
-        previous_signal_handlers[signum] = signal.getsignal(signum)
-        signal.signal(signum, request_stop)
+    stop_state = accelerate_install_stop_signal_handlers(on_signal=request_stop)
 
     append_event(
         log_path,
@@ -8792,10 +8978,12 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
     }
     runner_terminated_children: set[str] = set()
     runner_restarted_children: List[Dict[str, Any]] = []
+    autoencoder_restart_count = 0
     codex_worker_restart_counts: Dict[str, int] = {}
     codex_worker_exit_restart_counts: Dict[str, int] = {}
     last_codex_queue_starved = False
     last_autoencoder_restart_at = 0.0
+    last_failed_validation_rescue_at = 0.0
 
     try:
         with ExitStack() as stack:
@@ -8808,9 +8996,10 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                 previous_pid: Optional[int] = None,
                 restart_count: int = 0,
             ) -> subprocess.Popen[str]:
-                process = subprocess.Popen(
+                process = accelerate_launch_process_child(
                     list(paired["autoencoder_command"]),
                     cwd=root,
+                    stdin=None,
                     stdout=auto_stdout,
                     stderr=auto_stderr,
                     start_new_session=True,
@@ -8848,9 +9037,10 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                 child_stderr = stack.enter_context(
                     Path(str(child["stderr_path"])).open("a", encoding="utf-8")
                 )
-                process = subprocess.Popen(
+                process = accelerate_launch_process_child(
                     list(child["command"]),
                     cwd=root,
+                    stdin=None,
                     stdout=child_stdout,
                     stderr=child_stderr,
                     start_new_session=True,
@@ -8899,7 +9089,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                         exit_code=auto_exit_code,
                         restart_count=autoencoder_restart_count,
                         restart_limit=autoencoder_restart_limit,
-                        stop_requested=stop_requested,
+                        stop_requested=stop_state.stop_requested,
                     )
                     and (time.time() - started) <= max_wait
                 ):
@@ -8940,7 +9130,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                     summary["autoencoder_restart_count"] = autoencoder_restart_count
                     summary["runner_restarted_children"] = list(runner_restarted_children)
 
-                if accelerate_style_supervision and not stop_requested:
+                if accelerate_style_supervision and not stop_state.stop_requested:
                     for child in codex_child_summaries:
                         child_run_id = str(child["run_id"])
                         exit_code = codex_exit_codes.get(child_run_id)
@@ -8952,7 +9142,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                             exit_code=exit_code,
                             restart_count=restart_count,
                             restart_limit=codex_worker_restart_limit,
-                            stop_requested=stop_requested,
+                            stop_requested=stop_state.stop_requested,
                         ):
                             continue
                         if (time.time() - started) > max_wait:
@@ -9017,8 +9207,11 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                     "program_synthesis_claimed",
                     "program_synthesis_completed",
                     "program_synthesis_failed_validation",
+                    "program_synthesis_superseded",
+                    "codex_queue_drained",
                     "codex_queue_open_count",
                     "codex_queue_starved",
+                    "codex_workers_active_packet_count",
                     "codex_workers_waiting_for_todos_count",
                     "codex_worker_summary_count",
                     "codex_claimed_total",
@@ -9059,13 +9252,13 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                             process.poll() if process is not None else None
                         )
                         if process is not None and process.poll() is None:
-                            _terminate_process_group(process, signal.SIGTERM)
-                            try:
-                                process.wait(timeout=max(5.0, min(30.0, poll_seconds * 3.0)))
-                            except subprocess.TimeoutExpired:
-                                _terminate_process_group(process, signal.SIGKILL)
-                                process.wait(timeout=5.0)
-                            previous_exit_code = process.poll()
+                            previous_exit_code = _terminate_process_with_grace(
+                                process,
+                                grace_seconds=max(
+                                    5.0,
+                                    min(30.0, poll_seconds * 3.0),
+                                ),
+                            )
                             runner_terminated_children.add(child_run_id)
                         requeue_report = requeue_stale_program_synthesis_claims(
                             queue_path=queue_path,
@@ -9160,6 +9353,77 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                         },
                     )
                     last_codex_queue_starved = codex_queue_starved
+                if (
+                    accelerate_style_supervision
+                    and failed_validation_rescue_max_clusters > 0
+                    and _paired_failed_validation_rescue_should_seed(
+                        program_synthesis_health,
+                        mode=failed_validation_rescue_mode,
+                        last_seed_at=last_failed_validation_rescue_at,
+                        interval_seconds=failed_validation_rescue_interval_seconds,
+                    )
+                ):
+                    last_failed_validation_rescue_at = time.time()
+                    rescue_report = seed_failed_validation_rescue_todos_for_queue(
+                        queue_path=queue_path,
+                        policy=ModalOptimizerPolicy(),
+                        max_clusters=failed_validation_rescue_max_clusters,
+                    )
+                    summary["latest_paired_failed_validation_rescue"] = dict(
+                        rescue_report
+                    )
+                    summary["paired_failed_validation_rescue_seeded_total"] = int(
+                        summary.get("paired_failed_validation_rescue_seeded_total", 0)
+                        or 0
+                    ) + int(rescue_report.get("seeded_count", 0) or 0)
+                    summary["paired_failed_validation_rescue_deduped_total"] = int(
+                        summary.get("paired_failed_validation_rescue_deduped_total", 0)
+                        or 0
+                    ) + int(rescue_report.get("deduped_count", 0) or 0)
+                    append_event(
+                        log_path,
+                        args.run_id,
+                        {
+                            "event": (
+                                "paired_failed_validation_rescue_seeded"
+                                if int(rescue_report.get("seeded_count", 0) or 0) > 0
+                                else "paired_failed_validation_rescue_not_seeded"
+                            ),
+                            "program_synthesis_health": program_synthesis_health,
+                            "queue_run_id": paired["queue_run_id"],
+                            "rescue_report": dict(rescue_report),
+                        },
+                    )
+                    if (
+                        int(rescue_report.get("seeded_count", 0) or 0) > 0
+                        or int(rescue_report.get("superseded_count", 0) or 0) > 0
+                    ):
+                        program_synthesis_health = paired_program_synthesis_health(
+                            queue_path=queue_path,
+                            codex_summary_paths=codex_summary_paths,
+                            codex_worker_stale_seconds=codex_worker_stale_seconds,
+                        )
+                        summary["program_synthesis_health"] = program_synthesis_health
+                        for key in (
+                            "program_synthesis_pending",
+                            "program_synthesis_claimed",
+                            "program_synthesis_completed",
+                            "program_synthesis_failed_validation",
+                            "program_synthesis_superseded",
+                            "codex_queue_drained",
+                            "codex_queue_open_count",
+                            "codex_queue_starved",
+                            "codex_workers_active_packet_count",
+                            "codex_workers_waiting_for_todos_count",
+                            "codex_worker_summary_count",
+                            "codex_claimed_total",
+                            "codex_execution_count",
+                        ):
+                            if key in program_synthesis_health:
+                                summary[key] = program_synthesis_health[key]
+                        codex_queue_starved = bool(
+                            program_synthesis_health.get("codex_queue_starved", False)
+                        )
                 heartbeat_age = autoencoder_health.get(
                     "autoencoder_effective_heartbeat_age_seconds"
                 )
@@ -9230,15 +9494,10 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                             "restart_count": autoencoder_restart_count + 1,
                         },
                     )
-                    _terminate_process_group(auto_process, signal.SIGTERM)
-                    try:
-                        auto_process.wait(
-                            timeout=max(5.0, min(30.0, poll_seconds * 3.0))
-                        )
-                    except subprocess.TimeoutExpired:
-                        _terminate_process_group(auto_process, signal.SIGKILL)
-                        auto_process.wait(timeout=5.0)
-                    previous_exit_code = auto_process.poll()
+                    previous_exit_code = _terminate_process_with_grace(
+                        auto_process,
+                        grace_seconds=max(5.0, min(30.0, poll_seconds * 3.0)),
+                    )
                     autoencoder_restart_count += 1
                     last_autoencoder_restart_at = time.time()
                     runner_restarted_children.append(
@@ -9275,7 +9534,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                     exit_code is not None for exit_code in codex_exit_codes.values()
                 ):
                     break
-                if stop_requested:
+                if stop_state.stop_requested:
                     break
                 if (time.time() - started) > max_wait:
                     summary["latest_stop_reason"] = "paired_timeout_grace_exceeded"
@@ -9286,25 +9545,29 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
             (str(paired["autoencoder_run_id"]), auto_process),
             *[(run_id, process) for run_id, process in codex_processes.items()],
         ]
-        for child_run_id, process in process_labels:
-            if process is None or process.poll() is not None:
-                continue
-            runner_terminated_children.add(child_run_id)
-            _terminate_process_group(process, signal.SIGTERM)
-
         termination_wait_seconds = max(
             10.0,
             min(60.0, float(args.paired_grace_seconds)),
         )
-        for child_run_id, process in process_labels:
-            if process is None or process.poll() is not None:
-                continue
-            try:
-                process.wait(timeout=termination_wait_seconds)
-            except subprocess.TimeoutExpired:
+        termination_results = accelerate_terminate_processes_with_grace(
+            process_labels,
+            grace_seconds=termination_wait_seconds,
+            kill_wait_seconds=5.0,
+        )
+        for child_run_id, result in termination_results.items():
+            if result.initial_exit_code is None:
                 runner_terminated_children.add(child_run_id)
-                _terminate_process_group(process, signal.SIGKILL)
-                process.wait(timeout=5.0)
+        summary["child_termination_results"] = {
+            child_run_id: {
+                "final_exit_code": result.final_exit_code,
+                "initial_exit_code": result.initial_exit_code,
+                "kill_sent": result.kill_sent,
+                "pid": result.pid,
+                "terminate_sent": result.terminate_sent,
+                "timed_out": result.timed_out,
+            }
+            for child_run_id, result in sorted(termination_results.items())
+        }
 
         if auto_process is not None:
             auto_exit_code = auto_process.poll()
@@ -9313,9 +9576,9 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
             for run_id, process in codex_processes.items()
         }
 
-        if stop_requested:
-            summary["latest_stop_reason"] = f"signal_{stop_signal}"
-            summary["stopped_by_signal"] = stop_signal
+        if stop_state.stop_requested:
+            summary["latest_stop_reason"] = f"signal_{stop_state.stop_signal}"
+            summary["stopped_by_signal"] = stop_state.stop_signal
         summary["elapsed_seconds"] = round(time.time() - started, 3)
         summary["autoencoder_exit_code"] = auto_exit_code
         summary["codex_exit_codes"] = codex_exit_codes
@@ -9339,11 +9602,14 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         for key in (
             "program_synthesis_pending",
             "program_synthesis_claimed",
-            "program_synthesis_completed",
-            "program_synthesis_failed_validation",
-            "codex_queue_open_count",
-            "codex_queue_starved",
-            "codex_workers_waiting_for_todos_count",
+                "program_synthesis_completed",
+                "program_synthesis_failed_validation",
+                "program_synthesis_superseded",
+                "codex_queue_drained",
+                "codex_queue_open_count",
+                "codex_queue_starved",
+                "codex_workers_active_packet_count",
+                "codex_workers_waiting_for_todos_count",
             "codex_worker_summary_count",
             "codex_claimed_total",
             "codex_execution_count",
@@ -9370,7 +9636,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
             codex_exit_codes,
             autoencoder_exit_code=auto_exit_code,
             runner_terminated_children=runner_terminated_children,
-            stop_requested=stop_requested,
+            stop_requested=stop_state.stop_requested,
         )
         summary["autoencoder_runner_terminated"] = autoencoder_runner_terminated
         summary["status"] = (
@@ -9391,14 +9657,13 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                 "runner_terminated_children": sorted(runner_terminated_children),
             },
         )
-        for signum, handler in previous_signal_handlers.items():
-            signal.signal(signum, handler)
+        stop_state.restore()
 
     codex_success = _paired_codex_children_succeeded(
         codex_exit_codes,
         autoencoder_exit_code=auto_exit_code,
         runner_terminated_children=runner_terminated_children,
-        stop_requested=stop_requested,
+        stop_requested=stop_state.stop_requested,
     )
     autoencoder_success = _paired_autoencoder_succeeded(
         autoencoder_run_id=str(paired["autoencoder_run_id"]),
@@ -9424,18 +9689,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     queue_dir.mkdir(parents=True, exist_ok=True)
     report_dir.mkdir(parents=True, exist_ok=True)
 
-    stop_requested = False
-    stop_signal: int | None = None
-    previous_signal_handlers: Dict[int, Any] = {}
-
-    def request_stop(signum: int, frame: Any) -> None:
-        nonlocal stop_requested, stop_signal
-        stop_requested = True
-        stop_signal = signum
-
-    for signum in (signal.SIGINT, signal.SIGTERM):
-        previous_signal_handlers[signum] = signal.getsignal(signum)
-        signal.signal(signum, request_stop)
+    stop_state = accelerate_install_stop_signal_handlers()
 
     if summary_path.exists():
         summary = json.loads(summary_path.read_text(encoding="utf-8"))
@@ -10430,7 +10684,10 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         }
 
     try:
-        while not stop_requested and time.time() + cycle_start_margin_seconds < end_at:
+        while (
+            not stop_state.stop_requested
+            and time.time() + cycle_start_margin_seconds < end_at
+        ):
             cycle = int(summary.get("cycles", 0)) + 1
             cycle_started = time.time()
             cycle_started_at = utc_now()
@@ -11669,7 +11926,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 summary["test_failures"] = int(summary.get("test_failures", 0)) + int(test_result["exit_code"] != 0)
                 append_event(log_path, args.run_id, test_result)
                 save_summary(summary_path, summary)
-        if not stop_requested and int(summary.get("cycles", 0) or 0) <= 0:
+        if not stop_state.stop_requested and int(summary.get("cycles", 0) or 0) <= 0:
             now = time.time()
             remaining_seconds = max(0.0, end_at - now)
             stop_reason = (
@@ -11693,9 +11950,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             )
             save_summary(summary_path, summary)
     finally:
-        if stop_requested:
-            summary["latest_stop_reason"] = f"signal_{stop_signal}"
-            summary["stopped_by_signal"] = stop_signal
+        if stop_state.stop_requested:
+            summary["latest_stop_reason"] = f"signal_{stop_state.stop_signal}"
+            summary["stopped_by_signal"] = stop_state.stop_signal
         summary.update(autoencoder.compute_backend_metadata())
         summary["applied_todo_ids"] = len(autoencoder.state.applied_todo_ids)
         summary["compiler_quality_embedding_weight_entries"] = len(
@@ -11797,8 +12054,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         )
         save_summary(summary_path, summary, final=True)
         append_event(log_path, args.run_id, {"event": "run_finished", **summary})
-        for signum, handler in previous_signal_handlers.items():
-            signal.signal(signum, handler)
+        stop_state.restore()
     return 0
 
 
@@ -11821,19 +12077,10 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
     work_dir.mkdir(parents=True, exist_ok=True)
     execution_mode = codex_loop_execution_mode(args)
 
-    stop_requested = False
-    stop_signal: int | None = None
-    previous_signal_handlers: Dict[int, Any] = {}
-
     def request_stop(signum: int, frame: Any) -> None:
-        nonlocal stop_requested, stop_signal
-        stop_requested = True
-        stop_signal = signum
         _terminate_active_codex_exec_processes(signal.SIGTERM)
 
-    for signum in (signal.SIGINT, signal.SIGTERM):
-        previous_signal_handlers[signum] = signal.getsignal(signum)
-        signal.signal(signum, request_stop)
+    stop_state = accelerate_install_stop_signal_handlers(on_signal=request_stop)
 
     if summary_path.exists():
         summary = json.loads(summary_path.read_text(encoding="utf-8"))
@@ -11929,6 +12176,9 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             summary["active_packet_claimed_todo_ids"] = list(claimed_ids)
             summary["active_packet_scopes"] = list(claimed_scopes)
             summary["active_packet_worker_id"] = worker_id
+            summary["heartbeat_at"] = heartbeat_at
+            summary["latest_stop_reason"] = phase
+            summary["updated_at"] = heartbeat_at
             if active_packet.get("packet_id"):
                 summary["active_packet_id"] = active_packet["packet_id"]
             if active_packet.get("packet_path"):
@@ -11984,7 +12234,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
     )
 
     try:
-        while not stop_requested and time.time() < end_at:
+        while not stop_state.stop_requested and time.time() < end_at:
             cycle = int(summary.get("cycles", 0)) + 1
             cycle_started = time.time()
             packet: Dict[str, Any] = {}
@@ -12199,12 +12449,12 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             )
             save_summary(summary_path, summary)
             sleep_seconds = max(0.1, float(args.poll_seconds))
-            if not stop_requested:
+            if not stop_state.stop_requested:
                 time.sleep(sleep_seconds)
     finally:
-        if stop_requested:
-            summary["latest_stop_reason"] = f"signal_{stop_signal}"
-            summary["stopped_by_signal"] = stop_signal
+        if stop_state.stop_requested:
+            summary["latest_stop_reason"] = f"signal_{stop_state.stop_signal}"
+            summary["stopped_by_signal"] = stop_state.stop_signal
         summary["elapsed_seconds"] = round(time.time() - started_at, 3)
         with queue_file_lock(queue_path):
             queue = ModalTodoQueue.load_jsonl(queue_path)
@@ -12219,8 +12469,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
         summary["finished_at"] = utc_now()
         save_summary(summary_path, summary, final=True)
         append_event(log_path, args.run_id, {"event": "run_finished", **summary})
-        for signum, handler in previous_signal_handlers.items():
-            signal.signal(signum, handler)
+        stop_state.restore()
     return 0
 
 

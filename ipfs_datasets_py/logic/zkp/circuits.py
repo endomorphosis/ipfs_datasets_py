@@ -121,6 +121,28 @@ def _json_safe_public_input(value: Any) -> Any:
     return str(value)
 
 
+def compiler_guidance_ref_from_metadata(metadata: Mapping[str, Any] | None) -> str:
+    """Return a stable guidance ref from explicit metadata or a contract body."""
+    metadata_dict = _mapping_dict(metadata)
+    explicit_ref = str(metadata_dict.get("compiler_guidance_ref") or "").strip()
+    if explicit_ref:
+        return explicit_ref
+
+    contract = metadata_dict.get("compiler_guidance_contract")
+    if contract is None:
+        return ""
+    if isinstance(contract, str) and not contract.strip():
+        return ""
+    if isinstance(contract, Mapping) and not contract:
+        return ""
+    if isinstance(contract, (list, tuple)) and not contract:
+        return ""
+
+    canonical_contract = _json_safe_public_input(contract)
+    payload = json.dumps(canonical_contract, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
 def _canonical_public_inputs(public_inputs: Mapping[str, Any]) -> Dict[str, Any]:
     """Return public inputs suitable for stable attestation-view commitments."""
     return {
@@ -155,6 +177,7 @@ def build_proof_attestation_view(
     compiler_guidance_ref = str(
         public_inputs_dict.get("compiler_guidance_ref")
         or metadata_dict.get("compiler_guidance_ref")
+        or compiler_guidance_ref_from_metadata(metadata_dict)
         or ""
     )
     compiler_guidance_version = _non_negative_int(

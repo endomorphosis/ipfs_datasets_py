@@ -1547,6 +1547,22 @@ def test_frame_ontology_terms_from_feature_keys_support_typed_flogic_citation_an
     ]
 
 
+def test_frame_ontology_terms_from_feature_keys_skip_low_signal_positioned_segments() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:condition_alnum_segment_positioned:15:in",
+            "flogic:condition_scope_alnum_segment_positioned:14:in",
+            "slot:condition_alnum_segment_positioned:15_in",
+            "slot:condition_scope_alnum_segment_positioned:14_in",
+            "flogic:fallback_surface_text_alnum_segment_positioned:3:91",
+            "slot:fallback_surface_text_alnum_segment_positioned:3_91",
+            "flogic:fallback_surface_text_alnum_segment_positioned:4:voucher",
+        ]
+    )
+
+    assert terms == ["voucher"]
+
+
 def test_frame_ontology_terms_from_feature_keys_keep_single_letter_citation_suffixes() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [
@@ -2038,6 +2054,24 @@ def test_frame_ontology_feature_keys_from_values_audits_packet_view_family_featu
         "legal_ir_view_tdfol_prover",
         "legal_ir_view_knowledge_graphs_neo4j_compat",
         "legal_ir_view_cec_native",
+        "fallback_surface_text_alnum_segment_kind_positioned_numeric",
+    ]
+
+
+def test_frame_ontology_contextualized_terms_skip_low_signal_positioned_segments() -> None:
+    terms = frame_ontology_contextualized_terms(
+        feature_keys=[
+            "flogic:condition_alnum_segment_positioned:15:in",
+            "flogic:condition_scope_alnum_segment_positioned:14:in",
+            "slot:condition_alnum_segment_positioned:15_in",
+            "slot:condition_scope_alnum_segment_positioned:14_in",
+            "flogic:fallback_surface_text_alnum_segment_positioned:3:91",
+            "slot:fallback_surface_text_alnum_segment_positioned:3_91",
+            "flogic:fallback_surface_text_alnum_segment_kind_positioned:4:numeric",
+        ]
+    )
+
+    assert terms == [
         "fallback_surface_text_alnum_segment_kind_positioned_numeric",
     ]
 

@@ -926,6 +926,10 @@ _CROSS_FAMILY_BRIDGE_FAMILY_PRIORITY: Mapping[str, int] = {
     "dynamic": 6,
 }
 _SOURCE_ANCHOR_DIRECTIONAL_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = {
+    "alethic": ("conditional_normative", "deontic", "temporal"),
+    "conditional_normative": ("deontic",),
+    "deontic": ("conditional_normative", "deontic", "frame", "temporal"),
+    "frame": ("conditional_normative", "deontic", "doxastic", "frame", "temporal"),
     "temporal": ("conditional_normative", "deontic", "epistemic", "temporal"),
 }
 _DEONTIC_BRIDGE_REINFORCEMENT_OPERATORS: frozenset[str] = frozenset(
@@ -6338,6 +6342,7 @@ def _refined_temporal_transition_components(
             (
                 (f"{normalized_slot_prefix}_refined_temporal_bridge_family_pair", pair),
                 (f"{normalized_slot_prefix}_refined_temporal_bridge_family_pair_key", pair_key),
+                (f"{normalized_slot_prefix}_refined_temporal_bridge_family_pair", pair_key),
                 (f"{normalized_slot_prefix}_refined_temporal_bridge_operator_pair", operator_pair),
                 (f"{normalized_slot_prefix}_refined_temporal_bridge_signature", signature),
                 (
@@ -6346,6 +6351,7 @@ def _refined_temporal_transition_components(
                 ),
                 ("refined_temporal_bridge_family_pair", pair),
                 ("refined_temporal_bridge_family_pair_key", pair_key),
+                ("refined_temporal_bridge_family_pair", pair_key),
                 ("refined_temporal_bridge_operator_pair", operator_pair),
                 ("refined_temporal_bridge_signature", signature),
                 ("refined_temporal_bridge_pair_cue", f"{pair}:{normalized_cue}"),
@@ -6353,6 +6359,10 @@ def _refined_temporal_transition_components(
                 (
                     "refined_temporal_bridge_context_pair",
                     f"{normalized_slot_prefix}:{pair}",
+                ),
+                (
+                    "refined_temporal_bridge_context_pair",
+                    f"{normalized_slot_prefix}_{pair_key}",
                 ),
             )
         )
@@ -10109,6 +10119,7 @@ def _is_semantic_support_slot(slot: str) -> bool:
         "fallback_surface_context_legal_semantic_atom",
         "section_heading_tail_legal_semantic_atom",
         "status_keyword",
+        "semantic_ir_reconstruction_anchor",
         "typed_ir_reconstruction",
         "role",
     }:
@@ -10196,6 +10207,7 @@ def _structural_semantic_values(decoded: DecodedModalText) -> List[str]:
     preferred_slots = (
         "legal_semantic_atom",
         "status_keyword",
+        "semantic_ir_reconstruction_anchor",
         "section_heading_tail_legal_semantic_atom",
         "fallback_surface_text_legal_semantic_atom",
         "fallback_surface_context_legal_semantic_atom",
@@ -10342,8 +10354,12 @@ def _structural_decoded_text(
         include_fixed=False,
         include_provenance_only=True,
     )
+    typed_ir_values = [
+        *slot_text_map.get("typed_ir_reconstruction", ()),
+        *slot_text_map.get("semantic_ir_reconstruction_anchor", ()),
+    ]
     typed_ir_rendered = _clean_non_empty_string(
-        " ".join(slot_text_map.get("typed_ir_reconstruction", ()))
+        " ".join(_unique_preserve_order(typed_ir_values))
     )
     if typed_ir_rendered:
         return typed_ir_rendered

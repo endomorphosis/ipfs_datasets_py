@@ -58,6 +58,12 @@ _EVENT_FORMULA_CONNECTOR_REPLACEMENTS = {
     "∀": "forall ",
     "∃": "exists ",
 }
+_DCEC_STATE_PREDICATE_BY_KIND = {
+    "definition": "Definition",
+    "applicability": "AppliesTo",
+    "exemption": "ExemptedFrom",
+    "instrument_lifecycle": "LifecycleState",
+}
 
 
 @dataclass
@@ -105,22 +111,21 @@ class CecDcecBridgeAdapter:
                 "source": "cec_dcec_bridge_ir",
             },
         )
+        cec_event_rows = _cec_event_view_rows(records)
+        procedure_event_count = sum(
+            len(record.get("procedure_event_records") or []) for record in records
+        )
         views = {
             "cec_events": LogicIRView(
                 name="cec_events",
                 format="cec-event-records",
                 source_component="CEC.native",
-                payload={
-                    "events": [
-                        {
-                            "actor": record["actor"],
-                            "event": record["event"],
-                            "source_id": record["source_id"],
-                        }
-                        for record in records
-                    ]
+                payload={"events": cec_event_rows},
+                metadata={
+                    "event_count": len(cec_event_rows),
+                    "norm_event_count": len(records),
+                    "procedure_event_count": procedure_event_count,
                 },
-                metadata={"event_count": len(records)},
             ),
             "event_calculus": LogicIRView(
                 name="event_calculus",
@@ -152,6 +157,13 @@ class CecDcecBridgeAdapter:
                                 record.get("compiler_guidance_source") or ""
                             ),
                             "modality": record["modality"],
+                            "procedure_event_records": [
+                                dict(procedure_event)
+                                for procedure_event in record.get(
+                                    "procedure_event_records"
+                                )
+                                or []
+                            ],
                             "source_id": record["source_id"],
                         }
                         for record in records
@@ -159,6 +171,7 @@ class CecDcecBridgeAdapter:
                 },
                 metadata={
                     "state_formula_count": len(records),
+                    "procedure_event_count": procedure_event_count,
                     "selected_frame_count": sum(
                         1 for record in records if str(record.get("selected_frame") or "")
                     ),
@@ -235,6 +248,7 @@ class CecDcecBridgeAdapter:
                     "dcec_formula_count": len(records),
                     "deontic_norm_count": len(norms),
                     "event_formula_count": len(records),
+                    "procedure_event_count": procedure_event_count,
                     "event_formula_selected_frame_count": sum(
                         1 for record in records if str(record.get("selected_frame") or "")
                     ),
@@ -464,7 +478,13 @@ def _dcec_records(
         actor = _symbol(norm.get("actor"), fallback="actor")
         event = _symbol(norm.get("action") or norm.get("predicate"), fallback="act")
         modality = _dcec_modality(norm)
+        state_kind = _dcec_state_kind(norm)
         source_id = str(norm.get("source_id") or f"dcec:norm:{index}")
+        procedure_event_records = _procedure_event_records_from_norm(
+            norm,
+            source_id=source_id,
+            actor=actor,
+        )
         frame_guidance = _frame_guidance_from_norm(
             norm,
             compiler_guidance=compiler_guidance,
@@ -476,6 +496,7 @@ def _dcec_records(
             actor=actor,
             event=event,
             modality=modality,
+            state_kind=state_kind,
         )
         formula = (
             str(formula_object.to_string())
@@ -486,6 +507,7 @@ def _dcec_records(
             actor=actor,
             event=event,
             modality=modality,
+            state_kind=state_kind,
         )
         event_formula_export = _take_event_formula_export(
             pending_event_formula_exports,
@@ -573,6 +595,8 @@ def _dcec_records(
                 "compiler_guidance_source": compiler_guidance_source,
                 "formula_object": formula_object,
                 "modality": modality,
+                "state_kind": state_kind,
+                "procedure_event_records": procedure_event_records,
                 "source_id": source_id,
                 "source_norm": dict(norm),
                 "valid": valid,
@@ -580,6 +604,185 @@ def _dcec_records(
             }
         )
     return records
+
+
+def _procedure_event_records_from_norm(
+    norm: Mapping[str, Any],
+    *,
+    source_id: str,
+    actor: str,
+) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    for key in (
+        "procedure_event_records",
+        "cec_procedure_event_records",
+        "event_calculus_event_records",
+    ):
+        records.extend(_list_of_dicts(norm.get(key)))
+
+    if not records:
+        records.extend(
+            _procedure_event_records_from_procedure(
+                _mapping(norm.get("procedure")),
+                source_id=source_id,
+            )
+        )
+
+    if not records:
+        records.extend(_exported_procedure_event_records_from_norm(norm))
+
+    normalized: list[dict[str, Any]] = []
+    seen: set[tuple[str, str, int, str]] = set()
+    for index, record in enumerate(records, start=1):
+        event = _first_text_value(record.get("event"), record.get("name"))
+        relation = _first_text_value(
+            record.get("relation"),
+            record.get("type"),
+            *_text_sequence(record.get("relation_types")),
+        )
+        anchor_event = _first_text_value(
+            record.get("anchor_event"),
+            record.get("anchor"),
+            *_text_sequence(record.get("anchor_events")),
+        )
+        if not event and anchor_event:
+            event = anchor_event
+        if not event:
+            continue
+        event_order = _intish(record.get("event_order") or record.get("order"), index)
+        event_symbol = _first_text_value(
+            record.get("event_symbol"),
+            fallback=_symbol(event, fallback="event"),
+        )
+        identity = "|".join(
+            [source_id, str(event_order), event, relation, anchor_event]
+        )
+        event_id = _first_text_value(
+            record.get("event_id"),
+            fallback=f"event:{_stable_short_hash(identity)}",
+        )
+        key = (event_id, event, event_order, relation)
+        if key in seen:
+            continue
+        seen.add(key)
+        normalized.append(
+            {
+                "actor": _first_text_value(record.get("actor"), fallback=actor),
+                "anchor_event": anchor_event,
+                "anchor_symbol": _first_text_value(
+                    record.get("anchor_symbol"),
+                    fallback=_symbol(anchor_event, fallback=""),
+                ),
+                "event": event,
+                "event_id": event_id,
+                "event_order": event_order,
+                "event_symbol": event_symbol,
+                "is_formula_antecedent": bool(
+                    _boolish(record.get("is_formula_antecedent"))
+                ),
+                "is_terminal": bool(_boolish(record.get("is_terminal"))),
+                "is_trigger": bool(_boolish(record.get("is_trigger"))),
+                "proof_role": _first_text_value(
+                    record.get("proof_role"),
+                    fallback=(
+                        "prerequisite"
+                        if _boolish(record.get("is_formula_antecedent"))
+                        else "ordering_provenance"
+                    ),
+                ),
+                "raw_text": _first_text_value(
+                    record.get("raw_text"),
+                    record.get("value"),
+                    record.get("procedure_value"),
+                ),
+                "relation": relation,
+                "source_id": _first_text_value(
+                    record.get("source_id"),
+                    fallback=source_id,
+                ),
+            }
+        )
+    return normalized
+
+
+def _procedure_event_records_from_procedure(
+    procedure: Mapping[str, Any],
+    *,
+    source_id: str,
+) -> list[dict[str, Any]]:
+    if not procedure:
+        return []
+    records: list[dict[str, Any]] = []
+    for index, item in enumerate(_list_of_dicts(procedure.get("event_chain")), start=1):
+        event = _first_text_value(item.get("event"))
+        if not event:
+            continue
+        relations = _list_of_dicts(item.get("relations"))
+        relation = relations[0] if relations else {}
+        records.append(
+            {
+                "anchor_event": _first_text_value(relation.get("anchor_event")),
+                "event": event,
+                "event_order": _intish(item.get("order"), index),
+                "event_symbol": _symbol(event, fallback="event"),
+                "is_terminal": event == _first_text_value(procedure.get("terminal_event")),
+                "is_trigger": event == _first_text_value(procedure.get("trigger_event")),
+                "relation": _first_text_value(relation.get("relation")),
+                "source_id": source_id,
+            }
+        )
+
+    for index, relation in enumerate(
+        _list_of_dicts(procedure.get("event_relations")),
+        start=len(records) + 1,
+    ):
+        event = _first_text_value(
+            relation.get("event"),
+            procedure.get("terminal_event"),
+            relation.get("anchor_event"),
+        )
+        if not event:
+            continue
+        records.append(
+            {
+                "anchor_event": _first_text_value(
+                    relation.get("anchor_event"),
+                    procedure.get("trigger_event"),
+                ),
+                "event": event,
+                "event_order": index,
+                "event_symbol": _symbol(event, fallback="event"),
+                "raw_text": _first_text_value(
+                    relation.get("raw_text"),
+                    relation.get("value"),
+                ),
+                "relation": _first_text_value(relation.get("relation")),
+                "source_id": source_id,
+            }
+        )
+    return records
+
+
+def _exported_procedure_event_records_from_norm(
+    norm: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    try:
+        from ipfs_datasets_py.logic.deontic.exports import (
+            build_procedure_event_records_from_ir,
+        )
+        from ipfs_datasets_py.logic.deontic.ir import LegalNormIR
+    except Exception:
+        return []
+
+    try:
+        norm_object = LegalNormIR.from_parser_element(dict(norm))
+        return [
+            dict(record)
+            for record in build_procedure_event_records_from_ir(norm_object)
+            if isinstance(record, Mapping)
+        ]
+    except Exception:
+        return []
 
 
 def _dcec_modality(norm: Mapping[str, Any]) -> str:
@@ -593,6 +796,38 @@ def _dcec_modality(norm: Mapping[str, Any]) -> str:
     if "permit" in modality or "may" in modality:
         return "permitted"
     return "obligated"
+
+
+def _dcec_state_kind(norm: Mapping[str, Any]) -> str:
+    norm_type = str(norm.get("norm_type") or "").strip().lower()
+    modality = str(norm.get("modality") or norm.get("deontic_operator") or "").strip().lower()
+    for token in (norm_type, modality):
+        normalized = token.replace("-", "_").replace(" ", "_")
+        if normalized in _DCEC_STATE_PREDICATE_BY_KIND:
+            return normalized
+        if normalized in {"def", "definition"}:
+            return "definition"
+        if normalized in {"life", "lifecycle", "instrument_lifecycle_validity", "instrument_lifecycle_expiration"}:
+            return "instrument_lifecycle"
+
+    corpus = " ".join(
+        _first_text_value(
+            norm.get("support_text"),
+            norm.get("source_text"),
+            norm.get("text"),
+            norm.get("action"),
+            fallback="",
+        ).lower().split()
+    )
+    if re.search(r"\b(?:the\s+term|terms?)\b.{0,80}\bmeans\b", corpus):
+        return "definition"
+    if re.search(r"\b(?:does\s+not|do\s+not|shall\s+not)\s+apply\s+to\b", corpus):
+        return "exemption"
+    if re.search(r"\b(?:applies|apply|shall\s+apply|is\s+applicable)\s+to\b", corpus):
+        return "applicability"
+    if re.search(r"\b(?:expires?|expiration|effective\s+date|takes?\s+effect)\b", corpus):
+        return "instrument_lifecycle"
+    return ""
 
 
 def _proof_gate_from_dcec_records(records: Sequence[Mapping[str, Any]]) -> ProofGateResult:
@@ -615,6 +850,46 @@ def _proof_gate_from_dcec_records(records: Sequence[Mapping[str, Any]]) -> Proof
             for record in records
         ),
     )
+
+
+def _cec_event_view_rows(records: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for record in records:
+        source_id = str(record.get("source_id") or "")
+        actor = str(record.get("actor") or "")
+        event = str(record.get("event") or "")
+        if event:
+            rows.append(
+                {
+                    "actor": actor,
+                    "event": event,
+                    "event_role": "norm_action",
+                    "source_id": source_id,
+                }
+            )
+        for procedure_event in record.get("procedure_event_records") or []:
+            if not isinstance(procedure_event, Mapping):
+                continue
+            procedure_event_name = str(procedure_event.get("event") or "").strip()
+            if not procedure_event_name:
+                continue
+            row = {
+                "actor": str(procedure_event.get("actor") or actor),
+                "event": procedure_event_name,
+                "event_id": str(procedure_event.get("event_id") or ""),
+                "event_order": _intish(procedure_event.get("event_order"), 0),
+                "event_role": "procedure_event",
+                "event_symbol": str(procedure_event.get("event_symbol") or ""),
+                "source_id": str(procedure_event.get("source_id") or source_id),
+            }
+            relation = str(procedure_event.get("relation") or "").strip()
+            if relation:
+                row["relation"] = relation
+            anchor_event = str(procedure_event.get("anchor_event") or "").strip()
+            if anchor_event:
+                row["anchor_event"] = anchor_event
+            rows.append(row)
+    return rows
 
 
 def _dcec_frame_logic_triples(
@@ -677,7 +952,60 @@ def _dcec_frame_logic_triples(
                 },
             ]
         )
+        triples.extend(_procedure_event_frame_logic_triples(source_id, record))
     return [triple for triple in triples if triple["object"]]
+
+
+def _procedure_event_frame_logic_triples(
+    source_id: str,
+    record: Mapping[str, Any],
+) -> list[dict[str, str]]:
+    triples: list[dict[str, str]] = []
+    for procedure_event in record.get("procedure_event_records") or []:
+        if not isinstance(procedure_event, Mapping):
+            continue
+        event_id = str(procedure_event.get("event_id") or "").strip()
+        event = str(procedure_event.get("event") or "").strip()
+        if not event_id:
+            event_symbol = str(
+                procedure_event.get("event_symbol") or _symbol(event, fallback="event")
+            )
+            event_id = f"{source_id}:procedure:{event_symbol}"
+        if not event_id or not event:
+            continue
+        triples.extend(
+            [
+                {"subject": source_id, "predicate": "has_procedure_event", "object": event_id},
+                {"subject": event_id, "predicate": "type", "object": "cec_procedure_event"},
+                {"subject": event_id, "predicate": "event", "object": event},
+                {
+                    "subject": event_id,
+                    "predicate": "event_symbol",
+                    "object": str(procedure_event.get("event_symbol") or ""),
+                },
+                {
+                    "subject": event_id,
+                    "predicate": "event_order",
+                    "object": str(procedure_event.get("event_order") or ""),
+                },
+                {
+                    "subject": event_id,
+                    "predicate": "relation",
+                    "object": str(procedure_event.get("relation") or ""),
+                },
+                {
+                    "subject": event_id,
+                    "predicate": "anchor_event",
+                    "object": str(procedure_event.get("anchor_event") or ""),
+                },
+                {
+                    "subject": event_id,
+                    "predicate": "proof_role",
+                    "object": str(procedure_event.get("proof_role") or ""),
+                },
+            ]
+        )
+    return triples
 
 
 def _graph_data_from_triples(
@@ -705,7 +1033,13 @@ def _citation_from_norms(norms: Sequence[Mapping[str, Any]]) -> Optional[str]:
     return str(citation) if citation else None
 
 
-def _native_dcec_event_formula(*, actor: str, event: str, modality: str) -> Any:
+def _native_dcec_event_formula(
+    *,
+    actor: str,
+    event: str,
+    modality: str,
+    state_kind: str = "",
+) -> Any:
     if not actor or not event:
         return None
     from ipfs_datasets_py.logic.CEC.native.dcec_core import (
@@ -723,6 +1057,12 @@ def _native_dcec_event_formula(*, actor: str, event: str, modality: str) -> Any:
     moment_sort = Sort("Moment")
     actor_term = FunctionTerm(Function(actor, [], agent_sort), [])
     event_term = FunctionTerm(Function(event, [], event_sort), [])
+    state_predicate = _DCEC_STATE_PREDICATE_BY_KIND.get(str(state_kind or ""))
+    if state_predicate:
+        return AtomicFormula(
+            Predicate(state_predicate, [agent_sort, event_sort]),
+            [actor_term, event_term],
+        )
     moment_term = FunctionTerm(Function("t0", [], moment_sort), [])
     happens_predicate = Predicate(
         "happens",
@@ -780,7 +1120,16 @@ def _symbol(value: Any, *, fallback: str = "") -> str:
     return normalized[:96]
 
 
-def _proof_input_formula_text(*, actor: str, event: str, modality: str) -> str:
+def _proof_input_formula_text(
+    *,
+    actor: str,
+    event: str,
+    modality: str,
+    state_kind: str = "",
+) -> str:
+    state_predicate = _DCEC_STATE_PREDICATE_BY_KIND.get(str(state_kind or ""))
+    if state_predicate:
+        return f"{state_predicate}({actor},{event})"
     operator = "O"
     if modality == "forbidden":
         operator = "F"
@@ -1715,6 +2064,19 @@ def _boolish(value: Any) -> bool:
     if isinstance(value, str):
         return value.strip().lower() in {"1", "true", "yes", "y"}
     return False
+
+
+def _intish(value: Any, fallback: int = 0) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return fallback
+
+
+def _text_sequence(value: Any) -> list[Any]:
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        return list(value)
+    return [value] if value not in (None, "") else []
 
 
 def _first_text_value(*values: Any, fallback: str = "") -> str:

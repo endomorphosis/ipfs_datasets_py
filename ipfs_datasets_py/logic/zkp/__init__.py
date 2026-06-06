@@ -80,6 +80,7 @@ __all__ = [
     'create_implication_circuit',
     'build_proof_attestation_view',
     'attestation_view_matches_proof',
+    'compiler_guidance_ref_from_metadata',
     'decode_simulated_proof_layout',
     'proof_attestation_view_from_proof_dict',
 ]
@@ -196,6 +197,7 @@ def __getattr__(name: str):
         "create_implication_circuit",
         "build_proof_attestation_view",
         "attestation_view_matches_proof",
+        "compiler_guidance_ref_from_metadata",
         "decode_simulated_proof_layout",
         "proof_attestation_view_from_proof_dict",
     }:
@@ -204,6 +206,7 @@ def __getattr__(name: str):
             "create_implication_circuit",
             "build_proof_attestation_view",
             "attestation_view_matches_proof",
+            "compiler_guidance_ref_from_metadata",
             "decode_simulated_proof_layout",
             "proof_attestation_view_from_proof_dict",
         }:

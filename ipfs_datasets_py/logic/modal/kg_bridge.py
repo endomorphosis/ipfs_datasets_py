@@ -76,14 +76,40 @@ _MODAL_SEMANTIC_PREDICATES = {
     "predicate_role",
 }
 _MODAL_SEMANTIC_PREDICATE_PREFIXES = (
+    "bridge_",
+    "condition_",
+    "condition_scope_",
     "cue_modal_",
+    "cue_bridge_",
+    "fallback_rule_",
+    "fallback_surface_",
     "modal_",
     "predicate_",
+    "refined_modal_",
+    "refined_temporal_",
     "selected_frame_modal_family",
+    "source_action_family_",
+    "source_condition_family_",
+    "source_logical_variable_",
+    "source_object_family_",
+    "source_subject_family_",
+    "source_temporal_family_",
 )
 _DOCUMENT_SCOPE_PREDICATE_PREFIXES = (
     "source_text_",
     "source_id",
+)
+_LEGAL_IR_VIEW_ALIGNMENT_PREDICATES = {
+    "learned_legal_ir_predicted_view",
+    "learned_legal_ir_predicted_view_weight",
+    "learned_legal_ir_target_view",
+    "learned_legal_ir_target_view_weight",
+    "learned_legal_ir_view_gap",
+    "learned_legal_ir_view_rank",
+}
+_LEGAL_IR_VIEW_ALIGNMENT_PREDICATE_PREFIXES = (
+    "compiler_guidance_legal_ir_",
+    "learned_legal_ir_",
 )
 _CITATION_PREDICATE_PREFIXES = (
     "citation_",
@@ -112,6 +138,8 @@ _SECTION_STRUCTURE_PREDICATE_PREFIXES = (
     "citation_source_id_section_",
     "citation_source_id_title_section_",
     "citation_title_section_",
+    "fallback_section_heading_",
+    "section_heading_",
     "section_component_",
     "section_profile_",
     "section_range_",
@@ -132,8 +160,10 @@ _SOURCE_ID_CITATION_STRUCTURE_PREDICATE_PREFIXES = (
 )
 _SECTION_STRUCTURE_TOKENS = (
     "chapter",
+    "heading_tail",
     "part",
     "section_component",
+    "section_heading",
     "section_marker",
     "section_profile",
     "section_range",
@@ -468,7 +498,22 @@ def _projection_alignment_metadata(
     predicates = {str(triple["predicate"]) for triple in triples}
     objects = {str(triple["object"]) for triple in triples}
     unique_triple_count = _unique_triple_count(triples)
+    canonical_view_distribution = _canonical_component_distribution(
+        projection_view_counts,
+        relationship_count=relationship_count,
+    )
     metadata: Dict[str, Any] = {
+        "canonical_legal_ir_projection_components": sorted(canonical_view_distribution),
+        "canonical_legal_ir_projection_view_distribution": canonical_view_distribution,
+        "canonical_legal_ir_projection_view_total": len(canonical_view_distribution),
+        "frame_logic_to_neo4j_alignment_total": relationship_count
+        if normalized_triple_count == relationship_count
+        else 0,
+        "frame_logic_to_neo4j_component_pair": (
+            "modal.frame_logic->knowledge_graphs.neo4j_compat"
+        ),
+        "frame_logic_to_neo4j_source_component": "modal.frame_logic",
+        "frame_logic_to_neo4j_target_component": "knowledge_graphs.neo4j_compat",
         "flogic_input_triple_count": input_triple_count,
         "flogic_invalid_triple_count": max(0, input_triple_count - normalized_triple_count),
         "flogic_duplicate_triple_count": max(0, len(triples) - unique_triple_count),
@@ -493,10 +538,104 @@ def _projection_alignment_metadata(
         "frame_logic_unique_predicate_count": len(predicates),
         "frame_logic_unique_subject_count": len(subjects),
     }
+    metadata.update(
+        _legal_view_coverage_metadata(
+            triples,
+            projection_view_counts=projection_view_counts,
+        )
+    )
     selected_frame = _selected_frame_from_triples(triples)
     if selected_frame:
         metadata["frame_logic_selected_frame"] = selected_frame
     return metadata
+
+
+def _legal_view_coverage_metadata(
+    triples: Sequence[Mapping[str, str]],
+    *,
+    projection_view_counts: Mapping[str, int],
+) -> Dict[str, Any]:
+    """Summarize deterministic legal-structure coverage for graph consumers."""
+
+    required_views = _required_legal_projection_views(triples)
+    present_views = {str(name) for name, count in projection_view_counts.items() if count}
+    missing_views = [view for view in required_views if view not in present_views]
+    return {
+        "frame_logic_projection_legal_view_coverage_complete": not missing_views,
+        "frame_logic_projection_legal_view_coverage_ratio": (
+            1.0
+            if not required_views
+            else (len(required_views) - len(missing_views)) / len(required_views)
+        ),
+        "frame_logic_projection_legal_view_missing": missing_views,
+        "frame_logic_projection_legal_view_required": required_views,
+    }
+
+
+def _required_legal_projection_views(
+    triples: Sequence[Mapping[str, str]],
+) -> List[str]:
+    predicates = {
+        str(triple.get("predicate") or "").strip().lower()
+        for triple in triples
+    }
+    if not predicates:
+        return []
+    has_source_id = any(
+        predicate == "source_id" or predicate.startswith("source_id_")
+        for predicate in predicates
+    )
+    has_citation = any(
+        predicate == "citation" or predicate.startswith("citation_")
+        for predicate in predicates
+    )
+    has_section = any(
+        predicate.startswith(_SECTION_STRUCTURE_PREDICATE_PREFIXES)
+        or "section_heading" in predicate
+        or "section_component" in predicate
+        or "section_profile" in predicate
+        for predicate in predicates
+    )
+    required: List[str] = []
+    if has_source_id:
+        required.append("document_scope")
+    if has_source_id or has_citation:
+        required.append("citation_structure")
+    if has_section:
+        required.append("section_structure")
+    return sorted(set(required))
+def _canonical_component_distribution(
+    projection_view_counts: Mapping[str, int],
+    *,
+    relationship_count: int,
+) -> Dict[str, float]:
+    if relationship_count <= 0:
+        return {}
+    structural_count = sum(
+        int(projection_view_counts.get(view_name, 0) or 0)
+        for view_name in (
+            "citation_structure",
+            "document_scope",
+            "editorial_status",
+            "frame_link",
+            "ontology_term",
+            "section_structure",
+            "type_assertion",
+        )
+    )
+    modal_count = sum(
+        int(projection_view_counts.get(view_name, 0) or 0)
+        for view_name in ("fact", "modal_semantics", "provenance")
+    )
+    distribution = {
+        "knowledge_graphs.neo4j_compat": max(1, structural_count),
+        "modal.frame_logic": max(1, modal_count),
+    }
+    total = float(sum(distribution.values()))
+    return {
+        component: count / total
+        for component, count in sorted(distribution.items())
+    }
 
 
 def _selected_frame_from_triples(triples: Sequence[Mapping[str, str]]) -> str:
@@ -525,6 +664,10 @@ def _projection_view_for_triple(predicate: str, obj: str = "") -> str:
         return "frame_link"
     if "ontology_term" in normalized:
         return "ontology_term"
+    if normalized in _LEGAL_IR_VIEW_ALIGNMENT_PREDICATES or normalized.startswith(
+        _LEGAL_IR_VIEW_ALIGNMENT_PREDICATE_PREFIXES
+    ):
+        return "legal_ir_view_alignment"
     if normalized.startswith(_SECTION_STRUCTURE_PREDICATE_PREFIXES):
         return "section_structure"
     if (

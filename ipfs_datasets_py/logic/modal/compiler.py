@@ -27,6 +27,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     compiler_ambiguity_policy_targets,
     compiler_refined_modal_family_cue_margin_buffer,
+    compiler_weak_typed_self_family_cue_margin_buffer,
     compiler_required_adaptive_ambiguity_targets,
     DEFAULT_MODAL_REGISTRY,
     is_compiler_ambiguity_policy_pair,
@@ -165,6 +166,23 @@ def _compiler_refined_modal_family_cue_margin_buffer(
     resolver = _current_compiler_attr(
         "compiler_refined_modal_family_cue_margin_buffer",
         compiler_refined_modal_family_cue_margin_buffer,
+    )
+    try:
+        resolved = float(resolver(predicted_family, target_family))
+    except (TypeError, ValueError):
+        return 0.0
+    if not math.isfinite(resolved):
+        return 0.0
+    return max(0.0, resolved)
+
+
+def _compiler_weak_typed_self_family_cue_margin_buffer(
+    predicted_family: str,
+    target_family: str,
+) -> float:
+    resolver = _current_compiler_attr(
+        "compiler_weak_typed_self_family_cue_margin_buffer",
+        compiler_weak_typed_self_family_cue_margin_buffer,
     )
     try:
         resolved = float(resolver(predicted_family, target_family))
@@ -1275,7 +1293,6 @@ class DeterministicModalCompiler:
                 target_family=target_family,
                 base_threshold=threshold,
             )
-            pair_margin_buffer = max(0.0, pair_threshold - threshold)
             self_pair_margin = (
                 duplicate_predicted_family_share - predicted_share
                 if (
@@ -1296,6 +1313,18 @@ class DeterministicModalCompiler:
                 )
                 else runner_up_family
             )
+            weak_typed_self_family_buffer = (
+                self._weak_typed_self_family_margin_buffer(
+                    predicted_family=predicted_family,
+                    target_family=target_family,
+                    predicted_share=predicted_share,
+                    compiled_primary_family=compiled_primary_family,
+                )
+                if is_self_pair
+                else 0.0
+            )
+            pair_threshold += weak_typed_self_family_buffer
+            pair_margin_buffer = max(0.0, pair_threshold - threshold)
             runner_up_is_priority_policy_pair = bool(
                 is_self_pair
                 and runner_up_family_value is not None
@@ -1433,6 +1462,9 @@ class DeterministicModalCompiler:
                 "adaptive_family_margin_threshold": threshold,
                 "adaptive_effective_family_margin_threshold": pair_threshold,
                 "adaptive_pair_margin_buffer": pair_margin_buffer,
+                "weak_typed_self_family_margin_buffer": (
+                    weak_typed_self_family_buffer
+                ),
                 "adaptive_margin_direction": margin_direction,
                 "adaptive_margin_abs": abs(family_margin),
                 "adaptive_priority": adaptive_priority,
@@ -2313,7 +2345,6 @@ class DeterministicModalCompiler:
             if duplicate_compiled_primary_family_share is not None
             else (runner_up_share if runner_up_family is not None else None)
         )
-        family_margin = primary_share - runner_up_share
         pair_threshold = self._adaptive_pair_margin_threshold(
             predicted_family=resolved_compiled_primary_family,
             target_family=resolved_compiled_primary_family,
@@ -2618,6 +2649,26 @@ class DeterministicModalCompiler:
             target_family,
         )
         return resolved_threshold + margin_buffer
+
+    @staticmethod
+    def _weak_typed_self_family_margin_buffer(
+        *,
+        predicted_family: str,
+        target_family: str,
+        predicted_share: float,
+        compiled_primary_family: Optional[str],
+    ) -> float:
+        """Return extra self-pair threshold for weak but typed modal evidence."""
+        if predicted_family != target_family:
+            return 0.0
+        if compiled_primary_family != predicted_family:
+            return 0.0
+        if float(predicted_share) >= 0.5:
+            return 0.0
+        return _compiler_weak_typed_self_family_cue_margin_buffer(
+            predicted_family,
+            target_family,
+        )
 
     def _supports_signal_free_adaptive_pair(
         self,

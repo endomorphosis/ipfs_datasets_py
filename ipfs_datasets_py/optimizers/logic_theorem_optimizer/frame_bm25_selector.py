@@ -1588,12 +1588,24 @@ def _predicate_allows_stopword_ontology_tokens(predicate: str) -> bool:
     return (
         canonical == "modal_cue"
         or canonical.endswith("_conditional_normative")
-        or canonical.startswith("condition_alnum_segment")
-        or canonical.startswith("condition_scope_alnum_segment")
+        or (
+            canonical.startswith("condition_alnum_segment")
+            and not canonical.endswith("_positioned")
+        )
+        or (
+            canonical.startswith("condition_scope_alnum_segment")
+            and not canonical.endswith("_positioned")
+        )
         or canonical.startswith("condition_token")
         or canonical.startswith("condition_scope_token")
-        or canonical.startswith("exception_alnum_segment")
-        or canonical.startswith("exception_scope_alnum_segment")
+        or (
+            canonical.startswith("exception_alnum_segment")
+            and not canonical.endswith("_positioned")
+        )
+        or (
+            canonical.startswith("exception_scope_alnum_segment")
+            and not canonical.endswith("_positioned")
+        )
         or canonical.startswith("exception_token")
         or canonical.startswith("exception_scope_token")
     )
@@ -1868,6 +1880,8 @@ def _should_contextualize_frame_ontology_value(
     normalized_value: str,
     include_positioned_terms: bool,
 ) -> bool:
+    if _is_low_signal_positioned_alnum_segment(predicate, normalized_value):
+        return False
     if _is_frame_ontology_contextual_low_signal_value(normalized_value):
         return True
     if _predicate_requires_explicit_frame_ontology_context(predicate):
@@ -1875,6 +1889,20 @@ def _should_contextualize_frame_ontology_value(
     if include_positioned_terms and predicate.endswith("_positioned"):
         return True
     return False
+
+
+def _is_low_signal_positioned_alnum_segment(
+    predicate: str,
+    normalized_value: str,
+) -> bool:
+    normalized_predicate = _normalized_frame_ontology_predicate(predicate)
+    if not normalized_predicate.endswith("_alnum_segment_positioned"):
+        return False
+    normalized = str(normalized_value or "").strip().lower()
+    return (
+        normalized in _FRAME_ONTOLOGY_STOPWORDS
+        or _is_frame_ontology_contextual_low_signal_value(normalized)
+    )
 
 
 def _predicate_requires_explicit_frame_ontology_context(predicate: str) -> bool:

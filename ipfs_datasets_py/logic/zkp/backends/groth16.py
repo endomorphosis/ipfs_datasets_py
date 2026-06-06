@@ -41,7 +41,7 @@ from ..canonicalization import (
     hash_theorem,
     tdfol_v1_axioms_commitment_hex_v2,
 )
-from ..circuits import build_proof_attestation_view
+from ..circuits import build_proof_attestation_view, compiler_guidance_ref_from_metadata
 from ..legal_theorem_semantics import derive_tdfol_v1_trace
 from ..statement import format_circuit_ref, parse_circuit_ref_lenient
 
@@ -118,7 +118,7 @@ class Groth16Backend:
             "ruleset_id": ruleset_id,
             "circuit_ref": circuit_ref,
         }
-        guidance_ref = str(metadata_dict.get("compiler_guidance_ref") or "")
+        guidance_ref = compiler_guidance_ref_from_metadata(metadata_dict)
         if guidance_ref:
             witness["compiler_guidance_ref"] = guidance_ref
             witness["compiler_guidance_version"] = int(
@@ -131,7 +131,7 @@ class Groth16Backend:
             proof = self._ffi().generate_proof(json.dumps(witness), seed=seed)
             public_inputs = proof.public_inputs if isinstance(getattr(proof, "public_inputs", None), dict) else {}
             metadata_out = proof.metadata if isinstance(getattr(proof, "metadata", None), dict) else {}
-            guidance_ref = str(metadata_dict.get("compiler_guidance_ref") or "")
+            guidance_ref = compiler_guidance_ref_from_metadata(metadata_dict)
             if guidance_ref and isinstance(public_inputs, dict):
                 public_inputs.setdefault("compiler_guidance_ref", guidance_ref)
                 public_inputs.setdefault(
