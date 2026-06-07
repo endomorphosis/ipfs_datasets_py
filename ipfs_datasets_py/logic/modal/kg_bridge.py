@@ -27,6 +27,11 @@ FLOGIC_CLASS_LABEL = "FLogicClass"
 FLOGIC_FRAME_LABEL = "FLogicFrame"
 MODAL_FORMULA_LABEL = "ModalFormula"
 LEGAL_MODAL_DOCUMENT_LABEL = "LegalModalDocument"
+LEGAL_CITATION_STRUCTURE_LABEL = "LegalCitationStructure"
+LEGAL_DOCUMENT_SCOPE_LABEL = "LegalDocumentScope"
+LEGAL_EDITORIAL_STATUS_LABEL = "LegalEditorialStatus"
+LEGAL_IR_VIEW_ALIGNMENT_LABEL = "LegalIRViewAlignment"
+LEGAL_SECTION_STRUCTURE_LABEL = "LegalSectionStructure"
 
 _FRAME_PREDICATES = {
     "candidate_ontology_frame",
@@ -172,6 +177,13 @@ _SECTION_STRUCTURE_TOKENS = (
     "subtitle",
     "title",
 )
+_NODE_LABELS_BY_PROJECTION_VIEW = {
+    "citation_structure": LEGAL_CITATION_STRUCTURE_LABEL,
+    "document_scope": LEGAL_DOCUMENT_SCOPE_LABEL,
+    "editorial_status": LEGAL_EDITORIAL_STATUS_LABEL,
+    "legal_ir_view_alignment": LEGAL_IR_VIEW_ALIGNMENT_LABEL,
+    "section_structure": LEGAL_SECTION_STRUCTURE_LABEL,
+}
 _IDENTIFIER_RE = re.compile(r"[^A-Za-z0-9_]+")
 
 
@@ -208,6 +220,10 @@ def flogic_triples_to_graph_data(
             object_labels = [FLOGIC_FRAME_LABEL, FLOGIC_RESOURCE_LABEL]
         elif predicate in _VALUE_LABELS_BY_PREDICATE:
             object_labels.append(_VALUE_LABELS_BY_PREDICATE[predicate])
+        projection_label = _NODE_LABELS_BY_PROJECTION_VIEW.get(projection_view)
+        if projection_label:
+            _add_label(subject_node, projection_label)
+            object_labels.append(projection_label)
 
         object_node = _ensure_node(node_map, obj, labels=object_labels)
         rel_type = _relationship_type(predicate)

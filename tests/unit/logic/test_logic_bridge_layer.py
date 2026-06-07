@@ -348,6 +348,54 @@ def test_modal_frame_logic_bridge_projects_us_code_source_id_components_to_legal
     ] is True
 
 
+def test_modal_frame_logic_bridge_labels_legal_projection_view_nodes() -> None:
+    from ipfs_datasets_py.logic.modal.kg_bridge import flogic_triples_to_graph_data
+
+    graph_data = flogic_triples_to_graph_data(
+        [
+            {
+                "subject": "us-code-36-50111",
+                "predicate": "source_id",
+                "object": "us-code-36-50111-738f0d70f38dacf1",
+            },
+            {
+                "subject": "us-code-36-50111",
+                "predicate": "source_id_citation_canonical",
+                "object": "36 U.S.C. 50111",
+            },
+            {
+                "subject": "us-code-36-50111",
+                "predicate": "source_id_section_normalized",
+                "object": "50111",
+            },
+            {
+                "subject": "us-code-36-50111",
+                "predicate": "status_keyword",
+                "object": "active",
+            },
+            {
+                "subject": "us-code-36-50111",
+                "predicate": "learned_legal_ir_target_view",
+                "object": "knowledge_graphs.neo4j_compat",
+            },
+        ],
+        graph_id="us-code-36-50111:flogic",
+    )
+
+    labels = set(graph_data.schema.node_labels)
+    assert {
+        "LegalCitationStructure",
+        "LegalDocumentScope",
+        "LegalEditorialStatus",
+        "LegalIRViewAlignment",
+        "LegalSectionStructure",
+    } <= labels
+    assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
+    assert graph_data.metadata[
+        "frame_logic_projection_legal_view_coverage_complete"
+    ] is True
+
+
 def test_modal_frame_logic_bridge_projects_heading_and_learned_views() -> None:
     from ipfs_datasets_py.logic.modal.kg_bridge import flogic_triples_to_graph_data
 

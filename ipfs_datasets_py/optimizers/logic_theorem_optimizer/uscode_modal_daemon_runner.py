@@ -8984,6 +8984,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
     last_codex_queue_starved = False
     last_autoencoder_restart_at = 0.0
     last_failed_validation_rescue_at = 0.0
+    paired_duration_elapsed = False
 
     try:
         with ExitStack() as stack:
@@ -9076,7 +9077,11 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                 }
                 summary["elapsed_seconds"] = round(elapsed, 3)
                 summary["heartbeat_at"] = utc_now()
-                summary["latest_stop_reason"] = "running"
+                summary["latest_stop_reason"] = (
+                    "paired_duration_elapsed"
+                    if paired_duration_elapsed
+                    else "running"
+                )
                 summary["autoencoder_pid"] = auto_process.pid
                 summary["codex_pids"] = {
                     run_id: process.pid for run_id, process in codex_processes.items()
@@ -9093,6 +9098,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                         restart_limit=autoencoder_restart_limit,
                         stop_requested=stop_state.stop_requested,
                     )
+                    and not paired_duration_elapsed
                     and elapsed <= duration_wait
                 ):
                     previous_pid = auto_process.pid
@@ -9132,7 +9138,11 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                     summary["autoencoder_restart_count"] = autoencoder_restart_count
                     summary["runner_restarted_children"] = list(runner_restarted_children)
 
-                if accelerate_style_supervision and not stop_state.stop_requested:
+                if (
+                    accelerate_style_supervision
+                    and not stop_state.stop_requested
+                    and not paired_duration_elapsed
+                ):
                     for child in codex_child_summaries:
                         child_run_id = str(child["run_id"])
                         exit_code = codex_exit_codes.get(child_run_id)
@@ -9230,7 +9240,12 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                     if str(worker_id)
                 }
                 codex_worker_restarted = False
-                if stale_claimed_worker_ids and codex_worker_restart_limit > 0:
+                if (
+                    stale_claimed_worker_ids
+                    and not paired_duration_elapsed
+                    and elapsed <= duration_wait
+                    and codex_worker_restart_limit > 0
+                ):
                     stale_claim_age_seconds = max(
                         1.0,
                         min(
@@ -9357,6 +9372,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                     last_codex_queue_starved = codex_queue_starved
                 if (
                     accelerate_style_supervision
+                    and not paired_duration_elapsed
                     and failed_validation_rescue_max_clusters > 0
                     and _paired_failed_validation_rescue_should_seed(
                         program_synthesis_health,
@@ -9467,6 +9483,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                     stale_autoencoder_blocking_codex
                     and auto_exit_code is None
                     and autoencoder_stale
+                    and not paired_duration_elapsed
                     and autoencoder_restart_count < autoencoder_restart_limit
                     and restart_cooldown_ready
                 ):
@@ -9538,7 +9555,8 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                     break
                 if stop_state.stop_requested:
                     break
-                if elapsed >= duration_wait:
+                if not paired_duration_elapsed and elapsed >= duration_wait:
+                    paired_duration_elapsed = True
                     summary["latest_stop_reason"] = "paired_duration_elapsed"
                     summary["paired_duration_elapsed_at"] = utc_now()
                     append_event(
@@ -9551,7 +9569,8 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                         },
                     )
                     save_summary(summary_path, summary)
-                    break
+                    time.sleep(poll_seconds)
+                    continue
                 if (time.time() - started) > max_wait:
                     summary["latest_stop_reason"] = "paired_timeout_grace_exceeded"
                     break
@@ -9561,10 +9580,17 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
             (str(paired["autoencoder_run_id"]), auto_process),
             *[(run_id, process) for run_id, process in codex_processes.items()],
         ]
-        termination_wait_seconds = max(
-            10.0,
-            float(args.paired_grace_seconds),
-        )
+        if paired_duration_elapsed:
+            grace_deadline = started + max_wait
+            termination_wait_seconds = max(
+                5.0,
+                min(float(args.paired_grace_seconds), grace_deadline - time.time()),
+            )
+        else:
+            termination_wait_seconds = max(
+                10.0,
+                float(args.paired_grace_seconds),
+            )
         termination_results = accelerate_terminate_processes_with_grace(
             process_labels,
             grace_seconds=termination_wait_seconds,
