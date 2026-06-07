@@ -3367,6 +3367,87 @@ def test_round_robin_codex_worker_cap_preserves_scope_coverage() -> None:
     ]
 
 
+def test_codex_scope_fallback_claims_global_backlog_when_lane_empty() -> None:
+    todo = ModalTodo(
+        todo_id="program-tdfol",
+        action="repair_tdfol_bridge_parse",
+        objective="repair tdfol parser",
+        sample_ids=["sample-tdfol"],
+        citations=["5 U.S.C. 552"],
+        loss_name="program_synthesis",
+        loss_value=1.0,
+        priority=10.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "tdfol",
+            "target_component": "modal.tdfol",
+        },
+    )
+    supervisor = ModalTodoSupervisor(queue=ModalTodoQueue([todo]))
+
+    claimed, report = runner._claim_program_synthesis_batch_with_scope_fallback(
+        supervisor,
+        worker_id="codex-bridge-01",
+        max_items=1,
+        requested_scope="bridge",
+        semantic_bundle=False,
+        fallback_to_global=True,
+    )
+
+    assert [item.todo_id for item in claimed] == ["program-tdfol"]
+    assert claimed[0].claimed_by == "codex-bridge-01"
+    assert report["fallback_used"] is True
+    assert report["borrowed_scopes"] == ["tdfol"]
+    assert report["requested_scope"] == "bridge"
+
+
+def test_codex_scope_fallback_prefers_local_scope() -> None:
+    local = ModalTodo(
+        todo_id="program-bridge",
+        action="repair_multiview_legal_ir_graph_projection",
+        objective="repair bridge",
+        sample_ids=["sample-bridge"],
+        citations=["5 U.S.C. 552"],
+        loss_name="program_synthesis",
+        loss_value=1.0,
+        priority=5.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "bridge",
+            "target_component": "modal.bridge",
+        },
+    )
+    other = ModalTodo(
+        todo_id="program-tdfol",
+        action="repair_tdfol_bridge_parse",
+        objective="repair tdfol parser",
+        sample_ids=["sample-tdfol"],
+        citations=["5 U.S.C. 552"],
+        loss_name="program_synthesis",
+        loss_value=1.0,
+        priority=50.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "tdfol",
+            "target_component": "modal.tdfol",
+        },
+    )
+    supervisor = ModalTodoSupervisor(queue=ModalTodoQueue([local, other]))
+
+    claimed, report = runner._claim_program_synthesis_batch_with_scope_fallback(
+        supervisor,
+        worker_id="codex-bridge-01",
+        max_items=1,
+        requested_scope="bridge",
+        semantic_bundle=False,
+        fallback_to_global=True,
+    )
+
+    assert [item.todo_id for item in claimed] == ["program-bridge"]
+    assert report["fallback_used"] is False
+    assert supervisor.queue.get("program-tdfol").status == "pending"
+
+
 def test_nested_bridge_adapter_parallelism_is_clamped(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS", "4")
 

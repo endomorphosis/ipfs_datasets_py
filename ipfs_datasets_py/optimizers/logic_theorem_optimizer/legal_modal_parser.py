@@ -43,6 +43,13 @@ _USCODE_EDITORIAL_STATUS_HINT_RE = re.compile(
     r"\b(?:repealed|omitted|reserved|vacant|renumbered|terminated)\b",
     re.IGNORECASE,
 )
+_USCODE_EDITORIAL_NOTE_CONTEXT_RE = re.compile(
+    r"\b(?:editorial\s+notes|historical\s+and\s+revision\s+notes|"
+    r"codification|formerly\s+classified|reclassified|renumbered|repealed|"
+    r"transferred|statutory\s+notes)\b",
+    re.IGNORECASE,
+)
+_USCODE_EDITORIAL_PERMISSION_CUES = frozenset({"allowed", "authorized", "permitted"})
 _USCODE_SECTION_REF_PREFIX_RE = r"(?:§{1,2}\s*|\bsec(?:tion)?s?\.?\s*)"
 _USCODE_OPTIONAL_SECTION_REF_PREFIX_RE = rf"(?:{_USCODE_SECTION_REF_PREFIX_RE})?"
 _USCODE_CITATION_MARKER_RE = re.compile(
@@ -571,6 +578,16 @@ class LegalModalParser:
                             end_char=match.end(),
                         ):
                             continue
+                        if (
+                            profile.family == ModalLogicFamily.DEONTIC
+                            and self._is_non_deontic_editorial_permission_cue(
+                                normalized_text=normalized,
+                                cue=cue,
+                                start_char=match.start(),
+                                end_char=match.end(),
+                            )
+                        ):
+                            continue
                         found.append(
                             ModalCueSpan(
                                 family=profile.family,
@@ -642,6 +659,47 @@ class LegalModalParser:
             return False
         trailing = normalized_text[end_char:]
         return bool(re.match(r"^\s+\d{1,2}(?:,\s*|\s+)\d{4}\b", trailing))
+
+    def _is_non_deontic_editorial_permission_cue(
+        self,
+        *,
+        normalized_text: str,
+        cue: str,
+        start_char: int,
+        end_char: int,
+    ) -> bool:
+        """Ignore historical-note permission words that describe repealed sections."""
+        if cue.lower() not in _USCODE_EDITORIAL_PERMISSION_CUES:
+            return False
+        trailing = normalized_text[end_char : end_char + 32]
+        if re.match(r"^\s+to\s+be\s+appropriated\b", trailing, re.IGNORECASE):
+            return False
+        context_window = normalized_text[
+            max(0, start_char - 160) : min(len(normalized_text), end_char + 96)
+        ]
+        leading = normalized_text[max(0, start_char - 96) : start_char].lower()
+        has_section_history_prefix = bool(
+            re.search(r"\bsection\s+[0-9a-z.\-\u2010-\u2015]+\b", leading)
+            and re.search(
+                r"\b(?:act|acts|ch\.|pub\.\s*l\.|stat\.|related\s+to)\b",
+                leading,
+                re.IGNORECASE,
+            )
+        )
+        if (
+            not _USCODE_EDITORIAL_NOTE_CONTEXT_RE.search(context_window)
+            and not has_section_history_prefix
+        ):
+            return False
+        if has_section_history_prefix:
+            return True
+        return bool(
+            re.search(
+                r"\b(?:act|acts|pub\.\s*l\.|stat\.|related\s+to)\b",
+                context_window,
+                re.IGNORECASE,
+            )
+        )
 
     def _should_ignore_non_temporal_temporal_cue(
         self,
@@ -1672,6 +1730,15 @@ class LegalModalParser:
             if transferred_heading_segment is None:
                 transferred_heading_segment = segment
         if candidate_segment is None:
+            candidate_segment = transferred_heading_segment
+        elif transferred_heading_segment is not None and (
+            re.match(
+                rf"^\s*{_USCODE_OPTIONAL_SECTION_REF_PREFIX_RE}[0-9A-Za-z.\-\u2010-\u2015]+"
+                rf"{_USCODE_SECTION_REF_SUFFIX_RE}\s*[-\u2012\u2013\u2014]?\s*transferred\b",
+                transferred_heading_segment.text,
+                re.IGNORECASE,
+            )
+        ):
             candidate_segment = transferred_heading_segment
         if candidate_segment is None:
             return None

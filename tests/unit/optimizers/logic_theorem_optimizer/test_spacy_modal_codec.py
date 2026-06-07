@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import build_us_code_sample
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_modal_parser import LegalModalParser
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import AdaptiveModalAutoencoder
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import ModalTodoSupervisor
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec import (
@@ -236,6 +237,28 @@ _USCODE_42_12313_SYMBOLIC_VALIDITY_TODO_TEXT = (
 _USCODE_43_2430_PACKET_143_TODO_TEXT = (
     "The administrative notice and hearing procedures for offshore mineral leasing "
     "adjustments and adjudications."
+)
+_USCODE_16_431_PACKET_2400_TEXT = (
+    "U.S.C. Title 16 - CONSERVATION 16 U.S.C. United States Code, 2024 Edition "
+    "Title 16 - CONSERVATION CHAPTER 1 - NATIONAL PARKS, MILITARY PARKS, "
+    "MONUMENTS, AND SEASHORES SUBCHAPTER LXI - NATIONAL AND INTERNATIONAL "
+    "MONUMENTS AND MEMORIALS Sec. 431 - Repealed. Pub. L. 113-287, §7, "
+    "Dec. 19, 2014, 128 Stat. 3272 From the U.S. Government Publishing Office, "
+    "www.gpo.gov §431. Repealed. Pub. L. 113–287, §7, Dec. 19, 2014, "
+    "128 Stat. 3272 Section, act June 8, 1906, ch. 3060, §2, 34 Stat. 225, "
+    "authorized declaration of national monuments. See section 320301(a) to "
+    "(c) of Title 54, National Park Service and Related Programs."
+)
+_USCODE_16_590R_PACKET_2400_TEXT = (
+    "U.S.C. Title 16 - CONSERVATION 16 U.S.C. United States Code, 2024 Edition "
+    "Title 16 - CONSERVATION CHAPTER 3C - WATER CONSERVATION SUBCHAPTER I - "
+    "FACILITIES FOR WATER STORAGE AND UTILIZATION Secs. 590r to 590x-4 - "
+    "Repealed. Pub. L. 87-128, title III, §341(a), Aug. 8, 1961, 75 Stat. 318 "
+    "From the U.S. Government Publishing Office, www.gpo.gov §§590r to 590x–4. "
+    "Repealed. Pub. L. 87–128, title III, §341(a), Aug. 8, 1961, 75 Stat. 318 "
+    "Section 590r, acts Aug. 28, 1937, ch. 870, §1, 50 Stat. 869, related to "
+    "Congressional declaration of policy. Section 590x, act Aug. 28, 1937, "
+    "ch. 870, §7, 50 Stat. 870, authorized appropriations."
 )
 _USCODE_2_453_PACKET_39_TEXT = "The oath of office."
 _USCODE_9_6_PACKET_39_TEXT = "The application heard as motion."
@@ -6257,6 +6280,57 @@ def test_spacy_compiler_replays_sec_prefixed_transferred_heading_zero_formula_ca
         assert fallback.metadata["cue"] == "__uscode_codification_fallback__"
         assert fallback.metadata["fallback_rule"] == "uscode_transferred_heading_v1"
         assert fallback.provenance.citation == citation
+
+
+def test_spacy_and_regex_parsers_ignore_editorial_history_authorized_cues() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    regex_parser = LegalModalParser()
+    cases = [
+        (
+            _USCODE_16_431_PACKET_2400_TEXT,
+            "us-code-16-431-715f8a7a6ba4bc2b",
+            "16 U.S.C. 431",
+        ),
+        (
+            _USCODE_16_590R_PACKET_2400_TEXT,
+            "us-code-16-590r-e49058a68f67bb60",
+            "16 U.S.C. 590r",
+        ),
+    ]
+
+    for text, document_id, citation in cases:
+        encoding = encoder.encode(
+            text,
+            document_id=document_id,
+            citation=citation,
+            source="us_code",
+        )
+        assert not any(
+            cue.family == "deontic" and cue.cue.lower() == "authorized"
+            for cue in encoding.cues
+        )
+
+        spacy_ir = compiler.compile(encoding)
+        regex_ir = regex_parser.parse(
+            text,
+            document_id=document_id,
+            citation=citation,
+            source="us_code",
+        )
+
+        for modal_ir in (spacy_ir, regex_ir):
+            assert not any(
+                formula.operator.family == "deontic"
+                and formula.metadata.get("cue") == "authorized"
+                for formula in modal_ir.formulas
+            )
+            assert any(
+                formula.operator.family == "frame"
+                and formula.metadata.get("fallback_rule")
+                == "uscode_editorial_status_heading_v1"
+                for formula in modal_ir.formulas
+            )
 
 
 def test_spacy_compiler_adds_residual_span_coverage_before_codification_fallback_for_50_2523b_style_text() -> None:

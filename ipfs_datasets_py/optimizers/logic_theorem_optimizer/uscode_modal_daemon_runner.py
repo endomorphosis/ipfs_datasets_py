@@ -4013,7 +4013,11 @@ def _claim_vector_program_synthesis_batch(
     summary: Dict[str, Any],
 ) -> tuple[List[ModalTodo], ModalTodoQueue, Dict[str, Any], Dict[str, Any]]:
     """Claim a vector-nearest Codex bundle without holding the queue lock while embedding."""
-    metadata_filter = _codex_scope_filter(getattr(args, "codex_scope", None))
+    requested_scope = getattr(args, "codex_scope", None)
+    metadata_filter = _codex_scope_filter(requested_scope)
+    scope_fallback_enabled = bool(
+        getattr(args, "codex_scope_fallback_to_global", True)
+    )
     with queue_file_lock(queue_path):
         snapshot_queue = ModalTodoQueue.load_jsonl(queue_path)
         raw_candidates = [
@@ -4021,6 +4025,17 @@ def _claim_vector_program_synthesis_batch(
             for todo in snapshot_queue.pending(optimizer_role=policy.program_synthesis_role)
             if _metadata_matches(todo, metadata_filter)
         ]
+        scoped_candidate_count = len(raw_candidates)
+        effective_metadata_filter = metadata_filter
+        if (
+            not raw_candidates
+            and requested_scope
+            and scope_fallback_enabled
+        ):
+            raw_candidates = list(
+                snapshot_queue.pending(optimizer_role=policy.program_synthesis_role)
+            )
+            effective_metadata_filter = None
         target_lane_lock_seconds = max(
             0.0,
             float(getattr(args, "codex_target_file_lane_lock_seconds", 0.0) or 0.0),
@@ -4066,6 +4081,10 @@ def _claim_vector_program_synthesis_batch(
         ),
         "mode": "vector",
         "oldest_candidate_age_seconds": round(_oldest_todo_age_seconds(candidates), 3),
+        "requested_scope": str(requested_scope or ""),
+        "scope_fallback_enabled": scope_fallback_enabled,
+        "scope_fallback_used": bool(effective_metadata_filter is None and metadata_filter is not None),
+        "scoped_candidate_count": scoped_candidate_count,
         "selected_count": 0,
         "target_file_lane_lock_mode": lane_lock_mode,
         "target_file_lane_lock_seconds": target_lane_lock_seconds,
@@ -4103,7 +4122,11 @@ def _claim_vector_program_synthesis_batch(
             claimed = supervisor.claim_program_synthesis_batch(
                 worker_id=worker_id,
                 max_items=args.max_items,
-                program_synthesis_scope=getattr(args, "codex_scope", None),
+                program_synthesis_scope=(
+                    None
+                    if effective_metadata_filter is None
+                    else requested_scope
+                ),
                 semantic_bundle=False,
             )
             if claimed:
@@ -4243,7 +4266,7 @@ def _claim_vector_program_synthesis_batch(
             worker_id=worker_id,
             todo_ids=selected_ids,
             optimizer_role=policy.program_synthesis_role,
-            metadata_filter=metadata_filter,
+            metadata_filter=effective_metadata_filter,
         )
         for todo in claimed:
             todo.metadata["vector_bundle_anchor_id"] = anchor_id
@@ -4277,6 +4300,55 @@ def _claim_vector_program_synthesis_batch(
     )
     vector_report["min_similarity"] = float(getattr(args, "codex_vector_min_similarity", 0.72))
     return claimed, queue, status, vector_report
+
+
+def _claim_program_synthesis_batch_with_scope_fallback(
+    supervisor: ModalTodoSupervisor,
+    *,
+    worker_id: str,
+    max_items: int,
+    requested_scope: Optional[str],
+    semantic_bundle: bool,
+    fallback_to_global: bool,
+) -> tuple[List[ModalTodo], Dict[str, Any]]:
+    """Claim scoped work first, then borrow global work if that lane is empty."""
+
+    claimed = supervisor.claim_program_synthesis_batch(
+        worker_id=worker_id,
+        max_items=max_items,
+        program_synthesis_scope=requested_scope,
+        semantic_bundle=semantic_bundle,
+    )
+    report: Dict[str, Any] = {
+        "borrowed_count": 0,
+        "fallback_enabled": bool(fallback_to_global),
+        "fallback_used": False,
+        "requested_scope": str(requested_scope or ""),
+        "worker_id": worker_id,
+    }
+    if claimed or not requested_scope or not fallback_to_global:
+        return claimed, report
+
+    claimed = supervisor.claim_program_synthesis_batch(
+        worker_id=worker_id,
+        max_items=max_items,
+        program_synthesis_scope=None,
+        semantic_bundle=semantic_bundle,
+    )
+    if claimed:
+        report.update(
+            {
+                "borrowed_count": len(claimed),
+                "borrowed_scopes": sorted(
+                    {
+                        str(todo.metadata.get("program_synthesis_scope", "") or "")
+                        for todo in claimed
+                    }
+                ),
+                "fallback_used": True,
+            }
+        )
+    return claimed, report
 
 
 def _codex_parallel_scope_values(args: argparse.Namespace) -> List[str]:
@@ -4360,6 +4432,8 @@ def _build_codex_child_command(
         str(getattr(args, "codex_apply_mode", "patch_only")),
         "--codex-commit-mode",
         str(getattr(args, "codex_commit_mode", "none")),
+        "--codex-scope-fallback-to-global",
+        str(bool(getattr(args, "codex_scope_fallback_to_global", True))).lower(),
         "--codex-bundle-mode",
         str(getattr(args, "codex_bundle_mode", "semantic")),
         "--codex-vector-min-similarity",
@@ -8855,6 +8929,16 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         choices=CODEX_AST_SCOPES,
         default=None,
         help="Restrict the Codex worker to one AST/write-scope lane for parallel runs.",
+    )
+    parser.add_argument(
+        "--codex-scope-fallback-to-global",
+        type=parse_bool_flag,
+        default=True,
+        help=(
+            "Allow a scoped Codex worker to borrow any pending program-synthesis "
+            "TODO when its own scope is empty. This prevents resource-capped paired "
+            "runs from idling workers in empty lanes while other lanes have backlog."
+        ),
     )
     parser.add_argument(
         "--codex-parallel-scopes",
@@ -13430,12 +13514,23 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                 with queue_file_lock(queue_path):
                     queue = ModalTodoQueue.load_jsonl(queue_path)
                     supervisor = ModalTodoSupervisor(queue=queue, policy=policy)
-                    claimed = supervisor.claim_program_synthesis_batch(
-                        worker_id=worker_id,
-                        max_items=args.max_items,
-                        program_synthesis_scope=getattr(args, "codex_scope", None),
-                        semantic_bundle=(bundle_mode == "semantic"),
+                    requested_scope = getattr(args, "codex_scope", None)
+                    claimed, fallback_report = (
+                        _claim_program_synthesis_batch_with_scope_fallback(
+                            supervisor,
+                            worker_id=worker_id,
+                            max_items=args.max_items,
+                            requested_scope=requested_scope,
+                            semantic_bundle=(bundle_mode == "semantic"),
+                            fallback_to_global=bool(
+                                getattr(args, "codex_scope_fallback_to_global", True)
+                            ),
+                        )
                     )
+                    if fallback_report.get("fallback_used"):
+                        summary["latest_codex_scope_fallback_claim"] = dict(
+                            fallback_report
+                        )
                     if claimed:
                         queue.save_jsonl(queue_path)
                     status = update_program_synthesis_summary(

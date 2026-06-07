@@ -940,6 +940,15 @@ _NON_DEONTIC_REQUIRED_CONTEXT_RE = re.compile(
     r"\b(?:codification|editorial|historical|reclassified|renumbered|repealed|transferred|formerly)\b",
     re.IGNORECASE,
 )
+_NON_DEONTIC_EDITORIAL_PERMISSION_CUES = frozenset(
+    {"allowed", "authorized", "permitted"}
+)
+_NON_DEONTIC_EDITORIAL_PERMISSION_CONTEXT_RE = re.compile(
+    r"\b(?:editorial\s+notes|historical\s+and\s+revision\s+notes|"
+    r"codification|formerly\s+classified|reclassified|renumbered|repealed|"
+    r"transferred|statutory\s+notes)\b",
+    re.IGNORECASE,
+)
 _DEONTIC_SCOPE_PHRASES = (
     "authorization of appropriations",
     "authorized to be appropriated",
@@ -1215,6 +1224,16 @@ class SpaCyLegalEncoder:
                             )
                         ):
                             continue
+                        if (
+                            profile.family == ModalLogicFamily.DEONTIC
+                            and self._is_non_deontic_editorial_permission_cue(
+                                normalized_text=normalized,
+                                cue=cue,
+                                start_char=match.start(),
+                                end_char=match.end(),
+                            )
+                        ):
+                            continue
                         if profile.family == ModalLogicFamily.TEMPORAL:
                             lowered_cue = cue.lower()
                             if lowered_cue in _NON_TEMPORAL_PROCEDURAL_AFTER_CUES:
@@ -1356,6 +1375,47 @@ class SpaCyLegalEncoder:
         if _contains_scope_phrase(context_window, _FRAME_EDITORIAL_SCOPE_PHRASES):
             return True
         return bool(_NON_DEONTIC_REQUIRED_CONTEXT_RE.search(context_window))
+
+    def _is_non_deontic_editorial_permission_cue(
+        self,
+        *,
+        normalized_text: str,
+        cue: str,
+        start_char: int,
+        end_char: int,
+    ) -> bool:
+        """Treat bare permission words in U.S.C. editorial history as descriptions."""
+        if cue.lower() not in _NON_DEONTIC_EDITORIAL_PERMISSION_CUES:
+            return False
+        trailing = normalized_text[end_char : end_char + 32]
+        if re.match(r"^\s+to\s+be\s+appropriated\b", trailing, re.IGNORECASE):
+            return False
+        context_window = normalized_text[
+            max(0, start_char - 160) : min(len(normalized_text), end_char + 96)
+        ]
+        leading = normalized_text[max(0, start_char - 96) : start_char].lower()
+        has_section_history_prefix = bool(
+            re.search(r"\bsection\s+[0-9a-z.\-\u2010-\u2015]+\b", leading)
+            and re.search(
+                r"\b(?:act|acts|ch\.|pub\.\s*l\.|stat\.|related\s+to)\b",
+                leading,
+                re.IGNORECASE,
+            )
+        )
+        if (
+            not _NON_DEONTIC_EDITORIAL_PERMISSION_CONTEXT_RE.search(context_window)
+            and not has_section_history_prefix
+        ):
+            return False
+        if has_section_history_prefix:
+            return True
+        return bool(
+            re.search(
+                r"\b(?:act|acts|pub\.\s*l\.|stat\.|related\s+to)\b",
+                context_window,
+                re.IGNORECASE,
+            )
+        )
 
     def _is_temporal_deadline_by_cue(
         self,
