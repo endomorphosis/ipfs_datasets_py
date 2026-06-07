@@ -2186,6 +2186,66 @@ def test_codex_target_metric_validation_reports_regressions() -> None:
     assert unavailable["regressed_metrics"] == []
 
 
+def test_codex_target_metric_snapshot_uses_shared_process_capture(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    captured = {}
+    packet = {
+        "todos": [
+            {
+                "metadata": {
+                    "metric_sample_payloads": [
+                        {
+                            "citation": "5 U.S.C. 552",
+                            "sample_id": "sample-a",
+                            "section": "552",
+                            "text": "The agency shall provide notice.",
+                            "title": "5",
+                        }
+                    ],
+                    "target_metrics": ["cross_entropy_loss"],
+                },
+                "todo_id": "todo-a",
+            }
+        ]
+    }
+
+    def fake_capture(command, **kwargs):
+        captured["command"] = command
+        captured["kwargs"] = kwargs
+        return {
+            "exit_code": 0,
+            "status": "completed",
+            "stderr": "",
+            "stdout": json.dumps(
+                {
+                    "metric_count": 1,
+                    "metrics": {"cross_entropy_loss": 0.42},
+                    "sample_count": 1,
+                    "status": "measured",
+                    "target_metrics": ["cross_entropy_loss"],
+                }
+            ),
+        }
+
+    monkeypatch.setattr(runner, "accelerate_run_process_group_capture", fake_capture)
+
+    snapshot = runner._codex_packet_target_metric_snapshot(
+        packet,
+        tmp_path,
+        timeout_seconds=7.0,
+    )
+
+    assert captured["command"][:2] == [sys.executable, "-c"]
+    assert captured["kwargs"]["cwd"] == tmp_path
+    assert captured["kwargs"]["timeout_seconds"] == 7.0
+    assert "sample-a" in captured["kwargs"]["input_text"]
+    assert snapshot["status"] == "measured"
+    assert snapshot["metrics"] == {"cross_entropy_loss": 0.42}
+    assert snapshot["timeout_seconds"] == 7.0
+
+
 def test_supervisor_finalize_program_synthesis_batch_applies_queue_transitions() -> None:
     samples = [
         build_us_code_sample(
@@ -2942,6 +3002,7 @@ def test_paired_autoencoder_child_health_detects_stale_projection(tmp_path) -> N
                 "active_cycle_projection_progress": {"stage": "line_search_attempt"},
                 "active_cycle_projection_stage": "line_search_attempt",
                 "cycles": 3,
+                "final": False,
                 "latest_stop_reason": "running",
                 "updated_at": "2026-06-05T00:00:05Z",
             }
@@ -2959,6 +3020,7 @@ def test_paired_autoencoder_child_health_detects_stale_projection(tmp_path) -> N
     assert health["autoencoder_active_cycle_phase"] == "generalizable_projection"
     assert health["autoencoder_active_cycle_heartbeat_age_seconds"] == pytest.approx(1200.0)
     assert health["autoencoder_effective_heartbeat_age_seconds"] == pytest.approx(1200.0)
+    assert health["autoencoder_summary_final"] is False
     assert health["autoencoder_summary_age_seconds"] == pytest.approx(1195.0)
 
 
@@ -2970,6 +3032,19 @@ def test_paired_codex_status_accepts_runner_terminated_children() -> None:
         },
         autoencoder_exit_code=0,
         runner_terminated_children={"paired-root-codex-compiler_ambiguity"},
+        stop_requested=False,
+    )
+    assert runner._paired_codex_children_succeeded(
+        {
+            "paired-root-codex-compiler_ambiguity": -signal.SIGTERM,
+            "paired-root-codex-ir_decompiler": 0,
+        },
+        autoencoder_exit_code=-signal.SIGTERM,
+        autoencoder_success=True,
+        runner_terminated_children={
+            "paired-root-autoencoder",
+            "paired-root-codex-compiler_ambiguity",
+        },
         stop_requested=False,
     )
 
@@ -3006,10 +3081,41 @@ def test_paired_autoencoder_status_requires_own_clean_stop() -> None:
         autoencoder_exit_code=0,
         runner_terminated_children={"paired-root-autoencoder"},
     )
+    assert runner._paired_autoencoder_succeeded(
+        autoencoder_run_id="paired-root-autoencoder",
+        autoencoder_exit_code=-signal.SIGTERM,
+        autoencoder_child_health={
+            "autoencoder_cycles": 31,
+            "autoencoder_latest_stop_reason": "no_claimed_todos",
+            "autoencoder_summary_final": False,
+        },
+        runner_terminated_children={"paired-root-autoencoder"},
+    )
     assert not runner._paired_autoencoder_succeeded(
         autoencoder_run_id="paired-root-autoencoder",
         autoencoder_exit_code=1,
         runner_terminated_children=set(),
+    )
+    assert not runner._paired_autoencoder_succeeded(
+        autoencoder_run_id="paired-root-autoencoder",
+        autoencoder_exit_code=-signal.SIGTERM,
+        autoencoder_child_health={
+            "autoencoder_cycles": 0,
+            "autoencoder_latest_stop_reason": "no_claimed_todos",
+            "autoencoder_summary_final": False,
+        },
+        runner_terminated_children={"paired-root-autoencoder"},
+    )
+    assert not runner._paired_autoencoder_succeeded(
+        autoencoder_run_id="paired-root-autoencoder",
+        autoencoder_exit_code=-signal.SIGTERM,
+        autoencoder_child_health={
+            "autoencoder_cycles": 31,
+            "autoencoder_latest_stop_reason": "no_claimed_todos",
+            "autoencoder_summary_final": False,
+        },
+        runner_terminated_children={"paired-root-autoencoder"},
+        stop_requested=True,
     )
 
 

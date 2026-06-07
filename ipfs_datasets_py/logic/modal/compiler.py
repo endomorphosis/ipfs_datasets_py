@@ -2856,6 +2856,10 @@ class DeterministicModalCompiler:
         family_margin = target_share - predicted_share
         if family_margin >= self.config.modal_conditional_target_family_outvote_margin:
             return []
+        is_compiler_ambiguity_bundle_pair = _is_compiler_ambiguity_policy_pair(
+            predicted_family,
+            target_family,
+        )
         return [
             ModalCompilationAmbiguity(
                 ambiguity_type="conditional_scope_family_outvoted",
@@ -2868,6 +2872,19 @@ class DeterministicModalCompiler:
                 metadata={
                     "family_margin": round(family_margin, 6),
                     "family_ranking": list(ranking),
+                    "is_compiler_ambiguity_bundle_pair": (
+                        is_compiler_ambiguity_bundle_pair
+                    ),
+                    "ambiguity_policy_bundle": (
+                        "compiler_ambiguity"
+                        if is_compiler_ambiguity_bundle_pair
+                        else None
+                    ),
+                    "compiler_ambiguity_policy_pair": (
+                        f"{predicted_family}->{target_family}"
+                        if is_compiler_ambiguity_bundle_pair
+                        else None
+                    ),
                     "lexical_signals": dict(sorted(signals.items())),
                     "outvote_margin_threshold": self.config.modal_conditional_target_family_outvote_margin,
                     "predicted_family": predicted_family,

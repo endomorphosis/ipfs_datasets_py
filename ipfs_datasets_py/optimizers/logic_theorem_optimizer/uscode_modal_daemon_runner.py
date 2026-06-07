@@ -55,6 +55,7 @@ from ipfs_accelerate_py.agent_supervisor.todo_daemon.supervisor_runtime import (
     child_exit_should_restart as accelerate_child_exit_should_restart,
     install_stop_signal_handlers as accelerate_install_stop_signal_handlers,
     launch_process_child as accelerate_launch_process_child,
+    run_process_group_capture as accelerate_run_process_group_capture,
     supervised_child_group_succeeded as accelerate_supervised_child_group_succeeded,
     supervised_child_succeeded as accelerate_supervised_child_succeeded,
     summarize_child_summary_files as accelerate_summarize_child_summary_files,
@@ -3505,6 +3506,7 @@ def paired_autoencoder_child_health(
                 now=now_epoch,
             ),
             "autoencoder_latest_stop_reason": data.get("latest_stop_reason"),
+            "autoencoder_summary_final": data.get("final"),
             "autoencoder_summary_age_seconds": accelerate_timestamp_age_seconds(
                 updated_at,
                 now=now_epoch,
@@ -4619,12 +4621,15 @@ def _paired_codex_children_succeeded(
     codex_exit_codes: Mapping[str, Optional[int]],
     *,
     autoencoder_exit_code: Optional[int],
+    autoencoder_success: Optional[bool] = None,
     runner_terminated_children: AbstractSet[str],
     stop_requested: bool,
 ) -> bool:
     """Return whether Codex children finished cleanly for paired-run accounting."""
 
-    if not codex_exit_codes or autoencoder_exit_code != 0:
+    if autoencoder_success is None:
+        autoencoder_success = autoencoder_exit_code == 0
+    if not codex_exit_codes or not autoencoder_success:
         return False
     return accelerate_supervised_child_group_succeeded(
         codex_exit_codes,
@@ -4634,19 +4639,69 @@ def _paired_codex_children_succeeded(
     )
 
 
+_PAIRED_AUTOENCODER_MANAGED_STOP_REASONS = frozenset(
+    {
+        "max_iterations",
+        "no_claimed_todos",
+        "no_validated_improvement",
+        "targets_met",
+    }
+)
+
+
+def _paired_autoencoder_health_indicates_managed_stop(
+    autoencoder_child_health: Optional[Mapping[str, Any]],
+) -> bool:
+    """Return whether the LegalIR autoencoder summary reached a useful stop."""
+
+    if not autoencoder_child_health:
+        return False
+    reason = str(
+        autoencoder_child_health.get("autoencoder_latest_stop_reason") or ""
+    ).strip().lower()
+    try:
+        cycles = int(autoencoder_child_health.get("autoencoder_cycles") or 0)
+    except (TypeError, ValueError):
+        cycles = 0
+    final = bool(autoencoder_child_health.get("autoencoder_summary_final", False))
+    if cycles <= 0:
+        return False
+    if reason in _PAIRED_AUTOENCODER_MANAGED_STOP_REASONS:
+        return True
+    return bool(final and reason.startswith("signal_"))
+
+
 def _paired_autoencoder_succeeded(
     *,
     autoencoder_run_id: str,
     autoencoder_exit_code: Optional[int],
+    autoencoder_child_health: Optional[Mapping[str, Any]] = None,
     runner_terminated_children: AbstractSet[str],
+    stop_requested: bool = False,
 ) -> bool:
     """Return whether the paired autoencoder child reached its own clean stop."""
 
-    return accelerate_supervised_child_succeeded(
+    clean_process_stop = accelerate_supervised_child_succeeded(
         child_id=autoencoder_run_id,
         exit_code=autoencoder_exit_code,
         runner_terminated_child_ids=tuple(runner_terminated_children),
         allow_runner_terminated=False,
+    )
+    if clean_process_stop:
+        return True
+    if stop_requested:
+        return False
+    runner_managed_process_stop = accelerate_supervised_child_succeeded(
+        child_id=autoencoder_run_id,
+        exit_code=autoencoder_exit_code,
+        runner_terminated_child_ids=tuple(runner_terminated_children),
+        allow_runner_terminated=True,
+    )
+    return bool(
+        runner_managed_process_stop
+        and _paired_autoencoder_health_indicates_managed_stop(
+            autoencoder_child_health
+        )
     )
 
 
@@ -5560,44 +5615,14 @@ def _run_process_group_capture(
     timeout_seconds: float,
 ) -> Dict[str, Any]:
     """Run a command with a process-group timeout so child workers cannot leak."""
-    started = time.time()
-    process: Optional[subprocess.Popen[str]] = None
-    try:
-        process = subprocess.Popen(
-            list(command),
+    return dict(
+        accelerate_run_process_group_capture(
+            command,
             cwd=cwd,
-            env=dict(env) if env is not None else None,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            start_new_session=True,
+            env=env,
+            timeout_seconds=timeout_seconds,
         )
-        stdout, stderr = process.communicate(timeout=max(1.0, float(timeout_seconds)))
-        return {
-            "duration_seconds": round(time.time() - started, 3),
-            "exit_code": process.returncode,
-            "status": "completed",
-            "stderr": stderr or "",
-            "stdout": stdout or "",
-        }
-    except subprocess.TimeoutExpired as exc:
-        if process is not None:
-            _terminate_process_group(process, signal.SIGTERM)
-            try:
-                stdout, stderr = process.communicate(timeout=5.0)
-            except subprocess.TimeoutExpired:
-                _terminate_process_group(process, signal.SIGKILL)
-                stdout, stderr = process.communicate(timeout=5.0)
-        else:
-            stdout, stderr = exc.stdout, exc.stderr
-        return {
-            "duration_seconds": round(time.time() - started, 3),
-            "exit_code": process.returncode if process is not None else None,
-            "status": "timeout",
-            "stderr": _process_text(stderr),
-            "stdout": _process_text(stdout),
-            "timeout_seconds": float(timeout_seconds),
-        }
+    )
 
 
 _PYTEST_FAILURE_LINE_RE = re.compile(r"(?m)^(?:FAILED|ERROR)\s+([^\s]+)")
@@ -5896,63 +5921,38 @@ print(json.dumps({
         if timeout_seconds is None
         else max(1.0, float(timeout_seconds))
     )
-    process: Optional[subprocess.Popen[str]] = None
-    try:
-        process = subprocess.Popen(
-            [sys.executable, "-c", script],
-            cwd=repo_root,
-            env=_codex_apply_validation_env(),
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            start_new_session=True,
-            text=True,
-        )
-        stdout, stderr = process.communicate(
-            input=json.dumps(payload, ensure_ascii=True),
-            timeout=timeout,
-        )
-    except OSError as exc:
+    result = accelerate_run_process_group_capture(
+        [sys.executable, "-c", script],
+        cwd=repo_root,
+        env=_codex_apply_validation_env(),
+        input_text=json.dumps(payload, ensure_ascii=True),
+        timeout_seconds=timeout,
+    )
+    stdout = str(result.get("stdout") or "")
+    stderr = str(result.get("stderr") or "")
+    result_status = str(result.get("status") or "")
+    if result_status == "failed":
         return {
             "metric_count": 0,
             "metrics": {},
             "sample_count": len(sample_payloads),
             "status": "failed",
-            "stderr_tail": str(exc)[-500:],
-            "stdout_tail": "",
+            "stderr_tail": stderr[-500:],
+            "stdout_tail": stdout[-500:],
             "target_metrics": target_metrics,
         }
-    except subprocess.TimeoutExpired:
-        if process is not None:
-            _terminate_process_group(process, signal.SIGTERM)
-            try:
-                stdout, stderr = process.communicate(timeout=5.0)
-            except subprocess.TimeoutExpired:
-                _terminate_process_group(process, signal.SIGKILL)
-                stdout, stderr = process.communicate()
-        else:
-            stdout, stderr = "", ""
+    if result_status == "timeout":
         return {
             "metric_count": 0,
             "metrics": {},
             "sample_count": len(sample_payloads),
             "status": "timeout",
-            "stderr_tail": _process_text(stderr)[-500:],
-            "stdout_tail": _process_text(stdout)[-500:],
+            "stderr_tail": stderr[-500:],
+            "stdout_tail": stdout[-500:],
             "target_metrics": target_metrics,
             "timeout_seconds": float(timeout),
         }
-    if process is None:
-        return {
-            "metric_count": 0,
-            "metrics": {},
-            "sample_count": len(sample_payloads),
-            "status": "failed",
-            "stderr_tail": "target metric subprocess did not start",
-            "stdout_tail": "",
-            "target_metrics": target_metrics,
-        }
-    returncode = process.returncode
+    returncode = result.get("exit_code")
     if returncode != 0:
         return {
             "exit_code": returncode,
@@ -5960,8 +5960,8 @@ print(json.dumps({
             "metrics": {},
             "sample_count": len(sample_payloads),
             "status": "failed",
-            "stderr_tail": (stderr or "")[-500:],
-            "stdout_tail": (stdout or "")[-500:],
+            "stderr_tail": stderr[-500:],
+            "stdout_tail": stdout[-500:],
             "target_metrics": target_metrics,
         }
     try:
@@ -5974,11 +5974,11 @@ print(json.dumps({
             "metrics": {},
             "sample_count": len(sample_payloads),
             "status": "invalid_json",
-            "stderr_tail": (stderr or "")[-500:],
-            "stdout_tail": (stdout or "")[-500:],
+            "stderr_tail": stderr[-500:],
+            "stdout_tail": stdout[-500:],
             "target_metrics": target_metrics,
         }
-    snapshot["stderr_tail"] = (stderr or "")[-500:]
+    snapshot["stderr_tail"] = stderr[-500:]
     snapshot["timeout_seconds"] = float(timeout)
     return snapshot
 
@@ -9065,14 +9065,16 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                 codex_processes[child_run_id] = start_codex_child(child)
 
             poll_seconds = max(0.2, float(args.paired_poll_seconds))
-            max_wait = float(args.duration_seconds) + max(0.0, float(args.paired_grace_seconds))
+            duration_wait = max(0.0, float(args.duration_seconds))
+            max_wait = duration_wait + max(0.0, float(args.paired_grace_seconds))
             while True:
+                elapsed = time.time() - started
                 auto_exit_code = auto_process.poll()
                 codex_exit_codes = {
                     run_id: process.poll()
                     for run_id, process in codex_processes.items()
                 }
-                summary["elapsed_seconds"] = round(time.time() - started, 3)
+                summary["elapsed_seconds"] = round(elapsed, 3)
                 summary["heartbeat_at"] = utc_now()
                 summary["latest_stop_reason"] = "running"
                 summary["autoencoder_pid"] = auto_process.pid
@@ -9091,7 +9093,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                         restart_limit=autoencoder_restart_limit,
                         stop_requested=stop_state.stop_requested,
                     )
-                    and (time.time() - started) <= max_wait
+                    and elapsed <= duration_wait
                 ):
                     previous_pid = auto_process.pid
                     previous_exit_code = auto_exit_code
@@ -9145,7 +9147,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                             stop_requested=stop_state.stop_requested,
                         ):
                             continue
-                        if (time.time() - started) > max_wait:
+                        if elapsed > duration_wait:
                             continue
                         process = codex_processes.get(child_run_id)
                         previous_pid = process.pid if process is not None else None
@@ -9536,6 +9538,20 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                     break
                 if stop_state.stop_requested:
                     break
+                if elapsed >= duration_wait:
+                    summary["latest_stop_reason"] = "paired_duration_elapsed"
+                    summary["paired_duration_elapsed_at"] = utc_now()
+                    append_event(
+                        log_path,
+                        args.run_id,
+                        {
+                            "event": "paired_duration_elapsed",
+                            "elapsed_seconds": round(elapsed, 3),
+                            "paired_grace_seconds": float(args.paired_grace_seconds),
+                        },
+                    )
+                    save_summary(summary_path, summary)
+                    break
                 if (time.time() - started) > max_wait:
                     summary["latest_stop_reason"] = "paired_timeout_grace_exceeded"
                     break
@@ -9547,7 +9563,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         ]
         termination_wait_seconds = max(
             10.0,
-            min(60.0, float(args.paired_grace_seconds)),
+            float(args.paired_grace_seconds),
         )
         termination_results = accelerate_terminate_processes_with_grace(
             process_labels,
@@ -9630,11 +9646,14 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         autoencoder_success = _paired_autoencoder_succeeded(
             autoencoder_run_id=str(paired["autoencoder_run_id"]),
             autoencoder_exit_code=auto_exit_code,
+            autoencoder_child_health=autoencoder_health,
             runner_terminated_children=runner_terminated_children,
+            stop_requested=stop_state.stop_requested,
         )
         codex_success = _paired_codex_children_succeeded(
             codex_exit_codes,
             autoencoder_exit_code=auto_exit_code,
+            autoencoder_success=autoencoder_success,
             runner_terminated_children=runner_terminated_children,
             stop_requested=stop_state.stop_requested,
         )
@@ -9659,16 +9678,19 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         )
         stop_state.restore()
 
-    codex_success = _paired_codex_children_succeeded(
-        codex_exit_codes,
-        autoencoder_exit_code=auto_exit_code,
-        runner_terminated_children=runner_terminated_children,
-        stop_requested=stop_state.stop_requested,
-    )
     autoencoder_success = _paired_autoencoder_succeeded(
         autoencoder_run_id=str(paired["autoencoder_run_id"]),
         autoencoder_exit_code=auto_exit_code,
+        autoencoder_child_health=summary.get("autoencoder_child_health"),
         runner_terminated_children=runner_terminated_children,
+        stop_requested=stop_state.stop_requested,
+    )
+    codex_success = _paired_codex_children_succeeded(
+        codex_exit_codes,
+        autoencoder_exit_code=auto_exit_code,
+        autoencoder_success=autoencoder_success,
+        runner_terminated_children=runner_terminated_children,
+        stop_requested=stop_state.stop_requested,
     )
     return 0 if autoencoder_success and codex_success else 1
 

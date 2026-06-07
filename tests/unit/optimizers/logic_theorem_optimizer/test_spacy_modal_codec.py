@@ -4547,6 +4547,72 @@ def test_spacy_codec_backfills_deontic_share_for_single_frame_cue_with_temporal_
     assert deontic_share > 0.0
 
 
+def test_spacy_codec_balances_corporate_powers_permission_against_frame_cues() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="36",
+        section="130305",
+        text=(
+            "Powers The corporation may adopt bylaws and carry out the purposes "
+            "of the corporation under this section. The corporation and authority apply."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+    shares = {item["family"]: float(item["share"]) for item in ranking}
+
+    assert signals["has_deontic_corporate_powers_scope_phrase"] is True
+    assert shares["deontic"] >= shares["frame"]
+    assert ranking[0]["family"] == "deontic"
+
+
+def test_spacy_codec_preserves_annual_report_duty_over_fiscal_temporal_scope() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="36",
+        section="140411",
+        text=(
+            "Annual report The corporation shall submit to Congress an annual "
+            "report during the preceding fiscal year under this section."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+    shares = {item["family"]: float(item["share"]) for item in ranking}
+
+    assert signals["has_deontic_report_duty_scope_phrase"] is True
+    assert signals["has_temporal_fiscal_scope_phrase"] is True
+    assert shares["deontic"] > shares["temporal"]
+
+
+def test_spacy_codec_keeps_deadline_submit_clause_temporal() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="14",
+        section="5113",
+        text=(
+            "Not later than 60 days after the date on which the President submits "
+            "a budget, the Commandant shall submit the report."
+        ),
+    )
+    ranking = ranked_modal_families(codec.encode_sample(sample))
+    shares = {item["family"]: float(item["share"]) for item in ranking}
+
+    assert shares["temporal"] > shares["deontic"]
+    assert ranking[0]["family"] == "temporal"
+
+
 def test_spacy_codec_reinforces_deontic_share_for_moderate_temporal_scope_with_explicit_cue() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),

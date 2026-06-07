@@ -384,3 +384,110 @@ def test_compiler_exposes_explicit_ambiguity_for_packet_002568_adaptive_margins(
     assert abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - priority) <= (
         1e-12
     )
+
+
+@pytest.mark.parametrize(
+    (
+        "sample_id",
+        "predicted_family",
+        "target_family",
+        "family_margin",
+        "priority",
+        "expected_type",
+        "expected_severity",
+    ),
+    (
+        (
+            "us-code-7-5203-b522c0d6ad7a11aa",
+            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.TEMPORAL.value,
+            -0.313603835283,
+            0.463603835283,
+            "adaptive_frame_temporal_outvoted_margin_low",
+            "requires_rule",
+        ),
+        (
+            "us-code-42-64a-to-64c-92c6a496a40db68f",
+            ModalLogicFamily.TEMPORAL.value,
+            ModalLogicFamily.TEMPORAL.value,
+            0.081722083969,
+            0.068277916031,
+            "adaptive_temporal_temporal_contested_margin_low",
+            "review",
+        ),
+        (
+            "us-code-25-1147-f5bef9a6ca4f493d",
+            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.DEONTIC.value,
+            -0.106206383221,
+            0.256206383221,
+            "adaptive_frame_deontic_outvoted_margin_low",
+            "requires_rule",
+        ),
+        (
+            "us-code-7-7917-03031f76e7a6c28c",
+            ModalLogicFamily.DEONTIC.value,
+            ModalLogicFamily.FRAME.value,
+            -0.118239387019,
+            0.268239387019,
+            "adaptive_deontic_frame_outvoted_margin_low",
+            "requires_rule",
+        ),
+    ),
+)
+def test_compiler_exposes_explicit_ambiguity_for_packet_008598_adaptive_margins(
+    monkeypatch,
+    sample_id: str,
+    predicted_family: str,
+    target_family: str,
+    family_margin: float,
+    priority: float,
+    expected_type: str,
+    expected_severity: str,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="regex")
+    )
+    monkeypatch.setattr(
+        modal_compiler_module,
+        "ranked_modal_families",
+        lambda _encoding: [],
+    )
+    monkeypatch.setattr(
+        modal_compiler_module,
+        "modal_ambiguity_signals",
+        lambda _encoding: {},
+    )
+    ranking = _ranking_for_margin(
+        predicted_family=predicted_family,
+        target_family=target_family,
+        family_margin=family_margin,
+    )
+    compiler._adaptive_family_ranking_from_logits = (  # type: ignore[method-assign]
+        lambda _encoding, ranking=ranking: list(ranking)
+    )
+
+    result = compiler.compile(
+        "As provided in section 3, the Secretary shall act by June 1, 2030.",
+        document_id=f"packet-008598-{sample_id}",
+    )
+    ambiguity = _adaptive_explicit_ambiguity_from_source(
+        result,
+        predicted_family=predicted_family,
+        target_family=target_family,
+        predicted_family_source="adaptive_logits_fallback",
+    )
+    assert ambiguity is not None, sample_id
+    assert ambiguity.ambiguity_type == expected_type
+    assert ambiguity.severity == expected_severity
+    assert ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
+    assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
+    assert ambiguity.metadata.get("explicit_ambiguity_type") == expected_type
+    assert (
+        abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin)
+        <= 1e-12
+    )
+    assert abs(float(ambiguity.metadata.get("priority", 0.0)) - priority) <= 1e-12
+    assert abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - priority) <= (
+        1e-12
+    )

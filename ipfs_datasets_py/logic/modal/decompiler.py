@@ -82,6 +82,8 @@ _CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("to the extent provided", "to_the_extent_provided"),
     ("not later than", "not_later_than"),
     ("no later than", "no_later_than"),
+    ("not later", "not_later"),
+    ("no later", "no_later"),
     ("which", "which"),
     ("if", "if"),
     ("when", "when"),
@@ -111,6 +113,8 @@ _TEMPORAL_CLAUSE_PREFIX_RELATIONS: dict[str, str] = {
     "by": "deadline",
     "no_later_than": "deadline",
     "not_later_than": "deadline",
+    "no_later": "deadline",
+    "not_later": "deadline",
     "upon": "after",
 }
 _USCODE_FALLBACK_STATUS_KEYWORDS: tuple[str, ...] = (
@@ -366,6 +370,8 @@ _SOURCE_ROLE_TEMPORAL_CONTEXT_TOKENS = frozenset(
     set(_SOURCE_ROLE_TEMPORAL_MARKERS)
     | {
         "calendar",
+        "day",
+        "days",
         "date",
         "dates",
         "deadline",
@@ -850,9 +856,18 @@ _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...
         ("conditional_normative", "O|"),
         ("temporal", "F"),
     ),
+    "no_later": (
+        ("conditional_normative", "O|"),
+        ("temporal", "F"),
+    ),
+    "not_later": (
+        ("conditional_normative", "O|"),
+        ("temporal", "F"),
+    ),
     "which": (
         ("conditional_normative", "O|"),
         ("deontic", "O"),
+        ("frame", "Frame"),
     ),
     "shall": (("deontic", "O"),),
     "must": (("deontic", "O"),),
@@ -1019,7 +1034,6 @@ _SOURCE_ANCHOR_DIRECTIONAL_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = 
     "alethic": ("conditional_normative", "deontic", "temporal"),
     "conditional_normative": ("deontic",),
     "deontic": ("conditional_normative", "deontic", "frame", "temporal"),
-    "deontic": ("conditional_normative", "deontic", "frame", "temporal"),
     "epistemic": ("conditional_normative", "epistemic"),
     "frame": ("conditional_normative", "deontic", "doxastic", "frame", "temporal"),
     "temporal": ("conditional_normative", "deontic", "epistemic", "temporal"),
@@ -1027,8 +1041,6 @@ _SOURCE_ANCHOR_DIRECTIONAL_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = 
 _DECOMPILER_REFINED_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = {
     "alethic": ("deontic",),
     "conditional_normative": ("deontic", "temporal"),
-    "deontic": ("conditional_normative", "frame", "temporal"),
-    "conditional_normative": ("temporal",),
     "deontic": ("conditional_normative", "frame", "temporal"),
     "epistemic": ("conditional_normative",),
     "frame": ("conditional_normative", "deontic", "frame", "temporal"),
@@ -1127,6 +1139,8 @@ _DEONTIC_TEMPORAL_BRIDGE_CUES: frozenset[str] = frozenset(
         "within",
         "not_later_than",
         "no_later_than",
+        "not_later",
+        "no_later",
         "deadline",
         "effective_date",
         "fiscal_year",
@@ -1213,6 +1227,8 @@ _FRAME_TEMPORAL_BRIDGE_CUES: frozenset[str] = frozenset(
         "frame",
         "not_later_than",
         "no_later_than",
+        "not_later",
+        "no_later",
         "within",
     }
 )
@@ -1271,6 +1287,8 @@ _TEMPORAL_BRIDGE_CONTEXT_PHRASES: tuple[tuple[str, str], ...] = (
     ("on or after", "on_or_after"),
     ("no later than", "no_later_than"),
     ("not later than", "not_later_than"),
+    ("no later", "no_later"),
+    ("not later", "not_later"),
     ("effective date", "effective_date"),
     ("effective dates", "effective_date"),
     ("fiscal year", "fiscal_year"),
@@ -1292,10 +1310,8 @@ _REFINED_HEADING_BRIDGE_SOURCE_FAMILIES: frozenset[str] = frozenset(
 _TYPED_IR_REFINED_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = {
     "alethic": ("deontic",),
     "conditional_normative": ("conditional_normative",),
-    "deontic": ("deontic", "temporal"),
+    "deontic": ("conditional_normative", "deontic", "epistemic", "temporal"),
     "frame": ("conditional_normative", "deontic", "dynamic", "frame", "temporal"),
-    "deontic": ("deontic", "epistemic", "temporal"),
-    "frame": ("deontic", "dynamic", "frame", "temporal"),
     "temporal": ("deontic", "temporal"),
 }
 _REFINED_HEADING_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[
@@ -4235,6 +4251,13 @@ def _legal_ir_view_prototype_phrases(
                 )
         if selected_frame:
             slot_values.append(("selected-frame", selected_frame))
+            if family == "frame":
+                add(
+                    family="deontic",
+                    slot_name="selected-frame",
+                    slot_value=selected_frame,
+                    spans=spans,
+                )
         if has_frame_logic:
             ontology_name = _clean_text(getattr(frame_logic, "ontology_name", ""))
             if ontology_name:
@@ -4259,6 +4282,12 @@ def _legal_ir_view_prototype_phrases(
             cue_key = _normalized_bridge_cue_key(cue)
             if cue_key:
                 slot_values.append(("modal-cue", cue_key))
+                for target_family, _ in _cue_bridge_operator_pairs(cue_key):
+                    normalized_target = _slot_safe_family_key(target_family)
+                    if normalized_target:
+                        slot_values.append(
+                            ("cue-family", f"{cue_key}:{normalized_target}")
+                        )
                 for family_pair in _source_anchor_family_pairs(
                     document=document,
                     formula=formula,
@@ -4292,6 +4321,19 @@ def _legal_ir_view_prototype_phrases(
         for semantic_text in semantic_texts:
             for atom in _legal_semantic_atoms_from_text(semantic_text):
                 slot_values.append(("legal-semantic-atom", atom))
+                if family == "frame" and atom in {
+                    "administrative_notice_hearing",
+                    "notice_hearing",
+                    "review_appeal",
+                    "records_report",
+                    "procedure",
+                }:
+                    add(
+                        family="deontic",
+                        slot_name="legal-semantic-atom",
+                        slot_value=atom,
+                        spans=spans,
+                    )
         slot_values.extend(
             _legal_ir_decompiler_bridge_slot_values(
                 document=document,
@@ -4571,6 +4613,11 @@ def _legal_ir_decompiler_bridge_slot_values(
         "typed_decompiler_bridge_signature",
         "typed_decompiler_temporal_bridge_family_pair",
         "typed_decompiler_deontic_bridge_family_pair",
+        "typed_decompiler_frame_bridge_family_pair",
+        "typed_decompiler_conditional_normative_bridge_family_pair",
+        "typed_decompiler_family_pair_legal_ir_view",
+        "typed_decompiler_target_family_legal_ir_view",
+        "typed_decompiler_bridge_legal_ir_view_signature",
     }
 
     def add(slot: str, value: str) -> None:
@@ -8885,6 +8932,38 @@ def _typed_decompiler_bridge_phrases(
             )
         )
 
+    def add_family_semantic_slot(
+        *,
+        family: str,
+        slot_name: str,
+        slot_value: str,
+    ) -> None:
+        family_key = _slot_safe_family_key(_clean_text(family).lower())
+        slot_label = _clean_text(slot_name).replace(" ", "_")
+        slot_key = _slot_safe_family_key(slot_label)
+        normalized_value = _clean_text(slot_value)
+        if not family_key or not slot_key or not slot_label or not normalized_value:
+            return
+        semantic_slot = f"{family_key}||slot:{slot_label}:{normalized_value}"
+        add("family_semantic_slot_prototype", semantic_slot)
+        add(
+            f"family_semantic_slot_prototype_{family_key}_{slot_label}",
+            normalized_value,
+        )
+        for view in _LEGAL_IR_VIEW_PROTOTYPES:
+            view_key = view.replace(".", "_")
+            add(
+                "family_semantic_slot_legal_ir_view_prototype",
+                f"{semantic_slot}||{view}",
+            )
+            add(
+                (
+                    "family_semantic_slot_legal_ir_view_prototype_"
+                    f"{family_key}_{slot_label}_{view_key}"
+                ),
+                normalized_value,
+            )
+
     add("typed_decompiler_family", family)
     source_operator = _clean_text(formula.operator.symbol)
     source_system = _clean_text(formula.operator.system)
@@ -8907,13 +8986,38 @@ def _typed_decompiler_bridge_phrases(
             f"{source_family}||slot:typed-decompiler-family-pair:{family_pair}"
         )
         add("family_semantic_slot_prototype", pair_semantic_slot)
+        add_family_semantic_slot(
+            family=source_family,
+            slot_name="typed-decompiler-family-pair",
+            slot_value=family_pair,
+        )
+        if target_family != source_family:
+            add_family_semantic_slot(
+                family=target_family,
+                slot_name="typed-decompiler-source-family",
+                slot_value=source_family,
+            )
         add("typed_decompiler_transition_family_pair", family_pair)
         for view in _LEGAL_IR_VIEW_PROTOTYPES:
+            view_key = _slot_safe_family_key(view)
             add(
                 "family_semantic_slot_legal_ir_view_prototype",
                 f"{pair_semantic_slot}||{view}",
             )
             add("typed_decompiler_family_pair_legal_ir_view", f"{family_pair}||{view}")
+            add(
+                "typed_decompiler_target_family_legal_ir_view",
+                f"{target_family}||{view}",
+            )
+            add(
+                f"typed_decompiler_{target_family}_family_pair_legal_ir_view",
+                f"{family_pair}||{view}",
+            )
+            if pair_key and view_key:
+                add(
+                    f"typed_decompiler_{target_family}_{view_key}_family_pair_key",
+                    pair_key,
+                )
         target_operator = _typed_ir_refined_target_symbol(
             target_family,
             fallback_symbol=source_operator,
@@ -8936,6 +9040,22 @@ def _typed_decompiler_bridge_phrases(
                 f"typed_decompiler_{target_family}_bridge_signature",
                 bridge_signature,
             )
+            for view in _LEGAL_IR_VIEW_PROTOTYPES:
+                view_key = _slot_safe_family_key(view)
+                view_signature = f"{bridge_signature}||{view}"
+                add(
+                    "typed_decompiler_bridge_legal_ir_view_signature",
+                    view_signature,
+                )
+                add(
+                    f"typed_decompiler_{target_family}_bridge_legal_ir_view_signature",
+                    view_signature,
+                )
+                if view_key:
+                    add(
+                        f"typed_decompiler_{target_family}_{view_key}_bridge_signature",
+                        bridge_signature,
+                    )
             if target_family == "conditional_normative":
                 add(
                     "typed_decompiler_conditional_normative_bridge_family_pair",
@@ -9021,6 +9141,26 @@ def _typed_decompiler_bridge_phrases(
                             f"{clause_slot}_scope_typed_decompiler_target",
                             f"{normalized_prefix}:{target_family}:{target_operator}",
                         )
+                        add_family_semantic_slot(
+                            family=clause_source_family,
+                            slot_name=f"{clause_slot}-prefix-family",
+                            slot_value=f"{normalized_prefix}:{target_family}",
+                        )
+                        add_family_semantic_slot(
+                            family=target_family,
+                            slot_name=f"{clause_slot}-prefix-source-family",
+                            slot_value=f"{normalized_prefix}:{clause_source_family}",
+                        )
+                        add_family_semantic_slot(
+                            family=clause_source_family,
+                            slot_name="cue-family",
+                            slot_value=f"{normalized_prefix}:{target_family}",
+                        )
+                        add_family_semantic_slot(
+                            family=target_family,
+                            slot_name="modal-cue",
+                            slot_value=normalized_prefix,
+                        )
                         add(
                             f"{clause_slot}_scope_typed_decompiler_bridge_signature",
                             scoped_bridge_signature,
@@ -9042,6 +9182,24 @@ def _typed_decompiler_bridge_phrases(
                     f"{clause_slot}_scope_content_family_pair",
                     f"{content_value}:{family_pair}",
                 )
+                if "->" in family_pair:
+                    content_source_family, content_target_family = (
+                        _clean_text(part).lower()
+                        for part in family_pair.split("->", 1)
+                    )
+                else:
+                    content_source_family = family
+                    content_target_family = family
+                add_family_semantic_slot(
+                    family=content_source_family,
+                    slot_name=f"{clause_slot}-scope-content-family-pair",
+                    slot_value=f"{content_value}:{family_pair}",
+                )
+                add_family_semantic_slot(
+                    family=content_target_family,
+                    slot_name=f"{clause_slot}-scope-content-source-family",
+                    slot_value=f"{content_value}:{content_source_family}",
+                )
             for slot, value in _typed_identifier_slots(
                 content_value,
                 slot_prefix=f"{clause_slot}_scope_content",
@@ -9057,6 +9215,24 @@ def _typed_decompiler_bridge_phrases(
                 add(
                     f"typed_decompiler_source_{role_name}_family_pair_anchor",
                     f"{anchor}:{family_pair}",
+                )
+                if "->" in family_pair:
+                    anchor_source_family, anchor_target_family = (
+                        _clean_text(part).lower()
+                        for part in family_pair.split("->", 1)
+                    )
+                else:
+                    anchor_source_family = family
+                    anchor_target_family = family
+                add_family_semantic_slot(
+                    family=anchor_source_family,
+                    slot_name=f"source-{role_name}-family",
+                    slot_value=f"{anchor}:{anchor_target_family}",
+                )
+                add_family_semantic_slot(
+                    family=anchor_target_family,
+                    slot_name=f"source-{role_name}-source-family",
+                    slot_value=f"{anchor}:{anchor_source_family}",
                 )
             if role_name == "object" and anchor in {"pub", "publication", "public_law"}:
                 add("source_object_publication_anchor", anchor)
@@ -9231,6 +9407,12 @@ def _source_role_anchor_values(
         default_index=0,
     )
     if not action_anchor:
+        action_anchor = predicate_default_anchor
+    elif (
+        predicate_default_anchor
+        and action_anchor not in predicate_tokens
+        and temporal_anchor
+    ):
         action_anchor = predicate_default_anchor
     if (
         not object_anchor
@@ -9679,6 +9861,17 @@ def _refined_clause_bridge_phrases(
                 ),
             )
         )
+        slot_items.extend(
+            _clause_scope_modal_bridge_alias_slots(
+                clause_slot=normalized_slot,
+                source_family=source_family,
+                source_system=formula.operator.system,
+                source_operator=source_operator,
+                target_family=target_family,
+                target_operator=target_operator,
+                cue=normalized_prefix,
+            )
+        )
         if family_pair_key:
             slot_items.append(
                 (
@@ -9705,6 +9898,86 @@ def _refined_clause_bridge_phrases(
             )
         )
     return phrases
+
+
+def _clause_scope_modal_bridge_alias_slots(
+    *,
+    clause_slot: str,
+    source_family: str,
+    source_system: str,
+    source_operator: str,
+    target_family: str,
+    target_operator: str,
+    cue: str,
+) -> List[Tuple[str, str]]:
+    """Expose refined clause scopes under bridge-modal slot names."""
+
+    normalized_clause_slot = _clean_text(clause_slot)
+    source_family_key = _clean_text(source_family).lower()
+    source_operator_key = _clean_text(source_operator)
+    target_family_key = _clean_text(target_family).lower()
+    target_operator_key = _clean_text(target_operator)
+    normalized_cue = _clean_text(cue).lower()
+    if (
+        not normalized_clause_slot
+        or not source_family_key
+        or not source_operator_key
+        or not target_family_key
+        or not target_operator_key
+        or not normalized_cue
+    ):
+        return []
+
+    scope_prefix = f"{normalized_clause_slot}_scope"
+    family_pair = f"{source_family_key}->{target_family_key}"
+    operator_pair = f"{source_operator_key}->{target_operator_key}"
+    bridge_signature = f"{target_family_key}:{target_operator_key}:{normalized_cue}"
+    transition_signature = (
+        f"{source_family_key}:{source_operator_key}->"
+        f"{target_family_key}:{target_operator_key}:{normalized_cue}"
+    )
+    slots: List[Tuple[str, str]] = [
+        (f"{scope_prefix}_modal_bridge_family_pair", family_pair),
+        (f"{scope_prefix}_bridge_modal_family_pair", family_pair),
+        (f"{scope_prefix}_modal_bridge_operator_pair", operator_pair),
+        (f"{scope_prefix}_bridge_modal_operator_pair", operator_pair),
+        (f"{scope_prefix}_modal_bridge_pair_cue", f"{family_pair}:{normalized_cue}"),
+        (f"{scope_prefix}_bridge_modal_pair_cue", f"{family_pair}:{normalized_cue}"),
+        (f"{scope_prefix}_modal_bridge_signature", bridge_signature),
+        (f"{scope_prefix}_bridge_modal_signature", bridge_signature),
+        (f"{scope_prefix}_modal_bridge_transition_signature", transition_signature),
+        (f"{scope_prefix}_bridge_modal_transition_signature", transition_signature),
+    ]
+    family_pair_key = _slot_safe_family_pair_key(family_pair)
+    if family_pair_key:
+        slots.extend(
+            (
+                (f"{scope_prefix}_modal_bridge_family_pair_key", family_pair_key),
+                (f"{scope_prefix}_bridge_modal_family_pair_key", family_pair_key),
+            )
+        )
+    operator_pair_key = _modal_operator_pair_feature_key(
+        source_operator_key,
+        target_operator_key,
+    )
+    if operator_pair_key:
+        slots.extend(
+            (
+                (f"{scope_prefix}_modal_bridge_operator_pair_key", operator_pair_key),
+                (f"{scope_prefix}_bridge_modal_operator_pair_key", operator_pair_key),
+            )
+        )
+    slots.extend(
+        _modal_operator_transition_signature_slots(
+            source_family=source_family_key,
+            source_system=source_system,
+            source_symbol=source_operator_key,
+            target_family=target_family_key,
+            target_symbol=target_operator_key,
+            slot_prefix=f"{scope_prefix}_modal_bridge",
+        )
+    )
+    return _unique_slot_values(slots)
 
 
 def _slot_safe_text_atom(value: str, *, max_tokens: int = 6) -> str:
@@ -10407,7 +10680,18 @@ def _modal_lexeme_slots(
         (f"{normalized_slot_prefix}_family", family),
         (f"{normalized_slot_prefix}_operator", symbol),
         (f"{normalized_slot_prefix}_lexeme", cue_value),
+        (f"{normalized_slot_prefix}_self_bridge_family", family),
+        (f"{normalized_slot_prefix}_self_bridge_operator", symbol),
+        (f"{normalized_slot_prefix}_self_bridge_signature", signature),
     ]
+    if alias_prefix:
+        slots.extend(
+            (
+                (f"{alias_prefix}_self_bridge_family", family),
+                (f"{alias_prefix}_self_bridge_operator", symbol),
+                (f"{alias_prefix}_self_bridge_signature", signature),
+            )
+        )
     canonical_symbol = _canonical_cue_operator_symbol(formula, cue=cue_value)
     if canonical_symbol:
         slots.append(

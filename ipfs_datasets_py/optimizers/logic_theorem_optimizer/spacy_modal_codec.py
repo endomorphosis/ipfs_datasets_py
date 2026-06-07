@@ -989,6 +989,17 @@ _DEONTIC_AUTHORIZATION_SCOPE_PHRASES = (
     "are authorized to be appropriated",
     "authorized to be appropriated",
 )
+_DEONTIC_CORPORATE_POWERS_SCOPE_PHRASES = (
+    "powers the corporation may",
+    "the corporation may",
+)
+_DEONTIC_REPORT_DUTY_SCOPE_PHRASES = (
+    "shall submit",
+    "report shall be submitted",
+)
+_DEONTIC_CITATION_AUTHORITY_SCOPE_PHRASES = (
+    "may be cited",
+)
 
 
 @dataclass(frozen=True)
@@ -4818,12 +4829,22 @@ def _apply_refined_modal_family_cue_pair_balance(
         signals.get("has_deontic_scope")
         or signals.get("has_deontic_cue")
     )
+    has_deontic_cue = bool(signals.get("has_deontic_cue"))
     has_explicit_deontic_scope = bool(
         signals.get("has_deontic_scope_phrase")
         or signals.get("has_deontic_cue")
     )
     has_deontic_appropriations_scope_phrase = bool(
         signals.get("has_deontic_appropriations_scope_phrase")
+    )
+    has_deontic_corporate_powers_scope_phrase = bool(
+        signals.get("has_deontic_corporate_powers_scope_phrase")
+    )
+    has_deontic_report_duty_scope_phrase = bool(
+        signals.get("has_deontic_report_duty_scope_phrase")
+    )
+    has_deontic_citation_authority_scope_phrase = bool(
+        signals.get("has_deontic_citation_authority_scope_phrase")
     )
     has_phrase_only_deontic_scope = bool(
         has_deontic_scope
@@ -4995,6 +5016,59 @@ def _apply_refined_modal_family_cue_pair_balance(
                     0.2 * math.log1p(frame_count - frame_cap)
                 )
                 frame_count = float(counts.get(frame_family, 0.0))
+
+    # frame -> deontic:
+    # corporate-charter powers sections are often packed with frame terms
+    # ("corporation", "purposes", title headers), but "the corporation may"
+    # carries operative permission.
+    if (
+        frame_count > deontic_count
+        and has_deontic_corporate_powers_scope_phrase
+        and has_deontic_cue
+        and has_frame_scope_context
+    ):
+        deontic_floor = _scaled_competing_scope_backfill(
+            source_count=frame_count,
+            ratio=1.0,
+            minimum=max(deontic_count, _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT),
+            maximum=max(frame_count, _FRAME_TO_DEONTIC_SCOPE_REINFORCEMENT_MAX),
+        )
+        counts[deontic_family] = max(deontic_count, deontic_floor)
+        deontic_count = float(counts.get(deontic_family, 0.0))
+
+    # temporal -> deontic:
+    # annual-report provisions use temporal fiscal-year scope to describe the
+    # timing of a mandatory submission.  Preserve the typed duty cue when it is
+    # otherwise only a rounding margin below temporal evidence.
+    if (
+        temporal_count >= deontic_count
+        and has_deontic_report_duty_scope_phrase
+        and has_deontic_cue
+        and has_temporal_scope
+        and bool(signals.get("has_temporal_fiscal_scope_phrase"))
+    ):
+        counts[deontic_family] = max(
+            deontic_count,
+            temporal_count + 0.01,
+        )
+        deontic_count = float(counts.get(deontic_family, 0.0))
+
+    # deontic -> deontic:
+    # short-title provisions and amendment notes repeat conditional/date
+    # scaffolding; "may be cited" remains a permission cue and should not be
+    # washed out by those surrounding note clauses.
+    if (
+        has_deontic_citation_authority_scope_phrase
+        and has_deontic_cue
+        and deontic_count > 0.0
+    ):
+        deontic_floor = max(
+            deontic_count,
+            max(conditional_count, temporal_count)
+            + _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
+        counts[deontic_family] = deontic_floor
+        deontic_count = float(counts.get(deontic_family, 0.0))
 
     # temporal -> deontic:
     # repeal-style statutory notes can surface dense date/status tokens that
@@ -6111,6 +6185,9 @@ def _apply_competing_deontic_temporal_scope_phrase_reinforcement(
     has_deontic_authorization_scope_phrase = bool(
         signals.get("has_deontic_authorization_scope_phrase")
     )
+    has_deontic_report_duty_scope_phrase = bool(
+        signals.get("has_deontic_report_duty_scope_phrase")
+    )
     has_temporal_fiscal_scope_phrase = bool(
         signals.get("has_temporal_fiscal_scope_phrase")
     )
@@ -6127,6 +6204,14 @@ def _apply_competing_deontic_temporal_scope_phrase_reinforcement(
         and not has_temporal_deadline_cue
     ):
         counts[deontic_family] = deontic_count + _DEONTIC_SCOPE_PHRASE_REINFORCEMENT
+        deontic_count = float(counts.get(deontic_family, 0.0))
+    if (
+        has_deontic_report_duty_scope_phrase
+        and has_temporal_fiscal_scope_phrase
+        and not has_temporal_deadline_cue
+        and temporal_count >= deontic_count
+    ):
+        counts[deontic_family] = temporal_count + 0.01
         deontic_count = float(counts.get(deontic_family, 0.0))
     if has_temporal_expended_scope_phrase:
         counts[temporal_family] = temporal_count + _TEMPORAL_SCOPE_PHRASE_REINFORCEMENT
@@ -6570,6 +6655,15 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
     deontic_authorization_scope_phrase = _contains_scope_phrase(
         normalized_text, _DEONTIC_AUTHORIZATION_SCOPE_PHRASES
     )
+    deontic_corporate_powers_scope_phrase = _contains_scope_phrase(
+        normalized_text, _DEONTIC_CORPORATE_POWERS_SCOPE_PHRASES
+    )
+    deontic_report_duty_scope_phrase = _contains_scope_phrase(
+        normalized_text, _DEONTIC_REPORT_DUTY_SCOPE_PHRASES
+    )
+    deontic_citation_authority_scope_phrase = _contains_scope_phrase(
+        normalized_text, _DEONTIC_CITATION_AUTHORITY_SCOPE_PHRASES
+    )
     epistemic_scope_phrase = _contains_scope_phrase(
         normalized_text, _EPISTEMIC_SCOPE_PHRASES
     )
@@ -6716,6 +6810,15 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         ),
         "has_deontic_authorization_scope_phrase": bool(
             deontic_authorization_scope_phrase
+        ),
+        "has_deontic_corporate_powers_scope_phrase": bool(
+            deontic_corporate_powers_scope_phrase
+        ),
+        "has_deontic_report_duty_scope_phrase": bool(
+            deontic_report_duty_scope_phrase
+        ),
+        "has_deontic_citation_authority_scope_phrase": bool(
+            deontic_citation_authority_scope_phrase
         ),
         "has_doxastic_cue": ModalLogicFamily.DOXASTIC.value in cue_families,
         "has_doxastic_scope": doxastic_scope,
