@@ -1161,6 +1161,22 @@ def _result_compiled(
 ) -> bool:
     if proved:
         return True
+    compiled = _result_value(result, "is_compiled", None)
+    if callable(compiled):
+        try:
+            return bool(compiled())
+        except Exception:
+            return False
+    if compiled not in (None, ""):
+        return bool(compiled)
+    compiled = _result_value(result, "compiles", None)
+    if callable(compiled):
+        try:
+            return bool(compiled())
+        except Exception:
+            return False
+    if compiled not in (None, ""):
+        return bool(compiled)
     if str(reason or "").strip().lower().startswith("error:"):
         return False
     if prover_used or completed_provers:

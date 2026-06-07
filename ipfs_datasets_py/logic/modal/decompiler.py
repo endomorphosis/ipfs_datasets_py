@@ -6868,6 +6868,19 @@ def _typed_ir_reconstruction_phrases(
                 provenance_only=True,
             )
         )
+        for support_text in _typed_ir_source_semantic_excerpts(
+            document=document,
+            formula=formula,
+            existing_text=rendered,
+        ):
+            phrases.append(
+                DecodedModalPhrase(
+                    text=support_text,
+                    slot="typed_ir_semantic_support",
+                    spans=spans,
+                    provenance_only=True,
+                )
+            )
     return phrases
 
 
@@ -7008,6 +7021,179 @@ def _typed_ir_source_semantic_surface(
     ):
         return semantic_surface
     return ""
+
+
+def _typed_ir_source_semantic_excerpts(
+    *,
+    document: ModalIRDocument,
+    formula: ModalIRFormula,
+    existing_text: str,
+    max_excerpts: int = 3,
+    max_excerpt_tokens: int = 22,
+) -> List[str]:
+    """Return short non-boilerplate source clauses for sparse long spans."""
+
+    semantic_surface = _clean_text(
+        _semantic_source_span_text(document=document, formula=formula)
+    )
+    if not semantic_surface:
+        return []
+    semantic_tokens = _tokenize_for_similarity(semantic_surface)
+    if len(semantic_tokens) <= 32:
+        return []
+    existing_tokens = set(_tokenize_for_similarity(existing_text))
+    existing_content_tokens = _semantic_excerpt_content_tokens(existing_tokens)
+    excerpts: List[str] = []
+    seen: set[str] = set()
+    for candidate in _source_semantic_excerpt_candidates(semantic_surface):
+        candidate = _clean_text(candidate)
+        if not candidate:
+            continue
+        tokens = _tokenize_for_similarity(candidate)
+        if not tokens or len(tokens) > max_excerpt_tokens:
+            continue
+        token_set = set(tokens)
+        content_tokens = _semantic_excerpt_content_tokens(token_set)
+        novel_content_tokens = content_tokens - existing_content_tokens
+        if token_set and token_set.issubset(existing_tokens):
+            continue
+        if content_tokens and not novel_content_tokens:
+            continue
+        if len(novel_content_tokens) < 2:
+            continue
+        lowered = candidate.lower()
+        if lowered in seen:
+            continue
+        seen.add(lowered)
+        excerpts.append(candidate)
+        existing_tokens.update(token_set)
+        existing_content_tokens.update(content_tokens)
+        if len(excerpts) >= max_excerpts:
+            break
+    return excerpts
+
+
+def _semantic_excerpt_content_tokens(tokens: set[str]) -> set[str]:
+    return {
+        token
+        for token in tokens
+        if (
+            len(token) > 2
+            and token not in _LOW_INFORMATION_SCOPE_LEADING_TOKENS
+            and token not in _SOURCE_ROLE_CONNECTIVE_TOKENS
+            and token not in _SOURCE_ROLE_NOISE_TOKENS
+        )
+    }
+
+
+def _source_semantic_excerpt_candidates(text: str) -> List[str]:
+    normalized = _clean_text(text)
+    if not normalized:
+        return []
+    normalized = _strip_uscode_gpo_attribution_fragment(normalized)
+    normalized = _clean_text(normalized)
+    if not normalized:
+        return []
+    normalized = re.sub(
+        r"\b(?:Historical and Revision Notes|Editorial Notes|Statutory Notes "
+        r"and Related Subsidiaries|References in Text|Prior Provisions|"
+        r"Amendments)\b.*$",
+        "",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    split_text = re.sub(r"\s+\(([a-z0-9]+)\)\s+", r". (\1) ", normalized)
+    split_text = re.sub(r"\s+\(([A-Z])\)\s+", r". (\1) ", split_text)
+    raw_segments = _INFERRED_CONDITION_CLAUSE_SPLIT_RE.split(split_text)
+    candidates: List[str] = []
+    for raw_segment in raw_segments:
+        segment = _clean_text(raw_segment)
+        if not segment:
+            continue
+        segment = _clean_text(_USCODE_LEADING_SECTION_REF_RE.sub("", segment))
+        segment = segment.lstrip(" \t\r\n-–—:;,.")
+        segment = _TRAILING_SECTION_PUNCT_RE.sub("", segment)
+        segment = _trim_uscode_compilation_surface_text(
+            segment,
+            max_tokens=28,
+        )
+        segment = _clean_text(segment)
+        if not segment or _is_low_information_section_marker(segment):
+            continue
+        if _is_uscode_semantic_excerpt_boilerplate(segment):
+            continue
+        candidates.append(segment)
+    return _unique_preserve_order(candidates)
+
+
+def _is_uscode_semantic_excerpt_boilerplate(text: str) -> bool:
+    normalized = _clean_text(text)
+    if not normalized:
+        return True
+    lowered = normalized.lower()
+    if any(
+        marker in lowered
+        for marker in (
+            "united states code",
+            "government publishing office",
+            "www.gpo.gov",
+            "source statutes at large",
+            "source u.s. code",
+            "historical and revision notes",
+            "editorial notes",
+            "statutory notes",
+            "references in text",
+            "prior provisions",
+        )
+    ):
+        return True
+    if re.search(
+        r"(?<!\w)(?:pub|public)\.?\s+l\.?\b|\b\d+\s+stat\.?\b",
+        lowered,
+    ):
+        return True
+    tokens = _CUE_TOKEN_RE.findall(lowered)
+    if not tokens:
+        return True
+    if _bridge_cues_from_text(normalized):
+        return False
+    if _legal_semantic_atoms_from_text(normalized):
+        return False
+    if _status_keyword_from_source_text(normalized):
+        return False
+    if any(token in _SOURCE_ROLE_CUE_MARKERS for token in tokens):
+        return False
+    if any(token in _SOURCE_ROLE_TEMPORAL_CONTEXT_TOKENS for token in tokens):
+        return False
+    if len(tokens) <= 2:
+        return True
+    hierarchy_tokens = {
+        "title",
+        "chapter",
+        "subchapter",
+        "subtitle",
+        "part",
+        "section",
+        "sections",
+        "sec",
+        "secs",
+        "code",
+        "edition",
+        "source",
+        "statutes",
+        "large",
+    }
+    hierarchy_count = sum(token in hierarchy_tokens for token in tokens)
+    uppercase_alpha = [
+        token
+        for token in re.findall(r"[A-Za-z][A-Za-z-]*", normalized)
+        if token.upper() == token and len(token) > 1
+    ]
+    if hierarchy_count >= 2 and len(uppercase_alpha) >= max(2, len(tokens) // 2):
+        return True
+    if tokens[0] in {"pub", "public"} and "stat" in tokens:
+        return True
+    return False
 
 
 def _source_span_slot_phrases(

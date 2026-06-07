@@ -7,6 +7,7 @@ import heapq
 import json
 import sys
 import threading
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -339,6 +340,7 @@ def bridge_loss_evaluator_for_names(
     bridge_names: Sequence[str],
     *,
     evaluate_provers: Optional[bool] = None,
+    parallel_workers: Optional[int] = None,
 ) -> BridgeLossEvaluator:
     """Build a lazy bridge evaluator that returns optimizer-visible losses.
 
@@ -354,47 +356,93 @@ def bridge_loss_evaluator_for_names(
             if str(name).strip() and str(name).strip().lower() not in {"none", "off", "false"}
         )
     )
-    def evaluate(samples: Sequence[LegalSample]) -> Mapping[str, Mapping[str, float]]:
-        losses_by_sample: Dict[str, Dict[str, float]] = {}
-        if not names:
-            return losses_by_sample
-        from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
+    def evaluate_one(sample: LegalSample) -> tuple[str, Dict[str, float]]:
+        sample_losses: Dict[str, float] = {}
+        cache_key = _bridge_loss_cache_key(
+            sample,
+            bridge_names=names,
+            evaluate_provers=evaluate_provers,
+        )
+        with _BRIDGE_LOSS_CACHE_LOCK:
+            cached_losses = _BRIDGE_LOSS_CACHE.get(cache_key)
+        if cached_losses is not None:
+            return sample.sample_id, dict(cached_losses)
+        try:
+            from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
 
-        for sample in samples:
-            sample_losses: Dict[str, float] = {}
-            cache_key = _bridge_loss_cache_key(
-                sample,
+            multiview = evaluate_legal_ir_multiview(
+                sample.text,
                 bridge_names=names,
+                document_id=sample.sample_id,
                 evaluate_provers=evaluate_provers,
+                citation=sample.citation,
+                source=sample.source,
+                source_embedding=sample.embedding_vector,
             )
+            sample_losses.update(_multiview_losses_for_optimizer(multiview))
+        except Exception:
+            sample_losses["legal_ir_multiview_bridge_evaluation_failure_loss"] = 1.0
+        if sample_losses:
+            sample_losses = dict(sorted(sample_losses.items()))
             with _BRIDGE_LOSS_CACHE_LOCK:
-                cached_losses = _BRIDGE_LOSS_CACHE.get(cache_key)
-            if cached_losses is not None:
-                losses_by_sample[sample.sample_id] = dict(cached_losses)
-                continue
-            try:
-                multiview = evaluate_legal_ir_multiview(
-                    sample.text,
-                    bridge_names=names,
-                    document_id=sample.sample_id,
-                    evaluate_provers=evaluate_provers,
-                    citation=sample.citation,
-                    source=sample.source,
-                    source_embedding=sample.embedding_vector,
-                )
-                sample_losses.update(_multiview_losses_for_optimizer(multiview))
-            except Exception:
-                sample_losses["legal_ir_multiview_bridge_evaluation_failure_loss"] = 1.0
+                if len(_BRIDGE_LOSS_CACHE) >= BRIDGE_LOSS_CACHE_MAX:
+                    _BRIDGE_LOSS_CACHE.pop(next(iter(_BRIDGE_LOSS_CACHE)), None)
+                _BRIDGE_LOSS_CACHE[cache_key] = dict(sample_losses)
+        return sample.sample_id, dict(sorted(sample_losses.items()))
+
+    def evaluate(samples: Sequence[LegalSample]) -> Mapping[str, Mapping[str, float]]:
+        sample_list = list(samples)
+        losses_by_sample: Dict[str, Dict[str, float]] = {}
+        if not names or not sample_list:
+            return losses_by_sample
+
+        worker_count = _parallel_worker_count(
+            requested=parallel_workers,
+            item_count=len(sample_list),
+        )
+        if worker_count <= 1:
+            results = [evaluate_one(sample) for sample in sample_list]
+        else:
+            with ThreadPoolExecutor(
+                max_workers=worker_count,
+                thread_name_prefix="bridge-loss-samples",
+            ) as executor:
+                results = list(executor.map(evaluate_one, sample_list))
+        for sample_id, sample_losses in results:
             if sample_losses:
-                sample_losses = dict(sorted(sample_losses.items()))
-                with _BRIDGE_LOSS_CACHE_LOCK:
-                    if len(_BRIDGE_LOSS_CACHE) >= BRIDGE_LOSS_CACHE_MAX:
-                        _BRIDGE_LOSS_CACHE.pop(next(iter(_BRIDGE_LOSS_CACHE)), None)
-                    _BRIDGE_LOSS_CACHE[cache_key] = dict(sample_losses)
-                losses_by_sample[sample.sample_id] = dict(sorted(sample_losses.items()))
+                losses_by_sample[sample_id] = sample_losses
         return losses_by_sample
 
     return evaluate
+
+
+def _parallel_worker_count(
+    *,
+    requested: Optional[int],
+    item_count: int,
+) -> int:
+    if item_count <= 1:
+        return 1
+    if requested is None:
+        return 1
+    try:
+        requested_count = int(requested)
+    except (TypeError, ValueError):
+        return 1
+    return max(1, min(requested_count, int(item_count)))
+
+
+def _emit_optimization_progress(
+    callback: Optional[Callable[[Mapping[str, Any]], None]],
+    **payload: Any,
+) -> None:
+    """Best-effort progress reporting for long synchronous optimization phases."""
+    if callback is None:
+        return
+    try:
+        callback(dict(payload))
+    except Exception:
+        return
 
 
 def _bridge_loss_cache_key(
@@ -1817,6 +1865,7 @@ class ModalTodoSupervisor:
         bridge_loss_evaluator: Optional[BridgeLossEvaluator] = None,
         bridge_names: Sequence[str] = (),
         bridge_evaluate_provers: Optional[bool] = None,
+        bridge_parallel_workers: Optional[int] = None,
     ) -> None:
         self.policy = policy or ModalOptimizerPolicy()
         self.queue = queue or ModalTodoQueue()
@@ -1834,6 +1883,7 @@ class ModalTodoSupervisor:
             )
         )
         self.bridge_evaluate_provers = bridge_evaluate_provers
+        self.bridge_parallel_workers = bridge_parallel_workers
         self.bridge_loss_evaluator = (
             bridge_loss_evaluator
             if bridge_loss_evaluator is not None
@@ -1841,6 +1891,7 @@ class ModalTodoSupervisor:
                 bridge_loss_evaluator_for_names(
                     self.bridge_names,
                     evaluate_provers=self.bridge_evaluate_provers,
+                    parallel_workers=self.bridge_parallel_workers,
                 )
                 if self.bridge_names
                 else None
@@ -1922,6 +1973,8 @@ class ModalTodoSupervisor:
         if self.bridge_names:
             kwargs["legal_ir_bridge_names"] = self.bridge_names
             kwargs["legal_ir_evaluate_provers"] = self.bridge_evaluate_provers
+            if self.bridge_parallel_workers is not None:
+                kwargs["legal_ir_parallel_workers"] = self.bridge_parallel_workers
         return autoencoder.evaluate(list(samples), **kwargs)
 
     def seed_program_synthesis_from_introspection(
@@ -2474,12 +2527,34 @@ class ModalTodoSupervisor:
         max_items: int = 4,
         learning_rate: float = 0.35,
         iteration: int = 1,
+        progress_callback: Optional[Callable[[Mapping[str, Any]], None]] = None,
     ) -> ModalOptimizationStep:
         """Generate TODOs, claim a batch, apply updates, and validate progress."""
+        def report(stage: str, **payload: Any) -> None:
+            _emit_optimization_progress(
+                progress_callback,
+                iteration=iteration,
+                queue_counts=self.queue.status_counts(),
+                role_queue_counts=self.queue.role_status_counts(),
+                stage=stage,
+                **payload,
+            )
+
         sample_list = list(samples)
         validation_list = list(validation_samples or [])
         samples_by_id = {sample.sample_id: sample for sample in sample_list}
+        report(
+            "before_train_evaluation_start",
+            sample_count=len(sample_list),
+            validation_sample_count=len(validation_list),
+        )
         before = self._autoencoder_evaluation(autoencoder, sample_list)
+        report(
+            "before_train_evaluation_done",
+            cross_entropy_loss=before.cross_entropy_loss,
+            cosine_similarity=before.embedding_cosine_similarity,
+        )
+        report("before_validation_evaluation_start")
         validation_before = (
             self._autoencoder_evaluation(
                 autoencoder,
@@ -2489,18 +2564,32 @@ class ModalTodoSupervisor:
             if validation_list
             else None
         )
+        if validation_before is not None:
+            report(
+                "before_validation_evaluation_done",
+                cross_entropy_loss=validation_before.cross_entropy_loss,
+                cosine_similarity=validation_before.embedding_cosine_similarity,
+            )
+        else:
+            report("before_validation_evaluation_skipped")
+        report("seed_loss_todos_start")
         loss_seeded = self.seed_from_evaluation(sample_list, autoencoder=before)
+        report("seed_loss_todos_done", seeded_count=len(loss_seeded))
         bridge_loss_failure_count = int(self.last_bridge_loss_failure_count)
         bridge_loss_sample_count = int(self.last_bridge_loss_sample_count)
         bridge_loss_signal_count = int(self.last_bridge_loss_signal_count)
+        report("autoencoder_deduplicate_start")
         self.queue.deduplicate_autoencoder(
             optimizer_role=self.policy.autoencoder_role,
         )
+        report("autoencoder_deduplicate_done")
+        report("claim_autoencoder_todos_start", max_items=int(max_items))
         claimed = self.claim_next_batch(
             worker_id=worker_id,
             max_items=max_items,
             optimizer_role=self.policy.autoencoder_role,
         )
+        report("claim_autoencoder_todos_done", claimed_count=len(claimed))
         validation_scope = (
             "validation"
             if validation_before is not None
@@ -2512,12 +2601,21 @@ class ModalTodoSupervisor:
         failed_validation_ids: List[str] = []
         if claimed:
             state_before_batch = autoencoder.state.copy()
+            report("apply_todos_start", claimed_count=len(claimed))
             batch_updates = autoencoder.apply_todos(
                 claimed,
                 samples_by_id,
                 learning_rate=learning_rate,
             )
+            report("apply_todos_done", applied_update_count=len(batch_updates))
+            report("attempted_train_evaluation_start")
             attempted_after = self._autoencoder_evaluation(autoencoder, sample_list)
+            report(
+                "attempted_train_evaluation_done",
+                cross_entropy_loss=attempted_after.cross_entropy_loss,
+                cosine_similarity=attempted_after.embedding_cosine_similarity,
+            )
+            report("attempted_validation_evaluation_start")
             attempted_validation_after = (
                 self._autoencoder_evaluation(
                     autoencoder,
@@ -2527,6 +2625,14 @@ class ModalTodoSupervisor:
                 if validation_list
                 else None
             )
+            if attempted_validation_after is not None:
+                report(
+                    "attempted_validation_evaluation_done",
+                    cross_entropy_loss=attempted_validation_after.cross_entropy_loss,
+                    cosine_similarity=attempted_validation_after.embedding_cosine_similarity,
+                )
+            else:
+                report("attempted_validation_evaluation_skipped")
             completion_before = validation_before or before
             completion_after = attempted_validation_after or attempted_after
             validations: List[Dict[str, Any]] = []
@@ -2565,7 +2671,14 @@ class ModalTodoSupervisor:
                     )
                     failed_validation_ids.append(todo.todo_id)
 
+        report("after_train_evaluation_start")
         after = self._autoencoder_evaluation(autoencoder, sample_list)
+        report(
+            "after_train_evaluation_done",
+            cross_entropy_loss=after.cross_entropy_loss,
+            cosine_similarity=after.embedding_cosine_similarity,
+        )
+        report("after_validation_evaluation_start")
         validation_after = (
             self._autoencoder_evaluation(
                 autoencoder,
@@ -2575,6 +2688,15 @@ class ModalTodoSupervisor:
             if validation_list
             else None
         )
+        if validation_after is not None:
+            report(
+                "after_validation_evaluation_done",
+                cross_entropy_loss=validation_after.cross_entropy_loss,
+                cosine_similarity=validation_after.embedding_cosine_similarity,
+            )
+        else:
+            report("after_validation_evaluation_skipped")
+        report("program_synthesis_seed_start")
         program_synthesis_seeded = self.seed_program_synthesis_from_introspection(
             sample_list,
             autoencoder=autoencoder,
@@ -2584,6 +2706,11 @@ class ModalTodoSupervisor:
             require_residual_survival=bool(claimed),
         )
         program_synthesis_deduped = int(self.last_program_synthesis_deduped_count)
+        report(
+            "program_synthesis_seed_done",
+            deduped_count=program_synthesis_deduped,
+            seeded_count=len(program_synthesis_seeded),
+        )
 
         return ModalOptimizationStep(
             iteration=iteration,
@@ -2626,11 +2753,32 @@ class ModalTodoSupervisor:
         max_iterations: int = 5,
         target_cross_entropy_loss: float = 0.05,
         target_cosine_similarity: float = 0.99,
+        queue_refresh_callback: Optional[Callable[["ModalTodoSupervisor"], None]] = None,
+        progress_callback: Optional[Callable[[Mapping[str, Any]], None]] = None,
     ) -> ModalOptimizationRun:
         """Run bounded daemon iterations until targets are met or progress stops."""
         steps: List[ModalOptimizationStep] = []
         stopped_reason = "max_iterations"
+        _emit_optimization_progress(
+            progress_callback,
+            iteration=0,
+            sample_count=len(samples),
+            stage="initial_train_evaluation_start",
+        )
         final_evaluation = self._autoencoder_evaluation(autoencoder, list(samples))
+        _emit_optimization_progress(
+            progress_callback,
+            cross_entropy_loss=final_evaluation.cross_entropy_loss,
+            cosine_similarity=final_evaluation.embedding_cosine_similarity,
+            iteration=0,
+            stage="initial_train_evaluation_done",
+        )
+        _emit_optimization_progress(
+            progress_callback,
+            iteration=0,
+            sample_count=0 if validation_samples is None else len(validation_samples),
+            stage="initial_validation_evaluation_start",
+        )
         validation_final_evaluation = (
             self._autoencoder_evaluation(
                 autoencoder,
@@ -2640,8 +2788,45 @@ class ModalTodoSupervisor:
             if validation_samples is not None and len(validation_samples) > 0
             else None
         )
+        if validation_final_evaluation is not None:
+            _emit_optimization_progress(
+                progress_callback,
+                cross_entropy_loss=validation_final_evaluation.cross_entropy_loss,
+                cosine_similarity=validation_final_evaluation.embedding_cosine_similarity,
+                iteration=0,
+                stage="initial_validation_evaluation_done",
+            )
+        else:
+            _emit_optimization_progress(
+                progress_callback,
+                iteration=0,
+                stage="initial_validation_evaluation_skipped",
+            )
 
+        def refresh_queue(stage: str, iteration: int) -> None:
+            if queue_refresh_callback is None:
+                return
+            try:
+                queue_refresh_callback(self)
+                _emit_optimization_progress(
+                    progress_callback,
+                    iteration=iteration,
+                    queue_counts=self.queue.status_counts(),
+                    role_queue_counts=self.queue.role_status_counts(),
+                    stage=stage,
+                )
+            except Exception as exc:
+                _emit_optimization_progress(
+                    progress_callback,
+                    error=str(exc),
+                    error_type=type(exc).__name__,
+                    iteration=iteration,
+                    stage=f"{stage}_failed",
+                )
+
+        refresh_queue("queue_refresh_before_optimize", 0)
         for iteration in range(1, max_iterations + 1):
+            refresh_queue("queue_refresh_before_iteration", iteration)
             step = self.optimize_once(
                 samples,
                 autoencoder=autoencoder,
@@ -2650,8 +2835,10 @@ class ModalTodoSupervisor:
                 max_items=max_items,
                 learning_rate=learning_rate,
                 iteration=iteration,
+                progress_callback=progress_callback,
             )
             steps.append(step)
+            refresh_queue("queue_refresh_after_iteration", iteration)
             final_evaluation = step.after
             validation_final_evaluation = step.validation_after or validation_final_evaluation
             target_evaluation = validation_final_evaluation or final_evaluation
@@ -2668,6 +2855,7 @@ class ModalTodoSupervisor:
                 stopped_reason = "no_validated_improvement"
                 break
 
+        refresh_queue("queue_refresh_after_optimize", len(steps))
         return ModalOptimizationRun(
             steps=steps,
             final_evaluation=final_evaluation,

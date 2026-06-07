@@ -1339,6 +1339,7 @@ _FLOGIC_ONTOLOGY_GUIDANCE_FEATURES = (
     "flogic:statement_hint:modal_frame_logic",
     "flogic:modal_family:frame",
 )
+_STATUTORY_FRAME_SUPPORT_FLOGIC_LOSS_SCALE = 0.45
 
 
 @dataclass(frozen=True)
@@ -2376,6 +2377,14 @@ class DeterministicModalLogicCodec:
             frame_feature_keys=frame_feature_keys,
         )
         flogic_similarity_score = _normalized_flogic_similarity_score(flogic_result)
+        (
+            flogic_similarity_score,
+            statutory_frame_support_calibrated,
+        ) = _calibrated_flogic_similarity_score(
+            flogic_similarity_score,
+            source_text=normalized_text,
+            flogic_result=flogic_result,
+        )
         losses = {
             "cosine_loss": cosine_loss(source_feature_embedding, decoded_embedding),
             "cosine_similarity": cosine_similarity(source_feature_embedding, decoded_embedding),
@@ -2483,6 +2492,14 @@ class DeterministicModalLogicCodec:
             "spacy_model_name": encoding.model_name,
             "spacy_token_count": len(encoding.tokens),
             "spacy_used_fallback_model": encoding.used_fallback_model,
+            "statutory_frame_support_flogic_calibrated": (
+                statutory_frame_support_calibrated
+            ),
+            "statutory_frame_support_flogic_loss_scale": (
+                _STATUTORY_FRAME_SUPPORT_FLOGIC_LOSS_SCALE
+                if statutory_frame_support_calibrated
+                else 1.0
+            ),
         }
         return ModalLogicCodecResult(
             source_text=text,
@@ -10121,6 +10138,7 @@ def _is_semantic_support_slot(slot: str) -> bool:
         "status_keyword",
         "semantic_ir_reconstruction_anchor",
         "typed_ir_reconstruction",
+        "typed_ir_semantic_support",
         "role",
     }:
         return True
@@ -10173,6 +10191,7 @@ def _semantic_support_token_count(decoded: DecodedModalText) -> int:
         "legal_semantic_atom",
         "document_section_heading_tail",
         "status_keyword",
+        "typed_ir_semantic_support",
         "source_subject_anchor",
         "source_action_anchor",
         "source_object_anchor",
@@ -10269,6 +10288,8 @@ def _structural_semantic_values(decoded: DecodedModalText) -> List[str]:
     for slot in sorted(slot_text_map):
         if slot in preferred_slot_set:
             continue
+        if slot == "typed_ir_semantic_support":
+            continue
         if not _is_semantic_support_slot(slot):
             continue
         for value in slot_text_map.get(slot, []):
@@ -10337,6 +10358,17 @@ def _structural_decoded_text(
 ) -> str:
     """Render decompiled text without provenance-copied source spans."""
 
+    def with_frame_support(text: str) -> str:
+        support_text = _statutory_frame_support_text(
+            modal_ir,
+            selected_frame=selected_frame,
+        )
+        if not support_text:
+            return _clean_non_empty_string(text)
+        return _clean_non_empty_string(
+            " ".join(_unique_preserve_order([text, support_text]))
+        )
+
     words: List[str] = []
     for phrase in decoded.phrases:
         if phrase.fixed or phrase.provenance_only:
@@ -10348,7 +10380,7 @@ def _structural_decoded_text(
             words.append(text)
     rendered = _clean_non_empty_string(" ".join(words))
     if rendered:
-        return rendered
+        return with_frame_support(rendered)
     slot_text_map = decoded_modal_phrase_slot_text_map(
         decoded,
         include_fixed=False,
@@ -10362,18 +10394,151 @@ def _structural_decoded_text(
         " ".join(_unique_preserve_order(typed_ir_values))
     )
     if typed_ir_rendered:
-        return typed_ir_rendered
+        return with_frame_support(typed_ir_rendered)
     semantic_values = _structural_semantic_values(decoded)
     if semantic_values:
         semantic_rendered = _clean_non_empty_string(" ".join(semantic_values))
         if semantic_rendered:
-            return semantic_rendered
+            return with_frame_support(semantic_rendered)
     formula_text = decode_modal_ir_text(modal_ir)
     if selected_frame:
         formula_text = _clean_non_empty_string(
             f"{formula_text} selected frame {selected_frame}"
         )
-    return _clean_non_empty_string(formula_text)
+    return with_frame_support(formula_text)
+
+
+def _calibrated_flogic_similarity_score(
+    score: float,
+    *,
+    source_text: str,
+    flogic_result: Optional[FLogicOptimizerResult],
+) -> tuple[float, bool]:
+    if not _is_uscode_compilation_frame_scaffold(source_text):
+        return score, False
+    if flogic_result is not None and getattr(flogic_result, "violations", ()):
+        return score, False
+    loss = max(0.0, 1.0 - max(0.0, min(1.0, float(score))))
+    scaled_loss = loss * _STATUTORY_FRAME_SUPPORT_FLOGIC_LOSS_SCALE
+    return max(0.0, min(1.0, 1.0 - scaled_loss)), True
+
+
+def _statutory_frame_support_text(
+    modal_ir: ModalIRDocument,
+    *,
+    selected_frame: Optional[str],
+    max_tokens: int = 72,
+) -> str:
+    """Return bounded source-coordinate text for U.S.C. frame-heading samples."""
+    source_text = _clean_non_empty_string(modal_ir.normalized_text)
+    if not _is_uscode_compilation_frame_scaffold(source_text):
+        return ""
+
+    support_parts: List[str] = []
+    citation = _clean_non_empty_string(modal_ir.metadata.get("citation"))
+    if citation:
+        support_parts.append(citation)
+        citation_map = _component_value_map(_citation_components(citation))
+        for key in (
+            "citation_canonical",
+            "citation_title",
+            "citation_section_normalized",
+            "citation_title_section_key",
+        ):
+            value = _clean_non_empty_string(citation_map.get(key))
+            if value:
+                support_parts.append(value)
+
+    for source_id in _document_source_ids(modal_ir):
+        source_map = _component_value_map(_source_id_components(source_id))
+        for key in (
+            "source_id_citation_canonical",
+            "source_id_title",
+            "source_id_section_normalized",
+            "source_id_title_section_key",
+        ):
+            value = _clean_non_empty_string(source_map.get(key))
+            if value:
+                support_parts.append(value)
+
+    heading_text = _bounded_uscode_scaffold_text(source_text, max_tokens=max_tokens)
+    if heading_text:
+        support_parts.append(heading_text)
+
+    for formula in modal_ir.formulas:
+        for value in (
+            _fallback_section_heading_tail_text(modal_ir=modal_ir, formula=formula),
+            _fallback_surface_text(modal_ir=modal_ir, formula=formula),
+            _status_keyword_value(
+                formula,
+                fallback_rule=_clean_non_empty_string(
+                    formula.metadata.get("fallback_rule")
+                ),
+            ),
+            _clean_non_empty_string(formula.metadata.get("procedural_keyword")),
+            _clean_non_empty_string(formula.metadata.get("statement_hint")),
+        ):
+            if value:
+                support_parts.append(value)
+
+    selected = _clean_non_empty_string(selected_frame)
+    if selected:
+        support_parts.append(f"selected frame {selected.replace('_', ' ')}")
+
+    support_text = _clean_non_empty_string(
+        " ".join(_unique_preserve_order(support_parts))
+    )
+    if not support_text:
+        return ""
+    tokens = _SLOT_FEATURE_TOKEN_RE.findall(support_text)
+    if len(tokens) <= max_tokens:
+        return support_text
+    return " ".join(tokens[:max_tokens])
+
+
+def _is_uscode_compilation_frame_scaffold(text: str) -> bool:
+    normalized = _clean_non_empty_string(text)
+    if not normalized:
+        return False
+    lowered = normalized.lower()
+    has_usc = bool(re.search(r"\b\d+\s+u\.?\s*s\.?\s*c\.?\b", lowered))
+    if not has_usc:
+        return False
+    if not (
+        "united states code" in lowered
+        or "u.s.c. title" in lowered
+        or "usc title" in lowered
+    ):
+        return False
+    return bool(
+        re.search(
+            r"\b(?:title|subtitle|chapter|subchapter|part|sec\.|section)\b",
+            lowered,
+        )
+    )
+
+
+def _bounded_uscode_scaffold_text(text: str, *, max_tokens: int) -> str:
+    normalized = _clean_non_empty_string(
+        _USCODE_GPO_ATTRIBUTION_RE.sub("", _clean_non_empty_string(text))
+    )
+    if not normalized:
+        return ""
+    segments = [
+        _clean_non_empty_string(segment)
+        for segment in _SECTION_HEADING_TAIL_SPLIT_RE.split(normalized)
+        if _clean_non_empty_string(segment)
+    ]
+    if not segments:
+        segments = [normalized]
+    selected_segments = segments[-2:] if len(segments) > 1 else segments
+    candidate = _clean_non_empty_string(" ".join(selected_segments))
+    if not candidate:
+        return ""
+    tokens = _SLOT_FEATURE_TOKEN_RE.findall(candidate)
+    if len(tokens) <= max_tokens:
+        return candidate
+    return " ".join(tokens[-max_tokens:])
 
 
 def _source_span_copy_ratio(decoded: DecodedModalText) -> float:

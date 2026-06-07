@@ -260,6 +260,9 @@ def _zkp_attestation_records(
                 if guidance_ref:
                     proof.public_inputs["compiler_guidance_ref"] = guidance_ref
                     proof.public_inputs["compiler_guidance_version"] = 1
+                    from ipfs_datasets_py.logic.zkp import refresh_proof_attestation
+
+                    refresh_proof_attestation(proof)
                 verified = bool(verifier.verify_proof(proof))
             proof_dict = proof.to_dict()
             proof_hash = hashlib.sha256(proof.proof_data).hexdigest()

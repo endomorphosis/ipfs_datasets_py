@@ -175,6 +175,44 @@ def test_modal_frame_logic_bridge_bounds_flogic_similarity_loss_for_heading_samp
     assert report.round_trip.extra_losses["ontology_violation_count"] == 0.0
 
 
+def test_modal_frame_logic_bridge_aligns_compact_uscode_heading_scaffolds() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("modal_frame_logic")
+    samples = [
+        (
+            "25 U.S.C. 2017",
+            (
+                "25 U.S.C. 2017: U.S.C. Title 25 - INDIANS 25 U.S.C. United "
+                "States Code, 2024 Edition Title 25 - INDIANS CHAPTER 22 - "
+                "BUREAU OF INDIAN AFFAIRS PROGRAMS SUBCHAPTER II - INDIAN "
+                "EDUCATION Sec. 2017 - Annual report"
+            ),
+        ),
+        (
+            "50 U.S.C. 1906",
+            (
+                "50 U.S.C. 1906. U.S.C. Title 50 - WAR AND NATIONAL DEFENSE "
+                "United States Code, 2024 Edition CHAPTER 44 - NATIONAL "
+                "SECURITY SUBCHAPTER I - COORDINATION FOR NATIONAL SECURITY "
+                "Sec. 1906 - Annual report"
+            ),
+        ),
+    ]
+
+    for citation, text in samples:
+        report = adapter.evaluate(
+            text,
+            document_id=citation.lower().replace(" ", "-").replace(".", ""),
+            citation=citation,
+            evaluate_provers=False,
+        )
+
+        assert report.ir_document.has_frame_logic is True
+        assert report.round_trip.flogic_similarity_loss < 0.05
+        assert report.round_trip.extra_losses["ontology_violation_count"] == 0.0
+
+
 def test_graph_projection_parses_string_boolean_metadata() -> None:
     from ipfs_datasets_py.logic.bridge.types import GraphProjectionResult
 
@@ -705,6 +743,110 @@ def test_deontic_bridge_recovers_core_slots_from_nested_prompt_context() -> None
     assert norm["action"] == "conduct security evaluations"
     assert summary["missing_required_slots"] == []
     assert summary["slot_reconstruction_complete"] is True
+    assert phase8_record["requires_validation"] is False
+    assert report.round_trip.extra_losses["deontic_decoder_slot_loss"] == 0.0
+    assert report.round_trip.extra_losses["deontic_quality_requires_validation_loss"] == 0.0
+
+
+def test_deontic_bridge_scopes_migrated_detail_slots_to_norm_support_span() -> None:
+    from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
+
+    source_text = (
+        "Notwithstanding another section, no permit shall issue unless approved. "
+        "Historical notes and cross references. "
+        "The Secretary shall publish notice."
+    )
+    support_text = "The Secretary shall publish notice."
+    support_start = source_text.index(support_text)
+    support_end = support_start + len(support_text)
+
+    class _FakeResult:
+        success = True
+        metadata = {
+            "parser_element": {
+                "schema_version": "legal_norm_ir-v1",
+                "source_id": "legacy:deontic:scoped-detail-slots",
+                "canonical_citation": "42 U.S.C. 1591",
+                "deontic_operator": "shall",
+                "subject": ["Secretary"],
+                "action": ["publish notice"],
+                "text": source_text,
+                "source_text": source_text,
+                "support_text": support_text,
+                "support_span": [support_start, support_end],
+                "norm_type": "obligation",
+                "promotable_to_theorem": False,
+                "parser_warnings": [
+                    "enumerated_clause_requires_item_level_review",
+                    "cross_reference_requires_resolution",
+                    "exception_requires_scope_review",
+                    "override_clause_requires_precedence_review",
+                    "llm_repair_required",
+                ],
+                "export_readiness": {
+                    "blockers": [
+                        "enumerated_clause_requires_item_level_review",
+                        "cross_reference_requires_resolution",
+                        "exception_requires_scope_review",
+                        "override_clause_requires_precedence_review",
+                        "llm_repair_required",
+                    ]
+                },
+                "field_spans": {
+                    "subject": [support_start + 4, support_start + 13],
+                    "modality": [support_start + 14, support_start + 19],
+                    "action": [support_start + 20, support_start + 34],
+                },
+                "exception_details": [
+                    {
+                        "value": "approved",
+                        "span": [58, 66],
+                        "clause_span": [51, 67],
+                    }
+                ],
+                "cross_reference_details": [
+                    {
+                        "value": "another section",
+                        "span": [18, 33],
+                    }
+                ],
+                "override_clause_details": [
+                    {
+                        "value": "Notwithstanding another section",
+                        "span": [0, 33],
+                    }
+                ],
+            }
+        }
+
+    class _FakeConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _FakeResult()
+
+    adapter = DeonticNormsBridgeAdapter(converter=_FakeConverter())
+    report = adapter.evaluate(
+        source_text,
+        document_id="deontic-bridge-scoped-detail-slots",
+        citation="Deontic Bridge Scoped Detail Slots",
+    )
+
+    norm = report.ir_document.views["deontic_ir"].payload["norms"][0]
+    formula_record = report.ir_document.views["deontic_formula_records"].payload[
+        "records"
+    ][0]
+    phase8_record = report.ir_document.views["deontic_phase8_quality"].payload[
+        "records"
+    ][0]
+
+    assert norm["exceptions"] == []
+    assert norm["cross_references"] == []
+    assert norm["overrides"] == []
+    assert "exception_requires_scope_review" not in formula_record["blockers"]
+    assert "cross_reference_requires_resolution" not in formula_record["blockers"]
+    assert "override_clause_requires_precedence_review" not in formula_record["blockers"]
+    assert formula_record["proof_ready"] is True
+    assert formula_record["requires_validation"] is False
     assert phase8_record["requires_validation"] is False
     assert report.round_trip.extra_losses["deontic_decoder_slot_loss"] == 0.0
     assert report.round_trip.extra_losses["deontic_quality_requires_validation_loss"] == 0.0
@@ -1791,6 +1933,32 @@ def test_tdfol_bridge_coerce_parses_prefixed_proof_obligation_text() -> None:
     assert coerced.to_string() == "O(disclose_records(agency))"
 
 
+def test_tdfol_bridge_coerce_extracts_json_formula_export_text() -> None:
+    from ipfs_datasets_py.logic.TDFOL.tdfol_core import DeonticFormula, DeonticOperator
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
+
+    formula = '{"target_logic": "TDFOL", "formula": "P(establish_fund(secretary))"}'
+
+    coerced = coerce_tdfol_formula(formula)
+
+    assert isinstance(coerced, DeonticFormula)
+    assert coerced.operator == DeonticOperator.PERMISSION
+    assert coerced.to_string() == "P(establish_fund(secretary))"
+
+
+def test_tdfol_bridge_coerce_canonicalizes_deontic_agent_prefix_export() -> None:
+    from ipfs_datasets_py.logic.TDFOL.tdfol_core import DeonticFormula, DeonticOperator
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
+
+    formula = "proof obligation: O(agency, publish_notice(agency, deadline))"
+
+    coerced = coerce_tdfol_formula(formula)
+
+    assert isinstance(coerced, DeonticFormula)
+    assert coerced.operator == DeonticOperator.OBLIGATION
+    assert coerced.to_string() == "O(publish_notice(agency, deadline))"
+
+
 def test_tdfol_bridge_canonicalizes_prefixed_proof_obligation_rows() -> None:
     from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
 
@@ -2001,6 +2169,82 @@ def test_cec_dcec_bridge_uses_lifecycle_fallback_when_converter_output_is_formul
     assert "mark_section_vacant" in formula_record["proof_input"]
     assert report.proof_gate.compiles is True
     assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+
+
+def test_cec_dcec_bridge_recognizes_repealed_section_status_without_converter() -> None:
+    from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
+
+    class _NoisyConverter:
+        @staticmethod
+        def convert(_text: str):
+            raise AssertionError("editorial section status should not invoke converter")
+
+    adapter = CecDcecBridgeAdapter(converter=_NoisyConverter())
+    report = adapter.evaluate(
+        (
+            "U.S.C. Title 20 - EDUCATION Secs. 6577, 6578 - Repealed. "
+            "Pub. L. 114-95, title I, Dec. 10, 2015. "
+            "§§6577, 6578. Repealed. Section 6577 related to State report."
+        ),
+        document_id="cec-bridge-repealed-status",
+        citation="20 U.S.C. 6577",
+    )
+
+    event_record = report.ir_document.views["cec_events"].payload["events"][0]
+    formula_record = report.ir_document.views["dcec_formula"].payload["records"][0]
+
+    assert event_record["actor"] == "statute_section"
+    assert event_record["event"] == "record_section_repeal"
+    assert formula_record["proof_input"].startswith("LifecycleState(")
+    assert report.proof_gate.compiles is True
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
+def test_cec_dcec_bridge_rejects_heading_polluted_fallback_proposition() -> None:
+    from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
+
+    class _HeadingPollutedOutput:
+        proposition = (
+            "U.S.C. Title 36 - PATRIOTIC AND NATIONAL OBSERVANCES "
+            "United States Code From the U.S. Government Publishing Office "
+            + ("heading text " * 30)
+        )
+        operator = None
+        agent = None
+
+    class _HeadingPollutedResult:
+        success = True
+        output = _HeadingPollutedOutput()
+        metadata = {}
+
+    class _HeadingPollutedConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _HeadingPollutedResult()
+
+    adapter = CecDcecBridgeAdapter(converter=_HeadingPollutedConverter())
+    report = adapter.evaluate(
+        (
+            "U.S.C. Title 36 - PATRIOTIC AND NATIONAL OBSERVANCES "
+            "Sec. 50111 - Liability for acts of officers and agents "
+            "§50111. Liability for acts of officers and agents The corporation "
+            "is liable for the acts of its officers and agents acting within "
+            "the scope of their authority."
+        ),
+        document_id="cec-bridge-heading-polluted-fallback",
+        citation="36 U.S.C. 50111",
+    )
+
+    event_record = report.ir_document.views["cec_events"].payload["events"][0]
+    formula_record = report.ir_document.views["dcec_formula"].payload["records"][0]
+
+    assert event_record["actor"] == "corporation"
+    assert event_record["event"] == "assume_liability_for_acts_of_officers_and_agents"
+    assert "usc_title" not in formula_record["proof_input"].lower()
+    assert report.proof_gate.compiles is True
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
 
 
 def test_cec_dcec_bridge_recovers_norms_from_legacy_parser_element_metadata() -> None:
@@ -3005,8 +3249,10 @@ def test_external_prover_router_uses_syntactic_native_fallback_when_tdfol_unavai
 
     assert router.get_available_provers() == ["native_syntactic"]
     assert result.is_proved is False
+    assert result.is_compiled() is True
     assert result.prover_used == "native_syntactic"
     assert result.reason == "Used native_syntactic (no proof)"
+    assert result.all_results["native_syntactic"].is_compiled() is True
     assert result.all_results["native_syntactic"].is_valid is True
 
 
@@ -3041,7 +3287,9 @@ def test_external_prover_router_uses_syntactic_native_fallback_when_native_init_
 
     assert router.get_available_provers() == ["native_syntactic"]
     assert result.is_proved is False
+    assert result.is_compiled() is True
     assert result.prover_used == "native_syntactic"
+    assert result.all_results["native_syntactic"].is_compiled() is True
     assert result.all_results["native_syntactic"].is_valid is True
 
 
@@ -4129,6 +4377,35 @@ def test_zkp_verifier_rejects_stale_attestation_view() -> None:
     assert verifier.verify_proof(proof) is False
 
 
+def test_zkp_attestation_refresh_repairs_public_input_mutation() -> None:
+    from ipfs_datasets_py.logic.zkp import (
+        ZKPProver,
+        ZKPVerifier,
+        refresh_proof_attestation,
+    )
+
+    prover = ZKPProver(backend="simulated", enable_caching=False)
+    proof = prover.generate_proof(
+        "O(publish_notice(agency))",
+        ["O(publish_notice(agency))", "uses_predicate(publish_notice)"],
+        metadata={"circuit_ref": "legal_ir_zkp_attestation@v1", "circuit_version": 1},
+    )
+    verifier = ZKPVerifier(backend="simulated")
+
+    proof.public_inputs["compiler_guidance_ref"] = "c" * 64
+    proof.public_inputs["compiler_guidance_version"] = 1
+
+    assert verifier.verify_proof(proof) is False
+
+    refresh_proof_attestation(proof)
+
+    assert proof.public_inputs["attestation_ref"] == (
+        proof.metadata["attestation_view"]["attestation_ref"]
+    )
+    assert proof.metadata["attestation_view"]["compiler_guidance_ref"] == "c" * 64
+    assert verifier.verify_proof(proof) is True
+
+
 def test_zkp_prover_cached_whitespace_variant_refreshes_attestation_view() -> None:
     from ipfs_datasets_py.logic.zkp import ZKPProver, ZKPVerifier
 
@@ -4414,6 +4691,84 @@ def test_multiview_training_target_compacts_short_official_usc_section() -> None
     }
     assert "modal.frame_logic" not in compacted
     assert abs(sum(compacted.values()) - 1.0) < 1e-9
+
+
+def test_official_usc_primary_projection_handles_liability_and_reporting_sections() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _project_official_usc_primary_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.25,
+        "TDFOL.prover": 0.25,
+        "deontic.ir": 0.25,
+        "knowledge_graphs.neo4j_compat": 0.25,
+    }
+
+    liability = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "36 U.S.C. 50111. Liability for acts of officers and agents. "
+            "The corporation is liable for the acts of its officers and agents "
+            "acting within the scope of their authority."
+        ),
+    )
+    reporting = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "50 U.S.C. 1906. Annual report. The Secretary shall submit to the "
+            "President and to the congressional intelligence committees an annual "
+            "report. The report shall contain an analysis of the program."
+        ),
+    )
+
+    assert liability["deontic.ir"] > distribution["deontic.ir"]
+    assert liability["CEC.native"] > distribution["CEC.native"]
+    assert reporting["deontic.ir"] > distribution["deontic.ir"]
+    assert reporting["TDFOL.prover"] > distribution["TDFOL.prover"]
+    assert abs(sum(liability.values()) - 1.0) < 1e-9
+    assert abs(sum(reporting.values()) - 1.0) < 1e-9
+
+
+def test_official_usc_primary_projection_handles_determination_and_renaming_sections() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _project_official_usc_primary_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.25,
+        "TDFOL.prover": 0.25,
+        "deontic.ir": 0.25,
+        "knowledge_graphs.neo4j_compat": 0.25,
+    }
+
+    determination = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "42 U.S.C. 1591. Determination of critical areas by President; "
+            "requisite conditions. The authority shall not be exercised unless "
+            "the President shall have determined that the area is critical."
+        ),
+    )
+    renaming = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "16 U.S.C. 217a. Change in name of Abraham Lincoln National "
+            "Historical Park. The park shall on and after September 8, 1959, "
+            "be known as Abraham Lincoln Birthplace National Historic Site, and "
+            "any law in which the park is designated or referred to shall be "
+            "held to refer to such park under that name."
+        ),
+    )
+
+    assert determination["TDFOL.prover"] > distribution["TDFOL.prover"]
+    assert determination["CEC.native"] > distribution["CEC.native"]
+    assert renaming["knowledge_graphs.neo4j_compat"] > distribution[
+        "knowledge_graphs.neo4j_compat"
+    ]
+    assert renaming["CEC.native"] > distribution["CEC.native"]
+    assert abs(sum(determination.values()) - 1.0) < 1e-9
+    assert abs(sum(renaming.values()) - 1.0) < 1e-9
 
 
 def test_multiview_training_target_distribution_rebalances_dense_contract_lanes() -> None:

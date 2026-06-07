@@ -10,6 +10,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Mapping
 
 import pytest
 
@@ -6399,3 +6400,57 @@ def test_supervisor_optimization_run_reduces_ce_and_reconstruction_loss(tmp_path
     assert run.final_evaluation.embedding_cosine_similarity == pytest.approx(1.0)
     assert run.to_dict()["steps"]
     assert path.read_text(encoding="utf-8").startswith("{")
+
+
+def test_supervisor_optimize_refreshes_external_program_synthesis_queue_state() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice before adopting a rule.",
+    )
+    stale_todo = ModalTodo(
+        todo_id="program-stale-external",
+        action="repair_tdfol_bridge_parse",
+        objective="external Codex work should not remain pending after refresh",
+        sample_ids=[sample.sample_id],
+        citations=[sample.citation],
+        loss_name="tdfol_parse_failure_ratio",
+        loss_value=1.0,
+        priority=1.0,
+        metadata={
+            "execution_target": "codex_program_repair",
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "tdfol",
+        },
+    )
+    supervisor = ModalTodoSupervisor(
+        queue=ModalTodoQueue([stale_todo]),
+        policy=ModalOptimizerPolicy(enable_program_synthesis_todos=False),
+    )
+    refresh_stages = []
+    progress_stages = []
+
+    def refresh_queue(target_supervisor: ModalTodoSupervisor) -> None:
+        refreshed = ModalTodoQueue([ModalTodo.from_dict(stale_todo.to_dict())])
+        refreshed.complete(stale_todo.todo_id)
+        target_supervisor.queue = refreshed
+        refresh_stages.append(target_supervisor.queue.status_counts())
+
+    def record_progress(progress: Mapping[str, object]) -> None:
+        progress_stages.append(str(progress.get("stage") or ""))
+
+    run = supervisor.optimize(
+        [sample],
+        autoencoder=AdaptiveModalAutoencoder(),
+        max_iterations=1,
+        max_items=2,
+        queue_refresh_callback=refresh_queue,
+        progress_callback=record_progress,
+    )
+
+    assert refresh_stages
+    assert supervisor.queue.pending_count(optimizer_role="program_synthesis") == 0
+    assert supervisor.queue.status_counts().get("completed") == 1
+    assert run.steps[0].program_synthesis_pending_count == 0
+    assert "queue_refresh_before_iteration" in progress_stages
+    assert "before_train_evaluation_start" in progress_stages

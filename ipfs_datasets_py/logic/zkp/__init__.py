@@ -83,6 +83,7 @@ __all__ = [
     'compiler_guidance_ref_from_metadata',
     'decode_simulated_proof_layout',
     'proof_attestation_view_from_proof_dict',
+    'refresh_proof_attestation',
 ]
 
 _SIMULATION_WARNING = (
@@ -200,6 +201,7 @@ def __getattr__(name: str):
         "compiler_guidance_ref_from_metadata",
         "decode_simulated_proof_layout",
         "proof_attestation_view_from_proof_dict",
+        "refresh_proof_attestation",
     }:
         mod = importlib.import_module(f"{__name__}.circuits")
         if name in {
@@ -209,6 +211,7 @@ def __getattr__(name: str):
             "compiler_guidance_ref_from_metadata",
             "decode_simulated_proof_layout",
             "proof_attestation_view_from_proof_dict",
+            "refresh_proof_attestation",
         }:
             value = getattr(mod, name)
             globals()[name] = value

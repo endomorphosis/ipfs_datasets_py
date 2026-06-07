@@ -276,6 +276,29 @@ _BRIDGE_CONTRACT_ENFORCEMENT_PENALTY_PROVISION_RE = re.compile(
     r"shall\s+be\s+guilty)\b",
     flags=re.IGNORECASE,
 )
+_BRIDGE_CONTRACT_LIABILITY_PROVISION_RE = re.compile(
+    r"\b(?:liable\s+for|liability\s+for|scope\s+of\s+(?:his|her|its|their|the)\s+"
+    r"authority|acts?\s+of\s+(?:its|their|the)\s+officers?\s+and\s+agents?)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_REPORTING_DUTY_RE = re.compile(
+    r"\b(?:annual\s+report|submit\s+(?:to|an?\s+annual\s+report)|"
+    r"report\s+(?:shall|submitted|required\s+by)|contents?\s+of\s+report|"
+    r"include\s+all\s+assessments\s+in\s+the\s+report)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_DETERMINATION_CONDITION_RE = re.compile(
+    r"\b(?:determination\s+of|shall\s+have\s+determined|shall\s+not\s+be\s+"
+    r"exercised|unless\s+the\s+president\s+finds|conditions?\s+exist|"
+    r"requisite\s+conditions?)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_RENAMING_DESIGNATION_RE = re.compile(
+    r"\b(?:change\s+in\s+name|shall\s+(?:on\s+and\s+after\s+)?"
+    r"(?:be\s+known|be\s+held\s+to\s+refer)|designated\s+or\s+referred\s+to|"
+    r"renamed)\b",
+    flags=re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -2418,10 +2441,54 @@ def _project_official_usc_primary_contract_distribution(
     has_enforcement_penalty_provision = bool(
         _BRIDGE_CONTRACT_ENFORCEMENT_PENALTY_PROVISION_RE.search(normalized_text)
     )
+    has_liability_provision = bool(
+        _BRIDGE_CONTRACT_LIABILITY_PROVISION_RE.search(normalized_text)
+    )
+    has_reporting_duty = bool(
+        _BRIDGE_CONTRACT_REPORTING_DUTY_RE.search(normalized_text)
+    )
+    has_determination_condition = bool(
+        _BRIDGE_CONTRACT_DETERMINATION_CONDITION_RE.search(normalized_text)
+    )
+    has_renaming_designation = bool(
+        _BRIDGE_CONTRACT_RENAMING_DESIGNATION_RE.search(normalized_text)
+    )
 
     target_mix: Sequence[tuple[str, float]]
     strength = 0.0
-    if has_enforcement_penalty_provision and deontic_cue_count > 0:
+    if has_liability_provision:
+        target_mix = (
+            ("deontic.ir", 0.42),
+            ("CEC.native", 0.30),
+            ("knowledge_graphs.neo4j_compat", 0.20),
+            ("TDFOL.prover", 0.08),
+        )
+        strength = 0.36
+    elif has_determination_condition:
+        target_mix = (
+            ("TDFOL.prover", 0.34),
+            ("CEC.native", 0.30),
+            ("deontic.ir", 0.24),
+            ("knowledge_graphs.neo4j_compat", 0.12),
+        )
+        strength = 0.38
+    elif has_reporting_duty and deontic_cue_count > 0:
+        target_mix = (
+            ("deontic.ir", 0.44),
+            ("TDFOL.prover", 0.30),
+            ("CEC.native", 0.18),
+            ("knowledge_graphs.neo4j_compat", 0.08),
+        )
+        strength = 0.36
+    elif has_renaming_designation:
+        target_mix = (
+            ("knowledge_graphs.neo4j_compat", 0.34),
+            ("CEC.native", 0.30),
+            ("deontic.ir", 0.24),
+            ("TDFOL.prover", 0.12),
+        )
+        strength = 0.34
+    elif has_enforcement_penalty_provision and deontic_cue_count > 0:
         target_mix = (
             ("deontic.ir", 0.46),
             ("knowledge_graphs.neo4j_compat", 0.30),

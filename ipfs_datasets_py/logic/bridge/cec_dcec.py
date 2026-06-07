@@ -362,12 +362,16 @@ class CecDcecBridgeAdapter:
 
 
 def _deontic_norms_from_text(text: str, *, converter: Any) -> list[dict[str, Any]]:
+    editorial_norm = _section_editorial_norm_from_text(text)
+    if editorial_norm and editorial_norm.get("editorial_status") in {"repealed", "vacant"}:
+        return [editorial_norm]
+
     result = converter.convert(text)
     metadata = dict(getattr(result, "metadata", {}) or {})
     norms = _deontic_norm_rows_from_metadata(metadata)
     if norms:
         return norms
-    fallback = _fallback_norm_from_conversion(result=result, text=text)
+    fallback = editorial_norm or _fallback_norm_from_conversion(result=result, text=text)
     return [fallback] if fallback else []
 
 
@@ -1927,7 +1931,7 @@ def _stable_short_hash(value: str) -> str:
 
 
 def _fallback_norm_from_conversion(*, result: Any, text: str) -> Optional[dict[str, Any]]:
-    normalized_text = " ".join(str(text or "").split())
+    normalized_text = _normalize_legal_sample_text(text)
     if not normalized_text:
         return None
 
@@ -1954,6 +1958,64 @@ def _fallback_norm_from_conversion(*, result: Any, text: str) -> Optional[dict[s
     }
 
 
+def _section_editorial_norm_from_text(text: str) -> Optional[dict[str, Any]]:
+    normalized_text = _normalize_legal_sample_text(text)
+    lowered = normalized_text.lower()
+    if not normalized_text:
+        return None
+
+    status = ""
+    action = ""
+    if _section_status_heading_matches(lowered, "repealed"):
+        status = "repealed"
+        action = "record section repeal"
+    elif _section_status_heading_matches(lowered, "vacant"):
+        status = "vacant"
+        action = "mark section vacant"
+    elif (
+        re.search(r"\bsec\.?\s*[0-9a-z.-]+\s*-\s*change\s+in\s+name\b", lowered)
+        or re.search(r"§+\s*[0-9a-z.-]+\.?\s+change\s+in\s+name\b", lowered)
+    ) and re.search(r"\b(?:shall\s+be\s+known\s+as|renamed)\b", lowered):
+        status = "renamed"
+        action = "record statutory name change"
+
+    if not status:
+        return None
+
+    digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
+    return {
+        "actor": "statute section",
+        "action": action,
+        "modality": "obligated",
+        "norm_type": "instrument_lifecycle",
+        "source_id": f"dcec:editorial:{digest}",
+        "support_text": normalized_text[:500],
+        "editorial_status": status,
+        "extraction_method": "cec_dcec_editorial_status_v1",
+    }
+
+
+def _section_status_heading_matches(text: str, status: str) -> bool:
+    escaped_status = re.escape(status)
+    return bool(
+        re.search(
+            rf"\bsecs?\.?\s*[0-9][0-9a-z.\-\s,]*(?:-|\.|:)\s*{escaped_status}\b",
+            text,
+        )
+        or re.search(
+            rf"§+\s*[0-9][0-9a-z.\-\s]*(?:to\s+[0-9a-z.\-\s]+)?\.?\s+{escaped_status}\b",
+            text,
+        )
+    )
+
+
+def _normalize_legal_sample_text(text: Any) -> str:
+    normalized = str(text or "")
+    normalized = normalized.replace("\xa0", " ")
+    normalized = normalized.replace("–", "-").replace("—", "-")
+    return " ".join(normalized.split())
+
+
 def _fallback_actor_from_conversion_output(output: Any) -> str:
     agent = getattr(output, "agent", None)
     if agent is None:
@@ -1971,7 +2033,7 @@ def _fallback_action_from_conversion_output(output: Any) -> str:
         return ""
     if proposition in {"UnparsedNonNormativeOrAmbiguousText", "UNPARSED", "unknown"}:
         return ""
-    if _looks_like_formula_text(proposition):
+    if _looks_like_formula_text(proposition) or _looks_like_heading_polluted_text(proposition):
         return ""
     return proposition
 
@@ -1998,6 +2060,8 @@ def _fallback_actor_from_text(text: str) -> str:
         return "statute section"
     if re.search(r"\b(?:definitions|for purposes of this chapter)\b", lowered):
         return "chapter terms"
+    if re.search(r"\bthe\s+corporation\s+is\s+liable\b", lowered):
+        return "corporation"
     for pattern in (
         r"\b(?:the\s+)?([a-z][a-z0-9]*(?:\s+[a-z][a-z0-9]*){0,5})(?:\s*,[^,]{1,120},)?\s+"
         r"(?:shall|must|may|can|shall\s+not|must\s+not|may\s+not)\b",
@@ -2011,10 +2075,12 @@ def _fallback_actor_from_text(text: str) -> str:
 
 def _fallback_action_from_text(text: str) -> str:
     lowered = text.lower()
-    if re.search(r"\b(?:sec\.|section|§)\s*[0-9a-z.-]+\s*(?:-|\.|:)?\s*vacant\b", lowered):
+    if _section_status_heading_matches(lowered, "vacant"):
         return "mark section vacant"
-    if re.search(r"\bwas\s+repealed\b|\brepealed\s+by\b", lowered):
+    if _section_status_heading_matches(lowered, "repealed"):
         return "record section repeal"
+    if re.search(r"\bthe\s+corporation\s+is\s+liable\s+for\s+the\s+acts\b", lowered):
+        return "assume liability for acts of officers and agents"
     if re.search(r"\b(?:definitions|for purposes of this chapter)\b", lowered):
         return "define statutory terms"
     for pattern in (
@@ -2042,6 +2108,15 @@ def _looks_like_formula_text(text: str) -> bool:
         or re.search(r"(?:->|=>|<->|∀|∃|∧|∨|¬)", value)
         or re.match(r"^\(?\s*(?:O|P|F|always|Happens|HoldsAt|Definition)\s*\(", value)
     )
+
+
+def _looks_like_heading_polluted_text(text: str) -> bool:
+    value = _normalize_legal_sample_text(text).lower()
+    if len(value) > 240 and re.search(r"\bu\.s\.c\.\s+title\b|\bunited\s+states\s+code\b", value):
+        return True
+    if len(value) > 240 and re.search(r"\bfrom\s+the\s+u\.s\.\s+government\s+publishing\s+office\b", value):
+        return True
+    return False
 
 
 def _list_of_dicts(value: Any) -> list[dict[str, Any]]:

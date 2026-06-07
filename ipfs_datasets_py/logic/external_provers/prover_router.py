@@ -60,6 +60,13 @@ class RouterProofResult:
         """Get result from a specific prover."""
         return self.all_results.get(prover_name)
 
+    def is_compiled(self) -> bool:
+        """Return True when at least one prover accepted the formula payload."""
+
+        if self.is_proved:
+            return True
+        return any(not isinstance(result, str) for result in self.all_results.values())
+
 
 @dataclass(frozen=True)
 class SyntacticProofResult:
@@ -74,6 +81,11 @@ class SyntacticProofResult:
         """The fallback validates routing syntax but never asserts a theorem."""
 
         return False
+
+    def is_compiled(self) -> bool:
+        """Return True when the fallback accepted the formula syntax."""
+
+        return self.is_valid
 
 
 class SyntacticNativeFallbackProver:

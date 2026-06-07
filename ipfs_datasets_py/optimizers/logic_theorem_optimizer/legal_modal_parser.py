@@ -109,8 +109,12 @@ _USCODE_HEADING_ONLY_ARTICLE_NOUN_HINTS = frozenset(
         "expenses",
         "finding",
         "findings",
+        "grant",
+        "grants",
         "hearing",
         "hearings",
+        "institution",
+        "institutions",
         "lands",
         "motion",
         "motions",
@@ -135,6 +139,8 @@ _USCODE_HEADING_ONLY_ARTICLE_NOUN_HINTS = frozenset(
         "reservations",
         "review",
         "rights",
+        "use",
+        "uses",
         "withdrawal",
         "withdrawals",
     }
@@ -283,7 +289,7 @@ _USCODE_LONG_RESIDUAL_HEADING_MAX_TOKENS = _USCODE_HEADING_ONLY_EXTENDED_MAX_TOK
 _USCODE_LONG_RESIDUAL_HEADING_MIN_SIGNAL_TOKENS = 2
 _USCODE_MODAL_HEADING_PREFIX_MAX_TOKENS = 18
 _USCODE_MAX_RESIDUAL_SPAN_FORMULAS = 3
-_USCODE_RESIDUAL_SPAN_FORMULA_BUDGET_CAP = 8
+_USCODE_RESIDUAL_SPAN_FORMULA_BUDGET_CAP = 12
 _USCODE_RESIDUAL_COALESCE_SEGMENT_MAX_TOKENS = 12
 _USCODE_RESIDUAL_HEADER_MIN_TOKENS = 10
 _USCODE_RESIDUAL_SHORT_HEADER_MIN_TOKENS = 4
@@ -1390,6 +1396,11 @@ class LegalModalParser:
             return True
         if token_count < _USCODE_RESIDUAL_SHORT_HEADER_MIN_TOKENS:
             return False
+        if (
+            "government publishing office" in lowered
+            or "www.gpo.gov" in lowered
+        ):
+            return True
         return "u.s.c." in lowered or "united states code" in lowered
 
     def _is_uscode_statutory_fragment_residual_candidate(
@@ -1405,6 +1416,8 @@ class LegalModalParser:
         lowered = normalized_segment_text.lower()
         if not any(character.isdigit() for character in lowered):
             return False
+        if lowered.lstrip().startswith(("§", "§§")):
+            return True
         return bool(_USCODE_RESIDUAL_STATUTORY_FRAGMENT_HINT_RE.search(lowered))
 
     def _is_uscode_administrative_procedure_residual_candidate(

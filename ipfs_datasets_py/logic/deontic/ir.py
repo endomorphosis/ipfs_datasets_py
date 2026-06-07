@@ -1136,6 +1136,103 @@ def _slot_detail_records(
     return records
 
 
+def _support_scoped_slot_records(
+    records: Sequence[Mapping[str, Any]],
+    support_span: "SourceSpan",
+) -> List[Dict[str, Any]]:
+    """Keep detail records that are local to this norm's support span.
+
+    Some migrated parser payloads attach section-level condition, exception,
+    override, and reference records to every extracted norm.  When both the norm
+    and detail record carry absolute spans, the typed IR should expose only the
+    details that overlap the norm support text.  Spanless records are retained
+    for legacy callers that cannot provide this stronger evidence.
+    """
+
+    scoped: List[Dict[str, Any]] = []
+    support_start = int(support_span.start)
+    support_end = int(support_span.end)
+    has_support_span = support_end > support_start
+    for record in records:
+        row = dict(record)
+        spans = _direct_record_spans(row)
+        if not has_support_span or not spans:
+            scoped.append(row)
+            continue
+        if any(_spans_overlap(span, [support_start, support_end]) for span in spans):
+            scoped.append(row)
+    return scoped
+
+
+def _direct_record_spans(record: Mapping[str, Any]) -> List[List[int]]:
+    """Return spans that locate the record itself, excluding nested values."""
+
+    spans: List[List[int]] = []
+    for key in ("span", "source_span", "support_span", "clause_span"):
+        spans.extend(_normalized_span_records(record.get(key)))
+    return spans
+
+
+def _spans_overlap(left: Sequence[int], right: Sequence[int]) -> bool:
+    if len(left) != 2 or len(right) != 2:
+        return False
+    left_start, left_end = int(left[0]), int(left[1])
+    right_start, right_end = int(right[0]), int(right[1])
+    return left_start < right_end and right_start < left_end
+
+
+def _quality_with_scoped_slot_blockers(
+    quality: "LegalNormQuality",
+    *,
+    conditions: Sequence[Mapping[str, Any]],
+    exceptions: Sequence[Mapping[str, Any]],
+    overrides: Sequence[Mapping[str, Any]],
+    cross_references: Sequence[Mapping[str, Any]],
+) -> "LegalNormQuality":
+    """Drop parser blockers for slot families absent after IR span scoping."""
+
+    absent_warning_by_slot = {
+        "conditions": {"condition_requires_scope_review"},
+        "exceptions": {"exception_requires_scope_review"},
+        "overrides": {"override_clause_requires_precedence_review"},
+        "cross_references": {"cross_reference_requires_resolution"},
+    }
+    present_by_slot = {
+        "conditions": bool(conditions),
+        "exceptions": bool(exceptions),
+        "overrides": bool(overrides),
+        "cross_references": bool(cross_references),
+    }
+    stale_warnings = {
+        warning
+        for slot_name, warnings in absent_warning_by_slot.items()
+        if not present_by_slot[slot_name]
+        for warning in warnings
+    }
+    if not stale_warnings:
+        return quality
+
+    parser_warnings = [
+        warning for warning in quality.parser_warnings if warning not in stale_warnings
+    ]
+    export_readiness = dict(quality.export_readiness or {})
+    blockers = export_readiness.get("blockers")
+    if isinstance(blockers, list):
+        export_readiness["blockers"] = [
+            blocker for blocker in _list_of_strings(blockers) if blocker not in stale_warnings
+        ]
+
+    return LegalNormQuality(
+        schema_valid=quality.schema_valid,
+        slot_coverage=quality.slot_coverage,
+        scaffold_quality=quality.scaffold_quality,
+        quality_label=quality.quality_label,
+        parser_warnings=parser_warnings,
+        promotable_to_theorem=quality.promotable_to_theorem,
+        export_readiness=export_readiness,
+    )
+
+
 def _with_value_alias(record: Dict[str, Any]) -> Dict[str, Any]:
     normalized = dict(record)
     if normalized.get("value"):
@@ -1532,10 +1629,43 @@ class LegalNormIR:
         """Build a deterministic IR from a parser element dictionary."""
         element = _hydrate_parser_element_from_nested_context(element)
         source_span_value = element.get("source_span") or element.get("support_span")
+        support_span = SourceSpan.from_value(element.get("support_span"))
 
         enumeration_label = str(element.get("enumeration_label") or "")
         enumeration_index = element.get("enumeration_index")
         derived_index = _enumeration_index(enumeration_index) or _enumeration_index(enumeration_label)
+        conditions = _support_scoped_slot_records(
+            _slot_detail_records(element, "condition_details", "conditions"),
+            support_span,
+        )
+        exceptions = _support_scoped_slot_records(
+            _slot_detail_records(element, "exception_details", "exceptions"),
+            support_span,
+        )
+        overrides = _support_scoped_slot_records(
+            _slot_detail_records(element, "override_clause_details", "override_clauses"),
+            support_span,
+        )
+        temporal_constraints = _support_scoped_slot_records(
+            _slot_detail_records(
+                element,
+                "temporal_constraint_details",
+                "temporal_constraints",
+                default_type="deadline",
+            ),
+            support_span,
+        )
+        cross_references = _support_scoped_slot_records(
+            _slot_detail_records(element, "cross_reference_details", "cross_references"),
+            support_span,
+        )
+        quality = _quality_with_scoped_slot_blockers(
+            LegalNormQuality.from_parser_element(element),
+            conditions=conditions,
+            exceptions=exceptions,
+            overrides=overrides,
+            cross_references=cross_references,
+        )
 
         return cls(
             schema_version=str(element.get("schema_version") or ""),
@@ -1548,7 +1678,7 @@ class LegalNormIR:
             source_text=str(element.get("text") or element.get("source_text") or ""),
             support_text=str(element.get("support_text") or ""),
             source_span=SourceSpan.from_value(source_span_value),
-            support_span=SourceSpan.from_value(element.get("support_span")),
+            support_span=support_span,
             modality=_modality_from_parser_element(element),
             norm_type=_norm_type_from_parser_element(element),
             actor=(
@@ -1570,16 +1700,11 @@ class LegalNormIR:
             action_verb=_action_verb_text(element),
             action_object=_action_object_text(element) or _detail_only_regulated_activity_text(element),
             recipient=_recipient_text(element) or _detail_only_recipient_text(element),
-            conditions=_slot_detail_records(element, "condition_details", "conditions"),
-            exceptions=_slot_detail_records(element, "exception_details", "exceptions"),
-            overrides=_slot_detail_records(element, "override_clause_details", "override_clauses"),
-            temporal_constraints=_slot_detail_records(
-                element,
-                "temporal_constraint_details",
-                "temporal_constraints",
-                default_type="deadline",
-            ),
-            cross_references=_slot_detail_records(element, "cross_reference_details", "cross_references"),
+            conditions=conditions,
+            exceptions=exceptions,
+            overrides=overrides,
+            temporal_constraints=temporal_constraints,
+            cross_references=cross_references,
             resolved_cross_references=[
                 _with_value_alias(record) for record in _list_of_dicts(element.get("resolved_cross_references"))
             ],
@@ -1602,7 +1727,7 @@ class LegalNormIR:
             legal_frame=dict(element.get("legal_frame") or {}),
             section_context=dict(element.get("section_context") or {}),
             actor_entities=_actor_texts(element.get("actor_entities")) or _actor_entities(element),
-            quality=LegalNormQuality.from_parser_element(element),
+            quality=quality,
             definition_scope=dict(element.get("definition_scope") or {}),
         )
 

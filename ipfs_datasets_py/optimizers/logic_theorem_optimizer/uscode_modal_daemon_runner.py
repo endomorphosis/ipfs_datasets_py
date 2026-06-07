@@ -10375,7 +10375,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         bridge_loss_evaluator=bridge_loss_evaluator_for_names(
             bridge_adapters,
             evaluate_provers=bridge_evaluate_provers,
+            parallel_workers=bridge_parallel_workers,
         ),
+        bridge_parallel_workers=bridge_parallel_workers,
     )
     rng = random.Random(int(summary.get("seed", 0)) + int(summary.get("cycles", 0)) + 1)
     blocked_validation_sample_ids = set(state.decoded_embeddings) | set(state.family_logits)
@@ -10519,6 +10521,71 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         summary["active_cycle_train_indices"] = []
         summary["active_cycle_validation_indices"] = []
 
+    def apply_queue_summary(queue_snapshot: ModalTodoQueue) -> Dict[str, Any]:
+        status = update_program_synthesis_summary(
+            summary,
+            queue_snapshot,
+            supervisor.policy,
+            execution_mode="queued_for_external_codex_worker",
+        )
+        summary["latest_queue_counts"] = queue_snapshot.status_counts()
+        summary["latest_role_queue_counts"] = queue_snapshot.role_status_counts()
+        return status
+
+    def refresh_queue_summary_from_disk() -> Dict[str, Any]:
+        with queue_file_lock(queue_path):
+            latest_queue = ModalTodoQueue.load_jsonl(queue_path)
+        status = apply_queue_summary(latest_queue)
+        summary["active_cycle_queue_refresh"] = {
+            "at": utc_now(),
+            "mode": "summary_snapshot",
+            "queue_counts": latest_queue.status_counts(),
+            "role_queue_counts": latest_queue.role_status_counts(),
+        }
+        return status
+
+    def refresh_supervisor_queue_from_disk(
+        target_supervisor: ModalTodoSupervisor,
+    ) -> None:
+        nonlocal queue
+        with queue_file_lock(queue_path):
+            latest_queue = ModalTodoQueue.load_jsonl(queue_path)
+            latest_queue.merge_from(
+                target_supervisor.queue,
+                preserve_claimed_role=target_supervisor.policy.program_synthesis_role,
+            )
+            latest_queue.save_jsonl(queue_path)
+            target_supervisor.queue = latest_queue
+            queue = latest_queue
+        status = apply_queue_summary(target_supervisor.queue)
+        summary["active_cycle_queue_refresh"] = {
+            "at": utc_now(),
+            "mode": "supervisor_merge",
+            "program_synthesis_status": status,
+            "queue_counts": target_supervisor.queue.status_counts(),
+            "role_queue_counts": target_supervisor.queue.role_status_counts(),
+        }
+
+    def record_todo_optimizer_progress(progress: Mapping[str, Any]) -> None:
+        payload = dict(progress)
+        cycle_started_value = summary.get("active_cycle_started_at")
+        payload["active_cycle_elapsed_seconds"] = summary.get(
+            "active_cycle_elapsed_seconds",
+            0.0,
+        )
+        payload["active_cycle_started_at"] = cycle_started_value
+        payload["at"] = utc_now()
+        summary["active_cycle_todo_optimizer_progress"] = payload
+        summary["active_cycle_last_heartbeat_at"] = payload["at"]
+        summary["updated_at"] = payload["at"]
+        if "queue_counts" in payload:
+            summary["latest_queue_counts"] = dict(payload.get("queue_counts") or {})
+        if "role_queue_counts" in payload:
+            summary["latest_role_queue_counts"] = dict(
+                payload.get("role_queue_counts") or {}
+            )
+        save_summary(summary_path, summary)
+
     @contextmanager
     def active_cycle_heartbeat(
         *,
@@ -10547,6 +10614,16 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "phase": str(phase),
                     "heartbeat_interval_seconds": interval,
                 }
+                if str(phase) == "todo_supervisor_optimization":
+                    try:
+                        refresh_queue_summary_from_disk()
+                    except Exception as exc:
+                        summary["active_cycle_queue_refresh"] = {
+                            "at": utc_now(),
+                            "error": str(exc),
+                            "error_type": type(exc).__name__,
+                            "mode": "summary_snapshot",
+                        }
                 save_summary(summary_path, summary)
 
         thread = threading.Thread(
@@ -10574,6 +10651,16 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "heartbeat_interval_seconds": interval,
                     "final": True,
                 }
+                if str(phase) == "todo_supervisor_optimization":
+                    try:
+                        refresh_queue_summary_from_disk()
+                    except Exception as exc:
+                        summary["active_cycle_queue_refresh"] = {
+                            "at": utc_now(),
+                            "error": str(exc),
+                            "error_type": type(exc).__name__,
+                            "mode": "summary_snapshot",
+                        }
                 save_summary(summary_path, summary)
 
     def bootstrap_program_synthesis_todos(
@@ -11024,6 +11111,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     max_iterations=args.max_inner_iterations,
                     target_cross_entropy_loss=0.001,
                     target_cosine_similarity=0.999999,
+                    queue_refresh_callback=refresh_supervisor_queue_from_disk,
+                    progress_callback=record_todo_optimizer_progress,
                 )
             mark_active_autoencoder_cycle(
                 cycle=cycle,

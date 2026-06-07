@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Optional, Sequence
@@ -779,6 +780,7 @@ def _normalize_tdfol_export_formula(text: str) -> str:
         return ""
     normalized = normalized.strip("`\"'").strip()
     normalized = _strip_tdfol_line_comment(normalized)
+    normalized = _unwrap_tdfol_json_export(normalized)
     normalized = _unwrap_tdfol_key_value_export(normalized)
     normalized = re.sub(
         r"^\s*(?:formula|proof_formula|proof\s+formula|tdfol_formula|"
@@ -808,9 +810,129 @@ def _normalize_tdfol_export_formula(text: str) -> str:
         normalized,
         flags=re.IGNORECASE,
     )
+    normalized = _normalize_deontic_argument_export(normalized)
     normalized = re.sub(r",\s*(?=\))", "", normalized)
     normalized = re.sub(r"(:[0-9A-Za-z_-]+)\.(?=\s*[\),])", r"\1", normalized)
     return normalized.strip()
+
+
+def _unwrap_tdfol_json_export(text: str) -> str:
+    """Extract formula text from JSON/JSON-ish proof obligation exports."""
+
+    normalized = str(text or "").strip()
+    if not normalized or normalized[0] not in "[{":
+        return normalized
+    try:
+        parsed = json.loads(normalized)
+    except json.JSONDecodeError:
+        parsed = None
+    if parsed is not None:
+        extracted = _tdfol_formula_text_from_json_value(parsed)
+        if extracted:
+            return extracted
+
+    match = re.search(
+        r"""(?is)(?:^|[,{\s])["']?(?:formula|proof_input|proof_formula|tdfol_formula)["']?\s*:\s*(["'])(.*?)\1""",
+        normalized,
+    )
+    if match:
+        return match.group(2).strip()
+    return normalized
+
+
+def _tdfol_formula_text_from_json_value(value: Any) -> str:
+    if isinstance(value, Mapping):
+        for key in (
+            "formula",
+            "proof_input",
+            "proof_formula",
+            "tdfol_formula",
+            "value",
+            "text",
+        ):
+            candidate = value.get(key)
+            if isinstance(candidate, str) and candidate.strip():
+                return candidate.strip()
+            nested = _tdfol_formula_text_from_json_value(candidate)
+            if nested:
+                return nested
+        for candidate in value.values():
+            nested = _tdfol_formula_text_from_json_value(candidate)
+            if nested:
+                return nested
+    elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        for candidate in value:
+            nested = _tdfol_formula_text_from_json_value(candidate)
+            if nested:
+                return nested
+    return ""
+
+
+def _normalize_deontic_argument_export(text: str) -> str:
+    """Canonicalize O(agent, action(...)) style exports to O(action(...))."""
+
+    normalized = str(text or "").strip()
+    if not normalized:
+        return normalized
+    result: list[str] = []
+    index = 0
+    while index < len(normalized):
+        char = normalized[index]
+        if (
+            char in {"O", "P", "F"}
+            and (index == 0 or not normalized[index - 1].isalnum())
+            and index + 1 < len(normalized)
+            and normalized[index + 1] == "("
+        ):
+            close_index = _matching_paren_index(normalized, index + 1)
+            if close_index is not None:
+                inner = normalized[index + 2 : close_index]
+                parts = _split_top_level_commas(inner)
+                if len(parts) >= 2 and _looks_like_tdfol_formula(parts[-1]):
+                    result.append(f"{char}({parts[-1].strip()})")
+                    index = close_index + 1
+                    continue
+        result.append(char)
+        index += 1
+    return "".join(result)
+
+
+def _matching_paren_index(text: str, open_index: int) -> Optional[int]:
+    depth = 0
+    for index in range(open_index, len(text)):
+        char = text[index]
+        if char == "(":
+            depth += 1
+        elif char == ")":
+            depth -= 1
+            if depth == 0:
+                return index
+    return None
+
+
+def _split_top_level_commas(text: str) -> list[str]:
+    parts: list[str] = []
+    start = 0
+    depth = 0
+    for index, char in enumerate(text):
+        if char in "([{":
+            depth += 1
+        elif char in ")]}":
+            depth = max(0, depth - 1)
+        elif char == "," and depth == 0:
+            parts.append(text[start:index].strip())
+            start = index + 1
+    parts.append(text[start:].strip())
+    return parts
+
+
+def _looks_like_tdfol_formula(text: str) -> bool:
+    candidate = str(text or "").strip()
+    if not candidate:
+        return False
+    if re.match(r"^(?:forall|exists|[OPFGX]|□|◊|not\b|¬)", candidate, re.IGNORECASE):
+        return True
+    return bool(re.match(r"^[A-Za-z_][A-Za-z0-9_-]*\s*\(", candidate))
 
 
 def _unwrap_tdfol_key_value_export(text: str) -> str:

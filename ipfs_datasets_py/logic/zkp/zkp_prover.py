@@ -18,7 +18,7 @@ import warnings
 from . import ZKPProof, ZKPError
 from .backends import get_backend
 from .canonicalization import canonicalize_axioms, canonicalize_theorem, theorem_hash_hex
-from .circuits import build_proof_attestation_view, compiler_guidance_ref_from_metadata
+from .circuits import compiler_guidance_ref_from_metadata, refresh_proof_attestation
 
 
 class ZKPProver:
@@ -191,16 +191,12 @@ class ZKPProver:
                 or "attestation_view_version" in updated_public_inputs
                 or isinstance(updated_metadata.get("attestation_view"), dict)
             ):
-                attestation_view = build_proof_attestation_view(
-                    proof_data=proof.proof_data,
+                refreshed = replace(
+                    proof,
                     public_inputs=updated_public_inputs,
                     metadata=updated_metadata,
                 )
-                updated_public_inputs["attestation_ref"] = attestation_view["attestation_ref"]
-                updated_public_inputs["attestation_view_version"] = int(
-                    attestation_view["attestation_view_version"]
-                )
-                updated_metadata["attestation_view"] = attestation_view
+                return refresh_proof_attestation(refreshed)
 
             return replace(
                 proof,

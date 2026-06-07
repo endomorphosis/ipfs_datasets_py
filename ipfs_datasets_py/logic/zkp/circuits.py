@@ -225,6 +225,39 @@ def build_proof_attestation_view(
     return view
 
 
+def refresh_proof_attestation(proof: Any) -> Any:
+    """Synchronize a proof's public attestation fields with its current inputs.
+
+    Some bridge paths add deterministic public inputs after backend proof
+    generation.  Keep the public ``attestation_ref`` and embedded
+    ``metadata.attestation_view`` in lockstep so verifier and LegalIR views see
+    the same commitment.
+    """
+    public_inputs = getattr(proof, "public_inputs", None)
+    if not isinstance(public_inputs, dict):
+        return proof
+
+    metadata = getattr(proof, "metadata", None)
+    if not isinstance(metadata, dict):
+        metadata = {}
+        try:
+            proof.metadata = metadata
+        except Exception:
+            return proof
+
+    attestation_view = build_proof_attestation_view(
+        proof_data=getattr(proof, "proof_data", b""),
+        public_inputs=public_inputs,
+        metadata=metadata,
+    )
+    public_inputs["attestation_ref"] = attestation_view["attestation_ref"]
+    public_inputs["attestation_view_version"] = int(
+        attestation_view["attestation_view_version"]
+    )
+    metadata["attestation_view"] = attestation_view
+    return proof
+
+
 def _proof_bytes_from_serialized(proof_data: object) -> object:
     if isinstance(proof_data, str):
         try:

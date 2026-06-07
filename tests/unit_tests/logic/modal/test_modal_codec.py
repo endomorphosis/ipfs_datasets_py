@@ -77,6 +77,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_002840_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_002877_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_005886_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_000220_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000004_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_007995_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_012436_FAMILY_PAIRS,
@@ -31618,6 +31619,51 @@ def test_decode_modal_ir_document_uses_bounded_source_semantics_for_sparse_typed
     assert "government publishing office" not in typed_reconstruction
 
 
+def test_decode_modal_ir_document_adds_long_span_semantic_support_without_boilerplate() -> None:
+    source_text = (
+        "Sec. 2017. Regulations (a) Promulgation (1) In general The Secretary "
+        "may promulgate only such regulations as are necessary to ensure "
+        "compliance with the specific provisions of this chapter. (2) "
+        "Publication In promulgating the regulations, the Secretary shall "
+        "publish proposed regulations in the Federal Register and provide a "
+        "period of not less than 120 days for public comment. (Pub. L. "
+        "107-110, Jan. 8, 2002, 115 Stat. 2056.) Historical and Revision Notes "
+        "Source (Statutes at Large)."
+    )
+    document = ModalIRDocument(
+        document_id="us-code-25-2017-long-semantic-support",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-long-regulations-support",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="D",
+                    symbol="P",
+                    label="permission",
+                ),
+                predicate=ModalIRPredicate(name="promulgate_regulations", role="clause"),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-25-2017-long-semantic-support",
+                    start_char=0,
+                    end_char=len(source_text),
+                    citation="25 U.S.C. 2017",
+                ),
+                metadata={"cue": "may"},
+            )
+        ],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    support_text = " ".join(slot_texts["typed_ir_semantic_support"]).lower()
+
+    assert "publication in promulgating the regulations" in support_text
+    assert "historical and revision notes" not in support_text
+    assert "115 stat" not in support_text
+
+
 def test_decode_modal_ir_document_refines_temporal_source_context_family_pair_keys() -> None:
     source_text = (
         "Sec. 8386. Recall to active duty. Members of the Fleet Reserve shall be "
@@ -32010,6 +32056,7 @@ def test_decode_modal_ir_document_surfaces_packet_013873_clause_self_bridge_slot
 
 def test_rescued_failed_validation_ambiguity_packets_are_registered() -> None:
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
+        COMPILER_AMBIGUITY_PACKET_000008_FAMILY_PAIRS,
         COMPILER_AMBIGUITY_PACKET_001247_FAMILY_PAIRS,
         COMPILER_AMBIGUITY_PACKET_001540_FAMILY_PAIRS,
         COMPILER_AMBIGUITY_PACKET_001730_FAMILY_PAIRS,
@@ -32029,6 +32076,7 @@ def test_rescued_failed_validation_ambiguity_packets_are_registered() -> None:
         COMPILER_AMBIGUITY_PACKET_008598_FAMILY_PAIRS,
         COMPILER_AMBIGUITY_PACKET_011135_FAMILY_PAIRS,
         COMPILER_AMBIGUITY_PACKET_014167_FAMILY_PAIRS,
+        COMPILER_AMBIGUITY_PACKET_000220_FAMILY_PAIRS,
         COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS,
         COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
         PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
@@ -32057,6 +32105,7 @@ def test_rescued_failed_validation_ambiguity_packets_are_registered() -> None:
         COMPILER_AMBIGUITY_PACKET_008598_FAMILY_PAIRS,
         COMPILER_AMBIGUITY_PACKET_011135_FAMILY_PAIRS,
         COMPILER_AMBIGUITY_PACKET_014167_FAMILY_PAIRS,
+        COMPILER_AMBIGUITY_PACKET_000220_FAMILY_PAIRS,
     )
 
     for packet_pairs in full_view_packets:
@@ -32080,6 +32129,71 @@ def test_rescued_failed_validation_ambiguity_packets_are_registered() -> None:
     assert ("deontic", "alethic") not in priority_view
 
 
+def test_packet_000008_compiler_ambiguity_policy_covers_bootstrap_samples() -> None:
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
+        COMPILER_AMBIGUITY_PACKET_000008_FAMILY_PAIRS,
+        compiler_ambiguity_policy_targets,
+        supports_signal_free_adaptive_ambiguity_pair,
+    )
+
+    assert COMPILER_AMBIGUITY_PACKET_000008_FAMILY_PAIRS == (
+        ("frame", "temporal"),
+        ("temporal", "frame"),
+        ("temporal", "conditional_normative"),
+        ("temporal", "deontic"),
+        ("deontic", "frame"),
+        ("deontic", "temporal"),
+        ("deontic", "conditional_normative"),
+        ("conditional_normative", "deontic"),
+        ("conditional_normative", "epistemic"),
+        ("conditional_normative", "frame"),
+        ("frame", "alethic"),
+    )
+
+    for predicted_family, target_family in COMPILER_AMBIGUITY_PACKET_000008_FAMILY_PAIRS:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+
+def test_packet_000008_status_and_operational_samples_emit_policy_pairs() -> None:
+    compiler = DeterministicModalCompiler()
+
+    repealed_result = compiler.compile(
+        "U.S.C. Title 20 - EDUCATION Secs. 6577, 6578 - Repealed. "
+        "Section 6578 related to issuance of regulations not later than 6 "
+        "months after January 8, 2002. Effective Date of Repeal except with "
+        "respect to certain programs and see section 5 of Pub. L. 114-95.",
+        document_id="packet-000008-repealed-status",
+    )
+    operative_result = compiler.compile(
+        "Notwithstanding any other provision, the authority under this section "
+        "shall not be exercised unless the President finds that the conditions "
+        "exist and has determined that the area is a critical defense housing area.",
+        document_id="packet-000008-operative-mixed",
+    )
+
+    def _explicit_policy_pairs(result) -> set[str]:
+        return {
+            str(ambiguity.metadata.get("effective_compiler_ambiguity_policy_pair"))
+            for ambiguity in result.ambiguities
+            if isinstance(ambiguity.metadata, dict)
+            and ambiguity.metadata.get("effective_ambiguity_policy_bundle")
+            == "compiler_ambiguity"
+            and ambiguity.metadata.get("is_explicit_adaptive_ambiguity") is True
+        }
+
+    repealed_pairs = _explicit_policy_pairs(repealed_result)
+    operative_pairs = _explicit_policy_pairs(operative_result)
+
+    assert "frame->temporal" in repealed_pairs
+    assert "temporal->frame" in repealed_pairs
+    assert "conditional_normative->deontic" in operative_pairs
+    assert "conditional_normative->epistemic" in operative_pairs
+
+
 def test_packet_011135_compiler_ambiguity_pairs_are_signal_free_supported() -> None:
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
         COMPILER_AMBIGUITY_PACKET_011135_FAMILY_PAIRS,
@@ -32101,6 +32215,38 @@ def test_packet_011135_compiler_ambiguity_pairs_are_signal_free_supported() -> N
             predicted_family,
             target_family,
         )
+
+
+def test_packet_000220_failed_validation_rescue_keeps_frame_deontic_pairs_narrow() -> None:
+    packet_pairs = COMPILER_AMBIGUITY_PACKET_000220_FAMILY_PAIRS
+    assert packet_pairs == (
+        ("deontic", "frame"),
+        ("frame", "deontic"),
+    )
+
+    for predicted_family, target_family in packet_pairs:
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert compiler_refined_modal_family_cue_margin_buffer(
+            predicted_family,
+            target_family,
+        ) == _expected_compiler_refined_margin_buffer(
+            predicted_family,
+            target_family,
+        )
+
+
 def test_packet_014167_deontic_frame_ambiguity_emits_both_directions() -> None:
     compiler = DeterministicModalCompiler()
 
