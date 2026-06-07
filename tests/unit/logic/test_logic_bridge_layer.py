@@ -278,6 +278,51 @@ def test_modal_frame_logic_bridge_projects_repealed_status_as_graph_view() -> No
     assert "editorial_status" in graph_view.metadata["frame_logic_projection_views"]
 
 
+def test_modal_frame_logic_bridge_asserts_projection_ontology_constraints() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("modal_frame_logic")
+    report = adapter.evaluate(
+        (
+            "42 U.S.C. 17822 to 17824.: §§17822 to 17824. Repealed. "
+            "Pub. L. 111-314, §6, Dec. 18, 2010, 124 Stat. 3444 Section "
+            "17822, Pub. L. 110-422, title XI, §1103, Oct. 15, 2008, "
+            "122 Stat. 4808, related to astronaut health care."
+        ),
+        document_id="bridge-layer-repealed-range-ontology-constraints",
+        citation="42 U.S.C. 17822 to 17824.",
+        evaluate_provers=False,
+    )
+
+    triples = report.ir_document.views["frame_logic"].payload["triples"]
+    triple_pairs = {
+        (triple["predicate"], triple["object"])
+        for triple in triples
+    }
+
+    assert report.round_trip.extra_losses["ontology_violation_count"] == 0.0
+    assert (
+        "learned_legal_ir_projection_coverage_complete",
+        "true",
+    ) in triple_pairs
+    assert (
+        "learned_legal_ir_required_projection_view",
+        "editorial_status",
+    ) in triple_pairs
+    assert (
+        "learned_legal_ir_satisfied_projection_view",
+        "editorial_status",
+    ) in triple_pairs
+    assert (
+        "modal_frame_logic_ontology_constraint",
+        "editorial_status:required:satisfied",
+    ) in triple_pairs
+    assert not any(
+        triple["predicate"] == "learned_legal_ir_missing_projection_view"
+        for triple in triples
+    )
+
+
 def test_modal_frame_logic_bridge_preserves_selected_frame_without_splitting_view_family() -> None:
     from ipfs_datasets_py.logic.modal.kg_bridge import flogic_triples_to_graph_data
 

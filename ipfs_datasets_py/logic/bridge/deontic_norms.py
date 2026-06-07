@@ -978,6 +978,12 @@ def _phase8_summary_from_records(
             if str(blocker or "").strip()
         )
 
+    source_scoped_reconstruction = _reconstruction_slot_loss_from_phase8_records(
+        valid_records
+    )
+    if source_scoped_reconstruction:
+        summary["reconstruction_slot_loss"] = source_scoped_reconstruction
+
     summary.update(
         {
             "source_record_count": record_count,
@@ -998,6 +1004,34 @@ def _phase8_summary_from_records(
         }
     )
     return summary
+
+
+def _reconstruction_slot_loss_from_phase8_records(
+    records: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Return source-scoped reconstruction summary embedded in Phase 8 rows."""
+
+    reconstruction_rows: list[dict[str, Any]] = []
+    for record in records or []:
+        if not isinstance(record, Mapping):
+            continue
+        coverage_summary = record.get("coverage_summary")
+        if not isinstance(coverage_summary, Mapping):
+            continue
+        reconstruction = coverage_summary.get("reconstruction_slot_loss")
+        if not isinstance(reconstruction, Mapping):
+            continue
+        reconstruction_rows.append(
+            {
+                "source_id": str(record.get("source_id") or "").strip(),
+                "coverage_blockers": list(reconstruction.get("coverage_blockers") or []),
+                "coverage_summary": dict(reconstruction),
+            }
+        )
+
+    if not reconstruction_rows:
+        return {}
+    return _summarize_reconstruction_slot_loss_rows(reconstruction_rows)
 
 
 def _apply_phase8_quality_to_proof_and_repair_records(

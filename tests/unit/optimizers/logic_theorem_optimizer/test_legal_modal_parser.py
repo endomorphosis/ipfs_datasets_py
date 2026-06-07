@@ -1250,6 +1250,34 @@ def test_parser_adds_residual_span_coverage_for_25_57_todo_shape() -> None:
     assert any("43 Stat." in span for span in residual_text_spans)
 
 
+def test_parser_covers_coalesced_uscode_statute_history_fragments() -> None:
+    parser = LegalModalParser()
+    document = parser.parse(
+        (
+            "§2348. Inventories of supplies not to be increased Inventories of "
+            "supplies may not be increased. (Added Pub. L. 96-323, §2(a), "
+            "Aug. 4, 1980, 94 Stat. 1018, §2328; amended Pub. L. 97-22, "
+            "§11(a)(8), July 10, 1981, 95 Stat. 138; renumbered §2348, "
+            "Pub. L. 99-145, title XIII, §1304(a)(1), Nov. 8, 1985, "
+            "99 Stat. 741.)"
+        ),
+        document_id="us-code-10-2348-history",
+        source="us_code",
+        citation="10 U.S.C. 2348",
+    )
+
+    residual_spans = {
+        document.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ]
+        for formula in document.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    }
+
+    assert any("Added Pub. L. 96-323" in span for span in residual_spans)
+    assert any("L. 99-145" in span and "99 Stat. 741" in span for span in residual_spans)
+
+
 def test_parser_adds_definition_residual_span_coverage_for_8502_style_text() -> None:
     parser = LegalModalParser()
     document = parser.parse(

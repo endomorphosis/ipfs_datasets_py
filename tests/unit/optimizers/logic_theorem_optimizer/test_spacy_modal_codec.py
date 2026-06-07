@@ -301,6 +301,21 @@ def test_spacy_encoder_ignores_calendar_month_may_as_permission_cue() -> None:
     assert any(cue.family == "temporal" and cue.cue.lower() == "after" for cue in encoding.cues)
 
 
+def test_spacy_encoder_prefers_negated_permission_over_embedded_may() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        "The civil penalty may not exceed $100 per day.",
+        document_id="sample-negated-permission",
+    )
+
+    deontic_cues = {
+        (cue.symbol, cue.cue.lower()) for cue in encoding.cues if cue.family == "deontic"
+    }
+
+    assert ("F", "may not") in deontic_cues
+    assert ("P", "may") not in deontic_cues
+
+
 def test_spacy_encoder_refines_packet_000317_registry_family_cues() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
 
@@ -6358,6 +6373,37 @@ def test_spacy_compiler_adds_report_heading_residual_span_coverage() -> None:
         for formula in residual_formulas
     }
     assert "Congressional notification and reports." in residual_text_spans
+
+
+def test_spacy_compiler_adds_compact_administration_heading_span_coverage() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    text = (
+        "Administration. "
+        "The Secretary shall issue regulations for the park area."
+    )
+    encoding = encoder.encode(
+        text,
+        document_id="us-code-16-450dd-1-compact-administration",
+        citation="16 U.S.C. 450dd-1",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    frame_coverage_text_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in modal_ir.formulas
+        if formula.operator.family == "frame"
+        and formula.metadata.get("fallback_rule")
+        in {
+            "uscode_modal_heading_prefix_coverage_v1",
+            "uscode_residual_span_coverage_v1",
+        }
+    }
+
+    assert "Administration." in frame_coverage_text_spans
 
 
 def test_spacy_compiler_adds_modal_heading_prefix_coverage_for_penalty_heading() -> None:

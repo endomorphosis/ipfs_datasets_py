@@ -10718,6 +10718,7 @@ def test_feature_codec_keys_are_augmented_with_fallback_modal_features() -> None
     autoencoder = AdaptiveModalAutoencoder(
         feature_codec=SparseFeatureCodec(),
         feature_family_logit_scale=1.0,
+        max_codec_feature_keys=8,
     )
     before = autoencoder.evaluate([validation])
     todo = type(
@@ -10762,6 +10763,7 @@ def test_sparse_codec_noise_does_not_drown_fallback_family_updates() -> None:
     autoencoder = AdaptiveModalAutoencoder(
         feature_codec=NoisyFeatureCodec(),
         feature_family_logit_scale=1.0,
+        max_codec_feature_keys=100,
     )
     before = autoencoder.evaluate([validation])
     todo = type(
@@ -10846,7 +10848,10 @@ def test_feature_update_groups_prioritize_structural_fallback_over_noisy_codec_k
         section="552",
         text="The agency must provide notice before final action.",
     )
-    autoencoder = AdaptiveModalAutoencoder(feature_codec=NoisyFeatureCodec())
+    autoencoder = AdaptiveModalAutoencoder(
+        feature_codec=NoisyFeatureCodec(),
+        max_codec_feature_keys=100,
+    )
 
     groups = autoencoder._feature_update_groups_for(sample, step=1.0)
     per_feature_step = {
@@ -10872,6 +10877,7 @@ def test_feature_logit_clip_bounds_large_feature_aggregates() -> None:
     autoencoder = AdaptiveModalAutoencoder(
         feature_codec=DenseFeatureCodec(),
         feature_family_logit_scale=1.0,
+        max_codec_feature_keys=400,
         max_token_features=0,
         feature_activity_reference=64,
         feature_logit_clip=3.0,
@@ -10882,6 +10888,24 @@ def test_feature_logit_clip_bounds_large_feature_aggregates() -> None:
     logits = autoencoder._logits_for(sample, use_sample_memory=False)
 
     assert logits["deontic"] == pytest.approx(3.0)
+
+
+def test_feature_codec_keys_are_disabled_by_default_for_fast_fallback_features() -> None:
+    class ExpensiveFeatureCodec:
+        def feature_keys_for_sample(self, sample):
+            raise AssertionError("codec feature keys should be opt-in")
+
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice before final action.",
+    )
+    autoencoder = AdaptiveModalAutoencoder(feature_codec=ExpensiveFeatureCodec())
+
+    features = autoencoder._feature_keys_for(sample)
+
+    assert "modal-family:deontic" in features
+    assert "token:agency" in features
 
 
 def test_adaptive_autoencoder_skips_program_synthesis_todos() -> None:

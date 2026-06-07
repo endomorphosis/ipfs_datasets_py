@@ -25,6 +25,7 @@ import time
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack, contextmanager
+from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import AbstractSet, Any, Dict, Iterable, Iterator, List, Mapping, Optional, Sequence
@@ -117,6 +118,15 @@ LAW_COLUMNS = [
     "normalized_citation",
 ]
 DEFAULT_BRIDGE_LOSS_ADAPTERS = ",".join(DEFAULT_LEGAL_IR_BRIDGE_NAMES)
+DEFAULT_AUTOENCODER_METRIC_BRIDGE_ADAPTERS = (
+    "modal_frame_logic",
+    "deontic_norms",
+    "fol_tdfol",
+)
+DEFAULT_AUTOENCODER_DIAGNOSTIC_BRIDGE_ADAPTERS = (
+    *DEFAULT_AUTOENCODER_METRIC_BRIDGE_ADAPTERS,
+)
+DEFAULT_AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLES = 2
 
 CODEX_AST_SCOPES = tuple(
     dict.fromkeys(
@@ -829,6 +839,9 @@ def metric_block(evaluation) -> Dict[str, Any]:
         }
         block["legal_ir_target_count"] = int(
             getattr(evaluation, "legal_ir_target_count", 0) or 0
+        )
+        block["legal_ir_target_sampled"] = (
+            int(block["legal_ir_target_count"]) < int(evaluation.sample_count)
         )
         block["legal_ir_target_hashes"] = dict(
             sorted(dict(getattr(evaluation, "legal_ir_target_hashes", {}) or {}).items())
@@ -3662,6 +3675,103 @@ def bridge_loss_adapter_names(args: argparse.Namespace) -> List[str]:
     ]
 
 
+def autoencoder_metric_bridge_adapter_names(
+    args: argparse.Namespace,
+    bridge_adapters: Sequence[str],
+) -> List[str]:
+    """Return bridge adapters used for autoencoder-side LegalIR metrics.
+
+    Bridge loss TODO generation can afford to be broader than the synchronous
+    autoencoder metric path.  The autoencoder path runs before and after each
+    training cycle, so by default it uses a cheap, representative bridge subset.
+    """
+
+    env_raw = os.environ.get("IPFS_DATASETS_AUTOENCODER_METRIC_BRIDGE_ADAPTERS")
+    raw_value = getattr(args, "autoencoder_metric_bridge_adapters", None)
+    raw = str(raw_value if raw_value is not None else env_raw or "").strip()
+    normalized = raw.lower()
+    bridge_adapter_list = [
+        str(name).strip()
+        for name in bridge_adapters
+        if str(name).strip()
+    ]
+    if normalized in {"none", "off", "false"}:
+        return []
+    if normalized in {"all", "bridge", "bridge_loss", "same"}:
+        return list(bridge_adapter_list)
+    if raw:
+        return [
+            name
+            for name in (part.strip() for part in raw.split(","))
+            if name and name.lower() not in {"none", "off", "false"}
+        ]
+    preferred = [
+        name
+        for name in DEFAULT_AUTOENCODER_METRIC_BRIDGE_ADAPTERS
+        if name in bridge_adapter_list
+    ]
+    if preferred:
+        return preferred
+    return bridge_adapter_list[:1]
+
+
+def autoencoder_diagnostic_bridge_adapter_names(
+    args: argparse.Namespace,
+    bridge_adapters: Sequence[str],
+    metric_bridge_adapters: Sequence[str],
+) -> List[str]:
+    """Return bridge adapters used by synchronous compiler bridge diagnostics."""
+
+    env_raw = os.environ.get("IPFS_DATASETS_AUTOENCODER_DIAGNOSTIC_BRIDGE_ADAPTERS")
+    raw_value = getattr(args, "autoencoder_diagnostic_bridge_adapters", None)
+    raw = str(raw_value if raw_value is not None else env_raw or "").strip()
+    normalized = raw.lower()
+    bridge_adapter_list = [
+        str(name).strip()
+        for name in bridge_adapters
+        if str(name).strip()
+    ]
+    metric_adapter_list = [
+        str(name).strip()
+        for name in metric_bridge_adapters
+        if str(name).strip()
+    ]
+    if normalized in {"none", "off", "false"}:
+        return []
+    if normalized in {"all", "bridge", "bridge_loss"}:
+        return list(bridge_adapter_list)
+    if normalized in {"metric", "metrics", "autoencoder_metric", "same"}:
+        return list(metric_adapter_list)
+    if raw:
+        return [
+            name
+            for name in (part.strip() for part in raw.split(","))
+            if name and name.lower() not in {"none", "off", "false"}
+        ]
+    preferred = [
+        name
+        for name in DEFAULT_AUTOENCODER_DIAGNOSTIC_BRIDGE_ADAPTERS
+        if name in bridge_adapter_list
+    ]
+    if preferred:
+        return preferred
+    if metric_adapter_list:
+        return metric_adapter_list
+    return bridge_adapter_list[:1]
+
+
+def autoencoder_metric_bridge_max_samples(args: argparse.Namespace) -> int:
+    """Return sample cap for bridge-backed autoencoder metrics."""
+
+    if getattr(args, "autoencoder_metric_bridge_max_samples", None) is not None:
+        return max(0, int(getattr(args, "autoencoder_metric_bridge_max_samples") or 0))
+    return _env_int(
+        "IPFS_DATASETS_AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLES",
+        DEFAULT_AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLES,
+        minimum=0,
+    )
+
+
 def parse_bool_flag(value: Any) -> bool:
     normalized = str(value).strip().lower()
     if normalized in {"1", "true", "yes", "y", "on"}:
@@ -4347,6 +4457,32 @@ def build_paired_daemon_commands(
         str(getattr(args, "bridge_loss_adapters", DEFAULT_BRIDGE_LOSS_ADAPTERS)),
         "--bridge-evaluate-provers",
         str(getattr(args, "bridge_evaluate_provers", True)).lower(),
+        "--autoencoder-metric-bridge-adapters",
+        str(
+            getattr(args, "autoencoder_metric_bridge_adapters", None)
+            if getattr(args, "autoencoder_metric_bridge_adapters", None) is not None
+            else os.environ.get("IPFS_DATASETS_AUTOENCODER_METRIC_BRIDGE_ADAPTERS", "")
+        ),
+        "--autoencoder-diagnostic-bridge-adapters",
+        str(
+            getattr(args, "autoencoder_diagnostic_bridge_adapters", None)
+            if getattr(args, "autoencoder_diagnostic_bridge_adapters", None)
+            is not None
+            else os.environ.get(
+                "IPFS_DATASETS_AUTOENCODER_DIAGNOSTIC_BRIDGE_ADAPTERS",
+                "",
+            )
+        ),
+        "--autoencoder-metric-bridge-max-samples",
+        str(
+            getattr(
+                args,
+                "autoencoder_metric_bridge_max_samples",
+                DEFAULT_AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLES,
+            )
+            if getattr(args, "autoencoder_metric_bridge_max_samples", None) is not None
+            else DEFAULT_AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLES
+        ),
         "--autoencoder-device",
         str(getattr(args, "autoencoder_device", "auto")),
         "--autoencoder-feature-family-logit-scale",
@@ -4503,6 +4639,8 @@ def build_paired_daemon_commands(
         str(getattr(args, "autoencoder_max_token_bigram_features", 24)),
         "--autoencoder-max-token-trigram-features",
         str(getattr(args, "autoencoder_max_token_trigram_features", 12)),
+        "--autoencoder-max-codec-feature-keys",
+        str(getattr(args, "autoencoder_max_codec_feature_keys", 0)),
         "--autoencoder-max-legal-ir-token-features",
         str(getattr(args, "autoencoder_max_legal_ir_token_features", 24)),
         "--autoencoder-max-legal-ir-token-bigram-features",
@@ -7275,7 +7413,254 @@ def append_event(path: Path, run_id: str, event: Mapping[str, Any]) -> None:
 def save_summary(summary_path: Path, summary: Dict[str, Any], *, final: bool = False) -> None:
     summary["final"] = final
     summary["updated_at"] = utc_now()
-    summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    summary_path.parent.mkdir(parents=True, exist_ok=True)
+    payload = json.dumps(summary, indent=2, sort_keys=True) + "\n"
+    handle = tempfile.NamedTemporaryFile(
+        "w",
+        delete=False,
+        dir=str(summary_path.parent),
+        encoding="utf-8",
+        prefix=f".{summary_path.name}.",
+        suffix=".tmp",
+    )
+    tmp_path = Path(handle.name)
+    try:
+        with handle:
+            handle.write(payload)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(tmp_path, summary_path)
+    finally:
+        try:
+            tmp_path.unlink()
+        except FileNotFoundError:
+            pass
+
+
+def _read_meminfo_kb() -> Dict[str, int]:
+    meminfo: Dict[str, int] = {}
+    try:
+        lines = Path("/proc/meminfo").read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return meminfo
+    for line in lines:
+        if ":" not in line:
+            continue
+        key, raw_value = line.split(":", 1)
+        parts = raw_value.strip().split()
+        if not parts:
+            continue
+        try:
+            meminfo[key] = int(parts[0])
+        except ValueError:
+            continue
+    return meminfo
+
+
+def paired_resource_health() -> Dict[str, Any]:
+    """Return lightweight host memory/CPU facts for paired-run admission control."""
+
+    meminfo = _read_meminfo_kb()
+
+    def gib(key: str) -> Optional[float]:
+        value = meminfo.get(key)
+        if value is None:
+            return None
+        return round(float(value) / 1024.0 / 1024.0, 3)
+
+    return {
+        "cpu_count": os.cpu_count() or 1,
+        "memory_available_gb": gib("MemAvailable"),
+        "memory_free_gb": gib("MemFree"),
+        "memory_total_gb": gib("MemTotal"),
+        "swap_free_gb": gib("SwapFree"),
+        "swap_total_gb": gib("SwapTotal"),
+    }
+
+
+def _resource_float(
+    resource_health: Mapping[str, Any],
+    key: str,
+    default: float,
+) -> float:
+    value = resource_health.get(key)
+    if isinstance(value, (int, float)):
+        return float(value)
+    return float(default)
+
+
+def _round_robin_codex_children(
+    codex_children: Sequence[Mapping[str, Any]],
+    *,
+    limit: int,
+) -> List[Mapping[str, Any]]:
+    """Keep scope coverage when the resource guard trims a parallel Codex pool."""
+
+    if limit <= 0:
+        return []
+    if len(codex_children) <= limit:
+        return [dict(child) for child in codex_children]
+
+    grouped: Dict[str, List[Mapping[str, Any]]] = {}
+    scope_order: List[str] = []
+    for child in codex_children:
+        scope = str(child.get("scope") or "all")
+        if scope not in grouped:
+            grouped[scope] = []
+            scope_order.append(scope)
+        grouped[scope].append(child)
+
+    selected: List[Mapping[str, Any]] = []
+    while len(selected) < limit:
+        added = False
+        for scope in scope_order:
+            if len(selected) >= limit:
+                break
+            items = grouped.get(scope) or []
+            if not items:
+                continue
+            selected.append(dict(items.pop(0)))
+            added = True
+        if not added:
+            break
+    return selected
+
+
+def paired_codex_worker_resource_plan(
+    args: argparse.Namespace,
+    *,
+    requested_workers: int,
+    resource_health: Optional[Mapping[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Compute the effective Codex worker budget for a paired run."""
+
+    requested_workers = max(0, int(requested_workers))
+    health = dict(resource_health or paired_resource_health())
+    mode = str(getattr(args, "paired_resource_guard", "auto") or "auto").strip().lower()
+    explicit_max = max(0, int(getattr(args, "paired_codex_max_workers", 0) or 0))
+    cpu_count = max(1, int(health.get("cpu_count") or os.cpu_count() or 1))
+    per_worker_gb = max(
+        0.25,
+        float(getattr(args, "paired_codex_worker_memory_gb", 2.0) or 2.0),
+    )
+    reserved_gb = max(
+        0.0,
+        float(getattr(args, "paired_reserved_memory_gb", 24.0) or 0.0),
+    )
+    available_gb = _resource_float(health, "memory_available_gb", reserved_gb)
+    min_swap_free_gb = max(
+        0.0,
+        float(getattr(args, "paired_min_swap_free_gb", 1.0) or 0.0),
+    )
+    swap_free_gb = _resource_float(health, "swap_free_gb", min_swap_free_gb)
+    swap_pressure = bool(min_swap_free_gb > 0.0 and swap_free_gb < min_swap_free_gb)
+    cpu_cap = max(1, min(12, cpu_count - 2 if cpu_count > 2 else 1))
+    memory_cap = max(1, int((available_gb - reserved_gb) // per_worker_gb))
+    swap_cap = cpu_cap
+    if swap_pressure:
+        swap_cap = max(1, min(cpu_cap, cpu_count // 2 if cpu_count > 1 else 1, 8))
+
+    if mode == "off":
+        effective_workers = requested_workers
+        reason = "resource_guard_off"
+    elif mode == "fixed" and explicit_max > 0:
+        effective_workers = min(requested_workers, explicit_max)
+        reason = "fixed_max_workers"
+    else:
+        auto_cap = max(1, min(cpu_cap, memory_cap, swap_cap))
+        if explicit_max > 0:
+            auto_cap = min(auto_cap, explicit_max)
+        effective_workers = min(requested_workers, auto_cap)
+        reason = "auto_cpu_memory_swap_cap" if swap_pressure else "auto_cpu_memory_cap"
+
+    return {
+        "available_memory_gb": available_gb,
+        "cpu_cap": cpu_cap,
+        "cpu_count": cpu_count,
+        "effective_workers": max(0, int(effective_workers)),
+        "explicit_max_workers": explicit_max,
+        "memory_cap": memory_cap,
+        "mode": mode,
+        "per_worker_memory_gb": per_worker_gb,
+        "reason": reason,
+        "requested_workers": requested_workers,
+        "reserved_memory_gb": reserved_gb,
+        "resource_health": health,
+        "swap_cap": swap_cap,
+        "swap_free_gb": swap_free_gb,
+        "swap_pressure": swap_pressure,
+        "min_swap_free_gb": min_swap_free_gb,
+    }
+
+
+def _paired_resource_pressure(
+    args: argparse.Namespace,
+    *,
+    resource_health: Optional[Mapping[str, Any]] = None,
+) -> tuple[bool, Dict[str, Any]]:
+    health = dict(resource_health or paired_resource_health())
+    min_available_gb = max(
+        0.0,
+        float(getattr(args, "paired_min_available_memory_gb", 12.0) or 0.0),
+    )
+    available_gb = _resource_float(health, "memory_available_gb", min_available_gb)
+    memory_pressure = bool(
+        min_available_gb > 0.0 and available_gb < min_available_gb
+    )
+    min_swap_free_gb = max(
+        0.0,
+        float(getattr(args, "paired_min_swap_free_gb", 1.0) or 0.0),
+    )
+    swap_free_gb = _resource_float(health, "swap_free_gb", min_swap_free_gb)
+    swap_pressure = bool(min_swap_free_gb > 0.0 and swap_free_gb < min_swap_free_gb)
+    pressure = memory_pressure or swap_pressure
+    report = {
+        "available_memory_gb": available_gb,
+        "memory_pressure": memory_pressure,
+        "min_available_memory_gb": min_available_gb,
+        "min_swap_free_gb": min_swap_free_gb,
+        "resource_pressure": pressure,
+        "resource_health": health,
+        "swap_free_gb": swap_free_gb,
+        "swap_pressure": swap_pressure,
+    }
+    return pressure, report
+
+
+def paired_codex_child_env(args: argparse.Namespace) -> Dict[str, str]:
+    """Return environment overrides for paired Codex workers."""
+
+    if not bool(getattr(args, "paired_codex_disable_cuda", True)):
+        return {}
+    return {
+        "CUDA_VISIBLE_DEVICES": "",
+        "IPFS_DATASETS_CODEX_TASK_EMBEDDINGS_DEVICE": "cpu",
+        "NVIDIA_VISIBLE_DEVICES": "none",
+    }
+
+
+def _clamp_nested_bridge_adapter_parallelism(
+    *,
+    bridge_parallel_workers: int,
+) -> Dict[str, Any]:
+    """Avoid sample-worker x adapter-worker explosions during LegalIR evaluation."""
+
+    previous = os.environ.get("IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS", "").strip()
+    try:
+        adapter_workers = int(previous) if previous else 1
+    except ValueError:
+        adapter_workers = 1
+    clamped = False
+    if bridge_parallel_workers > 1 and adapter_workers > 1:
+        os.environ["IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS"] = "1"
+        adapter_workers = 1
+        clamped = True
+    return {
+        "bridge_parallel_workers": int(bridge_parallel_workers),
+        "clamped": clamped,
+        "effective_adapter_workers": adapter_workers,
+        "previous_adapter_workers": previous,
+    }
 
 
 def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Path, state_path: Path) -> Dict[str, Any]:
@@ -7540,6 +7925,36 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         help=(
             "Whether bridge scoring should run expensive theorem-prover gates. "
             "Use false for daemon health checks that need fast compiler/KG/TODO cycles."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-metric-bridge-adapters",
+        default=None,
+        help=(
+            "Comma-separated bridge adapters used inside synchronous autoencoder "
+            "LegalIR metric/evaluation phases. Empty uses a cheap representative "
+            "subset, 'all' mirrors --bridge-loss-adapters, and 'none' disables "
+            "bridge-backed autoencoder metrics."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-diagnostic-bridge-adapters",
+        default=None,
+        help=(
+            "Comma-separated bridge adapters used for synchronous compiler bridge "
+            "diagnostics. Empty mirrors the cheap autoencoder metric ladder, "
+            "'all' mirrors --bridge-loss-adapters, and 'none' disables these "
+            "diagnostic bridge metrics."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-metric-bridge-max-samples",
+        type=int,
+        default=None,
+        help=(
+            "Maximum train/validation samples per phase that receive bridge-backed "
+            "LegalIR autoencoder metrics. Base CE/cosine/reconstruction metrics "
+            "still evaluate the full batch. Zero disables sampled bridge metrics."
         ),
     )
     parser.add_argument(
@@ -8356,6 +8771,18 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         help="Maximum trigram lexical features per sample in the modal head.",
     )
     parser.add_argument(
+        "--autoencoder-max-codec-feature-keys",
+        type=int,
+        default=0,
+        help=(
+            "Maximum deterministic codec-provided feature keys per sample in "
+            "the adaptive autoencoder. Fallback compiler/legal feature groups "
+            "remain governed by their dedicated per-family caps. The default "
+            "keeps this disabled because the full deterministic codec feature "
+            "path can be much slower than the bounded fallback feature heads."
+        ),
+    )
+    parser.add_argument(
         "--autoencoder-max-legal-ir-token-features",
         type=int,
         default=24,
@@ -8615,8 +9042,85 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--autoencoder-run-id", default=None)
     parser.add_argument("--codex-run-id", default=None)
     parser.add_argument("--paired-launch-delay-seconds", type=float, default=0.0)
+    parser.add_argument(
+        "--paired-codex-launch-stagger-seconds",
+        type=float,
+        default=1.0,
+        help=(
+            "Delay between paired Codex child launches. Staggering avoids import "
+            "and Codex CLI startup memory spikes when many scope workers start."
+        ),
+    )
+    parser.add_argument(
+        "--paired-codex-disable-cuda",
+        type=parse_bool_flag,
+        default=parse_bool_flag(
+            os.environ.get("IPFS_DATASETS_PAIRED_CODEX_DISABLE_CUDA", "true")
+        ),
+        help=(
+            "Hide CUDA devices from paired Codex workers so the autoencoder owns "
+            "GPU memory. Use false only when a Codex lane explicitly needs CUDA."
+        ),
+    )
     parser.add_argument("--paired-poll-seconds", type=float, default=1.0)
     parser.add_argument("--paired-grace-seconds", type=float, default=300.0)
+    parser.add_argument(
+        "--paired-resource-guard",
+        choices=("auto", "fixed", "off"),
+        default=os.environ.get("IPFS_DATASETS_PAIRED_RESOURCE_GUARD", "auto"),
+        help=(
+            "Admission-control mode for paired Codex workers. The auto mode caps "
+            "workers by CPU and available memory before launching the pool."
+        ),
+    )
+    parser.add_argument(
+        "--paired-codex-max-workers",
+        type=int,
+        default=int(os.environ.get("IPFS_DATASETS_PAIRED_CODEX_MAX_WORKERS", "0") or 0),
+        help=(
+            "Maximum paired Codex workers. Zero lets the auto resource guard choose."
+        ),
+    )
+    parser.add_argument(
+        "--paired-codex-worker-memory-gb",
+        type=float,
+        default=float(
+            os.environ.get("IPFS_DATASETS_PAIRED_CODEX_WORKER_MEMORY_GB", "2.0") or 2.0
+        ),
+        help="Estimated host-memory budget per paired Codex worker.",
+    )
+    parser.add_argument(
+        "--paired-reserved-memory-gb",
+        type=float,
+        default=float(
+            os.environ.get("IPFS_DATASETS_PAIRED_RESERVED_MEMORY_GB", "24.0") or 24.0
+        ),
+        help="Host memory kept free for the OS, editor, CUDA driver, and autoencoder.",
+    )
+    parser.add_argument(
+        "--paired-min-available-memory-gb",
+        type=float,
+        default=float(
+            os.environ.get("IPFS_DATASETS_PAIRED_MIN_AVAILABLE_MEMORY_GB", "12.0")
+            or 12.0
+        ),
+        help=(
+            "Do not restart paired children while MemAvailable is below this "
+            "threshold. Zero disables restart deferral under memory pressure."
+        ),
+    )
+    parser.add_argument(
+        "--paired-min-swap-free-gb",
+        type=float,
+        default=float(
+            os.environ.get("IPFS_DATASETS_PAIRED_MIN_SWAP_FREE_GB", "1.0") or 1.0
+        ),
+        help=(
+            "Do not restart paired children while SwapFree is below this threshold. "
+            "Auto worker admission also trims the Codex pool under swap pressure. "
+            "Zero disables swap-pressure handling."
+        ),
+    )
     parser.add_argument(
         "--paired-autoencoder-stale-seconds",
         type=float,
@@ -8826,6 +9330,17 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                 "worker_id": getattr(args, "worker_id", None),
             }
         ]
+    requested_codex_child_count = len(codex_children)
+    resource_plan = paired_codex_worker_resource_plan(
+        args,
+        requested_workers=requested_codex_child_count,
+    )
+    effective_codex_child_count = int(resource_plan.get("effective_workers", 0) or 0)
+    if effective_codex_child_count < requested_codex_child_count:
+        codex_children = _round_robin_codex_children(
+            codex_children,
+            limit=effective_codex_child_count,
+        )
     codex_child_summaries: List[Dict[str, Any]] = []
     for child in codex_children:
         child_run_id = str(child["run_id"])
@@ -8901,6 +9416,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         "codex_command": list(paired["codex_command"]),
         "codex_children": codex_child_summaries,
         "codex_child_count": len(codex_child_summaries),
+        "codex_requested_child_count": requested_codex_child_count,
         "codex_worker_exit_restart_counts": {},
         "codex_worker_restart_limit": codex_worker_restart_limit,
         "codex_worker_stale_restart_counts": {},
@@ -8914,6 +9430,12 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         "loop_role": "paired",
         "paired_grace_seconds": float(args.paired_grace_seconds),
         "paired_poll_seconds": float(args.paired_poll_seconds),
+        "paired_codex_child_env": paired_codex_child_env(args),
+        "paired_codex_disable_cuda": bool(
+            getattr(args, "paired_codex_disable_cuda", True)
+        ),
+        "paired_resource_guard": str(getattr(args, "paired_resource_guard", "auto")),
+        "paired_resource_plan": dict(resource_plan),
         "paired_codex_worker_stale_seconds": codex_worker_stale_seconds,
         "paired_failed_validation_rescue_deduped_total": 0,
         "paired_failed_validation_rescue_interval_seconds": (
@@ -8960,11 +9482,13 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
             "event": "paired_runner_started",
             "autoencoder_run_id": paired["autoencoder_run_id"],
             "codex_child_count": len(codex_child_summaries),
+            "codex_requested_child_count": requested_codex_child_count,
             "codex_children": [
                 {"run_id": child["run_id"], "scope": child.get("scope")}
                 for child in codex_child_summaries
             ],
             "codex_run_id": paired["codex_run_id"],
+            "paired_resource_plan": dict(resource_plan),
             "queue_run_id": paired["queue_run_id"],
         },
     )
@@ -8981,6 +9505,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
     autoencoder_restart_count = 0
     codex_worker_restart_counts: Dict[str, int] = {}
     codex_worker_exit_restart_counts: Dict[str, int] = {}
+    restart_resource_defer_last_at: Dict[str, float] = {}
     last_codex_queue_starved = False
     last_autoencoder_restart_at = 0.0
     last_failed_validation_rescue_at = 0.0
@@ -9041,6 +9566,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                 process = accelerate_launch_process_child(
                     list(child["command"]),
                     cwd=root,
+                    env=paired_codex_child_env(args),
                     stdin=None,
                     stdout=child_stdout,
                     stderr=child_stderr,
@@ -9064,6 +9590,12 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
             for child in codex_child_summaries:
                 child_run_id = str(child["run_id"])
                 codex_processes[child_run_id] = start_codex_child(child)
+                stagger = max(
+                    0.0,
+                    float(getattr(args, "paired_codex_launch_stagger_seconds", 0.0) or 0.0),
+                )
+                if stagger > 0.0:
+                    time.sleep(stagger)
 
             poll_seconds = max(0.2, float(args.paired_poll_seconds))
             duration_wait = max(0.0, float(args.duration_seconds))
@@ -9077,6 +9609,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                 }
                 summary["elapsed_seconds"] = round(elapsed, 3)
                 summary["heartbeat_at"] = utc_now()
+                summary["paired_resource_health"] = paired_resource_health()
                 summary["latest_stop_reason"] = (
                     "paired_duration_elapsed"
                     if paired_duration_elapsed
@@ -9101,6 +9634,35 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                     and not paired_duration_elapsed
                     and elapsed <= duration_wait
                 ):
+                    resource_pressure, pressure_report = _paired_resource_pressure(args)
+                    if resource_pressure:
+                        now = time.time()
+                        last_deferred = restart_resource_defer_last_at.get(
+                            str(paired["autoencoder_run_id"]),
+                            0.0,
+                        )
+                        if now - last_deferred >= 60.0:
+                            restart_resource_defer_last_at[
+                                str(paired["autoencoder_run_id"])
+                            ] = now
+                            append_event(
+                                log_path,
+                                args.run_id,
+                                {
+                                    "event": "paired_autoencoder_restart_deferred",
+                                    "previous_exit_code": auto_exit_code,
+                                    "reason": "resource_pressure",
+                                    "resource_pressure": dict(pressure_report),
+                                },
+                            )
+                        summary["latest_restart_deferral"] = {
+                            "child_run_id": paired["autoencoder_run_id"],
+                            "reason": "resource_pressure",
+                            "resource_pressure": dict(pressure_report),
+                        }
+                        save_summary(summary_path, summary)
+                        time.sleep(poll_seconds)
+                        continue
                     previous_pid = auto_process.pid
                     previous_exit_code = auto_exit_code
                     autoencoder_restart_count += 1
@@ -9158,6 +9720,34 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                         ):
                             continue
                         if elapsed > duration_wait:
+                            continue
+                        resource_pressure, pressure_report = _paired_resource_pressure(args)
+                        if resource_pressure:
+                            now = time.time()
+                            last_deferred = restart_resource_defer_last_at.get(
+                                child_run_id,
+                                0.0,
+                            )
+                            if now - last_deferred >= 60.0:
+                                restart_resource_defer_last_at[child_run_id] = now
+                                append_event(
+                                    log_path,
+                                    args.run_id,
+                                    {
+                                        "event": "paired_codex_restart_deferred",
+                                        "child_run_id": child_run_id,
+                                        "codex_scope": child.get("scope"),
+                                        "previous_exit_code": exit_code,
+                                        "reason": "resource_pressure",
+                                        "resource_pressure": dict(pressure_report),
+                                        "worker_id": child.get("worker_id"),
+                                    },
+                                )
+                            summary["latest_restart_deferral"] = {
+                                "child_run_id": child_run_id,
+                                "reason": "resource_pressure",
+                                "resource_pressure": dict(pressure_report),
+                            }
                             continue
                         process = codex_processes.get(child_run_id)
                         previous_pid = process.pid if process is not None else None
@@ -9262,6 +9852,38 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                         child_run_id = str(child["run_id"])
                         restart_count = codex_worker_restart_counts.get(child_run_id, 0)
                         if restart_count >= codex_worker_restart_limit:
+                            continue
+                        resource_pressure, pressure_report = _paired_resource_pressure(args)
+                        if resource_pressure:
+                            now = time.time()
+                            last_deferred = restart_resource_defer_last_at.get(
+                                child_run_id,
+                                0.0,
+                            )
+                            if now - last_deferred >= 60.0:
+                                restart_resource_defer_last_at[child_run_id] = now
+                                append_event(
+                                    log_path,
+                                    args.run_id,
+                                    {
+                                        "event": "paired_codex_stale_restart_deferred",
+                                        "child_run_id": child_run_id,
+                                        "previous_exit_code": (
+                                            process.poll()
+                                            if (process := codex_processes.get(child_run_id)) is not None
+                                            else None
+                                        ),
+                                        "program_synthesis_health": program_synthesis_health,
+                                        "reason": "resource_pressure",
+                                        "resource_pressure": dict(pressure_report),
+                                        "worker_id": worker_id,
+                                    },
+                                )
+                            summary["latest_restart_deferral"] = {
+                                "child_run_id": child_run_id,
+                                "reason": "resource_pressure",
+                                "resource_pressure": dict(pressure_report),
+                            }
                             continue
                         process = codex_processes.get(child_run_id)
                         previous_pid = process.pid if process is not None else None
@@ -9487,6 +10109,43 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                     and autoencoder_restart_count < autoencoder_restart_limit
                     and restart_cooldown_ready
                 ):
+                    resource_pressure, pressure_report = _paired_resource_pressure(args)
+                    if resource_pressure:
+                        now = time.time()
+                        last_deferred = restart_resource_defer_last_at.get(
+                            str(paired["autoencoder_run_id"]),
+                            0.0,
+                        )
+                        if now - last_deferred >= 60.0:
+                            restart_resource_defer_last_at[
+                                str(paired["autoencoder_run_id"])
+                            ] = now
+                            append_event(
+                                log_path,
+                                args.run_id,
+                                {
+                                    "event": "paired_autoencoder_stale_restart_deferred",
+                                    "autoencoder_child_health": autoencoder_health,
+                                    "autoencoder_stale_seconds": autoencoder_stale_seconds,
+                                    "autoencoder_zero_cycle_stalled": (
+                                        autoencoder_zero_cycle_stalled
+                                    ),
+                                    "codex_prequeue_blocked": codex_prequeue_blocked,
+                                    "codex_queue_starved": codex_queue_starved,
+                                    "previous_pid": auto_process.pid,
+                                    "program_synthesis_health": program_synthesis_health,
+                                    "reason": "resource_pressure",
+                                    "resource_pressure": dict(pressure_report),
+                                },
+                            )
+                        summary["latest_restart_deferral"] = {
+                            "child_run_id": paired["autoencoder_run_id"],
+                            "reason": "resource_pressure",
+                            "resource_pressure": dict(pressure_report),
+                        }
+                        save_summary(summary_path, summary)
+                        time.sleep(poll_seconds)
+                        continue
                     previous_pid = auto_process.pid
                     restart_reason = (
                         "stale_autoencoder_heartbeat_before_queue_created"
@@ -9755,10 +10414,37 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         1,
         int(getattr(args, "autoencoder_bridge_workers", 1) or 1),
     )
+    metric_bridge_adapters = autoencoder_metric_bridge_adapter_names(args, bridge_adapters)
+    diagnostic_bridge_adapters = autoencoder_diagnostic_bridge_adapter_names(
+        args,
+        bridge_adapters,
+        metric_bridge_adapters,
+    )
+    metric_bridge_max_samples = autoencoder_metric_bridge_max_samples(args)
+    metric_bridge_parallel_workers = max(
+        1,
+        min(
+            bridge_parallel_workers,
+            metric_bridge_max_samples if metric_bridge_max_samples > 0 else 1,
+        ),
+    )
     os.environ["IPFS_DATASETS_LEGAL_IR_PARALLEL_WORKERS"] = str(bridge_parallel_workers)
+    bridge_parallelism_report = _clamp_nested_bridge_adapter_parallelism(
+        bridge_parallel_workers=bridge_parallel_workers,
+    )
     summary["bridge_loss_adapters"] = bridge_adapters
     summary["bridge_evaluate_provers"] = bridge_evaluate_provers
     summary["autoencoder_bridge_workers"] = bridge_parallel_workers
+    summary["legal_ir_bridge_parallelism"] = dict(bridge_parallelism_report)
+    summary["autoencoder_metric_bridge_adapters"] = list(metric_bridge_adapters)
+    summary["autoencoder_diagnostic_bridge_adapters"] = list(
+        diagnostic_bridge_adapters
+    )
+    summary["autoencoder_diagnostic_bridge_skipped_adapters"] = [
+        name for name in bridge_adapters if name not in set(diagnostic_bridge_adapters)
+    ]
+    summary["autoencoder_metric_bridge_max_samples"] = metric_bridge_max_samples
+    summary["autoencoder_metric_bridge_parallel_workers"] = metric_bridge_parallel_workers
     generalizable_projection_timeout_seconds = max(
         0.0,
         float(getattr(args, "generalizable_projection_timeout_seconds", 900.0) or 0.0),
@@ -9789,8 +10475,11 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     summary.setdefault("program_synthesis_bootstrap_semantic_deduped_total", 0)
     summary["active_cycle"] = None
     summary["active_cycle_bridge_loss_adapters"] = []
+    summary["active_cycle_metric_bridge_adapters"] = []
+    summary["active_cycle_metric_bridge_max_samples"] = 0
     summary["active_cycle_elapsed_seconds"] = 0.0
     summary["active_cycle_last_heartbeat_at"] = None
+    summary["active_cycle_metric_progress"] = {}
     summary["active_cycle_phase"] = None
     summary["active_cycle_started_at"] = None
     summary["active_cycle_train_count"] = 0
@@ -9982,6 +10671,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         ),
         max_token_trigram_features=int(
             getattr(args, "autoencoder_max_token_trigram_features", 12)
+        ),
+        max_codec_feature_keys=int(
+            getattr(args, "autoencoder_max_codec_feature_keys", 0)
         ),
         max_legal_ir_token_features=int(
             getattr(args, "autoencoder_max_legal_ir_token_features", 24)
@@ -10234,6 +10926,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     summary["autoencoder_max_token_trigram_features"] = int(
         getattr(args, "autoencoder_max_token_trigram_features", 12)
     )
+    summary["autoencoder_max_codec_feature_keys"] = int(
+        getattr(args, "autoencoder_max_codec_feature_keys", 0)
+    )
     summary["autoencoder_max_legal_ir_token_features"] = int(
         getattr(args, "autoencoder_max_legal_ir_token_features", 24)
     )
@@ -10370,14 +11065,15 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     save_summary(summary_path, summary)
     supervisor = ModalTodoSupervisor(
         queue=queue,
-        bridge_names=bridge_adapters,
+        bridge_names=metric_bridge_adapters,
         bridge_evaluate_provers=bridge_evaluate_provers,
         bridge_loss_evaluator=bridge_loss_evaluator_for_names(
             bridge_adapters,
             evaluate_provers=bridge_evaluate_provers,
             parallel_workers=bridge_parallel_workers,
         ),
-        bridge_parallel_workers=bridge_parallel_workers,
+        bridge_metric_max_samples=metric_bridge_max_samples,
+        bridge_parallel_workers=metric_bridge_parallel_workers,
     )
     rng = random.Random(int(summary.get("seed", 0)) + int(summary.get("cycles", 0)) + 1)
     blocked_validation_sample_ids = set(state.decoded_embeddings) | set(state.family_logits)
@@ -10486,12 +11182,18 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     ) -> None:
         summary["active_cycle"] = int(cycle)
         summary["active_cycle_bridge_loss_adapters"] = list(bridge_adapters)
+        summary["active_cycle_metric_bridge_adapters"] = list(metric_bridge_adapters)
+        summary["active_cycle_diagnostic_bridge_adapters"] = list(
+            diagnostic_bridge_adapters
+        )
+        summary["active_cycle_metric_bridge_max_samples"] = int(metric_bridge_max_samples)
         summary["active_cycle_elapsed_seconds"] = round(time.time() - cycle_started, 3)
         summary["active_cycle_last_heartbeat_at"] = utc_now()
         summary["active_cycle_phase"] = phase
         if phase != "generalizable_projection":
             summary["active_cycle_projection_progress"] = {}
             summary["active_cycle_projection_stage"] = None
+        summary["active_cycle_metric_progress"] = {}
         summary["active_cycle_started_at"] = cycle_started_at
         summary["active_cycle_train_count"] = (
             int(args.train_count) if train_count is None else int(train_count)
@@ -10510,8 +11212,12 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     def clear_active_autoencoder_cycle() -> None:
         summary["active_cycle"] = None
         summary["active_cycle_bridge_loss_adapters"] = []
+        summary["active_cycle_metric_bridge_adapters"] = []
+        summary["active_cycle_diagnostic_bridge_adapters"] = []
+        summary["active_cycle_metric_bridge_max_samples"] = 0
         summary["active_cycle_elapsed_seconds"] = 0.0
         summary["active_cycle_last_heartbeat_at"] = None
+        summary["active_cycle_metric_progress"] = {}
         summary["active_cycle_phase"] = None
         summary["active_cycle_projection_progress"] = {}
         summary["active_cycle_projection_stage"] = None
@@ -10614,16 +11320,15 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "phase": str(phase),
                     "heartbeat_interval_seconds": interval,
                 }
-                if str(phase) == "todo_supervisor_optimization":
-                    try:
-                        refresh_queue_summary_from_disk()
-                    except Exception as exc:
-                        summary["active_cycle_queue_refresh"] = {
-                            "at": utc_now(),
-                            "error": str(exc),
-                            "error_type": type(exc).__name__,
-                            "mode": "summary_snapshot",
-                        }
+                try:
+                    refresh_queue_summary_from_disk()
+                except Exception as exc:
+                    summary["active_cycle_queue_refresh"] = {
+                        "at": utc_now(),
+                        "error": str(exc),
+                        "error_type": type(exc).__name__,
+                        "mode": "summary_snapshot",
+                    }
                 save_summary(summary_path, summary)
 
         thread = threading.Thread(
@@ -10651,17 +11356,268 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "heartbeat_interval_seconds": interval,
                     "final": True,
                 }
-                if str(phase) == "todo_supervisor_optimization":
-                    try:
-                        refresh_queue_summary_from_disk()
-                    except Exception as exc:
-                        summary["active_cycle_queue_refresh"] = {
-                            "at": utc_now(),
-                            "error": str(exc),
-                            "error_type": type(exc).__name__,
-                            "mode": "summary_snapshot",
-                        }
+                try:
+                    refresh_queue_summary_from_disk()
+                except Exception as exc:
+                    summary["active_cycle_queue_refresh"] = {
+                        "at": utc_now(),
+                        "error": str(exc),
+                        "error_type": type(exc).__name__,
+                        "mode": "summary_snapshot",
+                    }
                 save_summary(summary_path, summary)
+
+    def sampled_bridge_metric_samples(
+        samples: Sequence[Any],
+        *,
+        cycle: int,
+    ) -> List[Any]:
+        sample_list = list(samples)
+        if not sample_list or metric_bridge_max_samples <= 0:
+            return []
+        if len(sample_list) <= metric_bridge_max_samples:
+            return sample_list
+        start = ((max(1, int(cycle)) - 1) * metric_bridge_max_samples) % len(sample_list)
+        return [
+            sample_list[(start + offset) % len(sample_list)]
+            for offset in range(metric_bridge_max_samples)
+        ]
+
+    def record_metric_progress(
+        *,
+        cycle: int,
+        cycle_started: float,
+        phase: str,
+        stage: str,
+        sample_count: int,
+        bridge_sample_count: int = 0,
+        bridge_sample_ids: Sequence[str] = (),
+        error: Optional[BaseException] = None,
+    ) -> None:
+        payload: Dict[str, Any] = {
+            "bridge_adapters": list(metric_bridge_adapters),
+            "bridge_sample_count": int(bridge_sample_count),
+            "bridge_sample_ids": list(bridge_sample_ids),
+            "cycle": int(cycle),
+            "elapsed_seconds": round(time.time() - cycle_started, 3),
+            "phase": str(phase),
+            "sample_count": int(sample_count),
+            "stage": str(stage),
+        }
+        if error is not None:
+            payload["error"] = str(error)
+            payload["error_type"] = type(error).__name__
+        summary["active_cycle_elapsed_seconds"] = payload["elapsed_seconds"]
+        summary["active_cycle_last_heartbeat_at"] = utc_now()
+        summary["active_cycle_metric_progress"] = payload
+        save_summary(summary_path, summary)
+
+    def cuda_oom_error(exc: BaseException) -> bool:
+        text = f"{type(exc).__module__}.{type(exc).__name__}: {exc}".lower()
+        return "cuda" in text and (
+            "out of memory" in text
+            or "memoryallocation" in text
+            or "cuda errormemoryallocation" in text
+        )
+
+    def fallback_autoencoder_compute_to_python(
+        *,
+        cycle: int,
+        cycle_started: float,
+        phase: str,
+        stage: str,
+        error: BaseException,
+    ) -> None:
+        previous_backend = getattr(autoencoder, "compute_backend", "")
+        previous_device = str(getattr(autoencoder, "compute_device", None) or "")
+        autoencoder._torch = None
+        autoencoder.compute_device = None
+        autoencoder.compute_backend = "python_cuda_oom_fallback"
+        fallback_record = {
+            "at": utc_now(),
+            "cycle": int(cycle),
+            "elapsed_seconds": round(time.time() - cycle_started, 3),
+            "error": str(error),
+            "error_type": type(error).__name__,
+            "phase": str(phase),
+            "previous_backend": str(previous_backend),
+            "previous_device": previous_device,
+            "stage": str(stage),
+        }
+        summary["autoencoder_compute_fallback"] = fallback_record
+        summary["autoencoder_compute_fallback_count"] = int(
+            summary.get("autoencoder_compute_fallback_count", 0) or 0
+        ) + 1
+        summary.update(autoencoder.compute_backend_metadata())
+        record_metric_progress(
+            cycle=cycle,
+            cycle_started=cycle_started,
+            phase=phase,
+            stage=f"{stage}_cuda_oom_fallback",
+            sample_count=int(summary.get("active_cycle_train_count", 0) or 0),
+            error=error,
+        )
+        append_event(
+            log_path,
+            args.run_id,
+            {
+                "event": "autoencoder_cuda_oom_fallback",
+                **fallback_record,
+            },
+        )
+
+    def evaluate_autoencoder_cycle_metrics(
+        samples: Sequence[Any],
+        *,
+        cycle: int,
+        cycle_started: float,
+        phase: str,
+        use_sample_memory: bool = True,
+    ):
+        sample_list = list(samples)
+        bridge_samples = (
+            sampled_bridge_metric_samples(sample_list, cycle=cycle)
+            if metric_bridge_adapters
+            else []
+        )
+        bridge_sample_ids = [
+            str(getattr(sample, "sample_id", "") or "")
+            for sample in bridge_samples
+        ]
+        record_metric_progress(
+            cycle=cycle,
+            cycle_started=cycle_started,
+            phase=phase,
+            stage="base_evaluation_start",
+            sample_count=len(sample_list),
+            bridge_sample_count=len(bridge_samples),
+            bridge_sample_ids=bridge_sample_ids,
+        )
+        try:
+            base = autoencoder.evaluate(
+                sample_list,
+                legal_ir_bridge_names=(),
+                legal_ir_evaluate_provers=bridge_evaluate_provers,
+                legal_ir_parallel_workers=1,
+                use_sample_memory=use_sample_memory,
+            )
+        except Exception as exc:
+            if not cuda_oom_error(exc):
+                raise
+            fallback_autoencoder_compute_to_python(
+                cycle=cycle,
+                cycle_started=cycle_started,
+                phase=phase,
+                stage="base_evaluation",
+                error=exc,
+            )
+            base = autoencoder.evaluate(
+                sample_list,
+                legal_ir_bridge_names=(),
+                legal_ir_evaluate_provers=bridge_evaluate_provers,
+                legal_ir_parallel_workers=1,
+                use_sample_memory=use_sample_memory,
+            )
+        if not bridge_samples:
+            record_metric_progress(
+                cycle=cycle,
+                cycle_started=cycle_started,
+                phase=phase,
+                stage="base_evaluation_done",
+                sample_count=len(sample_list),
+            )
+            return base
+        record_metric_progress(
+            cycle=cycle,
+            cycle_started=cycle_started,
+            phase=phase,
+            stage="bridge_metric_start",
+            sample_count=len(sample_list),
+            bridge_sample_count=len(bridge_samples),
+            bridge_sample_ids=bridge_sample_ids,
+        )
+        try:
+            bridge_evaluation = autoencoder.evaluate(
+                bridge_samples,
+                legal_ir_bridge_names=metric_bridge_adapters,
+                legal_ir_evaluate_provers=bridge_evaluate_provers,
+                legal_ir_parallel_workers=metric_bridge_parallel_workers,
+                use_sample_memory=use_sample_memory,
+            )
+        except Exception as exc:
+            if cuda_oom_error(exc):
+                fallback_autoencoder_compute_to_python(
+                    cycle=cycle,
+                    cycle_started=cycle_started,
+                    phase=phase,
+                    stage="bridge_metric",
+                    error=exc,
+                )
+                try:
+                    bridge_evaluation = autoencoder.evaluate(
+                        bridge_samples,
+                        legal_ir_bridge_names=metric_bridge_adapters,
+                        legal_ir_evaluate_provers=bridge_evaluate_provers,
+                        legal_ir_parallel_workers=metric_bridge_parallel_workers,
+                        use_sample_memory=use_sample_memory,
+                    )
+                except Exception as retry_exc:
+                    exc = retry_exc
+                else:
+                    record_metric_progress(
+                        cycle=cycle,
+                        cycle_started=cycle_started,
+                        phase=phase,
+                        stage="bridge_metric_done",
+                        sample_count=len(sample_list),
+                        bridge_sample_count=len(bridge_samples),
+                        bridge_sample_ids=bridge_sample_ids,
+                    )
+                    return replace(
+                        base,
+                        legal_ir_target_count=bridge_evaluation.legal_ir_target_count,
+                        legal_ir_losses=dict(bridge_evaluation.legal_ir_losses),
+                        legal_ir_predicted_view_distribution=dict(
+                            bridge_evaluation.legal_ir_predicted_view_distribution
+                        ),
+                        legal_ir_target_hashes=dict(bridge_evaluation.legal_ir_target_hashes),
+                        legal_ir_view_distribution=dict(
+                            bridge_evaluation.legal_ir_view_distribution
+                        ),
+                    )
+            summary["bridge_metric_failures"] = int(
+                summary.get("bridge_metric_failures", 0) or 0
+            ) + 1
+            record_metric_progress(
+                cycle=cycle,
+                cycle_started=cycle_started,
+                phase=phase,
+                stage="bridge_metric_failed",
+                sample_count=len(sample_list),
+                bridge_sample_count=len(bridge_samples),
+                bridge_sample_ids=bridge_sample_ids,
+                error=exc,
+            )
+            return base
+        record_metric_progress(
+            cycle=cycle,
+            cycle_started=cycle_started,
+            phase=phase,
+            stage="bridge_metric_done",
+            sample_count=len(sample_list),
+            bridge_sample_count=len(bridge_samples),
+            bridge_sample_ids=bridge_sample_ids,
+        )
+        return replace(
+            base,
+            legal_ir_target_count=bridge_evaluation.legal_ir_target_count,
+            legal_ir_losses=dict(bridge_evaluation.legal_ir_losses),
+            legal_ir_predicted_view_distribution=dict(
+                bridge_evaluation.legal_ir_predicted_view_distribution
+            ),
+            legal_ir_target_hashes=dict(bridge_evaluation.legal_ir_target_hashes),
+            legal_ir_view_distribution=dict(bridge_evaluation.legal_ir_view_distribution),
+        )
 
     def bootstrap_program_synthesis_todos(
         *,
@@ -10893,11 +11849,11 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 cycle_started=cycle_started,
                 phase="before_train_evaluation",
             ):
-                before_train = autoencoder.evaluate(
+                before_train = evaluate_autoencoder_cycle_metrics(
                     train_samples,
-                    legal_ir_bridge_names=bridge_adapters,
-                    legal_ir_evaluate_provers=bridge_evaluate_provers,
-                    legal_ir_parallel_workers=bridge_parallel_workers,
+                    cycle=cycle,
+                    cycle_started=cycle_started,
+                    phase="before_train_evaluation",
                 )
             mark_active_autoencoder_cycle(
                 cycle=cycle,
@@ -10914,11 +11870,11 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 cycle_started=cycle_started,
                 phase="before_validation_evaluation",
             ):
-                before_validation = autoencoder.evaluate(
+                before_validation = evaluate_autoencoder_cycle_metrics(
                     acceptance_validation_samples,
-                    legal_ir_bridge_names=bridge_adapters,
-                    legal_ir_evaluate_provers=bridge_evaluate_provers,
-                    legal_ir_parallel_workers=bridge_parallel_workers,
+                    cycle=cycle,
+                    cycle_started=cycle_started,
+                    phase="before_validation_evaluation",
                     use_sample_memory=False,
                 )
             mark_active_autoencoder_cycle(
@@ -10931,11 +11887,30 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 train_indices=train_indices,
                 validation_indices=acceptance_validation_indices,
             )
-            compiler_ir_train = compiler_ir_metric_block(train_samples, feature_codec)
-            compiler_ir_validation = compiler_ir_metric_block(
-                acceptance_validation_samples,
-                feature_codec,
-            )
+            with active_cycle_heartbeat(
+                cycle=cycle,
+                cycle_started=cycle_started,
+                phase="compiler_ir_metrics",
+            ):
+                compiler_ir_train_samples = (
+                    sampled_bridge_metric_samples(train_samples, cycle=cycle)
+                    or list(train_samples)
+                )
+                compiler_ir_validation_samples = (
+                    sampled_bridge_metric_samples(
+                        acceptance_validation_samples,
+                        cycle=cycle,
+                    )
+                    or list(acceptance_validation_samples)
+                )
+                compiler_ir_train = compiler_ir_metric_block(
+                    compiler_ir_train_samples,
+                    feature_codec,
+                )
+                compiler_ir_validation = compiler_ir_metric_block(
+                    compiler_ir_validation_samples,
+                    feature_codec,
+                )
             mark_active_autoencoder_cycle(
                 cycle=cycle,
                 cycle_started=cycle_started,
@@ -10951,18 +11926,55 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 cycle_started=cycle_started,
                 phase="logic_bridge_metrics",
             ):
-                bridge_ir_train = bridge_ir_metric_block(
+                bridge_metric_train_samples = sampled_bridge_metric_samples(
                     train_samples,
-                    bridge_adapters,
-                    evaluate_provers=bridge_evaluate_provers,
-                    parallel_workers=bridge_parallel_workers,
+                    cycle=cycle,
                 )
-                bridge_ir_validation = bridge_ir_metric_block(
+                bridge_metric_validation_samples = sampled_bridge_metric_samples(
                     acceptance_validation_samples,
-                    bridge_adapters,
-                    evaluate_provers=bridge_evaluate_provers,
-                    parallel_workers=bridge_parallel_workers,
+                    cycle=cycle,
                 )
+                bridge_ir_train = bridge_ir_metric_block(
+                    bridge_metric_train_samples,
+                    diagnostic_bridge_adapters,
+                    evaluate_provers=bridge_evaluate_provers,
+                    parallel_workers=metric_bridge_parallel_workers,
+                )
+                bridge_ir_train["full_sample_count"] = len(train_samples)
+                bridge_ir_train["sampled"] = (
+                    len(bridge_metric_train_samples) < len(train_samples)
+                )
+                bridge_ir_train["bridge_loss_adapters"] = list(bridge_adapters)
+                bridge_ir_train["diagnostic_bridge_adapters"] = list(
+                    diagnostic_bridge_adapters
+                )
+                bridge_ir_train["skipped_bridge_loss_adapters"] = [
+                    name
+                    for name in bridge_adapters
+                    if name not in set(diagnostic_bridge_adapters)
+                ]
+                bridge_ir_validation = bridge_ir_metric_block(
+                    bridge_metric_validation_samples,
+                    diagnostic_bridge_adapters,
+                    evaluate_provers=bridge_evaluate_provers,
+                    parallel_workers=metric_bridge_parallel_workers,
+                )
+                bridge_ir_validation["full_sample_count"] = len(
+                    acceptance_validation_samples
+                )
+                bridge_ir_validation["sampled"] = (
+                    len(bridge_metric_validation_samples)
+                    < len(acceptance_validation_samples)
+                )
+                bridge_ir_validation["bridge_loss_adapters"] = list(bridge_adapters)
+                bridge_ir_validation["diagnostic_bridge_adapters"] = list(
+                    diagnostic_bridge_adapters
+                )
+                bridge_ir_validation["skipped_bridge_loss_adapters"] = [
+                    name
+                    for name in bridge_adapters
+                    if name not in set(diagnostic_bridge_adapters)
+                ]
             feature_projection_report: Dict[str, Any] = {}
             generalizable_projection_epochs = max(
                 0,
@@ -11009,83 +12021,89 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                         projection_progress_last_saved_at[0] = now
                         save_summary(summary_path, summary)
 
-                feature_projection_report = autoencoder.train_generalizable_projection(
-                    train_samples,
-                    validation_samples=acceptance_validation_samples,
-                    epochs=generalizable_projection_epochs,
-                    learning_rate=cycle_learning_rate,
-                    legal_ir_bridge_names=bridge_adapters,
-                    legal_ir_evaluate_provers=bridge_evaluate_provers,
-                    legal_ir_parallel_workers=bridge_parallel_workers,
-                    max_cosine_regression=float(
-                        getattr(
-                            args,
-                            "generalizable_projection_max_cosine_regression",
-                            0.005,
-                        )
-                    ),
-                    max_reconstruction_regression=float(
-                        getattr(
-                            args,
-                            "generalizable_projection_max_reconstruction_regression",
-                            0.01,
-                        )
-                    ),
-                    max_cross_entropy_regression=float(
-                        getattr(
-                            args,
-                            "generalizable_projection_max_cross_entropy_regression",
-                            0.0,
-                        )
-                    ),
-                    max_legal_ir_loss_regression=float(
-                        getattr(
-                            args,
-                            "generalizable_projection_max_legal_ir_loss_regression",
-                            0.01,
-                        )
-                    ),
-                    objective_cross_entropy_weight=float(
-                        getattr(
-                            args,
-                            "generalizable_projection_objective_cross_entropy_weight",
-                            1.0,
-                        )
-                    ),
-                    objective_reconstruction_weight=float(
-                        getattr(
-                            args,
-                            "generalizable_projection_objective_reconstruction_weight",
-                            1.0,
-                        )
-                    ),
-                    objective_cosine_gap_weight=float(
-                        getattr(
-                            args,
-                            "generalizable_projection_objective_cosine_gap_weight",
-                            1.0,
-                        )
-                    ),
-                    objective_legal_ir_weight=float(
-                        getattr(
-                            args,
-                            "generalizable_projection_objective_legal_ir_weight",
-                            1.0,
-                        )
-                    ),
-                    hard_example_fraction=float(
-                        getattr(
-                            args,
-                            "generalizable_projection_hard_example_fraction",
-                            1.0,
-                        )
-                    ),
-                    max_seconds=generalizable_projection_timeout_seconds,
-                    max_line_search_attempts=(
-                        generalizable_projection_max_line_search_attempts
-                    ),
-                    progress_callback=record_projection_progress,
-                )
+                with active_cycle_heartbeat(
+                    cycle=cycle,
+                    cycle_started=cycle_started,
+                    phase="generalizable_projection",
+                ):
+                    feature_projection_report = autoencoder.train_generalizable_projection(
+                        train_samples,
+                        validation_samples=acceptance_validation_samples,
+                        epochs=generalizable_projection_epochs,
+                        learning_rate=cycle_learning_rate,
+                        legal_ir_bridge_names=metric_bridge_adapters,
+                        legal_ir_bridge_max_samples=metric_bridge_max_samples,
+                        legal_ir_evaluate_provers=bridge_evaluate_provers,
+                        legal_ir_parallel_workers=metric_bridge_parallel_workers,
+                        max_cosine_regression=float(
+                            getattr(
+                                args,
+                                "generalizable_projection_max_cosine_regression",
+                                0.005,
+                            )
+                        ),
+                        max_reconstruction_regression=float(
+                            getattr(
+                                args,
+                                "generalizable_projection_max_reconstruction_regression",
+                                0.01,
+                            )
+                        ),
+                        max_cross_entropy_regression=float(
+                            getattr(
+                                args,
+                                "generalizable_projection_max_cross_entropy_regression",
+                                0.0,
+                            )
+                        ),
+                        max_legal_ir_loss_regression=float(
+                            getattr(
+                                args,
+                                "generalizable_projection_max_legal_ir_loss_regression",
+                                0.01,
+                            )
+                        ),
+                        objective_cross_entropy_weight=float(
+                            getattr(
+                                args,
+                                "generalizable_projection_objective_cross_entropy_weight",
+                                1.0,
+                            )
+                        ),
+                        objective_reconstruction_weight=float(
+                            getattr(
+                                args,
+                                "generalizable_projection_objective_reconstruction_weight",
+                                1.0,
+                            )
+                        ),
+                        objective_cosine_gap_weight=float(
+                            getattr(
+                                args,
+                                "generalizable_projection_objective_cosine_gap_weight",
+                                1.0,
+                            )
+                        ),
+                        objective_legal_ir_weight=float(
+                            getattr(
+                                args,
+                                "generalizable_projection_objective_legal_ir_weight",
+                                1.0,
+                            )
+                        ),
+                        hard_example_fraction=float(
+                            getattr(
+                                args,
+                                "generalizable_projection_hard_example_fraction",
+                                1.0,
+                            )
+                        ),
+                        max_seconds=generalizable_projection_timeout_seconds,
+                        max_line_search_attempts=(
+                            generalizable_projection_max_line_search_attempts
+                        ),
+                        progress_callback=record_projection_progress,
+                    )
             mark_active_autoencoder_cycle(
                 cycle=cycle,
                 cycle_started=cycle_started,
@@ -11129,11 +12147,11 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 cycle_started=cycle_started,
                 phase="after_train_evaluation",
             ):
-                after_train = autoencoder.evaluate(
+                after_train = evaluate_autoencoder_cycle_metrics(
                     train_samples,
-                    legal_ir_bridge_names=bridge_adapters,
-                    legal_ir_evaluate_provers=bridge_evaluate_provers,
-                    legal_ir_parallel_workers=bridge_parallel_workers,
+                    cycle=cycle,
+                    cycle_started=cycle_started,
+                    phase="after_train_evaluation",
                 )
             mark_active_autoencoder_cycle(
                 cycle=cycle,
@@ -11150,11 +12168,11 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 cycle_started=cycle_started,
                 phase="after_validation_evaluation",
             ):
-                after_validation = autoencoder.evaluate(
+                after_validation = evaluate_autoencoder_cycle_metrics(
                     acceptance_validation_samples,
-                    legal_ir_bridge_names=bridge_adapters,
-                    legal_ir_evaluate_provers=bridge_evaluate_provers,
-                    legal_ir_parallel_workers=bridge_parallel_workers,
+                    cycle=cycle,
+                    cycle_started=cycle_started,
+                    phase="after_validation_evaluation",
                     use_sample_memory=False,
                 )
             mark_active_autoencoder_cycle(
@@ -11172,14 +12190,25 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 cycle_started=cycle_started,
                 phase="guided_compiler_ir_metrics",
             ):
+                guided_compiler_ir_train_samples = (
+                    sampled_bridge_metric_samples(train_samples, cycle=cycle)
+                    or list(train_samples)
+                )
+                guided_compiler_ir_validation_samples = (
+                    sampled_bridge_metric_samples(
+                        acceptance_validation_samples,
+                        cycle=cycle,
+                    )
+                    or list(acceptance_validation_samples)
+                )
                 compiler_ir_guided_train = compiler_ir_metric_block(
-                    train_samples,
+                    guided_compiler_ir_train_samples,
                     feature_codec,
                     autoencoder=autoencoder,
                     use_autoencoder_guidance=True,
                 )
                 compiler_ir_guided_validation = compiler_ir_metric_block(
-                    acceptance_validation_samples,
+                    guided_compiler_ir_validation_samples,
                     feature_codec,
                     autoencoder=autoencoder,
                     use_autoencoder_guidance=True,

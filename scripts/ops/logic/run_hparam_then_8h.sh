@@ -20,6 +20,69 @@ BASE_RUN_ID="${1:-legal-ir-hparam-$(date -u +%Y%m%dT%H%M%SZ)}"
 LOG_DIR="${ROOT_DIR}/workspace/test-logs"
 mkdir -p "${LOG_DIR}"
 
+PREVENT_CONCURRENT_PIPELINES="${PREVENT_CONCURRENT_PIPELINES:-1}"
+ALLOW_CONCURRENT_PIPELINES="${ALLOW_CONCURRENT_PIPELINES:-0}"
+if [[ "${PREVENT_CONCURRENT_PIPELINES}" != "0" && "${ALLOW_CONCURRENT_PIPELINES}" != "1" ]]; then
+  ACTIVE_PIPELINES="$("${PYTHON_BIN}" - <<'PY'
+import json
+import os
+
+
+def _ancestor_pids(pid: int) -> set[int]:
+    pids = {pid}
+    while pid > 1:
+        try:
+            with open(f"/proc/{pid}/stat", "r", encoding="utf-8", errors="replace") as handle:
+                fields = handle.read().split()
+        except OSError:
+            break
+        if len(fields) < 4:
+            break
+        try:
+            pid = int(fields[3])
+        except ValueError:
+            break
+        if pid in pids:
+            break
+        pids.add(pid)
+    return pids
+
+
+ignored = _ancestor_pids(os.getpid())
+active = []
+for name in os.listdir("/proc"):
+    if not name.isdigit():
+        continue
+    pid = int(name)
+    if pid in ignored:
+        continue
+    try:
+        with open(f"/proc/{pid}/cmdline", "rb") as handle:
+            cmd = handle.read().replace(b"\x00", b" ").decode("utf-8", "replace").strip()
+    except OSError:
+        continue
+    if not cmd:
+        continue
+    is_pipeline = "scripts/ops/logic/run_hparam_then_8h.sh" in cmd
+    is_paired = (
+        "ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_runner" in cmd
+        and "--loop-role paired" in cmd
+    )
+    if not (is_pipeline or is_paired):
+        continue
+    active.append({"cmd": cmd[:320], "pid": pid})
+
+print(json.dumps(active[:16], sort_keys=True))
+PY
+)"
+  if [[ "${ACTIVE_PIPELINES}" != "[]" ]]; then
+    echo "[pipeline] refusing_to_start_concurrent_pipeline base_run_id=${BASE_RUN_ID}" >&2
+    echo "[pipeline] active_pipeline_processes=${ACTIVE_PIPELINES}" >&2
+    echo "[pipeline] set ALLOW_CONCURRENT_PIPELINES=1 to bypass this guard intentionally" >&2
+    exit 12
+  fi
+fi
+
 TRIAL_COUNT="${TRIAL_COUNT:-6}"
 # There are six built-in sweep configs. Run them in one wave so each candidate
 # gets the full one-hour sweep budget instead of splitting into shorter waves.
@@ -114,6 +177,14 @@ CODEX_MERGE_REPAIR_ATTEMPTS="${CODEX_MERGE_REPAIR_ATTEMPTS:-1}"
 CODEX_MAIN_APPLY_LOCK_TIMEOUT_SECONDS="${CODEX_MAIN_APPLY_LOCK_TIMEOUT_SECONDS:-600}"
 CODEX_TARGET_METRIC_TIMEOUT_SECONDS="${CODEX_TARGET_METRIC_TIMEOUT_SECONDS:-30}"
 CODEX_TARGET_METRIC_MAX_SAMPLES="${CODEX_TARGET_METRIC_MAX_SAMPLES:-2}"
+PAIRED_RESOURCE_GUARD="${PAIRED_RESOURCE_GUARD:-auto}"
+PAIRED_CODEX_MAX_WORKERS="${PAIRED_CODEX_MAX_WORKERS:-0}"
+PAIRED_CODEX_WORKER_MEMORY_GB="${PAIRED_CODEX_WORKER_MEMORY_GB:-2.0}"
+PAIRED_RESERVED_MEMORY_GB="${PAIRED_RESERVED_MEMORY_GB:-24.0}"
+PAIRED_MIN_AVAILABLE_MEMORY_GB="${PAIRED_MIN_AVAILABLE_MEMORY_GB:-12.0}"
+PAIRED_MIN_SWAP_FREE_GB="${PAIRED_MIN_SWAP_FREE_GB:-1.0}"
+PAIRED_CODEX_LAUNCH_STAGGER_SECONDS="${PAIRED_CODEX_LAUNCH_STAGGER_SECONDS:-1.0}"
+PAIRED_CODEX_DISABLE_CUDA="${PAIRED_CODEX_DISABLE_CUDA:-true}"
 
 CODEX_EXEC_MODE="${CODEX_EXEC_MODE:-codex_cli}"
 if ! command -v codex >/dev/null 2>&1; then
@@ -217,6 +288,14 @@ FINAL_COMMON_OVERRIDES=(
 PAIRED_ARGS=(
   --paired-poll-seconds 1
   --paired-grace-seconds "${PAIRED_GRACE_SECONDS}"
+  --paired-resource-guard "${PAIRED_RESOURCE_GUARD}"
+  --paired-codex-max-workers "${PAIRED_CODEX_MAX_WORKERS}"
+  --paired-codex-worker-memory-gb "${PAIRED_CODEX_WORKER_MEMORY_GB}"
+  --paired-reserved-memory-gb "${PAIRED_RESERVED_MEMORY_GB}"
+  --paired-min-available-memory-gb "${PAIRED_MIN_AVAILABLE_MEMORY_GB}"
+  --paired-min-swap-free-gb "${PAIRED_MIN_SWAP_FREE_GB}"
+  --paired-codex-launch-stagger-seconds "${PAIRED_CODEX_LAUNCH_STAGGER_SECONDS}"
+  --paired-codex-disable-cuda "${PAIRED_CODEX_DISABLE_CUDA}"
   --codex-exec-mode "${CODEX_EXEC_MODE}"
   --codex-apply-mode "${CODEX_APPLY_MODE}"
   --codex-commit-mode "${CODEX_COMMIT_MODE}"
@@ -269,6 +348,14 @@ echo "[pipeline] final_run_seconds=${FINAL_SECONDS}"
 echo "[pipeline] trial_timeout_seconds=${TRIAL_TIMEOUT_SECONDS}"
 echo "[pipeline] final_timeout_seconds=${FINAL_TIMEOUT_SECONDS}"
 echo "[pipeline] paired_grace_seconds=${PAIRED_GRACE_SECONDS}"
+echo "[pipeline] paired_resource_guard=${PAIRED_RESOURCE_GUARD}"
+echo "[pipeline] paired_codex_max_workers=${PAIRED_CODEX_MAX_WORKERS}"
+echo "[pipeline] paired_codex_worker_memory_gb=${PAIRED_CODEX_WORKER_MEMORY_GB}"
+echo "[pipeline] paired_reserved_memory_gb=${PAIRED_RESERVED_MEMORY_GB}"
+echo "[pipeline] paired_min_available_memory_gb=${PAIRED_MIN_AVAILABLE_MEMORY_GB}"
+echo "[pipeline] paired_min_swap_free_gb=${PAIRED_MIN_SWAP_FREE_GB}"
+echo "[pipeline] paired_codex_launch_stagger_seconds=${PAIRED_CODEX_LAUNCH_STAGGER_SECONDS}"
+echo "[pipeline] paired_codex_disable_cuda=${PAIRED_CODEX_DISABLE_CUDA}"
 echo "[pipeline] sweep_projection_epochs=${SWEEP_PROJECTION_EPOCHS}"
 echo "[pipeline] final_projection_epochs=${FINAL_PROJECTION_EPOCHS}"
 echo "[pipeline] allow_final_fallback_on_sweep_failure=${ALLOW_FINAL_FALLBACK_ON_SWEEP_FAILURE}"

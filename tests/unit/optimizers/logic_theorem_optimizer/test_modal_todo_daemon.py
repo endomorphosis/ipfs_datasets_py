@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import fcntl
 import json
+import os
 import signal
 import subprocess
 import sys
@@ -24,6 +25,7 @@ from ipfs_datasets_py.logic.modal.synthesis import route_autoencoder_residual
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import build_us_code_sample
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import (
     AdaptiveModalAutoencoder,
+    ModalAutoencoderTrainingState,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import modal_todo_daemon as daemon
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import (
@@ -1610,6 +1612,29 @@ def test_supervisor_seeds_legal_ir_view_cross_entropy_sgd_todo() -> None:
     assert view_todos[0].metadata["execution_target"] == "adaptive_autoencoder"
 
 
+def test_autoencoder_caches_legal_ir_view_candidate_scan() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall publish notice before the permit takes effect.",
+    )
+    state = ModalAutoencoderTrainingState(
+        feature_family_logits={
+            f"feature-{index}": {"modal.frame_logic": 0.1}
+            for index in range(100)
+        }
+    )
+    autoencoder = AdaptiveModalAutoencoder(state=state)
+
+    assert autoencoder._legal_ir_view_family_candidates() == ("modal.frame_logic",)
+    state.feature_family_logits["feature-new"] = {"CEC.native": 0.2}
+    assert autoencoder._legal_ir_view_family_candidates() == ("modal.frame_logic",)
+
+    autoencoder._legal_ir_view_target_cache[sample.sample_id] = {"CEC.native": 1.0}
+    assert autoencoder._nudge_legal_ir_view_global_logits(sample, learning_rate=0.1)
+    assert "CEC.native" in autoencoder._legal_ir_view_family_candidates()
+
+
 def test_supervisor_caps_loss_derived_program_synthesis_todos() -> None:
     sample = build_us_code_sample(
         title="5",
@@ -3025,6 +3050,19 @@ def test_paired_autoencoder_child_health_detects_stale_projection(tmp_path) -> N
     assert health["autoencoder_summary_age_seconds"] == pytest.approx(1195.0)
 
 
+def test_save_summary_writes_complete_json_and_cleans_tempfile(tmp_path) -> None:
+    summary_path = tmp_path / "daemon.summary"
+    summary = {"cycles": 3}
+
+    runner.save_summary(summary_path, summary)
+
+    data = json.loads(summary_path.read_text(encoding="utf-8"))
+    assert data["cycles"] == 3
+    assert data["final"] is False
+    assert data["updated_at"]
+    assert not list(tmp_path.glob(".daemon.summary.*.tmp"))
+
+
 def test_paired_codex_status_accepts_runner_terminated_children() -> None:
     assert runner._paired_codex_children_succeeded(
         {
@@ -3167,6 +3205,178 @@ def test_paired_supervisor_backend_defaults_to_accelerate_style() -> None:
     )
 
     assert args.paired_supervisor_backend == "accelerate_style"
+
+
+def test_paired_codex_worker_resource_plan_caps_memory_heavy_pool() -> None:
+    args = runner.build_uscode_modal_daemon_arg_parser().parse_args(
+        [
+            "--run-id",
+            "paired-resource-plan",
+            "--duration-seconds",
+            "1",
+            "--loop-role",
+            "paired",
+            "--paired-resource-guard",
+            "auto",
+            "--paired-reserved-memory-gb",
+            "24",
+            "--paired-codex-worker-memory-gb",
+            "2",
+        ]
+    )
+
+    plan = runner.paired_codex_worker_resource_plan(
+        args,
+        requested_workers=29,
+        resource_health={
+            "cpu_count": 20,
+            "memory_available_gb": 85.0,
+            "memory_total_gb": 121.0,
+        },
+    )
+
+    assert plan["reason"] == "auto_cpu_memory_cap"
+    assert plan["cpu_cap"] == 12
+    assert plan["memory_cap"] == 30
+    assert plan["effective_workers"] == 12
+
+
+def test_paired_codex_worker_resource_plan_caps_swap_pressure() -> None:
+    args = runner.build_uscode_modal_daemon_arg_parser().parse_args(
+        [
+            "--run-id",
+            "paired-resource-plan-swap",
+            "--duration-seconds",
+            "1",
+            "--loop-role",
+            "paired",
+            "--paired-resource-guard",
+            "auto",
+            "--paired-reserved-memory-gb",
+            "24",
+            "--paired-codex-worker-memory-gb",
+            "2",
+            "--paired-min-swap-free-gb",
+            "1",
+        ]
+    )
+
+    plan = runner.paired_codex_worker_resource_plan(
+        args,
+        requested_workers=29,
+        resource_health={
+            "cpu_count": 20,
+            "memory_available_gb": 85.0,
+            "memory_total_gb": 121.0,
+            "swap_free_gb": 0.05,
+            "swap_total_gb": 16.0,
+        },
+    )
+
+    assert plan["reason"] == "auto_cpu_memory_swap_cap"
+    assert plan["swap_pressure"] is True
+    assert plan["swap_cap"] == 8
+    assert plan["effective_workers"] == 8
+
+
+def test_paired_resource_pressure_includes_low_swap() -> None:
+    args = runner.build_uscode_modal_daemon_arg_parser().parse_args(
+        [
+            "--run-id",
+            "paired-resource-pressure-swap",
+            "--duration-seconds",
+            "1",
+            "--loop-role",
+            "paired",
+            "--paired-min-available-memory-gb",
+            "12",
+            "--paired-min-swap-free-gb",
+            "1",
+        ]
+    )
+
+    pressure, report = runner._paired_resource_pressure(
+        args,
+        resource_health={
+            "cpu_count": 20,
+            "memory_available_gb": 64.0,
+            "memory_total_gb": 121.0,
+            "swap_free_gb": 0.05,
+            "swap_total_gb": 16.0,
+        },
+    )
+
+    assert pressure is True
+    assert report["memory_pressure"] is False
+    assert report["swap_pressure"] is True
+    assert report["resource_pressure"] is True
+
+
+def test_paired_codex_child_env_hides_cuda_by_default() -> None:
+    args = runner.build_uscode_modal_daemon_arg_parser().parse_args(
+        [
+            "--run-id",
+            "paired-codex-env",
+            "--duration-seconds",
+            "1",
+            "--loop-role",
+            "paired",
+        ]
+    )
+
+    env = runner.paired_codex_child_env(args)
+
+    assert env["CUDA_VISIBLE_DEVICES"] == ""
+    assert env["NVIDIA_VISIBLE_DEVICES"] == "none"
+    assert env["IPFS_DATASETS_CODEX_TASK_EMBEDDINGS_DEVICE"] == "cpu"
+
+
+def test_paired_codex_child_env_can_leave_cuda_visible() -> None:
+    args = runner.build_uscode_modal_daemon_arg_parser().parse_args(
+        [
+            "--run-id",
+            "paired-codex-env-visible",
+            "--duration-seconds",
+            "1",
+            "--loop-role",
+            "paired",
+            "--paired-codex-disable-cuda",
+            "false",
+        ]
+    )
+
+    assert runner.paired_codex_child_env(args) == {}
+
+
+def test_round_robin_codex_worker_cap_preserves_scope_coverage() -> None:
+    children = [
+        {"run_id": "bridge-1", "scope": "bridge"},
+        {"run_id": "bridge-2", "scope": "bridge"},
+        {"run_id": "cec-1", "scope": "cec"},
+        {"run_id": "cec-2", "scope": "cec"},
+        {"run_id": "tdfol-1", "scope": "tdfol"},
+        {"run_id": "tdfol-2", "scope": "tdfol"},
+    ]
+
+    selected = runner._round_robin_codex_children(children, limit=3)
+
+    assert [child["run_id"] for child in selected] == [
+        "bridge-1",
+        "cec-1",
+        "tdfol-1",
+    ]
+
+
+def test_nested_bridge_adapter_parallelism_is_clamped(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS", "4")
+
+    report = runner._clamp_nested_bridge_adapter_parallelism(
+        bridge_parallel_workers=8,
+    )
+
+    assert report["clamped"] is True
+    assert report["effective_adapter_workers"] == 1
+    assert os.environ["IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS"] == "1"
 
 
 def test_paired_program_synthesis_health_detects_starved_codex_queue(tmp_path: Path) -> None:

@@ -1273,8 +1273,40 @@ class SpaCyLegalEncoder:
                             match.end(),
                             token_indices,
                         )
-        return sorted(
+        return self._prune_negated_permission_cues(
             found.values(),
+        )
+
+    def _prune_negated_permission_cues(
+        self,
+        cues: Iterable[SpaCyModalCueFeature],
+    ) -> List[SpaCyModalCueFeature]:
+        """Prefer statutory prohibition over embedded bare permission in `may not`."""
+        accepted: List[SpaCyModalCueFeature] = []
+        for cue in sorted(
+            cues,
+            key=lambda item: (
+                item.start_char,
+                -(item.end_char - item.start_char),
+                item.end_char,
+                item.family,
+                item.symbol,
+                item.cue.lower(),
+            ),
+        ):
+            if any(
+                existing.family == "deontic"
+                and existing.cue.lower() == "may not"
+                and cue.family == "deontic"
+                and cue.cue.lower() == "may"
+                and existing.start_char <= cue.start_char
+                and cue.end_char <= existing.end_char
+                for existing in accepted
+            ):
+                continue
+            accepted.append(cue)
+        return sorted(
+            accepted,
             key=lambda cue: (cue.start_char, cue.end_char, cue.family, cue.symbol, cue.cue),
         )
 

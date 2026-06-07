@@ -2094,6 +2094,40 @@ def test_modal_compiler_adds_report_heading_residual_span_coverage_for_44_3558()
         assert "Congressional notification and reports." in residual_text_spans
 
 
+def test_modal_compiler_adds_compact_administration_heading_span_coverage_for_16_450dd_1() -> None:
+    for backend in ("regex", "spacy"):
+        compiler = DeterministicModalCompiler(
+            ModalCompilerConfig(
+                parser_backend=backend,
+                spacy_model_name="definitely_missing_legal_model",
+            )
+        )
+        compiled = compiler.compile(
+            (
+                "Administration. "
+                "The Secretary shall issue regulations for the park area."
+            ),
+            document_id="us-code-16-450dd-1-compact-administration",
+            citation="16 U.S.C. 450dd-1",
+            source="us_code",
+        )
+
+        frame_coverage_text_spans = {
+            compiled.modal_ir.normalized_text[
+                int(formula.provenance.start_char) : int(formula.provenance.end_char)
+            ].strip()
+            for formula in compiled.modal_ir.formulas
+            if formula.operator.family == "frame"
+            and formula.metadata.get("fallback_rule")
+            in {
+                "uscode_modal_heading_prefix_coverage_v1",
+                "uscode_residual_span_coverage_v1",
+            }
+        }
+
+        assert "Administration." in frame_coverage_text_spans
+
+
 def test_modal_compiler_adds_modal_heading_prefix_coverage_for_packet_shapes() -> None:
     cases = [
         (

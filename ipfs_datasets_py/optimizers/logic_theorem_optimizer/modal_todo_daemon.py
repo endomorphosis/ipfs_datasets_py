@@ -8,7 +8,7 @@ import json
 import sys
 import threading
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, BinaryIO, Callable, Dict, Iterable, List, Mapping, Optional, Sequence
@@ -1865,6 +1865,7 @@ class ModalTodoSupervisor:
         bridge_loss_evaluator: Optional[BridgeLossEvaluator] = None,
         bridge_names: Sequence[str] = (),
         bridge_evaluate_provers: Optional[bool] = None,
+        bridge_metric_max_samples: Optional[int] = None,
         bridge_parallel_workers: Optional[int] = None,
     ) -> None:
         self.policy = policy or ModalOptimizerPolicy()
@@ -1883,6 +1884,11 @@ class ModalTodoSupervisor:
             )
         )
         self.bridge_evaluate_provers = bridge_evaluate_provers
+        self.bridge_metric_max_samples = (
+            None
+            if bridge_metric_max_samples is None
+            else max(0, int(bridge_metric_max_samples))
+        )
         self.bridge_parallel_workers = bridge_parallel_workers
         self.bridge_loss_evaluator = (
             bridge_loss_evaluator
@@ -1898,7 +1904,9 @@ class ModalTodoSupervisor:
             )
         )
         self.last_bridge_loss_failure_count = 0
+        self.last_bridge_loss_full_sample_count = 0
         self.last_bridge_loss_sample_count = 0
+        self.last_bridge_loss_sampled = False
         self.last_bridge_loss_signal_count = 0
         self.last_failed_validation_superseded_count = 0
         self.last_program_synthesis_deduped_count = 0
@@ -1929,12 +1937,20 @@ class ModalTodoSupervisor:
         samples: Sequence[LegalSample],
     ) -> Dict[str, Dict[str, float]]:
         self.last_bridge_loss_failure_count = 0
+        self.last_bridge_loss_full_sample_count = len(samples)
         self.last_bridge_loss_sample_count = 0
+        self.last_bridge_loss_sampled = False
         self.last_bridge_loss_signal_count = 0
         if self.bridge_loss_evaluator is None:
             return {}
+        sample_list = list(samples)
+        if self.bridge_metric_max_samples is not None:
+            if self.bridge_metric_max_samples <= 0:
+                return {}
+            sample_list = sample_list[: self.bridge_metric_max_samples]
+            self.last_bridge_loss_sampled = len(sample_list) < len(samples)
         try:
-            raw = self.bridge_loss_evaluator(samples)
+            raw = self.bridge_loss_evaluator(sample_list)
         except Exception:
             return {}
         normalized: Dict[str, Dict[str, float]] = {}
@@ -1969,13 +1985,37 @@ class ModalTodoSupervisor:
         *,
         use_sample_memory: bool = True,
     ) -> AutoencoderEvaluation:
-        kwargs: Dict[str, Any] = {"use_sample_memory": use_sample_memory}
-        if self.bridge_names:
-            kwargs["legal_ir_bridge_names"] = self.bridge_names
-            kwargs["legal_ir_evaluate_provers"] = self.bridge_evaluate_provers
-            if self.bridge_parallel_workers is not None:
-                kwargs["legal_ir_parallel_workers"] = self.bridge_parallel_workers
-        return autoencoder.evaluate(list(samples), **kwargs)
+        sample_list = list(samples)
+        base = autoencoder.evaluate(
+            sample_list,
+            legal_ir_bridge_names=(),
+            use_sample_memory=use_sample_memory,
+        )
+        if not self.bridge_names:
+            return base
+        bridge_samples = sample_list
+        if self.bridge_metric_max_samples is not None:
+            bridge_samples = bridge_samples[: self.bridge_metric_max_samples]
+        if not bridge_samples:
+            return base
+        kwargs: Dict[str, Any] = {
+            "legal_ir_bridge_names": self.bridge_names,
+            "legal_ir_evaluate_provers": self.bridge_evaluate_provers,
+            "use_sample_memory": use_sample_memory,
+        }
+        if self.bridge_parallel_workers is not None:
+            kwargs["legal_ir_parallel_workers"] = self.bridge_parallel_workers
+        bridge_evaluation = autoencoder.evaluate(bridge_samples, **kwargs)
+        return replace(
+            base,
+            legal_ir_target_count=bridge_evaluation.legal_ir_target_count,
+            legal_ir_losses=dict(bridge_evaluation.legal_ir_losses),
+            legal_ir_predicted_view_distribution=dict(
+                bridge_evaluation.legal_ir_predicted_view_distribution
+            ),
+            legal_ir_target_hashes=dict(bridge_evaluation.legal_ir_target_hashes),
+            legal_ir_view_distribution=dict(bridge_evaluation.legal_ir_view_distribution),
+        )
 
     def seed_program_synthesis_from_introspection(
         self,
@@ -2574,10 +2614,18 @@ class ModalTodoSupervisor:
             report("before_validation_evaluation_skipped")
         report("seed_loss_todos_start")
         loss_seeded = self.seed_from_evaluation(sample_list, autoencoder=before)
-        report("seed_loss_todos_done", seeded_count=len(loss_seeded))
         bridge_loss_failure_count = int(self.last_bridge_loss_failure_count)
+        bridge_loss_full_sample_count = int(self.last_bridge_loss_full_sample_count)
         bridge_loss_sample_count = int(self.last_bridge_loss_sample_count)
+        bridge_loss_sampled = bool(self.last_bridge_loss_sampled)
         bridge_loss_signal_count = int(self.last_bridge_loss_signal_count)
+        report(
+            "seed_loss_todos_done",
+            bridge_loss_full_sample_count=bridge_loss_full_sample_count,
+            bridge_loss_sample_count=bridge_loss_sample_count,
+            bridge_loss_sampled=bridge_loss_sampled,
+            seeded_count=len(loss_seeded),
+        )
         report("autoencoder_deduplicate_start")
         self.queue.deduplicate_autoencoder(
             optimizer_role=self.policy.autoencoder_role,

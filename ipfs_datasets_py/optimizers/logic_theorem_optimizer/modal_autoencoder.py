@@ -10,7 +10,7 @@ import re
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence
 
@@ -2000,6 +2000,7 @@ class AdaptiveModalAutoencoder:
         max_token_features: int = 48,
         max_token_bigram_features: int = 24,
         max_token_trigram_features: int = 12,
+        max_codec_feature_keys: int = 0,
         max_legal_ir_token_features: int = 24,
         max_legal_ir_token_bigram_features: int = 12,
         max_legal_ir_token_trigram_features: int = 8,
@@ -2175,6 +2176,7 @@ class AdaptiveModalAutoencoder:
         self.max_token_features = max(0, int(max_token_features))
         self.max_token_bigram_features = max(0, int(max_token_bigram_features))
         self.max_token_trigram_features = max(0, int(max_token_trigram_features))
+        self.max_codec_feature_keys = max(0, int(max_codec_feature_keys))
         self.max_legal_ir_token_features = max(0, int(max_legal_ir_token_features))
         self.max_legal_ir_token_bigram_features = max(
             0,
@@ -2360,6 +2362,7 @@ class AdaptiveModalAutoencoder:
         self._sample_feature_cache: Dict[tuple[str, int], Dict[str, Any]] = {}
         self._legal_ir_loss_target_cache: Dict[str, Dict[str, float]] = {}
         self._legal_ir_view_target_cache: Dict[str, Dict[str, float]] = {}
+        self._legal_ir_view_family_candidates_cache: Optional[tuple[str, ...]] = None
 
     def evaluate(
         self,
@@ -3106,6 +3109,7 @@ class AdaptiveModalAutoencoder:
         validation_samples: Optional[Sequence[LegalSample]] = None,
         legal_ir_bridge_names: Sequence[str] = (),
         legal_ir_evaluate_provers: Optional[bool] = None,
+        legal_ir_bridge_max_samples: Optional[int] = None,
         legal_ir_targets: Optional[Mapping[str, Any] | Sequence[Any]] = None,
         legal_ir_parallel_workers: Optional[int] = None,
         epochs: int = 3,
@@ -3157,6 +3161,16 @@ class AdaptiveModalAutoencoder:
             except Exception:
                 pass
 
+        bridge_names = tuple(
+            str(name).strip()
+            for name in legal_ir_bridge_names
+            if str(name).strip()
+        )
+        bridge_sample_cap = (
+            None
+            if legal_ir_bridge_max_samples is None
+            else max(0, int(legal_ir_bridge_max_samples))
+        )
         evaluation_kwargs: Dict[str, Any] = {
             "legal_ir_bridge_names": legal_ir_bridge_names,
             "legal_ir_evaluate_provers": legal_ir_evaluate_provers,
@@ -3164,12 +3178,61 @@ class AdaptiveModalAutoencoder:
             "legal_ir_parallel_workers": legal_ir_parallel_workers,
             "use_sample_memory": False,
         }
+        base_evaluation_kwargs: Dict[str, Any] = {
+            **evaluation_kwargs,
+            "legal_ir_bridge_names": (),
+            "legal_ir_targets": None,
+        }
+
+        def projection_bridge_samples(rows: Sequence[LegalSample]) -> List[LegalSample]:
+            row_list = list(rows)
+            if not bridge_names:
+                return []
+            if bridge_sample_cap is None:
+                return row_list
+            if bridge_sample_cap <= 0:
+                return []
+            return row_list[:bridge_sample_cap]
+
+        def evaluate_projection_rows(
+            rows: Sequence[LegalSample],
+            *,
+            stage: str,
+        ) -> AutoencoderEvaluation:
+            row_list = list(rows)
+            if bridge_sample_cap is None:
+                return self.evaluate(row_list, **evaluation_kwargs)
+            base = self.evaluate(row_list, **base_evaluation_kwargs)
+            bridge_rows = projection_bridge_samples(row_list)
+            if not bridge_rows:
+                return base
+            emit_progress(
+                f"{stage}_bridge_evaluation",
+                bridge_sample_count=len(bridge_rows),
+                full_sample_count=len(row_list),
+                sample_count=len(row_list),
+            )
+            bridge = self.evaluate(bridge_rows, **evaluation_kwargs)
+            return replace(
+                base,
+                legal_ir_target_count=bridge.legal_ir_target_count,
+                legal_ir_losses=dict(bridge.legal_ir_losses),
+                legal_ir_predicted_view_distribution=dict(
+                    bridge.legal_ir_predicted_view_distribution
+                ),
+                legal_ir_target_hashes=dict(bridge.legal_ir_target_hashes),
+                legal_ir_view_distribution=dict(bridge.legal_ir_view_distribution),
+            )
+
         emit_progress(
             "before_holdout_evaluation",
             sample_count=len(sample_list),
             validation_sample_count=len(target_samples),
         )
-        before = self.evaluate(target_samples, **evaluation_kwargs)
+        before = evaluate_projection_rows(
+            target_samples,
+            stage="before_holdout_evaluation",
+        )
         if sample_list and validation_list:
             # Prime LegalIR target caches for training samples before feature-level
             # nudges.  Validation-only evaluation intentionally does not touch
@@ -3179,7 +3242,10 @@ class AdaptiveModalAutoencoder:
                 sample_count=len(sample_list),
                 validation_sample_count=len(target_samples),
             )
-            self.evaluate(sample_list, **evaluation_kwargs)
+            evaluate_projection_rows(
+                sample_list,
+                stage="training_cache_prime",
+            )
         emit_progress("initial_state_snapshot")
         best_state = self.state.copy()
         best = before
@@ -3319,7 +3385,10 @@ class AdaptiveModalAutoencoder:
                         line_search_attempt=len(attempt_reports) + 1,
                         update=update_name,
                     )
-                    after = self.evaluate(target_samples, **evaluation_kwargs)
+                    after = evaluate_projection_rows(
+                        target_samples,
+                        stage="line_search_evaluation",
+                    )
                     regressions = _evaluation_regressions_for_training(
                         best,
                         after,
@@ -3568,6 +3637,7 @@ class AdaptiveModalAutoencoder:
             "objective_weights": dict(objective_weights),
             "rejection_summary": _projection_rejection_summary(epoch_reports),
             "sample_memory_used": False,
+            "legal_ir_bridge_max_samples": bridge_sample_cap,
             "state_entry_count": state_entry_count,
             "stopped_reason": projection_stopped_reason,
             "validation_sample_count": len(target_samples),
@@ -3784,53 +3854,7 @@ class AdaptiveModalAutoencoder:
     ) -> Dict[str, float]:
         families = _unique_preserve_order(
             [str(name) for name in target_distribution.keys()]
-            + [
-                str(family)
-                for family in self.state.legal_ir_view_logits.keys()
-                if self._is_legal_ir_view_family(str(family))
-            ]
-            + [
-                str(family)
-                for logits in self.state.feature_legal_ir_view_logits.values()
-                for family in logits.keys()
-                if self._is_legal_ir_view_family(str(family))
-            ]
-            + [
-                str(family)
-                for logits in self.state.feature_family_logits.values()
-                for family in logits.keys()
-                if self._is_legal_ir_view_family(str(family))
-            ]
-            + [
-                str(family)
-                for logits in self.state.semantic_slot_legal_ir_view_logits.values()
-                for family in logits.keys()
-                if self._is_legal_ir_view_family(str(family))
-            ]
-            + [
-                str(family)
-                for logits in self.state.logic_signature_legal_ir_view_logits.values()
-                for family in logits.keys()
-                if self._is_legal_ir_view_family(str(family))
-            ]
-            + [
-                str(family)
-                for logits in self.state.round_trip_signal_legal_ir_view_logits.values()
-                for family in logits.keys()
-                if self._is_legal_ir_view_family(str(family))
-            ]
-            + [
-                str(family)
-                for logits in self.state.decompiler_plan_legal_ir_view_logits.values()
-                for family in logits.keys()
-                if self._is_legal_ir_view_family(str(family))
-            ]
-            + [
-                str(family)
-                for logits in self.state.predicate_argument_legal_ir_view_logits.values()
-                for family in logits.keys()
-                if self._is_legal_ir_view_family(str(family))
-            ]
+            + list(self._legal_ir_view_family_candidates())
             + [
                 str(family)
                 for family in self.state.family_logits.get(sample.sample_id, {}).keys()
@@ -3871,60 +3895,7 @@ class AdaptiveModalAutoencoder:
                 target_distribution,
                 use_sample_memory=use_sample_memory,
             )
-        families = _unique_preserve_order(
-            [
-                str(view)
-                for view in self.state.legal_ir_view_embedding_weights.keys()
-                if self._is_legal_ir_view_family(str(view))
-            ]
-            + [
-                str(view)
-                for view in self.state.legal_ir_view_logits.keys()
-                if self._is_legal_ir_view_family(str(view))
-            ]
-            + [
-                str(view)
-                for logits in self.state.feature_legal_ir_view_logits.values()
-                for view in logits.keys()
-                if self._is_legal_ir_view_family(str(view))
-            ]
-            + [
-                str(view)
-                for logits in self.state.feature_family_logits.values()
-                for view in logits.keys()
-                if self._is_legal_ir_view_family(str(view))
-            ]
-            + [
-                str(view)
-                for logits in self.state.semantic_slot_legal_ir_view_logits.values()
-                for view in logits.keys()
-                if self._is_legal_ir_view_family(str(view))
-            ]
-            + [
-                str(view)
-                for logits in self.state.logic_signature_legal_ir_view_logits.values()
-                for view in logits.keys()
-                if self._is_legal_ir_view_family(str(view))
-            ]
-            + [
-                str(view)
-                for logits in self.state.round_trip_signal_legal_ir_view_logits.values()
-                for view in logits.keys()
-                if self._is_legal_ir_view_family(str(view))
-            ]
-            + [
-                str(view)
-                for logits in self.state.decompiler_plan_legal_ir_view_logits.values()
-                for view in logits.keys()
-                if self._is_legal_ir_view_family(str(view))
-            ]
-            + [
-                str(view)
-                for logits in self.state.predicate_argument_legal_ir_view_logits.values()
-                for view in logits.keys()
-                if self._is_legal_ir_view_family(str(view))
-            ]
-        )
+        families = self._legal_ir_view_family_candidates()
         if not families:
             return {}
         return _softmax(
@@ -4783,6 +4754,46 @@ class AdaptiveModalAutoencoder:
 
     def _is_legal_ir_view_family(self, family: str) -> bool:
         return str(family) not in self.modal_families
+
+    def _legal_ir_view_family_candidates(self) -> tuple[str, ...]:
+        cached = self._legal_ir_view_family_candidates_cache
+        if cached is not None:
+            return cached
+
+        families: List[str] = []
+        seen: set[str] = set()
+
+        def add(value: Any) -> None:
+            family = str(value)
+            if family in seen or not self._is_legal_ir_view_family(family):
+                return
+            seen.add(family)
+            families.append(family)
+
+        for view in self.state.legal_ir_view_embedding_weights.keys():
+            add(view)
+        for view in self.state.legal_ir_view_logits.keys():
+            add(view)
+        for logits_by_key in (
+            self.state.feature_legal_ir_view_logits,
+            self.state.feature_family_logits,
+            self.state.semantic_slot_legal_ir_view_logits,
+            self.state.logic_signature_legal_ir_view_logits,
+            self.state.round_trip_signal_legal_ir_view_logits,
+            self.state.decompiler_plan_legal_ir_view_logits,
+            self.state.predicate_argument_legal_ir_view_logits,
+            self.state.family_semantic_slot_legal_ir_view_logits,
+        ):
+            for logits in logits_by_key.values():
+                for family in logits.keys():
+                    add(family)
+
+        cached = tuple(families)
+        self._legal_ir_view_family_candidates_cache = cached
+        return cached
+
+    def _invalidate_legal_ir_view_family_candidates(self) -> None:
+        self._legal_ir_view_family_candidates_cache = None
 
     def _legal_ir_view_logits_for(
         self,
@@ -18138,6 +18149,7 @@ class AdaptiveModalAutoencoder:
                     pair_logits[family] = pair_logits.get(family, 0.0) + (
                         2.0 * step * legal_view_update_scale * normalized_weight * gradient
                     )
+        self._invalidate_legal_ir_view_family_candidates()
         return True
 
     def _nudge_legal_ir_view_global_logits(
@@ -18181,6 +18193,8 @@ class AdaptiveModalAutoencoder:
                 + (step * legal_view_update_scale * gradient)
             )
             changed = True
+        if changed:
+            self._invalidate_legal_ir_view_family_candidates()
         return changed
 
     def _regularize_feature_state(self, l2_regularization: float) -> None:
@@ -19127,15 +19141,67 @@ class AdaptiveModalAutoencoder:
         if self.feature_codec is not None and hasattr(
             self.feature_codec,
             "feature_keys_for_sample",
-        ):
+        ) and self.max_codec_feature_keys > 0:
+            feature_keys_for_sample = self.feature_codec.feature_keys_for_sample
+            try:
+                codec_keys = feature_keys_for_sample(
+                    sample,
+                    max_features=self.max_codec_feature_keys,
+                )
+            except TypeError:
+                codec_keys = feature_keys_for_sample(sample)
             keys.extend(
-                str(value)
-                for value in self.feature_codec.feature_keys_for_sample(sample)
+                self._select_codec_feature_keys(
+                    [str(value) for value in codec_keys],
+                    limit=self.max_codec_feature_keys,
+                )
             )
         keys.extend(self._fallback_feature_keys_for(sample))
         result = _unique_preserve_order(keys)
         cache["feature_keys"] = list(result)
         return result
+
+    def _select_codec_feature_keys(
+        self,
+        keys: Sequence[str],
+        *,
+        limit: int,
+    ) -> List[str]:
+        """Keep a bounded, high-signal subset of codec-provided feature keys."""
+        unique_keys = _unique_preserve_order(str(value) for value in keys)
+        bounded_limit = max(0, int(limit))
+        if bounded_limit <= 0 or len(unique_keys) <= bounded_limit:
+            return unique_keys
+
+        def prefix_score(feature: str) -> float:
+            if feature.startswith(("frame:", "family:selected_frame:", "selected-frame-term:")):
+                return 5.0
+            if feature.startswith(("slot:", "flogic:", "frame-term:", "frame-candidate:")):
+                return 4.0
+            if feature.startswith(("modal-", "modal:", "operator", "predicate", "family:")):
+                return 3.0
+            if feature.startswith(("token:", "token2:", "token3:")):
+                return 1.0
+            return 2.0
+
+        def learned_score(feature: str) -> float:
+            score = prefix_score(feature)
+            if feature in self.state.feature_embedding_weights:
+                score += 8.0
+            if feature in self.state.feature_family_logits:
+                score += 8.0
+            if feature in self.state.feature_legal_ir_view_logits:
+                score += 8.0
+            if len(feature) > 256:
+                score -= 1.0
+            return score
+
+        ranked = sorted(
+            enumerate(unique_keys),
+            key=lambda item: (-learned_score(item[1]), item[0]),
+        )
+        selected = sorted(ranked[:bounded_limit], key=lambda item: item[0])
+        return [feature for _index, feature in selected]
 
     def _fallback_feature_keys_for(self, sample: LegalSample) -> List[str]:
         """Return codec-independent features that make SGD updates portable."""

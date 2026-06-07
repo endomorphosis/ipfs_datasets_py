@@ -2567,7 +2567,12 @@ class DeterministicModalLogicCodec:
             modal_families=modal_families,
         )
 
-    def feature_keys_for_sample(self, sample: LegalSample) -> List[str]:
+    def feature_keys_for_sample(
+        self,
+        sample: LegalSample,
+        *,
+        max_features: Optional[int] = None,
+    ) -> List[str]:
         """Return generalizable modal, frame, and F-logic features for SGD."""
         codec_result = self.encode(
             sample.text,
@@ -2576,29 +2581,71 @@ class DeterministicModalLogicCodec:
             source=sample.source,
             source_embedding=sample.embedding_vector,
         )
-        features: List[str] = list(self.decoder._feature_stream(codec_result.encoding))
-        features.extend(_slot_features(codec_result.decoded_modal_text))
+        limit = max(0, int(max_features or 0))
+        features: List[str] = []
+        seen: set[str] = set()
+
+        def add(value: str) -> bool:
+            feature = str(value or "")
+            if not feature or feature in seen:
+                return False
+            seen.add(feature)
+            features.append(feature)
+            return True
+
+        def add_many(values: Iterable[str], *, budget: Optional[int] = None) -> None:
+            added = 0
+            for value in values:
+                if budget is not None and added >= budget:
+                    break
+                if add(str(value)):
+                    added += 1
+
+        decoder_budget = None
+        slot_budget = None
+        frame_term_budget = None
+        triple_budget = None
+        if limit > 0:
+            decoder_budget = max(32, limit // 2)
+            slot_budget = max(16, limit // 4)
+            frame_term_budget = max(24, limit // 4)
+            triple_budget = max(16, limit // 4)
+
+        add_many(self.decoder._feature_stream(codec_result.encoding), budget=decoder_budget)
+        add_many(_slot_features(codec_result.decoded_modal_text), budget=slot_budget)
         if codec_result.selected_frame:
-            features.append(f"frame:{codec_result.selected_frame}")
+            add(f"frame:{codec_result.selected_frame}")
             for family in _selected_frame_modal_families(codec_result.modal_ir):
-                features.append(f"family:selected_frame:{family}")
+                add(f"family:selected_frame:{family}")
         frame_terms = _frame_ontology_terms_by_frame(codec_result.modal_ir)
+        frame_term_count = 0
         for frame_id in sorted(frame_terms):
             terms = frame_terms[frame_id]
             for term in terms:
-                features.append(f"frame-term:{term}")
+                if frame_term_budget is not None and frame_term_count >= frame_term_budget:
+                    break
+                if add(f"frame-term:{term}"):
+                    frame_term_count += 1
                 if frame_id == codec_result.selected_frame:
-                    features.append(f"selected-frame-term:{term}")
+                    add(f"selected-frame-term:{term}")
+            if frame_term_budget is not None and frame_term_count >= frame_term_budget:
+                break
         for candidate in codec_result.frame_candidates:
             frame_id = candidate.get("frame_id")
             if frame_id:
-                features.append(f"frame-candidate:{frame_id}")
+                add(f"frame-candidate:{frame_id}")
+        triple_count = 0
         for triple in codec_result.kg_triples:
+            if triple_budget is not None and triple_count >= triple_budget:
+                break
             predicate = triple.get("predicate", "")
             obj = triple.get("object", "")
             if predicate and obj:
-                features.append(f"flogic:{predicate}:{obj}")
-        return _unique_preserve_order(features)
+                if add(f"flogic:{predicate}:{obj}"):
+                    triple_count += 1
+        if limit > 0:
+            return features[:limit]
+        return features
 
     def _compile_modal_ir(
         self,
@@ -3939,7 +3986,228 @@ def modal_ir_to_flogic_triples(
                         "object": term,
                     }
                 )
+    return _append_legal_projection_constraint_triples(
+        triples,
+        document_id=modal_ir.document_id,
+    )
+
+
+def _append_legal_projection_constraint_triples(
+    triples: List[Dict[str, str]],
+    *,
+    document_id: str,
+) -> List[Dict[str, str]]:
+    """Assert deterministic ontology constraints for legal projection views."""
+    required_views = _required_frame_logic_projection_views(triples)
+    if not required_views:
+        return triples
+
+    present_views = sorted(
+        {
+            view
+            for triple in triples
+            for view in [
+                _frame_logic_projection_view_for_predicate(
+                    triple.get("predicate", "")
+                )
+            ]
+            if view
+        }
+    )
+    missing_views = [view for view in required_views if view not in present_views]
+    satisfied_views = [view for view in required_views if view in present_views]
+    coverage_ratio = (
+        1.0
+        if not required_views
+        else len(satisfied_views) / float(len(required_views))
+    )
+    facts: List[tuple[str, str]] = [
+        ("learned_legal_ir_projection_constraint", "statutory_frame_ontology"),
+        (
+            "learned_legal_ir_projection_coverage_complete",
+            "true" if not missing_views else "false",
+        ),
+        ("learned_legal_ir_projection_coverage_ratio", f"{coverage_ratio:.6f}"),
+    ]
+    facts.extend(
+        ("learned_legal_ir_required_projection_view", view)
+        for view in required_views
+    )
+    facts.extend(
+        ("learned_legal_ir_present_projection_view", view)
+        for view in present_views
+    )
+    facts.extend(
+        ("learned_legal_ir_satisfied_projection_view", view)
+        for view in satisfied_views
+    )
+    facts.extend(
+        ("learned_legal_ir_missing_projection_view", view)
+        for view in missing_views
+    )
+    facts.extend(
+        (
+            "modal_frame_logic_ontology_constraint",
+            f"{view}:required:{'missing' if view in missing_views else 'satisfied'}",
+        )
+        for view in required_views
+    )
+
+    seen = {
+        (
+            str(triple.get("subject", "")).strip(),
+            str(triple.get("predicate", "")).strip(),
+            str(triple.get("object", "")).strip(),
+        )
+        for triple in triples
+    }
+    for predicate, value in facts:
+        normalized_value = _clean_non_empty_string(value)
+        if not normalized_value:
+            continue
+        triple_key = (document_id, predicate, normalized_value)
+        if triple_key in seen:
+            continue
+        seen.add(triple_key)
+        triples.append(
+            {
+                "subject": document_id,
+                "predicate": predicate,
+                "object": normalized_value,
+            }
+        )
     return triples
+
+
+def _required_frame_logic_projection_views(
+    triples: Sequence[Mapping[str, Any]],
+) -> List[str]:
+    predicates = {
+        _clean_non_empty_string(triple.get("predicate")).lower()
+        for triple in triples
+    }
+    if not predicates:
+        return []
+    required: List[str] = []
+    has_source_id = any(
+        predicate == "source_id" or predicate.startswith("source_id_")
+        for predicate in predicates
+    )
+    has_citation = any(
+        predicate == "citation" or predicate.startswith("citation_")
+        for predicate in predicates
+    )
+    has_section = any(
+        predicate.startswith(
+            (
+                "citation_section_",
+                "citation_source_id_section_",
+                "citation_source_id_title_section_",
+                "citation_title_section_",
+                "fallback_section_heading_",
+                "section_heading_",
+                "section_component_",
+                "section_profile_",
+                "section_range_",
+                "section_style_",
+                "source_id_section_",
+                "source_id_title_section_",
+            )
+        )
+        or "section_heading" in predicate
+        or "section_component" in predicate
+        or "section_profile" in predicate
+        for predicate in predicates
+    )
+    has_editorial_status = any(
+        predicate == "status_keyword" or predicate.startswith("status_keyword_")
+        for predicate in predicates
+    )
+    has_view_alignment = any(
+        predicate.startswith("learned_legal_ir_")
+        or predicate.startswith("compiler_guidance_legal_ir_")
+        for predicate in predicates
+    )
+    if has_source_id:
+        required.append("document_scope")
+    if has_source_id or has_citation:
+        required.append("citation_structure")
+    if has_section:
+        required.append("section_structure")
+    if has_editorial_status:
+        required.append("editorial_status")
+    if has_view_alignment:
+        required.append("legal_ir_view_alignment")
+    return sorted(set(required))
+
+
+def _frame_logic_projection_view_for_predicate(predicate: Any) -> str:
+    normalized = _clean_non_empty_string(predicate).lower()
+    if not normalized:
+        return ""
+    if normalized == "type":
+        return "type_assertion"
+    if normalized == "status_keyword" or normalized.startswith("status_keyword_"):
+        return "editorial_status"
+    if normalized.startswith("learned_legal_ir_") or normalized.startswith(
+        "compiler_guidance_legal_ir_"
+    ):
+        return "legal_ir_view_alignment"
+    if normalized in {
+        "candidate_ontology_frame",
+        "interpreted_in_frame",
+        "selected_ontology_frame",
+    } or normalized.startswith(
+        (
+            "candidate_ontology_frame",
+            "interpreted_in_frame",
+            "selected_ontology_frame",
+        )
+    ):
+        return "frame_link"
+    if "ontology_term" in normalized:
+        return "ontology_term"
+    if normalized.startswith(
+        (
+            "citation_section_",
+            "citation_source_id_section_",
+            "citation_source_id_title_section_",
+            "citation_title_section_",
+            "fallback_section_heading_",
+            "section_heading_",
+            "section_component_",
+            "section_profile_",
+            "section_range_",
+            "section_style_",
+            "source_id_section_",
+            "source_id_title_section_",
+        )
+    ):
+        return "section_structure"
+    if normalized in {
+        "source_id_citation_canonical",
+        "source_id_scheme",
+        "source_id_title",
+        "source_id_title_number",
+        "source_id_title_section_key",
+    } or normalized.startswith(("source_id_citation_", "source_id_title_")):
+        return "citation_structure"
+    if normalized in {
+        "belongs_to_document",
+        "contains_formula",
+        "contains_norm",
+        "source",
+        "source_id",
+    } or normalized.startswith(("source_text_", "source_id")):
+        return "document_scope"
+    if normalized == "citation" or normalized.startswith("citation_"):
+        return "citation_structure"
+    if any(
+        token in normalized
+        for token in ("citation", "section", "source_id", "title", "usc")
+    ):
+        return "citation_structure"
+    return "fact"
 
 
 def _all_modal_families() -> List[str]:

@@ -230,7 +230,9 @@ _USCODE_SHORT_RESIDUAL_HEADING_SIGNAL_TOKENS = frozenset(
     {
         "activities",
         "activity",
+        "acts",
         "administrative",
+        "administration",
         "aid",
         "aids",
         "amendment",
@@ -259,9 +261,12 @@ _USCODE_SHORT_RESIDUAL_HEADING_SIGNAL_TOKENS = frozenset(
         "notifications",
         "notes",
         "navigation",
+        "operation",
+        "operations",
         "policy",
         "penalty",
         "penalties",
+        "prohibited",
         "program",
         "programs",
         "project",
@@ -282,6 +287,8 @@ _USCODE_SHORT_RESIDUAL_HEADING_SIGNAL_TOKENS = frozenset(
         "review",
         "revision",
         "security",
+        "violation",
+        "violations",
     }
 )
 _USCODE_LONG_RESIDUAL_HEADING_MIN_TOKENS = 6
@@ -306,7 +313,7 @@ _USCODE_DEFINITION_RESIDUAL_HINT_RE = re.compile(
     r"means\s+[^.;:]{1,120})\b",
     re.IGNORECASE,
 )
-_USCODE_RESIDUAL_STATUTORY_FRAGMENT_MAX_TOKENS = 10
+_USCODE_RESIDUAL_STATUTORY_FRAGMENT_MAX_TOKENS = 18
 _USCODE_RESIDUAL_STATUTORY_FRAGMENT_HINT_RE = re.compile(
     r"\b(?:ch|chapter|pub|stat)\b",
     re.IGNORECASE,
@@ -1654,10 +1661,18 @@ class LegalModalParser:
             return None
 
         candidate_segment: Optional[LegalSegment] = None
+        transferred_heading_segment: Optional[LegalSegment] = None
         for segment in segments:
-            if _USCODE_CODIFICATION_HINT_RE.search(segment.text):
+            if not _USCODE_CODIFICATION_HINT_RE.search(segment.text):
+                continue
+            lowered_segment = segment.text.lower()
+            if "reclassified" in lowered_segment or "codification" in lowered_segment:
                 candidate_segment = segment
                 break
+            if transferred_heading_segment is None:
+                transferred_heading_segment = segment
+        if candidate_segment is None:
+            candidate_segment = transferred_heading_segment
         if candidate_segment is None:
             return None
 
