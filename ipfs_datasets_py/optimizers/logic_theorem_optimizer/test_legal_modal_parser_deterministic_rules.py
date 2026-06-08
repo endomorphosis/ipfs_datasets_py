@@ -395,6 +395,45 @@ def test_compiler_spacy_backend_recovers_editorial_status_fallback_when_strict_f
     assert all(formula.provenance.citation == "16 U.S.C. 452a" for formula in editorial_formulas)
 
 
+def test_parser_adds_frame_residual_for_omitted_editorial_note_tail_with_non_temporal_by() -> None:
+    parser = LegalModalParser()
+    modal_ir = parser.parse(
+        (
+            "§4906. Omitted Editorial Notes Codification Section, Pub. L. 92-574, "
+            "§7(a), Oct. 27, 1972, 86 Stat. 1239, related to a study by the "
+            "Administrator of the adequacy of noise controls, noise emission "
+            "standards, and measures available to control noise."
+        ),
+        document_id="us-code-42-4906-editorial-tail",
+        citation="42 U.S.C. 4906.",
+    )
+
+    assert any(
+        "related to a study by the administrator" in modal_ir.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ].lower()
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    )
+
+
+def test_parser_keeps_formula_ids_unique_for_editorial_tail_residuals() -> None:
+    parser = LegalModalParser()
+    modal_ir = parser.parse(
+        (
+            "§4906. Omitted Editorial Notes Codification Section, Pub. L. 92-574, "
+            "§7(a), Oct. 27, 1972, 86 Stat. 1239, related to a study by the "
+            "Administrator of the adequacy of noise controls, noise emission "
+            "standards, and measures available to control noise."
+        ),
+        document_id="us-code-42-4906-unique-formulas",
+        citation="42 U.S.C. 4906.",
+    )
+
+    formula_ids = [formula.formula_id for formula in modal_ir.formulas]
+    assert len(formula_ids) == len(set(formula_ids))
+
+
 def test_compiler_emits_explicit_frame_to_conditional_and_temporal_adaptive_pairs() -> None:
     compiler = DeterministicModalCompiler(
         config=ModalCompilerConfig(parser_backend="spacy")

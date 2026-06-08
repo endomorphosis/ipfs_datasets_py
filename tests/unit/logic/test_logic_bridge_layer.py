@@ -479,6 +479,53 @@ def test_modal_frame_logic_bridge_labels_legal_projection_view_nodes() -> None:
     ] is True
 
 
+def test_modal_frame_logic_bridge_requires_editorial_and_alignment_graph_views() -> None:
+    from ipfs_datasets_py.logic.modal.kg_bridge import flogic_triples_to_graph_data
+
+    graph_data = flogic_triples_to_graph_data(
+        [
+            {
+                "subject": "us-code-42-4906",
+                "predicate": "source_id",
+                "object": "us-code-42-4906",
+            },
+            {
+                "subject": "us-code-42-4906",
+                "predicate": "source_id_citation_canonical",
+                "object": "42 U.S.C. 4906",
+            },
+            {
+                "subject": "us-code-42-4906",
+                "predicate": "source_id_section_normalized",
+                "object": "4906",
+            },
+            {
+                "subject": "us-code-42-4906",
+                "predicate": "status_keyword",
+                "object": "omitted",
+            },
+            {
+                "subject": "us-code-42-4906",
+                "predicate": "learned_legal_ir_target_view",
+                "object": "knowledge_graphs.neo4j_compat",
+            },
+        ],
+        graph_id="us-code-42-4906:flogic",
+    )
+
+    assert graph_data.metadata["frame_logic_projection_legal_view_required"] == [
+        "citation_structure",
+        "document_scope",
+        "editorial_status",
+        "legal_ir_view_alignment",
+        "section_structure",
+    ]
+    assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
+    assert graph_data.metadata[
+        "frame_logic_projection_legal_view_coverage_complete"
+    ] is True
+
+
 def test_modal_frame_logic_bridge_projects_heading_and_learned_views() -> None:
     from ipfs_datasets_py.logic.modal.kg_bridge import flogic_triples_to_graph_data
 
@@ -629,6 +676,41 @@ def test_modal_frame_logic_bridge_scales_us_code_scaffold_loss() -> None:
     assert calibrated.extra_losses["cross_entropy_excess_loss"] < 1.5
 
 
+def test_multiview_contract_compacts_short_repealed_section_ranges() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _compact_official_usc_contract_distribution,
+    )
+
+    compacted = _compact_official_usc_contract_distribution(
+        {
+            "CEC.native": 0.156,
+            "TDFOL.prover": 0.080,
+            "deontic.ir": 0.150,
+            "external_provers.router": 0.121,
+            "knowledge_graphs.neo4j_compat": 0.210,
+            "modal.frame_logic": 0.143,
+            "zkp.circuits": 0.140,
+        },
+        text=(
+            "§§7705, 7705a. Repealed. Pub. L. 105-47, §4, Oct. 1, "
+            "1997, 111 Stat. 1164 Section 7705, Pub. L. 95-124, §6, "
+            "Oct. 7, 1977, 91 Stat. 1102; Pub. L. 96-472, title I, "
+            "§102(a), Oct. 19, 1980, 94 Stat. 2259; Pub. L. 101-614, "
+            "§6, Nov. 16, 1990, 104 Stat. 3236, related to Office of "
+            "Science and Technology Policy report."
+        ),
+    )
+
+    assert set(compacted) == {
+        "CEC.native",
+        "TDFOL.prover",
+        "deontic.ir",
+        "knowledge_graphs.neo4j_compat",
+    }
+    assert compacted["knowledge_graphs.neo4j_compat"] >= 0.24
+    assert compacted["CEC.native"] >= 0.20
+
+
 def test_modal_frame_logic_bridge_does_not_scale_short_statutory_sentence() -> None:
     from ipfs_datasets_py.logic.bridge.modal_frame_logic import (
         _calibrate_round_trip_for_statutory_scaffold,
@@ -727,6 +809,56 @@ def test_deontic_bridge_decoder_slot_loss_uses_present_optional_slots_only() -> 
     assert summary["missing_required_slots"] == []
     assert summary["slot_reconstruction_complete"] is True
     assert report.round_trip.extra_losses["deontic_decoder_slot_loss"] == 0.0
+
+
+def test_deontic_bridge_recovers_us_code_section_status_lifecycle_notes() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("deontic_norms")
+    samples = [
+        (
+            "§§7705, 7705a. Repealed. Pub. L. 105-47, §4, Oct. 1, 1997, 111 Stat. 1164",
+            "Repealed",
+        ),
+        (
+            "§4906. Omitted Editorial Notes Codification Section, Pub. L. 92-574, "
+            "§7(a), Oct. 27, 1972, 86 Stat. 1239, related to a study by the "
+            "Administrator of the adequacy of noise controls.",
+            "Omitted",
+        ),
+    ]
+
+    for text, predicate in samples:
+        report = adapter.evaluate(
+            text,
+            document_id=f"deontic-bridge-section-status-{predicate.lower()}",
+            citation=f"Deontic Bridge Section Status {predicate}",
+        )
+
+        norm = report.ir_document.views["deontic_ir"].payload["norms"][0]
+        formula = report.ir_document.views["deontic_formula_records"].payload[
+            "records"
+        ][0]["formula"]
+        slot_summary = report.ir_document.views[
+            "deontic_reconstruction_slot_loss"
+        ].payload["summary"]
+        phase8_summary = report.ir_document.views["deontic_phase8_quality"].payload[
+            "summary"
+        ]
+
+        assert norm["norm_type"] == "instrument_lifecycle"
+        assert norm["modality"] == "LIFE"
+        assert norm["actor"]
+        assert norm["action"].startswith(predicate.lower())
+        assert formula.startswith(f"{predicate}(")
+        assert slot_summary["slot_reconstruction_complete"] is True
+        assert phase8_summary["phase8_quality_complete"] is True
+        assert phase8_summary["requires_validation"] is False
+        assert report.round_trip.extra_losses["deontic_decoder_slot_loss"] == 0.0
+        assert (
+            report.round_trip.extra_losses["deontic_quality_requires_validation_loss"]
+            == 0.0
+        )
 
 
 def test_deontic_bridge_recovers_core_slots_from_nested_prompt_context() -> None:
@@ -2004,6 +2136,19 @@ def test_tdfol_bridge_coerce_canonicalizes_deontic_agent_prefix_export() -> None
     assert coerced.to_string() == "O(publish_notice(agency, deadline))"
 
 
+def test_tdfol_bridge_coerce_canonicalizes_keyword_deontic_export() -> None:
+    from ipfs_datasets_py.logic.TDFOL.tdfol_core import DeonticFormula, DeonticOperator
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
+
+    formula = "O(agent=agency, action=publish_notice(agency, deadline))"
+
+    coerced = coerce_tdfol_formula(formula)
+
+    assert isinstance(coerced, DeonticFormula)
+    assert coerced.operator == DeonticOperator.OBLIGATION
+    assert coerced.to_string() == "O(publish_notice(agency, deadline))"
+
+
 def test_tdfol_bridge_canonicalizes_prefixed_proof_obligation_rows() -> None:
     from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
 
@@ -2032,6 +2177,42 @@ def test_tdfol_bridge_canonicalizes_prefixed_proof_obligation_rows() -> None:
 
     assert record["formula"] == "O(disclose_records(agency))"
     assert record["proof_input"] == "O(disclose_records(agency))"
+    assert record["parse_ok"] is True
+    assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
+
+
+def test_tdfol_bridge_recovers_nested_alternate_proof_obligation_rows() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
+
+    class _ProofObligationResult:
+        success = True
+        metadata = {
+            "proof_obligations": {
+                "obligations": [
+                    {
+                        "proof_formula": (
+                            "O(agent=agency, action=publish_notice(agency, deadline))"
+                        ),
+                        "source_id": "tdfol:guidance:keyword",
+                    }
+                ]
+            },
+            "legal_norm_irs": [],
+            "parser_elements": [],
+        }
+
+    class _ProofObligationConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _ProofObligationResult()
+
+    adapter = FolTdfolBridgeAdapter(converter=_ProofObligationConverter())
+
+    report = adapter.evaluate("The agency shall publish notice.")
+    record = report.ir_document.views["tdfol_formula"].payload["records"][0]
+
+    assert record["source_id"] == "tdfol:guidance:keyword"
+    assert record["formula"] == "O(publish_notice(agency, deadline))"
     assert record["parse_ok"] is True
     assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
 
@@ -2078,6 +2259,38 @@ def test_tdfol_bridge_recovers_deontic_operator_from_norm_text() -> None:
     assert formulas[1].startswith("P(")
     assert report.proof_gate.valid_count == report.proof_gate.attempted_count
     assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
+
+
+def test_tdfol_bridge_compacts_status_and_definition_fallback_predicates() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
+
+    class _EmptyResult:
+        success = True
+        metadata = {"legal_norm_irs": [], "parser_elements": []}
+
+    class _EmptyConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _EmptyResult()
+
+    adapter = FolTdfolBridgeAdapter(converter=_EmptyConverter())
+
+    repealed = adapter.evaluate("42 U.S.C. 7705: §§7705, 7705a. Repealed.")
+    definition = adapter.evaluate(
+        '46 U.S.C. 4701. Definitions In this chapter- (1) "abandon" means to moor a barge.'
+    )
+
+    repealed_formula = repealed.ir_document.views["tdfol_formula"].payload["records"][0][
+        "formula"
+    ]
+    definition_formula = definition.ir_document.views["tdfol_formula"].payload[
+        "records"
+    ][0]["formula"]
+
+    assert "statute_status_repealed" in repealed_formula
+    assert "define_abandon" in definition_formula
+    assert repealed.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
+    assert definition.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
 
 
 def test_tdfol_bridge_applies_compiler_guidance_conditioned_temporal_rule() -> None:
@@ -2240,6 +2453,37 @@ def test_cec_dcec_bridge_recognizes_repealed_section_status_without_converter() 
 
     assert event_record["actor"] == "statute_section"
     assert event_record["event"] == "record_section_repeal"
+    assert formula_record["proof_input"].startswith("LifecycleState(")
+    assert report.proof_gate.compiles is True
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
+def test_cec_dcec_bridge_recognizes_omitted_section_status_without_converter() -> None:
+    from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
+
+    class _NoisyConverter:
+        @staticmethod
+        def convert(_text: str):
+            raise AssertionError("editorial section status should not invoke converter")
+
+    adapter = CecDcecBridgeAdapter(converter=_NoisyConverter())
+    report = adapter.evaluate(
+        (
+            "42 U.S.C. 4906. §4906. Omitted Editorial Notes Codification "
+            "Section, Pub. L. 92-574, §7(a), Oct. 27, 1972, 86 Stat. 1239, "
+            "related to a study by the Administrator of the adequacy of noise "
+            "controls and noise emission standards."
+        ),
+        document_id="cec-bridge-omitted-status",
+        citation="42 U.S.C. 4906",
+    )
+
+    event_record = report.ir_document.views["cec_events"].payload["events"][0]
+    formula_record = report.ir_document.views["dcec_formula"].payload["records"][0]
+
+    assert event_record["actor"] == "statute_section"
+    assert event_record["event"] == "record_section_omission"
     assert formula_record["proof_input"].startswith("LifecycleState(")
     assert report.proof_gate.compiles is True
     assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
@@ -3301,6 +3545,52 @@ def test_external_prover_router_uses_syntactic_native_fallback_when_tdfol_unavai
     assert result.all_results["native_syntactic"].is_valid is True
 
 
+def test_external_prover_router_syntactic_fallback_accepts_legacy_record_payloads(
+    monkeypatch,
+) -> None:
+    import builtins
+
+    from ipfs_datasets_py.logic.external_provers.prover_router import ProverRouter
+
+    real_import = builtins.__import__
+
+    def blocked_tdfol_import(name, *args, **kwargs):
+        if str(name).endswith("TDFOL.tdfol_prover"):
+            raise ImportError("tdfol unavailable for legacy payload fallback test")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", blocked_tdfol_import)
+
+    router = ProverRouter(
+        enable_cache=False,
+        enable_cvc5=False,
+        enable_coq=False,
+        enable_lean=False,
+        enable_native=True,
+        enable_symbolicai=False,
+        enable_z3=False,
+    )
+    payload = {
+        "records": [
+            {
+                "source_id": "us-code-42-4906",
+                "text": (
+                    "42 U.S.C. 4906. Omitted. Editorial Notes Codification "
+                    "related to a study by the Administrator."
+                ),
+            }
+        ]
+    }
+
+    result = router.route(payload, strategy="sequential")
+
+    assert router.get_available_provers() == ["native_syntactic"]
+    assert result.is_proved is False
+    assert result.is_compiled() is True
+    assert result.prover_used == "native_syntactic"
+    assert result.all_results["native_syntactic"].is_valid is True
+
+
 def test_external_prover_router_uses_syntactic_native_fallback_when_native_init_fails(
     monkeypatch,
 ) -> None:
@@ -4315,6 +4605,42 @@ def test_zkp_attestation_bridge_passes_compiler_guidance_ref_into_public_inputs(
     assert record["public_inputs"]["compiler_guidance_version"] == 1
     assert record["attestation_view"]["compiler_guidance_ref"] == record["compiler_guidance_ref"]
     assert record["attestation_view"]["compiler_guidance_version"] == 1
+
+
+def test_form_certificate_serializes_distinct_zkp_public_inputs() -> None:
+    from ipfs_datasets_py.logic.zkp import ZKPProver
+    from ipfs_datasets_py.logic.zkp.form_circuit import FormCompletionCertificate
+
+    prover = ZKPProver(backend="simulated", enable_caching=False)
+    proof = prover.generate_proof(
+        "O(publish_notice(agency))",
+        ["O(publish_notice(agency))", "uses_predicate(publish_notice)"],
+        metadata={"circuit_ref": "legal_ir_zkp_attestation@v1", "circuit_version": 1},
+    )
+    certificate = FormCompletionCertificate(
+        proof=proof,
+        form_id="notice-form",
+        source_pdf="notice.pdf",
+        public_inputs={
+            "form_template_hash": "f" * 64,
+            "rule_set_hash": "r" * 64,
+            "verdicts_hash": "v" * 64,
+        },
+    )
+
+    serialized = certificate.to_dict()
+
+    assert serialized["public_inputs"] == certificate.public_inputs
+    assert serialized["zkp_public_inputs"]["attestation_ref"] == (
+        proof.public_inputs["attestation_ref"]
+    )
+    assert serialized["zkp_public_inputs"]["theorem_hash"] == (
+        proof.public_inputs["theorem_hash"]
+    )
+    assert serialized["zkp_attestation"]["attestation_ref"] == (
+        proof.public_inputs["attestation_ref"]
+    )
+    assert "form_template_hash" not in serialized["zkp_public_inputs"]
 
 
 def test_zkp_prover_cache_separates_compiler_guidance_attestations() -> None:

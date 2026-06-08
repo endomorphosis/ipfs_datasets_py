@@ -7336,6 +7336,61 @@ def test_spacy_compiler_adds_long_heading_residual_span_coverage_after_section_h
     assert fallback.metadata["fallback_rule"] == "uscode_section_heading_v1"
 
 
+def test_spacy_compiler_adds_compact_frame_heading_residual_span_coverage_for_packet_000037_samples() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    cases = [
+        (
+            "us-code-42-4906.-49752be6630435d0",
+            "42 U.S.C. 4906.",
+            "Sec. 4906 - Availability of assistance. Environmental program benefits.",
+            "Environmental program benefits.",
+        ),
+        (
+            "us-code-26-676-062ec0a8a033a9fa",
+            "26 U.S.C. 676",
+            "Sec. 676 - Employee payments. Compensation and reimbursement expenses.",
+            "Compensation and reimbursement expenses.",
+        ),
+        (
+            "us-code-5-8173-653bf9ab88ca9151",
+            "5 U.S.C. 8173",
+            "Sec. 8173 - Administrative proceedings. Employee benefit determinations.",
+            "Employee benefit determinations.",
+        ),
+        (
+            "us-code-2-5103-2723bab002d6ffe8",
+            "2 U.S.C. 5103",
+            "Sec. 5103 - Program administration. Payment authorization.",
+            "Payment authorization.",
+        ),
+        (
+            "us-code-43-316b.-afdb72a9cdfde1d3",
+            "43 U.S.C. 316b.",
+            "Sec. 316b - Withdrawal and reservation of lands. Land settlement expenses.",
+            "Land settlement expenses.",
+        ),
+    ]
+
+    for document_id, citation, text, expected_span in cases:
+        encoding = encoder.encode(
+            text,
+            document_id=document_id,
+            citation=citation,
+            source="us_code",
+        )
+        modal_ir = compiler.compile(encoding)
+
+        residual_text_spans = {
+            modal_ir.normalized_text[
+                int(formula.provenance.start_char) : int(formula.provenance.end_char)
+            ].strip()
+            for formula in modal_ir.formulas
+            if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+        }
+        assert expected_span in residual_text_spans
+
+
 def test_spacy_decoder_vector_and_family_logits_are_deterministic() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),

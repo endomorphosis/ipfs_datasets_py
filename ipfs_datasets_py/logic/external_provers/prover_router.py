@@ -391,23 +391,65 @@ class ProverRouter:
     def _coerce_native_formula(formula: Any) -> Any:
         """Best-effort conversion of router payloads into native TDFOL formulas."""
 
+        return ProverRouter._coerce_native_formula_inner(formula, seen=set())
+
+    @staticmethod
+    def _coerce_native_formula_inner(formula: Any, *, seen: set[int]) -> Any:
+        """Best-effort conversion helper with cycle protection."""
+
         if formula is None:
             return None
         if isinstance(formula, Mapping):
-            for key in (
+            object_id = id(formula)
+            if object_id in seen:
+                return None
+            seen.add(object_id)
+            consumed_keys: set[str] = set()
+            priority_keys = (
                 "formula_object",
                 "proof_formula_object",
                 "formula",
                 "proof_input",
                 "proof_formula",
                 "tdfol_formula",
-            ):
+                "value",
+                "text",
+            )
+            container_keys = (
+                "obligations",
+                "proof_obligations",
+                "records",
+                "formulas",
+                "items",
+            )
+            for key in priority_keys + container_keys:
                 if key not in formula:
                     continue
+                consumed_keys.add(key)
                 value = formula.get(key)
                 if value is formula:
                     continue
-                coerced = ProverRouter._coerce_native_formula(value)
+                coerced = ProverRouter._coerce_native_formula_inner(value, seen=seen)
+                if coerced is not None:
+                    return coerced
+            for raw_key in sorted(formula.keys(), key=lambda item: str(item)):
+                key = str(raw_key)
+                if key in consumed_keys:
+                    continue
+                value = formula.get(raw_key)
+                if value is formula:
+                    continue
+                coerced = ProverRouter._coerce_native_formula_inner(value, seen=seen)
+                if coerced is not None:
+                    return coerced
+            return None
+        if isinstance(formula, (list, tuple)):
+            object_id = id(formula)
+            if object_id in seen:
+                return None
+            seen.add(object_id)
+            for item in formula:
+                coerced = ProverRouter._coerce_native_formula_inner(item, seen=seen)
                 if coerced is not None:
                     return coerced
             return None

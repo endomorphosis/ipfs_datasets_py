@@ -54,6 +54,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_000003_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000004_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000139_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_000183_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000431_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000421_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000795_FAMILY_PAIRS,
@@ -2177,6 +2178,65 @@ def test_modal_compiler_adds_modal_heading_prefix_coverage_for_packet_shapes() -
                 for formula in prefix_formulas
             }
             assert expected_span in prefix_spans
+
+
+def test_modal_compiler_adds_compact_frame_heading_residual_span_coverage_for_packet_000037_samples() -> None:
+    cases = [
+        (
+            "us-code-42-4906.-49752be6630435d0",
+            "42 U.S.C. 4906.",
+            "Sec. 4906 - Availability of assistance. Environmental program benefits.",
+            "Environmental program benefits.",
+        ),
+        (
+            "us-code-26-676-062ec0a8a033a9fa",
+            "26 U.S.C. 676",
+            "Sec. 676 - Employee payments. Compensation and reimbursement expenses.",
+            "Compensation and reimbursement expenses.",
+        ),
+        (
+            "us-code-5-8173-653bf9ab88ca9151",
+            "5 U.S.C. 8173",
+            "Sec. 8173 - Administrative proceedings. Employee benefit determinations.",
+            "Employee benefit determinations.",
+        ),
+        (
+            "us-code-2-5103-2723bab002d6ffe8",
+            "2 U.S.C. 5103",
+            "Sec. 5103 - Program administration. Payment authorization.",
+            "Payment authorization.",
+        ),
+        (
+            "us-code-43-316b.-afdb72a9cdfde1d3",
+            "43 U.S.C. 316b.",
+            "Sec. 316b - Withdrawal and reservation of lands. Land settlement expenses.",
+            "Land settlement expenses.",
+        ),
+    ]
+
+    for backend in ("regex", "spacy"):
+        compiler = DeterministicModalCompiler(
+            ModalCompilerConfig(
+                parser_backend=backend,
+                spacy_model_name="definitely_missing_legal_model",
+            )
+        )
+        for document_id, citation, text, expected_span in cases:
+            compiled = compiler.compile(
+                text,
+                document_id=document_id,
+                citation=citation,
+                source="us_code",
+            )
+
+            residual_text_spans = {
+                compiled.modal_ir.normalized_text[
+                    int(formula.provenance.start_char) : int(formula.provenance.end_char)
+                ].strip()
+                for formula in compiled.modal_ir.formulas
+                if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+            }
+            assert expected_span in residual_text_spans
 
 
 def test_modal_compiler_surfaces_modal_family_ambiguity_when_cues_overlap() -> None:
@@ -29205,6 +29265,156 @@ def test_modal_compiler_surfaces_packet_002840_compiler_ambiguity_policy_pairs(
         )
 
 
+def test_modal_compiler_surfaces_packet_000183_compiler_ambiguity_policy_pairs(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+    scenarios = (
+        ("conditional_normative", "deontic", -0.006283324169),
+        ("conditional_normative", "temporal", -0.006006473593),
+        ("deontic", "conditional_normative", -0.168791139079),
+        ("deontic", "deontic", 0.081894856974),
+        ("deontic", "epistemic", -0.771093460398),
+        ("deontic", "temporal", -0.211225586789),
+        ("frame", "frame", 0.068066248343),
+        ("frame", "temporal", -0.157489153463),
+        ("temporal", "temporal", 0.094993241392),
+    )
+
+    assert COMPILER_AMBIGUITY_PACKET_000183_FAMILY_PAIRS == tuple(
+        dict.fromkeys(
+            (predicted_family, target_family)
+            for predicted_family, target_family, _ in scenarios
+        )
+    )
+    for predicted_family, target_family in COMPILER_AMBIGUITY_PACKET_000183_FAMILY_PAIRS:
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+    for index, (predicted_family, target_family, family_margin) in enumerate(
+        scenarios,
+        start=1,
+    ):
+        predicted_share = 0.9
+        if predicted_family == target_family:
+            runner_up_family = (
+                "temporal" if predicted_family != "temporal" else "deontic"
+            )
+            ranking = [
+                {
+                    "family": predicted_family,
+                    "count": 0,
+                    "share_raw": predicted_share,
+                    "share": predicted_share,
+                },
+                {
+                    "family": runner_up_family,
+                    "count": 0,
+                    "share_raw": predicted_share - family_margin,
+                    "share": predicted_share - family_margin,
+                },
+            ]
+            candidate_ids = [predicted_family]
+            expected_direction = "contested"
+        else:
+            target_share = predicted_share + family_margin
+            if target_share < 0.0:
+                predicted_share = min(0.99, abs(family_margin) + 0.05)
+                target_share = predicted_share + family_margin
+            ranking = [
+                {
+                    "family": predicted_family,
+                    "count": 0,
+                    "share_raw": predicted_share,
+                    "share": predicted_share,
+                },
+                {
+                    "family": target_family,
+                    "count": 0,
+                    "share_raw": target_share,
+                    "share": target_share,
+                },
+            ]
+            candidate_ids = [predicted_family, target_family]
+            expected_direction = "outvoted"
+        family_shares = {
+            str(candidate["family"]): float(candidate["share_raw"])
+            for candidate in ranking
+        }
+        encoding = SpaCyLegalEncoding(
+            document_id=f"packet-000183-adaptive-evidence-{index}",
+            text=f"Synthetic {predicted_family} ambiguity evidence.",
+            normalized_text=f"Synthetic {predicted_family} ambiguity evidence.",
+            tokens=[],
+            sentences=[],
+            cues=[],
+        )
+        modal_ir = ModalIRDocument(
+            document_id=f"packet-000183-adaptive-evidence-{index}",
+            source="us_code",
+            normalized_text=encoding.normalized_text,
+            formulas=[],
+        )
+
+        ambiguities = compiler._adaptive_family_margin_ambiguities(
+            encoding,
+            modal_ir=modal_ir,
+            ranking=ranking,
+            family_shares=family_shares,
+            predicted_family_source="adaptive_logits",
+        )
+
+        policy_pair = f"{predicted_family}->{target_family}"
+        expected_explicit_type = (
+            f"adaptive_{predicted_family}_{target_family}_{expected_direction}"
+            "_margin_low"
+        )
+        base_ambiguity = next(
+            ambiguity
+            for ambiguity in ambiguities
+            if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+            and ambiguity.candidate_ids == candidate_ids
+            and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+        )
+        assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
+        assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+        assert base_ambiguity.metadata["adaptive_margin_direction"] == expected_direction
+        assert (
+            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
+            < 1e-12
+        )
+        assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
+        assert any(
+            ambiguity.ambiguity_type == expected_explicit_type
+            and ambiguity.candidate_ids == candidate_ids
+            and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+            and ambiguity.metadata["adaptive_base_ambiguity_type"]
+            == "adaptive_family_margin_low"
+            for ambiguity in ambiguities
+        )
+
+
 def test_decode_modal_ir_document_surfaces_typed_ir_refined_family_pairs() -> None:
     source_text = (
         "Sec. 925. Administrative headings. "
@@ -32091,6 +32301,7 @@ def test_decode_modal_ir_document_surfaces_packet_013873_clause_self_bridge_slot
 def test_rescued_failed_validation_ambiguity_packets_are_registered() -> None:
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
         COMPILER_AMBIGUITY_PACKET_000008_FAMILY_PAIRS,
+        COMPILER_AMBIGUITY_PACKET_000183_FAMILY_PAIRS,
         COMPILER_AMBIGUITY_PACKET_001247_FAMILY_PAIRS,
         COMPILER_AMBIGUITY_PACKET_001540_FAMILY_PAIRS,
         COMPILER_AMBIGUITY_PACKET_001730_FAMILY_PAIRS,
@@ -32140,6 +32351,7 @@ def test_rescued_failed_validation_ambiguity_packets_are_registered() -> None:
         COMPILER_AMBIGUITY_PACKET_011135_FAMILY_PAIRS,
         COMPILER_AMBIGUITY_PACKET_014167_FAMILY_PAIRS,
         COMPILER_AMBIGUITY_PACKET_000220_FAMILY_PAIRS,
+        COMPILER_AMBIGUITY_PACKET_000183_FAMILY_PAIRS,
     )
 
     for packet_pairs in full_view_packets:

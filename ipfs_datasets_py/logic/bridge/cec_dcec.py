@@ -363,7 +363,7 @@ class CecDcecBridgeAdapter:
 
 def _deontic_norms_from_text(text: str, *, converter: Any) -> list[dict[str, Any]]:
     editorial_norm = _section_editorial_norm_from_text(text)
-    if editorial_norm and editorial_norm.get("editorial_status") in {"repealed", "vacant"}:
+    if editorial_norm and editorial_norm.get("norm_type") == "instrument_lifecycle":
         return [editorial_norm]
 
     result = converter.convert(text)
@@ -1972,6 +1972,9 @@ def _section_editorial_norm_from_text(text: str) -> Optional[dict[str, Any]]:
     elif _section_status_heading_matches(lowered, "vacant"):
         status = "vacant"
         action = "mark section vacant"
+    elif _section_status_heading_matches(lowered, "omitted"):
+        status = "omitted"
+        action = "record section omission"
     elif (
         re.search(r"\bsec\.?\s*[0-9a-z.-]+\s*-\s*change\s+in\s+name\b", lowered)
         or re.search(r"§+\s*[0-9a-z.-]+\.?\s+change\s+in\s+name\b", lowered)
@@ -2056,7 +2059,7 @@ def _fallback_actor_from_text(text: str) -> str:
     lowered = text.lower()
     if re.search(r"\b(?:sec\.|section|§)\s*[0-9a-z.-]+\s*(?:-|\.|:)?\s*vacant\b", lowered):
         return "statute section"
-    if re.search(r"\b(?:repealed|renumbered|redesignated)\b", lowered):
+    if re.search(r"\b(?:omitted|repealed|renumbered|redesignated)\b", lowered):
         return "statute section"
     if re.search(r"\b(?:definitions|for purposes of this chapter)\b", lowered):
         return "chapter terms"
@@ -2079,6 +2082,8 @@ def _fallback_action_from_text(text: str) -> str:
         return "mark section vacant"
     if _section_status_heading_matches(lowered, "repealed"):
         return "record section repeal"
+    if _section_status_heading_matches(lowered, "omitted"):
+        return "record section omission"
     if re.search(r"\bthe\s+corporation\s+is\s+liable\s+for\s+the\s+acts\b", lowered):
         return "assume liability for acts of officers and agents"
     if re.search(r"\b(?:definitions|for purposes of this chapter)\b", lowered):

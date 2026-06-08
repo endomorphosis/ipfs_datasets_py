@@ -301,6 +301,52 @@ _USCODE_SHORT_RESIDUAL_HEADING_SIGNAL_TOKENS = frozenset(
 _USCODE_LONG_RESIDUAL_HEADING_MIN_TOKENS = 6
 _USCODE_LONG_RESIDUAL_HEADING_MAX_TOKENS = _USCODE_HEADING_ONLY_EXTENDED_MAX_TOKENS
 _USCODE_LONG_RESIDUAL_HEADING_MIN_SIGNAL_TOKENS = 2
+_USCODE_COMPACT_FRAME_RESIDUAL_MIN_TOKENS = 2
+_USCODE_COMPACT_FRAME_RESIDUAL_MAX_TOKENS = 16
+_USCODE_COMPACT_FRAME_RESIDUAL_SIGNAL_TOKENS = frozenset(
+    {
+        "administration",
+        "administrative",
+        "allowance",
+        "allowances",
+        "application",
+        "applications",
+        "appropriation",
+        "appropriations",
+        "assistance",
+        "authorization",
+        "availability",
+        "benefit",
+        "benefits",
+        "compensation",
+        "determination",
+        "determinations",
+        "duties",
+        "employee",
+        "employees",
+        "expense",
+        "expenses",
+        "jurisdiction",
+        "land",
+        "lands",
+        "payment",
+        "payments",
+        "proceeding",
+        "proceedings",
+        "program",
+        "programs",
+        "reimbursement",
+        "reimbursements",
+        "reservation",
+        "reservations",
+        "settlement",
+        "settlements",
+        "transfer",
+        "transfers",
+        "withdrawal",
+        "withdrawals",
+    }
+)
 _USCODE_MODAL_HEADING_PREFIX_MAX_TOKENS = 18
 _USCODE_MAX_RESIDUAL_SPAN_FORMULAS = 3
 _USCODE_RESIDUAL_SPAN_FORMULA_BUDGET_CAP = 12
@@ -928,7 +974,7 @@ class LegalModalParser:
                 )
                 if reindexed_fallback is not None:
                     fallback_formula = reindexed_fallback
-            formulas.extend(_prefix_formulas(len(formulas) + 1))
+            formulas.extend(_prefix_formulas(len(formulas) + 2))
             formulas.append(fallback_formula)
         elif formulas:
             residual_segments = self._segments_excluding_spans(
@@ -968,7 +1014,7 @@ class LegalModalParser:
                         segments=residual_segments_after_fallback,
                     )
                 )
-                formulas.extend(_prefix_formulas(len(formulas) + 1))
+                formulas.extend(_prefix_formulas(len(formulas) + 2))
                 formulas.append(residual_fallback_formula)
             else:
                 formulas.extend(
@@ -993,6 +1039,23 @@ class LegalModalParser:
                 "segment_count": len(segments),
             },
         )
+
+    def _parse_eligible_cues(self, normalized_text: str) -> List[ModalCueSpan]:
+        """Return cue spans that are semantically eligible for formula emission."""
+        cues: List[ModalCueSpan] = []
+        for cue in self.extract_cues(normalized_text):
+            if (
+                cue.family == ModalLogicFamily.TEMPORAL
+                and self._should_ignore_non_temporal_temporal_cue(
+                    normalized_text=normalized_text,
+                    cue=cue.cue,
+                    start_char=cue.start_char,
+                    end_char=cue.end_char,
+                )
+            ):
+                continue
+            cues.append(cue)
+        return cues
 
     def fallback_formula(
         self,
@@ -1244,6 +1307,8 @@ class LegalModalParser:
             return True
         if self._is_uscode_definition_residual_candidate(normalized, tokens):
             return True
+        if self._is_uscode_compact_frame_residual_candidate(normalized, tokens):
+            return True
         is_short_heading_candidate = self._is_short_residual_heading_coverage_candidate(
             tokens
         )
@@ -1322,6 +1387,28 @@ class LegalModalParser:
             return False
         signal_count = len(set(tokens) & _USCODE_HEADING_ONLY_EXTENDED_NOUN_HINTS)
         return signal_count >= _USCODE_LONG_RESIDUAL_HEADING_MIN_SIGNAL_TOKENS
+
+    def _is_uscode_compact_frame_residual_candidate(
+        self,
+        normalized_segment_text: str,
+        tokens: Sequence[str],
+    ) -> bool:
+        """Recover compact U.S.C. frame headings that are not procedure-specific."""
+        token_count = len(tokens)
+        if (
+            token_count < _USCODE_COMPACT_FRAME_RESIDUAL_MIN_TOKENS
+            or token_count > _USCODE_COMPACT_FRAME_RESIDUAL_MAX_TOKENS
+        ):
+            return False
+        lowered = normalized_segment_text.lower()
+        if (
+            _USCODE_CODIFICATION_HINT_RE.search(lowered)
+            or _USCODE_EDITORIAL_STATUS_HINT_RE.search(lowered)
+            or _USCODE_DECLARATIVE_STATEMENT_HINT_RE.search(lowered)
+            or _USCODE_HEADING_ONLY_VERB_HINT_RE.search(lowered)
+        ):
+            return False
+        return bool(set(tokens) & _USCODE_COMPACT_FRAME_RESIDUAL_SIGNAL_TOKENS)
 
     def _modal_heading_prefix_segment(
         self,
@@ -1715,7 +1802,7 @@ class LegalModalParser:
             return None
         if not self._is_uscode_citation(citation):
             return None
-        if not allow_modal_cues and self.extract_cues(normalized_text):
+        if not allow_modal_cues and self._parse_eligible_cues(normalized_text):
             return None
 
         candidate_segment: Optional[LegalSegment] = None
@@ -1729,7 +1816,9 @@ class LegalModalParser:
                 break
             if transferred_heading_segment is None:
                 transferred_heading_segment = segment
-        if candidate_segment is None:
+        if transferred_heading_segment is not None:
+            candidate_segment = transferred_heading_segment
+        elif candidate_segment is None:
             candidate_segment = transferred_heading_segment
         elif transferred_heading_segment is not None and (
             re.match(
@@ -1749,6 +1838,21 @@ class LegalModalParser:
         has_transferred_heading_hint = self._looks_like_transferred_section_heading(
             candidate_segment.text,
             citation_section=citation_section,
+        )
+        has_cross_title_reclassification = self._has_cross_title_reclassification(
+            lowered,
+            citation=citation,
+        )
+        transferred_heading_rule_preferred = has_transferred_heading_hint and (
+            not has_reclassification_hint
+            or (
+                not has_cross_title_reclassification
+                and (
+                    "government publishing office" in lowered
+                    or "of this title" in lowered
+                    or re.search(r"\bof\s+title\s+\d+\b", lowered) is not None
+                )
+            )
         )
 
         if not has_reclassification_hint and not has_transferred_heading_hint:
@@ -1791,9 +1895,9 @@ class LegalModalParser:
             metadata={
                 "cue": "__uscode_codification_fallback__",
                 "fallback_rule": (
-                    "uscode_codification_transfer_heading_v1"
-                    if has_reclassification_hint
-                    else "uscode_transferred_heading_v1"
+                    "uscode_transferred_heading_v1"
+                    if transferred_heading_rule_preferred
+                    else "uscode_codification_transfer_heading_v1"
                 ),
             },
         )
@@ -1807,6 +1911,35 @@ class LegalModalParser:
         token = match.group(1).strip().lower()
         token = _USCODE_TRAILING_SECTION_PUNCT_RE.sub("", token)
         return self._normalized_citation_section_token(token)
+
+    def _citation_title_token(self, citation: Optional[str]) -> str:
+        if not citation:
+            return ""
+        match = re.search(
+            r"\b(?P<title>\d+[A-Za-z]*)\s+U\.?\s*S\.?\s*C\.?(?!\w)",
+            citation,
+            re.IGNORECASE,
+        )
+        if not match:
+            return ""
+        return match.group("title").strip().lower()
+
+    def _has_cross_title_reclassification(
+        self,
+        text: str,
+        *,
+        citation: Optional[str],
+    ) -> bool:
+        source_title = self._citation_title_token(citation)
+        if not source_title:
+            return False
+        if "reclassified as section" not in text:
+            return False
+        for match in re.finditer(r"\bof\s+title\s+(?P<title>\d+[a-z]*)\b", text):
+            target_title = match.group("title").strip().lower()
+            if target_title and target_title != source_title:
+                return True
+        return False
 
     def _normalized_citation_section_token(self, token: str) -> str:
         normalized = _USCODE_SECTION_DASH_VARIANT_RE.sub("-", token.lower())

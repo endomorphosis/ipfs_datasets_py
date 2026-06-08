@@ -135,6 +135,14 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
         if lowered.startswith("expires "):
             anchor = action_text[len("expires ") :]
             return f"ExpiresAfter({subject}, {normalize_predicate_name(anchor)})"
+        if lowered.startswith("repealed"):
+            return f"Repealed({subject})"
+        if lowered.startswith("omitted"):
+            return f"Omitted({subject})"
+        if lowered.startswith("reserved"):
+            return f"Reserved({subject})"
+        if lowered.startswith("transferred"):
+            return f"Transferred({subject})"
         return f"Lifecycle({subject}, {normalize_predicate_name(action_text)})"
 
     action_text = _action_without_mental_state(
@@ -2584,7 +2592,10 @@ def normalize_predicate_name(name: str) -> str:
     ]
     if not filtered_words:
         return "P"
-    return "".join(word.capitalize() for word in filtered_words)
+    predicate = "".join(word.capitalize() for word in filtered_words)
+    if predicate and not predicate[0].isalpha():
+        predicate = f"N{predicate}"
+    return predicate
 
 
 def _slot_texts(items: Iterable[Dict[str, Any]]) -> List[str]:

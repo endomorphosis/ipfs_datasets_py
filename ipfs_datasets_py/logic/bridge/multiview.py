@@ -246,7 +246,7 @@ _BRIDGE_CONTRACT_OFFICIAL_USC_EXCERPT_RE = re.compile(
 _BRIDGE_CONTRACT_OFFICIAL_USC_MIN_CHARS = 520
 _BRIDGE_CONTRACT_SHORT_OFFICIAL_USC_MIN_CHARS = 160
 _BRIDGE_CONTRACT_USC_SECTION_MARKER_RE = re.compile(
-    r"^\s*(?:§|\u00a7)\s*\d+[a-z0-9\-\.]*\b",
+    r"^\s*(?:§|\u00a7){1,2}\s*\d+[a-z0-9\-\.]*\b",
     flags=re.IGNORECASE,
 )
 _BRIDGE_CONTRACT_STATUTES_AT_LARGE_CUE_RE = re.compile(

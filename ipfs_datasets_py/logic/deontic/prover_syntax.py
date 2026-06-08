@@ -610,6 +610,7 @@ def _semantic_formula_family(action_predicate: str) -> str:
         return "ordinary_duty"
 
     ordered_prefixes: Sequence[tuple[Sequence[str], str]] = (
+        (("Repealed", "Omitted", "Reserved", "Transferred", "Lifecycle", "ValidFor", "ExpiresAfter"), "instrument_lifecycle"),
         (("DocumentChainCustody", "LogCustody", "RecordEvidenceTransfer", "InventoryEvidence", "InventoryExhibit", "Accession", "PreserveEvidence"), "evidence_custody_duty"),
         (("RecordMinutes", "SetAgenda", "CallRoll", "NoticeMeeting"), "meeting_governance_duty"),
         (("ReportIncident", "LogIncident", "RegisterBreach", "RegisterRisk", "RegisterIncident"), "incident_risk_reporting_duty"),
@@ -1107,6 +1108,10 @@ def _target_parse_profile_shape_complete(
             "ValidFor",
             "ExpiresAfter",
             "Lifecycle",
+            "Repealed",
+            "Omitted",
+            "Reserved",
+            "Transferred",
         }
     if target == "deontic_fol":
         return (
@@ -1505,4 +1510,7 @@ def _source_symbol(source_id: str) -> str:
 
 def _predicate_symbol(value: str) -> str:
     words = re.findall(r"[0-9A-Za-z]+", str(value or ""))
-    return "".join(word[:1].upper() + word[1:] for word in words) if words else "Unknown"
+    predicate = "".join(word[:1].upper() + word[1:] for word in words) if words else "Unknown"
+    if predicate and not predicate[0].isalpha():
+        predicate = f"N{predicate}"
+    return predicate

@@ -612,6 +612,17 @@ def _required_legal_projection_views(
         or "section_profile" in predicate
         for predicate in predicates
     )
+    has_editorial_status = any(
+        predicate in _EDITORIAL_STATUS_PREDICATES
+        or predicate.startswith(_EDITORIAL_STATUS_PREDICATE_PREFIXES)
+        or any(token in predicate for token in _EDITORIAL_STATUS_TOKENS)
+        for predicate in predicates
+    )
+    has_view_alignment = any(
+        predicate in _LEGAL_IR_VIEW_ALIGNMENT_PREDICATES
+        or predicate.startswith(_LEGAL_IR_VIEW_ALIGNMENT_PREDICATE_PREFIXES)
+        for predicate in predicates
+    )
     required: List[str] = []
     if has_source_id:
         required.append("document_scope")
@@ -619,6 +630,10 @@ def _required_legal_projection_views(
         required.append("citation_structure")
     if has_section:
         required.append("section_structure")
+    if has_editorial_status:
+        required.append("editorial_status")
+    if has_view_alignment:
+        required.append("legal_ir_view_alignment")
     return sorted(set(required))
 def _canonical_component_distribution(
     projection_view_counts: Mapping[str, int],

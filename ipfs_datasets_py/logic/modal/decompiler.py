@@ -128,6 +128,15 @@ _USCODE_FALLBACK_STATUS_KEYWORDS: tuple[str, ...] = (
     "renumbered",
     "terminated",
 )
+_USCODE_EDITORIAL_NOTE_LABELS: tuple[str, ...] = (
+    "Editorial Notes",
+    "Codification",
+    "References in Text",
+    "Historical and Revision Notes",
+    "Prior Provisions",
+    "Amendments",
+    "Statutory Notes and Related Subsidiaries",
+)
 _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("living donor mechanisms", "living_donor_mechanism"),
     ("living donor mechanism", "living_donor_mechanism"),
@@ -1420,6 +1429,7 @@ def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
         *_document_provenance_summary_phrases(document),
         *_document_modal_family_count_phrases(document),
         *_document_modal_family_transition_phrases(document),
+        *_document_uscode_editorial_status_phrases(document),
         *_document_semantic_slot_summary_phrases(document),
         *_frame_candidate_phrases(document),
         *_frame_ontology_phrases(document),
@@ -3553,6 +3563,256 @@ def _document_modal_family_transition_phrases(
             )
         )
     return phrases
+
+
+def _document_uscode_editorial_status_phrases(
+    document: ModalIRDocument,
+) -> List[DecodedModalPhrase]:
+    """Expose bounded semantic slots for U.S.C. editorial-status records."""
+
+    source_text = _clean_text(document.normalized_text)
+    if not source_text or not _document_has_uscode_context(document):
+        return []
+    status_keyword = _status_keyword_from_source_text(source_text)
+    editorial_labels = _uscode_editorial_note_labels(source_text)
+    if not status_keyword and not editorial_labels:
+        return []
+
+    citation = _document_primary_citation(document)
+    catchline = _leading_uscode_catchline_text(source_text[:520], max_tokens=16)
+    spans = [[0, len(str(document.normalized_text or ""))]]
+    source_ids = _document_source_ids(document)
+    coordinate_values = _document_uscode_coordinate_values(
+        citation=citation,
+        source_ids=source_ids,
+    )
+    status_clauses = _uscode_editorial_status_clauses(
+        source_text,
+        status_keyword=status_keyword,
+    )
+
+    slots: List[Tuple[str, str]] = []
+
+    def add(slot: str, value: str) -> None:
+        cleaned_slot = _clean_text(slot)
+        cleaned_value = _clean_text(value)
+        if cleaned_slot and cleaned_value:
+            slots.append((cleaned_slot, cleaned_value))
+
+    if citation:
+        add("editorial_status_citation", citation)
+    for slot_name, value in coordinate_values:
+        add(slot_name, value)
+    if status_keyword:
+        add("editorial_status_keyword", status_keyword)
+        add("editorial_status_semantic_atom", status_keyword)
+    if catchline:
+        add("editorial_status_catchline", catchline)
+    for label in editorial_labels:
+        add("editorial_status_note_label", label)
+        add("editorial_status_semantic_atom", label.lower().replace(" ", "_"))
+    for clause in status_clauses:
+        add("editorial_status_clause", clause)
+        for atom in _legal_semantic_atoms_from_text(clause):
+            add("editorial_status_semantic_atom", atom)
+    summary = _clean_text(
+        " ".join(
+            _unique_preserve_order(
+                [
+                    citation,
+                    *[value for _, value in coordinate_values],
+                    status_keyword,
+                    catchline,
+                    *editorial_labels,
+                    *status_clauses,
+                ]
+            )
+        )
+    )
+    if summary:
+        add("editorial_status_summary", summary)
+
+    phrases: List[DecodedModalPhrase] = []
+    seen: set[Tuple[str, str]] = set()
+    for slot, value in _unique_slot_values(slots):
+        marker = (slot, value)
+        if marker in seen:
+            continue
+        seen.add(marker)
+        phrases.append(
+            DecodedModalPhrase(
+                text=value,
+                slot=slot,
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+        if slot in {
+            "editorial_status_catchline",
+            "editorial_status_clause",
+            "editorial_status_summary",
+        }:
+            for typed_slot, typed_value in _typed_identifier_slots(
+                value,
+                slot_prefix=slot,
+            ):
+                typed_marker = (typed_slot, typed_value)
+                if typed_marker in seen:
+                    continue
+                seen.add(typed_marker)
+                phrases.append(
+                    DecodedModalPhrase(
+                        text=typed_value,
+                        slot=typed_slot,
+                        spans=spans,
+                        provenance_only=True,
+                    )
+                )
+    return phrases
+
+
+def _document_has_uscode_context(document: ModalIRDocument) -> bool:
+    source = _clean_text(document.source).lower()
+    if source == "us_code":
+        return True
+    citation = _document_primary_citation(document)
+    if citation and _USC_CITATION_RE.match(citation):
+        return True
+    return any(_USCODE_SOURCE_ID_RE.match(source_id) for source_id in _document_source_ids(document))
+
+
+def _document_primary_citation(document: ModalIRDocument) -> str:
+    citation = _clean_text(document.metadata.get("citation") or "")
+    if citation:
+        return citation
+    for formula in document.formulas:
+        formula_citation = _clean_text(formula.provenance.citation or "")
+        if formula_citation:
+            return formula_citation
+    inferred = _inferred_citations_from_source_ids(_document_source_ids(document))
+    return inferred[0] if inferred else ""
+
+
+def _document_uscode_coordinate_values(
+    *,
+    citation: str,
+    source_ids: Sequence[str],
+) -> List[Tuple[str, str]]:
+    slots: List[Tuple[str, str]] = []
+    if citation:
+        citation_map = _slot_value_map(_citation_slots(citation))
+        for source_slot, target_slot in (
+            ("citation_canonical", "editorial_status_citation_canonical"),
+            ("citation_title", "editorial_status_title"),
+            ("citation_section_normalized", "editorial_status_section"),
+            ("citation_title_section_key", "editorial_status_title_section_key"),
+        ):
+            value = _clean_text(citation_map.get(source_slot) or "")
+            if value:
+                slots.append((target_slot, value))
+    for source_id in source_ids:
+        source_map = _slot_value_map(_source_id_slots(source_id))
+        for source_slot, target_slot in (
+            ("source_id_citation_canonical", "editorial_status_citation_canonical"),
+            ("source_id_title", "editorial_status_title"),
+            ("source_id_section_normalized", "editorial_status_section"),
+            ("source_id_title_section_key", "editorial_status_title_section_key"),
+        ):
+            value = _clean_text(source_map.get(source_slot) or "")
+            if value:
+                slots.append((target_slot, value))
+    return _unique_slot_values(slots)
+
+
+def _uscode_editorial_note_labels(text: str) -> List[str]:
+    normalized = _clean_text(text)
+    labels: List[str] = []
+    for label in _USCODE_EDITORIAL_NOTE_LABELS:
+        if re.search(rf"(?<!\w){re.escape(label)}(?!\w)", normalized, re.IGNORECASE):
+            labels.append(label)
+    return labels
+
+
+def _uscode_editorial_status_clauses(
+    text: str,
+    *,
+    status_keyword: str,
+    max_clauses: int = 4,
+    max_tokens: int = 28,
+) -> List[str]:
+    normalized = _clean_text(text)
+    if not normalized:
+        return []
+    candidate_text = re.sub(
+        r"\b(?:Historical and Revision Notes|Prior Provisions|Amendments|"
+        r"Statutory Notes and Related Subsidiaries)\b.*$",
+        "",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    raw_segments = re.split(r"(?:[.;]|\s+—\s+|\s+–\s+)", candidate_text)
+    selectors = [
+        value
+        for value in (
+            status_keyword,
+            "codification",
+            "editorial notes",
+            "related to",
+            "reclassified",
+            "transferred",
+            "repealed",
+            "omitted",
+            "reserved",
+            "renumbered",
+            "terminated",
+        )
+        if value
+    ]
+    clauses: List[str] = []
+    for raw_segment in raw_segments:
+        segment = _clean_text(raw_segment)
+        if not segment:
+            continue
+        lowered = segment.lower()
+        if not any(selector in lowered for selector in selectors):
+            continue
+        segment = _clean_text(_USCODE_LEADING_SECTION_REF_RE.sub("", segment))
+        segment = _strip_uscode_gpo_attribution_fragment(segment)
+        segment = segment.lstrip(" \t\r\n-–—:;,.")
+        segment = _TRAILING_SECTION_PUNCT_RE.sub("", segment)
+        segment = _trim_uscode_compilation_surface_text(segment, max_tokens=max_tokens)
+        segment = _clean_text(segment)
+        if (
+            not segment
+            or _is_low_information_section_marker(segment)
+            or _is_uscode_editorial_clause_boilerplate(segment)
+        ):
+            continue
+        tokens = _tokenize_for_similarity(segment)
+        if not tokens or len(tokens) > max_tokens:
+            continue
+        clauses.append(segment)
+        if len(_unique_preserve_order(clauses)) >= max_clauses:
+            break
+    return _unique_preserve_order(clauses)
+
+
+def _is_uscode_editorial_clause_boilerplate(text: str) -> bool:
+    normalized = _clean_text(text)
+    if not normalized:
+        return True
+    lowered = normalized.lower()
+    if "united states code" in lowered or "government publishing office" in lowered:
+        return True
+    tokens = _tokenize_for_similarity(normalized)
+    if len(tokens) <= 1:
+        return True
+    if re.fullmatch(
+        r"(?:pub|public)\.?\s+l\.?.*?\b\d+\s+stat\.?.*",
+        lowered,
+    ):
+        return True
+    return False
 
 
 def _document_semantic_slot_summary_phrases(

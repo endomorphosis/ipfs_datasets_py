@@ -259,6 +259,16 @@ _INSTRUMENT_EXPIRATION_RE = re.compile(
     r"(?:expires|shall\s+expire|terminates|shall\s+terminate)\s+(?P<anchor>.+?)(?:[.;:]|$)",
     re.IGNORECASE,
 )
+_SECTION_STATUS_RE = re.compile(
+    r"(?:(?P<section_marker>§{1,2}\s*[0-9][0-9A-Za-z.\-]*(?:\s*,\s*[0-9][0-9A-Za-z.\-]*)*)\s*[\.:]?\s*)?"
+    r"\b(?P<status>repealed|omitted|reserved|transferred)\b"
+    r"(?P<detail>[^.;:]*)",
+    re.IGNORECASE,
+)
+_SECTION_STATUS_DETAIL_STOP_RE = re.compile(
+    r"\b(?:editorial\s+notes?|codification|pub\.?\s*l\.?|section|sections?|see|prior\s+provisions?)\b",
+    re.IGNORECASE,
+)
 _MONEY_RE = re.compile(
     r"(?:\$\s?\d[\d,]*(?:\.\d{2})?|\b\d[\d,]*\s+dollars?\b)",
     re.IGNORECASE,
@@ -497,6 +507,20 @@ def extract_normative_elements(
     expand_enumerations: bool = False,
 ) -> List[Dict[str, Any]]:
     elements: List[Dict[str, Any]] = []
+    elements.extend(_extract_section_status_lifecycle_elements(str(text or ""), document_type))
+    if elements:
+        _apply_definition_context(elements)
+        _apply_cross_reference_context(elements)
+        _apply_same_document_reference_repair_clearance(elements)
+        _apply_local_applicability_repair_clearance(elements)
+        _apply_local_scope_condition_repair_clearance(elements)
+        _apply_local_scope_exception_repair_clearance(elements)
+        _apply_formula_resolved_repair_clearance(elements)
+        _apply_active_repair_status(elements)
+        _apply_document_penalty_context(elements, str(text or ""))
+        _apply_enforcement_context(elements)
+        _apply_conflict_context(elements)
+        return elements
     segments = segment_legal_text(text)
     for segment in segments:
         segment_text = segment["text"].strip()
@@ -1467,6 +1491,18 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
             )
         ]
 
+    section_status_match = _SECTION_STATUS_RE.search(sentence)
+    if section_status_match:
+        return [
+            _finalize_element(
+                _build_section_status_lifecycle_element(
+                    sentence=sentence,
+                    document_type=document_type,
+                    match=section_status_match,
+                )
+            )
+        ]
+
     not_required_match = _NOT_REQUIRED_EXEMPTION_RE.search(sentence)
     if not_required_match:
         instrument_text = _clean_phrase(not_required_match.group("instrument"))
@@ -1690,6 +1726,131 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
         ]
 
     return []
+
+
+def _extract_section_status_lifecycle_elements(
+    text: str,
+    document_type: str,
+) -> List[Dict[str, Any]]:
+    """Extract whole-document section status notes before sentence splitting."""
+
+    normalized_text = str(text or "").strip()
+    if not normalized_text:
+        return []
+
+    elements: List[Dict[str, Any]] = []
+    for match in _SECTION_STATUS_RE.finditer(normalized_text):
+        elements.append(
+            _finalize_element(
+                _build_section_status_lifecycle_element(
+                    sentence=normalized_text,
+                    document_type=document_type,
+                    match=match,
+                )
+            )
+        )
+    return elements
+
+
+def _build_section_status_lifecycle_element(
+    *,
+    sentence: str,
+    document_type: str,
+    match: re.Match[str],
+) -> Dict[str, Any]:
+    """Build a typed lifecycle row for U.S. Code editorial status markers."""
+
+    status = _clean_phrase(match.group("status")).lower()
+    section_marker = _clean_phrase(match.group("section_marker") or "")
+    detail = _section_status_detail(match.group("detail") or "")
+    instrument_text = section_marker or _section_status_instrument_from_context(sentence)
+    action_text = status
+    if detail:
+        action_text = f"{status} {detail}"
+
+    status_span = list(match.span("status"))
+    subject_span = list(match.span("section_marker")) if section_marker else []
+    return {
+        "schema_version": PARSER_SCHEMA_VERSION,
+        "source_id": "",
+        "canonical_citation": "",
+        "text": sentence,
+        "support_text": sentence[match.start() : match.end()].strip(),
+        "support_span": list(match.span()),
+        "field_spans": {
+            "subject": subject_span,
+            "modal": status_span,
+            "action": status_span,
+            "action_verb": status_span,
+            "action_object": subject_span,
+            "action_recipient": [],
+        },
+        "norm_type": "instrument_lifecycle",
+        "deontic_operator": "LIFE",
+        "modal": status,
+        "subject": [instrument_text],
+        "actor_type": "legal_instrument",
+        "entity_type": "legal_instrument",
+        "action": [action_text],
+        "mental_state": "",
+        "action_verb": status,
+        "action_object": instrument_text,
+        "action_recipient": "",
+        "conditions": extract_conditions(sentence),
+        "condition_details": extract_condition_details(sentence),
+        "temporal_constraints": extract_temporal_constraints(sentence),
+        "temporal_constraint_details": extract_temporal_constraint_details(sentence),
+        "exceptions": extract_exceptions(sentence),
+        "exception_details": extract_exception_details(sentence),
+        "override_clauses": extract_override_clauses(sentence),
+        "override_clause_details": extract_override_clause_details(sentence),
+        "cross_references": [],
+        "cross_reference_details": [],
+        "resolved_cross_references": [],
+        "enforcement_links": [],
+        "conflict_links": [],
+        "enumerated_items": extract_enumerated_items(sentence),
+        "defined_term_refs": [],
+        "definition_scope": {},
+        "ontology_terms": extract_ontology_terms(sentence),
+        "formal_terms": {},
+        "llm_repair": {},
+        "export_readiness": {},
+        "logic_frame": {},
+        "legal_frame": {},
+        "kg_relationship_hints": [],
+        "monetary_amounts": extract_monetary_amounts(sentence),
+        "monetary_amount_details": extract_monetary_amount_details(sentence),
+        "penalty": {},
+        "procedure": {},
+        "section_context": {},
+        "hierarchy_path": [],
+        "hierarchy_details": [],
+        "document_type": document_type,
+        "extraction_method": "deterministic_section_status_lifecycle_v1",
+        "confidence_floor": 0.40,
+    }
+
+
+def _section_status_detail(value: str) -> str:
+    detail = _clean_phrase(value)
+    if not detail:
+        return ""
+    stop_match = _SECTION_STATUS_DETAIL_STOP_RE.search(detail)
+    if stop_match:
+        detail = detail[: stop_match.start()].strip(" ,")
+    return detail
+
+
+def _section_status_instrument_from_context(sentence: str) -> str:
+    section_context_match = re.search(
+        r"\b(?:sec(?:tion)?\.?|§{1,2})\s*([0-9][0-9A-Za-z.\-]*(?:\s*,\s*[0-9][0-9A-Za-z.\-]*)*)",
+        sentence,
+        re.IGNORECASE,
+    )
+    if section_context_match:
+        return f"section {section_context_match.group(1).strip()}"
+    return "section"
 
 
 def _build_element(

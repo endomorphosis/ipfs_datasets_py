@@ -315,7 +315,7 @@ def _formula_records_from_proof_obligation_rows(
 ) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
     for index, row in enumerate(rows):
-        formula_text = str(row.get("formula") or row.get("proof_input") or "").strip()
+        formula_text = str(_formula_text_from_proof_obligation_row(row)).strip()
         if not formula_text:
             continue
         formula_object = coerce_tdfol_formula(
@@ -345,6 +345,26 @@ def _formula_records_from_proof_obligation_rows(
             }
         )
     return records
+
+
+def _formula_text_from_proof_obligation_row(row: Mapping[str, Any]) -> str:
+    for key in (
+        "formula",
+        "proof_input",
+        "proof_formula",
+        "tdfol_formula",
+        "proof_obligation",
+        "obligation",
+        "value",
+        "text",
+    ):
+        value = row.get(key)
+        if isinstance(value, str) and value.strip():
+            return value
+        extracted = _tdfol_formula_text_from_json_value(value)
+        if extracted:
+            return extracted
+    return ""
 
 
 def _merge_formula_records(
@@ -382,10 +402,21 @@ def _proof_obligation_rows_from_metadata(metadata: Mapping[str, Any]) -> list[di
 
 def _proof_obligation_rows_from_value(value: Any) -> list[dict[str, Any]]:
     if isinstance(value, Mapping):
-        records = value.get("records")
-        if isinstance(records, Sequence) and not isinstance(records, (str, bytes)):
-            return [dict(item) for item in records if isinstance(item, Mapping)]
-        if "formula" in value or "proof_input" in value:
+        for key in ("records", "obligations", "proof_obligations", "items", "formulas"):
+            records = value.get(key)
+            if isinstance(records, Sequence) and not isinstance(records, (str, bytes)):
+                return [dict(item) for item in records if isinstance(item, Mapping)]
+        if any(
+            key in value
+            for key in (
+                "formula",
+                "proof_input",
+                "proof_formula",
+                "tdfol_formula",
+                "proof_obligation",
+                "obligation",
+            )
+        ):
             return [dict(value)]
         return []
     if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
@@ -888,13 +919,30 @@ def _normalize_deontic_argument_export(text: str) -> str:
             if close_index is not None:
                 inner = normalized[index + 2 : close_index]
                 parts = _split_top_level_commas(inner)
-                if len(parts) >= 2 and _looks_like_tdfol_formula(parts[-1]):
-                    result.append(f"{char}({parts[-1].strip()})")
+                formula_part = _formula_argument_from_deontic_parts(parts)
+                if formula_part:
+                    result.append(f"{char}({formula_part})")
                     index = close_index + 1
                     continue
         result.append(char)
         index += 1
     return "".join(result)
+
+
+def _formula_argument_from_deontic_parts(parts: Sequence[str]) -> str:
+    for part in reversed([str(part or "").strip() for part in parts]):
+        if not part:
+            continue
+        key_value = re.match(
+            r"(?is)^(?:formula|proof_input|proof_formula|tdfol_formula|"
+            r"action|predicate|event|target)\s*[:=]\s*(.+)$",
+            part,
+        )
+        candidate = key_value.group(1).strip() if key_value else part
+        candidate = candidate.strip("`\"'").strip()
+        if _looks_like_tdfol_formula(candidate):
+            return candidate
+    return ""
 
 
 def _matching_paren_index(text: str, open_index: int) -> Optional[int]:
@@ -930,7 +978,9 @@ def _looks_like_tdfol_formula(text: str) -> bool:
     candidate = str(text or "").strip()
     if not candidate:
         return False
-    if re.match(r"^(?:forall|exists|[OPFGX]|□|◊|not\b|¬)", candidate, re.IGNORECASE):
+    if re.match(r"^(?:forall|exists|not\b)", candidate, re.IGNORECASE):
+        return True
+    if re.match(r"^(?:[OPFGX]|□|◊|¬)\s*[\(\[\{]", candidate):
         return True
     return bool(re.match(r"^[A-Za-z_][A-Za-z0-9_-]*\s*\(", candidate))
 
@@ -1224,7 +1274,19 @@ def _first_text_value(value: Any) -> str:
 
 
 def _infer_action_from_text(text: str) -> str:
-    tokens = re.findall(r"[a-z0-9]+", str(text or "").lower())
+    normalized = " ".join(str(text or "").split())
+    lowered = normalized.lower()
+    if re.search(r"\b(?:repealed|repeal)\b", lowered):
+        return "statute_status_repealed"
+    if re.search(r"\bomitted\b", lowered):
+        return "statute_status_omitted"
+    definition_match = re.search(
+        r"(?:^|\bdefinitions?\b.*?)[\"']?([a-z][a-z0-9_-]{1,80})[\"']?\s+means\b",
+        lowered,
+    )
+    if definition_match:
+        return f"define_{definition_match.group(1)}"
+    tokens = re.findall(r"[a-z0-9]+", lowered)
     if not tokens:
         return "act"
     ignored = {
