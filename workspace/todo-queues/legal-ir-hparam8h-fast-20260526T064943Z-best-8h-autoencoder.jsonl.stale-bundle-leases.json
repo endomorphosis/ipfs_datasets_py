@@ -1,9 +1,0 @@
-{
-  "ir_decompiler|modal.ir_decompiler|{\"action\":\"refine_typed_ir_or_decompiler_slots\",\"family_pairs\":[\"deontic->conditional_normative\",\"deontic->deontic\",\"deontic->frame\",\"temporal->temporal\"],\"program_synthesis_scope\":\"ir_decompiler\",\"target_component\":\"modal.ir_decompiler\"}": {
-    "anchor_id": "program-0b08230cb9207b4f",
-    "expires_at": "2026-05-26T08:02:56+00:00",
-    "expires_at_epoch": 1779782576.4213872,
-    "selected_count": 1,
-    "worker_id": "codex-ir_decompiler"
-  }
-}
