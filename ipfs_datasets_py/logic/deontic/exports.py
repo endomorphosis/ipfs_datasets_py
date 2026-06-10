@@ -1786,13 +1786,15 @@ def _decoder_phrase_rows_with_reference_provenance(
     norm: LegalNormIR,
     phrases: Iterable[Any],
 ) -> List[Dict[str, Any]]:
-    """Return decoder phrase rows plus source-grounded cross-reference rows.
+    """Return decoder phrase rows plus source-grounded provenance-only rows.
 
     The natural-language decoder often renders a cross-reference inside an
     exception or override phrase. Phase 8 slot-loss reports still need the
     legally salient ``cross_references`` slot to be explicitly represented in
-    provenance. These extra rows are diagnostic-only and do not change the
-    decoded text.
+    provenance. Frame-style norms such as definitions, applicability rules,
+    exemptions, and instrument lifecycle clauses similarly encode modality in
+    fixed connectors rather than in an ordinary modal phrase. These extra rows
+    are diagnostic-only and do not change the decoded text.
     """
 
     rows = []
@@ -1810,6 +1812,17 @@ def _decoder_phrase_rows_with_reference_provenance(
         for row in rows
         if isinstance(row, Mapping)
     }
+
+    semantic_modality = _decoder_semantic_modality_row(norm, rows)
+    if semantic_modality:
+        key = (
+            str(semantic_modality.get("slot") or ""),
+            str(semantic_modality.get("text") or ""),
+            tuple(tuple(span) for span in semantic_modality.get("spans") or []),
+        )
+        if key not in seen:
+            seen.add(key)
+            rows.append(semantic_modality)
 
     for reference in _decoder_reference_records(norm):
         text = _decoder_reference_text(reference)
@@ -1831,6 +1844,69 @@ def _decoder_phrase_rows_with_reference_provenance(
         )
 
     return rows
+
+
+def _decoder_semantic_modality_row(
+    norm: LegalNormIR,
+    rows: Sequence[Mapping[str, Any]],
+) -> Dict[str, Any]:
+    """Return source-grounded modality provenance for frame-style decoders."""
+
+    if any("modality" in _decoder_phrase_slot_names(row) for row in rows):
+        return {}
+
+    modality = str(norm.modality or "").strip().upper()
+    if modality not in {"APP", "DEF", "EXEMPT", "LIFE"}:
+        return {}
+
+    text = _decoder_semantic_modality_text(norm)
+    spans = _decoder_semantic_modality_spans(norm)
+    if not text or not spans:
+        return {}
+
+    return {
+        "text": text,
+        "slot": "modality",
+        "spans": spans,
+        "fixed": False,
+        "provenance_only": True,
+        "semantic_modality": modality,
+    }
+
+
+def _decoder_semantic_modality_text(norm: LegalNormIR) -> str:
+    modality = str(norm.modality or "").strip().upper()
+    action = str(norm.action or "").strip()
+    if modality == "APP":
+        return "applies to"
+    if modality == "DEF":
+        return "means"
+    if modality == "EXEMPT":
+        return "is exempt from"
+    if modality == "LIFE":
+        lowered = action.lower()
+        if lowered.startswith("valid for "):
+            return "is valid for"
+        if lowered.startswith("expires "):
+            return "expires"
+        return "lifecycle"
+    return ""
+
+
+def _decoder_semantic_modality_spans(norm: LegalNormIR) -> List[List[int]]:
+    field_spans = norm.field_spans if isinstance(norm.field_spans, Mapping) else {}
+    for key in ("modality", "deontic_operator", "modal"):
+        spans = _decoder_coerce_spans(field_spans.get(key))
+        if spans:
+            return spans
+
+    support_span = norm.support_span.to_list()
+    if support_span != [0, 0]:
+        return [support_span]
+    source_span = norm.source_span.to_list()
+    if source_span != [0, 0]:
+        return [source_span]
+    return []
 
 
 def _decoder_reference_records(norm: LegalNormIR) -> List[Mapping[str, Any]]:
@@ -2121,6 +2197,8 @@ def _decoder_phrase_slot_names(phrase: Mapping[str, Any]) -> set[str]:
         "sources",
     ):
         add_value(phrase.get(key))
+    if "definition_body" in names:
+        names.add("action")
     return names
 
 
@@ -4493,14 +4571,15 @@ def summarize_reconstruction_slot_loss(
             for phrase in provenance:
                 if not isinstance(phrase, Mapping):
                     continue
-                slot_name = str(phrase.get("slot") or phrase.get("slot_name") or "").strip()
-                if not slot_name:
+                slot_names = _decoder_phrase_slot_names(phrase)
+                if not slot_names:
                     continue
                 spans = phrase.get("spans") or phrase.get("source_spans") or phrase.get("field_spans")
-                if spans:
-                    grounded_slots.add(slot_name)
-                elif phrase.get("fixed_connective") is not True:
-                    ungrounded_slots.add(slot_name)
+                for slot_name in slot_names:
+                    if spans:
+                        grounded_slots.add(slot_name)
+                    elif phrase.get("fixed_connective") is not True:
+                        ungrounded_slots.add(slot_name)
 
     grounded_required = sorted(slot for slot in required if slot in grounded_slots)
     missing_required = sorted(slot for slot in required if slot not in grounded_slots or slot in missing_slots)

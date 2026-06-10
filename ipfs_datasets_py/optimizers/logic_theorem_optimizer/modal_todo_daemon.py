@@ -23,6 +23,13 @@ from ipfs_datasets_py.logic.submodule_registry import logic_optimizer_scope_for_
 from .legal_samples import LegalSample
 from .modal_autoencoder import AdaptiveModalAutoencoder, AutoencoderEvaluation
 
+try:
+    from ipfs_accelerate_py.agent_supervisor.codex_failure_policy import (
+        classify_codex_program_outcome,
+    )
+except ImportError:  # pragma: no cover - compatibility when the reusable supervisor package is absent.
+    classify_codex_program_outcome = None  # type: ignore[assignment]
+
 
 def _utc_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
@@ -2446,107 +2453,82 @@ class ModalTodoSupervisor:
                 if failed_validation_count
                 else "completed"
             )
-        elif normalized_patch_status.startswith("main_apply_baseline_validation_failed"):
-            reason = "main_apply_baseline_validation_failed"
+        else:
             for todo_id in todo_ids:
                 todo = self.queue.get(todo_id)
+                transient_failure_count = (
+                    int(todo.metadata.get("transient_failure_count", 0))
+                    if todo is not None
+                    else 0
+                )
+                if classify_codex_program_outcome is not None:
+                    decision = classify_codex_program_outcome(
+                        codex_exec_status=normalized_exec_status,
+                        patch_status=normalized_patch_status,
+                        main_apply_status=(
+                            str((validation_report or {}).get("main_apply_status") or "")
+                            .strip()
+                            .lower()
+                        ),
+                        validation_report=validation_report,
+                        transient_failure_count=transient_failure_count,
+                        max_transient_failures=3,
+                    )
+                    reason = decision.reason
+                    action = decision.action
+                else:
+                    reason = (
+                        "codex_exec_transient_failure"
+                        if normalized_exec_status == "transient_failure"
+                        else f"codex_exec_{normalized_exec_status}"
+                        if normalized_exec_status in {"failed", "timeout"}
+                        else str(patch_status or "patch_not_created")
+                    )
+                    action = (
+                        "requeue"
+                        if normalized_exec_status == "transient_failure"
+                        and transient_failure_count < 3
+                        else "failed_validation"
+                    )
                 if todo is None:
                     continue
-                if int(todo.metadata.get("transient_failure_count", 0)) >= 3:
+                if action == "requeue":
+                    todo.metadata["last_transient_validation_report"] = dict(
+                        validation_report or {}
+                    )
+                    todo.metadata["last_transient_patch_status"] = normalized_patch_status
+                    todo.metadata["last_transient_codex_exec_status"] = normalized_exec_status
+                    todo.requeue(reason or "transient_apply_failure")
+                    requeued_count += 1
+                    continue
+                if action == "completed":
+                    completed_count += int(self.queue.complete(todo_id))
+                    continue
+                if action == "failed_validation":
                     _record_program_synthesis_failure_evidence(
                         todo,
-                        reason=reason,
+                        reason=reason or "patch_not_created",
                         validation_report=validation_report,
                         patch_status=normalized_patch_status,
                         codex_exec_status=normalized_exec_status,
                     )
                     failed_validation_count += int(
-                        self.queue.fail_validation(todo_id, reason=reason)
+                        self.queue.fail_validation(
+                            todo_id,
+                            reason=reason or "patch_not_created",
+                        )
                     )
-                    continue
-                todo.requeue(reason)
-                requeued_count += 1
-            outcome = "requeued" if requeued_count else "failed_validation"
-        elif (
-            normalized_patch_status.startswith("main_apply_target_metric_")
-            and normalized_patch_status.endswith("_rolled_back")
-            and "regression" not in normalized_patch_status
-        ):
-            reason = normalized_patch_status.removeprefix("main_apply_").removesuffix(
-                "_rolled_back"
+            outcome = (
+                "partial"
+                if completed_count and (failed_validation_count or requeued_count)
+                else "completed"
+                if completed_count
+                else "requeued"
+                if requeued_count
+                else "failed_validation"
+                if failed_validation_count
+                else "no_status_change"
             )
-            for todo_id in todo_ids:
-                todo = self.queue.get(todo_id)
-                if todo is None:
-                    continue
-                if int(todo.metadata.get("transient_failure_count", 0)) >= 3:
-                    _record_program_synthesis_failure_evidence(
-                        todo,
-                        reason=reason,
-                        validation_report=validation_report,
-                        patch_status=normalized_patch_status,
-                        codex_exec_status=normalized_exec_status,
-                    )
-                    failed_validation_count += int(
-                        self.queue.fail_validation(todo_id, reason=reason)
-                    )
-                    continue
-                todo.requeue(reason)
-                requeued_count += 1
-            outcome = "requeued" if requeued_count else "failed_validation"
-        elif normalized_exec_status == "transient_failure":
-            reason = "codex_exec_transient_failure"
-            for todo_id in todo_ids:
-                todo = self.queue.get(todo_id)
-                if todo is None:
-                    continue
-                if int(todo.metadata.get("transient_failure_count", 0)) >= 3:
-                    _record_program_synthesis_failure_evidence(
-                        todo,
-                        reason=reason,
-                        validation_report=validation_report,
-                        patch_status=normalized_patch_status,
-                        codex_exec_status=normalized_exec_status,
-                    )
-                    failed_validation_count += int(
-                        self.queue.fail_validation(todo_id, reason=reason)
-                    )
-                    continue
-                todo.requeue(reason)
-                requeued_count += 1
-            outcome = "requeued" if requeued_count else "failed_validation"
-        elif normalized_exec_status in {"failed", "timeout"}:
-            reason = f"codex_exec_{normalized_exec_status}"
-            for todo_id in todo_ids:
-                todo = self.queue.get(todo_id)
-                if todo is not None:
-                    _record_program_synthesis_failure_evidence(
-                        todo,
-                        reason=reason,
-                        validation_report=validation_report,
-                        patch_status=normalized_patch_status,
-                        codex_exec_status=normalized_exec_status,
-                    )
-                failed_validation_count += int(
-                    self.queue.fail_validation(todo_id, reason=reason)
-                )
-            outcome = "failed_validation"
-        elif normalized_patch_status not in {"created", "applied_to_main"}:
-            reason = str(patch_status or "patch_not_created")
-            for todo_id in todo_ids:
-                todo = self.queue.get(todo_id)
-                if todo is not None:
-                    _record_program_synthesis_failure_evidence(
-                        todo,
-                        reason=reason,
-                        validation_report=validation_report,
-                        patch_status=normalized_patch_status,
-                        codex_exec_status=normalized_exec_status,
-                    )
-                failed_validation_count += int(
-                    self.queue.fail_validation(todo_id, reason=reason)
-                )
-            outcome = "failed_validation"
 
         return {
             "completed_count": completed_count,

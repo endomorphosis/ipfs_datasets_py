@@ -260,7 +260,7 @@ _INSTRUMENT_EXPIRATION_RE = re.compile(
     re.IGNORECASE,
 )
 _SECTION_STATUS_RE = re.compile(
-    r"(?:(?P<section_marker>§{1,2}\s*[0-9][0-9A-Za-z.\-]*(?:\s*,\s*[0-9][0-9A-Za-z.\-]*)*)\s*[\.:]?\s*)?"
+    r"(?:(?P<section_marker>(?:secs?\.?|sections?|§{1,2})\s*[0-9][0-9A-Za-z.\-]*(?:\s*,\s*[0-9][0-9A-Za-z.\-]*)*)\s*[\.:]?\s*)?"
     r"\b(?P<status>repealed|omitted|reserved|transferred)\b"
     r"(?P<detail>[^.;:]*)",
     re.IGNORECASE,
@@ -1844,12 +1844,12 @@ def _section_status_detail(value: str) -> str:
 
 def _section_status_instrument_from_context(sentence: str) -> str:
     section_context_match = re.search(
-        r"\b(?:sec(?:tion)?\.?|§{1,2})\s*([0-9][0-9A-Za-z.\-]*(?:\s*,\s*[0-9][0-9A-Za-z.\-]*)*)",
+        r"\b(?:secs?\.?|sections?|§{1,2})\s*[0-9][0-9A-Za-z.\-]*(?:\s*,\s*[0-9][0-9A-Za-z.\-]*)*",
         sentence,
         re.IGNORECASE,
     )
     if section_context_match:
-        return f"section {section_context_match.group(1).strip()}"
+        return _clean_phrase(section_context_match.group(0))
     return "section"
 
 

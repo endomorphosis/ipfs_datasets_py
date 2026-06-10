@@ -787,6 +787,98 @@ def test_phase8_quality_summary_uses_source_grouped_prover_corpus_coverage():
     )
 
 
+def test_decoder_slot_loss_uses_semantic_modality_provenance_for_frame_norms():
+    examples = [
+        ("This section applies to food carts.", "APP", "applies to"),
+        (
+            'In this section, the term "food cart" means a mobile food vending unit.',
+            "DEF",
+            "means",
+        ),
+        ("A permit is not required for emergency work.", "EXEMPT", "is exempt from"),
+        ("The license is valid for 30 days.", "LIFE", "is valid for"),
+        ("The permit expires one year after issuance.", "LIFE", "expires"),
+    ]
+
+    for text, expected_modality, expected_phrase in examples:
+        norm = LegalNormIR.from_parser_element(extract_normative_elements(text)[0])
+        decoder_record = build_decoder_record_from_ir(norm)
+        modality_rows = [
+            phrase
+            for phrase in decoder_record["phrase_provenance"]
+            if phrase.get("slot") == "modality"
+        ]
+
+        assert modality_rows == [
+            {
+                "text": expected_phrase,
+                "slot": "modality",
+                "spans": modality_rows[0]["spans"],
+                "fixed": False,
+                "provenance_only": True,
+                "semantic_modality": expected_modality,
+            }
+        ]
+        assert modality_rows[0]["spans"]
+        assert modality_rows[0]["semantic_modality"] == norm.modality
+
+        slot_loss = summarize_reconstruction_slot_loss(
+            [decoder_record],
+            required_slots=("actor", "modality", "action"),
+        )
+
+        assert slot_loss["slot_reconstruction_complete"] is True
+        assert slot_loss["grounded_required_slots"] == [
+            "action",
+            "actor",
+            "modality",
+        ]
+        assert slot_loss["coverage_blockers"] == []
+
+
+def test_phase8_quality_accepts_frame_norm_semantic_modality_without_parser_promotion():
+    norms = [
+        LegalNormIR.from_parser_element(extract_normative_elements(text)[0])
+        for text in (
+            "This section applies to food carts.",
+            'In this section, the term "food cart" means a mobile food vending unit.',
+            "A permit is not required for emergency work.",
+            "The license is valid for 30 days.",
+        )
+    ]
+    decoder_records = build_decoder_records_from_irs(norms)
+    provenance_records = build_ir_slot_provenance_audit_records(
+        norms,
+        slots=("actor", "modality", "action"),
+    )
+    prover_records = []
+    for norm in norms:
+        prover_records.extend(build_prover_syntax_records_from_ir(norm))
+
+    summary = summarize_phase8_quality_records(
+        decoder_records=decoder_records,
+        prover_syntax_records=prover_records,
+        ir_slot_provenance_records=provenance_records,
+        required_slots=("actor", "modality", "action"),
+    )
+
+    assert summary["phase8_quality_complete"] is True
+    assert summary["requires_validation"] is False
+    assert summary["coverage_blockers"] == []
+    assert summary["reconstruction_slot_loss"]["slot_reconstruction_complete"] is True
+    assert summary["reconstruction_slot_loss"]["grounded_required_slot_rate"] == 1.0
+    assert summary["prover_syntax_corpus_coverage"]["all_sources_complete"] is True
+    assert norms[0].proof_ready is False
+    assert "cross_reference_requires_resolution" in norms[0].blockers
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_phase8_quality_summary_keeps_source_level_prover_failures_blocking():
     first = LegalNormIR.from_parser_element(extract_normative_elements(
         "The tenant must pay rent monthly."

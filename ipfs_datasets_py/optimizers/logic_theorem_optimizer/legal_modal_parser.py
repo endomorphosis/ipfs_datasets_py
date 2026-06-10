@@ -52,6 +52,14 @@ _USCODE_EDITORIAL_NOTE_CONTEXT_RE = re.compile(
 _USCODE_EDITORIAL_PERMISSION_CUES = frozenset({"allowed", "authorized", "permitted"})
 _USCODE_SECTION_REF_PREFIX_RE = r"(?:§{1,2}\s*|\bsec(?:tion)?s?\.?\s*)"
 _USCODE_OPTIONAL_SECTION_REF_PREFIX_RE = rf"(?:{_USCODE_SECTION_REF_PREFIX_RE})?"
+_USCODE_SECTION_PREFIX_SEGMENT_RE = re.compile(
+    r"^\s*sec(?:tion)?s?\.?\s*$",
+    re.IGNORECASE,
+)
+_USCODE_SECTION_ID_SEGMENT_RE = re.compile(
+    r"^\s*[0-9A-Za-z][0-9A-Za-z.\-\u2010-\u2015]*\b",
+    re.IGNORECASE,
+)
 _USCODE_CITATION_MARKER_RE = re.compile(
     r"\bU\.?\s*S\.?\s*C\.?(?!\w)",
     re.IGNORECASE,
@@ -606,7 +614,48 @@ class LegalModalParser:
                     role=self._classify_segment_role(segment_text),
                 )
             )
-        return segments
+        return self._coalesce_uscode_section_prefix_segments(
+            segments,
+            normalized_text=normalized,
+        )
+
+    def _coalesce_uscode_section_prefix_segments(
+        self,
+        segments: Sequence[LegalSegment],
+        *,
+        normalized_text: str,
+    ) -> List[LegalSegment]:
+        """Join split ``Sec.`` prefixes with the following section-heading span."""
+        if len(segments) < 2:
+            return list(segments)
+        coalesced: List[LegalSegment] = []
+        index = 0
+        while index < len(segments):
+            segment = segments[index]
+            if index + 1 >= len(segments):
+                coalesced.append(segment)
+                index += 1
+                continue
+            next_segment = segments[index + 1]
+            if (
+                _USCODE_SECTION_PREFIX_SEGMENT_RE.fullmatch(segment.text)
+                and next_segment.start_char <= segment.end_char + 1
+                and _USCODE_SECTION_ID_SEGMENT_RE.match(next_segment.text)
+            ):
+                merged_text = normalized_text[segment.start_char : next_segment.end_char]
+                coalesced.append(
+                    LegalSegment(
+                        text=merged_text,
+                        start_char=segment.start_char,
+                        end_char=next_segment.end_char,
+                        role=self._classify_segment_role(merged_text),
+                    )
+                )
+                index += 2
+                continue
+            coalesced.append(segment)
+            index += 1
+        return coalesced
 
     def extract_cues(self, text: str) -> List[ModalCueSpan]:
         """Extract modal cue spans from text using registry cue terms."""

@@ -2375,14 +2375,14 @@ def test_supervisor_finalize_program_synthesis_batch_applies_queue_transitions()
     )
     assert failed["updated"] is True
     assert failed["completed_count"] == 0
-    assert failed["failed_validation_count"] == 1
-    assert failed["reason"] == "codex_exec_failed"
+    assert failed["failed_validation_count"] == 0
+    assert failed["requeued_count"] == 1
+    assert failed["reason"] == "awaiting_codex_changes"
     failed_todo = supervisor_fail.queue.get(claimed_fail[0].todo_id)
-    assert failed_todo.status == "failed_validation"
-    assert failed_todo.metadata["failed_validation_codex_exec_status"] == "failed"
-    assert failed_todo.metadata["failed_validation_patch_status"] == (
-        "awaiting_codex_changes"
-    )
+    assert failed_todo.status == "pending"
+    assert failed_todo.metadata["transient_failure_count"] == 1
+    assert failed_todo.metadata["last_transient_codex_exec_status"] == "failed"
+    assert failed_todo.metadata["last_transient_patch_status"] == "awaiting_codex_changes"
 
     supervisor_timeout_patch = ModalTodoSupervisor(
         policy=ModalOptimizerPolicy(program_synthesis_min_support=2)

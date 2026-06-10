@@ -507,6 +507,80 @@ def test_prover_syntax_records_align_decoder_ir_and_formula_slots():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_prover_syntax_records_audit_omitted_formula_slots_across_targets():
+    examples = [
+        (
+            "The agency shall keep records subject to section 552.",
+            ["conditions"],
+            ["conditions"],
+            ["conditions"],
+            [],
+            True,
+        ),
+        (
+            "The Secretary shall submit a report to Congress within 30 days.",
+            ["recipients"],
+            [],
+            ["recipients"],
+            [],
+            False,
+        ),
+    ]
+
+    for (
+        text,
+        omitted_slot_names,
+        decoded_omitted_slots,
+        grounded_omitted_slots,
+        ungrounded_omitted_slots,
+        alignment_complete,
+    ) in examples:
+        norm = LegalNormIR.from_parser_element(extract_normative_elements(text)[0])
+        records = [target.to_dict() for target in validate_ir_with_provers(norm).targets]
+
+        assert len(records) == 5
+        assert len({record["slot_alignment_fingerprint"] for record in records}) == 1
+        assert all(record["omitted_formula_slot_names"] == omitted_slot_names for record in records)
+        assert all(record["decoded_omitted_formula_slots"] == decoded_omitted_slots for record in records)
+        assert all(record["grounded_omitted_formula_slots"] == grounded_omitted_slots for record in records)
+        assert all(record["ungrounded_omitted_formula_slots"] == ungrounded_omitted_slots for record in records)
+        assert all(
+            record["decoded_ir_slot_alignment"]["omitted_formula_slot_count"]
+            == len(omitted_slot_names)
+            for record in records
+        )
+        assert all(
+            record["decoded_ir_slot_alignment"]["omitted_formula_slot_alignment_complete"]
+            is True
+            for record in records
+        )
+        assert all(
+            record["decoded_ir_slot_alignment"]["alignment_complete"] is alignment_complete
+            for record in records
+        )
+        assert all(
+            record["target_components"]["omitted_formula_slot_names"]
+            == omitted_slot_names
+            for record in records
+        )
+        assert all(
+            record["target_components"]["omitted_formula_slot_alignment_complete"]
+            is True
+            for record in records
+        )
+        assert all(
+            record["target_quality_gate"]["omitted_formula_slot_names"]
+            == omitted_slot_names
+            for record in records
+        )
+        assert all(
+            record["target_quality_gate"]["grounded_omitted_formula_slots"]
+            == grounded_omitted_slots
+            for record in records
+        )
+        assert all(record["target_quality_gate"]["failed_quality_checks"] == [] for record in records)
+
+
 def test_prover_syntax_records_audit_target_formula_symbols():
     examples = [
         (
