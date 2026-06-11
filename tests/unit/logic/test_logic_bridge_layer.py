@@ -5711,6 +5711,120 @@ def test_dense_contract_rebalance_keeps_deontic_floor_for_citation_frame_scaffol
     assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
 
 
+def test_dense_contract_rebalance_projects_status_lifecycle_to_deontic_lane() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_dense_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.156,
+        "TDFOL.prover": 0.146,
+        "deontic.ir": 0.158,
+        "external_provers.router": 0.121,
+        "knowledge_graphs.neo4j_compat": 0.138,
+        "modal.frame_logic": 0.142,
+        "zkp.circuits": 0.139,
+    }
+
+    transferred = _rebalance_dense_contract_distribution(
+        distribution,
+        text=(
+            "U.S.C. Title 2 - THE CONGRESS 2 U.S.C. United States Code, "
+            "2024 Edition CHAPTER 4 - OFFICERS AND EMPLOYEES OF SENATE "
+            "AND HOUSE OF REPRESENTATIVES Sec. 130g - Transferred From "
+            "the U.S. Government Publishing Office."
+        ),
+    )
+    omitted_authority = _rebalance_dense_contract_distribution(
+        distribution,
+        text=(
+            "§3508. Omitted Editorial Notes Codification Section, which "
+            "authorized the Secretary to make transfers of motor vehicles "
+            "between bureaus and offices without transfer of funds."
+        ),
+    )
+
+    assert transferred["deontic.ir"] >= 0.30
+    assert omitted_authority["deontic.ir"] >= 0.30
+    assert transferred["deontic.ir"] > distribution["deontic.ir"]
+    assert omitted_authority["deontic.ir"] > distribution["deontic.ir"]
+    assert abs(sum(transferred.values()) - 1.0) < 1e-9
+    assert abs(sum(omitted_authority.values()) - 1.0) < 1e-9
+
+
+def test_dense_contract_rebalance_keeps_omitted_only_status_archival() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_dense_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.156,
+        "TDFOL.prover": 0.146,
+        "deontic.ir": 0.158,
+        "external_provers.router": 0.121,
+        "knowledge_graphs.neo4j_compat": 0.138,
+        "modal.frame_logic": 0.142,
+        "zkp.circuits": 0.139,
+    }
+
+    rebalanced = _rebalance_dense_contract_distribution(
+        distribution,
+        text=(
+            "Sections 8751 to 8755. Omitted Editorial Notes Codification. "
+            "Sections 8751 to 8755 were omitted from the Code in view of "
+            "termination of United States Synthetic Fuels Corporation."
+        ),
+    )
+
+    assert rebalanced["deontic.ir"] <= 0.24
+    assert rebalanced["CEC.native"] > rebalanced["deontic.ir"]
+    assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
+
+
+def test_dense_contract_rebalance_projects_compliance_and_fiscal_norms() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _rebalance_dense_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.156,
+        "TDFOL.prover": 0.146,
+        "deontic.ir": 0.158,
+        "external_provers.router": 0.121,
+        "knowledge_graphs.neo4j_compat": 0.138,
+        "modal.frame_logic": 0.142,
+        "zkp.circuits": 0.139,
+    }
+
+    compliance = _rebalance_dense_contract_distribution(
+        distribution,
+        text=(
+            "15 U.S.C. 1679f. Administrative enforcement. Compliance with "
+            "requirements imposed under this subchapter shall be enforced "
+            "under the Federal Trade Commission Act."
+        ),
+    )
+    fiscal = _rebalance_dense_contract_distribution(
+        distribution,
+        text=(
+            "2 U.S.C. 5541. The Secretary of the Senate may make available "
+            "amounts from the appropriations account for necessary expenses."
+        ),
+    )
+
+    assert compliance["deontic.ir"] > distribution["deontic.ir"]
+    assert compliance["TDFOL.prover"] > distribution["TDFOL.prover"]
+    assert compliance["knowledge_graphs.neo4j_compat"] < distribution[
+        "knowledge_graphs.neo4j_compat"
+    ]
+    assert fiscal["deontic.ir"] >= 0.30
+    assert fiscal["knowledge_graphs.neo4j_compat"] < distribution[
+        "knowledge_graphs.neo4j_compat"
+    ]
+    assert abs(sum(compliance.values()) - 1.0) < 1e-9
+    assert abs(sum(fiscal.values()) - 1.0) < 1e-9
+
+
 def test_dense_contract_rebalance_softens_scaffold_heading_bias_to_keep_deontic_lane() -> None:
     from ipfs_datasets_py.logic.bridge.multiview import (
         _rebalance_dense_contract_distribution,

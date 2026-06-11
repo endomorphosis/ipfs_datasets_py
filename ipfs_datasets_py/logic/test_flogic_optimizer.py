@@ -196,6 +196,61 @@ def test_frame_ontology_terms_contextualize_legal_ir_view_family_features() -> N
     )
 
 
+def test_frame_ontology_terms_promote_compiler_guidance_view_gaps() -> None:
+    result = _optimizer().evaluate(
+        source_text="s",
+        decoded_text="d",
+        source_embedding=[1.0, 0.0],
+        decoded_embedding=[1.0, 0.0],
+        kg_triples=[],
+        frame_feature_keys=[
+            "legal-ir-view-gap:underrepresented:modal.frame_logic",
+            "legal-ir-target-view:knowledge_graphs.neo4j_compat",
+            "legal-ir-predicted-view:TDFOL.prover",
+        ],
+    )
+
+    metadata = result.metadata
+    assert "modal_frame_logic" in metadata["frame_ontology_terms"]
+    assert "knowledge_graphs_neo4j_compat" in metadata["frame_ontology_terms"]
+    assert "tdfol_prover" in metadata["frame_ontology_terms"]
+    assert (
+        "legal_ir_view_modal_frame_logic"
+        in metadata["frame_ontology_high_signal_terms_from_contextualized"]
+    )
+
+
+def test_frame_ontology_terms_extract_compiler_guidance_view_evidence_fields() -> None:
+    result = _optimizer().evaluate(
+        source_text="s",
+        decoded_text="d",
+        source_embedding=[1.0, 0.0],
+        decoded_embedding=[1.0, 0.0],
+        kg_triples=[],
+        frame_feature_keys=[
+            {
+                "bridge_failure_name": "flogic_similarity_loss",
+                "legal_ir_underrepresented_components": [
+                    "modal.frame_logic",
+                    "knowledge_graphs.neo4j_compat",
+                ],
+                "predicted_view": "modal.frame_logic",
+                "target_view": "modal.frame_logic",
+            }
+        ],
+    )
+
+    metadata = result.metadata
+    assert "legal-ir-view:modal.frame_logic" in metadata["frame_audit_feature_keys"]
+    assert (
+        "legal-ir-view:knowledge_graphs.neo4j_compat"
+        in metadata["frame_audit_feature_keys"]
+    )
+    assert "modal_frame_logic" in metadata["frame_ontology_terms"]
+    assert "legal_ir_view_modal_frame_logic" in metadata["frame_ontology_terms"]
+    assert "knowledge_graphs_neo4j_compat" in metadata["frame_ontology_terms"]
+
+
 def test_frame_ontology_terms_skip_low_signal_positioned_alnum_segments() -> None:
     result = _optimizer().evaluate(
         source_text="s",

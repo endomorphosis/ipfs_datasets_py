@@ -276,6 +276,19 @@ _BRIDGE_CONTRACT_ENFORCEMENT_PENALTY_PROVISION_RE = re.compile(
     r"shall\s+be\s+guilty)\b",
     flags=re.IGNORECASE,
 )
+_BRIDGE_CONTRACT_COMPLIANCE_ENFORCEMENT_NORM_RE = re.compile(
+    r"\b(?:compliance\s+with\s+requirements?|requirements?\s+imposed)\b"
+    r".{0,160}\bshall\s+be\s+enforced\b"
+    r"|\bshall\s+be\s+enforced\b.{0,160}\b(?:compliance|requirements?)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_FISCAL_AVAILABILITY_NORM_RE = re.compile(
+    r"\b(?:may|shall)\s+make\s+available\b.{0,180}\b"
+    r"(?:amounts?|funds?|appropriations?\s+account)\b"
+    r"|\b(?:amounts?|funds?|appropriations?\s+account)\b.{0,180}\b"
+    r"(?:may|shall)\s+be\s+made\s+available\b",
+    flags=re.IGNORECASE,
+)
 _BRIDGE_CONTRACT_LIABILITY_PROVISION_RE = re.compile(
     r"\b(?:liable\s+for|liability\s+for|scope\s+of\s+(?:his|her|its|their|the)\s+"
     r"authority|acts?\s+of\s+(?:its|their|the)\s+officers?\s+and\s+agents?)\b",
@@ -1240,6 +1253,12 @@ def _rebalance_dense_contract_distribution(
     has_direct_appropriation_authorization = bool(
         _BRIDGE_CONTRACT_DIRECT_APPROPRIATION_AUTHORIZATION_RE.search(normalized_text)
     )
+    has_compliance_enforcement_norm = bool(
+        _BRIDGE_CONTRACT_COMPLIANCE_ENFORCEMENT_NORM_RE.search(normalized_text)
+    )
+    has_fiscal_availability_norm = bool(
+        _BRIDGE_CONTRACT_FISCAL_AVAILABILITY_NORM_RE.search(normalized_text)
+    )
     has_statutory_definition_section = bool(
         _BRIDGE_CONTRACT_STATUTORY_DEFINITION_SECTION_RE.search(normalized_text)
     )
@@ -1769,6 +1788,13 @@ def _rebalance_dense_contract_distribution(
                     ("knowledge_graphs.neo4j_compat", 0.12),
                     ("TDFOL.prover", 0.06),
                 )
+            elif has_compliance_enforcement_norm:
+                target_mix = (
+                    ("deontic.ir", 0.48),
+                    ("TDFOL.prover", 0.26),
+                    ("knowledge_graphs.neo4j_compat", 0.18),
+                    ("CEC.native", 0.08),
+                )
             elif has_deontic_cue and deontic_cue_count > temporal_cue_count:
                 target_mix = (
                     ("CEC.native", 0.38),
@@ -1828,6 +1854,27 @@ def _rebalance_dense_contract_distribution(
                     ("knowledge_graphs.neo4j_compat", 0.30),
                     ("deontic.ir", 0.16),
                     ("TDFOL.prover", 0.10),
+                )
+            elif has_compliance_enforcement_norm:
+                target_mix = (
+                    ("deontic.ir", 0.48),
+                    ("TDFOL.prover", 0.26),
+                    ("knowledge_graphs.neo4j_compat", 0.18),
+                    ("CEC.native", 0.08),
+                )
+            elif has_status_operation_cue and has_deontic_cue:
+                target_mix = (
+                    ("deontic.ir", 0.36),
+                    ("CEC.native", 0.26),
+                    ("TDFOL.prover", 0.20),
+                    ("knowledge_graphs.neo4j_compat", 0.18),
+                )
+            elif has_status_operation_cue and not has_omitted_codification_cue:
+                target_mix = (
+                    ("deontic.ir", 0.34),
+                    ("CEC.native", 0.30),
+                    ("knowledge_graphs.neo4j_compat", 0.24),
+                    ("TDFOL.prover", 0.12),
                 )
             else:
                 target_mix = (
@@ -1947,6 +1994,14 @@ def _rebalance_dense_contract_distribution(
         has_effect_on_existing_law_frame_cue=has_effect_on_existing_law_frame_cue,
         has_scaffolded_normative_operations=has_scaffolded_normative_operations,
         has_scaffolded_scope_norm_hint=has_scaffolded_scope_norm_hint,
+        has_statutory_deontic_projection_signal=(
+            has_compliance_enforcement_norm
+            or has_fiscal_availability_norm
+            or (
+                has_status_operation_cue
+                and (has_deontic_cue or not has_omitted_codification_cue)
+            )
+        ),
         has_structural_status_operation_signal=has_structural_status_operation_signal,
     ):
         adjusted = _project_contract_distribution_toward_target(
@@ -2034,6 +2089,24 @@ def _rebalance_dense_contract_distribution(
             adjusted["deontic.ir"] = adjusted.get("deontic.ir", 0.0) + (
                 kg_value - kg_cap
             )
+    if (
+        has_status_operation_cue
+        and not has_repealed_history_frame_cue
+        and not has_temporal_priority_without_normative_cue
+        and (has_deontic_cue or not has_omitted_codification_cue)
+    ):
+        adjusted = _enforce_contract_lane_floors(
+            adjusted,
+            floors={"deontic.ir": 0.30},
+            donor_priority=(
+                "external_provers.router",
+                "zkp.circuits",
+                "modal.frame_logic",
+                "knowledge_graphs.neo4j_compat",
+                "CEC.native",
+                "TDFOL.prover",
+            ),
+        )
     return adjusted
 
 
@@ -2067,6 +2140,7 @@ def _should_project_flat_dense_contract_distribution(
     has_effect_on_existing_law_frame_cue: bool,
     has_scaffolded_normative_operations: bool,
     has_scaffolded_scope_norm_hint: bool,
+    has_statutory_deontic_projection_signal: bool,
     has_structural_status_operation_signal: bool,
 ) -> bool:
     """Return whether a flat dense mix should be pulled toward semantic cues."""
@@ -2084,6 +2158,7 @@ def _should_project_flat_dense_contract_distribution(
         or has_direct_appropriation_authorization
         or has_scaffolded_normative_operations
         or has_scaffolded_scope_norm_hint
+        or has_statutory_deontic_projection_signal
         or has_structural_status_operation_signal
         or has_conditional_structural_normative_signal
     )
@@ -2441,6 +2516,12 @@ def _project_official_usc_primary_contract_distribution(
     has_enforcement_penalty_provision = bool(
         _BRIDGE_CONTRACT_ENFORCEMENT_PENALTY_PROVISION_RE.search(normalized_text)
     )
+    has_compliance_enforcement_norm = bool(
+        _BRIDGE_CONTRACT_COMPLIANCE_ENFORCEMENT_NORM_RE.search(normalized_text)
+    )
+    has_fiscal_availability_norm = bool(
+        _BRIDGE_CONTRACT_FISCAL_AVAILABILITY_NORM_RE.search(normalized_text)
+    )
     has_liability_provision = bool(
         _BRIDGE_CONTRACT_LIABILITY_PROVISION_RE.search(normalized_text)
     )
@@ -2488,12 +2569,22 @@ def _project_official_usc_primary_contract_distribution(
             ("TDFOL.prover", 0.12),
         )
         strength = 0.34
-    elif has_enforcement_penalty_provision and deontic_cue_count > 0:
+    elif (
+        has_enforcement_penalty_provision or has_compliance_enforcement_norm
+    ) and deontic_cue_count > 0:
         target_mix = (
             ("deontic.ir", 0.46),
             ("knowledge_graphs.neo4j_compat", 0.30),
             ("TDFOL.prover", 0.18),
             ("CEC.native", 0.06),
+        )
+        strength = 0.34
+    elif has_fiscal_availability_norm and deontic_cue_count > 0:
+        target_mix = (
+            ("deontic.ir", 0.50),
+            ("TDFOL.prover", 0.26),
+            ("CEC.native", 0.16),
+            ("knowledge_graphs.neo4j_compat", 0.08),
         )
         strength = 0.34
     elif has_admin_rulemaking_schedule and deontic_cue_count > 0:

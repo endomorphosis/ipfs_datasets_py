@@ -1454,7 +1454,6 @@ def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
             phrases.append(_fixed_phrase(";", "formula_separator"))
         formula_text = modal_formula_to_text(formula)
         formulas.append(formula_text)
-        phrases.extend(_decode_formula_phrases(formula, document=document))
         phrases.extend(
             _decode_formula_phrases(
                 formula,
@@ -4463,6 +4462,52 @@ def _legal_ir_view_prototype_phrases(
             slot_name="formula-count",
             slot_value=formula_count_bucket,
         )
+    if has_frame_logic:
+        triples = list(getattr(frame_logic, "triples", ()) or ())
+        frame_logic_families = document_families or ["frame"]
+        for triple_index, triple in enumerate(triples[:16]):
+            subject = _clean_text(
+                triple.get("subject", "")
+                if isinstance(triple, Mapping)
+                else getattr(triple, "subject", "")
+            )
+            predicate = _clean_text(
+                triple.get("predicate", "")
+                if isinstance(triple, Mapping)
+                else getattr(triple, "predicate", "")
+            )
+            object_value = _clean_text(
+                triple.get("object", "")
+                if isinstance(triple, Mapping)
+                else getattr(triple, "object", "")
+            )
+            predicate_key = _slot_safe_family_key(predicate)
+            object_key = _slot_safe_family_key(object_value)
+            subject_key = _slot_safe_family_key(subject)
+            for family in frame_logic_families:
+                if predicate_key:
+                    add(
+                        family=family,
+                        slot_name="frame-logic-predicate",
+                        slot_value=predicate_key,
+                    )
+                    add(
+                        family=family,
+                        slot_name="frame-logic-predicate-positioned",
+                        slot_value=f"{triple_index}:{predicate_key}",
+                    )
+                if predicate_key and object_key:
+                    add(
+                        family=family,
+                        slot_name="frame-logic-fact",
+                        slot_value=f"{predicate_key}:{object_key}",
+                    )
+                if subject_key and predicate_key:
+                    add(
+                        family=family,
+                        slot_name="frame-logic-subject-predicate",
+                        slot_value=f"{subject_key}:{predicate_key}",
+                    )
 
     for formula in document.formulas:
         spans = [[formula.provenance.start_char, formula.provenance.end_char]]
@@ -4539,6 +4584,26 @@ def _legal_ir_view_prototype_phrases(
                 target_family,
                 fallback_symbol=source_operator,
             )
+            if target_family and target_family != family:
+                slot_values.append(("family-role", f"{target_family}:{predicate_role}"))
+                slot_values.append(("modal-family", target_family))
+                target_system = _default_modal_system_key(target_family)
+                target_operator_key = _modal_operator_feature_key(target_operator)
+                if target_system and target_operator_key:
+                    slot_values.append(
+                        (
+                            "modal-operator",
+                            f"{target_family}:{target_system}:{target_operator_key}",
+                        )
+                    )
+                target_label = _CANONICAL_MODAL_OPERATOR_LABELS.get(
+                    (target_family, target_operator),
+                    "",
+                )
+                if target_label:
+                    slot_values.append(
+                        ("operator-label", f"{target_family}:{target_label}")
+                    )
             if source_operator and target_operator:
                 slot_values.append(
                     (
@@ -4568,6 +4633,18 @@ def _legal_ir_view_prototype_phrases(
             fallback_rule in _USCODE_SECTION_HEADING_TAIL_RULES
             or raw_cue == "__uscode_section_heading_fallback__"
         ):
+            fallback_target_families = [
+                target_family
+                for family_pair in _typed_decompiler_family_pairs(
+                    document=document,
+                    formula=formula,
+                )
+                if "->" in family_pair
+                for target_family in [
+                    _slot_safe_family_key(family_pair.split("->", 1)[1])
+                ]
+                if target_family and target_family != family
+            ]
             slot_values.append(
                 (
                     "cue-family",
@@ -4575,6 +4652,82 @@ def _legal_ir_view_prototype_phrases(
                 )
             )
             slot_values.append(("modal-cue", "uscode_section_heading_fallback"))
+            fallback_count_slots = [
+                f"conditions:{len(condition_values)}",
+                f"exceptions:{len(exception_values)}",
+            ]
+            fallback_source_slots = [
+                f"predicate-role:{predicate_role}",
+                f"family-role:{family}:{predicate_role}",
+                f"modal-family:{family}",
+            ]
+            if modal_operator_slot:
+                fallback_source_slots.append(f"modal-operator:{modal_operator_slot}")
+            if operator_label:
+                fallback_source_slots.append(
+                    f"operator-label:{family}:{operator_label}"
+                )
+            for target_family in _unique_preserve_order(fallback_target_families):
+                add(
+                    family=target_family,
+                    slot_name="cue-family",
+                    slot_value=f"uscode_section_heading_fallback:{family}",
+                    spans=spans,
+                )
+                add(
+                    family=target_family,
+                    slot_name="modal-cue",
+                    slot_value="uscode_section_heading_fallback",
+                    spans=spans,
+                )
+                add(
+                    family=target_family,
+                    slot_name="modal-family",
+                    slot_value=family,
+                    spans=spans,
+                )
+                if modal_operator_slot:
+                    add(
+                        family=target_family,
+                        slot_name="modal-operator",
+                        slot_value=modal_operator_slot,
+                        spans=spans,
+                    )
+                if operator_label:
+                    add(
+                        family=target_family,
+                        slot_name="operator-label",
+                        slot_value=f"{family}:{operator_label}",
+                        spans=spans,
+                    )
+                for count_slot in fallback_count_slots:
+                    for source_slot in fallback_source_slots:
+                        add_slot_pair(
+                            family=target_family,
+                            left_slot=count_slot,
+                            right_slot=source_slot,
+                            spans=spans,
+                        )
+                add_slot_pair(
+                    family=target_family,
+                    left_slot=f"conditions:{len(condition_values)}",
+                    right_slot=f"exceptions:{len(exception_values)}",
+                    spans=spans,
+                )
+                if modal_operator_slot:
+                    add_slot_pair(
+                        family=target_family,
+                        left_slot=f"modal-family:{family}",
+                        right_slot=f"modal-operator:{modal_operator_slot}",
+                        spans=spans,
+                    )
+                    if operator_label:
+                        add_slot_pair(
+                            family=target_family,
+                            left_slot=f"operator-label:{family}:{operator_label}",
+                            right_slot=f"modal-operator:{modal_operator_slot}",
+                            spans=spans,
+                        )
         for cue in cues:
             cue_key = _normalized_bridge_cue_key(cue)
             if cue_key:
@@ -4638,6 +4791,11 @@ def _legal_ir_view_prototype_phrases(
                 spans=spans,
             )
         )
+        for source_slot_name, source_slot_value in _source_action_legal_ir_slot_values(
+            document=document,
+            formula=formula,
+        ):
+            slot_values.append((source_slot_name, source_slot_value))
         for slot_name, slot_value in _unique_slot_values(slot_values):
             add(
                 family=family,
@@ -4729,6 +4887,44 @@ def _legal_ir_view_prototype_phrases(
                         spans=spans,
                     )
     return phrases
+
+
+def _source_action_legal_ir_slot_values(
+    *,
+    document: ModalIRDocument,
+    formula: ModalIRFormula,
+) -> List[Tuple[str, str]]:
+    """Return source-action semantic slots for LegalIR prototype projection."""
+    anchors = _source_role_anchor_values(document=document, formula=formula)
+    action_anchor = _slot_safe_family_key(_clean_text(anchors.get("action", "")))
+    if not action_anchor:
+        return []
+    family = _slot_safe_family_key(_clean_text(formula.operator.family).lower())
+    predicate_head = _predicate_head_anchor(formula)
+    operator_key = _modal_operator_feature_key(formula.operator.symbol)
+    values: List[Tuple[str, str]] = []
+    if family:
+        values.append(("source-action-family", f"{action_anchor}:{family}"))
+    if predicate_head:
+        values.append(("source-action-predicate", f"{action_anchor}:{predicate_head}"))
+    if family and operator_key:
+        values.append(
+            (
+                "source-action-operator",
+                f"{action_anchor}:{family}:{operator_key}",
+            )
+        )
+    for family_pair in _source_anchor_family_pairs(document=document, formula=formula):
+        pair_key = _slot_safe_family_pair_key(family_pair)
+        if pair_key:
+            values.append(("source-action-family-pair", pair_key))
+            values.append(
+                (
+                    "source-action-family-pair-anchor",
+                    f"{action_anchor}:{pair_key}",
+                )
+            )
+    return _unique_slot_values(values)
 
 
 def _typed_ir_refined_semantic_slot_phrases(
@@ -4905,6 +5101,10 @@ def _legal_ir_decompiler_bridge_slot_values(
     condition_values = _resolved_formula_conditions(document=document, formula=formula)
     exception_values = _resolved_formula_exceptions(document=document, formula=formula)
     source_span = _semantic_source_span_text(document=document, formula=formula)
+    source_family_pairs = _typed_decompiler_family_pairs(
+        document=document,
+        formula=formula,
+    )
     span_sources: List[Tuple[str, str]] = [
         ("source_semantic_span", source_span),
         ("modal_source_span", source_span),
@@ -4965,6 +5165,14 @@ def _legal_ir_decompiler_bridge_slot_values(
     for slot, value in _modal_transition_slots(formula):
         if slot in exact_slots:
             add(slot, value)
+    for slot, value in _decompiler_provenance_slot_values(
+        document=document,
+        formula=formula,
+        condition_values=condition_values,
+        exception_values=exception_values,
+        source_family_pairs=source_family_pairs,
+    ):
+        add(slot, value)
     for phrase in _typed_decompiler_bridge_phrases(
         document=document,
         formula=formula,
@@ -5012,6 +5220,127 @@ def _legal_ir_decompiler_bridge_slot_values(
             }:
                 add(slot, value)
     return _unique_slot_values(slot_values)
+
+
+def _decompiler_provenance_slot_values(
+    *,
+    document: ModalIRDocument | None,
+    formula: ModalIRFormula,
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
+    source_family_pairs: Sequence[str],
+) -> List[Tuple[str, str]]:
+    """Summarize typed clause shape and statutory references for multiview IR."""
+
+    family = _slot_safe_family_key(_clean_text(formula.operator.family).lower())
+    if not family:
+        return []
+    role = _slot_safe_family_key(formula.predicate.role or "") or "clause"
+    argument_count = len(formula.predicate.arguments or [])
+    condition_state = "cyes" if condition_values else "cno"
+    exception_state = "eyes" if exception_values else "eno"
+    source_operator = _clean_text(formula.operator.symbol)
+    source_system = _slot_safe_family_key(_clean_text(formula.operator.system).lower())
+    source_operator_key = _modal_operator_feature_key(source_operator)
+    topology = f"{family}:{role}:a{argument_count}:{condition_state}:{exception_state}"
+    slots: List[Tuple[str, str]] = [
+        ("clause_topology", topology),
+        ("ir_topology", topology),
+        ("ir_family_role", f"{family}:{role}"),
+        ("predicate_shape", f"{family}:a{argument_count}"),
+        ("condition_consequence_presence", f"{condition_state}:{exception_state}"),
+        (
+            "condition_consequence_route",
+            (
+                "refine_condition_consequence"
+                if condition_values or exception_values
+                else "none"
+            ),
+        ),
+    ]
+    if source_system and source_operator_key:
+        slots.append(
+            (
+                "ir_operator",
+                f"{family}:{source_system}:{source_operator_key}:{role}",
+            )
+        )
+
+    for family_pair in source_family_pairs:
+        normalized_pair = _clean_text(family_pair)
+        if not normalized_pair or "->" not in normalized_pair:
+            continue
+        source_family, target_family = (
+            _slot_safe_family_key(part)
+            for part in normalized_pair.split("->", 1)
+        )
+        if not source_family or not target_family:
+            continue
+        slots.append(("family_transition", f"{source_family}->{target_family}"))
+        slots.append(
+            (
+                "clause_topology_family_transition",
+                (
+                    f"{source_family}->{target_family}:a{argument_count}:"
+                    f"{condition_state}:{exception_state}"
+                ),
+            )
+        )
+
+    source_id = _clean_text(formula.provenance.source_id or "")
+    citation = _clean_text(formula.provenance.citation or "")
+    if not citation:
+        citation = _source_id_inferred_citation(source_id)
+    citation_slot_map = _slot_value_map(_citation_slots(citation)) if citation else {}
+    section = _clean_text(
+        citation_slot_map.get("citation_section_normalized")
+        or citation_slot_map.get("citation_section")
+        or ""
+    )
+    title = _clean_text(citation_slot_map.get("citation_title") or "")
+    title_section_key = _clean_text(
+        citation_slot_map.get("citation_title_section_key") or ""
+    )
+    if citation:
+        slots.extend(
+            (
+                ("authority_import", "section:statutory_section"),
+                (
+                    "decompiler_citation_slot",
+                    "authority_import:section:statutory_section",
+                ),
+                (
+                    "reference_target",
+                    "authority_import:statutory_section:section:positive",
+                ),
+            )
+        )
+    if title:
+        slots.extend(
+            (
+                ("current_scope", "title:current_container"),
+                ("decompiler_citation_slot", "current_scope:title:current_container"),
+                ("reference_exact", "current_scope:title:this:this"),
+                ("reference_target", "current_scope:current_container:title:positive"),
+            )
+        )
+    if section:
+        slots.append(("semantic_provenance_section", section))
+    if title_section_key:
+        slots.append(("semantic_provenance_title_section_key", title_section_key))
+        slots.append(
+            (
+                "semantic_provenance_family_title_section_key",
+                f"{family}:{title_section_key}",
+            )
+        )
+
+    if document is not None:
+        selected_frame = _selected_frame(document)
+        if selected_frame:
+            slots.append(("selected_frame_family", f"{selected_frame}:{family}"))
+
+    return _unique_slot_values(slots)
 
 
 def _semantic_text_cues_for_formula(
@@ -9598,9 +9927,45 @@ def _typed_decompiler_bridge_phrases(
                 normalized_value,
             )
 
+    def add_family_semantic_slot_pair(
+        *,
+        family: str,
+        left_slot: str,
+        right_slot: str,
+    ) -> None:
+        family_key = _slot_safe_family_key(_clean_text(family).lower())
+        left_value = _clean_text(left_slot)
+        right_value = _clean_text(right_slot)
+        if not family_key or not left_value or not right_value:
+            return
+        semantic_slot = f"{family_key}||slot-pair:{left_value}|{right_value}"
+        add("family_semantic_slot_prototype", semantic_slot)
+        add(f"family_semantic_slot_prototype_{family_key}_slot_pair", semantic_slot)
+        for view in _LEGAL_IR_VIEW_PROTOTYPES:
+            view_key = view.replace(".", "_")
+            add(
+                "family_semantic_slot_legal_ir_view_prototype",
+                f"{semantic_slot}||{view}",
+            )
+            add(
+                (
+                    "family_semantic_slot_legal_ir_view_prototype_"
+                    f"{family_key}_slot_pair_{view_key}"
+                ),
+                semantic_slot,
+            )
+
     add("typed_decompiler_family", family)
     source_operator = _clean_text(formula.operator.symbol)
     source_system = _clean_text(formula.operator.system)
+    for slot, value in _decompiler_provenance_slot_values(
+        document=document,
+        formula=formula,
+        condition_values=condition_values,
+        exception_values=exception_values,
+        source_family_pairs=source_family_pairs,
+    ):
+        add(slot, value)
     for family_pair in source_family_pairs:
         pair_key = _slot_safe_family_pair_key(family_pair)
         add("typed_decompiler_family_pair", family_pair)
@@ -9724,10 +10089,11 @@ def _typed_decompiler_bridge_phrases(
                 f"{semantic_slot}||{view}",
             )
     if document is not None:
-        for cue_class in _semantic_text_cues_for_formula(
+        semantic_text_cues = _semantic_text_cues_for_formula(
             document=document,
             formula=formula,
-        ):
+        )
+        for cue_class in semantic_text_cues:
             semantic_slot = f"{family}||slot:text-cue:{cue_class}"
             add("family_semantic_slot_prototype", semantic_slot)
             add("typed_decompiler_text_cue_family", f"{family}:{cue_class}")
@@ -9736,17 +10102,58 @@ def _typed_decompiler_bridge_phrases(
                     "family_semantic_slot_legal_ir_view_prototype",
                     f"{semantic_slot}||{view}",
                 )
+        for boundary_slot, boundary_value in _typed_decompiler_boundary_slots(
+            formula=formula,
+            condition_values=condition_values,
+            exception_values=exception_values,
+            semantic_text_cues=semantic_text_cues,
+        ):
+            add(boundary_slot, boundary_value)
+            if boundary_slot in {
+                "typed_decompiler_cue_operator_boundary",
+                "typed_decompiler_operator_force_boundary",
+            }:
+                semantic_slot_name = boundary_slot.removeprefix(
+                    "typed_decompiler_"
+                ).replace("_", "-")
+                add_family_semantic_slot(
+                    family=family,
+                    slot_name=semantic_slot_name,
+                    slot_value=boundary_value,
+                )
     for clause_slot, clause_values in (
         ("condition", condition_values),
         ("exception", exception_values),
     ):
-        for clause in clause_values:
+        if clause_values:
+            add_family_semantic_slot(
+                family=family,
+                slot_name=f"{clause_slot}-present",
+                slot_value="true",
+            )
+        for clause_index, clause in enumerate(clause_values):
             parsed = _typed_clause_slot(clause, slot=clause_slot)
             if parsed is None:
                 continue
             _, prefix_key, scoped_value = parsed
             normalized_prefix = _clean_text(prefix_key).lower()
+            plural_slot = f"{clause_slot}s"
+            add_family_semantic_slot_pair(
+                family=family,
+                left_slot=f"{plural_slot}:{clause_index}",
+                right_slot="predicate-role:clause",
+            )
+            add_family_semantic_slot_pair(
+                family=family,
+                left_slot=f"{plural_slot}:{clause_index}",
+                right_slot=f"modal-family:{family}",
+            )
             if normalized_prefix:
+                add_family_semantic_slot_pair(
+                    family=family,
+                    left_slot=f"{plural_slot}:{clause_index}",
+                    right_slot=f"modal-cue:{normalized_prefix}",
+                )
                 for family_pair in source_family_pairs:
                     add(
                         f"{clause_slot}_scope_family_pair",
@@ -9895,6 +10302,177 @@ def _typed_decompiler_family_pairs(
     if self_pair not in pairs:
         pairs.append(self_pair)
     return pairs
+
+
+def _typed_decompiler_boundary_slots(
+    *,
+    formula: ModalIRFormula,
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
+    semantic_text_cues: Sequence[str],
+) -> List[Tuple[str, str]]:
+    family = _slot_safe_family_key(_clean_text(formula.operator.family).lower())
+    symbol = _modal_operator_feature_key(formula.operator.symbol)
+    predicate_role = _slot_safe_family_key(
+        _clean_text(formula.predicate.role or "clause").lower()
+    )
+    if not family or not symbol or not predicate_role:
+        return []
+
+    temporal_scope = any(
+        _clause_has_temporal_scope(value, slot="condition")
+        for value in condition_values
+    ) or any(
+        _clause_has_temporal_scope(value, slot="exception")
+        for value in exception_values
+    )
+    if not temporal_scope:
+        temporal_scope = "temporal" in {
+            _slot_safe_family_key(_clean_text(cue).lower())
+            for cue in semantic_text_cues
+        }
+    scope_state = (
+        f"c{'yes' if condition_values else 'no'}:"
+        f"e{'yes' if exception_values else 'no'}:"
+        f"t{'yes' if temporal_scope else 'no'}"
+    )
+
+    cues = _unique_preserve_order(
+        [
+            *(
+                _slot_safe_family_key(_clean_text(cue).lower())
+                for cue in semantic_text_cues
+            ),
+            *(
+                _slot_safe_family_key(_clean_text(cue).replace(" ", "_").lower())
+                for cue in _formula_cues(formula)
+            ),
+            *(
+                _slot_safe_family_key(_clean_text(cue).replace(" ", "_").lower())
+                for cue in _formula_bridge_cues(
+                    formula,
+                    condition_values=condition_values,
+                    exception_values=exception_values,
+                )
+            ),
+        ]
+    )
+    force_tags, polarity_tags = _typed_decompiler_force_polarity_tags(
+        formula=formula,
+        cues=cues,
+    )
+
+    slots: List[Tuple[str, str]] = []
+    for cue in cues[:8]:
+        slots.append(
+            (
+                "typed_decompiler_cue_operator_boundary",
+                f"{cue}:{family}:{symbol}:{predicate_role}:{scope_state}",
+            )
+        )
+    for force in force_tags[:3]:
+        for polarity in polarity_tags[:3]:
+            slots.append(
+                (
+                    "typed_decompiler_operator_force_boundary",
+                    (
+                        f"{family}:{symbol}:{force}:{polarity}:"
+                        f"{predicate_role}:{scope_state}"
+                    ),
+                )
+            )
+    return _unique_slot_values(slots)
+
+
+def _clause_has_temporal_scope(clause: str, *, slot: str) -> bool:
+    parsed = _typed_clause_slot(clause, slot=slot)
+    if parsed is not None:
+        _, prefix_key, scoped_value = parsed
+        if _temporal_clause_prefix_relation(prefix_key):
+            return True
+        clause_text = scoped_value
+    else:
+        clause_text = clause
+    normalized = _clean_text(clause_text).lower()
+    if not normalized:
+        return False
+    tokens = set(_CUE_TOKEN_RE.findall(normalized))
+    return bool(tokens.intersection(_TEMPORAL_BRIDGE_CONTEXT_TOKENS)) or bool(
+        _TEMPORAL_BRIDGE_YEAR_RE.search(normalized)
+    )
+
+
+def _typed_decompiler_force_polarity_tags(
+    *,
+    formula: ModalIRFormula,
+    cues: Sequence[str],
+) -> Tuple[List[str], List[str]]:
+    symbol = _clean_text(formula.operator.symbol).upper()
+    label = _slot_safe_family_key(_clean_text(formula.operator.label).lower())
+    cue_set = {
+        _slot_safe_family_key(_clean_text(cue).replace(" ", "_").lower())
+        for cue in cues
+        if _clean_text(cue)
+    }
+    force_tags: List[str] = []
+    polarity_tags: List[str] = []
+
+    def add_force(value: str) -> None:
+        if value and value not in force_tags:
+            force_tags.append(value)
+
+    def add_polarity(value: str) -> None:
+        if value and value not in polarity_tags:
+            polarity_tags.append(value)
+
+    if (
+        symbol == "O"
+        or cue_set.intersection(
+            {
+                "shall",
+                "must",
+                "required",
+                "require",
+                "requires",
+                "obligation",
+                "obligatory",
+            }
+        )
+        or "oblig" in label
+    ):
+        add_force("obligation")
+        add_polarity("mandatory")
+    if (
+        symbol == "P"
+        or cue_set.intersection(
+            {"may", "authorized", "allowed", "permitted", "permission"}
+        )
+        or "permit" in label
+        or "authoriz" in label
+    ):
+        add_force("permission")
+        add_polarity("enabling")
+    if (
+        symbol == "F"
+        or cue_set.intersection(
+            {
+                "may_not",
+                "must_not",
+                "shall_not",
+                "prohibited",
+                "forbidden",
+                "prohibition",
+            }
+        )
+        or "prohibit" in label
+    ):
+        add_force("prohibition")
+        add_polarity("restrictive")
+    if not force_tags:
+        add_force("assertive")
+    if not polarity_tags:
+        add_polarity("neutral")
+    return force_tags, polarity_tags
 
 
 def _source_role_anchor_values(
