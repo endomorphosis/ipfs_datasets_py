@@ -187,8 +187,11 @@ PAIRED_CODEX_LAUNCH_STAGGER_SECONDS="${PAIRED_CODEX_LAUNCH_STAGGER_SECONDS:-1.0}
 PAIRED_CODEX_DISABLE_CUDA="${PAIRED_CODEX_DISABLE_CUDA:-true}"
 PAIRED_FAILED_VALIDATION_RESCUE_MODE="${PAIRED_FAILED_VALIDATION_RESCUE_MODE:-auto}"
 PAIRED_FAILED_VALIDATION_RESCUE_MAX_CLUSTERS="${PAIRED_FAILED_VALIDATION_RESCUE_MAX_CLUSTERS:-8}"
+PAIRED_FAILED_VALIDATION_RESCUE_MAX_ATTEMPTS="${PAIRED_FAILED_VALIDATION_RESCUE_MAX_ATTEMPTS:-3}"
 PAIRED_FAILED_VALIDATION_RESCUE_INTERVAL_SECONDS="${PAIRED_FAILED_VALIDATION_RESCUE_INTERVAL_SECONDS:-300}"
 PAIRED_FAILED_VALIDATION_RESCUE_BACKLOG_THRESHOLD="${PAIRED_FAILED_VALIDATION_RESCUE_BACKLOG_THRESHOLD:-16}"
+WARM_START_RUN_IDS="${WARM_START_RUN_IDS:-}"
+WARM_START_STATES="${WARM_START_STATES:-}"
 
 CODEX_EXEC_MODE="${CODEX_EXEC_MODE:-codex_cli}"
 if ! command -v codex >/dev/null 2>&1; then
@@ -302,6 +305,7 @@ PAIRED_ARGS=(
   --paired-codex-disable-cuda "${PAIRED_CODEX_DISABLE_CUDA}"
   --paired-failed-validation-rescue-mode "${PAIRED_FAILED_VALIDATION_RESCUE_MODE}"
   --paired-failed-validation-rescue-max-clusters "${PAIRED_FAILED_VALIDATION_RESCUE_MAX_CLUSTERS}"
+  --paired-failed-validation-rescue-max-attempts "${PAIRED_FAILED_VALIDATION_RESCUE_MAX_ATTEMPTS}"
   --paired-failed-validation-rescue-interval-seconds "${PAIRED_FAILED_VALIDATION_RESCUE_INTERVAL_SECONDS}"
   --paired-failed-validation-rescue-backlog-threshold "${PAIRED_FAILED_VALIDATION_RESCUE_BACKLOG_THRESHOLD}"
   --codex-exec-mode "${CODEX_EXEC_MODE}"
@@ -366,8 +370,11 @@ echo "[pipeline] paired_codex_launch_stagger_seconds=${PAIRED_CODEX_LAUNCH_STAGG
 echo "[pipeline] paired_codex_disable_cuda=${PAIRED_CODEX_DISABLE_CUDA}"
 echo "[pipeline] paired_failed_validation_rescue_mode=${PAIRED_FAILED_VALIDATION_RESCUE_MODE}"
 echo "[pipeline] paired_failed_validation_rescue_max_clusters=${PAIRED_FAILED_VALIDATION_RESCUE_MAX_CLUSTERS}"
+echo "[pipeline] paired_failed_validation_rescue_max_attempts=${PAIRED_FAILED_VALIDATION_RESCUE_MAX_ATTEMPTS}"
 echo "[pipeline] paired_failed_validation_rescue_interval_seconds=${PAIRED_FAILED_VALIDATION_RESCUE_INTERVAL_SECONDS}"
 echo "[pipeline] paired_failed_validation_rescue_backlog_threshold=${PAIRED_FAILED_VALIDATION_RESCUE_BACKLOG_THRESHOLD}"
+echo "[pipeline] warm_start_run_ids=${WARM_START_RUN_IDS}"
+echo "[pipeline] warm_start_states=${WARM_START_STATES}"
 echo "[pipeline] sweep_projection_epochs=${SWEEP_PROJECTION_EPOCHS}"
 echo "[pipeline] final_projection_epochs=${FINAL_PROJECTION_EPOCHS}"
 echo "[pipeline] allow_final_fallback_on_sweep_failure=${ALLOW_FINAL_FALLBACK_ON_SWEEP_FAILURE}"
@@ -1021,6 +1028,24 @@ final_args=(
   "${FINAL_COMMON_OVERRIDES[@]}"
   "${PAIRED_ARGS[@]}"
 )
+if [[ -n "${WARM_START_RUN_IDS}" ]]; then
+  IFS=',' read -r -a warm_start_run_ids <<< "${WARM_START_RUN_IDS}"
+  for warm_start_run_id in "${warm_start_run_ids[@]}"; do
+    warm_start_run_id="${warm_start_run_id//[[:space:]]/}"
+    if [[ -n "${warm_start_run_id}" ]]; then
+      final_args+=(--warm-start-run-id "${warm_start_run_id}")
+    fi
+  done
+fi
+if [[ -n "${WARM_START_STATES}" ]]; then
+  IFS=',' read -r -a warm_start_states <<< "${WARM_START_STATES}"
+  for warm_start_state in "${warm_start_states[@]}"; do
+    warm_start_state="${warm_start_state//[[:space:]]/}"
+    if [[ -n "${warm_start_state}" ]]; then
+      final_args+=(--warm-start-state "${warm_start_state}")
+    fi
+  done
+fi
 
 trap - ERR
 set +e

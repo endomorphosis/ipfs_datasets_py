@@ -110,6 +110,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_REFINED_PACKET_002430_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_005573_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000001_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_003992_FAMILY_PAIRS,
     DEFAULT_MODAL_REGISTRY,
     compiler_refined_modal_family_cue_margin_buffer,
     compiler_weak_typed_self_family_cue_margin_buffer,
@@ -18100,6 +18101,35 @@ def test_modal_decompiler_and_triples_include_statutory_scope_reference_slots() 
     )
 
 
+def test_modal_decompiler_surfaces_combined_grounding_plan_for_authority_threshold_reference_deadline() -> None:
+    sample = build_us_code_sample(
+        title="12",
+        section="1705",
+        text=(
+            "The Secretary may prescribe regulations under section 552 if "
+            "the applicant pays $5,000 not later than 30 days after notice."
+        ),
+    )
+
+    decoded = decode_modal_ir_document(sample.modal_ir)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+
+    signature = (
+        "rulemaking_authority:monetary_threshold:"
+        "statutory_reference:deadline:condition"
+    )
+    assert signature in slot_texts["decompiler_surface_grounding_signature"]
+    assert (
+        f"{signature}:deontic:p:clause"
+        in slot_texts["decompiler_surface_grounding_plan"]
+    )
+    assert "authority:rulemaking_authority" in slot_texts["semantic_grounding_slot"]
+    assert "constraint:monetary_threshold" in slot_texts["semantic_grounding_slot"]
+    assert "reference:statutory_reference" in slot_texts["semantic_grounding_slot"]
+    assert "temporal:deadline" in slot_texts["semantic_grounding_slot"]
+    assert "guard:condition" in slot_texts["semantic_grounding_slot"]
+
+
 def test_modal_decompiler_and_triples_expand_statutory_scope_units_and_connectors() -> None:
     formula = ModalIRFormula(
         formula_id="statutory-extended-doc:f0001",
@@ -34231,6 +34261,45 @@ def test_packet_000001_refined_cue_family_pairs_cover_rescue_bundle() -> None:
             predicted_family,
             target_family,
         )
+
+
+def test_packet_003992_refined_cue_family_pairs_cover_failed_validation_rescue() -> None:
+    packet_pairs = COMPILER_REFINED_PACKET_003992_FAMILY_PAIRS
+    assert packet_pairs == (
+        ("conditional_normative", "temporal"),
+        ("deontic", "deontic"),
+        ("deontic", "temporal"),
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("temporal", "frame"),
+        ("temporal", "temporal"),
+    )
+
+    refined_pairs = set(COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS)
+    for predicted_family, target_family in packet_pairs:
+        assert (predicted_family, target_family) in refined_pairs
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert compiler_refined_modal_family_cue_margin_buffer(
+            predicted_family,
+            target_family,
+        ) == _expected_compiler_refined_margin_buffer(
+            predicted_family,
+            target_family,
+        )
+
+
 def test_decode_modal_ir_document_surfaces_packet_001471_role_bridge_slots() -> None:
     source_text = (
         "The Secretary shall develop proposals by fiscal year 2027 under this "

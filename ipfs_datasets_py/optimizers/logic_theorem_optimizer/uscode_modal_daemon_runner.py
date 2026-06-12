@@ -7171,6 +7171,7 @@ def _codex_packet_validation_report(packet: Mapping[str, Any]) -> Dict[str, Any]
         "baseline_failure_accepted": baseline_failure_accepted,
         "baseline_status": baseline_validation.get("status"),
         "main_apply_validation_gate": packet.get("main_apply_validation_gate"),
+        "main_apply_validation_status": main_validation_status,
         "main_apply_status": packet.get("main_apply_status"),
         "metric_deltas": dict(packet.get("metric_deltas", {}) or {}),
         "patch_status": packet.get("patch_status"),
@@ -9298,6 +9299,12 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--paired-failed-validation-rescue-max-attempts",
+        type=int,
+        default=FAILED_VALIDATION_RESCUE_MAX_ATTEMPTS,
+        help="Maximum rescue attempts per failed-validation cluster in paired mode.",
+    )
+    parser.add_argument(
         "--warm-start-run-id",
         action="append",
         default=[],
@@ -9524,6 +9531,17 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
             or 32
         ),
     )
+    failed_validation_rescue_max_attempts = max(
+        1,
+        int(
+            getattr(
+                args,
+                "paired_failed_validation_rescue_max_attempts",
+                FAILED_VALIDATION_RESCUE_MAX_ATTEMPTS,
+            )
+            or FAILED_VALIDATION_RESCUE_MAX_ATTEMPTS
+        ),
+    )
 
     summary: Dict[str, Any] = {
         "autoencoder_command": list(paired["autoencoder_command"]),
@@ -9571,6 +9589,9 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         "paired_failed_validation_rescue_mode": failed_validation_rescue_mode,
         "paired_failed_validation_rescue_backlog_threshold": (
             failed_validation_rescue_backlog_threshold
+        ),
+        "paired_failed_validation_rescue_max_attempts": (
+            failed_validation_rescue_max_attempts
         ),
         "paired_failed_validation_rescue_seeded_total": 0,
         "paired_supervisor_backend": supervisor_backend,
@@ -10136,6 +10157,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                         queue_path=queue_path,
                         policy=ModalOptimizerPolicy(),
                         max_clusters=failed_validation_rescue_max_clusters,
+                        rescue_max_attempts=failed_validation_rescue_max_attempts,
                     )
                     summary["latest_paired_failed_validation_rescue"] = dict(
                         rescue_report

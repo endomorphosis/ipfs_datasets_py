@@ -1400,6 +1400,28 @@ _FRAME_ONTOLOGY_METADATA_OPAQUE_ID_HEX_RE = re.compile(
     r"[0-9a-f]{12,}",
     re.IGNORECASE,
 )
+_GROUNDING_MONETARY_RE = re.compile(
+    r"(?<!\w)(?:\$\s*\d[\d,]*(?:\.\d+)?|\d[\d,]*(?:\.\d+)?\s+dollars?)\b",
+    re.IGNORECASE,
+)
+_GROUNDING_TEMPORAL_DEADLINE_RE = re.compile(
+    r"\b(?:within|by|not\s+later\s+than|no\s+later\s+than|not\s+later|no\s+later)"
+    r"\s+\d[\d,]*(?:\.\d+)?\s+"
+    r"(?:day|days|month|months|year|years|hour|hours)\b",
+    re.IGNORECASE,
+)
+_GROUNDING_AUTHORITY_RE = re.compile(
+    r"\b(?:agency|administrator|authority|commission|court|secretary)\b",
+    re.IGNORECASE,
+)
+_GROUNDING_RULEMAKING_RE = re.compile(
+    r"\b(?:prescribe|promulgate|regulation|regulations|rule|rules|rulemaking)\b",
+    re.IGNORECASE,
+)
+_GROUNDING_JURISDICTION_RE = re.compile(
+    r"\b(?:court|jurisdiction|judicial)\b",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -5865,6 +5887,15 @@ def _decompiler_provenance_slot_values(
         if selected_frame:
             slots.append(("selected_frame_family", f"{selected_frame}:{family}"))
         slots.extend(
+            _decompiler_surface_grounding_slot_values(
+                document=document,
+                formula=formula,
+                condition_values=condition_values,
+                exception_values=exception_values,
+                source_family_pairs=source_family_pairs,
+            )
+        )
+        slots.extend(
             _decompiler_applicability_slot_values(
                 document=document,
                 formula=formula,
@@ -5875,6 +5906,149 @@ def _decompiler_provenance_slot_values(
         )
 
     return _unique_slot_values(slots)
+
+
+def _decompiler_surface_grounding_slot_values(
+    *,
+    document: ModalIRDocument,
+    formula: ModalIRFormula,
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
+    source_family_pairs: Sequence[str],
+) -> List[Tuple[str, str]]:
+    """Expose co-occurring source groundings as one typed decompiler plan."""
+
+    family = _slot_safe_family_key(_clean_text(formula.operator.family).lower())
+    operator = _modal_operator_feature_key(formula.operator.symbol) or "none"
+    role = _slot_safe_family_key(_clean_text(formula.predicate.role or "clause").lower())
+    if not family:
+        return []
+
+    source_span_text = _semantic_source_span_text(document=document, formula=formula)
+    text_parts = [
+        source_span_text,
+        _semantic_source_context_span_text(
+            document=document,
+            formula=formula,
+            source_span_text=source_span_text,
+        ),
+        _predicate_phrase(formula),
+        *condition_values,
+        *exception_values,
+    ]
+    normalized_text = _clean_text(" ".join(part for part in text_parts if part))
+    normalized_text = normalized_text.replace("_", " ").lower()
+    if not normalized_text:
+        return []
+
+    statutory_scope_slots = _statutory_scope_slots(normalized_text)
+    has_reference = any(
+        slot == "statutory_scope_reference" for slot, _ in statutory_scope_slots
+    )
+    has_monetary = bool(_GROUNDING_MONETARY_RE.search(normalized_text))
+    has_temporal_deadline = bool(
+        _GROUNDING_TEMPORAL_DEADLINE_RE.search(normalized_text)
+    )
+    has_condition = bool(condition_values)
+    has_exception = bool(exception_values)
+    authority_kind = _decompiler_grounding_authority_kind(normalized_text)
+    constraint_kind = "monetary_threshold" if has_monetary else "none"
+    reference_kind = "statutory_reference" if has_reference else "none"
+    temporal_kind = "deadline" if has_temporal_deadline else "none"
+    guard_kind = (
+        "condition_exception"
+        if has_condition and has_exception
+        else "condition"
+        if has_condition
+        else "exception"
+        if has_exception
+        else "none"
+    )
+    grounding_axis_count = sum(
+        value != "none"
+        for value in (
+            authority_kind,
+            constraint_kind,
+            reference_kind,
+            temporal_kind,
+            guard_kind,
+        )
+    )
+    if grounding_axis_count < 2:
+        return []
+
+    grounding_signature = (
+        f"{authority_kind}:{constraint_kind}:{reference_kind}:"
+        f"{temporal_kind}:{guard_kind}"
+    )
+    operator_signature = f"{family}:{operator}:{role}"
+    slots: List[Tuple[str, str]] = [
+        ("decompiler_surface_grounding_signature", grounding_signature),
+        (
+            "decompiler_surface_grounding_plan",
+            f"{grounding_signature}:{operator_signature}",
+        ),
+        (
+            "semantic_grounding_operator_signature",
+            f"{operator_signature}:{grounding_signature}",
+        ),
+    ]
+
+    for label, value in (
+        ("authority", authority_kind),
+        ("constraint", constraint_kind),
+        ("reference", reference_kind),
+        ("temporal", temporal_kind),
+        ("guard", guard_kind),
+    ):
+        if value == "none":
+            continue
+        slots.append(("semantic_grounding_slot", f"{label}:{value}"))
+        slots.append((f"semantic_grounding_{label}", value))
+        slots.append(
+            (
+                "semantic_grounding_family_slot",
+                f"{family}:{label}:{value}",
+            )
+        )
+
+    for family_pair in source_family_pairs:
+        pair_key = _slot_safe_family_pair_key(family_pair)
+        if not pair_key:
+            continue
+        slots.append(
+            (
+                "decompiler_surface_grounding_family_pair_plan",
+                f"{pair_key}:{grounding_signature}",
+            )
+        )
+        slots.append(
+            (
+                "semantic_grounding_family_pair_operator",
+                f"{pair_key}:{operator_signature}:{grounding_signature}",
+            )
+        )
+
+    for slot, value in statutory_scope_slots:
+        if slot in {
+            "statutory_scope_connector",
+            "statutory_scope_unit",
+            "statutory_scope_target",
+        }:
+            slots.append((f"semantic_grounding_{slot}", value))
+
+    return _unique_slot_values(slots)
+
+
+def _decompiler_grounding_authority_kind(text: str) -> str:
+    normalized = _clean_text(text).replace("_", " ").lower()
+    if not normalized or not _GROUNDING_AUTHORITY_RE.search(normalized):
+        return "none"
+    if _GROUNDING_JURISDICTION_RE.search(normalized):
+        return "adjudicatory_authority"
+    if _GROUNDING_RULEMAKING_RE.search(normalized):
+        return "rulemaking_authority"
+    return "government_authority"
 
 
 def _decompiler_applicability_slot_values(
@@ -10440,12 +10614,13 @@ def _source_role_anchor_phrases(
         anchored_slot_value = (
             f"{predicate_family}||slot:{slot_label}_anchor:{anchor_key}:{pair_key}"
         )
-        for slot_name, semantic_slot in _unique_slot_values(
+        source_semantic_slots = _unique_slot_values(
             [
                 (slot_label, slot_value),
                 (f"{slot_label}_anchor", anchored_slot_value),
             ]
-        ):
+        )
+        for slot_name, semantic_slot in source_semantic_slots:
             add("family_semantic_slot_prototype", semantic_slot)
             add(
                 f"family_semantic_slot_prototype_{predicate_family}_{slot_name}",
@@ -10471,6 +10646,51 @@ def _source_role_anchor_phrases(
                         f"{predicate_family}_{slot_name}_{view_key}"
                     ),
                     pair_key if slot_name == slot_label else f"{anchor_key}:{pair_key}",
+                )
+        target_slot_values = _unique_slot_values(
+            [
+                (
+                    f"source_{role_key}_source_family",
+                    (
+                        f"{target_family}||slot:source-{role_key}-source-family:"
+                        f"{anchor_key}:{predicate_family}"
+                    ),
+                ),
+                (
+                    f"source_{role_key}_family_pair_anchor",
+                    (
+                        f"{target_family}||slot:source-{role_key}-family-pair-anchor:"
+                        f"{anchor_key}:{pair_key}"
+                    ),
+                ),
+            ]
+        )
+        for slot_name, semantic_slot in target_slot_values:
+            add("family_semantic_slot_prototype", semantic_slot)
+            add(
+                f"family_semantic_slot_prototype_{target_family}_{slot_name}",
+                (
+                    f"{anchor_key}:{predicate_family}"
+                    if slot_name.endswith("_source_family")
+                    else f"{anchor_key}:{pair_key}"
+                ),
+            )
+            for view_name in _LEGAL_IR_VIEW_PROTOTYPES:
+                view_key = view_name.replace(".", "_")
+                add(
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    f"{semantic_slot}||{view_name}",
+                )
+                add(
+                    (
+                        "family_semantic_slot_legal_ir_view_prototype_"
+                        f"{target_family}_{slot_name}_{view_key}"
+                    ),
+                    (
+                        f"{anchor_key}:{predicate_family}"
+                        if slot_name.endswith("_source_family")
+                        else f"{anchor_key}:{pair_key}"
+                    ),
                 )
 
     if role_set:
@@ -10540,11 +10760,19 @@ def _source_role_anchor_phrases(
                 "predicate_argument_feature",
                 f"predicate-argument:source-{role_name}-family:{anchor}:{predicate_family}",
             )
+            add(
+                "source_role_decompiler_plan",
+                f"decompiler-plan:source-{role_name}-family:{anchor}:{predicate_family}",
+            )
             for family_pair in source_family_pairs:
                 add(f"source_{role_name}_family_pair", family_pair)
                 add(
                     f"source_{role_name}_family_pair_anchor",
                     f"{anchor}:{family_pair}",
+                )
+                add(
+                    "source_role_decompiler_plan",
+                    f"decompiler-plan:source-{role_name}-family-pair:{anchor}:{family_pair}",
                 )
                 if role_name in {"subject", "action", "object"}:
                     add_legal_ir_view_role_family_pair_prototypes(
@@ -10572,6 +10800,10 @@ def _source_role_anchor_phrases(
                 "predicate_argument_feature",
                 f"predicate-argument:source-{role_name}-role:{anchor}:{predicate_role_label}",
             )
+            add(
+                "source_role_decompiler_plan",
+                f"decompiler-plan:source-{role_name}-role:{anchor}:{predicate_role_label}",
+            )
             if predicate_operator:
                 add(
                     f"predicate_argument_source_{role_name}_operator",
@@ -10584,6 +10816,13 @@ def _source_role_anchor_phrases(
                         f"source-{role_name}-operator:{anchor}:{predicate_family}:{predicate_operator}"
                     ),
                 )
+                add(
+                    "source_role_decompiler_plan",
+                    (
+                        "decompiler-plan:"
+                        f"source-{role_name}-operator:{anchor}:{predicate_family}:{predicate_operator}"
+                    ),
+                )
         if predicate_head and role_name in {"action", "object"}:
             add(f"source_{role_name}_predicate", f"{anchor}:{predicate_head}")
             add(
@@ -10593,6 +10832,10 @@ def _source_role_anchor_phrases(
             add(
                 "predicate_argument_feature",
                 f"predicate-argument:source-{role_name}-predicate:{anchor}:{predicate_head}",
+            )
+            add(
+                "source_role_decompiler_plan",
+                f"decompiler-plan:source-{role_name}-predicate:{anchor}:{predicate_head}",
             )
     if predicate_family and predicate_operator:
         add(

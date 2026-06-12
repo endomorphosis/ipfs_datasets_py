@@ -2468,6 +2468,38 @@ def test_supervisor_finalize_program_synthesis_batch_applies_queue_transitions()
     assert applied["failed_validation_count"] == 0
     assert supervisor_applied.queue.get(claimed_applied[0].todo_id).status == "completed"
 
+    supervisor_applied_failed = ModalTodoSupervisor(
+        policy=ModalOptimizerPolicy(program_synthesis_min_support=2)
+    )
+    supervisor_applied_failed.seed_program_synthesis_from_introspection(
+        samples,
+        autoencoder=AdaptiveModalAutoencoder(feature_family_logit_scale=1.0),
+    )
+    claimed_applied_failed = supervisor_applied_failed.claim_program_synthesis_batch(
+        worker_id="codex-worker",
+        max_items=1,
+    )
+    applied_failed = supervisor_applied_failed.finalize_program_synthesis_batch(
+        claimed_applied_failed,
+        codex_exec_status="succeeded",
+        patch_status="applied_to_main",
+        validation_report={
+            "main_apply_validation_status": "failed",
+            "status": "failed",
+        },
+    )
+    applied_failed_todo = supervisor_applied_failed.queue.get(
+        claimed_applied_failed[0].todo_id
+    )
+    assert applied_failed["updated"] is True
+    assert applied_failed["completed_count"] == 0
+    assert applied_failed["failed_validation_count"] == 1
+    assert applied_failed["reason"] == "main_apply_validation_failed"
+    assert applied_failed_todo.status == "failed_validation"
+    assert applied_failed_todo.metadata["failed_validation_reason"] == (
+        "main_apply_validation_failed"
+    )
+
     supervisor_no_delta = ModalTodoSupervisor(
         policy=ModalOptimizerPolicy(program_synthesis_min_support=2)
     )

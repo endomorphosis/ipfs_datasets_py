@@ -2421,6 +2421,34 @@ class ModalTodoSupervisor:
         }:
             for todo_id in todo_ids:
                 todo = self.queue.get(todo_id)
+                report = dict(validation_report or {})
+                validation_status = str(
+                    report.get("main_apply_validation_status")
+                    or report.get("validation_status")
+                    or report.get("status")
+                    or ""
+                ).strip().lower()
+                target_metric_status = str(
+                    report.get("target_metric_status") or ""
+                ).strip().lower()
+                if validation_status == "failed" or target_metric_status == "regressed":
+                    reason = (
+                        "target_metric_regression"
+                        if target_metric_status == "regressed"
+                        else "main_apply_validation_failed"
+                    )
+                    if todo is not None:
+                        _record_program_synthesis_failure_evidence(
+                            todo,
+                            reason=reason,
+                            validation_report=validation_report,
+                            patch_status=normalized_patch_status,
+                            codex_exec_status=normalized_exec_status,
+                        )
+                    failed_validation_count += int(
+                        self.queue.fail_validation(todo_id, reason=reason)
+                    )
+                    continue
                 validation_gate = None
                 if todo is not None:
                     validation_gate = _program_synthesis_validation_gate(
