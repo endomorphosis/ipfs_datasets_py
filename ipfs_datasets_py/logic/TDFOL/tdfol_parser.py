@@ -345,6 +345,21 @@ class TDFOLParser:
         TokenType.WEAK_UNTIL: TemporalOperator.WEAK_UNTIL,
         TokenType.RELEASE: TemporalOperator.RELEASE,
     }
+    _FORMULA_START_TOKENS = frozenset(
+        {
+            TokenType.IDENTIFIER,
+            TokenType.FORALL,
+            TokenType.EXISTS,
+            TokenType.OBLIGATION,
+            TokenType.PERMISSION,
+            TokenType.PROHIBITION,
+            TokenType.ALWAYS,
+            TokenType.EVENTUALLY,
+            TokenType.NEXT,
+            TokenType.NOT,
+            TokenType.LPAREN,
+        }
+    )
     _KNOWN_SORT_NAMES = frozenset(Sort.__members__)
     
     def __init__(self, tokens: List[Token]):
@@ -459,10 +474,10 @@ class TDFOLParser:
     def parse_forall(self) -> Formula:
         """Parse universal quantification."""
         self.expect(TokenType.FORALL)
-        variable = self.parse_variable()
+        variable = self.parse_variable(allow_formula_separator_colon=True)
         if self.current_token().type == TokenType.DOT:
             self.advance()
-        elif self.current_token().type != TokenType.LPAREN:
+        elif not self._token_can_start_formula(self.current_token()):
             token = self.current_token()
             raise ValueError(
                 f"Expected {TokenType.DOT} but got {token.type} at position {token.position}"
@@ -473,10 +488,10 @@ class TDFOLParser:
     def parse_exists(self) -> Formula:
         """Parse existential quantification."""
         self.expect(TokenType.EXISTS)
-        variable = self.parse_variable()
+        variable = self.parse_variable(allow_formula_separator_colon=True)
         if self.current_token().type == TokenType.DOT:
             self.advance()
-        elif self.current_token().type != TokenType.LPAREN:
+        elif not self._token_can_start_formula(self.current_token()):
             token = self.current_token()
             raise ValueError(
                 f"Expected {TokenType.DOT} but got {token.type} at position {token.position}"
@@ -526,6 +541,9 @@ class TDFOLParser:
 
     def _binary_temporal_operator(self, token: Token) -> Optional[TemporalOperator]:
         return self._BINARY_TEMPORAL_OPERATOR_MAP.get(token.type)
+
+    def _token_can_start_formula(self, token: Token) -> bool:
+        return token.type in self._FORMULA_START_TOKENS
     
     def parse_deontic(self, operator: DeonticOperator) -> Formula:
         """Parse deontic formula."""
@@ -695,7 +713,7 @@ class TDFOLParser:
                 return Predicate(term.to_string(), ())
         return Predicate("legacy_deontic_target", tuple(terms))
     
-    def parse_variable(self) -> Variable:
+    def parse_variable(self, *, allow_formula_separator_colon: bool = False) -> Variable:
         """Parse a variable."""
         name_token = self.expect(TokenType.IDENTIFIER)
         name = name_token.value
@@ -704,10 +722,20 @@ class TDFOLParser:
         sort = None
         if self.current_token().type == TokenType.COLON:
             self.advance()
+            if allow_formula_separator_colon and self._colon_introduces_formula():
+                return Variable(name, sort)
             sort_token = self.expect(TokenType.IDENTIFIER)
             sort = self.parse_sort(sort_token.value)
         
         return Variable(name, sort)
+
+    def _colon_introduces_formula(self) -> bool:
+        """Return True when a quantifier colon is a separator, not a sort."""
+
+        token = self.current_token()
+        if token.type != TokenType.IDENTIFIER:
+            return self._token_can_start_formula(token)
+        return self.peek_token().type == TokenType.LPAREN
     
     def parse_sort(self, sort_name: str) -> Optional[Sort]:
         """Parse a sort name."""

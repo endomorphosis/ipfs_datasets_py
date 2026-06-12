@@ -34,8 +34,19 @@ from typing import AbstractSet, Any, Dict, Iterable, Iterator, List, Mapping, Op
 def _ensure_sibling_ipfs_accelerate_py_on_path() -> None:
     """Make a sibling ipfs_accelerate_py checkout importable when it is not installed."""
 
+    candidates: list[Path] = []
     for parent in Path(__file__).resolve().parents:
-        candidate = parent / "ipfs_accelerate_py"
+        candidates.append(parent / "ipfs_accelerate_py")
+    try:
+        candidates.append(Path.home() / "ipfs_accelerate_py")
+    except (OSError, RuntimeError):
+        pass
+
+    seen: set[Path] = set()
+    for candidate in candidates:
+        if candidate in seen:
+            continue
+        seen.add(candidate)
         runtime_path = (
             candidate
             / "ipfs_accelerate_py"
@@ -86,6 +97,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder impor
     ModalAutoencoderTrainingState,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import (
+    FAILED_VALIDATION_RESCUE_MAX_ATTEMPTS,
     ModalOptimizerPolicy,
     ModalTodo,
     ModalTodoQueue,
@@ -3204,6 +3216,7 @@ def seed_failed_validation_rescue_todos_for_queue(
     queue_path: Path,
     policy: Optional[ModalOptimizerPolicy] = None,
     max_clusters: int = 8,
+    rescue_max_attempts: int = FAILED_VALIDATION_RESCUE_MAX_ATTEMPTS,
     program_synthesis_scope: Optional[str] = None,
     failure_reason: Optional[str] = None,
     original_action: Optional[str] = None,
@@ -3214,6 +3227,7 @@ def seed_failed_validation_rescue_todos_for_queue(
     report: Dict[str, Any] = {
         "deduped_count": 0,
         "max_clusters": max(0, int(max_clusters)),
+        "rescue_max_attempts": max(1, int(rescue_max_attempts)),
         "queue_exists": queue_path.exists(),
         "queue_path": str(queue_path),
         "seeded_count": 0,
@@ -3234,6 +3248,7 @@ def seed_failed_validation_rescue_todos_for_queue(
         before_status = supervisor.program_synthesis_status()
         rescue_todos = supervisor.seed_failed_validation_rescue_todos(
             max_clusters=max_clusters,
+            rescue_max_attempts=rescue_max_attempts,
             program_synthesis_scope=program_synthesis_scope,
             failure_reason=failure_reason,
             original_action=original_action,
@@ -3282,6 +3297,7 @@ def _paired_failed_validation_rescue_should_seed(
     mode: str,
     last_seed_at: float,
     interval_seconds: float,
+    backlog_threshold: int = 32,
     now: Optional[float] = None,
 ) -> bool:
     """Return whether paired supervision should recover failed validation work."""
@@ -3291,7 +3307,10 @@ def _paired_failed_validation_rescue_should_seed(
         return False
     if not bool(program_synthesis_health.get("queue_exists", False)):
         return False
-    if int(program_synthesis_health.get("program_synthesis_failed_validation", 0) or 0) < 1:
+    failed_validation_count = int(
+        program_synthesis_health.get("program_synthesis_failed_validation", 0) or 0
+    )
+    if failed_validation_count < 1:
         return False
     current_time = time.time() if now is None else float(now)
     interval_ready = (current_time - float(last_seed_at or 0.0)) >= max(
@@ -3306,6 +3325,11 @@ def _paired_failed_validation_rescue_should_seed(
         return pending == 0 and claimed == 0
     if rescue_mode == "starved":
         return pending == 0 and claimed == 0
+    if rescue_mode in {"auto", "eager"} and failed_validation_count >= max(
+        1,
+        int(backlog_threshold),
+    ):
+        return True
     waiting_workers = int(
         program_synthesis_health.get("codex_workers_waiting_for_todos_count", 0) or 0
     )
@@ -6704,38 +6728,31 @@ def apply_codex_worktree_changes_to_main(
     updated["target_metric_validation"] = target_metric_validation
     updated["metric_deltas"] = dict(target_metric_validation.get("metric_deltas", {}))
     target_metric_status = str(target_metric_validation.get("status") or "").strip().lower()
-    if target_metric_status not in {"passed", "skipped"}:
+    if target_metric_status == "regressed":
         rollback = _run_git_apply_stdin(source_repo_root, diff_content, "-R")
         updated["main_apply_rollback"] = {
             "exit_code": rollback.returncode,
             "stderr_tail": (rollback.stderr or "")[-500:],
             "stdout_tail": (rollback.stdout or "")[-500:],
         }
-        rollback_reason = (
-            "target-metric-regression"
-            if target_metric_status == "regressed"
-            else f"target-metric-{target_metric_status or 'unavailable'}"
-        )
+        rollback_reason = "target-metric-regression"
         patch_path = _save_codex_packet_diff_patch(
             updated,
             diff_content=diff_content,
             reason=rollback_reason,
         )
-        status_suffix = (
-            "target_metric_regression"
-            if target_metric_status == "regressed"
-            else f"target_metric_{target_metric_status or 'unavailable'}"
-        )
         updated["patch_path"] = str(patch_path) if patch_path is not None else None
         updated["patch_status"] = (
-            f"main_apply_{status_suffix}_rolled_back"
+            "main_apply_target_metric_regression_rolled_back"
             if rollback.returncode == 0
-            else f"main_apply_{status_suffix}_rollback_failed"
+            else "main_apply_target_metric_regression_rollback_failed"
         )
         updated["patch_error"] = rollback_reason.replace("-", " ")
         updated["main_apply_error"] = updated["patch_error"]
         _save_packet_if_possible(updated, packet_path)
         return updated
+    if target_metric_status not in {"passed", "skipped"}:
+        updated["main_apply_target_metric_gate"] = "diagnostic_unavailable"
 
     if str(commit_mode).strip().lower() == "commit_applied":
         try:
@@ -9248,12 +9265,14 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--paired-failed-validation-rescue-mode",
-        choices=("auto", "off"),
+        choices=("auto", "eager", "starved", "off"),
         default="auto",
         help=(
             "In paired accelerate-style supervision, seed rescue TODOs when "
-            "Codex workers are alive but the program-synthesis queue is drained "
-            "into failed_validation terminal items."
+            "Codex workers are alive but the program-synthesis queue has "
+            "failed_validation terminal items. auto seeds on idle capacity or "
+            "large backlogs, eager is more aggressive, and starved waits for a "
+            "drained queue."
         ),
     )
     parser.add_argument(
@@ -9267,6 +9286,16 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         type=float,
         default=30.0,
         help="Minimum seconds between paired supervisor failed-validation rescue passes.",
+    )
+    parser.add_argument(
+        "--paired-failed-validation-rescue-backlog-threshold",
+        type=int,
+        default=32,
+        help=(
+            "In auto/eager rescue mode, seed failed-validation rescue TODOs even "
+            "while ordinary program-synthesis work remains once the failed backlog "
+            "reaches this count."
+        ),
     )
     parser.add_argument(
         "--warm-start-run-id",
@@ -9484,6 +9513,17 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
             or 0.0
         ),
     )
+    failed_validation_rescue_backlog_threshold = max(
+        1,
+        int(
+            getattr(
+                args,
+                "paired_failed_validation_rescue_backlog_threshold",
+                32,
+            )
+            or 32
+        ),
+    )
 
     summary: Dict[str, Any] = {
         "autoencoder_command": list(paired["autoencoder_command"]),
@@ -9529,6 +9569,9 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
             failed_validation_rescue_max_clusters
         ),
         "paired_failed_validation_rescue_mode": failed_validation_rescue_mode,
+        "paired_failed_validation_rescue_backlog_threshold": (
+            failed_validation_rescue_backlog_threshold
+        ),
         "paired_failed_validation_rescue_seeded_total": 0,
         "paired_supervisor_backend": supervisor_backend,
         "paired_supervisor_features": {
@@ -10085,6 +10128,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                         mode=failed_validation_rescue_mode,
                         last_seed_at=last_failed_validation_rescue_at,
                         interval_seconds=failed_validation_rescue_interval_seconds,
+                        backlog_threshold=failed_validation_rescue_backlog_threshold,
                     )
                 ):
                     last_failed_validation_rescue_at = time.time()

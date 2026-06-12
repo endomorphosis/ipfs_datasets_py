@@ -47,6 +47,27 @@ _ROUTER_GUIDANCE_PROVER_ROUTE_HINTS = frozenset(
         "repair_multiview_legal_ir_prover_gate",
     }
 )
+_ROUTER_FORMULA_PRIORITY_KEYS = (
+    "formula_object",
+    "proof_formula_object",
+    "formula",
+    "proof_input",
+    "proof_formula",
+    "tdfol_formula",
+)
+_ROUTER_FORMULA_CONTAINER_KEYS = (
+    "proof_obligation",
+    "obligation",
+    "payload",
+    "router_payload",
+    "view",
+    "data",
+    "obligations",
+    "proof_obligations",
+    "records",
+    "formulas",
+    "items",
+)
 
 
 @dataclass
@@ -827,14 +848,7 @@ def _record_formula_object(record: Mapping[str, Any]) -> Any:
 
 
 def _record_formula_resolution(record: Mapping[str, Any]) -> tuple[Any, bool]:
-    for key in (
-        "formula_object",
-        "proof_formula_object",
-        "formula",
-        "proof_input",
-        "proof_formula",
-        "tdfol_formula",
-    ):
+    for key in _ROUTER_FORMULA_PRIORITY_KEYS + _ROUTER_FORMULA_CONTAINER_KEYS:
         if key not in record:
             continue
         value = record.get(key)
@@ -847,10 +861,42 @@ def _record_formula_resolution(record: Mapping[str, Any]) -> tuple[Any, bool]:
 
 
 def _coerce_router_formula(value: Any) -> tuple[Any, bool]:
+    return _coerce_router_formula_inner(value, seen=set())
+
+
+def _coerce_router_formula_inner(value: Any, *, seen: set[int]) -> tuple[Any, bool]:
     if value is None:
         return None, False
     if hasattr(value, "to_string") and hasattr(value, "get_predicates"):
         return value, False
+    if isinstance(value, Mapping):
+        object_id = id(value)
+        if object_id in seen:
+            return None, False
+        seen.add(object_id)
+        for key in _ROUTER_FORMULA_PRIORITY_KEYS + _ROUTER_FORMULA_CONTAINER_KEYS:
+            if key not in value:
+                continue
+            nested = value.get(key)
+            if nested is value:
+                continue
+            formula, used_sanitized = _coerce_router_formula_inner(
+                nested,
+                seen=seen,
+            )
+            if formula is not None:
+                return formula, used_sanitized
+        return None, False
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        object_id = id(value)
+        if object_id in seen:
+            return None, False
+        seen.add(object_id)
+        for item in value:
+            formula, used_sanitized = _coerce_router_formula_inner(item, seen=seen)
+            if formula is not None:
+                return formula, used_sanitized
+        return None, False
 
     text = str(value or "").strip()
     if text:
@@ -877,21 +923,49 @@ def _sanitize_router_formula_text(text: str) -> str:
 
 
 def _record_formula_text(record: Mapping[str, Any]) -> str:
-    for key in (
-        "formula",
-        "proof_input",
-        "proof_formula",
-        "tdfol_formula",
-    ):
+    for key in _ROUTER_FORMULA_PRIORITY_KEYS + _ROUTER_FORMULA_CONTAINER_KEYS:
         if key not in record:
             continue
-        value = record.get(key)
-        if value is None:
-            continue
-        text = str(value).strip()
+        text = _formula_text_from_value(record.get(key), seen=set())
         if text:
             return text
     return ""
+
+
+def _formula_text_from_value(value: Any, *, seen: set[int]) -> str:
+    if value is None:
+        return ""
+    if hasattr(value, "to_string") and hasattr(value, "get_predicates"):
+        try:
+            return str(value.to_string() or "").strip()
+        except Exception:
+            return ""
+    if isinstance(value, Mapping):
+        object_id = id(value)
+        if object_id in seen:
+            return ""
+        seen.add(object_id)
+        for key in _ROUTER_FORMULA_PRIORITY_KEYS + _ROUTER_FORMULA_CONTAINER_KEYS:
+            if key not in value:
+                continue
+            nested = value.get(key)
+            if nested is value:
+                continue
+            text = _formula_text_from_value(nested, seen=seen)
+            if text:
+                return text
+        return ""
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        object_id = id(value)
+        if object_id in seen:
+            return ""
+        seen.add(object_id)
+        for item in value:
+            text = _formula_text_from_value(item, seen=seen)
+            if text:
+                return text
+        return ""
+    return str(value or "").strip()
 
 
 def _record_source_id(record: Mapping[str, Any], index: int) -> str:

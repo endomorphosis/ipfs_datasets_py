@@ -109,6 +109,7 @@ DEFAULT_DETERMINISTIC_CAPABILITY_PROFILE_SLOTS_BY_FAMILY = {
     "instrument_lifecycle_validity": ("actor", "modality", "action"),
     "instrument_lifecycle_expiration": ("actor", "modality", "action"),
     "instrument_lifecycle": ("actor", "modality", "action"),
+    "purpose": ("actor", "modality", "action"),
 }
 
 
@@ -1736,6 +1737,15 @@ def build_decoder_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
 
     decoded = decode_legal_norm_ir(norm)
     phrase_rows = _decoder_phrase_rows_with_reference_provenance(norm, decoded.phrases)
+    grounded_phrase_slots = {
+        slot
+        for phrase in phrase_rows
+        if phrase.get("spans")
+        for slot in _decoder_phrase_slot_names(phrase)
+    }
+    missing_slots = [
+        slot for slot in decoded.missing_slots if slot not in grounded_phrase_slots
+    ]
     fixed_phrase_count = sum(1 for phrase in phrase_rows if phrase.get("fixed") is True)
     ungrounded_phrase_count = sum(
         1
@@ -1766,12 +1776,12 @@ def build_decoder_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
         "ungrounded_decoded_phrase_count": ungrounded_phrase_count,
         "grounded_decoded_phrase_rate": grounded_phrase_rate,
         "ungrounded_decoded_phrase_rate": ungrounded_phrase_rate,
-        "missing_slot_count": len(decoded.missing_slots),
-        "missing_slots": list(decoded.missing_slots),
+        "missing_slot_count": len(missing_slots),
+        "missing_slots": missing_slots,
         "parser_warnings": list(decoded.parser_warnings),
         "phrase_provenance": phrase_rows,
         "proof_ready": norm.proof_ready,
-        "requires_validation": bool(norm.decoder_requires_validation or decoded.missing_slots),
+        "requires_validation": bool(norm.decoder_requires_validation or missing_slots),
         "schema_version": norm.schema_version,
     }
 
@@ -1856,7 +1866,7 @@ def _decoder_semantic_modality_row(
         return {}
 
     modality = str(norm.modality or "").strip().upper()
-    if modality not in {"APP", "DEF", "EXEMPT", "LIFE"}:
+    if modality not in {"APP", "DEF", "EXEMPT", "LIFE", "PURP"}:
         return {}
 
     text = _decoder_semantic_modality_text(norm)
@@ -1890,6 +1900,8 @@ def _decoder_semantic_modality_text(norm: LegalNormIR) -> str:
         if lowered.startswith("expires "):
             return "expires"
         return "lifecycle"
+    if modality == "PURP":
+        return "purpose"
     return ""
 
 
@@ -4191,7 +4203,7 @@ def _hydrate_prompt_context_modal_slots(elements: Sequence[Dict[str, Any]]) -> N
     the same deterministic readiness path as ordinary parser elements.
     """
 
-    allowed = {"O", "P", "F", "DEF", "APP", "EXEMPT", "LIFE"}
+    allowed = {"O", "P", "F", "DEF", "APP", "EXEMPT", "LIFE", "PURP"}
     for element in elements:
         llm_repair = dict(element.get("llm_repair") or {})
         prompt_context = llm_repair.get("prompt_context") or {}
@@ -4772,6 +4784,8 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
 
     if norm.norm_type == "definition":
         return "definition"
+    if norm.norm_type == "purpose":
+        return "purpose"
     if norm.norm_type == "applicability":
         return "applicability_rule"
     if norm.norm_type == "exemption":

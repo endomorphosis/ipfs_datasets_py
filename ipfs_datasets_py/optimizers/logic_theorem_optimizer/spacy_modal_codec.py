@@ -95,6 +95,11 @@ _PURPOSE_SCOPE_PHRASES = (
     "for purposes of",
     "for the purposes of",
 )
+_PURPOSE_OBJECT_SCOPE_RE = re.compile(
+    r"\b(?:(?:general\s+)?purpose\s+of|for\s+the\s+purpose\s+of|"
+    r"for\s+purposes\s+of|statement\s+of\s+purpose)\b",
+    re.IGNORECASE,
+)
 _STATUTORY_SCOPE_REFERENCE_PHRASES = (
     "as provided by",
     "as provided in",
@@ -949,6 +954,10 @@ _NON_DEONTIC_EDITORIAL_PERMISSION_CONTEXT_RE = re.compile(
     r"transferred|statutory\s+notes)\b",
     re.IGNORECASE,
 )
+_LEGISLATIVE_HISTORY_ABBREVIATION_RE = re.compile(
+    r"(?:\b(?:act|acts)\b|\bch\.|\bpub\.\s*l\.|\bstat\.|\brelated\s+to\b)",
+    re.IGNORECASE,
+)
 _DEONTIC_SCOPE_PHRASES = (
     "authorization of appropriations",
     "authorized to be appropriated",
@@ -971,6 +980,9 @@ _DEONTIC_SCOPE_PHRASES = (
     "requirements for",
     "is liable for",
     "shall issue",
+    "court shall be held",
+    "shall be held at",
+    "shall make a report",
     "shall be entitled to",
     "shall be fined",
     "shall be imprisoned",
@@ -1004,7 +1016,12 @@ _DEONTIC_CORPORATE_POWERS_SCOPE_PHRASES = (
 )
 _DEONTIC_REPORT_DUTY_SCOPE_PHRASES = (
     "shall submit",
+    "shall make a report",
     "report shall be submitted",
+)
+_DEONTIC_COURT_VENUE_DUTY_SCOPE_PHRASES = (
+    "court shall be held",
+    "shall be held at",
 )
 _DEONTIC_CITATION_AUTHORITY_SCOPE_PHRASES = (
     "may be cited",
@@ -1234,6 +1251,16 @@ class SpaCyLegalEncoder:
                             )
                         ):
                             continue
+                        if (
+                            profile.family == ModalLogicFamily.CONDITIONAL_NORMATIVE
+                            and self._is_non_conditional_purpose_object_cue(
+                                normalized_text=normalized,
+                                cue=cue,
+                                start_char=match.start(),
+                                end_char=match.end(),
+                            )
+                        ):
+                            continue
                         if profile.family == ModalLogicFamily.TEMPORAL:
                             lowered_cue = cue.lower()
                             if lowered_cue in _NON_TEMPORAL_PROCEDURAL_AFTER_CUES:
@@ -1376,6 +1403,33 @@ class SpaCyLegalEncoder:
             return True
         return bool(_NON_DEONTIC_REQUIRED_CONTEXT_RE.search(context_window))
 
+    def _is_non_conditional_purpose_object_cue(
+        self,
+        *,
+        normalized_text: str,
+        cue: str,
+        start_char: int,
+        end_char: int,
+    ) -> bool:
+        """Do not treat research-purpose object phrases as legal conditions."""
+        if cue.lower() != "with respect to":
+            return False
+        leading = normalized_text[max(0, start_char - 220) : start_char].lower()
+        trailing = normalized_text[
+            end_char : min(len(normalized_text), end_char + 96)
+        ].lower()
+        if not _PURPOSE_OBJECT_SCOPE_RE.search(leading):
+            return False
+        if not (
+            re.search(
+                r"\b(?:conduct|support|research|training|dissemination|programs?)\b",
+                leading,
+            )
+            or re.search(r"\b(?:research|training|health|environment)\b", trailing)
+        ):
+            return False
+        return True
+
     def _is_non_deontic_editorial_permission_cue(
         self,
         *,
@@ -1393,14 +1447,10 @@ class SpaCyLegalEncoder:
         context_window = normalized_text[
             max(0, start_char - 160) : min(len(normalized_text), end_char + 96)
         ]
-        leading = normalized_text[max(0, start_char - 96) : start_char].lower()
+        leading = normalized_text[max(0, start_char - 240) : start_char].lower()
         has_section_history_prefix = bool(
             re.search(r"\bsection\s+[0-9a-z.\-\u2010-\u2015]+\b", leading)
-            and re.search(
-                r"\b(?:act|acts|ch\.|pub\.\s*l\.|stat\.|related\s+to)\b",
-                leading,
-                re.IGNORECASE,
-            )
+            and _LEGISLATIVE_HISTORY_ABBREVIATION_RE.search(leading)
         )
         if (
             not _NON_DEONTIC_EDITORIAL_PERMISSION_CONTEXT_RE.search(context_window)
@@ -1409,13 +1459,7 @@ class SpaCyLegalEncoder:
             return False
         if has_section_history_prefix:
             return True
-        return bool(
-            re.search(
-                r"\b(?:act|acts|pub\.\s*l\.|stat\.|related\s+to)\b",
-                context_window,
-                re.IGNORECASE,
-            )
-        )
+        return bool(_LEGISLATIVE_HISTORY_ABBREVIATION_RE.search(context_window))
 
     def _is_temporal_deadline_by_cue(
         self,
@@ -6280,6 +6324,9 @@ def _apply_competing_deontic_temporal_scope_phrase_reinforcement(
     has_deontic_report_duty_scope_phrase = bool(
         signals.get("has_deontic_report_duty_scope_phrase")
     )
+    has_deontic_court_venue_duty_scope_phrase = bool(
+        signals.get("has_deontic_court_venue_duty_scope_phrase")
+    )
     has_temporal_fiscal_scope_phrase = bool(
         signals.get("has_temporal_fiscal_scope_phrase")
     )
@@ -6299,7 +6346,18 @@ def _apply_competing_deontic_temporal_scope_phrase_reinforcement(
         deontic_count = float(counts.get(deontic_family, 0.0))
     if (
         has_deontic_report_duty_scope_phrase
-        and has_temporal_fiscal_scope_phrase
+        and (
+            has_temporal_fiscal_scope_phrase
+            or bool(signals.get("has_calendar_date_scope"))
+        )
+        and not has_temporal_deadline_cue
+        and temporal_count >= deontic_count
+    ):
+        counts[deontic_family] = temporal_count + 0.01
+        deontic_count = float(counts.get(deontic_family, 0.0))
+    if (
+        has_deontic_court_venue_duty_scope_phrase
+        and bool(signals.get("has_calendar_date_scope"))
         and not has_temporal_deadline_cue
         and temporal_count >= deontic_count
     ):
@@ -6753,6 +6811,9 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
     deontic_report_duty_scope_phrase = _contains_scope_phrase(
         normalized_text, _DEONTIC_REPORT_DUTY_SCOPE_PHRASES
     )
+    deontic_court_venue_duty_scope_phrase = _contains_scope_phrase(
+        normalized_text, _DEONTIC_COURT_VENUE_DUTY_SCOPE_PHRASES
+    )
     deontic_citation_authority_scope_phrase = _contains_scope_phrase(
         normalized_text, _DEONTIC_CITATION_AUTHORITY_SCOPE_PHRASES
     )
@@ -6908,6 +6969,9 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         ),
         "has_deontic_report_duty_scope_phrase": bool(
             deontic_report_duty_scope_phrase
+        ),
+        "has_deontic_court_venue_duty_scope_phrase": bool(
+            deontic_court_venue_duty_scope_phrase
         ),
         "has_deontic_citation_authority_scope_phrase": bool(
             deontic_citation_authority_scope_phrase

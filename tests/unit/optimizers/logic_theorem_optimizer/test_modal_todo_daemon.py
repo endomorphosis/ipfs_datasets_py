@@ -746,6 +746,48 @@ def test_supervisor_seeds_failed_validation_rescue_todos_from_cluster() -> None:
     assert supervisor.last_program_synthesis_deduped_count == 1
 
 
+def test_supervisor_shards_large_failed_validation_rescue_clusters() -> None:
+    metadata = {
+        "execution_target": "codex_program_repair",
+        "failure_reason": "main_apply_validation_failed_rolled_back",
+        "optimizer_role": "program_synthesis",
+        "optimizer_stage": "typed_program_synthesis",
+        "program_synthesis_scope": "ir_decompiler",
+        "target_component": "modal.ir_decompiler",
+    }
+    failed = [
+        ModalTodo(
+            todo_id=f"failed-{idx:03d}",
+            action="refine_typed_ir_or_decompiler_slots",
+            objective="repair typed slots",
+            sample_ids=[f"sample-{idx:03d}"],
+            citations=[],
+            loss_name="autoencoder_residual_cluster",
+            loss_value=1.0,
+            priority=100.0 - idx,
+            status="failed_validation",
+            metadata=dict(metadata),
+        )
+        for idx in range(130)
+    ]
+    supervisor = ModalTodoSupervisor(queue=ModalTodoQueue(failed))
+
+    seeded = supervisor.seed_failed_validation_rescue_todos(max_clusters=8)
+
+    assert len(seeded) == 3
+    covered = {
+        todo_id
+        for rescue in seeded
+        for todo_id in rescue.metadata["failed_todo_ids"]
+    }
+    assert covered == {todo.todo_id for todo in failed}
+    assert [rescue.metadata.get("rescue_cluster_shard") for rescue in seeded] == [
+        "part-1-of-3",
+        "part-2-of-3",
+        "part-3-of-3",
+    ]
+
+
 def test_supervisor_retries_terminal_failed_validation_rescue_todos() -> None:
     failed = ModalTodo(
         todo_id="failed-ir",
@@ -3613,6 +3655,20 @@ def test_paired_failed_validation_rescue_should_seed_starved_queue() -> None:
         interval_seconds=30.0,
         now=41.0,
     )
+    backlog_health = {
+        **busy_health,
+        "codex_workers_active_packet_count": 4,
+        "codex_workers_waiting_for_todos_count": 0,
+        "program_synthesis_failed_validation": 40,
+    }
+    assert runner._paired_failed_validation_rescue_should_seed(
+        backlog_health,
+        mode="auto",
+        last_seed_at=10.0,
+        interval_seconds=30.0,
+        backlog_threshold=32,
+        now=41.0,
+    )
     assert not runner._paired_failed_validation_rescue_should_seed(
         busy_health,
         mode="starved",
@@ -4737,7 +4793,7 @@ def test_codex_work_packet_apply_to_main_keeps_patch_when_baseline_validation_is
     )
 
 
-def test_codex_work_packet_apply_to_main_rolls_back_unavailable_target_metrics(
+def test_codex_work_packet_apply_to_main_keeps_unavailable_target_metrics_diagnostic(
     tmp_path,
     monkeypatch,
 ) -> None:
@@ -4776,12 +4832,15 @@ def test_codex_work_packet_apply_to_main_rolls_back_unavailable_target_metrics(
 
     updated = apply_codex_worktree_changes_to_main(packet, validation_commands=())
 
-    assert updated["patch_status"] == "main_apply_target_metric_unavailable_rolled_back"
-    assert updated["main_apply_status"] == "failed"
+    assert updated["patch_status"] == "applied_to_main"
+    assert updated["main_apply_status"] == "applied"
+    assert updated["main_apply_target_metric_gate"] == "diagnostic_unavailable"
     assert updated["target_metric_validation"]["status"] == "unavailable"
-    assert updated["main_apply_rollback"]["exit_code"] == 0
-    assert updated["patch_path"]
-    assert (repo / "README.md").read_text(encoding="utf-8") == "test repo\n"
+    assert "main_apply_rollback" not in updated
+    assert not updated["patch_path"]
+    assert (repo / "README.md").read_text(encoding="utf-8") == (
+        "test repo\nmetric unavailable edit\n"
+    )
 
     subprocess.run(
         ["git", "worktree", "remove", packet["worktree_path"], "--force"],

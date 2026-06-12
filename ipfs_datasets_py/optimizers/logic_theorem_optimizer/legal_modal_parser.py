@@ -49,6 +49,10 @@ _USCODE_EDITORIAL_NOTE_CONTEXT_RE = re.compile(
     r"transferred|statutory\s+notes)\b",
     re.IGNORECASE,
 )
+_USCODE_LEGISLATIVE_HISTORY_ABBREVIATION_RE = re.compile(
+    r"(?:\b(?:act|acts)\b|\bch\.|\bpub\.\s*l\.|\bstat\.|\brelated\s+to\b)",
+    re.IGNORECASE,
+)
 _USCODE_EDITORIAL_PERMISSION_CUES = frozenset({"allowed", "authorized", "permitted"})
 _USCODE_SECTION_REF_PREFIX_RE = r"(?:§{1,2}\s*|\bsec(?:tion)?s?\.?\s*)"
 _USCODE_OPTIONAL_SECTION_REF_PREFIX_RE = rf"(?:{_USCODE_SECTION_REF_PREFIX_RE})?"
@@ -374,6 +378,32 @@ _USCODE_DEFINITION_RESIDUAL_HINT_RE = re.compile(
     r"means\s+[^.;:]{1,120})\b",
     re.IGNORECASE,
 )
+_USCODE_PURPOSE_RESIDUAL_HINT_RE = re.compile(
+    r"\b(?:(?:general\s+)?purpose\s+of|for\s+the\s+purpose\s+of|"
+    r"for\s+purposes\s+of|statement\s+of\s+purpose)\b",
+    re.IGNORECASE,
+)
+_USCODE_PURPOSE_RESIDUAL_SIGNAL_TOKENS = frozenset(
+    {
+        "activities",
+        "activity",
+        "conduct",
+        "coordination",
+        "dissemination",
+        "education",
+        "health",
+        "information",
+        "institute",
+        "institutes",
+        "program",
+        "programs",
+        "purpose",
+        "purposes",
+        "research",
+        "support",
+        "training",
+    }
+)
 _USCODE_RESIDUAL_STATUTORY_FRAGMENT_MAX_TOKENS = 18
 _USCODE_RESIDUAL_STATUTORY_FRAGMENT_HINT_RE = re.compile(
     r"\b(?:ch|chapter|pub|stat)\b",
@@ -683,6 +713,16 @@ class LegalModalParser:
                             )
                         ):
                             continue
+                        if (
+                            profile.family == ModalLogicFamily.CONDITIONAL_NORMATIVE
+                            and self._is_non_conditional_purpose_object_cue(
+                                normalized_text=normalized,
+                                cue=cue,
+                                start_char=match.start(),
+                                end_char=match.end(),
+                            )
+                        ):
+                            continue
                         found.append(
                             ModalCueSpan(
                                 family=profile.family,
@@ -772,14 +812,10 @@ class LegalModalParser:
         context_window = normalized_text[
             max(0, start_char - 160) : min(len(normalized_text), end_char + 96)
         ]
-        leading = normalized_text[max(0, start_char - 96) : start_char].lower()
+        leading = normalized_text[max(0, start_char - 240) : start_char].lower()
         has_section_history_prefix = bool(
             re.search(r"\bsection\s+[0-9a-z.\-\u2010-\u2015]+\b", leading)
-            and re.search(
-                r"\b(?:act|acts|ch\.|pub\.\s*l\.|stat\.|related\s+to)\b",
-                leading,
-                re.IGNORECASE,
-            )
+            and _USCODE_LEGISLATIVE_HISTORY_ABBREVIATION_RE.search(leading)
         )
         if (
             not _USCODE_EDITORIAL_NOTE_CONTEXT_RE.search(context_window)
@@ -788,13 +824,34 @@ class LegalModalParser:
             return False
         if has_section_history_prefix:
             return True
-        return bool(
+        return bool(_USCODE_LEGISLATIVE_HISTORY_ABBREVIATION_RE.search(context_window))
+
+    def _is_non_conditional_purpose_object_cue(
+        self,
+        *,
+        normalized_text: str,
+        cue: str,
+        start_char: int,
+        end_char: int,
+    ) -> bool:
+        """Do not treat research-purpose object phrases as legal conditions."""
+        if cue.lower() != "with respect to":
+            return False
+        leading = normalized_text[max(0, start_char - 220) : start_char].lower()
+        trailing = normalized_text[
+            end_char : min(len(normalized_text), end_char + 96)
+        ].lower()
+        if not _USCODE_PURPOSE_RESIDUAL_HINT_RE.search(leading):
+            return False
+        if not (
             re.search(
-                r"\b(?:act|acts|pub\.\s*l\.|stat\.|related\s+to)\b",
-                context_window,
-                re.IGNORECASE,
+                r"\b(?:conduct|support|research|training|dissemination|programs?)\b",
+                leading,
             )
-        )
+            or re.search(r"\b(?:research|training|health|environment)\b", trailing)
+        ):
+            return False
+        return True
 
     def _should_ignore_non_temporal_temporal_cue(
         self,
@@ -1356,6 +1413,8 @@ class LegalModalParser:
             return True
         if self._is_uscode_definition_residual_candidate(normalized, tokens):
             return True
+        if self._is_uscode_purpose_residual_candidate(normalized, tokens):
+            return True
         if self._is_uscode_compact_frame_residual_candidate(normalized, tokens):
             return True
         is_short_heading_candidate = self._is_short_residual_heading_coverage_candidate(
@@ -1683,6 +1742,24 @@ class LegalModalParser:
         if "term" not in set(tokens) and "terms" not in set(tokens):
             return False
         return bool(_USCODE_DEFINITION_RESIDUAL_HINT_RE.search(lowered))
+
+    def _is_uscode_purpose_residual_candidate(
+        self,
+        normalized_segment_text: str,
+        tokens: Sequence[str],
+    ) -> bool:
+        token_count = len(tokens)
+        if token_count < 4 or token_count > _USCODE_RESIDUAL_SPAN_MAX_TOKENS:
+            return False
+        lowered = normalized_segment_text.lower()
+        if (
+            _USCODE_CODIFICATION_HINT_RE.search(lowered)
+            or _USCODE_EDITORIAL_STATUS_HINT_RE.search(lowered)
+        ):
+            return False
+        if not _USCODE_PURPOSE_RESIDUAL_HINT_RE.search(lowered):
+            return False
+        return bool(set(tokens) & _USCODE_PURPOSE_RESIDUAL_SIGNAL_TOKENS)
 
     def _residual_span_coverage_formula(
         self,

@@ -4631,6 +4631,58 @@ def test_spacy_codec_preserves_annual_report_duty_over_fiscal_temporal_scope() -
     assert shares["deontic"] > shares["temporal"]
 
 
+def test_spacy_codec_preserves_calendar_report_duty_over_temporal_notes() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="15",
+        section="183",
+        text=(
+            "Report of statistics The Secretary of Commerce shall make a report "
+            "to Congress on the first Monday of January in each year, containing "
+            "the information collected during the preceding year. Historical and "
+            "Revision Notes Based on title 15, U.S.C., 1940 ed., January 1, 1940."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+    shares = {item["family"]: float(item["share"]) for item in ranking}
+
+    assert signals["has_deontic_report_duty_scope_phrase"] is True
+    assert signals["has_calendar_date_scope"] is True
+    assert shares["deontic"] > shares["temporal"]
+    assert ranking[0]["family"] == "deontic"
+
+
+def test_spacy_codec_preserves_court_venue_duty_over_historical_dates() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="28",
+        section="111",
+        text=(
+            "New Mexico constitutes one judicial district. Court shall be held "
+            "at Albuquerque, Las Cruces, Santa Fe, and Silver City. Historical "
+            "and Revision Notes Based on title 28, U.S.C., 1940 ed., June 20, "
+            "1910, and June 25, 1948."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+    shares = {item["family"]: float(item["share"]) for item in ranking}
+
+    assert signals["has_deontic_court_venue_duty_scope_phrase"] is True
+    assert signals["has_calendar_date_scope"] is True
+    assert shares["deontic"] > shares["temporal"]
+    assert ranking[0]["family"] == "deontic"
+
+
 def test_spacy_codec_keeps_deadline_submit_clause_temporal() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
@@ -6249,6 +6301,40 @@ def test_spacy_compiler_replays_uscode_editorial_status_zero_formula_cases() -> 
         assert fallback.provenance.citation == citation
 
 
+def test_spacy_compiler_ignores_historical_authorized_cue_in_repealed_section_notes() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    text = (
+        "§§9881 to 9887. Repealed. Pub. L. 103-252, title I, "
+        "§§112(b)(1), (2)(B), May 18, 1994, 108 Stat. 640, 641 "
+        "Section 9881, Pub. L. 97-35, title VI, §670N, as added "
+        "Pub. L. 100-297, title II, §2503, Apr. 28, 1988, "
+        "102 Stat. 326, authorized Community Services Block Grant "
+        "program coordination."
+    )
+
+    modal_ir = compiler.compile(
+        encoder.encode(
+            text,
+            document_id="us-code-42-9881-to-9887-packet-000124",
+            citation="42 U.S.C. 9881 to 9887.",
+            source="us_code",
+        )
+    )
+
+    assert not any(
+        formula.operator.family == "deontic"
+        and str(formula.metadata.get("cue", "")).lower() == "authorized"
+        for formula in modal_ir.formulas
+    )
+    fallback_rules = {
+        str(formula.metadata.get("fallback_rule"))
+        for formula in modal_ir.formulas
+    }
+    assert "uscode_editorial_status_heading_v1" in fallback_rules
+    assert "uscode_residual_span_coverage_v1" in fallback_rules
+
+
 def test_spacy_compiler_replays_sec_prefixed_transferred_heading_zero_formula_cases() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()
@@ -7334,6 +7420,39 @@ def test_spacy_compiler_adds_long_heading_residual_span_coverage_after_section_h
     fallback = modal_ir.formulas[-1]
     assert fallback.operator.family == "frame"
     assert fallback.metadata["fallback_rule"] == "uscode_section_heading_v1"
+
+
+def test_spacy_compiler_adds_purpose_clause_residual_span_coverage_for_institute_sample() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    text = (
+        "\u00a7285 l . Purpose of Institute The general purpose of the National "
+        "Institute of Environmental Health Sciences (in this subpart referred "
+        "to as the \"Institute\") is the conduct and support of research, "
+        "training, health information dissemination, and other programs with "
+        "respect to factors in the environment that affect human health."
+    )
+
+    encoding = encoder.encode(
+        text,
+        document_id="us-code-42-285-purpose-residual",
+        citation="42 U.S.C. 285",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    assert not any(cue.cue.lower() == "with respect to" for cue in encoding.cues)
+    residual_text_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    }
+    assert any(
+        span.startswith("Purpose of Institute The general purpose")
+        for span in residual_text_spans
+    )
 
 
 def test_spacy_compiler_adds_compact_frame_heading_residual_span_coverage_for_packet_000037_samples() -> None:

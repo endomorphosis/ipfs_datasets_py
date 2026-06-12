@@ -269,6 +269,17 @@ _SECTION_STATUS_DETAIL_STOP_RE = re.compile(
     r"\b(?:editorial\s+notes?|codification|pub\.?\s*l\.?|section|sections?|see|prior\s+provisions?)\b",
     re.IGNORECASE,
 )
+_PURPOSE_RE = re.compile(
+    r"""
+    \b(?:the\s+)?
+    (?P<purpose_kind>general\s+purpose|purpose|mission|function|functions)
+    \s+of\s+(?P<subject>.+?)
+    \s+(?:is|are)\s+
+    (?P<action>.+?)
+    (?=[.;:]|$)
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
 _MONEY_RE = re.compile(
     r"(?:\$\s?\d[\d,]*(?:\.\d{2})?|\b\d[\d,]*\s+dollars?\b)",
     re.IGNORECASE,
@@ -1575,6 +1586,49 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
                         "action": list(penalty_match.span(1)),
                     },
                     extraction_method="deterministic_penalty_clause_v4",
+                )
+            )
+        ]
+
+    purpose_matches = list(_PURPOSE_RE.finditer(sentence))
+    purpose_match = purpose_matches[-1] if purpose_matches else None
+    if purpose_match:
+        subject_text = _clean_phrase(purpose_match.group("subject"))
+        subject_span = list(purpose_match.span("subject"))
+        nested_subject_markers = list(
+            re.finditer(
+                r"\b(?:general\s+purpose|purpose|mission|function|functions)\s+of\s+",
+                subject_text,
+                re.IGNORECASE,
+            )
+        )
+        if nested_subject_markers:
+            nested_start = nested_subject_markers[-1].end()
+            subject_text = _clean_phrase(
+                subject_text[nested_start:]
+            )
+            subject_span = [
+                subject_span[0] + nested_start,
+                subject_span[1],
+            ]
+        action_text = _clean_action(purpose_match.group("action"))
+        return [
+            _finalize_element(
+                _build_element(
+                    sentence=sentence,
+                    document_type=document_type,
+                    norm_type="purpose",
+                    deontic_operator="PURP",
+                    modal=purpose_match.group("purpose_kind"),
+                    subject_text=subject_text,
+                    action_text=action_text,
+                    support_span=purpose_match.span(),
+                    field_spans={
+                        "subject": subject_span,
+                        "modal": list(purpose_match.span("purpose_kind")),
+                        "action": list(purpose_match.span("action")),
+                    },
+                    extraction_method="deterministic_purpose_clause_v1",
                 )
             )
         ]
@@ -2983,6 +3037,8 @@ def classify_legal_frame(element: Dict[str, Any]) -> str:
         return "exemption"
     if norm_type == "instrument_lifecycle":
         return "instrument_lifecycle"
+    if norm_type == "purpose":
+        return "purpose"
     if norm_type == "definition":
         return "definition"
     if norm_type == "penalty" or "punishable" in text or "fine" in text or "penalty" in text:
@@ -3569,6 +3625,8 @@ def score_scaffold_quality(element: Dict[str, Any]) -> Dict[str, Any]:
     required_slots = ["deontic_operator", "subject", "action"]
     if norm_type == "definition":
         required_slots = ["defined_term", "definition_body"]
+    elif norm_type == "purpose":
+        required_slots = ["subject", "action"]
 
     filled_slots = 0
     for slot in required_slots:
@@ -3615,7 +3673,7 @@ def score_scaffold_quality(element: Dict[str, Any]) -> Dict[str, Any]:
     if (element.get("legal_frame") or {}).get("category") == "procedure" and element.get("temporal_constraints"):
         warnings.append("procedure_timeline_requires_event_order_review")
         score -= 0.04
-    if len(re.findall(r"[A-Za-z][A-Za-z0-9'’\-]*", action_text)) > 18:
+    if norm_type != "purpose" and len(re.findall(r"[A-Za-z][A-Za-z0-9'’\-]*", action_text)) > 18:
         warnings.append("overlong_action_span")
         score -= 0.10
     if norm_type == "definition" and not element.get("defined_term"):

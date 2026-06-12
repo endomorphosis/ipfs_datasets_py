@@ -91,6 +91,7 @@ class RoundTripMetrics:
     frame_ranking_loss: float = 0.0
     flogic_similarity_score: float = 0.0
     flogic_similarity_loss: float = 0.0
+    ontology_violation_count: float = 0.0
     symbolic_validity_penalty: float = 0.0
     extra_losses: Mapping[str, float] = field(default_factory=dict)
 
@@ -120,6 +121,7 @@ class RoundTripMetrics:
             frame_ranking_loss=_float_loss(losses, "frame_ranking_loss"),
             flogic_similarity_score=_float_loss(losses, "flogic_similarity_score"),
             flogic_similarity_loss=_float_loss(losses, "flogic_similarity_loss"),
+            ontology_violation_count=_float_loss(losses, "ontology_violation_count"),
             symbolic_validity_penalty=_float_loss(losses, "symbolic_validity_penalty"),
             extra_losses={
                 str(name): _coerce_float(value)
@@ -162,6 +164,7 @@ class RoundTripMetrics:
             "flogic_similarity_score": self.flogic_similarity_score,
             "frame_ranking_loss": self.frame_ranking_loss,
             "reconstruction_loss": self.reconstruction_loss,
+            "ontology_violation_count": self.ontology_violation_count,
             "symbolic_validity_penalty": self.symbolic_validity_penalty,
             "text_reconstruction_loss": self.text_reconstruction_loss,
         }

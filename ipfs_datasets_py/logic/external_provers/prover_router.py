@@ -238,6 +238,7 @@ class ProverRouter:
             try:
                 from ..TDFOL.tdfol_prover import TDFOLProver
                 self.provers['native'] = TDFOLProver()
+                self.provers['native_syntactic'] = SyntacticNativeFallbackProver()
             except Exception:
                 logger.debug(
                     "Native TDFOL prover unavailable; using syntactic fallback",
@@ -405,7 +406,7 @@ class ProverRouter:
                 return None
             seen.add(object_id)
             consumed_keys: set[str] = set()
-            priority_keys = (
+            formula_keys = (
                 "formula_object",
                 "proof_formula_object",
                 "formula",
@@ -413,7 +414,6 @@ class ProverRouter:
                 "proof_formula",
                 "tdfol_formula",
                 "value",
-                "text",
             )
             container_keys = (
                 "obligations",
@@ -422,7 +422,12 @@ class ProverRouter:
                 "formulas",
                 "items",
             )
-            for key in priority_keys + container_keys:
+            text_keys = (
+                "text",
+                "source_text",
+                "normalized_text",
+            )
+            for key in formula_keys + container_keys + text_keys:
                 if key not in formula:
                     continue
                 consumed_keys.add(key)

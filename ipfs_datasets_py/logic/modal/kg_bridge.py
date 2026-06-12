@@ -518,6 +518,10 @@ def _projection_alignment_metadata(
         projection_view_counts,
         relationship_count=relationship_count,
     )
+    graph_failure_penalty = 0.0 if node_count > 0 and relationship_count > 0 else 1.0
+    graph_projection_signal_count = _graph_projection_signal_count(
+        projection_view_counts
+    )
     metadata: Dict[str, Any] = {
         "canonical_legal_ir_projection_components": sorted(canonical_view_distribution),
         "canonical_legal_ir_projection_view_distribution": canonical_view_distribution,
@@ -553,12 +557,28 @@ def _projection_alignment_metadata(
         "frame_logic_unique_object_count": len(objects),
         "frame_logic_unique_predicate_count": len(predicates),
         "frame_logic_unique_subject_count": len(subjects),
+        "legal_ir_multiview_graph_failure_penalty": graph_failure_penalty,
+        "legal_ir_graph_projection_signal_count": graph_projection_signal_count,
+        "legal_ir_graph_projection_signal_ratio": (
+            graph_projection_signal_count / relationship_count
+            if relationship_count > 0
+            else 0.0
+        ),
     }
-    metadata.update(
-        _legal_view_coverage_metadata(
-            triples,
-            projection_view_counts=projection_view_counts,
-        )
+    legal_view_metadata = _legal_view_coverage_metadata(
+        triples,
+        projection_view_counts=projection_view_counts,
+    )
+    metadata.update(legal_view_metadata)
+    metadata["legal_ir_view_cross_entropy_loss"] = max(
+        0.0,
+        1.0
+        - float(
+            legal_view_metadata.get(
+                "frame_logic_projection_legal_view_coverage_ratio",
+                0.0,
+            )
+        ),
     )
     selected_frame = _selected_frame_from_triples(triples)
     if selected_frame:
@@ -649,6 +669,7 @@ def _canonical_component_distribution(
             "document_scope",
             "editorial_status",
             "frame_link",
+            "legal_ir_view_alignment",
             "ontology_term",
             "section_structure",
             "type_assertion",
@@ -667,6 +688,24 @@ def _canonical_component_distribution(
         component: count / total
         for component, count in sorted(distribution.items())
     }
+
+
+def _graph_projection_signal_count(
+    projection_view_counts: Mapping[str, int],
+) -> int:
+    """Count structural projection facts that directly exercise Neo4j shape."""
+
+    return sum(
+        int(projection_view_counts.get(view_name, 0) or 0)
+        for view_name in (
+            "citation_structure",
+            "document_scope",
+            "editorial_status",
+            "legal_ir_view_alignment",
+            "section_structure",
+            "type_assertion",
+        )
+    )
 
 
 def _selected_frame_from_triples(triples: Sequence[Mapping[str, str]]) -> str:

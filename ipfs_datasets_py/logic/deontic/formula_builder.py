@@ -114,6 +114,10 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     if operator == "DEF":
         subject = normalize_predicate_name(norm.actor or "DefinedTerm")
         return f"Definition({subject})"
+    if operator == "PURP" or norm.norm_type == "purpose":
+        subject = normalize_predicate_name(norm.actor or "Entity")
+        action = normalize_predicate_name(norm.action or "Purpose")
+        return f"Purpose({subject}, {action})"
     if operator == "APP":
         subject = normalize_predicate_name(norm.actor or "Scope")
         target = normalize_predicate_name(_applicability_target(norm.action or "Apply"))

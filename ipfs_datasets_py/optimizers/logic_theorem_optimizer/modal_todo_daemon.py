@@ -50,6 +50,7 @@ AUTOENCODER_EXECUTION_TARGET = "adaptive_autoencoder"
 PROGRAM_SYNTHESIS_EXECUTION_TARGET = "codex_program_repair"
 FAILED_VALIDATION_RESCUE_ACTION = "rescue_failed_program_synthesis_validation"
 FAILED_VALIDATION_RESCUE_MAX_ATTEMPTS = 4
+FAILED_VALIDATION_RESCUE_CLUSTER_CHUNK_SIZE = 64
 TODO_STATUS_RANK = {
     "pending": 0,
     "claimed": 1,
@@ -2082,6 +2083,7 @@ class ModalTodoSupervisor:
         self,
         *,
         max_clusters: int = 8,
+        rescue_max_attempts: int = FAILED_VALIDATION_RESCUE_MAX_ATTEMPTS,
         program_synthesis_scope: Optional[str] = None,
         failure_reason: Optional[str] = None,
         original_action: Optional[str] = None,
@@ -2108,7 +2110,7 @@ class ModalTodoSupervisor:
         rescue_todos = _refresh_failed_validation_rescue_retries(
             rescue_todos,
             self.queue.all(),
-            max_attempts=FAILED_VALIDATION_RESCUE_MAX_ATTEMPTS,
+            max_attempts=rescue_max_attempts,
         )
         if not rescue_todos:
             self.last_program_synthesis_deduped_count = raw_rescue_count
@@ -3224,19 +3226,37 @@ def _failed_validation_rescue_todos(
             item[0],
         ),
     )
-    return [
-        _failed_validation_rescue_todo(
-            scope=scope,
-            target_component=target_component,
-            original_action=action,
-            failure_reason=reason,
-            failed_todos=sorted(failed_todos, key=_todo_priority_key),
-            policy=policy,
+    rescue_todos: List[ModalTodo] = []
+    chunk_size = max(1, int(FAILED_VALIDATION_RESCUE_CLUSTER_CHUNK_SIZE))
+    for (scope, target_component, action, reason), failed_todos in ranked_clusters:
+        ordered_failed_todos = sorted(failed_todos, key=_todo_priority_key)
+        shard_count = max(
+            1,
+            (len(ordered_failed_todos) + chunk_size - 1) // chunk_size,
         )
-        for (scope, target_component, action, reason), failed_todos in ranked_clusters[
-            :limit
-        ]
-    ]
+        for chunk_index, start in enumerate(
+            range(0, len(ordered_failed_todos), chunk_size),
+            start=1,
+        ):
+            if len(rescue_todos) >= limit:
+                return rescue_todos
+            shard_key = (
+                f"part-{chunk_index}-of-{shard_count}"
+                if shard_count > 1
+                else ""
+            )
+            rescue_todos.append(
+                _failed_validation_rescue_todo(
+                    scope=scope,
+                    target_component=target_component,
+                    original_action=action,
+                    failure_reason=reason,
+                    failed_todos=ordered_failed_todos[start : start + chunk_size],
+                    policy=policy,
+                    shard_key=shard_key,
+                )
+            )
+    return rescue_todos
 
 
 def _failed_validation_rescue_todo(
@@ -3247,6 +3267,7 @@ def _failed_validation_rescue_todo(
     failure_reason: str,
     failed_todos: Sequence[ModalTodo],
     policy: ModalOptimizerPolicy,
+    shard_key: str = "",
 ) -> ModalTodo:
     failed_todo_ids = _unique_preserve_order(todo.todo_id for todo in failed_todos)
     sample_ids = _unique_preserve_order(
@@ -3284,6 +3305,7 @@ def _failed_validation_rescue_todo(
         target_component=target_component,
         original_action=original_action,
         failure_reason=failure_reason,
+        shard_key=shard_key,
     )
     count = len(failed_todos)
     metadata = {
@@ -3308,6 +3330,8 @@ def _failed_validation_rescue_todo(
         "target_metrics": target_metrics,
         "validation_commands": validation_commands,
     }
+    if str(shard_key or "").strip():
+        metadata["rescue_cluster_shard"] = str(shard_key).strip()
     if metric_payloads:
         metadata["metric_sample_payloads"] = metric_payloads
     priority = round(
@@ -3323,6 +3347,7 @@ def _failed_validation_rescue_todo(
             original_action=original_action,
             failure_reason=failure_reason,
             failed_todo_ids=failed_todo_ids,
+            shard_key=shard_key,
         ),
         action=FAILED_VALIDATION_RESCUE_ACTION,
         objective=(
@@ -3363,13 +3388,77 @@ def _refresh_failed_validation_rescue_retries(
         if not attempts:
             refreshed.append(rescue)
             continue
-        if any(todo.status in {"pending", "claimed"} for todo in attempts):
-            continue
         current_failed_ids = set(
             str(todo_id)
             for todo_id in _as_list(rescue.metadata.get("failed_todo_ids"))
             if str(todo_id)
         )
+        pending_attempts = [
+            todo for todo in attempts if todo.status in {"pending", "claimed"}
+        ]
+        if pending_attempts:
+            pending_covered_ids = {
+                todo_id
+                for attempt in pending_attempts
+                for todo_id in _failed_validation_rescue_covered_todo_ids(attempt)
+            }
+            uncovered_ids = current_failed_ids - pending_covered_ids
+            if not uncovered_ids:
+                continue
+            metadata = dict(rescue.metadata)
+            uncovered_list = sorted(uncovered_ids)
+            refresh_digest = hashlib.sha256(
+                json.dumps(
+                    {
+                        "root_signature": root_signature,
+                        "uncovered_failed_todo_ids": uncovered_list,
+                    },
+                    ensure_ascii=True,
+                    sort_keys=True,
+                ).encode("utf-8")
+            ).hexdigest()[:16]
+            refresh_signature = json.dumps(
+                {
+                    "root_rescue_signature": root_signature,
+                    "source": "failed_validation_rescue_refresh_v1",
+                    "uncovered_digest": refresh_digest,
+                },
+                ensure_ascii=True,
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+            metadata.update(
+                {
+                    "dedupe_signature": refresh_signature,
+                    "failed_todo_ids": uncovered_list,
+                    "failed_validation_count": len(uncovered_list),
+                    "previous_rescue_todo_ids": [
+                        todo.todo_id
+                        for todo in sorted(
+                            pending_attempts,
+                            key=lambda item: item.created_at,
+                        )
+                    ][:16],
+                    "rescue_refresh_reason": (
+                        "new_failed_validation_ids_while_rescue_pending"
+                    ),
+                    "root_rescue_signature": root_signature,
+                    "semantic_bundle_key": refresh_signature,
+                    "source": "failed_validation_rescue_refresh_v1",
+                }
+            )
+            rescue.metadata = metadata
+            rescue.todo_id = f"program-rescue-refresh-{refresh_digest}"
+            rescue.loss_value = float(len(uncovered_list))
+            rescue.objective = (
+                f"Rescue {len(uncovered_list)} failed validation patch"
+                f"{'' if len(uncovered_list) == 1 else 'es'} not covered by "
+                "the currently pending rescue attempt; inspect the failed evidence, "
+                "narrow or split the fix, and make validation pass without "
+                "regressing target metrics."
+            )
+            refreshed.append(rescue)
+            continue
         completed_attempts = [todo for todo in attempts if todo.status == "completed"]
         completed_covered_ids = {
             todo_id
@@ -3444,6 +3533,7 @@ def _failed_validation_rescue_root_signature(todo: ModalTodo) -> str:
         target_component=target_component,
         original_action=original_action,
         failure_reason=failure_reason,
+        shard_key=str(metadata.get("rescue_cluster_shard") or ""),
     )
 
 
@@ -3542,6 +3632,7 @@ def _failed_validation_rescue_signature(
     target_component: str,
     original_action: str,
     failure_reason: str,
+    shard_key: str = "",
 ) -> str:
     payload = {
         "failure_reason": failure_reason,
@@ -3550,6 +3641,8 @@ def _failed_validation_rescue_signature(
         "source": "failed_validation_rescue_v1",
         "target_component": target_component,
     }
+    if str(shard_key or "").strip():
+        payload["shard"] = str(shard_key).strip()
     return json.dumps(payload, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
 
 
@@ -3560,6 +3653,7 @@ def _failed_validation_rescue_todo_id(
     original_action: str,
     failure_reason: str,
     failed_todo_ids: Sequence[str],
+    shard_key: str = "",
 ) -> str:
     payload = {
         "cluster_signature": _failed_validation_rescue_signature(
@@ -3567,6 +3661,7 @@ def _failed_validation_rescue_todo_id(
             target_component=target_component,
             original_action=original_action,
             failure_reason=failure_reason,
+            shard_key=shard_key,
         ),
         "failed_todo_ids": sorted(
             str(todo_id) for todo_id in failed_todo_ids if str(todo_id)

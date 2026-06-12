@@ -1477,6 +1477,110 @@ def _guidance_feature_list(value: Any, *, limit: int) -> List[str]:
     return _unique_preserve_order(features)
 
 
+_GRAPH_PROJECTION_GUIDANCE_ROUTE = "repair_multiview_legal_ir_graph_projection"
+_NEO4J_COMPAT_TARGET_COMPONENT = "knowledge_graphs.neo4j_compat"
+
+
+def _compiler_guidance_route_features(
+    compiler_guidance: Mapping[str, Any],
+) -> List[str]:
+    """Extract route/target/frame evidence from compact compiler guidance."""
+    routes: List[str] = []
+    for routes_key in ("compiler_guidance_todo_routes", "todo_routes", "routes"):
+        raw_routes = compiler_guidance.get(routes_key)
+        if isinstance(raw_routes, Mapping):
+            routes.extend(str(route) for route in raw_routes if str(route or "").strip())
+        else:
+            routes.extend(_guidance_feature_list(raw_routes, limit=0))
+    for route_key in ("compiler_guidance_route", "route"):
+        route = str(compiler_guidance.get(route_key) or "").strip()
+        if route:
+            routes.append(route)
+
+    features = [f"compiler-guidance-route:{route}" for route in routes]
+    target_component = str(compiler_guidance.get("target_component") or "").strip()
+    raw_bundle = compiler_guidance.get("bundle")
+    if not isinstance(raw_bundle, Mapping):
+        raw_bundle = compiler_guidance.get("semantic_bundle")
+    if isinstance(raw_bundle, Mapping):
+        bundle_route = str(raw_bundle.get("route") or "").strip()
+        if bundle_route:
+            features.append(f"compiler-guidance-route:{bundle_route}")
+        if not target_component:
+            target_component = str(raw_bundle.get("target_component") or "").strip()
+    if target_component:
+        features.append(f"target-component:{target_component}")
+
+    for frame in _compiler_guidance_selected_frame_evidence(compiler_guidance):
+        features.append(f"selected_ontology_frame:{frame}")
+    raw_evidence = compiler_guidance.get("evidence")
+    if raw_evidence is None:
+        raw_evidence = compiler_guidance.get("evidences")
+    if isinstance(raw_evidence, Mapping):
+        evidence_items: Iterable[Any] = [raw_evidence]
+    elif isinstance(raw_evidence, Sequence) and not isinstance(raw_evidence, (str, bytes)):
+        evidence_items = raw_evidence
+    else:
+        evidence_items = []
+    for item in evidence_items:
+        if not isinstance(item, Mapping):
+            continue
+        route = str(item.get("compiler_guidance_route") or "").strip()
+        if route:
+            features.append(f"compiler-guidance-route:{route}")
+    return _unique_preserve_order(features)
+
+
+def _compiler_guidance_selected_frame_evidence(
+    compiler_guidance: Mapping[str, Any],
+) -> List[str]:
+    frames: List[str] = []
+    for key in (
+        "selected_frame",
+        "selected_frame_after",
+        "compiler_guidance_selected_frame_after",
+    ):
+        frame = str(compiler_guidance.get(key) or "").strip()
+        if frame:
+            frames.append(frame)
+
+    raw_evidence = compiler_guidance.get("evidence")
+    if raw_evidence is None:
+        raw_evidence = compiler_guidance.get("evidences")
+    if isinstance(raw_evidence, Mapping):
+        evidence_items: Iterable[Any] = [raw_evidence]
+    elif isinstance(raw_evidence, Sequence) and not isinstance(raw_evidence, (str, bytes)):
+        evidence_items = raw_evidence
+    else:
+        evidence_items = []
+    for item in evidence_items:
+        if not isinstance(item, Mapping):
+            continue
+        for key in ("selected_frame_after", "selected_frame", "selected_frame_before"):
+            frame = str(item.get(key) or "").strip()
+            if frame:
+                frames.append(frame)
+    return _unique_preserve_order(frames)
+
+
+def _compiler_guidance_implies_neo4j_projection_target(
+    compiler_guidance: Mapping[str, Any],
+) -> bool:
+    route_values = _compiler_guidance_route_features(compiler_guidance)
+    has_graph_projection_route = any(
+        _GRAPH_PROJECTION_GUIDANCE_ROUTE in value for value in route_values
+    )
+    if not has_graph_projection_route:
+        return False
+    target_component = str(compiler_guidance.get("target_component") or "").strip()
+    raw_bundle = compiler_guidance.get("bundle")
+    if not isinstance(raw_bundle, Mapping):
+        raw_bundle = compiler_guidance.get("semantic_bundle")
+    if not target_component and isinstance(raw_bundle, Mapping):
+        target_component = str(raw_bundle.get("target_component") or "").strip()
+    return not target_component or target_component == _NEO4J_COMPAT_TARGET_COMPONENT
+
+
 def _compiler_guidance_summary(
     compiler_guidance: Optional[Mapping[str, Any]],
 ) -> Dict[str, Any]:
@@ -1519,6 +1623,18 @@ def _compiler_guidance_summary(
                         "score": round(_safe_float(item.get("score")), 12),
                     }
                 )
+    for feature in _compiler_guidance_route_features(compiler_guidance):
+        if len(ranked_guidance_features) >= _COMPILER_GUIDANCE_MAX_FEATURES:
+            break
+        ranked_guidance_features.append(
+            {
+                "embedding_weight_norm": 0.0,
+                "family_logit_magnitude": 0.0,
+                "feature": feature,
+                "legal_ir_view_logit_magnitude": 0.0,
+                "score": 1.0,
+            }
+        )
     decoded_embedding = []
     raw_decoded_embedding = compiler_guidance.get("decoded_embedding")
     if isinstance(raw_decoded_embedding, Sequence) and not isinstance(
@@ -1546,6 +1662,14 @@ def _compiler_guidance_summary(
     legal_ir_target_view_distribution = _numeric_distribution(
         compiler_guidance.get("legal_ir_target_view_distribution")
     )
+    if (
+        _compiler_guidance_implies_neo4j_projection_target(compiler_guidance)
+        and _NEO4J_COMPAT_TARGET_COMPONENT not in legal_ir_target_view_distribution
+    ):
+        legal_ir_target_view_distribution = {
+            **legal_ir_target_view_distribution,
+            _NEO4J_COMPAT_TARGET_COMPONENT: 1.0,
+        }
     legal_ir_view_gap_distribution = _numeric_signed_mapping(
         compiler_guidance.get("legal_ir_view_gap_distribution")
     )
@@ -1568,6 +1692,14 @@ def _compiler_guidance_summary(
             )
             > 1.0e-12
         }
+    synthesis_focus = _guidance_feature_list(
+        compiler_guidance.get("synthesis_focus"),
+        limit=_COMPILER_GUIDANCE_MAX_FEATURES,
+    )
+    if _compiler_guidance_implies_neo4j_projection_target(compiler_guidance):
+        synthesis_focus = _unique_preserve_order(
+            [*synthesis_focus, _GRAPH_PROJECTION_GUIDANCE_ROUTE]
+        )[:_COMPILER_GUIDANCE_MAX_FEATURES]
     summary = {
         "decoded_embedding": decoded_embedding,
         "decoded_embedding_norm": round(decoded_embedding_norm, 12),
@@ -1582,10 +1714,7 @@ def _compiler_guidance_summary(
         "ranked_guidance_features": ranked_guidance_features,
         "sample_id": str(compiler_guidance.get("sample_id") or ""),
         "sample_memory_used": bool(compiler_guidance.get("sample_memory_used")),
-        "synthesis_focus": _guidance_feature_list(
-            compiler_guidance.get("synthesis_focus"),
-            limit=_COMPILER_GUIDANCE_MAX_FEATURES,
-        ),
+        "synthesis_focus": synthesis_focus,
     }
     return {
         key: value
@@ -4555,6 +4684,7 @@ def _source_role_anchor_values(
         cue_tokens.update(cue_sequence)
 
     cue_window: tuple[int, int] | None = None
+    cue_window_sequence: List[str] = []
     for cue_sequence in sorted(cue_sequences, key=len, reverse=True):
         width = len(cue_sequence)
         if width <= 0 or width > len(raw_tokens):
@@ -4565,18 +4695,33 @@ def _source_role_anchor_values(
             candidate = (start, start + width)
             if cue_window is None:
                 cue_window = candidate
+                cue_window_sequence = list(cue_sequence)
             else:
                 current_width = cue_window[1] - cue_window[0]
                 if width > current_width or (
                     width == current_width and start < cue_window[0]
                 ):
                     cue_window = candidate
+                    cue_window_sequence = list(cue_sequence)
             break
 
     cue_start = -1
     cue_end = -1
+    passive_cue_action_candidates: List[str] = []
     if cue_window is not None:
         cue_start, cue_end = cue_window
+        if _is_passive_by_cue_sequence(cue_window_sequence):
+            passive_cue_action_candidates = _source_anchor_role_tokens(
+                cue_window_sequence[:-1]
+            )
+        elif _is_passive_by_marker_context(
+            cue_window_sequence=cue_window_sequence,
+            raw_tokens=raw_tokens,
+            cue_start=cue_start,
+        ):
+            passive_cue_action_candidates = _source_anchor_role_tokens(
+                raw_tokens[cue_start - 1 : cue_start]
+            )
     else:
         cue_start = next(
             (
@@ -4676,6 +4821,19 @@ def _source_role_anchor_values(
             ],
             default_index=0,
         )
+    if passive_cue_action_candidates:
+        passive_action_anchor = _preferred_anchor_candidate(
+            passive_cue_action_candidates,
+            default_index=-1,
+        )
+        passive_object_anchor = _preferred_anchor_candidate(
+            predicate_candidates,
+            default_index=0,
+        )
+        if passive_action_anchor:
+            action_anchor = passive_action_anchor
+        if passive_object_anchor:
+            object_anchor = passive_object_anchor
     anchors = {
         "subject": subject_anchor,
         "action": action_anchor,
@@ -4695,6 +4853,30 @@ def _source_role_anchor_values(
         ),
     }
     return {name: value for name, value in anchors.items() if value}
+
+
+def _is_passive_by_cue_sequence(cue_sequence: Sequence[str]) -> bool:
+    """Return True when a matched cue consumes the passive action verb."""
+
+    return (
+        len(cue_sequence) >= 2
+        and cue_sequence[-1] == "by"
+        and any(token not in _SOURCE_ROLE_CONNECTIVE_TOKENS for token in cue_sequence[:-1])
+    )
+
+
+def _is_passive_by_marker_context(
+    *,
+    cue_window_sequence: Sequence[str],
+    raw_tokens: Sequence[str],
+    cue_start: int,
+) -> bool:
+    """Return True for a single ``by`` marker following a passive verb."""
+
+    if list(cue_window_sequence) != ["by"] or cue_start <= 0:
+        return False
+    previous_token = _clean_non_empty_string(raw_tokens[cue_start - 1]).lower()
+    return len(previous_token) > 4 and previous_token.endswith("ed")
 
 
 def _source_anchor_role_tokens(tokens: Sequence[str]) -> List[str]:
@@ -10727,11 +10909,11 @@ def _statutory_frame_support_text(
 ) -> str:
     """Return bounded source-coordinate text for U.S.C. frame-heading samples."""
     source_text = _clean_non_empty_string(modal_ir.normalized_text)
-    if not _is_uscode_compilation_frame_scaffold(source_text):
+    citation = _clean_non_empty_string(modal_ir.metadata.get("citation"))
+    if not _has_statutory_frame_support_source(source_text, citation=citation):
         return ""
 
     support_parts: List[str] = []
-    citation = _clean_non_empty_string(modal_ir.metadata.get("citation"))
     if citation:
         support_parts.append(citation)
         citation_map = _component_value_map(_citation_components(citation))
@@ -10812,6 +10994,33 @@ def _is_uscode_compilation_frame_scaffold(text: str) -> bool:
             lowered,
         )
     )
+
+
+def _has_statutory_frame_support_source(text: str, *, citation: str = "") -> bool:
+    """Return true for bounded U.S.C. scaffold or citation-backed digests."""
+    if _is_uscode_compilation_frame_scaffold(text):
+        return True
+    return _is_uscode_section_digest_frame_source(text, citation=citation)
+
+
+def _is_uscode_section_digest_frame_source(text: str, *, citation: str = "") -> bool:
+    normalized = _clean_non_empty_string(text)
+    if not normalized or len(_SLOT_FEATURE_TOKEN_RE.findall(normalized)) > 220:
+        return False
+    if _USC_CITATION_RE.match(_clean_non_empty_string(citation)) is None:
+        return False
+    lowered = normalized.lower()
+    has_section_marker = bool(
+        re.match(r"^\s*(?:§{1,2}|secs?\.?|sections?\b|\d+[a-z]?\b)", lowered)
+    )
+    has_heading_or_status = bool(
+        re.search(
+            r"\b(?:definition|definitions|purpose|repealed|amendments?|"
+            r"codification|effective\s+date|statutory\s+notes)\b",
+            lowered,
+        )
+    )
+    return has_section_marker and has_heading_or_status
 
 
 def _bounded_uscode_scaffold_text(text: str, *, max_tokens: int) -> str:

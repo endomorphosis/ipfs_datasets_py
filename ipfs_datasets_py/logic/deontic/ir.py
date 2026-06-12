@@ -869,7 +869,7 @@ def _enumeration_index(value: Any) -> Optional[int]:
     return roman_values.get(text.lower())
 
 
-_CANONICAL_MODALITY_OPERATORS = {"O", "P", "F", "DEF", "APP", "EXEMPT", "LIFE"}
+_CANONICAL_MODALITY_OPERATORS = {"O", "P", "F", "DEF", "APP", "EXEMPT", "LIFE", "PURP"}
 _MODALITY_NORM_TYPE_MAP = {
     "O": "obligation",
     "P": "permission",
@@ -878,6 +878,7 @@ _MODALITY_NORM_TYPE_MAP = {
     "APP": "applicability",
     "EXEMPT": "exemption",
     "LIFE": "instrument_lifecycle",
+    "PURP": "purpose",
 }
 _NORM_TYPE_MODALITY_MAP = {
     "obligation": "O",
@@ -897,6 +898,7 @@ _NORM_TYPE_MODALITY_MAP = {
     "applicability": "APP",
     "exemption": "EXEMPT",
     "instrument_lifecycle": "LIFE",
+    "purpose": "PURP",
 }
 _TEXTUAL_MODALITY_MAP = {
     "obligation": "O",
@@ -928,6 +930,11 @@ _TEXTUAL_MODALITY_MAP = {
     "offense": "F",
     "infraction": "F",
     "definition": "DEF",
+    "purpose": "PURP",
+    "general purpose": "PURP",
+    "mission": "PURP",
+    "function": "PURP",
+    "functions": "PURP",
     "applicability": "APP",
     "exemption": "EXEMPT",
     "instrument lifecycle": "LIFE",
@@ -1847,14 +1854,17 @@ def legal_norm_ir_phase8_required_slots(
 ) -> List[str]:
     """Return per-norm Phase 8 slots required for quality-gate completeness.
 
-    Phase 8 quality should always require core deontic slots (actor/modality/
-    action) and should require optional legal slots only when that norm
-    actually carries grounded data for them. This avoids treating absent
-    optional structures as reconstruction/provenance defects.
+    Phase 8 quality should require the core slots that the decoder actually
+    renders for the norm family. Ordinary O/P/F norms stay strict on
+    actor/modality/action. Definition and frame-style legal families express
+    their force through fixed connectors, so they require only their
+    source-grounded legal arguments. Optional legal slots are required only
+    when that norm carries grounded data for them.
     """
 
+    family_core_slots = _phase8_core_slots_for_norm(norm, core_slots)
     required: List[str] = []
-    for slot in core_slots:
+    for slot in family_core_slots:
         slot_name = str(slot or "").strip()
         if slot_name and slot_name not in required:
             required.append(slot_name)
@@ -1866,6 +1876,26 @@ def legal_norm_ir_phase8_required_slots(
         if not _ir_slot_value_is_empty(_phase8_slot_value(norm, slot_name)):
             required.append(slot_name)
     return required
+
+
+def _phase8_core_slots_for_norm(
+    norm: "LegalNormIR",
+    default_core_slots: Sequence[str],
+) -> Sequence[str]:
+    """Return decoder-native required core slots for a legal norm family."""
+
+    norm_type = str(getattr(norm, "norm_type", "") or "").strip().lower()
+    modality = str(getattr(norm, "modality", "") or "").strip().upper()
+
+    if norm_type == "definition" or modality == "DEF":
+        return ("actor",)
+    if norm_type in {"applicability", "exemption", "instrument_lifecycle"} or modality in {
+        "APP",
+        "EXEMPT",
+        "LIFE",
+    }:
+        return ("actor", "action")
+    return default_core_slots
 
 
 def legal_norm_ir_slot_provenance(
@@ -1952,7 +1982,7 @@ def _ir_slot_spans(norm: LegalNormIR, slot: str, value: Any) -> List[List[int]]:
     if (
         slot == "modality"
         and not spans
-        and norm.norm_type in {"definition", "applicability", "exemption", "instrument_lifecycle"}
+        and norm.norm_type in {"definition", "applicability", "exemption", "instrument_lifecycle", "purpose"}
     ):
         spans.extend(_normalized_span_records(norm.support_span.to_list()))
     spans.extend(_nested_slot_spans(value))

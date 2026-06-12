@@ -688,6 +688,7 @@ def _semantic_formula_family(action_predicate: str) -> str:
         return "ordinary_duty"
 
     ordered_prefixes: Sequence[tuple[Sequence[str], str]] = (
+        (("Purpose",), "purpose"),
         (("Repealed", "Omitted", "Reserved", "Transferred", "Lifecycle", "ValidFor", "ExpiresAfter"), "instrument_lifecycle"),
         (("DocumentChainCustody", "LogCustody", "RecordEvidenceTransfer", "InventoryEvidence", "InventoryExhibit", "Accession", "PreserveEvidence"), "evidence_custody_duty"),
         (("RecordMinutes", "SetAgenda", "CallRoll", "NoticeMeeting"), "meeting_governance_duty"),
@@ -1203,6 +1204,7 @@ def _target_parse_profile_shape_complete(
             "AppliesTo",
             "Definition",
             "ExemptFrom",
+            "Purpose",
             "ValidFor",
             "ExpiresAfter",
             "Lifecycle",

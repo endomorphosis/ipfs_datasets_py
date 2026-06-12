@@ -29,6 +29,25 @@ _RESERVED_TDFOL_TERM_PREFIX = re.compile(
     r"([\(\,]\s*)(" + "|".join(_RESERVED_TDFOL_TERM_PREFIXES) + r")(?=[A-Za-z0-9_])",
     flags=re.IGNORECASE,
 )
+_DEONTIC_EXPORT_OPERATOR_ALIASES = {
+    "obligation": "O",
+    "obligatory": "O",
+    "required": "O",
+    "permission": "P",
+    "permitted": "P",
+    "prohibition": "F",
+    "forbidden": "F",
+    "impermissible": "F",
+}
+_DEONTIC_EXPORT_OPERATOR_PATTERN = re.compile(
+    r"\b("
+    + "|".join(
+        re.escape(name)
+        for name in sorted(_DEONTIC_EXPORT_OPERATOR_ALIASES, key=len, reverse=True)
+    )
+    + r")\s*\(",
+    flags=re.IGNORECASE,
+)
 
 
 @dataclass
@@ -200,13 +219,20 @@ class FolTdfolBridgeAdapter:
         failed = max(0, attempted - proof_gate.valid_count)
         parse_failure_ratio = failed / attempted
         no_formula_loss = 0.0 if formula_records else 1.0
+        legal_ir_view_cross_entropy_loss = max(
+            0.0,
+            parse_failure_ratio + no_formula_loss,
+        )
         round_trip = RoundTripMetrics(
             cosine_similarity=max(0.0, 1.0 - no_formula_loss),
             cosine_loss=no_formula_loss,
+            cross_entropy_loss=legal_ir_view_cross_entropy_loss,
             symbolic_validity_penalty=parse_failure_ratio,
             extra_losses={
                 "tdfol_no_formula_loss": no_formula_loss,
                 "tdfol_parse_failure_ratio": parse_failure_ratio,
+                "legal_ir_view_cross_entropy_loss": legal_ir_view_cross_entropy_loss,
+                "source_copy_reward_hack_penalty": 0.0,
             },
         )
         status = "ok" if formula_records and proof_gate.compiles else "partial"
@@ -525,18 +551,8 @@ def _tdfol_compiler_guidance_signal(
             "surface_features": (),
         }
 
-    routes: set[str] = set()
-    for key in ("compiler_guidance_todo_routes", "top_todo_routes"):
-        value = compiler_guidance.get(key)
-        if isinstance(value, Mapping):
-            routes.update(
-                _normalized_guidance_token(route) for route in value.keys()
-            )
-        elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
-            routes.update(_normalized_guidance_token(route) for route in value)
-    single_route = _normalized_guidance_token(compiler_guidance.get("route"))
-    if single_route:
-        routes.add(single_route)
+    routes = _tdfol_guidance_routes(compiler_guidance)
+    target_components = _tdfol_guidance_target_components(compiler_guidance)
 
     semantic_terms = _guidance_tokens(
         compiler_guidance.get("compiler_guidance_semantic_overlay_terms")
@@ -554,12 +570,167 @@ def _tdfol_compiler_guidance_signal(
         or "may" in semantic_terms
         or any("polarity-template:" in feature for feature in surface_features)
     )
+    targeted_tdfol = (
+        not target_components
+        or "tdfol.prover" in target_components
+        or "tdfol" in target_components
+    )
     return {
-        "active": bool(has_route and conditioned_temporal and has_deontic_surface),
+        "active": bool(
+            has_route
+            and targeted_tdfol
+            and (
+                (conditioned_temporal and has_deontic_surface)
+                or _has_packet_tdfol_guidance_evidence(compiler_guidance)
+            )
+        ),
         "route": route if has_route else "",
         "semantic_terms": tuple(sorted(semantic_terms)),
         "surface_features": tuple(sorted(surface_features)),
     }
+
+
+def _tdfol_guidance_routes(compiler_guidance: Mapping[str, Any]) -> set[str]:
+    """Extract route hints from daemon and packet-shaped compiler guidance."""
+
+    routes: set[str] = set()
+
+    def add_route(value: Any) -> None:
+        route = _normalized_guidance_token(value)
+        if route:
+            routes.add(route)
+
+    route_keys = (
+        "route",
+        "action",
+        "original_action",
+        "compiler_guidance_route",
+    )
+
+    def collect(value: Any) -> None:
+        if isinstance(value, Mapping):
+            for route in value.keys():
+                add_route(route)
+            for nested_key in route_keys:
+                add_route(value.get(nested_key))
+            return
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            for item in value:
+                if isinstance(item, Mapping):
+                    for nested_key in route_keys:
+                        add_route(item.get(nested_key))
+                else:
+                    add_route(item)
+            return
+        add_route(value)
+
+    for key in (
+        "compiler_guidance_todo_routes",
+        "top_todo_routes",
+        "todo_routes",
+    ):
+        value = compiler_guidance.get(key)
+        if value is not None:
+            collect(value)
+
+    for key in route_keys:
+        add_route(compiler_guidance.get(key))
+
+    for bundle in _tdfol_guidance_bundles(compiler_guidance):
+        collect(bundle)
+        for nested_routes_key in (
+            "compiler_guidance_todo_routes",
+            "top_todo_routes",
+            "todo_routes",
+        ):
+            if nested_routes_key in bundle:
+                collect(bundle.get(nested_routes_key))
+
+    attribution = compiler_guidance.get("compiler_guidance_attribution")
+    if isinstance(attribution, Mapping):
+        collect(attribution.get("todo_routes"))
+
+    return routes
+
+
+def _tdfol_guidance_target_components(
+    compiler_guidance: Mapping[str, Any],
+) -> set[str]:
+    components: set[str] = set()
+
+    def collect(value: Any) -> None:
+        if isinstance(value, Mapping):
+            for key in (
+                "target_component",
+                "target_view",
+                "predicted_view",
+                "target",
+            ):
+                collect(value.get(key))
+            collect(value.get("legal_ir_underrepresented_components"))
+            return
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            for item in value:
+                collect(item)
+            return
+        component = _normalized_guidance_token(value)
+        if component:
+            components.add(component)
+
+    collect(compiler_guidance)
+    for bundle in _tdfol_guidance_bundles(compiler_guidance):
+        collect(bundle)
+    return components
+
+
+def _has_packet_tdfol_guidance_evidence(
+    compiler_guidance: Mapping[str, Any],
+) -> bool:
+    if _tdfol_guidance_target_components(compiler_guidance) & {
+        "tdfol.prover",
+        "tdfol",
+    }:
+        return True
+    if compiler_guidance.get("compiler_guidance_quality_gate") == "pass":
+        return True
+    return any(
+        str(bundle.get("program_synthesis_scope") or "").strip().lower()
+        == "tdfol"
+        for bundle in _tdfol_guidance_bundles(compiler_guidance)
+    )
+
+
+def _tdfol_guidance_bundles(
+    compiler_guidance: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    bundles: list[dict[str, Any]] = []
+    for key in (
+        "bundle",
+        "semantic_bundle_key",
+        "compiler_guidance_bundle",
+        "vector_bundle",
+    ):
+        bundle = _tdfol_guidance_mapping(compiler_guidance.get(key))
+        if bundle:
+            bundles.append(bundle)
+    return bundles
+
+
+def _tdfol_guidance_mapping(value: Any) -> dict[str, Any]:
+    if isinstance(value, Mapping):
+        return dict(value)
+    if not isinstance(value, str):
+        return {}
+    text = value.strip()
+    if not text or text[0] not in "{[":
+        return {}
+    try:
+        parsed = json.loads(text)
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return {}
+    if isinstance(parsed, Mapping):
+        return dict(parsed)
+    return {}
 
 
 def _tdfol_guidance_formula(
@@ -813,6 +984,7 @@ def _normalize_tdfol_export_formula(text: str) -> str:
     normalized = _strip_tdfol_line_comment(normalized)
     normalized = _unwrap_tdfol_json_export(normalized)
     normalized = _unwrap_tdfol_key_value_export(normalized)
+    normalized = _normalize_deontic_operator_aliases(normalized)
     normalized = re.sub(
         r"^\s*(?:formula|proof_formula|proof\s+formula|tdfol_formula|"
         r"tdfol\s+formula|proof_input|proof\s+input|proof_obligation|"
@@ -845,6 +1017,20 @@ def _normalize_tdfol_export_formula(text: str) -> str:
     normalized = re.sub(r",\s*(?=\))", "", normalized)
     normalized = re.sub(r"(:[0-9A-Za-z_-]+)\.(?=\s*[\),])", r"\1", normalized)
     return normalized.strip()
+
+
+def _normalize_deontic_operator_aliases(text: str) -> str:
+    """Convert named deontic exports (Obligation/Permitted/etc.) to O/P/F."""
+
+    normalized = str(text or "").strip()
+    if not normalized:
+        return normalized
+    return _DEONTIC_EXPORT_OPERATOR_PATTERN.sub(
+        lambda match: (
+            f"{_DEONTIC_EXPORT_OPERATOR_ALIASES[match.group(1).lower()]}("
+        ),
+        normalized,
+    )
 
 
 def _unwrap_tdfol_json_export(text: str) -> str:
