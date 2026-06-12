@@ -84,6 +84,7 @@ __all__ = [
     'decode_simulated_proof_layout',
     'proof_attestation_view_from_proof_dict',
     'refresh_proof_attestation',
+    'zkp_attestation_legal_ir_view_loss',
 ]
 
 _SIMULATION_WARNING = (
@@ -202,6 +203,7 @@ def __getattr__(name: str):
         "decode_simulated_proof_layout",
         "proof_attestation_view_from_proof_dict",
         "refresh_proof_attestation",
+        "zkp_attestation_legal_ir_view_loss",
     }:
         mod = importlib.import_module(f"{__name__}.circuits")
         if name in {
@@ -212,6 +214,7 @@ def __getattr__(name: str):
             "decode_simulated_proof_layout",
             "proof_attestation_view_from_proof_dict",
             "refresh_proof_attestation",
+            "zkp_attestation_legal_ir_view_loss",
         }:
             value = getattr(mod, name)
             globals()[name] = value

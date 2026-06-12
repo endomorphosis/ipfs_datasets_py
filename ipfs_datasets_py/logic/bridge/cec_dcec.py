@@ -408,6 +408,9 @@ def _deontic_norms_from_text(text: str, *, converter: Any) -> list[dict[str, Any
     statutory_statement_norm = _section_statutory_statement_norm_from_text(text)
     if statutory_statement_norm:
         return [statutory_statement_norm]
+    operational_norm = _section_operational_norm_from_text(text)
+    if operational_norm:
+        return [operational_norm]
 
     result = converter.convert(text)
     metadata = dict(getattr(result, "metadata", {}) or {})
@@ -874,7 +877,12 @@ def _dcec_state_kind(norm: Mapping[str, Any]) -> str:
     )
     if re.search(r"\b(?:the\s+term|terms?)\b.{0,80}\bmeans\b", corpus):
         return "definition"
-    if re.search(r"\b(?:does\s+not|do\s+not|shall\s+not)\s+apply\s+to\b", corpus):
+    if re.search(
+        r"\b(?:(?:does\s+not|do\s+not|shall\s+not)\s+apply\s+to|"
+        r"nothing\b.{0,80}\bshall\s+apply\s+to|"
+        r"nothing\b.{0,80}\bshall\s+be\s+construed\s+as)\b",
+        corpus,
+    ):
         return "exemption"
     if re.search(r"\b(?:applies|apply|shall\s+apply|is\s+applicable)\s+to\b", corpus):
         return "applicability"
@@ -1890,6 +1898,7 @@ def _frame_guidance_from_norm(
     logic_frame = _mapping(norm.get("logic_frame"))
     legal_frame = _mapping(norm.get("legal_frame"))
     prompt_context = _mapping(norm.get("prompt_context"))
+    generic_frame: dict[str, str] = {}
     for source, value in (
         ("norm.selected_frame", norm.get("selected_frame")),
         ("norm.logic_frame.selected_frame", logic_frame.get("selected_frame")),
@@ -1900,6 +1909,14 @@ def _frame_guidance_from_norm(
     ):
         canonical = _canonical_frame_symbol(value)
         if canonical:
+            if source == "norm.legal_frame.category" and _is_generic_frame_symbol(
+                canonical
+            ):
+                generic_frame = {
+                    "selected_frame": canonical,
+                    "selected_frame_source": source,
+                }
+                continue
             return {
                 "selected_frame": canonical,
                 "selected_frame_source": source,
@@ -1923,6 +1940,8 @@ def _frame_guidance_from_norm(
             "selected_frame": inferred,
             "selected_frame_source": "norm.text_inference",
         }
+    if generic_frame:
+        return generic_frame
     return {}
 
 
@@ -1983,6 +2002,24 @@ def _compiler_guidance_has_cec_bridge_route(guidance: Mapping[str, Any]) -> bool
                 return True
         elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
             if any(str(route).strip().lower() in route_tokens for route in value):
+                return True
+    for key in (
+        "bundle",
+        "compiler_guidance_bundle",
+        "semantic_bundle",
+        "vector_bundle",
+    ):
+        bundle = _mapping(guidance.get(key))
+        if not bundle:
+            continue
+        for bundle_key in (
+            "route",
+            "compiler_guidance_route",
+            "target_component",
+            "target",
+        ):
+            token = str(bundle.get(bundle_key) or "").strip().lower()
+            if token in route_tokens:
                 return True
     return False
 
@@ -2114,6 +2151,10 @@ def _canonical_frame_symbol(value: Any) -> str:
     return token[:96] if token else ""
 
 
+def _is_generic_frame_symbol(value: str) -> bool:
+    return str(value or "").strip().lower() in {"norm", "legal_norm"}
+
+
 def _infer_selected_frame_from_norm_text(norm: Mapping[str, Any]) -> str:
     corpus = " ".join(
         _first_text_value(
@@ -2159,6 +2200,115 @@ def _fallback_norm_from_conversion(*, result: Any, text: str) -> Optional[dict[s
         "source_id": f"dcec:fallback:{digest}",
         "extraction_method": "cec_dcec_fallback_v1",
     }
+
+
+def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
+    normalized_text = _normalize_legal_sample_text(text)
+    if not normalized_text or not _looks_like_us_code_section_text(normalized_text):
+        return None
+    substantive_text = _substantive_statutory_text(normalized_text)
+    if not substantive_text:
+        return None
+    operative_text = _strip_parenthetical_public_law_tail(substantive_text)
+    patterns = (
+        (
+            "obligated",
+            r"\b(?P<actor>nothing\s+in\s+this\s+chapter)\s+shall\s+"
+            r"(?P<action>be\s+construed\s+as\s+[^.;]+)",
+        ),
+        (
+            "obligated",
+            r"\b(?P<actor>nothing\s+in\s+this\s+chapter)\s+shall\s+"
+            r"(?P<action>apply\s+to\s+[^.;]+)",
+        ),
+        (
+            "obligated",
+            r"\b(?P<actor>[A-Za-z][^.;]{1,360}?)\s+shall\s+"
+            r"(?P<action>be\s+transferred\s+[^.;]+)",
+        ),
+        (
+            "obligated",
+            r"\b(?P<actor>[A-Za-z][^.;]{1,360}?)\s+shall\s+"
+            r"(?P<action>be\s+subject\s+to\s+[^.;]+)",
+        ),
+        (
+            "permitted",
+            r"\b(?P<actor>[A-Za-z][^.;]{1,360}?)\s+may\s+"
+            r"(?P<action>be\s+leased\s+only[^.;]*)",
+        ),
+        (
+            "permitted",
+            r"\b(?P<actor>[A-Za-z][^.;]{1,360}?)\s+may\s+"
+            r"(?P<action>be\s+used\s+only\s+[^.;]+)",
+        ),
+        (
+            "obligated",
+            r"\b(?P<actor>[A-Za-z][^.;]{1,360}?)\s+shall\s+"
+            r"(?P<action>be\s+available\s+[^.;]+)",
+        ),
+    )
+    lowered = operative_text.lower()
+    for modality, pattern in patterns:
+        match = re.search(pattern, lowered)
+        if not match:
+            continue
+        actor = _clean_operational_slot(match.group("actor"))
+        action = _clean_operational_slot(match.group("action"))
+        if not actor or not action:
+            continue
+        digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
+        return {
+            "actor": actor,
+            "action": action,
+            "modality": modality,
+            "norm_type": modality,
+            "source_id": f"dcec:section:{digest}",
+            "support_text": operative_text[:500],
+            "extraction_method": "cec_dcec_section_operational_v1",
+        }
+    return None
+
+
+def _looks_like_us_code_section_text(text: str) -> bool:
+    lowered = str(text or "").lower()
+    return bool(
+        re.search(r"\bu\.s\.c\.\b|\bunited\s+states\s+code\b", lowered)
+        or re.search(r"\bsec\.?\s+[0-9][0-9a-z.-]*\b", lowered)
+        or re.search(r"§+\s*[0-9][0-9a-z.-]*", lowered)
+    )
+
+
+def _strip_parenthetical_public_law_tail(text: str) -> str:
+    value = _normalize_legal_sample_text(text)
+    return re.split(
+        r"\s+\((?:Pub\.|Added|Aug\.|June|July|Dec\.|Mar\.|Oct\.)\b",
+        value,
+        maxsplit=1,
+        flags=re.IGNORECASE,
+    )[0].strip()
+
+
+def _clean_operational_slot(text: str) -> str:
+    value = _normalize_legal_sample_text(text)
+    value = re.sub(r"\bprovided,?\s+however\b.*$", "", value, flags=re.IGNORECASE)
+    value = re.sub(
+        r"^notwithstanding\b[^,]{1,240},\s*",
+        "",
+        value,
+        flags=re.IGNORECASE,
+    )
+    lands_match = re.search(r"\b(lands\s+which\b.+)$", value, flags=re.IGNORECASE)
+    if lands_match:
+        value = lands_match.group(1)
+    value = re.sub(
+        r"^(?:purposes?|construction|leasing requirements|transfer of amounts|"
+        r"use of recovered amounts|attorney general approval of title)\s+",
+        "",
+        value,
+        flags=re.IGNORECASE,
+    )
+    value = re.sub(r"^(?:the|a|an)\s+", "", value, flags=re.IGNORECASE)
+    return value.strip(" ,:-")
 
 
 def _section_editorial_norm_from_text(text: str) -> Optional[dict[str, Any]]:
@@ -2246,6 +2396,14 @@ def _substantive_statutory_text(text: str) -> str:
         flags=re.IGNORECASE,
     ).strip()
     value = re.sub(
+        r"^.*?\bFrom\s+the\s+U\.S\.\s+Government\s+Publishing\s+Office,\s+"
+        r"www\.gpo\.gov\s+",
+        "",
+        value,
+        count=1,
+        flags=re.IGNORECASE,
+    ).strip()
+    value = re.sub(
         r"^§+\s*[0-9A-Za-z.-]+\s*\.?\s*",
         "",
         value,
@@ -2258,14 +2416,15 @@ def _looks_like_statutory_purpose_statement(lowered_text: str) -> bool:
     if not lowered_text:
         return False
     return bool(
-        re.search(r"\b(?:purpose|policy)\b", lowered_text)
+        re.search(r"\b(?:purpose|purposes|policy)\b", lowered_text)
         and re.search(
             r"\b(?:general\s+purpose|purpose\s+of|"
+            r"purposes\s+of|"
             r"congressional\s+statement\s+of\s+purpose|"
             r"it\s+is\s+the\s+policy\s+of\s+the\s+congress)\b",
             lowered_text,
         )
-        and re.search(r"\b(?:is|to)\b", lowered_text)
+        and re.search(r"\b(?:is|are|to)\b", lowered_text)
     )
 
 
@@ -2276,6 +2435,9 @@ def _purpose_actor_from_text(text: str) -> str:
         lowered,
     ) or re.findall(
         r"\bpurpose\s+of\s+(?:the\s+)?(.+?)\s+is\b",
+        lowered,
+    ) or re.findall(
+        r"\bpurposes\s+of\s+(?:the\s+)?(.+?)\s+are\b",
         lowered,
     )
     if institute_matches:
@@ -2298,6 +2460,7 @@ def _purpose_action_from_text(text: str) -> str:
     lowered = value.lower()
     for pattern in (
         r"\bpurpose\s+of\s+(?:the\s+)?.+?\s+is\s+(?:to\s+)?([^.;]+)",
+        r"\bpurposes\s+of\s+(?:the\s+)?.+?\s+are\s+(?:to\s+)?([^.;]+)",
         r"\bit\s+is\s+the\s+policy\s+of\s+the\s+congress\s+and\s+the\s+purpose\s+of\s+this\s+chapter\s+to\s+([^.;]+)",
         r"\bpurpose\s+of\s+this\s+chapter\s+(?:is\s+)?to\s+([^.;]+)",
     ):
@@ -2311,13 +2474,17 @@ def _purpose_action_from_text(text: str) -> str:
 
 def _section_status_heading_matches(text: str, status: str) -> bool:
     escaped_status = re.escape(status)
+    section_id = r"[0-9][0-9a-z]*(?:[.-][0-9a-z]+)*"
+    section_range = (
+        rf"{section_id}(?:\s*(?:,|and|to|-)\s*{section_id})*"
+    )
     return bool(
         re.search(
-            rf"\bsecs?\.?\s*[0-9][0-9a-z.\-\s,]*(?:-|\.|:)\s*{escaped_status}\b",
+            rf"\bsecs?\.?\s*{section_range}\s*(?:-|\.|:)\s*{escaped_status}\b",
             text,
         )
         or re.search(
-            rf"§+\s*[0-9][0-9a-z.\-\s]*(?:to\s+[0-9a-z.\-\s]+)?\.?\s+{escaped_status}\b",
+            rf"§+\s*{section_range}\.?\s+{escaped_status}\b",
             text,
         )
     )

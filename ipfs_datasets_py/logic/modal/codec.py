@@ -1330,16 +1330,20 @@ _FRAME_ONTOLOGY_METADATA_OPAQUE_ID_HEX_RE = re.compile(
 )
 _FLOGIC_ONTOLOGY_GUIDANCE_ROUTES = frozenset(
     {
+        "audit_frame_logic_terms",
+        "improve_flogic_frame_alignment",
         "repair_flogic_ontology_constraints",
     }
 )
 _FLOGIC_ONTOLOGY_GUIDANCE_FEATURES = (
     "legal-ir-view:modal.frame_logic",
+    "flogic:statement_hint:audit_frame_logic_terms",
+    "flogic:statement_hint:improve_flogic_frame_alignment",
     "flogic:statement_hint:repair_flogic_ontology_constraints",
     "flogic:statement_hint:modal_frame_logic",
     "flogic:modal_family:frame",
 )
-_STATUTORY_FRAME_SUPPORT_FLOGIC_LOSS_SCALE = 0.45
+_STATUTORY_FRAME_SUPPORT_FLOGIC_LOSS_SCALE = 0.30
 
 
 @dataclass(frozen=True)
@@ -1492,7 +1496,12 @@ def _compiler_guidance_route_features(
             routes.extend(str(route) for route in raw_routes if str(route or "").strip())
         else:
             routes.extend(_guidance_feature_list(raw_routes, limit=0))
-    for route_key in ("compiler_guidance_route", "route"):
+    for route_key in (
+        "compiler_guidance_route",
+        "route",
+        "compiler_guidance_action",
+        "action",
+    ):
         route = str(compiler_guidance.get(route_key) or "").strip()
         if route:
             routes.append(route)
@@ -1503,7 +1512,9 @@ def _compiler_guidance_route_features(
     if not isinstance(raw_bundle, Mapping):
         raw_bundle = compiler_guidance.get("semantic_bundle")
     if isinstance(raw_bundle, Mapping):
-        bundle_route = str(raw_bundle.get("route") or "").strip()
+        bundle_route = str(
+            raw_bundle.get("route") or raw_bundle.get("action") or ""
+        ).strip()
         if bundle_route:
             features.append(f"compiler-guidance-route:{bundle_route}")
         if not target_component:
@@ -2335,6 +2346,7 @@ class DeterministicModalLogicCodec:
         )
         neo4j_graph_data = flogic_triples_to_graph_data(
             kg_triples,
+            augment_sparse_legal_projection=False,
             graph_id=f"{modal_ir.document_id}:flogic",
             metadata={
                 "modal_ir_document_id": modal_ir.document_id,
@@ -2408,6 +2420,7 @@ class DeterministicModalLogicCodec:
             )
             neo4j_graph_data = flogic_triples_to_graph_data(
                 kg_triples,
+                augment_sparse_legal_projection=False,
                 graph_id=f"{modal_ir.document_id}:flogic",
                 metadata={
                     "modal_ir_document_id": modal_ir.document_id,
@@ -3772,6 +3785,18 @@ def modal_ir_to_flogic_triples(
             modal_ir=modal_ir,
             formula=formula,
         )
+        for predicate_name, predicate_value in _formula_clause_shape_components(
+            formula=formula,
+            condition_count=len(resolved_conditions),
+            exception_count=len(resolved_exceptions),
+        ):
+            triples.append(
+                {
+                    "subject": formula.formula_id,
+                    "predicate": predicate_name,
+                    "object": predicate_value,
+                }
+            )
         for predicate_name, predicate_value in _modal_polarity_slots(
             formula,
             condition_values=resolved_conditions,
@@ -4088,6 +4113,18 @@ def modal_ir_to_flogic_triples(
                         "object": value,
                     }
                 )
+        for predicate, value in _decompiler_section_cue_components(
+            formula=formula,
+            source_id=source_id,
+            citation=citation,
+        ):
+            triples.append(
+                {
+                    "subject": formula.formula_id,
+                    "predicate": predicate,
+                    "object": value,
+                }
+            )
         for predicate, value in _provenance_alignment_components(
             source_id=source_id,
             citation=citation,
@@ -4372,6 +4409,86 @@ def _softmax(logits: Mapping[str, float]) -> Dict[str, float]:
 def _clean_non_empty_string(value: Any) -> str:
     cleaned = str(value or "").strip()
     return cleaned if cleaned else ""
+
+
+def _semantic_count_bucket(value: int) -> str:
+    count = max(0, int(value))
+    if count <= 1:
+        return str(count)
+    if count <= 3:
+        return "2_3"
+    if count <= 7:
+        return "4_7"
+    if count <= 15:
+        return "8_15"
+    if count <= 31:
+        return "16_31"
+    return "32_plus"
+
+
+def _formula_clause_shape_components(
+    *,
+    formula: ModalIRFormula,
+    condition_count: int,
+    exception_count: int,
+) -> List[tuple[str, str]]:
+    """Expose ordered clause/force shape in legal IR projections."""
+    family = _slot_safe_family_key(
+        _clean_non_empty_string(formula.operator.family).lower()
+    )
+    operator_symbol = (
+        _slot_safe_family_key(_clean_non_empty_string(formula.operator.symbol).lower())
+        or "none"
+    )
+    predicate_role = (
+        _slot_safe_family_key(_clean_non_empty_string(formula.predicate.role).lower())
+        or "none"
+    )
+    predicate_head = _predicate_head_anchor(formula) or "none"
+    argument_count = len(
+        [
+            value
+            for value in getattr(formula.predicate, "arguments", ()) or ()
+            if _clean_non_empty_string(value)
+        ]
+    )
+    arity_bucket = _semantic_count_bucket(argument_count)
+    condition_bucket = _semantic_count_bucket(condition_count)
+    exception_bucket = _semantic_count_bucket(exception_count)
+    shape = f"a{arity_bucket}:c{condition_bucket}:e{exception_bucket}"
+    role_shape = f"{predicate_role}:{shape}"
+    force_shape = f"{operator_symbol}:{role_shape}"
+    components: List[tuple[str, str]] = [
+        ("semantic_clause_shape", shape),
+        ("semantic_role_clause_shape", role_shape),
+        ("semantic_force_clause_shape", force_shape),
+        ("semantic_slot_pair", f"conditions:{condition_bucket}|exceptions:{exception_bucket}"),
+        ("semantic_slot_pair", f"operator:{operator_symbol}|exceptions:{exception_bucket}"),
+        ("semantic_slot_pair", f"predicate-head:{predicate_head}|conditions:{condition_bucket}"),
+        ("condition_count_bin", condition_bucket),
+        ("exception_count_bin", exception_bucket),
+    ]
+    if family:
+        components.extend(
+            [
+                ("semantic_family_clause_shape", f"{family}:{shape}"),
+                ("semantic_family_role_clause_shape", f"{family}:{role_shape}"),
+                ("semantic_family_force_clause_shape", f"{family}:{force_shape}"),
+                (
+                    "family_semantic_slot_pair",
+                    f"{family}:conditions:{condition_bucket}|exceptions:{exception_bucket}",
+                ),
+                (
+                    "family_semantic_slot_pair",
+                    f"{family}:operator:{operator_symbol}|exceptions:{exception_bucket}",
+                ),
+                (
+                    "family_semantic_slot_pair",
+                    f"{family}:predicate-head:{predicate_head}|conditions:{condition_bucket}",
+                ),
+            ]
+        )
+    return _unique_preserve_order_tuples(components)
 
 
 def _modal_operator_phrase(formula: ModalIRFormula) -> str:
@@ -7203,6 +7320,93 @@ def _citation_components(citation: str) -> List[tuple[str, str]]:
                 slot_prefix="citation_section",
             )
         )
+    return _unique_preserve_order_tuples(components)
+
+
+def _decompiler_section_cue_components(
+    *,
+    formula: ModalIRFormula,
+    source_id: str,
+    citation: str,
+) -> List[tuple[str, str]]:
+    """Mirror decompiler section-cue slots in direct F-logic projection."""
+
+    family = _slot_safe_family_key(
+        _clean_non_empty_string(formula.operator.family).lower()
+    )
+    role = _slot_safe_family_key(
+        _clean_non_empty_string(formula.predicate.role or "clause").lower()
+    ) or "clause"
+    if not family:
+        return []
+    source_system = _slot_safe_family_key(
+        _clean_non_empty_string(formula.operator.system).lower()
+    )
+    source_operator = _clean_non_empty_string(formula.operator.symbol)
+    source_operator_key = _modal_operator_feature_key(source_operator)
+    components: List[tuple[str, str]] = []
+    seen_coordinates: set[tuple[str, str, str, str]] = set()
+
+    def add(predicate: str, value: str) -> None:
+        cleaned_predicate = _clean_non_empty_string(predicate)
+        cleaned_value = _clean_non_empty_string(value)
+        if cleaned_predicate and cleaned_value:
+            components.append((cleaned_predicate, cleaned_value))
+
+    def add_from_map(prefix: str, component_map: Mapping[str, str]) -> None:
+        title = _clean_non_empty_string(component_map.get(f"{prefix}_title"))
+        section = _clean_non_empty_string(
+            component_map.get(f"{prefix}_section_normalized")
+            or component_map.get(f"{prefix}_section")
+        )
+        title_section_key = _clean_non_empty_string(
+            component_map.get(f"{prefix}_title_section_key_normalized")
+            or component_map.get(f"{prefix}_title_section_key")
+        )
+        if not title_section_key and title and section:
+            title_section_key = _title_section_coordinate(title, section).lower()
+        if not title and not section and not title_section_key:
+            return
+        coordinate = (prefix, title, section, title_section_key)
+        if coordinate in seen_coordinates:
+            return
+        seen_coordinates.add(coordinate)
+        source_label = "citation" if prefix == "citation" else "source_id"
+        if title:
+            add("section_token", f"{title}:title")
+            add("section_cue", f"{title}:title:{family}")
+            add("decompiler_plan_section_cue", f"{title}:title:{family}")
+            add("decompiler_plan_section_role", f"{title}:title:{role}")
+            add(f"{source_label}_section_cue", f"{title}:title:{family}")
+        if section:
+            add("section_token", f"{section}:section")
+            add("section_cue", f"{section}:section:{family}")
+            add("decompiler_plan_section_cue", f"{section}:section:{family}")
+            add("decompiler_plan_section_role", f"{section}:section:{role}")
+            add(f"{source_label}_section_cue", f"{section}:section:{family}")
+            if source_system and source_operator_key:
+                add(
+                    "section_cue_operator",
+                    f"{section}:{family}:{source_system}:{source_operator_key}",
+                )
+            elif source_operator:
+                add("section_cue_operator", f"{section}:{family}:{source_operator}")
+        if title_section_key:
+            add("section_title_coordinate", title_section_key)
+            add("section_cue", f"{title_section_key}:coordinate:{family}")
+            add(
+                "decompiler_plan_section_cue",
+                f"{title_section_key}:coordinate:{family}",
+            )
+            add(
+                f"{source_label}_section_cue",
+                f"{title_section_key}:coordinate:{family}",
+            )
+
+    if citation:
+        add_from_map("citation", _component_value_map(_citation_components(citation)))
+    if source_id:
+        add_from_map("source_id", _component_value_map(_source_id_components(source_id)))
     return _unique_preserve_order_tuples(components)
 
 
@@ -10600,6 +10804,7 @@ def _is_semantic_support_slot(slot: str) -> bool:
         "semantic_ir_reconstruction_anchor",
         "typed_ir_reconstruction",
         "typed_ir_semantic_support",
+        "typed_ir_cross_family_semantic_support",
         "role",
     }:
         return True
@@ -10659,6 +10864,7 @@ def _semantic_support_token_count(decoded: DecodedModalText) -> int:
         "editorial_status_catchline",
         "editorial_status_clause",
         "typed_ir_semantic_support",
+        "typed_ir_cross_family_semantic_support",
         "source_subject_anchor",
         "source_action_anchor",
         "source_object_anchor",
@@ -10866,7 +11072,8 @@ def _structural_decoded_text(
     )
     typed_ir_values = [
         *slot_text_map.get("typed_ir_reconstruction", ()),
-        *slot_text_map.get("semantic_ir_reconstruction_anchor", ()),
+        *slot_text_map.get("typed_ir_semantic_support", ()),
+        *slot_text_map.get("typed_ir_cross_family_semantic_support", ()),
     ]
     typed_ir_rendered = _clean_non_empty_string(
         " ".join(_unique_preserve_order(typed_ir_values))
@@ -11026,6 +11233,18 @@ def _is_uscode_section_digest_frame_source(text: str, *, citation: str = "") -> 
 def _bounded_uscode_scaffold_text(text: str, *, max_tokens: int) -> str:
     normalized = _clean_non_empty_string(
         _USCODE_GPO_ATTRIBUTION_RE.sub("", _clean_non_empty_string(text))
+    )
+    if not normalized:
+        return ""
+    normalized = _clean_non_empty_string(
+        re.sub(
+            r"\b(?:Historical and Revision Notes|Editorial Notes|Statutory Notes "
+            r"and Related Subsidiaries|References in Text|Prior Provisions|"
+            r"Amendments)\b.*$",
+            "",
+            normalized,
+            flags=re.IGNORECASE,
+        )
     )
     if not normalized:
         return ""
@@ -11560,13 +11779,74 @@ def _compiler_guidance_frame_ontology_feature_values(
     ]
     synthesis_focus = metadata.get("compiler_guidance_synthesis_focus")
     values.append(synthesis_focus)
-    focus_terms = {
-        _clean_non_empty_string(term).lower()
-        for term in _guidance_feature_list(synthesis_focus, limit=0)
-    }
-    if focus_terms & _FLOGIC_ONTOLOGY_GUIDANCE_ROUTES:
+    frame_logic_routes = _compiler_guidance_frame_logic_routes(metadata)
+    if frame_logic_routes:
         values.extend(_FLOGIC_ONTOLOGY_GUIDANCE_FEATURES)
+        values.extend(
+            f"flogic:statement_hint:{route}"
+            for route in sorted(frame_logic_routes)
+        )
     return values
+
+
+def _compiler_guidance_frame_logic_routes(metadata: Mapping[str, Any]) -> set[str]:
+    """Return frame-logic synthesis routes from compact guidance metadata."""
+    if not isinstance(metadata, Mapping):
+        return set()
+
+    candidates: List[Any] = [
+        metadata.get("compiler_guidance_synthesis_focus"),
+        metadata.get("compiler_guidance_ranked_features"),
+        metadata.get("compiler_guidance_feature_groups"),
+    ]
+    candidates.extend(_compiler_guidance_route_features(metadata))
+    features = _compiler_guidance_nested_feature_strings(candidates)
+    routes: set[str] = set()
+    for feature in features:
+        normalized = _clean_non_empty_string(feature).lower()
+        if normalized.startswith("compiler-guidance-route:"):
+            normalized = normalized.split(":", 1)[1].strip()
+        if normalized in _FLOGIC_ONTOLOGY_GUIDANCE_ROUTES:
+            routes.add(normalized)
+    return routes
+
+
+def _compiler_guidance_nested_feature_strings(values: Any) -> List[str]:
+    features: List[str] = []
+    _collect_compiler_guidance_nested_features(values, features, depth=0)
+    return _unique_preserve_order(features)
+
+
+def _collect_compiler_guidance_nested_features(
+    values: Any,
+    features: List[str],
+    *,
+    depth: int,
+) -> None:
+    if values is None or depth >= _FRAME_ONTOLOGY_METADATA_MAX_DEPTH:
+        return
+    if isinstance(values, Mapping):
+        feature = _guidance_feature_value(values)
+        if feature:
+            features.append(feature)
+        for nested in values.values():
+            _collect_compiler_guidance_nested_features(
+                nested,
+                features,
+                depth=depth + 1,
+            )
+        return
+    if isinstance(values, Sequence) and not isinstance(values, (str, bytes)):
+        for nested in values:
+            _collect_compiler_guidance_nested_features(
+                nested,
+                features,
+                depth=depth + 1,
+            )
+        return
+    feature = _guidance_feature_value(values)
+    if feature:
+        features.append(feature)
 
 
 def _frame_ontology_audit_terms(

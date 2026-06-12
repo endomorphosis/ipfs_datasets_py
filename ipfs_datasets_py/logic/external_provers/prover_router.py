@@ -268,7 +268,8 @@ class ProverRouter:
         """Public compatibility wrapper for automatic prover selection."""
         try:
             return self._select_prover_for_formula(formula)
-        except RuntimeError:
+        except Exception:
+            logger.debug("Could not select prover for formula", exc_info=True)
             return None
 
     def route(self, formula, **kwargs) -> RouterProofResult:
@@ -504,18 +505,24 @@ class ProverRouter:
         Returns:
             Name of selected prover
         """
-        # Analyze formula to get recommendations
-        analysis = self.analyzer.analyze(formula)
-        
-        logger.debug(f"Formula analysis: type={analysis.formula_type.value}, "
-                    f"complexity={analysis.complexity.value}, score={analysis.complexity_score:.1f}")
-        logger.debug(f"Recommended provers: {analysis.recommended_provers}")
-        
-        # Try recommended provers in order
-        for prover_name in analysis.recommended_provers:
-            if prover_name in self.provers:
-                logger.info(f"Selected {prover_name} based on formula analysis")
-                return prover_name
+        try:
+            # Analyze formula to get recommendations
+            analysis = self.analyzer.analyze(formula)
+
+            logger.debug(f"Formula analysis: type={analysis.formula_type.value}, "
+                        f"complexity={analysis.complexity.value}, score={analysis.complexity_score:.1f}")
+            logger.debug(f"Recommended provers: {analysis.recommended_provers}")
+
+            # Try recommended provers in order
+            for prover_name in analysis.recommended_provers:
+                if prover_name in self.provers:
+                    logger.info(f"Selected {prover_name} based on formula analysis")
+                    return prover_name
+        except Exception:
+            logger.debug(
+                "Formula analysis failed during prover selection; using fallback order",
+                exc_info=True,
+            )
         
         # Fallback: prefer Z3 for FOL
         if 'z3' in self.provers:

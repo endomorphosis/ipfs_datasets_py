@@ -38,6 +38,7 @@ from .driver import IPFSDriver, GraphDatabase, create_driver
 from .session import IPFSSession, IPFSTransaction
 from .result import Result, Record
 from .types import Node, Relationship, Path, GraphObject
+from .legal_ir_projection import augment_legal_ir_projection_triples
 
 __all__ = [
     # Main driver interface (Neo4j compatible)
@@ -58,6 +59,7 @@ __all__ = [
     "Relationship",
     "Path",
     "GraphObject",
+    "augment_legal_ir_projection_triples",
 ]
 
 # Version info

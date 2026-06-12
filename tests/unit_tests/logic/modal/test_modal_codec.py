@@ -80,7 +80,9 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_002877_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_005886_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000220_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_000295_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000004_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_000080_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_007995_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_012436_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_011661_FAMILY_PAIRS,
@@ -110,6 +112,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_REFINED_PACKET_002430_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_005573_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000001_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_000001_RESCUE_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_003992_FAMILY_PAIRS,
     DEFAULT_MODAL_REGISTRY,
     compiler_refined_modal_family_cue_margin_buffer,
@@ -265,6 +268,65 @@ def test_modal_decompiler_normalizes_comma_spaced_provided_that_condition() -> N
     assert "provided_that:conditional_normative->deontic" in slot_texts[
         "condition_scope_family_pair"
     ]
+
+
+def test_modal_ir_exports_clause_shape_slot_pairs_to_decoder_and_flogic() -> None:
+    formula = ModalIRFormula(
+        formula_id="f_clause_shape_slots",
+        operator=ModalIROperator(
+            family="deontic",
+            system="D",
+            symbol="P",
+            label="permitted",
+        ),
+        predicate=ModalIRPredicate(
+            name="participate_in_program",
+            arguments=["eligible applicant"],
+            role="clause",
+        ),
+        provenance=ModalIRProvenance(
+            source_id="us-code-22-269d-clause-shape",
+            start_char=0,
+            end_char=150,
+            citation="22 U.S.C. 269d",
+        ),
+        exceptions=[
+            "except as otherwise provided",
+            "unless barred by regulation",
+            "except to the extent funds are unavailable",
+        ],
+        metadata={"cue": "may"},
+    )
+    document = ModalIRDocument(
+        document_id="us-code-22-269d-clause-shape",
+        source="us_code",
+        normalized_text=(
+            "The Secretary may participate in the program except as otherwise "
+            "provided, unless barred by regulation, and except to the extent "
+            "funds are unavailable."
+        ),
+        formulas=[formula],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+    triples = modal_ir_to_flogic_triples(document)
+    triple_pairs = {
+        (triple["predicate"], triple["object"])
+        for triple in triples
+        if triple["subject"] == "f_clause_shape_slots"
+    }
+
+    assert "2_3" in slot_texts["exception_count_bin"]
+    assert "conditions:2_3|exceptions:2_3" in slot_texts["semantic_slot_pair"]
+    assert "deontic:conditions:2_3|exceptions:2_3" in slot_texts[
+        "family_semantic_slot_pair"
+    ]
+    assert ("exception_count_bin", "2_3") in triple_pairs
+    assert ("semantic_slot_pair", "conditions:2_3|exceptions:2_3") in triple_pairs
+    assert (
+        "family_semantic_slot_pair",
+        "deontic:conditions:2_3|exceptions:2_3",
+    ) in triple_pairs
 
 
 _USCODE_2_31A_2B_TEXT = (
@@ -14884,6 +14946,94 @@ def test_modal_decompiler_source_action_slots_cover_packet_005690_family_pairs()
     )
 
 
+def test_modal_decompiler_emits_section_cue_slots_for_packet_000040_citations() -> None:
+    source_id = "us-code-33-1013-cd0ece6f6796f68e"
+    source_text = (
+        "33 U.S.C. 1013. Appropriations for navigation and navigable waters."
+    )
+    formula = ModalIRFormula(
+        formula_id=f"{source_id}:f0001",
+        operator=ModalIROperator(
+            family="temporal",
+            system="ltl",
+            symbol="F",
+            label="eventually",
+        ),
+        predicate=ModalIRPredicate(name="appropriations_clause"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="33 U.S.C. 1013",
+        ),
+        metadata={"cue": "after"},
+    )
+    document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+    triples = modal_ir_to_flogic_triples(document)
+
+    assert "33:title" in slot_texts["section_token"]
+    assert "1013:section" in slot_texts["section_token"]
+    assert "1013:section:temporal" in slot_texts["section_cue"]
+    assert "33:1013:coordinate:temporal" in slot_texts["section_cue"]
+    assert "1013:section:temporal" in slot_texts["decompiler_plan_section_cue"]
+    assert any(
+        triple["predicate"] == "section_cue"
+        and triple["object"] == "1013:section:temporal"
+        for triple in triples
+    )
+
+
+def test_modal_decompiler_section_cue_slots_cover_packet_000040_residual_fallback() -> None:
+    source_id = "us-code-8-1107-64c67dace029944e"
+    source_text = (
+        "U.S.C. Title 8 - ALIENS AND NATIONALITY Sec. 1107 - Additional report "
+        "From the U.S. Government Publishing Office."
+    )
+    formula = ModalIRFormula(
+        formula_id=f"{source_id}:f0001",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(name="additional_report_frame"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation=None,
+        ),
+        metadata={"cue": "__uscode_residual_span_fallback__"},
+    )
+    document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+    triples = modal_ir_to_flogic_triples(document)
+
+    assert "8:title" in slot_texts["section_token"]
+    assert "1107:section" in slot_texts["section_token"]
+    assert "8:1107:coordinate:frame" in slot_texts["source_id_section_cue"]
+    assert "1107:section:frame" in slot_texts["decompiler_plan_section_cue"]
+    assert any(
+        triple["predicate"] == "source_id_section_cue"
+        and triple["object"] == "8:1107:coordinate:frame"
+        for triple in triples
+    )
+
+
 def test_modal_decompiler_surfaces_role_topology_text_cue_and_variable_map_slots() -> None:
     source_id = "packet-001583-role-topology"
     source_text = "The Secretary shall sanction entities."
@@ -18011,6 +18161,56 @@ def test_modal_decompiler_splits_compound_typed_predicate_argument_slots() -> No
 
     assert slot_texts["argument_actor"] == ["secretary transportation"]
     assert slot_texts["argument_scope"] == ["collect fee section title"]
+
+
+def test_modal_decompiler_projects_typed_arguments_into_legal_ir_view_slots() -> None:
+    formula = ModalIRFormula(
+        formula_id="argument-view-doc:f0001",
+        operator=ModalIROperator(
+            family="frame",
+            system="Frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(
+            name="administrative_notice_hearing",
+            arguments=[
+                "actor:agency, action:provide_notice, object:hearing_record",
+            ],
+            role="clause",
+        ),
+        provenance=ModalIRProvenance(
+            source_id="argument-view-doc",
+            start_char=0,
+            end_char=72,
+            citation="5 U.S.C. 552",
+        ),
+    )
+    document = ModalIRDocument(
+        document_id="argument-view-doc",
+        source="us_code",
+        normalized_text="The agency shall provide notice for the hearing record.",
+        formulas=[formula],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+    view_slots = slot_texts["family_semantic_slot_legal_ir_view_prototype"]
+
+    assert (
+        "frame||slot:argument-actor:agency||deontic.ir"
+        in view_slots
+    )
+    assert (
+        "deontic||slot:argument-action:provide_notice||deontic.ir"
+        in view_slots
+    )
+    assert (
+        "deontic||slot-pair:argument-object:hearing_record|"
+        "predicate-role:clause||TDFOL.prover"
+        in view_slots
+    )
 
 
 def test_modal_decompiler_and_triples_include_statutory_scope_reference_slots() -> None:
@@ -30420,10 +30620,13 @@ def test_modal_registry_surfaces_packet_002254_rescue_family_pairs() -> None:
 
 def test_modal_registry_surfaces_packet_000004_refined_family_pairs() -> None:
     packet_pairs = (
+        ("conditional_normative", "temporal"),
         ("deontic", "temporal"),
         ("frame", "deontic"),
         ("frame", "temporal"),
+        ("temporal", "conditional_normative"),
         ("temporal", "deontic"),
+        ("temporal", "temporal"),
     )
     assert COMPILER_AMBIGUITY_PACKET_000004_FAMILY_PAIRS == packet_pairs
     for predicted_family, target_family in packet_pairs:
@@ -31164,10 +31367,13 @@ def test_modal_compiler_surfaces_packet_000004_ambiguity_policy_pairs(
         lambda _: {},
     )
     scenarios = (
+        ("conditional_normative", "temporal", -0.52256541633),
         ("deontic", "temporal", -0.09464822113),
         ("frame", "deontic", -0.034796694281),
         ("frame", "temporal", -0.368552844218),
+        ("temporal", "conditional_normative", -0.230754624767),
         ("temporal", "deontic", -0.855429442718),
+        ("temporal", "temporal", 0.05525069928),
     )
 
     assert COMPILER_AMBIGUITY_PACKET_000004_FAMILY_PAIRS == tuple(
@@ -31240,10 +31446,17 @@ def test_modal_compiler_surfaces_packet_000004_ambiguity_policy_pairs(
             predicted_family_source="adaptive_logits",
         )
 
-        candidate_ids = [predicted_family, target_family]
+        is_self_pair = predicted_family == target_family
+        candidate_ids = (
+            [predicted_family]
+            if is_self_pair
+            else [predicted_family, target_family]
+        )
         policy_pair = f"{predicted_family}->{target_family}"
+        expected_margin_direction = "contested" if is_self_pair else "outvoted"
         expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
+            f"adaptive_{predicted_family}_{target_family}_"
+            f"{expected_margin_direction}_margin_low"
         )
         base_ambiguity = next(
             ambiguity
@@ -31254,7 +31467,10 @@ def test_modal_compiler_surfaces_packet_000004_ambiguity_policy_pairs(
         )
         assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
-        assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
+        assert (
+            base_ambiguity.metadata["adaptive_margin_direction"]
+            == expected_margin_direction
+        )
         assert (
             abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
             < 1e-12
@@ -32635,6 +32851,58 @@ def test_decode_modal_ir_document_adds_long_span_semantic_support_without_boiler
     assert "115 stat" not in support_text
 
 
+def test_structural_decoded_text_uses_bounded_typed_ir_semantic_support() -> None:
+    source_text = (
+        "Sec. 2017. Regulations (a) Promulgation (1) In general The Secretary "
+        "may promulgate only such regulations as are necessary to ensure "
+        "compliance with the specific provisions of this chapter. (2) "
+        "Publication In promulgating the regulations, the Secretary shall "
+        "publish proposed regulations in the Federal Register and provide a "
+        "period of not less than 120 days for public comment. (Pub. L. "
+        "107-110, Jan. 8, 2002, 115 Stat. 2056.) Historical and Revision Notes "
+        "Source (Statutes at Large)."
+    )
+    document = ModalIRDocument(
+        document_id="us-code-25-2017-structural-semantic-support",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-structural-regulations-support",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="D",
+                    symbol="P",
+                    label="permission",
+                ),
+                predicate=ModalIRPredicate(name="promulgate_regulations", role="clause"),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-25-2017-structural-semantic-support",
+                    start_char=0,
+                    end_char=len(source_text),
+                    citation="25 U.S.C. 2017",
+                ),
+                metadata={"cue": "may"},
+            )
+        ],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    ).lower()
+    semantic_slot_texts = decoded_modal_phrase_slot_text_map(
+        decoded,
+        include_provenance_only=False,
+    )
+
+    assert "publication in promulgating the regulations" in structural_text
+    assert "historical and revision notes" not in structural_text
+    assert "typed_ir_semantic_support" not in semantic_slot_texts
+
+
 def test_decode_modal_ir_document_refines_temporal_source_context_family_pair_keys() -> None:
     source_text = (
         "Sec. 8386. Recall to active duty. Members of the Fleet Reserve shall be "
@@ -34004,6 +34272,124 @@ def test_packet_011135_compiler_ambiguity_pairs_are_signal_free_supported() -> N
         )
 
 
+def test_packet_000080_compiler_ambiguity_policy_exposes_adaptive_margins() -> None:
+    packet_pairs = COMPILER_AMBIGUITY_PACKET_000080_FAMILY_PAIRS
+    assert packet_pairs == (
+        ("conditional_normative", "deontic"),
+        ("deontic", "deontic"),
+        ("deontic", "temporal"),
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("temporal", "deontic"),
+    )
+
+    for predicted_family, target_family in packet_pairs:
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    encoding = SpaCyLegalEncoding(
+        document_id="packet-000080-adaptive-family-margin",
+        text="Synthetic packet 000080 adaptive family margin evidence.",
+        normalized_text="Synthetic packet 000080 adaptive family margin evidence.",
+        tokens=[],
+        sentences=[],
+        cues=[],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="packet-000080-adaptive-family-margin",
+        source="us_code",
+        normalized_text=encoding.normalized_text,
+        formulas=[],
+    )
+
+    evidence_margins = (
+        ("temporal", "deontic", -0.026979590797),
+        ("deontic", "deontic", 0.053874472385),
+        ("frame", "deontic", -0.843516254329),
+        ("conditional_normative", "deontic", -0.0508663472),
+        ("frame", "conditional_normative", -0.127694599645),
+        ("deontic", "temporal", -0.148761905312),
+    )
+    for predicted_family, target_family, family_margin in evidence_margins:
+        predicted_share = 0.5
+        if predicted_family == target_family:
+            competing_family = "temporal"
+            if predicted_family == competing_family:
+                competing_family = "deontic"
+            ranking = [
+                {
+                    "family": predicted_family,
+                    "count": 0,
+                    "share_raw": predicted_share,
+                    "share": predicted_share,
+                },
+                {
+                    "family": competing_family,
+                    "count": 0,
+                    "share_raw": predicted_share - family_margin,
+                    "share": predicted_share - family_margin,
+                },
+            ]
+        else:
+            ranking = [
+                {
+                    "family": predicted_family,
+                    "count": 0,
+                    "share_raw": predicted_share,
+                    "share": predicted_share,
+                },
+                {
+                    "family": target_family,
+                    "count": 0,
+                    "share_raw": predicted_share + family_margin,
+                    "share": predicted_share + family_margin,
+                },
+            ]
+
+        ambiguities = compiler._adaptive_family_margin_ambiguities(
+            encoding,
+            modal_ir=modal_ir,
+            ranking=ranking,
+            family_shares={
+                str(candidate["family"]): float(candidate["share_raw"])
+                for candidate in ranking
+            },
+            predicted_family_source="packet_000080_regression",
+        )
+        explicit_ambiguity = next(
+            ambiguity
+            for ambiguity in ambiguities
+            if ambiguity.metadata.get("adaptive_policy_pair")
+            == f"{predicted_family}->{target_family}"
+            and ambiguity.metadata.get("is_explicit_adaptive_ambiguity") is True
+        )
+
+        assert explicit_ambiguity.metadata["effective_ambiguity_policy_bundle"] == (
+            "compiler_ambiguity"
+        )
+        assert explicit_ambiguity.metadata["family_margin"] == round(
+            family_margin,
+            6,
+        )
+
+
 def test_packet_000536_compiler_ambiguity_policy_exposes_small_margin_pairs() -> None:
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
         COMPILER_AMBIGUITY_PACKET_000536_FAMILY_PAIRS,
@@ -34263,6 +34649,66 @@ def test_packet_000001_refined_cue_family_pairs_cover_rescue_bundle() -> None:
         )
 
 
+def test_packet_000001_decompiler_preserves_exception_role_family_slots() -> None:
+    source_text = (
+        "The Secretary may vest title by fiscal year 2027 unless waived by "
+        "regulation."
+    )
+    document = ModalIRDocument(
+        document_id="packet-000001-exception-role-bridge",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-packet-000001-permission",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="D",
+                    symbol="P",
+                    label="permission",
+                ),
+                predicate=ModalIRPredicate(name="vest_title", role="clause"),
+                provenance=ModalIRProvenance(
+                    source_id="packet-000001-exception-role-bridge",
+                    start_char=0,
+                    end_char=len(source_text),
+                    citation="42 U.S.C. 16291a",
+                ),
+                exceptions=["unless waived by regulation"],
+                metadata={"cue": "may"},
+            )
+        ],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+    legal_ir_slots = set(slot_texts["family_semantic_slot_legal_ir_view_prototype"])
+
+    assert "waived:deontic->conditional_normative" in slot_texts[
+        "typed_decompiler_source_exception_family_pair_anchor"
+    ]
+    assert "waived:deontic->frame" in slot_texts[
+        "typed_decompiler_source_exception_family_pair_anchor"
+    ]
+    assert "waived:deontic->temporal" in slot_texts[
+        "typed_decompiler_source_exception_family_pair_anchor"
+    ]
+    assert (
+        "conditional_normative||slot:source-exception-source-family:"
+        "waived:deontic||deontic.ir"
+        in legal_ir_slots
+    )
+    assert (
+        "frame||slot:source-exception-source-family:"
+        "waived:deontic||knowledge_graphs.neo4j_compat"
+        in legal_ir_slots
+    )
+    assert (
+        "temporal||slot:source-exception-source-family:"
+        "waived:deontic||TDFOL.prover"
+        in legal_ir_slots
+    )
+
+
 def test_packet_003992_refined_cue_family_pairs_cover_failed_validation_rescue() -> None:
     packet_pairs = COMPILER_REFINED_PACKET_003992_FAMILY_PAIRS
     assert packet_pairs == (
@@ -34271,6 +34717,48 @@ def test_packet_003992_refined_cue_family_pairs_cover_failed_validation_rescue()
         ("deontic", "temporal"),
         ("frame", "conditional_normative"),
         ("frame", "deontic"),
+        ("temporal", "frame"),
+        ("temporal", "temporal"),
+    )
+
+    refined_pairs = set(COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS)
+    for predicted_family, target_family in packet_pairs:
+        assert (predicted_family, target_family) in refined_pairs
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert compiler_refined_modal_family_cue_margin_buffer(
+            predicted_family,
+            target_family,
+        ) == _expected_compiler_refined_margin_buffer(
+            predicted_family,
+            target_family,
+        )
+
+
+def test_packet_000001_rescue_refined_pairs_cover_compiler_ambiguity_union() -> None:
+    packet_pairs = COMPILER_REFINED_PACKET_000001_RESCUE_FAMILY_PAIRS
+    assert packet_pairs == (
+        ("conditional_normative", "temporal"),
+        ("deontic", "conditional_normative"),
+        ("deontic", "deontic"),
+        ("deontic", "temporal"),
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("frame", "frame"),
+        ("frame", "temporal"),
+        ("temporal", "conditional_normative"),
+        ("temporal", "deontic"),
         ("temporal", "frame"),
         ("temporal", "temporal"),
     )
@@ -34357,6 +34845,22 @@ def test_decode_modal_ir_document_surfaces_packet_001471_role_bridge_slots() -> 
     assert (
         "deontic||slot:source-object-family-pair-anchor:"
         "proposals:deontic_temporal||knowledge_graphs.neo4j_compat"
+        in legal_ir_prototypes
+    )
+    assert "develop:program_development" in slot_texts["source_action_legal_class"]
+    assert (
+        "decompiler-plan:source-action-typed-contract:"
+        "develop:deontic:clause:o"
+        in slot_texts["source_role_decompiler_plan"]
+    )
+    assert (
+        "predicate-argument:source-action-typed-contract-family-pair:"
+        "program_development:deontic->temporal:clause:o"
+        in slot_texts["predicate_argument_feature"]
+    )
+    assert (
+        "temporal||slot:source-action-source-contract:"
+        "program_development:deontic:clause:o||deontic.ir"
         in legal_ir_prototypes
     )
 
@@ -34484,6 +34988,119 @@ def test_packet_004036_compiler_ambiguity_policy_exposes_temporal_doxastic() -> 
         )
 
 
+def test_packet_000004_compiler_ambiguity_policy_covers_modal_margin_pairs() -> None:
+    assert COMPILER_AMBIGUITY_PACKET_000004_FAMILY_PAIRS == (
+        ("conditional_normative", "temporal"),
+        ("deontic", "temporal"),
+        ("frame", "deontic"),
+        ("frame", "temporal"),
+        ("temporal", "conditional_normative"),
+        ("temporal", "deontic"),
+        ("temporal", "temporal"),
+    )
+
+    for predicted_family, target_family in COMPILER_AMBIGUITY_PACKET_000004_FAMILY_PAIRS:
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+
+def test_packet_000004_conditional_temporal_low_margin_emits_explicit_ambiguity() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    source_text = "If the guidance is adopted, the Commission shall act within 90 days."
+    ranking = [
+        {
+            "family": "conditional_normative",
+            "count": 0,
+            "share_raw": 0.48,
+            "share": 0.48,
+        },
+        {
+            "family": "temporal",
+            "count": 0,
+            "share_raw": 0.42,
+            "share": 0.42,
+        },
+    ]
+    encoding = SpaCyLegalEncoding(
+        document_id="packet-000004-conditional-temporal",
+        text=source_text,
+        normalized_text=source_text,
+        tokens=[],
+        sentences=[],
+        cues=[],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="packet-000004-conditional-temporal",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-packet-000004-conditional",
+                operator=ModalIROperator(
+                    family="conditional_normative",
+                    system="CNL",
+                    symbol="IF_THEN",
+                    label="conditional_norm",
+                ),
+                predicate=ModalIRPredicate(name="adopt_guidance", role="clause"),
+                provenance=ModalIRProvenance(
+                    source_id="packet-000004-conditional-temporal",
+                    start_char=0,
+                    end_char=len(source_text),
+                ),
+            )
+        ],
+    )
+
+    ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=ranking,
+        family_shares={
+            str(candidate["family"]): float(candidate["share_raw"])
+            for candidate in ranking
+        },
+        predicted_family_source="packet_000004_regression",
+    )
+
+    explicit_pairs = {
+        str(ambiguity.metadata.get("effective_compiler_ambiguity_policy_pair"))
+        for ambiguity in ambiguities
+        if isinstance(ambiguity.metadata, dict)
+        and ambiguity.metadata.get("effective_ambiguity_policy_bundle")
+        == "compiler_ambiguity"
+        and ambiguity.metadata.get("is_explicit_adaptive_ambiguity") is True
+    }
+    conditional_temporal = next(
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.metadata.get("adaptive_policy_pair")
+        == "conditional_normative->temporal"
+        and ambiguity.metadata.get("is_explicit_adaptive_ambiguity") is True
+    )
+
+    assert "conditional_normative->temporal" in explicit_pairs
+    assert conditional_temporal.metadata["adaptive_margin_direction"] == "outvoted"
+    assert conditional_temporal.metadata["signal_free_pair_policy_applied"] is False
+    assert conditional_temporal.metadata["family_margin"] == -0.06
+
+
 def test_packet_004036_temporal_doxastic_low_margin_emits_explicit_ambiguity() -> None:
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
@@ -34567,6 +35184,120 @@ def test_packet_004036_temporal_doxastic_low_margin_emits_explicit_ambiguity() -
     assert doxastic_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
     assert doxastic_ambiguity.metadata["signal_free_pair_policy_applied"] is False
     assert doxastic_ambiguity.metadata["family_margin"] == -0.03
+
+
+def test_packet_000295_compiler_ambiguity_policy_exposes_union_pairs() -> None:
+    assert COMPILER_AMBIGUITY_PACKET_000295_FAMILY_PAIRS == (
+        ("conditional_normative", "deontic"),
+        ("deontic", "deontic"),
+        ("deontic", "temporal"),
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("frame", "epistemic"),
+        ("frame", "frame"),
+        ("frame", "temporal"),
+        ("temporal", "alethic"),
+        ("temporal", "conditional_normative"),
+        ("temporal", "deontic"),
+        ("temporal", "frame"),
+        ("temporal", "temporal"),
+    )
+
+    for predicted_family, target_family in COMPILER_AMBIGUITY_PACKET_000295_FAMILY_PAIRS:
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+
+def test_packet_000295_temporal_alethic_low_margin_emits_explicit_ambiguity() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    source_text = "The authorization remains effective until renewal becomes impossible."
+    ranking = [
+        {
+            "family": "temporal",
+            "count": 0,
+            "share_raw": 0.51,
+            "share": 0.51,
+        },
+        {
+            "family": "alethic",
+            "count": 0,
+            "share_raw": 0.45,
+            "share": 0.45,
+        },
+    ]
+    encoding = SpaCyLegalEncoding(
+        document_id="packet-000295-temporal-alethic",
+        text=source_text,
+        normalized_text=source_text,
+        tokens=[],
+        sentences=[],
+        cues=[],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="packet-000295-temporal-alethic",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-packet-000295-temporal",
+                operator=ModalIROperator(
+                    family="temporal",
+                    system="LTL",
+                    symbol="F",
+                    label="eventuality",
+                ),
+                predicate=ModalIRPredicate(name="remain_effective", role="clause"),
+                provenance=ModalIRProvenance(
+                    source_id="packet-000295-temporal-alethic",
+                    start_char=0,
+                    end_char=len(source_text),
+                ),
+            )
+        ],
+    )
+
+    ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=ranking,
+        family_shares={
+            str(candidate["family"]): float(candidate["share_raw"])
+            for candidate in ranking
+        },
+        predicted_family_source="packet_000295_regression",
+    )
+
+    alethic_ambiguity = next(
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.metadata.get("adaptive_policy_pair") == "temporal->alethic"
+        and ambiguity.metadata.get("is_explicit_adaptive_ambiguity") is True
+    )
+    assert (
+        alethic_ambiguity.metadata["effective_compiler_ambiguity_policy_pair"]
+        == "temporal->alethic"
+    )
+    assert alethic_ambiguity.metadata["effective_ambiguity_policy_bundle"] == (
+        "compiler_ambiguity"
+    )
+    assert alethic_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
+    assert alethic_ambiguity.metadata["family_margin"] == -0.06
 
 
 def test_packet_014167_deontic_frame_ambiguity_emits_both_directions() -> None:
@@ -34655,6 +35386,58 @@ def test_decode_modal_ir_document_surfaces_resolved_clause_prefix_scope_slots() 
     )
     assert (
         "frame||slot-pair:exception-prefix:except_as_provided_in:frame|exceptions:0"
+        in slot_texts["family_semantic_slot_prototype"]
+    )
+
+
+def test_decode_modal_ir_document_surfaces_packet_000417_flow_contract_slots() -> None:
+    source_text = "The officer may issue benefits provided by section 7."
+    document = ModalIRDocument(
+        document_id="packet-000417-decompiler-flow-contract",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-packet-000417-deontic-permission",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="D",
+                    symbol="P",
+                    label="permission",
+                ),
+                predicate=ModalIRPredicate(name="issue_benefits", role="clause"),
+                provenance=ModalIRProvenance(
+                    source_id="packet-000417-decompiler-flow-contract",
+                    start_char=0,
+                    end_char=len(source_text),
+                    citation="5 U.S.C. 3316",
+                ),
+                metadata={"cue": "may"},
+            )
+        ],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+
+    assert (
+        "cue-operator-flow:provided:deontic:p:condition:clause"
+        in slot_texts["discourse_flow"]
+    )
+    assert (
+        "operator-phase-flow:deontic:p:condition:conditioned+temporal"
+        in slot_texts["discourse_flow"]
+    )
+    assert (
+        "cue-transition:provided->by:conditioned+temporal"
+        in slot_texts["discourse_flow"]
+    )
+    assert (
+        "scope-slot:deontic:p:source-cyes:eno:tyes:ir-cno:eno"
+        in slot_texts["logic_view_contract"]
+    )
+    assert (
+        "deontic||slot:logic_view_contract:"
+        "scope-slot:deontic:p:source-cyes:eno:tyes:ir-cno:eno"
         in slot_texts["family_semantic_slot_prototype"]
     )
 

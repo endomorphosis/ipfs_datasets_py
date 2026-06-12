@@ -379,6 +379,49 @@ def proof_attestation_view_from_proof_dict(proof: Mapping[str, Any]) -> Dict[str
     return rebuilt
 
 
+def zkp_attestation_legal_ir_view_loss(
+    records: object,
+) -> float:
+    """Return a bounded LegalIR view loss for ZKP attestation records.
+
+    The supervisor scores the ZKP bridge as a LegalIR view producer, not just as
+    a proof verifier.  A record is view-complete when it is verified and exposes
+    the stable fields needed to round-trip proof attestations through LegalIR.
+    """
+    if not isinstance(records, (list, tuple)):
+        return 1.0
+    if not records:
+        return 1.0
+
+    required_record_keys = (
+        "attestation_ref",
+        "attestation_view",
+        "circuit_ref",
+        "proof_hash",
+        "public_inputs",
+        "ruleset_id",
+        "source_id",
+        "theorem_hash",
+    )
+    missing = 0
+    total = len(records) * (len(required_record_keys) + 2)
+    for raw_record in records:
+        record = _mapping_dict(raw_record)
+        for key in required_record_keys:
+            if not record.get(key):
+                missing += 1
+
+        public_inputs = _mapping_dict(record.get("public_inputs"))
+        attestation_view = _mapping_dict(record.get("attestation_view"))
+        attestation_ref = str(record.get("attestation_ref") or "")
+        if not attestation_ref or public_inputs.get("attestation_ref") != attestation_ref:
+            missing += 1
+        if not attestation_ref or attestation_view.get("attestation_ref") != attestation_ref:
+            missing += 1
+
+    return min(1.0, max(0.0, missing / total))
+
+
 @dataclass
 class CircuitGate:
     """

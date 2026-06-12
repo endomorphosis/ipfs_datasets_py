@@ -272,7 +272,7 @@ _SECTION_STATUS_DETAIL_STOP_RE = re.compile(
 _PURPOSE_RE = re.compile(
     r"""
     \b(?:the\s+)?
-    (?P<purpose_kind>general\s+purpose|purpose|mission|function|functions)
+    (?P<purpose_kind>general\s+purposes?|purposes?|mission|function|functions)
     \s+of\s+(?P<subject>.+?)
     \s+(?:is|are)\s+
     (?P<action>.+?)

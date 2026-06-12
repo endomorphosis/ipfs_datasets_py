@@ -1912,7 +1912,7 @@ def legal_norm_ir_slot_provenance(
 
     records: List[Dict[str, Any]] = []
     for slot in dict.fromkeys(str(slot) for slot in slots if slot):
-        value = getattr(norm, slot, None)
+        value = _phase8_slot_value(norm, slot)
         present = not _ir_slot_value_is_empty(value)
         spans = _ir_slot_spans(norm, slot, value)
         status = "grounded" if spans else "ungrounded" if present else "missing"

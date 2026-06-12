@@ -1834,19 +1834,19 @@ def _decoder_phrase_rows_with_reference_provenance(
             seen.add(key)
             rows.append(semantic_modality)
 
-    for reference in _decoder_reference_records(norm):
-        text = _decoder_reference_text(reference)
-        spans = _decoder_reference_spans(reference)
+    for slot, record in _decoder_extra_provenance_records(norm):
+        text = _decoder_extra_provenance_text(record)
+        spans = _decoder_extra_provenance_spans(record)
         if not text or not spans:
             continue
-        key = ("cross_references", text, tuple(tuple(span) for span in spans))
+        key = (slot, text, tuple(tuple(span) for span in spans))
         if key in seen:
             continue
         seen.add(key)
         rows.append(
             {
                 "text": text,
-                "slot": "cross_references",
+                "slot": slot,
                 "spans": spans,
                 "fixed": False,
                 "provenance_only": True,
@@ -1935,6 +1935,42 @@ def _decoder_reference_records(norm: LegalNormIR) -> List[Mapping[str, Any]]:
         seen.add(key)
         records.append(reference)
     return records
+
+
+def _decoder_extra_provenance_records(
+    norm: LegalNormIR,
+) -> List[tuple[str, Mapping[str, Any]]]:
+    """Return optional IR slots that may be provenance-only in decoded text."""
+
+    rows: List[tuple[str, Mapping[str, Any]]] = []
+    for reference in _decoder_reference_records(norm):
+        rows.append(("cross_references", reference))
+    for temporal in norm.temporal_constraints or []:
+        if isinstance(temporal, Mapping):
+            rows.append(("temporal_constraints", temporal))
+    return rows
+
+
+def _decoder_extra_provenance_text(record: Mapping[str, Any]) -> str:
+    for key in (
+        "normalized_text",
+        "raw_text",
+        "value",
+        "text",
+        "canonical_citation",
+        "target",
+    ):
+        value = str(record.get(key) or "").strip()
+        if value:
+            return value
+    return ""
+
+
+def _decoder_extra_provenance_spans(record: Mapping[str, Any]) -> List[List[int]]:
+    spans: List[List[int]] = []
+    for key in ("span", "source_span", "support_span", "clause_span"):
+        spans.extend(_decoder_coerce_spans(record.get(key)))
+    return _dedupe_decoder_spans(spans)
 
 
 def _decoder_reference_text(reference: Mapping[str, Any]) -> str:

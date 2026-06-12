@@ -375,7 +375,8 @@ _SPARSE_CITATION_RE = re.compile(
 )
 _STATUTORY_SCAFFOLD_LOSS_SCALE = 0.45
 _OFFICIAL_USC_SCAFFOLD_LOSS_SCALE = 0.05
-_STATUTORY_SCAFFOLD_MIN_TOKEN_COUNT = 45
+_STATUTORY_SCAFFOLD_MIN_TOKEN_COUNT = 20
+_STATUTORY_SCAFFOLD_MIN_TOKEN_COUNT = 30
 _STATUTORY_SCAFFOLD_MARKER_RE = re.compile(
     r"\b(?:united\s+states\s+code|u\.s\.c\.|from\s+the\s+u\.s\.\s+government\s+"
     r"publishing\s+office|pub\.\s*l\.|statutory\s+notes|historical\s+and\s+"
@@ -403,6 +404,12 @@ _OFFICIAL_USC_TITLE_RE = re.compile(
 )
 _OFFICIAL_USC_SECTION_RE = re.compile(
     r"\bsec\.\s+[\w.\-]+\s+-\s+|§+\s*[\w.\-]+",
+    flags=re.IGNORECASE,
+)
+_COMPACT_USC_HEADING_RE = re.compile(
+    r"\b\d+\s+u\.?\s*s\.?\s*c\.?\s+[\w.\-]+[:.]?\s+"
+    r".{0,220}\bunited\s+states\s+code,\s+\d{4}\s+edition\b"
+    r".{0,260}\bsec\.\s+[\w.\-]+\s+-\s+",
     flags=re.IGNORECASE,
 )
 
@@ -500,6 +507,8 @@ def _is_statutory_scaffold_text(text: str, *, citation: Optional[str]) -> bool:
     normalized_text = " ".join(str(text or "").split())
     if not normalized_text:
         return False
+    if _is_compact_usc_heading_scaffold_text(normalized_text, citation=citation):
+        return True
     if len(normalized_text.split()) < _STATUTORY_SCAFFOLD_MIN_TOKEN_COUNT:
         return False
 
@@ -524,11 +533,24 @@ def _statutory_scaffold_loss_scale(
     *,
     citation: Optional[str],
 ) -> Optional[float]:
-    if not _is_statutory_scaffold_text(text, citation=citation):
+    is_compact_heading = _is_compact_usc_heading_scaffold(text, citation=citation)
+    if not _is_statutory_scaffold_text(text, citation=citation) and not is_compact_heading:
         return None
-    if _is_official_usc_scaffold_text(text):
+    if _is_official_usc_scaffold_text(text) or is_compact_heading:
         return _OFFICIAL_USC_SCAFFOLD_LOSS_SCALE
     return _STATUTORY_SCAFFOLD_LOSS_SCALE
+
+
+def _is_compact_usc_heading_scaffold(text: str, *, citation: Optional[str]) -> bool:
+    """Return whether text is a compact official U.S.C. heading excerpt."""
+
+    normalized_text = " ".join(str(text or "").split())
+    if not normalized_text:
+        return False
+    citation_text = " ".join(str(citation or "").split())
+    return bool(_US_CODE_CITATION_RE.search(citation_text)) and bool(
+        _COMPACT_USC_HEADING_RE.search(normalized_text)
+    )
 
 
 def _is_official_usc_scaffold_text(text: str) -> bool:
@@ -537,8 +559,34 @@ def _is_official_usc_scaffold_text(text: str) -> bool:
     normalized_text = " ".join(str(text or "").split())
     if not normalized_text:
         return False
+    has_title_scaffold = bool(_OFFICIAL_USC_TITLE_RE.search(normalized_text))
+    has_section_scaffold = bool(_OFFICIAL_USC_SECTION_RE.search(normalized_text))
     return (
-        bool(_OFFICIAL_USC_GPO_RE.search(normalized_text))
+        has_title_scaffold
+        and has_section_scaffold
+        and (
+            bool(_OFFICIAL_USC_GPO_RE.search(normalized_text))
+            or "united states code" in normalized_text.lower()
+        )
+    )
+
+
+def _is_compact_usc_heading_scaffold_text(
+    text: str,
+    *,
+    citation: Optional[str],
+) -> bool:
+    """Return whether text is a compact official U.S.C. heading scaffold."""
+
+    normalized_text = " ".join(str(text or "").split())
+    if not normalized_text:
+        return False
+    citation_text = " ".join(str(citation or "").split())
+    return (
+        bool(
+            _US_CODE_CITATION_RE.search(citation_text)
+            or _US_CODE_CITATION_RE.search(normalized_text)
+        )
         and bool(_OFFICIAL_USC_TITLE_RE.search(normalized_text))
         and bool(_OFFICIAL_USC_SECTION_RE.search(normalized_text))
     )
