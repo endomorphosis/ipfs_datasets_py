@@ -32560,6 +32560,91 @@ def test_decode_modal_ir_document_surfaces_typed_decompiler_boundary_slots() -> 
     )
 
 
+def test_decode_modal_ir_document_preserves_typed_decompiler_source_cue_family_slots() -> None:
+    source_text = (
+        "Safety standards. The Secretary shall submit reports by fiscal year 2027 "
+        "with respect to grants."
+    )
+    document = ModalIRDocument(
+        document_id="packet-009346-source-cue-family-slots",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-heading-fallback",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="FRAME_BM25",
+                    symbol="Frame",
+                    label="ontology_frame",
+                ),
+                predicate=ModalIRPredicate(name="safety_standards", role="heading"),
+                provenance=ModalIRProvenance(
+                    source_id="packet-009346-source-cue-family-slots",
+                    start_char=0,
+                    end_char=source_text.index("The Secretary"),
+                    citation="42 U.S.C. 9001",
+                ),
+                metadata={
+                    "cue": "__uscode_section_heading_fallback__",
+                    "fallback_rule": "uscode_section_heading_v1",
+                },
+            ),
+            ModalIRFormula(
+                formula_id="f-deontic-cued",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="D",
+                    symbol="O",
+                    label="obligation",
+                ),
+                predicate=ModalIRPredicate(name="submit_reports", role="clause"),
+                provenance=ModalIRProvenance(
+                    source_id="packet-009346-source-cue-family-slots",
+                    start_char=source_text.index("The Secretary"),
+                    end_char=len(source_text),
+                    citation="42 U.S.C. 9001",
+                ),
+                conditions=[
+                    "by fiscal year 2027",
+                    "with respect to grants",
+                ],
+                metadata={"cue": "shall"},
+            ),
+        ],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+    legal_ir_prototypes = set(
+        slot_texts["family_semantic_slot_legal_ir_view_prototype"]
+    )
+
+    assert "by:deontic->temporal" in slot_texts[
+        "typed_decompiler_source_cue_family_pair"
+    ]
+    assert "with_respect_to:deontic->conditional_normative" in slot_texts[
+        "typed_decompiler_source_cue_family_pair"
+    ]
+    assert "uscode_section_heading_fallback:frame->deontic" in slot_texts[
+        "typed_decompiler_source_cue_family_pair"
+    ]
+    assert "deontic||slot:cue-family:by:temporal||TDFOL.prover" in legal_ir_prototypes
+    assert (
+        "temporal||slot:cue-source-family:by:deontic||knowledge_graphs.neo4j_compat"
+        in legal_ir_prototypes
+    )
+    assert (
+        "deontic||slot-pair:cue-family:with_respect_to:conditional_normative|"
+        "typed-decompiler-family-pair:deontic->conditional_normative||deontic.ir"
+        in legal_ir_prototypes
+    )
+    assert (
+        "frame||slot:cue-family:uscode_section_heading_fallback:deontic||"
+        "modal.frame_logic"
+        in legal_ir_prototypes
+    )
+
+
 def test_decode_modal_ir_document_surfaces_packet_000759_sparse_typed_slots() -> None:
     source_text = (
         "Transferred Editorial Notes Codification. The Secretary shall establish "
@@ -32754,6 +32839,69 @@ def test_decode_modal_ir_document_surfaces_packet_000108_provenance_topology_slo
     assert "deontic->temporal" in slot_texts["typed_decompiler_family_pair"]
 
 
+def test_decode_modal_ir_document_surfaces_packet_007946_source_semantic_cues() -> None:
+    source_text = (
+        "§10606. Repealed. A claimant may not receive a certification by "
+        "fiscal year 2027 unless the Secretary approves the application."
+    )
+    document = ModalIRDocument(
+        document_id="us-code-42-10606.-29578e3fe5d839e7",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-packet-007946-frame-status",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="FRAME_BM25",
+                    symbol="Frame",
+                    label="ontology_frame",
+                ),
+                predicate=ModalIRPredicate(
+                    name="editorial_status_heading",
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-42-10606.-29578e3fe5d839e7",
+                    start_char=0,
+                    end_char=len(source_text),
+                    citation="42 U.S.C. 10606.",
+                ),
+                metadata={
+                    "cue": "__uscode_editorial_status_fallback__",
+                    "fallback_rule": "uscode_editorial_status_heading_v1",
+                    "status_keyword": "repealed",
+                },
+            )
+        ],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+    legal_ir_prototypes = set(
+        slot_texts["family_semantic_slot_legal_ir_view_prototype"]
+    )
+
+    assert "repealed" in slot_texts["source_semantic_cue"]
+    assert "may_not" in slot_texts["source_semantic_cue"]
+    assert "by" in slot_texts["source_semantic_cue"]
+    assert (
+        "frame||slot:predicate-head:repealed||TDFOL.prover"
+        in legal_ir_prototypes
+    )
+    assert (
+        "deontic||slot:cue-family:may_not:frame||deontic.ir"
+        in legal_ir_prototypes
+    )
+    assert (
+        "deontic||slot:operator-label:deontic:prohibition||TDFOL.prover"
+        in legal_ir_prototypes
+    )
+    assert (
+        "temporal||slot:modal-cue:by||knowledge_graphs.neo4j_compat"
+        in legal_ir_prototypes
+    )
+
+
 def test_rescued_failed_validation_ambiguity_packets_are_registered() -> None:
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
         COMPILER_AMBIGUITY_PACKET_000008_FAMILY_PAIRS,
@@ -32896,6 +33044,101 @@ def test_packet_000008_status_and_operational_samples_emit_policy_pairs() -> Non
     assert "temporal->frame" in repealed_pairs
     assert "conditional_normative->deontic" in operative_pairs
     assert "conditional_normative->epistemic" in operative_pairs
+
+
+def test_decode_modal_ir_document_surfaces_packet_011543_decompiler_pairs() -> None:
+    source_text = (
+        "Transferred Editorial Notes Codification. "
+        "The Secretary may maintain records by fiscal year 2027 if the "
+        "application is complete."
+    )
+    document = ModalIRDocument(
+        document_id="packet-011543-decompiler-family-pairs",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-frame-status",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="FRAME_BM25",
+                    symbol="Frame",
+                    label="ontology_frame",
+                ),
+                predicate=ModalIRPredicate(
+                    name="transferred_editorial_codification",
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="packet-011543-decompiler-family-pairs",
+                    start_char=0,
+                    end_char=source_text.index("The Secretary"),
+                    citation="42 U.S.C. 1445",
+                ),
+                metadata={"cue": "transferred", "status_keyword": "transferred"},
+            ),
+            ModalIRFormula(
+                formula_id="f-temporal-condition",
+                operator=ModalIROperator(
+                    family="temporal",
+                    system="LTL",
+                    symbol="F",
+                    label="eventuality",
+                ),
+                predicate=ModalIRPredicate(
+                    name="maintain_records_by_fiscal_year",
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="packet-011543-decompiler-family-pairs",
+                    start_char=source_text.index("The Secretary"),
+                    end_char=len(source_text),
+                    citation="33 U.S.C. 1512",
+                ),
+                conditions=["if the application is complete"],
+                metadata={"cue": "by"},
+            ),
+        ],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+
+    assert {
+        "frame->conditional_normative",
+        "frame->deontic",
+        "frame->epistemic",
+        "frame->frame",
+        "frame->temporal",
+        "temporal->conditional_normative",
+        "temporal->deontic",
+        "temporal->frame",
+        "temporal->temporal",
+    }.issubset(set(slot_texts["typed_decompiler_family_pair"]))
+    assert "frame_epistemic" in slot_texts["typed_decompiler_family_pair_key"]
+    assert "temporal_conditional_normative" in slot_texts[
+        "typed_decompiler_family_pair_key"
+    ]
+    assert "Frame->K" in slot_texts["typed_decompiler_operator_pair"]
+    assert "F->O|" in slot_texts["typed_decompiler_operator_pair"]
+    assert "frame->epistemic" in slot_texts[
+        "typed_ir_refined_modal_family_pair"
+    ]
+    assert "temporal->conditional_normative" in slot_texts[
+        "typed_ir_refined_modal_family_pair"
+    ]
+    legal_ir_prototypes = set(
+        slot_texts["family_semantic_slot_legal_ir_view_prototype"]
+    )
+    assert (
+        "frame||slot:typed-decompiler-family-pair:"
+        "frame->epistemic||TDFOL.prover"
+        in legal_ir_prototypes
+    )
+    assert (
+        "temporal||slot:typed-decompiler-family-pair:"
+        "temporal->conditional_normative||knowledge_graphs.neo4j_compat"
+        in legal_ir_prototypes
+    )
 
 
 def test_packet_011135_compiler_ambiguity_pairs_are_signal_free_supported() -> None:
