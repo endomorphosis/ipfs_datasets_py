@@ -1047,8 +1047,10 @@ def _normalize_tdfol_export_formula(text: str) -> str:
     normalized = _strip_tdfol_line_comment(normalized)
     normalized = _unwrap_tdfol_fenced_export(normalized)
     normalized = _unwrap_tdfol_json_export(normalized)
+    normalized = _unwrap_tdfol_assignment_export(normalized)
     normalized = _unwrap_tdfol_key_value_export(normalized)
     normalized = _normalize_deontic_operator_aliases(normalized)
+    normalized = _normalize_deontic_label_export(normalized)
     normalized = re.sub(
         r"^\s*(?:formula|proof_formula|proof\s+formula|tdfol_formula|"
         r"tdfol\s+formula|proof_input|proof\s+input|proof_obligation|"
@@ -1082,6 +1084,28 @@ def _normalize_tdfol_export_formula(text: str) -> str:
     normalized = re.sub(r",\s*(?=\))", "", normalized)
     normalized = re.sub(r"(:[0-9A-Za-z_-]+)\.(?=\s*[\),])", r"\1", normalized)
     return normalized.strip()
+
+
+def _unwrap_tdfol_assignment_export(text: str) -> str:
+    """Extract formula text from compact key/value proof exports."""
+
+    normalized = str(text or "").strip()
+    if not normalized:
+        return normalized
+    for key in (
+        "formula",
+        "proof_input",
+        "proof_formula",
+        "tdfol_formula",
+        "proof_obligation",
+        "obligation",
+    ):
+        value = _extract_tdfol_key_value(normalized, key)
+        if value:
+            candidate = value.strip("`\"'").strip()
+            formula = _extract_balanced_tdfol_formula(candidate)
+            return formula or candidate
+    return normalized
 
 
 def _unwrap_tdfol_fenced_export(text: str) -> str:
@@ -1173,6 +1197,26 @@ def _normalize_deontic_operator_aliases(text: str) -> str:
         ),
         normalized,
     )
+
+
+def _normalize_deontic_label_export(text: str) -> str:
+    """Convert label-style deontic exports such as O: action(...) to O(action(...))."""
+
+    normalized = str(text or "").strip()
+    if not normalized:
+        return normalized
+    match = re.match(
+        r"(?is)^([OPF])\s*:\s*(.+)$",
+        normalized,
+    )
+    if not match:
+        return normalized
+    formula = _extract_balanced_tdfol_formula(match.group(2).strip())
+    if not formula:
+        formula = match.group(2).strip().rstrip(".").strip()
+    if not formula:
+        return normalized
+    return f"{match.group(1).upper()}({formula})"
 
 
 def _unwrap_tdfol_json_export(text: str) -> str:
@@ -1333,7 +1377,7 @@ def _unwrap_tdfol_key_value_export(text: str) -> str:
 
 
 def _extract_tdfol_key_value(text: str, key: str) -> Optional[str]:
-    pattern = re.compile(rf"(?i)(?:^|,)\s*{re.escape(key)}\s*=")
+    pattern = re.compile(rf"(?i)(?:^|[,;])\s*{re.escape(key)}\s*=")
     match = pattern.search(text)
     if match is None:
         return None
@@ -1345,7 +1389,7 @@ def _extract_tdfol_key_value(text: str, key: str) -> Optional[str]:
             depth += 1
         elif char in ")]}":
             depth = max(0, depth - 1)
-        elif char == "," and depth == 0:
+        elif char in ",;" and depth == 0:
             return text[start:index].strip()
     return text[start:].strip()
 

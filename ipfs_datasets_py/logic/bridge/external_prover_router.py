@@ -54,6 +54,14 @@ _ROUTER_FORMULA_PRIORITY_KEYS = (
     "proof_input",
     "proof_formula",
     "tdfol_formula",
+    "goal",
+    "proof_goal",
+    "theorem",
+    "theorem_formula",
+    "logical_form",
+    "logic_formula",
+    "normalized_formula",
+    "expression",
 )
 _ROUTER_FORMULA_CONTAINER_KEYS = (
     "proof_obligation",
@@ -64,8 +72,12 @@ _ROUTER_FORMULA_CONTAINER_KEYS = (
     "data",
     "obligations",
     "proof_obligations",
+    "proofs",
     "records",
     "formulas",
+    "theorems",
+    "goals",
+    "clauses",
     "items",
 )
 
@@ -565,6 +577,19 @@ def _router_guidance_routes(compiler_guidance: Mapping[str, Any]) -> set[str]:
     attribution = compiler_guidance.get("compiler_guidance_attribution")
     if isinstance(attribution, Mapping):
         collect(attribution.get("todo_routes"))
+
+    for key in ("evidence", "hint_evidence"):
+        evidence_items = compiler_guidance.get(key)
+        if not isinstance(evidence_items, Sequence) or isinstance(
+            evidence_items,
+            (str, bytes),
+        ):
+            continue
+        for item in evidence_items:
+            if not isinstance(item, Mapping):
+                continue
+            for nested_key in route_keys:
+                add_route(item.get(nested_key))
 
     return routes
 

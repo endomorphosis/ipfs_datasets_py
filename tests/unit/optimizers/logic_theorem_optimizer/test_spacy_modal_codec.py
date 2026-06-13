@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+from ipfs_datasets_py.logic.modal.decompiler import decode_modal_ir_document
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import build_us_code_sample
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_modal_parser import LegalModalParser
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import AdaptiveModalAutoencoder
@@ -6566,6 +6567,37 @@ def test_spacy_compiler_adds_compact_administration_heading_span_coverage() -> N
     assert "Administration." in frame_coverage_text_spans
 
 
+def test_spacy_compiler_adds_criminal_penalty_enforcement_residual_span_coverage() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    text = (
+        "Civil enforcement. "
+        "The Secretary shall maintain records for criminal penalties."
+    )
+    encoding = encoder.encode(
+        text,
+        document_id="us-code-50-2205.-44bac97fa2b482ea",
+        citation="50 U.S.C. 2205.",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    frame_coverage_text_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in modal_ir.formulas
+        if formula.operator.family == "frame"
+        and formula.metadata.get("fallback_rule")
+        in {
+            "uscode_modal_heading_prefix_coverage_v1",
+            "uscode_residual_span_coverage_v1",
+        }
+    }
+
+    assert "Civil enforcement." in frame_coverage_text_spans
+
+
 def test_spacy_compiler_adds_modal_heading_prefix_coverage_for_penalty_heading() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()
@@ -6978,6 +7010,37 @@ def test_spacy_compiler_adds_residual_span_coverage_for_25_57_todo_shape() -> No
         "U.S.C. Title 25 - INDIANS 25 U.S.C." in span for span in residual_text_spans
     )
     assert any("43 Stat." in span for span in residual_text_spans)
+
+
+def test_spacy_compiler_expands_split_omitted_codification_fallback_span() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    text = (
+        "U.S.C. Title 25 - INDIANS 25 U.S.C. United States Code, 2024 Edition "
+        "Title 25 - INDIANS CHAPTER 19 - INDIAN LAND CLAIMS SETTLEMENTS "
+        "SUBCHAPTER XII - TORRES-MARTINEZ DESERT CAHUILLA INDIANS CLAIMS "
+        "SETTLEMENT Sec. 1778b - Omitted From the U.S. Government Publishing "
+        "Office, www.gpo.gov \u00a71778b. Omitted Editorial Notes Codification "
+        "Section, Pub. L. 106-568, title VI, \u00a7604, Dec. 27, 2000, 114 Stat. "
+        "2908, which ratified the Settlement Agreement, was omitted from the "
+        "Code as being of special and not general application."
+    )
+    encoding = encoder.encode(
+        text,
+        document_id="us-code-25-1778b-dc9d5bd7a948724f",
+        citation="25 U.S.C. 1778b",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    fallback = modal_ir.formulas[-1]
+    fallback_span = modal_ir.normalized_text[
+        int(fallback.provenance.start_char) : int(fallback.provenance.end_char)
+    ]
+
+    assert fallback.metadata["fallback_rule"] == "uscode_codification_transfer_heading_v1"
+    assert fallback_span.startswith("Omitted Editorial Notes Codification Section")
+    assert "was omitted from the Code as being of special and not general application" in fallback_span
 
 
 def test_spacy_compiler_supports_usc_and_section_symbol_citation_variants_for_sec_headings() -> None:
@@ -7508,6 +7571,51 @@ def test_spacy_compiler_adds_compact_frame_heading_residual_span_coverage_for_pa
             if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
         }
         assert expected_span in residual_text_spans
+
+
+def test_spacy_decompiler_preserves_uscode_source_surface_when_typed_slots_overlap() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    cases = [
+        (
+            "us-code-50-1231 to 1238.-54ddc50447da3288",
+            "50 U.S.C. 1231 to 1238.",
+            (
+                "50 U.S.C. 1231 to 1238.: §§1231 to 1238. Repealed. "
+                "Pub. L. 85-861, §36A, Sept. 2, 1958, 72 Stat. 1569 "
+                "Section 1231, act Sept. 3, 1954, ch. 1257, title III, "
+                "§308, 68 Stat. 1155, provided for promotion to first "
+                "lieutenant. See section 14301 et seq. of Title 10, "
+                "Armed Forces."
+            ),
+            "Repealed",
+        ),
+        (
+            "us-code-54-102503.-8cd28d6d56630d35",
+            "54 U.S.C. 102503.",
+            (
+                "54 U.S.C. 102503.: §102503. Authority of Secretary "
+                "(a) In General .-Notwithstanding other provisions or "
+                "limitations of law, the Secretary may perform the functions "
+                "described in this section in the manner that the Secretary "
+                "considers to be in the public interest."
+            ),
+            "Secretary may perform the functions",
+        ),
+    ]
+
+    for document_id, citation, text, expected_fragment in cases:
+        encoding = encoder.encode(
+            text,
+            document_id=document_id,
+            citation=citation,
+            source="us_code",
+        )
+        decoded = decode_modal_ir_document(compiler.compile(encoding))
+
+        assert decoded.reconstruction_similarity == 1.0
+        assert decoded.text.startswith(citation)
+        assert expected_fragment in decoded.text
 
 
 def test_spacy_decoder_vector_and_family_logits_are_deterministic() -> None:

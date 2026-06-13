@@ -8,16 +8,24 @@ from typing import Any, Dict, List, Mapping, Sequence, Tuple
 
 _USCODE_CITATION_RE = re.compile(
     r"(?P<title>\d+[A-Za-z]*)\s+U\.?S\.?C\.?\s+"
-    r"(?P<section>\d+[A-Za-z0-9]*(?:-[A-Za-z0-9]+)*(?:\.)?)",
+    r"(?:§{1,2}\s*|sec\.?\s*|section\s+)?"
+    r"(?P<section>\d+[A-Za-z0-9]*(?:[.-][A-Za-z0-9]+)*(?:\s+"
+    r"(?:to|through|thru)\s+\d+[A-Za-z0-9]*(?:[.-][A-Za-z0-9]+)*)?(?:\.)?)",
     re.IGNORECASE,
 )
 _USCODE_SOURCE_ID_RE = re.compile(
-    r"^us-code-(?P<title>\d+[A-Za-z]*)-(?P<section>[A-Za-z0-9][A-Za-z0-9.-]*?)"
+    r"^us-code-(?P<title>\d+[A-Za-z]*)-(?P<section>[A-Za-z0-9][A-Za-z0-9 .-]*?)"
     r"(?:-[0-9a-f]{8,})?$",
     re.IGNORECASE,
 )
 _TRAILING_SECTION_PUNCT_RE = re.compile(r"[.;:]+$")
 _SECTION_PART_RE = re.compile(r"(?P<number>\d+)(?P<suffix>[A-Za-z]+)?")
+_SECTION_RANGE_RE = re.compile(
+    r"^(?P<start>\d+[A-Za-z0-9]*(?:[.-][A-Za-z0-9]+)*)\s+"
+    r"(?P<connector>to|through|thru)\s+"
+    r"(?P<end>\d+[A-Za-z0-9]*(?:[.-][A-Za-z0-9]+)*)$",
+    re.IGNORECASE,
+)
 
 
 def augment_legal_ir_projection_triples(
@@ -115,6 +123,7 @@ def _source_id_components(source_id: str) -> List[Tuple[str, str]]:
         ("source_id_title_section_key", f"{title}:{section}"),
         ("source_id_section_component_profile", _section_profile(section)),
     ]
+    components.extend(_section_range_components("source_id_section", section))
     if raw_section != section:
         components.append(("source_id_section_has_trailing_punct", "true"))
     else:
@@ -140,6 +149,7 @@ def _citation_components(citation: str) -> List[Tuple[str, str]]:
         ("citation_title_section_key", f"{title}:{section}"),
         ("citation_section_component_profile", _section_profile(section)),
     ]
+    components.extend(_section_range_components("citation_section", section))
     if raw_section != section:
         components.append(("citation_section_has_trailing_punct", "true"))
     else:
@@ -163,10 +173,39 @@ def _leading_number(value: str) -> str:
 
 
 def _section_profile(section: str) -> str:
+    if _SECTION_RANGE_RE.fullmatch(section.strip()):
+        return "range"
     parts = _SECTION_PART_RE.fullmatch(section.strip())
     if not parts:
         return "mixed"
     return "numeric_alpha" if parts.group("suffix") else "numeric"
+
+
+def _section_range_components(prefix: str, section: str) -> List[Tuple[str, str]]:
+    match = _SECTION_RANGE_RE.fullmatch(section.strip())
+    if not match:
+        return []
+    start = match.group("start")
+    connector = match.group("connector").lower()
+    end = match.group("end")
+    components: List[Tuple[str, str]] = [
+        (f"{prefix}_range", f"{start} {connector} {end}"),
+        (f"{prefix}_range_start", start),
+        (f"{prefix}_range_end", end),
+        (f"{prefix}_range_connector", connector),
+    ]
+    start_number = _leading_number(start)
+    end_number = _leading_number(end)
+    if start_number and end_number:
+        components.append((f"{prefix}_range_number_pair", f"{start_number}|{end_number}"))
+        try:
+            span = int(end_number) - int(start_number)
+        except ValueError:
+            span = 0
+        relation = "ascending" if span > 0 else "same" if span == 0 else "descending"
+        components.append((f"{prefix}_range_number_relation", relation))
+        components.append((f"{prefix}_range_number_span", str(abs(span))))
+    return components
 
 
 def _clean_components(components: Sequence[Tuple[str, str]]) -> List[Tuple[str, str]]:

@@ -375,7 +375,6 @@ _SPARSE_CITATION_RE = re.compile(
 )
 _STATUTORY_SCAFFOLD_LOSS_SCALE = 0.45
 _OFFICIAL_USC_SCAFFOLD_LOSS_SCALE = 0.05
-_STATUTORY_SCAFFOLD_MIN_TOKEN_COUNT = 20
 _STATUTORY_SCAFFOLD_MIN_TOKEN_COUNT = 30
 _STATUTORY_SCAFFOLD_MARKER_RE = re.compile(
     r"\b(?:united\s+states\s+code|u\.s\.c\.|from\s+the\s+u\.s\.\s+government\s+"
@@ -404,6 +403,15 @@ _OFFICIAL_USC_TITLE_RE = re.compile(
 )
 _OFFICIAL_USC_SECTION_RE = re.compile(
     r"\bsec\.\s+[\w.\-]+\s+-\s+|§+\s*[\w.\-]+",
+    flags=re.IGNORECASE,
+)
+_OFFICIAL_USC_SECTION_BODY_RE = re.compile(
+    r"^\s*§+\s*[\w.\-\u2010-\u2015]+\b",
+    flags=re.IGNORECASE,
+)
+_OFFICIAL_USC_PROVENANCE_RE = re.compile(
+    r"\b(?:pub\.\s*l\.|act\s+[a-z]+\s+\d{1,2},\s+\d{4}|"
+    r"\d+\s+stat\.\s+\d+)\b",
     flags=re.IGNORECASE,
 )
 _COMPACT_USC_HEADING_RE = re.compile(
@@ -536,7 +544,11 @@ def _statutory_scaffold_loss_scale(
     is_compact_heading = _is_compact_usc_heading_scaffold(text, citation=citation)
     if not _is_statutory_scaffold_text(text, citation=citation) and not is_compact_heading:
         return None
-    if _is_official_usc_scaffold_text(text) or is_compact_heading:
+    if (
+        _is_official_usc_scaffold_text(text)
+        or _is_official_usc_section_body_text(text, citation=citation)
+        or is_compact_heading
+    ):
         return _OFFICIAL_USC_SCAFFOLD_LOSS_SCALE
     return _STATUTORY_SCAFFOLD_LOSS_SCALE
 
@@ -568,6 +580,20 @@ def _is_official_usc_scaffold_text(text: str) -> bool:
             bool(_OFFICIAL_USC_GPO_RE.search(normalized_text))
             or "united states code" in normalized_text.lower()
         )
+    )
+
+
+def _is_official_usc_section_body_text(text: str, *, citation: Optional[str]) -> bool:
+    """Return whether text is an official U.S.C. section body without header scaffolding."""
+
+    normalized_text = " ".join(str(text or "").split())
+    if not normalized_text:
+        return False
+    citation_text = " ".join(str(citation or "").split())
+    return (
+        bool(_US_CODE_CITATION_RE.search(citation_text))
+        and bool(_OFFICIAL_USC_SECTION_BODY_RE.search(normalized_text))
+        and bool(_OFFICIAL_USC_PROVENANCE_RE.search(normalized_text))
     )
 
 

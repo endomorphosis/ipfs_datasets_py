@@ -662,6 +662,19 @@ _NON_TEMPORAL_AFTER_CONTEXT_TOKENS = frozenset(
         "title",
     }
 )
+_NON_TEMPORAL_AFTER_PRECEDING_TOKENS = frozenset(
+    {
+        "insert",
+        "inserted",
+        "inserting",
+        "substitute",
+        "substituted",
+        "substituting",
+        "strike",
+        "struck",
+        "striking",
+    }
+)
 _NON_TEMPORAL_AFTER_PHRASE_RE = re.compile(
     r"^\s+(?:the\s+)?(?:"
     r"application|applications|article|chapter|clause|codification|division|editorial|hearing|note|notice|notes|paragraph|"
@@ -1630,6 +1643,13 @@ class SpaCyLegalEncoder:
             return False
         if _NON_TEMPORAL_AFTER_PHRASE_RE.match(trailing):
             return False
+        preceding = [
+            token.normalized().lower()
+            for token in tokens
+            if token.end_char <= start_char
+        ][-12:]
+        if any(token in _NON_TEMPORAL_AFTER_PRECEDING_TOKENS for token in preceding):
+            return False
         return True
 
     def _cue_feature(
@@ -2131,9 +2151,17 @@ def _weighted_modal_family_counts(
         resolved_signals = modal_ambiguity_signals(encoding)
     else:
         resolved_signals = signals
+    cue_empty_editorial_status_frame_backfill = False
     if not counts:
         if bool(resolved_signals.get("has_vacant_section_scope")):
             counts = {ModalLogicFamily.FRAME.value: 1.2}
+        elif (
+            bool(resolved_signals.get("has_statutory_status_frame_scope"))
+            and bool(resolved_signals.get("has_frame_scope_phrase"))
+            and bool(resolved_signals.get("has_temporal_status_scope"))
+        ):
+            counts = {ModalLogicFamily.FRAME.value: 2.4}
+            cue_empty_editorial_status_frame_backfill = True
         else:
             return {}
     has_generic_frame_debias_context = _is_generic_frame_cue_debias_context(
@@ -2210,6 +2238,13 @@ def _weighted_modal_family_counts(
         counts,
         resolved_signals,
     )
+    if cue_empty_editorial_status_frame_backfill:
+        frame_family = ModalLogicFamily.FRAME.value
+        temporal_family = ModalLogicFamily.TEMPORAL.value
+        counts[frame_family] = max(
+            float(counts.get(frame_family, 0.0)),
+            float(counts.get(temporal_family, 0.0)) + 0.2,
+        )
     return counts
 
 

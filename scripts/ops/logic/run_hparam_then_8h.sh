@@ -175,6 +175,7 @@ CODEX_VECTOR_FALLBACK_MODE="${CODEX_VECTOR_FALLBACK_MODE:-hash}"
 CODEX_MERGE_REPAIR_MODE="${CODEX_MERGE_REPAIR_MODE:-apply_3way}"
 CODEX_MERGE_REPAIR_ATTEMPTS="${CODEX_MERGE_REPAIR_ATTEMPTS:-1}"
 CODEX_MAIN_APPLY_LOCK_TIMEOUT_SECONDS="${CODEX_MAIN_APPLY_LOCK_TIMEOUT_SECONDS:-600}"
+CODEX_MAIN_APPLY_MAX_INFLIGHT_PACKETS="${CODEX_MAIN_APPLY_MAX_INFLIGHT_PACKETS:-3}"
 CODEX_TARGET_METRIC_TIMEOUT_SECONDS="${CODEX_TARGET_METRIC_TIMEOUT_SECONDS:-30}"
 CODEX_TARGET_METRIC_MAX_SAMPLES="${CODEX_TARGET_METRIC_MAX_SAMPLES:-2}"
 PAIRED_RESOURCE_GUARD="${PAIRED_RESOURCE_GUARD:-auto}"
@@ -331,6 +332,7 @@ PAIRED_ARGS=(
   --codex-merge-repair-mode "${CODEX_MERGE_REPAIR_MODE}"
   --codex-merge-repair-attempts "${CODEX_MERGE_REPAIR_ATTEMPTS}"
   --codex-main-apply-lock-timeout-seconds "${CODEX_MAIN_APPLY_LOCK_TIMEOUT_SECONDS}"
+  --codex-main-apply-max-inflight-packets "${CODEX_MAIN_APPLY_MAX_INFLIGHT_PACKETS}"
 )
 
 CONFIGS=(
@@ -419,6 +421,7 @@ echo "[pipeline] codex_vector_max_bundle_wait_seconds=${CODEX_VECTOR_MAX_BUNDLE_
 echo "[pipeline] codex_target_file_lane_lock_scopes=${CODEX_TARGET_FILE_LANE_LOCK_SCOPES}"
 echo "[pipeline] codex_lane_lock_mode=${CODEX_LANE_LOCK_MODE}"
 echo "[pipeline] codex_main_apply_lock_timeout_seconds=${CODEX_MAIN_APPLY_LOCK_TIMEOUT_SECONDS}"
+echo "[pipeline] codex_main_apply_max_inflight_packets=${CODEX_MAIN_APPLY_MAX_INFLIGHT_PACKETS}"
 echo "[pipeline] codex_target_metric_timeout_seconds=${CODEX_TARGET_METRIC_TIMEOUT_SECONDS}"
 echo "[pipeline] codex_target_metric_max_samples=${CODEX_TARGET_METRIC_MAX_SAMPLES}"
 

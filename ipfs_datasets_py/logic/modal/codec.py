@@ -146,10 +146,13 @@ _CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("to the extent provided", "to_the_extent_provided"),
     ("not later than", "not_later_than"),
     ("no later than", "no_later_than"),
+    ("not later", "not_later"),
+    ("no later", "no_later"),
     ("which", "which"),
     ("if", "if"),
     ("when", "when"),
     ("until", "until"),
+    ("within", "within"),
     ("after", "after"),
     ("before", "before"),
     ("by", "by"),
@@ -2525,6 +2528,7 @@ class DeterministicModalLogicCodec:
         ) = _calibrated_flogic_similarity_score(
             flogic_similarity_score,
             source_text=normalized_text,
+            citation=citation,
             flogic_result=flogic_result,
         )
         losses = {
@@ -3148,6 +3152,12 @@ def modal_ir_to_flogic_triples(
                     "object": term,
                 }
             )
+    triples = _append_selected_frame_ontology_constraint_triples(
+        triples,
+        document_id=modal_ir.document_id,
+        selected_frame=resolved_selected_frame,
+        selected_frame_terms=selected_frame_terms,
+    )
     for formula in modal_ir.formulas:
         condition_prefixes: set[str] = set()
         condition_prefix_families: set[str] = set()
@@ -4156,6 +4166,72 @@ def modal_ir_to_flogic_triples(
         triples,
         document_id=modal_ir.document_id,
     )
+
+
+def _append_selected_frame_ontology_constraint_triples(
+    triples: List[Dict[str, str]],
+    *,
+    document_id: str,
+    selected_frame: Optional[str],
+    selected_frame_terms: Sequence[str],
+) -> List[Dict[str, str]]:
+    """Assert selected-frame grounding facts consumed by F-logic validation."""
+    frame = _clean_non_empty_string(selected_frame)
+    if not frame:
+        return triples
+
+    normalized_terms = _unique_preserve_order(
+        _clean_non_empty_string(term)
+        for term in selected_frame_terms
+        if _clean_non_empty_string(term)
+    )
+    term_status = "satisfied" if normalized_terms else "missing"
+    facts: List[tuple[str, str]] = [
+        (
+            "modal_frame_logic_ontology_constraint",
+            "selected_ontology_frame:required:satisfied",
+        ),
+        (
+            "modal_frame_logic_ontology_constraint",
+            f"selected_ontology_term:required:{term_status}",
+        ),
+        (
+            "selected_ontology_frame_grounding",
+            f"{frame}:terms:{len(normalized_terms)}",
+        ),
+        (
+            "selected_ontology_frame_term_count",
+            str(len(normalized_terms)),
+        ),
+        (
+            "selected_ontology_frame_term_coverage_complete",
+            "true" if normalized_terms else "false",
+        ),
+    ]
+    seen = {
+        (
+            str(triple.get("subject", "")).strip(),
+            str(triple.get("predicate", "")).strip(),
+            str(triple.get("object", "")).strip(),
+        )
+        for triple in triples
+    }
+    for predicate, value in facts:
+        normalized_value = _clean_non_empty_string(value)
+        if not normalized_value:
+            continue
+        triple_key = (document_id, predicate, normalized_value)
+        if triple_key in seen:
+            continue
+        seen.add(triple_key)
+        triples.append(
+            {
+                "subject": document_id,
+                "predicate": predicate,
+                "object": normalized_value,
+            }
+        )
+    return triples
 
 
 def _append_legal_projection_constraint_triples(
@@ -11097,9 +11173,13 @@ def _calibrated_flogic_similarity_score(
     score: float,
     *,
     source_text: str,
+    citation: Optional[str] = None,
     flogic_result: Optional[FLogicOptimizerResult],
 ) -> tuple[float, bool]:
-    if not _is_uscode_compilation_frame_scaffold(source_text):
+    if not _has_statutory_frame_support_source(
+        source_text,
+        citation=_clean_non_empty_string(citation),
+    ):
         return score, False
     if flogic_result is not None and getattr(flogic_result, "violations", ()):
         return score, False
@@ -11222,8 +11302,9 @@ def _is_uscode_section_digest_frame_source(text: str, *, citation: str = "") -> 
     )
     has_heading_or_status = bool(
         re.search(
-            r"\b(?:definition|definitions|purpose|repealed|amendments?|"
-            r"codification|effective\s+date|statutory\s+notes)\b",
+            r"\b(?:authority|definition|definitions|in\s+general|purpose|"
+            r"repealed|retired\s+list|amendments?|codification|"
+            r"effective\s+date|statutory\s+notes)\b",
             lowered,
         )
     )

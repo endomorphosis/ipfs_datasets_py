@@ -1732,3 +1732,32 @@ def test_logic_critic_collects_modal_extraction_metrics() -> None:
     assert score.metrics["modal_family_accuracy"] == 1.0
     assert score.metrics["modal_system_accuracy"] == 1.0
     assert score.metrics["symbolic_validity"] == 1.0
+
+
+def test_parser_covers_uscode_use_recovery_paragraph_headings() -> None:
+    parser = LegalModalParser()
+    text = (
+        "§100724. Use of recovered amounts (a) Limitation on Use .—Response "
+        "costs and damages recovered by the Secretary under this subchapter "
+        "shall be available to the Secretary and without further Congressional "
+        "action may be used only as follows: (1) Reimbursement .—To reimburse "
+        "response costs and damage assessments by the Secretary. (2) Restoration "
+        "and replacement .—To restore, replace, or acquire the equivalent of "
+        "System unit resources."
+    )
+
+    parsed = parser.parse(text, citation="54 U.S.C. 100724.", source="us_code")
+    residual_spans = {
+        parsed.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ].strip()
+        for formula in parsed.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    }
+
+    assert "Use of recovered amounts (a) Limitation on Use ." in residual_spans
+    assert "(1) Reimbursement ." in residual_spans
+    assert any(
+        span.startswith("(2) Restoration and replacement .")
+        for span in residual_spans
+    )

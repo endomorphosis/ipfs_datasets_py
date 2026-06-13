@@ -379,6 +379,47 @@ def proof_attestation_view_from_proof_dict(proof: Mapping[str, Any]) -> Dict[str
     return rebuilt
 
 
+def proof_public_inputs_from_proof_dict(proof: Mapping[str, Any]) -> Dict[str, Any]:
+    """Return serialized proof public inputs with fresh attestation fields.
+
+    Bridge exporters sometimes receive a proof dictionary after the surrounding
+    record has lost its duplicated ``public_inputs`` field.  The proof itself is
+    the authoritative public-input carrier, so rebuild the derived attestation
+    fields from it before publishing LegalIR records.
+    """
+    if not isinstance(proof, Mapping):
+        return {}
+
+    public_inputs = _mapping_dict(proof.get("public_inputs"))
+    if not public_inputs:
+        return {}
+
+    attestation_view = proof_attestation_view_from_proof_dict(proof)
+    if not attestation_view:
+        return public_inputs
+
+    completed = dict(public_inputs)
+    completed["attestation_ref"] = attestation_view["attestation_ref"]
+    completed["attestation_view_version"] = int(
+        attestation_view["attestation_view_version"]
+    )
+
+    for key in (
+        "axioms_commitment",
+        "circuit_ref",
+        "circuit_version",
+        "compiler_guidance_ref",
+        "compiler_guidance_version",
+        "ruleset_id",
+        "theorem_hash",
+    ):
+        value = attestation_view.get(key)
+        if value not in (None, ""):
+            completed.setdefault(key, value)
+
+    return completed
+
+
 def zkp_attestation_legal_ir_view_loss(
     records: object,
 ) -> float:

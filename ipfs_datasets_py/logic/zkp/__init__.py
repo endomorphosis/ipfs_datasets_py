@@ -83,6 +83,7 @@ __all__ = [
     'compiler_guidance_ref_from_metadata',
     'decode_simulated_proof_layout',
     'proof_attestation_view_from_proof_dict',
+    'proof_public_inputs_from_proof_dict',
     'refresh_proof_attestation',
     'zkp_attestation_legal_ir_view_loss',
 ]
@@ -202,6 +203,7 @@ def __getattr__(name: str):
         "compiler_guidance_ref_from_metadata",
         "decode_simulated_proof_layout",
         "proof_attestation_view_from_proof_dict",
+        "proof_public_inputs_from_proof_dict",
         "refresh_proof_attestation",
         "zkp_attestation_legal_ir_view_loss",
     }:
@@ -213,6 +215,7 @@ def __getattr__(name: str):
             "compiler_guidance_ref_from_metadata",
             "decode_simulated_proof_layout",
             "proof_attestation_view_from_proof_dict",
+            "proof_public_inputs_from_proof_dict",
             "refresh_proof_attestation",
             "zkp_attestation_legal_ir_view_loss",
         }:

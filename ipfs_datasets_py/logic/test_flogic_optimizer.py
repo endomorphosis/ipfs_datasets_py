@@ -12,6 +12,66 @@ def _optimizer() -> FLogicSemanticOptimizer:
     )
 
 
+def _consistent_optimizer() -> FLogicSemanticOptimizer:
+    return FLogicSemanticOptimizer(
+        config=FLogicOptimizerConfig(check_ontology_consistency=True)
+    )
+
+
+def test_frame_ontology_constraints_reject_ungrounded_selected_frame() -> None:
+    result = _consistent_optimizer().evaluate(
+        source_text="s",
+        decoded_text="d",
+        source_embedding=[1.0, 0.0],
+        decoded_embedding=[1.0, 0.0],
+        kg_triples=[
+            {
+                "subject": "doc",
+                "predicate": "selected_ontology_frame",
+                "object": "administrative_notice_hearing",
+            },
+            {
+                "subject": "f1",
+                "predicate": "interpreted_in_frame",
+                "object": "administrative_notice_hearing",
+            },
+        ],
+    )
+
+    constraints = {violation.constraint for violation in result.violations}
+    assert result.ontology_consistent is False
+    assert "selected_frame_has_terms" in constraints
+
+
+def test_frame_ontology_constraints_accept_grounded_selected_frame() -> None:
+    result = _consistent_optimizer().evaluate(
+        source_text="s",
+        decoded_text="d",
+        source_embedding=[1.0, 0.0],
+        decoded_embedding=[1.0, 0.0],
+        kg_triples=[
+            {
+                "subject": "doc",
+                "predicate": "selected_ontology_frame",
+                "object": "administrative_notice_hearing",
+            },
+            {
+                "subject": "doc",
+                "predicate": "selected_ontology_term",
+                "object": "administrative_notice_hearing",
+            },
+            {
+                "subject": "f1",
+                "predicate": "interpreted_in_frame",
+                "object": "administrative_notice_hearing",
+            },
+        ],
+    )
+
+    assert result.ontology_consistent is True
+    assert result.violations == []
+
+
 def test_frame_ontology_terms_include_contextualized_suffix_count_features() -> None:
     result = _optimizer().evaluate(
         source_text="s",

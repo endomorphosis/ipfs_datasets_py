@@ -62,20 +62,331 @@ def _ensure_sibling_ipfs_accelerate_py_on_path() -> None:
 
 
 _ensure_sibling_ipfs_accelerate_py_on_path()
-from ipfs_accelerate_py.agent_supervisor.todo_daemon.supervisor_runtime import (
-    ChildSummaryHealthSpec,
-    child_exit_should_restart as accelerate_child_exit_should_restart,
-    install_stop_signal_handlers as accelerate_install_stop_signal_handlers,
-    launch_process_child as accelerate_launch_process_child,
-    run_process_group_capture as accelerate_run_process_group_capture,
-    supervised_child_group_succeeded as accelerate_supervised_child_group_succeeded,
-    supervised_child_succeeded as accelerate_supervised_child_succeeded,
-    summarize_child_summary_files as accelerate_summarize_child_summary_files,
-    terminate_process_group as accelerate_terminate_process_group,
-    terminate_processes_with_grace as accelerate_terminate_processes_with_grace,
-    terminate_process_with_grace as accelerate_terminate_process_with_grace,
-    timestamp_age_seconds as accelerate_timestamp_age_seconds,
-)
+try:
+    from ipfs_accelerate_py.agent_supervisor.todo_daemon.supervisor_runtime import (
+        ChildSummaryHealthSpec,
+        child_exit_should_restart as accelerate_child_exit_should_restart,
+        install_stop_signal_handlers as accelerate_install_stop_signal_handlers,
+        launch_process_child as accelerate_launch_process_child,
+        run_process_group_capture as accelerate_run_process_group_capture,
+        supervised_child_group_succeeded as accelerate_supervised_child_group_succeeded,
+        supervised_child_succeeded as accelerate_supervised_child_succeeded,
+        summarize_child_summary_files as accelerate_summarize_child_summary_files,
+        terminate_process_group as accelerate_terminate_process_group,
+        terminate_processes_with_grace as accelerate_terminate_processes_with_grace,
+        terminate_process_with_grace as accelerate_terminate_process_with_grace,
+        timestamp_age_seconds as accelerate_timestamp_age_seconds,
+    )
+except ModuleNotFoundError:
+    class ChildSummaryHealthSpec:
+        def __init__(
+            self,
+            *,
+            numeric_total_fields: Sequence[str] = (),
+            scope_field: str = "",
+            waiting_reasons: AbstractSet[str] = frozenset(),
+        ) -> None:
+            self.numeric_total_fields = tuple(numeric_total_fields)
+            self.scope_field = str(scope_field or "")
+            self.waiting_reasons = frozenset(waiting_reasons)
+
+    class _TerminationResult:
+        def __init__(self, initial_exit_code: Optional[int], final_exit_code: Optional[int]):
+            self.initial_exit_code = initial_exit_code
+            self.final_exit_code = final_exit_code
+
+    def accelerate_timestamp_age_seconds(timestamp: Any) -> Optional[float]:
+        if not timestamp:
+            return None
+        try:
+            value = datetime.fromisoformat(str(timestamp).replace("Z", "+00:00"))
+        except ValueError:
+            return None
+        if value.tzinfo is None:
+            value = value.replace(tzinfo=timezone.utc)
+        return max(0.0, (datetime.now(timezone.utc) - value).total_seconds())
+
+    def accelerate_summarize_child_summary_files(
+        paths: Sequence[Path],
+        *,
+        spec: ChildSummaryHealthSpec,
+        stale_seconds: float,
+    ) -> Dict[str, Any]:
+        summaries: List[Mapping[str, Any]] = []
+        age_by_child: Dict[str, float] = {}
+        numeric_totals = {field: 0.0 for field in spec.numeric_total_fields}
+        scope_counts: Dict[str, int] = {}
+        latest_stop_reasons: Dict[str, str] = {}
+        stale_child_ids: List[str] = []
+        waiting_count = 0
+        active_count = 0
+        now = datetime.now(timezone.utc)
+        for path in paths:
+            try:
+                data = json.loads(Path(path).read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError, TypeError):
+                continue
+            if not isinstance(data, Mapping):
+                continue
+            summaries.append(data)
+            child_id = str(data.get("run_id") or data.get("worker_id") or path)
+            timestamp = data.get("heartbeat_at") or data.get("updated_at")
+            age = accelerate_timestamp_age_seconds(timestamp)
+            if age is not None:
+                age_by_child[child_id] = age
+                if age > max(0.0, float(stale_seconds)):
+                    stale_child_ids.append(child_id)
+            elif timestamp is None:
+                stale_child_ids.append(child_id)
+            for field in spec.numeric_total_fields:
+                try:
+                    numeric_totals[field] += float(data.get(field) or 0.0)
+                except (TypeError, ValueError):
+                    pass
+            if spec.scope_field:
+                scope = str(data.get(spec.scope_field) or "")
+                if scope:
+                    scope_counts[scope] = scope_counts.get(scope, 0) + 1
+            reason = str(data.get("stop_reason") or data.get("latest_stop_reason") or "")
+            if reason:
+                latest_stop_reasons[child_id] = reason
+            if reason in spec.waiting_reasons:
+                waiting_count += 1
+            if not reason or data.get("status") in {"running", "active"}:
+                active_count += 1
+        return {
+            "active_count": active_count,
+            "latest_stop_reasons": latest_stop_reasons,
+            "numeric_totals": numeric_totals,
+            "scope_counts": scope_counts,
+            "stale_child_ids": stale_child_ids,
+            "summary_age_seconds": age_by_child,
+            "summary_count": len(summaries),
+            "waiting_count": waiting_count,
+        }
+
+    def accelerate_supervised_child_succeeded(
+        *,
+        child_id: str,
+        exit_code: Optional[int],
+        runner_terminated_child_ids: Sequence[str] = (),
+        allow_runner_terminated: bool = False,
+    ) -> bool:
+        if exit_code == 0:
+            return True
+        return bool(allow_runner_terminated and child_id in set(runner_terminated_child_ids))
+
+    def accelerate_supervised_child_group_succeeded(
+        exit_codes: Mapping[str, Optional[int]],
+        *,
+        runner_terminated_child_ids: Sequence[str] = (),
+        stop_requested: bool = False,
+        allow_runner_terminated: bool = False,
+    ) -> bool:
+        return all(
+            accelerate_supervised_child_succeeded(
+                child_id=str(child_id),
+                exit_code=exit_code,
+                runner_terminated_child_ids=runner_terminated_child_ids,
+                allow_runner_terminated=allow_runner_terminated or stop_requested,
+            )
+            for child_id, exit_code in exit_codes.items()
+        )
+
+    def accelerate_child_exit_should_restart(
+        *,
+        exit_code: Optional[int],
+        restart_count: int,
+        restart_limit: int,
+        stop_requested: bool = False,
+    ) -> bool:
+        return (
+            not stop_requested
+            and exit_code not in (0, None)
+            and int(restart_count) < int(restart_limit)
+        )
+
+    def accelerate_launch_process_child(command: Sequence[str], **kwargs: Any) -> subprocess.Popen[str]:
+        return subprocess.Popen(list(command), **kwargs)
+
+    def accelerate_run_process_group_capture(
+        command: Sequence[str],
+        *,
+        cwd: Path,
+        env: Optional[Mapping[str, str]] = None,
+        input_text: Optional[str] = None,
+        timeout_seconds: float,
+    ) -> Dict[str, Any]:
+        started = time.time()
+        try:
+            completed = subprocess.run(
+                list(command),
+                cwd=str(cwd),
+                env=dict(env) if env is not None else None,
+                input=input_text,
+                text=True,
+                capture_output=True,
+                timeout=max(0.1, float(timeout_seconds)),
+                start_new_session=True,
+            )
+        except subprocess.TimeoutExpired as exc:
+            return {
+                "duration_seconds": time.time() - started,
+                "exit_code": None,
+                "status": "timeout",
+                "stderr": _process_text(exc.stderr),
+                "stdout": _process_text(exc.stdout),
+            }
+        return {
+            "duration_seconds": time.time() - started,
+            "exit_code": completed.returncode,
+            "status": "passed" if completed.returncode == 0 else "failed",
+            "stderr": completed.stderr,
+            "stdout": completed.stdout,
+        }
+
+    def accelerate_terminate_process_group(process: subprocess.Popen[str], signum: int) -> None:
+        try:
+            os.killpg(process.pid, signum)
+        except ProcessLookupError:
+            return
+        except OSError:
+            process.send_signal(signum)
+
+    def accelerate_terminate_process_with_grace(
+        process: subprocess.Popen[str],
+        *,
+        grace_seconds: float,
+        kill_wait_seconds: float = 5.0,
+    ) -> _TerminationResult:
+        initial = process.poll()
+        if initial is not None:
+            return _TerminationResult(initial, initial)
+        accelerate_terminate_process_group(process, signal.SIGTERM)
+        try:
+            final = process.wait(timeout=max(0.0, float(grace_seconds)))
+        except subprocess.TimeoutExpired:
+            accelerate_terminate_process_group(process, signal.SIGKILL)
+            try:
+                final = process.wait(timeout=max(0.0, float(kill_wait_seconds)))
+            except subprocess.TimeoutExpired:
+                final = process.poll()
+        return _TerminationResult(initial, final)
+
+    def accelerate_terminate_processes_with_grace(
+        labeled_processes: Sequence[tuple[str, subprocess.Popen[str]]],
+        *,
+        grace_seconds: float,
+        kill_wait_seconds: float = 5.0,
+    ) -> Dict[str, _TerminationResult]:
+        return {
+            str(label): accelerate_terminate_process_with_grace(
+                process,
+                grace_seconds=grace_seconds,
+                kill_wait_seconds=kill_wait_seconds,
+            )
+            for label, process in labeled_processes
+        }
+
+    def accelerate_install_stop_signal_handlers(on_signal: Optional[Any] = None) -> Dict[str, Any]:
+        return {"stop_requested": False, "on_signal": on_signal}
+except ImportError:  # pragma: no cover - exercised when reusable supervisor runtime is absent.
+    class ChildSummaryHealthSpec:  # type: ignore[no-redef]
+        def __init__(self, **kwargs: Any) -> None:
+            self.__dict__.update(kwargs)
+
+    def accelerate_timestamp_age_seconds(timestamp: Any) -> Optional[float]:
+        if timestamp in (None, ""):
+            return None
+        try:
+            parsed = datetime.fromisoformat(str(timestamp).replace("Z", "+00:00"))
+        except (TypeError, ValueError):
+            return None
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return max(0.0, (datetime.now(timezone.utc) - parsed).total_seconds())
+
+    def accelerate_run_process_group_capture(
+        args: Sequence[str],
+        **kwargs: Any,
+    ) -> subprocess.CompletedProcess[str]:
+        timeout = kwargs.pop("timeout", None)
+        return subprocess.run(
+            list(args),
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            **kwargs,
+        )
+
+    def accelerate_launch_process_child(
+        args: Sequence[str],
+        **kwargs: Any,
+    ) -> subprocess.Popen[str]:
+        return subprocess.Popen(
+            list(args),
+            start_new_session=True,
+            text=True,
+            **kwargs,
+        )
+
+    def accelerate_terminate_process_group(
+        process: subprocess.Popen[Any],
+        signum: int = signal.SIGTERM,
+    ) -> None:
+        try:
+            os.killpg(os.getpgid(process.pid), signum)
+        except ProcessLookupError:
+            return
+
+    def accelerate_terminate_process_with_grace(
+        process: subprocess.Popen[Any],
+        *,
+        timeout: float = 5.0,
+        kill_timeout: float = 2.0,
+    ) -> Dict[str, Any]:
+        if process.poll() is not None:
+            return {"status": "already_exited", "returncode": process.returncode}
+        process.terminate()
+        try:
+            return {"status": "terminated", "returncode": process.wait(timeout=timeout)}
+        except subprocess.TimeoutExpired:
+            process.kill()
+            return {"status": "killed", "returncode": process.wait(timeout=kill_timeout)}
+
+    def accelerate_terminate_processes_with_grace(
+        processes: Sequence[subprocess.Popen[Any]],
+        **kwargs: Any,
+    ) -> list[Dict[str, Any]]:
+        return [
+            accelerate_terminate_process_with_grace(process, **kwargs)
+            for process in processes
+        ]
+
+    def accelerate_supervised_child_succeeded(*_args: Any, **kwargs: Any) -> bool:
+        return int(kwargs.get("returncode", 0) or 0) == 0
+
+    def accelerate_supervised_child_group_succeeded(*_args: Any, **kwargs: Any) -> bool:
+        return int(kwargs.get("returncode", 0) or 0) == 0
+
+    def accelerate_child_exit_should_restart(*_args: Any, **kwargs: Any) -> bool:
+        return int(kwargs.get("returncode", 0) or 0) != 0
+
+    def accelerate_summarize_child_summary_files(*_args: Any, **_kwargs: Any) -> Dict[str, Any]:
+        return {"status": "unavailable", "summary_count": 0, "summaries": []}
+
+    def accelerate_install_stop_signal_handlers(on_signal: Optional[Any] = None) -> Dict[str, Any]:
+        stop_state: Dict[str, Any] = {"stop_requested": False, "signal": None}
+
+        def _handler(signum: int, _frame: Any) -> None:
+            stop_state["stop_requested"] = True
+            stop_state["signal"] = signum
+            if on_signal is not None:
+                on_signal(signum)
+
+        signal.signal(signal.SIGTERM, _handler)
+        signal.signal(signal.SIGINT, _handler)
+        return stop_state
 
 import pyarrow.parquet as pq
 from huggingface_hub import HfFileSystem
@@ -4044,6 +4355,34 @@ def _claim_vector_program_synthesis_batch(
     )
     with queue_file_lock(queue_path):
         snapshot_queue = ModalTodoQueue.load_jsonl(queue_path)
+        apply_backpressure_report = _codex_main_apply_backpressure_report(
+            snapshot_queue,
+            args=args,
+            policy=policy,
+            worker_id=worker_id,
+        )
+        if apply_backpressure_report.get("blocked"):
+            status = update_program_synthesis_summary(
+                summary,
+                snapshot_queue,
+                policy,
+                execution_mode=execution_mode,
+            )
+            vector_report = {
+                "mode": "main_apply_backpressure",
+                "selected_count": 0,
+                "wait_reason": str(
+                    apply_backpressure_report.get("reason")
+                    or "main_apply_backpressure"
+                ),
+            }
+            vector_report.update(
+                {
+                    f"main_apply_backpressure_{key}": value
+                    for key, value in apply_backpressure_report.items()
+                }
+            )
+            return [], snapshot_queue, status, vector_report
         raw_candidates = [
             todo
             for todo in snapshot_queue.pending(optimizer_role=policy.program_synthesis_role)
@@ -4371,8 +4710,61 @@ def _claim_program_synthesis_batch_with_scope_fallback(
                 ),
                 "fallback_used": True,
             }
-        )
+    )
     return claimed, report
+
+
+def _codex_main_apply_backpressure_report(
+    queue: ModalTodoQueue,
+    *,
+    args: argparse.Namespace,
+    policy: ModalOptimizerPolicy,
+    worker_id: str,
+) -> Dict[str, Any]:
+    """Throttle new apply-to-main packets when the serialized apply lane is full."""
+    max_inflight = max(
+        0,
+        int(getattr(args, "codex_main_apply_max_inflight_packets", 0) or 0),
+    )
+    apply_mode = str(getattr(args, "codex_apply_mode", "") or "").strip().lower()
+    pending_count = len(
+        queue.pending(optimizer_role=policy.program_synthesis_role)
+    )
+    claimed_todos = list(
+        queue.claimed(optimizer_role=policy.program_synthesis_role)
+    )
+    claimed_workers = sorted(
+        {
+            str(todo.claimed_by or "")
+            for todo in claimed_todos
+            if str(todo.claimed_by or "")
+        }
+    )
+    active_other_workers = [
+        claimed_worker
+        for claimed_worker in claimed_workers
+        if claimed_worker != str(worker_id)
+    ]
+    active_packet_count = len(claimed_workers)
+    report = {
+        "active_packet_count": active_packet_count,
+        "active_other_packet_count": len(active_other_workers),
+        "active_workers": claimed_workers,
+        "blocked": False,
+        "enabled": apply_mode == "apply_to_main" and max_inflight > 0,
+        "max_inflight_packets": max_inflight,
+        "pending_count": pending_count,
+        "reason": "",
+    }
+    if (
+        report["enabled"]
+        and pending_count > 0
+        and active_packet_count >= max_inflight
+        and str(worker_id) not in set(claimed_workers)
+    ):
+        report["blocked"] = True
+        report["reason"] = "main_apply_inflight_limit_reached"
+    return report
 
 
 def _codex_parallel_scope_values(args: argparse.Namespace) -> List[str]:
@@ -4494,6 +4886,8 @@ def _build_codex_child_command(
                 CODEX_MAIN_APPLY_LOCK_TIMEOUT_SECONDS,
             )
         ),
+        "--codex-main-apply-max-inflight-packets",
+        str(getattr(args, "codex_main_apply_max_inflight_packets", 0)),
     ]
     if getattr(args, "codex_vector_index_path", None):
         command.extend(["--codex-vector-index-path", str(args.codex_vector_index_path)])
@@ -5862,6 +6256,9 @@ def _run_process_group_capture(
 
 
 _PYTEST_FAILURE_LINE_RE = re.compile(r"(?m)^(?:FAILED|ERROR)\s+([^\s]+)")
+_PYTHON_SYNTAX_LINE_RE = re.compile(
+    r'(?m)^\s*File "([^"]+)", line ([0-9]+)|^\s*File ([^,\n]+), line ([0-9]+)'
+)
 
 
 def _codex_validation_text_summary(text: str, *, limit: int = 2000) -> str:
@@ -5880,7 +6277,16 @@ def _codex_validation_failure_details(
 ) -> Dict[str, Any]:
     combined = "\n".join(part for part in (stdout, stderr) if part)
     failed_tests = sorted(dict.fromkeys(_PYTEST_FAILURE_LINE_RE.findall(combined)))
+    syntax_locations: List[str] = []
+    if "SyntaxError" in combined or "IndentationError" in combined:
+        for match in _PYTHON_SYNTAX_LINE_RE.finditer(combined):
+            file_path = match.group(1) or match.group(3) or ""
+            line_number = match.group(2) or match.group(4) or ""
+            if file_path and line_number:
+                syntax_locations.append(f"{file_path}:{line_number}")
+    syntax_locations = sorted(dict.fromkeys(syntax_locations))
     failure_tokens = [f"pytest:{node_id}" for node_id in failed_tests]
+    failure_tokens.extend(f"py_compile:{location}" for location in syntax_locations)
     if status != "passed" and not failure_tokens:
         command_key = shlex.join(str(part) for part in command)
         failure_tokens.append(
@@ -5889,6 +6295,7 @@ def _codex_validation_failure_details(
     return {
         "failed_tests": failed_tests,
         "failure_tokens": failure_tokens,
+        "syntax_locations": syntax_locations,
         "stderr_tail": _codex_validation_text_summary(stderr),
         "stdout_tail": _codex_validation_text_summary(stdout),
     }
@@ -5953,6 +6360,7 @@ def _run_codex_apply_validation(
     packet_dir: Path,
     *,
     validation_commands: Optional[Sequence[Sequence[str]]] = None,
+    preflight_python_files: Optional[Sequence[str]] = None,
     timeout_seconds: float = CODEX_APPLY_VALIDATION_TIMEOUT_SECONDS,
 ) -> Dict[str, Any]:
     commands = (
@@ -5960,6 +6368,13 @@ def _run_codex_apply_validation(
         if validation_commands is not None
         else _default_codex_apply_validation_commands(repo_root)
     )
+    preflight_files = [
+        str(path)
+        for path in (preflight_python_files or [])
+        if str(path).endswith(".py") and (repo_root / str(path)).exists()
+    ]
+    if preflight_files:
+        commands = [[sys.executable, "-m", "py_compile", *preflight_files], *commands]
     if not commands:
         return {"commands": [], "status": "skipped"}
 
@@ -6608,6 +7023,7 @@ def apply_codex_worktree_changes_to_main(
         source_repo_root,
         packet_dir,
         validation_commands=validation_commands,
+        preflight_python_files=target_files,
         timeout_seconds=validation_timeout_seconds,
     )
     updated["main_apply_validation"] = validation
@@ -6626,6 +7042,7 @@ def apply_codex_worktree_changes_to_main(
                 source_repo_root,
                 baseline_validation_dir,
                 validation_commands=validation_commands,
+                preflight_python_files=target_files,
                 timeout_seconds=validation_timeout_seconds,
             )
         updated["main_apply_baseline_validation"] = baseline_validation
@@ -7167,9 +7584,37 @@ def _codex_packet_validation_report(packet: Mapping[str, Any]) -> Dict[str, Any]
         if baseline_failure_accepted
         else main_validation.get("status")
     )
+    failed_command: Dict[str, Any] = {}
+    for command_result in main_validation.get("commands", []) or []:
+        if not isinstance(command_result, Mapping):
+            continue
+        if str(command_result.get("status") or "") != "passed":
+            failed_command = dict(command_result)
+            break
+    validation_failure_tokens = [
+        str(token)
+        for token in main_validation.get("failure_tokens", []) or []
+        if str(token)
+    ]
+    if not validation_failure_tokens and failed_command:
+        validation_failure_tokens = [
+            str(token)
+            for token in failed_command.get("failure_tokens", []) or []
+            if str(token)
+        ]
     return {
         "baseline_failure_accepted": baseline_failure_accepted,
         "baseline_status": baseline_validation.get("status"),
+        "main_apply_validation_failed_command": failed_command.get("command"),
+        "main_apply_validation_failed_tests": list(
+            failed_command.get("failed_tests", []) or []
+        )[:16],
+        "main_apply_validation_failure_tokens": validation_failure_tokens[:32],
+        "main_apply_validation_stderr_tail": failed_command.get("stderr_tail"),
+        "main_apply_validation_stdout_tail": failed_command.get("stdout_tail"),
+        "main_apply_validation_syntax_locations": list(
+            failed_command.get("syntax_locations", []) or []
+        )[:16],
         "main_apply_validation_gate": packet.get("main_apply_validation_gate"),
         "main_apply_validation_status": main_validation_status,
         "main_apply_status": packet.get("main_apply_status"),
@@ -9115,6 +9560,17 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         help=(
             "Maximum time a Codex worker waits for the serialized main apply lock "
             "before saving a rescue patch and requeueing the TODO as transient."
+        ),
+    )
+    parser.add_argument(
+        "--codex-main-apply-max-inflight-packets",
+        type=int,
+        default=0,
+        help=(
+            "Maximum claimed Codex packets allowed while using apply_to_main. "
+            "Zero disables pre-claim apply backpressure. Use this to prevent "
+            "parallel workers from all claiming TODOs and timing out on the "
+            "single serialized main-apply validation lane."
         ),
     )
     parser.add_argument(
@@ -13410,6 +13866,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             "codex_lane_lock_mode": args.codex_lane_lock_mode,
             "codex_claim_stale_seconds": _codex_claim_stale_seconds(args),
             "codex_main_apply_lock_timeout_seconds": args.codex_main_apply_lock_timeout_seconds,
+            "codex_main_apply_max_inflight_packets": args.codex_main_apply_max_inflight_packets,
             "codex_merge_repair_attempts": args.codex_merge_repair_attempts,
             "codex_merge_repair_mode": args.codex_merge_repair_mode,
             "codex_scope": args.codex_scope,
@@ -13459,7 +13916,12 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
     summary.setdefault("codex_vector_min_similarity", args.codex_vector_min_similarity)
     summary.setdefault("codex_main_apply_count", 0)
     summary.setdefault("codex_main_apply_failure_count", 0)
+    summary.setdefault("codex_main_apply_backpressure_wait_count", 0)
     summary.setdefault("codex_main_apply_repair_count", 0)
+    summary.setdefault(
+        "codex_main_apply_max_inflight_packets",
+        args.codex_main_apply_max_inflight_packets,
+    )
     summary.setdefault("codex_stale_claim_requeue_count", 0)
     summary.setdefault("codex_transient_requeue_count", 0)
 
@@ -13567,6 +14029,46 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                 summary["codex_stale_claim_requeue_count"] = int(
                     summary.get("codex_stale_claim_requeue_count", 0) or 0
                 ) + int(stale_claim_report.get("requeued_count", 0) or 0)
+            with queue_file_lock(queue_path):
+                backpressure_queue = ModalTodoQueue.load_jsonl(queue_path)
+                apply_backpressure_report = _codex_main_apply_backpressure_report(
+                    backpressure_queue,
+                    args=args,
+                    policy=policy,
+                    worker_id=worker_id,
+                )
+                status = update_program_synthesis_summary(
+                    summary,
+                    backpressure_queue,
+                    policy,
+                    execution_mode=execution_mode,
+                )
+            summary["latest_codex_main_apply_backpressure"] = dict(
+                apply_backpressure_report
+            )
+            if apply_backpressure_report.get("blocked"):
+                summary["cycles"] = cycle
+                summary["codex_main_apply_backpressure_wait_count"] = int(
+                    summary.get("codex_main_apply_backpressure_wait_count", 0) or 0
+                ) + 1
+                summary["latest_stop_reason"] = str(
+                    apply_backpressure_report.get("reason")
+                    or "main_apply_backpressure"
+                )
+                summary["updated_at"] = utc_now()
+                summary["heartbeat_at"] = summary["updated_at"]
+                save_summary(summary_path, summary)
+                append_event(
+                    log_path,
+                    args.run_id,
+                    {
+                        "event": "codex_main_apply_backpressure_wait",
+                        "report": dict(apply_backpressure_report),
+                        "worker_id": worker_id,
+                    },
+                )
+                time.sleep(max(1.0, float(args.poll_seconds)))
+                continue
             if bundle_mode == "vector":
                 claimed, queue, status, vector_claim_report = _claim_vector_program_synthesis_batch(
                     args=args,
@@ -13581,30 +14083,58 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                     queue = ModalTodoQueue.load_jsonl(queue_path)
                     supervisor = ModalTodoSupervisor(queue=queue, policy=policy)
                     requested_scope = getattr(args, "codex_scope", None)
-                    claimed, fallback_report = (
-                        _claim_program_synthesis_batch_with_scope_fallback(
-                            supervisor,
-                            worker_id=worker_id,
-                            max_items=args.max_items,
-                            requested_scope=requested_scope,
-                            semantic_bundle=(bundle_mode == "semantic"),
-                            fallback_to_global=bool(
-                                getattr(args, "codex_scope_fallback_to_global", True)
-                            ),
-                        )
-                    )
-                    if fallback_report.get("fallback_used"):
-                        summary["latest_codex_scope_fallback_claim"] = dict(
-                            fallback_report
-                        )
-                    if claimed:
-                        queue.save_jsonl(queue_path)
-                    status = update_program_synthesis_summary(
-                        summary,
+                    apply_backpressure_report = _codex_main_apply_backpressure_report(
                         queue,
-                        policy,
-                        execution_mode=execution_mode,
+                        args=args,
+                        policy=policy,
+                        worker_id=worker_id,
                     )
+                    if apply_backpressure_report.get("blocked"):
+                        claimed = []
+                        fallback_report = {}
+                        vector_claim_report = {
+                            "mode": "main_apply_backpressure",
+                            "selected_count": 0,
+                            "wait_reason": str(
+                                apply_backpressure_report.get("reason")
+                                or "main_apply_backpressure"
+                            ),
+                            **{
+                                f"main_apply_backpressure_{key}": value
+                                for key, value in apply_backpressure_report.items()
+                            },
+                        }
+                        status = update_program_synthesis_summary(
+                            summary,
+                            queue,
+                            policy,
+                            execution_mode=execution_mode,
+                        )
+                    else:
+                        claimed, fallback_report = (
+                            _claim_program_synthesis_batch_with_scope_fallback(
+                                supervisor,
+                                worker_id=worker_id,
+                                max_items=args.max_items,
+                                requested_scope=requested_scope,
+                                semantic_bundle=(bundle_mode == "semantic"),
+                                fallback_to_global=bool(
+                                    getattr(args, "codex_scope_fallback_to_global", True)
+                                ),
+                            )
+                        )
+                        if fallback_report.get("fallback_used"):
+                            summary["latest_codex_scope_fallback_claim"] = dict(
+                                fallback_report
+                            )
+                        if claimed:
+                            queue.save_jsonl(queue_path)
+                        status = update_program_synthesis_summary(
+                            summary,
+                            queue,
+                            policy,
+                            execution_mode=execution_mode,
+                        )
 
             if claimed:
                 with active_codex_packet_heartbeat(

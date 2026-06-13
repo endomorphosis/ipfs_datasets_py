@@ -2246,13 +2246,47 @@ def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
             r"\b(?P<actor>[A-Za-z][^.;]{1,360}?)\s+shall\s+"
             r"(?P<action>be\s+available\s+[^.;]+)",
         ),
+        (
+            "permitted",
+            r"\b(?P<actor>[A-Za-z][^.;]{1,360}?)\s+is\s+authorized\b[^.;]{0,160}?\s+to\s+"
+            r"(?P<action>[^.;:]+)",
+        ),
+        (
+            "forbidden",
+            r"\b(?P<actor>no\s+[A-Za-z][^.;]{1,360}?)\s+shall\s+"
+            r"(?P<action>[^.;:]+)",
+        ),
+        (
+            "forbidden",
+            r"\b(?P<actor>[A-Za-z][^.;]{1,360}?)\s+shall\s+not\s+"
+            r"(?P<action>[^.;:]+)",
+        ),
+        (
+            "obligated",
+            r"\b(?P<actor>[A-Za-z][^.;]{1,360}?)\s+shall\s+"
+            r"(?P<action>[^.;:]+)",
+        ),
+        (
+            "permitted",
+            r"\b(?P<actor>[A-Za-z][^.;]{1,360}?)\s+may\s+"
+            r"(?P<action>[^.;:]+)",
+        ),
     )
     lowered = operative_text.lower()
-    for modality, pattern in patterns:
+    matches: list[tuple[int, int, str, re.Match[str]]] = []
+    for pattern_index, (modality, pattern) in enumerate(patterns):
         match = re.search(pattern, lowered)
         if not match:
             continue
-        actor = _clean_operational_slot(match.group("actor"))
+        matches.append((match.start(), pattern_index, modality, match))
+    for _, _, modality, match in sorted(matches, key=lambda item: (item[0], item[1])):
+        raw_actor = match.group("actor")
+        if modality == "obligated":
+            embedded_no_actor = re.search(r"\bno\s+(.+)$", raw_actor)
+            if embedded_no_actor:
+                raw_actor = embedded_no_actor.group(0)
+                modality = "forbidden"
+        actor = _clean_operational_actor_slot(raw_actor)
         action = _clean_operational_slot(match.group("action"))
         if not actor or not action:
             continue
@@ -2302,11 +2336,42 @@ def _clean_operational_slot(text: str) -> str:
         value = lands_match.group(1)
     value = re.sub(
         r"^(?:purposes?|construction|leasing requirements|transfer of amounts|"
-        r"use of recovered amounts|attorney general approval of title)\s+",
+        r"use of recovered amounts|attorney general approval of title|"
+        r"guidance for executive agencies on linking of award and incentive fees "
+        r"to acquisition outcomes|information to congress on institute activities|"
+        r"contribution to inter american development bank authorization of "
+        r"appropriations|abandonment of property of the estate|art exhibits|"
+        r"disclaimers limited warranties and nonwarranties)\s+",
         "",
         value,
         flags=re.IGNORECASE,
     )
+    value = re.sub(r"^(?:the|a|an)\s+", "", value, flags=re.IGNORECASE)
+    return value.strip(" ,:-")
+
+
+def _clean_operational_actor_slot(text: str) -> str:
+    value = _clean_operational_slot(text)
+    use_clause_match = re.search(
+        r"\bthe\s+use\s+of\s+a\s+disclaimer\b.*$",
+        value,
+        flags=re.IGNORECASE,
+    )
+    if use_clause_match:
+        value = use_clause_match.group(0)
+    value = re.sub(r"^no\s+", "", value, flags=re.IGNORECASE)
+    heading_subject_match = re.search(
+        r"\b(?:the|a|an)\s+("
+        r"director|secretary|trustee|court|council|commission|administrator|nmic|"
+        r"federal acquisition regulation|department of defense|"
+        r"united states governor of the bank|property|work of art or manufacture|"
+        r"use of a disclaimer limited warranty or nonwarranty clause"
+        r")$",
+        value,
+        flags=re.IGNORECASE,
+    )
+    if heading_subject_match:
+        value = heading_subject_match.group(1)
     value = re.sub(r"^(?:the|a|an)\s+", "", value, flags=re.IGNORECASE)
     return value.strip(" ,:-")
 

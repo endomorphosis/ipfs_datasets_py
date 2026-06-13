@@ -381,10 +381,15 @@ def _graph_data_from_triples(
 
 
 def _public_attestation_record(record: Mapping[str, Any]) -> dict[str, Any]:
-    from ipfs_datasets_py.logic.zkp.circuits import proof_attestation_view_from_proof_dict
+    from ipfs_datasets_py.logic.zkp.circuits import (
+        proof_attestation_view_from_proof_dict,
+        proof_public_inputs_from_proof_dict,
+    )
 
     proof = dict(record.get("proof") or {})
-    public_inputs = dict(record.get("public_inputs") or {})
+    public_inputs = proof_public_inputs_from_proof_dict(proof) or dict(
+        record.get("public_inputs") or {}
+    )
     proof_metadata = proof.get("metadata")
     if not isinstance(proof_metadata, Mapping):
         proof_metadata = {}

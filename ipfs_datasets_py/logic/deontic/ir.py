@@ -187,15 +187,39 @@ def _hydrate_parser_element_from_nested_context(element: Mapping[str, Any]) -> D
             "action_object_details",
             "recipient_details",
             "action_recipient_details",
+            "beneficiary_details",
             "regulated_activity_details",
+            "activity_details",
+            "regulated_conduct_details",
             "condition_details",
             "exception_details",
             "override_clause_details",
             "temporal_constraint_details",
+            "deadline_details",
+            "duration_details",
             "cross_reference_details",
             "resolved_cross_references",
+            "defined_term_details",
+            "definition_details",
             "defined_term_refs",
             "defined_terms",
+            "purpose_details",
+            "purpose_body_details",
+            "penalty_details",
+            "sanction_details",
+            "procedure",
+            "procedure_details",
+            "instrument_lifecycle_details",
+            "lifecycle_details",
+            "applicability_details",
+            "applicability_target_details",
+            "applicability_scope_details",
+            "exemption_details",
+            "exemption_target_details",
+            "exemption_requirement_details",
+            "target_details",
+            "scope_details",
+            "requirement_details",
             "ontology_terms",
             "kg_relationship_hints",
         ):
@@ -612,6 +636,82 @@ def _exemption_action_text(element: Dict[str, Any]) -> str:
         for record in _list_of_dicts(element.get(detail_key)):
             normalized = _with_value_alias(record)
             for key in ("requirement", "requirement_text", "exemption_requirement", "instrument", "value", "normalized_text", "raw_text", "text"):
+                value = str(normalized.get(key) or "").strip()
+                if value:
+                    return value
+
+    return ""
+
+
+def _purpose_actor_text(element: Dict[str, Any]) -> str:
+    """Return the institutional subject for detail-only purpose parser rows."""
+
+    norm_type = str(element.get("norm_type") or "").strip().lower()
+    operator = str(element.get("deontic_operator") or element.get("modality") or "").strip().upper()
+    if norm_type != "purpose" and operator != "PURP":
+        return ""
+
+    for key in ("purpose_subject", "purpose_entity", "institution", "entity"):
+        value = str(element.get(key) or "").strip()
+        if value:
+            return value
+
+    for detail_key in ("purpose_details", "purpose_body_details"):
+        for record in _list_of_dicts(element.get(detail_key)):
+            normalized = _with_value_alias(record)
+            for key in (
+                "subject",
+                "actor",
+                "entity",
+                "institution",
+                "purpose_subject",
+            ):
+                value = str(normalized.get(key) or "").strip()
+                if value:
+                    return value
+
+    return ""
+
+
+def _purpose_action_text(element: Dict[str, Any]) -> str:
+    """Return the source-grounded purpose body for purpose parser rows."""
+
+    flat_value = _first_text(element.get("action")).strip()
+    if flat_value:
+        return flat_value
+
+    norm_type = str(element.get("norm_type") or "").strip().lower()
+    operator = str(element.get("deontic_operator") or element.get("modality") or "").strip().upper()
+    if norm_type != "purpose" and operator != "PURP":
+        return ""
+
+    for key in ("purpose", "purpose_text", "purpose_body", "body", "defined_as"):
+        value = str(element.get(key) or "").strip()
+        if value:
+            return value
+
+    legal_frame = element.get("legal_frame")
+    if isinstance(legal_frame, Mapping):
+        for key in ("purpose", "purpose_text", "purpose_body", "body"):
+            value = str(legal_frame.get(key) or "").strip()
+            if value:
+                return value
+
+    for detail_key in ("purpose_details", "purpose_body_details"):
+        for record in _list_of_dicts(element.get(detail_key)):
+            normalized = _with_value_alias(record)
+            for key in (
+                "purpose",
+                "purpose_text",
+                "purpose_body",
+                "body",
+                "object",
+                "target",
+                "value",
+                "normalized_text",
+                "raw_text",
+                "text",
+            ):
                 value = str(normalized.get(key) or "").strip()
                 if value:
                     return value
@@ -1694,6 +1794,7 @@ class LegalNormIR:
                 or _exemption_actor_text(element)
                 or _definition_actor_text(element)
                 or _instrument_lifecycle_actor_text(element)
+                or _purpose_actor_text(element)
             ),
             actor_type=str(element.get("actor_type") or element.get("entity_type") or ""),
             action=(
@@ -1701,6 +1802,7 @@ class LegalNormIR:
                 or _exemption_action_text(element)
                 or _instrument_lifecycle_action_text(element)
                 or _penalty_action_text(element)
+                or _purpose_action_text(element)
                 or _generic_action_text(element)
             ),
             mental_state=_mental_state_text(element),

@@ -2485,6 +2485,13 @@ def test_supervisor_finalize_program_synthesis_batch_applies_queue_transitions()
         patch_status="applied_to_main",
         validation_report={
             "main_apply_validation_status": "failed",
+            "main_apply_validation_failure_tokens": [
+                "py_compile:ipfs_datasets_py/logic/bridge/modal_frame_logic.py:511",
+            ],
+            "main_apply_validation_stderr_tail": "IndentationError: expected an indented block",
+            "main_apply_validation_syntax_locations": [
+                "ipfs_datasets_py/logic/bridge/modal_frame_logic.py:511",
+            ],
             "status": "failed",
         },
     )
@@ -2499,6 +2506,15 @@ def test_supervisor_finalize_program_synthesis_batch_applies_queue_transitions()
     assert applied_failed_todo.metadata["failed_validation_reason"] == (
         "main_apply_validation_failed"
     )
+    assert applied_failed_todo.metadata["failed_validation_report"][
+        "main_apply_validation_failure_tokens"
+    ] == ["py_compile:ipfs_datasets_py/logic/bridge/modal_frame_logic.py:511"]
+    assert applied_failed_todo.metadata["failed_validation_report"][
+        "main_apply_validation_syntax_locations"
+    ] == ["ipfs_datasets_py/logic/bridge/modal_frame_logic.py:511"]
+    assert "IndentationError" in applied_failed_todo.metadata[
+        "failed_validation_report"
+    ]["main_apply_validation_stderr_tail"]
 
     supervisor_no_delta = ModalTodoSupervisor(
         policy=ModalOptimizerPolicy(program_synthesis_min_support=2)
@@ -3891,6 +3907,58 @@ def test_paired_program_synthesis_health_detects_stale_claimed_codex_worker(
     assert health["stale_claimed_codex_worker_ids"] == ["codex-bridge-01"]
 
 
+def test_codex_main_apply_backpressure_blocks_new_claims_when_lane_is_full() -> None:
+    claimed = ModalTodo(
+        todo_id="claimed-bridge",
+        action="repair_bridge",
+        objective="claimed bridge repair",
+        sample_ids=["sample-a"],
+        citations=[],
+        loss_name="legal_ir_bridge_loss",
+        loss_value=1.0,
+        priority=3.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "bridge",
+        },
+    )
+    pending = ModalTodo(
+        todo_id="pending-bridge",
+        action="repair_next_bridge",
+        objective="pending bridge repair",
+        sample_ids=["sample-b"],
+        citations=[],
+        loss_name="legal_ir_bridge_loss",
+        loss_value=1.0,
+        priority=2.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "bridge",
+        },
+    )
+    queue = ModalTodoQueue([claimed, pending])
+    queue.claim_batch(
+        worker_id="codex-bridge-01",
+        max_items=1,
+        optimizer_role="program_synthesis",
+    )
+
+    report = runner._codex_main_apply_backpressure_report(
+        queue,
+        args=SimpleNamespace(
+            codex_apply_mode="apply_to_main",
+            codex_main_apply_max_inflight_packets=1,
+        ),
+        policy=ModalOptimizerPolicy(),
+        worker_id="codex-bridge-02",
+    )
+
+    assert report["blocked"] is True
+    assert report["reason"] == "main_apply_inflight_limit_reached"
+    assert report["active_packet_count"] == 1
+    assert report["pending_count"] == 1
+
+
 def test_paired_program_synthesis_health_separates_stale_idle_codex_worker(
     tmp_path: Path,
 ) -> None:
@@ -4612,14 +4680,22 @@ def test_run_tests_uses_nested_ipfs_dataset_checkout(tmp_path, monkeypatch) -> N
     assert report["exit_code"] == 0
 
 
-def _create_git_repo_with_program_synthesis_packet(tmp_path):
+def _create_git_repo_with_program_synthesis_packet(
+    tmp_path,
+    *,
+    tracked_python_module: bool = False,
+):
     repo = tmp_path / "repo"
     repo.mkdir()
     subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
     subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=repo, check=True)
     subprocess.run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)
     (repo / "README.md").write_text("test repo\n", encoding="utf-8")
+    if tracked_python_module:
+        (repo / "module.py").write_text("VALUE = 1\n", encoding="utf-8")
     subprocess.run(["git", "add", "README.md"], cwd=repo, check=True)
+    if tracked_python_module:
+        subprocess.run(["git", "add", "module.py"], cwd=repo, check=True)
     subprocess.run(["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True, text=True)
 
     samples = [
@@ -4918,6 +4994,59 @@ def test_codex_work_packet_apply_to_main_rejects_packet_only_validation_failure(
         "pytest:tests/test_baseline.py::test_existing_baseline"
     ]
     assert (repo / "README.md").read_text(encoding="utf-8") == "test repo\n"
+
+    subprocess.run(
+        ["git", "worktree", "remove", packet["worktree_path"], "--force"],
+        cwd=repo,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+
+def test_codex_apply_to_main_py_compile_preflight_reports_syntax_failure(
+    tmp_path,
+) -> None:
+    repo, packet = _create_git_repo_with_program_synthesis_packet(
+        tmp_path,
+        tracked_python_module=True,
+    )
+
+    worktree_module = Path(packet["worktree_path"]) / "module.py"
+    worktree_module.write_text("def broken(:\n    pass\n", encoding="utf-8")
+    validation_script = "print('full validation passed')"
+
+    updated = apply_codex_worktree_changes_to_main(
+        packet,
+        validation_commands=([sys.executable, "-c", validation_script],),
+    )
+
+    assert updated["patch_status"] == "main_apply_validation_failed_rolled_back"
+    validation = updated["main_apply_validation"]
+    assert validation["status"] == "failed"
+    assert validation["commands"][0]["command"][:3] == [
+        sys.executable,
+        "-m",
+        "py_compile",
+    ]
+    assert "module.py" in validation["commands"][0]["command"]
+    assert len(validation["commands"]) == 1
+    assert any(
+        token.startswith("py_compile:") and "module.py" in token
+        for token in validation["failure_tokens"]
+    )
+    report = runner._codex_packet_validation_report(updated)
+    assert report["main_apply_validation_failed_command"][:3] == [
+        sys.executable,
+        "-m",
+        "py_compile",
+    ]
+    assert any(
+        token.startswith("py_compile:") and "module.py" in token
+        for token in report["main_apply_validation_failure_tokens"]
+    )
+    assert report["main_apply_validation_syntax_locations"]
+    assert (repo / "module.py").read_text(encoding="utf-8") == "VALUE = 1\n"
 
     subprocess.run(
         ["git", "worktree", "remove", packet["worktree_path"], "--force"],
