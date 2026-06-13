@@ -48,8 +48,37 @@ try:
     _HYPOTHESIS_AVAILABLE = True
 except ImportError:
     _HYPOTHESIS_AVAILABLE = False
-    given = settings = None  # type: ignore[assignment]
-    st = None  # type: ignore[assignment]
+
+    class HealthCheck:  # type: ignore[no-redef]
+        too_slow = object()
+
+    class _UnavailableStrategy:
+        def filter(self, *_args, **_kwargs):
+            return self
+
+        def map(self, *_args, **_kwargs):
+            return self
+
+    class _UnavailableStrategies:
+        def text(self, **_kwargs):
+            return _UnavailableStrategy()
+
+        def lists(self, *_args, **_kwargs):
+            return _UnavailableStrategy()
+
+    def given(**_kwargs):  # type: ignore[no-redef]
+        def decorator(func):
+            return func
+
+        return decorator
+
+    def settings(**_kwargs):  # type: ignore[no-redef]
+        def decorator(func):
+            return func
+
+        return decorator
+
+    st = _UnavailableStrategies()  # type: ignore[assignment]
 
 
 # ---------------------------------------------------------------------------

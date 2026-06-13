@@ -94,15 +94,34 @@ except ImportError:
         json_str = json.dumps(obj, sort_keys=True)
         return hashlib.sha256(json_str.encode()).hexdigest()
 
-# Import IPFS backend support (optional - Phase 1 Task 1.3)
-try:
-    from ipfs_datasets_py.caching.router_remote_cache import IPFSBackedRemoteCache
-    from ipfs_datasets_py.ipfs_backend_router import get_ipfs_backend
-    IPFS_BACKEND_AVAILABLE = True
-except ImportError:
-    IPFS_BACKEND_AVAILABLE = False
-    IPFSBackedRemoteCache = None  # type: ignore
-    get_ipfs_backend = None  # type: ignore
+# IPFS backend imports are deferred to ProofCache.__init__ to keep this module
+# lightweight at import time (avoids pulling in ipfs_kit_py / lotus_kit eagerly).
+IPFS_BACKEND_AVAILABLE: bool | None = None  # None = not yet probed
+IPFSBackedRemoteCache = None  # type: ignore
+get_ipfs_backend = None  # type: ignore
+
+
+def _probe_ipfs_backend() -> bool:
+    """Lazily probe whether the IPFS backend dependencies are importable."""
+    global IPFS_BACKEND_AVAILABLE, IPFSBackedRemoteCache, get_ipfs_backend
+    if IPFS_BACKEND_AVAILABLE is not None:
+        return IPFS_BACKEND_AVAILABLE
+    try:
+        import warnings as _cache_warnings
+        with _cache_warnings.catch_warnings():
+            _cache_warnings.simplefilter("ignore")
+            from ipfs_datasets_py.caching.router_remote_cache import (  # noqa: PLC0415
+                IPFSBackedRemoteCache as _IRC,
+            )
+            from ipfs_datasets_py.ipfs_backend_router import (  # noqa: PLC0415
+                get_ipfs_backend as _GIB,
+            )
+        IPFSBackedRemoteCache = _IRC  # type: ignore
+        get_ipfs_backend = _GIB  # type: ignore
+        IPFS_BACKEND_AVAILABLE = True
+    except Exception:
+        IPFS_BACKEND_AVAILABLE = False
+    return IPFS_BACKEND_AVAILABLE
 
 logger = logging.getLogger(__name__)
 _CID_FALLBACK_LOGGED = False
@@ -227,7 +246,7 @@ class ProofCache:
         self.ipfs_backend = None
         self.ipfs_cache = None
         if enable_ipfs_backend:
-            if not IPFS_BACKEND_AVAILABLE:
+            if not _probe_ipfs_backend():
                 logger.warning(
                     "IPFS backend requested but ipfs_backend_router not available. "
                     "Falling back to local-only caching."
