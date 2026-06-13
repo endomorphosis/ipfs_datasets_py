@@ -121,6 +121,18 @@ def split_csv(value: str) -> list[str]:
     return [item for item in raw if item and item.lower() not in {"none", "n/a"}]
 
 
+def normalize_scope_items(values: list[str] | tuple[str, ...] | None) -> tuple[str, ...]:
+    if not values:
+        return ()
+    normalized: list[str] = []
+    for value in values:
+        for item in str(value).split(","):
+            stripped = item.strip().lower()
+            if stripped:
+                normalized.append(stripped)
+    return tuple(dict.fromkeys(normalized))
+
+
 def normalize_status(value: str) -> str:
     lowered = str(value or "").strip().lower().replace("-", "_").replace(" ", "_")
     if lowered in {"done", "complete", "completed"}:
@@ -427,6 +439,8 @@ class PortalImplementationDaemon:
         implementation_log_dir: Path | None = None,
         use_ephemeral_worktree: bool = False,
         worktree_root: Path | None = None,
+        allowed_tracks: list[str] | tuple[str, ...] | None = None,
+        allowed_task_ids: list[str] | tuple[str, ...] | None = None,
     ) -> None:
         self.todo_path = todo_path
         self.state_path = state_path
@@ -440,6 +454,13 @@ class PortalImplementationDaemon:
         self.implementation_log_dir = implementation_log_dir or self.state_path.parent / "implementation_logs"
         self.use_ephemeral_worktree = use_ephemeral_worktree
         self.worktree_root = worktree_root or Path(tempfile.gettempdir()) / "211-ai-implementation-worktrees"
+        self.allowed_tracks = normalize_scope_items(allowed_tracks)
+        self.allowed_task_ids = normalize_scope_items(allowed_task_ids)
+
+    def _task_in_scope(self, task: PortalTask) -> bool:
+        if not self.allowed_tracks and not self.allowed_task_ids:
+            return True
+        return task.track.lower() in self.allowed_tracks or task.task_id.lower() in self.allowed_task_ids
 
     def load_strategy(self) -> dict[str, Any]:
         defaults = {
@@ -467,6 +488,15 @@ class PortalImplementationDaemon:
         tasks = parse_task_file(self.todo_path, self.task_header_prefix)
         if not tasks:
             raise RuntimeError(f"No tasks found in {self.todo_path}")
+        scoped_tasks = [task for task in tasks if self._task_in_scope(task)]
+        if not scoped_tasks:
+            scope_detail = []
+            if self.allowed_tracks:
+                scope_detail.append(f"tracks={','.join(self.allowed_tracks)}")
+            if self.allowed_task_ids:
+                scope_detail.append(f"task_ids={','.join(self.allowed_task_ids)}")
+            raise RuntimeError(f"No in-scope tasks found in {self.todo_path}: {'; '.join(scope_detail)}")
+        scoped_task_ids = {task.task_id for task in scoped_tasks}
         previous = PortalTaskState.load(self.state_path)
         strategy = self.load_strategy()
         now = utc_now()
@@ -517,23 +547,31 @@ class PortalImplementationDaemon:
                 continue
             resolved_statuses[task.task_id] = "ready"
 
-        selected = self._select_next_task(tasks, resolved_statuses, strategy, unresolved_merge_failures, recent_outcomes)
+        selected = self._select_next_task(
+            scoped_tasks,
+            resolved_statuses,
+            strategy,
+            unresolved_merge_failures,
+            recent_outcomes,
+        )
+        scoped_completed_set = completed_set & scoped_task_ids
         state = PortalTaskState.load(self.state_path)
         state.heartbeat_at = now
+        newly_completed = [task_id for task_id in newly_completed if task_id in scoped_task_ids]
         if newly_completed or not state.last_progress_at:
             state.last_progress_at = now
-        state.completed_task_ids = sorted(completed_set)
+        state.completed_task_ids = sorted(scoped_completed_set)
         state.completed_count = len(state.completed_task_ids)
-        state.ready_task_ids = [task.task_id for task in tasks if resolved_statuses[task.task_id] == "ready"]
-        state.waiting_task_ids = [task.task_id for task in tasks if resolved_statuses[task.task_id] == "waiting"]
-        state.blocked_task_ids = [task.task_id for task in tasks if resolved_statuses[task.task_id] == "blocked"]
+        state.ready_task_ids = [task.task_id for task in scoped_tasks if resolved_statuses[task.task_id] == "ready"]
+        state.waiting_task_ids = [task.task_id for task in scoped_tasks if resolved_statuses[task.task_id] == "waiting"]
+        state.blocked_task_ids = [task.task_id for task in scoped_tasks if resolved_statuses[task.task_id] == "blocked"]
         state.ready_count = len(state.ready_task_ids)
         state.waiting_count = len(state.waiting_task_ids)
         state.blocked_count = len(state.blocked_task_ids)
-        state.task_count = len(tasks)
-        state.task_statuses = resolved_statuses
-        state.task_artifacts = task_artifacts
-        state.task_validation = {task.task_id: task.validation for task in tasks if task.validation}
+        state.task_count = len(scoped_tasks)
+        state.task_statuses = {task.task_id: resolved_statuses[task.task_id] for task in scoped_tasks}
+        state.task_artifacts = {task.task_id: task_artifacts[task.task_id] for task in scoped_tasks}
+        state.task_validation = {task.task_id: task.validation for task in scoped_tasks if task.validation}
         state.strategy_generation = int(strategy.get("generation", 0))
         state.implementation_attempts = previous.implementation_attempts
         state.active_attempt = previous.active_attempt
@@ -1492,7 +1530,7 @@ class PortalImplementationDaemon:
         task: PortalTask | None = None,
         overwrite_existing: bool = False,
     ) -> list[str]:
-        """Copy relevant dirty source context into an ephemeral worktree."""
+        """Copy relevant untracked source context into an ephemeral worktree."""
 
         seeded: list[str] = []
         for relative in self._untracked_worktree_context_paths():
@@ -1528,22 +1566,16 @@ class PortalImplementationDaemon:
 
     def _untracked_worktree_context_paths(self) -> list[str]:
         candidates: set[str] = set()
-        commands = (
+        result = subprocess.run(
             ["git", "ls-files", "--others", "--exclude-standard", "-z"],
-            ["git", "diff", "--name-only", "-z"],
-            ["git", "diff", "--cached", "--name-only", "-z"],
+            cwd=self.repo_root,
+            capture_output=True,
+            check=False,
         )
-        for command in commands:
-            result = subprocess.run(
-                command,
-                cwd=self.repo_root,
-                capture_output=True,
-                check=False,
-            )
-            if result.returncode != 0:
-                continue
-            paths = result.stdout.decode("utf-8", errors="surrogateescape").split("\0")
-            candidates.update(path for path in paths if path)
+        if result.returncode != 0:
+            return []
+        paths = result.stdout.decode("utf-8", errors="surrogateescape").split("\0")
+        candidates.update(path for path in paths if path)
         return sorted(candidates)
 
     def _untracked_context_path_allowed(self, relative: str) -> bool:
@@ -3441,6 +3473,17 @@ Rules:
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run the portal implementation backlog daemon")
     parser.add_argument("--once", action="store_true", help="Run one backlog pass and exit")
+    parser.add_argument(
+        "--until-complete",
+        action="store_true",
+        help="Run backlog passes until every parsed task is completed, then exit",
+    )
+    parser.add_argument(
+        "--max-passes",
+        type=int,
+        default=0,
+        help="Maximum backlog passes before exiting; 0 disables the limit",
+    )
     parser.add_argument("--interval", type=float, default=300.0, help="Seconds between backlog passes")
     parser.add_argument(
         "--todo-path",
@@ -3463,6 +3506,18 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--state-prefix",
         default="portal",
         help="State file prefix inside --state-dir",
+    )
+    parser.add_argument(
+        "--allowed-tracks",
+        action="append",
+        default=[],
+        help="Comma-separated task tracks this daemon may select; repeatable. Defaults to all tracks.",
+    )
+    parser.add_argument(
+        "--allowed-task-ids",
+        action="append",
+        default=[],
+        help="Comma-separated task IDs this daemon may select; repeatable. Defaults to all task IDs.",
     )
     parser.add_argument("--implement", action="store_true", help="Invoke an autonomous implementation agent for the ready task")
     parser.add_argument(
@@ -3514,11 +3569,21 @@ def main(argv: list[str] | None = None) -> None:
         implementation_timeout=args.implementation_timeout,
         use_ephemeral_worktree=args.implement and not args.no_ephemeral_worktree,
         worktree_root=args.worktree_root,
+        allowed_tracks=args.allowed_tracks,
+        allowed_task_ids=args.allowed_task_ids,
     )
+    passes = 0
     while True:
         result = daemon.run_once()
+        passes += 1
         logger.info("Portal implementation daemon pass complete: %s", result)
+        if args.until_complete and int(result.get("completed_count") or 0) >= int(result.get("task_count") or 0):
+            logger.info("Portal implementation daemon backlog complete after %s pass(es)", passes)
+            break
         if args.once:
+            break
+        if args.max_passes > 0 and passes >= args.max_passes:
+            logger.info("Portal implementation daemon reached max passes: %s", args.max_passes)
             break
         time.sleep(args.interval)
 

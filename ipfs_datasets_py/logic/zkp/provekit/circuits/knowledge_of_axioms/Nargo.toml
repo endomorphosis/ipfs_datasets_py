@@ -1,0 +1,6 @@
+[package]
+name = "provekit_knowledge_of_axioms"
+type = "bin"
+authors = ["ipfs_datasets_py"]
+compiler_version = ">=1.0.0"
+

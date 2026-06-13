@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import hashlib
+import hmac
 import re
 import tempfile
 import uuid
@@ -69,6 +71,7 @@ from .models import (
     WalletRecoveryBundleRecord,
     WalletStorageHealthReport,
     WalletInvocation,
+    WorldIdBinding,
     utc_now,
 )
 from .multisig import (
@@ -78,7 +81,7 @@ from .multisig import (
     operation_requires_approval,
     verify_approval,
 )
-from .proofs import ProofBackend, SimulatedProofBackend, create_simulated_proof_receipt
+from .proofs import ProofBackend, SimulatedProofBackend, create_simulated_proof_receipt, verifier_digest
 from .storage import EncryptedBlobStore, LocalEncryptedBlobStore
 from .ucan import (
     assert_grant_allows,
@@ -93,6 +96,9 @@ from .ucan import (
 )
 
 SERVICE_PLAN_SHARE_DEFAULT_SCOPES = ("service_summary",)
+WORLD_ID_PROOF_TYPE = "world_id_proof_of_human"
+WORLD_ID_PROOF_SYSTEM = "world_id_idkit_v4"
+WORLD_ID_VERIFIER_ID = "world_id_developer_portal_v4"
 SERVICE_PLAN_SHARE_SCOPE_FIELDS: Dict[str, List[str]] = {
     "service_summary": [
         "service_doc_id",
@@ -211,6 +217,11 @@ class DataWalletService:
         self.saved_services: Dict[str, SavedServiceRecord] = {}
         self.service_interactions: Dict[str, ServiceInteractionRecord] = {}
         self.service_plans: Dict[str, ServicePlanRecord] = {}
+        self.world_id_bindings: Dict[str, WorldIdBinding] = {}
+        self.world_id_binding_ids_by_wallet: Dict[str, List[str]] = {}
+        self.world_id_binding_ids_by_nullifier: Dict[str, str] = {}
+        self.world_id_private_nullifiers: Dict[str, Dict[str, str]] = {}
+        self.world_id_raw_nullifier_index: Dict[str, str] = {}
         self.audit_events: Dict[str, List[AuditEvent]] = {}
         self._principal_secrets: Dict[str, bytes] = {}
 
@@ -277,6 +288,11 @@ class DataWalletService:
     @staticmethod
     def _service_plan_resource(wallet_id: str, plan_id: str) -> str:
         return f"wallet://{wallet_id}/portal/plans/{plan_id}"
+
+    @staticmethod
+    def _world_id_binding_resource(wallet_id: str, binding_id: str) -> str:
+        return f"wallet://{wallet_id}/world-id-bindings/{binding_id}"
+
     @staticmethod
     def _unique_nonempty_strings(values: List[str] | None) -> List[str]:
         result: List[str] = []
@@ -562,6 +578,167 @@ class DataWalletService:
             },
         )
         return wallet
+
+    def add_world_id_binding(
+        self,
+        wallet_id: str,
+        *,
+        actor_did: str,
+        rp_id: str,
+        action: str,
+        protocol_version: str,
+        environment: str,
+        nullifier_ref: Optional[str] = None,
+        raw_nullifier: Optional[str] = None,
+        app_id: str = "",
+        credential_identifiers: Optional[List[str]] = None,
+        issuer_schema_ids: Optional[List[int]] = None,
+        proof_receipt_id: Optional[str] = None,
+        session_id: str = "",
+        signal_hash_ref: str = "",
+        verification_status: str = "verified",
+        verified_at: Optional[str] = None,
+        expires_at_min: Optional[int] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> WorldIdBinding:
+        """Attach a verified World ID proof reference to a wallet."""
+
+        wallet = self._wallet(wallet_id)
+        actor = str(actor_did or "").strip()
+        if not actor:
+            raise ValueError("actor_did is required")
+        if actor not in self._wallet_principals(wallet_id):
+            raise AccessDeniedError("actor_did is not authorized for this wallet")
+        normalized_rp_id = self._required_world_id_string(rp_id, "rp_id")
+        normalized_action = self._required_world_id_string(action, "action")
+        normalized_protocol = self._required_world_id_string(protocol_version, "protocol_version")
+        if normalized_protocol not in {"3.0", "4.0"}:
+            raise ValueError("protocol_version must be 3.0 or 4.0")
+        normalized_environment = self._required_world_id_string(environment, "environment").lower()
+        if normalized_environment not in {"staging", "production"}:
+            raise ValueError("environment must be staging or production")
+        normalized_status = self._required_world_id_string(verification_status, "verification_status")
+        normalized_schema_ids = self._normalize_world_id_schema_ids(issuer_schema_ids)
+        normalized_expires_at_min = self._normalize_world_id_expires_at_min(expires_at_min)
+        normalized_raw_nullifier = str(raw_nullifier or "").strip()
+        raw_nullifier_commitment = ""
+        if normalized_raw_nullifier:
+            raw_nullifier_commitment = self._world_id_raw_nullifier_commitment(
+                normalized_rp_id,
+                normalized_action,
+                normalized_environment,
+                normalized_raw_nullifier,
+            )
+            normalized_nullifier_ref = self._world_id_nullifier_ref(
+                wallet,
+                normalized_rp_id,
+                normalized_action,
+                normalized_environment,
+                normalized_raw_nullifier,
+            )
+            provided_nullifier_ref = str(nullifier_ref or "").strip()
+            if provided_nullifier_ref and provided_nullifier_ref != normalized_nullifier_ref:
+                raise ValueError("nullifier_ref does not match raw_nullifier commitment")
+            raw_existing_id = self.world_id_raw_nullifier_index.get(raw_nullifier_commitment)
+            if raw_existing_id:
+                existing = self.world_id_bindings[raw_existing_id]
+                if (
+                    existing.wallet_id == wallet_id
+                    and existing.rp_id == normalized_rp_id
+                    and existing.action == normalized_action
+                ):
+                    self._ensure_world_id_proof_receipt(existing, actor_did=actor)
+                    return existing
+                raise ValueError("World ID raw nullifier is already bound")
+        else:
+            normalized_nullifier_ref = self._required_world_id_string(nullifier_ref or "", "nullifier_ref")
+
+        existing_id = self.world_id_binding_ids_by_nullifier.get(normalized_nullifier_ref)
+        if existing_id:
+            existing = self.world_id_bindings[existing_id]
+            if (
+                existing.wallet_id == wallet_id
+                and existing.rp_id == normalized_rp_id
+                and existing.action == normalized_action
+            ):
+                if normalized_raw_nullifier and raw_nullifier_commitment:
+                    self._store_world_id_private_nullifier(
+                        existing,
+                        raw_nullifier=normalized_raw_nullifier,
+                        raw_nullifier_commitment=raw_nullifier_commitment,
+                    )
+                self._ensure_world_id_proof_receipt(existing, actor_did=actor)
+                return existing
+            raise ValueError("World ID nullifier reference is already bound")
+
+        now = utc_now()
+        binding = WorldIdBinding(
+            binding_id=f"world-id-binding-{uuid.uuid4().hex}",
+            wallet_id=wallet_id,
+            actor_did=actor,
+            rp_id=normalized_rp_id,
+            app_id=str(app_id or "").strip(),
+            action=normalized_action,
+            protocol_version=normalized_protocol,
+            environment=normalized_environment,
+            nullifier_ref=normalized_nullifier_ref,
+            credential_identifiers=self._unique_nonempty_strings(credential_identifiers),
+            issuer_schema_ids=normalized_schema_ids,
+            proof_receipt_id=str(proof_receipt_id or "").strip() or None,
+            session_id=str(session_id or "").strip(),
+            signal_hash_ref=str(signal_hash_ref or "").strip(),
+            verification_status=normalized_status,
+            verified_at=str(verified_at or now),
+            expires_at_min=normalized_expires_at_min,
+            created_at=now,
+            updated_at=now,
+            metadata=dict(metadata or {}),
+        )
+        self._store_world_id_binding(binding)
+        if normalized_raw_nullifier and raw_nullifier_commitment:
+            self._store_world_id_private_nullifier(
+                binding,
+                raw_nullifier=normalized_raw_nullifier,
+                raw_nullifier_commitment=raw_nullifier_commitment,
+            )
+        self._ensure_world_id_proof_receipt(binding, actor_did=actor)
+        self._touch_wallet(wallet)
+        append_audit_event(
+            self.audit_events[wallet_id],
+            wallet_id=wallet_id,
+            actor_did=actor,
+            action="wallet/world_id_bind",
+            resource=self._world_id_binding_resource(wallet_id, binding.binding_id),
+            decision="allow",
+            details={
+                "binding_id": binding.binding_id,
+                "rp_id": binding.rp_id,
+                "action": binding.action,
+                "protocol_version": binding.protocol_version,
+                "environment": binding.environment,
+                "credential_identifiers": list(binding.credential_identifiers),
+                "verification_status": binding.verification_status,
+            },
+        )
+        return binding
+
+    def get_world_id_binding(self, binding_id: str) -> WorldIdBinding:
+        try:
+            return self.world_id_bindings[binding_id]
+        except KeyError as exc:
+            raise MissingRecordError(f"World ID binding not found: {binding_id}") from exc
+
+    def list_world_id_bindings(self, wallet_id: str) -> List[WorldIdBinding]:
+        self._wallet(wallet_id)
+        binding_ids = self.world_id_binding_ids_by_wallet.get(wallet_id, [])
+        return [self.world_id_bindings[binding_id] for binding_id in binding_ids]
+
+    def find_world_id_binding_by_nullifier(self, nullifier_ref: str) -> Optional[WorldIdBinding]:
+        normalized = str(nullifier_ref or "").strip()
+        if not normalized:
+            return None
+        binding_id = self.world_id_binding_ids_by_nullifier.get(normalized)
+        return self.world_id_bindings.get(binding_id) if binding_id else None
 
     def _wallet_principals(self, wallet_id: str) -> set[str]:
         wallet = self._wallet(wallet_id)
@@ -4352,6 +4529,10 @@ class DataWalletService:
                 for request in sorted(self.access_requests.values(), key=lambda item: item.request_id)
                 if request.wallet_id == wallet_id
             ],
+            "world_id_bindings": [
+                binding.to_dict()
+                for binding in sorted(self.list_world_id_bindings(wallet_id), key=lambda item: item.binding_id)
+            ],
         }
 
     def export_wallet_snapshot(self, wallet_id: str) -> Dict[str, Any]:
@@ -4425,6 +4606,11 @@ class DataWalletService:
             for plan in self.service_plans.values()
             if plan.wallet_id == wallet_id
         )
+        world_id_binding_ids = sorted(
+            binding.binding_id
+            for binding in self.world_id_bindings.values()
+            if binding.wallet_id == wallet_id
+        )
         missing_person_dead_drop = self.missing_person_dead_drops.get(wallet_id)
         principal_secret_dids = sorted(
             did
@@ -4484,6 +4670,9 @@ class DataWalletService:
             ],
             "service_plans": [
                 self.service_plans[plan_id].to_dict() for plan_id in plan_ids
+            ],
+            "world_id_bindings": [
+                self.world_id_bindings[binding_id].to_dict() for binding_id in world_id_binding_ids
             ],
             "missing_person_dead_drop": (
                 missing_person_dead_drop.to_dict() if missing_person_dead_drop is not None else None
@@ -4980,6 +5169,8 @@ class DataWalletService:
             )
         for plan_data in snapshot.get("service_plans", []):
             self.service_plans[plan_data["plan_id"]] = ServicePlanRecord(**plan_data)
+        for binding_data in snapshot.get("world_id_bindings", []):
+            self._store_world_id_binding(WorldIdBinding(**binding_data))
         dead_drop_data = snapshot.get("missing_person_dead_drop")
         if isinstance(dead_drop_data, dict) and dead_drop_data.get("wallet_id"):
             self.missing_person_dead_drops[dead_drop_data["wallet_id"]] = MissingPersonDeadDropRecord(
@@ -5169,6 +5360,223 @@ class DataWalletService:
         )
         report.repaired = any(status.repaired for status in [*report.payload, *report.metadata])
         return report
+
+    def _store_world_id_binding(self, binding: WorldIdBinding) -> None:
+        old = self.world_id_bindings.get(binding.binding_id)
+        if old is not None:
+            old_wallet_bindings = self.world_id_binding_ids_by_wallet.get(old.wallet_id, [])
+            self.world_id_binding_ids_by_wallet[old.wallet_id] = [
+                binding_id for binding_id in old_wallet_bindings if binding_id != old.binding_id
+            ]
+            if self.world_id_binding_ids_by_nullifier.get(old.nullifier_ref) == old.binding_id:
+                self.world_id_binding_ids_by_nullifier.pop(old.nullifier_ref, None)
+            old_private = self.world_id_private_nullifiers.pop(old.binding_id, None)
+            if old_private is not None:
+                old_commitment = old_private.get("raw_nullifier_commitment", "")
+                if self.world_id_raw_nullifier_index.get(old_commitment) == old.binding_id:
+                    self.world_id_raw_nullifier_index.pop(old_commitment, None)
+
+        self.world_id_bindings[binding.binding_id] = binding
+        wallet_bindings = self.world_id_binding_ids_by_wallet.setdefault(binding.wallet_id, [])
+        if binding.binding_id not in wallet_bindings:
+            wallet_bindings.append(binding.binding_id)
+            wallet_bindings.sort()
+        self.world_id_binding_ids_by_nullifier[binding.nullifier_ref] = binding.binding_id
+
+    def _store_world_id_private_nullifier(
+        self,
+        binding: WorldIdBinding,
+        *,
+        raw_nullifier: str,
+        raw_nullifier_commitment: str,
+    ) -> None:
+        self.world_id_private_nullifiers[binding.binding_id] = {
+            "raw_nullifier": raw_nullifier,
+            "raw_nullifier_commitment": raw_nullifier_commitment,
+        }
+        self.world_id_raw_nullifier_index[raw_nullifier_commitment] = binding.binding_id
+
+    def _ensure_world_id_proof_receipt(
+        self,
+        binding: WorldIdBinding,
+        *,
+        actor_did: str,
+    ) -> Optional[ProofReceipt]:
+        if binding.verification_status != "verified":
+            return None
+        if binding.proof_receipt_id and binding.proof_receipt_id in self.proofs:
+            return self.proofs[binding.proof_receipt_id]
+        receipt = self._create_world_id_proof_receipt(binding)
+        self.proofs[receipt.proof_id] = receipt
+        binding.proof_receipt_id = receipt.proof_id
+        binding.updated_at = utc_now()
+        append_audit_event(
+            self.audit_events[binding.wallet_id],
+            wallet_id=binding.wallet_id,
+            actor_did=actor_did,
+            action="proof/world_id_bind",
+            resource=self._world_id_binding_resource(binding.wallet_id, binding.binding_id),
+            decision="allow",
+            details={
+                "binding_id": binding.binding_id,
+                "proof_id": receipt.proof_id,
+                "proof_type": receipt.proof_type,
+                "proof_system": receipt.proof_system,
+                "verifier_id": receipt.verifier_id,
+                "verification_status": receipt.verification_status,
+            },
+        )
+        return receipt
+
+    def _create_world_id_proof_receipt(self, binding: WorldIdBinding) -> ProofReceipt:
+        digest = verifier_digest(WORLD_ID_VERIFIER_ID, WORLD_ID_PROOF_SYSTEM)
+        public_inputs = self._world_id_proof_public_inputs(binding, verifier_digest_value=digest)
+        statement = {
+            "claim": "wallet_bound_world_id_proof_of_human",
+            "binding_id": binding.binding_id,
+            "wallet_id": binding.wallet_id,
+            "rp_id": binding.rp_id,
+            "action": binding.action,
+            "protocol_version": binding.protocol_version,
+            "environment": binding.environment,
+            "nullifier_ref": binding.nullifier_ref,
+            "credential_identifiers": list(binding.credential_identifiers),
+        }
+        proof_hash = sha256_hex(
+            canonical_bytes(
+                {
+                    "wallet_id": binding.wallet_id,
+                    "proof_type": WORLD_ID_PROOF_TYPE,
+                    "statement": statement,
+                    "public_inputs": public_inputs,
+                    "verifier_id": WORLD_ID_VERIFIER_ID,
+                    "proof_system": WORLD_ID_PROOF_SYSTEM,
+                    "verifier_digest": digest,
+                }
+            )
+        )
+        return ProofReceipt(
+            proof_id=f"proof-{uuid.uuid4().hex}",
+            wallet_id=binding.wallet_id,
+            proof_type=WORLD_ID_PROOF_TYPE,
+            statement=statement,
+            verifier_id=WORLD_ID_VERIFIER_ID,
+            public_inputs=public_inputs,
+            proof_hash=proof_hash,
+            witness_record_ids=[],
+            is_simulated=False,
+            proof_system=WORLD_ID_PROOF_SYSTEM,
+            circuit_id="world-id-idkit-v4-developer-portal",
+            verifier_digest=digest,
+            proof_artifact_ref=f"worldid-proof://{proof_hash}",
+            verification_status=binding.verification_status,
+        )
+
+    @staticmethod
+    def _world_id_proof_public_inputs(
+        binding: WorldIdBinding,
+        *,
+        verifier_digest_value: str,
+    ) -> Dict[str, Any]:
+        payload: Dict[str, Any] = {
+            "claim": WORLD_ID_PROOF_TYPE,
+            "binding_id": binding.binding_id,
+            "rp_id": binding.rp_id,
+            "app_id": binding.app_id,
+            "action": binding.action,
+            "protocol_version": binding.protocol_version,
+            "environment": binding.environment,
+            "credential_identifiers": list(binding.credential_identifiers),
+            "issuer_schema_ids": list(binding.issuer_schema_ids),
+            "nullifier_ref": binding.nullifier_ref,
+            "session_present": bool(binding.session_id),
+            "verification_status": binding.verification_status,
+            "verified_at": binding.verified_at,
+            "verifier": {
+                "id": WORLD_ID_VERIFIER_ID,
+                "type": "world_developer_portal",
+                "proof_system": WORLD_ID_PROOF_SYSTEM,
+                "digest": verifier_digest_value,
+            },
+        }
+        if binding.expires_at_min is not None:
+            payload["expires_at_min"] = binding.expires_at_min
+        return payload
+
+    def _world_id_nullifier_ref(
+        self,
+        wallet: Wallet,
+        rp_id: str,
+        action: str,
+        environment: str,
+        raw_nullifier: str,
+    ) -> str:
+        secret = self._ensure_principal_secret(wallet.owner_did)
+        digest = hmac.new(
+            secret,
+            canonical_bytes(
+                {
+                    "domain": "world-id-wallet-nullifier-ref-v1",
+                    "wallet_id": wallet.wallet_id,
+                    "rp_id": rp_id,
+                    "action": action,
+                    "environment": environment,
+                    "raw_nullifier": raw_nullifier,
+                }
+            ),
+            hashlib.sha256,
+        ).hexdigest()
+        return f"worldid-nullifier-ref:v1:{digest}"
+
+    @staticmethod
+    def _world_id_raw_nullifier_commitment(
+        rp_id: str,
+        action: str,
+        environment: str,
+        raw_nullifier: str,
+    ) -> str:
+        return sha256_hex(
+            canonical_bytes(
+                {
+                    "domain": "world-id-raw-nullifier-replay-v1",
+                    "rp_id": rp_id,
+                    "action": action,
+                    "environment": environment,
+                    "raw_nullifier": raw_nullifier,
+                }
+            )
+        )
+
+    @staticmethod
+    def _required_world_id_string(value: str, field_name: str) -> str:
+        normalized = str(value or "").strip()
+        if not normalized:
+            raise ValueError(f"{field_name} is required")
+        return normalized
+
+    @staticmethod
+    def _normalize_world_id_schema_ids(values: Optional[List[int]]) -> List[int]:
+        normalized: List[int] = []
+        for value in values or []:
+            if isinstance(value, bool):
+                raise ValueError("issuer_schema_ids must contain positive integers")
+            item = int(value)
+            if item <= 0:
+                raise ValueError("issuer_schema_ids must contain positive integers")
+            if item not in normalized:
+                normalized.append(item)
+        return normalized
+
+    @staticmethod
+    def _normalize_world_id_expires_at_min(value: Optional[int]) -> Optional[int]:
+        if value is None:
+            return None
+        if isinstance(value, bool):
+            raise ValueError("expires_at_min must be a positive integer")
+        parsed = int(value)
+        if parsed <= 0:
+            raise ValueError("expires_at_min must be a positive integer")
+        return parsed
 
     def _wallet(self, wallet_id: str) -> Wallet:
         if wallet_id not in self.wallets:
