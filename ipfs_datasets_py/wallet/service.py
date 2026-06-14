@@ -99,6 +99,50 @@ SERVICE_PLAN_SHARE_DEFAULT_SCOPES = ("service_summary",)
 WORLD_ID_PROOF_TYPE = "world_id_proof_of_human"
 WORLD_ID_PROOF_SYSTEM = "world_id_idkit_v4"
 WORLD_ID_VERIFIER_ID = "world_id_developer_portal_v4"
+PUBLIC_EXPORT_PROOF_KEYS = (
+    "proof_id",
+    "wallet_id",
+    "proof_type",
+    "statement",
+    "verifier_id",
+    "public_inputs",
+    "proof_hash",
+    "witness_record_ids",
+    "is_simulated",
+    "proof_system",
+    "circuit_id",
+    "verifier_digest",
+    "proof_artifact_ref",
+    "verification_status",
+    "created_at",
+    "expires_at",
+    "metadata",
+)
+PUBLIC_EXPORT_PROOF_PRIVATE_KEYS = {
+    "developer_portal_response",
+    "developer_response",
+    "idkit",
+    "idkit_payload",
+    "idkit_proof",
+    "jwt",
+    "merkle_root",
+    "nonce",
+    "nullifier",
+    "raw_nullifier",
+    "responses",
+    "root",
+    "rp_context",
+    "rp_signature",
+    "session_id",
+    "session_nullifier",
+    "sig",
+    "signature",
+}
+PUBLIC_EXPORT_PROOF_PRIVATE_KEY_PATTERN = re.compile(
+    r"(^|_)(bearer|email|full_name|idkit|key_hex|phone|pii|private|raw_proof|secret|ssn|token|witness)(_|$)",
+    re.IGNORECASE,
+)
+WORLD_ID_NULLIFIER_REF_PREFIX = "worldid-nullifier-ref:v1:"
 SERVICE_PLAN_SHARE_SCOPE_FIELDS: Dict[str, List[str]] = {
     "service_summary": [
         "service_doc_id",
@@ -4849,7 +4893,11 @@ class DataWalletService:
         proof_ids = sorted(
             proof.proof_id
             for proof in self.proofs.values()
-            if proof.wallet_id == wallet_id and any(record_id in record_id_set for record_id in proof.witness_record_ids)
+            if proof.wallet_id == wallet_id
+            and (
+                proof.proof_type == WORLD_ID_PROOF_TYPE
+                or any(record_id in record_id_set for record_id in proof.witness_record_ids)
+            )
         )
         bundle = {
             "bundle_type": "wallet_export_v1",
@@ -4865,7 +4913,7 @@ class DataWalletService:
                 else []
             ),
             "proofs": (
-                [self.proofs[proof_id].to_dict() for proof_id in proof_ids]
+                [self._public_export_proof_receipt(self.proofs[proof_id]) for proof_id in proof_ids]
                 if include_proofs
                 else []
             ),
@@ -4986,7 +5034,8 @@ class DataWalletService:
 
         imported_proofs = 0
         for proof_data in bundle.get("proofs", []):
-            self.proofs[proof_data["proof_id"]] = ProofReceipt(**proof_data)
+            sanitized_proof = self._public_export_proof_receipt_from_mapping(proof_data)
+            self.proofs[sanitized_proof["proof_id"]] = ProofReceipt(**sanitized_proof)
             imported_proofs += 1
 
         append_audit_event(
@@ -5082,6 +5131,139 @@ class DataWalletService:
             raise ValueError("Export bundle must contain at least one version")
         if not version_record_ids.issubset(record_ids):
             raise ValueError("Export bundle versions reference records outside the bundle")
+        for proof in bundle["proofs"]:
+            if not isinstance(proof, dict):
+                raise ValueError("Export bundle proofs must contain proof descriptors")
+            self._assert_public_export_proof_is_sanitized(proof, top_level=True)
+
+    def _public_export_proof_receipt(self, proof: ProofReceipt) -> Dict[str, Any]:
+        return self._public_export_proof_receipt_from_mapping(proof.to_dict())
+
+    def _public_export_proof_receipt_from_mapping(self, proof_data: Mapping[str, Any]) -> Dict[str, Any]:
+        proof_type = str(proof_data.get("proof_type") or "")
+        sanitized: Dict[str, Any] = {}
+        for key in PUBLIC_EXPORT_PROOF_KEYS:
+            if key not in proof_data:
+                continue
+            value = proof_data[key]
+            if key == "statement":
+                sanitized[key] = self._sanitize_public_export_proof_mapping(value, proof_type=proof_type)
+            elif key == "public_inputs":
+                sanitized[key] = self._sanitize_public_export_proof_public_inputs(value)
+            elif key == "metadata":
+                metadata = self._sanitize_public_export_proof_value(value)
+                sanitized[key] = metadata if isinstance(metadata, dict) else {}
+            elif key == "witness_record_ids":
+                sanitized[key] = [
+                    item
+                    for item in (
+                        self._sanitize_public_export_proof_value(entry)
+                        for entry in (value if isinstance(value, list) else [])
+                    )
+                    if isinstance(item, str) and item
+                ]
+            else:
+                safe_value = self._sanitize_public_export_proof_value(value)
+                if safe_value is not None:
+                    sanitized[key] = safe_value
+        return sanitized
+
+    def _sanitize_public_export_proof_public_inputs(self, value: Any) -> Dict[str, Any]:
+        if not isinstance(value, Mapping):
+            return {}
+        sanitized: Dict[str, Any] = {}
+        for key, entry in value.items():
+            normalized_key = str(key)
+            lowered = normalized_key.lower()
+            if lowered == "nullifier_ref":
+                if "nullifier_commitment" not in sanitized and "nullifier_commitment" not in value:
+                    commitment = self._world_id_public_nullifier_commitment(str(entry or ""))
+                    if commitment:
+                        sanitized["nullifier_commitment"] = commitment
+                continue
+            if self._private_public_export_proof_key(normalized_key):
+                continue
+            safe_value = self._sanitize_public_export_proof_value(entry)
+            if safe_value is not None:
+                sanitized[normalized_key] = safe_value
+        return sanitized
+
+    def _sanitize_public_export_proof_mapping(self, value: Any, *, proof_type: str = "") -> Dict[str, Any]:
+        if not isinstance(value, Mapping):
+            return {}
+        sanitized: Dict[str, Any] = {}
+        for key, entry in value.items():
+            normalized_key = str(key)
+            lowered = normalized_key.lower()
+            if proof_type == WORLD_ID_PROOF_TYPE and lowered == "nullifier_ref":
+                continue
+            if self._private_public_export_proof_key(normalized_key):
+                continue
+            safe_value = self._sanitize_public_export_proof_value(entry)
+            if safe_value is not None:
+                sanitized[normalized_key] = safe_value
+        return sanitized
+
+    def _sanitize_public_export_proof_value(self, value: Any) -> Any:
+        if isinstance(value, Mapping):
+            return self._sanitize_public_export_proof_mapping(value)
+        if isinstance(value, list):
+            items = [self._sanitize_public_export_proof_value(item) for item in value]
+            return [item for item in items if item is not None]
+        if isinstance(value, tuple):
+            items = [self._sanitize_public_export_proof_value(item) for item in value]
+            return [item for item in items if item is not None]
+        if isinstance(value, str):
+            stripped = value.strip()
+            if not stripped or self._private_public_export_proof_string(stripped):
+                return None
+            return stripped
+        if isinstance(value, (bool, int, float)) or value is None:
+            return value
+        return str(value)
+
+    def _assert_public_export_proof_is_sanitized(self, value: Any, *, top_level: bool = False) -> None:
+        if isinstance(value, Mapping):
+            for key, entry in value.items():
+                normalized_key = str(key)
+                lowered = normalized_key.lower()
+                if lowered == "nullifier_ref":
+                    raise ValueError("Export proof metadata must use nullifier_commitment, not nullifier_ref")
+                if not (top_level and lowered == "witness_record_ids") and self._private_public_export_proof_key(normalized_key):
+                    raise ValueError(f"Export proof metadata contains private field: {normalized_key}")
+                self._assert_public_export_proof_is_sanitized(entry)
+            return
+        if isinstance(value, (list, tuple)):
+            for item in value:
+                self._assert_public_export_proof_is_sanitized(item)
+            return
+        if isinstance(value, str) and self._private_public_export_proof_string(value):
+            raise ValueError("Export proof metadata contains private proof material")
+
+    @staticmethod
+    def _private_public_export_proof_key(key: str) -> bool:
+        lowered = str(key or "").lower()
+        if lowered in {"proof_hash", "proof_id", "proof_system", "proof_type", "proof_artifact_ref"}:
+            return False
+        if lowered == "nullifier_ref":
+            return True
+        return lowered in PUBLIC_EXPORT_PROOF_PRIVATE_KEYS or bool(PUBLIC_EXPORT_PROOF_PRIVATE_KEY_PATTERN.search(lowered))
+
+    def _private_public_export_proof_string(self, value: str) -> bool:
+        lowered = value.lower()
+        private_tokens = (
+            "0xraw",
+            "developer_portal_response",
+            "idkit_payload",
+            "idkit_proof",
+            "raw_nullifier",
+            "raw-world-id-nullifier",
+            "rp_signature",
+            "0xmocksig",
+        )
+        if any(token in lowered for token in private_tokens):
+            return True
+        return any(pattern.search(value) for pattern in self.REDACTION_PATTERNS.values())
 
     def _export_wallet_descriptor(self, wallet: Wallet, *, actor_did: str) -> Dict[str, Any]:
         if actor_did == wallet.owner_did:
@@ -5468,10 +5650,11 @@ class DataWalletService:
             "binding_id": binding.binding_id,
             "wallet_id": binding.wallet_id,
             "rp_id": binding.rp_id,
+            "app_id": binding.app_id,
             "action": binding.action,
             "protocol_version": binding.protocol_version,
             "environment": binding.environment,
-            "nullifier_ref": binding.nullifier_ref,
+            "credential_policy": str(binding.metadata.get("credential_policy") or "proof_of_human"),
             "credential_identifiers": list(binding.credential_identifiers),
         }
         proof_hash = sha256_hex(
@@ -5518,9 +5701,12 @@ class DataWalletService:
             "action": binding.action,
             "protocol_version": binding.protocol_version,
             "environment": binding.environment,
+            "credential_policy": str(binding.metadata.get("credential_policy") or "proof_of_human"),
             "credential_identifiers": list(binding.credential_identifiers),
             "issuer_schema_ids": list(binding.issuer_schema_ids),
             "nullifier_ref": binding.nullifier_ref,
+            "nullifier_commitment": DataWalletService._world_id_public_nullifier_commitment(binding.nullifier_ref),
+            "signal_hash": binding.signal_hash_ref,
             "session_present": bool(binding.session_id),
             "verification_status": binding.verification_status,
             "verified_at": binding.verified_at,
@@ -5533,7 +5719,17 @@ class DataWalletService:
         }
         if binding.expires_at_min is not None:
             payload["expires_at_min"] = binding.expires_at_min
+        verification = binding.metadata.get("verification")
+        if verification:
+            payload["verification_result_hash"] = f"sha256:{sha256_hex(canonical_bytes(verification))}"
         return payload
+
+    @staticmethod
+    def _world_id_public_nullifier_commitment(nullifier_ref: str) -> str:
+        normalized = str(nullifier_ref or "").strip()
+        if normalized.startswith(WORLD_ID_NULLIFIER_REF_PREFIX):
+            return f"hmac-sha256:{normalized.removeprefix(WORLD_ID_NULLIFIER_REF_PREFIX)}"
+        return normalized
 
     def _world_id_nullifier_ref(
         self,
