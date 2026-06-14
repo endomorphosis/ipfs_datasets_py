@@ -49,6 +49,7 @@ flake8>=6.0.0,<8.0.0
 # Data processing
 pyarrow>=15.0.0,<21.0.0; python_version < '3.14'
 datasets>=4.0.0,<5.0.0
+dill>=0.3.0,<0.4.1
 jsonschema>=4.0.0,<5.0.0
 jsonpatch>=1.33
 pydantic>=2.0.0,<3.0.0
@@ -72,6 +73,9 @@ PyPDF2>=3.0.0
 pytesseract>=0.3.13
 tiktoken>=0.6.0
 opencv-contrib-python-headless>=4.11.0.86 # NOTE THis library errors with "Clock skew detected"
+# symbolicai/ultralytics require the opencv-python distribution name; keep it
+# below the NumPy 2-only wheel line so pip check stays compatible with NumPy 1.26.
+opencv-python>=4.11.0.86,<4.13.0
 
 # File type detection
 python-magic>=0.4.27; platform_system != 'Windows'
