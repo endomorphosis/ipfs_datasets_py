@@ -2675,6 +2675,7 @@ class DataWalletService:
             witness=witness,
             witness_record_ids=[record_id],
         )
+        self._assert_no_simulated_proof_overclaim(receipt)
         if receipt.is_simulated and not self.allow_simulated_proofs:
             raise DataWalletError("Simulated proofs are disabled for this wallet service")
         if not self.proof_backend.verify(receipt):
@@ -2688,7 +2689,17 @@ class DataWalletService:
             action="proof/create",
             resource=resource_for_location(wallet_id, record_id),
             decision="allow",
-            details={"proof_type": receipt.proof_type, "is_simulated": receipt.is_simulated},
+            details={
+                "proof_id": receipt.proof_id,
+                "proof_type": receipt.proof_type,
+                "is_simulated": receipt.is_simulated,
+                "proof_system": receipt.proof_system,
+                "verifier_id": receipt.verifier_id,
+                "verifier_digest": receipt.verifier_digest,
+                "circuit_id": receipt.circuit_id,
+                "verification_status": receipt.verification_status,
+                "cache_status": receipt.metadata.get("cache_status"),
+            },
             grant_id=grant_id,
         )
         return receipt
@@ -2770,6 +2781,7 @@ class DataWalletService:
             witness=witness,
             witness_record_ids=[record_id],
         )
+        self._assert_no_simulated_proof_overclaim(receipt)
         if receipt.is_simulated and not self.allow_simulated_proofs:
             raise DataWalletError("Simulated proofs are disabled for this wallet service")
         if not self.proof_backend.verify(receipt):
@@ -2783,7 +2795,17 @@ class DataWalletService:
             action="proof/create",
             resource=resource_for_location(wallet_id, record_id),
             decision="allow",
-            details={"proof_type": receipt.proof_type, "is_simulated": receipt.is_simulated},
+            details={
+                "proof_id": receipt.proof_id,
+                "proof_type": receipt.proof_type,
+                "is_simulated": receipt.is_simulated,
+                "proof_system": receipt.proof_system,
+                "verifier_id": receipt.verifier_id,
+                "verifier_digest": receipt.verifier_digest,
+                "circuit_id": receipt.circuit_id,
+                "verification_status": receipt.verification_status,
+                "cache_status": receipt.metadata.get("cache_status"),
+            },
             grant_id=grant_id,
         )
         return receipt
@@ -2837,6 +2859,16 @@ class DataWalletService:
             },
         )
         return proof
+
+    @staticmethod
+    def _assert_no_simulated_proof_overclaim(receipt: ProofReceipt) -> None:
+        if not receipt.is_simulated:
+            return
+        proof_system = str(receipt.proof_system or "").strip().lower()
+        if proof_system != "simulated":
+            raise DataWalletError("Simulated proofs cannot claim a production proof system")
+        if receipt.metadata.get("production_evidence") is True:
+            raise DataWalletError("Simulated proofs cannot claim production proof evidence")
 
     @staticmethod
     def _caveat_value_set(value: object) -> set[str]:

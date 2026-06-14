@@ -561,6 +561,7 @@ class ProofReceipt:
     verification_status: str = "verified"
     created_at: str = field(default_factory=utc_now)
     expires_at: Optional[str] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
