@@ -45,6 +45,19 @@ DEFAULT_IMPLEMENTATION_TIMEOUT_SECONDS = 1800.0
 RECENT_NO_CHANGE_COOLDOWN_SECONDS = 1800.0
 NO_CHANGE_SELECTION_PENALTY = 50
 UNRESOLVED_MERGE_SELECTION_PENALTY = 1000
+DEFAULT_IMPLEMENTATION_PLAYWRIGHT_PORT_BASE = 5300
+IMPLEMENTATION_PLAYWRIGHT_ATTEMPT_SLOTS = 10
+IMPLEMENTATION_PLAYWRIGHT_FAMILY_OFFSETS = {
+    "agent_chat": 0,
+    "portal": 100,
+    "wallet": 200,
+    "worldid": 300,
+    "worldid_ui": 300,
+    "worldid_backend": 400,
+    "clzkml": 500,
+    "provekit": 600,
+    "portland_graphrag": 700,
+}
 SHARED_WORKTREE_PATHS = ("wallet_interface/ui/node_modules",)
 WORKTREE_SUBMODULE_PATHS = ("hallucinate_app", "ipfs_datasets_py", "swissknife")
 EPHEMERAL_WORKTREE_PATHS = (
@@ -457,6 +470,54 @@ class PortalImplementationDaemon:
         self.allowed_tracks = normalize_scope_items(allowed_tracks)
         self.allowed_task_ids = normalize_scope_items(allowed_task_ids)
 
+    def _implementation_family_key(self) -> str:
+        state_name = self.state_path.name
+        for suffix in ("_task_state.json", "_state.json", ".json"):
+            if state_name.endswith(suffix):
+                return state_name[: -len(suffix)] or self.state_path.stem
+        return self.state_path.stem
+
+    @staticmethod
+    def _stable_slot(value: str, modulo: int) -> int:
+        if modulo <= 1:
+            return 0
+        total = sum((index + 1) * ord(character) for index, character in enumerate(value))
+        return total % modulo
+
+    def _implementation_playwright_port_base(self) -> int:
+        raw = os.environ.get("IMPLEMENTATION_PLAYWRIGHT_PORT_BASE", "").strip()
+        if not raw:
+            return DEFAULT_IMPLEMENTATION_PLAYWRIGHT_PORT_BASE
+        try:
+            port = int(raw)
+        except ValueError:
+            logger.warning("Ignoring invalid IMPLEMENTATION_PLAYWRIGHT_PORT_BASE=%r", raw)
+            return DEFAULT_IMPLEMENTATION_PLAYWRIGHT_PORT_BASE
+        if port < 1024 or port > 65000:
+            logger.warning("Ignoring out-of-range IMPLEMENTATION_PLAYWRIGHT_PORT_BASE=%r", raw)
+            return DEFAULT_IMPLEMENTATION_PLAYWRIGHT_PORT_BASE
+        return port
+
+    def _implementation_playwright_port(self, task: PortalTask, attempt: int) -> str:
+        override = os.environ.get("IMPLEMENTATION_DAEMON_PLAYWRIGHT_PORT", "").strip()
+        if override:
+            return override
+
+        family_key = self._implementation_family_key()
+        family_offset = IMPLEMENTATION_PLAYWRIGHT_FAMILY_OFFSETS.get(family_key)
+        if family_offset is None:
+            family_offset = 1000 + (self._stable_slot(family_key, 40) * 100)
+        task_slot = self._stable_slot(task.task_id, 10) * IMPLEMENTATION_PLAYWRIGHT_ATTEMPT_SLOTS
+        attempt_slot = max(attempt - 1, 0) % IMPLEMENTATION_PLAYWRIGHT_ATTEMPT_SLOTS
+        return str(self._implementation_playwright_port_base() + family_offset + task_slot + attempt_slot)
+
+    def _build_implementation_environment(self, task: PortalTask, attempt: int) -> dict[str, str]:
+        env = os.environ.copy()
+        playwright_port = self._implementation_playwright_port(task, attempt)
+        env["PLAYWRIGHT_PORT"] = playwright_port
+        env["IMPLEMENTATION_PLAYWRIGHT_PORT"] = playwright_port
+        return env
+
     def _task_in_scope(self, task: PortalTask) -> bool:
         if not self.allowed_tracks and not self.allowed_task_ids:
             return True
@@ -722,6 +783,8 @@ class PortalImplementationDaemon:
 
         acquired_lock = True
         log_path = self.implementation_log_dir / f"{task.task_id.lower()}-attempt-{attempt}.log"
+        implementation_env = self._build_implementation_environment(task, attempt)
+        playwright_port = implementation_env["PLAYWRIGHT_PORT"]
         prompt = self._build_implementation_prompt(task, attempt)
         workspace_path = self.repo_root
         command = self._build_implementation_command(workspace_path)
@@ -745,6 +808,7 @@ class PortalImplementationDaemon:
                     started_at=started_at,
                     log_path=log_path,
                     prompt=prompt,
+                    environment=implementation_env,
                 )
             self.implementation_log_dir.mkdir(parents=True, exist_ok=True)
             self._mark_implementation_started(
@@ -761,12 +825,14 @@ class PortalImplementationDaemon:
                     "attempt": attempt,
                     "command": command,
                     "log_path": str(log_path),
+                    "playwright_port": playwright_port,
                 },
             )
             with log_path.open("w", encoding="utf-8") as log_fh:
                 log_fh.write(f"Task: {task.task_id} {task.title}\n")
                 log_fh.write(f"Started: {started_at}\n")
                 log_fh.write(f"Command: {' '.join(shlex.quote(item) for item in command)}\n\n")
+                log_fh.write(f"Environment: PLAYWRIGHT_PORT={playwright_port}\n\n")
                 log_fh.flush()
                 completed = subprocess.run(
                     command,
@@ -775,6 +841,7 @@ class PortalImplementationDaemon:
                     stdout=log_fh,
                     stderr=subprocess.STDOUT,
                     cwd=workspace_path,
+                    env=implementation_env,
                     timeout=self.implementation_timeout,
                     check=False,
                 )
@@ -785,7 +852,12 @@ class PortalImplementationDaemon:
                     phase="validating",
                     phase_detail="; ".join(task.validation) if task.validation else "",
                 )
-                validation_result = self._run_validation_commands(workspace_path, task, log_path)
+                validation_result = self._run_validation_commands(
+                    workspace_path,
+                    task,
+                    log_path,
+                    env=implementation_env,
+                )
                 if not validation_result.get("passed", False):
                     effective_returncode = int(validation_result.get("returncode") or 1)
             if effective_returncode == 0:
@@ -804,6 +876,7 @@ class PortalImplementationDaemon:
                 "attempt": attempt,
                 "returncode": effective_returncode,
                 "log_path": str(log_path),
+                "playwright_port": playwright_port,
                 "validation_result": validation_result,
             }
             if todo_update_result:
@@ -825,6 +898,7 @@ class PortalImplementationDaemon:
                 "attempt": attempt,
                 "returncode": 124,
                 "log_path": str(log_path),
+                "playwright_port": playwright_port,
                 "error": "timeout",
             }
             self._record_event("implementation_finished", result)
@@ -1072,6 +1146,7 @@ class PortalImplementationDaemon:
         started_at: str,
         log_path: Path,
         prompt: str,
+        environment: dict[str, str],
     ) -> dict[str, Any]:
         self.implementation_log_dir.mkdir(parents=True, exist_ok=True)
         self.worktree_root.mkdir(parents=True, exist_ok=True)
@@ -1091,6 +1166,7 @@ class PortalImplementationDaemon:
         }
         cleanup_result: dict[str, Any] = {"cleaned": False, "reason": "not_attempted"}
         command: list[str] = []
+        playwright_port = environment["PLAYWRIGHT_PORT"]
         returncode = 1
         commit_result: dict[str, Any] = {"committed": False}
         failed_preservation_result: dict[str, Any] = {}
@@ -1118,6 +1194,7 @@ class PortalImplementationDaemon:
                     "worktree_path": str(worktree_path),
                     "branch": branch_name,
                     "baseline_ref": baseline_ref,
+                    "playwright_port": playwright_port,
                 },
             )
             with log_path.open("w", encoding="utf-8") as log_fh:
@@ -1127,6 +1204,7 @@ class PortalImplementationDaemon:
                 log_fh.write(f"Branch: {branch_name}\n")
                 log_fh.write(f"Baseline: {baseline_ref}\n")
                 log_fh.write(f"Command: {' '.join(shlex.quote(item) for item in command)}\n\n")
+                log_fh.write(f"Environment: PLAYWRIGHT_PORT={playwright_port}\n\n")
                 log_fh.flush()
                 completed = subprocess.run(
                     command,
@@ -1135,6 +1213,7 @@ class PortalImplementationDaemon:
                     stdout=log_fh,
                     stderr=subprocess.STDOUT,
                     cwd=worktree_path,
+                    env=environment,
                     timeout=self.implementation_timeout,
                     check=False,
             )
@@ -1148,7 +1227,12 @@ class PortalImplementationDaemon:
                     branch_name=branch_name,
                 )
                 self._prepare_worktree_for_validation(worktree_path, task=task, branch_name=branch_name)
-                validation_result = self._run_validation_commands(worktree_path, task, log_path)
+                validation_result = self._run_validation_commands(
+                    worktree_path,
+                    task,
+                    log_path,
+                    env=environment,
+                )
                 if validation_result.get("passed", False):
                     commit_result = self._commit_worktree_changes(worktree_path, task, attempt)
                     implementation_commit = str(commit_result.get("commit", ""))
@@ -1181,8 +1265,6 @@ class PortalImplementationDaemon:
                         attempt,
                         validation_result,
                     )
-                    commit_result = dict(failed_preservation_result.get("commit_result") or commit_result)
-                    implementation_commit = str(commit_result.get("commit", ""))
                     cleanup_result = dict(failed_preservation_result.get("cleanup_result") or cleanup_result)
         except subprocess.TimeoutExpired:
             returncode = 124
@@ -1217,6 +1299,7 @@ class PortalImplementationDaemon:
             "attempt": attempt,
             "returncode": returncode,
             "log_path": str(log_path),
+            "playwright_port": playwright_port,
             "worktree_path": str(worktree_path),
             "branch": branch_name,
             "baseline_ref": baseline_ref,
@@ -1901,7 +1984,14 @@ class PortalImplementationDaemon:
             return False
         return any(line == relative or line.startswith(f"{relative.rstrip('/')}/") for line in result.stdout.splitlines())
 
-    def _run_validation_commands(self, workspace_path: Path, task: PortalTask, log_path: Path) -> dict[str, Any]:
+    def _run_validation_commands(
+        self,
+        workspace_path: Path,
+        task: PortalTask,
+        log_path: Path,
+        *,
+        env: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
         if not task.validation:
             return {
                 "attempted": False,
@@ -1915,6 +2005,8 @@ class PortalImplementationDaemon:
         log_path.parent.mkdir(parents=True, exist_ok=True)
         with log_path.open("a", encoding="utf-8") as log_fh:
             log_fh.write("\nValidation:\n")
+            if env and env.get("PLAYWRIGHT_PORT"):
+                log_fh.write(f"Environment: PLAYWRIGHT_PORT={env['PLAYWRIGHT_PORT']}\n")
             for command in task.validation:
                 started_at = utc_now()
                 log_fh.write(f"$ {command}\n")
@@ -1926,6 +2018,7 @@ class PortalImplementationDaemon:
                         text=True,
                         stdout=log_fh,
                         stderr=subprocess.STDOUT,
+                        env=env,
                         timeout=self.implementation_timeout,
                         check=False,
                     )
@@ -3385,6 +3478,7 @@ class PortalImplementationDaemon:
         )
 
     def _build_implementation_prompt(self, task: PortalTask, attempt: int) -> str:
+        playwright_port = self._implementation_playwright_port(task, attempt)
         return f"""You are an autonomous implementation agent working in this repository.
 
 Implement exactly this backlog task and keep changes scoped.
@@ -3400,6 +3494,7 @@ Task:
 - Depends on: {", ".join(task.depends_on) or "none"}
 - Expected outputs: {", ".join(task.outputs) or "none listed"}
 - Validation commands: {"; ".join(task.validation) or "none listed"}
+- Playwright port: {playwright_port}
 - Acceptance: {task.acceptance or "none listed"}
 
 Primary plan document:
@@ -3411,6 +3506,7 @@ Rules:
 - Do not revert unrelated local changes.
 - Prefer existing repo patterns and small, reviewable changes.
 - Implement the expected outputs for this task.
+- Use PLAYWRIGHT_PORT={playwright_port} for Playwright, Vite preview, smoke, visual, and full-stack UI validation; the daemon validates with the same environment.
 - Run the listed validation commands when practical.
 - The daemon will run the listed validation commands and will only commit and merge the worktree if they pass.
 - Leave generated artifacts and shared dependency paths alone; the daemon restores dist, screenshot artifacts, and linked node_modules before commit.
