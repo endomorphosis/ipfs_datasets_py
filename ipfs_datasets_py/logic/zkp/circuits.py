@@ -379,6 +379,17 @@ def proof_attestation_view_from_proof_dict(proof: Mapping[str, Any]) -> Dict[str
     return rebuilt
 
 
+def proof_digest_from_proof_dict(proof: Mapping[str, Any]) -> str:
+    """Return the proof byte digest from a serialized proof dictionary."""
+    if not isinstance(proof, Mapping):
+        return ""
+    proof_data = _proof_bytes_from_serialized(proof.get("proof_data"))
+    proof_bytes = _bytes_from_proof_data(proof_data)
+    if not proof_bytes:
+        return ""
+    return hashlib.sha256(proof_bytes).hexdigest()
+
+
 def proof_public_inputs_from_proof_dict(proof: Mapping[str, Any]) -> Dict[str, Any]:
     """Return serialized proof public inputs with fresh attestation fields.
 

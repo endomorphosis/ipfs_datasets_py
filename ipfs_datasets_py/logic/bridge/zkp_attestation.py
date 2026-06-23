@@ -112,7 +112,7 @@ class ZkpAttestationBridgeAdapter:
                 payload={
                     "records": [
                         {
-                            "public_inputs": dict(record.get("public_inputs") or {}),
+                            "public_inputs": _proof_public_inputs(record),
                             "source_id": record["source_id"],
                         }
                         for record in attestations
@@ -383,17 +383,21 @@ def _graph_data_from_triples(
 def _public_attestation_record(record: Mapping[str, Any]) -> dict[str, Any]:
     from ipfs_datasets_py.logic.zkp.circuits import (
         proof_attestation_view_from_proof_dict,
-        proof_public_inputs_from_proof_dict,
     )
 
     proof = dict(record.get("proof") or {})
-    public_inputs = proof_public_inputs_from_proof_dict(proof) or dict(
-        record.get("public_inputs") or {}
-    )
+    public_inputs = _proof_public_inputs(record)
     proof_metadata = proof.get("metadata")
     if not isinstance(proof_metadata, Mapping):
         proof_metadata = {}
     attestation_view = proof_attestation_view_from_proof_dict(proof)
+    proof_hash = _proof_hash(record)
+    compiler_guidance_ref = str(
+        record.get("compiler_guidance_ref")
+        or public_inputs.get("compiler_guidance_ref")
+        or attestation_view.get("compiler_guidance_ref")
+        or ""
+    )
     return {
         "attestation_ref": str(
             public_inputs.get("attestation_ref")
@@ -418,14 +422,14 @@ def _public_attestation_record(record: Mapping[str, Any]) -> dict[str, Any]:
             or ""
         ),
         "error": record.get("error") or "",
-        "proof_hash": record.get("proof_hash") or "",
+        "proof_hash": proof_hash,
         "proof_system": str(
             attestation_view.get("proof_system")
             or proof_metadata.get("proof_system")
             or ""
         ),
         "proof_size_bytes": int(proof.get("size_bytes") or 0),
-        "compiler_guidance_ref": record.get("compiler_guidance_ref") or "",
+        "compiler_guidance_ref": compiler_guidance_ref,
         "public_inputs": public_inputs,
         "ruleset_id": str(
             public_inputs.get("ruleset_id")
@@ -441,6 +445,26 @@ def _public_attestation_record(record: Mapping[str, Any]) -> dict[str, Any]:
         ),
         "verified": bool(record.get("verified")),
     }
+
+
+def _proof_public_inputs(record: Mapping[str, Any]) -> dict[str, Any]:
+    from ipfs_datasets_py.logic.zkp.circuits import proof_public_inputs_from_proof_dict
+
+    proof = record.get("proof")
+    proof_public_inputs = proof_public_inputs_from_proof_dict(proof)
+    if proof_public_inputs:
+        return proof_public_inputs
+    return dict(record.get("public_inputs") or {})
+
+
+def _proof_hash(record: Mapping[str, Any]) -> str:
+    explicit = str(record.get("proof_hash") or "").strip()
+    if explicit:
+        return explicit
+
+    from ipfs_datasets_py.logic.zkp.circuits import proof_digest_from_proof_dict
+
+    return proof_digest_from_proof_dict(record.get("proof"))
 
 
 def _document_id(prefix: str, text: str) -> str:

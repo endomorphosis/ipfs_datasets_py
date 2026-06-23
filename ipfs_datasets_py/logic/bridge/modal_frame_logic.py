@@ -364,6 +364,15 @@ def _target_metric_vector(
         "source_copy_reward_hack_penalty": _float(
             round_trip.extra_losses.get("source_copy_reward_hack_penalty", 0.0)
         ),
+        "source_decompiled_text_embedding_cosine_loss": _float(
+            round_trip.extra_losses.get(
+                "source_decompiled_text_embedding_cosine_loss",
+                0.0,
+            )
+        ),
+        "source_decompiled_text_token_loss": _float(
+            round_trip.extra_losses.get("source_decompiled_text_token_loss", 0.0)
+        ),
     }
 
 

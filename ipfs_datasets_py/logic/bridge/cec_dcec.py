@@ -2210,6 +2210,29 @@ def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
     if not substantive_text:
         return None
     operative_text = _strip_parenthetical_public_law_tail(substantive_text)
+    discretionary_transfer_match = re.search(
+        r"\b(?P<actor>(?:the\s+)?(?:secretary|administrator|commission|director|court|council)"
+        r"(?:\s+of\s+[^.;,]{1,120})?)\s+may\s*,?\s+"
+        r"(?:in\s+(?:his|her|the)\s+discretion,\s+)?"
+        r"(?:when\s+[^.;]{1,360}?\bshall\s+have\s+been\s+made,\s*)?"
+        r"(?P<action>transfer\s+title\s+to\s+[^.;]+)",
+        operative_text.lower(),
+    )
+    if discretionary_transfer_match:
+        digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
+        return {
+            "actor": _clean_operational_actor_slot(
+                discretionary_transfer_match.group("actor")
+            ),
+            "action": _clean_operational_slot(
+                discretionary_transfer_match.group("action")
+            ),
+            "modality": "permitted",
+            "norm_type": "permitted",
+            "source_id": f"dcec:section:{digest}",
+            "support_text": operative_text[:500],
+            "extraction_method": "cec_dcec_section_operational_v1",
+        }
     patterns = (
         (
             "obligated",
@@ -2306,7 +2329,7 @@ def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
 def _looks_like_us_code_section_text(text: str) -> bool:
     lowered = str(text or "").lower()
     return bool(
-        re.search(r"\bu\.s\.c\.\b|\bunited\s+states\s+code\b", lowered)
+        re.search(r"\bu\.s\.c\.|\bunited\s+states\s+code\b", lowered)
         or re.search(r"\bsec\.?\s+[0-9][0-9a-z.-]*\b", lowered)
         or re.search(r"§+\s*[0-9][0-9a-z.-]*", lowered)
     )
@@ -2463,6 +2486,13 @@ def _substantive_statutory_text(text: str) -> str:
     value = re.sub(
         r"^.*?\bFrom\s+the\s+U\.S\.\s+Government\s+Publishing\s+Office,\s+"
         r"www\.gpo\.gov\s+",
+        "",
+        value,
+        count=1,
+        flags=re.IGNORECASE,
+    ).strip()
+    value = re.sub(
+        r"^\s*\d+\s+U\.S\.C\.\s+[0-9A-Za-z.-]+\.?:?\s*",
         "",
         value,
         count=1,

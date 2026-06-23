@@ -492,6 +492,75 @@ def test_parser_keeps_formula_ids_unique_for_editorial_tail_residuals() -> None:
     assert len(formula_ids) == len(set(formula_ids))
 
 
+def test_parser_adds_frame_residual_for_revision_note_omitted_words() -> None:
+    parser = LegalModalParser()
+    modal_ir = parser.parse(
+        (
+            "§22306. Exclusive right to name. The corporation has the exclusive "
+            "right to use the name. Historical and Revision Notes The words "
+            '"sole" and "to have and to use in carrying out its purposes" are '
+            "omitted as unnecessary."
+        ),
+        document_id="us-code-36-22306-revision-note",
+        citation="36 U.S.C. 22306",
+    )
+
+    assert any(
+        "are omitted as unnecessary" in modal_ir.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ].lower()
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    )
+
+
+def test_parser_adds_frame_residual_for_uscode_footnote_tail() -> None:
+    parser = LegalModalParser()
+    modal_ir = parser.parse(
+        (
+            "§737. Unrestricted deeds for townsite lands. The trustee shall "
+            "issue an unrestricted deed. 1 See References in Text note below. "
+            "2 So in original."
+        ),
+        document_id="us-code-43-737-footnote-tail",
+        citation="43 U.S.C. 737.",
+    )
+
+    residual_text = " ".join(
+        modal_ir.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ].lower()
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    )
+    assert "references in text note below" in residual_text
+    assert "so in original" in residual_text
+
+
+def test_parser_adds_frame_residual_for_legislative_history_parenthetical() -> None:
+    parser = LegalModalParser()
+    modal_ir = parser.parse(
+        (
+            "§1315. State reports on water quality. Each State shall submit a "
+            "report. (June 30, 1948, ch. 758, title III, §305, as added Pub. "
+            "L. 92-500, §2, Oct. 18, 1972, 86 Stat. 853; amended Pub. L. "
+            "95-217, §52, Dec. 27, 1977, 91 Stat. 1589.) Editorial Notes"
+        ),
+        document_id="us-code-33-1315-legislative-history",
+        citation="33 U.S.C. 1315",
+    )
+
+    residual_text = " ".join(
+        modal_ir.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ].lower()
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    )
+    assert "june 30, 1948" in residual_text
+    assert "91 stat. 1589" in residual_text
+
+
 def test_compiler_emits_explicit_frame_to_conditional_and_temporal_adaptive_pairs() -> None:
     compiler = DeterministicModalCompiler(
         config=ModalCompilerConfig(parser_backend="spacy")

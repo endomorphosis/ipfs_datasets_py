@@ -148,12 +148,12 @@ VALIDATION_CANARY_INDICES="${VALIDATION_CANARY_INDICES:-28380,25280,18192,38585}
 AUTOENCODER_DEVICE="${AUTOENCODER_DEVICE:-cpu}"
 AUTOENCODER_BRIDGE_WORKERS="${AUTOENCODER_BRIDGE_WORKERS:-8}"
 BRIDGE_ADAPTER_WORKERS="${BRIDGE_ADAPTER_WORKERS:-4}"
-CODEX_PARALLEL_SCOPES="${CODEX_PARALLEL_SCOPES:-compiler_ambiguity,compiler_registry,ir_decompiler,bridge,compiler_parser,frame_logic,deontic,cec,tdfol,knowledge_graphs,external_provers,zkp}"
+CODEX_PARALLEL_SCOPES="${CODEX_PARALLEL_SCOPES:-compiler_ambiguity,compiler_registry,autoencoder,ir_decompiler,bridge,compiler_parser,frame_logic,deontic,cec,tdfol,knowledge_graphs,external_provers,zkp}"
 CODEX_SCOPE_WORKERS="${CODEX_SCOPE_WORKERS:-1}"
 # The paired final run has one stateful autoencoder producer. Codex workers are
 # demand-weighted from observed legal-IR TODO queues and cover every family scope
 # the autoencoder can seed, while bridge workers keep the deterministic metrics fed.
-CODEX_SCOPE_WORKER_MAP="${CODEX_SCOPE_WORKER_MAP:-compiler_ambiguity=3,compiler_registry=3,ir_decompiler=3,bridge=2,compiler_parser=2,frame_logic=2,deontic=2,cec=3,tdfol=2,knowledge_graphs=3,external_provers=2,zkp=2}"
+CODEX_SCOPE_WORKER_MAP="${CODEX_SCOPE_WORKER_MAP:-compiler_ambiguity=3,compiler_registry=3,autoencoder=1,ir_decompiler=3,bridge=2,compiler_parser=2,frame_logic=2,deontic=2,cec=3,tdfol=2,knowledge_graphs=3,external_provers=2,zkp=2}"
 CODEX_APPLY_MODE="${CODEX_APPLY_MODE:-apply_to_main}"
 if [[ "${CODEX_APPLY_MODE}" == "packet_only" ]]; then
   CODEX_APPLY_MODE="patch_only"
@@ -336,12 +336,12 @@ PAIRED_ARGS=(
 )
 
 CONFIGS=(
-  "lr=0.28 ce=1.75 rec=0.60 cos=0.60 legal=2.00 hard=0.55 maxcos=0.005 maxrec=0.010 maxce=0.000 maxlegal=0.010 fam=1.05 emb=0.45 qemb=0.50 qfam=1.05 sigemb=0.50 sigfam=1.10 sigview=1.05 rtemb=0.50 rtfam=1.10 rtview=1.05 planemb=0.50 planfam=1.10 planview=1.05 argemb=0.50 argfam=1.10 argview=1.05 embnorm=0.50 famnorm=0.50 viewnorm=0.50 proto=0.55 famslot=0.55 triemb=0.45 joint=0.55 slotfam=1.10 viewfam=1.05 triview=1.00 slotviewfam=1.05 slotemb=0.55 slotviewemb=0.55 slotpair=0.30 slotview=1.05 view=1.00 viewemb=0.55 cossgd=0.25"
-  "lr=0.30 ce=1.50 rec=0.70 cos=0.70 legal=4.00 hard=0.60 maxcos=0.008 maxrec=0.012 maxce=0.003 maxlegal=0.012 fam=0.95 emb=0.55 qemb=0.65 qfam=1.25 sigemb=0.70 sigfam=1.30 sigview=1.25 rtemb=0.70 rtfam=1.30 rtview=1.25 planemb=0.70 planfam=1.30 planview=1.25 argemb=0.70 argfam=1.30 argview=1.25 embnorm=0.65 famnorm=0.55 viewnorm=0.55 proto=0.50 famslot=0.70 triemb=0.65 joint=0.65 slotfam=1.25 viewfam=1.20 triview=1.25 slotviewfam=1.25 slotemb=0.65 slotviewemb=0.70 slotpair=0.40 slotview=1.20 view=1.10 viewemb=0.65 cossgd=0.35"
-  "lr=0.33 ce=1.35 rec=0.80 cos=0.80 legal=8.00 hard=0.70 maxcos=0.012 maxrec=0.018 maxce=0.006 maxlegal=0.018 fam=1.15 emb=0.50 qemb=0.45 qfam=0.95 sigemb=0.45 sigfam=0.95 sigview=0.90 rtemb=0.45 rtfam=0.95 rtview=0.90 planemb=0.45 planfam=0.95 planview=0.90 argemb=0.45 argfam=0.95 argview=0.90 embnorm=0.35 famnorm=0.45 viewnorm=0.45 proto=0.65 famslot=0.45 triemb=0.40 joint=0.50 slotfam=0.95 viewfam=0.90 triview=0.85 slotviewfam=0.90 slotemb=0.50 slotviewemb=0.45 slotpair=0.25 slotview=0.95 view=0.95 viewemb=0.50 cossgd=0.20"
-  "lr=0.26 ce=2.00 rec=0.50 cos=0.50 legal=16.00 hard=0.45 maxcos=0.015 maxrec=0.025 maxce=0.010 maxlegal=0.020 fam=0.85 emb=0.65 qemb=0.75 qfam=1.35 sigemb=0.80 sigfam=1.45 sigview=1.40 rtemb=0.80 rtfam=1.45 rtview=1.40 planemb=0.80 planfam=1.45 planview=1.40 argemb=0.80 argfam=1.45 argview=1.40 embnorm=0.75 famnorm=0.65 viewnorm=0.65 proto=0.45 famslot=0.80 triemb=0.80 joint=0.75 slotfam=1.35 viewfam=1.35 triview=1.45 slotviewfam=1.40 slotemb=0.75 slotviewemb=0.80 slotpair=0.50 slotview=1.35 view=1.20 viewemb=0.75 cossgd=0.40"
-  "lr=0.31 ce=1.60 rec=0.65 cos=0.75 legal=32.00 hard=0.50 maxcos=0.020 maxrec=0.030 maxce=0.015 maxlegal=0.030 fam=1.10 emb=0.40 qemb=0.55 qfam=1.15 sigemb=0.60 sigfam=1.20 sigview=1.15 rtemb=0.60 rtfam=1.20 rtview=1.15 planemb=0.60 planfam=1.20 planview=1.15 argemb=0.60 argfam=1.20 argview=1.15 embnorm=0.50 famnorm=0.60 viewnorm=0.55 proto=0.70 famslot=0.60 triemb=0.55 joint=0.60 slotfam=1.20 viewfam=1.10 triview=1.10 slotviewfam=1.15 slotemb=0.60 slotviewemb=0.60 slotpair=0.35 slotview=1.15 view=1.05 viewemb=0.60 cossgd=0.30"
-  "lr=0.29 ce=1.40 rec=0.75 cos=0.65 legal=64.00 hard=0.65 maxcos=0.006 maxrec=0.015 maxce=0.002 maxlegal=0.015 fam=1.00 emb=0.60 qemb=0.40 qfam=0.90 sigemb=0.40 sigfam=0.90 sigview=0.90 rtemb=0.40 rtfam=0.90 rtview=0.90 planemb=0.40 planfam=0.90 planview=0.90 argemb=0.40 argfam=0.90 argview=0.90 embnorm=0.25 famnorm=0.40 viewnorm=0.40 proto=0.55 famslot=0.40 triemb=0.35 joint=0.45 slotfam=1.00 viewfam=0.95 triview=0.90 slotviewfam=0.95 slotemb=0.45 slotviewemb=0.40 slotpair=0.20 slotview=0.90 view=0.90 viewemb=0.45 cossgd=0.25"
+  "lr=0.28 ce=1.75 rec=0.60 cos=1.20 legal=2.00 hard=0.55 maxcos=0.005 maxrec=0.010 maxce=0.000 maxlegal=0.010 fam=1.05 emb=0.45 qemb=0.50 qfam=1.05 sigemb=0.50 sigfam=1.10 sigview=1.05 rtemb=0.50 rtfam=1.10 rtview=1.05 planemb=0.50 planfam=1.10 planview=1.05 argemb=0.50 argfam=1.10 argview=1.05 embnorm=0.50 famnorm=0.50 viewnorm=0.50 proto=0.55 famslot=0.55 triemb=0.45 joint=0.55 slotfam=1.10 viewfam=1.05 triview=1.00 slotviewfam=1.05 slotemb=0.55 slotviewemb=0.55 slotpair=0.30 slotview=1.05 view=1.00 viewemb=0.55 cossgd=0.55"
+  "lr=0.30 ce=1.50 rec=0.70 cos=1.50 legal=4.00 hard=0.60 maxcos=0.008 maxrec=0.012 maxce=0.003 maxlegal=0.012 fam=0.95 emb=0.55 qemb=0.65 qfam=1.25 sigemb=0.70 sigfam=1.30 sigview=1.25 rtemb=0.70 rtfam=1.30 rtview=1.25 planemb=0.70 planfam=1.30 planview=1.25 argemb=0.70 argfam=1.30 argview=1.25 embnorm=0.65 famnorm=0.55 viewnorm=0.55 proto=0.50 famslot=0.70 triemb=0.65 joint=0.65 slotfam=1.25 viewfam=1.20 triview=1.25 slotviewfam=1.25 slotemb=0.65 slotviewemb=0.70 slotpair=0.40 slotview=1.20 view=1.10 viewemb=0.65 cossgd=0.65"
+  "lr=0.33 ce=1.35 rec=0.80 cos=1.80 legal=8.00 hard=0.70 maxcos=0.012 maxrec=0.018 maxce=0.006 maxlegal=0.018 fam=1.15 emb=0.50 qemb=0.45 qfam=0.95 sigemb=0.45 sigfam=0.95 sigview=0.90 rtemb=0.45 rtfam=0.95 rtview=0.90 planemb=0.45 planfam=0.95 planview=0.90 argemb=0.45 argfam=0.95 argview=0.90 embnorm=0.35 famnorm=0.45 viewnorm=0.45 proto=0.65 famslot=0.45 triemb=0.40 joint=0.50 slotfam=0.95 viewfam=0.90 triview=0.85 slotviewfam=0.90 slotemb=0.50 slotviewemb=0.45 slotpair=0.25 slotview=0.95 view=0.95 viewemb=0.50 cossgd=0.75"
+  "lr=0.26 ce=2.00 rec=0.50 cos=1.10 legal=16.00 hard=0.45 maxcos=0.015 maxrec=0.025 maxce=0.010 maxlegal=0.020 fam=0.85 emb=0.65 qemb=0.75 qfam=1.35 sigemb=0.80 sigfam=1.45 sigview=1.40 rtemb=0.80 rtfam=1.45 rtview=1.40 planemb=0.80 planfam=1.45 planview=1.40 argemb=0.80 argfam=1.45 argview=1.40 embnorm=0.75 famnorm=0.65 viewnorm=0.65 proto=0.45 famslot=0.80 triemb=0.80 joint=0.75 slotfam=1.35 viewfam=1.35 triview=1.45 slotviewfam=1.40 slotemb=0.75 slotviewemb=0.80 slotpair=0.50 slotview=1.35 view=1.20 viewemb=0.75 cossgd=0.60"
+  "lr=0.31 ce=1.60 rec=0.65 cos=1.60 legal=32.00 hard=0.50 maxcos=0.020 maxrec=0.030 maxce=0.015 maxlegal=0.030 fam=1.10 emb=0.40 qemb=0.55 qfam=1.15 sigemb=0.60 sigfam=1.20 sigview=1.15 rtemb=0.60 rtfam=1.20 rtview=1.15 planemb=0.60 planfam=1.20 planview=1.15 argemb=0.60 argfam=1.20 argview=1.15 embnorm=0.50 famnorm=0.60 viewnorm=0.55 proto=0.70 famslot=0.60 triemb=0.55 joint=0.60 slotfam=1.20 viewfam=1.10 triview=1.10 slotviewfam=1.15 slotemb=0.60 slotviewemb=0.60 slotpair=0.35 slotview=1.15 view=1.05 viewemb=0.60 cossgd=0.70"
+  "lr=0.29 ce=1.40 rec=0.75 cos=1.35 legal=64.00 hard=0.65 maxcos=0.006 maxrec=0.015 maxce=0.002 maxlegal=0.015 fam=1.00 emb=0.60 qemb=0.40 qfam=0.90 sigemb=0.40 sigfam=0.90 sigview=0.90 rtemb=0.40 rtfam=0.90 rtview=0.90 planemb=0.40 planfam=0.90 planview=0.90 argemb=0.40 argfam=0.90 argview=0.90 embnorm=0.25 famnorm=0.40 viewnorm=0.40 proto=0.55 famslot=0.40 triemb=0.35 joint=0.45 slotfam=1.00 viewfam=0.95 triview=0.90 slotviewfam=0.95 slotemb=0.45 slotviewemb=0.40 slotpair=0.20 slotview=0.90 view=0.90 viewemb=0.45 cossgd=0.60"
 )
 
 if (( TRIAL_COUNT < ${#CONFIGS[@]} )); then
@@ -644,8 +644,8 @@ score_trial_index() {
     return 0
   fi
 
-  local ce_score cos_score ir_ce_score ir_cos_score learned_ir_ce_score learned_ir_cos_score learned_ir_family_ce_excess_score learned_ir_worst_family_ce_excess_score learned_ir_worst_family_cosine_gap_score bridge_score source_copy_score structural_text_score projection_accepted_score trial_score
-  read -r ce_score cos_score ir_ce_score ir_cos_score learned_ir_ce_score learned_ir_cos_score learned_ir_family_ce_excess_score learned_ir_worst_family_ce_excess_score learned_ir_worst_family_cosine_gap_score bridge_score source_copy_score structural_text_score projection_accepted_score trial_score < <(
+  local ce_score cos_score ir_ce_score ir_cos_score learned_ir_ce_score learned_ir_cos_score learned_ir_family_ce_excess_score learned_ir_worst_family_ce_excess_score learned_ir_worst_family_cosine_gap_score bridge_score source_copy_score source_decompiled_cosine_loss_score source_decompiled_token_loss_score structural_text_score projection_accepted_score trial_score
+  read -r ce_score cos_score ir_ce_score ir_cos_score learned_ir_ce_score learned_ir_cos_score learned_ir_family_ce_excess_score learned_ir_worst_family_ce_excess_score learned_ir_worst_family_cosine_gap_score bridge_score source_copy_score source_decompiled_cosine_loss_score source_decompiled_token_loss_score structural_text_score projection_accepted_score trial_score < <(
     "${PYTHON_BIN}" - "${summary_path}" <<'PY'
 import json
 import math
@@ -726,6 +726,18 @@ if bridge > 1e11:
 source_copy = finite("best_validation_ir_source_copy_loss", 0.0)
 if source_copy > 1e11:
     source_copy = 0.0
+source_decompiled_cosine = finite(
+    "best_validation_ir_source_decompiled_text_embedding_cosine_loss",
+    0.0,
+)
+if source_decompiled_cosine > 1e11:
+    source_decompiled_cosine = 0.0
+source_decompiled_token = finite(
+    "best_validation_ir_source_decompiled_text_token_loss",
+    0.0,
+)
+if source_decompiled_token > 1e11:
+    source_decompiled_token = 0.0
 structural_text = finite("best_validation_ir_structural_text_reconstruction", 0.0)
 if structural_text > 1e11:
     structural_text = 0.0
@@ -748,13 +760,15 @@ score = (
     + (0.45 * min(learned_ir_worst_family_cosine_gap, 1.0))
     + (0.40 * bridge)
     + (0.70 * source_copy)
+    + (0.75 * source_decompiled_cosine)
+    + (0.45 * source_decompiled_token)
     + (0.40 * structural_text)
     + projection_score
     - (0.50 * cos)
     - (0.80 * ir_cos)
     - (0.60 * learned_ir_cos)
 )
-print(f"{ce} {cos} {ir_ce} {ir_cos} {learned_ir_ce} {learned_ir_cos} {learned_ir_family_ce_excess} {learned_ir_worst_family_ce_excess} {learned_ir_worst_family_cosine_gap} {bridge} {source_copy} {structural_text} {projection_accepted} {score}")
+print(f"{ce} {cos} {ir_ce} {ir_cos} {learned_ir_ce} {learned_ir_cos} {learned_ir_family_ce_excess} {learned_ir_worst_family_ce_excess} {learned_ir_worst_family_cosine_gap} {bridge} {source_copy} {source_decompiled_cosine} {source_decompiled_token} {structural_text} {projection_accepted} {score}")
 PY
   )
   local valid_trial
@@ -771,7 +785,7 @@ PY
     echo "[trial] skipped_invalid_score run_id=${trial_id} ce=${ce_score} cos=${cos_score} ir_ce=${ir_ce_score} ir_cos=${ir_cos_score} learned_ir_ce=${learned_ir_ce_score} learned_ir_cos=${learned_ir_cos_score} score=${trial_score}"
     return 0
   fi
-  echo "[trial] score run_id=${trial_id} score=${trial_score} best_validation_ce=${ce_score} best_validation_cosine=${cos_score} best_validation_ir_ce=${ir_ce_score} best_validation_ir_cosine=${ir_cos_score} best_validation_learned_ir_view_ce=${learned_ir_ce_score} best_validation_learned_ir_view_cosine=${learned_ir_cos_score} best_validation_learned_ir_family_ce_excess=${learned_ir_family_ce_excess_score} best_validation_learned_ir_worst_family_ce_excess=${learned_ir_worst_family_ce_excess_score} best_validation_learned_ir_worst_family_cosine_gap=${learned_ir_worst_family_cosine_gap_score} projection_accepted_epochs=${projection_accepted_score} best_validation_ir_source_copy_loss=${source_copy_score} best_validation_ir_structural_text_reconstruction=${structural_text_score} best_validation_logic_bridge_total_loss=${bridge_score}"
+  echo "[trial] score run_id=${trial_id} score=${trial_score} best_validation_ce=${ce_score} best_validation_cosine=${cos_score} best_validation_ir_ce=${ir_ce_score} best_validation_ir_cosine=${ir_cos_score} best_validation_learned_ir_view_ce=${learned_ir_ce_score} best_validation_learned_ir_view_cosine=${learned_ir_cos_score} best_validation_learned_ir_family_ce_excess=${learned_ir_family_ce_excess_score} best_validation_learned_ir_worst_family_ce_excess=${learned_ir_worst_family_ce_excess_score} best_validation_learned_ir_worst_family_cosine_gap=${learned_ir_worst_family_cosine_gap_score} projection_accepted_epochs=${projection_accepted_score} best_validation_ir_source_copy_loss=${source_copy_score} best_validation_ir_source_decompiled_text_embedding_cosine_loss=${source_decompiled_cosine_loss_score} best_validation_ir_source_decompiled_text_token_loss=${source_decompiled_token_loss_score} best_validation_ir_structural_text_reconstruction=${structural_text_score} best_validation_logic_bridge_total_loss=${bridge_score}"
 
   local better
   better="$("${PYTHON_BIN}" - <<PY
@@ -795,7 +809,7 @@ PY
     best_score="${trial_score}"
     best_run_id="${trial_id}"
     best_cfg="${cfg}"
-    echo "[trial] new_best run_id=${best_run_id} score=${best_score} ce=${best_ce} cos=${best_cos} ir_ce=${ir_ce_score} ir_cos=${ir_cos_score} learned_ir_ce=${learned_ir_ce_score} learned_ir_cos=${learned_ir_cos_score} learned_ir_family_ce_excess=${learned_ir_family_ce_excess_score} learned_ir_worst_family_ce_excess=${learned_ir_worst_family_ce_excess_score} learned_ir_worst_family_cosine_gap=${learned_ir_worst_family_cosine_gap_score}"
+    echo "[trial] new_best run_id=${best_run_id} score=${best_score} ce=${best_ce} cos=${best_cos} ir_ce=${ir_ce_score} ir_cos=${ir_cos_score} learned_ir_ce=${learned_ir_ce_score} learned_ir_cos=${learned_ir_cos_score} learned_ir_family_ce_excess=${learned_ir_family_ce_excess_score} learned_ir_worst_family_ce_excess=${learned_ir_worst_family_ce_excess_score} learned_ir_worst_family_cosine_gap=${learned_ir_worst_family_cosine_gap_score} source_decompiled_text_embedding_cosine_loss=${source_decompiled_cosine_loss_score} source_decompiled_text_token_loss=${source_decompiled_token_loss_score}"
   fi
 }
 

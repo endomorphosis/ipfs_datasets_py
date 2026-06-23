@@ -2552,6 +2552,13 @@ class DeterministicModalLogicCodec:
             "ontology_violation_count": float(len(flogic_result.violations)) if flogic_result else 0.0,
             "raw_source_embedding_cosine_similarity": raw_source_embedding_cosine,
             "reconstruction_loss": mse_loss(source_feature_embedding, decoded_embedding),
+            "source_decompiled_text_embedding_cosine_loss": max(
+                0.0,
+                1.0 - raw_source_embedding_cosine,
+            ),
+            "source_decompiled_text_embedding_cosine_similarity": raw_source_embedding_cosine,
+            "source_decompiled_text_token_loss": 1.0 - structural_text_similarity,
+            "source_decompiled_text_token_similarity": structural_text_similarity,
             "source_copy_loss": source_span_copy_ratio,
             "source_copy_reward_hack_penalty": source_copy_reward_hack_penalty,
             "source_span_copy_ratio": source_span_copy_ratio,

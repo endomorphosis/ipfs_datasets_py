@@ -391,6 +391,10 @@ def _instrument_lifecycle_actor_text(element: Dict[str, Any]) -> str:
     if norm_type != "instrument_lifecycle" and operator != "LIFE":
         return ""
 
+    grounded_instrument = _source_grounded_lifecycle_instrument_text(element)
+    if grounded_instrument:
+        return grounded_instrument
+
     for key in ("instrument", "instrument_type", "regulated_instrument"):
         value = str(element.get(key) or "").strip()
         if value:
@@ -418,6 +422,58 @@ def _instrument_lifecycle_actor_text(element: Dict[str, Any]) -> str:
                     return value
 
     return ""
+
+
+_US_CODE_CITATION_TEXT_RE = re.compile(
+    r"\b\d+\s+U\.?\s*S\.?\s*C\.?\s*(?:§\s*)?"
+    r"[0-9][0-9A-Za-z.\-]*(?:\s+to\s+[0-9][0-9A-Za-z.\-]*)?",
+    re.IGNORECASE,
+)
+_SECTION_MARKER_TEXT_RE = re.compile(
+    r"\b(?:secs?\.?|sections?)\s+[0-9][0-9A-Za-z.\-]*"
+    r"(?:\s*(?:,|and|to)\s*[0-9][0-9A-Za-z.\-]*)*"
+    r"|§{1,2}\s*[0-9][0-9A-Za-z.\-]*"
+    r"(?:\s*(?:,|and|to)\s*[0-9][0-9A-Za-z.\-]*)*",
+    re.IGNORECASE,
+)
+
+
+def _source_grounded_lifecycle_instrument_text(element: Dict[str, Any]) -> str:
+    """Return a section/citation label for status lifecycle rows.
+
+    U.S. Code status snippets sometimes read ``33 U.S.C. 763a-2 Repealed``
+    without a ``Sec.`` or ``§`` marker. The parser can still identify the
+    lifecycle action, but its fallback actor is the generic word ``section``.
+    Use only existing source/citation text to promote that actor to a grounded
+    legal instrument label for decoder and provenance gates.
+    """
+
+    flat_subject = _first_text(element.get("subject")).strip()
+    if flat_subject and flat_subject.lower() != "section":
+        return flat_subject
+
+    for key in ("canonical_citation", "citation"):
+        value = str(element.get(key) or "").strip()
+        if _US_CODE_CITATION_TEXT_RE.search(value) or _SECTION_MARKER_TEXT_RE.search(
+            value
+        ):
+            return value
+
+    for key in ("support_text", "text", "source_text"):
+        text = str(element.get(key) or "")
+        if not text:
+            continue
+        section_match = _SECTION_MARKER_TEXT_RE.search(text)
+        if section_match:
+            return _clean_source_label(section_match.group(0))
+        citation_match = _US_CODE_CITATION_TEXT_RE.search(text)
+        if citation_match:
+            return _clean_source_label(citation_match.group(0))
+    return ""
+
+
+def _clean_source_label(value: str) -> str:
+    return re.sub(r"\s+", " ", str(value or "").strip(" .,:;"))
 
 
 def _instrument_lifecycle_action_text(element: Dict[str, Any]) -> str:
@@ -1789,11 +1845,11 @@ class LegalNormIR:
             modality=_modality_from_parser_element(element),
             norm_type=_norm_type_from_parser_element(element),
             actor=(
-                _actor_text(element)
+                _instrument_lifecycle_actor_text(element)
+                or _actor_text(element)
                 or _applicability_actor_text(element)
                 or _exemption_actor_text(element)
                 or _definition_actor_text(element)
-                or _instrument_lifecycle_actor_text(element)
                 or _purpose_actor_text(element)
             ),
             actor_type=str(element.get("actor_type") or element.get("entity_type") or ""),

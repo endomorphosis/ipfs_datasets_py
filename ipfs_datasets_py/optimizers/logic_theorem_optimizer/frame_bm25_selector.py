@@ -398,6 +398,7 @@ _FRAME_ONTOLOGY_CONTEXTUAL_ALWAYS_PREDICATE_FRAGMENTS: tuple[str, ...] = (
 _FRAME_ONTOLOGY_FEATURE_VALUE_MAX_DEPTH = 6
 _FRAME_ONTOLOGY_FEATURE_VALUE_MAX_VALUES = 2048
 _FRAME_ONTOLOGY_FEATURE_VALUE_JSON_MAX_LENGTH = 4096
+_PREDICATE_ARGUMENT_DIRECTION_MARKERS = frozenset({"in", "out"})
 
 
 @dataclass(frozen=True)
@@ -1135,6 +1136,10 @@ def _normalized_frame_ontology_value(predicate: str, value: str) -> str:
             normalized_clause_value = clause_value.strip()
             if normalized_clause_value:
                 raw_value = normalized_clause_value
+    if normalized_predicate == "predicate_argument":
+        normalized_predicate_argument = _normalized_predicate_argument_value(raw_value)
+        if normalized_predicate_argument:
+            return normalized_predicate_argument
     if normalized_predicate.endswith("_positioned"):
         match = _FRAME_ONTOLOGY_POSITIONED_VALUE_RE.match(raw_value)
         if match:
@@ -1151,6 +1156,20 @@ def _normalized_frame_ontology_value(predicate: str, value: str) -> str:
             if positioned_value:
                 return positioned_value
     return raw_value
+
+
+def _normalized_predicate_argument_value(raw_value: str) -> str:
+    """Canonicalize predicate-argument signatures for ontology audits."""
+    signature_type, separator, signature_value = str(raw_value or "").partition(":")
+    if not separator:
+        return ""
+    normalized_signature_type = _normalized_frame_ontology_predicate(signature_type)
+    if not normalized_signature_type:
+        return ""
+    segments = _predicate_argument_signature_segments(signature_value)
+    if not segments:
+        return normalized_signature_type
+    return ":".join([normalized_signature_type, *segments])
 
 
 def _normalized_source_id_ontology_value(raw_value: str) -> str:
@@ -1735,8 +1754,7 @@ def _predicate_argument_operator_ontology_values(
 def _predicate_argument_anchor_family_ontology_values(
     signature_value: str,
 ) -> List[tuple[str, bool, bool, int]]:
-    segments = [segment.strip() for segment in str(signature_value or "").split(":")]
-    segments = [segment for segment in segments if segment]
+    segments = _predicate_argument_signature_segments(signature_value)
     if not segments:
         return []
     anchor = segments[0]
@@ -1764,8 +1782,7 @@ def _predicate_argument_anchor_family_ontology_values(
 def _predicate_argument_anchor_ontology_values(
     signature_value: str,
 ) -> List[tuple[str, bool, bool, int]]:
-    segments = [segment.strip() for segment in str(signature_value or "").split(":")]
-    segments = [segment for segment in segments if segment]
+    segments = _predicate_argument_signature_segments(signature_value)
     if not segments:
         return []
     anchor = segments[0]
@@ -1787,6 +1804,18 @@ def _predicate_argument_anchor_ontology_values(
             )
         )
     return values
+
+
+def _predicate_argument_signature_segments(signature_value: str) -> List[str]:
+    """Return predicate-argument segments without graph direction markers."""
+    segments = [
+        segment.strip()
+        for segment in str(signature_value or "").split(":")
+        if segment.strip()
+    ]
+    if len(segments) >= 2 and segments[0].lower() in _PREDICATE_ARGUMENT_DIRECTION_MARKERS:
+        return segments[1:]
+    return segments
 
 
 def _predicate_argument_role_shape_ontology_values(

@@ -769,6 +769,47 @@ def test_spacy_encoder_marks_repealed_statutory_sections_as_status_frame_scope()
     assert signals["has_statutory_status_frame_scope"] is True
 
 
+def test_spacy_encoder_extracts_packet_000004_registry_authority_cues() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    repealed_encoding = encoder.encode(
+        (
+            "Sec. 763a-2 - Repealed. Pub. L. 117-263, div. K, "
+            "title CXVIII, Sec. 11808(a)(14), Dec. 23, 2022."
+        ),
+        document_id="packet-000004-repealed-status",
+    )
+    authority_encoding = encoder.encode(
+        (
+            "Transfer of title; power development. The Secretary may, in his "
+            "discretion, when repayments shall have been made, transfer the "
+            "title to said canal and appurtenant structures to districts "
+            "having a beneficial interest. The districts shall have the "
+            "privilege at any time of using such power possibilities as may "
+            "exist, until they shall have paid the required costs."
+        ),
+        document_id="packet-000004-title-transfer-authority",
+    )
+
+    repealed_ranking = ranked_modal_families(repealed_encoding)
+    authority_ranking = ranked_modal_families(authority_encoding)
+    authority_rank_by_family = {
+        item["family"]: item["share_raw"] for item in authority_ranking
+    }
+
+    assert not repealed_encoding.cues
+    assert repealed_ranking[0]["family"] == "frame"
+    assert any(
+        cue.family == "frame" and cue.cue.lower() == "transfer of title"
+        for cue in authority_encoding.cues
+    )
+    assert any(
+        cue.family == "frame" and cue.cue.lower() == "power development"
+        for cue in authority_encoding.cues
+    )
+    assert authority_rank_by_family["frame"] > 0.0
+    assert authority_rank_by_family["deontic"] > authority_rank_by_family["frame"]
+
+
 def test_spacy_encoder_marks_vacant_sections_as_frame_status_scope() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),

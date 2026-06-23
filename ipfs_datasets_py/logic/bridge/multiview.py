@@ -333,6 +333,11 @@ _BRIDGE_CONTRACT_REFERENCES_REPEAL_CROSSREF_RE = re.compile(
     r"|\b(?:was\s+)?repealed\s+by\b.{0,420}\breferences\s+in\s+text\b",
     flags=re.IGNORECASE,
 )
+_BRIDGE_CONTRACT_REPEALED_PUBLIC_LAW_STATUS_RE = re.compile(
+    r"\b(?:sec\.\s*[\w\-\.]+\s*-\s*)?repealed\b.{0,220}\bpub\.\s*l\.\s*\d+[-\u2011]\d+"
+    r"|\bpub\.\s*l\.\s*\d+[-\u2011]\d+\b.{0,220}\brepealed\b",
+    flags=re.IGNORECASE,
+)
 _BRIDGE_CONTRACT_RENAMING_DESIGNATION_RE = re.compile(
     r"\b(?:change\s+in\s+name|shall\s+(?:on\s+and\s+after\s+)?"
     r"(?:be\s+known|be\s+held\s+to\s+refer)|designated\s+or\s+referred\s+to|"
@@ -357,6 +362,15 @@ _BRIDGE_CONTRACT_DEFINITION_PROVISION_RE = re.compile(
 _BRIDGE_CONTRACT_ASSET_TRANSFER_RULE_RE = re.compile(
     r"\b(?:asset\s+transfer\s+rules?|transfer\s+of\s+assets?|"
     r"transfer\s+of\s+plan\s+(?:assets|liabilities)|multiemployer\s+plan)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_TITLE_TRANSFER_AUTHORITY_RE = re.compile(
+    r"\btransfer\s+of\s+title\b"
+    r"|\btransfer\s+title\s+to\b"
+    r"|\b(?:secretary|administrator|commission|director)\b.{0,180}\b"
+    r"(?:may|authorized)\b.{0,180}\btransfer\s+title\b"
+    r"|\btransfer\s+title\b.{0,180}\b"
+    r"(?:canals?|appurtenant\s+structures?|power\s+development|project\s+works?|facilities)\b",
     flags=re.IGNORECASE,
 )
 _BRIDGE_CONTRACT_SAFETY_REGULATORY_PROCEDURE_RE = re.compile(
@@ -522,6 +536,14 @@ class MultiViewLegalIRReport:
                     ),
                     "legal_ir_multiview_total_loss": self.total_loss,
                     "legal_ir_multiview_view_coverage_loss": self.view_coverage_loss(),
+                    "source_decompiled_text_embedding_cosine_loss": (
+                        self._round_trip_extra_mean(
+                            "source_decompiled_text_embedding_cosine_loss"
+                        )
+                    ),
+                    "source_decompiled_text_token_loss": self._round_trip_extra_mean(
+                        "source_decompiled_text_token_loss"
+                    ),
                 }.items()
             )
         )
@@ -701,6 +723,16 @@ class MultiViewLegalIRReport:
         return _mean_with_failures(
             [
                 _float_or_zero(getattr(report.round_trip, metric_name, 0.0))
+                for report in self.reports.values()
+            ],
+            failure_count=len(self.failures),
+            expected_count=self.attempted_count,
+        )
+
+    def _round_trip_extra_mean(self, metric_name: str) -> float:
+        return _mean_with_failures(
+            [
+                _float_or_zero(report.round_trip.extra_losses.get(metric_name, 0.0))
                 for report in self.reports.values()
             ],
             failure_count=len(self.failures),
@@ -1219,6 +1251,9 @@ def _rebalance_dense_contract_distribution(
     has_authority_frame_cue = bool(
         _BRIDGE_CONTRACT_FRAME_AUTHORITY_CUE_RE.search(normalized_text)
     )
+    has_title_transfer_authority = bool(
+        _BRIDGE_CONTRACT_TITLE_TRANSFER_AUTHORITY_RE.search(normalized_text)
+    )
     has_effect_on_existing_law_frame_cue = bool(
         _BRIDGE_CONTRACT_EFFECT_ON_EXISTING_LAW_CUE_RE.search(normalized_text)
     )
@@ -1451,6 +1486,14 @@ def _rebalance_dense_contract_distribution(
             # Preserve deontic->frame supervision signal for delegated authority
             # passages where permissive norm text co-occurs with frame semantics.
             caps["deontic.ir"] = max(caps.get("deontic.ir", 0.0), 0.12)
+        if has_title_transfer_authority:
+            caps["knowledge_graphs.neo4j_compat"] = max(
+                caps["knowledge_graphs.neo4j_compat"],
+                0.24,
+            )
+            caps["CEC.native"] = max(caps["CEC.native"], 0.24)
+            caps["deontic.ir"] = min(caps.get("deontic.ir", 1.0), 0.30)
+            caps["TDFOL.prover"] = min(caps.get("TDFOL.prover", 1.0), 0.16)
     elif has_epistemic_cue and not has_temporal_cue:
         caps["knowledge_graphs.neo4j_compat"] = max(
             caps["knowledge_graphs.neo4j_compat"],
@@ -1723,6 +1766,13 @@ def _rebalance_dense_contract_distribution(
             ("CEC.native", 0.42),
             ("deontic.ir", 0.10),
             ("TDFOL.prover", 0.08),
+        )
+    elif has_title_transfer_authority:
+        target_mix = (
+            ("knowledge_graphs.neo4j_compat", 0.36),
+            ("CEC.native", 0.32),
+            ("deontic.ir", 0.22),
+            ("TDFOL.prover", 0.10),
         )
     elif has_frame_cue:
         if has_dense_statute_scaffold:
@@ -2117,6 +2167,18 @@ def _rebalance_dense_contract_distribution(
             adjusted,
             target_mix,
             strength=0.38,
+        )
+
+    if has_title_transfer_authority:
+        adjusted = _project_contract_distribution_toward_target(
+            adjusted,
+            (
+                ("knowledge_graphs.neo4j_compat", 0.36),
+                ("CEC.native", 0.32),
+                ("deontic.ir", 0.22),
+                ("TDFOL.prover", 0.10),
+            ),
+            strength=0.35,
         )
 
     if has_repealed_legislative_history_signal:
@@ -2755,6 +2817,9 @@ def _project_official_usc_primary_contract_distribution(
     has_references_repeal_crossref = bool(
         _BRIDGE_CONTRACT_REFERENCES_REPEAL_CROSSREF_RE.search(normalized_text)
     )
+    has_repealed_public_law_status = bool(
+        _BRIDGE_CONTRACT_REPEALED_PUBLIC_LAW_STATUS_RE.search(normalized_text)
+    )
     has_renaming_designation = bool(
         _BRIDGE_CONTRACT_RENAMING_DESIGNATION_RE.search(normalized_text)
     )
@@ -2767,6 +2832,9 @@ def _project_official_usc_primary_contract_distribution(
     )
     has_asset_transfer_rule = bool(
         _BRIDGE_CONTRACT_ASSET_TRANSFER_RULE_RE.search(normalized_text)
+    )
+    has_title_transfer_authority = bool(
+        _BRIDGE_CONTRACT_TITLE_TRANSFER_AUTHORITY_RE.search(normalized_text)
     )
     has_safety_regulatory_procedure = bool(
         _BRIDGE_CONTRACT_SAFETY_REGULATORY_PROCEDURE_RE.search(normalized_text)
@@ -2796,6 +2864,14 @@ def _project_official_usc_primary_contract_distribution(
             ("deontic.ir", 0.10),
         )
         strength = 0.42
+    elif has_repealed_public_law_status and deontic_cue_count <= 0:
+        target_mix = (
+            ("knowledge_graphs.neo4j_compat", 0.38),
+            ("CEC.native", 0.34),
+            ("TDFOL.prover", 0.18),
+            ("deontic.ir", 0.10),
+        )
+        strength = 0.48
     elif has_editorial_status_operation and deontic_cue_count <= 0:
         target_mix = (
             ("CEC.native", 0.44),
@@ -2820,6 +2896,14 @@ def _project_official_usc_primary_contract_distribution(
             ("TDFOL.prover", 0.12),
         )
         strength = 0.36
+    elif has_title_transfer_authority and deontic_cue_count > 0:
+        target_mix = (
+            ("knowledge_graphs.neo4j_compat", 0.34),
+            ("CEC.native", 0.30),
+            ("deontic.ir", 0.24),
+            ("TDFOL.prover", 0.12),
+        )
+        strength = 0.44
     elif has_asset_transfer_rule and deontic_cue_count > 0:
         target_mix = (
             ("deontic.ir", 0.44),

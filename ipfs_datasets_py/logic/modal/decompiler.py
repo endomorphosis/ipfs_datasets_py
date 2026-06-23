@@ -166,6 +166,12 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("property interests", "property_interest"),
     ("property interest", "property_interest"),
     ("fee title", "fee_title"),
+    ("transfer of title", "title_transfer"),
+    ("power development", "power_development"),
+    ("appurtenant structures", "appurtenant_structure"),
+    ("appurtenant structure", "appurtenant_structure"),
+    ("canals", "canal"),
+    ("canal", "canal"),
     ("foreign government", "foreign_government"),
     ("funding agreements", "funding_agreement"),
     ("funding agreement", "funding_agreement"),
@@ -518,6 +524,39 @@ _SOURCE_ROLE_QUANTIFIER_TOKENS = frozenset(
         "neither",
         "no",
         "some",
+    }
+)
+_SOURCE_ROLE_LEGAL_ACTION_TOKENS = frozenset(
+    {
+        "accept",
+        "administer",
+        "adopt",
+        "approve",
+        "arbitrate",
+        "authorize",
+        "certify",
+        "collect",
+        "compromise",
+        "conduct",
+        "create",
+        "deny",
+        "determine",
+        "develop",
+        "establish",
+        "exercise",
+        "file",
+        "grant",
+        "issue",
+        "maintain",
+        "make",
+        "permit",
+        "provide",
+        "receive",
+        "require",
+        "settle",
+        "submit",
+        "transfer",
+        "undertake",
     }
 )
 _STRUCTURAL_FRAME_CUE_TOKENS = frozenset(
@@ -1597,6 +1636,7 @@ def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
         ),
         *_source_identifier_phrases(document),
         *_document_citation_phrases(document),
+        *_typed_decompiler_document_identity_phrases(document),
         *_document_provenance_summary_phrases(document),
         *_document_modal_family_count_phrases(document),
         *_document_modal_family_transition_phrases(document),
@@ -3681,6 +3721,137 @@ def _document_citation_phrases(document: ModalIRDocument) -> List[DecodedModalPh
             )
         )
     return phrases
+
+
+def _typed_decompiler_document_identity_phrases(
+    document: ModalIRDocument,
+) -> List[DecodedModalPhrase]:
+    """Expose compact typed citation/source-id identity slots for sparse USC IR."""
+
+    phrases: List[DecodedModalPhrase] = []
+    seen: set[Tuple[str, str]] = set()
+
+    def add(slot: str, value: str) -> None:
+        normalized_slot = _clean_text(slot)
+        normalized_value = _clean_text(value)
+        marker = (normalized_slot, normalized_value)
+        if not normalized_slot or not normalized_value or marker in seen:
+            return
+        seen.add(marker)
+        phrases.append(
+            DecodedModalPhrase(
+                text=normalized_value,
+                slot=normalized_slot,
+                provenance_only=True,
+            )
+        )
+
+    citation_values: List[str] = []
+    metadata_citation = _clean_text(document.metadata.get("citation") or "")
+    if metadata_citation:
+        citation_values.append(metadata_citation)
+    for formula in document.formulas:
+        formula_citation = _clean_text(formula.provenance.citation or "")
+        if formula_citation and formula_citation not in citation_values:
+            citation_values.append(formula_citation)
+    for inferred_citation in _inferred_citations_from_source_ids(
+        _document_source_ids(document)
+    ):
+        if inferred_citation and inferred_citation not in citation_values:
+            citation_values.append(inferred_citation)
+
+    for citation in citation_values:
+        add("typed_decompiler_document_citation", citation)
+        for slot, value in _typed_decompiler_identity_slot_values(
+            _citation_slots(citation),
+            source_prefix="citation",
+        ):
+            add(slot, value)
+
+    for source_id in _document_source_ids(document):
+        add("typed_decompiler_document_source_id", source_id)
+        for slot, value in _typed_decompiler_identity_slot_values(
+            _source_id_slots(source_id),
+            source_prefix="source_id",
+        ):
+            add(slot, value)
+
+    return phrases
+
+
+def _typed_decompiler_identity_slot_values(
+    slot_values: Sequence[Tuple[str, str]],
+    *,
+    source_prefix: str,
+) -> List[Tuple[str, str]]:
+    """Select stable high-signal identity slots without mirroring every feature."""
+
+    selected_suffixes = {
+        "title",
+        "title_number",
+        "code",
+        "section",
+        "section_raw",
+        "section_normalized",
+        "section_trailing_punct",
+        "section_has_trailing_punct",
+        "section_trailing_punct_kind",
+        "citation_canonical",
+        "canonical",
+        "title_section_key",
+        "title_section_key_normalized",
+        "section_primary",
+        "section_terminal",
+        "section_primary_terminal_pair",
+        "section_primary_equals_terminal",
+        "section_component_count",
+        "section_component_profile",
+        "section_signature",
+        "section_style",
+        "section_style_canonical",
+        "title_section_style",
+        "title_section_style_canonical",
+        "section_is_range",
+        "section_range",
+        "section_range_start",
+        "section_range_end",
+        "section_range_connector",
+        "section_has_hyphen_subsection",
+        "section_hyphen_subsection_signature",
+        "section_primary_number",
+        "section_terminal_number",
+        "section_primary_suffix",
+        "section_terminal_suffix",
+        "section_primary_suffix_kind",
+        "section_terminal_suffix_kind",
+        "section_primary_terminal_suffix_kind_pair",
+    }
+    normalized_prefix = _clean_text(source_prefix)
+    if not normalized_prefix:
+        return []
+    prefix_marker = f"{normalized_prefix}_"
+    values: List[Tuple[str, str]] = []
+    for slot, value in slot_values:
+        normalized_slot = _clean_text(slot)
+        normalized_value = _clean_text(value)
+        if not normalized_slot or not normalized_value:
+            continue
+        suffix = (
+            normalized_slot[len(prefix_marker) :]
+            if normalized_slot.startswith(prefix_marker)
+            else normalized_slot
+        )
+        if suffix not in selected_suffixes:
+            continue
+        typed_slot = f"typed_decompiler_document_{suffix}"
+        values.append((typed_slot, normalized_value))
+        values.append(
+            (
+                f"typed_decompiler_document_{normalized_prefix}_{suffix}",
+                normalized_value,
+            )
+        )
+    return _unique_slot_values(values)
 
 
 def _document_provenance_alignment_phrases(
@@ -5831,7 +6002,14 @@ def _source_role_legal_ir_slot_values(
     anchors = _source_role_anchor_values(document=document, formula=formula)
     role_anchors = [
         (role_name, _slot_safe_family_key(_clean_text(anchors.get(role_name, ""))))
-        for role_name in ("subject", "action", "object", "condition", "temporal")
+        for role_name in (
+            "subject",
+            "action",
+            "object",
+            "condition",
+            "exception",
+            "temporal",
+        )
     ]
     role_anchors = [
         (role_name, anchor)
@@ -6202,6 +6380,15 @@ def _legal_ir_decompiler_bridge_slot_values(
         "typed_decompiler_bridge_legal_ir_view_signature",
         "typed_decompiler_family_pair_view_contract",
         "typed_decompiler_target_family_view_contract",
+        "coreference_binding_signature",
+        "coreference_reference_edge",
+        "compiler_variable_binding",
+        "frame_logic_same_as",
+        "decompiler_reference_slot",
+        "decompiler_coreference_plan",
+        "operator_coreference",
+        "operator_coreference_plan",
+        "todo_route_refine_coreference_binding",
     }
 
     def add(slot: str, value: str) -> None:
@@ -6455,6 +6642,16 @@ def _decompiler_provenance_slot_values(
                 condition_values=condition_values,
                 exception_values=exception_values,
                 source_family_pairs=source_family_pairs,
+            )
+        )
+        slots.extend(
+            _decompiler_coreference_slot_values(
+                document=document,
+                formula=formula,
+                condition_values=condition_values,
+                exception_values=exception_values,
+                source_family_pairs=source_family_pairs,
+                citation_slot_map=citation_slot_map,
             )
         )
 
@@ -7171,6 +7368,181 @@ def _decompiler_applicability_slot_values(
                 ),
             )
         )
+    return _unique_slot_values(slots)
+
+
+def _decompiler_coreference_slot_values(
+    *,
+    document: ModalIRDocument,
+    formula: ModalIRFormula,
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
+    source_family_pairs: Sequence[str],
+    citation_slot_map: Mapping[str, str],
+) -> List[Tuple[str, str]]:
+    """Bind legal deictic references to typed statutory/source anchors."""
+
+    family = _slot_safe_family_key(_clean_text(formula.operator.family).lower())
+    operator = _modal_operator_feature_key(formula.operator.symbol) or "none"
+    role = _slot_safe_family_key(_clean_text(formula.predicate.role or "clause").lower())
+    if not family:
+        return []
+
+    source_span = _semantic_source_span_text(document=document, formula=formula)
+    context_span = _semantic_source_context_span_text(
+        document=document,
+        formula=formula,
+        source_span_text=source_span,
+    )
+    text_parts = [
+        source_span,
+        context_span,
+        _predicate_phrase(formula),
+        *condition_values,
+        *exception_values,
+    ]
+    normalized_text = _clean_text(" ".join(part for part in text_parts if part))
+    normalized_lookup = normalized_text.replace("_", " ").lower()
+    if not normalized_lookup:
+        return []
+
+    reference_kinds: List[str] = []
+    for pattern, kind in (
+        (r"\bunder\s+that\s+(?:section|subsection|paragraph|subparagraph|chapter|title)\b", "under_that_reference"),
+        (r"\bthat\s+(?:section|subsection|paragraph|subparagraph|chapter|title)\b", "that_statutory_reference"),
+        (r"\bthereof\b", "thereof_reference"),
+        (r"\btherein\b", "therein_reference"),
+        (r"\b(?:thereunder|hereunder|herein)\b", "statutory_deictic_reference"),
+    ):
+        if re.search(pattern, normalized_lookup) and kind not in reference_kinds:
+            reference_kinds.append(kind)
+    if not reference_kinds:
+        return []
+
+    title_section_key = _clean_text(
+        citation_slot_map.get("citation_title_section_key_normalized")
+        or citation_slot_map.get("citation_title_section_key")
+        or ""
+    )
+    section = _clean_text(
+        citation_slot_map.get("citation_section_normalized")
+        or citation_slot_map.get("citation_section")
+        or ""
+    )
+    antecedent_class = "statutory_reference" if title_section_key or section else ""
+    if not antecedent_class:
+        if re.search(
+            r"\b(?:this|that)\s+(?:section|subsection|paragraph|chapter|title)\b",
+            normalized_lookup,
+        ):
+            antecedent_class = "statutory_reference"
+    if not antecedent_class:
+        return []
+
+    anchors = _source_role_anchor_values(document=document, formula=formula)
+
+    def role_atom(role_name: str) -> str:
+        value = _slot_safe_family_key(_clean_text(anchors.get(role_name, "")).lower())
+        return value or "none"
+
+    role_signature = ":".join(
+        role_atom(role_name)
+        for role_name in (
+            "subject",
+            "action",
+            "object",
+            "condition",
+            "exception",
+            "temporal",
+        )
+    )
+    scope_signature = (
+        "conditioned" if condition_values else "unconditioned",
+        "excepted" if exception_values else "unexcepted",
+        "temporal" if role_atom("temporal") != "none" else "atemporal",
+    )
+    source_scope = "+".join(scope_signature)
+    slots: List[Tuple[str, str]] = []
+
+    def add(slot: str, value: str) -> None:
+        normalized_slot = _clean_text(slot).replace(" ", "_")
+        normalized_value = _clean_text(value)
+        if normalized_slot and normalized_value:
+            slots.append((normalized_slot, normalized_value))
+
+    for kind in reference_kinds:
+        referent_class = antecedent_class
+        signature = (
+            f"{kind}:{antecedent_class}->{referent_class}:"
+            "same_document:class_preserving"
+        )
+        add("coreference_binding_signature", signature)
+        add("coreference_reference_edge", signature)
+        add(
+            "compiler_variable_binding",
+            f"{antecedent_class}->{referent_class}:{kind}:same_document",
+        )
+        add(
+            "frame_logic_same_as",
+            f"{antecedent_class}:{referent_class}:{kind}:class_preserving",
+        )
+        add(
+            "decompiler_reference_slot",
+            f"{kind}:{referent_class}:same_document:class_preserving",
+        )
+        add("decompiler_coreference_plan", signature)
+        add(
+            "operator_coreference",
+            f"{family}:{operator}:{role}:{kind}:{antecedent_class}->{referent_class}",
+        )
+        add(
+            "operator_coreference_plan",
+            f"{signature}:{role_signature}:{family}:{operator}",
+        )
+        add(
+            "todo_route_refine_coreference_binding",
+            f"{signature}:{role_signature}:{source_scope}",
+        )
+        if title_section_key:
+            add(
+                "coreference_statutory_coordinate_binding",
+                f"{kind}:{title_section_key}:{referent_class}",
+            )
+        for family_pair in source_family_pairs:
+            pair_key = _slot_safe_family_pair_key(family_pair)
+            if not pair_key or "->" not in family_pair:
+                continue
+            source_family, target_family = (
+                _slot_safe_family_key(part)
+                for part in family_pair.split("->", 1)
+            )
+            if not source_family or not target_family:
+                continue
+            add(
+                "coreference_binding_family_pair",
+                f"{signature}:{pair_key}",
+            )
+            add(
+                "operator_coreference_family_pair",
+                f"{family_pair}:{family}:{operator}:{kind}",
+            )
+            for view in _preferred_legal_ir_views_for_family(target_family):
+                add(
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    (
+                        f"{target_family}||slot:coreference-binding:"
+                        f"{kind}:{antecedent_class}->{referent_class}:"
+                        f"{source_family}||{view}"
+                    ),
+                )
+                add(
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    (
+                        f"{target_family}||slot-pair:operator-coreference:"
+                        f"{kind}:{pair_key}|predicate-role:{role}||{view}"
+                    ),
+                )
+
     return _unique_slot_values(slots)
 
 
@@ -9391,14 +9763,47 @@ def _document_leading_uscode_catchline_phrases(
     catchline = _leading_uscode_catchline_text(source_text[:480], max_tokens=18)
     if not catchline:
         return []
-    return [
+    spans = [[0, min(len(source_text), len(catchline))]]
+    phrases: List[DecodedModalPhrase] = [
         DecodedModalPhrase(
             text=catchline,
             slot="document_section_heading_tail",
-            spans=[[0, min(len(source_text), len(catchline))]],
+            spans=spans,
             provenance_only=True,
         )
     ]
+    for slot, value in _typed_identifier_slots(
+        catchline,
+        slot_prefix="document_section_heading_tail",
+    ):
+        phrases.append(
+            DecodedModalPhrase(
+                text=value,
+                slot=slot,
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+    phrases.extend(
+        _legal_semantic_atom_phrases(
+            text=catchline,
+            slot_prefix="document_section_heading_tail",
+            spans=spans,
+        )
+    )
+    atom_values = _legal_semantic_atoms_from_text(catchline)
+    if atom_values:
+        summary = _clean_text(" ".join(_unique_preserve_order(atom_values[:8])))
+        if summary:
+            phrases.append(
+                DecodedModalPhrase(
+                    text=summary,
+                    slot="document_section_heading_semantic_summary",
+                    spans=spans,
+                    provenance_only=True,
+                )
+            )
+    return phrases
 
 
 def _typed_ir_reconstruction_phrases(
@@ -11530,6 +11935,10 @@ def _source_role_anchor_phrases(
         formula=formula,
     )
     predicate_head = _predicate_head_anchor(formula)
+    coordinated_action_anchors = _coordinated_source_action_anchor_values(
+        document=document,
+        formula=formula,
+    )
     structural_roles = [
         role_name
         for role_name in ("subject", "action", "object")
@@ -11992,6 +12401,154 @@ def _source_role_anchor_phrases(
                     "source_role_decompiler_plan",
                     f"decompiler-plan:source-{role_name}-family-pair:{anchor}:{family_pair}",
                 )
+                add_legal_ir_view_role_family_pair_prototypes(
+                    role_name=role_name,
+                    anchor=anchor,
+                    family_pair=family_pair,
+                )
+            if role_name in {
+                "subject",
+                "action",
+                "object",
+                "condition",
+                "exception",
+                "temporal",
+            }:
+                if "->" in family_pair:
+                    pair_source, pair_target = (
+                        _slot_safe_family_key(_clean_text(part).lower())
+                        for part in family_pair.split("->", 1)
+                    )
+                else:
+                    pair_source = predicate_family
+                    pair_target = predicate_family
+                pair_key = _slot_safe_family_pair_key(family_pair)
+                if pair_source and pair_target:
+                    target_operator = _typed_ir_refined_target_symbol(
+                        pair_target,
+                        fallback_symbol=formula.operator.symbol,
+                    )
+                    target_operator_key = _modal_operator_feature_key(
+                        target_operator
+                    )
+                    add(
+                        f"source_{role_name}_target_family",
+                        f"{anchor}:{pair_target}",
+                    )
+                    add(
+                        f"predicate_argument_source_{role_name}_target_family",
+                        f"{anchor}:{pair_target}",
+                    )
+                    add(
+                        "predicate_argument_feature",
+                        (
+                            "predicate-argument:"
+                            f"source-{role_name}-target-family:{anchor}:{pair_target}"
+                        ),
+                    )
+                    add(
+                        "source_role_decompiler_plan",
+                        (
+                            "decompiler-plan:"
+                            f"source-{role_name}-target-family:{anchor}:{pair_target}"
+                        ),
+                    )
+                    add(
+                        "source_role_decompiler_plan",
+                        (
+                            "decompiler-plan:"
+                            f"source-{role_name}-source-target-family:"
+                            f"{anchor}:{pair_source}->{pair_target}"
+                        ),
+                    )
+                    add(
+                        "predicate_argument_feature",
+                        (
+                            "predicate-argument:"
+                            f"source-{role_name}-source-target-family:"
+                            f"{anchor}:{pair_source}->{pair_target}"
+                        ),
+                    )
+                    if pair_key:
+                        add(
+                            "source_role_decompiler_plan",
+                            (
+                                "decompiler-plan:"
+                                f"source-{role_name}-family-pair-key:"
+                                f"{anchor}:{pair_key}"
+                            ),
+                        )
+                        add(
+                            "predicate_argument_feature",
+                            (
+                                "predicate-argument:"
+                                f"source-{role_name}-family-pair-key:"
+                                f"{anchor}:{pair_key}"
+                            ),
+                        )
+                    if target_operator_key:
+                        add(
+                            f"source_{role_name}_target_operator",
+                            f"{anchor}:{pair_target}:{target_operator_key}",
+                        )
+                        add(
+                            "source_role_decompiler_plan",
+                            (
+                                "decompiler-plan:"
+                                f"source-{role_name}-target-operator:"
+                                f"{anchor}:{pair_target}:{target_operator_key}"
+                            ),
+                        )
+                        add(
+                            "predicate_argument_feature",
+                            (
+                                "predicate-argument:"
+                                f"source-{role_name}-target-operator:"
+                                f"{anchor}:{pair_target}:{target_operator_key}"
+                            ),
+                        )
+                    if predicate_role_label:
+                        add(
+                            f"source_{role_name}_target_role",
+                            f"{anchor}:{pair_target}:{predicate_role_label}",
+                        )
+                        add(
+                            "source_role_decompiler_plan",
+                            (
+                                "decompiler-plan:"
+                                f"source-{role_name}-target-role:"
+                                f"{anchor}:{pair_target}:{predicate_role_label}"
+                            ),
+                        )
+                        add(
+                            "predicate_argument_feature",
+                            (
+                                "predicate-argument:"
+                                f"source-{role_name}-target-role:"
+                                f"{anchor}:{pair_target}:{predicate_role_label}"
+                            ),
+                        )
+                    if predicate_head and role_name in {"action", "object"}:
+                        add(
+                            f"source_{role_name}_target_predicate",
+                            f"{anchor}:{pair_target}:{predicate_head}",
+                        )
+                        add(
+                            "source_role_decompiler_plan",
+                            (
+                                "decompiler-plan:"
+                                f"source-{role_name}-target-predicate:"
+                                f"{anchor}:{pair_target}:{predicate_head}"
+                            ),
+                        )
+                        add(
+                            "predicate_argument_feature",
+                            (
+                                "predicate-argument:"
+                                f"source-{role_name}-target-predicate:"
+                                f"{anchor}:{pair_target}:{predicate_head}"
+                            ),
+                        )
                 if role_name in {"subject", "action", "object"}:
                     add_legal_ir_view_role_family_pair_prototypes(
                         role_name=role_name,
@@ -12009,7 +12566,14 @@ def _source_role_anchor_phrases(
                 )
         if predicate_role and role_name in {"subject", "action", "object"}:
             add(f"source_{role_name}_role", f"{anchor}:{predicate_role}")
-        if predicate_family and role_name in {"subject", "action", "object"}:
+        if predicate_family and role_name in {
+            "subject",
+            "action",
+            "object",
+            "condition",
+            "exception",
+            "temporal",
+        }:
             # Preserve deterministic role-style features even when predicate.role
             # is missing or generic; downstream IR views rely on these anchors.
             add(f"source_{role_name}_role", f"{anchor}_{predicate_family}")
@@ -12059,6 +12623,94 @@ def _source_role_anchor_phrases(
                 "source_role_decompiler_plan",
                 f"decompiler-plan:source-{role_name}-predicate:{anchor}:{predicate_head}",
             )
+    for action_anchor in coordinated_action_anchors:
+        add("source_action_anchor", action_anchor)
+        add("source_action_coordinated_anchor", action_anchor)
+        if predicate_family:
+            add("source_action_family", f"{action_anchor}:{predicate_family}")
+            add(
+                "predicate_argument_source_action_family",
+                f"{action_anchor}:{predicate_family}",
+            )
+            add(
+                "predicate_argument_feature",
+                (
+                    "predicate-argument:"
+                    f"source-action-family:{action_anchor}:{predicate_family}"
+                ),
+            )
+            add(
+                "source_role_decompiler_plan",
+                f"decompiler-plan:source-action-family:{action_anchor}:{predicate_family}",
+            )
+            add_legal_ir_view_role_prototypes(
+                role_name="action",
+                anchor=action_anchor,
+            )
+            add_source_role_contracts(
+                role_name="action",
+                anchor=action_anchor,
+            )
+            for family_pair in source_family_pairs:
+                add("source_action_family_pair", family_pair)
+                add(
+                    "source_action_family_pair_anchor",
+                    f"{action_anchor}:{family_pair}",
+                )
+                add(
+                    "source_role_decompiler_plan",
+                    (
+                        "decompiler-plan:"
+                        f"source-action-family-pair:{action_anchor}:{family_pair}"
+                    ),
+                )
+                add_legal_ir_view_role_family_pair_prototypes(
+                    role_name="action",
+                    anchor=action_anchor,
+                    family_pair=family_pair,
+                )
+        if predicate_role:
+            add("source_action_role", f"{action_anchor}:{predicate_role}")
+        if predicate_family:
+            add("source_action_role", f"{action_anchor}_{predicate_family}")
+            add("source_action_role_family", f"{action_anchor}_{predicate_family}")
+            add(
+                "predicate_argument_source_action_role",
+                f"{action_anchor}:{predicate_role_label}",
+            )
+            add(
+                "predicate_argument_feature",
+                (
+                    "predicate-argument:"
+                    f"source-action-role:{action_anchor}:{predicate_role_label}"
+                ),
+            )
+            add(
+                "source_role_decompiler_plan",
+                (
+                    "decompiler-plan:"
+                    f"source-action-role:{action_anchor}:{predicate_role_label}"
+                ),
+            )
+        add("source_action_predicate", f"{action_anchor}:{action_anchor}")
+        add(
+            "predicate_argument_source_action_predicate",
+            f"{action_anchor}:{action_anchor}",
+        )
+        add(
+            "predicate_argument_feature",
+            (
+                "predicate-argument:"
+                f"source-action-predicate:{action_anchor}:{action_anchor}"
+            ),
+        )
+        add(
+            "source_role_decompiler_plan",
+            (
+                "decompiler-plan:"
+                f"source-action-predicate:{action_anchor}:{action_anchor}"
+            ),
+        )
     if predicate_family and predicate_operator:
         add(
             "predicate_argument_operator",
@@ -12077,8 +12729,45 @@ def _source_role_anchor_phrases(
         # are noisy (for example, heading-heavy U.S. Code compilation text).
         if predicate_head:
             add("source_action_role", f"{predicate_head}:{predicate_role}")
+            add(
+                "predicate_argument_source_action_role",
+                f"{predicate_head}:{predicate_role}",
+            )
+            add(
+                "predicate_argument_feature",
+                f"predicate-argument:source-action-role:{predicate_head}:{predicate_role}",
+            )
+            add(
+                "source_role_decompiler_plan",
+                f"decompiler-plan:source-action-role:{predicate_head}:{predicate_role}",
+            )
             if predicate_family:
                 add("source_action_role_family", f"{predicate_head}_{predicate_family}")
+                source_action_role_slot = (
+                    f"{predicate_family}||slot:source-action-role:"
+                    f"{predicate_head}:{predicate_role}"
+                )
+                add("family_semantic_slot_prototype", source_action_role_slot)
+                add(
+                    (
+                        "family_semantic_slot_prototype_"
+                        f"{predicate_family}_source_action_role"
+                    ),
+                    f"{predicate_head}:{predicate_role}",
+                )
+                for view_name in _LEGAL_IR_VIEW_PROTOTYPES:
+                    view_key = view_name.replace(".", "_")
+                    add(
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        f"{source_action_role_slot}||{view_name}",
+                    )
+                    add(
+                        (
+                            "family_semantic_slot_legal_ir_view_prototype_"
+                            f"{predicate_family}_source_action_role_{view_key}"
+                        ),
+                        f"{predicate_head}:{predicate_role}",
+                    )
         citation_text = _clean_text(formula.provenance.citation or "")
         if not citation_text:
             citation_text = _source_id_inferred_citation(
@@ -12440,6 +13129,14 @@ def _typed_decompiler_bridge_phrases(
     ):
         add(slot, value)
     source_cue_keys = typed_decompiler_cue_keys()
+    topology_slot_values = _typed_decompiler_topology_slot_values(
+        document=document,
+        formula=formula,
+        condition_values=condition_values,
+        exception_values=exception_values,
+    )
+    for topology_slot, topology_value in topology_slot_values:
+        add(topology_slot, topology_value)
     for family_pair in source_family_pairs:
         pair_key = _slot_safe_family_pair_key(family_pair)
         add("typed_decompiler_family_pair", family_pair)
@@ -12455,6 +13152,40 @@ def _typed_decompiler_bridge_phrases(
             target_family = family
         if not source_family or not target_family:
             continue
+        for topology_slot, topology_value in topology_slot_values:
+            if topology_slot not in {
+                "typed_decompiler_clause_topology",
+                "typed_decompiler_clause_topology_counts",
+                "typed_decompiler_clause_topology_prefix",
+                "typed_decompiler_clause_topology_ordered_edge",
+            }:
+                continue
+            slot_name = topology_slot.removeprefix(
+                "typed_decompiler_"
+            ).replace("_", "-")
+            add_family_semantic_slot(
+                family=source_family,
+                slot_name=slot_name,
+                slot_value=topology_value,
+            )
+            add_family_semantic_slot_pair(
+                family=source_family,
+                left_slot=f"{slot_name}:{topology_value}",
+                right_slot=f"typed-decompiler-family-pair:{family_pair}",
+            )
+            if target_family != source_family:
+                add_family_semantic_slot(
+                    family=target_family,
+                    slot_name=f"source-{slot_name}",
+                    slot_value=f"{topology_value}:{source_family}",
+                )
+                add_family_semantic_slot_pair(
+                    family=target_family,
+                    left_slot=(
+                        f"source-{slot_name}:{topology_value}:{source_family}"
+                    ),
+                    right_slot=f"typed-decompiler-family-pair:{family_pair}",
+                )
         if role_shape_value:
             add("typed_decompiler_role_shape", f"{source_family}:{role_shape_value}")
             add(
@@ -12898,6 +13629,74 @@ def _typed_decompiler_bridge_phrases(
                     left_slot=f"{plural_slot}:{clause_index}",
                     right_slot=f"modal-cue:{normalized_prefix}",
                 )
+                temporal_prefix_relations: List[Tuple[str, str]] = []
+                temporal_relation = _temporal_clause_prefix_relation(normalized_prefix)
+                if temporal_relation:
+                    temporal_prefix_relations.append(
+                        (normalized_prefix, temporal_relation)
+                    )
+                scoped_temporal_clause = _typed_clause_slot(
+                    scoped_value,
+                    slot="condition",
+                )
+                if scoped_temporal_clause is not None:
+                    _, scoped_temporal_prefix, _ = scoped_temporal_clause
+                    scoped_temporal_relation = _temporal_clause_prefix_relation(
+                        scoped_temporal_prefix
+                    )
+                    candidate = (scoped_temporal_prefix, scoped_temporal_relation)
+                    if (
+                        scoped_temporal_prefix
+                        and scoped_temporal_relation
+                        and candidate not in temporal_prefix_relations
+                    ):
+                        temporal_prefix_relations.append(candidate)
+                for scoped_cue in _temporal_transition_context_cues_from_text(
+                    scoped_value
+                ):
+                    scoped_temporal_prefix = (
+                        _normalized_bridge_cue_key(scoped_cue)
+                        or _slot_safe_family_key(
+                            _clean_text(scoped_cue).strip("_").lower()
+                        )
+                    )
+                    scoped_temporal_relation = _temporal_clause_prefix_relation(
+                        scoped_temporal_prefix
+                    )
+                    candidate = (scoped_temporal_prefix, scoped_temporal_relation)
+                    if (
+                        scoped_temporal_prefix
+                        and scoped_temporal_relation
+                        and candidate not in temporal_prefix_relations
+                    ):
+                        temporal_prefix_relations.append(candidate)
+                for temporal_prefix, temporal_relation in temporal_prefix_relations:
+                    temporal_role_slot = "family-role:temporal:clause"
+                    for semantic_family in _unique_preserve_order(
+                        (family, "temporal")
+                    ):
+                        add_family_semantic_slot_pair(
+                            family=semantic_family,
+                            left_slot=f"{plural_slot}:{clause_index}",
+                            right_slot="modal-family:temporal",
+                        )
+                        add_family_semantic_slot_pair(
+                            family=semantic_family,
+                            left_slot=f"{plural_slot}:{clause_index}",
+                            right_slot=temporal_role_slot,
+                        )
+                        add_family_semantic_slot_pair(
+                            family=semantic_family,
+                            left_slot=(
+                                f"{clause_slot}-prefix:{normalized_prefix}"
+                            ),
+                            right_slot=temporal_role_slot,
+                        )
+                    add_family_semantic_slot(
+                        family=family,
+                        slot_name=f"{clause_slot}-prefix-temporal-relation",
+                        slot_value=f"{temporal_prefix}:{temporal_relation}",
+                    )
                 for family_pair in source_family_pairs:
                     add(
                         f"{clause_slot}_scope_family_pair",
@@ -13108,6 +13907,103 @@ def _typed_decompiler_bridge_phrases(
                 add("source_object_publication_anchor", anchor)
                 add("source_object_anchor_publication_family", f"{anchor}:{family}")
     return phrases
+
+
+def _typed_decompiler_topology_slot_values(
+    *,
+    document: ModalIRDocument | None,
+    formula: ModalIRFormula,
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
+) -> List[Tuple[str, str]]:
+    """Summarize source role topology and ordered clause edges for decompilation."""
+
+    role_order: List[str] = []
+
+    def add_role(role: str) -> None:
+        role_key = _slot_safe_family_key(role)
+        if role_key and role_key not in role_order:
+            role_order.append(role_key)
+
+    if condition_values:
+        add_role("condition")
+    anchors: Mapping[str, str] = {}
+    if document is not None:
+        anchors = _source_role_anchor_values(document=document, formula=formula)
+        for role in ("subject", "action", "object"):
+            if _clean_text(anchors.get(role, "")):
+                add_role(role)
+    if exception_values:
+        add_role("exception")
+    has_temporal = any(
+        _clause_has_temporal_scope(clause, slot="condition")
+        for clause in condition_values
+    ) or any(
+        _clause_has_temporal_scope(clause, slot="exception")
+        for clause in exception_values
+    )
+    if not has_temporal:
+        has_temporal = bool(_clean_text(anchors.get("temporal", "")))
+    if has_temporal:
+        add_role("temporal")
+
+    parsed_clauses: List[Tuple[str, int, str, str, str]] = []
+    for clause_role, clauses in (
+        ("condition", condition_values),
+        ("exception", exception_values),
+    ):
+        for index, clause in enumerate(clauses):
+            parsed = _typed_clause_slot(clause, slot=clause_role)
+            if parsed is None:
+                continue
+            _, prefix_key, scoped_value = parsed
+            prefix_key = _slot_safe_family_key(_clean_text(prefix_key).lower())
+            if not prefix_key:
+                continue
+            temporal_relation = _temporal_clause_prefix_relation(prefix_key)
+            clause_family = "temporal" if temporal_relation else "conditional_normative"
+            scope_atom = _slot_safe_text_atom(scoped_value, max_tokens=4)
+            parsed_clauses.append(
+                (clause_role, index, prefix_key, clause_family, scope_atom)
+            )
+
+    slots: List[Tuple[str, str]] = []
+    temporal_state = "tyes" if has_temporal else "tno"
+    if role_order:
+        topology = "+".join(role_order)
+        slots.append(("typed_decompiler_clause_topology", topology))
+        slots.append(
+            (
+                "typed_decompiler_clause_topology_counts",
+                (
+                    f"{topology}:c{len(condition_values)}:"
+                    f"e{len(exception_values)}:{temporal_state}"
+                ),
+            )
+        )
+    for clause_role, index, prefix_key, clause_family, scope_atom in parsed_clauses:
+        prefix_value = f"{clause_role}:{index}:{prefix_key}:{clause_family}"
+        slots.append(("typed_decompiler_clause_topology_prefix", prefix_value))
+        if scope_atom:
+            slots.append(
+                (
+                    "typed_decompiler_clause_topology_scope_atom",
+                    f"{prefix_value}:{scope_atom}",
+                )
+            )
+    for left, right in zip(parsed_clauses, parsed_clauses[1:]):
+        left_role, left_index, left_prefix, left_family, _ = left
+        right_role, right_index, right_prefix, right_family, _ = right
+        slots.append(
+            (
+                "typed_decompiler_clause_topology_ordered_edge",
+                (
+                    f"{left_role}:{left_index}:{left_prefix}:{left_family}->"
+                    f"{right_role}:{right_index}:{right_prefix}:{right_family}"
+                ),
+            )
+        )
+    return _unique_slot_values(slots)
 
 
 def _typed_decompiler_family_pairs(
@@ -13459,6 +14355,9 @@ def _source_role_anchor_values(
         predicate_candidates,
         default_index=1,
     )
+    coordinated_object_anchor = _coordinated_legal_action_object_anchor(
+        predicate_candidates
+    )
     predicate_default_anchor = _preferred_anchor_candidate(
         predicate_tokens,
         default_index=0,
@@ -13484,6 +14383,8 @@ def _source_role_anchor_values(
             ],
             default_index=0,
         )
+    if coordinated_object_anchor:
+        object_anchor = coordinated_object_anchor
     if passive_cue_action_candidates:
         passive_action_anchor = _preferred_anchor_candidate(
             passive_cue_action_candidates,
@@ -13516,6 +14417,46 @@ def _source_role_anchor_values(
         ),
     }
     return {name: value for name, value in anchors.items() if value}
+
+
+def _coordinated_source_action_anchor_values(
+    *,
+    document: ModalIRDocument,
+    formula: ModalIRFormula,
+) -> List[str]:
+    span_text = _semantic_source_span_text(document=document, formula=formula)
+    raw_tokens = _CUE_TOKEN_RE.findall(span_text.lower())
+    explicit_cue = _clean_text(formula.metadata.get("cue") or "")
+    cue_tokens = {
+        token
+        for cue_value in (explicit_cue, *_formula_cues(formula))
+        for token in _CUE_TOKEN_RE.findall(
+            _clean_text(cue_value).replace("_", " ").lower()
+        )
+    }
+    cue_index = next(
+        (
+            index
+            for index, token in enumerate(raw_tokens)
+            if token in cue_tokens or token in _SOURCE_ROLE_CUE_MARKERS
+        ),
+        -1,
+    )
+    candidate_sequences: List[List[str]] = []
+    if cue_index >= 0:
+        candidate_sequences.append(
+            _source_anchor_role_tokens(raw_tokens[cue_index + 1 :])
+        )
+    predicate_tokens = _source_anchor_role_tokens(
+        _CUE_TOKEN_RE.findall(_predicate_phrase(formula).lower())
+    )
+    if predicate_tokens:
+        candidate_sequences.append(predicate_tokens)
+    for candidates in candidate_sequences:
+        actions = _coordinated_legal_action_anchors(candidates)
+        if actions:
+            return actions
+    return []
 
 
 def _is_passive_by_cue_sequence(cue_sequence: Sequence[str]) -> bool:
@@ -13572,6 +14513,41 @@ def _source_semantic_anchor_role_tokens(tokens: Sequence[str]) -> List[str]:
     if filtered:
         return filtered
     return candidates
+
+
+def _coordinated_legal_action_anchors(candidates: Sequence[str]) -> List[str]:
+    """Return leading coordinated legal actions before the object phrase."""
+
+    actions: List[str] = []
+    for candidate in candidates:
+        normalized = _clean_text(candidate).lower()
+        if not normalized:
+            continue
+        if normalized not in _SOURCE_ROLE_LEGAL_ACTION_TOKENS:
+            break
+        if normalized not in actions:
+            actions.append(normalized)
+    return actions if len(actions) >= 2 else []
+
+
+def _coordinated_legal_action_object_anchor(candidates: Sequence[str]) -> str:
+    actions = _coordinated_legal_action_anchors(candidates)
+    if not actions:
+        return ""
+    action_set = set(actions)
+    trailing_candidates: List[str] = []
+    seen_non_action = False
+    for candidate in candidates:
+        normalized = _clean_text(candidate).lower()
+        if not normalized:
+            continue
+        if not seen_non_action and normalized in action_set:
+            continue
+        seen_non_action = True
+        if normalized in action_set or _is_temporal_anchor_token(normalized):
+            continue
+        trailing_candidates.append(normalized)
+    return _preferred_anchor_candidate(trailing_candidates, default_index=0)
 
 
 def _is_temporal_anchor_token(token: str) -> bool:
@@ -16297,6 +17273,7 @@ def _contextual_typed_ir_refined_cues(
     text: str,
 ) -> List[str]:
     cues: List[str] = []
+    formula_family = _clean_text(formula.operator.family).lower()
     fallback_rule = _clean_text(formula.metadata.get("fallback_rule") or "")
     raw_cue = _clean_text(formula.metadata.get("cue") or "")
     if (
@@ -16324,7 +17301,61 @@ def _contextual_typed_ir_refined_cues(
         normalized_cue = _clean_text(cue).lower()
         if normalized_cue:
             cues.append(normalized_cue)
+    for cue in _contextual_typed_ir_modal_cues_from_text(
+        formula_family=formula_family,
+        raw_cue=raw_cue,
+        text=text,
+    ):
+        cues.append(cue)
     return _unique_preserve_order(cues)
+
+
+def _contextual_typed_ir_modal_cues_from_text(
+    *,
+    formula_family: str,
+    raw_cue: str,
+    text: str,
+) -> List[str]:
+    normalized_family = _clean_text(formula_family).lower()
+    candidates: List[str] = []
+    normalized_raw_cue = _clean_text(raw_cue).replace(" ", "_").lower()
+    if normalized_raw_cue:
+        candidates.append(normalized_raw_cue)
+    candidates.extend(_bridge_cues_from_text(text))
+
+    cues: List[str] = []
+    for cue in candidates:
+        normalized_cue = _clean_text(cue).replace(" ", "_").lower()
+        if not normalized_cue or normalized_cue in cues:
+            continue
+        if _is_contextual_typed_ir_modal_cue(
+            normalized_cue,
+            formula_family=normalized_family,
+        ):
+            cues.append(normalized_cue)
+    return cues
+
+
+def _is_contextual_typed_ir_modal_cue(
+    cue: str,
+    *,
+    formula_family: str,
+) -> bool:
+    normalized_cue = _clean_text(cue).replace(" ", "_").lower()
+    normalized_family = _clean_text(formula_family).lower()
+    if not normalized_cue:
+        return False
+    if normalized_cue in _DEONTIC_BRIDGE_REINFORCEMENT_CUES:
+        return True
+    if normalized_family == "frame" and normalized_cue in {
+        "authority",
+        "procedure",
+        "procedures",
+        "rule",
+        "rules",
+    }:
+        return True
+    return False
 
 
 def _contextual_typed_ir_refined_family_pair_slots(

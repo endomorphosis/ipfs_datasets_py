@@ -515,6 +515,27 @@ _USCODE_NOTE_REFERENCE_RESIDUAL_RE = re.compile(
     r"\bset\s+out\s+as\s+a\s+note\s+(?:under|preceding)\s+section\s+\d+\b",
     re.IGNORECASE,
 )
+_USCODE_REVISION_NOTE_RESIDUAL_RE = re.compile(
+    r"\b(?:"
+    r"references\s+in\s+text\s+note\s+below|"
+    r"so\s+in\s+original|"
+    r"words?\s+[^.;:]{0,180}?\s+(?:"
+    r"are\s+)?(?:omitted|substituted|inserted|added|struck\s+out)|"
+    r"(?:omitted|substituted|inserted|added|struck\s+out)\s+"
+    r"(?:as\s+)?(?:unnecessary|for\s+consistency|to\s+eliminate)|"
+    r"for\s+consistency\s+in\s+the\s+revised\s+title|"
+    r"to\s+eliminate\s+unnecessary\s+words"
+    r")\b",
+    re.IGNORECASE,
+)
+_USCODE_LEGISLATIVE_HISTORY_RESIDUAL_RE = re.compile(
+    r"(?:\b(?:pub\.?\s*l\.?|ch\.|stat\.|act\s+[a-z]+\.?)\b|§\d)"
+    r"(?=[^.;:]{0,260}\b(?:"
+    r"amended|added|formerly|renumbered|substituted|title|"
+    r"stat\.|pub\.?\s*l\.?|ch\.|act\s+[a-z]+\.?"
+    r")\b)",
+    re.IGNORECASE,
+)
 _MONTH_NAME_TOKENS = frozenset(
     {
         "jan",
@@ -1520,6 +1541,10 @@ class LegalModalParser:
             return True
         if self._is_uscode_note_reference_residual_candidate(normalized, tokens):
             return True
+        if self._is_uscode_revision_note_residual_candidate(normalized, tokens):
+            return True
+        if self._is_uscode_legislative_history_residual_candidate(normalized, tokens):
+            return True
         if self._is_uscode_compact_frame_residual_candidate(normalized, tokens):
             return True
         is_short_heading_candidate = self._is_short_residual_heading_coverage_candidate(
@@ -1916,6 +1941,31 @@ class LegalModalParser:
         if _USCODE_CODIFICATION_HINT_RE.search(normalized_segment_text):
             return False
         return bool(_USCODE_NOTE_REFERENCE_RESIDUAL_RE.search(normalized_segment_text))
+
+    def _is_uscode_revision_note_residual_candidate(
+        self,
+        normalized_segment_text: str,
+        tokens: Sequence[str],
+    ) -> bool:
+        token_count = len(tokens)
+        if token_count < 4 or token_count > _USCODE_RESIDUAL_SPAN_MAX_TOKENS:
+            return False
+        if _USCODE_CODIFICATION_HINT_RE.search(normalized_segment_text):
+            return False
+        return bool(_USCODE_REVISION_NOTE_RESIDUAL_RE.search(normalized_segment_text))
+
+    def _is_uscode_legislative_history_residual_candidate(
+        self,
+        normalized_segment_text: str,
+        tokens: Sequence[str],
+    ) -> bool:
+        token_count = len(tokens)
+        if token_count < 4 or token_count > _USCODE_RESIDUAL_SPAN_MAX_TOKENS:
+            return False
+        lowered = normalized_segment_text.lower()
+        if not any(character.isdigit() for character in lowered):
+            return False
+        return bool(_USCODE_LEGISLATIVE_HISTORY_RESIDUAL_RE.search(lowered))
 
     def _residual_span_coverage_formula(
         self,

@@ -60,6 +60,8 @@ _SPECS: tuple[LogicBridgeSpec, ...] = (
             "cross_entropy_loss",
             "reconstruction_loss",
             "text_reconstruction_loss",
+            "source_decompiled_text_embedding_cosine_loss",
+            "source_decompiled_text_token_loss",
             "frame_ranking_loss",
             "flogic_similarity_loss",
             "symbolic_validity_penalty",

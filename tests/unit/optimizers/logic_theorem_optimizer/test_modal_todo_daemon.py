@@ -162,6 +162,8 @@ def test_loss_generator_routes_source_copy_reward_hacking_to_decompiler_scope() 
         losses={
             "source_copy_loss": 0.9,
             "source_copy_reward_hack_penalty": 0.4,
+            "source_decompiled_text_embedding_cosine_loss": 0.7,
+            "source_decompiled_text_token_loss": 0.6,
             "structural_text_reconstruction_loss": 0.8,
         },
         selected_frame="administrative_notice_hearing",
@@ -170,14 +172,12 @@ def test_loss_generator_routes_source_copy_reward_hacking_to_decompiler_scope() 
 
     todos = ModalLossTodoGenerator().generate([snapshot])
 
-    assert [todo.action for todo in todos] == [
-        "refine_semantic_decompiler_reconstruction",
-        "refine_semantic_decompiler_reconstruction",
-        "refine_semantic_decompiler_reconstruction",
-    ]
+    assert all(todo.action == "refine_semantic_decompiler_reconstruction" for todo in todos)
     assert {todo.loss_name for todo in todos} == {
         "source_copy_loss",
         "source_copy_reward_hack_penalty",
+        "source_decompiled_text_embedding_cosine_loss",
+        "source_decompiled_text_token_loss",
         "structural_text_reconstruction_loss",
     }
     assert all(todo.metadata["program_synthesis_scope"] == "ir_decompiler" for todo in todos)
@@ -253,9 +253,17 @@ def test_autoencoder_residual_router_targets_logic_submodules() -> None:
     assert route_autoencoder_residual("cross_entropy_loss").target_component == (
         "modal.compiler.registry"
     )
-    assert route_autoencoder_residual("cosine_loss").target_component == (
-        "modal.ir_decompiler"
+    cosine_route = route_autoencoder_residual("cosine_loss")
+    assert cosine_route.target_component == "modal.autoencoder"
+    assert cosine_route.action == "improve_encoder_decoder_reconstruction"
+    decompiled_cosine_route = route_autoencoder_residual(
+        "source_decompiled_text_embedding_cosine_loss"
     )
+    assert decompiled_cosine_route.target_component == "modal.ir_decompiler"
+    assert decompiled_cosine_route.action == "refine_semantic_decompiler_reconstruction"
+    assert route_autoencoder_residual(
+        "source_decompiled_text_token_loss"
+    ).target_component == "modal.ir_decompiler"
     assert route_autoencoder_residual(
         "legal_ir_multiview_proof_failure_ratio"
     ).target_component == "external_provers.router"
@@ -3550,6 +3558,31 @@ def test_nested_bridge_adapter_parallelism_is_clamped(monkeypatch: pytest.Monkey
     assert os.environ["IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS"] == "1"
 
 
+def test_codex_validation_failure_details_extracts_pytest_banner_node_id() -> None:
+    details = runner._codex_validation_failure_details(
+        command=["python", "-m", "pytest", "tests/unit/example.py"],
+        command_index=2,
+        status="failed",
+        exit_code=1,
+        stdout=(
+            "=================================== FAILURES ===================================\n"
+            "___ test_spacy_compiler_adds_title_transfer_power_heading_prefix_for_43_617f ___\n"
+            "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py:7642: "
+            "in test_spacy_compiler_adds_title_transfer_power_heading_prefix_for_43_617f\n"
+            "    assert \"transfer of title;\" in prefix_spans\n"
+            "E   AssertionError: assert 'transfer of title;' in {'Canals and appurtenant structures;'}\n"
+        ),
+        stderr="",
+    )
+
+    node_id = (
+        "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py::"
+        "test_spacy_compiler_adds_title_transfer_power_heading_prefix_for_43_617f"
+    )
+    assert details["failed_tests"] == [node_id]
+    assert details["failure_tokens"] == [f"pytest:{node_id}"]
+
+
 def test_paired_program_synthesis_health_detects_starved_codex_queue(tmp_path: Path) -> None:
     metadata = {
         "optimizer_role": "program_synthesis",
@@ -3577,7 +3610,18 @@ def test_paired_program_synthesis_health_detects_starved_codex_queue(tmp_path: P
         loss_value=1.0,
         priority=1.0,
         status="failed_validation",
-        metadata=dict(metadata),
+        metadata={
+            **metadata,
+            "failed_validation_reason": "main_apply_validation_failed_rolled_back",
+            "failed_validation_report": {
+                "main_apply_validation_failed_tests": [
+                    "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py::test_heading_prefix"
+                ],
+                "main_apply_validation_failure_tokens": [
+                    "pytest:tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py::test_heading_prefix"
+                ],
+            },
+        },
     )
     queue_path = tmp_path / "queue.jsonl"
     ModalTodoQueue([completed, failed]).save_jsonl(queue_path)
@@ -3603,6 +3647,12 @@ def test_paired_program_synthesis_health_detects_starved_codex_queue(tmp_path: P
     assert health["program_synthesis_claimed"] == 0
     assert health["program_synthesis_completed"] == 1
     assert health["program_synthesis_failed_validation"] == 1
+    assert health["program_synthesis_failed_validation_reason_counts"] == {
+        "main_apply_validation_failed_rolled_back": 1
+    }
+    assert health["program_synthesis_failed_validation_test_counts"] == {
+        "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py::test_heading_prefix": 1
+    }
     assert health["codex_queue_starved"] is True
     assert health["codex_workers_waiting_for_todos_count"] == 1
     assert health["codex_claimed_total"] == 2
@@ -3957,6 +4007,101 @@ def test_codex_main_apply_backpressure_blocks_new_claims_when_lane_is_full() -> 
     assert report["reason"] == "main_apply_inflight_limit_reached"
     assert report["active_packet_count"] == 1
     assert report["pending_count"] == 1
+
+
+def test_vector_claim_rechecks_main_apply_backpressure_after_indexing(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    first = ModalTodo(
+        todo_id="program-first",
+        action="repair_first",
+        objective="first repair",
+        sample_ids=["sample-a"],
+        citations=[],
+        loss_name="legal_ir_loss",
+        loss_value=1.0,
+        priority=3.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "compiler_registry",
+        },
+    )
+    second = ModalTodo(
+        todo_id="program-second",
+        action="repair_second",
+        objective="second repair",
+        sample_ids=["sample-b"],
+        citations=[],
+        loss_name="legal_ir_loss",
+        loss_value=1.0,
+        priority=2.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "compiler_registry",
+        },
+    )
+    queue_path = tmp_path / "queue.jsonl"
+    ModalTodoQueue([first, second]).save_jsonl(queue_path)
+
+    def fake_vector_index(*, args, index_path, todos):
+        items = list(todos)
+        queue = ModalTodoQueue.load_jsonl(queue_path)
+        queue.claim_todo_ids(
+            worker_id="codex-other",
+            todo_ids=["program-second"],
+            optimizer_role="program_synthesis",
+        )
+        queue.save_jsonl(queue_path)
+        return (
+            {item.todo_id: [1.0, 0.0] for item in items},
+            {
+                "backend": "local",
+                "fallback_reason": "",
+                "indexed_count": len(items),
+                "path": str(index_path),
+                "provider": "test",
+                "refreshed_count": len(items),
+            },
+        )
+
+    monkeypatch.setattr(runner, "_update_codex_task_vector_index", fake_vector_index)
+    args = SimpleNamespace(
+        codex_apply_mode="apply_to_main",
+        codex_main_apply_max_inflight_packets=1,
+        codex_scope="compiler_registry",
+        codex_scope_fallback_to_global=True,
+        codex_target_file_lane_lock_scopes="all",
+        codex_target_file_lane_lock_seconds=0.0,
+        codex_lane_lock_mode="hybrid",
+        codex_vector_fill_min_similarity=0.0,
+        codex_vector_index_path=None,
+        codex_vector_min_bundle_size=1,
+        codex_vector_min_similarity=0.0,
+        codex_vector_max_bundle_wait_seconds=0.0,
+        codex_vector_stale_drain_cooldown_seconds=0.0,
+        codex_task_embeddings_batch_size=32,
+        codex_task_embeddings_provider="local_adapter",
+        codex_vector_fallback_mode="hash",
+        max_items=1,
+    )
+
+    claimed, queue, status, report = runner._claim_vector_program_synthesis_batch(
+        args=args,
+        queue_path=queue_path,
+        worker_id="codex-this",
+        policy=ModalOptimizerPolicy(),
+        execution_mode="codex_cli_executor",
+        summary={},
+    )
+
+    assert claimed == []
+    assert queue.get("program-first").status == "pending"
+    assert queue.get("program-second").status == "claimed"
+    assert status["pending"] == 1
+    assert status["claimed"] == 1
+    assert report["mode"] == "main_apply_backpressure"
+    assert report["main_apply_backpressure_active_workers"] == ["codex-other"]
 
 
 def test_paired_program_synthesis_health_separates_stale_idle_codex_worker(
@@ -5892,9 +6037,22 @@ def test_compiler_ir_metric_block_reports_deterministic_codec_losses() -> None:
     assert "source_copy_loss" in block
     assert "source_copy_reward_hack_penalty" in block
     assert "source_span_copy_ratio" in block
+    assert "source_decompiled_text_embedding_cosine_loss" in block
+    assert "source_decompiled_text_embedding_cosine_similarity" in block
+    assert "source_decompiled_text_token_loss" in block
+    assert "source_decompiled_text_token_similarity" in block
     assert "structural_text_reconstruction_loss" in block
     assert "text_reconstruction_loss" in block
     assert "modal_span_coverage" in block
+    assert block["source_decompiled_text_embedding_cosine_loss"] == pytest.approx(
+        max(0.0, 1.0 - block["raw_source_embedding_cosine_similarity"])
+    )
+    assert block["source_decompiled_text_token_loss"] == pytest.approx(
+        block["structural_text_reconstruction_loss"]
+    )
+    assert block["sample_metric_records"][0]["source_text_preview"]
+    assert block["sample_metric_records"][0]["decompiled_text_preview"]
+    assert "worst_source_decompiled_text_records" in block
 
 
 def test_compiler_ir_metric_block_can_apply_autoencoder_guidance() -> None:

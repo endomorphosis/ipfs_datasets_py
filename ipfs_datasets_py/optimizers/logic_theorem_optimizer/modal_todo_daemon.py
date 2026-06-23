@@ -78,6 +78,7 @@ PROGRAM_SYNTHESIS_ACTION_TARGETS = {
     "add_or_review_modal_ambiguity_policy": "modal.compiler.ambiguity",
     "audit_frame_logic_terms": "modal.frame_logic",
     "improve_bm25_frame_selector": "modal.frame_logic",
+    "improve_encoder_decoder_reconstruction": "modal.autoencoder",
     "improve_flogic_frame_alignment": "modal.frame_logic",
     "increase_modal_ir_span_coverage": "modal.compiler",
     "refine_modal_family_cue_rules": "modal.compiler.registry",
@@ -103,6 +104,11 @@ PROGRAM_SYNTHESIS_ACTION_TARGET_METRICS = {
     "add_or_review_modal_ambiguity_policy": ("cross_entropy_loss",),
     "audit_frame_logic_terms": ("flogic_similarity_loss", "ontology_violation_count"),
     "improve_bm25_frame_selector": ("frame_ranking_loss",),
+    "improve_encoder_decoder_reconstruction": (
+        "embedding_cosine_similarity",
+        "cosine_loss",
+        "reconstruction_loss",
+    ),
     "improve_flogic_frame_alignment": ("flogic_similarity_loss",),
     "increase_modal_ir_span_coverage": ("modal_span_coverage_loss",),
     "refine_modal_family_cue_rules": ("cross_entropy_loss",),
@@ -221,7 +227,6 @@ _BRIDGE_LOSS_CACHE_LOCK = threading.Lock()
 _BRIDGE_LOSS_CACHE: Dict[str, Dict[str, float]] = {}
 
 AUTOENCODER_TRAINABLE_ACTIONS = {
-    "improve_encoder_decoder_reconstruction",
     "improve_legal_ir_view_distribution",
     "improve_modal_family_classifier",
 }
@@ -804,6 +809,8 @@ class ModalLossTodoGenerator:
         "reconstruction_loss": 0.05,
         "source_copy_loss": 0.35,
         "source_copy_reward_hack_penalty": 0.10,
+        "source_decompiled_text_embedding_cosine_loss": 0.25,
+        "source_decompiled_text_token_loss": 0.25,
         "structural_text_reconstruction_loss": 0.50,
         "symbolic_validity_penalty": 0.0,
         "tdfol_no_formula_loss": 0.0,
@@ -890,6 +897,14 @@ class ModalLossTodoGenerator:
             "source_copy_reward_hack_penalty": (
                 "refine_semantic_decompiler_reconstruction",
                 "Penalize round-trip text similarity that is explained by copied source spans instead of typed IR slots.",
+            ),
+            "source_decompiled_text_embedding_cosine_loss": (
+                "refine_semantic_decompiler_reconstruction",
+                "Improve source legal text to structural decompiled legal text cosine without relying on copied provenance spans.",
+            ),
+            "source_decompiled_text_token_loss": (
+                "refine_semantic_decompiler_reconstruction",
+                "Improve source legal text to structural decompiled legal text token overlap without relying on copied provenance spans.",
             ),
             "structural_text_reconstruction_loss": (
                 "refine_semantic_decompiler_reconstruction",
@@ -2491,7 +2506,19 @@ class ModalTodoSupervisor:
                     if todo is not None
                     else 0
                 )
-                if classify_codex_program_outcome is not None:
+                if normalized_patch_status in {
+                    "awaiting_codex_changes",
+                    "main_apply_baseline_validation_failed_rolled_back",
+                    "main_apply_target_metric_unavailable_rolled_back",
+                } and transient_failure_count < 3:
+                    action = "requeue"
+                    if normalized_patch_status == "main_apply_baseline_validation_failed_rolled_back":
+                        reason = "main_apply_baseline_validation_failed"
+                    elif normalized_patch_status == "main_apply_target_metric_unavailable_rolled_back":
+                        reason = "target_metric_unavailable"
+                    else:
+                        reason = normalized_patch_status or "transient_apply_failure"
+                elif classify_codex_program_outcome is not None:
                     decision = classify_codex_program_outcome(
                         codex_exec_status=normalized_exec_status,
                         patch_status=normalized_patch_status,
@@ -3914,6 +3941,10 @@ def program_synthesis_todo_embedding_text(todo: ModalTodo) -> str:
                     "hint_id",
                     "predicted_family",
                     "target_family",
+                    "primary_pipeline_stage",
+                    "pipeline_stage_focus",
+                    "source_decompiled_text_embedding_cosine_loss",
+                    "source_decompiled_text_token_loss",
                     "selected_frame",
                     "frame_features",
                     "roundtrip_preview",
@@ -4284,9 +4315,19 @@ def _program_synthesis_target_metrics(
         "modal.compiler.ambiguity": ("cross_entropy_loss",),
         "modal.compiler.registry": ("cross_entropy_loss",),
         "modal.frame_logic": ("flogic_similarity_loss",),
+        "modal.autoencoder": (
+            "embedding_cosine_similarity",
+            "cosine_loss",
+            "reconstruction_loss",
+        ),
         "modal.ir_decompiler": (
             "embedding_cosine_similarity",
             "reconstruction_loss",
+            "source_decompiled_text_embedding_cosine_loss",
+            "source_decompiled_text_token_loss",
+            "source_copy_reward_hack_penalty",
+            "structural_text_reconstruction_loss",
+            "text_reconstruction_loss",
         ),
         "zkp.circuits": ("zkp_verification_failure_ratio",),
     }
@@ -4313,7 +4354,17 @@ def _program_synthesis_validation_commands(
             "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py"
         )
     tests = _unique_preserve_order(str(path) for path in tests if str(path))
-    return [f"{sys.executable} -m pytest -q {' '.join(tests)}"]
+    compile_targets = [
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_registry.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_modal_parser.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py",
+        "tests/unit_tests/logic/modal/test_modal_codec.py",
+    ]
+    return [
+        f"{sys.executable} -m py_compile {' '.join(compile_targets)}",
+        f"{sys.executable} -m pytest -q {' '.join(tests)}",
+    ]
 
 
 def _program_synthesis_sample_payloads(
@@ -4357,16 +4408,22 @@ def _compact_hint_evidence(hint: ModalProgramSynthesisHint) -> Dict[str, Any]:
     }
     for key in (
         "bridge_failure_name",
+        "cosine_loss",
         "cosine_similarity",
         "family_margin",
         "frame_features",
         "generic_bridge_priority_backoff",
         "legal_ir_component_gaps",
         "legal_ir_underrepresented_components",
+        "pipeline_stage_diagnostics",
+        "pipeline_stage_focus",
         "predicted_family",
         "predicted_view",
+        "primary_pipeline_stage",
         "reconstruction_loss",
         "sample_id",
+        "source_decompiled_text_embedding_cosine_loss",
+        "source_decompiled_text_token_loss",
         "target_file_lane",
         "target_family",
         "target_probability",

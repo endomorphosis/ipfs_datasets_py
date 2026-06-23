@@ -3040,6 +3040,8 @@ def test_objective_residual_features_bind_loss_profile_to_todo_routes() -> None:
             "legal_ir_multiview_graph_failure_penalty": 0.5,
             "cec_dcec_validation_failure_ratio": 0.4,
             "source_copy_reward_hack_penalty": 0.3,
+            "source_decompiled_text_embedding_cosine_loss": 0.45,
+            "source_decompiled_text_token_loss": 0.35,
         }
         view_distribution = {
             "deontic_norms": 0.4,
@@ -3087,8 +3089,14 @@ def test_objective_residual_features_bind_loss_profile_to_todo_routes() -> None:
     )
     assert (
         "objective-residual:loss-route:"
-        "refine_typed_ir_or_decompiler_slots:"
+        "refine_semantic_decompiler_reconstruction:"
         "source_copy_reward_hack_penalty:large"
+        in objective_features
+    )
+    assert (
+        "objective-residual:loss-route:"
+        "refine_semantic_decompiler_reconstruction:"
+        "source_decompiled_text_embedding_cosine_loss:large"
         in objective_features
     )
     assert (
@@ -10620,6 +10628,25 @@ def test_adaptive_autoencoder_introspection_explains_feature_level_decisions() -
     ]
     autoencoder.apply_todos(todos, {sample.sample_id: sample}, learning_rate=0.5)
 
+    class DummyDocument:
+        def canonical_hash(self):
+            return "source-decompiled-introspection-target"
+
+    class DummyTarget:
+        document = DummyDocument()
+        losses = {
+            "source_decompiled_text_embedding_cosine_loss": 0.72,
+            "source_decompiled_text_token_loss": 0.61,
+            "structural_text_reconstruction_loss": 0.61,
+        }
+        view_distribution = {}
+
+    autoencoder.evaluate(
+        [sample],
+        legal_ir_targets={sample.sample_id: DummyTarget()},
+        use_sample_memory=False,
+    )
+
     introspection = autoencoder.introspect_sample(sample)
     data = introspection.to_dict()
 
@@ -10632,6 +10659,26 @@ def test_adaptive_autoencoder_introspection_explains_feature_level_decisions() -
         contribution.contribution_type != "sample_family_logit"
         for contribution in introspection.top_family_contributions
     )
+    assert introspection.cosine_loss == pytest.approx(
+        max(0.0, 1.0 - introspection.cosine_similarity)
+    )
+    assert data["pipeline_stage_diagnostics"]["autoencoder_embedding_cosine_gap"] == (
+        pytest.approx(introspection.cosine_loss)
+    )
+    assert data["source_decompiled_text_embedding_cosine_loss"] == pytest.approx(0.72)
+    assert data["source_decompiled_text_token_loss"] == pytest.approx(0.61)
+    assert data["pipeline_stage_diagnostics"][
+        "source_decompiled_text_embedding_cosine_loss"
+    ] == pytest.approx(0.72)
+    assert data["pipeline_stage_diagnostics"]["source_decompiled_text_token_loss"] == (
+        pytest.approx(0.61)
+    )
+    assert "semantic_decompiler" in introspection.pipeline_stage_focus
+    assert "refine_semantic_decompiler_reconstruction" in introspection.synthesis_focus
+    assert data["cosine_loss"] == pytest.approx(introspection.cosine_loss)
+    if introspection.cosine_loss > 0.20:
+        assert "autoencoder_embedding_head" in introspection.pipeline_stage_focus
+        assert "improve_encoder_decoder_reconstruction" in introspection.synthesis_focus
     assert "refine_typed_ir_or_decompiler_slots" in introspection.synthesis_focus
     assert data["top_family_contributions"][0]["feature"]
 

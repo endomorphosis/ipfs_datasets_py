@@ -215,6 +215,29 @@ def test_frame_ontology_terms_include_predicate_argument_anchor_terms() -> None:
     assert "deontic_d_o" in metadata["frame_ontology_terms"]
 
 
+def test_frame_ontology_terms_drop_directional_predicate_argument_anchors() -> None:
+    result = _optimizer().evaluate(
+        source_text="s",
+        decoded_text="d",
+        source_embedding=[0.0, 1.0],
+        decoded_embedding=[0.0, 1.0],
+        kg_triples=[],
+        frame_feature_keys=[
+            "predicate-argument:source-object-family:out:conditional_normative",
+            "predicate-argument:source-object-role:out:clause",
+            "predicate-argument:source-object-family:out:deontic",
+        ],
+    )
+
+    terms = result.metadata["frame_ontology_terms"]
+    assert "conditional_normative" in terms
+    assert "source_object_family_conditional_normative" in terms
+    assert "source_object_role_clause" in terms
+    assert "deontic" in terms
+    assert "out" not in terms
+    assert "out_deontic" not in terms
+
+
 def test_frame_ontology_terms_contextualize_legal_ir_view_family_features() -> None:
     result = _optimizer().evaluate(
         source_text="s",

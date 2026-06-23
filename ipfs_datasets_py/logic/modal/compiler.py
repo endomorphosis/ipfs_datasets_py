@@ -786,40 +786,52 @@ class DeterministicModalCompiler:
                     )
 
             frame_family = ModalLogicFamily.FRAME.value
-            temporal_family = ModalLogicFamily.TEMPORAL.value
             top_family = (
                 self._canonical_modal_family_name(ranking[0].get("family"))
                 or str(ranking[0]["family"])
             )
-            if (
-                top_family != frame_family
-                and temporal_family in self._ordered_policy_target_families(frame_family)
-            ):
-                frame_temporal_signals = _modal_ambiguity_signals(encoding)
+            if top_family != frame_family:
+                frame_policy_signals = _modal_ambiguity_signals(encoding)
                 has_frame_bm25_support = self._has_frame_bm25_support(frame_selections)
                 compiled_modal_families = {
                     self._canonical_modal_family_name(formula.operator.family)
                     or str(formula.operator.family)
                     for formula in modal_ir.formulas
                 }
-                has_temporal_evidence = bool(
-                    family_shares.get(temporal_family, 0.0) > 0.0
-                    or temporal_family in compiled_modal_families
-                    or frame_temporal_signals.get("has_temporal_scope")
+                frame_target_signals = self._adaptive_target_signal_by_family(
+                    frame_family,
+                    signals=frame_policy_signals,
+                    has_frame_scope=bool(
+                        frame_policy_signals.get("has_frame_context")
+                        or frame_policy_signals.get("has_frame_cue")
+                        or frame_policy_signals.get("has_statutory_scope_reference")
+                        or has_frame_bm25_support
+                    ),
                 )
-                if has_temporal_evidence:
+                for policy_target_family in self._ordered_policy_target_families(
+                    frame_family
+                ):
+                    if policy_target_family == frame_family:
+                        continue
+                    has_policy_target_evidence = bool(
+                        family_shares.get(policy_target_family, 0.0) > 0.0
+                        or policy_target_family in compiled_modal_families
+                        or frame_target_signals.get(policy_target_family)
+                    )
+                    if not has_policy_target_evidence:
+                        continue
                     ambiguities.extend(
                         self._compiled_primary_family_adaptive_pair_ambiguities(
                             compiled_primary_family=frame_family,
-                            competing_family=temporal_family,
+                            competing_family=policy_target_family,
                             ranking=ranking,
                             family_shares=family_shares,
                             threshold=self.config.modal_adaptive_family_margin,
-                            signals=frame_temporal_signals,
+                            signals=frame_policy_signals,
                             has_frame_scope=bool(
-                                frame_temporal_signals.get("has_frame_context")
-                                or frame_temporal_signals.get("has_frame_cue")
-                                or frame_temporal_signals.get(
+                                frame_policy_signals.get("has_frame_context")
+                                or frame_policy_signals.get("has_frame_cue")
+                                or frame_policy_signals.get(
                                     "has_statutory_scope_reference"
                                 )
                                 or has_frame_bm25_support

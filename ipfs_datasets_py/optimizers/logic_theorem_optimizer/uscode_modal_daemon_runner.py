@@ -458,6 +458,7 @@ CODEX_AST_SCOPES = tuple(
             "compiler_parser",
             "compiler_registry",
             "compiler_ambiguity",
+            "autoencoder",
             "ir_decompiler",
             "frame_logic",
             *(
@@ -476,7 +477,17 @@ CODEX_TARGET_FILE_HINTS = {
     for key, value in logic_optimizer_target_file_hints().items()
 }
 CODEX_TARGET_FILE_HINTS.update({
+    "modal.autoencoder": [
+        "ipfs_datasets_py/logic/modal/synthesis.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
+        "tests/unit_tests/logic/modal/test_modal_codec.py",
+    ],
     "logic.optimizer.autoencoder": [
+        "ipfs_datasets_py/logic/modal/synthesis.py",
         "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
         "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
         "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
@@ -641,7 +652,7 @@ CODEX_APPLY_VALIDATION_TESTS = (
     "tests/unit_tests/logic/modal/test_modal_codec.py",
 )
 CODEX_MAIN_APPLY_LOCK_TIMEOUT_SECONDS = 600.0
-CODEX_APPLY_VALIDATION_TIMEOUT_SECONDS = 300.0
+CODEX_APPLY_VALIDATION_TIMEOUT_SECONDS = 600.0
 CODEX_TARGET_METRIC_TIMEOUT_SECONDS = 120.0
 CODEX_TARGET_METRIC_MAX_SAMPLES = 2
 BRIDGE_IR_REPORT_CACHE_MAX = 4096
@@ -1154,6 +1165,11 @@ def metric_block(evaluation) -> Dict[str, Any]:
         "sample_count": evaluation.sample_count,
         "symbolic_validity_penalty": round(evaluation.symbolic_validity_penalty, 9),
     }
+    sample_embedding_metrics = list(
+        getattr(evaluation, "sample_embedding_metrics", []) or []
+    )
+    if sample_embedding_metrics:
+        block["worst_sample_embedding_metrics"] = sample_embedding_metrics[:8]
     legal_ir_losses = dict(getattr(evaluation, "legal_ir_losses", {}) or {})
     if legal_ir_losses:
         block["legal_ir_losses"] = {
@@ -1342,6 +1358,10 @@ COMPILER_GUIDANCE_CANARY_METRICS = (
     "cross_entropy_loss",
     "cross_entropy_excess_loss",
     "cosine_similarity",
+    "source_decompiled_text_embedding_cosine_loss",
+    "source_decompiled_text_embedding_cosine_similarity",
+    "source_decompiled_text_token_loss",
+    "source_decompiled_text_token_similarity",
     "source_copy_loss",
     "source_copy_reward_hack_penalty",
     "structural_text_reconstruction_loss",
@@ -1386,6 +1406,10 @@ def compiler_ir_metric_block(
         "ontology_violation_count": [],
         "raw_source_embedding_cosine_similarity": [],
         "reconstruction_loss": [],
+        "source_decompiled_text_embedding_cosine_loss": [],
+        "source_decompiled_text_embedding_cosine_similarity": [],
+        "source_decompiled_text_token_loss": [],
+        "source_decompiled_text_token_similarity": [],
         "source_copy_loss": [],
         "source_copy_reward_hack_penalty": [],
         "source_span_copy_ratio": [],
@@ -1464,7 +1488,21 @@ def compiler_ir_metric_block(
                 if name in result.losses and result.losses.get(name) is not None
             },
             "sample_id": str(getattr(sample, "sample_id", "") or ""),
+            "source_text_preview": re.sub(
+                r"\s+",
+                " ",
+                str(getattr(sample, "text", "") or ""),
+            ).strip()[:240],
         }
+        structural_preview = str(
+            result.metadata.get("modal_decompiler_structural_text") or ""
+        )
+        if structural_preview:
+            sample_record["decompiled_text_preview"] = re.sub(
+                r"\s+",
+                " ",
+                structural_preview,
+            ).strip()[:240]
         if result.metadata.get("compiler_guidance_applied"):
             guidance_applied_count += 1
             guidance_frame_boost_counts.append(
@@ -1624,6 +1662,9 @@ def compiler_ir_metric_block(
         }
     if sample_metric_records:
         block["sample_metric_records"] = sample_metric_records
+        block["worst_source_decompiled_text_records"] = (
+            _worst_source_decompiled_text_records(sample_metric_records)
+        )
     if "modal_span_coverage_loss" in block:
         block["modal_span_coverage"] = round(
             1.0 - float(block["modal_span_coverage_loss"]),
@@ -1639,7 +1680,87 @@ def compiler_ir_metric_block(
             1.0 - float(block["structural_text_reconstruction_loss"]),
             9,
         )
+    if "source_decompiled_text_embedding_cosine_loss" in block:
+        block["source_decompiled_text_embedding_cosine_gap"] = round(
+            float(block["source_decompiled_text_embedding_cosine_loss"]),
+            9,
+        )
     return block
+
+
+def _worst_source_decompiled_text_records(
+    records: Sequence[Mapping[str, Any]],
+    *,
+    limit: int = 8,
+) -> List[Dict[str, Any]]:
+    """Return samples with the worst source text -> structural decompiled text gaps."""
+
+    ranked: List[tuple[float, Dict[str, Any]]] = []
+    for record in records:
+        if not isinstance(record, Mapping):
+            continue
+        metrics = record.get("metrics")
+        if not isinstance(metrics, Mapping):
+            continue
+        embedding_gap = _metric_value(
+            metrics,
+            "source_decompiled_text_embedding_cosine_loss",
+            default=max(
+                0.0,
+                1.0
+                - _metric_value(
+                    metrics,
+                    "raw_source_embedding_cosine_similarity",
+                    default=1.0,
+                ),
+            ),
+        )
+        token_loss = _metric_value(
+            metrics,
+            "source_decompiled_text_token_loss",
+            default=_metric_value(
+                metrics,
+                "structural_text_reconstruction_loss",
+                default=0.0,
+            ),
+        )
+        copy_hack = _metric_value(metrics, "source_copy_reward_hack_penalty", default=0.0)
+        structural_loss = _metric_value(
+            metrics,
+            "structural_text_reconstruction_loss",
+            default=0.0,
+        )
+        score = embedding_gap + token_loss + copy_hack + structural_loss
+        if score <= 0.0:
+            continue
+        ranked.append(
+            (
+                score,
+                {
+                    "citation": str(record.get("citation") or ""),
+                    "decompiled_text_preview": str(
+                        record.get("decompiled_text_preview") or ""
+                    ),
+                    "source_text_preview": str(record.get("source_text_preview") or ""),
+                    "sample_id": str(record.get("sample_id") or ""),
+                    "source_decompiled_text_embedding_cosine_loss": round(
+                        embedding_gap,
+                        9,
+                    ),
+                    "source_decompiled_text_token_loss": round(token_loss, 9),
+                    "source_copy_reward_hack_penalty": round(copy_hack, 9),
+                    "structural_text_reconstruction_loss": round(structural_loss, 9),
+                },
+            )
+        )
+    ranked.sort(
+        key=lambda item: (
+            -item[0],
+            item[1]["sample_id"],
+            item[1]["citation"],
+        )
+    )
+    return [row for _score, row in ranked[: max(0, int(limit))]]
 
 
 def _metric_value(block: Mapping[str, Any], name: str, default: float = 1.0e12) -> float:
@@ -1731,12 +1852,41 @@ def _record_canary_deltas(
     )
     plain_source_copy = _record_metric_value(plain_record, "source_copy_loss")
     guided_source_copy = _record_metric_value(guided_record, "source_copy_loss")
+    plain_text_cosine_loss = _record_metric_value(
+        plain_record,
+        "source_decompiled_text_embedding_cosine_loss",
+        default=max(
+            0.0,
+            1.0
+            - _record_metric_value(
+                plain_record,
+                "raw_source_embedding_cosine_similarity",
+                default=1.0,
+            ),
+        ),
+    )
+    guided_text_cosine_loss = _record_metric_value(
+        guided_record,
+        "source_decompiled_text_embedding_cosine_loss",
+        default=max(
+            0.0,
+            1.0
+            - _record_metric_value(
+                guided_record,
+                "raw_source_embedding_cosine_similarity",
+                default=1.0,
+            ),
+        ),
+    )
     return {
         "ce_delta": plain_ce - guided_ce,
         "ce_excess_delta": plain_ce_excess - guided_ce_excess,
         "copy_hack_delta": plain_copy_hack - guided_copy_hack,
         "cosine_delta": guided_cosine - plain_cosine,
         "source_copy_delta": plain_source_copy - guided_source_copy,
+        "source_decompiled_text_cosine_loss_delta": (
+            plain_text_cosine_loss - guided_text_cosine_loss
+        ),
     }
 
 
@@ -1768,8 +1918,23 @@ def _finalize_guidance_attribution(
                 float(values.get("source_copy_delta", 0.0)) / count,
                 9,
             ),
+            "source_decompiled_text_cosine_loss_delta": round(
+                float(
+                    values.get(
+                        "source_decompiled_text_cosine_loss_delta",
+                        0.0,
+                    )
+                )
+                / count,
+                9,
+            ),
         }
-        core = (row["ce_delta"], row["copy_hack_delta"], row["cosine_delta"])
+        core = (
+            row["ce_delta"],
+            row["copy_hack_delta"],
+            row["cosine_delta"],
+            row["source_decompiled_text_cosine_loss_delta"],
+        )
         if any(value < -threshold for value in core):
             gate = "fail"
         elif any(value > threshold for value in core):
@@ -1780,7 +1945,8 @@ def _finalize_guidance_attribution(
         row["objective_delta"] = round(
             float(row["ce_delta"])
             + float(row["copy_hack_delta"])
-            + float(row["cosine_delta"]),
+            + float(row["cosine_delta"])
+            + float(row["source_decompiled_text_cosine_loss_delta"]),
             9,
         )
         rows.append((str(key), row))
@@ -2434,6 +2600,8 @@ GUIDANCE_SCOPE_TARGET_METRICS = {
     "frame_logic": ("flogic_similarity_loss", "ontology_violation_count"),
     "ir_decompiler": (
         "cosine_similarity",
+        "source_decompiled_text_embedding_cosine_loss",
+        "source_decompiled_text_token_loss",
         "source_copy_reward_hack_penalty",
         "structural_text_reconstruction_loss",
         "text_reconstruction_loss",
@@ -2495,12 +2663,15 @@ def _compiler_guidance_target_metrics(route: str, scope: str) -> List[str]:
     metrics = [
         "cross_entropy_loss",
         "cosine_similarity",
+        "source_decompiled_text_embedding_cosine_loss",
         "source_copy_reward_hack_penalty",
     ]
     metrics.extend(GUIDANCE_SCOPE_TARGET_METRICS.get(str(scope), ()))
     if "decompiler" in route:
         metrics.extend(
             (
+                "source_decompiled_text_embedding_cosine_loss",
+                "source_decompiled_text_token_loss",
                 "structural_text_reconstruction_loss",
                 "text_reconstruction_loss",
             )
@@ -3693,6 +3864,10 @@ def paired_program_synthesis_health(
                     optimizer_role=optimizer_policy.program_synthesis_role
                 )
             )
+            failed_validation_report = _program_synthesis_failed_validation_report(
+                queue,
+                optimizer_role=optimizer_policy.program_synthesis_role,
+            )
             health.update(
                 {
                     "program_synthesis_claimed": int(status.get("claimed", 0)),
@@ -3702,6 +3877,12 @@ def paired_program_synthesis_health(
                     "program_synthesis_completed": int(status.get("completed", 0)),
                     "program_synthesis_failed_validation": int(
                         status.get("failed_validation", 0)
+                    ),
+                    "program_synthesis_failed_validation_reason_counts": (
+                        failed_validation_report["reason_counts"]
+                    ),
+                    "program_synthesis_failed_validation_test_counts": (
+                        failed_validation_report["test_counts"]
                     ),
                     "program_synthesis_pending": int(status.get("pending", 0)),
                     "program_synthesis_superseded": int(
@@ -3720,6 +3901,8 @@ def paired_program_synthesis_health(
                 "program_synthesis_claimed_by_worker": {},
                 "program_synthesis_completed": 0,
                 "program_synthesis_failed_validation": 0,
+                "program_synthesis_failed_validation_reason_counts": {},
+                "program_synthesis_failed_validation_test_counts": {},
                 "program_synthesis_pending": 0,
                 "program_synthesis_superseded": 0,
                 "queue_counts": {},
@@ -3754,6 +3937,10 @@ def paired_program_synthesis_health(
         if str(worker_id)
     }
     worker_active_packets = int(child_health.get("active_count", 0) or 0)
+    if worker_active_packets <= 0:
+        worker_active_packets = _active_codex_packet_summary_count(codex_summary_paths)
+    if worker_active_packets > 0 and worker_waiting > 0:
+        worker_waiting = max(0, worker_waiting - worker_active_packets)
     pending = int(health.get("program_synthesis_pending", 0) or 0)
     claimed = int(health.get("program_synthesis_claimed", 0) or 0)
     failed_validation = int(health.get("program_synthesis_failed_validation", 0) or 0)
@@ -3806,6 +3993,112 @@ def paired_program_synthesis_health(
     return health
 
 
+def _program_synthesis_failed_validation_report(
+    queue: ModalTodoQueue,
+    *,
+    optimizer_role: str,
+) -> Dict[str, Any]:
+    """Summarize failed-validation reasons and concrete failed validation tests."""
+
+    reason_counts: Counter[str] = Counter()
+    test_counts: Counter[str] = Counter()
+    for todo in queue.all():
+        if todo.status != "failed_validation":
+            continue
+        metadata = todo.metadata if isinstance(todo.metadata, Mapping) else {}
+        todo_role = str(metadata.get("optimizer_role") or "").strip()
+        if todo_role and todo_role != optimizer_role:
+            continue
+        if not todo_role and str(metadata.get("execution_target") or "") not in {
+            "codex_program_repair",
+            "external_codex_worker",
+        }:
+            continue
+        reason = str(
+            metadata.get("failed_validation_reason")
+            or metadata.get("failure_reason")
+            or ""
+        ).strip()
+        if not reason:
+            reason = "unknown"
+        reason_counts[reason] += 1
+
+        report = metadata.get("failed_validation_report")
+        if not isinstance(report, Mapping):
+            continue
+        todo_failed_tests: set[str] = set()
+        failed_tests = report.get("main_apply_validation_failed_tests") or ()
+        if isinstance(failed_tests, (str, bytes)):
+            failed_tests = (str(failed_tests),)
+        if isinstance(failed_tests, Iterable):
+            for test_id in failed_tests:
+                test_text = str(test_id or "").strip()
+                if test_text:
+                    todo_failed_tests.add(test_text)
+        failure_tokens = report.get("main_apply_validation_failure_tokens") or ()
+        if isinstance(failure_tokens, (str, bytes)):
+            failure_tokens = (str(failure_tokens),)
+        if isinstance(failure_tokens, Iterable):
+            for token in failure_tokens:
+                token_text = str(token or "").strip()
+                if token_text.startswith("pytest:"):
+                    todo_failed_tests.add(token_text.removeprefix("pytest:"))
+        for test_text in sorted(todo_failed_tests):
+            test_counts[test_text] += 1
+
+    return {
+        "reason_counts": dict(sorted(reason_counts.items())),
+        "test_counts": dict(sorted(test_counts.items())),
+    }
+
+
+def _active_codex_packet_summary_count(paths: Sequence[Path]) -> int:
+    """Count Codex summaries that are actively executing a claimed packet."""
+
+    active_count = 0
+    for path in paths:
+        try:
+            data = json.loads(Path(path).read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        active_ids = data.get("active_packet_claimed_todo_ids")
+        phase = str(data.get("active_packet_phase") or "").strip().lower()
+        if (
+            isinstance(active_ids, Sequence)
+            and not isinstance(active_ids, (str, bytes))
+            and len(active_ids) > 0
+        ) or phase in {"executing_codex_packet", "applying_codex_packet"}:
+            active_count += 1
+    return active_count
+
+
+def _timestamp_age_seconds(timestamp: Any, *, now: Optional[Any] = None) -> Optional[float]:
+    """Return timestamp age while supporting deterministic test clocks."""
+
+    if timestamp in (None, ""):
+        return None
+    if now is None:
+        try:
+            return accelerate_timestamp_age_seconds(timestamp)
+        except TypeError:
+            pass
+    try:
+        parsed = datetime.fromisoformat(str(timestamp).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    if isinstance(now, datetime):
+        current = now
+    elif now is None:
+        current = datetime.now(timezone.utc)
+    else:
+        current = datetime.fromtimestamp(float(now), timezone.utc)
+    if current.tzinfo is None:
+        current = current.replace(tzinfo=timezone.utc)
+    return max(0.0, (current - parsed).total_seconds())
+
+
 def paired_autoencoder_child_health(
     summary_path: Path,
     *,
@@ -3813,7 +4106,7 @@ def paired_autoencoder_child_health(
 ) -> Dict[str, Any]:
     """Return paired-run autoencoder heartbeat health from its child summary."""
 
-    now_epoch = time.time() if now is None else float(now)
+    now_epoch = time.time() if now is None else now
     health: Dict[str, Any] = {
         "autoencoder_summary_exists": summary_path.exists(),
         "autoencoder_summary_path": str(summary_path),
@@ -3835,7 +4128,7 @@ def paired_autoencoder_child_health(
             "autoencoder_active_cycle_elapsed_seconds": data.get(
                 "active_cycle_elapsed_seconds"
             ),
-            "autoencoder_active_cycle_heartbeat_age_seconds": accelerate_timestamp_age_seconds(
+            "autoencoder_active_cycle_heartbeat_age_seconds": _timestamp_age_seconds(
                 active_heartbeat_at,
                 now=now_epoch,
             ),
@@ -3849,13 +4142,13 @@ def paired_autoencoder_child_health(
                 "active_cycle_projection_stage"
             ),
             "autoencoder_cycles": data.get("cycles"),
-            "autoencoder_effective_heartbeat_age_seconds": accelerate_timestamp_age_seconds(
+            "autoencoder_effective_heartbeat_age_seconds": _timestamp_age_seconds(
                 heartbeat_at,
                 now=now_epoch,
             ),
             "autoencoder_latest_stop_reason": data.get("latest_stop_reason"),
             "autoencoder_summary_final": data.get("final"),
-            "autoencoder_summary_age_seconds": accelerate_timestamp_age_seconds(
+            "autoencoder_summary_age_seconds": _timestamp_age_seconds(
                 updated_at,
                 now=now_epoch,
             ),
@@ -4481,6 +4774,34 @@ def _claim_vector_program_synthesis_batch(
     if not vectors_by_id:
         with queue_file_lock(queue_path):
             queue = ModalTodoQueue.load_jsonl(queue_path)
+            apply_backpressure_report = _codex_main_apply_backpressure_report(
+                queue,
+                args=args,
+                policy=policy,
+                worker_id=worker_id,
+            )
+            if apply_backpressure_report.get("blocked"):
+                status = update_program_synthesis_summary(
+                    summary,
+                    queue,
+                    policy,
+                    execution_mode=execution_mode,
+                )
+                vector_report.update(
+                    {
+                        "mode": "main_apply_backpressure",
+                        "selected_count": 0,
+                        "wait_reason": str(
+                            apply_backpressure_report.get("reason")
+                            or "main_apply_backpressure"
+                        ),
+                        **{
+                            f"main_apply_backpressure_{key}": value
+                            for key, value in apply_backpressure_report.items()
+                        },
+                    }
+                )
+                return [], queue, status, vector_report
             supervisor = ModalTodoSupervisor(queue=queue, policy=policy)
             claimed = supervisor.claim_program_synthesis_batch(
                 worker_id=worker_id,
@@ -4595,6 +4916,37 @@ def _claim_vector_program_synthesis_batch(
 
     with queue_file_lock(queue_path):
         queue = ModalTodoQueue.load_jsonl(queue_path)
+        apply_backpressure_report = _codex_main_apply_backpressure_report(
+            queue,
+            args=args,
+            policy=policy,
+            worker_id=worker_id,
+        )
+        if apply_backpressure_report.get("blocked"):
+            status = update_program_synthesis_summary(
+                summary,
+                queue,
+                policy,
+                execution_mode=execution_mode,
+            )
+            vector_report.update(
+                {
+                    "anchor_id": anchor_id,
+                    "mode": "main_apply_backpressure",
+                    "proposed_selected_count": len(selected),
+                    "proposed_selected_ids": selected_ids,
+                    "selected_count": 0,
+                    "wait_reason": str(
+                        apply_backpressure_report.get("reason")
+                        or "main_apply_backpressure"
+                    ),
+                    **{
+                        f"main_apply_backpressure_{key}": value
+                        for key, value in apply_backpressure_report.items()
+                    },
+                }
+            )
+            return [], queue, status, vector_report
         if undersized_stale_bundle:
             lease_report = _try_acquire_stale_bundle_lease(
                 queue_path=queue_path,
@@ -5124,7 +5476,7 @@ def build_paired_daemon_commands(
         "--autoencoder-semantic-slot-legal-ir-view-embedding-weight-scale",
         str(getattr(args, "autoencoder_semantic_slot_legal_ir_view_embedding_weight_scale", 0.5)),
         "--autoencoder-cosine-reconstruction-weight",
-        str(getattr(args, "autoencoder_cosine_reconstruction_weight", 0.25)),
+        str(getattr(args, "autoencoder_cosine_reconstruction_weight", 0.5)),
         "--autoencoder-max-token-features",
         str(getattr(args, "autoencoder_max_token_features", 48)),
         "--autoencoder-max-token-bigram-features",
@@ -5156,7 +5508,7 @@ def build_paired_daemon_commands(
         "--generalizable-projection-objective-reconstruction-weight",
         str(getattr(args, "generalizable_projection_objective_reconstruction_weight", 1.0)),
         "--generalizable-projection-objective-cosine-gap-weight",
-        str(getattr(args, "generalizable_projection_objective_cosine_gap_weight", 1.0)),
+        str(getattr(args, "generalizable_projection_objective_cosine_gap_weight", 1.5)),
         "--generalizable-projection-objective-legal-ir-weight",
         str(getattr(args, "generalizable_projection_objective_legal_ir_weight", 1.0)),
         "--generalizable-projection-hard-example-fraction",
@@ -5257,6 +5609,8 @@ def _paired_codex_children_succeeded(
 ) -> bool:
     """Return whether Codex children finished cleanly for paired-run accounting."""
 
+    if stop_requested:
+        return False
     if autoencoder_success is None:
         autoencoder_success = autoencoder_exit_code == 0
     if not codex_exit_codes or not autoencoder_success:
@@ -5311,6 +5665,9 @@ def _paired_autoencoder_succeeded(
 ) -> bool:
     """Return whether the paired autoencoder child reached its own clean stop."""
 
+    runner_terminated = autoencoder_run_id in set(runner_terminated_children)
+    if runner_terminated and autoencoder_exit_code == 0:
+        return False
     clean_process_stop = accelerate_supervised_child_succeeded(
         child_id=autoencoder_run_id,
         exit_code=autoencoder_exit_code,
@@ -6256,6 +6613,10 @@ def _run_process_group_capture(
 
 
 _PYTEST_FAILURE_LINE_RE = re.compile(r"(?m)^(?:FAILED|ERROR)\s+([^\s]+)")
+_PYTEST_BANNER_RE = re.compile(r"(?m)^_+\s+([A-Za-z_][A-Za-z0-9_]*)\s+_+$")
+_PYTEST_IN_TEST_RE = re.compile(
+    r"(?m)^([^:\n]+\.py):[0-9]+:\s+in\s+([A-Za-z_][A-Za-z0-9_]*)\b"
+)
 _PYTHON_SYNTAX_LINE_RE = re.compile(
     r'(?m)^\s*File "([^"]+)", line ([0-9]+)|^\s*File ([^,\n]+), line ([0-9]+)'
 )
@@ -6276,7 +6637,12 @@ def _codex_validation_failure_details(
     stderr: str,
 ) -> Dict[str, Any]:
     combined = "\n".join(part for part in (stdout, stderr) if part)
-    failed_tests = sorted(dict.fromkeys(_PYTEST_FAILURE_LINE_RE.findall(combined)))
+    failed_test_ids = list(_PYTEST_FAILURE_LINE_RE.findall(combined))
+    banner_names = set(_PYTEST_BANNER_RE.findall(combined))
+    for file_path, test_name in _PYTEST_IN_TEST_RE.findall(combined):
+        if test_name in banner_names:
+            failed_test_ids.append(f"{file_path}::{test_name}")
+    failed_tests = sorted(dict.fromkeys(failed_test_ids))
     syntax_locations: List[str] = []
     if "SyntaxError" in combined or "IndentationError" in combined:
         for match in _PYTHON_SYNTAX_LINE_RE.finditer(combined):
@@ -7853,7 +8219,10 @@ def _codex_exec_prompt(packet: Mapping[str, Any]) -> str:
         "Implement a narrow deterministic parser, IR, decoder, or frame-logic improvement for the claimed TODOs.",
         "Prefer explainable compiler/decompiler code over learned weights when the TODO concerns modal or frame semantics.",
         "Use local repository files and tests only; do not use web search for this packet.",
+        "Before finishing, run py_compile on any touched Python files or the closest package/test modules.",
         "Run the smallest relevant tests you can before finishing.",
+        "Preserve U.S. Code catchline and heading invariants: semicolon-split headings such as `Canals and appurtenant structures; transfer of title; power development` must retain both individual heading spans and the coalesced catchline where existing tests expect them.",
+        "Do not weaken, delete, rename, or bypass existing modal codec heading/catchline tests to make a patch pass.",
         "Leave unrelated files alone.",
     ]
     if todo_markdown_path.exists() and todo_markdown_path != task_path:
@@ -8213,6 +8582,8 @@ def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Pat
         "best_validation_ir_guided_source_copy_reward_hack_penalty": 1.0e12,
         "best_validation_ir_reconstruction": 1.0e12,
         "best_validation_ir_source_copy_loss": 1.0e12,
+        "best_validation_ir_source_decompiled_text_embedding_cosine_loss": 1.0e12,
+        "best_validation_ir_source_decompiled_text_token_loss": 1.0e12,
         "best_validation_ir_structural_text_reconstruction": 1.0e12,
         "best_validation_ir_text_reconstruction": 1.0e12,
         "best_validation_learned_ir_family_ce_excess": 1.0e12,
@@ -8411,7 +8782,7 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--generalizable-projection-objective-cosine-gap-weight",
         type=float,
-        default=1.0,
+        default=1.5,
         help="Weight for cosine gap (1-cosine) in feature-projection objective.",
     )
     parser.add_argument(
@@ -9283,7 +9654,7 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--autoencoder-cosine-reconstruction-weight",
         type=float,
-        default=0.25,
+        default=0.5,
         help=(
             "Blend cosine-direction error into decoder feature/prototype updates "
             "alongside raw reconstruction error."
@@ -11110,6 +11481,11 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         1.0e12,
     )
     summary.setdefault("best_validation_ir_source_copy_loss", 1.0e12)
+    summary.setdefault(
+        "best_validation_ir_source_decompiled_text_embedding_cosine_loss",
+        1.0e12,
+    )
+    summary.setdefault("best_validation_ir_source_decompiled_text_token_loss", 1.0e12)
     summary.setdefault("best_validation_ir_structural_text_reconstruction", 1.0e12)
     summary.setdefault("best_validation_learned_ir_family_ce_excess", 1.0e12)
     summary.setdefault("best_validation_learned_ir_view_ce", 1.0e12)
@@ -11269,7 +11645,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             getattr(args, "autoencoder_semantic_slot_legal_ir_view_embedding_weight_scale", 0.5)
         ),
         cosine_reconstruction_weight=float(
-            getattr(args, "autoencoder_cosine_reconstruction_weight", 0.25)
+            getattr(args, "autoencoder_cosine_reconstruction_weight", 0.5)
         ),
         max_token_features=int(getattr(args, "autoencoder_max_token_features", 48)),
         max_token_bigram_features=int(
@@ -11521,7 +11897,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         getattr(args, "autoencoder_semantic_slot_legal_ir_view_embedding_weight_scale", 0.5)
     )
     summary["autoencoder_cosine_reconstruction_weight"] = float(
-        getattr(args, "autoencoder_cosine_reconstruction_weight", 0.25)
+        getattr(args, "autoencoder_cosine_reconstruction_weight", 0.5)
     )
     summary["autoencoder_max_token_features"] = int(
         getattr(args, "autoencoder_max_token_features", 48)
@@ -12687,7 +13063,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                             getattr(
                                 args,
                                 "generalizable_projection_objective_cosine_gap_weight",
-                                1.0,
+                                1.5,
                             )
                         ),
                         objective_legal_ir_weight=float(
@@ -12872,6 +13248,24 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             )
             latest_compiler_ir_source_copy_loss = float(
                 compiler_ir_validation.get("source_copy_loss", 1.0e12)
+            )
+            latest_compiler_ir_raw_source_embedding_cosine = float(
+                compiler_ir_validation.get("raw_source_embedding_cosine_similarity", -1.0)
+            )
+            latest_source_decompiled_text_embedding_cosine_loss = float(
+                compiler_ir_validation.get(
+                    "source_decompiled_text_embedding_cosine_loss",
+                    max(0.0, 1.0 - latest_compiler_ir_raw_source_embedding_cosine),
+                )
+            )
+            latest_source_decompiled_text_token_loss = float(
+                compiler_ir_validation.get(
+                    "source_decompiled_text_token_loss",
+                    compiler_ir_validation.get(
+                        "structural_text_reconstruction_loss",
+                        1.0e12,
+                    ),
+                )
             )
             latest_compiler_ir_source_copy_reward_hack_penalty = float(
                 compiler_ir_validation.get("source_copy_reward_hack_penalty", 1.0e12)
@@ -13134,10 +13528,95 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["latest_compiler_ir_ce"] = latest_compiler_ir_ce
             summary["latest_compiler_ir_ce_excess"] = latest_compiler_ir_ce_excess
             summary["latest_compiler_ir_cosine"] = latest_compiler_ir_cosine
+            summary["latest_compiler_ir_raw_source_embedding_cosine"] = (
+                latest_compiler_ir_raw_source_embedding_cosine
+            )
+            summary["latest_cosine_metric_disagreement"] = {
+                "compiler_ir_minus_autoencoder_embedding_cosine": round(
+                    latest_compiler_ir_cosine
+                    - after_validation.embedding_cosine_similarity,
+                    9,
+                ),
+                "compiler_raw_source_embedding_minus_autoencoder_embedding_cosine": round(
+                    latest_compiler_ir_raw_source_embedding_cosine
+                    - after_validation.embedding_cosine_similarity,
+                    9,
+                ),
+                "compiler_ir_cosine_metric": (
+                    "deterministic compiler/decompiler structural IR round-trip"
+                ),
+                "compiler_raw_source_embedding_cosine_metric": (
+                    "deterministic compiler decoded text embedding vs source embedding"
+                ),
+                "validation_cosine_metric": (
+                    "autoencoder decoded embedding vs source embedding"
+                ),
+            }
+            summary["latest_validation_cosine_bottleneck"] = {
+                "autoencoder_embedding_cosine": round(
+                    after_validation.embedding_cosine_similarity,
+                    9,
+                ),
+                "autoencoder_embedding_cosine_gap": round(
+                    max(0.0, 1.0 - after_validation.embedding_cosine_similarity),
+                    9,
+                ),
+                "autoencoder_reconstruction_loss": round(
+                    after_validation.reconstruction_loss,
+                    9,
+                ),
+                "compiler_raw_source_embedding_cosine": round(
+                    latest_compiler_ir_raw_source_embedding_cosine,
+                    9,
+                ),
+                "compiler_structural_ir_cosine": round(
+                    latest_compiler_ir_cosine,
+                    9,
+                ),
+                "is_embedding_head_bottleneck": bool(
+                    after_validation.embedding_cosine_similarity < 0.25
+                ),
+                "worst_samples": list(
+                    after_validation_metrics.get("worst_sample_embedding_metrics", [])
+                ),
+            }
             summary["latest_compiler_ir_source_copy_loss"] = latest_compiler_ir_source_copy_loss
             summary["latest_compiler_ir_source_copy_reward_hack_penalty"] = (
                 latest_compiler_ir_source_copy_reward_hack_penalty
             )
+            summary["latest_source_decompiled_text_embedding_cosine_loss"] = (
+                latest_source_decompiled_text_embedding_cosine_loss
+            )
+            summary["latest_source_decompiled_text_token_loss"] = (
+                latest_source_decompiled_text_token_loss
+            )
+            summary["latest_source_decompiled_text_roundtrip_bottleneck"] = {
+                "copy_hack_penalty": round(
+                    latest_compiler_ir_source_copy_reward_hack_penalty,
+                    9,
+                ),
+                "embedding_cosine_loss": round(
+                    latest_source_decompiled_text_embedding_cosine_loss,
+                    9,
+                ),
+                "embedding_cosine_similarity": round(
+                    1.0 - latest_source_decompiled_text_embedding_cosine_loss,
+                    9,
+                ),
+                "source_copy_loss": round(latest_compiler_ir_source_copy_loss, 9),
+                "token_loss": round(latest_source_decompiled_text_token_loss, 9),
+                "token_similarity": round(
+                    1.0 - latest_source_decompiled_text_token_loss,
+                    9,
+                ),
+                "worst_samples": list(
+                    compiler_ir_validation.get(
+                        "worst_source_decompiled_text_records",
+                        [],
+                    )
+                    or []
+                )[:8],
+            }
             summary["latest_compiler_ir_guided_ce"] = latest_guided_compiler_ir_ce
             summary["latest_compiler_ir_guided_ce_excess"] = (
                 latest_guided_compiler_ir_ce_excess
@@ -13514,6 +13993,20 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["best_validation_ir_text_reconstruction"] = min(
                 summary.get("best_validation_ir_text_reconstruction", 1.0e12),
                 float(compiler_ir_validation.get("text_reconstruction_loss", 1.0e12)),
+            )
+            summary["best_validation_ir_source_decompiled_text_embedding_cosine_loss"] = min(
+                summary.get(
+                    "best_validation_ir_source_decompiled_text_embedding_cosine_loss",
+                    1.0e12,
+                ),
+                latest_source_decompiled_text_embedding_cosine_loss,
+            )
+            summary["best_validation_ir_source_decompiled_text_token_loss"] = min(
+                summary.get(
+                    "best_validation_ir_source_decompiled_text_token_loss",
+                    1.0e12,
+                ),
+                latest_source_decompiled_text_token_loss,
             )
             summary["best_validation_logic_bridge_acceptance"] = max(
                 summary.get("best_validation_logic_bridge_acceptance", -1.0),

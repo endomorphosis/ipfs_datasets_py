@@ -321,6 +321,50 @@ def test_modal_frame_logic_bridge_promotes_action_shaped_graph_guidance_to_neo4j
     assert graph_metadata["legal_ir_view_cross_entropy_loss"] == 0.0
 
 
+def test_neo4j_compat_augments_sparse_legal_sample_text_projection() -> None:
+    from ipfs_datasets_py.logic.modal.kg_bridge import flogic_triples_to_graph_data
+
+    graph_data = flogic_triples_to_graph_data(
+        [
+            {
+                "subject": "us-code-33-763a-2-eb25ca5574fc2e5c",
+                "predicate": "sample_id",
+                "object": "us-code-33-763a-2-eb25ca5574fc2e5c",
+            },
+            {
+                "subject": "us-code-33-763a-2-eb25ca5574fc2e5c",
+                "predicate": "source_text",
+                "object": (
+                    "U.S.C. Title 33 - NAVIGATION AND NAVIGABLE WATERS "
+                    "33 U.S.C. United States Code, 2024 Edition CHAPTER 16 "
+                    "- LIGHTHOUSES Sec. 763a-2 - Repealed. "
+                    "§763a–2. Repealed."
+                ),
+            },
+        ],
+        graph_id="sparse-legal-sample-text-projection",
+    )
+
+    triples = {
+        (
+            relationship.properties["flogic_predicate"],
+            relationship.properties["flogic_object"],
+        )
+        for relationship in graph_data.relationships
+    }
+    view_distribution = graph_data.metadata["frame_logic_projection_view_distribution"]
+
+    assert ("citation_canonical", "33 U.S.C. 763a-2") in triples
+    assert ("source_id_citation_canonical", "33 U.S.C. 763a-2") in triples
+    assert ("source_id_section_component_profile", "mixed") in triples
+    assert view_distribution["citation_structure"] >= 1
+    assert view_distribution["document_scope"] >= 1
+    assert view_distribution["editorial_status"] >= 1
+    assert view_distribution["section_structure"] >= 1
+    assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
+    assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
+
+
 def test_modal_frame_logic_bridge_bounds_flogic_similarity_loss_for_heading_samples() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
@@ -778,6 +822,72 @@ def test_modal_frame_logic_bridge_augments_sparse_us_code_section_ranges() -> No
     assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
 
 
+def test_modal_frame_logic_bridge_aligns_sparse_us_code_source_and_citation_views() -> None:
+    from ipfs_datasets_py.logic.modal.kg_bridge import flogic_triples_to_graph_data
+
+    graph_data = flogic_triples_to_graph_data(
+        [
+            {
+                "subject": "us-code-43-617f",
+                "predicate": "source_id",
+                "object": "us-code-43-617f.-aec77238eacf8e25",
+            },
+            {
+                "subject": "us-code-43-617f",
+                "predicate": "citation",
+                "object": "43 U.S.C. 617f.",
+            },
+            {
+                "subject": "us-code-33-763a-2",
+                "predicate": "source_id",
+                "object": "us-code-33-763a-2-eb25ca5574fc2e5c",
+            },
+            {
+                "subject": "us-code-33-763a-2",
+                "predicate": "citation",
+                "object": "33 U.S.C. 763a-2",
+            },
+            {
+                "subject": "us-code-33-763a-2",
+                "predicate": "status_keyword",
+                "object": "repealed",
+            },
+        ],
+        graph_id="sparse-us-code-source-citation-alignment:flogic",
+    )
+
+    objects_by_subject_predicate = {
+        (
+            rel.properties["flogic_subject"],
+            rel.properties["flogic_predicate"],
+        ): rel.properties["flogic_object"]
+        for rel in graph_data.relationships
+    }
+    view_by_predicate = {
+        rel.properties["flogic_predicate"]: rel.properties["frame_logic_projection_view"]
+        for rel in graph_data.relationships
+    }
+
+    assert (
+        objects_by_subject_predicate[
+            ("us-code-43-617f", "citation_source_id_alignment")
+        ]
+        == "canonical_match"
+    )
+    assert (
+        objects_by_subject_predicate[
+            ("us-code-33-763a-2", "citation_source_id_section_match")
+        ]
+        == "true"
+    )
+    assert view_by_predicate["citation_source_id_section_match"] == "section_structure"
+    assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
+    assert graph_data.metadata[
+        "frame_logic_projection_legal_view_coverage_complete"
+    ] is True
+    assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
+
+
 def test_modal_frame_logic_bridge_labels_legal_projection_view_nodes() -> None:
     from ipfs_datasets_py.logic.modal.kg_bridge import flogic_triples_to_graph_data
 
@@ -1034,6 +1144,8 @@ def test_modal_frame_logic_bridge_exposes_graph_projection_target_metrics() -> N
         "cross_entropy_loss",
         "cosine_similarity",
         "source_copy_reward_hack_penalty",
+        "source_decompiled_text_embedding_cosine_loss",
+        "source_decompiled_text_token_loss",
     }
     report_dict = report.to_dict()
     graph_metadata = report_dict["graph_projection"]["metadata"]
@@ -1496,6 +1608,35 @@ def test_deontic_bridge_recovers_us_code_section_status_lifecycle_notes() -> Non
             report.round_trip.extra_losses["deontic_quality_requires_validation_loss"]
             == 0.0
         )
+
+
+def test_deontic_bridge_grounds_lifecycle_actor_from_us_code_citation() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("deontic_norms")
+    report = adapter.evaluate(
+        "33 U.S.C. 763a-2 Repealed. Pub. L. 117-263, div. K, title CXVIII.",
+        document_id="deontic-bridge-lifecycle-citation-actor",
+        citation="33 U.S.C. 763a-2",
+    )
+
+    norm = report.ir_document.views["deontic_ir"].payload["norms"][0]
+    phase8_record = report.ir_document.views["deontic_phase8_quality"].payload[
+        "records"
+    ][0]
+    provenance = phase8_record["coverage_summary"]["ir_slot_provenance"]
+
+    assert norm["norm_type"] == "instrument_lifecycle"
+    assert norm["actor"] == "33 U.S.C. 763a-2"
+    assert "actor" in provenance["grounded_slots"]
+    assert "ungrounded_ir_slot_provenance:actor" not in phase8_record[
+        "coverage_blockers"
+    ]
+    assert phase8_record["requires_validation"] is False
+    assert (
+        report.round_trip.extra_losses["deontic_quality_requires_validation_loss"]
+        == 0.0
+    )
 
 
 def test_deontic_bridge_recovers_core_slots_from_nested_prompt_context() -> None:
@@ -3092,6 +3233,42 @@ def test_tdfol_bridge_recovers_nested_alternate_proof_obligation_rows() -> None:
     assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
 
 
+def test_tdfol_bridge_synthesizes_raw_text_proof_obligation_rows() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
+
+    class _RawProofObligationResult:
+        success = True
+        metadata = {
+            "proof_obligations": [
+                {
+                    "text": (
+                        "Each State shall prepare and submit to the Administrator "
+                        "a report on water quality."
+                    ),
+                    "source_id": "tdfol:guidance:raw-text",
+                }
+            ],
+            "legal_norm_irs": [],
+            "parser_elements": [],
+        }
+
+    class _RawProofObligationConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _RawProofObligationResult()
+
+    adapter = FolTdfolBridgeAdapter(converter=_RawProofObligationConverter())
+
+    report = adapter.evaluate("stub")
+    record = report.ir_document.views["tdfol_formula"].payload["records"][0]
+
+    assert record["source_id"] == "tdfol:guidance:raw-text"
+    assert record["formula"].startswith("O(")
+    assert "each_state_prepare_submit_administrator_report" in record["predicates"]
+    assert record["parse_ok"] is True
+    assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
+
+
 def test_tdfol_bridge_recovers_deontic_operator_from_norm_text() -> None:
     from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
 
@@ -3895,6 +4072,68 @@ def test_cec_dcec_bridge_extracts_generic_shall_clause_before_revision_notes() -
     assert event_record["event"].startswith("provide_executive_agencies")
     assert formula_record["proof_input"].startswith("O(")
     assert not formula_record["proof_input"].startswith("LifecycleState(")
+    assert report.proof_gate.compiles is True
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
+def test_cec_dcec_bridge_extracts_bare_usc_shall_clause_without_converter() -> None:
+    from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
+
+    class _NoisyConverter:
+        @staticmethod
+        def convert(_text: str):
+            raise AssertionError("bare U.S.C. citation shall clause should be deterministic")
+
+    adapter = CecDcecBridgeAdapter(converter=_NoisyConverter())
+    report = adapter.evaluate(
+        (
+            "25 U.S.C. 5344. The Secretary shall submit a report to Congress "
+            "after consultation with Indian tribes."
+        ),
+        document_id="cec-bridge-bare-usc-shall-clause",
+        citation="25 U.S.C. 5344",
+    )
+
+    event_record = report.ir_document.views["cec_events"].payload["events"][0]
+    formula_record = report.ir_document.views["dcec_formula"].payload["records"][0]
+
+    assert event_record["actor"] == "secretary"
+    assert event_record["event"].startswith("submit_a_report_to_congress")
+    assert formula_record["proof_input"].startswith("O(")
+    assert report.proof_gate.compiles is True
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
+def test_cec_dcec_bridge_extracts_discretionary_transfer_power_without_heading_pollution() -> None:
+    from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
+
+    class _NoisyConverter:
+        @staticmethod
+        def convert(_text: str):
+            raise AssertionError("discretionary transfer power should be deterministic")
+
+    adapter = CecDcecBridgeAdapter(converter=_NoisyConverter())
+    report = adapter.evaluate(
+        (
+            "§617f. Canals and appurtenant structures; transfer of title; "
+            "power development The Secretary of the Interior may, in his "
+            "discretion, when repayments to the United States of all money "
+            "advanced, with interest, reimbursable hereunder, shall have been "
+            "made, transfer title to the canals and appurtenant structures."
+        ),
+        document_id="cec-bridge-discretionary-transfer-power",
+        citation="43 U.S.C. 617f",
+    )
+
+    event_record = report.ir_document.views["cec_events"].payload["events"][0]
+    formula_record = report.ir_document.views["dcec_formula"].payload["records"][0]
+
+    assert event_record["actor"] == "secretary_of_the_interior"
+    assert event_record["event"] == "transfer_title_to_the_canals_and_appurtenant_structures"
+    assert "power_development" not in formula_record["proof_input"]
+    assert formula_record["proof_input"].startswith("P(")
     assert report.proof_gate.compiles is True
     assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
@@ -5424,6 +5663,79 @@ def test_external_prover_router_bridge_proof_gate_supports_legacy_prove_signatur
     assert report.proof_gate.details[0]["proved"] is False
 
 
+def test_external_prover_router_bridge_recovers_nested_packet_text_formula(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge.external_prover_router import (
+        ExternalProverRouterBridgeAdapter,
+    )
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
+
+    class _CompiledResult:
+        def __init__(self) -> None:
+            self.is_proved = False
+            self.prover_used = "native"
+            self.proof_time = 0.01
+            self.reason = "Used native (no proof)"
+            self.strategy_used = "sequential"
+            self.all_results = {"native": object()}
+
+    class _CompiledRouter:
+        @staticmethod
+        def get_available_provers() -> list[str]:
+            return ["native"]
+
+        @staticmethod
+        def route(_formula, **_kwargs):
+            return _CompiledResult()
+
+    class _NestedPacketFormulaAdapter(FolTdfolBridgeAdapter):
+        def encode(self, *args, **kwargs):
+            document, context = super().encode(*args, **kwargs)
+            return (
+                document,
+                {
+                    **dict(context),
+                    "formula_records": [
+                        {
+                            "source_id": "packet:nested-text-formula",
+                            "payload": {
+                                "compiler_output": {
+                                    "program": {
+                                        "text": "O(register_notice(secretary))"
+                                    }
+                                }
+                            },
+                        }
+                    ],
+                },
+            )
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.bridge.external_prover_router._build_router",
+        lambda **_kwargs: _CompiledRouter(),
+    )
+
+    adapter = ExternalProverRouterBridgeAdapter(
+        tdfol_adapter=_NestedPacketFormulaAdapter(),
+        enable_native=True,
+        enable_external_binaries=False,
+    )
+    report = adapter.evaluate(
+        "The Secretary shall register notice.",
+        document_id="external-prover-bridge-nested-packet-text-formula",
+        citation="External Prover Bridge Nested Packet Text Formula",
+    )
+
+    records = report.ir_document.views["prover_formulas"].payload["records"]
+    assert records[0]["formula_parse_ok"] is True
+    assert records[0]["formula"] == "O(register_notice(secretary))"
+    assert report.proof_gate.attempted_count == 1
+    assert report.proof_gate.valid_count == 1
+    assert report.proof_gate.details[0]["compiled"] is True
+    assert report.round_trip.extra_losses["external_prover_failure_ratio"] == 0.0
+
+
 def test_external_prover_router_bridge_soft_passes_when_no_formulas_available() -> None:
     from ipfs_datasets_py.logic.bridge.external_prover_router import (
         ExternalProverRouterBridgeAdapter,
@@ -6162,6 +6474,47 @@ def test_fol_tdfol_coerce_formula_extracts_fenced_and_multiline_exports() -> Non
         assert parsed.to_string() == expected
 
 
+def test_fol_tdfol_coerce_formula_extracts_aliased_json_exports() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
+
+    cases = {
+        '{"target_logic": "TDFOL", "proof_obligation": "O(make_report(person))"}': (
+            "O(make_report(person))"
+        ),
+        '{"target_component": "TDFOL.prover", "goal": "P(accept_grant(secretary))"}': (
+            "P(accept_grant(secretary))"
+        ),
+        '{"record": {"obligation_formula": "F(disclose_records(carrier))"}}': (
+            "F(disclose_records(carrier))"
+        ),
+    }
+
+    for formula, expected in cases.items():
+        parsed = coerce_tdfol_formula(formula)
+
+        assert parsed is not None
+        assert parsed.to_string() == expected
+
+
+def test_fol_tdfol_coerce_formula_extracts_colon_key_value_exports() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
+
+    cases = {
+        "target_logic: TDFOL; proof_obligation: O(ensure_access(carrier))": (
+            "O(ensure_access(carrier))"
+        ),
+        "proof_obligation(target: TDFOL.prover, goal: P(accept_grant(secretary)))": (
+            "P(accept_grant(secretary))"
+        ),
+    }
+
+    for formula, expected in cases.items():
+        parsed = coerce_tdfol_formula(formula)
+
+        assert parsed is not None
+        assert parsed.to_string() == expected
+
+
 def test_fol_tdfol_coerce_formula_parses_colon_quantifier_exports() -> None:
     from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
 
@@ -6342,6 +6695,44 @@ def test_zkp_public_record_recovers_inputs_from_serialized_proof() -> None:
     assert record["attestation_ref"] == record["public_inputs"]["attestation_ref"]
     assert record["attestation_view"]["attestation_ref"] == record["attestation_ref"]
     assert record["theorem_hash"] == record["public_inputs"]["theorem_hash"]
+    assert zkp_attestation_legal_ir_view_loss([record]) == 0.0
+
+
+def test_zkp_public_record_recovers_duplicated_fields_from_proof_only() -> None:
+    from ipfs_datasets_py.logic.bridge.zkp_attestation import _public_attestation_record
+    from ipfs_datasets_py.logic.zkp import (
+        ZKPProver,
+        zkp_attestation_legal_ir_view_loss,
+    )
+
+    prover = ZKPProver(backend="simulated", enable_caching=False)
+    proof = prover.generate_proof(
+        "O(submit_report(state))",
+        ["O(submit_report(state))", "uses_predicate(submit_report)"],
+        metadata={
+            "circuit_ref": "legal_ir_zkp_attestation@v1",
+            "circuit_version": 1,
+            "compiler_guidance_ref": "d" * 64,
+            "compiler_guidance_version": 1,
+        },
+    )
+
+    record = _public_attestation_record(
+        {
+            "axiom_count": 2,
+            "proof": proof.to_dict(),
+            "source_id": "tdfol:norm:report",
+            "theorem": proof.public_inputs["theorem"],
+            "verified": True,
+        }
+    )
+
+    assert record["proof_hash"] == proof.metadata["attestation_view"]["proof_digest"]
+    assert record["compiler_guidance_ref"] == "d" * 64
+    assert record["public_inputs"]["attestation_ref"] == (
+        proof.public_inputs["attestation_ref"]
+    )
+    assert record["public_inputs"]["compiler_guidance_ref"] == "d" * 64
     assert zkp_attestation_legal_ir_view_loss([record]) == 0.0
 
 
@@ -8511,7 +8902,17 @@ def test_multiview_bridge_accepts_citation_prefixed_statutory_text() -> None:
 
     assert report.accepted_count == 3
     assert report.acceptance_rate == 1.0
-    assert report.canonical_loss_vector()["legal_ir_multiview_acceptance_loss"] == 0.0
+    canonical_losses = report.canonical_loss_vector()
+    assert canonical_losses["legal_ir_multiview_acceptance_loss"] == 0.0
+    assert "source_decompiled_text_embedding_cosine_loss" in canonical_losses
+    assert "source_decompiled_text_token_loss" in canonical_losses
+    target_losses = report.training_target().losses
+    assert target_losses["source_decompiled_text_embedding_cosine_loss"] == (
+        canonical_losses["source_decompiled_text_embedding_cosine_loss"]
+    )
+    assert target_losses["source_decompiled_text_token_loss"] == (
+        canonical_losses["source_decompiled_text_token_loss"]
+    )
     fol_records = report.document.views["fol_tdfol.tdfol_formula"].payload["records"]
     assert fol_records
     assert fol_records[0]["parse_ok"] is True

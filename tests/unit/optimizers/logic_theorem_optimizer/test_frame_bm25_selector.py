@@ -657,6 +657,25 @@ def test_frame_ontology_terms_from_feature_keys_extract_predicate_argument_role_
     assert "conditional_normative_clause" in terms
 
 
+def test_frame_ontology_terms_from_feature_keys_drop_predicate_argument_direction_markers() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "predicate-argument:source-object-family:out:conditional_normative",
+            "predicate-argument:source-object-role:out:clause",
+            "predicate-argument:source-object-family:out:deontic",
+        ]
+    )
+
+    assert "source_object_family_conditional_normative" in terms
+    assert "conditional_normative" in terms
+    assert "source_object_role_clause" in terms
+    assert "clause" in terms
+    assert "source_object_family_deontic" in terms
+    assert "deontic" in terms
+    assert "out" not in terms
+    assert "out_deontic" not in terms
+
+
 def test_frame_ontology_terms_from_feature_keys_support_legacy_frame_cues() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [

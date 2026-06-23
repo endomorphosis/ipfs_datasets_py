@@ -48,6 +48,22 @@ _DEONTIC_EXPORT_OPERATOR_PATTERN = re.compile(
     + r")\s*\(",
     flags=re.IGNORECASE,
 )
+_TDFOL_FORMULA_EXPORT_KEYS = (
+    "formula",
+    "proof_input",
+    "proof_formula",
+    "tdfol_formula",
+    "tdfol",
+    "proof_obligation",
+    "obligation",
+    "obligation_formula",
+    "target_formula",
+    "proof_goal",
+    "goal",
+    "claim",
+    "value",
+    "text",
+)
 
 
 @dataclass
@@ -344,9 +360,16 @@ def _formula_records_from_proof_obligation_rows(
         formula_text = str(_formula_text_from_proof_obligation_row(row)).strip()
         if not formula_text:
             continue
-        formula_object = coerce_tdfol_formula(
+        formula_source = (
             row.get("formula_object") or row.get("proof_formula_object") or formula_text
         )
+        formula_object = coerce_tdfol_formula(formula_source)
+        if formula_object is None:
+            formula_object = _tdfol_formula_from_raw_proof_obligation_row(
+                row,
+                fallback_text=formula_text,
+                index=index,
+            )
         parse_ok = formula_object is not None
         proof_input = (
             formula_object.to_string()
@@ -373,17 +396,61 @@ def _formula_records_from_proof_obligation_rows(
     return records
 
 
-def _formula_text_from_proof_obligation_row(row: Mapping[str, Any]) -> str:
+def _tdfol_formula_from_raw_proof_obligation_row(
+    row: Mapping[str, Any],
+    *,
+    fallback_text: str,
+    index: int,
+) -> Optional[Any]:
+    """Synthesize a parseable TDFOL formula for legal-text obligation rows."""
+
+    text = _raw_legal_text_from_proof_obligation_row(row) or fallback_text
+    if not _looks_like_legal_text_obligation(text):
+        return None
+    norm = _synthesized_norm_from_text(text)
+    if norm is None:
+        return None
+    norm["source_id"] = str(
+        row.get("source_id")
+        or row.get("proof_obligation_id")
+        or f"tdfol:guidance:raw:{index}"
+    )
+    return _tdfol_formula_from_norm(norm)
+
+
+def _raw_legal_text_from_proof_obligation_row(row: Mapping[str, Any]) -> str:
     for key in (
-        "formula",
-        "proof_input",
-        "proof_formula",
-        "tdfol_formula",
-        "proof_obligation",
+        "text",
+        "support_text",
+        "source_text",
+        "obligation_text",
+        "proof_obligation_text",
         "obligation",
         "value",
-        "text",
     ):
+        value = row.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return ""
+
+
+def _looks_like_legal_text_obligation(text: str) -> bool:
+    normalized = " ".join(str(text or "").split()).lower()
+    if not normalized:
+        return False
+    if _looks_like_tdfol_formula(normalized):
+        return False
+    return bool(
+        re.search(
+            r"\b(shall|must|may|authorized|required|prohibited|forbidden|"
+            r"repealed|omitted|established|means|defined)\b",
+            normalized,
+        )
+    )
+
+
+def _formula_text_from_proof_obligation_row(row: Mapping[str, Any]) -> str:
+    for key in _TDFOL_FORMULA_EXPORT_KEYS:
         value = row.get(key)
         if isinstance(value, str) and value.strip():
             return value
@@ -434,14 +501,7 @@ def _proof_obligation_rows_from_value(value: Any) -> list[dict[str, Any]]:
                 return [dict(item) for item in records if isinstance(item, Mapping)]
         if any(
             key in value
-            for key in (
-                "formula",
-                "proof_input",
-                "proof_formula",
-                "tdfol_formula",
-                "proof_obligation",
-                "obligation",
-            )
+            for key in _TDFOL_FORMULA_EXPORT_KEYS
         ):
             return [dict(value)]
         return []
@@ -929,12 +989,7 @@ def _coerce_tdfol_formula(formula: Any, *, seen: set[int]) -> Optional[Any]:
         formula_keys = (
             "formula_object",
             "proof_formula_object",
-            "formula",
-            "proof_input",
-            "proof_formula",
-            "tdfol_formula",
-            "value",
-            "text",
+            *_TDFOL_FORMULA_EXPORT_KEYS,
         )
         container_keys = (
             "obligations",
@@ -1092,14 +1147,7 @@ def _unwrap_tdfol_assignment_export(text: str) -> str:
     normalized = str(text or "").strip()
     if not normalized:
         return normalized
-    for key in (
-        "formula",
-        "proof_input",
-        "proof_formula",
-        "tdfol_formula",
-        "proof_obligation",
-        "obligation",
-    ):
+    for key in _TDFOL_FORMULA_EXPORT_KEYS:
         value = _extract_tdfol_key_value(normalized, key)
         if value:
             candidate = value.strip("`\"'").strip()
@@ -1234,8 +1282,11 @@ def _unwrap_tdfol_json_export(text: str) -> str:
         if extracted:
             return extracted
 
+    export_key_pattern = "|".join(
+        re.escape(key) for key in _TDFOL_FORMULA_EXPORT_KEYS
+    )
     match = re.search(
-        r"""(?is)(?:^|[,{\s])["']?(?:formula|proof_input|proof_formula|tdfol_formula)["']?\s*:\s*(["'])(.*?)\1""",
+        rf"""(?is)(?:^|[,{{\s])["']?(?:{export_key_pattern})["']?\s*:\s*(["'])(.*?)\1""",
         normalized,
     )
     if match:
@@ -1245,14 +1296,7 @@ def _unwrap_tdfol_json_export(text: str) -> str:
 
 def _tdfol_formula_text_from_json_value(value: Any) -> str:
     if isinstance(value, Mapping):
-        for key in (
-            "formula",
-            "proof_input",
-            "proof_formula",
-            "tdfol_formula",
-            "value",
-            "text",
-        ):
+        for key in _TDFOL_FORMULA_EXPORT_KEYS:
             candidate = value.get(key)
             if isinstance(candidate, str) and candidate.strip():
                 return candidate.strip()
@@ -1370,14 +1414,15 @@ def _unwrap_tdfol_key_value_export(text: str) -> str:
     if not match or not normalized.endswith(")"):
         return normalized
     inner = normalized[match.end() : -1].strip()
-    value = _extract_tdfol_key_value(inner, "formula")
-    if value is None:
-        value = _extract_tdfol_key_value(inner, "proof_input")
-    return value.strip("`\"'").strip() if value else normalized
+    for key in _TDFOL_FORMULA_EXPORT_KEYS:
+        value = _extract_tdfol_key_value(inner, key)
+        if value:
+            return value.strip("`\"'").strip()
+    return normalized
 
 
 def _extract_tdfol_key_value(text: str, key: str) -> Optional[str]:
-    pattern = re.compile(rf"(?i)(?:^|[,;])\s*{re.escape(key)}\s*=")
+    pattern = re.compile(rf"(?i)(?:^|[,;])\s*{re.escape(key)}\s*[:=]")
     match = pattern.search(text)
     if match is None:
         return None

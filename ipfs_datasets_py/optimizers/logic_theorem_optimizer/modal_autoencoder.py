@@ -110,6 +110,7 @@ class AutoencoderEvaluation:
     frame_ranking_loss: float
     symbolic_validity_penalty: float
     decoded_embeddings: Dict[str, List[float]]
+    sample_embedding_metrics: List[Dict[str, object]] = field(default_factory=list)
     legal_ir_target_count: int = 0
     legal_ir_losses: Dict[str, float] = field(default_factory=dict)
     legal_ir_predicted_view_distribution: Dict[str, float] = field(default_factory=dict)
@@ -135,6 +136,7 @@ class AutoencoderEvaluation:
             "legal_ir_target_hashes": dict(sorted(self.legal_ir_target_hashes.items())),
             "legal_ir_view_distribution": dict(sorted(self.legal_ir_view_distribution.items())),
             "reconstruction_loss": self.reconstruction_loss,
+            "sample_embedding_metrics": list(self.sample_embedding_metrics),
             "sample_count": self.sample_count,
             "symbolic_validity_penalty": self.symbolic_validity_penalty,
         }
@@ -173,6 +175,7 @@ class AutoencoderIntrospection:
     predicted_probability: float
     family_margin: float
     cosine_similarity: float
+    cosine_loss: float
     reconstruction_loss: float
     residual_vector: List[float]
     base_decoded_embedding: List[float]
@@ -181,6 +184,10 @@ class AutoencoderIntrospection:
     sample_memory_used: bool
     top_family_contributions: List[AutoencoderFeatureContribution] = field(default_factory=list)
     top_embedding_contributions: List[AutoencoderFeatureContribution] = field(default_factory=list)
+    source_decompiled_text_embedding_cosine_loss: float = 0.0
+    source_decompiled_text_token_loss: float = 0.0
+    pipeline_stage_diagnostics: Dict[str, Any] = field(default_factory=dict)
+    pipeline_stage_focus: List[str] = field(default_factory=list)
     synthesis_focus: List[str] = field(default_factory=list)
     legal_ir_view_cross_entropy_loss: float = 0.0
     legal_ir_view_entropy_loss: float = 0.0
@@ -195,6 +202,7 @@ class AutoencoderIntrospection:
     def to_dict(self) -> Dict[str, Any]:
         return {
             "base_decoded_embedding": list(self.base_decoded_embedding),
+            "cosine_loss": self.cosine_loss,
             "cosine_similarity": self.cosine_similarity,
             "decoded_embedding": list(self.decoded_embedding),
             "family_margin": self.family_margin,
@@ -218,10 +226,18 @@ class AutoencoderIntrospection:
             "legal_ir_view_distribution": dict(sorted(self.legal_ir_view_distribution.items())),
             "predicted_family": self.predicted_family,
             "predicted_probability": self.predicted_probability,
+            "pipeline_stage_diagnostics": dict(
+                sorted(self.pipeline_stage_diagnostics.items())
+            ),
+            "pipeline_stage_focus": list(self.pipeline_stage_focus),
             "reconstruction_loss": self.reconstruction_loss,
             "residual_vector": list(self.residual_vector),
             "sample_id": self.sample_id,
             "sample_memory_used": self.sample_memory_used,
+            "source_decompiled_text_embedding_cosine_loss": (
+                self.source_decompiled_text_embedding_cosine_loss
+            ),
+            "source_decompiled_text_token_loss": self.source_decompiled_text_token_loss,
             "synthesis_focus": list(self.synthesis_focus),
             "target_family": self.target_family,
             "target_probability": self.target_probability,
@@ -1922,6 +1938,11 @@ class ModalAutoencoderBaseline:
             frame_ranking_loss=_mean(frame_losses),
             symbolic_validity_penalty=_mean(symbolic_penalties),
             decoded_embeddings=decoded_embeddings,
+            sample_embedding_metrics=_sample_embedding_metric_rows(
+                sample_list,
+                cosine_scores=cosine_scores,
+                reconstruction_losses=reconstruction_losses,
+            ),
             legal_ir_target_count=legal_ir_payload["target_count"],
             legal_ir_losses=legal_ir_payload["losses"],
             legal_ir_target_hashes=legal_ir_payload["target_hashes"],
@@ -1996,7 +2017,7 @@ class AdaptiveModalAutoencoder:
         semantic_slot_legal_ir_view_logit_scale: float = 0.0,
         legal_ir_view_embedding_weight_scale: float = 0.5,
         semantic_slot_legal_ir_view_embedding_weight_scale: float = 0.5,
-        cosine_reconstruction_weight: float = 0.25,
+        cosine_reconstruction_weight: float = 0.5,
         max_token_features: int = 48,
         max_token_bigram_features: int = 24,
         max_token_trigram_features: int = 12,
@@ -2512,6 +2533,11 @@ class AdaptiveModalAutoencoder:
             frame_ranking_loss=_mean(frame_losses),
             symbolic_validity_penalty=_mean(symbolic_penalties),
             decoded_embeddings=decoded_embeddings,
+            sample_embedding_metrics=_sample_embedding_metric_rows(
+                sample_list,
+                cosine_scores=cosine_scores,
+                reconstruction_losses=reconstruction_losses,
+            ),
             legal_ir_target_count=legal_ir_payload["target_count"],
             legal_ir_losses=legal_ir_losses,
             legal_ir_predicted_view_distribution=_mean_distributions(
@@ -2610,6 +2636,8 @@ class AdaptiveModalAutoencoder:
         best_other = max(other_probabilities) if other_probabilities else 0.0
         decoded = self._decoded_for(sample, use_sample_memory=use_sample_memory)
         base_decoded = self._base_decoded_for(sample)
+        embedding_cosine = cosine_similarity(sample.embedding_vector, decoded)
+        embedding_reconstruction = mse_loss(sample.embedding_vector, decoded)
         residual = [
             float(target_value) - float(decoded_value)
             for target_value, decoded_value in zip(sample.embedding_vector, decoded)
@@ -2631,10 +2659,16 @@ class AdaptiveModalAutoencoder:
             sample.sample_id,
             self._legal_ir_view_target_cache.get(_sample_content_cache_id(sample), {}),
         )
-        legal_ir_losses = self._legal_ir_loss_target_cache.get(
-            sample.sample_id,
-            self._legal_ir_loss_target_cache.get(_sample_content_cache_id(sample), {}),
+        legal_ir_losses = dict(
+            self._legal_ir_loss_target_cache.get(
+                sample.sample_id,
+                self._legal_ir_loss_target_cache.get(_sample_content_cache_id(sample), {}),
+            )
         )
+        source_decompiled_losses = _source_decompiled_text_losses_from_targets(
+            legal_ir_losses
+        )
+        legal_ir_losses.update(source_decompiled_losses)
         legal_ir_predicted_view_distribution: Dict[str, float] = {}
         legal_ir_view_cross_entropy_loss = 0.0
         legal_ir_view_entropy_loss = 0.0
@@ -2675,6 +2709,25 @@ class AdaptiveModalAutoencoder:
             legal_ir_component_gaps,
             positive=False,
         )
+        pipeline_stage_diagnostics = _pipeline_stage_diagnostics_for_introspection(
+            sample,
+            target_family=target_family,
+            predicted_family=predicted_family,
+            target_probability=target_probability,
+            cosine_similarity_value=embedding_cosine,
+            reconstruction_loss=embedding_reconstruction,
+            source_decompiled_text_embedding_cosine_loss=source_decompiled_losses[
+                "source_decompiled_text_embedding_cosine_loss"
+            ],
+            source_decompiled_text_token_loss=source_decompiled_losses[
+                "source_decompiled_text_token_loss"
+            ],
+            legal_ir_view_cross_entropy_loss=legal_ir_view_cross_entropy_loss,
+            legal_ir_component_gaps=legal_ir_component_gaps,
+        )
+        pipeline_stage_focus = _pipeline_stage_focus_from_diagnostics(
+            pipeline_stage_diagnostics
+        )
         return AutoencoderIntrospection(
             sample_id=sample.sample_id,
             target_family=target_family,
@@ -2682,8 +2735,19 @@ class AdaptiveModalAutoencoder:
             target_probability=round(target_probability, 12),
             predicted_probability=round(predicted_probability, 12),
             family_margin=round(target_probability - best_other, 12),
-            cosine_similarity=round(cosine_similarity(sample.embedding_vector, decoded), 12),
-            reconstruction_loss=round(mse_loss(sample.embedding_vector, decoded), 12),
+            cosine_similarity=round(embedding_cosine, 12),
+            cosine_loss=round(max(0.0, 1.0 - embedding_cosine), 12),
+            reconstruction_loss=round(embedding_reconstruction, 12),
+            source_decompiled_text_embedding_cosine_loss=round(
+                source_decompiled_losses[
+                    "source_decompiled_text_embedding_cosine_loss"
+                ],
+                12,
+            ),
+            source_decompiled_text_token_loss=round(
+                source_decompiled_losses["source_decompiled_text_token_loss"],
+                12,
+            ),
             residual_vector=[round(value, 12) for value in residual],
             base_decoded_embedding=[round(float(value), 12) for value in base_decoded],
             decoded_embedding=[round(float(value), 12) for value in decoded],
@@ -2691,6 +2755,8 @@ class AdaptiveModalAutoencoder:
             sample_memory_used=use_sample_memory,
             top_family_contributions=family_contributions[:max(top_k, 0)],
             top_embedding_contributions=embedding_contributions[:max(top_k, 0)],
+            pipeline_stage_diagnostics=pipeline_stage_diagnostics,
+            pipeline_stage_focus=pipeline_stage_focus,
             legal_ir_view_cross_entropy_loss=round(legal_ir_view_cross_entropy_loss, 12),
             legal_ir_view_entropy_loss=round(legal_ir_view_entropy_loss, 12),
             legal_ir_view_cross_entropy_excess_loss=round(
@@ -2725,7 +2791,14 @@ class AdaptiveModalAutoencoder:
                 target_family=target_family,
                 predicted_family=predicted_family,
                 target_probability=target_probability,
-                reconstruction_loss=mse_loss(sample.embedding_vector, decoded),
+                cosine_similarity=embedding_cosine,
+                reconstruction_loss=embedding_reconstruction,
+                source_decompiled_text_embedding_cosine_loss=source_decompiled_losses[
+                    "source_decompiled_text_embedding_cosine_loss"
+                ],
+                source_decompiled_text_token_loss=source_decompiled_losses[
+                    "source_decompiled_text_token_loss"
+                ],
                 legal_ir_view_cross_entropy_loss=legal_ir_view_cross_entropy_loss,
                 legal_ir_view_distribution=legal_ir_view_distribution,
                 legal_ir_predicted_view_distribution=legal_ir_predicted_view_distribution,
@@ -2831,6 +2904,12 @@ class AdaptiveModalAutoencoder:
                 ),
                 "cross_entropy_loss": introspection.legal_ir_view_cross_entropy_loss,
                 "entropy_loss": introspection.legal_ir_view_entropy_loss,
+                "source_decompiled_text_embedding_cosine_loss": (
+                    introspection.source_decompiled_text_embedding_cosine_loss
+                ),
+                "source_decompiled_text_token_loss": (
+                    introspection.source_decompiled_text_token_loss
+                ),
                 "view_family_losses": {
                     key: round(float(value), 12)
                     for key, value in sorted(introspection.legal_ir_losses.items())
@@ -3121,7 +3200,7 @@ class AdaptiveModalAutoencoder:
         max_legal_ir_loss_regression: float = 0.02,
         objective_cross_entropy_weight: float = 1.0,
         objective_reconstruction_weight: float = 1.0,
-        objective_cosine_gap_weight: float = 1.0,
+        objective_cosine_gap_weight: float = 1.5,
         objective_legal_ir_weight: float = 1.0,
         hard_example_fraction: float = 1.0,
         max_seconds: Optional[float] = None,
@@ -7879,12 +7958,14 @@ class AdaptiveModalAutoencoder:
             if "view_coverage" in normalized_name or "missing" in normalized_name:
                 return "repair_multiview_legal_ir_view_coverage"
             if (
-                "cosine" in normalized_name
-                or "reconstruction" in normalized_name
+                "source_decompiled_text" in normalized_name
+                or "structural_text" in normalized_name
                 or "source_copy" in normalized_name
                 or "copy_hack" in normalized_name
-                or "text" in normalized_name
+                or "text_reconstruction" in normalized_name
             ):
+                return "refine_semantic_decompiler_reconstruction"
+            if "cosine" in normalized_name or "reconstruction" in normalized_name:
                 return "refine_typed_ir_or_decompiler_slots"
             if "cross_entropy" in normalized_name or "total" in normalized_name:
                 return "repair_multiview_legal_ir_loss"
@@ -20579,7 +20660,10 @@ class AdaptiveModalAutoencoder:
         target_family: str,
         predicted_family: str,
         target_probability: float,
+        cosine_similarity: float = 1.0,
         reconstruction_loss: float,
+        source_decompiled_text_embedding_cosine_loss: float = 0.0,
+        source_decompiled_text_token_loss: float = 0.0,
         legal_ir_view_cross_entropy_loss: float = 0.0,
         legal_ir_view_distribution: Optional[Mapping[str, float]] = None,
         legal_ir_predicted_view_distribution: Optional[Mapping[str, float]] = None,
@@ -20589,8 +20673,15 @@ class AdaptiveModalAutoencoder:
             focus.append("add_deterministic_parser_rule")
         if predicted_family != target_family or target_probability < 0.5:
             focus.append("refine_modal_family_cue_rules")
+        if max(0.0, 1.0 - float(cosine_similarity)) > 0.20:
+            focus.append("improve_encoder_decoder_reconstruction")
         if reconstruction_loss > 0.05:
             focus.append("refine_typed_ir_or_decompiler_slots")
+        if (
+            float(source_decompiled_text_embedding_cosine_loss) > 0.25
+            or float(source_decompiled_text_token_loss) > 0.25
+        ):
+            focus.append("refine_semantic_decompiler_reconstruction")
         if legal_ir_view_cross_entropy_loss > 0.05:
             distribution = legal_ir_view_distribution or {}
             predicted_distribution = legal_ir_predicted_view_distribution or {}
@@ -20658,6 +20749,135 @@ def _legal_ir_program_synthesis_focus(
     if has_component("zkp."):
         focus.append("repair_zkp_attestation_bridge")
     return focus
+
+
+def _pipeline_stage_diagnostics_for_introspection(
+    sample: LegalSample,
+    *,
+    target_family: str,
+    predicted_family: str,
+    target_probability: float,
+    cosine_similarity_value: float,
+    reconstruction_loss: float,
+    source_decompiled_text_embedding_cosine_loss: float = 0.0,
+    source_decompiled_text_token_loss: float = 0.0,
+    legal_ir_view_cross_entropy_loss: float,
+    legal_ir_component_gaps: Mapping[str, float],
+) -> Dict[str, Any]:
+    """Summarize where the legal text -> IR -> text pipeline is losing signal."""
+
+    formula_count = len(getattr(sample.modal_ir, "formulas", ()) or ())
+    component_gap_values = [
+        max(0.0, _float_or_zero(value))
+        for value in dict(legal_ir_component_gaps or {}).values()
+    ]
+    return {
+        "autoencoder_embedding_cosine_gap": round(
+            max(0.0, 1.0 - float(cosine_similarity_value)),
+            12,
+        ),
+        "ir_decoder_reconstruction_loss": round(
+            max(0.0, float(reconstruction_loss)),
+            12,
+        ),
+        "legal_ir_component_gap_max": round(
+            max(component_gap_values) if component_gap_values else 0.0,
+            12,
+        ),
+        "legal_ir_view_cross_entropy_loss": round(
+            max(0.0, float(legal_ir_view_cross_entropy_loss)),
+            12,
+        ),
+        "modal_family_cue_mismatch": str(predicted_family) != str(target_family),
+        "modal_family_target_probability_gap": round(
+            max(0.0, 0.5 - float(target_probability)),
+            12,
+        ),
+        "spacy_modal_formula_count": int(formula_count),
+        "spacy_parser_missing_formula": bool(formula_count <= 0),
+        "source_decompiled_text_embedding_cosine_loss": round(
+            max(0.0, float(source_decompiled_text_embedding_cosine_loss)),
+            12,
+        ),
+        "source_decompiled_text_token_loss": round(
+            max(0.0, float(source_decompiled_text_token_loss)),
+            12,
+        ),
+    }
+
+
+def _pipeline_stage_focus_from_diagnostics(
+    diagnostics: Mapping[str, Any],
+) -> List[str]:
+    """Return deterministic pipeline stages that should receive Codex attention."""
+
+    focus: List[str] = []
+    if bool(diagnostics.get("spacy_parser_missing_formula")):
+        focus.append("spacy_parser")
+    if bool(diagnostics.get("modal_family_cue_mismatch")) or _float_or_zero(
+        diagnostics.get("modal_family_target_probability_gap")
+    ) > 0.0:
+        focus.append("modal_family_registry")
+    if _float_or_zero(diagnostics.get("autoencoder_embedding_cosine_gap")) > 0.20:
+        focus.append("autoencoder_embedding_head")
+    if _float_or_zero(diagnostics.get("ir_decoder_reconstruction_loss")) > 0.05:
+        focus.append("typed_ir_decoder")
+    if (
+        _float_or_zero(
+            diagnostics.get("source_decompiled_text_embedding_cosine_loss")
+        )
+        > 0.25
+        or _float_or_zero(diagnostics.get("source_decompiled_text_token_loss")) > 0.25
+    ):
+        focus.append("semantic_decompiler")
+    if (
+        _float_or_zero(diagnostics.get("legal_ir_view_cross_entropy_loss")) > 0.05
+        or _float_or_zero(diagnostics.get("legal_ir_component_gap_max")) > 0.02
+    ):
+        focus.append("legal_ir_multiview")
+    return _unique_preserve_order(focus)
+
+
+def _source_decompiled_text_losses_from_targets(
+    losses: Mapping[str, Any],
+) -> Dict[str, float]:
+    """Normalize source text -> structural decompiled text losses from targets."""
+
+    source_decompiled_cosine_loss = _float_or_zero(
+        losses.get("source_decompiled_text_embedding_cosine_loss")
+    )
+    if source_decompiled_cosine_loss <= 0.0:
+        source_decompiled_cosine_similarity = losses.get(
+            "source_decompiled_text_embedding_cosine_similarity"
+        )
+        if source_decompiled_cosine_similarity is None:
+            source_decompiled_cosine_similarity = losses.get(
+                "raw_source_embedding_cosine_similarity"
+            )
+        if source_decompiled_cosine_similarity is not None:
+            source_decompiled_cosine_loss = max(
+                0.0,
+                1.0 - _float_or_zero(source_decompiled_cosine_similarity),
+            )
+
+    source_decompiled_token_loss = _float_or_zero(
+        losses.get("source_decompiled_text_token_loss")
+    )
+    if source_decompiled_token_loss <= 0.0:
+        source_decompiled_token_loss = _float_or_zero(
+            losses.get("structural_text_reconstruction_loss")
+        )
+
+    return {
+        "source_decompiled_text_embedding_cosine_loss": max(
+            0.0,
+            source_decompiled_cosine_loss,
+        ),
+        "source_decompiled_text_token_loss": max(
+            0.0,
+            source_decompiled_token_loss,
+        ),
+    }
 
 
 def _legal_ir_component_gaps(
@@ -21568,6 +21788,42 @@ def _resolve_vector_compute_backend(
 
 def _mean(values: Sequence[float]) -> float:
     return sum(values) / len(values) if values else 0.0
+
+
+def _sample_embedding_metric_rows(
+    samples: Sequence[LegalSample],
+    *,
+    cosine_scores: Sequence[float],
+    reconstruction_losses: Sequence[float],
+    limit: int = 8,
+) -> List[Dict[str, object]]:
+    """Return the worst embedding residuals for diagnostics and TODO routing."""
+    rows: List[Dict[str, object]] = []
+    for sample, cosine, reconstruction in zip(
+        samples,
+        cosine_scores,
+        reconstruction_losses,
+    ):
+        cosine_value = _float_or_zero(cosine)
+        reconstruction_value = _float_or_zero(reconstruction)
+        rows.append(
+            {
+                "citation": str(getattr(sample, "citation", "")),
+                "cosine_loss": round(1.0 - cosine_value, 9),
+                "cosine_similarity": round(cosine_value, 9),
+                "reconstruction_loss": round(reconstruction_value, 9),
+                "sample_id": str(sample.sample_id),
+                "text_shape": _text_shape(str(getattr(sample, "normalized_text", ""))),
+            }
+        )
+    rows.sort(
+        key=lambda row: (
+            float(row["cosine_similarity"]),
+            -float(row["reconstruction_loss"]),
+            str(row["sample_id"]),
+        )
+    )
+    return rows[: max(0, int(limit))]
 
 
 def _mean_distributions(

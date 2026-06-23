@@ -915,6 +915,56 @@ def test_modal_decompiler_refines_uscode_heading_fallback_typed_ir_slots() -> No
     ]
 
 
+def test_modal_decompiler_projects_source_role_target_family_slots() -> None:
+    formula = ModalIRFormula(
+        formula_id="f_frame_role_target",
+        operator=ModalIROperator(
+            family="frame",
+            system="Frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="care_supervision", role="clause"),
+        provenance=ModalIRProvenance(
+            source_id="us-code-16-446-role-target",
+            start_char=0,
+            end_char=78,
+            citation="16 U.S.C. 446",
+        ),
+        metadata={"cue": "__uscode_section_heading_fallback__"},
+    )
+    document = ModalIRDocument(
+        document_id="us-code-16-446-role-target",
+        source="us_code",
+        normalized_text=(
+            "Lands under the supervision or control of the Secretary are "
+            "maintained for care and protection."
+        ),
+        formulas=[formula],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+
+    assert "supervision:deontic" in slot_texts["source_action_target_family"]
+    assert "control:deontic" in slot_texts["source_object_target_family"]
+    assert (
+        "predicate-argument:source-action-target-family:supervision:deontic"
+        in slot_texts["predicate_argument_feature"]
+    )
+    assert (
+        "decompiler-plan:source-object-target-role:control:temporal:clause"
+        in slot_texts["source_role_decompiler_plan"]
+    )
+    assert (
+        "predicate-argument:source-action-source-target-family:supervision:frame->deontic"
+        in slot_texts["predicate_argument_feature"]
+    )
+    assert (
+        "decompiler-plan:source-action-family-pair-key:supervision:frame_temporal"
+        in slot_texts["source_role_decompiler_plan"]
+    )
+
+
 def test_modal_decompiler_refines_effective_date_temporal_typed_ir_slots() -> None:
     formula = ModalIRFormula(
         formula_id="f_effective_date_temporal",
