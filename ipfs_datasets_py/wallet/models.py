@@ -346,6 +346,36 @@ class Wallet:
 
 
 @dataclass
+class WorldIdBinding:
+    """Durable World ID proof binding attached to a wallet."""
+
+    binding_id: str
+    wallet_id: str
+    actor_did: str
+    rp_id: str
+    action: str
+    protocol_version: str
+    environment: str
+    nullifier_ref: str
+    app_id: str = ""
+    credential_identifiers: List[str] = field(default_factory=list)
+    issuer_schema_ids: List[int] = field(default_factory=list)
+    proof_receipt_id: Optional[str] = None
+    session_id: str = ""
+    signal_hash_ref: str = ""
+    verification_status: str = "verified"
+    status: str = "active"
+    verified_at: str = field(default_factory=utc_now)
+    expires_at_min: Optional[int] = None
+    created_at: str = field(default_factory=utc_now)
+    updated_at: str = field(default_factory=utc_now)
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
 class Grant:
     """UCAN-style wallet grant with capabilities and caveats."""
 
@@ -531,6 +561,7 @@ class ProofReceipt:
     verification_status: str = "verified"
     created_at: str = field(default_factory=utc_now)
     expires_at: Optional[str] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)

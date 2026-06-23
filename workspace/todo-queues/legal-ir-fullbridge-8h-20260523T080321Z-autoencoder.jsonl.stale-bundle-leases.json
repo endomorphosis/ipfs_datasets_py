@@ -1,9 +1,0 @@
-{
-  "compiler_ambiguity|modal.compiler.ambiguity|{\"action\":\"add_or_review_modal_ambiguity_policy\",\"family_pairs\":[\"conditional_normative->deontic\",\"deontic->temporal\"],\"program_synthesis_scope\":\"compiler_ambiguity\",\"target_component\":\"modal.compiler.ambiguity\"}": {
-    "anchor_id": "program-be3672dcb9dfe5cf",
-    "expires_at": "2026-05-23T16:05:04+00:00",
-    "expires_at_epoch": 1779552304.5786486,
-    "selected_count": 1,
-    "worker_id": "codex-compiler_ambiguity-02"
-  }
-}

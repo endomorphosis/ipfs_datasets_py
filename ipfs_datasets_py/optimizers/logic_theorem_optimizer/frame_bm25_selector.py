@@ -283,6 +283,14 @@ _FRAME_ONTOLOGY_LEGAL_IR_VIEW_PREFIXES: tuple[str, ...] = (
     "legal-ir-view:",
     "legal_ir_view:",
 )
+_FRAME_ONTOLOGY_LEGAL_IR_VIEW_GUIDANCE_PREFIXES: tuple[str, ...] = (
+    "legal-ir-view-gap:",
+    "legal_ir_view_gap:",
+    "legal-ir-predicted-view:",
+    "legal_ir_predicted_view:",
+    "legal-ir-target-view:",
+    "legal_ir_target_view:",
+)
 _FRAME_ONTOLOGY_CUE_VALUE_ALIASES = {
     "is a": "isa",
 }
@@ -312,6 +320,14 @@ _FRAME_ONTOLOGY_VALUE_KEY_FEATURE_PREFIXES = {
     "target_family": "family:selected_frame:",
     "target_component": "legal-ir-view:",
     "target_file_lane": "legal-ir-view:",
+    "target_view": "legal-ir-view:",
+    "predicted_view": "legal-ir-view:",
+}
+_FRAME_ONTOLOGY_VIEW_LIST_KEY_FEATURE_PREFIXES = {
+    "legal_ir_underrepresented_components": "legal-ir-view:",
+    "underrepresented_components": "legal-ir-view:",
+    "top_predicted_views": "legal-ir-view:",
+    "top_target_views": "legal-ir-view:",
 }
 _FRAME_ONTOLOGY_HINT_ID_KEYS = frozenset({"hint_id", "hint_ids"})
 _FRAME_ONTOLOGY_HINT_ID_PREFIX_RE = re.compile(
@@ -815,8 +831,11 @@ def _synthetic_frame_feature_candidates_from_key_value(
     if not normalized_key:
         return []
     prefix = _FRAME_ONTOLOGY_VALUE_KEY_FEATURE_PREFIXES.get(normalized_key)
+    sequence_prefix = _FRAME_ONTOLOGY_VIEW_LIST_KEY_FEATURE_PREFIXES.get(
+        normalized_key
+    )
     is_hint_id_key = normalized_key in _FRAME_ONTOLOGY_HINT_ID_KEYS
-    if not prefix and not is_hint_id_key:
+    if not prefix and not sequence_prefix and not is_hint_id_key:
         return []
     candidates: List[str] = []
     values: Sequence[Any]
@@ -840,7 +859,7 @@ def _synthetic_frame_feature_candidates_from_key_value(
             if hint_term:
                 candidates.append(f"flogic:statement_hint:{hint_term}")
             continue
-        candidates.append(f"{prefix}{text}")
+        candidates.append(f"{prefix or sequence_prefix}{text}")
     return candidates
 
 
@@ -1354,6 +1373,16 @@ def _frame_ontology_value_from_feature(
                 False,
                 _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL,
             )
+    for prefix in _FRAME_ONTOLOGY_LEGAL_IR_VIEW_GUIDANCE_PREFIXES:
+        if lowered.startswith(prefix):
+            return (
+                _legal_ir_view_value_from_guidance_feature(
+                    feature[len(prefix) :].strip()
+                ),
+                False,
+                False,
+                _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL,
+            )
 
     for prefix in _FRAME_FAMILY_FEATURE_PREFIXES:
         if lowered == prefix or lowered.startswith(f"{prefix}:"):
@@ -1634,6 +1663,19 @@ def _feature_allows_stopword_ontology_tokens(feature: str) -> bool:
     return False
 
 
+def _legal_ir_view_value_from_guidance_feature(value: str) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    parts = [part.strip() for part in text.split(":") if part.strip()]
+    if len(parts) >= 2 and parts[0].lower() in {
+        "overrepresented",
+        "underrepresented",
+    }:
+        return parts[-1]
+    return parts[-1] if parts else text
+
+
 def _additional_frame_ontology_values_from_feature(
     feature: str,
 ) -> List[tuple[str, bool, bool, int]]:
@@ -1854,6 +1896,9 @@ def _frame_ontology_contextual_predicate_from_feature(feature_key: str) -> str:
         return ""
     lowered = str(feature_key or "").strip().lower()
     for prefix in _FRAME_ONTOLOGY_LEGAL_IR_VIEW_PREFIXES:
+        if lowered.startswith(prefix):
+            return "legal_ir_view"
+    for prefix in _FRAME_ONTOLOGY_LEGAL_IR_VIEW_GUIDANCE_PREFIXES:
         if lowered.startswith(prefix):
             return "legal_ir_view"
     if _is_contextual_frame_ontology_predicate(head):

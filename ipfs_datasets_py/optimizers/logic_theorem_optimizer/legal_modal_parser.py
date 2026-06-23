@@ -49,9 +49,21 @@ _USCODE_EDITORIAL_NOTE_CONTEXT_RE = re.compile(
     r"transferred|statutory\s+notes)\b",
     re.IGNORECASE,
 )
+_USCODE_LEGISLATIVE_HISTORY_ABBREVIATION_RE = re.compile(
+    r"(?:\b(?:act|acts)\b|\bch\.|\bpub\.\s*l\.|\bstat\.|\brelated\s+to\b)",
+    re.IGNORECASE,
+)
 _USCODE_EDITORIAL_PERMISSION_CUES = frozenset({"allowed", "authorized", "permitted"})
 _USCODE_SECTION_REF_PREFIX_RE = r"(?:§{1,2}\s*|\bsec(?:tion)?s?\.?\s*)"
 _USCODE_OPTIONAL_SECTION_REF_PREFIX_RE = rf"(?:{_USCODE_SECTION_REF_PREFIX_RE})?"
+_USCODE_SECTION_PREFIX_SEGMENT_RE = re.compile(
+    r"^\s*sec(?:tion)?s?\.?\s*$",
+    re.IGNORECASE,
+)
+_USCODE_SECTION_ID_SEGMENT_RE = re.compile(
+    r"^\s*[0-9A-Za-z][0-9A-Za-z.\-\u2010-\u2015]*\b",
+    re.IGNORECASE,
+)
 _USCODE_CITATION_MARKER_RE = re.compile(
     r"\bU\.?\s*S\.?\s*C\.?(?!\w)",
     re.IGNORECASE,
@@ -199,6 +211,11 @@ _USCODE_ADMINISTRATIVE_PROCEDURE_PHRASE_RE = re.compile(
     r"review\s+(?:procedure|procedures|requirements)|"
     r"appeal\s+(?:procedure|procedures|rights)|"
     r"petition\s+(?:procedure|procedures)|"
+    r"(?:public\s+)?notice\s+and\s+(?:opportunity\s+to\s+)?comment|"
+    r"opportunity\s+(?:for|to)\s+(?:public\s+)?comment|"
+    r"(?:public\s+)?comment\s+period|"
+    r"(?:public\s+)?comments?\s+(?:on|concerning|regarding)\s+"
+    r"(?:proposed|administrative|agency)\b|"
     r"adjudication\s+(?:procedure|procedures|requirements|record|records)|"
     r"(?:record|records)\s+of\s+(?:hearing|proceeding|proceedings)|"
     r"(?:hearing|proceeding|proceedings)\s+(?:record|records|evidence|testimony))\b",
@@ -211,6 +228,8 @@ _USCODE_ADMINISTRATIVE_PROCEDURE_SIGNAL_TOKENS = frozenset(
         "adjudications",
         "appeal",
         "appeals",
+        "comment",
+        "comments",
         "hearing",
         "hearings",
         "investigation",
@@ -246,10 +265,13 @@ _USCODE_SHORT_RESIDUAL_HEADING_SIGNAL_TOKENS = frozenset(
         "amendments",
         "appropriation",
         "appropriations",
+        "access",
         "authorization",
         "authorizations",
         "compensation",
         "declaration",
+        "element",
+        "elements",
         "evaluation",
         "evaluations",
         "expense",
@@ -260,6 +282,7 @@ _USCODE_SHORT_RESIDUAL_HEADING_SIGNAL_TOKENS = frozenset(
         "findings",
         "grant",
         "grants",
+        "guidance",
         "hearing",
         "historical",
         "information",
@@ -283,6 +306,12 @@ _USCODE_SHORT_RESIDUAL_HEADING_SIGNAL_TOKENS = frozenset(
         "purpose",
         "procedure",
         "procedures",
+        "reimbursement",
+        "reimbursements",
+        "replacement",
+        "replacements",
+        "restoration",
+        "restorations",
         "regulation",
         "regulations",
         "report",
@@ -294,6 +323,8 @@ _USCODE_SHORT_RESIDUAL_HEADING_SIGNAL_TOKENS = frozenset(
         "review",
         "revision",
         "security",
+        "use",
+        "uses",
         "violation",
         "violations",
     }
@@ -309,6 +340,8 @@ _USCODE_COMPACT_FRAME_RESIDUAL_SIGNAL_TOKENS = frozenset(
         "administrative",
         "allowance",
         "allowances",
+        "amount",
+        "amounts",
         "application",
         "applications",
         "appropriation",
@@ -316,40 +349,116 @@ _USCODE_COMPACT_FRAME_RESIDUAL_SIGNAL_TOKENS = frozenset(
         "assistance",
         "authorization",
         "availability",
+        "access",
         "benefit",
         "benefits",
         "compensation",
         "determination",
         "determinations",
+        "element",
+        "elements",
         "duties",
         "employee",
         "employees",
         "expense",
         "expenses",
+        "guidance",
+        "information",
         "jurisdiction",
         "land",
         "lands",
+        "limitation",
+        "limitations",
         "payment",
         "payments",
         "proceeding",
         "proceedings",
         "program",
         "programs",
+        "recovered",
         "reimbursement",
         "reimbursements",
+        "replacement",
+        "replacements",
         "reservation",
         "reservations",
+        "restoration",
+        "restorations",
         "settlement",
         "settlements",
+        "subchapter",
         "transfer",
         "transfers",
+        "use",
+        "uses",
         "withdrawal",
         "withdrawals",
     }
 )
+_USCODE_ENFORCEMENT_RESIDUAL_MAX_TOKENS = 48
+_USCODE_ENFORCEMENT_RESIDUAL_SIGNAL_TOKENS = frozenset(
+    {
+        "civil",
+        "criminal",
+        "enforce",
+        "enforceable",
+        "enforcement",
+        "fine",
+        "fines",
+        "forfeiture",
+        "forfeitures",
+        "offence",
+        "offences",
+        "offense",
+        "offenses",
+        "penalties",
+        "penalty",
+        "prohibited",
+        "prohibition",
+        "prohibitions",
+        "punishable",
+        "punishment",
+        "sanction",
+        "sanctions",
+        "unlawful",
+        "violation",
+        "violations",
+    }
+)
+_USCODE_ENFORCEMENT_RESIDUAL_CONTEXT_TOKENS = frozenset(
+    {
+        "act",
+        "acts",
+        "authority",
+        "chapter",
+        "code",
+        "compliance",
+        "control",
+        "court",
+        "law",
+        "liability",
+        "order",
+        "orders",
+        "person",
+        "persons",
+        "proceeding",
+        "proceedings",
+        "program",
+        "programs",
+        "regulation",
+        "regulations",
+        "rule",
+        "rules",
+        "section",
+        "sections",
+        "subchapter",
+        "subsection",
+        "title",
+    }
+)
 _USCODE_MODAL_HEADING_PREFIX_MAX_TOKENS = 18
 _USCODE_MAX_RESIDUAL_SPAN_FORMULAS = 3
-_USCODE_RESIDUAL_SPAN_FORMULA_BUDGET_CAP = 12
+_USCODE_RESIDUAL_SPAN_FORMULA_BUDGET_CAP = 16
 _USCODE_RESIDUAL_COALESCE_SEGMENT_MAX_TOKENS = 12
 _USCODE_RESIDUAL_HEADER_MIN_TOKENS = 10
 _USCODE_RESIDUAL_SHORT_HEADER_MIN_TOKENS = 4
@@ -366,6 +475,32 @@ _USCODE_DEFINITION_RESIDUAL_HINT_RE = re.compile(
     r"means\s+[^.;:]{1,120})\b",
     re.IGNORECASE,
 )
+_USCODE_PURPOSE_RESIDUAL_HINT_RE = re.compile(
+    r"\b(?:(?:general\s+)?purpose\s+of|for\s+the\s+purpose\s+of|"
+    r"for\s+purposes\s+of|statement\s+of\s+purpose)\b",
+    re.IGNORECASE,
+)
+_USCODE_PURPOSE_RESIDUAL_SIGNAL_TOKENS = frozenset(
+    {
+        "activities",
+        "activity",
+        "conduct",
+        "coordination",
+        "dissemination",
+        "education",
+        "health",
+        "information",
+        "institute",
+        "institutes",
+        "program",
+        "programs",
+        "purpose",
+        "purposes",
+        "research",
+        "support",
+        "training",
+    }
+)
 _USCODE_RESIDUAL_STATUTORY_FRAGMENT_MAX_TOKENS = 18
 _USCODE_RESIDUAL_STATUTORY_FRAGMENT_HINT_RE = re.compile(
     r"\b(?:ch|chapter|pub|stat)\b",
@@ -374,6 +509,10 @@ _USCODE_RESIDUAL_STATUTORY_FRAGMENT_HINT_RE = re.compile(
 _GENERIC_LEGAL_REFERENCE_HINT_RE = re.compile(
     r"\b(?:section|sections|sec|secs|chapter|subchapter|title|subsection|"
     r"paragraph|stat|statutes?|public\s+law|pub\.?\s*l\.?)\b",
+    re.IGNORECASE,
+)
+_USCODE_NOTE_REFERENCE_RESIDUAL_RE = re.compile(
+    r"\bset\s+out\s+as\s+a\s+note\s+(?:under|preceding)\s+section\s+\d+\b",
     re.IGNORECASE,
 )
 _MONTH_NAME_TOKENS = frozenset(
@@ -606,7 +745,48 @@ class LegalModalParser:
                     role=self._classify_segment_role(segment_text),
                 )
             )
-        return segments
+        return self._coalesce_uscode_section_prefix_segments(
+            segments,
+            normalized_text=normalized,
+        )
+
+    def _coalesce_uscode_section_prefix_segments(
+        self,
+        segments: Sequence[LegalSegment],
+        *,
+        normalized_text: str,
+    ) -> List[LegalSegment]:
+        """Join split ``Sec.`` prefixes with the following section-heading span."""
+        if len(segments) < 2:
+            return list(segments)
+        coalesced: List[LegalSegment] = []
+        index = 0
+        while index < len(segments):
+            segment = segments[index]
+            if index + 1 >= len(segments):
+                coalesced.append(segment)
+                index += 1
+                continue
+            next_segment = segments[index + 1]
+            if (
+                _USCODE_SECTION_PREFIX_SEGMENT_RE.fullmatch(segment.text)
+                and next_segment.start_char <= segment.end_char + 1
+                and _USCODE_SECTION_ID_SEGMENT_RE.match(next_segment.text)
+            ):
+                merged_text = normalized_text[segment.start_char : next_segment.end_char]
+                coalesced.append(
+                    LegalSegment(
+                        text=merged_text,
+                        start_char=segment.start_char,
+                        end_char=next_segment.end_char,
+                        role=self._classify_segment_role(merged_text),
+                    )
+                )
+                index += 2
+                continue
+            coalesced.append(segment)
+            index += 1
+        return coalesced
 
     def extract_cues(self, text: str) -> List[ModalCueSpan]:
         """Extract modal cue spans from text using registry cue terms."""
@@ -627,6 +807,16 @@ class LegalModalParser:
                         if (
                             profile.family == ModalLogicFamily.DEONTIC
                             and self._is_non_deontic_editorial_permission_cue(
+                                normalized_text=normalized,
+                                cue=cue,
+                                start_char=match.start(),
+                                end_char=match.end(),
+                            )
+                        ):
+                            continue
+                        if (
+                            profile.family == ModalLogicFamily.CONDITIONAL_NORMATIVE
+                            and self._is_non_conditional_purpose_object_cue(
                                 normalized_text=normalized,
                                 cue=cue,
                                 start_char=match.start(),
@@ -723,14 +913,10 @@ class LegalModalParser:
         context_window = normalized_text[
             max(0, start_char - 160) : min(len(normalized_text), end_char + 96)
         ]
-        leading = normalized_text[max(0, start_char - 96) : start_char].lower()
+        leading = normalized_text[max(0, start_char - 240) : start_char].lower()
         has_section_history_prefix = bool(
             re.search(r"\bsection\s+[0-9a-z.\-\u2010-\u2015]+\b", leading)
-            and re.search(
-                r"\b(?:act|acts|ch\.|pub\.\s*l\.|stat\.|related\s+to)\b",
-                leading,
-                re.IGNORECASE,
-            )
+            and _USCODE_LEGISLATIVE_HISTORY_ABBREVIATION_RE.search(leading)
         )
         if (
             not _USCODE_EDITORIAL_NOTE_CONTEXT_RE.search(context_window)
@@ -739,13 +925,34 @@ class LegalModalParser:
             return False
         if has_section_history_prefix:
             return True
-        return bool(
+        return bool(_USCODE_LEGISLATIVE_HISTORY_ABBREVIATION_RE.search(context_window))
+
+    def _is_non_conditional_purpose_object_cue(
+        self,
+        *,
+        normalized_text: str,
+        cue: str,
+        start_char: int,
+        end_char: int,
+    ) -> bool:
+        """Do not treat research-purpose object phrases as legal conditions."""
+        if cue.lower() != "with respect to":
+            return False
+        leading = normalized_text[max(0, start_char - 220) : start_char].lower()
+        trailing = normalized_text[
+            end_char : min(len(normalized_text), end_char + 96)
+        ].lower()
+        if not _USCODE_PURPOSE_RESIDUAL_HINT_RE.search(leading):
+            return False
+        if not (
             re.search(
-                r"\b(?:act|acts|pub\.\s*l\.|stat\.|related\s+to)\b",
-                context_window,
-                re.IGNORECASE,
+                r"\b(?:conduct|support|research|training|dissemination|programs?)\b",
+                leading,
             )
-        )
+            or re.search(r"\b(?:research|training|health|environment)\b", trailing)
+        ):
+            return False
+        return True
 
     def _should_ignore_non_temporal_temporal_cue(
         self,
@@ -1305,7 +1512,13 @@ class LegalModalParser:
             tokens,
         ):
             return True
+        if self._is_uscode_enforcement_residual_candidate(normalized, tokens):
+            return True
         if self._is_uscode_definition_residual_candidate(normalized, tokens):
+            return True
+        if self._is_uscode_purpose_residual_candidate(normalized, tokens):
+            return True
+        if self._is_uscode_note_reference_residual_candidate(normalized, tokens):
             return True
         if self._is_uscode_compact_frame_residual_candidate(normalized, tokens):
             return True
@@ -1426,13 +1639,22 @@ class LegalModalParser:
         prefix_text = segment.text[: first_cue.start_char - segment.start_char].strip()
         if not prefix_text:
             return None
-        prefix_text = re.sub(
-            rf"^\s*{_USCODE_OPTIONAL_SECTION_REF_PREFIX_RE}[0-9A-Za-z.\-]+"
-            rf"{_USCODE_SECTION_REF_SUFFIX_RE}\s*",
-            "",
+        section_prefix_match = re.match(
+            rf"^\s*(?P<prefix>{_USCODE_SECTION_REF_PREFIX_RE})?"
+            rf"(?P<section>[0-9A-Za-z.\-]+){_USCODE_SECTION_REF_SUFFIX_RE}\s*",
             prefix_text,
             flags=re.IGNORECASE,
-        ).strip(" .;:\u2014-")
+        )
+        if section_prefix_match is not None:
+            section_token = section_prefix_match.group("section")
+            if (
+                section_prefix_match.group("prefix")
+                or any(character.isdigit() for character in section_token)
+                or "-" in section_token
+                or _USCODE_SECTION_DASH_VARIANT_RE.search(section_token)
+            ):
+                prefix_text = prefix_text[section_prefix_match.end() :]
+        prefix_text = prefix_text.strip(" .;:\u2014-")
         subsection_match = re.search(
             r"\((?:[a-z]{1,3}|[0-9]{1,3}|[ivxlcdm]{1,6})\)\s+",
             prefix_text,
@@ -1603,6 +1825,8 @@ class LegalModalParser:
                 "adjudications",
                 "appeal",
                 "appeals",
+                "comment",
+                "comments",
                 "hearing",
                 "hearings",
                 "investigation",
@@ -1615,6 +1839,34 @@ class LegalModalParser:
                 "review",
             }
         )
+
+    def _is_uscode_enforcement_residual_candidate(
+        self,
+        normalized_segment_text: str,
+        tokens: Sequence[str],
+    ) -> bool:
+        """Recover criminal/civil enforcement frame spans without explicit modals."""
+        token_count = len(tokens)
+        if token_count < 1:
+            return False
+        if token_count > _USCODE_ENFORCEMENT_RESIDUAL_MAX_TOKENS:
+            return False
+        lowered = normalized_segment_text.lower()
+        if (
+            _USCODE_CODIFICATION_HINT_RE.search(lowered)
+            or _USCODE_EDITORIAL_STATUS_HINT_RE.search(lowered)
+            or _USCODE_DECLARATIVE_STATEMENT_HINT_RE.search(lowered)
+        ):
+            return False
+        token_set = set(tokens)
+        signal_count = len(token_set & _USCODE_ENFORCEMENT_RESIDUAL_SIGNAL_TOKENS)
+        if signal_count >= 2:
+            return True
+        if signal_count < 1:
+            return False
+        if token_count <= _USCODE_COMPACT_FRAME_RESIDUAL_MAX_TOKENS:
+            return True
+        return bool(token_set & _USCODE_ENFORCEMENT_RESIDUAL_CONTEXT_TOKENS)
 
     def _is_uscode_definition_residual_candidate(
         self,
@@ -1634,6 +1886,36 @@ class LegalModalParser:
         if "term" not in set(tokens) and "terms" not in set(tokens):
             return False
         return bool(_USCODE_DEFINITION_RESIDUAL_HINT_RE.search(lowered))
+
+    def _is_uscode_purpose_residual_candidate(
+        self,
+        normalized_segment_text: str,
+        tokens: Sequence[str],
+    ) -> bool:
+        token_count = len(tokens)
+        if token_count < 4 or token_count > _USCODE_RESIDUAL_SPAN_MAX_TOKENS:
+            return False
+        lowered = normalized_segment_text.lower()
+        if (
+            _USCODE_CODIFICATION_HINT_RE.search(lowered)
+            or _USCODE_EDITORIAL_STATUS_HINT_RE.search(lowered)
+        ):
+            return False
+        if not _USCODE_PURPOSE_RESIDUAL_HINT_RE.search(lowered):
+            return False
+        return bool(set(tokens) & _USCODE_PURPOSE_RESIDUAL_SIGNAL_TOKENS)
+
+    def _is_uscode_note_reference_residual_candidate(
+        self,
+        normalized_segment_text: str,
+        tokens: Sequence[str],
+    ) -> bool:
+        token_count = len(tokens)
+        if token_count < 6 or token_count > _USCODE_RESIDUAL_SPAN_MAX_TOKENS:
+            return False
+        if _USCODE_CODIFICATION_HINT_RE.search(normalized_segment_text):
+            return False
+        return bool(_USCODE_NOTE_REFERENCE_RESIDUAL_RE.search(normalized_segment_text))
 
     def _residual_span_coverage_formula(
         self,
@@ -1831,6 +2113,11 @@ class LegalModalParser:
             candidate_segment = transferred_heading_segment
         if candidate_segment is None:
             return None
+        candidate_segment = self._expanded_uscode_codification_segment(
+            candidate_segment=candidate_segment,
+            normalized_text=normalized_text,
+            segments=segments,
+        )
 
         lowered = candidate_segment.text.lower()
         citation_section = self._citation_section_token(citation)
@@ -1900,6 +2187,86 @@ class LegalModalParser:
                     else "uscode_codification_transfer_heading_v1"
                 ),
             },
+        )
+
+    def _expanded_uscode_codification_segment(
+        self,
+        *,
+        candidate_segment: LegalSegment,
+        normalized_text: str,
+        segments: Sequence[LegalSegment],
+    ) -> LegalSegment:
+        """Recover codification note spans split by legal abbreviation periods."""
+        candidate_text = self.normalize_text(candidate_segment.text)
+        lowered_candidate = candidate_text.lower()
+        if not re.search(
+            r"\b(?:omitted|transferred)\s+editorial\s+notes\s+codification\b",
+            lowered_candidate,
+        ):
+            return candidate_segment
+        if "section" not in lowered_candidate:
+            return candidate_segment
+
+        candidate_index: Optional[int] = None
+        for index, segment in enumerate(segments):
+            if (
+                segment.start_char == candidate_segment.start_char
+                and segment.end_char == candidate_segment.end_char
+            ):
+                candidate_index = index
+                break
+        if candidate_index is None:
+            return candidate_segment
+
+        start_char = candidate_segment.start_char
+        end_char = candidate_segment.end_char
+        for next_segment in segments[candidate_index + 1 :]:
+            if next_segment.start_char > end_char + 1:
+                break
+            tentative_text = self.normalize_text(
+                normalized_text[start_char : next_segment.end_char]
+            )
+            if not tentative_text:
+                break
+            tentative_tokens = _TOKEN_RE.findall(tentative_text.lower())
+            if len(tentative_tokens) > _USCODE_RESIDUAL_SPAN_MAX_TOKENS:
+                break
+            lowered_tentative = tentative_text.lower()
+            if not (
+                any(character.isdigit() for character in lowered_tentative)
+                or "pub." in lowered_tentative
+                or "stat." in lowered_tentative
+                or "was omitted" in lowered_tentative
+                or "was editorially reclassified" in lowered_tentative
+                or "from the code" in lowered_tentative
+            ):
+                break
+            end_char = next_segment.end_char
+            if re.search(
+                r"\bwas\s+(?:omitted|editorially\s+reclassified|transferred)\b",
+                lowered_tentative,
+            ) and tentative_text.rstrip().endswith("."):
+                break
+
+        if end_char == candidate_segment.end_char:
+            return candidate_segment
+        expanded_text = normalized_text[start_char:end_char]
+        stripped_expanded_text = expanded_text.strip()
+        if not stripped_expanded_text:
+            return candidate_segment
+        lowered_expanded_text = stripped_expanded_text.lower()
+        if not (
+            "was omitted from the code" in lowered_expanded_text
+            or "was editorially reclassified" in lowered_expanded_text
+            or "reclassified as section" in lowered_expanded_text
+        ):
+            return candidate_segment
+        leading_offset = len(expanded_text) - len(expanded_text.lstrip())
+        return LegalSegment(
+            text=stripped_expanded_text,
+            start_char=start_char + leading_offset,
+            end_char=start_char + leading_offset + len(stripped_expanded_text),
+            role=candidate_segment.role,
         )
 
     def _citation_section_token(self, citation: Optional[str]) -> str:

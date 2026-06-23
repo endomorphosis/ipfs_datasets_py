@@ -29,6 +29,25 @@ _RESERVED_TDFOL_TERM_PREFIX = re.compile(
     r"([\(\,]\s*)(" + "|".join(_RESERVED_TDFOL_TERM_PREFIXES) + r")(?=[A-Za-z0-9_])",
     flags=re.IGNORECASE,
 )
+_DEONTIC_EXPORT_OPERATOR_ALIASES = {
+    "obligation": "O",
+    "obligatory": "O",
+    "required": "O",
+    "permission": "P",
+    "permitted": "P",
+    "prohibition": "F",
+    "forbidden": "F",
+    "impermissible": "F",
+}
+_DEONTIC_EXPORT_OPERATOR_PATTERN = re.compile(
+    r"\b("
+    + "|".join(
+        re.escape(name)
+        for name in sorted(_DEONTIC_EXPORT_OPERATOR_ALIASES, key=len, reverse=True)
+    )
+    + r")\s*\(",
+    flags=re.IGNORECASE,
+)
 
 
 @dataclass
@@ -200,13 +219,20 @@ class FolTdfolBridgeAdapter:
         failed = max(0, attempted - proof_gate.valid_count)
         parse_failure_ratio = failed / attempted
         no_formula_loss = 0.0 if formula_records else 1.0
+        legal_ir_view_cross_entropy_loss = max(
+            0.0,
+            parse_failure_ratio + no_formula_loss,
+        )
         round_trip = RoundTripMetrics(
             cosine_similarity=max(0.0, 1.0 - no_formula_loss),
             cosine_loss=no_formula_loss,
+            cross_entropy_loss=legal_ir_view_cross_entropy_loss,
             symbolic_validity_penalty=parse_failure_ratio,
             extra_losses={
                 "tdfol_no_formula_loss": no_formula_loss,
                 "tdfol_parse_failure_ratio": parse_failure_ratio,
+                "legal_ir_view_cross_entropy_loss": legal_ir_view_cross_entropy_loss,
+                "source_copy_reward_hack_penalty": 0.0,
             },
         )
         status = "ok" if formula_records and proof_gate.compiles else "partial"
@@ -525,18 +551,8 @@ def _tdfol_compiler_guidance_signal(
             "surface_features": (),
         }
 
-    routes: set[str] = set()
-    for key in ("compiler_guidance_todo_routes", "top_todo_routes"):
-        value = compiler_guidance.get(key)
-        if isinstance(value, Mapping):
-            routes.update(
-                _normalized_guidance_token(route) for route in value.keys()
-            )
-        elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
-            routes.update(_normalized_guidance_token(route) for route in value)
-    single_route = _normalized_guidance_token(compiler_guidance.get("route"))
-    if single_route:
-        routes.add(single_route)
+    routes = _tdfol_guidance_routes(compiler_guidance)
+    target_components = _tdfol_guidance_target_components(compiler_guidance)
 
     semantic_terms = _guidance_tokens(
         compiler_guidance.get("compiler_guidance_semantic_overlay_terms")
@@ -545,7 +561,9 @@ def _tdfol_compiler_guidance_signal(
         compiler_guidance.get("compiler_guidance_surface_features")
     )
     route = "repair_tdfol_bridge_parse"
-    has_route = route in routes
+    has_route = route in routes or _has_tdfol_parse_repair_evidence(
+        compiler_guidance
+    )
     conditioned_temporal = any(
         term in {"if", "when"} for term in semantic_terms
     ) or any("conditioned+temporal" in feature for feature in surface_features)
@@ -554,12 +572,228 @@ def _tdfol_compiler_guidance_signal(
         or "may" in semantic_terms
         or any("polarity-template:" in feature for feature in surface_features)
     )
+    targeted_tdfol = (
+        not target_components
+        or "tdfol.prover" in target_components
+        or "tdfol" in target_components
+    )
     return {
-        "active": bool(has_route and conditioned_temporal and has_deontic_surface),
+        "active": bool(
+            has_route
+            and targeted_tdfol
+            and (
+                (conditioned_temporal and has_deontic_surface)
+                or _has_packet_tdfol_guidance_evidence(compiler_guidance)
+            )
+        ),
         "route": route if has_route else "",
         "semantic_terms": tuple(sorted(semantic_terms)),
         "surface_features": tuple(sorted(surface_features)),
     }
+
+
+def _tdfol_guidance_routes(compiler_guidance: Mapping[str, Any]) -> set[str]:
+    """Extract route hints from daemon and packet-shaped compiler guidance."""
+
+    routes: set[str] = set()
+
+    def add_route(value: Any) -> None:
+        route = _normalized_guidance_token(value)
+        if route:
+            routes.add(route)
+
+    route_keys = (
+        "route",
+        "action",
+        "original_action",
+        "compiler_guidance_route",
+    )
+
+    def collect(value: Any) -> None:
+        if isinstance(value, Mapping):
+            for route in value.keys():
+                add_route(route)
+            for nested_key in route_keys:
+                add_route(value.get(nested_key))
+            return
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            for item in value:
+                if isinstance(item, Mapping):
+                    for nested_key in route_keys:
+                        add_route(item.get(nested_key))
+                else:
+                    add_route(item)
+            return
+        add_route(value)
+
+    for key in (
+        "compiler_guidance_todo_routes",
+        "top_todo_routes",
+        "todo_routes",
+    ):
+        value = compiler_guidance.get(key)
+        if value is not None:
+            collect(value)
+
+    for key in route_keys:
+        add_route(compiler_guidance.get(key))
+
+    for bundle in _tdfol_guidance_bundles(compiler_guidance):
+        collect(bundle)
+        for nested_routes_key in (
+            "compiler_guidance_todo_routes",
+            "top_todo_routes",
+            "todo_routes",
+        ):
+            if nested_routes_key in bundle:
+                collect(bundle.get(nested_routes_key))
+
+    attribution = compiler_guidance.get("compiler_guidance_attribution")
+    if isinstance(attribution, Mapping):
+        collect(attribution.get("todo_routes"))
+
+    for evidence in _tdfol_guidance_evidence_records(compiler_guidance):
+        collect(evidence)
+
+    return routes
+
+
+def _tdfol_guidance_target_components(
+    compiler_guidance: Mapping[str, Any],
+) -> set[str]:
+    components: set[str] = set()
+
+    def collect(value: Any) -> None:
+        if isinstance(value, Mapping):
+            for key in (
+                "target_component",
+                "target_view",
+                "predicted_view",
+                "target",
+            ):
+                collect(value.get(key))
+            collect(value.get("legal_ir_underrepresented_components"))
+            return
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            for item in value:
+                collect(item)
+            return
+        component = _normalized_guidance_token(value)
+        if component:
+            components.add(component)
+
+    collect(compiler_guidance)
+    for bundle in _tdfol_guidance_bundles(compiler_guidance):
+        collect(bundle)
+    for evidence in _tdfol_guidance_evidence_records(compiler_guidance):
+        collect(evidence)
+    return components
+
+
+def _has_packet_tdfol_guidance_evidence(
+    compiler_guidance: Mapping[str, Any],
+) -> bool:
+    if _tdfol_guidance_target_components(compiler_guidance) & {
+        "tdfol.prover",
+        "tdfol",
+    }:
+        return True
+    if compiler_guidance.get("compiler_guidance_quality_gate") == "pass":
+        return True
+    if _has_tdfol_parse_repair_evidence(compiler_guidance):
+        return True
+    return any(
+        str(bundle.get("program_synthesis_scope") or "").strip().lower()
+        == "tdfol"
+        for bundle in _tdfol_guidance_bundles(compiler_guidance)
+    )
+
+
+def _has_tdfol_parse_repair_evidence(
+    compiler_guidance: Mapping[str, Any],
+) -> bool:
+    """Detect packet evidence that names the TDFOL parse-repair failure."""
+
+    for evidence in _tdfol_guidance_evidence_records(compiler_guidance):
+        failure_name = _normalized_guidance_token(
+            evidence.get("bridge_failure_name") or evidence.get("failure_name")
+        )
+        target_lane = _normalized_guidance_token(
+            evidence.get("target_file_lane")
+            or evidence.get("program_synthesis_scope")
+            or evidence.get("scope")
+        )
+        target_view = _normalized_guidance_token(
+            evidence.get("target_view")
+            or evidence.get("predicted_view")
+            or evidence.get("target_component")
+            or evidence.get("target")
+        )
+        if (
+            failure_name == "tdfol_parse_failure_ratio"
+            and (
+                target_lane == "tdfol"
+                or target_view in {"tdfol.prover", "tdfol"}
+            )
+        ):
+            return True
+    return False
+
+
+def _tdfol_guidance_evidence_records(
+    compiler_guidance: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+
+    def collect(value: Any) -> None:
+        if isinstance(value, Mapping):
+            records.append(dict(value))
+            return
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            for item in value:
+                collect(item)
+
+    for key in (
+        "evidence",
+        "compiler_guidance_evidence",
+        "hint_evidence",
+        "metric_evidence",
+    ):
+        collect(compiler_guidance.get(key))
+    return records
+
+
+def _tdfol_guidance_bundles(
+    compiler_guidance: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    bundles: list[dict[str, Any]] = []
+    for key in (
+        "bundle",
+        "semantic_bundle_key",
+        "compiler_guidance_bundle",
+        "vector_bundle",
+    ):
+        bundle = _tdfol_guidance_mapping(compiler_guidance.get(key))
+        if bundle:
+            bundles.append(bundle)
+    return bundles
+
+
+def _tdfol_guidance_mapping(value: Any) -> dict[str, Any]:
+    if isinstance(value, Mapping):
+        return dict(value)
+    if not isinstance(value, str):
+        return {}
+    text = value.strip()
+    if not text or text[0] not in "{[":
+        return {}
+    try:
+        parsed = json.loads(text)
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return {}
+    if isinstance(parsed, Mapping):
+        return dict(parsed)
+    return {}
 
 
 def _tdfol_guidance_formula(
@@ -811,8 +1045,12 @@ def _normalize_tdfol_export_formula(text: str) -> str:
         return ""
     normalized = normalized.strip("`\"'").strip()
     normalized = _strip_tdfol_line_comment(normalized)
+    normalized = _unwrap_tdfol_fenced_export(normalized)
     normalized = _unwrap_tdfol_json_export(normalized)
+    normalized = _unwrap_tdfol_assignment_export(normalized)
     normalized = _unwrap_tdfol_key_value_export(normalized)
+    normalized = _normalize_deontic_operator_aliases(normalized)
+    normalized = _normalize_deontic_label_export(normalized)
     normalized = re.sub(
         r"^\s*(?:formula|proof_formula|proof\s+formula|tdfol_formula|"
         r"tdfol\s+formula|proof_input|proof\s+input|proof_obligation|"
@@ -828,6 +1066,7 @@ def _normalize_tdfol_export_formula(text: str) -> str:
         flags=re.IGNORECASE,
     )
     normalized = normalized.strip("`\"'").strip()
+    normalized = _unwrap_tdfol_multiline_export(normalized)
     normalized = _unwrap_tdfol_export_wrapper(normalized)
     normalized = re.sub(
         r"\b([OPF])\s*\[\s*(.*?)\s*\]",
@@ -845,6 +1084,139 @@ def _normalize_tdfol_export_formula(text: str) -> str:
     normalized = re.sub(r",\s*(?=\))", "", normalized)
     normalized = re.sub(r"(:[0-9A-Za-z_-]+)\.(?=\s*[\),])", r"\1", normalized)
     return normalized.strip()
+
+
+def _unwrap_tdfol_assignment_export(text: str) -> str:
+    """Extract formula text from compact key/value proof exports."""
+
+    normalized = str(text or "").strip()
+    if not normalized:
+        return normalized
+    for key in (
+        "formula",
+        "proof_input",
+        "proof_formula",
+        "tdfol_formula",
+        "proof_obligation",
+        "obligation",
+    ):
+        value = _extract_tdfol_key_value(normalized, key)
+        if value:
+            candidate = value.strip("`\"'").strip()
+            formula = _extract_balanced_tdfol_formula(candidate)
+            return formula or candidate
+    return normalized
+
+
+def _unwrap_tdfol_fenced_export(text: str) -> str:
+    """Extract formula text from Markdown-style proof export fences."""
+
+    normalized = str(text or "").strip()
+    if not normalized.startswith("```"):
+        return normalized
+    match = re.match(
+        r"(?is)^```[ \t]*(?:tdfol|logic|formula|proof)?[ \t]*\n?(.*?)\n?```$",
+        normalized,
+    )
+    if not match:
+        return normalized
+    return match.group(1).strip()
+
+
+def _unwrap_tdfol_multiline_export(text: str) -> str:
+    """Drop labels/provenance lines around a single exported TDFOL formula."""
+
+    normalized = str(text or "").strip()
+    if "\n" not in normalized:
+        return normalized
+    for line in normalized.splitlines():
+        candidate = _tdfol_export_line_candidate(line)
+        if not candidate:
+            continue
+        formula = _extract_balanced_tdfol_formula(candidate)
+        if formula:
+            return formula
+    return normalized
+
+
+def _tdfol_export_line_candidate(line: str) -> str:
+    candidate = str(line or "").strip()
+    if not candidate:
+        return ""
+    candidate = re.sub(r"^\s*(?:[-*]|\d+[.)])\s*", "", candidate).strip()
+    candidate = re.sub(
+        r"^\s*(?:formula|proof_formula|proof\s+formula|tdfol_formula|"
+        r"tdfol\s+formula|proof_input|proof\s+input|proof_obligation|"
+        r"proof\s+obligation|obligation)\s*[:=]\s*",
+        "",
+        candidate,
+        flags=re.IGNORECASE,
+    ).strip()
+    return candidate
+
+
+def _extract_balanced_tdfol_formula(text: str) -> str:
+    candidate = str(text or "").strip().strip("`\"'").strip()
+    if not _looks_like_tdfol_formula(candidate):
+        return ""
+    start = _tdfol_formula_start_index(candidate)
+    if start < 0:
+        return ""
+    candidate = candidate[start:].strip()
+    if candidate.startswith(("forall", "exists", "∀", "∃")):
+        return candidate.rstrip(".").strip()
+    open_index = candidate.find("(")
+    if open_index < 0:
+        return candidate.rstrip(".").strip()
+    close_index = _matching_paren_index(candidate, open_index)
+    if close_index is None:
+        return ""
+    return candidate[: close_index + 1].strip()
+
+
+def _tdfol_formula_start_index(text: str) -> int:
+    match = re.search(
+        r"(?is)(?:forall|exists|[OPFGX]|□|◊|¬|[A-Za-z_][A-Za-z0-9_-]*)\s*\(",
+        text,
+    )
+    if match:
+        return match.start()
+    match = re.search(r"(?is)(?:forall|exists|∀|∃)\b", text)
+    return match.start() if match else -1
+
+
+def _normalize_deontic_operator_aliases(text: str) -> str:
+    """Convert named deontic exports (Obligation/Permitted/etc.) to O/P/F."""
+
+    normalized = str(text or "").strip()
+    if not normalized:
+        return normalized
+    return _DEONTIC_EXPORT_OPERATOR_PATTERN.sub(
+        lambda match: (
+            f"{_DEONTIC_EXPORT_OPERATOR_ALIASES[match.group(1).lower()]}("
+        ),
+        normalized,
+    )
+
+
+def _normalize_deontic_label_export(text: str) -> str:
+    """Convert label-style deontic exports such as O: action(...) to O(action(...))."""
+
+    normalized = str(text or "").strip()
+    if not normalized:
+        return normalized
+    match = re.match(
+        r"(?is)^([OPF])\s*:\s*(.+)$",
+        normalized,
+    )
+    if not match:
+        return normalized
+    formula = _extract_balanced_tdfol_formula(match.group(2).strip())
+    if not formula:
+        formula = match.group(2).strip().rstrip(".").strip()
+    if not formula:
+        return normalized
+    return f"{match.group(1).upper()}({formula})"
 
 
 def _unwrap_tdfol_json_export(text: str) -> str:
@@ -1005,7 +1377,7 @@ def _unwrap_tdfol_key_value_export(text: str) -> str:
 
 
 def _extract_tdfol_key_value(text: str, key: str) -> Optional[str]:
-    pattern = re.compile(rf"(?i)(?:^|,)\s*{re.escape(key)}\s*=")
+    pattern = re.compile(rf"(?i)(?:^|[,;])\s*{re.escape(key)}\s*=")
     match = pattern.search(text)
     if match is None:
         return None
@@ -1017,7 +1389,7 @@ def _extract_tdfol_key_value(text: str, key: str) -> Optional[str]:
             depth += 1
         elif char in ")]}":
             depth = max(0, depth - 1)
-        elif char == "," and depth == 0:
+        elif char in ",;" and depth == 0:
             return text[start:index].strip()
     return text[start:].strip()
 

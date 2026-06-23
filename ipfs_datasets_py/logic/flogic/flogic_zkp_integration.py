@@ -315,14 +315,11 @@ class ZKPFLogicProver:
         # raw program text, so the witness remains verifiable without leaking
         # the full ontology to verifiers.
         witness = {
-            "ontology": ontology_hash if private_ontology else self._ergo.get_program()
+            "axioms": [ontology_hash if private_ontology else self._ergo.get_program()]
         }
 
         zkp_proof = self._zkp_prover.prove(statement, witness)
-        is_valid = self._zkp_verifier.verify(
-            {"goal": goal, "ontology_hash": ontology_hash},
-            zkp_proof,
-        )
+        is_valid = self._zkp_verifier.verify_proof(zkp_proof)
 
         proof_time = time.monotonic() - start
         status = FLogicStatus.SUCCESS if is_valid else FLogicStatus.FAILURE

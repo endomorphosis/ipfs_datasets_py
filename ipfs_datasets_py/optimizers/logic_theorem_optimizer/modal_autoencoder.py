@@ -21549,7 +21549,12 @@ def _resolve_vector_compute_backend(
         return request, "python", None, None
 
     if request == "auto":
-        if bool(torch.cuda.is_available()):
+        enable_auto_cuda = str(
+            os.environ.get("IPFS_DATASETS_MODAL_AUTOENCODER_AUTO_CUDA", "")
+        ).strip().lower()
+        if enable_auto_cuda in {"1", "true", "yes", "on"} and bool(
+            torch.cuda.is_available()
+        ):
             return request, "torch_cuda", torch.device("cuda"), torch
         return request, "python", None, None
     if request.startswith("cuda"):

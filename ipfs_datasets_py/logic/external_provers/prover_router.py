@@ -238,6 +238,7 @@ class ProverRouter:
             try:
                 from ..TDFOL.tdfol_prover import TDFOLProver
                 self.provers['native'] = TDFOLProver()
+                self.provers['native_syntactic'] = SyntacticNativeFallbackProver()
             except Exception:
                 logger.debug(
                     "Native TDFOL prover unavailable; using syntactic fallback",
@@ -267,7 +268,8 @@ class ProverRouter:
         """Public compatibility wrapper for automatic prover selection."""
         try:
             return self._select_prover_for_formula(formula)
-        except RuntimeError:
+        except Exception:
+            logger.debug("Could not select prover for formula", exc_info=True)
             return None
 
     def route(self, formula, **kwargs) -> RouterProofResult:
@@ -405,24 +407,46 @@ class ProverRouter:
                 return None
             seen.add(object_id)
             consumed_keys: set[str] = set()
-            priority_keys = (
+            formula_keys = (
                 "formula_object",
                 "proof_formula_object",
                 "formula",
                 "proof_input",
                 "proof_formula",
                 "tdfol_formula",
+                "goal",
+                "proof_goal",
+                "theorem",
+                "theorem_formula",
+                "logical_form",
+                "logic_formula",
+                "normalized_formula",
+                "expression",
                 "value",
-                "text",
             )
             container_keys = (
+                "proof_obligation",
+                "obligation",
+                "payload",
+                "router_payload",
+                "view",
+                "data",
                 "obligations",
                 "proof_obligations",
+                "proofs",
                 "records",
                 "formulas",
+                "theorems",
+                "goals",
+                "clauses",
                 "items",
             )
-            for key in priority_keys + container_keys:
+            text_keys = (
+                "text",
+                "source_text",
+                "normalized_text",
+            )
+            for key in formula_keys + container_keys + text_keys:
                 if key not in formula:
                     continue
                 consumed_keys.add(key)
@@ -499,18 +523,24 @@ class ProverRouter:
         Returns:
             Name of selected prover
         """
-        # Analyze formula to get recommendations
-        analysis = self.analyzer.analyze(formula)
-        
-        logger.debug(f"Formula analysis: type={analysis.formula_type.value}, "
-                    f"complexity={analysis.complexity.value}, score={analysis.complexity_score:.1f}")
-        logger.debug(f"Recommended provers: {analysis.recommended_provers}")
-        
-        # Try recommended provers in order
-        for prover_name in analysis.recommended_provers:
-            if prover_name in self.provers:
-                logger.info(f"Selected {prover_name} based on formula analysis")
-                return prover_name
+        try:
+            # Analyze formula to get recommendations
+            analysis = self.analyzer.analyze(formula)
+
+            logger.debug(f"Formula analysis: type={analysis.formula_type.value}, "
+                        f"complexity={analysis.complexity.value}, score={analysis.complexity_score:.1f}")
+            logger.debug(f"Recommended provers: {analysis.recommended_provers}")
+
+            # Try recommended provers in order
+            for prover_name in analysis.recommended_provers:
+                if prover_name in self.provers:
+                    logger.info(f"Selected {prover_name} based on formula analysis")
+                    return prover_name
+        except Exception:
+            logger.debug(
+                "Formula analysis failed during prover selection; using fallback order",
+                exc_info=True,
+            )
         
         # Fallback: prefer Z3 for FOL
         if 'z3' in self.provers:

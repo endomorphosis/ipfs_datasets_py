@@ -220,6 +220,10 @@ setup(
             "processors/groth16_backend/src/*.rs",
             "processors/groth16_backend/schemas/*.json",
             "processors/groth16_backend/contracts/*.sol",
+            "processors/provekit_backend/README.md",
+            "processors/provekit_backend/build.sh",
+            "logic/zkp/provekit/circuits/*/Nargo.toml",
+            "logic/zkp/provekit/circuits/*/src/*.nr",
         ],
     },
     include_package_data=True,
@@ -416,6 +420,11 @@ setup(
         # ZKP Groth16 (Rust FFI wrapper)
         # Note: the Rust binary itself is not a Python dependency.
         'groth16': [
+            'jsonschema>=4.0.0',
+        ],
+        'provekit': [
+            # ProveKit itself is an operator-provided CLI. The Python extra
+            # only installs lightweight validation helpers and package assets.
             'jsonschema>=4.0.0',
         ],
 

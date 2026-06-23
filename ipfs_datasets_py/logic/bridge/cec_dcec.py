@@ -63,6 +63,7 @@ _DCEC_STATE_PREDICATE_BY_KIND = {
     "applicability": "AppliesTo",
     "exemption": "ExemptedFrom",
     "instrument_lifecycle": "LifecycleState",
+    "purpose": "Purpose",
 }
 
 
@@ -96,7 +97,13 @@ class CecDcecBridgeAdapter:
 
         norms = _deontic_norms_from_text(text, converter=self._converter())
         resolved_document_id = document_id or _document_id("dcec", text)
-        records = _dcec_records(norms, compiler_guidance=compiler_guidance)
+        records = _dcec_records(
+            norms,
+            compiler_guidance=compiler_guidance,
+            document_id=resolved_document_id,
+            citation=citation,
+            source_text=text,
+        )
         triples = tuple(
             _dcec_frame_logic_triples(
                 resolved_document_id,
@@ -309,9 +316,39 @@ class CecDcecBridgeAdapter:
             / attempted,
         )
         no_formula_loss = 0.0 if records else 1.0
+        legal_ir_view_cross_entropy_loss = _cec_legal_ir_view_cross_entropy_loss(
+            ir_document
+        )
+        cross_entropy_loss = max(
+            no_formula_loss,
+            failure_ratio,
+            event_formula_invalid_ratio,
+            legal_ir_view_cross_entropy_loss,
+        )
+        cosine_similarity = max(0.0, 1.0 - no_formula_loss)
+        source_copy_reward_hack_penalty = _cec_source_copy_reward_hack_penalty(
+            source_text=text,
+            decoded_text=" ".join(
+                str(
+                    record.get("event_calculus_formula")
+                    or record.get("formula")
+                    or ""
+                )
+                for record in records
+            ),
+        )
+        target_metrics = {
+            "cec_dcec_event_formula_invalid_ratio": event_formula_invalid_ratio,
+            "cec_dcec_validation_failure_ratio": failure_ratio,
+            "cross_entropy_loss": cross_entropy_loss,
+            "cosine_similarity": cosine_similarity,
+            "legal_ir_view_cross_entropy_loss": legal_ir_view_cross_entropy_loss,
+            "source_copy_reward_hack_penalty": source_copy_reward_hack_penalty,
+        }
         round_trip = RoundTripMetrics(
-            cosine_similarity=max(0.0, 1.0 - no_formula_loss),
+            cosine_similarity=cosine_similarity,
             cosine_loss=no_formula_loss,
+            cross_entropy_loss=cross_entropy_loss,
             symbolic_validity_penalty=max(
                 failure_ratio,
                 event_formula_invalid_ratio,
@@ -320,6 +357,8 @@ class CecDcecBridgeAdapter:
                 "cec_dcec_no_formula_loss": no_formula_loss,
                 "cec_dcec_validation_failure_ratio": failure_ratio,
                 "cec_dcec_event_formula_invalid_ratio": event_formula_invalid_ratio,
+                "legal_ir_view_cross_entropy_loss": legal_ir_view_cross_entropy_loss,
+                "source_copy_reward_hack_penalty": source_copy_reward_hack_penalty,
             },
         )
         status = "ok" if records and proof_gate.compiles else "partial"
@@ -349,6 +388,7 @@ class CecDcecBridgeAdapter:
                     str(record.get("compiler_guidance_source") or "")
                     for record in records
                 ),
+                "target_metrics": target_metrics,
             },
         )
 
@@ -365,6 +405,12 @@ def _deontic_norms_from_text(text: str, *, converter: Any) -> list[dict[str, Any
     editorial_norm = _section_editorial_norm_from_text(text)
     if editorial_norm and editorial_norm.get("norm_type") == "instrument_lifecycle":
         return [editorial_norm]
+    statutory_statement_norm = _section_statutory_statement_norm_from_text(text)
+    if statutory_statement_norm:
+        return [statutory_statement_norm]
+    operational_norm = _section_operational_norm_from_text(text)
+    if operational_norm:
+        return [operational_norm]
 
     result = converter.convert(text)
     metadata = dict(getattr(result, "metadata", {}) or {})
@@ -471,6 +517,9 @@ def _dcec_records(
     norms: Sequence[Mapping[str, Any]],
     *,
     compiler_guidance: Optional[Mapping[str, Any]] = None,
+    document_id: str = "",
+    citation: Optional[str] = None,
+    source_text: str = "",
 ) -> list[dict[str, Any]]:
     event_formula_exports = _event_formula_exports_from_norms(norms)
     pending_event_formula_exports = {
@@ -492,6 +541,9 @@ def _dcec_records(
         frame_guidance = _frame_guidance_from_norm(
             norm,
             compiler_guidance=compiler_guidance,
+            document_id=document_id,
+            citation=citation,
+            source_text=source_text,
         )
         selected_frame = str(frame_guidance.get("selected_frame") or "")
         selected_frame_source = str(frame_guidance.get("selected_frame_source") or "")
@@ -825,10 +877,17 @@ def _dcec_state_kind(norm: Mapping[str, Any]) -> str:
     )
     if re.search(r"\b(?:the\s+term|terms?)\b.{0,80}\bmeans\b", corpus):
         return "definition"
-    if re.search(r"\b(?:does\s+not|do\s+not|shall\s+not)\s+apply\s+to\b", corpus):
+    if re.search(
+        r"\b(?:(?:does\s+not|do\s+not|shall\s+not)\s+apply\s+to|"
+        r"nothing\b.{0,80}\bshall\s+apply\s+to|"
+        r"nothing\b.{0,80}\bshall\s+be\s+construed\s+as)\b",
+        corpus,
+    ):
         return "exemption"
     if re.search(r"\b(?:applies|apply|shall\s+apply|is\s+applicable)\s+to\b", corpus):
         return "applicability"
+    if re.search(r"\b(?:purpose|policy)\b", corpus):
+        return "purpose"
     if re.search(r"\b(?:expires?|expiration|effective\s+date|takes?\s+effect)\b", corpus):
         return "instrument_lifecycle"
     return ""
@@ -854,6 +913,55 @@ def _proof_gate_from_dcec_records(records: Sequence[Mapping[str, Any]]) -> Proof
             for record in records
         ),
     )
+
+
+def _cec_legal_ir_view_cross_entropy_loss(ir_document: LegalIRDocument) -> float:
+    """Bounded missing-view loss for daemon-visible CEC legal IR metrics."""
+
+    required_views = {
+        "cec_events",
+        "dcec_formula",
+        "event_calculus",
+        "frame_logic",
+        "proof_trace",
+    }
+    present_views = {
+        name
+        for name, view in ir_document.views.items()
+        if name in required_views and dict(view.payload)
+    }
+    if not required_views:
+        return 0.0
+    missing_count = len(required_views - present_views)
+    return missing_count / len(required_views)
+
+
+def _cec_source_copy_reward_hack_penalty(
+    *,
+    source_text: str,
+    decoded_text: str,
+) -> float:
+    """Penalize decoded CEC output that simply mirrors long source spans."""
+
+    source_tokens = _metric_tokens(source_text)
+    decoded_tokens = _metric_tokens(decoded_text)
+    if len(source_tokens) < 12 or len(decoded_tokens) < 12:
+        return 0.0
+    source_token_set = set(source_tokens)
+    if not source_token_set:
+        return 0.0
+    copied_ratio = sum(1 for token in decoded_tokens if token in source_token_set) / len(
+        decoded_tokens
+    )
+    return copied_ratio if copied_ratio >= 0.85 else 0.0
+
+
+def _metric_tokens(text: str) -> list[str]:
+    return [
+        token
+        for token in re.findall(r"[a-z0-9_]+", str(text or "").lower())
+        if len(token) > 2
+    ]
 
 
 def _cec_event_view_rows(records: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
@@ -1783,10 +1891,14 @@ def _frame_guidance_from_norm(
     norm: Mapping[str, Any],
     *,
     compiler_guidance: Optional[Mapping[str, Any]] = None,
+    document_id: str = "",
+    citation: Optional[str] = None,
+    source_text: str = "",
 ) -> dict[str, str]:
     logic_frame = _mapping(norm.get("logic_frame"))
     legal_frame = _mapping(norm.get("legal_frame"))
     prompt_context = _mapping(norm.get("prompt_context"))
+    generic_frame: dict[str, str] = {}
     for source, value in (
         ("norm.selected_frame", norm.get("selected_frame")),
         ("norm.logic_frame.selected_frame", logic_frame.get("selected_frame")),
@@ -1797,11 +1909,25 @@ def _frame_guidance_from_norm(
     ):
         canonical = _canonical_frame_symbol(value)
         if canonical:
+            if source == "norm.legal_frame.category" and _is_generic_frame_symbol(
+                canonical
+            ):
+                generic_frame = {
+                    "selected_frame": canonical,
+                    "selected_frame_source": source,
+                }
+                continue
             return {
                 "selected_frame": canonical,
                 "selected_frame_source": source,
             }
-    guided_frame = _selected_frame_from_compiler_guidance(compiler_guidance)
+    guided_frame = _selected_frame_from_compiler_guidance(
+        compiler_guidance,
+        norm=norm,
+        document_id=document_id,
+        citation=citation,
+        source_text=source_text,
+    )
     if guided_frame:
         return {
             "selected_frame": guided_frame["selected_frame"],
@@ -1814,17 +1940,30 @@ def _frame_guidance_from_norm(
             "selected_frame": inferred,
             "selected_frame_source": "norm.text_inference",
         }
+    if generic_frame:
+        return generic_frame
     return {}
 
 
 def _selected_frame_from_compiler_guidance(
     compiler_guidance: Optional[Mapping[str, Any]],
+    *,
+    norm: Optional[Mapping[str, Any]] = None,
+    document_id: str = "",
+    citation: Optional[str] = None,
+    source_text: str = "",
 ) -> dict[str, str]:
     guidance = _mapping(compiler_guidance)
     if not guidance or not _compiler_guidance_has_cec_bridge_route(guidance):
         return {}
 
-    for source, value in _compiler_guidance_frame_candidates(guidance):
+    for source, value in _compiler_guidance_frame_candidates(
+        guidance,
+        norm=norm,
+        document_id=document_id,
+        citation=citation,
+        source_text=source_text,
+    ):
         canonical = _canonical_frame_symbol(value)
         if canonical:
             return {
@@ -1864,13 +2003,36 @@ def _compiler_guidance_has_cec_bridge_route(guidance: Mapping[str, Any]) -> bool
         elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
             if any(str(route).strip().lower() in route_tokens for route in value):
                 return True
+    for key in (
+        "bundle",
+        "compiler_guidance_bundle",
+        "semantic_bundle",
+        "vector_bundle",
+    ):
+        bundle = _mapping(guidance.get(key))
+        if not bundle:
+            continue
+        for bundle_key in (
+            "route",
+            "compiler_guidance_route",
+            "target_component",
+            "target",
+        ):
+            token = str(bundle.get(bundle_key) or "").strip().lower()
+            if token in route_tokens:
+                return True
     return False
 
 
 def _compiler_guidance_frame_candidates(
     guidance: Mapping[str, Any],
+    *,
+    norm: Optional[Mapping[str, Any]] = None,
+    document_id: str = "",
+    citation: Optional[str] = None,
+    source_text: str = "",
 ) -> list[tuple[str, Any]]:
-    candidates: list[tuple[str, Any]] = []
+    top_level_candidates: list[tuple[str, Any]] = []
     for key in (
         "selected_frame_after",
         "selected_frame",
@@ -1878,37 +2040,119 @@ def _compiler_guidance_frame_candidates(
         "frame_after",
         "frame",
     ):
-        candidates.append((key, guidance.get(key)))
+        top_level_candidates.append((key, guidance.get(key)))
 
+    candidates: list[tuple[str, Any]] = []
+    evidence_rows = _compiler_guidance_evidence_rows(guidance)
+    matched_rows = [
+        (collection_key, row)
+        for collection_key, row in evidence_rows
+        if _compiler_guidance_row_matches_norm(
+            row,
+            norm=norm,
+            document_id=document_id,
+            citation=citation,
+            source_text=source_text,
+        )
+    ]
+    for collection_key, row in matched_rows:
+        for key in (
+            "selected_frame_after",
+            "selected_frame",
+            "frame_after",
+            "frame",
+        ):
+            candidates.append((f"{collection_key}.{key}", row.get(key)))
+    candidates.extend(top_level_candidates)
+
+    for collection_key, row in evidence_rows:
+        if (collection_key, row) in matched_rows:
+            continue
+        for key in (
+            "selected_frame_after",
+            "selected_frame",
+            "frame_after",
+            "frame",
+        ):
+            candidates.append((f"{collection_key}.{key}", row.get(key)))
+    return candidates
+
+
+def _compiler_guidance_evidence_rows(
+    guidance: Mapping[str, Any],
+) -> list[tuple[str, Mapping[str, Any]]]:
+    rows: list[tuple[str, Mapping[str, Any]]] = []
     for collection_key in (
+        "hint_evidence",
         "evidence",
         "guidance_evidence",
         "compiler_guidance_evidence",
+        "metric_sample_payloads",
         "samples",
     ):
         value = guidance.get(collection_key)
-        rows: list[Mapping[str, Any]] = []
+        collection_rows: list[Mapping[str, Any]] = []
         if isinstance(value, Mapping):
-            rows = [value]
+            collection_rows = [value]
         elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
-            rows = [row for row in value if isinstance(row, Mapping)]
+            collection_rows = [row for row in value if isinstance(row, Mapping)]
         for row in sorted(
-            rows,
+            collection_rows,
             key=lambda item: int(item.get("evidence_rank") or item.get("rank") or 999999),
         ):
-            for key in (
-                "selected_frame_after",
-                "selected_frame",
-                "frame_after",
-                "frame",
-            ):
-                candidates.append((f"{collection_key}.{key}", row.get(key)))
-    return candidates
+            rows.append((collection_key, row))
+    return rows
+
+
+def _compiler_guidance_row_matches_norm(
+    row: Mapping[str, Any],
+    *,
+    norm: Optional[Mapping[str, Any]] = None,
+    document_id: str = "",
+    citation: Optional[str] = None,
+    source_text: str = "",
+) -> bool:
+    norm = _mapping(norm)
+    row_sample_id = str(row.get("sample_id") or row.get("document_id") or "").strip()
+    norm_ids = {
+        str(value).strip()
+        for value in (
+            norm.get("sample_id"),
+            norm.get("source_id"),
+            norm.get("document_id"),
+            document_id,
+        )
+        if str(value or "").strip()
+    }
+    if row_sample_id and row_sample_id in norm_ids:
+        return True
+
+    row_citation = str(row.get("citation") or row.get("canonical_citation") or "").strip()
+    norm_citations = {
+        str(value).strip()
+        for value in (
+            norm.get("citation"),
+            norm.get("canonical_citation"),
+            citation,
+        )
+        if str(value or "").strip()
+    }
+    if row_citation and row_citation in norm_citations:
+        return True
+
+    preview = _normalize_legal_sample_text(row.get("text_preview") or row.get("text"))
+    if preview and preview in _normalize_legal_sample_text(source_text):
+        return True
+    return False
 
 
 def _canonical_frame_symbol(value: Any) -> str:
     token = _symbol(value, fallback="")
     return token[:96] if token else ""
+
+
+def _is_generic_frame_symbol(value: str) -> bool:
+    return str(value or "").strip().lower() in {"norm", "legal_norm"}
 
 
 def _infer_selected_frame_from_norm_text(norm: Mapping[str, Any]) -> str:
@@ -1958,6 +2202,180 @@ def _fallback_norm_from_conversion(*, result: Any, text: str) -> Optional[dict[s
     }
 
 
+def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
+    normalized_text = _normalize_legal_sample_text(text)
+    if not normalized_text or not _looks_like_us_code_section_text(normalized_text):
+        return None
+    substantive_text = _substantive_statutory_text(normalized_text)
+    if not substantive_text:
+        return None
+    operative_text = _strip_parenthetical_public_law_tail(substantive_text)
+    patterns = (
+        (
+            "obligated",
+            r"\b(?P<actor>nothing\s+in\s+this\s+chapter)\s+shall\s+"
+            r"(?P<action>be\s+construed\s+as\s+[^.;]+)",
+        ),
+        (
+            "obligated",
+            r"\b(?P<actor>nothing\s+in\s+this\s+chapter)\s+shall\s+"
+            r"(?P<action>apply\s+to\s+[^.;]+)",
+        ),
+        (
+            "obligated",
+            r"\b(?P<actor>[A-Za-z][^.;]{1,360}?)\s+shall\s+"
+            r"(?P<action>be\s+transferred\s+[^.;]+)",
+        ),
+        (
+            "obligated",
+            r"\b(?P<actor>[A-Za-z][^.;]{1,360}?)\s+shall\s+"
+            r"(?P<action>be\s+subject\s+to\s+[^.;]+)",
+        ),
+        (
+            "permitted",
+            r"\b(?P<actor>[A-Za-z][^.;]{1,360}?)\s+may\s+"
+            r"(?P<action>be\s+leased\s+only[^.;]*)",
+        ),
+        (
+            "permitted",
+            r"\b(?P<actor>[A-Za-z][^.;]{1,360}?)\s+may\s+"
+            r"(?P<action>be\s+used\s+only\s+[^.;]+)",
+        ),
+        (
+            "obligated",
+            r"\b(?P<actor>[A-Za-z][^.;]{1,360}?)\s+shall\s+"
+            r"(?P<action>be\s+available\s+[^.;]+)",
+        ),
+        (
+            "permitted",
+            r"\b(?P<actor>[A-Za-z][^.;]{1,360}?)\s+is\s+authorized\b[^.;]{0,160}?\s+to\s+"
+            r"(?P<action>[^.;:]+)",
+        ),
+        (
+            "forbidden",
+            r"\b(?P<actor>no\s+[A-Za-z][^.;]{1,360}?)\s+shall\s+"
+            r"(?P<action>[^.;:]+)",
+        ),
+        (
+            "forbidden",
+            r"\b(?P<actor>[A-Za-z][^.;]{1,360}?)\s+shall\s+not\s+"
+            r"(?P<action>[^.;:]+)",
+        ),
+        (
+            "obligated",
+            r"\b(?P<actor>[A-Za-z][^.;]{1,360}?)\s+shall\s+"
+            r"(?P<action>[^.;:]+)",
+        ),
+        (
+            "permitted",
+            r"\b(?P<actor>[A-Za-z][^.;]{1,360}?)\s+may\s+"
+            r"(?P<action>[^.;:]+)",
+        ),
+    )
+    lowered = operative_text.lower()
+    matches: list[tuple[int, int, str, re.Match[str]]] = []
+    for pattern_index, (modality, pattern) in enumerate(patterns):
+        match = re.search(pattern, lowered)
+        if not match:
+            continue
+        matches.append((match.start(), pattern_index, modality, match))
+    for _, _, modality, match in sorted(matches, key=lambda item: (item[0], item[1])):
+        raw_actor = match.group("actor")
+        if modality == "obligated":
+            embedded_no_actor = re.search(r"\bno\s+(.+)$", raw_actor)
+            if embedded_no_actor:
+                raw_actor = embedded_no_actor.group(0)
+                modality = "forbidden"
+        actor = _clean_operational_actor_slot(raw_actor)
+        action = _clean_operational_slot(match.group("action"))
+        if not actor or not action:
+            continue
+        digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
+        return {
+            "actor": actor,
+            "action": action,
+            "modality": modality,
+            "norm_type": modality,
+            "source_id": f"dcec:section:{digest}",
+            "support_text": operative_text[:500],
+            "extraction_method": "cec_dcec_section_operational_v1",
+        }
+    return None
+
+
+def _looks_like_us_code_section_text(text: str) -> bool:
+    lowered = str(text or "").lower()
+    return bool(
+        re.search(r"\bu\.s\.c\.\b|\bunited\s+states\s+code\b", lowered)
+        or re.search(r"\bsec\.?\s+[0-9][0-9a-z.-]*\b", lowered)
+        or re.search(r"§+\s*[0-9][0-9a-z.-]*", lowered)
+    )
+
+
+def _strip_parenthetical_public_law_tail(text: str) -> str:
+    value = _normalize_legal_sample_text(text)
+    return re.split(
+        r"\s+\((?:Pub\.|Added|Aug\.|June|July|Dec\.|Mar\.|Oct\.)\b",
+        value,
+        maxsplit=1,
+        flags=re.IGNORECASE,
+    )[0].strip()
+
+
+def _clean_operational_slot(text: str) -> str:
+    value = _normalize_legal_sample_text(text)
+    value = re.sub(r"\bprovided,?\s+however\b.*$", "", value, flags=re.IGNORECASE)
+    value = re.sub(
+        r"^notwithstanding\b[^,]{1,240},\s*",
+        "",
+        value,
+        flags=re.IGNORECASE,
+    )
+    lands_match = re.search(r"\b(lands\s+which\b.+)$", value, flags=re.IGNORECASE)
+    if lands_match:
+        value = lands_match.group(1)
+    value = re.sub(
+        r"^(?:purposes?|construction|leasing requirements|transfer of amounts|"
+        r"use of recovered amounts|attorney general approval of title|"
+        r"guidance for executive agencies on linking of award and incentive fees "
+        r"to acquisition outcomes|information to congress on institute activities|"
+        r"contribution to inter american development bank authorization of "
+        r"appropriations|abandonment of property of the estate|art exhibits|"
+        r"disclaimers limited warranties and nonwarranties)\s+",
+        "",
+        value,
+        flags=re.IGNORECASE,
+    )
+    value = re.sub(r"^(?:the|a|an)\s+", "", value, flags=re.IGNORECASE)
+    return value.strip(" ,:-")
+
+
+def _clean_operational_actor_slot(text: str) -> str:
+    value = _clean_operational_slot(text)
+    use_clause_match = re.search(
+        r"\bthe\s+use\s+of\s+a\s+disclaimer\b.*$",
+        value,
+        flags=re.IGNORECASE,
+    )
+    if use_clause_match:
+        value = use_clause_match.group(0)
+    value = re.sub(r"^no\s+", "", value, flags=re.IGNORECASE)
+    heading_subject_match = re.search(
+        r"\b(?:the|a|an)\s+("
+        r"director|secretary|trustee|court|council|commission|administrator|nmic|"
+        r"federal acquisition regulation|department of defense|"
+        r"united states governor of the bank|property|work of art or manufacture|"
+        r"use of a disclaimer limited warranty or nonwarranty clause"
+        r")$",
+        value,
+        flags=re.IGNORECASE,
+    )
+    if heading_subject_match:
+        value = heading_subject_match.group(1)
+    value = re.sub(r"^(?:the|a|an)\s+", "", value, flags=re.IGNORECASE)
+    return value.strip(" ,:-")
+
+
 def _section_editorial_norm_from_text(text: str) -> Optional[dict[str, Any]]:
     normalized_text = _normalize_legal_sample_text(text)
     lowered = normalized_text.lower()
@@ -1975,6 +2393,9 @@ def _section_editorial_norm_from_text(text: str) -> Optional[dict[str, Any]]:
     elif _section_status_heading_matches(lowered, "omitted"):
         status = "omitted"
         action = "record section omission"
+    elif _section_status_heading_matches(lowered, "transferred"):
+        status = "transferred"
+        action = "record section transfer"
     elif (
         re.search(r"\bsec\.?\s*[0-9a-z.-]+\s*-\s*change\s+in\s+name\b", lowered)
         or re.search(r"§+\s*[0-9a-z.-]+\.?\s+change\s+in\s+name\b", lowered)
@@ -1998,15 +2419,137 @@ def _section_editorial_norm_from_text(text: str) -> Optional[dict[str, Any]]:
     }
 
 
+def _section_statutory_statement_norm_from_text(text: str) -> Optional[dict[str, Any]]:
+    normalized_text = _normalize_legal_sample_text(text)
+    if not normalized_text:
+        return None
+    substantive_text = _substantive_statutory_text(normalized_text)
+    lowered = substantive_text.lower()
+    if not _looks_like_statutory_purpose_statement(lowered):
+        return None
+
+    actor = _purpose_actor_from_text(substantive_text)
+    action = _purpose_action_from_text(substantive_text)
+    if not action:
+        return None
+    digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
+    return {
+        "actor": actor,
+        "action": action,
+        "modality": "purpose",
+        "norm_type": "purpose",
+        "source_id": f"dcec:purpose:{digest}",
+        "support_text": substantive_text[:500],
+        "extraction_method": "cec_dcec_statutory_statement_v1",
+    }
+
+
+def _substantive_statutory_text(text: str) -> str:
+    value = _normalize_legal_sample_text(text)
+    value = re.split(
+        r"\b(?:Editorial Notes|Statutory Notes and Related Subsidiaries|"
+        r"Amendments|References in Text)\b",
+        value,
+        maxsplit=1,
+        flags=re.IGNORECASE,
+    )[0].strip()
+    value = re.sub(
+        r"^.*?\b(?:Sec\.?\s*[0-9A-Za-z.-]+\s*-\s*)",
+        "",
+        value,
+        count=1,
+        flags=re.IGNORECASE,
+    ).strip()
+    value = re.sub(
+        r"^.*?\bFrom\s+the\s+U\.S\.\s+Government\s+Publishing\s+Office,\s+"
+        r"www\.gpo\.gov\s+",
+        "",
+        value,
+        count=1,
+        flags=re.IGNORECASE,
+    ).strip()
+    value = re.sub(
+        r"^§+\s*[0-9A-Za-z.-]+\s*\.?\s*",
+        "",
+        value,
+        count=1,
+    ).strip()
+    return value
+
+
+def _looks_like_statutory_purpose_statement(lowered_text: str) -> bool:
+    if not lowered_text:
+        return False
+    return bool(
+        re.search(r"\b(?:purpose|purposes|policy)\b", lowered_text)
+        and re.search(
+            r"\b(?:general\s+purpose|purpose\s+of|"
+            r"purposes\s+of|"
+            r"congressional\s+statement\s+of\s+purpose|"
+            r"it\s+is\s+the\s+policy\s+of\s+the\s+congress)\b",
+            lowered_text,
+        )
+        and re.search(r"\b(?:is|are|to)\b", lowered_text)
+    )
+
+
+def _purpose_actor_from_text(text: str) -> str:
+    lowered = text.lower()
+    institute_matches = re.findall(
+        r"\bgeneral\s+purpose\s+of\s+(?:the\s+)?(.+?)\s+is\b",
+        lowered,
+    ) or re.findall(
+        r"\bpurpose\s+of\s+(?:the\s+)?(.+?)\s+is\b",
+        lowered,
+    ) or re.findall(
+        r"\bpurposes\s+of\s+(?:the\s+)?(.+?)\s+are\b",
+        lowered,
+    )
+    if institute_matches:
+        actor = re.sub(
+            r"\s*\([^)]*\)\s*",
+            " ",
+            institute_matches[-1],
+        )
+        actor = re.split(r"\b(?:in\s+this|under\s+this)\b", actor, maxsplit=1)[0]
+        actor = " ".join(actor.split())
+        if actor:
+            return actor
+    if re.search(r"\bpolicy\s+of\s+the\s+congress\b", lowered):
+        return "Congress"
+    return "statute"
+
+
+def _purpose_action_from_text(text: str) -> str:
+    value = _normalize_legal_sample_text(text)
+    lowered = value.lower()
+    for pattern in (
+        r"\bpurpose\s+of\s+(?:the\s+)?.+?\s+is\s+(?:to\s+)?([^.;]+)",
+        r"\bpurposes\s+of\s+(?:the\s+)?.+?\s+are\s+(?:to\s+)?([^.;]+)",
+        r"\bit\s+is\s+the\s+policy\s+of\s+the\s+congress\s+and\s+the\s+purpose\s+of\s+this\s+chapter\s+to\s+([^.;]+)",
+        r"\bpurpose\s+of\s+this\s+chapter\s+(?:is\s+)?to\s+([^.;]+)",
+    ):
+        match = re.search(pattern, lowered)
+        if match:
+            action = match.group(1).strip()
+            if action:
+                return action
+    return ""
+
+
 def _section_status_heading_matches(text: str, status: str) -> bool:
     escaped_status = re.escape(status)
+    section_id = r"[0-9][0-9a-z]*(?:[.-][0-9a-z]+)*"
+    section_range = (
+        rf"{section_id}(?:\s*(?:,|and|to|-)\s*{section_id})*"
+    )
     return bool(
         re.search(
-            rf"\bsecs?\.?\s*[0-9][0-9a-z.\-\s,]*(?:-|\.|:)\s*{escaped_status}\b",
+            rf"\bsecs?\.?\s*{section_range}\s*(?:-|\.|:)\s*{escaped_status}\b",
             text,
         )
         or re.search(
-            rf"§+\s*[0-9][0-9a-z.\-\s]*(?:to\s+[0-9a-z.\-\s]+)?\.?\s+{escaped_status}\b",
+            rf"§+\s*{section_range}\.?\s+{escaped_status}\b",
             text,
         )
     )

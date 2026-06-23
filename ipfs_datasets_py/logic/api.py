@@ -254,30 +254,56 @@ _NL_UCAN_EXPORT_NAMES = {
 }
 
 # BW133: Populate UCAN delegation + conflict detector into namespace (best-effort)
-_BW133_DELEGATION_AVAILABLE = False
-_BW133_CONFLICT_AVAILABLE = False
-_CD140_I18N_AVAILABLE = False  # CD140
-try:
-	from ipfs_datasets_py.mcp_server.ucan_delegation import (  # type: ignore[import-not-found]
-		DelegationManager,
-		get_delegation_manager,
-	)
-	_BW133_DELEGATION_AVAILABLE = True
-except (ImportError, ModuleNotFoundError):
-	pass  # optional – mcp_server may be absent
+# These are imported lazily (via __getattr__) to keep logic.api lightweight.
+_BW133_DELEGATION_AVAILABLE = None  # None = not yet probed
+_BW133_CONFLICT_AVAILABLE = None    # None = not yet probed
+_CD140_I18N_AVAILABLE = None        # None = not yet probed
 
-try:
-	from .CEC.nl.nl_policy_conflict_detector import (  # type: ignore[import-not-found]
-		NLPolicyConflictDetector,
-		PolicyConflict,
-		detect_conflicts,
-		detect_i18n_conflicts,  # CB138
-		I18NConflictResult,  # CB138
-	)
-	_BW133_CONFLICT_AVAILABLE = True
-	_CD140_I18N_AVAILABLE = True  # CD140
-except (ImportError, ModuleNotFoundError):
-	pass  # optional
+def _probe_bw133_delegation():
+    global _BW133_DELEGATION_AVAILABLE, DelegationManager, get_delegation_manager  # noqa: PLW0603
+    if _BW133_DELEGATION_AVAILABLE is not None:
+        return _BW133_DELEGATION_AVAILABLE
+    try:
+        import warnings as _dw
+        with _dw.catch_warnings():
+            _dw.simplefilter("ignore")
+            from ipfs_datasets_py.mcp_server.ucan_delegation import (  # type: ignore[import-not-found]
+                DelegationManager as _DM,
+                get_delegation_manager as _GDM,
+            )
+        globals()["DelegationManager"] = _DM
+        globals()["get_delegation_manager"] = _GDM
+        _BW133_DELEGATION_AVAILABLE = True
+    except Exception:
+        _BW133_DELEGATION_AVAILABLE = False
+    return _BW133_DELEGATION_AVAILABLE
+
+def _probe_bw133_conflict():
+    global _BW133_CONFLICT_AVAILABLE, _CD140_I18N_AVAILABLE  # noqa: PLW0603
+    if _BW133_CONFLICT_AVAILABLE is not None:
+        return _BW133_CONFLICT_AVAILABLE
+    try:
+        import warnings as _cw
+        with _cw.catch_warnings():
+            _cw.simplefilter("ignore")
+            from .CEC.nl.nl_policy_conflict_detector import (  # type: ignore[import-not-found]
+                NLPolicyConflictDetector as _NLPCD,
+                PolicyConflict as _PC,
+                detect_conflicts as _DC,
+                detect_i18n_conflicts as _DIC,  # CB138
+                I18NConflictResult as _ICR,     # CB138
+            )
+        globals()["NLPolicyConflictDetector"] = _NLPCD
+        globals()["PolicyConflict"] = _PC
+        globals()["detect_conflicts"] = _DC
+        globals()["detect_i18n_conflicts"] = _DIC
+        globals()["I18NConflictResult"] = _ICR
+        _BW133_CONFLICT_AVAILABLE = True
+        _CD140_I18N_AVAILABLE = True  # CD140
+    except Exception:
+        _BW133_CONFLICT_AVAILABLE = False
+        _CD140_I18N_AVAILABLE = False
+    return _BW133_CONFLICT_AVAILABLE
 
 __all__ = [
 	# FOL
@@ -661,8 +687,30 @@ def compile_explain_iter(sentences: _List[str], policy_id: Optional[str] = None,
 __all__ += ["compile_explain_iter"]
 
 
+_BW133_LAZY_NAMES = {"DelegationManager", "get_delegation_manager"}
+_BW133_CONFLICT_LAZY_NAMES = {
+    "NLPolicyConflictDetector", "PolicyConflict", "detect_conflicts",
+    "detect_i18n_conflicts", "I18NConflictResult",
+}
+
 def __getattr__(name: str) -> Any:
     """Lazily expose optional API classes without import-time side effects."""
+    if name in _BW133_LAZY_NAMES:
+        _probe_bw133_delegation()
+        val = globals().get(name)
+        if val is not None:
+            return val
+        raise AttributeError(
+            f"{name} is not available because mcp_server.ucan_delegation could not be imported"
+        )
+    if name in _BW133_CONFLICT_LAZY_NAMES:
+        _probe_bw133_conflict()
+        val = globals().get(name)
+        if val is not None:
+            return val
+        raise AttributeError(
+            f"{name} is not available because the NL policy conflict detector could not be imported"
+        )
     if name in _NL_UCAN_EXPORT_NAMES:
         ns = _lazy_nl_ucan()
         if ns is not None and name in ns:

@@ -47,11 +47,14 @@ except ImportError:
 
 # Try to import libp2p for P2P cache sharing
 try:
-    from libp2p import new_host
-    from libp2p.peer.peerinfo import info_from_p2p_addr
-    from libp2p.network.stream.net_stream_interface import INetStream
+    import warnings as _libp2p_warnings
+    with _libp2p_warnings.catch_warnings():
+        _libp2p_warnings.simplefilter("ignore", DeprecationWarning)
+        from libp2p import new_host
+        from libp2p.peer.peerinfo import info_from_p2p_addr
+        from libp2p.network.stream.net_stream_interface import INetStream
     HAVE_LIBP2P = True
-except ImportError:
+except Exception:
     HAVE_LIBP2P = False
     new_host = None
 

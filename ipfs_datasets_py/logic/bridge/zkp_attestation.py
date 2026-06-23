@@ -180,6 +180,14 @@ class ZkpAttestationBridgeAdapter:
             source_embedding=source_embedding,
         )
         attestations = list(context["attestations"])
+        public_attestation_records = list(
+            ir_document.views["zkp_attestations"].payload.get("records") or []
+        )
+        from ipfs_datasets_py.logic.zkp import zkp_attestation_legal_ir_view_loss
+
+        legal_ir_view_loss = zkp_attestation_legal_ir_view_loss(
+            public_attestation_records
+        )
         proof_gate = _proof_gate_from_attestations(attestations)
         graph_result = GraphProjectionResult.from_graph_data(context["graph_data"])
         attempted = max(1, len(attestations))
@@ -193,8 +201,10 @@ class ZkpAttestationBridgeAdapter:
         round_trip = RoundTripMetrics(
             cosine_similarity=max(0.0, 1.0 - missing_loss),
             cosine_loss=missing_loss,
+            cross_entropy_loss=legal_ir_view_loss,
             symbolic_validity_penalty=verification_failure_ratio,
             extra_losses={
+                "legal_ir_view_cross_entropy_loss": legal_ir_view_loss,
                 "zkp_attestation_missing_loss": missing_loss,
                 "zkp_verification_failure_ratio": verification_failure_ratio,
             },
@@ -371,10 +381,15 @@ def _graph_data_from_triples(
 
 
 def _public_attestation_record(record: Mapping[str, Any]) -> dict[str, Any]:
-    from ipfs_datasets_py.logic.zkp.circuits import proof_attestation_view_from_proof_dict
+    from ipfs_datasets_py.logic.zkp.circuits import (
+        proof_attestation_view_from_proof_dict,
+        proof_public_inputs_from_proof_dict,
+    )
 
     proof = dict(record.get("proof") or {})
-    public_inputs = dict(record.get("public_inputs") or {})
+    public_inputs = proof_public_inputs_from_proof_dict(proof) or dict(
+        record.get("public_inputs") or {}
+    )
     proof_metadata = proof.get("metadata")
     if not isinstance(proof_metadata, Mapping):
         proof_metadata = {}

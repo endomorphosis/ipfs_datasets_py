@@ -187,15 +187,39 @@ def _hydrate_parser_element_from_nested_context(element: Mapping[str, Any]) -> D
             "action_object_details",
             "recipient_details",
             "action_recipient_details",
+            "beneficiary_details",
             "regulated_activity_details",
+            "activity_details",
+            "regulated_conduct_details",
             "condition_details",
             "exception_details",
             "override_clause_details",
             "temporal_constraint_details",
+            "deadline_details",
+            "duration_details",
             "cross_reference_details",
             "resolved_cross_references",
+            "defined_term_details",
+            "definition_details",
             "defined_term_refs",
             "defined_terms",
+            "purpose_details",
+            "purpose_body_details",
+            "penalty_details",
+            "sanction_details",
+            "procedure",
+            "procedure_details",
+            "instrument_lifecycle_details",
+            "lifecycle_details",
+            "applicability_details",
+            "applicability_target_details",
+            "applicability_scope_details",
+            "exemption_details",
+            "exemption_target_details",
+            "exemption_requirement_details",
+            "target_details",
+            "scope_details",
+            "requirement_details",
             "ontology_terms",
             "kg_relationship_hints",
         ):
@@ -619,6 +643,82 @@ def _exemption_action_text(element: Dict[str, Any]) -> str:
     return ""
 
 
+def _purpose_actor_text(element: Dict[str, Any]) -> str:
+    """Return the institutional subject for detail-only purpose parser rows."""
+
+    norm_type = str(element.get("norm_type") or "").strip().lower()
+    operator = str(element.get("deontic_operator") or element.get("modality") or "").strip().upper()
+    if norm_type != "purpose" and operator != "PURP":
+        return ""
+
+    for key in ("purpose_subject", "purpose_entity", "institution", "entity"):
+        value = str(element.get(key) or "").strip()
+        if value:
+            return value
+
+    for detail_key in ("purpose_details", "purpose_body_details"):
+        for record in _list_of_dicts(element.get(detail_key)):
+            normalized = _with_value_alias(record)
+            for key in (
+                "subject",
+                "actor",
+                "entity",
+                "institution",
+                "purpose_subject",
+            ):
+                value = str(normalized.get(key) or "").strip()
+                if value:
+                    return value
+
+    return ""
+
+
+def _purpose_action_text(element: Dict[str, Any]) -> str:
+    """Return the source-grounded purpose body for purpose parser rows."""
+
+    flat_value = _first_text(element.get("action")).strip()
+    if flat_value:
+        return flat_value
+
+    norm_type = str(element.get("norm_type") or "").strip().lower()
+    operator = str(element.get("deontic_operator") or element.get("modality") or "").strip().upper()
+    if norm_type != "purpose" and operator != "PURP":
+        return ""
+
+    for key in ("purpose", "purpose_text", "purpose_body", "body", "defined_as"):
+        value = str(element.get(key) or "").strip()
+        if value:
+            return value
+
+    legal_frame = element.get("legal_frame")
+    if isinstance(legal_frame, Mapping):
+        for key in ("purpose", "purpose_text", "purpose_body", "body"):
+            value = str(legal_frame.get(key) or "").strip()
+            if value:
+                return value
+
+    for detail_key in ("purpose_details", "purpose_body_details"):
+        for record in _list_of_dicts(element.get(detail_key)):
+            normalized = _with_value_alias(record)
+            for key in (
+                "purpose",
+                "purpose_text",
+                "purpose_body",
+                "body",
+                "object",
+                "target",
+                "value",
+                "normalized_text",
+                "raw_text",
+                "text",
+            ):
+                value = str(normalized.get(key) or "").strip()
+                if value:
+                    return value
+
+    return ""
+
+
 def _action_verb_text(element: Dict[str, Any]) -> str:
     """Return a source-grounded action verb from flat or detail fields."""
 
@@ -869,7 +969,7 @@ def _enumeration_index(value: Any) -> Optional[int]:
     return roman_values.get(text.lower())
 
 
-_CANONICAL_MODALITY_OPERATORS = {"O", "P", "F", "DEF", "APP", "EXEMPT", "LIFE"}
+_CANONICAL_MODALITY_OPERATORS = {"O", "P", "F", "DEF", "APP", "EXEMPT", "LIFE", "PURP"}
 _MODALITY_NORM_TYPE_MAP = {
     "O": "obligation",
     "P": "permission",
@@ -878,6 +978,7 @@ _MODALITY_NORM_TYPE_MAP = {
     "APP": "applicability",
     "EXEMPT": "exemption",
     "LIFE": "instrument_lifecycle",
+    "PURP": "purpose",
 }
 _NORM_TYPE_MODALITY_MAP = {
     "obligation": "O",
@@ -897,6 +998,7 @@ _NORM_TYPE_MODALITY_MAP = {
     "applicability": "APP",
     "exemption": "EXEMPT",
     "instrument_lifecycle": "LIFE",
+    "purpose": "PURP",
 }
 _TEXTUAL_MODALITY_MAP = {
     "obligation": "O",
@@ -928,6 +1030,11 @@ _TEXTUAL_MODALITY_MAP = {
     "offense": "F",
     "infraction": "F",
     "definition": "DEF",
+    "purpose": "PURP",
+    "general purpose": "PURP",
+    "mission": "PURP",
+    "function": "PURP",
+    "functions": "PURP",
     "applicability": "APP",
     "exemption": "EXEMPT",
     "instrument lifecycle": "LIFE",
@@ -1687,6 +1794,7 @@ class LegalNormIR:
                 or _exemption_actor_text(element)
                 or _definition_actor_text(element)
                 or _instrument_lifecycle_actor_text(element)
+                or _purpose_actor_text(element)
             ),
             actor_type=str(element.get("actor_type") or element.get("entity_type") or ""),
             action=(
@@ -1694,6 +1802,7 @@ class LegalNormIR:
                 or _exemption_action_text(element)
                 or _instrument_lifecycle_action_text(element)
                 or _penalty_action_text(element)
+                or _purpose_action_text(element)
                 or _generic_action_text(element)
             ),
             mental_state=_mental_state_text(element),
@@ -1847,14 +1956,17 @@ def legal_norm_ir_phase8_required_slots(
 ) -> List[str]:
     """Return per-norm Phase 8 slots required for quality-gate completeness.
 
-    Phase 8 quality should always require core deontic slots (actor/modality/
-    action) and should require optional legal slots only when that norm
-    actually carries grounded data for them. This avoids treating absent
-    optional structures as reconstruction/provenance defects.
+    Phase 8 quality should require the core slots that the decoder actually
+    renders for the norm family. Ordinary O/P/F norms stay strict on
+    actor/modality/action. Definition and frame-style legal families express
+    their force through fixed connectors, so they require only their
+    source-grounded legal arguments. Optional legal slots are required only
+    when that norm carries grounded data for them.
     """
 
+    family_core_slots = _phase8_core_slots_for_norm(norm, core_slots)
     required: List[str] = []
-    for slot in core_slots:
+    for slot in family_core_slots:
         slot_name = str(slot or "").strip()
         if slot_name and slot_name not in required:
             required.append(slot_name)
@@ -1866,6 +1978,26 @@ def legal_norm_ir_phase8_required_slots(
         if not _ir_slot_value_is_empty(_phase8_slot_value(norm, slot_name)):
             required.append(slot_name)
     return required
+
+
+def _phase8_core_slots_for_norm(
+    norm: "LegalNormIR",
+    default_core_slots: Sequence[str],
+) -> Sequence[str]:
+    """Return decoder-native required core slots for a legal norm family."""
+
+    norm_type = str(getattr(norm, "norm_type", "") or "").strip().lower()
+    modality = str(getattr(norm, "modality", "") or "").strip().upper()
+
+    if norm_type == "definition" or modality == "DEF":
+        return ("actor",)
+    if norm_type in {"applicability", "exemption", "instrument_lifecycle"} or modality in {
+        "APP",
+        "EXEMPT",
+        "LIFE",
+    }:
+        return ("actor", "action")
+    return default_core_slots
 
 
 def legal_norm_ir_slot_provenance(
@@ -1882,7 +2014,7 @@ def legal_norm_ir_slot_provenance(
 
     records: List[Dict[str, Any]] = []
     for slot in dict.fromkeys(str(slot) for slot in slots if slot):
-        value = getattr(norm, slot, None)
+        value = _phase8_slot_value(norm, slot)
         present = not _ir_slot_value_is_empty(value)
         spans = _ir_slot_spans(norm, slot, value)
         status = "grounded" if spans else "ungrounded" if present else "missing"
@@ -1952,7 +2084,7 @@ def _ir_slot_spans(norm: LegalNormIR, slot: str, value: Any) -> List[List[int]]:
     if (
         slot == "modality"
         and not spans
-        and norm.norm_type in {"definition", "applicability", "exemption", "instrument_lifecycle"}
+        and norm.norm_type in {"definition", "applicability", "exemption", "instrument_lifecycle", "purpose"}
     ):
         spans.extend(_normalized_span_records(norm.support_span.to_list()))
     spans.extend(_nested_slot_spans(value))

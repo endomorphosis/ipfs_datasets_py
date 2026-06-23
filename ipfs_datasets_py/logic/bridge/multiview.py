@@ -53,6 +53,8 @@ _BRIDGE_CONTRACT_SPARSE_KG_MIN = 0.22
 _BRIDGE_CONTRACT_SPARSE_KG_TARGET = 0.26
 _BRIDGE_CONTRACT_SPARSE_REPEAL_DEONTIC_CAP = 0.28
 _BRIDGE_CONTRACT_SPARSE_REPEAL_KG_MIN = 0.26
+_BRIDGE_CONTRACT_SPARSE_EPISTEMIC_SHIFT = 0.025
+_BRIDGE_CONTRACT_SPARSE_EPISTEMIC_KG_FLOOR = 0.22
 _BRIDGE_CONTRACT_CITATION_FRAME_DEONTIC_FLOOR = 0.20
 _BRIDGE_CONTRACT_CITATION_FRAME_STRUCTURE_MIN_COUNT = 3
 _BRIDGE_CONTRACT_NORMATIVE_DEONTIC_FLOOR = 0.30
@@ -245,6 +247,7 @@ _BRIDGE_CONTRACT_OFFICIAL_USC_EXCERPT_RE = re.compile(
 )
 _BRIDGE_CONTRACT_OFFICIAL_USC_MIN_CHARS = 520
 _BRIDGE_CONTRACT_SHORT_OFFICIAL_USC_MIN_CHARS = 160
+_BRIDGE_CONTRACT_STATUS_OFFICIAL_USC_MIN_CHARS = 80
 _BRIDGE_CONTRACT_USC_SECTION_MARKER_RE = re.compile(
     r"^\s*(?:§|\u00a7){1,2}\s*\d+[a-z0-9\-\.]*\b",
     flags=re.IGNORECASE,
@@ -271,9 +274,34 @@ _BRIDGE_CONTRACT_ADMIN_RULEMAKING_SCHEDULE_RE = re.compile(
     r".{0,180}\b(?:administrator|secretary|agency|commission|board|director)\b",
     flags=re.IGNORECASE,
 )
+_BRIDGE_CONTRACT_REGULATORY_COST_ESTIMATE_RE = re.compile(
+    r"\b(?:costs?\s+of\s+regulations?|regulations?.{0,120}\bcosts?|"
+    r"estimate\s+(?:the\s+)?costs?|cost\s+estimate|unfunded\s+mandates?)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_CONSTRUCTION_EXEMPTION_RE = re.compile(
+    r"\b(?:construction\b.{0,120}\bnothing\s+in\s+this\s+"
+    r"(?:section|chapter|subchapter|part)|"
+    r"nothing\s+in\s+this\s+(?:section|chapter|subchapter|part)\s+"
+    r"shall\s+(?:apply|be\s+construed|affect|limit))\b",
+    flags=re.IGNORECASE,
+)
 _BRIDGE_CONTRACT_ENFORCEMENT_PENALTY_PROVISION_RE = re.compile(
     r"\b(?:penalt(?:y|ies)|misdemeanor|without\s+first\s+obtaining\s+authority|"
     r"shall\s+be\s+guilty)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_COMPLIANCE_ENFORCEMENT_NORM_RE = re.compile(
+    r"\b(?:compliance\s+with\s+requirements?|requirements?\s+imposed)\b"
+    r".{0,160}\bshall\s+be\s+enforced\b"
+    r"|\bshall\s+be\s+enforced\b.{0,160}\b(?:compliance|requirements?)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_FISCAL_AVAILABILITY_NORM_RE = re.compile(
+    r"\b(?:may|shall)\s+make\s+available\b.{0,180}\b"
+    r"(?:amounts?|funds?|appropriations?\s+account)\b"
+    r"|\b(?:amounts?|funds?|appropriations?\s+account)\b.{0,180}\b"
+    r"(?:may|shall)\s+be\s+made\s+available\b",
     flags=re.IGNORECASE,
 )
 _BRIDGE_CONTRACT_LIABILITY_PROVISION_RE = re.compile(
@@ -293,10 +321,57 @@ _BRIDGE_CONTRACT_DETERMINATION_CONDITION_RE = re.compile(
     r"requisite\s+conditions?)\b",
     flags=re.IGNORECASE,
 )
+_BRIDGE_CONTRACT_PREEMPTION_CONTRACT_NORM_RE = re.compile(
+    r"\b(?:preempt(?:s|ed|ion)?|no\s+other\s+state\s+may\s+deny)\b"
+    r".{0,260}\b(?:contracts?|agreements?|credit|rights?|reinsurance)\b"
+    r"|\b(?:contracts?|agreements?|credit|rights?|reinsurance)\b.{0,260}\b"
+    r"(?:preempt(?:s|ed|ion)?|no\s+other\s+state\s+may\s+deny)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_REFERENCES_REPEAL_CROSSREF_RE = re.compile(
+    r"\breferences\s+in\s+text\b.{0,420}\b(?:was\s+)?repealed\s+by\b"
+    r"|\b(?:was\s+)?repealed\s+by\b.{0,420}\breferences\s+in\s+text\b",
+    flags=re.IGNORECASE,
+)
 _BRIDGE_CONTRACT_RENAMING_DESIGNATION_RE = re.compile(
     r"\b(?:change\s+in\s+name|shall\s+(?:on\s+and\s+after\s+)?"
     r"(?:be\s+known|be\s+held\s+to\s+refer)|designated\s+or\s+referred\s+to|"
     r"renamed)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_PURPOSE_POLICY_STATEMENT_RE = re.compile(
+    r"\b(?:congressional\s+statement\s+of\s+purpose|statement\s+of\s+purpose|"
+    r"purpose\s+of\s+(?:institute|chapter|subchapter|part)|"
+    r"general\s+purpose\s+of|it\s+is\s+the\s+policy\s+of\s+the\s+congress|"
+    r"policy\s+of\s+the\s+congress|sense\s+of\s+congress|"
+    r"purpose\s+of\s+this\s+chapter)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_DEFINITION_PROVISION_RE = re.compile(
+    r"\b(?:sec\.\s*[\w\-\.]+\s*-\s*definition|"
+    r"§\s*[\w\-\.]+\.?\s*definitions?|"
+    r"in\s+this\s+(?:section|subchapter|chapter|part|subpart)\b.{0,120}\b"
+    r"(?:term\s+[\w\s\"']+?\s+means|means\s+a|means\s+an|means\s+the))",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_ASSET_TRANSFER_RULE_RE = re.compile(
+    r"\b(?:asset\s+transfer\s+rules?|transfer\s+of\s+assets?|"
+    r"transfer\s+of\s+plan\s+(?:assets|liabilities)|multiemployer\s+plan)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_SAFETY_REGULATORY_PROCEDURE_RE = re.compile(
+    r"\b(?:marine\s+environmental\s+protection|navigational\s+safety|"
+    r"safety\s+zones?|safety\s+of\s+(?:life|property)|"
+    r"prevent\s+pollution|clean\s+up\s+any\s+pollutants?|"
+    r"prescribe\s+and\s+enforce\s+procedures?|"
+    r"issue\s+and\s+enforce\s+regulations?)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_SAVINGS_EXISTING_LAW_RE = re.compile(
+    r"\b(?:savings?\s+provisions?|nothing\s+in\s+this\s+"
+    r"(?:section|chapter|subchapter|part)\s+shall\s+be\s+deemed\s+to\s+"
+    r"(?:amend|repeal|affect|limit)|"
+    r"shall\s+not\s+be\s+deemed\s+to\s+(?:amend|repeal|affect|limit))\b",
     flags=re.IGNORECASE,
 )
 
@@ -1240,6 +1315,18 @@ def _rebalance_dense_contract_distribution(
     has_direct_appropriation_authorization = bool(
         _BRIDGE_CONTRACT_DIRECT_APPROPRIATION_AUTHORIZATION_RE.search(normalized_text)
     )
+    has_regulatory_cost_estimate = bool(
+        _BRIDGE_CONTRACT_REGULATORY_COST_ESTIMATE_RE.search(normalized_text)
+    )
+    has_construction_exemption = bool(
+        _BRIDGE_CONTRACT_CONSTRUCTION_EXEMPTION_RE.search(normalized_text)
+    )
+    has_compliance_enforcement_norm = bool(
+        _BRIDGE_CONTRACT_COMPLIANCE_ENFORCEMENT_NORM_RE.search(normalized_text)
+    )
+    has_fiscal_availability_norm = bool(
+        _BRIDGE_CONTRACT_FISCAL_AVAILABILITY_NORM_RE.search(normalized_text)
+    )
     has_statutory_definition_section = bool(
         _BRIDGE_CONTRACT_STATUTORY_DEFINITION_SECTION_RE.search(normalized_text)
     )
@@ -1405,6 +1492,17 @@ def _rebalance_dense_contract_distribution(
             if has_conditional_cue and has_explicit_temporal_deadline_cue:
                 caps["deontic.ir"] = min(caps["deontic.ir"], 0.68)
                 caps["TDFOL.prover"] = max(caps["TDFOL.prover"], 0.24)
+    if has_regulatory_cost_estimate and has_deontic_cue:
+        caps["TDFOL.prover"] = max(caps.get("TDFOL.prover", 0.0), 0.24)
+        caps["CEC.native"] = min(caps.get("CEC.native", 1.0), 0.20)
+        caps["knowledge_graphs.neo4j_compat"] = min(
+            caps.get("knowledge_graphs.neo4j_compat", 1.0),
+            0.16,
+        )
+    if has_construction_exemption and has_deontic_cue:
+        caps["deontic.ir"] = max(caps.get("deontic.ir", 0.0), 0.42)
+        caps["TDFOL.prover"] = max(caps.get("TDFOL.prover", 0.0), 0.20)
+        caps["CEC.native"] = min(caps.get("CEC.native", 1.0), 0.18)
     if has_conditional_cue and has_deontic_cue and not has_frame_cue:
         # Keep conditional_normative->deontic targets stable in non-frame text.
         caps["deontic.ir"] = max(caps.get("deontic.ir", 0.0), 0.60)
@@ -1756,6 +1854,20 @@ def _rebalance_dense_contract_distribution(
                         ("CEC.native", 0.12),
                         ("knowledge_graphs.neo4j_compat", 0.06),
                     )
+            elif has_regulatory_cost_estimate and has_deontic_cue:
+                target_mix = (
+                    ("TDFOL.prover", 0.38),
+                    ("deontic.ir", 0.30),
+                    ("CEC.native", 0.20),
+                    ("knowledge_graphs.neo4j_compat", 0.12),
+                )
+            elif has_construction_exemption and has_deontic_cue:
+                target_mix = (
+                    ("deontic.ir", 0.50),
+                    ("TDFOL.prover", 0.24),
+                    ("knowledge_graphs.neo4j_compat", 0.16),
+                    ("CEC.native", 0.10),
+                )
             elif (
                 has_conditional_cue
                 and has_deontic_cue
@@ -1768,6 +1880,13 @@ def _rebalance_dense_contract_distribution(
                     ("CEC.native", 0.18),
                     ("knowledge_graphs.neo4j_compat", 0.12),
                     ("TDFOL.prover", 0.06),
+                )
+            elif has_compliance_enforcement_norm:
+                target_mix = (
+                    ("deontic.ir", 0.48),
+                    ("TDFOL.prover", 0.26),
+                    ("knowledge_graphs.neo4j_compat", 0.18),
+                    ("CEC.native", 0.08),
                 )
             elif has_deontic_cue and deontic_cue_count > temporal_cue_count:
                 target_mix = (
@@ -1829,6 +1948,27 @@ def _rebalance_dense_contract_distribution(
                     ("deontic.ir", 0.16),
                     ("TDFOL.prover", 0.10),
                 )
+            elif has_compliance_enforcement_norm:
+                target_mix = (
+                    ("deontic.ir", 0.48),
+                    ("TDFOL.prover", 0.26),
+                    ("knowledge_graphs.neo4j_compat", 0.18),
+                    ("CEC.native", 0.08),
+                )
+            elif has_status_operation_cue and has_deontic_cue:
+                target_mix = (
+                    ("deontic.ir", 0.36),
+                    ("CEC.native", 0.26),
+                    ("TDFOL.prover", 0.20),
+                    ("knowledge_graphs.neo4j_compat", 0.18),
+                )
+            elif has_status_operation_cue and not has_omitted_codification_cue:
+                target_mix = (
+                    ("deontic.ir", 0.34),
+                    ("CEC.native", 0.30),
+                    ("knowledge_graphs.neo4j_compat", 0.24),
+                    ("TDFOL.prover", 0.12),
+                )
             else:
                 target_mix = (
                     ("knowledge_graphs.neo4j_compat", 0.45),
@@ -1855,6 +1995,20 @@ def _rebalance_dense_contract_distribution(
             ("CEC.native", 0.30),
             ("TDFOL.prover", 0.18),
             ("knowledge_graphs.neo4j_compat", 0.08),
+        )
+    elif has_regulatory_cost_estimate and has_deontic_cue:
+        target_mix = (
+            ("TDFOL.prover", 0.40),
+            ("deontic.ir", 0.30),
+            ("CEC.native", 0.18),
+            ("knowledge_graphs.neo4j_compat", 0.12),
+        )
+    elif has_construction_exemption and has_deontic_cue:
+        target_mix = (
+            ("deontic.ir", 0.52),
+            ("TDFOL.prover", 0.24),
+            ("knowledge_graphs.neo4j_compat", 0.16),
+            ("CEC.native", 0.08),
         )
     elif has_deontic_cue and not has_temporal_cue:
         target_mix = (
@@ -1942,11 +2096,21 @@ def _rebalance_dense_contract_distribution(
     if _should_project_flat_dense_contract_distribution(
         lanes,
         has_conditional_structural_normative_signal=has_conditional_structural_normative_signal,
+        has_construction_exemption=has_construction_exemption,
         has_dense_statute_scaffold=has_dense_statute_scaffold,
         has_direct_appropriation_authorization=has_direct_appropriation_authorization,
         has_effect_on_existing_law_frame_cue=has_effect_on_existing_law_frame_cue,
+        has_regulatory_cost_estimate=has_regulatory_cost_estimate,
         has_scaffolded_normative_operations=has_scaffolded_normative_operations,
         has_scaffolded_scope_norm_hint=has_scaffolded_scope_norm_hint,
+        has_statutory_deontic_projection_signal=(
+            has_compliance_enforcement_norm
+            or has_fiscal_availability_norm
+            or (
+                has_status_operation_cue
+                and (has_deontic_cue or not has_omitted_codification_cue)
+            )
+        ),
         has_structural_status_operation_signal=has_structural_status_operation_signal,
     ):
         adjusted = _project_contract_distribution_toward_target(
@@ -2034,6 +2198,24 @@ def _rebalance_dense_contract_distribution(
             adjusted["deontic.ir"] = adjusted.get("deontic.ir", 0.0) + (
                 kg_value - kg_cap
             )
+    if (
+        has_status_operation_cue
+        and not has_repealed_history_frame_cue
+        and not has_temporal_priority_without_normative_cue
+        and (has_deontic_cue or not has_omitted_codification_cue)
+    ):
+        adjusted = _enforce_contract_lane_floors(
+            adjusted,
+            floors={"deontic.ir": 0.30},
+            donor_priority=(
+                "external_provers.router",
+                "zkp.circuits",
+                "modal.frame_logic",
+                "knowledge_graphs.neo4j_compat",
+                "CEC.native",
+                "TDFOL.prover",
+            ),
+        )
     return adjusted
 
 
@@ -2062,11 +2244,14 @@ def _should_project_flat_dense_contract_distribution(
     lanes: Mapping[str, float],
     *,
     has_conditional_structural_normative_signal: bool,
+    has_construction_exemption: bool,
     has_dense_statute_scaffold: bool,
     has_direct_appropriation_authorization: bool,
     has_effect_on_existing_law_frame_cue: bool,
+    has_regulatory_cost_estimate: bool,
     has_scaffolded_normative_operations: bool,
     has_scaffolded_scope_norm_hint: bool,
+    has_statutory_deontic_projection_signal: bool,
     has_structural_status_operation_signal: bool,
 ) -> bool:
     """Return whether a flat dense mix should be pulled toward semantic cues."""
@@ -2082,8 +2267,11 @@ def _should_project_flat_dense_contract_distribution(
         has_dense_statute_scaffold
         or has_effect_on_existing_law_frame_cue
         or has_direct_appropriation_authorization
+        or has_regulatory_cost_estimate
+        or has_construction_exemption
         or has_scaffolded_normative_operations
         or has_scaffolded_scope_norm_hint
+        or has_statutory_deontic_projection_signal
         or has_structural_status_operation_signal
         or has_conditional_structural_normative_signal
     )
@@ -2274,12 +2462,6 @@ def _rebalance_sparse_contract_distribution(
         _BRIDGE_CONTRACT_STRUCTURAL_FRAME_CUE_RE,
         normalized_text,
     ) + _cue_count(_BRIDGE_CONTRACT_STATUTE_STRUCTURE_CUE_RE, normalized_text)
-    if (
-        scaffold_count < _BRIDGE_CONTRACT_SPARSE_SCAFFOLD_MIN_COUNT
-        or structural_count < _BRIDGE_CONTRACT_SPARSE_STRUCTURAL_MIN_COUNT
-    ):
-        return lanes
-
     deontic_cue_count = _contextual_modal_cue_count(
         _BRIDGE_CONTRACT_DEONTIC_CUE_RE,
         normalized_text,
@@ -2288,8 +2470,36 @@ def _rebalance_sparse_contract_distribution(
         _BRIDGE_CONTRACT_REPEAL_TEMPORAL_CUE_RE,
         normalized_text,
     )
-    has_repeal_scaffold_signal = repeal_cue_count > 0 and scaffold_count >= (
-        _BRIDGE_CONTRACT_SPARSE_SCAFFOLD_MIN_COUNT + 1
+    has_short_official_status_signal = (
+        len(normalized_text) >= _BRIDGE_CONTRACT_STATUS_OFFICIAL_USC_MIN_CHARS
+        and _BRIDGE_CONTRACT_USC_SECTION_MARKER_RE.search(normalized_text) is not None
+        and repeal_cue_count > 0
+        and (
+            _BRIDGE_CONTRACT_LEGISLATIVE_HISTORY_CUE_RE.search(normalized_text)
+            is not None
+            or _BRIDGE_CONTRACT_STATUTES_AT_LARGE_CUE_RE.search(normalized_text)
+            is not None
+        )
+        and structural_count > 0
+    )
+    if (
+        not has_short_official_status_signal
+        and (
+            scaffold_count < _BRIDGE_CONTRACT_SPARSE_SCAFFOLD_MIN_COUNT
+            or structural_count < _BRIDGE_CONTRACT_SPARSE_STRUCTURAL_MIN_COUNT
+        )
+    ):
+        return lanes
+
+    has_repeal_scaffold_signal = (
+        repeal_cue_count > 0
+        and (
+            scaffold_count >= (_BRIDGE_CONTRACT_SPARSE_SCAFFOLD_MIN_COUNT + 1)
+            or has_short_official_status_signal
+        )
+    )
+    has_epistemic_heading_signal = bool(
+        _BRIDGE_CONTRACT_EPISTEMIC_HEADING_CUE_RE.search(normalized_text)
     )
     if deontic_cue_count <= 0 and not has_repeal_scaffold_signal:
         return lanes
@@ -2326,6 +2536,43 @@ def _rebalance_sparse_contract_distribution(
             adjusted[deontic_lane] -= shift
             adjusted[kg_lane] += shift
 
+    if has_epistemic_heading_signal:
+        adjusted = _rebalance_sparse_epistemic_heading_distribution(adjusted)
+
+    return adjusted
+
+
+def _rebalance_sparse_epistemic_heading_distribution(
+    distribution: Mapping[str, float],
+) -> Dict[str, float]:
+    """Expose TDFOL/deontic lanes for sparse statutory findings sections."""
+
+    adjusted = {
+        str(name): max(0.0, float(value))
+        for name, value in dict(distribution or {}).items()
+        if float(value) > 0.0
+    }
+    required_lanes = {
+        "TDFOL.prover",
+        "deontic.ir",
+        "knowledge_graphs.neo4j_compat",
+    }
+    if not required_lanes <= set(adjusted):
+        return adjusted
+
+    kg_lane = "knowledge_graphs.neo4j_compat"
+    kg_value = adjusted.get(kg_lane, 0.0)
+    available = kg_value - _BRIDGE_CONTRACT_SPARSE_EPISTEMIC_KG_FLOOR
+    if available <= 0.0:
+        return adjusted
+
+    shift = min(_BRIDGE_CONTRACT_SPARSE_EPISTEMIC_SHIFT, available)
+    if shift <= 0.0:
+        return adjusted
+
+    adjusted[kg_lane] = kg_value - shift
+    adjusted["TDFOL.prover"] = adjusted.get("TDFOL.prover", 0.0) + (0.8 * shift)
+    adjusted["deontic.ir"] = adjusted.get("deontic.ir", 0.0) + (0.2 * shift)
     return adjusted
 
 
@@ -2365,7 +2612,47 @@ def _compact_official_usc_contract_distribution(
             is not None
         )
     )
-    if not (is_long_official_excerpt or is_short_official_section):
+    is_short_editorial_status_section = (
+        len(normalized_text) >= _BRIDGE_CONTRACT_STATUS_OFFICIAL_USC_MIN_CHARS
+        and _BRIDGE_CONTRACT_USC_SECTION_MARKER_RE.search(normalized_text) is not None
+        and (
+            _BRIDGE_CONTRACT_STATUS_OPERATION_CUE_RE.search(normalized_text)
+            is not None
+            or _BRIDGE_CONTRACT_REPEAL_TEMPORAL_CUE_RE.search(normalized_text)
+            is not None
+        )
+        and (
+            _BRIDGE_CONTRACT_STRUCTURAL_FRAME_CUE_RE.search(normalized_text)
+            is not None
+            or _BRIDGE_CONTRACT_LEGISLATIVE_HISTORY_CUE_RE.search(normalized_text)
+            is not None
+        )
+    )
+    is_official_header_editorial_status_section = (
+        len(normalized_text) >= _BRIDGE_CONTRACT_STATUS_OFFICIAL_USC_MIN_CHARS
+        and _BRIDGE_CONTRACT_OFFICIAL_USC_EXCERPT_RE.search(normalized_text)
+        is not None
+        and (
+            _BRIDGE_CONTRACT_STATUS_OPERATION_CUE_RE.search(normalized_text)
+            is not None
+            or _BRIDGE_CONTRACT_REPEAL_TEMPORAL_CUE_RE.search(normalized_text)
+            is not None
+            or _BRIDGE_CONTRACT_OMITTED_CODIFICATION_CUE_RE.search(normalized_text)
+            is not None
+        )
+        and (
+            _BRIDGE_CONTRACT_STRUCTURAL_FRAME_CUE_RE.search(normalized_text)
+            is not None
+            or _BRIDGE_CONTRACT_LEGISLATIVE_HISTORY_CUE_RE.search(normalized_text)
+            is not None
+        )
+    )
+    if not (
+        is_long_official_excerpt
+        or is_short_official_section
+        or is_short_editorial_status_section
+        or is_official_header_editorial_status_section
+    ):
         return lanes
     primary = {
         lane: lanes[lane]
@@ -2441,6 +2728,12 @@ def _project_official_usc_primary_contract_distribution(
     has_enforcement_penalty_provision = bool(
         _BRIDGE_CONTRACT_ENFORCEMENT_PENALTY_PROVISION_RE.search(normalized_text)
     )
+    has_compliance_enforcement_norm = bool(
+        _BRIDGE_CONTRACT_COMPLIANCE_ENFORCEMENT_NORM_RE.search(normalized_text)
+    )
+    has_fiscal_availability_norm = bool(
+        _BRIDGE_CONTRACT_FISCAL_AVAILABILITY_NORM_RE.search(normalized_text)
+    )
     has_liability_provision = bool(
         _BRIDGE_CONTRACT_LIABILITY_PROVISION_RE.search(normalized_text)
     )
@@ -2450,13 +2743,108 @@ def _project_official_usc_primary_contract_distribution(
     has_determination_condition = bool(
         _BRIDGE_CONTRACT_DETERMINATION_CONDITION_RE.search(normalized_text)
     )
+    has_preemption_contract_norm = bool(
+        _BRIDGE_CONTRACT_PREEMPTION_CONTRACT_NORM_RE.search(normalized_text)
+    )
+    has_regulatory_cost_estimate = bool(
+        _BRIDGE_CONTRACT_REGULATORY_COST_ESTIMATE_RE.search(normalized_text)
+    )
+    has_construction_exemption = bool(
+        _BRIDGE_CONTRACT_CONSTRUCTION_EXEMPTION_RE.search(normalized_text)
+    )
+    has_references_repeal_crossref = bool(
+        _BRIDGE_CONTRACT_REFERENCES_REPEAL_CROSSREF_RE.search(normalized_text)
+    )
     has_renaming_designation = bool(
         _BRIDGE_CONTRACT_RENAMING_DESIGNATION_RE.search(normalized_text)
+    )
+    has_purpose_policy_statement = bool(
+        _BRIDGE_CONTRACT_PURPOSE_POLICY_STATEMENT_RE.search(normalized_text)
+    )
+    has_definition_provision = bool(
+        _BRIDGE_CONTRACT_DEFINITION_PROVISION_RE.search(normalized_text)
+        or _BRIDGE_CONTRACT_STATUTORY_DEFINITION_SECTION_RE.search(normalized_text)
+    )
+    has_asset_transfer_rule = bool(
+        _BRIDGE_CONTRACT_ASSET_TRANSFER_RULE_RE.search(normalized_text)
+    )
+    has_safety_regulatory_procedure = bool(
+        _BRIDGE_CONTRACT_SAFETY_REGULATORY_PROCEDURE_RE.search(normalized_text)
+    )
+    has_savings_existing_law = bool(
+        _BRIDGE_CONTRACT_SAVINGS_EXISTING_LAW_RE.search(normalized_text)
+    )
+    status_operation_cue_count = _cue_count(
+        _BRIDGE_CONTRACT_STATUS_OPERATION_CUE_RE,
+        normalized_text,
+    )
+    has_editorial_status_operation = (
+        status_operation_cue_count > 0
+        or _cue_count(_BRIDGE_CONTRACT_REPEAL_TEMPORAL_CUE_RE, normalized_text) > 0
+    ) and (
+        structural_frame_cue_count > 0
+        or legislative_history_cue_count > 0
     )
 
     target_mix: Sequence[tuple[str, float]]
     strength = 0.0
-    if has_liability_provision:
+    if has_repealed_history_scaffold:
+        target_mix = (
+            ("CEC.native", 0.42),
+            ("knowledge_graphs.neo4j_compat", 0.32),
+            ("TDFOL.prover", 0.16),
+            ("deontic.ir", 0.10),
+        )
+        strength = 0.42
+    elif has_editorial_status_operation and deontic_cue_count <= 0:
+        target_mix = (
+            ("CEC.native", 0.44),
+            ("knowledge_graphs.neo4j_compat", 0.34),
+            ("TDFOL.prover", 0.14),
+            ("deontic.ir", 0.08),
+        )
+        strength = 0.46
+    elif has_definition_provision and deontic_cue_count <= 1:
+        target_mix = (
+            ("CEC.native", 0.38),
+            ("knowledge_graphs.neo4j_compat", 0.28),
+            ("deontic.ir", 0.22),
+            ("TDFOL.prover", 0.12),
+        )
+        strength = 0.40
+    elif has_purpose_policy_statement and deontic_cue_count <= 1:
+        target_mix = (
+            ("CEC.native", 0.34),
+            ("knowledge_graphs.neo4j_compat", 0.28),
+            ("deontic.ir", 0.26),
+            ("TDFOL.prover", 0.12),
+        )
+        strength = 0.36
+    elif has_asset_transfer_rule and deontic_cue_count > 0:
+        target_mix = (
+            ("deontic.ir", 0.44),
+            ("TDFOL.prover", 0.24),
+            ("CEC.native", 0.20),
+            ("knowledge_graphs.neo4j_compat", 0.12),
+        )
+        strength = 0.38
+    elif has_safety_regulatory_procedure and deontic_cue_count > 0:
+        target_mix = (
+            ("TDFOL.prover", 0.46),
+            ("deontic.ir", 0.28),
+            ("CEC.native", 0.16),
+            ("knowledge_graphs.neo4j_compat", 0.10),
+        )
+        strength = 0.40
+    elif has_savings_existing_law:
+        target_mix = (
+            ("knowledge_graphs.neo4j_compat", 0.34),
+            ("CEC.native", 0.28),
+            ("deontic.ir", 0.22),
+            ("TDFOL.prover", 0.16),
+        )
+        strength = 0.36
+    elif has_liability_provision:
         target_mix = (
             ("deontic.ir", 0.42),
             ("CEC.native", 0.30),
@@ -2472,6 +2860,30 @@ def _project_official_usc_primary_contract_distribution(
             ("knowledge_graphs.neo4j_compat", 0.12),
         )
         strength = 0.38
+    elif has_preemption_contract_norm and deontic_cue_count > 0:
+        target_mix = (
+            ("deontic.ir", 0.58),
+            ("TDFOL.prover", 0.16),
+            ("CEC.native", 0.15),
+            ("knowledge_graphs.neo4j_compat", 0.11),
+        )
+        strength = 0.30
+    elif has_regulatory_cost_estimate and deontic_cue_count > 0:
+        target_mix = (
+            ("TDFOL.prover", 0.40),
+            ("deontic.ir", 0.28),
+            ("CEC.native", 0.20),
+            ("knowledge_graphs.neo4j_compat", 0.12),
+        )
+        strength = 0.42
+    elif has_construction_exemption and deontic_cue_count > 0:
+        target_mix = (
+            ("deontic.ir", 0.52),
+            ("TDFOL.prover", 0.24),
+            ("knowledge_graphs.neo4j_compat", 0.16),
+            ("CEC.native", 0.08),
+        )
+        strength = 0.40
     elif has_reporting_duty and deontic_cue_count > 0:
         target_mix = (
             ("deontic.ir", 0.44),
@@ -2488,12 +2900,30 @@ def _project_official_usc_primary_contract_distribution(
             ("TDFOL.prover", 0.12),
         )
         strength = 0.34
-    elif has_enforcement_penalty_provision and deontic_cue_count > 0:
+    elif has_references_repeal_crossref and deontic_cue_count > 0:
+        target_mix = (
+            ("deontic.ir", 0.38),
+            ("TDFOL.prover", 0.27),
+            ("CEC.native", 0.20),
+            ("knowledge_graphs.neo4j_compat", 0.15),
+        )
+        strength = 0.30
+    elif (
+        has_enforcement_penalty_provision or has_compliance_enforcement_norm
+    ) and deontic_cue_count > 0:
         target_mix = (
             ("deontic.ir", 0.46),
             ("knowledge_graphs.neo4j_compat", 0.30),
             ("TDFOL.prover", 0.18),
             ("CEC.native", 0.06),
+        )
+        strength = 0.34
+    elif has_fiscal_availability_norm and deontic_cue_count > 0:
+        target_mix = (
+            ("deontic.ir", 0.50),
+            ("TDFOL.prover", 0.26),
+            ("CEC.native", 0.16),
+            ("knowledge_graphs.neo4j_compat", 0.08),
         )
         strength = 0.34
     elif has_admin_rulemaking_schedule and deontic_cue_count > 0:
@@ -2504,14 +2934,6 @@ def _project_official_usc_primary_contract_distribution(
             ("knowledge_graphs.neo4j_compat", 0.08),
         )
         strength = 0.42
-    elif has_repealed_history_scaffold:
-        target_mix = (
-            ("deontic.ir", 0.46),
-            ("TDFOL.prover", 0.28),
-            ("CEC.native", 0.20),
-            ("knowledge_graphs.neo4j_compat", 0.06),
-        )
-        strength = 0.30
     elif deontic_cue_count >= 2 and temporal_cue_count > 0:
         target_mix = (
             ("deontic.ir", 0.50),

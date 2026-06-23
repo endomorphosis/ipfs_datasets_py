@@ -23,6 +23,7 @@ from ipfs_datasets_py.wallet import (
     ProofReceipt,
     WalletInvocation,
     WalletService,
+    WorldIdBinding,
 )
 from ipfs_datasets_py.wallet.manifest import canonical_bytes
 from ipfs_datasets_py.wallet.privacy import noisy_count
@@ -996,6 +997,128 @@ def test_device_add_and_revoke_updates_wallet_manifest(tmp_path):
     assert restored.wallets[wallet.wallet_id].device_dids == [OWNER]
     assert "wallet/device_add" in actions
     assert "wallet/device_revoke" in actions
+
+
+def test_world_id_binding_indexes_manifest_and_snapshot(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    wallet = service.create_wallet(owner_did=OWNER)
+    raw_nullifier = "0xraw-world-id-nullifier"
+
+    binding = service.add_world_id_binding(
+        wallet.wallet_id,
+        actor_did=OWNER,
+        rp_id="rp_test_123",
+        app_id="app_test_123",
+        action="wallet-attach-world-id-v1",
+        protocol_version="4.0",
+        environment="staging",
+        raw_nullifier=raw_nullifier,
+        credential_identifiers=["proof_of_human", "proof_of_human", "selfie"],
+        issuer_schema_ids=[1, 1, 11],
+        signal_hash_ref="worldid-signal-ref:def456",
+        expires_at_min=1_756_166_400,
+        metadata={"verification_provider": "developer_portal"},
+    )
+
+    assert isinstance(binding, WorldIdBinding)
+    assert binding.credential_identifiers == ["proof_of_human", "selfie"]
+    assert binding.issuer_schema_ids == [1, 11]
+    assert service.get_world_id_binding(binding.binding_id) == binding
+    assert service.list_world_id_bindings(wallet.wallet_id) == [binding]
+    assert binding.nullifier_ref.startswith("worldid-nullifier-ref:v1:")
+    assert binding.nullifier_ref != raw_nullifier
+    assert service.find_world_id_binding_by_nullifier(binding.nullifier_ref) == binding
+    assert service.world_id_private_nullifiers[binding.binding_id]["raw_nullifier"] == raw_nullifier
+    assert binding.proof_receipt_id is not None
+
+    receipt = service.proofs[binding.proof_receipt_id]
+    assert receipt.proof_type == "world_id_proof_of_human"
+    assert receipt.proof_system == "world_id_idkit_v4"
+    assert receipt.is_simulated is False
+    assert receipt.verifier_id == "world_id_developer_portal_v4"
+    assert receipt.circuit_id == "world-id-idkit-v4-developer-portal"
+    assert receipt.proof_artifact_ref == f"worldid-proof://{receipt.proof_hash}"
+    assert receipt.public_inputs["nullifier_ref"] == binding.nullifier_ref
+    assert receipt.public_inputs["credential_identifiers"] == ["proof_of_human", "selfie"]
+    assert receipt.public_inputs["issuer_schema_ids"] == [1, 11]
+    assert receipt.public_inputs["expires_at_min"] == 1_756_166_400
+
+    manifest = service.get_wallet_manifest(wallet.wallet_id)
+    assert manifest["world_id_bindings"][0]["binding_id"] == binding.binding_id
+    assert manifest["world_id_bindings"][0]["nullifier_ref"] == binding.nullifier_ref
+
+    snapshot = service.export_wallet_snapshot(wallet.wallet_id)
+    public_payload = json.dumps(
+        {
+            "binding": binding.to_dict(),
+            "manifest": manifest,
+            "snapshot": snapshot,
+            "proofs": [proof.to_dict() for proof in service.proofs.values()],
+        },
+        sort_keys=True,
+    )
+    assert raw_nullifier not in public_payload
+    assert "0xproof" not in public_payload
+    assert "proof/world_id_bind" in [event.action for event in service.get_audit_log(wallet.wallet_id)]
+
+    restored = WalletService(storage_dir=tmp_path / "restored-world-id")
+    restored.import_wallet_snapshot(snapshot)
+    restored_binding = restored.get_world_id_binding(binding.binding_id)
+
+    assert restored_binding.to_dict() == binding.to_dict()
+    assert restored.proofs[receipt.proof_id].to_dict() == receipt.to_dict()
+    assert restored.find_world_id_binding_by_nullifier(binding.nullifier_ref) == restored_binding
+    assert restored.list_world_id_bindings(wallet.wallet_id) == [restored_binding]
+    assert restored.world_id_private_nullifiers == {}
+
+    legacy_snapshot = json.loads(json.dumps(snapshot))
+    legacy_snapshot.pop("world_id_bindings")
+    legacy_restored = WalletService(storage_dir=tmp_path / "legacy-world-id")
+    legacy_restored.import_wallet_snapshot(legacy_snapshot)
+    assert legacy_restored.list_world_id_bindings(wallet.wallet_id) == []
+
+
+def test_world_id_binding_nullifier_index_is_idempotent_per_wallet_and_unique_across_wallets(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    wallet = service.create_wallet(owner_did=OWNER)
+    other_wallet = service.create_wallet(owner_did="did:key:other-owner")
+    raw_nullifier = "0xshared-world-id-nullifier"
+
+    binding = service.add_world_id_binding(
+        wallet.wallet_id,
+        actor_did=OWNER,
+        rp_id="rp_test_123",
+        action="wallet-attach-world-id-v1",
+        protocol_version="3.0",
+        environment="production",
+        raw_nullifier=raw_nullifier,
+        credential_identifiers=["orb"],
+    )
+    repeated = service.add_world_id_binding(
+        wallet.wallet_id,
+        actor_did=OWNER,
+        rp_id="rp_test_123",
+        action="wallet-attach-world-id-v1",
+        protocol_version="3.0",
+        environment="production",
+        raw_nullifier=raw_nullifier,
+        credential_identifiers=["orb"],
+    )
+
+    assert repeated.binding_id == binding.binding_id
+    assert len(service.list_world_id_bindings(wallet.wallet_id)) == 1
+    assert len(service.proofs) == 1
+    with pytest.raises(ValueError, match="raw nullifier"):
+        service.add_world_id_binding(
+            other_wallet.wallet_id,
+            actor_did="did:key:other-owner",
+            rp_id="rp_test_123",
+            action="wallet-attach-world-id-v1",
+            protocol_version="3.0",
+            environment="production",
+            raw_nullifier=raw_nullifier,
+            credential_identifiers=["orb"],
+        )
 
 
 def test_recovery_policy_requires_threshold_and_recovers_controller(tmp_path):

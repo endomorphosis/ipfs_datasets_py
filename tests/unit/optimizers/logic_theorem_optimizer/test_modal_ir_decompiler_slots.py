@@ -865,3 +865,90 @@ def test_modal_decompiler_refines_deontic_exception_negative_scope_slots() -> No
     ]
     assert "mandatory:excepted" in slot_texts["normative_polarity_scope"]
     assert "negative_scope:excepted" in slot_texts["normative_polarity_scope"]
+
+
+def test_modal_decompiler_refines_uscode_heading_fallback_typed_ir_slots() -> None:
+    formula = ModalIRFormula(
+        formula_id="f_heading_fallback_frame",
+        operator=ModalIROperator(
+            family="frame",
+            system="Frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="organization", role="clause"),
+        provenance=ModalIRProvenance(
+            source_id="us-code-42-3058c-heading-fallback",
+            start_char=0,
+            end_char=96,
+            citation="42 U.S.C. 3058c",
+        ),
+        metadata={
+            "cue": "__uscode_section_heading_fallback__",
+            "fallback_rule": "uscode_section_heading_v1",
+        },
+    )
+    document = ModalIRDocument(
+        document_id="us-code-42-3058c-heading-fallback",
+        source="us_code",
+        normalized_text=(
+            "§3058c. Organization In order for a State to be eligible to "
+            "receive allotments under this part, the State shall demonstrate "
+            "eligibility."
+        ),
+        formulas=[formula],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+
+    assert "uscode_section_heading_fallback" in slot_texts[
+        "typed_ir_refined_modal_cue"
+    ]
+    assert "frame->conditional_normative:uscode_section_heading_fallback" in slot_texts[
+        "typed_ir_refined_modal_pair_cue"
+    ]
+    assert "frame->deontic:uscode_section_heading_fallback" in slot_texts[
+        "typed_ir_refined_modal_pair_cue"
+    ]
+    assert "frame->temporal:uscode_section_heading_fallback" in slot_texts[
+        "typed_ir_refined_modal_pair_cue"
+    ]
+
+
+def test_modal_decompiler_refines_effective_date_temporal_typed_ir_slots() -> None:
+    formula = ModalIRFormula(
+        formula_id="f_effective_date_temporal",
+        operator=ModalIROperator(
+            family="temporal",
+            system="LTL",
+            symbol="F",
+            label="eventually",
+        ),
+        predicate=ModalIRPredicate(name="effective_date", role="clause"),
+        provenance=ModalIRProvenance(
+            source_id="us-code-26-1451-effective-date",
+            start_char=0,
+            end_char=92,
+            citation="26 U.S.C. 1451",
+        ),
+    )
+    document = ModalIRDocument(
+        document_id="us-code-26-1451-effective-date",
+        source="us_code",
+        normalized_text=(
+            "§1451. Effective date On and after January 1, 2025, this "
+            "subtitle shall apply to withholding."
+        ),
+        formulas=[formula],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+
+    assert "effective_date" in slot_texts["typed_ir_refined_modal_cue"]
+    assert "temporal->conditional_normative:effective_date" in slot_texts[
+        "typed_ir_refined_modal_pair_cue"
+    ]
+    assert "temporal->frame:effective_date" in slot_texts[
+        "typed_ir_refined_modal_pair_cue"
+    ]
+    assert "f_to_o_pipe" in slot_texts["typed_ir_refined_modal_operator_pair_key"]

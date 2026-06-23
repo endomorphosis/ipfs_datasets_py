@@ -72,6 +72,10 @@ class ProverTargetSyntaxRecord:
     ir_slot_grounding_fingerprint: str
     formula_slots: List[str]
     omitted_formula_slots: Dict[str, Any]
+    omitted_formula_slot_names: List[str]
+    decoded_omitted_formula_slots: List[str]
+    grounded_omitted_formula_slots: List[str]
+    ungrounded_omitted_formula_slots: List[str]
     decoded_ir_slot_alignment: Dict[str, Any]
     slot_alignment_fingerprint: str
     source_formula_symbols: List[str]
@@ -257,6 +261,16 @@ def _validate_target_formula(
         ir_slot_grounding_fingerprint=ir_slot_summary["ir_slot_grounding_fingerprint"],
         formula_slots=alignment_summary["formula_slots"],
         omitted_formula_slots=alignment_summary["omitted_formula_slots"],
+        omitted_formula_slot_names=alignment_summary["omitted_formula_slot_names"],
+        decoded_omitted_formula_slots=alignment_summary[
+            "decoded_omitted_formula_slots"
+        ],
+        grounded_omitted_formula_slots=alignment_summary[
+            "grounded_omitted_formula_slots"
+        ],
+        ungrounded_omitted_formula_slots=alignment_summary[
+            "ungrounded_omitted_formula_slots"
+        ],
         decoded_ir_slot_alignment=alignment_summary,
         slot_alignment_fingerprint=alignment_summary["slot_alignment_fingerprint"],
         source_formula_symbols=symbol_alignment["source_formula_symbols"],
@@ -429,11 +443,28 @@ def _decoded_ir_slot_alignment(
     grounded_formula_overlap = [
         slot for slot in grounded_ir_slots if slot in formula_set
     ]
+    decoded_omitted_slots = [
+        slot
+        for slot in omitted_formula_slot_names
+        if _slot_name_matches_any(slot, decoded_slots)
+    ]
+    grounded_omitted_slots = [
+        slot
+        for slot in omitted_formula_slot_names
+        if _slot_name_matches_any(slot, grounded_ir_slots)
+    ]
+    ungrounded_omitted_slots = [
+        slot
+        for slot in omitted_formula_slot_names
+        if slot not in grounded_omitted_slots
+    ]
+    omitted_alignment_complete = not ungrounded_omitted_slots
     complete = (
         not missing_decoded
         and not ungrounded_decoded
         and not formula_missing_decoded
         and not formula_ungrounded
+        and omitted_alignment_complete
     )
 
     fingerprint = _stable_fingerprint(
@@ -441,6 +472,8 @@ def _decoded_ir_slot_alignment(
         "|".join(grounded_ir_slots),
         "|".join(formula_slots),
         "|".join(omitted_formula_slot_names),
+        "|".join(grounded_omitted_slots),
+        "|".join(ungrounded_omitted_slots),
         str(complete),
     )
     return {
@@ -449,6 +482,11 @@ def _decoded_ir_slot_alignment(
         "formula_slots": formula_slots,
         "omitted_formula_slots": omitted_formula_slots,
         "omitted_formula_slot_names": omitted_formula_slot_names,
+        "decoded_omitted_formula_slots": decoded_omitted_slots,
+        "grounded_omitted_formula_slots": grounded_omitted_slots,
+        "ungrounded_omitted_formula_slots": ungrounded_omitted_slots,
+        "omitted_formula_slot_count": len(omitted_formula_slot_names),
+        "omitted_formula_slot_alignment_complete": omitted_alignment_complete,
         "decoded_formula_overlap": decoded_formula_overlap,
         "grounded_formula_overlap": grounded_formula_overlap,
         "decoded_missing_grounded_ir_slots": missing_decoded,
@@ -472,6 +510,26 @@ def _ordered_unique(values: Iterable[Any]) -> List[str]:
     return result
 
 
+def _slot_name_matches_any(slot: str, candidates: Sequence[Any]) -> bool:
+    aliases = _slot_name_aliases(slot)
+    return any(str(candidate or "").strip() in aliases for candidate in candidates)
+
+
+def _slot_name_aliases(slot: str) -> set[str]:
+    value = str(slot or "").strip()
+    aliases = {value}
+    if value.endswith("s"):
+        aliases.add(value[:-1])
+    aliases.update({
+        "recipients": "recipient",
+        "recipient": "recipients",
+        "overrides": "override",
+        "override": "overrides",
+    }.get(value, "").split())
+    aliases.discard("")
+    return aliases
+
+
 def _target_components(
     target: str,
     exported_formula: str,
@@ -493,6 +551,18 @@ def _target_components(
     ungrounded_ir_slots = list(ir_slot_summary.get("ungrounded_ir_slots") or [])
     missing_ir_slots = list(ir_slot_summary.get("missing_ir_slots") or [])
     formula_slots = list(alignment_summary.get("formula_slots") or [])
+    omitted_formula_slot_names = list(
+        alignment_summary.get("omitted_formula_slot_names") or []
+    )
+    decoded_omitted_formula_slots = list(
+        alignment_summary.get("decoded_omitted_formula_slots") or []
+    )
+    grounded_omitted_formula_slots = list(
+        alignment_summary.get("grounded_omitted_formula_slots") or []
+    )
+    ungrounded_omitted_formula_slots = list(
+        alignment_summary.get("ungrounded_omitted_formula_slots") or []
+    )
     missing_symbols = list(symbol_alignment.get("missing_exported_formula_symbols") or [])
     source_symbols = list(symbol_alignment.get("source_formula_symbols") or [])
     exported_symbols = list(symbol_alignment.get("exported_formula_symbols") or [])
@@ -517,6 +587,14 @@ def _target_components(
         "missing_ir_slot_count": len(missing_ir_slots),
         "formula_slots": formula_slots,
         "formula_slot_count": len(formula_slots),
+        "omitted_formula_slot_names": omitted_formula_slot_names,
+        "omitted_formula_slot_count": len(omitted_formula_slot_names),
+        "decoded_omitted_formula_slots": decoded_omitted_formula_slots,
+        "grounded_omitted_formula_slots": grounded_omitted_formula_slots,
+        "ungrounded_omitted_formula_slots": ungrounded_omitted_formula_slots,
+        "omitted_formula_slot_alignment_complete": bool(
+            alignment_summary.get("omitted_formula_slot_alignment_complete") is True
+        ),
         "slot_alignment_complete": bool(
             alignment_summary.get("alignment_complete") is True
         ),
@@ -610,6 +688,7 @@ def _semantic_formula_family(action_predicate: str) -> str:
         return "ordinary_duty"
 
     ordered_prefixes: Sequence[tuple[Sequence[str], str]] = (
+        (("Purpose",), "purpose"),
         (("Repealed", "Omitted", "Reserved", "Transferred", "Lifecycle", "ValidFor", "ExpiresAfter"), "instrument_lifecycle"),
         (("DocumentChainCustody", "LogCustody", "RecordEvidenceTransfer", "InventoryEvidence", "InventoryExhibit", "Accession", "PreserveEvidence"), "evidence_custody_duty"),
         (("RecordMinutes", "SetAgenda", "CallRoll", "NoticeMeeting"), "meeting_governance_duty"),
@@ -685,6 +764,9 @@ def _target_quality_gate(
         reconstruction_token_profile.get("reconstruction_token_profile_complete")
         is True
     )
+    omitted_slot_alignment_complete = bool(
+        alignment_summary.get("omitted_formula_slot_alignment_complete") is True
+    )
     known_local_target = target in LOCAL_PROVER_TARGETS
     structural_checks_complete = all(
         (
@@ -730,6 +812,10 @@ def _target_quality_gate(
         str(structural_checks_complete),
         str(formal_validation_complete),
         str(parser_theorem_promotable),
+        str(omitted_slot_alignment_complete),
+        "|".join(alignment_summary.get("omitted_formula_slot_names") or []),
+        "|".join(alignment_summary.get("grounded_omitted_formula_slots") or []),
+        "|".join(alignment_summary.get("ungrounded_omitted_formula_slots") or []),
         "|".join(failed_checks),
         "|".join(diagnostic_codes),
     )
@@ -742,6 +828,19 @@ def _target_quality_gate(
         "formula_requires_validation": formula_requires_validation,
         "parser_proof_ready": bool(norm.proof_ready),
         "slot_alignment_complete": slot_alignment_complete,
+        "omitted_formula_slot_alignment_complete": omitted_slot_alignment_complete,
+        "omitted_formula_slot_names": list(
+            alignment_summary.get("omitted_formula_slot_names") or []
+        ),
+        "decoded_omitted_formula_slots": list(
+            alignment_summary.get("decoded_omitted_formula_slots") or []
+        ),
+        "grounded_omitted_formula_slots": list(
+            alignment_summary.get("grounded_omitted_formula_slots") or []
+        ),
+        "ungrounded_omitted_formula_slots": list(
+            alignment_summary.get("ungrounded_omitted_formula_slots") or []
+        ),
         "target_symbol_alignment_complete": symbol_alignment_complete,
         "target_dialect_profile_complete": dialect_complete,
         "target_parse_profile_complete": parse_complete,
@@ -1105,6 +1204,7 @@ def _target_parse_profile_shape_complete(
             "AppliesTo",
             "Definition",
             "ExemptFrom",
+            "Purpose",
             "ValidFor",
             "ExpiresAfter",
             "Lifecycle",

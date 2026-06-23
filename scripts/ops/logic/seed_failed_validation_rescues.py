@@ -44,6 +44,7 @@ def seed_failed_validation_rescues(
     queue_path: Path,
     *,
     max_clusters: int,
+    rescue_max_attempts: int,
     program_synthesis_scope: str | None,
     failure_reason: str | None,
     original_action: str | None,
@@ -56,6 +57,7 @@ def seed_failed_validation_rescues(
         before_ids = {todo.todo_id for todo in supervisor.queue.all()}
         seeded = supervisor.seed_failed_validation_rescue_todos(
             max_clusters=max_clusters,
+            rescue_max_attempts=rescue_max_attempts,
             program_synthesis_scope=program_synthesis_scope,
             failure_reason=failure_reason,
             original_action=original_action,
@@ -74,6 +76,7 @@ def seed_failed_validation_rescues(
             "deduped_count": int(supervisor.last_program_synthesis_deduped_count),
             "dry_run": bool(dry_run),
             "queue_path": str(queue_path),
+            "rescue_max_attempts": int(rescue_max_attempts),
             "seeded_count": len(seeded_ids),
             "seeded_todo_ids": seeded_ids,
         }
@@ -87,6 +90,12 @@ def main(argv: list[str] | None = None) -> int:
         type=int,
         default=8,
         help="Maximum failed-validation clusters to convert into rescue TODOs.",
+    )
+    parser.add_argument(
+        "--rescue-max-attempts",
+        type=int,
+        default=4,
+        help="Maximum rescue attempts per failed-validation cluster.",
     )
     parser.add_argument(
         "--program-synthesis-scope",
@@ -110,6 +119,7 @@ def main(argv: list[str] | None = None) -> int:
     report = seed_failed_validation_rescues(
         args.queue_path,
         max_clusters=args.max_clusters,
+        rescue_max_attempts=args.rescue_max_attempts,
         program_synthesis_scope=args.program_synthesis_scope,
         failure_reason=args.failure_reason,
         original_action=args.original_action,

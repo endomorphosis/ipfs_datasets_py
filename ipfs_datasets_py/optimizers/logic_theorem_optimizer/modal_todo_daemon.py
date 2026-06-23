@@ -23,6 +23,13 @@ from ipfs_datasets_py.logic.submodule_registry import logic_optimizer_scope_for_
 from .legal_samples import LegalSample
 from .modal_autoencoder import AdaptiveModalAutoencoder, AutoencoderEvaluation
 
+try:
+    from ipfs_accelerate_py.agent_supervisor.codex_failure_policy import (
+        classify_codex_program_outcome,
+    )
+except ImportError:  # pragma: no cover - compatibility when the reusable supervisor package is absent.
+    classify_codex_program_outcome = None  # type: ignore[assignment]
+
 
 def _utc_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
@@ -43,6 +50,7 @@ AUTOENCODER_EXECUTION_TARGET = "adaptive_autoencoder"
 PROGRAM_SYNTHESIS_EXECUTION_TARGET = "codex_program_repair"
 FAILED_VALIDATION_RESCUE_ACTION = "rescue_failed_program_synthesis_validation"
 FAILED_VALIDATION_RESCUE_MAX_ATTEMPTS = 4
+FAILED_VALIDATION_RESCUE_CLUSTER_CHUNK_SIZE = 64
 TODO_STATUS_RANK = {
     "pending": 0,
     "claimed": 1,
@@ -2075,6 +2083,7 @@ class ModalTodoSupervisor:
         self,
         *,
         max_clusters: int = 8,
+        rescue_max_attempts: int = FAILED_VALIDATION_RESCUE_MAX_ATTEMPTS,
         program_synthesis_scope: Optional[str] = None,
         failure_reason: Optional[str] = None,
         original_action: Optional[str] = None,
@@ -2101,7 +2110,7 @@ class ModalTodoSupervisor:
         rescue_todos = _refresh_failed_validation_rescue_retries(
             rescue_todos,
             self.queue.all(),
-            max_attempts=FAILED_VALIDATION_RESCUE_MAX_ATTEMPTS,
+            max_attempts=rescue_max_attempts,
         )
         if not rescue_todos:
             self.last_program_synthesis_deduped_count = raw_rescue_count
@@ -2412,6 +2421,34 @@ class ModalTodoSupervisor:
         }:
             for todo_id in todo_ids:
                 todo = self.queue.get(todo_id)
+                report = dict(validation_report or {})
+                validation_status = str(
+                    report.get("main_apply_validation_status")
+                    or report.get("validation_status")
+                    or report.get("status")
+                    or ""
+                ).strip().lower()
+                target_metric_status = str(
+                    report.get("target_metric_status") or ""
+                ).strip().lower()
+                if validation_status == "failed" or target_metric_status == "regressed":
+                    reason = (
+                        "target_metric_regression"
+                        if target_metric_status == "regressed"
+                        else "main_apply_validation_failed"
+                    )
+                    if todo is not None:
+                        _record_program_synthesis_failure_evidence(
+                            todo,
+                            reason=reason,
+                            validation_report=validation_report,
+                            patch_status=normalized_patch_status,
+                            codex_exec_status=normalized_exec_status,
+                        )
+                    failed_validation_count += int(
+                        self.queue.fail_validation(todo_id, reason=reason)
+                    )
+                    continue
                 validation_gate = None
                 if todo is not None:
                     validation_gate = _program_synthesis_validation_gate(
@@ -2446,107 +2483,82 @@ class ModalTodoSupervisor:
                 if failed_validation_count
                 else "completed"
             )
-        elif normalized_patch_status.startswith("main_apply_baseline_validation_failed"):
-            reason = "main_apply_baseline_validation_failed"
+        else:
             for todo_id in todo_ids:
                 todo = self.queue.get(todo_id)
+                transient_failure_count = (
+                    int(todo.metadata.get("transient_failure_count", 0))
+                    if todo is not None
+                    else 0
+                )
+                if classify_codex_program_outcome is not None:
+                    decision = classify_codex_program_outcome(
+                        codex_exec_status=normalized_exec_status,
+                        patch_status=normalized_patch_status,
+                        main_apply_status=(
+                            str((validation_report or {}).get("main_apply_status") or "")
+                            .strip()
+                            .lower()
+                        ),
+                        validation_report=validation_report,
+                        transient_failure_count=transient_failure_count,
+                        max_transient_failures=3,
+                    )
+                    reason = decision.reason
+                    action = decision.action
+                else:
+                    reason = (
+                        "codex_exec_transient_failure"
+                        if normalized_exec_status == "transient_failure"
+                        else f"codex_exec_{normalized_exec_status}"
+                        if normalized_exec_status in {"failed", "timeout"}
+                        else str(patch_status or "patch_not_created")
+                    )
+                    action = (
+                        "requeue"
+                        if normalized_exec_status == "transient_failure"
+                        and transient_failure_count < 3
+                        else "failed_validation"
+                    )
                 if todo is None:
                     continue
-                if int(todo.metadata.get("transient_failure_count", 0)) >= 3:
+                if action == "requeue":
+                    todo.metadata["last_transient_validation_report"] = dict(
+                        validation_report or {}
+                    )
+                    todo.metadata["last_transient_patch_status"] = normalized_patch_status
+                    todo.metadata["last_transient_codex_exec_status"] = normalized_exec_status
+                    todo.requeue(reason or "transient_apply_failure")
+                    requeued_count += 1
+                    continue
+                if action == "completed":
+                    completed_count += int(self.queue.complete(todo_id))
+                    continue
+                if action == "failed_validation":
                     _record_program_synthesis_failure_evidence(
                         todo,
-                        reason=reason,
+                        reason=reason or "patch_not_created",
                         validation_report=validation_report,
                         patch_status=normalized_patch_status,
                         codex_exec_status=normalized_exec_status,
                     )
                     failed_validation_count += int(
-                        self.queue.fail_validation(todo_id, reason=reason)
+                        self.queue.fail_validation(
+                            todo_id,
+                            reason=reason or "patch_not_created",
+                        )
                     )
-                    continue
-                todo.requeue(reason)
-                requeued_count += 1
-            outcome = "requeued" if requeued_count else "failed_validation"
-        elif (
-            normalized_patch_status.startswith("main_apply_target_metric_")
-            and normalized_patch_status.endswith("_rolled_back")
-            and "regression" not in normalized_patch_status
-        ):
-            reason = normalized_patch_status.removeprefix("main_apply_").removesuffix(
-                "_rolled_back"
+            outcome = (
+                "partial"
+                if completed_count and (failed_validation_count or requeued_count)
+                else "completed"
+                if completed_count
+                else "requeued"
+                if requeued_count
+                else "failed_validation"
+                if failed_validation_count
+                else "no_status_change"
             )
-            for todo_id in todo_ids:
-                todo = self.queue.get(todo_id)
-                if todo is None:
-                    continue
-                if int(todo.metadata.get("transient_failure_count", 0)) >= 3:
-                    _record_program_synthesis_failure_evidence(
-                        todo,
-                        reason=reason,
-                        validation_report=validation_report,
-                        patch_status=normalized_patch_status,
-                        codex_exec_status=normalized_exec_status,
-                    )
-                    failed_validation_count += int(
-                        self.queue.fail_validation(todo_id, reason=reason)
-                    )
-                    continue
-                todo.requeue(reason)
-                requeued_count += 1
-            outcome = "requeued" if requeued_count else "failed_validation"
-        elif normalized_exec_status == "transient_failure":
-            reason = "codex_exec_transient_failure"
-            for todo_id in todo_ids:
-                todo = self.queue.get(todo_id)
-                if todo is None:
-                    continue
-                if int(todo.metadata.get("transient_failure_count", 0)) >= 3:
-                    _record_program_synthesis_failure_evidence(
-                        todo,
-                        reason=reason,
-                        validation_report=validation_report,
-                        patch_status=normalized_patch_status,
-                        codex_exec_status=normalized_exec_status,
-                    )
-                    failed_validation_count += int(
-                        self.queue.fail_validation(todo_id, reason=reason)
-                    )
-                    continue
-                todo.requeue(reason)
-                requeued_count += 1
-            outcome = "requeued" if requeued_count else "failed_validation"
-        elif normalized_exec_status in {"failed", "timeout"}:
-            reason = f"codex_exec_{normalized_exec_status}"
-            for todo_id in todo_ids:
-                todo = self.queue.get(todo_id)
-                if todo is not None:
-                    _record_program_synthesis_failure_evidence(
-                        todo,
-                        reason=reason,
-                        validation_report=validation_report,
-                        patch_status=normalized_patch_status,
-                        codex_exec_status=normalized_exec_status,
-                    )
-                failed_validation_count += int(
-                    self.queue.fail_validation(todo_id, reason=reason)
-                )
-            outcome = "failed_validation"
-        elif normalized_patch_status not in {"created", "applied_to_main"}:
-            reason = str(patch_status or "patch_not_created")
-            for todo_id in todo_ids:
-                todo = self.queue.get(todo_id)
-                if todo is not None:
-                    _record_program_synthesis_failure_evidence(
-                        todo,
-                        reason=reason,
-                        validation_report=validation_report,
-                        patch_status=normalized_patch_status,
-                        codex_exec_status=normalized_exec_status,
-                    )
-                failed_validation_count += int(
-                    self.queue.fail_validation(todo_id, reason=reason)
-                )
-            outcome = "failed_validation"
 
         return {
             "completed_count": completed_count,
@@ -3242,19 +3254,37 @@ def _failed_validation_rescue_todos(
             item[0],
         ),
     )
-    return [
-        _failed_validation_rescue_todo(
-            scope=scope,
-            target_component=target_component,
-            original_action=action,
-            failure_reason=reason,
-            failed_todos=sorted(failed_todos, key=_todo_priority_key),
-            policy=policy,
+    rescue_todos: List[ModalTodo] = []
+    chunk_size = max(1, int(FAILED_VALIDATION_RESCUE_CLUSTER_CHUNK_SIZE))
+    for (scope, target_component, action, reason), failed_todos in ranked_clusters:
+        ordered_failed_todos = sorted(failed_todos, key=_todo_priority_key)
+        shard_count = max(
+            1,
+            (len(ordered_failed_todos) + chunk_size - 1) // chunk_size,
         )
-        for (scope, target_component, action, reason), failed_todos in ranked_clusters[
-            :limit
-        ]
-    ]
+        for chunk_index, start in enumerate(
+            range(0, len(ordered_failed_todos), chunk_size),
+            start=1,
+        ):
+            if len(rescue_todos) >= limit:
+                return rescue_todos
+            shard_key = (
+                f"part-{chunk_index}-of-{shard_count}"
+                if shard_count > 1
+                else ""
+            )
+            rescue_todos.append(
+                _failed_validation_rescue_todo(
+                    scope=scope,
+                    target_component=target_component,
+                    original_action=action,
+                    failure_reason=reason,
+                    failed_todos=ordered_failed_todos[start : start + chunk_size],
+                    policy=policy,
+                    shard_key=shard_key,
+                )
+            )
+    return rescue_todos
 
 
 def _failed_validation_rescue_todo(
@@ -3265,6 +3295,7 @@ def _failed_validation_rescue_todo(
     failure_reason: str,
     failed_todos: Sequence[ModalTodo],
     policy: ModalOptimizerPolicy,
+    shard_key: str = "",
 ) -> ModalTodo:
     failed_todo_ids = _unique_preserve_order(todo.todo_id for todo in failed_todos)
     sample_ids = _unique_preserve_order(
@@ -3302,6 +3333,7 @@ def _failed_validation_rescue_todo(
         target_component=target_component,
         original_action=original_action,
         failure_reason=failure_reason,
+        shard_key=shard_key,
     )
     count = len(failed_todos)
     metadata = {
@@ -3326,6 +3358,8 @@ def _failed_validation_rescue_todo(
         "target_metrics": target_metrics,
         "validation_commands": validation_commands,
     }
+    if str(shard_key or "").strip():
+        metadata["rescue_cluster_shard"] = str(shard_key).strip()
     if metric_payloads:
         metadata["metric_sample_payloads"] = metric_payloads
     priority = round(
@@ -3341,6 +3375,7 @@ def _failed_validation_rescue_todo(
             original_action=original_action,
             failure_reason=failure_reason,
             failed_todo_ids=failed_todo_ids,
+            shard_key=shard_key,
         ),
         action=FAILED_VALIDATION_RESCUE_ACTION,
         objective=(
@@ -3381,13 +3416,77 @@ def _refresh_failed_validation_rescue_retries(
         if not attempts:
             refreshed.append(rescue)
             continue
-        if any(todo.status in {"pending", "claimed"} for todo in attempts):
-            continue
         current_failed_ids = set(
             str(todo_id)
             for todo_id in _as_list(rescue.metadata.get("failed_todo_ids"))
             if str(todo_id)
         )
+        pending_attempts = [
+            todo for todo in attempts if todo.status in {"pending", "claimed"}
+        ]
+        if pending_attempts:
+            pending_covered_ids = {
+                todo_id
+                for attempt in pending_attempts
+                for todo_id in _failed_validation_rescue_covered_todo_ids(attempt)
+            }
+            uncovered_ids = current_failed_ids - pending_covered_ids
+            if not uncovered_ids:
+                continue
+            metadata = dict(rescue.metadata)
+            uncovered_list = sorted(uncovered_ids)
+            refresh_digest = hashlib.sha256(
+                json.dumps(
+                    {
+                        "root_signature": root_signature,
+                        "uncovered_failed_todo_ids": uncovered_list,
+                    },
+                    ensure_ascii=True,
+                    sort_keys=True,
+                ).encode("utf-8")
+            ).hexdigest()[:16]
+            refresh_signature = json.dumps(
+                {
+                    "root_rescue_signature": root_signature,
+                    "source": "failed_validation_rescue_refresh_v1",
+                    "uncovered_digest": refresh_digest,
+                },
+                ensure_ascii=True,
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+            metadata.update(
+                {
+                    "dedupe_signature": refresh_signature,
+                    "failed_todo_ids": uncovered_list,
+                    "failed_validation_count": len(uncovered_list),
+                    "previous_rescue_todo_ids": [
+                        todo.todo_id
+                        for todo in sorted(
+                            pending_attempts,
+                            key=lambda item: item.created_at,
+                        )
+                    ][:16],
+                    "rescue_refresh_reason": (
+                        "new_failed_validation_ids_while_rescue_pending"
+                    ),
+                    "root_rescue_signature": root_signature,
+                    "semantic_bundle_key": refresh_signature,
+                    "source": "failed_validation_rescue_refresh_v1",
+                }
+            )
+            rescue.metadata = metadata
+            rescue.todo_id = f"program-rescue-refresh-{refresh_digest}"
+            rescue.loss_value = float(len(uncovered_list))
+            rescue.objective = (
+                f"Rescue {len(uncovered_list)} failed validation patch"
+                f"{'' if len(uncovered_list) == 1 else 'es'} not covered by "
+                "the currently pending rescue attempt; inspect the failed evidence, "
+                "narrow or split the fix, and make validation pass without "
+                "regressing target metrics."
+            )
+            refreshed.append(rescue)
+            continue
         completed_attempts = [todo for todo in attempts if todo.status == "completed"]
         completed_covered_ids = {
             todo_id
@@ -3462,6 +3561,7 @@ def _failed_validation_rescue_root_signature(todo: ModalTodo) -> str:
         target_component=target_component,
         original_action=original_action,
         failure_reason=failure_reason,
+        shard_key=str(metadata.get("rescue_cluster_shard") or ""),
     )
 
 
@@ -3560,6 +3660,7 @@ def _failed_validation_rescue_signature(
     target_component: str,
     original_action: str,
     failure_reason: str,
+    shard_key: str = "",
 ) -> str:
     payload = {
         "failure_reason": failure_reason,
@@ -3568,6 +3669,8 @@ def _failed_validation_rescue_signature(
         "source": "failed_validation_rescue_v1",
         "target_component": target_component,
     }
+    if str(shard_key or "").strip():
+        payload["shard"] = str(shard_key).strip()
     return json.dumps(payload, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
 
 
@@ -3578,6 +3681,7 @@ def _failed_validation_rescue_todo_id(
     original_action: str,
     failure_reason: str,
     failed_todo_ids: Sequence[str],
+    shard_key: str = "",
 ) -> str:
     payload = {
         "cluster_signature": _failed_validation_rescue_signature(
@@ -3585,6 +3689,7 @@ def _failed_validation_rescue_todo_id(
             target_component=target_component,
             original_action=original_action,
             failure_reason=failure_reason,
+            shard_key=shard_key,
         ),
         "failed_todo_ids": sorted(
             str(todo_id) for todo_id in failed_todo_ids if str(todo_id)
@@ -4298,8 +4403,14 @@ def _record_program_synthesis_failure_evidence(
         in {
             "baseline_failure_accepted",
             "baseline_status",
+            "main_apply_validation_failed_command",
+            "main_apply_validation_failed_tests",
+            "main_apply_validation_failure_tokens",
             "main_apply_validation_gate",
+            "main_apply_validation_stderr_tail",
             "main_apply_status",
+            "main_apply_validation_stdout_tail",
+            "main_apply_validation_syntax_locations",
             "metric_deltas",
             "patch_status",
             "regressed_metrics",

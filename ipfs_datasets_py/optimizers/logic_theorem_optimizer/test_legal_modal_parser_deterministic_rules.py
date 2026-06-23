@@ -285,6 +285,64 @@ def test_compiler_spacy_backend_adds_residual_span_coverage_after_residual_fallb
     assert result.modal_ir.formulas[-1].metadata.get("fallback_rule") == "uscode_procedural_clause_v1"
 
 
+def test_parser_types_notice_comment_residual_span_as_administrative_frame() -> None:
+    parser = LegalModalParser()
+    modal_ir = parser.parse(
+        (
+            "The Secretary shall publish the annual report. "
+            "Public comments on proposed agency guidance are collected in the administrative record."
+        ),
+        document_id="us-code-21-2013-notice-comment-residual",
+        citation="21 U.S.C. 2013",
+    )
+
+    residual_formulas = [
+        formula
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    ]
+    residual_text = " ".join(
+        modal_ir.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ].lower()
+        for formula in residual_formulas
+    )
+
+    assert "public comments on proposed agency guidance" in residual_text
+    assert all(formula.operator.family == ModalLogicFamily.FRAME.value for formula in residual_formulas)
+    assert all(formula.provenance.citation == "21 U.S.C. 2013" for formula in residual_formulas)
+
+
+def test_compiler_spacy_backend_types_notice_comment_residual_span_as_administrative_frame() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+    result = compiler.compile(
+        (
+            "The agency must retain the contract file. "
+            "The administrative comment period for proposed procurement guidance."
+        ),
+        document_id="us-code-41-4711-comment-period-residual",
+        citation="41 U.S.C. 4711",
+    )
+
+    residual_formulas = [
+        formula
+        for formula in result.modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    ]
+    residual_text = " ".join(
+        result.modal_ir.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ].lower()
+        for formula in residual_formulas
+    )
+
+    assert "administrative comment period" in residual_text
+    assert all(formula.operator.family == ModalLogicFamily.FRAME.value for formula in residual_formulas)
+    assert all(formula.provenance.citation == "41 U.S.C. 4711" for formula in residual_formulas)
+
+
 def test_parser_types_compact_uncovered_uscode_topic_headings_as_frame_spans() -> None:
     parser = LegalModalParser()
     modal_ir = parser.parse(

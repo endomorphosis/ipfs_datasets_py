@@ -175,6 +175,7 @@ CODEX_VECTOR_FALLBACK_MODE="${CODEX_VECTOR_FALLBACK_MODE:-hash}"
 CODEX_MERGE_REPAIR_MODE="${CODEX_MERGE_REPAIR_MODE:-apply_3way}"
 CODEX_MERGE_REPAIR_ATTEMPTS="${CODEX_MERGE_REPAIR_ATTEMPTS:-1}"
 CODEX_MAIN_APPLY_LOCK_TIMEOUT_SECONDS="${CODEX_MAIN_APPLY_LOCK_TIMEOUT_SECONDS:-600}"
+CODEX_MAIN_APPLY_MAX_INFLIGHT_PACKETS="${CODEX_MAIN_APPLY_MAX_INFLIGHT_PACKETS:-3}"
 CODEX_TARGET_METRIC_TIMEOUT_SECONDS="${CODEX_TARGET_METRIC_TIMEOUT_SECONDS:-30}"
 CODEX_TARGET_METRIC_MAX_SAMPLES="${CODEX_TARGET_METRIC_MAX_SAMPLES:-2}"
 PAIRED_RESOURCE_GUARD="${PAIRED_RESOURCE_GUARD:-auto}"
@@ -185,6 +186,13 @@ PAIRED_MIN_AVAILABLE_MEMORY_GB="${PAIRED_MIN_AVAILABLE_MEMORY_GB:-12.0}"
 PAIRED_MIN_SWAP_FREE_GB="${PAIRED_MIN_SWAP_FREE_GB:-1.0}"
 PAIRED_CODEX_LAUNCH_STAGGER_SECONDS="${PAIRED_CODEX_LAUNCH_STAGGER_SECONDS:-1.0}"
 PAIRED_CODEX_DISABLE_CUDA="${PAIRED_CODEX_DISABLE_CUDA:-true}"
+PAIRED_FAILED_VALIDATION_RESCUE_MODE="${PAIRED_FAILED_VALIDATION_RESCUE_MODE:-auto}"
+PAIRED_FAILED_VALIDATION_RESCUE_MAX_CLUSTERS="${PAIRED_FAILED_VALIDATION_RESCUE_MAX_CLUSTERS:-8}"
+PAIRED_FAILED_VALIDATION_RESCUE_MAX_ATTEMPTS="${PAIRED_FAILED_VALIDATION_RESCUE_MAX_ATTEMPTS:-3}"
+PAIRED_FAILED_VALIDATION_RESCUE_INTERVAL_SECONDS="${PAIRED_FAILED_VALIDATION_RESCUE_INTERVAL_SECONDS:-300}"
+PAIRED_FAILED_VALIDATION_RESCUE_BACKLOG_THRESHOLD="${PAIRED_FAILED_VALIDATION_RESCUE_BACKLOG_THRESHOLD:-16}"
+WARM_START_RUN_IDS="${WARM_START_RUN_IDS:-}"
+WARM_START_STATES="${WARM_START_STATES:-}"
 
 CODEX_EXEC_MODE="${CODEX_EXEC_MODE:-codex_cli}"
 if ! command -v codex >/dev/null 2>&1; then
@@ -296,6 +304,11 @@ PAIRED_ARGS=(
   --paired-min-swap-free-gb "${PAIRED_MIN_SWAP_FREE_GB}"
   --paired-codex-launch-stagger-seconds "${PAIRED_CODEX_LAUNCH_STAGGER_SECONDS}"
   --paired-codex-disable-cuda "${PAIRED_CODEX_DISABLE_CUDA}"
+  --paired-failed-validation-rescue-mode "${PAIRED_FAILED_VALIDATION_RESCUE_MODE}"
+  --paired-failed-validation-rescue-max-clusters "${PAIRED_FAILED_VALIDATION_RESCUE_MAX_CLUSTERS}"
+  --paired-failed-validation-rescue-max-attempts "${PAIRED_FAILED_VALIDATION_RESCUE_MAX_ATTEMPTS}"
+  --paired-failed-validation-rescue-interval-seconds "${PAIRED_FAILED_VALIDATION_RESCUE_INTERVAL_SECONDS}"
+  --paired-failed-validation-rescue-backlog-threshold "${PAIRED_FAILED_VALIDATION_RESCUE_BACKLOG_THRESHOLD}"
   --codex-exec-mode "${CODEX_EXEC_MODE}"
   --codex-apply-mode "${CODEX_APPLY_MODE}"
   --codex-commit-mode "${CODEX_COMMIT_MODE}"
@@ -319,6 +332,7 @@ PAIRED_ARGS=(
   --codex-merge-repair-mode "${CODEX_MERGE_REPAIR_MODE}"
   --codex-merge-repair-attempts "${CODEX_MERGE_REPAIR_ATTEMPTS}"
   --codex-main-apply-lock-timeout-seconds "${CODEX_MAIN_APPLY_LOCK_TIMEOUT_SECONDS}"
+  --codex-main-apply-max-inflight-packets "${CODEX_MAIN_APPLY_MAX_INFLIGHT_PACKETS}"
 )
 
 CONFIGS=(
@@ -356,6 +370,13 @@ echo "[pipeline] paired_min_available_memory_gb=${PAIRED_MIN_AVAILABLE_MEMORY_GB
 echo "[pipeline] paired_min_swap_free_gb=${PAIRED_MIN_SWAP_FREE_GB}"
 echo "[pipeline] paired_codex_launch_stagger_seconds=${PAIRED_CODEX_LAUNCH_STAGGER_SECONDS}"
 echo "[pipeline] paired_codex_disable_cuda=${PAIRED_CODEX_DISABLE_CUDA}"
+echo "[pipeline] paired_failed_validation_rescue_mode=${PAIRED_FAILED_VALIDATION_RESCUE_MODE}"
+echo "[pipeline] paired_failed_validation_rescue_max_clusters=${PAIRED_FAILED_VALIDATION_RESCUE_MAX_CLUSTERS}"
+echo "[pipeline] paired_failed_validation_rescue_max_attempts=${PAIRED_FAILED_VALIDATION_RESCUE_MAX_ATTEMPTS}"
+echo "[pipeline] paired_failed_validation_rescue_interval_seconds=${PAIRED_FAILED_VALIDATION_RESCUE_INTERVAL_SECONDS}"
+echo "[pipeline] paired_failed_validation_rescue_backlog_threshold=${PAIRED_FAILED_VALIDATION_RESCUE_BACKLOG_THRESHOLD}"
+echo "[pipeline] warm_start_run_ids=${WARM_START_RUN_IDS}"
+echo "[pipeline] warm_start_states=${WARM_START_STATES}"
 echo "[pipeline] sweep_projection_epochs=${SWEEP_PROJECTION_EPOCHS}"
 echo "[pipeline] final_projection_epochs=${FINAL_PROJECTION_EPOCHS}"
 echo "[pipeline] allow_final_fallback_on_sweep_failure=${ALLOW_FINAL_FALLBACK_ON_SWEEP_FAILURE}"
@@ -400,6 +421,7 @@ echo "[pipeline] codex_vector_max_bundle_wait_seconds=${CODEX_VECTOR_MAX_BUNDLE_
 echo "[pipeline] codex_target_file_lane_lock_scopes=${CODEX_TARGET_FILE_LANE_LOCK_SCOPES}"
 echo "[pipeline] codex_lane_lock_mode=${CODEX_LANE_LOCK_MODE}"
 echo "[pipeline] codex_main_apply_lock_timeout_seconds=${CODEX_MAIN_APPLY_LOCK_TIMEOUT_SECONDS}"
+echo "[pipeline] codex_main_apply_max_inflight_packets=${CODEX_MAIN_APPLY_MAX_INFLIGHT_PACKETS}"
 echo "[pipeline] codex_target_metric_timeout_seconds=${CODEX_TARGET_METRIC_TIMEOUT_SECONDS}"
 echo "[pipeline] codex_target_metric_max_samples=${CODEX_TARGET_METRIC_MAX_SAMPLES}"
 
@@ -1009,6 +1031,24 @@ final_args=(
   "${FINAL_COMMON_OVERRIDES[@]}"
   "${PAIRED_ARGS[@]}"
 )
+if [[ -n "${WARM_START_RUN_IDS}" ]]; then
+  IFS=',' read -r -a warm_start_run_ids <<< "${WARM_START_RUN_IDS}"
+  for warm_start_run_id in "${warm_start_run_ids[@]}"; do
+    warm_start_run_id="${warm_start_run_id//[[:space:]]/}"
+    if [[ -n "${warm_start_run_id}" ]]; then
+      final_args+=(--warm-start-run-id "${warm_start_run_id}")
+    fi
+  done
+fi
+if [[ -n "${WARM_START_STATES}" ]]; then
+  IFS=',' read -r -a warm_start_states <<< "${WARM_START_STATES}"
+  for warm_start_state in "${warm_start_states[@]}"; do
+    warm_start_state="${warm_start_state//[[:space:]]/}"
+    if [[ -n "${warm_start_state}" ]]; then
+      final_args+=(--warm-start-state "${warm_start_state}")
+    fi
+  done
+fi
 
 trap - ERR
 set +e

@@ -129,6 +129,10 @@ _SPECS: tuple[LogicBridgeSpec, ...] = (
             "neo4j_graph_data",
         ),
         loss_names=(
+            "cosine_similarity",
+            "cross_entropy_loss",
+            "legal_ir_view_cross_entropy_loss",
+            "source_copy_reward_hack_penalty",
             "tdfol_no_formula_loss",
             "tdfol_parse_failure_ratio",
         ),

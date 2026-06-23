@@ -119,7 +119,10 @@ class SimulatedBackend:
         )
         public_inputs["attestation_ref"] = attestation_view["attestation_ref"]
         public_inputs["attestation_view_version"] = int(attestation_view["attestation_view_version"])
-        output_metadata.setdefault("attestation_view", attestation_view)
+        # Caller metadata can be replayed from serialized LegalIR records.
+        # Always publish the backend-derived view so verification and bridge
+        # losses use the fresh commitment for this proof.
+        output_metadata["attestation_view"] = attestation_view
 
         return ZKPProof(
             proof_data=proof_data,

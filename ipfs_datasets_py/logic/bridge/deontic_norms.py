@@ -40,6 +40,7 @@ class DeonticNormsBridgeAdapter:
         citation: Optional[str] = None,
         source: str = "us_code",
         source_embedding: Optional[Sequence[float]] = None,
+        compiler_guidance: Optional[Mapping[str, Any]] = None,
     ) -> tuple[LegalIRDocument, Any]:
         """Encode legal text into the canonical bridge IR envelope."""
 
@@ -55,6 +56,18 @@ class DeonticNormsBridgeAdapter:
             legal_norm_ir = metadata.get("legal_norm_ir")
             if isinstance(legal_norm_ir, Mapping):
                 norms = [dict(legal_norm_ir)]
+        guidance_context = _deontic_compiler_guidance_context(
+            compiler_guidance,
+            document_id=document_id,
+            citation=citation,
+            source_text=text,
+        )
+        parser_elements = _apply_deontic_compiler_guidance_to_rows(
+            parser_elements,
+            guidance_context,
+        )
+        norms = _apply_deontic_compiler_guidance_to_rows(norms, guidance_context)
+        compiler_guidance_applied = bool(guidance_context.get("applied"))
         deontic_source_rows = parser_elements if parser_elements else norms
         norm_objects = _legal_norm_objects_from_parser_elements(deontic_source_rows)
         if not norms and norm_objects:
@@ -281,6 +294,7 @@ class DeonticNormsBridgeAdapter:
                 frame_logic_triples=triples,
                 metadata={
                     "converter_success": bool(getattr(result, "success", False)),
+                    "compiler_guidance_applied": compiler_guidance_applied,
                     "deontic_formula_record_proof_ready_count": int(
                         metadata.get("legal_formula_record_proof_ready_count") or 0
                     ),
@@ -305,6 +319,7 @@ class DeonticNormsBridgeAdapter:
         citation: Optional[str] = None,
         source: str = "us_code",
         source_embedding: Optional[Sequence[float]] = None,
+        compiler_guidance: Optional[Mapping[str, Any]] = None,
         **_: Any,
     ) -> BridgeEvaluationReport:
         """Run the deontic bridge and return optimizer-visible diagnostics."""
@@ -315,6 +330,7 @@ class DeonticNormsBridgeAdapter:
             citation=citation,
             source=source,
             source_embedding=source_embedding,
+            compiler_guidance=compiler_guidance,
         )
         proof_gate = _proof_gate_from_coverage_records(context["coverage_records"])
         graph_result = GraphProjectionResult.from_graph_data(context["graph_data"])
@@ -345,6 +361,9 @@ class DeonticNormsBridgeAdapter:
             status=status,
             metadata={
                 "adapter": "deontic_norms_bridge_v1",
+                "compiler_guidance_applied": bool(
+                    ir_document.metadata.get("compiler_guidance_applied")
+                ),
                 "coverage_requires_validation": coverage_requires_validation,
                 "proof_gate_soft_pass": proof_gate_soft_pass,
             },
@@ -426,6 +445,248 @@ def _prover_syntax_records_by_source_from_norm_rows(
                 record["source_id"] = source_id
             records_by_source.setdefault(source_id, []).append(record)
     return records_by_source
+
+
+def _deontic_compiler_guidance_context(
+    compiler_guidance: Optional[Mapping[str, Any]],
+    *,
+    document_id: Optional[str],
+    citation: Optional[str],
+    source_text: str,
+) -> dict[str, Any]:
+    """Return normalized deontic guidance state for typed IR hydration."""
+
+    guidance = _mapping(compiler_guidance)
+    if not guidance or not _compiler_guidance_has_deontic_route(guidance):
+        return {"applied": False}
+    return {
+        "applied": False,
+        "citation": citation or "",
+        "document_id": document_id or "",
+        "guidance": guidance,
+        "route": _deontic_guidance_route(guidance),
+        "source_text": source_text,
+    }
+
+
+def _apply_deontic_compiler_guidance_to_rows(
+    rows: Sequence[Mapping[str, Any]],
+    context: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    if not rows:
+        return []
+    if not context.get("guidance"):
+        return [dict(row) for row in rows if isinstance(row, Mapping)]
+
+    enriched_rows: list[dict[str, Any]] = []
+    for row in rows:
+        if not isinstance(row, Mapping):
+            continue
+        enriched = dict(row)
+        frame_guidance = _selected_frame_from_deontic_compiler_guidance(
+            context,
+            norm=enriched,
+        )
+        if frame_guidance:
+            legal_frame = dict(enriched.get("legal_frame") or {})
+            legal_frame.setdefault("selected_frame", frame_guidance["selected_frame"])
+            legal_frame.setdefault(
+                "selected_frame_source",
+                frame_guidance["selected_frame_source"],
+            )
+            legal_frame.setdefault(
+                "compiler_guidance_source",
+                frame_guidance["compiler_guidance_source"],
+            )
+            enriched["legal_frame"] = legal_frame
+            enriched.setdefault("selected_frame", frame_guidance["selected_frame"])
+            enriched["compiler_guidance_source"] = frame_guidance[
+                "compiler_guidance_source"
+            ]
+            if isinstance(context, dict):
+                context["applied"] = True
+        enriched_rows.append(enriched)
+    return enriched_rows
+
+
+def _compiler_guidance_has_deontic_route(guidance: Mapping[str, Any]) -> bool:
+    route_tokens = {
+        "deontic.ir",
+        "deontic_norms",
+        "repair_deontic_bridge_quality_gate",
+    }
+    for key in ("route", "compiler_guidance_route", "target_component", "target"):
+        token = str(guidance.get(key) or "").strip().lower()
+        if token in route_tokens:
+            return True
+
+    for key in ("compiler_guidance_todo_routes", "todo_routes", "routes"):
+        value = guidance.get(key)
+        if isinstance(value, Mapping):
+            if any(str(route).strip().lower() in route_tokens for route in value):
+                return True
+        elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            if any(str(route).strip().lower() in route_tokens for route in value):
+                return True
+
+    for key in ("bundle", "compiler_guidance_bundle", "semantic_bundle"):
+        bundle = guidance.get(key)
+        if isinstance(bundle, Mapping) and _compiler_guidance_has_deontic_route(bundle):
+            return True
+    return False
+
+
+def _deontic_guidance_route(guidance: Mapping[str, Any]) -> str:
+    for key in ("compiler_guidance_route", "route", "target_component", "target"):
+        value = str(guidance.get(key) or "").strip()
+        if value:
+            return value
+    routes = guidance.get("compiler_guidance_todo_routes")
+    if isinstance(routes, Mapping):
+        for route in routes:
+            route_text = str(route or "").strip()
+            if route_text:
+                return route_text
+    return "repair_deontic_bridge_quality_gate"
+
+
+def _selected_frame_from_deontic_compiler_guidance(
+    context: Mapping[str, Any],
+    *,
+    norm: Mapping[str, Any],
+) -> dict[str, str]:
+    guidance = _mapping(context.get("guidance"))
+    if not guidance:
+        return {}
+
+    for source, value in _deontic_guidance_frame_candidates(context, norm=norm):
+        frame = _canonical_deontic_frame_symbol(value)
+        if not frame:
+            continue
+        return {
+            "selected_frame": frame,
+            "selected_frame_source": f"compiler_guidance.{source}",
+            "compiler_guidance_source": str(
+                context.get("route") or "repair_deontic_bridge_quality_gate"
+            ),
+        }
+    return {}
+
+
+def _deontic_guidance_frame_candidates(
+    context: Mapping[str, Any],
+    *,
+    norm: Mapping[str, Any],
+) -> list[tuple[str, Any]]:
+    guidance = _mapping(context.get("guidance"))
+    top_level = [
+        (key, guidance.get(key))
+        for key in (
+            "selected_frame_after",
+            "selected_frame",
+            "compiler_guidance_selected_frame",
+            "frame_after",
+            "frame",
+        )
+    ]
+    evidence_rows = _deontic_guidance_evidence_rows(guidance)
+    matched_rows = [
+        (collection_key, row)
+        for collection_key, row in evidence_rows
+        if _deontic_guidance_row_matches_norm(row, context=context, norm=norm)
+    ]
+
+    candidates: list[tuple[str, Any]] = []
+    for collection_key, row in matched_rows:
+        for key in ("selected_frame_after", "selected_frame", "frame_after", "frame"):
+            candidates.append((f"{collection_key}.{key}", row.get(key)))
+    candidates.extend(top_level)
+    for collection_key, row in evidence_rows:
+        if (collection_key, row) in matched_rows:
+            continue
+        for key in ("selected_frame_after", "selected_frame", "frame_after", "frame"):
+            candidates.append((f"{collection_key}.{key}", row.get(key)))
+    return candidates
+
+
+def _deontic_guidance_evidence_rows(
+    guidance: Mapping[str, Any],
+) -> list[tuple[str, Mapping[str, Any]]]:
+    rows: list[tuple[str, Mapping[str, Any]]] = []
+    for collection_key in (
+        "hint_evidence",
+        "evidence",
+        "guidance_evidence",
+        "compiler_guidance_evidence",
+        "metric_sample_payloads",
+        "samples",
+    ):
+        value = guidance.get(collection_key)
+        if isinstance(value, Mapping):
+            collection_rows = [value]
+        elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            collection_rows = [row for row in value if isinstance(row, Mapping)]
+        else:
+            collection_rows = []
+        for row in sorted(
+            collection_rows,
+            key=lambda item: int(item.get("evidence_rank") or item.get("rank") or 999999),
+        ):
+            rows.append((collection_key, row))
+    return rows
+
+
+def _deontic_guidance_row_matches_norm(
+    row: Mapping[str, Any],
+    *,
+    context: Mapping[str, Any],
+    norm: Mapping[str, Any],
+) -> bool:
+    row_sample_id = str(row.get("sample_id") or row.get("document_id") or "").strip()
+    norm_ids = {
+        str(value).strip()
+        for value in (
+            norm.get("sample_id"),
+            norm.get("source_id"),
+            norm.get("document_id"),
+            context.get("document_id"),
+        )
+        if str(value or "").strip()
+    }
+    if row_sample_id and row_sample_id in norm_ids:
+        return True
+
+    row_citation = str(row.get("citation") or row.get("canonical_citation") or "").strip()
+    norm_citations = {
+        str(value).strip()
+        for value in (
+            norm.get("citation"),
+            norm.get("canonical_citation"),
+            context.get("citation"),
+        )
+        if str(value or "").strip()
+    }
+    if row_citation and row_citation in norm_citations:
+        return True
+
+    preview = _normalized_guidance_text(row.get("text_preview") or row.get("text"))
+    source_text = _normalized_guidance_text(context.get("source_text"))
+    if preview and source_text and preview in source_text:
+        return True
+    return False
+
+
+def _canonical_deontic_frame_symbol(value: Any) -> str:
+    text = str(value or "").strip().lower().replace("-", "_")
+    tokens = [
+        "".join(char for char in token if char.isalnum())
+        for token in text.replace("_", " ").split()
+    ]
+    return "_".join(token for token in tokens if token)[:96]
+
+
+def _normalized_guidance_text(value: Any) -> str:
+    return " ".join(str(value or "").lower().split())
 
 
 def _coverage_records_need_rebuild(records: Sequence[Mapping[str, Any]]) -> bool:
@@ -1536,6 +1797,27 @@ def _frame_logic_triples_from_deontic_records(
                 {"subject": source_id, "predicate": "action", "object": str(norm.get("action") or "")},
             ]
         )
+        legal_frame = norm.get("legal_frame")
+        if isinstance(legal_frame, Mapping):
+            triples.extend(
+                [
+                    {
+                        "subject": source_id,
+                        "predicate": "selected_frame",
+                        "object": str(legal_frame.get("selected_frame") or ""),
+                    },
+                    {
+                        "subject": source_id,
+                        "predicate": "selected_frame_source",
+                        "object": str(legal_frame.get("selected_frame_source") or ""),
+                    },
+                    {
+                        "subject": source_id,
+                        "predicate": "compiler_guidance_source",
+                        "object": str(legal_frame.get("compiler_guidance_source") or ""),
+                    },
+                ]
+            )
         formula_record = formulas_by_source.get(source_id, {})
         if formula_record:
             triples.extend(

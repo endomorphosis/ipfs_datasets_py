@@ -62,7 +62,7 @@ class Groth16Backend:
     _DEFAULT_CIRCUIT_ID: str = "knowledge_of_axioms"
 
     def _enabled(self) -> bool:
-        return os.environ.get("IPFS_DATASETS_ENABLE_GROTH16", "1").strip().lower() not in {"0", "false", "no", "off", ""}
+        return os.environ.get("IPFS_DATASETS_ENABLE_GROTH16", "0").strip().lower() not in {"0", "false", "no", "off", ""}
 
     def _ffi(self):
         # Import lazily to keep imports quiet and lightweight.
@@ -73,8 +73,8 @@ class Groth16Backend:
     def generate_proof(self, theorem: str, private_axioms: list[str], metadata: dict[str, Any]) -> ZKPProof:
         if not self._enabled():
             raise ZKPError(
-                "Groth16 backend is disabled by IPFS_DATASETS_ENABLE_GROTH16. "
-                "Unset it or set IPFS_DATASETS_ENABLE_GROTH16=1 to enable Rust FFI proving."
+                "Groth16 backend is disabled by default. "
+                "Set IPFS_DATASETS_ENABLE_GROTH16=1 to enable Rust FFI proving."
             )
 
         if not theorem:
@@ -189,8 +189,8 @@ class Groth16Backend:
     def verify_proof(self, proof: ZKPProof) -> bool:
         if not self._enabled():
             raise ZKPError(
-                "Groth16 backend is disabled by IPFS_DATASETS_ENABLE_GROTH16. "
-                "Unset it or set IPFS_DATASETS_ENABLE_GROTH16=1 to enable Rust FFI verification."
+                "Groth16 backend is disabled by default. "
+                "Set IPFS_DATASETS_ENABLE_GROTH16=1 to enable Rust FFI verification."
             )
 
         try:
@@ -222,8 +222,8 @@ class Groth16Backend:
         """
         if not self._enabled():
             raise ZKPError(
-                "Groth16 backend is disabled by IPFS_DATASETS_ENABLE_GROTH16. "
-                "Unset it or set IPFS_DATASETS_ENABLE_GROTH16=1 to enable Rust FFI setup."
+                "Groth16 backend is disabled by default. "
+                "Set IPFS_DATASETS_ENABLE_GROTH16=1 to enable Rust FFI setup."
             )
 
         try:
@@ -250,8 +250,8 @@ class Groth16Backend:
         """
         if not self._enabled():
             raise ZKPError(
-                "Groth16 backend is disabled by IPFS_DATASETS_ENABLE_GROTH16. "
-                "Unset it or set IPFS_DATASETS_ENABLE_GROTH16=1 to enable auto-setup."
+                "Groth16 backend is disabled by default. "
+                "Set IPFS_DATASETS_ENABLE_GROTH16=1 to enable auto-setup."
             )
 
         ffi = self._ffi()

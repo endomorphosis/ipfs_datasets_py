@@ -1,9 +1,0 @@
-{
-  "compiler_registry|modal.compiler.registry|{\"action\":\"refine_modal_family_cue_rules\",\"family_pairs\":[\"frame->conditional_normative\",\"frame->temporal\",\"temporal->conditional_normative\",\"temporal->deontic\"],\"program_synthesis_scope\":\"compiler_registry\",\"target_component\":\"modal.compiler.registry\"}": {
-    "anchor_id": "program-6b9eb87ca9c5570a",
-    "expires_at": "2026-05-20T05:53:47+00:00",
-    "expires_at_epoch": 1779256427.201841,
-    "selected_count": 1,
-    "worker_id": "codex-09"
-  }
-}
