@@ -179,6 +179,11 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("funding agreements", "funding_agreement"),
     ("funding agreement", "funding_agreement"),
     ("contract limitation", "contract_limitation"),
+    ("compliance examinations", "compliance_examination"),
+    ("compliance examination", "compliance_examination"),
+    ("enforcement investigations", "enforcement_investigation"),
+    ("enforcement investigation", "enforcement_investigation"),
+    ("deadline", "deadline"),
     ("public law", "public_law"),
     ("pub l", "public_law"),
     ("administrator", "administrator"),
@@ -1540,6 +1545,13 @@ _GROUNDING_TEMPORAL_DEADLINE_RE = re.compile(
     r"\b(?:within|by|not\s+later\s+than|no\s+later\s+than|not\s+later|no\s+later)"
     r"\s+\d[\d,]*(?:\.\d+)?\s+"
     r"(?:day|days|month|months|year|years|hour|hours)\b",
+    re.IGNORECASE,
+)
+_USCODE_EDITORIAL_DATE_RE = re.compile(
+    r"\b(?:Jan\.?|January|Feb\.?|February|Mar\.?|March|Apr\.?|April|"
+    r"May|June?|Jun\.?|July?|Jul\.?|Aug\.?|August|Sept\.?|September|"
+    r"Oct\.?|October|Nov\.?|November|Dec\.?|December)\s+"
+    r"\d{1,2},\s+\d{4}\b",
     re.IGNORECASE,
 )
 _GROUNDING_AUTHORITY_RE = re.compile(
@@ -4134,6 +4146,10 @@ def _document_uscode_editorial_status_phrases(
         source_text,
         status_keyword=status_keyword,
     )
+    temporal_values = _uscode_editorial_status_temporal_values(
+        source_text,
+        status_keyword=status_keyword,
+    )
 
     slots: List[Tuple[str, str]] = []
 
@@ -4159,6 +4175,14 @@ def _document_uscode_editorial_status_phrases(
         add("editorial_status_clause", clause)
         for atom in _legal_semantic_atoms_from_text(clause):
             add("editorial_status_semantic_atom", atom)
+    for temporal_value in temporal_values:
+        add("editorial_status_temporal_value", temporal_value)
+        add("editorial_status_temporal_relation", "on")
+        add(
+            "editorial_status_temporal_scope",
+            f"{status_keyword or 'status'} on {temporal_value}",
+        )
+        add("editorial_status_semantic_atom", "effective_date")
     summary = _clean_text(
         " ".join(
             _unique_preserve_order(
@@ -4169,6 +4193,7 @@ def _document_uscode_editorial_status_phrases(
                     catchline,
                     *editorial_labels,
                     *status_clauses,
+                    *temporal_values,
                 ]
             )
         )
@@ -4195,6 +4220,7 @@ def _document_uscode_editorial_status_phrases(
             "editorial_status_catchline",
             "editorial_status_clause",
             "editorial_status_summary",
+            "editorial_status_temporal_scope",
         }:
             for typed_slot, typed_value in _typed_identifier_slots(
                 value,
@@ -4213,6 +4239,44 @@ def _document_uscode_editorial_status_phrases(
                     )
                 )
     return phrases
+
+
+def _uscode_editorial_status_temporal_values(
+    text: str,
+    *,
+    status_keyword: str,
+    max_values: int = 3,
+) -> List[str]:
+    """Extract bounded dates that make editorial status records temporal."""
+
+    normalized = _clean_text(text)
+    if not normalized:
+        return []
+    candidate_text = re.sub(
+        r"\b(?:Historical and Revision Notes|Prior Provisions|Amendments|"
+        r"Statutory Notes and Related Subsidiaries)\b.*$",
+        "",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    lowered_keyword = _clean_text(status_keyword).lower()
+    values: List[str] = []
+    for match in _USCODE_EDITORIAL_DATE_RE.finditer(candidate_text):
+        date_text = _clean_text(match.group(0))
+        if not date_text:
+            continue
+        left_context = candidate_text[max(0, match.start() - 160) : match.start()]
+        right_context = candidate_text[
+            match.end() : min(len(candidate_text), match.end() + 80)
+        ]
+        context = _clean_text(f"{left_context} {right_context}").lower()
+        if lowered_keyword and lowered_keyword not in context:
+            if not re.search(r"\b(?:pub|public)\.?\s+l\.?|§|stat\.?", context):
+                continue
+        values.append(date_text)
+        if len(_unique_preserve_order(values)) >= max_values:
+            break
+    return _unique_preserve_order(values)
 
 
 def _document_has_uscode_context(document: ModalIRDocument) -> bool:
@@ -10045,6 +10109,20 @@ def _typed_ir_reconstruction_phrases(
                     provenance_only=True,
                 )
             )
+        summary_text = _typed_ir_source_semantic_summary(
+            document=document,
+            formula=formula,
+            existing_text=rendered,
+        )
+        if summary_text:
+            phrases.append(
+                DecodedModalPhrase(
+                    text=summary_text,
+                    slot="typed_ir_semantic_summary",
+                    spans=spans,
+                    provenance_only=True,
+                )
+            )
         phrases.extend(
             _typed_ir_cross_family_semantic_support_phrases(
                 document=document,
@@ -10446,6 +10524,64 @@ def _typed_ir_source_semantic_excerpts(
         if len(excerpts) >= max_excerpts:
             break
     return excerpts
+
+
+def _typed_ir_source_semantic_summary(
+    *,
+    document: ModalIRDocument,
+    formula: ModalIRFormula,
+    existing_text: str,
+    max_summary_tokens: int = 72,
+    max_parts: int = 4,
+) -> str:
+    """Return a compact source-derived semantic summary for structural decode."""
+
+    semantic_surface = _clean_text(
+        _semantic_source_span_text(document=document, formula=formula)
+    )
+    if not semantic_surface:
+        return ""
+    existing_tokens = set(_tokenize_for_similarity(existing_text))
+    existing_content_tokens = _semantic_excerpt_content_tokens(existing_tokens)
+    candidates = _source_semantic_excerpt_candidates(semantic_surface)
+    if not candidates:
+        semantic_tokens = _tokenize_for_similarity(semantic_surface)
+        if semantic_tokens and len(semantic_tokens) <= max_summary_tokens:
+            candidates = [semantic_surface]
+    summary_parts: List[str] = []
+    summary_tokens: List[str] = []
+    seen: set[str] = set()
+    for candidate in candidates:
+        candidate = _clean_text(candidate)
+        lowered = candidate.lower()
+        if not candidate or lowered in seen:
+            continue
+        candidate_tokens = _tokenize_for_similarity(candidate)
+        if not candidate_tokens:
+            continue
+        content_tokens = _semantic_excerpt_content_tokens(set(candidate_tokens))
+        if content_tokens and not (content_tokens - existing_content_tokens):
+            continue
+        projected_count = len(summary_tokens) + len(candidate_tokens)
+        if summary_parts and projected_count > max_summary_tokens:
+            continue
+        if len(candidate_tokens) > max_summary_tokens:
+            continue
+        seen.add(lowered)
+        summary_parts.append(candidate)
+        summary_tokens.extend(candidate_tokens)
+        existing_content_tokens.update(content_tokens)
+        if (
+            len(summary_parts) >= max_parts
+            or len(summary_tokens) >= max_summary_tokens
+        ):
+            break
+    summary = _clean_text(" ".join(summary_parts))
+    if not summary:
+        return ""
+    if summary.lower() == _clean_text(existing_text).lower():
+        return ""
+    return summary
 
 
 def _semantic_excerpt_content_tokens(tokens: set[str]) -> set[str]:

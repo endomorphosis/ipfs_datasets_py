@@ -53,6 +53,8 @@ _BRIDGE_CONTRACT_SPARSE_KG_MIN = 0.22
 _BRIDGE_CONTRACT_SPARSE_KG_TARGET = 0.26
 _BRIDGE_CONTRACT_SPARSE_REPEAL_DEONTIC_CAP = 0.28
 _BRIDGE_CONTRACT_SPARSE_REPEAL_KG_MIN = 0.26
+_BRIDGE_CONTRACT_SPARSE_OPERATIONAL_DEONTIC_CAP = 0.45
+_BRIDGE_CONTRACT_SPARSE_OPERATIONAL_KG_FLOOR = 0.12
 _BRIDGE_CONTRACT_SPARSE_EPISTEMIC_SHIFT = 0.025
 _BRIDGE_CONTRACT_SPARSE_EPISTEMIC_KG_FLOOR = 0.22
 _BRIDGE_CONTRACT_CITATION_FRAME_DEONTIC_FLOOR = 0.20
@@ -153,7 +155,7 @@ _BRIDGE_CONTRACT_EFFECT_ON_EXISTING_LAW_CUE_RE = re.compile(
     r"(?:act|section|chapter|subchapter|part)\b.{0,220}\b"
     r"(?:affect(?:s|ing)?|amend(?:s|ing)?|limit(?:s|ing)?|alter(?:s|ing)?|"
     r"repeal(?:s|ing)?)"
-    r".{0,120}\bauthority\s+of)\b",
+    r".{0,120}\b(?:authority\s+of|authority\b.{0,80}\bof\s+any))\b",
     flags=re.IGNORECASE,
 )
 _BRIDGE_CONTRACT_FRAME_ENFORCEMENT_CUE_RE = re.compile(
@@ -270,8 +272,10 @@ _BRIDGE_CONTRACT_AUXILIARY_AUTOENCODER_LANES = (
 )
 _BRIDGE_CONTRACT_ADMIN_RULEMAKING_SCHEDULE_RE = re.compile(
     r"\b(?:administrator|secretary|agency|commission|board|director)\b.{0,180}\b"
-    r"(?:promulgate|petition|notice|comment|determines?|phase\s+out|phasing\s+out)\b"
-    r"|\b(?:promulgate|petition|notice|comment|determines?|phase\s+out|phasing\s+out)\b"
+    r"(?:promulgate|petition|notice|comment|determines?|phase\s+out|phasing\s+out|"
+    r"by\s+regulation\s+establish|establish\b.{0,80}\bstandards?)\b"
+    r"|\b(?:promulgate|petition|notice|comment|determines?|phase\s+out|phasing\s+out|"
+    r"by\s+regulation\s+establish|establish\b.{0,80}\bstandards?)\b"
     r".{0,180}\b(?:administrator|secretary|agency|commission|board|director)\b",
     flags=re.IGNORECASE,
 )
@@ -387,6 +391,9 @@ _BRIDGE_CONTRACT_SAVINGS_EXISTING_LAW_RE = re.compile(
     r"(?:act|section|chapter|subchapter|part)\s+shall\s+be\s+(?:construed|deemed)\s+"
     r"(?:as\s+)?(?:to\s+)?"
     r"(?:amend(?:ing)?|repeal(?:ing)?|affect(?:ing)?|limit(?:ing)?)|"
+    r"nothing\s+in\s+this\s+(?:act|section|chapter|subchapter|part)\b.{0,220}\b"
+    r"(?:affect(?:s|ing)?|limit(?:s|ing)?|alter(?:s|ing)?)\b.{0,120}\b"
+    r"(?:authority\s+of|authority\b.{0,80}\bof\s+any)|"
     r"shall\s+not\s+be\s+deemed\s+to\s+(?:amend|repeal|affect|limit))\b",
     flags=re.IGNORECASE,
 )
@@ -401,6 +408,14 @@ _BRIDGE_CONTRACT_PERFORMANCE_PLAN_ASSESSMENT_RE = re.compile(
     r"\b(?:annual\s+performance\s+plan|performance\s+plan\s+conducted|"
     r"shall\s+conduct\b.{0,180}\bperformance\s+plan|"
     r"shall\s+include\s+an\s+assessment\b.{0,220}\bgoals?)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_SUBSTANTIVE_OPERATIONAL_NORM_RE = re.compile(
+    r"\b(?:authorized\s+to\s+(?:employ|be\s+appropriated)|"
+    r"there\s+(?:is|are)\s+established|shall\s+be\s+composed|"
+    r"shall\s+constitute\s+a\s+quorum|shall\s+meet|shall\s+be\s+available|"
+    r"shall\s+be\s+used|shall\s+give\s+priority|may\s+be\s+allowed|"
+    r"shall\s+cause\s+to\s+have\s+prepared)\b",
     flags=re.IGNORECASE,
 )
 
@@ -2578,6 +2593,11 @@ def _rebalance_sparse_contract_distribution(
     has_epistemic_heading_signal = bool(
         _BRIDGE_CONTRACT_EPISTEMIC_HEADING_CUE_RE.search(normalized_text)
     )
+    has_substantive_operational_norm = (
+        deontic_cue_count > 0
+        and _BRIDGE_CONTRACT_SUBSTANTIVE_OPERATIONAL_NORM_RE.search(normalized_text)
+        is not None
+    )
     if deontic_cue_count <= 0 and not has_repeal_scaffold_signal:
         return lanes
 
@@ -2596,6 +2616,12 @@ def _rebalance_sparse_contract_distribution(
             _BRIDGE_CONTRACT_SPARSE_REPEAL_DEONTIC_CAP,
         )
         kg_floor = max(kg_floor, _BRIDGE_CONTRACT_SPARSE_REPEAL_KG_MIN)
+    if has_substantive_operational_norm:
+        deontic_cap = max(
+            deontic_cap,
+            _BRIDGE_CONTRACT_SPARSE_OPERATIONAL_DEONTIC_CAP,
+        )
+        kg_floor = min(kg_floor, _BRIDGE_CONTRACT_SPARSE_OPERATIONAL_KG_FLOOR)
 
     if adjusted.get(deontic_lane, 0.0) > deontic_cap:
         excess = adjusted[deontic_lane] - deontic_cap

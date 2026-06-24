@@ -67,6 +67,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_001808_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001547_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001983_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_001944_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000906_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_002920_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_002162_FAMILY_PAIRS,
@@ -34340,6 +34341,55 @@ def test_modal_decompiler_structures_document_catchline_semantic_atoms() -> None
     ]
 
 
+def test_modal_decompiler_structures_editorial_status_temporal_dates() -> None:
+    source_text = (
+        "§§630 to 632. Repealed. Pub. L. 100-485, title II, §202(a), "
+        "Oct. 13, 1988, 102 Stat. 2377 Section 630 related to assistance."
+    )
+    document = ModalIRDocument(
+        document_id="us-code-42-630-to-632-repealed-status",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+
+    assert slot_texts["editorial_status_keyword"] == ["repealed"]
+    assert slot_texts["editorial_status_temporal_value"] == ["Oct. 13, 1988"]
+    assert slot_texts["editorial_status_temporal_relation"] == ["on"]
+    assert "repealed on Oct. 13, 1988" in slot_texts[
+        "editorial_status_temporal_scope"
+    ]
+    assert "effective_date" in slot_texts["editorial_status_semantic_atom"]
+
+
+def test_modal_decompiler_structures_deadline_catchline_semantic_atoms() -> None:
+    source_text = (
+        "§78d-5. Deadline for completing enforcement investigations and "
+        "compliance examinations The Commission shall complete each review."
+    )
+    document = ModalIRDocument(
+        document_id="us-code-15-78d-5-deadline-catchline",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+
+    assert slot_texts["document_section_heading_tail"] == [
+        "Deadline for completing enforcement investigations and compliance examinations"
+    ]
+    assert "deadline" in slot_texts["document_section_heading_tail_legal_semantic_atom"]
+    assert "enforcement_investigation" in slot_texts[
+        "document_section_heading_tail_legal_semantic_atom"
+    ]
+    assert "compliance_examination" in slot_texts[
+        "document_section_heading_tail_legal_semantic_atom"
+    ]
+
+
 def test_decode_modal_ir_document_surfaces_packet_001553_semantic_span_bridges() -> None:
     source_text = (
         "The Secretary may conduct an administrative notice hearing by regulation "
@@ -38231,6 +38281,119 @@ def test_packet_002920_low_margin_emits_explicit_ambiguities() -> None:
             predicted_family,
             target_family,
         )
+
+
+def test_packet_001944_compiler_ambiguity_policy_refines_family_cue_rules() -> None:
+    assert COMPILER_AMBIGUITY_PACKET_001944_FAMILY_PAIRS == (
+        ("deontic", "conditional_normative"),
+        ("deontic", "deontic"),
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("frame", "temporal"),
+        ("temporal", "temporal"),
+    )
+
+    for predicted_family, target_family in COMPILER_AMBIGUITY_PACKET_001944_FAMILY_PAIRS:
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert (
+            compiler_refined_modal_family_cue_margin_buffer(
+                predicted_family,
+                target_family,
+            )
+            > 0.0
+        )
+
+
+def test_packet_001944_low_margin_evidence_emits_explicit_ambiguities() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    source_text = (
+        "The authority under this section shall apply subject to the program "
+        "not later than the effective date."
+    )
+    encoding = SpaCyLegalEncoding(
+        document_id="packet-001944-family-cue-margin",
+        text=source_text,
+        normalized_text=source_text,
+        tokens=[],
+        sentences=[],
+        cues=[],
+    )
+
+    for predicted_family, target_family in COMPILER_AMBIGUITY_PACKET_001944_FAMILY_PAIRS:
+        predicted_share = 0.5
+        target_share = 0.455
+        modal_ir = ModalIRDocument(
+            document_id=f"packet-001944-{predicted_family}-{target_family}",
+            source="us_code",
+            normalized_text=source_text,
+            formulas=[
+                ModalIRFormula(
+                    formula_id=f"f-packet-001944-{predicted_family}-{target_family}",
+                    operator=ModalIROperator(
+                        family=predicted_family,
+                        system="D",
+                        symbol="O",
+                        label="packet_001944_primary",
+                    ),
+                    predicate=ModalIRPredicate(name="resolve_family_cue", role="clause"),
+                    provenance=ModalIRProvenance(
+                        source_id=f"packet-001944-{predicted_family}-{target_family}",
+                        start_char=0,
+                        end_char=len(source_text),
+                    ),
+                )
+            ],
+        )
+        ranking = [
+            {
+                "family": predicted_family,
+                "count": 0,
+                "share_raw": predicted_share,
+                "share": predicted_share,
+            },
+            {
+                "family": target_family,
+                "count": 0,
+                "share_raw": target_share,
+                "share": target_share,
+            },
+        ]
+        ambiguities = compiler._adaptive_family_margin_ambiguities(
+            encoding,
+            modal_ir=modal_ir,
+            ranking=ranking,
+            family_shares={
+                str(candidate["family"]): float(candidate["share_raw"])
+                for candidate in ranking
+            },
+            predicted_family_source="packet_001944_regression",
+        )
+        explicit_pairs = {
+            str(ambiguity.metadata.get("effective_compiler_ambiguity_policy_pair"))
+            for ambiguity in ambiguities
+            if ambiguity.metadata.get("effective_ambiguity_policy_bundle")
+            == "compiler_ambiguity"
+            and ambiguity.metadata.get("is_explicit_adaptive_ambiguity") is True
+        }
+
+        assert f"{predicted_family}->{target_family}" in explicit_pairs
 
 
 def test_packet_000906_compiler_ambiguity_policy_exposes_small_margin_pairs() -> None:

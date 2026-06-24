@@ -10924,6 +10924,7 @@ def _is_semantic_support_slot(slot: str) -> bool:
         "semantic_ir_reconstruction_anchor",
         "typed_ir_reconstruction",
         "typed_ir_semantic_support",
+        "typed_ir_semantic_summary",
         "typed_ir_cross_family_semantic_support",
         "role",
     }:
@@ -10984,6 +10985,7 @@ def _semantic_support_token_count(decoded: DecodedModalText) -> int:
         "editorial_status_catchline",
         "editorial_status_clause",
         "typed_ir_semantic_support",
+        "typed_ir_semantic_summary",
         "typed_ir_cross_family_semantic_support",
         "source_subject_anchor",
         "source_action_anchor",
@@ -11193,6 +11195,7 @@ def _structural_decoded_text(
     typed_ir_values = [
         *slot_text_map.get("typed_ir_reconstruction", ()),
         *slot_text_map.get("typed_ir_semantic_support", ()),
+        *slot_text_map.get("typed_ir_semantic_summary", ()),
         *slot_text_map.get("typed_ir_cross_family_semantic_support", ()),
     ]
     typed_ir_rendered = _clean_non_empty_string(

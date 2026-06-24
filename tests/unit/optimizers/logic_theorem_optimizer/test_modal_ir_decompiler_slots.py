@@ -915,6 +915,45 @@ def test_modal_decompiler_refines_uscode_heading_fallback_typed_ir_slots() -> No
     ]
 
 
+def test_modal_decompiler_adds_bounded_source_semantic_summary_for_long_uscode_spans() -> None:
+    text = (
+        "§18726. Savings provision Nothing in this part affects the authority, "
+        "existing on the day before November 15, 2021, of any other Federal "
+        "department or agency, including the authority provided to the Secretary "
+        "of Homeland Security. Editorial Notes References in Text The Homeland "
+        "Security Act of 2002 is classified generally to Title 6."
+    )
+    formula = ModalIRFormula(
+        formula_id="f_savings_provision",
+        operator=ModalIROperator(
+            family="frame",
+            system="Frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="savings_provision", role="clause"),
+        provenance=ModalIRProvenance(
+            source_id="us-code-42-18726-summary",
+            start_char=0,
+            end_char=len(text),
+            citation="42 U.S.C. 18726.",
+        ),
+    )
+    document = ModalIRDocument(
+        document_id="us-code-42-18726-summary",
+        source="us_code",
+        normalized_text=text,
+        formulas=[formula],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+
+    summaries = slot_texts["typed_ir_semantic_summary"]
+    assert any("Savings provision Nothing in this part affects" in item for item in summaries)
+    assert all("Editorial Notes" not in item for item in summaries)
+    assert all("References in Text" not in item for item in summaries)
+
+
 def test_modal_decompiler_projects_source_role_target_family_slots() -> None:
     formula = ModalIRFormula(
         formula_id="f_frame_role_target",

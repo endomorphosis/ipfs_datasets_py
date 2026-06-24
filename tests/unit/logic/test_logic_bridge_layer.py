@@ -7919,6 +7919,47 @@ def test_official_usc_primary_projection_handles_safety_policy_and_savings_secti
     assert abs(sum(savings.values()) - 1.0) < 1e-9
 
 
+def test_official_usc_primary_projection_handles_packet_savings_and_rulemaking_deadlines() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _project_official_usc_primary_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.25,
+        "TDFOL.prover": 0.25,
+        "deontic.ir": 0.25,
+        "knowledge_graphs.neo4j_compat": 0.25,
+    }
+
+    existing_authority_savings = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "42 U.S.C. 18726. Savings provision. Nothing in this part affects "
+            "the authority, existing on the day before November 15, 2021, of "
+            "any other Federal department or agency, including the authority "
+            "provided to the Secretary of Homeland Security."
+        ),
+    )
+    pet_food_rulemaking = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "21 U.S.C. 2102. Ensuring the safety of pet food. Not later than "
+            "2 years after September 27, 2007, the Secretary shall by "
+            "regulation establish processing standards for pet food and "
+            "updated standards for the labeling of pet food."
+        ),
+    )
+
+    assert existing_authority_savings["knowledge_graphs.neo4j_compat"] > distribution[
+        "knowledge_graphs.neo4j_compat"
+    ]
+    assert existing_authority_savings["CEC.native"] > distribution["CEC.native"]
+    assert pet_food_rulemaking["TDFOL.prover"] > distribution["TDFOL.prover"]
+    assert pet_food_rulemaking["deontic.ir"] > distribution["deontic.ir"]
+    assert abs(sum(existing_authority_savings.values()) - 1.0) < 1e-9
+    assert abs(sum(pet_food_rulemaking.values()) - 1.0) < 1e-9
+
+
 def test_official_usc_primary_projection_handles_bootstrap_bridge_samples() -> None:
     from ipfs_datasets_py.logic.bridge.multiview import (
         _project_official_usc_primary_contract_distribution,
