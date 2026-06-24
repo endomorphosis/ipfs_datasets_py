@@ -4782,7 +4782,7 @@ class AdaptiveModalAutoencoder:
         if self.family_semantic_slot_embedding_weight_scale <= 0.0:
             return {}
         return _joint_distribution(
-            self._family_distribution(
+            self._family_distribution_for_embedding(
                 sample,
                 use_sample_memory=use_sample_memory,
             ),
@@ -4858,7 +4858,7 @@ class AdaptiveModalAutoencoder:
         if self.family_semantic_slot_legal_ir_view_embedding_weight_scale <= 0.0:
             return {}
         return _triple_distribution(
-            self._family_distribution(
+            self._family_distribution_for_embedding(
                 sample,
                 use_sample_memory=use_sample_memory,
             ),
@@ -4891,7 +4891,7 @@ class AdaptiveModalAutoencoder:
     ) -> Dict[str, float]:
         if self.family_legal_ir_view_embedding_weight_scale <= 0.0:
             return {}
-        family_distribution = self._family_distribution(
+        family_distribution = self._family_distribution_for_embedding(
             sample,
             use_sample_memory=use_sample_memory,
         )
@@ -4916,6 +4916,24 @@ class AdaptiveModalAutoencoder:
             self._legal_ir_view_target_distribution_for_sample(sample),
             key_fn=_family_legal_ir_view_key,
         )
+
+    def _family_distribution_for_embedding(
+        self,
+        sample: LegalSample,
+        *,
+        use_sample_memory: bool,
+    ) -> Dict[str, float]:
+        """Gate decoder embedding heads with compiled IR families.
+
+        Family logits are still evaluated by the classifier loss.  The decoder
+        heads are trained from observed modal IR families, so cold-start
+        reconstruction should use the same family space instead of routing
+        reusable semantic-slot weights through a possibly wrong classifier.
+        """
+        observed = _observed_family_distribution(sample)
+        if observed:
+            return observed
+        return self._family_distribution(sample, use_sample_memory=use_sample_memory)
 
     def _is_legal_ir_view_family(self, family: str) -> bool:
         return str(family) not in self.modal_families
@@ -18798,7 +18816,7 @@ class AdaptiveModalAutoencoder:
     ) -> List[float]:
         if self.family_embedding_weight_scale <= 0.0:
             return [0.0 for _ in range(dimensions)]
-        distribution = self._family_distribution(
+        distribution = self._family_distribution_for_embedding(
             sample,
             use_sample_memory=use_sample_memory,
         )

@@ -1140,6 +1140,21 @@ def test_flogic_graph_projection_classifies_structured_predicates_into_projectio
             },
             {
                 "subject": "sample-doc",
+                "predicate": "citation_title",
+                "object": "50",
+            },
+            {
+                "subject": "sample-doc",
+                "predicate": "section_marker_normalized",
+                "object": "523",
+            },
+            {
+                "subject": "sample-doc",
+                "predicate": "section_catchline",
+                "object": "Employment of civilian personnel",
+            },
+            {
+                "subject": "sample-doc",
                 "predicate": "support_span_start_char",
                 "object": "0",
             },
@@ -1160,18 +1175,87 @@ def test_flogic_graph_projection_classifies_structured_predicates_into_projectio
     assert view_by_predicate["candidate_ontology_frame_ranked_token"] == "frame_link"
     assert view_by_predicate["selected_frame_modal_family_count_value"] == "modal_semantics"
     assert view_by_predicate["citation_source_id_alignment_profile_token"] == "citation_structure"
+    assert view_by_predicate["citation_title"] == "citation_structure"
+    assert view_by_predicate["section_marker_normalized"] == "section_structure"
+    assert view_by_predicate["section_catchline"] == "section_structure"
     assert view_by_predicate["support_span_start_char"] == "provenance"
     assert view_by_predicate["source_text_char_count"] == "document_scope"
     assert view_by_predicate["custom_fact"] == "fact"
 
     assert graph_data.metadata["frame_logic_projection_view_distribution"] == {
-        "citation_structure": 1,
+        "citation_structure": 2,
         "document_scope": 1,
         "fact": 1,
         "frame_link": 1,
         "modal_semantics": 1,
         "provenance": 1,
+        "section_structure": 2,
     }
+
+
+def test_flogic_graph_projection_aligns_sparse_uscode_text_section_facts() -> None:
+    graph_data = flogic_triples_to_graph_data(
+        [
+            {
+                "subject": "us-code-50-523.-28b0a2057c1f5da6",
+                "predicate": "sample_text",
+                "object": (
+                    "50 U.S.C. 523.: §523. Employment of civilian personnel "
+                    "The Secretary of the Air Force is authorized to employ such "
+                    "civilian personnel as may be necessary to carry out the "
+                    "purposes of this subchapter without regard to the limitation "
+                    "on maximum number of"
+                ),
+            }
+        ],
+        graph_id="us-code-50-523.-28b0a2057c1f5da6:flogic",
+    )
+
+    view_by_predicate = {
+        rel.properties["flogic_predicate"]: rel.properties["frame_logic_projection_view"]
+        for rel in graph_data.relationships
+    }
+
+    assert view_by_predicate["citation_title"] == "citation_structure"
+    assert view_by_predicate["section_marker"] == "section_structure"
+    assert view_by_predicate["section_marker_normalized"] == "section_structure"
+    assert view_by_predicate["section_catchline"] == "section_structure"
+    assert view_by_predicate["section_heading_tail"] == "section_structure"
+    assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
+    assert graph_data.metadata["frame_logic_projection_legal_view_coverage_ratio"] == 1.0
+    assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
+
+
+def test_flogic_graph_projection_aligns_omitted_uscode_section_status() -> None:
+    graph_data = flogic_triples_to_graph_data(
+        [
+            {
+                "subject": "us-code-25-1082-8ced11db1f26249d",
+                "predicate": "sample_text",
+                "object": (
+                    "25 U.S.C. 1082: U.S.C. Title 25 - INDIANS 25 U.S.C. "
+                    "United States Code, 2024 Edition Title 25 - INDIANS "
+                    "CHAPTER 14 - MISCELLANEOUS SUBCHAPTER LII - QUILEUTE "
+                    "AND HOH TRIBES OF WASHINGTON: DISTRIBUTION OF JUDGMENT "
+                    "FUND Sec. 1082 - Omitted From the U.S. Government "
+                    "Publishing Office"
+                ),
+            }
+        ],
+        graph_id="us-code-25-1082-8ced11db1f26249d:flogic",
+    )
+
+    view_by_predicate = {
+        rel.properties["flogic_predicate"]: rel.properties["frame_logic_projection_view"]
+        for rel in graph_data.relationships
+    }
+
+    assert view_by_predicate["section_catchline"] == "section_structure"
+    assert view_by_predicate["status_keyword"] == "editorial_status"
+    assert view_by_predicate["status_keyword_omitted"] == "editorial_status"
+    assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
+    assert graph_data.metadata["frame_logic_projection_legal_view_coverage_ratio"] == 1.0
+    assert graph_data.metadata["legal_ir_multiview_graph_failure_penalty"] == 0.0
 
 
 def test_modal_ir_graph_projection_metadata_keeps_frame_logic_selected_frame() -> None:

@@ -1136,6 +1136,89 @@ def test_reconstruction_trains_family_slot_view_head_without_legal_ir_target() -
     assert after.embedding_cosine_similarity > before.embedding_cosine_similarity
 
 
+def test_reconstruction_family_slot_head_uses_observed_ir_when_classifier_misroutes() -> None:
+    train_base = build_us_code_sample(
+        title="20",
+        section="106",
+        text="The approval remains effective after notice is published.",
+        embedding_vector=[1.0, 0.0],
+    )
+    validation_base = build_us_code_sample(
+        title="20",
+        section="107",
+        text="The approval remains effective after notice is published.",
+        embedding_vector=[1.0, 0.0],
+    )
+
+    def temporal_sample(sample):
+        formula = sample.modal_ir.formulas[0]
+        temporal_formula = replace(
+            formula,
+            operator=replace(
+                formula.operator,
+                family="temporal",
+                system="LTL",
+                symbol="F",
+                label="eventually",
+            ),
+        )
+        return replace(
+            sample,
+            modal_ir=replace(sample.modal_ir, formulas=[temporal_formula]),
+        )
+
+    train = temporal_sample(train_base)
+    validation = temporal_sample(validation_base)
+    autoencoder = AdaptiveModalAutoencoder(
+        state=ModalAutoencoderTrainingState(
+            feature_family_logits={
+                "modal-family:temporal": {
+                    "frame": 8.0,
+                    "temporal": -8.0,
+                }
+            }
+        ),
+        compiler_quality_embedding_weight_scale=0.0,
+        logic_signature_embedding_weight_scale=0.0,
+        round_trip_signal_embedding_weight_scale=0.0,
+        decompiler_plan_embedding_weight_scale=0.0,
+        predicate_argument_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=4.0,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        feature_embedding_weight_scale=0.0,
+        feature_family_logit_scale=1.0,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+        cosine_reconstruction_weight=0.0,
+    )
+    predicted = autoencoder._family_distribution(validation, use_sample_memory=False)
+    before = autoencoder.evaluate([validation], use_sample_memory=False)
+
+    autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after = autoencoder.evaluate([validation], use_sample_memory=False)
+    embedding_family_slots = (
+        autoencoder._family_semantic_slot_distribution_for_embedding(
+            validation,
+            use_sample_memory=False,
+        )
+    )
+
+    assert predicted["frame"] > predicted["temporal"]
+    assert any(key.startswith("temporal||") for key in embedding_family_slots)
+    assert not any(key.startswith("frame||") for key in embedding_family_slots)
+    assert after.embedding_cosine_similarity > before.embedding_cosine_similarity
+
+
 def test_clause_topology_features_capture_abstract_source_ir_graph() -> None:
     sample = build_us_code_sample(
         title="5",

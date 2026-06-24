@@ -65,7 +65,6 @@ _DOCUMENT_SCOPE_PREDICATES = {
 _PROVENANCE_PREDICATES = {
     "citation",
     "citation_source",
-    "citation_title",
     "evidence",
     "hint_id",
     "sample_id",
@@ -148,7 +147,9 @@ _SECTION_STRUCTURE_PREDICATE_PREFIXES = (
     "citation_source_id_title_section_",
     "citation_title_section_",
     "fallback_section_heading_",
+    "section_catchline",
     "section_heading_",
+    "section_marker",
     "section_component_",
     "section_profile_",
     "section_range_",

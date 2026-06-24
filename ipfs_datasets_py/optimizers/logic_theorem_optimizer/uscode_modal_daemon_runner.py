@@ -28,7 +28,7 @@ from contextlib import ExitStack, contextmanager
 from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import AbstractSet, Any, Dict, Iterable, Iterator, List, Mapping, Optional, Sequence
+from typing import AbstractSet, Any, Callable, Dict, Iterable, Iterator, List, Mapping, Optional, Sequence
 
 
 def _ensure_sibling_ipfs_accelerate_py_on_path() -> None:
@@ -1377,6 +1377,7 @@ def compiler_ir_metric_block(
     use_autoencoder_guidance: bool = False,
     guidance_top_k: int = 16,
     max_sample_metric_records: int = 32,
+    progress_callback: Optional[Callable[[Mapping[str, Any]], None]] = None,
 ) -> Dict[str, Any]:
     """Aggregate deterministic compiler/IR/decompiler round-trip metrics."""
     sample_list = list(samples)
@@ -1388,6 +1389,27 @@ def compiler_ir_metric_block(
             "sample_count": 0,
         }
 
+    started_at = time.time()
+
+    def emit_progress(stage: str, **payload: Any) -> None:
+        if progress_callback is None:
+            return
+        event = {
+            "block": "compiler_ir",
+            "elapsed_seconds": round(time.time() - started_at, 3),
+            "sample_count": len(sample_list),
+            "stage": stage,
+        }
+        event.update(payload)
+        try:
+            progress_callback(event)
+        except Exception:
+            pass
+
+    emit_progress(
+        "start",
+        autoencoder_guidance_enabled=bool(use_autoencoder_guidance),
+    )
     losses: Dict[str, List[float]] = {
         "cosine_loss": [],
         "cosine_similarity": [],
@@ -1438,7 +1460,16 @@ def compiler_ir_metric_block(
     guidance_todo_routes: Counter[str] = Counter()
     guidance_todo_route_examples: Dict[str, List[Dict[str, str]]] = {}
     sample_metric_records: List[Dict[str, Any]] = []
-    for sample in sample_list:
+    for sample_index, sample in enumerate(sample_list, start=1):
+        sample_started_at = time.time()
+        sample_id = str(getattr(sample, "sample_id", "") or "")
+        citation = str(getattr(sample, "citation", "") or "")
+        emit_progress(
+            "sample_start",
+            citation=citation,
+            sample_id=sample_id,
+            sample_index=sample_index,
+        )
         compiler_guidance = None
         if use_autoencoder_guidance and autoencoder is not None:
             guidance_requested_count += 1
@@ -1466,6 +1497,14 @@ def compiler_ir_metric_block(
             )
         except Exception:
             failures += 1
+            emit_progress(
+                "sample_failed",
+                citation=citation,
+                failures=failures,
+                sample_id=sample_id,
+                sample_index=sample_index,
+                sample_seconds=round(time.time() - sample_started_at, 3),
+            )
             continue
         for name in losses:
             value = result.losses.get(name)
@@ -1597,6 +1636,17 @@ def compiler_ir_metric_block(
                 )
         if len(sample_metric_records) < max(0, int(max_sample_metric_records)):
             sample_metric_records.append(sample_record)
+        emit_progress(
+            "sample_done",
+            citation=citation,
+            evaluated_count=len(formula_counts),
+            failures=failures,
+            formula_count=len(result.modal_ir.formulas),
+            frame_candidate_count=len(result.frame_candidates),
+            sample_id=sample_id,
+            sample_index=sample_index,
+            sample_seconds=round(time.time() - sample_started_at, 3),
+        )
 
     block: Dict[str, Any] = {
         "autoencoder_guidance_enabled": bool(use_autoencoder_guidance),
@@ -1685,6 +1735,11 @@ def compiler_ir_metric_block(
             float(block["source_decompiled_text_embedding_cosine_loss"]),
             9,
         )
+    emit_progress(
+        "done",
+        evaluated_count=len(formula_counts),
+        failures=failures,
+    )
     return block
 
 
@@ -3307,6 +3362,7 @@ def bridge_ir_metric_block(
     *,
     evaluate_provers: Optional[bool] = None,
     parallel_workers: Optional[int] = None,
+    progress_callback: Optional[Callable[[Mapping[str, Any]], None]] = None,
 ) -> Dict[str, Any]:
     """Aggregate bridge-level compiler/prover/KG diagnostics by adapter."""
 
@@ -3325,6 +3381,25 @@ def bridge_ir_metric_block(
     }
     if not sample_list or not adapter_names:
         return block
+
+    started_at = time.time()
+
+    def emit_progress(stage: str, **payload: Any) -> None:
+        if progress_callback is None:
+            return
+        event = {
+            "adapter_count": len(adapter_names),
+            "adapters": list(adapter_names),
+            "block": "bridge_ir",
+            "elapsed_seconds": round(time.time() - started_at, 3),
+            "sample_count": len(sample_list),
+            "stage": stage,
+        }
+        event.update(payload)
+        try:
+            progress_callback(event)
+        except Exception:
+            pass
 
     aggregate_values: Dict[str, List[float]] = {
         "acceptance": [],
@@ -3347,14 +3422,22 @@ def bridge_ir_metric_block(
     failures_by_adapter: Dict[str, int] = {name: 0 for name in adapter_names}
     cache_hits = 0
     cache_misses = 0
+    completed_samples = 0
     evaluation_seconds: List[float] = []
     cache_stats_lock = threading.Lock()
 
     from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
 
     def evaluate_sample(sample: Any) -> Any:
-        nonlocal cache_hits, cache_misses
+        nonlocal cache_hits, cache_misses, completed_samples
         started = time.time()
+        sample_id = str(getattr(sample, "sample_id", "") or "")
+        citation = str(getattr(sample, "citation", "") or "")
+        emit_progress(
+            "sample_start",
+            citation=citation,
+            sample_id=sample_id,
+        )
         cache_key = _bridge_ir_report_cache_key(
             sample,
             bridge_names=adapter_names,
@@ -3366,9 +3449,31 @@ def bridge_ir_metric_block(
             with cache_stats_lock:
                 cache_hits += 1
                 evaluation_seconds.append(time.time() - started)
+                completed_samples += 1
+                completed = completed_samples
+                hits = cache_hits
+                misses = cache_misses
+            emit_progress(
+                "sample_cache_hit",
+                cache_hits=hits,
+                cache_misses=misses,
+                citation=citation,
+                completed_samples=completed,
+                sample_id=sample_id,
+                sample_seconds=round(time.time() - started, 3),
+            )
             return cached
         with cache_stats_lock:
             cache_misses += 1
+            hits = cache_hits
+            misses = cache_misses
+        emit_progress(
+            "sample_cache_miss",
+            cache_hits=hits,
+            cache_misses=misses,
+            citation=citation,
+            sample_id=sample_id,
+        )
         report = evaluate_legal_ir_multiview(
             sample.text,
             bridge_names=adapter_names,
@@ -3384,11 +3489,32 @@ def bridge_ir_metric_block(
             _BRIDGE_IR_REPORT_CACHE[cache_key] = report
         with cache_stats_lock:
             evaluation_seconds.append(time.time() - started)
+            completed_samples += 1
+            completed = completed_samples
+            hits = cache_hits
+            misses = cache_misses
+        emit_progress(
+            "sample_done",
+            cache_hits=hits,
+            cache_misses=misses,
+            citation=citation,
+            completed_samples=completed,
+            report_failures=len(getattr(report, "failures", {}) or {}),
+            report_view_count=float(getattr(report, "view_count", 0.0) or 0.0),
+            sample_id=sample_id,
+            sample_seconds=round(time.time() - started, 3),
+        )
         return report
 
     worker_count = _parallel_worker_count(
         requested=parallel_workers,
         item_count=len(sample_list),
+    )
+    block["worker_count"] = worker_count
+    emit_progress(
+        "start",
+        evaluate_provers=evaluate_provers,
+        worker_count=worker_count,
     )
     if worker_count <= 1:
         multiview_reports = [evaluate_sample(sample) for sample in sample_list]
@@ -3468,6 +3594,14 @@ def bridge_ir_metric_block(
     for name, values in aggregate_values.items():
         if values:
             block[name if name != "acceptance" else "acceptance_rate"] = _mean(values)
+    emit_progress(
+        "done",
+        cache_hits=cache_hits,
+        cache_misses=cache_misses,
+        evaluated_count=block["evaluated_count"],
+        metric_failures=block["metric_failures"],
+        worker_count=worker_count,
+    )
     return block
 
 
@@ -8572,24 +8706,64 @@ def paired_codex_child_env(args: argparse.Namespace) -> Dict[str, str]:
 def _clamp_nested_bridge_adapter_parallelism(
     *,
     bridge_parallel_workers: int,
+    sample_parallel_workers: Optional[int] = None,
+    adapter_count: Optional[int] = None,
+    max_nested_workers: Optional[int] = None,
 ) -> Dict[str, Any]:
-    """Avoid sample-worker x adapter-worker explosions during LegalIR evaluation."""
+    """Budget nested sample-worker x adapter-worker LegalIR evaluation.
+
+    The daemon has two useful levels of parallelism: samples evaluated by the
+    autoencoder, and bridge adapters evaluated inside each sample.  The old
+    guard collapsed adapter parallelism to one whenever sample parallelism was
+    enabled, which protected the host but also serialized small metric batches.
+    This version keeps the product bounded while still allowing adapter-level
+    parallelism for small sampled metric windows.
+    """
 
     previous = os.environ.get("IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS", "").strip()
     try:
-        adapter_workers = int(previous) if previous else 1
+        requested_adapter_workers = int(previous) if previous else 1
     except ValueError:
-        adapter_workers = 1
-    clamped = False
-    if bridge_parallel_workers > 1 and adapter_workers > 1:
-        os.environ["IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS"] = "1"
-        adapter_workers = 1
-        clamped = True
+        requested_adapter_workers = 1
+    sample_workers = max(
+        1,
+        int(
+            sample_parallel_workers
+            if sample_parallel_workers is not None
+            else bridge_parallel_workers
+        ),
+    )
+    adapter_limit = max(1, int(adapter_count or requested_adapter_workers or 1))
+    raw_budget = os.environ.get("IPFS_DATASETS_LEGAL_IR_NESTED_WORKER_BUDGET", "").strip()
+    if max_nested_workers is None and raw_budget:
+        try:
+            max_nested_workers = int(raw_budget)
+        except ValueError:
+            max_nested_workers = None
+    nested_budget = max(1, int(max_nested_workers or bridge_parallel_workers or 1))
+    adapter_budget = max(1, nested_budget // sample_workers)
+    adapter_workers = max(
+        1,
+        min(
+            requested_adapter_workers,
+            adapter_limit,
+            adapter_budget,
+        ),
+    )
+    clamped = adapter_workers != requested_adapter_workers
+    if previous or clamped:
+        os.environ["IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS"] = str(adapter_workers)
     return {
+        "adapter_count": adapter_limit,
+        "adapter_worker_budget": adapter_budget,
         "bridge_parallel_workers": int(bridge_parallel_workers),
         "clamped": clamped,
         "effective_adapter_workers": adapter_workers,
+        "estimated_nested_workers": sample_workers * adapter_workers,
+        "nested_worker_budget": nested_budget,
         "previous_adapter_workers": previous,
+        "requested_adapter_workers": requested_adapter_workers,
+        "sample_parallel_workers": sample_workers,
     }
 
 
@@ -11432,6 +11606,12 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     os.environ["IPFS_DATASETS_LEGAL_IR_PARALLEL_WORKERS"] = str(bridge_parallel_workers)
     bridge_parallelism_report = _clamp_nested_bridge_adapter_parallelism(
         bridge_parallel_workers=bridge_parallel_workers,
+        sample_parallel_workers=metric_bridge_parallel_workers,
+        adapter_count=max(
+            len(metric_bridge_adapters),
+            len(diagnostic_bridge_adapters),
+            1,
+        ),
     )
     summary["bridge_loss_adapters"] = bridge_adapters
     summary["bridge_evaluate_provers"] = bridge_evaluate_provers
@@ -12174,6 +12354,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         validation_canary_sample_ids = set()
         summary["validation_canary_count"] = 0
         summary["validation_canary_indices"] = []
+    metric_progress_lock = threading.RLock()
 
     def mark_active_autoencoder_cycle(
         *,
@@ -12186,52 +12367,59 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         train_indices: Sequence[int] | None = None,
         validation_indices: Sequence[int] | None = None,
     ) -> None:
-        summary["active_cycle"] = int(cycle)
-        summary["active_cycle_bridge_loss_adapters"] = list(bridge_adapters)
-        summary["active_cycle_metric_bridge_adapters"] = list(metric_bridge_adapters)
-        summary["active_cycle_diagnostic_bridge_adapters"] = list(
-            diagnostic_bridge_adapters
-        )
-        summary["active_cycle_metric_bridge_max_samples"] = int(metric_bridge_max_samples)
-        summary["active_cycle_elapsed_seconds"] = round(time.time() - cycle_started, 3)
-        summary["active_cycle_last_heartbeat_at"] = utc_now()
-        summary["active_cycle_phase"] = phase
-        if phase != "generalizable_projection":
-            summary["active_cycle_projection_progress"] = {}
-            summary["active_cycle_projection_stage"] = None
-        summary["active_cycle_metric_progress"] = {}
-        summary["active_cycle_started_at"] = cycle_started_at
-        summary["active_cycle_train_count"] = (
-            int(args.train_count) if train_count is None else int(train_count)
-        )
-        summary["active_cycle_validation_count"] = (
-            int(args.validation_count)
-            if validation_count is None
-            else int(validation_count)
-        )
-        if train_indices is not None:
-            summary["active_cycle_train_indices"] = list(train_indices)
-        if validation_indices is not None:
-            summary["active_cycle_validation_indices"] = list(validation_indices)
-        save_summary(summary_path, summary)
+        with metric_progress_lock:
+            summary["active_cycle"] = int(cycle)
+            summary["active_cycle_bridge_loss_adapters"] = list(bridge_adapters)
+            summary["active_cycle_metric_bridge_adapters"] = list(metric_bridge_adapters)
+            summary["active_cycle_diagnostic_bridge_adapters"] = list(
+                diagnostic_bridge_adapters
+            )
+            summary["active_cycle_metric_bridge_max_samples"] = int(
+                metric_bridge_max_samples
+            )
+            summary["active_cycle_elapsed_seconds"] = round(
+                time.time() - cycle_started,
+                3,
+            )
+            summary["active_cycle_last_heartbeat_at"] = utc_now()
+            summary["active_cycle_phase"] = phase
+            if phase != "generalizable_projection":
+                summary["active_cycle_projection_progress"] = {}
+                summary["active_cycle_projection_stage"] = None
+            summary["active_cycle_metric_progress"] = {}
+            summary["active_cycle_started_at"] = cycle_started_at
+            summary["active_cycle_train_count"] = (
+                int(args.train_count) if train_count is None else int(train_count)
+            )
+            summary["active_cycle_validation_count"] = (
+                int(args.validation_count)
+                if validation_count is None
+                else int(validation_count)
+            )
+            if train_indices is not None:
+                summary["active_cycle_train_indices"] = list(train_indices)
+            if validation_indices is not None:
+                summary["active_cycle_validation_indices"] = list(validation_indices)
+            save_summary(summary_path, summary)
 
     def clear_active_autoencoder_cycle() -> None:
-        summary["active_cycle"] = None
-        summary["active_cycle_bridge_loss_adapters"] = []
-        summary["active_cycle_metric_bridge_adapters"] = []
-        summary["active_cycle_diagnostic_bridge_adapters"] = []
-        summary["active_cycle_metric_bridge_max_samples"] = 0
-        summary["active_cycle_elapsed_seconds"] = 0.0
-        summary["active_cycle_last_heartbeat_at"] = None
-        summary["active_cycle_metric_progress"] = {}
-        summary["active_cycle_phase"] = None
-        summary["active_cycle_projection_progress"] = {}
-        summary["active_cycle_projection_stage"] = None
-        summary["active_cycle_started_at"] = None
-        summary["active_cycle_train_count"] = 0
-        summary["active_cycle_validation_count"] = 0
-        summary["active_cycle_train_indices"] = []
-        summary["active_cycle_validation_indices"] = []
+        with metric_progress_lock:
+            summary["active_cycle"] = None
+            summary["active_cycle_bridge_loss_adapters"] = []
+            summary["active_cycle_metric_bridge_adapters"] = []
+            summary["active_cycle_diagnostic_bridge_adapters"] = []
+            summary["active_cycle_metric_bridge_max_samples"] = 0
+            summary["active_cycle_elapsed_seconds"] = 0.0
+            summary["active_cycle_last_heartbeat_at"] = None
+            summary["active_cycle_metric_progress"] = {}
+            summary["active_cycle_phase"] = None
+            summary["active_cycle_projection_progress"] = {}
+            summary["active_cycle_projection_stage"] = None
+            summary["active_cycle_started_at"] = None
+            summary["active_cycle_train_count"] = 0
+            summary["active_cycle_validation_count"] = 0
+            summary["active_cycle_train_indices"] = []
+            summary["active_cycle_validation_indices"] = []
 
     def apply_queue_summary(queue_snapshot: ModalTodoQueue) -> Dict[str, Any]:
         status = update_program_synthesis_summary(
@@ -12247,13 +12435,14 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     def refresh_queue_summary_from_disk() -> Dict[str, Any]:
         with queue_file_lock(queue_path):
             latest_queue = ModalTodoQueue.load_jsonl(queue_path)
-        status = apply_queue_summary(latest_queue)
-        summary["active_cycle_queue_refresh"] = {
-            "at": utc_now(),
-            "mode": "summary_snapshot",
-            "queue_counts": latest_queue.status_counts(),
-            "role_queue_counts": latest_queue.role_status_counts(),
-        }
+        with metric_progress_lock:
+            status = apply_queue_summary(latest_queue)
+            summary["active_cycle_queue_refresh"] = {
+                "at": utc_now(),
+                "mode": "summary_snapshot",
+                "queue_counts": latest_queue.status_counts(),
+                "role_queue_counts": latest_queue.role_status_counts(),
+            }
         return status
 
     def refresh_supervisor_queue_from_disk(
@@ -12269,34 +12458,36 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             latest_queue.save_jsonl(queue_path)
             target_supervisor.queue = latest_queue
             queue = latest_queue
-        status = apply_queue_summary(target_supervisor.queue)
-        summary["active_cycle_queue_refresh"] = {
-            "at": utc_now(),
-            "mode": "supervisor_merge",
-            "program_synthesis_status": status,
-            "queue_counts": target_supervisor.queue.status_counts(),
-            "role_queue_counts": target_supervisor.queue.role_status_counts(),
-        }
+        with metric_progress_lock:
+            status = apply_queue_summary(target_supervisor.queue)
+            summary["active_cycle_queue_refresh"] = {
+                "at": utc_now(),
+                "mode": "supervisor_merge",
+                "program_synthesis_status": status,
+                "queue_counts": target_supervisor.queue.status_counts(),
+                "role_queue_counts": target_supervisor.queue.role_status_counts(),
+            }
 
     def record_todo_optimizer_progress(progress: Mapping[str, Any]) -> None:
-        payload = dict(progress)
-        cycle_started_value = summary.get("active_cycle_started_at")
-        payload["active_cycle_elapsed_seconds"] = summary.get(
-            "active_cycle_elapsed_seconds",
-            0.0,
-        )
-        payload["active_cycle_started_at"] = cycle_started_value
-        payload["at"] = utc_now()
-        summary["active_cycle_todo_optimizer_progress"] = payload
-        summary["active_cycle_last_heartbeat_at"] = payload["at"]
-        summary["updated_at"] = payload["at"]
-        if "queue_counts" in payload:
-            summary["latest_queue_counts"] = dict(payload.get("queue_counts") or {})
-        if "role_queue_counts" in payload:
-            summary["latest_role_queue_counts"] = dict(
-                payload.get("role_queue_counts") or {}
+        with metric_progress_lock:
+            payload = dict(progress)
+            cycle_started_value = summary.get("active_cycle_started_at")
+            payload["active_cycle_elapsed_seconds"] = summary.get(
+                "active_cycle_elapsed_seconds",
+                0.0,
             )
-        save_summary(summary_path, summary)
+            payload["active_cycle_started_at"] = cycle_started_value
+            payload["at"] = utc_now()
+            summary["active_cycle_todo_optimizer_progress"] = payload
+            summary["active_cycle_last_heartbeat_at"] = payload["at"]
+            summary["updated_at"] = payload["at"]
+            if "queue_counts" in payload:
+                summary["latest_queue_counts"] = dict(payload.get("queue_counts") or {})
+            if "role_queue_counts" in payload:
+                summary["latest_role_queue_counts"] = dict(
+                    payload.get("role_queue_counts") or {}
+                )
+            save_summary(summary_path, summary)
 
     @contextmanager
     def active_cycle_heartbeat(
@@ -12313,29 +12504,30 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
 
         def pulse() -> None:
             while not stop_event.wait(interval):
-                if summary.get("active_cycle") != int(cycle):
-                    continue
-                if str(summary.get("active_cycle_phase") or "") != str(phase):
-                    continue
-                summary["active_cycle_elapsed_seconds"] = round(
-                    time.time() - cycle_started,
-                    3,
-                )
-                summary["active_cycle_last_heartbeat_at"] = utc_now()
-                summary["active_cycle_long_phase_heartbeat"] = {
-                    "phase": str(phase),
-                    "heartbeat_interval_seconds": interval,
-                }
-                try:
-                    refresh_queue_summary_from_disk()
-                except Exception as exc:
-                    summary["active_cycle_queue_refresh"] = {
-                        "at": utc_now(),
-                        "error": str(exc),
-                        "error_type": type(exc).__name__,
-                        "mode": "summary_snapshot",
+                with metric_progress_lock:
+                    if summary.get("active_cycle") != int(cycle):
+                        continue
+                    if str(summary.get("active_cycle_phase") or "") != str(phase):
+                        continue
+                    summary["active_cycle_elapsed_seconds"] = round(
+                        time.time() - cycle_started,
+                        3,
+                    )
+                    summary["active_cycle_last_heartbeat_at"] = utc_now()
+                    summary["active_cycle_long_phase_heartbeat"] = {
+                        "phase": str(phase),
+                        "heartbeat_interval_seconds": interval,
                     }
-                save_summary(summary_path, summary)
+                    try:
+                        refresh_queue_summary_from_disk()
+                    except Exception as exc:
+                        summary["active_cycle_queue_refresh"] = {
+                            "at": utc_now(),
+                            "error": str(exc),
+                            "error_type": type(exc).__name__,
+                            "mode": "summary_snapshot",
+                        }
+                    save_summary(summary_path, summary)
 
         thread = threading.Thread(
             target=pulse,
@@ -12348,30 +12540,31 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         finally:
             stop_event.set()
             thread.join(timeout=1.0)
-            if (
-                summary.get("active_cycle") == int(cycle)
-                and str(summary.get("active_cycle_phase") or "") == str(phase)
-            ):
-                summary["active_cycle_elapsed_seconds"] = round(
-                    time.time() - cycle_started,
-                    3,
-                )
-                summary["active_cycle_last_heartbeat_at"] = utc_now()
-                summary["active_cycle_long_phase_heartbeat"] = {
-                    "phase": str(phase),
-                    "heartbeat_interval_seconds": interval,
-                    "final": True,
-                }
-                try:
-                    refresh_queue_summary_from_disk()
-                except Exception as exc:
-                    summary["active_cycle_queue_refresh"] = {
-                        "at": utc_now(),
-                        "error": str(exc),
-                        "error_type": type(exc).__name__,
-                        "mode": "summary_snapshot",
+            with metric_progress_lock:
+                if (
+                    summary.get("active_cycle") == int(cycle)
+                    and str(summary.get("active_cycle_phase") or "") == str(phase)
+                ):
+                    summary["active_cycle_elapsed_seconds"] = round(
+                        time.time() - cycle_started,
+                        3,
+                    )
+                    summary["active_cycle_last_heartbeat_at"] = utc_now()
+                    summary["active_cycle_long_phase_heartbeat"] = {
+                        "phase": str(phase),
+                        "heartbeat_interval_seconds": interval,
+                        "final": True,
                     }
-                save_summary(summary_path, summary)
+                    try:
+                        refresh_queue_summary_from_disk()
+                    except Exception as exc:
+                        summary["active_cycle_queue_refresh"] = {
+                            "at": utc_now(),
+                            "error": str(exc),
+                            "error_type": type(exc).__name__,
+                            "mode": "summary_snapshot",
+                        }
+                    save_summary(summary_path, summary)
 
     def sampled_bridge_metric_samples(
         samples: Sequence[Any],
@@ -12399,6 +12592,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         bridge_sample_count: int = 0,
         bridge_sample_ids: Sequence[str] = (),
         error: Optional[BaseException] = None,
+        extra: Optional[Mapping[str, Any]] = None,
     ) -> None:
         payload: Dict[str, Any] = {
             "bridge_adapters": list(metric_bridge_adapters),
@@ -12413,10 +12607,42 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         if error is not None:
             payload["error"] = str(error)
             payload["error_type"] = type(error).__name__
-        summary["active_cycle_elapsed_seconds"] = payload["elapsed_seconds"]
-        summary["active_cycle_last_heartbeat_at"] = utc_now()
-        summary["active_cycle_metric_progress"] = payload
-        save_summary(summary_path, summary)
+        if extra:
+            payload.update(dict(extra))
+        with metric_progress_lock:
+            summary["active_cycle_elapsed_seconds"] = payload["elapsed_seconds"]
+            summary["active_cycle_last_heartbeat_at"] = utc_now()
+            summary["active_cycle_metric_progress"] = payload
+            save_summary(summary_path, summary)
+
+    def metric_progress_callback(
+        *,
+        cycle: int,
+        cycle_started: float,
+        phase: str,
+        dataset: str,
+        sample_count: int,
+        bridge_sample_count: int = 0,
+        bridge_sample_ids: Sequence[str] = (),
+    ) -> Callable[[Mapping[str, Any]], None]:
+        def callback(update: Mapping[str, Any]) -> None:
+            detail = dict(update)
+            stage = str(detail.get("stage") or "update")
+            record_metric_progress(
+                cycle=cycle,
+                cycle_started=cycle_started,
+                phase=phase,
+                stage=f"{dataset}_{stage}",
+                sample_count=sample_count,
+                bridge_sample_count=bridge_sample_count,
+                bridge_sample_ids=bridge_sample_ids,
+                extra={
+                    "dataset": dataset,
+                    "metric_detail": detail,
+                },
+            )
+
+        return callback
 
     def cuda_oom_error(exc: BaseException) -> bool:
         text = f"{type(exc).__module__}.{type(exc).__name__}: {exc}".lower()
@@ -12912,10 +13138,34 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 compiler_ir_train = compiler_ir_metric_block(
                     compiler_ir_train_samples,
                     feature_codec,
+                    progress_callback=metric_progress_callback(
+                        cycle=cycle,
+                        cycle_started=cycle_started,
+                        phase="compiler_ir_metrics",
+                        dataset="train",
+                        sample_count=len(compiler_ir_train_samples),
+                        bridge_sample_count=len(compiler_ir_train_samples),
+                        bridge_sample_ids=[
+                            str(getattr(sample, "sample_id", "") or "")
+                            for sample in compiler_ir_train_samples
+                        ],
+                    ),
                 )
                 compiler_ir_validation = compiler_ir_metric_block(
                     compiler_ir_validation_samples,
                     feature_codec,
+                    progress_callback=metric_progress_callback(
+                        cycle=cycle,
+                        cycle_started=cycle_started,
+                        phase="compiler_ir_metrics",
+                        dataset="validation",
+                        sample_count=len(compiler_ir_validation_samples),
+                        bridge_sample_count=len(compiler_ir_validation_samples),
+                        bridge_sample_ids=[
+                            str(getattr(sample, "sample_id", "") or "")
+                            for sample in compiler_ir_validation_samples
+                        ],
+                    ),
                 )
             mark_active_autoencoder_cycle(
                 cycle=cycle,
@@ -12945,6 +13195,18 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     diagnostic_bridge_adapters,
                     evaluate_provers=bridge_evaluate_provers,
                     parallel_workers=metric_bridge_parallel_workers,
+                    progress_callback=metric_progress_callback(
+                        cycle=cycle,
+                        cycle_started=cycle_started,
+                        phase="logic_bridge_metrics",
+                        dataset="bridge_train",
+                        sample_count=len(bridge_metric_train_samples),
+                        bridge_sample_count=len(bridge_metric_train_samples),
+                        bridge_sample_ids=[
+                            str(getattr(sample, "sample_id", "") or "")
+                            for sample in bridge_metric_train_samples
+                        ],
+                    ),
                 )
                 bridge_ir_train["full_sample_count"] = len(train_samples)
                 bridge_ir_train["sampled"] = (
@@ -12964,6 +13226,18 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     diagnostic_bridge_adapters,
                     evaluate_provers=bridge_evaluate_provers,
                     parallel_workers=metric_bridge_parallel_workers,
+                    progress_callback=metric_progress_callback(
+                        cycle=cycle,
+                        cycle_started=cycle_started,
+                        phase="logic_bridge_metrics",
+                        dataset="bridge_validation",
+                        sample_count=len(bridge_metric_validation_samples),
+                        bridge_sample_count=len(bridge_metric_validation_samples),
+                        bridge_sample_ids=[
+                            str(getattr(sample, "sample_id", "") or "")
+                            for sample in bridge_metric_validation_samples
+                        ],
+                    ),
                 )
                 bridge_ir_validation["full_sample_count"] = len(
                     acceptance_validation_samples
@@ -12997,35 +13271,39 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     train_indices=train_indices,
                     validation_indices=acceptance_validation_indices,
                 )
-                summary["active_cycle_projection_progress"] = {
-                    "elapsed_seconds": 0.0,
-                    "stage": "starting",
-                }
-                summary["active_cycle_projection_stage"] = "starting"
-                save_summary(summary_path, summary)
+                with metric_progress_lock:
+                    summary["active_cycle_projection_progress"] = {
+                        "elapsed_seconds": 0.0,
+                        "stage": "starting",
+                    }
+                    summary["active_cycle_projection_stage"] = "starting"
+                    save_summary(summary_path, summary)
                 projection_progress_last_saved_at = [0.0]
 
                 def record_projection_progress(progress: Mapping[str, Any]) -> None:
                     now = time.time()
-                    projection_progress = dict(progress)
-                    projection_progress["cycle"] = int(cycle)
-                    summary["active_cycle_elapsed_seconds"] = round(
-                        now - cycle_started,
-                        3,
-                    )
-                    summary["active_cycle_last_heartbeat_at"] = utc_now()
-                    summary["active_cycle_phase"] = "generalizable_projection"
-                    summary["active_cycle_projection_progress"] = projection_progress
-                    summary["active_cycle_projection_stage"] = str(
-                        projection_progress.get("stage") or ""
-                    )
-                    force_save = str(projection_progress.get("stage") or "") == "finished"
-                    if (
-                        force_save
-                        or now - projection_progress_last_saved_at[0] >= 5.0
-                    ):
-                        projection_progress_last_saved_at[0] = now
-                        save_summary(summary_path, summary)
+                    with metric_progress_lock:
+                        projection_progress = dict(progress)
+                        projection_progress["cycle"] = int(cycle)
+                        summary["active_cycle_elapsed_seconds"] = round(
+                            now - cycle_started,
+                            3,
+                        )
+                        summary["active_cycle_last_heartbeat_at"] = utc_now()
+                        summary["active_cycle_phase"] = "generalizable_projection"
+                        summary["active_cycle_projection_progress"] = projection_progress
+                        summary["active_cycle_projection_stage"] = str(
+                            projection_progress.get("stage") or ""
+                        )
+                        force_save = (
+                            str(projection_progress.get("stage") or "") == "finished"
+                        )
+                        if (
+                            force_save
+                            or now - projection_progress_last_saved_at[0] >= 5.0
+                        ):
+                            projection_progress_last_saved_at[0] = now
+                            save_summary(summary_path, summary)
 
                 with active_cycle_heartbeat(
                     cycle=cycle,
@@ -13212,12 +13490,36 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     feature_codec,
                     autoencoder=autoencoder,
                     use_autoencoder_guidance=True,
+                    progress_callback=metric_progress_callback(
+                        cycle=cycle,
+                        cycle_started=cycle_started,
+                        phase="guided_compiler_ir_metrics",
+                        dataset="guided_train",
+                        sample_count=len(guided_compiler_ir_train_samples),
+                        bridge_sample_count=len(guided_compiler_ir_train_samples),
+                        bridge_sample_ids=[
+                            str(getattr(sample, "sample_id", "") or "")
+                            for sample in guided_compiler_ir_train_samples
+                        ],
+                    ),
                 )
                 compiler_ir_guided_validation = compiler_ir_metric_block(
                     guided_compiler_ir_validation_samples,
                     feature_codec,
                     autoencoder=autoencoder,
                     use_autoencoder_guidance=True,
+                    progress_callback=metric_progress_callback(
+                        cycle=cycle,
+                        cycle_started=cycle_started,
+                        phase="guided_compiler_ir_metrics",
+                        dataset="guided_validation",
+                        sample_count=len(guided_compiler_ir_validation_samples),
+                        bridge_sample_count=len(guided_compiler_ir_validation_samples),
+                        bridge_sample_ids=[
+                            str(getattr(sample, "sample_id", "") or "")
+                            for sample in guided_compiler_ir_validation_samples
+                        ],
+                    ),
                 )
             mark_active_autoencoder_cycle(
                 cycle=cycle,

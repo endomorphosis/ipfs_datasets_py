@@ -533,11 +533,6 @@ def _dcec_records(
         modality = _dcec_modality(norm)
         state_kind = _dcec_state_kind(norm)
         source_id = str(norm.get("source_id") or f"dcec:norm:{index}")
-        procedure_event_records = _procedure_event_records_from_norm(
-            norm,
-            source_id=source_id,
-            actor=actor,
-        )
         frame_guidance = _frame_guidance_from_norm(
             norm,
             compiler_guidance=compiler_guidance,
@@ -548,6 +543,20 @@ def _dcec_records(
         selected_frame = str(frame_guidance.get("selected_frame") or "")
         selected_frame_source = str(frame_guidance.get("selected_frame_source") or "")
         compiler_guidance_source = str(frame_guidance.get("compiler_guidance_source") or "")
+        procedure_event_records = _procedure_event_records_from_norm(
+            norm,
+            source_id=source_id,
+            actor=actor,
+        )
+        procedure_event_records = _augment_procedure_events_from_selected_frame(
+            procedure_event_records,
+            norm=norm,
+            source_id=source_id,
+            actor=actor,
+            selected_frame=selected_frame,
+            selected_frame_source=selected_frame_source,
+            compiler_guidance_source=compiler_guidance_source,
+        )
         formula_object = _native_dcec_event_formula(
             actor=actor,
             event=event,
@@ -839,6 +848,86 @@ def _exported_procedure_event_records_from_norm(
         ]
     except Exception:
         return []
+
+
+def _augment_procedure_events_from_selected_frame(
+    records: Sequence[Mapping[str, Any]],
+    *,
+    norm: Mapping[str, Any],
+    source_id: str,
+    actor: str,
+    selected_frame: str,
+    selected_frame_source: str,
+    compiler_guidance_source: str,
+) -> list[dict[str, Any]]:
+    normalized_records = [
+        dict(record) for record in records if isinstance(record, Mapping)
+    ]
+    if selected_frame != "administrative_notice_hearing":
+        return normalized_records
+
+    event_names = {
+        _symbol(record.get("event"), fallback="")
+        for record in normalized_records
+        if isinstance(record, Mapping)
+    }
+    if {"notice", "hearing"} <= event_names:
+        return normalized_records
+
+    corpus = " ".join(
+        _first_text_value(
+            norm.get("support_text"),
+            norm.get("source_text"),
+            norm.get("text"),
+            norm.get("action"),
+            fallback="",
+        ).lower().split()
+    )
+    if (
+        "notice" not in corpus
+        and "hearing" not in corpus
+        and not compiler_guidance_source
+    ):
+        return normalized_records
+
+    frame_source = selected_frame_source or "selected_frame"
+    if "notice" not in event_names:
+        normalized_records.append(
+            {
+                "actor": actor,
+                "event": "notice",
+                "event_id": f"{source_id}:procedure:notice",
+                "event_order": 1,
+                "event_symbol": "notice",
+                "is_formula_antecedent": True,
+                "is_trigger": True,
+                "proof_role": "administrative_notice_prerequisite",
+                "raw_text": "notice",
+                "relation": "before",
+                "source_id": source_id,
+                "source": frame_source,
+            }
+        )
+    if "hearing" not in event_names:
+        normalized_records.append(
+            {
+                "actor": actor,
+                "anchor_event": "notice",
+                "anchor_symbol": "notice",
+                "event": "hearing",
+                "event_id": f"{source_id}:procedure:hearing",
+                "event_order": 2,
+                "event_symbol": "hearing",
+                "is_formula_antecedent": True,
+                "is_terminal": True,
+                "proof_role": "administrative_hearing_prerequisite",
+                "raw_text": "hearing",
+                "relation": "after",
+                "source_id": source_id,
+                "source": frame_source,
+            }
+        )
+    return normalized_records
 
 
 def _dcec_modality(norm: Mapping[str, Any]) -> str:
@@ -2501,6 +2590,14 @@ def _clean_operational_actor_slot(text: str) -> str:
     )
     if use_clause_match:
         value = use_clause_match.group(0)
+    official_actor_tail = re.search(
+        r"\b((?:the\s+)?(?:director|secretary|administrator|commission|court|"
+        r"council)(?:\s+of\s+(?:the\s+)?[a-z][a-z\s]{1,100})?)$",
+        value,
+        flags=re.IGNORECASE,
+    )
+    if official_actor_tail:
+        value = official_actor_tail.group(1)
     value = re.sub(r"^no\s+", "", value, flags=re.IGNORECASE)
     heading_subject_match = re.search(
         r"\b(?:the|a|an)\s+("

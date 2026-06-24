@@ -4675,6 +4675,70 @@ def test_cec_dcec_bridge_guidance_overrides_generic_legal_frame_category() -> No
     )
 
 
+def test_cec_dcec_bridge_materializes_guided_notice_hearing_frame_events() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("cec_dcec")
+    report = adapter.evaluate(
+        (
+            "24 U.S.C. 295a: U.S.C. Title 24 - HOSPITALS AND ASYLUMS "
+            "24 U.S.C. United States Code, 2024 Edition Title 24 - "
+            "HOSPITALS AND ASYLUMS CHAPTER 7 - NATIONAL CEMETERIES "
+            "Sec. 295a - Arlington Memorial Amphitheater From the U.S. "
+            "Government Publishing Office, www.gpo.gov §295a. Arlington "
+            "Memorial Amphitheater The Secretary of the Army is authorized "
+            "to maintain the Arlington Memorial Amphitheater."
+        ),
+        document_id="us-code-24-295a-16dcd47733b0e7d4",
+        citation="24 U.S.C. 295a",
+        compiler_guidance={
+            "bundle": {
+                "route": "repair_cec_dcec_bridge",
+                "source": "compiler_guidance_distillation_v1",
+                "target_component": "CEC.native",
+            },
+            "evidence": [
+                {
+                    "citation": "24 U.S.C. 295a",
+                    "compiler_guidance_route": "repair_cec_dcec_bridge",
+                    "evidence_rank": 2,
+                    "sample_id": "us-code-24-295a-16dcd47733b0e7d4",
+                    "selected_frame_after": "administrative_notice_hearing",
+                }
+            ],
+        },
+    )
+
+    event_view = report.ir_document.views["cec_events"]
+    norm_event = next(
+        event
+        for event in event_view.payload["events"]
+        if event["event_role"] == "norm_action"
+    )
+    procedure_events = [
+        event
+        for event in event_view.payload["events"]
+        if event["event_role"] == "procedure_event"
+    ]
+    event_record = report.ir_document.views["event_calculus"].payload["records"][0]
+
+    assert norm_event["actor"] == "secretary_of_the_army"
+    assert event_view.metadata["procedure_event_count"] == 2
+    assert [event["event"] for event in procedure_events] == ["notice", "hearing"]
+    assert procedure_events[1]["relation"] == "after"
+    assert procedure_events[1]["anchor_event"] == "notice"
+    assert event_record["selected_frame"] == "administrative_notice_hearing"
+    assert event_record["compiler_guidance_source"] == "repair_cec_dcec_bridge"
+    assert report.metadata["compiler_guidance_applied"] is True
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+    assert any(
+        triple["predicate"] == "has_procedure_event"
+        and triple["object"].endswith(":procedure:notice")
+        for triple in report.ir_document.frame_logic_triples
+    )
+
+
 def test_cec_dcec_bridge_emits_parse_profile_for_fallback_event_formulas() -> None:
     from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
 

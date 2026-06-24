@@ -3551,11 +3551,31 @@ def test_nested_bridge_adapter_parallelism_is_clamped(monkeypatch: pytest.Monkey
 
     report = runner._clamp_nested_bridge_adapter_parallelism(
         bridge_parallel_workers=8,
+        sample_parallel_workers=8,
+        adapter_count=4,
     )
 
     assert report["clamped"] is True
     assert report["effective_adapter_workers"] == 1
     assert os.environ["IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS"] == "1"
+
+
+def test_nested_bridge_adapter_parallelism_uses_budget_for_small_metric_windows(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS", "4")
+
+    report = runner._clamp_nested_bridge_adapter_parallelism(
+        bridge_parallel_workers=8,
+        sample_parallel_workers=2,
+        adapter_count=3,
+    )
+
+    assert report["clamped"] is True
+    assert report["effective_adapter_workers"] == 3
+    assert report["estimated_nested_workers"] == 6
+    assert report["nested_worker_budget"] == 8
+    assert os.environ["IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS"] == "3"
 
 
 def test_codex_validation_failure_details_extracts_pytest_banner_node_id() -> None:
@@ -6058,6 +6078,36 @@ def test_compiler_ir_metric_block_reports_deterministic_codec_losses() -> None:
     assert "worst_source_decompiled_text_records" in block
 
 
+def test_compiler_ir_metric_block_reports_progress_callbacks() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide records promptly and may withhold exempt records.",
+    )
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(
+            parser_backend="spacy",
+            spacy_model_name="definitely_missing_legal_model",
+            use_flogic=True,
+        )
+    )
+    progress: list[Mapping[str, object]] = []
+
+    block = compiler_ir_metric_block(
+        [sample],
+        codec,
+        progress_callback=progress.append,
+    )
+
+    assert block["evaluated_count"] == 1
+    stages = [entry["stage"] for entry in progress]
+    assert stages[0] == "start"
+    assert "sample_start" in stages
+    assert "sample_done" in stages
+    assert stages[-1] == "done"
+    assert progress[-1]["evaluated_count"] == 1
+
+
 def test_compiler_ir_metric_block_can_apply_autoencoder_guidance() -> None:
     sample = build_us_code_sample(
         title="5",
@@ -6977,6 +7027,7 @@ def test_bridge_ir_metric_block_reports_per_adapter_views() -> None:
     assert block["canonical_ir"]["view_coverage_loss"] == 0.0
     assert block["canonical_ir"]["losses"]["legal_ir_multiview_total_loss"] >= 0.0
     assert block["canonical_ir"]["view_distribution"]
+    assert block["worker_count"] == 1
 
     deontic = block["adapters"]["deontic_norms"]
     assert deontic["views"]["deontic_ir"]["metadata"]["norm_count"] >= 1
@@ -6996,6 +7047,30 @@ def test_bridge_ir_metric_block_reports_per_adapter_views() -> None:
     assert tdfol["views"]["tdfol_formula"]["metadata"]["formula_count"] >= 1
     assert tdfol["views"]["proof_obligations"]["metadata"]["obligation_count"] >= 1
     assert "tdfol_parse_failure_ratio" in tdfol
+
+
+def test_bridge_ir_metric_block_reports_progress_callbacks() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall publish notice before the permit takes effect.",
+    )
+    progress: list[Mapping[str, object]] = []
+
+    block = bridge_ir_metric_block(
+        [sample],
+        ["deontic_norms"],
+        evaluate_provers=False,
+        progress_callback=progress.append,
+    )
+
+    assert block["sample_count"] == 1
+    assert block["worker_count"] == 1
+    stages = [entry["stage"] for entry in progress]
+    assert stages[0] == "start"
+    assert "sample_start" in stages
+    assert any(stage in stages for stage in ("sample_cache_hit", "sample_done"))
+    assert stages[-1] == "done"
 
 
 def test_metric_block_includes_autoencoder_legal_ir_target_losses() -> None:
