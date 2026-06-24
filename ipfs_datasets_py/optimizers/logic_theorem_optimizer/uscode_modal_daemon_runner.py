@@ -421,6 +421,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon impor
     _program_synthesis_sample_payloads,
     _program_synthesis_scope,
     _program_synthesis_target_metrics,
+    _program_synthesis_validation_failure_kind,
     _program_synthesis_validation_commands,
     _program_todo_id,
 )
@@ -665,6 +666,9 @@ _BRIDGE_IR_REPORT_CACHE_LOCK = threading.Lock()
 _BRIDGE_IR_REPORT_CACHE: Dict[str, Any] = {}
 _METRIC_CODE_FINGERPRINT_LOCK = threading.Lock()
 _METRIC_CODE_FINGERPRINT_VALUE: Optional[str] = None
+_COMPILER_IR_SAMPLE_CACHE_VERSION = "compiler-ir-metric-sample-cache-v2"
+_COMPILER_IR_SAMPLE_CODE_FINGERPRINT_LOCK = threading.Lock()
+_COMPILER_IR_SAMPLE_CODE_FINGERPRINT_VALUE: Optional[str] = None
 _ACTIVE_CODEX_EXEC_PROCESSES: List[subprocess.Popen[str]] = []
 CODEX_WORKTREE_ARTIFACT_FILENAMES = {"changes.patch"}
 
@@ -769,6 +773,57 @@ def _metric_code_fingerprint() -> str:
                 "\n".join(tokens).encode("utf-8")
             ).hexdigest()
         return _METRIC_CODE_FINGERPRINT_VALUE
+
+
+def _compiler_ir_sample_code_fingerprint() -> str:
+    global _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_VALUE
+    with _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_LOCK:
+        if _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_VALUE:
+            return _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_VALUE
+        try:
+            package_root = Path(__file__).resolve().parents[2]
+        except (IndexError, OSError, RuntimeError):
+            package_root = Path.cwd()
+        candidates = [
+            package_root / "logic" / "modal",
+            package_root / "optimizers" / "logic_theorem_optimizer" / "frame_bm25_selector.py",
+            package_root / "optimizers" / "logic_theorem_optimizer" / "legal_modal_parser.py",
+            package_root / "optimizers" / "logic_theorem_optimizer" / "legal_samples.py",
+            package_root / "optimizers" / "logic_theorem_optimizer" / "modal_ir.py",
+        ]
+        tokens: List[str] = []
+        for candidate in candidates:
+            paths = (
+                sorted(candidate.rglob("*.py"))
+                if candidate.is_dir()
+                else [candidate]
+            )
+            for path in paths:
+                try:
+                    stat = path.stat()
+                except (OSError, RuntimeError):
+                    continue
+                try:
+                    relative = path.relative_to(package_root)
+                except ValueError:
+                    relative = path
+                tokens.append(f"{relative}:{stat.st_mtime_ns}:{stat.st_size}")
+        _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_VALUE = (
+            hashlib.sha256("\n".join(tokens).encode("utf-8")).hexdigest()
+            if tokens
+            else "unknown"
+        )
+        return _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_VALUE
+
+
+def _compiler_ir_metric_sample_disk_cache_key(payload: Mapping[str, Any]) -> str:
+    wrapper = {
+        "code_fingerprint": _compiler_ir_sample_code_fingerprint(),
+        "kind": "compiler_ir_metric_sample",
+        "payload": payload,
+        "version": _COMPILER_IR_SAMPLE_CACHE_VERSION,
+    }
+    return hashlib.sha256(_stable_metric_json(wrapper).encode("utf-8")).hexdigest()
 
 
 def _metric_cache_object_payload(value: Any) -> Any:
@@ -4397,7 +4452,7 @@ def _compiler_ir_metric_sample_cache_key(
         "guidance_top_k": int(guidance_top_k),
         "sample": _sample_metric_cache_payload(sample),
     }
-    return _metric_disk_cache_key("compiler_ir_metric_sample", payload)
+    return _compiler_ir_metric_sample_disk_cache_key(payload)
 
 
 def _compiler_ir_metric_result_cache_payload(result: Any) -> Dict[str, Any]:
@@ -4779,6 +4834,9 @@ def paired_program_synthesis_health(
                     "program_synthesis_failed_validation_reason_counts": (
                         failed_validation_report["reason_counts"]
                     ),
+                    "program_synthesis_failed_validation_kind_counts": (
+                        failed_validation_report["kind_counts"]
+                    ),
                     "program_synthesis_failed_validation_test_counts": (
                         failed_validation_report["test_counts"]
                     ),
@@ -4799,6 +4857,7 @@ def paired_program_synthesis_health(
                 "program_synthesis_claimed_by_worker": {},
                 "program_synthesis_completed": 0,
                 "program_synthesis_failed_validation": 0,
+                "program_synthesis_failed_validation_kind_counts": {},
                 "program_synthesis_failed_validation_reason_counts": {},
                 "program_synthesis_failed_validation_test_counts": {},
                 "program_synthesis_pending": 0,
@@ -4898,6 +4957,7 @@ def _program_synthesis_failed_validation_report(
 ) -> Dict[str, Any]:
     """Summarize failed-validation reasons and concrete failed validation tests."""
 
+    kind_counts: Counter[str] = Counter()
     reason_counts: Counter[str] = Counter()
     test_counts: Counter[str] = Counter()
     for todo in queue.all():
@@ -4922,6 +4982,10 @@ def _program_synthesis_failed_validation_report(
         reason_counts[reason] += 1
 
         report = metadata.get("failed_validation_report")
+        kind = str(metadata.get("failed_validation_kind") or "").strip()
+        if not kind:
+            kind = _program_synthesis_validation_failure_kind(report)
+        kind_counts[kind or "unclassified"] += 1
         if not isinstance(report, Mapping):
             continue
         todo_failed_tests: set[str] = set()
@@ -4945,6 +5009,7 @@ def _program_synthesis_failed_validation_report(
             test_counts[test_text] += 1
 
     return {
+        "kind_counts": dict(sorted(kind_counts.items())),
         "reason_counts": dict(sorted(reason_counts.items())),
         "test_counts": dict(sorted(test_counts.items())),
     }
@@ -5223,6 +5288,9 @@ def autoencoder_metric_bridge_adapter_names(
     ]
     if normalized in {"none", "off", "false"}:
         return []
+    if normalized in {"auto", "default"}:
+        raw = ""
+        normalized = ""
     if normalized in {"all", "bridge", "bridge_loss", "same"}:
         return list(bridge_adapter_list)
     if raw:
@@ -5264,6 +5332,9 @@ def autoencoder_diagnostic_bridge_adapter_names(
     ]
     if normalized in {"none", "off", "false"}:
         return []
+    if normalized in {"auto", "default"}:
+        raw = ""
+        normalized = ""
     if normalized in {"all", "bridge", "bridge_loss"}:
         return list(bridge_adapter_list)
     if normalized in {"metric", "metrics", "autoencoder_metric", "same"}:
@@ -6204,7 +6275,8 @@ def build_paired_daemon_commands(
             getattr(args, "autoencoder_metric_bridge_adapters", None)
             if getattr(args, "autoencoder_metric_bridge_adapters", None) is not None
             else os.environ.get("IPFS_DATASETS_AUTOENCODER_METRIC_BRIDGE_ADAPTERS", "")
-        ),
+        ).strip()
+        or "default",
         "--autoencoder-diagnostic-bridge-adapters",
         str(
             getattr(args, "autoencoder_diagnostic_bridge_adapters", None)
@@ -6214,7 +6286,8 @@ def build_paired_daemon_commands(
                 "IPFS_DATASETS_AUTOENCODER_DIAGNOSTIC_BRIDGE_ADAPTERS",
                 "",
             )
-        ),
+        ).strip()
+        or "default",
         "--autoencoder-metric-bridge-max-samples",
         str(
             getattr(

@@ -754,6 +754,83 @@ def test_supervisor_seeds_failed_validation_rescue_todos_from_cluster() -> None:
     assert supervisor.last_program_synthesis_deduped_count == 1
 
 
+def test_supervisor_routes_syntax_failed_validation_rescue_separately() -> None:
+    base_metadata = {
+        "execution_target": "codex_program_repair",
+        "failure_reason": "main_apply_validation_failed_rolled_back",
+        "optimizer_role": "program_synthesis",
+        "optimizer_stage": "typed_program_synthesis",
+        "program_synthesis_scope": "compiler_ambiguity",
+        "target_component": "modal.compiler.ambiguity",
+    }
+    syntax_failed = ModalTodo(
+        todo_id="failed-syntax",
+        action="add_or_review_modal_ambiguity_policy",
+        objective="syntax failed ambiguity policy",
+        sample_ids=["sample-a"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=30.0,
+        status="failed_validation",
+        metadata={
+            **base_metadata,
+            "failed_validation_report": {
+                "main_apply_validation_failure_tokens": [
+                    "py_compile:ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_registry.py:478",
+                ],
+                "main_apply_validation_stderr_tail": "SyntaxError: '(' was never closed",
+                "main_apply_validation_syntax_locations": [
+                    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_registry.py:478",
+                ],
+            },
+        },
+    )
+    pytest_failed = ModalTodo(
+        todo_id="failed-pytest",
+        action="add_or_review_modal_ambiguity_policy",
+        objective="pytest failed ambiguity policy",
+        sample_ids=["sample-b"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=29.0,
+        status="failed_validation",
+        metadata={
+            **base_metadata,
+            "failed_validation_report": {
+                "main_apply_validation_failed_tests": [
+                    "tests/unit_tests/logic/modal/test_modal_codec.py::test_policy"
+                ],
+                "main_apply_validation_failure_tokens": [
+                    "pytest:tests/unit_tests/logic/modal/test_modal_codec.py::test_policy"
+                ],
+            },
+        },
+    )
+    supervisor = ModalTodoSupervisor(
+        queue=ModalTodoQueue([syntax_failed, pytest_failed])
+    )
+
+    seeded = supervisor.seed_failed_validation_rescue_todos(max_clusters=4)
+
+    assert len(seeded) == 2
+    by_kind = {todo.metadata["failed_validation_kind"]: todo for todo in seeded}
+    assert set(by_kind) == {"python_syntax", "pytest"}
+    syntax_rescue = by_kind["python_syntax"]
+    assert syntax_rescue.metadata["rescue_recommended_strategy"] == (
+        "repair_python_syntax_before_retrying_semantic_delta"
+    )
+    assert syntax_rescue.metadata["failed_todo_ids"] == ["failed-syntax"]
+    assert syntax_rescue.metadata["hint_evidence"][0]["syntax_locations"] == [
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_registry.py:478"
+    ]
+    assert syntax_rescue.metadata["hint_evidence"][0]["failed_validation_tokens"] == [
+        "py_compile:ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_registry.py:478"
+    ]
+    assert by_kind["pytest"].metadata["failed_todo_ids"] == ["failed-pytest"]
+
+
 def test_supervisor_shards_large_failed_validation_rescue_clusters() -> None:
     metadata = {
         "execution_target": "codex_program_repair",
@@ -2776,11 +2853,12 @@ def test_supervisor_finalize_program_synthesis_batch_applies_queue_transitions()
     assert applied_failed["updated"] is True
     assert applied_failed["completed_count"] == 0
     assert applied_failed["failed_validation_count"] == 1
-    assert applied_failed["reason"] == "main_apply_validation_failed"
+    assert applied_failed["reason"] == "main_apply_validation_python_syntax_error"
     assert applied_failed_todo.status == "failed_validation"
     assert applied_failed_todo.metadata["failed_validation_reason"] == (
-        "main_apply_validation_failed"
+        "main_apply_validation_python_syntax_error"
     )
+    assert applied_failed_todo.metadata["failed_validation_kind"] == "python_syntax"
     assert applied_failed_todo.metadata["failed_validation_report"][
         "main_apply_validation_failure_tokens"
     ] == ["py_compile:ipfs_datasets_py/logic/bridge/modal_frame_logic.py:511"]
@@ -3044,6 +3122,14 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
     assert "--learning-rate-floor-ratio" in paired["autoencoder_command"]
     assert "--learning-rate-cap-ratio" in paired["autoencoder_command"]
     assert "--learning-rate-plateau-delta" in paired["autoencoder_command"]
+    metric_bridge_index = paired["autoencoder_command"].index(
+        "--autoencoder-metric-bridge-adapters"
+    )
+    assert paired["autoencoder_command"][metric_bridge_index + 1] == "default"
+    diagnostic_bridge_index = paired["autoencoder_command"].index(
+        "--autoencoder-diagnostic-bridge-adapters"
+    )
+    assert paired["autoencoder_command"][diagnostic_bridge_index + 1] == "default"
 
 
 def test_cycle_learning_rate_reacts_to_plateau_and_cosine_regression() -> None:
@@ -3969,6 +4055,39 @@ def test_compiler_ir_metric_block_uses_persistent_sample_cache(
     assert second["formula_count"] == pytest.approx(2.0)
 
 
+def test_compiler_ir_metric_sample_cache_key_ignores_runner_fingerprint(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall publish notice before the permit takes effect.",
+    )
+    codec = SimpleNamespace(
+        config=SimpleNamespace(mode="compiler-sample-cache"),
+    )
+
+    first = runner._compiler_ir_metric_sample_cache_key(
+        sample,
+        codec=codec,
+        compiler_guidance=None,
+        guidance_top_k=16,
+    )
+
+    def fail_metric_fingerprint() -> str:
+        raise AssertionError("compiler sample cache must not use runner fingerprint")
+
+    monkeypatch.setattr(runner, "_metric_code_fingerprint", fail_metric_fingerprint)
+    second = runner._compiler_ir_metric_sample_cache_key(
+        sample,
+        codec=codec,
+        compiler_guidance=None,
+        guidance_top_k=16,
+    )
+
+    assert second == first
+
+
 def test_codex_validation_failure_details_extracts_pytest_banner_node_id() -> None:
     details = runner._codex_validation_failure_details(
         command=["python", "-m", "pytest", "tests/unit/example.py"],
@@ -4060,6 +4179,9 @@ def test_paired_program_synthesis_health_detects_starved_codex_queue(tmp_path: P
     assert health["program_synthesis_failed_validation"] == 1
     assert health["program_synthesis_failed_validation_reason_counts"] == {
         "main_apply_validation_failed_rolled_back": 1
+    }
+    assert health["program_synthesis_failed_validation_kind_counts"] == {
+        "pytest": 1
     }
     assert health["program_synthesis_failed_validation_test_counts"] == {
         "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py::test_heading_prefix": 1

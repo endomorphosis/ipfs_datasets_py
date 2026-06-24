@@ -2596,7 +2596,10 @@ class ModalTodoSupervisor:
                     reason = (
                         "target_metric_regression"
                         if target_metric_status == "regressed"
-                        else "main_apply_validation_failed"
+                        else _program_synthesis_failure_reason(
+                            "main_apply_validation_failed",
+                            validation_report,
+                        )
                     )
                     if todo is not None:
                         _record_program_synthesis_failure_evidence(
@@ -2708,9 +2711,13 @@ class ModalTodoSupervisor:
                     completed_count += int(self.queue.complete(todo_id))
                     continue
                 if action == "failed_validation":
+                    reason = _program_synthesis_failure_reason(
+                        reason or "patch_not_created",
+                        validation_report,
+                    )
                     _record_program_synthesis_failure_evidence(
                         todo,
-                        reason=reason or "patch_not_created",
+                        reason=reason,
                         validation_report=validation_report,
                         patch_status=normalized_patch_status,
                         codex_exec_status=normalized_exec_status,
@@ -2718,7 +2725,7 @@ class ModalTodoSupervisor:
                     failed_validation_count += int(
                         self.queue.fail_validation(
                             todo_id,
-                            reason=reason or "patch_not_created",
+                            reason=reason,
                         )
                     )
             outcome = (
@@ -3399,7 +3406,7 @@ def _failed_validation_rescue_todos(
     scope_filter = str(program_synthesis_scope or "").strip()
     reason_filter = str(failure_reason or "").strip()
     action_filter = str(original_action or "").strip()
-    clusters: Dict[tuple[str, str, str, str], List[ModalTodo]] = {}
+    clusters: Dict[tuple[str, str, str, str, str], List[ModalTodo]] = {}
     for todo in todos:
         if todo.status != "failed_validation":
             continue
@@ -3409,16 +3416,26 @@ def _failed_validation_rescue_todos(
             continue
         scope = _program_todo_scope(todo)
         target_component = _todo_target_component(todo)
-        reason = str(todo.metadata.get("failure_reason") or "").strip()
+        reason = str(
+            todo.metadata.get("failed_validation_reason")
+            or todo.metadata.get("failure_reason")
+            or ""
+        ).strip()
+        failure_kind = _program_synthesis_validation_failure_kind(
+            todo.metadata.get("failed_validation_report")
+        )
+        if not failure_kind:
+            failure_kind = str(todo.metadata.get("failed_validation_kind") or "").strip()
         if scope_filter and scope != scope_filter:
             continue
         if reason_filter and reason != reason_filter:
             continue
         if action_filter and todo.action != action_filter:
             continue
-        clusters.setdefault((scope, target_component, todo.action, reason), []).append(
-            todo
-        )
+        clusters.setdefault(
+            (scope, target_component, todo.action, reason, failure_kind),
+            [],
+        ).append(todo)
     ranked_clusters = sorted(
         clusters.items(),
         key=lambda item: (
@@ -3429,7 +3446,7 @@ def _failed_validation_rescue_todos(
     )
     rescue_todos: List[ModalTodo] = []
     chunk_size = max(1, int(FAILED_VALIDATION_RESCUE_CLUSTER_CHUNK_SIZE))
-    for (scope, target_component, action, reason), failed_todos in ranked_clusters:
+    for (scope, target_component, action, reason, failure_kind), failed_todos in ranked_clusters:
         ordered_failed_todos = sorted(failed_todos, key=_todo_priority_key)
         shard_count = max(
             1,
@@ -3452,6 +3469,7 @@ def _failed_validation_rescue_todos(
                     target_component=target_component,
                     original_action=action,
                     failure_reason=reason,
+                    failure_kind=failure_kind,
                     failed_todos=ordered_failed_todos[start : start + chunk_size],
                     policy=policy,
                     shard_key=shard_key,
@@ -3466,6 +3484,7 @@ def _failed_validation_rescue_todo(
     target_component: str,
     original_action: str,
     failure_reason: str,
+    failure_kind: str = "",
     failed_todos: Sequence[ModalTodo],
     policy: ModalOptimizerPolicy,
     shard_key: str = "",
@@ -3500,12 +3519,14 @@ def _failed_validation_rescue_todo(
         scope=scope,
         target_component=target_component,
         failure_reason=failure_reason,
+        failure_kind=failure_kind,
     )
     semantic_key = _failed_validation_rescue_signature(
         scope=scope,
         target_component=target_component,
         original_action=original_action,
         failure_reason=failure_reason,
+        failure_kind=failure_kind,
         shard_key=shard_key,
     )
     count = len(failed_todos)
@@ -3517,12 +3538,14 @@ def _failed_validation_rescue_todo(
         "dedupe_signature": semantic_key,
         "failed_todo_ids": failed_todo_ids[:64],
         "failed_validation_count": count,
+        "failed_validation_kind": failure_kind,
         "failed_validation_reason": failure_reason,
         "hint_evidence": hint_evidence,
         "original_action": original_action,
         "program_synthesis_scope": scope,
         "rescue_recommended_strategy": _failed_validation_rescue_strategy(
-            failure_reason
+            failure_reason,
+            failure_kind=failure_kind,
         ),
         "semantic_bundle_key": semantic_key,
         "source": "failed_validation_rescue_v1",
@@ -3547,6 +3570,7 @@ def _failed_validation_rescue_todo(
             target_component=target_component,
             original_action=original_action,
             failure_reason=failure_reason,
+            failure_kind=failure_kind,
             failed_todo_ids=failed_todo_ids,
             shard_key=shard_key,
         ),
@@ -3727,6 +3751,7 @@ def _failed_validation_rescue_root_signature(todo: ModalTodo) -> str:
         or metadata.get("failure_reason")
         or ""
     ).strip()
+    failure_kind = str(metadata.get("failed_validation_kind") or "").strip()
     if not (original_action and scope and target_component):
         return ""
     return _failed_validation_rescue_signature(
@@ -3734,6 +3759,7 @@ def _failed_validation_rescue_root_signature(todo: ModalTodo) -> str:
         target_component=target_component,
         original_action=original_action,
         failure_reason=failure_reason,
+        failure_kind=failure_kind,
         shard_key=str(metadata.get("rescue_cluster_shard") or ""),
     )
 
@@ -3833,6 +3859,7 @@ def _failed_validation_rescue_signature(
     target_component: str,
     original_action: str,
     failure_reason: str,
+    failure_kind: str = "",
     shard_key: str = "",
 ) -> str:
     payload = {
@@ -3842,6 +3869,8 @@ def _failed_validation_rescue_signature(
         "source": "failed_validation_rescue_v1",
         "target_component": target_component,
     }
+    if str(failure_kind or "").strip():
+        payload["failure_kind"] = str(failure_kind).strip()
     if str(shard_key or "").strip():
         payload["shard"] = str(shard_key).strip()
     return json.dumps(payload, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
@@ -3853,6 +3882,7 @@ def _failed_validation_rescue_todo_id(
     target_component: str,
     original_action: str,
     failure_reason: str,
+    failure_kind: str = "",
     failed_todo_ids: Sequence[str],
     shard_key: str = "",
 ) -> str:
@@ -3862,6 +3892,7 @@ def _failed_validation_rescue_todo_id(
             target_component=target_component,
             original_action=original_action,
             failure_reason=failure_reason,
+            failure_kind=failure_kind,
             shard_key=shard_key,
         ),
         "failed_todo_ids": sorted(
@@ -3944,11 +3975,13 @@ def _failed_validation_rescue_evidence(
     scope: str,
     target_component: str,
     failure_reason: str,
+    failure_kind: str = "",
 ) -> List[Dict[str, Any]]:
     evidence: List[Dict[str, Any]] = []
     for todo in failed_todos[:16]:
         item: Dict[str, Any] = {
             "failed_todo_id": todo.todo_id,
+            "failure_kind": failure_kind,
             "failure_reason": failure_reason,
             "hint_id": f"failed-validation:{todo.todo_id}",
             "original_action": todo.action,
@@ -3984,6 +4017,26 @@ def _failed_validation_rescue_evidence(
             item["failed_validation_target_metric_status"] = failed_report.get(
                 "target_metric_status"
             )
+            failed_tests = _as_list(
+                failed_report.get("main_apply_validation_failed_tests")
+            )
+            if failed_tests:
+                item["failed_validation_tests"] = failed_tests[:8]
+            failure_tokens = _as_list(
+                failed_report.get("main_apply_validation_failure_tokens")
+            )
+            if failure_tokens:
+                item["failed_validation_tokens"] = failure_tokens[:8]
+            syntax_locations = _as_list(
+                failed_report.get("main_apply_validation_syntax_locations")
+            )
+            if syntax_locations:
+                item["syntax_locations"] = syntax_locations[:8]
+            stderr_tail = str(
+                failed_report.get("main_apply_validation_stderr_tail") or ""
+            ).strip()
+            if stderr_tail:
+                item["stderr_tail"] = stderr_tail[-400:]
             regressed_metrics = _as_list(failed_report.get("regressed_metrics"))
             if regressed_metrics and "regressed_metrics" not in item:
                 item["regressed_metrics"] = regressed_metrics[:8]
@@ -3997,8 +4050,15 @@ def _failed_validation_rescue_evidence(
     return evidence
 
 
-def _failed_validation_rescue_strategy(failure_reason: str) -> str:
+def _failed_validation_rescue_strategy(
+    failure_reason: str,
+    *,
+    failure_kind: str = "",
+) -> str:
     normalized = str(failure_reason or "").strip().lower()
+    normalized_kind = str(failure_kind or "").strip().lower()
+    if normalized_kind == "python_syntax" or "syntax" in normalized:
+        return "repair_python_syntax_before_retrying_semantic_delta"
     if "target_metric_regression" in normalized:
         return "preserve_target_metrics_before_expanding_fix"
     if normalized.startswith("main_apply_validation_failed"):
@@ -4583,6 +4643,73 @@ def _compact_hint_evidence(hint: ModalProgramSynthesisHint) -> Dict[str, Any]:
     return summary
 
 
+def _program_synthesis_validation_failure_kind(
+    validation_report: Optional[Mapping[str, Any]],
+) -> str:
+    """Classify a failed Codex validation report for rescue routing."""
+
+    if not isinstance(validation_report, Mapping):
+        return ""
+    syntax_locations = _as_list(
+        validation_report.get("main_apply_validation_syntax_locations")
+    )
+    failure_tokens = [
+        str(token)
+        for token in _as_list(
+            validation_report.get("main_apply_validation_failure_tokens")
+        )
+        if str(token)
+    ]
+    stderr_tail = str(
+        validation_report.get("main_apply_validation_stderr_tail") or ""
+    )
+    if (
+        syntax_locations
+        or any(token.startswith("py_compile:") for token in failure_tokens)
+        or "SyntaxError" in stderr_tail
+        or "IndentationError" in stderr_tail
+    ):
+        return "python_syntax"
+
+    failed_tests = _as_list(validation_report.get("main_apply_validation_failed_tests"))
+    if failed_tests or any(token.startswith("pytest:") for token in failure_tokens):
+        return "pytest"
+
+    target_metric_status = str(
+        validation_report.get("target_metric_status") or ""
+    ).strip().lower()
+    if target_metric_status == "regressed" or _as_list(
+        validation_report.get("regressed_metrics")
+    ):
+        return "target_metric_regression"
+    if target_metric_status in {"failed", "invalid_json", "timeout", "unavailable"}:
+        return "target_metric_infrastructure"
+
+    status = str(
+        validation_report.get("main_apply_validation_status")
+        or validation_report.get("status")
+        or ""
+    ).strip().lower()
+    if status == "timeout":
+        return "validation_timeout"
+    if status == "failed":
+        return "validation_failed"
+    return ""
+
+
+def _program_synthesis_failure_reason(
+    reason: str,
+    validation_report: Optional[Mapping[str, Any]],
+) -> str:
+    """Return the most actionable queue failure reason for a validation report."""
+
+    normalized = str(reason or "").strip() or "patch_not_created"
+    kind = _program_synthesis_validation_failure_kind(validation_report)
+    if kind == "python_syntax" and normalized.startswith("main_apply_validation"):
+        return "main_apply_validation_python_syntax_error"
+    return normalized
+
+
 def _record_program_synthesis_failure_evidence(
     todo: ModalTodo,
     *,
@@ -4597,6 +4724,9 @@ def _record_program_synthesis_failure_evidence(
     todo.metadata["failed_validation_codex_exec_status"] = str(
         codex_exec_status or ""
     )
+    failure_kind = _program_synthesis_validation_failure_kind(validation_report)
+    if failure_kind:
+        todo.metadata["failed_validation_kind"] = failure_kind
     if not isinstance(validation_report, Mapping):
         return
     compact_report = {

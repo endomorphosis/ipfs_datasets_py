@@ -71,7 +71,9 @@ from .decompiler import (
     DecodedModalText,
     decode_modal_ir_document,
     decoded_modal_phrase_slot_text_map,
+    _legal_semantic_atoms_from_text,
     _modal_polarity_slots,
+    _uscode_status_clause_text,
     modal_text_token_similarity,
 )
 from .kg_bridge import (
@@ -3757,6 +3759,56 @@ def modal_ir_to_flogic_triples(
                             "object": value,
                         }
                     )
+        source_status_clause = _uscode_status_clause_text(
+            document=modal_ir,
+            formula=formula,
+        )
+        if source_status_clause:
+            triples.append(
+                {
+                    "subject": formula.formula_id,
+                    "predicate": "source_status_clause",
+                    "object": source_status_clause,
+                }
+            )
+            for predicate, value in _typed_identifier_components(
+                source_status_clause,
+                slot_prefix="source_status_clause",
+            ):
+                triples.append(
+                    {
+                        "subject": formula.formula_id,
+                        "predicate": predicate,
+                        "object": value,
+                    }
+                )
+            for atom in _legal_semantic_atoms_from_text(source_status_clause):
+                triples.append(
+                    {
+                        "subject": formula.formula_id,
+                        "predicate": "legal_semantic_atom",
+                        "object": atom,
+                    }
+                )
+                triples.append(
+                    {
+                        "subject": formula.formula_id,
+                        "predicate": "source_status_clause_legal_semantic_atom",
+                        "object": atom,
+                    }
+                )
+            for predicate, value in _contextual_modal_cue_components(
+                formula,
+                text=source_status_clause,
+                slot_prefix="source_status_clause",
+            ):
+                triples.append(
+                    {
+                        "subject": formula.formula_id,
+                        "predicate": predicate,
+                        "object": value,
+                    }
+                )
         status_keyword = _status_keyword_value(
             formula,
             fallback_rule=fallback_rule,
@@ -10907,6 +10959,8 @@ def _is_semantic_support_slot(slot: str) -> bool:
         "fallback_surface_text",
         "fallback_surface_context",
         "section_heading_tail",
+        "source_status_clause",
+        "source_status_clause_legal_semantic_atom",
         "legal_semantic_atom",
         "fallback_surface_text_legal_semantic_atom",
         "fallback_surface_context_legal_semantic_atom",
@@ -10981,6 +11035,8 @@ def _semantic_support_token_count(decoded: DecodedModalText) -> int:
         "legal_semantic_atom",
         "document_section_heading_tail",
         "status_keyword",
+        "source_status_clause",
+        "source_status_clause_legal_semantic_atom",
         "editorial_status_summary",
         "editorial_status_keyword",
         "editorial_status_semantic_atom",
@@ -11023,6 +11079,8 @@ def _structural_semantic_values(decoded: DecodedModalText) -> List[str]:
     preferred_slots = (
         "legal_semantic_atom",
         "status_keyword",
+        "source_status_clause",
+        "source_status_clause_legal_semantic_atom",
         "semantic_ir_reconstruction_anchor",
         "section_heading_tail_legal_semantic_atom",
         "fallback_surface_text_legal_semantic_atom",

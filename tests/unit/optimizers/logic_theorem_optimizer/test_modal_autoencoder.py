@@ -28,9 +28,12 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder impor
     frame_ranking_loss,
     mse_loss,
     symbolic_validity_penalty,
+    _autoencoder_typed_family_pairs_for_formula,
+    _autoencoder_typed_family_pair_strengths_for_formula,
     _evaluation_improved_for_training,
     _legal_ir_target_cache_key,
     _source_decompiled_text_losses_from_targets,
+    _uscode_surface_profile_tags,
 )
 
 
@@ -232,6 +235,65 @@ def test_legal_ir_target_cache_key_uses_source_text_not_citation_identity() -> N
     assert first.sample_id != second.sample_id
     assert first_key == second_key
     assert first_key != third_key
+
+
+def test_autoencoder_surface_profiles_cover_sparse_uscode_frame_records() -> None:
+    status_text = (
+        "§5616. Transferred Editorial Notes Codification Section 5616 was "
+        "editorially reclassified as section 11116 of Title 34, Crime Control "
+        "and Law Enforcement."
+    )
+    heading_text = (
+        "U.S.C. Title 7 - AGRICULTURE 7 U.S.C. United States Code, 2024 "
+        "Edition Title 7 - AGRICULTURE CHAPTER 55 - DEPARTMENT OF AGRICULTURE "
+        "Sec. 2239 - Funds for printing, binding, and scientific and technical "
+        "article reprint purchases From the U.S. Government Publishing Office, "
+        "www.gpo.gov"
+    )
+    deposit_text = (
+        '§93. Deposit of moneys deposited by unknown parties Amounts that appear '
+        'in the accounts of a district land office as "Moneys deposited by unknown '
+        'parties" shall also be deposited to the credit of the Treasurer of the '
+        "United States."
+    )
+    status_sample = build_us_code_sample(
+        title="42",
+        section="5616.",
+        citation="42 U.S.C. 5616.",
+        text=status_text,
+    )
+    heading_sample = build_us_code_sample(
+        title="7",
+        section="2239",
+        citation="7 U.S.C. 2239",
+        text=heading_text,
+    )
+    autoencoder = AdaptiveModalAutoencoder()
+
+    assert set(_uscode_surface_profile_tags(status_text)) >= {
+        "editorial_status_surface",
+        "editorial_notes",
+        "codification_note",
+        "editorial_reclassification",
+        "section_status_clause",
+        "cross_title_reference",
+    }
+    assert set(_uscode_surface_profile_tags(deposit_text)) >= {
+        "unknown_party_deposit",
+        "treasury_deposit",
+    }
+
+    status_features = set(autoencoder._feature_keys_for(status_sample))
+    heading_features = set(autoencoder._feature_keys_for(heading_sample))
+    status_round_trip = set(autoencoder._round_trip_signal_distribution_for(status_sample))
+    heading_plan = set(autoencoder._decompiler_plan_distribution_for(heading_sample))
+
+    assert "legal-semantic-frame:uscode-surface-profile:editorial_reclassification" in status_features
+    assert "decompiler-surface:uscode-surface-profile:editorial_reclassification" in status_features
+    assert "round-trip:uscode-surface-profile:editorial_reclassification" in status_round_trip
+    assert "legal-semantic-frame:uscode-surface-profile:printing_binding" in heading_features
+    assert "legal-semantic-frame:uscode-surface-profile:article_reprint_purchase" in heading_features
+    assert "decompiler-plan:uscode-surface-profile:printing_binding" in heading_plan
 
 
 def test_legal_ir_targets_use_persistent_disk_cache(
@@ -572,6 +634,49 @@ def test_adaptive_autoencoder_todo_updates_lower_ce_and_increase_cosine() -> Non
     assert after.cross_entropy_loss < before.cross_entropy_loss
     assert after.embedding_cosine_similarity > before.embedding_cosine_similarity
     assert autoencoder.state.applied_todo_ids == ["ce-1", "cos-1"]
+
+
+def test_autoencoder_surfaces_typed_family_pair_view_bridge_slots() -> None:
+    sample = build_us_code_sample(
+        title="38",
+        section="904",
+        text=(
+            "The officer determines eligibility before transfer and may issue "
+            "rules subject to section 101."
+        ),
+    )
+    autoencoder = AdaptiveModalAutoencoder()
+
+    slot_texts = set(autoencoder._semantic_slot_distribution_for(sample))
+
+    assert (
+        "slot:typed-decompiler-family-pair-view-contract:"
+        "deontic->temporal||TDFOL.prover"
+    ) in slot_texts
+    assert (
+        "slot:typed-decompiler-family-pair-view-contract:"
+        "conditional_normative->frame||modal.frame_logic"
+    ) in slot_texts
+    assert (
+        "slot:typed-decompiler-family-pair-view-contract:"
+        "epistemic->doxastic||TDFOL.prover"
+    ) in slot_texts
+    assert any(
+        slot.startswith(
+            "slot:typed-decompiler-family-pair-bridge:"
+            "deontic->temporal:"
+        )
+        and slot.endswith("||modal.frame_logic")
+        for slot in slot_texts
+    )
+    assert any(
+        slot.startswith(
+            "slot:typed-decompiler-force-view-family-pair:"
+            "permission:enabling:deontic->temporal"
+        )
+        and slot.endswith("||TDFOL.prover")
+        for slot in slot_texts
+    )
 
 
 def test_adaptive_autoencoder_generalizable_projection_uses_holdout_without_sample_memory() -> None:
@@ -1062,6 +1167,47 @@ def test_compiler_latent_profile_feature_head_transfers_cosine_to_holdout() -> N
     assert after.embedding_cosine_similarity > before.embedding_cosine_similarity
 
 
+def test_typed_family_pair_slots_preserve_surface_cue_targets() -> None:
+    conditional_sample = build_us_code_sample(
+        title="7",
+        section="1380a",
+        text="Subject to subsection (b), the agency shall make payments.",
+    )
+    conditional_formula = conditional_sample.modal_ir.formulas[0]
+
+    assert "conditional_normative->temporal" not in (
+        _autoencoder_typed_family_pairs_for_formula(
+            replace(conditional_sample.modal_ir, formulas=[conditional_formula]),
+            conditional_formula,
+        )
+    )
+    assert "conditional_normative->temporal" in (
+        _autoencoder_typed_family_pairs_for_formula(
+            replace(conditional_sample.modal_ir, formulas=[conditional_formula]),
+            conditional_formula,
+            surface_cues=["temporal"],
+        )
+    )
+
+    autoencoder = AdaptiveModalAutoencoder()
+    temporal_sample = build_us_code_sample(
+        title="10",
+        section="20238",
+        text="The agency must provide notice within 30 days.",
+    )
+    semantic_slots = autoencoder._semantic_slot_distribution_for(temporal_sample)
+    round_trip_features = autoencoder._round_trip_bridge_feature_keys_for(temporal_sample)
+
+    assert (
+        "slot:typed-decompiler-surface-cue-family-pair:"
+        "temporal:temporal->deontic"
+    ) in semantic_slots
+    assert (
+        "round-trip-bridge:surface-cue-to-family-pair:"
+        "temporal:temporal->deontic"
+    ) in round_trip_features
+
+
 def test_decompiler_plan_and_predicate_heads_align_source_roles_to_ir_shape() -> None:
     sample = build_us_code_sample(
         title="5",
@@ -1082,6 +1228,31 @@ def test_decompiler_plan_and_predicate_heads_align_source_roles_to_ir_shape() ->
     assert "predicate-argument:source-action-family:approve:deontic" in predicate_arguments
     assert "predicate-argument:source-action-predicate:approve:approve" in predicate_arguments
     assert "predicate-argument:source-object-predicate:permit:approve" in predicate_arguments
+
+
+def test_decompiler_plan_preserves_typed_family_pair_scope_features() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552(a)",
+        text="Before the hearing, the agency shall approve the permit.",
+    )
+    autoencoder = AdaptiveModalAutoencoder()
+
+    decompiler_plan = autoencoder._decompiler_plan_distribution_for(sample)
+
+    assert "decompiler-plan:typed-family-pair:frame->deontic" in decompiler_plan
+    assert "decompiler-plan:typed-family-pair:frame->temporal" in decompiler_plan
+    assert (
+        "decompiler-plan:force-polarity-family-pair:"
+        "obligation:mandatory:frame->deontic"
+    ) in decompiler_plan
+    assert any(
+        key.startswith(
+            "decompiler-plan:typed-family-pair-scope:"
+        )
+        and key.endswith(":frame->deontic")
+        for key in decompiler_plan
+    )
 
 
 def test_round_trip_bridge_features_encode_source_ir_equivalence() -> None:
@@ -9675,6 +9846,298 @@ def test_semantic_slots_surface_typed_family_pair_reconstruction_contracts() -> 
     )
 
 
+def test_typed_family_pair_strengths_demote_registry_only_candidates() -> None:
+    sample = build_us_code_sample(
+        title="16",
+        section="460hhh-1",
+        text="The Secretary may publish the Spring Mountains National Recreation Area map.",
+    )
+    base_formula = sample.modal_ir.formulas[0]
+    frame_formula = replace(
+        base_formula,
+        operator=replace(
+            base_formula.operator,
+            family="frame",
+            system="FRAME_BM25",
+            symbol="Frame",
+            label="ontology_frame",
+        ),
+        metadata={"cue": "uscode_residual_span_fallback"},
+    )
+    modal_ir = replace(sample.modal_ir, formulas=[frame_formula])
+
+    fallback_strengths = _autoencoder_typed_family_pair_strengths_for_formula(
+        modal_ir,
+        frame_formula,
+        surface_cues=["uscode_residual_span_fallback"],
+    )
+    cue_strengths = _autoencoder_typed_family_pair_strengths_for_formula(
+        modal_ir,
+        frame_formula,
+        surface_cues=["may"],
+    )
+
+    assert fallback_strengths["frame->frame"] == pytest.approx(1.0)
+    assert fallback_strengths["frame->deontic"] == pytest.approx(0.35)
+    assert cue_strengths["frame->deontic"] == pytest.approx(1.0)
+
+
+def test_autoencoder_exact_statutory_cues_drive_typed_family_pair_reconstruction() -> None:
+    source_text = (
+        "Subject to section 314, the authority may issue rules not later than "
+        "2027 except as provided in subsection (b) with respect to grants."
+    )
+    sample = build_us_code_sample(title="42", section="314", text=source_text)
+    base_formula = sample.modal_ir.formulas[0]
+    formulas = [
+        replace(
+            base_formula,
+            formula_id="packet-002281-frame",
+            operator=replace(
+                base_formula.operator,
+                family="frame",
+                system="FRAME_BM25",
+                symbol="Frame",
+                label="ontology_frame",
+            ),
+            conditions=[
+                "subject to section 314",
+                "not later than 2027",
+                "with respect to grants",
+            ],
+            exceptions=["except as provided in subsection (b)"],
+            metadata={"cue": "may"},
+        ),
+        replace(
+            base_formula,
+            formula_id="packet-002281-temporal",
+            operator=replace(
+                base_formula.operator,
+                family="temporal",
+                system="LTL",
+                symbol="F",
+                label="eventually",
+            ),
+            conditions=["not later than 2027"],
+            metadata={"cue": "not_later_than"},
+        ),
+    ]
+    sample = replace(sample, modal_ir=replace(sample.modal_ir, formulas=formulas))
+    autoencoder = AdaptiveModalAutoencoder()
+
+    cue_names = autoencoder._cue_names_for_text(source_text.lower())
+    distribution = autoencoder._semantic_slot_distribution_for(sample)
+
+    for cue_name in (
+        "subject_to_section",
+        "may",
+        "not_later_than",
+        "except_as_provided_in",
+        "with_respect_to",
+    ):
+        assert cue_name in cue_names
+    for family_pair in (
+        "frame->conditional_normative",
+        "frame->frame",
+        "frame->temporal",
+        "frame->deontic",
+        "temporal->deontic",
+    ):
+        assert f"slot:typed-decompiler-family-pair:{family_pair}" in distribution
+    assert (
+        "slot:typed-decompiler-family-pair-cue:frame->deontic:may"
+        in distribution
+    )
+    assert (
+        "slot:typed-decompiler-family-pair-cue:temporal->deontic:not_later_than"
+        in distribution
+    )
+
+
+def test_targeted_typed_family_pairs_have_reconstruction_slots() -> None:
+    source_text = (
+        "Subject to section 314, the authority may issue rules not later than "
+        "2027 except as provided in subsection (b)."
+    )
+    sample = build_us_code_sample(title="42", section="314", text=source_text)
+    base_formula = sample.modal_ir.formulas[0]
+    formulas = [
+        replace(
+            base_formula,
+            formula_id="packet-004256-frame",
+            operator=replace(
+                base_formula.operator,
+                family="frame",
+                system="FRAME_BM25",
+                symbol="Frame",
+                label="ontology_frame",
+            ),
+            metadata={"cue": "may"},
+        ),
+        replace(
+            base_formula,
+            formula_id="packet-004256-temporal",
+            operator=replace(
+                base_formula.operator,
+                family="temporal",
+                system="LTL",
+                symbol="F",
+                label="eventually",
+            ),
+            conditions=["not later than 2027"],
+            metadata={"cue": "not_later_than"},
+        ),
+    ]
+    sample = replace(sample, modal_ir=replace(sample.modal_ir, formulas=formulas))
+
+    distribution = AdaptiveModalAutoencoder()._semantic_slot_distribution_for(sample)
+
+    for family_pair in (
+        "frame->deontic",
+        "frame->frame",
+        "frame->temporal",
+        "temporal->conditional_normative",
+        "temporal->temporal",
+    ):
+        assert (
+            f"slot:typed-decompiler-target-reconstruction-pair:{family_pair}"
+            in distribution
+        )
+        assert (
+            f"slot:typed-decompiler-target-reconstruction-view:"
+            f"{family_pair}||modal.autoencoder"
+        ) in distribution
+
+    assert (
+        "slot:typed-decompiler-target-reconstruction-cue:"
+        "frame->deontic:may"
+    ) in distribution
+    assert any(
+        slot.startswith(
+            "slot:typed-decompiler-target-reconstruction-surface-cue:"
+        )
+        and slot.endswith(":temporal->conditional_normative")
+        for slot in distribution
+    )
+
+
+def test_exact_cue_semantic_slot_head_transfers_packet_002281_holdout() -> None:
+    def framed_sample(
+        *,
+        title: str,
+        section: str,
+        text: str,
+        embedding_vector: list[float],
+    ):
+        sample = build_us_code_sample(
+            title=title,
+            section=section,
+            text=text,
+            embedding_vector=embedding_vector,
+        )
+        base_formula = sample.modal_ir.formulas[0]
+        return replace(
+            sample,
+            modal_ir=replace(
+                sample.modal_ir,
+                formulas=[
+                    replace(
+                        base_formula,
+                        operator=replace(
+                            base_formula.operator,
+                            family="frame",
+                            system="FRAME_BM25",
+                            symbol="Frame",
+                            label="ontology_frame",
+                        ),
+                        conditions=[
+                            "subject to section 314",
+                            "not later than 2027",
+                            "with respect to grants",
+                        ],
+                        exceptions=["except as provided in subsection (b)"],
+                        metadata={"cue": "may"},
+                    )
+                ],
+            ),
+        )
+
+    train = framed_sample(
+        title="42",
+        section="314",
+        text=(
+            "Subject to section 314, the authority may issue rules not later than "
+            "2027 except as provided in subsection (b) with respect to grants."
+        ),
+        embedding_vector=[1.0, 0.0],
+    )
+    validation = framed_sample(
+        title="15",
+        section="80a-45",
+        text=(
+            "Subject to section 314, the Commission may publish reports not later "
+            "than 2027 except as provided in subsection (b) with respect to advisers."
+        ),
+        embedding_vector=[1.0, 0.0],
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        compiler_quality_embedding_weight_scale=0.0,
+        logic_signature_embedding_weight_scale=0.0,
+        round_trip_signal_embedding_weight_scale=0.0,
+        decompiler_plan_embedding_weight_scale=0.0,
+        predicate_argument_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=0.0,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=4.0,
+        semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        feature_embedding_weight_scale=0.0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before = autoencoder.evaluate([validation], use_sample_memory=False)
+
+    autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after = autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert any(
+        "typed-decompiler-family-pair:frame->conditional_normative" in slot
+        for slot in autoencoder.state.semantic_slot_embedding_weights
+    )
+    assert after.embedding_cosine_similarity > before.embedding_cosine_similarity
+def test_semantic_slots_surface_uscode_codification_transfer_fallback_contracts() -> None:
+    sample = build_us_code_sample(
+        title="42",
+        section="1973aa",
+        text=(
+            "\u00a71973aa\u20136. Transferred Editorial Notes Codification "
+            "Section 1973aa\u20136 was editorially reclassified as section "
+            "10508 of Title 52, Voting and Elections."
+        ),
+    )
+
+    assert sample.sample_id == "us-code-42-1973aa-5b544e271be3882f"
+
+    distribution = AdaptiveModalAutoencoder()._semantic_slot_distribution_for(sample)
+
+    assert "slot:text-cue:codification" in distribution
+    for family_pair in (
+        "frame->deontic",
+        "frame->frame",
+        "frame->temporal",
+    ):
+        assert f"slot:typed-decompiler-family-pair:{family_pair}" in distribution
+        assert (
+            "slot:typed-decompiler-family-pair-cue:"
+            f"{family_pair}:uscode_codification_transfer_heading_v1"
+        ) in distribution
+
+
 def test_semantic_slots_surface_pair_scoped_force_and_topology_contracts() -> None:
     source_text = (
         "Subject to section 460z-9, the Secretary shall not publish permits "
@@ -9771,6 +10234,61 @@ def test_semantic_slots_surface_pair_scoped_force_and_topology_contracts() -> No
         "condition+subject+action+object+exception+temporal:conditional_normative|"
         "typed-decompiler-family-pair:conditional_normative->deontic"
         in distribution
+    )
+
+
+def test_typed_decompiler_semantic_slots_transfer_embedding_residuals() -> None:
+    train = build_us_code_sample(
+        title="16",
+        section="5009",
+        text=(
+            "Subject to section 5009, the Secretary shall not publish permits "
+            "before 2027 except as authorized by regulation."
+        ),
+        embedding_vector=[0.0, 1.0],
+    )
+    validation = build_us_code_sample(
+        title="26",
+        section="1372",
+        text=(
+            "Subject to subsection (b), the corporation shall not issue stock "
+            "before approval except as authorized by rule."
+        ),
+        embedding_vector=[0.0, 1.0],
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        feature_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=7.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        compiler_quality_embedding_weight_scale=0.0,
+        logic_signature_embedding_weight_scale=0.0,
+        round_trip_signal_embedding_weight_scale=0.0,
+        decompiler_plan_embedding_weight_scale=0.0,
+        predicate_argument_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=0.0,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before = autoencoder.evaluate([validation], use_sample_memory=False)
+
+    autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after = autoencoder.evaluate([validation], use_sample_memory=False)
+
+    learned_slots = set(autoencoder.state.semantic_slot_embedding_weights)
+    assert any("typed-decompiler-family-pair" in slot for slot in learned_slots)
+    assert any("typed-decompiler-force-polarity" in slot for slot in learned_slots)
+    assert after.embedding_cosine_similarity > before.embedding_cosine_similarity
+    introspection = autoencoder.introspect_sample(validation)
+    assert any(
+        contribution.contribution_type == "semantic_slot_embedding_weight"
+        and "typed-decompiler" in contribution.feature
+        for contribution in introspection.top_embedding_contributions
     )
 
 
@@ -10941,6 +11459,42 @@ def test_embedding_head_update_normalization_shares_multi_head_step_budget() -> 
 
     assert normalized._active_embedding_update_head_count(sample) > 1
     assert 0.0 < normalized_norm < unnormalized_norm
+
+
+def test_encoder_decoder_todo_default_update_budget_preserves_cosine_direction() -> None:
+    sample = build_us_code_sample(
+        title="15",
+        section="717l",
+        text=(
+            "Subject to section 717, the Commission may grant authority "
+            "not later than 2027 after a complaint is filed."
+        ),
+        embedding_vector=[1.0, 0.0],
+    )
+    autoencoder = AdaptiveModalAutoencoder(cosine_reconstruction_weight=0.0)
+    todo = type(
+        "Todo",
+        (),
+        {
+            "action": "improve_encoder_decoder_reconstruction",
+            "loss_name": "cosine_loss",
+            "sample_ids": [sample.sample_id],
+            "todo_id": "packet-003058-encoder-decoder",
+        },
+    )()
+
+    report = autoencoder.apply_todo(
+        todo,
+        {sample.sample_id: sample},
+        learning_rate=1.0,
+    )
+    evaluation = autoencoder.evaluate([sample], use_sample_memory=False)
+
+    assert report["changed"] == ["decoded_embedding"]
+    assert autoencoder.embedding_head_update_normalization == pytest.approx(1.0)
+    assert autoencoder._active_embedding_update_head_count(sample) > 1
+    assert evaluation.embedding_cosine_similarity == pytest.approx(1.0)
+    assert evaluation.reconstruction_loss < 0.5
 
 
 def test_family_logit_head_update_normalization_shares_multi_head_step_budget() -> None:

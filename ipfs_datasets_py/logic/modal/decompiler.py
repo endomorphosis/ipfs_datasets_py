@@ -150,12 +150,29 @@ _USCODE_EDITORIAL_NOTE_LABELS: tuple[str, ...] = (
     "Statutory Notes and Related Subsidiaries",
 )
 _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
+    ("declaration of national emergency", "national_emergency_declaration"),
+    ("national emergency", "national_emergency"),
+    ("executive order", "executive_order"),
+    ("federal register", "federal_register_publication"),
+    ("transmittal to congress", "congressional_transmittal"),
+    ("transmit to congress", "congressional_transmittal"),
+    ("powers or authorities", "statutory_power_authority"),
+    ("powers and authorities", "statutory_power_authority"),
     ("authorization of appropriations", "appropriation_authorization"),
     ("authorized to be appropriated", "appropriation_authorization"),
     ("appropriations", "appropriation"),
     ("appropriated", "appropriation"),
+    ("availability of funds", "fund_availability"),
     ("remain available until expended", "no_year_funding_availability"),
     ("available until expended", "no_year_funding_availability"),
+    ("costs and expenses", "cost_expense_charge"),
+    ("costs", "cost"),
+    ("expenses", "expense"),
+    ("charge on prize", "prize_charge"),
+    ("prize", "prize"),
+    ("construction of dams", "dam_construction"),
+    ("dams", "dam"),
+    ("buildings", "building"),
     ("research program and plan", "research_program_plan"),
     ("research program", "research_program"),
     ("grants for research", "research_grant"),
@@ -210,6 +227,8 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("canals", "canal"),
     ("canal", "canal"),
     ("foreign government", "foreign_government"),
+    ("corporation", "corporation"),
+    ("corporations", "corporation"),
     ("funding agreements", "funding_agreement"),
     ("funding agreement", "funding_agreement"),
     ("contract limitation", "contract_limitation"),
@@ -223,6 +242,10 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("administrator", "administrator"),
     ("secretary", "secretary"),
     ("commission", "commission"),
+    ("president", "president"),
+    ("executive order", "executive_order"),
+    ("federal register", "federal_register"),
+    ("congress", "congress"),
     ("authority", "authority"),
     ("undertake", "undertake_action"),
     ("undertakes", "undertake_action"),
@@ -633,6 +656,10 @@ _LEGAL_IR_VIEW_PROTOTYPES: tuple[str, ...] = (
     "zkp.circuits",
 )
 _PREFERRED_LEGAL_IR_VIEWS_BY_FAMILY: Mapping[str, tuple[str, ...]] = {
+    "alethic": (
+        "TDFOL.prover",
+        "deontic.ir",
+    ),
     "conditional_normative": (
         "deontic.ir",
         "TDFOL.prover",
@@ -687,6 +714,8 @@ _COMPILER_GUIDANCE_PROMOTED_TODO_ROUTES: frozenset[str] = frozenset(
     }
 )
 _CANONICAL_MODAL_OPERATOR_LABELS: Mapping[Tuple[str, str], str] = {
+    ("alethic", "□"): "necessary",
+    ("alethic", "◇"): "possible",
     ("deontic", "O"): "obligation",
     ("deontic", "P"): "permission",
     ("deontic", "F"): "prohibition",
@@ -700,6 +729,10 @@ _CANONICAL_MODAL_OPERATOR_LABELS: Mapping[Tuple[str, str], str] = {
     ("frame", "Frame"): "frame",
 }
 _CANONICAL_MODAL_OPERATOR_LABEL_ALIASES: Mapping[str, str] = {
+    "necessary": "necessary",
+    "necessity": "necessary",
+    "possible": "possible",
+    "possibility": "possible",
     "obligatory": "obligation",
     "obligation": "obligation",
     "permitted": "permission",
@@ -1196,18 +1229,26 @@ _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...
 _CROSS_FAMILY_BRIDGE_FAMILY_PRIORITY: Mapping[str, int] = {
     "conditional_normative": 0,
     "deontic": 1,
-    "frame": 2,
-    "temporal": 3,
-    "epistemic": 4,
-    "doxastic": 5,
-    "dynamic": 6,
+    "alethic": 2,
+    "frame": 3,
+    "temporal": 4,
+    "epistemic": 5,
+    "doxastic": 6,
+    "dynamic": 7,
 }
 _SOURCE_ANCHOR_DIRECTIONAL_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = {
     "alethic": ("conditional_normative", "deontic", "temporal"),
     "conditional_normative": ("deontic",),
     "deontic": ("conditional_normative", "deontic", "frame", "temporal"),
     "epistemic": ("conditional_normative", "epistemic"),
-    "frame": ("conditional_normative", "deontic", "doxastic", "frame", "temporal"),
+    "frame": (
+        "alethic",
+        "conditional_normative",
+        "deontic",
+        "doxastic",
+        "frame",
+        "temporal",
+    ),
     "temporal": ("conditional_normative", "deontic", "epistemic", "temporal"),
 }
 _DECOMPILER_REFINED_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = {
@@ -1217,6 +1258,7 @@ _DECOMPILER_REFINED_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = {
     "dynamic": ("dynamic", "temporal"),
     "epistemic": ("conditional_normative",),
     "frame": (
+        "alethic",
         "conditional_normative",
         "deontic",
         "epistemic",
@@ -1490,8 +1532,14 @@ _REFINED_HEADING_BRIDGE_SOURCE_FAMILIES: frozenset[str] = frozenset(
 )
 _TYPED_IR_REFINED_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = {
     "alethic": ("deontic",),
-    "conditional_normative": ("conditional_normative",),
-    "deontic": ("conditional_normative", "deontic", "epistemic", "temporal"),
+    "conditional_normative": ("conditional_normative", "deontic"),
+    "deontic": (
+        "conditional_normative",
+        "deontic",
+        "epistemic",
+        "frame",
+        "temporal",
+    ),
     "dynamic": ("dynamic", "temporal"),
     "frame": (
         "conditional_normative",
@@ -1513,6 +1561,8 @@ _TYPED_IR_REFINED_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = {
 _CONTEXTUAL_TYPED_IR_REFINED_FAMILY_PAIRS: frozenset[tuple[str, str]] = frozenset(
     {
         ("deontic", "deontic"),
+        ("deontic", "frame"),
+        ("conditional_normative", "deontic"),
         ("frame", "conditional_normative"),
         ("frame", "deontic"),
         ("frame", "doxastic"),
@@ -2335,6 +2385,54 @@ def _decode_formula_phrases(
                 spans=spans,
             )
         )
+    status_clause_text = _uscode_status_clause_text(
+        document=document,
+        formula=formula,
+    )
+    if status_clause_text:
+        phrases.append(
+            DecodedModalPhrase(
+                text=status_clause_text,
+                slot="source_status_clause",
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+        for typed_slot, typed_value in _typed_identifier_slots(
+            status_clause_text,
+            slot_prefix="source_status_clause",
+        ):
+            phrases.append(
+                DecodedModalPhrase(
+                    text=typed_value,
+                    slot=typed_slot,
+                    spans=spans,
+                    provenance_only=True,
+                )
+            )
+        phrases.extend(
+            _legal_semantic_atom_phrases(
+                text=status_clause_text,
+                slot_prefix="source_status_clause",
+                spans=spans,
+            )
+        )
+        phrases.extend(
+            _contextual_modal_cue_phrases(
+                formula=formula,
+                text=status_clause_text,
+                slot_prefix="source_status_clause",
+                spans=spans,
+            )
+        )
+        phrases.extend(
+            _semantic_span_bridge_modal_phrases(
+                formula=formula,
+                text=status_clause_text,
+                slot_prefix="source_status_clause",
+                spans=spans,
+            )
+        )
     phrases.extend(
         _source_role_anchor_phrases(
             document=document,
@@ -3118,6 +3216,13 @@ def _semantic_source_span_text(
     span_text = _formula_source_span_text(document=document, formula=formula)
     if not span_text:
         return ""
+    uscode_body_text = _uscode_section_body_semantic_text(
+        document=document,
+        formula=formula,
+        span_text=span_text,
+    )
+    if uscode_body_text:
+        return uscode_body_text
     normalized = _clean_text(_USCODE_LEADING_SECTION_REF_RE.sub("", span_text))
     normalized = _strip_uscode_gpo_attribution_fragment(normalized)
     normalized = _TRAILING_SECTION_PUNCT_RE.sub("", normalized)
@@ -3126,6 +3231,122 @@ def _semantic_source_span_text(
     if normalized and not _is_low_information_section_marker(normalized):
         return normalized
     return span_text
+
+
+def _uscode_section_body_semantic_text(
+    *,
+    document: ModalIRDocument,
+    formula: ModalIRFormula,
+    span_text: str,
+    max_tokens: int = 80,
+) -> str:
+    """Return section-body text when a U.S.C. span only covers compilation headers."""
+
+    source_text = str(document.normalized_text or "")
+    if not source_text or not _is_probable_uscode_compilation_span(span_text):
+        return ""
+    section = _uscode_formula_section_identifier(formula)
+    if not section:
+        return ""
+    body_start = _uscode_section_body_start(source_text, section)
+    if body_start < 0:
+        return ""
+    span_start = max(0, min(len(source_text), int(formula.provenance.start_char)))
+    span_end = max(span_start, min(len(source_text), int(formula.provenance.end_char)))
+    if span_start <= body_start < span_end and not _is_probable_uscode_compilation_span(
+        source_text[span_start:body_start]
+    ):
+        return ""
+    body_text = _clean_text(source_text[body_start:])
+    body_text = re.sub(
+        r"\b(?:Editorial Notes|Statutory Notes and Related Subsidiaries|"
+        r"Executive Documents)\b.*$",
+        "",
+        body_text,
+        flags=re.IGNORECASE,
+    )
+    body_text = re.sub(
+        r"\s+\((?:Pub|June|Aug|Feb|Mar|Apr|May|Sept|Oct|Nov|Dec)\.?\b.*$",
+        "",
+        body_text,
+        flags=re.IGNORECASE,
+    )
+    body_text = _TRAILING_SECTION_PUNCT_RE.sub("", _clean_text(body_text))
+    if not body_text:
+        return ""
+    tokens = _tokenize_for_similarity(body_text)
+    if tokens and len(tokens) <= max_tokens and not _is_uscode_semantic_excerpt_boilerplate(
+        body_text
+    ):
+        return body_text
+    candidates = _source_semantic_excerpt_candidates(body_text)
+    selected: List[str] = []
+    token_count = 0
+    for candidate in candidates:
+        candidate = _clean_text(candidate)
+        candidate_tokens = _tokenize_for_similarity(candidate)
+        if not candidate or not candidate_tokens:
+            continue
+        if selected and token_count + len(candidate_tokens) > max_tokens:
+            continue
+        has_semantic_cue = bool(
+            _bridge_cues_from_text(candidate)
+            or _legal_semantic_atoms_from_text(candidate)
+            or _status_keyword_from_source_text(candidate)
+            or any(token in _SOURCE_ROLE_CUE_MARKERS for token in candidate_tokens)
+        )
+        if not selected or has_semantic_cue:
+            selected.append(candidate)
+            token_count += len(candidate_tokens)
+        if has_semantic_cue and token_count >= max_tokens // 3:
+            break
+    return _clean_text(" ".join(selected))
+
+
+def _uscode_formula_section_identifier(formula: ModalIRFormula) -> str:
+    for raw_value in (
+        formula.provenance.citation,
+        formula.provenance.source_id,
+    ):
+        value = _clean_text(raw_value or "")
+        if not value:
+            continue
+        citation_match = _USC_CITATION_RE.match(value)
+        if citation_match is not None:
+            return _TRAILING_SECTION_PUNCT_RE.sub(
+                "",
+                _clean_text(citation_match.group("section")),
+            )
+        source_id_match = _USCODE_SOURCE_ID_RE.match(value)
+        if source_id_match is not None:
+            return _TRAILING_SECTION_PUNCT_RE.sub(
+                "",
+                _clean_text(source_id_match.group("section")),
+            )
+    return ""
+
+
+def _uscode_section_body_start(source_text: str, section: str) -> int:
+    normalized_section = _TRAILING_SECTION_PUNCT_RE.sub("", _clean_text(section))
+    if not normalized_section:
+        return -1
+    escaped_section = re.escape(normalized_section)
+    marker_pattern = re.compile(
+        rf"(?:§{{1,2}}\s*{escaped_section}|"
+        rf"\bSecs?\.?\s+{escaped_section}\b|\bSections?\s+{escaped_section}\b)"
+        rf"\s*(?:[.:\-–—]+)?\s*",
+        re.IGNORECASE,
+    )
+    matches = list(marker_pattern.finditer(source_text))
+    if not matches:
+        return -1
+    # Prefer the repeated body marker after the GPO attribution over the
+    # compilation heading marker ("Sec. 1484 - ...").
+    for match in matches:
+        left_context = source_text[max(0, match.start() - 180) : match.start()].lower()
+        if "government publishing office" in left_context or "gpo.gov" in left_context:
+            return match.end()
+    return matches[-1].end()
 
 
 def _semantic_source_context_span_text(
@@ -3167,6 +3388,168 @@ def _semantic_source_context_span_text(
     if len(_tokenize_for_similarity(cleaned)) > max_tokens:
         return ""
     return cleaned
+
+
+def _uscode_status_clause_text(
+    *,
+    document: ModalIRDocument,
+    formula: ModalIRFormula,
+    max_tokens: int = 48,
+) -> str:
+    """Return the bounded source clause that carries U.S.C. editorial status."""
+
+    if not _formula_has_uscode_context(formula):
+        return ""
+    source_text = str(document.normalized_text or "")
+    if not source_text:
+        return ""
+    for keyword in _uscode_status_clause_keywords(
+        document=document,
+        formula=formula,
+    ):
+        clause = _status_clause_around_keyword(source_text, keyword)
+        if not clause:
+            continue
+        clause = _clean_status_clause_surface(clause)
+        tokens = _tokenize_for_similarity(clause)
+        if tokens and len(tokens) <= max_tokens:
+            return clause
+    return ""
+
+
+def _uscode_status_clause_keywords(
+    *,
+    document: ModalIRDocument,
+    formula: ModalIRFormula,
+) -> List[str]:
+    keywords: List[str] = []
+
+    def add(value: str) -> None:
+        normalized = _clean_text(value).lower()
+        if normalized and normalized in _USCODE_FALLBACK_STATUS_KEYWORDS:
+            if normalized not in keywords:
+                keywords.append(normalized)
+
+    fallback_rule = _clean_text(formula.metadata.get("fallback_rule") or "")
+    add(_derived_status_keyword(formula=formula, fallback_rule=fallback_rule))
+    add(_clean_text(formula.metadata.get("status_keyword") or ""))
+    predicate_text = _clean_text(formula.predicate.name).replace("_", " ").lower()
+    for keyword in _USCODE_FALLBACK_STATUS_KEYWORDS:
+        if re.search(rf"(?<!\w){re.escape(keyword)}(?!\w)", predicate_text):
+            add(keyword)
+    add(_status_keyword_from_source_text(str(document.normalized_text or "")))
+    return keywords
+
+
+def _status_clause_around_keyword(source_text: str, keyword: str) -> str:
+    normalized_keyword = _clean_text(keyword).lower()
+    if not normalized_keyword:
+        return ""
+    match = re.search(
+        rf"(?<!\w){re.escape(normalized_keyword)}(?:d|ed|s)?(?!\w)",
+        source_text,
+        flags=re.IGNORECASE,
+    )
+    if match is None:
+        return ""
+    start = _status_clause_start(source_text, match.start())
+    end = _status_clause_end(source_text, match.end())
+    return _clean_text(source_text[start:end])
+
+
+def _status_clause_start(source_text: str, match_start: int) -> int:
+    start = 0
+    for index in range(match_start - 1, -1, -1):
+        if source_text[index] in "\n;":
+            start = index + 1
+            break
+        if source_text[index] == "." and _period_marks_status_clause_boundary(
+            source_text,
+            index,
+        ):
+            start = index + 1
+            break
+    return max(0, start)
+
+
+def _status_clause_end(source_text: str, match_end: int) -> int:
+    for index in range(match_end, len(source_text)):
+        if source_text[index] in "\n;":
+            return index
+        if source_text[index] == "." and _period_marks_status_clause_boundary(
+            source_text,
+            index,
+        ):
+            return index + 1
+    return len(source_text)
+
+
+def _period_marks_status_clause_boundary(source_text: str, index: int) -> bool:
+    before = source_text[max(0, index - 16) : index]
+    token_match = re.search(r"([A-Za-z]+)\s*$", before)
+    previous_token = token_match.group(1).lower() if token_match else ""
+    if previous_token in {
+        "act",
+        "apr",
+        "aug",
+        "ch",
+        "dec",
+        "div",
+        "feb",
+        "jan",
+        "jul",
+        "jun",
+        "mar",
+        "nov",
+        "oct",
+        "pub",
+        "sec",
+        "sep",
+        "sept",
+        "stat",
+    }:
+        return False
+    return True
+
+
+def _clean_status_clause_surface(text: str) -> str:
+    cleaned = _clean_text(text)
+    if not cleaned:
+        return ""
+    cleaned = _clean_text(_USCODE_LEADING_SECTION_REF_RE.sub("", cleaned, count=1))
+    cleaned = _strip_uscode_gpo_attribution_fragment(cleaned)
+    cleaned = cleaned.lstrip(" \t\r\n-–—:;,.")
+    cleaned = _strip_uscode_editorial_status_prefix(cleaned)
+    cleaned = _TRAILING_SECTION_PUNCT_RE.sub("", cleaned)
+    return _clean_text(cleaned)
+
+
+def _strip_uscode_editorial_status_prefix(text: str) -> str:
+    cleaned = _clean_text(text)
+    if not cleaned:
+        return ""
+    status_heading_re = re.compile(
+        rf"^(?:{'|'.join(re.escape(keyword) for keyword in _USCODE_FALLBACK_STATUS_KEYWORDS)})"
+        r"\s+(?=Editorial Notes|Codification|References in Text|Historical and Revision Notes|"
+        r"Prior Provisions|Amendments|Statutory Notes and Related Subsidiaries)\b",
+        flags=re.IGNORECASE,
+    )
+    while True:
+        updated = _clean_text(status_heading_re.sub("", cleaned, count=1))
+        for label in _USCODE_EDITORIAL_NOTE_LABELS:
+            updated = _clean_text(
+                re.sub(
+                    rf"^{re.escape(label)}\b",
+                    "",
+                    updated,
+                    count=1,
+                    flags=re.IGNORECASE,
+                )
+            )
+        updated = updated.lstrip(" \t\r\n-–—:;,.")
+        if updated == cleaned:
+            return cleaned
+        cleaned = updated
 
 
 def _is_probable_uscode_compilation_span(text: str) -> bool:
@@ -3410,6 +3793,7 @@ def _legal_role_classes_from_anchor(anchor: str, *, role: str) -> List[str]:
                 "authority",
                 "commission",
                 "department",
+                "president",
                 "secretary",
                 "state",
                 "states",
@@ -3417,6 +3801,10 @@ def _legal_role_classes_from_anchor(anchor: str, *, role: str) -> List[str]:
             }
         ):
             add("government_actor")
+        if tokens.intersection({"congress"}):
+            add("legislative_actor")
+        if tokens.intersection({"corporation", "corporations"}):
+            add("corporate_actor")
         if tokens.intersection({"applicant", "recipient", "person", "entity"}):
             add("regulated_party")
     if role_key == "action":
@@ -3436,10 +3824,16 @@ def _legal_role_classes_from_anchor(anchor: str, *, role: str) -> List[str]:
             add("grant_authorization")
         if tokens.intersection({"appropriate", "appropriated", "fund", "funded"}):
             add("funding_authority")
+        if tokens.intersection({"declare", "declares", "declaration"}):
+            add("emergency_declaration")
+        if tokens.intersection({"publish", "publication", "transmit", "transmittal"}):
+            add("notice_publication_transmittal")
         if tokens.intersection({"research", "conduct"}):
             add("research_activity")
         if tokens.intersection({"print", "printing", "bind", "binding", "reprint"}):
             add("publication_procurement")
+        if tokens.intersection({"construct", "construction", "build", "building"}):
+            add("construction_activity")
         if tokens.intersection({"enforce", "enforcement", "quarantine"}):
             add("enforcement_action")
         if tokens.intersection({"use", "uses", "used"}):
@@ -3459,6 +3853,20 @@ def _legal_role_classes_from_anchor(anchor: str, *, role: str) -> List[str]:
             add("authorization_instrument")
         if tokens.intersection({"fund", "funds", "appropriation", "appropriations"}):
             add("funding_resource")
+        if tokens.intersection({"emergency", "emergencies"}):
+            add("emergency_status")
+        if tokens.intersection({"order", "orders"}) and "executive" in tokens:
+            add("executive_order")
+        if tokens.intersection({"register", "publication"}) and "federal" in tokens:
+            add("federal_register_notice")
+        if tokens.intersection({"congress", "transmittal"}):
+            add("congressional_notice")
+        if tokens.intersection({"cost", "costs", "expense", "expenses", "charge"}):
+            add("cost_charge")
+        if tokens.intersection({"prize", "prizes"}):
+            add("prize_property")
+        if tokens.intersection({"dam", "dams", "building", "buildings"}):
+            add("construction_asset")
         if tokens.intersection({"research", "grant", "grants"}):
             add("research_funding")
         if tokens.intersection({"bond", "bonding", "threshold"}):
@@ -3485,6 +3893,8 @@ def _legal_role_classes_from_anchor(anchor: str, *, role: str) -> List[str]:
             add("program_instrument")
         if tokens.intersection({"plan", "plans", "submission", "submissions"}):
             add("plan_submission")
+        if tokens.intersection({"corporation", "corporations"}):
+            add("corporate_entity")
     if role_key in {"condition", "exception", "temporal"}:
         if tokens.intersection(
             {"before", "after", "until", "within", "later", "deadline"}
@@ -5628,8 +6038,33 @@ def _legal_ir_view_prototype_phrases(
             _semantic_source_span_text(document=document, formula=formula),
             _fallback_section_heading_tail_text(document=document, formula=formula),
             _fallback_surface_text(document=document, formula=formula),
+            *_compact_uscode_formula_semantic_texts(
+                document=document,
+                formula=formula,
+                existing_text="",
+            ),
         ]
         for semantic_text in semantic_texts:
+            semantic_text = _clean_text(semantic_text)
+            if not semantic_text:
+                continue
+            semantic_tokens = _tokenize_for_similarity(semantic_text)
+            content_tokens = sorted(
+                _semantic_excerpt_content_tokens(set(semantic_tokens))
+            )
+            if semantic_tokens:
+                slot_values.append(
+                    (
+                        "source-semantic-token-count",
+                        _semantic_count_bucket(len(semantic_tokens)),
+                    )
+                )
+                slot_values.append(("source-semantic-token-prefix", semantic_tokens[0]))
+                slot_values.append(("source-semantic-token-suffix", semantic_tokens[-1]))
+            for token in content_tokens[:8]:
+                slot_values.append(("source-semantic-token", token))
+            if content_tokens:
+                slot_values.append(("source-semantic-token-head", content_tokens[0]))
             for atom in _legal_semantic_atoms_from_text(semantic_text):
                 slot_values.append(("legal-semantic-atom", atom))
                 if family == "frame" and atom in {
@@ -6454,6 +6889,7 @@ def _typed_ir_refined_semantic_slot_phrases(
         predicate_head = _predicate_head_anchor(formula)
         semantic_text_values = [
             _predicate_phrase(formula),
+            _uscode_status_clause_text(document=document, formula=formula),
             _semantic_source_span_text(document=document, formula=formula),
         ]
         semantic_atoms: List[str] = []
@@ -10231,6 +10667,19 @@ def _typed_ir_reconstruction_phrases(
                     provenance_only=True,
                 )
             )
+        for support_text in _compact_uscode_formula_semantic_texts(
+            document=document,
+            formula=formula,
+            existing_text=rendered,
+        ):
+            phrases.append(
+                DecodedModalPhrase(
+                    text=support_text,
+                    slot="typed_ir_compact_semantic_support",
+                    spans=spans,
+                    provenance_only=True,
+                )
+            )
         summary_text = _typed_ir_source_semantic_summary(
             document=document,
             formula=formula,
@@ -10424,16 +10873,54 @@ def _typed_ir_cross_family_semantic_support_phrases(
     semantic_surface = _clean_text(
         _semantic_source_span_text(document=document, formula=formula)
     )
+    context_surface = _clean_text(
+        _semantic_source_context_span_text(
+            document=document,
+            formula=formula,
+            source_span_text=semantic_surface,
+            max_tokens=max_tokens,
+            context_char_window=260,
+        )
+    )
+    if (
+        context_surface
+        and context_surface.lower() != semantic_surface.lower()
+        and (
+            not semantic_surface
+            or _is_low_information_section_marker(semantic_surface)
+            or len(_tokenize_for_similarity(semantic_surface)) <= 8
+            or not (
+                _bridge_cues_from_text(semantic_surface)
+                or _semantic_text_cues_for_formula(document=document, formula=formula)
+            )
+        )
+    ):
+        semantic_surface = context_surface
     if not semantic_surface:
         return []
     semantic_tokens = _tokenize_for_similarity(semantic_surface)
     if not semantic_tokens or len(semantic_tokens) > max_tokens:
         return []
 
+    condition_values = _resolved_formula_conditions(
+        document=document,
+        formula=formula,
+    )
+    exception_values = _resolved_formula_exceptions(
+        document=document,
+        formula=formula,
+    )
     cue_values = _unique_preserve_order(
         [
             *_bridge_cues_from_text(semantic_surface),
             *_semantic_text_cues_for_formula(document=document, formula=formula),
+            *_formula_bridge_cues(
+                formula,
+                condition_values=condition_values,
+                exception_values=exception_values,
+            ),
+            *_clause_prefix_cues_from_values(condition_values, slot="condition"),
+            *_clause_prefix_cues_from_values(exception_values, slot="exception"),
         ]
     )
     transition_slots = _refined_contextual_modal_transition_slots(
@@ -10493,6 +10980,24 @@ def _typed_ir_cross_family_semantic_support_phrases(
             _clean_text(part).lower()
             for part in family_pair.split("->", 1)
         )
+        if pair_target:
+            add("typed_ir_cross_family_semantic_support_target_family", pair_target)
+        if pair_source:
+            add("typed_ir_cross_family_semantic_support_source_family", pair_source)
+        for cue in cue_values:
+            cue_key = _normalized_bridge_cue_key(cue) or _slot_safe_family_key(
+                _clean_text(cue).strip("_").lower()
+            )
+            if not cue_key:
+                continue
+            add(
+                "typed_ir_cross_family_semantic_support_cue_family",
+                f"{cue_key}:{pair_target}",
+            )
+            add(
+                "typed_ir_cross_family_semantic_support_cue_family_pair",
+                f"{cue_key}:{family_pair}",
+            )
         target_symbol = _typed_ir_refined_target_symbol(
             pair_target,
             fallback_symbol=_clean_text(formula.operator.symbol),
@@ -10512,6 +11017,15 @@ def _typed_ir_cross_family_semantic_support_phrases(
             "typed_ir_cross_family_semantic_support_signature",
             f"{pair_source}:{formula.operator.symbol}->{pair_target}:{target_symbol}",
         )
+        target_label = _CANONICAL_MODAL_OPERATOR_LABELS.get(
+            (pair_target, target_symbol),
+            "",
+        )
+        if target_label:
+            add(
+                "typed_ir_cross_family_semantic_support_operator_label",
+                f"{pair_target}:{target_label}",
+            )
     return phrases
 
 
@@ -10594,6 +11108,12 @@ def _typed_formula_surface_text(
         formula=formula,
         existing_text=" ".join(values),
     )
+    source_status_clause = _uscode_status_clause_text(
+        document=document,
+        formula=formula,
+    )
+    if source_status_clause:
+        values.append(source_status_clause)
     if source_semantic_surface:
         values.append(source_semantic_surface)
     values.extend(_phrase_values(formula.predicate.arguments))
@@ -10616,6 +11136,7 @@ def _typed_formula_surface_text(
     semantic_texts = (
         _fallback_section_heading_tail_text(document=document, formula=formula),
         _fallback_surface_text(document=document, formula=formula),
+        _uscode_status_clause_text(document=document, formula=formula),
         _semantic_source_span_text(document=document, formula=formula),
     )
     for semantic_text in semantic_texts:
@@ -10769,6 +11290,74 @@ def _typed_ir_source_semantic_summary(
     if summary.lower() == _clean_text(existing_text).lower():
         return ""
     return summary
+
+
+def _compact_uscode_formula_semantic_texts(
+    *,
+    document: ModalIRDocument,
+    formula: ModalIRFormula,
+    existing_text: str,
+    max_texts: int = 4,
+    max_tokens: int = 32,
+) -> List[str]:
+    """Return bounded catchline/status semantics for sparse U.S.C. formula spans."""
+
+    if not _formula_has_uscode_context(formula):
+        return []
+    candidates: List[str] = []
+    for text in (
+        _fallback_section_heading_tail_text(document=document, formula=formula),
+        _fallback_surface_text(document=document, formula=formula),
+        _semantic_source_span_text(document=document, formula=formula),
+    ):
+        cleaned = _clean_text(text)
+        if cleaned:
+            candidates.append(cleaned)
+            candidates.extend(_source_semantic_excerpt_candidates(cleaned))
+
+    source_span = _formula_source_span_text(document=document, formula=formula)
+    if source_span:
+        catchline = _leading_uscode_catchline_text(source_span[:360], max_tokens=18)
+        if catchline:
+            candidates.append(catchline)
+        status_keyword = _status_keyword_from_source_text(source_span)
+        candidates.extend(
+            _uscode_editorial_status_clauses(
+                source_span,
+                status_keyword=status_keyword,
+                max_clauses=2,
+                max_tokens=max_tokens,
+            )
+        )
+
+    existing_tokens = set(_tokenize_for_similarity(existing_text))
+    compact_texts: List[str] = []
+    seen: set[str] = set()
+    for candidate in candidates:
+        cleaned = _clean_text(candidate)
+        lowered = cleaned.lower()
+        if not cleaned or lowered in seen:
+            continue
+        tokens = _tokenize_for_similarity(cleaned)
+        if not tokens or len(tokens) > max_tokens:
+            continue
+        if _is_low_information_section_marker(cleaned):
+            continue
+        if _is_uscode_semantic_excerpt_boilerplate(cleaned):
+            continue
+        if not (
+            _bridge_cues_from_text(cleaned)
+            or _legal_semantic_atoms_from_text(cleaned)
+            or _status_keyword_from_source_text(cleaned)
+            or _source_semantic_legal_ir_cues(cleaned)
+        ):
+            continue
+        seen.add(lowered)
+        compact_texts.append(cleaned)
+        existing_tokens.update(tokens)
+        if len(compact_texts) >= max_texts:
+            break
+    return compact_texts
 
 
 def _semantic_excerpt_content_tokens(tokens: set[str]) -> set[str]:
@@ -13656,6 +14245,7 @@ def _typed_decompiler_bridge_phrases(
                 _semantic_source_span_text(document=document, formula=formula),
                 _fallback_section_heading_tail_text(document=document, formula=formula),
                 _fallback_surface_text(document=document, formula=formula),
+                _uscode_status_clause_text(document=document, formula=formula),
             ):
                 raw_cues.extend(_source_semantic_legal_ir_cues(semantic_text))
         for raw_cue in raw_cues:
@@ -13728,6 +14318,27 @@ def _typed_decompiler_bridge_phrases(
         if enabled
     ]
     modal_scope_signature = "+".join(scope_parts) if scope_parts else "unconditioned"
+    source_role_anchors: Mapping[str, str] = {}
+    if document is not None:
+        source_role_anchors = _source_role_anchor_values(
+            document=document,
+            formula=formula,
+        )
+    surface_slot_order_parts = [
+        role_name
+        for role_name, enabled in (
+            ("subject", bool(_clean_text(source_role_anchors.get("subject", "")))),
+            ("force", bool(modal_force)),
+            ("polarity", bool(modal_polarity)),
+            ("action", bool(_clean_text(source_role_anchors.get("action", "")))),
+            ("object", bool(_clean_text(source_role_anchors.get("object", "")))),
+            ("condition", bool(condition_values)),
+            ("exception", bool(exception_values)),
+            ("temporal", bool(_clean_text(source_role_anchors.get("temporal", "")))),
+        )
+        if enabled
+    ]
+    surface_slot_order = ">".join(surface_slot_order_parts)
     for topology_slot, topology_value in topology_slot_values:
         add(topology_slot, topology_value)
     for family_pair in source_family_pairs:
@@ -13745,6 +14356,116 @@ def _typed_decompiler_bridge_phrases(
             target_family = family
         if not source_family or not target_family:
             continue
+        reconstruction_signature = ":".join(
+            value
+            for value in (
+                family_pair,
+                modal_force,
+                modal_polarity,
+                modal_scope_signature,
+                role_shape_value,
+            )
+            if value
+        )
+        if reconstruction_signature:
+            add(
+                "typed_decompiler_semantic_reconstruction_family_pair",
+                reconstruction_signature,
+            )
+            add(
+                "source_role_decompiler_plan",
+                f"decompiler-plan:semantic-reconstruction:{reconstruction_signature}",
+            )
+            add_family_semantic_slot(
+                family=source_family,
+                slot_name="semantic-reconstruction",
+                slot_value=reconstruction_signature,
+            )
+            if target_family != source_family:
+                add_family_semantic_slot(
+                    family=target_family,
+                    slot_name="source-semantic-reconstruction",
+                    slot_value=f"{reconstruction_signature}:{source_family}",
+                )
+            for view in _preferred_legal_ir_views_for_family(target_family):
+                add(
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    (
+                        f"{target_family}||slot:typed-decompiler-semantic-"
+                        f"reconstruction:{reconstruction_signature}||{view}"
+                    ),
+                )
+        if surface_slot_order:
+            surface_order_value = f"{surface_slot_order}:{family_pair}"
+            add("typed_decompiler_surface_slot_order", surface_slot_order)
+            add("typed_decompiler_surface_slot_order_family_pair", surface_order_value)
+            add_family_semantic_slot_pair(
+                family=source_family,
+                left_slot=f"surface-slot-order:{surface_slot_order}",
+                right_slot=f"typed-decompiler-family-pair:{family_pair}",
+            )
+            if target_family != source_family:
+                add_family_semantic_slot_pair(
+                    family=target_family,
+                    left_slot=f"source-surface-slot-order:{surface_slot_order}:{source_family}",
+                    right_slot=f"typed-decompiler-family-pair:{family_pair}",
+                )
+        for role_name, anchor in source_role_anchors.items():
+            role_key = _slot_safe_family_key(_clean_text(role_name).lower())
+            anchor_value = _slot_safe_text_atom(anchor, max_tokens=5)
+            if not role_key or not anchor_value:
+                continue
+            role_anchor_value = f"{role_key}:{anchor_value}:{family_pair}"
+            add("typed_decompiler_source_role_anchor_family_pair", role_anchor_value)
+            add(
+                f"typed_decompiler_source_{role_key}_anchor_family_pair",
+                f"{anchor_value}:{family_pair}",
+            )
+            add_family_semantic_slot(
+                family=source_family,
+                slot_name=f"source-{role_key}",
+                slot_value=f"{anchor_value}:{target_family}",
+            )
+            if target_family != source_family:
+                add_family_semantic_slot(
+                    family=target_family,
+                    slot_name=f"source-{role_key}-source-family",
+                    slot_value=f"{anchor_value}:{source_family}",
+                )
+                for view in _preferred_legal_ir_views_for_family(target_family):
+                    add(
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        (
+                            f"{target_family}||slot-pair:source-{role_key}:"
+                            f"{anchor_value}:{source_family}|typed-decompiler-"
+                            f"family-pair:{family_pair}||{view}"
+                        ),
+                    )
+        for cue_key in source_cue_keys:
+            add(
+                "typed_decompiler_semantic_reconstruction_cue_family_pair",
+                f"{cue_key}:{family_pair}",
+            )
+            add_family_semantic_slot_pair(
+                family=source_family,
+                left_slot=f"semantic-reconstruction-cue:{cue_key}",
+                right_slot=f"typed-decompiler-family-pair:{family_pair}",
+            )
+            if target_family != source_family:
+                add_family_semantic_slot_pair(
+                    family=target_family,
+                    left_slot=f"source-semantic-reconstruction-cue:{cue_key}:{source_family}",
+                    right_slot=f"typed-decompiler-family-pair:{family_pair}",
+                )
+            for view in _preferred_legal_ir_views_for_family(target_family):
+                add(
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    (
+                        f"{target_family}||slot-pair:semantic-reconstruction-"
+                        f"cue:{cue_key}|typed-decompiler-family-pair:"
+                        f"{family_pair}||{view}"
+                    ),
+                )
         if modal_force and modal_polarity:
             force_polarity_value = f"{modal_force}:{modal_polarity}"
             add(
@@ -17983,6 +18704,8 @@ def _typed_ir_refined_target_symbol(
     fallback_symbol: str,
 ) -> str:
     normalized_family = _clean_text(target_family).lower()
+    if normalized_family == "alethic":
+        return fallback_symbol if fallback_symbol in {"□", "◇"} else "□"
     if normalized_family == "conditional_normative":
         return "O|"
     if normalized_family == "deontic":

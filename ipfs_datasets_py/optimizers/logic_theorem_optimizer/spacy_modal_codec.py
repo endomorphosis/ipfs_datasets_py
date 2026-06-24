@@ -6445,6 +6445,23 @@ def _apply_competing_deontic_temporal_scope_phrase_reinforcement(
     ):
         counts[deontic_family] = temporal_count + 0.01
         deontic_count = float(counts.get(deontic_family, 0.0))
+    # Date/status scaffolding such as "for a period beginning ... and ending ..."
+    # can outweigh a single operative "shall" even when no temporal cue is
+    # acting as the clause operator. Preserve deontic force in that no-deadline
+    # shape after all temporal phrase boosts have been applied.
+    if (
+        bool(signals.get("has_deontic_cue"))
+        and (
+            bool(signals.get("has_temporal_status_scope"))
+            or bool(signals.get("has_calendar_date_scope"))
+        )
+        and bool(signals.get("has_temporal_scope_phrase"))
+        and not bool(signals.get("has_temporal_cue"))
+        and not has_temporal_deadline_cue
+        and temporal_count >= deontic_count
+    ):
+        counts[deontic_family] = temporal_count + 0.01
+        deontic_count = float(counts.get(deontic_family, 0.0))
     if has_temporal_expended_scope_phrase:
         counts[temporal_family] = temporal_count + _TEMPORAL_SCOPE_PHRASE_REINFORCEMENT
 

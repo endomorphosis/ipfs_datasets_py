@@ -67,16 +67,45 @@ _AUTOENCODER_DIRECTIONAL_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = {
 
 _AUTOENCODER_CUE_TARGET_FAMILIES: Mapping[str, tuple[str, ...]] = {
     "after": ("temporal", "epistemic"),
+    "as_provided_in": ("conditional_normative", "deontic", "temporal"),
     "as_authorized": ("deontic",),
     "authorized": ("deontic", "epistemic"),
     "before": ("temporal", "epistemic"),
+    "by": ("temporal", "deontic"),
+    "conditional": ("conditional_normative", "deontic"),
+    "deontic": ("deontic", "conditional_normative"),
+    "by": ("temporal",),
+    "codification": ("frame", "deontic", "temporal"),
     "determined": ("epistemic", "doxastic", "conditional_normative"),
     "determines": ("epistemic", "doxastic", "conditional_normative"),
     "determining": ("epistemic", "doxastic", "conditional_normative"),
     "determine": ("epistemic", "doxastic", "conditional_normative"),
+    "obligation": ("deontic", "conditional_normative"),
+    "permission": ("deontic", "epistemic"),
     "subject_to": ("conditional_normative", "deontic", "frame"),
+    "temporal": ("temporal", "deontic"),
+    "except_as_otherwise_provided": ("conditional_normative", "deontic"),
+    "except_as_provided": ("conditional_normative", "deontic"),
+    "except_as_provided_in": ("conditional_normative", "deontic", "temporal"),
+    "if": ("conditional_normative",),
+    "may": ("deontic",),
+    "may_not": ("deontic",),
+    "must": ("deontic",),
+    "not_later_than": ("temporal", "deontic"),
+    "provided": ("conditional_normative", "deontic", "temporal"),
+    "provided_that": ("conditional_normative",),
+    "shall": ("deontic",),
+    "shall_not": ("deontic",),
+    "subject_to": ("conditional_normative", "deontic", "frame"),
+    "subject_to_section": ("conditional_normative", "deontic", "frame"),
+    "under": ("temporal", "conditional_normative", "dynamic"),
+    "uscode_codification_transfer_heading_v1": ("frame", "deontic", "temporal"),
     "until": ("temporal", "epistemic"),
+    "unless": ("conditional_normative", "temporal"),
+    "when": ("conditional_normative", "temporal"),
+    "whenever": ("conditional_normative", "temporal"),
     "within": ("temporal", "epistemic"),
+    "with_respect_to": ("conditional_normative",),
 }
 
 _AUTOENCODER_FAMILY_PAIR_PRIORITY: Mapping[str, int] = {
@@ -88,6 +117,36 @@ _AUTOENCODER_FAMILY_PAIR_PRIORITY: Mapping[str, int] = {
     "doxastic": 5,
     "dynamic": 6,
 }
+_AUTOENCODER_PRIORITY_FAMILY_PAIRS = {
+    "frame->conditional_normative",
+    "frame->deontic",
+    "frame->frame",
+    "frame->temporal",
+    "temporal->conditional_normative",
+    "temporal->deontic",
+    "temporal->temporal",
+}
+_AUTOENCODER_TARGETED_RECONSTRUCTION_FAMILY_PAIRS = frozenset(
+    {
+        "frame->deontic",
+        "frame->frame",
+        "frame->temporal",
+        "temporal->conditional_normative",
+        "temporal->temporal",
+    }
+)
+
+_AUTOENCODER_FAMILY_LEGAL_IR_VIEW_TARGETS: Mapping[str, tuple[str, ...]] = {
+    "conditional_normative": ("deontic.ir", "TDFOL.prover"),
+    "deontic": ("deontic.ir", "TDFOL.prover"),
+    "doxastic": ("TDFOL.prover",),
+    "dynamic": ("TDFOL.prover",),
+    "epistemic": ("TDFOL.prover", "knowledge_graphs.neo4j_compat"),
+    "frame": ("modal.frame_logic", "knowledge_graphs.neo4j_compat"),
+    "temporal": ("TDFOL.prover", "modal.frame_logic"),
+}
+
+_AUTOENCODER_TYPED_DECOMPILER_SLOT_WEIGHT = 1.6
 
 
 def cosine_similarity(left: Sequence[float], right: Sequence[float]) -> float:
@@ -2132,7 +2191,7 @@ class AdaptiveModalAutoencoder:
         max_coreference_binding_features: int = 64,
         max_logical_connective_features: int = 64,
         max_enumeration_hierarchy_features: int = 64,
-        embedding_head_update_normalization: float = 0.0,
+        embedding_head_update_normalization: float = 1.0,
         family_logit_head_update_normalization: float = 0.0,
         legal_ir_view_head_update_normalization: float = 0.0,
         feature_activity_reference: int = 64,
@@ -4361,11 +4420,19 @@ class AdaptiveModalAutoencoder:
 
         text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
         cues = self._cue_names_for_text(text)
+        surface_profiles = _uscode_surface_profile_tags(text)
         bump(f"round-trip:cue-count:{_count_bucket(len(cues))}", 0.4)
         if len(cues) > 1:
             bump("round-trip:multiple-modal-cues", 0.75)
         for cue in cues[:4]:
             bump(f"round-trip:cue:{cue}", 0.4)
+        for profile in surface_profiles[:8]:
+            bump(f"round-trip:uscode-surface-profile:{profile}", 0.8)
+        for left_profile, right_profile in zip(surface_profiles, surface_profiles[1:]):
+            bump(
+                f"round-trip:uscode-surface-profile-transition:{left_profile}->{right_profile}",
+                0.55,
+            )
 
         frame_candidates = list(sample.frame_candidates or [])
         bump(
@@ -4425,6 +4492,7 @@ class AdaptiveModalAutoencoder:
         raw_tokens = _TOKEN_RE.findall(text)
         content_tokens = _token_features(text, max_tokens=32)
         cues = self._cue_names_for_text(text)
+        surface_profiles = _uscode_surface_profile_tags(text)
         counts: Dict[str, float] = {}
 
         def bump(plan: str, weight: float = 1.0) -> None:
@@ -4504,6 +4572,18 @@ class AdaptiveModalAutoencoder:
             bump(f"decompiler-plan:cue-signature:{'|'.join(cues[:4])}", 0.6)
         for left_cue, right_cue in zip(cues, cues[1:]):
             bump(f"decompiler-plan:cue-transition:{left_cue}->{right_cue}", 0.4)
+        for profile in surface_profiles[:8]:
+            bump(f"decompiler-plan:uscode-surface-profile:{profile}", 0.85)
+            if not cues:
+                bump(
+                    f"decompiler-plan:no-cue-surface-profile:{profile}",
+                    0.65,
+                )
+        for left_profile, right_profile in zip(surface_profiles, surface_profiles[1:]):
+            bump(
+                f"decompiler-plan:uscode-surface-profile-transition:{left_profile}->{right_profile}",
+                0.5,
+            )
 
         if subject_anchor:
             bump(f"decompiler-plan:subject-anchor:{subject_anchor}", 0.55)
@@ -4560,6 +4640,29 @@ class AdaptiveModalAutoencoder:
             conditions = list(getattr(formula, "conditions", []) or [])
             exceptions = list(getattr(formula, "exceptions", []) or [])
             arity_bucket = _count_bucket(len(arguments))
+            family_pairs = _autoencoder_typed_family_pairs_for_formula(
+                sample.modal_ir,
+                formula,
+            )
+            pair_cues = _unique_preserve_order(
+                [*cues, *_formula_autoencoder_cue_names(formula)]
+            )
+            pair_scope_tags = self._source_clause_scope_tags_for(
+                sample,
+                pair_cues,
+                source_anchors,
+            )
+            if conditions and "conditioned" not in pair_scope_tags:
+                pair_scope_tags = [*pair_scope_tags, "conditioned"]
+            if exceptions and "excepted" not in pair_scope_tags:
+                pair_scope_tags = [*pair_scope_tags, "excepted"]
+            pair_scope_signature = "+".join(
+                tag for tag in _unique_preserve_order(pair_scope_tags) if tag
+            ) or "unconditioned"
+            pair_force_tags, pair_polarity_tags = _autoencoder_formula_force_polarity_tags(
+                formula,
+                text=text,
+            )
             if family:
                 bump(f"decompiler-plan:compiled-family:{family}", 0.45)
             if family and symbol:
@@ -4633,6 +4736,50 @@ class AdaptiveModalAutoencoder:
                 bump(f"decompiler-plan:compiled-condition:{family}", 0.35)
             if exceptions:
                 bump(f"decompiler-plan:compiled-exception:{family}", 0.35)
+            for family_pair in family_pairs:
+                bump(f"decompiler-plan:typed-family-pair:{family_pair}", 0.9)
+                bump(
+                    (
+                        "decompiler-plan:typed-family-pair-scope:"
+                        f"{pair_scope_signature}:{family_pair}"
+                    ),
+                    0.75,
+                )
+                if conditions:
+                    bump(
+                        f"decompiler-plan:typed-family-pair-condition:{family_pair}",
+                        0.55,
+                    )
+                if exceptions:
+                    bump(
+                        f"decompiler-plan:typed-family-pair-exception:{family_pair}",
+                        0.55,
+                    )
+                if action_anchor:
+                    bump(
+                        (
+                            "decompiler-plan:source-action-family-pair:"
+                            f"{action_anchor}:{family_pair}"
+                        ),
+                        0.65,
+                    )
+                if predicate_head:
+                    bump(
+                        (
+                            "decompiler-plan:predicate-family-pair:"
+                            f"{predicate_head}:{family_pair}"
+                        ),
+                        0.55,
+                    )
+                for force in pair_force_tags[:2]:
+                    for polarity in pair_polarity_tags[:2]:
+                        bump(
+                            (
+                                "decompiler-plan:force-polarity-family-pair:"
+                                f"{force}:{polarity}:{family_pair}"
+                            ),
+                            0.6,
+                        )
 
         result = _normalized_distribution(counts)
         cache["decompiler_plan_distribution"] = dict(result)
@@ -6139,6 +6286,7 @@ class AdaptiveModalAutoencoder:
 
         text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
         cue_names = self._cue_names_for_text(text)
+        surface_profiles = _uscode_surface_profile_tags(text)
         source_anchors = self._source_role_anchors_for(sample)
         role_classes = {
             role: self._legal_semantic_classes_for(anchor, role=role)
@@ -6159,6 +6307,10 @@ class AdaptiveModalAutoencoder:
 
         add("bias")
         add(f"formula-count:{_count_bucket(len(sample.modal_ir.formulas))}")
+        for profile in surface_profiles[:8]:
+            add(f"uscode-surface-profile:{profile}")
+        for left_profile, right_profile in zip(surface_profiles, surface_profiles[1:]):
+            add(f"uscode-surface-profile-transition:{left_profile}->{right_profile}")
         for cue_name in cue_names[:5]:
             add(f"cue:{cue_name}")
         for role, classes in sorted(role_classes.items()):
@@ -6713,6 +6865,7 @@ class AdaptiveModalAutoencoder:
         text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
         raw_tokens = _TOKEN_RE.findall(text)
         cue_names = self._cue_names_for_text(text)
+        surface_profiles = _uscode_surface_profile_tags(text)
         source_anchors = self._source_role_anchors_for(sample)
         role_classes = {
             role: self._legal_semantic_classes_for(anchor, role=role)
@@ -6769,6 +6922,12 @@ class AdaptiveModalAutoencoder:
         add("bias")
         add(f"slot-order:{'>'.join(ordered_roles)}")
         add(f"force-lexeme:{force_tags[0] if force_tags else 'none'}:{force_lexeme}")
+        for profile in surface_profiles[:8]:
+            add(f"uscode-surface-profile:{profile}")
+            if not cue_names:
+                add(f"no-cue-surface-profile:{profile}")
+        for left_profile, right_profile in zip(surface_profiles, surface_profiles[1:]):
+            add(f"uscode-surface-profile-transition:{left_profile}->{right_profile}")
         for force in force_tags[:2]:
             for polarity in polarity_tags[:2]:
                 add(f"force-polarity-template:{force}:{polarity}:{scope_signature}")
@@ -17119,6 +17278,24 @@ class AdaptiveModalAutoencoder:
         if action_anchor and object_anchor:
             add(f"surface-path:action-object:{action_anchor}->{object_anchor}")
 
+        priority_family_pairs: List[str] = []
+        for formula in list(sample.modal_ir.formulas or [])[:6]:
+            priority_family_pairs.extend(
+                _autoencoder_typed_family_pairs_for_formula(
+                    sample.modal_ir,
+                    formula,
+                    surface_cues=cue_names,
+                )
+            )
+        for family_pair in sorted(
+            pair
+            for pair in _unique_preserve_order(priority_family_pairs)
+            if pair in _AUTOENCODER_PRIORITY_FAMILY_PAIRS
+        ):
+            add(f"typed-family-pair:{family_pair}")
+            for cue_name in cue_names[:4]:
+                add(f"surface-cue-to-family-pair:{cue_name}:{family_pair}")
+
         family_sequence: List[str] = []
         predicate_sequence: List[str] = []
         for formula in list(sample.modal_ir.formulas or [])[:6]:
@@ -17197,14 +17374,19 @@ class AdaptiveModalAutoencoder:
             family_pairs = _autoencoder_typed_family_pairs_for_formula(
                 sample.modal_ir,
                 formula,
+                surface_cues=cue_names,
             )
             for family_pair in family_pairs:
+                if family_pair in _AUTOENCODER_PRIORITY_FAMILY_PAIRS:
+                    add(f"typed-family-pair:{family_pair}")
                 add_typed_family_pair(f"typed-family-pair:{family_pair}")
                 if formula_cue:
                     add_typed_family_pair(
                         f"typed-family-pair-cue:{family_pair}:{formula_cue}"
                     )
                 for cue_name in cue_names[:4]:
+                    if family_pair in _AUTOENCODER_PRIORITY_FAMILY_PAIRS:
+                        add(f"surface-cue-to-family-pair:{cue_name}:{family_pair}")
                     add_typed_family_pair(
                         f"surface-cue-to-family-pair:{cue_name}:{family_pair}"
                     )
@@ -17267,6 +17449,9 @@ class AdaptiveModalAutoencoder:
             predicate_sequence[1:],
         ):
             add(f"ir-predicate-transition:{left_predicate}->{right_predicate}")
+
+        for suffix in _unique_preserve_order(typed_family_pair_suffixes):
+            add(suffix)
 
         frame_logic = getattr(sample.modal_ir, "frame_logic", None)
         if frame_logic is None:
@@ -17663,13 +17848,33 @@ class AdaptiveModalAutoencoder:
                     bump(f"slot:family-exception-present:{family}")
             cue = formula.metadata.get("cue") if formula.metadata else None
             cue_name = _feature_atom(cue)
+            formula_cue_names = _formula_autoencoder_cue_names(formula)
             if cue_name:
                 bump(f"slot:modal-cue:{cue_name}")
                 if family:
                     bump(f"slot:cue-family:{cue_name}:{family}")
+            source_cue_names = self._cue_names_for_text(text)
+            for source_cue in source_cue_names:
+                if family:
+                    bump(f"slot:surface-cue-family:{source_cue}:{family}", weight=0.8)
+            for formula_cue_name in formula_cue_names:
+                if formula_cue_name == cue_name:
+                    continue
+                bump(f"slot:modal-cue:{formula_cue_name}", weight=0.75)
+                if family:
+                    bump(
+                        f"slot:cue-family:{formula_cue_name}:{family}",
+                        weight=0.75,
+                    )
             family_pairs = _autoencoder_typed_family_pairs_for_formula(
                 sample.modal_ir,
                 formula,
+                surface_cues=source_cue_names,
+            )
+            family_pair_strengths = _autoencoder_typed_family_pair_strengths_for_formula(
+                sample.modal_ir,
+                formula,
+                surface_cues=source_cue_names,
             )
             predicate_head = predicate_name.split("_", 1)[0] if predicate_name else ""
             force_tags, polarity_tags = _autoencoder_formula_force_polarity_tags(
@@ -17679,7 +17884,7 @@ class AdaptiveModalAutoencoder:
             scope_tags = self._source_clause_scope_tags_for(
                 sample,
                 _unique_preserve_order(
-                    [*self._cue_names_for_text(text), *_formula_autoencoder_cue_names(formula)]
+                    [*self._cue_names_for_text(text), *formula_cue_names]
                 ),
                 self._source_role_anchors_for(sample),
             )
@@ -17699,11 +17904,31 @@ class AdaptiveModalAutoencoder:
                 scope_tags=scope_tags,
             )
             for family_pair in family_pairs:
-                bump(f"slot:typed-decompiler-family-pair:{family_pair}", weight=1.25)
-                if cue_name:
+                pair_strength = max(
+                    0.0,
+                    float(family_pair_strengths.get(family_pair, 1.0)),
+                )
+                if pair_strength <= 0.0:
+                    continue
+                bump(
+                    f"slot:typed-decompiler-family-pair:{family_pair}",
+                    weight=1.25 * pair_strength,
+                )
+                for formula_cue_name in formula_cue_names:
                     bump(
-                        f"slot:typed-decompiler-family-pair-cue:{family_pair}:{cue_name}",
-                        weight=0.75,
+                        (
+                            "slot:typed-decompiler-family-pair-cue:"
+                            f"{family_pair}:{formula_cue_name}"
+                        ),
+                        weight=0.75 * pair_strength,
+                    )
+                for source_cue in source_cue_names[:4]:
+                    bump(
+                        (
+                            "slot:typed-decompiler-surface-cue-family-pair:"
+                            f"{source_cue}:{family_pair}"
+                        ),
+                        weight=0.75 * pair_strength,
                     )
                 if predicate_head:
                     bump(
@@ -17711,26 +17936,55 @@ class AdaptiveModalAutoencoder:
                             "slot:typed-decompiler-family-pair-predicate:"
                             f"{family_pair}:{predicate_head}"
                         ),
-                        weight=0.5,
+                        weight=0.5 * pair_strength,
                     )
                 if conditions:
                     bump(
                         f"slot:typed-decompiler-condition-family-pair:{family_pair}",
-                        weight=0.75,
+                        weight=0.75 * pair_strength,
                     )
                 if exceptions:
                     bump(
                         f"slot:typed-decompiler-exception-family-pair:{family_pair}",
-                        weight=0.75,
+                        weight=0.75 * pair_strength,
                     )
                 if "->" in family_pair:
                     source_family, _target_family = family_pair.split("->", 1)
                 else:
                     source_family = family
+                    _target_family = family
                 bump(
                     f"slot:typed-decompiler-scope-family-pair:{scope_signature}:{family_pair}",
-                    weight=0.75,
+                    weight=0.75 * pair_strength,
                 )
+                if family_pair in _AUTOENCODER_TARGETED_RECONSTRUCTION_FAMILY_PAIRS:
+                    bump(
+                        f"slot:typed-decompiler-target-reconstruction-pair:{family_pair}",
+                        weight=1.35,
+                    )
+                    bump(
+                        (
+                            "slot:typed-decompiler-target-reconstruction-scope:"
+                            f"{scope_signature}:{family_pair}"
+                        ),
+                        weight=1.0,
+                    )
+                    for formula_cue_name in formula_cue_names:
+                        bump(
+                            (
+                                "slot:typed-decompiler-target-reconstruction-cue:"
+                                f"{family_pair}:{formula_cue_name}"
+                            ),
+                            weight=0.9,
+                        )
+                    for source_cue in source_cue_names[:4]:
+                        bump(
+                            (
+                                "slot:typed-decompiler-target-reconstruction-surface-cue:"
+                                f"{source_cue}:{family_pair}"
+                            ),
+                            weight=0.8,
+                        )
                 if topology_signature:
                     bump(
                         (
@@ -17738,8 +17992,33 @@ class AdaptiveModalAutoencoder:
                             f"{topology_signature}:{source_family}|"
                             f"typed-decompiler-family-pair:{family_pair}"
                         ),
-                        weight=0.65,
+                        weight=0.65 * pair_strength,
                     )
+                bridge_scope = topology_signature or scope_signature
+                for view in _autoencoder_legal_ir_views_for_family_pair(family_pair):
+                    bump(
+                        (
+                            "slot:typed-decompiler-family-pair-view-contract:"
+                            f"{family_pair}||{view}"
+                        ),
+                        weight=0.8 * pair_strength,
+                    )
+                    bump(
+                        (
+                            "slot:typed-decompiler-family-pair-bridge:"
+                            f"{source_family}->{_target_family}:"
+                            f"{bridge_scope}||{view}"
+                        ),
+                        weight=0.75 * pair_strength,
+                    )
+                    if family_pair in _AUTOENCODER_TARGETED_RECONSTRUCTION_FAMILY_PAIRS:
+                        bump(
+                            (
+                                "slot:typed-decompiler-target-reconstruction-view:"
+                                f"{family_pair}||{view}"
+                            ),
+                            weight=0.95,
+                        )
                 for force in force_tags:
                     for polarity in polarity_tags:
                         bump(
@@ -17754,15 +18033,25 @@ class AdaptiveModalAutoencoder:
                                 "slot:typed-decompiler-force-polarity-family-pair:"
                                 f"{force}:{polarity}:{family_pair}"
                             ),
-                            weight=0.85,
+                            weight=0.85 * pair_strength,
                         )
                         bump(
                             (
                                 "slot:typed-decompiler-force-polarity-scope-family-pair:"
                                 f"{force}:{polarity}:{scope_signature}:{family_pair}"
                             ),
-                            weight=0.8,
+                            weight=0.8 * pair_strength,
                         )
+                        for view in _autoencoder_legal_ir_views_for_family_pair(
+                            family_pair
+                        ):
+                            bump(
+                                (
+                                    "slot:typed-decompiler-force-view-family-pair:"
+                                    f"{force}:{polarity}:{family_pair}||{view}"
+                                ),
+                                weight=0.7 * pair_strength,
+                            )
                         if predicate_head:
                             bump(
                                 (
@@ -17777,7 +18066,12 @@ class AdaptiveModalAutoencoder:
         for slot, weight in self._semantic_slot_interactions_for(counts):
             bump(slot, weight)
 
-        result = _normalized_distribution(counts)
+        result = _normalized_distribution(
+            {
+                slot: weight * _autoencoder_semantic_slot_embedding_weight(slot)
+                for slot, weight in counts.items()
+            }
+        )
         cache["semantic_slot_distribution"] = dict(result)
         return result
 
@@ -17797,6 +18091,9 @@ class AdaptiveModalAutoencoder:
             "slot:predicate-token-count:",
             "slot:predicate-arity:",
             "slot:typed-decompiler-force-polarity",
+            "slot:typed-decompiler-family-pair-bridge:",
+            "slot:typed-decompiler-family-pair-view-contract:",
+            "slot:typed-decompiler-force-view-family-pair:",
             "slot:typed-decompiler-scope-family-pair:",
             "slot:typed-decompiler-source-clause-topology-family-pair:",
             "slot:typed-decompiler-source-predicate-force-pair:",
@@ -21513,6 +21810,8 @@ def _family_semantic_slot_key(family: str, slot: str) -> str:
 def _autoencoder_typed_family_pairs_for_formula(
     modal_ir: Any,
     formula: Any,
+    *,
+    surface_cues: Sequence[str] = (),
 ) -> List[str]:
     source_family = _feature_atom(getattr(formula.operator, "family", "")).lower()
     if not source_family:
@@ -21527,7 +21826,9 @@ def _autoencoder_typed_family_pairs_for_formula(
     add_target(source_family)
     for candidate_formula in list(getattr(modal_ir, "formulas", []) or []):
         add_target(getattr(candidate_formula.operator, "family", ""))
-    for cue in _formula_autoencoder_cue_names(formula):
+    for cue in _unique_preserve_order(
+        [*_formula_autoencoder_cue_names(formula), *surface_cues]
+    ):
         for target_family in _AUTOENCODER_CUE_TARGET_FAMILIES.get(cue, ()):
             add_target(target_family)
     for target_family in _AUTOENCODER_DIRECTIONAL_FAMILY_PAIR_TARGETS.get(
@@ -21550,19 +21851,98 @@ def _autoencoder_typed_family_pairs_for_formula(
     return [f"{source_family}->{target_family}" for target_family in ordered_targets]
 
 
+def _autoencoder_typed_family_pair_strengths_for_formula(
+    modal_ir: Any,
+    formula: Any,
+    *,
+    surface_cues: Sequence[str] = (),
+) -> Dict[str, float]:
+    """Return support weights for typed decompiler family-pair slots.
+
+    Observed compiled families and exact statutory cues are strong evidence for
+    reconstruction.  Registry-only directional expansions remain available as
+    portable candidates, but are intentionally weaker so generic frame headings
+    do not dominate the embedding head for deontic or temporal targets.
+    """
+    source_family = _feature_atom(getattr(formula.operator, "family", "")).lower()
+    if not source_family:
+        return {}
+    strengths: Dict[str, float] = {}
+
+    def bump(target_family: str, strength: float) -> None:
+        target = _feature_atom(target_family).lower()
+        if not target:
+            return
+        pair = f"{source_family}->{target}"
+        strengths[pair] = max(strengths.get(pair, 0.0), float(strength))
+
+    bump(source_family, 1.0)
+    for candidate_formula in list(getattr(modal_ir, "formulas", []) or []):
+        bump(getattr(candidate_formula.operator, "family", ""), 1.0)
+    for cue in _unique_preserve_order(
+        [*_formula_autoencoder_cue_names(formula), *surface_cues]
+    ):
+        for target_family in _AUTOENCODER_CUE_TARGET_FAMILIES.get(cue, ()):
+            bump(target_family, 1.0)
+    for target_family in _AUTOENCODER_DIRECTIONAL_FAMILY_PAIR_TARGETS.get(
+        source_family,
+        (),
+    ):
+        bump(target_family, 0.35)
+    return {
+        family_pair: strengths[family_pair]
+        for family_pair in _autoencoder_typed_family_pairs_for_formula(
+            modal_ir,
+            formula,
+            surface_cues=surface_cues,
+        )
+        if family_pair in strengths
+    }
+
+
+def _autoencoder_legal_ir_views_for_family_pair(family_pair: str) -> List[str]:
+    if "->" in str(family_pair):
+        source_family, target_family = str(family_pair).split("->", 1)
+    else:
+        source_family = str(family_pair)
+        target_family = str(family_pair)
+    views: List[str] = ["modal.autoencoder"]
+    for family in (source_family, target_family):
+        for view in _AUTOENCODER_FAMILY_LEGAL_IR_VIEW_TARGETS.get(family, ()):
+            if view not in views:
+                views.append(view)
+    return views
+
+
 def _formula_autoencoder_cue_names(formula: Any) -> List[str]:
     cues: List[str] = []
     metadata = getattr(formula, "metadata", {}) or {}
-    for value in (
-        metadata.get("cue"),
-        metadata.get("modal_cue"),
-        metadata.get("source_cue"),
-        metadata.get("bridge_cue"),
+    for value, max_tokens in (
+        (metadata.get("cue"), 4),
+        (metadata.get("modal_cue"), 4),
+        (metadata.get("source_cue"), 4),
+        (metadata.get("bridge_cue"), 4),
+        (metadata.get("fallback_rule"), 6),
+        (metadata.get("residual_segment_role"), 4),
     ):
-        cue = _feature_atom(value)
+        cue = _feature_atom(value, max_tokens=max_tokens)
         if cue and cue not in cues:
             cues.append(cue)
     return cues
+
+
+def _autoencoder_semantic_slot_embedding_weight(slot: str) -> float:
+    """Return reconstruction weight for reusable semantic-slot features."""
+    slot_text = str(slot)
+    if "typed-decompiler-target-reconstruction-" in slot_text:
+        return _AUTOENCODER_TYPED_DECOMPILER_SLOT_WEIGHT * 1.2
+    if (
+        "typed-decompiler-family-pair" in slot_text
+        or "typed-decompiler-force-polarity" in slot_text
+        or "typed-decompiler-source-clause-topology" in slot_text
+    ):
+        return _AUTOENCODER_TYPED_DECOMPILER_SLOT_WEIGHT
+    return 1.0
 
 
 def _autoencoder_formula_force_polarity_tags(
@@ -22310,6 +22690,10 @@ _LEGAL_IR_DEFINITION_CUE_RE = re.compile(
     r"\b(means|defined|definition|term|for\s+purposes\s+of|includes?)\b",
     re.IGNORECASE,
 )
+_LEGAL_IR_CODIFICATION_CUE_RE = re.compile(
+    r"\b(codification|transferred|reclassified|redesignated|renumbered)\b",
+    re.IGNORECASE,
+)
 _LEGAL_IR_AUTHORITY_CUE_RE = re.compile(
     r"\b(secretary|administrator|agency|commission|authority|jurisdiction|regulation|rulemaking)\b",
     re.IGNORECASE,
@@ -22322,13 +22706,82 @@ _LEGAL_IR_EXCEPTION_CUE_RE = re.compile(
     r"\b(except|exception|notwithstanding|waiver|exemption|excluded?)\b",
     re.IGNORECASE,
 )
+_LEGAL_IR_MAY_NOT_CUE_RE = re.compile(r"\bmay\s+not\b", re.IGNORECASE)
+_LEGAL_IR_SHALL_NOT_CUE_RE = re.compile(r"\bshall\s+not\b", re.IGNORECASE)
+_LEGAL_IR_MAY_CUE_RE = re.compile(r"\bmay\b", re.IGNORECASE)
+_LEGAL_IR_SHALL_CUE_RE = re.compile(r"\bshall\b", re.IGNORECASE)
+_LEGAL_IR_MUST_CUE_RE = re.compile(r"\bmust\b", re.IGNORECASE)
+_LEGAL_IR_UNLESS_CUE_RE = re.compile(r"\bunless\b", re.IGNORECASE)
+_LEGAL_IR_WHEN_CUE_RE = re.compile(r"\bwhen\b", re.IGNORECASE)
+_LEGAL_IR_WHENEVER_CUE_RE = re.compile(r"\bwhenever\b", re.IGNORECASE)
+_LEGAL_IR_NOT_LATER_THAN_CUE_RE = re.compile(
+    r"\bnot\s+later\s+than\b",
+    re.IGNORECASE,
+)
+_LEGAL_IR_SUBJECT_TO_SECTION_CUE_RE = re.compile(
+    r"\bsubject\s+to\s+(?:section|subsection|paragraph|chapter|subchapter|title)\b",
+    re.IGNORECASE,
+)
+_LEGAL_IR_SUBJECT_TO_CUE_RE = re.compile(r"\bsubject\s+to\b", re.IGNORECASE)
+_LEGAL_IR_WITH_RESPECT_TO_CUE_RE = re.compile(
+    r"\bwith\s+respect\s+to\b",
+    re.IGNORECASE,
+)
+_LEGAL_IR_EXCEPT_AS_OTHERWISE_PROVIDED_CUE_RE = re.compile(
+    r"\bexcept\s+as\s+otherwise\s+provided\b",
+    re.IGNORECASE,
+)
+_LEGAL_IR_EXCEPT_AS_PROVIDED_IN_CUE_RE = re.compile(
+    r"\bexcept\s+as\s+provided\s+in\b",
+    re.IGNORECASE,
+)
+_LEGAL_IR_EXCEPT_AS_PROVIDED_CUE_RE = re.compile(
+    r"\bexcept\s+as\s+provided\b",
+    re.IGNORECASE,
+)
+_LEGAL_IR_AS_PROVIDED_IN_CUE_RE = re.compile(
+    r"\bas\s+provided\s+in\b",
+    re.IGNORECASE,
+)
+_LEGAL_IR_PROVIDED_THAT_CUE_RE = re.compile(
+    r"\bprovided\s+that\b",
+    re.IGNORECASE,
+)
+_LEGAL_IR_UNDER_CUE_RE = re.compile(
+    r"\bunder\s+(?:section|subsection|paragraph|chapter|subchapter|title|this)\b",
+    re.IGNORECASE,
+)
+_LEGAL_IR_BY_CUE_RE = re.compile(
+    r"\bby\s+(?:fiscal\s+year\s+)?(?:\d{4}|[0-9]+\s+(?:days?|months?|years?))\b",
+    re.IGNORECASE,
+)
 _LEGAL_IR_CUE_PATTERNS = (
+    ("except_as_otherwise_provided", _LEGAL_IR_EXCEPT_AS_OTHERWISE_PROVIDED_CUE_RE),
+    ("except_as_provided_in", _LEGAL_IR_EXCEPT_AS_PROVIDED_IN_CUE_RE),
+    ("except_as_provided", _LEGAL_IR_EXCEPT_AS_PROVIDED_CUE_RE),
+    ("as_provided_in", _LEGAL_IR_AS_PROVIDED_IN_CUE_RE),
+    ("provided_that", _LEGAL_IR_PROVIDED_THAT_CUE_RE),
+    ("subject_to_section", _LEGAL_IR_SUBJECT_TO_SECTION_CUE_RE),
+    ("subject_to", _LEGAL_IR_SUBJECT_TO_CUE_RE),
+    ("with_respect_to", _LEGAL_IR_WITH_RESPECT_TO_CUE_RE),
+    ("not_later_than", _LEGAL_IR_NOT_LATER_THAN_CUE_RE),
+    ("may_not", _LEGAL_IR_MAY_NOT_CUE_RE),
+    ("shall_not", _LEGAL_IR_SHALL_NOT_CUE_RE),
+    ("may", _LEGAL_IR_MAY_CUE_RE),
+    ("shall", _LEGAL_IR_SHALL_CUE_RE),
+    ("must", _LEGAL_IR_MUST_CUE_RE),
+    ("unless", _LEGAL_IR_UNLESS_CUE_RE),
+    ("whenever", _LEGAL_IR_WHENEVER_CUE_RE),
+    ("when", _LEGAL_IR_WHEN_CUE_RE),
+    ("under", _LEGAL_IR_UNDER_CUE_RE),
+    ("by", _LEGAL_IR_BY_CUE_RE),
     ("conditional", _LEGAL_IR_CONDITIONAL_CUE_RE),
     ("deontic", _LEGAL_IR_DEONTIC_CUE_RE),
     ("obligation", _LEGAL_IR_OBLIGATION_CUE_RE),
     ("permission", _LEGAL_IR_PERMISSION_CUE_RE),
     ("temporal", _LEGAL_IR_TEMPORAL_CUE_RE),
     ("definition", _LEGAL_IR_DEFINITION_CUE_RE),
+    ("codification", _LEGAL_IR_CODIFICATION_CUE_RE),
     ("authority", _LEGAL_IR_AUTHORITY_CUE_RE),
     ("enforcement", _LEGAL_IR_ENFORCEMENT_CUE_RE),
     ("exception", _LEGAL_IR_EXCEPTION_CUE_RE),
@@ -22362,6 +22815,64 @@ def _token_features(text: str, *, max_tokens: int = 40) -> List[str]:
         for token in _TOKEN_RE.findall(text.lower())
         if len(token) > 2 and token not in _STOPWORDS
     ][:max_tokens]
+
+
+def _uscode_surface_profile_tags(text: str) -> List[str]:
+    """Return stable U.S. Code surface profiles for sparse frame records."""
+    normalized = " ".join(str(text or "").lower().split())
+    if not normalized:
+        return []
+    tags: List[str] = []
+
+    def add(tag: str) -> None:
+        if tag and tag not in tags:
+            tags.append(tag)
+
+    if re.search(r"\b(?:u\.?\s*s\.?\s*c|united states code)\b", normalized):
+        add("uscode_catalog_record")
+    if re.search(r"(?:^|\s)(?:§|sec\.?\s+)?\d+[a-z0-9.-]*\s*[-.]?\s+", normalized):
+        add("uscode_section_heading_surface")
+    if re.search(
+        r"\b(?:editorial notes?|codification|reclassified|renumbered|transferred)\b",
+        normalized,
+    ):
+        add("editorial_status_surface")
+    if "editorial notes" in normalized:
+        add("editorial_notes")
+    if "codification" in normalized:
+        add("codification_note")
+    if re.search(
+        r"\b(?:transferred|editorially reclassified|reclassified as section)\b",
+        normalized,
+    ):
+        add("editorial_reclassification")
+    if re.search(r"\bsection\s+\d+[a-z0-9.-]*\s+was\b", normalized):
+        add("section_status_clause")
+    if re.search(r"\btitle\s+\d+\b", normalized):
+        add("cross_title_reference")
+    if "moneys deposited by unknown parties" in normalized:
+        add("unknown_party_deposit")
+    if re.search(r"\bdeposit(?:ed)?\b.*\btreasurer of the united states\b", normalized):
+        add("treasury_deposit")
+    if re.search(r"\bresearch program and plan\b", normalized):
+        add("research_program_plan")
+    if re.search(r"\bgrants? for research\b", normalized):
+        add("research_grant")
+    if re.search(r"\bindividuals with disabilities\b", normalized):
+        add("disability_services")
+    if re.search(r"\bfunds for printing, binding\b", normalized):
+        add("printing_binding")
+    if re.search(r"\b(?:article reprint purchases|reprint purchases)\b", normalized):
+        add("article_reprint_purchase")
+    if re.search(r"\bscientific and technical article\b", normalized):
+        add("technical_article")
+    if re.search(r"\bauthorization of appropriations\b", normalized):
+        add("appropriation_authorization")
+    if re.search(r"\bremain available until expended\b", normalized):
+        add("no_year_funding_availability")
+    if re.search(r"\beffect of act\b", normalized):
+        add("effect_of_act")
+    return tags
 
 
 def _feature_atom(value: Any, *, max_tokens: int = 4) -> str:

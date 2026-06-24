@@ -538,6 +538,32 @@ def test_spacy_encoder_detects_structural_authority_frame_scope_for_jurisdiction
     assert authority_signals["has_frame_structural_authority_scope_phrase"] is True
 
 
+def test_spacy_encoder_extracts_rescued_packet_001981_deontic_cues() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        (
+            "The plan shall conduct research and provide for services. "
+            "There are authorized to be appropriated such sums as are necessary. "
+            "The Administrator may guarantee bonds and may carry out this section."
+        ),
+        document_id="packet-001981-rescued-deontic-cues",
+    )
+
+    deontic_cues = {
+        cue.cue.lower()
+        for cue in encoding.cues
+        if cue.family == "deontic"
+    }
+
+    assert {
+        "shall conduct",
+        "provide for",
+        "there are authorized to be appropriated",
+        "may guarantee",
+        "may carry out",
+    }.issubset(deontic_cues)
+
+
 def test_refined_pair_balance_boosts_frame_for_structural_authority_statutory_scope() -> None:
     counts = {
         "deontic": 2.0,
@@ -633,6 +659,29 @@ def test_refined_pair_balance_promotes_deontic_over_temporal_status_scaffold() -
     _apply_refined_modal_family_cue_pair_balance(counts, signals)
 
     assert counts["deontic"] > counts["temporal"]
+
+
+def test_spacy_encoder_promotes_deontic_over_temporal_period_scaffold() -> None:
+    encoder = SpaCyLegalEncoder(model_name="blank")
+    encoding = encoder.encode(
+        (
+            "Temporary increase. The amount payable under this section for a "
+            "period beginning on the date of enactment and ending on September "
+            "30, 2025, shall be increased."
+        ),
+        document_id="packet-003061-temporal-deontic-period-scaffold",
+    )
+
+    ranking = ranked_modal_families(encoding)
+    signals = modal_ambiguity_signals(encoding)
+
+    assert any(
+        cue.family == "deontic" and cue.cue.lower() == "shall"
+        for cue in encoding.cues
+    )
+    assert signals["has_temporal_scope"] is True
+    assert signals["has_deontic_cue"] is True
+    assert ranking[0]["family"] == "deontic"
 
 
 def test_refined_pair_balance_preserves_alethic_scope_under_temporal_dominance() -> None:
@@ -7901,6 +7950,27 @@ def test_spacy_codec_strengthens_temporal_share_for_statutory_generic_frame_comp
     )
     assert temporal_share > 0.3
     assert frame_share > temporal_share
+
+
+def test_spacy_codec_marks_us_code_enforcement_and_duration_cues() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        (
+            "Sec. 5009 - Unlawful activities. It is unlawful for any person "
+            "to transport the resource, and the Secretary may discontinue a "
+            "lease for a period of not less than ten years."
+        ),
+        document_id="packet-005384-enforcement-duration-cues",
+    )
+    cues = {(cue.family, cue.cue.lower()) for cue in encoding.cues}
+    ranking = ranked_modal_families(encoding)
+    shares = {str(item["family"]): float(item["share_raw"]) for item in ranking}
+
+    assert ("deontic", "it is unlawful") in cues
+    assert ("deontic", "may discontinue") in cues
+    assert ("temporal", "period of not less than") in cues
+    assert shares["deontic"] > shares["frame"]
+    assert shares["temporal"] > 0.2
 
 
 def test_spacy_codec_strengthens_conditional_share_for_dense_temporal_scope_statutory_conflict() -> None:

@@ -607,6 +607,42 @@ def _low_information_fallback_surface_sample_document() -> ModalIRDocument:
     )
 
 
+def _omitted_codification_status_clause_sample_document() -> ModalIRDocument:
+    source_id = "us-code-42-1491-to-1497-b5119192b68c51b6"
+    normalized_text = (
+        "§§1491 to 1497. Omitted Editorial Notes Codification Sections were "
+        "omitted pursuant to section 5316 of this title which terminated the "
+        "authority to make grants or loans under this chapter after Jan. 1, 1975."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-omitted-codification-status-clause",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(name="uscode_omitted_heading_fallback"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=20,
+            citation="42 U.S.C. 1491 to 1497.",
+        ),
+        metadata={
+            "cue": "__uscode_editorial_status_heading_fallback__",
+            "fallback_rule": "uscode_editorial_status_heading_v1",
+            "status_keyword": "omitted",
+        },
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
 def _single_letter_low_information_fallback_surface_sample_document() -> ModalIRDocument:
     source_id = "us-code-19-134-9f14e2dcbf0f4b1a"
     normalized_text = "S. Repealed."
@@ -752,6 +788,27 @@ def _temporal_fallback_surface_context_bridge_sample_document() -> ModalIRDocume
             system="ltl",
             symbol="F",
             label="eventually",
+        ),
+        predicate=ModalIRPredicate(name="uscode_section_heading_fallback"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(normalized_text),
+            citation="16 U.S.C. 5108",
+        ),
+        metadata={
+            "cue": "__uscode_section_heading_fallback__",
+            "fallback_rule": "uscode_section_heading_v1",
+        },
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
 def _frame_fallback_structural_chapter_temporal_sample_document() -> ModalIRDocument:
     source_id = "us-code-22-286e-5a-fallback-778899aabbccddee"
     normalized_text = (
@@ -769,8 +826,6 @@ def _frame_fallback_structural_chapter_temporal_sample_document() -> ModalIRDocu
         provenance=ModalIRProvenance(
             source_id=source_id,
             start_char=0,
-            end_char=10,
-            citation="16 U.S.C. 5108",
             end_char=len(normalized_text),
             citation="22 U.S.C. 286e-5a",
         ),
@@ -4185,6 +4240,51 @@ def test_modal_ir_to_flogic_triples_avoid_low_information_fallback_surface_text(
     assert "sec" not in objects("fallback_surface_text_token")
 
 
+def test_decode_modal_ir_document_recovers_omitted_codification_status_clause() -> None:
+    decoded = decode_modal_ir_document(
+        _omitted_codification_status_clause_sample_document()
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    expected_clause = (
+        "Sections were omitted pursuant to section 5316 of this title which "
+        "terminated the authority to make grants or loans under this chapter "
+        "after Jan. 1, 1975"
+    )
+    assert slot_map["source_status_clause"] == [expected_clause]
+    assert "terminated" in slot_map["source_status_clause_legal_semantic_atom"]
+    assert "omitted" in slot_map["source_status_clause_legal_semantic_atom"]
+    assert any(
+        expected_clause in text
+        for text in slot_map["typed_ir_surface_reconstruction"]
+    )
+    assert "frame->conditional_normative" in slot_map[
+        "typed_decompiler_family_pair"
+    ]
+
+
+def test_modal_ir_to_flogic_triples_recover_omitted_codification_status_clause() -> None:
+    triples = modal_ir_to_flogic_triples(
+        _omitted_codification_status_clause_sample_document()
+    )
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    expected_clause = (
+        "Sections were omitted pursuant to section 5316 of this title which "
+        "terminated the authority to make grants or loans under this chapter "
+        "after Jan. 1, 1975"
+    )
+    assert objects("source_status_clause") == [expected_clause]
+    assert "terminated" in objects("source_status_clause_legal_semantic_atom")
+    assert "omitted" in objects("source_status_clause_legal_semantic_atom")
+
+
 def test_decode_modal_ir_document_avoids_single_letter_low_information_fallback_surface_text() -> None:
     decoded = decode_modal_ir_document(
         _single_letter_low_information_fallback_surface_sample_document()
@@ -4392,6 +4492,23 @@ def test_decode_modal_ir_document_emits_fallback_surface_context_bridge_slots() 
 def test_modal_ir_to_flogic_triples_emit_fallback_surface_context_bridge_slots() -> None:
     triples = modal_ir_to_flogic_triples(
         _temporal_fallback_surface_context_bridge_sample_document()
+    )
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("fallback_surface_text") == ["Authorization of appropriations"]
+    assert objects("fallback_surface_context") == [
+        "The Secretary shall allocate funds not later than fiscal year 2027"
+    ]
+    assert "temporal->deontic" in objects("fallback_surface_context_refined_modal_family_pair")
+    assert "deontic:O:shall" in objects("fallback_surface_context_refined_modal_bridge_signature")
+
+
 def test_decode_modal_ir_document_emits_frame_structural_deontic_bridge_slots() -> None:
     decoded = decode_modal_ir_document(
         _frame_fallback_structural_chapter_temporal_sample_document()
@@ -4416,12 +4533,6 @@ def test_modal_ir_to_flogic_triples_emit_frame_structural_deontic_bridge_slots()
             if triple.get("predicate") == predicate
         ]
 
-    assert objects("fallback_surface_text") == ["Authorization of appropriations"]
-    assert objects("fallback_surface_context") == [
-        "The Secretary shall allocate funds not later than fiscal year 2027"
-    ]
-    assert "temporal->deontic" in objects("fallback_surface_context_refined_modal_family_pair")
-    assert "deontic:O:shall" in objects("fallback_surface_context_refined_modal_bridge_signature")
     assert "chapter" in objects("fallback_surface_text_refined_modal_cue")
     assert "frame->deontic" in objects("fallback_surface_text_refined_modal_family_pair")
     assert "deontic:O:chapter" in objects("fallback_surface_text_refined_modal_bridge_signature")

@@ -1115,3 +1115,60 @@ def test_modal_decompiler_emits_domain_atoms_for_heading_and_status_sections() -
     assert "article_reprint_purchase" in heading_slots["legal_semantic_atom"]
     assert "technical_article" in heading_slots["legal_semantic_atom"]
     assert "editorial_reclassification" in status_slots["legal_semantic_atom"]
+
+
+def test_modal_decompiler_adds_compact_uscode_semantic_support_for_packet_004087_shapes() -> None:
+    compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
+    cases = [
+        (
+            "us-code-42-15244.-packet-004087-status",
+            "42 U.S.C. 15244.",
+            (
+                "§15244. Transferred Editorial Notes Codification Section 15244 "
+                "was editorially reclassified as section 50314 of Title 34, "
+                "Crime Control and Law Enforcement."
+            ),
+            "Transferred",
+            "frame||slot:source-semantic-token:codification||knowledge_graphs.neo4j_compat",
+        ),
+        (
+            "us-code-42-1752.-packet-004087-appropriation",
+            "42 U.S.C. 1752.",
+            (
+                "§1752. Authorization of appropriations; \"Secretary\" defined "
+                "For each fiscal year, there is authorized to be appropriated, "
+                "out of money in the Treasury not otherwise appropriated, such "
+                "sums as may be necessary to enable the Secretary of Agriculture "
+                "to carry out this section."
+            ),
+            "Authorization of appropriations",
+            "temporal||slot:source-semantic-token:appropriated||TDFOL.prover",
+        ),
+        (
+            "us-code-50-1514.-packet-004087-definition",
+            "50 U.S.C. 1514.",
+            (
+                "§1514. \"United States\" defined Unless otherwise indicated, "
+                "as used in this section [50 U.S.C. 1512, 1513-1515, 1517] "
+                "the term \"United States\" means the several States, the "
+                "District of Columbia, and the territories and possessions of "
+                "the United States."
+            ),
+            "\"United States\" defined Unless otherwise indicated",
+            "conditional_normative||slot:source-semantic-token:unless||deontic.ir",
+        ),
+    ]
+
+    for document_id, citation, source_text, expected_support, expected_view in cases:
+        compiled = compiler.compile(
+            source_text,
+            document_id=document_id,
+            citation=citation,
+            source="us_code",
+        )
+        decoded = decode_modal_ir_document(compiled.modal_ir)
+        slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+
+        assert decoded.reconstruction_similarity == 1.0
+        assert expected_support in slot_texts["typed_ir_compact_semantic_support"]
+        assert expected_view in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
