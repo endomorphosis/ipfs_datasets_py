@@ -1449,9 +1449,15 @@ def test_bridge_loss_evaluator_for_names_runs_deontic_adapter() -> None:
     assert "deontic_graph_failure_penalty" not in losses[sample.sample_id]
 
 
-def test_bridge_loss_evaluator_caches_multiview_diagnostics(monkeypatch) -> None:
+def test_bridge_loss_evaluator_caches_multiview_diagnostics(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
     from ipfs_datasets_py.logic import bridge as bridge_module
 
+    cache_dir = tmp_path / "bridge-loss-cache"
+    monkeypatch.setenv(daemon.LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV, str(cache_dir))
+    monkeypatch.setenv(daemon.LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV, "1")
     sample = build_us_code_sample(
         title="5",
         section="552",
@@ -1482,6 +1488,25 @@ def test_bridge_loss_evaluator_caches_multiview_diagnostics(monkeypatch) -> None
         def view_coverage_loss(self) -> float:
             return 0.0
 
+        def to_dict(self):
+            return {
+                "acceptance_rate": 1.0,
+                "canonical_loss_vector": {"legal_ir_multiview_total_loss": 0.25},
+                "failures": {},
+                "graph_failure_penalty": 0.0,
+                "proof_failure_ratio": 0.0,
+                "reports": {},
+                "total_loss": 0.25,
+                "training_target": {
+                    "document_hash": "fake-canonical-hash",
+                    "losses": {"legal_ir_multiview_total_loss": 0.25},
+                    "view_distribution": {"deontic.ir": 1.0},
+                },
+                "view_count": 1,
+                "view_coverage_loss": 0.0,
+                "view_distribution": {"deontic.ir": 1.0},
+            }
+
     def fake_evaluate_legal_ir_multiview(*args, **kwargs):
         calls["count"] += 1
         return FakeMultiview()
@@ -1497,10 +1522,22 @@ def test_bridge_loss_evaluator_caches_multiview_diagnostics(monkeypatch) -> None
 
     first = evaluator([sample])
     second = evaluator([sample])
+    with daemon._BRIDGE_LOSS_CACHE_LOCK:
+        daemon._BRIDGE_LOSS_CACHE.clear()
+    third = evaluator([sample])
 
     assert calls["count"] == 1
     assert first == second
+    assert first == third
     assert first[sample.sample_id]["legal_ir_multiview_total_loss"] == 0.25
+    cache_key = daemon._bridge_loss_cache_key(
+        sample,
+        bridge_names=("deontic_norms",),
+        evaluate_provers=False,
+    )
+    cache_path = daemon._bridge_loss_disk_cache_path(cache_key)
+    assert cache_path is not None
+    assert cache_path.is_file()
 
 
 def test_default_bridge_loss_adapters_cover_registered_logic_views() -> None:
@@ -1522,6 +1559,7 @@ def test_default_bridge_loss_adapters_cover_registered_logic_views() -> None:
 def test_bridge_ir_metric_block_caches_multiview_reports(monkeypatch) -> None:
     from ipfs_datasets_py.logic import bridge as bridge_module
 
+    monkeypatch.setenv(runner.LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV, "0")
     sample = build_us_code_sample(
         title="5",
         section="552",
@@ -1551,6 +1589,25 @@ def test_bridge_ir_metric_block_caches_multiview_reports(monkeypatch) -> None:
 
         def view_coverage_loss(self) -> float:
             return 0.0
+
+        def to_dict(self):
+            return {
+                "acceptance_rate": 1.0,
+                "canonical_loss_vector": {"legal_ir_multiview_total_loss": 0.25},
+                "failures": {},
+                "graph_failure_penalty": 0.0,
+                "proof_failure_ratio": 0.0,
+                "reports": {},
+                "total_loss": 0.25,
+                "training_target": {
+                    "document_hash": "fake-canonical-hash",
+                    "losses": {"legal_ir_multiview_total_loss": 0.25},
+                    "view_distribution": {"deontic.ir": 1.0},
+                },
+                "view_count": 1,
+                "view_coverage_loss": 0.0,
+                "view_distribution": {"deontic.ir": 1.0},
+            }
 
     def fake_evaluate_legal_ir_multiview(*args, **kwargs):
         calls["count"] += 1
@@ -1575,6 +1632,113 @@ def test_bridge_ir_metric_block_caches_multiview_reports(monkeypatch) -> None:
     assert second["cache_size"] >= 1
     assert first["canonical_ir"] == second["canonical_ir"]
     assert first["canonical_ir"]["total_loss"] == 0.25
+
+
+def test_bridge_ir_metric_block_uses_persistent_metric_cache(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic import bridge as bridge_module
+
+    cache_dir = tmp_path / "metric-cache"
+    monkeypatch.setenv(runner.LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV, str(cache_dir))
+    monkeypatch.setenv(runner.LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV, "1")
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall publish notice before the permit takes effect.",
+    )
+    calls = {"count": 0}
+
+    class FakeDocument:
+        def canonical_hash(self) -> str:
+            return "fake-canonical-hash"
+
+    class FakeMultiview:
+        acceptance_rate = 1.0
+        document = FakeDocument()
+        failures = {}
+        graph_failure_penalty = 0.0
+        proof_failure_ratio = 0.0
+        reports = {}
+        total_loss = 0.25
+        view_count = 1
+
+        def training_target(self):
+            return SimpleNamespace(
+                losses={"legal_ir_multiview_total_loss": 0.25},
+                view_distribution={"deontic.ir": 1.0},
+            )
+
+        def view_coverage_loss(self) -> float:
+            return 0.0
+
+        def to_dict(self):
+            return {
+                "acceptance_rate": 1.0,
+                "canonical_loss_vector": {"legal_ir_multiview_total_loss": 0.25},
+                "failures": {},
+                "graph_failure_penalty": 0.0,
+                "proof_failure_ratio": 0.0,
+                "reports": {},
+                "total_loss": 0.25,
+                "training_target": {
+                    "document_hash": "fake-canonical-hash",
+                    "losses": {"legal_ir_multiview_total_loss": 0.25},
+                    "view_distribution": {"deontic.ir": 1.0},
+                },
+                "view_count": 1,
+                "view_coverage_loss": 0.0,
+                "view_distribution": {"deontic.ir": 1.0},
+            }
+
+    def fake_evaluate_legal_ir_multiview(*args, **kwargs):
+        calls["count"] += 1
+        return FakeMultiview()
+
+    with runner._BRIDGE_IR_REPORT_CACHE_LOCK:
+        runner._BRIDGE_IR_REPORT_CACHE.clear()
+    monkeypatch.setattr(
+        bridge_module,
+        "evaluate_legal_ir_multiview",
+        fake_evaluate_legal_ir_multiview,
+    )
+
+    first = bridge_ir_metric_block(
+        [sample],
+        ["deontic_norms", "zkp_attestation"],
+        evaluate_provers=False,
+    )
+
+    assert calls["count"] == 1
+    assert first["persistent_cache_hit"] is False
+    block_cache_path = runner._metric_disk_cache_path(
+        "bridge_ir_metric_block",
+        first["persistent_cache_key"],
+    )
+    assert block_cache_path is not None
+    block_cache_path.unlink()
+    with runner._BRIDGE_IR_REPORT_CACHE_LOCK:
+        runner._BRIDGE_IR_REPORT_CACHE.clear()
+
+    second = bridge_ir_metric_block(
+        [sample],
+        ["deontic_norms", "zkp_attestation"],
+        evaluate_provers=False,
+    )
+    third = bridge_ir_metric_block(
+        [sample],
+        ["deontic_norms", "zkp_attestation"],
+        evaluate_provers=False,
+    )
+
+    assert calls["count"] == 1
+    assert second["persistent_cache_hit"] is False
+    assert second["persistent_sample_cache_hits"] == 1
+    assert third["persistent_cache_hit"] is True
+    assert second["persistent_cache_kind"] == "bridge_ir_metric_block"
+    assert second["zkp_attestation_cache"]["mode"] == "persistent_metric_certificate"
+    assert first["canonical_ir"] == second["canonical_ir"]
 
 
 def test_supervisor_seeds_canonical_multiview_loss_todos() -> None:
@@ -2286,6 +2450,8 @@ def test_codex_target_metric_snapshot_uses_shared_process_capture(
             }
         ]
     }
+    cache_dir = tmp_path / "target-metric-cache"
+    monkeypatch.setenv(runner.LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV, str(cache_dir))
 
     def fake_capture(command, **kwargs):
         captured["command"] = command
@@ -2315,11 +2481,91 @@ def test_codex_target_metric_snapshot_uses_shared_process_capture(
 
     assert captured["command"][:2] == [sys.executable, "-c"]
     assert captured["kwargs"]["cwd"] == tmp_path
+    assert (
+        captured["kwargs"]["env"][runner.LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV]
+        == str(cache_dir)
+    )
     assert captured["kwargs"]["timeout_seconds"] == 7.0
     assert "sample-a" in captured["kwargs"]["input_text"]
+    payload = json.loads(captured["kwargs"]["input_text"])
+    assert payload["bridge_names"] == []
     assert snapshot["status"] == "measured"
     assert snapshot["metrics"] == {"cross_entropy_loss": 0.42}
     assert snapshot["timeout_seconds"] == 7.0
+
+
+def test_codex_target_metric_snapshot_targets_bridge_adapters(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    captured = {}
+    packet = {
+        "todos": [
+            {
+                "metadata": {
+                    "metric_sample_payloads": [
+                        {
+                            "citation": "5 U.S.C. 552",
+                            "sample_id": "sample-a",
+                            "section": "552",
+                            "text": "The agency shall provide notice.",
+                            "title": "5",
+                        }
+                    ],
+                    "target_metrics": ["zkp_verification_failure_ratio"],
+                },
+                "todo_id": "todo-a",
+            }
+        ]
+    }
+
+    def fake_capture(command, **kwargs):
+        captured["command"] = command
+        captured["kwargs"] = kwargs
+        return {
+            "exit_code": 0,
+            "status": "completed",
+            "stderr": "",
+            "stdout": json.dumps(
+                {
+                    "metric_count": 1,
+                    "metrics": {"zkp_verification_failure_ratio": 0.0},
+                    "sample_count": 1,
+                    "status": "measured",
+                    "target_bridge_names": ["zkp_attestation"],
+                    "target_metrics": ["zkp_verification_failure_ratio"],
+                }
+            ),
+        }
+
+    monkeypatch.setattr(runner, "accelerate_run_process_group_capture", fake_capture)
+
+    snapshot = runner._codex_packet_target_metric_snapshot(
+        packet,
+        tmp_path,
+        timeout_seconds=7.0,
+    )
+
+    assert captured["command"][:2] == [sys.executable, "-c"]
+    payload = json.loads(captured["kwargs"]["input_text"])
+    assert payload["bridge_names"] == ["zkp_attestation"]
+    assert snapshot["status"] == "measured"
+    assert snapshot["metrics"] == {"zkp_verification_failure_ratio": 0.0}
+
+
+def test_codex_target_metric_bridge_adapter_selection_is_metric_scoped() -> None:
+    from ipfs_datasets_py.logic.bridge import DEFAULT_LEGAL_IR_BRIDGE_NAMES
+
+    assert runner._codex_target_metric_bridge_adapter_names(["cross_entropy_loss"]) == []
+    assert runner._codex_target_metric_bridge_adapter_names(
+        ["zkp_verification_failure_ratio"]
+    ) == ["zkp_attestation"]
+    assert runner._codex_target_metric_bridge_adapter_names(
+        ["deontic_decoder_slot_loss", "legal_ir_view_cross_entropy_loss"]
+    ) == ["deontic_norms"]
+    assert runner._codex_target_metric_bridge_adapter_names(
+        ["legal_ir_multiview_total_loss"]
+    ) == list(DEFAULT_LEGAL_IR_BRIDGE_NAMES)
 
 
 def test_supervisor_finalize_program_synthesis_batch_applies_queue_transitions() -> None:
@@ -3267,6 +3513,12 @@ def test_paired_accelerate_style_restart_policy_replaces_only_crashed_children()
         restart_count=2,
         restart_limit=3,
     )
+    assert runner._paired_child_exit_should_restart(
+        exit_code=0,
+        latest_stop_reason="signal_15",
+        restart_count=0,
+        restart_limit=3,
+    )
     assert not runner._paired_child_exit_should_restart(
         exit_code=0,
         restart_count=0,
@@ -3284,6 +3536,13 @@ def test_paired_accelerate_style_restart_policy_replaces_only_crashed_children()
     )
     assert not runner._paired_child_exit_should_restart(
         exit_code=2,
+        restart_count=0,
+        restart_limit=3,
+        stop_requested=True,
+    )
+    assert not runner._paired_child_exit_should_restart(
+        exit_code=0,
+        latest_stop_reason="signal_15",
         restart_count=0,
         restart_limit=3,
         stop_requested=True,
@@ -6029,7 +6288,8 @@ def test_validation_gating_completes_todos_only_when_holdout_improves() -> None:
     assert step.improved
 
 
-def test_compiler_ir_metric_block_reports_deterministic_codec_losses() -> None:
+def test_compiler_ir_metric_block_reports_deterministic_codec_losses(monkeypatch) -> None:
+    monkeypatch.setenv(runner.LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV, "0")
     sample = build_us_code_sample(
         title="5",
         section="552",
@@ -6078,7 +6338,104 @@ def test_compiler_ir_metric_block_reports_deterministic_codec_losses() -> None:
     assert "worst_source_decompiled_text_records" in block
 
 
-def test_compiler_ir_metric_block_reports_progress_callbacks() -> None:
+def test_compiler_ir_metric_block_uses_persistent_metric_cache(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    cache_dir = tmp_path / "metric-cache"
+    monkeypatch.setenv(runner.LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV, str(cache_dir))
+    monkeypatch.setenv(runner.LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV, "1")
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide records promptly and may withhold exempt records.",
+    )
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(
+            parser_backend="spacy",
+            spacy_model_name="definitely_missing_legal_model",
+            use_flogic=True,
+        )
+    )
+    original_encode = codec.encode
+    calls = {"count": 0}
+
+    def counted_encode(*args, **kwargs):
+        calls["count"] += 1
+        return original_encode(*args, **kwargs)
+
+    monkeypatch.setattr(codec, "encode", counted_encode)
+
+    first = compiler_ir_metric_block([sample], codec)
+    second = compiler_ir_metric_block([sample], codec)
+
+    assert calls["count"] == 1
+    assert first["persistent_cache_hit"] is False
+    assert second["persistent_cache_hit"] is True
+    assert second["persistent_cache_kind"] == "compiler_ir_metric_block"
+    assert first["cross_entropy_loss"] == second["cross_entropy_loss"]
+
+
+def test_compiler_ir_metric_block_uses_guided_persistent_metric_cache(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    cache_dir = tmp_path / "metric-cache"
+    monkeypatch.setenv(runner.LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV, str(cache_dir))
+    monkeypatch.setenv(runner.LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV, "1")
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide records promptly and may withhold exempt records.",
+    )
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(
+            parser_backend="spacy",
+            spacy_model_name="definitely_missing_legal_model",
+            use_flogic=True,
+        )
+    )
+    autoencoder = AdaptiveModalAutoencoder()
+    autoencoder.evaluate([sample], legal_ir_bridge_names=["modal.frame_logic"])
+    original_encode = codec.encode
+    original_guidance = autoencoder.compiler_guidance_for_sample
+    calls = {"encode": 0, "guidance": 0}
+
+    def counted_encode(*args, **kwargs):
+        calls["encode"] += 1
+        return original_encode(*args, **kwargs)
+
+    def counted_guidance(*args, **kwargs):
+        calls["guidance"] += 1
+        return original_guidance(*args, **kwargs)
+
+    monkeypatch.setattr(codec, "encode", counted_encode)
+    monkeypatch.setattr(autoencoder, "compiler_guidance_for_sample", counted_guidance)
+
+    first = compiler_ir_metric_block(
+        [sample],
+        codec,
+        autoencoder=autoencoder,
+        use_autoencoder_guidance=True,
+    )
+    second = compiler_ir_metric_block(
+        [sample],
+        codec,
+        autoencoder=autoencoder,
+        use_autoencoder_guidance=True,
+    )
+
+    assert calls["guidance"] == 2
+    assert calls["encode"] == 1
+    assert first["persistent_cache_hit"] is False
+    assert second["persistent_cache_hit"] is True
+    assert second["persistent_cache_kind"] == "compiler_ir_metric_block"
+    assert second["autoencoder_guidance_enabled"] is True
+    assert first["cross_entropy_loss"] == second["cross_entropy_loss"]
+
+
+def test_compiler_ir_metric_block_reports_progress_callbacks(monkeypatch) -> None:
+    monkeypatch.setenv(runner.LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV, "0")
     sample = build_us_code_sample(
         title="5",
         section="552",
@@ -7003,7 +7360,8 @@ def test_compiler_guidance_guardrail_todos_convert_copy_hack_regression() -> Non
     assert "cosine_similarity" in cosine_guardrail[0].metadata["target_metrics"]
 
 
-def test_bridge_ir_metric_block_reports_per_adapter_views() -> None:
+def test_bridge_ir_metric_block_reports_per_adapter_views(monkeypatch) -> None:
+    monkeypatch.setenv(runner.LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV, "0")
     sample = build_us_code_sample(
         title="5",
         section="552",
@@ -7049,7 +7407,8 @@ def test_bridge_ir_metric_block_reports_per_adapter_views() -> None:
     assert "tdfol_parse_failure_ratio" in tdfol
 
 
-def test_bridge_ir_metric_block_reports_progress_callbacks() -> None:
+def test_bridge_ir_metric_block_reports_progress_callbacks(monkeypatch) -> None:
+    monkeypatch.setenv(runner.LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV, "0")
     sample = build_us_code_sample(
         title="5",
         section="552",

@@ -236,9 +236,21 @@ def test_modal_frame_logic_bridge_projects_frame_alignment_guidance_routes_to_te
         assert report.round_trip.extra_losses["ontology_violation_count"] == 0.0
         assert route in audit_terms
         assert "modal_frame_logic" in high_signal_terms
+        assert "deontic_ir" in high_signal_terms
+        assert "tdfol_prover" in high_signal_terms
         assert any(
             triple["predicate"] == "audited_ontology_term"
             and triple["object"] == route
+            for triple in frame_triples
+        )
+        assert any(
+            triple["predicate"] == "selected_ontology_term"
+            and triple["object"] == "deontic_ir"
+            for triple in frame_triples
+        )
+        assert any(
+            triple["predicate"] == "selected_ontology_term"
+            and triple["object"] == "tdfol_prover"
             for triple in frame_triples
         )
 
@@ -7124,6 +7136,46 @@ def test_zkp_public_record_recovers_duplicated_fields_from_proof_only() -> None:
     assert zkp_attestation_legal_ir_view_loss([record]) == 0.0
 
 
+def test_zkp_attestation_records_cache_reuses_generated_attestations(monkeypatch) -> None:
+    import ipfs_datasets_py.logic.zkp as zkp
+    from ipfs_datasets_py.logic.bridge import zkp_attestation
+
+    with zkp_attestation._ZKP_ATTESTATION_RECORD_CACHE_LOCK:
+        zkp_attestation._ZKP_ATTESTATION_RECORD_CACHE.clear()
+    original_prover = zkp.ZKPProver
+    calls = {"prover_init": 0}
+
+    class CountingProver(original_prover):
+        def __init__(self, *args, **kwargs):
+            calls["prover_init"] += 1
+            super().__init__(*args, **kwargs)
+
+    monkeypatch.setattr(zkp, "ZKPProver", CountingProver)
+    formula_records = [
+        {
+            "formula": "O(publish_notice(agency))",
+            "predicates": ("publish_notice",),
+            "source_id": "tdfol:norm:notice",
+        }
+    ]
+
+    first = zkp_attestation._zkp_attestation_records(
+        formula_records,
+        prover_kwargs={"backend": "simulated", "enable_caching": True},
+        verifier_kwargs={"backend": "simulated"},
+    )
+    second = zkp_attestation._zkp_attestation_records(
+        formula_records,
+        prover_kwargs={"backend": "simulated", "enable_caching": True},
+        verifier_kwargs={"backend": "simulated"},
+    )
+
+    assert calls["prover_init"] == 1
+    assert first == second
+    assert first is not second
+    assert first[0] is not second[0]
+
+
 def test_zkp_prover_cache_separates_compiler_guidance_attestations() -> None:
     from ipfs_datasets_py.logic.zkp import ZKPProver
 
@@ -7473,6 +7525,74 @@ def test_multiview_training_target_rebalances_short_repealed_usc_excerpt() -> No
     assert raw_distribution["deontic.ir"] > 0.45
     assert target_distribution["deontic.ir"] <= 0.28
     assert target_distribution["knowledge_graphs.neo4j_compat"] >= 0.26
+    assert abs(sum(target_distribution.values()) - 1.0) < 1e-9
+
+
+def test_multiview_training_target_applies_compiler_guidance_view_gaps() -> None:
+    from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
+
+    text = (
+        "42 U.S.C. 18726.: §18726. Savings provision Nothing in this part "
+        "affects the authority, existing on the day before November 15, 2021, "
+        "of any other Federal department or agency, including the authority "
+        "provided to the Secretary of Homeland Security."
+    )
+    compiler_guidance = {
+        "bundle": {
+            "route": "repair_multiview_legal_ir_loss",
+            "source": "compiler_guidance_distillation_v1",
+            "target_component": "bridge.contracts",
+        },
+        "evidence": [
+            {
+                "bridge_failure_name": "legal_ir_view_cross_entropy_loss",
+                "legal_ir_component_gaps": {
+                    "TDFOL.prover": 0.037693082997,
+                    "deontic.ir": -0.068368644606,
+                    "knowledge_graphs.neo4j_compat": 0.22812109314,
+                },
+                "legal_ir_underrepresented_components": [
+                    "knowledge_graphs.neo4j_compat",
+                    "TDFOL.prover",
+                ],
+                "predicted_view": "knowledge_graphs.neo4j_compat",
+                "target_view": "knowledge_graphs.neo4j_compat",
+            }
+        ],
+    }
+
+    unguided = evaluate_legal_ir_multiview(
+        text,
+        bridge_names=("deontic_norms", "fol_tdfol"),
+        document_id="bridge-contract-guidance-unguided",
+        citation="42 U.S.C. 18726",
+        cache=False,
+        evaluate_provers=False,
+    )
+    guided = evaluate_legal_ir_multiview(
+        text,
+        bridge_names=("deontic_norms", "fol_tdfol"),
+        document_id="bridge-contract-guidance-guided",
+        citation="42 U.S.C. 18726",
+        compiler_guidance=compiler_guidance,
+        cache=False,
+        evaluate_provers=False,
+    )
+
+    target_distribution = guided.training_target().view_distribution
+    metadata = guided.document.metadata
+
+    assert metadata["compiler_guidance_bridge_contract_target_lanes"] == [
+        "TDFOL.prover",
+        "knowledge_graphs.neo4j_compat",
+    ]
+    assert (
+        target_distribution["knowledge_graphs.neo4j_compat"]
+        > unguided.training_target().view_distribution[
+            "knowledge_graphs.neo4j_compat"
+        ]
+    )
+    assert target_distribution["TDFOL.prover"] > 0.0
     assert abs(sum(target_distribution.values()) - 1.0) < 1e-9
 
 

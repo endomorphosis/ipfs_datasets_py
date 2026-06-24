@@ -85,6 +85,10 @@ _CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("no later than", "no_later_than"),
     ("not later", "not_later"),
     ("no later", "no_later"),
+    ("effective dates", "effective_date"),
+    ("effective date", "effective_date"),
+    ("on and after", "on_and_after"),
+    ("on or after", "on_or_after"),
     ("prior to", "prior_to"),
     ("which", "which"),
     ("if", "if"),
@@ -115,6 +119,9 @@ _TEMPORAL_CLAUSE_PREFIX_RELATIONS: dict[str, str] = {
     "before": "before",
     "prior_to": "before",
     "by": "deadline",
+    "effective_date": "deadline",
+    "on_and_after": "after",
+    "on_or_after": "after",
     "no_later_than": "deadline",
     "not_later_than": "deadline",
     "no_later": "deadline",
@@ -2774,7 +2781,17 @@ def _inferred_condition_values_from_source_span(
     max_tokens: int = 40,
 ) -> List[str]:
     span_text = _semantic_source_span_text(document=document, formula=formula)
-    if not span_text:
+    context_text = _semantic_source_context_span_text(
+        document=document,
+        formula=formula,
+        source_span_text=span_text,
+        max_tokens=48,
+        context_char_window=260,
+    )
+    inference_texts = _unique_preserve_order(
+        [text for text in (span_text, context_text) if _clean_text(text)]
+    )
+    if not inference_texts:
         return []
     cue_key = _clean_text(formula.metadata.get("cue") or "").lower().replace(" ", "_")
     ordered_prefixes = sorted(
@@ -2792,34 +2809,94 @@ def _inferred_condition_values_from_source_span(
         for prefix_text, prefix_key in ordered_prefixes
         if (prefix_text, prefix_key) not in prioritized_prefixes
     )
-    lowered_span = span_text.lower()
     inferred: List[str] = []
     inferred_lower: set[str] = set()
-    for prefix_text, prefix_key in prioritized_prefixes:
-        pattern = re.compile(rf"(?<!\w){re.escape(prefix_text)}(?!\w)", re.IGNORECASE)
-        for match in pattern.finditer(lowered_span):
-            clause = _trim_inferred_condition_clause(span_text[match.start() :])
-            clause = _strip_uscode_gpo_attribution_fragment(clause)
-            clause = _TRAILING_SECTION_PUNCT_RE.sub("", _clean_text(clause))
-            if not clause:
-                continue
-            token_count = len(_tokenize_for_similarity(clause))
-            if token_count < 2 or token_count > max_tokens:
-                continue
-            parsed_clause = _typed_clause_slot(clause, slot="condition")
-            if parsed_clause is None:
-                continue
-            _, parsed_prefix_key, scoped_value = parsed_clause
-            if not scoped_value or parsed_prefix_key != prefix_key:
-                continue
-            clause_lower = clause.lower()
-            if clause_lower in inferred_lower:
-                continue
-            inferred.append(clause)
-            inferred_lower.add(clause_lower)
-            if len(inferred) >= max_candidates:
+
+    def add_clause(clause: str, prefix_key: str) -> bool:
+        cleaned_clause = _strip_uscode_gpo_attribution_fragment(clause)
+        cleaned_clause = _TRAILING_SECTION_PUNCT_RE.sub("", _clean_text(cleaned_clause))
+        if not cleaned_clause:
+            return False
+        token_count = len(_tokenize_for_similarity(cleaned_clause))
+        if token_count < 2 or token_count > max_tokens:
+            return False
+        parsed_clause = _typed_clause_slot(cleaned_clause, slot="condition")
+        if parsed_clause is None:
+            return False
+        _, parsed_prefix_key, scoped_value = parsed_clause
+        if not scoped_value or parsed_prefix_key != prefix_key:
+            return False
+        clause_lower = cleaned_clause.lower()
+        if clause_lower in inferred_lower:
+            return False
+        inferred.append(cleaned_clause)
+        inferred_lower.add(clause_lower)
+        return len(inferred) >= max_candidates
+
+    for source_text in inference_texts:
+        for definition_clause in _inferred_definition_condition_values_from_text(
+            source_text
+        ):
+            if add_clause(definition_clause, "as_defined_in"):
                 return inferred
+    for span_candidate in inference_texts:
+        lowered_span = span_candidate.lower()
+        is_context_candidate = span_candidate != span_text
+        candidate_prefixes = prioritized_prefixes
+        if is_context_candidate:
+            candidate_prefixes = [
+                item
+                for item in prioritized_prefixes
+                if item[1]
+                in {
+                    "as_defined_in",
+                    "by",
+                    "effective_date",
+                    "no_later_than",
+                    "not_later_than",
+                    "no_later",
+                    "not_later",
+                    "on_and_after",
+                    "on_or_after",
+                    "subject_to",
+                    "subject_to_section",
+                    "subject_to_subsection",
+                    "subject_to_chapter",
+                    "subject_to_subchapter",
+                    "pursuant_to",
+                    "under",
+                    "within",
+                }
+            ]
+        for prefix_text, prefix_key in candidate_prefixes:
+            pattern = re.compile(
+                rf"(?<!\w){re.escape(prefix_text)}(?!\w)",
+                re.IGNORECASE,
+            )
+            for match in pattern.finditer(lowered_span):
+                clause = _trim_inferred_condition_clause(span_candidate[match.start() :])
+                if add_clause(clause, prefix_key):
+                    return inferred
     return inferred
+
+
+def _inferred_definition_condition_values_from_text(text: str) -> List[str]:
+    normalized = _clean_text(text)
+    if not normalized or not _DEFINED_TERM_RE.search(normalized):
+        return []
+    values: List[str] = []
+    for match in re.finditer(
+        (
+            r"\bhas\s+the\s+meaning\s+given\s+(?:that\s+term\s+)?"
+            r"(?:in|by)\s+(?P<scope>[^.;:]{3,120})"
+        ),
+        normalized,
+        flags=re.IGNORECASE,
+    ):
+        scope = _clean_text(match.group("scope"))
+        if scope:
+            values.append(f"as defined in {scope}")
+    return _unique_preserve_order(values)
 
 
 def _resolved_formula_conditions(
@@ -10087,7 +10164,11 @@ def _typed_ir_reconstruction_phrases(
                 provenance_only=True,
             )
         )
-        if _should_promote_typed_ir_surface(document=document, formula=formula):
+        if _should_promote_typed_ir_surface(
+            document=document,
+            formula=formula,
+            rendered_text=rendered,
+        ):
             phrases.append(
                 DecodedModalPhrase(
                     text=rendered,
@@ -10138,6 +10219,7 @@ def _should_promote_typed_ir_surface(
     *,
     document: ModalIRDocument,
     formula: ModalIRFormula,
+    rendered_text: str = "",
 ) -> bool:
     """Prefer typed slots over copied spans for USC scaffold/status clauses."""
 
@@ -10149,9 +10231,69 @@ def _should_promote_typed_ir_surface(
     fallback_rule = _clean_text(formula.metadata.get("fallback_rule") or "")
     if fallback_rule in _USCODE_STATUS_DERIVATION_RULES:
         return True
+    if (
+        fallback_rule == "uscode_residual_span_coverage_v1"
+        and _is_uscode_public_law_citation_span(source_span)
+    ):
+        return True
     if _is_probable_uscode_compilation_span(source_span):
         return True
+    if _should_promote_long_span_typed_semantics(
+        source_span=source_span,
+        rendered_text=rendered_text,
+    ):
+        return True
     return False
+
+
+def _is_uscode_public_law_citation_span(text: str) -> bool:
+    """Identify bounded repeal/amendment source citations worth reconstructing."""
+
+    normalized = _clean_text(text)
+    if not normalized:
+        return False
+    lowered = normalized.lower()
+    tokens = _tokenize_for_similarity(normalized)
+    if not tokens or len(tokens) > 48:
+        return False
+    if re.search(r"(?<!\w)(?:pub|public)\.?\s+l\.?\b", lowered):
+        return True
+    if re.search(r"\b\d+\s+stat\.?\s+\d+\b", lowered):
+        return True
+    if (
+        "stat." in lowered
+        and any(term in lowered for term in ("div.", "title", "sec.", "§"))
+    ):
+        return True
+    return False
+def _should_promote_long_span_typed_semantics(
+    *,
+    source_span: str,
+    rendered_text: str,
+    source_copy_token_limit: int = 48,
+    max_rendered_tokens: int = 80,
+) -> bool:
+    """Promote bounded typed semantics when copied source spans are suppressed."""
+
+    source_tokens = _tokenize_for_similarity(source_span)
+    rendered_tokens = _tokenize_for_similarity(rendered_text)
+    if len(source_tokens) <= source_copy_token_limit:
+        return False
+    if not rendered_tokens or len(rendered_tokens) > max_rendered_tokens:
+        return False
+    if len(rendered_tokens) >= len(source_tokens):
+        return False
+    if _is_low_information_section_marker(rendered_text):
+        return False
+    if _is_uscode_semantic_excerpt_boilerplate(rendered_text):
+        return False
+    if _bridge_cues_from_text(rendered_text):
+        return True
+    if _legal_semantic_atoms_from_text(rendered_text):
+        return True
+    if _status_keyword_from_source_text(rendered_text):
+        return True
+    return any(token in _SOURCE_ROLE_CUE_MARKERS for token in rendered_tokens)
 
 
 def _phrase_overlaps_any_spans(
@@ -10342,6 +10484,10 @@ def _typed_formula_surface_text(
     anchors = _source_role_anchor_values(document=document, formula=formula)
     subject = _clean_text(anchors.get("subject", ""))
     fallback_rule = _clean_text(formula.metadata.get("fallback_rule") or "")
+    if fallback_rule == "uscode_residual_span_coverage_v1":
+        semantic_span = _semantic_source_span_text(document=document, formula=formula)
+        if _is_uscode_public_law_citation_span(semantic_span):
+            return semantic_span
     if fallback_rule in _USCODE_SECTION_HEADING_TAIL_RULES:
         heading_tail = _fallback_section_heading_tail_text(
             document=document,
@@ -13490,9 +13636,13 @@ def _typed_decompiler_bridge_phrases(
     argument_count = len(_phrase_values(formula.predicate.arguments))
     condition_count = len(condition_values)
     exception_count = len(exception_values)
+    raw_condition_count = len(_phrase_values(formula.conditions))
+    raw_exception_count = len(_phrase_values(formula.exceptions))
     arity_bucket = _semantic_count_bucket(argument_count)
     condition_bucket = _semantic_count_bucket(condition_count)
     exception_bucket = _semantic_count_bucket(exception_count)
+    raw_condition_bucket = _semantic_count_bucket(raw_condition_count)
+    raw_exception_bucket = _semantic_count_bucket(raw_exception_count)
     role_shape_value = (
         f"{predicate_role}:a{arity_bucket}:c{condition_bucket}:e{exception_bucket}"
         if predicate_role
@@ -13817,6 +13967,38 @@ def _typed_decompiler_bridge_phrases(
                         left_slot=f"{clause_slot}-scope-content:{content_value}",
                         right_slot=f"typed-decompiler-family-pair:{family_pair}",
                     )
+        raw_condition_value = str(raw_condition_count)
+        raw_exception_value = str(raw_exception_count)
+        raw_operator_signature = ":".join(
+            value
+            for value in (
+                _slot_safe_family_key(family),
+                _slot_safe_family_key(source_system.lower()),
+                _slot_safe_family_key(source_operator.lower()),
+            )
+            if value
+        )
+        add_family_semantic_slot(
+            family=source_family,
+            slot_name="conditions",
+            slot_value=raw_condition_value,
+        )
+        add_family_semantic_slot(
+            family=source_family,
+            slot_name="exceptions",
+            slot_value=raw_exception_value,
+        )
+        add_family_semantic_slot_pair(
+            family=source_family,
+            left_slot=f"conditions:{raw_condition_bucket}",
+            right_slot=f"exceptions:{raw_exception_bucket}",
+        )
+        if raw_operator_signature:
+            add_family_semantic_slot_pair(
+                family=source_family,
+                left_slot=f"conditions:{raw_condition_bucket}",
+                right_slot=f"modal-operator:{raw_operator_signature}",
+            )
         for cue_key in source_cue_keys:
             add("typed_decompiler_source_cue_family_pair", f"{cue_key}:{family_pair}")
             add(

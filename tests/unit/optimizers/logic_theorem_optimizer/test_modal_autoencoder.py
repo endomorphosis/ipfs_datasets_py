@@ -9460,6 +9460,105 @@ def test_semantic_slots_surface_typed_family_pair_reconstruction_contracts() -> 
     )
 
 
+def test_semantic_slots_surface_pair_scoped_force_and_topology_contracts() -> None:
+    source_text = (
+        "Subject to section 460z-9, the Secretary shall not publish permits "
+        "before 2027 except as authorized by regulation."
+    )
+    sample = build_us_code_sample(title="16", section="460z-9", text=source_text)
+    base_formula = sample.modal_ir.formulas[0]
+    formulas = [
+        replace(
+            base_formula,
+            formula_id="packet-000539-conditional",
+            operator=replace(
+                base_formula.operator,
+                family="conditional_normative",
+                system="CTD",
+                symbol="O|",
+                label="conditional_obligation",
+            ),
+            predicate=replace(base_formula.predicate, name="publish_permits"),
+            conditions=["subject to section 460z-9", "before 2027"],
+            exceptions=["except as authorized by regulation"],
+            metadata={"cue": "shall not"},
+        ),
+        replace(
+            base_formula,
+            formula_id="packet-000539-frame",
+            operator=replace(
+                base_formula.operator,
+                family="frame",
+                system="FRAME_BM25",
+                symbol="Frame",
+                label="ontology_frame",
+            ),
+            predicate=replace(base_formula.predicate, name="authorization_frame"),
+            conditions=["subject to section 460z-9"],
+            metadata={
+                "cue": "authorized",
+                "force": "permission",
+                "polarity": "positive_scope",
+            },
+        ),
+        replace(
+            base_formula,
+            formula_id="packet-000539-temporal",
+            operator=replace(
+                base_formula.operator,
+                family="temporal",
+                system="LTL",
+                symbol="F",
+                label="eventually",
+            ),
+            predicate=replace(base_formula.predicate, name="deadline_arrives"),
+            conditions=["before 2027"],
+            metadata={
+                "cue": "before",
+                "force": "obligation",
+                "polarity": "positive_scope",
+            },
+        ),
+    ]
+    sample = replace(sample, modal_ir=replace(sample.modal_ir, formulas=formulas))
+
+    distribution = AdaptiveModalAutoencoder()._semantic_slot_distribution_for(sample)
+
+    assert (
+        "slot:typed-decompiler-force-polarity-family-pair:"
+        "obligation:negative_scope:conditional_normative->deontic"
+        in distribution
+    )
+    assert (
+        "slot:typed-decompiler-force-polarity-scope-family-pair:"
+        "obligation:negative_scope:conditioned+excepted+temporal:"
+        "conditional_normative->deontic"
+        in distribution
+    )
+    assert (
+        "slot:typed-decompiler-force-polarity-family-pair:"
+        "permission:positive_scope:frame->deontic"
+        in distribution
+    )
+    assert (
+        "slot:typed-decompiler-force-polarity-family-pair:"
+        "obligation:positive_scope:temporal->deontic"
+        in distribution
+    )
+    assert (
+        "slot:typed-decompiler-source-predicate-force-pair:"
+        "conditional_normative:publish|"
+        "typed-decompiler-force-polarity:obligation:negative_scope"
+        in distribution
+    )
+    assert (
+        "slot:typed-decompiler-source-clause-topology-family-pair:"
+        "condition+subject+action+object+exception+temporal:conditional_normative|"
+        "typed-decompiler-family-pair:conditional_normative->deontic"
+        in distribution
+    )
+
+
 def test_semantic_slot_pair_logits_can_drive_compositional_family_ce() -> None:
     sample = build_us_code_sample(
         title="5",

@@ -57,6 +57,8 @@ _BRIDGE_CONTRACT_SPARSE_OPERATIONAL_DEONTIC_CAP = 0.45
 _BRIDGE_CONTRACT_SPARSE_OPERATIONAL_KG_FLOOR = 0.12
 _BRIDGE_CONTRACT_SPARSE_EPISTEMIC_SHIFT = 0.025
 _BRIDGE_CONTRACT_SPARSE_EPISTEMIC_KG_FLOOR = 0.22
+_BRIDGE_CONTRACT_GUIDANCE_PROJECTION_STRENGTH = 0.32
+_BRIDGE_CONTRACT_GUIDANCE_LANE_FLOOR = 0.08
 _BRIDGE_CONTRACT_CITATION_FRAME_DEONTIC_FLOOR = 0.20
 _BRIDGE_CONTRACT_CITATION_FRAME_STRUCTURE_MIN_COUNT = 3
 _BRIDGE_CONTRACT_NORMATIVE_DEONTIC_FLOOR = 0.30
@@ -741,6 +743,10 @@ class MultiViewLegalIRReport:
             rebalanced,
             text=self.document.normalized_text or self.document.source_text,
         )
+        rebalanced = _project_guided_contract_distribution(
+            rebalanced,
+            metadata=self.document.metadata,
+        )
         rebalance_total = sum(rebalanced.values())
         if rebalance_total <= 0.0:
             return normalized
@@ -869,6 +875,7 @@ def evaluate_legal_ir_multiview(
         bridge_names=names,
         citation=citation,
         document_id=document_id,
+        compiler_guidance=compiler_guidance,
         failures=failures,
         reports=reports,
         source=source,
@@ -954,6 +961,211 @@ def _compiler_guidance_digest(compiler_guidance: Optional[Mapping[str, Any]]) ->
         return str(compiler_guidance)
 
 
+def _compiler_guidance_bridge_contract_metadata(
+    compiler_guidance: Optional[Mapping[str, Any]],
+) -> Dict[str, Any]:
+    """Distill autoencoder evidence into deterministic bridge.contracts lanes."""
+
+    if not isinstance(compiler_guidance, Mapping) or not compiler_guidance:
+        return {}
+
+    evidence_rows = _compiler_guidance_evidence_rows(compiler_guidance)
+    routes = _compiler_guidance_routes(compiler_guidance, evidence_rows=evidence_rows)
+    target_components = _compiler_guidance_target_components(
+        compiler_guidance,
+        evidence_rows=evidence_rows,
+    )
+    if not (
+        "repair_multiview_legal_ir_loss" in routes
+        or "repair_multiview_legal_ir_graph_projection" in routes
+        or "bridge.contracts" in target_components
+        or any(_evidence_row_targets_bridge_contracts(row) for row in evidence_rows)
+    ):
+        return {}
+
+    lane_scores: Dict[str, float] = {}
+    component_gaps: Dict[str, float] = {}
+
+    def add_lane(value: Any, score: float = 1.0) -> None:
+        lane = _bridge_contract_lane_component(
+            _canonical_bridge_component_name(str(value or "")),
+        )
+        if lane:
+            lane_scores[lane] = lane_scores.get(lane, 0.0) + max(0.0, float(score))
+
+    def collect(mapping: Mapping[str, Any]) -> None:
+        for key in ("target_view", "predicted_view", "target_component"):
+            add_lane(mapping.get(key))
+        for key in (
+            "legal_ir_underrepresented_components",
+            "underrepresented_components",
+        ):
+            for value in _guidance_sequence(mapping.get(key)):
+                add_lane(value)
+        for key in (
+            "legal_ir_target_view_distribution",
+            "compiler_guidance_legal_ir_view_gap_distribution",
+        ):
+            for lane, score in _guidance_distribution_items(mapping.get(key)):
+                add_lane(lane, score)
+        for lane, score in _guidance_distribution_items(
+            mapping.get("legal_ir_component_gaps")
+        ):
+            canonical_lane = _bridge_contract_lane_component(
+                _canonical_bridge_component_name(lane)
+            )
+            if canonical_lane:
+                component_gaps[canonical_lane] = float(score)
+                if score > 0.0:
+                    add_lane(lane, score)
+
+    collect(compiler_guidance)
+    for mapping in _compiler_guidance_nested_mappings(compiler_guidance):
+        collect(mapping)
+    for evidence in evidence_rows:
+        collect(evidence)
+
+    target_distribution = _normalize_positive_mapping(lane_scores)
+    if not target_distribution:
+        return {}
+    return {
+        "compiler_guidance_bridge_contract_evidence_count": len(evidence_rows),
+        "compiler_guidance_bridge_contract_projection_strength": (
+            _BRIDGE_CONTRACT_GUIDANCE_PROJECTION_STRENGTH
+        ),
+        "compiler_guidance_bridge_contract_target_distribution": target_distribution,
+        "compiler_guidance_bridge_contract_target_lanes": sorted(target_distribution),
+        "compiler_guidance_component_gaps": dict(sorted(component_gaps.items())),
+    }
+
+
+def _compiler_guidance_routes(
+    compiler_guidance: Mapping[str, Any],
+    *,
+    evidence_rows: Sequence[Mapping[str, Any]],
+) -> set[str]:
+    routes: set[str] = set()
+    keys = (
+        "action",
+        "route",
+        "compiler_guidance_route",
+        "loss_name",
+        "bridge_failure_name",
+    )
+    for mapping in (
+        compiler_guidance,
+        *_compiler_guidance_nested_mappings(compiler_guidance),
+        *evidence_rows,
+    ):
+        for key in keys:
+            value = mapping.get(key)
+            if isinstance(value, str) and value.strip():
+                routes.add(value.strip())
+        for key in ("compiler_guidance_todo_routes", "todo_routes", "routes"):
+            raw_routes = mapping.get(key)
+            if isinstance(raw_routes, Mapping):
+                routes.update(str(route) for route in raw_routes if str(route).strip())
+            else:
+                routes.update(str(route) for route in _guidance_sequence(raw_routes))
+    return routes
+
+
+def _compiler_guidance_target_components(
+    compiler_guidance: Mapping[str, Any],
+    *,
+    evidence_rows: Sequence[Mapping[str, Any]],
+) -> set[str]:
+    components: set[str] = set()
+    keys = ("target", "target_component", "target_view", "predicted_view")
+    for mapping in (
+        compiler_guidance,
+        *_compiler_guidance_nested_mappings(compiler_guidance),
+        *evidence_rows,
+    ):
+        for key in keys:
+            value = mapping.get(key)
+            if isinstance(value, str) and value.strip():
+                components.add(value.strip())
+    return components
+
+
+def _compiler_guidance_nested_mappings(
+    compiler_guidance: Mapping[str, Any],
+) -> tuple[Mapping[str, Any], ...]:
+    mappings: list[Mapping[str, Any]] = []
+    for key in (
+        "bundle",
+        "compiler_guidance_bundle",
+        "semantic_bundle",
+        "compiler_guidance_attribution",
+    ):
+        value = compiler_guidance.get(key)
+        if isinstance(value, Mapping):
+            mappings.append(value)
+    return tuple(mappings)
+
+
+def _compiler_guidance_evidence_rows(
+    compiler_guidance: Mapping[str, Any],
+) -> tuple[Mapping[str, Any], ...]:
+    rows: list[Mapping[str, Any]] = []
+    for key in (
+        "evidence",
+        "hint_evidence",
+        "compiler_guidance_evidence",
+        "metric_sample_payloads",
+    ):
+        value = compiler_guidance.get(key)
+        if isinstance(value, Mapping):
+            rows.append(value)
+        elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            rows.extend(item for item in value if isinstance(item, Mapping))
+    return tuple(rows)
+
+
+def _evidence_row_targets_bridge_contracts(row: Mapping[str, Any]) -> bool:
+    target = str(row.get("target_component") or row.get("target") or "").strip()
+    failure = str(row.get("bridge_failure_name") or row.get("loss_name") or "").strip()
+    return target == "bridge.contracts" or failure.startswith("legal_ir_")
+
+
+def _guidance_sequence(value: Any) -> tuple[Any, ...]:
+    if isinstance(value, (str, bytes)) or value is None:
+        return () if value is None else (value,)
+    if isinstance(value, Mapping):
+        return tuple(value)
+    if isinstance(value, Sequence):
+        return tuple(value)
+    return (value,)
+
+
+def _guidance_distribution_items(value: Any) -> tuple[tuple[str, float], ...]:
+    if not isinstance(value, Mapping):
+        return ()
+    items: list[tuple[str, float]] = []
+    for raw_lane, raw_score in value.items():
+        try:
+            score = float(raw_score)
+        except (TypeError, ValueError):
+            continue
+        if score == 0.0:
+            continue
+        items.append((str(raw_lane), score))
+    return tuple(items)
+
+
+def _normalize_positive_mapping(values: Mapping[str, float]) -> Dict[str, float]:
+    positive = {
+        str(name): max(0.0, float(value))
+        for name, value in dict(values or {}).items()
+        if float(value) > 0.0
+    }
+    total = sum(positive.values())
+    if total <= 0.0:
+        return {}
+    return {name: value / total for name, value in sorted(positive.items())}
+
+
 def _evaluate_adapter(
     adapter: Any,
     text: str,
@@ -1011,6 +1223,7 @@ def _merge_reports_to_document(
     bridge_names: Sequence[str],
     citation: Optional[str],
     document_id: Optional[str],
+    compiler_guidance: Optional[Mapping[str, Any]],
     failures: Mapping[str, str],
     reports: Mapping[str, BridgeEvaluationReport],
     source: str,
@@ -1056,6 +1269,7 @@ def _merge_reports_to_document(
         "multiview_version": "legal-ir-multiview-v1",
         "view_count": len(views),
     }
+    metadata.update(_compiler_guidance_bridge_contract_metadata(compiler_guidance))
     return LegalIRDocument(
         document_id=resolved_document_id,
         source_text=text,
@@ -2416,6 +2630,76 @@ def _project_contract_distribution_toward_target(
         lane: value / projected_total
         for lane, value in projected.items()
     }
+
+
+def _project_guided_contract_distribution(
+    distribution: Mapping[str, float],
+    *,
+    metadata: Mapping[str, Any],
+) -> Dict[str, float]:
+    """Blend contract lanes toward distilled compiler-guidance evidence."""
+
+    adjusted = {
+        str(name): max(0.0, float(value))
+        for name, value in dict(distribution or {}).items()
+        if float(value) > 0.0
+    }
+    if not adjusted:
+        return adjusted
+
+    raw_target_value = (metadata or {}).get(
+        "compiler_guidance_bridge_contract_target_distribution"
+    )
+    if not isinstance(raw_target_value, Mapping):
+        return adjusted
+    raw_target = dict(raw_target_value)
+    target_distribution = {
+        _bridge_contract_lane_component(_canonical_bridge_component_name(str(lane))): (
+            max(0.0, _float_or_zero(weight))
+        )
+        for lane, weight in raw_target.items()
+    }
+    target_distribution = {
+        lane: weight
+        for lane, weight in target_distribution.items()
+        if lane and weight > 0.0
+    }
+    if not target_distribution:
+        return adjusted
+
+    for lane in target_distribution:
+        if lane not in adjusted and lane in _BRIDGE_CONTRACT_CORE_COMPONENTS:
+            adjusted[lane] = 0.0
+
+    guidance_mix = tuple(sorted(target_distribution.items()))
+    projected = _project_contract_distribution_toward_target(
+        adjusted,
+        guidance_mix,
+        strength=_float_or_zero(
+            (metadata or {}).get(
+                "compiler_guidance_bridge_contract_projection_strength",
+                _BRIDGE_CONTRACT_GUIDANCE_PROJECTION_STRENGTH,
+            )
+        ),
+    )
+    floors = {
+        lane: _BRIDGE_CONTRACT_GUIDANCE_LANE_FLOOR * weight
+        for lane, weight in target_distribution.items()
+        if lane in projected
+    }
+    return _enforce_contract_lane_floors(
+        projected,
+        floors=floors,
+        donor_priority=(
+            "zkp.circuits",
+            "external_provers.router",
+            "modal.frame_logic",
+            "CEC.native",
+            "deontic.ir",
+            "TDFOL.prover",
+            "knowledge_graphs.neo4j_compat",
+        ),
+    )
 
 
 def _enforce_contract_lane_floors(

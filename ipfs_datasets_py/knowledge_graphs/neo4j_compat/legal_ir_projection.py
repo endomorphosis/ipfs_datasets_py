@@ -37,6 +37,17 @@ _SECTION_HEADING_MARKER_RE = re.compile(
     r"$)",
     re.IGNORECASE,
 )
+_SUBSECTION_HEADING_RE = re.compile(
+    r"(?:^|\s)\((?P<label>[a-z])\)\s+"
+    r"(?P<heading>[A-Z][A-Za-z0-9 ,'\-/&]{1,96}?)(?="
+    r"\s+(?:A|An|Each|For|In|No|Nothing|Not|The|There|Whoever)\b|"
+    r"\s+\([0-9A-Za-z]+\)|$)",
+)
+_PARAGRAPH_MARKER_RE = re.compile(r"(?:^|\s)\((?P<label>[0-9]+)\)\s+")
+_DEFINITION_TERM_RE = re.compile(
+    r"\([0-9]+\)\s+\"(?P<term>[^\"]{2,96})\"\s+means\b",
+    re.IGNORECASE,
+)
 _USCODE_TITLE_RE = re.compile(
     r"(?P<title>\d+[A-Za-z]*)\s+U\.?S\.?C\.?",
     re.IGNORECASE,
@@ -57,6 +68,11 @@ _TEXT_PREDICATES = {
 }
 _SOURCE_ID_ALIAS_PREDICATES = {
     "sample_id",
+}
+_MULTI_VALUE_COMPONENT_PREDICATES = {
+    "section_definition_term",
+    "section_paragraph_label",
+    "section_subsection_label",
 }
 _MAX_AUGMENT_TRIGGER_TRIPLES_PER_SUBJECT = 8
 _EDITORIAL_STATUS_KEYWORDS = (
@@ -138,7 +154,10 @@ def augment_legal_ir_projection_triples(
             continue
 
         for component_predicate, component_value in components:
-            if component_predicate in existing_predicates:
+            if (
+                component_predicate in existing_predicates
+                and component_predicate not in _MULTI_VALUE_COMPONENT_PREDICATES
+            ):
                 continue
             key = (subject, component_predicate, component_value)
             if key in seen:
@@ -292,6 +311,7 @@ def _section_text_components(text: str) -> List[Tuple[str, str]]:
                 components.append(("section_heading_part_count", str(len(parts))))
                 for index, part in enumerate(parts, start=1):
                     components.append((f"section_heading_part_{index}", part))
+    components.extend(_section_body_structure_components(normalized))
     return _clean_components(components)
 
 
@@ -319,6 +339,125 @@ def _section_heading_parts(heading: str) -> List[str]:
         for part in heading.split(";")
         if part.strip(" -.;")
     ]
+
+
+def _section_body_structure_components(text: str) -> List[Tuple[str, str]]:
+    components: List[Tuple[str, str]] = []
+    subsection_headings = _subsection_heading_components(text)
+    paragraph_components = _paragraph_marker_components(text)
+    definition_components = _definition_term_components(text)
+
+    components.extend(subsection_headings)
+    components.extend(paragraph_components)
+    components.extend(definition_components)
+    if subsection_headings:
+        components.append(("section_style_has_subsections", "true"))
+        components.append(
+            (
+                "section_subsection_count",
+                str(
+                    len(
+                        {
+                            value
+                            for predicate, value in subsection_headings
+                            if predicate == "section_subsection_label"
+                        }
+                    )
+                ),
+            )
+        )
+    if paragraph_components:
+        components.append(("section_style_has_paragraphs", "true"))
+        components.append(
+            (
+                "section_paragraph_count",
+                str(
+                    len(
+                        {
+                            value
+                            for predicate, value in paragraph_components
+                            if predicate == "section_paragraph_label"
+                        }
+                    )
+                ),
+            )
+        )
+    if definition_components:
+        components.append(("section_style_definition_list", "true"))
+        components.append(
+            (
+                "section_definition_term_count",
+                str(
+                    len(
+                        {
+                            value
+                            for predicate, value in definition_components
+                            if predicate == "section_definition_term"
+                        }
+                    )
+                ),
+            )
+        )
+    return components
+
+
+def _subsection_heading_components(text: str) -> List[Tuple[str, str]]:
+    components: List[Tuple[str, str]] = []
+    for match in _SUBSECTION_HEADING_RE.finditer(text):
+        label = match.group("label").lower()
+        heading = _clean_body_heading_text(match.group("heading"))
+        if not label or not heading:
+            continue
+        components.append(("section_subsection_label", label))
+        components.append((f"section_subsection_{label}_heading", heading))
+    return components[:24]
+
+
+def _paragraph_marker_components(text: str) -> List[Tuple[str, str]]:
+    components: List[Tuple[str, str]] = []
+    for match in _PARAGRAPH_MARKER_RE.finditer(text):
+        label = match.group("label")
+        if not label:
+            continue
+        components.append(("section_paragraph_label", label))
+        components.append((f"section_paragraph_{label}_marker", f"({label})"))
+    return components[:32]
+
+
+def _definition_term_components(text: str) -> List[Tuple[str, str]]:
+    components: List[Tuple[str, str]] = []
+    for index, match in enumerate(_DEFINITION_TERM_RE.finditer(text), start=1):
+        term = _clean_definition_term(match.group("term"))
+        if not term:
+            continue
+        components.append(("section_definition_term", term))
+        components.append((f"section_definition_term_{index}", term))
+        components.append(
+            (
+                f"section_definition_term_{index}_normalized",
+                _identifier_token(term),
+            )
+        )
+    return components[:36]
+
+
+def _clean_body_heading_text(text: str) -> str:
+    heading = re.sub(r"\s+", " ", _normalize_dashes(text)).strip(" -.;:")
+    heading = re.sub(
+        r"\s+(?:A|An|Each|For|In|No|Nothing|Not|The|There|Whoever)\b.*$",
+        "",
+        heading,
+    ).strip(" -.;:")
+    return heading
+
+
+def _clean_definition_term(text: str) -> str:
+    return re.sub(r"\s+", " ", _normalize_dashes(text)).strip(" -.;:")
+
+
+def _identifier_token(text: str) -> str:
+    token = re.sub(r"[^A-Za-z0-9]+", "_", text.lower()).strip("_")
+    return token or "term"
 
 
 def _canonical_usc_citation(title: str, section: str) -> str:

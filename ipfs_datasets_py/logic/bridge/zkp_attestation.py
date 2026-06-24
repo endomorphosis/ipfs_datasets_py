@@ -6,6 +6,7 @@ import hashlib
 import json
 import warnings
 from dataclasses import dataclass, field
+from threading import Lock
 from typing import Any, Mapping, Optional, Sequence
 
 from .fol_tdfol import FolTdfolBridgeAdapter
@@ -17,6 +18,11 @@ from .types import (
     ProofGateResult,
     RoundTripMetrics,
 )
+
+
+_ZKP_ATTESTATION_RECORD_CACHE_MAX_ITEMS = 4096
+_ZKP_ATTESTATION_RECORD_CACHE: dict[str, list[dict[str, Any]]] = {}
+_ZKP_ATTESTATION_RECORD_CACHE_LOCK = Lock()
 
 
 @dataclass
@@ -237,6 +243,16 @@ def _zkp_attestation_records(
 ) -> list[dict[str, Any]]:
     if not formula_records:
         return []
+    cache_key = _zkp_attestation_records_cache_key(
+        formula_records,
+        prover_kwargs=prover_kwargs,
+        verifier_kwargs=verifier_kwargs,
+    )
+    with _ZKP_ATTESTATION_RECORD_CACHE_LOCK:
+        cached = _ZKP_ATTESTATION_RECORD_CACHE.get(cache_key)
+    if cached is not None:
+        return _clone_attestation_records(cached)
+
     from ipfs_datasets_py.logic.zkp import ZKPProver, ZKPVerifier
 
     with warnings.catch_warnings():
@@ -297,7 +313,69 @@ def _zkp_attestation_records(
                 "compiler_guidance_ref": guidance_ref,
             }
         )
+    with _ZKP_ATTESTATION_RECORD_CACHE_LOCK:
+        if (
+            len(_ZKP_ATTESTATION_RECORD_CACHE)
+            >= _ZKP_ATTESTATION_RECORD_CACHE_MAX_ITEMS
+        ):
+            _ZKP_ATTESTATION_RECORD_CACHE.pop(
+                next(iter(_ZKP_ATTESTATION_RECORD_CACHE)),
+                None,
+            )
+        _ZKP_ATTESTATION_RECORD_CACHE[cache_key] = _clone_attestation_records(records)
     return records
+
+
+def _zkp_attestation_records_cache_key(
+    formula_records: Sequence[Mapping[str, Any]],
+    *,
+    prover_kwargs: Mapping[str, Any],
+    verifier_kwargs: Mapping[str, Any],
+) -> str:
+    payload = {
+        "formula_records": [
+            _zkp_attestation_formula_cache_payload(record, index=index)
+            for index, record in enumerate(formula_records)
+        ],
+        "prover_kwargs": dict(sorted((str(k), v) for k, v in prover_kwargs.items())),
+        "verifier_kwargs": dict(sorted((str(k), v) for k, v in verifier_kwargs.items())),
+        "version": 1,
+    }
+    return hashlib.sha256(
+        json.dumps(payload, default=str, ensure_ascii=True, sort_keys=True).encode(
+            "utf-8"
+        )
+    ).hexdigest()
+
+
+def _zkp_attestation_formula_cache_payload(
+    record: Mapping[str, Any],
+    *,
+    index: int,
+) -> dict[str, Any]:
+    theorem = str(record.get("formula") or "").strip()
+    source_id = str(record.get("source_id") or f"zkp:formula:{index}")
+    guidance_contract = _compiler_guidance_contract(record)
+    return {
+        "axioms": _private_axioms_for_formula(record, theorem=theorem),
+        "compiler_guidance_contract": guidance_contract,
+        "compiler_guidance_ref": _compiler_guidance_ref(guidance_contract),
+        "source_id": source_id,
+        "theorem": theorem,
+    }
+
+
+def _clone_attestation_records(
+    records: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    return json.loads(
+        json.dumps(
+            list(records),
+            default=str,
+            ensure_ascii=True,
+            sort_keys=True,
+        )
+    )
 
 
 def _private_axioms_for_formula(record: Mapping[str, Any], *, theorem: str) -> list[str]:

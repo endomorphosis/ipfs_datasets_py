@@ -1340,6 +1340,8 @@ _FLOGIC_ONTOLOGY_GUIDANCE_ROUTES = frozenset(
 )
 _FLOGIC_ONTOLOGY_GUIDANCE_FEATURES = (
     "legal-ir-view:modal.frame_logic",
+    "legal-ir-view:deontic.ir",
+    "legal-ir-view:TDFOL.prover",
     "flogic:statement_hint:audit_frame_logic_terms",
     "flogic:statement_hint:improve_flogic_frame_alignment",
     "flogic:statement_hint:repair_flogic_ontology_constraints",

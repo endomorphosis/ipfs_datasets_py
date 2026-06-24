@@ -587,6 +587,50 @@ def test_refined_pair_balance_boosts_temporal_runner_up_in_statutory_status_cont
     assert counts["temporal"] > 1.35
 
 
+def test_refined_pair_balance_promotes_conditional_scope_over_generic_frame() -> None:
+    counts = {
+        "frame": 2.2,
+        "conditional_normative": 1.4,
+        "deontic": 0.8,
+    }
+    signals = {
+        "has_condition_or_exception_scope": True,
+        "has_conditional_scope_phrase": True,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": True,
+        "has_frame_cue": True,
+        "has_frame_editorial_scope_phrase": False,
+        "has_definition_scope": False,
+        "has_frame_structural_authority_scope_phrase": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["conditional_normative"] > counts["frame"]
+
+
+def test_refined_pair_balance_promotes_deontic_over_temporal_status_scaffold() -> None:
+    counts = {
+        "temporal": 2.4,
+        "deontic": 1.2,
+        "conditional_normative": 0.5,
+        "frame": 0.35,
+    }
+    signals = {
+        "has_deontic_scope": True,
+        "has_deontic_cue": True,
+        "has_deontic_scope_phrase": True,
+        "has_temporal_scope": True,
+        "has_temporal_status_scope": True,
+        "has_statutory_scope_reference": True,
+        "has_frame_editorial_scope_phrase": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["deontic"] > counts["temporal"]
+
+
 def test_refined_pair_balance_preserves_alethic_scope_under_temporal_dominance() -> None:
     counts = {
         "temporal": 2.25,

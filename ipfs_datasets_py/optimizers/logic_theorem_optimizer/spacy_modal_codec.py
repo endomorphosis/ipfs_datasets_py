@@ -5188,6 +5188,28 @@ def _apply_refined_modal_family_cue_pair_balance(
                 )
                 frame_count = float(counts.get(frame_family, 0.0))
 
+    # frame -> conditional_normative:
+    # repeated authority/title tokens can make structural frame cues dominate
+    # clauses whose operative cue is statutory scoping ("with respect to",
+    # "pursuant to", "subject to"). In non-editorial text, keep that
+    # conditional qualifier just above generic frame evidence.
+    if (
+        frame_count >= conditional_count
+        and frame_count > 0.0
+        and has_structural_conditional_scope
+        and has_conditional_scope_phrase
+        and has_statutory_scope_reference
+        and has_frame_scope_context
+        and not has_editorial_frame_context
+        and not has_definition_scope
+        and not has_structural_authority_frame_scope
+    ):
+        counts[conditional_family] = max(
+            conditional_count,
+            frame_count + 0.01,
+        )
+        conditional_count = float(counts.get(conditional_family, 0.0))
+
     # frame -> deontic:
     # corporate-charter powers sections are often packed with frame terms
     # ("corporation", "purposes", title headers), but "the corporation may"
@@ -5323,6 +5345,31 @@ def _apply_refined_modal_family_cue_pair_balance(
             frame_floor,
         )
         frame_count = float(counts.get(frame_family, 0.0))
+
+    # temporal -> deontic:
+    # effective-date/status scaffolding often accompanies operative commands.
+    # When explicit deontic cues are present in a statutory-reference clause,
+    # preserve the duty/permission as the primary family instead of allowing
+    # date/status tokens to overtake it.
+    if (
+        temporal_count > deontic_count
+        and has_deontic_scope
+        and has_explicit_deontic_scope
+        and has_deontic_cue
+        and has_temporal_scope
+        and has_statutory_scope_reference
+        and (
+            has_temporal_status_scope
+            or has_calendar_date_scope
+            or bool(signals.get("has_temporal_fiscal_scope_phrase"))
+        )
+        and not has_editorial_frame_context
+    ):
+        counts[deontic_family] = max(
+            deontic_count,
+            temporal_count + 0.01,
+        )
+        deontic_count = float(counts.get(deontic_family, 0.0))
 
     # deontic -> temporal / frame:
     # statutory structural conditionals often carry generic deontic lexemes

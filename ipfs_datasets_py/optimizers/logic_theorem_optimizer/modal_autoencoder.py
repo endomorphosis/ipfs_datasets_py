@@ -6467,6 +6467,39 @@ class AdaptiveModalAutoencoder:
         ]
         return tags or ["unscoped"]
 
+    def _autoencoder_clause_topology_signature_for(
+        self,
+        sample: LegalSample,
+        formula: Any,
+        *,
+        conditions: Sequence[Any],
+        exceptions: Sequence[Any],
+        scope_tags: Sequence[str],
+    ) -> str:
+        """Return a compact source-role topology for typed decompiler slots."""
+        source_anchors = self._source_role_anchors_for(sample)
+        predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
+        arguments = list(getattr(formula.predicate, "arguments", []) or [])
+        roles: List[str] = []
+
+        def add(role: str, active: bool) -> None:
+            if active and role not in roles:
+                roles.append(role)
+
+        add("condition", bool(conditions) or bool(source_anchors.get("condition")))
+        add("subject", bool(source_anchors.get("subject")))
+        add(
+            "action",
+            bool(predicate_name) or bool(source_anchors.get("action")),
+        )
+        add("object", bool(arguments) or bool(source_anchors.get("object")))
+        add("exception", bool(exceptions) or bool(source_anchors.get("exception")))
+        add(
+            "temporal",
+            "temporal" in set(scope_tags) or bool(source_anchors.get("temporal")),
+        )
+        return "+".join(roles)
+
     def _compiler_contract_feature_keys_for(
         self,
         sample: LegalSample,
@@ -17549,6 +17582,32 @@ class AdaptiveModalAutoencoder:
                 formula,
             )
             predicate_head = predicate_name.split("_", 1)[0] if predicate_name else ""
+            force_tags, polarity_tags = _autoencoder_formula_force_polarity_tags(
+                formula,
+                text=text,
+            )
+            scope_tags = self._source_clause_scope_tags_for(
+                sample,
+                _unique_preserve_order(
+                    [*self._cue_names_for_text(text), *_formula_autoencoder_cue_names(formula)]
+                ),
+                self._source_role_anchors_for(sample),
+            )
+            if conditions and "conditioned" not in scope_tags:
+                scope_tags = [*scope_tags, "conditioned"]
+            if exceptions and "excepted" not in scope_tags:
+                scope_tags = [*scope_tags, "excepted"]
+            scope_tags = [
+                tag for tag in scope_tags if tag != "unscoped"
+            ] or ["unconditioned"]
+            scope_signature = "+".join(_unique_preserve_order(scope_tags))
+            topology_signature = self._autoencoder_clause_topology_signature_for(
+                sample,
+                formula,
+                conditions=conditions,
+                exceptions=exceptions,
+                scope_tags=scope_tags,
+            )
             for family_pair in family_pairs:
                 bump(f"slot:typed-decompiler-family-pair:{family_pair}", weight=1.25)
                 if cue_name:
@@ -17574,6 +17633,56 @@ class AdaptiveModalAutoencoder:
                         f"slot:typed-decompiler-exception-family-pair:{family_pair}",
                         weight=0.75,
                     )
+                if "->" in family_pair:
+                    source_family, _target_family = family_pair.split("->", 1)
+                else:
+                    source_family = family
+                bump(
+                    f"slot:typed-decompiler-scope-family-pair:{scope_signature}:{family_pair}",
+                    weight=0.75,
+                )
+                if topology_signature:
+                    bump(
+                        (
+                            "slot:typed-decompiler-source-clause-topology-family-pair:"
+                            f"{topology_signature}:{source_family}|"
+                            f"typed-decompiler-family-pair:{family_pair}"
+                        ),
+                        weight=0.65,
+                    )
+                for force in force_tags:
+                    for polarity in polarity_tags:
+                        bump(
+                            (
+                                "slot:typed-decompiler-force-polarity:"
+                                f"{force}:{polarity}:{source_family}"
+                            ),
+                            weight=0.85,
+                        )
+                        bump(
+                            (
+                                "slot:typed-decompiler-force-polarity-family-pair:"
+                                f"{force}:{polarity}:{family_pair}"
+                            ),
+                            weight=0.85,
+                        )
+                        bump(
+                            (
+                                "slot:typed-decompiler-force-polarity-scope-family-pair:"
+                                f"{force}:{polarity}:{scope_signature}:{family_pair}"
+                            ),
+                            weight=0.8,
+                        )
+                        if predicate_head:
+                            bump(
+                                (
+                                    "slot:typed-decompiler-source-predicate-force-pair:"
+                                    f"{source_family}:{predicate_head}|"
+                                    "typed-decompiler-force-polarity:"
+                                    f"{force}:{polarity}"
+                                ),
+                                weight=0.65,
+                            )
 
         for slot, weight in self._semantic_slot_interactions_for(counts):
             bump(slot, weight)
@@ -17597,6 +17706,10 @@ class AdaptiveModalAutoencoder:
             "slot:frame-logic-triples:",
             "slot:predicate-token-count:",
             "slot:predicate-arity:",
+            "slot:typed-decompiler-force-polarity",
+            "slot:typed-decompiler-scope-family-pair:",
+            "slot:typed-decompiler-source-clause-topology-family-pair:",
+            "slot:typed-decompiler-source-predicate-force-pair:",
         )
         anchors = [
             (slot, max(0.0, float(weight)))
@@ -21360,6 +21473,101 @@ def _formula_autoencoder_cue_names(formula: Any) -> List[str]:
         if cue and cue not in cues:
             cues.append(cue)
     return cues
+
+
+def _autoencoder_formula_force_polarity_tags(
+    formula: Any,
+    *,
+    text: str,
+) -> tuple[List[str], List[str]]:
+    metadata = getattr(formula, "metadata", {}) or {}
+    if not isinstance(metadata, Mapping):
+        metadata = {}
+    symbol = _feature_atom(getattr(formula.operator, "symbol", "")).upper()
+    label = _feature_atom(getattr(formula.operator, "label", ""))
+    family = _feature_atom(getattr(formula.operator, "family", ""))
+    cue_text = " ".join(
+        value.replace("_", " ")
+        for value in _formula_autoencoder_cue_names(formula)
+    ).lower()
+    metadata_force = _feature_atom(metadata.get("force", "")).lower()
+    metadata_polarity = _feature_atom(
+        metadata.get("polarity")
+        or metadata.get("force_polarity")
+        or metadata.get("compiler_guidance_force_polarity")
+        or ""
+    ).lower()
+    predicate_text = _feature_atom(getattr(formula.predicate, "name", "")).replace(
+        "_",
+        " ",
+    )
+    evidence_text = " ".join(
+        value
+        for value in (
+            str(text or ""),
+            cue_text,
+            label,
+            predicate_text,
+        )
+        if value
+    ).lower()
+    force_tags: List[str] = []
+    polarity_tags: List[str] = []
+
+    def add_force(value: str) -> None:
+        atom = _feature_atom(value).lower()
+        if atom and atom not in force_tags:
+            force_tags.append(atom)
+
+    def add_polarity(value: str) -> None:
+        atom = _feature_atom(value).lower()
+        if atom in {"negative", "negated"}:
+            atom = "negative_scope"
+        elif atom in {"positive", "affirmative"}:
+            atom = "positive_scope"
+        if atom and atom not in polarity_tags:
+            polarity_tags.append(atom)
+
+    if metadata_force:
+        add_force(metadata_force)
+    if (
+        symbol in {"O", "O|"}
+        or family == "conditional_normative"
+        or re.search(r"\b(?:shall|must|required|requires|obligation)\b", evidence_text)
+        or "oblig" in label
+    ):
+        add_force("obligation")
+    if (
+        symbol == "P"
+        or re.search(r"\b(?:may|authorized|permitted|eligible|entitled)\b", evidence_text)
+        or "permit" in label
+        or "authoriz" in label
+    ):
+        add_force("permission")
+    if (
+        symbol == "F"
+        or re.search(r"\b(?:may not|must not|shall not|prohibited|forbidden)\b", evidence_text)
+        or "prohibit" in label
+    ):
+        add_force("prohibition")
+    if family == "temporal" and not force_tags:
+        add_force("temporal")
+    if family == "frame" and not force_tags:
+        add_force("definition")
+    if not force_tags:
+        add_force("assertive")
+
+    if metadata_polarity:
+        add_polarity(metadata_polarity)
+    if re.search(r"\b(?:not|no|never|without|prohibited|forbidden)\b", evidence_text):
+        add_polarity("negative_scope")
+    if re.search(r"\b(?:shall|must|required|requires)\b", evidence_text):
+        add_polarity("mandatory")
+    if re.search(r"\b(?:may|authorized|permitted|eligible|entitled)\b", evidence_text):
+        add_polarity("enabling")
+    if not polarity_tags:
+        add_polarity("neutral")
+    return force_tags, polarity_tags
 
 
 def _semantic_slot_legal_ir_view_key(slot: str, view: str) -> str:

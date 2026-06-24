@@ -28,6 +28,7 @@ from contextlib import ExitStack, contextmanager
 from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
+from types import SimpleNamespace
 from typing import AbstractSet, Any, Callable, Dict, Iterable, Iterator, List, Mapping, Optional, Sequence
 
 
@@ -656,8 +657,14 @@ CODEX_APPLY_VALIDATION_TIMEOUT_SECONDS = 600.0
 CODEX_TARGET_METRIC_TIMEOUT_SECONDS = 120.0
 CODEX_TARGET_METRIC_MAX_SAMPLES = 2
 BRIDGE_IR_REPORT_CACHE_MAX = 4096
+LEGAL_IR_METRIC_DISK_CACHE_VERSION = "legal-ir-metric-disk-cache-v1"
+LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV = "IPFS_DATASETS_LEGAL_IR_METRIC_CACHE_DIR"
+LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV = "IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE"
+_FALSE_ENV_VALUES = {"0", "false", "no", "off", "none", "disabled"}
 _BRIDGE_IR_REPORT_CACHE_LOCK = threading.Lock()
 _BRIDGE_IR_REPORT_CACHE: Dict[str, Any] = {}
+_METRIC_CODE_FINGERPRINT_LOCK = threading.Lock()
+_METRIC_CODE_FINGERPRINT_VALUE: Optional[str] = None
 _ACTIVE_CODEX_EXEC_PROCESSES: List[subprocess.Popen[str]] = []
 CODEX_WORKTREE_ARTIFACT_FILENAMES = {"changes.patch"}
 
@@ -686,6 +693,218 @@ def _env_int(name: str, default: int, *, minimum: int = 0) -> int:
     except (TypeError, ValueError):
         return int(default)
     return max(int(minimum), value)
+
+
+def _stable_metric_json(value: Any) -> str:
+    return json.dumps(
+        value,
+        default=str,
+        ensure_ascii=True,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+
+
+def _metric_disk_cache_enabled() -> bool:
+    raw = str(os.environ.get(LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV) or "").strip().lower()
+    return raw not in _FALSE_ENV_VALUES
+
+
+def _default_metric_disk_cache_dir() -> Path:
+    try:
+        repo_root = Path(__file__).resolve().parents[3]
+    except (IndexError, OSError, RuntimeError):
+        repo_root = Path.cwd()
+    return repo_root / "workspace" / "test-logs" / "legal-ir-metric-cache"
+
+
+def _metric_disk_cache_dir() -> Optional[Path]:
+    if not _metric_disk_cache_enabled():
+        return None
+    raw = str(os.environ.get(LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV) or "").strip()
+    if raw.lower() in _FALSE_ENV_VALUES:
+        return None
+    return Path(raw).expanduser() if raw else _default_metric_disk_cache_dir()
+
+
+def _metric_code_fingerprint() -> str:
+    global _METRIC_CODE_FINGERPRINT_VALUE
+    with _METRIC_CODE_FINGERPRINT_LOCK:
+        if _METRIC_CODE_FINGERPRINT_VALUE:
+            return _METRIC_CODE_FINGERPRINT_VALUE
+        try:
+            package_root = Path(__file__).resolve().parents[2]
+        except (IndexError, OSError, RuntimeError):
+            package_root = Path.cwd()
+        candidates = [
+            Path(__file__),
+            package_root / "logic" / "bridge",
+            package_root / "logic" / "modal",
+            package_root
+            / "knowledge_graphs"
+            / "neo4j_compat"
+            / "legal_ir_projection.py",
+        ]
+        tokens: List[str] = []
+        for candidate in candidates:
+            paths = (
+                sorted(candidate.rglob("*.py"))
+                if candidate.is_dir()
+                else [candidate]
+            )
+            for path in paths:
+                try:
+                    stat = path.stat()
+                except (OSError, RuntimeError):
+                    continue
+                try:
+                    relative = path.relative_to(package_root)
+                except ValueError:
+                    relative = path
+                tokens.append(f"{relative}:{stat.st_mtime_ns}:{stat.st_size}")
+        if not tokens:
+            _METRIC_CODE_FINGERPRINT_VALUE = "unknown"
+        else:
+            _METRIC_CODE_FINGERPRINT_VALUE = hashlib.sha256(
+                "\n".join(tokens).encode("utf-8")
+            ).hexdigest()
+        return _METRIC_CODE_FINGERPRINT_VALUE
+
+
+def _metric_cache_object_payload(value: Any) -> Any:
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    if isinstance(value, Mapping):
+        return {str(key): _metric_cache_object_payload(item) for key, item in value.items()}
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        return [_metric_cache_object_payload(item) for item in value]
+    if hasattr(value, "__dict__"):
+        return {
+            "attrs": {
+                str(key): _metric_cache_object_payload(item)
+                for key, item in sorted(vars(value).items())
+                if not str(key).startswith("_")
+            },
+            "type": f"{value.__class__.__module__}.{value.__class__.__qualname__}",
+        }
+    return repr(value)
+
+
+def _metric_mapping_to_namespace(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return SimpleNamespace(
+            **{
+                str(key): _metric_mapping_to_namespace(item)
+                for key, item in value.items()
+            }
+        )
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        return [_metric_mapping_to_namespace(item) for item in value]
+    return value
+
+
+def _metric_mapping_dict(value: Any) -> Dict[str, Any]:
+    if isinstance(value, Mapping):
+        return dict(value)
+    if isinstance(value, SimpleNamespace):
+        return dict(vars(value))
+    return {}
+
+
+def _sample_metric_cache_payload(sample: Any) -> Dict[str, Any]:
+    embedding = [
+        round(float(value), 12)
+        for value in list(getattr(sample, "embedding_vector", []) or [])
+    ]
+    embedding_hash = hashlib.sha256(
+        json.dumps(embedding, ensure_ascii=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    return {
+        "citation": str(getattr(sample, "citation", "") or ""),
+        "embedding_hash": embedding_hash,
+        "sample_id": str(getattr(sample, "sample_id", "") or ""),
+        "source": str(getattr(sample, "source", "") or ""),
+        "text_hash": hashlib.sha256(
+            str(getattr(sample, "text", "") or "").encode("utf-8")
+        ).hexdigest(),
+        "title": str(getattr(sample, "title", "") or ""),
+        "section": str(getattr(sample, "section", "") or ""),
+    }
+
+
+def _metric_disk_cache_key(kind: str, payload: Mapping[str, Any]) -> str:
+    wrapper = {
+        "code_fingerprint": _metric_code_fingerprint(),
+        "kind": str(kind),
+        "payload": payload,
+        "version": LEGAL_IR_METRIC_DISK_CACHE_VERSION,
+    }
+    return hashlib.sha256(_stable_metric_json(wrapper).encode("utf-8")).hexdigest()
+
+
+def _metric_disk_cache_path(kind: str, key: str) -> Optional[Path]:
+    root = _metric_disk_cache_dir()
+    if root is None:
+        return None
+    safe_kind = re.sub(r"[^A-Za-z0-9_.-]+", "_", str(kind)).strip("._") or "metric"
+    key_text = re.sub(r"[^a-fA-F0-9]+", "", str(key)) or hashlib.sha256(
+        str(key).encode("utf-8")
+    ).hexdigest()
+    return root / safe_kind / key_text[:2] / f"{key_text}.json"
+
+
+def _read_metric_disk_cache(kind: str, key: str) -> Optional[Dict[str, Any]]:
+    path = _metric_disk_cache_path(kind, key)
+    if path is None or not path.is_file():
+        return None
+    try:
+        wrapper = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(wrapper, Mapping):
+        return None
+    if wrapper.get("version") != LEGAL_IR_METRIC_DISK_CACHE_VERSION:
+        return None
+    if wrapper.get("kind") != kind or wrapper.get("key") != key:
+        return None
+    payload = wrapper.get("payload")
+    if not isinstance(payload, Mapping):
+        return None
+    return dict(payload)
+
+
+def _write_metric_disk_cache(kind: str, key: str, payload: Mapping[str, Any]) -> None:
+    path = _metric_disk_cache_path(kind, key)
+    if path is None:
+        return
+    wrapper = {
+        "created_at": utc_now(),
+        "code_fingerprint": _metric_code_fingerprint(),
+        "key": key,
+        "kind": kind,
+        "payload": dict(payload),
+        "version": LEGAL_IR_METRIC_DISK_CACHE_VERSION,
+    }
+    tmp_path: Optional[Path] = None
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile(
+            "w",
+            delete=False,
+            dir=str(path.parent),
+            encoding="utf-8",
+            prefix=f".{path.stem}.",
+            suffix=".tmp",
+        ) as handle:
+            tmp_path = Path(handle.name)
+            json.dump(wrapper, handle, default=str, ensure_ascii=True, sort_keys=True)
+        os.replace(tmp_path, path)
+    except Exception:
+        if tmp_path is not None:
+            try:
+                tmp_path.unlink(missing_ok=True)
+            except OSError:
+                pass
 
 
 def parse_utc(value: str) -> float:
@@ -1410,6 +1629,83 @@ def compiler_ir_metric_block(
         "start",
         autoencoder_guidance_enabled=bool(use_autoencoder_guidance),
     )
+    guidance_applied_count = 0
+    guidance_empty_count = 0
+    guidance_failures = 0
+    guidance_produced_count = 0
+    guidance_requested_count = 0
+    precomputed_guidance: List[Optional[Mapping[str, Any]]] = []
+    guidance_cache_records: List[Dict[str, Any]] = []
+    if use_autoencoder_guidance and autoencoder is not None:
+        emit_progress("guidance_start")
+        for sample_index, sample in enumerate(sample_list, start=1):
+            guidance_requested_count += 1
+            guidance_error = ""
+            compiler_guidance: Optional[Mapping[str, Any]] = None
+            try:
+                compiler_guidance = autoencoder.compiler_guidance_for_sample(
+                    sample,
+                    use_sample_memory=False,
+                    top_k=guidance_top_k,
+                )
+                if compiler_guidance:
+                    guidance_produced_count += 1
+                else:
+                    guidance_empty_count += 1
+            except Exception as exc:
+                guidance_failures += 1
+                guidance_error = f"{type(exc).__name__}: {str(exc)[:240]}"
+                compiler_guidance = None
+            precomputed_guidance.append(compiler_guidance)
+            guidance_cache_records.append(
+                {
+                    "error": guidance_error,
+                    "guidance": _metric_cache_object_payload(compiler_guidance),
+                    "sample": _sample_metric_cache_payload(sample),
+                    "sample_index": sample_index,
+                }
+            )
+        emit_progress(
+            "guidance_done",
+            guidance_empty_count=guidance_empty_count,
+            guidance_failures=guidance_failures,
+            guidance_produced_count=guidance_produced_count,
+            guidance_requested_count=guidance_requested_count,
+        )
+    persistent_cache_key: Optional[str] = None
+    metric_block_cacheable = (
+        (not use_autoencoder_guidance and autoencoder is None)
+        or (
+            use_autoencoder_guidance
+            and autoencoder is not None
+            and not guidance_failures
+        )
+    )
+    if metric_block_cacheable:
+        persistent_cache_key = _compiler_ir_metric_block_cache_key(
+            sample_list,
+            codec=codec,
+            guidance_cache_records=guidance_cache_records,
+            guidance_top_k=guidance_top_k,
+            max_sample_metric_records=max_sample_metric_records,
+        )
+        cached_block = _read_metric_disk_cache(
+            "compiler_ir_metric_block",
+            persistent_cache_key,
+        )
+        if cached_block is not None:
+            cached = dict(cached_block)
+            cached["persistent_cache_enabled"] = True
+            cached["persistent_cache_hit"] = True
+            cached["persistent_cache_key"] = persistent_cache_key
+            cached["persistent_cache_kind"] = "compiler_ir_metric_block"
+            emit_progress(
+                "persistent_cache_hit",
+                cache_key=persistent_cache_key,
+                evaluated_count=cached.get("evaluated_count", 0),
+            )
+            return cached
+        emit_progress("persistent_cache_miss", cache_key=persistent_cache_key)
     losses: Dict[str, List[float]] = {
         "cosine_loss": [],
         "cosine_similarity": [],
@@ -1445,11 +1741,6 @@ def compiler_ir_metric_block(
     frame_candidate_counts: List[float] = []
     llm_call_counts: List[float] = []
     failures = 0
-    guidance_applied_count = 0
-    guidance_empty_count = 0
-    guidance_failures = 0
-    guidance_produced_count = 0
-    guidance_requested_count = 0
     guidance_frame_boost_counts: List[float] = []
     guidance_frame_changed_count = 0
     guidance_feature_groups: Counter[str] = Counter()
@@ -1471,7 +1762,9 @@ def compiler_ir_metric_block(
             sample_index=sample_index,
         )
         compiler_guidance = None
-        if use_autoencoder_guidance and autoencoder is not None:
+        if precomputed_guidance:
+            compiler_guidance = precomputed_guidance[sample_index - 1]
+        elif use_autoencoder_guidance and autoencoder is not None:
             guidance_requested_count += 1
             try:
                 compiler_guidance = autoencoder.compiler_guidance_for_sample(
@@ -1734,6 +2027,16 @@ def compiler_ir_metric_block(
         block["source_decompiled_text_embedding_cosine_gap"] = round(
             float(block["source_decompiled_text_embedding_cosine_loss"]),
             9,
+        )
+    if persistent_cache_key is not None:
+        block["persistent_cache_enabled"] = _metric_disk_cache_enabled()
+        block["persistent_cache_hit"] = False
+        block["persistent_cache_key"] = persistent_cache_key
+        block["persistent_cache_kind"] = "compiler_ir_metric_block"
+        _write_metric_disk_cache(
+            "compiler_ir_metric_block",
+            persistent_cache_key,
+            block,
         )
     emit_progress(
         "done",
@@ -3401,6 +3704,49 @@ def bridge_ir_metric_block(
         except Exception:
             pass
 
+    worker_count = _parallel_worker_count(
+        requested=parallel_workers,
+        item_count=len(sample_list),
+    )
+    block["worker_count"] = worker_count
+    persistent_cache_key = _bridge_ir_metric_block_cache_key(
+        sample_list,
+        bridge_names=adapter_names,
+        evaluate_provers=evaluate_provers,
+    )
+    zkp_adapter_present = "zkp_attestation" in set(adapter_names)
+    emit_progress(
+        "start",
+        evaluate_provers=evaluate_provers,
+        worker_count=worker_count,
+    )
+    cached_block = _read_metric_disk_cache(
+        "bridge_ir_metric_block",
+        persistent_cache_key,
+    )
+    if cached_block is not None:
+        cached = dict(cached_block)
+        cached["persistent_cache_enabled"] = True
+        cached["persistent_cache_hit"] = True
+        cached["persistent_cache_key"] = persistent_cache_key
+        cached["persistent_cache_kind"] = "bridge_ir_metric_block"
+        cached["worker_count"] = worker_count
+        if zkp_adapter_present:
+            cached["zkp_attestation_cache"] = {
+                "adapter_present": True,
+                "cache_key": persistent_cache_key,
+                "mode": "persistent_metric_certificate",
+                "persistent_cache_hit": True,
+            }
+        emit_progress(
+            "persistent_cache_hit",
+            cache_key=persistent_cache_key,
+            evaluated_count=cached.get("evaluated_count", 0),
+            metric_failures=cached.get("metric_failures", 0),
+        )
+        return cached
+    emit_progress("persistent_cache_miss", cache_key=persistent_cache_key)
+
     aggregate_values: Dict[str, List[float]] = {
         "acceptance": [],
         "graph_failure_penalty": [],
@@ -3422,6 +3768,8 @@ def bridge_ir_metric_block(
     failures_by_adapter: Dict[str, int] = {name: 0 for name in adapter_names}
     cache_hits = 0
     cache_misses = 0
+    persistent_sample_cache_hits = 0
+    persistent_sample_cache_misses = 0
     completed_samples = 0
     evaluation_seconds: List[float] = []
     cache_stats_lock = threading.Lock()
@@ -3430,6 +3778,7 @@ def bridge_ir_metric_block(
 
     def evaluate_sample(sample: Any) -> Any:
         nonlocal cache_hits, cache_misses, completed_samples
+        nonlocal persistent_sample_cache_hits, persistent_sample_cache_misses
         started = time.time()
         sample_id = str(getattr(sample, "sample_id", "") or "")
         citation = str(getattr(sample, "citation", "") or "")
@@ -3463,15 +3812,52 @@ def bridge_ir_metric_block(
                 sample_seconds=round(time.time() - started, 3),
             )
             return cached
+        disk_cache_key = _bridge_ir_multiview_report_cache_key(
+            sample,
+            bridge_names=adapter_names,
+            evaluate_provers=evaluate_provers,
+        )
+        cached_report = _read_metric_disk_cache(
+            "bridge_ir_multiview_report",
+            disk_cache_key,
+        )
+        if cached_report is not None:
+            with _BRIDGE_IR_REPORT_CACHE_LOCK:
+                if len(_BRIDGE_IR_REPORT_CACHE) >= BRIDGE_IR_REPORT_CACHE_MAX:
+                    _BRIDGE_IR_REPORT_CACHE.pop(next(iter(_BRIDGE_IR_REPORT_CACHE)), None)
+                _BRIDGE_IR_REPORT_CACHE[cache_key] = cached_report
+            with cache_stats_lock:
+                cache_hits += 1
+                persistent_sample_cache_hits += 1
+                evaluation_seconds.append(time.time() - started)
+                completed_samples += 1
+                completed = completed_samples
+                hits = cache_hits
+                misses = cache_misses
+                persistent_hits = persistent_sample_cache_hits
+            emit_progress(
+                "sample_persistent_cache_hit",
+                cache_hits=hits,
+                cache_misses=misses,
+                citation=citation,
+                completed_samples=completed,
+                persistent_sample_cache_hits=persistent_hits,
+                sample_id=sample_id,
+                sample_seconds=round(time.time() - started, 3),
+            )
+            return cached_report
         with cache_stats_lock:
             cache_misses += 1
+            persistent_sample_cache_misses += 1
             hits = cache_hits
             misses = cache_misses
+            persistent_misses = persistent_sample_cache_misses
         emit_progress(
             "sample_cache_miss",
             cache_hits=hits,
             cache_misses=misses,
             citation=citation,
+            persistent_sample_cache_misses=persistent_misses,
             sample_id=sample_id,
         )
         report = evaluate_legal_ir_multiview(
@@ -3487,6 +3873,12 @@ def bridge_ir_metric_block(
             if len(_BRIDGE_IR_REPORT_CACHE) >= BRIDGE_IR_REPORT_CACHE_MAX:
                 _BRIDGE_IR_REPORT_CACHE.pop(next(iter(_BRIDGE_IR_REPORT_CACHE)), None)
             _BRIDGE_IR_REPORT_CACHE[cache_key] = report
+        if hasattr(report, "to_dict"):
+            _write_metric_disk_cache(
+                "bridge_ir_multiview_report",
+                disk_cache_key,
+                report.to_dict(),
+            )
         with cache_stats_lock:
             evaluation_seconds.append(time.time() - started)
             completed_samples += 1
@@ -3506,16 +3898,6 @@ def bridge_ir_metric_block(
         )
         return report
 
-    worker_count = _parallel_worker_count(
-        requested=parallel_workers,
-        item_count=len(sample_list),
-    )
-    block["worker_count"] = worker_count
-    emit_progress(
-        "start",
-        evaluate_provers=evaluate_provers,
-        worker_count=worker_count,
-    )
     if worker_count <= 1:
         multiview_reports = [evaluate_sample(sample) for sample in sample_list]
     else:
@@ -3531,8 +3913,61 @@ def bridge_ir_metric_block(
     block["cache_size"] = cache_size
     block["evaluation_seconds_max"] = max(evaluation_seconds) if evaluation_seconds else 0.0
     block["evaluation_seconds_mean"] = _mean(evaluation_seconds)
+    block["persistent_sample_cache_hits"] = persistent_sample_cache_hits
+    block["persistent_sample_cache_misses"] = persistent_sample_cache_misses
 
     for multiview in multiview_reports:
+        if isinstance(multiview, Mapping):
+            canonical_values["acceptance_rate"].append(
+                _float_or_zero(multiview.get("acceptance_rate"))
+            )
+            canonical_values["graph_failure_penalty"].append(
+                _float_or_zero(multiview.get("graph_failure_penalty"))
+            )
+            canonical_values["proof_failure_ratio"].append(
+                _float_or_zero(multiview.get("proof_failure_ratio"))
+            )
+            canonical_values["total_loss"].append(
+                _float_or_zero(multiview.get("total_loss"))
+            )
+            canonical_values["view_coverage_loss"].append(
+                _float_or_zero(multiview.get("view_coverage_loss"))
+            )
+            canonical_values["view_count"].append(_float_or_zero(multiview.get("view_count")))
+            training_target = dict(multiview.get("training_target", {}) or {})
+            document_hash = str(
+                training_target.get("document_hash")
+                or multiview.get("document_hash")
+                or ""
+            )
+            if document_hash:
+                canonical_hashes.append(document_hash)
+            canonical_loss_map = dict(
+                multiview.get("canonical_loss_vector")
+                or training_target.get("losses")
+                or {}
+            )
+            for name, value in canonical_loss_map.items():
+                canonical_loss_values.setdefault(str(name), []).append(float(value))
+            view_distribution = dict(
+                training_target.get("view_distribution")
+                or multiview.get("view_distribution")
+                or {}
+            )
+            for name, value in view_distribution.items():
+                canonical_view_distribution_values.setdefault(str(name), []).append(
+                    float(value)
+                )
+            reports = dict(multiview.get("reports", {}) or {})
+            for adapter_name, report in reports.items():
+                reports_by_adapter.setdefault(str(adapter_name), []).append(
+                    _metric_mapping_to_namespace(report)
+                )
+            for adapter_name in dict(multiview.get("failures", {}) or {}):
+                failures_by_adapter[str(adapter_name)] = (
+                    failures_by_adapter.get(str(adapter_name), 0) + 1
+                )
+            continue
         canonical_values["acceptance_rate"].append(multiview.acceptance_rate)
         canonical_values["graph_failure_penalty"].append(multiview.graph_failure_penalty)
         canonical_values["proof_failure_ratio"].append(multiview.proof_failure_ratio)
@@ -3594,6 +4029,22 @@ def bridge_ir_metric_block(
     for name, values in aggregate_values.items():
         if values:
             block[name if name != "acceptance" else "acceptance_rate"] = _mean(values)
+    block["persistent_cache_enabled"] = _metric_disk_cache_enabled()
+    block["persistent_cache_hit"] = False
+    block["persistent_cache_key"] = persistent_cache_key
+    block["persistent_cache_kind"] = "bridge_ir_metric_block"
+    if zkp_adapter_present:
+        block["zkp_attestation_cache"] = {
+            "adapter_present": True,
+            "cache_key": persistent_cache_key,
+            "mode": "persistent_metric_certificate",
+            "persistent_cache_hit": False,
+        }
+    _write_metric_disk_cache(
+        "bridge_ir_metric_block",
+        persistent_cache_key,
+        block,
+    )
     emit_progress(
         "done",
         cache_hits=cache_hits,
@@ -3664,15 +4115,19 @@ def _adapter_metrics_from_reports(
         round_trip = getattr(report, "round_trip", None)
         for name in BRIDGE_ROUND_TRIP_METRIC_NAMES:
             metric_values[name].append(float(getattr(round_trip, name, 0.0) or 0.0))
-        for name, value in dict(getattr(round_trip, "extra_losses", {}) or {}).items():
+        for name, value in _metric_mapping_dict(
+            getattr(round_trip, "extra_losses", {})
+        ).items():
             metric_values.setdefault(str(name), []).append(_float_or_zero(value))
 
         ir_document = getattr(report, "ir_document", None)
-        views = dict(getattr(ir_document, "views", {}) or {})
+        views = _metric_mapping_dict(getattr(ir_document, "views", {}))
         for view_name, view in views.items():
             view_counts[str(view_name)] = view_counts.get(str(view_name), 0) + 1
             metadata_bucket = view_metadata_values.setdefault(str(view_name), {})
-            for key, value in dict(getattr(view, "metadata", {}) or {}).items():
+            for key, value in _metric_mapping_dict(
+                getattr(view, "metadata", {})
+            ).items():
                 if isinstance(value, bool):
                     continue
                 if isinstance(value, (int, float)):
@@ -3732,6 +4187,57 @@ def _parallel_worker_count(
         except ValueError:
             return 1
     return max(1, min(int(requested), int(item_count)))
+
+
+def _compiler_ir_metric_block_cache_key(
+    samples: Sequence[Any],
+    *,
+    codec: Any,
+    guidance_cache_records: Sequence[Mapping[str, Any]] = (),
+    guidance_top_k: int,
+    max_sample_metric_records: int,
+) -> str:
+    payload = {
+        "codec": {
+            "config": _metric_cache_object_payload(getattr(codec, "config", None)),
+            "type": f"{codec.__class__.__module__}.{codec.__class__.__qualname__}",
+        },
+        "guidance_cache_records": _metric_cache_object_payload(
+            list(guidance_cache_records)
+        ),
+        "guidance_top_k": int(guidance_top_k),
+        "max_sample_metric_records": int(max_sample_metric_records),
+        "samples": [_sample_metric_cache_payload(sample) for sample in samples],
+    }
+    return _metric_disk_cache_key("compiler_ir_metric_block", payload)
+
+
+def _bridge_ir_metric_block_cache_key(
+    samples: Sequence[Any],
+    *,
+    bridge_names: Sequence[str],
+    evaluate_provers: Optional[bool],
+) -> str:
+    payload = {
+        "bridge_names": list(bridge_names),
+        "evaluate_provers": evaluate_provers,
+        "samples": [_sample_metric_cache_payload(sample) for sample in samples],
+    }
+    return _metric_disk_cache_key("bridge_ir_metric_block", payload)
+
+
+def _bridge_ir_multiview_report_cache_key(
+    sample: Any,
+    *,
+    bridge_names: Sequence[str],
+    evaluate_provers: Optional[bool],
+) -> str:
+    payload = {
+        "bridge_names": list(bridge_names),
+        "evaluate_provers": evaluate_provers,
+        "sample": _sample_metric_cache_payload(sample),
+    }
+    return _metric_disk_cache_key("bridge_ir_multiview_report", payload)
 
 
 def _bridge_ir_report_cache_key(
@@ -5850,15 +6356,34 @@ def _paired_autoencoder_succeeded(
     )
 
 
+def _child_summary_latest_stop_reason(summary_path: Path) -> str:
+    """Return the latest child stop reason from a Codex/autoencoder summary."""
+
+    try:
+        data = json.loads(Path(summary_path).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return ""
+    return str(data.get("latest_stop_reason") or data.get("stop_reason") or "")
+
+
 def _paired_child_exit_should_restart(
     *,
     exit_code: Optional[int],
+    latest_stop_reason: str = "",
     restart_count: int,
     restart_limit: int,
     stop_requested: bool = False,
 ) -> bool:
     """Return whether accelerate-style supervision should replace a dead child."""
 
+    stop_reason = str(latest_stop_reason or "").strip().lower()
+    if (
+        not stop_requested
+        and exit_code == 0
+        and stop_reason.startswith("signal_")
+        and int(restart_count) < int(restart_limit)
+    ):
+        return True
     return accelerate_child_exit_should_restart(
         exit_code=exit_code,
         restart_count=restart_count,
@@ -7001,6 +7526,66 @@ def _codex_packet_target_metric_names(packet: Mapping[str, Any]) -> List[str]:
     return list(dict.fromkeys(metric for metric in metrics if metric))
 
 
+def _codex_target_metric_bridge_adapter_names(
+    target_metrics: Sequence[str],
+) -> List[str]:
+    """Return the cheapest bridge adapter set needed for target metric checks."""
+
+    mode = str(
+        os.environ.get("IPFS_DATASETS_CODEX_TARGET_METRIC_BRIDGE_MODE") or "targeted"
+    ).strip().lower()
+    if mode in _FALSE_ENV_VALUES:
+        return []
+    if mode in {"all", "full"}:
+        return list(DEFAULT_LEGAL_IR_BRIDGE_NAMES)
+
+    explicit = str(
+        os.environ.get("IPFS_DATASETS_CODEX_TARGET_METRIC_BRIDGE_ADAPTERS") or ""
+    ).strip()
+    if explicit:
+        return [
+            name
+            for name in dict.fromkeys(part.strip() for part in explicit.split(","))
+            if name and name.lower() not in _FALSE_ENV_VALUES
+        ]
+
+    requested: List[str] = []
+    legal_ir_view_requested = False
+    for metric in target_metrics:
+        normalized = str(metric or "").strip().lower()
+        if not normalized:
+            continue
+        if normalized.startswith("legal_ir_multiview_"):
+            return list(DEFAULT_LEGAL_IR_BRIDGE_NAMES)
+        if normalized.startswith("legal_ir_view_"):
+            legal_ir_view_requested = True
+            continue
+        if normalized.startswith(("deontic_", "norm_")):
+            requested.append("deontic_norms")
+            continue
+        if normalized.startswith(("tdfol_", "fol_", "first_order_")):
+            requested.append("fol_tdfol")
+            continue
+        if normalized.startswith(("cec_", "dcec_", "event_calculus_")):
+            requested.append("cec_dcec")
+            continue
+        if normalized.startswith(("zkp_", "zero_knowledge_", "attestation_")):
+            requested.append("zkp_attestation")
+            continue
+        if "prover" in normalized or normalized.startswith("proof_"):
+            requested.append("external_prover_router")
+            continue
+        if normalized.startswith(("kg_", "graph_", "knowledge_graph_")):
+            requested.extend(("modal_frame_logic", "deontic_norms"))
+            continue
+
+    if legal_ir_view_requested and not requested:
+        requested.extend(DEFAULT_LEGAL_IR_BRIDGE_NAMES)
+
+    requested_set = set(requested)
+    return [name for name in DEFAULT_LEGAL_IR_BRIDGE_NAMES if name in requested_set]
+
+
 def _codex_packet_target_metric_snapshot(
     packet: Mapping[str, Any],
     repo_root: Path,
@@ -7022,7 +7607,6 @@ def _codex_packet_target_metric_snapshot(
 import json
 import sys
 
-from ipfs_datasets_py.logic.bridge import DEFAULT_LEGAL_IR_BRIDGE_NAMES
 from ipfs_datasets_py.logic.modal import DeterministicModalLogicCodec, ModalLogicCodecConfig
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import build_us_code_sample
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_runner import (
@@ -7051,27 +7635,48 @@ for key, value in compiler.items():
 if "cosine_similarity" in metrics:
     metrics["embedding_cosine_similarity"] = metrics["cosine_similarity"]
 target_metrics = list(payload.get("target_metrics") or [])
-bridge = bridge_ir_metric_block(
-    samples,
-    DEFAULT_LEGAL_IR_BRIDGE_NAMES,
-    evaluate_provers=False,
-    parallel_workers=min(4, max(1, len(samples))),
-)
-canonical = dict(bridge.get("canonical_ir", {}) or {})
-canonical_losses = dict(canonical.get("losses", {}) or {})
-for key, value in canonical_losses.items():
-    if isinstance(value, (int, float)):
-        metrics[str(key)] = float(value)
-canonical_map = {
-    "legal_ir_multiview_total_loss": "total_loss",
-    "legal_ir_multiview_graph_failure_penalty": "graph_failure_penalty",
-    "legal_ir_multiview_proof_failure_ratio": "proof_failure_ratio",
-    "legal_ir_multiview_view_coverage_loss": "view_coverage_loss",
-}
-for metric_name, source_key in canonical_map.items():
-    value = canonical.get(source_key)
-    if isinstance(value, (int, float)):
-        metrics[metric_name] = float(value)
+bridge_names = [
+    str(name)
+    for name in payload.get("bridge_names", []) or []
+    if str(name).strip()
+]
+bridge = {}
+if bridge_names:
+    bridge = bridge_ir_metric_block(
+        samples,
+        bridge_names,
+        evaluate_provers=False,
+        parallel_workers=min(4, max(1, len(samples))),
+    )
+    canonical = dict(bridge.get("canonical_ir", {}) or {})
+    canonical_losses = dict(canonical.get("losses", {}) or {})
+    for key, value in canonical_losses.items():
+        if isinstance(value, (int, float)):
+            metrics[str(key)] = float(value)
+    canonical_map = {
+        "legal_ir_multiview_total_loss": "total_loss",
+        "legal_ir_multiview_graph_failure_penalty": "graph_failure_penalty",
+        "legal_ir_multiview_proof_failure_ratio": "proof_failure_ratio",
+        "legal_ir_multiview_view_coverage_loss": "view_coverage_loss",
+    }
+    for metric_name, source_key in canonical_map.items():
+        value = canonical.get(source_key)
+        if isinstance(value, (int, float)):
+            metrics[metric_name] = float(value)
+    if (
+        "legal_ir_view_cross_entropy_loss" not in metrics
+        and "legal_ir_multiview_cross_entropy_loss" in metrics
+    ):
+        metrics["legal_ir_view_cross_entropy_loss"] = float(
+            metrics["legal_ir_multiview_cross_entropy_loss"]
+        )
+    for adapter_name, adapter_block in dict(bridge.get("adapters", {}) or {}).items():
+        if not isinstance(adapter_block, dict):
+            continue
+        for key, value in adapter_block.items():
+            if isinstance(value, (int, float)):
+                metrics[str(key)] = float(value)
+                metrics[f"{adapter_name}.{key}"] = float(value)
 selected = {
     metric: metrics[metric]
     for metric in target_metrics
@@ -7079,14 +7684,24 @@ selected = {
 }
 print(json.dumps({
     "compiler": compiler,
+    "metric_cache": {
+        "bridge_persistent_cache_hit": bool(bridge.get("persistent_cache_hit")),
+        "bridge_skipped": not bool(bridge_names),
+        "compiler_persistent_cache_hit": bool(compiler.get("persistent_cache_hit")),
+    },
     "metric_count": len(selected),
     "metrics": selected,
     "sample_count": len(samples),
     "status": "measured",
+    "target_bridge_names": bridge_names,
     "target_metrics": target_metrics,
 }, sort_keys=True))
     '''
-    payload = {"samples": sample_payloads, "target_metrics": target_metrics}
+    payload = {
+        "bridge_names": _codex_target_metric_bridge_adapter_names(target_metrics),
+        "samples": sample_payloads,
+        "target_metrics": target_metrics,
+    }
     timeout = (
         _env_float(
             "IPFS_DATASETS_CODEX_TARGET_METRIC_TIMEOUT_SECONDS",
@@ -7096,10 +7711,14 @@ print(json.dumps({
         if timeout_seconds is None
         else max(1.0, float(timeout_seconds))
     )
+    env = _codex_apply_validation_env()
+    metric_cache_dir = _metric_disk_cache_dir()
+    if metric_cache_dir is not None:
+        env.setdefault(LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV, str(metric_cache_dir))
     result = accelerate_run_process_group_capture(
         [sys.executable, "-c", script],
         cwd=repo_root,
-        env=_codex_apply_validation_env(),
+        env=env,
         input_text=json.dumps(payload, ensure_ascii=True),
         timeout_seconds=timeout,
     )
@@ -10800,6 +11419,12 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                     accelerate_style_supervision
                     and _paired_child_exit_should_restart(
                         exit_code=auto_exit_code,
+                        latest_stop_reason=str(
+                            paired_autoencoder_child_health(
+                                autoencoder_summary_path
+                            ).get("autoencoder_latest_stop_reason")
+                            or ""
+                        ),
                         restart_count=autoencoder_restart_count,
                         restart_limit=autoencoder_restart_limit,
                         stop_requested=stop_state.stop_requested,
@@ -10887,6 +11512,9 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                         )
                         if not _paired_child_exit_should_restart(
                             exit_code=exit_code,
+                            latest_stop_reason=_child_summary_latest_stop_reason(
+                                log_dir / f"{child_run_id}.summary"
+                            ),
                             restart_count=restart_count,
                             restart_limit=codex_worker_restart_limit,
                             stop_requested=stop_state.stop_requested,

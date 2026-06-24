@@ -259,6 +259,88 @@ def test_modal_decompiler_promotes_predicate_head_source_action_role_slots() -> 
     )
 
 
+def test_modal_decompiler_infers_definition_condition_scope_from_source_span() -> None:
+    text = (
+        '§115. Vessel In this title, the term "vessel" has the meaning given '
+        "that term in section 3 of title 1."
+    )
+    formula = ModalIRFormula(
+        formula_id="f_vessel_definition",
+        operator=ModalIROperator(
+            family="frame",
+            system="Frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="define_vessel", role="clause"),
+        provenance=ModalIRProvenance(
+            source_id="us-code-46-115-definition",
+            start_char=0,
+            end_char=len(text),
+            citation="46 U.S.C. 115",
+        ),
+        metadata={"cue": "means"},
+    )
+    document = ModalIRDocument(
+        document_id="us-code-46-115-definition",
+        source="us_code",
+        normalized_text=text,
+        formulas=[formula],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+
+    assert "as defined in section 3 of title 1" in slot_texts["condition"]
+    assert "as_defined_in" in slot_texts["condition_prefix_key"]
+    assert "section 3 of title 1" in slot_texts["condition_scope"]
+    assert "frame->conditional_normative" in slot_texts[
+        "clause_sequence_modal_family_pair"
+    ]
+
+
+def test_modal_decompiler_infers_effective_date_condition_from_context_span() -> None:
+    text = (
+        "The commander shall hold the grade of general while serving in that "
+        "position. Statutory Notes Effective Date of 1972 Amendment Amendment "
+        "effective on first day of first applicable pay period beginning on or "
+        "after 90th day after Aug. 19, 1972."
+    )
+    start = text.index("shall")
+    end = text.index("position") + len("position")
+    formula = ModalIRFormula(
+        formula_id="f_effective_date_context",
+        operator=ModalIROperator(
+            family="deontic",
+            system="D",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="hold_grade", role="clause"),
+        provenance=ModalIRProvenance(
+            source_id="us-code-52-30124-effective-date",
+            start_char=start,
+            end_char=end,
+            citation="52 U.S.C. 30124",
+        ),
+        metadata={"cue": "shall"},
+    )
+    document = ModalIRDocument(
+        document_id="us-code-52-30124-effective-date",
+        source="us_code",
+        normalized_text=text,
+        formulas=[formula],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+
+    assert "effective_date" in slot_texts["condition_prefix_key"]
+    assert "temporal" in slot_texts["condition_prefix_family"]
+    assert "effective_date:deadline" in slot_texts[
+        "condition_scope_refined_temporal_bridge_context"
+    ]
+    assert "deontic->temporal" in slot_texts["clause_sequence_modal_family_pair"]
+
+
 def test_modal_decompiler_refines_within_deadline_condition_slots() -> None:
     formula = ModalIRFormula(
         formula_id="f_within_deadline",
@@ -1257,6 +1339,48 @@ def test_flogic_graph_projection_aligns_omitted_uscode_section_status() -> None:
     assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
     assert graph_data.metadata["frame_logic_projection_legal_view_coverage_ratio"] == 1.0
     assert graph_data.metadata["legal_ir_multiview_graph_failure_penalty"] == 0.0
+
+
+def test_flogic_graph_projection_extracts_uscode_body_structure_from_sparse_text() -> None:
+    graph_data = flogic_triples_to_graph_data(
+        [
+            {
+                "subject": "us-code-49-32301.-a193232e8cf56de7",
+                "predicate": "sample_text",
+                "object": (
+                    "\u00a732301. Definitions In this chapter\u2014 (1) \"crash avoidance\" "
+                    'means preventing or mitigating a crash; (2) "crashworthiness" '
+                    "means the protection a passenger motor vehicle gives its "
+                    "passengers against personal injury or death; and (3) "
+                    '"damage susceptibility" means the susceptibility of a '
+                    "passenger motor vehicle to damage in a motor vehicle accident."
+                ),
+            }
+        ],
+        graph_id="us-code-49-32301.-a193232e8cf56de7:flogic",
+    )
+
+    triples = {
+        (rel.properties["flogic_predicate"], rel.properties["flogic_object"]): rel
+        for rel in graph_data.relationships
+    }
+    view_by_predicate = {
+        rel.properties["flogic_predicate"]: rel.properties["frame_logic_projection_view"]
+        for rel in graph_data.relationships
+    }
+
+    assert ("section_catchline", "Definitions") in triples
+    assert ("section_style_has_paragraphs", "true") in triples
+    assert ("section_paragraph_count", "3") in triples
+    assert ("section_style_definition_list", "true") in triples
+    assert ("section_definition_term_count", "3") in triples
+    assert ("section_definition_term", "crash avoidance") in triples
+    assert ("section_definition_term", "crashworthiness") in triples
+    assert ("section_definition_term", "damage susceptibility") in triples
+    assert view_by_predicate["section_definition_term"] == "section_structure"
+    assert view_by_predicate["section_paragraph_count"] == "section_structure"
+    assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
+    assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
 
 
 def test_modal_ir_graph_projection_metadata_keeps_frame_logic_selected_frame() -> None:
@@ -33820,6 +33944,60 @@ def test_decode_modal_ir_document_uses_bounded_source_semantics_for_sparse_typed
     assert "government publishing office" not in typed_reconstruction
 
 
+def test_decode_modal_ir_document_promotes_long_span_typed_semantics_without_copying_source() -> None:
+    clause = (
+        "No water shall be delivered to the lands of any water-right applicant "
+        "or entryman who shall be in arrears for more than one calendar year "
+        "for the payment of any charge for operation and maintenance. "
+    )
+    source_text = (clause * 3).strip()
+    document = ModalIRDocument(
+        document_id="us-code-43-495.-long-typed-semantic-reconstruction",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-long-water-charge-obligation",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="D",
+                    symbol="O",
+                    label="obligation",
+                ),
+                predicate=ModalIRPredicate(
+                    name="deliver_water",
+                    arguments=["water_right_applicant", "operation_charge"],
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-43-495.-long-typed-semantic-reconstruction",
+                    start_char=0,
+                    end_char=len(source_text),
+                    citation="43 U.S.C. 495.",
+                ),
+                conditions=["for more than one calendar year"],
+                metadata={"cue": "shall"},
+            )
+        ],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    semantic_slot_texts = decoded_modal_phrase_slot_text_map(
+        decoded,
+        include_provenance_only=False,
+    )
+
+    assert decoded.text
+    assert "water shall delivered lands" in decoded.text
+    assert "water_right_applicant" in decoded.text
+    assert "operation_charge" in decoded.text
+    assert len(decoded.text) < len(source_text) // 2
+    assert "typed_ir_surface_reconstruction" in semantic_slot_texts
+    assert "modal_source_span" not in semantic_slot_texts
+    assert "modal_source_span" in slot_texts
+
+
 def test_decode_modal_ir_document_promotes_typed_surface_for_uscode_scaffold() -> None:
     source_text = (
         "U.S.C. Title 2 - THE CONGRESS 2 U.S.C. United States Code, 2024 "
@@ -33870,6 +34048,107 @@ def test_decode_modal_ir_document_promotes_typed_surface_for_uscode_scaffold() -
     assert "provide office space" in decoded.text
     assert "not later than fiscal year 2027" in decoded.text
     assert "United States Code, 2024 Edition" not in decoded.text
+
+
+def test_decode_modal_ir_document_promotes_uscode_public_law_residual_surface() -> None:
+    source_text = (
+        "U.S.C. Title 16 - CONSERVATION 16 U.S.C. United States Code, 2024 "
+        "Edition Title 16 - CONSERVATION CHAPTER 61 - INTERJURISDICTIONAL "
+        "FISHERIES Sec. 4107 - Repealed. Pub. L. 117-328, div. S, title II, "
+        "Sec. 204(a), Dec. 29, 2022, 136 Stat. 5270"
+    )
+    status_start = source_text.index("4107")
+    status_end = source_text.index("Pub. L.")
+    public_law_start = status_end
+    document = ModalIRDocument(
+        document_id="packet-000109-repealed-public-law-residual",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-uscode-scaffold-residual",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="FRAME_BM25",
+                    symbol="Frame",
+                    label="ontology_frame",
+                ),
+                predicate=ModalIRPredicate(
+                    name="u_s_c_title_conservation",
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="packet-000109-repealed-public-law-residual",
+                    start_char=0,
+                    end_char=status_start,
+                    citation="16 U.S.C. 4107",
+                ),
+                metadata={
+                    "cue": "__uscode_residual_span_fallback__",
+                    "fallback_rule": "uscode_residual_span_coverage_v1",
+                },
+            ),
+            ModalIRFormula(
+                formula_id="f-uscode-public-law-residual",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="FRAME_BM25",
+                    symbol="Frame",
+                    label="ontology_frame",
+                ),
+                predicate=ModalIRPredicate(
+                    name="pub_l_div_s_title_ii",
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="packet-000109-repealed-public-law-residual",
+                    start_char=public_law_start,
+                    end_char=len(source_text),
+                    citation="16 U.S.C. 4107",
+                ),
+                metadata={
+                    "cue": "__uscode_residual_span_fallback__",
+                    "fallback_rule": "uscode_residual_span_coverage_v1",
+                },
+            ),
+            ModalIRFormula(
+                formula_id="f-uscode-repealed-status",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="FRAME_BM25",
+                    symbol="Frame",
+                    label="ontology_frame",
+                ),
+                predicate=ModalIRPredicate(name="repealed", role="clause"),
+                provenance=ModalIRProvenance(
+                    source_id="packet-000109-repealed-public-law-residual",
+                    start_char=status_start,
+                    end_char=status_end,
+                    citation="16 U.S.C. 4107",
+                ),
+                metadata={
+                    "cue": "__uscode_editorial_status_fallback__",
+                    "fallback_rule": "uscode_editorial_status_heading_v1",
+                    "status_keyword": "repealed",
+                },
+            ),
+        ],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    semantic_slot_texts = decoded_modal_phrase_slot_text_map(
+        decoded,
+        include_provenance_only=False,
+    )
+
+    assert (
+        "Pub. L. 117-328, div. S, title II, Sec. 204(a), Dec. 29, 2022, "
+        "136 Stat. 5270"
+        in slot_texts["typed_ir_surface_reconstruction"]
+    )
+    assert "public_law" not in decoded.text
+    assert "modal_source_span" not in semantic_slot_texts
 
 
 def test_decode_modal_ir_document_adds_long_span_semantic_support_without_boilerplate() -> None:

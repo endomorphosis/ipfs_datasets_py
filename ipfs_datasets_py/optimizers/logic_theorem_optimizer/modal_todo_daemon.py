@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import heapq
 import json
+import os
 import sys
 import threading
 from concurrent.futures import ThreadPoolExecutor
@@ -223,8 +224,14 @@ PROGRAM_SYNTHESIS_SCOPE_VALIDATION_TESTS = {
     ),
 }
 BRIDGE_LOSS_CACHE_MAX = 4096
+BRIDGE_LOSS_DISK_CACHE_VERSION = "legal-ir-bridge-loss-disk-cache-v1"
+LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV = "IPFS_DATASETS_LEGAL_IR_METRIC_CACHE_DIR"
+LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV = "IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE"
+_FALSE_ENV_VALUES = {"0", "false", "no", "off", "none", "disabled"}
 _BRIDGE_LOSS_CACHE_LOCK = threading.Lock()
 _BRIDGE_LOSS_CACHE: Dict[str, Dict[str, float]] = {}
+_BRIDGE_LOSS_CODE_FINGERPRINT_LOCK = threading.Lock()
+_BRIDGE_LOSS_CODE_FINGERPRINT_VALUE: Optional[str] = None
 
 AUTOENCODER_TRAINABLE_ACTIONS = {
     "improve_legal_ir_view_distribution",
@@ -380,6 +387,13 @@ def bridge_loss_evaluator_for_names(
             cached_losses = _BRIDGE_LOSS_CACHE.get(cache_key)
         if cached_losses is not None:
             return sample.sample_id, dict(cached_losses)
+        cached_losses = _read_bridge_loss_disk_cache(cache_key)
+        if cached_losses is not None:
+            with _BRIDGE_LOSS_CACHE_LOCK:
+                if len(_BRIDGE_LOSS_CACHE) >= BRIDGE_LOSS_CACHE_MAX:
+                    _BRIDGE_LOSS_CACHE.pop(next(iter(_BRIDGE_LOSS_CACHE)), None)
+                _BRIDGE_LOSS_CACHE[cache_key] = dict(cached_losses)
+            return sample.sample_id, dict(cached_losses)
         try:
             from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
 
@@ -395,12 +409,12 @@ def bridge_loss_evaluator_for_names(
             sample_losses.update(_multiview_losses_for_optimizer(multiview))
         except Exception:
             sample_losses["legal_ir_multiview_bridge_evaluation_failure_loss"] = 1.0
-        if sample_losses:
-            sample_losses = dict(sorted(sample_losses.items()))
-            with _BRIDGE_LOSS_CACHE_LOCK:
-                if len(_BRIDGE_LOSS_CACHE) >= BRIDGE_LOSS_CACHE_MAX:
-                    _BRIDGE_LOSS_CACHE.pop(next(iter(_BRIDGE_LOSS_CACHE)), None)
-                _BRIDGE_LOSS_CACHE[cache_key] = dict(sample_losses)
+        sample_losses = dict(sorted(sample_losses.items()))
+        with _BRIDGE_LOSS_CACHE_LOCK:
+            if len(_BRIDGE_LOSS_CACHE) >= BRIDGE_LOSS_CACHE_MAX:
+                _BRIDGE_LOSS_CACHE.pop(next(iter(_BRIDGE_LOSS_CACHE)), None)
+            _BRIDGE_LOSS_CACHE[cache_key] = dict(sample_losses)
+        _write_bridge_loss_disk_cache(cache_key, sample_losses)
         return sample.sample_id, dict(sorted(sample_losses.items()))
 
     def evaluate(samples: Sequence[LegalSample]) -> Mapping[str, Mapping[str, float]]:
@@ -487,6 +501,138 @@ def _bridge_loss_cache_key(
     return hashlib.sha256(
         json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
     ).hexdigest()
+
+
+def _bridge_loss_disk_cache_enabled() -> bool:
+    raw = str(os.environ.get(LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV) or "").strip().lower()
+    return raw not in _FALSE_ENV_VALUES
+
+
+def _bridge_loss_default_disk_cache_dir() -> Path:
+    try:
+        repo_root = Path(__file__).resolve().parents[3]
+    except (IndexError, OSError, RuntimeError):
+        repo_root = Path.cwd()
+    return repo_root / "workspace" / "test-logs" / "legal-ir-metric-cache"
+
+
+def _bridge_loss_disk_cache_dir() -> Optional[Path]:
+    if not _bridge_loss_disk_cache_enabled():
+        return None
+    raw = str(os.environ.get(LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV) or "").strip()
+    if raw.lower() in _FALSE_ENV_VALUES:
+        return None
+    return Path(raw).expanduser() if raw else _bridge_loss_default_disk_cache_dir()
+
+
+def _bridge_loss_code_fingerprint() -> str:
+    global _BRIDGE_LOSS_CODE_FINGERPRINT_VALUE
+    with _BRIDGE_LOSS_CODE_FINGERPRINT_LOCK:
+        if _BRIDGE_LOSS_CODE_FINGERPRINT_VALUE:
+            return _BRIDGE_LOSS_CODE_FINGERPRINT_VALUE
+        try:
+            package_root = Path(__file__).resolve().parents[2]
+        except (IndexError, OSError, RuntimeError):
+            package_root = Path.cwd()
+        candidates = [
+            Path(__file__),
+            package_root / "logic" / "bridge",
+            package_root / "logic" / "modal",
+            package_root
+            / "knowledge_graphs"
+            / "neo4j_compat"
+            / "legal_ir_projection.py",
+        ]
+        tokens: List[str] = []
+        for candidate in candidates:
+            paths = (
+                sorted(candidate.rglob("*.py"))
+                if candidate.is_dir()
+                else [candidate]
+            )
+            for path in paths:
+                try:
+                    stat = path.stat()
+                except (OSError, RuntimeError):
+                    continue
+                try:
+                    relative = path.relative_to(package_root)
+                except ValueError:
+                    relative = path
+                tokens.append(f"{relative}:{stat.st_mtime_ns}:{stat.st_size}")
+        _BRIDGE_LOSS_CODE_FINGERPRINT_VALUE = (
+            hashlib.sha256("\n".join(tokens).encode("utf-8")).hexdigest()
+            if tokens
+            else "unknown"
+        )
+        return _BRIDGE_LOSS_CODE_FINGERPRINT_VALUE
+
+
+def _bridge_loss_disk_cache_key(memory_cache_key: str) -> str:
+    payload = {
+        "code_fingerprint": _bridge_loss_code_fingerprint(),
+        "memory_cache_key": str(memory_cache_key),
+        "version": BRIDGE_LOSS_DISK_CACHE_VERSION,
+    }
+    return hashlib.sha256(
+        json.dumps(
+            payload,
+            ensure_ascii=True,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+    ).hexdigest()
+
+
+def _bridge_loss_disk_cache_path(memory_cache_key: str) -> Optional[Path]:
+    root = _bridge_loss_disk_cache_dir()
+    if root is None:
+        return None
+    key = _bridge_loss_disk_cache_key(memory_cache_key)
+    return root / "bridge_loss_optimizer" / key[:2] / f"{key}.json"
+
+
+def _read_bridge_loss_disk_cache(memory_cache_key: str) -> Optional[Dict[str, float]]:
+    path = _bridge_loss_disk_cache_path(memory_cache_key)
+    if path is None or not path.is_file():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if data.get("version") != BRIDGE_LOSS_DISK_CACHE_VERSION:
+        return None
+    if data.get("code_fingerprint") != _bridge_loss_code_fingerprint():
+        return None
+    losses = data.get("losses")
+    if not isinstance(losses, Mapping):
+        return None
+    return {str(name): _safe_float(value) for name, value in losses.items()}
+
+
+def _write_bridge_loss_disk_cache(
+    memory_cache_key: str,
+    losses: Mapping[str, float],
+) -> None:
+    path = _bridge_loss_disk_cache_path(memory_cache_key)
+    if path is None:
+        return
+    payload = {
+        "code_fingerprint": _bridge_loss_code_fingerprint(),
+        "losses": {str(name): _safe_float(value) for name, value in losses.items()},
+        "memory_cache_key": str(memory_cache_key),
+        "version": BRIDGE_LOSS_DISK_CACHE_VERSION,
+    }
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp_path = path.with_suffix(f"{path.suffix}.{os.getpid()}.tmp")
+        tmp_path.write_text(
+            json.dumps(payload, ensure_ascii=True, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        tmp_path.replace(path)
+    except OSError:
+        return
 
 
 def _multiview_losses_for_optimizer(multiview: Any) -> Dict[str, float]:
