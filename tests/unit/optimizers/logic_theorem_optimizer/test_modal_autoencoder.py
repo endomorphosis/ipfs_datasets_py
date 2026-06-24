@@ -29,6 +29,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder impor
     symbolic_validity_penalty,
     _evaluation_improved_for_training,
     _legal_ir_target_cache_key,
+    _source_decompiled_text_losses_from_targets,
 )
 
 
@@ -61,6 +62,33 @@ def test_embedding_loss_helpers() -> None:
 def test_loss_helpers_reject_vector_length_mismatch() -> None:
     with pytest.raises(ValueError, match="same length"):
         cosine_similarity([1.0], [1.0, 2.0])
+
+
+def test_source_decompiled_loss_normalization_prefers_same_space_cosine() -> None:
+    losses = _source_decompiled_text_losses_from_targets(
+        {
+            "cosine_similarity": 0.82,
+            "raw_source_embedding_cosine_similarity": -0.35,
+            "structural_text_reconstruction_loss": 0.27,
+        }
+    )
+
+    assert losses["source_decompiled_text_embedding_cosine_loss"] == pytest.approx(
+        0.18
+    )
+    assert losses["source_decompiled_text_token_loss"] == pytest.approx(0.27)
+
+    explicit_losses = _source_decompiled_text_losses_from_targets(
+        {
+            "source_decompiled_text_embedding_cosine_loss": 0.11,
+            "cosine_similarity": 0.82,
+            "raw_source_embedding_cosine_similarity": -0.35,
+        }
+    )
+
+    assert explicit_losses["source_decompiled_text_embedding_cosine_loss"] == (
+        pytest.approx(0.11)
+    )
 
 
 def test_modal_autoencoder_baseline_reports_fixture_losses() -> None:

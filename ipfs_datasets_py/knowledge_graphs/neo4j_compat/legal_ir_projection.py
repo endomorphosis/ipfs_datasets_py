@@ -24,6 +24,19 @@ _SECTION_MARKER_RE = re.compile(
     r"(?:to|through|thru)\s+\d+[A-Za-z0-9]*(?:[.-][A-Za-z0-9]+)*)?(?:\.)?)",
     re.IGNORECASE,
 )
+_SECTION_HEADING_MARKER_RE = re.compile(
+    r"(?:§{1,2}|sec\.?|section)\s*"
+    r"(?P<section>\d+[A-Za-z0-9]*(?:[.-][A-Za-z0-9]+)*(?:\s+"
+    r"(?:to|through|thru)\s+\d+[A-Za-z0-9]*(?:[.-][A-Za-z0-9]+)*)?(?:\.)?)"
+    r"\s*(?:[-.]|\])\s*(?P<heading>[^§]+?)(?="
+    r"\s+From the U\.S\. Government Publishing Office\b|"
+    r"\s+Editorial Notes\b|"
+    r"\s+Statutory Notes\b|"
+    r"\s+\([a-z]\)(?:\([0-9A-Za-z]+\))?(?:\s|$)|"
+    r"\s+\(Pub\.|\s+\(Added|\s+\(June|\s+\(Sept\.|"
+    r"$)",
+    re.IGNORECASE,
+)
 _USCODE_TITLE_RE = re.compile(
     r"(?P<title>\d+[A-Za-z]*)\s+U\.?S\.?C\.?",
     re.IGNORECASE,
@@ -108,6 +121,8 @@ def augment_legal_ir_projection_triples(
                 components.extend(_citation_from_text_components(obj))
             if not _has_family(existing_predicates, "source_id_"):
                 components.extend(_source_id_from_text_components(obj))
+            if not _has_family(existing_predicates, "section_marker"):
+                components.extend(_section_text_components(obj))
             if "status_keyword" not in existing_predicates:
                 components.extend(_editorial_status_components(obj))
         if not components:
@@ -243,6 +258,34 @@ def _citation_from_text_components(text: str) -> List[Tuple[str, str]]:
     return _citation_components(citation)
 
 
+def _section_text_components(text: str) -> List[Tuple[str, str]]:
+    normalized = _normalize_dashes(text)
+    section_match = _SECTION_MARKER_RE.search(normalized)
+    if not section_match:
+        return []
+    raw_section = section_match.group("section")
+    section = _normalize_section(raw_section)
+    components: List[Tuple[str, str]] = [
+        ("section_marker", raw_section),
+        ("section_marker_normalized", section),
+        ("section_marker_component_profile", _section_profile(section)),
+    ]
+    components.extend(_section_range_components("section_marker", section))
+
+    heading_match = _SECTION_HEADING_MARKER_RE.search(normalized)
+    if heading_match:
+        heading = _clean_heading_text(heading_match.group("heading"))
+        if heading:
+            components.append(("section_heading_tail", heading))
+            components.append(("section_catchline", heading))
+            parts = _section_heading_parts(heading)
+            if len(parts) > 1:
+                components.append(("section_heading_part_count", str(len(parts))))
+                for index, part in enumerate(parts, start=1):
+                    components.append((f"section_heading_part_{index}", part))
+    return _clean_components(components)
+
+
 def _editorial_status_components(text: str) -> List[Tuple[str, str]]:
     normalized = _normalize_dashes(text)
     components: List[Tuple[str, str]] = []
@@ -251,6 +294,22 @@ def _editorial_status_components(text: str) -> List[Tuple[str, str]]:
             components.append(("status_keyword", keyword))
             components.append((f"status_keyword_{keyword}", "true"))
     return components
+
+
+def _clean_heading_text(text: str) -> str:
+    heading = re.sub(r"\s+", " ", _normalize_dashes(text)).strip(" -.;")
+    # Some sparse samples continue directly into text after a short catchline.
+    # Keep the canonical heading span conservative and deterministic.
+    heading = re.sub(r"\s+(Nothing|Each|Whoever|The|In)\b.*$", "", heading).strip(" -.;")
+    return heading
+
+
+def _section_heading_parts(heading: str) -> List[str]:
+    return [
+        part.strip(" -.;")
+        for part in heading.split(";")
+        if part.strip(" -.;")
+    ]
 
 
 def _canonical_usc_citation(title: str, section: str) -> str:

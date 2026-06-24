@@ -78,12 +78,14 @@ _CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("includes", "includes"),
     ("include", "include"),
     ("pursuant to", "pursuant_to"),
+    ("to the extent that", "to_the_extent_that"),
     ("to the extent", "to_the_extent"),
     ("to the extent provided", "to_the_extent_provided"),
     ("not later than", "not_later_than"),
     ("no later than", "no_later_than"),
     ("not later", "not_later"),
     ("no later", "no_later"),
+    ("prior to", "prior_to"),
     ("which", "which"),
     ("if", "if"),
     ("when", "when"),
@@ -111,6 +113,7 @@ _TEMPORAL_CLAUSE_PREFIX_RELATIONS: dict[str, str] = {
     "until": "until",
     "after": "after",
     "before": "before",
+    "prior_to": "before",
     "by": "deadline",
     "no_later_than": "deadline",
     "not_later_than": "deadline",
@@ -838,6 +841,7 @@ _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...
         ("deontic", "O"),
     ),
     "to_the_extent": (("conditional_normative", "O|"),),
+    "to_the_extent_that": (("conditional_normative", "O|"),),
     "to_the_extent_provided": (("conditional_normative", "O|"),),
     "in_accordance_with": (
         ("conditional_normative", "O|"),
@@ -950,6 +954,11 @@ _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...
         ("dynamic", "[a]"),
     ),
     "before": (
+        ("conditional_normative", "O|"),
+        ("temporal", "X"),
+        ("dynamic", "[a]"),
+    ),
+    "prior_to": (
         ("conditional_normative", "O|"),
         ("temporal", "X"),
         ("dynamic", "[a]"),
@@ -1159,7 +1168,7 @@ _SOURCE_ANCHOR_DIRECTIONAL_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = 
 }
 _DECOMPILER_REFINED_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = {
     "alethic": ("deontic",),
-    "conditional_normative": ("deontic", "temporal"),
+    "conditional_normative": ("deontic", "dynamic", "temporal"),
     "deontic": ("conditional_normative", "frame", "temporal"),
     "dynamic": ("dynamic", "temporal"),
     "epistemic": ("conditional_normative",),
@@ -1355,6 +1364,7 @@ _FRAME_TEMPORAL_BRIDGE_CUES: frozenset[str] = frozenset(
         "no_later_than",
         "not_later",
         "no_later",
+        "prior_to",
         "within",
     }
 )
@@ -1415,6 +1425,7 @@ _TEMPORAL_BRIDGE_CONTEXT_PHRASES: tuple[tuple[str, str], ...] = (
     ("not later than", "not_later_than"),
     ("no later", "no_later"),
     ("not later", "not_later"),
+    ("prior to", "prior_to"),
     ("effective date", "effective_date"),
     ("effective dates", "effective_date"),
     ("fiscal year", "fiscal_year"),
@@ -5685,7 +5696,12 @@ def _legal_ir_view_prototype_phrases(
             target_role_pair_slots = [
                 f"predicate-role:{predicate_role}",
                 f"family-role:{family}:{predicate_role}",
+                f"modal-family:{family}",
             ]
+            if operator_label:
+                target_role_pair_slots.append(
+                    f"operator-label:{family}:{operator_label}"
+                )
             if modal_operator_slot:
                 target_role_pair_slots.append(f"modal-operator:{modal_operator_slot}")
                 add_slot_pair(
@@ -5694,6 +5710,19 @@ def _legal_ir_view_prototype_phrases(
                     right_slot=f"modal-operator:{modal_operator_slot}",
                     spans=spans,
                 )
+                add_slot_pair(
+                    family=target_family,
+                    left_slot=f"modal-family:{family}",
+                    right_slot=f"modal-operator:{modal_operator_slot}",
+                    spans=spans,
+                )
+                if operator_label:
+                    add_slot_pair(
+                        family=target_family,
+                        left_slot=f"operator-label:{family}:{operator_label}",
+                        right_slot=f"modal-operator:{modal_operator_slot}",
+                        spans=spans,
+                    )
             for left_slot in count_pair_slots:
                 for right_slot in target_role_pair_slots:
                     add_slot_pair(
@@ -5769,6 +5798,32 @@ def _legal_ir_view_prototype_phrases(
                         right_slot=f"source-family:{family}",
                         spans=spans,
                     )
+                    add_slot_pair(
+                        family=target_family,
+                        left_slot=clause_index_slot,
+                        right_slot=f"modal-family:{family}",
+                        spans=spans,
+                    )
+                    add_slot_pair(
+                        family=target_family,
+                        left_slot=clause_index_slot,
+                        right_slot=f"family-role:{family}:{predicate_role}",
+                        spans=spans,
+                    )
+                    if modal_operator_slot:
+                        add_slot_pair(
+                            family=target_family,
+                            left_slot=clause_index_slot,
+                            right_slot=f"modal-operator:{modal_operator_slot}",
+                            spans=spans,
+                        )
+                    if operator_label:
+                        add_slot_pair(
+                            family=target_family,
+                            left_slot=clause_index_slot,
+                            right_slot=f"operator-label:{family}:{operator_label}",
+                            spans=spans,
+                        )
                 parsed_clause = _typed_clause_slot(clause, slot=typed_slot)
                 clause_family = family
                 prefix_key = ""
@@ -6700,6 +6755,11 @@ def _decompiler_flow_contract_slot_values(
     source_temporal_state = "tyes" if source_has_temporal else "tno"
     ir_condition_state = "cyes" if formula.conditions else "cno"
     ir_exception_state = "eyes" if formula.exceptions else "eno"
+    source_family_pairs = (
+        _typed_decompiler_family_pairs(document=document, formula=formula)
+        if document is not None
+        else [f"{family}->{family}"]
+    )
     slots: List[Tuple[str, str]] = [
         (
             "logic_view_contract",
@@ -6719,6 +6779,73 @@ def _decompiler_flow_contract_slot_values(
             ),
         ),
     ]
+    scope_contract_targets: List[str] = [family]
+    for family_pair in source_family_pairs:
+        if "->" not in family_pair:
+            continue
+        _source_family, target_family = (
+            _slot_safe_family_key(part)
+            for part in family_pair.split("->", 1)
+        )
+        if target_family and target_family not in scope_contract_targets:
+            scope_contract_targets.append(target_family)
+    for scope in source_scope_tags or ["unconditioned"]:
+        for target_family in scope_contract_targets:
+            slots.extend(
+                (
+                    (
+                        "compiler_contract_scope_ir_contract",
+                        (
+                            f"{scope}:{target_family}:"
+                            f"{ir_condition_state}:{ir_exception_state}"
+                        ),
+                    ),
+                    (
+                        "compiler_contract",
+                        (
+                            f"scope-ir-contract:{scope}:{target_family}:"
+                            f"{ir_condition_state}:{ir_exception_state}"
+                        ),
+                    ),
+                )
+            )
+            if source_has_temporal or target_family == "temporal":
+                target_symbol = _modal_operator_feature_key(
+                    _typed_ir_refined_target_symbol(
+                        target_family,
+                        fallback_symbol=formula.operator.symbol,
+                    )
+                ) or symbol
+                priority_value = (
+                    f"temporal-guard:none:{target_family}:"
+                    f"{target_symbol}:{role}"
+                )
+                slots.extend(
+                    (
+                        ("defeasible_priority_temporal_priority", priority_value),
+                        (
+                            "defeasible_priority",
+                            f"temporal-priority:{priority_value}",
+                        ),
+                        (
+                            "defeasible_priority_temporal_contract",
+                            (
+                                f"temporal-guard:none:{family}:{target_family}:"
+                                f"{ir_condition_state}:{ir_exception_state}:"
+                                f"{source_temporal_state}"
+                            ),
+                        ),
+                        (
+                            "defeasible_priority",
+                            (
+                                "temporal-contract:"
+                                f"temporal-guard:none:{family}:{target_family}:"
+                                f"{ir_condition_state}:{ir_exception_state}:"
+                                f"{source_temporal_state}"
+                            ),
+                        ),
+                    )
+                )
     for cue, phase in source_cues[:8]:
         slots.extend(
             (
@@ -12174,6 +12301,37 @@ def _source_role_anchor_phrases(
                 ),
                 f"{anchor_key}:{pair_key}",
             )
+            target_family_slot = (
+                f"{predicate_family}||slot:source-{role_key}-target-family:"
+                f"{anchor_key}:{target_family}"
+            )
+            add(
+                "family_semantic_slot_legal_ir_view_prototype",
+                f"{target_family_slot}||{view_name}",
+            )
+            add(
+                (
+                    "family_semantic_slot_legal_ir_view_prototype_"
+                    f"{predicate_family}_source_{role_key}_target_family_{view_key}"
+                ),
+                f"{anchor_key}:{target_family}",
+            )
+            if predicate_head and role_key in {"action", "object"}:
+                target_predicate_slot = (
+                    f"{target_family}||slot:source-{role_key}-target-predicate:"
+                    f"{anchor_key}:{pair_source}:{predicate_head}"
+                )
+                add(
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    f"{target_predicate_slot}||{view_name}",
+                )
+                add(
+                    (
+                        "family_semantic_slot_legal_ir_view_prototype_"
+                        f"{target_family}_source_{role_key}_target_predicate_{view_key}"
+                    ),
+                    f"{anchor_key}:{pair_source}:{predicate_head}",
+                )
 
     def add_source_role_contracts(
         *,
@@ -12406,14 +12564,6 @@ def _source_role_anchor_phrases(
                     anchor=anchor,
                     family_pair=family_pair,
                 )
-            if role_name in {
-                "subject",
-                "action",
-                "object",
-                "condition",
-                "exception",
-                "temporal",
-            }:
                 if "->" in family_pair:
                     pair_source, pair_target = (
                         _slot_safe_family_key(_clean_text(part).lower())
@@ -12549,12 +12699,6 @@ def _source_role_anchor_phrases(
                                 f"{anchor}:{pair_target}:{predicate_head}"
                             ),
                         )
-                if role_name in {"subject", "action", "object"}:
-                    add_legal_ir_view_role_family_pair_prototypes(
-                        role_name=role_name,
-                        anchor=anchor,
-                        family_pair=family_pair,
-                    )
             if role_name in {"subject", "action", "object", "condition", "temporal"}:
                 add_legal_ir_view_role_prototypes(
                     role_name=role_name,
@@ -13120,6 +13264,13 @@ def _typed_decompiler_bridge_phrases(
         if predicate_role
         else ""
     )
+    modal_force = _modal_force_label(formula)
+    modal_polarity = _modal_scope_polarity(
+        formula,
+        condition_values=condition_values,
+        exception_values=exception_values,
+        document=document,
+    )
     for slot, value in _decompiler_provenance_slot_values(
         document=document,
         formula=formula,
@@ -13135,6 +13286,23 @@ def _typed_decompiler_bridge_phrases(
         condition_values=condition_values,
         exception_values=exception_values,
     )
+    temporal_scope = any(
+        _clause_has_temporal_scope(clause, slot="condition")
+        for clause in condition_values
+    ) or any(
+        _clause_has_temporal_scope(clause, slot="exception")
+        for clause in exception_values
+    )
+    scope_parts = [
+        value
+        for value, enabled in (
+            ("conditioned", bool(condition_values)),
+            ("excepted", bool(exception_values)),
+            ("temporal", temporal_scope),
+        )
+        if enabled
+    ]
+    modal_scope_signature = "+".join(scope_parts) if scope_parts else "unconditioned"
     for topology_slot, topology_value in topology_slot_values:
         add(topology_slot, topology_value)
     for family_pair in source_family_pairs:
@@ -13152,6 +13320,78 @@ def _typed_decompiler_bridge_phrases(
             target_family = family
         if not source_family or not target_family:
             continue
+        if modal_force and modal_polarity:
+            force_polarity_value = f"{modal_force}:{modal_polarity}"
+            add(
+                "typed_decompiler_force_polarity_family_pair",
+                f"{force_polarity_value}:{family_pair}",
+            )
+            add(
+                "typed_decompiler_scope_family_pair",
+                f"{modal_scope_signature}:{family_pair}",
+            )
+            add(
+                "typed_decompiler_force_polarity_scope_family_pair",
+                f"{force_polarity_value}:{modal_scope_signature}:{family_pair}",
+            )
+            for semantic_family in _unique_preserve_order(
+                [source_family, target_family]
+            ):
+                add_family_semantic_slot(
+                    family=semantic_family,
+                    slot_name="typed-decompiler-force-polarity",
+                    slot_value=f"{force_polarity_value}:{source_family}",
+                )
+                add_family_semantic_slot(
+                    family=semantic_family,
+                    slot_name="typed-decompiler-force-polarity-scope",
+                    slot_value=(
+                        f"{force_polarity_value}:{modal_scope_signature}:"
+                        f"{source_family}"
+                    ),
+                )
+                add_family_semantic_slot_pair(
+                    family=semantic_family,
+                    left_slot=(
+                        f"typed-decompiler-force-polarity:"
+                        f"{force_polarity_value}"
+                    ),
+                    right_slot=f"typed-decompiler-family-pair:{family_pair}",
+                )
+            for view in _preferred_legal_ir_views_for_family(target_family):
+                add(
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    (
+                        f"{target_family}||slot:typed-decompiler-force-polarity:"
+                        f"{force_polarity_value}:{source_family}||{view}"
+                    ),
+                )
+                add(
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    (
+                        f"{target_family}||slot:typed-decompiler-force-polarity-scope:"
+                        f"{force_polarity_value}:{modal_scope_signature}:"
+                        f"{source_family}||{view}"
+                    ),
+                )
+                add(
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    (
+                        f"{target_family}||slot-pair:"
+                        f"typed-decompiler-force-polarity:{force_polarity_value}|"
+                        f"typed-decompiler-family-pair:{family_pair}||{view}"
+                    ),
+                )
+                if predicate_head:
+                    add(
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        (
+                            f"{target_family}||slot-pair:"
+                            f"source-predicate-head:{source_family}:{predicate_head}|"
+                            f"typed-decompiler-force-polarity:"
+                            f"{force_polarity_value}||{view}"
+                        ),
+                    )
         for topology_slot, topology_value in topology_slot_values:
             if topology_slot not in {
                 "typed_decompiler_clause_topology",
@@ -13186,6 +13426,15 @@ def _typed_decompiler_bridge_phrases(
                     ),
                     right_slot=f"typed-decompiler-family-pair:{family_pair}",
                 )
+                for view in _preferred_legal_ir_views_for_family(target_family):
+                    add(
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        (
+                            f"{target_family}||slot-pair:"
+                            f"source-{slot_name}:{topology_value}:{source_family}|"
+                            f"typed-decompiler-family-pair:{family_pair}||{view}"
+                        ),
+                    )
         if role_shape_value:
             add("typed_decompiler_role_shape", f"{source_family}:{role_shape_value}")
             add(
@@ -13486,6 +13735,33 @@ def _typed_decompiler_bridge_phrases(
             )
             for view in _LEGAL_IR_VIEW_PROTOTYPES:
                 view_key = _slot_safe_family_key(view)
+                target_operator_key = (
+                    _modal_operator_feature_key(target_operator)
+                    or _slot_safe_family_key(target_operator)
+                )
+                if view_key and target_operator_key:
+                    add(
+                        "logic_view_contract",
+                        f"bridge-operator:{view_key}:{target_family}:{target_operator_key}",
+                    )
+                    add(
+                        f"logic_view_contract_{target_family}_bridge_operator",
+                        f"{view_key}:{target_operator_key}",
+                    )
+                    add(
+                        "family_semantic_slot_prototype",
+                        (
+                            f"{target_family}||slot:logic-view-bridge-operator:"
+                            f"{view_key}:{target_operator_key}"
+                        ),
+                    )
+                    add(
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        (
+                            f"{target_family}||slot:logic-view-bridge-operator:"
+                            f"{view_key}:{target_operator_key}||{view}"
+                        ),
+                    )
                 view_signature = f"{bridge_signature}||{view}"
                 add(
                     "typed_decompiler_bridge_legal_ir_view_signature",

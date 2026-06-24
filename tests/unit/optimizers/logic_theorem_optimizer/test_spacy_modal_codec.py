@@ -6577,6 +6577,38 @@ def test_spacy_compiler_adds_report_heading_residual_span_coverage() -> None:
     assert "Congressional notification and reports." in residual_text_spans
 
 
+def test_spacy_compiler_adds_packet_000004_short_structural_heading_spans() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    text = (
+        "§52. Dissemination of false advertisements "
+        "(a) Unlawfulness It shall be unlawful to disseminate false advertisements. "
+        '"(2) Requirements . The Commission shall include consumer information. '
+        '"(b) Database . The Commission shall establish a national database. '
+        "(c) Definition of Political Appointee . In this section, the term "
+        '"political appointee" means an employee appointed by the Secretary.'
+    )
+    encoding = encoder.encode(
+        text,
+        document_id="us-code-packet-000004-structural-headings",
+        citation="15 U.S.C. 52",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    residual_text_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    }
+
+    assert "2) Requirements ." in residual_text_spans
+    assert "b) Database ." in residual_text_spans
+    assert "c) Definition of Political Appointee ." in residual_text_spans
+
+
 def test_spacy_compiler_adds_compact_administration_heading_span_coverage() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()

@@ -1106,6 +1106,7 @@ def _normalize_tdfol_export_formula(text: str) -> str:
     normalized = _unwrap_tdfol_key_value_export(normalized)
     normalized = _normalize_deontic_operator_aliases(normalized)
     normalized = _normalize_deontic_label_export(normalized)
+    normalized = _normalize_deontic_agent_annotation_export(normalized)
     normalized = re.sub(
         r"^\s*(?:formula|proof_formula|proof\s+formula|tdfol_formula|"
         r"tdfol\s+formula|proof_input|proof\s+input|proof_obligation|"
@@ -1265,6 +1266,72 @@ def _normalize_deontic_label_export(text: str) -> str:
     if not formula:
         return normalized
     return f"{match.group(1).upper()}({formula})"
+
+
+def _normalize_deontic_agent_annotation_export(text: str) -> str:
+    """Drop parser-incompatible deontic agent annotations around formulas.
+
+    CEC/DCEC and TDFOL pretty printers commonly emit O[agent](phi) or
+    O_agent(phi). The local TDFOL parser represents agents on DeonticFormula
+    objects, but formula strings used by proof gates only need a parseable
+    deontic operator over phi. Preserve legacy O_t(...) predicate exports.
+    """
+
+    normalized = str(text or "").strip()
+    if not normalized:
+        return normalized
+    normalized = _normalize_bracketed_deontic_agent_export(normalized)
+    return _normalize_underscored_deontic_agent_export(normalized)
+
+
+def _normalize_bracketed_deontic_agent_export(text: str) -> str:
+    result: list[str] = []
+    index = 0
+    pattern = re.compile(r"([OPF])\s*\[\s*([A-Za-z_][A-Za-z0-9_-]*)\s*\]\s*\(")
+    while index < len(text):
+        match = pattern.search(text, index)
+        if match is None:
+            result.append(text[index:])
+            break
+        open_index = match.end() - 1
+        close_index = _matching_paren_index(text, open_index)
+        if close_index is None:
+            result.append(text[index:])
+            break
+        inner = _normalize_deontic_agent_annotation_export(
+            text[open_index + 1:close_index]
+        )
+        result.append(text[index:match.start()])
+        result.append(f"{match.group(1)}({inner})")
+        index = close_index + 1
+    return "".join(result)
+
+
+def _normalize_underscored_deontic_agent_export(text: str) -> str:
+    result: list[str] = []
+    index = 0
+    pattern = re.compile(r"(?<![A-Za-z0-9_])([OPF])_([A-Za-z_][A-Za-z0-9_-]*)\s*\(")
+    while index < len(text):
+        match = pattern.search(text, index)
+        if match is None:
+            result.append(text[index:])
+            break
+        agent = match.group(2)
+        open_index = match.end() - 1
+        close_index = _matching_paren_index(text, open_index)
+        if close_index is None:
+            result.append(text[index:])
+            break
+        if agent.lower() in {"t", "time"}:
+            result.append(text[index:close_index + 1])
+        else:
+            result.append(text[index:match.start()])
+            inner = _normalize_deontic_agent_annotation_export(
+                text[open_index + 1:close_index]
+            )
+            result.append(f"{match.group(1)}({inner})")
+        index = close_index + 1
+    return "".join(result)
 
 
 def _unwrap_tdfol_json_export(text: str) -> str:

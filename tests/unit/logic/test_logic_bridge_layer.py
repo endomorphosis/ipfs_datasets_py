@@ -365,6 +365,57 @@ def test_neo4j_compat_augments_sparse_legal_sample_text_projection() -> None:
     assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
 
 
+def test_neo4j_compat_augments_packet_sample_text_section_markers() -> None:
+    from ipfs_datasets_py.logic.modal.kg_bridge import flogic_triples_to_graph_data
+
+    graph_data = flogic_triples_to_graph_data(
+        [
+            {
+                "subject": "us-code-42-285c-c93bc6252b834d56",
+                "predicate": "sample_id",
+                "object": "us-code-42-285c-c93bc6252b834d56",
+            },
+            {
+                "subject": "us-code-42-285c-c93bc6252b834d56",
+                "predicate": "source_text",
+                "object": (
+                    "§285c–2. Division Directors for Diabetes, Endocrinology, "
+                    "and Metabolic Diseases, Digestive Diseases and Nutrition, "
+                    "and Kidney, Urologic, and Hematologic Diseases; functions "
+                    "(a)(1) In the Institute there shall be a Division Director."
+                ),
+            },
+        ],
+        graph_id="packet-sparse-section-marker-projection",
+    )
+
+    triples = {
+        (
+            relationship.properties["flogic_predicate"],
+            relationship.properties["flogic_object"],
+        )
+        for relationship in graph_data.relationships
+    }
+    view_distribution = graph_data.metadata["frame_logic_projection_view_distribution"]
+
+    assert ("source_id_citation_canonical", "42 U.S.C. 285c") in triples
+    assert ("section_marker_normalized", "285c-2") in triples
+    assert ("section_heading_part_count", "2") in triples
+    assert (
+        "section_catchline",
+        (
+            "Division Directors for Diabetes, Endocrinology, and Metabolic "
+            "Diseases, Digestive Diseases and Nutrition, and Kidney, Urologic, "
+            "and Hematologic Diseases; functions"
+        ),
+    ) in triples
+    assert view_distribution["citation_structure"] >= 1
+    assert view_distribution["document_scope"] >= 1
+    assert view_distribution["section_structure"] >= 1
+    assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
+    assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
+
+
 def test_modal_frame_logic_bridge_bounds_flogic_similarity_loss_for_heading_samples() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
@@ -6441,6 +6492,13 @@ def test_fol_tdfol_coerce_formula_normalizes_noisy_prover_exports() -> None:
         "Obligation(agent=agency, action=publish_notice(agency))": (
             "O(publish_notice(agency))"
         ),
+        "O[agency](publish_notice(agency))": "O(publish_notice(agency))",
+        "P_secretary(establish_program(secretary))": (
+            "P(establish_program(secretary))"
+        ),
+        "O[agency](P[secretary](establish_program(secretary)))": (
+            "O(P(establish_program(secretary)))"
+        ),
         "PERMISSION(secretary, establish_program(secretary))": (
             "P(establish_program(secretary))"
         ),
@@ -7529,6 +7587,61 @@ def test_official_usc_primary_projection_handles_safety_policy_and_savings_secti
     assert abs(sum(safety.values()) - 1.0) < 1e-9
     assert abs(sum(policy.values()) - 1.0) < 1e-9
     assert abs(sum(savings.values()) - 1.0) < 1e-9
+
+
+def test_official_usc_primary_projection_handles_bootstrap_bridge_samples() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _project_official_usc_primary_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.25,
+        "TDFOL.prover": 0.25,
+        "deontic.ir": 0.25,
+        "knowledge_graphs.neo4j_compat": 0.25,
+    }
+
+    act_savings = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "33 U.S.C. 701e. Effect of act June 22, 1936, on provisions for "
+            "Mississippi River and other projects. Nothing in this Act shall "
+            "be construed as repealing or amending any provision of sections "
+            "702a through 704 of this title."
+        ),
+    )
+    false_advertising = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "15 U.S.C. 52. Dissemination of false advertisements. It shall be "
+            "unlawful for any person to disseminate any false advertisement. "
+            "The dissemination of any false advertisement shall be an unfair "
+            "or deceptive act or practice in or affecting commerce."
+        ),
+    )
+    performance_plan = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "38 U.S.C. 725. Annual performance plan for political appointees. "
+            "The Secretary shall conduct an annual performance plan for each "
+            "political appointee. Each annual performance plan shall include "
+            "an assessment of whether the appointee is meeting the goals."
+        ),
+    )
+
+    assert act_savings["knowledge_graphs.neo4j_compat"] > distribution[
+        "knowledge_graphs.neo4j_compat"
+    ]
+    assert act_savings["CEC.native"] > distribution["CEC.native"]
+    assert false_advertising["deontic.ir"] > distribution["deontic.ir"]
+    assert false_advertising["knowledge_graphs.neo4j_compat"] > distribution[
+        "knowledge_graphs.neo4j_compat"
+    ]
+    assert performance_plan["deontic.ir"] > distribution["deontic.ir"]
+    assert performance_plan["TDFOL.prover"] >= distribution["TDFOL.prover"]
+    assert abs(sum(act_savings.values()) - 1.0) < 1e-9
+    assert abs(sum(false_advertising.values()) - 1.0) < 1e-9
+    assert abs(sum(performance_plan.values()) - 1.0) < 1e-9
 
 
 def test_multiview_training_target_distribution_rebalances_dense_contract_lanes() -> None:

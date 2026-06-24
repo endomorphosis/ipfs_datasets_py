@@ -6045,7 +6045,10 @@ def test_compiler_ir_metric_block_reports_deterministic_codec_losses() -> None:
     assert "text_reconstruction_loss" in block
     assert "modal_span_coverage" in block
     assert block["source_decompiled_text_embedding_cosine_loss"] == pytest.approx(
-        max(0.0, 1.0 - block["raw_source_embedding_cosine_similarity"])
+        max(0.0, 1.0 - block["source_decompiled_text_embedding_cosine_similarity"])
+    )
+    assert block["source_decompiled_text_embedding_cosine_similarity"] == pytest.approx(
+        block["cosine_similarity"]
     )
     assert block["source_decompiled_text_token_loss"] == pytest.approx(
         block["structural_text_reconstruction_loss"]

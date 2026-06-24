@@ -20843,13 +20843,18 @@ def _source_decompiled_text_losses_from_targets(
 ) -> Dict[str, float]:
     """Normalize source text -> structural decompiled text losses from targets."""
 
-    source_decompiled_cosine_loss = _float_or_zero(
-        losses.get("source_decompiled_text_embedding_cosine_loss")
+    explicit_cosine_loss = losses.get("source_decompiled_text_embedding_cosine_loss")
+    source_decompiled_cosine_loss = (
+        _float_or_zero(explicit_cosine_loss)
+        if explicit_cosine_loss is not None
+        else 0.0
     )
-    if source_decompiled_cosine_loss <= 0.0:
+    if explicit_cosine_loss is None:
         source_decompiled_cosine_similarity = losses.get(
             "source_decompiled_text_embedding_cosine_similarity"
         )
+        if source_decompiled_cosine_similarity is None:
+            source_decompiled_cosine_similarity = losses.get("cosine_similarity")
         if source_decompiled_cosine_similarity is None:
             source_decompiled_cosine_similarity = losses.get(
                 "raw_source_embedding_cosine_similarity"

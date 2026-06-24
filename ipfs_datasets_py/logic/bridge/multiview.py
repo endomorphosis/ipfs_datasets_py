@@ -150,8 +150,9 @@ _BRIDGE_CONTRACT_FRAME_AUTHORITY_CUE_RE = re.compile(
 )
 _BRIDGE_CONTRACT_EFFECT_ON_EXISTING_LAW_CUE_RE = re.compile(
     r"\b(?:effect\s+on\s+existing\s+law|nothing\s+in\s+this\s+"
-    r"(?:section|chapter|subchapter|part)\b.{0,220}\b"
-    r"(?:affect(?:s|ing)?|limit(?:s|ing)?|alter(?:s|ing)?)"
+    r"(?:act|section|chapter|subchapter|part)\b.{0,220}\b"
+    r"(?:affect(?:s|ing)?|amend(?:s|ing)?|limit(?:s|ing)?|alter(?:s|ing)?|"
+    r"repeal(?:s|ing)?)"
     r".{0,120}\bauthority\s+of)\b",
     flags=re.IGNORECASE,
 )
@@ -383,9 +384,23 @@ _BRIDGE_CONTRACT_SAFETY_REGULATORY_PROCEDURE_RE = re.compile(
 )
 _BRIDGE_CONTRACT_SAVINGS_EXISTING_LAW_RE = re.compile(
     r"\b(?:savings?\s+provisions?|nothing\s+in\s+this\s+"
-    r"(?:section|chapter|subchapter|part)\s+shall\s+be\s+deemed\s+to\s+"
-    r"(?:amend|repeal|affect|limit)|"
+    r"(?:act|section|chapter|subchapter|part)\s+shall\s+be\s+(?:construed|deemed)\s+"
+    r"(?:as\s+)?(?:to\s+)?"
+    r"(?:amend(?:ing)?|repeal(?:ing)?|affect(?:ing)?|limit(?:ing)?)|"
     r"shall\s+not\s+be\s+deemed\s+to\s+(?:amend|repeal|affect|limit))\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_DECEPTIVE_ADVERTISING_NORM_RE = re.compile(
+    r"\b(?:false\s+advertisements?|unfair\s+or\s+deceptive\s+act\s+or\s+practice|"
+    r"shall\s+be\s+unlawful\b.{0,220}\b(?:advertisements?|disseminate)|"
+    r"disseminat(?:e|ed|ion)\b.{0,220}\b(?:false\s+advertisements?|"
+    r"unfair\s+or\s+deceptive\s+act\s+or\s+practice))\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_PERFORMANCE_PLAN_ASSESSMENT_RE = re.compile(
+    r"\b(?:annual\s+performance\s+plan|performance\s+plan\s+conducted|"
+    r"shall\s+conduct\b.{0,180}\bperformance\s+plan|"
+    r"shall\s+include\s+an\s+assessment\b.{0,220}\bgoals?)\b",
     flags=re.IGNORECASE,
 )
 
@@ -2842,6 +2857,12 @@ def _project_official_usc_primary_contract_distribution(
     has_savings_existing_law = bool(
         _BRIDGE_CONTRACT_SAVINGS_EXISTING_LAW_RE.search(normalized_text)
     )
+    has_deceptive_advertising_norm = bool(
+        _BRIDGE_CONTRACT_DECEPTIVE_ADVERTISING_NORM_RE.search(normalized_text)
+    )
+    has_performance_plan_assessment = bool(
+        _BRIDGE_CONTRACT_PERFORMANCE_PLAN_ASSESSMENT_RE.search(normalized_text)
+    )
     status_operation_cue_count = _cue_count(
         _BRIDGE_CONTRACT_STATUS_OPERATION_CUE_RE,
         normalized_text,
@@ -2928,6 +2949,22 @@ def _project_official_usc_primary_contract_distribution(
             ("TDFOL.prover", 0.16),
         )
         strength = 0.36
+    elif has_deceptive_advertising_norm and deontic_cue_count > 0:
+        target_mix = (
+            ("deontic.ir", 0.46),
+            ("knowledge_graphs.neo4j_compat", 0.28),
+            ("TDFOL.prover", 0.18),
+            ("CEC.native", 0.08),
+        )
+        strength = 0.36
+    elif has_performance_plan_assessment and deontic_cue_count > 0:
+        target_mix = (
+            ("deontic.ir", 0.46),
+            ("TDFOL.prover", 0.28),
+            ("CEC.native", 0.18),
+            ("knowledge_graphs.neo4j_compat", 0.08),
+        )
+        strength = 0.34
     elif has_liability_provision:
         target_mix = (
             ("deontic.ir", 0.42),

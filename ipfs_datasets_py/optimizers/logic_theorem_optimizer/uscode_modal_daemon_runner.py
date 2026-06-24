@@ -1710,8 +1710,16 @@ def _worst_source_decompiled_text_records(
                 1.0
                 - _metric_value(
                     metrics,
-                    "raw_source_embedding_cosine_similarity",
-                    default=1.0,
+                    "source_decompiled_text_embedding_cosine_similarity",
+                    default=_metric_value(
+                        metrics,
+                        "cosine_similarity",
+                        default=_metric_value(
+                            metrics,
+                            "raw_source_embedding_cosine_similarity",
+                            default=1.0,
+                        ),
+                    ),
                 ),
             ),
         )
@@ -1860,8 +1868,16 @@ def _record_canary_deltas(
             1.0
             - _record_metric_value(
                 plain_record,
-                "raw_source_embedding_cosine_similarity",
-                default=1.0,
+                "source_decompiled_text_embedding_cosine_similarity",
+                default=_record_metric_value(
+                    plain_record,
+                    "cosine_similarity",
+                    default=_record_metric_value(
+                        plain_record,
+                        "raw_source_embedding_cosine_similarity",
+                        default=1.0,
+                    ),
+                ),
             ),
         ),
     )
@@ -1873,8 +1889,16 @@ def _record_canary_deltas(
             1.0
             - _record_metric_value(
                 guided_record,
-                "raw_source_embedding_cosine_similarity",
-                default=1.0,
+                "source_decompiled_text_embedding_cosine_similarity",
+                default=_record_metric_value(
+                    guided_record,
+                    "cosine_similarity",
+                    default=_record_metric_value(
+                        guided_record,
+                        "raw_source_embedding_cosine_similarity",
+                        default=1.0,
+                    ),
+                ),
             ),
         ),
     )
@@ -13255,7 +13279,18 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             latest_source_decompiled_text_embedding_cosine_loss = float(
                 compiler_ir_validation.get(
                     "source_decompiled_text_embedding_cosine_loss",
-                    max(0.0, 1.0 - latest_compiler_ir_raw_source_embedding_cosine),
+                    max(
+                        0.0,
+                        1.0
+                        - float(
+                            compiler_ir_validation.get(
+                                "source_decompiled_text_embedding_cosine_similarity",
+                                latest_compiler_ir_cosine
+                                if latest_compiler_ir_cosine > -1.0
+                                else latest_compiler_ir_raw_source_embedding_cosine,
+                            )
+                        ),
+                    ),
                 )
             )
             latest_source_decompiled_text_token_loss = float(

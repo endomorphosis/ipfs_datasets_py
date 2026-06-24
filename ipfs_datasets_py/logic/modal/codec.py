@@ -2513,6 +2513,10 @@ class DeterministicModalLogicCodec:
             resolved_source_embedding,
             decoded_embedding,
         )
+        source_decompiled_embedding_cosine = cosine_similarity(
+            source_feature_embedding,
+            decoded_embedding,
+        )
         flogic_result = self._evaluate_flogic(
             normalized_text,
             decoded_text,
@@ -2551,12 +2555,25 @@ class DeterministicModalLogicCodec:
             "modal_span_coverage_loss": 1.0 - decoded_modal_text.modal_span_coverage,
             "ontology_violation_count": float(len(flogic_result.violations)) if flogic_result else 0.0,
             "raw_source_embedding_cosine_similarity": raw_source_embedding_cosine,
-            "reconstruction_loss": mse_loss(source_feature_embedding, decoded_embedding),
-            "source_decompiled_text_embedding_cosine_loss": max(
+            "raw_source_embedding_cosine_loss": max(
                 0.0,
                 1.0 - raw_source_embedding_cosine,
             ),
-            "source_decompiled_text_embedding_cosine_similarity": raw_source_embedding_cosine,
+            "reconstruction_loss": mse_loss(source_feature_embedding, decoded_embedding),
+            "source_decompiled_text_embedding_cosine_loss": max(
+                0.0,
+                1.0 - source_decompiled_embedding_cosine,
+            ),
+            "source_decompiled_text_embedding_cosine_similarity": (
+                source_decompiled_embedding_cosine
+            ),
+            "source_decompiled_text_raw_embedding_cosine_loss": max(
+                0.0,
+                1.0 - raw_source_embedding_cosine,
+            ),
+            "source_decompiled_text_raw_embedding_cosine_similarity": (
+                raw_source_embedding_cosine
+            ),
             "source_decompiled_text_token_loss": 1.0 - structural_text_similarity,
             "source_decompiled_text_token_similarity": structural_text_similarity,
             "source_copy_loss": source_span_copy_ratio,
