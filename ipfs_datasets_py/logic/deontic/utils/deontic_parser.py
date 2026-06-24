@@ -238,6 +238,12 @@ _NON_APPLICABILITY_RE = re.compile(
     r"(?:does\s+not\s+apply|shall\s+not\s+apply|is\s+not\s+applicable)\s+to\s+(?P<target>.+?)(?:[.;:]|$)",
     re.IGNORECASE,
 )
+_SAVINGS_PRESERVATION_RE = re.compile(
+    r"\bnothing\s+in\s+(?P<scope>this\s+(?:act|section|chapter|title|article|part|subchapter|subtitle|division))\s+"
+    r"(?P<modal>affects|shall\s+affect|may\s+be\s+construed\s+as\s+affecting|shall\s+be\s+construed\s+to\s+affect|shall\s+be\s+construed\s+as\s+affecting)\s+"
+    r"(?P<target>.+?)(?:[.;:]|$)",
+    re.IGNORECASE,
+)
 _EXEMPTION_RE = re.compile(
     r"\b(?P<target>.+?)\s+(?:is|are)\s+exempt\s+from\s+(?P<requirement>.+?)(?:[.;:]|$)",
     re.IGNORECASE,
@@ -1347,13 +1353,30 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
     sentence_lower = sentence.lower()
     elements: List[Dict[str, Any]] = []
 
+    savings_match = _SAVINGS_PRESERVATION_RE.search(sentence)
+    if savings_match:
+        return [
+            _finalize_element(
+                _build_savings_preservation_element(
+                    sentence=sentence,
+                    document_type=document_type,
+                    match=savings_match,
+                )
+            )
+        ]
+
     for match in _MODAL_RE.finditer(sentence):
         modal = re.sub(r"\s+", " ", match.group("modal").lower()).strip()
         norm_type, deontic_operator = classify_modal(modal)
         raw_subject = match.group("subject")
-        if deontic_operator in {"O", "P"} and re.match(r"\s*(?:no|none)\b", raw_subject or "", flags=re.IGNORECASE):
+        negated_subject = _has_leading_negated_subject(raw_subject)
+        if deontic_operator in {"O", "P"} and negated_subject:
             norm_type, deontic_operator = "prohibition", "F"
-        subject_text = _clean_phrase(raw_subject)
+        subject_text = (
+            _clean_negated_subject_phrase(raw_subject)
+            if negated_subject
+            else _clean_phrase(raw_subject)
+        )
         if subject_text.lower() in {"and", "or"}:
             continue
         action_text = _clean_action(match.group("action"))
@@ -1389,6 +1412,8 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
                 continue
             modal = re.sub(r"\s+", " ", match.group("modal").lower()).strip()
             norm_type, deontic_operator = classify_modal(modal)
+            if deontic_operator in {"O", "P"} and _has_leading_negated_subject(first_subject):
+                norm_type, deontic_operator = "prohibition", "F"
             action_text = _clean_action(match.group("action"))
             subject_text, action_text = _normalize_passive_clause(first_subject, action_text)
             if not action_text:
@@ -1884,6 +1909,108 @@ def _build_section_status_lifecycle_element(
         "extraction_method": "deterministic_section_status_lifecycle_v1",
         "confidence_floor": 0.40,
     }
+
+
+def _build_savings_preservation_element(
+    *,
+    sentence: str,
+    document_type: str,
+    match: re.Match[str],
+) -> Dict[str, Any]:
+    """Build a typed row for statutory savings/no-effect clauses."""
+
+    scope_text = _clean_phrase(match.group("scope"))
+    target_text = _clean_phrase(match.group("target"))
+    preserved_actor = _savings_preserved_actor_text(target_text) or target_text
+    preserved_object = _savings_preserved_object_text(target_text)
+    action_text = f"preserve {preserved_object or target_text}"
+    if scope_text:
+        action_text = f"{action_text} from {scope_text}"
+
+    return {
+        "schema_version": PARSER_SCHEMA_VERSION,
+        "source_id": "",
+        "canonical_citation": "",
+        "text": sentence,
+        "support_text": sentence[match.start() : match.end()].strip(),
+        "support_span": list(match.span()),
+        "field_spans": {
+            "subject": list(match.span("target")),
+            "modal": list(match.span("modal")),
+            "action": list(match.span("target")),
+            "action_verb": list(match.span("modal")),
+            "action_object": list(match.span("target")),
+            "action_recipient": [],
+        },
+        "norm_type": "exemption",
+        "deontic_operator": "EXEMPT",
+        "modal": "savings preservation",
+        "subject": [preserved_actor],
+        "actor_type": classify_legal_entity(preserved_actor),
+        "entity_type": classify_legal_entity(preserved_actor),
+        "action": [action_text],
+        "mental_state": "",
+        "action_verb": "preserve",
+        "action_object": preserved_object or target_text,
+        "action_recipient": "",
+        "conditions": extract_conditions(sentence),
+        "condition_details": extract_condition_details(sentence),
+        "temporal_constraints": extract_temporal_constraints(sentence),
+        "temporal_constraint_details": extract_temporal_constraint_details(sentence),
+        "exceptions": extract_exceptions(sentence),
+        "exception_details": extract_exception_details(sentence),
+        "override_clauses": extract_override_clauses(sentence),
+        "override_clause_details": extract_override_clause_details(sentence),
+        "cross_references": extract_cross_references(sentence),
+        "cross_reference_details": extract_cross_reference_details(sentence),
+        "resolved_cross_references": [],
+        "enforcement_links": [],
+        "conflict_links": [],
+        "enumerated_items": extract_enumerated_items(sentence),
+        "defined_term_refs": [],
+        "definition_scope": {},
+        "ontology_terms": extract_ontology_terms(sentence),
+        "formal_terms": {},
+        "llm_repair": {},
+        "export_readiness": {},
+        "logic_frame": {},
+        "legal_frame": {},
+        "kg_relationship_hints": [],
+        "monetary_amounts": extract_monetary_amounts(sentence),
+        "monetary_amount_details": extract_monetary_amount_details(sentence),
+        "penalty": {},
+        "procedure": {},
+        "section_context": {},
+        "hierarchy_path": [],
+        "hierarchy_details": [],
+        "document_type": document_type,
+        "extraction_method": "deterministic_savings_preservation_clause_v1",
+        "confidence_floor": 0.40,
+    }
+
+
+def _savings_preserved_actor_text(target_text: str) -> str:
+    text = _clean_phrase(target_text)
+    actor_match = re.search(
+        r"\bof\s+(?P<actor>.+?)(?=,\s+including\b|,\s+except\b|,\s+as\b|$)",
+        text,
+        re.IGNORECASE,
+    )
+    if actor_match:
+        return _clean_phrase(actor_match.group("actor"))
+    return ""
+
+
+def _savings_preserved_object_text(target_text: str) -> str:
+    text = _clean_phrase(target_text)
+    object_match = re.match(
+        r"(?P<object>.+?)(?:,\s*existing\b|\s+of\b|$)",
+        text,
+        re.IGNORECASE,
+    )
+    if object_match:
+        return _clean_phrase(object_match.group("object"))
+    return text
 
 
 def _section_status_detail(value: str) -> str:
@@ -3497,6 +3624,22 @@ def _clean_phrase(value: str) -> str:
     text = re.sub(r"\s+", " ", str(value or "")).strip(" ,;:")
     text = _LEADING_DETERMINERS_RE.sub("", text).strip()
     return text
+
+
+def _has_leading_negated_subject(value: Any) -> bool:
+    text = re.sub(r"\s+", " ", str(value or "")).strip(" ,;:").lower()
+    return bool(re.match(r"^(?:(?:then|and|or|but)\s+)?(?:no|none)\b", text))
+
+
+def _clean_negated_subject_phrase(value: Any) -> str:
+    text = re.sub(r"\s+", " ", str(value or "")).strip(" ,;:")
+    text = re.sub(
+        r"^(?:(?:then|and|or|but)\s+)?(?:no|none)\s+",
+        "",
+        text,
+        flags=re.IGNORECASE,
+    ).strip()
+    return _clean_phrase(text)
 
 
 def _clean_action(value: str) -> str:

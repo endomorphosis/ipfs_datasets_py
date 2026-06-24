@@ -1041,3 +1041,77 @@ def test_modal_decompiler_refines_effective_date_temporal_typed_ir_slots() -> No
         "typed_ir_refined_modal_pair_cue"
     ]
     assert "f_to_o_pipe" in slot_texts["typed_ir_refined_modal_operator_pair_key"]
+
+
+def test_modal_decompiler_emits_domain_atoms_for_appropriation_and_research_sections() -> None:
+    appropriation_sample = build_us_code_sample(
+        title="42",
+        section="6246.",
+        citation="42 U.S.C. 6246.",
+        text=(
+            "§6246. Authorization of appropriations There are authorized to be "
+            "appropriated to the Secretary such sums as are necessary to carry "
+            "out this part and part D, to remain available until expended."
+        ),
+    )
+    research_sample = build_us_code_sample(
+        title="42",
+        section="11271.",
+        citation="42 U.S.C. 11271.",
+        text=(
+            "§11271. Research program and plan (a) Grants for research The "
+            "Administrator of the Centers for Medicare & Medicaid Services "
+            "shall conduct, or make grants for the conduct of, research relevant "
+            "to appropriate services for individuals with disabilities."
+        ),
+    )
+
+    appropriation_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(appropriation_sample.modal_ir)
+    )
+    research_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(research_sample.modal_ir)
+    )
+
+    assert "appropriation_authorization" in appropriation_slots["legal_semantic_atom"]
+    assert "no_year_funding_availability" in appropriation_slots["legal_semantic_atom"]
+    assert "research_program_plan" in research_slots["legal_semantic_atom"]
+    assert "research_grant" in research_slots["legal_semantic_atom"]
+    assert "disability_services" in research_slots["legal_semantic_atom"]
+
+
+def test_modal_decompiler_emits_domain_atoms_for_heading_and_status_sections() -> None:
+    heading_sample = build_us_code_sample(
+        title="7",
+        section="2239",
+        citation="7 U.S.C. 2239",
+        text=(
+            "U.S.C. Title 7 - AGRICULTURE 7 U.S.C. United States Code, 2024 "
+            "Edition Title 7 - AGRICULTURE CHAPTER 55 - DEPARTMENT OF "
+            "AGRICULTURE Sec. 2239 - Funds for printing, binding, and "
+            "scientific and technical article reprint purchases From the U.S. "
+            "Government Publishing Office, www.gpo.gov"
+        ),
+    )
+    status_sample = build_us_code_sample(
+        title="42",
+        section="5616.",
+        citation="42 U.S.C. 5616.",
+        text=(
+            "§5616. Transferred Editorial Notes Codification Section 5616 was "
+            "editorially reclassified as section 11116 of Title 34, Crime "
+            "Control and Law Enforcement."
+        ),
+    )
+
+    heading_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(heading_sample.modal_ir)
+    )
+    status_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(status_sample.modal_ir)
+    )
+
+    assert "printing_binding" in heading_slots["legal_semantic_atom"]
+    assert "article_reprint_purchase" in heading_slots["legal_semantic_atom"]
+    assert "technical_article" in heading_slots["legal_semantic_atom"]
+    assert "editorial_reclassification" in status_slots["legal_semantic_atom"]

@@ -735,14 +735,27 @@ class ProverRouter:
                     strategy_used="parallel",
                     reason=f"Proved by {prover_name}"
                 )
+
+        first_non_error = next(
+            (
+                prover_name
+                for prover_name, result in all_results.items()
+                if not isinstance(result, str)
+            ),
+            None,
+        )
         
         return RouterProofResult(
             is_proved=False,
-            prover_used=None,
+            prover_used=first_non_error,
             proof_time=proof_time,
             all_results=all_results,
             strategy_used="parallel",
-            reason="No prover succeeded"
+            reason=(
+                f"Used {first_non_error} (no proof)"
+                if first_non_error
+                else "No prover succeeded"
+            )
         )
     
     def _prove_sequential(
@@ -851,13 +864,18 @@ class ProverRouter:
                         timeout,
                     )
                     proof_time = time.time() - start_time
+                    proved = self._result_is_proved(result)
                     return RouterProofResult(
-                        is_proved=self._result_is_proved(result),
+                        is_proved=proved,
                         prover_used=prover_name,
                         proof_time=proof_time,
                         all_results={prover_name: result},
                         strategy_used="most_capable",
-                        reason=f"Used {prover_name}"
+                        reason=(
+                            f"Proved by {prover_name}"
+                            if proved
+                            else f"Used {prover_name} (no proof)"
+                        )
                     )
                 except Exception as e:
                     continue

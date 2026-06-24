@@ -4,8 +4,12 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import tempfile
+import time
 import warnings
 from dataclasses import dataclass, field
+from pathlib import Path
 from threading import Lock
 from typing import Any, Mapping, Optional, Sequence
 
@@ -23,6 +27,13 @@ from .types import (
 _ZKP_ATTESTATION_RECORD_CACHE_MAX_ITEMS = 4096
 _ZKP_ATTESTATION_RECORD_CACHE: dict[str, list[dict[str, Any]]] = {}
 _ZKP_ATTESTATION_RECORD_CACHE_LOCK = Lock()
+_ZKP_ATTESTATION_RECORD_DISK_CACHE_VERSION = "zkp-attestation-record-cache-v1"
+_ZKP_ATTESTATION_RECORD_DISK_CACHE_KIND = "zkp_attestation_records"
+_ZKP_ATTESTATION_RECORD_DISK_CACHE_DIR_ENV = "IPFS_DATASETS_LEGAL_IR_METRIC_CACHE_DIR"
+_ZKP_ATTESTATION_RECORD_DISK_CACHE_ENABLED_ENV = "IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE"
+_ZKP_ATTESTATION_RECORD_CODE_FINGERPRINT_LOCK = Lock()
+_ZKP_ATTESTATION_RECORD_CODE_FINGERPRINT_VALUE = ""
+_FALSE_ENV_VALUES = {"0", "false", "no", "off", "none", "disabled"}
 
 
 @dataclass
@@ -252,6 +263,10 @@ def _zkp_attestation_records(
         cached = _ZKP_ATTESTATION_RECORD_CACHE.get(cache_key)
     if cached is not None:
         return _clone_attestation_records(cached)
+    disk_cached = _read_zkp_attestation_records_disk_cache(cache_key)
+    if disk_cached is not None:
+        _remember_zkp_attestation_records(cache_key, disk_cached)
+        return _clone_attestation_records(disk_cached)
 
     from ipfs_datasets_py.logic.zkp import ZKPProver, ZKPVerifier
 
@@ -313,16 +328,8 @@ def _zkp_attestation_records(
                 "compiler_guidance_ref": guidance_ref,
             }
         )
-    with _ZKP_ATTESTATION_RECORD_CACHE_LOCK:
-        if (
-            len(_ZKP_ATTESTATION_RECORD_CACHE)
-            >= _ZKP_ATTESTATION_RECORD_CACHE_MAX_ITEMS
-        ):
-            _ZKP_ATTESTATION_RECORD_CACHE.pop(
-                next(iter(_ZKP_ATTESTATION_RECORD_CACHE)),
-                None,
-            )
-        _ZKP_ATTESTATION_RECORD_CACHE[cache_key] = _clone_attestation_records(records)
+    _remember_zkp_attestation_records(cache_key, records)
+    _write_zkp_attestation_records_disk_cache(cache_key, records)
     return records
 
 
@@ -376,6 +383,173 @@ def _clone_attestation_records(
             sort_keys=True,
         )
     )
+
+
+def _remember_zkp_attestation_records(
+    cache_key: str,
+    records: Sequence[Mapping[str, Any]],
+) -> None:
+    with _ZKP_ATTESTATION_RECORD_CACHE_LOCK:
+        if (
+            len(_ZKP_ATTESTATION_RECORD_CACHE)
+            >= _ZKP_ATTESTATION_RECORD_CACHE_MAX_ITEMS
+        ):
+            _ZKP_ATTESTATION_RECORD_CACHE.pop(
+                next(iter(_ZKP_ATTESTATION_RECORD_CACHE)),
+                None,
+            )
+        _ZKP_ATTESTATION_RECORD_CACHE[cache_key] = _clone_attestation_records(records)
+
+
+def _zkp_attestation_records_disk_cache_enabled() -> bool:
+    raw = str(
+        os.environ.get(_ZKP_ATTESTATION_RECORD_DISK_CACHE_ENABLED_ENV) or ""
+    ).strip().lower()
+    return raw not in _FALSE_ENV_VALUES
+
+
+def _default_zkp_attestation_records_disk_cache_dir() -> Path:
+    try:
+        repo_root = Path(__file__).resolve().parents[3]
+    except (IndexError, OSError, RuntimeError):
+        repo_root = Path.cwd()
+    return repo_root / "workspace" / "test-logs" / "legal-ir-metric-cache"
+
+
+def _zkp_attestation_records_disk_cache_dir() -> Optional[Path]:
+    if not _zkp_attestation_records_disk_cache_enabled():
+        return None
+    raw = str(os.environ.get(_ZKP_ATTESTATION_RECORD_DISK_CACHE_DIR_ENV) or "").strip()
+    if raw.lower() in _FALSE_ENV_VALUES:
+        return None
+    return Path(raw).expanduser() if raw else _default_zkp_attestation_records_disk_cache_dir()
+
+
+def _zkp_attestation_records_code_fingerprint() -> str:
+    global _ZKP_ATTESTATION_RECORD_CODE_FINGERPRINT_VALUE
+    with _ZKP_ATTESTATION_RECORD_CODE_FINGERPRINT_LOCK:
+        if _ZKP_ATTESTATION_RECORD_CODE_FINGERPRINT_VALUE:
+            return _ZKP_ATTESTATION_RECORD_CODE_FINGERPRINT_VALUE
+        try:
+            package_root = Path(__file__).resolve().parents[2]
+        except (IndexError, OSError, RuntimeError):
+            package_root = Path.cwd()
+        candidates = [
+            Path(__file__),
+            package_root / "logic" / "zkp",
+            package_root / "logic" / "bridge" / "fol_tdfol.py",
+        ]
+        tokens: list[str] = []
+        for candidate in candidates:
+            paths = (
+                sorted(candidate.rglob("*.py"))
+                if candidate.is_dir()
+                else [candidate]
+            )
+            for path in paths:
+                try:
+                    stat = path.stat()
+                except (OSError, RuntimeError):
+                    continue
+                try:
+                    relative = path.relative_to(package_root)
+                except ValueError:
+                    relative = path
+                tokens.append(f"{relative}:{stat.st_mtime_ns}:{stat.st_size}")
+        _ZKP_ATTESTATION_RECORD_CODE_FINGERPRINT_VALUE = (
+            hashlib.sha256("\n".join(tokens).encode("utf-8")).hexdigest()
+            if tokens
+            else "unknown"
+        )
+        return _ZKP_ATTESTATION_RECORD_CODE_FINGERPRINT_VALUE
+
+
+def _zkp_attestation_records_disk_cache_key(cache_key: str) -> str:
+    payload = {
+        "code_fingerprint": _zkp_attestation_records_code_fingerprint(),
+        "kind": _ZKP_ATTESTATION_RECORD_DISK_CACHE_KIND,
+        "records_cache_key": str(cache_key),
+        "version": _ZKP_ATTESTATION_RECORD_DISK_CACHE_VERSION,
+    }
+    return hashlib.sha256(
+        json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+    ).hexdigest()
+
+
+def _zkp_attestation_records_disk_cache_path(cache_key: str) -> Optional[Path]:
+    root = _zkp_attestation_records_disk_cache_dir()
+    if root is None:
+        return None
+    disk_key = _zkp_attestation_records_disk_cache_key(cache_key)
+    return (
+        root
+        / _ZKP_ATTESTATION_RECORD_DISK_CACHE_KIND
+        / disk_key[:2]
+        / f"{disk_key}.json"
+    )
+
+
+def _read_zkp_attestation_records_disk_cache(
+    cache_key: str,
+) -> Optional[list[dict[str, Any]]]:
+    path = _zkp_attestation_records_disk_cache_path(cache_key)
+    if path is None or not path.is_file():
+        return None
+    try:
+        wrapper = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(wrapper, Mapping):
+        return None
+    if wrapper.get("version") != _ZKP_ATTESTATION_RECORD_DISK_CACHE_VERSION:
+        return None
+    if wrapper.get("kind") != _ZKP_ATTESTATION_RECORD_DISK_CACHE_KIND:
+        return None
+    if wrapper.get("records_cache_key") != cache_key:
+        return None
+    if wrapper.get("code_fingerprint") != _zkp_attestation_records_code_fingerprint():
+        return None
+    records = wrapper.get("records")
+    if not isinstance(records, list):
+        return None
+    return _clone_attestation_records(
+        [record for record in records if isinstance(record, Mapping)]
+    )
+
+
+def _write_zkp_attestation_records_disk_cache(
+    cache_key: str,
+    records: Sequence[Mapping[str, Any]],
+) -> None:
+    path = _zkp_attestation_records_disk_cache_path(cache_key)
+    if path is None:
+        return
+    wrapper = {
+        "code_fingerprint": _zkp_attestation_records_code_fingerprint(),
+        "created_at": int(time.time()),
+        "kind": _ZKP_ATTESTATION_RECORD_DISK_CACHE_KIND,
+        "records": _clone_attestation_records(records),
+        "records_cache_key": cache_key,
+        "version": _ZKP_ATTESTATION_RECORD_DISK_CACHE_VERSION,
+    }
+    tmp_path: Optional[str] = None
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile(
+            "w",
+            delete=False,
+            dir=str(path.parent),
+            encoding="utf-8",
+        ) as handle:
+            tmp_path = handle.name
+            json.dump(wrapper, handle, ensure_ascii=True, sort_keys=True)
+        os.replace(tmp_path, path)
+    except Exception:
+        if tmp_path:
+            try:
+                Path(tmp_path).unlink(missing_ok=True)
+            except OSError:
+                pass
 
 
 def _private_axioms_for_formula(record: Mapping[str, Any], *, theorem: str) -> list[str]:

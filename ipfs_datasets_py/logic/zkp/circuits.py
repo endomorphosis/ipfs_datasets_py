@@ -494,11 +494,18 @@ def complete_zkp_attestation_record(record: Mapping[str, Any]) -> Dict[str, Any]
     completed["public_inputs"] = proof_public_inputs or public_inputs
     if attestation_ref:
         completed["attestation_ref"] = attestation_ref
+        completed["attestation_view_version"] = int(
+            attestation_view.get("attestation_view_version") or 0
+        )
     proof_hash = proof_digest_from_proof_dict(proof_for_view)
-    completed.setdefault("proof_hash", proof_hash)
+    if proof_hash and not completed.get("proof_hash"):
+        completed["proof_hash"] = proof_hash
 
     for key in (
+        "axioms_commitment",
         "circuit_ref",
+        "compiler_guidance_ref",
+        "compiler_guidance_version",
         "ruleset_id",
         "source_id",
         "theorem_hash",

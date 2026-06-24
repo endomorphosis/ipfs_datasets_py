@@ -1639,6 +1639,12 @@ def test_bridge_ir_metric_block_uses_persistent_metric_cache(
     monkeypatch,
 ) -> None:
     from ipfs_datasets_py.logic import bridge as bridge_module
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import (
+        _LEGAL_IR_TARGET_CACHE,
+        _LEGAL_IR_TARGET_CACHE_LOCK,
+        _legal_ir_target_cache_key,
+        _read_legal_ir_target_disk_cache,
+    )
 
     cache_dir = tmp_path / "metric-cache"
     monkeypatch.setenv(runner.LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV, str(cache_dir))
@@ -1698,6 +1704,8 @@ def test_bridge_ir_metric_block_uses_persistent_metric_cache(
 
     with runner._BRIDGE_IR_REPORT_CACHE_LOCK:
         runner._BRIDGE_IR_REPORT_CACHE.clear()
+    with _LEGAL_IR_TARGET_CACHE_LOCK:
+        _LEGAL_IR_TARGET_CACHE.clear()
     monkeypatch.setattr(
         bridge_module,
         "evaluate_legal_ir_multiview",
@@ -1712,6 +1720,16 @@ def test_bridge_ir_metric_block_uses_persistent_metric_cache(
 
     assert calls["count"] == 1
     assert first["persistent_cache_hit"] is False
+    assert first["legal_ir_target_cache_exports"] == 1
+    target_cache_key = _legal_ir_target_cache_key(
+        sample,
+        bridge_names=("deontic_norms", "zkp_attestation"),
+        evaluate_provers=False,
+    )
+    target = _read_legal_ir_target_disk_cache(target_cache_key)
+    assert target is not None
+    assert target.losses["legal_ir_multiview_total_loss"] == 0.25
+    assert target.view_distribution["deontic.ir"] == 1.0
     block_cache_path = runner._metric_disk_cache_path(
         "bridge_ir_metric_block",
         first["persistent_cache_key"],
@@ -1720,6 +1738,8 @@ def test_bridge_ir_metric_block_uses_persistent_metric_cache(
     block_cache_path.unlink()
     with runner._BRIDGE_IR_REPORT_CACHE_LOCK:
         runner._BRIDGE_IR_REPORT_CACHE.clear()
+    with _LEGAL_IR_TARGET_CACHE_LOCK:
+        _LEGAL_IR_TARGET_CACHE.clear()
 
     second = bridge_ir_metric_block(
         [sample],
@@ -1735,6 +1755,7 @@ def test_bridge_ir_metric_block_uses_persistent_metric_cache(
     assert calls["count"] == 1
     assert second["persistent_cache_hit"] is False
     assert second["persistent_sample_cache_hits"] == 1
+    assert second["legal_ir_target_cache_exports"] == 1
     assert third["persistent_cache_hit"] is True
     assert second["persistent_cache_kind"] == "bridge_ir_metric_block"
     assert second["zkp_attestation_cache"]["mode"] == "persistent_metric_certificate"
@@ -3667,6 +3688,43 @@ def test_paired_resource_pressure_includes_low_swap() -> None:
     assert report["memory_pressure"] is False
     assert report["swap_pressure"] is True
     assert report["resource_pressure"] is True
+    assert report["swap_blocks_restart"] is True
+
+
+def test_paired_resource_pressure_does_not_swap_block_autoencoder_restart() -> None:
+    args = runner.build_uscode_modal_daemon_arg_parser().parse_args(
+        [
+            "--run-id",
+            "paired-resource-pressure-autoencoder-swap",
+            "--duration-seconds",
+            "1",
+            "--loop-role",
+            "paired",
+            "--paired-min-available-memory-gb",
+            "12",
+            "--paired-min-swap-free-gb",
+            "1",
+        ]
+    )
+
+    pressure, report = runner._paired_resource_pressure(
+        args,
+        role="autoencoder",
+        resource_health={
+            "cpu_count": 20,
+            "memory_available_gb": 64.0,
+            "memory_total_gb": 121.0,
+            "swap_free_gb": 0.05,
+            "swap_total_gb": 16.0,
+        },
+    )
+
+    assert pressure is False
+    assert report["memory_pressure"] is False
+    assert report["restart_role"] == "autoencoder"
+    assert report["swap_blocks_restart"] is False
+    assert report["swap_pressure"] is True
+    assert report["resource_pressure"] is False
 
 
 def test_paired_codex_child_env_hides_cuda_by_default() -> None:
@@ -3835,6 +3893,80 @@ def test_nested_bridge_adapter_parallelism_uses_budget_for_small_metric_windows(
     assert report["estimated_nested_workers"] == 6
     assert report["nested_worker_budget"] == 8
     assert os.environ["IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS"] == "3"
+
+
+def test_nested_bridge_adapter_parallelism_defaults_to_adapter_budget(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS", raising=False)
+
+    report = runner._clamp_nested_bridge_adapter_parallelism(
+        bridge_parallel_workers=8,
+        sample_parallel_workers=2,
+        adapter_count=3,
+    )
+
+    assert report["clamped"] is False
+    assert report["effective_adapter_workers"] == 3
+    assert report["estimated_nested_workers"] == 6
+    assert report["requested_adapter_workers"] == 3
+    assert os.environ["IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS"] == "3"
+
+
+def test_compiler_ir_metric_block_uses_persistent_sample_cache(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("IPFS_DATASETS_LEGAL_IR_METRIC_CACHE_DIR", str(tmp_path))
+    monkeypatch.setenv("IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE", "1")
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall publish notice before the permit takes effect.",
+    )
+
+    class FakeCodec:
+        config = SimpleNamespace(mode="compiler-sample-cache")
+
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def encode(self, *args: object, **kwargs: object) -> SimpleNamespace:
+            self.calls += 1
+            return SimpleNamespace(
+                decoded_modal_text="shall publish notice",
+                frame_candidates=[object()],
+                losses={
+                    "cosine_loss": 0.1,
+                    "cosine_similarity": 0.9,
+                    "cross_entropy_loss": 0.2,
+                    "source_decompiled_text_embedding_cosine_loss": 0.3,
+                },
+                metadata={
+                    "llm_call_count": 0.0,
+                    "modal_decompiler_structural_text": "The agency shall publish notice.",
+                },
+                modal_ir=SimpleNamespace(formulas=[object(), object()]),
+            )
+
+    codec = FakeCodec()
+
+    first = runner.compiler_ir_metric_block(
+        [sample],
+        codec,
+        max_sample_metric_records=32,
+    )
+    second = runner.compiler_ir_metric_block(
+        [sample],
+        codec,
+        max_sample_metric_records=31,
+    )
+
+    assert codec.calls == 1
+    assert first["persistent_sample_cache_misses"] == 1
+    assert second["persistent_sample_cache_hits"] == 1
+    assert second["cosine_similarity"] == pytest.approx(0.9)
+    assert second["formula_count"] == pytest.approx(2.0)
 
 
 def test_codex_validation_failure_details_extracts_pytest_banner_node_id() -> None:

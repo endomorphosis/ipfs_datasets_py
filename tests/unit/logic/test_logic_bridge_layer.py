@@ -537,6 +537,57 @@ def test_neo4j_compat_augments_packet_samples_past_modal_triple_cutoff() -> None
         assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
 
 
+def test_neo4j_compat_projects_uscode_hierarchy_and_repealed_catchlines() -> None:
+    from ipfs_datasets_py.logic.modal.kg_bridge import flogic_triples_to_graph_data
+
+    graph_data = flogic_triples_to_graph_data(
+        [
+            {
+                "subject": "us-code-16-4107-13dda804a14c7ced",
+                "predicate": "sample_id",
+                "object": "us-code-16-4107-13dda804a14c7ced",
+            },
+            {
+                "subject": "us-code-16-4107-13dda804a14c7ced",
+                "predicate": "source_text",
+                "object": (
+                    "16 U.S.C. 4107: U.S.C. Title 16 - CONSERVATION "
+                    "16 U.S.C. United States Code, 2024 Edition "
+                    "CHAPTER 61 - INTERJURISDICTIONAL FISHERIES "
+                    "Sec. 4107 - Repealed. Pub. L. 117-328, div. S, "
+                    "title II, section 204(a), Dec. 29, 2022."
+                ),
+            },
+        ],
+        graph_id="packet-uscode-hierarchy-projection",
+    )
+
+    graph_triples = {
+        (
+            relationship.properties["flogic_predicate"],
+            relationship.properties["flogic_object"],
+        )
+        for relationship in graph_data.relationships
+    }
+    view_distribution = graph_data.metadata["frame_logic_projection_view_distribution"]
+
+    assert ("usc_hierarchy_title_label", "16") in graph_triples
+    assert ("usc_hierarchy_title_heading", "CONSERVATION") in graph_triples
+    assert ("usc_hierarchy_chapter_label", "61") in graph_triples
+    assert (
+        "usc_hierarchy_chapter_heading",
+        "INTERJURISDICTIONAL FISHERIES",
+    ) in graph_triples
+    assert ("section_catchline", "Repealed") in graph_triples
+    assert ("section_heading_tail", "Repealed") in graph_triples
+    assert ("status_keyword", "repealed") in graph_triples
+    assert view_distribution["citation_structure"] >= 1
+    assert view_distribution["section_structure"] >= 1
+    assert view_distribution["editorial_status"] >= 1
+    assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
+    assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
+
+
 def test_modal_frame_logic_bridge_bounds_flogic_similarity_loss_for_heading_samples() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
@@ -1805,6 +1856,72 @@ def test_deontic_bridge_grounds_lifecycle_actor_from_us_code_citation() -> None:
         "coverage_blockers"
     ]
     assert phase8_record["requires_validation"] is False
+    assert (
+        report.round_trip.extra_losses["deontic_quality_requires_validation_loss"]
+        == 0.0
+    )
+
+
+def test_deontic_bridge_recovers_savings_preservation_clause() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("deontic_norms")
+    report = adapter.evaluate(
+        (
+            "42 U.S.C. 18726. Savings provision. Nothing in this part affects "
+            "the authority, existing on the day before November 15, 2021, of "
+            "any other Federal department or agency, including the authority "
+            "provided to the Secretary of Homeland Security."
+        ),
+        document_id="deontic-bridge-savings-preservation",
+        citation="42 U.S.C. 18726",
+    )
+
+    norm = report.ir_document.views["deontic_ir"].payload["norms"][0]
+    slot_summary = report.ir_document.views[
+        "deontic_reconstruction_slot_loss"
+    ].payload["summary"]
+    phase8_summary = report.ir_document.views["deontic_phase8_quality"].payload[
+        "summary"
+    ]
+
+    assert norm["norm_type"] == "exemption"
+    assert norm["modality"] == "EXEMPT"
+    assert norm["actor"] == "other Federal department or agency"
+    assert norm["action"] == "preserve authority from this part"
+    assert slot_summary["slot_reconstruction_complete"] is True
+    assert phase8_summary["requires_validation"] is False
+    assert report.round_trip.extra_losses["deontic_decoder_slot_loss"] == 0.0
+    assert (
+        report.round_trip.extra_losses["deontic_quality_requires_validation_loss"]
+        == 0.0
+    )
+
+
+def test_deontic_bridge_classifies_no_subject_may_as_prohibition() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("deontic_norms")
+    report = adapter.evaluate(
+        (
+            "If the State recognizes credit for reinsurance, then no other "
+            "State may deny credit for reinsurance."
+        ),
+        document_id="deontic-bridge-no-subject-may-prohibition",
+        citation="Deontic Bridge No Subject May Prohibition",
+    )
+
+    norm = report.ir_document.views["deontic_ir"].payload["norms"][0]
+    formula = report.ir_document.views["deontic_formula_records"].payload[
+        "records"
+    ][0]["formula"]
+
+    assert norm["norm_type"] == "prohibition"
+    assert norm["modality"] == "F"
+    assert norm["actor"] == "other State"
+    assert norm["action"] == "deny credit for reinsurance"
+    assert formula.startswith("F(")
+    assert report.round_trip.extra_losses["deontic_decoder_slot_loss"] == 0.0
     assert (
         report.round_trip.extra_losses["deontic_quality_requires_validation_loss"]
         == 0.0
@@ -4055,13 +4172,60 @@ def test_cec_dcec_bridge_canonicalizes_direct_event_formula_text() -> None:
     event_record = report.ir_document.views["event_calculus"].payload["records"][0]
     assert event_record["event_calculus_formula"] == (
         "Happens(legal_norm(canonical_cec_formula), t) "
-        "=> HoldsAt(O(happens(agency,publish_notice,t0)), t)"
+        "=> HoldsAt(O(Happens(agency,publish_notice,t0)), t)"
     )
     assert event_record["event_formula_syntax_valid"] is True
     assert (
         event_record["event_formula_target_parse_profile"]["top_level_connector"]
         == "=>"
     )
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
+def test_cec_dcec_bridge_wraps_direct_state_formula_exports() -> None:
+    from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
+
+    class _StateFormulaResult:
+        success = True
+        metadata = {
+            "legal_norm_irs": [
+                {
+                    "source_id": "direct:cec:state-formula",
+                    "actor": "Statute section",
+                    "action": "record section repeal",
+                    "modality": "obligated",
+                    "norm_type": "definition",
+                    "event_calculus_formula": (
+                        "definition(statute_section, record_section_repeal)."
+                    ),
+                    "event_formula_source": "canonical_legal_ir",
+                }
+            ]
+        }
+
+    class _StateFormulaConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _StateFormulaResult()
+
+    adapter = CecDcecBridgeAdapter(converter=_StateFormulaConverter())
+    report = adapter.evaluate(
+        "The section is repealed.",
+        document_id="cec-bridge-direct-state-formula",
+        citation="CEC Bridge Direct State Formula",
+    )
+
+    event_record = report.ir_document.views["event_calculus"].payload["records"][0]
+    parse_profile = event_record["event_formula_target_parse_profile"]
+
+    assert event_record["event_calculus_formula"] == (
+        "Happens(legal_norm(direct_cec_state_formula), t) "
+        "=> HoldsAt(Definition(statute_section, record_section_repeal), t)"
+    )
+    assert event_record["event_formula_syntax_valid"] is True
+    assert parse_profile["event_predicates"] == ["Happens", "HoldsAt"]
+    assert parse_profile["event_predicate_slot_complete"] is True
+    assert parse_profile["target_parse_profile_complete"] is True
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
 
 
@@ -4919,7 +5083,7 @@ def test_cec_dcec_bridge_promotes_labeled_deontic_event_exports(
     event_record = report.ir_document.views["event_calculus"].payload["records"][0]
     assert event_record["event_calculus_formula"] == (
         "Happens(legal_norm(bridge_proof_obligation_1), t) "
-        "=> HoldsAt(O(happens(agency,publish_notice,t0)), t)"
+        "=> HoldsAt(O(Happens(agency,publish_notice,t0)), t)"
     )
     assert event_record["event_formula_syntax_valid"] is True
     assert (
@@ -5310,6 +5474,10 @@ def test_cec_dcec_bridge_accepts_case_variant_event_formula_predicates(
     event_record = report.ir_document.views["event_calculus"].payload["records"][0]
     parse_profile = event_record["event_formula_target_parse_profile"]
 
+    assert event_record["event_calculus_formula"] == (
+        "Happens(legal_norm(bridge_case_variant_1), t) => "
+        "HoldsAt(O(Happens(agency,publish_notice,t0)), t)"
+    )
     assert event_record["event_formula_syntax_valid"] is True
     assert parse_profile["event_predicates"] == ["Happens", "HoldsAt"]
     assert parse_profile["event_predicate_slot_complete"] is True
@@ -5664,6 +5832,72 @@ def test_external_prover_router_uses_syntactic_backup_when_native_prove_fails(
     assert "Error: native prover locked" in result.all_results["native"]
     assert result.all_results["native_syntactic"].is_compiled() is True
     assert result.all_results["native_syntactic"].is_valid is True
+
+
+def test_external_prover_router_parallel_reports_syntactic_compile_fallback(
+    monkeypatch,
+) -> None:
+    import builtins
+
+    from ipfs_datasets_py.logic.external_provers.prover_router import ProverRouter
+
+    real_import = builtins.__import__
+
+    def blocked_tdfol_import(name, *args, **kwargs):
+        if str(name).endswith("TDFOL.tdfol_prover"):
+            raise ImportError("tdfol unavailable for parallel fallback test")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", blocked_tdfol_import)
+
+    router = ProverRouter(
+        enable_cache=False,
+        enable_cvc5=False,
+        enable_coq=False,
+        enable_lean=False,
+        enable_native=True,
+        enable_symbolicai=False,
+        enable_z3=False,
+    )
+    result = router.route("O(register_notice(secretary))", strategy="parallel")
+
+    assert result.is_proved is False
+    assert result.is_compiled() is True
+    assert result.prover_used == "native_syntactic"
+    assert result.reason == "Used native_syntactic (no proof)"
+
+
+def test_external_prover_router_most_capable_reports_no_proof_for_syntactic_fallback(
+    monkeypatch,
+) -> None:
+    import builtins
+
+    from ipfs_datasets_py.logic.external_provers.prover_router import ProverRouter
+
+    real_import = builtins.__import__
+
+    def blocked_tdfol_import(name, *args, **kwargs):
+        if str(name).endswith("TDFOL.tdfol_prover"):
+            raise ImportError("tdfol unavailable for most capable fallback test")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", blocked_tdfol_import)
+
+    router = ProverRouter(
+        enable_cache=False,
+        enable_cvc5=False,
+        enable_coq=False,
+        enable_lean=False,
+        enable_native=True,
+        enable_symbolicai=False,
+        enable_z3=False,
+    )
+    result = router.route("O(register_notice(secretary))", strategy="most_capable")
+
+    assert result.is_proved is False
+    assert result.is_compiled() is True
+    assert result.prover_used == "native_syntactic"
+    assert result.reason == "Used native_syntactic (no proof)"
 
 
 def test_external_prover_router_auto_falls_back_when_formula_analysis_fails() -> None:
@@ -6931,6 +7165,37 @@ def test_fol_tdfol_coerce_formula_parses_colon_quantifier_exports() -> None:
         assert parsed.to_string() == expected
 
 
+def test_fol_tdfol_coerce_formula_extracts_prefixed_assignment_exports() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
+
+    parsed = coerce_tdfol_formula(
+        "TDFOL.prover: proof_obligation = O(agency, publish_notice(permit))"
+    )
+
+    assert parsed is not None
+    assert parsed.to_string() == "O(publish_notice(permit))"
+
+
+def test_fol_tdfol_coerce_formula_synthesizes_raw_deontic_text_exports() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
+
+    cases = {
+        "O(agency shall publish notice)": "O(agency_publish_notice(actor))",
+        "P(the Secretary may detail members as instructors)": (
+            "P(secretary_detail_members_instructors(secretary))"
+        ),
+        "F(person shall not disclose records)": (
+            "F(person_disclose_records(actor))"
+        ),
+    }
+
+    for formula, expected in cases.items():
+        parsed = coerce_tdfol_formula(formula)
+
+        assert parsed is not None
+        assert parsed.to_string() == expected
+
+
 def test_zkp_attestation_bridge_evaluates_proof_attestations_and_graph() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
@@ -7140,6 +7405,7 @@ def test_zkp_attestation_records_cache_reuses_generated_attestations(monkeypatch
     import ipfs_datasets_py.logic.zkp as zkp
     from ipfs_datasets_py.logic.bridge import zkp_attestation
 
+    monkeypatch.setenv("IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE", "0")
     with zkp_attestation._ZKP_ATTESTATION_RECORD_CACHE_LOCK:
         zkp_attestation._ZKP_ATTESTATION_RECORD_CACHE.clear()
     original_prover = zkp.ZKPProver
@@ -7168,6 +7434,65 @@ def test_zkp_attestation_records_cache_reuses_generated_attestations(monkeypatch
         formula_records,
         prover_kwargs={"backend": "simulated", "enable_caching": True},
         verifier_kwargs={"backend": "simulated"},
+    )
+
+    assert calls["prover_init"] == 1
+    assert first == second
+    assert first is not second
+    assert first[0] is not second[0]
+
+
+def test_zkp_attestation_records_use_persistent_disk_cache(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    import ipfs_datasets_py.logic.zkp as zkp
+    from ipfs_datasets_py.logic.bridge import zkp_attestation
+
+    cache_dir = tmp_path / "legal-ir-metric-cache"
+    monkeypatch.setenv("IPFS_DATASETS_LEGAL_IR_METRIC_CACHE_DIR", str(cache_dir))
+    monkeypatch.setenv("IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE", "1")
+    with zkp_attestation._ZKP_ATTESTATION_RECORD_CACHE_LOCK:
+        zkp_attestation._ZKP_ATTESTATION_RECORD_CACHE.clear()
+    original_prover = zkp.ZKPProver
+    calls = {"prover_init": 0}
+
+    class CountingProver(original_prover):
+        def __init__(self, *args, **kwargs):
+            calls["prover_init"] += 1
+            super().__init__(*args, **kwargs)
+
+    monkeypatch.setattr(zkp, "ZKPProver", CountingProver)
+    formula_records = [
+        {
+            "formula": "O(publish_notice(agency))",
+            "predicates": ("publish_notice",),
+            "source_id": "tdfol:norm:notice",
+        }
+    ]
+    prover_kwargs = {"backend": "simulated", "enable_caching": True}
+    verifier_kwargs = {"backend": "simulated"}
+
+    first = zkp_attestation._zkp_attestation_records(
+        formula_records,
+        prover_kwargs=prover_kwargs,
+        verifier_kwargs=verifier_kwargs,
+    )
+    cache_key = zkp_attestation._zkp_attestation_records_cache_key(
+        formula_records,
+        prover_kwargs=prover_kwargs,
+        verifier_kwargs=verifier_kwargs,
+    )
+    cache_path = zkp_attestation._zkp_attestation_records_disk_cache_path(cache_key)
+    assert cache_path is not None
+    assert cache_path.is_file()
+    with zkp_attestation._ZKP_ATTESTATION_RECORD_CACHE_LOCK:
+        zkp_attestation._ZKP_ATTESTATION_RECORD_CACHE.clear()
+
+    second = zkp_attestation._zkp_attestation_records(
+        formula_records,
+        prover_kwargs=prover_kwargs,
+        verifier_kwargs=verifier_kwargs,
     )
 
     assert calls["prover_init"] == 1

@@ -171,6 +171,44 @@ def test_sparse_legal_ir_record_is_completed_from_nested_proof():
     assert zkp_attestation_legal_ir_view_loss([sparse_record]) == 0.0
 
 
+def test_flattened_record_replaces_empty_duplicated_attestation_fields():
+    from ipfs_datasets_py.logic.zkp import ZKPProver
+
+    proof = ZKPProver().generate_proof(
+        theorem="Q",
+        private_axioms=["P", "P -> Q"],
+        metadata={
+            "circuit_ref": "legal_ir_zkp_attestation@v1",
+            "circuit_version": 1,
+            "ruleset_id": "LegalIR_TDFOL_v1",
+        },
+    )
+    proof_dict = proof.to_dict()
+    flattened_record = {
+        "attestation_ref": "",
+        "attestation_view_version": 0,
+        "proof_data": proof_dict["proof_data"],
+        "proof_hash": "",
+        "public_inputs": {
+            key: value
+            for key, value in proof_dict["public_inputs"].items()
+            if not key.startswith("attestation_")
+        },
+        "metadata": proof_dict["metadata"],
+        "sample_id": "us-code-42-18726.-3ff52550e83c51a1",
+    }
+
+    completed = complete_zkp_attestation_record(flattened_record)
+
+    assert completed["attestation_ref"] == proof.public_inputs["attestation_ref"]
+    assert completed["attestation_view_version"] == 1
+    assert completed["public_inputs"]["attestation_ref"] == completed["attestation_ref"]
+    assert completed["proof_hash"] == proof.metadata["attestation_view"]["proof_digest"]
+    assert completed["axioms_commitment"] == proof.public_inputs["axioms_commitment"]
+    assert completed["source_id"] == "us-code-42-18726.-3ff52550e83c51a1"
+    assert zkp_attestation_legal_ir_view_loss([flattened_record]) == 0.0
+
+
 def test_backend_fails_if_cli_succeeds_without_proof_file(tmp_path):
     binary = _fake_provekit_cli(tmp_path / "provekit-cli", write_proof=False)
     backend = ProveKitBackend(binary_path=str(binary))

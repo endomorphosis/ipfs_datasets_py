@@ -150,6 +150,33 @@ _USCODE_EDITORIAL_NOTE_LABELS: tuple[str, ...] = (
     "Statutory Notes and Related Subsidiaries",
 )
 _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
+    ("authorization of appropriations", "appropriation_authorization"),
+    ("authorized to be appropriated", "appropriation_authorization"),
+    ("appropriations", "appropriation"),
+    ("appropriated", "appropriation"),
+    ("remain available until expended", "no_year_funding_availability"),
+    ("available until expended", "no_year_funding_availability"),
+    ("research program and plan", "research_program_plan"),
+    ("research program", "research_program"),
+    ("grants for research", "research_grant"),
+    ("grants for the conduct of research", "research_grant"),
+    ("conduct of research", "research_activity"),
+    ("medicare & medicaid services", "medicare_medicaid_services"),
+    ("medicare and medicaid services", "medicare_medicaid_services"),
+    ("individuals with disabilities", "disability_services"),
+    ("printing, binding", "printing_binding"),
+    ("printing binding", "printing_binding"),
+    ("article reprint purchases", "article_reprint_purchase"),
+    ("reprint purchases", "article_reprint_purchase"),
+    ("scientific and technical article", "technical_article"),
+    ("small business bonding threshold", "small_business_bonding_threshold"),
+    ("bonding threshold", "bonding_threshold"),
+    ("firearm authority", "firearm_authority"),
+    ("animal quarantine enforcement", "animal_quarantine_enforcement"),
+    ("editorially reclassified", "editorial_reclassification"),
+    ("reclassified as section", "editorial_reclassification"),
+    ("jurisdiction over lands", "land_jurisdiction"),
+    ("determined by the secretary", "secretarial_determination"),
     ("annual plan submission", "plan_submission"),
     ("plan submission", "plan_submission"),
     ("plan submissions", "plan_submission"),
@@ -3409,6 +3436,12 @@ def _legal_role_classes_from_anchor(anchor: str, *, role: str) -> List[str]:
             add("grant_authorization")
         if tokens.intersection({"appropriate", "appropriated", "fund", "funded"}):
             add("funding_authority")
+        if tokens.intersection({"research", "conduct"}):
+            add("research_activity")
+        if tokens.intersection({"print", "printing", "bind", "binding", "reprint"}):
+            add("publication_procurement")
+        if tokens.intersection({"enforce", "enforcement", "quarantine"}):
+            add("enforcement_action")
         if tokens.intersection({"use", "uses", "used"}):
             add("resource_use")
         if tokens.intersection({"make", "made", "pay", "paid", "payment"}):
@@ -3426,6 +3459,14 @@ def _legal_role_classes_from_anchor(anchor: str, *, role: str) -> List[str]:
             add("authorization_instrument")
         if tokens.intersection({"fund", "funds", "appropriation", "appropriations"}):
             add("funding_resource")
+        if tokens.intersection({"research", "grant", "grants"}):
+            add("research_funding")
+        if tokens.intersection({"bond", "bonding", "threshold"}):
+            add("bonding_requirement")
+        if tokens.intersection({"firearm", "quarantine", "enforcement"}):
+            add("enforcement_authority")
+        if tokens.intersection({"printing", "binding", "reprint", "article"}):
+            add("publication_material")
         if tokens.intersection({"account", "accounts"}):
             add("financial_account")
         if tokens.intersection(

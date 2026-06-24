@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import replace
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -233,6 +234,83 @@ def test_legal_ir_target_cache_key_uses_source_text_not_citation_identity() -> N
     assert first_key != third_key
 
 
+def test_legal_ir_targets_use_persistent_disk_cache(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from ipfs_datasets_py.logic import bridge as bridge_module
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+        modal_autoencoder as modal_autoencoder_module,
+    )
+
+    monkeypatch.setenv(
+        "IPFS_DATASETS_LEGAL_IR_METRIC_CACHE_DIR",
+        str(tmp_path),
+    )
+    monkeypatch.setenv("IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE", "1")
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall publish notice before the permit takes effect.",
+    )
+    target = SimpleNamespace(
+        accepted=True,
+        adapter_losses={"deontic_norms": {"total_loss": 0.25}},
+        bridge_names=("deontic_norms",),
+        document=SimpleNamespace(
+            canonical_hash=lambda: "cached-target-hash",
+            document_id=sample.sample_id,
+            version="legal-ir-test",
+        ),
+        losses={"legal_ir_multiview_total_loss": 0.25},
+        view_distribution={"deontic.ir": 1.0},
+    )
+    call_count = 0
+
+    class FakeReport:
+        def training_target(self) -> object:
+            return target
+
+    def fake_evaluate(*args: object, **kwargs: object) -> FakeReport:
+        nonlocal call_count
+        call_count += 1
+        return FakeReport()
+
+    def clear_process_cache() -> None:
+        with modal_autoencoder_module._LEGAL_IR_TARGET_CACHE_LOCK:
+            modal_autoencoder_module._LEGAL_IR_TARGET_CACHE.clear()
+
+    clear_process_cache()
+    monkeypatch.setattr(
+        bridge_module,
+        "evaluate_legal_ir_multiview",
+        fake_evaluate,
+    )
+    autoencoder = AdaptiveModalAutoencoder()
+
+    first = autoencoder.evaluate(
+        [sample],
+        legal_ir_bridge_names=("deontic_norms",),
+        legal_ir_evaluate_provers=False,
+    )
+    clear_process_cache()
+    monkeypatch.setattr(
+        bridge_module,
+        "evaluate_legal_ir_multiview",
+        lambda *args, **kwargs: pytest.fail("bridge target should come from disk"),
+    )
+    second = autoencoder.evaluate(
+        [sample],
+        legal_ir_bridge_names=("deontic_norms",),
+        legal_ir_evaluate_provers=False,
+    )
+
+    assert call_count == 1
+    assert first.legal_ir_target_hashes[sample.sample_id] == "cached-target-hash"
+    assert second.legal_ir_target_hashes[sample.sample_id] == "cached-target-hash"
+    assert second.legal_ir_losses["legal_ir_multiview_total_loss"] == pytest.approx(0.25)
+
+
 def test_adaptive_autoencoder_sgd_lowers_legal_ir_view_cross_entropy() -> None:
     from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
 
@@ -367,6 +445,38 @@ def test_generalizable_projection_reports_progress_and_attempt_cap() -> None:
     assert "before_holdout_evaluation" in stages
     assert "line_search_attempt" in stages
     assert stages[-1] == "finished"
+
+
+def test_generalizable_projection_auto_caps_large_state_line_search(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall publish notice before the permit takes effect.",
+    )
+    monkeypatch.setenv(
+        "IPFS_DATASETS_GENERALIZABLE_PROJECTION_AUTO_LINE_SEARCH_ATTEMPTS",
+        "2",
+    )
+    monkeypatch.setattr(
+        ModalAutoencoderTrainingState,
+        "generalizable_entry_count",
+        lambda self: 100_000,
+    )
+    autoencoder = AdaptiveModalAutoencoder()
+
+    report = autoencoder.train_generalizable_projection(
+        [sample],
+        epochs=1,
+        learning_rate=0.1,
+    )
+
+    assert report["effective_max_line_search_attempts"] == 2
+    assert report["line_search_attempt_policy"] == "auto_large_state_cap"
+    assert report["epoch_reports"][0]["candidate_reports"][0][
+        "line_search_attempt_count"
+    ] <= 2
 
 
 def test_legal_ir_view_global_projection_isolates_core_heads() -> None:
@@ -1002,6 +1112,111 @@ def test_round_trip_bridge_features_encode_source_ir_equivalence() -> None:
         "legal-ir:round-trip-bridge:surface-action-to-family:approve:deontic"
         in legal_ir_features
     )
+
+
+def test_round_trip_bridge_features_encode_typed_family_pair_reconstruction() -> None:
+    base = build_us_code_sample(
+        title="5",
+        section="552(a)",
+        text="If the applicant files notice, the agency shall approve the permit.",
+    )
+    formula = base.modal_ir.formulas[0]
+    frame_formula = replace(
+        formula,
+        operator=replace(
+            formula.operator,
+            family="frame",
+            system="FrameLogic",
+            symbol="frame_bm25",
+            label="ontology_frame",
+        ),
+    )
+    sample = replace(base, modal_ir=replace(base.modal_ir, formulas=[frame_formula]))
+    autoencoder = AdaptiveModalAutoencoder(max_round_trip_bridge_features=256)
+
+    bridge_features = autoencoder._round_trip_bridge_feature_keys_for(sample)
+
+    assert "round-trip-bridge:typed-family-pair:frame->conditional_normative" in (
+        bridge_features
+    )
+    assert any(
+        feature.startswith(
+            "round-trip-bridge:typed-family-pair-predicate:"
+            "frame->conditional_normative:"
+        )
+        for feature in bridge_features
+    )
+    assert (
+        "round-trip-bridge:surface-action-to-family-pair:"
+        "approve:frame->conditional_normative"
+    ) in bridge_features
+
+
+def test_typed_family_pair_bridge_head_transfers_cosine_to_holdout() -> None:
+    def frame_pair_sample(title: str, section: str) -> object:
+        base = build_us_code_sample(
+            title=title,
+            section=section,
+            text="If the applicant files notice, the agency shall approve the permit.",
+            embedding_vector=[1.0, 0.0],
+        )
+        formula = base.modal_ir.formulas[0]
+        frame_formula = replace(
+            formula,
+            operator=replace(
+                formula.operator,
+                family="frame",
+                system="FrameLogic",
+                symbol="frame_bm25",
+                label="ontology_frame",
+            ),
+        )
+        return replace(base, modal_ir=replace(base.modal_ir, formulas=[frame_formula]))
+
+    train = frame_pair_sample("5", "552")
+    validation = frame_pair_sample("12", "1841")
+    autoencoder = AdaptiveModalAutoencoder(
+        compiler_quality_embedding_weight_scale=0.0,
+        logic_signature_embedding_weight_scale=0.0,
+        round_trip_signal_embedding_weight_scale=0.0,
+        decompiler_plan_embedding_weight_scale=0.0,
+        predicate_argument_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=0.0,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        feature_embedding_weight_scale=4.0,
+        max_compiler_latent_profile_features=0,
+        max_round_trip_bridge_features=256,
+        max_clause_topology_features=0,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+        cosine_reconstruction_weight=0.0,
+    )
+    shared_bridge_features = set(
+        autoencoder._round_trip_bridge_feature_keys_for(train)
+    ).intersection(autoencoder._round_trip_bridge_feature_keys_for(validation))
+    before = autoencoder.evaluate([validation], use_sample_memory=False)
+
+    autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after = autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert "round-trip-bridge:typed-family-pair:frame->conditional_normative" in (
+        shared_bridge_features
+    )
+    assert any(
+        feature.startswith("round-trip-bridge:typed-family-pair:")
+        for feature in autoencoder.state.feature_embedding_weights
+    )
+    assert after.embedding_cosine_similarity > before.embedding_cosine_similarity
 
 
 def test_round_trip_bridge_feature_head_transfers_ce_and_cosine_to_holdout() -> None:

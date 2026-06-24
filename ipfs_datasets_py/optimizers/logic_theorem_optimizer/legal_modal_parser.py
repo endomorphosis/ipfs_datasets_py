@@ -510,6 +510,39 @@ _USCODE_PURPOSE_RESIDUAL_SIGNAL_TOKENS = frozenset(
         "training",
     }
 )
+_USCODE_SAVINGS_EFFECT_RESIDUAL_MAX_TOKENS = 96
+_USCODE_SAVINGS_EFFECT_RESIDUAL_HINT_RE = re.compile(
+    r"\b(?:"
+    r"savings?\s+provisions?|"
+    r"effect\s+on\s+(?:other\s+)?law|"
+    r"effect\s+of\s+(?:act|chapter|part|section|subchapter|title)|"
+    r"nothing\s+in\s+(?:this|the)\s+"
+    r"(?:act|chapter|part|section|subchapter|title)\s+"
+    r"(?:affects?|alters?|impairs?|limits?|modifies|supersedes)|"
+    r"no\s+provision\s+of\s+(?:this|the)\s+"
+    r"(?:act|chapter|part|section|subchapter|title)\s+"
+    r"(?:affects?|alters?|impairs?|limits?|modifies|supersedes)"
+    r")\b",
+    re.IGNORECASE,
+)
+_USCODE_SAVINGS_EFFECT_RESIDUAL_SIGNAL_TOKENS = frozenset(
+    {
+        "act",
+        "agency",
+        "authority",
+        "chapter",
+        "department",
+        "law",
+        "laws",
+        "part",
+        "provision",
+        "provisions",
+        "savings",
+        "section",
+        "subchapter",
+        "title",
+    }
+)
 _USCODE_RESIDUAL_STATUTORY_FRAGMENT_MAX_TOKENS = 18
 _USCODE_RESIDUAL_STATUTORY_FRAGMENT_HINT_RE = re.compile(
     r"\b(?:ch|chapter|pub|stat)\b",
@@ -1548,6 +1581,8 @@ class LegalModalParser:
             return True
         if self._is_uscode_purpose_residual_candidate(normalized, tokens):
             return True
+        if self._is_uscode_savings_effect_residual_candidate(normalized, tokens):
+            return True
         if self._is_uscode_note_reference_residual_candidate(normalized, tokens):
             return True
         if self._is_uscode_revision_note_residual_candidate(normalized, tokens):
@@ -1938,6 +1973,26 @@ class LegalModalParser:
         if not _USCODE_PURPOSE_RESIDUAL_HINT_RE.search(lowered):
             return False
         return bool(set(tokens) & _USCODE_PURPOSE_RESIDUAL_SIGNAL_TOKENS)
+
+    def _is_uscode_savings_effect_residual_candidate(
+        self,
+        normalized_segment_text: str,
+        tokens: Sequence[str],
+    ) -> bool:
+        """Recover non-supersession/savings frame spans without explicit modals."""
+        token_count = len(tokens)
+        if token_count < 5 or token_count > _USCODE_SAVINGS_EFFECT_RESIDUAL_MAX_TOKENS:
+            return False
+        lowered = normalized_segment_text.lower()
+        if (
+            _USCODE_CODIFICATION_HINT_RE.search(lowered)
+            or _USCODE_EDITORIAL_STATUS_HINT_RE.search(lowered)
+            or _USCODE_DECLARATIVE_STATEMENT_HINT_RE.search(lowered)
+        ):
+            return False
+        if not _USCODE_SAVINGS_EFFECT_RESIDUAL_HINT_RE.search(lowered):
+            return False
+        return bool(set(tokens) & _USCODE_SAVINGS_EFFECT_RESIDUAL_SIGNAL_TOKENS)
 
     def _is_uscode_note_reference_residual_candidate(
         self,

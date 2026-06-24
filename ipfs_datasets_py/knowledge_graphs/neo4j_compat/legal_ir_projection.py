@@ -32,9 +32,43 @@ _SECTION_HEADING_MARKER_RE = re.compile(
     r"\s+From the U\.S\. Government Publishing Office\b|"
     r"\s+Editorial Notes\b|"
     r"\s+Statutory Notes\b|"
+    r"\s+Pub\. L\.|"
     r"\s+\([a-z]\)(?:\([0-9A-Za-z]+\))?(?:\s|$)|"
     r"\s+\(Pub\.|\s+\(Added|\s+\(June|\s+\(Sept\.|"
     r"$)",
+    re.IGNORECASE,
+)
+_CODE_TITLE_HEADING_RE = re.compile(
+    r"\bTitle\s+(?P<label>\d+[A-Za-z]*)\s+-\s+"
+    r"(?P<heading>.+?)(?="
+    r"\s+\d+[A-Za-z]*\s+U\.?S\.?C\.?\b|"
+    r"\s+United States Code\b|"
+    r"\s+Subtitle\s+[A-Z0-9]+\s+-\s+|"
+    r"\s+CHAPTER\s+[0-9A-Za-z-]+\s+-\s+|"
+    r"\s+SUBCHAPTER\s+[IVXLCDM0-9A-Z-]+\s+-\s+|"
+    r"\s+Sec\.?\s+\d|$)",
+    re.IGNORECASE,
+)
+_SUBTITLE_HEADING_RE = re.compile(
+    r"\bSubtitle\s+(?P<label>[A-Z0-9]+)\s+-\s+"
+    r"(?P<heading>.+?)(?="
+    r"\s+CHAPTER\s+[0-9A-Za-z-]+\s+-\s+|"
+    r"\s+SUBCHAPTER\s+[IVXLCDM0-9A-Z-]+\s+-\s+|"
+    r"\s+Subchapter\s+[IVXLCDM0-9A-Z-]+\s+-\s+|"
+    r"\s+Sec\.?\s+\d|$)",
+    re.IGNORECASE,
+)
+_CHAPTER_HEADING_RE = re.compile(
+    r"\bCHAPTER\s+(?P<label>[0-9A-Za-z-]+)\s+-\s+"
+    r"(?P<heading>.+?)(?="
+    r"\s+SUBCHAPTER\s+[IVXLCDM0-9A-Z-]+\s+-\s+|"
+    r"\s+Subchapter\s+[IVXLCDM0-9A-Z-]+\s+-\s+|"
+    r"\s+Sec\.?\s+\d|$)",
+    re.IGNORECASE,
+)
+_SUBCHAPTER_HEADING_RE = re.compile(
+    r"\bSubchapter\s+(?P<label>[IVXLCDM0-9A-Z-]+)\s+-\s+"
+    r"(?P<heading>.+?)(?=\s+Sec\.?\s+\d|$)",
     re.IGNORECASE,
 )
 _SUBSECTION_HEADING_RE = re.compile(
@@ -150,6 +184,8 @@ def augment_legal_ir_projection_triples(
                 components.extend(_section_text_components(obj))
             if "status_keyword" not in existing_predicates:
                 components.extend(_editorial_status_components(obj))
+            if not _has_family(existing_predicates, "usc_hierarchy_"):
+                components.extend(_uscode_hierarchy_components(obj))
         if not components:
             continue
 
@@ -315,6 +351,82 @@ def _section_text_components(text: str) -> List[Tuple[str, str]]:
     return _clean_components(components)
 
 
+def _uscode_hierarchy_components(text: str) -> List[Tuple[str, str]]:
+    normalized = _normalize_dashes(text)
+    components: List[Tuple[str, str]] = []
+    components.extend(
+        _hierarchy_heading_components(
+            normalized,
+            pattern=_CODE_TITLE_HEADING_RE,
+            prefix="usc_hierarchy_title",
+        )
+    )
+    components.extend(
+        _hierarchy_heading_components(
+            normalized,
+            pattern=_SUBTITLE_HEADING_RE,
+            prefix="usc_hierarchy_subtitle",
+        )
+    )
+    components.extend(
+        _hierarchy_heading_components(
+            normalized,
+            pattern=_CHAPTER_HEADING_RE,
+            prefix="usc_hierarchy_chapter",
+        )
+    )
+    components.extend(
+        _hierarchy_heading_components(
+            normalized,
+            pattern=_SUBCHAPTER_HEADING_RE,
+            prefix="usc_hierarchy_subchapter",
+        )
+    )
+    if components:
+        levels = {
+            predicate.rsplit("_", 1)[0]
+            for predicate, _value in components
+            if predicate.endswith("_label")
+        }
+        components.append(("usc_hierarchy_level_count", str(len(levels))))
+        components.append(("usc_hierarchy_projection", "true"))
+    return _clean_components(components)
+
+
+def _hierarchy_heading_components(
+    text: str,
+    *,
+    pattern: re.Pattern[str],
+    prefix: str,
+) -> List[Tuple[str, str]]:
+    components: List[Tuple[str, str]] = []
+    for match in pattern.finditer(text):
+        label = _clean_hierarchy_label(match.group("label"))
+        heading = _clean_hierarchy_heading_text(match.group("heading"))
+        if not label or not heading:
+            continue
+        components.append((f"{prefix}_label", label))
+        components.append((f"{prefix}_heading", heading))
+        components.append((f"{prefix}_key", f"{label}:{_identifier_token(heading)}"))
+    return components[:12]
+
+
+def _clean_hierarchy_label(text: str) -> str:
+    return re.sub(r"\s+", " ", _normalize_dashes(text)).strip(" -.;:").upper()
+
+
+def _clean_hierarchy_heading_text(text: str) -> str:
+    heading = re.sub(r"\s+", " ", _normalize_dashes(text)).strip(" -.;:")
+    heading = re.sub(
+        r"\s+(?:From the U\.S\. Government Publishing Office|Editorial Notes|"
+        r"Statutory Notes|Sec\.?\s+\d).*$",
+        "",
+        heading,
+        flags=re.IGNORECASE,
+    ).strip(" -.;:")
+    return heading
+
+
 def _editorial_status_components(text: str) -> List[Tuple[str, str]]:
     normalized = _normalize_dashes(text)
     components: List[Tuple[str, str]] = []
@@ -329,7 +441,11 @@ def _clean_heading_text(text: str) -> str:
     heading = re.sub(r"\s+", " ", _normalize_dashes(text)).strip(" -.;")
     # Some sparse samples continue directly into text after a short catchline.
     # Keep the canonical heading span conservative and deterministic.
-    heading = re.sub(r"\s+(Nothing|Each|Whoever|The|In)\b.*$", "", heading).strip(" -.;")
+    heading = re.sub(
+        r"\s+(Nothing|Each|Whoever|The|In|Pub\. L\.)\b.*$",
+        "",
+        heading,
+    ).strip(" -.;")
     return heading
 
 

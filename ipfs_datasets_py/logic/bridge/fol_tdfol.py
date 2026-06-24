@@ -1138,6 +1138,7 @@ def _normalize_tdfol_export_formula(text: str) -> str:
         flags=re.IGNORECASE,
     )
     normalized = _normalize_deontic_argument_export(normalized)
+    normalized = _normalize_raw_deontic_text_export(normalized)
     normalized = re.sub(r",\s*(?=\))", "", normalized)
     normalized = re.sub(r"(:[0-9A-Za-z_-]+)\.(?=\s*[\),])", r"\1", normalized)
     return normalized.strip()
@@ -1413,6 +1414,49 @@ def _normalize_deontic_argument_export(text: str) -> str:
     return "".join(result)
 
 
+def _normalize_raw_deontic_text_export(text: str) -> str:
+    """Canonicalize raw-text deontic exports such as O(agency shall file)."""
+
+    normalized = str(text or "").strip()
+    if not normalized:
+        return normalized
+    result: list[str] = []
+    index = 0
+    while index < len(normalized):
+        char = normalized[index]
+        if (
+            char in {"O", "P", "F"}
+            and (index == 0 or not normalized[index - 1].isalnum())
+            and index + 1 < len(normalized)
+            and normalized[index + 1] == "("
+        ):
+            close_index = _matching_paren_index(normalized, index + 1)
+            if close_index is not None:
+                inner = normalized[index + 2 : close_index].strip()
+                formula = _formula_from_raw_deontic_text_argument(char, inner)
+                if formula:
+                    result.append(formula)
+                    index = close_index + 1
+                    continue
+        result.append(char)
+        index += 1
+    return "".join(result)
+
+
+def _formula_from_raw_deontic_text_argument(operator: str, text: str) -> str:
+    candidate = str(text or "").strip().rstrip(".").strip()
+    if not candidate or _looks_like_tdfol_formula(candidate):
+        return ""
+    if not _looks_like_legal_text_obligation(candidate):
+        return ""
+    norm = _synthesized_norm_from_text(candidate)
+    if norm is None:
+        return ""
+    actor = _symbol(norm.get("actor") or _infer_actor_from_text(candidate))
+    action = _predicate_name(norm.get("action") or _infer_action_from_text(candidate))
+    return f"{operator}({action}({actor}))"
+
+
 def _formula_argument_from_deontic_parts(parts: Sequence[str]) -> str:
     for part in reversed([str(part or "").strip() for part in parts]):
         if not part:
@@ -1490,7 +1534,7 @@ def _unwrap_tdfol_key_value_export(text: str) -> str:
 
 
 def _extract_tdfol_key_value(text: str, key: str) -> Optional[str]:
-    pattern = re.compile(rf"(?i)(?:^|[,;])\s*{re.escape(key)}\s*[:=]")
+    pattern = re.compile(rf"(?i)(?:^|[,;:])\s*{re.escape(key)}\s*[:=]")
     match = pattern.search(text)
     if match is None:
         return None

@@ -65,6 +65,11 @@ _DCEC_STATE_PREDICATE_BY_KIND = {
     "instrument_lifecycle": "LifecycleState",
     "purpose": "Purpose",
 }
+_DCEC_STATE_PREDICATE_CANONICAL_BY_LOWER = {
+    predicate.lower(): predicate
+    for predicate in _DCEC_STATE_PREDICATE_BY_KIND.values()
+}
+_DCEC_STATE_PREDICATE_SET = set(_DCEC_STATE_PREDICATE_BY_KIND.values())
 
 
 @dataclass
@@ -1419,8 +1424,11 @@ def _direct_event_formula_export_from_norm(
         return None
     parse_profile = _event_formula_parse_profile(formula)
     if not (
-        parse_profile.get("event_predicates")
-        and parse_profile.get("target_parse_profile_complete") is True
+        parse_profile.get("target_parse_profile_complete") is True
+        and (
+            parse_profile.get("event_predicates")
+            or parse_profile.get("top_level_symbol") in _DCEC_STATE_PREDICATE_SET
+        )
     ):
         return None
     syntax_valid = bool(
@@ -1584,6 +1592,8 @@ def _event_formula_parse_profile_complete(
 ) -> bool:
     if not text or not _balanced_delimiters(text):
         return False
+    if top_level_symbol in _DCEC_STATE_PREDICATE_SET:
+        return _dcec_state_predicate_slots_complete(text, top_level_symbol)
     if not event_predicates:
         return False
     if not event_predicate_slot_complete:
@@ -1625,7 +1635,12 @@ def _top_level_symbol(text: str) -> str:
         lowered = token.lower()
         if lowered in {"forall", "exists"}:
             return lowered
-        return _canonical_event_predicate(token) or _canonical_wrapper_symbol(token) or token
+        return (
+            _canonical_event_predicate(token)
+            or _canonical_dcec_state_predicate(token)
+            or _canonical_wrapper_symbol(token)
+            or token
+        )
     if re.match(
         r"^\s*forall\s+[A-Za-z][A-Za-z0-9_]*\s*(?:\.|:|\()",
         text,
@@ -1665,6 +1680,13 @@ def _canonical_wrapper_symbol(token: str) -> str:
 
 def _canonical_event_predicate(token: str) -> str:
     return _EVENT_PREDICATE_CANONICAL_BY_LOWER.get(str(token or "").lower(), "")
+
+
+def _canonical_dcec_state_predicate(token: str) -> str:
+    return _DCEC_STATE_PREDICATE_CANONICAL_BY_LOWER.get(
+        str(token or "").lower(),
+        "",
+    )
 
 
 def _event_predicates(text: str) -> list[str]:
@@ -1719,6 +1741,16 @@ def _event_predicate_slots_complete(
         if empty_argument_count:
             return False
     return True
+
+
+def _dcec_state_predicate_slots_complete(text: str, top_level_symbol: str) -> bool:
+    for token, argument_text in _function_argument_texts(text):
+        canonical = _canonical_dcec_state_predicate(token)
+        if canonical != top_level_symbol:
+            continue
+        arguments = _split_top_level_arguments(argument_text)
+        return len(arguments) >= 2 and not any(not argument for argument in arguments)
+    return False
 
 
 def _function_argument_texts(text: str) -> list[tuple[str, str]]:
@@ -1823,7 +1855,27 @@ def _canonicalize_event_formula_text(text: str) -> str:
     for token, replacement in _EVENT_FORMULA_CONNECTOR_REPLACEMENTS.items():
         normalized = normalized.replace(token, replacement)
     normalized = _normalize_event_formula_brackets(normalized)
+    normalized = _canonicalize_event_formula_function_names(normalized)
     return " ".join(normalized.split())
+
+
+def _canonicalize_event_formula_function_names(text: str) -> str:
+    normalized = str(text or "")
+    canonical_names = {
+        **_EVENT_FORMULA_WRAPPER_CANONICAL_BY_LOWER,
+        **_DCEC_STATE_PREDICATE_CANONICAL_BY_LOWER,
+    }
+    for lowered, canonical in sorted(
+        canonical_names.items(),
+        key=lambda item: -len(item[0]),
+    ):
+        normalized = re.sub(
+            rf"\b{re.escape(lowered)}\s*(?=[(\[])",
+            canonical,
+            normalized,
+            flags=re.IGNORECASE,
+        )
+    return normalized
 
 
 def _normalize_event_formula_text(formula: str) -> str:
@@ -1978,6 +2030,8 @@ def _cec_slot_alignment_repairable(
     if list(components.get("formula_ungrounded_slots") or []):
         return False
     return bool(list(components.get("decoded_missing_grounded_ir_slots") or []))
+
+
 def _event_calculus_state_formula_from_export(
     formula: str,
     *,
@@ -1996,6 +2050,11 @@ def _event_calculus_state_formula_from_export(
         )
     ):
         return text
+    if parse_profile.get("top_level_symbol") in _DCEC_STATE_PREDICATE_SET:
+        return _event_calculus_formula_text(
+            source_id=source_id,
+            deontic_formula=text,
+        )
     if parse_profile.get("top_level_symbol") not in {"O", "P", "F"}:
         return text
     if "Happens" not in set(parse_profile.get("event_predicates") or []):

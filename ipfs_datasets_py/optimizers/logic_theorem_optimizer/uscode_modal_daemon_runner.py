@@ -811,6 +811,106 @@ def _metric_mapping_dict(value: Any) -> Dict[str, Any]:
     return {}
 
 
+def _bridge_report_training_target_payload(
+    report: Any,
+    *,
+    bridge_names: Sequence[str],
+) -> Optional[Dict[str, Any]]:
+    if isinstance(report, Mapping):
+        target_payload = dict(report.get("training_target", {}) or {})
+        document_hash = str(
+            target_payload.get("document_hash")
+            or report.get("document_hash")
+            or ""
+        )
+        if not document_hash:
+            return None
+        losses = dict(
+            target_payload.get("losses")
+            or report.get("canonical_loss_vector")
+            or {}
+        )
+        view_distribution = dict(
+            target_payload.get("view_distribution")
+            or report.get("view_distribution")
+            or {}
+        )
+        return {
+            "accepted": bool(target_payload.get("accepted", report.get("accepted", False))),
+            "adapter_losses": dict(target_payload.get("adapter_losses", {}) or {}),
+            "bridge_names": list(target_payload.get("bridge_names") or bridge_names),
+            "document_hash": document_hash,
+            "document_id": str(target_payload.get("document_id") or report.get("document_id") or ""),
+            "document_version": str(target_payload.get("document_version") or ""),
+            "losses": losses,
+            "view_distribution": view_distribution,
+        }
+    if hasattr(report, "to_dict"):
+        try:
+            report_payload = report.to_dict()
+        except Exception:
+            report_payload = None
+        if isinstance(report_payload, Mapping):
+            return _bridge_report_training_target_payload(
+                report_payload,
+                bridge_names=bridge_names,
+            )
+    try:
+        target = report.training_target()
+    except Exception:
+        target = None
+    if target is None:
+        return None
+    document = getattr(target, "document", None) or getattr(report, "document", None)
+    document_hash = ""
+    if document is not None and hasattr(document, "canonical_hash"):
+        try:
+            document_hash = str(document.canonical_hash())
+        except Exception:
+            document_hash = ""
+    if not document_hash:
+        return None
+    return {
+        "accepted": bool(getattr(target, "accepted", False)),
+        "adapter_losses": dict(getattr(target, "adapter_losses", {}) or {}),
+        "bridge_names": list(getattr(target, "bridge_names", ()) or bridge_names),
+        "document_hash": document_hash,
+        "document_id": str(getattr(document, "document_id", "") or ""),
+        "document_version": str(getattr(document, "version", "") or ""),
+        "losses": dict(getattr(target, "losses", {}) or {}),
+        "view_distribution": dict(getattr(target, "view_distribution", {}) or {}),
+    }
+
+
+def _export_bridge_report_to_legal_ir_target_cache(
+    sample: Any,
+    report: Any,
+    *,
+    bridge_names: Sequence[str],
+    evaluate_provers: Optional[bool],
+) -> bool:
+    payload = _bridge_report_training_target_payload(
+        report,
+        bridge_names=bridge_names,
+    )
+    if payload is None:
+        return False
+    try:
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import (
+            _legal_ir_target_cache_key,
+            _write_legal_ir_target_disk_cache_payload,
+        )
+
+        cache_key = _legal_ir_target_cache_key(
+            sample,
+            bridge_names=bridge_names,
+            evaluate_provers=evaluate_provers,
+        )
+        return _write_legal_ir_target_disk_cache_payload(cache_key, payload)
+    except Exception:
+        return False
+
+
 def _sample_metric_cache_payload(sample: Any) -> Dict[str, Any]:
     embedding = [
         round(float(value), 12)
@@ -1741,6 +1841,8 @@ def compiler_ir_metric_block(
     frame_candidate_counts: List[float] = []
     llm_call_counts: List[float] = []
     failures = 0
+    persistent_sample_cache_hits = 0
+    persistent_sample_cache_misses = 0
     guidance_frame_boost_counts: List[float] = []
     guidance_frame_changed_count = 0
     guidance_feature_groups: Counter[str] = Counter()
@@ -1779,26 +1881,64 @@ def compiler_ir_metric_block(
             except Exception:
                 guidance_failures += 1
                 compiler_guidance = None
-        try:
-            result = codec.encode(
-                sample.text,
-                document_id=sample.sample_id,
-                citation=sample.citation,
-                source=sample.source,
-                source_embedding=sample.embedding_vector,
-                compiler_guidance=compiler_guidance,
-            )
-        except Exception:
-            failures += 1
+        sample_cache_key = _compiler_ir_metric_sample_cache_key(
+            sample,
+            codec=codec,
+            compiler_guidance=compiler_guidance,
+            guidance_top_k=guidance_top_k,
+        )
+        cached_result_payload = _read_metric_disk_cache(
+            "compiler_ir_metric_sample",
+            sample_cache_key,
+        )
+        result = _compiler_ir_metric_result_from_cache_payload(
+            cached_result_payload
+        )
+        if result is not None:
+            persistent_sample_cache_hits += 1
             emit_progress(
-                "sample_failed",
+                "sample_persistent_cache_hit",
                 citation=citation,
-                failures=failures,
+                persistent_sample_cache_hits=persistent_sample_cache_hits,
+                persistent_sample_cache_misses=persistent_sample_cache_misses,
                 sample_id=sample_id,
                 sample_index=sample_index,
-                sample_seconds=round(time.time() - sample_started_at, 3),
             )
-            continue
+        else:
+            persistent_sample_cache_misses += 1
+            emit_progress(
+                "sample_cache_miss",
+                citation=citation,
+                persistent_sample_cache_hits=persistent_sample_cache_hits,
+                persistent_sample_cache_misses=persistent_sample_cache_misses,
+                sample_id=sample_id,
+                sample_index=sample_index,
+            )
+            try:
+                result = codec.encode(
+                    sample.text,
+                    document_id=sample.sample_id,
+                    citation=sample.citation,
+                    source=sample.source,
+                    source_embedding=sample.embedding_vector,
+                    compiler_guidance=compiler_guidance,
+                )
+            except Exception:
+                failures += 1
+                emit_progress(
+                    "sample_failed",
+                    citation=citation,
+                    failures=failures,
+                    sample_id=sample_id,
+                    sample_index=sample_index,
+                    sample_seconds=round(time.time() - sample_started_at, 3),
+                )
+                continue
+            _write_metric_disk_cache(
+                "compiler_ir_metric_sample",
+                sample_cache_key,
+                _compiler_ir_metric_result_cache_payload(result),
+            )
         for name in losses:
             value = result.losses.get(name)
             if value is not None:
@@ -1954,6 +2094,8 @@ def compiler_ir_metric_block(
         ),
         "evaluated_count": len(formula_counts),
         "metric_failures": failures,
+        "persistent_sample_cache_hits": persistent_sample_cache_hits,
+        "persistent_sample_cache_misses": persistent_sample_cache_misses,
         "sample_count": len(sample_list),
     }
     for name, values in losses.items():
@@ -3770,11 +3912,28 @@ def bridge_ir_metric_block(
     cache_misses = 0
     persistent_sample_cache_hits = 0
     persistent_sample_cache_misses = 0
+    legal_ir_target_cache_exports = 0
+    legal_ir_target_cache_export_misses = 0
     completed_samples = 0
     evaluation_seconds: List[float] = []
     cache_stats_lock = threading.Lock()
 
     from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
+
+    def record_legal_ir_target_cache_export(sample: Any, report: Any) -> bool:
+        nonlocal legal_ir_target_cache_exports, legal_ir_target_cache_export_misses
+        exported = _export_bridge_report_to_legal_ir_target_cache(
+            sample,
+            report,
+            bridge_names=adapter_names,
+            evaluate_provers=evaluate_provers,
+        )
+        with cache_stats_lock:
+            if exported:
+                legal_ir_target_cache_exports += 1
+            else:
+                legal_ir_target_cache_export_misses += 1
+        return exported
 
     def evaluate_sample(sample: Any) -> Any:
         nonlocal cache_hits, cache_misses, completed_samples
@@ -3822,6 +3981,7 @@ def bridge_ir_metric_block(
             disk_cache_key,
         )
         if cached_report is not None:
+            exported_target = record_legal_ir_target_cache_export(sample, cached_report)
             with _BRIDGE_IR_REPORT_CACHE_LOCK:
                 if len(_BRIDGE_IR_REPORT_CACHE) >= BRIDGE_IR_REPORT_CACHE_MAX:
                     _BRIDGE_IR_REPORT_CACHE.pop(next(iter(_BRIDGE_IR_REPORT_CACHE)), None)
@@ -3835,12 +3995,15 @@ def bridge_ir_metric_block(
                 hits = cache_hits
                 misses = cache_misses
                 persistent_hits = persistent_sample_cache_hits
+                target_exports = legal_ir_target_cache_exports
             emit_progress(
                 "sample_persistent_cache_hit",
                 cache_hits=hits,
                 cache_misses=misses,
                 citation=citation,
                 completed_samples=completed,
+                legal_ir_target_cache_exported=exported_target,
+                legal_ir_target_cache_exports=target_exports,
                 persistent_sample_cache_hits=persistent_hits,
                 sample_id=sample_id,
                 sample_seconds=round(time.time() - started, 3),
@@ -3879,18 +4042,22 @@ def bridge_ir_metric_block(
                 disk_cache_key,
                 report.to_dict(),
             )
+        exported_target = record_legal_ir_target_cache_export(sample, report)
         with cache_stats_lock:
             evaluation_seconds.append(time.time() - started)
             completed_samples += 1
             completed = completed_samples
             hits = cache_hits
             misses = cache_misses
+            target_exports = legal_ir_target_cache_exports
         emit_progress(
             "sample_done",
             cache_hits=hits,
             cache_misses=misses,
             citation=citation,
             completed_samples=completed,
+            legal_ir_target_cache_exported=exported_target,
+            legal_ir_target_cache_exports=target_exports,
             report_failures=len(getattr(report, "failures", {}) or {}),
             report_view_count=float(getattr(report, "view_count", 0.0) or 0.0),
             sample_id=sample_id,
@@ -3913,6 +4080,8 @@ def bridge_ir_metric_block(
     block["cache_size"] = cache_size
     block["evaluation_seconds_max"] = max(evaluation_seconds) if evaluation_seconds else 0.0
     block["evaluation_seconds_mean"] = _mean(evaluation_seconds)
+    block["legal_ir_target_cache_export_misses"] = legal_ir_target_cache_export_misses
+    block["legal_ir_target_cache_exports"] = legal_ir_target_cache_exports
     block["persistent_sample_cache_hits"] = persistent_sample_cache_hits
     block["persistent_sample_cache_misses"] = persistent_sample_cache_misses
 
@@ -4210,6 +4379,71 @@ def _compiler_ir_metric_block_cache_key(
         "samples": [_sample_metric_cache_payload(sample) for sample in samples],
     }
     return _metric_disk_cache_key("compiler_ir_metric_block", payload)
+
+
+def _compiler_ir_metric_sample_cache_key(
+    sample: Any,
+    *,
+    codec: Any,
+    compiler_guidance: Optional[Mapping[str, Any]],
+    guidance_top_k: int,
+) -> str:
+    payload = {
+        "codec": {
+            "config": _metric_cache_object_payload(getattr(codec, "config", None)),
+            "type": f"{codec.__class__.__module__}.{codec.__class__.__qualname__}",
+        },
+        "compiler_guidance": _metric_cache_object_payload(compiler_guidance),
+        "guidance_top_k": int(guidance_top_k),
+        "sample": _sample_metric_cache_payload(sample),
+    }
+    return _metric_disk_cache_key("compiler_ir_metric_sample", payload)
+
+
+def _compiler_ir_metric_result_cache_payload(result: Any) -> Dict[str, Any]:
+    modal_ir = getattr(result, "modal_ir", None)
+    frame_candidates = getattr(result, "frame_candidates", ()) or ()
+    return {
+        "decoded_modal_text": str(getattr(result, "decoded_modal_text", "") or ""),
+        "frame_candidate_count": len(frame_candidates),
+        "losses": _metric_cache_object_payload(getattr(result, "losses", {}) or {}),
+        "metadata": _metric_cache_object_payload(getattr(result, "metadata", {}) or {}),
+        "modal_formula_count": len(getattr(modal_ir, "formulas", ()) or ()),
+    }
+
+
+def _compiler_ir_metric_result_from_cache_payload(
+    payload: Optional[Mapping[str, Any]],
+) -> Optional[Any]:
+    if not isinstance(payload, Mapping):
+        return None
+    losses = payload.get("losses")
+    if not isinstance(losses, Mapping):
+        return None
+    metadata = payload.get("metadata")
+    if not isinstance(metadata, Mapping):
+        metadata = {}
+    try:
+        formula_count = max(0, int(payload.get("modal_formula_count", 0) or 0))
+    except (TypeError, ValueError):
+        formula_count = 0
+    try:
+        frame_candidate_count = max(
+            0,
+            int(payload.get("frame_candidate_count", 0) or 0),
+        )
+    except (TypeError, ValueError):
+        frame_candidate_count = 0
+    return SimpleNamespace(
+        decoded_modal_text=str(payload.get("decoded_modal_text") or ""),
+        frame_candidates=[None] * frame_candidate_count,
+        losses={
+            str(name): _float_or_zero(value)
+            for name, value in losses.items()
+        },
+        metadata=dict(metadata),
+        modal_ir=SimpleNamespace(formulas=[None] * formula_count),
+    )
 
 
 def _bridge_ir_metric_block_cache_key(
@@ -9280,8 +9514,10 @@ def _paired_resource_pressure(
     args: argparse.Namespace,
     *,
     resource_health: Optional[Mapping[str, Any]] = None,
+    role: str = "codex",
 ) -> tuple[bool, Dict[str, Any]]:
     health = dict(resource_health or paired_resource_health())
+    normalized_role = str(role or "codex").strip().lower()
     min_available_gb = max(
         0.0,
         float(getattr(args, "paired_min_available_memory_gb", 12.0) or 0.0),
@@ -9296,7 +9532,8 @@ def _paired_resource_pressure(
     )
     swap_free_gb = _resource_float(health, "swap_free_gb", min_swap_free_gb)
     swap_pressure = bool(min_swap_free_gb > 0.0 and swap_free_gb < min_swap_free_gb)
-    pressure = memory_pressure or swap_pressure
+    swap_blocks_restart = bool(normalized_role != "autoencoder")
+    pressure = memory_pressure or (swap_pressure and swap_blocks_restart)
     report = {
         "available_memory_gb": available_gb,
         "memory_pressure": memory_pressure,
@@ -9304,7 +9541,9 @@ def _paired_resource_pressure(
         "min_swap_free_gb": min_swap_free_gb,
         "resource_pressure": pressure,
         "resource_health": health,
+        "restart_role": normalized_role,
         "swap_free_gb": swap_free_gb,
+        "swap_blocks_restart": swap_blocks_restart,
         "swap_pressure": swap_pressure,
     }
     return pressure, report
@@ -9339,11 +9578,6 @@ def _clamp_nested_bridge_adapter_parallelism(
     parallelism for small sampled metric windows.
     """
 
-    previous = os.environ.get("IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS", "").strip()
-    try:
-        requested_adapter_workers = int(previous) if previous else 1
-    except ValueError:
-        requested_adapter_workers = 1
     sample_workers = max(
         1,
         int(
@@ -9352,7 +9586,8 @@ def _clamp_nested_bridge_adapter_parallelism(
             else bridge_parallel_workers
         ),
     )
-    adapter_limit = max(1, int(adapter_count or requested_adapter_workers or 1))
+    adapter_limit = max(1, int(adapter_count or 1))
+    previous = os.environ.get("IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS", "").strip()
     raw_budget = os.environ.get("IPFS_DATASETS_LEGAL_IR_NESTED_WORKER_BUDGET", "").strip()
     if max_nested_workers is None and raw_budget:
         try:
@@ -9360,6 +9595,20 @@ def _clamp_nested_bridge_adapter_parallelism(
         except ValueError:
             max_nested_workers = None
     nested_budget = max(1, int(max_nested_workers or bridge_parallel_workers or 1))
+    if previous:
+        try:
+            requested_adapter_workers = int(previous)
+        except ValueError:
+            requested_adapter_workers = 1
+    else:
+        requested_adapter_workers = max(
+            1,
+            min(
+                adapter_limit,
+                nested_budget,
+                bridge_parallel_workers,
+            ),
+        )
     adapter_budget = max(1, nested_budget // sample_workers)
     adapter_workers = max(
         1,
@@ -9370,8 +9619,7 @@ def _clamp_nested_bridge_adapter_parallelism(
         ),
     )
     clamped = adapter_workers != requested_adapter_workers
-    if previous or clamped:
-        os.environ["IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS"] = str(adapter_workers)
+    os.environ["IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS"] = str(adapter_workers)
     return {
         "adapter_count": adapter_limit,
         "adapter_worker_budget": adapter_budget,
@@ -11432,7 +11680,10 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                     and not paired_duration_elapsed
                     and elapsed <= duration_wait
                 ):
-                    resource_pressure, pressure_report = _paired_resource_pressure(args)
+                    resource_pressure, pressure_report = _paired_resource_pressure(
+                        args,
+                        role="autoencoder",
+                    )
                     if resource_pressure:
                         now = time.time()
                         last_deferred = restart_resource_defer_last_at.get(
@@ -11912,7 +12163,10 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                     and autoencoder_restart_count < autoencoder_restart_limit
                     and restart_cooldown_ready
                 ):
-                    resource_pressure, pressure_report = _paired_resource_pressure(args)
+                    resource_pressure, pressure_report = _paired_resource_pressure(
+                        args,
+                        role="autoencoder",
+                    )
                     if resource_pressure:
                         now = time.time()
                         last_deferred = restart_resource_defer_last_at.get(

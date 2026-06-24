@@ -20,6 +20,40 @@ from .modal_registry import ModalLogicFamily
 _LEGAL_IR_TARGET_CACHE_MAX = 2048
 _LEGAL_IR_TARGET_CACHE_LOCK = threading.Lock()
 _LEGAL_IR_TARGET_CACHE: Dict[str, Any] = {}
+_LEGAL_IR_TARGET_DISK_CACHE_VERSION = "legal-ir-target-disk-cache-v1"
+_LEGAL_IR_TARGET_DISK_CACHE_KIND = "legal_ir_training_target"
+_LEGAL_IR_TARGET_DISK_CACHE_DIR_ENV = "IPFS_DATASETS_LEGAL_IR_METRIC_CACHE_DIR"
+_LEGAL_IR_TARGET_DISK_CACHE_ENABLED_ENV = "IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE"
+_PROJECTION_AUTO_LINE_SEARCH_ATTEMPTS_ENV = (
+    "IPFS_DATASETS_GENERALIZABLE_PROJECTION_AUTO_LINE_SEARCH_ATTEMPTS"
+)
+_FALSE_ENV_VALUES = {"0", "false", "no", "off", "none", "disabled"}
+_LEGAL_IR_TARGET_CODE_FINGERPRINT_LOCK = threading.Lock()
+_LEGAL_IR_TARGET_CODE_FINGERPRINT_VALUE: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class _CachedLegalIRDocument:
+    document_hash: str
+    document_id: str = ""
+    version: str = ""
+
+    def canonical_hash(self) -> str:
+        return self.document_hash
+
+
+@dataclass(frozen=True)
+class _CachedLegalIRTrainingTarget:
+    bridge_names: Sequence[str]
+    document: _CachedLegalIRDocument
+    losses: Mapping[str, float] = field(default_factory=dict)
+    adapter_losses: Mapping[str, Mapping[str, float]] = field(default_factory=dict)
+    view_distribution: Mapping[str, float] = field(default_factory=dict)
+    accepted: bool = False
+
+    @property
+    def total_loss(self) -> float:
+        return float(self.losses.get("legal_ir_multiview_total_loss", 0.0))
 
 _AUTOENCODER_DIRECTIONAL_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = {
     "alethic": ("conditional_normative", "deontic", "temporal"),
@@ -3402,8 +3436,14 @@ class AdaptiveModalAutoencoder:
             0,
             int(max_line_search_attempts or 0),
         )
+        line_search_attempt_policy = "explicit"
         if effective_max_line_search_attempts <= 0 and state_entry_count >= 100_000:
-            effective_max_line_search_attempts = len(line_search_multipliers)
+            effective_max_line_search_attempts = _projection_auto_line_search_attempts(
+                max_attempts=len(line_search_multipliers),
+            )
+            line_search_attempt_policy = "auto_large_state_cap"
+        elif effective_max_line_search_attempts <= 0:
+            line_search_attempt_policy = "unbounded_small_state"
 
         for epoch in range(1, max(0, int(epochs)) + 1):
             if timed_out():
@@ -3747,6 +3787,7 @@ class AdaptiveModalAutoencoder:
             "epoch_reports": epoch_reports,
             "elapsed_seconds": round(elapsed_seconds(), 3),
             "effective_max_line_search_attempts": effective_max_line_search_attempts,
+            "line_search_attempt_policy": line_search_attempt_policy,
             "objective_weights": dict(objective_weights),
             "rejection_summary": _projection_rejection_summary(epoch_reports),
             "sample_memory_used": False,
@@ -17053,11 +17094,17 @@ class AdaptiveModalAutoencoder:
         exception_anchor = source_anchors.get("exception", "")
         temporal_anchor = source_anchors.get("temporal", "")
         keys: List[str] = []
+        typed_family_pair_suffixes: List[str] = []
 
         def add(suffix: str) -> None:
             suffix_atom = str(suffix).strip(":")
             if suffix_atom:
                 keys.append(f"{normalized_prefix}:{suffix_atom}")
+
+        def add_typed_family_pair(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                typed_family_pair_suffixes.append(suffix_atom)
 
         add("bias")
         add(f"formula-count:{_count_bucket(len(sample.modal_ir.formulas))}")
@@ -17147,6 +17194,47 @@ class AdaptiveModalAutoencoder:
                     add(f"cue-round-trip:{cue_name}:{formula_cue}")
             if formula_cue and family:
                 add(f"ir-cue-to-family:{formula_cue}:{family}")
+            family_pairs = _autoencoder_typed_family_pairs_for_formula(
+                sample.modal_ir,
+                formula,
+            )
+            for family_pair in family_pairs:
+                add_typed_family_pair(f"typed-family-pair:{family_pair}")
+                if formula_cue:
+                    add_typed_family_pair(
+                        f"typed-family-pair-cue:{family_pair}:{formula_cue}"
+                    )
+                for cue_name in cue_names[:4]:
+                    add_typed_family_pair(
+                        f"surface-cue-to-family-pair:{cue_name}:{family_pair}"
+                    )
+                if predicate_head:
+                    add_typed_family_pair(
+                        f"typed-family-pair-predicate:{family_pair}:{predicate_head}"
+                    )
+                if action_anchor:
+                    add_typed_family_pair(
+                        f"surface-action-to-family-pair:{action_anchor}:{family_pair}"
+                    )
+                if object_anchor:
+                    add_typed_family_pair(
+                        f"surface-object-to-family-pair:{object_anchor}:{family_pair}"
+                    )
+                if condition_anchor:
+                    add_typed_family_pair(
+                        f"surface-condition-to-family-pair:"
+                        f"{condition_anchor}:{family_pair}"
+                    )
+                if temporal_anchor:
+                    add_typed_family_pair(
+                        f"surface-temporal-to-family-pair:"
+                        f"{temporal_anchor}:{family_pair}"
+                    )
+                if exception_anchor:
+                    add_typed_family_pair(
+                        f"surface-exception-to-family-pair:"
+                        f"{exception_anchor}:{family_pair}"
+                    )
             if condition_anchor and family:
                 add(
                     f"surface-condition-to-family:{condition_anchor}:{family}:c{condition_bucket}"
@@ -17208,6 +17296,8 @@ class AdaptiveModalAutoencoder:
                     add(f"kg-subject-predicate:{subject}:{predicate}")
                 if predicate and obj:
                     add(f"kg-predicate-object:{predicate}:{obj}")
+        for suffix in _unique_preserve_order(typed_family_pair_suffixes):
+            add(suffix)
 
         result = _unique_preserve_order(keys)[: self.max_round_trip_bridge_features]
         cache[cache_key] = list(result)
@@ -21692,6 +21782,13 @@ def _legal_ir_target_items(
             cached = _LEGAL_IR_TARGET_CACHE.get(cache_key)
         if cached is not None:
             return sample.sample_id, cached
+        cached = _read_legal_ir_target_disk_cache(cache_key)
+        if cached is not None:
+            with _LEGAL_IR_TARGET_CACHE_LOCK:
+                if len(_LEGAL_IR_TARGET_CACHE) >= _LEGAL_IR_TARGET_CACHE_MAX:
+                    _LEGAL_IR_TARGET_CACHE.pop(next(iter(_LEGAL_IR_TARGET_CACHE)), None)
+                _LEGAL_IR_TARGET_CACHE[cache_key] = cached
+            return sample.sample_id, cached
         report = evaluate_legal_ir_multiview(
             sample.text,
             bridge_names=names,
@@ -21706,6 +21803,7 @@ def _legal_ir_target_items(
             if len(_LEGAL_IR_TARGET_CACHE) >= _LEGAL_IR_TARGET_CACHE_MAX:
                 _LEGAL_IR_TARGET_CACHE.pop(next(iter(_LEGAL_IR_TARGET_CACHE)), None)
             _LEGAL_IR_TARGET_CACHE[cache_key] = target
+        _write_legal_ir_target_disk_cache(cache_key, target)
         return sample.sample_id, target
 
     worker_count = _legal_ir_parallel_worker_count(
@@ -21771,6 +21869,282 @@ def _legal_ir_target_cache_key(
     return hashlib.sha256(
         json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
     ).hexdigest()
+
+
+def _legal_ir_target_disk_cache_enabled() -> bool:
+    raw = str(
+        os.environ.get(_LEGAL_IR_TARGET_DISK_CACHE_ENABLED_ENV) or ""
+    ).strip().lower()
+    return raw not in _FALSE_ENV_VALUES
+
+
+def _projection_auto_line_search_attempts(*, max_attempts: int) -> int:
+    upper_bound = max(1, int(max_attempts))
+    raw = str(os.environ.get(_PROJECTION_AUTO_LINE_SEARCH_ATTEMPTS_ENV) or "").strip()
+    if raw:
+        try:
+            requested = int(raw)
+        except ValueError:
+            requested = 3
+    else:
+        requested = 3
+    return max(1, min(upper_bound, requested))
+
+
+def _default_legal_ir_target_disk_cache_dir() -> Path:
+    try:
+        repo_root = Path(__file__).resolve().parents[3]
+    except (IndexError, OSError, RuntimeError):
+        repo_root = Path.cwd()
+    return repo_root / "workspace" / "test-logs" / "legal-ir-metric-cache"
+
+
+def _legal_ir_target_disk_cache_dir() -> Optional[Path]:
+    if not _legal_ir_target_disk_cache_enabled():
+        return None
+    raw = str(os.environ.get(_LEGAL_IR_TARGET_DISK_CACHE_DIR_ENV) or "").strip()
+    if raw.lower() in _FALSE_ENV_VALUES:
+        return None
+    return Path(raw).expanduser() if raw else _default_legal_ir_target_disk_cache_dir()
+
+
+def _legal_ir_target_code_fingerprint() -> str:
+    global _LEGAL_IR_TARGET_CODE_FINGERPRINT_VALUE
+    with _LEGAL_IR_TARGET_CODE_FINGERPRINT_LOCK:
+        if _LEGAL_IR_TARGET_CODE_FINGERPRINT_VALUE:
+            return _LEGAL_IR_TARGET_CODE_FINGERPRINT_VALUE
+        try:
+            package_root = Path(__file__).resolve().parents[2]
+        except (IndexError, OSError, RuntimeError):
+            package_root = Path.cwd()
+        candidates = [
+            Path(__file__),
+            package_root / "logic" / "bridge",
+            package_root / "logic" / "modal",
+            package_root / "knowledge_graphs" / "neo4j_compat" / "legal_ir_projection.py",
+        ]
+        tokens: List[str] = []
+        for candidate in candidates:
+            paths = (
+                sorted(candidate.rglob("*.py"))
+                if candidate.is_dir()
+                else [candidate]
+            )
+            for path in paths:
+                try:
+                    stat = path.stat()
+                except (OSError, RuntimeError):
+                    continue
+                try:
+                    relative = path.relative_to(package_root)
+                except ValueError:
+                    relative = path
+                tokens.append(f"{relative}:{stat.st_mtime_ns}:{stat.st_size}")
+        _LEGAL_IR_TARGET_CODE_FINGERPRINT_VALUE = (
+            hashlib.sha256("\n".join(tokens).encode("utf-8")).hexdigest()
+            if tokens
+            else "unknown"
+        )
+        return _LEGAL_IR_TARGET_CODE_FINGERPRINT_VALUE
+
+
+def _legal_ir_target_disk_cache_key(cache_key: str) -> str:
+    payload = {
+        "code_fingerprint": _legal_ir_target_code_fingerprint(),
+        "kind": _LEGAL_IR_TARGET_DISK_CACHE_KIND,
+        "target_cache_key": str(cache_key),
+        "version": _LEGAL_IR_TARGET_DISK_CACHE_VERSION,
+    }
+    return hashlib.sha256(
+        json.dumps(
+            payload,
+            ensure_ascii=True,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+    ).hexdigest()
+
+
+def _legal_ir_target_disk_cache_path(cache_key: str) -> Optional[Path]:
+    root = _legal_ir_target_disk_cache_dir()
+    if root is None:
+        return None
+    disk_key = _legal_ir_target_disk_cache_key(cache_key)
+    return (
+        root
+        / _LEGAL_IR_TARGET_DISK_CACHE_KIND
+        / disk_key[:2]
+        / f"{disk_key}.json"
+    )
+
+
+def _numeric_float_mapping(values: Any) -> Dict[str, float]:
+    if not isinstance(values, Mapping):
+        return {}
+    return {
+        str(name): _float_or_zero(value)
+        for name, value in values.items()
+    }
+
+
+def _legal_ir_target_cache_payload(target: Any) -> Optional[Dict[str, Any]]:
+    document = getattr(target, "document", None)
+    if document is None or not hasattr(document, "canonical_hash"):
+        return None
+    try:
+        document_hash = str(document.canonical_hash())
+    except Exception:
+        return None
+    if not document_hash:
+        return None
+    adapter_losses: Dict[str, Dict[str, float]] = {}
+    for name, losses in dict(getattr(target, "adapter_losses", {}) or {}).items():
+        if isinstance(losses, Mapping):
+            adapter_losses[str(name)] = _numeric_float_mapping(losses)
+    return {
+        "accepted": bool(getattr(target, "accepted", False)),
+        "adapter_losses": dict(sorted(adapter_losses.items())),
+        "bridge_names": [
+            str(name)
+            for name in list(getattr(target, "bridge_names", ()) or ())
+        ],
+        "document_hash": document_hash,
+        "document_id": str(getattr(document, "document_id", "") or ""),
+        "document_version": str(getattr(document, "version", "") or ""),
+        "losses": _numeric_float_mapping(getattr(target, "losses", {}) or {}),
+        "view_distribution": _numeric_float_mapping(
+            getattr(target, "view_distribution", {}) or {}
+        ),
+    }
+
+
+def _normalise_legal_ir_target_cache_payload(
+    payload: Mapping[str, Any],
+) -> Optional[Dict[str, Any]]:
+    document_hash = str(payload.get("document_hash") or "")
+    if not document_hash:
+        return None
+    adapter_losses: Dict[str, Dict[str, float]] = {}
+    raw_adapter_losses = payload.get("adapter_losses")
+    if isinstance(raw_adapter_losses, Mapping):
+        for name, losses in raw_adapter_losses.items():
+            if isinstance(losses, Mapping):
+                adapter_losses[str(name)] = _numeric_float_mapping(losses)
+    return {
+        "accepted": bool(payload.get("accepted", False)),
+        "adapter_losses": dict(sorted(adapter_losses.items())),
+        "bridge_names": [
+            str(name)
+            for name in list(payload.get("bridge_names") or ())
+            if str(name)
+        ],
+        "document_hash": document_hash,
+        "document_id": str(payload.get("document_id") or ""),
+        "document_version": str(payload.get("document_version") or ""),
+        "losses": _numeric_float_mapping(payload.get("losses")),
+        "view_distribution": _numeric_float_mapping(payload.get("view_distribution")),
+    }
+
+
+def _write_legal_ir_target_disk_cache_payload(
+    cache_key: str,
+    payload: Mapping[str, Any],
+) -> bool:
+    path = _legal_ir_target_disk_cache_path(cache_key)
+    normalized_payload = _normalise_legal_ir_target_cache_payload(payload)
+    if path is None or normalized_payload is None:
+        return False
+    tmp_path = path.with_name(
+        f".{path.stem}.{os.getpid()}.{threading.get_ident()}.tmp"
+    )
+    wrapper = {
+        "code_fingerprint": _legal_ir_target_code_fingerprint(),
+        "created_at": int(time.time()),
+        "kind": _LEGAL_IR_TARGET_DISK_CACHE_KIND,
+        "payload": normalized_payload,
+        "target_cache_key": cache_key,
+        "version": _LEGAL_IR_TARGET_DISK_CACHE_VERSION,
+    }
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp_path.write_text(
+            json.dumps(wrapper, ensure_ascii=True, sort_keys=True),
+            encoding="utf-8",
+        )
+        os.replace(tmp_path, path)
+        cached_target = _legal_ir_target_from_cache_payload(normalized_payload)
+        if cached_target is not None:
+            with _LEGAL_IR_TARGET_CACHE_LOCK:
+                if len(_LEGAL_IR_TARGET_CACHE) >= _LEGAL_IR_TARGET_CACHE_MAX:
+                    _LEGAL_IR_TARGET_CACHE.pop(next(iter(_LEGAL_IR_TARGET_CACHE)), None)
+                _LEGAL_IR_TARGET_CACHE[cache_key] = cached_target
+        return True
+    except Exception:
+        try:
+            tmp_path.unlink(missing_ok=True)
+        except OSError:
+            pass
+        return False
+
+
+def _legal_ir_target_from_cache_payload(
+    payload: Mapping[str, Any],
+) -> Optional[_CachedLegalIRTrainingTarget]:
+    normalized_payload = _normalise_legal_ir_target_cache_payload(payload)
+    if normalized_payload is None:
+        return None
+    adapter_losses: Dict[str, Dict[str, float]] = {}
+    raw_adapter_losses = normalized_payload.get("adapter_losses")
+    if isinstance(raw_adapter_losses, Mapping):
+        for name, losses in raw_adapter_losses.items():
+            adapter_losses[str(name)] = _numeric_float_mapping(losses)
+    return _CachedLegalIRTrainingTarget(
+        bridge_names=tuple(
+            str(name)
+            for name in list(normalized_payload.get("bridge_names") or ())
+            if str(name)
+        ),
+        document=_CachedLegalIRDocument(
+            document_hash=str(normalized_payload.get("document_hash") or ""),
+            document_id=str(normalized_payload.get("document_id") or ""),
+            version=str(normalized_payload.get("document_version") or ""),
+        ),
+        losses=_numeric_float_mapping(normalized_payload.get("losses")),
+        adapter_losses=dict(sorted(adapter_losses.items())),
+        view_distribution=_numeric_float_mapping(normalized_payload.get("view_distribution")),
+        accepted=bool(normalized_payload.get("accepted", False)),
+    )
+
+
+def _read_legal_ir_target_disk_cache(cache_key: str) -> Optional[Any]:
+    path = _legal_ir_target_disk_cache_path(cache_key)
+    if path is None or not path.is_file():
+        return None
+    try:
+        wrapper = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(wrapper, Mapping):
+        return None
+    if wrapper.get("version") != _LEGAL_IR_TARGET_DISK_CACHE_VERSION:
+        return None
+    if wrapper.get("kind") != _LEGAL_IR_TARGET_DISK_CACHE_KIND:
+        return None
+    if wrapper.get("target_cache_key") != cache_key:
+        return None
+    if wrapper.get("code_fingerprint") != _legal_ir_target_code_fingerprint():
+        return None
+    payload = wrapper.get("payload")
+    if not isinstance(payload, Mapping):
+        return None
+    return _legal_ir_target_from_cache_payload(payload)
+
+
+def _write_legal_ir_target_disk_cache(cache_key: str, target: Any) -> None:
+    payload = _legal_ir_target_cache_payload(target)
+    if payload is None:
+        return
+    _write_legal_ir_target_disk_cache_payload(cache_key, payload)
 
 
 def _sample_content_cache_id(sample: LegalSample) -> str:

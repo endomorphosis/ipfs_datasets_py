@@ -47,6 +47,10 @@ _USCODE_46_55318_TODO_TEXT = (
     "words \"section 1707a(b)(8) of title 7\" are omitted because the provision referred "
     "to has been repealed."
 )
+_USCODE_SAVINGS_EFFECT_RESIDUAL_TEXT = (
+    "Sec. 18726 - Savings provision. Nothing in this part affects any other "
+    "provision of law of a Federal department or agency."
+)
 _USCODE_8_606_TODO_TEXT = (
     "U.S.C. Title 8 - ALIENS AND NATIONALITY 8 U.S.C. United States Code, 2024 Edition "
     "Title 8 - ALIENS AND NATIONALITY CHAPTER 11 - NATIONALITY SUBCHAPTER II - NATIONALITY "
@@ -6619,6 +6623,31 @@ def test_spacy_compiler_adds_report_heading_residual_span_coverage() -> None:
         for formula in residual_formulas
     }
     assert "Congressional notification and reports." in residual_text_spans
+
+
+def test_spacy_compiler_adds_savings_effect_residual_span_coverage() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    encoding = encoder.encode(
+        _USCODE_SAVINGS_EFFECT_RESIDUAL_TEXT,
+        document_id="us-code-42-18726-savings-effect-residual",
+        citation="42 U.S.C. 18726",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    residual_text_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    }
+
+    assert (
+        "Nothing in this part affects any other provision of law of "
+        "a Federal department or agency."
+    ) in residual_text_spans
 
 
 def test_spacy_compiler_adds_packet_000004_short_structural_heading_spans() -> None:
