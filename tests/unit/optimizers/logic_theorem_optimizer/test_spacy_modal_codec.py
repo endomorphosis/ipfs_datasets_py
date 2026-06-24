@@ -8042,3 +8042,34 @@ def test_supervisor_with_spacy_codec_improves_loss_and_cosine() -> None:
     assert run.final_evaluation.reconstruction_loss < before.reconstruction_loss
     assert run.final_evaluation.embedding_cosine_similarity > before.embedding_cosine_similarity
     assert supervisor.queue.status_counts()["completed"] >= 2
+
+
+def test_spacy_compiler_covers_uscode_effect_of_act_catchline_for_701e() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    text = (
+        "33 U.S.C. 701e. Effect of act June 22, 1936, on provisions for "
+        "Mississippi River and other projects. Nothing in this Act shall be "
+        "construed as repealing or amending any provision of sections 702a "
+        "through 704 of this title."
+    )
+    encoding = encoder.encode(
+        text,
+        document_id="us-code-33-701e-19ea9c3021f51521",
+        citation="33 U.S.C. 701e",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    residual_spans = {
+        modal_ir.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ].strip()
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    }
+
+    assert (
+        "Effect of act June 22, 1936, on provisions for Mississippi River "
+        "and other projects."
+    ) in residual_spans

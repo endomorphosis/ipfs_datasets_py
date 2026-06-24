@@ -1761,3 +1761,32 @@ def test_parser_covers_uscode_use_recovery_paragraph_headings() -> None:
         span.startswith("(2) Restoration and replacement .")
         for span in residual_spans
     )
+
+
+def test_parser_covers_uscode_effect_of_act_catchline_for_701e() -> None:
+    parser = LegalModalParser()
+    text = (
+        "33 U.S.C. 701e. Effect of act June 22, 1936, on provisions for "
+        "Mississippi River and other projects. Nothing in this Act shall be "
+        "construed as repealing or amending any provision of sections 702a "
+        "through 704 of this title."
+    )
+
+    parsed = parser.parse(
+        text,
+        document_id="us-code-33-701e-19ea9c3021f51521",
+        source="us_code",
+        citation="33 U.S.C. 701e",
+    )
+    residual_spans = {
+        parsed.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ].strip()
+        for formula in parsed.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    }
+
+    assert (
+        "Effect of act June 22, 1936, on provisions for Mississippi River "
+        "and other projects."
+    ) in residual_spans

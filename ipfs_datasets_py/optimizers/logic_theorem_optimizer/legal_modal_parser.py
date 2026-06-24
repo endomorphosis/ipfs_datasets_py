@@ -167,6 +167,8 @@ _USCODE_HEADING_ONLY_ARTICLE_NOUN_HINTS = frozenset(
 _USCODE_HEADING_ONLY_EXTENDED_NOUN_HINTS = frozenset(
     {
         *_USCODE_HEADING_ONLY_ARTICLE_NOUN_HINTS,
+        "act",
+        "acts",
         "administrative",
         "adjudication",
         "adjudications",
@@ -174,8 +176,11 @@ _USCODE_HEADING_ONLY_EXTENDED_NOUN_HINTS = frozenset(
         "appeals",
         "certification",
         "compliance",
+        "control",
         "enforcement",
         "implementation",
+        "project",
+        "projects",
         "procedural",
         "procedure",
         "procedures",
