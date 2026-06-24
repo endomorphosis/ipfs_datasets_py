@@ -134,7 +134,8 @@ class ProverRouter:
         enable_symbolicai: bool = False,
         default_strategy: ProverStrategy = ProverStrategy.AUTO,
         default_timeout: float = 5.0,
-        enable_cache: bool = True
+        enable_cache: bool = True,
+        enable_syntactic_fallback: bool = True,
     ):
         """Initialize prover router.
         
@@ -148,6 +149,8 @@ class ProverRouter:
             default_strategy: Default proving strategy
             default_timeout: Default timeout per prover
             enable_cache: Whether to enable proof caching
+            enable_syntactic_fallback: Whether to keep a compile-only
+                fallback available when configured provers are absent
         """
         self.enable_z3 = enable_z3
         self.enable_cvc5 = enable_cvc5
@@ -158,6 +161,7 @@ class ProverRouter:
         self.default_strategy = self._coerce_strategy(default_strategy)
         self.default_timeout = default_timeout
         self.enable_cache = enable_cache
+        self.enable_syntactic_fallback = enable_syntactic_fallback
         
         # Initialize formula analyzer for intelligent selection
         self.analyzer = FormulaAnalyzer()
@@ -174,6 +178,8 @@ class ProverRouter:
         # Initialize provers
         self.provers = {}
         self._initialize_provers()
+        if self.enable_syntactic_fallback and not self.provers:
+            self.provers['native_syntactic'] = SyntacticNativeFallbackProver()
     
     def _initialize_provers(self):
         """Initialize available provers."""
@@ -238,13 +244,15 @@ class ProverRouter:
             try:
                 from ..TDFOL.tdfol_prover import TDFOLProver
                 self.provers['native'] = TDFOLProver()
-                self.provers['native_syntactic'] = SyntacticNativeFallbackProver()
+                if self.enable_syntactic_fallback:
+                    self.provers['native_syntactic'] = SyntacticNativeFallbackProver()
             except Exception:
                 logger.debug(
                     "Native TDFOL prover unavailable; using syntactic fallback",
                     exc_info=True,
                 )
-                self.provers['native_syntactic'] = SyntacticNativeFallbackProver()
+                if self.enable_syntactic_fallback:
+                    self.provers['native_syntactic'] = SyntacticNativeFallbackProver()
     
     def get_available_provers(self) -> List[str]:
         """Get list of available provers."""
@@ -898,4 +906,6 @@ __all__ = [
     "ProverRouter",
     "ProverStrategy",
     "RouterProofResult",
+    "SyntacticNativeFallbackProver",
+    "SyntacticProofResult",
 ]

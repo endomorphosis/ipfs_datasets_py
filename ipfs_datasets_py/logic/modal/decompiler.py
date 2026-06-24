@@ -12319,7 +12319,7 @@ def _source_role_anchor_phrases(
             if predicate_head and role_key in {"action", "object"}:
                 target_predicate_slot = (
                     f"{target_family}||slot:source-{role_key}-target-predicate:"
-                    f"{anchor_key}:{pair_source}:{predicate_head}"
+                    f"{anchor_key}:{pair_key}:{predicate_head}"
                 )
                 add(
                     "family_semantic_slot_legal_ir_view_prototype",
@@ -12330,7 +12330,7 @@ def _source_role_anchor_phrases(
                         "family_semantic_slot_legal_ir_view_prototype_"
                         f"{target_family}_source_{role_key}_target_predicate_{view_key}"
                     ),
-                    f"{anchor_key}:{pair_source}:{predicate_head}",
+                    f"{anchor_key}:{pair_key}:{predicate_head}",
                 )
 
     def add_source_role_contracts(

@@ -98,6 +98,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_004160_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_009549_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_004913_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_000738_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_004147_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001551_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_002638_FAMILY_PAIRS,
@@ -137,6 +138,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_REFINED_PACKET_002827_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_004382_FAMILY_PAIRS,
     DEFAULT_MODAL_REGISTRY,
+    compiler_ambiguity_policy_targets,
     compiler_refined_modal_family_cue_margin_buffer,
     compiler_weak_typed_self_family_cue_margin_buffer,
     is_compiler_ambiguity_policy_pair,
@@ -38230,6 +38232,122 @@ def test_packet_004913_compiler_ambiguity_policy_exposes_small_margin_pairs() ->
         assert is_priority_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
+        )
+
+
+def test_packet_000738_compiler_ambiguity_policy_exposes_small_margin_pairs() -> None:
+    assert COMPILER_AMBIGUITY_PACKET_000738_FAMILY_PAIRS == (
+        ("deontic", "epistemic"),
+        ("frame", "deontic"),
+        ("temporal", "epistemic"),
+    )
+
+    for predicted_family, target_family in COMPILER_AMBIGUITY_PACKET_000738_FAMILY_PAIRS:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+
+def test_packet_000738_low_margin_emits_explicit_ambiguities() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    source_text = (
+        "The authority under this section may apply when Congress finds "
+        "a deadline has been met."
+    )
+    encoding = SpaCyLegalEncoding(
+        document_id="packet-000738-adaptive-family-margin",
+        text=source_text,
+        normalized_text=source_text,
+        tokens=[],
+        sentences=[],
+        cues=[],
+    )
+
+    evidence_margins = (
+        ("frame", "deontic", -0.381478866542),
+        ("frame", "deontic", -0.245736232654),
+        ("temporal", "epistemic", -0.348971364616),
+        ("deontic", "epistemic", -0.08),
+    )
+
+    for predicted_family, target_family, family_margin in evidence_margins:
+        predicted_share = 0.5
+        ranking = [
+            {
+                "family": predicted_family,
+                "count": 0,
+                "share_raw": predicted_share,
+                "share": predicted_share,
+            },
+            {
+                "family": target_family,
+                "count": 0,
+                "share_raw": predicted_share + family_margin,
+                "share": predicted_share + family_margin,
+            },
+        ]
+        modal_ir = ModalIRDocument(
+            document_id=f"packet-000738-{predicted_family}-{target_family}",
+            source="us_code",
+            normalized_text=source_text,
+            formulas=[
+                ModalIRFormula(
+                    formula_id=f"f-packet-000738-{predicted_family}",
+                    operator=ModalIROperator(
+                        family=predicted_family,
+                        system="D",
+                        symbol="O",
+                        label="packet_000738_primary",
+                    ),
+                    predicate=ModalIRPredicate(name="resolve_ambiguity", role="clause"),
+                    provenance=ModalIRProvenance(
+                        source_id=f"packet-000738-{predicted_family}-{target_family}",
+                        start_char=0,
+                        end_char=len(source_text),
+                    ),
+                )
+            ],
+        )
+        ambiguities = compiler._adaptive_family_margin_ambiguities(
+            encoding,
+            modal_ir=modal_ir,
+            ranking=ranking,
+            family_shares={
+                str(index): float(candidate["share_raw"])
+                for index, candidate in enumerate(ranking)
+            },
+            predicted_family_source="packet_000738_regression",
+        )
+        explicit_ambiguity = next(
+            ambiguity
+            for ambiguity in ambiguities
+            if ambiguity.metadata.get("adaptive_policy_pair")
+            == f"{predicted_family}->{target_family}"
+            and ambiguity.metadata.get("is_explicit_adaptive_ambiguity") is True
+        )
+
+        assert explicit_ambiguity.metadata["effective_ambiguity_policy_bundle"] == (
+            "compiler_ambiguity"
+        )
+        assert explicit_ambiguity.metadata["family_margin"] == round(
+            family_margin,
+            6,
         )
 
 

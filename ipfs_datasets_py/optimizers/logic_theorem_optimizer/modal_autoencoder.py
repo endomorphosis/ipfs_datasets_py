@@ -21,6 +21,40 @@ _LEGAL_IR_TARGET_CACHE_MAX = 2048
 _LEGAL_IR_TARGET_CACHE_LOCK = threading.Lock()
 _LEGAL_IR_TARGET_CACHE: Dict[str, Any] = {}
 
+_AUTOENCODER_DIRECTIONAL_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = {
+    "alethic": ("conditional_normative", "deontic", "temporal"),
+    "conditional_normative": ("deontic",),
+    "deontic": ("conditional_normative", "deontic", "epistemic", "frame", "temporal"),
+    "dynamic": ("dynamic", "temporal"),
+    "epistemic": ("conditional_normative", "epistemic"),
+    "frame": ("conditional_normative", "deontic", "doxastic", "epistemic", "frame", "temporal"),
+    "temporal": ("conditional_normative", "deontic", "epistemic", "frame", "temporal"),
+}
+
+_AUTOENCODER_CUE_TARGET_FAMILIES: Mapping[str, tuple[str, ...]] = {
+    "after": ("temporal", "epistemic"),
+    "as_authorized": ("deontic",),
+    "authorized": ("deontic", "epistemic"),
+    "before": ("temporal", "epistemic"),
+    "determined": ("epistemic", "doxastic", "conditional_normative"),
+    "determines": ("epistemic", "doxastic", "conditional_normative"),
+    "determining": ("epistemic", "doxastic", "conditional_normative"),
+    "determine": ("epistemic", "doxastic", "conditional_normative"),
+    "subject_to": ("conditional_normative", "deontic", "frame"),
+    "until": ("temporal", "epistemic"),
+    "within": ("temporal", "epistemic"),
+}
+
+_AUTOENCODER_FAMILY_PAIR_PRIORITY: Mapping[str, int] = {
+    "conditional_normative": 0,
+    "deontic": 1,
+    "frame": 2,
+    "temporal": 3,
+    "epistemic": 4,
+    "doxastic": 5,
+    "dynamic": 6,
+}
+
 
 def cosine_similarity(left: Sequence[float], right: Sequence[float]) -> float:
     """Return cosine similarity for two vectors."""
@@ -17425,6 +17459,36 @@ class AdaptiveModalAutoencoder:
                 bump(f"slot:modal-cue:{cue_name}")
                 if family:
                     bump(f"slot:cue-family:{cue_name}:{family}")
+            family_pairs = _autoencoder_typed_family_pairs_for_formula(
+                sample.modal_ir,
+                formula,
+            )
+            predicate_head = predicate_name.split("_", 1)[0] if predicate_name else ""
+            for family_pair in family_pairs:
+                bump(f"slot:typed-decompiler-family-pair:{family_pair}", weight=1.25)
+                if cue_name:
+                    bump(
+                        f"slot:typed-decompiler-family-pair-cue:{family_pair}:{cue_name}",
+                        weight=0.75,
+                    )
+                if predicate_head:
+                    bump(
+                        (
+                            "slot:typed-decompiler-family-pair-predicate:"
+                            f"{family_pair}:{predicate_head}"
+                        ),
+                        weight=0.5,
+                    )
+                if conditions:
+                    bump(
+                        f"slot:typed-decompiler-condition-family-pair:{family_pair}",
+                        weight=0.75,
+                    )
+                if exceptions:
+                    bump(
+                        f"slot:typed-decompiler-exception-family-pair:{family_pair}",
+                        weight=0.75,
+                    )
 
         for slot, weight in self._semantic_slot_interactions_for(counts):
             bump(slot, weight)
@@ -21155,6 +21219,61 @@ def _triple_distribution(
 
 def _family_semantic_slot_key(family: str, slot: str) -> str:
     return f"{str(family)}||{str(slot)}"
+
+
+def _autoencoder_typed_family_pairs_for_formula(
+    modal_ir: Any,
+    formula: Any,
+) -> List[str]:
+    source_family = _feature_atom(getattr(formula.operator, "family", "")).lower()
+    if not source_family:
+        return []
+    target_families: List[str] = []
+
+    def add_target(candidate: str) -> None:
+        target = _feature_atom(candidate).lower()
+        if target and target not in target_families:
+            target_families.append(target)
+
+    add_target(source_family)
+    for candidate_formula in list(getattr(modal_ir, "formulas", []) or []):
+        add_target(getattr(candidate_formula.operator, "family", ""))
+    for cue in _formula_autoencoder_cue_names(formula):
+        for target_family in _AUTOENCODER_CUE_TARGET_FAMILIES.get(cue, ()):
+            add_target(target_family)
+    for target_family in _AUTOENCODER_DIRECTIONAL_FAMILY_PAIR_TARGETS.get(
+        source_family,
+        (),
+    ):
+        add_target(target_family)
+
+    ordered_targets = sorted(
+        target_families,
+        key=lambda family: (
+            0 if family == source_family else 1,
+            _AUTOENCODER_FAMILY_PAIR_PRIORITY.get(
+                family,
+                len(_AUTOENCODER_FAMILY_PAIR_PRIORITY),
+            ),
+            family,
+        ),
+    )
+    return [f"{source_family}->{target_family}" for target_family in ordered_targets]
+
+
+def _formula_autoencoder_cue_names(formula: Any) -> List[str]:
+    cues: List[str] = []
+    metadata = getattr(formula, "metadata", {}) or {}
+    for value in (
+        metadata.get("cue"),
+        metadata.get("modal_cue"),
+        metadata.get("source_cue"),
+        metadata.get("bridge_cue"),
+    ):
+        cue = _feature_atom(value)
+        if cue and cue not in cues:
+            cues.append(cue)
+    return cues
 
 
 def _semantic_slot_legal_ir_view_key(slot: str, view: str) -> str:

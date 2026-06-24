@@ -9252,6 +9252,78 @@ def test_semantic_slot_interactions_capture_compositional_ir() -> None:
     )
 
 
+def test_semantic_slots_surface_typed_family_pair_reconstruction_contracts() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text=(
+            "The agency determines eligibility after the board is authorized "
+            "to carry out the transfer."
+        ),
+    )
+    base_formula = sample.modal_ir.formulas[0]
+    formulas = [
+        replace(
+            base_formula,
+            formula_id="packet-000851-deontic",
+            operator=replace(
+                base_formula.operator,
+                family="deontic",
+                system="D",
+                symbol="O",
+                label="obligation",
+            ),
+            metadata={"cue": "determines"},
+        ),
+        replace(
+            base_formula,
+            formula_id="packet-000851-frame",
+            operator=replace(
+                base_formula.operator,
+                family="frame",
+                system="Frame",
+                symbol="frame",
+                label="frame",
+            ),
+            metadata={"cue": "authorized"},
+        ),
+        replace(
+            base_formula,
+            formula_id="packet-000851-temporal",
+            operator=replace(
+                base_formula.operator,
+                family="temporal",
+                system="LTL",
+                symbol="F",
+                label="eventually",
+            ),
+            metadata={"cue": "after"},
+        ),
+    ]
+    mixed_sample = replace(sample, modal_ir=replace(sample.modal_ir, formulas=formulas))
+
+    distribution = AdaptiveModalAutoencoder()._semantic_slot_distribution_for(
+        mixed_sample
+    )
+
+    for family_pair in (
+        "deontic->epistemic",
+        "frame->deontic",
+        "frame->frame",
+        "temporal->epistemic",
+    ):
+        assert f"slot:typed-decompiler-family-pair:{family_pair}" in distribution
+
+    assert (
+        "slot:typed-decompiler-family-pair-cue:deontic->epistemic:determines"
+        in distribution
+    )
+    assert (
+        "slot:typed-decompiler-family-pair-cue:temporal->epistemic:after"
+        in distribution
+    )
+
+
 def test_semantic_slot_pair_logits_can_drive_compositional_family_ce() -> None:
     sample = build_us_code_sample(
         title="5",

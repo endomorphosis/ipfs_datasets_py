@@ -1456,6 +1456,10 @@ def _event_formula_parse_profile(formula: str) -> dict[str, Any]:
         if _canonical_wrapper_symbol(match.group(1))
     ]
     event_predicates = _event_predicates(text)
+    event_predicate_argument_counts = _event_predicate_argument_counts(text)
+    event_predicate_slot_complete = _event_predicate_slots_complete(
+        event_predicate_argument_counts
+    )
     top_level_symbol = _top_level_symbol(text)
     parse_profile_complete = _event_formula_parse_profile_complete(
         text=text,
@@ -1464,9 +1468,12 @@ def _event_formula_parse_profile(formula: str) -> dict[str, Any]:
         connector_index=connector_index,
         quantifier_variables=quantifier_variables,
         event_predicates=event_predicates,
+        event_predicate_slot_complete=event_predicate_slot_complete,
     )
     return {
         "contains_implication": bool(top_level_connector),
+        "event_predicate_argument_counts": event_predicate_argument_counts,
+        "event_predicate_slot_complete": event_predicate_slot_complete,
         "event_predicates": event_predicates,
         "target_parse_profile_complete": parse_profile_complete,
         "top_level_symbol": top_level_symbol,
@@ -1484,10 +1491,13 @@ def _event_formula_parse_profile_complete(
     connector_index: int,
     quantifier_variables: Sequence[str],
     event_predicates: Sequence[str],
+    event_predicate_slot_complete: bool,
 ) -> bool:
     if not text or not _balanced_delimiters(text):
         return False
     if not event_predicates:
+        return False
+    if not event_predicate_slot_complete:
         return False
     if top_level_connector:
         if connector_index <= 0:
@@ -1575,6 +1585,103 @@ def _event_predicates(text: str) -> list[str]:
         if canonical and canonical not in predicates:
             predicates.append(canonical)
     return predicates
+
+
+def _event_predicate_argument_counts(text: str) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    for token, argument_text in _function_argument_texts(text):
+        canonical = _canonical_event_predicate(token)
+        if not canonical:
+            continue
+        arguments = _split_top_level_arguments(argument_text)
+        records.append(
+            {
+                "predicate": canonical,
+                "argument_count": len(arguments),
+                "empty_argument_count": sum(1 for argument in arguments if not argument),
+            }
+        )
+    return records
+
+
+def _event_predicate_slots_complete(
+    argument_counts: Sequence[Mapping[str, Any]],
+) -> bool:
+    if not argument_counts:
+        return False
+    min_arity = {
+        "Happens": 2,
+        "HoldsAt": 2,
+        "Initiates": 3,
+        "Terminates": 3,
+        "ReleasedAt": 2,
+        "Clipped": 3,
+        "Trajectory": 4,
+        "Initially": 1,
+        "InitiallyP": 1,
+        "InitiallyN": 1,
+    }
+    for record in argument_counts:
+        predicate = str(record.get("predicate") or "")
+        argument_count = _intish(record.get("argument_count"), 0)
+        empty_argument_count = _intish(record.get("empty_argument_count"), 0)
+        if argument_count < min_arity.get(predicate, 1):
+            return False
+        if empty_argument_count:
+            return False
+    return True
+
+
+def _function_argument_texts(text: str) -> list[tuple[str, str]]:
+    value = str(text or "")
+    records: list[tuple[str, str]] = []
+    for match in re.finditer(r"\b([A-Za-z][A-Za-z0-9_]*)\s*\(", value):
+        open_index = value.find("(", match.start())
+        if open_index < 0:
+            continue
+        close_index = _matching_close_paren_index(value, open_index)
+        if close_index < 0:
+            continue
+        records.append((match.group(1), value[open_index + 1:close_index]))
+    return records
+
+
+def _matching_close_paren_index(text: str, open_index: int) -> int:
+    depth = 0
+    for index in range(open_index, len(text)):
+        char = text[index]
+        if char == "(":
+            depth += 1
+            continue
+        if char != ")":
+            continue
+        depth -= 1
+        if depth == 0:
+            return index
+        if depth < 0:
+            return -1
+    return -1
+
+
+def _split_top_level_arguments(text: str) -> list[str]:
+    value = str(text or "")
+    if not value.strip():
+        return []
+    arguments: list[str] = []
+    depth = 0
+    start = 0
+    for index, char in enumerate(value):
+        if char in "([{":
+            depth += 1
+            continue
+        if char in ")]}":
+            depth = max(0, depth - 1)
+            continue
+        if char == "," and depth == 0:
+            arguments.append(value[start:index].strip())
+            start = index + 1
+    arguments.append(value[start:].strip())
+    return arguments
 
 
 def _strip_event_formula_clause_terminator(text: str) -> str:
@@ -1679,7 +1786,11 @@ def _normalize_event_formula_fields(
         derived=derived_parse_profile,
     )
     resolved_syntax_valid = bool(
-        syntax_valid or merged_parse_profile.get("target_parse_profile_complete") is True
+        (
+            syntax_valid
+            or merged_parse_profile.get("target_parse_profile_complete") is True
+        )
+        and merged_parse_profile.get("event_predicate_slot_complete") is not False
     )
     derived_components = _event_formula_target_components(
         normalized_formula,
@@ -1829,6 +1940,14 @@ def _merge_event_formula_parse_profile(
         merged["wrapper_sequence"] = list(derived.get("wrapper_sequence") or [])
     if not merged.get("event_predicates"):
         merged["event_predicates"] = list(derived.get("event_predicates") or [])
+    if not merged.get("event_predicate_argument_counts"):
+        merged["event_predicate_argument_counts"] = list(
+            derived.get("event_predicate_argument_counts") or []
+        )
+    merged["event_predicate_slot_complete"] = bool(
+        merged.get("event_predicate_slot_complete") is True
+        or derived.get("event_predicate_slot_complete") is True
+    )
     if not merged.get("quantifier_variables"):
         merged["quantifier_variables"] = list(derived.get("quantifier_variables") or [])
     return merged

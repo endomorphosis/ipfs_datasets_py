@@ -106,6 +106,32 @@ def test_modal_frame_logic_bridge_evaluates_ir_graph_and_proof_gate() -> None:
     assert report.to_dict()["ir_document"]["has_frame_logic"] is True
 
 
+def test_external_prover_router_uses_syntactic_fallback_when_backends_absent() -> None:
+    from ipfs_datasets_py.logic.bridge.external_prover_router import (
+        ExternalProverRouterBridgeAdapter,
+    )
+
+    adapter = ExternalProverRouterBridgeAdapter(
+        enable_external_binaries=False,
+        enable_native=False,
+    )
+    report = adapter.evaluate(
+        (
+            "15 U.S.C. 52. It shall be unlawful for any person to "
+            "disseminate any false advertisement."
+        ),
+        document_id="bridge-layer-external-router-syntactic-fallback",
+        citation="15 U.S.C. 52",
+        compiler_guidance={"action": "repair_external_prover_router"},
+    )
+
+    assert report.status == "ok"
+    assert report.proof_gate.compiles is True
+    assert report.proof_gate.failure_ratio == 0.0
+    assert report.round_trip.extra_losses["external_prover_unavailable_loss"] == 0.0
+    assert "native_syntactic" in report.metadata["available_provers"]
+
+
 def test_modal_frame_logic_bridge_projects_flogic_repair_guidance_to_ontology_terms() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
@@ -3248,6 +3274,40 @@ def test_tdfol_bridge_canonicalizes_assignment_proof_obligation_rows() -> None:
     assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
 
 
+def test_tdfol_bridge_accepts_exported_formula_proof_obligation_rows() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
+
+    class _ProofObligationResult:
+        success = True
+        metadata = {
+            "proof_obligations": [
+                {
+                    "target_component": "TDFOL.prover",
+                    "exported_formula": "O(make_report(person))",
+                    "source_id": "tdfol:guidance:exported-formula",
+                }
+            ],
+            "legal_norm_irs": [],
+            "parser_elements": [],
+        }
+
+    class _ProofObligationConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _ProofObligationResult()
+
+    adapter = FolTdfolBridgeAdapter(converter=_ProofObligationConverter())
+
+    report = adapter.evaluate("The person shall make a report.")
+    record = report.ir_document.views["tdfol_formula"].payload["records"][0]
+
+    assert record["source_id"] == "tdfol:guidance:exported-formula"
+    assert record["formula"] == "O(make_report(person))"
+    assert record["parse_ok"] is True
+    assert report.proof_gate.compiles is True
+    assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
+
+
 def test_tdfol_bridge_recovers_nested_alternate_proof_obligation_rows() -> None:
     from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
 
@@ -4972,6 +5032,129 @@ def test_cec_dcec_bridge_accepts_capitalized_function_style_quantifier_formulas(
         event_record["event_formula_target_parse_profile"]["target_parse_profile_complete"]
         is True
     )
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
+def test_cec_dcec_bridge_validates_event_formula_slots_after_normalization(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge import cec_dcec as cec_dcec_mod
+
+    class _NormResult:
+        success = True
+        metadata = {
+            "legal_norm_irs": [
+                {
+                    "source_id": "bridge:empty-slot:1",
+                    "actor": "Agency",
+                    "action": "publish notice",
+                    "modality": "obligated",
+                }
+            ]
+        }
+
+    class _NormConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _NormResult()
+
+    def _fake_event_formula_exports(_norms):
+        return {
+            "bridge:empty-slot:1": [
+                {
+                    "event_calculus_formula": (
+                        "Happens(legal_norm(bridge_empty_slot_1), ) => "
+                        "HoldsAt(O(happens(agency,publish_notice,t0)), t)."
+                    ),
+                    "event_formula_source": "deontic.prover_syntax",
+                    "event_formula_syntax_valid": True,
+                }
+            ]
+        }
+
+    monkeypatch.setattr(
+        cec_dcec_mod,
+        "_event_formula_exports_from_norms",
+        _fake_event_formula_exports,
+    )
+
+    adapter = cec_dcec_mod.CecDcecBridgeAdapter(converter=_NormConverter())
+    report = adapter.evaluate(
+        "The agency shall publish notice.",
+        document_id="cec-bridge-empty-event-slot",
+        citation="CEC Bridge Empty Event Slot",
+    )
+
+    event_record = report.ir_document.views["event_calculus"].payload["records"][0]
+    parse_profile = event_record["event_formula_target_parse_profile"]
+
+    assert event_record["event_formula_syntax_valid"] is False
+    assert parse_profile["event_predicate_slot_complete"] is False
+    assert parse_profile["target_parse_profile_complete"] is False
+    assert (
+        event_record["event_formula_target_quality_gate"]["requires_validation"]
+        is True
+    )
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 1.0
+
+
+def test_cec_dcec_bridge_accepts_case_variant_event_formula_predicates(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge import cec_dcec as cec_dcec_mod
+
+    class _NormResult:
+        success = True
+        metadata = {
+            "legal_norm_irs": [
+                {
+                    "source_id": "bridge:case-variant:1",
+                    "actor": "Agency",
+                    "action": "publish notice",
+                    "modality": "obligated",
+                }
+            ]
+        }
+
+    class _NormConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _NormResult()
+
+    def _fake_event_formula_exports(_norms):
+        return {
+            "bridge:case-variant:1": [
+                {
+                    "event_calculus_formula": (
+                        "happens(legal_norm(bridge_case_variant_1), t) => "
+                        "holdsat(O(happens(agency,publish_notice,t0)), t)."
+                    ),
+                    "event_formula_source": "deontic.prover_syntax",
+                    "event_formula_syntax_valid": False,
+                }
+            ]
+        }
+
+    monkeypatch.setattr(
+        cec_dcec_mod,
+        "_event_formula_exports_from_norms",
+        _fake_event_formula_exports,
+    )
+
+    adapter = cec_dcec_mod.CecDcecBridgeAdapter(converter=_NormConverter())
+    report = adapter.evaluate(
+        "The agency shall publish notice.",
+        document_id="cec-bridge-case-variant-event-formula",
+        citation="CEC Bridge Case Variant Event Formula",
+    )
+
+    event_record = report.ir_document.views["event_calculus"].payload["records"][0]
+    parse_profile = event_record["event_formula_target_parse_profile"]
+
+    assert event_record["event_formula_syntax_valid"] is True
+    assert parse_profile["event_predicates"] == ["Happens", "HoldsAt"]
+    assert parse_profile["event_predicate_slot_complete"] is True
+    assert parse_profile["target_parse_profile_complete"] is True
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
 
 

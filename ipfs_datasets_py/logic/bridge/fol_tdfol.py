@@ -57,6 +57,7 @@ _TDFOL_FORMULA_EXPORT_KEYS = (
     "proof_obligation",
     "obligation",
     "obligation_formula",
+    "exported_formula",
     "target_formula",
     "proof_goal",
     "goal",
