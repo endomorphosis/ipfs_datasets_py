@@ -19804,6 +19804,37 @@ def test_modal_codec_audits_frame_terms_when_metadata_is_partial() -> None:
     assert "and" not in selected_terms
 
 
+def test_modal_codec_grounds_guidance_selected_frame_without_candidate_terms() -> None:
+    modal_ir = ModalIRDocument(
+        document_id="frame-term-guidance-only-doc",
+        source="us_code",
+        normalized_text="Sec. 701e. Effect of act on flood control provisions.",
+        frame_logic=ModalIRFrameLogic(selected_frame="external_guidance_frame"),
+        metadata={"selected_frame": "external_guidance_frame"},
+    )
+
+    triples = modal_ir_to_flogic_triples(modal_ir)
+    selected_terms = {
+        triple["object"]
+        for triple in triples
+        if triple["predicate"] == "selected_ontology_term"
+    }
+
+    assert "external_guidance_frame" in selected_terms
+
+    from ipfs_datasets_py.logic.flogic_optimizer import FLogicSemanticOptimizer
+
+    result = FLogicSemanticOptimizer().evaluate(
+        source_text=modal_ir.normalized_text,
+        decoded_text=modal_ir.normalized_text,
+        source_embedding=[1.0, 0.0],
+        decoded_embedding=[1.0, 0.0],
+        kg_triples=triples,
+    )
+
+    assert result.violations == []
+
+
 def test_modal_codec_audits_frame_terms_when_metadata_contains_weight_maps() -> None:
     codec = DeterministicModalLogicCodec(
         ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
@@ -33799,6 +33830,52 @@ def test_decode_modal_ir_document_adds_long_span_semantic_support_without_boiler
     assert "publication in promulgating the regulations" in support_text
     assert "historical and revision notes" not in support_text
     assert "115 stat" not in support_text
+
+
+def test_decode_modal_ir_document_preserves_defined_term_semantic_atoms() -> None:
+    source_text = (
+        '§7383j. Definition of Restricted Data In this subchapter, the term '
+        '"Restricted Data" has the meaning given that term in section 2014(y) '
+        "of this title."
+    )
+    document = ModalIRDocument(
+        document_id="us-code-42-7383j-defined-term",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-defined-term-reconstruction",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="frame",
+                    symbol="Frame",
+                    label="definition",
+                ),
+                predicate=ModalIRPredicate(
+                    name="restricted_data",
+                    role="definition",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-42-7383j-defined-term",
+                    start_char=0,
+                    end_char=len(source_text),
+                    citation="42 U.S.C. 7383j",
+                ),
+                metadata={"cue": "definition"},
+            )
+        ],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+    typed_surface = " ".join(slot_texts["typed_ir_reconstruction"])
+
+    assert "restricted_data" in slot_texts["legal_semantic_atom"]
+    assert (
+        "restricted_data"
+        in slot_texts["modal_source_span_semantic_legal_semantic_atom"]
+    )
+    assert "definition definition" not in typed_surface
+    assert "restricted_data" in typed_surface
 
 
 def test_structural_decoded_text_uses_bounded_typed_ir_semantic_support() -> None:

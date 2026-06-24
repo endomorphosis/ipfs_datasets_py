@@ -243,6 +243,11 @@ _USCODE_SOURCE_ID_RE = re.compile(
     r"^\s*(?P<scheme>us-code)-(?P<title>[^-]+)-(?P<section>.+)-(?P<digest>[0-9a-f]{16})\s*$",
     re.IGNORECASE,
 )
+_DEFINED_TERM_RE = re.compile(
+    r"\bthe\s+term\s+['\"]?(?P<term>[A-Z][A-Za-z0-9]*(?:[-\s]+[A-Z][A-Za-z0-9]*){0,5})['\"]?"
+    r"\s+(?:has|shall\s+have)\s+the\s+meaning\b",
+    re.IGNORECASE,
+)
 _TRAILING_SECTION_PUNCT_RE = re.compile(r"[.;:]+$")
 _CITATION_SECTION_COMPONENT_SPLIT_RE = re.compile(r"[.\-]+")
 _CITATION_SECTION_DELIMITER_RE = re.compile(r"[.\-]+")
@@ -3233,6 +3238,10 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
     tokens = set(_CUE_TOKEN_RE.findall(normalized))
     atoms: List[str] = []
     seen: set[str] = set()
+    for term in _defined_term_atoms_from_text(text):
+        if term not in seen:
+            seen.add(term)
+            atoms.append(term)
     for phrase, atom in _LEGAL_SEMANTIC_ATOM_PHRASES:
         phrase_tokens = _CUE_TOKEN_RE.findall(phrase)
         if phrase in normalized or (
@@ -3241,6 +3250,23 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
             if atom not in seen:
                 seen.add(atom)
                 atoms.append(atom)
+    return atoms
+
+
+def _defined_term_atoms_from_text(text: str) -> List[str]:
+    atoms: List[str] = []
+    seen: set[str] = set()
+    for match in _DEFINED_TERM_RE.finditer(str(text or "")):
+        term = _clean_text(match.group("term"))
+        if not term:
+            continue
+        tokens = _CUE_TOKEN_RE.findall(term.lower())
+        if not tokens or len(tokens) > 6:
+            continue
+        atom = "_".join(tokens)
+        if atom and atom not in seen:
+            seen.add(atom)
+            atoms.append(atom)
     return atoms
 
 
@@ -9672,6 +9698,48 @@ def _unique_preserve_order(values: Sequence[str]) -> List[str]:
     return result
 
 
+def _unique_surface_parts(values: Sequence[str]) -> List[str]:
+    seen_values: set[str] = set()
+    seen_token_sequences: set[Tuple[str, ...]] = set()
+    result: List[str] = []
+    for value in values:
+        cleaned = _clean_text(value)
+        if not cleaned:
+            continue
+        lowered = cleaned.lower()
+        tokens = tuple(_tokenize_for_similarity(cleaned))
+        if lowered in seen_values or (tokens and tokens in seen_token_sequences):
+            continue
+        if len(tokens) == 1 and tokens[0] in seen_token_sequences:
+            continue
+        seen_values.add(lowered)
+        if tokens:
+            seen_token_sequences.add(tokens)
+            for token in tokens:
+                seen_token_sequences.add((token,))
+        result.append(cleaned)
+    return result
+
+
+def _surface_part_without_seen_prefix(candidate: str, *, existing_text: str) -> str:
+    cleaned = _clean_text(candidate)
+    if not cleaned:
+        return ""
+    existing_tokens = set(_tokenize_for_similarity(existing_text))
+    if not existing_tokens:
+        return cleaned
+    raw_tokens = cleaned.split()
+    comparable_tokens = _tokenize_for_similarity(cleaned)
+    drop_count = 0
+    for comparable in comparable_tokens:
+        if comparable not in existing_tokens:
+            break
+        drop_count += 1
+    if drop_count <= 0 or drop_count >= len(raw_tokens):
+        return cleaned
+    return _clean_text(" ".join(raw_tokens[drop_count:]))
+
+
 def _operator_phrase(formula: ModalIRFormula) -> str:
     symbol = formula.operator.symbol
     label = formula.operator.label or symbol
@@ -10248,6 +10316,11 @@ def _typed_formula_surface_text(
         if cleaned_anchor:
             values.append(cleaned_anchor)
     if predicate_surface:
+        predicate_surface = _surface_part_without_seen_prefix(
+            predicate_surface,
+            existing_text=" ".join(values),
+        )
+    if predicate_surface:
         values.append(predicate_surface)
     if temporal and temporal.lower() not in _clean_text(" ".join(values)).lower():
         values.append(temporal)
@@ -10282,7 +10355,7 @@ def _typed_formula_surface_text(
     )
     for semantic_text in semantic_texts:
         values.extend(_legal_semantic_atoms_from_text(semantic_text))
-    return _clean_text(" ".join(_unique_preserve_order(values)))
+    return _clean_text(" ".join(_unique_surface_parts(values)))
 
 
 def _typed_ir_source_semantic_surface(
@@ -10645,6 +10718,16 @@ def _source_span_slot_phrases(
                         provenance_only=True,
                     )
                 )
+            for atom_phrase in _legal_semantic_atom_phrases(
+                text=semantic_text,
+                slot_prefix=semantic_slot_prefix,
+                spans=spans,
+            ):
+                marker = (atom_phrase.slot, atom_phrase.text, span_marker)
+                if marker in seen:
+                    continue
+                seen.add(marker)
+                phrases.append(atom_phrase)
             for cue in _bridge_cues_from_text(semantic_text):
                 semantic_cue_marker = (
                     f"{semantic_slot_prefix}_bridge_cue",
@@ -12160,11 +12243,11 @@ def _source_role_anchor_phrases(
             or "->" not in family_pair
         ):
             return
-        _, target_family = (
+        pair_source, target_family = (
             _slot_safe_family_key(_clean_text(part).lower())
             for part in family_pair.split("->", 1)
         )
-        if not target_family:
+        if not pair_source or not target_family:
             return
         role_label = _slot_safe_family_key(predicate_role_label or "clause")
         if not role_label:
@@ -12321,9 +12404,17 @@ def _source_role_anchor_phrases(
                     f"{target_family}||slot:source-{role_key}-target-predicate:"
                     f"{anchor_key}:{pair_key}:{predicate_head}"
                 )
+                target_source_predicate_slot = (
+                    f"{target_family}||slot:source-{role_key}-target-predicate:"
+                    f"{anchor_key}:{pair_source}:{predicate_head}"
+                )
                 add(
                     "family_semantic_slot_legal_ir_view_prototype",
                     f"{target_predicate_slot}||{view_name}",
+                )
+                add(
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    f"{target_source_predicate_slot}||{view_name}",
                 )
                 add(
                     (
@@ -12331,6 +12422,13 @@ def _source_role_anchor_phrases(
                         f"{target_family}_source_{role_key}_target_predicate_{view_key}"
                     ),
                     f"{anchor_key}:{pair_key}:{predicate_head}",
+                )
+                add(
+                    (
+                        "family_semantic_slot_legal_ir_view_prototype_"
+                        f"{target_family}_source_{role_key}_target_predicate_source_{view_key}"
+                    ),
+                    f"{anchor_key}:{pair_source}:{predicate_head}",
                 )
 
     def add_source_role_contracts(

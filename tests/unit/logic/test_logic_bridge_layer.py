@@ -168,6 +168,11 @@ def test_modal_frame_logic_bridge_projects_flogic_repair_guidance_to_ontology_te
     assert "repair_flogic_ontology_constraints" in audit_terms
     assert "modal_frame_logic" in high_signal_terms
     assert any(
+        triple["predicate"] == "selected_ontology_term"
+        and triple["object"] == "repair_flogic_ontology_constraints"
+        for triple in frame_triples
+    )
+    assert any(
         triple["predicate"] == "audited_ontology_term"
         and triple["object"] == "repair_flogic_ontology_constraints"
         for triple in frame_triples
@@ -440,6 +445,84 @@ def test_neo4j_compat_augments_packet_sample_text_section_markers() -> None:
     assert view_distribution["section_structure"] >= 1
     assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
     assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
+
+
+def test_neo4j_compat_augments_packet_samples_past_modal_triple_cutoff() -> None:
+    from ipfs_datasets_py.logic.modal.kg_bridge import flogic_triples_to_graph_data
+
+    packet_samples = [
+        (
+            "us-code-26-994-cbae6d13150585b8",
+            "26 U.S.C. 994",
+            "Regulations",
+            (
+                "26 U.S.C. 994: U.S.C. Title 26 - INTERNAL REVENUE CODE "
+                "26 U.S.C. United States Code, 2024 Edition Subtitle A - "
+                "Income Taxes CHAPTER 1 - NORMAL TAXES AND SURTAXES "
+                "Subchapter N - Tax Based on Income From Sources Within or "
+                "Without the United States Sec. 994 - Regulations From the "
+                "U.S. Government Publishing Office"
+            ),
+        ),
+        (
+            "us-code-24-295a-16dcd47733b0e7d4",
+            "24 U.S.C. 295a",
+            "Arlington Memorial Amphitheater",
+            (
+                "24 U.S.C. 295a: U.S.C. Title 24 - HOSPITALS AND ASYLUMS "
+                "24 U.S.C. United States Code, 2024 Edition CHAPTER 7 - "
+                "NATIONAL CEMETERIES Sec. 295a - Arlington Memorial "
+                "Amphitheater From the U.S. Government Publishing Office"
+            ),
+        ),
+    ]
+
+    for sample_id, citation, catchline, source_text in packet_samples:
+        triples = [
+            {
+                "subject": sample_id,
+                "predicate": f"modal_feature_{index}",
+                "object": f"value_{index}",
+            }
+            for index in range(20)
+        ]
+        triples.extend(
+            [
+                {
+                    "subject": sample_id,
+                    "predicate": "sample_id",
+                    "object": sample_id,
+                },
+                {
+                    "subject": sample_id,
+                    "predicate": "source_text",
+                    "object": source_text,
+                },
+                {
+                    "subject": sample_id,
+                    "predicate": "learned_legal_ir_target_view",
+                    "object": "knowledge_graphs.neo4j_compat",
+                },
+            ]
+        )
+
+        graph_data = flogic_triples_to_graph_data(
+            triples,
+            graph_id=f"{sample_id}:packet-cutoff-projection",
+        )
+        graph_triples = {
+            (
+                relationship.properties["flogic_predicate"],
+                relationship.properties["flogic_object"],
+            )
+            for relationship in graph_data.relationships
+        }
+
+        assert ("citation_canonical", citation) in graph_triples
+        assert ("source_id_citation_canonical", citation) in graph_triples
+        assert ("section_catchline", catchline) in graph_triples
+        assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
+        assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
 
 
 def test_modal_frame_logic_bridge_bounds_flogic_similarity_loss_for_heading_samples() -> None:

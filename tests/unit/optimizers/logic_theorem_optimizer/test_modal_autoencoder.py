@@ -1083,6 +1083,59 @@ def test_round_trip_bridge_feature_head_transfers_ce_and_cosine_to_holdout() -> 
     assert after_cosine.embedding_cosine_similarity > before_cosine.embedding_cosine_similarity
 
 
+def test_reconstruction_trains_family_slot_view_head_without_legal_ir_target() -> None:
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice.",
+        embedding_vector=[1.0, 0.0],
+    )
+    validation = build_us_code_sample(
+        title="5",
+        section="553",
+        text="The agency shall provide notice.",
+        embedding_vector=[1.0, 0.0],
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        compiler_quality_embedding_weight_scale=0.0,
+        logic_signature_embedding_weight_scale=0.0,
+        round_trip_signal_embedding_weight_scale=0.0,
+        decompiler_plan_embedding_weight_scale=0.0,
+        predicate_argument_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=0.0,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=4.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        feature_embedding_weight_scale=0.0,
+        max_token_features=0,
+        max_token_bigram_features=0,
+        max_token_trigram_features=0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before = autoencoder.evaluate([validation], use_sample_memory=False)
+
+    autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after = autoencoder.evaluate([validation], use_sample_memory=False)
+
+    learned_keys = autoencoder.state.family_semantic_slot_legal_ir_view_embedding_weights
+    assert any(key.endswith("||deontic.ir") for key in learned_keys)
+    assert any(
+        "deontic.ir" in key
+        for key in autoencoder._family_semantic_slot_legal_ir_view_distribution_for_embedding(
+            validation,
+            use_sample_memory=False,
+        )
+    )
+    assert after.embedding_cosine_similarity > before.embedding_cosine_similarity
+
+
 def test_clause_topology_features_capture_abstract_source_ir_graph() -> None:
     sample = build_us_code_sample(
         title="5",

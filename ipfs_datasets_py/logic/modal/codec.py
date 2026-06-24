@@ -3166,9 +3166,29 @@ def modal_ir_to_flogic_triples(
                         "object": term,
                     }
                 )
-    if resolved_selected_frame and not selected_frame_terms:
+    should_emit_fallback_selected_terms = bool(
+        resolved_selected_frame and not selected_frame_terms
+    )
+    if should_emit_fallback_selected_terms:
         selected_frame_terms = list(frame_terms_by_frame.get(resolved_selected_frame, ()))
+    if should_emit_fallback_selected_terms and not selected_frame_terms:
+        fallback_selected_term = normalize_frame_ontology_term(resolved_selected_frame)
+        if fallback_selected_term:
+            selected_frame_terms = [fallback_selected_term]
+    if should_emit_fallback_selected_terms and selected_frame_terms:
         for term in selected_frame_terms:
+            triples.append(
+                {
+                    "subject": modal_ir.document_id,
+                    "predicate": "selected_ontology_term",
+                    "object": term,
+                }
+            )
+    if resolved_selected_frame:
+        for term in _compiler_guidance_selected_ontology_terms(modal_ir):
+            if term in selected_frame_terms:
+                continue
+            selected_frame_terms.append(term)
             triples.append(
                 {
                     "subject": modal_ir.document_id,
@@ -11914,6 +11934,43 @@ def _compiler_guidance_frame_logic_routes(metadata: Mapping[str, Any]) -> set[st
         if normalized in _FLOGIC_ONTOLOGY_GUIDANCE_ROUTES:
             routes.add(normalized)
     return routes
+
+
+def _compiler_guidance_selected_ontology_terms(
+    modal_ir: ModalIRDocument,
+) -> List[str]:
+    """Promote frame-logic repair guidance into selected ontology grounding."""
+    metadata = modal_ir.metadata if isinstance(modal_ir.metadata, Mapping) else {}
+    routes = _compiler_guidance_frame_logic_routes(metadata)
+    if not routes:
+        return []
+
+    values: List[Any] = [
+        metadata.get("compiler_guidance_feature_groups"),
+        metadata.get("compiler_guidance_ranked_features"),
+        metadata.get("compiler_guidance_legal_ir_target_view_distribution"),
+        metadata.get("compiler_guidance_legal_ir_view_gap_distribution"),
+        metadata.get("compiler_guidance_synthesis_focus"),
+        "legal-ir-view:modal.frame_logic",
+    ]
+    values.extend(f"flogic:statement_hint:{route}" for route in sorted(routes))
+    values.extend(_FLOGIC_ONTOLOGY_GUIDANCE_FEATURES)
+    feature_keys = frame_ontology_feature_keys_from_values(
+        values,
+        max_keys=_FRAME_ONTOLOGY_AUDIT_MAX_FEATURE_KEYS,
+    )
+    terms = frame_ontology_terms_from_feature_keys(
+        feature_keys,
+        max_terms=_FRAME_ONTOLOGY_AUDIT_MAX_TERMS,
+    )
+    return _unique_preserve_order(
+        term
+        for term in (
+            _normalize_frame_ontology_audit_term(term)
+            for term in terms
+        )
+        if term
+    )
 
 
 def _compiler_guidance_nested_feature_strings(values: Any) -> List[str]:

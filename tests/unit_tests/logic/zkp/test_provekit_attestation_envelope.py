@@ -6,7 +6,12 @@ import pytest
 
 from ipfs_datasets_py.logic.zkp import ZKPError, ZKPProof
 from ipfs_datasets_py.logic.zkp.backends.provekit import ProveKitBackend
-from ipfs_datasets_py.logic.zkp.circuits import attestation_view_matches_proof
+from ipfs_datasets_py.logic.zkp.circuits import (
+    attestation_view_matches_proof,
+    complete_zkp_attestation_record,
+    decode_simulated_proof_layout,
+    zkp_attestation_legal_ir_view_loss,
+)
 
 
 def _fake_provekit_cli(path: Path, *, write_proof: bool = True) -> Path:
@@ -127,6 +132,45 @@ def test_attestation_check_rejects_stale_proof_bytes(tmp_path):
     )
 
 
+def test_simulated_proof_layout_decodes_serialized_hex():
+    from ipfs_datasets_py.logic.zkp import ZKPProver
+
+    proof = ZKPProver().generate_proof(
+        theorem="Q",
+        private_axioms=["P", "P -> Q"],
+        metadata={"security_level": 128},
+    )
+    proof_dict = proof.to_dict()
+
+    layout = decode_simulated_proof_layout(proof_dict["proof_data"])
+
+    assert layout["valid"] is True
+    assert layout["format"] == "SIMZKP/1"
+
+
+def test_sparse_legal_ir_record_is_completed_from_nested_proof():
+    from ipfs_datasets_py.logic.zkp import ZKPProver
+
+    proof = ZKPProver().generate_proof(
+        theorem="Q",
+        private_axioms=["P", "P -> Q"],
+        metadata={"security_level": 128},
+    )
+    sparse_record = {
+        "proof": proof.to_dict(),
+        "form_id": "us-code-33-701e-19ea9c3021f51521",
+    }
+
+    completed = complete_zkp_attestation_record(sparse_record)
+
+    assert completed["attestation_ref"] == proof.public_inputs["attestation_ref"]
+    assert completed["attestation_view"]["attestation_ref"] == completed["attestation_ref"]
+    assert completed["public_inputs"]["attestation_ref"] == completed["attestation_ref"]
+    assert completed["proof_hash"]
+    assert completed["source_id"] == "us-code-33-701e-19ea9c3021f51521"
+    assert zkp_attestation_legal_ir_view_loss([sparse_record]) == 0.0
+
+
 def test_backend_fails_if_cli_succeeds_without_proof_file(tmp_path):
     binary = _fake_provekit_cli(tmp_path / "provekit-cli", write_proof=False)
     backend = ProveKitBackend(binary_path=str(binary))
@@ -137,4 +181,3 @@ def test_backend_fails_if_cli_succeeds_without_proof_file(tmp_path):
             private_axioms=["P", "P -> Q"],
             metadata=_artifact_metadata(tmp_path),
         )
-

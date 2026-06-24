@@ -58,6 +58,7 @@ _TEXT_PREDICATES = {
 _SOURCE_ID_ALIAS_PREDICATES = {
     "sample_id",
 }
+_MAX_AUGMENT_TRIGGER_TRIPLES_PER_SUBJECT = 8
 _EDITORIAL_STATUS_KEYWORDS = (
     ("repealed", re.compile(r"\brepealed\b", re.IGNORECASE)),
     ("transferred", re.compile(r"\btransferred\b", re.IGNORECASE)),
@@ -86,8 +87,6 @@ def augment_legal_ir_projection_triples(
     """
 
     normalized = _normalize_triples(triples)
-    if len(normalized) > 16:
-        return normalized
     seen = {
         (triple["subject"], triple["predicate"], triple["object"])
         for triple in normalized
@@ -99,12 +98,22 @@ def augment_legal_ir_projection_triples(
         )
 
     augmented = list(normalized)
+    augment_triggers_by_subject: Dict[str, int] = {}
     for triple in normalized:
         subject = triple["subject"]
         predicate = triple["predicate"]
         obj = triple["object"]
         components: List[Tuple[str, str]] = []
         existing_predicates = predicates_by_subject.setdefault(subject, set())
+        is_augment_trigger = (
+            predicate in {"source_id", "citation", *_SOURCE_ID_ALIAS_PREDICATES}
+            or predicate in _TEXT_PREDICATES
+        )
+        if is_augment_trigger:
+            trigger_count = augment_triggers_by_subject.get(subject, 0)
+            if trigger_count >= _MAX_AUGMENT_TRIGGER_TRIPLES_PER_SUBJECT:
+                continue
+            augment_triggers_by_subject[subject] = trigger_count + 1
         if (
             predicate in {"source_id", *_SOURCE_ID_ALIAS_PREDICATES}
             and not _has_family(existing_predicates, "source_id_")

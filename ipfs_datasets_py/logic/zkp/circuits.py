@@ -24,6 +24,7 @@ _DERIVED_PUBLIC_INPUT_KEYS = frozenset(
         "attestation_view_version",
     }
 )
+_HEX_CHARS = frozenset("0123456789abcdefABCDEF")
 
 
 def _bytes_from_proof_data(proof_data: object) -> bytes:
@@ -34,6 +35,19 @@ def _bytes_from_proof_data(proof_data: object) -> bytes:
         return bytes(proof_data)
     if isinstance(proof_data, memoryview):
         return proof_data.tobytes()
+    if isinstance(proof_data, str):
+        stripped = proof_data.strip()
+        hex_candidate = stripped[2:] if stripped.startswith(("0x", "0X")) else stripped
+        if (
+            hex_candidate
+            and len(hex_candidate) % 2 == 0
+            and all(char in _HEX_CHARS for char in hex_candidate)
+        ):
+            try:
+                return bytes.fromhex(hex_candidate)
+            except ValueError:
+                pass
+        return proof_data.encode("utf-8")
     if proof_data is None:
         return b""
     return str(proof_data).encode("utf-8")
@@ -431,6 +445,90 @@ def proof_public_inputs_from_proof_dict(proof: Mapping[str, Any]) -> Dict[str, A
     return completed
 
 
+def complete_zkp_attestation_record(record: Mapping[str, Any]) -> Dict[str, Any]:
+    """Return a LegalIR ZKP attestation record with deterministic bridge fields.
+
+    LegalIR exporters are not perfectly uniform: some put the serialized proof
+    under ``proof`` while others flatten proof bytes and public inputs at the
+    record root.  This helper treats the proof payload as authoritative and
+    fills the duplicated attestation fields expected by downstream views.
+    """
+    record_dict = _mapping_dict(record)
+    if not record_dict:
+        return {}
+
+    completed = dict(record_dict)
+    proof = _mapping_dict(completed.get("proof"))
+    if not proof and (
+        "proof_data" in completed
+        or "public_inputs" in completed
+        or "metadata" in completed
+    ):
+        proof = {
+            "proof_data": completed.get("proof_data"),
+            "public_inputs": completed.get("public_inputs"),
+            "metadata": completed.get("metadata"),
+        }
+
+    proof_data = proof.get("proof_data", completed.get("proof_data", b""))
+    metadata = _mapping_dict(proof.get("metadata") or completed.get("metadata"))
+    public_inputs = _mapping_dict(
+        proof.get("public_inputs") or completed.get("public_inputs")
+    )
+
+    if not public_inputs:
+        return completed
+
+    proof_for_view = {
+        "proof_data": proof_data,
+        "public_inputs": public_inputs,
+        "metadata": metadata,
+    }
+    attestation_view = proof_attestation_view_from_proof_dict(proof_for_view)
+    proof_public_inputs = proof_public_inputs_from_proof_dict(proof_for_view)
+    if not attestation_view:
+        return completed
+
+    attestation_ref = str(attestation_view.get("attestation_ref") or "")
+    completed["attestation_view"] = attestation_view
+    completed["public_inputs"] = proof_public_inputs or public_inputs
+    if attestation_ref:
+        completed["attestation_ref"] = attestation_ref
+    proof_hash = proof_digest_from_proof_dict(proof_for_view)
+    completed.setdefault("proof_hash", proof_hash)
+
+    for key in (
+        "circuit_ref",
+        "ruleset_id",
+        "source_id",
+        "theorem_hash",
+    ):
+        if completed.get(key):
+            continue
+        if key == "source_id":
+            source_id = (
+                completed.get("source_id")
+                or completed.get("sample_id")
+                or completed.get("document_id")
+                or completed.get("id")
+                or completed.get("form_id")
+                or completed.get("source_pdf")
+                or metadata.get("source_id")
+                or metadata.get("sample_id")
+                or metadata.get("document_id")
+                or metadata.get("form_id")
+                or (f"zkp-proof:{proof_hash[:16]}" if proof_hash else "")
+            )
+            if source_id:
+                completed[key] = str(source_id)
+            continue
+        value = proof_public_inputs.get(key) or attestation_view.get(key)
+        if value not in (None, ""):
+            completed[key] = value
+
+    return completed
+
+
 def zkp_attestation_legal_ir_view_loss(
     records: object,
 ) -> float:
@@ -458,7 +556,7 @@ def zkp_attestation_legal_ir_view_loss(
     missing = 0
     total = len(records) * (len(required_record_keys) + 2)
     for raw_record in records:
-        record = _mapping_dict(raw_record)
+        record = complete_zkp_attestation_record(_mapping_dict(raw_record))
         for key in required_record_keys:
             if not record.get(key):
                 missing += 1

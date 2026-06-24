@@ -2,6 +2,7 @@
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector import (
     frame_ontology_contextualized_terms,
+    frame_ontology_feature_keys,
     frame_ontology_feature_keys_from_values,
     frame_ontology_high_signal_terms,
     frame_ontology_terms_from_feature_keys,
@@ -563,3 +564,28 @@ def test_frame_ontology_terms_extract_predicate_argument_anchor_terms() -> None:
     assert "conservation_frame" in terms
     assert "deontic" in terms
     assert "deontic_d_o" in terms
+
+
+def test_frame_ontology_terms_contextualize_legal_ir_view_features() -> None:
+    feature_keys = [
+        "legal-ir-view:deontic.ir",
+        "legal-ir-view:TDFOL.prover",
+        "legal-ir-view:modal.frame_logic",
+        "quality:bias",
+    ]
+
+    assert frame_ontology_feature_keys(feature_keys) == [
+        "legal-ir-view:deontic.ir",
+        "legal-ir-view:TDFOL.prover",
+        "legal-ir-view:modal.frame_logic",
+    ]
+    assert frame_ontology_terms_from_feature_keys(feature_keys) == [
+        "deontic_ir",
+        "tdfol_prover",
+        "modal_frame_logic",
+    ]
+    assert frame_ontology_contextualized_terms(feature_keys=feature_keys) == [
+        "legal_ir_view_deontic_ir",
+        "legal_ir_view_tdfol_prover",
+        "legal_ir_view_modal_frame_logic",
+    ]

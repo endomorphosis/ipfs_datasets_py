@@ -260,6 +260,10 @@ def _actor_text(element: Dict[str, Any]) -> str:
     """Return a source-grounded actor slot from flat or detail fields."""
 
     flat_value = _first_text(element.get("subject")).strip()
+    if flat_value.lower() == "it":
+        unlawful_actor = _unlawful_clause_actor_text(element)
+        if unlawful_actor:
+            return unlawful_actor
     if flat_value:
         return flat_value
 
@@ -479,14 +483,14 @@ def _clean_source_label(value: str) -> str:
 def _instrument_lifecycle_action_text(element: Dict[str, Any]) -> str:
     """Return a lifecycle action from structured duration or anchor details."""
 
-    flat_value = _first_text(element.get("action")).strip()
-    if flat_value:
-        return flat_value
-
     norm_type = str(element.get("norm_type") or "").strip().lower()
     operator = str(element.get("deontic_operator") or element.get("modality") or "").strip().upper()
     if norm_type != "instrument_lifecycle" and operator != "LIFE":
         return ""
+
+    flat_value = _first_text(element.get("action")).strip()
+    if flat_value:
+        return flat_value
 
     kind = str(
         element.get("lifecycle_action")
@@ -532,13 +536,13 @@ def _instrument_lifecycle_action_from_parts(kind: str, duration: str, anchor: st
 def _penalty_action_text(element: Dict[str, Any]) -> str:
     """Return a sanction action from structured detail-only penalty fields."""
 
-    flat_value = _first_text(element.get("action")).strip()
-    if flat_value:
-        return flat_value
-
     norm_type = str(element.get("norm_type") or "").strip().lower()
     if norm_type != "penalty":
         return ""
+
+    flat_value = _first_text(element.get("action")).strip()
+    if flat_value:
+        return flat_value
 
     candidates: List[Dict[str, Any]] = []
     penalty = element.get("penalty")
@@ -600,14 +604,14 @@ def _applicability_actor_text(element: Dict[str, Any]) -> str:
 def _applicability_action_text(element: Dict[str, Any]) -> str:
     """Return the target for detail-only applicability parser rows."""
 
-    flat_value = _first_text(element.get("action")).strip()
-    if flat_value:
-        return flat_value
-
     norm_type = str(element.get("norm_type") or "").strip().lower()
     operator = str(element.get("deontic_operator") or element.get("modality") or "").strip().upper()
     if norm_type != "applicability" and operator != "APP":
         return ""
+
+    flat_value = _first_text(element.get("action")).strip()
+    if flat_value:
+        return flat_value
 
     for key in ("target", "applicability_target", "regulated_target"):
         value = str(element.get(key) or "").strip()
@@ -670,14 +674,14 @@ def _exemption_actor_text(element: Dict[str, Any]) -> str:
 def _exemption_action_text(element: Dict[str, Any]) -> str:
     """Return the exempted requirement for detail-only exemption parser rows."""
 
-    flat_value = _first_text(element.get("action")).strip()
-    if flat_value:
-        return flat_value
-
     norm_type = str(element.get("norm_type") or "").strip().lower()
     operator = str(element.get("deontic_operator") or element.get("modality") or "").strip().upper()
     if norm_type != "exemption" and operator != "EXEMPT":
         return ""
+
+    flat_value = _first_text(element.get("action")).strip()
+    if flat_value:
+        return flat_value
 
     for key in ("requirement", "exemption_requirement", "instrument", "required_instrument"):
         value = str(element.get(key) or "").strip()
@@ -732,14 +736,14 @@ def _purpose_actor_text(element: Dict[str, Any]) -> str:
 def _purpose_action_text(element: Dict[str, Any]) -> str:
     """Return the source-grounded purpose body for purpose parser rows."""
 
-    flat_value = _first_text(element.get("action")).strip()
-    if flat_value:
-        return flat_value
-
     norm_type = str(element.get("norm_type") or "").strip().lower()
     operator = str(element.get("deontic_operator") or element.get("modality") or "").strip().upper()
     if norm_type != "purpose" and operator != "PURP":
         return ""
+
+    flat_value = _first_text(element.get("action")).strip()
+    if flat_value:
+        return flat_value
 
     for key in ("purpose", "purpose_text", "purpose_body", "body", "defined_as"):
         value = str(element.get(key) or "").strip()
@@ -838,8 +842,16 @@ def _generic_action_text(element: Dict[str, Any]) -> str:
     """Return a source-grounded action phrase from common scalar aliases."""
 
     flat_value = _first_text(element.get("action")).strip()
+    unlawful_action = _unlawful_clause_action_text(element)
+    if unlawful_action:
+        return unlawful_action
+    span_action = _field_span_text(element, ("action",))
     if flat_value:
+        if _prefer_field_span_action(flat_value, span_action):
+            return span_action
         return flat_value
+    if span_action:
+        return span_action
 
     for key in (
         "action_text",
@@ -889,6 +901,182 @@ def _generic_action_text(element: Dict[str, Any]) -> str:
             return value
 
     return ""
+
+
+_UNLAWFUL_FOR_CLAUSE_RE = re.compile(
+    r"\bbe\s+unlawful\s+for\s+(?P<actor>.+?)\s+to\s+(?P<action>.+?)"
+    r"(?=(?:\s+(?:if|when|where|provided\s+that|unless|except|within|before|after)\b)|[.;]|$)",
+    re.IGNORECASE,
+)
+_SOURCE_CONDITION_RE = re.compile(
+    r"\b(?P<connector>if|when|where|provided\s+that|unless)\s+"
+    r"(?P<body>.+?)"
+    r"(?=(?:[,;.]|\s+(?:shall|must|may)\b)|$)",
+    re.IGNORECASE,
+)
+
+
+def _unlawful_clause_parts(element: Dict[str, Any]) -> Dict[str, str]:
+    """Extract actor/action slots from impersonal ``shall be unlawful for`` rows."""
+
+    candidates = [
+        _first_text(element.get("action")),
+        _field_span_text(element, ("action",)),
+        str(element.get("support_text") or ""),
+        str(element.get("text") or element.get("source_text") or ""),
+    ]
+    for text in candidates:
+        candidate = re.sub(r"\s+", " ", str(text or "")).strip()
+        if not candidate:
+            continue
+        match = _UNLAWFUL_FOR_CLAUSE_RE.search(candidate)
+        if not match:
+            continue
+        actor = _clean_source_label(match.group("actor"))
+        action = _clean_source_label(match.group("action"))
+        if actor and action:
+            return {"actor": actor, "action": action}
+    return {}
+
+
+def _unlawful_clause_actor_text(element: Dict[str, Any]) -> str:
+    return _unlawful_clause_parts(element).get("actor", "")
+
+
+def _unlawful_clause_action_text(element: Dict[str, Any]) -> str:
+    return _unlawful_clause_parts(element).get("action", "")
+
+
+def _prefer_field_span_action(flat_value: str, span_action: str) -> bool:
+    """Prefer a grounded action span when a legacy action slot was clipped."""
+
+    flat = _clean_source_label(flat_value)
+    span_text = _clean_source_label(span_action)
+    if not flat or not span_text:
+        return False
+    if len(span_text) <= len(flat) + 8:
+        return False
+    if flat.endswith(","):
+        return True
+    if len(flat.split()) <= 2 and re.search(r"\b(?:under|for|to|of|in|by)\b", span_text, re.IGNORECASE):
+        return True
+    return False
+
+
+def _field_span_text(element: Mapping[str, Any], aliases: Sequence[str]) -> str:
+    """Return text covered by one of the element's field spans, if available."""
+
+    field_spans = element.get("field_spans")
+    if not isinstance(field_spans, Mapping):
+        return ""
+
+    for alias in aliases:
+        spans = _normalized_span_records(field_spans.get(alias))
+        for span in spans:
+            text = _text_for_absolute_or_relative_span(element, span)
+            if text:
+                return text
+    return ""
+
+
+def _text_for_absolute_or_relative_span(element: Mapping[str, Any], span: Sequence[int]) -> str:
+    if len(span) != 2:
+        return ""
+    start, end = int(span[0]), int(span[1])
+    if end <= start:
+        return ""
+
+    for key in ("text", "source_text", "support_text"):
+        text = str(element.get(key) or "")
+        if end <= len(text):
+            return _clean_source_label(text[start:end])
+
+    support_text = str(element.get("support_text") or "")
+    support_span = SourceSpan.from_value(element.get("support_span")).to_list()
+    if support_text and len(support_span) == 2:
+        rel_start = start - support_span[0]
+        rel_end = end - support_span[0]
+        if 0 <= rel_start < rel_end <= len(support_text):
+            return _clean_source_label(support_text[rel_start:rel_end])
+    return ""
+
+
+def _condition_records_from_source_text(
+    element: Mapping[str, Any],
+    support_span: "SourceSpan",
+) -> List[Dict[str, Any]]:
+    """Recover explicit if/when/unless conditions for reduced IR rows."""
+
+    text = str(element.get("support_text") or element.get("text") or element.get("source_text") or "")
+    if not text:
+        return []
+    base_offset = 0
+    support_values = support_span.to_list()
+    if str(element.get("support_text") or "") == text and len(support_values) == 2:
+        base_offset = support_values[0]
+
+    records: List[Dict[str, Any]] = []
+    for match in _SOURCE_CONDITION_RE.finditer(text):
+        connector = re.sub(r"\s+", " ", match.group("connector").lower()).strip()
+        body = _clean_source_label(match.group("body"))
+        if not body:
+            continue
+        records.append(
+            {
+                "type": "condition",
+                "clause_type": connector,
+                "raw_text": match.group(0).strip(),
+                "normalized_text": body,
+                "span": [base_offset + match.start("body"), base_offset + match.end("body")],
+                "clause_span": [base_offset + match.start(), base_offset + match.end()],
+                "value": body,
+            }
+        )
+    return records
+
+
+def _field_spans_with_source_fallback(element: Mapping[str, Any]) -> Dict[str, Any]:
+    """Return field spans adjusted for deterministic source-text recoveries."""
+
+    field_spans = dict(element.get("field_spans") or {})
+    unlawful_spans = _unlawful_clause_field_spans(element)
+    if unlawful_spans:
+        field_spans.update(unlawful_spans)
+    return field_spans
+
+
+def _unlawful_clause_field_spans(element: Mapping[str, Any]) -> Dict[str, List[int]]:
+    for key in ("action", "support_text", "text", "source_text"):
+        text = str(element.get(key) or "")
+        if isinstance(element.get(key), list):
+            text = _first_text(element.get(key))
+        if not text:
+            continue
+        base_offset = 0
+        if key == "action":
+            field_spans = element.get("field_spans")
+            if isinstance(field_spans, Mapping):
+                action_spans = _normalized_span_records(field_spans.get("action"))
+                if action_spans:
+                    base_offset = action_spans[0][0]
+        if key == "support_text":
+            support_span = SourceSpan.from_value(element.get("support_span")).to_list()
+            if len(support_span) == 2:
+                base_offset = support_span[0]
+        match = _UNLAWFUL_FOR_CLAUSE_RE.search(text)
+        if not match:
+            continue
+        return {
+            "subject": [
+                base_offset + match.start("actor"),
+                base_offset + match.end("actor"),
+            ],
+            "action": [
+                base_offset + match.start("action"),
+                base_offset + match.end("action"),
+            ],
+        }
+    return {}
 
 
 def _penalty_action_from_parts(record: Dict[str, Any]) -> str:
@@ -1164,6 +1352,8 @@ def _modality_from_parser_element(element: Dict[str, Any]) -> str:
     """
 
     resolved_norm_type = _norm_type_from_parser_element(element)
+    if _unlawful_clause_action_text(element):
+        return "F"
     for key in ("deontic_operator", "modality"):
         inferred = canonical_modality_operator(
             element.get(key),
@@ -1221,6 +1411,9 @@ def _prompt_context_mapping(element: Mapping[str, Any]) -> Dict[str, Any]:
 
 def _norm_type_from_parser_element(element: Dict[str, Any]) -> str:
     """Return a stable norm type from top-level or legacy detail slots."""
+
+    if _unlawful_clause_action_text(element):
+        return "prohibition"
 
     top_level = str(element.get("norm_type") or "").strip()
     if top_level:
@@ -1325,6 +1518,32 @@ def _support_scoped_slot_records(
         if any(_spans_overlap(span, [support_start, support_end]) for span in spans):
             scoped.append(row)
     return scoped
+
+
+def _same_sentence_slot_scope(element: Mapping[str, Any], support_span: "SourceSpan") -> "SourceSpan":
+    """Expand slot scoping to the containing sentence, not the whole section."""
+
+    text = str(element.get("text") or element.get("source_text") or "")
+    support_start = int(support_span.start)
+    support_end = int(support_span.end)
+    if not text or support_end <= support_start or support_start >= len(text):
+        return support_span
+
+    sentence_start = 0
+    for index in range(min(support_start, len(text) - 1), -1, -1):
+        if text[index] in ".!?\n":
+            sentence_start = index + 1
+            break
+
+    sentence_end = len(text)
+    for index in range(min(max(support_end, 0), len(text) - 1), len(text)):
+        if text[index] in ".!?\n":
+            sentence_end = index + 1
+            break
+
+    if sentence_end <= sentence_start:
+        return support_span
+    return SourceSpan(sentence_start, sentence_end)
 
 
 def _direct_record_spans(record: Mapping[str, Any]) -> List[List[int]]:
@@ -1712,6 +1931,11 @@ class LegalNormQuality:
             if isinstance(nested_quality, Mapping)
             else {}
         )
+        export_readiness = dict(
+            quality.get("export_readiness")
+            or element.get("export_readiness")
+            or {}
+        )
         return cls(
             schema_valid=bool(quality.get("schema_valid", element.get("schema_valid"))),
             slot_coverage=float(
@@ -1729,14 +1953,14 @@ class LegalNormQuality:
             promotable_to_theorem=bool(
                 quality.get(
                     "promotable_to_theorem",
-                    element.get("promotable_to_theorem"),
+                    element.get(
+                        "promotable_to_theorem",
+                        export_readiness.get("proof_ready")
+                        or export_readiness.get("theorem_promotable"),
+                    ),
                 )
             ),
-            export_readiness=dict(
-                quality.get("export_readiness")
-                or element.get("export_readiness")
-                or {}
-            ),
+            export_readiness=export_readiness,
         )
 
 
@@ -1793,21 +2017,22 @@ class LegalNormIR:
         element = _hydrate_parser_element_from_nested_context(element)
         source_span_value = element.get("source_span") or element.get("support_span")
         support_span = SourceSpan.from_value(element.get("support_span"))
+        slot_scope_span = _same_sentence_slot_scope(element, support_span)
 
         enumeration_label = str(element.get("enumeration_label") or "")
         enumeration_index = element.get("enumeration_index")
         derived_index = _enumeration_index(enumeration_index) or _enumeration_index(enumeration_label)
         conditions = _support_scoped_slot_records(
             _slot_detail_records(element, "condition_details", "conditions"),
-            support_span,
+            slot_scope_span,
         )
         exceptions = _support_scoped_slot_records(
             _slot_detail_records(element, "exception_details", "exceptions"),
-            support_span,
+            slot_scope_span,
         )
         overrides = _support_scoped_slot_records(
             _slot_detail_records(element, "override_clause_details", "override_clauses"),
-            support_span,
+            slot_scope_span,
         )
         temporal_constraints = _support_scoped_slot_records(
             _slot_detail_records(
@@ -1816,12 +2041,17 @@ class LegalNormIR:
                 "temporal_constraints",
                 default_type="deadline",
             ),
-            support_span,
+            slot_scope_span,
         )
         cross_references = _support_scoped_slot_records(
             _slot_detail_records(element, "cross_reference_details", "cross_references"),
-            support_span,
+            slot_scope_span,
         )
+        if not conditions:
+            conditions = _support_scoped_slot_records(
+                _condition_records_from_source_text(element, support_span),
+                slot_scope_span,
+            )
         quality = _quality_with_scoped_slot_blockers(
             LegalNormQuality.from_parser_element(element),
             conditions=conditions,
@@ -1887,7 +2117,7 @@ class LegalNormIR:
             kg_relationship_hints=[
                 _with_relationship_value_alias(record) for record in _list_of_dicts(element.get("kg_relationship_hints"))
             ],
-            field_spans=dict(element.get("field_spans") or {}),
+            field_spans=_field_spans_with_source_fallback(element),
             formal_terms=dict(element.get("formal_terms") or {}),
             legal_frame=dict(element.get("legal_frame") or {}),
             section_context=dict(element.get("section_context") or {}),
@@ -1994,6 +2224,13 @@ def parser_warnings_require_decoder_validation(warnings: Sequence[str]) -> bool:
     theorem-gating while still allowing source-grounded reconstruction, so it
     does not force decoder validation by itself.
     """
+
+    warning_set = {str(warning or "").strip() for warning in warnings if str(warning or "").strip()}
+    if {
+        "cross_reference_requires_resolution",
+        "exception_requires_scope_review",
+    }.issubset(warning_set):
+        return True
 
     for warning in warnings:
         normalized = str(warning or "").strip()

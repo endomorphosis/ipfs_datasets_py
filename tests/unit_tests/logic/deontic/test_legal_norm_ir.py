@@ -1,6 +1,7 @@
 """Tests for the deterministic legal norm intermediate representation."""
 
 from ipfs_datasets_py.logic.deontic import LegalNormIR, parser_element_to_ir
+from ipfs_datasets_py.logic.deontic.ir import legal_norm_ir_slot_provenance
 from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
 
 
@@ -134,3 +135,118 @@ def test_legal_norm_ir_decoder_validation_gate_distinguishes_cross_reference_war
     assert "cross_reference_requires_resolution" in unresolved_exception_ir.blockers
     assert "exception_requires_scope_review" in unresolved_exception_ir.blockers
     assert unresolved_exception_ir.decoder_requires_validation is True
+
+
+def test_legal_norm_ir_recovers_clipped_negative_action_from_field_span() -> None:
+    source_text = (
+        "The Secretary shall not waive, under subsection (b), the non-Federal "
+        "share requirement for any program."
+    )
+    element = {
+        "schema_version": "legal_norm_ir-v1",
+        "source_id": "legacy:deontic:clipped-shall-not",
+        "text": source_text,
+        "support_text": source_text,
+        "support_span": [0, len(source_text)],
+        "norm_type": "prohibition",
+        "deontic_operator": "F",
+        "subject": ["Secretary"],
+        "action": ["waive,"],
+        "field_spans": {
+            "subject": [4, 13],
+            "modal": [14, 23],
+            "action": [24, len(source_text) - 1],
+        },
+        "promotable_to_theorem": True,
+        "export_readiness": {"blockers": []},
+    }
+
+    ir = LegalNormIR.from_parser_element(element)
+    audit = legal_norm_ir_slot_provenance(ir, ("actor", "modality", "action"))
+
+    assert ir.modality == "F"
+    assert ir.action == (
+        "waive, under subsection (b), the non-Federal share requirement for any program"
+    )
+    assert audit["missing_slots"] == []
+    assert audit["ungrounded_slots"] == []
+
+
+def test_legal_norm_ir_recovers_unlawful_for_actor_action_and_modality() -> None:
+    source_text = (
+        "It shall be unlawful for any person, partnership, or corporation to "
+        "disseminate any false advertisement."
+    )
+    element = {
+        "schema_version": "legal_norm_ir-v1",
+        "source_id": "legacy:deontic:unlawful-for",
+        "text": source_text,
+        "support_text": source_text,
+        "support_span": [0, len(source_text)],
+        "norm_type": "obligation",
+        "deontic_operator": "O",
+        "subject": ["It"],
+        "action": [
+            "be unlawful for any person, partnership, or corporation to "
+            "disseminate any false advertisement"
+        ],
+        "field_spans": {
+            "subject": [0, 2],
+            "modal": [3, 8],
+            "action": [9, len(source_text) - 1],
+        },
+        "export_readiness": {"proof_ready": True, "blockers": []},
+    }
+
+    ir = LegalNormIR.from_parser_element(element)
+    audit = legal_norm_ir_slot_provenance(ir, ("actor", "modality", "action"))
+
+    assert ir.norm_type == "prohibition"
+    assert ir.modality == "F"
+    assert ir.actor == "any person, partnership, or corporation"
+    assert ir.action == "disseminate any false advertisement"
+    assert ir.proof_ready is True
+    assert audit["missing_slots"] == []
+    assert audit["ungrounded_slots"] == []
+    assert audit["slot_grounding"][0]["spans"] == [[25, 64]]
+    assert audit["slot_grounding"][2]["spans"] == [[68, 103]]
+
+
+def test_legal_norm_ir_recovers_source_text_conditions_for_reduced_rows() -> None:
+    source_text = (
+        "The Secretary may waive the requirement if such application is "
+        "otherwise approvable."
+    )
+    element = {
+        "schema_version": "legal_norm_ir-v1",
+        "source_id": "legacy:deontic:source-condition",
+        "text": source_text,
+        "support_text": source_text,
+        "support_span": [0, len(source_text)],
+        "norm_type": "permission",
+        "deontic_operator": "may",
+        "subject": ["Secretary"],
+        "action": ["waive the requirement"],
+        "field_spans": {
+            "subject": [4, 13],
+            "modal": [14, 17],
+            "action": [18, 39],
+        },
+        "promotable_to_theorem": True,
+        "export_readiness": {"blockers": []},
+    }
+
+    ir = LegalNormIR.from_parser_element(element)
+
+    assert ir.modality == "P"
+    assert ir.conditions == [
+        {
+            "type": "condition",
+            "clause_type": "if",
+            "raw_text": "if such application is otherwise approvable",
+            "normalized_text": "such application is otherwise approvable",
+            "span": [43, 83],
+            "clause_span": [40, 83],
+            "value": "such application is otherwise approvable",
+        }
+    ]

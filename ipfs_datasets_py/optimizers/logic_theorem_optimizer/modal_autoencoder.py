@@ -3984,16 +3984,68 @@ class AdaptiveModalAutoencoder:
     def _legal_ir_view_target_distribution_for_sample(
         self,
         sample: LegalSample,
+        *,
+        include_autoencoder_prior: bool = True,
     ) -> Dict[str, float]:
         distribution = self._legal_ir_view_target_cache.get(
             sample.sample_id,
             self._legal_ir_view_target_cache.get(_sample_content_cache_id(sample), {}),
         )
-        return {
+        cached_distribution = {
             str(name): _float_or_zero(value)
             for name, value in dict(distribution or {}).items()
             if _float_or_zero(value) > 0.0
         }
+        if cached_distribution:
+            return cached_distribution
+        if not include_autoencoder_prior:
+            return {}
+        return self._autoencoder_view_target_distribution_for_sample(sample)
+
+    def _autoencoder_view_target_distribution_for_sample(
+        self,
+        sample: LegalSample,
+    ) -> Dict[str, float]:
+        """Return a deterministic view prior for reconstruction-only training."""
+        family_distribution = _observed_family_distribution(sample)
+        if not family_distribution:
+            return {}
+        view_weights: Dict[str, float] = {}
+
+        def bump(view: str, weight: float) -> None:
+            normalized_weight = max(0.0, float(weight))
+            if not view or normalized_weight <= 0.0:
+                return
+            view_weights[view] = view_weights.get(view, 0.0) + normalized_weight
+
+        for family, family_weight in family_distribution.items():
+            weight = max(0.0, float(family_weight))
+            if weight <= 0.0:
+                continue
+            family_name = str(family)
+            if family_name == "deontic":
+                bump("deontic.ir", 0.60 * weight)
+                bump("TDFOL.prover", 0.25 * weight)
+                bump("modal.frame_logic", 0.15 * weight)
+            elif family_name == "frame":
+                bump("modal.frame_logic", 0.55 * weight)
+                bump("modal.autoencoder", 0.30 * weight)
+                bump("deontic.ir", 0.15 * weight)
+            elif family_name == "temporal":
+                bump("modal.autoencoder", 0.40 * weight)
+                bump("modal.frame_logic", 0.25 * weight)
+                bump("deontic.ir", 0.20 * weight)
+                bump("TDFOL.prover", 0.15 * weight)
+            elif family_name == "conditional_normative":
+                bump("deontic.ir", 0.35 * weight)
+                bump("modal.frame_logic", 0.30 * weight)
+                bump("TDFOL.prover", 0.20 * weight)
+                bump("modal.autoencoder", 0.15 * weight)
+            else:
+                bump("modal.autoencoder", 0.50 * weight)
+                bump("modal.frame_logic", 0.25 * weight)
+                bump("TDFOL.prover", 0.25 * weight)
+        return _normalized_distribution(view_weights)
 
     def _legal_ir_view_distribution_for_embedding(
         self,
@@ -4885,6 +4937,18 @@ class AdaptiveModalAutoencoder:
 
         for view in self.state.legal_ir_view_embedding_weights.keys():
             add(view)
+        for key in self.state.family_legal_ir_view_embedding_weights.keys():
+            parts = str(key).split("||")
+            if len(parts) == 2:
+                add(parts[1])
+        for key in self.state.semantic_slot_legal_ir_view_embedding_weights.keys():
+            parts = str(key).split("||")
+            if len(parts) == 2:
+                add(parts[1])
+        for key in self.state.family_semantic_slot_legal_ir_view_embedding_weights.keys():
+            parts = str(key).split("||")
+            if len(parts) == 3:
+                add(parts[2])
         for view in self.state.legal_ir_view_logits.keys():
             add(view)
         for logits_by_key in (
@@ -7915,7 +7979,10 @@ class AdaptiveModalAutoencoder:
         """Loss-profile contracts that connect validation residuals to TODO routes."""
         normalized_prefix = str(prefix or "objective-residual").strip(":")
         losses = self._compiler_quality_loss_targets_for_sample(sample)
-        view_distribution = self._legal_ir_view_target_distribution_for_sample(sample)
+        view_distribution = self._legal_ir_view_target_distribution_for_sample(
+            sample,
+            include_autoencoder_prior=False,
+        )
         target_signature = hashlib.sha256(
             json.dumps(
                 {
@@ -17936,6 +18003,7 @@ class AdaptiveModalAutoencoder:
                 error,
                 scale=step * embedding_update_scale * normalized_weight,
             )
+        self._invalidate_legal_ir_view_family_candidates()
         feature_keys = self._feature_keys_for(sample)
         if not feature_keys:
             return
