@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import os
+from types import SimpleNamespace
 
 import pytest
 
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import uscode_modal_daemon_runner as runner
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import AdaptiveModalAutoencoder
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import ModalTodoSupervisor
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec import (
@@ -14,6 +16,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec impor
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_dataset import (
     HF_USCODE_DATASET_ID,
+    USCODE_EMBEDDINGS_PARQUET,
     USCODE_LAWS_PARQUET,
     iter_uscode_records_from_parquet,
     load_hf_uscode_samples,
@@ -36,9 +39,19 @@ def test_uscode_parquet_fixture_converts_to_legal_samples(tmp_path) -> None:
 
     assert len(samples) == 2
     assert samples[0].citation == "5 U.S.C. 552"
+    assert samples[0].embedding_model == f"uscode:{USCODE_EMBEDDINGS_PARQUET}"
     assert samples[0].embedding_vector == [0.1, 0.2, 0.3]
     assert samples[0].modal_ir.formulas
     assert samples[1].selected_frame is not None
+
+
+def test_uscode_parquet_without_embeddings_keeps_mock_embedding_label(tmp_path) -> None:
+    laws_path, _ = _write_uscode_fixture(tmp_path)
+
+    samples = load_uscode_samples_from_parquet(laws_path, limit=1)
+
+    assert samples[0].embedding_model == "mock:stable-sha256"
+    assert len(samples[0].embedding_vector) == 8
 
 
 def test_uscode_embeddings_loader_uses_first_vector_per_cid(tmp_path) -> None:
@@ -140,7 +153,34 @@ def test_uscode_loaders_support_offsets_for_holdout_windows(tmp_path) -> None:
 
     assert records[0].citation == "42 U.S.C. 1983"
     assert samples[0].citation == "42 U.S.C. 1983"
+    assert samples[0].embedding_model == f"uscode:{USCODE_EMBEDDINGS_PARQUET}"
     assert samples[0].embedding_vector == [0.4, 0.5, 0.6]
+
+
+def test_daemon_row_sampler_uses_real_uscode_embedding_lookup(tmp_path) -> None:
+    laws_path, embeddings_path = _write_uscode_fixture(tmp_path)
+    laws_table = pq.read_table(laws_path)
+    lookup = runner.load_uscode_embedding_lookup(
+        SimpleNamespace(
+            uscode_embeddings_mode="required",
+            uscode_embeddings_path=str(embeddings_path),
+        )
+    )
+
+    sample = runner.row_to_sample(
+        laws_table.take([0]).to_pylist()[0],
+        embedding_lookup=lookup,
+    )
+    payload = runner._sample_metric_cache_payload(sample)
+    report = lookup.report()
+
+    assert sample.embedding_model == f"parquet:{embeddings_path.name}"
+    assert sample.embedding_vector == [0.1, 0.2, 0.3]
+    assert payload["embedding_dimensions"] == 3
+    assert payload["embedding_model"] == f"parquet:{embeddings_path.name}"
+    assert report["enabled"] is True
+    assert report["hit_count"] == 1
+    assert report["miss_count"] == 0
 
 
 def test_supervisor_can_validate_uscode_parquet_on_holdout_offset(tmp_path) -> None:

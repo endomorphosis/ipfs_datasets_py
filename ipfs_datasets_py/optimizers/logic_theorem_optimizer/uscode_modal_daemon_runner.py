@@ -427,6 +427,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon impor
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_dataset import (
     HF_USCODE_DATASET_ID,
+    USCODE_EMBEDDINGS_PARQUET,
     USCODE_LAWS_PARQUET,
     USCodeParquetRecord,
 )
@@ -976,7 +977,9 @@ def _sample_metric_cache_payload(sample: Any) -> Dict[str, Any]:
     ).hexdigest()
     return {
         "citation": str(getattr(sample, "citation", "") or ""),
+        "embedding_dimensions": len(embedding),
         "embedding_hash": embedding_hash,
+        "embedding_model": str(getattr(sample, "embedding_model", "") or ""),
         "sample_id": str(getattr(sample, "sample_id", "") or ""),
         "source": str(getattr(sample, "source", "") or ""),
         "text_hash": hashlib.sha256(
@@ -1329,11 +1332,235 @@ def _try_acquire_stale_bundle_lease(
     }
 
 
+class USCodeEmbeddingLookup:
+    """Lookup first laws_embeddings.parquet vector by U.S. Code content CID."""
+
+    def __init__(
+        self,
+        *,
+        enabled: bool,
+        mode: str,
+        path: str,
+        source: str,
+        embedding_model: str,
+        cid_to_index: Optional[Mapping[str, int]] = None,
+        embedding_column: Any = None,
+        dimensions: int = 0,
+        load_error: str = "",
+    ) -> None:
+        self.enabled = bool(enabled)
+        self.mode = str(mode or "auto")
+        self.path = str(path or "")
+        self.source = str(source or "")
+        self.embedding_model = str(embedding_model or "mock:stable-sha256")
+        self._cid_to_index = dict(cid_to_index or {})
+        self._embedding_column = embedding_column
+        self.dimensions = int(dimensions or 0)
+        self.load_error = str(load_error or "")
+        self.hit_count = 0
+        self.miss_count = 0
+        self.lookup_count = 0
+        self.lookup_error_count = 0
+
+    @classmethod
+    def disabled(
+        cls,
+        *,
+        mode: str,
+        path: str = "",
+        reason: str = "",
+        load_error: str = "",
+    ) -> "USCodeEmbeddingLookup":
+        return cls(
+            enabled=False,
+            mode=mode,
+            path=path,
+            source="disabled",
+            embedding_model="mock:stable-sha256",
+            load_error=load_error or reason,
+        )
+
+    @classmethod
+    def from_table(
+        cls,
+        table: Any,
+        *,
+        mode: str,
+        path: str,
+        source: str,
+        embedding_model: str,
+    ) -> "USCodeEmbeddingLookup":
+        available = set(getattr(table, "column_names", []) or [])
+        if not {"cid", "embedding"}.issubset(available):
+            return cls.disabled(
+                mode=mode,
+                path=path,
+                reason="embedding parquet is missing required cid/embedding columns",
+            )
+        cid_to_index: Dict[str, int] = {}
+        for index, cid in enumerate(table.column("cid").to_pylist()):
+            key = str(cid or "").strip()
+            if key and key not in cid_to_index:
+                cid_to_index[key] = index
+        lookup = cls(
+            enabled=bool(cid_to_index),
+            mode=mode,
+            path=path,
+            source=source,
+            embedding_model=embedding_model,
+            cid_to_index=cid_to_index,
+            embedding_column=table.column("embedding"),
+        )
+        lookup.dimensions = lookup._infer_dimensions()
+        return lookup
+
+    @classmethod
+    def from_parquet_source(
+        cls,
+        parquet_source: Any,
+        *,
+        mode: str,
+        path: str,
+        source: str,
+        embedding_model: str,
+    ) -> "USCodeEmbeddingLookup":
+        parquet_file = pq.ParquetFile(parquet_source)
+        available = set(parquet_file.schema_arrow.names)
+        columns = [column for column in ("cid", "embedding") if column in available]
+        table = parquet_file.read(columns=columns)
+        return cls.from_table(
+            table,
+            mode=mode,
+            path=path,
+            source=source,
+            embedding_model=embedding_model,
+        )
+
+    def _infer_dimensions(self) -> int:
+        for index in self._cid_to_index.values():
+            vector = self._vector_at_index(index)
+            if vector:
+                return len(vector)
+        return 0
+
+    def _vector_at_index(self, index: int) -> Optional[List[float]]:
+        if self._embedding_column is None:
+            return None
+        value = self._embedding_column[index]
+        vector = value.as_py() if hasattr(value, "as_py") else value
+        if not vector:
+            return None
+        return [float(item) for item in list(vector)]
+
+    def vector_for_cid(self, cid: Any) -> Optional[List[float]]:
+        self.lookup_count += 1
+        key = str(cid or "").strip()
+        if not self.enabled or not key:
+            self.miss_count += 1
+            return None
+        index = self._cid_to_index.get(key)
+        if index is None:
+            self.miss_count += 1
+            return None
+        try:
+            vector = self._vector_at_index(index)
+        except Exception:
+            self.lookup_error_count += 1
+            self.miss_count += 1
+            return None
+        if not vector:
+            self.miss_count += 1
+            return None
+        self.hit_count += 1
+        if not self.dimensions:
+            self.dimensions = len(vector)
+        return vector
+
+    def vector_and_model_for_row(
+        self,
+        row: Mapping[str, Any],
+    ) -> tuple[Optional[List[float]], Optional[str]]:
+        vector = self.vector_for_cid(row.get("ipfs_cid") or row.get("cid"))
+        if vector is None:
+            return None, None
+        return vector, self.embedding_model
+
+    def report(self) -> Dict[str, Any]:
+        return {
+            "cid_count": len(self._cid_to_index),
+            "dimensions": self.dimensions,
+            "embedding_model": self.embedding_model,
+            "enabled": self.enabled,
+            "hit_count": self.hit_count,
+            "load_error": self.load_error,
+            "lookup_count": self.lookup_count,
+            "lookup_error_count": self.lookup_error_count,
+            "miss_count": self.miss_count,
+            "mode": self.mode,
+            "path": self.path,
+            "source": self.source,
+        }
+
+
 def load_laws_table():
     fs = HfFileSystem()
     path = f"datasets/{HF_USCODE_DATASET_ID}/{USCODE_LAWS_PARQUET}"
     with fs.open(path, "rb") as laws_file:
         return pq.ParquetFile(laws_file).read(columns=LAW_COLUMNS)
+
+
+def load_uscode_embedding_lookup(args: argparse.Namespace) -> USCodeEmbeddingLookup:
+    mode = str(getattr(args, "uscode_embeddings_mode", "auto") or "auto").strip().lower()
+    if mode not in {"auto", "off", "required"}:
+        mode = "auto"
+    embeddings_path = str(
+        getattr(args, "uscode_embeddings_path", USCODE_EMBEDDINGS_PARQUET)
+        or USCODE_EMBEDDINGS_PARQUET
+    ).strip()
+    if mode == "off":
+        return USCodeEmbeddingLookup.disabled(
+            mode=mode,
+            path=embeddings_path,
+            reason="disabled by --uscode-embeddings-mode=off",
+        )
+    if not embeddings_path:
+        return USCodeEmbeddingLookup.disabled(
+            mode=mode,
+            path=embeddings_path,
+            reason="no embeddings path configured",
+        )
+
+    try:
+        local_path = Path(embeddings_path).expanduser()
+        if local_path.is_file():
+            return USCodeEmbeddingLookup.from_parquet_source(
+                local_path,
+                mode=mode,
+                path=str(local_path),
+                source="local",
+                embedding_model=f"parquet:{local_path.name}",
+            )
+
+        fs = HfFileSystem()
+        hf_path = f"datasets/{HF_USCODE_DATASET_ID}/{embeddings_path.lstrip('/')}"
+        with fs.open(hf_path, "rb") as embeddings_file:
+            return USCodeEmbeddingLookup.from_parquet_source(
+                embeddings_file,
+                mode=mode,
+                path=embeddings_path,
+                source="huggingface",
+                embedding_model=f"hf:{HF_USCODE_DATASET_ID}:{embeddings_path}",
+            )
+    except Exception as exc:
+        if mode == "required":
+            raise RuntimeError(
+                f"Unable to load U.S. Code embeddings from {embeddings_path!r}"
+            ) from exc
+        return USCodeEmbeddingLookup.disabled(
+            mode=mode,
+            path=embeddings_path,
+            load_error=f"{type(exc).__name__}: {exc}",
+        )
 
 
 @contextmanager
@@ -1428,8 +1655,19 @@ def codex_main_apply_lock(
                 fcntl.flock(handle, fcntl.LOCK_UN)
 
 
-def row_to_sample(row: Mapping[str, Any]):
-    return USCodeParquetRecord.from_row(row).to_sample()
+def row_to_sample(
+    row: Mapping[str, Any],
+    *,
+    embedding_lookup: Optional[USCodeEmbeddingLookup] = None,
+):
+    embedding_vector: Optional[List[float]] = None
+    embedding_model: Optional[str] = None
+    if embedding_lookup is not None:
+        embedding_vector, embedding_model = embedding_lookup.vector_and_model_for_row(row)
+    return USCodeParquetRecord.from_row(row).to_sample(
+        embedding_vector=embedding_vector,
+        embedding_model=embedding_model,
+    )
 
 
 def _row_text_within_limit(row: Mapping[str, Any], max_text_chars: int) -> bool:
@@ -1444,6 +1682,7 @@ def _sample_one_row(
     *,
     selected_indices: set[int],
     blocked_sample_ids: AbstractSet[str] = frozenset(),
+    embedding_lookup: Optional[USCodeEmbeddingLookup] = None,
     max_sample_text_chars: int = 0,
     max_attempts: int = 5000,
 ) -> tuple[int, Any, int]:
@@ -1456,7 +1695,7 @@ def _sample_one_row(
         row = laws_table.take([index]).to_pylist()[0]
         if not _row_text_within_limit(row, max_sample_text_chars):
             continue
-        sample = row_to_sample(row)
+        sample = row_to_sample(row, embedding_lookup=embedding_lookup)
         if sample.sample_id in blocked_sample_ids:
             continue
         selected_indices.add(index)
@@ -1474,6 +1713,7 @@ def sample_train_validation_rows(
     validation_count: int,
     blocked_train_sample_ids: AbstractSet[str] = frozenset(),
     blocked_validation_sample_ids: AbstractSet[str] = frozenset(),
+    embedding_lookup: Optional[USCodeEmbeddingLookup] = None,
     max_sample_text_chars: int = 0,
 ):
     selected_indices: set[int] = set()
@@ -1487,6 +1727,7 @@ def sample_train_validation_rows(
             rng,
             selected_indices=selected_indices,
             blocked_sample_ids=blocked_train_sample_ids,
+            embedding_lookup=embedding_lookup,
             max_sample_text_chars=max_sample_text_chars,
             max_attempts=max_train_attempts,
         )
@@ -1503,6 +1744,7 @@ def sample_train_validation_rows(
             rng,
             selected_indices=selected_indices,
             blocked_sample_ids=blocked_validation_sample_ids,
+            embedding_lookup=embedding_lookup,
             max_sample_text_chars=max_sample_text_chars,
             max_attempts=max_attempts - attempts,
         )
@@ -6258,6 +6500,10 @@ def build_paired_daemon_commands(
         str(getattr(args, "validation_canary_indices", "")),
         "--max-sample-text-chars",
         str(getattr(args, "max_sample_text_chars", 0)),
+        "--uscode-embeddings-mode",
+        str(getattr(args, "uscode_embeddings_mode", "auto")),
+        "--uscode-embeddings-path",
+        str(getattr(args, "uscode_embeddings_path", USCODE_EMBEDDINGS_PARQUET)),
         "--max-inner-iterations",
         str(args.max_inner_iterations),
         "--max-items",
@@ -9742,6 +9988,14 @@ def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Pat
         "cycles": 0,
         "codex_program_synthesis_execution_mode": "queued_for_external_codex_worker",
         "dataset_id": HF_USCODE_DATASET_ID,
+        "embedding_target_report": {
+            "embedding_model": "mock:stable-sha256",
+            "enabled": False,
+            "mode": str(getattr(args, "uscode_embeddings_mode", "auto")),
+            "path": str(
+                getattr(args, "uscode_embeddings_path", USCODE_EMBEDDINGS_PARQUET)
+            ),
+        },
         "final": False,
         "laws_path": USCODE_LAWS_PARQUET,
         "log_path": str(log_path),
@@ -9765,6 +10019,10 @@ def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Pat
         "test_failures": 0,
         "train_ce_improved_cycles": 0,
         "train_cosine_improved_cycles": 0,
+        "uscode_embeddings_mode": str(getattr(args, "uscode_embeddings_mode", "auto")),
+        "uscode_embeddings_path": str(
+            getattr(args, "uscode_embeddings_path", USCODE_EMBEDDINGS_PARQUET)
+        ),
         "validation_ce_improved_cycles": 0,
         "validation_cosine_improved_cycles": 0,
         "learning_rate_plateau_streak": 0,
@@ -9849,6 +10107,27 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         help=(
             "Skip randomly sampled U.S. Code rows whose text exceeds this many "
             "characters. Zero keeps the full corpus eligible."
+        ),
+    )
+    parser.add_argument(
+        "--uscode-embeddings-mode",
+        choices=("auto", "off", "required"),
+        default=os.environ.get("IPFS_DATASETS_USCODE_EMBEDDINGS_MODE", "auto"),
+        help=(
+            "How to load laws_embeddings.parquet for autoencoder targets: "
+            "auto falls back to stable mock vectors, required fails fast, "
+            "and off always uses mock vectors."
+        ),
+    )
+    parser.add_argument(
+        "--uscode-embeddings-path",
+        default=os.environ.get(
+            "IPFS_DATASETS_USCODE_EMBEDDINGS_PATH",
+            USCODE_EMBEDDINGS_PARQUET,
+        ),
+        help=(
+            "Local path or Hugging Face dataset-relative path for U.S. Code "
+            "semantic embeddings used by validation cosine/CE targets."
         ),
     )
     parser.add_argument("--max-inner-iterations", type=int, default=3)
@@ -13234,6 +13513,17 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         args.run_id,
         {"event": "detached_dataset_loaded", "row_count": laws_table.num_rows},
     )
+    embedding_lookup = load_uscode_embedding_lookup(args)
+    summary["embedding_target_report"] = embedding_lookup.report()
+    save_summary(summary_path, summary)
+    append_event(
+        log_path,
+        args.run_id,
+        {
+            "embedding_target_report": embedding_lookup.report(),
+            "event": "detached_embedding_lookup_loaded",
+        },
+    )
     validation_canary_count = max(
         0,
         int(getattr(args, "validation_canary_count", 0) or 0),
@@ -13269,7 +13559,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             ):
                 continue
             validation_canary_indices.append(index)
-            validation_canary_samples.append(row_to_sample(row))
+            validation_canary_samples.append(
+                row_to_sample(row, embedding_lookup=embedding_lookup)
+            )
         if len(validation_canary_samples) < validation_canary_count:
             (
                 _unused_train_indices,
@@ -13283,6 +13575,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 train_count=0,
                 validation_count=validation_canary_count,
                 blocked_validation_sample_ids=blocked_validation_sample_ids,
+                embedding_lookup=embedding_lookup,
                 max_sample_text_chars=int(
                     getattr(args, "max_sample_text_chars", 0) or 0
                 ),
@@ -13294,11 +13587,13 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         summary["validation_canary_count"] = len(validation_canary_samples)
         summary["validation_canary_indices"] = list(validation_canary_indices)
         summary["validation_canary_sampling_attempts"] = validation_canary_sampling_attempts
+        summary["embedding_target_report"] = embedding_lookup.report()
         save_summary(summary_path, summary)
         append_event(
             log_path,
             args.run_id,
             {
+                "embedding_target_report": embedding_lookup.report(),
                 "event": "validation_canary_selected",
                 "sample_count": len(validation_canary_samples),
                 "sampling_attempts": validation_canary_sampling_attempts,
@@ -14004,6 +14299,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 validation_count=args.validation_count,
                 blocked_train_sample_ids=validation_canary_sample_ids,
                 blocked_validation_sample_ids=blocked_validation_sample_ids,
+                embedding_lookup=embedding_lookup,
                 max_sample_text_chars=int(getattr(args, "max_sample_text_chars", 0) or 0),
             )
             acceptance_validation_samples = validation_canary_samples or validation_samples
@@ -14801,6 +15097,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["latest_feature_projection_report"] = feature_projection_report
             summary["latest_program_synthesis_bootstrap"] = bootstrap_report
             summary["latest_cycle_seconds"] = latest_cycle_seconds
+            summary["embedding_target_report"] = embedding_lookup.report()
             summary["latest_autoencoder_train"] = after_train_metrics
             summary["latest_autoencoder_validation"] = after_validation_metrics
             summary["latest_train_ce"] = after_train.cross_entropy_loss
