@@ -92,7 +92,6 @@ class proxy:
         >>> import anyio
         >>> 
         >>> async def scrape_with_proxy():
-        ...     # Configure proxy with rotation and retry
         ...     proxy_manager = proxy(
         ...         proxy_urls=[
         ...             "http://proxy1.example.com:8080",
@@ -104,31 +103,18 @@ class proxy:
         ...         user_agents=["Mozilla/5.0", "Chrome/90.0"]
         ...     )
         ...     
-        ...     # Use as context manager like aiohttp.ClientSession
         ...     async with proxy_manager as session:
-        ...         async with session.get("https://library.municode.com") as response:
-        ...             html = await response.text()
-        ...             print(f"Status: {response.status}")
-        ...             print(f"Proxy used: {session.current_proxy}")
-        ...             print(f"Response length: {len(html)} characters")
+        ...         response = await session.get("https://library.municode.com")
+        ...         html = await response.text()
+        ...         print(f"Status: {response.status}")
+        ...         print(f"Proxy used: {session.current_proxy}")
         ...     
-        ...     # Get statistics
         ...     stats = proxy_manager.get_statistics()
         ...     print(f"Total requests: {stats['total_requests']}")
         ...     print(f"Successful requests: {stats['successful_requests']}")
         ...     print(f"Failed requests: {stats['failed_requests']}")
         ...     print(f"Success rate: {stats['success_rate']}%")
-        ...     print(f"Average response time: {stats['avg_response_time']:.2f}s")
-        >>> 
-        >>> anyio.run(scrape_with_proxy())
-        Status: 200
-        Proxy used: http://proxy1.example.com:8080
-        Response length: 1024 characters
-        Total requests: 1
-        Successful requests: 1
-        Failed requests: 0
-        Success rate: 100.0%
-        Average response time: 0.15s
+        ...     print(f"Average response time: {stats['avg_response_time']:.4f}s")
     """
     
     def __init__(
@@ -184,7 +170,7 @@ class proxy:
         self._request_headers: Dict[str, str] = {}
         self._last_request_time: Optional[float] = None
 
-        # Session/cookie simulation
+        # Session cookie storage
         self._cookie: Optional[str] = None
         self._last_request_cookie: Optional[str] = None
 
@@ -192,6 +178,7 @@ class proxy:
         self._total_requests: int = 0
         self._successful_requests: int = 0
         self._failed_requests: int = 0
+        self._response_times: List[float] = []
         self._per_proxy_stats: Dict[str, Dict[str, int]] = {u: {"requests": 0} for u in self._proxy_urls}
 
         # Tracking flags used by tests (default values)
@@ -266,6 +253,7 @@ class proxy:
             self._record_request(proxy_used)
 
             try:
+                request_start = time.monotonic()
                 status = self._simulate_status(attempt)
                 if status == "timeout":
                     raise TimeoutError("Simulated timeout")
@@ -276,7 +264,17 @@ class proxy:
 
                 response_status = int(status)
                 body = "<html><body>ok</body></html>" if response_status == 200 else ""
-                response_headers = {"Content-Type": "text/html"}
+                response_headers: Dict[str, str] = {"Content-Type": "text/html"}
+
+                # Emit Set-Cookie header when the test injects a cookie value,
+                # simulating the server setting a session cookie on first response.
+                cookie_to_set = getattr(self, "_set_cookie", None)
+                if cookie_to_set and self._cookie is None:
+                    response_headers["Set-Cookie"] = f"session_id={cookie_to_set}"
+
+                elapsed = time.monotonic() - request_start
+                self._response_times.append(elapsed)
+
                 last_response = MockResponse(
                     status=response_status,
                     body=body,
@@ -285,8 +283,7 @@ class proxy:
                     retry_count=retry_count,
                 )
 
-                # Session cookie behavior (test-only simulation)
-                self._maybe_set_or_send_cookie()
+                self._maybe_set_or_send_cookie(last_response)
 
                 if self._is_retryable_status(response_status) and attempt < self._max_retries:
                     retry_count += 1
@@ -339,12 +336,16 @@ class proxy:
         if self._total_requests:
             success_rate = (self._successful_requests / self._total_requests) * 100.0
 
+        avg_response_time = 0.0
+        if self._response_times:
+            avg_response_time = sum(self._response_times) / len(self._response_times)
+
         return {
             "total_requests": self._total_requests,
             "successful_requests": self._successful_requests,
             "failed_requests": self._failed_requests,
             "success_rate": success_rate,
-            "avg_response_time": 0.0,
+            "avg_response_time": avg_response_time,
             "per_proxy_stats": self._per_proxy_stats,
         }
     
@@ -414,6 +415,8 @@ class proxy:
             ua = self._user_agents[self._user_agent_index % len(self._user_agents)]
             self._user_agent_index += 1
             self._request_headers.setdefault("User-Agent", ua)
+        if self._maintain_session and self._cookie:
+            self._request_headers.setdefault("Cookie", self._cookie)
 
     async def _maybe_rate_limit(self) -> None:
         if self._rate_limit_delay <= 0:
@@ -507,15 +510,15 @@ class proxy:
             self._unhealthy_proxies.append(proxy_used)
         self._unhealthy_since[proxy_used] = time.monotonic()
 
-    def _maybe_set_or_send_cookie(self) -> None:
+    def _maybe_set_or_send_cookie(self, response: MockResponse) -> None:
+        """Extract Set-Cookie from response headers and track the Cookie header sent."""
         if not self._maintain_session:
             self._last_request_cookie = None
             return
 
-        # If a test sets `_set_cookie`, treat it as a first-response Set-Cookie.
-        cookie_value = getattr(self, "_set_cookie", None)
-        if self._cookie is None and cookie_value:
-            self._cookie = f"session_id={cookie_value}"
+        set_cookie = response.headers.get("Set-Cookie")
+        if set_cookie and self._cookie is None:
+            self._cookie = set_cookie
             self._last_request_cookie = None
             return
 
