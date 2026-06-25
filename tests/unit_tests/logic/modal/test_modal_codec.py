@@ -102,6 +102,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_009549_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_004913_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_002650_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_004344_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001622_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000738_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_003786_FAMILY_PAIRS,
@@ -5105,7 +5106,7 @@ def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_001264_pair
         ("temporal", "deontic"),
     )
     expected_margin_buffer_by_pair = {
-        ("deontic", "deontic"): 0.075,
+        ("deontic", "deontic"): 0.076,
         ("deontic", "temporal"): 0.0015,
         ("frame", "deontic"): 0.0015,
         ("temporal", "deontic"): 0.0015,
@@ -6004,7 +6005,7 @@ def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_002877_pair
     expected_margin_buffer_by_pair = {
         ("alethic", "deontic"): 0.0015,
         ("deontic", "conditional_normative"): 0.0015,
-        ("deontic", "deontic"): 0.075,
+        ("deontic", "deontic"): 0.076,
         ("frame", "deontic"): 0.0015,
         ("frame", "temporal"): 0.002,
         ("temporal", "temporal"): 0.0015,
@@ -6119,7 +6120,7 @@ def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_000795_pair
     )
     expected_margin_buffer_by_pair = {
         ("conditional_normative", "frame"): 0.0015,
-        ("deontic", "deontic"): 0.075,
+        ("deontic", "deontic"): 0.076,
         ("frame", "temporal"): 0.002,
         ("frame", "conditional_normative"): 0.0015,
         ("frame", "deontic"): 0.0015,
@@ -15586,6 +15587,105 @@ def test_modal_decompiler_emits_section_cue_slots_for_packet_000040_citations() 
     )
 
 
+def test_modal_decompiler_structurally_reconstructs_appropriation_authority() -> None:
+    source_id = "us-code-42-6246-653cdbf2449feb6f"
+    source_text = (
+        "42 U.S.C. 6246. Authorization of appropriations There are authorized "
+        "to be appropriated to the Secretary such sums as are necessary to "
+        "carry out this part and part D, to remain available until expended."
+    )
+    clause_start = source_text.index("There are authorized")
+    formula = ModalIRFormula(
+        formula_id=f"{source_id}:f0001",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="P",
+            label="permitted",
+        ),
+        predicate=ModalIRPredicate(
+            name="appropriation_authority",
+            arguments=["Secretary", "sums"],
+            role="clause",
+        ),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=clause_start,
+            end_char=len(source_text),
+            citation="42 U.S.C. 6246",
+        ),
+        metadata={"cue": "authorized"},
+    )
+    document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = " ".join(
+        slot_texts["document_structural_semantic_reconstruction"]
+    )
+
+    assert "Authorization of appropriations" in structural_text
+    assert "Secretary appropriation authority" in structural_text
+    assert "such sums as are necessary" in structural_text
+    assert "remain available until expended" in structural_text
+    assert "document_structural_semantic_reconstruction" in {
+        phrase.slot for phrase in decoded.phrases if not phrase.provenance_only
+    }
+
+
+def test_modal_decompiler_structurally_reconstructs_editorial_transfer_status() -> None:
+    source_id = "us-code-50-415c-59ae8671bca3f7f4"
+    source_text = (
+        "50 U.S.C. 415c. Transferred Editorial Notes Codification Section 415c, "
+        "comprising section 601 of the Implementing Recommendations of the "
+        "9/11 Commission Act of 2007, Pub. L. 110-53, was editorially "
+        "reclassified as section 3306 of this title."
+    )
+    formula = ModalIRFormula(
+        formula_id=f"{source_id}:f0001",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(name="editorial_status_frame", role="frame"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="50 U.S.C. 415c",
+        ),
+        metadata={
+            "cue": "__uscode_residual_span_fallback__",
+            "fallback_rule": "uscode_editorial_status_heading_v1",
+        },
+    )
+    document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = " ".join(
+        slot_texts["document_structural_semantic_reconstruction"]
+    )
+
+    assert "Transferred" in structural_text
+    assert "reclassified" in structural_text
+    assert "new section 3306" in structural_text
+    assert "Editorial Notes" in structural_text
+    assert decoded.reconstruction_similarity > 0.0
+
+
 def test_modal_decompiler_section_cue_slots_cover_packet_000040_residual_fallback() -> None:
     source_id = "us-code-8-1107-64c67dace029944e"
     source_text = (
@@ -15972,6 +16072,79 @@ def test_modal_decompiler_source_role_anchors_prefer_content_tokens() -> None:
         and triple["object"] == "agencies"
         for triple in respect_triples
     )
+
+
+def test_modal_decompiler_predicate_head_skips_scaffold_tokens() -> None:
+    source_text = "The Secretary shall submit the plan."
+    document = ModalIRDocument(
+        document_id="packet-004828-predicate-head-scaffold",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-predicate-head-scaffold",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="KD",
+                    symbol="O",
+                    label="obligatory",
+                ),
+                predicate=ModalIRPredicate(name="the_of_u_submit_plan", role="clause"),
+                provenance=ModalIRProvenance(
+                    source_id="packet-004828-predicate-head-scaffold",
+                    start_char=0,
+                    end_char=len(source_text),
+                    citation="33 U.S.C. 3049",
+                ),
+                metadata={"cue": "shall"},
+            )
+        ],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+
+    assert slot_texts["predicate_head"] == ["submit"]
+    assert "the" not in slot_texts["predicate_head"]
+    assert "of" not in slot_texts["predicate_head"]
+    assert "u" not in slot_texts["predicate_head"]
+
+
+def test_modal_decompiler_source_role_anchors_skip_uscode_scaffold_tokens() -> None:
+    source_text = "The Secretary shall submit United States reports."
+    document = ModalIRDocument(
+        document_id="packet-004828-source-role-scaffold",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-source-role-scaffold",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="KD",
+                    symbol="O",
+                    label="obligatory",
+                ),
+                predicate=ModalIRPredicate(name="submit_reports", role="clause"),
+                provenance=ModalIRProvenance(
+                    source_id="packet-004828-source-role-scaffold",
+                    start_char=0,
+                    end_char=len(source_text),
+                    citation="33 U.S.C. 3049",
+                ),
+                metadata={"cue": "shall"},
+            )
+        ],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+
+    assert slot_texts["source_subject_anchor"] == ["secretary"]
+    assert slot_texts["source_action_anchor"] == ["submit"]
+    assert slot_texts["source_object_anchor"] == ["reports"]
+    for scaffold_token in ("united", "states"):
+        assert scaffold_token not in slot_texts["source_subject_anchor"]
+        assert scaffold_token not in slot_texts["source_action_anchor"]
+        assert scaffold_token not in slot_texts["source_object_anchor"]
 
 
 def test_modal_decompiler_refined_slots_backfill_clause_prefix_cues_from_typed_ir() -> None:
@@ -28535,7 +28708,7 @@ def test_modal_compiler_surfaces_packet_000795_compiler_ambiguity_policy_pairs(
     )
     expected_margin_buffer_by_pair = {
         ("conditional_normative", "frame"): 0.0015,
-        ("deontic", "deontic"): 0.075,
+        ("deontic", "deontic"): 0.076,
         ("frame", "temporal"): 0.002,
         ("frame", "conditional_normative"): 0.0015,
         ("frame", "deontic"): 0.0015,
@@ -34162,6 +34335,63 @@ def test_decode_modal_ir_document_promotes_typed_surface_for_uscode_scaffold() -
     assert "United States Code, 2024 Edition" not in decoded.text
 
 
+def test_decode_modal_ir_document_promoted_frame_surface_keeps_modal_cues() -> None:
+    source_text = (
+        "U.S.C. Title 20 - EDUCATION 20 U.S.C. United States Code, 2024 "
+        "Edition Title 20 - EDUCATION CHAPTER 70 - SCHOOL PROGRAMS Sec. "
+        "8281 - Authority. The Secretary may award grants by fiscal year 2027 "
+        "subject to section 8282."
+    )
+    document = ModalIRDocument(
+        document_id="packet-002186-frame-modal-cue-surface",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-packet-002186-frame-authority",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="FRAME_BM25",
+                    symbol="Frame",
+                    label="ontology_frame",
+                ),
+                predicate=ModalIRPredicate(
+                    name="award_grants",
+                    arguments=["secretary", "grants"],
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-20-8281-dcc80c28859eef5d",
+                    start_char=0,
+                    end_char=len(source_text),
+                    citation="20 U.S.C. 8281",
+                ),
+                conditions=[
+                    "by fiscal year 2027",
+                    "subject to section 8282",
+                ],
+                metadata={"cue": "authority"},
+            )
+        ],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    semantic_slot_texts = decoded_modal_phrase_slot_text_map(
+        decoded,
+        include_provenance_only=False,
+    )
+    typed_surface = " ".join(semantic_slot_texts["typed_ir_surface_reconstruction"])
+
+    assert "modal_source_span" not in semantic_slot_texts
+    assert "authority" in typed_surface
+    assert "may" in typed_surface
+    assert "by" in typed_surface
+    assert "fiscal_year" in typed_surface
+    assert "subject_to" in typed_surface
+    assert "award grants" in typed_surface
+    assert "United States Code, 2024 Edition" not in decoded.text
+
+
 def test_decode_modal_ir_document_promotes_uscode_public_law_residual_surface() -> None:
     source_text = (
         "U.S.C. Title 16 - CONSERVATION 16 U.S.C. United States Code, 2024 "
@@ -35030,7 +35260,7 @@ def test_decode_modal_ir_document_surfaces_packet_003249_frame_doxastic_slots() 
         in slot_texts["source_role_decompiler_plan"]
     )
     assert (
-        "predicate-argument:source-object-role:united:definition"
+        "predicate-argument:source-object-role:covered:definition"
         in slot_texts["predicate_argument_feature"]
     )
 
@@ -35483,7 +35713,7 @@ def test_decode_modal_ir_document_projects_typed_role_shape_bridge_slots() -> No
         in legal_ir_prototypes
     )
     assert (
-        "temporal||slot:source-predicate-head:deontic:be||deontic.ir"
+        "temporal||slot:source-predicate-head:deontic:responsible||deontic.ir"
         in legal_ir_prototypes
     )
 
@@ -39837,6 +40067,139 @@ def test_packet_006301_low_margin_emits_explicit_ambiguities() -> None:
         )
 
 
+def test_packet_004344_compiler_ambiguity_policy_exposes_small_margin_pairs() -> None:
+    assert COMPILER_AMBIGUITY_PACKET_004344_FAMILY_PAIRS == (
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("frame", "frame"),
+        ("frame", "temporal"),
+    )
+
+    for predicted_family, target_family in COMPILER_AMBIGUITY_PACKET_004344_FAMILY_PAIRS:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+
+def test_packet_004344_low_margin_emits_explicit_ambiguities() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    source_text = (
+        "For purposes of this chapter, embedded property means material firmly "
+        "affixed to submerged lands unless excavation tools are required."
+    )
+    encoding = SpaCyLegalEncoding(
+        document_id="packet-004344-adaptive-family-margin",
+        text=source_text,
+        normalized_text=source_text,
+        tokens=[],
+        sentences=[],
+        cues=[],
+    )
+
+    evidence_margins = (
+        ("frame", "conditional_normative", -0.635756804403),
+        ("frame", "deontic", -0.256019712218),
+        ("frame", "frame", 0.104435280271),
+        ("frame", "temporal", -0.751376808659),
+    )
+
+    for predicted_family, target_family, family_margin in evidence_margins:
+        predicted_share = 0.5
+        if predicted_family == target_family:
+            ranking = [
+                {
+                    "family": predicted_family,
+                    "count": 0,
+                    "share_raw": predicted_share,
+                    "share": predicted_share,
+                },
+                {
+                    "family": predicted_family,
+                    "count": 0,
+                    "share_raw": predicted_share + family_margin,
+                    "share": predicted_share + family_margin,
+                },
+            ]
+        else:
+            ranking = [
+                {
+                    "family": predicted_family,
+                    "count": 0,
+                    "share_raw": predicted_share,
+                    "share": predicted_share,
+                },
+                {
+                    "family": target_family,
+                    "count": 0,
+                    "share_raw": predicted_share + family_margin,
+                    "share": predicted_share + family_margin,
+                },
+            ]
+        modal_ir = ModalIRDocument(
+            document_id=f"packet-004344-{predicted_family}-{target_family}",
+            source="us_code",
+            normalized_text=source_text,
+            formulas=[
+                ModalIRFormula(
+                    formula_id=f"f-packet-004344-{predicted_family}",
+                    operator=ModalIROperator(
+                        family=predicted_family,
+                        system="FRAME_BM25",
+                        symbol="Frame",
+                        label="packet_004344_primary",
+                    ),
+                    predicate=ModalIRPredicate(name="resolve_ambiguity", role="clause"),
+                    provenance=ModalIRProvenance(
+                        source_id=f"packet-004344-{predicted_family}-{target_family}",
+                        start_char=0,
+                        end_char=len(source_text),
+                    ),
+                )
+            ],
+        )
+        ambiguities = compiler._adaptive_family_margin_ambiguities(
+            encoding,
+            modal_ir=modal_ir,
+            ranking=ranking,
+            family_shares={
+                str(index): float(candidate["share_raw"])
+                for index, candidate in enumerate(ranking)
+            },
+            predicted_family_source="packet_004344_regression",
+        )
+        explicit_ambiguity = next(
+            ambiguity
+            for ambiguity in ambiguities
+            if ambiguity.metadata.get("adaptive_policy_pair")
+            == f"{predicted_family}->{target_family}"
+            and ambiguity.metadata.get("is_explicit_adaptive_ambiguity") is True
+        )
+
+        assert explicit_ambiguity.metadata["effective_ambiguity_policy_bundle"] == (
+            "compiler_ambiguity"
+        )
+        assert explicit_ambiguity.metadata["family_margin"] == round(
+            family_margin,
+            6,
+        )
+
+
 def test_packet_004913_low_margin_emits_explicit_ambiguities() -> None:
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
@@ -41178,6 +41541,68 @@ def test_packet_001716_decompiler_uses_uscode_body_for_header_spans() -> None:
     )
     assert "shall be interpreted" in decoded.text
     assert "United States Code" not in decoded.text
+
+
+def test_packet_004224_decompiler_preserves_predicate_force_family_pair_slots() -> None:
+    source_text = (
+        "The Secretary shall publish permits subject to section 460z-9 not later "
+        "than 2027."
+    )
+    document = ModalIRDocument(
+        document_id="packet-004224-predicate-force-family-pairs",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-packet-004224-conditional",
+                operator=ModalIROperator(
+                    family="conditional_normative",
+                    system="CTD",
+                    symbol="O|",
+                    label="conditional_obligation",
+                ),
+                predicate=ModalIRPredicate(name="publish_permits", role="clause"),
+                provenance=ModalIRProvenance(
+                    source_id="packet-004224-predicate-force-family-pairs",
+                    start_char=0,
+                    end_char=len(source_text),
+                    citation="16 U.S.C. 460z-9",
+                ),
+                conditions=["subject to section 460z-9", "not later than 2027"],
+                metadata={
+                    "cue": "shall",
+                    "force": "obligation",
+                    "polarity": "negative_scope",
+                },
+            )
+        ],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+    legal_ir_slots = set(slot_texts["family_semantic_slot_legal_ir_view_prototype"])
+
+    assert (
+        "source-predicate-head:conditional_normative:publish|"
+        "typed-decompiler-force-polarity:obligation:negative_scope:"
+        "conditional_normative->deontic"
+        in slot_texts["typed_decompiler_source_predicate_force_pair"]
+    )
+    assert (
+        "conditional_normative:publish:conditional_normative->deontic"
+        in slot_texts["typed_decompiler_source_predicate_family_pair"]
+    )
+    assert (
+        "deontic||slot:typed-decompiler-source-predicate-force-pair:"
+        "source-predicate-head:conditional_normative:publish|"
+        "typed-decompiler-force-polarity:obligation:negative_scope||deontic.ir"
+        in legal_ir_slots
+    )
+    assert (
+        "deontic||slot-pair:source-predicate-head:"
+        "conditional_normative:publish|typed-decompiler-family-pair:"
+        "conditional_normative->deontic||deontic.ir"
+        in legal_ir_slots
+    )
 
 
 def _token_overlap_ratio(left: str, right: str) -> float:

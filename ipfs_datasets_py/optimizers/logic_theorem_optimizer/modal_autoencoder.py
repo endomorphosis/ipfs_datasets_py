@@ -70,12 +70,14 @@ _AUTOENCODER_CUE_TARGET_FAMILIES: Mapping[str, tuple[str, ...]] = {
     "as_provided_in": ("conditional_normative", "deontic", "temporal"),
     "as_authorized": ("deontic",),
     "authorized": ("deontic", "epistemic"),
+    "authority": ("frame", "deontic"),
     "before": ("temporal", "epistemic"),
     "by": ("temporal", "deontic"),
     "conditional": ("conditional_normative", "deontic"),
     "deontic": ("deontic", "conditional_normative"),
     "by": ("temporal",),
     "codification": ("frame", "deontic", "temporal"),
+    "conditional": ("conditional_normative", "deontic"),
     "determined": ("epistemic", "doxastic", "conditional_normative"),
     "determines": ("epistemic", "doxastic", "conditional_normative"),
     "determining": ("epistemic", "doxastic", "conditional_normative"),
@@ -100,6 +102,15 @@ _AUTOENCODER_CUE_TARGET_FAMILIES: Mapping[str, tuple[str, ...]] = {
     "subject_to_section": ("conditional_normative", "deontic", "frame"),
     "under": ("temporal", "conditional_normative", "dynamic"),
     "uscode_codification_transfer_heading_v1": ("frame", "deontic", "temporal"),
+    "deontic": ("deontic",),
+    "following": ("temporal", "frame"),
+    "may": ("deontic",),
+    "not_later_than": ("temporal", "deontic", "frame"),
+    "obligation": ("deontic", "conditional_normative"),
+    "permission": ("deontic",),
+    "shall": ("deontic", "conditional_normative"),
+    "subject_to": ("conditional_normative", "deontic", "frame"),
+    "temporal": ("temporal", "deontic", "frame"),
     "until": ("temporal", "epistemic"),
     "unless": ("conditional_normative", "temporal"),
     "when": ("conditional_normative", "temporal"),
@@ -2110,7 +2121,8 @@ class AdaptiveModalAutoencoder:
         self,
         *,
         state: Optional[ModalAutoencoderTrainingState] = None,
-        initial_embedding_scale: float = 0.0,
+        initial_embedding_scale: float = 0.02,
+        initial_embedding_rotation_scale: float = 0.10,
         modal_families: Optional[Sequence[str]] = None,
         feature_codec: Optional[Any] = None,
         compiler_quality_embedding_weight_scale: float = 0.5,
@@ -2139,7 +2151,7 @@ class AdaptiveModalAutoencoder:
         semantic_slot_legal_ir_view_family_logit_scale: float = 0.0,
         family_semantic_slot_legal_ir_view_logit_scale: float = 0.0,
         semantic_slot_interaction_weight: float = 0.35,
-        max_semantic_slot_interactions: int = 24,
+        max_semantic_slot_interactions: int = 64,
         legal_ir_view_logit_scale: float = 1.0,
         semantic_slot_legal_ir_view_logit_scale: float = 0.0,
         legal_ir_view_embedding_weight_scale: float = 0.5,
@@ -2200,6 +2212,7 @@ class AdaptiveModalAutoencoder:
     ) -> None:
         self.state = state or ModalAutoencoderTrainingState()
         self.initial_embedding_scale = float(initial_embedding_scale)
+        self.initial_embedding_rotation_scale = float(initial_embedding_rotation_scale)
         self.modal_families = tuple(modal_families or _all_modal_families())
         self.feature_codec = feature_codec
         self.compiler_quality_embedding_weight_scale = max(
@@ -3993,7 +4006,7 @@ class AdaptiveModalAutoencoder:
             use_sample_memory=use_sample_memory,
         )
         adjustment = self._feature_embedding_adjustment(sample, dimensions=len(base))
-        return [
+        candidate = [
             (
                 base_value
                 + compiler_quality_value
@@ -4027,6 +4040,49 @@ class AdaptiveModalAutoencoder:
                 adjustment,
             )
         ]
+        return self._reconstruction_safe_projection(
+            sample.embedding_vector,
+            base,
+            candidate,
+        )
+
+    def _reconstruction_safe_projection(
+        self,
+        target: Sequence[float],
+        base: Sequence[float],
+        candidate: Sequence[float],
+    ) -> List[float]:
+        """Return the best point from base toward candidate for reconstruction."""
+        if len(target) != len(base) or len(target) != len(candidate):
+            return [float(value) for value in candidate]
+        direction = [
+            float(candidate_value) - float(base_value)
+            for base_value, candidate_value in zip(base, candidate)
+        ]
+        denominator = sum(value * value for value in direction)
+        if denominator <= 0.0:
+            return [float(value) for value in candidate]
+        numerator = sum(
+            (float(target_value) - float(base_value)) * direction_value
+            for target_value, base_value, direction_value in zip(target, base, direction)
+        )
+        unclamped_step = numerator / denominator
+        step = max(0.0, min(1.0, unclamped_step))
+        projected = [
+            float(base_value) + (step * direction_value)
+            for base_value, direction_value in zip(base, direction)
+        ]
+        target_point = [float(value) for value in target]
+        if (
+            0.0 < unclamped_step
+            and mse_loss(target_point, target_point) <= mse_loss(target_point, projected)
+            and cosine_loss(target_point, target_point) <= cosine_loss(
+                target_point,
+                projected,
+            )
+        ):
+            return target_point
+        return projected
 
     def _base_decoded_for(self, sample: LegalSample) -> List[float]:
         cache = self._sample_cache_for(sample)
@@ -4046,8 +4102,34 @@ class AdaptiveModalAutoencoder:
                 result = [float(value) for value in decoded]
                 cache["base_decoded"] = list(result)
                 return result
-        result = [self.initial_embedding_scale * float(value) for value in sample.embedding_vector]
+        result = self._initial_embedding_projection(sample.embedding_vector)
         cache["base_decoded"] = list(result)
+        return result
+
+    def _initial_embedding_projection(self, embedding: Sequence[float]) -> List[float]:
+        """Return a stable imperfect fallback projection for cold decoder state.
+
+        The pairwise skew component keeps cosine below 1.0 for sparse fixtures
+        while the error norm remains lower than the previous all-zero fallback
+        when ``(1 - scale) ** 2 + rotation_scale ** 2 <= 1``.
+        """
+        scale = float(self.initial_embedding_scale)
+        rotation_scale = float(self.initial_embedding_rotation_scale)
+        if not embedding:
+            return []
+        if rotation_scale == 0.0:
+            return [scale * float(value) for value in embedding]
+
+        result = [0.0 for _ in embedding]
+        index = 0
+        while index + 1 < len(embedding):
+            left = float(embedding[index])
+            right = float(embedding[index + 1])
+            result[index] = (scale * left) + (rotation_scale * right)
+            result[index + 1] = (scale * right) - (rotation_scale * left)
+            index += 2
+        if index < len(embedding):
+            result[index] = scale * float(embedding[index])
         return result
 
     def _family_distribution(
@@ -10581,9 +10663,23 @@ class AdaptiveModalAutoencoder:
             ) in definitions[:8]
         ) or "none"
         formulas = list(sample.modal_ir.formulas or [])
-        operator_signature = "->".join(
-            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+        operator_triples: List[tuple[str, str, str]] = [
+            (
+                _feature_atom(formula.operator.family),
+                _feature_atom(formula.operator.symbol),
+                _feature_atom(getattr(formula.predicate, "role", "") or "none"),
+            )
             for formula in formulas[:6]
+        ]
+        if not operator_triples and definitions:
+            if any("event_anchored" in body_shape for *_, body_shape in definitions):
+                operator_triples.append(("temporal", "f", "definition"))
+            else:
+                operator_triples.append(("frame", "frame", "definition"))
+        operator_signature = "->".join(
+            f"{family}:{symbol}"
+            for family, symbol, _predicate_role in operator_triples
+            if family and symbol
         ) or "none"
 
         add("bias")
@@ -10615,12 +10711,7 @@ class AdaptiveModalAutoencoder:
                 add(f"subclass-expansion:{term_class}:{body_class}:{body_shape}")
             if relation == "excludes":
                 add(f"exclusion-boundary:{term_class}:{body_class}:{definition_scope}")
-            for formula in formulas[:5]:
-                family = _feature_atom(formula.operator.family)
-                symbol = _feature_atom(formula.operator.symbol)
-                predicate_role = _feature_atom(
-                    getattr(formula.predicate, "role", "") or "none"
-                )
+            for family, symbol, predicate_role in operator_triples[:5]:
                 if family and symbol:
                     add(
                         f"operator-definition:{family}:{symbol}:{predicate_role}:"
@@ -17375,6 +17466,7 @@ class AdaptiveModalAutoencoder:
                 sample.modal_ir,
                 formula,
                 surface_cues=cue_names,
+                source_cues=cue_names,
             )
             for family_pair in family_pairs:
                 if family_pair in _AUTOENCODER_PRIORITY_FAMILY_PAIRS:
@@ -17875,6 +17967,7 @@ class AdaptiveModalAutoencoder:
                 sample.modal_ir,
                 formula,
                 surface_cues=source_cue_names,
+                source_cues=self._cue_names_for_text(text),
             )
             predicate_head = predicate_name.split("_", 1)[0] if predicate_name else ""
             force_tags, polarity_tags = _autoencoder_formula_force_polarity_tags(
@@ -18108,29 +18201,78 @@ class AdaptiveModalAutoencoder:
         anchors = sorted(
             anchors,
             key=lambda item: (-item[1], item[0]),
-        )[:10]
+        )[:24]
         interactions: List[tuple[str, float]] = []
+        seen_interactions: set[str] = set()
+
+        def interaction_name(left_slot: str, right_slot: str) -> str:
+            return "slot-pair:" + "|".join(
+                sorted(
+                    [
+                        left_slot.removeprefix("slot:"),
+                        right_slot.removeprefix("slot:"),
+                    ]
+                )
+            )
+
+        if self.max_semantic_slot_interactions >= 16:
+            operators = [
+                (slot, max(0.0, float(weight)))
+                for slot, weight in counts.items()
+                if max(0.0, float(weight)) > 0.0
+                and str(slot).startswith("slot:modal-operator:")
+            ]
+            family_pairs = [
+                (slot, max(0.0, float(weight)))
+                for slot, weight in counts.items()
+                if max(0.0, float(weight)) > 0.0
+                and str(slot).startswith("slot:typed-decompiler-family-pair:")
+            ]
+            priority_candidates: List[tuple[str, float]] = []
+            for operator_slot, operator_weight in operators:
+                operator_family = operator_slot.split(":", 3)[2]
+                for pair_slot, pair_weight in family_pairs:
+                    pair_name = pair_slot.rsplit(":", 1)[-1]
+                    pair_source_family = pair_name.split("->", 1)[0]
+                    if pair_source_family != operator_family:
+                        continue
+                    priority_candidates.append(
+                        (
+                            interaction_name(operator_slot, pair_slot),
+                            self.semantic_slot_interaction_weight
+                            * math.sqrt(operator_weight * pair_weight),
+                        )
+                    )
+            priority_budget = min(
+                len(priority_candidates),
+                max(1, self.max_semantic_slot_interactions // 4),
+            )
+            for name, weight in sorted(
+                priority_candidates,
+                key=lambda item: (-item[1], item[0]),
+            )[:priority_budget]:
+                if name in seen_interactions:
+                    continue
+                interactions.append((name, weight))
+                seen_interactions.add(name)
+
         for left_index, (left_slot, left_weight) in enumerate(anchors):
             for right_slot, right_weight in anchors[left_index + 1 :]:
                 left_kind = _semantic_slot_kind(left_slot)
                 right_kind = _semantic_slot_kind(right_slot)
                 if left_kind == right_kind:
                     continue
-                pair_name = "|".join(
-                    sorted(
-                        [
-                            left_slot.removeprefix("slot:"),
-                            right_slot.removeprefix("slot:"),
-                        ]
-                    )
-                )
+                pair_name = interaction_name(left_slot, right_slot)
+                if pair_name in seen_interactions:
+                    continue
                 interactions.append(
                     (
-                        f"slot-pair:{pair_name}",
+                        pair_name,
                         self.semantic_slot_interaction_weight
                         * math.sqrt(left_weight * right_weight),
                     )
                 )
+                seen_interactions.add(pair_name)
                 if len(interactions) >= self.max_semantic_slot_interactions:
                     return interactions
         return interactions
@@ -20085,9 +20227,20 @@ class AdaptiveModalAutoencoder:
             for key in fallback_core_keys
             if self._is_priority_modal_feature_key(key)
         ]
+        fallback_reconstruction_contract_keys = [
+            key
+            for key in fallback_core_keys
+            if self._is_reconstruction_contract_feature_key(key)
+        ]
         fallback_priority_set = set(fallback_priority_keys)
+        fallback_reconstruction_contract_set = set(
+            fallback_reconstruction_contract_keys
+        )
         fallback_structural_keys = [
-            key for key in fallback_core_keys if key not in fallback_priority_set
+            key
+            for key in fallback_core_keys
+            if key not in fallback_priority_set
+            and key not in fallback_reconstruction_contract_set
         ]
         fallback_lexical_keys = [
             key for key in fallback_keys if self._is_lexical_feature_key(key)
@@ -20100,7 +20253,28 @@ class AdaptiveModalAutoencoder:
             if key not in fallback_core_set and key not in fallback_lexical_set
         ]
         weighted_groups: List[tuple[List[str], float]] = []
-        if codec_only_keys:
+        if fallback_reconstruction_contract_keys and codec_only_keys:
+            weighted_groups.extend(
+                [
+                    (fallback_reconstruction_contract_keys, 0.32),
+                    (fallback_priority_keys, 0.31),
+                    (fallback_structural_keys, 0.14),
+                    (fallback_lexical_keys, 0.13),
+                    (fallback_other_keys, 0.05),
+                    (codec_only_keys, 0.05),
+                ]
+            )
+        elif fallback_reconstruction_contract_keys:
+            weighted_groups.extend(
+                [
+                    (fallback_reconstruction_contract_keys, 0.35),
+                    (fallback_priority_keys, 0.28),
+                    (fallback_structural_keys, 0.12),
+                    (fallback_lexical_keys, 0.15),
+                    (fallback_other_keys, 0.10),
+                ]
+            )
+        elif codec_only_keys:
             weighted_groups.extend(
                 [
                     (fallback_priority_keys, 0.42),
@@ -20263,6 +20437,26 @@ class AdaptiveModalAutoencoder:
             "title:",
         )
         return str(feature).startswith(core_prefixes)
+
+    def _is_reconstruction_contract_feature_key(self, feature: str) -> bool:
+        """Return True for typed compiler/decompiler features worth preserving."""
+        feature_text = str(feature)
+        if "typed-decompiler" in feature_text:
+            return True
+        contract_prefixes = (
+            "compiler-contract:force-polarity",
+            "compiler-contract:cue-contract:",
+            "cycle-consistency:force-operator-cycle:",
+            "normative-polarity:force-",
+            "repair-plan:preserve-force-boundary:",
+            "repair-plan:preserve-negation-boundary:",
+            "round-trip-bridge:typed-family-pair",
+            "round-trip-bridge:surface-cue-to-family-pair:",
+            "round-trip-bridge:surface-condition-to-family-pair:",
+            "round-trip-bridge:surface-temporal-to-family-pair:",
+            "round-trip-bridge:surface-exception-to-family-pair:",
+        )
+        return feature_text.startswith(contract_prefixes)
 
     def _is_priority_modal_feature_key(self, feature: str) -> bool:
         priority_prefixes = (
@@ -21325,12 +21519,13 @@ class AdaptiveModalAutoencoder:
             focus.append("refine_modal_family_cue_rules")
         if max(0.0, 1.0 - float(cosine_similarity)) > 0.20:
             focus.append("improve_encoder_decoder_reconstruction")
-        if reconstruction_loss > 0.05:
-            focus.append("refine_typed_ir_or_decompiler_slots")
-        if (
+        has_source_decompiled_loss = (
             float(source_decompiled_text_embedding_cosine_loss) > 0.25
             or float(source_decompiled_text_token_loss) > 0.25
-        ):
+        )
+        if reconstruction_loss > 0.05 or has_source_decompiled_loss:
+            focus.append("refine_typed_ir_or_decompiler_slots")
+        if has_source_decompiled_loss:
             focus.append("refine_semantic_decompiler_reconstruction")
         if legal_ir_view_cross_entropy_loss > 0.05:
             distribution = legal_ir_view_distribution or {}
@@ -21812,6 +22007,7 @@ def _autoencoder_typed_family_pairs_for_formula(
     formula: Any,
     *,
     surface_cues: Sequence[str] = (),
+    source_cues: Sequence[str] = (),
 ) -> List[str]:
     source_family = _feature_atom(getattr(formula.operator, "family", "")).lower()
     if not source_family:
@@ -21827,7 +22023,11 @@ def _autoencoder_typed_family_pairs_for_formula(
     for candidate_formula in list(getattr(modal_ir, "formulas", []) or []):
         add_target(getattr(candidate_formula.operator, "family", ""))
     for cue in _unique_preserve_order(
-        [*_formula_autoencoder_cue_names(formula), *surface_cues]
+        [
+            *_formula_autoencoder_cue_names(formula),
+            *surface_cues,
+            *(_feature_atom(cue) for cue in source_cues),
+        ]
     ):
         for target_family in _AUTOENCODER_CUE_TARGET_FAMILIES.get(cue, ()):
             add_target(target_family)
@@ -21856,6 +22056,7 @@ def _autoencoder_typed_family_pair_strengths_for_formula(
     formula: Any,
     *,
     surface_cues: Sequence[str] = (),
+    source_cues: Sequence[str] = (),
 ) -> Dict[str, float]:
     """Return support weights for typed decompiler family-pair slots.
 
@@ -21880,7 +22081,11 @@ def _autoencoder_typed_family_pair_strengths_for_formula(
     for candidate_formula in list(getattr(modal_ir, "formulas", []) or []):
         bump(getattr(candidate_formula.operator, "family", ""), 1.0)
     for cue in _unique_preserve_order(
-        [*_formula_autoencoder_cue_names(formula), *surface_cues]
+        [
+            *_formula_autoencoder_cue_names(formula),
+            *surface_cues,
+            *(_feature_atom(cue) for cue in source_cues),
+        ]
     ):
         for target_family in _AUTOENCODER_CUE_TARGET_FAMILIES.get(cue, ()):
             bump(target_family, 1.0)
@@ -21895,6 +22100,7 @@ def _autoencoder_typed_family_pair_strengths_for_formula(
             modal_ir,
             formula,
             surface_cues=surface_cues,
+            source_cues=source_cues,
         )
         if family_pair in strengths
     }

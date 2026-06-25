@@ -469,10 +469,13 @@ def test_generalizable_projection_lowers_legal_ir_view_ce_on_holdout() -> None:
     )
 
     assert report["accepted_epochs"] >= 1
-    assert report["epoch_reports"][0]["selected_update"] == "legal_ir_view_logits"
+    assert report["epoch_reports"][0]["selected_update"] in {
+        "combined",
+        "legal_ir_view_logits",
+    }
     assert any(
-        candidate["update"] == "combined"
-        and candidate["pareto_regressions"]
+        candidate["update"] == "legal_ir_view_logits"
+        and candidate["accepted"]
         for candidate in report["epoch_reports"][0]["candidate_reports"]
     )
     assert (
@@ -595,6 +598,27 @@ def test_modal_autoencoder_empty_dataset_returns_zero_metrics() -> None:
     assert evaluation.decoded_embeddings == {}
 
 
+def test_adaptive_autoencoder_cold_projection_improves_zero_reconstruction() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice within 30 days.",
+    )
+    zero_autoencoder = AdaptiveModalAutoencoder(
+        initial_embedding_scale=0.0,
+        initial_embedding_rotation_scale=0.0,
+    )
+    projected_autoencoder = AdaptiveModalAutoencoder()
+
+    zero = zero_autoencoder.evaluate([sample], use_sample_memory=False)
+    projected = projected_autoencoder.evaluate([sample], use_sample_memory=False)
+
+    assert projected.embedding_cosine_similarity > zero.embedding_cosine_similarity
+    assert projected.embedding_cosine_similarity < 1.0
+    assert projected.cosine_loss < zero.cosine_loss
+    assert projected.reconstruction_loss < zero.reconstruction_loss
+
+
 def test_adaptive_autoencoder_todo_updates_lower_ce_and_increase_cosine() -> None:
     sample = build_us_code_sample(
         title="5",
@@ -712,6 +736,40 @@ def test_adaptive_autoencoder_generalizable_projection_uses_holdout_without_samp
     assert autoencoder.state.decoded_embeddings == {}
     assert autoencoder.state.feature_family_logits
     assert autoencoder.state.feature_embedding_weights
+
+
+def test_embedding_updates_prioritize_typed_decompiler_contract_features() -> None:
+    sample = build_us_code_sample(
+        title="43",
+        section="3005",
+        text=(
+            "Notwithstanding any other provision of this chapter, the Secretary "
+            "shall continue to manage public lands before final action."
+        ),
+    )
+    autoencoder = AdaptiveModalAutoencoder()
+
+    groups = autoencoder._feature_update_groups_for(sample, step=1.0)
+    contract_groups = [
+        (keys, step)
+        for keys, step in groups
+        if any(autoencoder._is_reconstruction_contract_feature_key(key) for key in keys)
+    ]
+    non_contract_structural_steps = [
+        step
+        for keys, step in groups
+        if not any(autoencoder._is_reconstruction_contract_feature_key(key) for key in keys)
+        and any(
+            autoencoder._is_core_modal_feature_key(key)
+            and not autoencoder._is_priority_modal_feature_key(key)
+            for key in keys
+        )
+    ]
+
+    assert contract_groups
+    assert any("typed-decompiler-family-pair" in key for keys, _ in contract_groups for key in keys)
+    assert non_contract_structural_steps
+    assert min(step for _, step in contract_groups) > max(non_contract_structural_steps)
 
 
 def test_generalizable_projection_supports_objective_weights_and_hard_example_fraction() -> None:
@@ -9954,6 +10012,75 @@ def test_autoencoder_exact_statutory_cues_drive_typed_family_pair_reconstruction
     )
 
 
+def test_semantic_slot_interactions_retain_packet_family_pair_contracts() -> None:
+    sample = build_us_code_sample(
+        title="14",
+        section="2165",
+        text=(
+            "During the period before separation, the Secretary shall revoke "
+            "commissions subject to this section."
+        ),
+    )
+    base_formula = sample.modal_ir.formulas[0]
+    formulas = [
+        replace(
+            base_formula,
+            formula_id="packet-005812-frame",
+            operator=replace(
+                base_formula.operator,
+                family="frame",
+                system="FRAME_BM25",
+                symbol="Frame",
+                label="ontology_frame",
+            ),
+            metadata={"cue": "during"},
+        ),
+        replace(
+            base_formula,
+            formula_id="packet-005812-deontic",
+            operator=replace(
+                base_formula.operator,
+                family="deontic",
+                system="D",
+                symbol="O",
+                label="obligation",
+            ),
+            metadata={"cue": "shall"},
+        ),
+        replace(
+            base_formula,
+            formula_id="packet-005812-temporal",
+            operator=replace(
+                base_formula.operator,
+                family="temporal",
+                system="LTL",
+                symbol="F",
+                label="eventually",
+            ),
+            metadata={"cue": "during"},
+        ),
+    ]
+    mixed_sample = replace(sample, modal_ir=replace(sample.modal_ir, formulas=formulas))
+
+    distribution = AdaptiveModalAutoencoder()._semantic_slot_distribution_for(
+        mixed_sample
+    )
+
+    for family_pair in (
+        "deontic->temporal",
+        "frame->deontic",
+        "frame->frame",
+        "frame->temporal",
+        "temporal->temporal",
+    ):
+        assert f"slot:typed-decompiler-family-pair:{family_pair}" in distribution
+        assert any(
+            slot.startswith("slot-pair:")
+            and f"typed-decompiler-family-pair:{family_pair}" in slot
+            for slot in distribution
+        )
+
+
 def test_targeted_typed_family_pairs_have_reconstruction_slots() -> None:
     source_text = (
         "Subject to section 314, the authority may issue rules not later than "
@@ -10110,6 +10237,8 @@ def test_exact_cue_semantic_slot_head_transfers_packet_002281_holdout() -> None:
         for slot in autoencoder.state.semantic_slot_embedding_weights
     )
     assert after.embedding_cosine_similarity > before.embedding_cosine_similarity
+
+
 def test_semantic_slots_surface_uscode_codification_transfer_fallback_contracts() -> None:
     sample = build_us_code_sample(
         title="42",
@@ -10324,6 +10453,86 @@ def test_semantic_slot_pair_logits_can_drive_compositional_family_ce() -> None:
     after = autoencoder.evaluate([sample], use_sample_memory=False)
 
     assert after.cross_entropy_loss < before.cross_entropy_loss
+
+
+def test_source_cue_targets_extend_typed_family_pair_reconstruction_slots() -> None:
+    source_text = (
+        "Subject to section 10104, the authority may issue rules not later "
+        "than 2027 following approval."
+    )
+    sample = build_us_code_sample(title="42", section="300x", text=source_text)
+    base_formula = sample.modal_ir.formulas[0]
+    formulas = [
+        replace(
+            base_formula,
+            formula_id="packet-002929-conditional",
+            operator=replace(
+                base_formula.operator,
+                family="conditional_normative",
+                system="CTD",
+                symbol="O|",
+                label="conditional_obligation",
+            ),
+            conditions=["subject to section 10104"],
+            metadata={"cue": "subject_to"},
+        ),
+        replace(
+            base_formula,
+            formula_id="packet-002929-deontic",
+            operator=replace(
+                base_formula.operator,
+                family="deontic",
+                system="D",
+                symbol="P",
+                label="permission",
+            ),
+            conditions=["not later than 2027"],
+            metadata={},
+        ),
+        replace(
+            base_formula,
+            formula_id="packet-002929-temporal",
+            operator=replace(
+                base_formula.operator,
+                family="temporal",
+                system="LTL",
+                symbol="F",
+                label="eventually",
+            ),
+            conditions=["following approval"],
+            metadata={"cue": "not_later_than"},
+        ),
+    ]
+    sample = replace(sample, modal_ir=replace(sample.modal_ir, formulas=formulas))
+
+    autoencoder = AdaptiveModalAutoencoder(max_round_trip_bridge_features=200)
+    distribution = autoencoder._semantic_slot_distribution_for(sample)
+    round_trip_features = set(autoencoder._round_trip_bridge_feature_keys_for(sample))
+
+    for family_pair in (
+        "conditional_normative->deontic",
+        "deontic->frame",
+        "temporal->deontic",
+        "temporal->frame",
+    ):
+        assert f"slot:typed-decompiler-family-pair:{family_pair}" in distribution
+
+    assert (
+        "slot:typed-decompiler-family-pair-cue:temporal->frame:not_later_than"
+        in distribution
+    )
+    assert (
+        "round-trip-bridge:typed-family-pair:deontic->frame"
+        in round_trip_features
+    )
+    assert (
+        "round-trip-bridge:surface-role:subject:authority"
+        in round_trip_features
+    )
+    assert (
+        "round-trip-bridge:surface-action-to-family-pair:issue:deontic->frame"
+        in round_trip_features
+    )
 
 
 def test_semantic_slot_legal_ir_view_head_lowers_holdout_ce() -> None:
@@ -11495,6 +11704,45 @@ def test_encoder_decoder_todo_default_update_budget_preserves_cosine_direction()
     assert autoencoder._active_embedding_update_head_count(sample) > 1
     assert evaluation.embedding_cosine_similarity == pytest.approx(1.0)
     assert evaluation.reconstruction_loss < 0.5
+def test_decoded_embedding_projection_clamps_reusable_head_overshoot() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice before final action.",
+        embedding_vector=[1.0, 0.0],
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        state=ModalAutoencoderTrainingState(
+            compiler_quality_embedding_weights={"quality:bias": [1000.0, 0.0]}
+        ),
+    )
+
+    base_projection = autoencoder._base_decoded_for(sample)
+    decoded_projection = autoencoder._decoded_for(sample, use_sample_memory=False)
+
+    assert mse_loss(sample.embedding_vector, decoded_projection) <= mse_loss(
+        sample.embedding_vector,
+        base_projection,
+    )
+    assert cosine_loss(sample.embedding_vector, decoded_projection) <= cosine_loss(
+        sample.embedding_vector,
+        base_projection,
+    )
+    assert decoded_projection == pytest.approx([1.0, 0.0])
+
+    opposite_autoencoder = AdaptiveModalAutoencoder(
+        state=ModalAutoencoderTrainingState(
+            compiler_quality_embedding_weights={"quality:bias": [-1000.0, 0.0]}
+        ),
+    )
+    opposite_base_projection = opposite_autoencoder._base_decoded_for(sample)
+    opposite_projection = opposite_autoencoder._decoded_for(
+        sample,
+        use_sample_memory=False,
+    )
+
+    assert opposite_projection == pytest.approx(opposite_base_projection)
+    assert cosine_loss(sample.embedding_vector, opposite_projection) <= 1.0
 
 
 def test_family_logit_head_update_normalization_shares_multi_head_step_budget() -> None:

@@ -487,6 +487,59 @@ def test_parser_extracts_deontic_and_temporal_cues() -> None:
     assert {"must", "within"}.issubset(cue_terms)
 
 
+def test_parser_ignores_non_deadline_by_cues_in_uscode_history() -> None:
+    parser = LegalModalParser()
+
+    document = parser.parse(
+        (
+            "Statutory Notes and Related Subsidiaries Effective Date of 2012 "
+            "Amendment Amendment by Pub. L. 112-141 effective Oct. 1, 2012, "
+            "see section 3(a) of Pub. L. 112-141."
+        ),
+        document_id="us-code-history-by-pub-l",
+        source="us_code",
+        citation="49 U.S.C. 32301",
+    )
+
+    assert all(formula.metadata.get("cue") != "by" for formula in document.formulas)
+
+
+def test_parser_ignores_passive_agent_and_amount_by_cues() -> None:
+    parser = LegalModalParser()
+
+    document = parser.parse(
+        (
+            "The alleged victim shall be heard regarding the danger posed by "
+            "the defendant. The amount shall be reduced by $6,000,000. "
+            "(Pub. L. 110-140, Dec. 19, 2007.)"
+        ),
+        document_id="us-code-passive-agent-and-amount-by",
+        source="us_code",
+        citation="18 U.S.C. 2263",
+    )
+
+    by_formulas = [
+        formula for formula in document.formulas if formula.metadata.get("cue") == "by"
+    ]
+    assert by_formulas == []
+
+
+def test_parser_keeps_deadline_by_cues() -> None:
+    parser = LegalModalParser()
+
+    document = parser.parse(
+        "The agency must respond by March 1, 2027.",
+        document_id="deadline-by-cue",
+        source="us_code",
+        citation="5 U.S.C. 552",
+    )
+
+    assert any(
+        formula.operator.family == "temporal" and formula.metadata.get("cue") == "by"
+        for formula in document.formulas
+    )
+
+
 def test_parser_compiles_cues_to_modal_ir_with_provenance() -> None:
     parser = LegalModalParser()
 

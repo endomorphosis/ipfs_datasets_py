@@ -1305,6 +1305,12 @@ class DeterministicModalCompiler:
                 target_family=target_family,
                 base_threshold=threshold,
             )
+            if (
+                is_self_pair
+                and predicted_family == "deontic"
+                and not modal_ir.formulas
+            ):
+                pair_threshold = min(pair_threshold, threshold + 0.075)
             self_pair_margin = (
                 duplicate_predicted_family_share - predicted_share
                 if (

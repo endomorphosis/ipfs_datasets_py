@@ -645,11 +645,13 @@ _NON_TEMPORAL_BY_CONTEXT_TOKENS = frozenset(
         "act",
         "administrator",
         "agency",
+        "applicant",
         "article",
         "chapter",
         "clause",
         "code",
         "commissioner",
+        "defendant",
         "department",
         "director",
         "division",
@@ -657,6 +659,7 @@ _NON_TEMPORAL_BY_CONTEXT_TOKENS = frozenset(
         "law",
         "paragraph",
         "part",
+        "person",
         "president",
         "public",
         "pub",
@@ -1049,11 +1052,18 @@ class LegalModalParser:
     ) -> bool:
         """Treat temporal `by` as a deadline cue only in time-like contexts."""
         trailing = normalized_text[end_char : end_char + 80]
+        if re.match(r"^\s+(?:\$+\s*\d|\$?\d[\d,]*\.\d+\b)", trailing):
+            return False
+        if (
+            re.match(r"^\s+(?:pub\.?\s*l\.?|public\s+law)\b", trailing, re.IGNORECASE)
+            and _MONTH_DAY_RE.search(trailing)
+        ):
+            return True
         if _NON_TEMPORAL_BY_PHRASE_RE.match(trailing):
             return False
         if _TEMPORAL_BY_PHRASE_RE.match(trailing):
             return True
-        if _MONTH_DAY_RE.search(trailing):
+        if _MONTH_DAY_RE.match(trailing):
             return True
         lookahead = self._lookahead_tokens(trailing, limit=4)
         if not lookahead:
@@ -1094,7 +1104,7 @@ class LegalModalParser:
             return False
         if _TEMPORAL_WITHIN_PHRASE_RE.match(trailing):
             return True
-        if _MONTH_DAY_RE.search(trailing):
+        if _MONTH_DAY_RE.match(trailing):
             return True
         lookahead = self._lookahead_tokens(trailing, limit=4)
         if not lookahead:
@@ -1160,7 +1170,7 @@ class LegalModalParser:
         normalized = self.normalize_text(text)
         resolved_document_id = document_id or self._document_id(normalized)
         segments = self.segment(normalized)
-        cues = self.extract_cues(normalized)
+        cues = self._parse_eligible_cues(normalized)
         formulas: List[ModalIRFormula] = []
 
         for index, cue in enumerate(cues, start=1):
@@ -1457,11 +1467,14 @@ class LegalModalParser:
         formulas: List[ModalIRFormula] = []
         next_index = max(1, int(start_index))
         for segment in eligible_segments[:resolved_max_formulas]:
+            coverage_segment = (
+                self._residual_paragraph_heading_prefix_segment(segment) or segment
+            )
             formulas.append(
                 self._residual_span_coverage_formula(
                     document_id=document_id,
                     citation=citation,
-                    segment=segment,
+                    segment=coverage_segment,
                     start_index=next_index,
                     operator=operator,
                     profile=profile,
@@ -1764,6 +1777,36 @@ class LegalModalParser:
             role="heading",
         )
 
+    def _residual_paragraph_heading_prefix_segment(
+        self,
+        segment: LegalSegment,
+    ) -> Optional[LegalSegment]:
+        match = re.match(
+            r"^\s*(?P<prefix>.{1,120}?\.)\s*(?:\u2014|--|-)",
+            segment.text,
+        )
+        if match is None:
+            return None
+        prefix_text = match.group("prefix").strip()
+        if not prefix_text:
+            return None
+        if self._has_blocking_residual_modal_cues(prefix_text):
+            return None
+        tokens = _TOKEN_RE.findall(prefix_text.lower())
+        if not (
+            self._is_short_residual_heading_coverage_candidate(tokens)
+            or self._is_long_residual_heading_coverage_candidate(tokens)
+            or self._looks_like_heading_without_section_reference(prefix_text)
+        ):
+            return None
+        prefix_start = segment.start_char + segment.text.index(prefix_text)
+        return LegalSegment(
+            text=prefix_text,
+            start_char=prefix_start,
+            end_char=prefix_start + len(prefix_text),
+            role="heading",
+        )
+
     def _coalesce_short_residual_segments(
         self,
         segments: Sequence[LegalSegment],
@@ -1787,6 +1830,12 @@ class LegalModalParser:
             while end < len(segments):
                 next_segment = segments[end]
                 if next_segment.start_char > segments[end - 1].end_char + 1:
+                    break
+                if re.match(
+                    r"^\s*\((?:[a-z]{1,3}|[0-9]{1,3}|[ivxlcdm]{1,6})\)\s+",
+                    next_segment.text,
+                    re.IGNORECASE,
+                ):
                     break
                 next_tokens = len(_TOKEN_RE.findall(next_segment.text.lower()))
                 if next_tokens > _USCODE_RESIDUAL_COALESCE_SEGMENT_MAX_TOKENS:
@@ -2543,7 +2592,7 @@ class LegalModalParser:
             return None
         if not self._is_uscode_citation(citation):
             return None
-        if not allow_modal_cues and self.extract_cues(normalized_text):
+        if not allow_modal_cues and self._parse_eligible_cues(normalized_text):
             return None
 
         citation_section = self._citation_section_token(citation)
@@ -2622,7 +2671,7 @@ class LegalModalParser:
             return None
         if not self._is_uscode_citation(citation):
             return None
-        if not allow_modal_cues and self.extract_cues(normalized_text):
+        if not allow_modal_cues and self._parse_eligible_cues(normalized_text):
             return None
 
         citation_section = self._citation_section_token(citation)
@@ -2708,7 +2757,7 @@ class LegalModalParser:
             return None
         if not self._is_uscode_citation(citation):
             return None
-        if not allow_modal_cues and self.extract_cues(normalized_text):
+        if not allow_modal_cues and self._parse_eligible_cues(normalized_text):
             return None
 
         citation_section = self._citation_section_token(citation)
@@ -2844,7 +2893,7 @@ class LegalModalParser:
             return None
         if not self._is_uscode_citation(citation):
             return None
-        if not allow_modal_cues and self.extract_cues(normalized_text):
+        if not allow_modal_cues and self._parse_eligible_cues(normalized_text):
             return None
 
         candidate_segment: Optional[LegalSegment] = None

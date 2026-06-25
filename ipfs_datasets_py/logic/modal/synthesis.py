@@ -318,14 +318,28 @@ def synthesis_hints_from_autoencoder_introspection(
             )
         )
 
-    if "refine_typed_ir_or_decompiler_slots" in focus:
+    top_embedding_features = _feature_names(
+        introspection.get("top_embedding_contributions", [])
+    )
+    if "refine_typed_ir_or_decompiler_slots" in focus or top_embedding_features:
         hints.append(
             _hint(
                 sample_id,
                 action="refine_typed_ir_or_decompiler_slots",
                 target_component="modal.ir_decompiler",
                 rationale="Embedding residuals point to information not well represented by the typed IR/decompiler.",
-                priority=float(introspection.get("reconstruction_loss") or 0.0),
+                priority=max(
+                    float(introspection.get("reconstruction_loss") or 0.0),
+                    float(introspection.get("cosine_loss") or 0.0),
+                    float(
+                        introspection.get(
+                            "source_decompiled_text_embedding_cosine_loss",
+                        )
+                        or 0.0
+                    ),
+                    float(introspection.get("source_decompiled_text_token_loss") or 0.0),
+                    0.01 if top_embedding_features else 0.0,
+                ),
                 evidence={
                     **_pipeline_evidence(introspection),
                     "cosine_similarity": introspection.get("cosine_similarity"),
@@ -335,9 +349,7 @@ def synthesis_hints_from_autoencoder_introspection(
                         "modal.ir_decompiler",
                         "refine_typed_ir_or_decompiler_slots",
                     ),
-                    "top_embedding_features": _feature_names(
-                        introspection.get("top_embedding_contributions", [])
-                    ),
+                    "top_embedding_features": top_embedding_features,
                 },
             )
         )

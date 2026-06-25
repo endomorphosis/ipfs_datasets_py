@@ -1738,6 +1738,10 @@ def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
         *source_phrases,
         *_document_leading_uscode_catchline_phrases(document),
         *typed_ir_phrases,
+        *_document_structural_semantic_reconstruction_phrases(
+            document,
+            typed_ir_phrases=typed_ir_phrases,
+        ),
         *_source_span_slot_phrases(
             source_phrases,
             formulas=formula_order,
@@ -10619,6 +10623,198 @@ def _document_leading_uscode_catchline_phrases(
     return phrases
 
 
+def _document_structural_semantic_reconstruction_phrases(
+    document: ModalIRDocument,
+    *,
+    typed_ir_phrases: Sequence[DecodedModalPhrase],
+) -> List[DecodedModalPhrase]:
+    """Render concise source semantics from typed USC slots without span copy."""
+
+    if not _document_has_uscode_context(document):
+        return []
+    source_text = _clean_text(document.normalized_text)
+    if not source_text:
+        return []
+    visible_text = _clean_text(
+        " ".join(
+            phrase.text
+            for phrase in typed_ir_phrases
+            if not phrase.provenance_only
+        )
+    )
+    source_tokens = set(_tokenize_for_similarity(source_text))
+    visible_tokens = set(_tokenize_for_similarity(visible_text))
+    summary_parts: List[str] = []
+
+    catchline = _leading_uscode_catchline_text(source_text[:520], max_tokens=16)
+    if catchline and not set(_tokenize_for_similarity(catchline)).issubset(
+        visible_tokens
+    ):
+        summary_parts.append(catchline)
+
+    appropriation_summary = _uscode_appropriation_structural_summary(
+        source_text,
+        existing_tokens=visible_tokens,
+    )
+    has_structural_rewrite = False
+    if appropriation_summary:
+        summary_parts.append(appropriation_summary)
+        has_structural_rewrite = True
+
+    editorial_summary = _uscode_editorial_structural_summary(
+        source_text,
+        existing_tokens=visible_tokens,
+    )
+    if editorial_summary:
+        summary_parts.append(editorial_summary)
+        has_structural_rewrite = True
+
+    structural_text = _clean_text(" ".join(_unique_surface_parts(summary_parts)))
+    if not structural_text:
+        return []
+    structural_tokens = _tokenize_for_similarity(structural_text)
+    if not structural_tokens or len(structural_tokens) > 40:
+        return []
+    if source_tokens and set(structural_tokens).issubset(visible_tokens):
+        return []
+    if structural_text.lower() == source_text.lower():
+        return []
+
+    spans = [[0, len(str(document.normalized_text or ""))]]
+    phrases: List[DecodedModalPhrase] = [
+        DecodedModalPhrase(
+            text=structural_text,
+            slot="document_structural_semantic_reconstruction",
+            spans=spans,
+            provenance_only=not has_structural_rewrite,
+        )
+    ]
+    for slot, value in _typed_identifier_slots(
+        structural_text,
+        slot_prefix="document_structural_semantic_reconstruction",
+    ):
+        phrases.append(
+            DecodedModalPhrase(
+                text=value,
+                slot=slot,
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+    phrases.extend(
+        _legal_semantic_atom_phrases(
+            text=structural_text,
+            slot_prefix="document_structural_semantic_reconstruction",
+            spans=spans,
+        )
+    )
+    return phrases
+
+
+def _uscode_appropriation_structural_summary(
+    source_text: str,
+    *,
+    existing_tokens: set[str],
+) -> str:
+    normalized = _clean_text(source_text)
+    if not normalized:
+        return ""
+    lowered = normalized.lower()
+    if not re.search(
+        r"\b(?:authorized\s+to\s+be\s+appropriated|authorization\s+of\s+appropriations|appropriations?)\b",
+        lowered,
+    ):
+        return ""
+
+    parts: List[str] = []
+    actor_match = re.search(
+        r"\bto\s+the\s+(?P<actor>Secretary|Administrator|Commission|Director|President)\b",
+        normalized,
+        re.IGNORECASE,
+    )
+    amount_match = re.search(
+        r"\b(?P<amount>such\s+sums\s+as\s+are\s+necessary)\b",
+        normalized,
+        re.IGNORECASE,
+    )
+    purpose_match = re.search(
+        r"\bto\s+carry\s+out\s+(?P<purpose>[^.;()]{1,96})",
+        normalized,
+        re.IGNORECASE,
+    )
+    availability_match = re.search(
+        r"\b(?P<availability>remain\s+available\s+until\s+expended)\b",
+        normalized,
+        re.IGNORECASE,
+    )
+
+    if actor_match:
+        parts.append(f"{actor_match.group('actor')} appropriation authority")
+    else:
+        parts.append("appropriation authority")
+    if amount_match:
+        parts.append(amount_match.group("amount"))
+    if purpose_match:
+        parts.append(f"carry out {purpose_match.group('purpose')}")
+    if availability_match:
+        parts.append(availability_match.group("availability"))
+
+    summary = _clean_text(" ".join(_unique_surface_parts(parts)))
+    if not summary:
+        return ""
+    tokens = _tokenize_for_similarity(summary)
+    if not tokens or set(tokens).issubset(existing_tokens):
+        return ""
+    return summary
+
+
+def _uscode_editorial_structural_summary(
+    source_text: str,
+    *,
+    existing_tokens: set[str],
+) -> str:
+    normalized = _clean_text(source_text)
+    if not normalized:
+        return ""
+    status_keyword = _status_keyword_from_source_text(normalized)
+    if not status_keyword:
+        return ""
+    status_clauses = _uscode_editorial_status_clauses(
+        normalized,
+        status_keyword=status_keyword,
+    )
+    clause = status_clauses[0] if status_clauses else ""
+    source_section_match = re.search(
+        r"\bSection\s+(?P<section>[0-9A-Za-z.\-]+(?:\([^)]+\))?)\b",
+        normalized,
+        re.IGNORECASE,
+    )
+    target_match = re.search(
+        r"\bas\s+(?:section|sections?)\s+(?P<section>[0-9A-Za-z.\-]+(?:\([^)]+\))?)\s+of\s+this\s+title\b",
+        normalized,
+        re.IGNORECASE,
+    )
+    parts = [status_keyword]
+    if clause and len(_tokenize_for_similarity(clause)) <= 14:
+        parts.append(clause)
+    elif source_section_match:
+        parts.append(f"section {source_section_match.group('section')}")
+        if status_keyword == "reclassified":
+            parts.append("editorially reclassified")
+    if target_match:
+        parts.append(f"new section {target_match.group('section')}")
+    for label in _uscode_editorial_note_labels(normalized):
+        parts.append(label)
+
+    summary = _clean_text(" ".join(_unique_surface_parts(parts)))
+    if not summary:
+        return ""
+    tokens = _tokenize_for_similarity(summary)
+    if not tokens or len(tokens) > 32 or set(tokens).issubset(existing_tokens):
+        return ""
+    return summary
+
+
 def _typed_ir_reconstruction_phrases(
     document: ModalIRDocument,
     formulas: Sequence[ModalIRFormula],
@@ -11133,6 +11329,13 @@ def _typed_formula_surface_text(
         anchor = _clean_text(anchors.get(role_name, ""))
         if anchor:
             values.append(anchor)
+    values.extend(
+        _typed_surface_source_modal_cues(
+            document=document,
+            formula=formula,
+            existing_values=values,
+        )
+    )
     semantic_texts = (
         _fallback_section_heading_tail_text(document=document, formula=formula),
         _fallback_surface_text(document=document, formula=formula),
@@ -11142,6 +11345,84 @@ def _typed_formula_surface_text(
     for semantic_text in semantic_texts:
         values.extend(_legal_semantic_atoms_from_text(semantic_text))
     return _clean_text(" ".join(_unique_surface_parts(values)))
+
+
+def _typed_surface_source_modal_cues(
+    *,
+    document: ModalIRDocument,
+    formula: ModalIRFormula,
+    existing_values: Sequence[str],
+) -> List[str]:
+    """Return bounded source-derived modal cues for typed surface rendering."""
+
+    existing_tokens = set(
+        _tokenize_for_similarity(_clean_text(" ".join(existing_values)))
+    )
+    text_parts = [
+        _semantic_source_span_text(document=document, formula=formula),
+        _fallback_section_heading_tail_text(document=document, formula=formula),
+        _fallback_surface_text(document=document, formula=formula),
+        " ".join(_resolved_formula_conditions(document=document, formula=formula)),
+        " ".join(_resolved_formula_exceptions(document=document, formula=formula)),
+    ]
+    normalized_text = _clean_text(" ".join(part for part in text_parts if part))
+    if not normalized_text:
+        return []
+
+    allowed_cues = set(_DEONTIC_BRIDGE_REINFORCEMENT_CUES)
+    allowed_cues.update(_DEONTIC_TEMPORAL_BRIDGE_CUES)
+    allowed_cues.update(_CLAUSE_PREFIX_BRIDGE_CUES)
+    allowed_cues.update(_TEMPORAL_BRIDGE_CONTEXT_TOKENS)
+    allowed_cues.update(
+        {
+            "effective_date",
+            "fiscal_year",
+            "no_later_than",
+            "not_later_than",
+            "on_and_after",
+            "on_or_after",
+            "prior_to",
+            "within",
+        }
+    )
+
+    visible_duplicate_cues = {
+        "effective_date",
+        "fiscal_year",
+        "no_later_than",
+        "not_later_than",
+        "on_and_after",
+        "on_or_after",
+        "subject_to",
+        "subject_to_section",
+    }
+    cues: List[str] = []
+    for cue in (
+        *_bridge_cues_from_text(normalized_text),
+        *_temporal_transition_context_cues_from_text(normalized_text),
+        *_formula_clause_prefix_cues(formula),
+    ):
+        normalized_cue = _slot_safe_family_key(_clean_text(cue).lower())
+        cue_tokens = set(_tokenize_for_similarity(normalized_cue.replace("_", " ")))
+        duplicate_visible_cue = normalized_cue in visible_duplicate_cues
+        if (
+            not normalized_cue
+            or (
+                not duplicate_visible_cue
+                and (
+                    normalized_cue in existing_tokens
+                    or (cue_tokens and cue_tokens.issubset(existing_tokens))
+                )
+            )
+            or normalized_cue in cues
+            or normalized_cue not in allowed_cues
+            or normalized_cue in _STRUCTURAL_FRAME_CUE_TOKENS
+        ):
+            continue
+        cues.append(normalized_cue)
+        if len(cues) >= 6:
+            break
+    return cues
 
 
 def _typed_ir_source_semantic_surface(
@@ -14529,6 +14810,14 @@ def _typed_decompiler_bridge_phrases(
                     ),
                 )
                 if predicate_head:
+                    source_predicate_force_slot = (
+                        f"source-predicate-head:{source_family}:{predicate_head}|"
+                        f"typed-decompiler-force-polarity:{force_polarity_value}"
+                    )
+                    add(
+                        "typed_decompiler_source_predicate_force_pair",
+                        f"{source_predicate_force_slot}:{family_pair}",
+                    )
                     add(
                         "family_semantic_slot_legal_ir_view_prototype",
                         (
@@ -14536,6 +14825,22 @@ def _typed_decompiler_bridge_phrases(
                             f"source-predicate-head:{source_family}:{predicate_head}|"
                             f"typed-decompiler-force-polarity:"
                             f"{force_polarity_value}||{view}"
+                        ),
+                    )
+                    add(
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        (
+                            f"{target_family}||slot:typed-decompiler-source-predicate-force-pair:"
+                            f"{source_predicate_force_slot}||{view}"
+                        ),
+                    )
+                    add(
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        (
+                            f"{target_family}||slot-pair:"
+                            f"typed-decompiler-source-predicate-force-pair:"
+                            f"{source_predicate_force_slot}|"
+                            f"typed-decompiler-family-pair:{family_pair}||{view}"
                         ),
                     )
         for topology_slot, topology_value in topology_slot_values:
@@ -15006,10 +15311,19 @@ def _typed_decompiler_bridge_phrases(
                 "typed_decompiler_target_predicate_head_family",
                 f"{pair_target}:{pair_source}:{predicate_head}",
             )
+            add(
+                "typed_decompiler_source_predicate_family_pair",
+                f"{pair_source}:{predicate_head}:{family_pair}",
+            )
             add_family_semantic_slot(
                 family=pair_target,
                 slot_name="source-predicate-head",
                 slot_value=f"{pair_source}:{predicate_head}",
+            )
+            add_family_semantic_slot(
+                family=pair_target,
+                slot_name="typed-decompiler-source-predicate-family-pair",
+                slot_value=f"{pair_source}:{predicate_head}:{family_pair}",
             )
             if role_shape_value:
                 add_family_semantic_slot_pair(
@@ -15017,6 +15331,11 @@ def _typed_decompiler_bridge_phrases(
                     left_slot=f"source-predicate-head:{pair_source}:{predicate_head}",
                     right_slot=f"source-role-shape:{pair_source}:{role_shape_value}",
                 )
+            add_family_semantic_slot_pair(
+                family=pair_target,
+                left_slot=f"source-predicate-head:{pair_source}:{predicate_head}",
+                right_slot=f"typed-decompiler-family-pair:{family_pair}",
+            )
     if document is not None:
         semantic_text_cues = _semantic_text_cues_for_formula(
             document=document,
@@ -15941,18 +16260,26 @@ def _source_anchor_role_tokens(tokens: Sequence[str]) -> List[str]:
     return [
         token
         for token in tokens
-        if len(token) > 2
-        and token not in _SOURCE_ROLE_NOISE_TOKENS
-        and token not in _SOURCE_ROLE_CONNECTIVE_TOKENS
-        and token not in _SOURCE_ROLE_QUANTIFIER_TOKENS
-        and token not in _LOW_INFORMATION_SCOPE_LEADING_TOKENS
+        if _is_informative_source_role_anchor_token(token)
         and token not in _SOURCE_ROLE_CUE_MARKERS
         and token not in _SOURCE_ROLE_CONDITION_MARKERS
         and token not in _SOURCE_ROLE_EXCEPTION_MARKERS
         and token not in _SOURCE_ROLE_TEMPORAL_MARKERS
         and token not in _SOURCE_ROLE_NEGATION_MARKERS
-        and not _is_low_information_section_marker(token)
     ]
+
+
+def _is_informative_source_role_anchor_token(token: str) -> bool:
+    normalized = _clean_text(token).lower()
+    return (
+        len(normalized) > 2
+        and normalized not in _SOURCE_ROLE_NOISE_TOKENS
+        and normalized not in _SOURCE_ROLE_CONNECTIVE_TOKENS
+        and normalized not in _SOURCE_ROLE_QUANTIFIER_TOKENS
+        and normalized not in _LOW_INFORMATION_SCOPE_LEADING_TOKENS
+        and normalized not in _SOURCE_ROLE_COMPILATION_NOISE_TOKENS
+        and not _is_low_information_section_marker(normalized)
+    )
 
 
 def _source_semantic_anchor_role_tokens(tokens: Sequence[str]) -> List[str]:
@@ -16113,9 +16440,7 @@ def _predicate_head_anchor(formula: ModalIRFormula) -> str:
     if not predicate_tokens:
         return ""
     for token in predicate_tokens:
-        if token in _LOW_INFORMATION_SCOPE_LEADING_TOKENS:
-            continue
-        if _is_low_information_section_marker(token):
+        if not _is_informative_source_role_anchor_token(token):
             continue
         return token
     return predicate_tokens[0]
