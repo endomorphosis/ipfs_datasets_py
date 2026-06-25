@@ -6688,6 +6688,50 @@ def test_compiler_ir_metric_block_uses_guided_persistent_metric_cache(
     assert first["cross_entropy_loss"] == second["cross_entropy_loss"]
 
 
+def test_compiler_ir_metric_sample_cache_preserves_guidance_diagnostics(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    cache_dir = tmp_path / "metric-cache"
+    monkeypatch.setenv(runner.LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV, str(cache_dir))
+    monkeypatch.setenv(runner.LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV, "1")
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide records promptly and may withhold exempt records.",
+    )
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(
+            parser_backend="spacy",
+            spacy_model_name="definitely_missing_legal_model",
+            use_flogic=True,
+        )
+    )
+    autoencoder = AdaptiveModalAutoencoder()
+    autoencoder.evaluate([sample], legal_ir_bridge_names=["modal.frame_logic"])
+
+    first = compiler_ir_metric_block(
+        [sample],
+        codec,
+        autoencoder=autoencoder,
+        use_autoencoder_guidance=True,
+        max_sample_metric_records=32,
+    )
+    second = compiler_ir_metric_block(
+        [sample],
+        codec,
+        autoencoder=autoencoder,
+        use_autoencoder_guidance=True,
+        max_sample_metric_records=31,
+    )
+
+    assert first["persistent_sample_cache_misses"] == 1
+    assert second["persistent_cache_hit"] is False
+    assert second["persistent_sample_cache_hits"] == 1
+    assert second["compiler_guidance_feature_groups"]
+    assert second["compiler_guidance_surface_features"]
+
+
 def test_compiler_ir_metric_block_reports_progress_callbacks(monkeypatch) -> None:
     monkeypatch.setenv(runner.LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV, "0")
     sample = build_us_code_sample(
@@ -7735,6 +7779,54 @@ def test_autoencoder_memory_gap_block_flags_memorization_probe() -> None:
     assert block["reconstruction_gain_from_sample_memory"] > 0.0
     assert block["sample_memory_advantage_detected"] is True
     assert block["unexpected_holdout_memory_advantage"] is True
+
+
+def test_autoencoder_state_telemetry_includes_low_rank_shadow(tmp_path) -> None:
+    state = ModalAutoencoderTrainingState(
+        feature_embedding_weights={"token:agency": [1.0, 2.0, 3.0, 4.0]}
+    )
+    state_path = tmp_path / "state.json"
+    state.save_json(state_path)
+
+    telemetry = runner.autoencoder_state_telemetry(state, state_path=state_path)
+
+    assert telemetry["state_file"]["exists"] is True
+    assert telemetry["state_file"]["size_bytes"] > 0
+    assert telemetry["low_rank_shadow"]["shadow_mode"] is True
+    assert telemetry["low_rank_shadow"]["rank"] > 0
+    assert telemetry["low_rank_shadow"]["dense_vector_entry_count"] == 1
+    assert telemetry["low_rank_shadow"]["sampled_reconstruction_count"] == 1
+    assert telemetry["low_rank_sidecar"]["enabled"] is False
+
+
+def test_autoencoder_state_telemetry_can_write_low_rank_sidecar(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    state = ModalAutoencoderTrainingState(
+        feature_embedding_weights={
+            "token:agency": [1.0, 2.0, 3.0, 4.0],
+            "token:duty": [4.0, 3.0, 2.0, 1.0],
+        }
+    )
+    state_path = tmp_path / "state.json"
+    state.save_json(state_path)
+    monkeypatch.setenv(
+        "IPFS_DATASETS_AUTOENCODER_LOW_RANK_SIDECAR_MAX_VECTORS",
+        "1",
+    )
+
+    telemetry = runner.autoencoder_state_telemetry(state, state_path=state_path)
+    sidecar = telemetry["low_rank_sidecar"]
+
+    assert sidecar["enabled"] is True
+    assert sidecar["status"] == "saved"
+    assert sidecar["complete"] is False
+    assert sidecar["vector_entry_count"] == 1
+    assert sidecar["file"]["exists"] is True
+    payload = json.loads(Path(sidecar["path"]).read_text(encoding="utf-8"))
+    assert payload["vector_entry_count"] == 1
+    assert payload["complete"] is False
 
 
 def test_learned_ir_metric_block_reports_autoencoder_view_alignment() -> None:

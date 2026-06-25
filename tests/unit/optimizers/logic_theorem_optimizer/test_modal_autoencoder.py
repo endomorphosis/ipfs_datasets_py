@@ -16,6 +16,8 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder impor
     CodexCallCache,
     CodexCallGateConfig,
     MODAL_AUTOENCODER_ARCHITECTURE_VERSION,
+    MODAL_AUTOENCODER_LOW_RANK_BASIS,
+    MODAL_AUTOENCODER_LOW_RANK_STATE_SCHEMA_VERSION,
     MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
     ModalAutoencoderBaseline,
     ModalAutoencoderTrainingState,
@@ -12599,6 +12601,106 @@ def test_training_state_telemetry_reports_dense_state_size() -> None:
     assert telemetry["vector_scalar_count"] == 7
     assert telemetry["nested_logit_entry_count"] == 2
     assert telemetry["nested_logit_scalar_count"] == 3
+
+
+def test_training_state_low_rank_shadow_report_estimates_compression() -> None:
+    state = ModalAutoencoderTrainingState(
+        feature_embedding_weights={
+            "token:agency": [1.0, 2.0, 3.0, 4.0],
+            "token:duty": [2.0, 2.0, 2.0, 2.0],
+        },
+        legal_ir_view_embedding_weights={
+            "knowledge_graphs.neo4j_compat": [0.5, 1.5, 2.5, 3.5]
+        },
+    )
+
+    report = state.low_rank_shadow_report(rank=2, max_vectors=8)
+
+    assert report["basis"] == MODAL_AUTOENCODER_LOW_RANK_BASIS
+    assert report["schema_version"] == MODAL_AUTOENCODER_LOW_RANK_STATE_SCHEMA_VERSION
+    assert report["shadow_mode"] is True
+    assert report["rank"] == 2
+    assert report["dense_vector_entry_count"] == 3
+    assert report["dense_vector_scalar_count"] == 12
+    assert report["estimated_low_rank_coefficient_scalar_count"] == 6
+    assert report["estimated_low_rank_dimension_metadata_scalar_count"] == 3
+    assert report["estimated_low_rank_total_scalar_count"] == 9
+    assert report["estimated_scalar_compression_ratio"] == pytest.approx(12 / 9)
+    assert report["sampled_reconstruction_count"] == 3
+    assert 0.0 <= report["sample_average_reconstruction_cosine"] <= 1.0
+    assert report["sample_average_reconstruction_mse"] >= 0.0
+    assert report["per_map"]["feature_embedding_weights"]["entry_count"] == 2
+    assert (
+        report["per_map"]["feature_embedding_weights"]["dimension_counts"]["4"]
+        == 2
+    )
+
+
+def test_training_state_low_rank_shadow_report_full_rank_reconstructs() -> None:
+    state = ModalAutoencoderTrainingState(
+        feature_embedding_weights={
+            "token:agency": [1.0, -2.0, 3.0, -4.0],
+        },
+    )
+
+    report = state.low_rank_shadow_report(rank=4, max_vectors=8)
+
+    assert report["sampled_reconstruction_count"] == 1
+    assert report["sample_average_reconstruction_cosine"] == pytest.approx(1.0)
+    assert report["sample_average_reconstruction_mse"] == pytest.approx(0.0)
+
+
+def test_training_state_low_rank_shadow_state_roundtrip(tmp_path) -> None:
+    state = ModalAutoencoderTrainingState(
+        feature_embedding_weights={
+            "token:agency": [1.0, -2.0, 3.0, -4.0],
+            "token:duty": [2.0, 0.0, -2.0, 1.0],
+        },
+        semantic_slot_embedding_weights={
+            "slot:condition-present": [0.5, -0.5, 1.5, -1.5]
+        },
+    )
+    path = tmp_path / "state.low-rank-shadow.json"
+
+    payload = state.save_low_rank_shadow_json(path, rank=4)
+    loaded = ModalAutoencoderTrainingState.load_low_rank_shadow_json(path)
+    reconstructed = ModalAutoencoderTrainingState.reconstruct_low_rank_embedding_maps(
+        loaded
+    )
+
+    assert payload["complete"] is True
+    assert loaded["schema_version"] == MODAL_AUTOENCODER_LOW_RANK_STATE_SCHEMA_VERSION
+    assert loaded["vector_entry_count"] == 3
+    assert not list(tmp_path.glob(".state.low-rank-shadow.json.tmp-*"))
+    assert reconstructed["feature_embedding_weights"]["token:agency"] == pytest.approx(
+        [1.0, -2.0, 3.0, -4.0]
+    )
+    assert reconstructed["feature_embedding_weights"]["token:duty"] == pytest.approx(
+        [2.0, 0.0, -2.0, 1.0]
+    )
+    assert reconstructed["semantic_slot_embedding_weights"][
+        "slot:condition-present"
+    ] == pytest.approx([0.5, -0.5, 1.5, -1.5])
+
+
+def test_training_state_low_rank_shadow_state_can_be_bounded() -> None:
+    state = ModalAutoencoderTrainingState(
+        feature_embedding_weights={
+            "token:agency": [1.0, 2.0],
+            "token:duty": [3.0, 4.0],
+        },
+        semantic_slot_embedding_weights={"slot:condition-present": [5.0, 6.0]},
+    )
+
+    payload = state.materialize_low_rank_shadow_state(rank=2, max_vectors=2)
+    reconstructed = ModalAutoencoderTrainingState.reconstruct_low_rank_embedding_maps(
+        payload
+    )
+
+    assert payload["complete"] is False
+    assert payload["max_vectors"] == 2
+    assert payload["vector_entry_count"] == 2
+    assert sum(len(mapping) for mapping in reconstructed.values()) == 2
 
 
 def test_generalizable_state_copy_drops_sample_specific_memory() -> None:

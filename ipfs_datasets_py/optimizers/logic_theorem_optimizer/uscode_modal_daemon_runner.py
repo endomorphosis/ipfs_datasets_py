@@ -407,6 +407,8 @@ from ipfs_datasets_py.optimizers.agentic.patch_control import PatchManager, Work
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import (
     AdaptiveModalAutoencoder,
     MODAL_AUTOENCODER_ARCHITECTURE_VERSION,
+    MODAL_AUTOENCODER_LOW_RANK_DEFAULT_RANK,
+    MODAL_AUTOENCODER_LOW_RANK_STATE_SCHEMA_VERSION,
     MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
     ModalAutoencoderTrainingState,
 )
@@ -663,6 +665,12 @@ CODEX_TARGET_METRIC_MAX_SAMPLES = 2
 BRIDGE_IR_REPORT_CACHE_MAX = 4096
 USCODE_DAEMON_METRIC_SCHEMA_VERSION = "uscode-modal-daemon-metrics-v2"
 USCODE_DAEMON_ROLLOUT_STAGE = "observability-v1"
+AUTOENCODER_LOW_RANK_SIDECAR_MAX_VECTORS_ENV = (
+    "IPFS_DATASETS_AUTOENCODER_LOW_RANK_SIDECAR_MAX_VECTORS"
+)
+AUTOENCODER_LOW_RANK_SIDECAR_RANK_ENV = (
+    "IPFS_DATASETS_AUTOENCODER_LOW_RANK_SIDECAR_RANK"
+)
 LEGAL_IR_METRIC_DISK_CACHE_VERSION = "legal-ir-metric-disk-cache-v1"
 LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV = "IPFS_DATASETS_LEGAL_IR_METRIC_CACHE_DIR"
 LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV = "IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE"
@@ -671,7 +679,9 @@ _BRIDGE_IR_REPORT_CACHE_LOCK = threading.Lock()
 _BRIDGE_IR_REPORT_CACHE: Dict[str, Any] = {}
 _METRIC_CODE_FINGERPRINT_LOCK = threading.Lock()
 _METRIC_CODE_FINGERPRINT_VALUE: Optional[str] = None
-_COMPILER_IR_SAMPLE_CACHE_VERSION = "compiler-ir-metric-sample-cache-v2"
+_COMPILER_IR_METRIC_BLOCK_CACHE_VERSION = "compiler-ir-metric-block-cache-v2"
+_COMPILER_IR_GUIDANCE_DIAGNOSTICS_VERSION = "compiler-guidance-diagnostics-v1"
+_COMPILER_IR_SAMPLE_CACHE_VERSION = "compiler-ir-metric-sample-cache-v4"
 _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_LOCK = threading.Lock()
 _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_VALUE: Optional[str] = None
 _ACTIVE_CODEX_EXEC_PROCESSES: List[subprocess.Popen[str]] = []
@@ -2001,6 +2011,91 @@ def learned_ir_metric_block(evaluation) -> Dict[str, Any]:
     return block
 
 
+def _guidance_slot_safe_key(value: Any) -> str:
+    return re.sub(r"[^A-Za-z0-9]+", "_", str(value or "")).strip("_").lower()
+
+
+def _metadata_sequence_strings(value: Any) -> List[str]:
+    if isinstance(value, Mapping):
+        return [
+            str(item)
+            for item, count in sorted(value.items())
+            if str(item) and _float_or_zero(count) > 0.0
+        ]
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        return [str(item) for item in value if str(item)]
+    if value is None or isinstance(value, (str, bytes)):
+        return [str(value)] if str(value or "") else []
+    return [str(value)]
+
+
+def compiler_guidance_slot_texts_from_result(result: Any) -> Dict[str, List[str]]:
+    """Return guidance slots from decoded phrases, falling back to cached metadata."""
+
+    cached_slot_texts = getattr(result, "compiler_guidance_slot_texts", None)
+    if isinstance(cached_slot_texts, Mapping):
+        return {
+            str(slot): _metadata_sequence_strings(values)
+            for slot, values in sorted(cached_slot_texts.items())
+            if str(slot)
+        }
+    decoded = getattr(result, "decoded_modal_text", None)
+    if hasattr(decoded, "phrases"):
+        return decoded_modal_phrase_slot_text_map(decoded)
+    metadata = dict(getattr(result, "metadata", {}) or {})
+    cached_metadata_slot_texts = metadata.get("_compiler_guidance_slot_texts")
+    if isinstance(cached_metadata_slot_texts, Mapping):
+        return {
+            str(slot): _metadata_sequence_strings(values)
+            for slot, values in sorted(cached_metadata_slot_texts.items())
+            if str(slot)
+        }
+    slot_texts: Dict[str, List[str]] = {}
+
+    def add(slot: str, value: Any) -> None:
+        text = str(value or "")
+        if text:
+            slot_texts.setdefault(slot, []).append(text)
+
+    feature_groups = metadata.get("compiler_guidance_feature_groups")
+    if isinstance(feature_groups, Mapping):
+        for group_name, features in sorted(feature_groups.items()):
+            safe_group = _guidance_slot_safe_key(group_name)
+            if not safe_group:
+                continue
+            add("compiler_guidance_feature_group", safe_group)
+            for feature in _metadata_sequence_strings(features):
+                add(f"compiler_guidance_{safe_group}_feature", feature)
+
+    predicted = metadata.get("compiler_guidance_legal_ir_predicted_view_distribution")
+    target = metadata.get("compiler_guidance_legal_ir_target_view_distribution")
+    if isinstance(predicted, Mapping) and isinstance(target, Mapping):
+        for view in sorted(set(predicted) | set(target)):
+            safe_view = _guidance_slot_safe_key(view)
+            if not safe_view:
+                continue
+            predicted_value = _float_or_zero(predicted.get(view))
+            target_value = _float_or_zero(target.get(view))
+            if target_value > predicted_value:
+                add("compiler_guidance_legal_ir_view_gap", safe_view)
+                add(
+                    "compiler_guidance_legal_ir_view_gap_direction",
+                    f"{safe_view}:underrepresented",
+                )
+            elif predicted_value > target_value:
+                add("compiler_guidance_legal_ir_view_gap", safe_view)
+                add(
+                    "compiler_guidance_legal_ir_view_gap_direction",
+                    f"{safe_view}:overrepresented",
+                )
+
+    for route in _metadata_sequence_strings(
+        metadata.get("compiler_guidance_todo_routes")
+    ):
+        add("compiler_guidance_todo_route", route)
+    return slot_texts
+
+
 def _learned_ir_family_gap_block(
     legal_ir_losses: Mapping[str, Any],
 ) -> Dict[str, Any]:
@@ -2073,6 +2168,30 @@ COMPILER_GUIDANCE_CANARY_METRICS = (
     "structural_text_reconstruction_loss",
     "text_reconstruction_loss",
 )
+
+
+def _compiler_ir_guidance_block_cache_compatible(
+    block: Mapping[str, Any],
+    *,
+    use_autoencoder_guidance: bool,
+) -> bool:
+    if not use_autoencoder_guidance:
+        return True
+    if (
+        block.get("compiler_guidance_diagnostics_version")
+        != _COMPILER_IR_GUIDANCE_DIAGNOSTICS_VERSION
+    ):
+        return False
+    if _float_or_zero(block.get("autoencoder_guidance_applied_count")) <= 0.0:
+        return True
+    required_mapping_keys = (
+        "compiler_guidance_feature_groups",
+        "compiler_guidance_legal_ir_view_gaps",
+        "compiler_guidance_semantic_overlay_terms",
+        "compiler_guidance_surface_features",
+        "compiler_guidance_todo_routes",
+    )
+    return all(isinstance(block.get(key), Mapping) for key in required_mapping_keys)
 
 
 def compiler_ir_metric_block(
@@ -2180,7 +2299,10 @@ def compiler_ir_metric_block(
             "compiler_ir_metric_block",
             persistent_cache_key,
         )
-        if cached_block is not None:
+        if cached_block is not None and _compiler_ir_guidance_block_cache_compatible(
+            cached_block,
+            use_autoencoder_guidance=use_autoencoder_guidance,
+        ):
             cached = dict(cached_block)
             cached["persistent_cache_enabled"] = True
             cached["persistent_cache_hit"] = True
@@ -2192,6 +2314,12 @@ def compiler_ir_metric_block(
                 evaluated_count=cached.get("evaluated_count", 0),
             )
             return cached
+        if cached_block is not None:
+            emit_progress(
+                "persistent_cache_stale",
+                cache_key=persistent_cache_key,
+                reason="guided_diagnostics_schema",
+            )
         emit_progress("persistent_cache_miss", cache_key=persistent_cache_key)
     losses: Dict[str, List[float]] = {
         "cosine_loss": [],
@@ -2393,7 +2521,7 @@ def compiler_ir_metric_block(
                 != result.metadata.get("compiler_guidance_selected_frame_after")
             ):
                 guidance_frame_changed_count += 1
-            slot_texts = decoded_modal_phrase_slot_text_map(result.decoded_modal_text)
+            slot_texts = compiler_guidance_slot_texts_from_result(result)
             for value in slot_texts.get("compiler_guidance_feature_group", []):
                 guidance_feature_groups[str(value)] += 1
             sample_view_gaps = [
@@ -2485,6 +2613,10 @@ def compiler_ir_metric_block(
         "persistent_sample_cache_misses": persistent_sample_cache_misses,
         "sample_count": len(sample_list),
     }
+    if use_autoencoder_guidance:
+        block["compiler_guidance_diagnostics_version"] = (
+            _COMPILER_IR_GUIDANCE_DIAGNOSTICS_VERSION
+        )
     for name, values in losses.items():
         if values:
             block[name] = round(sum(values) / len(values), 9)
@@ -2507,26 +2639,27 @@ def compiler_ir_metric_block(
             / len(guidance_semantic_overlay_counts),
             9,
         )
-    if guidance_semantic_overlay_terms:
+    if use_autoencoder_guidance or guidance_semantic_overlay_terms:
         block["compiler_guidance_semantic_overlay_terms"] = dict(
             guidance_semantic_overlay_terms.most_common(12)
         )
-    if guidance_feature_groups:
+    if use_autoencoder_guidance or guidance_feature_groups:
         block["compiler_guidance_feature_groups"] = dict(
             guidance_feature_groups.most_common(12)
         )
-    if guidance_legal_ir_view_gaps:
+    if use_autoencoder_guidance or guidance_legal_ir_view_gaps:
         block["compiler_guidance_legal_ir_view_gaps"] = dict(
             guidance_legal_ir_view_gaps.most_common(12)
         )
-    if guidance_surface_features:
+    if use_autoencoder_guidance or guidance_surface_features:
         block["compiler_guidance_surface_features"] = dict(
             guidance_surface_features.most_common(12)
         )
-    if guidance_todo_routes:
+    if use_autoencoder_guidance or guidance_todo_routes:
         block["compiler_guidance_todo_routes"] = dict(
             guidance_todo_routes.most_common(12)
         )
+    if guidance_todo_routes:
         block["compiler_guidance_todo_route_examples"] = {
             route: guidance_todo_route_examples.get(route, [])[:3]
             for route, _ in guidance_todo_routes.most_common(12)
@@ -4754,10 +4887,12 @@ def _compiler_ir_metric_block_cache_key(
     max_sample_metric_records: int,
 ) -> str:
     payload = {
+        "block_cache_version": _COMPILER_IR_METRIC_BLOCK_CACHE_VERSION,
         "codec": {
             "config": _metric_cache_object_payload(getattr(codec, "config", None)),
             "type": f"{codec.__class__.__module__}.{codec.__class__.__qualname__}",
         },
+        "guidance_diagnostics_version": _COMPILER_IR_GUIDANCE_DIAGNOSTICS_VERSION,
         "guidance_cache_records": _metric_cache_object_payload(
             list(guidance_cache_records)
         ),
@@ -4790,13 +4925,19 @@ def _compiler_ir_metric_sample_cache_key(
 def _compiler_ir_metric_result_cache_payload(result: Any) -> Dict[str, Any]:
     modal_ir = getattr(result, "modal_ir", None)
     frame_candidates = getattr(result, "frame_candidates", ()) or ()
-    return {
+    payload = {
         "decoded_modal_text": str(getattr(result, "decoded_modal_text", "") or ""),
         "frame_candidate_count": len(frame_candidates),
         "losses": _metric_cache_object_payload(getattr(result, "losses", {}) or {}),
         "metadata": _metric_cache_object_payload(getattr(result, "metadata", {}) or {}),
         "modal_formula_count": len(getattr(modal_ir, "formulas", ()) or ()),
     }
+    slot_texts = compiler_guidance_slot_texts_from_result(result)
+    if slot_texts:
+        payload["compiler_guidance_slot_texts"] = _metric_cache_object_payload(
+            slot_texts
+        )
+    return payload
 
 
 def _compiler_ir_metric_result_from_cache_payload(
@@ -4810,6 +4951,16 @@ def _compiler_ir_metric_result_from_cache_payload(
     metadata = payload.get("metadata")
     if not isinstance(metadata, Mapping):
         metadata = {}
+    guidance_slot_texts: Dict[str, List[str]] = {}
+    raw_slot_texts = payload.get("compiler_guidance_slot_texts")
+    if isinstance(raw_slot_texts, Mapping):
+        guidance_slot_texts = {
+            str(slot): _metadata_sequence_strings(values)
+            for slot, values in sorted(raw_slot_texts.items())
+            if str(slot)
+        }
+        metadata = dict(metadata)
+        metadata["_compiler_guidance_slot_texts"] = guidance_slot_texts
     try:
         formula_count = max(0, int(payload.get("modal_formula_count", 0) or 0))
     except (TypeError, ValueError):
@@ -4828,6 +4979,7 @@ def _compiler_ir_metric_result_from_cache_payload(
             str(name): _float_or_zero(value)
             for name, value in losses.items()
         },
+        compiler_guidance_slot_texts=guidance_slot_texts,
         metadata=dict(metadata),
         modal_ir=SimpleNamespace(formulas=[None] * formula_count),
     )
@@ -9789,8 +9941,67 @@ def autoencoder_state_telemetry(
     state_path: Path,
 ) -> Dict[str, Any]:
     telemetry = state.telemetry()
+    telemetry["low_rank_shadow"] = state.low_rank_shadow_report(
+        rank=MODAL_AUTOENCODER_LOW_RANK_DEFAULT_RANK,
+        max_vectors=128,
+    )
     telemetry["state_file"] = path_size_report(state_path)
+    telemetry["low_rank_sidecar"] = autoencoder_low_rank_sidecar_report(
+        state,
+        state_path=state_path,
+    )
     return telemetry
+
+
+def autoencoder_low_rank_sidecar_report(
+    state: ModalAutoencoderTrainingState,
+    *,
+    state_path: Path,
+) -> Dict[str, Any]:
+    rank = _env_int(
+        AUTOENCODER_LOW_RANK_SIDECAR_RANK_ENV,
+        MODAL_AUTOENCODER_LOW_RANK_DEFAULT_RANK,
+        minimum=1,
+    )
+    max_vectors = _env_int(
+        AUTOENCODER_LOW_RANK_SIDECAR_MAX_VECTORS_ENV,
+        0,
+        minimum=0,
+    )
+    sidecar_path = state_path.with_suffix(".low-rank-shadow.json")
+    if max_vectors <= 0:
+        return {
+            "enabled": False,
+            "max_vectors": 0,
+            "path": str(sidecar_path),
+            "rank": rank,
+            "reason": "disabled",
+        }
+    try:
+        payload = state.save_low_rank_shadow_json(
+            sidecar_path,
+            rank=rank,
+            max_vectors=max_vectors,
+        )
+    except Exception as exc:
+        return {
+            "enabled": True,
+            "error": f"{type(exc).__name__}: {str(exc)[:240]}",
+            "max_vectors": max_vectors,
+            "path": str(sidecar_path),
+            "rank": rank,
+            "status": "failed",
+        }
+    return {
+        "complete": bool(payload.get("complete", False)),
+        "enabled": True,
+        "file": path_size_report(sidecar_path),
+        "max_vectors": max_vectors,
+        "path": str(sidecar_path),
+        "rank": rank,
+        "status": "saved",
+        "vector_entry_count": int(payload.get("vector_entry_count", 0) or 0),
+    }
 
 
 def _read_meminfo_kb() -> Dict[str, int]:
@@ -10078,6 +10289,9 @@ def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Pat
     return {
         "active_cycle_phase_timings": {},
         "autoencoder_architecture_version": MODAL_AUTOENCODER_ARCHITECTURE_VERSION,
+        "autoencoder_low_rank_state_schema_version": (
+            MODAL_AUTOENCODER_LOW_RANK_STATE_SCHEMA_VERSION
+        ),
         "autoencoder_state_schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
         "best_validation_ce": 1.0e12,
         "best_validation_cosine": -1.0,
@@ -12948,6 +13162,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     summary["rollout_stage"] = USCODE_DAEMON_ROLLOUT_STAGE
     summary["autoencoder_architecture_version"] = (
         MODAL_AUTOENCODER_ARCHITECTURE_VERSION
+    )
+    summary["autoencoder_low_rank_state_schema_version"] = (
+        MODAL_AUTOENCODER_LOW_RANK_STATE_SCHEMA_VERSION
     )
     summary["autoencoder_state_schema_version"] = (
         MODAL_AUTOENCODER_STATE_SCHEMA_VERSION
@@ -16246,6 +16463,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         summary.update(autoencoder.compute_backend_metadata())
         summary["autoencoder_architecture_version"] = (
             MODAL_AUTOENCODER_ARCHITECTURE_VERSION
+        )
+        summary["autoencoder_low_rank_state_schema_version"] = (
+            MODAL_AUTOENCODER_LOW_RANK_STATE_SCHEMA_VERSION
         )
         summary["autoencoder_state_schema_version"] = (
             MODAL_AUTOENCODER_STATE_SCHEMA_VERSION

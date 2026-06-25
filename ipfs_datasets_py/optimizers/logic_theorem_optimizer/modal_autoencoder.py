@@ -32,6 +32,9 @@ _LEGAL_IR_TARGET_CODE_FINGERPRINT_LOCK = threading.Lock()
 _LEGAL_IR_TARGET_CODE_FINGERPRINT_VALUE: Optional[str] = None
 MODAL_AUTOENCODER_ARCHITECTURE_VERSION = "legacy_dense_v1"
 MODAL_AUTOENCODER_STATE_SCHEMA_VERSION = "modal-autoencoder-state-v1"
+MODAL_AUTOENCODER_LOW_RANK_STATE_SCHEMA_VERSION = "modal-autoencoder-low-rank-v1"
+MODAL_AUTOENCODER_LOW_RANK_BASIS = "implicit-dct-v1"
+MODAL_AUTOENCODER_LOW_RANK_DEFAULT_RANK = 32
 
 
 @dataclass(frozen=True)
@@ -236,6 +239,57 @@ def cross_entropy_excess_distribution_loss(
         target_distribution,
     ) - distribution_entropy_loss(target_distribution)
     return max(0.0, excess)
+
+
+def _low_rank_effective_rank(rank: int, dimension: int) -> int:
+    return max(0, min(int(rank), int(dimension)))
+
+
+def _implicit_dct_basis_value(component: int, index: int, dimension: int) -> float:
+    if dimension <= 0:
+        return 0.0
+    if component <= 0:
+        return 1.0 / math.sqrt(float(dimension))
+    return math.sqrt(2.0 / float(dimension)) * math.cos(
+        math.pi * (float(index) + 0.5) * float(component) / float(dimension)
+    )
+
+
+def _low_rank_project_vector(
+    vector: Sequence[float],
+    *,
+    rank: int,
+) -> List[float]:
+    values = [float(value) for value in vector]
+    dimension = len(values)
+    effective_rank = _low_rank_effective_rank(rank, dimension)
+    coefficients: List[float] = []
+    for component in range(effective_rank):
+        coefficients.append(
+            sum(
+                value * _implicit_dct_basis_value(component, index, dimension)
+                for index, value in enumerate(values)
+            )
+        )
+    return coefficients
+
+
+def _low_rank_reconstruct_vector(
+    coefficients: Sequence[float],
+    *,
+    dimension: int,
+) -> List[float]:
+    dimension = max(0, int(dimension))
+    if dimension <= 0:
+        return []
+    return [
+        sum(
+            float(coefficient)
+            * _implicit_dct_basis_value(component, index, dimension)
+            for component, coefficient in enumerate(coefficients)
+        )
+        for index in range(dimension)
+    ]
 
 
 @dataclass(frozen=True)
@@ -804,9 +858,9 @@ class ModalAutoencoderTrainingState:
             )
         )
 
-    def telemetry(self) -> Dict[str, Any]:
-        """Return compact state-size telemetry for daemon rollout diagnostics."""
-        vector_maps: Dict[str, Mapping[str, Sequence[float]]] = {
+    def embedding_weight_maps(self) -> Dict[str, Mapping[str, Sequence[float]]]:
+        """Return reusable dense embedding-weight maps by state field name."""
+        return {
             "compiler_quality_embedding_weights": self.compiler_quality_embedding_weights,
             "logic_signature_embedding_weights": self.logic_signature_embedding_weights,
             "round_trip_signal_embedding_weights": self.round_trip_signal_embedding_weights,
@@ -825,6 +879,288 @@ class ModalAutoencoderTrainingState:
                 self.semantic_slot_legal_ir_view_embedding_weights
             ),
         }
+
+    def low_rank_shadow_report(
+        self,
+        *,
+        rank: int = MODAL_AUTOENCODER_LOW_RANK_DEFAULT_RANK,
+        max_vectors: int = 128,
+    ) -> Dict[str, Any]:
+        """Estimate an implicit-basis low-rank embedding state without mutating state."""
+        effective_rank_request = max(0, int(rank))
+        sample_limit = max(0, int(max_vectors))
+        vector_maps = self.embedding_weight_maps()
+        dense_vector_entry_count = 0
+        dense_vector_scalar_count = 0
+        low_rank_coefficient_scalar_count = 0
+        low_rank_total_scalar_count = 0
+        sampled_vectors: List[tuple[str, str, List[float]]] = []
+        per_map: Dict[str, Dict[str, Any]] = {}
+        for map_name, mapping in sorted(vector_maps.items()):
+            entry_count = 0
+            dense_scalar_count = 0
+            coefficient_scalar_count = 0
+            dimensions: Dict[int, int] = {}
+            for key, vector in sorted(mapping.items()):
+                values = [float(value) for value in vector]
+                dimension = len(values)
+                if dimension <= 0:
+                    continue
+                entry_count += 1
+                dense_scalar_count += dimension
+                coefficient_scalar_count += _low_rank_effective_rank(
+                    effective_rank_request,
+                    dimension,
+                )
+                dimensions[dimension] = dimensions.get(dimension, 0) + 1
+                if len(sampled_vectors) < sample_limit:
+                    sampled_vectors.append((map_name, str(key), values))
+            dimension_metadata_scalar_count = entry_count
+            total_scalar_count = coefficient_scalar_count + dimension_metadata_scalar_count
+            dense_vector_entry_count += entry_count
+            dense_vector_scalar_count += dense_scalar_count
+            low_rank_coefficient_scalar_count += coefficient_scalar_count
+            low_rank_total_scalar_count += total_scalar_count
+            per_map[map_name] = {
+                "dense_scalar_count": dense_scalar_count,
+                "dimension_counts": {
+                    str(dimension): count
+                    for dimension, count in sorted(dimensions.items())
+                },
+                "entry_count": entry_count,
+                "estimated_low_rank_coefficient_scalar_count": (
+                    coefficient_scalar_count
+                ),
+                "estimated_low_rank_dimension_metadata_scalar_count": (
+                    dimension_metadata_scalar_count
+                ),
+                "estimated_low_rank_total_scalar_count": total_scalar_count,
+                "estimated_scalar_compression_ratio": round(
+                    dense_scalar_count / total_scalar_count,
+                    9,
+                )
+                if total_scalar_count > 0
+                else 0.0,
+            }
+
+        reconstruction_cosines: List[float] = []
+        reconstruction_mses: List[float] = []
+        sampled_records: List[Dict[str, Any]] = []
+        for map_name, key, vector in sampled_vectors:
+            coefficients = _low_rank_project_vector(
+                vector,
+                rank=effective_rank_request,
+            )
+            reconstructed = _low_rank_reconstruct_vector(
+                coefficients,
+                dimension=len(vector),
+            )
+            cosine = cosine_similarity(vector, reconstructed)
+            mse = mse_loss(vector, reconstructed)
+            reconstruction_cosines.append(cosine)
+            reconstruction_mses.append(mse)
+            sampled_records.append(
+                {
+                    "coefficient_count": len(coefficients),
+                    "cosine_similarity": round(cosine, 9),
+                    "dimension": len(vector),
+                    "key": key,
+                    "map": map_name,
+                    "mse_loss": round(mse, 9),
+                }
+            )
+
+        return {
+            "basis": MODAL_AUTOENCODER_LOW_RANK_BASIS,
+            "dense_vector_entry_count": dense_vector_entry_count,
+            "dense_vector_scalar_count": dense_vector_scalar_count,
+            "estimated_low_rank_basis_scalar_count": 0,
+            "estimated_low_rank_coefficient_scalar_count": (
+                low_rank_coefficient_scalar_count
+            ),
+            "estimated_low_rank_dimension_metadata_scalar_count": (
+                dense_vector_entry_count
+            ),
+            "estimated_low_rank_total_scalar_count": low_rank_total_scalar_count,
+            "estimated_scalar_compression_ratio": round(
+                dense_vector_scalar_count / low_rank_total_scalar_count,
+                9,
+            )
+            if low_rank_total_scalar_count > 0
+            else 0.0,
+            "max_vectors": sample_limit,
+            "per_map": per_map,
+            "rank": effective_rank_request,
+            "sample_average_reconstruction_cosine": round(
+                _mean(reconstruction_cosines),
+                9,
+            ),
+            "sample_average_reconstruction_mse": round(
+                _mean(reconstruction_mses),
+                9,
+            ),
+            "sample_records": sampled_records[:16],
+            "sampled_reconstruction_count": len(sampled_vectors),
+            "schema_version": MODAL_AUTOENCODER_LOW_RANK_STATE_SCHEMA_VERSION,
+            "shadow_mode": True,
+        }
+
+    def materialize_low_rank_shadow_state(
+        self,
+        *,
+        rank: int = MODAL_AUTOENCODER_LOW_RANK_DEFAULT_RANK,
+        max_vectors: Optional[int] = None,
+        include_report: bool = True,
+    ) -> Dict[str, Any]:
+        """Return a compact, JSON-serializable low-rank sidecar for dense vectors.
+
+        This is deliberately a shadow artifact: it can be saved and compared
+        against dense state, but active decoding/training still reads the dense
+        fields until the v2 rollout is explicitly promoted.
+        """
+
+        effective_rank = max(0, int(rank))
+        vector_limit = None if max_vectors is None else max(0, int(max_vectors))
+        vector_count = 0
+        dense_scalar_count = 0
+        coefficient_scalar_count = 0
+        complete = True
+        embedding_maps: Dict[str, Dict[str, Dict[str, Any]]] = {}
+        for map_name, mapping in sorted(self.embedding_weight_maps().items()):
+            map_payload: Dict[str, Dict[str, Any]] = {}
+            for key, vector in sorted(mapping.items()):
+                if vector_limit is not None and vector_count >= vector_limit:
+                    complete = False
+                    break
+                values = [float(value) for value in vector]
+                dimension = len(values)
+                if dimension <= 0:
+                    continue
+                coefficients = _low_rank_project_vector(
+                    values,
+                    rank=effective_rank,
+                )
+                map_payload[str(key)] = {
+                    "coefficients": coefficients,
+                    "dimension": dimension,
+                }
+                vector_count += 1
+                dense_scalar_count += dimension
+                coefficient_scalar_count += len(coefficients)
+            if map_payload:
+                embedding_maps[map_name] = map_payload
+            if not complete:
+                break
+        metadata_scalar_count = vector_count
+        total_scalar_count = coefficient_scalar_count + metadata_scalar_count
+        payload: Dict[str, Any] = {
+            "basis": MODAL_AUTOENCODER_LOW_RANK_BASIS,
+            "complete": complete,
+            "dense_scalar_count": dense_scalar_count,
+            "embedding_maps": embedding_maps,
+            "estimated_scalar_compression_ratio": round(
+                dense_scalar_count / total_scalar_count,
+                9,
+            )
+            if total_scalar_count > 0
+            else 0.0,
+            "low_rank_coefficient_scalar_count": coefficient_scalar_count,
+            "low_rank_dimension_metadata_scalar_count": metadata_scalar_count,
+            "low_rank_total_scalar_count": total_scalar_count,
+            "max_vectors": vector_limit,
+            "rank": effective_rank,
+            "schema_version": MODAL_AUTOENCODER_LOW_RANK_STATE_SCHEMA_VERSION,
+            "shadow_mode": True,
+            "vector_entry_count": vector_count,
+        }
+        if include_report:
+            payload["report"] = self.low_rank_shadow_report(
+                rank=effective_rank,
+                max_vectors=128 if vector_limit is None else min(128, vector_limit),
+            )
+        return payload
+
+    @staticmethod
+    def reconstruct_low_rank_embedding_maps(
+        payload: Mapping[str, Any],
+    ) -> Dict[str, Dict[str, List[float]]]:
+        """Reconstruct dense embedding maps from a low-rank shadow sidecar."""
+
+        if str(payload.get("basis") or "") != MODAL_AUTOENCODER_LOW_RANK_BASIS:
+            raise ValueError("Unsupported low-rank basis")
+        raw_maps = payload.get("embedding_maps")
+        if not isinstance(raw_maps, Mapping):
+            return {}
+        reconstructed: Dict[str, Dict[str, List[float]]] = {}
+        for map_name, raw_map in sorted(raw_maps.items()):
+            if not isinstance(raw_map, Mapping):
+                continue
+            map_payload: Dict[str, List[float]] = {}
+            for key, raw_entry in sorted(raw_map.items()):
+                if not isinstance(raw_entry, Mapping):
+                    continue
+                try:
+                    dimension = int(raw_entry.get("dimension", 0) or 0)
+                except (TypeError, ValueError):
+                    dimension = 0
+                coefficients = raw_entry.get("coefficients", [])
+                if not isinstance(coefficients, Sequence) or isinstance(
+                    coefficients,
+                    (str, bytes),
+                ):
+                    coefficients = []
+                map_payload[str(key)] = _low_rank_reconstruct_vector(
+                    [float(value) for value in coefficients],
+                    dimension=dimension,
+                )
+            if map_payload:
+                reconstructed[str(map_name)] = map_payload
+        return reconstructed
+
+    def save_low_rank_shadow_json(
+        self,
+        path: str | Path,
+        *,
+        rank: int = MODAL_AUTOENCODER_LOW_RANK_DEFAULT_RANK,
+        max_vectors: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        destination = Path(path)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        payload = self.materialize_low_rank_shadow_state(
+            rank=rank,
+            max_vectors=max_vectors,
+        )
+        temporary = destination.with_name(
+            f".{destination.name}.tmp-{os.getpid()}-{threading.get_ident()}"
+        )
+        try:
+            temporary.write_text(
+                json.dumps(
+                    payload,
+                    ensure_ascii=True,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            os.replace(temporary, destination)
+        finally:
+            try:
+                if temporary.exists():
+                    temporary.unlink()
+            except OSError:
+                pass
+        return payload
+
+    @staticmethod
+    def load_low_rank_shadow_json(path: str | Path) -> Dict[str, Any]:
+        source = Path(path)
+        return dict(json.loads(source.read_text(encoding="utf-8")))
+
+    def telemetry(self) -> Dict[str, Any]:
+        """Return compact state-size telemetry for daemon rollout diagnostics."""
+        vector_maps = self.embedding_weight_maps()
         nested_logit_maps: Dict[str, Mapping[str, Mapping[str, float]]] = {
             "compiler_quality_family_logits": self.compiler_quality_family_logits,
             "logic_signature_family_logits": self.logic_signature_family_logits,
@@ -23767,6 +24103,9 @@ __all__ = [
     "CodexCallDecision",
     "CodexCallGateConfig",
     "MODAL_AUTOENCODER_ARCHITECTURE_VERSION",
+    "MODAL_AUTOENCODER_LOW_RANK_BASIS",
+    "MODAL_AUTOENCODER_LOW_RANK_DEFAULT_RANK",
+    "MODAL_AUTOENCODER_LOW_RANK_STATE_SCHEMA_VERSION",
     "MODAL_AUTOENCODER_STATE_SCHEMA_VERSION",
     "ModalAutoencoderBaseline",
     "ModalAutoencoderTrainingState",
