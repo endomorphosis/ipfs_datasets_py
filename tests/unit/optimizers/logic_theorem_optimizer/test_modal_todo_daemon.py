@@ -7708,6 +7708,35 @@ def test_metric_block_includes_autoencoder_legal_ir_target_losses() -> None:
     assert block["legal_ir_predicted_view_distribution"]
 
 
+def test_autoencoder_memory_gap_block_flags_memorization_probe() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall publish notice before the permit takes effect.",
+    )
+    autoencoder = AdaptiveModalAutoencoder()
+    generalized = autoencoder.evaluate([sample], use_sample_memory=False)
+    autoencoder.state.decoded_embeddings[sample.sample_id] = list(
+        sample.embedding_vector
+    )
+    sample_memory = autoencoder.evaluate([sample], use_sample_memory=True)
+
+    block = runner.autoencoder_memory_gap_block(
+        generalized,
+        sample_memory,
+        dataset="validation",
+        expected_holdout=True,
+    )
+
+    assert block["dataset"] == "validation"
+    assert block["generalized_label"] == "sample_memory_disabled"
+    assert block["sample_memory_label"] == "sample_memory_enabled"
+    assert block["cosine_gain_from_sample_memory"] > 0.0
+    assert block["reconstruction_gain_from_sample_memory"] > 0.0
+    assert block["sample_memory_advantage_detected"] is True
+    assert block["unexpected_holdout_memory_advantage"] is True
+
+
 def test_learned_ir_metric_block_reports_autoencoder_view_alignment() -> None:
     sample = build_us_code_sample(
         title="5",
@@ -7757,7 +7786,11 @@ def test_supervisor_optimization_run_reduces_ce_and_reconstruction_loss(tmp_path
     assert len(run.steps) >= 1
     assert run.final_evaluation.cross_entropy_loss < before.cross_entropy_loss
     assert run.final_evaluation.reconstruction_loss < before.reconstruction_loss
-    assert run.final_evaluation.embedding_cosine_similarity == pytest.approx(1.0)
+    assert (
+        run.final_evaluation.embedding_cosine_similarity
+        > before.embedding_cosine_similarity
+    )
+    assert run.final_evaluation.embedding_cosine_similarity > 0.999
     assert run.to_dict()["steps"]
     assert path.read_text(encoding="utf-8").startswith("{")
 

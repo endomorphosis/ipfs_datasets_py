@@ -29,7 +29,7 @@ from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
-from typing import AbstractSet, Any, Callable, Dict, Iterable, Iterator, List, Mapping, Optional, Sequence
+from typing import AbstractSet, Any, Callable, Dict, Iterable, Iterator, List, Mapping, MutableMapping, Optional, Sequence
 
 
 def _ensure_sibling_ipfs_accelerate_py_on_path() -> None:
@@ -406,6 +406,8 @@ from ipfs_datasets_py.logic.submodule_registry import (
 from ipfs_datasets_py.optimizers.agentic.patch_control import PatchManager, WorktreeManager
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import (
     AdaptiveModalAutoencoder,
+    MODAL_AUTOENCODER_ARCHITECTURE_VERSION,
+    MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
     ModalAutoencoderTrainingState,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import (
@@ -659,6 +661,8 @@ CODEX_APPLY_VALIDATION_TIMEOUT_SECONDS = 600.0
 CODEX_TARGET_METRIC_TIMEOUT_SECONDS = 120.0
 CODEX_TARGET_METRIC_MAX_SAMPLES = 2
 BRIDGE_IR_REPORT_CACHE_MAX = 4096
+USCODE_DAEMON_METRIC_SCHEMA_VERSION = "uscode-modal-daemon-metrics-v2"
+USCODE_DAEMON_ROLLOUT_STAGE = "observability-v1"
 LEGAL_IR_METRIC_DISK_CACHE_VERSION = "legal-ir-metric-disk-cache-v1"
 LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV = "IPFS_DATASETS_LEGAL_IR_METRIC_CACHE_DIR"
 LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV = "IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE"
@@ -1821,6 +1825,92 @@ def metric_block(evaluation) -> Dict[str, Any]:
             )
         }
     return block
+
+
+def _basic_autoencoder_metric_block(evaluation: Any) -> Dict[str, Any]:
+    return {
+        "cosine_loss": round(float(getattr(evaluation, "cosine_loss", 0.0)), 9),
+        "cosine_similarity": round(
+            float(getattr(evaluation, "embedding_cosine_similarity", 0.0)),
+            9,
+        ),
+        "cross_entropy_excess_loss": round(
+            float(getattr(evaluation, "cross_entropy_excess_loss", 0.0)),
+            9,
+        ),
+        "cross_entropy_loss": round(
+            float(getattr(evaluation, "cross_entropy_loss", 0.0)),
+            9,
+        ),
+        "reconstruction_loss": round(
+            float(getattr(evaluation, "reconstruction_loss", 0.0)),
+            9,
+        ),
+        "sample_count": int(getattr(evaluation, "sample_count", 0) or 0),
+    }
+
+
+def autoencoder_memory_gap_block(
+    generalized_evaluation: Any,
+    sample_memory_evaluation: Any,
+    *,
+    dataset: str,
+    expected_holdout: bool = False,
+    threshold: float = 1.0e-6,
+) -> Dict[str, Any]:
+    """Compare sample-memory-disabled and sample-memory-enabled autoencoder scores."""
+
+    generalized = _basic_autoencoder_metric_block(generalized_evaluation)
+    sample_memory = _basic_autoencoder_metric_block(sample_memory_evaluation)
+    cosine_gain = (
+        float(sample_memory["cosine_similarity"])
+        - float(generalized["cosine_similarity"])
+    )
+    cross_entropy_gain = (
+        float(generalized["cross_entropy_loss"])
+        - float(sample_memory["cross_entropy_loss"])
+    )
+    cross_entropy_excess_gain = (
+        float(generalized["cross_entropy_excess_loss"])
+        - float(sample_memory["cross_entropy_excess_loss"])
+    )
+    reconstruction_gain = (
+        float(generalized["reconstruction_loss"])
+        - float(sample_memory["reconstruction_loss"])
+    )
+    advantage_detected = (
+        cosine_gain > threshold
+        or cross_entropy_gain > threshold
+        or cross_entropy_excess_gain > threshold
+        or reconstruction_gain > threshold
+    )
+    return {
+        "cross_entropy_excess_gain_from_sample_memory": round(
+            cross_entropy_excess_gain,
+            9,
+        ),
+        "cross_entropy_gain_from_sample_memory": round(cross_entropy_gain, 9),
+        "cosine_gain_from_sample_memory": round(cosine_gain, 9),
+        "dataset": str(dataset),
+        "expected_holdout": bool(expected_holdout),
+        "generalized": generalized,
+        "generalized_label": "sample_memory_disabled",
+        "interpretation": (
+            "sample memory improves this split; treat memory-enabled scores as a "
+            "memorization probe, not generalization"
+            if advantage_detected
+            else "sample memory did not materially improve this split"
+        ),
+        "reconstruction_gain_from_sample_memory": round(reconstruction_gain, 9),
+        "sample_count": int(generalized.get("sample_count", 0) or 0),
+        "sample_memory": sample_memory,
+        "sample_memory_advantage_detected": bool(advantage_detected),
+        "sample_memory_label": "sample_memory_enabled",
+        "threshold": float(threshold),
+        "unexpected_holdout_memory_advantage": bool(
+            expected_holdout and advantage_detected
+        ),
+    }
 
 
 def _distribution_cosine_similarity(
@@ -9673,6 +9763,36 @@ def save_summary(summary_path: Path, summary: Dict[str, Any], *, final: bool = F
             pass
 
 
+def path_size_report(path: Path) -> Dict[str, Any]:
+    """Return compact file-size telemetry without failing the daemon."""
+    try:
+        stat = path.stat()
+    except OSError:
+        return {
+            "exists": False,
+            "path": str(path),
+            "size_bytes": 0,
+            "size_mb": 0.0,
+        }
+    size_bytes = int(stat.st_size)
+    return {
+        "exists": True,
+        "path": str(path),
+        "size_bytes": size_bytes,
+        "size_mb": round(size_bytes / 1024.0 / 1024.0, 3),
+    }
+
+
+def autoencoder_state_telemetry(
+    state: ModalAutoencoderTrainingState,
+    *,
+    state_path: Path,
+) -> Dict[str, Any]:
+    telemetry = state.telemetry()
+    telemetry["state_file"] = path_size_report(state_path)
+    return telemetry
+
+
 def _read_meminfo_kb() -> Dict[str, int]:
     meminfo: Dict[str, int] = {}
     try:
@@ -9956,6 +10076,9 @@ def _clamp_nested_bridge_adapter_parallelism(
 def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Path, state_path: Path) -> Dict[str, Any]:
     seed = int(hashlib.sha256(args.run_id.encode("utf-8")).hexdigest()[:12], 16)
     return {
+        "active_cycle_phase_timings": {},
+        "autoencoder_architecture_version": MODAL_AUTOENCODER_ARCHITECTURE_VERSION,
+        "autoencoder_state_schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
         "best_validation_ce": 1.0e12,
         "best_validation_cosine": -1.0,
         "best_validation_ir_ce": 1.0e12,
@@ -10001,6 +10124,7 @@ def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Pat
         "log_path": str(log_path),
         "loop_role": getattr(args, "loop_role", "autoencoder"),
         "metric_failures": 0,
+        "metric_schema_version": USCODE_DAEMON_METRIC_SCHEMA_VERSION,
         "optimizer_policy": "autoencoder_sgd_with_codex_program_synthesis_backlog",
         "program_synthesis_claimed": 0,
         "program_synthesis_completed": 0,
@@ -10013,6 +10137,7 @@ def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Pat
         "queue_run_id": getattr(args, "queue_run_id", None) or args.run_id,
         "queue_path": str(queue_path),
         "run_id": args.run_id,
+        "rollout_stage": USCODE_DAEMON_ROLLOUT_STAGE,
         "seed": seed,
         "started_at": utc_now(),
         "state_path": str(state_path),
@@ -10025,6 +10150,8 @@ def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Pat
         ),
         "validation_ce_improved_cycles": 0,
         "validation_cosine_improved_cycles": 0,
+        "latest_autoencoder_state_telemetry": {},
+        "latest_cycle_phase_timings": {},
         "learning_rate_plateau_streak": 0,
         "learning_rate_cosine_regression_streak": 0,
         "learning_rate_applied": float(getattr(args, "learning_rate", 0.35)),
@@ -12817,6 +12944,17 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             state_path=state_path,
         )
         save_summary(summary_path, summary)
+    summary["metric_schema_version"] = USCODE_DAEMON_METRIC_SCHEMA_VERSION
+    summary["rollout_stage"] = USCODE_DAEMON_ROLLOUT_STAGE
+    summary["autoencoder_architecture_version"] = (
+        MODAL_AUTOENCODER_ARCHITECTURE_VERSION
+    )
+    summary["autoencoder_state_schema_version"] = (
+        MODAL_AUTOENCODER_STATE_SCHEMA_VERSION
+    )
+    summary.setdefault("active_cycle_phase_timings", {})
+    summary.setdefault("latest_cycle_phase_timings", {})
+    summary.setdefault("latest_autoencoder_state_telemetry", {})
     bridge_adapters = bridge_loss_adapter_names(args)
     bridge_evaluate_provers = bool(getattr(args, "bridge_evaluate_provers", True))
     bridge_parallel_workers = max(
@@ -12896,6 +13034,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     summary["active_cycle_last_heartbeat_at"] = None
     summary["active_cycle_metric_progress"] = {}
     summary["active_cycle_phase"] = None
+    summary["active_cycle_phase_timings"] = {}
     summary["active_cycle_started_at"] = None
     summary["active_cycle_train_count"] = 0
     summary["active_cycle_validation_count"] = 0
@@ -12938,6 +13077,10 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     cycle_start_margin_seconds = 8.0
     summary["autoencoder_cycle_start_margin_seconds"] = cycle_start_margin_seconds
     state = ModalAutoencoderTrainingState.load_json(state_path)
+    summary["latest_autoencoder_state_telemetry"] = autoencoder_state_telemetry(
+        state,
+        state_path=state_path,
+    )
     warm_start_paths = resolve_warm_start_state_paths(args, queue_dir)
     if warm_start_paths:
         existing_warm_start = dict(summary.get("warm_start", {}))
@@ -12957,6 +13100,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             warm_start["applied"] = True
             summary["warm_start"] = warm_start
             state.save_json(state_path)
+            summary["latest_autoencoder_state_telemetry"] = (
+                autoencoder_state_telemetry(state, state_path=state_path)
+            )
             save_summary(summary_path, summary)
             append_event(
                 log_path,
@@ -13605,6 +13751,37 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         summary["validation_canary_count"] = 0
         summary["validation_canary_indices"] = []
     metric_progress_lock = threading.RLock()
+    phase_timer_state: Dict[str, Any] = {
+        "cycle": None,
+        "phase": None,
+        "started_at": None,
+        "timings": {},
+    }
+
+    def rounded_phase_timings() -> Dict[str, float]:
+        timings = phase_timer_state.get("timings", {})
+        if not isinstance(timings, Mapping):
+            return {}
+        return {
+            str(phase): round(float(seconds), 3)
+            for phase, seconds in sorted(timings.items())
+        }
+
+    def close_active_phase(*, cycle: int, now: float | None = None) -> Dict[str, float]:
+        if phase_timer_state.get("cycle") != int(cycle):
+            return rounded_phase_timings()
+        timestamp = time.time() if now is None else float(now)
+        phase = phase_timer_state.get("phase")
+        started = phase_timer_state.get("started_at")
+        if phase and started is not None:
+            elapsed = max(0.0, timestamp - float(started))
+            timings = phase_timer_state.setdefault("timings", {})
+            if isinstance(timings, MutableMapping):
+                phase_name = str(phase)
+                timings[phase_name] = float(timings.get(phase_name, 0.0)) + elapsed
+        phase_timer_state["phase"] = None
+        phase_timer_state["started_at"] = None
+        return rounded_phase_timings()
 
     def mark_active_autoencoder_cycle(
         *,
@@ -13618,6 +13795,17 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         validation_indices: Sequence[int] | None = None,
     ) -> None:
         with metric_progress_lock:
+            now = time.time()
+            if phase_timer_state.get("cycle") != int(cycle):
+                phase_timer_state["cycle"] = int(cycle)
+                phase_timer_state["phase"] = None
+                phase_timer_state["started_at"] = None
+                phase_timer_state["timings"] = {}
+            else:
+                close_active_phase(cycle=int(cycle), now=now)
+            phase_timer_state["cycle"] = int(cycle)
+            phase_timer_state["phase"] = str(phase)
+            phase_timer_state["started_at"] = now
             summary["active_cycle"] = int(cycle)
             summary["active_cycle_bridge_loss_adapters"] = list(bridge_adapters)
             summary["active_cycle_metric_bridge_adapters"] = list(metric_bridge_adapters)
@@ -13633,6 +13821,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             )
             summary["active_cycle_last_heartbeat_at"] = utc_now()
             summary["active_cycle_phase"] = phase
+            summary["active_cycle_phase_timings"] = rounded_phase_timings()
             if phase != "generalizable_projection":
                 summary["active_cycle_projection_progress"] = {}
                 summary["active_cycle_projection_stage"] = None
@@ -13663,6 +13852,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["active_cycle_last_heartbeat_at"] = None
             summary["active_cycle_metric_progress"] = {}
             summary["active_cycle_phase"] = None
+            summary["active_cycle_phase_timings"] = {}
             summary["active_cycle_projection_progress"] = {}
             summary["active_cycle_projection_stage"] = None
             summary["active_cycle_started_at"] = None
@@ -13670,6 +13860,10 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["active_cycle_validation_count"] = 0
             summary["active_cycle_train_indices"] = []
             summary["active_cycle_validation_indices"] = []
+            phase_timer_state["cycle"] = None
+            phase_timer_state["phase"] = None
+            phase_timer_state["started_at"] = None
+            phase_timer_state["timings"] = {}
 
     def apply_queue_summary(queue_snapshot: ModalTodoQueue) -> Dict[str, Any]:
         status = update_program_synthesis_summary(
@@ -14100,6 +14294,57 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             legal_ir_target_hashes=dict(bridge_evaluation.legal_ir_target_hashes),
             legal_ir_view_distribution=dict(bridge_evaluation.legal_ir_view_distribution),
         )
+
+    def evaluate_autoencoder_base_probe(
+        samples: Sequence[Any],
+        *,
+        cycle: int,
+        cycle_started: float,
+        phase: str,
+        dataset: str,
+        use_sample_memory: bool,
+    ):
+        sample_list = list(samples)
+        record_metric_progress(
+            cycle=cycle,
+            cycle_started=cycle_started,
+            phase=phase,
+            stage=f"{dataset}_base_probe_start",
+            sample_count=len(sample_list),
+        )
+        try:
+            evaluation = autoencoder.evaluate(
+                sample_list,
+                legal_ir_bridge_names=(),
+                legal_ir_evaluate_provers=False,
+                legal_ir_parallel_workers=1,
+                use_sample_memory=use_sample_memory,
+            )
+        except Exception as exc:
+            if not cuda_oom_error(exc):
+                raise
+            fallback_autoencoder_compute_to_python(
+                cycle=cycle,
+                cycle_started=cycle_started,
+                phase=phase,
+                stage=f"{dataset}_base_probe",
+                error=exc,
+            )
+            evaluation = autoencoder.evaluate(
+                sample_list,
+                legal_ir_bridge_names=(),
+                legal_ir_evaluate_provers=False,
+                legal_ir_parallel_workers=1,
+                use_sample_memory=use_sample_memory,
+            )
+        record_metric_progress(
+            cycle=cycle,
+            cycle_started=cycle_started,
+            phase=phase,
+            stage=f"{dataset}_base_probe_done",
+            sample_count=len(sample_list),
+        )
+        return evaluation
 
     def bootstrap_program_synthesis_todos(
         *,
@@ -14714,6 +14959,39 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 cycle=cycle,
                 cycle_started=cycle_started,
                 cycle_started_at=cycle_started_at,
+                phase="sample_memory_probe",
+                train_count=len(train_samples),
+                validation_count=len(acceptance_validation_samples),
+                train_indices=train_indices,
+                validation_indices=acceptance_validation_indices,
+            )
+            with active_cycle_heartbeat(
+                cycle=cycle,
+                cycle_started=cycle_started,
+                phase="sample_memory_probe",
+            ):
+                after_train_generalized_probe = evaluate_autoencoder_base_probe(
+                    train_samples,
+                    cycle=cycle,
+                    cycle_started=cycle_started,
+                    phase="sample_memory_probe",
+                    dataset="train_generalized",
+                    use_sample_memory=False,
+                )
+                after_validation_sample_memory_probe = (
+                    evaluate_autoencoder_base_probe(
+                        acceptance_validation_samples,
+                        cycle=cycle,
+                        cycle_started=cycle_started,
+                        phase="sample_memory_probe",
+                        dataset="validation_sample_memory",
+                        use_sample_memory=True,
+                    )
+                )
+            mark_active_autoencoder_cycle(
+                cycle=cycle,
+                cycle_started=cycle_started,
+                cycle_started_at=cycle_started_at,
                 phase="guided_compiler_ir_metrics",
                 train_count=len(train_samples),
                 validation_count=len(acceptance_validation_samples),
@@ -14798,6 +15076,10 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 queue = latest_queue
             autoencoder.state.save_json(state_path)
             run.save_json(run_json_path)
+            latest_state_telemetry = autoencoder_state_telemetry(
+                autoencoder.state,
+                state_path=state_path,
+            )
 
             train_ce_delta = before_train.cross_entropy_loss - after_train.cross_entropy_loss
             validation_ce_delta = before_validation.cross_entropy_loss - after_validation.cross_entropy_loss
@@ -14810,6 +15092,24 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             before_validation_metrics = metric_block(before_validation)
             after_train_metrics = metric_block(after_train)
             after_validation_metrics = metric_block(after_validation)
+            after_train_generalized_probe_metrics = metric_block(
+                after_train_generalized_probe
+            )
+            after_validation_sample_memory_probe_metrics = metric_block(
+                after_validation_sample_memory_probe
+            )
+            train_sample_memory_gap = autoencoder_memory_gap_block(
+                after_train_generalized_probe,
+                after_train,
+                dataset="train",
+                expected_holdout=False,
+            )
+            validation_sample_memory_gap = autoencoder_memory_gap_block(
+                after_validation,
+                after_validation_sample_memory_probe,
+                dataset="validation",
+                expected_holdout=True,
+            )
             learned_ir_before_train = learned_ir_metric_block(before_train)
             learned_ir_before_validation = learned_ir_metric_block(before_validation)
             learned_ir_train = learned_ir_metric_block(after_train)
@@ -15087,6 +15387,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 "worst_family_cosine_gap_loss",
             )
             latest_cycle_seconds = round(time.time() - cycle_started, 3)
+            latest_cycle_phase_timings = close_active_phase(cycle=cycle)
             clear_active_autoencoder_cycle()
             summary["last_completed_cycle"] = cycle
             summary["cycles"] = cycle
@@ -15097,9 +15398,21 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["latest_feature_projection_report"] = feature_projection_report
             summary["latest_program_synthesis_bootstrap"] = bootstrap_report
             summary["latest_cycle_seconds"] = latest_cycle_seconds
+            summary["latest_cycle_phase_timings"] = latest_cycle_phase_timings
+            summary["latest_autoencoder_state_telemetry"] = latest_state_telemetry
             summary["embedding_target_report"] = embedding_lookup.report()
             summary["latest_autoencoder_train"] = after_train_metrics
+            summary["latest_autoencoder_train_generalized_probe"] = (
+                after_train_generalized_probe_metrics
+            )
             summary["latest_autoencoder_validation"] = after_validation_metrics
+            summary["latest_autoencoder_validation_sample_memory_probe"] = (
+                after_validation_sample_memory_probe_metrics
+            )
+            summary["latest_train_sample_memory_gap"] = train_sample_memory_gap
+            summary["latest_validation_sample_memory_gap"] = (
+                validation_sample_memory_gap
+            )
             summary["latest_train_ce"] = after_train.cross_entropy_loss
             summary["latest_train_cosine"] = after_train.embedding_cosine_similarity
             summary["latest_train_reconstruction"] = after_train.reconstruction_loss
@@ -15370,6 +15683,119 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["latest_learned_ir_worst_family_cosine_gap_name"] = (
                 learned_ir_validation.get("worst_family_cosine_gap_name")
             )
+            summary["latest_validation_signal_separation"] = {
+                "autoencoder_generalization": _basic_autoencoder_metric_block(
+                    after_validation
+                ),
+                "deterministic_compiler_ir": {
+                    "cross_entropy_excess_loss": round(
+                        latest_compiler_ir_ce_excess,
+                        9,
+                    ),
+                    "cross_entropy_loss": round(latest_compiler_ir_ce, 9),
+                    "metric_role": (
+                        "deterministic compiler/decompiler IR round-trip"
+                    ),
+                    "raw_source_embedding_cosine_similarity": round(
+                        latest_compiler_ir_raw_source_embedding_cosine,
+                        9,
+                    ),
+                    "structural_ir_cosine_similarity": round(
+                        latest_compiler_ir_cosine,
+                        9,
+                    ),
+                },
+                "learned_ir_view": {
+                    "family_cross_entropy_excess_loss": round(
+                        latest_learned_ir_family_ce_excess,
+                        9,
+                    ),
+                    "metric_role": (
+                        "autoencoder-predicted LegalIR view/family alignment"
+                    ),
+                    "view_cosine_similarity": round(
+                        latest_learned_ir_view_cosine,
+                        9,
+                    ),
+                    "view_cross_entropy_loss": round(
+                        latest_learned_ir_view_ce,
+                        9,
+                    ),
+                    "worst_family_cosine_gap_loss": round(
+                        latest_learned_ir_worst_family_cosine_gap,
+                        9,
+                    ),
+                    "worst_family_cross_entropy_excess_loss": round(
+                        latest_learned_ir_worst_family_ce_excess,
+                        9,
+                    ),
+                },
+                "logic_bridge_validation": {
+                    "acceptance_rate": round(
+                        float(bridge_ir_validation.get("acceptance_rate", 0.0)),
+                        9,
+                    ),
+                    "metric_role": (
+                        "syntax/prover/KG bridge checks over diagnostic adapters"
+                    ),
+                    "proof_failure_ratio": round(
+                        float(
+                            bridge_ir_validation.get(
+                                "proof_failure_ratio",
+                                0.0,
+                            )
+                        ),
+                        9,
+                    ),
+                    "sampled": bool(bridge_ir_validation.get("sampled", False)),
+                    "total_loss": round(
+                        float(bridge_ir_validation.get("total_loss", 0.0)),
+                        9,
+                    ),
+                },
+                "metric_roles": {
+                    "autoencoder_generalization": (
+                        "held-out samples with sample memory disabled; this is "
+                        "the core generalization signal"
+                    ),
+                    "deterministic_compiler_ir": (
+                        "current Python compiler/decompiler IR quality, not the "
+                        "learned embedding head"
+                    ),
+                    "learned_ir_view": (
+                        "autoencoder's learned projection into LegalIR view/family "
+                        "space"
+                    ),
+                    "sample_memory_probe": (
+                        "same samples with sample-specific memory enabled; a large "
+                        "gain indicates memorization pressure"
+                    ),
+                    "source_copy_guard": (
+                        "penalizes decompilers that copy source spans instead of "
+                        "round-tripping through useful IR"
+                    ),
+                },
+                "sample_memory_probe": validation_sample_memory_gap,
+                "source_copy_guard": {
+                    "copy_hack_penalty": round(
+                        latest_compiler_ir_source_copy_reward_hack_penalty,
+                        9,
+                    ),
+                    "source_copy_loss": round(
+                        latest_compiler_ir_source_copy_loss,
+                        9,
+                    ),
+                    "source_decompiled_text_embedding_cosine_loss": round(
+                        latest_source_decompiled_text_embedding_cosine_loss,
+                        9,
+                    ),
+                    "source_decompiled_text_token_loss": round(
+                        latest_source_decompiled_text_token_loss,
+                        9,
+                    ),
+                },
+                "validation_mode": validation_mode,
+            }
             summary["validation_mode"] = validation_mode
             program_synthesis_status = update_program_synthesis_summary(
                 summary,
@@ -15650,10 +16076,17 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "after_train": after_train_metrics,
                     "after_validation": after_validation_metrics,
                     "applied_count": sum(step.applied_count for step in run.steps),
+                    "autoencoder_state_telemetry": latest_state_telemetry,
                     "autoencoder_after_train": after_train_metrics,
                     "autoencoder_after_validation": after_validation_metrics,
                     "autoencoder_before_train": before_train_metrics,
                     "autoencoder_before_validation": before_validation_metrics,
+                    "autoencoder_train_generalized_probe": (
+                        after_train_generalized_probe_metrics
+                    ),
+                    "autoencoder_validation_sample_memory_probe": (
+                        after_validation_sample_memory_probe_metrics
+                    ),
                     "before_train": before_train_metrics,
                     "before_validation": before_validation_metrics,
                     "completed_count": sum(step.completed_count for step in run.steps),
@@ -15731,6 +16164,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "logic_bridge_validation": bridge_ir_validation,
                     "cycle": cycle,
                     "duration_seconds": latest_cycle_seconds,
+                    "cycle_phase_timings": latest_cycle_phase_timings,
                     "event": "cycle",
                     "failed_validation_count": sum(step.failed_validation_count for step in run.steps),
                     "failed_validation_rescue_deduped_count": int(
@@ -15750,6 +16184,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "bridge_loss_signal_count": bridge_loss_signals,
                     "queue_counts": supervisor.queue.status_counts(),
                     "role_queue_counts": supervisor.queue.role_status_counts(),
+                    "train_sample_memory_gap": train_sample_memory_gap,
+                    "validation_sample_memory_gap": validation_sample_memory_gap,
                     "stopped_reason": run.stopped_reason,
                     "program_synthesis_claimed_count": program_synthesis_status["claimed"],
                     "program_synthesis_completed_count": program_synthesis_status["completed"],
@@ -15808,6 +16244,16 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["latest_stop_reason"] = f"signal_{stop_state.stop_signal}"
             summary["stopped_by_signal"] = stop_state.stop_signal
         summary.update(autoencoder.compute_backend_metadata())
+        summary["autoencoder_architecture_version"] = (
+            MODAL_AUTOENCODER_ARCHITECTURE_VERSION
+        )
+        summary["autoencoder_state_schema_version"] = (
+            MODAL_AUTOENCODER_STATE_SCHEMA_VERSION
+        )
+        summary["latest_autoencoder_state_telemetry"] = autoencoder_state_telemetry(
+            autoencoder.state,
+            state_path=state_path,
+        )
         summary["applied_todo_ids"] = len(autoencoder.state.applied_todo_ids)
         summary["compiler_quality_embedding_weight_entries"] = len(
             autoencoder.state.compiler_quality_embedding_weights

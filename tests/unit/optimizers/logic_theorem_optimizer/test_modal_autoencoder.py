@@ -15,6 +15,8 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder impor
     AutoencoderEvaluation,
     CodexCallCache,
     CodexCallGateConfig,
+    MODAL_AUTOENCODER_ARCHITECTURE_VERSION,
+    MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
     ModalAutoencoderBaseline,
     ModalAutoencoderTrainingState,
     ProverCompilationSignal,
@@ -12551,6 +12553,52 @@ def test_adaptive_autoencoder_state_roundtrip(tmp_path) -> None:
 
     assert loaded.to_dict() == state.to_dict()
     assert loaded_from_file.to_dict() == state.to_dict()
+    assert not list(tmp_path.glob(".state.json.tmp-*"))
+
+
+def test_training_state_telemetry_reports_dense_state_size() -> None:
+    state = ModalAutoencoderTrainingState(
+        decoded_embeddings={"sample-1": [0.1, 0.2]},
+        family_logits={"sample-1": {"deontic": 0.7, "temporal": 0.3}},
+        feature_embedding_weights={
+            "token:agency": [0.3, -0.1, 0.2],
+            "token:duty": [0.4, 0.5],
+        },
+        legal_ir_view_embedding_weights={
+            "knowledge_graphs.neo4j_compat": [0.05, 0.06]
+        },
+        feature_family_logits={
+            "modal-family:deontic": {"deontic": 0.2, "temporal": -0.1}
+        },
+        feature_legal_ir_view_logits={
+            "legal-ir:cue:deontic": {"frame_logic": 0.4}
+        },
+        legal_ir_view_logits={"deontic.ir": 0.3},
+        applied_todo_ids=["todo-1"],
+    )
+
+    telemetry = state.telemetry()
+
+    assert (
+        telemetry["architecture_version"]
+        == MODAL_AUTOENCODER_ARCHITECTURE_VERSION
+    )
+    assert telemetry["schema_version"] == MODAL_AUTOENCODER_STATE_SCHEMA_VERSION
+    assert telemetry["applied_todo_count"] == 1
+    assert telemetry["decoded_embedding_count"] == 1
+    assert telemetry["family_logit_sample_count"] == 1
+    assert telemetry["sample_memory_entry_count"] == 2
+    assert telemetry["sample_memory_scalar_count"] == 4
+    assert telemetry["sample_decoded_embedding_scalar_count"] == 2
+    assert telemetry["sample_family_logit_scalar_count"] == 2
+    assert telemetry["feature_embedding_weight_entries"] == 2
+    assert telemetry["feature_family_logit_entries"] == 1
+    assert telemetry["feature_legal_ir_view_logit_entries"] == 1
+    assert telemetry["flat_legal_ir_view_logit_entries"] == 1
+    assert telemetry["vector_entry_count"] == 3
+    assert telemetry["vector_scalar_count"] == 7
+    assert telemetry["nested_logit_entry_count"] == 2
+    assert telemetry["nested_logit_scalar_count"] == 3
 
 
 def test_generalizable_state_copy_drops_sample_specific_memory() -> None:

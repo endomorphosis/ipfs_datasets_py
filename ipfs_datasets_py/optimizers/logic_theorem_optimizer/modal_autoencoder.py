@@ -30,6 +30,8 @@ _PROJECTION_AUTO_LINE_SEARCH_ATTEMPTS_ENV = (
 _FALSE_ENV_VALUES = {"0", "false", "no", "off", "none", "disabled"}
 _LEGAL_IR_TARGET_CODE_FINGERPRINT_LOCK = threading.Lock()
 _LEGAL_IR_TARGET_CODE_FINGERPRINT_VALUE: Optional[str] = None
+MODAL_AUTOENCODER_ARCHITECTURE_VERSION = "legacy_dense_v1"
+MODAL_AUTOENCODER_STATE_SCHEMA_VERSION = "modal-autoencoder-state-v1"
 
 
 @dataclass(frozen=True)
@@ -801,6 +803,100 @@ class ModalAutoencoderTrainingState:
                 self.semantic_slot_legal_ir_view_logits,
             )
         )
+
+    def telemetry(self) -> Dict[str, Any]:
+        """Return compact state-size telemetry for daemon rollout diagnostics."""
+        vector_maps: Dict[str, Mapping[str, Sequence[float]]] = {
+            "compiler_quality_embedding_weights": self.compiler_quality_embedding_weights,
+            "logic_signature_embedding_weights": self.logic_signature_embedding_weights,
+            "round_trip_signal_embedding_weights": self.round_trip_signal_embedding_weights,
+            "decompiler_plan_embedding_weights": self.decompiler_plan_embedding_weights,
+            "predicate_argument_embedding_weights": self.predicate_argument_embedding_weights,
+            "feature_embedding_weights": self.feature_embedding_weights,
+            "family_embedding_weights": self.family_embedding_weights,
+            "family_semantic_slot_embedding_weights": self.family_semantic_slot_embedding_weights,
+            "family_semantic_slot_legal_ir_view_embedding_weights": (
+                self.family_semantic_slot_legal_ir_view_embedding_weights
+            ),
+            "family_legal_ir_view_embedding_weights": self.family_legal_ir_view_embedding_weights,
+            "semantic_slot_embedding_weights": self.semantic_slot_embedding_weights,
+            "legal_ir_view_embedding_weights": self.legal_ir_view_embedding_weights,
+            "semantic_slot_legal_ir_view_embedding_weights": (
+                self.semantic_slot_legal_ir_view_embedding_weights
+            ),
+        }
+        nested_logit_maps: Dict[str, Mapping[str, Mapping[str, float]]] = {
+            "compiler_quality_family_logits": self.compiler_quality_family_logits,
+            "logic_signature_family_logits": self.logic_signature_family_logits,
+            "logic_signature_legal_ir_view_logits": self.logic_signature_legal_ir_view_logits,
+            "round_trip_signal_family_logits": self.round_trip_signal_family_logits,
+            "round_trip_signal_legal_ir_view_logits": self.round_trip_signal_legal_ir_view_logits,
+            "decompiler_plan_family_logits": self.decompiler_plan_family_logits,
+            "decompiler_plan_legal_ir_view_logits": self.decompiler_plan_legal_ir_view_logits,
+            "predicate_argument_family_logits": self.predicate_argument_family_logits,
+            "predicate_argument_legal_ir_view_logits": self.predicate_argument_legal_ir_view_logits,
+            "feature_family_logits": self.feature_family_logits,
+            "semantic_slot_family_logits": self.semantic_slot_family_logits,
+            "legal_ir_view_family_logits": self.legal_ir_view_family_logits,
+            "feature_legal_ir_view_logits": self.feature_legal_ir_view_logits,
+            "family_semantic_slot_legal_ir_view_logits": (
+                self.family_semantic_slot_legal_ir_view_logits
+            ),
+            "semantic_slot_legal_ir_view_family_logits": (
+                self.semantic_slot_legal_ir_view_family_logits
+            ),
+            "semantic_slot_legal_ir_view_logits": self.semantic_slot_legal_ir_view_logits,
+        }
+        vector_entry_counts = {
+            name: len(mapping)
+            for name, mapping in sorted(vector_maps.items())
+        }
+        nested_logit_entry_counts = {
+            name: len(mapping)
+            for name, mapping in sorted(nested_logit_maps.items())
+        }
+        vector_scalar_count = sum(
+            len(vector)
+            for mapping in vector_maps.values()
+            for vector in mapping.values()
+        )
+        nested_logit_scalar_count = sum(
+            len(logits)
+            for mapping in nested_logit_maps.values()
+            for logits in mapping.values()
+        )
+        sample_embedding_scalar_count = sum(
+            len(vector) for vector in self.decoded_embeddings.values()
+        )
+        sample_family_logit_scalar_count = sum(
+            len(logits) for logits in self.family_logits.values()
+        )
+        return {
+            "architecture_version": MODAL_AUTOENCODER_ARCHITECTURE_VERSION,
+            "applied_todo_count": len(self.applied_todo_ids),
+            "decoded_embedding_count": len(self.decoded_embeddings),
+            "family_logit_sample_count": len(self.family_logits),
+            "feature_embedding_weight_entries": len(self.feature_embedding_weights),
+            "feature_family_logit_entries": len(self.feature_family_logits),
+            "feature_legal_ir_view_logit_entries": len(
+                self.feature_legal_ir_view_logits
+            ),
+            "flat_legal_ir_view_logit_entries": len(self.legal_ir_view_logits),
+            "generalizable_entry_count": self.generalizable_entry_count(),
+            "nested_logit_entry_count": sum(nested_logit_entry_counts.values()),
+            "nested_logit_entry_counts": nested_logit_entry_counts,
+            "nested_logit_scalar_count": nested_logit_scalar_count,
+            "schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
+            "sample_memory_entry_count": len(self.decoded_embeddings)
+            + len(self.family_logits),
+            "sample_memory_scalar_count": sample_embedding_scalar_count
+            + sample_family_logit_scalar_count,
+            "sample_decoded_embedding_scalar_count": sample_embedding_scalar_count,
+            "sample_family_logit_scalar_count": sample_family_logit_scalar_count,
+            "vector_entry_count": sum(vector_entry_counts.values()),
+            "vector_entry_counts": vector_entry_counts,
+            "vector_scalar_count": vector_scalar_count,
+        }
 
     def generalizable_copy(self) -> "ModalAutoencoderTrainingState":
         """Return only feature-level state safe to reuse across samples.
@@ -1779,7 +1875,19 @@ class ModalAutoencoderTrainingState:
     def save_json(self, path: str | Path) -> None:
         destination = Path(path)
         destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_text(self.to_json() + "\n", encoding="utf-8")
+        payload = self.to_json() + "\n"
+        temporary = destination.with_name(
+            f".{destination.name}.tmp-{os.getpid()}-{threading.get_ident()}"
+        )
+        try:
+            temporary.write_text(payload, encoding="utf-8")
+            os.replace(temporary, destination)
+        finally:
+            try:
+                if temporary.exists():
+                    temporary.unlink()
+            except OSError:
+                pass
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "ModalAutoencoderTrainingState":
@@ -23658,6 +23766,8 @@ __all__ = [
     "CodexCallCache",
     "CodexCallDecision",
     "CodexCallGateConfig",
+    "MODAL_AUTOENCODER_ARCHITECTURE_VERSION",
+    "MODAL_AUTOENCODER_STATE_SCHEMA_VERSION",
     "ModalAutoencoderBaseline",
     "ModalAutoencoderTrainingState",
     "ProverCompilationSignal",
