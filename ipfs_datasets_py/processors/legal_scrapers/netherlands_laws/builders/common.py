@@ -54,9 +54,21 @@ def _parquet_safe(value: Any) -> Any:
     return value
 
 
+def _jsonify_complex(value: Any) -> Any:
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, ensure_ascii=False, sort_keys=True)
+    return value
+
+
 def write_parquet(path: Path, rows: list[dict[str, Any]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    table = pa.Table.from_pylist([{key: _parquet_safe(value) for key, value in row.items()} for row in rows])
+    safe_rows = [{key: _parquet_safe(value) for key, value in row.items()} for row in rows]
+    try:
+        table = pa.Table.from_pylist(safe_rows)
+    except (pa.ArrowInvalid, pa.ArrowTypeError, TypeError):
+        table = pa.Table.from_pylist(
+            [{key: _jsonify_complex(value) for key, value in row.items()} for row in safe_rows]
+        )
     pq.write_table(table, path, compression="zstd")
 
 

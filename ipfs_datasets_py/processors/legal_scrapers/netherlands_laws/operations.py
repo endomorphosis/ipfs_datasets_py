@@ -947,6 +947,8 @@ def coverage_report(
     total = len(rows)
     state_counts = Counter(str(row["scrape_state"]) for row in rows)
     status_counts = Counter(str(row["law_status"] or "unknown") for row in rows)
+    parser_status_counts = Counter(str(row["parser_status"] or "unknown") for row in rows)
+    article_status_counts = Counter(str(row["article_extraction_status"] or "unknown") for row in rows)
     failure_counts = Counter(str(row["last_error_category"] or "none") for row in rows if row["scrape_state"] == "failed")
     complete_identifiers = [
         str(row["identifier"])
@@ -981,6 +983,16 @@ def coverage_report(
         },
         "percent_complete": round((complete / total * 100.0), 6) if total else 0.0,
         "law_status_counts": {status: status_counts.get(status, 0) for status in LAW_STATUS_VALUES},
+        "parser_status_counts": dict(sorted(parser_status_counts.items())),
+        "article_extraction_status_counts": dict(sorted(article_status_counts.items())),
+        "article_producing_laws_count": article_status_counts.get("articles_extracted", 0),
+        "non_article_producing_laws_count": (
+            article_status_counts.get("non_article_document", 0)
+            + article_status_counts.get("article_extraction_missing", 0)
+        ),
+        "article_extraction_missing_count": article_status_counts.get("article_extraction_missing", 0),
+        "genuine_non_article_laws_count": article_status_counts.get("non_article_document", 0),
+        "article_rows_count": sum(int(row["article_rows_count"] or 0) for row in rows),
         "failures_by_category": dict(sorted(failure_counts.items())),
         "completion_semantics": (
             "Complete means parsed, packaged, uploaded, verified, permanently_skipped, or failed with "

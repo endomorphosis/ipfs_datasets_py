@@ -50,6 +50,8 @@ def _raw_fixture(raw_dir: Path) -> Path:
             "status_confidence": "high",
             "status_note": "Official status text indicates the law is current",
             "article_count": 2,
+            "article_rows_count": 3,
+            "article_extraction_status": "articles_extracted",
             "metadata": {},
         }
     ]
@@ -328,6 +330,10 @@ def test_catalog_sync_incremental_delta_and_integrity(tmp_path):
     assert report["counts"]["parsed"] == 1
     assert report["counts"]["complete"] == 1
     assert report["law_status_counts"]["current"] == 1
+    assert report["parser_status_counts"]["parsed"] == 1
+    assert report["article_producing_laws_count"] == 1
+    assert report["non_article_producing_laws_count"] == 0
+    assert report["article_rows_count"] == 3
 
     delta = build_incremental_hf_delta(catalog_path=catalog_path, raw_dir=raw_dir, out_dir=tmp_path / "delta")
     assert delta["records"] == {"laws": 1, "articles": 3, "cid_index": 4, "index_rows": 4}

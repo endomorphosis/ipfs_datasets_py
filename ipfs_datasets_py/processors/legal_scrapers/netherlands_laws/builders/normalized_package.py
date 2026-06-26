@@ -180,6 +180,17 @@ def write_dataset_card(
     scrape_date = str(run_metadata.get("scraped_at") or "unknown")
     scope_note = str(run_metadata.get("corpus_scope_note") or "")
     full_bwb = run_metadata.get("full_bwb_discovery") or {}
+    catalog_counts = run_metadata.get("catalog_coverage_counts") or {}
+    catalog_note = ""
+    if run_metadata.get("catalog_backed_run"):
+        catalog_note = (
+            f"Catalog-backed production batch: {run_metadata.get('catalog_batch_size', 'unknown')} queued BWBR identifier(s). "
+            f"Catalog coverage after this run: {catalog_counts.get('complete', 'unknown')} complete of "
+            f"{catalog_counts.get('total_discovered_identifiers', 'unknown')} discovered identifier(s) "
+            f"({run_metadata.get('catalog_percent_complete', 'unknown')}%). Remaining: "
+            f"{catalog_counts.get('remaining', 'unknown')}. Integrity validation ok: "
+            f"{run_metadata.get('catalog_integrity_ok', 'unknown')}."
+        )
     readme = f"""---
 pretty_name: Netherlands Laws (Dutch, Normalized)
 language:
@@ -219,6 +230,8 @@ Scrape date: {scrape_date}
 Exact corpus size in this package: {record_counts.get("laws", 0)} law records and {record_counts.get("articles", 0)} article records.
 
 Full BWB discovery inventory: {full_bwb.get("unique_laws_discovered", "unknown")} unique BWBR identifiers from {full_bwb.get("number_of_records_reported", "unknown")} official SRU record(s), with {full_bwb.get("failed_pages_count", "unknown")} failed discovery page(s).
+
+{catalog_note}
 
 {scope_note}
 

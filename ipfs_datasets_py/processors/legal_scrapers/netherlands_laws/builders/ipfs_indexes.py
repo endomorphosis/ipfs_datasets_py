@@ -140,6 +140,22 @@ def _write_gitattributes(out_dir: Path) -> None:
     )
 
 
+def _catalog_summary_text(run_metadata: dict[str, Any]) -> str:
+    if not run_metadata.get("catalog_backed_run"):
+        return ""
+    counts = run_metadata.get("catalog_coverage_counts") or {}
+    return (
+        f"Catalog-backed production batch: {run_metadata.get('catalog_batch_size', 'unknown')} queued BWBR identifier(s). "
+        f"Catalog coverage after this run: {counts.get('complete', 'unknown')} complete of "
+        f"{counts.get('total_discovered_identifiers', 'unknown')} discovered identifier(s) "
+        f"({run_metadata.get('catalog_percent_complete', 'unknown')}%). Remaining: "
+        f"{counts.get('remaining', 'unknown')}. Integrity validation ok: "
+        f"{run_metadata.get('catalog_integrity_ok', 'unknown')}. "
+        "This is not full Dutch corpus coverage until every discovered identifier is parsed, intentionally skipped, "
+        "or permanently failed with explanation. "
+    )
+
+
 def _write_manifest(
     out_dir: Path,
     dataset_name: str,
@@ -246,6 +262,7 @@ def build_vector_index(
     write_json(out_dir / "artifacts/metadata.json", metadata)
     scrape_date = str(run_metadata.get("scraped_at") or "unknown")
     full_bwb = run_metadata.get("full_bwb_discovery") or {}
+    catalog_summary = _catalog_summary_text(run_metadata)
     _write_dataset_card(
         out_dir,
         "IPFS Netherlands Laws Vector Index",
@@ -257,6 +274,7 @@ def build_vector_index(
             f"Source scrape date: {scrape_date}. "
             f"Full BWB discovery inventory found {full_bwb.get('unique_laws_discovered', 'unknown')} unique BWBR identifiers "
             f"from {full_bwb.get('number_of_records_reported', 'unknown')} official SRU record(s). "
+            f"{catalog_summary}"
             "The current source dataset may be capped; do not describe it as the full Dutch corpus unless "
             "the paired base dataset manifest/run metadata proves full discovery coverage. "
             "The paired base dataset includes article extraction diagnostics and parser coverage improvements "
@@ -363,6 +381,7 @@ def build_bm25_index(
     write_json(out_dir / "artifacts/metadata.json", metadata)
     scrape_date = str(run_metadata.get("scraped_at") or "unknown")
     full_bwb = run_metadata.get("full_bwb_discovery") or {}
+    catalog_summary = _catalog_summary_text(run_metadata)
     _write_dataset_card(
         out_dir,
         "IPFS Netherlands Laws BM25 Index",
@@ -374,6 +393,7 @@ def build_bm25_index(
             f"Source scrape date: {scrape_date}. "
             f"Full BWB discovery inventory found {full_bwb.get('unique_laws_discovered', 'unknown')} unique BWBR identifiers "
             f"from {full_bwb.get('number_of_records_reported', 'unknown')} official SRU record(s). "
+            f"{catalog_summary}"
             "The current source dataset may be capped; do not describe it as the full Dutch corpus unless "
             "the paired base dataset manifest/run metadata proves full discovery coverage. "
             "The paired base dataset includes article extraction diagnostics and parser coverage improvements "
@@ -537,6 +557,7 @@ def build_knowledge_graph(
     write_json(out_dir / "artifacts/metadata.json", metadata)
     scrape_date = str(run_metadata.get("scraped_at") or "unknown")
     full_bwb = run_metadata.get("full_bwb_discovery") or {}
+    catalog_summary = _catalog_summary_text(run_metadata)
     _write_dataset_card(
         out_dir,
         "IPFS Netherlands Laws Knowledge Graph",
@@ -548,6 +569,7 @@ def build_knowledge_graph(
             f"Source scrape date: {scrape_date}. "
             f"Full BWB discovery inventory found {full_bwb.get('unique_laws_discovered', 'unknown')} unique BWBR identifiers "
             f"from {full_bwb.get('number_of_records_reported', 'unknown')} official SRU record(s). "
+            f"{catalog_summary}"
             "The current source dataset may be capped; do not describe it as the full Dutch corpus unless "
             "the paired base dataset manifest/run metadata proves full discovery coverage. "
             "The paired base dataset includes article extraction diagnostics and parser coverage improvements "
