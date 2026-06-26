@@ -34,6 +34,9 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder impor
     symbolic_validity_penalty,
     _autoencoder_typed_family_pairs_for_formula,
     _autoencoder_typed_family_pair_strengths_for_formula,
+    _annotate_projection_prescreen_rankings,
+    _projection_deadband_decision,
+    _projection_prescreen_summary,
     _evaluation_improved_for_training,
     _legal_ir_target_cache_key,
     _source_decompiled_text_losses_from_targets,
@@ -504,6 +507,10 @@ def test_generalizable_projection_reports_progress_and_attempt_cap() -> None:
         epochs=1,
         learning_rate=0.1,
         max_line_search_attempts=1,
+        projection_deadband_mode="shadow",
+        projection_max_ce_deadband=1.0e-4,
+        projection_prescreen_mode="shadow",
+        projection_prescreen_top_k=1,
         progress_callback=progress.append,
     )
 
@@ -511,7 +518,20 @@ def test_generalizable_projection_reports_progress_and_attempt_cap() -> None:
     assert report["effective_max_line_search_attempts"] == 1
     assert report["elapsed_seconds"] >= 0.0
     assert report["state_entry_count"] >= 0
+    assert report["projection_deadband"]["mode"] == "shadow"
+    assert report["projection_deadband"]["max_ce_deadband"] == pytest.approx(1.0e-4)
+    assert report["projection_prescreen"]["mode"] == "shadow"
+    assert report["projection_prescreen"]["top_k"] == 1
+    assert report["projection_prescreen_summary"]["enabled_attempt_count"] >= 1
+    assert report["epoch_reports"][0]["candidate_reports"][0]["attempt_reports"][0][
+        "projection_deadband"
+    ]["mode"] == "shadow"
+    assert report["epoch_reports"][0]["candidate_reports"][0]["attempt_reports"][0][
+        "projection_prescreen"
+    ]["mode"] == "shadow"
     assert "before_holdout_evaluation" in stages
+    assert "projection_prescreen_baseline" in stages
+    assert "projection_prescreen_evaluation" in stages
     assert "line_search_attempt" in stages
     assert stages[-1] == "finished"
 
@@ -902,6 +922,147 @@ def test_generalizable_projection_acceptance_rejects_cosine_regression() -> None
 
     assert _evaluation_improved_for_training(before, after_ce_only) is False
     assert _evaluation_improved_for_training(before, after_pareto) is True
+
+
+def test_projection_deadband_tolerates_only_ce_micro_regressions() -> None:
+    shadow = _projection_deadband_decision(
+        {"cross_entropy_excess_loss": 5.0e-5},
+        objective_delta=0.2,
+        mode="shadow",
+        max_ce_deadband=1.0e-4,
+        hard_guardrail_metrics="embedding_cosine_similarity,legal_ir:*",
+    )
+    enforced = _projection_deadband_decision(
+        {"cross_entropy_excess_loss": 5.0e-5},
+        objective_delta=0.2,
+        mode="enforce",
+        max_ce_deadband=1.0e-4,
+        hard_guardrail_metrics="embedding_cosine_similarity,legal_ir:*",
+    )
+    hard_guarded = _projection_deadband_decision(
+        {
+            "cross_entropy_excess_loss": 5.0e-5,
+            "embedding_cosine_similarity": 1.0e-6,
+        },
+        objective_delta=0.2,
+        mode="shadow",
+        max_ce_deadband=1.0e-4,
+        hard_guardrail_metrics="embedding_cosine_similarity,legal_ir:*",
+    )
+    legal_ir_guarded = _projection_deadband_decision(
+        {"legal_ir:legal_ir_view_cross_entropy_excess_loss": 5.0e-5},
+        objective_delta=0.2,
+        mode="shadow",
+        max_ce_deadband=1.0e-4,
+        hard_guardrail_metrics="embedding_cosine_similarity,legal_ir:*",
+    )
+    strict = _projection_deadband_decision(
+        {},
+        objective_delta=0.2,
+        mode="shadow",
+        max_ce_deadband=1.0e-4,
+        hard_guardrail_metrics="embedding_cosine_similarity,legal_ir:*",
+    )
+
+    assert shadow["would_accept"] is True
+    assert shadow["enforced_accepted"] is False
+    assert shadow["adjusted_pareto_regressions"] == {}
+    assert shadow["tolerated_regressions"]["cross_entropy_excess_loss"] == pytest.approx(
+        5.0e-5
+    )
+    assert enforced["would_accept"] is True
+    assert enforced["enforced_accepted"] is True
+    assert hard_guarded["would_accept"] is False
+    assert "embedding_cosine_similarity" in hard_guarded[
+        "hard_guardrail_blocked_regressions"
+    ]
+    assert legal_ir_guarded["would_accept"] is False
+    assert "legal_ir:legal_ir_view_cross_entropy_excess_loss" in legal_ir_guarded[
+        "hard_guardrail_blocked_regressions"
+    ]
+    assert strict["would_accept"] is False
+
+
+def test_projection_prescreen_ranks_top_k_attempts() -> None:
+    attempts = [
+        {
+            "line_search_multiplier": 1.0,
+            "projection_prescreen": {
+                "enabled": True,
+                "objective_delta": 0.1,
+            },
+            "update": "family_logits",
+        },
+        {
+            "line_search_multiplier": 0.5,
+            "projection_prescreen": {
+                "enabled": True,
+                "objective_delta": 0.3,
+            },
+            "update": "legal_ir_view_logits",
+        },
+        {
+            "line_search_multiplier": 0.25,
+            "projection_prescreen": {
+                "enabled": True,
+                "objective_delta": -0.1,
+            },
+            "update": "embedding_weights",
+        },
+    ]
+
+    _annotate_projection_prescreen_rankings(attempts, top_k=2)
+
+    assert attempts[1]["projection_prescreen"]["rank"] == 1
+    assert attempts[1]["projection_prescreen"]["selected_for_holdout"] is True
+    assert attempts[0]["projection_prescreen"]["rank"] == 2
+    assert attempts[0]["projection_prescreen"]["selected_for_holdout"] is True
+    assert attempts[2]["projection_prescreen"]["rank"] == 3
+    assert attempts[2]["projection_prescreen"]["selected_for_holdout"] is False
+
+    summary = _projection_prescreen_summary(
+        [{"candidate_reports": [{"attempt_reports": attempts}]}]
+    )
+
+    assert summary["enabled_attempt_count"] == 3
+    assert summary["positive_delta_count"] == 2
+    assert summary["selected_for_holdout_count"] == 2
+    assert summary["unselected_for_holdout_count"] == 1
+    assert summary["best_prescreen_attempt"]["update"] == "legal_ir_view_logits"
+
+
+def test_generalizable_projection_prescreen_enforce_skips_holdout_attempts() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="553",
+        text="The agency shall provide notice before adopting a final rule.",
+    )
+    autoencoder = AdaptiveModalAutoencoder()
+
+    report = autoencoder.train_generalizable_projection(
+        [sample],
+        epochs=1,
+        learning_rate=0.1,
+        max_line_search_attempts=3,
+        projection_prescreen_mode="enforce",
+        projection_prescreen_top_k=1,
+    )
+
+    summary = report["projection_prescreen_summary"]
+    assert summary["enabled_attempt_count"] >= 3
+    assert summary["evaluated_holdout_count"] < summary["enabled_attempt_count"]
+    assert summary["unselected_for_holdout_count"] >= 1
+
+    attempts = [
+        attempt
+        for candidate in report["epoch_reports"][0]["candidate_reports"]
+        for attempt in candidate["attempt_reports"]
+    ]
+    assert any(not attempt["holdout_evaluated"] for attempt in attempts)
+    assert any(
+        attempt["acceptance_source"] == "prescreen_filtered"
+        for attempt in attempts
+    )
 
 
 def test_legal_ir_component_gap_focus_routes_only_underrepresented_views() -> None:
@@ -12701,6 +12862,57 @@ def test_training_state_low_rank_shadow_state_can_be_bounded() -> None:
     assert payload["max_vectors"] == 2
     assert payload["vector_entry_count"] == 2
     assert sum(len(mapping) for mapping in reconstructed.values()) == 2
+
+
+def test_training_state_low_rank_shadow_hydration_merges_without_overwrite(
+    tmp_path,
+) -> None:
+    source = ModalAutoencoderTrainingState(
+        feature_embedding_weights={
+            "token:agency": [1.0, -2.0, 3.0, -4.0],
+            "token:duty": [2.0, 0.0, -2.0, 1.0],
+        },
+    )
+    path = tmp_path / "state.low-rank-shadow.json"
+    source.save_low_rank_shadow_json(path, rank=4)
+    target = ModalAutoencoderTrainingState(
+        feature_embedding_weights={"token:agency": [9.0, 9.0, 9.0, 9.0]},
+    )
+
+    report = target.hydrate_low_rank_shadow_json(path)
+
+    assert report["dense_state_hydrated"] is True
+    assert report["merged_vector_entry_count"] == 1
+    assert report["skipped_existing_vector_entry_count"] == 1
+    assert target.feature_embedding_weights["token:agency"] == [
+        9.0,
+        9.0,
+        9.0,
+        9.0,
+    ]
+    assert target.feature_embedding_weights["token:duty"] == pytest.approx(
+        [2.0, 0.0, -2.0, 1.0]
+    )
+
+
+def test_training_state_low_rank_shadow_hydration_can_overwrite(tmp_path) -> None:
+    source = ModalAutoencoderTrainingState(
+        feature_embedding_weights={"token:agency": [1.0, -2.0, 3.0, -4.0]},
+    )
+    path = tmp_path / "state.low-rank-shadow.json"
+    source.save_low_rank_shadow_json(path, rank=4)
+    target = ModalAutoencoderTrainingState(
+        feature_embedding_weights={"token:agency": [9.0, 9.0, 9.0, 9.0]},
+    )
+
+    report = target.hydrate_low_rank_shadow_json(path, overwrite=True)
+
+    assert report["dense_state_hydrated"] is True
+    assert report["merged_vector_entry_count"] == 1
+    assert report["skipped_existing_vector_entry_count"] == 0
+    assert target.feature_embedding_weights["token:agency"] == pytest.approx(
+        [1.0, -2.0, 3.0, -4.0]
+    )
 
 
 def test_generalizable_state_copy_drops_sample_specific_memory() -> None:

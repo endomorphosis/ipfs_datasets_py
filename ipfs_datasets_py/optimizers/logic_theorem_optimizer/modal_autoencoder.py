@@ -12,7 +12,17 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field, replace
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    MutableMapping,
+    Optional,
+    Sequence,
+)
 
 from .legal_samples import LegalSample
 from .modal_registry import ModalLogicFamily
@@ -35,6 +45,16 @@ MODAL_AUTOENCODER_STATE_SCHEMA_VERSION = "modal-autoencoder-state-v1"
 MODAL_AUTOENCODER_LOW_RANK_STATE_SCHEMA_VERSION = "modal-autoencoder-low-rank-v1"
 MODAL_AUTOENCODER_LOW_RANK_BASIS = "implicit-dct-v1"
 MODAL_AUTOENCODER_LOW_RANK_DEFAULT_RANK = 32
+PROJECTION_DEADBAND_MODES = frozenset({"off", "shadow", "enforce"})
+PROJECTION_DEADBAND_CE_REGRESSION_KEYS = frozenset(
+    {"cross_entropy_excess_loss", "cross_entropy_loss"}
+)
+PROJECTION_DEADBAND_DEFAULT_HARD_GUARDRAILS = (
+    "embedding_cosine_similarity",
+    "reconstruction_loss",
+    "legal_ir:*",
+)
+PROJECTION_PRESCREEN_MODES = frozenset({"off", "shadow", "enforce"})
 
 
 @dataclass(frozen=True)
@@ -1086,6 +1106,9 @@ class ModalAutoencoderTrainingState:
     ) -> Dict[str, Dict[str, List[float]]]:
         """Reconstruct dense embedding maps from a low-rank shadow sidecar."""
 
+        schema = str(payload.get("schema_version") or "")
+        if schema and schema != MODAL_AUTOENCODER_LOW_RANK_STATE_SCHEMA_VERSION:
+            raise ValueError("Unsupported low-rank state schema")
         if str(payload.get("basis") or "") != MODAL_AUTOENCODER_LOW_RANK_BASIS:
             raise ValueError("Unsupported low-rank basis")
         raw_maps = payload.get("embedding_maps")
@@ -1116,6 +1139,84 @@ class ModalAutoencoderTrainingState:
             if map_payload:
                 reconstructed[str(map_name)] = map_payload
         return reconstructed
+
+    def hydrate_low_rank_shadow_state(
+        self,
+        payload: Mapping[str, Any],
+        *,
+        overwrite: bool = False,
+    ) -> Dict[str, Any]:
+        """Merge low-rank sidecar embeddings into dense maps used by training."""
+
+        reconstructed = self.reconstruct_low_rank_embedding_maps(payload)
+        target_maps = self.embedding_weight_maps()
+        merged_count = 0
+        skipped_existing_count = 0
+        skipped_empty_count = 0
+        skipped_unknown_map_count = 0
+        merged_map_entry_counts: Dict[str, int] = {}
+        for map_name, mapping in sorted(reconstructed.items()):
+            target_mapping = target_maps.get(map_name)
+            if not isinstance(target_mapping, dict):
+                skipped_unknown_map_count += len(mapping)
+                continue
+            for key, vector in sorted(mapping.items()):
+                values = [float(value) for value in vector]
+                if not values:
+                    skipped_empty_count += 1
+                    continue
+                if not overwrite and key in target_mapping:
+                    skipped_existing_count += 1
+                    continue
+                target_mapping[key] = values
+                merged_count += 1
+                merged_map_entry_counts[map_name] = (
+                    merged_map_entry_counts.get(map_name, 0) + 1
+                )
+
+        source_vector_count = sum(len(mapping) for mapping in reconstructed.values())
+        return {
+            "basis": str(payload.get("basis") or ""),
+            "complete": bool(payload.get("complete", False)),
+            "dense_state_hydrated": merged_count > 0,
+            "loaded": True,
+            "merged_map_entry_counts": dict(sorted(merged_map_entry_counts.items())),
+            "merged_vector_entry_count": merged_count,
+            "overwrite": bool(overwrite),
+            "schema_version": str(payload.get("schema_version") or ""),
+            "shadow_mode": bool(payload.get("shadow_mode", False)),
+            "skipped_empty_vector_entry_count": skipped_empty_count,
+            "skipped_existing_vector_entry_count": skipped_existing_count,
+            "skipped_unknown_map_vector_entry_count": skipped_unknown_map_count,
+            "source_vector_entry_count": source_vector_count,
+            "status": "hydrated" if merged_count > 0 else "no_new_entries",
+        }
+
+    @staticmethod
+    def low_rank_shadow_sidecar_path(path: str | Path) -> Path:
+        return Path(path).with_suffix(".low-rank-shadow.json")
+
+    def hydrate_low_rank_shadow_json(
+        self,
+        path: str | Path,
+        *,
+        overwrite: bool = False,
+    ) -> Dict[str, Any]:
+        source = Path(path)
+        if not source.exists():
+            return {
+                "dense_state_hydrated": False,
+                "loaded": False,
+                "path": str(source),
+                "status": "missing",
+            }
+        payload = self.load_low_rank_shadow_json(source)
+        report = self.hydrate_low_rank_shadow_state(
+            payload,
+            overwrite=overwrite,
+        )
+        report["path"] = str(source)
+        return report
 
     def save_low_rank_shadow_json(
         self,
@@ -3789,6 +3890,15 @@ class AdaptiveModalAutoencoder:
         hard_example_fraction: float = 1.0,
         max_seconds: Optional[float] = None,
         max_line_search_attempts: Optional[int] = None,
+        projection_deadband_mode: str = "off",
+        projection_max_ce_deadband: float = 0.0,
+        projection_hard_guardrail_metrics: Sequence[str] | str | None = (
+            PROJECTION_DEADBAND_DEFAULT_HARD_GUARDRAILS
+        ),
+        projection_prescreen_mode: str = "off",
+        projection_prescreen_top_k: int = 3,
+        projection_periodic_full_search_every_n_cycles: int = 0,
+        projection_cycle: Optional[int] = None,
         progress_callback: Optional[Callable[[Mapping[str, Any]], None]] = None,
     ) -> Dict[str, Any]:
         """Train feature-level weights with rollback on holdout regression.
@@ -3922,6 +4032,38 @@ class AdaptiveModalAutoencoder:
             "legal_ir": max(0.0, float(objective_legal_ir_weight)),
         }
         hard_fraction = max(0.0, min(1.0, float(hard_example_fraction)))
+        deadband_mode = _projection_deadband_mode(projection_deadband_mode)
+        deadband_ce = max(0.0, float(projection_max_ce_deadband or 0.0))
+        deadband_guardrails = _projection_guardrail_names(
+            projection_hard_guardrail_metrics
+        )
+        projection_deadband_config = {
+            "hard_guardrail_metrics": list(deadband_guardrails),
+            "max_ce_deadband": deadband_ce,
+            "mode": deadband_mode,
+        }
+        prescreen_mode = _projection_prescreen_mode(projection_prescreen_mode)
+        prescreen_top_k = max(0, int(projection_prescreen_top_k or 0))
+        prescreen_full_search_every = max(
+            0,
+            int(projection_periodic_full_search_every_n_cycles or 0),
+        )
+        prescreen_periodic_full_search = bool(
+            prescreen_mode == "enforce"
+            and prescreen_full_search_every > 0
+            and projection_cycle is not None
+            and int(projection_cycle) > 0
+            and int(projection_cycle) % prescreen_full_search_every == 0
+        )
+        effective_prescreen_mode = "shadow" if prescreen_periodic_full_search else prescreen_mode
+        projection_prescreen_config = {
+            "effective_mode": effective_prescreen_mode,
+            "mode": prescreen_mode,
+            "periodic_full_search": prescreen_periodic_full_search,
+            "periodic_full_search_every_n_cycles": prescreen_full_search_every,
+            "projection_cycle": int(projection_cycle) if projection_cycle is not None else None,
+            "top_k": prescreen_top_k,
+        }
 
         candidate_updates = (
             ("family_logits", ("family_logits",)),
@@ -3983,6 +4125,18 @@ class AdaptiveModalAutoencoder:
                 hard_example_fraction=hard_fraction,
                 objective_weights=objective_weights,
             )
+            prescreen_before: Optional[AutoencoderEvaluation] = None
+            if effective_prescreen_mode != "off" and update_samples:
+                emit_progress(
+                    "projection_prescreen_baseline",
+                    epoch=epoch,
+                    sample_count=len(update_samples),
+                    top_k=prescreen_top_k,
+                )
+                prescreen_before = self.evaluate(
+                    update_samples,
+                    **base_evaluation_kwargs,
+                )
 
             for update_name, update_targets in candidate_updates:
                 if timed_out():
@@ -3994,8 +4148,177 @@ class AdaptiveModalAutoencoder:
                 best_improved_attempt: Optional[
                     tuple[float, Dict[str, Any], AutoencoderEvaluation, ModalAutoencoderTrainingState]
                 ] = None
+                attempt_tuples: List[
+                    tuple[
+                        float,
+                        Dict[str, Any],
+                        AutoencoderEvaluation,
+                        ModalAutoencoderTrainingState,
+                    ]
+                ] = []
                 multipliers_to_try = list(line_search_multipliers)
                 refinement_added = False
+
+                def finalize_attempt_report(
+                    *,
+                    attempt_report: Dict[str, Any],
+                    candidate_state: ModalAutoencoderTrainingState,
+                ) -> tuple[
+                    float,
+                    Dict[str, Any],
+                    AutoencoderEvaluation,
+                    ModalAutoencoderTrainingState,
+                ]:
+                    self.state = candidate_state.copy()
+                    emit_progress(
+                        "line_search_evaluation",
+                        epoch=epoch,
+                        line_search_attempt=int(
+                            attempt_report.get("line_search_attempt", 0) or 0
+                        ),
+                        update=update_name,
+                    )
+                    after = evaluate_projection_rows(
+                        target_samples,
+                        stage="line_search_evaluation",
+                    )
+                    regressions = _evaluation_regressions_for_training(
+                        best,
+                        after,
+                        max_cosine_regression=max_cosine_regression,
+                        max_reconstruction_regression=max_reconstruction_regression,
+                        max_cross_entropy_regression=max_cross_entropy_regression,
+                        max_legal_ir_loss_regression=max_legal_ir_loss_regression,
+                    )
+                    objective_delta = (
+                        _evaluation_objective_for_training(
+                            best,
+                            **objective_weights,
+                        )
+                        - _evaluation_objective_for_training(
+                            after,
+                            **objective_weights,
+                        )
+                    )
+                    strict_improved = bool(
+                        not regressions and objective_delta > 0.0
+                    )
+                    deadband_decision = _projection_deadband_decision(
+                        regressions,
+                        objective_delta=objective_delta,
+                        mode=deadband_mode,
+                        max_ce_deadband=deadband_ce,
+                        hard_guardrail_metrics=deadband_guardrails,
+                    )
+                    improved = bool(
+                        strict_improved
+                        or deadband_decision.get("enforced_accepted", False)
+                    )
+                    attempt_report.update(
+                        {
+                            "accepted": improved,
+                            "acceptance_source": (
+                                "strict"
+                                if strict_improved
+                                else "deadband_enforced"
+                                if deadband_decision.get("enforced_accepted", False)
+                                else "rejected"
+                            ),
+                            "cross_entropy_delta": best.cross_entropy_loss
+                            - after.cross_entropy_loss,
+                            "cross_entropy_excess_delta": (
+                                best.cross_entropy_excess_loss
+                                - after.cross_entropy_excess_loss
+                            ),
+                            "cosine_similarity_delta": (
+                                after.embedding_cosine_similarity
+                                - best.embedding_cosine_similarity
+                            ),
+                            "holdout_evaluated": True,
+                            "legal_ir_view_cross_entropy_delta": (
+                                float(
+                                    best.legal_ir_losses.get(
+                                        "legal_ir_view_cross_entropy_loss",
+                                        0.0,
+                                    )
+                                )
+                                - float(
+                                    after.legal_ir_losses.get(
+                                        "legal_ir_view_cross_entropy_loss",
+                                        0.0,
+                                    )
+                                )
+                            ),
+                            "legal_ir_view_cross_entropy_excess_delta": (
+                                float(
+                                    best.legal_ir_losses.get(
+                                        "legal_ir_view_cross_entropy_excess_loss",
+                                        0.0,
+                                    )
+                                )
+                                - float(
+                                    after.legal_ir_losses.get(
+                                        "legal_ir_view_cross_entropy_excess_loss",
+                                        0.0,
+                                    )
+                                )
+                            ),
+                            "legal_ir_view_family_cross_entropy_delta": (
+                                float(
+                                    best.legal_ir_losses.get(
+                                        "legal_ir_view_family_cross_entropy_loss",
+                                        0.0,
+                                    )
+                                )
+                                - float(
+                                    after.legal_ir_losses.get(
+                                        "legal_ir_view_family_cross_entropy_loss",
+                                        0.0,
+                                    )
+                                )
+                            ),
+                            "legal_ir_view_family_cross_entropy_excess_delta": (
+                                float(
+                                    best.legal_ir_losses.get(
+                                        "legal_ir_view_family_cross_entropy_excess_loss",
+                                        0.0,
+                                    )
+                                )
+                                - float(
+                                    after.legal_ir_losses.get(
+                                        "legal_ir_view_family_cross_entropy_excess_loss",
+                                        0.0,
+                                    )
+                                )
+                            ),
+                            "legal_ir_view_family_cosine_gap_delta": (
+                                float(
+                                    best.legal_ir_losses.get(
+                                        "legal_ir_view_family_cosine_gap_loss",
+                                        0.0,
+                                    )
+                                )
+                                - float(
+                                    after.legal_ir_losses.get(
+                                        "legal_ir_view_family_cosine_gap_loss",
+                                        0.0,
+                                    )
+                                )
+                            ),
+                            "objective_delta": objective_delta,
+                            "pareto_regressions": regressions,
+                            "projection_deadband": deadband_decision,
+                            "reconstruction_delta": best.reconstruction_loss
+                            - after.reconstruction_loss,
+                            "strict_accepted": strict_improved,
+                        }
+                    )
+                    return (
+                        objective_delta,
+                        attempt_report,
+                        after,
+                        self.state.copy(),
+                    )
                 for line_search_multiplier in multipliers_to_try:
                     if timed_out():
                         projection_stopped_reason = "projection_timeout"
@@ -4048,145 +4371,108 @@ class AdaptiveModalAutoencoder:
                                 learning_rate=effective_learning_rate,
                             )
                     self._regularize_feature_state(l2_regularization)
-                    emit_progress(
-                        "line_search_evaluation",
-                        epoch=epoch,
-                        line_search_attempt=len(attempt_reports) + 1,
-                        update=update_name,
-                    )
-                    after = evaluate_projection_rows(
-                        target_samples,
-                        stage="line_search_evaluation",
-                    )
-                    regressions = _evaluation_regressions_for_training(
-                        best,
-                        after,
-                        max_cosine_regression=max_cosine_regression,
-                        max_reconstruction_regression=max_reconstruction_regression,
-                        max_cross_entropy_regression=max_cross_entropy_regression,
-                        max_legal_ir_loss_regression=max_legal_ir_loss_regression,
-                    )
-                    objective_delta = (
-                        _evaluation_objective_for_training(
-                            best,
+                    prescreen_report: Dict[str, Any] = {
+                        "effective_mode": effective_prescreen_mode,
+                        "enabled": effective_prescreen_mode != "off",
+                        "mode": prescreen_mode,
+                        "selected_for_holdout": True,
+                        "top_k": prescreen_top_k,
+                    }
+                    if prescreen_before is not None:
+                        emit_progress(
+                            "projection_prescreen_evaluation",
+                            effective_learning_rate=effective_learning_rate,
+                            epoch=epoch,
+                            line_search_attempt=len(attempt_reports) + 1,
+                            line_search_multiplier=float(line_search_multiplier),
+                            sample_count=len(update_samples),
+                            top_k=prescreen_top_k,
+                            update=update_name,
+                        )
+                        prescreen_after = self.evaluate(
+                            update_samples,
+                            **base_evaluation_kwargs,
+                        )
+                        before_prescreen_objective = _evaluation_objective_for_training(
+                            prescreen_before,
                             **objective_weights,
                         )
-                        - _evaluation_objective_for_training(
-                            after,
+                        after_prescreen_objective = _evaluation_objective_for_training(
+                            prescreen_after,
                             **objective_weights,
                         )
+                        prescreen_report.update(
+                            {
+                                "after_objective": round(
+                                    after_prescreen_objective,
+                                    12,
+                                ),
+                                "before_objective": round(
+                                    before_prescreen_objective,
+                                    12,
+                                ),
+                                "objective_delta": round(
+                                    before_prescreen_objective
+                                    - after_prescreen_objective,
+                                    12,
+                                ),
+                                "sample_count": len(update_samples),
+                            }
+                        )
+                    candidate_state = self.state.copy()
+                    line_search_attempt_index = len(attempt_reports) + 1
+                    defer_holdout_evaluation = bool(
+                        effective_prescreen_mode == "enforce"
+                        and prescreen_before is not None
                     )
-                    improved = _evaluation_improved_for_training(
-                        best,
-                        after,
-                        max_cosine_regression=max_cosine_regression,
-                        max_reconstruction_regression=max_reconstruction_regression,
-                        max_cross_entropy_regression=max_cross_entropy_regression,
-                        max_legal_ir_loss_regression=max_legal_ir_loss_regression,
-                        **objective_weights,
+                    prescreen_objective_delta = _float_or_zero(
+                        prescreen_report.get("objective_delta")
                     )
                     attempt_report = {
-                        "accepted": improved,
-                        "cross_entropy_delta": best.cross_entropy_loss
-                        - after.cross_entropy_loss,
-                        "cross_entropy_excess_delta": best.cross_entropy_excess_loss
-                        - after.cross_entropy_excess_loss,
+                        "accepted": False,
+                        "acceptance_source": (
+                            "prescreen_deferred"
+                            if defer_holdout_evaluation
+                            else "pending"
+                        ),
                         "effective_learning_rate": effective_learning_rate,
                         "hard_example_count": len(update_samples),
                         "hard_example_fraction": hard_fraction,
                         "head_learning_rate_scale": head_scale,
-                        "cosine_similarity_delta": (
-                            after.embedding_cosine_similarity
-                            - best.embedding_cosine_similarity
-                        ),
-                        "legal_ir_view_cross_entropy_delta": (
-                            float(
-                                best.legal_ir_losses.get(
-                                    "legal_ir_view_cross_entropy_loss",
-                                    0.0,
-                                )
-                            )
-                            - float(
-                                after.legal_ir_losses.get(
-                                    "legal_ir_view_cross_entropy_loss",
-                                    0.0,
-                                )
-                            )
-                        ),
-                        "legal_ir_view_cross_entropy_excess_delta": (
-                            float(
-                                best.legal_ir_losses.get(
-                                    "legal_ir_view_cross_entropy_excess_loss",
-                                    0.0,
-                                )
-                            )
-                            - float(
-                                after.legal_ir_losses.get(
-                                    "legal_ir_view_cross_entropy_excess_loss",
-                                    0.0,
-                                )
-                            )
-                        ),
-                        "legal_ir_view_family_cross_entropy_delta": (
-                            float(
-                                best.legal_ir_losses.get(
-                                    "legal_ir_view_family_cross_entropy_loss",
-                                    0.0,
-                                )
-                            )
-                            - float(
-                                after.legal_ir_losses.get(
-                                    "legal_ir_view_family_cross_entropy_loss",
-                                    0.0,
-                                )
-                            )
-                        ),
-                        "legal_ir_view_family_cross_entropy_excess_delta": (
-                            float(
-                                best.legal_ir_losses.get(
-                                    "legal_ir_view_family_cross_entropy_excess_loss",
-                                    0.0,
-                                )
-                            )
-                            - float(
-                                after.legal_ir_losses.get(
-                                    "legal_ir_view_family_cross_entropy_excess_loss",
-                                    0.0,
-                                )
-                            )
-                        ),
-                        "legal_ir_view_family_cosine_gap_delta": (
-                            float(
-                                best.legal_ir_losses.get(
-                                    "legal_ir_view_family_cosine_gap_loss",
-                                    0.0,
-                                )
-                            )
-                            - float(
-                                after.legal_ir_losses.get(
-                                    "legal_ir_view_family_cosine_gap_loss",
-                                    0.0,
-                                )
-                            )
-                        ),
+                        "holdout_evaluated": False,
+                        "line_search_attempt": line_search_attempt_index,
                         "line_search_multiplier": float(line_search_multiplier),
                         "line_search_refinement": bool(is_refinement_attempt),
-                        "objective_delta": objective_delta,
-                        "pareto_regressions": regressions,
-                        "reconstruction_delta": best.reconstruction_loss
-                        - after.reconstruction_loss,
+                        "objective_delta": prescreen_objective_delta,
+                        "pareto_regressions": {},
+                        "projection_deadband": {},
+                        "projection_prescreen": prescreen_report,
+                        "strict_accepted": False,
                         "update": update_name,
                     }
-                    attempt_reports.append(attempt_report)
-                    attempt_tuple = (
-                        objective_delta,
-                        attempt_report,
-                        after,
-                        self.state.copy(),
+                    if defer_holdout_evaluation:
+                        attempt_reports.append(attempt_report)
+                        attempt_tuples.append(
+                            (
+                                prescreen_objective_delta,
+                                attempt_report,
+                                best,
+                                candidate_state,
+                            )
+                        )
+                        continue
+                    attempt_tuple = finalize_attempt_report(
+                        attempt_report=attempt_report,
+                        candidate_state=candidate_state,
                     )
+                    objective_delta, attempt_report, after, _candidate_state = (
+                        attempt_tuple
+                    )
+                    attempt_reports.append(attempt_report)
+                    attempt_tuples.append(attempt_tuple)
                     if best_attempt is None or objective_delta > best_attempt[0]:
                         best_attempt = attempt_tuple
-                    if improved and (
+                    if attempt_report.get("accepted") and (
                         best_improved_attempt is None
                         or objective_delta > best_improved_attempt[0]
                     ):
@@ -4204,6 +4490,49 @@ class AdaptiveModalAutoencoder:
                         refinement_added = True
                 if projection_stopped_reason:
                     break
+                _annotate_projection_prescreen_rankings(
+                    attempt_reports,
+                    top_k=prescreen_top_k,
+                )
+                if effective_prescreen_mode == "enforce":
+                    selected_tuples = []
+                    for attempt in attempt_tuples:
+                        _score, attempt_report, after, candidate_state = attempt
+                        prescreen = attempt_report.get("projection_prescreen", {})
+                        selected_for_holdout = bool(
+                            isinstance(prescreen, Mapping)
+                            and prescreen.get("selected_for_holdout", True)
+                        )
+                        if not selected_for_holdout:
+                            if not bool(attempt_report.get("holdout_evaluated", False)):
+                                attempt_report["acceptance_source"] = (
+                                    "prescreen_filtered"
+                                )
+                            continue
+                        if bool(attempt_report.get("holdout_evaluated", False)):
+                            selected_tuples.append(attempt)
+                            continue
+                        selected_tuples.append(
+                            finalize_attempt_report(
+                                attempt_report=attempt_report,
+                                candidate_state=candidate_state,
+                            )
+                        )
+                    best_attempt = max(
+                        selected_tuples,
+                        key=lambda attempt: attempt[0],
+                        default=None,
+                    )
+                    improved_tuples = [
+                        attempt
+                        for attempt in selected_tuples
+                        if bool(attempt[1].get("accepted"))
+                    ]
+                    best_improved_attempt = max(
+                        improved_tuples,
+                        key=lambda attempt: attempt[0],
+                        default=None,
+                    )
                 chosen = best_improved_attempt or best_attempt
                 if chosen is None:
                     continue
@@ -4305,6 +4634,11 @@ class AdaptiveModalAutoencoder:
             "effective_max_line_search_attempts": effective_max_line_search_attempts,
             "line_search_attempt_policy": line_search_attempt_policy,
             "objective_weights": dict(objective_weights),
+            "projection_deadband": dict(projection_deadband_config),
+            "projection_prescreen": dict(projection_prescreen_config),
+            "projection_prescreen_summary": _projection_prescreen_summary(
+                epoch_reports
+            ),
             "rejection_summary": _projection_rejection_summary(epoch_reports),
             "sample_memory_used": False,
             "legal_ir_bridge_max_samples": bridge_sample_cap,
@@ -23976,16 +24310,210 @@ def _evaluation_regressions_for_training(
     return regressions
 
 
+def _projection_deadband_mode(value: str) -> str:
+    mode = str(value or "off").strip().lower()
+    return mode if mode in PROJECTION_DEADBAND_MODES else "off"
+
+
+def _projection_prescreen_mode(value: str) -> str:
+    mode = str(value or "off").strip().lower()
+    return mode if mode in PROJECTION_PRESCREEN_MODES else "off"
+
+
+def _annotate_projection_prescreen_rankings(
+    attempt_reports: Sequence[MutableMapping[str, Any]],
+    *,
+    top_k: int,
+) -> None:
+    ranked: List[tuple[float, int, MutableMapping[str, Any], MutableMapping[str, Any]]] = []
+    for index, report in enumerate(attempt_reports):
+        prescreen = report.get("projection_prescreen")
+        if not isinstance(prescreen, MutableMapping):
+            continue
+        if not bool(prescreen.get("enabled", False)):
+            prescreen["selected_for_holdout"] = True
+            continue
+        objective_delta = _float_or_zero(prescreen.get("objective_delta"))
+        ranked.append((objective_delta, index, report, prescreen))
+    if not ranked:
+        return
+    ranked.sort(key=lambda item: (-item[0], item[1]))
+    selected_limit = max(0, int(top_k or 0))
+    for rank, (_score, _index, _report, prescreen) in enumerate(ranked, start=1):
+        selected = selected_limit <= 0 or rank <= selected_limit
+        prescreen["rank"] = rank
+        prescreen["selected_for_holdout"] = bool(selected)
+        prescreen["would_select_for_holdout"] = bool(selected)
+
+
+def _projection_prescreen_summary(
+    epoch_reports: Sequence[Mapping[str, Any]],
+) -> Dict[str, Any]:
+    attempted_count = 0
+    enabled_attempt_count = 0
+    selected_count = 0
+    unselected_count = 0
+    evaluated_holdout_count = 0
+    positive_delta_count = 0
+    best_prescreen: Optional[Dict[str, Any]] = None
+    for epoch in epoch_reports:
+        candidate_reports = epoch.get("candidate_reports")
+        if not isinstance(candidate_reports, Sequence) or isinstance(
+            candidate_reports,
+            (str, bytes),
+        ):
+            continue
+        for candidate in candidate_reports:
+            if not isinstance(candidate, Mapping):
+                continue
+            attempt_reports = candidate.get("attempt_reports")
+            if not isinstance(attempt_reports, Sequence) or isinstance(
+                attempt_reports,
+                (str, bytes),
+            ):
+                attempt_reports = [candidate]
+            for attempt in attempt_reports:
+                if not isinstance(attempt, Mapping):
+                    continue
+                attempted_count += 1
+                prescreen = attempt.get("projection_prescreen")
+                if not isinstance(prescreen, Mapping):
+                    continue
+                if not bool(prescreen.get("enabled", False)):
+                    continue
+                enabled_attempt_count += 1
+                objective_delta = _float_or_zero(prescreen.get("objective_delta"))
+                if objective_delta > 0.0:
+                    positive_delta_count += 1
+                if bool(prescreen.get("selected_for_holdout", True)):
+                    selected_count += 1
+                else:
+                    unselected_count += 1
+                if bool(attempt.get("holdout_evaluated", True)):
+                    evaluated_holdout_count += 1
+                if (
+                    best_prescreen is None
+                    or objective_delta > _float_or_zero(
+                        best_prescreen.get("objective_delta")
+                    )
+                ):
+                    best_prescreen = {
+                        "line_search_multiplier": round(
+                            _float_or_zero(attempt.get("line_search_multiplier")),
+                            12,
+                        ),
+                        "objective_delta": round(objective_delta, 12),
+                        "rank": int(prescreen.get("rank", 0) or 0),
+                        "selected_for_holdout": bool(
+                            prescreen.get("selected_for_holdout", True)
+                        ),
+                        "update": str(attempt.get("update") or ""),
+                    }
+    return {
+        "attempted_count": attempted_count,
+        "best_prescreen_attempt": best_prescreen or {},
+        "enabled_attempt_count": enabled_attempt_count,
+        "evaluated_holdout_count": evaluated_holdout_count,
+        "positive_delta_count": positive_delta_count,
+        "selected_for_holdout_count": selected_count,
+        "unselected_for_holdout_count": unselected_count,
+    }
+
+
+def _projection_guardrail_names(values: Sequence[str] | str | None) -> tuple[str, ...]:
+    if values is None:
+        return PROJECTION_DEADBAND_DEFAULT_HARD_GUARDRAILS
+    if isinstance(values, str):
+        raw_values: Sequence[Any] = values.split(",")
+    else:
+        raw_values = values
+    normalized = tuple(
+        str(value).strip()
+        for value in raw_values
+        if str(value).strip()
+    )
+    return normalized or PROJECTION_DEADBAND_DEFAULT_HARD_GUARDRAILS
+
+
+def _projection_metric_matches_guardrail(name: str, guardrail: str) -> bool:
+    metric_name = str(name)
+    guardrail_name = str(guardrail)
+    if guardrail_name.endswith("*"):
+        return metric_name.startswith(guardrail_name[:-1])
+    return metric_name == guardrail_name
+
+
+def _projection_deadband_decision(
+    regressions: Mapping[str, float],
+    *,
+    objective_delta: float,
+    mode: str = "off",
+    max_ce_deadband: float = 0.0,
+    hard_guardrail_metrics: Sequence[str] | str | None = None,
+) -> Dict[str, Any]:
+    """Return shadow/enforced acceptance metadata for tiny CE regressions."""
+
+    normalized_mode = _projection_deadband_mode(mode)
+    guardrails = _projection_guardrail_names(hard_guardrail_metrics)
+    ce_deadband = max(0.0, float(max_ce_deadband or 0.0))
+    adjusted_regressions: Dict[str, float] = {}
+    tolerated_regressions: Dict[str, float] = {}
+    hard_guardrail_blocked: Dict[str, float] = {}
+    for name, raw_value in sorted(dict(regressions).items()):
+        value = max(0.0, float(raw_value))
+        is_hard_guardrail = any(
+            _projection_metric_matches_guardrail(name, guardrail)
+            for guardrail in guardrails
+        )
+        if (
+            normalized_mode != "off"
+            and not is_hard_guardrail
+            and name in PROJECTION_DEADBAND_CE_REGRESSION_KEYS
+            and value <= ce_deadband
+        ):
+            tolerated_regressions[str(name)] = value
+            continue
+        adjusted_regressions[str(name)] = value
+        if is_hard_guardrail:
+            hard_guardrail_blocked[str(name)] = value
+
+    would_accept = bool(
+        normalized_mode != "off"
+        and float(objective_delta) > 0.0
+        and tolerated_regressions
+        and not adjusted_regressions
+    )
+    enforced_accepted = bool(normalized_mode == "enforce" and would_accept)
+    return {
+        "adjusted_pareto_regressions": adjusted_regressions,
+        "enabled": normalized_mode != "off",
+        "enforced_accepted": enforced_accepted,
+        "hard_guardrail_blocked_regressions": hard_guardrail_blocked,
+        "hard_guardrail_metrics": list(guardrails),
+        "max_ce_deadband": ce_deadband,
+        "mode": normalized_mode,
+        "tolerated_regressions": tolerated_regressions,
+        "would_accept": would_accept,
+    }
+
+
 def _projection_rejection_summary(
     epoch_reports: Sequence[Mapping[str, Any]],
 ) -> Dict[str, Any]:
     """Summarize why guarded projection attempts were not accepted."""
     attempted_count = 0
     accepted_attempt_count = 0
+    deadband_enforced_accept_count = 0
     refinement_attempt_count = 0
     rejected_attempt_count = 0
+    strict_accepted_attempt_count = 0
+    deadband_would_accept_count = 0
+    deadband_shadow_would_accept_count = 0
     regression_counts: Dict[str, int] = {}
+    deadband_tolerated_counts: Dict[str, int] = {}
+    deadband_hard_guardrail_counts: Dict[str, int] = {}
     best_rejected: Optional[Dict[str, Any]] = None
+    best_deadband_would_accept: Optional[Dict[str, Any]] = None
     for epoch in epoch_reports:
         candidate_reports = epoch.get("candidate_reports")
         if not isinstance(candidate_reports, Sequence) or isinstance(
@@ -24009,16 +24537,76 @@ def _projection_rejection_summary(
                 if bool(attempt.get("line_search_refinement")):
                     refinement_attempt_count += 1
                 accepted = bool(attempt.get("accepted"))
+                if bool(attempt.get("strict_accepted")):
+                    strict_accepted_attempt_count += 1
+                deadband = attempt.get("projection_deadband")
+                if isinstance(deadband, Mapping):
+                    if bool(deadband.get("would_accept")):
+                        deadband_would_accept_count += 1
+                        if str(deadband.get("mode") or "") == "shadow":
+                            deadband_shadow_would_accept_count += 1
+                    if bool(deadband.get("enforced_accepted")):
+                        deadband_enforced_accept_count += 1
+                    tolerated = deadband.get("tolerated_regressions")
+                    if isinstance(tolerated, Mapping):
+                        for name in tolerated:
+                            key = str(name)
+                            deadband_tolerated_counts[key] = (
+                                deadband_tolerated_counts.get(key, 0) + 1
+                            )
+                    blocked = deadband.get("hard_guardrail_blocked_regressions")
+                    if isinstance(blocked, Mapping):
+                        for name in blocked:
+                            key = str(name)
+                            deadband_hard_guardrail_counts[key] = (
+                                deadband_hard_guardrail_counts.get(key, 0) + 1
+                            )
                 if accepted:
                     accepted_attempt_count += 1
-                    continue
-                rejected_attempt_count += 1
                 pareto_regressions = attempt.get("pareto_regressions")
                 if isinstance(pareto_regressions, Mapping):
                     for name in pareto_regressions:
                         key = str(name)
-                        regression_counts[key] = regression_counts.get(key, 0) + 1
+                        if not accepted:
+                            regression_counts[key] = regression_counts.get(key, 0) + 1
                 objective_delta = _float_or_zero(attempt.get("objective_delta"))
+                if (
+                    isinstance(deadband, Mapping)
+                    and bool(deadband.get("would_accept"))
+                    and (
+                        best_deadband_would_accept is None
+                        or objective_delta
+                        > _float_or_zero(
+                            best_deadband_would_accept.get("objective_delta")
+                        )
+                    )
+                ):
+                    best_deadband_would_accept = {
+                        "acceptance_source": str(
+                            attempt.get("acceptance_source") or ""
+                        ),
+                        "cross_entropy_delta": round(
+                            _float_or_zero(attempt.get("cross_entropy_delta")),
+                            12,
+                        ),
+                        "effective_learning_rate": round(
+                            _float_or_zero(attempt.get("effective_learning_rate")),
+                            12,
+                        ),
+                        "line_search_multiplier": round(
+                            _float_or_zero(attempt.get("line_search_multiplier")),
+                            12,
+                        ),
+                        "objective_delta": round(objective_delta, 12),
+                        "pareto_regressions": dict(pareto_regressions)
+                        if isinstance(pareto_regressions, Mapping)
+                        else {},
+                        "projection_deadband": dict(deadband),
+                        "update": str(attempt.get("update") or ""),
+                    }
+                if accepted:
+                    continue
+                rejected_attempt_count += 1
                 if best_rejected is None or objective_delta > _float_or_zero(
                     best_rejected.get("objective_delta")
                 ):
@@ -24058,6 +24646,19 @@ def _projection_rejection_summary(
         "accepted_attempt_count": accepted_attempt_count,
         "attempted_count": attempted_count,
         "best_rejected_attempt": best_rejected or {},
+        "projection_deadband": {
+            "best_would_accept_attempt": best_deadband_would_accept or {},
+            "enforced_accept_count": deadband_enforced_accept_count,
+            "hard_guardrail_blocked_counts": dict(
+                sorted(deadband_hard_guardrail_counts.items())
+            ),
+            "shadow_would_accept_count": deadband_shadow_would_accept_count,
+            "strict_accepted_attempt_count": strict_accepted_attempt_count,
+            "tolerated_regression_counts": dict(
+                sorted(deadband_tolerated_counts.items())
+            ),
+            "would_accept_count": deadband_would_accept_count,
+        },
         "pareto_regression_counts": dict(sorted(regression_counts.items())),
         "refinement_attempt_count": refinement_attempt_count,
         "rejected_attempt_count": rejected_attempt_count,
