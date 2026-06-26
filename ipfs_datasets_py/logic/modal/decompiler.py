@@ -357,6 +357,11 @@ _USCODE_CATCHLINE_BODY_START_RE = re.compile(
     r"No\s+\w+\b|The\s+\w+\b|A\s+\w+\b|An\s+\w+\b))",
     re.IGNORECASE,
 )
+_USCODE_COMPILATION_SEC_CATCHLINE_RE = re.compile(
+    rf"\bSecs?\.?\s+{_USCODE_SECTION_LIST_PATTERN}\s*[-–—]\s*"
+    r"(?P<catchline>[^.;\n]{2,180})",
+    re.IGNORECASE,
+)
 _INFERRED_CONDITION_CLAUSE_SPLIT_RE = re.compile(
     r"(?:;|[.?!]|—|–|,(?!\s*\d))"
 )
@@ -666,6 +671,11 @@ _PREFERRED_LEGAL_IR_VIEWS_BY_FAMILY: Mapping[str, tuple[str, ...]] = {
         "knowledge_graphs.neo4j_compat",
     ),
     "deontic": (
+        "deontic.ir",
+        "TDFOL.prover",
+        "knowledge_graphs.neo4j_compat",
+    ),
+    "doxastic": (
         "deontic.ir",
         "TDFOL.prover",
         "knowledge_graphs.neo4j_compat",
@@ -1562,6 +1572,7 @@ _CONTEXTUAL_TYPED_IR_REFINED_FAMILY_PAIRS: frozenset[tuple[str, str]] = frozense
     {
         ("deontic", "deontic"),
         ("deontic", "frame"),
+        ("deontic", "temporal"),
         ("conditional_normative", "deontic"),
         ("frame", "conditional_normative"),
         ("frame", "deontic"),
@@ -1740,6 +1751,7 @@ def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
         *typed_ir_phrases,
         *_document_structural_semantic_reconstruction_phrases(
             document,
+            source_phrases=source_phrases,
             typed_ir_phrases=typed_ir_phrases,
         ),
         *_source_span_slot_phrases(
@@ -4048,6 +4060,35 @@ def _leading_uscode_catchline_text(text: str, *, max_tokens: int) -> str:
     return stripped
 
 
+def _document_uscode_catchline_text(text: str, *, max_tokens: int) -> str:
+    catchline = _leading_uscode_catchline_text(text, max_tokens=max_tokens)
+    if catchline:
+        return catchline
+    normalized = _clean_text(text)
+    if not normalized:
+        return ""
+    match = _USCODE_COMPILATION_SEC_CATCHLINE_RE.search(normalized)
+    if match is None:
+        return ""
+    candidate = _clean_text(match.group("catchline"))
+    candidate = _strip_uscode_gpo_attribution_fragment(candidate)
+    candidate = _TRAILING_SECTION_PUNCT_RE.sub("", candidate)
+    candidate = _clean_text(candidate)
+    if not candidate or _is_low_information_section_marker(candidate):
+        return ""
+    lowered = candidate.lower()
+    if (
+        lowered.startswith("u.s.c. title")
+        or lowered.startswith("usc title")
+        or "united states code" in lowered
+    ):
+        return ""
+    tokens = _tokenize_for_similarity(candidate)
+    if not tokens or len(tokens) > max_tokens:
+        return ""
+    return candidate
+
+
 def _fallback_surface_text(
     *,
     document: ModalIRDocument,
@@ -4667,7 +4708,7 @@ def _document_uscode_editorial_status_phrases(
         return []
 
     citation = _document_primary_citation(document)
-    catchline = _leading_uscode_catchline_text(source_text[:520], max_tokens=16)
+    catchline = _document_uscode_catchline_text(source_text[:520], max_tokens=16)
     spans = [[0, len(str(document.normalized_text or ""))]]
     source_ids = _document_source_ids(document)
     coordinate_values = _document_uscode_coordinate_values(
@@ -6951,6 +6992,19 @@ def _typed_ir_refined_semantic_slot_phrases(
                 slot_value=family_pair,
                 spans=spans,
             )
+            if pair_target != pair_source:
+                add_semantic_slot(
+                    family=pair_target,
+                    slot_name="typed-ir-refined-source-family",
+                    slot_value=pair_source,
+                    spans=spans,
+                )
+                add_semantic_slot(
+                    family=pair_target,
+                    slot_name="typed-ir-refined-source-family-pair",
+                    slot_value=f"{pair_source}:{family_pair}",
+                    spans=spans,
+                )
             if predicate_head and pair_target != pair_source:
                 add_phrase(
                     slot="typed_ir_refined_predicate_head_family_pair",
@@ -10577,7 +10631,7 @@ def _document_leading_uscode_catchline_phrases(
     source_text = str(document.normalized_text or "")
     if not source_text:
         return []
-    catchline = _leading_uscode_catchline_text(source_text[:480], max_tokens=18)
+    catchline = _document_uscode_catchline_text(source_text[:480], max_tokens=18)
     if not catchline:
         return []
     spans = [[0, min(len(source_text), len(catchline))]]
@@ -10626,6 +10680,7 @@ def _document_leading_uscode_catchline_phrases(
 def _document_structural_semantic_reconstruction_phrases(
     document: ModalIRDocument,
     *,
+    source_phrases: Sequence[DecodedModalPhrase],
     typed_ir_phrases: Sequence[DecodedModalPhrase],
 ) -> List[DecodedModalPhrase]:
     """Render concise source semantics from typed USC slots without span copy."""
@@ -10635,26 +10690,35 @@ def _document_structural_semantic_reconstruction_phrases(
     source_text = _clean_text(document.normalized_text)
     if not source_text:
         return []
-    visible_text = _clean_text(
+    typed_visible_text = _clean_text(
         " ".join(
             phrase.text
             for phrase in typed_ir_phrases
             if not phrase.provenance_only
         )
     )
+    visible_text = _clean_text(
+        " ".join(
+            phrase.text
+            for phrase in (*source_phrases, *typed_ir_phrases)
+            if not phrase.provenance_only
+        )
+    )
     source_tokens = set(_tokenize_for_similarity(source_text))
+    typed_visible_tokens = set(_tokenize_for_similarity(typed_visible_text))
     visible_tokens = set(_tokenize_for_similarity(visible_text))
+    full_source_visible = bool(source_tokens and source_tokens.issubset(visible_tokens))
     summary_parts: List[str] = []
 
-    catchline = _leading_uscode_catchline_text(source_text[:520], max_tokens=16)
+    catchline = _document_uscode_catchline_text(source_text[:520], max_tokens=16)
     if catchline and not set(_tokenize_for_similarity(catchline)).issubset(
-        visible_tokens
+        typed_visible_tokens
     ):
         summary_parts.append(catchline)
 
     appropriation_summary = _uscode_appropriation_structural_summary(
         source_text,
-        existing_tokens=visible_tokens,
+        existing_tokens=typed_visible_tokens,
     )
     has_structural_rewrite = False
     if appropriation_summary:
@@ -10663,7 +10727,7 @@ def _document_structural_semantic_reconstruction_phrases(
 
     editorial_summary = _uscode_editorial_structural_summary(
         source_text,
-        existing_tokens=visible_tokens,
+        existing_tokens=typed_visible_tokens,
     )
     if editorial_summary:
         summary_parts.append(editorial_summary)
@@ -10675,7 +10739,7 @@ def _document_structural_semantic_reconstruction_phrases(
     structural_tokens = _tokenize_for_similarity(structural_text)
     if not structural_tokens or len(structural_tokens) > 40:
         return []
-    if source_tokens and set(structural_tokens).issubset(visible_tokens):
+    if source_tokens and set(structural_tokens).issubset(typed_visible_tokens):
         return []
     if structural_text.lower() == source_text.lower():
         return []
@@ -10686,7 +10750,8 @@ def _document_structural_semantic_reconstruction_phrases(
             text=structural_text,
             slot="document_structural_semantic_reconstruction",
             spans=spans,
-            provenance_only=not has_structural_rewrite,
+            provenance_only=not has_structural_rewrite
+            or (full_source_visible and source_text.startswith("§")),
         )
     ]
     for slot, value in _typed_identifier_slots(
@@ -14637,6 +14702,127 @@ def _typed_decompiler_bridge_phrases(
             target_family = family
         if not source_family or not target_family:
             continue
+        target_symbol = _typed_ir_refined_target_symbol(
+            target_family,
+            fallback_symbol=source_operator,
+        )
+        transition_slots = _modal_operator_transition_signature_slots(
+            source_family=source_family,
+            source_system=source_system,
+            source_symbol=source_operator,
+            target_family=target_family,
+            target_symbol=target_symbol,
+            slot_prefix="typed_decompiler",
+        )
+        for transition_slot, transition_value in transition_slots:
+            add(transition_slot, transition_value)
+        transition_signature = _slot_value_map(transition_slots).get(
+            "typed_decompiler_operator_transition_signature",
+            "",
+        )
+        if transition_signature:
+            reconstruction_edge = (
+                f"{transition_signature}:clause:a{argument_count}:"
+                f"c{condition_count}:e{exception_count}->"
+                f"{transition_signature}:clause:a{argument_count}:"
+                f"c{condition_count}:e{exception_count}"
+            )
+            add(
+                "typed_decompiler_canonical_ir_ordered_edge",
+                reconstruction_edge,
+            )
+            add(
+                "typed_decompiler_family_pair_operator_transition_signature",
+                f"{family_pair}:{transition_signature}",
+            )
+            add_family_semantic_slot(
+                family=source_family,
+                slot_name="operator-transition",
+                slot_value=transition_signature,
+            )
+            add_family_semantic_slot_pair(
+                family=source_family,
+                left_slot=f"operator-transition:{transition_signature}",
+                right_slot=f"typed-decompiler-family-pair:{family_pair}",
+            )
+            add_family_semantic_slot_pair(
+                family=source_family,
+                left_slot=f"canonical-ir-ordered-edge:{reconstruction_edge}",
+                right_slot=f"typed-decompiler-family-pair:{family_pair}",
+            )
+            if target_family != source_family:
+                add_family_semantic_slot(
+                    family=target_family,
+                    slot_name="source-operator-transition",
+                    slot_value=f"{transition_signature}:{source_family}",
+                )
+                add_family_semantic_slot_pair(
+                    family=target_family,
+                    left_slot=(
+                        "source-operator-transition:"
+                        f"{transition_signature}:{source_family}"
+                    ),
+                    right_slot=f"typed-decompiler-family-pair:{family_pair}",
+                )
+        scope_boundary_value = ":".join(
+            (
+                "cyes" if condition_count else "cno",
+                "eyes" if exception_count else "eno",
+                "tyes" if temporal_scope else "tno",
+            )
+        )
+        add("canonical_ir_scope", modal_scope_signature)
+        add("discourse_flow_scope", modal_scope_signature)
+        add(
+            "contrastive_ir_scope_boundary",
+            f"{scope_boundary_value}:{modal_scope_signature}",
+        )
+        add("cycle_consistency_source_scope", modal_scope_signature)
+        add(
+            "defeasible_priority_sequence",
+            f"temporal-guard:{modal_scope_signature}",
+        )
+        add(
+            "typed_decompiler_scope_signature_family_pair",
+            f"{modal_scope_signature}:{family_pair}",
+        )
+        add(
+            "typed_decompiler_scope_boundary_family_pair",
+            f"{scope_boundary_value}:{modal_scope_signature}:{family_pair}",
+        )
+        add_family_semantic_slot(
+            family=source_family,
+            slot_name="typed-decompiler-scope",
+            slot_value=modal_scope_signature,
+        )
+        add_family_semantic_slot_pair(
+            family=source_family,
+            left_slot=f"typed-decompiler-scope:{modal_scope_signature}",
+            right_slot=f"typed-decompiler-family-pair:{family_pair}",
+        )
+        if target_family != source_family:
+            add_family_semantic_slot(
+                family=target_family,
+                slot_name="source-typed-decompiler-scope",
+                slot_value=f"{modal_scope_signature}:{source_family}",
+            )
+            add_family_semantic_slot_pair(
+                family=target_family,
+                left_slot=(
+                    f"source-typed-decompiler-scope:"
+                    f"{modal_scope_signature}:{source_family}"
+                ),
+                right_slot=f"typed-decompiler-family-pair:{family_pair}",
+            )
+        for view in _preferred_legal_ir_views_for_family(target_family):
+            add(
+                "family_semantic_slot_legal_ir_view_prototype",
+                (
+                    f"{target_family}||slot-pair:"
+                    f"typed-decompiler-scope:{modal_scope_signature}|"
+                    f"typed-decompiler-family-pair:{family_pair}||{view}"
+                ),
+            )
         reconstruction_signature = ":".join(
             value
             for value in (
@@ -14727,10 +14913,19 @@ def _typed_decompiler_bridge_phrases(
                 "typed_decompiler_semantic_reconstruction_cue_family_pair",
                 f"{cue_key}:{family_pair}",
             )
+            add(
+                "typed_decompiler_target_reconstruction_cue",
+                f"{family_pair}:{cue_key}",
+            )
             add_family_semantic_slot_pair(
                 family=source_family,
                 left_slot=f"semantic-reconstruction-cue:{cue_key}",
                 right_slot=f"typed-decompiler-family-pair:{family_pair}",
+            )
+            add_family_semantic_slot(
+                family=target_family,
+                slot_name="typed-decompiler-target-reconstruction-cue",
+                slot_value=f"{family_pair}:{cue_key}",
             )
             if target_family != source_family:
                 add_family_semantic_slot_pair(
@@ -14747,8 +14942,17 @@ def _typed_decompiler_bridge_phrases(
                         f"{family_pair}||{view}"
                     ),
                 )
-        if modal_force and modal_polarity:
-            force_polarity_value = f"{modal_force}:{modal_polarity}"
+                add(
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    (
+                        f"{target_family}||slot:typed-decompiler-target-"
+                        f"reconstruction-cue:{family_pair}:{cue_key}||{view}"
+                    ),
+                )
+        for force_polarity_value in _typed_decompiler_force_polarity_values(
+            force=modal_force,
+            polarity=modal_polarity,
+        ):
             add(
                 "typed_decompiler_force_polarity_family_pair",
                 f"{force_polarity_value}:{family_pair}",
@@ -15516,6 +15720,21 @@ def _typed_decompiler_bridge_phrases(
                             f"typed_decompiler_{clause_slot}_family_pair",
                             f"{normalized_prefix}:{family_pair}",
                         )
+                        clause_role_pair = (
+                            f"{normalized_prefix}:{predicate_role}:{family_pair}"
+                        )
+                        source_clause_role = (
+                            f"{normalized_prefix}:{predicate_role}:"
+                            f"{clause_source_family}"
+                        )
+                        add(
+                            f"typed_decompiler_{clause_slot}_role_family_pair",
+                            clause_role_pair,
+                        )
+                        add(
+                            f"typed_decompiler_{clause_slot}_cue_role_family_pair",
+                            clause_role_pair,
+                        )
                         add(
                             f"typed_decompiler_{clause_slot}_role_shape",
                             clause_role_shape,
@@ -15531,9 +15750,30 @@ def _typed_decompiler_bridge_phrases(
                             slot_value=f"{normalized_prefix}:{target_family}",
                         )
                         add_family_semantic_slot(
+                            family=clause_source_family,
+                            slot_name=f"{clause_slot}-cue-role",
+                            slot_value=(
+                                f"{normalized_prefix}:{predicate_role}:"
+                                f"{target_family}"
+                            ),
+                        )
+                        add_family_semantic_slot_pair(
+                            family=clause_source_family,
+                            left_slot=(
+                                f"{clause_slot}-cue-role:"
+                                f"{normalized_prefix}:{predicate_role}"
+                            ),
+                            right_slot=f"typed-decompiler-family-pair:{family_pair}",
+                        )
+                        add_family_semantic_slot(
                             family=target_family,
                             slot_name=f"{clause_slot}-prefix-source-family",
                             slot_value=f"{normalized_prefix}:{clause_source_family}",
+                        )
+                        add_family_semantic_slot(
+                            family=target_family,
+                            slot_name=f"source-{clause_slot}-cue-role",
+                            slot_value=source_clause_role,
                         )
                         add_family_semantic_slot(
                             family=clause_source_family,
@@ -15556,6 +15796,23 @@ def _typed_decompiler_bridge_phrases(
                                     f"{target_family}||slot:clause-prefix-view-contract:"
                                     f"{normalized_prefix}:{clause_source_family}:"
                                     f"{target_operator_key}||{view}"
+                                ),
+                            )
+                            add(
+                                "family_semantic_slot_legal_ir_view_prototype",
+                                (
+                                    f"{target_family}||slot:"
+                                    f"source-{clause_slot}-cue-role:"
+                                    f"{source_clause_role}||{view}"
+                                ),
+                            )
+                            add(
+                                "family_semantic_slot_legal_ir_view_prototype",
+                                (
+                                    f"{target_family}||slot-pair:"
+                                    f"source-{clause_slot}-cue-role:"
+                                    f"{source_clause_role}|typed-decompiler-"
+                                    f"family-pair:{family_pair}||{view}"
                                 ),
                             )
                             if scoped_value:
@@ -15584,8 +15841,21 @@ def _typed_decompiler_bridge_phrases(
                         )
                         add_family_semantic_slot_pair(
                             family=target_family,
+                            left_slot=(
+                                f"source-{clause_slot}-cue-role:"
+                                f"{source_clause_role}"
+                            ),
+                            right_slot=f"typed-decompiler-family-pair:{family_pair}",
+                        )
+                        add_family_semantic_slot_pair(
+                            family=target_family,
                             left_slot=f"{clause_slot}-prefix:{normalized_prefix}",
                             right_slot=f"source-family:{clause_source_family}",
+                        )
+                        add_family_semantic_slot_pair(
+                            family=target_family,
+                            left_slot=f"modal-cue:{normalized_prefix}",
+                            right_slot=f"predicate-role:{predicate_role}",
                         )
                         if role_shape_value:
                             add_family_semantic_slot_pair(
@@ -15971,6 +16241,30 @@ def _typed_decompiler_force_polarity_tags(
     if not polarity_tags:
         add_polarity("neutral")
     return force_tags, polarity_tags
+
+
+def _typed_decompiler_force_polarity_values(
+    *,
+    force: str,
+    polarity: str,
+) -> List[str]:
+    """Return canonical and force-semantic polarity labels for typed IR slots."""
+
+    normalized_force = _slot_safe_family_key(_clean_text(force).lower())
+    normalized_polarity = _slot_safe_family_key(_clean_text(polarity).lower())
+    if not normalized_force or not normalized_polarity:
+        return []
+    values = [f"{normalized_force}:{normalized_polarity}"]
+    semantic_polarity = ""
+    if normalized_force == "permission" and normalized_polarity == "positive_scope":
+        semantic_polarity = "enabling"
+    elif normalized_force == "obligation" and normalized_polarity == "positive_scope":
+        semantic_polarity = "mandatory"
+    elif normalized_force == "prohibition" and normalized_polarity == "negative_scope":
+        semantic_polarity = "restrictive"
+    if semantic_polarity:
+        values.append(f"{normalized_force}:{semantic_polarity}")
+    return _unique_preserve_order(values)
 
 
 def _source_role_anchor_values(
@@ -19103,6 +19397,13 @@ def _contextual_typed_ir_modal_cues_from_text(
     if normalized_raw_cue:
         candidates.append(normalized_raw_cue)
     candidates.extend(_bridge_cues_from_text(text))
+    if normalized_family == "frame":
+        candidates.extend(_frame_status_keyword_cues_from_text(text))
+        candidates.extend(_structural_frame_cues_from_text(text))
+        if _FRAME_STRUCTURAL_DEONTIC_BRIDGE_TRIGGER_RE.search(
+            _clean_text(text).replace("_", " ").lower()
+        ):
+            candidates.extend(_deontic_bridge_cues_from_text(text))
 
     cues: List[str] = []
     for cue in candidates:
@@ -19136,7 +19437,28 @@ def _is_contextual_typed_ir_modal_cue(
         "rules",
     }:
         return True
+    if normalized_family == "frame" and normalized_cue in _FRAME_REFINED_STATUS_DEONTIC_CUES:
+        return True
+    if normalized_family == "frame" and normalized_cue in _STRUCTURAL_FRAME_CUE_TOKENS:
+        return True
     return False
+
+
+def _deontic_bridge_cues_from_text(text: str) -> List[str]:
+    normalized_text = _clean_text(text).replace("_", " ").lower()
+    if not normalized_text:
+        return []
+    cues: List[str] = []
+    for cue_key in sorted(
+        _DEONTIC_BRIDGE_REINFORCEMENT_CUES,
+        key=lambda item: (-len(item.split("_")), -len(item), item),
+    ):
+        cue_surface = cue_key.replace("_", " ")
+        if not cue_surface:
+            continue
+        if cue_key not in cues and _text_contains_cue_term(normalized_text, cue_surface):
+            cues.append(cue_key)
+    return cues
 
 
 def _contextual_typed_ir_refined_family_pair_slots(

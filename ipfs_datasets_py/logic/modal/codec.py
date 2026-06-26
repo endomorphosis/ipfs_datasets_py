@@ -33,6 +33,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector imp
     frame_ontology_terms,
     frame_ontology_terms_from_feature_keys,
     frame_ontology_terms_from_triples,
+    is_high_signal_frame_ontology_term,
     normalize_frame_ontology_term,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_modal_parser import (
@@ -1351,6 +1352,7 @@ _FLOGIC_ONTOLOGY_GUIDANCE_FEATURES = (
     "flogic:modal_family:frame",
 )
 _STATUTORY_FRAME_SUPPORT_FLOGIC_LOSS_SCALE = 0.30
+_FRAME_LOGIC_ALIGNMENT_FLOGIC_LOSS_SCALE = 0.85
 
 
 @dataclass(frozen=True)
@@ -2533,6 +2535,7 @@ class DeterministicModalLogicCodec:
         (
             flogic_similarity_score,
             statutory_frame_support_calibrated,
+            frame_logic_alignment_calibrated,
         ) = _calibrated_flogic_similarity_score(
             flogic_similarity_score,
             source_text=normalized_text,
@@ -2666,6 +2669,14 @@ class DeterministicModalLogicCodec:
             "spacy_model_name": encoding.model_name,
             "spacy_token_count": len(encoding.tokens),
             "spacy_used_fallback_model": encoding.used_fallback_model,
+            "frame_logic_alignment_flogic_calibrated": (
+                frame_logic_alignment_calibrated
+            ),
+            "frame_logic_alignment_flogic_loss_scale": (
+                _FRAME_LOGIC_ALIGNMENT_FLOGIC_LOSS_SCALE
+                if frame_logic_alignment_calibrated
+                else 1.0
+            ),
             "statutory_frame_support_flogic_calibrated": (
                 statutory_frame_support_calibrated
             ),
@@ -11282,17 +11293,69 @@ def _calibrated_flogic_similarity_score(
     source_text: str,
     citation: Optional[str] = None,
     flogic_result: Optional[FLogicOptimizerResult],
-) -> tuple[float, bool]:
-    if not _has_statutory_frame_support_source(
+) -> tuple[float, bool, bool]:
+    if flogic_result is not None and getattr(flogic_result, "violations", ()):
+        return score, False, False
+    statutory_calibrated = _has_statutory_frame_support_source(
         source_text,
         citation=_clean_non_empty_string(citation),
-    ):
-        return score, False
-    if flogic_result is not None and getattr(flogic_result, "violations", ()):
-        return score, False
+    )
+    statutory_scale = (
+        _STATUTORY_FRAME_SUPPORT_FLOGIC_LOSS_SCALE if statutory_calibrated else 1.0
+    )
+    alignment_scale = _frame_logic_alignment_flogic_loss_scale(flogic_result)
+    alignment_calibrated = alignment_scale < 1.0
+    loss_scale = min(statutory_scale, alignment_scale)
+    if loss_scale >= 1.0:
+        return score, False, False
     loss = max(0.0, 1.0 - max(0.0, min(1.0, float(score))))
-    scaled_loss = loss * _STATUTORY_FRAME_SUPPORT_FLOGIC_LOSS_SCALE
-    return max(0.0, min(1.0, 1.0 - scaled_loss)), True
+    scaled_loss = loss * loss_scale
+    return (
+        max(0.0, min(1.0, 1.0 - scaled_loss)),
+        statutory_calibrated,
+        alignment_calibrated,
+    )
+
+
+def _frame_logic_alignment_flogic_loss_scale(
+    flogic_result: Optional[FLogicOptimizerResult],
+) -> float:
+    """Return a conservative similarity loss scale for explicit frame alignment."""
+    if flogic_result is None or not isinstance(flogic_result.metadata, Mapping):
+        return 1.0
+    terms = {
+        _clean_non_empty_string(term)
+        for key in (
+            "frame_ontology_high_signal_terms",
+            "frame_ontology_high_signal_terms_from_feature_keys",
+            "frame_ontology_high_signal_terms_from_contextualized",
+            "frame_ontology_terms",
+        )
+        for term in flogic_result.metadata.get(key, ())
+        if _clean_non_empty_string(term)
+    }
+    if not terms:
+        return 1.0
+    has_frame_logic_view = bool(
+        terms
+        & {
+            "modal_frame_logic",
+            "legal_ir_view_modal_frame_logic",
+            "frame_logic",
+        }
+    )
+    has_symbolic_view = bool(
+        terms
+        & {
+            "deontic_ir",
+            "legal_ir_view_deontic_ir",
+            "modal_autoencoder",
+            "legal_ir_view_modal_autoencoder",
+        }
+    )
+    if has_frame_logic_view and has_symbolic_view:
+        return _FRAME_LOGIC_ALIGNMENT_FLOGIC_LOSS_SCALE
+    return 1.0
 
 
 def _statutory_frame_support_text(
@@ -12131,7 +12194,12 @@ def _frame_ontology_audit_triples(
         )
         for triple in triples
     }
+    selected_term_candidates = _selected_frame_audit_term_candidates(
+        kg_triples=triples,
+        frame_high_signal_audit_terms=frame_high_signal_audit_terms,
+    )
     for predicate, terms in (
+        ("selected_ontology_term", selected_term_candidates),
         ("audited_ontology_term", frame_audit_terms),
         ("audited_high_signal_ontology_term", frame_high_signal_audit_terms),
     ):
@@ -12151,6 +12219,36 @@ def _frame_ontology_audit_triples(
                 }
             )
     return triples
+
+
+def _selected_frame_audit_term_candidates(
+    *,
+    kg_triples: Sequence[Mapping[str, str]],
+    frame_high_signal_audit_terms: Sequence[str],
+) -> List[str]:
+    """Use audited high-signal terms as selected-frame grounding facts."""
+    has_selected_frame = any(
+        _clean_non_empty_string(triple.get("predicate")) == "selected_ontology_frame"
+        and _clean_non_empty_string(triple.get("object"))
+        for triple in kg_triples
+    )
+    if not has_selected_frame:
+        return []
+    existing_terms = {
+        _clean_non_empty_string(triple.get("object"))
+        for triple in kg_triples
+        if _clean_non_empty_string(triple.get("predicate")) == "selected_ontology_term"
+    }
+    return _unique_preserve_order(
+        normalized
+        for normalized in (
+            _normalize_frame_ontology_audit_term(str(term))
+            for term in frame_high_signal_audit_terms
+        )
+        if normalized
+        and normalized not in existing_terms
+        and is_high_signal_frame_ontology_term(normalized)
+    )
 
 
 def _normalize_frame_ontology_audit_term(term: str) -> str:

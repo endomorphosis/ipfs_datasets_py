@@ -1202,7 +1202,11 @@ def build_prover_syntax_target_coverage_record(
         if quality_gate_present
         else True
     )
+    role_complete = bool(role_summary["target_role_matrix_complete"])
     formal_syntax_valid = bool(summary["all_required_passed"] and quality_complete)
+    validated_bridge_report = bool(
+        formal_syntax_valid and role_complete and not blockers
+    )
     coverage_summary = dict(summary)
     coverage_summary.update(
         {
@@ -1217,6 +1221,17 @@ def build_prover_syntax_target_coverage_record(
             "target_role_matrix_blockers": role_summary[
                 "target_role_matrix_blockers"
             ],
+            "bridge_validation_status": (
+                "validated" if validated_bridge_report else "requires_validation"
+            ),
+            "bridge_validation_basis": _prover_bridge_validation_basis(
+                summary,
+                quality_summary,
+                role_summary,
+                blockers,
+                formal_syntax_valid=formal_syntax_valid,
+                validated_bridge_report=validated_bridge_report,
+            ),
             "semantic_family_summary": semantic_summary,
             "semantic_formula_families": semantic_summary[
                 "semantic_formula_families"
@@ -1231,6 +1246,14 @@ def build_prover_syntax_target_coverage_record(
     )
 
     normalized_source_id = str(source_id or "").strip()
+    bridge_validation_basis = _prover_bridge_validation_basis(
+        summary,
+        quality_summary,
+        role_summary,
+        blockers,
+        formal_syntax_valid=formal_syntax_valid,
+        validated_bridge_report=validated_bridge_report,
+    )
     return {
         "prover_syntax_summary_id": _stable_id(
             "prover-syntax-coverage",
@@ -1245,6 +1268,11 @@ def build_prover_syntax_target_coverage_record(
         "syntax_valid_rate": summary["syntax_valid_rate"],
         "formal_syntax_valid": formal_syntax_valid,
         "requires_validation": (not formal_syntax_valid) or bool(blockers),
+        "validated_by_quality_gate": validated_bridge_report,
+        "bridge_validation_status": (
+            "validated" if validated_bridge_report else "requires_validation"
+        ),
+        "bridge_validation_basis": bridge_validation_basis,
         "coverage_blockers": blockers,
         "quality_gate_summary": quality_summary,
         "target_role_matrix_summary": role_summary,
@@ -1262,6 +1290,40 @@ def build_prover_syntax_target_coverage_record(
             "target_semantic_family_consistent"
         ],
         "coverage_summary": coverage_summary,
+    }
+
+
+def _prover_bridge_validation_basis(
+    coverage_summary: Mapping[str, Any],
+    quality_summary: Mapping[str, Any],
+    role_summary: Mapping[str, Any],
+    blockers: Sequence[str],
+    *,
+    formal_syntax_valid: bool,
+    validated_bridge_report: bool,
+) -> Dict[str, Any]:
+    """Return the deterministic evidence used to promote coverage to validated."""
+
+    blocker_list = [str(blocker) for blocker in blockers if str(blocker).strip()]
+    return {
+        "validator": "deontic.local_prover_quality_gate",
+        "validation_scope": "source_bridge_report",
+        "status": (
+            "validated"
+            if validated_bridge_report
+            else "requires_validation"
+        ),
+        "all_required_passed": bool(
+            coverage_summary.get("all_required_passed") is True
+        ),
+        "quality_gate_all_targets_complete": bool(
+            quality_summary.get("quality_gate_all_targets_complete") is True
+        ),
+        "target_role_matrix_complete": bool(
+            role_summary.get("target_role_matrix_complete") is True
+        ),
+        "formal_syntax_valid": bool(formal_syntax_valid),
+        "coverage_blockers": blocker_list,
     }
 
 

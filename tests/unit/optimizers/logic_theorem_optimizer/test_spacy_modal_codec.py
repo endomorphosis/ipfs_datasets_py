@@ -6649,6 +6649,33 @@ def test_spacy_compiler_adds_administrative_proceeding_record_residual_span_cove
     )
 
 
+def test_spacy_compiler_adds_administrative_approval_residual_span_coverage_for_packet_005219_shape() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    text = (
+        "The Secretary shall prescribe procedures. "
+        "Peer review records. "
+        "Secretarial approval records."
+    )
+    encoding = encoder.encode(
+        text,
+        document_id="us-code-42-6395-packet-005219-spacy",
+        citation="42 U.S.C. 6395.",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    residual_text_spans = {
+        modal_ir.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ].strip()
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    }
+
+    assert "Secretarial approval records." in residual_text_spans
+
+
 def test_spacy_compiler_adds_report_heading_residual_span_coverage() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()
@@ -6697,6 +6724,32 @@ def test_spacy_compiler_adds_savings_effect_residual_span_coverage() -> None:
         "Nothing in this part affects any other provision of law of "
         "a Federal department or agency."
     ) in residual_text_spans
+
+
+def test_spacy_compiler_adds_cost_analysis_residual_span_coverage() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    text = (
+        "Sec. 1544 - Annual cost analysis by Fish and Wildlife Service. "
+        "Cost analysis."
+    )
+    encoding = encoder.encode(
+        text,
+        document_id="us-code-16-1544-cost-analysis-residual",
+        citation="16 U.S.C. 1544",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    residual_text_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    }
+
+    assert "Cost analysis." in residual_text_spans
 
 
 def test_spacy_compiler_adds_packet_000004_short_structural_heading_spans() -> None:

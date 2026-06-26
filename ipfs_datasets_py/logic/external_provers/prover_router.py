@@ -818,31 +818,28 @@ class ProverRouter:
         timeout: float
     ) -> RouterProofResult:
         """Prove with fastest prover (Z3 preferred)."""
-        # Prefer Z3 as fastest
-        if 'z3' in self.provers:
-            start_time = time.time()
-            try:
-                result = self._call_prover(
-                    "z3",
-                    self.provers["z3"],
-                    formula,
-                    axioms,
-                    timeout,
-                )
-                proof_time = time.time() - start_time
-                return RouterProofResult(
-                    is_proved=self._result_is_proved(result),
-                    prover_used='z3',
-                    proof_time=proof_time,
-                    all_results={'z3': result},
-                    strategy_used="fastest",
-                    reason="Used Z3 (fastest)"
-                )
-            except Exception as e:
-                pass
-        
-        # Fall back to auto
-        return self._prove_auto(formula, axioms, timeout)
+        fastest_order = [
+            "z3",
+            "native",
+            "native_syntactic",
+            "cvc5",
+            "lean",
+            "coq",
+            "symbolicai",
+        ]
+        ordered_provers = [
+            name for name in fastest_order if name in self.provers
+        ] + [
+            name for name in self.provers if name not in fastest_order
+        ]
+        return self._prove_ordered(
+            formula,
+            axioms,
+            timeout,
+            ordered_provers,
+            strategy_used="fastest",
+            no_available_reason="No fastest prover available",
+        )
     
     def _prove_most_capable(
         self,
@@ -851,43 +848,91 @@ class ProverRouter:
         timeout: float
     ) -> RouterProofResult:
         """Prove with most capable prover (Lean/Coq preferred)."""
-        # Prefer Lean or Coq as most capable
-        for prover_name in ['lean', 'coq', 'cvc5', 'z3', 'native', 'native_syntactic']:
-            if prover_name in self.provers:
-                start_time = time.time()
-                try:
-                    result = self._call_prover(
-                        prover_name,
-                        self.provers[prover_name],
-                        formula,
-                        axioms,
-                        timeout,
-                    )
-                    proof_time = time.time() - start_time
-                    proved = self._result_is_proved(result)
-                    return RouterProofResult(
-                        is_proved=proved,
-                        prover_used=prover_name,
-                        proof_time=proof_time,
-                        all_results={prover_name: result},
-                        strategy_used="most_capable",
-                        reason=(
-                            f"Proved by {prover_name}"
-                            if proved
-                            else f"Used {prover_name} (no proof)"
-                        )
-                    )
-                except Exception as e:
-                    continue
-        
-        # All failed
+        capable_order = ['lean', 'coq', 'cvc5', 'z3', 'native', 'native_syntactic']
+        ordered_provers = [
+            name for name in capable_order if name in self.provers
+        ] + [
+            name for name in self.provers if name not in capable_order
+        ]
+        return self._prove_ordered(
+            formula,
+            axioms,
+            timeout,
+            ordered_provers,
+            strategy_used="most_capable",
+            no_available_reason="No capable prover available",
+        )
+
+    def _prove_ordered(
+        self,
+        formula,
+        axioms: Optional[List],
+        timeout: float,
+        ordered_provers: List[str],
+        *,
+        strategy_used: str,
+        no_available_reason: str,
+    ) -> RouterProofResult:
+        """Try an explicit prover order and keep compile fallback evidence."""
+
+        start_time = time.time()
+        all_results: Dict[str, Any] = {}
+        first_non_error: Optional[str] = None
+
+        for prover_name in ordered_provers:
+            prover = self.provers.get(prover_name)
+            if prover is None:
+                continue
+            try:
+                result = self._call_prover(
+                    prover_name,
+                    prover,
+                    formula,
+                    axioms,
+                    timeout,
+                )
+            except Exception as exc:
+                all_results[prover_name] = f"Error: {str(exc)}"
+                continue
+
+            all_results[prover_name] = result
+            if first_non_error is None:
+                first_non_error = prover_name
+            if self._result_is_proved(result):
+                return RouterProofResult(
+                    is_proved=True,
+                    prover_used=prover_name,
+                    proof_time=time.time() - start_time,
+                    all_results=all_results,
+                    strategy_used=strategy_used,
+                    reason=f"Proved by {prover_name}",
+                )
+
+        if first_non_error:
+            return RouterProofResult(
+                is_proved=False,
+                prover_used=first_non_error,
+                proof_time=time.time() - start_time,
+                all_results=all_results,
+                strategy_used=strategy_used,
+                reason=f"Used {first_non_error} (no proof)",
+            )
+        if all_results:
+            return RouterProofResult(
+                is_proved=False,
+                prover_used=None,
+                proof_time=time.time() - start_time,
+                all_results=all_results,
+                strategy_used=strategy_used,
+                reason="All provers failed",
+            )
         return RouterProofResult(
             is_proved=False,
             prover_used=None,
             proof_time=0.0,
             all_results={},
-            strategy_used="most_capable",
-            reason="No capable prover available"
+            strategy_used=strategy_used,
+            reason=no_available_reason,
         )
     
     def prove_parallel(

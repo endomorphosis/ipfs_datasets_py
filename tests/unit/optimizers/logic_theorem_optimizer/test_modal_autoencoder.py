@@ -1613,6 +1613,73 @@ def test_typed_family_pair_bridge_head_transfers_cosine_to_holdout() -> None:
     assert after.embedding_cosine_similarity > before.embedding_cosine_similarity
 
 
+def test_targeted_reconstruction_slots_cover_frame_conditional_and_deontic_self_pairs() -> None:
+    def typed_sample(title: str, section: str, text: str, family: str) -> object:
+        base = build_us_code_sample(
+            title=title,
+            section=section,
+            text=text,
+            embedding_vector=[1.0, 0.0],
+        )
+        formula = base.modal_ir.formulas[0]
+        typed_formula = replace(
+            formula,
+            operator=replace(
+                formula.operator,
+                family=family,
+                system="FrameLogic" if family == "frame" else formula.operator.system,
+                symbol="frame_bm25" if family == "frame" else formula.operator.symbol,
+                label="ontology_frame" if family == "frame" else formula.operator.label,
+            ),
+        )
+        return replace(base, modal_ir=replace(base.modal_ir, formulas=[typed_formula]))
+
+    frame_sample = typed_sample(
+        "50",
+        "2822.",
+        (
+            "Notwithstanding any other provision of law, the Secretary shall pay "
+            "the costs of operating and maintaining infrastructure."
+        ),
+        "frame",
+    )
+    deontic_sample = typed_sample(
+        "42",
+        "9164.",
+        (
+            "The Secretary shall establish and enforce standards for submarine "
+            "electric transmission cable safety."
+        ),
+        "deontic",
+    )
+    autoencoder = AdaptiveModalAutoencoder(max_round_trip_bridge_features=256)
+
+    frame_slots = set(autoencoder._semantic_slot_distribution_for(frame_sample))
+    frame_bridge_features = set(autoencoder._round_trip_bridge_feature_keys_for(frame_sample))
+    deontic_slots = set(autoencoder._semantic_slot_distribution_for(deontic_sample))
+
+    assert (
+        "slot:typed-decompiler-target-reconstruction-pair:"
+        "frame->conditional_normative"
+    ) in frame_slots
+    assert (
+        "slot:typed-decompiler-target-reconstruction-cue:"
+        "frame->deontic:shall"
+    ) in frame_slots
+    assert (
+        "round-trip-bridge:target-reconstruction-surface-cue-family-pair:"
+        "shall:frame->deontic"
+    ) in frame_bridge_features
+    assert (
+        "slot:typed-decompiler-target-reconstruction-pair:deontic->deontic"
+        in deontic_slots
+    )
+    assert (
+        "slot:typed-decompiler-target-reconstruction-cue:deontic->deontic:shall"
+        in deontic_slots
+    )
+
+
 def test_round_trip_bridge_feature_head_transfers_ce_and_cosine_to_holdout() -> None:
     train = build_us_code_sample(
         title="5",
@@ -10268,6 +10335,31 @@ def test_targeted_typed_family_pairs_have_reconstruction_slots() -> None:
         ),
         replace(
             base_formula,
+            formula_id="packet-004256-conditional",
+            operator=replace(
+                base_formula.operator,
+                family="conditional_normative",
+                system="COND",
+                symbol="IF",
+                label="condition",
+            ),
+            conditions=["subject to section 314"],
+            metadata={"cue": "subject_to"},
+        ),
+        replace(
+            base_formula,
+            formula_id="packet-004256-deontic",
+            operator=replace(
+                base_formula.operator,
+                family="deontic",
+                system="D",
+                symbol="O",
+                label="obligation",
+            ),
+            metadata={"cue": "shall"},
+        ),
+        replace(
+            base_formula,
             formula_id="packet-004256-temporal",
             operator=replace(
                 base_formula.operator,
@@ -10285,6 +10377,10 @@ def test_targeted_typed_family_pairs_have_reconstruction_slots() -> None:
     distribution = AdaptiveModalAutoencoder()._semantic_slot_distribution_for(sample)
 
     for family_pair in (
+        "conditional_normative->deontic",
+        "deontic->deontic",
+        "deontic->temporal",
+        "frame->conditional_normative",
         "frame->deontic",
         "frame->frame",
         "frame->temporal",

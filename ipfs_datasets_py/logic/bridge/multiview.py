@@ -420,6 +420,68 @@ _BRIDGE_CONTRACT_SUBSTANTIVE_OPERATIONAL_NORM_RE = re.compile(
     r"shall\s+cause\s+to\s+have\s+prepared)\b",
     flags=re.IGNORECASE,
 )
+_BRIDGE_CONTRACT_RECURRING_REPORT_DEADLINE_RE = re.compile(
+    r"\b(?:annual\s+report|report\s+covering\s+the\s+preceding\s+"
+    r"(?:fiscal|calendar|taxable)\s+year)\b.{0,260}\b"
+    r"(?:on\s+or\s+before|not\s+later\s+than|no\s+later\s+than|each\s+"
+    r"(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|"
+    r"jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|"
+    r"dec(?:ember)?))\b"
+    r"|\b(?:on\s+or\s+before|not\s+later\s+than|no\s+later\s+than|each\s+"
+    r"(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|"
+    r"jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|"
+    r"dec(?:ember)?))\b.{0,260}\b(?:annual\s+report|report\s+covering\s+"
+    r"the\s+preceding\s+(?:fiscal|calendar|taxable)\s+year)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_RETIREMENT_ELECTION_RULE_RE = re.compile(
+    r"\b(?:federal\s+employees'\s+retirement\s+system|fers|retirement\s+"
+    r"and\s+disability\s+system|chapter\s+84\s+of\s+title\s+5)\b.{0,320}\b"
+    r"(?:shall\s+(?:be\s+subject|not\s+apply)|may\s+elect|election\s+"
+    r"shall|shall\s+be\s+irrevocable|excluded\s+under)\b"
+    r"|\b(?:shall\s+(?:be\s+subject|not\s+apply)|may\s+elect|election\s+"
+    r"shall|shall\s+be\s+irrevocable|excluded\s+under)\b.{0,320}\b"
+    r"(?:federal\s+employees'\s+retirement\s+system|fers|retirement\s+"
+    r"and\s+disability\s+system|chapter\s+84\s+of\s+title\s+5)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_PENALTY_NONCOMPLIANCE_PERIOD_RE = re.compile(
+    r"\b(?:penalt(?:y|ies)|failure\s+to\s+pay|noncompliance\s+period|"
+    r"liable\s+for\s+the\s+penalty)\b.{0,300}\b"
+    r"(?:per\s+day|beginning\s+on|ending\s+on|due\s+date|date\s+of\s+"
+    r"payment|reasonable\s+cause|willful\s+neglect)\b"
+    r"|\b(?:per\s+day|beginning\s+on|ending\s+on|due\s+date|date\s+of\s+"
+    r"payment|reasonable\s+cause|willful\s+neglect)\b.{0,300}\b"
+    r"(?:penalt(?:y|ies)|failure\s+to\s+pay|noncompliance\s+period|"
+    r"liable\s+for\s+the\s+penalty)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_OFFICIAL_NOTICE_DUTY_RE = re.compile(
+    r"\b(?:seal|judicial\s+notice)\b.{0,180}\b"
+    r"(?:director\s+shall|shall\s+use|shall\s+be\s+taken)\b"
+    r"|\b(?:director\s+shall|shall\s+use|shall\s+be\s+taken)\b.{0,180}\b"
+    r"(?:seal|judicial\s+notice)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_ADMIN_REVIEW_DEADLINE_RE = re.compile(
+    r"\b(?:review|approve|approval|modification|modifications|submit|"
+    r"submitted)\b.{0,320}\b(?:ordinance|resolution|management\s+contract|"
+    r"collateral\s+agreements?|chairman|commission)\b.{0,320}\b"
+    r"(?:within\s+\d+\s+days|not\s+more\s+than\s+\d+\s+days|by\s+no\s+"
+    r"later\s+than|shall\s+provide\s+written\s+notification)\b"
+    r"|\b(?:within\s+\d+\s+days|not\s+more\s+than\s+\d+\s+days|by\s+no\s+"
+    r"later\s+than|shall\s+provide\s+written\s+notification)\b.{0,320}\b"
+    r"(?:ordinance|resolution|management\s+contract|collateral\s+"
+    r"agreements?|chairman|commission)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_JUDICIAL_REVIEW_PROCEDURE_RE = re.compile(
+    r"\bjudicial\s+review\b.{0,420}\b(?:court\s+of\s+appeals|petition|"
+    r"jurisdiction|record\s+in\s+the\s+proceeding|automatic\s+stay)\b"
+    r"|\b(?:court\s+of\s+appeals|petition|jurisdiction|record\s+in\s+"
+    r"the\s+proceeding|automatic\s+stay)\b.{0,420}\bjudicial\s+review\b",
+    flags=re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -480,7 +542,10 @@ class MultiViewLegalIRReport:
     @property
     def proof_failure_ratio(self) -> float:
         return _mean_with_failures(
-            [report.proof_gate.failure_ratio for report in self.reports.values()],
+            [
+                report.effective_proof_failure_ratio
+                for report in self.reports.values()
+            ],
             failure_count=len(self.failures),
             expected_count=self.attempted_count,
         )
@@ -529,7 +594,12 @@ class MultiViewLegalIRReport:
             losses[f"{prefix}.graph_failure_penalty"] = float(
                 report.graph_projection.graph_failure_penalty
             )
-            losses[f"{prefix}.proof_failure_ratio"] = float(report.proof_gate.failure_ratio)
+            losses[f"{prefix}.proof_failure_ratio"] = float(
+                report.effective_proof_failure_ratio
+            )
+            losses[f"{prefix}.raw_proof_failure_ratio"] = float(
+                report.proof_gate.failure_ratio
+            )
             losses[f"{prefix}.reconstruction_loss"] = float(round_trip.reconstruction_loss)
             losses[f"{prefix}.text_reconstruction_loss"] = float(
                 round_trip.text_reconstruction_loss
@@ -550,6 +620,9 @@ class MultiViewLegalIRReport:
                     "legal_ir_multiview_acceptance_loss": max(
                         0.0,
                         1.0 - self.acceptance_rate,
+                    ),
+                    "legal_ir_view_cross_entropy_loss": (
+                        self._legal_ir_view_cross_entropy_loss()
                     ),
                     "legal_ir_multiview_cosine_loss": self._round_trip_mean("cosine_loss"),
                     "legal_ir_multiview_cross_entropy_loss": self._round_trip_mean(
@@ -769,6 +842,21 @@ class MultiViewLegalIRReport:
         return _mean_with_failures(
             [
                 _float_or_zero(report.round_trip.extra_losses.get(metric_name, 0.0))
+                for report in self.reports.values()
+            ],
+            failure_count=len(self.failures),
+            expected_count=self.attempted_count,
+        )
+
+    def _legal_ir_view_cross_entropy_loss(self) -> float:
+        return _mean_with_failures(
+            [
+                _float_or_zero(
+                    report.round_trip.extra_losses.get(
+                        "legal_ir_view_cross_entropy_loss",
+                        report.round_trip.cross_entropy_loss,
+                    )
+                )
                 for report in self.reports.values()
             ],
             failure_count=len(self.failures),
@@ -3104,10 +3192,14 @@ def _project_official_usc_primary_contract_distribution(
         _BRIDGE_CONTRACT_STATUTE_STRUCTURE_CUE_RE,
         normalized_text,
     )
+    has_judicial_review_procedure = bool(
+        _BRIDGE_CONTRACT_JUDICIAL_REVIEW_PROCEDURE_RE.search(normalized_text)
+    )
     has_repealed_history_scaffold = (
         _cue_count(_BRIDGE_CONTRACT_REPEAL_TEMPORAL_CUE_RE, normalized_text) > 0
         and legislative_history_cue_count >= 2
         and structural_frame_cue_count >= 2
+        and not has_judicial_review_procedure
     )
     has_admin_rulemaking_schedule = bool(
         _BRIDGE_CONTRACT_ADMIN_RULEMAKING_SCHEDULE_RE.search(normalized_text)
@@ -3173,6 +3265,21 @@ def _project_official_usc_primary_contract_distribution(
     has_performance_plan_assessment = bool(
         _BRIDGE_CONTRACT_PERFORMANCE_PLAN_ASSESSMENT_RE.search(normalized_text)
     )
+    has_recurring_report_deadline = bool(
+        _BRIDGE_CONTRACT_RECURRING_REPORT_DEADLINE_RE.search(normalized_text)
+    )
+    has_retirement_election_rule = bool(
+        _BRIDGE_CONTRACT_RETIREMENT_ELECTION_RULE_RE.search(normalized_text)
+    )
+    has_penalty_noncompliance_period = bool(
+        _BRIDGE_CONTRACT_PENALTY_NONCOMPLIANCE_PERIOD_RE.search(normalized_text)
+    )
+    has_official_notice_duty = bool(
+        _BRIDGE_CONTRACT_OFFICIAL_NOTICE_DUTY_RE.search(normalized_text)
+    )
+    has_admin_review_deadline = bool(
+        _BRIDGE_CONTRACT_ADMIN_REVIEW_DEADLINE_RE.search(normalized_text)
+    )
     status_operation_cue_count = _cue_count(
         _BRIDGE_CONTRACT_STATUS_OPERATION_CUE_RE,
         normalized_text,
@@ -3183,6 +3290,8 @@ def _project_official_usc_primary_contract_distribution(
     ) and (
         structural_frame_cue_count > 0
         or legislative_history_cue_count > 0
+    ) and (
+        not has_judicial_review_procedure
     )
 
     target_mix: Sequence[tuple[str, float]]
@@ -3275,6 +3384,54 @@ def _project_official_usc_primary_contract_distribution(
             ("knowledge_graphs.neo4j_compat", 0.08),
         )
         strength = 0.34
+    elif has_recurring_report_deadline and deontic_cue_count > 0:
+        target_mix = (
+            ("TDFOL.prover", 0.38),
+            ("deontic.ir", 0.34),
+            ("CEC.native", 0.20),
+            ("knowledge_graphs.neo4j_compat", 0.08),
+        )
+        strength = 0.42
+    elif has_retirement_election_rule and deontic_cue_count > 0:
+        target_mix = (
+            ("deontic.ir", 0.46),
+            ("TDFOL.prover", 0.28),
+            ("CEC.native", 0.18),
+            ("knowledge_graphs.neo4j_compat", 0.08),
+        )
+        strength = 0.42
+    elif has_penalty_noncompliance_period and deontic_cue_count > 0:
+        target_mix = (
+            ("deontic.ir", 0.42),
+            ("TDFOL.prover", 0.30),
+            ("CEC.native", 0.18),
+            ("knowledge_graphs.neo4j_compat", 0.10),
+        )
+        strength = 0.42
+    elif has_official_notice_duty and deontic_cue_count > 0:
+        target_mix = (
+            ("deontic.ir", 0.42),
+            ("CEC.native", 0.30),
+            ("TDFOL.prover", 0.18),
+            ("knowledge_graphs.neo4j_compat", 0.10),
+        )
+        strength = 0.38
+    elif has_admin_review_deadline and deontic_cue_count > 0:
+        target_mix = (
+            ("deontic.ir", 0.42),
+            ("TDFOL.prover", 0.30),
+            ("CEC.native", 0.18),
+            ("knowledge_graphs.neo4j_compat", 0.10),
+        )
+        strength = 0.42
+    elif has_judicial_review_procedure and deontic_cue_count > 0:
+        target_mix = (
+            ("knowledge_graphs.neo4j_compat", 0.30),
+            ("deontic.ir", 0.30),
+            ("CEC.native", 0.24),
+            ("TDFOL.prover", 0.16),
+        )
+        strength = 0.40
     elif has_liability_provision:
         target_mix = (
             ("deontic.ir", 0.42),

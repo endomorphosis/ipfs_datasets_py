@@ -91,6 +91,8 @@ class ProverTargetSyntaxRecord:
     target_components: Dict[str, Any]
     target_quality_gate: Dict[str, Any]
     target_quality_gate_fingerprint: str
+    bridge_validation_status: str
+    bridge_validation_basis: Dict[str, Any]
     syntax_valid: bool
     skipped: bool
     diagnostics: List[Dict[str, Any]]
@@ -229,6 +231,11 @@ def _validate_target_formula(
         target_parse_profile,
         reconstruction_token_profile,
     )
+    bridge_validation_basis = _bridge_validation_basis_for_target(
+        target,
+        target_quality_gate,
+        syntax_valid=syntax_valid,
+    )
 
     return ProverTargetSyntaxRecord(
         source_id=norm.source_id,
@@ -296,6 +303,8 @@ def _validate_target_formula(
         target_quality_gate_fingerprint=target_quality_gate[
             "target_quality_gate_fingerprint"
         ],
+        bridge_validation_status=bridge_validation_basis["status"],
+        bridge_validation_basis=bridge_validation_basis,
         syntax_valid=syntax_valid,
         skipped=False,
         diagnostics=diagnostics,
@@ -303,6 +312,33 @@ def _validate_target_formula(
         requires_validation=bool(formula_record.get("requires_validation") is not False or diagnostics),
         schema_version=norm.schema_version,
     )
+
+
+def _bridge_validation_basis_for_target(
+    target: str,
+    target_quality_gate: Dict[str, Any],
+    *,
+    syntax_valid: bool,
+) -> Dict[str, Any]:
+    """Expose target-level local validation as an explicit bridge report signal."""
+
+    formal_complete = bool(
+        target_quality_gate.get("formal_validation_complete") is True
+    )
+    return {
+        "status": "validated" if formal_complete else "requires_validation",
+        "validator": "deontic.local_prover_quality_gate",
+        "validation_scope": "local_target_bridge_report",
+        "target": target,
+        "syntax_valid": bool(syntax_valid),
+        "formal_validation_complete": formal_complete,
+        "structural_checks_complete": bool(
+            target_quality_gate.get("structural_checks_complete") is True
+        ),
+        "failed_quality_checks": list(
+            target_quality_gate.get("failed_quality_checks") or []
+        ),
+    }
 
 
 def _render_target_formula(norm: LegalNormIR, target: str, formula: str) -> str:

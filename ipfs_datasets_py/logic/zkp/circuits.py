@@ -445,6 +445,55 @@ def proof_public_inputs_from_proof_dict(proof: Mapping[str, Any]) -> Dict[str, A
     return completed
 
 
+def _first_nonempty(*values: object) -> str:
+    for value in values:
+        if value in (None, ""):
+            continue
+        text = str(value).strip()
+        if text:
+            return text
+    return ""
+
+
+def _source_id_from_record(
+    record: Mapping[str, Any],
+    metadata: Mapping[str, Any],
+    proof_hash: str,
+) -> str:
+    """Return a stable LegalIR source id from common proof/export fields."""
+    direct = _first_nonempty(
+        record.get("source_id"),
+        record.get("sample_id"),
+        record.get("document_id"),
+        record.get("doc_id"),
+        record.get("id"),
+        record.get("form_id"),
+        record.get("source_pdf"),
+        metadata.get("source_id"),
+        metadata.get("sample_id"),
+        metadata.get("document_id"),
+        metadata.get("doc_id"),
+        metadata.get("form_id"),
+        metadata.get("source_pdf"),
+    )
+    if direct:
+        return direct
+
+    citation = _first_nonempty(record.get("citation"), metadata.get("citation"))
+    if citation:
+        return citation
+
+    title = _first_nonempty(record.get("title"), metadata.get("title"))
+    section = _first_nonempty(record.get("section"), metadata.get("section"))
+    source = _first_nonempty(record.get("source"), metadata.get("source"))
+    if source.lower() in {"us_code", "us-code", "usc", "u.s.c."} and title and section:
+        return f"{title} U.S.C. {section}"
+
+    if proof_hash:
+        return f"zkp-proof:{proof_hash[:16]}"
+    return ""
+
+
 def complete_zkp_attestation_record(record: Mapping[str, Any]) -> Dict[str, Any]:
     """Return a LegalIR ZKP attestation record with deterministic bridge fields.
 
@@ -492,6 +541,13 @@ def complete_zkp_attestation_record(record: Mapping[str, Any]) -> Dict[str, Any]
     attestation_ref = str(attestation_view.get("attestation_ref") or "")
     completed["attestation_view"] = attestation_view
     completed["public_inputs"] = proof_public_inputs or public_inputs
+    if proof:
+        synced_proof = dict(proof)
+        synced_metadata = dict(metadata)
+        synced_metadata["attestation_view"] = attestation_view
+        synced_proof["metadata"] = synced_metadata
+        synced_proof["public_inputs"] = proof_public_inputs or public_inputs
+        completed["proof"] = synced_proof
     if attestation_ref:
         completed["attestation_ref"] = attestation_ref
         completed["attestation_view_version"] = int(
@@ -513,19 +569,7 @@ def complete_zkp_attestation_record(record: Mapping[str, Any]) -> Dict[str, Any]
         if completed.get(key):
             continue
         if key == "source_id":
-            source_id = (
-                completed.get("source_id")
-                or completed.get("sample_id")
-                or completed.get("document_id")
-                or completed.get("id")
-                or completed.get("form_id")
-                or completed.get("source_pdf")
-                or metadata.get("source_id")
-                or metadata.get("sample_id")
-                or metadata.get("document_id")
-                or metadata.get("form_id")
-                or (f"zkp-proof:{proof_hash[:16]}" if proof_hash else "")
-            )
+            source_id = _source_id_from_record(completed, metadata, proof_hash)
             if source_id:
                 completed[key] = str(source_id)
             continue

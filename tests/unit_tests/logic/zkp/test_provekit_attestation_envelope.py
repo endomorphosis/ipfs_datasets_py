@@ -203,10 +203,74 @@ def test_flattened_record_replaces_empty_duplicated_attestation_fields():
     assert completed["attestation_ref"] == proof.public_inputs["attestation_ref"]
     assert completed["attestation_view_version"] == 1
     assert completed["public_inputs"]["attestation_ref"] == completed["attestation_ref"]
+    assert completed["proof"]["public_inputs"]["attestation_ref"] == (
+        completed["attestation_ref"]
+    )
+    assert completed["proof"]["metadata"]["attestation_view"]["attestation_ref"] == (
+        completed["attestation_ref"]
+    )
     assert completed["proof_hash"] == proof.metadata["attestation_view"]["proof_digest"]
     assert completed["axioms_commitment"] == proof.public_inputs["axioms_commitment"]
     assert completed["source_id"] == "us-code-42-18726.-3ff52550e83c51a1"
     assert zkp_attestation_legal_ir_view_loss([flattened_record]) == 0.0
+
+
+def test_sparse_us_code_record_uses_citation_as_source_id():
+    from ipfs_datasets_py.logic.zkp import ZKPProver
+
+    proof = ZKPProver().generate_proof(
+        theorem="O(submit_annual_cost_analysis(service))",
+        private_axioms=[
+            "O(submit_annual_cost_analysis(service))",
+            "source_citation(16 U.S.C. 1544)",
+        ],
+        metadata={
+            "circuit_ref": "legal_ir_zkp_attestation@v1",
+            "circuit_version": 1,
+            "ruleset_id": "LegalIR_TDFOL_v1",
+        },
+    )
+    sparse_record = {
+        "proof": proof.to_dict(),
+        "citation": "16 U.S.C. 1544",
+        "section": "1544",
+        "source": "us_code",
+        "title": "16",
+    }
+
+    completed = complete_zkp_attestation_record(sparse_record)
+
+    assert completed["source_id"] == "16 U.S.C. 1544"
+    assert completed["attestation_ref"] == completed["public_inputs"]["attestation_ref"]
+    assert completed["proof"]["metadata"]["attestation_view"]["attestation_ref"] == (
+        completed["attestation_ref"]
+    )
+    assert zkp_attestation_legal_ir_view_loss([sparse_record]) == 0.0
+
+
+def test_sparse_us_code_record_derives_source_id_from_title_and_section():
+    from ipfs_datasets_py.logic.zkp import ZKPProver
+
+    proof = ZKPProver().generate_proof(
+        theorem="O(file_record(director))",
+        private_axioms=["O(file_record(director))", "source_section(4583)"],
+        metadata={
+            "circuit_ref": "legal_ir_zkp_attestation@v1",
+            "circuit_version": 1,
+            "ruleset_id": "LegalIR_TDFOL_v1",
+        },
+    )
+    sparse_record = {
+        "proof": proof.to_dict(),
+        "section": "4583",
+        "source": "us_code",
+        "title": "12",
+    }
+
+    completed = complete_zkp_attestation_record(sparse_record)
+
+    assert completed["source_id"] == "12 U.S.C. 4583"
+    assert zkp_attestation_legal_ir_view_loss([sparse_record]) == 0.0
 
 
 def test_backend_fails_if_cli_succeeds_without_proof_file(tmp_path):

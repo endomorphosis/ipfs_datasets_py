@@ -776,6 +776,10 @@ def _has_tdfol_parse_repair_evidence(
     """Detect packet evidence that names the TDFOL parse-repair failure."""
 
     for evidence in _tdfol_guidance_evidence_records(compiler_guidance):
+        target_metrics = {
+            _normalized_guidance_token(metric)
+            for metric in evidence.get("target_metrics") or ()
+        }
         failure_name = _normalized_guidance_token(
             evidence.get("bridge_failure_name") or evidence.get("failure_name")
         )
@@ -791,7 +795,10 @@ def _has_tdfol_parse_repair_evidence(
             or evidence.get("target")
         )
         if (
-            failure_name == "tdfol_parse_failure_ratio"
+            (
+                failure_name == "tdfol_parse_failure_ratio"
+                or "tdfol_parse_failure_ratio" in target_metrics
+            )
             and (
                 target_lane == "tdfol"
                 or target_view in {"tdfol.prover", "tdfol"}
@@ -1103,6 +1110,7 @@ def _normalize_tdfol_export_formula(text: str) -> str:
     normalized = _strip_tdfol_line_comment(normalized)
     normalized = _unwrap_tdfol_fenced_export(normalized)
     normalized = _unwrap_tdfol_json_export(normalized)
+    normalized = _normalize_deontic_text_label_export(normalized)
     normalized = _unwrap_tdfol_assignment_export(normalized)
     normalized = _unwrap_tdfol_key_value_export(normalized)
     normalized = _normalize_deontic_operator_aliases(normalized)
@@ -1117,7 +1125,7 @@ def _normalize_tdfol_export_formula(text: str) -> str:
         flags=re.IGNORECASE,
     )
     normalized = re.sub(
-        r"^\s*(?:TDFOL(?:\.prover)?|target_component\s*[:=]\s*TDFOL(?:\.prover)?)\s*[:=]\s*",
+        r"^\s*(?:TDFOL(?:[\s.]prover)?|target_component\s*[:=]\s*TDFOL(?:[\s.]prover)?)\s*[:=]\s*",
         "",
         normalized,
         flags=re.IGNORECASE,
@@ -1268,6 +1276,30 @@ def _normalize_deontic_label_export(text: str) -> str:
     if not formula:
         return normalized
     return f"{match.group(1).upper()}({formula})"
+
+
+def _normalize_deontic_text_label_export(text: str) -> str:
+    """Convert named raw-text deontic labels into parser-ready formulas."""
+
+    normalized = str(text or "").strip()
+    if not normalized:
+        return normalized
+    operator_names = "|".join(
+        re.escape(name)
+        for name in sorted(_DEONTIC_EXPORT_OPERATOR_ALIASES, key=len, reverse=True)
+    )
+    match = re.match(rf"(?is)^({operator_names})\s*[:=]\s*(.+)$", normalized)
+    if not match:
+        return normalized
+    operator = _DEONTIC_EXPORT_OPERATOR_ALIASES[match.group(1).lower()]
+    payload = match.group(2).strip().strip("`\"'").strip()
+    if not payload:
+        return normalized
+    formula = _extract_balanced_tdfol_formula(payload)
+    if formula:
+        return f"{operator}({formula})"
+    raw_formula = _formula_from_raw_deontic_text_argument(operator, payload)
+    return raw_formula or normalized
 
 
 def _normalize_deontic_agent_annotation_export(text: str) -> str:

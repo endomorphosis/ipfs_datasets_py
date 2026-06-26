@@ -253,6 +253,50 @@ _USCODE_ADMINISTRATIVE_PROCEDURE_SIGNAL_TOKENS = frozenset(
         "testimony",
     }
 )
+_USCODE_ADMINISTRATIVE_FRAME_RESIDUAL_MAX_TOKENS = 72
+_USCODE_ADMINISTRATIVE_FRAME_CONTEXT_TOKENS = frozenset(
+    {
+        "administration",
+        "administrative",
+        "administrator",
+        "agency",
+        "agencies",
+        "board",
+        "commission",
+        "committee",
+        "department",
+        "director",
+        "federal",
+        "officer",
+        "officers",
+        "secretarial",
+        "secretary",
+    }
+)
+_USCODE_ADMINISTRATIVE_FRAME_PROCESS_TOKENS = frozenset(
+    {
+        "approval",
+        "approvals",
+        "certification",
+        "certifications",
+        "consultation",
+        "consultations",
+        "coordination",
+        "determination",
+        "determinations",
+        "evaluation",
+        "evaluations",
+        "peer",
+        "procedure",
+        "procedures",
+        "process",
+        "processes",
+        "record",
+        "records",
+        "review",
+        "reviews",
+    }
+)
 _USCODE_RESIDUAL_SPAN_MIN_TOKENS = 6
 _USCODE_RESIDUAL_SPAN_MAX_TOKENS = 120
 _USCODE_SHORT_RESIDUAL_HEADING_MIN_TOKENS = 1
@@ -542,6 +586,10 @@ _USCODE_SAVINGS_EFFECT_RESIDUAL_SIGNAL_TOKENS = frozenset(
         "subchapter",
         "title",
     }
+)
+_USCODE_COST_ANALYSIS_RESIDUAL_RE = re.compile(
+    r"\b(?:(?:annual\s+)?cost\s+analys(?:is|es)|analys(?:is|es)\s+of\s+costs?)\b",
+    re.IGNORECASE,
 )
 _USCODE_RESIDUAL_STATUTORY_FRAGMENT_MAX_TOKENS = 18
 _USCODE_RESIDUAL_STATUTORY_FRAGMENT_HINT_RE = re.compile(
@@ -1588,6 +1636,11 @@ class LegalModalParser:
             tokens,
         ):
             return True
+        if self._is_uscode_administrative_frame_residual_candidate(
+            normalized,
+            tokens,
+        ):
+            return True
         if self._is_uscode_enforcement_residual_candidate(normalized, tokens):
             return True
         if self._is_uscode_definition_residual_candidate(normalized, tokens):
@@ -1595,6 +1648,8 @@ class LegalModalParser:
         if self._is_uscode_purpose_residual_candidate(normalized, tokens):
             return True
         if self._is_uscode_savings_effect_residual_candidate(normalized, tokens):
+            return True
+        if self._is_uscode_cost_analysis_residual_candidate(normalized, tokens):
             return True
         if self._is_uscode_note_reference_residual_candidate(normalized, tokens):
             return True
@@ -1958,6 +2013,29 @@ class LegalModalParser:
             }
         )
 
+    def _is_uscode_administrative_frame_residual_candidate(
+        self,
+        normalized_segment_text: str,
+        tokens: Sequence[str],
+    ) -> bool:
+        """Recover administrative approval/review frame spans without modal cues."""
+        token_count = len(tokens)
+        if token_count < 2:
+            return False
+        if token_count > _USCODE_ADMINISTRATIVE_FRAME_RESIDUAL_MAX_TOKENS:
+            return False
+        lowered = normalized_segment_text.lower()
+        if (
+            _USCODE_CODIFICATION_HINT_RE.search(lowered)
+            or _USCODE_EDITORIAL_STATUS_HINT_RE.search(lowered)
+            or _USCODE_DECLARATIVE_STATEMENT_HINT_RE.search(lowered)
+        ):
+            return False
+        token_set = set(tokens)
+        return bool(
+            token_set & _USCODE_ADMINISTRATIVE_FRAME_CONTEXT_TOKENS
+        ) and bool(token_set & _USCODE_ADMINISTRATIVE_FRAME_PROCESS_TOKENS)
+
     def _is_uscode_enforcement_residual_candidate(
         self,
         normalized_segment_text: str,
@@ -2042,6 +2120,25 @@ class LegalModalParser:
         if not _USCODE_SAVINGS_EFFECT_RESIDUAL_HINT_RE.search(lowered):
             return False
         return bool(set(tokens) & _USCODE_SAVINGS_EFFECT_RESIDUAL_SIGNAL_TOKENS)
+
+    def _is_uscode_cost_analysis_residual_candidate(
+        self,
+        normalized_segment_text: str,
+        tokens: Sequence[str],
+    ) -> bool:
+        """Recover compact cost-analysis frame headings without modal cues."""
+        token_count = len(tokens)
+        if token_count < 2 or token_count > _USCODE_COMPACT_FRAME_RESIDUAL_MAX_TOKENS:
+            return False
+        lowered = normalized_segment_text.lower()
+        if (
+            _USCODE_CODIFICATION_HINT_RE.search(lowered)
+            or _USCODE_EDITORIAL_STATUS_HINT_RE.search(lowered)
+            or _USCODE_DECLARATIVE_STATEMENT_HINT_RE.search(lowered)
+            or _USCODE_HEADING_ONLY_VERB_HINT_RE.search(lowered)
+        ):
+            return False
+        return bool(_USCODE_COST_ANALYSIS_RESIDUAL_RE.search(lowered))
 
     def _is_uscode_note_reference_residual_candidate(
         self,

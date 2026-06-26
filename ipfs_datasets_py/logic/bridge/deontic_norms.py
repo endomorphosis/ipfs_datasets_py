@@ -1910,16 +1910,96 @@ def _normalize_coverage_validation_records(
             row["coverage_summary"] = dict(summary)
 
         if _coverage_record_validated_by_quality_gate(row):
-            row["requires_validation"] = False
-            row["validated_by_quality_gate"] = True
+            row = _promote_coverage_record_to_validated_bridge_report(row)
             if isinstance(row.get("coverage_summary"), Mapping):
                 coverage_summary = dict(row["coverage_summary"])
-                coverage_summary["requires_validation"] = False
-                coverage_summary["validated_by_quality_gate"] = True
+                coverage_summary = (
+                    _promote_coverage_summary_to_validated_bridge_report(
+                        coverage_summary
+                    )
+                )
                 row["coverage_summary"] = coverage_summary
 
         normalized.append(row)
     return normalized
+
+
+def _promote_coverage_record_to_validated_bridge_report(
+    record: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Mark a complete local prover coverage row as bridge-validated."""
+
+    row = dict(record)
+    row["requires_validation"] = False
+    row["validated_by_quality_gate"] = True
+    row["bridge_validation_status"] = "validated"
+    row["bridge_validation_basis"] = _coverage_bridge_validation_basis(row)
+    return row
+
+
+def _promote_coverage_summary_to_validated_bridge_report(
+    summary: Mapping[str, Any],
+) -> dict[str, Any]:
+    row = dict(summary)
+    row["requires_validation"] = False
+    row["validated_by_quality_gate"] = True
+    row["bridge_validation_status"] = "validated"
+    row["bridge_validation_basis"] = _coverage_bridge_validation_basis(row)
+    return row
+
+
+def _coverage_bridge_validation_basis(record: Mapping[str, Any]) -> dict[str, Any]:
+    summary = record.get("coverage_summary")
+    summary_mapping = summary if isinstance(summary, Mapping) else record
+    quality_summary = summary_mapping.get("quality_gate_summary")
+    if not isinstance(quality_summary, Mapping):
+        quality_summary = record.get("quality_gate_summary")
+    if not isinstance(quality_summary, Mapping):
+        quality_summary = {}
+    role_summary = summary_mapping.get("target_role_matrix_summary")
+    if not isinstance(role_summary, Mapping):
+        role_summary = record.get("target_role_matrix_summary")
+    if not isinstance(role_summary, Mapping):
+        role_summary = {}
+    all_required_passed = _coverage_basis_all_required_passed(summary_mapping)
+
+    return {
+        "validator": "deontic.local_prover_quality_gate",
+        "validation_scope": "source_bridge_report",
+        "status": "validated",
+        "all_required_passed": all_required_passed,
+        "quality_gate_all_targets_complete": bool(
+            quality_summary.get("quality_gate_all_targets_complete") is True
+            or not quality_summary
+        ),
+        "target_role_matrix_complete": bool(
+            role_summary.get("target_role_matrix_complete") is not False
+        ),
+        "formal_syntax_valid": bool(
+            record.get("formal_syntax_valid") is True
+            or all_required_passed
+        ),
+        "coverage_blockers": [],
+    }
+
+
+def _coverage_basis_all_required_passed(summary: Mapping[str, Any]) -> bool:
+    if summary.get("all_required_passed") is True:
+        return True
+
+    required_targets = _normalized_target_names(summary.get("required_targets"))
+    if not required_targets:
+        return False
+    passed_targets = set(_normalized_target_names(summary.get("passed_targets")))
+    status_by_target = summary.get("target_status_by_target")
+    if isinstance(status_by_target, Mapping):
+        passed_targets.update(
+            target
+            for target in required_targets
+            if str(status_by_target.get(target) or "").strip().lower()
+            in {"passed", "pass", "valid", "ok"}
+        )
+    return all(target in passed_targets for target in required_targets)
 
 
 def _coverage_record_validated_by_quality_gate(record: Mapping[str, Any]) -> bool:

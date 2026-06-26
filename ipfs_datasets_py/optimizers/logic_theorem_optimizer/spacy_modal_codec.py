@@ -1018,6 +1018,10 @@ _DEONTIC_APPROPRIATIONS_SCOPE_PHRASES = (
     "there are authorized to be appropriated",
 )
 _DEONTIC_AUTHORIZATION_SCOPE_PHRASES = (
+    "authorized and directed to",
+    "authorized and empowered",
+    "is authorized and directed to",
+    "is authorized and empowered",
     "there is authorized to be appropriated",
     "is authorized to be appropriated",
     "are authorized to be appropriated",
@@ -5008,6 +5012,9 @@ def _apply_refined_modal_family_cue_pair_balance(
     has_deontic_appropriations_scope_phrase = bool(
         signals.get("has_deontic_appropriations_scope_phrase")
     )
+    has_deontic_authorization_scope_phrase = bool(
+        signals.get("has_deontic_authorization_scope_phrase")
+    )
     has_deontic_corporate_powers_scope_phrase = bool(
         signals.get("has_deontic_corporate_powers_scope_phrase")
     )
@@ -5023,6 +5030,9 @@ def _apply_refined_modal_family_cue_pair_balance(
     )
     has_temporal_scope = bool(signals.get("has_temporal_scope"))
     has_strong_temporal_scope = _has_strong_temporal_scope_signal(signals)
+    has_temporal_fiscal_scope_phrase = bool(
+        signals.get("has_temporal_fiscal_scope_phrase")
+    )
     has_temporal_deadline_scope = bool(
         signals.get("has_temporal_deadline_cue")
         or signals.get("has_temporal_within_scope")
@@ -5188,6 +5198,23 @@ def _apply_refined_modal_family_cue_pair_balance(
                 )
                 frame_count = float(counts.get(frame_family, 0.0))
 
+    # temporal -> conditional_normative / deontic:
+    # Fiscal-year openers are temporal scope, but in statutory authority
+    # clauses they frequently modify cross-reference conditions or requirements
+    # rather than becoming the only family with meaningful evidence.
+    if (
+        has_temporal_fiscal_scope_phrase
+        and has_statutory_scope_reference
+        and has_frame_scope_context
+        and not has_editorial_frame_context
+    ):
+        if has_conditional_scope_phrase and conditional_count > 0.0:
+            counts[conditional_family] = max(conditional_count, 0.75)
+            conditional_count = float(counts.get(conditional_family, 0.0))
+        if has_deontic_scope and not has_deontic_cue and deontic_count > 0.0:
+            counts[deontic_family] = max(deontic_count, 0.86)
+            deontic_count = float(counts.get(deontic_family, 0.0))
+
     # frame -> conditional_normative:
     # repeated authority/title tokens can make structural frame cues dominate
     # clauses whose operative cue is statutory scoping ("with respect to",
@@ -5227,6 +5254,24 @@ def _apply_refined_modal_family_cue_pair_balance(
             maximum=max(frame_count, _FRAME_TO_DEONTIC_SCOPE_REINFORCEMENT_MAX),
         )
         counts[deontic_family] = max(deontic_count, deontic_floor)
+        deontic_count = float(counts.get(deontic_family, 0.0))
+
+    # frame -> deontic:
+    # "authorized and directed/empowered" is structural authority language, but
+    # in operative text it gives the actor legal permission plus a directive.
+    # Keep that deontic reading ahead of frame scaffolding from office,
+    # authority, and section headings.
+    if (
+        frame_count >= deontic_count
+        and has_deontic_authorization_scope_phrase
+        and has_deontic_cue
+        and has_frame_scope_context
+        and not has_editorial_frame_context
+    ):
+        counts[deontic_family] = max(
+            deontic_count,
+            frame_count + 0.01,
+        )
         deontic_count = float(counts.get(deontic_family, 0.0))
 
     # temporal -> deontic:

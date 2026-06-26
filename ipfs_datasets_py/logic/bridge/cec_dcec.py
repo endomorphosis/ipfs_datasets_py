@@ -980,7 +980,7 @@ def _dcec_state_kind(norm: Mapping[str, Any]) -> str:
         return "exemption"
     if re.search(r"\b(?:applies|apply|shall\s+apply|is\s+applicable)\s+to\b", corpus):
         return "applicability"
-    if re.search(r"\b(?:purpose|policy)\b", corpus):
+    if _looks_like_statutory_purpose_statement(corpus):
         return "purpose"
     if re.search(r"\b(?:expires?|expiration|effective\s+date|takes?\s+effect)\b", corpus):
         return "instrument_lifecycle"
@@ -2473,10 +2473,56 @@ def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
     normalized_text = _normalize_legal_sample_text(text)
     if not normalized_text or not _looks_like_us_code_section_text(normalized_text):
         return None
-    substantive_text = _substantive_statutory_text(normalized_text)
+    substantive_text = _strip_uscode_catchline_and_subsection_heading(
+        _substantive_statutory_text(normalized_text)
+    )
     if not substantive_text:
         return None
-    operative_text = _strip_parenthetical_public_law_tail(substantive_text)
+    operative_text = _strip_parenthetical_public_law_tail(
+        _strip_uscode_catchline_and_subsection_heading(substantive_text)
+    )
+    penalty_imposition_match = re.search(
+        r"\bthere\s+is\s+hereby\s+imposed\s+a\s+penalty\s+on\s+the\s+"
+        r"failure\s+of\s+(?P<actor>[^.;]{1,180}?)\s+to\s+"
+        r"(?P<action>[^.;]+)",
+        operative_text.lower(),
+    )
+    if penalty_imposition_match:
+        digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
+        return {
+            "actor": _clean_operational_actor_slot(
+                penalty_imposition_match.group("actor")
+            ),
+            "action": _clean_operational_slot(
+                penalty_imposition_match.group("action")
+            ),
+            "modality": "obligated",
+            "norm_type": "obligated",
+            "source_id": f"dcec:section:{digest}",
+            "support_text": penalty_imposition_match.group(0)[:500],
+            "extraction_method": "cec_dcec_section_operational_v1",
+        }
+    fers_applicability_match = re.search(
+        r"\bexcept\s+as\s+provided\s+in\s+subsections\s+\([^)]+\)\s+and\s+\([^)]+\),\s+"
+        r"(?P<actor>all\s+employees\s+of\s+the\s+agency)\b.{0,620}?\s+shall\s+"
+        r"(?P<action>be\s+subject\s+to\s+chapter\s+84\s+of\s+title\s+5)",
+        operative_text.lower(),
+    )
+    if fers_applicability_match:
+        digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
+        return {
+            "actor": _clean_operational_actor_slot(
+                fers_applicability_match.group("actor")
+            ),
+            "action": _clean_operational_slot(
+                fers_applicability_match.group("action")
+            ),
+            "modality": "obligated",
+            "norm_type": "obligated",
+            "source_id": f"dcec:section:{digest}",
+            "support_text": fers_applicability_match.group(0)[:500],
+            "extraction_method": "cec_dcec_section_operational_v1",
+        }
     discretionary_transfer_match = re.search(
         r"\b(?P<actor>(?:the\s+)?(?:secretary|administrator|commission|director|court|council)"
         r"(?:\s+of\s+[^.;,]{1,120})?)\s+may\s*,?\s+"
@@ -2642,6 +2688,19 @@ def _clean_operational_slot(text: str) -> str:
 
 def _clean_operational_actor_slot(text: str) -> str:
     value = _clean_operational_slot(text)
+    value = re.sub(
+        r"^notwithstanding\b[^,]{1,240},\s*",
+        "",
+        value,
+        flags=re.IGNORECASE,
+    )
+    value = re.sub(
+        r"^(?:on|before|after|by|within)\b[^,]{1,240},\s*"
+        r"(?:and\s+[^,]{1,160},\s*)?",
+        "",
+        value,
+        flags=re.IGNORECASE,
+    )
     use_clause_match = re.search(
         r"\bthe\s+use\s+of\s+a\s+disclaimer\b.*$",
         value,
@@ -2649,14 +2708,32 @@ def _clean_operational_actor_slot(text: str) -> str:
     )
     if use_clause_match:
         value = use_clause_match.group(0)
+    official_actor_focus = re.search(
+        r"\b((?:the\s+)?(?:chairman|director|secretary|administrator|commission|"
+        r"court|council)(?:\s+of\s+(?:the\s+)?[a-z][a-z\s]{1,100}?)?)"
+        r"(?:,\s*acting\b|\s+acting\b|\s+shall\b|$)",
+        value,
+        flags=re.IGNORECASE,
+    )
+    if official_actor_focus:
+        value = official_actor_focus.group(1)
     official_actor_tail = re.search(
-        r"\b((?:the\s+)?(?:director|secretary|administrator|commission|court|"
+        r"\b((?:the\s+)?(?:chairman|director|secretary|administrator|commission|court|"
         r"council)(?:\s+of\s+(?:the\s+)?[a-z][a-z\s]{1,100})?)$",
         value,
         flags=re.IGNORECASE,
     )
     if official_actor_tail:
         value = official_actor_tail.group(1)
+    official_actor_prefix = re.match(
+        r"^((?:the\s+)?(?:chairman|director|secretary|administrator|commission|court|"
+        r"council)(?:\s+of\s+(?:the\s+)?[a-z][a-z\s]{1,100})?)"
+        r"(?:,\s*acting\b|\s+acting\b|$)",
+        value,
+        flags=re.IGNORECASE,
+    )
+    if official_actor_prefix:
+        value = official_actor_prefix.group(1)
     value = re.sub(r"^no\s+", "", value, flags=re.IGNORECASE)
     heading_subject_match = re.search(
         r"\b(?:the|a|an)\s+("
@@ -2721,7 +2798,9 @@ def _section_statutory_statement_norm_from_text(text: str) -> Optional[dict[str,
     normalized_text = _normalize_legal_sample_text(text)
     if not normalized_text:
         return None
-    substantive_text = _substantive_statutory_text(normalized_text)
+    substantive_text = _strip_uscode_catchline_and_subsection_heading(
+        _substantive_statutory_text(normalized_text)
+    )
     lowered = substantive_text.lower()
     if not _looks_like_statutory_purpose_statement(lowered):
         return None
@@ -2782,14 +2861,52 @@ def _substantive_statutory_text(text: str) -> str:
     return value
 
 
+def _strip_uscode_catchline_and_subsection_heading(text: str) -> str:
+    value = _normalize_legal_sample_text(text)
+    if not value:
+        return ""
+    starters = (
+        "Notwithstanding",
+        "Except",
+        "As soon",
+        "Within",
+        "By no later",
+        "Upon",
+        "There is hereby",
+        "The",
+        "An",
+        "Any",
+        "No",
+    )
+    starter_pattern = "|".join(re.escape(starter) for starter in starters)
+    subsection_match = re.match(
+        rf"^.{1,220}?\s+\([a-z0-9]+\)\s+[^.;]{{0,140}}?\s+"
+        rf"(?=({starter_pattern})\b)",
+        value,
+        flags=re.IGNORECASE,
+    )
+    if subsection_match:
+        value = value[subsection_match.end():].strip()
+    if not value.lower().startswith(tuple(starter.lower() for starter in starters)):
+        catchline_match = re.match(
+            rf"^(.{{1,160}}?)\s+(?=({starter_pattern})\b)",
+            value,
+            flags=re.IGNORECASE,
+        )
+        if catchline_match:
+            value = value[catchline_match.end():].strip()
+    return value
+
+
 def _looks_like_statutory_purpose_statement(lowered_text: str) -> bool:
     if not lowered_text:
         return False
     return bool(
         re.search(r"\b(?:purpose|purposes|policy)\b", lowered_text)
         and re.search(
-            r"\b(?:general\s+purpose|purpose\s+of|"
-            r"purposes\s+of|"
+            r"\b(?:general\s+purpose\s+of|"
+            r"purpose\s+of\s+(?:this|the)\s+(?:chapter|subchapter|section|act|program|fund|institute)|"
+            r"purposes\s+of\s+(?:this|the)\s+(?:chapter|subchapter|section|act|program|fund|institute|corporation)|"
             r"congressional\s+statement\s+of\s+purpose|"
             r"it\s+is\s+the\s+policy\s+of\s+the\s+congress)\b",
             lowered_text,

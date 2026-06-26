@@ -588,6 +588,106 @@ def test_neo4j_compat_projects_uscode_hierarchy_and_repealed_catchlines() -> Non
     assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
 
 
+def test_neo4j_compat_splits_nested_part_and_subpart_hierarchy_levels() -> None:
+    from ipfs_datasets_py.logic.modal.kg_bridge import flogic_triples_to_graph_data
+
+    graph_data = flogic_triples_to_graph_data(
+        [
+            {
+                "subject": "us-code-12-4583-b48011e8796a83f9",
+                "predicate": "sample_id",
+                "object": "us-code-12-4583-b48011e8796a83f9",
+            },
+            {
+                "subject": "us-code-12-4583-b48011e8796a83f9",
+                "predicate": "source_text",
+                "object": (
+                    "U.S.C. Title 12 - BANKS AND BANKING 12 U.S.C. "
+                    "United States Code, 2024 Edition CHAPTER 46 - "
+                    "GOVERNMENT SPONSORED ENTERPRISES SUBCHAPTER I - "
+                    "SUPERVISION AND REGULATION OF ENTERPRISES Part B - "
+                    "Additional Authorities of the Director subpart 3 - "
+                    "enforcement Sec. 4583 - Judicial review"
+                ),
+            },
+        ],
+        graph_id="packet-uscode-part-subpart-hierarchy-projection",
+    )
+
+    graph_triples = {
+        (
+            relationship.properties["flogic_predicate"],
+            relationship.properties["flogic_object"],
+        )
+        for relationship in graph_data.relationships
+    }
+
+    assert (
+        "usc_hierarchy_subchapter_heading",
+        "SUPERVISION AND REGULATION OF ENTERPRISES",
+    ) in graph_triples
+    assert ("usc_hierarchy_part_label", "B") in graph_triples
+    assert (
+        "usc_hierarchy_part_heading",
+        "Additional Authorities of the Director",
+    ) in graph_triples
+    assert ("usc_hierarchy_subpart_label", "3") in graph_triples
+    assert ("usc_hierarchy_subpart_heading", "enforcement") in graph_triples
+    assert (
+        "usc_hierarchy_subchapter_heading",
+        (
+            "SUPERVISION AND REGULATION OF ENTERPRISES Part B - Additional "
+            "Authorities of the Director subpart 3 - enforcement"
+        ),
+    ) not in graph_triples
+    assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
+    assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
+
+
+def test_neo4j_compat_splits_uppercase_part_after_subchapter() -> None:
+    from ipfs_datasets_py.logic.modal.kg_bridge import flogic_triples_to_graph_data
+
+    graph_data = flogic_triples_to_graph_data(
+        [
+            {
+                "subject": "us-code-26-9707-9ae6031ba65cd77d",
+                "predicate": "sample_id",
+                "object": "us-code-26-9707-9ae6031ba65cd77d",
+            },
+            {
+                "subject": "us-code-26-9707-9ae6031ba65cd77d",
+                "predicate": "source_text",
+                "object": (
+                    "U.S.C. Title 26 - INTERNAL REVENUE CODE 26 U.S.C. "
+                    "United States Code, 2024 Edition Subtitle J - Coal "
+                    "Industry Health Benefits CHAPTER 99 - COAL INDUSTRY "
+                    "HEALTH BENEFITS Subchapter B - Combined Benefit Fund "
+                    "PART III - ENFORCEMENT Sec. 9707 - Failure to pay premium"
+                ),
+            },
+        ],
+        graph_id="packet-uscode-uppercase-part-hierarchy-projection",
+    )
+
+    graph_triples = {
+        (
+            relationship.properties["flogic_predicate"],
+            relationship.properties["flogic_object"],
+        )
+        for relationship in graph_data.relationships
+    }
+
+    assert ("usc_hierarchy_subchapter_heading", "Combined Benefit Fund") in graph_triples
+    assert ("usc_hierarchy_part_label", "III") in graph_triples
+    assert ("usc_hierarchy_part_heading", "ENFORCEMENT") in graph_triples
+    assert (
+        "usc_hierarchy_subchapter_heading",
+        "Combined Benefit Fund PART III - ENFORCEMENT",
+    ) not in graph_triples
+    assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
+    assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
+
+
 def test_modal_frame_logic_bridge_bounds_flogic_similarity_loss_for_heading_samples() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
@@ -4476,6 +4576,73 @@ def test_cec_dcec_bridge_extracts_bare_usc_shall_clause_without_converter() -> N
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
 
 
+def test_cec_dcec_bridge_extracts_fers_applicability_clause_without_purpose_pollution() -> None:
+    from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
+
+    class _NoisyConverter:
+        @staticmethod
+        def convert(_text: str):
+            raise AssertionError("FERS applicability clause should be deterministic")
+
+    adapter = CecDcecBridgeAdapter(converter=_NoisyConverter())
+    report = adapter.evaluate(
+        (
+            "§2151. Application of Federal Employees' Retirement System to Agency "
+            "employees (a) General rule Except as provided in subsections (b) "
+            "and (c), all employees of the Agency, any of whose service after "
+            "December 31, 1983, is employment for the purpose of title II of "
+            "the Social Security Act [42 U.S.C. 401 et seq.] and chapter 21 "
+            "of title 26, shall be subject to chapter 84 of title 5."
+        ),
+        document_id="cec-bridge-fers-applicability",
+        citation="50 U.S.C. 2151",
+    )
+
+    event_record = report.ir_document.views["cec_events"].payload["events"][0]
+    formula_record = report.ir_document.views["dcec_formula"].payload["records"][0]
+
+    assert event_record["actor"] == "all_employees_of_the_agency"
+    assert event_record["event"] == "be_subject_to_chapter_84_of_title_5"
+    assert formula_record["proof_input"].startswith("O(")
+    assert not formula_record["proof_input"].startswith("Purpose(")
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
+def test_cec_dcec_bridge_extracts_penalty_imposition_clause_without_purpose_pollution() -> None:
+    from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
+
+    class _NoisyConverter:
+        @staticmethod
+        def convert(_text: str):
+            raise AssertionError("penalty imposition clause should be deterministic")
+
+    adapter = CecDcecBridgeAdapter(converter=_NoisyConverter())
+    report = adapter.evaluate(
+        (
+            "Sec. 9707 - Failure to pay premium §9707. Failure to pay premium "
+            "(a) Failures to pay (1) Premiums for eligible beneficiaries There "
+            "is hereby imposed a penalty on the failure of any assigned operator "
+            "to pay any premium required to be paid under section 9704 with "
+            "respect to any eligible beneficiary. (c) Noncompliance period For "
+            "purposes of this section, the term noncompliance period means the "
+            "period beginning on the due date."
+        ),
+        document_id="cec-bridge-penalty-imposition",
+        citation="26 U.S.C. 9707",
+    )
+
+    event_record = report.ir_document.views["cec_events"].payload["events"][0]
+    formula_record = report.ir_document.views["dcec_formula"].payload["records"][0]
+
+    assert event_record["actor"] == "any_assigned_operator"
+    assert event_record["event"].startswith("pay_any_premium_required")
+    assert formula_record["proof_input"].startswith("O(")
+    assert not formula_record["proof_input"].startswith("Purpose(")
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
 def test_cec_dcec_bridge_extracts_discretionary_transfer_power_without_heading_pollution() -> None:
     from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
 
@@ -5900,6 +6067,76 @@ def test_external_prover_router_most_capable_reports_no_proof_for_syntactic_fall
     assert result.reason == "Used native_syntactic (no proof)"
 
 
+def test_external_prover_router_most_capable_falls_back_after_inconclusive_prover() -> None:
+    from ipfs_datasets_py.logic.external_provers.prover_router import ProverRouter
+
+    class _InconclusiveProver:
+        @staticmethod
+        def prove(*_args, **_kwargs):
+            return False
+
+    class _FallbackProver:
+        @staticmethod
+        def prove(*_args, **_kwargs):
+            return True
+
+    router = ProverRouter(
+        enable_cache=False,
+        enable_cvc5=False,
+        enable_coq=False,
+        enable_lean=False,
+        enable_native=False,
+        enable_symbolicai=False,
+        enable_z3=False,
+    )
+    router.provers = {
+        "lean": _InconclusiveProver(),
+        "native": _FallbackProver(),
+    }
+
+    result = router.route("O(register_notice(secretary))", strategy="most_capable")
+
+    assert result.is_proved is True
+    assert result.prover_used == "native"
+    assert result.strategy_used == "most_capable"
+    assert list(result.all_results) == ["lean", "native"]
+
+
+def test_external_prover_router_fastest_keeps_native_compile_fallback() -> None:
+    from ipfs_datasets_py.logic.external_provers.prover_router import (
+        ProverRouter,
+        SyntacticNativeFallbackProver,
+    )
+
+    class _FailingFastProver:
+        @staticmethod
+        def prove(*_args, **_kwargs):
+            raise RuntimeError("fast prover unavailable")
+
+    router = ProverRouter(
+        enable_cache=False,
+        enable_cvc5=False,
+        enable_coq=False,
+        enable_lean=False,
+        enable_native=False,
+        enable_symbolicai=False,
+        enable_z3=False,
+    )
+    router.provers = {
+        "z3": _FailingFastProver(),
+        "native_syntactic": SyntacticNativeFallbackProver(),
+    }
+
+    result = router.route("O(register_notice(secretary))", strategy="fastest")
+
+    assert result.is_proved is False
+    assert result.is_compiled() is True
+    assert result.prover_used == "native_syntactic"
+    assert result.strategy_used == "fastest"
+    assert "Error: fast prover unavailable" in result.all_results["z3"]
+    assert result.all_results["native_syntactic"].is_valid is True
+
+
 def test_external_prover_router_auto_falls_back_when_formula_analysis_fails() -> None:
     from ipfs_datasets_py.logic.external_provers.prover_router import ProverRouter
 
@@ -7060,6 +7297,9 @@ def test_fol_tdfol_coerce_formula_normalizes_noisy_prover_exports() -> None:
         ),
         "O(qualified(section:12574.))": "O(qualified(section:12574))",
         "TDFOL.prover: O(apply(this_chapter))": "O(apply(this_chapter))",
+        "TDFOL prover: O(issue_notice(administrator))": (
+            "O(issue_notice(administrator))"
+        ),
         (
             "proof_obligation(target=TDFOL.prover, "
             "formula=O(apply(this_chapter)))"
@@ -7194,6 +7434,52 @@ def test_fol_tdfol_coerce_formula_synthesizes_raw_deontic_text_exports() -> None
 
         assert parsed is not None
         assert parsed.to_string() == expected
+
+
+def test_fol_tdfol_coerce_formula_synthesizes_named_raw_deontic_labels() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
+
+    cases = {
+        "obligation: agency shall publish notice": (
+            "O(agency_publish_notice(actor))"
+        ),
+        "permission = the Secretary may detail members as instructors": (
+            "P(secretary_detail_members_instructors(secretary))"
+        ),
+        "forbidden: person shall not disclose records": (
+            "F(person_disclose_records(actor))"
+        ),
+    }
+
+    for formula, expected in cases.items():
+        parsed = coerce_tdfol_formula(formula)
+
+        assert parsed is not None
+        assert parsed.to_string() == expected
+
+
+def test_tdfol_bridge_guidance_activates_from_target_metric_evidence() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
+
+    adapter = FolTdfolBridgeAdapter()
+    report = adapter.evaluate(
+        "The agency shall publish notice before the permit takes effect.",
+        document_id="tdfol-target-metric-guidance",
+        citation="Bridge Layer Guided TDFOL",
+        compiler_guidance={
+            "evidence": [
+                {
+                    "program_synthesis_scope": "tdfol",
+                    "target_component": "TDFOL.prover",
+                    "target_metrics": ["tdfol_parse_failure_ratio"],
+                }
+            ],
+        },
+    )
+
+    assert report.ir_document.metadata["compiler_guidance_formula_count"] == 1
+    assert report.proof_gate.compiles is True
+    assert report.proof_gate.failure_ratio == 0.0
 
 
 def test_zkp_attestation_bridge_evaluates_proof_attestations_and_graph() -> None:
@@ -8458,6 +8744,122 @@ def test_official_usc_primary_projection_handles_bootstrap_bridge_samples() -> N
     assert abs(sum(act_savings.values()) - 1.0) < 1e-9
     assert abs(sum(false_advertising.values()) - 1.0) < 1e-9
     assert abs(sum(performance_plan.values()) - 1.0) < 1e-9
+
+
+def test_official_usc_primary_projection_handles_packet_207_bridge_contracts() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _project_official_usc_primary_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.25,
+        "TDFOL.prover": 0.25,
+        "deontic.ir": 0.25,
+        "knowledge_graphs.neo4j_compat": 0.25,
+    }
+
+    annual_cost_report = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "16 U.S.C. 1544. Annual cost analysis by Fish and Wildlife "
+            "Service. On or before January 15, 1990, and each January 15 "
+            "thereafter, the Secretary shall submit to Congress an annual "
+            "report covering the preceding fiscal year."
+        ),
+    )
+    retirement_election = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "50 U.S.C. 2151. Application of Federal Employees' Retirement "
+            "System to Agency employees. Employees shall be subject to "
+            "chapter 84 of title 5. An employee may elect to become subject "
+            "to chapter 84 of title 5, and such election shall be irrevocable."
+        ),
+    )
+    penalty_noncompliance = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "26 U.S.C. 9707. Failure to pay premium. There is imposed a "
+            "penalty on failure to pay any premium. The noncompliance period "
+            "begins on the due date and ends on the date of payment, and the "
+            "person failing to meet the requirements shall be liable for the "
+            "penalty."
+        ),
+    )
+    seal_notice = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "28 U.S.C. 608. Seal. The Director shall use a seal approved by "
+            "the Supreme Court. Judicial notice shall be taken of such seal."
+        ),
+    )
+    ordinance_review = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "25 U.S.C. 2712. Review of existing ordinances and contracts. "
+            "The Chairman shall review an ordinance or resolution within 90 "
+            "days, approve a management contract, or provide written "
+            "notification of necessary modifications, and the parties shall "
+            "have not more than 120 days to come into compliance."
+        ),
+    )
+    judicial_review = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "12 U.S.C. 4583. Judicial review. An enterprise may obtain review "
+            "of a final order by filing in the United States Court of Appeals "
+            "a written petition. The clerk shall transmit a copy to the "
+            "Director, the Director shall file the record, and the court "
+            "shall have jurisdiction to affirm, modify, terminate, or set "
+            "aside the order."
+        ),
+    )
+    repealed = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "16 U.S.C. 1414. Repealed. Pub. L. 105-42, section 6(c), "
+            "Aug. 15, 1997. Section related to reviews, reports, and "
+            "recommendations by Secretary of Commerce."
+        ),
+    )
+    omitted = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "25 U.S.C. 1071. Omitted. Editorial Notes Codification. Section "
+            "was omitted from the Code as being of special and not general "
+            "application."
+        ),
+    )
+
+    assert annual_cost_report["TDFOL.prover"] > distribution["TDFOL.prover"]
+    assert annual_cost_report["deontic.ir"] > distribution["deontic.ir"]
+    assert retirement_election["deontic.ir"] > distribution["deontic.ir"]
+    assert retirement_election["TDFOL.prover"] > distribution["TDFOL.prover"]
+    assert penalty_noncompliance["deontic.ir"] > distribution["deontic.ir"]
+    assert penalty_noncompliance["TDFOL.prover"] > distribution["TDFOL.prover"]
+    assert seal_notice["deontic.ir"] > distribution["deontic.ir"]
+    assert seal_notice["CEC.native"] > distribution["CEC.native"]
+    assert ordinance_review["deontic.ir"] > distribution["deontic.ir"]
+    assert ordinance_review["TDFOL.prover"] > distribution["TDFOL.prover"]
+    assert judicial_review["deontic.ir"] > distribution["deontic.ir"]
+    assert judicial_review["knowledge_graphs.neo4j_compat"] > distribution[
+        "knowledge_graphs.neo4j_compat"
+    ]
+    assert repealed["CEC.native"] > repealed["deontic.ir"]
+    assert repealed["knowledge_graphs.neo4j_compat"] > repealed["deontic.ir"]
+    assert omitted["CEC.native"] > omitted["deontic.ir"]
+    assert omitted["knowledge_graphs.neo4j_compat"] > omitted["deontic.ir"]
+    for projected in (
+        annual_cost_report,
+        retirement_election,
+        penalty_noncompliance,
+        seal_notice,
+        ordinance_review,
+        judicial_review,
+        repealed,
+        omitted,
+    ):
+        assert abs(sum(projected.values()) - 1.0) < 1e-9
 
 
 def test_multiview_training_target_distribution_rebalances_dense_contract_lanes() -> None:
@@ -9965,6 +10367,77 @@ def test_multiview_bridge_accepts_deontic_soft_pass_with_core_fol_only(
     assert report.accepted_count == 2
     assert report.acceptance_rate == 1.0
     assert report.canonical_loss_vector()["legal_ir_multiview_acceptance_loss"] == 0.0
+
+
+def test_multiview_bridge_soft_pass_uses_effective_proof_loss() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import MultiViewLegalIRReport
+    from ipfs_datasets_py.logic.bridge.types import (
+        BridgeEvaluationReport,
+        GraphProjectionResult,
+        LegalIRDocument,
+        LogicIRView,
+        ProofGateResult,
+        RoundTripMetrics,
+    )
+
+    document = LegalIRDocument(
+        document_id="multiview-effective-proof-loss",
+        source_text="The agency shall publish notice.",
+        normalized_text="The agency shall publish notice.",
+        views={
+            "tdfol_formula": LogicIRView(
+                name="tdfol_formula",
+                source_component="TDFOL.prover",
+                payload={"records": [{"formula": "O(publish_notice(agency))"}]},
+            )
+        },
+        frame_logic_triples=(
+            {
+                "subject": "agency",
+                "predicate": "shall_publish",
+                "object": "notice",
+            },
+        ),
+    )
+    bridge_report = BridgeEvaluationReport(
+        adapter_name="fol_tdfol",
+        target_component="TDFOL.prover",
+        ir_document=document,
+        round_trip=RoundTripMetrics(
+            cosine_similarity=1.0,
+            cross_entropy_loss=0.2,
+            extra_losses={"legal_ir_view_cross_entropy_loss": 0.125},
+        ),
+        proof_gate=ProofGateResult(
+            attempted_count=2,
+            valid_count=1,
+            failed_count=1,
+        ),
+        graph_projection=GraphProjectionResult(
+            neo4j_compatible=True,
+            node_count=2,
+            relationship_count=1,
+        ),
+        status="ok",
+        metadata={"proof_gate_soft_pass": True},
+    )
+    report = MultiViewLegalIRReport(
+        bridge_names=("fol_tdfol",),
+        document=document,
+        reports={"fol_tdfol": bridge_report},
+    )
+
+    losses = report.loss_vector()
+    canonical_losses = report.canonical_loss_vector()
+
+    assert bridge_report.proof_gate.failure_ratio == 0.5
+    assert bridge_report.effective_proof_failure_ratio == 0.0
+    assert report.proof_failure_ratio == 0.0
+    assert losses["fol_tdfol.raw_proof_failure_ratio"] == 0.5
+    assert losses["fol_tdfol.proof_failure_ratio"] == 0.0
+    assert canonical_losses["legal_ir_view_cross_entropy_loss"] == 0.125
+    assert canonical_losses["legal_ir_multiview_total_loss"] == bridge_report.total_loss
+    assert bridge_report.total_loss < 0.5
 
 
 def test_multiview_bridge_forwards_compiler_guidance_to_adapter() -> None:

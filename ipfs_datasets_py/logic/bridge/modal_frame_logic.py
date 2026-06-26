@@ -551,13 +551,19 @@ def _statutory_scaffold_loss_scale(
     citation: Optional[str],
 ) -> Optional[float]:
     is_compact_heading = _is_compact_usc_heading_scaffold(text, citation=citation)
-    if not _is_statutory_scaffold_text(text, citation=citation) and not is_compact_heading:
-        return None
+    is_official_scaffold = _is_official_usc_scaffold_text(text)
+    is_official_section_body = _is_official_usc_section_body_text(
+        text,
+        citation=citation,
+    )
     if (
-        _is_official_usc_scaffold_text(text)
-        or _is_official_usc_section_body_text(text, citation=citation)
-        or is_compact_heading
+        not _is_statutory_scaffold_text(text, citation=citation)
+        and not is_compact_heading
+        and not is_official_scaffold
+        and not is_official_section_body
     ):
+        return None
+    if is_official_scaffold or is_official_section_body or is_compact_heading:
         return _OFFICIAL_USC_SCAFFOLD_LOSS_SCALE
     return _STATUTORY_SCAFFOLD_LOSS_SCALE
 

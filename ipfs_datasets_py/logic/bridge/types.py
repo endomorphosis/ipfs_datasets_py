@@ -302,9 +302,17 @@ class BridgeEvaluationReport:
     @property
     def total_loss(self) -> float:
         return self.round_trip.total_loss(
-            proof_failure_ratio=self.proof_gate.failure_ratio,
+            proof_failure_ratio=self.effective_proof_failure_ratio,
             graph_failure_penalty=self.graph_projection.graph_failure_penalty,
         )
+
+    @property
+    def effective_proof_failure_ratio(self) -> float:
+        """Return optimizer proof penalty after bridge-level soft-pass handling."""
+
+        if bool(self.metadata.get("proof_gate_soft_pass")):
+            return 0.0
+        return self.proof_gate.failure_ratio
 
     @property
     def accepted(self) -> bool:
@@ -325,6 +333,7 @@ class BridgeEvaluationReport:
             "ir_document": self.ir_document.to_dict(),
             "metadata": dict(sorted(self.metadata.items())),
             "proof_gate": self.proof_gate.to_dict(),
+            "effective_proof_failure_ratio": self.effective_proof_failure_ratio,
             "round_trip": self.round_trip.to_dict(),
             "status": self.status,
             "target_component": self.target_component,

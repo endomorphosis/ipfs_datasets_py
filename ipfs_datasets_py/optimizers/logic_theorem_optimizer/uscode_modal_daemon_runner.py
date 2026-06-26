@@ -6526,6 +6526,23 @@ def autoencoder_diagnostic_bridge_adapter_names(
     return bridge_adapter_list[:1]
 
 
+def _paired_autoencoder_bridge_adapter_arg(
+    args: argparse.Namespace,
+    attr_name: str,
+    env_name: str,
+) -> str:
+    """Return a stable child-process adapter argument for paired runs."""
+    raw_value = getattr(args, attr_name, None)
+    raw = str(
+        raw_value
+        if raw_value is not None
+        else os.environ.get(env_name, "")
+    ).strip()
+    if not raw or raw.lower() in _FALSE_ENV_VALUES:
+        return "default"
+    return raw
+
+
 def autoencoder_metric_bridge_max_samples(args: argparse.Namespace) -> int:
     """Return sample cap for bridge-backed autoencoder metrics."""
 
@@ -7540,23 +7557,17 @@ def build_paired_daemon_commands(
         "--bridge-evaluate-provers",
         str(getattr(args, "bridge_evaluate_provers", True)).lower(),
         "--autoencoder-metric-bridge-adapters",
-        str(
-            getattr(args, "autoencoder_metric_bridge_adapters", None)
-            if getattr(args, "autoencoder_metric_bridge_adapters", None) is not None
-            else os.environ.get("IPFS_DATASETS_AUTOENCODER_METRIC_BRIDGE_ADAPTERS", "")
-        ).strip()
-        or "default",
+        _paired_autoencoder_bridge_adapter_arg(
+            args,
+            "autoencoder_metric_bridge_adapters",
+            "IPFS_DATASETS_AUTOENCODER_METRIC_BRIDGE_ADAPTERS",
+        ),
         "--autoencoder-diagnostic-bridge-adapters",
-        str(
-            getattr(args, "autoencoder_diagnostic_bridge_adapters", None)
-            if getattr(args, "autoencoder_diagnostic_bridge_adapters", None)
-            is not None
-            else os.environ.get(
-                "IPFS_DATASETS_AUTOENCODER_DIAGNOSTIC_BRIDGE_ADAPTERS",
-                "",
-            )
-        ).strip()
-        or "default",
+        _paired_autoencoder_bridge_adapter_arg(
+            args,
+            "autoencoder_diagnostic_bridge_adapters",
+            "IPFS_DATASETS_AUTOENCODER_DIAGNOSTIC_BRIDGE_ADAPTERS",
+        ),
         "--autoencoder-metric-bridge-max-samples",
         str(
             getattr(

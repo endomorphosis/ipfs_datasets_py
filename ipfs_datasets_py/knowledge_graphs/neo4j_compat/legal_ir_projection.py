@@ -52,6 +52,8 @@ _CODE_TITLE_HEADING_RE = re.compile(
 _SUBTITLE_HEADING_RE = re.compile(
     r"\bSubtitle\s+(?P<label>[A-Z0-9]+)\s+-\s+"
     r"(?P<heading>.+?)(?="
+    r"\s+PART\s+[IVXLCDM0-9A-Z-]+\s+-\s+|"
+    r"\s+Part\s+[IVXLCDM0-9A-Z-]+\s+-\s+|"
     r"\s+CHAPTER\s+[0-9A-Za-z-]+\s+-\s+|"
     r"\s+SUBCHAPTER\s+[IVXLCDM0-9A-Z-]+\s+-\s+|"
     r"\s+Subchapter\s+[IVXLCDM0-9A-Z-]+\s+-\s+|"
@@ -63,11 +65,30 @@ _CHAPTER_HEADING_RE = re.compile(
     r"(?P<heading>.+?)(?="
     r"\s+SUBCHAPTER\s+[IVXLCDM0-9A-Z-]+\s+-\s+|"
     r"\s+Subchapter\s+[IVXLCDM0-9A-Z-]+\s+-\s+|"
+    r"\s+PART\s+[IVXLCDM0-9A-Z-]+\s+-\s+|"
+    r"\s+Part\s+[IVXLCDM0-9A-Z-]+\s+-\s+|"
+    r"\s+subpart\s+[IVXLCDM0-9A-Z-]+\s+-\s+|"
     r"\s+Sec\.?\s+\d|$)",
     re.IGNORECASE,
 )
 _SUBCHAPTER_HEADING_RE = re.compile(
     r"\bSubchapter\s+(?P<label>[IVXLCDM0-9A-Z-]+)\s+-\s+"
+    r"(?P<heading>.+?)(?="
+    r"\s+PART\s+[IVXLCDM0-9A-Z-]+\s+-\s+|"
+    r"\s+Part\s+[IVXLCDM0-9A-Z-]+\s+-\s+|"
+    r"\s+subpart\s+[IVXLCDM0-9A-Z-]+\s+-\s+|"
+    r"\s+Sec\.?\s+\d|$)",
+    re.IGNORECASE,
+)
+_PART_HEADING_RE = re.compile(
+    r"\bPart\s+(?P<label>[IVXLCDM0-9A-Z-]+)\s+-\s+"
+    r"(?P<heading>.+?)(?="
+    r"\s+subpart\s+[IVXLCDM0-9A-Z-]+\s+-\s+|"
+    r"\s+Sec\.?\s+\d|$)",
+    re.IGNORECASE,
+)
+_SUBPART_HEADING_RE = re.compile(
+    r"\bsubpart\s+(?P<label>[IVXLCDM0-9A-Z-]+)\s+-\s+"
     r"(?P<heading>.+?)(?=\s+Sec\.?\s+\d|$)",
     re.IGNORECASE,
 )
@@ -380,6 +401,20 @@ def _uscode_hierarchy_components(text: str) -> List[Tuple[str, str]]:
             normalized,
             pattern=_SUBCHAPTER_HEADING_RE,
             prefix="usc_hierarchy_subchapter",
+        )
+    )
+    components.extend(
+        _hierarchy_heading_components(
+            normalized,
+            pattern=_PART_HEADING_RE,
+            prefix="usc_hierarchy_part",
+        )
+    )
+    components.extend(
+        _hierarchy_heading_components(
+            normalized,
+            pattern=_SUBPART_HEADING_RE,
+            prefix="usc_hierarchy_subpart",
         )
     )
     if components:

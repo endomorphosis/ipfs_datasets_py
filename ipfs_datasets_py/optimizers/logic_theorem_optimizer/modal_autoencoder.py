@@ -114,10 +114,12 @@ _AUTOENCODER_CUE_TARGET_FAMILIES: Mapping[str, tuple[str, ...]] = {
     "except_as_otherwise_provided": ("conditional_normative", "deontic"),
     "except_as_provided": ("conditional_normative", "deontic"),
     "except_as_provided_in": ("conditional_normative", "deontic", "temporal"),
+    "exception": ("conditional_normative", "deontic"),
     "if": ("conditional_normative",),
     "may": ("deontic",),
     "may_not": ("deontic",),
     "must": ("deontic",),
+    "notwithstanding": ("conditional_normative", "deontic"),
     "not_later_than": ("temporal", "deontic"),
     "provided": ("conditional_normative", "deontic", "temporal"),
     "provided_that": ("conditional_normative",),
@@ -164,6 +166,12 @@ _AUTOENCODER_PRIORITY_FAMILY_PAIRS = {
 }
 _AUTOENCODER_TARGETED_RECONSTRUCTION_FAMILY_PAIRS = frozenset(
     {
+        "deontic->deontic",
+        "frame->conditional_normative",
+        "conditional_normative->deontic",
+        "deontic->deontic",
+        "deontic->temporal",
+        "frame->conditional_normative",
         "frame->deontic",
         "frame->frame",
         "frame->temporal",
@@ -18121,6 +18129,7 @@ class AdaptiveModalAutoencoder:
         condition_anchor = source_anchors.get("condition", "")
         exception_anchor = source_anchors.get("exception", "")
         temporal_anchor = source_anchors.get("temporal", "")
+        surface_profiles = _uscode_surface_profile_tags(text)
         keys: List[str] = []
         typed_family_pair_suffixes: List[str] = []
 
@@ -18260,6 +18269,20 @@ class AdaptiveModalAutoencoder:
                     add_typed_family_pair(
                         f"surface-cue-to-family-pair:{cue_name}:{family_pair}"
                     )
+                    if family_pair in _AUTOENCODER_TARGETED_RECONSTRUCTION_FAMILY_PAIRS:
+                        add_typed_family_pair(
+                            "target-reconstruction-surface-cue-family-pair:"
+                            f"{cue_name}:{family_pair}"
+                        )
+                for profile in surface_profiles[:4]:
+                    add_typed_family_pair(
+                        f"surface-profile-to-family-pair:{profile}:{family_pair}"
+                    )
+                    if family_pair in _AUTOENCODER_TARGETED_RECONSTRUCTION_FAMILY_PAIRS:
+                        add_typed_family_pair(
+                            "target-reconstruction-surface-profile-family-pair:"
+                            f"{profile}:{family_pair}"
+                        )
                 if predicate_head:
                     add_typed_family_pair(
                         f"typed-family-pair-predicate:{family_pair}:{predicate_head}"
@@ -18724,6 +18747,7 @@ class AdaptiveModalAutoencoder:
                 if family:
                     bump(f"slot:cue-family:{cue_name}:{family}")
             source_cue_names = self._cue_names_for_text(text)
+            surface_profiles = _uscode_surface_profile_tags(text)
             for source_cue in source_cue_names:
                 if family:
                     bump(f"slot:surface-cue-family:{source_cue}:{family}", weight=0.8)
@@ -18853,6 +18877,21 @@ class AdaptiveModalAutoencoder:
                             (
                                 "slot:typed-decompiler-target-reconstruction-surface-cue:"
                                 f"{source_cue}:{family_pair}"
+                            ),
+                            weight=0.8,
+                        )
+                        bump(
+                            (
+                                "slot:typed-decompiler-target-reconstruction-cue:"
+                                f"{family_pair}:{source_cue}"
+                            ),
+                            weight=0.75,
+                        )
+                    for profile in surface_profiles[:4]:
+                        bump(
+                            (
+                                "slot:typed-decompiler-target-reconstruction-surface-profile:"
+                                f"{profile}:{family_pair}"
                             ),
                             weight=0.8,
                         )
