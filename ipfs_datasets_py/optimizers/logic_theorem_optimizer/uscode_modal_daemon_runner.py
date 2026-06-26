@@ -16352,21 +16352,6 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                         compiler_ir_metric_sample_timeout_seconds
                     ),
                 )
-            if run is None:
-                stopped_reason = str(
-                    todo_supervisor_optimization.get("skip_reason")
-                    or "todo_supervisor_optimization_skipped"
-                )
-                run = ModalOptimizationRun(
-                    steps=[],
-                    final_evaluation=after_train,
-                    stopped_reason=stopped_reason,
-                    validation_final_evaluation=after_validation,
-                )
-            summary["latest_todo_supervisor_optimization"] = {
-                "stopped_reason": run.stopped_reason,
-                **todo_supervisor_optimization,
-            }
             mark_active_autoencoder_cycle(
                 cycle=cycle,
                 cycle_started=cycle_started,
@@ -16848,6 +16833,21 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                         compiler_ir_metric_sample_timeout_seconds
                     ),
                 )
+            if run is None:
+                stopped_reason = str(
+                    todo_supervisor_optimization.get("skip_reason")
+                    or "todo_supervisor_optimization_skipped"
+                )
+                run = ModalOptimizationRun(
+                    steps=[],
+                    final_evaluation=after_train,
+                    stopped_reason=stopped_reason,
+                    validation_final_evaluation=after_validation,
+                )
+            summary["latest_todo_supervisor_optimization"] = {
+                "stopped_reason": run.stopped_reason,
+                **todo_supervisor_optimization,
+            }
             mark_active_autoencoder_cycle(
                 cycle=cycle,
                 cycle_started=cycle_started,

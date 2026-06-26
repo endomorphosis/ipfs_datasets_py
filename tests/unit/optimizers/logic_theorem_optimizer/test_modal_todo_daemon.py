@@ -3175,6 +3175,14 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
         "--autoencoder-sample-memory-probe-every-n-cycles"
     )
     assert paired["autoencoder_command"][memory_probe_cadence_index + 1] == "4"
+    todo_supervisor_mode_index = paired["autoencoder_command"].index(
+        "--autoencoder-todo-supervisor-mode"
+    )
+    assert paired["autoencoder_command"][todo_supervisor_mode_index + 1] == "every_cycle"
+    todo_supervisor_min_open_index = paired["autoencoder_command"].index(
+        "--autoencoder-todo-supervisor-min-open"
+    )
+    assert paired["autoencoder_command"][todo_supervisor_min_open_index + 1] == "12"
     assert "--autoencoder-max-cosine-regression" not in paired["autoencoder_command"]
     assert "--learning-rate-floor-ratio" in paired["autoencoder_command"]
     assert "--learning-rate-cap-ratio" in paired["autoencoder_command"]
@@ -3235,6 +3243,44 @@ def test_cycle_cadence_modes() -> None:
         mode="periodic",
         every_n_cycles=4,
     )
+
+
+def test_todo_supervisor_starvation_skip_decision_counts_open_work() -> None:
+    stocked = runner._todo_supervisor_skip_decision(
+        mode="starved",
+        program_synthesis_status={
+            "pending": 9,
+            "claimed": 3,
+            "completed": 40,
+            "failed_validation": 12,
+        },
+        min_open=12,
+    )
+    assert stocked["skipped"] is True
+    assert stocked["open_count"] == 12
+    assert stocked["skip_reason"] == "program_synthesis_queue_sufficient"
+
+    starved = runner._todo_supervisor_skip_decision(
+        mode="starved",
+        program_synthesis_status={
+            "pending": 8,
+            "claimed": 3,
+            "completed": 40,
+            "failed_validation": 99,
+        },
+        min_open=12,
+    )
+    assert starved["skipped"] is False
+    assert starved["open_count"] == 11
+    assert starved["skip_reason"] == ""
+
+    disabled = runner._todo_supervisor_skip_decision(
+        mode="off",
+        program_synthesis_status={"pending": 0, "claimed": 0},
+        min_open=12,
+    )
+    assert disabled["skipped"] is True
+    assert disabled["skip_reason"] == "todo_supervisor_disabled"
 
 
 def test_build_paired_daemon_commands_respect_custom_child_run_ids_and_model() -> None:
