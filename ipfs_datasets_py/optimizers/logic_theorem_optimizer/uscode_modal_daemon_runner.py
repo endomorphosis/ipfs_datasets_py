@@ -416,6 +416,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder impor
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import (
     FAILED_VALIDATION_RESCUE_MAX_ATTEMPTS,
     ModalOptimizerPolicy,
+    ModalOptimizationRun,
     ModalTodo,
     ModalTodoQueue,
     ModalTodoSupervisor,
@@ -683,6 +684,30 @@ DEFAULT_COMPILER_IR_TRAIN_MODE = "every_cycle"
 DEFAULT_COMPILER_IR_TRAIN_EVERY_N_CYCLES = 4
 DEFAULT_COMPILER_IR_GUIDED_TRAIN_MODE = "every_cycle"
 DEFAULT_COMPILER_IR_GUIDED_TRAIN_EVERY_N_CYCLES = 4
+AUTOENCODER_BEFORE_TRAIN_EVAL_MODE_ENV = (
+    "IPFS_DATASETS_AUTOENCODER_BEFORE_TRAIN_EVAL_MODE"
+)
+AUTOENCODER_BEFORE_TRAIN_EVAL_EVERY_N_CYCLES_ENV = (
+    "IPFS_DATASETS_AUTOENCODER_BEFORE_TRAIN_EVAL_EVERY_N_CYCLES"
+)
+AUTOENCODER_SAMPLE_MEMORY_PROBE_MODE_ENV = (
+    "IPFS_DATASETS_AUTOENCODER_SAMPLE_MEMORY_PROBE_MODE"
+)
+AUTOENCODER_SAMPLE_MEMORY_PROBE_EVERY_N_CYCLES_ENV = (
+    "IPFS_DATASETS_AUTOENCODER_SAMPLE_MEMORY_PROBE_EVERY_N_CYCLES"
+)
+AUTOENCODER_TODO_SUPERVISOR_MODE_ENV = (
+    "IPFS_DATASETS_AUTOENCODER_TODO_SUPERVISOR_MODE"
+)
+AUTOENCODER_TODO_SUPERVISOR_MIN_OPEN_ENV = (
+    "IPFS_DATASETS_AUTOENCODER_TODO_SUPERVISOR_MIN_OPEN"
+)
+DEFAULT_AUTOENCODER_BEFORE_TRAIN_EVAL_MODE = "every_cycle"
+DEFAULT_AUTOENCODER_BEFORE_TRAIN_EVAL_EVERY_N_CYCLES = 4
+DEFAULT_AUTOENCODER_SAMPLE_MEMORY_PROBE_MODE = "every_cycle"
+DEFAULT_AUTOENCODER_SAMPLE_MEMORY_PROBE_EVERY_N_CYCLES = 4
+DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MODE = "every_cycle"
+DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MIN_OPEN = 12
 BRIDGE_IR_REPORT_CACHE_MAX = 4096
 USCODE_DAEMON_METRIC_SCHEMA_VERSION = "uscode-modal-daemon-metrics-v2"
 USCODE_DAEMON_ROLLOUT_STAGE = "observability-v1"
@@ -728,7 +753,8 @@ _BRIDGE_IR_REPORT_CACHE_LOCK = threading.Lock()
 _BRIDGE_IR_REPORT_CACHE: Dict[str, Any] = {}
 _METRIC_CODE_FINGERPRINT_LOCK = threading.Lock()
 _METRIC_CODE_FINGERPRINT_VALUE: Optional[str] = None
-_COMPILER_IR_METRIC_BLOCK_CACHE_VERSION = "compiler-ir-metric-block-cache-v3"
+_COMPILER_IR_METRIC_BLOCK_CACHE_VERSION = "compiler-ir-metric-block-cache-v4"
+_COMPILER_IR_GUIDANCE_CACHE_POLICY = "codec-output-contract-v1"
 _COMPILER_IR_GUIDANCE_DIAGNOSTICS_VERSION = "compiler-guidance-diagnostics-v1"
 _COMPILER_IR_SAMPLE_CACHE_VERSION = "compiler-ir-metric-sample-cache-v4"
 _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_LOCK = threading.Lock()
@@ -786,6 +812,67 @@ def _should_run_cycle_tests(cycle: int, test_every_cycles: int) -> bool:
     if cadence <= 0:
         return False
     return int(cycle) % cadence == 0
+
+
+def _should_run_cycle_cadence(
+    *,
+    cycle: int,
+    mode: str,
+    every_n_cycles: int,
+) -> bool:
+    normalized = str(mode or "every_cycle").strip().lower()
+    if normalized == "every_cycle":
+        return True
+    if normalized == "off":
+        return False
+    if normalized != "periodic":
+        return True
+    cadence = max(1, int(every_n_cycles or 1))
+    return int(cycle) > 0 and int(cycle) % cadence == 0
+
+
+def _program_synthesis_open_count(status: Mapping[str, Any]) -> int:
+    """Count Codex-facing TODOs that still require worker attention."""
+
+    try:
+        pending = int(status.get("pending") or 0)
+    except (TypeError, ValueError):
+        pending = 0
+    try:
+        claimed = int(status.get("claimed") or 0)
+    except (TypeError, ValueError):
+        claimed = 0
+    return max(0, pending) + max(0, claimed)
+
+
+def _todo_supervisor_skip_decision(
+    *,
+    mode: str,
+    program_synthesis_status: Mapping[str, Any],
+    min_open: int,
+) -> Dict[str, Any]:
+    normalized = str(mode or DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MODE).strip().lower()
+    if normalized not in {"every_cycle", "starved", "off"}:
+        normalized = DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MODE
+    threshold = max(1, int(min_open or 1))
+    open_count = _program_synthesis_open_count(program_synthesis_status)
+    if normalized == "off":
+        skip = True
+        reason = "todo_supervisor_disabled"
+    elif normalized == "starved" and open_count >= threshold:
+        skip = True
+        reason = "program_synthesis_queue_sufficient"
+    else:
+        skip = False
+        reason = ""
+    return {
+        "mode": normalized,
+        "min_open": threshold,
+        "open_count": open_count,
+        "program_synthesis_status": dict(program_synthesis_status),
+        "skip_reason": reason,
+        "skipped": skip,
+    }
 
 
 def _stable_metric_json(value: Any) -> str:
@@ -932,6 +1019,49 @@ def _metric_cache_object_payload(value: Any) -> Any:
             "type": f"{value.__class__.__module__}.{value.__class__.__qualname__}",
         }
     return repr(value)
+
+
+_COMPILER_IR_GUIDANCE_CACHE_CONTRACT_KEYS = (
+    "bundle",
+    "compiler_guidance_action",
+    "compiler_guidance_route",
+    "compiler_guidance_selected_frame_after",
+    "compiler_guidance_todo_routes",
+    "evidence",
+    "evidences",
+    "family_distribution",
+    "feature_groups",
+    "legal_ir_predicted_view_distribution",
+    "legal_ir_target_view_distribution",
+    "legal_ir_view_gap_distribution",
+    "legal_ir_view_metrics",
+    "ranked_guidance_features",
+    "routes",
+    "sample_id",
+    "sample_memory_used",
+    "semantic_bundle",
+    "synthesis_focus",
+    "target_component",
+    "todo_routes",
+)
+
+
+def _compiler_ir_metric_guidance_cache_payload(
+    compiler_guidance: Optional[Mapping[str, Any]],
+) -> Optional[Dict[str, Any]]:
+    """Return the guidance subset that can affect deterministic compiler metrics."""
+
+    if not isinstance(compiler_guidance, Mapping) or not compiler_guidance:
+        return None
+    contract = {
+        key: _metric_cache_object_payload(compiler_guidance.get(key))
+        for key in _COMPILER_IR_GUIDANCE_CACHE_CONTRACT_KEYS
+        if key in compiler_guidance
+    }
+    return {
+        "contract": contract,
+        "policy": _COMPILER_IR_GUIDANCE_CACHE_POLICY,
+    }
 
 
 def _metric_mapping_to_namespace(value: Any) -> Any:
@@ -1997,6 +2127,58 @@ def autoencoder_memory_gap_block(
     }
 
 
+def skipped_autoencoder_metric_block(
+    reference_evaluation: Any,
+    *,
+    cycle: int,
+    dataset: str,
+    every_n_cycles: int,
+    mode: str,
+    skip_reason: str,
+) -> Dict[str, Any]:
+    """Report an intentionally skipped diagnostic autoencoder metric."""
+
+    return {
+        "cadence_every_n_cycles": max(1, int(every_n_cycles or 1)),
+        "cadence_mode": str(mode),
+        "cycle": int(cycle),
+        "dataset": str(dataset),
+        "reference_metrics": metric_block(reference_evaluation),
+        "sample_count": int(getattr(reference_evaluation, "sample_count", 0) or 0),
+        "skip_reason": str(skip_reason),
+        "skipped": True,
+    }
+
+
+def skipped_autoencoder_memory_gap_block(
+    reference_evaluation: Any,
+    *,
+    cycle: int,
+    dataset: str,
+    every_n_cycles: int,
+    expected_holdout: bool,
+    mode: str,
+    skip_reason: str,
+) -> Dict[str, Any]:
+    """Report that the diagnostic sample-memory gap was not measured this cycle."""
+
+    return {
+        "cadence_every_n_cycles": max(1, int(every_n_cycles or 1)),
+        "cadence_mode": str(mode),
+        "cycle": int(cycle),
+        "dataset": str(dataset),
+        "expected_holdout": bool(expected_holdout),
+        "interpretation": (
+            "sample-memory probe skipped by cadence; this cycle did not measure "
+            "memorization pressure"
+        ),
+        "reference_metrics": metric_block(reference_evaluation),
+        "sample_count": int(getattr(reference_evaluation, "sample_count", 0) or 0),
+        "skip_reason": str(skip_reason),
+        "skipped": True,
+    }
+
+
 def _distribution_cosine_similarity(
     left: Mapping[str, float],
     right: Mapping[str, float],
@@ -2389,7 +2571,9 @@ def compiler_ir_metric_block(
             guidance_cache_records.append(
                 {
                     "error": guidance_error,
-                    "guidance": _metric_cache_object_payload(compiler_guidance),
+                    "guidance": _compiler_ir_metric_guidance_cache_payload(
+                        compiler_guidance
+                    ),
                     "sample": _sample_metric_cache_payload(sample),
                     "sample_index": sample_index,
                 }
@@ -2433,8 +2617,14 @@ def compiler_ir_metric_block(
             cached["persistent_cache_hit"] = True
             cached["persistent_cache_key"] = persistent_cache_key
             cached["persistent_cache_kind"] = "compiler_ir_metric_block"
+            cached["compiler_ir_guidance_cache_policy"] = (
+                _COMPILER_IR_GUIDANCE_CACHE_POLICY
+            )
             cached["sample_timeout_cache_policy"] = "timeout_agnostic_successful_block"
             cached["sample_timeout_seconds"] = sample_timeout_seconds
+            cached["sample_cache_not_consulted_due_block_hit"] = True
+            cached["persistent_sample_cache_hits"] = 0
+            cached["persistent_sample_cache_misses"] = 0
             emit_progress(
                 "persistent_cache_hit",
                 cache_key=persistent_cache_key,
@@ -2799,6 +2989,7 @@ def compiler_ir_metric_block(
             0,
             guidance_produced_count - guidance_applied_count,
         ),
+        "compiler_ir_guidance_cache_policy": _COMPILER_IR_GUIDANCE_CACHE_POLICY,
         "evaluated_count": len(formula_counts),
         "max_sample_text_chars": max_sample_text_chars,
         "metric_failures": failures,
@@ -5407,7 +5598,9 @@ def _compiler_ir_metric_sample_cache_key(
             "config": _metric_cache_object_payload(getattr(codec, "config", None)),
             "type": f"{codec.__class__.__module__}.{codec.__class__.__qualname__}",
         },
-        "compiler_guidance": _metric_cache_object_payload(compiler_guidance),
+        "compiler_guidance": _compiler_ir_metric_guidance_cache_payload(
+            compiler_guidance
+        ),
         "guidance_top_k": int(guidance_top_k),
         "sample": _sample_metric_cache_payload(sample),
     }
@@ -7280,6 +7473,54 @@ def build_paired_daemon_commands(
                 args,
                 "compiler_ir_guided_train_every_n_cycles",
                 DEFAULT_COMPILER_IR_GUIDED_TRAIN_EVERY_N_CYCLES,
+            )
+        ),
+        "--autoencoder-before-train-eval-mode",
+        str(
+            getattr(
+                args,
+                "autoencoder_before_train_eval_mode",
+                DEFAULT_AUTOENCODER_BEFORE_TRAIN_EVAL_MODE,
+            )
+        ),
+        "--autoencoder-before-train-eval-every-n-cycles",
+        str(
+            getattr(
+                args,
+                "autoencoder_before_train_eval_every_n_cycles",
+                DEFAULT_AUTOENCODER_BEFORE_TRAIN_EVAL_EVERY_N_CYCLES,
+            )
+        ),
+        "--autoencoder-sample-memory-probe-mode",
+        str(
+            getattr(
+                args,
+                "autoencoder_sample_memory_probe_mode",
+                DEFAULT_AUTOENCODER_SAMPLE_MEMORY_PROBE_MODE,
+            )
+        ),
+        "--autoencoder-sample-memory-probe-every-n-cycles",
+        str(
+            getattr(
+                args,
+                "autoencoder_sample_memory_probe_every_n_cycles",
+                DEFAULT_AUTOENCODER_SAMPLE_MEMORY_PROBE_EVERY_N_CYCLES,
+            )
+        ),
+        "--autoencoder-todo-supervisor-mode",
+        str(
+            getattr(
+                args,
+                "autoencoder_todo_supervisor_mode",
+                DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MODE,
+            )
+        ),
+        "--autoencoder-todo-supervisor-min-open",
+        str(
+            getattr(
+                args,
+                "autoencoder_todo_supervisor_min_open",
+                DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MIN_OPEN,
             )
         ),
         "--uscode-embeddings-mode",
@@ -11196,6 +11437,84 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--autoencoder-before-train-eval-mode",
+        choices=("every_cycle", "periodic", "off"),
+        default=os.environ.get(
+            AUTOENCODER_BEFORE_TRAIN_EVAL_MODE_ENV,
+            DEFAULT_AUTOENCODER_BEFORE_TRAIN_EVAL_MODE,
+        ),
+        help=(
+            "When to run the diagnostic before-train autoencoder pass. Validation "
+            "still runs every cycle; after-train metrics still provide the train "
+            "snapshot."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-before-train-eval-every-n-cycles",
+        type=int,
+        default=_env_int(
+            AUTOENCODER_BEFORE_TRAIN_EVAL_EVERY_N_CYCLES_ENV,
+            DEFAULT_AUTOENCODER_BEFORE_TRAIN_EVAL_EVERY_N_CYCLES,
+            minimum=1,
+        ),
+        help=(
+            "Cycle cadence for --autoencoder-before-train-eval-mode periodic. "
+            "Ignored for every_cycle and off."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-sample-memory-probe-mode",
+        choices=("every_cycle", "periodic", "off"),
+        default=os.environ.get(
+            AUTOENCODER_SAMPLE_MEMORY_PROBE_MODE_ENV,
+            DEFAULT_AUTOENCODER_SAMPLE_MEMORY_PROBE_MODE,
+        ),
+        help=(
+            "When to run diagnostic sample-memory probes. These probes estimate "
+            "memorization pressure and are not part of the validation acceptance "
+            "signal."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-sample-memory-probe-every-n-cycles",
+        type=int,
+        default=_env_int(
+            AUTOENCODER_SAMPLE_MEMORY_PROBE_EVERY_N_CYCLES_ENV,
+            DEFAULT_AUTOENCODER_SAMPLE_MEMORY_PROBE_EVERY_N_CYCLES,
+            minimum=1,
+        ),
+        help=(
+            "Cycle cadence for --autoencoder-sample-memory-probe-mode periodic. "
+            "Ignored for every_cycle and off."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-todo-supervisor-mode",
+        choices=("every_cycle", "starved", "off"),
+        default=os.environ.get(
+            AUTOENCODER_TODO_SUPERVISOR_MODE_ENV,
+            DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MODE,
+        ),
+        help=(
+            "When to run the TODO supervisor optimization bridge. starved refreshes "
+            "the queue each cycle but skips duplicate optimization while enough "
+            "program-synthesis TODOs are already pending or claimed."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-todo-supervisor-min-open",
+        type=int,
+        default=_env_int(
+            AUTOENCODER_TODO_SUPERVISOR_MIN_OPEN_ENV,
+            DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MIN_OPEN,
+            minimum=1,
+        ),
+        help=(
+            "Minimum pending+claimed program-synthesis TODOs required for "
+            "--autoencoder-todo-supervisor-mode starved to skip optimization."
+        ),
+    )
+    parser.add_argument(
         "--uscode-embeddings-mode",
         choices=("auto", "off", "required"),
         default=os.environ.get("IPFS_DATASETS_USCODE_EMBEDDINGS_MODE", "auto"),
@@ -14180,6 +14499,71 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             or DEFAULT_COMPILER_IR_GUIDED_TRAIN_EVERY_N_CYCLES
         ),
     )
+    autoencoder_before_train_eval_mode = str(
+        getattr(
+            args,
+            "autoencoder_before_train_eval_mode",
+            DEFAULT_AUTOENCODER_BEFORE_TRAIN_EVAL_MODE,
+        )
+        or DEFAULT_AUTOENCODER_BEFORE_TRAIN_EVAL_MODE
+    ).strip().lower()
+    if autoencoder_before_train_eval_mode not in {"every_cycle", "periodic", "off"}:
+        autoencoder_before_train_eval_mode = DEFAULT_AUTOENCODER_BEFORE_TRAIN_EVAL_MODE
+    autoencoder_before_train_eval_every_n_cycles = max(
+        1,
+        int(
+            getattr(
+                args,
+                "autoencoder_before_train_eval_every_n_cycles",
+                DEFAULT_AUTOENCODER_BEFORE_TRAIN_EVAL_EVERY_N_CYCLES,
+            )
+            or DEFAULT_AUTOENCODER_BEFORE_TRAIN_EVAL_EVERY_N_CYCLES
+        ),
+    )
+    autoencoder_sample_memory_probe_mode = str(
+        getattr(
+            args,
+            "autoencoder_sample_memory_probe_mode",
+            DEFAULT_AUTOENCODER_SAMPLE_MEMORY_PROBE_MODE,
+        )
+        or DEFAULT_AUTOENCODER_SAMPLE_MEMORY_PROBE_MODE
+    ).strip().lower()
+    if autoencoder_sample_memory_probe_mode not in {"every_cycle", "periodic", "off"}:
+        autoencoder_sample_memory_probe_mode = (
+            DEFAULT_AUTOENCODER_SAMPLE_MEMORY_PROBE_MODE
+        )
+    autoencoder_sample_memory_probe_every_n_cycles = max(
+        1,
+        int(
+            getattr(
+                args,
+                "autoencoder_sample_memory_probe_every_n_cycles",
+                DEFAULT_AUTOENCODER_SAMPLE_MEMORY_PROBE_EVERY_N_CYCLES,
+            )
+            or DEFAULT_AUTOENCODER_SAMPLE_MEMORY_PROBE_EVERY_N_CYCLES
+        ),
+    )
+    autoencoder_todo_supervisor_mode = str(
+        getattr(
+            args,
+            "autoencoder_todo_supervisor_mode",
+            DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MODE,
+        )
+        or DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MODE
+    ).strip().lower()
+    if autoencoder_todo_supervisor_mode not in {"every_cycle", "starved", "off"}:
+        autoencoder_todo_supervisor_mode = DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MODE
+    autoencoder_todo_supervisor_min_open = max(
+        1,
+        int(
+            getattr(
+                args,
+                "autoencoder_todo_supervisor_min_open",
+                DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MIN_OPEN,
+            )
+            or DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MIN_OPEN
+        ),
+    )
     summary["generalizable_projection_timeout_seconds"] = (
         generalizable_projection_timeout_seconds
     )
@@ -14210,6 +14594,18 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     summary["compiler_ir_guided_train"] = {
         "every_n_cycles": compiler_ir_guided_train_every_n_cycles,
         "mode": compiler_ir_guided_train_mode,
+    }
+    summary["autoencoder_before_train_eval"] = {
+        "every_n_cycles": autoencoder_before_train_eval_every_n_cycles,
+        "mode": autoencoder_before_train_eval_mode,
+    }
+    summary["autoencoder_sample_memory_probe"] = {
+        "every_n_cycles": autoencoder_sample_memory_probe_every_n_cycles,
+        "mode": autoencoder_sample_memory_probe_mode,
+    }
+    summary["autoencoder_todo_supervisor"] = {
+        "min_open": autoencoder_todo_supervisor_min_open,
+        "mode": autoencoder_todo_supervisor_mode,
     }
     summary["autoencoder_bootstrap_program_synthesis_todos"] = bool(
         getattr(args, "autoencoder_bootstrap_program_synthesis_todos", True)
@@ -15807,16 +16203,39 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 train_indices=train_indices,
                 validation_indices=acceptance_validation_indices,
             )
-            with active_cycle_heartbeat(
+            run_before_train_eval = _should_run_cycle_cadence(
                 cycle=cycle,
-                cycle_started=cycle_started,
-                phase="before_train_evaluation",
-            ):
-                before_train = evaluate_autoencoder_cycle_metrics(
-                    train_samples,
+                mode=autoencoder_before_train_eval_mode,
+                every_n_cycles=autoencoder_before_train_eval_every_n_cycles,
+            )
+            before_train = None
+            if run_before_train_eval:
+                with active_cycle_heartbeat(
                     cycle=cycle,
                     cycle_started=cycle_started,
                     phase="before_train_evaluation",
+                ):
+                    before_train = evaluate_autoencoder_cycle_metrics(
+                        train_samples,
+                        cycle=cycle,
+                        cycle_started=cycle_started,
+                        phase="before_train_evaluation",
+                    )
+            else:
+                record_metric_progress(
+                    cycle=cycle,
+                    cycle_started=cycle_started,
+                    phase="before_train_evaluation",
+                    stage="before_train_evaluation_skipped",
+                    sample_count=len(train_samples),
+                    extra={
+                        "cadence_every_n_cycles": (
+                            autoencoder_before_train_eval_every_n_cycles
+                        ),
+                        "cadence_mode": autoencoder_before_train_eval_mode,
+                        "skip_reason": "before_train_eval_disabled",
+                        "skipped": True,
+                    },
                 )
             mark_active_autoencoder_cycle(
                 cycle=cycle,
@@ -15933,6 +16352,21 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                         compiler_ir_metric_sample_timeout_seconds
                     ),
                 )
+            if run is None:
+                stopped_reason = str(
+                    todo_supervisor_optimization.get("skip_reason")
+                    or "todo_supervisor_optimization_skipped"
+                )
+                run = ModalOptimizationRun(
+                    steps=[],
+                    final_evaluation=after_train,
+                    stopped_reason=stopped_reason,
+                    validation_final_evaluation=after_validation,
+                )
+            summary["latest_todo_supervisor_optimization"] = {
+                "stopped_reason": run.stopped_reason,
+                **todo_supervisor_optimization,
+            }
             mark_active_autoencoder_cycle(
                 cycle=cycle,
                 cycle_started=cycle_started,
@@ -16171,24 +16605,48 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 train_indices=train_indices,
                 validation_indices=acceptance_validation_indices,
             )
+            run: Optional[ModalOptimizationRun] = None
+            todo_supervisor_optimization: Dict[str, Any] = {}
             with active_cycle_heartbeat(
                 cycle=cycle,
                 cycle_started=cycle_started,
                 phase="todo_supervisor_optimization",
             ):
-                run = supervisor.optimize(
-                    train_samples,
-                    validation_samples=acceptance_validation_samples,
-                    autoencoder=autoencoder,
-                    worker_id="random-uscode-daemon-detached",
-                    max_items=args.max_items,
-                    learning_rate=cycle_learning_rate,
-                    max_iterations=args.max_inner_iterations,
-                    target_cross_entropy_loss=0.001,
-                    target_cosine_similarity=0.999999,
-                    queue_refresh_callback=refresh_supervisor_queue_from_disk,
-                    progress_callback=record_todo_optimizer_progress,
+                refresh_supervisor_queue_from_disk(supervisor)
+                todo_supervisor_optimization = _todo_supervisor_skip_decision(
+                    mode=autoencoder_todo_supervisor_mode,
+                    program_synthesis_status=supervisor.program_synthesis_status(),
+                    min_open=autoencoder_todo_supervisor_min_open,
                 )
+                with metric_progress_lock:
+                    summary["active_cycle_todo_supervisor_optimization"] = {
+                        "at": utc_now(),
+                        **todo_supervisor_optimization,
+                    }
+                if bool(todo_supervisor_optimization.get("skipped")):
+                    record_todo_optimizer_progress(
+                        {
+                            "iteration": 0,
+                            "queue_counts": supervisor.queue.status_counts(),
+                            "role_queue_counts": supervisor.queue.role_status_counts(),
+                            "stage": "todo_supervisor_optimization_skipped",
+                            **todo_supervisor_optimization,
+                        }
+                    )
+                else:
+                    run = supervisor.optimize(
+                        train_samples,
+                        validation_samples=acceptance_validation_samples,
+                        autoencoder=autoencoder,
+                        worker_id="random-uscode-daemon-detached",
+                        max_items=args.max_items,
+                        learning_rate=cycle_learning_rate,
+                        max_iterations=args.max_inner_iterations,
+                        target_cross_entropy_loss=0.001,
+                        target_cosine_similarity=0.999999,
+                        queue_refresh_callback=refresh_supervisor_queue_from_disk,
+                        progress_callback=record_todo_optimizer_progress,
+                    )
             mark_active_autoencoder_cycle(
                 cycle=cycle,
                 cycle_started=cycle_started,
@@ -16242,28 +16700,54 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 train_indices=train_indices,
                 validation_indices=acceptance_validation_indices,
             )
-            with active_cycle_heartbeat(
+            run_sample_memory_probe = _should_run_cycle_cadence(
                 cycle=cycle,
-                cycle_started=cycle_started,
-                phase="sample_memory_probe",
-            ):
-                after_train_generalized_probe = evaluate_autoencoder_base_probe(
-                    train_samples,
+                mode=autoencoder_sample_memory_probe_mode,
+                every_n_cycles=autoencoder_sample_memory_probe_every_n_cycles,
+            )
+            after_train_generalized_probe = None
+            after_validation_sample_memory_probe = None
+            if run_sample_memory_probe:
+                with active_cycle_heartbeat(
                     cycle=cycle,
                     cycle_started=cycle_started,
                     phase="sample_memory_probe",
-                    dataset="train_generalized",
-                    use_sample_memory=False,
-                )
-                after_validation_sample_memory_probe = (
-                    evaluate_autoencoder_base_probe(
-                        acceptance_validation_samples,
+                ):
+                    after_train_generalized_probe = evaluate_autoencoder_base_probe(
+                        train_samples,
                         cycle=cycle,
                         cycle_started=cycle_started,
                         phase="sample_memory_probe",
-                        dataset="validation_sample_memory",
-                        use_sample_memory=True,
+                        dataset="train_generalized",
+                        use_sample_memory=False,
                     )
+                    after_validation_sample_memory_probe = (
+                        evaluate_autoencoder_base_probe(
+                            acceptance_validation_samples,
+                            cycle=cycle,
+                            cycle_started=cycle_started,
+                            phase="sample_memory_probe",
+                            dataset="validation_sample_memory",
+                            use_sample_memory=True,
+                        )
+                    )
+            else:
+                record_metric_progress(
+                    cycle=cycle,
+                    cycle_started=cycle_started,
+                    phase="sample_memory_probe",
+                    stage="sample_memory_probe_skipped",
+                    sample_count=(
+                        len(train_samples) + len(acceptance_validation_samples)
+                    ),
+                    extra={
+                        "cadence_every_n_cycles": (
+                            autoencoder_sample_memory_probe_every_n_cycles
+                        ),
+                        "cadence_mode": autoencoder_sample_memory_probe_mode,
+                        "skip_reason": "sample_memory_probe_disabled",
+                        "skipped": True,
+                    },
                 )
             mark_active_autoencoder_cycle(
                 cycle=cycle,
@@ -16395,6 +16879,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 state_path=state_path,
             )
 
+            before_train_eval_skipped = before_train is None
+            if before_train_eval_skipped:
+                before_train = after_train
             train_ce_delta = before_train.cross_entropy_loss - after_train.cross_entropy_loss
             validation_ce_delta = before_validation.cross_entropy_loss - after_validation.cross_entropy_loss
             train_cos_delta = after_train.embedding_cosine_similarity - before_train.embedding_cosine_similarity
@@ -16402,29 +16889,84 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 after_validation.embedding_cosine_similarity
                 - before_validation.embedding_cosine_similarity
             )
-            before_train_metrics = metric_block(before_train)
+            if before_train_eval_skipped:
+                before_train_metrics = skipped_autoencoder_metric_block(
+                    after_train,
+                    cycle=cycle,
+                    dataset="train",
+                    every_n_cycles=autoencoder_before_train_eval_every_n_cycles,
+                    mode=autoencoder_before_train_eval_mode,
+                    skip_reason="before_train_eval_disabled",
+                )
+            else:
+                before_train_metrics = metric_block(before_train)
             before_validation_metrics = metric_block(before_validation)
             after_train_metrics = metric_block(after_train)
             after_validation_metrics = metric_block(after_validation)
-            after_train_generalized_probe_metrics = metric_block(
-                after_train_generalized_probe
+            sample_memory_probe_skipped = (
+                after_train_generalized_probe is None
+                or after_validation_sample_memory_probe is None
             )
-            after_validation_sample_memory_probe_metrics = metric_block(
-                after_validation_sample_memory_probe
-            )
-            train_sample_memory_gap = autoencoder_memory_gap_block(
-                after_train_generalized_probe,
-                after_train,
-                dataset="train",
-                expected_holdout=False,
-            )
-            validation_sample_memory_gap = autoencoder_memory_gap_block(
-                after_validation,
-                after_validation_sample_memory_probe,
-                dataset="validation",
-                expected_holdout=True,
-            )
+            if sample_memory_probe_skipped:
+                after_train_generalized_probe_metrics = skipped_autoencoder_metric_block(
+                    after_train,
+                    cycle=cycle,
+                    dataset="train_generalized",
+                    every_n_cycles=autoencoder_sample_memory_probe_every_n_cycles,
+                    mode=autoencoder_sample_memory_probe_mode,
+                    skip_reason="sample_memory_probe_disabled",
+                )
+                after_validation_sample_memory_probe_metrics = (
+                    skipped_autoencoder_metric_block(
+                        after_validation,
+                        cycle=cycle,
+                        dataset="validation_sample_memory",
+                        every_n_cycles=autoencoder_sample_memory_probe_every_n_cycles,
+                        mode=autoencoder_sample_memory_probe_mode,
+                        skip_reason="sample_memory_probe_disabled",
+                    )
+                )
+                train_sample_memory_gap = skipped_autoencoder_memory_gap_block(
+                    after_train,
+                    cycle=cycle,
+                    dataset="train",
+                    every_n_cycles=autoencoder_sample_memory_probe_every_n_cycles,
+                    expected_holdout=False,
+                    mode=autoencoder_sample_memory_probe_mode,
+                    skip_reason="sample_memory_probe_disabled",
+                )
+                validation_sample_memory_gap = skipped_autoencoder_memory_gap_block(
+                    after_validation,
+                    cycle=cycle,
+                    dataset="validation",
+                    every_n_cycles=autoencoder_sample_memory_probe_every_n_cycles,
+                    expected_holdout=True,
+                    mode=autoencoder_sample_memory_probe_mode,
+                    skip_reason="sample_memory_probe_disabled",
+                )
+            else:
+                after_train_generalized_probe_metrics = metric_block(
+                    after_train_generalized_probe
+                )
+                after_validation_sample_memory_probe_metrics = metric_block(
+                    after_validation_sample_memory_probe
+                )
+                train_sample_memory_gap = autoencoder_memory_gap_block(
+                    after_train_generalized_probe,
+                    after_train,
+                    dataset="train",
+                    expected_holdout=False,
+                )
+                validation_sample_memory_gap = autoencoder_memory_gap_block(
+                    after_validation,
+                    after_validation_sample_memory_probe,
+                    dataset="validation",
+                    expected_holdout=True,
+                )
             learned_ir_before_train = learned_ir_metric_block(before_train)
+            if before_train_eval_skipped:
+                learned_ir_before_train["skipped"] = True
+                learned_ir_before_train["skip_reason"] = "before_train_eval_disabled"
             learned_ir_before_validation = learned_ir_metric_block(before_validation)
             learned_ir_train = learned_ir_metric_block(after_train)
             learned_ir_validation = learned_ir_metric_block(after_validation)
@@ -16719,6 +17261,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["latest_cycle_phase_timings"] = latest_cycle_phase_timings
             summary["latest_autoencoder_state_telemetry"] = latest_state_telemetry
             summary["embedding_target_report"] = embedding_lookup.report()
+            summary["latest_autoencoder_before_train"] = before_train_metrics
+            summary["latest_autoencoder_before_validation"] = before_validation_metrics
             summary["latest_autoencoder_train"] = after_train_metrics
             summary["latest_autoencoder_train_generalized_probe"] = (
                 after_train_generalized_probe_metrics

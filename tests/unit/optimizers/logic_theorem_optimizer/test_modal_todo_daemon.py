@@ -3159,6 +3159,22 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
         "--compiler-ir-guided-train-every-n-cycles"
     )
     assert paired["autoencoder_command"][guided_train_cadence_index + 1] == "4"
+    before_train_mode_index = paired["autoencoder_command"].index(
+        "--autoencoder-before-train-eval-mode"
+    )
+    assert paired["autoencoder_command"][before_train_mode_index + 1] == "every_cycle"
+    before_train_cadence_index = paired["autoencoder_command"].index(
+        "--autoencoder-before-train-eval-every-n-cycles"
+    )
+    assert paired["autoencoder_command"][before_train_cadence_index + 1] == "4"
+    memory_probe_mode_index = paired["autoencoder_command"].index(
+        "--autoencoder-sample-memory-probe-mode"
+    )
+    assert paired["autoencoder_command"][memory_probe_mode_index + 1] == "every_cycle"
+    memory_probe_cadence_index = paired["autoencoder_command"].index(
+        "--autoencoder-sample-memory-probe-every-n-cycles"
+    )
+    assert paired["autoencoder_command"][memory_probe_cadence_index + 1] == "4"
     assert "--autoencoder-max-cosine-regression" not in paired["autoencoder_command"]
     assert "--learning-rate-floor-ratio" in paired["autoencoder_command"]
     assert "--learning-rate-cap-ratio" in paired["autoencoder_command"]
@@ -3196,6 +3212,29 @@ def test_cycle_learning_rate_reacts_to_plateau_and_cosine_regression() -> None:
     assert baseline_policy["plateau_streak"] == 0
     assert plateau_policy["plateau_streak"] == 4
     assert regressed_policy["cosine_regression_streak"] == 2
+
+
+def test_cycle_cadence_modes() -> None:
+    assert runner._should_run_cycle_cadence(
+        cycle=3,
+        mode="every_cycle",
+        every_n_cycles=4,
+    )
+    assert not runner._should_run_cycle_cadence(
+        cycle=4,
+        mode="off",
+        every_n_cycles=4,
+    )
+    assert runner._should_run_cycle_cadence(
+        cycle=8,
+        mode="periodic",
+        every_n_cycles=4,
+    )
+    assert not runner._should_run_cycle_cadence(
+        cycle=7,
+        mode="periodic",
+        every_n_cycles=4,
+    )
 
 
 def test_build_paired_daemon_commands_respect_custom_child_run_ids_and_model() -> None:
@@ -6873,6 +6912,7 @@ def test_compiler_ir_metric_block_uses_persistent_metric_cache(
     assert first["persistent_cache_hit"] is False
     assert second["persistent_cache_hit"] is True
     assert second["persistent_cache_kind"] == "compiler_ir_metric_block"
+    assert second["sample_cache_not_consulted_due_block_hit"] is True
     assert first["cross_entropy_loss"] == second["cross_entropy_loss"]
 
 
@@ -6912,6 +6952,7 @@ def test_compiler_ir_metric_block_cache_reuses_success_across_timeout_settings(
     assert second["persistent_cache_hit"] is True
     assert second["sample_timeout_seconds"] == pytest.approx(30.0)
     assert second["sample_timeout_cache_policy"] == "timeout_agnostic_successful_block"
+    assert second["persistent_sample_cache_misses"] == 0
     assert first["cross_entropy_loss"] == second["cross_entropy_loss"]
 
 
@@ -6969,7 +7010,89 @@ def test_compiler_ir_metric_block_uses_guided_persistent_metric_cache(
     assert first["persistent_cache_hit"] is False
     assert second["persistent_cache_hit"] is True
     assert second["persistent_cache_kind"] == "compiler_ir_metric_block"
+    assert second["sample_cache_not_consulted_due_block_hit"] is True
     assert second["autoencoder_guidance_enabled"] is True
+    assert first["cross_entropy_loss"] == second["cross_entropy_loss"]
+
+
+def test_compiler_ir_metric_guided_cache_ignores_decoded_embedding_drift(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    cache_dir = tmp_path / "metric-cache"
+    monkeypatch.setenv(runner.LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV, str(cache_dir))
+    monkeypatch.setenv(runner.LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV, "1")
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall provide records unless an exemption applies.",
+    )
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(
+            parser_backend="spacy",
+            spacy_model_name="definitely_missing_legal_model",
+            use_flogic=True,
+        )
+    )
+    autoencoder = AdaptiveModalAutoencoder()
+    original_encode = codec.encode
+    calls = {"encode": 0, "guidance": 0}
+
+    def counted_encode(*args, **kwargs):
+        calls["encode"] += 1
+        return original_encode(*args, **kwargs)
+
+    def drifting_guidance(sample_arg, **_kwargs):
+        calls["guidance"] += 1
+        return {
+            "decoded_embedding": [float(calls["guidance"]), 0.25, 0.5],
+            "family_distribution": {"obligation": 1.0},
+            "feature_groups": {
+                "decompiler_surface_template": [
+                    "decompiler-surface:force-lexeme:lexeme:shall",
+                ],
+            },
+            "ranked_guidance_features": [
+                {
+                    "embedding_weight_norm": 0.1,
+                    "family_logit_magnitude": 0.2,
+                    "feature": "decompiler-surface:force-lexeme:lexeme:shall",
+                    "legal_ir_view_logit_magnitude": 0.3,
+                    "score": 0.4,
+                },
+            ],
+            "sample_id": sample_arg.sample_id,
+            "sample_memory_used": False,
+            "top_embedding_contributions": [
+                {"feature": f"volatile-{calls['guidance']}", "score": 1.0},
+            ],
+        }
+
+    monkeypatch.setattr(codec, "encode", counted_encode)
+    monkeypatch.setattr(autoencoder, "compiler_guidance_for_sample", drifting_guidance)
+
+    first = compiler_ir_metric_block(
+        [sample],
+        codec,
+        autoencoder=autoencoder,
+        use_autoencoder_guidance=True,
+    )
+    second = compiler_ir_metric_block(
+        [sample],
+        codec,
+        autoencoder=autoencoder,
+        use_autoencoder_guidance=True,
+    )
+
+    assert calls["guidance"] == 2
+    assert calls["encode"] == 1
+    assert first["persistent_cache_hit"] is False
+    assert second["persistent_cache_hit"] is True
+    assert second["sample_cache_not_consulted_due_block_hit"] is True
+    assert (
+        second["compiler_ir_guidance_cache_policy"]
+        == runner._COMPILER_IR_GUIDANCE_CACHE_POLICY
+    )
     assert first["cross_entropy_loss"] == second["cross_entropy_loss"]
 
 
