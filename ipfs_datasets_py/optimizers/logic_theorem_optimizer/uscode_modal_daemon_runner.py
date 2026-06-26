@@ -411,6 +411,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder impor
     MODAL_AUTOENCODER_LOW_RANK_STATE_SCHEMA_VERSION,
     MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
     ModalAutoencoderTrainingState,
+    PROJECTION_DEADBAND_DEFAULT_HARD_GUARDRAILS,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import (
     FAILED_VALIDATION_RESCUE_MAX_ATTEMPTS,
@@ -662,6 +663,26 @@ CODEX_MAIN_APPLY_LOCK_TIMEOUT_SECONDS = 600.0
 CODEX_APPLY_VALIDATION_TIMEOUT_SECONDS = 600.0
 CODEX_TARGET_METRIC_TIMEOUT_SECONDS = 120.0
 CODEX_TARGET_METRIC_MAX_SAMPLES = 2
+COMPILER_IR_METRIC_MAX_SAMPLE_TEXT_CHARS_ENV = (
+    "IPFS_DATASETS_COMPILER_IR_METRIC_MAX_SAMPLE_TEXT_CHARS"
+)
+COMPILER_IR_METRIC_SAMPLE_TIMEOUT_SECONDS_ENV = (
+    "IPFS_DATASETS_COMPILER_IR_METRIC_SAMPLE_TIMEOUT_SECONDS"
+)
+DEFAULT_COMPILER_IR_METRIC_MAX_SAMPLE_TEXT_CHARS = 3000
+DEFAULT_COMPILER_IR_METRIC_SAMPLE_TIMEOUT_SECONDS = 30.0
+COMPILER_IR_TRAIN_MODE_ENV = "IPFS_DATASETS_COMPILER_IR_TRAIN_MODE"
+COMPILER_IR_TRAIN_EVERY_N_CYCLES_ENV = (
+    "IPFS_DATASETS_COMPILER_IR_TRAIN_EVERY_N_CYCLES"
+)
+COMPILER_IR_GUIDED_TRAIN_MODE_ENV = "IPFS_DATASETS_COMPILER_IR_GUIDED_TRAIN_MODE"
+COMPILER_IR_GUIDED_TRAIN_EVERY_N_CYCLES_ENV = (
+    "IPFS_DATASETS_COMPILER_IR_GUIDED_TRAIN_EVERY_N_CYCLES"
+)
+DEFAULT_COMPILER_IR_TRAIN_MODE = "every_cycle"
+DEFAULT_COMPILER_IR_TRAIN_EVERY_N_CYCLES = 4
+DEFAULT_COMPILER_IR_GUIDED_TRAIN_MODE = "every_cycle"
+DEFAULT_COMPILER_IR_GUIDED_TRAIN_EVERY_N_CYCLES = 4
 BRIDGE_IR_REPORT_CACHE_MAX = 4096
 USCODE_DAEMON_METRIC_SCHEMA_VERSION = "uscode-modal-daemon-metrics-v2"
 USCODE_DAEMON_ROLLOUT_STAGE = "observability-v1"
@@ -671,6 +692,34 @@ AUTOENCODER_LOW_RANK_SIDECAR_MAX_VECTORS_ENV = (
 AUTOENCODER_LOW_RANK_SIDECAR_RANK_ENV = (
     "IPFS_DATASETS_AUTOENCODER_LOW_RANK_SIDECAR_RANK"
 )
+AUTOENCODER_LOW_RANK_LOAD_ENV = "IPFS_DATASETS_AUTOENCODER_LOW_RANK_LOAD"
+AUTOENCODER_LOW_RANK_LOAD_OVERWRITE_ENV = (
+    "IPFS_DATASETS_AUTOENCODER_LOW_RANK_LOAD_OVERWRITE"
+)
+AUTOENCODER_PROJECTION_DEADBAND_MODE_ENV = (
+    "IPFS_DATASETS_AUTOENCODER_PROJECTION_DEADBAND_MODE"
+)
+AUTOENCODER_MAX_CE_DEADBAND_ENV = "IPFS_DATASETS_AUTOENCODER_MAX_CE_DEADBAND"
+AUTOENCODER_MAX_COSINE_REGRESSION_ENV = (
+    "IPFS_DATASETS_AUTOENCODER_MAX_COSINE_REGRESSION"
+)
+AUTOENCODER_HARD_GUARDRAIL_METRICS_ENV = (
+    "IPFS_DATASETS_AUTOENCODER_HARD_GUARDRAIL_METRICS"
+)
+AUTOENCODER_PROJECTION_PRESCREEN_MODE_ENV = (
+    "IPFS_DATASETS_AUTOENCODER_PROJECTION_PRESCREEN_MODE"
+)
+AUTOENCODER_PROJECTION_PRESCREEN_TOP_K_ENV = (
+    "IPFS_DATASETS_AUTOENCODER_PROJECTION_PRESCREEN_TOP_K"
+)
+AUTOENCODER_PROJECTION_PERIODIC_FULL_SEARCH_EVERY_N_CYCLES_ENV = (
+    "IPFS_DATASETS_AUTOENCODER_PROJECTION_PERIODIC_FULL_SEARCH_EVERY_N_CYCLES"
+)
+DEFAULT_AUTOENCODER_PROJECTION_DEADBAND_MODE = "shadow"
+DEFAULT_AUTOENCODER_MAX_CE_DEADBAND = 1.0e-4
+DEFAULT_AUTOENCODER_PROJECTION_PRESCREEN_MODE = "off"
+DEFAULT_AUTOENCODER_PROJECTION_PRESCREEN_TOP_K = 3
+DEFAULT_AUTOENCODER_PROJECTION_PERIODIC_FULL_SEARCH_EVERY_N_CYCLES = 8
 LEGAL_IR_METRIC_DISK_CACHE_VERSION = "legal-ir-metric-disk-cache-v1"
 LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV = "IPFS_DATASETS_LEGAL_IR_METRIC_CACHE_DIR"
 LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV = "IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE"
@@ -679,7 +728,7 @@ _BRIDGE_IR_REPORT_CACHE_LOCK = threading.Lock()
 _BRIDGE_IR_REPORT_CACHE: Dict[str, Any] = {}
 _METRIC_CODE_FINGERPRINT_LOCK = threading.Lock()
 _METRIC_CODE_FINGERPRINT_VALUE: Optional[str] = None
-_COMPILER_IR_METRIC_BLOCK_CACHE_VERSION = "compiler-ir-metric-block-cache-v2"
+_COMPILER_IR_METRIC_BLOCK_CACHE_VERSION = "compiler-ir-metric-block-cache-v3"
 _COMPILER_IR_GUIDANCE_DIAGNOSTICS_VERSION = "compiler-guidance-diagnostics-v1"
 _COMPILER_IR_SAMPLE_CACHE_VERSION = "compiler-ir-metric-sample-cache-v4"
 _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_LOCK = threading.Lock()
@@ -703,6 +752,17 @@ def _env_float(name: str, default: float, *, minimum: float = 0.0) -> float:
     return max(float(minimum), value)
 
 
+def _env_optional_float(name: str, *, minimum: float = 0.0) -> Optional[float]:
+    raw = os.environ.get(name)
+    if raw is None or str(raw).strip() == "":
+        return None
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        return None
+    return max(float(minimum), value)
+
+
 def _env_int(name: str, default: int, *, minimum: int = 0) -> int:
     raw = os.environ.get(name)
     if raw is None or str(raw).strip() == "":
@@ -712,6 +772,20 @@ def _env_int(name: str, default: int, *, minimum: int = 0) -> int:
     except (TypeError, ValueError):
         return int(default)
     return max(int(minimum), value)
+
+
+def _env_bool(name: str, default: bool = False) -> bool:
+    raw = os.environ.get(name)
+    if raw is None or str(raw).strip() == "":
+        return bool(default)
+    return str(raw).strip().lower() not in _FALSE_ENV_VALUES
+
+
+def _should_run_cycle_tests(cycle: int, test_every_cycles: int) -> bool:
+    cadence = int(test_every_cycles or 0)
+    if cadence <= 0:
+        return False
+    return int(cycle) % cadence == 0
 
 
 def _stable_metric_json(value: Any) -> str:
@@ -2170,6 +2244,48 @@ COMPILER_GUIDANCE_CANARY_METRICS = (
 )
 
 
+class CompilerIRMetricSampleTimeout(TimeoutError):
+    """Raised when one deterministic compiler metric sample exceeds its budget."""
+
+
+def _compiler_ir_metric_sample_timeout_supported(timeout_seconds: float) -> bool:
+    return (
+        float(timeout_seconds) > 0.0
+        and threading.current_thread() is threading.main_thread()
+        and hasattr(signal, "setitimer")
+        and hasattr(signal, "getitimer")
+    )
+
+
+@contextmanager
+def _compiler_ir_metric_sample_timeout(timeout_seconds: float) -> Iterator[bool]:
+    timeout = max(0.0, float(timeout_seconds))
+    if not _compiler_ir_metric_sample_timeout_supported(timeout):
+        yield False
+        return
+    previous_handler = signal.getsignal(signal.SIGALRM)
+    previous_timer = signal.getitimer(signal.ITIMER_REAL)
+
+    def handle_timeout(_signum: int, _frame: Any) -> None:
+        raise CompilerIRMetricSampleTimeout(
+            f"compiler IR metric sample exceeded {timeout:.3f}s"
+        )
+
+    signal.signal(signal.SIGALRM, handle_timeout)
+    signal.setitimer(signal.ITIMER_REAL, timeout)
+    try:
+        yield True
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0.0)
+        signal.signal(signal.SIGALRM, previous_handler)
+        if previous_timer and previous_timer[0] > 0.0:
+            signal.setitimer(
+                signal.ITIMER_REAL,
+                previous_timer[0],
+                previous_timer[1],
+            )
+
+
 def _compiler_ir_guidance_block_cache_compatible(
     block: Mapping[str, Any],
     *,
@@ -2202,7 +2318,9 @@ def compiler_ir_metric_block(
     use_autoencoder_guidance: bool = False,
     guidance_top_k: int = 16,
     max_sample_metric_records: int = 32,
+    max_sample_text_chars: int = 0,
     progress_callback: Optional[Callable[[Mapping[str, Any]], None]] = None,
+    sample_timeout_seconds: float = 0.0,
 ) -> Dict[str, Any]:
     """Aggregate deterministic compiler/IR/decompiler round-trip metrics."""
     sample_list = list(samples)
@@ -2215,6 +2333,11 @@ def compiler_ir_metric_block(
         }
 
     started_at = time.time()
+    max_sample_text_chars = max(0, int(max_sample_text_chars or 0))
+    sample_timeout_seconds = max(0.0, float(sample_timeout_seconds or 0.0))
+    sample_timeout_supported = _compiler_ir_metric_sample_timeout_supported(
+        sample_timeout_seconds
+    )
 
     def emit_progress(stage: str, **payload: Any) -> None:
         if progress_callback is None:
@@ -2294,6 +2417,8 @@ def compiler_ir_metric_block(
             guidance_cache_records=guidance_cache_records,
             guidance_top_k=guidance_top_k,
             max_sample_metric_records=max_sample_metric_records,
+            max_sample_text_chars=max_sample_text_chars,
+            sample_timeout_seconds=sample_timeout_seconds,
         )
         cached_block = _read_metric_disk_cache(
             "compiler_ir_metric_block",
@@ -2308,6 +2433,8 @@ def compiler_ir_metric_block(
             cached["persistent_cache_hit"] = True
             cached["persistent_cache_key"] = persistent_cache_key
             cached["persistent_cache_kind"] = "compiler_ir_metric_block"
+            cached["sample_timeout_cache_policy"] = "timeout_agnostic_successful_block"
+            cached["sample_timeout_seconds"] = sample_timeout_seconds
             emit_progress(
                 "persistent_cache_hit",
                 cache_key=persistent_cache_key,
@@ -2356,6 +2483,9 @@ def compiler_ir_metric_block(
     frame_candidate_counts: List[float] = []
     llm_call_counts: List[float] = []
     failures = 0
+    sample_timeouts = 0
+    skipped_sample_count = 0
+    text_length_skipped_count = 0
     persistent_sample_cache_hits = 0
     persistent_sample_cache_misses = 0
     guidance_frame_boost_counts: List[float] = []
@@ -2372,12 +2502,38 @@ def compiler_ir_metric_block(
         sample_started_at = time.time()
         sample_id = str(getattr(sample, "sample_id", "") or "")
         citation = str(getattr(sample, "citation", "") or "")
+        sample_text = str(getattr(sample, "text", "") or "")
+        sample_text_length = len(sample_text)
         emit_progress(
             "sample_start",
             citation=citation,
             sample_id=sample_id,
             sample_index=sample_index,
+            text_length=sample_text_length,
         )
+        if max_sample_text_chars > 0 and sample_text_length > max_sample_text_chars:
+            skipped_sample_count += 1
+            text_length_skipped_count += 1
+            sample_record = {
+                "citation": citation,
+                "max_sample_text_chars": max_sample_text_chars,
+                "sample_id": sample_id,
+                "skip_reason": "text_length_limit",
+                "source_text_preview": re.sub(r"\s+", " ", sample_text).strip()[:240],
+                "text_length": sample_text_length,
+            }
+            if len(sample_metric_records) < max(0, int(max_sample_metric_records)):
+                sample_metric_records.append(sample_record)
+            emit_progress(
+                "sample_skipped",
+                citation=citation,
+                max_sample_text_chars=max_sample_text_chars,
+                sample_id=sample_id,
+                sample_index=sample_index,
+                skip_reason="text_length_limit",
+                text_length=sample_text_length,
+            )
+            continue
         compiler_guidance = None
         if precomputed_guidance:
             compiler_guidance = precomputed_guidance[sample_index - 1]
@@ -2430,14 +2586,50 @@ def compiler_ir_metric_block(
                 sample_index=sample_index,
             )
             try:
-                result = codec.encode(
-                    sample.text,
-                    document_id=sample.sample_id,
-                    citation=sample.citation,
-                    source=sample.source,
-                    source_embedding=sample.embedding_vector,
-                    compiler_guidance=compiler_guidance,
+                with _compiler_ir_metric_sample_timeout(
+                    sample_timeout_seconds
+                ) as timeout_guarded:
+                    result = codec.encode(
+                        sample.text,
+                        document_id=sample.sample_id,
+                        citation=sample.citation,
+                        source=sample.source,
+                        source_embedding=sample.embedding_vector,
+                        compiler_guidance=compiler_guidance,
+                    )
+                if sample_timeout_seconds > 0.0 and not timeout_guarded:
+                    emit_progress(
+                        "sample_timeout_guard_unsupported",
+                        citation=citation,
+                        sample_id=sample_id,
+                        sample_index=sample_index,
+                        sample_timeout_seconds=sample_timeout_seconds,
+                    )
+            except CompilerIRMetricSampleTimeout:
+                failures += 1
+                sample_timeouts += 1
+                skipped_sample_count += 1
+                sample_record = {
+                    "citation": citation,
+                    "sample_id": sample_id,
+                    "sample_timeout_seconds": sample_timeout_seconds,
+                    "skip_reason": "sample_timeout",
+                    "source_text_preview": re.sub(r"\s+", " ", sample_text).strip()[:240],
+                    "text_length": sample_text_length,
+                }
+                if len(sample_metric_records) < max(0, int(max_sample_metric_records)):
+                    sample_metric_records.append(sample_record)
+                emit_progress(
+                    "sample_timeout",
+                    citation=citation,
+                    failures=failures,
+                    sample_id=sample_id,
+                    sample_index=sample_index,
+                    sample_seconds=round(time.time() - sample_started_at, 3),
+                    sample_timeout_seconds=sample_timeout_seconds,
+                    text_length=sample_text_length,
                 )
+                continue
             except Exception:
                 failures += 1
                 emit_progress(
@@ -2608,10 +2800,17 @@ def compiler_ir_metric_block(
             guidance_produced_count - guidance_applied_count,
         ),
         "evaluated_count": len(formula_counts),
+        "max_sample_text_chars": max_sample_text_chars,
         "metric_failures": failures,
         "persistent_sample_cache_hits": persistent_sample_cache_hits,
         "persistent_sample_cache_misses": persistent_sample_cache_misses,
+        "sample_timeout_cache_policy": "timeout_agnostic_successful_block",
+        "sample_timeout_seconds": sample_timeout_seconds,
+        "sample_timeout_supported": sample_timeout_supported,
+        "sample_timeouts": sample_timeouts,
         "sample_count": len(sample_list),
+        "skipped_sample_count": skipped_sample_count,
+        "text_length_skipped_count": text_length_skipped_count,
     }
     if use_autoencoder_guidance:
         block["compiler_guidance_diagnostics_version"] = (
@@ -2690,7 +2889,7 @@ def compiler_ir_metric_block(
             float(block["source_decompiled_text_embedding_cosine_loss"]),
             9,
         )
-    if persistent_cache_key is not None:
+    if persistent_cache_key is not None and sample_timeouts <= 0:
         block["persistent_cache_enabled"] = _metric_disk_cache_enabled()
         block["persistent_cache_hit"] = False
         block["persistent_cache_key"] = persistent_cache_key
@@ -2704,6 +2903,8 @@ def compiler_ir_metric_block(
         "done",
         evaluated_count=len(formula_counts),
         failures=failures,
+        sample_timeouts=sample_timeouts,
+        skipped_sample_count=skipped_sample_count,
     )
     return block
 
@@ -2799,6 +3000,293 @@ def _metric_value(block: Mapping[str, Any], name: str, default: float = 1.0e12) 
     if value != value:
         return default
     return value
+
+
+def _metric_optional_value(block: Mapping[str, Any], name: str) -> Optional[float]:
+    if name not in block:
+        return None
+    try:
+        value = float(block.get(name))
+    except (TypeError, ValueError):
+        return None
+    if value != value:
+        return None
+    return value
+
+
+def _metric_count_value(block: Mapping[str, Any], name: str) -> int:
+    try:
+        return int(block.get(name, 0) or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+def rollout_baseline_snapshot(
+    *,
+    summary: Mapping[str, Any],
+    cycle: int,
+    cycle_seconds: float,
+    cycle_phase_timings: Mapping[str, Any],
+    validation_metrics: Mapping[str, Any],
+    compiler_ir_validation: Mapping[str, Any],
+    learned_ir_validation: Mapping[str, Any],
+    logic_bridge_validation: Mapping[str, Any],
+    queue_counts: Mapping[str, Any],
+    role_queue_counts: Mapping[str, Any],
+    state_telemetry: Mapping[str, Any],
+    embedding_report: Mapping[str, Any],
+    backend_metadata: Mapping[str, Any],
+    host_resource_health: Mapping[str, Any],
+    compiler_ir_guided_validation: Optional[Mapping[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Return a stable rollout comparison snapshot for autoencoder experiments."""
+
+    compiler_ir_guided_validation = compiler_ir_guided_validation or {}
+    state_file = state_telemetry.get("state_file")
+    if not isinstance(state_file, Mapping):
+        state_file = {}
+    low_rank_sidecar = state_telemetry.get("low_rank_sidecar")
+    if not isinstance(low_rank_sidecar, Mapping):
+        low_rank_sidecar = {}
+    status_counts = {str(key): int(value) for key, value in queue_counts.items()}
+    failed_validation_count = int(status_counts.get("failed_validation", 0))
+    return {
+        "autoencoder_architecture_version": str(
+            summary.get("autoencoder_architecture_version")
+            or MODAL_AUTOENCODER_ARCHITECTURE_VERSION
+        ),
+        "autoencoder_state_schema_version": str(
+            summary.get("autoencoder_state_schema_version")
+            or MODAL_AUTOENCODER_STATE_SCHEMA_VERSION
+        ),
+        "backend": dict(backend_metadata),
+        "compiler_ir_validation": {
+            "cosine_similarity": _metric_optional_value(
+                compiler_ir_validation,
+                "cosine_similarity",
+            ),
+            "cross_entropy_excess_loss": _metric_optional_value(
+                compiler_ir_validation,
+                "cross_entropy_excess_loss",
+            ),
+            "cross_entropy_loss": _metric_optional_value(
+                compiler_ir_validation,
+                "cross_entropy_loss",
+            ),
+            "evaluated_count": _metric_count_value(
+                compiler_ir_validation,
+                "evaluated_count",
+            ),
+            "metric_failures": _metric_count_value(
+                compiler_ir_validation,
+                "metric_failures",
+            ),
+            "raw_source_embedding_cosine_similarity": _metric_optional_value(
+                compiler_ir_validation,
+                "raw_source_embedding_cosine_similarity",
+            ),
+            "sample_count": _metric_count_value(
+                compiler_ir_validation,
+                "sample_count",
+            ),
+            "sample_timeouts": _metric_count_value(
+                compiler_ir_validation,
+                "sample_timeouts",
+            ),
+            "skipped_sample_count": _metric_count_value(
+                compiler_ir_validation,
+                "skipped_sample_count",
+            ),
+            "source_copy_loss": _metric_optional_value(
+                compiler_ir_validation,
+                "source_copy_loss",
+            ),
+            "source_copy_reward_hack_penalty": _metric_optional_value(
+                compiler_ir_validation,
+                "source_copy_reward_hack_penalty",
+            ),
+            "source_decompiled_text_embedding_cosine_loss": _metric_optional_value(
+                compiler_ir_validation,
+                "source_decompiled_text_embedding_cosine_loss",
+            ),
+            "source_decompiled_text_token_loss": _metric_optional_value(
+                compiler_ir_validation,
+                "source_decompiled_text_token_loss",
+            ),
+            "text_length_skipped_count": _metric_count_value(
+                compiler_ir_validation,
+                "text_length_skipped_count",
+            ),
+        },
+        "compiler_ir_guided_validation": {
+            "cosine_similarity": _metric_optional_value(
+                compiler_ir_guided_validation,
+                "cosine_similarity",
+            ),
+            "cross_entropy_loss": _metric_optional_value(
+                compiler_ir_guided_validation,
+                "cross_entropy_loss",
+            ),
+            "source_copy_reward_hack_penalty": _metric_optional_value(
+                compiler_ir_guided_validation,
+                "source_copy_reward_hack_penalty",
+            ),
+        },
+        "compiler_ir_metric_cache": {
+            "guided_validation_block_cache_hit": bool(
+                compiler_ir_guided_validation.get("persistent_cache_hit", False)
+            ),
+            "guided_validation_sample_cache_hits": _metric_count_value(
+                compiler_ir_guided_validation,
+                "persistent_sample_cache_hits",
+            ),
+            "guided_validation_sample_cache_misses": _metric_count_value(
+                compiler_ir_guided_validation,
+                "persistent_sample_cache_misses",
+            ),
+            "validation_block_cache_hit": bool(
+                compiler_ir_validation.get("persistent_cache_hit", False)
+            ),
+            "validation_sample_cache_hits": _metric_count_value(
+                compiler_ir_validation,
+                "persistent_sample_cache_hits",
+            ),
+            "validation_sample_cache_misses": _metric_count_value(
+                compiler_ir_validation,
+                "persistent_sample_cache_misses",
+            ),
+        },
+        "cycle": int(cycle),
+        "cycle_seconds": round(float(cycle_seconds), 3),
+        "cycle_phase_timings": {
+            str(name): round(float(seconds), 3)
+            for name, seconds in sorted(cycle_phase_timings.items())
+        },
+        "embedding_report": dict(embedding_report),
+        "failed_validation_count": failed_validation_count,
+        "host_resource_health": dict(host_resource_health),
+        "learned_feature_rows": {
+            "generalizable_entry_count": _metric_count_value(
+                state_telemetry,
+                "generalizable_entry_count",
+            ),
+            "nested_logit_entry_count": _metric_count_value(
+                state_telemetry,
+                "nested_logit_entry_count",
+            ),
+            "vector_entry_count": _metric_count_value(
+                state_telemetry,
+                "vector_entry_count",
+            ),
+        },
+        "learned_ir_view_validation": {
+            "family_cross_entropy_excess_loss": _metric_optional_value(
+                learned_ir_validation,
+                "family_cross_entropy_excess_loss",
+            ),
+            "target_count": _metric_count_value(
+                learned_ir_validation,
+                "target_count",
+            ),
+            "view_cosine_similarity": _metric_optional_value(
+                learned_ir_validation,
+                "view_cosine_similarity",
+            ),
+            "view_cross_entropy_loss": _metric_optional_value(
+                learned_ir_validation,
+                "view_cross_entropy_loss",
+            ),
+            "worst_family_cosine_gap_loss": _metric_optional_value(
+                learned_ir_validation,
+                "worst_family_cosine_gap_loss",
+            ),
+            "worst_family_cross_entropy_excess_loss": _metric_optional_value(
+                learned_ir_validation,
+                "worst_family_cross_entropy_excess_loss",
+            ),
+        },
+        "logic_bridge_validation": {
+            "acceptance_rate": _metric_optional_value(
+                logic_bridge_validation,
+                "acceptance_rate",
+            ),
+            "adapter_count": _metric_count_value(
+                logic_bridge_validation,
+                "adapter_count",
+            ),
+            "evaluated_count": _metric_count_value(
+                logic_bridge_validation,
+                "evaluated_count",
+            ),
+            "metric_failures": _metric_count_value(
+                logic_bridge_validation,
+                "metric_failures",
+            ),
+            "proof_failure_ratio": _metric_optional_value(
+                logic_bridge_validation,
+                "proof_failure_ratio",
+            ),
+            "sample_count": _metric_count_value(
+                logic_bridge_validation,
+                "sample_count",
+            ),
+            "total_loss": _metric_optional_value(
+                logic_bridge_validation,
+                "total_loss",
+            ),
+        },
+        "metric_schema_version": str(
+            summary.get("metric_schema_version") or USCODE_DAEMON_METRIC_SCHEMA_VERSION
+        ),
+        "queue_counts": status_counts,
+        "role_queue_counts": {
+            str(role): {
+                str(status): int(count)
+                for status, count in dict(counts or {}).items()
+            }
+            for role, counts in role_queue_counts.items()
+        },
+        "run_id": str(summary.get("run_id") or ""),
+        "state_file": {
+            "path": str(state_file.get("path") or summary.get("state_path") or ""),
+            "size_bytes": _metric_count_value(state_file, "size_bytes"),
+            "size_mb": _metric_optional_value(state_file, "size_mb"),
+        },
+        "state_low_rank_sidecar": {
+            "complete": bool(low_rank_sidecar.get("complete", False)),
+            "enabled": bool(low_rank_sidecar.get("enabled", False)),
+            "size_mb": _metric_optional_value(
+                low_rank_sidecar.get("file", {})
+                if isinstance(low_rank_sidecar.get("file"), Mapping)
+                else {},
+                "size_mb",
+            ),
+            "status": str(low_rank_sidecar.get("status") or ""),
+            "vector_entry_count": _metric_count_value(
+                low_rank_sidecar,
+                "vector_entry_count",
+            ),
+        },
+        "validation": {
+            "cosine_similarity": _metric_optional_value(
+                validation_metrics,
+                "cosine_similarity",
+            ),
+            "cross_entropy_excess_loss": _metric_optional_value(
+                validation_metrics,
+                "cross_entropy_excess_loss",
+            ),
+            "cross_entropy_loss": _metric_optional_value(
+                validation_metrics,
+                "cross_entropy_loss",
+            ),
+            "reconstruction_loss": _metric_optional_value(
+                validation_metrics,
+                "reconstruction_loss",
+            ),
+            "sample_count": _metric_count_value(validation_metrics, "sample_count"),
+        },
+    }
 
 
 def _record_metric_value(
@@ -4884,7 +5372,9 @@ def _compiler_ir_metric_block_cache_key(
     codec: Any,
     guidance_cache_records: Sequence[Mapping[str, Any]] = (),
     guidance_top_k: int,
+    max_sample_text_chars: int,
     max_sample_metric_records: int,
+    sample_timeout_seconds: float,
 ) -> str:
     payload = {
         "block_cache_version": _COMPILER_IR_METRIC_BLOCK_CACHE_VERSION,
@@ -4898,7 +5388,9 @@ def _compiler_ir_metric_block_cache_key(
         ),
         "guidance_top_k": int(guidance_top_k),
         "max_sample_metric_records": int(max_sample_metric_records),
+        "max_sample_text_chars": int(max_sample_text_chars),
         "samples": [_sample_metric_cache_payload(sample) for sample in samples],
+        "successful_result_timeout_policy": "timeout_agnostic",
     }
     return _metric_disk_cache_key("compiler_ir_metric_block", payload)
 
@@ -6742,6 +7234,54 @@ def build_paired_daemon_commands(
         str(getattr(args, "validation_canary_indices", "")),
         "--max-sample-text-chars",
         str(getattr(args, "max_sample_text_chars", 0)),
+        "--compiler-ir-metric-max-sample-text-chars",
+        str(
+            getattr(
+                args,
+                "compiler_ir_metric_max_sample_text_chars",
+                DEFAULT_COMPILER_IR_METRIC_MAX_SAMPLE_TEXT_CHARS,
+            )
+        ),
+        "--compiler-ir-metric-sample-timeout-seconds",
+        str(
+            getattr(
+                args,
+                "compiler_ir_metric_sample_timeout_seconds",
+                DEFAULT_COMPILER_IR_METRIC_SAMPLE_TIMEOUT_SECONDS,
+            )
+        ),
+        "--compiler-ir-train-mode",
+        str(
+            getattr(
+                args,
+                "compiler_ir_train_mode",
+                DEFAULT_COMPILER_IR_TRAIN_MODE,
+            )
+        ),
+        "--compiler-ir-train-every-n-cycles",
+        str(
+            getattr(
+                args,
+                "compiler_ir_train_every_n_cycles",
+                DEFAULT_COMPILER_IR_TRAIN_EVERY_N_CYCLES,
+            )
+        ),
+        "--compiler-ir-guided-train-mode",
+        str(
+            getattr(
+                args,
+                "compiler_ir_guided_train_mode",
+                DEFAULT_COMPILER_IR_GUIDED_TRAIN_MODE,
+            )
+        ),
+        "--compiler-ir-guided-train-every-n-cycles",
+        str(
+            getattr(
+                args,
+                "compiler_ir_guided_train_every_n_cycles",
+                DEFAULT_COMPILER_IR_GUIDED_TRAIN_EVERY_N_CYCLES,
+            )
+        ),
         "--uscode-embeddings-mode",
         str(getattr(args, "uscode_embeddings_mode", "auto")),
         "--uscode-embeddings-path",
@@ -6976,6 +7516,54 @@ def build_paired_daemon_commands(
         str(getattr(args, "generalizable_projection_timeout_seconds", 900.0)),
         "--generalizable-projection-max-line-search-attempts",
         str(getattr(args, "generalizable_projection_max_line_search_attempts", 0)),
+        "--autoencoder-projection-deadband-mode",
+        str(
+            getattr(
+                args,
+                "autoencoder_projection_deadband_mode",
+                DEFAULT_AUTOENCODER_PROJECTION_DEADBAND_MODE,
+            )
+        ),
+        "--autoencoder-max-ce-deadband",
+        str(
+            getattr(
+                args,
+                "autoencoder_max_ce_deadband",
+                DEFAULT_AUTOENCODER_MAX_CE_DEADBAND,
+            )
+        ),
+        "--autoencoder-hard-guardrail-metrics",
+        str(
+            getattr(
+                args,
+                "autoencoder_hard_guardrail_metrics",
+                ",".join(PROJECTION_DEADBAND_DEFAULT_HARD_GUARDRAILS),
+            )
+        ),
+        "--autoencoder-projection-prescreen-mode",
+        str(
+            getattr(
+                args,
+                "autoencoder_projection_prescreen_mode",
+                DEFAULT_AUTOENCODER_PROJECTION_PRESCREEN_MODE,
+            )
+        ),
+        "--autoencoder-projection-prescreen-top-k",
+        str(
+            getattr(
+                args,
+                "autoencoder_projection_prescreen_top_k",
+                DEFAULT_AUTOENCODER_PROJECTION_PRESCREEN_TOP_K,
+            )
+        ),
+        "--autoencoder-projection-periodic-full-search-every-n-cycles",
+        str(
+            getattr(
+                args,
+                "autoencoder_projection_periodic_full_search_every_n_cycles",
+                DEFAULT_AUTOENCODER_PROJECTION_PERIODIC_FULL_SEARCH_EVERY_N_CYCLES,
+            )
+        ),
         "--autoencoder-bootstrap-mode",
         str(getattr(args, "autoencoder_bootstrap_mode", "fast")),
         "--learning-rate-floor-ratio",
@@ -6989,6 +7577,22 @@ def build_paired_daemon_commands(
         "--test-every-cycles",
         str(args.test_every_cycles),
     ]
+    if getattr(args, "autoencoder_max_cosine_regression", None) is not None:
+        autoencoder_command.extend(
+            [
+                "--autoencoder-max-cosine-regression",
+                str(getattr(args, "autoencoder_max_cosine_regression")),
+            ]
+        )
+    if getattr(args, "sampling_seed", None) is not None and str(
+        getattr(args, "sampling_seed")
+    ).strip():
+        autoencoder_command.extend(
+            [
+                "--sampling-seed",
+                str(getattr(args, "sampling_seed")),
+            ]
+        )
     for warm_start_run_id in getattr(args, "warm_start_run_id", []):
         autoencoder_command.extend(["--warm-start-run-id", str(warm_start_run_id)])
     for warm_start_state in getattr(args, "warm_start_state", []):
@@ -9953,6 +10557,42 @@ def autoencoder_state_telemetry(
     return telemetry
 
 
+def autoencoder_low_rank_load_report(
+    state: ModalAutoencoderTrainingState,
+    *,
+    state_path: Path,
+) -> Dict[str, Any]:
+    sidecar_path = ModalAutoencoderTrainingState.low_rank_shadow_sidecar_path(
+        state_path
+    )
+    if not _env_bool(AUTOENCODER_LOW_RANK_LOAD_ENV, False):
+        return {
+            "enabled": False,
+            "overwrite": False,
+            "path": str(sidecar_path),
+            "reason": "disabled",
+        }
+    overwrite = _env_bool(AUTOENCODER_LOW_RANK_LOAD_OVERWRITE_ENV, False)
+    try:
+        report = state.hydrate_low_rank_shadow_json(
+            sidecar_path,
+            overwrite=overwrite,
+        )
+    except Exception as exc:
+        return {
+            "enabled": True,
+            "error": f"{type(exc).__name__}: {str(exc)[:240]}",
+            "overwrite": overwrite,
+            "path": str(sidecar_path),
+            "status": "failed",
+        }
+    report = dict(report)
+    report["enabled"] = True
+    report["overwrite"] = overwrite
+    report.setdefault("path", str(sidecar_path))
+    return report
+
+
 def autoencoder_low_rank_sidecar_report(
     state: ModalAutoencoderTrainingState,
     *,
@@ -9968,7 +10608,9 @@ def autoencoder_low_rank_sidecar_report(
         0,
         minimum=0,
     )
-    sidecar_path = state_path.with_suffix(".low-rank-shadow.json")
+    sidecar_path = ModalAutoencoderTrainingState.low_rank_shadow_sidecar_path(
+        state_path
+    )
     if max_vectors <= 0:
         return {
             "enabled": False,
@@ -10284,8 +10926,21 @@ def _clamp_nested_bridge_adapter_parallelism(
     }
 
 
+def _sampling_seed_for_args(args: argparse.Namespace) -> tuple[int, str]:
+    raw_seed = getattr(args, "sampling_seed", None)
+    if raw_seed is None or str(raw_seed).strip() == "":
+        seed_source = str(args.run_id)
+    else:
+        seed_source = str(raw_seed).strip()
+    try:
+        seed = int(seed_source, 0)
+    except ValueError:
+        seed = int(hashlib.sha256(seed_source.encode("utf-8")).hexdigest()[:12], 16)
+    return seed, seed_source
+
+
 def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Path, state_path: Path) -> Dict[str, Any]:
-    seed = int(hashlib.sha256(args.run_id.encode("utf-8")).hexdigest()[:12], 16)
+    seed, seed_source = _sampling_seed_for_args(args)
     return {
         "active_cycle_phase_timings": {},
         "autoencoder_architecture_version": MODAL_AUTOENCODER_ARCHITECTURE_VERSION,
@@ -10353,6 +11008,7 @@ def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Pat
         "run_id": args.run_id,
         "rollout_stage": USCODE_DAEMON_ROLLOUT_STAGE,
         "seed": seed,
+        "sampling_seed_source": seed_source,
         "started_at": utc_now(),
         "state_path": str(state_path),
         "test_failures": 0,
@@ -10409,6 +11065,15 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument("--run-id", required=True)
     parser.add_argument(
+        "--sampling-seed",
+        default=None,
+        help=(
+            "Optional integer or string seed for train/validation sampling. "
+            "When omitted, the run id is used as before. Hparam sweeps should "
+            "share one sampling seed across trials so configs see comparable rows."
+        ),
+    )
+    parser.add_argument(
         "--loop-role",
         choices=("autoencoder", "codex", "paired"),
         default="autoencoder",
@@ -10448,6 +11113,86 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         help=(
             "Skip randomly sampled U.S. Code rows whose text exceeds this many "
             "characters. Zero keeps the full corpus eligible."
+        ),
+    )
+    parser.add_argument(
+        "--compiler-ir-metric-max-sample-text-chars",
+        type=int,
+        default=_env_int(
+            COMPILER_IR_METRIC_MAX_SAMPLE_TEXT_CHARS_ENV,
+            DEFAULT_COMPILER_IR_METRIC_MAX_SAMPLE_TEXT_CHARS,
+            minimum=0,
+        ),
+        help=(
+            "Skip deterministic compiler/IR metric samples longer than this many "
+            "characters. This does not change autoencoder train/validation "
+            "sampling. Zero disables the metric-only text cap."
+        ),
+    )
+    parser.add_argument(
+        "--compiler-ir-metric-sample-timeout-seconds",
+        type=float,
+        default=_env_float(
+            COMPILER_IR_METRIC_SAMPLE_TIMEOUT_SECONDS_ENV,
+            DEFAULT_COMPILER_IR_METRIC_SAMPLE_TIMEOUT_SECONDS,
+            minimum=0.0,
+        ),
+        help=(
+            "Per-sample wall-clock timeout for deterministic compiler/IR metric "
+            "encoding. Timed-out samples are skipped and reported. Zero disables "
+            "the timeout."
+        ),
+    )
+    parser.add_argument(
+        "--compiler-ir-train-mode",
+        choices=("every_cycle", "periodic", "off"),
+        default=os.environ.get(
+            COMPILER_IR_TRAIN_MODE_ENV,
+            DEFAULT_COMPILER_IR_TRAIN_MODE,
+        ),
+        help=(
+            "When to run unguided compiler-IR metrics on train samples. "
+            "Validation metrics always run because they drive hparam scoring and "
+            "best-run tracking."
+        ),
+    )
+    parser.add_argument(
+        "--compiler-ir-train-every-n-cycles",
+        type=int,
+        default=_env_int(
+            COMPILER_IR_TRAIN_EVERY_N_CYCLES_ENV,
+            DEFAULT_COMPILER_IR_TRAIN_EVERY_N_CYCLES,
+            minimum=1,
+        ),
+        help=(
+            "Cycle cadence for --compiler-ir-train-mode periodic. Ignored for "
+            "every_cycle and off."
+        ),
+    )
+    parser.add_argument(
+        "--compiler-ir-guided-train-mode",
+        choices=("every_cycle", "periodic", "off"),
+        default=os.environ.get(
+            COMPILER_IR_GUIDED_TRAIN_MODE_ENV,
+            DEFAULT_COMPILER_IR_GUIDED_TRAIN_MODE,
+        ),
+        help=(
+            "When to run guided compiler-IR metrics on train samples. Guided "
+            "validation always runs because it feeds the guidance canary; train "
+            "metrics are diagnostic and can be disabled for faster sweeps."
+        ),
+    )
+    parser.add_argument(
+        "--compiler-ir-guided-train-every-n-cycles",
+        type=int,
+        default=_env_int(
+            COMPILER_IR_GUIDED_TRAIN_EVERY_N_CYCLES_ENV,
+            DEFAULT_COMPILER_IR_GUIDED_TRAIN_EVERY_N_CYCLES,
+            minimum=1,
+        ),
+        help=(
+            "Cycle cadence for --compiler-ir-guided-train-mode periodic. Ignored "
+            "for every_cycle and off."
         ),
     )
     parser.add_argument(
@@ -10574,6 +11319,94 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         help=(
             "Maximum line-search attempts per projection update. Zero uses auto mode, "
             "which trims expensive refinement attempts for very large warm-start states."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-projection-deadband-mode",
+        choices=("off", "shadow", "enforce"),
+        default=os.environ.get(
+            AUTOENCODER_PROJECTION_DEADBAND_MODE_ENV,
+            DEFAULT_AUTOENCODER_PROJECTION_DEADBAND_MODE,
+        ),
+        help=(
+            "Whether feature-projection acceptance should tolerate tiny CE "
+            "regressions: off disables reporting, shadow reports would-accept "
+            "decisions without changing training, enforce applies the deadband."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-max-ce-deadband",
+        type=float,
+        default=_env_float(
+            AUTOENCODER_MAX_CE_DEADBAND_ENV,
+            DEFAULT_AUTOENCODER_MAX_CE_DEADBAND,
+            minimum=0.0,
+        ),
+        help=(
+            "Maximum CE/CE-excess regression the projection deadband may tolerate "
+            "when weighted objective improves."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-max-cosine-regression",
+        type=float,
+        default=_env_optional_float(
+            AUTOENCODER_MAX_COSINE_REGRESSION_ENV,
+            minimum=0.0,
+        ),
+        help=(
+            "Optional explicit hard cosine-regression cap for projection acceptance. "
+            "When omitted, --generalizable-projection-max-cosine-regression is used."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-hard-guardrail-metrics",
+        default=os.environ.get(
+            AUTOENCODER_HARD_GUARDRAIL_METRICS_ENV,
+            ",".join(PROJECTION_DEADBAND_DEFAULT_HARD_GUARDRAILS),
+        ),
+        help=(
+            "Comma-separated metric names or prefix globs that the projection "
+            "deadband must never relax, e.g. embedding_cosine_similarity,legal_ir:*."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-projection-prescreen-mode",
+        choices=("off", "shadow", "enforce"),
+        default=os.environ.get(
+            AUTOENCODER_PROJECTION_PRESCREEN_MODE_ENV,
+            DEFAULT_AUTOENCODER_PROJECTION_PRESCREEN_MODE,
+        ),
+        help=(
+            "Whether projection candidates should be ranked by cheap train-sample "
+            "prescreening before holdout validation: off disables it, shadow reports "
+            "rankings, enforce restricts acceptance to the top-k ranked candidates."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-projection-prescreen-top-k",
+        type=int,
+        default=_env_int(
+            AUTOENCODER_PROJECTION_PRESCREEN_TOP_K_ENV,
+            DEFAULT_AUTOENCODER_PROJECTION_PRESCREEN_TOP_K,
+            minimum=0,
+        ),
+        help=(
+            "Number of projection line-search attempts per update selected by "
+            "prescreening. Zero means select all attempts."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-projection-periodic-full-search-every-n-cycles",
+        type=int,
+        default=_env_int(
+            AUTOENCODER_PROJECTION_PERIODIC_FULL_SEARCH_EVERY_N_CYCLES_ENV,
+            DEFAULT_AUTOENCODER_PROJECTION_PERIODIC_FULL_SEARCH_EVERY_N_CYCLES,
+            minimum=0,
+        ),
+        help=(
+            "When prescreen enforce mode is active, run a shadow full-search cycle "
+            "every N cycles. Zero disables periodic full-search cycles."
         ),
     )
     parser.add_argument(
@@ -11918,12 +12751,17 @@ def load_warm_start_state(paths: Sequence[Path]) -> tuple[ModalAutoencoderTraini
     """Load and average generalizable state from previous runs."""
     loaded_states: List[ModalAutoencoderTrainingState] = []
     loaded_paths: List[str] = []
+    low_rank_load_reports: List[Dict[str, Any]] = []
     missing_paths: List[str] = []
     for path in paths:
         if not path.exists():
             missing_paths.append(str(path))
             continue
-        loaded_states.append(ModalAutoencoderTrainingState.load_json(path).generalizable_copy())
+        state = ModalAutoencoderTrainingState.load_json(path)
+        low_rank_report = autoencoder_low_rank_load_report(state, state_path=path)
+        if low_rank_report.get("enabled"):
+            low_rank_load_reports.append(low_rank_report)
+        loaded_states.append(state.generalizable_copy())
         loaded_paths.append(str(path))
 
     averaged = ModalAutoencoderTrainingState.average_generalizable(loaded_states)
@@ -11983,6 +12821,7 @@ def load_warm_start_state(paths: Sequence[Path]) -> tuple[ModalAutoencoderTraini
         "feature_embedding_weight_entries": len(averaged.feature_embedding_weights),
         "feature_family_logit_entries": len(averaged.feature_family_logits),
         "loaded_paths": loaded_paths,
+        "low_rank_load_reports": low_rank_load_reports,
         "legal_ir_view_embedding_weight_entries": len(
             averaged.legal_ir_view_embedding_weights
         ),
@@ -13223,12 +14062,155 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         0,
         int(getattr(args, "generalizable_projection_max_line_search_attempts", 0) or 0),
     )
+    projection_max_cosine_regression = getattr(
+        args,
+        "autoencoder_max_cosine_regression",
+        None,
+    )
+    if projection_max_cosine_regression is None:
+        projection_max_cosine_regression = getattr(
+            args,
+            "generalizable_projection_max_cosine_regression",
+            0.005,
+        )
+    projection_max_cosine_regression = max(
+        0.0,
+        float(projection_max_cosine_regression or 0.0),
+    )
+    projection_deadband_mode = str(
+        getattr(
+            args,
+            "autoencoder_projection_deadband_mode",
+            DEFAULT_AUTOENCODER_PROJECTION_DEADBAND_MODE,
+        )
+        or DEFAULT_AUTOENCODER_PROJECTION_DEADBAND_MODE
+    ).strip().lower()
+    if projection_deadband_mode not in {"off", "shadow", "enforce"}:
+        projection_deadband_mode = DEFAULT_AUTOENCODER_PROJECTION_DEADBAND_MODE
+    projection_max_ce_deadband = max(
+        0.0,
+        float(
+            getattr(
+                args,
+                "autoencoder_max_ce_deadband",
+                DEFAULT_AUTOENCODER_MAX_CE_DEADBAND,
+            )
+            or 0.0
+        ),
+    )
+    projection_hard_guardrail_metrics = str(
+        getattr(
+            args,
+            "autoencoder_hard_guardrail_metrics",
+            ",".join(PROJECTION_DEADBAND_DEFAULT_HARD_GUARDRAILS),
+        )
+        or ""
+    )
+    projection_prescreen_mode = str(
+        getattr(
+            args,
+            "autoencoder_projection_prescreen_mode",
+            DEFAULT_AUTOENCODER_PROJECTION_PRESCREEN_MODE,
+        )
+        or DEFAULT_AUTOENCODER_PROJECTION_PRESCREEN_MODE
+    ).strip().lower()
+    if projection_prescreen_mode not in {"off", "shadow", "enforce"}:
+        projection_prescreen_mode = DEFAULT_AUTOENCODER_PROJECTION_PRESCREEN_MODE
+    projection_prescreen_top_k = max(
+        0,
+        int(
+            getattr(
+                args,
+                "autoencoder_projection_prescreen_top_k",
+                DEFAULT_AUTOENCODER_PROJECTION_PRESCREEN_TOP_K,
+            )
+            or 0
+        ),
+    )
+    projection_periodic_full_search_every_n_cycles = max(
+        0,
+        int(
+            getattr(
+                args,
+                "autoencoder_projection_periodic_full_search_every_n_cycles",
+                DEFAULT_AUTOENCODER_PROJECTION_PERIODIC_FULL_SEARCH_EVERY_N_CYCLES,
+            )
+            or 0
+        ),
+    )
+    compiler_ir_train_mode = str(
+        getattr(
+            args,
+            "compiler_ir_train_mode",
+            DEFAULT_COMPILER_IR_TRAIN_MODE,
+        )
+        or DEFAULT_COMPILER_IR_TRAIN_MODE
+    ).strip().lower()
+    if compiler_ir_train_mode not in {"every_cycle", "periodic", "off"}:
+        compiler_ir_train_mode = DEFAULT_COMPILER_IR_TRAIN_MODE
+    compiler_ir_train_every_n_cycles = max(
+        1,
+        int(
+            getattr(
+                args,
+                "compiler_ir_train_every_n_cycles",
+                DEFAULT_COMPILER_IR_TRAIN_EVERY_N_CYCLES,
+            )
+            or DEFAULT_COMPILER_IR_TRAIN_EVERY_N_CYCLES
+        ),
+    )
+    compiler_ir_guided_train_mode = str(
+        getattr(
+            args,
+            "compiler_ir_guided_train_mode",
+            DEFAULT_COMPILER_IR_GUIDED_TRAIN_MODE,
+        )
+        or DEFAULT_COMPILER_IR_GUIDED_TRAIN_MODE
+    ).strip().lower()
+    if compiler_ir_guided_train_mode not in {"every_cycle", "periodic", "off"}:
+        compiler_ir_guided_train_mode = DEFAULT_COMPILER_IR_GUIDED_TRAIN_MODE
+    compiler_ir_guided_train_every_n_cycles = max(
+        1,
+        int(
+            getattr(
+                args,
+                "compiler_ir_guided_train_every_n_cycles",
+                DEFAULT_COMPILER_IR_GUIDED_TRAIN_EVERY_N_CYCLES,
+            )
+            or DEFAULT_COMPILER_IR_GUIDED_TRAIN_EVERY_N_CYCLES
+        ),
+    )
     summary["generalizable_projection_timeout_seconds"] = (
         generalizable_projection_timeout_seconds
     )
     summary["generalizable_projection_max_line_search_attempts"] = (
         generalizable_projection_max_line_search_attempts
     )
+    summary["autoencoder_projection_deadband"] = {
+        "hard_guardrail_metrics": [
+            value.strip()
+            for value in projection_hard_guardrail_metrics.split(",")
+            if value.strip()
+        ],
+        "max_ce_deadband": projection_max_ce_deadband,
+        "max_cosine_regression": projection_max_cosine_regression,
+        "mode": projection_deadband_mode,
+    }
+    summary["autoencoder_projection_prescreen"] = {
+        "mode": projection_prescreen_mode,
+        "periodic_full_search_every_n_cycles": (
+            projection_periodic_full_search_every_n_cycles
+        ),
+        "top_k": projection_prescreen_top_k,
+    }
+    summary["compiler_ir_train"] = {
+        "every_n_cycles": compiler_ir_train_every_n_cycles,
+        "mode": compiler_ir_train_mode,
+    }
+    summary["compiler_ir_guided_train"] = {
+        "every_n_cycles": compiler_ir_guided_train_every_n_cycles,
+        "mode": compiler_ir_guided_train_mode,
+    }
     summary["autoencoder_bootstrap_program_synthesis_todos"] = bool(
         getattr(args, "autoencoder_bootstrap_program_synthesis_todos", True)
     )
@@ -13263,6 +14245,34 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         bridge_adapter_workers = 1
     summary["bridge_adapter_workers"] = max(1, bridge_adapter_workers)
     summary["max_sample_text_chars"] = int(getattr(args, "max_sample_text_chars", 0) or 0)
+    compiler_ir_metric_max_sample_text_chars = max(
+        0,
+        int(
+            getattr(
+                args,
+                "compiler_ir_metric_max_sample_text_chars",
+                DEFAULT_COMPILER_IR_METRIC_MAX_SAMPLE_TEXT_CHARS,
+            )
+            or 0
+        ),
+    )
+    compiler_ir_metric_sample_timeout_seconds = max(
+        0.0,
+        float(
+            getattr(
+                args,
+                "compiler_ir_metric_sample_timeout_seconds",
+                DEFAULT_COMPILER_IR_METRIC_SAMPLE_TIMEOUT_SECONDS,
+            )
+            or 0.0
+        ),
+    )
+    summary["compiler_ir_metric_max_sample_text_chars"] = (
+        compiler_ir_metric_max_sample_text_chars
+    )
+    summary["compiler_ir_metric_sample_timeout_seconds"] = (
+        compiler_ir_metric_sample_timeout_seconds
+    )
     summary.setdefault("bridge_loss_failures", 0)
     summary.setdefault("bridge_loss_samples", 0)
     summary.setdefault("bridge_loss_signals", 0)
@@ -13294,6 +14304,14 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     cycle_start_margin_seconds = 8.0
     summary["autoencoder_cycle_start_margin_seconds"] = cycle_start_margin_seconds
     state = ModalAutoencoderTrainingState.load_json(state_path)
+    low_rank_load = autoencoder_low_rank_load_report(state, state_path=state_path)
+    summary["autoencoder_low_rank_load"] = low_rank_load
+    if low_rank_load.get("dense_state_hydrated"):
+        append_event(
+            log_path,
+            args.run_id,
+            {"event": "autoencoder_low_rank_loaded", "low_rank_load": low_rank_load},
+        )
     summary["latest_autoencoder_state_telemetry"] = autoencoder_state_telemetry(
         state,
         state_path=state_path,
@@ -14837,9 +15855,22 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 cycle_started=cycle_started,
                 phase="compiler_ir_metrics",
             ):
+                run_compiler_ir_train_metrics = bool(
+                    compiler_ir_train_mode == "every_cycle"
+                    or (
+                        compiler_ir_train_mode == "periodic"
+                        and int(cycle)
+                        % max(1, int(compiler_ir_train_every_n_cycles))
+                        == 0
+                    )
+                )
                 compiler_ir_train_samples = (
-                    sampled_bridge_metric_samples(train_samples, cycle=cycle)
-                    or list(train_samples)
+                    (
+                        sampled_bridge_metric_samples(train_samples, cycle=cycle)
+                        or list(train_samples)
+                    )
+                    if run_compiler_ir_train_metrics
+                    else []
                 )
                 compiler_ir_validation_samples = (
                     sampled_bridge_metric_samples(
@@ -14848,25 +15879,44 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     )
                     or list(acceptance_validation_samples)
                 )
-                compiler_ir_train = compiler_ir_metric_block(
-                    compiler_ir_train_samples,
-                    feature_codec,
-                    progress_callback=metric_progress_callback(
-                        cycle=cycle,
-                        cycle_started=cycle_started,
-                        phase="compiler_ir_metrics",
-                        dataset="train",
-                        sample_count=len(compiler_ir_train_samples),
-                        bridge_sample_count=len(compiler_ir_train_samples),
-                        bridge_sample_ids=[
-                            str(getattr(sample, "sample_id", "") or "")
-                            for sample in compiler_ir_train_samples
-                        ],
-                    ),
-                )
+                if run_compiler_ir_train_metrics:
+                    compiler_ir_train = compiler_ir_metric_block(
+                        compiler_ir_train_samples,
+                        feature_codec,
+                        max_sample_text_chars=compiler_ir_metric_max_sample_text_chars,
+                        progress_callback=metric_progress_callback(
+                            cycle=cycle,
+                            cycle_started=cycle_started,
+                            phase="compiler_ir_metrics",
+                            dataset="train",
+                            sample_count=len(compiler_ir_train_samples),
+                            bridge_sample_count=len(compiler_ir_train_samples),
+                            bridge_sample_ids=[
+                                str(getattr(sample, "sample_id", "") or "")
+                                for sample in compiler_ir_train_samples
+                            ],
+                        ),
+                        sample_timeout_seconds=(
+                            compiler_ir_metric_sample_timeout_seconds
+                        ),
+                    )
+                else:
+                    compiler_ir_train = {
+                        "autoencoder_guidance_enabled": False,
+                        "compiler_ir_train_every_n_cycles": (
+                            compiler_ir_train_every_n_cycles
+                        ),
+                        "compiler_ir_train_mode": compiler_ir_train_mode,
+                        "evaluated_count": 0,
+                        "metric_failures": 0,
+                        "sample_count": len(train_samples),
+                        "skip_reason": "train_metrics_disabled",
+                        "skipped": True,
+                    }
                 compiler_ir_validation = compiler_ir_metric_block(
                     compiler_ir_validation_samples,
                     feature_codec,
+                    max_sample_text_chars=compiler_ir_metric_max_sample_text_chars,
                     progress_callback=metric_progress_callback(
                         cycle=cycle,
                         cycle_started=cycle_started,
@@ -14878,6 +15928,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                             str(getattr(sample, "sample_id", "") or "")
                             for sample in compiler_ir_validation_samples
                         ],
+                    ),
+                    sample_timeout_seconds=(
+                        compiler_ir_metric_sample_timeout_seconds
                     ),
                 )
             mark_active_autoencoder_cycle(
@@ -15033,11 +16086,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                         legal_ir_evaluate_provers=bridge_evaluate_provers,
                         legal_ir_parallel_workers=metric_bridge_parallel_workers,
                         max_cosine_regression=float(
-                            getattr(
-                                args,
-                                "generalizable_projection_max_cosine_regression",
-                                0.005,
-                            )
+                            projection_max_cosine_regression
                         ),
                         max_reconstruction_regression=float(
                             getattr(
@@ -15099,6 +16148,17 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                         max_line_search_attempts=(
                             generalizable_projection_max_line_search_attempts
                         ),
+                        projection_deadband_mode=projection_deadband_mode,
+                        projection_max_ce_deadband=projection_max_ce_deadband,
+                        projection_hard_guardrail_metrics=(
+                            projection_hard_guardrail_metrics
+                        ),
+                        projection_prescreen_mode=projection_prescreen_mode,
+                        projection_prescreen_top_k=projection_prescreen_top_k,
+                        projection_periodic_full_search_every_n_cycles=(
+                            projection_periodic_full_search_every_n_cycles
+                        ),
+                        projection_cycle=cycle,
                         progress_callback=record_projection_progress,
                     )
             mark_active_autoencoder_cycle(
@@ -15220,9 +16280,22 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 cycle_started=cycle_started,
                 phase="guided_compiler_ir_metrics",
             ):
+                run_guided_train_metrics = bool(
+                    compiler_ir_guided_train_mode == "every_cycle"
+                    or (
+                        compiler_ir_guided_train_mode == "periodic"
+                        and int(cycle)
+                        % max(1, int(compiler_ir_guided_train_every_n_cycles))
+                        == 0
+                    )
+                )
                 guided_compiler_ir_train_samples = (
-                    sampled_bridge_metric_samples(train_samples, cycle=cycle)
-                    or list(train_samples)
+                    (
+                        sampled_bridge_metric_samples(train_samples, cycle=cycle)
+                        or list(train_samples)
+                    )
+                    if run_guided_train_metrics
+                    else []
                 )
                 guided_compiler_ir_validation_samples = (
                     sampled_bridge_metric_samples(
@@ -15231,28 +16304,49 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     )
                     or list(acceptance_validation_samples)
                 )
-                compiler_ir_guided_train = compiler_ir_metric_block(
-                    guided_compiler_ir_train_samples,
-                    feature_codec,
-                    autoencoder=autoencoder,
-                    use_autoencoder_guidance=True,
-                    progress_callback=metric_progress_callback(
-                        cycle=cycle,
-                        cycle_started=cycle_started,
-                        phase="guided_compiler_ir_metrics",
-                        dataset="guided_train",
-                        sample_count=len(guided_compiler_ir_train_samples),
-                        bridge_sample_count=len(guided_compiler_ir_train_samples),
-                        bridge_sample_ids=[
-                            str(getattr(sample, "sample_id", "") or "")
-                            for sample in guided_compiler_ir_train_samples
-                        ],
-                    ),
-                )
+                if run_guided_train_metrics:
+                    compiler_ir_guided_train = compiler_ir_metric_block(
+                        guided_compiler_ir_train_samples,
+                        feature_codec,
+                        autoencoder=autoencoder,
+                        max_sample_text_chars=compiler_ir_metric_max_sample_text_chars,
+                        use_autoencoder_guidance=True,
+                        progress_callback=metric_progress_callback(
+                            cycle=cycle,
+                            cycle_started=cycle_started,
+                            phase="guided_compiler_ir_metrics",
+                            dataset="guided_train",
+                            sample_count=len(guided_compiler_ir_train_samples),
+                            bridge_sample_count=len(guided_compiler_ir_train_samples),
+                            bridge_sample_ids=[
+                                str(getattr(sample, "sample_id", "") or "")
+                                for sample in guided_compiler_ir_train_samples
+                            ],
+                        ),
+                        sample_timeout_seconds=(
+                            compiler_ir_metric_sample_timeout_seconds
+                        ),
+                    )
+                else:
+                    compiler_ir_guided_train = {
+                        "autoencoder_guidance_enabled": True,
+                        "compiler_ir_guided_train_every_n_cycles": (
+                            compiler_ir_guided_train_every_n_cycles
+                        ),
+                        "compiler_ir_guided_train_mode": (
+                            compiler_ir_guided_train_mode
+                        ),
+                        "evaluated_count": 0,
+                        "metric_failures": 0,
+                        "sample_count": len(train_samples),
+                        "skip_reason": "guided_train_metrics_disabled",
+                        "skipped": True,
+                    }
                 compiler_ir_guided_validation = compiler_ir_metric_block(
                     guided_compiler_ir_validation_samples,
                     feature_codec,
                     autoencoder=autoencoder,
+                    max_sample_text_chars=compiler_ir_metric_max_sample_text_chars,
                     use_autoencoder_guidance=True,
                     progress_callback=metric_progress_callback(
                         cycle=cycle,
@@ -15265,6 +16359,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                             str(getattr(sample, "sample_id", "") or "")
                             for sample in guided_compiler_ir_validation_samples
                         ],
+                    ),
+                    sample_timeout_seconds=(
+                        compiler_ir_metric_sample_timeout_seconds
                     ),
                 )
             mark_active_autoencoder_cycle(
@@ -15606,10 +16703,14 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             latest_cycle_seconds = round(time.time() - cycle_started, 3)
             latest_cycle_phase_timings = close_active_phase(cycle=cycle)
             clear_active_autoencoder_cycle()
+            backend_metadata = autoencoder.compute_backend_metadata()
+            host_resource_health = paired_resource_health()
             summary["last_completed_cycle"] = cycle
             summary["cycles"] = cycle
             summary["latest_stop_reason"] = run.stopped_reason
-            summary.update(autoencoder.compute_backend_metadata())
+            summary.update(backend_metadata)
+            summary["latest_autoencoder_backend"] = dict(backend_metadata)
+            summary["latest_host_resource_health"] = dict(host_resource_health)
             summary["latest_queue_counts"] = supervisor.queue.status_counts()
             summary["latest_role_queue_counts"] = supervisor.queue.role_status_counts()
             summary["latest_feature_projection_report"] = feature_projection_report
@@ -15625,6 +16726,23 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["latest_autoencoder_validation"] = after_validation_metrics
             summary["latest_autoencoder_validation_sample_memory_probe"] = (
                 after_validation_sample_memory_probe_metrics
+            )
+            summary["latest_rollout_baseline_snapshot"] = rollout_baseline_snapshot(
+                summary=summary,
+                cycle=cycle,
+                cycle_seconds=latest_cycle_seconds,
+                cycle_phase_timings=latest_cycle_phase_timings,
+                validation_metrics=after_validation_metrics,
+                compiler_ir_validation=compiler_ir_validation,
+                compiler_ir_guided_validation=compiler_ir_guided_validation,
+                learned_ir_validation=learned_ir_validation,
+                logic_bridge_validation=bridge_ir_validation,
+                queue_counts=summary["latest_queue_counts"],
+                role_queue_counts=summary["latest_role_queue_counts"],
+                state_telemetry=latest_state_telemetry,
+                embedding_report=embedding_lookup.report(),
+                backend_metadata=backend_metadata,
+                host_resource_health=host_resource_health,
             )
             summary["latest_train_sample_memory_gap"] = train_sample_memory_gap
             summary["latest_validation_sample_memory_gap"] = (
@@ -16428,7 +17546,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             )
             save_summary(summary_path, summary)
 
-            if cycle % args.test_every_cycles == 0:
+            if _should_run_cycle_tests(cycle, args.test_every_cycles):
                 test_result = run_tests(root, report_dir, cycle)
                 summary["test_failures"] = int(summary.get("test_failures", 0)) + int(test_result["exit_code"] != 0)
                 append_event(log_path, args.run_id, test_result)
@@ -16460,7 +17578,10 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         if stop_state.stop_requested:
             summary["latest_stop_reason"] = f"signal_{stop_state.stop_signal}"
             summary["stopped_by_signal"] = stop_state.stop_signal
-        summary.update(autoencoder.compute_backend_metadata())
+        backend_metadata = autoencoder.compute_backend_metadata()
+        summary.update(backend_metadata)
+        summary["latest_autoencoder_backend"] = dict(backend_metadata)
+        summary["latest_host_resource_health"] = paired_resource_health()
         summary["autoencoder_architecture_version"] = (
             MODAL_AUTOENCODER_ARCHITECTURE_VERSION
         )

@@ -8,6 +8,7 @@ import os
 import signal
 import subprocess
 import sys
+import time
 from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
@@ -3119,6 +3120,46 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
     assert "--generalizable-projection-max-reconstruction-regression" in paired["autoencoder_command"]
     assert "--generalizable-projection-max-cross-entropy-regression" in paired["autoencoder_command"]
     assert "--generalizable-projection-max-legal-ir-loss-regression" in paired["autoencoder_command"]
+    assert "--autoencoder-projection-deadband-mode" in paired["autoencoder_command"]
+    deadband_index = paired["autoencoder_command"].index(
+        "--autoencoder-projection-deadband-mode"
+    )
+    assert paired["autoencoder_command"][deadband_index + 1] == "shadow"
+    ce_deadband_index = paired["autoencoder_command"].index(
+        "--autoencoder-max-ce-deadband"
+    )
+    assert paired["autoencoder_command"][ce_deadband_index + 1] == "0.0001"
+    assert "--autoencoder-hard-guardrail-metrics" in paired["autoencoder_command"]
+    assert "--autoencoder-projection-prescreen-mode" in paired["autoencoder_command"]
+    prescreen_mode_index = paired["autoencoder_command"].index(
+        "--autoencoder-projection-prescreen-mode"
+    )
+    assert paired["autoencoder_command"][prescreen_mode_index + 1] == "off"
+    prescreen_top_k_index = paired["autoencoder_command"].index(
+        "--autoencoder-projection-prescreen-top-k"
+    )
+    assert paired["autoencoder_command"][prescreen_top_k_index + 1] == "3"
+    full_search_index = paired["autoencoder_command"].index(
+        "--autoencoder-projection-periodic-full-search-every-n-cycles"
+    )
+    assert paired["autoencoder_command"][full_search_index + 1] == "8"
+    compiler_train_mode_index = paired["autoencoder_command"].index(
+        "--compiler-ir-train-mode"
+    )
+    assert paired["autoencoder_command"][compiler_train_mode_index + 1] == "every_cycle"
+    compiler_train_cadence_index = paired["autoencoder_command"].index(
+        "--compiler-ir-train-every-n-cycles"
+    )
+    assert paired["autoencoder_command"][compiler_train_cadence_index + 1] == "4"
+    guided_train_mode_index = paired["autoencoder_command"].index(
+        "--compiler-ir-guided-train-mode"
+    )
+    assert paired["autoencoder_command"][guided_train_mode_index + 1] == "every_cycle"
+    guided_train_cadence_index = paired["autoencoder_command"].index(
+        "--compiler-ir-guided-train-every-n-cycles"
+    )
+    assert paired["autoencoder_command"][guided_train_cadence_index + 1] == "4"
+    assert "--autoencoder-max-cosine-regression" not in paired["autoencoder_command"]
     assert "--learning-rate-floor-ratio" in paired["autoencoder_command"]
     assert "--learning-rate-cap-ratio" in paired["autoencoder_command"]
     assert "--learning-rate-plateau-delta" in paired["autoencoder_command"]
@@ -3431,6 +3472,7 @@ def test_build_paired_daemon_commands_pass_projection_bounds_to_autoencoder() ->
         max_inner_iterations=1,
         max_items=3,
         learning_rate=0.1,
+        sampling_seed="shared-hparam-seed",
         generalizable_projection_timeout_seconds=123.0,
         generalizable_projection_max_line_search_attempts=4,
         autoencoder_bootstrap_mode="fast",
@@ -3459,12 +3501,38 @@ def test_build_paired_daemon_commands_pass_projection_bounds_to_autoencoder() ->
     )
 
     command = paired["autoencoder_command"]
+    assert command[command.index("--sampling-seed") + 1] == "shared-hparam-seed"
     assert command[command.index("--generalizable-projection-timeout-seconds") + 1] == "123.0"
     assert (
         command[command.index("--generalizable-projection-max-line-search-attempts") + 1]
         == "4"
     )
     assert command[command.index("--autoencoder-bootstrap-mode") + 1] == "fast"
+
+
+def test_initial_summary_uses_explicit_sampling_seed(tmp_path) -> None:
+    args = SimpleNamespace(
+        run_id="summary-run",
+        sampling_seed="shared-hparam-seed",
+        queue_run_id=None,
+        bridge_evaluate_provers=False,
+        bridge_loss_adapters="none",
+        uscode_embeddings_mode="off",
+        uscode_embeddings_path="",
+        learning_rate=0.1,
+    )
+
+    summary = runner.initial_summary(
+        args,
+        log_path=tmp_path / "run.jsonl",
+        queue_path=tmp_path / "queue.json",
+        state_path=tmp_path / "state.json",
+    )
+    expected_seed, expected_source = runner._sampling_seed_for_args(args)
+
+    assert summary["seed"] == expected_seed
+    assert summary["sampling_seed_source"] == expected_source
+    assert summary["sampling_seed_source"] == "shared-hparam-seed"
 
 
 def test_paired_autoencoder_child_health_detects_stale_projection(tmp_path) -> None:
@@ -3669,6 +3737,114 @@ def test_paired_supervisor_backend_defaults_to_accelerate_style() -> None:
     )
 
     assert args.paired_supervisor_backend == "accelerate_style"
+
+
+def test_should_run_cycle_tests_treats_nonpositive_cadence_as_disabled() -> None:
+    assert runner._should_run_cycle_tests(1, 0) is False
+    assert runner._should_run_cycle_tests(1, -5) is False
+    assert runner._should_run_cycle_tests(3, 2) is False
+    assert runner._should_run_cycle_tests(4, 2) is True
+
+
+def test_rollout_baseline_snapshot_collects_go_no_go_fields() -> None:
+    snapshot = runner.rollout_baseline_snapshot(
+        summary={
+            "autoencoder_architecture_version": "test-arch",
+            "autoencoder_state_schema_version": "state-v-test",
+            "metric_schema_version": "metric-v-test",
+            "run_id": "baseline-run",
+            "state_path": "/tmp/state.json",
+        },
+        cycle=3,
+        cycle_seconds=12.3456,
+        cycle_phase_timings={
+            "sampling": 0.5,
+            "compiler_ir_metrics": 3.25,
+        },
+        validation_metrics={
+            "cosine_similarity": 0.91,
+            "cross_entropy_excess_loss": 0.2,
+            "cross_entropy_loss": 1.7,
+            "reconstruction_loss": 0.04,
+            "sample_count": 5,
+        },
+        compiler_ir_validation={
+            "cosine_similarity": 0.62,
+            "cross_entropy_loss": 2.5,
+            "evaluated_count": 2,
+            "metric_failures": 1,
+            "persistent_sample_cache_hits": 7,
+            "persistent_sample_cache_misses": 3,
+            "sample_count": 4,
+            "sample_timeouts": 1,
+            "skipped_sample_count": 2,
+            "source_copy_reward_hack_penalty": 0.33,
+            "text_length_skipped_count": 1,
+        },
+        compiler_ir_guided_validation={
+            "cosine_similarity": 0.66,
+            "cross_entropy_loss": 2.1,
+            "persistent_cache_hit": True,
+            "source_copy_reward_hack_penalty": 0.22,
+        },
+        learned_ir_validation={
+            "family_cross_entropy_excess_loss": 0.4,
+            "target_count": 6,
+            "view_cosine_similarity": 0.73,
+            "view_cross_entropy_loss": 1.2,
+        },
+        logic_bridge_validation={
+            "acceptance_rate": 0.8,
+            "adapter_count": 2,
+            "evaluated_count": 3,
+            "metric_failures": 0,
+            "proof_failure_ratio": 0.1,
+            "sample_count": 3,
+            "total_loss": 0.25,
+        },
+        queue_counts={"pending": 9, "failed_validation": 2},
+        role_queue_counts={"program_synthesis": {"pending": 9}},
+        state_telemetry={
+            "generalizable_entry_count": 11,
+            "nested_logit_entry_count": 13,
+            "state_file": {
+                "path": "/tmp/state.json",
+                "size_bytes": 1024,
+                "size_mb": 0.001,
+            },
+            "low_rank_sidecar": {
+                "complete": False,
+                "enabled": True,
+                "status": "saved",
+                "vector_entry_count": 16,
+            },
+            "vector_entry_count": 17,
+        },
+        embedding_report={"embedding_model": "mock:test", "enabled": True},
+        backend_metadata={
+            "autoencoder_compute_backend": "torch_cpu",
+            "autoencoder_compute_device": "cpu",
+        },
+        host_resource_health={
+            "cpu_count": 8,
+            "memory_available_gb": 32.0,
+            "swap_free_gb": 4.0,
+        },
+    )
+
+    assert snapshot["run_id"] == "baseline-run"
+    assert snapshot["cycle_seconds"] == pytest.approx(12.346)
+    assert snapshot["failed_validation_count"] == 2
+    assert snapshot["validation"]["cross_entropy_loss"] == pytest.approx(1.7)
+    assert snapshot["compiler_ir_validation"]["sample_timeouts"] == 1
+    assert snapshot["compiler_ir_metric_cache"]["validation_sample_cache_hits"] == 7
+    assert snapshot["compiler_ir_metric_cache"]["guided_validation_block_cache_hit"] is True
+    assert snapshot["learned_ir_view_validation"]["target_count"] == 6
+    assert snapshot["logic_bridge_validation"]["acceptance_rate"] == pytest.approx(0.8)
+    assert snapshot["state_file"]["size_bytes"] == 1024
+    assert snapshot["learned_feature_rows"]["vector_entry_count"] == 17
+    assert snapshot["backend"]["autoencoder_compute_backend"] == "torch_cpu"
+    assert snapshot["host_resource_health"]["memory_available_gb"] == pytest.approx(32.0)
 
 
 def test_paired_codex_worker_resource_plan_caps_memory_heavy_pool() -> None:
@@ -6592,6 +6768,76 @@ def test_compiler_ir_metric_block_reports_deterministic_codec_losses(monkeypatch
     assert "worst_source_decompiled_text_records" in block
 
 
+def test_compiler_ir_metric_block_skips_long_metric_samples(monkeypatch) -> None:
+    monkeypatch.setenv(runner.LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV, "0")
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text=" ".join(["The agency must provide records promptly."] * 8),
+    )
+
+    class ExplodingCodec:
+        config = SimpleNamespace(mode="compiler-ir-text-limit")
+
+        def encode(self, *_args, **_kwargs):
+            raise AssertionError("text-length skip should avoid codec.encode")
+
+    progress: list[Mapping[str, object]] = []
+
+    block = compiler_ir_metric_block(
+        [sample],
+        ExplodingCodec(),
+        max_sample_metric_records=1,
+        max_sample_text_chars=32,
+        progress_callback=progress.append,
+    )
+
+    assert block["sample_count"] == 1
+    assert block["evaluated_count"] == 0
+    assert block["metric_failures"] == 0
+    assert block["skipped_sample_count"] == 1
+    assert block["text_length_skipped_count"] == 1
+    assert block["sample_metric_records"][0]["skip_reason"] == "text_length_limit"
+    assert "sample_skipped" in [entry["stage"] for entry in progress]
+
+
+def test_compiler_ir_metric_block_times_out_slow_metric_samples(monkeypatch) -> None:
+    monkeypatch.setenv(runner.LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV, "0")
+    if not runner._compiler_ir_metric_sample_timeout_supported(0.05):
+        pytest.skip("compiler IR metric sample timeouts need SIGALRM support")
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide records promptly.",
+    )
+
+    class SlowCodec:
+        config = SimpleNamespace(mode="compiler-ir-timeout")
+
+        def encode(self, *_args, **_kwargs):
+            time.sleep(1.0)
+            raise AssertionError("timeout should interrupt codec.encode")
+
+    progress: list[Mapping[str, object]] = []
+
+    block = compiler_ir_metric_block(
+        [sample],
+        SlowCodec(),
+        max_sample_metric_records=1,
+        progress_callback=progress.append,
+        sample_timeout_seconds=0.05,
+    )
+
+    assert block["sample_count"] == 1
+    assert block["evaluated_count"] == 0
+    assert block["metric_failures"] == 1
+    assert block["sample_timeouts"] == 1
+    assert block["skipped_sample_count"] == 1
+    assert block["sample_timeout_supported"] is True
+    assert block["sample_metric_records"][0]["skip_reason"] == "sample_timeout"
+    assert "sample_timeout" in [entry["stage"] for entry in progress]
+
+
 def test_compiler_ir_metric_block_uses_persistent_metric_cache(
     tmp_path: Path,
     monkeypatch,
@@ -6627,6 +6873,45 @@ def test_compiler_ir_metric_block_uses_persistent_metric_cache(
     assert first["persistent_cache_hit"] is False
     assert second["persistent_cache_hit"] is True
     assert second["persistent_cache_kind"] == "compiler_ir_metric_block"
+    assert first["cross_entropy_loss"] == second["cross_entropy_loss"]
+
+
+def test_compiler_ir_metric_block_cache_reuses_success_across_timeout_settings(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    cache_dir = tmp_path / "metric-cache"
+    monkeypatch.setenv(runner.LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV, str(cache_dir))
+    monkeypatch.setenv(runner.LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV, "1")
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide records promptly and may withhold exempt records.",
+    )
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(
+            parser_backend="spacy",
+            spacy_model_name="definitely_missing_legal_model",
+            use_flogic=True,
+        )
+    )
+    original_encode = codec.encode
+    calls = {"count": 0}
+
+    def counted_encode(*args, **kwargs):
+        calls["count"] += 1
+        return original_encode(*args, **kwargs)
+
+    monkeypatch.setattr(codec, "encode", counted_encode)
+
+    first = compiler_ir_metric_block([sample], codec, sample_timeout_seconds=0.0)
+    second = compiler_ir_metric_block([sample], codec, sample_timeout_seconds=30.0)
+
+    assert calls["count"] == 1
+    assert first["persistent_cache_hit"] is False
+    assert second["persistent_cache_hit"] is True
+    assert second["sample_timeout_seconds"] == pytest.approx(30.0)
+    assert second["sample_timeout_cache_policy"] == "timeout_agnostic_successful_block"
     assert first["cross_entropy_loss"] == second["cross_entropy_loss"]
 
 
@@ -7827,6 +8112,46 @@ def test_autoencoder_state_telemetry_can_write_low_rank_sidecar(
     payload = json.loads(Path(sidecar["path"]).read_text(encoding="utf-8"))
     assert payload["vector_entry_count"] == 1
     assert payload["complete"] is False
+
+
+def test_autoencoder_low_rank_load_report_hydrates_sidecar(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    source = ModalAutoencoderTrainingState(
+        feature_embedding_weights={
+            "token:agency": [1.0, -2.0, 3.0, -4.0],
+            "token:duty": [2.0, 0.0, -2.0, 1.0],
+        },
+    )
+    state_path = tmp_path / "state.json"
+    sidecar_path = ModalAutoencoderTrainingState.low_rank_shadow_sidecar_path(
+        state_path
+    )
+    source.save_low_rank_shadow_json(sidecar_path, rank=4)
+    target = ModalAutoencoderTrainingState(
+        feature_embedding_weights={"token:agency": [9.0, 9.0, 9.0, 9.0]},
+    )
+    monkeypatch.setenv("IPFS_DATASETS_AUTOENCODER_LOW_RANK_LOAD", "1")
+
+    report = runner.autoencoder_low_rank_load_report(
+        target,
+        state_path=state_path,
+    )
+
+    assert report["enabled"] is True
+    assert report["dense_state_hydrated"] is True
+    assert report["merged_vector_entry_count"] == 1
+    assert report["skipped_existing_vector_entry_count"] == 1
+    assert target.feature_embedding_weights["token:agency"] == [
+        9.0,
+        9.0,
+        9.0,
+        9.0,
+    ]
+    assert target.feature_embedding_weights["token:duty"] == pytest.approx(
+        [2.0, 0.0, -2.0, 1.0]
+    )
 
 
 def test_learned_ir_metric_block_reports_autoencoder_view_alignment() -> None:
