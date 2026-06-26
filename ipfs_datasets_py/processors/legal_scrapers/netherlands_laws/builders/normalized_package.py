@@ -87,10 +87,17 @@ def normalize_laws(raw_laws: list[dict[str, Any]]) -> list[dict[str, Any]]:
         "document_type",
         "citation",
         "official_metadata",
+        "law_status",
+        "is_current",
+        "valid_from",
+        "valid_to",
         "effective_date",
+        "retrieved_at",
+        "status_source",
+        "status_confidence",
+        "status_note",
         "version_start_date",
         "version_end_date",
-        "is_current",
         "publication_date",
         "last_modified_date",
         "historical_versions",
@@ -134,10 +141,17 @@ def normalize_articles(raw_articles: list[dict[str, Any]]) -> list[dict[str, Any
         "division_number",
         "paragraph_number",
         "text",
+        "law_status",
+        "is_current",
+        "valid_from",
+        "valid_to",
         "effective_date",
+        "retrieved_at",
+        "status_source",
+        "status_confidence",
+        "status_note",
         "version_start_date",
         "version_end_date",
-        "is_current",
         "scraped_at",
     ]
     rows: list[dict[str, Any]] = []
@@ -201,6 +215,12 @@ This refresh includes parser coverage improvements for older/French heading styl
 plus run metadata diagnostics that distinguish article-producing laws, parser-missing article cases,
 and genuinely unnumbered/non-article documents.
 
+Historical/former laws are preserved. Consumers should use `law_status`, `is_current`, `valid_from`,
+`valid_to`, `effective_date`, `retrieved_at`, `status_source`, `status_confidence`, and `status_note`
+to distinguish current law from historical, repealed, superseded, or unknown-status records. These fields
+are parsed only from official Dutch government metadata/pages; `unknown` means the scraper did not find
+enough official metadata to classify the status.
+
 Scrape command:
 
 ```bash
@@ -216,6 +236,10 @@ Current package counts:
 - Documents failed: {run_metadata.get("documents_failed", "unknown")}
 - Article-producing laws: {run_metadata.get("article_producing_laws_count", "unknown")}
 - Non-article-producing laws: {run_metadata.get("non_article_producing_laws_count", "unknown")}
+- Current laws: {run_metadata.get("current_laws_count", "unknown")}
+- Historical/repealed/superseded laws: {run_metadata.get("historical_repealed_superseded_laws_count", "unknown")}
+- Unknown-status laws: {run_metadata.get("unknown_status_laws_count", "unknown")}
+- Ambiguous-status laws: {run_metadata.get("ambiguous_status_laws_count", "unknown")}
 
 Remaining limitations before a full corpus release: increase/remove `max_documents`, validate larger-run packaging/upload behavior, and spot-check laws that expose no article-level rows.
 """
@@ -318,6 +342,11 @@ def build_normalized_package(
             "records_count": run_metadata.get("records_count"),
             "article_records_count": run_metadata.get("article_records_count"),
             "search_records_count": run_metadata.get("search_records_count"),
+            "law_status_counts": run_metadata.get("law_status_counts"),
+            "current_laws_count": run_metadata.get("current_laws_count"),
+            "historical_repealed_superseded_laws_count": run_metadata.get("historical_repealed_superseded_laws_count"),
+            "unknown_status_laws_count": run_metadata.get("unknown_status_laws_count"),
+            "ambiguous_status_laws_count": run_metadata.get("ambiguous_status_laws_count"),
         },
     }
 
@@ -339,6 +368,7 @@ def build_normalized_package(
         "notes": [
             "Law-level metadata is stored in the laws table.",
             "Repeated law-level fields were removed from article rows.",
+            "Historical/former laws are preserved and labeled; they are not filtered out.",
             f"This package was derived from a scrape run capped at max_documents={run_metadata.get('max_documents')}.",
         ],
         "files": {},

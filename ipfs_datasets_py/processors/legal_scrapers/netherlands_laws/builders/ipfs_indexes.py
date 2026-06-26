@@ -51,6 +51,15 @@ def load_source_rows(source_dir: Path | None = None) -> list[dict[str, Any]]:
                 "citation": row.get("citation"),
                 "content_address": row.get("content_address"),
                 "source_url": row.get("source_url"),
+                "law_status": row.get("law_status"),
+                "is_current": row.get("is_current"),
+                "valid_from": row.get("valid_from"),
+                "valid_to": row.get("valid_to"),
+                "effective_date": row.get("effective_date"),
+                "retrieved_at": row.get("retrieved_at"),
+                "status_source": row.get("status_source"),
+                "status_confidence": row.get("status_confidence"),
+                "status_note": row.get("status_note"),
                 "text": row.get("text") or "",
             }
         )
@@ -66,6 +75,15 @@ def load_source_rows(source_dir: Path | None = None) -> list[dict[str, Any]]:
                 "citation": row.get("citation"),
                 "content_address": row.get("content_address"),
                 "source_url": None,
+                "law_status": row.get("law_status"),
+                "is_current": row.get("is_current"),
+                "valid_from": row.get("valid_from"),
+                "valid_to": row.get("valid_to"),
+                "effective_date": row.get("effective_date"),
+                "retrieved_at": row.get("retrieved_at"),
+                "status_source": row.get("status_source"),
+                "status_confidence": row.get("status_confidence"),
+                "status_note": row.get("status_note"),
                 "text": row.get("text") or "",
             }
         )
@@ -182,6 +200,15 @@ def build_vector_index(
             "title": row.get("title"),
             "citation": row.get("citation"),
             "content_address": row.get("content_address"),
+            "law_status": row.get("law_status"),
+            "is_current": row.get("is_current"),
+            "valid_from": row.get("valid_from"),
+            "valid_to": row.get("valid_to"),
+            "effective_date": row.get("effective_date"),
+            "retrieved_at": row.get("retrieved_at"),
+            "status_source": row.get("status_source"),
+            "status_confidence": row.get("status_confidence"),
+            "status_note": row.get("status_note"),
             "embedding": dense[idx].tolist(),
             "embedding_dim": int(dense.shape[1]),
             "search_text_preview": row["search_text"][:500],
@@ -216,7 +243,9 @@ def build_vector_index(
             "The current source dataset may be capped; do not describe it as the full Dutch corpus unless "
             "the paired base dataset manifest/run metadata proves full discovery coverage. "
             "The paired base dataset includes article extraction diagnostics and parser coverage improvements "
-            "for older/French heading styles."
+            "for older/French heading styles. Historical/former laws are preserved and labeled with "
+            "`law_status`, `is_current`, validity dates, status source, confidence, and notes; these fields "
+            "are also present in the vector mapping rows for filtering."
         ),
     )
     _write_gitattributes(out_dir)
@@ -253,6 +282,15 @@ def build_bm25_index(
             "title": row.get("title"),
             "citation": row.get("citation"),
             "content_address": row.get("content_address"),
+            "law_status": row.get("law_status"),
+            "is_current": row.get("is_current"),
+            "valid_from": row.get("valid_from"),
+            "valid_to": row.get("valid_to"),
+            "effective_date": row.get("effective_date"),
+            "retrieved_at": row.get("retrieved_at"),
+            "status_source": row.get("status_source"),
+            "status_confidence": row.get("status_confidence"),
+            "status_note": row.get("status_note"),
             "doc_length": len(tokens),
             "token_count_unique": len(tf_by_doc[source_cid]),
             "text_preview": text[:500],
@@ -316,7 +354,9 @@ def build_bm25_index(
             "The current source dataset may be capped; do not describe it as the full Dutch corpus unless "
             "the paired base dataset manifest/run metadata proves full discovery coverage. "
             "The paired base dataset includes article extraction diagnostics and parser coverage improvements "
-            "for older/French heading styles."
+            "for older/French heading styles. Historical/former laws are preserved and labeled with "
+            "`law_status`, `is_current`, validity dates, status source, confidence, and notes; these fields "
+            "are also present in BM25 document rows for filtering."
         ),
     )
     _write_gitattributes(out_dir)
@@ -345,6 +385,9 @@ def build_knowledge_graph(
         "article_identifier": "https://schema.org/identifier",
         "law_identifier": "https://schema.org/identifier",
         "content_address": "https://schema.org/url",
+        "law_status": "https://schema.org/legislationLegalForce",
+        "valid_from": "https://schema.org/validFrom",
+        "valid_to": "https://schema.org/validThrough",
         "hasPart": {"@id": "https://schema.org/hasPart", "@type": "@id"},
         "isPartOf": {"@id": "https://schema.org/isPartOf", "@type": "@id"},
     }
@@ -356,6 +399,15 @@ def build_knowledge_graph(
             "source_cid": law["source_cid"],
             "law_identifier": law["law_identifier"],
             "name": law["title"],
+            "law_status": law.get("law_status") or "unknown",
+            "is_current": law.get("is_current"),
+            "valid_from": law.get("valid_from"),
+            "valid_to": law.get("valid_to"),
+            "effective_date": law.get("effective_date"),
+            "retrieved_at": law.get("retrieved_at"),
+            "status_source": law.get("status_source"),
+            "status_confidence": law.get("status_confidence"),
+            "status_note": law.get("status_note"),
         }
         jsonld_graph.append(node)
         graph_nodes.append(
@@ -368,6 +420,14 @@ def build_knowledge_graph(
                 "jsonld_id": law["content_address"],
                 "law_identifier": law["law_identifier"],
                 "article_identifier": None,
+                "law_status": law.get("law_status"),
+                "is_current": law.get("is_current"),
+                "valid_from": law.get("valid_from"),
+                "valid_to": law.get("valid_to"),
+                "effective_date": law.get("effective_date"),
+                "retrieved_at": law.get("retrieved_at"),
+                "status_source": law.get("status_source"),
+                "status_confidence": law.get("status_confidence"),
             }
         )
 
@@ -381,6 +441,15 @@ def build_knowledge_graph(
             "article_identifier": article["article_identifier"],
             "law_identifier": article["law_identifier"],
             "name": article["title"],
+            "law_status": article.get("law_status") or "unknown",
+            "is_current": article.get("is_current"),
+            "valid_from": article.get("valid_from"),
+            "valid_to": article.get("valid_to"),
+            "effective_date": article.get("effective_date"),
+            "retrieved_at": article.get("retrieved_at"),
+            "status_source": article.get("status_source"),
+            "status_confidence": article.get("status_confidence"),
+            "status_note": article.get("status_note"),
         }
         if law:
             node["isPartOf"] = {"@id": law["content_address"]}
@@ -395,6 +464,14 @@ def build_knowledge_graph(
                 "jsonld_id": article["content_address"],
                 "law_identifier": article["law_identifier"],
                 "article_identifier": article["article_identifier"],
+                "law_status": article.get("law_status"),
+                "is_current": article.get("is_current"),
+                "valid_from": article.get("valid_from"),
+                "valid_to": article.get("valid_to"),
+                "effective_date": article.get("effective_date"),
+                "retrieved_at": article.get("retrieved_at"),
+                "status_source": article.get("status_source"),
+                "status_confidence": article.get("status_confidence"),
             }
         )
         if law:
@@ -445,7 +522,9 @@ def build_knowledge_graph(
             "The current source dataset may be capped; do not describe it as the full Dutch corpus unless "
             "the paired base dataset manifest/run metadata proves full discovery coverage. "
             "The paired base dataset includes article extraction diagnostics and parser coverage improvements "
-            "for older/French heading styles."
+            "for older/French heading styles. Historical/former laws are preserved and labeled with "
+            "`law_status`, `is_current`, validity dates, status source, confidence, and notes in graph nodes "
+            "and JSON-LD objects."
         ),
     )
     _write_gitattributes(out_dir)

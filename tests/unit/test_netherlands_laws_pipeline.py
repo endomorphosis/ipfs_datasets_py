@@ -39,6 +39,15 @@ def _raw_fixture(raw_dir: Path) -> Path:
             "source_url": "https://wetten.overheid.nl/BWBRTEST1/",
             "document_type": "wet",
             "citation": "Testwet",
+            "law_status": "current",
+            "is_current": True,
+            "valid_from": "2024-01-01",
+            "valid_to": "",
+            "effective_date": "2024-01-01",
+            "retrieved_at": "2026-04-10T00:00:00",
+            "status_source": "wetten.overheid.nl/informatie",
+            "status_confidence": "high",
+            "status_note": "Official status text indicates the law is current",
             "article_count": 2,
             "metadata": {},
         }
@@ -52,6 +61,15 @@ def _raw_fixture(raw_dir: Path) -> Path:
             "citation": "Testwet, Artikel 1",
             "hierarchy_path": ["Artikel 1"],
             "hierarchy_path_text": "Artikel 1",
+            "law_status": "current",
+            "is_current": True,
+            "valid_from": "2024-01-01",
+            "valid_to": "",
+            "effective_date": "2024-01-01",
+            "retrieved_at": "2026-04-10T00:00:00",
+            "status_source": "wetten.overheid.nl/informatie",
+            "status_confidence": "high",
+            "status_note": "Official status text indicates the law is current",
             "text": "Artikel een regelt documenten, registers en openbare toegang.",
         },
         {
@@ -62,6 +80,15 @@ def _raw_fixture(raw_dir: Path) -> Path:
             "citation": "Testwet, Artikel 2",
             "hierarchy_path": ["Artikel 2"],
             "hierarchy_path_text": "Artikel 2",
+            "law_status": "current",
+            "is_current": True,
+            "valid_from": "2024-01-01",
+            "valid_to": "",
+            "effective_date": "2024-01-01",
+            "retrieved_at": "2026-04-10T00:00:00",
+            "status_source": "wetten.overheid.nl/informatie",
+            "status_confidence": "high",
+            "status_note": "Official status text indicates the law is current",
             "text": "Artikel twee regelt bewaring, wijziging en digitale bekendmaking.",
         },
         {
@@ -72,6 +99,15 @@ def _raw_fixture(raw_dir: Path) -> Path:
             "citation": "Testwet, Artikel 3",
             "hierarchy_path": ["Artikel 3"],
             "hierarchy_path_text": "Artikel 3",
+            "law_status": "current",
+            "is_current": True,
+            "valid_from": "2024-01-01",
+            "valid_to": "",
+            "effective_date": "2024-01-01",
+            "retrieved_at": "2026-04-10T00:00:00",
+            "status_source": "wetten.overheid.nl/informatie",
+            "status_confidence": "high",
+            "status_note": "Official status text indicates the law is current",
             "text": "Artikel drie regelt toezicht, bezwaar en administratieve uitvoering.",
         },
     ]
@@ -79,7 +115,19 @@ def _raw_fixture(raw_dir: Path) -> Path:
     _write_jsonl(raw_dir / "netherlands_laws_articles_index_latest.jsonl", article_rows)
     _write_jsonl(raw_dir / "netherlands_laws_search_index_latest.jsonl", [*law_rows, *article_rows])
     (raw_dir / "netherlands_laws_run_metadata_latest.json").write_text(
-        json.dumps({"max_documents": 1, "records_count": 1, "article_records_count": 3, "search_records_count": 4}),
+        json.dumps(
+            {
+                "max_documents": 1,
+                "records_count": 1,
+                "article_records_count": 3,
+                "search_records_count": 4,
+                "law_status_counts": {"current": 1, "historical": 0, "repealed": 0, "superseded": 0, "unknown": 0},
+                "current_laws_count": 1,
+                "historical_repealed_superseded_laws_count": 0,
+                "unknown_status_laws_count": 0,
+                "ambiguous_status_laws_count": 0,
+            }
+        ),
         encoding="utf-8",
     )
     return raw_dir
@@ -169,6 +217,9 @@ def test_ipfs_package_manifest_has_cids_hashes_counts_and_upload_target(tmp_path
     laws = [json.loads(line) for line in (out_dir / "data/laws/ipfs_netherlands_laws.jsonl").read_text().splitlines()]
     assert laws[0]["cid"].startswith("b")
     assert laws[0]["content_address"] == f"ipfs://{laws[0]['cid']}"
+    assert laws[0]["law_status"] == "current"
+    assert laws[0]["is_current"] is True
+    assert laws[0]["status_confidence"] == "high"
 
     target = DatasetUploadTarget("base", out_dir, "justicedao/ipfs_netherlands_laws", ("dataset_manifest.json",))
     assert assert_local_upload_ready(target)["records"]["laws"] == 1
@@ -203,3 +254,22 @@ def test_index_manifests_have_cids_hashes_counts_and_upload_targets(tmp_path):
         for info in manifest["files"].values():
             assert info["sha256"]
             assert info["file_cid"].startswith("b")
+
+    vector_mapping = [
+        json.loads(line)
+        for line in (outputs[0] / "data/mapping/ipfs_netherlands_laws_vector_mapping.jsonl").read_text().splitlines()
+    ]
+    bm25_documents = [
+        json.loads(line)
+        for line in (outputs[1] / "data/documents/ipfs_netherlands_laws_bm25_documents.jsonl").read_text().splitlines()
+    ]
+    kg_nodes = [
+        json.loads(line)
+        for line in (outputs[2] / "data/nodes/ipfs_netherlands_laws_kg_nodes.jsonl").read_text().splitlines()
+    ]
+    kg_graph = json.loads((outputs[2] / "data/graph/ipfs_netherlands_laws_kg.jsonld").read_text())
+
+    assert vector_mapping[0]["law_status"] == "current"
+    assert bm25_documents[0]["law_status"] == "current"
+    assert kg_nodes[0]["law_status"] == "current"
+    assert kg_graph["@graph"][0]["law_status"] == "current"

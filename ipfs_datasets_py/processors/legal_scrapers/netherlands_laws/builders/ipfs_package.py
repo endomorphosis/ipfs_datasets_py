@@ -66,10 +66,17 @@ def law_payload(row: dict[str, Any]) -> dict[str, Any]:
         "document_type",
         "citation",
         "official_metadata",
+        "law_status",
+        "is_current",
+        "valid_from",
+        "valid_to",
         "effective_date",
+        "retrieved_at",
+        "status_source",
+        "status_confidence",
+        "status_note",
         "version_start_date",
         "version_end_date",
-        "is_current",
         "publication_date",
         "last_modified_date",
         "historical_versions",
@@ -113,10 +120,17 @@ def article_payload(row: dict[str, Any]) -> dict[str, Any]:
         "division_number",
         "paragraph_number",
         "text",
+        "law_status",
+        "is_current",
+        "valid_from",
+        "valid_to",
         "effective_date",
+        "retrieved_at",
+        "status_source",
+        "status_confidence",
+        "status_note",
         "version_start_date",
         "version_end_date",
-        "is_current",
         "scraped_at",
     ]
     return {key: row.get(key) for key in keep}
@@ -147,6 +161,14 @@ def build_rows(raw_dir: Path | None = None) -> tuple[list[dict[str, Any]], list[
                 "content_address": f"ipfs://{cid}",
                 "source_url": payload.get("source_url"),
                 "title": payload.get("title"),
+                "law_status": payload.get("law_status"),
+                "is_current": payload.get("is_current"),
+                "valid_from": payload.get("valid_from"),
+                "valid_to": payload.get("valid_to"),
+                "effective_date": payload.get("effective_date"),
+                "retrieved_at": payload.get("retrieved_at"),
+                "status_source": payload.get("status_source"),
+                "status_confidence": payload.get("status_confidence"),
             }
         )
 
@@ -167,6 +189,14 @@ def build_rows(raw_dir: Path | None = None) -> tuple[list[dict[str, Any]], list[
                 "content_address": f"ipfs://{cid}",
                 "source_url": None,
                 "title": payload.get("citation"),
+                "law_status": payload.get("law_status"),
+                "is_current": payload.get("is_current"),
+                "valid_from": payload.get("valid_from"),
+                "valid_to": payload.get("valid_to"),
+                "effective_date": payload.get("effective_date"),
+                "retrieved_at": payload.get("retrieved_at"),
+                "status_source": payload.get("status_source"),
+                "status_confidence": payload.get("status_confidence"),
             }
         )
     return laws, articles, cid_index
@@ -231,6 +261,12 @@ This refresh includes parser coverage improvements for older/French heading styl
 plus run metadata diagnostics that distinguish article-producing laws, parser-missing article cases,
 and genuinely unnumbered/non-article documents.
 
+Historical/former laws are preserved. Consumers should use `law_status`, `is_current`, `valid_from`,
+`valid_to`, `effective_date`, `retrieved_at`, `status_source`, `status_confidence`, and `status_note`
+to distinguish current law from historical, repealed, superseded, or unknown-status records. These fields
+are part of the content-addressed payload, so CIDs change when official status/version metadata changes.
+The scraper does not provide legal advice or validate legal force beyond the official metadata it parsed.
+
 Scrape command:
 
 ```bash
@@ -246,6 +282,10 @@ Current package counts:
 - Documents failed: {run_metadata.get("documents_failed", "unknown")}
 - Article-producing laws: {run_metadata.get("article_producing_laws_count", "unknown")}
 - Non-article-producing laws: {run_metadata.get("non_article_producing_laws_count", "unknown")}
+- Current laws: {run_metadata.get("current_laws_count", "unknown")}
+- Historical/repealed/superseded laws: {run_metadata.get("historical_repealed_superseded_laws_count", "unknown")}
+- Unknown-status laws: {run_metadata.get("unknown_status_laws_count", "unknown")}
+- Ambiguous-status laws: {run_metadata.get("ambiguous_status_laws_count", "unknown")}
 
 Remaining limitations before a full corpus release: increase/remove `max_documents`, validate shard/streaming behavior on larger runs, and spot-check laws that expose no article-level rows.
 """

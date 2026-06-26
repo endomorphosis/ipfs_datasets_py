@@ -208,6 +208,173 @@ def test_extract_info_metadata_rejects_geen_title_placeholders():
     assert metadata["aliases"] == []
 
 
+def test_current_law_status_detection_from_official_status_label():
+    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws_scraper import (
+        _extract_status_metadata,
+        _merge_status_metadata,
+    )
+
+    status = _extract_status_metadata(
+        """
+        <html><body>
+          <dl>
+            <dt>Status</dt><dd>Geldend</dd>
+            <dt>Geldig van</dt><dd>01-01-2024</dd>
+          </dl>
+        </body></html>
+        """,
+        source_url="https://wetten.overheid.nl/BWBRTEST/informatie",
+    )
+    normalized = _merge_status_metadata(
+        info_status=status,
+        effective_date="2024-01-01",
+        retrieved_at="2026-04-10T00:00:00",
+        information_available=True,
+    )
+
+    assert normalized["law_status"] == "current"
+    assert normalized["is_current"] is True
+    assert normalized["valid_from"] == "2024-01-01"
+    assert normalized["status_confidence"] == "high"
+
+
+def test_historical_law_status_detection_from_official_valid_to():
+    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws_scraper import (
+        _extract_status_metadata,
+        _merge_status_metadata,
+    )
+
+    status = _extract_status_metadata(
+        """
+        <html><body>
+          <dl>
+            <dt>Geldig van</dt><dd>01-01-1933</dd>
+            <dt>Geldig tot</dt><dd>31-12-1945</dd>
+          </dl>
+        </body></html>
+        """,
+        source_url="https://wetten.overheid.nl/BWBRHIST/informatie",
+    )
+    normalized = _merge_status_metadata(
+        info_status=status,
+        effective_date="1933-01-01",
+        retrieved_at="2026-04-10T00:00:00",
+        information_available=True,
+    )
+
+    assert normalized["law_status"] == "historical"
+    assert normalized["is_current"] is False
+    assert normalized["valid_to"] == "1945-12-31"
+    assert normalized["status_confidence"] == "medium"
+
+
+def test_repealed_and_superseded_status_detection_uses_official_text():
+    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws_scraper import _extract_status_metadata
+
+    repealed = _extract_status_metadata(
+        "<dl><dt>Status</dt><dd>Ingetrokken en buiten werking</dd></dl>",
+        source_url="https://wetten.overheid.nl/BWBRREP/informatie",
+    )
+    superseded = _extract_status_metadata(
+        "<dl><dt>Status</dt><dd>Vervangen door nieuwe regeling</dd></dl>",
+        source_url="https://wetten.overheid.nl/BWBRSUP/informatie",
+    )
+
+    assert repealed["law_status"] == "repealed"
+    assert repealed["is_current"] is False
+    assert superseded["law_status"] == "superseded"
+    assert superseded["is_current"] is False
+
+
+def test_unknown_status_stays_unknown_without_official_evidence():
+    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws_scraper import _merge_status_metadata
+
+    normalized = _merge_status_metadata(
+        info_status={},
+        document_status={},
+        effective_date="",
+        retrieved_at="2026-04-10T00:00:00",
+        information_available=False,
+    )
+
+    assert normalized["law_status"] == "unknown"
+    assert normalized["is_current"] is None
+    assert normalized["status_confidence"] == "unknown"
+
+
+def test_article_status_inheritance_from_parent_law():
+    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws_scraper import _build_article_records
+
+    rows = _build_article_records(
+        {
+            "identifier": "BWBRHIST",
+            "law_identifier": "BWBRHIST",
+            "canonical_title": "Historische wet",
+            "aliases": [],
+            "effective_date": "1933-01-01",
+            "law_version_identifier": "BWBRHIST@1933-01-01",
+            "law_status": "historical",
+            "is_current": False,
+            "valid_from": "1933-01-01",
+            "valid_to": "1945-12-31",
+            "retrieved_at": "2026-04-10T00:00:00",
+            "status_source": "wetten.overheid.nl/informatie",
+            "status_confidence": "medium",
+            "status_note": "Official validity end date is before the retrieval date.",
+            "articles": [{"number": "1", "label": "Artikel 1", "text": "Historische bepaling.", "hierarchy_path": []}],
+        }
+    )
+
+    assert rows[0]["law_status"] == "historical"
+    assert rows[0]["is_current"] is False
+    assert rows[0]["valid_to"] == "1945-12-31"
+    assert rows[0]["status_source"] == "wetten.overheid.nl/informatie"
+
+
+def test_status_summary_counts_and_ambiguous_laws():
+    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws_scraper import _law_status_summary
+
+    summary = _law_status_summary(
+        [
+            {"law_identifier": "A", "law_status": "current", "status_confidence": "high"},
+            {"law_identifier": "B", "law_status": "historical", "status_confidence": "medium"},
+            {"law_identifier": "C", "law_status": "repealed", "status_confidence": "high"},
+            {"law_identifier": "D", "law_status": "superseded", "status_confidence": "high"},
+            {"law_identifier": "E", "law_status": "unknown", "status_confidence": "unknown"},
+        ]
+    )
+
+    assert summary["current_laws_count"] == 1
+    assert summary["historical_repealed_superseded_laws_count"] == 3
+    assert summary["unknown_status_laws_count"] == 1
+    assert summary["ambiguous_status_laws"][0]["law_identifier"] == "E"
+
+
+def test_legacy_cached_rows_without_status_are_not_resume_skipped():
+    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws_scraper import (
+        _ensure_status_fields,
+        _record_has_status_classification,
+    )
+
+    legacy_row = {"identifier": "BWBRLEGACY", "is_current": True}
+    assert _record_has_status_classification(legacy_row) is False
+    normalized = _ensure_status_fields(legacy_row)
+    assert normalized["law_status"] == "unknown"
+    assert normalized["is_current"] is None
+    assert normalized["status_confidence"] == "unknown"
+    assert (
+        _record_has_status_classification(
+            {
+                "identifier": "BWBRCLASSIFIED",
+                "law_status": "current",
+                "status_source": "wetten.overheid.nl/informatie",
+                "status_confidence": "medium",
+            }
+        )
+        is True
+    )
+
+
 def test_article_missing_diagnostics_flag_likely_parser_misses():
     from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws_scraper import (
         _diagnose_article_extraction,
@@ -354,6 +521,13 @@ async def test_scrape_netherlands_laws_with_explicit_document_urls(monkeypatch, 
     assert result["data"][0]["canonical_law_url"] == "https://wetten.overheid.nl/BWBR0001854/"
     assert result["data"][0]["versioned_law_url"] == "https://wetten.overheid.nl/BWBR0001854/1994-02-01/0/"
     assert result["data"][0]["last_modified_date"] == "2024-10-01"
+    assert result["data"][0]["law_status"] == "current"
+    assert result["data"][0]["is_current"] is True
+    assert result["data"][0]["valid_from"] == "2024-01-01"
+    assert result["data"][0]["status_source"] == "wetten.overheid.nl/informatie"
+    assert result["metadata"]["current_laws_count"] == 1
+    assert result["metadata"]["historical_repealed_superseded_laws_count"] == 0
+    assert result["metadata"]["unknown_status_laws_count"] == 0
     assert any(version["effective_date"] == "2012-01-01" for version in result["data"][0]["historical_versions"])
     assert any(version["is_current"] is True for version in result["data"][0]["historical_versions"])
     assert any(version["law_version_identifier"] == "BWBR0001854@2012-01-01" for version in result["data"][0]["historical_versions"])
@@ -361,6 +535,9 @@ async def test_scrape_netherlands_laws_with_explicit_document_urls(monkeypatch, 
     assert result["data"][0]["citations"] == ["Artikel 1", "Artikel 2", "Artikel 92"]
     assert result["article_data"][0]["citation"].startswith("Sr, Boek 1 Algemene bepalingen")
     assert result["article_data"][0]["document_version_identifier"] == "BWBR0001854@1994-02-01"
+    assert result["article_data"][0]["law_status"] == "current"
+    assert result["article_data"][0]["is_current"] is True
+    assert result["article_data"][0]["valid_from"] == "2024-01-01"
     assert result["article_data"][0]["hierarchy_path_text"].endswith("Artikel 1")
     assert result["article_data"][1]["article_heading"] == "Strafwet toepasselijkheid"
     assert result["data"][0]["metadata"]["verification"]["information_page_verified"] is True
