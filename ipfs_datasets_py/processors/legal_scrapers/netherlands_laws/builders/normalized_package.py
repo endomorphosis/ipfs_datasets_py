@@ -177,6 +177,9 @@ def write_dataset_card(
         "--use_default_seeds true --max_seed_pages <pages> --crawl_depth 1 "
         "--max_documents <cap> --rate_limit_delay <delay> --resume"
     )
+    scrape_date = str(run_metadata.get("scraped_at") or "unknown")
+    scope_note = str(run_metadata.get("corpus_scope_note") or "")
+    full_bwb = run_metadata.get("full_bwb_discovery") or {}
     readme = f"""---
 pretty_name: Netherlands Laws (Dutch, Normalized)
 language:
@@ -211,6 +214,14 @@ This package is a normalized version of the Netherlands laws scrape output.
 
 {coverage}
 
+Scrape date: {scrape_date}
+
+Exact corpus size in this package: {record_counts.get("laws", 0)} law records and {record_counts.get("articles", 0)} article records.
+
+Full BWB discovery inventory: {full_bwb.get("unique_laws_discovered", "unknown")} unique BWBR identifiers from {full_bwb.get("number_of_records_reported", "unknown")} official SRU record(s), with {full_bwb.get("failed_pages_count", "unknown")} failed discovery page(s).
+
+{scope_note}
+
 This refresh includes parser coverage improvements for older/French heading styles such as `Article I.er`,
 plus run metadata diagnostics that distinguish article-producing laws, parser-missing article cases,
 and genuinely unnumbered/non-article documents.
@@ -220,6 +231,8 @@ Historical/former laws are preserved. Consumers should use `law_status`, `is_cur
 to distinguish current law from historical, repealed, superseded, or unknown-status records. These fields
 are parsed only from official Dutch government metadata/pages; `unknown` means the scraper did not find
 enough official metadata to classify the status.
+
+This dataset is not legal advice and does not validate legal force beyond the official metadata parsed.
 
 Scrape command:
 
@@ -241,7 +254,7 @@ Current package counts:
 - Unknown-status laws: {run_metadata.get("unknown_status_laws_count", "unknown")}
 - Ambiguous-status laws: {run_metadata.get("ambiguous_status_laws_count", "unknown")}
 
-Remaining limitations before a full corpus release: increase/remove `max_documents`, validate larger-run packaging/upload behavior, and spot-check laws that expose no article-level rows.
+Remaining limitations: this package should only be described as the full Dutch corpus when the run metadata shows uncapped official discovery and every discovered official BWBR document was parsed or explicitly logged as failed/skipped. Otherwise it is a verified shard or discovered-corpus subset.
 """
     (out_dir / "README.md").write_text(readme, encoding="utf-8")
 
@@ -369,7 +382,7 @@ def build_normalized_package(
             "Law-level metadata is stored in the laws table.",
             "Repeated law-level fields were removed from article rows.",
             "Historical/former laws are preserved and labeled; they are not filtered out.",
-            f"This package was derived from a scrape run capped at max_documents={run_metadata.get('max_documents')}.",
+            "This dataset is not legal advice and does not validate legal force beyond parsed official metadata.",
         ],
         "files": {},
     }

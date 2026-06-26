@@ -39,6 +39,7 @@ def _summarize_scrape_result(result: dict[str, Any]) -> dict[str, Any]:
         "documents_parsed",
         "documents_skipped",
         "documents_failed",
+        "documents_retried",
         "records_count",
         "article_records_count",
         "search_records_count",
@@ -110,7 +111,13 @@ def build_parser() -> argparse.ArgumentParser:
     scrape_parser.add_argument("--seed-url", action="append", dest="seed_urls", default=[])
     scrape_parser.add_argument("--use-default-seeds", "--use_default_seeds", nargs="?", const=True, default=False, type=_parse_bool)
     scrape_parser.add_argument("--max-documents", "--max_documents", type=int)
-    scrape_parser.add_argument("--max-seed-pages", "--max_seed_pages", type=int)
+    scrape_parser.add_argument("--max-seed-pages", "--max_seed_pages", type=int, default=25)
+    scrape_parser.add_argument(
+        "--full-discovery",
+        "--full_discovery",
+        action="store_true",
+        help="Do not cap official discovery pages and do not apply a document cap unless explicit document URLs are supplied.",
+    )
     scrape_parser.add_argument("--crawl-depth", "--crawl_depth", type=int, default=1)
     scrape_parser.add_argument("--rate-limit-delay", "--rate_limit_delay", type=float, default=0.5)
     scrape_parser.add_argument("--skip-existing", "--skip_existing", nargs="?", const=True, default=False, type=_parse_bool)
@@ -164,8 +171,8 @@ def main(argv: list[str] | None = None) -> int:
                 document_urls=args.document_urls,
                 seed_urls=args.seed_urls,
                 use_default_seeds=args.use_default_seeds,
-                max_documents=args.max_documents,
-                max_seed_pages=args.max_seed_pages,
+                max_documents=None if args.full_discovery else args.max_documents,
+                max_seed_pages=None if args.full_discovery or args.max_seed_pages == 0 else args.max_seed_pages,
                 crawl_depth=args.crawl_depth,
                 rate_limit_delay=args.rate_limit_delay,
                 skip_existing=(args.skip_existing or args.resume) and not args.no_skip_existing,

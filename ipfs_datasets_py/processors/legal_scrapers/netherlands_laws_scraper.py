@@ -1484,7 +1484,7 @@ async def scrape_netherlands_laws(
     max_documents: Optional[int] = None,
     include_metadata: bool = True,
     custom_sources: Optional[List[Dict[str, Any]]] = None,
-    max_seed_pages: int = 25,
+    max_seed_pages: Optional[int] = 25,
     crawl_depth: int = 2,
     use_default_seeds: bool = False,
     skip_existing: bool = False,
@@ -1501,7 +1501,7 @@ async def scrape_netherlands_laws(
         max_documents: Optional cap on scraped law documents.
         include_metadata: Include source metadata fields in result rows.
         custom_sources: Optional additional ``{"type": "index"|"document", "url": ...}`` configs.
-        max_seed_pages: Bounded count of official discovery pages to visit.
+        max_seed_pages: Bounded count of official discovery pages to visit. ``None`` or ``0`` means unbounded discovery.
         crawl_depth: Maximum discovery-link depth from the provided seed pages.
         use_default_seeds: Add built-in official discovery pages when explicit seeds are not provided.
         skip_existing: Skip laws already present in the on-disk document index.
@@ -1564,6 +1564,7 @@ async def scrape_netherlands_laws(
     successful_document_fetches = 0
     successful_parses = 0
     failed_documents = 0
+    failed_document_urls: List[str] = []
     failed_seed_pages = 0
     existing_record_map = _load_existing_record_map(output_root / DEFAULT_NETHERLANDS_LAWS_INDEX_PATH.name)
 
@@ -1577,7 +1578,11 @@ async def scrape_netherlands_laws(
     seed_queue: deque[tuple[str, int]] = deque((url, 0) for url in normalized_seed_urls)
     seen_seed_urls: Set[str] = set()
 
-    while seed_queue and seed_visit_count < max(0, int(max_seed_pages or 0)):
+    seed_page_limit: Optional[int] = None
+    if max_seed_pages is not None and int(max_seed_pages) > 0:
+        seed_page_limit = int(max_seed_pages)
+
+    while seed_queue and (seed_page_limit is None or seed_visit_count < seed_page_limit):
         index_url, depth = seed_queue.popleft()
         if index_url in seen_seed_urls:
             continue
@@ -1771,6 +1776,7 @@ async def scrape_netherlands_laws(
             successful_parses += 1
         except Exception as exc:
             failed_documents += 1
+            failed_document_urls.append(law_url)
             errors.append(f"{law_url}: {exc}")
         time.sleep(max(0.0, float(rate_limit_delay)))
 
@@ -1812,7 +1818,7 @@ async def scrape_netherlands_laws(
     scrape_command = (
         "python -m ipfs_datasets_py.processors.legal_scrapers.netherlands_laws scrape "
         f"--output-dir {output_root} "
-        f"--max_seed_pages {max_seed_pages} --crawl_depth {crawl_depth} "
+        f"--max_seed_pages {0 if max_seed_pages is None else max_seed_pages} --crawl_depth {crawl_depth} "
         f"--rate_limit_delay {rate_limit_delay}"
     )
     if use_default_seeds:
@@ -1847,6 +1853,9 @@ async def scrape_netherlands_laws(
         "total_skipped": len(skipped_documents),
         "documents_failed": failed_documents,
         "total_failed": failed_documents,
+        "documents_retried": 0,
+        "failed_document_urls": failed_document_urls,
+        "failed_law_identifiers": sorted({_extract_bwb_id(url) for url in failed_document_urls if _extract_bwb_id(url)}),
         "skipped_document_urls": skipped_documents,
         "records_count": len(records),
         "article_records_count": len(article_records),

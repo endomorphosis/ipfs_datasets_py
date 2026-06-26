@@ -197,6 +197,15 @@ def test_scrape_cli_accepts_underscore_boolean_aliases():
     assert args.resume is True
 
 
+def test_scrape_cli_accepts_full_discovery_without_seed_page_cap():
+    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.cli import build_parser
+
+    args = build_parser().parse_args(["scrape", "--full_discovery", "--max_seed_pages", "0"])
+
+    assert args.full_discovery is True
+    assert args.max_seed_pages == 0
+
+
 def test_ipfs_package_manifest_has_cids_hashes_counts_and_upload_target(tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.builders.ipfs_package import build_ipfs_cid_package
     from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.upload import DatasetUploadTarget, assert_local_upload_ready

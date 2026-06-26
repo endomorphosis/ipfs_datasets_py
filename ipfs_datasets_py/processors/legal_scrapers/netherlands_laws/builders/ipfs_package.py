@@ -217,6 +217,9 @@ def write_readme(
         "--max_documents <cap> --rate_limit_delay <delay> --resume"
     )
     coverage = coverage_note(run_metadata, record_counts)
+    scrape_date = str(run_metadata.get("scraped_at") or "unknown")
+    scope_note = str(run_metadata.get("corpus_scope_note") or "")
+    full_bwb = run_metadata.get("full_bwb_discovery") or {}
     readme = f"""---
 pretty_name: IPFS Netherlands Laws
 language:
@@ -257,6 +260,14 @@ This dataset packages Netherlands law records with deterministic IPFS Content ID
 
 {coverage}
 
+Scrape date: {scrape_date}
+
+Exact corpus size in this package: {record_counts.get("laws", 0)} law records, {record_counts.get("articles", 0)} article records, and {record_counts.get("cid_index", 0)} CID index rows.
+
+Full BWB discovery inventory: {full_bwb.get("unique_laws_discovered", "unknown")} unique BWBR identifiers from {full_bwb.get("number_of_records_reported", "unknown")} official SRU record(s), with {full_bwb.get("failed_pages_count", "unknown")} failed discovery page(s).
+
+{scope_note}
+
 This refresh includes parser coverage improvements for older/French heading styles such as `Article I.er`,
 plus run metadata diagnostics that distinguish article-producing laws, parser-missing article cases,
 and genuinely unnumbered/non-article documents.
@@ -265,7 +276,7 @@ Historical/former laws are preserved. Consumers should use `law_status`, `is_cur
 `valid_to`, `effective_date`, `retrieved_at`, `status_source`, `status_confidence`, and `status_note`
 to distinguish current law from historical, repealed, superseded, or unknown-status records. These fields
 are part of the content-addressed payload, so CIDs change when official status/version metadata changes.
-The scraper does not provide legal advice or validate legal force beyond the official metadata it parsed.
+This dataset is not legal advice and does not validate legal force beyond the official metadata parsed.
 
 Scrape command:
 
@@ -287,7 +298,7 @@ Current package counts:
 - Unknown-status laws: {run_metadata.get("unknown_status_laws_count", "unknown")}
 - Ambiguous-status laws: {run_metadata.get("ambiguous_status_laws_count", "unknown")}
 
-Remaining limitations before a full corpus release: increase/remove `max_documents`, validate shard/streaming behavior on larger runs, and spot-check laws that expose no article-level rows.
+Remaining limitations: this package should only be described as the full Dutch corpus when the run metadata shows uncapped official discovery and every discovered official BWBR document was parsed or explicitly logged as failed/skipped. Otherwise it is a verified shard or discovered-corpus subset.
 """
     (out_dir / "README.md").write_text(readme, encoding="utf-8")
 

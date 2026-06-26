@@ -90,6 +90,17 @@ def load_source_rows(source_dir: Path | None = None) -> list[dict[str, Any]]:
     return corpus
 
 
+def load_source_run_metadata(source_dir: Path | None = None) -> dict[str, Any]:
+    source_dir = source_dir or DEFAULT_SOURCE_DIR
+    metadata_path = source_dir / "data/metadata/netherlands_laws_run_metadata_latest.json"
+    if not metadata_path.exists():
+        return {}
+    try:
+        return json.loads(metadata_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
 def _write_dataset_card(out_dir: Path, title: str, repo_id: str, configs: list[str], body: str) -> None:
     config_yaml = "\n".join(
         [
@@ -171,6 +182,7 @@ def build_vector_index(
     from sklearn.preprocessing import normalize
 
     corpus = corpus or load_source_rows(source_dir)
+    run_metadata = load_source_run_metadata(source_dir)
     out_dir = out_dir or DEFAULT_VECTOR_OUT_DIR
     docs: list[dict[str, Any]] = []
     texts: list[str] = []
@@ -232,6 +244,8 @@ def build_vector_index(
         "index_key": "source_cid",
     }
     write_json(out_dir / "artifacts/metadata.json", metadata)
+    scrape_date = str(run_metadata.get("scraped_at") or "unknown")
+    full_bwb = run_metadata.get("full_bwb_discovery") or {}
     _write_dataset_card(
         out_dir,
         "IPFS Netherlands Laws Vector Index",
@@ -240,12 +254,15 @@ def build_vector_index(
         (
             "Dense vector mapping keyed by source CID, with FAISS and TF-IDF/SVD artifacts.\n\n"
             f"This index covers {len(mapping_rows)} rows from the paired CID dataset. "
+            f"Source scrape date: {scrape_date}. "
+            f"Full BWB discovery inventory found {full_bwb.get('unique_laws_discovered', 'unknown')} unique BWBR identifiers "
+            f"from {full_bwb.get('number_of_records_reported', 'unknown')} official SRU record(s). "
             "The current source dataset may be capped; do not describe it as the full Dutch corpus unless "
             "the paired base dataset manifest/run metadata proves full discovery coverage. "
             "The paired base dataset includes article extraction diagnostics and parser coverage improvements "
             "for older/French heading styles. Historical/former laws are preserved and labeled with "
             "`law_status`, `is_current`, validity dates, status source, confidence, and notes; these fields "
-            "are also present in the vector mapping rows for filtering."
+            "are also present in the vector mapping rows for filtering. This index is not legal advice."
         ),
     )
     _write_gitattributes(out_dir)
@@ -260,6 +277,7 @@ def build_bm25_index(
     repo_id: str = DEFAULT_HF_REPO_IDS["bm25"],
 ) -> Path:
     corpus = corpus or load_source_rows(source_dir)
+    run_metadata = load_source_run_metadata(source_dir)
     out_dir = out_dir or DEFAULT_BM25_OUT_DIR
     doc_lengths: dict[str, int] = {}
     tf_by_doc: dict[str, Counter[str]] = {}
@@ -343,6 +361,8 @@ def build_bm25_index(
         "index_key": "source_cid",
     }
     write_json(out_dir / "artifacts/metadata.json", metadata)
+    scrape_date = str(run_metadata.get("scraped_at") or "unknown")
+    full_bwb = run_metadata.get("full_bwb_discovery") or {}
     _write_dataset_card(
         out_dir,
         "IPFS Netherlands Laws BM25 Index",
@@ -351,12 +371,15 @@ def build_bm25_index(
         (
             "Sparse BM25 document and postings tables keyed by source CID.\n\n"
             f"This index covers {len(doc_rows)} documents and {len(term_rows)} terms from the paired CID dataset. "
+            f"Source scrape date: {scrape_date}. "
+            f"Full BWB discovery inventory found {full_bwb.get('unique_laws_discovered', 'unknown')} unique BWBR identifiers "
+            f"from {full_bwb.get('number_of_records_reported', 'unknown')} official SRU record(s). "
             "The current source dataset may be capped; do not describe it as the full Dutch corpus unless "
             "the paired base dataset manifest/run metadata proves full discovery coverage. "
             "The paired base dataset includes article extraction diagnostics and parser coverage improvements "
             "for older/French heading styles. Historical/former laws are preserved and labeled with "
             "`law_status`, `is_current`, validity dates, status source, confidence, and notes; these fields "
-            "are also present in BM25 document rows for filtering."
+            "are also present in BM25 document rows for filtering. This index is not legal advice."
         ),
     )
     _write_gitattributes(out_dir)
@@ -371,6 +394,7 @@ def build_knowledge_graph(
     repo_id: str = DEFAULT_HF_REPO_IDS["knowledge-graph"],
 ) -> Path:
     corpus = corpus or load_source_rows(source_dir)
+    run_metadata = load_source_run_metadata(source_dir)
     out_dir = out_dir or DEFAULT_KG_OUT_DIR
     laws = [row for row in corpus if row["record_type"] == "law"]
     articles = [row for row in corpus if row["record_type"] == "article"]
@@ -511,6 +535,8 @@ def build_knowledge_graph(
         "index_key": "source_cid",
     }
     write_json(out_dir / "artifacts/metadata.json", metadata)
+    scrape_date = str(run_metadata.get("scraped_at") or "unknown")
+    full_bwb = run_metadata.get("full_bwb_discovery") or {}
     _write_dataset_card(
         out_dir,
         "IPFS Netherlands Laws Knowledge Graph",
@@ -519,12 +545,15 @@ def build_knowledge_graph(
         (
             "JSON-LD graph and node/edge tables whose identities are IPFS content addresses.\n\n"
             f"This graph currently has {len(graph_nodes)} nodes and {len(graph_edges)} edges from the paired CID dataset. "
+            f"Source scrape date: {scrape_date}. "
+            f"Full BWB discovery inventory found {full_bwb.get('unique_laws_discovered', 'unknown')} unique BWBR identifiers "
+            f"from {full_bwb.get('number_of_records_reported', 'unknown')} official SRU record(s). "
             "The current source dataset may be capped; do not describe it as the full Dutch corpus unless "
             "the paired base dataset manifest/run metadata proves full discovery coverage. "
             "The paired base dataset includes article extraction diagnostics and parser coverage improvements "
             "for older/French heading styles. Historical/former laws are preserved and labeled with "
             "`law_status`, `is_current`, validity dates, status source, confidence, and notes in graph nodes "
-            "and JSON-LD objects."
+            "and JSON-LD objects. This graph is not legal advice."
         ),
     )
     _write_gitattributes(out_dir)
@@ -547,9 +576,9 @@ def build_knowledge_graph_package(*args: Any, **kwargs: Any) -> Path:
 def build_all_indexes(source_dir: Path | None = None) -> list[Path]:
     corpus = load_source_rows(source_dir)
     return [
-        build_vector_index(corpus=corpus),
-        build_bm25_index(corpus=corpus),
-        build_knowledge_graph(corpus=corpus),
+        build_vector_index(corpus=corpus, source_dir=source_dir),
+        build_bm25_index(corpus=corpus, source_dir=source_dir),
+        build_knowledge_graph(corpus=corpus, source_dir=source_dir),
     ]
 
 
