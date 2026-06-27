@@ -3287,6 +3287,132 @@ def _metric_count_value(block: Mapping[str, Any], name: str) -> int:
         return 0
 
 
+def autoencoder_validation_signal_health(
+    *,
+    compiler_ir_validation: Mapping[str, Any],
+    learned_ir_validation: Mapping[str, Any],
+    logic_bridge_validation: Mapping[str, Any],
+    validation_metrics: Mapping[str, Any],
+    metric_bridge_adapters: Sequence[str] = (),
+    diagnostic_bridge_adapters: Sequence[str] = (),
+    minimum_validation_samples: int = 8,
+) -> Dict[str, Any]:
+    """Summarize whether validation/projection signals are actually active."""
+
+    issues: List[str] = []
+    recommendations: List[str] = []
+    validation_sample_count = _metric_count_value(validation_metrics, "sample_count")
+    compiler_sample_count = _metric_count_value(compiler_ir_validation, "sample_count")
+    compiler_evaluated_count = _metric_count_value(
+        compiler_ir_validation,
+        "evaluated_count",
+    )
+    compiler_sample_timeouts = _metric_count_value(
+        compiler_ir_validation,
+        "sample_timeouts",
+    )
+    compiler_skipped_count = _metric_count_value(
+        compiler_ir_validation,
+        "skipped_sample_count",
+    )
+    learned_ir_target_count = _metric_count_value(learned_ir_validation, "target_count")
+    bridge_adapter_count = _metric_count_value(logic_bridge_validation, "adapter_count")
+    bridge_evaluated_count = _metric_count_value(
+        logic_bridge_validation,
+        "evaluated_count",
+    )
+    metric_adapter_list = [str(name) for name in metric_bridge_adapters if str(name)]
+    diagnostic_adapter_list = [
+        str(name) for name in diagnostic_bridge_adapters if str(name)
+    ]
+
+    if validation_sample_count and validation_sample_count < max(
+        1,
+        int(minimum_validation_samples),
+    ):
+        issues.append("validation_holdout_too_small")
+        recommendations.append(
+            "increase validation-canary-count or use a stratified held-out manifest"
+        )
+    if not metric_adapter_list and learned_ir_target_count <= 0:
+        issues.append("autoencoder_metric_bridge_adapters_empty")
+        recommendations.append(
+            "enable cheap LegalIR metric adapters such as modal_frame_logic,deontic_norms"
+        )
+    if learned_ir_target_count <= 0:
+        issues.append("learned_ir_targets_inactive")
+        recommendations.append(
+            "ensure bridge-backed LegalIR targets are produced before trusting learned IR-view metrics"
+        )
+    if bridge_adapter_count <= 0:
+        issues.append("logic_bridge_metrics_inactive")
+        recommendations.append(
+            "enable diagnostic bridge adapters so syntax/KG/prover validity is measured"
+        )
+    elif bridge_evaluated_count <= 0:
+        issues.append("logic_bridge_no_samples_evaluated")
+        recommendations.append(
+            "check bridge sample caps and adapter failures; no bridge samples reached evaluation"
+        )
+    if compiler_sample_count > 0 and compiler_evaluated_count <= 0:
+        if compiler_sample_timeouts >= compiler_sample_count:
+            issues.append("compiler_ir_all_samples_timed_out")
+            recommendations.append(
+                "lower compiler metric sample length, split long samples, or raise the timeout budget"
+            )
+        elif compiler_skipped_count >= compiler_sample_count:
+            issues.append("compiler_ir_all_samples_skipped")
+            recommendations.append(
+                "rotate smaller compiler metric samples or enable a truncating metric mode"
+            )
+        else:
+            issues.append("compiler_ir_no_samples_evaluated")
+            recommendations.append(
+                "inspect compiler IR metric sample records for failures before using sentinel CE/cosine"
+            )
+
+    blocking_issues = {
+        "autoencoder_metric_bridge_adapters_empty",
+        "learned_ir_targets_inactive",
+        "logic_bridge_metrics_inactive",
+        "compiler_ir_all_samples_timed_out",
+        "compiler_ir_no_samples_evaluated",
+    }
+    if any(issue in blocking_issues for issue in issues):
+        quality_gate = "fail"
+    elif issues:
+        quality_gate = "warn"
+    else:
+        quality_gate = "pass"
+    return {
+        "compiler_ir": {
+            "evaluated_count": compiler_evaluated_count,
+            "sample_count": compiler_sample_count,
+            "sample_timeouts": compiler_sample_timeouts,
+            "skipped_sample_count": compiler_skipped_count,
+        },
+        "diagnostic_bridge_adapters": diagnostic_adapter_list,
+        "issues": list(dict.fromkeys(issues)),
+        "learned_ir": {
+            "target_count": learned_ir_target_count,
+        },
+        "logic_bridge": {
+            "adapter_count": bridge_adapter_count,
+            "evaluated_count": bridge_evaluated_count,
+        },
+        "metric_bridge_adapters": metric_adapter_list,
+        "quality_gate": quality_gate,
+        "recommendations": list(dict.fromkeys(recommendations)),
+        "validation": {
+            "minimum_recommended_sample_count": max(
+                1,
+                int(minimum_validation_samples),
+            ),
+            "sample_count": validation_sample_count,
+        },
+    }
+
+
 def rollout_baseline_snapshot(
     *,
     summary: Mapping[str, Any],
@@ -3304,6 +3430,8 @@ def rollout_baseline_snapshot(
     backend_metadata: Mapping[str, Any],
     host_resource_health: Mapping[str, Any],
     compiler_ir_guided_validation: Optional[Mapping[str, Any]] = None,
+    metric_bridge_adapters: Sequence[str] = (),
+    diagnostic_bridge_adapters: Sequence[str] = (),
 ) -> Dict[str, Any]:
     """Return a stable rollout comparison snapshot for autoencoder experiments."""
 
@@ -3316,6 +3444,14 @@ def rollout_baseline_snapshot(
         low_rank_sidecar = {}
     status_counts = {str(key): int(value) for key, value in queue_counts.items()}
     failed_validation_count = int(status_counts.get("failed_validation", 0))
+    signal_health = autoencoder_validation_signal_health(
+        compiler_ir_validation=compiler_ir_validation,
+        learned_ir_validation=learned_ir_validation,
+        logic_bridge_validation=logic_bridge_validation,
+        validation_metrics=validation_metrics,
+        metric_bridge_adapters=metric_bridge_adapters,
+        diagnostic_bridge_adapters=diagnostic_bridge_adapters,
+    )
     return {
         "autoencoder_architecture_version": str(
             summary.get("autoencoder_architecture_version")
@@ -3513,6 +3649,7 @@ def rollout_baseline_snapshot(
             for role, counts in role_queue_counts.items()
         },
         "run_id": str(summary.get("run_id") or ""),
+        "signal_health": signal_health,
         "state_file": {
             "path": str(state_file.get("path") or summary.get("state_path") or ""),
             "size_bytes": _metric_count_value(state_file, "size_bytes"),
@@ -6577,6 +6714,8 @@ def autoencoder_metric_bridge_adapter_names(
     Bridge loss TODO generation can afford to be broader than the synchronous
     autoencoder metric path.  The autoencoder path runs before and after each
     training cycle, so by default it uses a cheap, representative bridge subset.
+    Keep that metric subset alive even when bridge-loss TODO generation is
+    disabled; otherwise the learned LegalIR-view head has no targets.
     """
 
     env_raw = os.environ.get("IPFS_DATASETS_AUTOENCODER_METRIC_BRIDGE_ADAPTERS")
@@ -6601,6 +6740,12 @@ def autoencoder_metric_bridge_adapter_names(
             for name in (part.strip() for part in raw.split(","))
             if name and name.lower() not in {"none", "off", "false"}
         ]
+    registered_bridge_adapters = set(DEFAULT_LEGAL_IR_BRIDGE_NAMES)
+    default_adapter_list = [
+        name
+        for name in DEFAULT_AUTOENCODER_METRIC_BRIDGE_ADAPTERS
+        if name in registered_bridge_adapters
+    ]
     preferred = [
         name
         for name in DEFAULT_AUTOENCODER_METRIC_BRIDGE_ADAPTERS
@@ -6608,6 +6753,8 @@ def autoencoder_metric_bridge_adapter_names(
     ]
     if preferred:
         return preferred
+    if default_adapter_list:
+        return default_adapter_list
     return bridge_adapter_list[:1]
 
 
@@ -17415,6 +17562,16 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["latest_autoencoder_validation_sample_memory_probe"] = (
                 after_validation_sample_memory_probe_metrics
             )
+            summary["latest_autoencoder_signal_health"] = (
+                autoencoder_validation_signal_health(
+                    compiler_ir_validation=compiler_ir_validation,
+                    learned_ir_validation=learned_ir_validation,
+                    logic_bridge_validation=bridge_ir_validation,
+                    validation_metrics=after_validation_metrics,
+                    metric_bridge_adapters=metric_bridge_adapters,
+                    diagnostic_bridge_adapters=diagnostic_bridge_adapters,
+                )
+            )
             summary["latest_rollout_baseline_snapshot"] = rollout_baseline_snapshot(
                 summary=summary,
                 cycle=cycle,
@@ -17431,6 +17588,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 embedding_report=embedding_lookup.report(),
                 backend_metadata=backend_metadata,
                 host_resource_health=host_resource_health,
+                metric_bridge_adapters=metric_bridge_adapters,
+                diagnostic_bridge_adapters=diagnostic_bridge_adapters,
             )
             summary["latest_train_sample_memory_gap"] = train_sample_memory_gap
             summary["latest_validation_sample_memory_gap"] = (
@@ -17799,6 +17958,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     ),
                 },
                 "sample_memory_probe": validation_sample_memory_gap,
+                "signal_health": summary["latest_autoencoder_signal_health"],
                 "source_copy_guard": {
                     "copy_hack_penalty": round(
                         latest_compiler_ir_source_copy_reward_hack_penalty,

@@ -1634,6 +1634,34 @@ def test_default_bridge_loss_adapters_cover_registered_logic_views() -> None:
     ]
 
 
+def test_autoencoder_metric_bridge_defaults_survive_disabled_bridge_loss(
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv(
+        "IPFS_DATASETS_AUTOENCODER_METRIC_BRIDGE_ADAPTERS",
+        raising=False,
+    )
+    bridge_adapters = runner.bridge_loss_adapter_names(
+        SimpleNamespace(bridge_loss_adapters="none")
+    )
+
+    names = runner.autoencoder_metric_bridge_adapter_names(
+        SimpleNamespace(autoencoder_metric_bridge_adapters=None),
+        bridge_adapters,
+    )
+
+    assert bridge_adapters == []
+    assert names == list(runner.DEFAULT_AUTOENCODER_METRIC_BRIDGE_ADAPTERS)
+    assert runner.autoencoder_metric_bridge_adapter_names(
+        SimpleNamespace(autoencoder_metric_bridge_adapters="same"),
+        bridge_adapters,
+    ) == []
+    assert runner.autoencoder_metric_bridge_adapter_names(
+        SimpleNamespace(autoencoder_metric_bridge_adapters="none"),
+        bridge_adapters,
+    ) == []
+
+
 def test_bridge_ir_metric_block_caches_multiview_reports(monkeypatch) -> None:
     from ipfs_datasets_py.logic import bridge as bridge_module
 
@@ -3620,6 +3648,28 @@ def test_initial_summary_uses_explicit_sampling_seed(tmp_path) -> None:
     assert summary["sampling_seed_source"] == "shared-hparam-seed"
 
 
+def test_autoencoder_signal_health_flags_inactive_legal_ir_and_timeouts() -> None:
+    health = runner.autoencoder_validation_signal_health(
+        compiler_ir_validation={
+            "evaluated_count": 0,
+            "sample_count": 2,
+            "sample_timeouts": 2,
+            "skipped_sample_count": 2,
+        },
+        learned_ir_validation={"target_count": 0},
+        logic_bridge_validation={"adapter_count": 0, "evaluated_count": 0},
+        validation_metrics={"sample_count": 4},
+        metric_bridge_adapters=[],
+        diagnostic_bridge_adapters=[],
+    )
+
+    assert health["quality_gate"] == "fail"
+    assert "learned_ir_targets_inactive" in health["issues"]
+    assert "compiler_ir_all_samples_timed_out" in health["issues"]
+    assert "validation_holdout_too_small" in health["issues"]
+    assert health["learned_ir"]["target_count"] == 0
+
+
 def test_paired_autoencoder_child_health_detects_stale_projection(tmp_path) -> None:
     summary_path = tmp_path / "autoencoder.summary"
     summary_path.write_text(
@@ -3915,6 +3965,8 @@ def test_rollout_baseline_snapshot_collects_go_no_go_fields() -> None:
             "memory_available_gb": 32.0,
             "swap_free_gb": 4.0,
         },
+        metric_bridge_adapters=["modal_frame_logic", "deontic_norms"],
+        diagnostic_bridge_adapters=["modal_frame_logic", "deontic_norms"],
     )
 
     assert snapshot["run_id"] == "baseline-run"
@@ -3930,6 +3982,8 @@ def test_rollout_baseline_snapshot_collects_go_no_go_fields() -> None:
     assert snapshot["learned_feature_rows"]["vector_entry_count"] == 17
     assert snapshot["backend"]["autoencoder_compute_backend"] == "torch_cpu"
     assert snapshot["host_resource_health"]["memory_available_gb"] == pytest.approx(32.0)
+    assert snapshot["signal_health"]["quality_gate"] == "warn"
+    assert "validation_holdout_too_small" in snapshot["signal_health"]["issues"]
 
 
 def test_paired_codex_worker_resource_plan_caps_memory_heavy_pool() -> None:
