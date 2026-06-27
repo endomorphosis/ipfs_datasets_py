@@ -385,6 +385,7 @@ _USCODE_SHORT_RESIDUAL_HEADING_SIGNAL_TOKENS = frozenset(
 _USCODE_LONG_RESIDUAL_HEADING_MIN_TOKENS = 6
 _USCODE_LONG_RESIDUAL_HEADING_MAX_TOKENS = _USCODE_HEADING_ONLY_EXTENDED_MAX_TOKENS
 _USCODE_LONG_RESIDUAL_HEADING_MIN_SIGNAL_TOKENS = 2
+_USCODE_SECTION_CATCHLINE_MAX_TOKENS = 28
 _USCODE_COMPACT_FRAME_RESIDUAL_MIN_TOKENS = 2
 _USCODE_COMPACT_FRAME_RESIDUAL_MAX_TOKENS = 16
 _USCODE_COMPACT_FRAME_RESIDUAL_SIGNAL_TOKENS = frozenset(
@@ -520,6 +521,20 @@ _USCODE_RESIDUAL_HEADER_SCOPE_PHRASES = (
     "u.s.c.",
     "united states code",
     "www.gpo.gov",
+)
+_USCODE_SECTION_CATCHLINE_STOP_RE = re.compile(
+    r"\s+(?=(?:From\s+the\s+U\.?\s*S\.?\s+Government\s+Publishing\s+Office|"
+    r"\([a-z0-9ivxlcdm]{1,6}\)\s+|"
+    r"The\s+(?:Secretary|Foundation|Commission|Administrator|Director|"
+    r"consolidated\s+bank)\b|"
+    r"Each\s+\w+\b|"
+    r"This\s+section\b|"
+    r"Nothing\s+in\s+this\b|"
+    r"As\s+soon\s+as\b|"
+    r"Under\s+such\s+terms\b|"
+    r"It\s+is\s+(?:critical|the\s+purpose|the\s+sense)\b|"
+    r"There\s+(?:is|are)\s+established\b))",
+    re.IGNORECASE,
 )
 _USCODE_DEFINITION_RESIDUAL_HINT_RE = re.compile(
     r"\b(?:the\s+term\s+[^.;:]{0,160}?\s+(?:means|has\s+the\s+meaning\s+given)|"
@@ -1267,6 +1282,21 @@ class LegalModalParser:
                 cues=cues,
             )
 
+        def _catchline_formulas(start_index: int) -> List[ModalIRFormula]:
+            return self.uscode_section_catchline_coverage_formulas(
+                document_id=resolved_document_id,
+                text=normalized,
+                citation=citation,
+                start_index=start_index,
+                covered_spans=[
+                    (
+                        int(formula.provenance.start_char),
+                        int(formula.provenance.end_char),
+                    )
+                    for formula in formulas
+                ],
+            )
+
         fallback_formula = self.fallback_formula(
             document_id=resolved_document_id,
             text=normalized,
@@ -1303,6 +1333,7 @@ class LegalModalParser:
                 if reindexed_fallback is not None:
                     fallback_formula = reindexed_fallback
             formulas.extend(_prefix_formulas(len(formulas) + 2))
+            formulas.extend(_catchline_formulas(len(formulas) + 2))
             formulas.append(fallback_formula)
         elif formulas:
             residual_segments = self._segments_excluding_spans(
@@ -1343,6 +1374,7 @@ class LegalModalParser:
                     )
                 )
                 formulas.extend(_prefix_formulas(len(formulas) + 2))
+                formulas.extend(_catchline_formulas(len(formulas) + 2))
                 formulas.append(residual_fallback_formula)
             else:
                 formulas.extend(
@@ -1355,6 +1387,7 @@ class LegalModalParser:
                     )
                 )
                 formulas.extend(_prefix_formulas(len(formulas) + 1))
+                formulas.extend(_catchline_formulas(len(formulas) + 1))
 
         return ModalIRDocument(
             document_id=resolved_document_id,
@@ -1529,6 +1562,53 @@ class LegalModalParser:
                 )
             )
             next_index += 1
+        return formulas
+
+    def uscode_section_catchline_coverage_formulas(
+        self,
+        *,
+        document_id: str,
+        text: str,
+        citation: Optional[str],
+        start_index: int = 1,
+        covered_spans: Sequence[tuple[int, int]] = (),
+        max_formulas: int = 1,
+    ) -> List[ModalIRFormula]:
+        """Emit frame coverage for the coalesced U.S.C. section catchline."""
+        if max_formulas <= 0 or not self._is_uscode_citation(citation):
+            return []
+        normalized = self.normalize_text(text)
+        if not normalized.strip():
+            return []
+        citation_section = self._citation_section_token(citation)
+        if not citation_section:
+            return []
+        profile = self.registry.get_profile(ModalLogicFamily.FRAME)
+        if not profile.operators:
+            return []
+        operator = profile.operators[0]
+        formulas: List[ModalIRFormula] = []
+        next_index = max(1, int(start_index))
+        for segment in self._uscode_section_catchline_segments(
+            normalized_text=normalized,
+            citation_section=citation_section,
+        ):
+            if self._is_exactly_covered_span(segment, covered_spans):
+                continue
+            formulas.append(
+                self._residual_span_coverage_formula(
+                    document_id=document_id,
+                    citation=citation,
+                    segment=segment,
+                    start_index=next_index,
+                    operator=operator,
+                    profile=profile,
+                    fallback_rule="uscode_section_catchline_coverage_v1",
+                )
+            )
+            next_index += 1
+            if len(formulas) >= max_formulas:
+                break
         return formulas
 
     def modal_heading_prefix_coverage_formulas(
@@ -1759,6 +1839,85 @@ class LegalModalParser:
         ):
             return False
         return bool(set(tokens) & _USCODE_COMPACT_FRAME_RESIDUAL_SIGNAL_TOKENS)
+
+    def _uscode_section_catchline_segments(
+        self,
+        *,
+        normalized_text: str,
+        citation_section: str,
+    ) -> List[LegalSegment]:
+        """Return cited-section catchline spans, preferring the in-body marker."""
+        if not citation_section:
+            return []
+        section_pattern = self._citation_section_pattern(citation_section)
+        marker_re = re.compile(
+            rf"(?:§+\s*{section_pattern}|"
+            rf"\bsec(?:tion)?s?\.?\s+{section_pattern})"
+            rf"(?={_USCODE_SECTION_REF_SUFFIX_RE})"
+            rf"\s*(?:[.)]|\s*-\s*)?",
+            re.IGNORECASE,
+        )
+        candidates: List[LegalSegment] = []
+        for marker in marker_re.finditer(normalized_text):
+            candidate_start = marker.end()
+            raw_tail = normalized_text[candidate_start : candidate_start + 360]
+            if not raw_tail.strip():
+                continue
+            stop_match = _USCODE_SECTION_CATCHLINE_STOP_RE.search(raw_tail)
+            candidate_end = candidate_start + (
+                stop_match.start() if stop_match is not None else len(raw_tail)
+            )
+            raw_candidate = normalized_text[candidate_start:candidate_end]
+            leading_offset = len(raw_candidate) - len(raw_candidate.lstrip())
+            stripped = raw_candidate.strip()
+            stripped = stripped.strip(" .;:\u2014-")
+            if not stripped:
+                continue
+            tokens = _TOKEN_RE.findall(stripped.lower())
+            if (
+                not tokens
+                or len(tokens) > _USCODE_SECTION_CATCHLINE_MAX_TOKENS
+                or _USCODE_EDITORIAL_STATUS_HINT_RE.search(stripped)
+                or _USCODE_CODIFICATION_HINT_RE.search(stripped)
+                or _USCODE_DECLARATIVE_STATEMENT_HINT_RE.search(stripped)
+                or _USCODE_HEADING_ONLY_VERB_HINT_RE.search(stripped)
+            ):
+                continue
+            if not (
+                self._looks_like_heading_without_section_reference(stripped)
+                or self._is_short_residual_heading_coverage_candidate(tokens)
+                or self._is_long_residual_heading_coverage_candidate(tokens)
+                or self._is_uscode_compact_frame_residual_candidate(stripped, tokens)
+            ):
+                continue
+            start_char = candidate_start + leading_offset
+            candidates.append(
+                LegalSegment(
+                    text=stripped,
+                    start_char=start_char,
+                    end_char=start_char + len(stripped),
+                    role="heading",
+                )
+            )
+        deduped: List[LegalSegment] = []
+        seen_spans: set[tuple[int, int]] = set()
+        for candidate in reversed(candidates):
+            span = (candidate.start_char, candidate.end_char)
+            if span in seen_spans:
+                continue
+            seen_spans.add(span)
+            deduped.append(candidate)
+        return deduped
+
+    def _is_exactly_covered_span(
+        self,
+        segment: LegalSegment,
+        covered_spans: Sequence[tuple[int, int]],
+    ) -> bool:
+        return any(
+            int(start_char) == segment.start_char and int(end_char) == segment.end_char
+            for start_char, end_char in covered_spans
+        )
 
     def _modal_heading_prefix_segment(
         self,

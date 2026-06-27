@@ -2077,6 +2077,63 @@ def test_frame_ontology_feature_keys_from_values_audits_packet_view_family_featu
     ]
 
 
+def test_frame_ontology_feature_keys_audit_condition_consequence_edges() -> None:
+    keys = frame_ontology_feature_keys_from_values(
+        {
+            "frame_features": [
+                (
+                    "condition-consequence:event-calculus-precondition:"
+                    "legal_condition->legal_consequence:legal_object"
+                ),
+                (
+                    "condition-consequence:compiler-antecedent-edge:"
+                    "legal_condition->legal_consequence:legal_object:general_scope"
+                ),
+                (
+                    "legal-ir:condition-consequence:decompiler-guard-plan:"
+                    "sufficient_condition->legal_consequence"
+                ),
+            ],
+            "pipeline_stage_focus": [
+                "modal_family_registry",
+                "autoencoder_embedding_head",
+            ],
+            "primary_pipeline_stage": "typed_ir_decoder",
+        }
+    )
+
+    assert keys == [
+        (
+            "condition-consequence:event-calculus-precondition:"
+            "legal_condition->legal_consequence:legal_object"
+        ),
+        (
+            "condition-consequence:compiler-antecedent-edge:"
+            "legal_condition->legal_consequence:legal_object:general_scope"
+        ),
+        (
+            "legal-ir:condition-consequence:decompiler-guard-plan:"
+            "sufficient_condition->legal_consequence"
+        ),
+        "flogic:statement_hint:modal_family_registry",
+        "flogic:statement_hint:autoencoder_embedding_head",
+        "flogic:statement_hint:typed_ir_decoder",
+    ]
+    assert frame_ontology_terms_from_feature_keys(keys)[:6] == [
+        "event_calculus_precondition_condition_consequence_object",
+        "compiler_antecedent_edge_condition_consequence_object_general_scope",
+        "decompiler_guard_plan_sufficient_condition_consequence",
+        "modal_family_registry",
+        "autoencoder_embedding_head",
+        "typed_ir_decoder",
+    ]
+    assert frame_ontology_contextualized_terms(feature_keys=keys)[:3] == [
+        "condition_consequence_event_calculus_precondition_condition_consequence_object",
+        "condition_consequence_compiler_antecedent_edge_condition_consequence_object_general_scope",
+        "condition_consequence_decompiler_guard_plan_sufficient_condition_consequence",
+    ]
+
+
 def test_frame_ontology_contextualized_terms_skip_low_signal_positioned_segments() -> None:
     terms = frame_ontology_contextualized_terms(
         feature_keys=[

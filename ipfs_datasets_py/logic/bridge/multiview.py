@@ -482,6 +482,50 @@ _BRIDGE_CONTRACT_JUDICIAL_REVIEW_PROCEDURE_RE = re.compile(
     r"the\s+proceeding|automatic\s+stay)\b.{0,420}\bjudicial\s+review\b",
     flags=re.IGNORECASE,
 )
+_BRIDGE_CONTRACT_AGENCY_TECHNOLOGY_GOAL_RE = re.compile(
+    r"\b(?:goal\s+for\s+agency\s+space\s+technology|it\s+is\s+critical\s+that\b"
+    r".{0,180}\b(?:maintain|align|support)\b.{0,180}\b"
+    r"(?:technology\s+base|mission\s+directorate|long\s+term\s+needs))\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_COUNTY_PAYMENT_DUTY_RE = re.compile(
+    r"\bpayments?\s+to\s+counties\b"
+    r"|\bsecretary\s+shall\s+pay\b.{0,220}\b(?:county|net\s+revenues)\b"
+    r"|\bpayments?\s+to\s+counties\b.{0,220}\b(?:condition|school|road)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_PRIVATE_SCHOOL_PARTICIPATION_RE = re.compile(
+    r"\bparticipation\s+of\s+teachers\s+from\s+private\s+schools\b"
+    r"|\bshall\b.{0,160}\bmake\s+provision\b.{0,180}\b"
+    r"(?:benefit\s+of\s+teachers|equitable\s+participation)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_SURVEY_RESEARCH_PROJECT_AUTHORITY_RE = re.compile(
+    r"\bduties\s+of\s+secretary\b.{0,220}\b(?:surveys?|research|projects?)\b"
+    r"|\bauthorized\b.{0,240}\b(?:conduct\s+surveys?|investigations?|"
+    r"research|publish|disseminate|plan\s+and\s+execute\s+projects?)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_PATRONAGE_POOL_ALLOCATION_RE = re.compile(
+    r"\bpatronage\s+pools?\b"
+    r"|\bmay\b.{0,180}\bestablish\s+separate\s+patronage\s+pools?\b"
+    r"|\ballocate\s+revenues,\s+expenses,\s+and\s+net\s+savings\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_CIVILIAN_NAUTICAL_SCHOOL_RE = re.compile(
+    r"\bcivilian\s+nautical\s+schools?\b"
+    r"|\bdefinition\b.{0,160}\b(?:civilian\s+nautical\s+school|means\s+a\s+school)\b"
+    r"|\b(?:inspection|rating\s+and\s+certification)\b.{0,220}\b"
+    r"(?:secretary|course\s+of\s+instruction|instructors|equipment)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_MINING_LEASE_TAX_PROVISO_RE = re.compile(
+    r"\bleases?\s+for\s+mining\s+purposes\b"
+    r"|\bauthorized\s+to\s+lease\b.{0,240}\b(?:mining\s+purposes|reservation)\b"
+    r"|\bprovided\b.{0,220}\b(?:production\s+of\s+oil\s+and\s+gas|tax|lien|"
+    r"royalty\s+interests?)\b",
+    flags=re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -3280,6 +3324,27 @@ def _project_official_usc_primary_contract_distribution(
     has_admin_review_deadline = bool(
         _BRIDGE_CONTRACT_ADMIN_REVIEW_DEADLINE_RE.search(normalized_text)
     )
+    has_agency_technology_goal = bool(
+        _BRIDGE_CONTRACT_AGENCY_TECHNOLOGY_GOAL_RE.search(normalized_text)
+    )
+    has_county_payment_duty = bool(
+        _BRIDGE_CONTRACT_COUNTY_PAYMENT_DUTY_RE.search(normalized_text)
+    )
+    has_private_school_participation = bool(
+        _BRIDGE_CONTRACT_PRIVATE_SCHOOL_PARTICIPATION_RE.search(normalized_text)
+    )
+    has_survey_research_project_authority = bool(
+        _BRIDGE_CONTRACT_SURVEY_RESEARCH_PROJECT_AUTHORITY_RE.search(normalized_text)
+    )
+    has_patronage_pool_allocation = bool(
+        _BRIDGE_CONTRACT_PATRONAGE_POOL_ALLOCATION_RE.search(normalized_text)
+    )
+    has_civilian_nautical_school = bool(
+        _BRIDGE_CONTRACT_CIVILIAN_NAUTICAL_SCHOOL_RE.search(normalized_text)
+    )
+    has_mining_lease_tax_proviso = bool(
+        _BRIDGE_CONTRACT_MINING_LEASE_TAX_PROVISO_RE.search(normalized_text)
+    )
     status_operation_cue_count = _cue_count(
         _BRIDGE_CONTRACT_STATUS_OPERATION_CUE_RE,
         normalized_text,
@@ -3312,6 +3377,62 @@ def _project_official_usc_primary_contract_distribution(
             ("deontic.ir", 0.10),
         )
         strength = 0.48
+    elif has_agency_technology_goal:
+        target_mix = (
+            ("CEC.native", 0.34),
+            ("knowledge_graphs.neo4j_compat", 0.30),
+            ("deontic.ir", 0.24),
+            ("TDFOL.prover", 0.12),
+        )
+        strength = 0.40
+    elif has_county_payment_duty:
+        target_mix = (
+            ("deontic.ir", 0.42),
+            ("TDFOL.prover", 0.28),
+            ("CEC.native", 0.20),
+            ("knowledge_graphs.neo4j_compat", 0.10),
+        )
+        strength = 0.42
+    elif has_private_school_participation:
+        target_mix = (
+            ("deontic.ir", 0.44),
+            ("CEC.native", 0.28),
+            ("TDFOL.prover", 0.18),
+            ("knowledge_graphs.neo4j_compat", 0.10),
+        )
+        strength = 0.40
+    elif has_survey_research_project_authority:
+        target_mix = (
+            ("CEC.native", 0.36),
+            ("TDFOL.prover", 0.26),
+            ("deontic.ir", 0.26),
+            ("knowledge_graphs.neo4j_compat", 0.12),
+        )
+        strength = 0.42
+    elif has_patronage_pool_allocation:
+        target_mix = (
+            ("deontic.ir", 0.36),
+            ("CEC.native", 0.28),
+            ("TDFOL.prover", 0.24),
+            ("knowledge_graphs.neo4j_compat", 0.12),
+        )
+        strength = 0.38
+    elif has_civilian_nautical_school:
+        target_mix = (
+            ("CEC.native", 0.34),
+            ("knowledge_graphs.neo4j_compat", 0.28),
+            ("deontic.ir", 0.24),
+            ("TDFOL.prover", 0.14),
+        )
+        strength = 0.44
+    elif has_mining_lease_tax_proviso:
+        target_mix = (
+            ("deontic.ir", 0.38),
+            ("TDFOL.prover", 0.28),
+            ("CEC.native", 0.22),
+            ("knowledge_graphs.neo4j_compat", 0.12),
+        )
+        strength = 0.44
     elif has_editorial_status_operation and deontic_cue_count <= 0:
         target_mix = (
             ("CEC.native", 0.44),

@@ -1742,6 +1742,21 @@ class SpaCyModalIRCompiler:
                     start_index=start_index,
                 )
 
+            def _catchline_formulas(start_index: int) -> List[ModalIRFormula]:
+                return self._fallback_parser.uscode_section_catchline_coverage_formulas(
+                    document_id=encoding.document_id,
+                    text=encoding.normalized_text,
+                    citation=encoding.citation,
+                    start_index=start_index,
+                    covered_spans=[
+                        (
+                            int(formula.provenance.start_char),
+                            int(formula.provenance.end_char),
+                        )
+                        for formula in formulas
+                    ],
+                )
+
             if not formulas:
                 fallback_allow_modal_cues = False
                 fallback_formula = self._fallback_parser.fallback_formula(
@@ -1789,7 +1804,8 @@ class SpaCyModalIRCompiler:
                         )
                         if reindexed_fallback is not None:
                             fallback_formula = reindexed_fallback
-                    formulas.extend(_prefix_formulas(len(formulas) + 1))
+                    formulas.extend(_prefix_formulas(len(formulas) + 2))
+                    formulas.extend(_catchline_formulas(len(formulas) + 2))
                     formulas.append(fallback_formula)
                 else:
                     formulas.extend(
@@ -1800,6 +1816,8 @@ class SpaCyModalIRCompiler:
                             start_index=1,
                         )
                     )
+                    formulas.extend(_prefix_formulas(len(formulas) + 1))
+                    formulas.extend(_catchline_formulas(len(formulas) + 1))
             else:
                 segments = self._fallback_parser.segment(encoding.normalized_text)
                 residual_segments = self._fallback_parser._segments_excluding_spans(
@@ -1839,7 +1857,8 @@ class SpaCyModalIRCompiler:
                             segments=residual_segments_after_fallback,
                         )
                     )
-                    formulas.extend(_prefix_formulas(len(formulas) + 1))
+                    formulas.extend(_prefix_formulas(len(formulas) + 2))
+                    formulas.extend(_catchline_formulas(len(formulas) + 2))
                     formulas.append(residual_fallback_formula)
                 else:
                     formulas.extend(
@@ -1852,6 +1871,7 @@ class SpaCyModalIRCompiler:
                         )
                     )
                     formulas.extend(_prefix_formulas(len(formulas) + 1))
+                    formulas.extend(_catchline_formulas(len(formulas) + 1))
         return ModalIRDocument(
             document_id=encoding.document_id,
             source=encoding.source,

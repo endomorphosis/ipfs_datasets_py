@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import math
 from dataclasses import replace
 from pathlib import Path
@@ -263,6 +264,14 @@ def test_autoencoder_surface_profiles_cover_sparse_uscode_frame_records() -> Non
         'parties" shall also be deposited to the credit of the Treasurer of the '
         "United States."
     )
+    assistance_text = (
+        "38 U.S.C. 7654 Health Professionals Educational Assistance Program "
+        "The Secretary may provide educational assistance."
+    )
+    prize_text = (
+        "10 U.S.C. 8870 Costs and expenses a charge on prize proceeds "
+        "Costs and expenses shall be a charge on prize proceeds."
+    )
     status_sample = build_us_code_sample(
         title="42",
         section="5616.",
@@ -289,9 +298,27 @@ def test_autoencoder_surface_profiles_cover_sparse_uscode_frame_records() -> Non
         "unknown_party_deposit",
         "treasury_deposit",
     }
+    assert set(_uscode_surface_profile_tags(assistance_text)) >= {
+        "education_assistance_benefit",
+        "health_professional_education_assistance",
+    }
+    assert set(_uscode_surface_profile_tags(prize_text)) >= {
+        "cost_expense_charge",
+        "prize_proceeds_charge",
+    }
 
     status_features = set(autoencoder._feature_keys_for(status_sample))
     heading_features = set(autoencoder._feature_keys_for(heading_sample))
+    assistance_features = set(
+        autoencoder._feature_keys_for(
+            build_us_code_sample(
+                title="38",
+                section="7654",
+                citation="38 U.S.C. 7654",
+                text=assistance_text,
+            )
+        )
+    )
     status_round_trip = set(autoencoder._round_trip_signal_distribution_for(status_sample))
     heading_plan = set(autoencoder._decompiler_plan_distribution_for(heading_sample))
 
@@ -301,6 +328,10 @@ def test_autoencoder_surface_profiles_cover_sparse_uscode_frame_records() -> Non
     assert "legal-semantic-frame:uscode-surface-profile:printing_binding" in heading_features
     assert "legal-semantic-frame:uscode-surface-profile:article_reprint_purchase" in heading_features
     assert "decompiler-plan:uscode-surface-profile:printing_binding" in heading_plan
+    assert (
+        "uscode-surface-profile-family:health_professional_education_assistance:deontic"
+        in assistance_features
+    )
 
 
 def test_legal_ir_targets_use_persistent_disk_cache(
@@ -682,6 +713,46 @@ def test_adaptive_autoencoder_todo_updates_lower_ce_and_increase_cosine() -> Non
     assert after.cross_entropy_loss < before.cross_entropy_loss
     assert after.embedding_cosine_similarity > before.embedding_cosine_similarity
     assert autoencoder.state.applied_todo_ids == ["ce-1", "cos-1"]
+
+
+def test_rescue_todo_uses_original_reconstruction_action_from_metadata() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice.",
+    )
+    autoencoder = AdaptiveModalAutoencoder()
+    before = autoencoder.evaluate([sample])
+    todo = SimpleNamespace(
+        action="rescue_failed_program_synthesis_validation",
+        metadata={
+            "semantic_bundle_key": json.dumps(
+                {
+                    "original_action": "improve_encoder_decoder_reconstruction",
+                    "target_metrics": [
+                        "embedding_cosine_similarity",
+                        "cosine_loss",
+                        "reconstruction_loss",
+                    ],
+                }
+            )
+        },
+        sample_ids=[sample.sample_id],
+        todo_id="rescue-cos-1",
+    )
+
+    report = autoencoder.apply_todo(
+        todo,
+        {sample.sample_id: sample},
+        learning_rate=0.5,
+    )
+    after = autoencoder.evaluate([sample])
+
+    assert report["action"] == "rescue_failed_program_synthesis_validation"
+    assert report["effective_action"] == "improve_encoder_decoder_reconstruction"
+    assert report["changed"] == ["decoded_embedding"]
+    assert after.embedding_cosine_similarity > before.embedding_cosine_similarity
+    assert autoencoder.state.applied_todo_ids == ["rescue-cos-1"]
 
 
 def test_autoencoder_surfaces_typed_family_pair_view_bridge_slots() -> None:
@@ -1677,6 +1748,25 @@ def test_targeted_reconstruction_slots_cover_frame_conditional_and_deontic_self_
     assert (
         "slot:typed-decompiler-target-reconstruction-cue:deontic->deontic:shall"
         in deontic_slots
+    )
+
+
+def test_targeted_reconstruction_slots_downweight_registry_only_family_pairs() -> None:
+    sample = build_us_code_sample(
+        title="42",
+        section="9164.",
+        text=(
+            "The Secretary shall establish and enforce standards for submarine "
+            "electric transmission cable safety."
+        ),
+    )
+    autoencoder = AdaptiveModalAutoencoder()
+
+    slots = autoencoder._semantic_slot_distribution_for(sample)
+
+    assert (
+        slots["slot:typed-decompiler-target-reconstruction-pair:deontic->deontic"]
+        > slots["slot:typed-decompiler-target-reconstruction-pair:deontic->temporal"]
     )
 
 
@@ -10385,6 +10475,7 @@ def test_targeted_typed_family_pairs_have_reconstruction_slots() -> None:
         "frame->frame",
         "frame->temporal",
         "temporal->conditional_normative",
+        "temporal->frame",
         "temporal->temporal",
     ):
         assert (

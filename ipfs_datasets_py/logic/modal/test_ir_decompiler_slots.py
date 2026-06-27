@@ -6803,6 +6803,62 @@ def test_decode_and_triples_emit_no_modal_span_bucket_for_zero_formula_documents
     assert objects("modal_span_coverage_bucket") == ["no_modal_span"]
 
 
+def _frame_unnamed_predicate_cue_force_sample_document() -> ModalIRDocument:
+    source_id = "us-code-49-10902-frame-unnamed-cue-force-0a81cc9526fcb917"
+    source_text = (
+        "Subject to subsection (b), the Board may approve the application."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-frame-unnamed-cue-force",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="", role="clause"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="49 U.S.C. 10902",
+        ),
+        conditions=["subject to subsection (b)"],
+        metadata={"cue": "may"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_emits_unnamed_predicate_cue_force_bridge_slots() -> None:
+    decoded = decode_modal_ir_document(_frame_unnamed_predicate_cue_force_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "may:permission" in slot_map["typed_decompiler_cue_force"]
+    assert (
+        "cue-force:may:permission"
+        in slot_map["normative_polarity"]
+    )
+    assert (
+        "may:permission:enabling:frame->conditional_normative"
+        in slot_map["typed_decompiler_cue_force_polarity_family_pair"]
+    )
+    assert (
+        "source-predicate-head:frame:unnamed|typed-decompiler-force-polarity:"
+        "permission:enabling:frame->conditional_normative"
+        in slot_map["typed_decompiler_source_predicate_force_pair"]
+    )
+    assert (
+        "source-predicate-head:frame:unnamed|typed-decompiler-force-polarity:"
+        "obligation:conditional:frame->deontic"
+        in slot_map["typed_decompiler_source_predicate_force_pair"]
+    )
+
+
 def _under_scope_deontic_sample_document() -> ModalIRDocument:
     source_id = "us-code-5-552-under-scope-deontic-2dd3178ce4b6af11"
     source_text = (

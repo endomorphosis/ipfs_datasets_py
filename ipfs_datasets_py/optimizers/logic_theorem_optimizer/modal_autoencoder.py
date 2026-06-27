@@ -176,6 +176,7 @@ _AUTOENCODER_TARGETED_RECONSTRUCTION_FAMILY_PAIRS = frozenset(
         "frame->frame",
         "frame->temporal",
         "temporal->conditional_normative",
+        "temporal->frame",
         "temporal->temporal",
     }
 )
@@ -3814,8 +3815,59 @@ class AdaptiveModalAutoencoder:
         learning_rate: float = 0.35,
     ) -> Dict[str, Any]:
         """Apply one TODO and return a compact update report."""
-        action = str(getattr(todo, "action", ""))
+        raw_action = str(getattr(todo, "action", ""))
+        metadata = getattr(todo, "metadata", {})
+        if not isinstance(metadata, Mapping):
+            metadata = {}
+
+        def metadata_payloads() -> List[Mapping[str, Any]]:
+            payloads: List[Mapping[str, Any]] = [metadata]
+            for key in ("bundle", "semantic_bundle_key", "evidence"):
+                value = metadata.get(key)
+                if isinstance(value, Mapping):
+                    payloads.append(value)
+                elif isinstance(value, str) and value.strip().startswith("{"):
+                    try:
+                        parsed = json.loads(value)
+                    except (TypeError, ValueError):
+                        continue
+                    if isinstance(parsed, Mapping):
+                        payloads.append(parsed)
+            return payloads
+
+        action = raw_action
+        if action == "rescue_failed_program_synthesis_validation":
+            for payload in metadata_payloads():
+                rescued_action = str(payload.get("original_action") or "").strip()
+                if rescued_action:
+                    action = rescued_action
+                    break
         loss_name = str(getattr(todo, "loss_name", ""))
+        if not loss_name:
+            target_metrics: List[str] = []
+            for payload in metadata_payloads():
+                raw_metrics = payload.get("target_metrics")
+                if isinstance(raw_metrics, str):
+                    target_metrics.extend(
+                        metric.strip()
+                        for metric in raw_metrics.split(",")
+                        if metric.strip()
+                    )
+                elif isinstance(raw_metrics, Sequence) and not isinstance(
+                    raw_metrics,
+                    (bytes, bytearray, str),
+                ):
+                    target_metrics.extend(str(metric) for metric in raw_metrics)
+            for metric in target_metrics:
+                normalized_metric = str(metric).strip()
+                if normalized_metric in {
+                    "cosine_loss",
+                    "cross_entropy_loss",
+                    "legal_ir_view_cross_entropy_loss",
+                    "reconstruction_loss",
+                }:
+                    loss_name = normalized_metric
+                    break
         todo_id = str(getattr(todo, "todo_id", ""))
         sample_ids = [str(value) for value in getattr(todo, "sample_ids", [])]
         changed: List[str] = []
@@ -3837,7 +3889,7 @@ class AdaptiveModalAutoencoder:
         )
         if not trainable:
             return {
-                "action": action,
+                "action": raw_action,
                 "changed": [],
                 "reason": "todo targets deterministic program synthesis, not autoencoder SGD",
                 "sample_ids": sample_ids,
@@ -3867,12 +3919,15 @@ class AdaptiveModalAutoencoder:
 
         if todo_id and todo_id not in self.state.applied_todo_ids:
             self.state.applied_todo_ids.append(todo_id)
-        return {
-            "action": action,
+        report = {
+            "action": raw_action,
             "changed": sorted(set(changed)),
             "sample_ids": sample_ids,
             "todo_id": todo_id,
         }
+        if action != raw_action:
+            report["effective_action"] = action
+        return report
 
     def train_generalizable_projection(
         self,
@@ -18855,14 +18910,14 @@ class AdaptiveModalAutoencoder:
                 if family_pair in _AUTOENCODER_TARGETED_RECONSTRUCTION_FAMILY_PAIRS:
                     bump(
                         f"slot:typed-decompiler-target-reconstruction-pair:{family_pair}",
-                        weight=1.35,
+                        weight=1.35 * pair_strength,
                     )
                     bump(
                         (
                             "slot:typed-decompiler-target-reconstruction-scope:"
                             f"{scope_signature}:{family_pair}"
                         ),
-                        weight=1.0,
+                        weight=1.0 * pair_strength,
                     )
                     for formula_cue_name in formula_cue_names:
                         bump(
@@ -18870,7 +18925,7 @@ class AdaptiveModalAutoencoder:
                                 "slot:typed-decompiler-target-reconstruction-cue:"
                                 f"{family_pair}:{formula_cue_name}"
                             ),
-                            weight=0.9,
+                            weight=0.9 * pair_strength,
                         )
                     for source_cue in source_cue_names[:4]:
                         bump(
@@ -18878,14 +18933,14 @@ class AdaptiveModalAutoencoder:
                                 "slot:typed-decompiler-target-reconstruction-surface-cue:"
                                 f"{source_cue}:{family_pair}"
                             ),
-                            weight=0.8,
+                            weight=0.8 * pair_strength,
                         )
                         bump(
                             (
                                 "slot:typed-decompiler-target-reconstruction-cue:"
                                 f"{family_pair}:{source_cue}"
                             ),
-                            weight=0.75,
+                            weight=0.75 * pair_strength,
                         )
                     for profile in surface_profiles[:4]:
                         bump(
@@ -18893,7 +18948,7 @@ class AdaptiveModalAutoencoder:
                                 "slot:typed-decompiler-target-reconstruction-surface-profile:"
                                 f"{profile}:{family_pair}"
                             ),
-                            weight=0.8,
+                            weight=0.8 * pair_strength,
                         )
                 if topology_signature:
                     bump(
@@ -18927,7 +18982,7 @@ class AdaptiveModalAutoencoder:
                                 "slot:typed-decompiler-target-reconstruction-view:"
                                 f"{family_pair}||{view}"
                             ),
-                            weight=0.95,
+                            weight=0.95 * pair_strength,
                         )
                 for force in force_tags:
                     for polarity in polarity_tags:
@@ -20921,6 +20976,10 @@ class AdaptiveModalAutoencoder:
                 keys.append(f"section-cue:{section_prefix}:{cue_name}")
             if sample.selected_frame:
                 keys.append(f"frame-cue:{sample.selected_frame}:{cue_name}")
+        for profile in _uscode_surface_profile_tags(text):
+            keys.append(f"uscode-surface-profile:{profile}")
+            for family in _uscode_surface_profile_modal_families(profile):
+                keys.append(f"uscode-surface-profile-family:{profile}:{family}")
 
         formula_families: List[str] = []
         formula_operators: List[str] = []
@@ -21252,6 +21311,7 @@ class AdaptiveModalAutoencoder:
             "semantic-slot:",
             "temporal-validity:",
             "title:",
+            "uscode-surface-profile:",
         )
         return str(feature).startswith(core_prefixes)
 
@@ -23883,6 +23943,14 @@ def _uscode_surface_profile_tags(text: str) -> List[str]:
         add("research_grant")
     if re.search(r"\bindividuals with disabilities\b", normalized):
         add("disability_services")
+    if re.search(r"\bhealth professionals? educational assistance program\b", normalized):
+        add("health_professional_education_assistance")
+    if re.search(r"\beducational assistance\b", normalized):
+        add("education_assistance_benefit")
+    if re.search(r"\b(?:costs?|expenses?)\b.*\bcharge\b", normalized):
+        add("cost_expense_charge")
+    if re.search(r"\bcharge\b.*\bprize\b", normalized):
+        add("prize_proceeds_charge")
     if re.search(r"\bfunds for printing, binding\b", normalized):
         add("printing_binding")
     if re.search(r"\b(?:article reprint purchases|reprint purchases)\b", normalized):
@@ -23896,6 +23964,28 @@ def _uscode_surface_profile_tags(text: str) -> List[str]:
     if re.search(r"\beffect of act\b", normalized):
         add("effect_of_act")
     return tags
+
+
+_USCODE_SURFACE_PROFILE_MODAL_FAMILIES: Mapping[str, tuple[str, ...]] = {
+    "appropriation_authorization": ("deontic", "temporal"),
+    "article_reprint_purchase": ("deontic", "frame"),
+    "cost_expense_charge": ("deontic", "frame"),
+    "disability_services": ("deontic", "frame"),
+    "education_assistance_benefit": ("deontic", "frame"),
+    "health_professional_education_assistance": ("deontic", "frame"),
+    "no_year_funding_availability": ("temporal", "deontic"),
+    "printing_binding": ("deontic", "frame"),
+    "prize_proceeds_charge": ("deontic", "frame"),
+    "research_grant": ("deontic", "frame"),
+    "research_program_plan": ("frame", "deontic"),
+    "treasury_deposit": ("deontic", "frame"),
+    "unknown_party_deposit": ("deontic", "frame"),
+}
+
+
+def _uscode_surface_profile_modal_families(profile: str) -> tuple[str, ...]:
+    """Return modal families implied by a stable U.S. Code surface profile."""
+    return _USCODE_SURFACE_PROFILE_MODAL_FAMILIES.get(str(profile), ())
 
 
 def _feature_atom(value: Any, *, max_tokens: int = 4) -> str:

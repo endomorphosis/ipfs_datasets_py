@@ -214,6 +214,11 @@ _USCODE_LEADING_SECTION_REF_RE = re.compile(
     rf"^\s*(?:(?:§{{1,2}}\s*|secs?\.?\s*|sections?\s+){_USCODE_SECTION_LIST_PATTERN}|{_USCODE_SECTION_TOKEN_PATTERN})\s*(?:[.:\-–—]+)?\s*",
     re.IGNORECASE,
 )
+_USCODE_CATCHLINE_BODY_START_RE = re.compile(
+    r"\s+(?=(?:\([a-z0-9]+\)\s+|For\s+purposes\s+of\b|On\s+and\s+after\b|"
+    r"No\s+\w+\b|The\s+\w+\b|A\s+\w+\b|An\s+\w+\b))",
+    re.IGNORECASE,
+)
 _USCODE_STATUS_LEADING_SECTION_LABEL_RE = re.compile(
     r"^\s*(?:(?:this|such)\s+)?(?:sections?|secs?\.?)\b\s*[,.:;\-–—]*\s*",
     re.IGNORECASE,
@@ -1220,6 +1225,11 @@ _STATUTORY_SCOPE_REFERENCE_RE = re.compile(
     rf"(?!\w)",
     re.IGNORECASE,
 )
+_STRUCTURAL_HEADING_SPAN_RE = re.compile(
+    rf"(?<!\w)(?:{_STATUTORY_SCOPE_UNIT_PATTERN})\s+"
+    rf"(?:\d+[a-z]?|[ivxlcdm]+|[a-z])\b",
+    re.IGNORECASE,
+)
 _SLOT_FEATURE_TOKEN_RE = re.compile(r"[A-Za-z0-9]+")
 _CUE_TOKEN_RE = re.compile(r"[a-z0-9]+")
 _USCODE_FALLBACK_STATUS_KEYWORDS: tuple[str, ...] = (
@@ -1275,6 +1285,9 @@ _FRAME_ONTOLOGY_METADATA_VALUE_KEYS = frozenset(
         "matched_terms",
         "name",
         "names",
+        "pipeline_stage",
+        "pipeline_stage_focus",
+        "primary_pipeline_stage",
         "sample",
         "sample_id",
         "sample_ids",
@@ -4918,6 +4931,8 @@ def _source_anchor_family_pairs(
         if not candidate_family or candidate_family in distinct_families:
             continue
         distinct_families.append(candidate_family)
+    if source_family == "frame" and set(distinct_families or [source_family]) == {"frame"}:
+        return ["frame->frame"]
     for target_family in _cue_derived_target_families(formula):
         if target_family and target_family not in distinct_families:
             distinct_families.append(target_family)
@@ -6721,6 +6736,24 @@ def _structural_frame_cues_from_text(text: str) -> List[str]:
     return cues
 
 
+def _temporal_structural_frame_context_cues_from_text(text: str) -> List[str]:
+    normalized_text = _clean_non_empty_string(text).replace("_", " ").lower()
+    if not normalized_text:
+        return []
+    cues = _structural_frame_cues_from_text(normalized_text)
+    if not cues:
+        return []
+    if _is_probable_uscode_compilation_span(text):
+        return cues
+    if _STATUTORY_SCOPE_REFERENCE_RE.search(normalized_text):
+        return cues
+    if _STRUCTURAL_HEADING_SPAN_RE.search(normalized_text):
+        return cues
+    if _temporal_transition_context_cues_from_text(normalized_text):
+        return [cue for cue in cues if cue != "title"]
+    return []
+
+
 @lru_cache(maxsize=1)
 def _bridge_registry_cue_terms() -> tuple[str, ...]:
     terms: set[str] = set()
@@ -6855,6 +6888,7 @@ def _refined_contextual_modal_cues_from_text(
 ) -> List[str]:
     formula_family = _clean_non_empty_string(formula.operator.family).lower()
     temporal_context_cues = _temporal_transition_context_cues_from_text(text)
+    temporal_structural_cues = _temporal_structural_frame_context_cues_from_text(text)
     cues: List[str] = []
     for cue in _contextual_modal_cues_from_text(formula, text=text):
         if cue and cue not in cues:
@@ -6875,12 +6909,17 @@ def _refined_contextual_modal_cues_from_text(
         for cue in _frame_status_keyword_cues_from_text(text):
             if cue and cue not in cues:
                 cues.append(cue)
-    elif formula_family == "temporal" and temporal_context_cues:
+    elif formula_family == "temporal" and (
+        temporal_context_cues or temporal_structural_cues
+    ):
         # Temporal formulas often carry frame-like statute scaffolding tokens
         # ("title", "chapter", "subchapter") inside compilation spans.
-        # Only admit those structural cues when the same text also has
-        # temporal context so non-temporal noun noise stays filtered.
-        for cue in _structural_frame_cues_from_text(text):
+        # Admit structural cues only for real statute scope/heading contexts,
+        # so ordinary noun uses such as "title updates" stay filtered.
+        for cue in temporal_context_cues:
+            if cue and cue not in cues:
+                cues.append(cue)
+        for cue in temporal_structural_cues:
             if cue and cue not in cues:
                 cues.append(cue)
     elif formula_family == "temporal":
@@ -7051,6 +7090,13 @@ def _refined_temporal_transition_components(
     ):
         return []
     context_cues = _temporal_transition_context_cues_from_text(text)
+    structural_context_cues = _temporal_structural_frame_context_cues_from_text(text)
+    if (
+        formula_family == "temporal"
+        and normalized_cue in structural_context_cues
+        and normalized_cue not in context_cues
+    ):
+        context_cues.append(normalized_cue)
     if not context_cues:
         return []
     if formula_family == "deontic":
@@ -10520,6 +10566,10 @@ def _fallback_section_heading_tail_text(
         return ""
     start = max(0, min(len(source_text), int(formula.provenance.start_char)))
     end = max(start, min(len(source_text), int(formula.provenance.end_char)))
+    local_span = source_text[start:end]
+    local_heading = _leading_uscode_catchline_text(local_span, max_tokens=max_tokens)
+    if local_heading:
+        return local_heading
     trailing = source_text[end:]
     if not trailing:
         return ""
@@ -10545,6 +10595,41 @@ def _fallback_section_heading_tail_text(
     if len(tokens) > max_tokens:
         return ""
     return heading_tail
+
+
+def _leading_uscode_catchline_text(text: str, *, max_tokens: int) -> str:
+    normalized = _clean_non_empty_string(text)
+    if not normalized:
+        return ""
+    stripped = _clean_non_empty_string(
+        _USCODE_LEADING_SECTION_REF_RE.sub("", normalized, count=1)
+    )
+    if not stripped or stripped == normalized:
+        return ""
+    stripped = _strip_uscode_gpo_attribution_fragment(stripped)
+    stripped = _clean_non_empty_string(stripped.lstrip(" \t\r\n-–—:;,."))
+    if not stripped:
+        return ""
+    body_match = _USCODE_CATCHLINE_BODY_START_RE.search(stripped)
+    if body_match is not None:
+        stripped = _clean_non_empty_string(stripped[: body_match.start()])
+    else:
+        stripped = _clean_non_empty_string(
+            _SECTION_HEADING_TAIL_SPLIT_RE.split(stripped, maxsplit=1)[0]
+        )
+    stripped = _TRAILING_SECTION_PUNCT_RE.sub("", stripped)
+    if not stripped or _is_low_information_section_marker(stripped):
+        return ""
+    lowered = stripped.lower()
+    if (
+        lowered.startswith("u.s.c. title")
+        or lowered.startswith("usc title")
+        or "united states code" in lowered
+    ):
+        return ""
+    if len(_SLOT_FEATURE_TOKEN_RE.findall(stripped.lower())) > max_tokens:
+        return ""
+    return stripped
 
 
 def _alnum_segments(token: str) -> List[str]:
@@ -11942,6 +12027,9 @@ def _frame_ontology_audit_metadata_feature_keys(
         metadata.get("frame_feature_key"),
         metadata.get("frame_feature_keys"),
         metadata.get("frame_features"),
+        metadata.get("pipeline_stage"),
+        metadata.get("pipeline_stage_focus"),
+        metadata.get("primary_pipeline_stage"),
         metadata.get("sample_id"),
         metadata.get("sample_ids"),
         metadata.get("source_id"),
@@ -11985,6 +12073,9 @@ def _frame_ontology_audit_metadata_feature_keys(
             frame_logic_metadata.get("frame_feature_key"),
             frame_logic_metadata.get("frame_feature_keys"),
             frame_logic_metadata.get("frame_features"),
+            frame_logic_metadata.get("pipeline_stage"),
+            frame_logic_metadata.get("pipeline_stage_focus"),
+            frame_logic_metadata.get("primary_pipeline_stage"),
             frame_logic_metadata.get("hint_evidence"),
             frame_logic_metadata.get("top_embedding_contributions"),
             frame_logic_metadata.get("top_embedding_features"),

@@ -312,13 +312,18 @@ def attestation_view_matches_proof(
             metadata=metadata_dict,
         )
 
-        if public_inputs_dict.get("attestation_ref") != expected["attestation_ref"]:
+        if not embedded:
             return False
-        if int(public_inputs_dict.get("attestation_view_version") or 0) != int(
+
+        public_ref = public_inputs_dict.get("attestation_ref")
+        public_version = public_inputs_dict.get("attestation_view_version")
+        if public_ref is not None and public_ref != expected["attestation_ref"]:
+            return False
+        if public_version is not None and int(public_version or 0) != int(
             expected["attestation_view_version"]
         ):
             return False
-        if not embedded:
+        if (public_ref is None) != (public_version is None):
             return False
 
         for key in (

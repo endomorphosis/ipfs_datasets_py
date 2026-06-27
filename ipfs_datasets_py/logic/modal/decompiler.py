@@ -1275,7 +1275,7 @@ _DECOMPILER_REFINED_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = {
         "frame",
         "temporal",
     ),
-    "temporal": ("conditional_normative", "deontic", "frame", "temporal"),
+    "temporal": ("conditional_normative", "deontic", "dynamic", "frame", "temporal"),
 }
 _DEONTIC_BRIDGE_REINFORCEMENT_OPERATORS: frozenset[str] = frozenset(
     {
@@ -1623,6 +1623,11 @@ _STATUTORY_SCOPE_REFERENCE_RE = re.compile(
     rf"(?P<unit>{_STATUTORY_SCOPE_UNIT_PATTERN})"
     rf"(?:\s+(?P<target>(?:\([^)]+\))+|[0-9A-Za-z][0-9A-Za-z.\-]*(?:\([^)]+\))*))?"
     rf"(?!\w)",
+    re.IGNORECASE,
+)
+_STRUCTURAL_HEADING_SPAN_RE = re.compile(
+    rf"(?<!\w)(?:{_STATUTORY_SCOPE_UNIT_PATTERN})\s+"
+    rf"(?:\d+[a-z]?|[ivxlcdm]+|[a-z])\b",
     re.IGNORECASE,
 )
 _CUE_TOKEN_RE = re.compile(r"[a-z0-9]+")
@@ -2978,7 +2983,14 @@ def _inferred_condition_values_from_source_span(
         for definition_clause in _inferred_definition_condition_values_from_text(
             source_text
         ):
-            if add_clause(definition_clause, "as_defined_in"):
+            parsed_definition_clause = _typed_clause_slot(
+                definition_clause,
+                slot="condition",
+            )
+            if parsed_definition_clause is None:
+                continue
+            _, definition_prefix_key, _ = parsed_definition_clause
+            if add_clause(definition_clause, definition_prefix_key):
                 return inferred
     for span_candidate in inference_texts:
         lowered_span = span_candidate.lower()
@@ -3023,20 +3035,39 @@ def _inferred_condition_values_from_source_span(
 
 def _inferred_definition_condition_values_from_text(text: str) -> List[str]:
     normalized = _clean_text(text)
-    if not normalized or not _DEFINED_TERM_RE.search(normalized):
+    if not normalized:
         return []
     values: List[str] = []
-    for match in re.finditer(
-        (
-            r"\bhas\s+the\s+meaning\s+given\s+(?:that\s+term\s+)?"
-            r"(?:in|by)\s+(?P<scope>[^.;:]{3,120})"
-        ),
+    if _DEFINED_TERM_RE.search(normalized):
+        for match in re.finditer(
+            (
+                r"\bhas\s+the\s+meaning\s+given\s+(?:that\s+term\s+)?"
+                r"(?:in|by)\s+(?P<scope>[^.;:]{3,120})"
+            ),
+            normalized,
+            flags=re.IGNORECASE,
+        ):
+            scope = _clean_text(match.group("scope"))
+            if scope:
+                values.append(f"as defined in {scope}")
+    if re.search(
+        r"(?<!\w)(?:definitions?|the\s+term|['\"][^'\"]{2,80}['\"]\s+means)\b",
         normalized,
         flags=re.IGNORECASE,
     ):
-        scope = _clean_text(match.group("scope"))
-        if scope:
-            values.append(f"as defined in {scope}")
+        for match in re.finditer(
+            (
+                r"\bin\s+(?P<determiner>this|such)?\s*"
+                r"(?P<scope>chapter|subchapter|section|subsection|paragraph|"
+                r"subparagraph|title|part)\b"
+            ),
+            normalized,
+            flags=re.IGNORECASE,
+        ):
+            determiner = _clean_text(match.group("determiner") or "this").lower()
+            scope = _clean_text(match.group("scope")).lower()
+            if determiner and scope:
+                values.append(f"for purposes of {determiner} {scope}")
     return _unique_preserve_order(values)
 
 
@@ -14417,6 +14448,8 @@ def _source_anchor_family_pairs(
         if not candidate_family or candidate_family in distinct_families:
             continue
         distinct_families.append(candidate_family)
+    if source_family == "frame" and set(distinct_families or [source_family]) == {"frame"}:
+        return ["frame->frame"]
     for target_family in _cue_derived_target_families(formula):
         if target_family and target_family not in distinct_families:
             distinct_families.append(target_family)
@@ -14477,6 +14510,7 @@ def _typed_decompiler_bridge_phrases(
         if document is not None
         else [f"{family}->{family}"]
     )
+    source_predicate_head = predicate_head or "unnamed"
     phrases: List[DecodedModalPhrase] = []
     seen: set[Tuple[str, str]] = set()
 
@@ -14909,13 +14943,20 @@ def _typed_decompiler_bridge_phrases(
                         ),
                     )
         for cue_key in source_cue_keys:
+            family_pair_cue = f"{family_pair}:{cue_key}"
             add(
                 "typed_decompiler_semantic_reconstruction_cue_family_pair",
                 f"{cue_key}:{family_pair}",
             )
+            add("typed_decompiler_family_pair_cue", family_pair_cue)
             add(
                 "typed_decompiler_target_reconstruction_cue",
                 f"{family_pair}:{cue_key}",
+            )
+            add_family_semantic_slot(
+                family=source_family,
+                slot_name="typed-decompiler-family-pair-cue",
+                slot_value=family_pair_cue,
             )
             add_family_semantic_slot_pair(
                 family=source_family,
@@ -14924,10 +14965,30 @@ def _typed_decompiler_bridge_phrases(
             )
             add_family_semantic_slot(
                 family=target_family,
+                slot_name="typed-decompiler-family-pair-cue",
+                slot_value=f"{family_pair}:{cue_key}",
+            )
+            add_family_semantic_slot(
+                family=target_family,
                 slot_name="typed-decompiler-target-reconstruction-cue",
                 slot_value=f"{family_pair}:{cue_key}",
             )
             if target_family != source_family:
+                target_self_pair_cue = f"{target_family}->{target_family}:{cue_key}"
+                add(
+                    "typed_decompiler_target_self_family_pair_cue",
+                    target_self_pair_cue,
+                )
+                add_family_semantic_slot(
+                    family=source_family,
+                    slot_name="typed-decompiler-family-pair-cue",
+                    slot_value=target_self_pair_cue,
+                )
+                add_family_semantic_slot(
+                    family=target_family,
+                    slot_name="source-typed-decompiler-family-pair-cue",
+                    slot_value=f"{family_pair_cue}:{source_family}",
+                )
                 add_family_semantic_slot_pair(
                     family=target_family,
                     left_slot=f"source-semantic-reconstruction-cue:{cue_key}:{source_family}",
@@ -14949,6 +15010,104 @@ def _typed_decompiler_bridge_phrases(
                         f"reconstruction-cue:{family_pair}:{cue_key}||{view}"
                     ),
                 )
+                add(
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    (
+                        f"{source_family}||slot:typed-decompiler-family-pair-cue:"
+                        f"{family_pair_cue}||{view}"
+                    ),
+                )
+                if target_family != source_family:
+                    add(
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        (
+                            f"{source_family}||slot:typed-decompiler-family-pair-cue:"
+                            f"{target_family}->{target_family}:{cue_key}||{view}"
+                        ),
+                    )
+        fallback_rule = _slot_safe_family_key(
+            _clean_text(formula.metadata.get("fallback_rule") or "").lower()
+        )
+        pair_cues = _unique_preserve_order(
+            [
+                predicate_role,
+                *(source_cue_keys or []),
+                fallback_rule,
+            ]
+        )
+        for pair_cue in pair_cues:
+            if not pair_cue:
+                continue
+            add(
+                "typed_decompiler_family_pair_cue",
+                f"{family_pair}:{pair_cue}",
+            )
+            add_family_semantic_slot(
+                family=target_family,
+                slot_name="typed-decompiler-family-pair-cue",
+                slot_value=f"{family_pair}:{pair_cue}",
+            )
+            for cue_force, cue_polarity in _typed_decompiler_cue_force_polarity_values(
+                pair_cue
+            ):
+                cue_force_value = f"{pair_cue}:{cue_force}"
+                cue_force_polarity_value = f"{pair_cue}:{cue_force}:{cue_polarity}"
+                cue_force_slot = (
+                    f"source-predicate-head:{source_family}:"
+                    f"{source_predicate_head}|typed-decompiler-force-polarity:"
+                    f"{cue_force}:{cue_polarity}"
+                )
+                add("typed_decompiler_cue_force", cue_force_value)
+                add(
+                    "typed_decompiler_cue_force_family_pair",
+                    f"{cue_force_value}:{family_pair}",
+                )
+                add(
+                    "typed_decompiler_cue_force_polarity_family_pair",
+                    f"{cue_force_polarity_value}:{family_pair}",
+                )
+                add(
+                    "normative_polarity",
+                    f"cue-force:{pair_cue}:{cue_force}",
+                )
+                add(
+                    "typed_decompiler_source_predicate_force_pair",
+                    f"{cue_force_slot}:{family_pair}",
+                )
+                add_family_semantic_slot(
+                    family=target_family,
+                    slot_name="typed-decompiler-cue-force",
+                    slot_value=f"{cue_force_value}:{source_family}",
+                )
+                add_family_semantic_slot_pair(
+                    family=target_family,
+                    left_slot=f"cue-force:{cue_force_value}",
+                    right_slot=f"typed-decompiler-family-pair:{family_pair}",
+                )
+                for view in _preferred_legal_ir_views_for_family(target_family):
+                    add(
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        (
+                            f"{target_family}||slot:typed-decompiler-cue-force:"
+                            f"{cue_force_value}:{source_family}||{view}"
+                        ),
+                    )
+                    add(
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        (
+                            f"{target_family}||slot-pair:cue-force:"
+                            f"{cue_force_value}|typed-decompiler-family-pair:"
+                            f"{family_pair}||{view}"
+                        ),
+                    )
+                    add(
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        (
+                            f"{target_family}||slot:"
+                            f"typed-decompiler-source-predicate-force-pair:"
+                            f"{cue_force_slot}||{view}"
+                        ),
+                    )
         for force_polarity_value in _typed_decompiler_force_polarity_values(
             force=modal_force,
             polarity=modal_polarity,
@@ -15018,9 +15177,17 @@ def _typed_decompiler_bridge_phrases(
                         f"source-predicate-head:{source_family}:{predicate_head}|"
                         f"typed-decompiler-force-polarity:{force_polarity_value}"
                     )
+                    compact_predicate_force_slot = (
+                        f"{source_family}:{predicate_head}|"
+                        f"typed-decompiler-force-polarity:{force_polarity_value}"
+                    )
                     add(
                         "typed_decompiler_source_predicate_force_pair",
                         f"{source_predicate_force_slot}:{family_pair}",
+                    )
+                    add(
+                        "typed_decompiler_source_predicate_force_pair",
+                        f"{compact_predicate_force_slot}:{family_pair}",
                     )
                     add(
                         "family_semantic_slot_legal_ir_view_prototype",
@@ -15041,12 +15208,61 @@ def _typed_decompiler_bridge_phrases(
                     add(
                         "family_semantic_slot_legal_ir_view_prototype",
                         (
+                            f"{target_family}||slot:typed-decompiler-source-predicate-force-pair:"
+                            f"{compact_predicate_force_slot}||{view}"
+                        ),
+                    )
+                    add(
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        (
                             f"{target_family}||slot-pair:"
                             f"typed-decompiler-source-predicate-force-pair:"
                             f"{source_predicate_force_slot}|"
                             f"typed-decompiler-family-pair:{family_pair}||{view}"
                         ),
                     )
+                    add(
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        (
+                            f"{target_family}||slot-pair:"
+                            f"typed-decompiler-source-predicate-force-pair:"
+                            f"{compact_predicate_force_slot}|"
+                            f"typed-decompiler-family-pair:{family_pair}||{view}"
+                        ),
+                    )
+                source_predicate_force_slot = (
+                    f"source-predicate-head:{source_family}:{source_predicate_head}|"
+                    f"typed-decompiler-force-polarity:{force_polarity_value}"
+                )
+                add(
+                    "typed_decompiler_source_predicate_force_pair",
+                    f"{source_predicate_force_slot}:{family_pair}",
+                )
+                add(
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    (
+                        f"{target_family}||slot-pair:"
+                        f"source-predicate-head:{source_family}:"
+                        f"{source_predicate_head}|typed-decompiler-force-polarity:"
+                        f"{force_polarity_value}||{view}"
+                    ),
+                )
+                add(
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    (
+                        f"{target_family}||slot:typed-decompiler-source-predicate-force-pair:"
+                        f"{source_predicate_force_slot}||{view}"
+                    ),
+                )
+                add(
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    (
+                        f"{target_family}||slot-pair:"
+                        f"typed-decompiler-source-predicate-force-pair:"
+                        f"{source_predicate_force_slot}|"
+                        f"typed-decompiler-family-pair:{family_pair}||{view}"
+                    ),
+                )
         for topology_slot, topology_value in topology_slot_values:
             if topology_slot not in {
                 "typed_decompiler_clause_topology",
@@ -16265,6 +16481,58 @@ def _typed_decompiler_force_polarity_values(
     if semantic_polarity:
         values.append(f"{normalized_force}:{semantic_polarity}")
     return _unique_preserve_order(values)
+
+
+def _typed_decompiler_cue_force_polarity_values(cue: str) -> List[Tuple[str, str]]:
+    """Return force/polarity tags implied by a modal or bridge cue."""
+
+    cue_key = _slot_safe_family_key(_clean_text(cue).replace(" ", "_").lower())
+    if not cue_key:
+        return []
+    pairs: List[Tuple[str, str]] = []
+
+    def add(force: str, polarity: str) -> None:
+        pair = (force, polarity)
+        if pair not in pairs:
+            pairs.append(pair)
+
+    if cue_key in {
+        "shall",
+        "must",
+        "required",
+        "require",
+        "requires",
+        "requiring",
+        "obligation",
+        "obligated",
+        "obligatory",
+        "under_an_obligation_to",
+        "has_a_duty_to",
+        "have_a_duty_to",
+    }:
+        add("obligation", "mandatory")
+    if cue_key in {
+        "may",
+        "authorized",
+        "allowed",
+        "permitted",
+        "permission",
+        "is_entitled_to",
+        "shall_be_entitled_to",
+    }:
+        add("permission", "enabling")
+    if cue_key in {
+        "may_not",
+        "must_not",
+        "shall_not",
+        "prohibited",
+        "forbidden",
+        "prohibition",
+    }:
+        add("prohibition", "restrictive")
+    if cue_key in _CLAUSE_PREFIX_BRIDGE_CUES or cue_key in _STATUTORY_SCOPE_BRIDGE_CUES:
+        add("obligation", "conditional")
+    return pairs
 
 
 def _source_role_anchor_values(
@@ -18874,6 +19142,24 @@ def _structural_frame_cues_from_text(text: str) -> List[str]:
     return cues
 
 
+def _temporal_structural_frame_context_cues_from_text(text: str) -> List[str]:
+    normalized_text = _clean_text(text).replace("_", " ").lower()
+    if not normalized_text:
+        return []
+    cues = _structural_frame_cues_from_text(normalized_text)
+    if not cues:
+        return []
+    if _is_probable_uscode_compilation_span(text):
+        return cues
+    if _STATUTORY_SCOPE_REFERENCE_RE.search(normalized_text):
+        return cues
+    if _STRUCTURAL_HEADING_SPAN_RE.search(normalized_text):
+        return cues
+    if _temporal_transition_context_cues_from_text(normalized_text):
+        return [cue for cue in cues if cue != "title"]
+    return []
+
+
 @lru_cache(maxsize=1)
 def _bridge_registry_cue_terms() -> tuple[str, ...]:
     terms: set[str] = set()
@@ -19022,6 +19308,7 @@ def _refined_contextual_modal_cues_from_text(
 ) -> List[str]:
     formula_family = _clean_text(formula.operator.family).lower()
     temporal_context_cues = _temporal_transition_context_cues_from_text(text)
+    temporal_structural_cues = _temporal_structural_frame_context_cues_from_text(text)
     cues: List[str] = []
     for cue in _contextual_modal_cues_from_text(formula, text=text):
         if cue and cue not in cues:
@@ -19067,16 +19354,17 @@ def _refined_contextual_modal_cues_from_text(
             if cue and cue not in cues:
                 cues.append(cue)
     elif formula_family == "temporal" and (
-        temporal_context_cues
-        or _is_probable_uscode_compilation_span(text)
-        or _formula_has_uscode_context(formula)
+        temporal_context_cues or temporal_structural_cues
     ):
         # Temporal formulas often carry frame-like statute scaffolding tokens
         # ("title", "chapter", "subchapter") inside compilation spans.
         # Admit those structural cues when the same text has temporal context
         # or the span is identifiable U.S. Code compilation scaffolding, so
         # clipped heading spans still preserve temporal->frame bridge slots.
-        for cue in _structural_frame_cues_from_text(text):
+        for cue in temporal_context_cues:
+            if cue and cue not in cues:
+                cues.append(cue)
+        for cue in temporal_structural_cues:
             if cue and cue not in cues:
                 cues.append(cue)
     elif formula_family == "temporal":
@@ -19632,16 +19920,13 @@ def _refined_temporal_transition_slots(
     ):
         return []
     context_cues = _temporal_transition_context_cues_from_text(text)
+    structural_context_cues = _temporal_structural_frame_context_cues_from_text(text)
     if (
-        not context_cues
-        and formula_family == "temporal"
-        and normalized_cue in _STRUCTURAL_FRAME_CUE_TOKENS
-        and (
-            _is_probable_uscode_compilation_span(text)
-            or _formula_has_uscode_context(formula)
-        )
+        formula_family == "temporal"
+        and normalized_cue in structural_context_cues
+        and normalized_cue not in context_cues
     ):
-        context_cues = [normalized_cue]
+        context_cues.append(normalized_cue)
     if not context_cues:
         return []
     if formula_family == "deontic":

@@ -358,6 +358,18 @@ class TestParserPredicates:
         assert isinstance(formula, Predicate)
         assert formula.name == "Q"
         assert formula.arguments == ()
+
+    def test_parse_reserved_single_letter_nullary_predicates(self):
+        """Test reserved modal symbols as atoms when no modal payload follows."""
+        # GIVEN single-letter atom names that are modal operators with (...)
+        for formula_str in ("P", "O", "F", "G", "X", "U", "S", "W", "R"):
+            # WHEN parsing
+            formula = parse_tdfol(formula_str)
+
+            # THEN they should be accepted as propositional variables
+            assert isinstance(formula, Predicate)
+            assert formula.name == formula_str
+            assert formula.arguments == ()
     
     def test_parse_unary_predicate(self):
         """Test parsing a unary predicate."""
@@ -552,6 +564,22 @@ class TestParserLogicOperators:
         # THEN should be a binary formula with OR
         assert isinstance(formula, BinaryFormula)
         assert formula.operator == LogicOperator.OR
+
+    def test_parse_implication_with_reserved_single_letter_atoms(self):
+        """Test implication syntax used by prover examples with P and Q atoms."""
+        # GIVEN a compact propositional implication
+        formula_str = "P -> Q"
+
+        # WHEN parsing
+        formula = parse_tdfol(formula_str)
+
+        # THEN P should be an atom, not a malformed permission operator
+        assert isinstance(formula, BinaryFormula)
+        assert formula.operator == LogicOperator.IMPLIES
+        assert isinstance(formula.left, Predicate)
+        assert formula.left.name == "P"
+        assert isinstance(formula.right, Predicate)
+        assert formula.right.name == "Q"
     
     def test_parse_negation(self):
         """Test parsing negation."""

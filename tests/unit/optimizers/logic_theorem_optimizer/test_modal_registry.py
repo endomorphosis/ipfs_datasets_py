@@ -1178,10 +1178,10 @@ def test_packet_001270_recurrent_compiler_registry_family_pairs_are_supported() 
 def test_packet_001807_adaptive_family_pairs_are_explicit_ambiguity_policy() -> None:
     """Keep packet-001807 low-margin family transitions visible to the compiler."""
     expected_pairs = (
-        ("deontic", "frame"),
-        ("frame", "conditional_normative"),
+        ("deontic", "conditional_normative"),
+        ("frame", "deontic"),
+        ("frame", "temporal"),
         ("temporal", "deontic"),
-        ("temporal", "frame"),
     )
 
     assert COMPILER_AMBIGUITY_PACKET_001807_FAMILY_PAIRS == expected_pairs
@@ -1200,6 +1200,76 @@ def test_packet_001807_adaptive_family_pairs_are_explicit_ambiguity_policy() -> 
             target_family,
         )
         assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+
+def test_failed_validation_rescue_packet_family_pairs_are_registered() -> None:
+    """Keep hand-rescued failed-validation packet pairs syntax-safe and reachable."""
+    refined_packets = {
+        "003313": (
+            ("frame", "deontic"),
+            ("frame", "temporal"),
+            ("temporal", "deontic"),
+        ),
+        "003650": (
+            ("deontic", "epistemic"),
+            ("frame", "deontic"),
+            ("frame", "doxastic"),
+            ("temporal", "deontic"),
+        ),
+        "003960": (
+            ("conditional_normative", "deontic"),
+            ("frame", "conditional_normative"),
+            ("frame", "deontic"),
+        ),
+        "004579": (
+            ("deontic", "deontic"),
+            ("deontic", "frame"),
+            ("frame", "deontic"),
+            ("frame", "doxastic"),
+            ("frame", "frame"),
+            ("temporal", "deontic"),
+        ),
+        "004746": (
+            ("frame", "conditional_normative"),
+            ("frame", "deontic"),
+            ("temporal", "epistemic"),
+        ),
+    }
+
+    for packet_id, expected_pairs in refined_packets.items():
+        packet_pairs = getattr(
+            modal_registry,
+            f"COMPILER_REFINED_PACKET_{packet_id}_FAMILY_PAIRS",
+        )
+        assert packet_pairs == expected_pairs
+        for predicted_family, target_family in expected_pairs:
+            assert (predicted_family, target_family) in (
+                COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS
+            )
+
+    ambiguity_pairs = modal_registry.COMPILER_AMBIGUITY_PACKET_001879_FAMILY_PAIRS
+    assert ("frame", "dynamic") in ambiguity_pairs
+    for predicted_family, target_family in ambiguity_pairs:
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
             predicted_family
         )
         assert is_signal_free_adaptive_ambiguity_pair(

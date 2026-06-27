@@ -603,6 +603,38 @@ def _dcec_records(
             event_formula_target_quality_gate = _mapping(
                 event_formula_export.get("event_formula_target_quality_gate")
             )
+            if _event_formula_export_needs_bridge_fallback(event_calculus_formula):
+                event_calculus_formula = _event_calculus_formula_text(
+                    source_id=source_id,
+                    deontic_formula=proof_input,
+                )
+                event_formula_source = (
+                    f"{event_formula_source}:bridge_fallback"
+                    if event_formula_source
+                    else "cec_dcec_bridge_fallback"
+                )
+                event_formula_syntax_valid = _event_calculus_formula_shape_valid(
+                    event_calculus_formula
+                )
+                event_formula_target_parse_profile = _event_formula_parse_profile(
+                    event_calculus_formula
+                )
+                event_formula_target_components = _event_formula_target_components(
+                    event_calculus_formula,
+                    source_id=source_id,
+                    modality=modality,
+                )
+                event_formula_target_quality_gate = {
+                    "syntax_valid": bool(event_formula_syntax_valid),
+                    "target_parse_profile_complete": bool(
+                        event_formula_target_parse_profile.get(
+                            "target_parse_profile_complete"
+                        )
+                        is True
+                    ),
+                    "requires_validation": not bool(event_formula_syntax_valid),
+                    "cec_dcec_bridge_fallback_from_invalid_export": True,
+                }
         else:
             event_calculus_formula = _event_calculus_formula_text(
                 source_id=source_id,
@@ -1536,6 +1568,24 @@ def _event_calculus_formula_text(*, source_id: str, deontic_formula: str) -> str
 def _event_calculus_formula_shape_valid(formula: str) -> bool:
     parse_profile = _event_formula_parse_profile(formula)
     return bool(parse_profile.get("target_parse_profile_complete") is True)
+
+
+def _event_formula_export_needs_bridge_fallback(formula: str) -> bool:
+    """Return True when an export has no usable CEC/event-calculus skeleton."""
+
+    text = _normalize_event_formula_text(formula)
+    if not text:
+        return True
+    parse_profile = _event_formula_parse_profile(text)
+    if parse_profile.get("target_parse_profile_complete") is True:
+        return False
+    if parse_profile.get("event_predicates"):
+        return False
+    top_level_symbol = str(parse_profile.get("top_level_symbol") or "")
+    return top_level_symbol not in (
+        _DCEC_STATE_PREDICATE_SET
+        | {"O", "P", "F", "always", "forall", "exists"}
+    )
 
 
 def _source_symbol(source_id: str) -> str:

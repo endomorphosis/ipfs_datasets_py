@@ -6752,6 +6752,46 @@ def test_spacy_compiler_adds_cost_analysis_residual_span_coverage() -> None:
     assert "Cost analysis." in residual_text_spans
 
 
+def test_spacy_compiler_preserves_coalesced_semicolon_uscode_catchline_coverage() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    text = (
+        "U.S.C. Title 30 - MINERAL LANDS AND MINING 30 U.S.C. "
+        "United States Code, 2024 Edition Title 30 - MINERAL LANDS AND "
+        "MINING CHAPTER 13 - CONTROL OF COAL-MINE FIRES Sec. 553 - "
+        "Duties of Secretary; surveys, research, etc.; projects From "
+        "the U.S. Government Publishing Office, www.gpo.gov §553. "
+        "Duties of Secretary; surveys, research, etc.; projects The "
+        "Secretary of the Interior is hereby authorized to conduct surveys."
+    )
+    encoding = encoder.encode(
+        text,
+        document_id="us-code-30-553-semicolon-catchline",
+        citation="30 U.S.C. 553",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    catchline_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule")
+        == "uscode_section_catchline_coverage_v1"
+    }
+    residual_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    }
+
+    assert "Duties of Secretary; surveys, research, etc.; projects" in catchline_spans
+    assert any("surveys, research, etc.; projects" in span for span in residual_spans)
+
+
 def test_spacy_compiler_adds_packet_000004_short_structural_heading_spans() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()

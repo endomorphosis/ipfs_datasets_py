@@ -5588,6 +5588,74 @@ def test_cec_dcec_bridge_validates_event_formula_slots_after_normalization(
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 1.0
 
 
+def test_cec_dcec_bridge_falls_back_from_unstructured_event_formula_export(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge import cec_dcec as cec_dcec_mod
+
+    class _NormResult:
+        success = True
+        metadata = {
+            "legal_norm_irs": [
+                {
+                    "source_id": "bridge:unstructured-export:1",
+                    "actor": "Secretary",
+                    "action": "publish notice",
+                    "modality": "obligated",
+                }
+            ]
+        }
+
+    class _NormConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _NormResult()
+
+    def _fake_event_formula_exports(_norms):
+        return {
+            "bridge:unstructured-export:1": [
+                {
+                    "event_calculus_formula": (
+                        "proof obligation: the Secretary shall publish notice"
+                    ),
+                    "event_formula_source": "deontic.prover_syntax",
+                    "event_formula_syntax_valid": False,
+                }
+            ]
+        }
+
+    monkeypatch.setattr(
+        cec_dcec_mod,
+        "_event_formula_exports_from_norms",
+        _fake_event_formula_exports,
+    )
+
+    adapter = cec_dcec_mod.CecDcecBridgeAdapter(converter=_NormConverter())
+    report = adapter.evaluate(
+        "The Secretary shall publish notice.",
+        document_id="cec-bridge-unstructured-event-export",
+        citation="CEC Bridge Unstructured Event Export",
+    )
+
+    event_record = report.ir_document.views["event_calculus"].payload["records"][0]
+
+    assert event_record["event_formula_source"] == (
+        "deontic.prover_syntax:bridge_fallback"
+    )
+    assert event_record["event_calculus_formula"] == (
+        "Happens(legal_norm(bridge_unstructured_export_1), t) "
+        "=> HoldsAt(O(Happens(secretary,publish_notice,t0)), t)"
+    )
+    assert event_record["event_formula_syntax_valid"] is True
+    assert (
+        event_record["event_formula_target_quality_gate"][
+            "cec_dcec_bridge_fallback_from_invalid_export"
+        ]
+        is True
+    )
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
 def test_cec_dcec_bridge_accepts_case_variant_event_formula_predicates(
     monkeypatch,
 ) -> None:
@@ -5879,6 +5947,49 @@ def test_external_prover_router_legacy_payload_prefers_proof_formula_over_source
     assert result.is_compiled() is True
     assert fallback_result.is_valid is True
     assert fallback_result.formula.to_string() == "O(publish_notice(agency))"
+
+
+def test_external_prover_router_prefers_candidate_formula_alias_over_source_text(
+    monkeypatch,
+) -> None:
+    import builtins
+
+    from ipfs_datasets_py.logic.external_provers.prover_router import ProverRouter
+
+    real_import = builtins.__import__
+
+    def blocked_tdfol_import(name, *args, **kwargs):
+        if str(name).endswith("TDFOL.tdfol_prover"):
+            raise ImportError("tdfol unavailable for candidate formula fallback test")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", blocked_tdfol_import)
+
+    router = ProverRouter(
+        enable_cache=False,
+        enable_cvc5=False,
+        enable_coq=False,
+        enable_lean=False,
+        enable_native=True,
+        enable_symbolicai=False,
+        enable_z3=False,
+    )
+    payload = {
+        "text": "7 U.S.C. 1012. Payments to counties. Source text follows.",
+        "claims": [
+            {
+                "candidate_formula": "O(pay_to_county(secretary, county))",
+                "source_text": "The Secretary shall pay to the county.",
+            }
+        ],
+    }
+
+    result = router.route(payload, strategy="sequential")
+
+    fallback_result = result.all_results["native_syntactic"]
+    assert result.is_compiled() is True
+    assert fallback_result.is_valid is True
+    assert fallback_result.formula.to_string() == "O(pay_to_county(secretary, county))"
 
 
 def test_external_prover_router_syntactic_fallback_accepts_goal_payload_aliases(
@@ -6597,6 +6708,83 @@ def test_external_prover_router_bridge_recovers_nested_packet_text_formula(
     assert report.proof_gate.attempted_count == 1
     assert report.proof_gate.valid_count == 1
     assert report.proof_gate.details[0]["compiled"] is True
+    assert report.round_trip.extra_losses["external_prover_failure_ratio"] == 0.0
+
+
+def test_external_prover_router_bridge_prefers_candidate_formula_alias(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge.external_prover_router import (
+        ExternalProverRouterBridgeAdapter,
+    )
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
+
+    class _CompiledResult:
+        def __init__(self) -> None:
+            self.is_proved = False
+            self.prover_used = "native"
+            self.proof_time = 0.01
+            self.reason = "Used native (no proof)"
+            self.strategy_used = "sequential"
+            self.all_results = {"native": object()}
+
+    class _CompiledRouter:
+        @staticmethod
+        def get_available_provers() -> list[str]:
+            return ["native"]
+
+        @staticmethod
+        def route(_formula, **_kwargs):
+            return _CompiledResult()
+
+    class _CandidateFormulaAdapter(FolTdfolBridgeAdapter):
+        def encode(self, *args, **kwargs):
+            document, context = super().encode(*args, **kwargs)
+            return (
+                document,
+                {
+                    **dict(context),
+                    "formula_records": [
+                        {
+                            "source_id": "packet:candidate-formula",
+                            "text": (
+                                "25 U.S.C. 401. Leases for mining purposes "
+                                "of unallotted lands in Kaw Reservation."
+                            ),
+                            "claims": [
+                                {
+                                    "candidate_formula": (
+                                        "P(lease_for_mining(secretary, land))"
+                                    )
+                                }
+                            ],
+                        }
+                    ],
+                },
+            )
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.bridge.external_prover_router._build_router",
+        lambda **_kwargs: _CompiledRouter(),
+    )
+
+    adapter = ExternalProverRouterBridgeAdapter(
+        tdfol_adapter=_CandidateFormulaAdapter(),
+        enable_native=True,
+        enable_external_binaries=False,
+    )
+    report = adapter.evaluate(
+        "The Secretary is authorized to lease lands for mining purposes.",
+        document_id="external-prover-bridge-candidate-formula",
+        citation="25 U.S.C. 401",
+    )
+
+    records = report.ir_document.views["prover_formulas"].payload["records"]
+    assert records[0]["formula_parse_ok"] is True
+    assert records[0]["formula"] == "P(lease_for_mining(secretary, land))"
+    assert report.ir_document.metadata["router_resolved_formula_count"] == 1
+    assert report.ir_document.metadata["router_text_fallback_formula_count"] == 0
+    assert report.proof_gate.valid_count == report.proof_gate.attempted_count
     assert report.round_trip.extra_losses["external_prover_failure_ratio"] == 0.0
 
 
@@ -8744,6 +8932,127 @@ def test_official_usc_primary_projection_handles_bootstrap_bridge_samples() -> N
     assert abs(sum(act_savings.values()) - 1.0) < 1e-9
     assert abs(sum(false_advertising.values()) - 1.0) < 1e-9
     assert abs(sum(performance_plan.values()) - 1.0) < 1e-9
+
+
+def test_official_usc_primary_projection_handles_packet_2711_bridge_samples() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _project_official_usc_primary_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.25,
+        "TDFOL.prover": 0.25,
+        "deontic.ir": 0.25,
+        "knowledge_graphs.neo4j_compat": 0.25,
+    }
+
+    agency_goal = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "42 U.S.C. 18403. Goal for Agency space technology. It is "
+            "critical that NASA maintain an Agency space technology base that "
+            "helps align mission directorate investments and supports long "
+            "term needs."
+        ),
+    )
+    county_payments = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "7 U.S.C. 1012. Payments to counties. As soon as practicable "
+            "after the end of each calendar year, the Secretary shall pay to "
+            "the county 25 per centum of net revenues. Payments shall be made "
+            "on the condition that they are used for school or road purposes."
+        ),
+    )
+    teacher_participation = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "20 U.S.C. 3922. Participation of teachers from private schools. "
+            "The Foundation shall, after consultation with appropriate "
+            "private school representatives, make provision for the benefit "
+            "of teachers in order to assure equitable participation."
+        ),
+    )
+    surveys_projects = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "30 U.S.C. 553. Duties of Secretary; surveys, research, etc.; "
+            "projects. The Secretary is authorized to conduct surveys, "
+            "investigations, and research, to publish and disseminate results, "
+            "and to plan and execute projects for control of fires."
+        ),
+    )
+    patronage_pools = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "12 U.S.C. 2147. Patronage pools. The consolidated bank may "
+            "establish separate patronage pools and allocate revenues, "
+            "expenses, and net savings among such pools on an equitable basis."
+        ),
+    )
+    repealed_status = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "10 U.S.C. 1183. Repealed. Pub. L. 105-261, div. A, title V, "
+            "section 503(a), Oct. 17, 1998, 112 Stat. 2003. Section related "
+            "to convening and determinations of boards of review."
+        ),
+    )
+    nautical_schools = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "46 U.S.C. 51702. Civilian nautical schools. Definition. In this "
+            "section, the term civilian nautical school means a school "
+            "operated in the United States. Inspection. Each civilian "
+            "nautical school is subject to inspection by the Secretary. "
+            "Rating and Certification. The Secretary may provide for rating "
+            "and certification of civilian nautical schools."
+        ),
+    )
+    mining_leases = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "25 U.S.C. 401. Leases for mining purposes of unallotted lands. "
+            "The Secretary is authorized to lease for mining purposes lands "
+            "reserved from allotment. Provided, That production of oil and "
+            "gas may be taxed, and such tax shall not become a lien against "
+            "the land."
+        ),
+    )
+
+    assert agency_goal["CEC.native"] > distribution["CEC.native"]
+    assert agency_goal["knowledge_graphs.neo4j_compat"] > distribution[
+        "knowledge_graphs.neo4j_compat"
+    ]
+    assert county_payments["deontic.ir"] > distribution["deontic.ir"]
+    assert county_payments["TDFOL.prover"] > distribution["TDFOL.prover"]
+    assert teacher_participation["deontic.ir"] > distribution["deontic.ir"]
+    assert teacher_participation["CEC.native"] >= distribution["CEC.native"]
+    assert surveys_projects["CEC.native"] > distribution["CEC.native"]
+    assert surveys_projects["TDFOL.prover"] >= distribution["TDFOL.prover"]
+    assert patronage_pools["deontic.ir"] > distribution["deontic.ir"]
+    assert patronage_pools["CEC.native"] > distribution["CEC.native"]
+    assert repealed_status["CEC.native"] > repealed_status["deontic.ir"]
+    assert repealed_status["knowledge_graphs.neo4j_compat"] > repealed_status[
+        "deontic.ir"
+    ]
+    assert nautical_schools["CEC.native"] > distribution["CEC.native"]
+    assert nautical_schools["knowledge_graphs.neo4j_compat"] > distribution[
+        "knowledge_graphs.neo4j_compat"
+    ]
+    assert mining_leases["deontic.ir"] > distribution["deontic.ir"]
+    assert mining_leases["TDFOL.prover"] > distribution["TDFOL.prover"]
+    for projected in (
+        agency_goal,
+        county_payments,
+        teacher_participation,
+        surveys_projects,
+        patronage_pools,
+        repealed_status,
+        nautical_schools,
+        mining_leases,
+    ):
+        assert abs(sum(projected.values()) - 1.0) < 1e-9
 
 
 def test_official_usc_primary_projection_handles_packet_207_bridge_contracts() -> None:

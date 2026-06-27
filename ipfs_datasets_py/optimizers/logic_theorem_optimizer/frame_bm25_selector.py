@@ -291,6 +291,14 @@ _FRAME_ONTOLOGY_LEGAL_IR_VIEW_GUIDANCE_PREFIXES: tuple[str, ...] = (
     "legal-ir-target-view:",
     "legal_ir_target_view:",
 )
+_FRAME_ONTOLOGY_CONDITION_CONSEQUENCE_PREFIXES: tuple[str, ...] = (
+    "condition-consequence:",
+    "condition_consequence:",
+    "source-condition-consequence:",
+    "source_condition_consequence:",
+    "legal-ir:condition-consequence:",
+    "legal_ir:condition_consequence:",
+)
 _FRAME_ONTOLOGY_CUE_VALUE_ALIASES = {
     "is a": "isa",
 }
@@ -311,7 +319,10 @@ _FRAME_ONTOLOGY_VALUE_KEY_FEATURE_PREFIXES = {
     "frame_term": "frame-term:",
     "modal_family": "family:selected_frame:",
     "modal_family_name": "family:selected_frame:",
+    "pipeline_stage": "flogic:statement_hint:",
+    "pipeline_stage_focus": "flogic:statement_hint:",
     "predicted_family": "family:selected_frame:",
+    "primary_pipeline_stage": "flogic:statement_hint:",
     "selected_family": "family:selected_frame:",
     "selected_frame": "frame:",
     "selected_frame_term": "selected-frame-term:",
@@ -377,6 +388,7 @@ _FRAME_ONTOLOGY_STRUCTURAL_CONTEXTUAL_PREDICATE_SUFFIXES: tuple[str, ...] = (
     "_unique_char_count",
 )
 _FRAME_ONTOLOGY_CONTEXTUAL_ALWAYS_PREDICATE_FRAGMENTS: tuple[str, ...] = (
+    "condition_consequence",
     "legal_ir_view",
     "modal_cue",
     "condition_modal_family",
@@ -1402,6 +1414,16 @@ def _frame_ontology_value_from_feature(
                 False,
                 _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL,
             )
+    for prefix in _FRAME_ONTOLOGY_CONDITION_CONSEQUENCE_PREFIXES:
+        if lowered.startswith(prefix):
+            return (
+                _normalized_condition_consequence_ontology_value(
+                    feature[len(prefix) :].strip()
+                ),
+                False,
+                False,
+                _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL,
+            )
 
     for prefix in _FRAME_FAMILY_FEATURE_PREFIXES:
         if lowered == prefix or lowered.startswith(f"{prefix}:"):
@@ -1695,6 +1717,21 @@ def _legal_ir_view_value_from_guidance_feature(value: str) -> str:
     return parts[-1] if parts else text
 
 
+def _normalized_condition_consequence_ontology_value(value: str) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    text = re.sub(r"\blegal[_-]condition\b", "condition", text, flags=re.IGNORECASE)
+    text = re.sub(
+        r"\blegal[_-]consequence\b",
+        "consequence",
+        text,
+        flags=re.IGNORECASE,
+    )
+    text = re.sub(r"\blegal[_-]object\b", "object", text, flags=re.IGNORECASE)
+    return text
+
+
 def _additional_frame_ontology_values_from_feature(
     feature: str,
 ) -> List[tuple[str, bool, bool, int]]:
@@ -1930,6 +1967,9 @@ def _frame_ontology_contextual_predicate_from_feature(feature_key: str) -> str:
     for prefix in _FRAME_ONTOLOGY_LEGAL_IR_VIEW_GUIDANCE_PREFIXES:
         if lowered.startswith(prefix):
             return "legal_ir_view"
+    for prefix in _FRAME_ONTOLOGY_CONDITION_CONSEQUENCE_PREFIXES:
+        if lowered.startswith(prefix):
+            return "condition_consequence"
     if _is_contextual_frame_ontology_predicate(head):
         return _normalized_frame_ontology_predicate(head)
     namespace = head.strip().lower()

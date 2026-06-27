@@ -132,6 +132,59 @@ def test_attestation_check_rejects_stale_proof_bytes(tmp_path):
     )
 
 
+def test_attestation_check_accepts_embedded_view_when_public_fields_dropped():
+    from ipfs_datasets_py.logic.zkp import ZKPProver
+
+    proof = ZKPProver().generate_proof(
+        theorem="Q",
+        private_axioms=["P", "P -> Q"],
+        metadata={"security_level": 128},
+    )
+    public_inputs = {
+        key: value
+        for key, value in proof.public_inputs.items()
+        if key not in {"attestation_ref", "attestation_view_version"}
+    }
+
+    assert attestation_view_matches_proof(
+        proof_data=proof.proof_data,
+        public_inputs=public_inputs,
+        metadata=proof.metadata,
+    )
+
+    sparse_record = {
+        "proof": {
+            **proof.to_dict(),
+            "public_inputs": public_inputs,
+        },
+        "form_id": "us-code-42-18403.-96a82a94ef457b84",
+    }
+    completed = complete_zkp_attestation_record(sparse_record)
+
+    assert completed["attestation_ref"] == proof.public_inputs["attestation_ref"]
+    assert completed["public_inputs"]["attestation_ref"] == completed["attestation_ref"]
+    assert completed["proof"]["public_inputs"]["attestation_ref"] == completed["attestation_ref"]
+    assert zkp_attestation_legal_ir_view_loss([sparse_record]) == 0.0
+
+
+def test_attestation_check_rejects_half_dropped_public_attestation_fields():
+    from ipfs_datasets_py.logic.zkp import ZKPProver
+
+    proof = ZKPProver().generate_proof(
+        theorem="Q",
+        private_axioms=["P", "P -> Q"],
+        metadata={"security_level": 128},
+    )
+    public_inputs = dict(proof.public_inputs)
+    public_inputs.pop("attestation_view_version")
+
+    assert not attestation_view_matches_proof(
+        proof_data=proof.proof_data,
+        public_inputs=public_inputs,
+        metadata=proof.metadata,
+    )
+
+
 def test_simulated_proof_layout_decodes_serialized_hex():
     from ipfs_datasets_py.logic.zkp import ZKPProver
 

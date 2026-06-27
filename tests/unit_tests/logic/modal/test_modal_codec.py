@@ -120,6 +120,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_003094_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_003336_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_002204_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_002580_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000542_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_003279_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_003527_FAMILY_PAIRS,
@@ -309,6 +310,52 @@ def test_modal_decompiler_infers_definition_condition_scope_from_source_span() -
     assert "frame->conditional_normative" in slot_texts[
         "clause_sequence_modal_family_pair"
     ]
+
+
+def test_modal_decompiler_maps_definition_scope_to_conditional_normative_slots() -> None:
+    text = (
+        '§5101. Definitions In this chapter— (1) "domestic voyage" means '
+        "movement of a vessel between places in the United States."
+    )
+    formula = ModalIRFormula(
+        formula_id="f_domestic_voyage_definition",
+        operator=ModalIROperator(
+            family="frame",
+            system="Frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="define_domestic_voyage", role="definition"),
+        provenance=ModalIRProvenance(
+            source_id="us-code-46-5101-definition",
+            start_char=0,
+            end_char=len(text),
+            citation="46 U.S.C. 5101",
+        ),
+        metadata={"cue": "means"},
+    )
+    document = ModalIRDocument(
+        document_id="us-code-46-5101-definition",
+        source="us_code",
+        normalized_text=text,
+        formulas=[formula],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+
+    assert "for purposes of this chapter" in slot_texts["condition"]
+    assert "for_purposes_of" in slot_texts["condition_prefix_key"]
+    assert "frame->conditional_normative" in slot_texts[
+        "typed_decompiler_family_pair"
+    ]
+    assert "for_purposes_of:frame->conditional_normative" in slot_texts[
+        "typed_decompiler_source_cue_family_pair"
+    ]
+    assert (
+        "conditional_normative||slot:typed-decompiler-target-reconstruction-cue:"
+        "frame->conditional_normative:for_purposes_of||deontic.ir"
+        in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
+    )
 
 
 def test_modal_decompiler_infers_effective_date_condition_from_context_span() -> None:
@@ -1374,6 +1421,38 @@ def test_flogic_graph_projection_aligns_sparse_uscode_text_section_facts() -> No
     assert view_by_predicate["section_heading_tail"] == "section_structure"
     assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
     assert graph_data.metadata["frame_logic_projection_legal_view_coverage_ratio"] == 1.0
+    assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
+
+
+def test_flogic_graph_projection_trims_sparse_section_heading_before_body() -> None:
+    graph_data = flogic_triples_to_graph_data(
+        [
+            {
+                "subject": "us-code-42-18403.-96a82a94ef457b84",
+                "predicate": "sample_text",
+                "object": (
+                    "42 U.S.C. 18403.: §18403. Goal for Agency space technology "
+                    "It is critical that NASA maintain an Agency space technology "
+                    "base that helps align mission directorate investments."
+                ),
+            }
+        ],
+        graph_id="us-code-42-18403.-96a82a94ef457b84:flogic",
+    )
+
+    triples = {
+        (rel.properties["flogic_predicate"], rel.properties["flogic_object"]): rel
+        for rel in graph_data.relationships
+    }
+    view_by_predicate = {
+        rel.properties["flogic_predicate"]: rel.properties["frame_logic_projection_view"]
+        for rel in graph_data.relationships
+    }
+
+    assert ("section_catchline", "Goal for Agency space technology") in triples
+    assert ("section_heading_tail", "Goal for Agency space technology") in triples
+    assert view_by_predicate["section_catchline"] == "section_structure"
+    assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
     assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
 
 
@@ -21098,6 +21177,84 @@ def test_modal_codec_frame_ontology_audit_feature_keys_include_autoencoder_contr
     assert "49_47126" in terms
 
 
+def test_modal_codec_frame_ontology_audit_feature_keys_include_condition_consequence_evidence() -> None:
+    modal_ir = ModalIRDocument(
+        document_id="frame-audit-condition-consequence-doc",
+        source="us_code",
+        normalized_text=(
+            "It is critical that NASA maintain an Agency space technology base."
+        ),
+        frame_logic=ModalIRFrameLogic(
+            selected_frame="agency_duties",
+            metadata={
+                "evidence": [
+                    {
+                        "frame_features": [
+                            "legal-ir-view:modal.frame_logic",
+                            (
+                                "condition-consequence:event-calculus-precondition:"
+                                "legal_condition->legal_consequence:legal_object"
+                            ),
+                            (
+                                "condition-consequence:compiler-antecedent-edge:"
+                                "legal_condition->legal_consequence:"
+                                "legal_object:general_scope"
+                            ),
+                        ],
+                        "pipeline_stage_focus": [
+                            "autoencoder_embedding_head",
+                            "typed_ir_decoder",
+                        ],
+                        "primary_pipeline_stage": "modal_family_registry",
+                    }
+                ]
+            },
+        ),
+        metadata={
+            "target_file_lane": "frame_logic",
+            "top_family_features": [
+                "legal-ir-view:modal.frame_logic",
+                "legal-ir-view:modal.autoencoder",
+                "quality:bias",
+            ],
+        },
+    )
+
+    keys = _frame_ontology_audit_feature_keys(
+        modal_ir=modal_ir,
+        selected_frame="agency_duties",
+        kg_triples=[
+            {
+                "subject": modal_ir.document_id,
+                "predicate": "selected_ontology_frame",
+                "object": "agency_duties",
+            }
+        ],
+    )
+    terms = _frame_ontology_audit_terms(
+        frame_feature_keys=keys,
+        kg_triples=[],
+    )
+
+    assert "legal-ir-view:modal.frame_logic" in keys
+    assert (
+        "condition-consequence:event-calculus-precondition:"
+        "legal_condition->legal_consequence:legal_object"
+    ) in keys
+    assert "flogic:statement_hint:modal_family_registry" in keys
+    assert "modal_frame_logic" in terms
+    assert (
+        "event_calculus_precondition_condition_consequence_object"
+        in terms
+    )
+    assert (
+        "compiler_antecedent_edge_condition_consequence_object_general_scope"
+        in terms
+    )
+    assert "modal_family_registry" in terms
+    assert "typed_ir_decoder" in terms
+
+
 def test_modal_codec_frame_ontology_audit_feature_keys_include_family_scoring_metadata_fields() -> None:
     modal_ir = ModalIRDocument(
         document_id="frame-audit-family-fields-doc",
@@ -39801,6 +39958,36 @@ def test_packet_002204_compiler_registry_refines_modal_family_cue_rules() -> Non
         )
 
 
+def test_packet_002580_compiler_registry_exposes_adaptive_ambiguity_pairs() -> None:
+    assert COMPILER_AMBIGUITY_PACKET_002580_FAMILY_PAIRS == (
+        ("conditional_normative", "conditional_normative"),
+        ("deontic", "conditional_normative"),
+        ("deontic", "deontic"),
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("frame", "epistemic"),
+        ("frame", "temporal"),
+        ("temporal", "deontic"),
+        ("temporal", "frame"),
+    )
+
+    for predicted_family, target_family in COMPILER_AMBIGUITY_PACKET_002580_FAMILY_PAIRS:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+
 def test_packet_002204_weak_deontic_evidence_emits_explicit_ambiguities() -> None:
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
@@ -41047,6 +41234,62 @@ def test_decode_modal_ir_document_surfaces_resolved_clause_prefix_scope_slots() 
     ]
 
 
+def test_packet_004292_decompiler_surfaces_for_purposes_definition_family_pair_cues() -> None:
+    source_text = (
+        'For purposes of this chapter, "domestic voyage" means movement of a '
+        "vessel between places subject to the jurisdiction of the United States."
+    )
+    document = ModalIRDocument(
+        document_id="packet-004292-for-purposes-definition-scope",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-packet-004292-frame-definition",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="FRAME_BM25",
+                    symbol="Frame",
+                    label="ontology_frame",
+                ),
+                predicate=ModalIRPredicate(name="domestic_voyage", role="definition"),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-46-5101.-4cd54301c175ce17",
+                    start_char=0,
+                    end_char=len(source_text),
+                    citation="46 U.S.C. 5101",
+                ),
+                conditions=["for purposes of this chapter"],
+                metadata={"cue": "definition"},
+            )
+        ],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+    legal_ir_slots = set(slot_texts["family_semantic_slot_legal_ir_view_prototype"])
+
+    assert (
+        "frame->conditional_normative:for_purposes_of"
+        in slot_texts["typed_decompiler_family_pair_cue"]
+    )
+    assert (
+        "conditional_normative->conditional_normative:for_purposes_of"
+        in slot_texts["typed_decompiler_target_self_family_pair_cue"]
+    )
+    assert (
+        "frame||slot:typed-decompiler-family-pair-cue:"
+        "conditional_normative->conditional_normative:for_purposes_of"
+        "||modal.frame_logic"
+        in legal_ir_slots
+    )
+    assert (
+        "conditional_normative||slot:source-typed-decompiler-family-pair-cue:"
+        "frame->conditional_normative:for_purposes_of:frame"
+        "||knowledge_graphs.neo4j_compat"
+        in legal_ir_slots
+    )
+
+
 def test_packet_003149_decompiler_surfaces_preferred_view_contract_slots() -> None:
     source_text = (
         "Subject to section 10104, the Commission shall terminate the program "
@@ -42214,6 +42457,90 @@ def test_packet_004224_decompiler_preserves_predicate_force_family_pair_slots() 
         "deontic||slot-pair:source-predicate-head:"
         "conditional_normative:publish|typed-decompiler-family-pair:"
         "conditional_normative->deontic||deontic.ir"
+        in legal_ir_slots
+    )
+
+
+def test_packet_001369_decompiler_projects_compact_predicate_force_and_dynamic_slots() -> None:
+    source_text = (
+        "Amounts derived from the Fund shall not be available for publicity "
+        "purposes. Not later than 2027, the authority takes effect."
+    )
+    document = ModalIRDocument(
+        document_id="packet-001369-typed-decompiler-residuals",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-packet-001369-frame-publicity",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="FRAME_BM25",
+                    symbol="Frame",
+                    label="ontology_frame",
+                ),
+                predicate=ModalIRPredicate(name="pub", role="clause"),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-54-200307-990c5495460e0abd",
+                    start_char=0,
+                    end_char=source_text.index(".") + 1,
+                    citation="54 U.S.C. 200307",
+                ),
+                metadata={
+                    "cue": "shall not",
+                    "force": "permission",
+                    "polarity": "negative_scope",
+                    "fallback_rule": "uscode_residual_span_coverage_v1",
+                },
+            ),
+            ModalIRFormula(
+                formula_id="f-packet-001369-temporal-dynamic",
+                operator=ModalIROperator(
+                    family="temporal",
+                    system="LTL",
+                    symbol="F",
+                    label="eventually",
+                ),
+                predicate=ModalIRPredicate(name="take_effect", role="clause"),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-22-937-53570d85375ba9d8",
+                    start_char=source_text.index("Not later"),
+                    end_char=len(source_text),
+                    citation="22 U.S.C. 937",
+                ),
+                conditions=["not later than 2027"],
+                metadata={"cue": "not later than"},
+            ),
+        ],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+    legal_ir_slots = set(slot_texts["family_semantic_slot_legal_ir_view_prototype"])
+
+    assert "temporal->dynamic" in slot_texts["typed_decompiler_family_pair"]
+    assert (
+        "frame->deontic:uscode_residual_span_coverage_v1"
+        in slot_texts["typed_decompiler_family_pair_cue"]
+    )
+    assert (
+        "source-predicate-head:frame:pub|typed-decompiler-force-polarity:"
+        "permission:negative_scope:frame->deontic"
+        in slot_texts["typed_decompiler_source_predicate_force_pair"]
+    )
+    assert (
+        "frame:pub|typed-decompiler-force-polarity:"
+        "permission:negative_scope:frame->deontic"
+        in slot_texts["typed_decompiler_source_predicate_force_pair"]
+    )
+    assert (
+        "deontic||slot:typed-decompiler-source-predicate-force-pair:"
+        "frame:pub|typed-decompiler-force-polarity:"
+        "permission:negative_scope||deontic.ir"
+        in legal_ir_slots
+    )
+    assert (
+        "dynamic||slot:typed-decompiler-family-pair-cue:"
+        "temporal->dynamic:clause||TDFOL.prover"
         in legal_ir_slots
     )
 

@@ -6923,6 +6923,186 @@ def test_compiler_ir_metric_block_times_out_slow_metric_samples(monkeypatch) -> 
     assert "sample_timeout" in [entry["stage"] for entry in progress]
 
 
+def test_compiler_ir_metric_block_caches_sample_timeouts(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    if not runner._compiler_ir_metric_sample_timeout_supported(0.05):
+        pytest.skip("compiler IR metric sample timeouts need SIGALRM support")
+    monkeypatch.setenv(runner.LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV, str(tmp_path))
+    monkeypatch.setenv(runner.LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV, "1")
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide records promptly.",
+    )
+
+    class SlowCodec:
+        config = SimpleNamespace(mode="compiler-ir-timeout-cache")
+
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def encode(self, *_args, **_kwargs):
+            self.calls += 1
+            time.sleep(1.0)
+            raise AssertionError("timeout should interrupt codec.encode")
+
+    codec = SlowCodec()
+    progress: list[Mapping[str, object]] = []
+
+    first = compiler_ir_metric_block(
+        [sample],
+        codec,
+        max_sample_metric_records=1,
+        progress_callback=progress.append,
+        sample_timeout_seconds=0.05,
+    )
+    second = compiler_ir_metric_block(
+        [sample],
+        codec,
+        max_sample_metric_records=1,
+        progress_callback=progress.append,
+        sample_timeout_seconds=0.05,
+    )
+
+    assert codec.calls == 1
+    assert first["persistent_sample_cache_misses"] == 1
+    assert second["persistent_sample_cache_hits"] == 1
+    assert second["persistent_sample_cache_misses"] == 0
+    assert second["persistent_sample_timeout_cache_hits"] == 1
+    assert second["sample_timeouts"] == 1
+    assert second["sample_metric_records"][0]["from_persistent_sample_cache"] is True
+    assert "sample_timeout_cache_hit" in [entry["stage"] for entry in progress]
+
+
+def test_compiler_ir_metric_timeout_cache_respects_timeout_budget(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    if not runner._compiler_ir_metric_sample_timeout_supported(0.05):
+        pytest.skip("compiler IR metric sample timeouts need SIGALRM support")
+    monkeypatch.setenv(runner.LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV, str(tmp_path))
+    monkeypatch.setenv(runner.LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV, "1")
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide records promptly.",
+    )
+
+    class RecoveringCodec:
+        config = SimpleNamespace(mode="compiler-ir-timeout-budget")
+
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def encode(self, *_args, **_kwargs):
+            self.calls += 1
+            if self.calls == 1:
+                time.sleep(1.0)
+                raise AssertionError("timeout should interrupt the first call")
+            return SimpleNamespace(
+                decoded_modal_text="must provide records",
+                frame_candidates=[object()],
+                losses={
+                    "cosine_loss": 0.1,
+                    "cosine_similarity": 0.9,
+                    "cross_entropy_loss": 0.2,
+                },
+                metadata={"llm_call_count": 0.0},
+                modal_ir=SimpleNamespace(formulas=[object()]),
+            )
+
+    codec = RecoveringCodec()
+
+    first = compiler_ir_metric_block(
+        [sample],
+        codec,
+        max_sample_metric_records=1,
+        sample_timeout_seconds=0.05,
+    )
+    second = compiler_ir_metric_block(
+        [sample],
+        codec,
+        max_sample_metric_records=1,
+        sample_timeout_seconds=1.0,
+    )
+
+    assert codec.calls == 2
+    assert first["sample_timeouts"] == 1
+    assert second["evaluated_count"] == 1
+    assert second["sample_timeouts"] == 0
+    assert second["persistent_sample_timeout_cache_hits"] == 0
+    assert second["cosine_similarity"] == pytest.approx(0.9)
+
+
+def test_compiler_ir_metric_timeout_cache_ignores_guidance_drift(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    if not runner._compiler_ir_metric_sample_timeout_supported(0.05):
+        pytest.skip("compiler IR metric sample timeouts need SIGALRM support")
+    monkeypatch.setenv(runner.LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV, str(tmp_path))
+    monkeypatch.setenv(runner.LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV, "1")
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide records promptly.",
+    )
+
+    class ChangingGuidance:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def compiler_guidance_for_sample(self, *_args, **_kwargs):
+            self.calls += 1
+            return {
+                "ranked_guidance_features": [
+                    {"feature": f"feature-{self.calls}", "weight": 1.0}
+                ],
+                "synthesis_focus": f"focus-{self.calls}",
+            }
+
+    class SlowCodec:
+        config = SimpleNamespace(mode="compiler-ir-timeout-guidance-drift")
+
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def encode(self, *_args, **_kwargs):
+            self.calls += 1
+            time.sleep(1.0)
+            raise AssertionError("timeout should interrupt codec.encode")
+
+    codec = SlowCodec()
+    guidance = ChangingGuidance()
+
+    first = compiler_ir_metric_block(
+        [sample],
+        codec,
+        autoencoder=guidance,
+        use_autoencoder_guidance=True,
+        max_sample_metric_records=1,
+        sample_timeout_seconds=0.05,
+    )
+    second = compiler_ir_metric_block(
+        [sample],
+        codec,
+        autoencoder=guidance,
+        use_autoencoder_guidance=True,
+        max_sample_metric_records=1,
+        sample_timeout_seconds=0.05,
+    )
+
+    assert guidance.calls == 2
+    assert codec.calls == 1
+    assert first["sample_timeouts"] == 1
+    assert second["persistent_sample_timeout_cache_hits"] == 1
+    assert second["sample_metric_records"][0]["persistent_cache_kind"] == (
+        "compiler_ir_metric_sample_timeout"
+    )
+
+
 def test_compiler_ir_metric_block_uses_persistent_metric_cache(
     tmp_path: Path,
     monkeypatch,
@@ -6997,7 +7177,9 @@ def test_compiler_ir_metric_block_cache_reuses_success_across_timeout_settings(
     assert first["persistent_cache_hit"] is False
     assert second["persistent_cache_hit"] is True
     assert second["sample_timeout_seconds"] == pytest.approx(30.0)
-    assert second["sample_timeout_cache_policy"] == "timeout_agnostic_successful_block"
+    assert second["sample_timeout_cache_policy"] == (
+        runner._COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY
+    )
     assert second["persistent_sample_cache_misses"] == 0
     assert first["cross_entropy_loss"] == second["cross_entropy_loss"]
 

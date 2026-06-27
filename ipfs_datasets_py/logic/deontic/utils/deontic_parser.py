@@ -286,6 +286,23 @@ _PURPOSE_RE = re.compile(
     """,
     re.IGNORECASE | re.VERBOSE,
 )
+_CRITICAL_THAT_RE = re.compile(
+    r"\b[Ii]t\s+is\s+(?P<modal>critical|essential|necessary)\s+that\s+"
+    r"(?P<subject>[A-Z][A-Z0-9&]*(?:\s+[A-Z][A-Z0-9&]*){0,5})\s+"
+    r"(?P<action>.+?)(?=[.;:]|$)",
+)
+_HEREBY_AUTHORIZED_RE = re.compile(
+    r"\b(?P<subject>(?:[Tt]he\s+)?[A-Z][A-Za-z0-9'’\-]*(?:\s+(?!is\b)[A-Za-z][A-Za-z0-9'’\-]*){0,10})\s*"
+    r"(?:,\s*[^,;]{1,260},\s*)?"
+    r"(?P<modal>[Ii]s\s+hereby\s+authorized(?:\s+and\s+directed)?|"
+    r"[Aa]re\s+hereby\s+authorized(?:\s+and\s+directed)?)"
+    r"(?:\s+to|\s*[-—:]\s*)\s*(?P<action>.+?)(?=[.;]|$)",
+)
+_DASH_MODAL_RE = re.compile(
+    r"\b(?P<subject>(?:[Tt]he\s+)?[A-Za-z][A-Za-z0-9'’\-]*(?:\s+(?!may\b|shall\b|must\b)[A-Za-z][A-Za-z0-9'’\-]*){0,10})\s+"
+    r"(?P<modal>may|shall|must)\s*[-—:]\s*(?P<action>.+?)(?=[.;]|$)",
+    re.IGNORECASE,
+)
 _MONEY_RE = re.compile(
     r"(?:\$\s?\d[\d,]*(?:\.\d{2})?|\b\d[\d,]*\s+dollars?\b)",
     re.IGNORECASE,
@@ -523,9 +540,9 @@ def extract_normative_elements(
     *,
     expand_enumerations: bool = False,
 ) -> List[Dict[str, Any]]:
-    elements: List[Dict[str, Any]] = []
-    elements.extend(_extract_section_status_lifecycle_elements(str(text or ""), document_type))
-    if elements:
+    status_elements = _extract_section_status_lifecycle_elements(str(text or ""), document_type)
+    if status_elements and _section_status_should_short_circuit(str(text or ""), status_elements):
+        elements: List[Dict[str, Any]] = status_elements
         _apply_definition_context(elements)
         _apply_cross_reference_context(elements)
         _apply_same_document_reference_repair_clearance(elements)
@@ -538,6 +555,7 @@ def extract_normative_elements(
         _apply_enforcement_context(elements)
         _apply_conflict_context(elements)
         return elements
+    elements = []
     segments = segment_legal_text(text)
     for segment in segments:
         segment_text = segment["text"].strip()
@@ -1365,6 +1383,96 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
             )
         ]
 
+    critical_match = _CRITICAL_THAT_RE.search(sentence)
+    if critical_match:
+        subject_text = _clean_phrase(critical_match.group("subject"))
+        action_text = _clean_action(critical_match.group("action"))
+        if action_text:
+            return [
+                _finalize_element(
+                    _build_element(
+                        sentence=sentence,
+                        document_type=document_type,
+                        norm_type="obligation",
+                        deontic_operator="O",
+                        modal=f"is {critical_match.group('modal').lower()} that",
+                        subject_text=subject_text,
+                        action_text=action_text,
+                        support_span=critical_match.span(),
+                        field_spans={
+                            "subject": list(critical_match.span("subject")),
+                            "modal": list(critical_match.span("modal")),
+                            "action": list(critical_match.span("action")),
+                        },
+                        extraction_method="deterministic_critical_that_clause_v1",
+                    )
+                )
+            ]
+
+    hereby_match = _HEREBY_AUTHORIZED_RE.search(sentence)
+    if hereby_match:
+        modal = re.sub(r"\s+", " ", hereby_match.group("modal").lower()).strip()
+        subject_text = _clean_phrase(hereby_match.group("subject"))
+        action_text = _clean_action(
+            _strip_leading_authorized_action_prefix(hereby_match.group("action"))
+        )
+        norm_type, deontic_operator = (
+            ("obligation", "O")
+            if "directed" in modal
+            else ("permission", "P")
+        )
+        if action_text:
+            return [
+                _finalize_element(
+                    _build_element(
+                        sentence=sentence,
+                        document_type=document_type,
+                        norm_type=norm_type,
+                        deontic_operator=deontic_operator,
+                        modal=modal,
+                        subject_text=subject_text,
+                        action_text=action_text,
+                        support_span=hereby_match.span(),
+                        field_spans={
+                            "subject": list(hereby_match.span("subject")),
+                            "modal": list(hereby_match.span("modal")),
+                            "action": list(hereby_match.span("action")),
+                        },
+                        extraction_method="deterministic_hereby_authorized_clause_v1",
+                    )
+                )
+            ]
+
+    dash_modal_match = _DASH_MODAL_RE.search(sentence)
+    if dash_modal_match:
+        modal = re.sub(r"\s+", " ", dash_modal_match.group("modal").lower()).strip()
+        norm_type, deontic_operator = classify_modal(modal)
+        subject_text = _clean_phrase(dash_modal_match.group("subject"))
+        action_text = _clean_action(
+            _strip_leading_authorized_action_prefix(dash_modal_match.group("action"))
+        )
+        if action_text:
+            return [
+                _finalize_element(
+                    _build_element(
+                        sentence=sentence,
+                        document_type=document_type,
+                        norm_type=norm_type,
+                        deontic_operator=deontic_operator,
+                        modal=modal,
+                        subject_text=subject_text,
+                        action_text=action_text,
+                        support_span=dash_modal_match.span(),
+                        field_spans={
+                            "subject": list(dash_modal_match.span("subject")),
+                            "modal": list(dash_modal_match.span("modal")),
+                            "action": list(dash_modal_match.span("action")),
+                        },
+                        extraction_method="deterministic_dash_modal_clause_v1",
+                    )
+                )
+            ]
+
     for match in _MODAL_RE.finditer(sentence):
         modal = re.sub(r"\s+", " ", match.group("modal").lower()).strip()
         norm_type, deontic_operator = classify_modal(modal)
@@ -1377,6 +1485,7 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
             if negated_subject
             else _clean_phrase(raw_subject)
         )
+        subject_text = _trim_embedded_heading_subject(subject_text)
         if subject_text.lower() in {"and", "or"}:
             continue
         action_text = _clean_action(match.group("action"))
@@ -1831,6 +1940,58 @@ def _extract_section_status_lifecycle_elements(
     return elements
 
 
+def _section_status_should_short_circuit(
+    text: str,
+    elements: List[Dict[str, Any]],
+) -> bool:
+    """Return true when status rows describe the section itself, not notes.
+
+    Whole U.S. Code documents often contain editorial-history phrases such as
+    "Prior section ... was omitted" after the operative statute. Those status
+    markers are useful when the section is actually repealed/omitted, but they
+    should not suppress ordinary modal parsing for mixed documents.
+    """
+
+    if not elements:
+        return False
+    normalized = re.sub(r"\s+", " ", str(text or "")).strip()
+    if not normalized:
+        return False
+
+    status_starts = [
+        int((element.get("support_span") or [0, 0])[0])
+        for element in elements
+        if isinstance(element.get("support_span"), list)
+        and len(element.get("support_span") or []) == 2
+    ]
+    if not status_starts:
+        return False
+    first_status_start = min(status_starts)
+    prefix = normalized[:first_status_start].lower()
+    if re.search(
+        r"\b(?:shall|must|may|is\s+authorized|are\s+authorized|"
+        r"is\s+critical\s+that|are\s+required|is\s+required)\b",
+        prefix,
+    ):
+        return False
+
+    first_element = min(
+        elements,
+        key=lambda element: int((element.get("support_span") or [0, 0])[0]),
+    )
+    support_text = str(first_element.get("support_text") or "")
+    return bool(
+        re.search(
+            r"^\s*(?:\[?\s*)?(?:(?:secs?\.?|sections?|§{1,2})\s*)?"
+            r"[0-9][0-9A-Za-z.\-]*\.?\s*"
+            r"(?:repealed|omitted|reserved|transferred)\b",
+            support_text,
+            re.IGNORECASE,
+        )
+        or first_status_start < 600
+    )
+
+
 def _build_section_status_lifecycle_element(
     *,
     sentence: str,
@@ -2032,6 +2193,15 @@ def _section_status_instrument_from_context(sentence: str) -> str:
     if section_context_match:
         return _clean_phrase(section_context_match.group(0))
     return "section"
+
+
+def _strip_leading_enumeration_label(value: str) -> str:
+    return re.sub(r"^\s*\([A-Za-z0-9]+\)\s*", "", str(value or "")).strip()
+
+
+def _strip_leading_authorized_action_prefix(value: str) -> str:
+    text = _strip_leading_enumeration_label(value)
+    return re.sub(r"^\s*to\s+", "", text, flags=re.IGNORECASE).strip()
 
 
 def _build_element(
@@ -3640,6 +3810,30 @@ def _clean_negated_subject_phrase(value: Any) -> str:
         flags=re.IGNORECASE,
     ).strip()
     return _clean_phrase(text)
+
+
+def _trim_embedded_heading_subject(value: str) -> str:
+    """Drop catchline text accidentally glued before a determiner-led actor."""
+
+    text = _clean_phrase(value)
+    matches = list(
+        re.finditer(
+            r"\b(?:[Tt]he|[Aa]|[Aa]n|[Ee]ach|[Aa]ny)\s+"
+            r"(?P<actor>[A-Z][A-Za-z0-9'’\-]*(?:\s+[A-Z][A-Za-z0-9'’\-]*){0,8})$",
+            text,
+        )
+    )
+    if not matches:
+        return text
+    actor = _clean_phrase(matches[-1].group("actor"))
+    if actor and classify_legal_entity(actor) in {
+        "government_actor",
+        "legal_person",
+        "organization",
+        "legal_entity",
+    }:
+        return actor
+    return text
 
 
 def _clean_action(value: str) -> str:

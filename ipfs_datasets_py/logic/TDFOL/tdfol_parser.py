@@ -360,6 +360,20 @@ class TDFOLParser:
             TokenType.LPAREN,
         }
     )
+    _RESERVED_OPERATOR_ATOM_TOKENS = frozenset(
+        {
+            TokenType.OBLIGATION,
+            TokenType.PERMISSION,
+            TokenType.PROHIBITION,
+            TokenType.ALWAYS,
+            TokenType.EVENTUALLY,
+            TokenType.NEXT,
+            TokenType.UNTIL,
+            TokenType.SINCE,
+            TokenType.WEAK_UNTIL,
+            TokenType.RELEASE,
+        }
+    )
     _KNOWN_SORT_NAMES = frozenset(Sort.__members__)
     
     def __init__(self, tokens: List[Token]):
@@ -502,6 +516,13 @@ class TDFOLParser:
     def parse_modal(self) -> Formula:
         """Parse modal (deontic/temporal) formula."""
         token = self.current_token()
+
+        if (
+            token.type in self._RESERVED_OPERATOR_ATOM_TOKENS
+            and self.peek_token().type != TokenType.LPAREN
+        ):
+            self.advance()
+            return Predicate(token.value, ())
         
         # Deontic operators
         if token.type == TokenType.OBLIGATION:

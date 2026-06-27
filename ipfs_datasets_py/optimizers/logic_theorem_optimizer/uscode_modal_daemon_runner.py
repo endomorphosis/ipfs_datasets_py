@@ -757,6 +757,7 @@ _COMPILER_IR_METRIC_BLOCK_CACHE_VERSION = "compiler-ir-metric-block-cache-v4"
 _COMPILER_IR_GUIDANCE_CACHE_POLICY = "codec-output-contract-v1"
 _COMPILER_IR_GUIDANCE_DIAGNOSTICS_VERSION = "compiler-guidance-diagnostics-v1"
 _COMPILER_IR_SAMPLE_CACHE_VERSION = "compiler-ir-metric-sample-cache-v4"
+_COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY = "timeout_cached_per_sample_budget_v1"
 _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_LOCK = threading.Lock()
 _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_VALUE: Optional[str] = None
 _ACTIVE_CODEX_EXEC_PROCESSES: List[subprocess.Popen[str]] = []
@@ -996,6 +997,18 @@ def _compiler_ir_metric_sample_disk_cache_key(payload: Mapping[str, Any]) -> str
     wrapper = {
         "code_fingerprint": _compiler_ir_sample_code_fingerprint(),
         "kind": "compiler_ir_metric_sample",
+        "payload": payload,
+        "version": _COMPILER_IR_SAMPLE_CACHE_VERSION,
+    }
+    return hashlib.sha256(_stable_metric_json(wrapper).encode("utf-8")).hexdigest()
+
+
+def _compiler_ir_metric_sample_timeout_disk_cache_key(
+    payload: Mapping[str, Any]
+) -> str:
+    wrapper = {
+        "code_fingerprint": _compiler_ir_sample_code_fingerprint(),
+        "kind": "compiler_ir_metric_sample_timeout",
         "payload": payload,
         "version": _COMPILER_IR_SAMPLE_CACHE_VERSION,
     }
@@ -2620,11 +2633,14 @@ def compiler_ir_metric_block(
             cached["compiler_ir_guidance_cache_policy"] = (
                 _COMPILER_IR_GUIDANCE_CACHE_POLICY
             )
-            cached["sample_timeout_cache_policy"] = "timeout_agnostic_successful_block"
+            cached["sample_timeout_cache_policy"] = (
+                _COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY
+            )
             cached["sample_timeout_seconds"] = sample_timeout_seconds
             cached["sample_cache_not_consulted_due_block_hit"] = True
             cached["persistent_sample_cache_hits"] = 0
             cached["persistent_sample_cache_misses"] = 0
+            cached["persistent_sample_timeout_cache_hits"] = 0
             emit_progress(
                 "persistent_cache_hit",
                 cache_key=persistent_cache_key,
@@ -2678,6 +2694,7 @@ def compiler_ir_metric_block(
     text_length_skipped_count = 0
     persistent_sample_cache_hits = 0
     persistent_sample_cache_misses = 0
+    persistent_sample_timeout_cache_hits = 0
     guidance_frame_boost_counts: List[float] = []
     guidance_frame_changed_count = 0
     guidance_feature_groups: Counter[str] = Counter()
@@ -2748,10 +2765,52 @@ def compiler_ir_metric_block(
             compiler_guidance=compiler_guidance,
             guidance_top_k=guidance_top_k,
         )
+        sample_timeout_cache_key = _compiler_ir_metric_sample_timeout_cache_key(
+            sample,
+            codec=codec,
+        )
         cached_result_payload = _read_metric_disk_cache(
             "compiler_ir_metric_sample",
             sample_cache_key,
         )
+        timeout_record = _compiler_ir_metric_sample_timeout_record_from_cache_payload(
+            cached_result_payload,
+            requested_timeout_seconds=sample_timeout_seconds,
+        )
+        timeout_cache_kind = "compiler_ir_metric_sample"
+        if timeout_record is None:
+            timeout_record = _compiler_ir_metric_sample_timeout_record_from_cache_payload(
+                _read_metric_disk_cache(
+                    "compiler_ir_metric_sample_timeout",
+                    sample_timeout_cache_key,
+                ),
+                requested_timeout_seconds=sample_timeout_seconds,
+            )
+            timeout_cache_kind = "compiler_ir_metric_sample_timeout"
+        if timeout_record is not None:
+            persistent_sample_cache_hits += 1
+            persistent_sample_timeout_cache_hits += 1
+            failures += 1
+            sample_timeouts += 1
+            skipped_sample_count += 1
+            if len(sample_metric_records) < max(0, int(max_sample_metric_records)):
+                cached_record = dict(timeout_record)
+                cached_record["persistent_cache_kind"] = timeout_cache_kind
+                sample_metric_records.append(cached_record)
+            emit_progress(
+                "sample_timeout_cache_hit",
+                citation=citation,
+                persistent_sample_cache_hits=persistent_sample_cache_hits,
+                persistent_sample_cache_misses=persistent_sample_cache_misses,
+                persistent_sample_timeout_cache_hits=(
+                    persistent_sample_timeout_cache_hits
+                ),
+                sample_id=sample_id,
+                sample_index=sample_index,
+                sample_timeout_seconds=sample_timeout_seconds,
+                timeout_cache_kind=timeout_cache_kind,
+            )
+            continue
         result = _compiler_ir_metric_result_from_cache_payload(
             cached_result_payload
         )
@@ -2804,11 +2863,26 @@ def compiler_ir_metric_block(
                     "sample_id": sample_id,
                     "sample_timeout_seconds": sample_timeout_seconds,
                     "skip_reason": "sample_timeout",
-                    "source_text_preview": re.sub(r"\s+", " ", sample_text).strip()[:240],
+                    "source_text_preview": re.sub(r"\s+", " ", sample_text).strip()[
+                        :240
+                    ],
                     "text_length": sample_text_length,
                 }
                 if len(sample_metric_records) < max(0, int(max_sample_metric_records)):
                     sample_metric_records.append(sample_record)
+                timeout_payload = _compiler_ir_metric_sample_timeout_cache_payload(
+                    sample_record
+                )
+                _write_metric_disk_cache(
+                    "compiler_ir_metric_sample",
+                    sample_cache_key,
+                    timeout_payload,
+                )
+                _write_metric_disk_cache(
+                    "compiler_ir_metric_sample_timeout",
+                    sample_timeout_cache_key,
+                    timeout_payload,
+                )
                 emit_progress(
                     "sample_timeout",
                     citation=citation,
@@ -2995,7 +3069,8 @@ def compiler_ir_metric_block(
         "metric_failures": failures,
         "persistent_sample_cache_hits": persistent_sample_cache_hits,
         "persistent_sample_cache_misses": persistent_sample_cache_misses,
-        "sample_timeout_cache_policy": "timeout_agnostic_successful_block",
+        "persistent_sample_timeout_cache_hits": persistent_sample_timeout_cache_hits,
+        "sample_timeout_cache_policy": _COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY,
         "sample_timeout_seconds": sample_timeout_seconds,
         "sample_timeout_supported": sample_timeout_supported,
         "sample_timeouts": sample_timeouts,
@@ -5607,6 +5682,21 @@ def _compiler_ir_metric_sample_cache_key(
     return _compiler_ir_metric_sample_disk_cache_key(payload)
 
 
+def _compiler_ir_metric_sample_timeout_cache_key(
+    sample: Any,
+    *,
+    codec: Any,
+) -> str:
+    payload = {
+        "codec": {
+            "config": _metric_cache_object_payload(getattr(codec, "config", None)),
+            "type": f"{codec.__class__.__module__}.{codec.__class__.__qualname__}",
+        },
+        "sample": _sample_metric_cache_payload(sample),
+    }
+    return _compiler_ir_metric_sample_timeout_disk_cache_key(payload)
+
+
 def _compiler_ir_metric_result_cache_payload(result: Any) -> Dict[str, Any]:
     modal_ir = getattr(result, "modal_ir", None)
     frame_candidates = getattr(result, "frame_candidates", ()) or ()
@@ -5623,6 +5713,49 @@ def _compiler_ir_metric_result_cache_payload(result: Any) -> Dict[str, Any]:
             slot_texts
         )
     return payload
+
+
+def _compiler_ir_metric_sample_timeout_cache_payload(
+    sample_record: Mapping[str, Any],
+) -> Dict[str, Any]:
+    return {
+        "cache_entry_type": "sample_timeout",
+        "record": _metric_cache_object_payload(sample_record),
+        "sample_timeout_cache_policy": _COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY,
+        "sample_timeout_seconds": _float_or_zero(
+            sample_record.get("sample_timeout_seconds")
+        ),
+    }
+
+
+def _compiler_ir_metric_sample_timeout_record_from_cache_payload(
+    payload: Optional[Mapping[str, Any]],
+    *,
+    requested_timeout_seconds: float,
+) -> Optional[Dict[str, Any]]:
+    if not isinstance(payload, Mapping):
+        return None
+    if payload.get("cache_entry_type") != "sample_timeout":
+        return None
+    if (
+        payload.get("sample_timeout_cache_policy")
+        != _COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY
+    ):
+        return None
+    requested_timeout = max(0.0, float(requested_timeout_seconds or 0.0))
+    cached_timeout = _float_or_zero(payload.get("sample_timeout_seconds"))
+    if requested_timeout <= 0.0 or cached_timeout + 1.0e-9 < requested_timeout:
+        return None
+    record = payload.get("record")
+    if not isinstance(record, Mapping):
+        return None
+    cached = dict(record)
+    cached["cached_sample_timeout_seconds"] = cached_timeout
+    cached["from_persistent_sample_cache"] = True
+    cached["sample_timeout_cache_policy"] = _COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY
+    cached["sample_timeout_seconds"] = requested_timeout
+    cached["skip_reason"] = "sample_timeout"
+    return cached
 
 
 def _compiler_ir_metric_result_from_cache_payload(
