@@ -8520,6 +8520,95 @@ def test_multiview_training_target_compacts_short_official_usc_section() -> None
     assert abs(sum(compacted.values()) - 1.0) < 1e-9
 
 
+def test_multiview_training_target_projects_packet_official_usc_contract_patterns() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _compact_official_usc_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.17,
+        "TDFOL.prover": 0.19,
+        "deontic.ir": 0.28,
+        "external_provers.router": 0.10,
+        "knowledge_graphs.neo4j_compat": 0.14,
+        "modal.frame_logic": 0.06,
+        "zkp.circuits": 0.06,
+    }
+    samples = {
+        "intergovernmental_report": (
+            "U.S.C. Title 33 - NAVIGATION AND NAVIGABLE WATERS 33 U.S.C. "
+            "United States Code, 2024 Edition Sec. 1521 - Negotiations with "
+            "Canada and Mexico; report to Congress From the U.S. Government "
+            "Publishing Office, www.gpo.gov §1521. The President of the "
+            "United States is authorized and requested to enter into "
+            "negotiations with the Governments of Canada and Mexico to "
+            "determine the need for intergovernmental understandings, "
+            "agreements, or treaties. The President shall report to the "
+            "Congress the actions taken, the progress achieved, and "
+            "recommendations for further action. (Pub. L. 93-627, §22, "
+            "Jan. 3, 1975, 88 Stat. 2147.)"
+        ),
+        "subsidy_contract": (
+            "§57516. Operating-differential subsidies If the Secretary of "
+            "Transportation considers it necessary, the Secretary may make a "
+            "contract with a charterer of a vessel owned by the Secretary for "
+            "payment of an operating-differential subsidy, subject to the "
+            "same limitations and restrictions. (Pub. L. 109-304, §8(c), "
+            "Oct. 6, 2006, 120 Stat. 1667.)"
+        ),
+        "program_funding": (
+            "§15824. State Technologies Advancement Collaborative The "
+            "Secretary, in cooperation with the States, shall establish a "
+            "cooperative program for research, development, demonstration, "
+            "and deployment of technologies. Funding for the Collaborative "
+            "may be provided from amounts specifically appropriated. There "
+            "are authorized to carry out this section such sums as are "
+            "necessary for each of fiscal years 2006 through 2010. (Pub. "
+            "L. 109-58, title I, §127, Aug. 8, 2005, 119 Stat. 619.)"
+        ),
+        "installment_schedule": (
+            "§471. Initial payment and annual installments of charges "
+            "generally Any entryman or applicant shall pay into the "
+            "reclamation fund 5 per centum of the construction charge as an "
+            "initial installment, and shall pay the balance of said charge "
+            "in annual installments. The first annual installment shall "
+            "become due and payable on December 1 of the fifth calendar "
+            "year after the initial installment. (Aug. 13, 1914, ch. 247, "
+            "§1, 38 Stat. 686.) Editorial Notes Codification."
+        ),
+        "contractor_reporting": (
+            "U.S.C. Title 41 - PUBLIC CONTRACTS 41 U.S.C. United States "
+            "Code, 2024 Edition Sec. 8703 - Contractor responsibilities "
+            "From the U.S. Government Publishing Office, www.gpo.gov "
+            "§8703. Each contracting agency shall include in each prime "
+            "contract a requirement that the prime contractor shall "
+            "cooperate fully with a Federal Government agency investigating "
+            "a violation. A prime contractor or subcontractor shall promptly "
+            "report the possible violation in writing to the inspector "
+            "general. (Pub. L. 111-350, §3, Jan. 4, 2011, 124 Stat. 3839.)"
+        ),
+    }
+
+    projected = {
+        name: _compact_official_usc_contract_distribution(distribution, text=text)
+        for name, text in samples.items()
+    }
+
+    assert projected["intergovernmental_report"]["TDFOL.prover"] > 0.24
+    assert projected["subsidy_contract"]["CEC.native"] > 0.21
+    assert projected["program_funding"]["deontic.ir"] > 0.40
+    assert projected["installment_schedule"]["TDFOL.prover"] > 0.29
+    assert projected["contractor_reporting"]["deontic.ir"] > 0.40
+    for compacted in projected.values():
+        assert set(compacted) == {
+            "CEC.native",
+            "TDFOL.prover",
+            "deontic.ir",
+            "knowledge_graphs.neo4j_compat",
+        }
+        assert abs(sum(compacted.values()) - 1.0) < 1e-9
+
+
 def test_official_usc_primary_projection_handles_liability_and_reporting_sections() -> None:
     from ipfs_datasets_py.logic.bridge.multiview import (
         _project_official_usc_primary_contract_distribution,

@@ -1271,6 +1271,7 @@ _DECOMPILER_REFINED_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = {
         "alethic",
         "conditional_normative",
         "deontic",
+        "doxastic",
         "epistemic",
         "frame",
         "temporal",
@@ -14448,8 +14449,6 @@ def _source_anchor_family_pairs(
         if not candidate_family or candidate_family in distinct_families:
             continue
         distinct_families.append(candidate_family)
-    if source_family == "frame" and set(distinct_families or [source_family]) == {"frame"}:
-        return ["frame->frame"]
     for target_family in _cue_derived_target_families(formula):
         if target_family and target_family not in distinct_families:
             distinct_families.append(target_family)

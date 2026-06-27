@@ -526,6 +526,47 @@ _BRIDGE_CONTRACT_MINING_LEASE_TAX_PROVISO_RE = re.compile(
     r"royalty\s+interests?)\b",
     flags=re.IGNORECASE,
 )
+_BRIDGE_CONTRACT_INTERGOVERNMENTAL_NEGOTIATION_REPORT_RE = re.compile(
+    r"\b(?:president|secretary|administrator|agency)\b.{0,260}\b"
+    r"(?:enter\s+into\s+negotiations?|intergovernmental\s+understandings?|"
+    r"agreements?,?\s+or\s+treaties|joint\s+studies\s+and\s+investigations)\b"
+    r"|\bshall\s+report\s+to\s+(?:the\s+)?congress\b.{0,220}\b"
+    r"(?:actions?\s+taken|progress\s+achieved|recommendations?\s+for\s+"
+    r"further\s+action)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_SUBSIDY_PAYMENT_CONTRACT_RE = re.compile(
+    r"\b(?:operating-differential\s+subsid(?:y|ies)|subsid(?:y|ies))\b"
+    r".{0,260}\b(?:contract|charterer|payment|limitations?\s+and\s+restrictions?)\b"
+    r"|\b(?:secretary|administrator|agency)\b.{0,180}\bmay\s+make\s+a\s+contract\b"
+    r".{0,220}\b(?:payment|subsid(?:y|ies)|vessels?)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_PROGRAM_FUNDING_AUTHORITY_RE = re.compile(
+    r"\b(?:shall\s+establish|there\s+(?:is|are)\s+established)\b.{0,240}\b"
+    r"(?:cooperative\s+program|collaborative|program\s+for\s+research|"
+    r"development,\s+demonstration,\s+and\s+deployment)\b"
+    r"|\b(?:funding\s+for|authorized\s+to\s+carry\s+out|authorized\s+to\s+be\s+"
+    r"appropriated)\b.{0,220}\b(?:program|collaborative|fiscal\s+years?)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_PAYMENT_INSTALLMENT_SCHEDULE_RE = re.compile(
+    r"\b(?:initial\s+installment|annual\s+installments?|construction\s+charge|"
+    r"water-right\s+(?:application|applicant)|reclamation\s+fund)\b"
+    r".{0,260}\b(?:shall\s+pay|shall\s+become\s+due|due\s+and\s+payable|"
+    r"provided\s+further)\b"
+    r"|\b(?:shall\s+pay|shall\s+become\s+due|due\s+and\s+payable)\b.{0,260}\b"
+    r"(?:initial\s+installment|annual\s+installments?|construction\s+charge)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_CONTRACTOR_COMPLIANCE_REPORT_RE = re.compile(
+    r"\b(?:prime\s+contractor|subcontractor|contracting\s+agency|prime\s+contract)\b"
+    r".{0,280}\b(?:shall\s+include|shall\s+cooperate|shall\s+promptly\s+report|"
+    r"possible\s+violation|inspector\s+general|suspend\s+or\s+debar)\b"
+    r"|\b(?:shall\s+cooperate|shall\s+promptly\s+report|possible\s+violation)\b"
+    r".{0,280}\b(?:prime\s+contractor|subcontractor|contracting\s+agency)\b",
+    flags=re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -3345,6 +3386,23 @@ def _project_official_usc_primary_contract_distribution(
     has_mining_lease_tax_proviso = bool(
         _BRIDGE_CONTRACT_MINING_LEASE_TAX_PROVISO_RE.search(normalized_text)
     )
+    has_intergovernmental_negotiation_report = bool(
+        _BRIDGE_CONTRACT_INTERGOVERNMENTAL_NEGOTIATION_REPORT_RE.search(
+            normalized_text
+        )
+    )
+    has_subsidy_payment_contract = bool(
+        _BRIDGE_CONTRACT_SUBSIDY_PAYMENT_CONTRACT_RE.search(normalized_text)
+    )
+    has_program_funding_authority = bool(
+        _BRIDGE_CONTRACT_PROGRAM_FUNDING_AUTHORITY_RE.search(normalized_text)
+    )
+    has_payment_installment_schedule = bool(
+        _BRIDGE_CONTRACT_PAYMENT_INSTALLMENT_SCHEDULE_RE.search(normalized_text)
+    )
+    has_contractor_compliance_report = bool(
+        _BRIDGE_CONTRACT_CONTRACTOR_COMPLIANCE_REPORT_RE.search(normalized_text)
+    )
     status_operation_cue_count = _cue_count(
         _BRIDGE_CONTRACT_STATUS_OPERATION_CUE_RE,
         normalized_text,
@@ -3433,6 +3491,46 @@ def _project_official_usc_primary_contract_distribution(
             ("knowledge_graphs.neo4j_compat", 0.12),
         )
         strength = 0.44
+    elif has_intergovernmental_negotiation_report:
+        target_mix = (
+            ("deontic.ir", 0.38),
+            ("CEC.native", 0.26),
+            ("TDFOL.prover", 0.24),
+            ("knowledge_graphs.neo4j_compat", 0.12),
+        )
+        strength = 0.44
+    elif has_subsidy_payment_contract:
+        target_mix = (
+            ("deontic.ir", 0.40),
+            ("CEC.native", 0.28),
+            ("TDFOL.prover", 0.20),
+            ("knowledge_graphs.neo4j_compat", 0.12),
+        )
+        strength = 0.42
+    elif has_program_funding_authority:
+        target_mix = (
+            ("deontic.ir", 0.44),
+            ("CEC.native", 0.24),
+            ("TDFOL.prover", 0.22),
+            ("knowledge_graphs.neo4j_compat", 0.10),
+        )
+        strength = 0.55
+    elif has_payment_installment_schedule:
+        target_mix = (
+            ("TDFOL.prover", 0.36),
+            ("deontic.ir", 0.34),
+            ("CEC.native", 0.20),
+            ("knowledge_graphs.neo4j_compat", 0.10),
+        )
+        strength = 0.44
+    elif has_contractor_compliance_report:
+        target_mix = (
+            ("deontic.ir", 0.48),
+            ("knowledge_graphs.neo4j_compat", 0.22),
+            ("TDFOL.prover", 0.18),
+            ("CEC.native", 0.12),
+        )
+        strength = 0.42
     elif has_editorial_status_operation and deontic_cue_count <= 0:
         target_mix = (
             ("CEC.native", 0.44),

@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
 import random
 import re
@@ -396,6 +397,7 @@ from ipfs_datasets_py.logic.modal import (
     DeterministicModalLogicCodec,
     ModalLogicCodecConfig,
     decoded_modal_phrase_slot_text_map,
+    modal_text_token_similarity,
 )
 from ipfs_datasets_py.logic.bridge import DEFAULT_LEGAL_IR_BRIDGE_NAMES
 from ipfs_datasets_py.logic.submodule_registry import (
@@ -437,6 +439,9 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_dataset import (
     USCODE_LAWS_PARQUET,
     USCodeParquetRecord,
 )
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import (
+    stable_mock_embedding,
+)
 
 LAW_COLUMNS = [
     "ipfs_cid",
@@ -455,10 +460,14 @@ DEFAULT_AUTOENCODER_METRIC_BRIDGE_ADAPTERS = (
     "deontic_norms",
     "fol_tdfol",
 )
-DEFAULT_AUTOENCODER_DIAGNOSTIC_BRIDGE_ADAPTERS = (
-    *DEFAULT_AUTOENCODER_METRIC_BRIDGE_ADAPTERS,
+DEFAULT_AUTOENCODER_DIAGNOSTIC_BRIDGE_ADAPTERS: tuple[str, ...] = ()
+DEFAULT_AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLES = 1
+AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLE_TEXT_CHARS_ENV = (
+    "IPFS_DATASETS_AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLE_TEXT_CHARS"
 )
-DEFAULT_AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLES = 2
+DEFAULT_AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLE_TEXT_CHARS = 800
+BRIDGE_EVALUATE_PROVERS_ENV = "IPFS_DATASETS_BRIDGE_EVALUATE_PROVERS"
+DEFAULT_BRIDGE_EVALUATE_PROVERS = False
 
 CODEX_AST_SCOPES = tuple(
     dict.fromkeys(
@@ -670,8 +679,12 @@ COMPILER_IR_METRIC_MAX_SAMPLE_TEXT_CHARS_ENV = (
 COMPILER_IR_METRIC_SAMPLE_TIMEOUT_SECONDS_ENV = (
     "IPFS_DATASETS_COMPILER_IR_METRIC_SAMPLE_TIMEOUT_SECONDS"
 )
-DEFAULT_COMPILER_IR_METRIC_MAX_SAMPLE_TEXT_CHARS = 3000
-DEFAULT_COMPILER_IR_METRIC_SAMPLE_TIMEOUT_SECONDS = 30.0
+COMPILER_IR_METRIC_TEXT_POLICY_ENV = "IPFS_DATASETS_COMPILER_IR_METRIC_TEXT_POLICY"
+COMPILER_IR_METRIC_TEXT_POLICIES = ("skip", "truncate")
+DEFAULT_COMPILER_IR_METRIC_MAX_SAMPLE_TEXT_CHARS = 400
+DEFAULT_COMPILER_IR_METRIC_SAMPLE_TIMEOUT_SECONDS = 10.0
+DEFAULT_COMPILER_IR_METRIC_TEXT_POLICY = "truncate"
+DEFAULT_VALIDATION_CANARY_COUNT = 8
 COMPILER_IR_TRAIN_MODE_ENV = "IPFS_DATASETS_COMPILER_IR_TRAIN_MODE"
 COMPILER_IR_TRAIN_EVERY_N_CYCLES_ENV = (
     "IPFS_DATASETS_COMPILER_IR_TRAIN_EVERY_N_CYCLES"
@@ -680,9 +693,9 @@ COMPILER_IR_GUIDED_TRAIN_MODE_ENV = "IPFS_DATASETS_COMPILER_IR_GUIDED_TRAIN_MODE
 COMPILER_IR_GUIDED_TRAIN_EVERY_N_CYCLES_ENV = (
     "IPFS_DATASETS_COMPILER_IR_GUIDED_TRAIN_EVERY_N_CYCLES"
 )
-DEFAULT_COMPILER_IR_TRAIN_MODE = "every_cycle"
+DEFAULT_COMPILER_IR_TRAIN_MODE = "periodic"
 DEFAULT_COMPILER_IR_TRAIN_EVERY_N_CYCLES = 4
-DEFAULT_COMPILER_IR_GUIDED_TRAIN_MODE = "every_cycle"
+DEFAULT_COMPILER_IR_GUIDED_TRAIN_MODE = "periodic"
 DEFAULT_COMPILER_IR_GUIDED_TRAIN_EVERY_N_CYCLES = 4
 AUTOENCODER_BEFORE_TRAIN_EVAL_MODE_ENV = (
     "IPFS_DATASETS_AUTOENCODER_BEFORE_TRAIN_EVAL_MODE"
@@ -702,11 +715,11 @@ AUTOENCODER_TODO_SUPERVISOR_MODE_ENV = (
 AUTOENCODER_TODO_SUPERVISOR_MIN_OPEN_ENV = (
     "IPFS_DATASETS_AUTOENCODER_TODO_SUPERVISOR_MIN_OPEN"
 )
-DEFAULT_AUTOENCODER_BEFORE_TRAIN_EVAL_MODE = "every_cycle"
+DEFAULT_AUTOENCODER_BEFORE_TRAIN_EVAL_MODE = "periodic"
 DEFAULT_AUTOENCODER_BEFORE_TRAIN_EVAL_EVERY_N_CYCLES = 4
-DEFAULT_AUTOENCODER_SAMPLE_MEMORY_PROBE_MODE = "every_cycle"
+DEFAULT_AUTOENCODER_SAMPLE_MEMORY_PROBE_MODE = "periodic"
 DEFAULT_AUTOENCODER_SAMPLE_MEMORY_PROBE_EVERY_N_CYCLES = 4
-DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MODE = "every_cycle"
+DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MODE = "starved"
 DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MIN_OPEN = 12
 BRIDGE_IR_REPORT_CACHE_MAX = 4096
 USCODE_DAEMON_METRIC_SCHEMA_VERSION = "uscode-modal-daemon-metrics-v2"
@@ -745,6 +758,7 @@ DEFAULT_AUTOENCODER_MAX_CE_DEADBAND = 1.0e-4
 DEFAULT_AUTOENCODER_PROJECTION_PRESCREEN_MODE = "off"
 DEFAULT_AUTOENCODER_PROJECTION_PRESCREEN_TOP_K = 3
 DEFAULT_AUTOENCODER_PROJECTION_PERIODIC_FULL_SEARCH_EVERY_N_CYCLES = 8
+DEFAULT_GENERALIZABLE_PROJECTION_TIMEOUT_SECONDS = 180.0
 LEGAL_IR_METRIC_DISK_CACHE_VERSION = "legal-ir-metric-disk-cache-v1"
 LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV = "IPFS_DATASETS_LEGAL_IR_METRIC_CACHE_DIR"
 LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV = "IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE"
@@ -753,11 +767,11 @@ _BRIDGE_IR_REPORT_CACHE_LOCK = threading.Lock()
 _BRIDGE_IR_REPORT_CACHE: Dict[str, Any] = {}
 _METRIC_CODE_FINGERPRINT_LOCK = threading.Lock()
 _METRIC_CODE_FINGERPRINT_VALUE: Optional[str] = None
-_COMPILER_IR_METRIC_BLOCK_CACHE_VERSION = "compiler-ir-metric-block-cache-v4"
+_COMPILER_IR_METRIC_BLOCK_CACHE_VERSION = "compiler-ir-metric-block-cache-v5"
 _COMPILER_IR_GUIDANCE_CACHE_POLICY = "codec-output-contract-v1"
 _COMPILER_IR_GUIDANCE_DIAGNOSTICS_VERSION = "compiler-guidance-diagnostics-v1"
-_COMPILER_IR_SAMPLE_CACHE_VERSION = "compiler-ir-metric-sample-cache-v4"
-_COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY = "timeout_cached_per_sample_budget_v1"
+_COMPILER_IR_SAMPLE_CACHE_VERSION = "compiler-ir-metric-sample-cache-v5"
+_COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY = "timeout_surface_fallback_per_sample_budget_v2"
 _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_LOCK = threading.Lock()
 _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_VALUE: Optional[str] = None
 _ACTIVE_CODEX_EXEC_PROCESSES: List[subprocess.Popen[str]] = []
@@ -2505,6 +2519,242 @@ def _compiler_ir_guidance_block_cache_compatible(
     return all(isinstance(block.get(key), Mapping) for key in required_mapping_keys)
 
 
+def _normalise_compiler_ir_metric_text_policy(value: Any) -> str:
+    policy = str(value or DEFAULT_COMPILER_IR_METRIC_TEXT_POLICY).strip().lower()
+    if policy not in COMPILER_IR_METRIC_TEXT_POLICIES:
+        return DEFAULT_COMPILER_IR_METRIC_TEXT_POLICY
+    return policy
+
+
+def _compiler_ir_metric_bounded_text(text: str, max_chars: int) -> str:
+    """Return a stable metric prefix without cutting the last token when possible."""
+
+    limit = max(0, int(max_chars or 0))
+    source_text = str(text or "")
+    if limit <= 0 or len(source_text) <= limit:
+        return source_text
+    prefix = source_text[:limit].rstrip()
+    if not prefix:
+        return source_text[:limit]
+    boundary = max(prefix.rfind(". "), prefix.rfind("; "), prefix.rfind("\n"))
+    min_boundary = max(80, int(limit * 0.65))
+    if boundary >= min_boundary:
+        return prefix[: boundary + 1].rstrip()
+    whitespace = prefix.rfind(" ")
+    if whitespace >= min_boundary:
+        return prefix[:whitespace].rstrip()
+    return prefix
+
+
+def _compiler_ir_metric_sample_for_text(
+    sample: Any,
+    *,
+    metric_text: str,
+) -> Any:
+    """Return a metric-only sample clone with an embedding aligned to the text."""
+
+    original_text = str(getattr(sample, "text", "") or "")
+    if str(metric_text) == original_text:
+        return sample
+    sample_id = str(getattr(sample, "sample_id", "") or "sample")
+    digest = hashlib.sha256(str(metric_text).encode("utf-8")).hexdigest()[:12]
+    dimensions = len(list(getattr(sample, "embedding_vector", []) or [])) or 8
+    embedding_model = str(getattr(sample, "embedding_model", "") or "")
+    metric_embedding_model = (
+        f"metric-prefix:{embedding_model}" if embedding_model else "metric-prefix:mock"
+    )
+    payload = {
+        "embedding_model": metric_embedding_model,
+        "embedding_vector": stable_mock_embedding(str(metric_text), dimensions=dimensions),
+        "normalized_text": str(metric_text),
+        "sample_id": f"{sample_id}:metric-prefix:{digest}",
+        "text": str(metric_text),
+    }
+    try:
+        return replace(sample, **payload)
+    except Exception:
+        fallback = dict(getattr(sample, "__dict__", {}) or {})
+        fallback.update(payload)
+        return SimpleNamespace(**fallback)
+
+
+def _vector_cosine_similarity(left: Sequence[float], right: Sequence[float]) -> float:
+    if len(left) != len(right) or not left:
+        return 0.0
+    left_norm = sum(float(value) * float(value) for value in left) ** 0.5
+    right_norm = sum(float(value) * float(value) for value in right) ** 0.5
+    if left_norm <= 0.0 or right_norm <= 0.0:
+        return 0.0
+    return sum(float(a) * float(b) for a, b in zip(left, right)) / (left_norm * right_norm)
+
+
+def _vector_mse_loss(left: Sequence[float], right: Sequence[float]) -> float:
+    if len(left) != len(right) or not left:
+        return 1.0
+    return sum((float(a) - float(b)) ** 2 for a, b in zip(left, right)) / len(left)
+
+
+def _compiler_ir_timeout_structural_text(metric_text: str) -> str:
+    """Return a cheap modal-cue summary for timed-out deterministic codec metrics."""
+
+    normalized = re.sub(r"\s+", " ", str(metric_text or "")).strip()
+    if not normalized:
+        return ""
+    cue_re = re.compile(
+        r"\b(?:shall|must|may|may\s+not|shall\s+not|required|prohibit(?:ed)?|"
+        r"authorized|eligible|entitled|except|unless|provided|subject\s+to|"
+        r"before|after|within|not\s+later\s+than|effective|repealed|means|"
+        r"definition|penalty|violation|report)\b",
+        flags=re.IGNORECASE,
+    )
+    clauses = [
+        part.strip(" ;:,.")
+        for part in re.split(r"(?<=[.;:])\s+|\n+|\s+\([a-z0-9]+\)\s+", normalized)
+        if part.strip(" ;:,.")
+    ]
+    selected = [part for part in clauses if cue_re.search(part)]
+    if not selected:
+        selected = clauses[:2]
+    structural = "; ".join(part[:220] for part in selected[:3]).strip()
+    return structural[:640] or normalized[:640]
+
+
+def _compiler_ir_timeout_family_distribution(metric_text: str, sample: Any) -> Dict[str, float]:
+    counts: Dict[str, float] = {}
+    modal_ir = getattr(sample, "modal_ir", None)
+    for formula in list(getattr(modal_ir, "formulas", ()) or ()):
+        operator = getattr(formula, "operator", None)
+        family = str(getattr(operator, "family", "") or "").strip()
+        if family:
+            counts[family] = counts.get(family, 0.0) + 1.0
+    lowered = str(metric_text or "").lower()
+    cue_weights = {
+        "deontic": ("shall", "must", "may", "required", "prohibited", "authorized"),
+        "temporal": ("before", "after", "within", "deadline", "effective", "later than"),
+        "conditional_normative": ("if", "unless", "provided", "subject to", "except"),
+        "frame": ("means", "definition", "term", "section", "chapter"),
+    }
+    for family, cues in cue_weights.items():
+        hit_count = sum(1 for cue in cues if cue in lowered)
+        if hit_count:
+            counts[family] = counts.get(family, 0.0) + float(hit_count)
+    if not counts:
+        counts["hybrid"] = 1.0
+    total = sum(counts.values()) or 1.0
+    return {name: value / total for name, value in sorted(counts.items()) if value > 0.0}
+
+
+def _compiler_ir_timeout_entropy(distribution: Mapping[str, float]) -> float:
+    return -sum(
+        max(0.0, float(value)) * math.log(max(float(value), 1.0e-12))
+        for value in distribution.values()
+        if float(value) > 0.0
+    )
+
+
+def _compiler_ir_metric_timeout_fallback_result(
+    sample: Any,
+    *,
+    metric_sample_id: str,
+    metric_text: str,
+    metric_text_length: int,
+    original_text_length: int,
+    sample_timeout_seconds: float,
+) -> Any:
+    """Return finite, degraded compiler metrics when codec scoring times out.
+
+    A timeout means the expensive codec path failed to finish; it does not mean
+    the sample has zero modal signal.  This fallback keeps a bounded surface
+    round-trip signal available for scoring and TODO routing while preserving
+    explicit timeout metadata.
+    """
+
+    modal_ir = getattr(sample, "modal_ir", None)
+    formulas = list(getattr(modal_ir, "formulas", ()) or ())
+    frame_candidates = list(getattr(sample, "frame_candidates", ()) or ())
+    structural_text = _compiler_ir_timeout_structural_text(metric_text)
+    dimensions = len(list(getattr(sample, "embedding_vector", []) or [])) or 8
+    source_embedding = list(getattr(sample, "embedding_vector", []) or []) or stable_mock_embedding(
+        str(metric_text),
+        dimensions=dimensions,
+    )
+    decoded_embedding = stable_mock_embedding(structural_text, dimensions=len(source_embedding))
+    embedding_cosine = _vector_cosine_similarity(source_embedding, decoded_embedding)
+    token_similarity = modal_text_token_similarity(str(metric_text), structural_text)
+    family_distribution = _compiler_ir_timeout_family_distribution(metric_text, sample)
+    family_entropy = _compiler_ir_timeout_entropy(family_distribution)
+    source_copy_ratio = min(1.0, max(0.0, token_similarity))
+    source_copy_penalty = max(0.0, source_copy_ratio - 0.65)
+    symbolic_validity_penalty = 0.25 if formulas else 0.75
+    cross_entropy = min(1.0, family_entropy + 0.20 + symbolic_validity_penalty * 0.20)
+    losses = {
+        "cosine_loss": max(0.0, 1.0 - embedding_cosine),
+        "cosine_similarity": embedding_cosine,
+        "cross_entropy_entropy_loss": min(1.0, family_entropy),
+        "cross_entropy_excess_loss": max(0.0, cross_entropy - min(1.0, family_entropy)),
+        "cross_entropy_loss": cross_entropy,
+        "flogic_similarity_loss": max(0.15, 1.0 - token_similarity),
+        "flogic_similarity_score": min(0.85, max(0.0, token_similarity)),
+        "frame_ranking_loss": 0.25 if frame_candidates else 0.75,
+        "modal_span_coverage_loss": max(0.0, 1.0 - token_similarity),
+        "ontology_violation_count": symbolic_validity_penalty,
+        "raw_source_embedding_cosine_similarity": embedding_cosine,
+        "reconstruction_loss": _vector_mse_loss(source_embedding, decoded_embedding),
+        "source_copy_loss": source_copy_ratio,
+        "source_copy_reward_hack_penalty": source_copy_penalty,
+        "source_decompiled_text_embedding_cosine_loss": max(0.0, 1.0 - embedding_cosine),
+        "source_decompiled_text_embedding_cosine_similarity": embedding_cosine,
+        "source_decompiled_text_token_loss": max(0.0, 1.0 - token_similarity),
+        "source_decompiled_text_token_similarity": token_similarity,
+        "source_span_copy_ratio": source_copy_ratio,
+        "source_span_text_reconstruction_loss": max(0.0, 1.0 - token_similarity),
+        "structural_text_reconstruction_loss": max(0.0, 1.0 - token_similarity),
+        "structural_text_reconstruction_similarity": token_similarity,
+        "symbolic_validity_penalty": symbolic_validity_penalty,
+        "text_reconstruction_loss": max(0.0, 1.0 - token_similarity),
+    }
+    metadata = {
+        "compiler_ir_metric_timeout_fallback": True,
+        "compiler_ir_metric_timeout_fallback_kind": "surface_modal_approximation",
+        "compiler_ir_metric_timeout_family_distribution": family_distribution,
+        "llm_call_count": 0.0,
+        "metric_sample_id": metric_sample_id,
+        "modal_decompiler_structural_text": structural_text,
+        "metric_text_length": int(metric_text_length),
+        "original_text_length": int(original_text_length),
+        "sample_timeout_seconds": float(sample_timeout_seconds),
+        "skip_reason": "sample_timeout",
+    }
+    return SimpleNamespace(
+        decoded_modal_text=structural_text,
+        frame_candidates=frame_candidates,
+        losses=losses,
+        metadata=metadata,
+        modal_ir=SimpleNamespace(formulas=formulas),
+    )
+
+
+def autoencoder_metric_bridge_samples_for_evaluation(
+    samples: Sequence[Any],
+    *,
+    max_sample_text_chars: int = DEFAULT_AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLE_TEXT_CHARS,
+) -> List[Any]:
+    """Return metric-only bridge samples bounded for synchronous LegalIR scoring."""
+
+    limit = max(0, int(max_sample_text_chars or 0))
+    bounded_samples: List[Any] = []
+    for sample in samples:
+        sample_text = str(getattr(sample, "text", "") or "")
+        if limit <= 0 or len(sample_text) <= limit:
+            bounded_samples.append(sample)
+            continue
+        metric_text = _compiler_ir_metric_bounded_text(sample_text, limit)
+        bounded_samples.append(
+            _compiler_ir_metric_sample_for_text(sample, metric_text=metric_text)
+        )
+    return bounded_samples
+
+
 def compiler_ir_metric_block(
     samples: Sequence[Any],
     codec: DeterministicModalLogicCodec,
@@ -2514,6 +2764,7 @@ def compiler_ir_metric_block(
     guidance_top_k: int = 16,
     max_sample_metric_records: int = 32,
     max_sample_text_chars: int = 0,
+    metric_text_policy: str = DEFAULT_COMPILER_IR_METRIC_TEXT_POLICY,
     progress_callback: Optional[Callable[[Mapping[str, Any]], None]] = None,
     sample_timeout_seconds: float = 0.0,
 ) -> Dict[str, Any]:
@@ -2529,6 +2780,9 @@ def compiler_ir_metric_block(
 
     started_at = time.time()
     max_sample_text_chars = max(0, int(max_sample_text_chars or 0))
+    metric_text_policy = _normalise_compiler_ir_metric_text_policy(
+        metric_text_policy
+    )
     sample_timeout_seconds = max(0.0, float(sample_timeout_seconds or 0.0))
     sample_timeout_supported = _compiler_ir_metric_sample_timeout_supported(
         sample_timeout_seconds
@@ -2552,6 +2806,8 @@ def compiler_ir_metric_block(
     emit_progress(
         "start",
         autoencoder_guidance_enabled=bool(use_autoencoder_guidance),
+        max_sample_text_chars=max_sample_text_chars,
+        metric_text_policy=metric_text_policy,
     )
     guidance_applied_count = 0
     guidance_empty_count = 0
@@ -2615,6 +2871,7 @@ def compiler_ir_metric_block(
             guidance_top_k=guidance_top_k,
             max_sample_metric_records=max_sample_metric_records,
             max_sample_text_chars=max_sample_text_chars,
+            metric_text_policy=metric_text_policy,
             sample_timeout_seconds=sample_timeout_seconds,
         )
         cached_block = _read_metric_disk_cache(
@@ -2690,8 +2947,10 @@ def compiler_ir_metric_block(
     llm_call_counts: List[float] = []
     failures = 0
     sample_timeouts = 0
+    timeout_fallback_count = 0
     skipped_sample_count = 0
     text_length_skipped_count = 0
+    text_length_truncated_count = 0
     persistent_sample_cache_hits = 0
     persistent_sample_cache_misses = 0
     persistent_sample_timeout_cache_hits = 0
@@ -2711,36 +2970,73 @@ def compiler_ir_metric_block(
         citation = str(getattr(sample, "citation", "") or "")
         sample_text = str(getattr(sample, "text", "") or "")
         sample_text_length = len(sample_text)
+        metric_sample = sample
+        metric_text = sample_text
+        metric_sample_id = sample_id
+        metric_text_length = sample_text_length
+        metric_text_truncated = False
         emit_progress(
             "sample_start",
             citation=citation,
+            max_sample_text_chars=max_sample_text_chars,
+            metric_text_policy=metric_text_policy,
             sample_id=sample_id,
             sample_index=sample_index,
             text_length=sample_text_length,
         )
         if max_sample_text_chars > 0 and sample_text_length > max_sample_text_chars:
-            skipped_sample_count += 1
-            text_length_skipped_count += 1
-            sample_record = {
-                "citation": citation,
-                "max_sample_text_chars": max_sample_text_chars,
-                "sample_id": sample_id,
-                "skip_reason": "text_length_limit",
-                "source_text_preview": re.sub(r"\s+", " ", sample_text).strip()[:240],
-                "text_length": sample_text_length,
-            }
-            if len(sample_metric_records) < max(0, int(max_sample_metric_records)):
-                sample_metric_records.append(sample_record)
+            if metric_text_policy == "skip":
+                skipped_sample_count += 1
+                text_length_skipped_count += 1
+                sample_record = {
+                    "citation": citation,
+                    "max_sample_text_chars": max_sample_text_chars,
+                    "metric_text_policy": metric_text_policy,
+                    "original_text_length": sample_text_length,
+                    "sample_id": sample_id,
+                    "skip_reason": "text_length_limit",
+                    "source_text_preview": re.sub(r"\s+", " ", sample_text).strip()[
+                        :240
+                    ],
+                    "text_length": sample_text_length,
+                }
+                if len(sample_metric_records) < max(0, int(max_sample_metric_records)):
+                    sample_metric_records.append(sample_record)
+                emit_progress(
+                    "sample_skipped",
+                    citation=citation,
+                    max_sample_text_chars=max_sample_text_chars,
+                    metric_text_policy=metric_text_policy,
+                    sample_id=sample_id,
+                    sample_index=sample_index,
+                    skip_reason="text_length_limit",
+                    text_length=sample_text_length,
+                )
+                continue
+            metric_text = _compiler_ir_metric_bounded_text(
+                sample_text,
+                max_sample_text_chars,
+            )
+            metric_sample = _compiler_ir_metric_sample_for_text(
+                sample,
+                metric_text=metric_text,
+            )
+            metric_sample_id = str(getattr(metric_sample, "sample_id", "") or sample_id)
+            metric_text_length = len(metric_text)
+            metric_text_truncated = metric_text_length < sample_text_length
+            if metric_text_truncated:
+                text_length_truncated_count += 1
             emit_progress(
-                "sample_skipped",
+                "sample_text_truncated",
                 citation=citation,
                 max_sample_text_chars=max_sample_text_chars,
+                metric_sample_id=metric_sample_id,
+                metric_text_length=metric_text_length,
+                metric_text_policy=metric_text_policy,
+                original_text_length=sample_text_length,
                 sample_id=sample_id,
                 sample_index=sample_index,
-                skip_reason="text_length_limit",
-                text_length=sample_text_length,
             )
-            continue
         compiler_guidance = None
         if precomputed_guidance:
             compiler_guidance = precomputed_guidance[sample_index - 1]
@@ -2760,13 +3056,13 @@ def compiler_ir_metric_block(
                 guidance_failures += 1
                 compiler_guidance = None
         sample_cache_key = _compiler_ir_metric_sample_cache_key(
-            sample,
+            metric_sample,
             codec=codec,
             compiler_guidance=compiler_guidance,
             guidance_top_k=guidance_top_k,
         )
         sample_timeout_cache_key = _compiler_ir_metric_sample_timeout_cache_key(
-            sample,
+            metric_sample,
             codec=codec,
         )
         cached_result_payload = _read_metric_disk_cache(
@@ -2788,15 +3084,25 @@ def compiler_ir_metric_block(
             )
             timeout_cache_kind = "compiler_ir_metric_sample_timeout"
         if timeout_record is not None:
+            result_from_timeout_cache = True
             persistent_sample_cache_hits += 1
             persistent_sample_timeout_cache_hits += 1
             failures += 1
             sample_timeouts += 1
+            timeout_fallback_count += 1
             skipped_sample_count += 1
             if len(sample_metric_records) < max(0, int(max_sample_metric_records)):
                 cached_record = dict(timeout_record)
                 cached_record["persistent_cache_kind"] = timeout_cache_kind
                 sample_metric_records.append(cached_record)
+            result = _compiler_ir_metric_timeout_fallback_result(
+                metric_sample,
+                metric_sample_id=metric_sample_id,
+                metric_text=metric_text,
+                metric_text_length=metric_text_length,
+                original_text_length=sample_text_length,
+                sample_timeout_seconds=sample_timeout_seconds,
+            )
             emit_progress(
                 "sample_timeout_cache_hit",
                 citation=citation,
@@ -2810,21 +3116,12 @@ def compiler_ir_metric_block(
                 sample_timeout_seconds=sample_timeout_seconds,
                 timeout_cache_kind=timeout_cache_kind,
             )
-            continue
-        result = _compiler_ir_metric_result_from_cache_payload(
-            cached_result_payload
-        )
-        if result is not None:
-            persistent_sample_cache_hits += 1
-            emit_progress(
-                "sample_persistent_cache_hit",
-                citation=citation,
-                persistent_sample_cache_hits=persistent_sample_cache_hits,
-                persistent_sample_cache_misses=persistent_sample_cache_misses,
-                sample_id=sample_id,
-                sample_index=sample_index,
-            )
         else:
+            result_from_timeout_cache = False
+            result = _compiler_ir_metric_result_from_cache_payload(
+                cached_result_payload
+            )
+        if result is None:
             persistent_sample_cache_misses += 1
             emit_progress(
                 "sample_cache_miss",
@@ -2839,17 +3136,18 @@ def compiler_ir_metric_block(
                     sample_timeout_seconds
                 ) as timeout_guarded:
                     result = codec.encode(
-                        sample.text,
-                        document_id=sample.sample_id,
-                        citation=sample.citation,
-                        source=sample.source,
-                        source_embedding=sample.embedding_vector,
+                        metric_sample.text,
+                        document_id=metric_sample.sample_id,
+                        citation=metric_sample.citation,
+                        source=metric_sample.source,
+                        source_embedding=metric_sample.embedding_vector,
                         compiler_guidance=compiler_guidance,
                     )
                 if sample_timeout_seconds > 0.0 and not timeout_guarded:
                     emit_progress(
                         "sample_timeout_guard_unsupported",
                         citation=citation,
+                        metric_sample_id=metric_sample_id,
                         sample_id=sample_id,
                         sample_index=sample_index,
                         sample_timeout_seconds=sample_timeout_seconds,
@@ -2857,17 +3155,45 @@ def compiler_ir_metric_block(
             except CompilerIRMetricSampleTimeout:
                 failures += 1
                 sample_timeouts += 1
+                timeout_fallback_count += 1
                 skipped_sample_count += 1
+                result = _compiler_ir_metric_timeout_fallback_result(
+                    metric_sample,
+                    metric_sample_id=metric_sample_id,
+                    metric_text=metric_text,
+                    metric_text_length=metric_text_length,
+                    original_text_length=sample_text_length,
+                    sample_timeout_seconds=sample_timeout_seconds,
+                )
+                family_distribution = result.metadata.get(
+                    "compiler_ir_metric_timeout_family_distribution"
+                )
                 sample_record = {
+                    "compiler_ir_metric_timeout_fallback": True,
+                    "compiler_ir_metric_timeout_fallback_kind": str(
+                        result.metadata.get("compiler_ir_metric_timeout_fallback_kind")
+                        or ""
+                    ),
                     "citation": citation,
+                    "metric_sample_id": metric_sample_id,
+                    "metric_text_length": metric_text_length,
+                    "metric_text_policy": metric_text_policy,
+                    "metric_text_truncated": metric_text_truncated,
+                    "original_text_length": sample_text_length,
                     "sample_id": sample_id,
                     "sample_timeout_seconds": sample_timeout_seconds,
                     "skip_reason": "sample_timeout",
-                    "source_text_preview": re.sub(r"\s+", " ", sample_text).strip()[
+                    "source_text_preview": re.sub(r"\s+", " ", metric_text).strip()[
                         :240
                     ],
-                    "text_length": sample_text_length,
+                    "text_length": metric_text_length,
                 }
+                if isinstance(family_distribution, Mapping):
+                    sample_record["compiler_ir_metric_timeout_family_distribution"] = {
+                        str(key): float(value)
+                        for key, value in family_distribution.items()
+                        if isinstance(value, (int, float))
+                    }
                 if len(sample_metric_records) < max(0, int(max_sample_metric_records)):
                     sample_metric_records.append(sample_record)
                 timeout_payload = _compiler_ir_metric_sample_timeout_cache_payload(
@@ -2887,13 +3213,15 @@ def compiler_ir_metric_block(
                     "sample_timeout",
                     citation=citation,
                     failures=failures,
+                    metric_sample_id=metric_sample_id,
+                    metric_text_length=metric_text_length,
+                    metric_text_truncated=metric_text_truncated,
                     sample_id=sample_id,
                     sample_index=sample_index,
                     sample_seconds=round(time.time() - sample_started_at, 3),
                     sample_timeout_seconds=sample_timeout_seconds,
-                    text_length=sample_text_length,
+                    text_length=metric_text_length,
                 )
-                continue
             except Exception:
                 failures += 1
                 emit_progress(
@@ -2905,10 +3233,25 @@ def compiler_ir_metric_block(
                     sample_seconds=round(time.time() - sample_started_at, 3),
                 )
                 continue
-            _write_metric_disk_cache(
-                "compiler_ir_metric_sample",
-                sample_cache_key,
-                _compiler_ir_metric_result_cache_payload(result),
+            if not bool(
+                getattr(result, "metadata", {}).get(
+                    "compiler_ir_metric_timeout_fallback"
+                )
+            ):
+                _write_metric_disk_cache(
+                    "compiler_ir_metric_sample",
+                    sample_cache_key,
+                    _compiler_ir_metric_result_cache_payload(result),
+                )
+        elif not result_from_timeout_cache:
+            persistent_sample_cache_hits += 1
+            emit_progress(
+                "sample_persistent_cache_hit",
+                citation=citation,
+                persistent_sample_cache_hits=persistent_sample_cache_hits,
+                persistent_sample_cache_misses=persistent_sample_cache_misses,
+                sample_id=sample_id,
+                sample_index=sample_index,
             )
         for name in losses:
             value = result.losses.get(name)
@@ -2930,13 +3273,38 @@ def compiler_ir_metric_block(
                 for name in COMPILER_GUIDANCE_CANARY_METRICS
                 if name in result.losses and result.losses.get(name) is not None
             },
+            "metric_sample_id": metric_sample_id,
+            "metric_text_length": metric_text_length,
+            "metric_text_policy": metric_text_policy,
+            "metric_text_truncated": metric_text_truncated,
+            "original_text_length": sample_text_length,
             "sample_id": str(getattr(sample, "sample_id", "") or ""),
             "source_text_preview": re.sub(
                 r"\s+",
                 " ",
-                str(getattr(sample, "text", "") or ""),
+                metric_text,
             ).strip()[:240],
+            "text_length": metric_text_length,
         }
+        if result.metadata.get("compiler_ir_metric_timeout_fallback"):
+            sample_record["compiler_ir_metric_timeout_fallback"] = True
+            sample_record["compiler_ir_metric_timeout_fallback_kind"] = str(
+                result.metadata.get("compiler_ir_metric_timeout_fallback_kind") or ""
+            )
+            family_distribution = result.metadata.get(
+                "compiler_ir_metric_timeout_family_distribution"
+            )
+            if isinstance(family_distribution, Mapping):
+                sample_record["compiler_ir_metric_timeout_family_distribution"] = {
+                    str(key): float(value)
+                    for key, value in family_distribution.items()
+                    if isinstance(value, (int, float))
+                }
+            sample_record["sample_timeout_seconds"] = float(
+                result.metadata.get("sample_timeout_seconds", sample_timeout_seconds)
+                or 0.0
+            )
+            sample_record["skip_reason"] = "sample_timeout"
         structural_preview = str(
             result.metadata.get("modal_decompiler_structural_text") or ""
         )
@@ -3015,8 +3383,8 @@ def compiler_ir_metric_block(
                 text_preview = re.sub(
                     r"\s+",
                     " ",
-                    str(getattr(sample, "text", "") or ""),
-                ).strip()[:240]
+                        metric_text,
+                    ).strip()[:240]
                 examples.append(
                     {
                         "citation": str(getattr(sample, "citation", "") or ""),
@@ -3047,6 +3415,9 @@ def compiler_ir_metric_block(
             failures=failures,
             formula_count=len(result.modal_ir.formulas),
             frame_candidate_count=len(result.frame_candidates),
+            metric_sample_id=metric_sample_id,
+            metric_text_length=metric_text_length,
+            metric_text_truncated=metric_text_truncated,
             sample_id=sample_id,
             sample_index=sample_index,
             sample_seconds=round(time.time() - sample_started_at, 3),
@@ -3066,6 +3437,7 @@ def compiler_ir_metric_block(
         "compiler_ir_guidance_cache_policy": _COMPILER_IR_GUIDANCE_CACHE_POLICY,
         "evaluated_count": len(formula_counts),
         "max_sample_text_chars": max_sample_text_chars,
+        "metric_text_policy": metric_text_policy,
         "metric_failures": failures,
         "persistent_sample_cache_hits": persistent_sample_cache_hits,
         "persistent_sample_cache_misses": persistent_sample_cache_misses,
@@ -3077,6 +3449,8 @@ def compiler_ir_metric_block(
         "sample_count": len(sample_list),
         "skipped_sample_count": skipped_sample_count,
         "text_length_skipped_count": text_length_skipped_count,
+        "text_length_truncated_count": text_length_truncated_count,
+        "timeout_fallback_count": timeout_fallback_count,
     }
     if use_autoencoder_guidance:
         block["compiler_guidance_diagnostics_version"] = (
@@ -3344,7 +3718,12 @@ def autoencoder_validation_signal_health(
         recommendations.append(
             "ensure bridge-backed LegalIR targets are produced before trusting learned IR-view metrics"
         )
-    if bridge_adapter_count <= 0:
+    if not diagnostic_adapter_list:
+        if learned_ir_target_count > 0:
+            recommendations.append(
+                "run occasional diagnostic bridge sweeps for syntax/KG/prover coverage"
+            )
+    elif bridge_adapter_count <= 0:
         issues.append("logic_bridge_metrics_inactive")
         recommendations.append(
             "enable diagnostic bridge adapters so syntax/KG/prover validity is measured"
@@ -3374,10 +3753,11 @@ def autoencoder_validation_signal_health(
     blocking_issues = {
         "autoencoder_metric_bridge_adapters_empty",
         "learned_ir_targets_inactive",
-        "logic_bridge_metrics_inactive",
         "compiler_ir_all_samples_timed_out",
         "compiler_ir_no_samples_evaluated",
     }
+    if diagnostic_adapter_list:
+        blocking_issues.add("logic_bridge_metrics_inactive")
     if any(issue in blocking_issues for issue in issues):
         quality_gate = "fail"
     elif issues:
@@ -5777,6 +6157,7 @@ def _compiler_ir_metric_block_cache_key(
     guidance_top_k: int,
     max_sample_text_chars: int,
     max_sample_metric_records: int,
+    metric_text_policy: str,
     sample_timeout_seconds: float,
 ) -> str:
     payload = {
@@ -5792,6 +6173,9 @@ def _compiler_ir_metric_block_cache_key(
         "guidance_top_k": int(guidance_top_k),
         "max_sample_metric_records": int(max_sample_metric_records),
         "max_sample_text_chars": int(max_sample_text_chars),
+        "metric_text_policy": _normalise_compiler_ir_metric_text_policy(
+            metric_text_policy
+        ),
         "samples": [_sample_metric_cache_payload(sample) for sample in samples],
         "successful_result_timeout_policy": "timeout_agnostic",
     }
@@ -6779,6 +7163,8 @@ def autoencoder_diagnostic_bridge_adapter_names(
         for name in metric_bridge_adapters
         if str(name).strip()
     ]
+    if raw_value is None and not env_raw:
+        return list(DEFAULT_AUTOENCODER_DIAGNOSTIC_BRIDGE_ADAPTERS)
     if normalized in {"none", "off", "false"}:
         return []
     if normalized in {"auto", "default"}:
@@ -6810,6 +7196,8 @@ def _paired_autoencoder_bridge_adapter_arg(
     args: argparse.Namespace,
     attr_name: str,
     env_name: str,
+    *,
+    default_value: str = "default",
 ) -> str:
     """Return a stable child-process adapter argument for paired runs."""
     raw_value = getattr(args, attr_name, None)
@@ -6819,7 +7207,7 @@ def _paired_autoencoder_bridge_adapter_arg(
         else os.environ.get(env_name, "")
     ).strip()
     if not raw or raw.lower() in _FALSE_ENV_VALUES:
-        return "default"
+        return default_value
     return raw
 
 
@@ -6831,6 +7219,21 @@ def autoencoder_metric_bridge_max_samples(args: argparse.Namespace) -> int:
     return _env_int(
         "IPFS_DATASETS_AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLES",
         DEFAULT_AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLES,
+        minimum=0,
+    )
+
+
+def autoencoder_metric_bridge_max_sample_text_chars(args: argparse.Namespace) -> int:
+    """Return text cap for bridge-backed autoencoder metric samples."""
+
+    if getattr(args, "autoencoder_metric_bridge_max_sample_text_chars", None) is not None:
+        return max(
+            0,
+            int(getattr(args, "autoencoder_metric_bridge_max_sample_text_chars") or 0),
+        )
+    return _env_int(
+        AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLE_TEXT_CHARS_ENV,
+        DEFAULT_AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLE_TEXT_CHARS,
         minimum=0,
     )
 
@@ -7719,7 +8122,7 @@ def build_paired_daemon_commands(
         "--validation-count",
         str(args.validation_count),
         "--validation-canary-count",
-        str(getattr(args, "validation_canary_count", 4)),
+        str(getattr(args, "validation_canary_count", DEFAULT_VALIDATION_CANARY_COUNT)),
         "--validation-canary-indices",
         str(getattr(args, "validation_canary_indices", "")),
         "--max-sample-text-chars",
@@ -7730,6 +8133,14 @@ def build_paired_daemon_commands(
                 args,
                 "compiler_ir_metric_max_sample_text_chars",
                 DEFAULT_COMPILER_IR_METRIC_MAX_SAMPLE_TEXT_CHARS,
+            )
+        ),
+        "--compiler-ir-metric-text-policy",
+        str(
+            getattr(
+                args,
+                "compiler_ir_metric_text_policy",
+                DEFAULT_COMPILER_IR_METRIC_TEXT_POLICY,
             )
         ),
         "--compiler-ir-metric-sample-timeout-seconds",
@@ -7835,7 +8246,13 @@ def build_paired_daemon_commands(
         "--bridge-loss-adapters",
         str(getattr(args, "bridge_loss_adapters", DEFAULT_BRIDGE_LOSS_ADAPTERS)),
         "--bridge-evaluate-provers",
-        str(getattr(args, "bridge_evaluate_provers", True)).lower(),
+        str(
+            getattr(
+                args,
+                "bridge_evaluate_provers",
+                DEFAULT_BRIDGE_EVALUATE_PROVERS,
+            )
+        ).lower(),
         "--autoencoder-metric-bridge-adapters",
         _paired_autoencoder_bridge_adapter_arg(
             args,
@@ -7847,6 +8264,7 @@ def build_paired_daemon_commands(
             args,
             "autoencoder_diagnostic_bridge_adapters",
             "IPFS_DATASETS_AUTOENCODER_DIAGNOSTIC_BRIDGE_ADAPTERS",
+            default_value="none",
         ),
         "--autoencoder-metric-bridge-max-samples",
         str(
@@ -7857,6 +8275,17 @@ def build_paired_daemon_commands(
             )
             if getattr(args, "autoencoder_metric_bridge_max_samples", None) is not None
             else DEFAULT_AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLES
+        ),
+        "--autoencoder-metric-bridge-max-sample-text-chars",
+        str(
+            getattr(
+                args,
+                "autoencoder_metric_bridge_max_sample_text_chars",
+                DEFAULT_AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLE_TEXT_CHARS,
+            )
+            if getattr(args, "autoencoder_metric_bridge_max_sample_text_chars", None)
+            is not None
+            else DEFAULT_AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLE_TEXT_CHARS
         ),
         "--autoencoder-device",
         str(getattr(args, "autoencoder_device", "auto")),
@@ -8045,7 +8474,13 @@ def build_paired_daemon_commands(
         "--generalizable-projection-hard-example-fraction",
         str(getattr(args, "generalizable_projection_hard_example_fraction", 1.0)),
         "--generalizable-projection-timeout-seconds",
-        str(getattr(args, "generalizable_projection_timeout_seconds", 900.0)),
+        str(
+            getattr(
+                args,
+                "generalizable_projection_timeout_seconds",
+                DEFAULT_GENERALIZABLE_PROJECTION_TIMEOUT_SECONDS,
+            )
+        ),
         "--generalizable-projection-max-line-search-attempts",
         str(getattr(args, "generalizable_projection_max_line_search_attempts", 0)),
         "--autoencoder-projection-deadband-mode",
@@ -11503,7 +11938,13 @@ def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Pat
         "best_validation_logic_bridge_acceptance": -1.0,
         "best_validation_logic_bridge_proof_failure_ratio": 1.0e12,
         "best_validation_logic_bridge_total_loss": 1.0e12,
-        "bridge_evaluate_provers": bool(getattr(args, "bridge_evaluate_provers", True)),
+        "bridge_evaluate_provers": bool(
+            getattr(
+                args,
+                "bridge_evaluate_provers",
+                DEFAULT_BRIDGE_EVALUATE_PROVERS,
+            )
+        ),
         "bridge_loss_adapters": bridge_loss_adapter_names(args),
         "bridge_loss_failures": 0,
         "bridge_loss_samples": 0,
@@ -11622,7 +12063,7 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--validation-canary-count",
         type=int,
-        default=4,
+        default=DEFAULT_VALIDATION_CANARY_COUNT,
         help=(
             "Sample this many fixed holdout rows once per run and use them for "
             "autoencoder acceptance so validation deltas are comparable across cycles. "
@@ -11659,6 +12100,20 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
             "Skip deterministic compiler/IR metric samples longer than this many "
             "characters. This does not change autoencoder train/validation "
             "sampling. Zero disables the metric-only text cap."
+        ),
+    )
+    parser.add_argument(
+        "--compiler-ir-metric-text-policy",
+        choices=COMPILER_IR_METRIC_TEXT_POLICIES,
+        default=os.environ.get(
+            COMPILER_IR_METRIC_TEXT_POLICY_ENV,
+            DEFAULT_COMPILER_IR_METRIC_TEXT_POLICY,
+        ),
+        help=(
+            "How deterministic compiler/IR metrics handle samples above "
+            "--compiler-ir-metric-max-sample-text-chars. Use 'skip' for the "
+            "legacy full-text-only behavior, or 'truncate' to score a bounded "
+            "metric prefix with a metric-only sample id."
         ),
     )
     parser.add_argument(
@@ -11916,7 +12371,7 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--generalizable-projection-timeout-seconds",
         type=float,
-        default=900.0,
+        default=DEFAULT_GENERALIZABLE_PROJECTION_TIMEOUT_SECONDS,
         help=(
             "Maximum wall-clock seconds for one guarded feature-projection phase. "
             "Zero disables this guard."
@@ -12030,10 +12485,14 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--bridge-evaluate-provers",
         type=parse_bool_flag,
-        default=True,
+        default=_env_bool(
+            BRIDGE_EVALUATE_PROVERS_ENV,
+            DEFAULT_BRIDGE_EVALUATE_PROVERS,
+        ),
         help=(
             "Whether bridge scoring should run expensive theorem-prover gates. "
-            "Use false for daemon health checks that need fast compiler/KG/TODO cycles."
+            "Defaults to false so daemon cycles reach projection/Codex quickly; "
+            "use true for dedicated prover-heavy validation sweeps."
         ),
     )
     parser.add_argument(
@@ -12064,6 +12523,16 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
             "Maximum train/validation samples per phase that receive bridge-backed "
             "LegalIR autoencoder metrics. Base CE/cosine/reconstruction metrics "
             "still evaluate the full batch. Zero disables sampled bridge metrics."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-metric-bridge-max-sample-text-chars",
+        type=int,
+        default=None,
+        help=(
+            "Maximum text characters per sampled bridge-backed autoencoder metric "
+            "sample. Longer samples are evaluated with a metric-only bounded prefix. "
+            "Zero disables the metric-only text cap."
         ),
     )
     parser.add_argument(
@@ -14622,7 +15091,13 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     summary.setdefault("latest_cycle_phase_timings", {})
     summary.setdefault("latest_autoencoder_state_telemetry", {})
     bridge_adapters = bridge_loss_adapter_names(args)
-    bridge_evaluate_provers = bool(getattr(args, "bridge_evaluate_provers", True))
+    bridge_evaluate_provers = bool(
+        getattr(
+            args,
+            "bridge_evaluate_provers",
+            DEFAULT_BRIDGE_EVALUATE_PROVERS,
+        )
+    )
     bridge_parallel_workers = max(
         1,
         int(getattr(args, "autoencoder_bridge_workers", 1) or 1),
@@ -14634,6 +15109,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         metric_bridge_adapters,
     )
     metric_bridge_max_samples = autoencoder_metric_bridge_max_samples(args)
+    metric_bridge_max_sample_text_chars = (
+        autoencoder_metric_bridge_max_sample_text_chars(args)
+    )
     metric_bridge_parallel_workers = max(
         1,
         min(
@@ -14663,10 +15141,20 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         name for name in bridge_adapters if name not in set(diagnostic_bridge_adapters)
     ]
     summary["autoencoder_metric_bridge_max_samples"] = metric_bridge_max_samples
+    summary["autoencoder_metric_bridge_max_sample_text_chars"] = (
+        metric_bridge_max_sample_text_chars
+    )
     summary["autoencoder_metric_bridge_parallel_workers"] = metric_bridge_parallel_workers
     generalizable_projection_timeout_seconds = max(
         0.0,
-        float(getattr(args, "generalizable_projection_timeout_seconds", 900.0) or 0.0),
+        float(
+            getattr(
+                args,
+                "generalizable_projection_timeout_seconds",
+                DEFAULT_GENERALIZABLE_PROJECTION_TIMEOUT_SECONDS,
+            )
+            or 0.0
+        ),
     )
     generalizable_projection_max_line_search_attempts = max(
         0,
@@ -14954,9 +15442,17 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             or 0.0
         ),
     )
+    compiler_ir_metric_text_policy = _normalise_compiler_ir_metric_text_policy(
+        getattr(
+            args,
+            "compiler_ir_metric_text_policy",
+            DEFAULT_COMPILER_IR_METRIC_TEXT_POLICY,
+        )
+    )
     summary["compiler_ir_metric_max_sample_text_chars"] = (
         compiler_ir_metric_max_sample_text_chars
     )
+    summary["compiler_ir_metric_text_policy"] = compiler_ir_metric_text_policy
     summary["compiler_ir_metric_sample_timeout_seconds"] = (
         compiler_ir_metric_sample_timeout_seconds
     )
@@ -15941,12 +16437,19 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         if not sample_list or metric_bridge_max_samples <= 0:
             return []
         if len(sample_list) <= metric_bridge_max_samples:
-            return sample_list
+            return autoencoder_metric_bridge_samples_for_evaluation(
+                sample_list,
+                max_sample_text_chars=metric_bridge_max_sample_text_chars,
+            )
         start = ((max(1, int(cycle)) - 1) * metric_bridge_max_samples) % len(sample_list)
-        return [
+        selected = [
             sample_list[(start + offset) % len(sample_list)]
             for offset in range(metric_bridge_max_samples)
         ]
+        return autoencoder_metric_bridge_samples_for_evaluation(
+            selected,
+            max_sample_text_chars=metric_bridge_max_sample_text_chars,
+        )
 
     def record_metric_progress(
         *,
@@ -16594,6 +17097,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                         compiler_ir_train_samples,
                         feature_codec,
                         max_sample_text_chars=compiler_ir_metric_max_sample_text_chars,
+                        metric_text_policy=compiler_ir_metric_text_policy,
                         progress_callback=metric_progress_callback(
                             cycle=cycle,
                             cycle_started=cycle_started,
@@ -16627,6 +17131,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     compiler_ir_validation_samples,
                     feature_codec,
                     max_sample_text_chars=compiler_ir_metric_max_sample_text_chars,
+                    metric_text_policy=compiler_ir_metric_text_policy,
                     progress_callback=metric_progress_callback(
                         cycle=cycle,
                         cycle_started=cycle_started,
@@ -16793,6 +17298,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                         learning_rate=cycle_learning_rate,
                         legal_ir_bridge_names=metric_bridge_adapters,
                         legal_ir_bridge_max_samples=metric_bridge_max_samples,
+                        legal_ir_bridge_max_sample_text_chars=(
+                            metric_bridge_max_sample_text_chars
+                        ),
                         legal_ir_evaluate_provers=bridge_evaluate_provers,
                         legal_ir_parallel_workers=metric_bridge_parallel_workers,
                         max_cosine_regression=float(
@@ -17070,6 +17578,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                         feature_codec,
                         autoencoder=autoencoder,
                         max_sample_text_chars=compiler_ir_metric_max_sample_text_chars,
+                        metric_text_policy=compiler_ir_metric_text_policy,
                         use_autoencoder_guidance=True,
                         progress_callback=metric_progress_callback(
                             cycle=cycle,
@@ -17107,6 +17616,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     feature_codec,
                     autoencoder=autoencoder,
                     max_sample_text_chars=compiler_ir_metric_max_sample_text_chars,
+                    metric_text_policy=compiler_ir_metric_text_policy,
                     use_autoencoder_guidance=True,
                     progress_callback=metric_progress_callback(
                         cycle=cycle,

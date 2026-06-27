@@ -7,6 +7,7 @@ import hashlib
 import math
 import os
 import re
+import signal
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -24,16 +25,18 @@ from typing import (
     Sequence,
 )
 
-from .legal_samples import LegalSample
+from .legal_samples import LegalSample, stable_mock_embedding
 from .modal_registry import ModalLogicFamily
 
 _LEGAL_IR_TARGET_CACHE_MAX = 2048
 _LEGAL_IR_TARGET_CACHE_LOCK = threading.Lock()
 _LEGAL_IR_TARGET_CACHE: Dict[str, Any] = {}
-_LEGAL_IR_TARGET_DISK_CACHE_VERSION = "legal-ir-target-disk-cache-v1"
+_LEGAL_IR_TARGET_DISK_CACHE_VERSION = "legal-ir-target-disk-cache-v2"
 _LEGAL_IR_TARGET_DISK_CACHE_KIND = "legal_ir_training_target"
 _LEGAL_IR_TARGET_DISK_CACHE_DIR_ENV = "IPFS_DATASETS_LEGAL_IR_METRIC_CACHE_DIR"
 _LEGAL_IR_TARGET_DISK_CACHE_ENABLED_ENV = "IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE"
+_LEGAL_IR_TARGET_TIMEOUT_SECONDS_ENV = "IPFS_DATASETS_LEGAL_IR_TARGET_TIMEOUT_SECONDS"
+_LEGAL_IR_TARGET_DEFAULT_TIMEOUT_SECONDS = 15.0
 _PROJECTION_AUTO_LINE_SEARCH_ATTEMPTS_ENV = (
     "IPFS_DATASETS_GENERALIZABLE_PROJECTION_AUTO_LINE_SEARCH_ATTEMPTS"
 )
@@ -79,6 +82,10 @@ class _CachedLegalIRTrainingTarget:
     @property
     def total_loss(self) -> float:
         return float(self.losses.get("legal_ir_multiview_total_loss", 0.0))
+
+
+class _LegalIRTargetTimeout(RuntimeError):
+    """Raised when LegalIR metric target construction exceeds its budget."""
 
 _AUTOENCODER_DIRECTIONAL_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = {
     "alethic": ("conditional_normative", "deontic", "temporal"),
@@ -3937,6 +3944,7 @@ class AdaptiveModalAutoencoder:
         legal_ir_bridge_names: Sequence[str] = (),
         legal_ir_evaluate_provers: Optional[bool] = None,
         legal_ir_bridge_max_samples: Optional[int] = None,
+        legal_ir_bridge_max_sample_text_chars: Optional[int] = None,
         legal_ir_targets: Optional[Mapping[str, Any] | Sequence[Any]] = None,
         legal_ir_parallel_workers: Optional[int] = None,
         epochs: int = 3,
@@ -4007,6 +4015,11 @@ class AdaptiveModalAutoencoder:
             if legal_ir_bridge_max_samples is None
             else max(0, int(legal_ir_bridge_max_samples))
         )
+        bridge_text_cap = (
+            None
+            if legal_ir_bridge_max_sample_text_chars is None
+            else max(0, int(legal_ir_bridge_max_sample_text_chars))
+        )
         evaluation_kwargs: Dict[str, Any] = {
             "legal_ir_bridge_names": legal_ir_bridge_names,
             "legal_ir_evaluate_provers": legal_ir_evaluate_provers,
@@ -4025,10 +4038,15 @@ class AdaptiveModalAutoencoder:
             if not bridge_names:
                 return []
             if bridge_sample_cap is None:
-                return row_list
-            if bridge_sample_cap <= 0:
+                selected = row_list
+            elif bridge_sample_cap <= 0:
                 return []
-            return row_list[:bridge_sample_cap]
+            else:
+                selected = row_list[:bridge_sample_cap]
+            return _bounded_legal_ir_metric_samples(
+                selected,
+                max_sample_text_chars=bridge_text_cap,
+            )
 
         def evaluate_projection_rows(
             rows: Sequence[LegalSample],
@@ -4045,6 +4063,11 @@ class AdaptiveModalAutoencoder:
             emit_progress(
                 f"{stage}_bridge_evaluation",
                 bridge_sample_count=len(bridge_rows),
+                bridge_sample_ids=[
+                    str(getattr(sample, "sample_id", "") or "")
+                    for sample in bridge_rows
+                ],
+                bridge_text_cap=bridge_text_cap,
                 full_sample_count=len(row_list),
                 sample_count=len(row_list),
             )
@@ -4705,6 +4728,7 @@ class AdaptiveModalAutoencoder:
             "rejection_summary": _projection_rejection_summary(epoch_reports),
             "sample_memory_used": False,
             "legal_ir_bridge_max_samples": bridge_sample_cap,
+            "legal_ir_bridge_max_sample_text_chars": bridge_text_cap,
             "state_entry_count": state_entry_count,
             "stopped_reason": projection_stopped_reason,
             "validation_sample_count": len(target_samples),
@@ -23139,6 +23163,66 @@ def _family_legal_ir_view_key(family: str, view: str) -> str:
     return f"{str(family)}||{str(view)}"
 
 
+def _bounded_metric_text(text: str, max_chars: int) -> str:
+    limit = max(0, int(max_chars or 0))
+    source_text = str(text or "")
+    if limit <= 0 or len(source_text) <= limit:
+        return source_text
+    prefix = source_text[:limit].rstrip()
+    if not prefix:
+        return source_text[:limit]
+    boundary = max(prefix.rfind(". "), prefix.rfind("; "), prefix.rfind("\n"))
+    min_boundary = max(80, int(limit * 0.65))
+    if boundary >= min_boundary:
+        return prefix[: boundary + 1].rstrip()
+    whitespace = prefix.rfind(" ")
+    if whitespace >= min_boundary:
+        return prefix[:whitespace].rstrip()
+    return prefix
+
+
+def _legal_ir_metric_sample_for_text(sample: LegalSample, *, metric_text: str) -> LegalSample:
+    original_text = str(getattr(sample, "text", "") or "")
+    if str(metric_text) == original_text:
+        return sample
+    sample_id = str(getattr(sample, "sample_id", "") or "sample")
+    digest = hashlib.sha256(str(metric_text).encode("utf-8")).hexdigest()[:12]
+    dimensions = len(list(getattr(sample, "embedding_vector", []) or [])) or 8
+    embedding_model = str(getattr(sample, "embedding_model", "") or "")
+    metric_embedding_model = (
+        f"metric-prefix:{embedding_model}" if embedding_model else "metric-prefix:mock"
+    )
+    return replace(
+        sample,
+        embedding_model=metric_embedding_model,
+        embedding_vector=stable_mock_embedding(str(metric_text), dimensions=dimensions),
+        normalized_text=str(metric_text),
+        sample_id=f"{sample_id}:metric-prefix:{digest}",
+        text=str(metric_text),
+    )
+
+
+def _bounded_legal_ir_metric_samples(
+    samples: Sequence[LegalSample],
+    *,
+    max_sample_text_chars: Optional[int],
+) -> List[LegalSample]:
+    if max_sample_text_chars is None:
+        return list(samples)
+    limit = max(0, int(max_sample_text_chars or 0))
+    if limit <= 0:
+        return list(samples)
+    bounded: List[LegalSample] = []
+    for sample in samples:
+        sample_text = str(getattr(sample, "text", "") or "")
+        if len(sample_text) <= limit:
+            bounded.append(sample)
+            continue
+        metric_text = _bounded_metric_text(sample_text, limit)
+        bounded.append(_legal_ir_metric_sample_for_text(sample, metric_text=metric_text))
+    return bounded
+
+
 def _legal_ir_target_payload(
     samples: Sequence[LegalSample],
     *,
@@ -23202,6 +23286,192 @@ def _legal_ir_target_payload(
     }
 
 
+def _legal_ir_target_timeout_seconds() -> float:
+    raw = str(os.environ.get(_LEGAL_IR_TARGET_TIMEOUT_SECONDS_ENV) or "").strip()
+    if not raw:
+        return _LEGAL_IR_TARGET_DEFAULT_TIMEOUT_SECONDS
+    try:
+        value = float(raw)
+    except ValueError:
+        return _LEGAL_IR_TARGET_DEFAULT_TIMEOUT_SECONDS
+    return max(0.0, value)
+
+
+def _legal_ir_target_timeout_enabled(timeout_seconds: float) -> bool:
+    return (
+        timeout_seconds > 0.0
+        and threading.current_thread() is threading.main_thread()
+        and hasattr(signal, "SIGALRM")
+        and hasattr(signal, "ITIMER_REAL")
+        and hasattr(signal, "setitimer")
+    )
+
+
+def _evaluate_legal_ir_multiview_with_timeout(
+    evaluate_legal_ir_multiview: Callable[..., Any],
+    *,
+    timeout_seconds: float,
+    **kwargs: Any,
+) -> Any:
+    if not _legal_ir_target_timeout_enabled(timeout_seconds):
+        return evaluate_legal_ir_multiview(**kwargs)
+
+    previous_handler = signal.getsignal(signal.SIGALRM)
+    previous_timer = signal.setitimer(signal.ITIMER_REAL, 0.0)
+
+    def _raise_timeout(signum: int, frame: Any) -> None:
+        raise _LegalIRTargetTimeout(
+            f"LegalIR target construction exceeded {timeout_seconds:.3f}s"
+        )
+
+    try:
+        signal.signal(signal.SIGALRM, _raise_timeout)
+        signal.setitimer(signal.ITIMER_REAL, timeout_seconds)
+        return evaluate_legal_ir_multiview(**kwargs)
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0.0)
+        signal.signal(signal.SIGALRM, previous_handler)
+        if previous_timer[0] > 0.0:
+            signal.setitimer(
+                signal.ITIMER_REAL,
+                previous_timer[0],
+                previous_timer[1],
+            )
+
+
+def _legal_ir_timeout_view_for_bridge_name(name: str) -> str:
+    normalized = str(name or "").strip().lower().replace("-", "_")
+    if "deontic" in normalized or "norm" in normalized:
+        return "deontic.ir"
+    if "frame" in normalized or "modal" in normalized:
+        return "modal.frame_logic"
+    if "tdfol" in normalized or normalized.startswith("fol"):
+        return "TDFOL.prover"
+    if "cec" in normalized or "event" in normalized:
+        return "CEC.native"
+    if "knowledge" in normalized or "graph" in normalized or "neo4j" in normalized:
+        return "knowledge_graphs.neo4j_compat"
+    if "zkp" in normalized or "zero" in normalized or "circuit" in normalized:
+        return "zkp.circuits"
+    if "prover" in normalized or "router" in normalized:
+        return "external_provers.router"
+    return "modal.frame_logic"
+
+
+def _legal_ir_timeout_view_distribution(
+    sample: LegalSample,
+    *,
+    bridge_names: Sequence[str],
+) -> Dict[str, float]:
+    text = str(sample.text or sample.normalized_text or "").lower()
+    scores: Dict[str, float] = {}
+    for name in bridge_names:
+        view = _legal_ir_timeout_view_for_bridge_name(str(name))
+        scores[view] = max(scores.get(view, 0.0), 0.15)
+
+    def bump(view: str, weight: float) -> None:
+        scores[view] = scores.get(view, 0.0) + float(weight)
+
+    cue_groups = (
+        ("deontic.ir", 0.55, r"\b(?:shall|must|may|required|prohibited|authorized|eligible|entitled)\b"),
+        ("TDFOL.prover", 0.40, r"\b(?:if|unless|provided|subject\s+to|before|after|within|not\s+later\s+than)\b"),
+        ("modal.frame_logic", 0.35, r"\b(?:means|definition|term|section|chapter|subchapter|paragraph)\b"),
+        ("knowledge_graphs.neo4j_compat", 0.30, r"\b(?:secretary|administrator|agency|commission|state|person|contractor)\b"),
+        ("CEC.native", 0.30, r"\b(?:effective|expires?|repealed|transferred|action|event|hearing|notice)\b"),
+        ("external_provers.router", 0.20, r"\b(?:prove|certif(?:y|ies|ied)|determine|finding|report)\b"),
+        ("zkp.circuits", 0.12, r"\b(?:attest|certificate|audit|compliance|verification)\b"),
+    )
+    for view, weight, pattern in cue_groups:
+        if re.search(pattern, text, flags=re.IGNORECASE):
+            bump(view, weight)
+    if not scores:
+        bump("modal.frame_logic", 0.5)
+        bump("deontic.ir", 0.25)
+        bump("TDFOL.prover", 0.25)
+    total = sum(max(0.0, value) for value in scores.values())
+    if total <= 0.0:
+        return {}
+    return {
+        key: value / total
+        for key, value in sorted(scores.items())
+        if value > 0.0
+    }
+
+
+def _legal_ir_target_is_timeout_fallback(target: Any) -> bool:
+    losses = getattr(target, "losses", {}) or {}
+    document = getattr(target, "document", None)
+    document_hash = ""
+    if document is not None and hasattr(document, "canonical_hash"):
+        try:
+            document_hash = str(document.canonical_hash())
+        except Exception:
+            document_hash = ""
+    return (
+        "legal_ir_target_timeout_loss" in dict(losses)
+        or document_hash.startswith("timeout:")
+        or document_hash.startswith("timeout-fallback:")
+    )
+
+
+def _legal_ir_timeout_training_target(
+    sample: LegalSample,
+    *,
+    bridge_names: Sequence[str],
+    cache_key: str,
+    timeout_seconds: float,
+) -> _CachedLegalIRTrainingTarget:
+    view_distribution = _legal_ir_timeout_view_distribution(
+        sample,
+        bridge_names=bridge_names,
+    )
+    entropy_loss = distribution_entropy_loss(view_distribution) if view_distribution else 1.0
+    family_losses = _legal_ir_view_family_loss_metrics(
+        view_distribution,
+        view_distribution,
+    )
+    fallback_loss = min(1.0, 0.35 + 0.10 * len(view_distribution))
+    document_hash = hashlib.sha256(
+        json.dumps(
+            {
+                "bridge_names": list(bridge_names),
+                "cache_key": cache_key,
+                "kind": "legal_ir_target_timeout",
+                "sample_id": sample.sample_id,
+                "timeout_seconds": round(float(timeout_seconds), 6),
+            },
+            ensure_ascii=True,
+            sort_keys=True,
+        ).encode("utf-8")
+    ).hexdigest()
+    return _CachedLegalIRTrainingTarget(
+        bridge_names=tuple(bridge_names),
+        document=_CachedLegalIRDocument(
+            document_hash=f"timeout-fallback:{document_hash}",
+            document_id=sample.sample_id,
+            version="timeout_fallback_v2",
+        ),
+        losses={
+            "legal_ir_multiview_total_loss": fallback_loss,
+            "legal_ir_target_timeout_loss": 1.0,
+            "legal_ir_target_timeout_fallback_loss": fallback_loss,
+            "legal_ir_view_cross_entropy_loss": entropy_loss,
+            "legal_ir_view_cross_entropy_excess_loss": 0.0,
+            "legal_ir_view_entropy_loss": entropy_loss,
+            **family_losses,
+        },
+        adapter_losses={
+            str(name): {
+                "legal_ir_target_timeout_loss": 1.0,
+                "legal_ir_target_timeout_fallback_loss": fallback_loss,
+            }
+            for name in bridge_names
+        },
+        view_distribution=view_distribution,
+        accepted=False,
+    )
+
+
 def _legal_ir_target_items(
     samples: Sequence[LegalSample],
     *,
@@ -23252,16 +23522,27 @@ def _legal_ir_target_items(
                     _LEGAL_IR_TARGET_CACHE.pop(next(iter(_LEGAL_IR_TARGET_CACHE)), None)
                 _LEGAL_IR_TARGET_CACHE[cache_key] = cached
             return sample.sample_id, cached
-        report = evaluate_legal_ir_multiview(
-            sample.text,
-            bridge_names=names,
-            document_id=sample.sample_id,
-            evaluate_provers=evaluate_provers,
-            citation=sample.citation,
-            source=sample.source,
-            source_embedding=sample.embedding_vector,
-        )
-        target = report.training_target()
+        timeout_seconds = _legal_ir_target_timeout_seconds()
+        try:
+            report = _evaluate_legal_ir_multiview_with_timeout(
+                evaluate_legal_ir_multiview,
+                timeout_seconds=timeout_seconds,
+                text=sample.text,
+                bridge_names=names,
+                document_id=sample.sample_id,
+                evaluate_provers=evaluate_provers,
+                citation=sample.citation,
+                source=sample.source,
+                source_embedding=sample.embedding_vector,
+            )
+            target = report.training_target()
+        except _LegalIRTargetTimeout:
+            target = _legal_ir_timeout_training_target(
+                sample,
+                bridge_names=names,
+                cache_key=cache_key,
+                timeout_seconds=timeout_seconds,
+            )
         with _LEGAL_IR_TARGET_CACHE_LOCK:
             if len(_LEGAL_IR_TARGET_CACHE) >= _LEGAL_IR_TARGET_CACHE_MAX:
                 _LEGAL_IR_TARGET_CACHE.pop(next(iter(_LEGAL_IR_TARGET_CACHE)), None)
@@ -23327,6 +23608,7 @@ def _legal_ir_target_cache_key(
         "evaluate_provers": evaluate_provers,
         "sample_content_hash": _sample_content_cache_id(sample),
         "source": sample.source,
+        "target_timeout_seconds": round(_legal_ir_target_timeout_seconds(), 6),
         "text_hash": _text_hash(sample.normalized_text or sample.text),
     }
     return hashlib.sha256(

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import math
+import time
 from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
@@ -243,6 +244,49 @@ def test_legal_ir_target_cache_key_uses_source_text_not_citation_identity() -> N
     assert first.sample_id != second.sample_id
     assert first_key == second_key
     assert first_key != third_key
+
+
+def test_legal_ir_target_timeout_becomes_loss(monkeypatch) -> None:
+    from ipfs_datasets_py.logic import bridge as bridge_module
+
+    sample = build_us_code_sample(
+        title="5",
+        section="552-timeout",
+        text="The agency shall publish a uniquely slow timeout fixture notice.",
+    )
+
+    def slow_multiview(**kwargs):
+        time.sleep(1.0)
+        raise AssertionError("timeout should interrupt this fake bridge")
+
+    monkeypatch.setenv("IPFS_DATASETS_LEGAL_IR_TARGET_TIMEOUT_SECONDS", "0.01")
+    monkeypatch.setenv("IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE", "0")
+    monkeypatch.setattr(
+        bridge_module,
+        "evaluate_legal_ir_multiview",
+        slow_multiview,
+    )
+
+    started = time.monotonic()
+    evaluation = AdaptiveModalAutoencoder().evaluate(
+        [sample],
+        legal_ir_bridge_names=("deontic_norms",),
+        legal_ir_evaluate_provers=False,
+    )
+
+    assert time.monotonic() - started < 0.9
+    assert evaluation.legal_ir_target_count == 1
+    assert evaluation.legal_ir_losses["legal_ir_target_timeout_loss"] == pytest.approx(1.0)
+    assert 0.0 < evaluation.legal_ir_losses["legal_ir_multiview_total_loss"] < 1.0
+    assert (
+        evaluation.legal_ir_losses["legal_ir_target_timeout_fallback_loss"]
+        == pytest.approx(evaluation.legal_ir_losses["legal_ir_multiview_total_loss"])
+    )
+    assert evaluation.legal_ir_view_distribution
+    assert evaluation.legal_ir_view_distribution.get("deontic.ir", 0.0) > 0.0
+    assert evaluation.legal_ir_target_hashes[sample.sample_id].startswith(
+        "timeout-fallback:"
+    )
 
 
 def test_autoencoder_surface_profiles_cover_sparse_uscode_frame_records() -> None:
@@ -565,6 +609,47 @@ def test_generalizable_projection_reports_progress_and_attempt_cap() -> None:
     assert "projection_prescreen_evaluation" in stages
     assert "line_search_attempt" in stages
     assert stages[-1] == "finished"
+
+
+def test_generalizable_projection_bounds_bridge_metric_text(monkeypatch) -> None:
+    train_sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text=" ".join(["The agency shall publish notice before the permit takes effect."] * 8),
+    )
+    validation_sample = build_us_code_sample(
+        title="5",
+        section="553",
+        text=" ".join(["The agency shall publish notice before a rule takes effect."] * 8),
+    )
+    autoencoder = AdaptiveModalAutoencoder()
+    original_evaluate = autoencoder.evaluate
+    bridge_sample_ids: list[str] = []
+    bridge_text_lengths: list[int] = []
+
+    def spy_evaluate(samples, *args, **kwargs):
+        if kwargs.get("legal_ir_bridge_names"):
+            for sample in samples:
+                bridge_sample_ids.append(str(getattr(sample, "sample_id", "") or ""))
+                bridge_text_lengths.append(len(str(getattr(sample, "text", "") or "")))
+        return original_evaluate(samples, *args, **kwargs)
+
+    monkeypatch.setattr(autoencoder, "evaluate", spy_evaluate)
+
+    report = autoencoder.train_generalizable_projection(
+        [train_sample],
+        validation_samples=[validation_sample],
+        legal_ir_bridge_names=("modal_frame_logic",),
+        legal_ir_bridge_max_samples=1,
+        legal_ir_bridge_max_sample_text_chars=80,
+        legal_ir_targets={},
+        epochs=0,
+    )
+
+    assert report["legal_ir_bridge_max_sample_text_chars"] == 80
+    assert bridge_sample_ids
+    assert all(":metric-prefix:" in sample_id for sample_id in bridge_sample_ids)
+    assert all(length <= 80 for length in bridge_text_lengths)
 
 
 def test_generalizable_projection_auto_caps_large_state_line_search(

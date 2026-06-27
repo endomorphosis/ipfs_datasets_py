@@ -1634,6 +1634,98 @@ def test_default_bridge_loss_adapters_cover_registered_logic_views() -> None:
     ]
 
 
+def test_bridge_evaluate_provers_defaults_to_fast_metric_mode(monkeypatch) -> None:
+    monkeypatch.delenv(runner.BRIDGE_EVALUATE_PROVERS_ENV, raising=False)
+    parser = runner.build_uscode_modal_daemon_arg_parser()
+
+    args = parser.parse_args(["--run-id", "fast-bridge-default"])
+
+    assert args.bridge_evaluate_provers is runner.DEFAULT_BRIDGE_EVALUATE_PROVERS
+    assert args.bridge_evaluate_provers is False
+
+
+def test_bridge_evaluate_provers_env_can_enable_heavy_mode(monkeypatch) -> None:
+    monkeypatch.setenv(runner.BRIDGE_EVALUATE_PROVERS_ENV, "1")
+    parser = runner.build_uscode_modal_daemon_arg_parser()
+
+    args = parser.parse_args(["--run-id", "heavy-bridge-env"])
+
+    assert args.bridge_evaluate_provers is True
+
+
+def test_autoencoder_metric_bridge_samples_use_bounded_metric_text() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text=" ".join(["The agency must provide records promptly."] * 8),
+    )
+
+    bounded = runner.autoencoder_metric_bridge_samples_for_evaluation(
+        [sample],
+        max_sample_text_chars=80,
+    )
+
+    assert len(bounded) == 1
+    assert bounded[0] is not sample
+    assert len(bounded[0].text) <= 80
+    assert ":metric-prefix:" in bounded[0].sample_id
+    assert len(bounded[0].embedding_vector) == len(sample.embedding_vector)
+    assert sample.text != bounded[0].text
+
+
+def test_autoencoder_metric_bridge_samples_leave_short_text_unchanged() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide records promptly.",
+    )
+
+    bounded = runner.autoencoder_metric_bridge_samples_for_evaluation(
+        [sample],
+        max_sample_text_chars=80,
+    )
+
+    assert bounded == [sample]
+
+
+def test_autoencoder_diagnostic_bridge_defaults_to_off(monkeypatch) -> None:
+    monkeypatch.delenv(
+        "IPFS_DATASETS_AUTOENCODER_DIAGNOSTIC_BRIDGE_ADAPTERS",
+        raising=False,
+    )
+
+    names = runner.autoencoder_diagnostic_bridge_adapter_names(
+        SimpleNamespace(autoencoder_diagnostic_bridge_adapters=None),
+        bridge_adapters=["modal_frame_logic", "deontic_norms"],
+        metric_bridge_adapters=["modal_frame_logic"],
+    )
+    explicit_default = runner.autoencoder_diagnostic_bridge_adapter_names(
+        SimpleNamespace(autoencoder_diagnostic_bridge_adapters="default"),
+        bridge_adapters=["modal_frame_logic", "deontic_norms"],
+        metric_bridge_adapters=["modal_frame_logic"],
+    )
+
+    assert names == []
+    assert explicit_default == ["modal_frame_logic"]
+
+
+def test_validation_signal_health_allows_disabled_diagnostic_bridge_when_targets_active() -> None:
+    health = runner.autoencoder_validation_signal_health(
+        compiler_ir_validation={"evaluated_count": 1, "sample_count": 1},
+        learned_ir_validation={"target_count": 1},
+        logic_bridge_validation={"adapter_count": 0, "evaluated_count": 0},
+        validation_metrics={"sample_count": 8},
+        metric_bridge_adapters=["modal_frame_logic"],
+        diagnostic_bridge_adapters=[],
+    )
+
+    assert health["quality_gate"] == "pass"
+    assert "logic_bridge_metrics_inactive" not in health["issues"]
+    assert health["recommendations"] == [
+        "run occasional diagnostic bridge sweeps for syntax/KG/prover coverage"
+    ]
+
+
 def test_autoencoder_metric_bridge_defaults_survive_disabled_bridge_loss(
     monkeypatch,
 ) -> None:
@@ -3132,6 +3224,38 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
     assert paired["codex_command"][queue_index + 1] == paired["queue_run_id"]
     duration_index = paired["codex_command"].index("--duration-seconds")
     assert paired["codex_command"][duration_index + 1] == "420.0"
+    canary_index = paired["autoencoder_command"].index("--validation-canary-count")
+    assert paired["autoencoder_command"][canary_index + 1] == str(
+        runner.DEFAULT_VALIDATION_CANARY_COUNT
+    )
+    prover_index = paired["autoencoder_command"].index("--bridge-evaluate-provers")
+    assert paired["autoencoder_command"][prover_index + 1] == "false"
+    bridge_text_index = paired["autoencoder_command"].index(
+        "--autoencoder-metric-bridge-max-sample-text-chars"
+    )
+    assert paired["autoencoder_command"][bridge_text_index + 1] == str(
+        runner.DEFAULT_AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLE_TEXT_CHARS
+    )
+    diagnostic_bridge_index = paired["autoencoder_command"].index(
+        "--autoencoder-diagnostic-bridge-adapters"
+    )
+    assert paired["autoencoder_command"][diagnostic_bridge_index + 1] == "none"
+    text_policy_index = paired["autoencoder_command"].index(
+        "--compiler-ir-metric-text-policy"
+    )
+    assert paired["autoencoder_command"][text_policy_index + 1] == "truncate"
+    sample_timeout_index = paired["autoencoder_command"].index(
+        "--compiler-ir-metric-sample-timeout-seconds"
+    )
+    assert paired["autoencoder_command"][sample_timeout_index + 1] == str(
+        runner.DEFAULT_COMPILER_IR_METRIC_SAMPLE_TIMEOUT_SECONDS
+    )
+    projection_timeout_index = paired["autoencoder_command"].index(
+        "--generalizable-projection-timeout-seconds"
+    )
+    assert paired["autoencoder_command"][projection_timeout_index + 1] == str(
+        runner.DEFAULT_GENERALIZABLE_PROJECTION_TIMEOUT_SECONDS
+    )
     apply_index = paired["codex_command"].index("--codex-apply-mode")
     assert paired["codex_command"][apply_index + 1] == "apply_to_main"
     scale_index = paired["autoencoder_command"].index(
@@ -3174,7 +3298,10 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
     compiler_train_mode_index = paired["autoencoder_command"].index(
         "--compiler-ir-train-mode"
     )
-    assert paired["autoencoder_command"][compiler_train_mode_index + 1] == "every_cycle"
+    assert (
+        paired["autoencoder_command"][compiler_train_mode_index + 1]
+        == runner.DEFAULT_COMPILER_IR_TRAIN_MODE
+    )
     compiler_train_cadence_index = paired["autoencoder_command"].index(
         "--compiler-ir-train-every-n-cycles"
     )
@@ -3182,7 +3309,10 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
     guided_train_mode_index = paired["autoencoder_command"].index(
         "--compiler-ir-guided-train-mode"
     )
-    assert paired["autoencoder_command"][guided_train_mode_index + 1] == "every_cycle"
+    assert (
+        paired["autoencoder_command"][guided_train_mode_index + 1]
+        == runner.DEFAULT_COMPILER_IR_GUIDED_TRAIN_MODE
+    )
     guided_train_cadence_index = paired["autoencoder_command"].index(
         "--compiler-ir-guided-train-every-n-cycles"
     )
@@ -3190,7 +3320,10 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
     before_train_mode_index = paired["autoencoder_command"].index(
         "--autoencoder-before-train-eval-mode"
     )
-    assert paired["autoencoder_command"][before_train_mode_index + 1] == "every_cycle"
+    assert (
+        paired["autoencoder_command"][before_train_mode_index + 1]
+        == runner.DEFAULT_AUTOENCODER_BEFORE_TRAIN_EVAL_MODE
+    )
     before_train_cadence_index = paired["autoencoder_command"].index(
         "--autoencoder-before-train-eval-every-n-cycles"
     )
@@ -3198,7 +3331,10 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
     memory_probe_mode_index = paired["autoencoder_command"].index(
         "--autoencoder-sample-memory-probe-mode"
     )
-    assert paired["autoencoder_command"][memory_probe_mode_index + 1] == "every_cycle"
+    assert (
+        paired["autoencoder_command"][memory_probe_mode_index + 1]
+        == runner.DEFAULT_AUTOENCODER_SAMPLE_MEMORY_PROBE_MODE
+    )
     memory_probe_cadence_index = paired["autoencoder_command"].index(
         "--autoencoder-sample-memory-probe-every-n-cycles"
     )
@@ -3206,7 +3342,10 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
     todo_supervisor_mode_index = paired["autoencoder_command"].index(
         "--autoencoder-todo-supervisor-mode"
     )
-    assert paired["autoencoder_command"][todo_supervisor_mode_index + 1] == "every_cycle"
+    assert (
+        paired["autoencoder_command"][todo_supervisor_mode_index + 1]
+        == runner.DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MODE
+    )
     todo_supervisor_min_open_index = paired["autoencoder_command"].index(
         "--autoencoder-todo-supervisor-min-open"
     )
@@ -3222,7 +3361,7 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
     diagnostic_bridge_index = paired["autoencoder_command"].index(
         "--autoencoder-diagnostic-bridge-adapters"
     )
-    assert paired["autoencoder_command"][diagnostic_bridge_index + 1] == "default"
+    assert paired["autoencoder_command"][diagnostic_bridge_index + 1] == "none"
 
 
 def test_cycle_learning_rate_reacts_to_plateau_and_cosine_regression() -> None:
@@ -6928,16 +7067,137 @@ def test_compiler_ir_metric_block_skips_long_metric_samples(monkeypatch) -> None
         ExplodingCodec(),
         max_sample_metric_records=1,
         max_sample_text_chars=32,
+        metric_text_policy="skip",
         progress_callback=progress.append,
     )
 
     assert block["sample_count"] == 1
     assert block["evaluated_count"] == 0
     assert block["metric_failures"] == 0
+    assert block["metric_text_policy"] == "skip"
     assert block["skipped_sample_count"] == 1
     assert block["text_length_skipped_count"] == 1
     assert block["sample_metric_records"][0]["skip_reason"] == "text_length_limit"
     assert "sample_skipped" in [entry["stage"] for entry in progress]
+
+
+def test_compiler_ir_metric_block_truncates_long_metric_samples(monkeypatch) -> None:
+    monkeypatch.setenv(runner.LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV, "0")
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text=" ".join(["The agency must provide records promptly."] * 8),
+    )
+
+    class RecordingCodec:
+        config = SimpleNamespace(mode="compiler-ir-text-truncate")
+
+        def __init__(self) -> None:
+            self.calls: list[Mapping[str, object]] = []
+
+        def encode(
+            self,
+            text,
+            *,
+            document_id,
+            citation,
+            source,
+            source_embedding,
+            compiler_guidance=None,
+        ):
+            self.calls.append(
+                {
+                    "document_id": document_id,
+                    "embedding": list(source_embedding),
+                    "text": text,
+                }
+            )
+            return SimpleNamespace(
+                decoded_modal_text="must provide records",
+                frame_candidates=[object()],
+                losses={
+                    "cosine_similarity": 0.8,
+                    "cross_entropy_loss": 0.3,
+                    "source_decompiled_text_embedding_cosine_similarity": 0.8,
+                },
+                metadata={"llm_call_count": 0.0},
+                modal_ir=SimpleNamespace(formulas=[object()]),
+            )
+
+    codec = RecordingCodec()
+    progress: list[Mapping[str, object]] = []
+
+    block = compiler_ir_metric_block(
+        [sample],
+        codec,
+        max_sample_metric_records=1,
+        max_sample_text_chars=80,
+        progress_callback=progress.append,
+    )
+
+    assert block["evaluated_count"] == 1
+    assert block["metric_text_policy"] == "truncate"
+    assert block["text_length_skipped_count"] == 0
+    assert block["text_length_truncated_count"] == 1
+    assert len(codec.calls) == 1
+    assert len(str(codec.calls[0]["text"])) <= 80
+    assert ":metric-prefix:" in str(codec.calls[0]["document_id"])
+    assert block["sample_metric_records"][0]["metric_text_truncated"] is True
+    assert block["sample_metric_records"][0]["metric_text_length"] <= 80
+    assert "sample_text_truncated" in [entry["stage"] for entry in progress]
+
+
+def test_compiler_ir_metric_block_cache_respects_metric_text_policy(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv(runner.LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV, str(tmp_path))
+    monkeypatch.setenv(runner.LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV, "1")
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text=" ".join(["The agency must provide records promptly."] * 8),
+    )
+
+    class CountingCodec:
+        config = SimpleNamespace(mode="compiler-ir-text-policy-cache")
+
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def encode(self, *_args, **_kwargs):
+            self.calls += 1
+            return SimpleNamespace(
+                decoded_modal_text="must provide records",
+                frame_candidates=[object()],
+                losses={
+                    "cosine_similarity": 0.8,
+                    "cross_entropy_loss": 0.3,
+                },
+                metadata={"llm_call_count": 0.0},
+                modal_ir=SimpleNamespace(formulas=[object()]),
+            )
+
+    codec = CountingCodec()
+
+    skipped = compiler_ir_metric_block(
+        [sample],
+        codec,
+        max_sample_text_chars=32,
+        metric_text_policy="skip",
+    )
+    truncated = compiler_ir_metric_block(
+        [sample],
+        codec,
+        max_sample_text_chars=32,
+        metric_text_policy="truncate",
+    )
+
+    assert skipped["evaluated_count"] == 0
+    assert skipped["persistent_cache_hit"] is False
+    assert truncated["evaluated_count"] == 1
+    assert truncated["persistent_cache_hit"] is False
+    assert codec.calls == 1
 
 
 def test_compiler_ir_metric_block_times_out_slow_metric_samples(monkeypatch) -> None:
@@ -6968,12 +7228,20 @@ def test_compiler_ir_metric_block_times_out_slow_metric_samples(monkeypatch) -> 
     )
 
     assert block["sample_count"] == 1
-    assert block["evaluated_count"] == 0
+    assert block["evaluated_count"] == 1
     assert block["metric_failures"] == 1
     assert block["sample_timeouts"] == 1
     assert block["skipped_sample_count"] == 1
+    assert block["timeout_fallback_count"] == 1
+    assert 0.0 <= block["source_decompiled_text_token_loss"] <= 1.0
+    assert 0.0 <= block["symbolic_validity_penalty"] < 1.0
     assert block["sample_timeout_supported"] is True
     assert block["sample_metric_records"][0]["skip_reason"] == "sample_timeout"
+    assert block["sample_metric_records"][0]["compiler_ir_metric_timeout_fallback"] is True
+    assert (
+        block["sample_metric_records"][0]["compiler_ir_metric_timeout_fallback_kind"]
+        == "surface_modal_approximation"
+    )
     assert "sample_timeout" in [entry["stage"] for entry in progress]
 
 
@@ -7025,7 +7293,9 @@ def test_compiler_ir_metric_block_caches_sample_timeouts(
     assert second["persistent_sample_cache_hits"] == 1
     assert second["persistent_sample_cache_misses"] == 0
     assert second["persistent_sample_timeout_cache_hits"] == 1
+    assert second["evaluated_count"] == 1
     assert second["sample_timeouts"] == 1
+    assert second["timeout_fallback_count"] == 1
     assert second["sample_metric_records"][0]["from_persistent_sample_cache"] is True
     assert "sample_timeout_cache_hit" in [entry["stage"] for entry in progress]
 

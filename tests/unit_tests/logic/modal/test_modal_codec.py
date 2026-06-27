@@ -35046,6 +35046,54 @@ def test_structural_decoded_text_uses_bounded_typed_ir_semantic_support() -> Non
     assert "typed_ir_semantic_support" not in semantic_slot_texts
 
 
+def test_structural_decoded_text_uses_compact_typed_ir_semantic_support() -> None:
+    source_text = (
+        "§57516. Operating-differential subsidies If the Secretary of "
+        "Transportation considers it necessary, the Secretary may make a "
+        "contract with a charterer of a vessel owned by the Secretary for "
+        "payment of an operating-differential subsidy."
+    )
+    document = ModalIRDocument(
+        document_id="us-code-46-57516-compact-structural-support",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-operating-differential-subsidy",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="D",
+                    symbol="P",
+                    label="permission",
+                ),
+                predicate=ModalIRPredicate(name="subsidy", role="clause"),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-46-57516-compact-structural-support",
+                    start_char=0,
+                    end_char=len(source_text),
+                    citation="46 U.S.C. 57516",
+                ),
+                metadata={"cue": "may"},
+            )
+        ],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    ).lower()
+    semantic_slot_texts = decoded_modal_phrase_slot_text_map(
+        decoded,
+        include_provenance_only=False,
+    )
+
+    assert "operating-differential subsidies" in structural_text
+    assert "the secretary may make a contract" in structural_text
+    assert "typed_ir_compact_semantic_support" not in semantic_slot_texts
+
+
 def test_decode_modal_ir_document_refines_temporal_source_context_family_pair_keys() -> None:
     source_text = (
         "Sec. 8386. Recall to active duty. Members of the Fleet Reserve shall be "
