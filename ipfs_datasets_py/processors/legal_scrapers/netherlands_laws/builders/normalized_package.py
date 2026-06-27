@@ -7,7 +7,17 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from .common import count_jsonl, file_manifest_entry, read_jsonl, write_json, write_jsonl, write_parquet
+from .common import (
+    clean_legal_text,
+    count_jsonl,
+    disambiguate_duplicate_article_identifiers,
+    file_manifest_entry,
+    read_jsonl,
+    stable_row_key,
+    write_json,
+    write_jsonl,
+    write_parquet,
+)
 from ..paths import DEFAULT_HF_REPO_IDS, HF_DATA_DIR, NORMALIZED_DATASET_NAME, PACKAGE_RAW_OUTPUT_DIR
 
 
@@ -110,7 +120,10 @@ def normalize_laws(raw_laws: list[dict[str, Any]]) -> list[dict[str, Any]]:
         "scraped_at",
         "metadata",
     ]
-    return [{key: row.get(key) for key in keep} for row in raw_laws]
+    rows = [{key: row.get(key) for key in keep} for row in raw_laws]
+    for row in rows:
+        row["text"] = clean_legal_text(row.get("text"))
+    return rows
 
 
 def normalize_articles(raw_articles: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -157,9 +170,19 @@ def normalize_articles(raw_articles: list[dict[str, Any]]) -> list[dict[str, Any
     rows: list[dict[str, Any]] = []
     for row in raw_articles:
         out = {key: row.get(key) for key in keep}
+        out["text"] = clean_legal_text(out.get("text"))
         out["law_row_id"] = row.get("law_identifier")
         rows.append(out)
-    return rows
+    disambiguate_duplicate_article_identifiers(rows)
+    deduplicated: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for row in rows:
+        key = stable_row_key(row)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduplicated.append(row)
+    return deduplicated
 
 
 def write_dataset_card(

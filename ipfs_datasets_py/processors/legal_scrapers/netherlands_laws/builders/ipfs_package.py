@@ -8,7 +8,16 @@ from typing import Any
 
 from ipfs_datasets_py.utils.cid_utils import cid_for_obj
 
-from .common import file_manifest_entry, read_jsonl, write_json, write_jsonl, write_parquet
+from .common import (
+    clean_legal_text,
+    disambiguate_duplicate_article_identifiers,
+    file_manifest_entry,
+    read_jsonl,
+    stable_row_key,
+    write_json,
+    write_jsonl,
+    write_parquet,
+)
 from ..paths import (
     DEFAULT_HF_REPO_IDS,
     HF_DATA_DIR,
@@ -89,7 +98,9 @@ def law_payload(row: dict[str, Any]) -> dict[str, Any]:
         "scraped_at",
         "metadata",
     ]
-    return {key: row.get(key) for key in keep}
+    payload = {key: row.get(key) for key in keep}
+    payload["text"] = clean_legal_text(payload.get("text"))
+    return payload
 
 
 def article_payload(row: dict[str, Any]) -> dict[str, Any]:
@@ -133,11 +144,9 @@ def article_payload(row: dict[str, Any]) -> dict[str, Any]:
         "version_end_date",
         "scraped_at",
     ]
-    return {key: row.get(key) for key in keep}
-
-
-def _dedupe_key(row: dict[str, Any]) -> str:
-    return json.dumps(row, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    payload = {key: row.get(key) for key in keep}
+    payload["text"] = clean_legal_text(payload.get("text"))
+    return payload
 
 
 def build_rows(raw_dir: Path | None = None) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
@@ -176,12 +185,14 @@ def build_rows(raw_dir: Path | None = None) -> tuple[list[dict[str, Any]], list[
             }
         )
 
+    article_payloads = [article_payload(raw_row) for raw_row in raw_articles]
+    disambiguate_duplicate_article_identifiers(article_payloads)
+
     articles: list[dict[str, Any]] = []
     seen_article_payloads: set[str] = set()
-    for raw_row in raw_articles:
-        payload = article_payload(raw_row)
+    for payload in article_payloads:
         payload["law_cid"] = law_cid_by_id.get(str(payload.get("law_identifier") or ""), "")
-        dedupe_key = _dedupe_key(payload)
+        dedupe_key = stable_row_key(payload)
         if dedupe_key in seen_article_payloads:
             continue
         seen_article_payloads.add(dedupe_key)

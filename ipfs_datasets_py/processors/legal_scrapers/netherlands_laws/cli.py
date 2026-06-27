@@ -29,6 +29,7 @@ from .operations import (
     validate_integrity,
 )
 from .paths import DEFAULT_BWBR_CATALOG_PATH, DEFAULT_HF_NAMESPACE, DEFAULT_HF_REPO_IDS, PACKAGE_RAW_OUTPUT_DIR
+from .quality_audit import run_quality_audit
 from .upload import token_from_env, upload_datasets, verify_remote_datasets
 
 
@@ -232,6 +233,16 @@ def build_parser() -> argparse.ArgumentParser:
     coverage.add_argument("--out-path", "--out_path", type=Path)
     coverage.add_argument("--no-remaining-identifiers", "--no_remaining_identifiers", action="store_true")
 
+    quality = sub.add_parser("quality-audit", help="Run duplicate, parser-noise, hierarchy, citation, status, packaging, and retrieval audits.")
+    quality.add_argument("--base-dir", "--base_dir", type=Path)
+    quality.add_argument("--vector-dir", "--vector_dir", type=Path)
+    quality.add_argument("--bm25-dir", "--bm25_dir", type=Path)
+    quality.add_argument("--kg-dir", "--kg_dir", type=Path)
+    quality.add_argument("--raw-dir", "--raw_dir", type=Path, default=PACKAGE_RAW_OUTPUT_DIR)
+    quality.add_argument("--out-dir", "--out_dir", type=Path)
+    quality.add_argument("--sample-size", "--sample_size", type=int, default=500)
+    quality.add_argument("--seed", type=int, default=42)
+
     return parser
 
 
@@ -422,6 +433,21 @@ def main(argv: list[str] | None = None) -> int:
                 catalog_path=args.catalog_path,
                 out_path=args.out_path,
                 include_remaining_identifiers=not args.no_remaining_identifiers,
+            )
+        )
+        return 0
+
+    if args.command == "quality-audit":
+        _print(
+            run_quality_audit(
+                base_dir=args.base_dir,
+                vector_dir=args.vector_dir,
+                bm25_dir=args.bm25_dir,
+                kg_dir=args.kg_dir,
+                raw_dir=args.raw_dir,
+                out_dir=args.out_dir,
+                sample_size=args.sample_size,
+                seed=args.seed,
             )
         )
         return 0
