@@ -6,7 +6,7 @@ import json
 import math
 import pickle
 import re
-from collections import Counter
+from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -299,6 +299,7 @@ def build_bm25_index(
     out_dir = out_dir or DEFAULT_BM25_OUT_DIR
     doc_lengths: dict[str, int] = {}
     tf_by_doc: dict[str, Counter[str]] = {}
+    postings_by_term: dict[str, list[tuple[str, int]]] = defaultdict(list)
     doc_rows: list[dict[str, Any]] = []
     row_by_cid: dict[str, dict[str, Any]] = {}
 
@@ -306,8 +307,11 @@ def build_bm25_index(
         text = f"{row.get('title') or ''} {row.get('citation') or ''} {row.get('text') or ''}".strip()
         source_cid = row["source_cid"]
         tokens = tokenise(text)
+        term_counts = Counter(tokens)
         doc_lengths[source_cid] = len(tokens)
-        tf_by_doc[source_cid] = Counter(tokens)
+        tf_by_doc[source_cid] = term_counts
+        for term, tf in term_counts.items():
+            postings_by_term[term].append((source_cid, tf))
         payload = {
             "cid": source_cid,
             "source_cid": source_cid,
@@ -348,10 +352,7 @@ def build_bm25_index(
         df = doc_freq[term]
         idf = math.log(1 + (n_docs - df + 0.5) / (df + 0.5))
         postings = []
-        for source_cid, tf_counter in tf_by_doc.items():
-            tf = tf_counter.get(term, 0)
-            if not tf:
-                continue
+        for source_cid, tf in postings_by_term.get(term, []):
             dl = doc_lengths[source_cid]
             score = idf * ((tf * (k1 + 1)) / (tf + k1 * (1 - b + b * (dl / avgdl))))
             postings.append(
