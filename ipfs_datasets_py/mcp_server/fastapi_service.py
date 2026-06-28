@@ -178,6 +178,8 @@ RATE_LIMITS = {
 
 # Global rate limiting storage (in production, use Redis)
 rate_limit_storage: Dict[str, Dict[str, Any]] = {}
+_rate_limit_last_cleanup: float = time.time()
+_RATE_LIMIT_MAX_ENTRIES = 50000
 
 # Pydantic models for API
 class TokenResponse(BaseModel):
@@ -388,6 +390,18 @@ async def check_rate_limit(request: Request, endpoint: str) -> None:
     
     # Check rate limit
     key = f"{client_ip}:{endpoint}"
+    
+    # Periodic cleanup to prevent unbounded memory growth
+    global _rate_limit_last_cleanup
+    if len(rate_limit_storage) > _RATE_LIMIT_MAX_ENTRIES or (current_time - _rate_limit_last_cleanup > 300):
+        stale = [k for k, v in rate_limit_storage.items()
+                 if current_time - v.get("window_start", 0) > 7200]
+        for k in stale:
+            del rate_limit_storage[k]
+        if len(rate_limit_storage) > _RATE_LIMIT_MAX_ENTRIES:
+            rate_limit_storage.clear()
+        _rate_limit_last_cleanup = current_time
+    
     if key not in rate_limit_storage:
         rate_limit_storage[key] = {"requests": 0, "window_start": current_time}
     

@@ -312,9 +312,29 @@ class DAGCompactor:
         self._current_epoch_id = 0
         self._compaction_proofs: List[CompactionProof] = []
         self._total_compacted_events = 0
+        self._max_storage_bytes = int(os.environ.get(
+            "MCPPP_MAX_COLD_STORAGE_GB", "10")) * 1024 ** 3
 
         os.makedirs(storage_dir, exist_ok=True)
         self._load_compaction_index()
+
+    def _check_storage_quota(self) -> bool:
+        """Check if cold storage is within quota. Returns False if over limit."""
+        try:
+            total_size = sum(
+                os.path.getsize(os.path.join(self.storage_dir, f))
+                for f in os.listdir(self.storage_dir)
+                if os.path.isfile(os.path.join(self.storage_dir, f))
+            )
+            if total_size >= self._max_storage_bytes:
+                logger.error(
+                    "Cold storage quota exceeded: %.1f GB >= %d GB, compaction skipped",
+                    total_size / (1024 ** 3), self._max_storage_bytes // (1024 ** 3),
+                )
+                return False
+            return True
+        except OSError:
+            return True
 
     def _load_compaction_index(self) -> None:
         """Load previously saved compaction proofs index."""
@@ -397,6 +417,10 @@ class DAGCompactor:
         Returns:
             CompactionResult with the CIDs that were compacted, or None if no compaction needed.
         """
+        # Check cold storage quota before writing
+        if not self._check_storage_quota():
+            return None
+
         with self._lock:
             if len(events) < self.epoch_size:
                 return None
