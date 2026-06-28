@@ -21,6 +21,8 @@ FINAL_VERIFY_MIN_CYCLES="${FINAL_VERIFY_MIN_CYCLES:-1}"
 STOP_AFTER_FINAL_VERIFY="${STOP_AFTER_FINAL_VERIFY:-1}"
 TRIAL_OVERRUN_SECONDS="${TRIAL_OVERRUN_SECONDS:-900}"
 TRIAL_OVERRUN_MAX_CYCLES="${TRIAL_OVERRUN_MAX_CYCLES:-0}"
+FINAL_OVERRUN_SECONDS="${FINAL_OVERRUN_SECONDS:-900}"
+FINAL_OVERRUN_MAX_CYCLES="${FINAL_OVERRUN_MAX_CYCLES:-0}"
 
 timestamp() {
   date -u +"%Y-%m-%dT%H:%M:%SZ"
@@ -75,6 +77,14 @@ pipeline_pid() {
 active_trial_pid_elapsed() {
   ps -eo pid,etimes,args | awk -v run_id="${RUN_ID}" '
     $0 ~ "uscode_modal_daemon_runner" && $0 ~ "--run-id "run_id"-trial-" {pid=$1; etimes=$2}
+    END {if (pid != "") print pid " " etimes}
+  '
+}
+
+active_final_autoencoder_pid_elapsed() {
+  local final_run_id="$1"
+  ps -eo pid,etimes,args | awk -v run_id="${final_run_id}-autoencoder" '
+    $0 ~ "uscode_modal_daemon_runner" && $0 ~ "--run-id "run_id" " {pid=$1; etimes=$2}
     END {if (pid != "") print pid " " etimes}
   '
 }
@@ -136,20 +146,29 @@ while true; do
     exit 4
   fi
 
-  mtime_epoch="$(stat -c %Y "${PIPELINE_LOG}")"
-  now_epoch="$(date +%s)"
-  age_seconds=$((now_epoch - mtime_epoch))
-  if (( age_seconds > STALE_SECONDS )); then
-    log_line "problem_detected signature=stale_pipeline_log age_seconds=${age_seconds} pid=${pid}"
-    write_state "unknown" "failed" "stale_pipeline_log" "" false
-    exit 5
-  fi
-
   final_run_id="$(extract_final_run_id)"
   if [[ -n "${final_run_id}" ]]; then
     final_summary="${LOG_DIR}/${final_run_id}-autoencoder.summary"
     if [[ -f "${final_summary}" ]]; then
+      mtime_epoch="$(stat -c %Y "${final_summary}")"
+      now_epoch="$(date +%s)"
+      age_seconds=$((now_epoch - mtime_epoch))
+      if (( age_seconds > STALE_SECONDS )); then
+        log_line "problem_detected signature=stale_final_summary run_id=${final_run_id} age_seconds=${age_seconds} pid=${pid}"
+        write_state "final_run" "failed" "stale_final_summary" "${final_run_id}" false
+        exit 5
+      fi
       cycles="$(read_cycles_from_summary "${final_summary}")"
+      final_runtime="$(active_final_autoencoder_pid_elapsed "${final_run_id}" || true)"
+      if [[ -n "${final_runtime}" ]]; then
+        final_pid="${final_runtime%% *}"
+        final_elapsed="${final_runtime##* }"
+        if (( final_elapsed > FINAL_OVERRUN_SECONDS && cycles <= FINAL_OVERRUN_MAX_CYCLES )); then
+          log_line "problem_detected signature=final_overrun_no_progress run_id=${final_run_id} final_pid=${final_pid} elapsed_seconds=${final_elapsed} cycles=${cycles}"
+          write_state "final_run" "failed" "final_overrun_no_progress" "${final_run_id}" false
+          exit 6
+        fi
+      fi
       if (( cycles >= FINAL_VERIFY_MIN_CYCLES )); then
         log_line "final_run_verified_working run_id=${final_run_id} cycles=${cycles} pid=${pid}"
         write_state "final_run" "running" "final_run_verified_working" "${final_run_id}" true
@@ -163,10 +182,26 @@ while true; do
         write_state "final_run" "running" "final_run_started_waiting_for_cycles" "${final_run_id}" false
       fi
     else
+      mtime_epoch="$(stat -c %Y "${PIPELINE_LOG}")"
+      now_epoch="$(date +%s)"
+      age_seconds=$((now_epoch - mtime_epoch))
+      if (( age_seconds > STALE_SECONDS )); then
+        log_line "problem_detected signature=final_summary_missing_stale_pipeline run_id=${final_run_id} age_seconds=${age_seconds} pid=${pid}"
+        write_state "final_run" "failed" "final_summary_missing_stale_pipeline" "${final_run_id}" false
+        exit 5
+      fi
       log_line "final_run_started_waiting_for_summary run_id=${final_run_id} pid=${pid}"
       write_state "final_run" "running" "final_run_started_waiting_for_summary" "${final_run_id}" false
     fi
   else
+    mtime_epoch="$(stat -c %Y "${PIPELINE_LOG}")"
+    now_epoch="$(date +%s)"
+    age_seconds=$((now_epoch - mtime_epoch))
+    if (( age_seconds > STALE_SECONDS )); then
+      log_line "problem_detected signature=stale_pipeline_log age_seconds=${age_seconds} pid=${pid}"
+      write_state "unknown" "failed" "stale_pipeline_log" "" false
+      exit 5
+    fi
     trial_id="$(extract_last_trial_id)"
     if [[ -n "${trial_id}" ]]; then
       trial_summary="${LOG_DIR}/${trial_id}.summary"

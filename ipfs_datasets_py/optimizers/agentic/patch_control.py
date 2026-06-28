@@ -492,7 +492,9 @@ class WorktreeManager:
         worktree_name = f"agent-{agent_id}-{timestamp}"
         worktree_path = self.worktrees_base / worktree_name
         
-        # Create worktree
+        # Create worktree. Runtime artifacts under workspace/ can become large
+        # enough to make full worktree checkout fail, so fall back to a sparse
+        # checkout for agent worktrees when the full checkout cannot complete.
         cmd = ['git', 'worktree', 'add', str(worktree_path)]
         if branch:
             cmd.append(branch)
@@ -505,12 +507,63 @@ class WorktreeManager:
         )
         
         if result.returncode != 0:
-            raise RuntimeError(
-                f"Failed to create worktree: {result.stderr}"
+            sparse_error = self._create_sparse_worktree(
+                worktree_path=worktree_path,
+                branch=branch,
             )
+            if sparse_error is not None:
+                raise RuntimeError(
+                    "Failed to create worktree: "
+                    f"{result.stderr}\nSparse retry failed: {sparse_error}"
+                )
         
         self.active_worktrees[agent_id] = worktree_path
         return worktree_path
+
+    def _create_sparse_worktree(
+        self,
+        worktree_path: Path,
+        branch: Optional[str],
+    ) -> Optional[str]:
+        """Retry worktree creation with workspace/ excluded from checkout."""
+        try:
+            subprocess.run(
+                ['git', 'worktree', 'remove', '--force', str(worktree_path)],
+                cwd=self.repo_path,
+                capture_output=True,
+                text=True,
+            )
+            shutil.rmtree(worktree_path, ignore_errors=True)
+
+            cmd = ['git', 'worktree', 'add', '--no-checkout', str(worktree_path)]
+            if branch:
+                cmd.append(branch)
+            result = subprocess.run(
+                cmd,
+                cwd=self.repo_path,
+                capture_output=True,
+                text=True,
+            )
+            if result.returncode != 0:
+                return result.stderr
+
+            commands = [
+                ['git', 'sparse-checkout', 'init', '--no-cone'],
+                ['git', 'sparse-checkout', 'set', '--no-cone', '/*', '!/workspace/'],
+                ['git', 'checkout', branch or 'HEAD'],
+            ]
+            for command in commands:
+                result = subprocess.run(
+                    command,
+                    cwd=worktree_path,
+                    capture_output=True,
+                    text=True,
+                )
+                if result.returncode != 0:
+                    return result.stderr
+        except (OSError, subprocess.SubprocessError) as exc:
+            return str(exc)
+        return None
     
     def get_worktree(self, agent_id: str) -> Optional[Path]:
         """Get worktree path for agent.

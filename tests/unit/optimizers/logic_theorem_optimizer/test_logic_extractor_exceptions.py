@@ -27,7 +27,7 @@ def _build_context() -> le.LogicExtractionContext:
 def test_logic_extractor_defaults_to_codex_53_model() -> None:
     extractor = _build_extractor()
 
-    assert extractor.model == "gpt-5.3-codex"
+    assert extractor.model == "gpt-5.5"
 
 
 def test_extract_handles_typed_value_error(monkeypatch: pytest.MonkeyPatch) -> None:

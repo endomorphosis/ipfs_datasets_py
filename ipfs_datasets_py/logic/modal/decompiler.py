@@ -5517,7 +5517,7 @@ def _refined_temporal_transition_slots(
     if (
         not normalized_slot_prefix
         or not normalized_cue
-        or formula_family not in {"deontic", "frame"}
+        or formula_family not in {"deontic", "frame", "temporal"}
     ):
         return []
     context_cues = _temporal_transition_context_cues_from_text(text)
@@ -5526,11 +5526,17 @@ def _refined_temporal_transition_slots(
     if formula_family == "deontic":
         if normalized_cue not in _DEONTIC_TEMPORAL_BRIDGE_CUES:
             return []
+        pair_source_family = "deontic"
     elif formula_family == "frame":
         if normalized_cue not in _FRAME_TEMPORAL_BRIDGE_CUES:
             return []
+        pair_source_family = "frame"
+    else:
+        if normalized_cue not in _DEONTIC_TEMPORAL_BRIDGE_CUES:
+            return []
+        pair_source_family = "deontic"
 
-    pair = f"{formula_family}->temporal"
+    pair = f"{pair_source_family}->temporal"
     signature = f"temporal:F:{normalized_cue}"
     slots: List[Tuple[str, str]] = [
         (f"{normalized_slot_prefix}_refined_temporal_bridge_family_pair", pair),

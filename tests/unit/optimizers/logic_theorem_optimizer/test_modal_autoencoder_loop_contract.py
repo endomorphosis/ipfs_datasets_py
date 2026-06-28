@@ -74,7 +74,7 @@ def test_spacy_frame_logic_prover_graph_and_codex_gate_loop_contract() -> None:
         prover_signal=prover_signal,
     )
     assert DEFAULT_CODEX_PROVIDER == "codex"
-    assert DEFAULT_CODEX_MODEL == "gpt-5.3-codex"
+    assert DEFAULT_CODEX_MODEL == "gpt-5.5"
     assert isinstance(decision.should_call_codex, bool)
     assert decision.prover_signal == prover_signal
     assert decision.feature_signature_hash

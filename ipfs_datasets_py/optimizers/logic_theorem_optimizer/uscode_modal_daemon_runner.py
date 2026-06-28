@@ -40,6 +40,7 @@ from ipfs_datasets_py.logic.submodule_registry import (
     logic_submodule_specs,
 )
 from ipfs_datasets_py.optimizers.agentic.patch_control import PatchManager, WorktreeManager
+from ipfs_datasets_py.optimizers.common.llm_defaults import DEFAULT_CODEX_MODEL
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import (
     AdaptiveModalAutoencoder,
     ModalAutoencoderTrainingState,
@@ -1813,6 +1814,14 @@ def build_paired_daemon_commands(
         str(args.max_inner_iterations),
         "--max-items",
         str(args.max_items),
+        "--program-synthesis-min-support",
+        str(getattr(args, "program_synthesis_min_support", 2)),
+        "--max-program-synthesis-pending",
+        str(getattr(args, "max_program_synthesis_pending", 512)),
+        "--program-synthesis-min-residual-occurrences",
+        str(getattr(args, "program_synthesis_min_residual_occurrences", 1)),
+        "--program-synthesis-min-residual-survival-score",
+        str(getattr(args, "program_synthesis_min_residual_survival_score", 0.0)),
         "--learning-rate",
         str(args.learning_rate),
         "--generalizable-projection-epochs",
@@ -2363,6 +2372,30 @@ def _codex_worktree_diff(worktree_path: Path) -> Dict[str, Any]:
             path for path in untracked_paths if _is_codex_worktree_artifact(path)
         ],
     }
+
+
+def cleanup_codex_packet_worktree(packet: Dict[str, Any]) -> Dict[str, Any]:
+    """Remove a packet worktree after its patch/apply artifacts are recorded."""
+    worktree_value = packet.get("worktree_path")
+    if not worktree_value:
+        return {"status": "skipped", "reason": "missing_worktree_path"}
+    worktree_path = Path(str(worktree_value))
+    if not worktree_path.exists():
+        return {"status": "skipped", "reason": "worktree_missing"}
+
+    result = subprocess.run(
+        ["git", "worktree", "remove", "--force", str(worktree_path)],
+        cwd=Path.cwd(),
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        shutil.rmtree(worktree_path, ignore_errors=True)
+        return {
+            "status": "forced_removed",
+            "stderr": result.stderr[-4000:],
+        }
+    return {"status": "removed"}
 
 
 def _dirty_target_files(repo_root: Path, target_files: Sequence[str]) -> List[str]:
@@ -5313,6 +5346,39 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--poll-seconds", type=float, default=5.0)
     parser.add_argument("--test-every-cycles", type=int, default=24)
+    parser.add_argument(
+        "--program-synthesis-min-support",
+        type=int,
+        default=2,
+        help=(
+            "Minimum distinct sample support required before seeding a Codex "
+            "program-synthesis TODO from autoencoder residual hints."
+        ),
+    )
+    parser.add_argument(
+        "--max-program-synthesis-pending",
+        type=int,
+        default=512,
+        help="Maximum pending Codex/program-synthesis TODOs retained in the queue.",
+    )
+    parser.add_argument(
+        "--program-synthesis-min-residual-occurrences",
+        type=int,
+        default=1,
+        help=(
+            "Minimum repeated residual-signature count before a post-SGD residual "
+            "can be considered persistent."
+        ),
+    )
+    parser.add_argument(
+        "--program-synthesis-min-residual-survival-score",
+        type=float,
+        default=0.0,
+        help=(
+            "Minimum post-SGD residual survival score required when the survival "
+            "gate is active."
+        ),
+    )
     parser.add_argument("--worker-id", default=None)
     parser.add_argument(
         "--codex-exec-mode",
@@ -5321,7 +5387,10 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         help="For the Codex loop, either only create work packets or run codex exec in each packet worktree.",
     )
     parser.add_argument("--codex-command", default="codex")
-    parser.add_argument("--codex-model", default="gpt-5.3-codex")
+    parser.add_argument(
+        "--codex-model",
+        default=os.environ.get("IPFS_DATASETS_PY_CODEX_MODEL", DEFAULT_CODEX_MODEL),
+    )
     parser.add_argument(
         "--codex-apply-mode",
         choices=("patch_only", "apply_to_main"),
@@ -6445,6 +6514,38 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     save_summary(summary_path, summary)
     supervisor = ModalTodoSupervisor(
         queue=queue,
+        policy=ModalOptimizerPolicy(
+            program_synthesis_min_support=max(
+                1,
+                int(getattr(args, "program_synthesis_min_support", 2) or 2),
+            ),
+            max_program_synthesis_pending=max(
+                0,
+                int(getattr(args, "max_program_synthesis_pending", 512) or 512),
+            ),
+            program_synthesis_min_residual_occurrences=max(
+                1,
+                int(
+                    getattr(
+                        args,
+                        "program_synthesis_min_residual_occurrences",
+                        1,
+                    )
+                    or 1
+                ),
+            ),
+            program_synthesis_min_residual_survival_score=max(
+                0.0,
+                float(
+                    getattr(
+                        args,
+                        "program_synthesis_min_residual_survival_score",
+                        0.0,
+                    )
+                    or 0.0
+                ),
+            ),
+        ),
         bridge_names=bridge_adapters,
         bridge_evaluate_provers=bridge_evaluate_provers,
         bridge_loss_evaluator=bridge_loss_evaluator_for_names(
@@ -7269,6 +7370,17 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             summary["codex_worktree_count"] = int(
                 summary.get("codex_worktree_count", 0)
             ) + int(bool(packet.get("worktree_path")))
+            worktree_cleanup = (
+                cleanup_codex_packet_worktree(packet)
+                if packet.get("worktree_path")
+                else {"status": "skipped", "reason": "missing_worktree_path"}
+            )
+            if packet.get("packet_path"):
+                packet["worktree_cleanup"] = dict(worktree_cleanup)
+                _save_packet_if_possible(
+                    packet,
+                    Path(str(packet["packet_path"])),
+                )
             summary["elapsed_seconds"] = round(time.time() - started_at, 3)
             summary["latest_queue_counts"] = queue.status_counts()
             summary["latest_role_queue_counts"] = queue.role_status_counts()
@@ -7310,6 +7422,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                     "todo_list_path": packet.get("todo_list_path"),
                     "todo_markdown_path": packet.get("todo_markdown_path"),
                     "worktree_path": packet.get("worktree_path"),
+                    "worktree_cleanup": worktree_cleanup,
                 },
             )
             save_summary(summary_path, summary)

@@ -13413,6 +13413,55 @@ def test_modal_decompiler_and_triples_surface_frame_to_temporal_snapshot_bridge_
     )
 
 
+def test_modal_decompiler_surfaces_deontic_to_temporal_snapshot_bridge_slots() -> None:
+    source_id = "us-code-25-155-deontic-to-temporal-bridge"
+    source_text = (
+        "U.S.C. Title 25 - INDIANS 25 U.S.C. United States Code, 2024 Edition "
+        "Title 25 - INDIANS CHAPTER 4 - PERFORMANCE BY UNITED STATES OF "
+        "OBLIGATIONS TO INDIANS SUBCHAPTER III - DEPOSIT, CARE, AND INVESTMENT "
+        "OF INDIAN MONEYS Sec. 155 - Disposal of funds."
+    )
+    formula = ModalIRFormula(
+        formula_id=f"{source_id}:f0001",
+        operator=ModalIROperator(
+            family="temporal",
+            system="LTL",
+            symbol="F",
+            label="eventually",
+        ),
+        predicate=ModalIRPredicate(
+            name="united_states_of_obligations_to_indians",
+            role="clause",
+        ),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="25 U.S.C. 155",
+        ),
+        metadata={"cue": "by"},
+    )
+    document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "deontic->temporal" in slot_texts[
+        "modal_source_span_refined_temporal_bridge_family_pair"
+    ]
+    assert "temporal:F:obligation" in slot_texts[
+        "modal_source_span_refined_temporal_bridge_signature"
+    ]
+    assert "edition_year" in slot_texts[
+        "modal_source_span_refined_temporal_bridge_context"
+    ]
+
+
 def test_modal_decompiler_and_triples_surface_subject_to_section_specific_bridge_slots() -> None:
     source_id = "us-code-6-314-subject-to-section"
     source_text = (

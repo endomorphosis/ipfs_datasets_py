@@ -44,7 +44,7 @@ def test_default_adapter_prefers_llm_router_codex() -> None:
     assert adapter.active_backend == "llm_router"
     assert isinstance(adapter.backends["llm_router"], RouterBackend)
     assert adapter.router_provider == "codex"
-    assert adapter.router_model == "gpt-5.3-codex"
+    assert adapter.router_model == "gpt-5.5"
 
 
 def test_router_backend_calls_llm_router_with_codex_53(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -58,7 +58,7 @@ def test_router_backend_calls_llm_router_with_codex_53(monkeypatch: pytest.Monke
     def _fake_trace():
         return {
             "effective_provider_name": "codex_cli",
-            "effective_model_name": "gpt-5.3-codex",
+            "effective_model_name": "gpt-5.5",
         }
 
     monkeypatch.setattr("ipfs_datasets_py.llm_router.generate_text", _fake_generate_text)
@@ -68,10 +68,10 @@ def test_router_backend_calls_llm_router_with_codex_53(monkeypatch: pytest.Monke
 
     assert response.text == "Formula: P(x)"
     assert response.backend == "llm_router"
-    assert response.model == "gpt-5.3-codex"
+    assert response.model == "gpt-5.5"
     assert captured["prompt"] == "extract logic"
     assert captured["kwargs"]["provider"] == "codex"
-    assert captured["kwargs"]["model_name"] == "gpt-5.3-codex"
+    assert captured["kwargs"]["model_name"] == "gpt-5.5"
     assert captured["kwargs"]["allow_local_fallback"] is False
     assert captured["kwargs"]["disable_model_retry"] is True
 
@@ -82,7 +82,7 @@ def test_router_backend_rejects_non_codex_effective_provider(
     monkeypatch.setattr("ipfs_datasets_py.llm_router.generate_text", lambda *args, **kwargs: "ok")
     monkeypatch.setattr(
         "ipfs_datasets_py.llm_router.get_last_generation_trace",
-        lambda: {"effective_provider_name": "openai", "effective_model_name": "gpt-5.3-codex"},
+        lambda: {"effective_provider_name": "openai", "effective_model_name": "gpt-5.5"},
     )
 
     with pytest.raises(RuntimeError, match="expected Codex provider"):

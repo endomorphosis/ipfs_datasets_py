@@ -23,8 +23,28 @@ SWEEP_LOOP_ROLE="${SWEEP_LOOP_ROLE:-autoencoder}"
 SWEEP_TEST_EVERY_CYCLES="${SWEEP_TEST_EVERY_CYCLES:-48}"
 FINAL_TEST_EVERY_CYCLES="${FINAL_TEST_EVERY_CYCLES:-96}"
 SWEEP_PROJECTION_EPOCHS="${SWEEP_PROJECTION_EPOCHS:-1}"
-FINAL_PROJECTION_EPOCHS="${FINAL_PROJECTION_EPOCHS:-2}"
+FINAL_PROJECTION_EPOCHS="${FINAL_PROJECTION_EPOCHS:-1}"
 FINAL_RECOVERY_MIN_CYCLES="${FINAL_RECOVERY_MIN_CYCLES:-1}"
+BRIDGE_LOSS_ADAPTERS="${BRIDGE_LOSS_ADAPTERS:-none}"
+BRIDGE_EVALUATE_PROVERS="${BRIDGE_EVALUATE_PROVERS:-false}"
+TRAIN_COUNT="${TRAIN_COUNT:-4}"
+VALIDATION_COUNT="${VALIDATION_COUNT:-4}"
+VALIDATION_CANARY_COUNT="${VALIDATION_CANARY_COUNT:-4}"
+MAX_INNER_ITERATIONS="${MAX_INNER_ITERATIONS:-3}"
+MAX_ITEMS="${MAX_ITEMS:-8}"
+PROGRAM_SYNTHESIS_MIN_SUPPORT="${PROGRAM_SYNTHESIS_MIN_SUPPORT:-2}"
+MAX_PROGRAM_SYNTHESIS_PENDING="${MAX_PROGRAM_SYNTHESIS_PENDING:-512}"
+PROGRAM_SYNTHESIS_MIN_RESIDUAL_OCCURRENCES="${PROGRAM_SYNTHESIS_MIN_RESIDUAL_OCCURRENCES:-1}"
+PROGRAM_SYNTHESIS_MIN_RESIDUAL_SURVIVAL_SCORE="${PROGRAM_SYNTHESIS_MIN_RESIDUAL_SURVIVAL_SCORE:-0.0}"
+SWEEP_MIN_COSINE="${SWEEP_MIN_COSINE:-0.0}"
+SWEEP_COSINE_PENALTY="${SWEEP_COSINE_PENALTY:-4.0}"
+SWEEP_IR_CE_WEIGHT="${SWEEP_IR_CE_WEIGHT:-0.25}"
+SWEEP_IR_COSINE_PENALTY="${SWEEP_IR_COSINE_PENALTY:-2.0}"
+CODEX_PARALLEL_SCOPES="${CODEX_PARALLEL_SCOPES:-compiler_parser,deontic,ir_decompiler}"
+CODEX_SCOPE_WORKERS="${CODEX_SCOPE_WORKERS:-1}"
+CODEX_VECTOR_MIN_BUNDLE_SIZE="${CODEX_VECTOR_MIN_BUNDLE_SIZE:-2}"
+CODEX_VECTOR_MAX_BUNDLE_WAIT_SECONDS="${CODEX_VECTOR_MAX_BUNDLE_WAIT_SECONDS:-120}"
+CODEX_MODEL="${CODEX_MODEL:-${IPFS_DATASETS_PY_CODEX_MODEL:-gpt-5.5}}"
 
 CODEX_EXEC_MODE="${CODEX_EXEC_MODE:-codex_cli}"
 if ! command -v codex >/dev/null 2>&1; then
@@ -32,11 +52,15 @@ if ! command -v codex >/dev/null 2>&1; then
 fi
 
 COMMON_ARGS=(
-  --train-count 4
-  --validation-count 4
-  --validation-canary-count 4
-  --max-inner-iterations 3
-  --max-items 8
+  --train-count "${TRAIN_COUNT}"
+  --validation-count "${VALIDATION_COUNT}"
+  --validation-canary-count "${VALIDATION_CANARY_COUNT}"
+  --max-inner-iterations "${MAX_INNER_ITERATIONS}"
+  --max-items "${MAX_ITEMS}"
+  --program-synthesis-min-support "${PROGRAM_SYNTHESIS_MIN_SUPPORT}"
+  --max-program-synthesis-pending "${MAX_PROGRAM_SYNTHESIS_PENDING}"
+  --program-synthesis-min-residual-occurrences "${PROGRAM_SYNTHESIS_MIN_RESIDUAL_OCCURRENCES}"
+  --program-synthesis-min-residual-survival-score "${PROGRAM_SYNTHESIS_MIN_RESIDUAL_SURVIVAL_SCORE}"
   --autoencoder-device auto
   --autoencoder-bridge-workers 2
   --autoencoder-max-token-features 48
@@ -82,6 +106,8 @@ COMMON_ARGS=(
   --learning-rate-floor-ratio 0.25
   --learning-rate-cap-ratio 1.5
   --learning-rate-plateau-delta 1e-5
+  --bridge-loss-adapters "${BRIDGE_LOSS_ADAPTERS}"
+  --bridge-evaluate-provers "${BRIDGE_EVALUATE_PROVERS}"
 )
 
 PAIRED_ARGS=(
@@ -90,14 +116,14 @@ PAIRED_ARGS=(
   --codex-exec-mode "${CODEX_EXEC_MODE}"
   --codex-apply-mode apply_to_main
   --codex-commit-mode none
-  --codex-model gpt-5.3-codex
-  --codex-parallel-scopes compiler_parser,deontic,ir_decompiler
-  --codex-scope-workers 1
+  --codex-model "${CODEX_MODEL}"
+  --codex-parallel-scopes "${CODEX_PARALLEL_SCOPES}"
+  --codex-scope-workers "${CODEX_SCOPE_WORKERS}"
   --codex-bundle-mode vector
   --codex-vector-min-similarity 0.65
   --codex-vector-fill-min-similarity 0.45
-  --codex-vector-min-bundle-size 2
-  --codex-vector-max-bundle-wait-seconds 120
+  --codex-vector-min-bundle-size "${CODEX_VECTOR_MIN_BUNDLE_SIZE}"
+  --codex-vector-max-bundle-wait-seconds "${CODEX_VECTOR_MAX_BUNDLE_WAIT_SECONDS}"
 )
 
 CONFIGS=(
@@ -115,14 +141,36 @@ fi
 
 echo "[pipeline] base_run_id=${BASE_RUN_ID}"
 echo "[pipeline] codex_exec_mode=${CODEX_EXEC_MODE}"
+echo "[pipeline] codex_model=${CODEX_MODEL}"
 echo "[pipeline] sweep_loop_role=${SWEEP_LOOP_ROLE}"
 echo "[pipeline] hyperparam_budget_seconds=${TOTAL_TRIAL_SECONDS}"
 echo "[pipeline] final_run_seconds=${FINAL_SECONDS}"
+echo "[pipeline] bridge_loss_adapters=${BRIDGE_LOSS_ADAPTERS}"
+echo "[pipeline] bridge_evaluate_provers=${BRIDGE_EVALUATE_PROVERS}"
+echo "[pipeline] train_count=${TRAIN_COUNT}"
+echo "[pipeline] validation_count=${VALIDATION_COUNT}"
+echo "[pipeline] validation_canary_count=${VALIDATION_CANARY_COUNT}"
+echo "[pipeline] max_inner_iterations=${MAX_INNER_ITERATIONS}"
+echo "[pipeline] max_items=${MAX_ITEMS}"
+echo "[pipeline] program_synthesis_min_support=${PROGRAM_SYNTHESIS_MIN_SUPPORT}"
+echo "[pipeline] max_program_synthesis_pending=${MAX_PROGRAM_SYNTHESIS_PENDING}"
+echo "[pipeline] program_synthesis_min_residual_occurrences=${PROGRAM_SYNTHESIS_MIN_RESIDUAL_OCCURRENCES}"
+echo "[pipeline] program_synthesis_min_residual_survival_score=${PROGRAM_SYNTHESIS_MIN_RESIDUAL_SURVIVAL_SCORE}"
+echo "[pipeline] sweep_min_cosine=${SWEEP_MIN_COSINE}"
+echo "[pipeline] sweep_cosine_penalty=${SWEEP_COSINE_PENALTY}"
+echo "[pipeline] sweep_ir_ce_weight=${SWEEP_IR_CE_WEIGHT}"
+echo "[pipeline] sweep_ir_cosine_penalty=${SWEEP_IR_COSINE_PENALTY}"
+echo "[pipeline] codex_parallel_scopes=${CODEX_PARALLEL_SCOPES}"
+echo "[pipeline] codex_scope_workers=${CODEX_SCOPE_WORKERS}"
+echo "[pipeline] codex_vector_min_bundle_size=${CODEX_VECTOR_MIN_BUNDLE_SIZE}"
+echo "[pipeline] codex_vector_max_bundle_wait_seconds=${CODEX_VECTOR_MAX_BUNDLE_WAIT_SECONDS}"
 
 best_run_id=""
 best_cfg=""
 best_ce="1000000000000000000000000"
 best_cos="-1000000000"
+best_score="1000000000000000000000000"
+best_selection_bucket="999"
 
 for idx in "${!CONFIGS[@]}"; do
   cfg="${CONFIGS[$idx]}"
@@ -282,7 +330,7 @@ for idx in "${!CONFIGS[@]}"; do
     continue
   fi
 
-  read -r ce_score cos_score < <(
+  read -r ce_score cos_score ir_ce_score ir_cos_score < <(
     "${PYTHON_BIN}" - "${summary_path}" <<'PY'
 import json
 import sys
@@ -291,36 +339,69 @@ with open(path, "r", encoding="utf-8") as handle:
     data = json.load(handle)
 ce = float(data.get("best_validation_ce", 1e9))
 cos = float(data.get("best_validation_cosine", -1.0))
-print(f"{ce} {cos}")
+ir_ce = float(data.get("best_validation_ir_ce", ce))
+ir_cos = float(data.get("best_validation_ir_cosine", cos))
+print(f"{ce} {cos} {ir_ce} {ir_cos}")
 PY
   )
-  valid_trial="$("${PYTHON_BIN}" - <<PY
+  read -r valid_trial composite_score below_min_cos below_min_ir_cos selection_bucket < <(
+    "${PYTHON_BIN}" - <<PY
 ce = float("${ce_score}")
 cos = float("${cos_score}")
-print("1" if ce < 1e11 and cos > -0.99 else "0")
+ir_ce = float("${ir_ce_score}")
+ir_cos = float("${ir_cos_score}")
+min_cos = float("${SWEEP_MIN_COSINE}")
+cos_penalty = float("${SWEEP_COSINE_PENALTY}")
+ir_ce_weight = float("${SWEEP_IR_CE_WEIGHT}")
+ir_cos_penalty = float("${SWEEP_IR_COSINE_PENALTY}")
+valid = ce < 1e11 and cos > -0.99 and ir_ce < 1e11 and ir_cos > -0.99
+score = ce + (ir_ce_weight * ir_ce)
+score += cos_penalty * max(0.0, min_cos - cos)
+score += ir_cos_penalty * max(0.0, min_cos - ir_cos)
+print(
+    ("1" if valid else "0"),
+    f"{score:.12g}",
+    ("1" if cos < min_cos else "0"),
+    ("1" if ir_cos < min_cos else "0"),
+    int(cos < min_cos) + int(ir_cos < min_cos),
+)
 PY
-)"
+)
   if [[ "${valid_trial}" != "1" ]]; then
-    echo "[trial] skipped_invalid_score run_id=${trial_id} ce=${ce_score} cos=${cos_score}"
+    echo "[trial] skipped_invalid_score run_id=${trial_id} ce=${ce_score} cos=${cos_score} ir_ce=${ir_ce_score} ir_cos=${ir_cos_score}"
     continue
   fi
-  echo "[trial] score run_id=${trial_id} best_validation_ce=${ce_score} best_validation_cosine=${cos_score}"
+  echo "[trial] score run_id=${trial_id} best_validation_ce=${ce_score} best_validation_cosine=${cos_score} best_validation_ir_ce=${ir_ce_score} best_validation_ir_cosine=${ir_cos_score} composite_score=${composite_score} selection_bucket=${selection_bucket} below_min_cos=${below_min_cos} below_min_ir_cos=${below_min_ir_cos}"
 
   better="$("${PYTHON_BIN}" - <<PY
-best_ce = float("${best_ce}")
+best_bucket = int("${best_selection_bucket}")
+bucket = int("${selection_bucket}")
+best_score = float("${best_score}")
 best_cos = float("${best_cos}")
+best_ce = float("${best_ce}")
+score = float("${composite_score}")
 ce = float("${ce_score}")
 cos = float("${cos_score}")
-is_better = (ce < best_ce) or (abs(ce - best_ce) <= 1e-12 and cos > best_cos)
+is_better = (bucket < best_bucket) or (
+    bucket == best_bucket and (
+        score < best_score or (
+            abs(score - best_score) <= 1e-12 and (
+        cos > best_cos or (abs(cos - best_cos) <= 1e-12 and ce < best_ce)
+    )
+        )
+    )
+)
 print("1" if is_better else "0")
 PY
 )"
   if [[ "${better}" == "1" ]]; then
     best_ce="${ce_score}"
     best_cos="${cos_score}"
+    best_score="${composite_score}"
+    best_selection_bucket="${selection_bucket}"
     best_run_id="${trial_id}"
     best_cfg="${cfg}"
-    echo "[trial] new_best run_id=${best_run_id} ce=${best_ce} cos=${best_cos}"
+    echo "[trial] new_best run_id=${best_run_id} ce=${best_ce} cos=${best_cos} score=${best_score} selection_bucket=${best_selection_bucket}"
   fi
 done
 
@@ -329,7 +410,7 @@ if [[ -z "${best_run_id}" ]]; then
   exit 1
 fi
 
-echo "[pipeline] best_trial=${best_run_id} cfg=${best_cfg} ce=${best_ce} cos=${best_cos}"
+echo "[pipeline] best_trial=${best_run_id} cfg=${best_cfg} ce=${best_ce} cos=${best_cos} score=${best_score} selection_bucket=${best_selection_bucket}"
 
 final_run_id="${BASE_RUN_ID}-best-8h"
 lr=""

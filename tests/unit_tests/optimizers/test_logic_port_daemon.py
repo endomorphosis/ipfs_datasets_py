@@ -76,7 +76,7 @@ class WrongProviderRouter:
         return "{}"
 
     def get_last_generation_trace(self):
-        return {"effective_provider_name": "openai", "effective_model_name": "gpt-5.3-codex"}
+        return {"effective_provider_name": "openai", "effective_model_name": "gpt-5.5"}
 
 
 def test_default_plan_docs_use_typescript_port_plan():
@@ -197,7 +197,7 @@ def test_legal_parser_lifecycle_spec_is_reusable_and_keeps_defaults(tmp_path, mo
     assert spec.tmux_session_name == "legal-parser-daemon"
     assert spec.worktree_root == Path(".daemon/legal-parser-worktrees")
     assert "ipfs_datasets_py.optimizers.todo_daemon.legal_parser_daemon" in spec.daemon_process_match_all
-    assert launch_env["MODEL_NAME"] == "gpt-5.3-codex"
+    assert launch_env["MODEL_NAME"] == "gpt-5.5"
     assert launch_env["PROVIDER"] == "codex"
     assert launch_env["IPFS_DATASETS_PY_LLM_PROVIDER"] == "codex_cli"
 
@@ -233,7 +233,7 @@ def test_reusable_todo_daemon_health_reports_legal_parser_legacy_fields(tmp_path
             "cycle_index": 17,
             "phase": "requesting_worktree_edit",
             "phase_started_at": now,
-            "model_name": "gpt-5.3-codex",
+            "model_name": "gpt-5.5",
             "provider": "llm_router",
             "proposal_transport": "worktree",
             "worktree_edit_timeout_seconds": 1200,
@@ -1365,7 +1365,7 @@ def test_dry_run_daemon_calls_codex_53_and_does_not_apply_patch(tmp_path):
     result = LogicPortDaemonOptimizer(config, llm_router=router).run_once(session_id="test-session")
 
     assert router.calls
-    assert router.calls[0]["kwargs"]["model_name"] == "gpt-5.3-codex"
+    assert router.calls[0]["kwargs"]["model_name"] == "gpt-5.5"
     assert router.calls[0]["kwargs"]["provider"] == "codex"
     assert router.calls[0]["kwargs"]["allow_local_fallback"] is False
     assert router.calls[0]["kwargs"]["max_new_tokens"] == 4096

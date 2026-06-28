@@ -46,7 +46,7 @@ class TestOptimizerLLMRouter:
         """Test default initialization."""
         router = OptimizerLLMRouter()
         assert router.preferred_provider == LLMProvider.CODEX
-        assert router.model_name == "gpt-5.3-codex"
+        assert router.model_name == "gpt-5.5"
         assert router.fallback_providers == []
         assert router.enable_tracking is True
     
@@ -129,7 +129,7 @@ class TestOptimizerLLMRouter:
         assert call_kwargs["top_p"] == 0.1
         assert call_kwargs["presence_penalty"] == 0.2
         assert call_kwargs["provider"] == "codex"
-        assert call_kwargs["model_name"] == "gpt-5.3-codex"
+        assert call_kwargs["model_name"] == "gpt-5.5"
         assert call_kwargs["max_tokens"] == 2000
 
     def test_generate_cache_key_includes_router_kwargs(self):
