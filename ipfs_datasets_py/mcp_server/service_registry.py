@@ -27,7 +27,7 @@ import os
 import threading
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Callable, Dict, List, Optional, Set
 
 logger = logging.getLogger("ipfs_datasets.mcp_server.service_registry")
 
@@ -129,7 +129,7 @@ class ServiceRegistry:
         self._lock = threading.Lock()
         self._local_records: Dict[str, ServiceRecord] = {}  # Our advertised services
         self._remote_records: Dict[str, Dict[str, ServiceRecord]] = {}  # service_name -> {peer_id -> record}
-        self._listeners: List[Any] = []
+        self._change_callbacks: Dict[str, Callable] = {}  # id -> callback for service changes
 
     def register_local(self, record: ServiceRecord) -> None:
         """Register a local service for advertisement."""
@@ -144,6 +144,27 @@ class ServiceRegistry:
         with self._lock:
             self._remote_records.setdefault(record.service_name, {})[record.peer_id] = record
         logger.debug(f"Added remote service: {record.service_name} from {record.peer_id}")
+        self._notify_change("add", record)
+
+    def on_change(self, callback_id: str, callback: Callable) -> None:
+        """Register a callback for service changes (add/remove/expire)."""
+        with self._lock:
+            self._change_callbacks[callback_id] = callback
+
+    def remove_callback(self, callback_id: str) -> None:
+        """Unregister a change callback."""
+        with self._lock:
+            self._change_callbacks.pop(callback_id, None)
+
+    def _notify_change(self, event_type: str, record: ServiceRecord) -> None:
+        """Notify all registered callbacks of a service change."""
+        with self._lock:
+            callbacks = list(self._change_callbacks.values())
+        for cb in callbacks:
+            try:
+                cb(event_type, record)
+            except Exception as e:
+                logger.debug(f"Service change callback error: {e}")
 
     def get_services(self, service_name: Optional[str] = None) -> List[ServiceRecord]:
         """Get all known service records (local + remote), optionally filtered by name."""

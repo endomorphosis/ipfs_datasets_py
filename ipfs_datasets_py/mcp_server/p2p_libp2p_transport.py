@@ -123,6 +123,8 @@ class P2PMessage:
         length = int.from_bytes(data[:4], "big")
         if length > MAX_P2P_MESSAGE_SIZE:
             raise ValueError(f"Message size {length} exceeds limit {MAX_P2P_MESSAGE_SIZE}")
+        if len(data) < 4 + length:
+            raise ValueError(f"Incomplete message: expected {length} bytes, got {len(data) - 4}")
         payload = json.loads(data[4:4 + length].decode("utf-8"))
         return cls(
             msg_type=payload.get("type", "request"),
