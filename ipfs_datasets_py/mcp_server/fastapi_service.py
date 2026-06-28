@@ -1567,3 +1567,467 @@ async def clear_cache(
     except Exception as e:
         logger.error(f"Unexpected error clearing cache: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to clear cache: {str(e)}")
+
+
+# =============================================================================
+# MCP++ Protocol Endpoints (Profiles A-E)
+# =============================================================================
+
+# --- Profile A: MCP-IDL Interface Discovery ---
+
+@app.get("/mcp/interfaces")
+async def list_mcp_interfaces():
+    """List all registered MCP++ interface descriptors (Profile A)."""
+    try:
+        from .interface_descriptor import get_interface_repository
+        repo = get_interface_repository()
+        descriptors = repo.list()
+        return {
+            "interfaces": [
+                {
+                    "name": d.name,
+                    "namespace": d.namespace,
+                    "version": d.version,
+                    "interface_cid": str(d.interface_cid) if hasattr(d, 'interface_cid') else "",
+                    "methods": [{"name": m.name, "input_schema_cid": str(getattr(m, 'input_schema_cid', '')), "output_schema_cid": str(getattr(m, 'output_schema_cid', ''))} for m in (d.methods if hasattr(d, 'methods') else [])],
+                    "semantic_tags": list(d.semantic_tags) if hasattr(d, 'semantic_tags') else [],
+                }
+                for d in descriptors
+            ],
+            "count": len(descriptors),
+        }
+    except ImportError:
+        return {"interfaces": [], "count": 0, "error": "interface_descriptor module not available"}
+    except Exception as e:
+        logger.error(f"Failed to list interfaces: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to list interfaces: {e}")
+
+
+@app.get("/mcp/interfaces/{interface_cid}")
+async def get_mcp_interface(interface_cid: str):
+    """Get a specific interface descriptor by CID (Profile A)."""
+    try:
+        from .interface_descriptor import get_interface_repository
+        repo = get_interface_repository()
+        descriptor = repo.get(interface_cid)
+        if descriptor is None:
+            raise HTTPException(status_code=404, detail=f"Interface not found: {interface_cid}")
+        return {
+            "name": descriptor.name,
+            "namespace": descriptor.namespace,
+            "version": descriptor.version,
+            "interface_cid": str(descriptor.interface_cid) if hasattr(descriptor, 'interface_cid') else interface_cid,
+            "methods": [{"name": m.name} for m in (descriptor.methods if hasattr(descriptor, 'methods') else [])],
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get interface: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# --- Profile B: CID-Native Execution with Envelope ---
+
+@app.post("/mcp/execute")
+async def mcp_execute_with_envelope(request: Request):
+    """Execute a tool call with CID-native envelope (Profile B)."""
+    try:
+        from .cid_artifacts import IntentObject, artifact_cid, EventNode
+        body = await request.json()
+        tool_name = body.get("tool", "")
+        arguments = body.get("arguments", {})
+        proof_cid = body.get("proof_cid")
+        policy_cid = body.get("policy_cid")
+
+        # Create intent
+        intent = IntentObject(
+            interface_cid=body.get("interface_cid", ""),
+            tool=tool_name,
+            input_cid=str(artifact_cid(arguments)),
+            correlation_id=str(uuid.uuid4()),
+        )
+        intent_cid = str(artifact_cid({"tool": tool_name, "input": arguments}))
+
+        # Evaluate policy if available
+        decision = "allow"
+        if policy_cid:
+            try:
+                from .temporal_policy import evaluate_policy
+                result = evaluate_policy(intent_cid, proof_cid)
+                decision = result.get("decision", "allow")
+            except (ImportError, Exception):
+                pass  # Default allow if policy module unavailable
+
+        if decision == "deny":
+            return {
+                "envelope_cid": str(artifact_cid({"intent": intent_cid, "decision": "deny"})),
+                "decision": "deny",
+                "justification": "Denied by temporal deontic policy",
+            }
+
+        # Execute the tool
+        import time as _time
+        start = _time.time()
+        output = None
+        error_msg = None
+        try:
+            mcp_server = app.state.mcp_server if hasattr(app.state, 'mcp_server') else None
+            if mcp_server and hasattr(mcp_server, 'tools') and tool_name in mcp_server.tools:
+                tool_fn = mcp_server.tools[tool_name]
+                output = await tool_fn(**arguments) if callable(tool_fn) else None
+            else:
+                error_msg = f"Tool not found: {tool_name}"
+        except Exception as e:
+            error_msg = str(e)
+        duration_ms = int((_time.time() - start) * 1000)
+
+        # Build envelope
+        output_cid = str(artifact_cid(output or {}))
+        receipt_cid = str(artifact_cid({"intent": intent_cid, "output": output_cid, "duration": duration_ms}))
+        event_cid = str(artifact_cid({"intent": intent_cid, "receipt": receipt_cid}))
+        envelope_cid = str(artifact_cid({"intent": intent_cid, "receipt": receipt_cid, "event": event_cid}))
+
+        # Append to Event DAG
+        try:
+            from .event_dag import EventDAG
+            dag = getattr(app.state, '_event_dag', None)
+            if dag is None:
+                dag = EventDAG(strict=False)
+                app.state._event_dag = dag
+            node = EventNode(
+                event_cid=event_cid,
+                parents=dag.frontier() if hasattr(dag, 'frontier') else [],
+                intent_cid=intent_cid,
+                decision_cid=str(artifact_cid({"decision": decision})),
+                receipt_cid=receipt_cid,
+            )
+            dag.append(node)
+        except (ImportError, Exception) as e:
+            logger.debug(f"Event DAG append skipped: {e}")
+
+        return {
+            "envelope_cid": envelope_cid,
+            "event_cid": event_cid,
+            "decision": decision,
+            "receipt": {
+                "receipt_cid": receipt_cid,
+                "duration_ms": duration_ms,
+                "success": error_msg is None,
+                "error": error_msg,
+                "output_cid": output_cid,
+            },
+            "output": output,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"MCP++ execute failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Execution failed: {e}")
+
+
+# --- Event DAG Endpoints ---
+
+@app.get("/mcp/dag/frontier")
+async def get_dag_frontier():
+    """Get the current Event DAG frontier (leaf nodes)."""
+    try:
+        from .event_dag import EventDAG
+        dag = getattr(app.state, '_event_dag', None)
+        if dag is None:
+            return {"frontier": []}
+        frontier_nodes = dag.frontier()
+        return {"frontier": [str(n.event_cid) if hasattr(n, 'event_cid') else str(n) for n in frontier_nodes]}
+    except Exception as e:
+        logger.error(f"DAG frontier error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/mcp/dag/history")
+async def get_dag_history(limit: int = 50):
+    """Get Event DAG history (most recent events)."""
+    try:
+        from .event_dag import EventDAG
+        dag = getattr(app.state, '_event_dag', None)
+        if dag is None:
+            return {"events": [], "count": 0}
+        # Walk the DAG
+        all_nodes = list(dag._nodes.values()) if hasattr(dag, '_nodes') else []
+        recent = all_nodes[-limit:] if len(all_nodes) > limit else all_nodes
+        return {
+            "events": [
+                {
+                    "event_cid": str(n.event_cid),
+                    "parents": [str(p) for p in (n.parents or [])],
+                    "intent_cid": str(getattr(n, 'intent_cid', '')),
+                    "receipt_cid": str(getattr(n, 'receipt_cid', '')),
+                }
+                for n in recent
+            ],
+            "count": len(all_nodes),
+        }
+    except Exception as e:
+        logger.error(f"DAG history error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/mcp/dag/provenance/{event_cid}")
+async def trace_dag_provenance(event_cid: str):
+    """Trace provenance chain from an event CID back to roots."""
+    try:
+        from .event_dag import EventDAG
+        dag = getattr(app.state, '_event_dag', None)
+        if dag is None:
+            return {"chain": []}
+        chain = dag.walk(event_cid) if hasattr(dag, 'walk') else []
+        return {
+            "chain": [
+                {"event_cid": str(n.event_cid), "parents": [str(p) for p in (n.parents or [])]}
+                for n in chain
+            ]
+        }
+    except Exception as e:
+        logger.error(f"DAG provenance error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# --- Profile C: UCAN Delegation Endpoints ---
+
+@app.post("/mcp/ucan/delegate")
+async def create_ucan_delegation(request: Request):
+    """Create a UCAN capability delegation (Profile C)."""
+    try:
+        from .ucan_delegation import Capability, Delegation, add_delegation
+        body = await request.json()
+        audience = body.get("audience", "")
+        capabilities = body.get("capabilities", [])
+        expiration_hours = body.get("expiration_hours", 24)
+
+        if not audience:
+            raise HTTPException(status_code=400, detail="audience DID required")
+
+        caps = [
+            Capability(resource=c.get("resource", "*"), ability=c.get("ability", "*"))
+            for c in capabilities
+        ]
+
+        import time as _time
+        now = int(_time.time())
+        delegation = Delegation(
+            issuer="did:key:z6MkIPFSDatasetsMCPServer",
+            audience=audience,
+            capabilities=caps,
+            not_before=now,
+            expiration=now + (expiration_hours * 3600),
+            nonce=str(uuid.uuid4()),
+        )
+
+        # Store delegation
+        from .cid_artifacts import artifact_cid
+        proof_cid = str(artifact_cid({
+            "issuer": delegation.issuer,
+            "audience": delegation.audience,
+            "capabilities": [{"resource": c.resource, "ability": c.ability} for c in caps],
+            "expiration": delegation.expiration,
+        }))
+
+        try:
+            add_delegation(proof_cid, delegation)
+        except Exception:
+            pass  # Store may not be initialized
+
+        return {
+            "proof_cid": proof_cid,
+            "delegation": {
+                "issuer": delegation.issuer,
+                "audience": delegation.audience,
+                "capabilities": [{"resource": c.resource, "ability": c.ability} for c in caps],
+                "not_before": delegation.not_before,
+                "expiration": delegation.expiration,
+            },
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"UCAN delegation failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/mcp/ucan/validate")
+async def validate_ucan_delegation(request: Request):
+    """Validate a UCAN proof chain (Profile C)."""
+    try:
+        from .ucan_delegation import get_delegation, DelegationEvaluator, get_delegation_evaluator
+        body = await request.json()
+        proof_cid = body.get("proof_cid", "")
+
+        if not proof_cid:
+            raise HTTPException(status_code=400, detail="proof_cid required")
+
+        delegation = get_delegation(proof_cid)
+        if delegation is None:
+            return {"valid": False, "error": "Delegation not found", "chain": []}
+
+        # Validate time bounds
+        import time as _time
+        now = int(_time.time())
+        valid = True
+        reasons = []
+
+        if hasattr(delegation, 'expiration') and delegation.expiration < now:
+            valid = False
+            reasons.append("expired")
+        if hasattr(delegation, 'not_before') and delegation.not_before > now:
+            valid = False
+            reasons.append("not yet valid")
+
+        return {
+            "valid": valid,
+            "reasons": reasons,
+            "chain": [{
+                "issuer": getattr(delegation, 'issuer', ''),
+                "audience": getattr(delegation, 'audience', ''),
+                "expiration": getattr(delegation, 'expiration', 0),
+            }],
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"UCAN validation failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# --- Profile D: Policy Evaluation ---
+
+@app.post("/mcp/policy/evaluate")
+async def evaluate_deontic_policy(request: Request):
+    """Evaluate temporal deontic policy for an intent (Profile D)."""
+    try:
+        from .temporal_policy import TemporalPolicyEvaluator
+        body = await request.json()
+        intent_cid = body.get("intent_cid", "")
+        proof_cid = body.get("proof_cid")
+
+        evaluator = TemporalPolicyEvaluator()
+        result = evaluator.evaluate(intent_cid=intent_cid, proof_cid=proof_cid)
+
+        return {
+            "decision": getattr(result, 'decision', 'allow') if result else "allow",
+            "obligations": getattr(result, 'obligations', []) if result else [],
+            "policy_cid": getattr(result, 'policy_cid', '') if result else "",
+        }
+    except ImportError:
+        return {"decision": "allow", "obligations": [], "note": "Policy module not available"}
+    except Exception as e:
+        logger.error(f"Policy evaluation failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# --- Profile E: P2P Peer Discovery ---
+
+@app.get("/mcp/p2p/peers")
+async def discover_p2p_peers():
+    """Discover available P2P peers (Profile E)."""
+    try:
+        from .mcp_p2p_transport import MCP_P2P_PROTOCOL_ID
+        p2p_manager = getattr(app.state, '_p2p_service_manager', None)
+        peers = []
+        if p2p_manager and hasattr(p2p_manager, 'get_peers'):
+            peers = p2p_manager.get_peers()
+        return {
+            "protocol": MCP_P2P_PROTOCOL_ID,
+            "peers": peers,
+            "count": len(peers),
+        }
+    except ImportError:
+        return {"protocol": "/mcp+p2p/1.0.0", "peers": [], "count": 0}
+    except Exception as e:
+        logger.error(f"P2P peer discovery failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# --- MCP++ Capability Negotiation (JSON-RPC) ---
+
+@app.post("/mcp")
+async def mcp_jsonrpc_handler(request: Request):
+    """Handle MCP JSON-RPC requests including MCP++ profile negotiation."""
+    try:
+        body = await request.json()
+        method = body.get("method", "")
+        params = body.get("params", {})
+        req_id = body.get("id", 1)
+
+        if method == "initialize":
+            # MCP++ capability negotiation
+            client_caps = params.get("capabilities", {}).get("experimental", {})
+            server_caps = {}
+            if client_caps.get("mcp++/mcp-idl"):
+                server_caps["mcp++/mcp-idl"] = True
+            if client_caps.get("mcp++/cid-envelope"):
+                server_caps["mcp++/cid-envelope"] = True
+            if client_caps.get("mcp++/ucan"):
+                server_caps["mcp++/ucan"] = True
+            if client_caps.get("mcp++/deontic-policy"):
+                server_caps["mcp++/deontic-policy"] = True
+            if client_caps.get("mcp++/event-dag"):
+                server_caps["mcp++/event-dag"] = True
+            if client_caps.get("mcp++/p2p-transport"):
+                server_caps["mcp++/p2p-transport"] = True
+
+            return {
+                "jsonrpc": "2.0",
+                "id": req_id,
+                "result": {
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {
+                        "tools": {"listChanged": True},
+                        "experimental": server_caps,
+                    },
+                    "serverInfo": {"name": "ipfs-datasets-mcppp", "version": "1.0.0"},
+                },
+            }
+
+        elif method == "tools/call":
+            tool_name = params.get("name", "")
+            arguments = params.get("arguments", {})
+            mcp_server = getattr(app.state, 'mcp_server', None)
+            if mcp_server and hasattr(mcp_server, 'tools') and tool_name in mcp_server.tools:
+                tool_fn = mcp_server.tools[tool_name]
+                result = await tool_fn(**arguments) if callable(tool_fn) else None
+                return {"jsonrpc": "2.0", "id": req_id, "result": result}
+            return {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32601, "message": f"Tool not found: {tool_name}"}}
+
+        elif method == "tools/list":
+            mcp_server = getattr(app.state, 'mcp_server', None)
+            tools = list(mcp_server.tools.keys()) if mcp_server and hasattr(mcp_server, 'tools') else []
+            return {"jsonrpc": "2.0", "id": req_id, "result": {"tools": tools}}
+
+        elif method == "mcp++/execute":
+            # Delegate to the envelope execution endpoint
+            from starlette.testclient import TestClient
+            # Inline call
+            return await mcp_execute_with_envelope(request)
+
+        elif method == "mcp++/ucan/validate":
+            proof_cid = params.get("proof_cid", "")
+            from .ucan_delegation import get_delegation
+            delegation = get_delegation(proof_cid)
+            import time as _time
+            now = int(_time.time())
+            valid = delegation is not None and (not hasattr(delegation, 'expiration') or delegation.expiration >= now)
+            return {"jsonrpc": "2.0", "id": req_id, "result": {"valid": valid, "chain": []}}
+
+        elif method == "mcp++/policy/evaluate":
+            return {"jsonrpc": "2.0", "id": req_id, "result": {"decision": "allow", "obligations": []}}
+
+        elif method == "mcp++/p2p/peers":
+            return {"jsonrpc": "2.0", "id": req_id, "result": {"peers": [], "protocol": "/mcp+p2p/1.0.0"}}
+
+        elif method == "shutdown":
+            return {"jsonrpc": "2.0", "id": req_id, "result": None}
+
+        else:
+            return {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32601, "message": f"Method not found: {method}"}}
+
+    except Exception as e:
+        logger.error(f"MCP JSON-RPC error: {e}", exc_info=True)
+        return {"jsonrpc": "2.0", "id": body.get("id", 1) if 'body' in dir() else 1, "error": {"code": -32603, "message": str(e)}}

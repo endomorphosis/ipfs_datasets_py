@@ -558,6 +558,12 @@ class DelegationEvaluator:
             if d.is_expired(now=t):
                 return False, f"Delegation '{d.cid}' has expired"
 
+        # Signature verification — if delegation is a DIDSignedDelegation, verify it
+        for d in chain:
+            if hasattr(d, '_signed') and d._signed is not None:
+                if not verify_delegation_signature(d._signed):
+                    return False, f"Delegation '{d.cid}' has invalid signature"
+
         # Capability check — at least one delegation must cover the request
         for d in chain:
             if d.has_capability(resource, ability):
@@ -583,9 +589,20 @@ def get_delegation_evaluator() -> DelegationEvaluator:
     return _GLOBAL_EVALUATOR
 
 
-def add_delegation(delegation: Delegation) -> None:
-    """Add *delegation* to the global evaluator store."""
-    get_delegation_evaluator().add(delegation)
+def add_delegation(cid_or_delegation: Any, delegation: Optional[Delegation] = None) -> None:
+    """Add *delegation* to the global evaluator store.
+    
+    Supports two call signatures:
+    - add_delegation(delegation) — adds delegation using its .cid
+    - add_delegation(proof_cid, delegation) — adds with explicit CID
+    """
+    if delegation is None:
+        # Single arg: it's the delegation itself
+        get_delegation_evaluator().add(cid_or_delegation)
+    else:
+        # Two args: cid + delegation
+        delegation.cid = str(cid_or_delegation)
+        get_delegation_evaluator().add(delegation)
 
 
 def get_delegation(cid: str) -> Optional[Delegation]:
