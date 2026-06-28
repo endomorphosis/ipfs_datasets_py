@@ -8,6 +8,7 @@ surface of the legal IR.  This module projects those triples into the migration
 from __future__ import annotations
 
 import hashlib
+import math
 import re
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
@@ -16,6 +17,9 @@ from ipfs_datasets_py.knowledge_graphs.migration.formats import (
     NodeData,
     RelationshipData,
     SchemaData,
+)
+from ipfs_datasets_py.knowledge_graphs.neo4j_compat.legal_ir_projection import (
+    augment_legal_ir_projection_triples,
 )
 from ipfs_datasets_py.logic.flogic import FLogicFrame, FLogicOntology
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import ModalIRDocument
@@ -27,6 +31,11 @@ FLOGIC_CLASS_LABEL = "FLogicClass"
 FLOGIC_FRAME_LABEL = "FLogicFrame"
 MODAL_FORMULA_LABEL = "ModalFormula"
 LEGAL_MODAL_DOCUMENT_LABEL = "LegalModalDocument"
+LEGAL_CITATION_STRUCTURE_LABEL = "LegalCitationStructure"
+LEGAL_DOCUMENT_SCOPE_LABEL = "LegalDocumentScope"
+LEGAL_EDITORIAL_STATUS_LABEL = "LegalEditorialStatus"
+LEGAL_IR_VIEW_ALIGNMENT_LABEL = "LegalIRViewAlignment"
+LEGAL_SECTION_STRUCTURE_LABEL = "LegalSectionStructure"
 
 _FRAME_PREDICATES = {
     "candidate_ontology_frame",
@@ -56,7 +65,6 @@ _DOCUMENT_SCOPE_PREDICATES = {
 _PROVENANCE_PREDICATES = {
     "citation",
     "citation_source",
-    "citation_title",
     "evidence",
     "hint_id",
     "sample_id",
@@ -76,14 +84,40 @@ _MODAL_SEMANTIC_PREDICATES = {
     "predicate_role",
 }
 _MODAL_SEMANTIC_PREDICATE_PREFIXES = (
+    "bridge_",
+    "condition_",
+    "condition_scope_",
     "cue_modal_",
+    "cue_bridge_",
+    "fallback_rule_",
+    "fallback_surface_",
     "modal_",
     "predicate_",
+    "refined_modal_",
+    "refined_temporal_",
     "selected_frame_modal_family",
+    "source_action_family_",
+    "source_condition_family_",
+    "source_logical_variable_",
+    "source_object_family_",
+    "source_subject_family_",
+    "source_temporal_family_",
 )
 _DOCUMENT_SCOPE_PREDICATE_PREFIXES = (
     "source_text_",
     "source_id",
+)
+_LEGAL_IR_VIEW_ALIGNMENT_PREDICATES = {
+    "learned_legal_ir_predicted_view",
+    "learned_legal_ir_predicted_view_weight",
+    "learned_legal_ir_target_view",
+    "learned_legal_ir_target_view_weight",
+    "learned_legal_ir_view_gap",
+    "learned_legal_ir_view_rank",
+}
+_LEGAL_IR_VIEW_ALIGNMENT_PREDICATE_PREFIXES = (
+    "compiler_guidance_legal_ir_",
+    "learned_legal_ir_",
 )
 _CITATION_PREDICATE_PREFIXES = (
     "citation_",
@@ -95,19 +129,91 @@ _CITATION_TOKENS = (
     "title",
     "usc",
 )
+_EDITORIAL_STATUS_PREDICATES = {
+    "status_keyword",
+}
+_EDITORIAL_STATUS_PREDICATE_PREFIXES = (
+    "status_keyword_",
+)
+_EDITORIAL_STATUS_TOKENS = (
+    "repeal",
+    "repealed",
+    "status_bridge",
+    "transferred",
+)
+_SECTION_STRUCTURE_PREDICATE_PREFIXES = (
+    "citation_section_",
+    "citation_source_id_section_",
+    "citation_source_id_title_section_",
+    "citation_title_section_",
+    "fallback_section_heading_",
+    "section_catchline",
+    "section_definition_",
+    "section_heading_",
+    "section_marker",
+    "section_paragraph_",
+    "section_component_",
+    "section_profile_",
+    "section_range_",
+    "section_style_",
+    "section_subsection_",
+    "source_id_section_",
+    "source_id_title_section_",
+)
+_SOURCE_ID_CITATION_STRUCTURE_PREDICATES = {
+    "source_id_citation_canonical",
+    "source_id_scheme",
+    "source_id_title",
+    "source_id_title_number",
+    "source_id_title_section_key",
+}
+_SOURCE_ID_CITATION_STRUCTURE_PREDICATE_PREFIXES = (
+    "source_id_citation_",
+    "source_id_title_",
+)
+_SECTION_STRUCTURE_TOKENS = (
+    "chapter",
+    "heading_tail",
+    "part",
+    "section_component",
+    "section_definition",
+    "section_heading",
+    "section_marker",
+    "section_paragraph",
+    "section_profile",
+    "section_range",
+    "section_style",
+    "section_subsection",
+    "subchapter",
+    "subtitle",
+    "title",
+)
+_NODE_LABELS_BY_PROJECTION_VIEW = {
+    "citation_structure": LEGAL_CITATION_STRUCTURE_LABEL,
+    "document_scope": LEGAL_DOCUMENT_SCOPE_LABEL,
+    "editorial_status": LEGAL_EDITORIAL_STATUS_LABEL,
+    "legal_ir_view_alignment": LEGAL_IR_VIEW_ALIGNMENT_LABEL,
+    "section_structure": LEGAL_SECTION_STRUCTURE_LABEL,
+}
 _IDENTIFIER_RE = re.compile(r"[^A-Za-z0-9_]+")
+_GRAPH_PROJECTION_GUIDANCE_ROUTE = "repair_multiview_legal_ir_graph_projection"
+_NEO4J_COMPAT_TARGET_COMPONENT = "knowledge_graphs.neo4j_compat"
 
 
 def flogic_triples_to_graph_data(
     triples: Sequence[Mapping[str, Any]],
     *,
+    augment_sparse_legal_projection: bool = True,
     graph_id: Optional[str] = None,
     metadata: Optional[Mapping[str, Any]] = None,
 ) -> GraphData:
     """Convert F-logic triples into Neo4j-compatible migration graph data."""
     input_triple_count = len(triples)
     normalized = _normalize_triples(triples)
-    projected = _canonical_projection_triples(normalized)
+    projected = _canonical_projection_triples(
+        normalized,
+        augment_sparse_legal_projection=augment_sparse_legal_projection,
+    )
     node_map: Dict[str, NodeData] = {}
     relationships: List[RelationshipData] = []
     relationship_types: set[str] = set()
@@ -117,7 +223,7 @@ def flogic_triples_to_graph_data(
         subject = triple["subject"]
         predicate = triple["predicate"]
         obj = triple["object"]
-        projection_view = _projection_view_for_predicate(predicate)
+        projection_view = _projection_view_for_triple(predicate, obj)
         subject_node = _ensure_node(node_map, subject, labels=[FLOGIC_RESOURCE_LABEL])
         object_labels = [FLOGIC_VALUE_LABEL]
         if predicate == "type":
@@ -131,6 +237,10 @@ def flogic_triples_to_graph_data(
             object_labels = [FLOGIC_FRAME_LABEL, FLOGIC_RESOURCE_LABEL]
         elif predicate in _VALUE_LABELS_BY_PREDICATE:
             object_labels.append(_VALUE_LABELS_BY_PREDICATE[predicate])
+        projection_label = _NODE_LABELS_BY_PROJECTION_VIEW.get(projection_view)
+        if projection_label:
+            _add_label(subject_node, projection_label)
+            object_labels.append(projection_label)
 
         object_node = _ensure_node(node_map, obj, labels=object_labels)
         rel_type = _relationship_type(predicate)
@@ -206,6 +316,7 @@ def modal_ir_to_neo4j_graph_data(
         from .codec import modal_ir_to_flogic_triples
 
         triples = modal_ir_to_flogic_triples(modal_ir, selected_frame=selected_frame)
+    triples = _with_guided_legal_ir_projection_triples(modal_ir, triples)
     return flogic_triples_to_graph_data(
         triples,
         graph_id=f"{modal_ir.document_id}:flogic",
@@ -327,6 +438,8 @@ def _normalize_triples(triples: Sequence[Mapping[str, Any]]) -> List[Dict[str, s
 
 def _canonical_projection_triples(
     triples: Sequence[Mapping[str, str]],
+    *,
+    augment_sparse_legal_projection: bool = True,
 ) -> List[Dict[str, str]]:
     """Return triples in deterministic lexical order."""
     normalized = [
@@ -337,7 +450,12 @@ def _canonical_projection_triples(
         }
         for triple in triples
     ]
-    return sorted(normalized, key=lambda item: (item["subject"], item["predicate"], item["object"]))
+    if augment_sparse_legal_projection:
+        normalized = augment_legal_ir_projection_triples(normalized)
+    return sorted(
+        normalized,
+        key=lambda item: (item["subject"], item["predicate"], item["object"]),
+    )
 
 
 def _ensure_node(
@@ -421,7 +539,26 @@ def _projection_alignment_metadata(
     predicates = {str(triple["predicate"]) for triple in triples}
     objects = {str(triple["object"]) for triple in triples}
     unique_triple_count = _unique_triple_count(triples)
+    canonical_view_distribution = _canonical_component_distribution(
+        projection_view_counts,
+        relationship_count=relationship_count,
+    )
+    graph_failure_penalty = 0.0 if node_count > 0 and relationship_count > 0 else 1.0
+    graph_projection_signal_count = _graph_projection_signal_count(
+        projection_view_counts
+    )
     metadata: Dict[str, Any] = {
+        "canonical_legal_ir_projection_components": sorted(canonical_view_distribution),
+        "canonical_legal_ir_projection_view_distribution": canonical_view_distribution,
+        "canonical_legal_ir_projection_view_total": len(canonical_view_distribution),
+        "frame_logic_to_neo4j_alignment_total": relationship_count
+        if normalized_triple_count == relationship_count
+        else 0,
+        "frame_logic_to_neo4j_component_pair": (
+            "modal.frame_logic->knowledge_graphs.neo4j_compat"
+        ),
+        "frame_logic_to_neo4j_source_component": "modal.frame_logic",
+        "frame_logic_to_neo4j_target_component": "knowledge_graphs.neo4j_compat",
         "flogic_input_triple_count": input_triple_count,
         "flogic_invalid_triple_count": max(0, input_triple_count - normalized_triple_count),
         "flogic_duplicate_triple_count": max(0, len(triples) - unique_triple_count),
@@ -445,11 +582,155 @@ def _projection_alignment_metadata(
         "frame_logic_unique_object_count": len(objects),
         "frame_logic_unique_predicate_count": len(predicates),
         "frame_logic_unique_subject_count": len(subjects),
+        "legal_ir_multiview_graph_failure_penalty": graph_failure_penalty,
+        "legal_ir_graph_projection_signal_count": graph_projection_signal_count,
+        "legal_ir_graph_projection_signal_ratio": (
+            graph_projection_signal_count / relationship_count
+            if relationship_count > 0
+            else 0.0
+        ),
     }
+    legal_view_metadata = _legal_view_coverage_metadata(
+        triples,
+        projection_view_counts=projection_view_counts,
+    )
+    metadata.update(legal_view_metadata)
+    metadata["legal_ir_view_cross_entropy_loss"] = max(
+        0.0,
+        1.0
+        - float(
+            legal_view_metadata.get(
+                "frame_logic_projection_legal_view_coverage_ratio",
+                0.0,
+            )
+        ),
+    )
     selected_frame = _selected_frame_from_triples(triples)
     if selected_frame:
         metadata["frame_logic_selected_frame"] = selected_frame
     return metadata
+
+
+def _legal_view_coverage_metadata(
+    triples: Sequence[Mapping[str, str]],
+    *,
+    projection_view_counts: Mapping[str, int],
+) -> Dict[str, Any]:
+    """Summarize deterministic legal-structure coverage for graph consumers."""
+
+    required_views = _required_legal_projection_views(triples)
+    present_views = {str(name) for name, count in projection_view_counts.items() if count}
+    missing_views = [view for view in required_views if view not in present_views]
+    return {
+        "frame_logic_projection_legal_view_coverage_complete": not missing_views,
+        "frame_logic_projection_legal_view_coverage_ratio": (
+            1.0
+            if not required_views
+            else (len(required_views) - len(missing_views)) / len(required_views)
+        ),
+        "frame_logic_projection_legal_view_missing": missing_views,
+        "frame_logic_projection_legal_view_required": required_views,
+    }
+
+
+def _required_legal_projection_views(
+    triples: Sequence[Mapping[str, str]],
+) -> List[str]:
+    predicates = {
+        str(triple.get("predicate") or "").strip().lower()
+        for triple in triples
+    }
+    if not predicates:
+        return []
+    has_source_id = any(
+        predicate == "source_id" or predicate.startswith("source_id_")
+        for predicate in predicates
+    )
+    has_citation = any(
+        predicate == "citation" or predicate.startswith("citation_")
+        for predicate in predicates
+    )
+    has_section = any(
+        predicate.startswith(_SECTION_STRUCTURE_PREDICATE_PREFIXES)
+        or "section_heading" in predicate
+        or "section_component" in predicate
+        or "section_profile" in predicate
+        for predicate in predicates
+    )
+    has_editorial_status = any(
+        predicate in _EDITORIAL_STATUS_PREDICATES
+        or predicate.startswith(_EDITORIAL_STATUS_PREDICATE_PREFIXES)
+        or any(token in predicate for token in _EDITORIAL_STATUS_TOKENS)
+        for predicate in predicates
+    )
+    has_view_alignment = any(
+        predicate in _LEGAL_IR_VIEW_ALIGNMENT_PREDICATES
+        or predicate.startswith(_LEGAL_IR_VIEW_ALIGNMENT_PREDICATE_PREFIXES)
+        for predicate in predicates
+    )
+    required: List[str] = []
+    if has_source_id:
+        required.append("document_scope")
+    if has_source_id or has_citation:
+        required.append("citation_structure")
+    if has_section:
+        required.append("section_structure")
+    if has_editorial_status:
+        required.append("editorial_status")
+    if has_view_alignment:
+        required.append("legal_ir_view_alignment")
+    return sorted(set(required))
+def _canonical_component_distribution(
+    projection_view_counts: Mapping[str, int],
+    *,
+    relationship_count: int,
+) -> Dict[str, float]:
+    if relationship_count <= 0:
+        return {}
+    structural_count = sum(
+        int(projection_view_counts.get(view_name, 0) or 0)
+        for view_name in (
+            "citation_structure",
+            "document_scope",
+            "editorial_status",
+            "frame_link",
+            "legal_ir_view_alignment",
+            "ontology_term",
+            "section_structure",
+            "type_assertion",
+        )
+    )
+    modal_count = sum(
+        int(projection_view_counts.get(view_name, 0) or 0)
+        for view_name in ("fact", "modal_semantics", "provenance")
+    )
+    distribution = {
+        "knowledge_graphs.neo4j_compat": max(1, structural_count),
+        "modal.frame_logic": max(1, modal_count),
+    }
+    total = float(sum(distribution.values()))
+    return {
+        component: count / total
+        for component, count in sorted(distribution.items())
+    }
+
+
+def _graph_projection_signal_count(
+    projection_view_counts: Mapping[str, int],
+) -> int:
+    """Count structural projection facts that directly exercise Neo4j shape."""
+
+    return sum(
+        int(projection_view_counts.get(view_name, 0) or 0)
+        for view_name in (
+            "citation_structure",
+            "document_scope",
+            "editorial_status",
+            "legal_ir_view_alignment",
+            "section_structure",
+            "type_assertion",
+        )
+    )
 
 
 def _selected_frame_from_triples(triples: Sequence[Mapping[str, str]]) -> str:
@@ -462,16 +743,33 @@ def _selected_frame_from_triples(triples: Sequence[Mapping[str, str]]) -> str:
     return ""
 
 
-def _projection_view_for_predicate(predicate: str) -> str:
+def _projection_view_for_triple(predicate: str, obj: str = "") -> str:
     normalized = str(predicate or "").strip().lower()
     if not normalized:
         return "fact"
     if normalized == "type":
         return "type_assertion"
+    if normalized in _EDITORIAL_STATUS_PREDICATES or normalized.startswith(
+        _EDITORIAL_STATUS_PREDICATE_PREFIXES
+    ):
+        return "editorial_status"
+    if any(token in normalized for token in _EDITORIAL_STATUS_TOKENS):
+        return "editorial_status"
     if normalized in _FRAME_PREDICATES or normalized.startswith(_FRAME_PREDICATE_PREFIXES):
         return "frame_link"
     if "ontology_term" in normalized:
         return "ontology_term"
+    if normalized in _LEGAL_IR_VIEW_ALIGNMENT_PREDICATES or normalized.startswith(
+        _LEGAL_IR_VIEW_ALIGNMENT_PREDICATE_PREFIXES
+    ):
+        return "legal_ir_view_alignment"
+    if normalized.startswith(_SECTION_STRUCTURE_PREDICATE_PREFIXES):
+        return "section_structure"
+    if (
+        normalized in _SOURCE_ID_CITATION_STRUCTURE_PREDICATES
+        or normalized.startswith(_SOURCE_ID_CITATION_STRUCTURE_PREDICATE_PREFIXES)
+    ):
+        return "citation_structure"
     if normalized in _MODAL_SEMANTIC_PREDICATES or normalized.startswith(
         _MODAL_SEMANTIC_PREDICATE_PREFIXES
     ):
@@ -488,6 +786,8 @@ def _projection_view_for_predicate(predicate: str) -> str:
         return "citation_structure"
     if any(token in normalized for token in _CITATION_TOKENS):
         return "citation_structure"
+    if any(token in normalized for token in _SECTION_STRUCTURE_TOKENS):
+        return "section_structure"
     return "fact"
 
 
@@ -513,6 +813,237 @@ def _unique_triple_count(triples: Sequence[Mapping[str, str]]) -> int:
             for triple in triples
         }
     )
+
+
+def _with_guided_legal_ir_projection_triples(
+    modal_ir: ModalIRDocument,
+    triples: Sequence[Mapping[str, Any]],
+) -> List[Mapping[str, Any]]:
+    """Add graph-lane LegalIR guidance triples when codec metadata carries it."""
+
+    projected = list(triples or [])
+    guidance_triples = _guided_legal_ir_projection_triples(modal_ir)
+    if not guidance_triples:
+        return projected
+
+    seen = {
+        (
+            str(triple.get("subject") or ""),
+            str(triple.get("predicate") or ""),
+            str(triple.get("object") or ""),
+        )
+        for triple in projected
+    }
+    for triple in guidance_triples:
+        key = (
+            str(triple.get("subject") or ""),
+            str(triple.get("predicate") or ""),
+            str(triple.get("object") or ""),
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        projected.append(triple)
+    return projected
+
+
+def _guided_legal_ir_projection_triples(
+    modal_ir: ModalIRDocument,
+) -> List[Dict[str, str]]:
+    metadata = getattr(modal_ir, "metadata", {}) or {}
+    if not isinstance(metadata, Mapping):
+        return []
+
+    predicted = _numeric_distribution(
+        metadata.get("compiler_guidance_legal_ir_predicted_view_distribution")
+    )
+    target = _numeric_distribution(
+        metadata.get("compiler_guidance_legal_ir_target_view_distribution")
+    )
+    gaps = _numeric_signed_mapping(
+        metadata.get("compiler_guidance_legal_ir_view_gap_distribution")
+    )
+    if _metadata_implies_neo4j_projection_guidance(metadata):
+        target = {
+            **target,
+            _NEO4J_COMPAT_TARGET_COMPONENT: max(
+                1.0,
+                target.get(_NEO4J_COMPAT_TARGET_COMPONENT, 0.0),
+            ),
+        }
+        gaps = {
+            **gaps,
+            _NEO4J_COMPAT_TARGET_COMPONENT: round(
+                target[_NEO4J_COMPAT_TARGET_COMPONENT]
+                - predicted.get(_NEO4J_COMPAT_TARGET_COMPONENT, 0.0),
+                12,
+            ),
+        }
+    if not predicted and not target and not gaps:
+        return []
+
+    ranked_views = sorted(
+        set(predicted) | set(target) | set(gaps),
+        key=lambda view: max(
+            predicted.get(view, 0.0),
+            target.get(view, 0.0),
+            abs(gaps.get(view, 0.0)),
+        ),
+        reverse=True,
+    )[:6]
+    triples: List[Dict[str, str]] = []
+    for rank, view in enumerate(ranked_views, start=1):
+        safe_view = str(view or "").strip()
+        if not safe_view:
+            continue
+        if view in predicted:
+            triples.append(
+                {
+                    "subject": modal_ir.document_id,
+                    "predicate": "learned_legal_ir_predicted_view",
+                    "object": safe_view,
+                }
+            )
+            triples.append(
+                {
+                    "subject": modal_ir.document_id,
+                    "predicate": "learned_legal_ir_predicted_view_weight",
+                    "object": f"{safe_view}:{predicted[view]:.6f}",
+                }
+            )
+        if view in target:
+            triples.append(
+                {
+                    "subject": modal_ir.document_id,
+                    "predicate": "learned_legal_ir_target_view",
+                    "object": safe_view,
+                }
+            )
+            triples.append(
+                {
+                    "subject": modal_ir.document_id,
+                    "predicate": "learned_legal_ir_target_view_weight",
+                    "object": f"{safe_view}:{target[view]:.6f}",
+                }
+            )
+        triples.extend(
+            [
+                {
+                    "subject": modal_ir.document_id,
+                    "predicate": "learned_legal_ir_view_rank",
+                    "object": f"{rank}:{safe_view}",
+                },
+                {
+                    "subject": modal_ir.document_id,
+                    "predicate": "learned_legal_ir_view_gap",
+                    "object": (
+                        f"{safe_view}:"
+                        f"{gaps.get(view, target.get(view, 0.0) - predicted.get(view, 0.0)):.6f}"
+                    ),
+                },
+            ]
+        )
+    return triples
+
+
+def _metadata_implies_neo4j_projection_guidance(metadata: Mapping[str, Any]) -> bool:
+    target_distribution = _numeric_distribution(
+        metadata.get("compiler_guidance_legal_ir_target_view_distribution")
+    )
+    if _NEO4J_COMPAT_TARGET_COMPONENT in target_distribution:
+        return True
+    features = _compiler_guidance_metadata_features(metadata)
+    has_graph_route = any(
+        _GRAPH_PROJECTION_GUIDANCE_ROUTE in feature for feature in features
+    )
+    has_neo4j_target = any(
+        _NEO4J_COMPAT_TARGET_COMPONENT in feature for feature in features
+    )
+    return has_graph_route or has_neo4j_target
+
+
+def _compiler_guidance_metadata_features(metadata: Mapping[str, Any]) -> List[str]:
+    features: List[str] = []
+    for key in (
+        "compiler_guidance_synthesis_focus",
+        "compiler_guidance_semantic_overlay_terms",
+    ):
+        features.extend(_feature_values(metadata.get(key)))
+    ranked = metadata.get("compiler_guidance_ranked_features")
+    features.extend(_feature_values(ranked))
+    groups = metadata.get("compiler_guidance_feature_groups")
+    if isinstance(groups, Mapping):
+        for value in groups.values():
+            features.extend(_feature_values(value))
+    return _unique(features)
+
+
+def _feature_values(value: Any) -> List[str]:
+    if value is None:
+        return []
+    if isinstance(value, Mapping):
+        feature = str(value.get("feature") or value.get("name") or "").strip()
+        if feature:
+            return [feature]
+        values: Iterable[Any] = value.values()
+    elif isinstance(value, (str, bytes)):
+        values = [value]
+    else:
+        try:
+            values = list(value)
+        except TypeError:
+            values = [value]
+
+    features: List[str] = []
+    for item in values:
+        if isinstance(item, Mapping):
+            feature = str(item.get("feature") or item.get("name") or "").strip()
+        else:
+            feature = str(item or "").strip()
+        if feature:
+            features.append(feature)
+    return features
+
+
+def _numeric_distribution(value: Any) -> Dict[str, float]:
+    if not isinstance(value, Mapping):
+        return {}
+    distribution: Dict[str, float] = {}
+    for key, raw_value in value.items():
+        name = str(key or "").strip()
+        number = _finite_float(raw_value)
+        if name and number is not None:
+            distribution[name] = number
+    total = sum(max(0.0, score) for score in distribution.values())
+    if total <= 0.0:
+        return {}
+    return {
+        key: max(0.0, score) / total
+        for key, score in sorted(distribution.items())
+        if max(0.0, score) > 0.0
+    }
+
+
+def _numeric_signed_mapping(value: Any) -> Dict[str, float]:
+    if not isinstance(value, Mapping):
+        return {}
+    mapping: Dict[str, float] = {}
+    for key, raw_value in sorted(value.items()):
+        name = str(key or "").strip()
+        number = _finite_float(raw_value)
+        if name and number is not None:
+            mapping[name] = number
+    return mapping
+
+
+def _finite_float(value: Any) -> Optional[float]:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(number):
+        return None
+    return number
 
 
 __all__ = [

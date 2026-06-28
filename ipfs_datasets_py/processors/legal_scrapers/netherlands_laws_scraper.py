@@ -17,7 +17,7 @@ import logging
 import re
 import time
 import xml.etree.ElementTree as ET
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from collections import defaultdict, deque
 from typing import Any, Dict, Iterable, List, Optional, Set
@@ -98,6 +98,15 @@ _INFO_LABEL_PATTERNS = {
     "last_modified_date": [
         re.compile(r"(?:laatste wijziging|laatst gewijzigd)\s+(.+?)(?:\s{2,}|$)", re.IGNORECASE),
     ],
+    "valid_from": [
+        re.compile(r"(?:geldig van|geldend van|geldig vanaf|versie geldig vanaf)\s+(.+?)(?:\s{2,}|$)", re.IGNORECASE),
+    ],
+    "valid_to": [
+        re.compile(r"(?:geldig tot|geldend tot|geldig t/m|vervallen per|datum vervallen|buiten werking per)\s+(.+?)(?:\s{2,}|$)", re.IGNORECASE),
+    ],
+    "status": [
+        re.compile(r"(?:status|toestand)\s+(.+?)(?:\s{2,}|$)", re.IGNORECASE),
+    ],
 }
 _DUTCH_MONTHS = {
     "januari": 1,
@@ -144,6 +153,18 @@ _SRU_BWB_ENDPOINT = "https://zoekservice.overheid.nl/sru/Search"
 _DEFAULT_SRU_MAXIMUM_RECORDS = 100
 _MAX_METADATA_TITLE_CHARS = 300
 _MAX_AUTHORITY_SOURCES = 50
+_LAW_STATUS_VALUES = {"current", "historical", "repealed", "superseded", "unknown"}
+_STATUS_FIELDS = [
+    "law_status",
+    "is_current",
+    "valid_from",
+    "valid_to",
+    "effective_date",
+    "retrieved_at",
+    "status_source",
+    "status_confidence",
+    "status_note",
+]
 
 
 def _build_sru_seed_url(query: str, *, start_record: int = 1, maximum_records: int = _DEFAULT_SRU_MAXIMUM_RECORDS) -> str:
@@ -739,6 +760,143 @@ def _match_info_label(text: str, key: str) -> str:
     return ""
 
 
+def _first_labeled_value(labeled_values: Dict[str, List[str]], *labels: str) -> str:
+    for label in labels:
+        values = labeled_values.get(label)
+        if values:
+            return _normalize_space(values[0])
+    return ""
+
+
+def _status_from_text(status_text: str) -> tuple[str, str]:
+    lowered = _normalize_space(status_text).lower()
+    if not lowered:
+        return "unknown", ""
+    if any(term in lowered for term in ["vervangen", "opgevolgd", "opgeheven en vervangen"]):
+        return "superseded", "official status text indicates the law has been superseded"
+    if any(term in lowered for term in ["vervallen", "ingetrokken", "buiten werking", "niet meer geldig"]):
+        return "repealed", "official status text indicates the law is no longer in force"
+    if any(term in lowered for term in ["historisch", "oude versie", "voorgaande versie", "niet geldend"]):
+        return "historical", "official status text indicates a historical/former version"
+    if any(term in lowered for term in ["geldend", "geldig", "in werking", "huidige versie", "actueel"]):
+        return "current", "official status text indicates the law is current"
+    return "unknown", ""
+
+
+def _date_is_before_today(value: str) -> bool:
+    parsed = _parse_dutch_date(value)
+    if not parsed:
+        return False
+    try:
+        return datetime.strptime(parsed, "%Y-%m-%d").date() < date.today()
+    except ValueError:
+        return False
+
+
+def _extract_status_metadata(html: str, *, source_url: str = "") -> Dict[str, Any]:
+    """Parse law status/version hints from an official wetten.overheid.nl page."""
+    soup = BeautifulSoup(html, "html.parser")
+    text = _normalize_space(soup.get_text(" ", strip=True))
+    labeled_values = _collect_labeled_values(soup)
+
+    status_text = (
+        _first_labeled_value(labeled_values, "status", "toestand", "geldigheid")
+        or _match_info_label(text, "status")
+    )
+    valid_from = _parse_dutch_date(
+        _first_labeled_value(labeled_values, "geldig van", "geldend van", "geldig vanaf", "versie geldig vanaf")
+        or _match_info_label(text, "valid_from")
+    )
+    valid_to = _parse_dutch_date(
+        _first_labeled_value(
+            labeled_values,
+            "geldig tot",
+            "geldend tot",
+            "geldig t/m",
+            "vervallen per",
+            "datum vervallen",
+            "buiten werking per",
+            "datum buitenwerkingtreding",
+            "einddatum",
+        )
+        or _match_info_label(text, "valid_to")
+    )
+    status, reason = _status_from_text(status_text)
+    source = "wetten.overheid.nl/informatie" if source_url.endswith("/informatie") else "wetten.overheid.nl/document"
+    confidence = "unknown"
+    note = "No official status field or validity end date was found."
+
+    if status != "unknown":
+        confidence = "high"
+        note = reason
+    elif valid_to and _date_is_before_today(valid_to):
+        status = "historical"
+        confidence = "medium"
+        note = "Official validity end date is before the retrieval date."
+    elif valid_to:
+        status = "current"
+        confidence = "medium"
+        note = "Official validity end date is present but not before the retrieval date."
+
+    return {
+        "law_status": status,
+        "is_current": True if status == "current" else False if status in {"historical", "repealed", "superseded"} else None,
+        "valid_from": valid_from,
+        "valid_to": valid_to,
+        "status_text": status_text,
+        "status_source": source,
+        "status_confidence": confidence,
+        "status_note": note,
+    }
+
+
+def _merge_status_metadata(
+    *,
+    info_status: Dict[str, Any] | None = None,
+    document_status: Dict[str, Any] | None = None,
+    effective_date: str = "",
+    retrieved_at: str = "",
+    information_available: bool = False,
+) -> Dict[str, Any]:
+    info_status = info_status or {}
+    document_status = document_status or {}
+    candidates = [info_status, document_status]
+
+    selected = next((item for item in candidates if item.get("law_status") in _LAW_STATUS_VALUES - {"unknown"}), {})
+    if not selected:
+        selected = next((item for item in candidates if item.get("valid_to")), {})
+    if not selected:
+        selected = info_status or document_status or {}
+
+    status = str(selected.get("law_status") or "unknown")
+    if status not in _LAW_STATUS_VALUES:
+        status = "unknown"
+    valid_from = str(selected.get("valid_from") or document_status.get("valid_from") or effective_date or "")
+    valid_to = str(selected.get("valid_to") or document_status.get("valid_to") or "")
+    confidence = str(selected.get("status_confidence") or "unknown")
+    note = str(selected.get("status_note") or "No official status metadata was available.")
+
+    if status == "unknown" and information_available and not valid_to:
+        status = "current"
+        confidence = "medium"
+        note = (
+            "Official information metadata was retrieved and no official repeal or validity end marker was found; "
+            "classification should not be treated as legal advice."
+        )
+
+    return {
+        "law_status": status,
+        "is_current": True if status == "current" else False if status in {"historical", "repealed", "superseded"} else None,
+        "valid_from": valid_from,
+        "valid_to": valid_to,
+        "effective_date": _parse_dutch_date(effective_date),
+        "retrieved_at": retrieved_at,
+        "status_source": str(selected.get("status_source") or "wetten.overheid.nl"),
+        "status_confidence": confidence,
+        "status_note": note,
+    }
+
+
 def _metadata_value_is_reasonable(value: str, *, max_chars: int = _MAX_METADATA_TITLE_CHARS) -> bool:
     normalized = _normalize_space(value)
     if not normalized or len(normalized) > max_chars:
@@ -880,6 +1038,7 @@ def _extract_info_metadata(html: str, *, info_url: str = "") -> Dict[str, Any]:
         or next(iter(labeled_values.get("laatst gewijzigd", [])), "")
         or _match_info_label(text, "last_modified_date")
     )
+    status_metadata = _extract_status_metadata(html, source_url=info_url)
     authority_sources = _discover_authoritative_source_urls(soup, info_url)
     historical_versions = _extract_version_history(soup, identifier=identifier, base_url=info_url)
 
@@ -892,6 +1051,7 @@ def _extract_info_metadata(html: str, *, info_url: str = "") -> Dict[str, Any]:
         "effective_date": effective_date,
         "publication_date": publication_date,
         "last_modified_date": last_modified_date,
+        "status_metadata": status_metadata,
         "historical_versions": historical_versions,
         "authority_sources": authority_sources,
     }
@@ -935,6 +1095,7 @@ def _build_article_records(document_row: Dict[str, Any]) -> List[Dict[str, Any]]
     law_version_identifier = str(
         document_row.get("law_version_identifier") or _version_identifier(law_identifier, version_date)
     )
+    inherited_status = {field: document_row.get(field) for field in _STATUS_FIELDS if field in document_row}
 
     for article in document_row.get("articles") or []:
         article_text = _normalize_space(article.get("text") or "")
@@ -976,7 +1137,7 @@ def _build_article_records(document_row: Dict[str, Any]) -> List[Dict[str, Any]]
                 "effective_date": document_row.get("effective_date", ""),
                 "version_start_date": document_row.get("version_start_date", ""),
                 "version_end_date": document_row.get("version_end_date", ""),
-                "is_current": bool(document_row.get("is_current", False)),
+                "is_current": document_row.get("is_current"),
                 "publication_date": document_row.get("publication_date", ""),
                 "last_modified_date": document_row.get("last_modified_date", ""),
                 "historical_version_count": len(list(document_row.get("historical_versions") or [])),
@@ -988,6 +1149,7 @@ def _build_article_records(document_row: Dict[str, Any]) -> List[Dict[str, Any]]
                 "hierarchy_path_text": hierarchy_path_text,
                 "hierarchy_labels": [item.get("label") for item in hierarchy_path if item.get("label")],
                 **hierarchy_fields,
+                **inherited_status,
                 "scraped_at": document_row.get("scraped_at"),
             }
         )
@@ -1077,6 +1239,40 @@ def _article_coverage_summary(
     }
 
 
+def _law_status_summary(document_rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+    counts = {status: 0 for status in sorted(_LAW_STATUS_VALUES)}
+    ambiguous: List[Dict[str, Any]] = []
+    for row in document_rows:
+        status = str(row.get("law_status") or "unknown")
+        if status not in _LAW_STATUS_VALUES:
+            status = "unknown"
+        counts[status] += 1
+        confidence = str(row.get("status_confidence") or "unknown")
+        if status == "unknown" or confidence in {"unknown", "low"}:
+            ambiguous.append(
+                {
+                    "law_identifier": row.get("law_identifier") or row.get("identifier"),
+                    "title": row.get("canonical_title") or row.get("title"),
+                    "source_url": row.get("source_url"),
+                    "law_status": status,
+                    "status_confidence": confidence,
+                    "status_source": row.get("status_source"),
+                    "status_note": row.get("status_note"),
+                }
+            )
+    return {
+        "law_status_counts": counts,
+        "current_laws_count": counts["current"],
+        "historical_laws_count": counts["historical"],
+        "repealed_laws_count": counts["repealed"],
+        "superseded_laws_count": counts["superseded"],
+        "historical_repealed_superseded_laws_count": counts["historical"] + counts["repealed"] + counts["superseded"],
+        "unknown_status_laws_count": counts["unknown"],
+        "ambiguous_status_laws_count": len(ambiguous),
+        "ambiguous_status_laws": ambiguous,
+    }
+
+
 def _verify_cross_sources(
     session: "requests.Session",
     *,
@@ -1132,6 +1328,10 @@ def _jsonld_record(record: Dict[str, Any]) -> Dict[str, Any]:
             "identifier": "https://schema.org/identifier",
             "legislationType": "https://schema.org/legislationType",
             "inLanguage": "https://schema.org/inLanguage",
+            "lawStatus": "https://schema.org/legislationLegalForce",
+            "validFrom": "https://schema.org/validFrom",
+            "validTo": "https://schema.org/validThrough",
+            "statusSource": "https://schema.org/isBasedOn",
         },
         "@type": "Legislation",
         "@id": f"urn:nl-law:{_safe_id_fragment(identifier or title)}",
@@ -1141,6 +1341,15 @@ def _jsonld_record(record: Dict[str, Any]) -> Dict[str, Any]:
         "jurisdiction": "NL",
         "inLanguage": str(record.get("language") or "nl"),
         "dateModified": str(record.get("last_modified_date") or datetime.now().date().isoformat()),
+        "lawStatus": str(record.get("law_status") or "unknown"),
+        "is_current": record.get("is_current"),
+        "validFrom": str(record.get("valid_from") or ""),
+        "validTo": str(record.get("valid_to") or ""),
+        "effective_date": str(record.get("effective_date") or ""),
+        "retrieved_at": str(record.get("retrieved_at") or record.get("scraped_at") or ""),
+        "statusSource": str(record.get("status_source") or ""),
+        "status_confidence": str(record.get("status_confidence") or ""),
+        "status_note": str(record.get("status_note") or ""),
         "sourceUrl": source_url,
         "text": str(record.get("text") or ""),
     }
@@ -1203,6 +1412,43 @@ def _load_existing_record_map(index_path: Path) -> Dict[str, Dict[str, Any]]:
     return existing
 
 
+def _record_has_status_classification(row: Dict[str, Any]) -> bool:
+    status = str(row.get("law_status") or "").strip().lower()
+    return status in _LAW_STATUS_VALUES and "status_source" in row and "status_confidence" in row
+
+
+def _ensure_status_fields(row: Dict[str, Any]) -> Dict[str, Any]:
+    out = dict(row)
+    status = str(out.get("law_status") or "").strip().lower()
+    if status not in _LAW_STATUS_VALUES:
+        status = "unknown"
+        out["law_status"] = status
+        out["is_current"] = None
+        out.setdefault("valid_from", "")
+        out.setdefault("valid_to", "")
+        out["effective_date"] = _parse_dutch_date(out.get("effective_date") or out.get("version_start_date") or "")
+        out["retrieved_at"] = out.get("retrieved_at") or out.get("scraped_at") or ""
+        out["status_source"] = ""
+        out["status_confidence"] = "unknown"
+        out["status_note"] = (
+            "No official status metadata was parsed for this retained row; status is unknown until refreshed from "
+            "wetten.overheid.nl metadata."
+        )
+        return out
+
+    out["law_status"] = status
+    if status == "current":
+        out["is_current"] = True
+    elif status in {"historical", "repealed", "superseded"}:
+        out["is_current"] = False
+    elif out.get("is_current") not in (True, False, None):
+        out["is_current"] = None
+    for field in _STATUS_FIELDS:
+        out.setdefault(field, None if field == "is_current" else "")
+    out["effective_date"] = _parse_dutch_date(out.get("effective_date") or out.get("version_start_date") or "")
+    return out
+
+
 async def list_netherlands_law_sources() -> Dict[str, Any]:
     """List built-in Netherlands law source configs."""
     return {
@@ -1238,7 +1484,7 @@ async def scrape_netherlands_laws(
     max_documents: Optional[int] = None,
     include_metadata: bool = True,
     custom_sources: Optional[List[Dict[str, Any]]] = None,
-    max_seed_pages: int = 25,
+    max_seed_pages: Optional[int] = 25,
     crawl_depth: int = 2,
     use_default_seeds: bool = False,
     skip_existing: bool = False,
@@ -1255,7 +1501,7 @@ async def scrape_netherlands_laws(
         max_documents: Optional cap on scraped law documents.
         include_metadata: Include source metadata fields in result rows.
         custom_sources: Optional additional ``{"type": "index"|"document", "url": ...}`` configs.
-        max_seed_pages: Bounded count of official discovery pages to visit.
+        max_seed_pages: Bounded count of official discovery pages to visit. ``None`` or ``0`` means unbounded discovery.
         crawl_depth: Maximum discovery-link depth from the provided seed pages.
         use_default_seeds: Add built-in official discovery pages when explicit seeds are not provided.
         skip_existing: Skip laws already present in the on-disk document index.
@@ -1318,6 +1564,7 @@ async def scrape_netherlands_laws(
     successful_document_fetches = 0
     successful_parses = 0
     failed_documents = 0
+    failed_document_urls: List[str] = []
     failed_seed_pages = 0
     existing_record_map = _load_existing_record_map(output_root / DEFAULT_NETHERLANDS_LAWS_INDEX_PATH.name)
 
@@ -1331,7 +1578,11 @@ async def scrape_netherlands_laws(
     seed_queue: deque[tuple[str, int]] = deque((url, 0) for url in normalized_seed_urls)
     seen_seed_urls: Set[str] = set()
 
-    while seed_queue and seed_visit_count < max(0, int(max_seed_pages or 0)):
+    seed_page_limit: Optional[int] = None
+    if max_seed_pages is not None and int(max_seed_pages) > 0:
+        seed_page_limit = int(max_seed_pages)
+
+    while seed_queue and (seed_page_limit is None or seed_visit_count < seed_page_limit):
         index_url, depth = seed_queue.popleft()
         if index_url in seen_seed_urls:
             continue
@@ -1393,10 +1644,8 @@ async def scrape_netherlands_laws(
 
     for law_url in ordered_document_urls:
         identifier = _extract_bwb_id(law_url)
-        if skip_existing and (
-            identifier in existing_record_map
-            or law_url in existing_record_map
-        ):
+        existing_row = existing_record_map.get(identifier) or existing_record_map.get(law_url)
+        if skip_existing and existing_row and _record_has_status_classification(existing_row):
             skipped_documents.append(law_url)
             continue
         try:
@@ -1412,6 +1661,8 @@ async def scrape_netherlands_laws(
                 raise RuntimeError("No law text extracted")
 
             structure = parsed.get("structure") or {}
+            scraped_at = datetime.now().isoformat()
+            document_status_metadata = _extract_status_metadata(response.text or "", source_url=law_url)
             info_metadata: Dict[str, Any] = {}
             info_url = ""
             if identifier:
@@ -1444,6 +1695,13 @@ async def scrape_netherlands_laws(
                 current_info_url=info_url,
                 current_effective_date=str(info_metadata.get("effective_date") or ""),
             )
+            status_fields = _merge_status_metadata(
+                info_status=info_metadata.get("status_metadata") if isinstance(info_metadata.get("status_metadata"), dict) else {},
+                document_status=document_status_metadata,
+                effective_date=str(info_metadata.get("effective_date") or ""),
+                retrieved_at=scraped_at,
+                information_available=bool(info_metadata),
+            )
 
             row: Dict[str, Any] = {
                 "record_type": "document",
@@ -1475,11 +1733,11 @@ async def scrape_netherlands_laws(
                     "effective_date": info_metadata.get("effective_date") or "",
                     "publication_date": info_metadata.get("publication_date") or "",
                     "last_modified_date": info_metadata.get("last_modified_date") or "",
+                    "status_metadata": info_metadata.get("status_metadata") or document_status_metadata,
                 },
                 "effective_date": str(info_metadata.get("effective_date") or ""),
                 "version_start_date": str(info_metadata.get("effective_date") or ""),
                 "version_end_date": "",
-                "is_current": True,
                 "publication_date": str(info_metadata.get("publication_date") or ""),
                 "last_modified_date": str(info_metadata.get("last_modified_date") or ""),
                 "historical_versions": normalized_versions,
@@ -1490,7 +1748,8 @@ async def scrape_netherlands_laws(
                 "parts": structure_parts,
                 "headings": [part.get("label") for part in structure_parts if str(part.get("kind")) != "artikel"],
                 "citations": [part.get("citation") for part in structure_articles if part.get("citation")],
-                "scraped_at": datetime.now().isoformat(),
+                "scraped_at": scraped_at,
+                **status_fields,
             }
             if include_metadata:
                 row["metadata"] = {
@@ -1517,6 +1776,7 @@ async def scrape_netherlands_laws(
             successful_parses += 1
         except Exception as exc:
             failed_documents += 1
+            failed_document_urls.append(law_url)
             errors.append(f"{law_url}: {exc}")
         time.sleep(max(0.0, float(rate_limit_delay)))
 
@@ -1534,12 +1794,14 @@ async def scrape_netherlands_laws(
                 if _normalize_space(row.get("identifier") or row.get("source_url") or "") not in replacement_keys
             ]
     persisted_records.extend(records)
+    persisted_records = [_ensure_status_fields(row) for row in persisted_records]
     persisted_article_records: List[Dict[str, Any]] = []
     for row in persisted_records:
         if str(row.get("record_type") or "") != "document":
             continue
         persisted_article_records.extend(list(row.get("article_records") or _build_article_records(row)))
     coverage_summary = _article_coverage_summary(persisted_records, persisted_article_records)
+    status_summary = _law_status_summary(persisted_records)
 
     _write_index_jsonl(persisted_records, index_path=output_root / DEFAULT_NETHERLANDS_LAWS_INDEX_PATH.name)
     _write_optional_index(
@@ -1556,7 +1818,7 @@ async def scrape_netherlands_laws(
     scrape_command = (
         "python -m ipfs_datasets_py.processors.legal_scrapers.netherlands_laws scrape "
         f"--output-dir {output_root} "
-        f"--max_seed_pages {max_seed_pages} --crawl_depth {crawl_depth} "
+        f"--max_seed_pages {0 if max_seed_pages is None else max_seed_pages} --crawl_depth {crawl_depth} "
         f"--rate_limit_delay {rate_limit_delay}"
     )
     if use_default_seeds:
@@ -1591,6 +1853,9 @@ async def scrape_netherlands_laws(
         "total_skipped": len(skipped_documents),
         "documents_failed": failed_documents,
         "total_failed": failed_documents,
+        "documents_retried": 0,
+        "failed_document_urls": failed_document_urls,
+        "failed_law_identifiers": sorted({_extract_bwb_id(url) for url in failed_document_urls if _extract_bwb_id(url)}),
         "skipped_document_urls": skipped_documents,
         "records_count": len(records),
         "article_records_count": len(article_records),
@@ -1599,6 +1864,7 @@ async def scrape_netherlands_laws(
         "output_article_records_count": len(persisted_article_records),
         "output_search_records_count": len(persisted_records) + len(persisted_article_records),
         **coverage_summary,
+        **status_summary,
         "errors": errors,
         "error_count": len(errors),
         "elapsed_time_seconds": elapsed,
@@ -1662,6 +1928,11 @@ __all__ = [
     "_extract_document_links",
     "_extract_sru_document_links",
     "_extract_title_and_text",
+    "_extract_status_metadata",
+    "_merge_status_metadata",
+    "_record_has_status_classification",
+    "_ensure_status_fields",
     "_diagnose_article_extraction",
     "_article_coverage_summary",
+    "_law_status_summary",
 ]

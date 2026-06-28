@@ -6,6 +6,8 @@ import time
 from pathlib import Path
 
 import ipfs_datasets_py.optimizers.todo_daemon.legal_parser_daemon as parser_daemon_module
+from ipfs_datasets_py.optimizers.todo_daemon import legal_parser as legal_parser_lifecycle
+from ipfs_datasets_py.optimizers.todo_daemon.core import ManagedDaemonSpec
 from ipfs_datasets_py.optimizers.todo_daemon.legal_parser_daemon import (
     LegalParserDaemonConfig,
     LegalParserCycleProposal,
@@ -267,6 +269,63 @@ def test_check_legal_parser_daemon_requires_live_supervisor_for_health():
     assert "maintenance_running" in script
     assert '"formal_logic_goal"' in script
     assert "pid_is_legal_parser_wrapper" in script
+
+
+def test_legal_parser_health_recomputes_stale_ensure_supervisor_pid(tmp_path):
+    daemon_dir = tmp_path / ".daemon"
+    output_dir = tmp_path / "artifacts" / "legal_parser_optimizer_daemon"
+    daemon_dir.mkdir()
+    output_dir.mkdir(parents=True)
+
+    stale_pid = 987654321
+    (output_dir / "current_status.json").write_text(
+        json.dumps(
+            {
+                "pid": stale_pid,
+                "updated_at": "2026-05-11T21:49:32Z",
+                "cycle_index": 6960,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (output_dir / "progress_summary.json").write_text("{}", encoding="utf-8")
+    (daemon_dir / "legal_parser_daemon_supervisor.json").write_text(
+        json.dumps({"supervisor_pid": stale_pid}),
+        encoding="utf-8",
+    )
+    (daemon_dir / "legal_parser_daemon_ensure.status.json").write_text(
+        json.dumps(
+            {
+                "status": "started",
+                "wrapper_pid": stale_pid,
+                "supervisor_pid": stale_pid,
+                "supervisor_pid_alive": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    spec = ManagedDaemonSpec(
+        name="legal-parser",
+        schema="ipfs_datasets_py.legal_parser_daemon",
+        repo_root=tmp_path,
+        daemon_dir=Path(".daemon"),
+        runner=("bash", "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh"),
+        status_path=Path("artifacts/legal_parser_optimizer_daemon/current_status.json"),
+        supervisor_status_path=Path(".daemon/legal_parser_daemon_supervisor.json"),
+        supervisor_pid_path=Path(".daemon/legal_parser_daemon_supervisor.pid"),
+        child_pid_path=Path(".daemon/legal_parser_daemon.pid"),
+        supervisor_out_path=Path(".daemon/legal_parser_daemon_supervisor.out"),
+        ensure_status_path=Path(".daemon/legal_parser_daemon_ensure.status.json"),
+        ensure_check_path=Path(".daemon/legal_parser_daemon_ensure_check.json"),
+        progress_path=Path("artifacts/legal_parser_optimizer_daemon/progress_summary.json"),
+    )
+
+    payload = legal_parser_lifecycle.check_legal_parser_health(spec)
+
+    assert payload["ensure_supervisor_pid"] == stale_pid
+    assert payload["ensure_supervisor_pid_alive"] is False
+    assert payload["supervisor_pid_alive"] is False
 
 
 def test_supervisor_recovers_dirty_targets_before_agentic_maintenance():

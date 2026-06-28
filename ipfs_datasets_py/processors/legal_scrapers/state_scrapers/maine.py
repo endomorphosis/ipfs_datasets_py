@@ -134,6 +134,7 @@ class MaineScraper(BaseStateScraper):
         root_soup = BeautifulSoup(root_html, "html.parser")
 
         resumed = self._load_partial_checkpoint_statutes(code_name=code_name, max_statutes=max_statutes)
+        checkpoint_progress = self._load_partial_checkpoint_progress()
         statutes: List[NormalizedStatute] = []
         seen_sections: set[str] = set()
         seen_keys: set[str] = set()
@@ -160,6 +161,14 @@ class MaineScraper(BaseStateScraper):
                 "Maine official tree: resumed %s statutes from partial checkpoint",
                 len(statutes),
             )
+        resume_titles_scanned = max(0, int(checkpoint_progress.get("titles_scanned") or 0))
+        resume_chapters_scanned = max(0, int(checkpoint_progress.get("chapters_scanned") or 0))
+        resume_sections_scanned = max(0, int(checkpoint_progress.get("sections_scanned") or 0))
+        resume_discovered_sections = max(0, int(checkpoint_progress.get("discovered_sections") or 0))
+        title_rewind = max(0, int(self._env_int("STATE_SCRAPER_ME_RESUME_TITLE_REWIND", default=1)))
+        chapter_rewind = max(0, int(self._env_int("STATE_SCRAPER_ME_RESUME_CHAPTER_REWIND", default=10)))
+        resume_title_floor = max(0, resume_titles_scanned - title_rewind)
+        resume_chapter_floor = max(0, resume_chapters_scanned - chapter_rewind)
         title_urls = []
         seen_titles = set()
         for link in root_soup.find_all("a", href=True):
@@ -184,18 +193,25 @@ class MaineScraper(BaseStateScraper):
             extra={
                 "titles_scanned": 0,
                 "discovered_titles": int(len(title_urls)),
+                "chapters_scanned": 0,
+                "sections_scanned": int(max(len(statutes), resume_sections_scanned)),
+                "discovered_sections": int(max(len(statutes), resume_discovered_sections)),
                 "codes_completed": 0,
                 "codes_total": 1,
             },
         )
 
         processed_chapters = 0
+        sections_scanned_total = int(max(len(statutes), resume_sections_scanned))
+        sections_discovered_total = int(max(len(statutes), resume_discovered_sections))
         section_concurrency = max(1, int(self._env_int("STATE_SCRAPER_ME_SECTION_CONCURRENCY", default=8)))
         section_sem = asyncio.Semaphore(section_concurrency)
 
         for title_index, title_url in enumerate(title_urls, start=1):
             if len(statutes) >= max_statutes:
                 break
+            if title_index < resume_title_floor:
+                continue
             title_raw = await self._fetch_page_content_with_archival_fallback(title_url, timeout_seconds=25)
             if not title_raw:
                 continue
@@ -226,6 +242,9 @@ class MaineScraper(BaseStateScraper):
                 extra={
                     "titles_scanned": int(title_index),
                     "discovered_titles": int(len(title_urls)),
+                    "chapters_scanned": int(processed_chapters),
+                    "sections_scanned": int(sections_scanned_total),
+                    "discovered_sections": int(sections_discovered_total),
                     "discovered_chapters": int(len(chapter_urls)),
                     "codes_completed": 0,
                     "codes_total": 1,
@@ -236,6 +255,8 @@ class MaineScraper(BaseStateScraper):
                 if len(statutes) >= max_statutes:
                     break
                 processed_chapters += 1
+                if processed_chapters < resume_chapter_floor:
+                    continue
                 chapter_raw = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=25)
                 if not chapter_raw:
                     continue
@@ -254,6 +275,7 @@ class MaineScraper(BaseStateScraper):
                         continue
                     seen_local_candidates.add(section_url)
                     section_candidates.append(section_url)
+                sections_discovered_total += len(section_candidates)
 
                 async def _parse_section_url(section_url: str) -> Optional[NormalizedStatute]:
                     async with section_sem:
@@ -264,6 +286,7 @@ class MaineScraper(BaseStateScraper):
                 cancelled_early = False
                 for task in asyncio.as_completed(tasks):
                     scanned_sections += 1
+                    sections_scanned_total += 1
                     statute = await task
                     if statute is not None:
                         _extend_unique([statute])
@@ -278,9 +301,11 @@ class MaineScraper(BaseStateScraper):
                                 code_name=code_name,
                                 stage_label="maine:section-scan",
                                 extra={
+                                    "titles_scanned": int(title_index),
+                                    "discovered_titles": int(len(title_urls)),
                                     "chapters_scanned": int(processed_chapters),
-                                    "sections_scanned": int(scanned_sections),
-                                    "discovered_sections": int(len(section_candidates)),
+                                    "sections_scanned": int(sections_scanned_total),
+                                    "discovered_sections": int(sections_discovered_total),
                                     "codes_completed": 0,
                                     "codes_total": 1,
                                 },
@@ -302,9 +327,11 @@ class MaineScraper(BaseStateScraper):
                         code_name=code_name,
                         stage_label="maine:section-scan",
                         extra={
+                            "titles_scanned": int(title_index),
+                            "discovered_titles": int(len(title_urls)),
                             "chapters_scanned": int(processed_chapters),
-                            "sections_scanned": int(scanned_sections),
-                            "discovered_sections": int(len(section_candidates)),
+                            "sections_scanned": int(sections_scanned_total),
+                            "discovered_sections": int(sections_discovered_total),
                             "codes_completed": 0,
                             "codes_total": 1,
                         },
@@ -319,6 +346,8 @@ class MaineScraper(BaseStateScraper):
                 "titles_scanned": int(len(title_urls)),
                 "discovered_titles": int(len(title_urls)),
                 "chapters_scanned": int(processed_chapters),
+                "sections_scanned": int(sections_scanned_total),
+                "discovered_sections": int(sections_discovered_total),
                 "codes_completed": 1,
                 "codes_total": 1,
             },

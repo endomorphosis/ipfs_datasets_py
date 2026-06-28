@@ -607,6 +607,42 @@ def _low_information_fallback_surface_sample_document() -> ModalIRDocument:
     )
 
 
+def _omitted_codification_status_clause_sample_document() -> ModalIRDocument:
+    source_id = "us-code-42-1491-to-1497-b5119192b68c51b6"
+    normalized_text = (
+        "§§1491 to 1497. Omitted Editorial Notes Codification Sections were "
+        "omitted pursuant to section 5316 of this title which terminated the "
+        "authority to make grants or loans under this chapter after Jan. 1, 1975."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-omitted-codification-status-clause",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(name="uscode_omitted_heading_fallback"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=20,
+            citation="42 U.S.C. 1491 to 1497.",
+        ),
+        metadata={
+            "cue": "__uscode_editorial_status_heading_fallback__",
+            "fallback_rule": "uscode_editorial_status_heading_v1",
+            "status_keyword": "omitted",
+        },
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
 def _single_letter_low_information_fallback_surface_sample_document() -> ModalIRDocument:
     source_id = "us-code-19-134-9f14e2dcbf0f4b1a"
     normalized_text = "S. Repealed."
@@ -739,6 +775,73 @@ def _frame_fallback_refined_cross_family_cue_sample_document() -> ModalIRDocumen
     )
 
 
+def _temporal_fallback_surface_context_bridge_sample_document() -> ModalIRDocument:
+    source_id = "us-code-16-5108-context-bridge-1afec22bc1119aa0"
+    normalized_text = (
+        "Sec. 5108. Authorization of appropriations. The Secretary shall allocate "
+        "funds not later than fiscal year 2027."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-temporal-fallback-surface-context-bridge",
+        operator=ModalIROperator(
+            family="temporal",
+            system="ltl",
+            symbol="F",
+            label="eventually",
+        ),
+        predicate=ModalIRPredicate(name="uscode_section_heading_fallback"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(normalized_text),
+            citation="16 U.S.C. 5108",
+        ),
+        metadata={
+            "cue": "__uscode_section_heading_fallback__",
+            "fallback_rule": "uscode_section_heading_v1",
+        },
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
+def _frame_fallback_structural_chapter_temporal_sample_document() -> ModalIRDocument:
+    source_id = "us-code-22-286e-5a-fallback-778899aabbccddee"
+    normalized_text = (
+        "Sec. 286e-5a. Chapter 7 fiscal year 2024 coordination requirements."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-frame-fallback-structural-chapter-temporal",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(name="uscode_section_heading_fallback"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(normalized_text),
+            citation="22 U.S.C. 286e-5a",
+        ),
+        metadata={
+            "cue": "__uscode_section_heading_fallback__",
+            "fallback_rule": "uscode_section_heading_v1",
+        },
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
 def _non_frame_structural_title_noise_sample_document() -> ModalIRDocument:
     source_id = "us-code-49-32916-title-noise-1122334455667788"
     normalized_text = "Not later than January 15, title updates are published."
@@ -759,6 +862,33 @@ def _non_frame_structural_title_noise_sample_document() -> ModalIRDocument:
             start_char=0,
             end_char=len(normalized_text),
             citation="49 U.S.C. 32916",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
+def _temporal_year_context_refined_bridge_sample_document() -> ModalIRDocument:
+    source_id = "us-code-15-3112-temporal-year-bridge-5091a94d3679ed3b"
+    normalized_text = "Coverage remains in effect from 1978 through 1992 revisions."
+    formula = ModalIRFormula(
+        formula_id="f-temporal-year-context-refined-bridge",
+        operator=ModalIROperator(
+            family="temporal",
+            system="ltl",
+            symbol="F",
+            label="eventually",
+        ),
+        predicate=ModalIRPredicate(name="coverage_effect_window"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(normalized_text),
+            citation="15 U.S.C. 3112",
         ),
     )
     return ModalIRDocument(
@@ -1287,6 +1417,137 @@ def _metadata_only_frame_terms_without_selected_frame_sample_document() -> Modal
         frame_candidates=[],
         metadata=dict(base.metadata),
     )
+
+
+def _source_anchor_connective_noise_sample_document() -> ModalIRDocument:
+    source_id = "us-code-15-717k-anchor-noise-cf08f62ff321ca14"
+    source_text = (
+        "§717k. Officials dealing in securities It shall be unlawful for any "
+        "officer or director to receive compensation."
+    )
+    cue_start = source_text.index("shall")
+    cue_end = cue_start + len("shall")
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-source-anchor-connective-noise",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="kd",
+                    symbol="O",
+                    label="obligatory",
+                ),
+                predicate=ModalIRPredicate(
+                    name="be_unlawful_for_any_officer_or",
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id=source_id,
+                    start_char=0,
+                    end_char=len(source_text),
+                    citation="15 U.S.C. 717k",
+                ),
+                metadata={
+                    "cue": "shall",
+                    "cue_start_char": cue_start,
+                    "cue_end_char": cue_end,
+                },
+            ),
+        ],
+    )
+
+
+def _inferred_condition_gpo_fragment_sample_document() -> ModalIRDocument:
+    source_id = "us-code-12-1960-gpo-fragment-cc2b0e5fd97410af"
+    source_text = (
+        "Sec. 1960 - Safe harbor with respect to keep open directives "
+        "From the U.S. Government Publishing Office, www.gpo.gov"
+    )
+    span_start = source_text.index("Safe harbor")
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-inferred-condition-gpo-fragment",
+                operator=ModalIROperator(
+                    family="conditional_normative",
+                    system="kd",
+                    symbol="O|",
+                    label="conditional obligation",
+                ),
+                predicate=ModalIRPredicate(
+                    name="keep_open_directives_from_the_u",
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id=source_id,
+                    start_char=span_start,
+                    end_char=len(source_text),
+                    citation="12 U.S.C. 1960",
+                ),
+                metadata={
+                    "cue": "with respect to",
+                },
+            ),
+        ],
+    )
+
+
+def test_decode_modal_ir_document_filters_connective_anchor_tokens() -> None:
+    decoded = decode_modal_ir_document(_source_anchor_connective_noise_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "officer" in slot_map["source_object_anchor"]
+    assert "for" not in slot_map["source_object_anchor"]
+    assert "any" not in slot_map["source_object_anchor"]
+    assert "officer:deontic" in slot_map["source_object_family"]
+    assert "for:deontic" not in slot_map["source_object_family"]
+
+
+def test_modal_ir_to_flogic_triples_filters_connective_anchor_tokens() -> None:
+    triples = modal_ir_to_flogic_triples(_source_anchor_connective_noise_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert "officer" in objects("source_object_anchor")
+    assert "for" not in objects("source_object_anchor")
+    assert "any" not in objects("source_object_anchor")
+    assert "officer:deontic" in objects("source_object_family")
+    assert "for:deontic" not in objects("source_object_family")
+
+
+def test_decode_modal_ir_document_trims_gpo_fragment_from_inferred_conditions() -> None:
+    decoded = decode_modal_ir_document(_inferred_condition_gpo_fragment_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["condition"] == ["with respect to keep open directives"]
+    assert slot_map["condition_scope"] == ["keep open directives"]
+    assert "from the u" not in slot_map["condition"][0].lower()
+
+
+def test_modal_ir_to_flogic_triples_trim_gpo_fragment_from_inferred_conditions() -> None:
+    triples = modal_ir_to_flogic_triples(_inferred_condition_gpo_fragment_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("condition") == ["with respect to keep open directives"]
+    assert objects("condition_scope") == ["keep open directives"]
+    assert "from the u" not in objects("condition")[0].lower()
 
 
 def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
@@ -3285,6 +3546,7 @@ def test_modal_ir_to_flogic_triples_infers_selected_frame_and_candidates_from_me
         "agency",
         "appeal",
         "deadline",
+        "26_646",
     ]
     assert objects("interpreted_in_frame") == ["administrative_notice_hearing"]
     assert objects("interpreted_in_frame_term") == [
@@ -3293,6 +3555,29 @@ def test_modal_ir_to_flogic_triples_infers_selected_frame_and_candidates_from_me
         "agency",
         "appeal",
         "deadline",
+        "26_646",
+    ]
+    assert objects("frame_grounding_profile") == [
+        "administrative_notice_hearing|rank:1|terms:6|candidates:3"
+    ]
+    assert objects("frame_grounding_selected_frame") == [
+        "administrative_notice_hearing"
+    ]
+    assert objects("frame_grounding_selected_rank") == ["1"]
+    assert objects("frame_grounding_selected_term_count") == ["6"]
+    assert objects("frame_grounding_candidate_count") == ["3"]
+    assert objects("frame_grounding_selected_term_ranked") == [
+        "1:administrative",
+        "2:administrative_notice_hearing",
+        "3:agency",
+        "4:appeal",
+        "5:deadline",
+        "6:26_646",
+    ]
+    assert objects("frame_grounding_modal_family") == ["temporal"]
+    assert objects("frame_grounding_modal_family_count") == ["temporal:1"]
+    assert objects("frame_grounding_family_profile") == [
+        "administrative_notice_hearing|family:temporal|count:1|rank:1|terms:6"
     ]
 
 
@@ -3339,6 +3624,27 @@ def test_decode_modal_ir_document_infers_selected_frame_terms_from_metadata() ->
         "agency",
         "appeal",
         "deadline",
+    ]
+    assert slot_map["frame_grounding_profile"] == [
+        "administrative_notice_hearing|rank:1|terms:5|candidates:3"
+    ]
+    assert slot_map["frame_grounding_selected_frame"] == [
+        "administrative_notice_hearing"
+    ]
+    assert slot_map["frame_grounding_selected_rank"] == ["1"]
+    assert slot_map["frame_grounding_selected_term_count"] == ["5"]
+    assert slot_map["frame_grounding_candidate_count"] == ["3"]
+    assert slot_map["frame_grounding_selected_term_ranked"] == [
+        "1:administrative",
+        "2:administrative_notice_hearing",
+        "3:agency",
+        "4:appeal",
+        "5:deadline",
+    ]
+    assert slot_map["frame_grounding_modal_family"] == ["temporal"]
+    assert slot_map["frame_grounding_modal_family_count"] == ["temporal:1"]
+    assert slot_map["frame_grounding_family_profile"] == [
+        "administrative_notice_hearing|family:temporal|count:1|rank:1|terms:5"
     ]
 
 
@@ -3979,6 +4285,51 @@ def test_modal_ir_to_flogic_triples_avoid_low_information_fallback_surface_text(
     assert "sec" not in objects("fallback_surface_text_token")
 
 
+def test_decode_modal_ir_document_recovers_omitted_codification_status_clause() -> None:
+    decoded = decode_modal_ir_document(
+        _omitted_codification_status_clause_sample_document()
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    expected_clause = (
+        "Sections were omitted pursuant to section 5316 of this title which "
+        "terminated the authority to make grants or loans under this chapter "
+        "after Jan. 1, 1975"
+    )
+    assert slot_map["source_status_clause"] == [expected_clause]
+    assert "terminated" in slot_map["source_status_clause_legal_semantic_atom"]
+    assert "omitted" in slot_map["source_status_clause_legal_semantic_atom"]
+    assert any(
+        expected_clause in text
+        for text in slot_map["typed_ir_surface_reconstruction"]
+    )
+    assert "frame->conditional_normative" in slot_map[
+        "typed_decompiler_family_pair"
+    ]
+
+
+def test_modal_ir_to_flogic_triples_recover_omitted_codification_status_clause() -> None:
+    triples = modal_ir_to_flogic_triples(
+        _omitted_codification_status_clause_sample_document()
+    )
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    expected_clause = (
+        "Sections were omitted pursuant to section 5316 of this title which "
+        "terminated the authority to make grants or loans under this chapter "
+        "after Jan. 1, 1975"
+    )
+    assert objects("source_status_clause") == [expected_clause]
+    assert "terminated" in objects("source_status_clause_legal_semantic_atom")
+    assert "omitted" in objects("source_status_clause_legal_semantic_atom")
+
+
 def test_decode_modal_ir_document_avoids_single_letter_low_information_fallback_surface_text() -> None:
     decoded = decode_modal_ir_document(
         _single_letter_low_information_fallback_surface_sample_document()
@@ -4007,6 +4358,44 @@ def test_modal_ir_to_flogic_triples_avoid_single_letter_low_information_fallback
     assert objects("fallback_surface_text") == ["repealed"]
     assert objects("fallback_surface_text_token") == ["repealed"]
     assert "s" not in objects("fallback_surface_text_token")
+
+
+def test_decode_modal_ir_document_emits_refined_editorial_status_bridge_slots() -> None:
+    decoded = decode_modal_ir_document(_low_information_fallback_surface_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "repealed" in slot_map["fallback_surface_text_refined_modal_cue"]
+    assert "frame->frame" in slot_map["fallback_surface_text_refined_modal_family_pair"]
+    assert "frame->deontic" in slot_map["fallback_surface_text_refined_modal_family_pair"]
+    assert (
+        "frame:Frame:repealed"
+        in slot_map["fallback_surface_text_refined_modal_bridge_signature"]
+    )
+    assert (
+        "deontic:F:repealed"
+        in slot_map["fallback_surface_text_refined_modal_bridge_signature"]
+    )
+
+
+def test_modal_ir_to_flogic_triples_emit_refined_editorial_status_bridge_slots() -> None:
+    triples = modal_ir_to_flogic_triples(_low_information_fallback_surface_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert "repealed" in objects("fallback_surface_text_refined_modal_cue")
+    assert "frame->frame" in objects("fallback_surface_text_refined_modal_family_pair")
+    assert "frame->deontic" in objects("fallback_surface_text_refined_modal_family_pair")
+    assert "frame:Frame:repealed" in objects(
+        "fallback_surface_text_refined_modal_bridge_signature"
+    )
+    assert "deontic:F:repealed" in objects(
+        "fallback_surface_text_refined_modal_bridge_signature"
+    )
 
 
 def test_decode_modal_ir_document_trims_compilation_preamble_from_fallback_surface() -> None:
@@ -4131,6 +4520,72 @@ def test_modal_ir_to_flogic_triples_emit_refined_cross_family_slots_for_frame_fa
     )
 
 
+def test_decode_modal_ir_document_emits_fallback_surface_context_bridge_slots() -> None:
+    decoded = decode_modal_ir_document(
+        _temporal_fallback_surface_context_bridge_sample_document()
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["fallback_surface_text"] == ["Authorization of appropriations"]
+    assert slot_map["fallback_surface_context"] == [
+        "The Secretary shall allocate funds not later than fiscal year 2027"
+    ]
+    assert "temporal->deontic" in slot_map["fallback_surface_context_refined_modal_family_pair"]
+    assert "deontic:O:shall" in slot_map["fallback_surface_context_refined_modal_bridge_signature"]
+
+
+def test_modal_ir_to_flogic_triples_emit_fallback_surface_context_bridge_slots() -> None:
+    triples = modal_ir_to_flogic_triples(
+        _temporal_fallback_surface_context_bridge_sample_document()
+    )
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("fallback_surface_text") == ["Authorization of appropriations"]
+    assert objects("fallback_surface_context") == [
+        "The Secretary shall allocate funds not later than fiscal year 2027"
+    ]
+    assert "temporal->deontic" in objects("fallback_surface_context_refined_modal_family_pair")
+    assert "deontic:O:shall" in objects("fallback_surface_context_refined_modal_bridge_signature")
+
+
+def test_decode_modal_ir_document_emits_frame_structural_deontic_bridge_slots() -> None:
+    decoded = decode_modal_ir_document(
+        _frame_fallback_structural_chapter_temporal_sample_document()
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "chapter" in slot_map["fallback_surface_text_refined_modal_cue"]
+    assert "frame->deontic" in slot_map["fallback_surface_text_refined_modal_family_pair"]
+    assert "deontic:O:chapter" in slot_map["fallback_surface_text_refined_modal_bridge_signature"]
+    assert "frame->temporal" in slot_map["fallback_surface_text_refined_temporal_bridge_family_pair"]
+
+
+def test_modal_ir_to_flogic_triples_emit_frame_structural_deontic_bridge_slots() -> None:
+    triples = modal_ir_to_flogic_triples(
+        _frame_fallback_structural_chapter_temporal_sample_document()
+    )
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert "chapter" in objects("fallback_surface_text_refined_modal_cue")
+    assert "frame->deontic" in objects("fallback_surface_text_refined_modal_family_pair")
+    assert "deontic:O:chapter" in objects("fallback_surface_text_refined_modal_bridge_signature")
+    assert "frame->temporal" in objects(
+        "fallback_surface_text_refined_temporal_bridge_family_pair"
+    )
+
+
 def test_decode_modal_ir_document_ignores_structural_title_refined_cue_for_non_frame_formula() -> None:
     decoded = decode_modal_ir_document(_non_frame_structural_title_noise_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
@@ -4151,6 +4606,22 @@ def test_modal_ir_to_flogic_triples_ignore_structural_title_refined_cue_for_non_
 
     assert "title" not in objects("argument_refined_modal_cue")
     assert "temporal:X:title" not in objects("argument_refined_modal_signature")
+
+
+def test_decode_modal_ir_document_emits_temporal_year_refined_bridge_slots() -> None:
+    decoded = decode_modal_ir_document(_temporal_year_context_refined_bridge_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "year" in slot_map["modal_source_span_refined_modal_cue"]
+    assert (
+        "temporal->temporal"
+        in slot_map["modal_source_span_refined_temporal_bridge_family_pair"]
+    )
+    assert (
+        "temporal:F:year"
+        in slot_map["modal_source_span_refined_temporal_bridge_signature"]
+    )
+    assert "year" in slot_map["modal_source_span_refined_temporal_bridge_context"]
 
 
 def test_decode_modal_ir_document_emits_procedural_keyword_slots() -> None:
@@ -4541,6 +5012,177 @@ def test_modal_ir_to_flogic_triples_emits_temporal_until_canonical_slots() -> No
     assert objects("cue_modal_operator") == ["F"]
     assert objects("cue_modal_canonical_operator") == ["G"]
     assert objects("cue_modal_operator_alignment") == ["divergent"]
+
+
+def test_decode_modal_ir_document_emits_source_anchor_family_pair_slots() -> None:
+    mixed_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_cue_signature_temporal_clause_sample_document())
+    )
+
+    assert {
+        "deontic->deontic",
+        "deontic->temporal",
+        "temporal->epistemic",
+        "temporal->temporal",
+    }.issubset(set(mixed_slot_map["source_action_family_pair"]))
+    assert any(
+        value.endswith(":deontic->temporal")
+        for value in mixed_slot_map["source_action_family_pair_anchor"]
+    )
+    assert any(
+        value.endswith(":temporal->temporal")
+        for value in mixed_slot_map["source_action_family_pair_anchor"]
+    )
+
+    frame_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_fallback_frame_authority_cue_sample_document())
+    )
+    assert frame_slot_map["source_action_family_pair"] == ["frame->frame"]
+    assert any(
+        value.endswith(":frame->frame")
+        for value in frame_slot_map["source_action_family_pair_anchor"]
+    )
+
+
+def test_modal_ir_to_flogic_triples_emit_source_anchor_family_pair_slots() -> None:
+    mixed_triples = modal_ir_to_flogic_triples(
+        _cue_signature_temporal_clause_sample_document()
+    )
+
+    def objects(triples: list[dict[str, str]], predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    mixed_pairs = objects(mixed_triples, "source_action_family_pair")
+    assert {
+        "deontic->deontic",
+        "deontic->temporal",
+        "temporal->epistemic",
+        "temporal->temporal",
+    }.issubset(
+        set(mixed_pairs)
+    )
+    mixed_pair_anchors = objects(mixed_triples, "source_action_family_pair_anchor")
+    assert any(value.endswith(":deontic->temporal") for value in mixed_pair_anchors)
+    assert any(value.endswith(":temporal->temporal") for value in mixed_pair_anchors)
+
+    frame_triples = modal_ir_to_flogic_triples(
+        _fallback_frame_authority_cue_sample_document()
+    )
+    assert objects(frame_triples, "source_action_family_pair") == ["frame->frame"]
+    assert any(
+        value.endswith(":frame->frame")
+        for value in objects(frame_triples, "source_action_family_pair_anchor")
+    )
+
+
+def test_decode_modal_ir_document_emits_alethic_directional_source_anchor_family_pairs() -> None:
+    source_id = "us-code-11-77-a11e77a11e77a11e"
+    sample_document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="The Secretary may, when necessary, issue guidance.",
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-alethic-anchor",
+                operator=ModalIROperator(
+                    family="alethic",
+                    system="S5",
+                    symbol="□",
+                    label="necessary",
+                ),
+                predicate=ModalIRPredicate(name="issue_guidance"),
+                provenance=ModalIRProvenance(
+                    source_id=source_id,
+                    start_char=0,
+                    end_char=53,
+                    citation="11 U.S.C. 77",
+                ),
+            )
+        ],
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(sample_document)
+    )
+    source_action_pairs = set(slot_map["source_action_family_pair"])
+    assert {
+        "alethic->alethic",
+        "alethic->conditional_normative",
+        "alethic->deontic",
+        "alethic->temporal",
+    }.issubset(source_action_pairs)
+    source_action_pair_anchors = slot_map["source_action_family_pair_anchor"]
+    assert any(
+        value.endswith(":alethic->conditional_normative")
+        for value in source_action_pair_anchors
+    )
+    assert any(
+        value.endswith(":alethic->deontic")
+        for value in source_action_pair_anchors
+    )
+    assert any(
+        value.endswith(":alethic->temporal")
+        for value in source_action_pair_anchors
+    )
+
+
+def test_modal_ir_to_flogic_triples_emit_alethic_directional_source_anchor_family_pairs() -> None:
+    source_id = "us-code-11-77-a11e77a11e77a11e"
+    sample_document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="The Secretary may, when necessary, issue guidance.",
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-alethic-anchor",
+                operator=ModalIROperator(
+                    family="alethic",
+                    system="S5",
+                    symbol="□",
+                    label="necessary",
+                ),
+                predicate=ModalIRPredicate(name="issue_guidance"),
+                provenance=ModalIRProvenance(
+                    source_id=source_id,
+                    start_char=0,
+                    end_char=53,
+                    citation="11 U.S.C. 77",
+                ),
+            )
+        ],
+    )
+    triples = modal_ir_to_flogic_triples(sample_document)
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    source_action_pairs = set(objects("source_action_family_pair"))
+    assert {
+        "alethic->alethic",
+        "alethic->conditional_normative",
+        "alethic->deontic",
+        "alethic->temporal",
+    }.issubset(source_action_pairs)
+    source_action_pair_anchors = objects("source_action_family_pair_anchor")
+    assert any(
+        value.endswith(":alethic->conditional_normative")
+        for value in source_action_pair_anchors
+    )
+    assert any(
+        value.endswith(":alethic->deontic")
+        for value in source_action_pair_anchors
+    )
+    assert any(
+        value.endswith(":alethic->temporal")
+        for value in source_action_pair_anchors
+    )
 
 
 def test_decode_modal_ir_document_derives_modal_cue_from_fallback_frame_predicate() -> None:
@@ -6204,3 +6846,162 @@ def test_decode_and_triples_emit_no_modal_span_bucket_for_zero_formula_documents
     assert objects("source_context_span_count") == ["1"]
     assert objects("modal_span_coverage_percent") == ["0"]
     assert objects("modal_span_coverage_bucket") == ["no_modal_span"]
+
+
+def _frame_unnamed_predicate_cue_force_sample_document() -> ModalIRDocument:
+    source_id = "us-code-49-10902-frame-unnamed-cue-force-0a81cc9526fcb917"
+    source_text = (
+        "Subject to subsection (b), the Board may approve the application."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-frame-unnamed-cue-force",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="", role="clause"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="49 U.S.C. 10902",
+        ),
+        conditions=["subject to subsection (b)"],
+        metadata={"cue": "may"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_emits_unnamed_predicate_cue_force_bridge_slots() -> None:
+    decoded = decode_modal_ir_document(_frame_unnamed_predicate_cue_force_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "may:permission" in slot_map["typed_decompiler_cue_force"]
+    assert (
+        "cue-force:may:permission"
+        in slot_map["normative_polarity"]
+    )
+    assert (
+        "may:permission:enabling:frame->conditional_normative"
+        in slot_map["typed_decompiler_cue_force_polarity_family_pair"]
+    )
+    assert (
+        "source-predicate-head:frame:unnamed|typed-decompiler-force-polarity:"
+        "permission:enabling:frame->conditional_normative"
+        in slot_map["typed_decompiler_source_predicate_force_pair"]
+    )
+    assert (
+        "source-predicate-head:frame:unnamed|typed-decompiler-force-polarity:"
+        "obligation:conditional:frame->deontic"
+        in slot_map["typed_decompiler_source_predicate_force_pair"]
+    )
+
+
+def _under_scope_deontic_sample_document() -> ModalIRDocument:
+    source_id = "us-code-5-552-under-scope-deontic-2dd3178ce4b6af11"
+    source_text = (
+        "Under section 552(a)(1), the Secretary shall submit to Congress a report."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-under-scope-deontic",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(
+            name="submit_report_to_congress",
+            role="clause",
+        ),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="5 U.S.C. 552",
+        ),
+        conditions=["under section 552(a)(1)"],
+        metadata={"cue": "shall"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def _under_scope_temporal_sample_document() -> ModalIRDocument:
+    source_id = "us-code-7-8735-under-scope-temporal-40ad4e5f031131be"
+    source_text = "Benefits remain available under section 8735."
+    formula = ModalIRFormula(
+        formula_id="f-under-scope-temporal",
+        operator=ModalIROperator(
+            family="temporal",
+            system="ltl",
+            symbol="F",
+            label="eventually",
+        ),
+        predicate=ModalIRPredicate(
+            name="remain_available_benefits",
+            role="clause",
+        ),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="7 U.S.C. 8735",
+        ),
+        conditions=["under section 8735"],
+        metadata={"cue": "fiscal_year"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_treats_under_scope_as_typed_condition_and_skips_under_anchor() -> None:
+    decoded = decode_modal_ir_document(_under_scope_deontic_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["condition_prefix_key"] == ["under"]
+    assert "conditional_normative:O|:under" in slot_map["condition_modal_bridge_signature"]
+    assert "frame:Frame:under" in slot_map["condition_modal_bridge_signature"]
+    assert "deontic->conditional_normative" in slot_map["condition_modal_bridge_family_pair"]
+    assert "deontic->frame" in slot_map["condition_modal_bridge_family_pair"]
+    assert slot_map["source_subject_anchor"] == ["secretary"]
+    assert slot_map["source_action_anchor"] == ["submit"]
+    assert slot_map["source_object_anchor"] == ["congress"]
+    assert "under" not in slot_map["source_subject_anchor"]
+
+
+def test_modal_ir_to_flogic_triples_surface_under_scope_temporal_cross_family_bridge_pairs() -> None:
+    triples = modal_ir_to_flogic_triples(_under_scope_temporal_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("condition_prefix_key") == ["under"]
+    assert "temporal->conditional_normative" in objects("condition_modal_bridge_family_pair")
+    assert "temporal->deontic" in objects("condition_modal_bridge_family_pair")
+    assert "temporal->frame" in objects("condition_modal_bridge_family_pair")
+    assert "F->O|" in objects("condition_modal_bridge_operator_pair")
+    assert "F->O" in objects("condition_modal_bridge_operator_pair")
+    assert "F->Frame" in objects("condition_modal_bridge_operator_pair")
+    assert "f_to_o_pipe" in objects("condition_modal_bridge_operator_pair_key")
+    assert "f_to_o" in objects("condition_modal_bridge_operator_pair_key")
+    assert "f_to_frame" in objects("condition_modal_bridge_operator_pair_key")

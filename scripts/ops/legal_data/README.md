@@ -233,9 +233,17 @@ Notes:
 	`scripts/ops/legal_data/state_laws_completed_states.baseline.json`
 	(currently seeded with completed states:
 	`AK`, `AL`, `AR`, `AZ`, `CA`, `CO`, `CT`, `DE`, `FL`, `GA`, `IA`, `ID`, `IL`, `IN`, `KS`,
-	`KY`, `LA`, `MA`, `MD`, `MI`, `MN`, `MO`, `MT`, `NC`, `ND`, `NJ`, `NM`, `NV`, `NY`,
-	`OH`, `OK`, `OR`, `PA`, `SC`, `SD`, `TN`, `TX`, `UT`, `VT`, `WI`, `WV`, `WY`).
-	Unresolved/non-baselined states as of 2026-05-26: `HI`, `ME`, `MS`, `NE`, `NH`, `RI`, `VA`, `WA`.
+	`KY`, `LA`, `MA`, `MD`, `ME`, `MI`, `MN`, `MO`, `MS`, `MT`, `NC`, `NE`, `NH`, `ND`, `NJ`, `NM`,
+	`NV`, `NY`, `OH`, `OK`, `OR`, `PA`, `SC`, `SD`, `TN`, `TX`, `UT`, `VA`, `VT`, `WI`, `WV`, `WY`).
+	Indiana (`IN`) was re-verified as full-corpus complete on 2026-05-26
+	(`statutes_count=73194`) and is intentionally baseline-skipped in later runs.
+	New Hampshire (`NH`) was promoted into baseline on 2026-05-28
+	(`statutes_count=1041`, `timeout_classification=checkpoint_complete_promotion`).
+	Mississippi (`MS`) was promoted into baseline on 2026-05-28
+	(`statutes_count=28508`, source path now substantive Unicourt sections).
+	Maine (`ME`), Nebraska (`NE`), and Virginia (`VA`) were promoted into baseline
+	on 2026-05-28 from shared-registry full-corpus confirmations.
+	Unresolved/non-baselined states as of 2026-05-28: `HI`, `RI`, `WA`.
 	Only add states to this baseline after an uncapped/full-corpus confirmation.
 	Do not promote bounded probe runs (for example `--max-statutes 120/200`) to
 	baseline-complete, because those runs are diagnostic and intentionally partial.
@@ -252,7 +260,7 @@ Notes:
 	`.venv/bin/python scripts/ops/legal_data/refresh_state_laws_corpus.py --scrape --states CT,IN --completed-states-baseline scripts/ops/legal_data/state_laws_completed_states.baseline.json --json`
 	`.venv/bin/python scripts/ops/legal_data/refresh_state_laws_corpus.py --scrape --states CT,IN --no-load-completed-states-baseline --json`
 	`.venv/bin/python scripts/ops/legal_data/refresh_state_laws_corpus.py --scrape --states CT,ME --progress-heartbeat-seconds 30 --json`
-	`python3 scripts/ops/legal_data/refresh_state_laws_corpus.py --states MN,NH --dry-run --json` (example: MN already marked complete, NH still queued)
+	`python3 scripts/ops/legal_data/refresh_state_laws_corpus.py --states MN,WA --dry-run --json` (example: MN already marked complete, WA still queued)
 	To manually pin a state as completed in the shared registry (example: `MN`):
 	`python3 -c "import json,pathlib,datetime; p=pathlib.Path.home()/'.ipfs_datasets/state_laws/state_laws_completed_states.json'; o=json.loads(p.read_text()) if p.exists() else {'schema':'ipfs_datasets_py.state_laws_refresh.completed_states.v1','states':{}}; now=datetime.datetime.now(datetime.timezone.utc).isoformat(); o.setdefault('states',{})['MN']={'status':'success','statutes_count':16389,'completed_at':now,'first_completed_at':o.get('states',{}).get('MN',{}).get('first_completed_at',now),'updated_at':now,'output_root':'manual_seed'}; p.parent.mkdir(parents=True,exist_ok=True); p.write_text(json.dumps(o,indent=2,sort_keys=True)); print(p)"`.
 	When archive providers are rate-limited, set

@@ -40,6 +40,7 @@ class DeonticNormsBridgeAdapter:
         citation: Optional[str] = None,
         source: str = "us_code",
         source_embedding: Optional[Sequence[float]] = None,
+        compiler_guidance: Optional[Mapping[str, Any]] = None,
     ) -> tuple[LegalIRDocument, Any]:
         """Encode legal text into the canonical bridge IR envelope."""
 
@@ -55,6 +56,18 @@ class DeonticNormsBridgeAdapter:
             legal_norm_ir = metadata.get("legal_norm_ir")
             if isinstance(legal_norm_ir, Mapping):
                 norms = [dict(legal_norm_ir)]
+        guidance_context = _deontic_compiler_guidance_context(
+            compiler_guidance,
+            document_id=document_id,
+            citation=citation,
+            source_text=text,
+        )
+        parser_elements = _apply_deontic_compiler_guidance_to_rows(
+            parser_elements,
+            guidance_context,
+        )
+        norms = _apply_deontic_compiler_guidance_to_rows(norms, guidance_context)
+        compiler_guidance_applied = bool(guidance_context.get("applied"))
         deontic_source_rows = parser_elements if parser_elements else norms
         norm_objects = _legal_norm_objects_from_parser_elements(deontic_source_rows)
         if not norms and norm_objects:
@@ -63,15 +76,29 @@ class DeonticNormsBridgeAdapter:
         coverage_records = _list_of_dicts(
             metadata.get("legal_prover_syntax_target_coverage_records")
         )
+        embedded_prover_records = _prover_syntax_records_by_source_from_norm_rows(
+            norms or deontic_source_rows
+        )
         capability_records = _list_of_dicts(
             metadata.get("legal_parser_capability_profile_records")
         )
         if not formula_records and norm_objects:
             formula_records = _formula_records_from_norm_objects(norm_objects)
-        if not coverage_records and norm_objects:
-            coverage_records = _coverage_records_from_norm_objects(norm_objects)
-        elif _coverage_records_need_rebuild(coverage_records) and norm_objects:
-            coverage_records = _coverage_records_from_norm_objects(norm_objects)
+        if not coverage_records:
+            if embedded_prover_records:
+                coverage_records = _coverage_records_from_embedded_prover_records(
+                    embedded_prover_records
+                )
+            elif norm_objects:
+                coverage_records = _coverage_records_from_norm_objects(norm_objects)
+        elif _coverage_records_need_rebuild(coverage_records):
+            if embedded_prover_records:
+                coverage_records = _coverage_records_from_embedded_prover_records(
+                    embedded_prover_records
+                )
+            elif norm_objects:
+                coverage_records = _coverage_records_from_norm_objects(norm_objects)
+        coverage_records = _normalize_coverage_validation_records(coverage_records)
         if not capability_records and norm_objects:
             capability_records = _capability_records_from_norm_objects(norm_objects)
         deontic_exports = _deontic_export_context_from_parser_elements(
@@ -267,6 +294,7 @@ class DeonticNormsBridgeAdapter:
                 frame_logic_triples=triples,
                 metadata={
                     "converter_success": bool(getattr(result, "success", False)),
+                    "compiler_guidance_applied": compiler_guidance_applied,
                     "deontic_formula_record_proof_ready_count": int(
                         metadata.get("legal_formula_record_proof_ready_count") or 0
                     ),
@@ -291,6 +319,7 @@ class DeonticNormsBridgeAdapter:
         citation: Optional[str] = None,
         source: str = "us_code",
         source_embedding: Optional[Sequence[float]] = None,
+        compiler_guidance: Optional[Mapping[str, Any]] = None,
         **_: Any,
     ) -> BridgeEvaluationReport:
         """Run the deontic bridge and return optimizer-visible diagnostics."""
@@ -301,6 +330,7 @@ class DeonticNormsBridgeAdapter:
             citation=citation,
             source=source,
             source_embedding=source_embedding,
+            compiler_guidance=compiler_guidance,
         )
         proof_gate = _proof_gate_from_coverage_records(context["coverage_records"])
         graph_result = GraphProjectionResult.from_graph_data(context["graph_data"])
@@ -331,6 +361,9 @@ class DeonticNormsBridgeAdapter:
             status=status,
             metadata={
                 "adapter": "deontic_norms_bridge_v1",
+                "compiler_guidance_applied": bool(
+                    ir_document.metadata.get("compiler_guidance_applied")
+                ),
                 "coverage_requires_validation": coverage_requires_validation,
                 "proof_gate_soft_pass": proof_gate_soft_pass,
             },
@@ -371,6 +404,289 @@ def _coverage_records_from_norm_objects(norm_objects: Sequence[Any]) -> list[dic
     )
 
     return build_prover_syntax_target_coverage_records_from_irs(norm_objects)
+
+
+def _coverage_records_from_embedded_prover_records(
+    records_by_source: Mapping[str, Sequence[Mapping[str, Any]]],
+) -> list[dict[str, Any]]:
+    """Summarize nested target-level prover rows into bridge coverage reports."""
+
+    if not records_by_source:
+        return []
+    from ipfs_datasets_py.logic.deontic.exports import (
+        build_prover_syntax_target_coverage_record,
+    )
+
+    return [
+        build_prover_syntax_target_coverage_record(source_id, records)
+        for source_id, records in sorted(records_by_source.items())
+        if source_id and records
+    ]
+
+
+def _prover_syntax_records_by_source_from_norm_rows(
+    rows: Sequence[Mapping[str, Any]],
+) -> dict[str, list[dict[str, Any]]]:
+    """Extract target-level prover syntax rows embedded in LegalNormIR metadata."""
+
+    records_by_source: dict[str, list[dict[str, Any]]] = {}
+    for row in rows or []:
+        if not isinstance(row, Mapping):
+            continue
+        source_id = str(row.get("source_id") or "").strip()
+        if not source_id:
+            continue
+        records: list[dict[str, Any]] = []
+        for key in ("prover_syntax_records", "local_prover_syntax_records"):
+            records.extend(_list_of_dicts(row.get(key)))
+        for record in records:
+            record_source_id = str(record.get("source_id") or "").strip()
+            if not record_source_id:
+                record["source_id"] = source_id
+            records_by_source.setdefault(source_id, []).append(record)
+    return records_by_source
+
+
+def _deontic_compiler_guidance_context(
+    compiler_guidance: Optional[Mapping[str, Any]],
+    *,
+    document_id: Optional[str],
+    citation: Optional[str],
+    source_text: str,
+) -> dict[str, Any]:
+    """Return normalized deontic guidance state for typed IR hydration."""
+
+    guidance = _mapping(compiler_guidance)
+    if not guidance or not _compiler_guidance_has_deontic_route(guidance):
+        return {"applied": False}
+    return {
+        "applied": False,
+        "citation": citation or "",
+        "document_id": document_id or "",
+        "guidance": guidance,
+        "route": _deontic_guidance_route(guidance),
+        "source_text": source_text,
+    }
+
+
+def _apply_deontic_compiler_guidance_to_rows(
+    rows: Sequence[Mapping[str, Any]],
+    context: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    if not rows:
+        return []
+    if not context.get("guidance"):
+        return [dict(row) for row in rows if isinstance(row, Mapping)]
+
+    enriched_rows: list[dict[str, Any]] = []
+    for row in rows:
+        if not isinstance(row, Mapping):
+            continue
+        enriched = dict(row)
+        frame_guidance = _selected_frame_from_deontic_compiler_guidance(
+            context,
+            norm=enriched,
+        )
+        if frame_guidance:
+            legal_frame = dict(enriched.get("legal_frame") or {})
+            legal_frame.setdefault("selected_frame", frame_guidance["selected_frame"])
+            legal_frame.setdefault(
+                "selected_frame_source",
+                frame_guidance["selected_frame_source"],
+            )
+            legal_frame.setdefault(
+                "compiler_guidance_source",
+                frame_guidance["compiler_guidance_source"],
+            )
+            enriched["legal_frame"] = legal_frame
+            enriched.setdefault("selected_frame", frame_guidance["selected_frame"])
+            enriched["compiler_guidance_source"] = frame_guidance[
+                "compiler_guidance_source"
+            ]
+            if isinstance(context, dict):
+                context["applied"] = True
+        enriched_rows.append(enriched)
+    return enriched_rows
+
+
+def _compiler_guidance_has_deontic_route(guidance: Mapping[str, Any]) -> bool:
+    route_tokens = {
+        "deontic.ir",
+        "deontic_norms",
+        "repair_deontic_bridge_quality_gate",
+    }
+    for key in ("route", "compiler_guidance_route", "target_component", "target"):
+        token = str(guidance.get(key) or "").strip().lower()
+        if token in route_tokens:
+            return True
+
+    for key in ("compiler_guidance_todo_routes", "todo_routes", "routes"):
+        value = guidance.get(key)
+        if isinstance(value, Mapping):
+            if any(str(route).strip().lower() in route_tokens for route in value):
+                return True
+        elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            if any(str(route).strip().lower() in route_tokens for route in value):
+                return True
+
+    for key in ("bundle", "compiler_guidance_bundle", "semantic_bundle"):
+        bundle = guidance.get(key)
+        if isinstance(bundle, Mapping) and _compiler_guidance_has_deontic_route(bundle):
+            return True
+    return False
+
+
+def _deontic_guidance_route(guidance: Mapping[str, Any]) -> str:
+    for key in ("compiler_guidance_route", "route", "target_component", "target"):
+        value = str(guidance.get(key) or "").strip()
+        if value:
+            return value
+    routes = guidance.get("compiler_guidance_todo_routes")
+    if isinstance(routes, Mapping):
+        for route in routes:
+            route_text = str(route or "").strip()
+            if route_text:
+                return route_text
+    return "repair_deontic_bridge_quality_gate"
+
+
+def _selected_frame_from_deontic_compiler_guidance(
+    context: Mapping[str, Any],
+    *,
+    norm: Mapping[str, Any],
+) -> dict[str, str]:
+    guidance = _mapping(context.get("guidance"))
+    if not guidance:
+        return {}
+
+    for source, value in _deontic_guidance_frame_candidates(context, norm=norm):
+        frame = _canonical_deontic_frame_symbol(value)
+        if not frame:
+            continue
+        return {
+            "selected_frame": frame,
+            "selected_frame_source": f"compiler_guidance.{source}",
+            "compiler_guidance_source": str(
+                context.get("route") or "repair_deontic_bridge_quality_gate"
+            ),
+        }
+    return {}
+
+
+def _deontic_guidance_frame_candidates(
+    context: Mapping[str, Any],
+    *,
+    norm: Mapping[str, Any],
+) -> list[tuple[str, Any]]:
+    guidance = _mapping(context.get("guidance"))
+    top_level = [
+        (key, guidance.get(key))
+        for key in (
+            "selected_frame_after",
+            "selected_frame",
+            "compiler_guidance_selected_frame",
+            "frame_after",
+            "frame",
+        )
+    ]
+    evidence_rows = _deontic_guidance_evidence_rows(guidance)
+    matched_rows = [
+        (collection_key, row)
+        for collection_key, row in evidence_rows
+        if _deontic_guidance_row_matches_norm(row, context=context, norm=norm)
+    ]
+
+    candidates: list[tuple[str, Any]] = []
+    for collection_key, row in matched_rows:
+        for key in ("selected_frame_after", "selected_frame", "frame_after", "frame"):
+            candidates.append((f"{collection_key}.{key}", row.get(key)))
+    candidates.extend(top_level)
+    for collection_key, row in evidence_rows:
+        if (collection_key, row) in matched_rows:
+            continue
+        for key in ("selected_frame_after", "selected_frame", "frame_after", "frame"):
+            candidates.append((f"{collection_key}.{key}", row.get(key)))
+    return candidates
+
+
+def _deontic_guidance_evidence_rows(
+    guidance: Mapping[str, Any],
+) -> list[tuple[str, Mapping[str, Any]]]:
+    rows: list[tuple[str, Mapping[str, Any]]] = []
+    for collection_key in (
+        "hint_evidence",
+        "evidence",
+        "guidance_evidence",
+        "compiler_guidance_evidence",
+        "metric_sample_payloads",
+        "samples",
+    ):
+        value = guidance.get(collection_key)
+        if isinstance(value, Mapping):
+            collection_rows = [value]
+        elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            collection_rows = [row for row in value if isinstance(row, Mapping)]
+        else:
+            collection_rows = []
+        for row in sorted(
+            collection_rows,
+            key=lambda item: int(item.get("evidence_rank") or item.get("rank") or 999999),
+        ):
+            rows.append((collection_key, row))
+    return rows
+
+
+def _deontic_guidance_row_matches_norm(
+    row: Mapping[str, Any],
+    *,
+    context: Mapping[str, Any],
+    norm: Mapping[str, Any],
+) -> bool:
+    row_sample_id = str(row.get("sample_id") or row.get("document_id") or "").strip()
+    norm_ids = {
+        str(value).strip()
+        for value in (
+            norm.get("sample_id"),
+            norm.get("source_id"),
+            norm.get("document_id"),
+            context.get("document_id"),
+        )
+        if str(value or "").strip()
+    }
+    if row_sample_id and row_sample_id in norm_ids:
+        return True
+
+    row_citation = str(row.get("citation") or row.get("canonical_citation") or "").strip()
+    norm_citations = {
+        str(value).strip()
+        for value in (
+            norm.get("citation"),
+            norm.get("canonical_citation"),
+            context.get("citation"),
+        )
+        if str(value or "").strip()
+    }
+    if row_citation and row_citation in norm_citations:
+        return True
+
+    preview = _normalized_guidance_text(row.get("text_preview") or row.get("text"))
+    source_text = _normalized_guidance_text(context.get("source_text"))
+    if preview and source_text and preview in source_text:
+        return True
+    return False
+
+
+def _canonical_deontic_frame_symbol(value: Any) -> str:
+    text = str(value or "").strip().lower().replace("-", "_")
+    tokens = [
+        "".join(char for char in token if char.isalnum())
+        for token in text.replace("_", " ").split()
+    ]
+    return "_".join(token for token in tokens if token)[:96]
+
+
+def _normalized_guidance_text(value: Any) -> str:
+    return " ".join(str(value or "").lower().split())
 
 
 def _coverage_records_need_rebuild(records: Sequence[Mapping[str, Any]]) -> bool:
@@ -426,7 +742,8 @@ def _deontic_export_context_from_parser_elements(
 ) -> dict[str, Any]:
     context = _empty_deontic_export_context()
     norm_objects = _legal_norm_objects_from_parser_elements(parser_elements)
-    required_slots_by_source = _phase8_required_slots_by_source(norm_objects)
+    provenance_required_slots_by_source = _phase8_required_slots_by_source(norm_objects)
+    decoder_required_slots_by_source = _decoder_required_slots_by_source(norm_objects)
     context["norm_count"] = len(norm_objects)
     if not norm_objects:
         return context
@@ -439,6 +756,7 @@ def _deontic_export_context_from_parser_elements(
         build_phase8_quality_summary_record,
         build_phase8_quality_summary_records,
         build_prover_syntax_records_from_ir,
+        build_reconstruction_slot_loss_record,
         build_reconstruction_slot_loss_records,
         summarize_ir_slot_provenance_audit_records,
         summarize_phase8_quality_records,
@@ -448,22 +766,28 @@ def _deontic_export_context_from_parser_elements(
     try:
         decoder_records = build_decoder_records_from_irs(norm_objects)
         context["decoder_records"] = decoder_records
-        context["reconstruction_slot_loss_records"] = (
-            build_reconstruction_slot_loss_records(decoder_records)
+        (
+            reconstruction_slot_loss_records,
+            reconstruction_slot_loss_summary,
+        ) = _reconstruction_slot_loss_from_decoder_records(
+            decoder_records,
+            required_slots_by_source=decoder_required_slots_by_source,
+            build_record=build_reconstruction_slot_loss_record,
+            build_records=build_reconstruction_slot_loss_records,
+            summarize=summarize_reconstruction_slot_loss,
         )
-        context["reconstruction_slot_loss_summary"] = (
-            summarize_reconstruction_slot_loss(decoder_records)
-        )
+        context["reconstruction_slot_loss_records"] = reconstruction_slot_loss_records
+        context["reconstruction_slot_loss_summary"] = reconstruction_slot_loss_summary
     except Exception as exc:  # pragma: no cover - diagnostics only
         _record_export_context_error(context, "decoder_reconstruction", exc)
         decoder_records = []
 
     try:
-        if required_slots_by_source:
+        if provenance_required_slots_by_source:
             ir_slot_provenance_records = []
             for norm in norm_objects:
                 source_id = str(getattr(norm, "source_id", "") or "").strip()
-                slots = required_slots_by_source.get(source_id)
+                slots = provenance_required_slots_by_source.get(source_id)
                 if slots:
                     ir_slot_provenance_records.append(
                         build_ir_slot_provenance_audit_record(norm, slots=slots)
@@ -508,7 +832,12 @@ def _deontic_export_context_from_parser_elements(
         _record_export_context_error(context, "proof_and_repair_records", exc)
 
     try:
-        if required_slots_by_source:
+        phase8_required_slots_by_source = (
+            decoder_required_slots_by_source
+            if decoder_required_slots_by_source
+            else provenance_required_slots_by_source
+        )
+        if phase8_required_slots_by_source:
             decoder_by_source = _group_records_by_source(decoder_records)
             prover_by_source = _group_records_by_source(prover_syntax_records)
             provenance_by_source = _group_records_by_source(ir_slot_provenance_records)
@@ -523,7 +852,7 @@ def _deontic_export_context_from_parser_elements(
                     decoder_records=decoder_by_source.get(source_id, []),
                     prover_syntax_records=prover_by_source.get(source_id, []),
                     ir_slot_provenance_records=provenance_by_source.get(source_id, []),
-                    required_slots=required_slots_by_source.get(source_id, ()),
+                    required_slots=phase8_required_slots_by_source.get(source_id, ()),
                 )
                 for source_id in source_ids
             ]
@@ -537,6 +866,7 @@ def _deontic_export_context_from_parser_elements(
             phase8_records,
             coverage_records,
         )
+        _apply_phase8_quality_to_proof_and_repair_records(context, phase8_records)
         context["phase8_quality_records"] = phase8_records
         raw_phase8_summary = summarize_phase8_quality_records(
             decoder_records=decoder_records,
@@ -630,6 +960,91 @@ def _phase8_required_slots_by_source(
     return required_by_source
 
 
+def _decoder_required_slots_by_source(
+    norm_objects: Sequence[Any],
+) -> dict[str, tuple[str, ...]]:
+    """Return source-keyed decoder slot requirements by deontic family.
+
+    The decoder emits family-specific phrase slots: definition/applicability
+    connectors are fixed text and should not force a missing ``modality`` slot
+    in reconstruction loss. This helper keeps core deontic checks strict for
+    O/P/F clauses while using decoder-native requirements for other families.
+    """
+
+    if not norm_objects:
+        return {}
+
+    required_by_source: dict[str, tuple[str, ...]] = {}
+    optional_slots = (
+        "conditions",
+        "exceptions",
+        "temporal_constraints",
+        "cross_references",
+    )
+    for norm in norm_objects:
+        source_id = str(getattr(norm, "source_id", "") or "").strip()
+        if not source_id:
+            continue
+
+        merged = list(required_by_source.get(source_id, ()))
+        for slot_name in _decoder_required_core_slots_for_norm(norm):
+            if slot_name and slot_name not in merged:
+                merged.append(slot_name)
+
+        for slot_name in optional_slots:
+            if slot_name in merged:
+                continue
+            slot_value = _decoder_slot_value(norm, slot_name)
+            if _slot_value_present(slot_value):
+                merged.append(slot_name)
+
+        required_by_source[source_id] = tuple(merged)
+    return required_by_source
+
+
+def _decoder_required_core_slots_for_norm(norm: Any) -> tuple[str, ...]:
+    norm_type = str(getattr(norm, "norm_type", "") or "").strip().lower()
+    modality = str(getattr(norm, "modality", "") or "").strip().upper()
+
+    if norm_type == "definition" or modality == "DEF":
+        return ("actor",)
+    if norm_type in {
+        "applicability",
+        "exemption",
+        "instrument_lifecycle",
+        "purpose",
+    } or modality in {
+        "APP",
+        "EXEMPT",
+        "LIFE",
+        "PURP",
+    }:
+        return ("actor", "action")
+    return ("actor", "modality", "action")
+
+
+def _decoder_slot_value(norm: Any, slot_name: str) -> Any:
+    if slot_name == "cross_references":
+        references = list(getattr(norm, "cross_references", ()) or ())
+        references.extend(
+            reference
+            for reference in list(getattr(norm, "resolved_cross_references", ()) or ())
+            if reference not in references
+        )
+        return references
+    return getattr(norm, slot_name, None)
+
+
+def _slot_value_present(value: Any) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, str):
+        return bool(value.strip())
+    if isinstance(value, (list, tuple, set, dict)):
+        return len(value) > 0
+    return True
+
+
 def _group_records_by_source(
     records: Sequence[Mapping[str, Any]],
 ) -> dict[str, list[dict[str, Any]]]:
@@ -642,6 +1057,165 @@ def _group_records_by_source(
             continue
         grouped.setdefault(source_id, []).append(dict(record))
     return grouped
+
+
+def _reconstruction_slot_loss_from_decoder_records(
+    decoder_records: Sequence[Mapping[str, Any]],
+    *,
+    required_slots_by_source: Mapping[str, Sequence[str]],
+    build_record: Any,
+    build_records: Any,
+    summarize: Any,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Build reconstruction slot-loss rows with per-source required slots.
+
+    The bridge already derives per-source Phase 8 required slots from typed IR
+    (core slots plus only optional slots that are present). Reuse those
+    requirements for decoder slot-loss rows so missing optional structures do
+    not inflate reconstruction loss for otherwise complete clauses.
+    """
+
+    if not decoder_records:
+        return [], {}
+
+    if not required_slots_by_source:
+        return (
+            list(build_records(decoder_records)),
+            dict(summarize(decoder_records)),
+        )
+
+    grouped = _group_records_by_source(decoder_records)
+    rows: list[dict[str, Any]] = []
+    for source_id in sorted(grouped):
+        source_slots = tuple(
+            slot
+            for slot in (
+                str(slot_name or "").strip()
+                for slot_name in required_slots_by_source.get(source_id, ())
+            )
+            if slot
+        )
+        if source_slots:
+            rows.append(
+                build_record(
+                    source_id,
+                    grouped[source_id],
+                    required_slots=source_slots,
+                )
+            )
+            continue
+        rows.append(build_record(source_id, grouped[source_id]))
+
+    return rows, _summarize_reconstruction_slot_loss_rows(rows)
+
+
+def _summarize_reconstruction_slot_loss_rows(
+    rows: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Aggregate source-level reconstruction rows into bridge summary metrics."""
+
+    if not rows:
+        return {}
+
+    source_ids: set[str] = set()
+    required_slots: list[str] = []
+    grounded_required_slots: list[str] = []
+    missing_required_slots: list[str] = []
+    ungrounded_required_slots: list[str] = []
+    extra_ungrounded_slots: list[str] = []
+    blockers: set[str] = set()
+
+    record_count = 0
+    required_slot_count = 0
+    grounded_required_slot_count = 0
+    missing_required_slot_count = 0
+    ungrounded_slot_count = 0
+    all_complete = True
+
+    for row in rows:
+        if not isinstance(row, Mapping):
+            continue
+
+        summary = row.get("coverage_summary")
+        summary_mapping = summary if isinstance(summary, Mapping) else row
+
+        source_id = str(row.get("source_id") or "").strip()
+        if source_id:
+            source_ids.add(source_id)
+
+        record_count += int(summary_mapping.get("record_count") or 0)
+        required_slot_count += int(summary_mapping.get("required_slot_count") or 0)
+        grounded_required_slot_count += int(
+            summary_mapping.get("grounded_required_slot_count") or 0
+        )
+        missing_required_slot_count += int(
+            summary_mapping.get("missing_required_slot_count") or 0
+        )
+        ungrounded_slot_count += int(summary_mapping.get("ungrounded_slot_count") or 0)
+
+        _append_unique_strings(required_slots, summary_mapping.get("required_slots"))
+        _append_unique_strings(
+            grounded_required_slots,
+            summary_mapping.get("grounded_required_slots"),
+        )
+        _append_unique_strings(
+            missing_required_slots,
+            summary_mapping.get("missing_required_slots"),
+        )
+        _append_unique_strings(
+            ungrounded_required_slots,
+            summary_mapping.get("ungrounded_required_slots"),
+        )
+        _append_unique_strings(
+            extra_ungrounded_slots,
+            summary_mapping.get("extra_ungrounded_slots"),
+        )
+        blockers.update(_list_of_strings(row.get("coverage_blockers")))
+        blockers.update(_list_of_strings(summary_mapping.get("coverage_blockers")))
+
+        if summary_mapping.get("slot_reconstruction_complete") is not True:
+            all_complete = False
+
+    if record_count <= 0:
+        record_count = len(
+            [row for row in rows if isinstance(row, Mapping)]
+        )
+
+    grounded_required_slot_rate = (
+        round(grounded_required_slot_count / required_slot_count, 6)
+        if required_slot_count
+        else 0.0
+    )
+    grounded_or_ungrounded = grounded_required_slot_count + ungrounded_slot_count
+    ungrounded_decoded_slot_rate = (
+        round(ungrounded_slot_count / grounded_or_ungrounded, 6)
+        if grounded_or_ungrounded
+        else 0.0
+    )
+
+    return {
+        "source_ids": sorted(source_ids),
+        "record_count": record_count,
+        "required_slots": required_slots,
+        "grounded_required_slots": grounded_required_slots,
+        "missing_required_slots": missing_required_slots,
+        "ungrounded_required_slots": ungrounded_required_slots,
+        "extra_ungrounded_slots": extra_ungrounded_slots,
+        "required_slot_count": required_slot_count,
+        "grounded_required_slot_count": grounded_required_slot_count,
+        "missing_required_slot_count": missing_required_slot_count,
+        "ungrounded_slot_count": ungrounded_slot_count,
+        "slot_reconstruction_complete": bool(rows) and all_complete,
+        "grounded_required_slot_rate": grounded_required_slot_rate,
+        "ungrounded_decoded_slot_rate": ungrounded_decoded_slot_rate,
+        "coverage_blockers": sorted(blockers),
+    }
+
+
+def _append_unique_strings(target: list[str], value: Any) -> None:
+    for item in _list_of_strings(value):
+        if item not in target:
+            target.append(item)
 
 
 def _phase8_summary_from_records(
@@ -671,6 +1245,12 @@ def _phase8_summary_from_records(
             if str(blocker or "").strip()
         )
 
+    source_scoped_reconstruction = _reconstruction_slot_loss_from_phase8_records(
+        valid_records
+    )
+    if source_scoped_reconstruction:
+        summary["reconstruction_slot_loss"] = source_scoped_reconstruction
+
     summary.update(
         {
             "source_record_count": record_count,
@@ -691,6 +1271,99 @@ def _phase8_summary_from_records(
         }
     )
     return summary
+
+
+def _reconstruction_slot_loss_from_phase8_records(
+    records: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Return source-scoped reconstruction summary embedded in Phase 8 rows."""
+
+    reconstruction_rows: list[dict[str, Any]] = []
+    for record in records or []:
+        if not isinstance(record, Mapping):
+            continue
+        coverage_summary = record.get("coverage_summary")
+        if not isinstance(coverage_summary, Mapping):
+            continue
+        reconstruction = coverage_summary.get("reconstruction_slot_loss")
+        if not isinstance(reconstruction, Mapping):
+            continue
+        reconstruction_rows.append(
+            {
+                "source_id": str(record.get("source_id") or "").strip(),
+                "coverage_blockers": list(reconstruction.get("coverage_blockers") or []),
+                "coverage_summary": dict(reconstruction),
+            }
+        )
+
+    if not reconstruction_rows:
+        return {}
+    return _summarize_reconstruction_slot_loss_rows(reconstruction_rows)
+
+
+def _apply_phase8_quality_to_proof_and_repair_records(
+    context: dict[str, Any],
+    phase8_records: Sequence[Mapping[str, Any]],
+) -> None:
+    """Clear stale proof repair flags for source-level validated Phase 8 rows."""
+
+    validated_source_ids = _phase8_quality_validated_source_ids(phase8_records)
+    if not validated_source_ids:
+        return
+
+    proof_records: list[dict[str, Any]] = []
+    for record in _list_of_dicts(context.get("proof_obligation_records")):
+        source_id = str(record.get("source_id") or "").strip()
+        if source_id in validated_source_ids:
+            record = _phase8_quality_validated_proof_record(record)
+        proof_records.append(record)
+    context["proof_obligation_records"] = proof_records
+
+    repair_records: list[dict[str, Any]] = []
+    for record in _list_of_dicts(context.get("repair_queue_records")):
+        source_id = str(record.get("source_id") or "").strip()
+        if source_id in validated_source_ids:
+            continue
+        repair_records.append(record)
+    context["repair_queue_records"] = repair_records
+
+
+def _phase8_quality_validated_source_ids(
+    records: Sequence[Mapping[str, Any]],
+) -> set[str]:
+    source_ids: set[str] = set()
+    for record in records or []:
+        if not isinstance(record, Mapping):
+            continue
+        source_id = str(record.get("source_id") or "").strip()
+        if not source_id:
+            continue
+        if record.get("phase8_quality_complete") is not True:
+            continue
+        if _truthy_flag(record.get("requires_validation")):
+            continue
+        if _list_of_strings(record.get("coverage_blockers")):
+            continue
+        source_ids.add(source_id)
+    return source_ids
+
+
+def _phase8_quality_validated_proof_record(
+    record: Mapping[str, Any],
+) -> dict[str, Any]:
+    row = dict(record)
+    row["requires_validation"] = False
+    row["repair_required"] = False
+    row["theorem_candidate"] = True
+    row["proof_ready"] = True
+    row["validated_by_phase8_quality_gate"] = True
+    resolution = dict(row.get("deterministic_resolution") or {})
+    if not resolution:
+        resolution = {"type": "phase8_quality_gate_validated"}
+    else:
+        resolution.setdefault("phase8_quality_gate_validated", True)
+    row["deterministic_resolution"] = resolution
+    return row
 
 
 def _deontic_graph_payload_from_norm_objects(
@@ -1130,6 +1803,27 @@ def _frame_logic_triples_from_deontic_records(
                 {"subject": source_id, "predicate": "action", "object": str(norm.get("action") or "")},
             ]
         )
+        legal_frame = norm.get("legal_frame")
+        if isinstance(legal_frame, Mapping):
+            triples.extend(
+                [
+                    {
+                        "subject": source_id,
+                        "predicate": "selected_frame",
+                        "object": str(legal_frame.get("selected_frame") or ""),
+                    },
+                    {
+                        "subject": source_id,
+                        "predicate": "selected_frame_source",
+                        "object": str(legal_frame.get("selected_frame_source") or ""),
+                    },
+                    {
+                        "subject": source_id,
+                        "predicate": "compiler_guidance_source",
+                        "object": str(legal_frame.get("compiler_guidance_source") or ""),
+                    },
+                ]
+            )
         formula_record = formulas_by_source.get(source_id, {})
         if formula_record:
             triples.extend(
@@ -1197,21 +1891,221 @@ def _coverage_validation_metrics(records: Sequence[Mapping[str, Any]]) -> dict[s
 
 
 def _coverage_record_requires_validation(record: Mapping[str, Any]) -> bool:
-    if bool(record.get("requires_validation")):
+    if _coverage_record_validated_by_quality_gate(record):
+        return False
+    if _truthy_flag(record.get("requires_validation")):
         return True
     summary = record.get("coverage_summary")
-    if isinstance(summary, Mapping) and bool(summary.get("requires_validation")):
+    if isinstance(summary, Mapping) and _truthy_flag(summary.get("requires_validation")):
         return True
     return False
+
+
+def _normalize_coverage_validation_records(
+    records: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    """Clear stale validation flags when a complete quality gate validates a row."""
+
+    normalized: list[dict[str, Any]] = []
+    for record in records or []:
+        if not isinstance(record, Mapping):
+            continue
+        row = dict(record)
+        summary = row.get("coverage_summary")
+        if isinstance(summary, Mapping):
+            row["coverage_summary"] = dict(summary)
+
+        if _coverage_record_validated_by_quality_gate(row):
+            row = _promote_coverage_record_to_validated_bridge_report(row)
+            if isinstance(row.get("coverage_summary"), Mapping):
+                coverage_summary = dict(row["coverage_summary"])
+                coverage_summary = (
+                    _promote_coverage_summary_to_validated_bridge_report(
+                        coverage_summary
+                    )
+                )
+                row["coverage_summary"] = coverage_summary
+
+        normalized.append(row)
+    return normalized
+
+
+def _promote_coverage_record_to_validated_bridge_report(
+    record: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Mark a complete local prover coverage row as bridge-validated."""
+
+    row = dict(record)
+    row["requires_validation"] = False
+    row["validated_by_quality_gate"] = True
+    row["bridge_validation_status"] = "validated"
+    row["bridge_validation_basis"] = _coverage_bridge_validation_basis(row)
+    return row
+
+
+def _promote_coverage_summary_to_validated_bridge_report(
+    summary: Mapping[str, Any],
+) -> dict[str, Any]:
+    row = dict(summary)
+    row["requires_validation"] = False
+    row["validated_by_quality_gate"] = True
+    row["bridge_validation_status"] = "validated"
+    row["bridge_validation_basis"] = _coverage_bridge_validation_basis(row)
+    return row
+
+
+def _coverage_bridge_validation_basis(record: Mapping[str, Any]) -> dict[str, Any]:
+    summary = record.get("coverage_summary")
+    summary_mapping = summary if isinstance(summary, Mapping) else record
+    quality_summary = summary_mapping.get("quality_gate_summary")
+    if not isinstance(quality_summary, Mapping):
+        quality_summary = record.get("quality_gate_summary")
+    if not isinstance(quality_summary, Mapping):
+        quality_summary = {}
+    role_summary = summary_mapping.get("target_role_matrix_summary")
+    if not isinstance(role_summary, Mapping):
+        role_summary = record.get("target_role_matrix_summary")
+    if not isinstance(role_summary, Mapping):
+        role_summary = {}
+    all_required_passed = _coverage_basis_all_required_passed(summary_mapping)
+
+    return {
+        "validator": "deontic.local_prover_quality_gate",
+        "validation_scope": "source_bridge_report",
+        "status": "validated",
+        "all_required_passed": all_required_passed,
+        "quality_gate_all_targets_complete": bool(
+            quality_summary.get("quality_gate_all_targets_complete") is True
+            or not quality_summary
+        ),
+        "target_role_matrix_complete": bool(
+            role_summary.get("target_role_matrix_complete") is not False
+        ),
+        "formal_syntax_valid": bool(
+            record.get("formal_syntax_valid") is True
+            or all_required_passed
+        ),
+        "coverage_blockers": [],
+    }
+
+
+def _coverage_basis_all_required_passed(summary: Mapping[str, Any]) -> bool:
+    if summary.get("all_required_passed") is True:
+        return True
+
+    required_targets = _normalized_target_names(summary.get("required_targets"))
+    if not required_targets:
+        return False
+    passed_targets = set(_normalized_target_names(summary.get("passed_targets")))
+    status_by_target = summary.get("target_status_by_target")
+    if isinstance(status_by_target, Mapping):
+        passed_targets.update(
+            target
+            for target in required_targets
+            if str(status_by_target.get(target) or "").strip().lower()
+            in {"passed", "pass", "valid", "ok"}
+        )
+    return all(target in passed_targets for target in required_targets)
+
+
+def _coverage_record_validated_by_quality_gate(record: Mapping[str, Any]) -> bool:
+    """Return whether bridge-level target quality clears stale validation flags."""
+
+    if _list_of_strings(record.get("coverage_blockers")):
+        return False
+
+    summary = record.get("coverage_summary")
+    if not isinstance(summary, Mapping):
+        return False
+    if _list_of_strings(summary.get("coverage_blockers")):
+        return False
+
+    quality_summary = summary.get("quality_gate_summary")
+    if not isinstance(quality_summary, Mapping):
+        quality_summary = record.get("quality_gate_summary")
+    if not isinstance(quality_summary, Mapping):
+        quality_summary = {}
+
+    required_targets = _normalized_target_names(
+        summary.get("required_targets") or record.get("required_targets")
+    )
+    passed_targets = _normalized_target_names(summary.get("passed_targets"))
+    if (
+        _normalized_target_names(summary.get("failed_targets"))
+        or _normalized_target_names(summary.get("missing_targets"))
+        or _normalized_target_names(summary.get("skipped_targets"))
+    ):
+        return False
+    target_status = summary.get("target_status_by_target")
+    if not passed_targets and required_targets and isinstance(target_status, Mapping):
+        passed_targets = [
+            target
+            for target in required_targets
+            if str(target_status.get(target) or "").strip().lower()
+            in {"passed", "pass", "valid", "ok"}
+        ]
+
+    all_required_passed = bool(summary.get("all_required_passed") is True)
+    if required_targets:
+        all_required_passed = all_required_passed or all(
+            target in passed_targets for target in required_targets
+        )
+    if not all_required_passed:
+        return False
+
+    quality_complete = quality_summary.get("quality_gate_all_targets_complete")
+    legacy_complete_without_quality_summary = (
+        not quality_summary
+        and all_required_passed
+        and bool(required_targets)
+    )
+    if quality_complete is not True and not legacy_complete_without_quality_summary:
+        return False
+    if int(quality_summary.get("failed_quality_check_count") or 0) > 0:
+        return False
+    failed_distribution = quality_summary.get("failed_quality_check_distribution")
+    if isinstance(failed_distribution, Mapping) and any(
+        int(count or 0) > 0 for count in failed_distribution.values()
+    ):
+        return False
+
+    role_summary = summary.get("target_role_matrix_summary")
+    if not isinstance(role_summary, Mapping):
+        role_summary = record.get("target_role_matrix_summary")
+    if isinstance(role_summary, Mapping):
+        if role_summary.get("target_role_matrix_complete") is False:
+            return False
+        if _truthy_flag(role_summary.get("target_role_matrix_requires_validation")):
+            return False
+        if _list_of_strings(role_summary.get("target_role_matrix_blockers")):
+            return False
+
+    return True
+
+
+def _truthy_flag(value: Any) -> bool:
+    """Coerce legacy boolean-like values without treating ``\"false\"`` as true."""
+
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return False
+    if isinstance(value, (int, float)):
+        return value != 0
+    text = str(value).strip().lower()
+    if not text:
+        return False
+    if text in {"0", "false", "no", "n", "off"}:
+        return False
+    if text in {"1", "true", "yes", "y", "on"}:
+        return True
+    return True
 
 
 def _merge_phase8_validation_from_coverage_records(
     phase8_records: Sequence[Mapping[str, Any]],
     coverage_records: Sequence[Mapping[str, Any]],
 ) -> list[dict[str, Any]]:
-    if not phase8_records:
-        return []
-
     coverage_by_source: dict[str, dict[str, Any]] = {}
     for record in coverage_records or []:
         if not isinstance(record, Mapping):
@@ -1220,10 +2114,19 @@ def _merge_phase8_validation_from_coverage_records(
         if source_id:
             coverage_by_source[source_id] = dict(record)
 
+    if not phase8_records:
+        return [
+            _phase8_record_from_coverage_record(coverage_by_source[source_id])
+            for source_id in sorted(coverage_by_source)
+        ]
+
     merged: list[dict[str, Any]] = []
+    merged_source_ids: set[str] = set()
     for phase8_record in phase8_records:
         row = dict(phase8_record)
         source_id = str(row.get("source_id") or "").strip()
+        if source_id:
+            merged_source_ids.add(source_id)
         coverage_record = coverage_by_source.get(source_id)
         if coverage_record is None:
             merged.append(row)
@@ -1232,9 +2135,9 @@ def _merge_phase8_validation_from_coverage_records(
         blockers = set(_list_of_strings(row.get("coverage_blockers")))
         blockers.update(_list_of_strings(coverage_record.get("coverage_blockers")))
 
-        requires_validation = bool(row.get("requires_validation")) or _coverage_record_requires_validation(
-            coverage_record
-        )
+        requires_validation = _truthy_flag(
+            row.get("requires_validation")
+        ) or _coverage_record_requires_validation(coverage_record)
         row["coverage_blockers"] = sorted(blockers)
         row["requires_validation"] = requires_validation
         row["phase8_quality_complete"] = (
@@ -1253,7 +2156,34 @@ def _merge_phase8_validation_from_coverage_records(
             row["coverage_summary"] = summary
         merged.append(row)
 
+    for source_id, coverage_record in sorted(coverage_by_source.items()):
+        if source_id in merged_source_ids:
+            continue
+        merged.append(_phase8_record_from_coverage_record(coverage_record))
+
     return merged
+
+
+def _phase8_record_from_coverage_record(record: Mapping[str, Any]) -> dict[str, Any]:
+    """Build a minimal Phase 8 row when only coverage diagnostics are present."""
+
+    source_id = str(record.get("source_id") or "").strip()
+    requires_validation = _coverage_record_requires_validation(record)
+    blockers = sorted(_list_of_strings(record.get("coverage_blockers")))
+    summary = record.get("coverage_summary")
+    coverage_summary = dict(summary) if isinstance(summary, Mapping) else {}
+    coverage_summary["requires_validation"] = requires_validation
+    coverage_summary["phase8_quality_complete"] = not requires_validation
+    summary_blockers = set(_list_of_strings(coverage_summary.get("coverage_blockers")))
+    summary_blockers.update(blockers)
+    coverage_summary["coverage_blockers"] = sorted(summary_blockers)
+    return {
+        "source_id": source_id,
+        "phase8_quality_complete": not requires_validation,
+        "requires_validation": requires_validation,
+        "coverage_blockers": blockers,
+        "coverage_summary": coverage_summary,
+    }
 
 
 def _deontic_proof_gate_soft_pass(

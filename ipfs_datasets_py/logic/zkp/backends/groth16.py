@@ -41,7 +41,7 @@ from ..canonicalization import (
     hash_theorem,
     tdfol_v1_axioms_commitment_hex_v2,
 )
-from ..circuits import build_proof_attestation_view
+from ..circuits import build_proof_attestation_view, compiler_guidance_ref_from_metadata
 from ..legal_theorem_semantics import derive_tdfol_v1_trace
 from ..statement import format_circuit_ref, parse_circuit_ref_lenient
 
@@ -62,7 +62,7 @@ class Groth16Backend:
     _DEFAULT_CIRCUIT_ID: str = "knowledge_of_axioms"
 
     def _enabled(self) -> bool:
-        return os.environ.get("IPFS_DATASETS_ENABLE_GROTH16", "1").strip().lower() not in {"0", "false", "no", "off", ""}
+        return os.environ.get("IPFS_DATASETS_ENABLE_GROTH16", "0").strip().lower() not in {"0", "false", "no", "off", ""}
 
     def _ffi(self):
         # Import lazily to keep imports quiet and lightweight.
@@ -73,8 +73,8 @@ class Groth16Backend:
     def generate_proof(self, theorem: str, private_axioms: list[str], metadata: dict[str, Any]) -> ZKPProof:
         if not self._enabled():
             raise ZKPError(
-                "Groth16 backend is disabled by IPFS_DATASETS_ENABLE_GROTH16. "
-                "Unset it or set IPFS_DATASETS_ENABLE_GROTH16=1 to enable Rust FFI proving."
+                "Groth16 backend is disabled by default. "
+                "Set IPFS_DATASETS_ENABLE_GROTH16=1 to enable Rust FFI proving."
             )
 
         if not theorem:
@@ -118,6 +118,12 @@ class Groth16Backend:
             "ruleset_id": ruleset_id,
             "circuit_ref": circuit_ref,
         }
+        guidance_ref = compiler_guidance_ref_from_metadata(metadata_dict)
+        if guidance_ref:
+            witness["compiler_guidance_ref"] = guidance_ref
+            witness["compiler_guidance_version"] = int(
+                metadata_dict.get("compiler_guidance_version") or 1
+            )
 
         seed = metadata_dict.get("seed")
 
@@ -125,6 +131,13 @@ class Groth16Backend:
             proof = self._ffi().generate_proof(json.dumps(witness), seed=seed)
             public_inputs = proof.public_inputs if isinstance(getattr(proof, "public_inputs", None), dict) else {}
             metadata_out = proof.metadata if isinstance(getattr(proof, "metadata", None), dict) else {}
+            guidance_ref = compiler_guidance_ref_from_metadata(metadata_dict)
+            if guidance_ref and isinstance(public_inputs, dict):
+                public_inputs.setdefault("compiler_guidance_ref", guidance_ref)
+                public_inputs.setdefault(
+                    "compiler_guidance_version",
+                    int(metadata_dict.get("compiler_guidance_version") or 1),
+                )
             attestation_view = build_proof_attestation_view(
                 proof_data=getattr(proof, "proof_data", b""),
                 public_inputs=public_inputs,
@@ -176,8 +189,8 @@ class Groth16Backend:
     def verify_proof(self, proof: ZKPProof) -> bool:
         if not self._enabled():
             raise ZKPError(
-                "Groth16 backend is disabled by IPFS_DATASETS_ENABLE_GROTH16. "
-                "Unset it or set IPFS_DATASETS_ENABLE_GROTH16=1 to enable Rust FFI verification."
+                "Groth16 backend is disabled by default. "
+                "Set IPFS_DATASETS_ENABLE_GROTH16=1 to enable Rust FFI verification."
             )
 
         try:
@@ -209,8 +222,8 @@ class Groth16Backend:
         """
         if not self._enabled():
             raise ZKPError(
-                "Groth16 backend is disabled by IPFS_DATASETS_ENABLE_GROTH16. "
-                "Unset it or set IPFS_DATASETS_ENABLE_GROTH16=1 to enable Rust FFI setup."
+                "Groth16 backend is disabled by default. "
+                "Set IPFS_DATASETS_ENABLE_GROTH16=1 to enable Rust FFI setup."
             )
 
         try:
@@ -237,8 +250,8 @@ class Groth16Backend:
         """
         if not self._enabled():
             raise ZKPError(
-                "Groth16 backend is disabled by IPFS_DATASETS_ENABLE_GROTH16. "
-                "Unset it or set IPFS_DATASETS_ENABLE_GROTH16=1 to enable auto-setup."
+                "Groth16 backend is disabled by default. "
+                "Set IPFS_DATASETS_ENABLE_GROTH16=1 to enable auto-setup."
             )
 
         ffi = self._ffi()

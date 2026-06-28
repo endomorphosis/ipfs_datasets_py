@@ -578,6 +578,8 @@ def logic_optimizer_scope_for_component(
 
     explicit = {
         "modal.frame_logic": "frame_logic",
+        "modal.autoencoder": "autoencoder",
+        "logic.optimizer.autoencoder": "autoencoder",
         "modal.ir_decompiler": "ir_decompiler",
         "modal.compiler.ambiguity": "compiler_ambiguity",
         "modal.compiler.registry": "compiler_registry",

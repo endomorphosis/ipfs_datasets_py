@@ -142,6 +142,25 @@ def test_frame_ontology_terms_from_triples_include_frame_predicates() -> None:
     assert terms == ["administrative_notice_hearing", "final_order"]
 
 
+def test_frame_ontology_terms_from_triples_include_audited_term_predicates() -> None:
+    terms = frame_ontology_terms_from_triples(
+        [
+            {
+                "subject": "doc-1",
+                "predicate": "audited_ontology_term",
+                "object": "agency notice",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "audited_high_signal_ontology_term",
+                "object": "hearing rights",
+            },
+        ]
+    )
+
+    assert terms == ["agency_notice", "hearing_rights"]
+
+
 def test_frame_ontology_terms_from_feature_keys_extract_frame_linked_values() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [
@@ -583,6 +602,78 @@ def test_frame_ontology_terms_from_feature_keys_support_frame_cue_features() -> 
         "isa",
         "part",
     ]
+
+
+def test_frame_ontology_terms_from_feature_keys_support_legal_ir_view_features() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "legal-ir-view:modal.frame_logic",
+            "legal_ir_view:deontic.ir",
+            "token:agency",
+        ]
+    )
+
+    assert terms == [
+        "modal_frame_logic",
+        "deontic_ir",
+    ]
+
+
+def test_frame_ontology_contextualized_terms_audit_legal_ir_view_features() -> None:
+    terms = frame_ontology_contextualized_terms(
+        feature_keys=[
+            "legal-ir-view:modal.frame_logic",
+            "legal-ir-view:TDFOL.prover",
+            "legal-ir-view:knowledge_graphs.neo4j_compat",
+            "legal-ir-view:CEC.native",
+        ],
+    )
+
+    assert terms == [
+        "legal_ir_view_modal_frame_logic",
+        "legal_ir_view_tdfol_prover",
+        "legal_ir_view_knowledge_graphs_neo4j_compat",
+        "legal_ir_view_cec_native",
+    ]
+
+
+def test_frame_ontology_terms_from_feature_keys_extract_predicate_argument_role_shape_and_role_pairs() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "predicate-argument:source-action-role:appropriations:clause",
+            "predicate-argument:source-object-family:repealed:frame",
+            "predicate-argument:role-shape:conditional_normative:clause:c1:e1",
+        ]
+    )
+
+    assert "source_action_role_appropriations_clause" in terms
+    assert "appropriations" in terms
+    assert "appropriations_clause" in terms
+    assert "source_object_family_repealed_frame" in terms
+    assert "repealed" in terms
+    assert "repealed_frame" in terms
+    assert "role_shape_conditional_normative_clause_c1_e1" in terms
+    assert "conditional_normative" in terms
+    assert "conditional_normative_clause" in terms
+
+
+def test_frame_ontology_terms_from_feature_keys_drop_predicate_argument_direction_markers() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "predicate-argument:source-object-family:out:conditional_normative",
+            "predicate-argument:source-object-role:out:clause",
+            "predicate-argument:source-object-family:out:deontic",
+        ]
+    )
+
+    assert "source_object_family_conditional_normative" in terms
+    assert "conditional_normative" in terms
+    assert "source_object_role_clause" in terms
+    assert "clause" in terms
+    assert "source_object_family_deontic" in terms
+    assert "deontic" in terms
+    assert "out" not in terms
+    assert "out_deontic" not in terms
 
 
 def test_frame_ontology_terms_from_feature_keys_support_legacy_frame_cues() -> None:
@@ -1152,6 +1243,24 @@ def test_frame_ontology_contextualized_terms_contextualize_predicate_token_and_m
     assert "citation_section_primary_number_magnitude_bucket_lt_1k" in terms
 
 
+def test_frame_ontology_contextualized_terms_audit_zero_digit_predicates_by_context() -> None:
+    terms = frame_ontology_contextualized_terms(
+        feature_keys=[
+            "flogic:citation_title_section_primary_number_span_has_zero_digit:false",
+            "flogic:citation_title_section_primary_number_span_zero_digit_count:0",
+            "flogic:citation_title_section_terminal_number_span_has_zero_digit:false",
+            "flogic:citation_section_number_trailing_zero_count_positioned:1:0",
+            "flogic:citation_section_primary_number_trailing_zero_count:100",
+        ]
+    )
+
+    assert "citation_title_section_primary_number_span_has_zero_digit_false" in terms
+    assert "citation_title_section_primary_number_span_zero_digit_count_0" in terms
+    assert "citation_title_section_terminal_number_span_has_zero_digit_false" in terms
+    assert "citation_section_number_trailing_zero_count_positioned_0" in terms
+    assert "citation_section_primary_number_trailing_zero_count_100" in terms
+
+
 def test_frame_ontology_contextualized_terms_contextualize_modal_cues_and_low_signal_digit_signatures() -> None:
     terms = frame_ontology_contextualized_terms(
         feature_keys=[
@@ -1455,6 +1564,22 @@ def test_frame_ontology_terms_from_feature_keys_support_typed_flogic_citation_an
         "if",
         "except",
     ]
+
+
+def test_frame_ontology_terms_from_feature_keys_skip_low_signal_positioned_segments() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:condition_alnum_segment_positioned:15:in",
+            "flogic:condition_scope_alnum_segment_positioned:14:in",
+            "slot:condition_alnum_segment_positioned:15_in",
+            "slot:condition_scope_alnum_segment_positioned:14_in",
+            "flogic:fallback_surface_text_alnum_segment_positioned:3:91",
+            "slot:fallback_surface_text_alnum_segment_positioned:3_91",
+            "flogic:fallback_surface_text_alnum_segment_positioned:4:voucher",
+        ]
+    )
+
+    assert terms == ["voucher"]
 
 
 def test_frame_ontology_terms_from_feature_keys_keep_single_letter_citation_suffixes() -> None:
@@ -1789,6 +1914,7 @@ def test_frame_ontology_feature_keys_from_values_extracts_nested_hint_evidence()
     )
 
     assert keys == [
+        "flogic:statement_hint:modal-synthesis",
         "us-code-26-307-c04b9c0813def639",
         "selected-frame-term:26 U.S.C. 307",
         "us-code-42-300i-0102d16fb9d986ee",
@@ -1869,6 +1995,170 @@ def test_frame_ontology_feature_keys_from_values_synthesizes_family_alias_fields
         "epistemic",
         "dynamic",
         "frame",
+    ]
+
+
+def test_frame_ontology_feature_keys_from_values_audits_packet_frame_logic_evidence() -> None:
+    keys = frame_ontology_feature_keys_from_values(
+        {
+            "evidence": [
+                {
+                    "hint_id": "modal-synthesis-02d179558f02b764",
+                    "priority": 0.232604288682,
+                    "sample_id": "us-code-42-13109.-4f7ff54b08bbaf31",
+                    "target_file_lane": "frame_logic",
+                },
+                {
+                    "hint_id": "modal-synthesis-57f3dda89389e0d9",
+                    "priority": 0.662409005364,
+                    "sample_id": "us-code-7-450h-ca4b03be437fbbde",
+                    "target_component": "modal.frame_logic",
+                },
+            ],
+        }
+    )
+
+    assert keys == [
+        "flogic:statement_hint:modal-synthesis",
+        "us-code-42-13109.-4f7ff54b08bbaf31",
+        "legal-ir-view:frame_logic",
+        "us-code-7-450h-ca4b03be437fbbde",
+        "legal-ir-view:modal.frame_logic",
+    ]
+    assert frame_ontology_terms_from_feature_keys(keys) == [
+        "modal_synthesis",
+        "42_13109",
+        "frame_logic",
+        "7_450h",
+        "modal_frame_logic",
+    ]
+
+
+def test_frame_ontology_feature_keys_from_values_audits_packet_view_family_features() -> None:
+    keys = frame_ontology_feature_keys_from_values(
+        {
+            "frame_features": [
+                "legal-ir-view:deontic.ir",
+                "legal-ir-view:modal.frame_logic",
+                "legal-ir-view:TDFOL.prover",
+                "legal-ir-view:knowledge_graphs.neo4j_compat",
+                "legal-ir-view:CEC.native",
+                "flogic:fallback_surface_text_alnum_segment_kind_positioned:4:numeric",
+                "slot:fallback_surface_text_alnum_segment_kind_positioned:4_numeric",
+            ],
+            "top_family_features": [
+                "legal-ir-view:deontic.ir",
+                "legal-ir-view:modal.frame_logic",
+                "legal-ir-view:TDFOL.prover",
+                "legal-ir-view:knowledge_graphs.neo4j_compat",
+                "quality:bias",
+                "quality:symbolic:has-formula",
+                "quality:frame:rank-top",
+                "signature:operator:frame:frame_bm25:frame",
+                "legal-ir-view:CEC.native",
+            ],
+        }
+    )
+
+    assert keys == [
+        "legal-ir-view:deontic.ir",
+        "legal-ir-view:modal.frame_logic",
+        "legal-ir-view:TDFOL.prover",
+        "legal-ir-view:knowledge_graphs.neo4j_compat",
+        "legal-ir-view:CEC.native",
+        "flogic:fallback_surface_text_alnum_segment_kind_positioned:4:numeric",
+        "slot:fallback_surface_text_alnum_segment_kind_positioned:4_numeric",
+        "quality:frame:rank-top",
+        "signature:operator:frame:frame_bm25:frame",
+    ]
+    assert frame_ontology_terms_from_feature_keys(keys)[-2:] == [
+        "rank_top",
+        "frame_bm25_frame",
+    ]
+    assert frame_ontology_contextualized_terms(feature_keys=keys) == [
+        "legal_ir_view_deontic_ir",
+        "legal_ir_view_modal_frame_logic",
+        "legal_ir_view_tdfol_prover",
+        "legal_ir_view_knowledge_graphs_neo4j_compat",
+        "legal_ir_view_cec_native",
+        "fallback_surface_text_alnum_segment_kind_positioned_numeric",
+        "quality_frame_rank_top",
+        "signature_frame_frame_bm25_frame",
+    ]
+
+
+def test_frame_ontology_feature_keys_audit_condition_consequence_edges() -> None:
+    keys = frame_ontology_feature_keys_from_values(
+        {
+            "frame_features": [
+                (
+                    "condition-consequence:event-calculus-precondition:"
+                    "legal_condition->legal_consequence:legal_object"
+                ),
+                (
+                    "condition-consequence:compiler-antecedent-edge:"
+                    "legal_condition->legal_consequence:legal_object:general_scope"
+                ),
+                (
+                    "legal-ir:condition-consequence:decompiler-guard-plan:"
+                    "sufficient_condition->legal_consequence"
+                ),
+            ],
+            "pipeline_stage_focus": [
+                "modal_family_registry",
+                "autoencoder_embedding_head",
+            ],
+            "primary_pipeline_stage": "typed_ir_decoder",
+        }
+    )
+
+    assert keys == [
+        (
+            "condition-consequence:event-calculus-precondition:"
+            "legal_condition->legal_consequence:legal_object"
+        ),
+        (
+            "condition-consequence:compiler-antecedent-edge:"
+            "legal_condition->legal_consequence:legal_object:general_scope"
+        ),
+        (
+            "legal-ir:condition-consequence:decompiler-guard-plan:"
+            "sufficient_condition->legal_consequence"
+        ),
+        "flogic:statement_hint:modal_family_registry",
+        "flogic:statement_hint:autoencoder_embedding_head",
+        "flogic:statement_hint:typed_ir_decoder",
+    ]
+    assert frame_ontology_terms_from_feature_keys(keys)[:6] == [
+        "event_calculus_precondition_condition_consequence_object",
+        "compiler_antecedent_edge_condition_consequence_object_general_scope",
+        "decompiler_guard_plan_sufficient_condition_consequence",
+        "modal_family_registry",
+        "autoencoder_embedding_head",
+        "typed_ir_decoder",
+    ]
+    assert frame_ontology_contextualized_terms(feature_keys=keys)[:3] == [
+        "condition_consequence_event_calculus_precondition_condition_consequence_object",
+        "condition_consequence_compiler_antecedent_edge_condition_consequence_object_general_scope",
+        "condition_consequence_decompiler_guard_plan_sufficient_condition_consequence",
+    ]
+
+
+def test_frame_ontology_contextualized_terms_skip_low_signal_positioned_segments() -> None:
+    terms = frame_ontology_contextualized_terms(
+        feature_keys=[
+            "flogic:condition_alnum_segment_positioned:15:in",
+            "flogic:condition_scope_alnum_segment_positioned:14:in",
+            "slot:condition_alnum_segment_positioned:15_in",
+            "slot:condition_scope_alnum_segment_positioned:14_in",
+            "flogic:fallback_surface_text_alnum_segment_positioned:3:91",
+            "slot:fallback_surface_text_alnum_segment_positioned:3_91",
+            "flogic:fallback_surface_text_alnum_segment_kind_positioned:4:numeric",
+        ]
+    )
+
+    assert terms == [
+        "fallback_surface_text_alnum_segment_kind_positioned_numeric",
     ]
 
 

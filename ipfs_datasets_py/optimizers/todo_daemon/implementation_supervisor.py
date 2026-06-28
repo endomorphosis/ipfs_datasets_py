@@ -45,6 +45,7 @@ class PortalSupervisorConfig:
     check_interval: float = 60.0
     max_restarts: int = 10
     daemon_interval: float = 300.0
+    until_complete: bool = False
     task_prefix: str = TASK_HEADER_PREFIX
     state_prefix: str = "portal"
     implement: bool = False
@@ -53,6 +54,8 @@ class PortalSupervisorConfig:
     implementation_log_stall_seconds: float = 300.0
     use_ephemeral_worktree: bool = True
     worktree_root: Path | None = None
+    allowed_tracks: tuple[str, ...] = ()
+    allowed_task_ids: tuple[str, ...] = ()
     repo_root: Path = field(default_factory=Path.cwd)
     daemon_script_path: Path | None = None
 
@@ -110,6 +113,24 @@ class PortalImplementationSupervisor:
 
     def run_once(self) -> dict[str, Any]:
         state = PortalTaskState.load(self.config.state_path)
+        if self.config.until_complete and self._state_is_complete(state):
+            self._record_event(
+                "supervisor_check",
+                {
+                    "stuck": False,
+                    "complete": True,
+                    "active_task_id": state.active_task_id,
+                    "completed_count": state.completed_count,
+                    "task_count": state.task_count,
+                },
+            )
+            return {
+                "stuck": False,
+                "complete": True,
+                "active_task_id": state.active_task_id,
+                "completed_count": state.completed_count,
+                "task_count": state.task_count,
+            }
         stuck, reason = self.is_stuck(state, now_ts=time.time())
         if stuck:
             strategy = self.rewrite_strategy(state, reason)
@@ -195,6 +216,9 @@ class PortalImplementationSupervisor:
                 "state_path": str(self.config.state_path),
                 "task_prefix": self.config.task_prefix,
                 "state_prefix": self.config.state_prefix,
+                "until_complete": self.config.until_complete,
+                "allowed_tracks": list(self.config.allowed_tracks),
+                "allowed_task_ids": list(self.config.allowed_task_ids),
             },
         )
 
@@ -205,6 +229,8 @@ class PortalImplementationSupervisor:
         _current_status: dict[str, Any],
     ) -> SupervisorLoopDecision:
         state = PortalTaskState.load(self.config.state_path)
+        if self.config.until_complete and self._state_is_complete(state):
+            return SupervisorLoopDecision.stop("backlog_complete", status="completed")
         stuck, reason = self.is_stuck(state, now_ts=time.time())
         if not stuck:
             return SupervisorLoopDecision.keep_running()
@@ -371,6 +397,10 @@ class PortalImplementationSupervisor:
                 self.config.state_prefix,
             ]
         )
+        if self.config.allowed_tracks:
+            command.extend(["--allowed-tracks", ",".join(self.config.allowed_tracks)])
+        if self.config.allowed_task_ids:
+            command.extend(["--allowed-task-ids", ",".join(self.config.allowed_task_ids)])
         if self.config.implement:
             command.append("--implement")
             command.extend(["--implementation-timeout", str(self.config.implementation_timeout)])
@@ -381,6 +411,10 @@ class PortalImplementationSupervisor:
             if self.config.worktree_root is not None:
                 command.extend(["--worktree-root", str(self.config.worktree_root)])
         return command
+
+    @staticmethod
+    def _state_is_complete(state: PortalTaskState) -> bool:
+        return bool(state.task_count > 0 and state.completed_count >= state.task_count)
 
     def _managed_daemon_pid_path(self) -> Path:
         return self.config.state_dir / f"{self.config.state_prefix}_managed_daemon.pid"
@@ -428,6 +462,10 @@ class PortalImplementationSupervisor:
             "--todo-path",
             str(self.config.todo_path),
         ]
+        if self.config.allowed_tracks:
+            required_fragments.extend(["--allowed-tracks", ",".join(self.config.allowed_tracks)])
+        if self.config.allowed_task_ids:
+            required_fragments.extend(["--allowed-task-ids", ",".join(self.config.allowed_task_ids)])
         if not all(fragment in command_line for fragment in required_fragments):
             return False
         has_implement_flag = "--implement" in command_line
@@ -474,6 +512,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--max-restarts", type=int, default=10)
     parser.add_argument("--daemon-interval", type=float, default=300.0)
     parser.add_argument(
+        "--until-complete",
+        action="store_true",
+        help="Supervise the daemon until every parsed todo task is completed, then stop",
+    )
+    parser.add_argument(
         "--task-prefix",
         default=TASK_HEADER_PREFIX,
         help="Markdown heading prefix for tasks, for example '## PORTAL-' or '## AGENT-'",
@@ -482,6 +525,18 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--state-prefix",
         default="portal",
         help="State file prefix inside --state-dir",
+    )
+    parser.add_argument(
+        "--allowed-tracks",
+        action="append",
+        default=[],
+        help="Comma-separated task tracks this supervisor may select; repeatable. Defaults to all tracks.",
+    )
+    parser.add_argument(
+        "--allowed-task-ids",
+        action="append",
+        default=[],
+        help="Comma-separated task IDs this supervisor may select; repeatable. Defaults to all task IDs.",
     )
     implement_group = parser.add_mutually_exclusive_group()
     implement_group.add_argument(
@@ -546,6 +601,7 @@ def main(argv: list[str] | None = None) -> None:
             check_interval=args.check_interval,
             max_restarts=args.max_restarts,
             daemon_interval=args.daemon_interval,
+            until_complete=args.until_complete,
             task_prefix=args.task_prefix,
             state_prefix=args.state_prefix,
             implement=args.implement,
@@ -554,6 +610,8 @@ def main(argv: list[str] | None = None) -> None:
             implementation_log_stall_seconds=args.implementation_log_stall_seconds,
             use_ephemeral_worktree=args.implement and not args.no_ephemeral_worktree,
             worktree_root=args.worktree_root,
+            allowed_tracks=tuple(item.strip().lower() for value in args.allowed_tracks for item in value.split(",") if item.strip()),
+            allowed_task_ids=tuple(item.strip().lower() for value in args.allowed_task_ids for item in value.split(",") if item.strip()),
             repo_root=REPO_ROOT,
         )
     )

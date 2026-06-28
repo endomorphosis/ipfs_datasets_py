@@ -40,7 +40,7 @@ pandas>=1.5.0
 datasets>=2.10.0
 
 # P2P communication
-libp2p>=0.2.7  # Optional: for distributed dataset management
+libp2p @ git+https://github.com/libp2p/py-libp2p.git@main  # Optional: for distributed dataset management
 
 # Testing
 pytest>=7.3.1

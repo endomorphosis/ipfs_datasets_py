@@ -17,6 +17,7 @@ from .paths import (
     IPFS_DATASET_NAME,
     KNOWLEDGE_GRAPH_DATASET_NAME,
     NORMALIZED_DATASET_NAME,
+    UNIFIED_WETWIJZER_DATASET_NAME,
     VECTOR_INDEX_DATASET_NAME,
     repo_id_for,
 )
@@ -83,6 +84,29 @@ UPLOAD_TARGETS: dict[str, DatasetUploadTarget] = {
             "parquet/articles/train-00000-of-00001.parquet",
         ),
     ),
+    "unified": DatasetUploadTarget(
+        key="unified",
+        local_dir=HF_DATA_DIR / UNIFIED_WETWIJZER_DATASET_NAME,
+        repo_id=DEFAULT_HF_REPO_IDS["unified"],
+        required_files=(
+            "README.md",
+            "dataset_manifest.json",
+            "data/laws.parquet",
+            "data/articles.parquet",
+            "data/cid_index.parquet",
+            "indexes/vector/vector_mapping.parquet",
+            "indexes/vector/faiss.index",
+            "indexes/bm25/bm25_documents.parquet",
+            "indexes/bm25/bm25_terms.parquet",
+            "graph/kg_nodes.parquet",
+            "graph/kg_edges.parquet",
+            "graph/graph.jsonld",
+            "logic/logic_relationships.parquet",
+            "reports/coverage_report.json",
+            "reports/quality_report.json",
+            "reports/integrity_report.json",
+        ),
+    ),
 }
 
 TARGET_ALIASES = {
@@ -91,6 +115,8 @@ TARGET_ALIASES = {
     "cid": ("base",),
     "kg": ("knowledge-graph",),
     "knowledge_graph": ("knowledge-graph",),
+    "wetwijzer": ("unified",),
+    "unified-corpus": ("unified",),
 }
 
 

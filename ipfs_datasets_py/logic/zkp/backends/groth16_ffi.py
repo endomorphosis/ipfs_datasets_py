@@ -406,6 +406,12 @@ class Groth16Backend(ZKPBackend):
             'circuit_version': witness.get('circuit_version', 0),
             'ruleset_id': witness.get('ruleset_id', ''),
         }
+        guidance_ref = str(witness.get("compiler_guidance_ref") or "")
+        if guidance_ref:
+            public_inputs["compiler_guidance_ref"] = guidance_ref
+            public_inputs["compiler_guidance_version"] = int(
+                witness.get("compiler_guidance_version") or 1
+            )
         
         # Reconstruct proof (would be properly decoded from Rust)
         proof_hex = json.dumps(proof_data).encode()
@@ -551,6 +557,16 @@ class Groth16BackendFallback(ZKPBackend):
                 'circuit_ref': witness.get('circuit_ref', ''),
                 'circuit_version': witness['circuit_version'],
                 'ruleset_id': witness['ruleset_id'],
+                **(
+                    {
+                        "compiler_guidance_ref": str(witness.get("compiler_guidance_ref") or ""),
+                        "compiler_guidance_version": int(
+                            witness.get("compiler_guidance_version") or 1
+                        ),
+                    }
+                    if witness.get("compiler_guidance_ref")
+                    else {}
+                ),
             },
             metadata={
                 'backend': 'groth16_fallback',

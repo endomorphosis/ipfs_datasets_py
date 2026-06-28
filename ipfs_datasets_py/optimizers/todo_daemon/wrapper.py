@@ -38,6 +38,7 @@ def build_restart_loop_command(
     env_keys: Sequence[str] = (),
     restart_delay_seconds: int = 5,
     restart_message: str = "supervisor exited with code",
+    restart_on_success: bool = True,
 ) -> str:
     """Build a shell restart loop for a supervisor command.
 
@@ -54,9 +55,13 @@ def build_restart_loop_command(
     printf_format = shlex.quote(
         f"%s {str(restart_message)} %s; wrapper restarting in %ss\\n"
     )
+    success_exit = ""
+    if not restart_on_success:
+        success_exit = "if [ \"$rc\" -eq 0 ]; then exit 0; fi; "
     return (
         f"while true; do {command_text}; "
         "rc=$?; "
+        f"{success_exit}"
         f"printf {printf_format} "
         f"\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\" \"$rc\" {restart_delay}; "
         f"sleep {restart_delay}; done"
@@ -117,6 +122,7 @@ def launch_restarting_wrapper(
     launch_mode: str = "nohup_loop",
     restart_delay_seconds: int = 5,
     restart_message: str = "supervisor exited with code",
+    restart_on_success: bool = True,
     tmux_session_name: str = "",
 ) -> RestartingWrapperLaunch:
     """Launch a supervisor under an unattended restart loop."""
@@ -131,6 +137,7 @@ def launch_restarting_wrapper(
         env_keys=env_keys,
         restart_delay_seconds=restart_delay_seconds,
         restart_message=restart_message,
+        restart_on_success=restart_on_success,
     )
     out_path.parent.mkdir(parents=True, exist_ok=True)
     pid_path.parent.mkdir(parents=True, exist_ok=True)

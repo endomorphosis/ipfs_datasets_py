@@ -58,6 +58,9 @@ vectors = [
 groth16 = [
     "jsonschema>=4.0.0",
 ]
+provekit = [
+    "jsonschema>=4.0.0",
+]
 api = [
     "fastapi>=0.100.0",
     "uvicorn>=0.23.0",
@@ -153,6 +156,10 @@ ipfs_datasets_py = [
     "processors/groth16_backend/src/*.rs",
     "processors/groth16_backend/schemas/*.json",
     "processors/groth16_backend/contracts/*.sol",
+    "processors/provekit_backend/README.md",
+    "processors/provekit_backend/build.sh",
+    "logic/zkp/provekit/circuits/*/Nargo.toml",
+    "logic/zkp/provekit/circuits/*/src/*.nr",
 ]
 
 [project.scripts]

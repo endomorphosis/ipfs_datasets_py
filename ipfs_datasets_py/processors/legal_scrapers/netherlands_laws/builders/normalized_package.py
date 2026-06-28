@@ -7,7 +7,17 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from .common import count_jsonl, file_manifest_entry, read_jsonl, write_json, write_jsonl, write_parquet
+from .common import (
+    clean_legal_text,
+    count_jsonl,
+    disambiguate_duplicate_article_identifiers,
+    file_manifest_entry,
+    read_jsonl,
+    stable_row_key,
+    write_json,
+    write_jsonl,
+    write_parquet,
+)
 from ..paths import DEFAULT_HF_REPO_IDS, HF_DATA_DIR, NORMALIZED_DATASET_NAME, PACKAGE_RAW_OUTPUT_DIR
 
 
@@ -87,10 +97,17 @@ def normalize_laws(raw_laws: list[dict[str, Any]]) -> list[dict[str, Any]]:
         "document_type",
         "citation",
         "official_metadata",
+        "law_status",
+        "is_current",
+        "valid_from",
+        "valid_to",
         "effective_date",
+        "retrieved_at",
+        "status_source",
+        "status_confidence",
+        "status_note",
         "version_start_date",
         "version_end_date",
-        "is_current",
         "publication_date",
         "last_modified_date",
         "historical_versions",
@@ -103,7 +120,10 @@ def normalize_laws(raw_laws: list[dict[str, Any]]) -> list[dict[str, Any]]:
         "scraped_at",
         "metadata",
     ]
-    return [{key: row.get(key) for key in keep} for row in raw_laws]
+    rows = [{key: row.get(key) for key in keep} for row in raw_laws]
+    for row in rows:
+        row["text"] = clean_legal_text(row.get("text"))
+    return rows
 
 
 def normalize_articles(raw_articles: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -134,18 +154,35 @@ def normalize_articles(raw_articles: list[dict[str, Any]]) -> list[dict[str, Any
         "division_number",
         "paragraph_number",
         "text",
+        "law_status",
+        "is_current",
+        "valid_from",
+        "valid_to",
         "effective_date",
+        "retrieved_at",
+        "status_source",
+        "status_confidence",
+        "status_note",
         "version_start_date",
         "version_end_date",
-        "is_current",
         "scraped_at",
     ]
     rows: list[dict[str, Any]] = []
     for row in raw_articles:
         out = {key: row.get(key) for key in keep}
+        out["text"] = clean_legal_text(out.get("text"))
         out["law_row_id"] = row.get("law_identifier")
         rows.append(out)
-    return rows
+    disambiguate_duplicate_article_identifiers(rows)
+    deduplicated: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for row in rows:
+        key = stable_row_key(row)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduplicated.append(row)
+    return deduplicated
 
 
 def write_dataset_card(
@@ -163,6 +200,20 @@ def write_dataset_card(
         "--use_default_seeds true --max_seed_pages <pages> --crawl_depth 1 "
         "--max_documents <cap> --rate_limit_delay <delay> --resume"
     )
+    scrape_date = str(run_metadata.get("scraped_at") or "unknown")
+    scope_note = str(run_metadata.get("corpus_scope_note") or "")
+    full_bwb = run_metadata.get("full_bwb_discovery") or {}
+    catalog_counts = run_metadata.get("catalog_coverage_counts") or {}
+    catalog_note = ""
+    if run_metadata.get("catalog_backed_run"):
+        catalog_note = (
+            f"Catalog-backed production batch: {run_metadata.get('catalog_batch_size', 'unknown')} queued BWBR identifier(s). "
+            f"Catalog coverage after this run: {catalog_counts.get('complete', 'unknown')} complete of "
+            f"{catalog_counts.get('total_discovered_identifiers', 'unknown')} discovered identifier(s) "
+            f"({run_metadata.get('catalog_percent_complete', 'unknown')}%). Remaining: "
+            f"{catalog_counts.get('remaining', 'unknown')}. Integrity validation ok: "
+            f"{run_metadata.get('catalog_integrity_ok', 'unknown')}."
+        )
     readme = f"""---
 pretty_name: Netherlands Laws (Dutch, Normalized)
 language:
@@ -197,9 +248,27 @@ This package is a normalized version of the Netherlands laws scrape output.
 
 {coverage}
 
+Scrape date: {scrape_date}
+
+Exact corpus size in this package: {record_counts.get("laws", 0)} law records and {record_counts.get("articles", 0)} article records.
+
+Full BWB discovery inventory: {full_bwb.get("unique_laws_discovered", "unknown")} unique BWBR identifiers from {full_bwb.get("number_of_records_reported", "unknown")} official SRU record(s), with {full_bwb.get("failed_pages_count", "unknown")} failed discovery page(s).
+
+{catalog_note}
+
+{scope_note}
+
 This refresh includes parser coverage improvements for older/French heading styles such as `Article I.er`,
 plus run metadata diagnostics that distinguish article-producing laws, parser-missing article cases,
 and genuinely unnumbered/non-article documents.
+
+Historical/former laws are preserved. Consumers should use `law_status`, `is_current`, `valid_from`,
+`valid_to`, `effective_date`, `retrieved_at`, `status_source`, `status_confidence`, and `status_note`
+to distinguish current law from historical, repealed, superseded, or unknown-status records. These fields
+are parsed only from official Dutch government metadata/pages; `unknown` means the scraper did not find
+enough official metadata to classify the status.
+
+This dataset is not legal advice and does not validate legal force beyond the official metadata parsed.
 
 Scrape command:
 
@@ -216,8 +285,12 @@ Current package counts:
 - Documents failed: {run_metadata.get("documents_failed", "unknown")}
 - Article-producing laws: {run_metadata.get("article_producing_laws_count", "unknown")}
 - Non-article-producing laws: {run_metadata.get("non_article_producing_laws_count", "unknown")}
+- Current laws: {run_metadata.get("current_laws_count", "unknown")}
+- Historical/repealed/superseded laws: {run_metadata.get("historical_repealed_superseded_laws_count", "unknown")}
+- Unknown-status laws: {run_metadata.get("unknown_status_laws_count", "unknown")}
+- Ambiguous-status laws: {run_metadata.get("ambiguous_status_laws_count", "unknown")}
 
-Remaining limitations before a full corpus release: increase/remove `max_documents`, validate larger-run packaging/upload behavior, and spot-check laws that expose no article-level rows.
+Remaining limitations: this package should only be described as the full Dutch corpus when the run metadata shows uncapped official discovery and every discovered official BWBR document was parsed or explicitly logged as failed/skipped. Otherwise it is a verified shard or discovered-corpus subset.
 """
     (out_dir / "README.md").write_text(readme, encoding="utf-8")
 
@@ -318,6 +391,11 @@ def build_normalized_package(
             "records_count": run_metadata.get("records_count"),
             "article_records_count": run_metadata.get("article_records_count"),
             "search_records_count": run_metadata.get("search_records_count"),
+            "law_status_counts": run_metadata.get("law_status_counts"),
+            "current_laws_count": run_metadata.get("current_laws_count"),
+            "historical_repealed_superseded_laws_count": run_metadata.get("historical_repealed_superseded_laws_count"),
+            "unknown_status_laws_count": run_metadata.get("unknown_status_laws_count"),
+            "ambiguous_status_laws_count": run_metadata.get("ambiguous_status_laws_count"),
         },
     }
 
@@ -339,7 +417,8 @@ def build_normalized_package(
         "notes": [
             "Law-level metadata is stored in the laws table.",
             "Repeated law-level fields were removed from article rows.",
-            f"This package was derived from a scrape run capped at max_documents={run_metadata.get('max_documents')}.",
+            "Historical/former laws are preserved and labeled; they are not filtered out.",
+            "This dataset is not legal advice and does not validate legal force beyond parsed official metadata.",
         ],
         "files": {},
     }

@@ -7,8 +7,13 @@ import json
 import ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry as modal_registry
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_CORE_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_001444_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_001807_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_004796_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS,
     COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS,
+    COMPILER_REFINED_PACKET_000440_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_003441_FAMILY_PAIRS,
     COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
     compiler_ambiguity_policy_targets,
     compiler_refined_modal_family_cue_margin_buffer,
@@ -156,7 +161,7 @@ def test_refined_modal_family_cue_margin_buffer_is_pair_specific_and_normalized(
             "deontic",
             "deontic",
         )
-        - 0.0015
+        - 0.076
     ) <= 1e-12
     assert abs(
         compiler_refined_modal_family_cue_margin_buffer(
@@ -172,18 +177,108 @@ def test_refined_modal_family_cue_margin_buffer_is_pair_specific_and_normalized(
         )
         - 0.0015
     ) <= 1e-12
-    assert (
+    assert abs(
         compiler_refined_modal_family_cue_margin_buffer(
             "frame",
             "deontic",
         )
-        == 0.0
-    )
+        - 0.0015
+    ) <= 1e-12
+
+
 def test_refined_modal_family_cue_policy_pairs_cover_compiler_registry_todo_bundle() -> None:
     refined_pairs = set(modal_registry.COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS)
     assert ("conditional_normative", "conditional_normative") in refined_pairs
     assert ("deontic", "deontic") in refined_pairs
     assert ("temporal", "deontic") in refined_pairs
+
+
+def test_packet_003441_refined_cue_pairs_cover_weak_family_evidence() -> None:
+    packet_pairs = (
+        ("deontic", "deontic"),
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("frame", "temporal"),
+    )
+    assert COMPILER_REFINED_PACKET_003441_FAMILY_PAIRS == packet_pairs
+    refined_pairs = set(COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS)
+    for predicted_family, target_family in packet_pairs:
+        assert (predicted_family, target_family) in refined_pairs
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+    observed_weak_self_margin = 0.225541191768
+    effective_threshold = 0.15 + compiler_refined_modal_family_cue_margin_buffer(
+        "deontic",
+        "deontic",
+    )
+    assert effective_threshold > observed_weak_self_margin
+
+
+def test_packet_000440_family_pairs_are_refined_required_priority_policy() -> None:
+    expected_pairs = (
+        ("frame", "conditional_normative"),
+        ("frame", "temporal"),
+        ("temporal", "conditional_normative"),
+        ("temporal", "deontic"),
+    )
+    assert tuple(COMPILER_REFINED_PACKET_000440_FAMILY_PAIRS) == expected_pairs
+
+    refined_pairs = set(COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS)
+    for predicted_family, target_family in expected_pairs:
+        assert (predicted_family, target_family) in refined_pairs
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+
+def test_packet_001444_family_pairs_are_explicit_signal_free_registry_policy() -> None:
+    expected_pairs = (
+        ("deontic", "temporal"),
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("frame", "temporal"),
+        ("temporal", "temporal"),
+    )
+    assert tuple(COMPILER_AMBIGUITY_PACKET_001444_FAMILY_PAIRS) == expected_pairs
+
+    refined_pairs = set(COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS)
+    for predicted_family, target_family in expected_pairs:
+        assert (predicted_family, target_family) in refined_pairs
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
 
 
 def test_compiler_ambiguity_core_pairs_cover_frame_margin_bundle_targets() -> None:
@@ -202,6 +297,35 @@ def test_compiler_ambiguity_core_pairs_cover_frame_margin_bundle_targets() -> No
         assert supports_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
+        )
+
+
+def test_refined_modal_family_cue_policy_pairs_cover_packet_004796_pairs() -> None:
+    expected_pairs = (
+        ("deontic", "deontic"),
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("temporal", "deontic"),
+    )
+
+    assert COMPILER_AMBIGUITY_PACKET_004796_FAMILY_PAIRS == expected_pairs
+    refined_pairs = set(COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS)
+    for predicted_family, target_family in expected_pairs:
+        assert (predicted_family, target_family) in refined_pairs
+        assert is_compiler_ambiguity_policy_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert (
+            compiler_refined_modal_family_cue_margin_buffer(
+                predicted_family,
+                target_family,
+            )
+            > 0.0
         )
 
 
@@ -1046,6 +1170,116 @@ def test_packet_001270_recurrent_compiler_registry_family_pairs_are_supported() 
             target_family,
         )
         assert is_compiler_ambiguity_policy_pair(
+            predicted_family,
+            target_family,
+        )
+
+
+def test_packet_001807_adaptive_family_pairs_are_explicit_ambiguity_policy() -> None:
+    """Keep packet-001807 low-margin family transitions visible to the compiler."""
+    expected_pairs = (
+        ("deontic", "conditional_normative"),
+        ("frame", "deontic"),
+        ("frame", "temporal"),
+        ("temporal", "deontic"),
+    )
+
+    assert COMPILER_AMBIGUITY_PACKET_001807_FAMILY_PAIRS == expected_pairs
+    for predicted_family, target_family in expected_pairs:
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+
+def test_failed_validation_rescue_packet_family_pairs_are_registered() -> None:
+    """Keep hand-rescued failed-validation packet pairs syntax-safe and reachable."""
+    refined_packets = {
+        "003313": (
+            ("frame", "deontic"),
+            ("frame", "temporal"),
+            ("temporal", "deontic"),
+        ),
+        "003650": (
+            ("deontic", "epistemic"),
+            ("frame", "deontic"),
+            ("frame", "doxastic"),
+            ("temporal", "deontic"),
+        ),
+        "003960": (
+            ("conditional_normative", "deontic"),
+            ("frame", "conditional_normative"),
+            ("frame", "deontic"),
+        ),
+        "004579": (
+            ("deontic", "deontic"),
+            ("deontic", "frame"),
+            ("frame", "deontic"),
+            ("frame", "doxastic"),
+            ("frame", "frame"),
+            ("temporal", "deontic"),
+        ),
+        "004746": (
+            ("frame", "conditional_normative"),
+            ("frame", "deontic"),
+            ("temporal", "epistemic"),
+        ),
+    }
+
+    for packet_id, expected_pairs in refined_packets.items():
+        packet_pairs = getattr(
+            modal_registry,
+            f"COMPILER_REFINED_PACKET_{packet_id}_FAMILY_PAIRS",
+        )
+        assert packet_pairs == expected_pairs
+        for predicted_family, target_family in expected_pairs:
+            assert (predicted_family, target_family) in (
+                COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS
+            )
+
+    ambiguity_pairs = modal_registry.COMPILER_AMBIGUITY_PACKET_001879_FAMILY_PAIRS
+    assert ("frame", "dynamic") in ambiguity_pairs
+    for predicted_family, target_family in ambiguity_pairs:
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )

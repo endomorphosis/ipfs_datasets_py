@@ -18,6 +18,7 @@ import warnings
 from . import ZKPProof, ZKPError
 from .backends import get_backend
 from .canonicalization import canonicalize_axioms, canonicalize_theorem, theorem_hash_hex
+from .circuits import compiler_guidance_ref_from_metadata, refresh_proof_attestation
 
 
 class ZKPProver:
@@ -184,7 +185,24 @@ class ZKPProver:
             if "theorem_hash" in updated_public_inputs:
                 updated_public_inputs["theorem_hash"] = theorem_hash_hex(theorem)
 
-            return replace(proof, public_inputs=updated_public_inputs)
+            updated_metadata = dict(proof.metadata or {})
+            if (
+                "attestation_ref" in updated_public_inputs
+                or "attestation_view_version" in updated_public_inputs
+                or isinstance(updated_metadata.get("attestation_view"), dict)
+            ):
+                refreshed = replace(
+                    proof,
+                    public_inputs=updated_public_inputs,
+                    metadata=updated_metadata,
+                )
+                return refresh_proof_attestation(refreshed)
+
+            return replace(
+                proof,
+                public_inputs=updated_public_inputs,
+                metadata=updated_metadata,
+            )
         except Exception:
             return proof
     
@@ -207,9 +225,23 @@ class ZKPProver:
             'security_level': self.security_level,
         }
         if metadata:
-            for key in ("seed", "circuit_version", "ruleset_id"):
+            for key in (
+                "backend",
+                "circuit_id",
+                "circuit_ref",
+                "seed",
+                "circuit_id",
+                "circuit_ref",
+                "circuit_version",
+                "ruleset_id",
+                "compiler_guidance_ref",
+                "compiler_guidance_version",
+            ):
                 if key in metadata:
                     meta_ctx[key] = metadata.get(key)
+            guidance_ref = compiler_guidance_ref_from_metadata(metadata)
+            if guidance_ref:
+                meta_ctx["compiler_guidance_ref"] = guidance_ref
 
         key_data = json.dumps(
             {
@@ -255,4 +287,3 @@ class ZKPProver:
             private_axioms=private_axioms,
             metadata=metadata,
         )
-

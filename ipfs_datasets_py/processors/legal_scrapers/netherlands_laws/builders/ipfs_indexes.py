@@ -6,7 +6,7 @@ import json
 import math
 import pickle
 import re
-from collections import Counter
+from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -51,6 +51,15 @@ def load_source_rows(source_dir: Path | None = None) -> list[dict[str, Any]]:
                 "citation": row.get("citation"),
                 "content_address": row.get("content_address"),
                 "source_url": row.get("source_url"),
+                "law_status": row.get("law_status"),
+                "is_current": row.get("is_current"),
+                "valid_from": row.get("valid_from"),
+                "valid_to": row.get("valid_to"),
+                "effective_date": row.get("effective_date"),
+                "retrieved_at": row.get("retrieved_at"),
+                "status_source": row.get("status_source"),
+                "status_confidence": row.get("status_confidence"),
+                "status_note": row.get("status_note"),
                 "text": row.get("text") or "",
             }
         )
@@ -66,10 +75,30 @@ def load_source_rows(source_dir: Path | None = None) -> list[dict[str, Any]]:
                 "citation": row.get("citation"),
                 "content_address": row.get("content_address"),
                 "source_url": None,
+                "law_status": row.get("law_status"),
+                "is_current": row.get("is_current"),
+                "valid_from": row.get("valid_from"),
+                "valid_to": row.get("valid_to"),
+                "effective_date": row.get("effective_date"),
+                "retrieved_at": row.get("retrieved_at"),
+                "status_source": row.get("status_source"),
+                "status_confidence": row.get("status_confidence"),
+                "status_note": row.get("status_note"),
                 "text": row.get("text") or "",
             }
         )
     return corpus
+
+
+def load_source_run_metadata(source_dir: Path | None = None) -> dict[str, Any]:
+    source_dir = source_dir or DEFAULT_SOURCE_DIR
+    metadata_path = source_dir / "data/metadata/netherlands_laws_run_metadata_latest.json"
+    if not metadata_path.exists():
+        return {}
+    try:
+        return json.loads(metadata_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
 
 
 def _write_dataset_card(out_dir: Path, title: str, repo_id: str, configs: list[str], body: str) -> None:
@@ -108,6 +137,22 @@ def _write_gitattributes(out_dir: Path) -> None:
         "data/**/*.jsonl filter=lfs diff=lfs merge=lfs -text\n"
         "data/**/*.jsonld filter=lfs diff=lfs merge=lfs -text\n",
         encoding="utf-8",
+    )
+
+
+def _catalog_summary_text(run_metadata: dict[str, Any]) -> str:
+    if not run_metadata.get("catalog_backed_run"):
+        return ""
+    counts = run_metadata.get("catalog_coverage_counts") or {}
+    return (
+        f"Catalog-backed production batch: {run_metadata.get('catalog_batch_size', 'unknown')} queued BWBR identifier(s). "
+        f"Catalog coverage after this run: {counts.get('complete', 'unknown')} complete of "
+        f"{counts.get('total_discovered_identifiers', 'unknown')} discovered identifier(s) "
+        f"({run_metadata.get('catalog_percent_complete', 'unknown')}%). Remaining: "
+        f"{counts.get('remaining', 'unknown')}. Integrity validation ok: "
+        f"{run_metadata.get('catalog_integrity_ok', 'unknown')}. "
+        "This is not full Dutch corpus coverage until every discovered identifier is parsed, intentionally skipped, "
+        "or permanently failed with explanation. "
     )
 
 
@@ -153,6 +198,7 @@ def build_vector_index(
     from sklearn.preprocessing import normalize
 
     corpus = corpus or load_source_rows(source_dir)
+    run_metadata = load_source_run_metadata(source_dir)
     out_dir = out_dir or DEFAULT_VECTOR_OUT_DIR
     docs: list[dict[str, Any]] = []
     texts: list[str] = []
@@ -182,6 +228,15 @@ def build_vector_index(
             "title": row.get("title"),
             "citation": row.get("citation"),
             "content_address": row.get("content_address"),
+            "law_status": row.get("law_status"),
+            "is_current": row.get("is_current"),
+            "valid_from": row.get("valid_from"),
+            "valid_to": row.get("valid_to"),
+            "effective_date": row.get("effective_date"),
+            "retrieved_at": row.get("retrieved_at"),
+            "status_source": row.get("status_source"),
+            "status_confidence": row.get("status_confidence"),
+            "status_note": row.get("status_note"),
             "embedding": dense[idx].tolist(),
             "embedding_dim": int(dense.shape[1]),
             "search_text_preview": row["search_text"][:500],
@@ -205,6 +260,9 @@ def build_vector_index(
         "index_key": "source_cid",
     }
     write_json(out_dir / "artifacts/metadata.json", metadata)
+    scrape_date = str(run_metadata.get("scraped_at") or "unknown")
+    full_bwb = run_metadata.get("full_bwb_discovery") or {}
+    catalog_summary = _catalog_summary_text(run_metadata)
     _write_dataset_card(
         out_dir,
         "IPFS Netherlands Laws Vector Index",
@@ -213,10 +271,18 @@ def build_vector_index(
         (
             "Dense vector mapping keyed by source CID, with FAISS and TF-IDF/SVD artifacts.\n\n"
             f"This index covers {len(mapping_rows)} rows from the paired CID dataset. "
+            f"Source scrape date: {scrape_date}. "
+            f"Full BWB discovery inventory found {full_bwb.get('unique_laws_discovered', 'unknown')} unique BWBR identifiers "
+            f"from {full_bwb.get('number_of_records_reported', 'unknown')} official SRU record(s). "
+            f"{catalog_summary}"
             "The current source dataset may be capped; do not describe it as the full Dutch corpus unless "
             "the paired base dataset manifest/run metadata proves full discovery coverage. "
             "The paired base dataset includes article extraction diagnostics and parser coverage improvements "
-            "for older/French heading styles."
+            "for older/French heading styles. The paired source package was quality-audited after parser-noise "
+            "cleanup for official website UI chrome, duplicate article identifier disambiguation, clean "
+            "hierarchy/citation validation, and sampled CID/vector/BM25/KG retrieval checks. Historical/former laws are preserved and labeled with "
+            "`law_status`, `is_current`, validity dates, status source, confidence, and notes; these fields "
+            "are also present in the vector mapping rows for filtering. This index is not legal advice."
         ),
     )
     _write_gitattributes(out_dir)
@@ -231,9 +297,11 @@ def build_bm25_index(
     repo_id: str = DEFAULT_HF_REPO_IDS["bm25"],
 ) -> Path:
     corpus = corpus or load_source_rows(source_dir)
+    run_metadata = load_source_run_metadata(source_dir)
     out_dir = out_dir or DEFAULT_BM25_OUT_DIR
     doc_lengths: dict[str, int] = {}
     tf_by_doc: dict[str, Counter[str]] = {}
+    postings_by_term: dict[str, list[tuple[str, int]]] = defaultdict(list)
     doc_rows: list[dict[str, Any]] = []
     row_by_cid: dict[str, dict[str, Any]] = {}
 
@@ -241,8 +309,11 @@ def build_bm25_index(
         text = f"{row.get('title') or ''} {row.get('citation') or ''} {row.get('text') or ''}".strip()
         source_cid = row["source_cid"]
         tokens = tokenise(text)
+        term_counts = Counter(tokens)
         doc_lengths[source_cid] = len(tokens)
-        tf_by_doc[source_cid] = Counter(tokens)
+        tf_by_doc[source_cid] = term_counts
+        for term, tf in term_counts.items():
+            postings_by_term[term].append((source_cid, tf))
         payload = {
             "cid": source_cid,
             "source_cid": source_cid,
@@ -253,6 +324,15 @@ def build_bm25_index(
             "title": row.get("title"),
             "citation": row.get("citation"),
             "content_address": row.get("content_address"),
+            "law_status": row.get("law_status"),
+            "is_current": row.get("is_current"),
+            "valid_from": row.get("valid_from"),
+            "valid_to": row.get("valid_to"),
+            "effective_date": row.get("effective_date"),
+            "retrieved_at": row.get("retrieved_at"),
+            "status_source": row.get("status_source"),
+            "status_confidence": row.get("status_confidence"),
+            "status_note": row.get("status_note"),
             "doc_length": len(tokens),
             "token_count_unique": len(tf_by_doc[source_cid]),
             "text_preview": text[:500],
@@ -274,10 +354,7 @@ def build_bm25_index(
         df = doc_freq[term]
         idf = math.log(1 + (n_docs - df + 0.5) / (df + 0.5))
         postings = []
-        for source_cid, tf_counter in tf_by_doc.items():
-            tf = tf_counter.get(term, 0)
-            if not tf:
-                continue
+        for source_cid, tf in postings_by_term.get(term, []):
             dl = doc_lengths[source_cid]
             score = idf * ((tf * (k1 + 1)) / (tf + k1 * (1 - b + b * (dl / avgdl))))
             postings.append(
@@ -305,6 +382,9 @@ def build_bm25_index(
         "index_key": "source_cid",
     }
     write_json(out_dir / "artifacts/metadata.json", metadata)
+    scrape_date = str(run_metadata.get("scraped_at") or "unknown")
+    full_bwb = run_metadata.get("full_bwb_discovery") or {}
+    catalog_summary = _catalog_summary_text(run_metadata)
     _write_dataset_card(
         out_dir,
         "IPFS Netherlands Laws BM25 Index",
@@ -313,10 +393,18 @@ def build_bm25_index(
         (
             "Sparse BM25 document and postings tables keyed by source CID.\n\n"
             f"This index covers {len(doc_rows)} documents and {len(term_rows)} terms from the paired CID dataset. "
+            f"Source scrape date: {scrape_date}. "
+            f"Full BWB discovery inventory found {full_bwb.get('unique_laws_discovered', 'unknown')} unique BWBR identifiers "
+            f"from {full_bwb.get('number_of_records_reported', 'unknown')} official SRU record(s). "
+            f"{catalog_summary}"
             "The current source dataset may be capped; do not describe it as the full Dutch corpus unless "
             "the paired base dataset manifest/run metadata proves full discovery coverage. "
             "The paired base dataset includes article extraction diagnostics and parser coverage improvements "
-            "for older/French heading styles."
+            "for older/French heading styles. The paired source package was quality-audited after parser-noise "
+            "cleanup for official website UI chrome, duplicate article identifier disambiguation, clean "
+            "hierarchy/citation validation, and sampled CID/vector/BM25/KG retrieval checks. Historical/former laws are preserved and labeled with "
+            "`law_status`, `is_current`, validity dates, status source, confidence, and notes; these fields "
+            "are also present in BM25 document rows for filtering. This index is not legal advice."
         ),
     )
     _write_gitattributes(out_dir)
@@ -331,6 +419,7 @@ def build_knowledge_graph(
     repo_id: str = DEFAULT_HF_REPO_IDS["knowledge-graph"],
 ) -> Path:
     corpus = corpus or load_source_rows(source_dir)
+    run_metadata = load_source_run_metadata(source_dir)
     out_dir = out_dir or DEFAULT_KG_OUT_DIR
     laws = [row for row in corpus if row["record_type"] == "law"]
     articles = [row for row in corpus if row["record_type"] == "article"]
@@ -345,6 +434,9 @@ def build_knowledge_graph(
         "article_identifier": "https://schema.org/identifier",
         "law_identifier": "https://schema.org/identifier",
         "content_address": "https://schema.org/url",
+        "law_status": "https://schema.org/legislationLegalForce",
+        "valid_from": "https://schema.org/validFrom",
+        "valid_to": "https://schema.org/validThrough",
         "hasPart": {"@id": "https://schema.org/hasPart", "@type": "@id"},
         "isPartOf": {"@id": "https://schema.org/isPartOf", "@type": "@id"},
     }
@@ -356,6 +448,15 @@ def build_knowledge_graph(
             "source_cid": law["source_cid"],
             "law_identifier": law["law_identifier"],
             "name": law["title"],
+            "law_status": law.get("law_status") or "unknown",
+            "is_current": law.get("is_current"),
+            "valid_from": law.get("valid_from"),
+            "valid_to": law.get("valid_to"),
+            "effective_date": law.get("effective_date"),
+            "retrieved_at": law.get("retrieved_at"),
+            "status_source": law.get("status_source"),
+            "status_confidence": law.get("status_confidence"),
+            "status_note": law.get("status_note"),
         }
         jsonld_graph.append(node)
         graph_nodes.append(
@@ -368,6 +469,14 @@ def build_knowledge_graph(
                 "jsonld_id": law["content_address"],
                 "law_identifier": law["law_identifier"],
                 "article_identifier": None,
+                "law_status": law.get("law_status"),
+                "is_current": law.get("is_current"),
+                "valid_from": law.get("valid_from"),
+                "valid_to": law.get("valid_to"),
+                "effective_date": law.get("effective_date"),
+                "retrieved_at": law.get("retrieved_at"),
+                "status_source": law.get("status_source"),
+                "status_confidence": law.get("status_confidence"),
             }
         )
 
@@ -381,6 +490,15 @@ def build_knowledge_graph(
             "article_identifier": article["article_identifier"],
             "law_identifier": article["law_identifier"],
             "name": article["title"],
+            "law_status": article.get("law_status") or "unknown",
+            "is_current": article.get("is_current"),
+            "valid_from": article.get("valid_from"),
+            "valid_to": article.get("valid_to"),
+            "effective_date": article.get("effective_date"),
+            "retrieved_at": article.get("retrieved_at"),
+            "status_source": article.get("status_source"),
+            "status_confidence": article.get("status_confidence"),
+            "status_note": article.get("status_note"),
         }
         if law:
             node["isPartOf"] = {"@id": law["content_address"]}
@@ -395,6 +513,14 @@ def build_knowledge_graph(
                 "jsonld_id": article["content_address"],
                 "law_identifier": article["law_identifier"],
                 "article_identifier": article["article_identifier"],
+                "law_status": article.get("law_status"),
+                "is_current": article.get("is_current"),
+                "valid_from": article.get("valid_from"),
+                "valid_to": article.get("valid_to"),
+                "effective_date": article.get("effective_date"),
+                "retrieved_at": article.get("retrieved_at"),
+                "status_source": article.get("status_source"),
+                "status_confidence": article.get("status_confidence"),
             }
         )
         if law:
@@ -434,6 +560,9 @@ def build_knowledge_graph(
         "index_key": "source_cid",
     }
     write_json(out_dir / "artifacts/metadata.json", metadata)
+    scrape_date = str(run_metadata.get("scraped_at") or "unknown")
+    full_bwb = run_metadata.get("full_bwb_discovery") or {}
+    catalog_summary = _catalog_summary_text(run_metadata)
     _write_dataset_card(
         out_dir,
         "IPFS Netherlands Laws Knowledge Graph",
@@ -442,10 +571,18 @@ def build_knowledge_graph(
         (
             "JSON-LD graph and node/edge tables whose identities are IPFS content addresses.\n\n"
             f"This graph currently has {len(graph_nodes)} nodes and {len(graph_edges)} edges from the paired CID dataset. "
+            f"Source scrape date: {scrape_date}. "
+            f"Full BWB discovery inventory found {full_bwb.get('unique_laws_discovered', 'unknown')} unique BWBR identifiers "
+            f"from {full_bwb.get('number_of_records_reported', 'unknown')} official SRU record(s). "
+            f"{catalog_summary}"
             "The current source dataset may be capped; do not describe it as the full Dutch corpus unless "
             "the paired base dataset manifest/run metadata proves full discovery coverage. "
             "The paired base dataset includes article extraction diagnostics and parser coverage improvements "
-            "for older/French heading styles."
+            "for older/French heading styles. The paired source package was quality-audited after parser-noise "
+            "cleanup for official website UI chrome, duplicate article identifier disambiguation, clean "
+            "hierarchy/citation validation, and sampled CID/vector/BM25/KG retrieval checks. Historical/former laws are preserved and labeled with "
+            "`law_status`, `is_current`, validity dates, status source, confidence, and notes in graph nodes "
+            "and JSON-LD objects. This graph is not legal advice."
         ),
     )
     _write_gitattributes(out_dir)
@@ -468,9 +605,9 @@ def build_knowledge_graph_package(*args: Any, **kwargs: Any) -> Path:
 def build_all_indexes(source_dir: Path | None = None) -> list[Path]:
     corpus = load_source_rows(source_dir)
     return [
-        build_vector_index(corpus=corpus),
-        build_bm25_index(corpus=corpus),
-        build_knowledge_graph(corpus=corpus),
+        build_vector_index(corpus=corpus, source_dir=source_dir),
+        build_bm25_index(corpus=corpus, source_dir=source_dir),
+        build_knowledge_graph(corpus=corpus, source_dir=source_dir),
     ]
 
 

@@ -7,18 +7,191 @@ import hashlib
 import math
 import os
 import re
+import signal
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    MutableMapping,
+    Optional,
+    Sequence,
+)
 
-from .legal_samples import LegalSample
+from .legal_samples import LegalSample, stable_mock_embedding
 from .modal_registry import ModalLogicFamily
 
 _LEGAL_IR_TARGET_CACHE_MAX = 2048
 _LEGAL_IR_TARGET_CACHE_LOCK = threading.Lock()
 _LEGAL_IR_TARGET_CACHE: Dict[str, Any] = {}
+_LEGAL_IR_TARGET_DISK_CACHE_VERSION = "legal-ir-target-disk-cache-v2"
+_LEGAL_IR_TARGET_DISK_CACHE_KIND = "legal_ir_training_target"
+_LEGAL_IR_TARGET_DISK_CACHE_DIR_ENV = "IPFS_DATASETS_LEGAL_IR_METRIC_CACHE_DIR"
+_LEGAL_IR_TARGET_DISK_CACHE_ENABLED_ENV = "IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE"
+_LEGAL_IR_TARGET_TIMEOUT_SECONDS_ENV = "IPFS_DATASETS_LEGAL_IR_TARGET_TIMEOUT_SECONDS"
+_LEGAL_IR_TARGET_DEFAULT_TIMEOUT_SECONDS = 15.0
+_PROJECTION_AUTO_LINE_SEARCH_ATTEMPTS_ENV = (
+    "IPFS_DATASETS_GENERALIZABLE_PROJECTION_AUTO_LINE_SEARCH_ATTEMPTS"
+)
+_FALSE_ENV_VALUES = {"0", "false", "no", "off", "none", "disabled"}
+_LEGAL_IR_TARGET_CODE_FINGERPRINT_LOCK = threading.Lock()
+_LEGAL_IR_TARGET_CODE_FINGERPRINT_VALUE: Optional[str] = None
+MODAL_AUTOENCODER_ARCHITECTURE_VERSION = "legacy_dense_v1"
+MODAL_AUTOENCODER_STATE_SCHEMA_VERSION = "modal-autoencoder-state-v1"
+MODAL_AUTOENCODER_LOW_RANK_STATE_SCHEMA_VERSION = "modal-autoencoder-low-rank-v1"
+MODAL_AUTOENCODER_LOW_RANK_BASIS = "implicit-dct-v1"
+MODAL_AUTOENCODER_LOW_RANK_DEFAULT_RANK = 32
+PROJECTION_DEADBAND_MODES = frozenset({"off", "shadow", "enforce"})
+PROJECTION_DEADBAND_CE_REGRESSION_KEYS = frozenset(
+    {"cross_entropy_excess_loss", "cross_entropy_loss"}
+)
+PROJECTION_DEADBAND_DEFAULT_HARD_GUARDRAILS = (
+    "embedding_cosine_similarity",
+    "reconstruction_loss",
+    "legal_ir:*",
+)
+PROJECTION_PRESCREEN_MODES = frozenset({"off", "shadow", "enforce"})
+
+
+@dataclass(frozen=True)
+class _CachedLegalIRDocument:
+    document_hash: str
+    document_id: str = ""
+    version: str = ""
+
+    def canonical_hash(self) -> str:
+        return self.document_hash
+
+
+@dataclass(frozen=True)
+class _CachedLegalIRTrainingTarget:
+    bridge_names: Sequence[str]
+    document: _CachedLegalIRDocument
+    losses: Mapping[str, float] = field(default_factory=dict)
+    adapter_losses: Mapping[str, Mapping[str, float]] = field(default_factory=dict)
+    view_distribution: Mapping[str, float] = field(default_factory=dict)
+    accepted: bool = False
+
+    @property
+    def total_loss(self) -> float:
+        return float(self.losses.get("legal_ir_multiview_total_loss", 0.0))
+
+
+class _LegalIRTargetTimeout(RuntimeError):
+    """Raised when LegalIR metric target construction exceeds its budget."""
+
+_AUTOENCODER_DIRECTIONAL_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = {
+    "alethic": ("conditional_normative", "deontic", "temporal"),
+    "conditional_normative": ("deontic",),
+    "deontic": ("conditional_normative", "deontic", "epistemic", "frame", "temporal"),
+    "dynamic": ("dynamic", "temporal"),
+    "epistemic": ("conditional_normative", "epistemic"),
+    "frame": ("conditional_normative", "deontic", "doxastic", "epistemic", "frame", "temporal"),
+    "temporal": ("conditional_normative", "deontic", "epistemic", "frame", "temporal"),
+}
+
+_AUTOENCODER_CUE_TARGET_FAMILIES: Mapping[str, tuple[str, ...]] = {
+    "after": ("temporal", "epistemic"),
+    "as_provided_in": ("conditional_normative", "deontic", "temporal"),
+    "as_authorized": ("deontic",),
+    "authorized": ("deontic", "epistemic"),
+    "authority": ("frame", "deontic"),
+    "before": ("temporal", "epistemic"),
+    "by": ("temporal", "deontic"),
+    "conditional": ("conditional_normative", "deontic"),
+    "deontic": ("deontic", "conditional_normative"),
+    "codification": ("frame", "deontic", "temporal"),
+    "determined": ("epistemic", "doxastic", "conditional_normative"),
+    "determines": ("epistemic", "doxastic", "conditional_normative"),
+    "determining": ("epistemic", "doxastic", "conditional_normative"),
+    "determine": ("epistemic", "doxastic", "conditional_normative"),
+    "obligation": ("deontic", "conditional_normative"),
+    "permission": ("deontic", "epistemic"),
+    "subject_to": ("conditional_normative", "deontic", "frame"),
+    "temporal": ("temporal", "deontic"),
+    "except_as_otherwise_provided": ("conditional_normative", "deontic"),
+    "except_as_provided": ("conditional_normative", "deontic"),
+    "except_as_provided_in": ("conditional_normative", "deontic", "temporal"),
+    "exception": ("conditional_normative", "deontic"),
+    "if": ("conditional_normative",),
+    "may": ("deontic",),
+    "may_not": ("deontic",),
+    "must": ("deontic",),
+    "notwithstanding": ("conditional_normative", "deontic"),
+    "not_later_than": ("temporal", "deontic"),
+    "provided": ("conditional_normative", "deontic", "temporal"),
+    "provided_that": ("conditional_normative",),
+    "shall": ("deontic",),
+    "shall_not": ("deontic",),
+    "subject_to": ("conditional_normative", "deontic", "frame"),
+    "subject_to_section": ("conditional_normative", "deontic", "frame"),
+    "under": ("temporal", "conditional_normative", "dynamic"),
+    "uscode_codification_transfer_heading_v1": ("frame", "deontic", "temporal"),
+    "following": ("temporal", "frame"),
+    "not_later_than": ("temporal", "deontic", "frame"),
+    "shall": ("deontic", "conditional_normative"),
+    "temporal": ("temporal", "deontic", "frame"),
+    "until": ("temporal", "epistemic"),
+    "unless": ("conditional_normative", "temporal"),
+    "when": ("conditional_normative", "temporal"),
+    "whenever": ("conditional_normative", "temporal"),
+    "within": ("temporal", "epistemic"),
+    "with_respect_to": ("conditional_normative",),
+}
+
+_AUTOENCODER_FAMILY_PAIR_PRIORITY: Mapping[str, int] = {
+    "conditional_normative": 0,
+    "deontic": 1,
+    "frame": 2,
+    "temporal": 3,
+    "epistemic": 4,
+    "doxastic": 5,
+    "dynamic": 6,
+}
+_AUTOENCODER_PRIORITY_FAMILY_PAIRS = {
+    "frame->conditional_normative",
+    "frame->deontic",
+    "frame->frame",
+    "frame->temporal",
+    "temporal->conditional_normative",
+    "temporal->deontic",
+    "temporal->temporal",
+}
+_AUTOENCODER_TARGETED_RECONSTRUCTION_FAMILY_PAIRS = frozenset(
+    {
+        "deontic->deontic",
+        "frame->conditional_normative",
+        "conditional_normative->deontic",
+        "deontic->deontic",
+        "deontic->temporal",
+        "frame->conditional_normative",
+        "frame->deontic",
+        "frame->frame",
+        "frame->temporal",
+        "temporal->conditional_normative",
+        "temporal->frame",
+        "temporal->temporal",
+    }
+)
+
+_AUTOENCODER_FAMILY_LEGAL_IR_VIEW_TARGETS: Mapping[str, tuple[str, ...]] = {
+    "conditional_normative": ("deontic.ir", "TDFOL.prover"),
+    "deontic": ("deontic.ir", "TDFOL.prover"),
+    "doxastic": ("TDFOL.prover",),
+    "dynamic": ("TDFOL.prover",),
+    "epistemic": ("TDFOL.prover", "knowledge_graphs.neo4j_compat"),
+    "frame": ("modal.frame_logic", "knowledge_graphs.neo4j_compat"),
+    "temporal": ("TDFOL.prover", "modal.frame_logic"),
+}
+
+_AUTOENCODER_TYPED_DECOMPILER_SLOT_WEIGHT = 1.6
 
 
 def cosine_similarity(left: Sequence[float], right: Sequence[float]) -> float:
@@ -69,6 +242,85 @@ def cross_entropy_distribution_loss(
     return loss
 
 
+def distribution_entropy_loss(target_distribution: Mapping[str, float]) -> float:
+    """Return the entropy floor for a normalized target distribution."""
+    total_weight = sum(
+        max(0.0, float(weight))
+        for weight in target_distribution.values()
+    )
+    if total_weight <= 0.0:
+        return 0.0
+    loss = 0.0
+    for weight in target_distribution.values():
+        probability = max(0.0, float(weight)) / total_weight
+        if probability > 0.0:
+            loss += probability * -math.log(probability)
+    return loss
+
+
+def cross_entropy_excess_distribution_loss(
+    probabilities: Mapping[str, float],
+    target_distribution: Mapping[str, float],
+) -> float:
+    """Return cross entropy above the target entropy floor, i.e. KL divergence."""
+    excess = cross_entropy_distribution_loss(
+        probabilities,
+        target_distribution,
+    ) - distribution_entropy_loss(target_distribution)
+    return max(0.0, excess)
+
+
+def _low_rank_effective_rank(rank: int, dimension: int) -> int:
+    return max(0, min(int(rank), int(dimension)))
+
+
+def _implicit_dct_basis_value(component: int, index: int, dimension: int) -> float:
+    if dimension <= 0:
+        return 0.0
+    if component <= 0:
+        return 1.0 / math.sqrt(float(dimension))
+    return math.sqrt(2.0 / float(dimension)) * math.cos(
+        math.pi * (float(index) + 0.5) * float(component) / float(dimension)
+    )
+
+
+def _low_rank_project_vector(
+    vector: Sequence[float],
+    *,
+    rank: int,
+) -> List[float]:
+    values = [float(value) for value in vector]
+    dimension = len(values)
+    effective_rank = _low_rank_effective_rank(rank, dimension)
+    coefficients: List[float] = []
+    for component in range(effective_rank):
+        coefficients.append(
+            sum(
+                value * _implicit_dct_basis_value(component, index, dimension)
+                for index, value in enumerate(values)
+            )
+        )
+    return coefficients
+
+
+def _low_rank_reconstruct_vector(
+    coefficients: Sequence[float],
+    *,
+    dimension: int,
+) -> List[float]:
+    dimension = max(0, int(dimension))
+    if dimension <= 0:
+        return []
+    return [
+        sum(
+            float(coefficient)
+            * _implicit_dct_basis_value(component, index, dimension)
+            for component, coefficient in enumerate(coefficients)
+        )
+        for index in range(dimension)
+    ]
+
+
 @dataclass(frozen=True)
 class AutoencoderEvaluation:
     """Metrics for one deterministic baseline pass."""
@@ -81,15 +333,20 @@ class AutoencoderEvaluation:
     frame_ranking_loss: float
     symbolic_validity_penalty: float
     decoded_embeddings: Dict[str, List[float]]
+    sample_embedding_metrics: List[Dict[str, object]] = field(default_factory=list)
     legal_ir_target_count: int = 0
     legal_ir_losses: Dict[str, float] = field(default_factory=dict)
     legal_ir_predicted_view_distribution: Dict[str, float] = field(default_factory=dict)
     legal_ir_target_hashes: Dict[str, str] = field(default_factory=dict)
     legal_ir_view_distribution: Dict[str, float] = field(default_factory=dict)
+    cross_entropy_entropy_loss: float = 0.0
+    cross_entropy_excess_loss: float = 0.0
 
     def to_dict(self) -> Dict[str, object]:
         return {
             "cosine_loss": self.cosine_loss,
+            "cross_entropy_entropy_loss": self.cross_entropy_entropy_loss,
+            "cross_entropy_excess_loss": self.cross_entropy_excess_loss,
             "cross_entropy_loss": self.cross_entropy_loss,
             "decoded_embeddings": self.decoded_embeddings,
             "embedding_cosine_similarity": self.embedding_cosine_similarity,
@@ -102,6 +359,7 @@ class AutoencoderEvaluation:
             "legal_ir_target_hashes": dict(sorted(self.legal_ir_target_hashes.items())),
             "legal_ir_view_distribution": dict(sorted(self.legal_ir_view_distribution.items())),
             "reconstruction_loss": self.reconstruction_loss,
+            "sample_embedding_metrics": list(self.sample_embedding_metrics),
             "sample_count": self.sample_count,
             "symbolic_validity_penalty": self.symbolic_validity_penalty,
         }
@@ -140,6 +398,7 @@ class AutoencoderIntrospection:
     predicted_probability: float
     family_margin: float
     cosine_similarity: float
+    cosine_loss: float
     reconstruction_loss: float
     residual_vector: List[float]
     base_decoded_embedding: List[float]
@@ -148,8 +407,14 @@ class AutoencoderIntrospection:
     sample_memory_used: bool
     top_family_contributions: List[AutoencoderFeatureContribution] = field(default_factory=list)
     top_embedding_contributions: List[AutoencoderFeatureContribution] = field(default_factory=list)
+    source_decompiled_text_embedding_cosine_loss: float = 0.0
+    source_decompiled_text_token_loss: float = 0.0
+    pipeline_stage_diagnostics: Dict[str, Any] = field(default_factory=dict)
+    pipeline_stage_focus: List[str] = field(default_factory=list)
     synthesis_focus: List[str] = field(default_factory=list)
     legal_ir_view_cross_entropy_loss: float = 0.0
+    legal_ir_view_entropy_loss: float = 0.0
+    legal_ir_view_cross_entropy_excess_loss: float = 0.0
     legal_ir_component_gaps: Dict[str, float] = field(default_factory=dict)
     legal_ir_losses: Dict[str, float] = field(default_factory=dict)
     legal_ir_underrepresented_components: List[str] = field(default_factory=list)
@@ -160,6 +425,7 @@ class AutoencoderIntrospection:
     def to_dict(self) -> Dict[str, Any]:
         return {
             "base_decoded_embedding": list(self.base_decoded_embedding),
+            "cosine_loss": self.cosine_loss,
             "cosine_similarity": self.cosine_similarity,
             "decoded_embedding": list(self.decoded_embedding),
             "family_margin": self.family_margin,
@@ -176,13 +442,25 @@ class AutoencoderIntrospection:
                 self.legal_ir_underrepresented_components
             ),
             "legal_ir_view_cross_entropy_loss": self.legal_ir_view_cross_entropy_loss,
+            "legal_ir_view_entropy_loss": self.legal_ir_view_entropy_loss,
+            "legal_ir_view_cross_entropy_excess_loss": (
+                self.legal_ir_view_cross_entropy_excess_loss
+            ),
             "legal_ir_view_distribution": dict(sorted(self.legal_ir_view_distribution.items())),
             "predicted_family": self.predicted_family,
             "predicted_probability": self.predicted_probability,
+            "pipeline_stage_diagnostics": dict(
+                sorted(self.pipeline_stage_diagnostics.items())
+            ),
+            "pipeline_stage_focus": list(self.pipeline_stage_focus),
             "reconstruction_loss": self.reconstruction_loss,
             "residual_vector": list(self.residual_vector),
             "sample_id": self.sample_id,
             "sample_memory_used": self.sample_memory_used,
+            "source_decompiled_text_embedding_cosine_loss": (
+                self.source_decompiled_text_embedding_cosine_loss
+            ),
+            "source_decompiled_text_token_loss": self.source_decompiled_text_token_loss,
             "synthesis_focus": list(self.synthesis_focus),
             "target_family": self.target_family,
             "target_probability": self.target_probability,
@@ -559,7 +837,512 @@ class ModalAutoencoderTrainingState:
 
     def copy(self) -> "ModalAutoencoderTrainingState":
         """Return a deep copy suitable for transactional optimizer rollback."""
-        return self.from_dict(self.to_dict())
+        copied = self.generalizable_copy()
+        copied.decoded_embeddings = {
+            sample_id: list(vector)
+            for sample_id, vector in self.decoded_embeddings.items()
+        }
+        copied.family_logits = {
+            sample_id: dict(logits)
+            for sample_id, logits in self.family_logits.items()
+        }
+        copied.applied_todo_ids = list(self.applied_todo_ids)
+        return copied
+
+    def generalizable_entry_count(self) -> int:
+        """Return a cheap size estimate for reusable projection state."""
+        return sum(
+            len(mapping)
+            for mapping in (
+                self.compiler_quality_embedding_weights,
+                self.compiler_quality_family_logits,
+                self.logic_signature_embedding_weights,
+                self.logic_signature_family_logits,
+                self.logic_signature_legal_ir_view_logits,
+                self.round_trip_signal_embedding_weights,
+                self.round_trip_signal_family_logits,
+                self.round_trip_signal_legal_ir_view_logits,
+                self.decompiler_plan_embedding_weights,
+                self.decompiler_plan_family_logits,
+                self.decompiler_plan_legal_ir_view_logits,
+                self.predicate_argument_embedding_weights,
+                self.predicate_argument_family_logits,
+                self.predicate_argument_legal_ir_view_logits,
+                self.feature_embedding_weights,
+                self.family_embedding_weights,
+                self.family_semantic_slot_embedding_weights,
+                self.family_semantic_slot_legal_ir_view_embedding_weights,
+                self.family_legal_ir_view_embedding_weights,
+                self.semantic_slot_embedding_weights,
+                self.feature_family_logits,
+                self.semantic_slot_family_logits,
+                self.legal_ir_view_logits,
+                self.legal_ir_view_embedding_weights,
+                self.legal_ir_view_family_logits,
+                self.feature_legal_ir_view_logits,
+                self.family_semantic_slot_legal_ir_view_logits,
+                self.semantic_slot_legal_ir_view_embedding_weights,
+                self.semantic_slot_legal_ir_view_family_logits,
+                self.semantic_slot_legal_ir_view_logits,
+            )
+        )
+
+    def embedding_weight_maps(self) -> Dict[str, Mapping[str, Sequence[float]]]:
+        """Return reusable dense embedding-weight maps by state field name."""
+        return {
+            "compiler_quality_embedding_weights": self.compiler_quality_embedding_weights,
+            "logic_signature_embedding_weights": self.logic_signature_embedding_weights,
+            "round_trip_signal_embedding_weights": self.round_trip_signal_embedding_weights,
+            "decompiler_plan_embedding_weights": self.decompiler_plan_embedding_weights,
+            "predicate_argument_embedding_weights": self.predicate_argument_embedding_weights,
+            "feature_embedding_weights": self.feature_embedding_weights,
+            "family_embedding_weights": self.family_embedding_weights,
+            "family_semantic_slot_embedding_weights": self.family_semantic_slot_embedding_weights,
+            "family_semantic_slot_legal_ir_view_embedding_weights": (
+                self.family_semantic_slot_legal_ir_view_embedding_weights
+            ),
+            "family_legal_ir_view_embedding_weights": self.family_legal_ir_view_embedding_weights,
+            "semantic_slot_embedding_weights": self.semantic_slot_embedding_weights,
+            "legal_ir_view_embedding_weights": self.legal_ir_view_embedding_weights,
+            "semantic_slot_legal_ir_view_embedding_weights": (
+                self.semantic_slot_legal_ir_view_embedding_weights
+            ),
+        }
+
+    def low_rank_shadow_report(
+        self,
+        *,
+        rank: int = MODAL_AUTOENCODER_LOW_RANK_DEFAULT_RANK,
+        max_vectors: int = 128,
+    ) -> Dict[str, Any]:
+        """Estimate an implicit-basis low-rank embedding state without mutating state."""
+        effective_rank_request = max(0, int(rank))
+        sample_limit = max(0, int(max_vectors))
+        vector_maps = self.embedding_weight_maps()
+        dense_vector_entry_count = 0
+        dense_vector_scalar_count = 0
+        low_rank_coefficient_scalar_count = 0
+        low_rank_total_scalar_count = 0
+        sampled_vectors: List[tuple[str, str, List[float]]] = []
+        per_map: Dict[str, Dict[str, Any]] = {}
+        for map_name, mapping in sorted(vector_maps.items()):
+            entry_count = 0
+            dense_scalar_count = 0
+            coefficient_scalar_count = 0
+            dimensions: Dict[int, int] = {}
+            for key, vector in sorted(mapping.items()):
+                values = [float(value) for value in vector]
+                dimension = len(values)
+                if dimension <= 0:
+                    continue
+                entry_count += 1
+                dense_scalar_count += dimension
+                coefficient_scalar_count += _low_rank_effective_rank(
+                    effective_rank_request,
+                    dimension,
+                )
+                dimensions[dimension] = dimensions.get(dimension, 0) + 1
+                if len(sampled_vectors) < sample_limit:
+                    sampled_vectors.append((map_name, str(key), values))
+            dimension_metadata_scalar_count = entry_count
+            total_scalar_count = coefficient_scalar_count + dimension_metadata_scalar_count
+            dense_vector_entry_count += entry_count
+            dense_vector_scalar_count += dense_scalar_count
+            low_rank_coefficient_scalar_count += coefficient_scalar_count
+            low_rank_total_scalar_count += total_scalar_count
+            per_map[map_name] = {
+                "dense_scalar_count": dense_scalar_count,
+                "dimension_counts": {
+                    str(dimension): count
+                    for dimension, count in sorted(dimensions.items())
+                },
+                "entry_count": entry_count,
+                "estimated_low_rank_coefficient_scalar_count": (
+                    coefficient_scalar_count
+                ),
+                "estimated_low_rank_dimension_metadata_scalar_count": (
+                    dimension_metadata_scalar_count
+                ),
+                "estimated_low_rank_total_scalar_count": total_scalar_count,
+                "estimated_scalar_compression_ratio": round(
+                    dense_scalar_count / total_scalar_count,
+                    9,
+                )
+                if total_scalar_count > 0
+                else 0.0,
+            }
+
+        reconstruction_cosines: List[float] = []
+        reconstruction_mses: List[float] = []
+        sampled_records: List[Dict[str, Any]] = []
+        for map_name, key, vector in sampled_vectors:
+            coefficients = _low_rank_project_vector(
+                vector,
+                rank=effective_rank_request,
+            )
+            reconstructed = _low_rank_reconstruct_vector(
+                coefficients,
+                dimension=len(vector),
+            )
+            cosine = cosine_similarity(vector, reconstructed)
+            mse = mse_loss(vector, reconstructed)
+            reconstruction_cosines.append(cosine)
+            reconstruction_mses.append(mse)
+            sampled_records.append(
+                {
+                    "coefficient_count": len(coefficients),
+                    "cosine_similarity": round(cosine, 9),
+                    "dimension": len(vector),
+                    "key": key,
+                    "map": map_name,
+                    "mse_loss": round(mse, 9),
+                }
+            )
+
+        return {
+            "basis": MODAL_AUTOENCODER_LOW_RANK_BASIS,
+            "dense_vector_entry_count": dense_vector_entry_count,
+            "dense_vector_scalar_count": dense_vector_scalar_count,
+            "estimated_low_rank_basis_scalar_count": 0,
+            "estimated_low_rank_coefficient_scalar_count": (
+                low_rank_coefficient_scalar_count
+            ),
+            "estimated_low_rank_dimension_metadata_scalar_count": (
+                dense_vector_entry_count
+            ),
+            "estimated_low_rank_total_scalar_count": low_rank_total_scalar_count,
+            "estimated_scalar_compression_ratio": round(
+                dense_vector_scalar_count / low_rank_total_scalar_count,
+                9,
+            )
+            if low_rank_total_scalar_count > 0
+            else 0.0,
+            "max_vectors": sample_limit,
+            "per_map": per_map,
+            "rank": effective_rank_request,
+            "sample_average_reconstruction_cosine": round(
+                _mean(reconstruction_cosines),
+                9,
+            ),
+            "sample_average_reconstruction_mse": round(
+                _mean(reconstruction_mses),
+                9,
+            ),
+            "sample_records": sampled_records[:16],
+            "sampled_reconstruction_count": len(sampled_vectors),
+            "schema_version": MODAL_AUTOENCODER_LOW_RANK_STATE_SCHEMA_VERSION,
+            "shadow_mode": True,
+        }
+
+    def materialize_low_rank_shadow_state(
+        self,
+        *,
+        rank: int = MODAL_AUTOENCODER_LOW_RANK_DEFAULT_RANK,
+        max_vectors: Optional[int] = None,
+        include_report: bool = True,
+    ) -> Dict[str, Any]:
+        """Return a compact, JSON-serializable low-rank sidecar for dense vectors.
+
+        This is deliberately a shadow artifact: it can be saved and compared
+        against dense state, but active decoding/training still reads the dense
+        fields until the v2 rollout is explicitly promoted.
+        """
+
+        effective_rank = max(0, int(rank))
+        vector_limit = None if max_vectors is None else max(0, int(max_vectors))
+        vector_count = 0
+        dense_scalar_count = 0
+        coefficient_scalar_count = 0
+        complete = True
+        embedding_maps: Dict[str, Dict[str, Dict[str, Any]]] = {}
+        for map_name, mapping in sorted(self.embedding_weight_maps().items()):
+            map_payload: Dict[str, Dict[str, Any]] = {}
+            for key, vector in sorted(mapping.items()):
+                if vector_limit is not None and vector_count >= vector_limit:
+                    complete = False
+                    break
+                values = [float(value) for value in vector]
+                dimension = len(values)
+                if dimension <= 0:
+                    continue
+                coefficients = _low_rank_project_vector(
+                    values,
+                    rank=effective_rank,
+                )
+                map_payload[str(key)] = {
+                    "coefficients": coefficients,
+                    "dimension": dimension,
+                }
+                vector_count += 1
+                dense_scalar_count += dimension
+                coefficient_scalar_count += len(coefficients)
+            if map_payload:
+                embedding_maps[map_name] = map_payload
+            if not complete:
+                break
+        metadata_scalar_count = vector_count
+        total_scalar_count = coefficient_scalar_count + metadata_scalar_count
+        payload: Dict[str, Any] = {
+            "basis": MODAL_AUTOENCODER_LOW_RANK_BASIS,
+            "complete": complete,
+            "dense_scalar_count": dense_scalar_count,
+            "embedding_maps": embedding_maps,
+            "estimated_scalar_compression_ratio": round(
+                dense_scalar_count / total_scalar_count,
+                9,
+            )
+            if total_scalar_count > 0
+            else 0.0,
+            "low_rank_coefficient_scalar_count": coefficient_scalar_count,
+            "low_rank_dimension_metadata_scalar_count": metadata_scalar_count,
+            "low_rank_total_scalar_count": total_scalar_count,
+            "max_vectors": vector_limit,
+            "rank": effective_rank,
+            "schema_version": MODAL_AUTOENCODER_LOW_RANK_STATE_SCHEMA_VERSION,
+            "shadow_mode": True,
+            "vector_entry_count": vector_count,
+        }
+        if include_report:
+            payload["report"] = self.low_rank_shadow_report(
+                rank=effective_rank,
+                max_vectors=128 if vector_limit is None else min(128, vector_limit),
+            )
+        return payload
+
+    @staticmethod
+    def reconstruct_low_rank_embedding_maps(
+        payload: Mapping[str, Any],
+    ) -> Dict[str, Dict[str, List[float]]]:
+        """Reconstruct dense embedding maps from a low-rank shadow sidecar."""
+
+        schema = str(payload.get("schema_version") or "")
+        if schema and schema != MODAL_AUTOENCODER_LOW_RANK_STATE_SCHEMA_VERSION:
+            raise ValueError("Unsupported low-rank state schema")
+        if str(payload.get("basis") or "") != MODAL_AUTOENCODER_LOW_RANK_BASIS:
+            raise ValueError("Unsupported low-rank basis")
+        raw_maps = payload.get("embedding_maps")
+        if not isinstance(raw_maps, Mapping):
+            return {}
+        reconstructed: Dict[str, Dict[str, List[float]]] = {}
+        for map_name, raw_map in sorted(raw_maps.items()):
+            if not isinstance(raw_map, Mapping):
+                continue
+            map_payload: Dict[str, List[float]] = {}
+            for key, raw_entry in sorted(raw_map.items()):
+                if not isinstance(raw_entry, Mapping):
+                    continue
+                try:
+                    dimension = int(raw_entry.get("dimension", 0) or 0)
+                except (TypeError, ValueError):
+                    dimension = 0
+                coefficients = raw_entry.get("coefficients", [])
+                if not isinstance(coefficients, Sequence) or isinstance(
+                    coefficients,
+                    (str, bytes),
+                ):
+                    coefficients = []
+                map_payload[str(key)] = _low_rank_reconstruct_vector(
+                    [float(value) for value in coefficients],
+                    dimension=dimension,
+                )
+            if map_payload:
+                reconstructed[str(map_name)] = map_payload
+        return reconstructed
+
+    def hydrate_low_rank_shadow_state(
+        self,
+        payload: Mapping[str, Any],
+        *,
+        overwrite: bool = False,
+    ) -> Dict[str, Any]:
+        """Merge low-rank sidecar embeddings into dense maps used by training."""
+
+        reconstructed = self.reconstruct_low_rank_embedding_maps(payload)
+        target_maps = self.embedding_weight_maps()
+        merged_count = 0
+        skipped_existing_count = 0
+        skipped_empty_count = 0
+        skipped_unknown_map_count = 0
+        merged_map_entry_counts: Dict[str, int] = {}
+        for map_name, mapping in sorted(reconstructed.items()):
+            target_mapping = target_maps.get(map_name)
+            if not isinstance(target_mapping, dict):
+                skipped_unknown_map_count += len(mapping)
+                continue
+            for key, vector in sorted(mapping.items()):
+                values = [float(value) for value in vector]
+                if not values:
+                    skipped_empty_count += 1
+                    continue
+                if not overwrite and key in target_mapping:
+                    skipped_existing_count += 1
+                    continue
+                target_mapping[key] = values
+                merged_count += 1
+                merged_map_entry_counts[map_name] = (
+                    merged_map_entry_counts.get(map_name, 0) + 1
+                )
+
+        source_vector_count = sum(len(mapping) for mapping in reconstructed.values())
+        return {
+            "basis": str(payload.get("basis") or ""),
+            "complete": bool(payload.get("complete", False)),
+            "dense_state_hydrated": merged_count > 0,
+            "loaded": True,
+            "merged_map_entry_counts": dict(sorted(merged_map_entry_counts.items())),
+            "merged_vector_entry_count": merged_count,
+            "overwrite": bool(overwrite),
+            "schema_version": str(payload.get("schema_version") or ""),
+            "shadow_mode": bool(payload.get("shadow_mode", False)),
+            "skipped_empty_vector_entry_count": skipped_empty_count,
+            "skipped_existing_vector_entry_count": skipped_existing_count,
+            "skipped_unknown_map_vector_entry_count": skipped_unknown_map_count,
+            "source_vector_entry_count": source_vector_count,
+            "status": "hydrated" if merged_count > 0 else "no_new_entries",
+        }
+
+    @staticmethod
+    def low_rank_shadow_sidecar_path(path: str | Path) -> Path:
+        return Path(path).with_suffix(".low-rank-shadow.json")
+
+    def hydrate_low_rank_shadow_json(
+        self,
+        path: str | Path,
+        *,
+        overwrite: bool = False,
+    ) -> Dict[str, Any]:
+        source = Path(path)
+        if not source.exists():
+            return {
+                "dense_state_hydrated": False,
+                "loaded": False,
+                "path": str(source),
+                "status": "missing",
+            }
+        payload = self.load_low_rank_shadow_json(source)
+        report = self.hydrate_low_rank_shadow_state(
+            payload,
+            overwrite=overwrite,
+        )
+        report["path"] = str(source)
+        return report
+
+    def save_low_rank_shadow_json(
+        self,
+        path: str | Path,
+        *,
+        rank: int = MODAL_AUTOENCODER_LOW_RANK_DEFAULT_RANK,
+        max_vectors: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        destination = Path(path)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        payload = self.materialize_low_rank_shadow_state(
+            rank=rank,
+            max_vectors=max_vectors,
+        )
+        temporary = destination.with_name(
+            f".{destination.name}.tmp-{os.getpid()}-{threading.get_ident()}"
+        )
+        try:
+            temporary.write_text(
+                json.dumps(
+                    payload,
+                    ensure_ascii=True,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            os.replace(temporary, destination)
+        finally:
+            try:
+                if temporary.exists():
+                    temporary.unlink()
+            except OSError:
+                pass
+        return payload
+
+    @staticmethod
+    def load_low_rank_shadow_json(path: str | Path) -> Dict[str, Any]:
+        source = Path(path)
+        return dict(json.loads(source.read_text(encoding="utf-8")))
+
+    def telemetry(self) -> Dict[str, Any]:
+        """Return compact state-size telemetry for daemon rollout diagnostics."""
+        vector_maps = self.embedding_weight_maps()
+        nested_logit_maps: Dict[str, Mapping[str, Mapping[str, float]]] = {
+            "compiler_quality_family_logits": self.compiler_quality_family_logits,
+            "logic_signature_family_logits": self.logic_signature_family_logits,
+            "logic_signature_legal_ir_view_logits": self.logic_signature_legal_ir_view_logits,
+            "round_trip_signal_family_logits": self.round_trip_signal_family_logits,
+            "round_trip_signal_legal_ir_view_logits": self.round_trip_signal_legal_ir_view_logits,
+            "decompiler_plan_family_logits": self.decompiler_plan_family_logits,
+            "decompiler_plan_legal_ir_view_logits": self.decompiler_plan_legal_ir_view_logits,
+            "predicate_argument_family_logits": self.predicate_argument_family_logits,
+            "predicate_argument_legal_ir_view_logits": self.predicate_argument_legal_ir_view_logits,
+            "feature_family_logits": self.feature_family_logits,
+            "semantic_slot_family_logits": self.semantic_slot_family_logits,
+            "legal_ir_view_family_logits": self.legal_ir_view_family_logits,
+            "feature_legal_ir_view_logits": self.feature_legal_ir_view_logits,
+            "family_semantic_slot_legal_ir_view_logits": (
+                self.family_semantic_slot_legal_ir_view_logits
+            ),
+            "semantic_slot_legal_ir_view_family_logits": (
+                self.semantic_slot_legal_ir_view_family_logits
+            ),
+            "semantic_slot_legal_ir_view_logits": self.semantic_slot_legal_ir_view_logits,
+        }
+        vector_entry_counts = {
+            name: len(mapping)
+            for name, mapping in sorted(vector_maps.items())
+        }
+        nested_logit_entry_counts = {
+            name: len(mapping)
+            for name, mapping in sorted(nested_logit_maps.items())
+        }
+        vector_scalar_count = sum(
+            len(vector)
+            for mapping in vector_maps.values()
+            for vector in mapping.values()
+        )
+        nested_logit_scalar_count = sum(
+            len(logits)
+            for mapping in nested_logit_maps.values()
+            for logits in mapping.values()
+        )
+        sample_embedding_scalar_count = sum(
+            len(vector) for vector in self.decoded_embeddings.values()
+        )
+        sample_family_logit_scalar_count = sum(
+            len(logits) for logits in self.family_logits.values()
+        )
+        return {
+            "architecture_version": MODAL_AUTOENCODER_ARCHITECTURE_VERSION,
+            "applied_todo_count": len(self.applied_todo_ids),
+            "decoded_embedding_count": len(self.decoded_embeddings),
+            "family_logit_sample_count": len(self.family_logits),
+            "feature_embedding_weight_entries": len(self.feature_embedding_weights),
+            "feature_family_logit_entries": len(self.feature_family_logits),
+            "feature_legal_ir_view_logit_entries": len(
+                self.feature_legal_ir_view_logits
+            ),
+            "flat_legal_ir_view_logit_entries": len(self.legal_ir_view_logits),
+            "generalizable_entry_count": self.generalizable_entry_count(),
+            "nested_logit_entry_count": sum(nested_logit_entry_counts.values()),
+            "nested_logit_entry_counts": nested_logit_entry_counts,
+            "nested_logit_scalar_count": nested_logit_scalar_count,
+            "schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
+            "sample_memory_entry_count": len(self.decoded_embeddings)
+            + len(self.family_logits),
+            "sample_memory_scalar_count": sample_embedding_scalar_count
+            + sample_family_logit_scalar_count,
+            "sample_decoded_embedding_scalar_count": sample_embedding_scalar_count,
+            "sample_family_logit_scalar_count": sample_family_logit_scalar_count,
+            "vector_entry_count": sum(vector_entry_counts.values()),
+            "vector_entry_counts": vector_entry_counts,
+            "vector_scalar_count": vector_scalar_count,
+        }
 
     def generalizable_copy(self) -> "ModalAutoencoderTrainingState":
         """Return only feature-level state safe to reuse across samples.
@@ -1538,7 +2321,19 @@ class ModalAutoencoderTrainingState:
     def save_json(self, path: str | Path) -> None:
         destination = Path(path)
         destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_text(self.to_json() + "\n", encoding="utf-8")
+        payload = self.to_json() + "\n"
+        temporary = destination.with_name(
+            f".{destination.name}.tmp-{os.getpid()}-{threading.get_ident()}"
+        )
+        try:
+            temporary.write_text(payload, encoding="utf-8")
+            os.replace(temporary, destination)
+        finally:
+            try:
+                if temporary.exists():
+                    temporary.unlink()
+            except OSError:
+                pass
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "ModalAutoencoderTrainingState":
@@ -1794,6 +2589,8 @@ class ModalAutoencoderBaseline:
         cosine_losses: List[float] = []
         reconstruction_losses: List[float] = []
         ce_losses: List[float] = []
+        ce_entropy_losses: List[float] = []
+        ce_excess_losses: List[float] = []
         frame_losses: List[float] = []
         symbolic_penalties: List[float] = []
         decoded_embeddings: Dict[str, List[float]] = {}
@@ -1804,10 +2601,19 @@ class ModalAutoencoderBaseline:
             cosine_scores.append(cosine_similarity(sample.embedding_vector, decoded))
             cosine_losses.append(cosine_loss(sample.embedding_vector, decoded))
             reconstruction_losses.append(mse_loss(sample.embedding_vector, decoded))
+            predicted_distribution = self._family_distribution(sample)
+            target_distribution = _observed_family_distribution(sample)
             ce_losses.append(
                 cross_entropy_distribution_loss(
-                    self._family_distribution(sample),
-                    _observed_family_distribution(sample),
+                    predicted_distribution,
+                    target_distribution,
+                )
+            )
+            ce_entropy_losses.append(distribution_entropy_loss(target_distribution))
+            ce_excess_losses.append(
+                cross_entropy_excess_distribution_loss(
+                    predicted_distribution,
+                    target_distribution,
                 )
             )
             frame_losses.append(frame_ranking_loss(sample))
@@ -1819,9 +2625,16 @@ class ModalAutoencoderBaseline:
             cosine_loss=_mean(cosine_losses),
             reconstruction_loss=_mean(reconstruction_losses),
             cross_entropy_loss=_mean(ce_losses),
+            cross_entropy_entropy_loss=_mean(ce_entropy_losses),
+            cross_entropy_excess_loss=_mean(ce_excess_losses),
             frame_ranking_loss=_mean(frame_losses),
             symbolic_validity_penalty=_mean(symbolic_penalties),
             decoded_embeddings=decoded_embeddings,
+            sample_embedding_metrics=_sample_embedding_metric_rows(
+                sample_list,
+                cosine_scores=cosine_scores,
+                reconstruction_losses=reconstruction_losses,
+            ),
             legal_ir_target_count=legal_ir_payload["target_count"],
             legal_ir_losses=legal_ir_payload["losses"],
             legal_ir_target_hashes=legal_ir_payload["target_hashes"],
@@ -1862,7 +2675,8 @@ class AdaptiveModalAutoencoder:
         self,
         *,
         state: Optional[ModalAutoencoderTrainingState] = None,
-        initial_embedding_scale: float = 0.0,
+        initial_embedding_scale: float = 0.02,
+        initial_embedding_rotation_scale: float = 0.10,
         modal_families: Optional[Sequence[str]] = None,
         feature_codec: Optional[Any] = None,
         compiler_quality_embedding_weight_scale: float = 0.5,
@@ -1891,15 +2705,16 @@ class AdaptiveModalAutoencoder:
         semantic_slot_legal_ir_view_family_logit_scale: float = 0.0,
         family_semantic_slot_legal_ir_view_logit_scale: float = 0.0,
         semantic_slot_interaction_weight: float = 0.35,
-        max_semantic_slot_interactions: int = 24,
+        max_semantic_slot_interactions: int = 64,
         legal_ir_view_logit_scale: float = 1.0,
         semantic_slot_legal_ir_view_logit_scale: float = 0.0,
         legal_ir_view_embedding_weight_scale: float = 0.5,
         semantic_slot_legal_ir_view_embedding_weight_scale: float = 0.5,
-        cosine_reconstruction_weight: float = 0.25,
+        cosine_reconstruction_weight: float = 0.5,
         max_token_features: int = 48,
         max_token_bigram_features: int = 24,
         max_token_trigram_features: int = 12,
+        max_codec_feature_keys: int = 0,
         max_legal_ir_token_features: int = 24,
         max_legal_ir_token_bigram_features: int = 12,
         max_legal_ir_token_trigram_features: int = 8,
@@ -1923,14 +2738,26 @@ class AdaptiveModalAutoencoder:
         max_entity_binding_features: int = 64,
         max_defeasible_priority_features: int = 64,
         max_constraint_grounding_features: int = 64,
+        max_quantitative_formula_features: int = 64,
         max_definition_grounding_features: int = 64,
         max_quantifier_scope_features: int = 64,
         max_procedural_lifecycle_features: int = 64,
         max_enforcement_remedy_features: int = 64,
+        max_mental_state_features: int = 64,
         max_reference_dependency_features: int = 64,
+        max_amendment_operation_features: int = 64,
         max_authority_jurisdiction_features: int = 64,
+        max_discretion_standard_features: int = 64,
         max_temporal_validity_features: int = 64,
-        embedding_head_update_normalization: float = 0.0,
+        max_evidentiary_burden_features: int = 64,
+        max_legal_relation_features: int = 64,
+        max_status_transition_features: int = 64,
+        max_condition_consequence_features: int = 64,
+        max_applicability_scope_features: int = 64,
+        max_coreference_binding_features: int = 64,
+        max_logical_connective_features: int = 64,
+        max_enumeration_hierarchy_features: int = 64,
+        embedding_head_update_normalization: float = 1.0,
         family_logit_head_update_normalization: float = 0.0,
         legal_ir_view_head_update_normalization: float = 0.0,
         feature_activity_reference: int = 64,
@@ -1939,6 +2766,7 @@ class AdaptiveModalAutoencoder:
     ) -> None:
         self.state = state or ModalAutoencoderTrainingState()
         self.initial_embedding_scale = float(initial_embedding_scale)
+        self.initial_embedding_rotation_scale = float(initial_embedding_rotation_scale)
         self.modal_families = tuple(modal_families or _all_modal_families())
         self.feature_codec = feature_codec
         self.compiler_quality_embedding_weight_scale = max(
@@ -2063,6 +2891,7 @@ class AdaptiveModalAutoencoder:
         self.max_token_features = max(0, int(max_token_features))
         self.max_token_bigram_features = max(0, int(max_token_bigram_features))
         self.max_token_trigram_features = max(0, int(max_token_trigram_features))
+        self.max_codec_feature_keys = max(0, int(max_codec_feature_keys))
         self.max_legal_ir_token_features = max(0, int(max_legal_ir_token_features))
         self.max_legal_ir_token_bigram_features = max(
             0,
@@ -2149,6 +2978,10 @@ class AdaptiveModalAutoencoder:
             0,
             int(max_constraint_grounding_features),
         )
+        self.max_quantitative_formula_features = max(
+            0,
+            int(max_quantitative_formula_features),
+        )
         self.max_definition_grounding_features = max(
             0,
             int(max_definition_grounding_features),
@@ -2165,17 +2998,61 @@ class AdaptiveModalAutoencoder:
             0,
             int(max_enforcement_remedy_features),
         )
+        self.max_mental_state_features = max(
+            0,
+            int(max_mental_state_features),
+        )
         self.max_reference_dependency_features = max(
             0,
             int(max_reference_dependency_features),
+        )
+        self.max_amendment_operation_features = max(
+            0,
+            int(max_amendment_operation_features),
         )
         self.max_authority_jurisdiction_features = max(
             0,
             int(max_authority_jurisdiction_features),
         )
+        self.max_discretion_standard_features = max(
+            0,
+            int(max_discretion_standard_features),
+        )
         self.max_temporal_validity_features = max(
             0,
             int(max_temporal_validity_features),
+        )
+        self.max_evidentiary_burden_features = max(
+            0,
+            int(max_evidentiary_burden_features),
+        )
+        self.max_legal_relation_features = max(
+            0,
+            int(max_legal_relation_features),
+        )
+        self.max_status_transition_features = max(
+            0,
+            int(max_status_transition_features),
+        )
+        self.max_condition_consequence_features = max(
+            0,
+            int(max_condition_consequence_features),
+        )
+        self.max_applicability_scope_features = max(
+            0,
+            int(max_applicability_scope_features),
+        )
+        self.max_coreference_binding_features = max(
+            0,
+            int(max_coreference_binding_features),
+        )
+        self.max_logical_connective_features = max(
+            0,
+            int(max_logical_connective_features),
+        )
+        self.max_enumeration_hierarchy_features = max(
+            0,
+            int(max_enumeration_hierarchy_features),
         )
         self.embedding_head_update_normalization = max(
             0.0,
@@ -2200,6 +3077,7 @@ class AdaptiveModalAutoencoder:
         self._sample_feature_cache: Dict[tuple[str, int], Dict[str, Any]] = {}
         self._legal_ir_loss_target_cache: Dict[str, Dict[str, float]] = {}
         self._legal_ir_view_target_cache: Dict[str, Dict[str, float]] = {}
+        self._legal_ir_view_family_candidates_cache: Optional[tuple[str, ...]] = None
 
     def evaluate(
         self,
@@ -2278,9 +3156,20 @@ class AdaptiveModalAutoencoder:
             probability_maps,
             target_maps,
         )
+        ce_entropy_losses = [
+            distribution_entropy_loss(target)
+            for target in target_maps
+        ]
+        ce_excess_losses = [
+            cross_entropy_excess_distribution_loss(probabilities, target)
+            for probabilities, target in zip(probability_maps, target_maps)
+        ]
         legal_ir_losses = dict(legal_ir_payload["losses"])
         legal_ir_view_ce_losses: List[float] = []
+        legal_ir_view_entropy_losses: List[float] = []
+        legal_ir_view_excess_losses: List[float] = []
         predicted_view_distributions: List[Mapping[str, float]] = []
+        legal_ir_view_family_loss_values: Dict[str, List[float]] = {}
         for sample in sample_list:
             target_view_distribution = legal_ir_target_distributions.get(sample.sample_id)
             if not target_view_distribution:
@@ -2297,10 +3186,35 @@ class AdaptiveModalAutoencoder:
                     target_view_distribution,
                 )
             )
+            legal_ir_view_entropy_losses.append(
+                distribution_entropy_loss(target_view_distribution)
+            )
+            legal_ir_view_excess_losses.append(
+                cross_entropy_excess_distribution_loss(
+                    predicted_view_distribution,
+                    target_view_distribution,
+                )
+            )
+            for name, value in _legal_ir_view_family_loss_metrics(
+                predicted_view_distribution,
+                target_view_distribution,
+            ).items():
+                legal_ir_view_family_loss_values.setdefault(name, []).append(
+                    _float_or_zero(value)
+                )
         if legal_ir_view_ce_losses:
             legal_ir_losses["legal_ir_view_cross_entropy_loss"] = _mean(
                 legal_ir_view_ce_losses
             )
+            legal_ir_losses["legal_ir_view_entropy_loss"] = _mean(
+                legal_ir_view_entropy_losses
+            )
+            legal_ir_losses["legal_ir_view_cross_entropy_excess_loss"] = _mean(
+                legal_ir_view_excess_losses
+            )
+        for name, values in sorted(legal_ir_view_family_loss_values.items()):
+            if values:
+                legal_ir_losses[name] = _mean(values)
 
         return AutoencoderEvaluation(
             sample_count=len(sample_list),
@@ -2308,9 +3222,16 @@ class AdaptiveModalAutoencoder:
             cosine_loss=_mean(cosine_losses),
             reconstruction_loss=_mean(reconstruction_losses),
             cross_entropy_loss=_mean(ce_losses),
+            cross_entropy_entropy_loss=_mean(ce_entropy_losses),
+            cross_entropy_excess_loss=_mean(ce_excess_losses),
             frame_ranking_loss=_mean(frame_losses),
             symbolic_validity_penalty=_mean(symbolic_penalties),
             decoded_embeddings=decoded_embeddings,
+            sample_embedding_metrics=_sample_embedding_metric_rows(
+                sample_list,
+                cosine_scores=cosine_scores,
+                reconstruction_losses=reconstruction_losses,
+            ),
             legal_ir_target_count=legal_ir_payload["target_count"],
             legal_ir_losses=legal_ir_losses,
             legal_ir_predicted_view_distribution=_mean_distributions(
@@ -2409,6 +3330,8 @@ class AdaptiveModalAutoencoder:
         best_other = max(other_probabilities) if other_probabilities else 0.0
         decoded = self._decoded_for(sample, use_sample_memory=use_sample_memory)
         base_decoded = self._base_decoded_for(sample)
+        embedding_cosine = cosine_similarity(sample.embedding_vector, decoded)
+        embedding_reconstruction = mse_loss(sample.embedding_vector, decoded)
         residual = [
             float(target_value) - float(decoded_value)
             for target_value, decoded_value in zip(sample.embedding_vector, decoded)
@@ -2430,12 +3353,21 @@ class AdaptiveModalAutoencoder:
             sample.sample_id,
             self._legal_ir_view_target_cache.get(_sample_content_cache_id(sample), {}),
         )
-        legal_ir_losses = self._legal_ir_loss_target_cache.get(
-            sample.sample_id,
-            self._legal_ir_loss_target_cache.get(_sample_content_cache_id(sample), {}),
+        legal_ir_losses = dict(
+            self._legal_ir_loss_target_cache.get(
+                sample.sample_id,
+                self._legal_ir_loss_target_cache.get(_sample_content_cache_id(sample), {}),
+            )
         )
+        source_decompiled_losses = _source_decompiled_text_losses_from_targets(
+            legal_ir_losses
+        )
+        legal_ir_losses.update(source_decompiled_losses)
         legal_ir_predicted_view_distribution: Dict[str, float] = {}
         legal_ir_view_cross_entropy_loss = 0.0
+        legal_ir_view_entropy_loss = 0.0
+        legal_ir_view_cross_entropy_excess_loss = 0.0
+        legal_ir_view_family_losses: Dict[str, float] = {}
         if legal_ir_view_distribution:
             legal_ir_predicted_view_distribution = self._legal_ir_view_distribution(
                 sample,
@@ -2443,6 +3375,19 @@ class AdaptiveModalAutoencoder:
                 use_sample_memory=use_sample_memory,
             )
             legal_ir_view_cross_entropy_loss = cross_entropy_distribution_loss(
+                legal_ir_predicted_view_distribution,
+                legal_ir_view_distribution,
+            )
+            legal_ir_view_entropy_loss = distribution_entropy_loss(
+                legal_ir_view_distribution
+            )
+            legal_ir_view_cross_entropy_excess_loss = (
+                cross_entropy_excess_distribution_loss(
+                    legal_ir_predicted_view_distribution,
+                    legal_ir_view_distribution,
+                )
+            )
+            legal_ir_view_family_losses = _legal_ir_view_family_loss_metrics(
                 legal_ir_predicted_view_distribution,
                 legal_ir_view_distribution,
             )
@@ -2458,6 +3403,25 @@ class AdaptiveModalAutoencoder:
             legal_ir_component_gaps,
             positive=False,
         )
+        pipeline_stage_diagnostics = _pipeline_stage_diagnostics_for_introspection(
+            sample,
+            target_family=target_family,
+            predicted_family=predicted_family,
+            target_probability=target_probability,
+            cosine_similarity_value=embedding_cosine,
+            reconstruction_loss=embedding_reconstruction,
+            source_decompiled_text_embedding_cosine_loss=source_decompiled_losses[
+                "source_decompiled_text_embedding_cosine_loss"
+            ],
+            source_decompiled_text_token_loss=source_decompiled_losses[
+                "source_decompiled_text_token_loss"
+            ],
+            legal_ir_view_cross_entropy_loss=legal_ir_view_cross_entropy_loss,
+            legal_ir_component_gaps=legal_ir_component_gaps,
+        )
+        pipeline_stage_focus = _pipeline_stage_focus_from_diagnostics(
+            pipeline_stage_diagnostics
+        )
         return AutoencoderIntrospection(
             sample_id=sample.sample_id,
             target_family=target_family,
@@ -2465,8 +3429,19 @@ class AdaptiveModalAutoencoder:
             target_probability=round(target_probability, 12),
             predicted_probability=round(predicted_probability, 12),
             family_margin=round(target_probability - best_other, 12),
-            cosine_similarity=round(cosine_similarity(sample.embedding_vector, decoded), 12),
-            reconstruction_loss=round(mse_loss(sample.embedding_vector, decoded), 12),
+            cosine_similarity=round(embedding_cosine, 12),
+            cosine_loss=round(max(0.0, 1.0 - embedding_cosine), 12),
+            reconstruction_loss=round(embedding_reconstruction, 12),
+            source_decompiled_text_embedding_cosine_loss=round(
+                source_decompiled_losses[
+                    "source_decompiled_text_embedding_cosine_loss"
+                ],
+                12,
+            ),
+            source_decompiled_text_token_loss=round(
+                source_decompiled_losses["source_decompiled_text_token_loss"],
+                12,
+            ),
             residual_vector=[round(value, 12) for value in residual],
             base_decoded_embedding=[round(float(value), 12) for value in base_decoded],
             decoded_embedding=[round(float(value), 12) for value in decoded],
@@ -2474,14 +3449,26 @@ class AdaptiveModalAutoencoder:
             sample_memory_used=use_sample_memory,
             top_family_contributions=family_contributions[:max(top_k, 0)],
             top_embedding_contributions=embedding_contributions[:max(top_k, 0)],
+            pipeline_stage_diagnostics=pipeline_stage_diagnostics,
+            pipeline_stage_focus=pipeline_stage_focus,
             legal_ir_view_cross_entropy_loss=round(legal_ir_view_cross_entropy_loss, 12),
+            legal_ir_view_entropy_loss=round(legal_ir_view_entropy_loss, 12),
+            legal_ir_view_cross_entropy_excess_loss=round(
+                legal_ir_view_cross_entropy_excess_loss,
+                12,
+            ),
             legal_ir_component_gaps={
                 key: round(float(value), 12)
                 for key, value in sorted(legal_ir_component_gaps.items())
             },
             legal_ir_losses={
                 key: round(float(value), 12)
-                for key, value in sorted(legal_ir_losses.items())
+                for key, value in sorted(
+                    {
+                        **dict(legal_ir_losses),
+                        **legal_ir_view_family_losses,
+                    }.items()
+                )
             },
             legal_ir_underrepresented_components=legal_ir_underrepresented_components,
             legal_ir_overrepresented_components=legal_ir_overrepresented_components,
@@ -2498,12 +3485,183 @@ class AdaptiveModalAutoencoder:
                 target_family=target_family,
                 predicted_family=predicted_family,
                 target_probability=target_probability,
-                reconstruction_loss=mse_loss(sample.embedding_vector, decoded),
+                cosine_similarity=embedding_cosine,
+                reconstruction_loss=embedding_reconstruction,
+                source_decompiled_text_embedding_cosine_loss=source_decompiled_losses[
+                    "source_decompiled_text_embedding_cosine_loss"
+                ],
+                source_decompiled_text_token_loss=source_decompiled_losses[
+                    "source_decompiled_text_token_loss"
+                ],
                 legal_ir_view_cross_entropy_loss=legal_ir_view_cross_entropy_loss,
                 legal_ir_view_distribution=legal_ir_view_distribution,
                 legal_ir_predicted_view_distribution=legal_ir_predicted_view_distribution,
             ),
         )
+
+    def compiler_guidance_for_sample(
+        self,
+        sample: LegalSample,
+        *,
+        use_sample_memory: bool = False,
+        top_k: int = 16,
+    ) -> Dict[str, Any]:
+        """Export learned compiler/decompiler guidance for deterministic IR code.
+
+        The autoencoder learns reusable feature weights over compiler contracts,
+        decompiler surface templates, cycle-consistency contracts, and LegalIR
+        views.  This method exposes those representations as a compact,
+        serializable contract that deterministic compiler/decompiler stages can
+        consume without depending on sample-specific memory.
+        """
+        limit = max(0, int(top_k))
+        introspection = self.introspect_sample(
+            sample,
+            use_sample_memory=use_sample_memory,
+            top_k=limit,
+        )
+        legal_ir_target_distribution = dict(
+            self._legal_ir_view_target_cache.get(
+                sample.sample_id,
+                self._legal_ir_view_target_cache.get(
+                    _sample_content_cache_id(sample),
+                    {},
+                ),
+            )
+        )
+        legal_ir_predicted_distribution: Dict[str, float] = {}
+        if legal_ir_target_distribution:
+            legal_ir_predicted_distribution = self._legal_ir_view_distribution(
+                sample,
+                legal_ir_target_distribution,
+                use_sample_memory=use_sample_memory,
+            )
+        legal_ir_view_gap_distribution = {
+            key: round(
+                float(legal_ir_target_distribution.get(key, 0.0))
+                - float(legal_ir_predicted_distribution.get(key, 0.0)),
+                12,
+            )
+            for key in sorted(
+                set(legal_ir_target_distribution)
+                | set(legal_ir_predicted_distribution)
+            )
+            if abs(
+                float(legal_ir_target_distribution.get(key, 0.0))
+                - float(legal_ir_predicted_distribution.get(key, 0.0))
+            )
+            > 1.0e-12
+        }
+
+        feature_groups = {
+            "compiler_latent_profile": self._compiler_latent_profile_feature_keys_for(sample),
+            "compiler_contract": self._compiler_contract_feature_keys_for(sample),
+            "decompiler_surface_template": self._decompiler_surface_template_feature_keys_for(sample),
+            "cycle_consistency": self._cycle_consistency_feature_keys_for(sample),
+            "logic_view_contract": self._logic_view_contract_feature_keys_for(sample),
+        }
+        ranked_features = self._rank_guidance_features(
+            _unique_preserve_order(
+                feature
+                for features in feature_groups.values()
+                for feature in features
+            ),
+            top_k=limit,
+        )
+        return {
+            "decoded_embedding": list(introspection.decoded_embedding),
+            "family_distribution": {
+                key: round(float(value), 12)
+                for key, value in sorted(
+                    self._family_distribution(
+                        sample,
+                        use_sample_memory=use_sample_memory,
+                    ).items()
+                )
+            },
+            "feature_groups": {
+                name: list(features[:limit] if limit else features)
+                for name, features in sorted(feature_groups.items())
+            },
+            "legal_ir_predicted_view_distribution": {
+                key: round(float(value), 12)
+                for key, value in sorted(legal_ir_predicted_distribution.items())
+            },
+            "legal_ir_target_view_distribution": {
+                key: round(float(value), 12)
+                for key, value in sorted(legal_ir_target_distribution.items())
+            },
+            "legal_ir_view_gap_distribution": legal_ir_view_gap_distribution,
+            "legal_ir_view_metrics": {
+                "cross_entropy_excess_loss": (
+                    introspection.legal_ir_view_cross_entropy_excess_loss
+                ),
+                "cross_entropy_loss": introspection.legal_ir_view_cross_entropy_loss,
+                "entropy_loss": introspection.legal_ir_view_entropy_loss,
+                "source_decompiled_text_embedding_cosine_loss": (
+                    introspection.source_decompiled_text_embedding_cosine_loss
+                ),
+                "source_decompiled_text_token_loss": (
+                    introspection.source_decompiled_text_token_loss
+                ),
+                "view_family_losses": {
+                    key: round(float(value), 12)
+                    for key, value in sorted(introspection.legal_ir_losses.items())
+                    if key.startswith("legal_ir_view_family_")
+                },
+            },
+            "ranked_guidance_features": ranked_features,
+            "sample_id": sample.sample_id,
+            "sample_memory_used": use_sample_memory,
+            "synthesis_focus": list(introspection.synthesis_focus),
+            "top_embedding_contributions": [
+                contribution.to_dict()
+                for contribution in introspection.top_embedding_contributions
+            ],
+            "top_family_contributions": [
+                contribution.to_dict()
+                for contribution in introspection.top_family_contributions
+            ],
+        }
+
+    def _rank_guidance_features(
+        self,
+        features: Sequence[str],
+        *,
+        top_k: int,
+    ) -> List[Dict[str, Any]]:
+        scored: List[Dict[str, Any]] = []
+        for feature in _unique_preserve_order(str(feature) for feature in features):
+            embedding_weight_norm = _vector_norm(
+                self.state.feature_embedding_weights.get(feature, [])
+            )
+            family_logit_magnitude = _max_abs_mapping(
+                self.state.feature_family_logits.get(feature, {})
+            )
+            legal_ir_view_logit_magnitude = _max_abs_mapping(
+                self.state.feature_legal_ir_view_logits.get(feature, {})
+            )
+            score = (
+                embedding_weight_norm
+                + family_logit_magnitude
+                + legal_ir_view_logit_magnitude
+            )
+            if score <= 0.0 and not self._is_core_modal_feature_key(feature):
+                continue
+            scored.append(
+                {
+                    "embedding_weight_norm": round(embedding_weight_norm, 12),
+                    "family_logit_magnitude": round(family_logit_magnitude, 12),
+                    "feature": feature,
+                    "legal_ir_view_logit_magnitude": round(
+                        legal_ir_view_logit_magnitude,
+                        12,
+                    ),
+                    "score": round(score, 12),
+                }
+            )
+        scored.sort(key=lambda item: (float(item["score"]), item["feature"]), reverse=True)
+        return scored[:top_k] if top_k else scored
 
     def codex_call_decision(
         self,
@@ -2657,8 +3815,59 @@ class AdaptiveModalAutoencoder:
         learning_rate: float = 0.35,
     ) -> Dict[str, Any]:
         """Apply one TODO and return a compact update report."""
-        action = str(getattr(todo, "action", ""))
+        raw_action = str(getattr(todo, "action", ""))
+        metadata = getattr(todo, "metadata", {})
+        if not isinstance(metadata, Mapping):
+            metadata = {}
+
+        def metadata_payloads() -> List[Mapping[str, Any]]:
+            payloads: List[Mapping[str, Any]] = [metadata]
+            for key in ("bundle", "semantic_bundle_key", "evidence"):
+                value = metadata.get(key)
+                if isinstance(value, Mapping):
+                    payloads.append(value)
+                elif isinstance(value, str) and value.strip().startswith("{"):
+                    try:
+                        parsed = json.loads(value)
+                    except (TypeError, ValueError):
+                        continue
+                    if isinstance(parsed, Mapping):
+                        payloads.append(parsed)
+            return payloads
+
+        action = raw_action
+        if action == "rescue_failed_program_synthesis_validation":
+            for payload in metadata_payloads():
+                rescued_action = str(payload.get("original_action") or "").strip()
+                if rescued_action:
+                    action = rescued_action
+                    break
         loss_name = str(getattr(todo, "loss_name", ""))
+        if not loss_name:
+            target_metrics: List[str] = []
+            for payload in metadata_payloads():
+                raw_metrics = payload.get("target_metrics")
+                if isinstance(raw_metrics, str):
+                    target_metrics.extend(
+                        metric.strip()
+                        for metric in raw_metrics.split(",")
+                        if metric.strip()
+                    )
+                elif isinstance(raw_metrics, Sequence) and not isinstance(
+                    raw_metrics,
+                    (bytes, bytearray, str),
+                ):
+                    target_metrics.extend(str(metric) for metric in raw_metrics)
+            for metric in target_metrics:
+                normalized_metric = str(metric).strip()
+                if normalized_metric in {
+                    "cosine_loss",
+                    "cross_entropy_loss",
+                    "legal_ir_view_cross_entropy_loss",
+                    "reconstruction_loss",
+                }:
+                    loss_name = normalized_metric
+                    break
         todo_id = str(getattr(todo, "todo_id", ""))
         sample_ids = [str(value) for value in getattr(todo, "sample_ids", [])]
         changed: List[str] = []
@@ -2680,7 +3889,7 @@ class AdaptiveModalAutoencoder:
         )
         if not trainable:
             return {
-                "action": action,
+                "action": raw_action,
                 "changed": [],
                 "reason": "todo targets deterministic program synthesis, not autoencoder SGD",
                 "sample_ids": sample_ids,
@@ -2710,12 +3919,15 @@ class AdaptiveModalAutoencoder:
 
         if todo_id and todo_id not in self.state.applied_todo_ids:
             self.state.applied_todo_ids.append(todo_id)
-        return {
-            "action": action,
+        report = {
+            "action": raw_action,
             "changed": sorted(set(changed)),
             "sample_ids": sample_ids,
             "todo_id": todo_id,
         }
+        if action != raw_action:
+            report["effective_action"] = action
+        return report
 
     def train_generalizable_projection(
         self,
@@ -2724,6 +3936,8 @@ class AdaptiveModalAutoencoder:
         validation_samples: Optional[Sequence[LegalSample]] = None,
         legal_ir_bridge_names: Sequence[str] = (),
         legal_ir_evaluate_provers: Optional[bool] = None,
+        legal_ir_bridge_max_samples: Optional[int] = None,
+        legal_ir_bridge_max_sample_text_chars: Optional[int] = None,
         legal_ir_targets: Optional[Mapping[str, Any] | Sequence[Any]] = None,
         legal_ir_parallel_workers: Optional[int] = None,
         epochs: int = 3,
@@ -2735,18 +3949,70 @@ class AdaptiveModalAutoencoder:
         max_legal_ir_loss_regression: float = 0.02,
         objective_cross_entropy_weight: float = 1.0,
         objective_reconstruction_weight: float = 1.0,
-        objective_cosine_gap_weight: float = 1.0,
+        objective_cosine_gap_weight: float = 1.5,
         objective_legal_ir_weight: float = 1.0,
         hard_example_fraction: float = 1.0,
+        max_seconds: Optional[float] = None,
+        max_line_search_attempts: Optional[int] = None,
+        projection_deadband_mode: str = "off",
+        projection_max_ce_deadband: float = 0.0,
+        projection_hard_guardrail_metrics: Sequence[str] | str | None = (
+            PROJECTION_DEADBAND_DEFAULT_HARD_GUARDRAILS
+        ),
+        projection_prescreen_mode: str = "off",
+        projection_prescreen_top_k: int = 3,
+        projection_periodic_full_search_every_n_cycles: int = 0,
+        projection_cycle: Optional[int] = None,
+        progress_callback: Optional[Callable[[Mapping[str, Any]], None]] = None,
     ) -> Dict[str, Any]:
         """Train feature-level weights with rollback on holdout regression.
 
         This guarded path keeps sample-memory disabled for updates, so any
         accepted improvement must come from reusable feature embeddings/logits.
         """
+        started_at = time.time()
         sample_list = list(samples)
         validation_list = list(validation_samples or [])
         target_samples = validation_list or sample_list
+
+        def elapsed_seconds() -> float:
+            return max(0.0, time.time() - started_at)
+
+        def timed_out() -> bool:
+            return (
+                max_seconds is not None
+                and float(max_seconds) > 0.0
+                and elapsed_seconds() >= float(max_seconds)
+            )
+
+        def emit_progress(stage: str, **payload: Any) -> None:
+            if progress_callback is None:
+                return
+            progress: Dict[str, Any] = {
+                "elapsed_seconds": round(elapsed_seconds(), 3),
+                "stage": stage,
+            }
+            progress.update(payload)
+            try:
+                progress_callback(progress)
+            except Exception:
+                pass
+
+        bridge_names = tuple(
+            str(name).strip()
+            for name in legal_ir_bridge_names
+            if str(name).strip()
+        )
+        bridge_sample_cap = (
+            None
+            if legal_ir_bridge_max_samples is None
+            else max(0, int(legal_ir_bridge_max_samples))
+        )
+        bridge_text_cap = (
+            None
+            if legal_ir_bridge_max_sample_text_chars is None
+            else max(0, int(legal_ir_bridge_max_sample_text_chars))
+        )
         evaluation_kwargs: Dict[str, Any] = {
             "legal_ir_bridge_names": legal_ir_bridge_names,
             "legal_ir_evaluate_provers": legal_ir_evaluate_provers,
@@ -2754,16 +4020,90 @@ class AdaptiveModalAutoencoder:
             "legal_ir_parallel_workers": legal_ir_parallel_workers,
             "use_sample_memory": False,
         }
-        before = self.evaluate(target_samples, **evaluation_kwargs)
+        base_evaluation_kwargs: Dict[str, Any] = {
+            **evaluation_kwargs,
+            "legal_ir_bridge_names": (),
+            "legal_ir_targets": None,
+        }
+
+        def projection_bridge_samples(rows: Sequence[LegalSample]) -> List[LegalSample]:
+            row_list = list(rows)
+            if not bridge_names:
+                return []
+            if bridge_sample_cap is None:
+                selected = row_list
+            elif bridge_sample_cap <= 0:
+                return []
+            else:
+                selected = row_list[:bridge_sample_cap]
+            return _bounded_legal_ir_metric_samples(
+                selected,
+                max_sample_text_chars=bridge_text_cap,
+            )
+
+        def evaluate_projection_rows(
+            rows: Sequence[LegalSample],
+            *,
+            stage: str,
+        ) -> AutoencoderEvaluation:
+            row_list = list(rows)
+            if bridge_sample_cap is None:
+                return self.evaluate(row_list, **evaluation_kwargs)
+            base = self.evaluate(row_list, **base_evaluation_kwargs)
+            bridge_rows = projection_bridge_samples(row_list)
+            if not bridge_rows:
+                return base
+            emit_progress(
+                f"{stage}_bridge_evaluation",
+                bridge_sample_count=len(bridge_rows),
+                bridge_sample_ids=[
+                    str(getattr(sample, "sample_id", "") or "")
+                    for sample in bridge_rows
+                ],
+                bridge_text_cap=bridge_text_cap,
+                full_sample_count=len(row_list),
+                sample_count=len(row_list),
+            )
+            bridge = self.evaluate(bridge_rows, **evaluation_kwargs)
+            return replace(
+                base,
+                legal_ir_target_count=bridge.legal_ir_target_count,
+                legal_ir_losses=dict(bridge.legal_ir_losses),
+                legal_ir_predicted_view_distribution=dict(
+                    bridge.legal_ir_predicted_view_distribution
+                ),
+                legal_ir_target_hashes=dict(bridge.legal_ir_target_hashes),
+                legal_ir_view_distribution=dict(bridge.legal_ir_view_distribution),
+            )
+
+        emit_progress(
+            "before_holdout_evaluation",
+            sample_count=len(sample_list),
+            validation_sample_count=len(target_samples),
+        )
+        before = evaluate_projection_rows(
+            target_samples,
+            stage="before_holdout_evaluation",
+        )
         if sample_list and validation_list:
             # Prime LegalIR target caches for training samples before feature-level
             # nudges.  Validation-only evaluation intentionally does not touch
             # training sample cache entries.
-            self.evaluate(sample_list, **evaluation_kwargs)
+            emit_progress(
+                "training_cache_prime",
+                sample_count=len(sample_list),
+                validation_sample_count=len(target_samples),
+            )
+            evaluate_projection_rows(
+                sample_list,
+                stage="training_cache_prime",
+            )
+        emit_progress("initial_state_snapshot")
         best_state = self.state.copy()
         best = before
         accepted_epochs = 0
         epoch_reports: List[Dict[str, Any]] = []
+        projection_stopped_reason: Optional[str] = None
         objective_weights = {
             "cross_entropy": max(0.0, float(objective_cross_entropy_weight)),
             "reconstruction": max(0.0, float(objective_reconstruction_weight)),
@@ -2771,118 +4111,552 @@ class AdaptiveModalAutoencoder:
             "legal_ir": max(0.0, float(objective_legal_ir_weight)),
         }
         hard_fraction = max(0.0, min(1.0, float(hard_example_fraction)))
+        deadband_mode = _projection_deadband_mode(projection_deadband_mode)
+        deadband_ce = max(0.0, float(projection_max_ce_deadband or 0.0))
+        deadband_guardrails = _projection_guardrail_names(
+            projection_hard_guardrail_metrics
+        )
+        projection_deadband_config = {
+            "hard_guardrail_metrics": list(deadband_guardrails),
+            "max_ce_deadband": deadband_ce,
+            "mode": deadband_mode,
+        }
+        prescreen_mode = _projection_prescreen_mode(projection_prescreen_mode)
+        prescreen_top_k = max(0, int(projection_prescreen_top_k or 0))
+        prescreen_full_search_every = max(
+            0,
+            int(projection_periodic_full_search_every_n_cycles or 0),
+        )
+        prescreen_periodic_full_search = bool(
+            prescreen_mode == "enforce"
+            and prescreen_full_search_every > 0
+            and projection_cycle is not None
+            and int(projection_cycle) > 0
+            and int(projection_cycle) % prescreen_full_search_every == 0
+        )
+        effective_prescreen_mode = "shadow" if prescreen_periodic_full_search else prescreen_mode
+        projection_prescreen_config = {
+            "effective_mode": effective_prescreen_mode,
+            "mode": prescreen_mode,
+            "periodic_full_search": prescreen_periodic_full_search,
+            "periodic_full_search_every_n_cycles": prescreen_full_search_every,
+            "projection_cycle": int(projection_cycle) if projection_cycle is not None else None,
+            "top_k": prescreen_top_k,
+        }
 
         candidate_updates = (
             ("family_logits", ("family_logits",)),
             ("decoded_embedding", ("decoded_embedding",)),
+            ("legal_ir_view_global_logits", ("legal_ir_view_global_logits",)),
             ("legal_ir_view_logits", ("legal_ir_view_logits",)),
             (
                 "combined",
                 ("family_logits", "decoded_embedding", "legal_ir_view_logits"),
             ),
         )
+        head_learning_rate_scales = {
+            "family_logits": 1.0,
+            "decoded_embedding": 0.5,
+            "legal_ir_view_global_logits": 0.5,
+            "legal_ir_view_logits": 0.5,
+            "combined": 0.35,
+        }
+        line_search_multipliers = (1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125)
+        line_search_refinement_multipliers = (
+            0.015625,
+            0.0078125,
+            0.00390625,
+            0.001953125,
+        )
+        state_entry_count = self.state.generalizable_entry_count()
+        effective_max_line_search_attempts = max(
+            0,
+            int(max_line_search_attempts or 0),
+        )
+        line_search_attempt_policy = "explicit"
+        if effective_max_line_search_attempts <= 0 and state_entry_count >= 100_000:
+            effective_max_line_search_attempts = _projection_auto_line_search_attempts(
+                max_attempts=len(line_search_multipliers),
+            )
+            line_search_attempt_policy = "auto_large_state_cap"
+        elif effective_max_line_search_attempts <= 0:
+            line_search_attempt_policy = "unbounded_small_state"
 
         for epoch in range(1, max(0, int(epochs)) + 1):
+            if timed_out():
+                projection_stopped_reason = "projection_timeout"
+                break
+            emit_progress(
+                "epoch_snapshot",
+                epoch=epoch,
+                state_entry_count=state_entry_count,
+            )
             epoch_before_state = self.state.copy()
             candidate_reports: List[Dict[str, Any]] = []
             selected: Optional[tuple[float, AutoencoderEvaluation, ModalAutoencoderTrainingState, str]] = None
+            emit_progress(
+                "hard_example_selection",
+                epoch=epoch,
+                hard_example_fraction=hard_fraction,
+            )
             update_samples = self._select_hard_examples_for_projection(
                 sample_list,
                 hard_example_fraction=hard_fraction,
                 objective_weights=objective_weights,
             )
+            prescreen_before: Optional[AutoencoderEvaluation] = None
+            if effective_prescreen_mode != "off" and update_samples:
+                emit_progress(
+                    "projection_prescreen_baseline",
+                    epoch=epoch,
+                    sample_count=len(update_samples),
+                    top_k=prescreen_top_k,
+                )
+                prescreen_before = self.evaluate(
+                    update_samples,
+                    **base_evaluation_kwargs,
+                )
 
             for update_name, update_targets in candidate_updates:
-                self.state = epoch_before_state.copy()
-                for sample in update_samples:
-                    if "family_logits" in update_targets:
-                        self._nudge_family_logits(
-                            sample,
-                            learning_rate=learning_rate,
-                            update_sample_memory=False,
-                        )
-                    if "decoded_embedding" in update_targets:
-                        self._nudge_decoded_embedding(
-                            sample,
-                            learning_rate=learning_rate,
-                            update_sample_memory=False,
-                        )
-                    if "legal_ir_view_logits" in update_targets:
-                        self._nudge_legal_ir_view_logits(
-                            sample,
-                            learning_rate=learning_rate,
-                            update_sample_memory=False,
-                        )
-                self._regularize_feature_state(l2_regularization)
-                after = self.evaluate(target_samples, **evaluation_kwargs)
-                regressions = _evaluation_regressions_for_training(
-                    best,
-                    after,
-                    max_cosine_regression=max_cosine_regression,
-                    max_reconstruction_regression=max_reconstruction_regression,
-                    max_cross_entropy_regression=max_cross_entropy_regression,
-                    max_legal_ir_loss_regression=max_legal_ir_loss_regression,
-                )
-                objective_delta = (
-                    _evaluation_objective_for_training(
+                if timed_out():
+                    projection_stopped_reason = "projection_timeout"
+                    break
+                head_scale = head_learning_rate_scales.get(update_name, 1.0)
+                attempt_reports: List[Dict[str, Any]] = []
+                best_attempt: Optional[tuple[float, Dict[str, Any], AutoencoderEvaluation, ModalAutoencoderTrainingState]] = None
+                best_improved_attempt: Optional[
+                    tuple[float, Dict[str, Any], AutoencoderEvaluation, ModalAutoencoderTrainingState]
+                ] = None
+                attempt_tuples: List[
+                    tuple[
+                        float,
+                        Dict[str, Any],
+                        AutoencoderEvaluation,
+                        ModalAutoencoderTrainingState,
+                    ]
+                ] = []
+                multipliers_to_try = list(line_search_multipliers)
+                refinement_added = False
+
+                def finalize_attempt_report(
+                    *,
+                    attempt_report: Dict[str, Any],
+                    candidate_state: ModalAutoencoderTrainingState,
+                ) -> tuple[
+                    float,
+                    Dict[str, Any],
+                    AutoencoderEvaluation,
+                    ModalAutoencoderTrainingState,
+                ]:
+                    self.state = candidate_state.copy()
+                    emit_progress(
+                        "line_search_evaluation",
+                        epoch=epoch,
+                        line_search_attempt=int(
+                            attempt_report.get("line_search_attempt", 0) or 0
+                        ),
+                        update=update_name,
+                    )
+                    after = evaluate_projection_rows(
+                        target_samples,
+                        stage="line_search_evaluation",
+                    )
+                    regressions = _evaluation_regressions_for_training(
                         best,
-                        **objective_weights,
-                    )
-                    - _evaluation_objective_for_training(
                         after,
-                        **objective_weights,
+                        max_cosine_regression=max_cosine_regression,
+                        max_reconstruction_regression=max_reconstruction_regression,
+                        max_cross_entropy_regression=max_cross_entropy_regression,
+                        max_legal_ir_loss_regression=max_legal_ir_loss_regression,
                     )
-                )
-                improved = _evaluation_improved_for_training(
-                    best,
-                    after,
-                    max_cosine_regression=max_cosine_regression,
-                    max_reconstruction_regression=max_reconstruction_regression,
-                    max_cross_entropy_regression=max_cross_entropy_regression,
-                    max_legal_ir_loss_regression=max_legal_ir_loss_regression,
-                )
-                candidate_reports.append(
-                    {
-                        "accepted": improved,
-                        "cross_entropy_delta": best.cross_entropy_loss
-                        - after.cross_entropy_loss,
+                    objective_delta = (
+                        _evaluation_objective_for_training(
+                            best,
+                            **objective_weights,
+                        )
+                        - _evaluation_objective_for_training(
+                            after,
+                            **objective_weights,
+                        )
+                    )
+                    strict_improved = bool(
+                        not regressions and objective_delta > 0.0
+                    )
+                    deadband_decision = _projection_deadband_decision(
+                        regressions,
+                        objective_delta=objective_delta,
+                        mode=deadband_mode,
+                        max_ce_deadband=deadband_ce,
+                        hard_guardrail_metrics=deadband_guardrails,
+                    )
+                    improved = bool(
+                        strict_improved
+                        or deadband_decision.get("enforced_accepted", False)
+                    )
+                    attempt_report.update(
+                        {
+                            "accepted": improved,
+                            "acceptance_source": (
+                                "strict"
+                                if strict_improved
+                                else "deadband_enforced"
+                                if deadband_decision.get("enforced_accepted", False)
+                                else "rejected"
+                            ),
+                            "cross_entropy_delta": best.cross_entropy_loss
+                            - after.cross_entropy_loss,
+                            "cross_entropy_excess_delta": (
+                                best.cross_entropy_excess_loss
+                                - after.cross_entropy_excess_loss
+                            ),
+                            "cosine_similarity_delta": (
+                                after.embedding_cosine_similarity
+                                - best.embedding_cosine_similarity
+                            ),
+                            "holdout_evaluated": True,
+                            "legal_ir_view_cross_entropy_delta": (
+                                float(
+                                    best.legal_ir_losses.get(
+                                        "legal_ir_view_cross_entropy_loss",
+                                        0.0,
+                                    )
+                                )
+                                - float(
+                                    after.legal_ir_losses.get(
+                                        "legal_ir_view_cross_entropy_loss",
+                                        0.0,
+                                    )
+                                )
+                            ),
+                            "legal_ir_view_cross_entropy_excess_delta": (
+                                float(
+                                    best.legal_ir_losses.get(
+                                        "legal_ir_view_cross_entropy_excess_loss",
+                                        0.0,
+                                    )
+                                )
+                                - float(
+                                    after.legal_ir_losses.get(
+                                        "legal_ir_view_cross_entropy_excess_loss",
+                                        0.0,
+                                    )
+                                )
+                            ),
+                            "legal_ir_view_family_cross_entropy_delta": (
+                                float(
+                                    best.legal_ir_losses.get(
+                                        "legal_ir_view_family_cross_entropy_loss",
+                                        0.0,
+                                    )
+                                )
+                                - float(
+                                    after.legal_ir_losses.get(
+                                        "legal_ir_view_family_cross_entropy_loss",
+                                        0.0,
+                                    )
+                                )
+                            ),
+                            "legal_ir_view_family_cross_entropy_excess_delta": (
+                                float(
+                                    best.legal_ir_losses.get(
+                                        "legal_ir_view_family_cross_entropy_excess_loss",
+                                        0.0,
+                                    )
+                                )
+                                - float(
+                                    after.legal_ir_losses.get(
+                                        "legal_ir_view_family_cross_entropy_excess_loss",
+                                        0.0,
+                                    )
+                                )
+                            ),
+                            "legal_ir_view_family_cosine_gap_delta": (
+                                float(
+                                    best.legal_ir_losses.get(
+                                        "legal_ir_view_family_cosine_gap_loss",
+                                        0.0,
+                                    )
+                                )
+                                - float(
+                                    after.legal_ir_losses.get(
+                                        "legal_ir_view_family_cosine_gap_loss",
+                                        0.0,
+                                    )
+                                )
+                            ),
+                            "objective_delta": objective_delta,
+                            "pareto_regressions": regressions,
+                            "projection_deadband": deadband_decision,
+                            "reconstruction_delta": best.reconstruction_loss
+                            - after.reconstruction_loss,
+                            "strict_accepted": strict_improved,
+                        }
+                    )
+                    return (
+                        objective_delta,
+                        attempt_report,
+                        after,
+                        self.state.copy(),
+                    )
+                for line_search_multiplier in multipliers_to_try:
+                    if timed_out():
+                        projection_stopped_reason = "projection_timeout"
+                        break
+                    if (
+                        effective_max_line_search_attempts > 0
+                        and len(attempt_reports) >= effective_max_line_search_attempts
+                    ):
+                        break
+                    is_refinement_attempt = (
+                        float(line_search_multiplier)
+                        in line_search_refinement_multipliers
+                    )
+                    effective_learning_rate = (
+                        learning_rate * head_scale * float(line_search_multiplier)
+                    )
+                    emit_progress(
+                        "line_search_attempt",
+                        effective_learning_rate=effective_learning_rate,
+                        epoch=epoch,
+                        hard_example_count=len(update_samples),
+                        line_search_attempt=len(attempt_reports) + 1,
+                        line_search_multiplier=float(line_search_multiplier),
+                        state_entry_count=state_entry_count,
+                        update=update_name,
+                    )
+                    self.state = epoch_before_state.copy()
+                    for sample in update_samples:
+                        if "family_logits" in update_targets:
+                            self._nudge_family_logits(
+                                sample,
+                                learning_rate=effective_learning_rate,
+                                update_sample_memory=False,
+                            )
+                        if "decoded_embedding" in update_targets:
+                            self._nudge_decoded_embedding(
+                                sample,
+                                learning_rate=effective_learning_rate,
+                                update_sample_memory=False,
+                            )
+                        if "legal_ir_view_logits" in update_targets:
+                            self._nudge_legal_ir_view_logits(
+                                sample,
+                                learning_rate=effective_learning_rate,
+                                update_sample_memory=False,
+                            )
+                        if "legal_ir_view_global_logits" in update_targets:
+                            self._nudge_legal_ir_view_global_logits(
+                                sample,
+                                learning_rate=effective_learning_rate,
+                            )
+                    self._regularize_feature_state(l2_regularization)
+                    prescreen_report: Dict[str, Any] = {
+                        "effective_mode": effective_prescreen_mode,
+                        "enabled": effective_prescreen_mode != "off",
+                        "mode": prescreen_mode,
+                        "selected_for_holdout": True,
+                        "top_k": prescreen_top_k,
+                    }
+                    if prescreen_before is not None:
+                        emit_progress(
+                            "projection_prescreen_evaluation",
+                            effective_learning_rate=effective_learning_rate,
+                            epoch=epoch,
+                            line_search_attempt=len(attempt_reports) + 1,
+                            line_search_multiplier=float(line_search_multiplier),
+                            sample_count=len(update_samples),
+                            top_k=prescreen_top_k,
+                            update=update_name,
+                        )
+                        prescreen_after = self.evaluate(
+                            update_samples,
+                            **base_evaluation_kwargs,
+                        )
+                        before_prescreen_objective = _evaluation_objective_for_training(
+                            prescreen_before,
+                            **objective_weights,
+                        )
+                        after_prescreen_objective = _evaluation_objective_for_training(
+                            prescreen_after,
+                            **objective_weights,
+                        )
+                        prescreen_report.update(
+                            {
+                                "after_objective": round(
+                                    after_prescreen_objective,
+                                    12,
+                                ),
+                                "before_objective": round(
+                                    before_prescreen_objective,
+                                    12,
+                                ),
+                                "objective_delta": round(
+                                    before_prescreen_objective
+                                    - after_prescreen_objective,
+                                    12,
+                                ),
+                                "sample_count": len(update_samples),
+                            }
+                        )
+                    candidate_state = self.state.copy()
+                    line_search_attempt_index = len(attempt_reports) + 1
+                    defer_holdout_evaluation = bool(
+                        effective_prescreen_mode == "enforce"
+                        and prescreen_before is not None
+                    )
+                    prescreen_objective_delta = _float_or_zero(
+                        prescreen_report.get("objective_delta")
+                    )
+                    attempt_report = {
+                        "accepted": False,
+                        "acceptance_source": (
+                            "prescreen_deferred"
+                            if defer_holdout_evaluation
+                            else "pending"
+                        ),
+                        "effective_learning_rate": effective_learning_rate,
                         "hard_example_count": len(update_samples),
                         "hard_example_fraction": hard_fraction,
-                        "cosine_similarity_delta": (
-                            after.embedding_cosine_similarity
-                            - best.embedding_cosine_similarity
-                        ),
-                        "legal_ir_view_cross_entropy_delta": (
-                            float(
-                                best.legal_ir_losses.get(
-                                    "legal_ir_view_cross_entropy_loss",
-                                    0.0,
-                                )
-                            )
-                            - float(
-                                after.legal_ir_losses.get(
-                                    "legal_ir_view_cross_entropy_loss",
-                                    0.0,
-                                )
-                            )
-                        ),
-                        "objective_delta": objective_delta,
-                        "pareto_regressions": regressions,
-                        "reconstruction_delta": best.reconstruction_loss
-                        - after.reconstruction_loss,
+                        "head_learning_rate_scale": head_scale,
+                        "holdout_evaluated": False,
+                        "line_search_attempt": line_search_attempt_index,
+                        "line_search_multiplier": float(line_search_multiplier),
+                        "line_search_refinement": bool(is_refinement_attempt),
+                        "objective_delta": prescreen_objective_delta,
+                        "pareto_regressions": {},
+                        "projection_deadband": {},
+                        "projection_prescreen": prescreen_report,
+                        "strict_accepted": False,
                         "update": update_name,
                     }
+                    if defer_holdout_evaluation:
+                        attempt_reports.append(attempt_report)
+                        attempt_tuples.append(
+                            (
+                                prescreen_objective_delta,
+                                attempt_report,
+                                best,
+                                candidate_state,
+                            )
+                        )
+                        continue
+                    attempt_tuple = finalize_attempt_report(
+                        attempt_report=attempt_report,
+                        candidate_state=candidate_state,
+                    )
+                    objective_delta, attempt_report, after, _candidate_state = (
+                        attempt_tuple
+                    )
+                    attempt_reports.append(attempt_report)
+                    attempt_tuples.append(attempt_tuple)
+                    if best_attempt is None or objective_delta > best_attempt[0]:
+                        best_attempt = attempt_tuple
+                    if attempt_report.get("accepted") and (
+                        best_improved_attempt is None
+                        or objective_delta > best_improved_attempt[0]
+                    ):
+                        best_improved_attempt = attempt_tuple
+                    if (
+                        not refinement_added
+                        and best_improved_attempt is None
+                        and len(attempt_reports) == len(line_search_multipliers)
+                        and (
+                            effective_max_line_search_attempts <= 0
+                            or len(attempt_reports) < effective_max_line_search_attempts
+                        )
+                    ):
+                        multipliers_to_try.extend(line_search_refinement_multipliers)
+                        refinement_added = True
+                if projection_stopped_reason:
+                    break
+                _annotate_projection_prescreen_rankings(
+                    attempt_reports,
+                    top_k=prescreen_top_k,
                 )
-                if improved and (
+                if effective_prescreen_mode == "enforce":
+                    selected_tuples = []
+                    for attempt in attempt_tuples:
+                        _score, attempt_report, after, candidate_state = attempt
+                        prescreen = attempt_report.get("projection_prescreen", {})
+                        selected_for_holdout = bool(
+                            isinstance(prescreen, Mapping)
+                            and prescreen.get("selected_for_holdout", True)
+                        )
+                        if not selected_for_holdout:
+                            if not bool(attempt_report.get("holdout_evaluated", False)):
+                                attempt_report["acceptance_source"] = (
+                                    "prescreen_filtered"
+                                )
+                            continue
+                        if bool(attempt_report.get("holdout_evaluated", False)):
+                            selected_tuples.append(attempt)
+                            continue
+                        selected_tuples.append(
+                            finalize_attempt_report(
+                                attempt_report=attempt_report,
+                                candidate_state=candidate_state,
+                            )
+                        )
+                    best_attempt = max(
+                        selected_tuples,
+                        key=lambda attempt: attempt[0],
+                        default=None,
+                    )
+                    improved_tuples = [
+                        attempt
+                        for attempt in selected_tuples
+                        if bool(attempt[1].get("accepted"))
+                    ]
+                    best_improved_attempt = max(
+                        improved_tuples,
+                        key=lambda attempt: attempt[0],
+                        default=None,
+                    )
+                chosen = best_improved_attempt or best_attempt
+                if chosen is None:
+                    continue
+                objective_delta, candidate_report, after, candidate_state = chosen
+                candidate_reports.append(
+                    {
+                        **candidate_report,
+                        "attempt_reports": attempt_reports,
+                        "line_search_attempt_count": len(attempt_reports),
+                        "line_search_refinement_attempt_count": sum(
+                            1
+                            for report in attempt_reports
+                            if report.get("line_search_refinement")
+                        ),
+                    }
+                )
+                if candidate_report["accepted"] and (
                     selected is None or objective_delta > selected[0]
                 ):
                     selected = (
                         objective_delta,
                         after,
-                        self.state.copy(),
+                        candidate_state,
                         update_name,
                     )
 
+            if projection_stopped_reason:
+                self.state = epoch_before_state
+                epoch_reports.append(
+                    {
+                        "accepted": False,
+                        "candidate_reports": candidate_reports,
+                        "epoch": epoch,
+                        "objective_delta": max(
+                            (
+                                float(report.get("objective_delta", 0.0))
+                                for report in candidate_reports
+                            ),
+                            default=0.0,
+                        ),
+                        "selected_update": None,
+                        "stopped_reason": projection_stopped_reason,
+                    }
+                )
+                break
             if selected is None:
                 self.state = epoch_before_state
                 epoch_reports.append(
@@ -2924,14 +4698,32 @@ class AdaptiveModalAutoencoder:
             )
 
         self.state = best_state
+        emit_progress(
+            "finished",
+            accepted_epochs=accepted_epochs,
+            stopped_reason=projection_stopped_reason,
+        )
         return {
             "accepted_epochs": accepted_epochs,
             "after": best.to_dict(),
             "before": before.to_dict(),
             "compute_backend": self.compute_backend_metadata(),
             "epoch_reports": epoch_reports,
+            "elapsed_seconds": round(elapsed_seconds(), 3),
+            "effective_max_line_search_attempts": effective_max_line_search_attempts,
+            "line_search_attempt_policy": line_search_attempt_policy,
             "objective_weights": dict(objective_weights),
+            "projection_deadband": dict(projection_deadband_config),
+            "projection_prescreen": dict(projection_prescreen_config),
+            "projection_prescreen_summary": _projection_prescreen_summary(
+                epoch_reports
+            ),
+            "rejection_summary": _projection_rejection_summary(epoch_reports),
             "sample_memory_used": False,
+            "legal_ir_bridge_max_samples": bridge_sample_cap,
+            "legal_ir_bridge_max_sample_text_chars": bridge_text_cap,
+            "state_entry_count": state_entry_count,
+            "stopped_reason": projection_stopped_reason,
             "validation_sample_count": len(target_samples),
         }
 
@@ -2978,9 +4770,10 @@ class AdaptiveModalAutoencoder:
         reconstruction = mse_loss(sample.embedding_vector, decoded)
         cosine_gap = max(0.0, 1.0 - cosine_similarity(sample.embedding_vector, decoded))
         distribution = self._family_distribution(sample, use_sample_memory=False)
-        cross_entropy = cross_entropy_distribution_loss(
+        target_family_distribution = _observed_family_distribution(sample)
+        cross_entropy = cross_entropy_excess_distribution_loss(
             distribution,
-            _observed_family_distribution(sample),
+            target_family_distribution,
         )
 
         legal_ir_loss = 0.0
@@ -2991,7 +4784,10 @@ class AdaptiveModalAutoencoder:
                 target_distribution,
                 use_sample_memory=False,
             )
-            legal_ir_loss = cross_entropy_distribution_loss(predicted, target_distribution)
+            legal_ir_loss = cross_entropy_excess_distribution_loss(
+                predicted,
+                target_distribution,
+            )
 
         return (
             (ce_weight * cross_entropy)
@@ -3068,7 +4864,7 @@ class AdaptiveModalAutoencoder:
             use_sample_memory=use_sample_memory,
         )
         adjustment = self._feature_embedding_adjustment(sample, dimensions=len(base))
-        return [
+        candidate = [
             (
                 base_value
                 + compiler_quality_value
@@ -3102,6 +4898,49 @@ class AdaptiveModalAutoencoder:
                 adjustment,
             )
         ]
+        return self._reconstruction_safe_projection(
+            sample.embedding_vector,
+            base,
+            candidate,
+        )
+
+    def _reconstruction_safe_projection(
+        self,
+        target: Sequence[float],
+        base: Sequence[float],
+        candidate: Sequence[float],
+    ) -> List[float]:
+        """Return the best point from base toward candidate for reconstruction."""
+        if len(target) != len(base) or len(target) != len(candidate):
+            return [float(value) for value in candidate]
+        direction = [
+            float(candidate_value) - float(base_value)
+            for base_value, candidate_value in zip(base, candidate)
+        ]
+        denominator = sum(value * value for value in direction)
+        if denominator <= 0.0:
+            return [float(value) for value in candidate]
+        numerator = sum(
+            (float(target_value) - float(base_value)) * direction_value
+            for target_value, base_value, direction_value in zip(target, base, direction)
+        )
+        unclamped_step = numerator / denominator
+        step = max(0.0, min(1.0, unclamped_step))
+        projected = [
+            float(base_value) + (step * direction_value)
+            for base_value, direction_value in zip(base, direction)
+        ]
+        target_point = [float(value) for value in target]
+        if (
+            0.0 < unclamped_step
+            and mse_loss(target_point, target_point) <= mse_loss(target_point, projected)
+            and cosine_loss(target_point, target_point) <= cosine_loss(
+                target_point,
+                projected,
+            )
+        ):
+            return target_point
+        return projected
 
     def _base_decoded_for(self, sample: LegalSample) -> List[float]:
         cache = self._sample_cache_for(sample)
@@ -3121,8 +4960,34 @@ class AdaptiveModalAutoencoder:
                 result = [float(value) for value in decoded]
                 cache["base_decoded"] = list(result)
                 return result
-        result = [self.initial_embedding_scale * float(value) for value in sample.embedding_vector]
+        result = self._initial_embedding_projection(sample.embedding_vector)
         cache["base_decoded"] = list(result)
+        return result
+
+    def _initial_embedding_projection(self, embedding: Sequence[float]) -> List[float]:
+        """Return a stable imperfect fallback projection for cold decoder state.
+
+        The pairwise skew component keeps cosine below 1.0 for sparse fixtures
+        while the error norm remains lower than the previous all-zero fallback
+        when ``(1 - scale) ** 2 + rotation_scale ** 2 <= 1``.
+        """
+        scale = float(self.initial_embedding_scale)
+        rotation_scale = float(self.initial_embedding_rotation_scale)
+        if not embedding:
+            return []
+        if rotation_scale == 0.0:
+            return [scale * float(value) for value in embedding]
+
+        result = [0.0 for _ in embedding]
+        index = 0
+        while index + 1 < len(embedding):
+            left = float(embedding[index])
+            right = float(embedding[index + 1])
+            result[index] = (scale * left) + (rotation_scale * right)
+            result[index + 1] = (scale * right) - (rotation_scale * left)
+            index += 2
+        if index < len(embedding):
+            result[index] = scale * float(embedding[index])
         return result
 
     def _family_distribution(
@@ -3142,53 +5007,7 @@ class AdaptiveModalAutoencoder:
     ) -> Dict[str, float]:
         families = _unique_preserve_order(
             [str(name) for name in target_distribution.keys()]
-            + [
-                str(family)
-                for family in self.state.legal_ir_view_logits.keys()
-                if self._is_legal_ir_view_family(str(family))
-            ]
-            + [
-                str(family)
-                for logits in self.state.feature_legal_ir_view_logits.values()
-                for family in logits.keys()
-                if self._is_legal_ir_view_family(str(family))
-            ]
-            + [
-                str(family)
-                for logits in self.state.feature_family_logits.values()
-                for family in logits.keys()
-                if self._is_legal_ir_view_family(str(family))
-            ]
-            + [
-                str(family)
-                for logits in self.state.semantic_slot_legal_ir_view_logits.values()
-                for family in logits.keys()
-                if self._is_legal_ir_view_family(str(family))
-            ]
-            + [
-                str(family)
-                for logits in self.state.logic_signature_legal_ir_view_logits.values()
-                for family in logits.keys()
-                if self._is_legal_ir_view_family(str(family))
-            ]
-            + [
-                str(family)
-                for logits in self.state.round_trip_signal_legal_ir_view_logits.values()
-                for family in logits.keys()
-                if self._is_legal_ir_view_family(str(family))
-            ]
-            + [
-                str(family)
-                for logits in self.state.decompiler_plan_legal_ir_view_logits.values()
-                for family in logits.keys()
-                if self._is_legal_ir_view_family(str(family))
-            ]
-            + [
-                str(family)
-                for logits in self.state.predicate_argument_legal_ir_view_logits.values()
-                for family in logits.keys()
-                if self._is_legal_ir_view_family(str(family))
-            ]
+            + list(self._legal_ir_view_family_candidates())
             + [
                 str(family)
                 for family in self.state.family_logits.get(sample.sample_id, {}).keys()
@@ -3205,16 +5024,68 @@ class AdaptiveModalAutoencoder:
     def _legal_ir_view_target_distribution_for_sample(
         self,
         sample: LegalSample,
+        *,
+        include_autoencoder_prior: bool = True,
     ) -> Dict[str, float]:
         distribution = self._legal_ir_view_target_cache.get(
             sample.sample_id,
             self._legal_ir_view_target_cache.get(_sample_content_cache_id(sample), {}),
         )
-        return {
+        cached_distribution = {
             str(name): _float_or_zero(value)
             for name, value in dict(distribution or {}).items()
             if _float_or_zero(value) > 0.0
         }
+        if cached_distribution:
+            return cached_distribution
+        if not include_autoencoder_prior:
+            return {}
+        return self._autoencoder_view_target_distribution_for_sample(sample)
+
+    def _autoencoder_view_target_distribution_for_sample(
+        self,
+        sample: LegalSample,
+    ) -> Dict[str, float]:
+        """Return a deterministic view prior for reconstruction-only training."""
+        family_distribution = _observed_family_distribution(sample)
+        if not family_distribution:
+            return {}
+        view_weights: Dict[str, float] = {}
+
+        def bump(view: str, weight: float) -> None:
+            normalized_weight = max(0.0, float(weight))
+            if not view or normalized_weight <= 0.0:
+                return
+            view_weights[view] = view_weights.get(view, 0.0) + normalized_weight
+
+        for family, family_weight in family_distribution.items():
+            weight = max(0.0, float(family_weight))
+            if weight <= 0.0:
+                continue
+            family_name = str(family)
+            if family_name == "deontic":
+                bump("deontic.ir", 0.60 * weight)
+                bump("TDFOL.prover", 0.25 * weight)
+                bump("modal.frame_logic", 0.15 * weight)
+            elif family_name == "frame":
+                bump("modal.frame_logic", 0.55 * weight)
+                bump("modal.autoencoder", 0.30 * weight)
+                bump("deontic.ir", 0.15 * weight)
+            elif family_name == "temporal":
+                bump("modal.autoencoder", 0.40 * weight)
+                bump("modal.frame_logic", 0.25 * weight)
+                bump("deontic.ir", 0.20 * weight)
+                bump("TDFOL.prover", 0.15 * weight)
+            elif family_name == "conditional_normative":
+                bump("deontic.ir", 0.35 * weight)
+                bump("modal.frame_logic", 0.30 * weight)
+                bump("TDFOL.prover", 0.20 * weight)
+                bump("modal.autoencoder", 0.15 * weight)
+            else:
+                bump("modal.autoencoder", 0.50 * weight)
+                bump("modal.frame_logic", 0.25 * weight)
+                bump("TDFOL.prover", 0.25 * weight)
+        return _normalized_distribution(view_weights)
 
     def _legal_ir_view_distribution_for_embedding(
         self,
@@ -3229,60 +5100,7 @@ class AdaptiveModalAutoencoder:
                 target_distribution,
                 use_sample_memory=use_sample_memory,
             )
-        families = _unique_preserve_order(
-            [
-                str(view)
-                for view in self.state.legal_ir_view_embedding_weights.keys()
-                if self._is_legal_ir_view_family(str(view))
-            ]
-            + [
-                str(view)
-                for view in self.state.legal_ir_view_logits.keys()
-                if self._is_legal_ir_view_family(str(view))
-            ]
-            + [
-                str(view)
-                for logits in self.state.feature_legal_ir_view_logits.values()
-                for view in logits.keys()
-                if self._is_legal_ir_view_family(str(view))
-            ]
-            + [
-                str(view)
-                for logits in self.state.feature_family_logits.values()
-                for view in logits.keys()
-                if self._is_legal_ir_view_family(str(view))
-            ]
-            + [
-                str(view)
-                for logits in self.state.semantic_slot_legal_ir_view_logits.values()
-                for view in logits.keys()
-                if self._is_legal_ir_view_family(str(view))
-            ]
-            + [
-                str(view)
-                for logits in self.state.logic_signature_legal_ir_view_logits.values()
-                for view in logits.keys()
-                if self._is_legal_ir_view_family(str(view))
-            ]
-            + [
-                str(view)
-                for logits in self.state.round_trip_signal_legal_ir_view_logits.values()
-                for view in logits.keys()
-                if self._is_legal_ir_view_family(str(view))
-            ]
-            + [
-                str(view)
-                for logits in self.state.decompiler_plan_legal_ir_view_logits.values()
-                for view in logits.keys()
-                if self._is_legal_ir_view_family(str(view))
-            ]
-            + [
-                str(view)
-                for logits in self.state.predicate_argument_legal_ir_view_logits.values()
-                for view in logits.keys()
-                if self._is_legal_ir_view_family(str(view))
-            ]
-        )
+        families = self._legal_ir_view_family_candidates()
         if not families:
             return {}
         return _softmax(
@@ -3542,11 +5360,19 @@ class AdaptiveModalAutoencoder:
 
         text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
         cues = self._cue_names_for_text(text)
+        surface_profiles = _uscode_surface_profile_tags(text)
         bump(f"round-trip:cue-count:{_count_bucket(len(cues))}", 0.4)
         if len(cues) > 1:
             bump("round-trip:multiple-modal-cues", 0.75)
         for cue in cues[:4]:
             bump(f"round-trip:cue:{cue}", 0.4)
+        for profile in surface_profiles[:8]:
+            bump(f"round-trip:uscode-surface-profile:{profile}", 0.8)
+        for left_profile, right_profile in zip(surface_profiles, surface_profiles[1:]):
+            bump(
+                f"round-trip:uscode-surface-profile-transition:{left_profile}->{right_profile}",
+                0.55,
+            )
 
         frame_candidates = list(sample.frame_candidates or [])
         bump(
@@ -3606,6 +5432,7 @@ class AdaptiveModalAutoencoder:
         raw_tokens = _TOKEN_RE.findall(text)
         content_tokens = _token_features(text, max_tokens=32)
         cues = self._cue_names_for_text(text)
+        surface_profiles = _uscode_surface_profile_tags(text)
         counts: Dict[str, float] = {}
 
         def bump(plan: str, weight: float = 1.0) -> None:
@@ -3685,6 +5512,18 @@ class AdaptiveModalAutoencoder:
             bump(f"decompiler-plan:cue-signature:{'|'.join(cues[:4])}", 0.6)
         for left_cue, right_cue in zip(cues, cues[1:]):
             bump(f"decompiler-plan:cue-transition:{left_cue}->{right_cue}", 0.4)
+        for profile in surface_profiles[:8]:
+            bump(f"decompiler-plan:uscode-surface-profile:{profile}", 0.85)
+            if not cues:
+                bump(
+                    f"decompiler-plan:no-cue-surface-profile:{profile}",
+                    0.65,
+                )
+        for left_profile, right_profile in zip(surface_profiles, surface_profiles[1:]):
+            bump(
+                f"decompiler-plan:uscode-surface-profile-transition:{left_profile}->{right_profile}",
+                0.5,
+            )
 
         if subject_anchor:
             bump(f"decompiler-plan:subject-anchor:{subject_anchor}", 0.55)
@@ -3741,6 +5580,29 @@ class AdaptiveModalAutoencoder:
             conditions = list(getattr(formula, "conditions", []) or [])
             exceptions = list(getattr(formula, "exceptions", []) or [])
             arity_bucket = _count_bucket(len(arguments))
+            family_pairs = _autoencoder_typed_family_pairs_for_formula(
+                sample.modal_ir,
+                formula,
+            )
+            pair_cues = _unique_preserve_order(
+                [*cues, *_formula_autoencoder_cue_names(formula)]
+            )
+            pair_scope_tags = self._source_clause_scope_tags_for(
+                sample,
+                pair_cues,
+                source_anchors,
+            )
+            if conditions and "conditioned" not in pair_scope_tags:
+                pair_scope_tags = [*pair_scope_tags, "conditioned"]
+            if exceptions and "excepted" not in pair_scope_tags:
+                pair_scope_tags = [*pair_scope_tags, "excepted"]
+            pair_scope_signature = "+".join(
+                tag for tag in _unique_preserve_order(pair_scope_tags) if tag
+            ) or "unconditioned"
+            pair_force_tags, pair_polarity_tags = _autoencoder_formula_force_polarity_tags(
+                formula,
+                text=text,
+            )
             if family:
                 bump(f"decompiler-plan:compiled-family:{family}", 0.45)
             if family and symbol:
@@ -3814,6 +5676,50 @@ class AdaptiveModalAutoencoder:
                 bump(f"decompiler-plan:compiled-condition:{family}", 0.35)
             if exceptions:
                 bump(f"decompiler-plan:compiled-exception:{family}", 0.35)
+            for family_pair in family_pairs:
+                bump(f"decompiler-plan:typed-family-pair:{family_pair}", 0.9)
+                bump(
+                    (
+                        "decompiler-plan:typed-family-pair-scope:"
+                        f"{pair_scope_signature}:{family_pair}"
+                    ),
+                    0.75,
+                )
+                if conditions:
+                    bump(
+                        f"decompiler-plan:typed-family-pair-condition:{family_pair}",
+                        0.55,
+                    )
+                if exceptions:
+                    bump(
+                        f"decompiler-plan:typed-family-pair-exception:{family_pair}",
+                        0.55,
+                    )
+                if action_anchor:
+                    bump(
+                        (
+                            "decompiler-plan:source-action-family-pair:"
+                            f"{action_anchor}:{family_pair}"
+                        ),
+                        0.65,
+                    )
+                if predicate_head:
+                    bump(
+                        (
+                            "decompiler-plan:predicate-family-pair:"
+                            f"{predicate_head}:{family_pair}"
+                        ),
+                        0.55,
+                    )
+                for force in pair_force_tags[:2]:
+                    for polarity in pair_polarity_tags[:2]:
+                        bump(
+                            (
+                                "decompiler-plan:force-polarity-family-pair:"
+                                f"{force}:{polarity}:{family_pair}"
+                            ),
+                            0.6,
+                        )
 
         result = _normalized_distribution(counts)
         cache["decompiler_plan_distribution"] = dict(result)
@@ -4004,7 +5910,7 @@ class AdaptiveModalAutoencoder:
         if self.family_semantic_slot_embedding_weight_scale <= 0.0:
             return {}
         return _joint_distribution(
-            self._family_distribution(
+            self._family_distribution_for_semantic_slot_embedding(
                 sample,
                 use_sample_memory=use_sample_memory,
             ),
@@ -4019,7 +5925,7 @@ class AdaptiveModalAutoencoder:
         if self.family_semantic_slot_embedding_weight_scale <= 0.0:
             return {}
         return _joint_distribution(
-            _observed_family_distribution(sample),
+            self._target_family_distribution_for_semantic_slot_embedding(sample),
             self._semantic_slot_distribution_for(sample),
             key_fn=_family_semantic_slot_key,
         )
@@ -4066,7 +5972,7 @@ class AdaptiveModalAutoencoder:
         if self.family_semantic_slot_legal_ir_view_logit_scale <= 0.0:
             return {}
         return _joint_distribution(
-            _observed_family_distribution(sample),
+            self._target_family_distribution_for_semantic_slot_embedding(sample),
             self._semantic_slot_distribution_for(sample),
             key_fn=_family_semantic_slot_key,
         )
@@ -4080,7 +5986,7 @@ class AdaptiveModalAutoencoder:
         if self.family_semantic_slot_legal_ir_view_embedding_weight_scale <= 0.0:
             return {}
         return _triple_distribution(
-            self._family_distribution(
+            self._family_distribution_for_semantic_slot_embedding(
                 sample,
                 use_sample_memory=use_sample_memory,
             ),
@@ -4099,7 +6005,7 @@ class AdaptiveModalAutoencoder:
         if self.family_semantic_slot_legal_ir_view_embedding_weight_scale <= 0.0:
             return {}
         return _triple_distribution(
-            _observed_family_distribution(sample),
+            self._target_family_distribution_for_semantic_slot_embedding(sample),
             self._semantic_slot_distribution_for(sample),
             self._legal_ir_view_target_distribution_for_sample(sample),
             key_fn=_family_semantic_slot_legal_ir_view_key,
@@ -4113,7 +6019,7 @@ class AdaptiveModalAutoencoder:
     ) -> Dict[str, float]:
         if self.family_legal_ir_view_embedding_weight_scale <= 0.0:
             return {}
-        family_distribution = self._family_distribution(
+        family_distribution = self._family_distribution_for_embedding(
             sample,
             use_sample_memory=use_sample_memory,
         )
@@ -4139,8 +6045,152 @@ class AdaptiveModalAutoencoder:
             key_fn=_family_legal_ir_view_key,
         )
 
+    def _family_distribution_for_embedding(
+        self,
+        sample: LegalSample,
+        *,
+        use_sample_memory: bool,
+    ) -> Dict[str, float]:
+        """Gate decoder embedding heads with compiled IR families.
+
+        Family logits are still evaluated by the classifier loss.  The decoder
+        heads are trained from observed modal IR families, so cold-start
+        reconstruction should use the same family space instead of routing
+        reusable semantic-slot weights through a possibly wrong classifier.
+        """
+        observed = _observed_family_distribution(sample)
+        if observed:
+            return observed
+        return self._family_distribution(sample, use_sample_memory=use_sample_memory)
+
+    def _family_distribution_for_semantic_slot_embedding(
+        self,
+        sample: LegalSample,
+        *,
+        use_sample_memory: bool,
+    ) -> Dict[str, float]:
+        """Return family gates for semantic-slot reconstruction heads.
+
+        A frame formula can carry typed decompiler slots such as
+        ``frame->deontic`` or ``frame->conditional_normative``.  The classifier
+        should still learn from the observed source family, but the embedding
+        heads need target-family gates so reusable decompiler features transfer
+        to the LegalIR view that reconstructs the slot.
+        """
+        return self._semantic_slot_projected_family_distribution(
+            sample,
+            base_distribution=self._family_distribution_for_embedding(
+                sample,
+                use_sample_memory=use_sample_memory,
+            ),
+        )
+
+    def _target_family_distribution_for_semantic_slot_embedding(
+        self,
+        sample: LegalSample,
+    ) -> Dict[str, float]:
+        return self._semantic_slot_projected_family_distribution(
+            sample,
+            base_distribution=_observed_family_distribution(sample),
+        )
+
+    def _semantic_slot_projected_family_distribution(
+        self,
+        sample: LegalSample,
+        *,
+        base_distribution: Mapping[str, float],
+    ) -> Dict[str, float]:
+        base = {
+            str(family): max(0.0, float(weight))
+            for family, weight in dict(base_distribution or {}).items()
+            if max(0.0, float(weight)) > 0.0
+        }
+        slots = self._semantic_slot_distribution_for(sample)
+        if not slots:
+            return _normalized_distribution(base)
+
+        counts: Dict[str, float] = dict(base)
+        for slot, slot_weight in slots.items():
+            weight = max(0.0, float(slot_weight))
+            if weight <= 0.0 or "typed-decompiler" not in str(slot):
+                continue
+            slot_text = str(slot)
+            if "typed-decompiler-target-reconstruction" in slot_text:
+                weight *= 6.0
+            elif "typed-decompiler-family-pair" in slot_text:
+                weight *= 2.5
+            for source_family, target_family in re.findall(
+                r"\b([a-z][a-z0-9_]*)->([a-z][a-z0-9_]*)\b",
+                slot_text,
+            ):
+                is_cross_family = source_family != target_family
+                if is_cross_family and source_family != "frame":
+                    continue
+                if source_family and is_cross_family:
+                    counts[source_family] = counts.get(source_family, 0.0) + (
+                        weight * 0.10
+                    )
+                if target_family:
+                    target_weight = weight if is_cross_family else weight * 0.20
+                    counts[target_family] = (
+                        counts.get(target_family, 0.0) + target_weight
+                    )
+        return _normalized_distribution(counts)
+
     def _is_legal_ir_view_family(self, family: str) -> bool:
         return str(family) not in self.modal_families
+
+    def _legal_ir_view_family_candidates(self) -> tuple[str, ...]:
+        cached = self._legal_ir_view_family_candidates_cache
+        if cached is not None:
+            return cached
+
+        families: List[str] = []
+        seen: set[str] = set()
+
+        def add(value: Any) -> None:
+            family = str(value)
+            if family in seen or not self._is_legal_ir_view_family(family):
+                return
+            seen.add(family)
+            families.append(family)
+
+        for view in self.state.legal_ir_view_embedding_weights.keys():
+            add(view)
+        for key in self.state.family_legal_ir_view_embedding_weights.keys():
+            parts = str(key).split("||")
+            if len(parts) == 2:
+                add(parts[1])
+        for key in self.state.semantic_slot_legal_ir_view_embedding_weights.keys():
+            parts = str(key).split("||")
+            if len(parts) == 2:
+                add(parts[1])
+        for key in self.state.family_semantic_slot_legal_ir_view_embedding_weights.keys():
+            parts = str(key).split("||")
+            if len(parts) == 3:
+                add(parts[2])
+        for view in self.state.legal_ir_view_logits.keys():
+            add(view)
+        for logits_by_key in (
+            self.state.feature_legal_ir_view_logits,
+            self.state.feature_family_logits,
+            self.state.semantic_slot_legal_ir_view_logits,
+            self.state.logic_signature_legal_ir_view_logits,
+            self.state.round_trip_signal_legal_ir_view_logits,
+            self.state.decompiler_plan_legal_ir_view_logits,
+            self.state.predicate_argument_legal_ir_view_logits,
+            self.state.family_semantic_slot_legal_ir_view_logits,
+        ):
+            for logits in logits_by_key.values():
+                for family in logits.keys():
+                    add(family)
+
+        cached = tuple(families)
+        self._legal_ir_view_family_candidates_cache = cached
+        return cached
+
+    def _invalidate_legal_ir_view_family_candidates(self) -> None:
+        self._legal_ir_view_family_candidates_cache = None
 
     def _legal_ir_view_logits_for(
         self,
@@ -4748,6 +6798,12 @@ class AdaptiveModalAutoencoder:
             )
         )
         keys.extend(
+            self._quantitative_formula_feature_keys_for(
+                sample,
+                prefix="legal-ir:quantitative-formula",
+            )
+        )
+        keys.extend(
             self._definition_grounding_feature_keys_for(
                 sample,
                 prefix="legal-ir:definition-grounding",
@@ -4772,9 +6828,21 @@ class AdaptiveModalAutoencoder:
             )
         )
         keys.extend(
+            self._mental_state_feature_keys_for(
+                sample,
+                prefix="legal-ir:mental-state",
+            )
+        )
+        keys.extend(
             self._reference_dependency_feature_keys_for(
                 sample,
                 prefix="legal-ir:reference-dependency",
+            )
+        )
+        keys.extend(
+            self._amendment_operation_feature_keys_for(
+                sample,
+                prefix="legal-ir:amendment-operation",
             )
         )
         keys.extend(
@@ -4784,9 +6852,63 @@ class AdaptiveModalAutoencoder:
             )
         )
         keys.extend(
+            self._discretion_standard_feature_keys_for(
+                sample,
+                prefix="legal-ir:discretion-standard",
+            )
+        )
+        keys.extend(
             self._temporal_validity_feature_keys_for(
                 sample,
                 prefix="legal-ir:temporal-validity",
+            )
+        )
+        keys.extend(
+            self._evidentiary_burden_feature_keys_for(
+                sample,
+                prefix="legal-ir:evidentiary-burden",
+            )
+        )
+        keys.extend(
+            self._legal_relation_feature_keys_for(
+                sample,
+                prefix="legal-ir:legal-relation",
+            )
+        )
+        keys.extend(
+            self._status_transition_feature_keys_for(
+                sample,
+                prefix="legal-ir:status-transition",
+            )
+        )
+        keys.extend(
+            self._condition_consequence_feature_keys_for(
+                sample,
+                prefix="legal-ir:condition-consequence",
+            )
+        )
+        keys.extend(
+            self._applicability_scope_feature_keys_for(
+                sample,
+                prefix="legal-ir:applicability-scope",
+            )
+        )
+        keys.extend(
+            self._coreference_binding_feature_keys_for(
+                sample,
+                prefix="legal-ir:coreference-binding",
+            )
+        )
+        keys.extend(
+            self._logical_connective_feature_keys_for(
+                sample,
+                prefix="legal-ir:logical-connective",
+            )
+        )
+        keys.extend(
+            self._enumeration_hierarchy_feature_keys_for(
+                sample,
+                prefix="legal-ir:enumeration-hierarchy",
             )
         )
         keys.extend(
@@ -5178,6 +7300,7 @@ class AdaptiveModalAutoencoder:
 
         text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
         cue_names = self._cue_names_for_text(text)
+        surface_profiles = _uscode_surface_profile_tags(text)
         source_anchors = self._source_role_anchors_for(sample)
         role_classes = {
             role: self._legal_semantic_classes_for(anchor, role=role)
@@ -5198,6 +7321,10 @@ class AdaptiveModalAutoencoder:
 
         add("bias")
         add(f"formula-count:{_count_bucket(len(sample.modal_ir.formulas))}")
+        for profile in surface_profiles[:8]:
+            add(f"uscode-surface-profile:{profile}")
+        for left_profile, right_profile in zip(surface_profiles, surface_profiles[1:]):
+            add(f"uscode-surface-profile-transition:{left_profile}->{right_profile}")
         for cue_name in cue_names[:5]:
             add(f"cue:{cue_name}")
         for role, classes in sorted(role_classes.items()):
@@ -5547,6 +7674,39 @@ class AdaptiveModalAutoencoder:
         ]
         return tags or ["unscoped"]
 
+    def _autoencoder_clause_topology_signature_for(
+        self,
+        sample: LegalSample,
+        formula: Any,
+        *,
+        conditions: Sequence[Any],
+        exceptions: Sequence[Any],
+        scope_tags: Sequence[str],
+    ) -> str:
+        """Return a compact source-role topology for typed decompiler slots."""
+        source_anchors = self._source_role_anchors_for(sample)
+        predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
+        arguments = list(getattr(formula.predicate, "arguments", []) or [])
+        roles: List[str] = []
+
+        def add(role: str, active: bool) -> None:
+            if active and role not in roles:
+                roles.append(role)
+
+        add("condition", bool(conditions) or bool(source_anchors.get("condition")))
+        add("subject", bool(source_anchors.get("subject")))
+        add(
+            "action",
+            bool(predicate_name) or bool(source_anchors.get("action")),
+        )
+        add("object", bool(arguments) or bool(source_anchors.get("object")))
+        add("exception", bool(exceptions) or bool(source_anchors.get("exception")))
+        add(
+            "temporal",
+            "temporal" in set(scope_tags) or bool(source_anchors.get("temporal")),
+        )
+        return "+".join(roles)
+
     def _compiler_contract_feature_keys_for(
         self,
         sample: LegalSample,
@@ -5719,6 +7879,7 @@ class AdaptiveModalAutoencoder:
         text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
         raw_tokens = _TOKEN_RE.findall(text)
         cue_names = self._cue_names_for_text(text)
+        surface_profiles = _uscode_surface_profile_tags(text)
         source_anchors = self._source_role_anchors_for(sample)
         role_classes = {
             role: self._legal_semantic_classes_for(anchor, role=role)
@@ -5775,6 +7936,12 @@ class AdaptiveModalAutoencoder:
         add("bias")
         add(f"slot-order:{'>'.join(ordered_roles)}")
         add(f"force-lexeme:{force_tags[0] if force_tags else 'none'}:{force_lexeme}")
+        for profile in surface_profiles[:8]:
+            add(f"uscode-surface-profile:{profile}")
+            if not cue_names:
+                add(f"no-cue-surface-profile:{profile}")
+        for left_profile, right_profile in zip(surface_profiles, surface_profiles[1:]):
+            add(f"uscode-surface-profile-transition:{left_profile}->{right_profile}")
         for force in force_tags[:2]:
             for polarity in polarity_tags[:2]:
                 add(f"force-polarity-template:{force}:{polarity}:{scope_signature}")
@@ -7077,7 +9244,10 @@ class AdaptiveModalAutoencoder:
         """Loss-profile contracts that connect validation residuals to TODO routes."""
         normalized_prefix = str(prefix or "objective-residual").strip(":")
         losses = self._compiler_quality_loss_targets_for_sample(sample)
-        view_distribution = self._legal_ir_view_target_distribution_for_sample(sample)
+        view_distribution = self._legal_ir_view_target_distribution_for_sample(
+            sample,
+            include_autoencoder_prior=False,
+        )
         target_signature = hashlib.sha256(
             json.dumps(
                 {
@@ -7154,10 +9324,14 @@ class AdaptiveModalAutoencoder:
             if "view_coverage" in normalized_name or "missing" in normalized_name:
                 return "repair_multiview_legal_ir_view_coverage"
             if (
-                "cosine" in normalized_name
-                or "reconstruction" in normalized_name
-                or "text" in normalized_name
+                "source_decompiled_text" in normalized_name
+                or "structural_text" in normalized_name
+                or "source_copy" in normalized_name
+                or "copy_hack" in normalized_name
+                or "text_reconstruction" in normalized_name
             ):
+                return "refine_semantic_decompiler_reconstruction"
+            if "cosine" in normalized_name or "reconstruction" in normalized_name:
                 return "refine_typed_ir_or_decompiler_slots"
             if "cross_entropy" in normalized_name or "total" in normalized_name:
                 return "repair_multiview_legal_ir_loss"
@@ -8768,6 +10942,363 @@ class AdaptiveModalAutoencoder:
         cache[cache_key] = list(result)
         return result
 
+    def _quantitative_formula_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "quantitative-formula",
+    ) -> List[str]:
+        """Arithmetic formula contracts for legal amounts, caps, and rates."""
+        normalized_prefix = str(prefix or "quantitative-formula").strip(":")
+        cache_key = f"quantitative_formula_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_quantitative_formula_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        action_classes = role_classes.get("action", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        def money_bucket(raw: str) -> str:
+            normalized = str(raw or "").replace(",", "")
+            try:
+                amount = float(normalized)
+            except ValueError:
+                return "unknown"
+            if amount <= 0.0:
+                return "0"
+            if amount < 100.0:
+                return "under_100"
+            if amount < 1000.0:
+                return "100_1k"
+            if amount < 10000.0:
+                return "1k_10k"
+            if amount < 100000.0:
+                return "10k_100k"
+            return "100k_plus"
+
+        def percent_bucket(raw: str) -> str:
+            try:
+                value = float(str(raw or ""))
+            except ValueError:
+                return "unknown"
+            if value <= 1.0:
+                return "0_1"
+            if value <= 10.0:
+                return "2_10"
+            if value <= 25.0:
+                return "11_25"
+            if value <= 50.0:
+                return "26_50"
+            return "51_100"
+
+        def operand_kind_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            tokens = set(_TOKEN_RE.findall(normalized))
+            if re.search(r"\$\s*\d|\d[\d,]*(?:\.\d+)?\s+dollars?\b", normalized):
+                return "monetary_amount"
+            if re.search(r"\d+(?:\.\d+)?\s*(?:percent|%)\b", normalized):
+                return "percentage_amount"
+            if re.search(r"\b(?:twice|double|triple|three\s+times|four\s+times)\b", normalized):
+                return "multiplier_amount"
+            if tokens.intersection({"damage", "damages", "loss", "losses"}):
+                return "damages_amount"
+            if tokens.intersection({"cost", "costs", "expense", "expenses"}):
+                return "cost_amount"
+            if tokens.intersection({"fee", "fees", "charge", "charges"}):
+                return "fee_amount"
+            if tokens.intersection({"payment", "payments", "paid"}):
+                return "payment_amount"
+            if tokens.intersection({"day", "days", "month", "months", "year", "years"}):
+                return "period_amount"
+            return "legal_amount"
+
+        def result_kind_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            tokens = set(_TOKEN_RE.findall(normalized))
+            if tokens.intersection({"penalty", "penalties", "fine", "fines", "forfeiture"}):
+                return "penalty_amount"
+            if tokens.intersection({"fee", "fees", "charge", "charges"}):
+                return "fee_amount"
+            if tokens.intersection({"refund", "rebate", "credit"}):
+                return "refund_amount"
+            if tokens.intersection({"payment", "payments", "amount", "sum", "total"}):
+                return "payment_amount"
+            if tokens.intersection({"damages", "damage", "loss", "losses"}):
+                return "damages_amount"
+            return first_or_none(role_classes.get("object", [])) or "legal_amount"
+
+        def force_class_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\bshall\s+not\b|\bmay\s+not\b|\bmust\s+not\b|\bnot\s+exceed\b", normalized):
+                return "prohibition"
+            if re.search(r"\bshall\b|\bmust\b|\brequired\b", normalized):
+                return "obligation"
+            if re.search(r"\bmay\b|\bauthorized\b|\bpermitted\b", normalized):
+                return "permission"
+            return _feature_atom(force_tags[0] if force_tags else "assertive") or "assertive"
+
+        def polarity_for(kind: str, context: str) -> str:
+            normalized = " ".join(str(context or "").lower().split())
+            if kind in {"cap_formula", "lesser_of_formula"} or re.search(
+                r"\bnot\s+exceed\b|\bno\s+more\s+than\b|\bat\s+most\b",
+                normalized,
+            ):
+                return "upper_bound"
+            if kind == "floor_formula" or re.search(
+                r"\bnot\s+less\s+than\b|\bat\s+least\b",
+                normalized,
+            ):
+                return "lower_bound"
+            return "computed_amount"
+
+        def rate_unit_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\bper\s+day\b|\bfor\s+each\s+day\b", normalized):
+                return "per_day"
+            if re.search(r"\bper\s+month\b|\bfor\s+each\s+month\b", normalized):
+                return "per_month"
+            if re.search(r"\bper\s+year\b|\bannually\b", normalized):
+                return "per_year"
+            return "lump_sum"
+
+        formula_events: List[
+            tuple[int, str, str, str, str, str, str, str, str, str, str]
+        ] = []
+
+        def add_formula(
+            *,
+            start: int,
+            kind: str,
+            left_text: str,
+            right_text: str,
+            result_text: str,
+            context_text: str,
+        ) -> None:
+            left_kind = operand_kind_for(left_text)
+            right_kind = operand_kind_for(right_text)
+            result_kind = result_kind_for(result_text or context_text)
+            force_class = force_class_for(context_text)
+            polarity = polarity_for(kind, context_text)
+            rate_unit = rate_unit_for(context_text)
+            formula_events.append(
+                (
+                    int(start),
+                    kind,
+                    left_kind,
+                    right_kind,
+                    result_kind,
+                    force_class,
+                    polarity,
+                    rate_unit,
+                    _feature_atom(left_text, max_tokens=5) or left_kind,
+                    _feature_atom(right_text, max_tokens=5) or right_kind,
+                    _feature_atom(result_text or context_text, max_tokens=5) or result_kind,
+                )
+            )
+
+        greater_pattern = re.compile(
+            r"\b(?P<result>[^.;]{0,120}?)\b(?:shall|must|may|is|are)?\s*"
+            r"(?:be|equal|equals|mean|means)?\s*the\s+greater\s+of\s+"
+            r"(?P<left>[^.;,]{1,120})\s+(?:or|and)\s+(?P<right>[^.;]{1,160})"
+        )
+        lesser_pattern = re.compile(
+            r"\b(?P<result>[^.;]{0,120}?)\b(?:shall|must|may|is|are)?\s*"
+            r"(?:be|equal|equals|mean|means)?\s*the\s+lesser\s+of\s+"
+            r"(?P<left>[^.;,]{1,120})\s+(?:or|and)\s+(?P<right>[^.;]{1,160})"
+        )
+        cap_pattern = re.compile(
+            r"\b(?P<result>[^.;]{0,120}?)\s+"
+            r"(?:may\s+not|shall\s+not|must\s+not|does\s+not|not\s+to)\s+"
+            r"(?:exceed|be\s+more\s+than)\s+"
+            r"(?P<left>\$\s*\d[\d,]*(?:\.\d+)?|\d[\d,]*(?:\.\d+)?\s+dollars?)"
+            r"(?P<right>\s+per\s+(?:day|month|year)|\s+for\s+each\s+(?:day|month|year))?"
+        )
+        floor_pattern = re.compile(
+            r"\b(?P<result>[^.;]{0,120}?)\s+"
+            r"(?:shall|must|is|are)?\s*(?:be\s+)?"
+            r"(?:not\s+less\s+than|at\s+least)\s+"
+            r"(?P<left>\$\s*\d[\d,]*(?:\.\d+)?|\d[\d,]*(?:\.\d+)?\s+dollars?)"
+            r"(?P<right>\s+per\s+(?:day|month|year)|\s+for\s+each\s+(?:day|month|year))?"
+        )
+        multiplier_pattern = re.compile(
+            r"\b(?P<result>[^.;]{0,120}?)\s+"
+            r"(?:shall|must|is|are)?\s*(?:be\s+)?"
+            r"(?:equal|equals|be|pay|paid)\s+"
+            r"(?P<left>twice|double|triple|three\s+times|four\s+times)\s+"
+            r"(?:the\s+)?(?P<right>amount\s+paid|payment|fee|damages|loss)"
+        )
+        sum_pattern = re.compile(
+            r"\b(?P<result>[^.;]{0,120}?)\s+"
+            r"(?:shall|must|is|are)?\s*(?:be\s+)?"
+            r"(?:equal|equals|be)?\s*the\s+sum\s+of\s+"
+            r"(?P<left>[^.;,]{1,120})\s+and\s+(?P<right>[^.;]{1,160})"
+        )
+        for pattern, kind in (
+            (greater_pattern, "greater_of_formula"),
+            (lesser_pattern, "lesser_of_formula"),
+            (cap_pattern, "cap_formula"),
+            (floor_pattern, "floor_formula"),
+            (multiplier_pattern, "multiplier_formula"),
+            (sum_pattern, "sum_formula"),
+        ):
+            for match in pattern.finditer(text):
+                right = match.groupdict().get("right") or "lump sum"
+                add_formula(
+                    start=match.start(),
+                    kind=kind,
+                    left_text=match.group("left"),
+                    right_text=right,
+                    result_text=match.group("result"),
+                    context_text=match.group(0),
+                )
+
+        formula_events = sorted(
+            _unique_preserve_order(formula_events),
+            key=lambda item: (item[0], item[1], item[2], item[3], item[4], item[7]),
+        )
+        formula_signature = "+".join(
+            f"{kind}:{left_kind}+{right_kind}->{result_kind}:"
+            f"{force_class}:{polarity}:{rate_unit}"
+            for (
+                _start,
+                kind,
+                left_kind,
+                right_kind,
+                result_kind,
+                force_class,
+                polarity,
+                rate_unit,
+                _left_atom,
+                _right_atom,
+                _result_atom,
+            ) in formula_events[:8]
+        ) or "none"
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        force_signature = "+".join(force_tags[:3]) or "none"
+        polarity_signature = "+".join(polarity_tags[:3]) or "none"
+
+        add("bias")
+        add(f"source-quantitative-formula:{role_signature}:{scope_signature}")
+        add(f"formula-count:{_count_bucket(len(formula_events))}")
+        add(f"formula-signature:{formula_signature}")
+        add(f"force-formula:{force_signature}:{polarity_signature}:{scope_signature}")
+        if not formula_events:
+            add(f"formula-coverage:none:{role_signature}:{scope_signature}")
+
+        for (
+            _start,
+            kind,
+            left_kind,
+            right_kind,
+            result_kind,
+            force_class,
+            polarity,
+            rate_unit,
+            left_atom,
+            right_atom,
+            result_atom,
+        ) in formula_events[:10]:
+            add(
+                f"arithmetic-edge:{kind}:{left_kind}+{right_kind}->"
+                f"{result_kind}:{polarity}:{rate_unit}"
+            )
+            add(
+                f"compiler-arithmetic-node:{kind}:{left_kind}+{right_kind}:"
+                f"{result_kind}:{force_class}"
+            )
+            add(
+                f"frame-logic-arithmetic-slot:"
+                f"{kind}:{result_kind}:{left_kind}:{right_kind}:{rate_unit}"
+            )
+            add(
+                f"kg-quantitative-formula-edge:"
+                f"{left_kind}:{kind}:{right_kind}:{result_kind}"
+            )
+            add(
+                f"event-calculus-amount-fluent:"
+                f"{kind}:{result_kind}:{polarity}:{rate_unit}"
+            )
+            add(
+                f"decompiler-formula-slot:"
+                f"{kind}:{result_kind}:{left_kind}:{right_kind}:{rate_unit}"
+            )
+            add(
+                f"formula-exact:{kind}:"
+                f"{left_atom}+{right_atom}->{result_atom}"
+            )
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-formula:{family}:{symbol}:{predicate_role}:"
+                        f"{kind}:{result_kind}:{polarity}"
+                    )
+
+        add(f"decompiler-formula-plan:{formula_signature}")
+        add(
+            f"operator-formula-plan:{formula_signature}:"
+            f"{role_signature}:{operator_signature}"
+        )
+        add(f"todo-route:refine_quantitative_formula:{formula_signature}:{role_signature}")
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:formula-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_quantitative_formula_features]
+        cache[cache_key] = list(result)
+        return result
+
     def _definition_grounding_feature_keys_for(
         self,
         sample: LegalSample,
@@ -9064,9 +11595,23 @@ class AdaptiveModalAutoencoder:
             ) in definitions[:8]
         ) or "none"
         formulas = list(sample.modal_ir.formulas or [])
-        operator_signature = "->".join(
-            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+        operator_triples: List[tuple[str, str, str]] = [
+            (
+                _feature_atom(formula.operator.family),
+                _feature_atom(formula.operator.symbol),
+                _feature_atom(getattr(formula.predicate, "role", "") or "none"),
+            )
             for formula in formulas[:6]
+        ]
+        if not operator_triples and definitions:
+            if any("event_anchored" in body_shape for *_, body_shape in definitions):
+                operator_triples.append(("temporal", "f", "definition"))
+            else:
+                operator_triples.append(("frame", "frame", "definition"))
+        operator_signature = "->".join(
+            f"{family}:{symbol}"
+            for family, symbol, _predicate_role in operator_triples
+            if family and symbol
         ) or "none"
 
         add("bias")
@@ -9098,12 +11643,7 @@ class AdaptiveModalAutoencoder:
                 add(f"subclass-expansion:{term_class}:{body_class}:{body_shape}")
             if relation == "excludes":
                 add(f"exclusion-boundary:{term_class}:{body_class}:{definition_scope}")
-            for formula in formulas[:5]:
-                family = _feature_atom(formula.operator.family)
-                symbol = _feature_atom(formula.operator.symbol)
-                predicate_role = _feature_atom(
-                    getattr(formula.predicate, "role", "") or "none"
-                )
+            for family, symbol, predicate_role in operator_triples[:5]:
                 if family and symbol:
                     add(
                         f"operator-definition:{family}:{symbol}:{predicate_role}:"
@@ -10147,6 +12687,348 @@ class AdaptiveModalAutoencoder:
         cache[cache_key] = list(result)
         return result
 
+    def _mental_state_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "mental-state",
+    ) -> List[str]:
+        """Knowledge, intent, recklessness, and negligence gates for legal IR."""
+        normalized_prefix = str(prefix or "mental-state").strip(":")
+        cache_key = f"mental_state_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_mental_state_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        action_classes = role_classes.get("action", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        def token_set(value: str) -> set[str]:
+            return set(_TOKEN_RE.findall(str(value or "").lower()))
+
+        def actor_class_for(value: str) -> str:
+            tokens = token_set(value)
+            if tokens.intersection(
+                {
+                    "person",
+                    "persons",
+                    "owner",
+                    "owners",
+                    "applicant",
+                    "applicants",
+                    "licensee",
+                    "licensees",
+                    "recipient",
+                    "recipients",
+                    "contractor",
+                    "contractors",
+                    "individual",
+                    "individuals",
+                    "party",
+                    "parties",
+                }
+            ):
+                return "private_party"
+            if tokens.intersection(
+                {"secretary", "administrator", "agency", "commission", "department", "board", "director", "officer"}
+            ):
+                return "government_actor"
+            if tokens.intersection({"court", "judge", "tribunal"}):
+                return "judicial_actor"
+            classes: List[str] = []
+            for role_name in ("subject", "object", "predicate", "kg"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            for class_name in _unique_preserve_order(classes):
+                if class_name in {"private_party", "government_actor", "judicial_actor"}:
+                    return class_name
+            return first_or_none(role_classes.get("subject", [])) or "mental_actor"
+
+        def state_kind_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\bhas\s+reason\s+to\s+know\b|\breason\s+to\s+know\b", normalized):
+                return "reason_to_know"
+            if re.search(r"\bshould\s+have\s+known\b", normalized):
+                return "constructive_knowledge"
+            if re.search(r"\bwithout\s+(?:knowledge|knowing)\b|\bdoes\s+not\s+know\b|\bnot\s+knowingly\b", normalized):
+                return "lack_of_knowledge"
+            if re.search(r"\bwithout\s+intent\b|\bwithout\s+intending\b|\bnot\s+intentionally\b", normalized):
+                return "lack_of_intent"
+            if re.search(r"\bknowingly\b|\bknowing\b|\bknows\b|\bknew\b|\bactual\s+knowledge\b|\bhas\s+knowledge\b", normalized):
+                return "knowing"
+            if re.search(r"\bwillfully\b|\bwillful\b", normalized):
+                return "willful"
+            if re.search(r"\bintentionally\b|\bintentional\b|\bwith\s+intent\s+to\b", normalized):
+                return "intentional"
+            if re.search(r"\brecklessly\b|\breckless\b", normalized):
+                return "reckless"
+            if re.search(r"\bnegligently\b|\bnegligent\b", normalized):
+                return "negligent"
+            return "mental_state"
+
+        def target_class_for(value: str) -> str:
+            tokens = token_set(value)
+            if tokens.intersection({"violate", "violates", "violation", "unlawful", "prohibited"}):
+                return "statutory_violation"
+            if tokens.intersection({"fail", "fails", "comply", "compliance"}):
+                return "noncompliance"
+            if tokens.intersection({"disclose", "discloses", "disclosure", "publish", "provide", "notice", "record", "records", "information"}):
+                return "notice_or_record"
+            if tokens.intersection({"file", "files", "submit", "application", "claim", "report"}):
+                return "application_or_proof"
+            if tokens.intersection({"pay", "fee", "fees", "payment", "tax", "fine", "penalty"}):
+                return "payment_or_fee"
+            if tokens.intersection({"license", "permit", "approval", "authorization", "certificate"}):
+                return "authorization_instrument"
+            if tokens.intersection({"hearing", "appeal", "action", "order", "proceeding"}):
+                return "proceeding_or_order"
+            if tokens.intersection({"material", "fact", "facts", "statement", "statements"}):
+                return "material_fact"
+            classes: List[str] = []
+            for role_name in ("action", "object", "condition", "predicate", "kg"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            classes = _unique_preserve_order(classes)
+            return classes[0] if classes else "legal_conduct"
+
+        def force_class_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\bshall\s+not\b|\bmay\s+not\b|\bmust\s+not\b|\bno\b|\bprohibited\b|\bunlawful\b", normalized):
+                return "prohibition"
+            if re.search(r"\bshall\b|\bmust\b|\brequired\b", normalized):
+                return "obligation"
+            if re.search(r"\bmay\b|\bauthorized\b|\bpermitted\b", normalized):
+                return "permission"
+            return _feature_atom(force_tags[0] if force_tags else "assertive") or "assertive"
+
+        def polarity_for(kind: str) -> str:
+            if kind in {"lack_of_knowledge", "lack_of_intent"}:
+                return "negated_mental_state"
+            return "affirmative_mental_state"
+
+        def scope_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\bliable\b|\bpenalty\b|\bfine\b|\bviolation\b|\bviolates?\b", normalized):
+                return "liability_scope"
+            if re.search(r"\bshall\s+not\b|\bmay\s+not\b|\bprohibited\b|\bunlawful\b", normalized):
+                return "prohibition_scope"
+            if re.search(r"\bnotice\b|\brecord\b|\binformation\b|\bdisclos", normalized):
+                return "disclosure_scope"
+            if re.search(r"\blicense\b|\bpermit\b|\bauthorization\b|\bapproval\b", normalized):
+                return "authorization_scope"
+            return "general_scope"
+
+        actor_pattern = (
+            r"person|owner|applicant|licensee|recipient|contractor|individual|"
+            r"party|officer|agency|commission|department|board|secretary|administrator"
+        )
+        adverb_pattern = re.compile(
+            rf"\b(?P<actor>{actor_pattern})\s+"
+            r"(?:(?:who|that)\s+)?"
+            r"(?P<state>knowingly|willfully|intentionally|recklessly|negligently)\s+"
+            r"(?P<conduct>[^.;]{1,140})"
+        )
+        knowledge_pattern = re.compile(
+            rf"\b(?P<actor>{actor_pattern})\s+"
+            r"(?P<state>knows|knew|has\s+knowledge\s+of|has\s+actual\s+knowledge\s+of|"
+            r"has\s+reason\s+to\s+know|should\s+have\s+known)\s+"
+            r"(?P<conduct>[^.;]{1,140})"
+        )
+        intent_pattern = re.compile(
+            rf"\b(?P<actor>{actor_pattern})\s+"
+            r"(?:acts?\s+)?(?P<state>with\s+intent\s+to)\s+"
+            r"(?P<conduct>[^.;]{1,140})"
+        )
+        negated_pattern = re.compile(
+            r"\b(?P<state>without\s+(?:knowledge|intent)|not\s+knowingly|not\s+intentionally)\s+"
+            r"(?P<conduct>[^.;]{1,140})"
+        )
+        state_events: List[tuple[int, str, str, str, str, str, str, str, str]] = []
+        occupied_ranges: List[tuple[int, int]] = []
+
+        def add_state(
+            *,
+            start: int,
+            end: int,
+            actor: str,
+            state_text: str,
+            conduct: str,
+        ) -> None:
+            context = text[max(0, start - 96) : min(len(text), end + 96)]
+            state_kind = state_kind_for(state_text)
+            actor_class = actor_class_for(actor or source_anchors.get("subject", ""))
+            target_class = target_class_for(conduct)
+            force_class = force_class_for(context)
+            polarity = polarity_for(state_kind)
+            state_scope = scope_for(f"{context} {conduct}")
+            state_events.append(
+                (
+                    int(start),
+                    state_kind,
+                    actor_class,
+                    target_class,
+                    force_class,
+                    polarity,
+                    state_scope,
+                    _feature_atom(state_text, max_tokens=4) or "mental_state",
+                    _feature_atom(conduct, max_tokens=5) or "conduct",
+                )
+            )
+
+        for pattern in (adverb_pattern, knowledge_pattern, intent_pattern, negated_pattern):
+            for match in pattern.finditer(text):
+                start, end = int(match.start()), int(match.end())
+                if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                    continue
+                add_state(
+                    start=start,
+                    end=end,
+                    actor=match.groupdict().get("actor") or "",
+                    state_text=match.group("state"),
+                    conduct=match.group("conduct"),
+                )
+                occupied_ranges.append((start, end))
+
+        state_events = sorted(
+            _unique_preserve_order(state_events),
+            key=lambda item: (item[0], item[1], item[2], item[3], item[4], item[5]),
+        )
+        if not state_events:
+            cache[cache_key] = []
+            return []
+
+        mental_signature = "+".join(
+            f"{state_kind}:{actor_class}:{target_class}:"
+            f"{force_class}:{polarity}:{state_scope}"
+            for (
+                _start,
+                state_kind,
+                actor_class,
+                target_class,
+                force_class,
+                polarity,
+                state_scope,
+                _state_atom,
+                _conduct_atom,
+            ) in state_events[:8]
+        )
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        force_signature = "+".join(force_tags[:3]) or "none"
+        polarity_signature = "+".join(polarity_tags[:3]) or "none"
+
+        add("bias")
+        add(f"source-mental-state:{role_signature}:{scope_signature}")
+        add(f"mental-state-count:{_count_bucket(len(state_events))}")
+        add(f"mental-state-signature:{mental_signature}")
+        add(f"force-mental-state:{force_signature}:{polarity_signature}:{scope_signature}")
+
+        for (
+            _start,
+            state_kind,
+            actor_class,
+            target_class,
+            force_class,
+            polarity,
+            state_scope,
+            state_atom,
+            conduct_atom,
+        ) in state_events[:10]:
+            add(
+                f"culpability-edge:{state_kind}:{actor_class}:"
+                f"{target_class}:{force_class}:{polarity}"
+            )
+            add(
+                f"compiler-mental-state-gate:{state_kind}:"
+                f"{actor_class}:{target_class}:{state_scope}"
+            )
+            add(
+                f"frame-logic-mental-slot:"
+                f"{actor_class}:{state_kind}:{target_class}:{state_scope}"
+            )
+            add(
+                f"kg-mental-state-edge:{actor_class}:"
+                f"{state_kind}:{target_class}:{polarity}"
+            )
+            add(
+                f"modal-culpability-standard:"
+                f"{state_kind}:{target_class}:{force_class}:{state_scope}"
+            )
+            add(
+                f"decompiler-mental-state-slot:"
+                f"{state_kind}:{actor_class}:{target_class}:{state_scope}"
+            )
+            add(f"mental-state-exact:{state_atom}:{conduct_atom}:{actor_class}")
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-mental-state:{family}:{symbol}:{predicate_role}:"
+                        f"{state_kind}:{target_class}:{force_class}:{polarity}"
+                    )
+
+        add(f"decompiler-mental-state-plan:{mental_signature}")
+        add(
+            f"operator-mental-state-plan:{mental_signature}:"
+            f"{role_signature}:{operator_signature}"
+        )
+        add(f"todo-route:refine_mental_state:{mental_signature}:{role_signature}")
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:mental-state-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_mental_state_features]
+        cache[cache_key] = list(result)
+        return result
+
     def _reference_dependency_feature_keys_for(
         self,
         sample: LegalSample,
@@ -10449,6 +13331,365 @@ class AdaptiveModalAutoencoder:
         ).hexdigest()[:16]
         keys.insert(1, f"{normalized_prefix}:reference-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_reference_dependency_features]
+        cache[cache_key] = list(result)
+        return result
+
+    def _amendment_operation_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "amendment-operation",
+    ) -> List[str]:
+        """Statutory text-edit operations and structural amendment plans."""
+        normalized_prefix = str(prefix or "amendment-operation").strip(":")
+        cache_key = f"amendment_operation_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_amendment_operation_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        if not re.search(
+            r"\b(amend(?:ed|ing|ment)|strik(?:e|ing)|insert(?:ing)?|"
+            r"add(?:ing)?|redesignat(?:e|ing|ed)|repeal(?:ed|ing)?)\b",
+            text,
+        ):
+            cache[cache_key] = []
+            return []
+
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        action_classes = role_classes.get("action", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        def unit_atom(value: str) -> str:
+            raw = str(value or "").strip().lower()
+            raw = raw.strip("()[]{}.,;:\"'")
+            return _feature_atom(raw, max_tokens=5) or "this"
+
+        def target_parts(value: str) -> tuple[str, str, str]:
+            target = " ".join(str(value or "").lower().split())
+            match = re.match(
+                r"(?P<this>this\s+)?(?P<kind>section|subsection|paragraph|"
+                r"subparagraph|clause|subclause|chapter|subchapter|title)"
+                r"(?:\s+(?P<label>\([a-z0-9]+\)|[a-z0-9][a-z0-9().-]*))?",
+                target,
+            )
+            if not match:
+                return ("legal_unit", "unit", unit_atom(target))
+            kind = _feature_atom(match.group("kind")) or "unit"
+            label = unit_atom(match.group("label") or "")
+            if match.group("this") or label == "this":
+                if kind == "section":
+                    return ("current_section", kind, "this")
+                if kind in {
+                    "subsection",
+                    "paragraph",
+                    "subparagraph",
+                    "clause",
+                    "subclause",
+                }:
+                    return ("current_subdivision", kind, "this")
+                return ("current_container", kind, "this")
+            if kind in {
+                "subsection",
+                "paragraph",
+                "subparagraph",
+                "clause",
+                "subclause",
+            }:
+                return ("local_subdivision", kind, label)
+            if kind == "section":
+                return ("statutory_section", kind, label)
+            if kind in {"chapter", "subchapter", "title"}:
+                return ("statutory_container", kind, label)
+            return ("legal_unit", kind, label)
+
+        def fragment_class_for(value: str, *, absent: str = "none") -> str:
+            fragment = " ".join(str(value or "").lower().split())
+            if not fragment:
+                return absent
+            if re.search(r"\bsubparagraph\s+\([a-z0-9]+\)", fragment):
+                return "subparagraph_reference"
+            if re.search(r"\bparagraph\s+\([a-z0-9]+\)", fragment):
+                return "paragraph_reference"
+            if re.search(r"\bsubsection\s+\([a-z0-9]+\)", fragment):
+                return "subdivision_reference"
+            if re.search(r"\bsection\s+[a-z0-9][a-z0-9().-]*", fragment):
+                return "statutory_reference"
+            if re.search(r"\bfollowing\s+(?:new\s+)?(?:text|paragraph|subsection)", fragment):
+                return "introduced_text"
+            return "text_fragment"
+
+        def operation_scope(op_kind: str) -> str:
+            if op_kind in {"redesignate_subdivision", "repeal_unit"}:
+                return "structural_scope"
+            return "textual_scope"
+
+        def operation_polarity(op_kind: str) -> str:
+            if op_kind in {"strike_text", "repeal_unit"}:
+                return "negative_amendment"
+            if op_kind == "redesignate_subdivision":
+                return "renaming_amendment"
+            return "positive_amendment"
+
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        force_signature = "+".join(force_tags[:3]) or "none"
+        polarity_signature = "+".join(polarity_tags[:3]) or "none"
+        scope_signature = "+".join(scope_tags) or "unscoped"
+        events: List[tuple[int, str, str, str, str, str, str, str, str, str]] = []
+
+        target_pattern = (
+            r"(?:this\s+)?(?:section|subsection|paragraph|subparagraph|clause|"
+            r"subclause|chapter|subchapter|title)"
+            r"(?:\s+(?:\([a-z0-9]+\)|[a-z0-9][a-z0-9().-]*))?"
+        )
+        amended_pattern = re.compile(
+            rf"\b(?P<target>{target_pattern})\s+"
+            r"(?:(?:is|are|be|shall\s+be|must\s+be|may\s+be)\s+)?"
+            r"amended\s+by\s+(?P<body>[^.]{1,360})"
+        )
+        gerund_pattern = re.compile(
+            rf"\bamending\s+(?P<target>{target_pattern})\s+"
+            r"by\s+(?P<body>[^.]{1,360})"
+        )
+        repeal_pattern = re.compile(
+            rf"\b(?P<target>{target_pattern})\s+"
+            r"(?:(?:is|are|shall\s+be|must\s+be)\s+)?repealed\b"
+        )
+        replace_pattern = re.compile(
+            r"\bstriking\s+(?P<old>[^.;]{1,140}?)\s+and\s+"
+            r"inserting\s+(?P<new>[^.;]{1,140})"
+        )
+        strike_pattern = re.compile(r"\bstriking\s+(?P<old>[^.;]{1,140})")
+        insert_pattern = re.compile(r"\binserting\s+(?P<new>[^.;]{1,140})")
+        add_pattern = re.compile(
+            r"\badding(?:\s+at\s+the\s+end)?\s+(?P<new>[^.;]{1,160})"
+        )
+        redesignate_pattern = re.compile(
+            r"\bredesignating\s+"
+            r"(?P<old>(?:subparagraph|paragraph|subsection|clause|subclause)"
+            r"\s+\([a-z0-9]+\))\s+as\s+"
+            r"(?P<new>(?:subparagraph|paragraph|subsection|clause|subclause)"
+            r"\s+\([a-z0-9]+\))"
+        )
+
+        def append_event(
+            *,
+            start: int,
+            target: str,
+            op_kind: str,
+            old_fragment: str = "",
+            new_fragment: str = "",
+        ) -> None:
+            target_class, target_kind, target_label = target_parts(target)
+            old_class = fragment_class_for(old_fragment)
+            new_class = fragment_class_for(new_fragment)
+            scope = operation_scope(op_kind)
+            polarity = operation_polarity(op_kind)
+            events.append(
+                (
+                    int(start),
+                    op_kind,
+                    target_class,
+                    target_kind,
+                    target_label,
+                    old_class,
+                    new_class,
+                    polarity,
+                    scope,
+                    f"{unit_atom(old_fragment)}->{unit_atom(new_fragment)}",
+                )
+            )
+
+        def append_body_events(start: int, target: str, body: str) -> None:
+            body_text = str(body or "")
+            occupied: List[tuple[int, int]] = []
+            for match in redesignate_pattern.finditer(body_text):
+                append_event(
+                    start=start + match.start(),
+                    target=target,
+                    op_kind="redesignate_subdivision",
+                    old_fragment=match.group("old"),
+                    new_fragment=match.group("new"),
+                )
+                occupied.append((match.start(), match.end()))
+            for match in replace_pattern.finditer(body_text):
+                append_event(
+                    start=start + match.start(),
+                    target=target,
+                    op_kind="replace_text",
+                    old_fragment=match.group("old"),
+                    new_fragment=match.group("new"),
+                )
+                occupied.append((match.start(), match.end()))
+            for match in strike_pattern.finditer(body_text):
+                start_pos, end_pos = match.start(), match.end()
+                if any(start_pos < end and end_pos > begin for begin, end in occupied):
+                    continue
+                append_event(
+                    start=start + start_pos,
+                    target=target,
+                    op_kind="strike_text",
+                    old_fragment=match.group("old"),
+                )
+            for match in insert_pattern.finditer(body_text):
+                start_pos, end_pos = match.start(), match.end()
+                if any(start_pos < end and end_pos > begin for begin, end in occupied):
+                    continue
+                append_event(
+                    start=start + start_pos,
+                    target=target,
+                    op_kind="insert_text",
+                    new_fragment=match.group("new"),
+                )
+            for match in add_pattern.finditer(body_text):
+                append_event(
+                    start=start + match.start(),
+                    target=target,
+                    op_kind="add_text",
+                    new_fragment=match.group("new"),
+                )
+
+        for pattern in (amended_pattern, gerund_pattern):
+            for match in pattern.finditer(text):
+                append_body_events(
+                    match.start("body"),
+                    match.group("target"),
+                    match.group("body"),
+                )
+        for match in repeal_pattern.finditer(text):
+            append_event(
+                start=match.start(),
+                target=match.group("target"),
+                op_kind="repeal_unit",
+            )
+
+        events = sorted(
+            _unique_preserve_order(events),
+            key=lambda item: (item[0], item[1], item[2], item[3], item[4]),
+        )
+        if not events:
+            cache[cache_key] = []
+            return []
+
+        amendment_signature = "+".join(
+            f"{op}:{target_class}:{old_class}->{new_class}:{polarity}:{scope}"
+            for (
+                _start,
+                op,
+                target_class,
+                _target_kind,
+                _target_label,
+                old_class,
+                new_class,
+                polarity,
+                scope,
+                _exact,
+            ) in events[:8]
+        )
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:"
+            f"{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+
+        add("bias")
+        add(f"amendment-count:{_count_bucket(len(events))}")
+        add(f"amendment-signature:{amendment_signature}")
+        add(f"force-amendment:{force_signature}:{polarity_signature}:{scope_signature}")
+        add(f"source-amendment:{role_signature}:{scope_signature}")
+        for (
+            _start,
+            op,
+            target_class,
+            target_kind,
+            target_label,
+            old_class,
+            new_class,
+            polarity,
+            scope,
+            exact_fragment,
+        ) in events[:10]:
+            add(f"operation:{op}:{target_class}:{old_class}->{new_class}:{scope}")
+            add(f"operation-exact:{op}:{target_kind}:{target_label}:{exact_fragment}")
+            add(
+                f"compiler-amendment-node:"
+                f"{op}:{target_class}:{old_class}->{new_class}:{scope}"
+            )
+            add(
+                f"frame-logic-amendment-slot:"
+                f"{target_class}:{op}:{old_class}:{new_class}:{scope}"
+            )
+            add(
+                f"kg-amendment-edge:"
+                f"{target_class}:{op}:{old_class}->{new_class}:{polarity}"
+            )
+            if op == "redesignate_subdivision":
+                add(f"structural-redesignation:{target_class}:{old_class}->{new_class}")
+            if op == "repeal_unit":
+                add(f"structural-repeal:{target_class}:{polarity}:{scope}")
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-amendment:{family}:{symbol}:{predicate_role}:"
+                        f"{op}:{target_class}:{polarity}"
+                    )
+
+        add(f"decompiler-amendment-plan:{amendment_signature}")
+        add(
+            f"operator-amendment-plan:{amendment_signature}:"
+            f"{role_signature}:{operator_signature}"
+        )
+        add(f"todo-route:refine_amendment_operation:{amendment_signature}:{role_signature}")
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:amendment-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_amendment_operation_features]
         cache[cache_key] = list(result)
         return result
 
@@ -10798,6 +14039,438 @@ class AdaptiveModalAutoencoder:
         cache[cache_key] = list(result)
         return result
 
+    def _discretion_standard_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "discretion-standard",
+    ) -> List[str]:
+        """Discretionary determinations and evaluative standards for legal IR gates."""
+        normalized_prefix = str(prefix or "discretion-standard").strip(":")
+        cache_key = f"discretion_standard_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_discretion_standard_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        action_classes = role_classes.get("action", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        def token_set(value: str) -> set[str]:
+            return set(_TOKEN_RE.findall(str(value or "").lower()))
+
+        def actor_class_for(value: str) -> str:
+            tokens = token_set(value)
+            if tokens.intersection({"court", "judge", "tribunal", "magistrate"}):
+                return "judicial_actor"
+            if tokens.intersection(
+                {
+                    "secretary",
+                    "administrator",
+                    "agency",
+                    "commission",
+                    "department",
+                    "board",
+                    "director",
+                    "officer",
+                }
+            ):
+                return "government_actor"
+            if tokens.intersection(
+                {"person", "applicant", "owner", "licensee", "recipient", "entity"}
+            ):
+                return "private_party"
+            classes: List[str] = []
+            for role_name in ("subject", "object", "predicate", "kg"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            for class_name in _unique_preserve_order(classes):
+                if class_name in {"government_actor", "judicial_actor", "private_party"}:
+                    return class_name
+            return first_or_none(role_classes.get("subject", [])) or "standard_actor"
+
+        def standard_class_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if "good cause" in normalized:
+                return "good_cause_standard"
+            if "public interest" in normalized:
+                return "public_interest_standard"
+            if re.search(r"\bnecessary\b|\bnecessity\b", normalized):
+                return "necessity_standard"
+            if re.search(r"\breasonable\b|\breasonably\b", normalized):
+                return "reasonableness_standard"
+            if re.search(r"\bappropriate\b|\bproper\b", normalized):
+                return "appropriateness_standard"
+            if re.search(r"\bfeasible\b|\bpracticable\b", normalized):
+                return "feasibility_standard"
+            if re.search(r"\bsatisfactory\b|\bsatisfaction\b", normalized):
+                return "satisfaction_standard"
+            if re.search(r"\badequate\b|\bsufficient\b", normalized):
+                return "adequacy_standard"
+            return "discretionary_standard"
+
+        def target_class_for(value: str) -> str:
+            tokens = token_set(value)
+            if tokens.intersection(
+                {
+                    "waiver",
+                    "waivers",
+                    "exemption",
+                    "exemptions",
+                    "license",
+                    "permit",
+                    "certificate",
+                    "approval",
+                    "authorization",
+                }
+            ):
+                return "authorization_instrument"
+            if tokens.intersection({"rule", "rules", "regulation", "regulations"}):
+                return "rulemaking_instrument"
+            if tokens.intersection({"fee", "fees", "payment", "payments", "damages"}):
+                return "payment_or_fee"
+            if tokens.intersection(
+                {"deadline", "deadlines", "period", "days", "date", "extend", "extension"}
+            ):
+                return "deadline_condition"
+            if tokens.intersection({"hearing", "appeal", "action", "order", "proceeding"}):
+                return "proceeding_or_order"
+            if tokens.intersection({"notice", "record", "records", "document", "information"}):
+                return "notice_or_record"
+            if tokens.intersection({"requirement", "standard", "condition"}):
+                return "legal_requirement"
+            classes: List[str] = []
+            for role_name in ("object", "action", "condition", "predicate", "kg"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            classes = _unique_preserve_order(classes)
+            return classes[0] if classes else "legal_target"
+
+        def force_class_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\bshall\s+not\b|\bmay\s+not\b|\bmust\s+not\b|\bno\b", normalized):
+                return "prohibition"
+            if re.search(r"\bmay\b|\bauthorized\b|\bpermitted\b", normalized):
+                return "permission"
+            if re.search(r"\bshall\b|\bmust\b|\brequired\b", normalized):
+                return "obligation"
+            return _feature_atom(force_tags[0] if force_tags else "assertive") or "assertive"
+
+        def scope_for(target: str, standard: str, context: str) -> str:
+            merged = " ".join((target, standard, context)).lower()
+            if re.search(r"\b(?:waiver|exemption|license|permit|certificate|approval|authorization)\b", merged):
+                return "instrument_scope"
+            if re.search(r"\b(?:rule|rules|regulation|regulations)\b", merged):
+                return "rulemaking_scope"
+            if re.search(r"\b(?:fee|fees|payment|payments|damages)\b", merged):
+                return "payment_scope"
+            if re.search(r"\b(?:deadline|period|days|date|extend|extension)\b", merged):
+                return "deadline_scope"
+            if re.search(r"\b(?:hearing|appeal|action|order|proceeding)\b", merged):
+                return "procedure_scope"
+            if "public interest" in merged:
+                return "public_interest_scope"
+            return "general_scope"
+
+        def determination_kind_for(
+            *,
+            actor_class: str,
+            verb: str,
+            standard: str,
+        ) -> str:
+            verb_atom = _feature_atom(verb, max_tokens=2)
+            if standard == "good_cause_standard":
+                return "good_cause_finding"
+            if actor_class == "judicial_actor":
+                return "judicial_finding"
+            if standard == "public_interest_standard":
+                return "public_interest_determination"
+            if verb_atom in {"deem", "deems", "deemed"}:
+                return "legal_deeming"
+            if standard in {"reasonableness_standard", "appropriateness_standard"}:
+                return "evaluative_determination"
+            return "discretionary_determination"
+
+        def gate_kind_for(marker: str, standard: str) -> str:
+            marker_atom = _feature_atom(marker, max_tokens=3)
+            if marker_atom in {"in_discretion", "at_discretion"}:
+                return "discretion_gate"
+            if marker_atom in {"as_determined", "for_good_cause"}:
+                return "evaluative_gate"
+            if marker_atom in {"if", "when", "where", "whenever", "provided_that"}:
+                return "epistemic_gate"
+            if standard in {
+                "good_cause_standard",
+                "public_interest_standard",
+                "reasonableness_standard",
+                "appropriateness_standard",
+            }:
+                return "evaluative_gate"
+            return "epistemic_gate"
+
+        standard_pattern = (
+            r"necessary(?:\s+and\s+appropriate)?|"
+            r"consistent\s+with\s+the\s+public\s+interest|"
+            r"in\s+the\s+public\s+interest|"
+            r"reasonable|appropriate|proper|feasible|practicable|"
+            r"satisfactory|adequate|sufficient"
+        )
+        actor_pattern = (
+            r"secretary|administrator|agency|commission|department|board|"
+            r"director|officer|court|judge"
+        )
+        determination_pattern = re.compile(
+            rf"\b(?:(?P<marker>if|when|where|whenever|provided\s+that)\s+)?"
+            rf"(?:the\s+)?(?P<actor>{actor_pattern})\s+"
+            rf"(?P<verb>determines?|finds?|deems?|concludes?|certifies?|considers?)"
+            rf"\s+(?:that\s+)?(?P<target>[^.;,]{{0,90}}?)\s+"
+            rf"(?:is|are|be|to\s+be)\s+(?P<standard>{standard_pattern})"
+        )
+        as_pattern = re.compile(
+            rf"\b(?P<target>[^.;]{{1,140}}?)\s+as\s+"
+            rf"(?:the\s+)?(?P<actor>{actor_pattern})\s+"
+            rf"(?P<verb>determines?|finds?|deems?)\s+"
+            rf"(?:(?:is|are|to\s+be)\s+)?(?P<standard>{standard_pattern})"
+        )
+        discretion_pattern = re.compile(
+            rf"\b(?P<marker>in|at)\s+(?:the\s+)?"
+            rf"(?P<actor>{actor_pattern})(?:'s)?\s+discretion\b"
+        )
+        good_cause_pattern = re.compile(
+            r"\b(?P<target>[^.;]{0,140}?)\s+(?:for|upon)\s+"
+            r"(?P<standard>good\s+cause)(?:\s+shown)?\b"
+        )
+        satisfaction_pattern = re.compile(
+            rf"\b(?P<target>[^.;]{{0,140}}?)\s+to\s+the\s+satisfaction\s+of\s+"
+            rf"(?:the\s+)?(?P<actor>{actor_pattern})\b"
+        )
+
+        standard_events: List[
+            tuple[int, str, str, str, str, str, str, str, str, str, str]
+        ] = []
+        occupied_ranges: List[tuple[int, int]] = []
+
+        def add_standard(
+            *,
+            start: int,
+            end: int,
+            actor: str,
+            verb: str,
+            target: str,
+            standard_text: str,
+            marker: str,
+        ) -> None:
+            context = text[max(0, start - 128) : min(len(text), end + 96)]
+            actor_class = actor_class_for(actor)
+            standard_class = standard_class_for(standard_text)
+            target_class = target_class_for(target or context)
+            force_class = force_class_for(context)
+            scope = scope_for(target, standard_text, context)
+            determination_kind = determination_kind_for(
+                actor_class=actor_class,
+                verb=verb,
+                standard=standard_class,
+            )
+            gate_kind = gate_kind_for(marker, standard_class)
+            standard_events.append(
+                (
+                    int(start),
+                    determination_kind,
+                    actor_class,
+                    standard_class,
+                    target_class,
+                    force_class,
+                    gate_kind,
+                    scope,
+                    _feature_atom(verb, max_tokens=2) or "determine",
+                    _feature_atom(target, max_tokens=5) or "target",
+                    _feature_atom(standard_text, max_tokens=5) or "standard",
+                )
+            )
+
+        for pattern, default_marker in (
+            (determination_pattern, "determination"),
+            (as_pattern, "as_determined"),
+            (discretion_pattern, "in_discretion"),
+            (good_cause_pattern, "for_good_cause"),
+            (satisfaction_pattern, "satisfaction"),
+        ):
+            for match in pattern.finditer(text):
+                start, end = int(match.start()), int(match.end())
+                if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                    continue
+                groupdict = match.groupdict()
+                actor = groupdict.get("actor") or source_anchors.get("subject", "")
+                verb = groupdict.get("verb") or default_marker
+                target = groupdict.get("target") or text[max(0, start - 96) : start]
+                standard_text = groupdict.get("standard")
+                if not standard_text:
+                    standard_text = (
+                        "satisfaction"
+                        if default_marker == "satisfaction"
+                        else "discretion"
+                    )
+                marker = groupdict.get("marker") or default_marker
+                add_standard(
+                    start=start,
+                    end=end,
+                    actor=actor,
+                    verb=verb,
+                    target=target,
+                    standard_text=standard_text,
+                    marker=marker,
+                )
+                occupied_ranges.append((start, end))
+
+        standard_events = sorted(
+            _unique_preserve_order(standard_events),
+            key=lambda item: (item[0], item[1], item[2], item[3], item[4], item[5]),
+        )
+        if not standard_events:
+            cache[cache_key] = []
+            return []
+
+        standard_signature = "+".join(
+            f"{kind}:{actor_class}:{standard_class}:{target_class}:"
+            f"{force_class}:{gate_kind}:{scope}"
+            for (
+                _start,
+                kind,
+                actor_class,
+                standard_class,
+                target_class,
+                force_class,
+                gate_kind,
+                scope,
+                _verb,
+                _target_atom,
+                _standard_atom,
+            ) in standard_events[:8]
+        )
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        force_signature = "+".join(force_tags[:3]) or "none"
+        polarity_signature = "+".join(polarity_tags[:3]) or "none"
+
+        add("bias")
+        add(f"source-discretion-standard:{role_signature}:{scope_signature}")
+        add(f"standard-count:{_count_bucket(len(standard_events))}")
+        add(f"standard-signature:{standard_signature}")
+        add(f"force-standard:{force_signature}:{polarity_signature}:{scope_signature}")
+
+        for (
+            _start,
+            kind,
+            actor_class,
+            standard_class,
+            target_class,
+            force_class,
+            gate_kind,
+            scope,
+            verb_atom,
+            target_atom,
+            standard_atom,
+        ) in standard_events[:10]:
+            add(
+                f"standard-edge:{kind}:{actor_class}:"
+                f"{standard_class}:{target_class}:{force_class}"
+            )
+            add(
+                f"compiler-discretion-gate:{kind}:{actor_class}:"
+                f"{target_class}:{standard_class}:{gate_kind}"
+            )
+            add(
+                f"frame-logic-standard-slot:"
+                f"{actor_class}:{standard_class}:{target_class}:{scope}"
+            )
+            add(
+                f"kg-standard-edge:{actor_class}:{kind}:"
+                f"{target_class}:{standard_class}"
+            )
+            add(
+                f"modal-epistemic-standard:{kind}:"
+                f"{standard_class}:{force_class}:{gate_kind}"
+            )
+            add(
+                f"decompiler-standard-slot:"
+                f"{kind}:{actor_class}:{standard_class}:{target_class}:{scope}"
+            )
+            add(
+                f"standard-exact:{verb_atom}:{target_atom}:"
+                f"{standard_atom}:{actor_class}"
+            )
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-standard:{family}:{symbol}:{predicate_role}:"
+                        f"{kind}:{standard_class}:{target_class}:{gate_kind}"
+                    )
+
+        add(f"decompiler-standard-plan:{standard_signature}")
+        add(
+            f"operator-standard-plan:{standard_signature}:"
+            f"{role_signature}:{operator_signature}"
+        )
+        add(
+            f"todo-route:refine_discretion_standard:"
+            f"{standard_signature}:{role_signature}"
+        )
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:standard-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_discretion_standard_features]
+        cache[cache_key] = list(result)
+        return result
+
     def _temporal_validity_feature_keys_for(
         self,
         sample: LegalSample,
@@ -11138,6 +14811,3273 @@ class AdaptiveModalAutoencoder:
         cache[cache_key] = list(result)
         return result
 
+    def _evidentiary_burden_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "evidentiary-burden",
+    ) -> List[str]:
+        """Burden holders, standards of proof, presumptions, and evidence rules."""
+        normalized_prefix = str(prefix or "evidentiary-burden").strip(":")
+        cache_key = f"evidentiary_burden_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_evidentiary_burden_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        action_classes = role_classes.get("action", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        def actor_class_for(value: str) -> str:
+            tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
+            if tokens.intersection({"agency", "department", "commission", "board", "secretary"}):
+                return "government_actor"
+            if tokens.intersection({"court", "judge", "tribunal"}):
+                return "judicial_actor"
+            if tokens.intersection(
+                {
+                    "applicant",
+                    "owner",
+                    "person",
+                    "party",
+                    "claimant",
+                    "licensee",
+                    "recipient",
+                    "respondent",
+                    "petitioner",
+                }
+            ):
+                return "private_party"
+            classes: List[str] = []
+            for role_name in ("subject", "object", "predicate", "kg"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            for class_name in _unique_preserve_order(classes):
+                if class_name in {"government_actor", "judicial_actor", "private_party"}:
+                    return class_name
+            return "burden_holder"
+
+        def issue_class_for(value: str) -> str:
+            tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
+            if tokens.intersection({"eligible", "eligibility", "qualified", "qualify"}):
+                return "eligibility_issue"
+            if tokens.intersection({"violation", "violates", "noncompliance", "breach"}):
+                return "violation_issue"
+            if tokens.intersection({"exception", "exemption", "waiver", "defense"}):
+                return "exception_issue"
+            if tokens.intersection({"compliance", "comply", "compliant"}):
+                return "compliance_issue"
+            if tokens.intersection({"record", "certificate", "notice", "document"}):
+                return "record_issue"
+            if tokens.intersection({"claim", "claims", "action", "relief"}):
+                return "claim_issue"
+            if tokens.intersection({"fact", "facts", "finding", "determination"}):
+                return "fact_issue"
+            return "legal_issue"
+
+        def proof_standard_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if "clear and convincing" in normalized:
+                return "clear_and_convincing"
+            if "beyond a reasonable doubt" in normalized or "beyond reasonable doubt" in normalized:
+                return "beyond_reasonable_doubt"
+            if "preponderance" in normalized:
+                return "preponderance"
+            if "substantial evidence" in normalized:
+                return "substantial_evidence"
+            if "probable cause" in normalized:
+                return "probable_cause"
+            if "prima facie" in normalized:
+                return "prima_facie"
+            if "competent evidence" in normalized or "credible evidence" in normalized:
+                return "competent_evidence"
+            return "unspecified_standard"
+
+        def burden_phase_for(kind: str, context: str) -> str:
+            normalized = " ".join(str(context or "").lower().split())
+            if "rebut" in normalized or "unless" in normalized:
+                return "rebuttal_burden"
+            if kind in {"prima_facie_evidence", "rebuttable_presumption"}:
+                return "production_burden"
+            if "burden of production" in normalized:
+                return "production_burden"
+            if "burden of persuasion" in normalized:
+                return "persuasion_burden"
+            return "persuasion_burden"
+
+        def presumption_kind_for(context: str) -> str:
+            normalized = " ".join(str(context or "").lower().split())
+            if "conclusive" in normalized or "irrebuttable" in normalized:
+                return "conclusive_presumption"
+            if "rebuttable" in normalized or "unless rebutted" in normalized or "may be rebutted" in normalized:
+                return "rebuttable_presumption"
+            return "presumption"
+
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        force_signature = "+".join(force_tags[:3]) or "none"
+        polarity_signature = "+".join(polarity_tags[:3]) or "none"
+        burden_events: List[tuple[int, str, str, str, str, str, str, str]] = []
+        occupied_ranges: List[tuple[int, int]] = []
+
+        holder = (
+            r"applicant|owner|person|party|claimant|licensee|recipient|"
+            r"respondent|petitioner|agency|department|commission|board|secretary"
+        )
+        issue = r"[^.;]{0,96}"
+        standard_expr = (
+            r"preponderance\s+of\s+the\s+evidence|clear\s+and\s+convincing\s+evidence|"
+            r"beyond\s+(?:a\s+)?reasonable\s+doubt|substantial\s+evidence|"
+            r"probable\s+cause|prima\s+facie\s+evidence|competent\s+evidence|"
+            r"credible\s+evidence"
+        )
+        burden_pattern = re.compile(
+            rf"\b(?P<holder>{holder})\s+"
+            rf"(?P<verb>bears?|has|carries|shall\s+have|must\s+prove|shall\s+prove)\s+"
+            rf"(?:the\s+)?(?P<burden>burden(?:\s+of\s+(?:proof|production|persuasion))?|"
+            rf"responsibility\s+to\s+prove|obligation\s+to\s+prove|prove)\s*"
+            rf"(?:to\s+(?:establish|prove|show)\s+)?(?P<issue>{issue}?)"
+            rf"(?:\s+by\s+(?P<standard>{standard_expr}))?\b"
+        )
+        asserting_burden_pattern = re.compile(
+            rf"\b(?P<holder>{holder})\s+(?P<issue>asserting\s+(?:an?\s+)?"
+            rf"(?:exception|exemption|defense|claim)[^.;]{{0,48}}?)\s+"
+            rf"(?P<verb>bears?|has|carries|shall\s+have)\s+(?:the\s+)?"
+            rf"(?P<burden>burden(?:\s+of\s+(?:proof|production|persuasion))?)"
+            rf"(?:\s+by\s+(?P<standard>{standard_expr}))?\b"
+        )
+        proof_by_pattern = re.compile(
+            rf"\b(?P<holder>{holder})\s+(?P<modal>must|shall)\s+prove\s+"
+            rf"(?P<issue>{issue}?)\s+by\s+(?P<standard>{standard_expr})\b"
+        )
+        burden_on_pattern = re.compile(
+            rf"\bthe\s+burden(?:\s+of\s+(?:proof|production|persuasion))?\s+"
+            rf"(?:is|shall\s+be)\s+on\s+(?:the\s+)?(?P<holder>{holder})\s+"
+            rf"(?:to\s+(?:establish|prove|show)\s+)?(?P<issue>{issue}?)"
+            rf"(?:\s+by\s+(?P<standard>{standard_expr}))?\b"
+        )
+        presumption_pattern = re.compile(
+            rf"\b(?P<issue>[^.;]{{1,80}}?)\s+"
+            rf"(?P<verb>is|are|shall\s+be)\s+"
+            rf"(?P<presumption>presumed|rebuttably\s+presumed|conclusively\s+presumed)\s+"
+            rf"(?P<state>[^.;]{{0,80}}?)"
+            rf"(?:\s+(?:unless|until)\s+rebutted\s+by\s+(?P<standard>{standard_expr}))?"
+        )
+        rebuttable_presumption_pattern = re.compile(
+            rf"\bthere\s+is\s+a\s+(?P<presumption>rebuttable|conclusive)?\s*"
+            rf"presumption\s+that\s+(?P<issue>[^.;]{{1,96}})"
+            rf"(?:\s+by\s+(?P<standard>{standard_expr}))?"
+        )
+        prima_facie_pattern = re.compile(
+            rf"\b(?P<issue>[^.;]{{1,80}}?)\s+"
+            rf"(?P<verb>is|are|shall\s+be)\s+prima\s+facie\s+evidence\s+of\s+"
+            rf"(?P<object>[^.;]{{1,80}})"
+        )
+
+        def add_burden(
+            *,
+            start: int,
+            end: int,
+            kind: str,
+            holder_text: str,
+            issue_text: str,
+            standard_text: str,
+        ) -> None:
+            context = text[max(0, start - 80) : min(len(text), end + 96)]
+            standard = proof_standard_for(f"{standard_text} {context}")
+            actor_class = actor_class_for(holder_text)
+            issue_source = (
+                issue_text
+                if _TOKEN_RE.findall(str(issue_text or ""))
+                else context
+            )
+            issue_class = issue_class_for(issue_source)
+            phase = burden_phase_for(kind, context)
+            burden_events.append(
+                (
+                    int(start),
+                    kind,
+                    actor_class,
+                    issue_class,
+                    standard,
+                    phase,
+                    _feature_atom(holder_text, max_tokens=4) or "holder",
+                    _feature_atom(issue_source, max_tokens=5) or "issue",
+                )
+            )
+
+        def add_presumption(
+            *,
+            start: int,
+            end: int,
+            issue_text: str,
+            standard_text: str,
+            kind_text: str,
+            prima_object: str = "",
+        ) -> None:
+            context = text[max(0, start - 80) : min(len(text), end + 96)]
+            kind = "prima_facie_evidence" if prima_object else presumption_kind_for(
+                f"{kind_text} {context}"
+            )
+            standard = proof_standard_for(f"{standard_text} {context}")
+            if standard == "unspecified_standard" and kind == "prima_facie_evidence":
+                standard = "prima_facie"
+            issue_class = issue_class_for(f"{issue_text} {prima_object}")
+            phase = burden_phase_for(kind, context)
+            burden_events.append(
+                (
+                    int(start),
+                    kind,
+                    "evidence_rule",
+                    issue_class,
+                    standard,
+                    phase,
+                    _feature_atom(kind_text, max_tokens=4) or kind,
+                    _feature_atom(f"{issue_text} {prima_object}", max_tokens=5) or "issue",
+                )
+            )
+
+        for pattern in (
+            asserting_burden_pattern,
+            proof_by_pattern,
+            burden_on_pattern,
+            burden_pattern,
+        ):
+            for match in pattern.finditer(text):
+                start, end = int(match.start()), int(match.end())
+                if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                    continue
+                add_burden(
+                    start=start,
+                    end=end,
+                    kind="burden_of_proof",
+                    holder_text=match.group("holder"),
+                    issue_text=match.group("issue") or "",
+                    standard_text=match.groupdict().get("standard") or "",
+                )
+                occupied_ranges.append((start, end))
+
+        for pattern in (presumption_pattern, rebuttable_presumption_pattern):
+            for match in pattern.finditer(text):
+                start, end = int(match.start()), int(match.end())
+                if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                    continue
+                add_presumption(
+                    start=start,
+                    end=end,
+                    issue_text=match.group("issue") or "",
+                    standard_text=match.groupdict().get("standard") or "",
+                    kind_text=match.groupdict().get("presumption") or "presumption",
+                )
+                occupied_ranges.append((start, end))
+
+        for match in prima_facie_pattern.finditer(text):
+            start, end = int(match.start()), int(match.end())
+            if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                continue
+            add_presumption(
+                start=start,
+                end=end,
+                issue_text=match.group("issue") or "",
+                standard_text="prima facie evidence",
+                kind_text="prima_facie",
+                prima_object=match.group("object") or "",
+            )
+
+        burden_events = sorted(
+            _unique_preserve_order(burden_events),
+            key=lambda item: (item[0], item[1], item[2], item[3], item[4], item[5]),
+        )
+        burden_signature = "+".join(
+            f"{kind}:{holder_class}:{issue_class}:{standard}:{phase}"
+            for (
+                _start,
+                kind,
+                holder_class,
+                issue_class,
+                standard,
+                phase,
+                _holder_atom,
+                _issue_atom,
+            ) in burden_events[:8]
+        ) or "none"
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+
+        add("bias")
+        add(f"source-burden:{role_signature}:{scope_signature}")
+        add(f"burden-count:{_count_bucket(len(burden_events))}")
+        add(f"burden-signature:{burden_signature}")
+        add(f"force-burden:{force_signature}:{polarity_signature}:{scope_signature}")
+        if not burden_events:
+            add(f"burden-coverage:none:{role_signature}:{scope_signature}")
+
+        for (
+            _start,
+            kind,
+            holder_class,
+            issue_class,
+            standard,
+            phase,
+            holder_atom,
+            issue_atom,
+        ) in burden_events[:10]:
+            add(f"proof-burden:{holder_class}:{issue_class}:{standard}:{phase}")
+            add(f"burden-exact:{kind}:{holder_atom}:{issue_atom}:{standard}")
+            add(f"standard-of-proof:{standard}:{kind}:{holder_class}:{issue_class}")
+            add(f"proof-phase:{phase}:{kind}:{holder_class}:{issue_class}")
+            add(f"event-calculus-evidence:{kind}->{phase}:{standard}:{issue_class}")
+            add(f"compiler-proof-burden-edge:{holder_class}->{issue_class}:{standard}:{phase}")
+            add(f"decompiler-burden-slot:{kind}:{holder_class}:{issue_class}:{standard}")
+            if kind in {"rebuttable_presumption", "conclusive_presumption", "presumption"}:
+                add(f"presumption:{kind}:{issue_class}:{standard}:{phase}")
+            if kind == "prima_facie_evidence":
+                add(f"evidence-rule:prima_facie_evidence:{issue_class}:{standard}:{phase}")
+            if phase == "rebuttal_burden":
+                add(f"rebuttal-burden:{holder_class}:{issue_class}:{standard}:{kind}")
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-burden:{family}:{symbol}:{predicate_role}:"
+                        f"{kind}:{holder_class}:{issue_class}:{standard}"
+                    )
+
+        add(f"decompiler-burden-plan:{burden_signature}")
+        add(
+            f"operator-burden-plan:{burden_signature}:"
+            f"{role_signature}:{operator_signature}"
+        )
+        add(
+            f"todo-route:refine_evidentiary_burden:"
+            f"{burden_signature}:{role_signature}"
+        )
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:burden-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_evidentiary_burden_features]
+        cache[cache_key] = list(result)
+        return result
+
+    def _legal_relation_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "legal-relation",
+    ) -> List[str]:
+        """Hohfeld-style rights, duties, powers, liabilities, and immunities."""
+        normalized_prefix = str(prefix or "legal-relation").strip(":")
+        cache_key = f"legal_relation_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_legal_relation_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        action_classes = role_classes.get("action", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        party_source = (
+            r"applicant|owner|person|party|claimant|licensee|recipient|"
+            r"employee|employer|contractor|agency|department|commission|"
+            r"board|secretary|administrator|officer|court|judge|state"
+        )
+        holder_expr = rf"(?:the\s+|an?\s+|any\s+)?(?P<holder>{party_source})"
+        object_tail = r"(?P<object>[^.;]{1,120})"
+
+        def actor_class_for(value: str) -> str:
+            tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
+            if tokens.intersection(
+                {
+                    "agency",
+                    "department",
+                    "commission",
+                    "board",
+                    "secretary",
+                    "administrator",
+                    "officer",
+                    "state",
+                }
+            ):
+                return "government_actor"
+            if tokens.intersection({"court", "judge", "tribunal"}):
+                return "judicial_actor"
+            if tokens.intersection(
+                {
+                    "applicant",
+                    "owner",
+                    "person",
+                    "party",
+                    "claimant",
+                    "licensee",
+                    "recipient",
+                    "employee",
+                    "employer",
+                    "contractor",
+                }
+            ):
+                return "private_party"
+            classes: List[str] = []
+            for role_name in ("subject", "object", "predicate", "kg"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            for class_name in _unique_preserve_order(classes):
+                if class_name in {"government_actor", "judicial_actor", "private_party"}:
+                    return class_name
+            return "relation_counterparty"
+
+        def action_class_for(value: str) -> str:
+            tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
+            if tokens.intersection({"revoke", "revocation", "suspend", "terminate", "deny"}):
+                return "deny_or_revoke"
+            if tokens.intersection({"issue", "grant", "approve", "prescribe", "adopt"}):
+                return "grant_authorization"
+            if tokens.intersection({"inspect", "investigate", "audit", "enforce"}):
+                return "investigate_or_enforce"
+            classes: List[str] = []
+            for role_name in ("action", "predicate", "kg"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            classes = _unique_preserve_order(classes)
+            if classes:
+                return classes[0]
+            if tokens.intersection(
+                {"provide", "notify", "notice", "disclose", "furnish", "send", "receive"}
+            ):
+                return "disclose_or_notify"
+            if tokens.intersection({"file", "submit", "appeal", "apply", "petition"}):
+                return "submit_or_file"
+            if tokens.intersection({"comply", "maintain", "pay", "perform"}):
+                return "require_compliance"
+            if tokens.intersection({"liable", "liability", "penalty", "damages"}):
+                return "enforcement_liability"
+            return "legal_action"
+
+        def object_class_for(value: str) -> str:
+            tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
+            if tokens.intersection({"license", "permit", "certificate", "approval"}):
+                return "authorization_instrument"
+            if tokens.intersection({"revocation", "suspension", "termination"}):
+                return "authorization_instrument"
+            if tokens.intersection({"liability", "liable", "penalty", "damages"}):
+                return "liability_or_penalty"
+            classes: List[str] = []
+            for role_name in ("object", "kg", "predicate"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            classes = _unique_preserve_order(classes)
+            if classes:
+                return classes[0]
+            if tokens.intersection({"record", "records", "notice", "information", "document"}):
+                return "notice_or_record"
+            if tokens.intersection({"appeal", "action", "hearing", "proceeding", "claim"}):
+                return "proceeding_or_order"
+            if tokens.intersection({"fee", "payment", "tax", "fine"}):
+                return "payment_or_fee"
+            return "legal_object"
+
+        def relation_scope_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\bthis\s+(?:section|subsection|chapter|subchapter|title)\b", normalized):
+                return "local_statutory_scope"
+            if re.search(r"\bunder\s+(?:section|chapter|title)\b", normalized):
+                return "external_statutory_scope"
+            if re.search(r"\bthe\s+(?:license|permit|order|contract)\b", normalized):
+                return "instrument_scope"
+            return "general_scope"
+
+        def polarity_for(value: str, *, default: str = "positive") -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\b(?:no|not|never|without)\b", normalized):
+                return "negative"
+            if re.search(r"\b(?:prohibited|forbidden|unlawful|barred)\b", normalized):
+                return "negative"
+            return default
+
+        def clean_object_text(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            normalized = re.split(
+                rf"\b(?:from|against|by|to|over)\s+"
+                rf"(?:the\s+|an?\s+|any\s+)?(?:{party_source})\b",
+                normalized,
+                maxsplit=1,
+            )[0]
+            normalized = re.split(
+                r"\bunder\s+this\s+(?:section|subsection|chapter|subchapter|title)\b",
+                normalized,
+                maxsplit=1,
+            )[0]
+            return normalized.strip() or str(value or "").strip()
+
+        def explicit_counterparty_class_for(value: str) -> str:
+            for match in re.finditer(
+                rf"\b(?:from|against|by|to|over)\s+"
+                rf"(?:the\s+|an?\s+|any\s+)?(?P<party>{party_source})\b",
+                str(value or "").lower(),
+            ):
+                actor_class = actor_class_for(match.group("party"))
+                if actor_class != "relation_counterparty":
+                    return actor_class
+            return "relation_counterparty"
+
+        def default_counterparty_for(
+            kind: str,
+            holder_class: str,
+            context: str,
+        ) -> str:
+            explicit = explicit_counterparty_class_for(context)
+            if explicit != "relation_counterparty":
+                return explicit
+            if kind in {"right_duty", "privilege_no_right", "liability_power"}:
+                if holder_class in {"government_actor", "judicial_actor"}:
+                    return "private_party"
+                return "government_actor"
+            if kind in {"duty_right", "power_liability", "disability_immunity"}:
+                if holder_class in {"government_actor", "judicial_actor"}:
+                    return "private_party"
+                return "government_actor"
+            if kind == "immunity_disability":
+                if holder_class in {"government_actor", "judicial_actor"}:
+                    return "private_party"
+                return "government_actor"
+            return "relation_counterparty"
+
+        def correlative_for(kind: str) -> tuple[str, str]:
+            return {
+                "right_duty": ("right", "duty"),
+                "duty_right": ("duty", "right"),
+                "privilege_no_right": ("privilege", "no_right"),
+                "power_liability": ("power", "liability"),
+                "liability_power": ("liability", "power"),
+                "immunity_disability": ("immunity", "disability"),
+                "disability_immunity": ("disability", "immunity"),
+            }.get(kind, ("relation", "correlative"))
+
+        relation_events: List[tuple[int, str, str, str, str, str, str, str, str]] = []
+        occupied_ranges: List[tuple[int, int]] = []
+
+        def add_relation(
+            *,
+            start: int,
+            end: int,
+            kind: str,
+            holder_text: str,
+            action_text: str,
+            object_text: str,
+            default_polarity: str = "positive",
+        ) -> None:
+            context = text[max(0, start - 96) : min(len(text), end + 120)]
+            object_clean = clean_object_text(object_text)
+            holder_class = actor_class_for(holder_text)
+            action_class = action_class_for(f"{action_text} {object_clean}")
+            object_class = object_class_for(object_clean or action_text)
+            relation_kind = kind
+            if (
+                relation_kind == "privilege_no_right"
+                and holder_class in {"government_actor", "judicial_actor"}
+                and action_class in {"grant_authorization", "deny_or_revoke", "investigate_or_enforce"}
+            ):
+                relation_kind = "power_liability"
+            counterparty_class = default_counterparty_for(
+                relation_kind,
+                holder_class,
+                f"{object_text} {context}",
+            )
+            polarity = polarity_for(context, default=default_polarity)
+            scope = relation_scope_for(f"{object_text} {context}")
+            relation_events.append(
+                (
+                    int(start),
+                    relation_kind,
+                    holder_class,
+                    counterparty_class,
+                    object_class,
+                    action_class,
+                    polarity,
+                    scope,
+                    _feature_atom(object_clean, max_tokens=5) or "object",
+                )
+            )
+
+        relation_patterns: tuple[tuple[re.Pattern[str], str, str], ...] = (
+            (
+                re.compile(
+                    rf"\b{holder_expr}\s+(?:has|have|shall\s+have)\s+"
+                    rf"(?:a\s+)?right\s+to\s+(?P<action>[a-z]+)\s+{object_tail}"
+                ),
+                "right_duty",
+                "positive",
+            ),
+            (
+                re.compile(
+                    rf"\b{holder_expr}\s+(?:is|are|shall\s+be)\s+"
+                    rf"entitled\s+to\s+(?P<action>[a-z]+)\s+{object_tail}"
+                ),
+                "right_duty",
+                "positive",
+            ),
+            (
+                re.compile(
+                    rf"\b{holder_expr}\s+(?:may\s+not|shall\s+not|must\s+not)\s+"
+                    rf"(?P<action>revoke|suspend|terminate|deny|impose|enforce)\s+"
+                    rf"{object_tail}"
+                ),
+                "disability_immunity",
+                "negative",
+            ),
+            (
+                re.compile(
+                    rf"\b{holder_expr}\s+(?:may|is\s+authorized\s+to|are\s+authorized\s+to)\s+"
+                    rf"(?P<action>prescribe|promulgate|adopt|issue|grant|approve|"
+                    rf"deny|revoke|suspend|terminate|modify|waive|order|enforce)\s+"
+                    rf"{object_tail}"
+                ),
+                "power_liability",
+                "positive",
+            ),
+            (
+                re.compile(
+                    rf"\b{holder_expr}\s+(?:may|is\s+permitted\s+to|are\s+permitted\s+to)\s+"
+                    rf"(?P<action>[a-z]+)\s+{object_tail}"
+                ),
+                "privilege_no_right",
+                "positive",
+            ),
+            (
+                re.compile(
+                    rf"\b{holder_expr}\s+(?:shall|must|is\s+required\s+to|"
+                    rf"are\s+required\s+to|has\s+a\s+duty\s+to|have\s+a\s+duty\s+to)\s+"
+                    rf"(?P<action>[a-z]+)\s+{object_tail}"
+                ),
+                "duty_right",
+                "positive",
+            ),
+            (
+                re.compile(
+                    rf"\b{holder_expr}\s+(?:is|are|shall\s+be)\s+"
+                    rf"(?:liable\s+for|subject\s+to)\s+{object_tail}"
+                ),
+                "liability_power",
+                "positive",
+            ),
+            (
+                re.compile(
+                    rf"\b{holder_expr}\s+(?:is|are|shall\s+be)\s+"
+                    rf"(?:immune\s+from|not\s+liable\s+for)\s+{object_tail}"
+                ),
+                "immunity_disability",
+                "positive",
+            ),
+            (
+                re.compile(
+                    rf"\bno\s+(?P<holder>{party_source})\s+shall\s+be\s+"
+                    rf"liable\s+for\s+{object_tail}"
+                ),
+                "immunity_disability",
+                "negative",
+            ),
+        )
+
+        for pattern, kind, default_polarity in relation_patterns:
+            for match in pattern.finditer(text):
+                start, end = int(match.start()), int(match.end())
+                if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                    continue
+                action_text = match.groupdict().get("action") or kind
+                add_relation(
+                    start=start,
+                    end=end,
+                    kind=kind,
+                    holder_text=match.group("holder"),
+                    action_text=action_text,
+                    object_text=match.group("object"),
+                    default_polarity=default_polarity,
+                )
+                occupied_ranges.append((start, end))
+
+        relation_events = sorted(
+            _unique_preserve_order(relation_events),
+            key=lambda item: (item[0], item[1], item[2], item[3], item[4], item[5]),
+        )
+        relation_signature = "+".join(
+            f"{kind}:{holder_class}:{counterparty_class}:{object_class}:"
+            f"{action_class}:{polarity}:{scope}"
+            for (
+                _start,
+                kind,
+                holder_class,
+                counterparty_class,
+                object_class,
+                action_class,
+                polarity,
+                scope,
+                _object_atom,
+            ) in relation_events[:8]
+        ) or "none"
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        force_signature = "+".join(force_tags[:3]) or "none"
+        polarity_signature = "+".join(polarity_tags[:3]) or "none"
+
+        add("bias")
+        add(f"source-relation:{role_signature}:{scope_signature}")
+        add(f"relation-count:{_count_bucket(len(relation_events))}")
+        add(f"relation-signature:{relation_signature}")
+        add(f"force-relation:{force_signature}:{polarity_signature}:{scope_signature}")
+        if not relation_events:
+            add(f"relation-coverage:none:{role_signature}:{scope_signature}")
+
+        for (
+            _start,
+            kind,
+            holder_class,
+            counterparty_class,
+            object_class,
+            action_class,
+            polarity,
+            scope,
+            object_atom,
+        ) in relation_events[:10]:
+            primary, correlative = correlative_for(kind)
+            add(
+                f"hohfeld-relation:{kind}:{holder_class}:{counterparty_class}:"
+                f"{object_class}:{action_class}:{polarity}"
+            )
+            add(
+                f"correlative:{primary}->{correlative}:"
+                f"{holder_class}->{counterparty_class}:{object_class}:{action_class}"
+            )
+            add(
+                f"compiler-relation-edge:{holder_class}->{counterparty_class}:"
+                f"{action_class}:{object_class}:{kind}:{polarity}"
+            )
+            add(f"event-calculus-relation:{kind}:{action_class}:{object_class}:{scope}")
+            add(f"frame-logic-relation-slot:{primary}:{holder_class}:{object_class}:{scope}")
+            add(f"kg-relation:{kind}:{holder_class}:{counterparty_class}:{object_class}")
+            add(f"decompiler-relation-slot:{kind}:{holder_class}:{object_class}:{action_class}")
+            add(f"relation-object-exact:{kind}:{object_atom}:{scope}")
+            if kind == "right_duty":
+                add(f"claim-right:{holder_class}:{counterparty_class}:{object_class}:{action_class}")
+            if kind == "duty_right":
+                add(f"legal-duty:{holder_class}:{counterparty_class}:{object_class}:{action_class}")
+            if kind == "privilege_no_right":
+                add(f"privilege-liberty:{holder_class}:{object_class}:{action_class}:{polarity}")
+            if kind == "power_liability":
+                add(f"legal-power:{holder_class}:{counterparty_class}:{object_class}:{action_class}")
+            if kind == "liability_power":
+                add(f"legal-liability:{holder_class}:{counterparty_class}:{object_class}:{action_class}")
+            if kind == "immunity_disability":
+                add(f"legal-immunity:{holder_class}:{counterparty_class}:{object_class}:{action_class}")
+            if kind == "disability_immunity":
+                add(f"legal-disability:{holder_class}:{counterparty_class}:{object_class}:{action_class}")
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-relation:{family}:{symbol}:{predicate_role}:"
+                        f"{kind}:{holder_class}:{counterparty_class}:{action_class}"
+                    )
+
+        add(f"decompiler-relation-plan:{relation_signature}")
+        add(
+            f"operator-relation-plan:{relation_signature}:"
+            f"{role_signature}:{operator_signature}"
+        )
+        add(f"todo-route:refine_legal_relation:{relation_signature}:{role_signature}")
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:relation-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_legal_relation_features]
+        cache[cache_key] = list(result)
+        return result
+
+    def _status_transition_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "status-transition",
+    ) -> List[str]:
+        """Legal status state machines for authorizations and eligibility."""
+        normalized_prefix = str(prefix or "status-transition").strip(":")
+        cache_key = f"status_transition_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_status_transition_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        actor_expr = (
+            r"agency|department|commission|board|secretary|administrator|"
+            r"officer|court|applicant|owner|person|party|licensee|recipient"
+        )
+        object_expr = (
+            r"license|permit|certificate|certification|approval|authorization|"
+            r"registration|application|claim|eligibility|status|benefit"
+        )
+
+        def actor_class_for(value: str) -> str:
+            tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
+            if tokens.intersection(
+                {
+                    "agency",
+                    "department",
+                    "commission",
+                    "board",
+                    "secretary",
+                    "administrator",
+                    "officer",
+                }
+            ):
+                return "government_actor"
+            if tokens.intersection({"court", "judge", "tribunal"}):
+                return "judicial_actor"
+            if tokens.intersection(
+                {
+                    "applicant",
+                    "owner",
+                    "person",
+                    "party",
+                    "licensee",
+                    "recipient",
+                }
+            ):
+                return "private_party"
+            classes: List[str] = []
+            for role_name in ("subject", "object", "predicate", "kg"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            for class_name in _unique_preserve_order(classes):
+                if class_name in {"government_actor", "judicial_actor", "private_party"}:
+                    return class_name
+            return "status_actor"
+
+        def object_class_for(value: str) -> str:
+            tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
+            if tokens.intersection(
+                {
+                    "license",
+                    "permit",
+                    "certificate",
+                    "certification",
+                    "approval",
+                    "authorization",
+                    "registration",
+                }
+            ):
+                return "authorization_instrument"
+            if tokens.intersection({"application", "claim"}):
+                return "application_or_proof"
+            if tokens.intersection(
+                {
+                    "eligible",
+                    "eligibility",
+                    "ineligible",
+                    "qualified",
+                    "disqualified",
+                    "benefit",
+                }
+            ):
+                return "eligibility_status"
+            classes: List[str] = []
+            for role_name in ("object", "kg", "predicate", "condition"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            classes = _unique_preserve_order(classes)
+            if classes:
+                return classes[0]
+            return "legal_status"
+
+        def trigger_kind_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\b(?:issue|grant|approve|authorize|certify)\b", normalized):
+                return "authorization_activation"
+            if re.search(r"\b(?:renew|reinstate|restore|reissue)\b", normalized):
+                return "authorization_reactivation"
+            if re.search(r"\b(?:revoke|terminate|cancel|rescind)\b", normalized):
+                return "authorization_termination"
+            if re.search(r"\b(?:suspend|stay)\b", normalized):
+                return "authorization_suspension"
+            if re.search(r"\b(?:expire|expires|lapse|sunset)\b", normalized):
+                return "authorization_expiration"
+            if re.search(r"\b(?:deny|reject|disapprove)\b", normalized):
+                return "authorization_denial"
+            if re.search(r"\b(?:effective|operative|takes?\s+effect)\b", normalized):
+                return "effectiveness_activation"
+            if re.search(r"\b(?:eligible|qualified)\b", normalized):
+                return "eligibility_activation"
+            if re.search(r"\b(?:ineligible|disqualified)\b", normalized):
+                return "eligibility_termination"
+            if re.search(r"\b(?:valid|good\s+standing)\b", normalized):
+                return "validity_confirmation"
+            if re.search(r"\b(?:invalid|void)\b", normalized):
+                return "validity_termination"
+            return "status_change"
+
+        def state_pair_for(trigger: str, object_class: str) -> tuple[str, str, str]:
+            if trigger in {"authorization_activation", "effectiveness_activation"}:
+                return ("authorization_status", "pending_authorization", "active_authorization")
+            if trigger == "authorization_reactivation":
+                return ("authorization_status", "inactive_authorization", "active_authorization")
+            if trigger == "authorization_termination":
+                return ("authorization_status", "active_authorization", "terminated_authorization")
+            if trigger == "authorization_suspension":
+                return ("authorization_status", "active_authorization", "suspended_authorization")
+            if trigger == "authorization_expiration":
+                return ("authorization_status", "active_authorization", "expired_authorization")
+            if trigger == "authorization_denial":
+                return ("authorization_status", "pending_authorization", "denied_authorization")
+            if trigger == "eligibility_activation":
+                return ("eligibility_status", "unqualified_status", "eligible_status")
+            if trigger == "eligibility_termination":
+                return ("eligibility_status", "eligible_status", "ineligible_status")
+            if trigger == "validity_confirmation":
+                return ("validity_status", "uncertain_status", "valid_status")
+            if trigger == "validity_termination":
+                return ("validity_status", "valid_status", "invalid_status")
+            if object_class == "eligibility_status":
+                return ("eligibility_status", "uncertain_status", "eligible_status")
+            return ("legal_status", "prior_status", "new_status")
+
+        def status_scope_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\bthis\s+(?:section|subsection|chapter|subchapter|title)\b", normalized):
+                return "local_statutory_scope"
+            if re.search(r"\bunder\s+(?:section|chapter|title)\b", normalized):
+                return "external_statutory_scope"
+            if re.search(r"\b(?:license|permit|certificate|approval|authorization)\b", normalized):
+                return "instrument_scope"
+            return "general_scope"
+
+        def force_class_for(context: str) -> str:
+            normalized = " ".join(str(context or "").lower().split())
+            if re.search(r"\bmay\b|\bauthorized\b|\bpermitted\b", normalized):
+                return "permission"
+            if re.search(r"\bshall\b|\bmust\b|\brequired\b", normalized):
+                return "obligation"
+            return "assertive"
+
+        def event_polarity_for(context: str) -> str:
+            normalized = " ".join(str(context or "").lower().split())
+            if re.search(r"\b(?:may\s+not|shall\s+not|must\s+not|not|no|without)\b", normalized):
+                return "blocked"
+            return "affirmed"
+
+        transition_events: List[
+            tuple[int, str, str, str, str, str, str, str, str, str]
+        ] = []
+        occupied_ranges: List[tuple[int, int]] = []
+
+        def add_transition(
+            *,
+            start: int,
+            end: int,
+            actor_text: str,
+            object_text: str,
+            context_text: str,
+        ) -> None:
+            context = text[max(0, start - 96) : min(len(text), end + 120)]
+            merged = f"{context_text} {object_text} {context}"
+            actor_class = actor_class_for(actor_text)
+            object_class = object_class_for(object_text or context_text)
+            trigger = trigger_kind_for(merged)
+            status_kind, from_state, to_state = state_pair_for(trigger, object_class)
+            force_class = force_class_for(context)
+            event_polarity = event_polarity_for(context)
+            scope = status_scope_for(merged)
+            transition_events.append(
+                (
+                    int(start),
+                    status_kind,
+                    actor_class,
+                    object_class,
+                    from_state,
+                    to_state,
+                    trigger,
+                    force_class,
+                    event_polarity,
+                    scope,
+                )
+            )
+
+        actor_action_pattern = re.compile(
+            rf"\b(?P<actor>{actor_expr})\s+"
+            rf"(?P<modal>may|shall|must|is\s+authorized\s+to|are\s+authorized\s+to)?\s*"
+            rf"(?P<verb>issue|grant|approve|authorize|certify|renew|reinstate|restore|"
+            rf"reissue|revoke|terminate|cancel|rescind|suspend|deny|reject)\s+"
+            rf"(?:an?\s+|the\s+)?(?P<object>{object_expr})\b"
+        )
+        passive_pattern = re.compile(
+            rf"\b(?:an?\s+|the\s+)?(?P<object>{object_expr})\s+"
+            rf"(?P<verb>is|are|shall\s+be|may\s+be|must\s+be)?\s*"
+            rf"(?P<state>issued|granted|approved|renewed|reinstated|restored|"
+            rf"revoked|terminated|cancelled|canceled|rescinded|suspended|denied|"
+            rf"effective|valid|invalid|void|expired)\b"
+        )
+        effective_pattern = re.compile(
+            rf"\b(?:an?\s+|the\s+)?(?P<object>{object_expr})\s+"
+            rf"(?P<verb>becomes?|takes?)\s+"
+            rf"(?P<state>effective|operative|valid|effect)\b"
+        )
+        expiration_pattern = re.compile(
+            rf"\b(?:an?\s+|the\s+)?(?P<object>{object_expr})\s+"
+            rf"(?P<verb>expires?|lapses?|terminates?)\b"
+        )
+        eligibility_pattern = re.compile(
+            rf"\b(?P<actor>{actor_expr})\s+"
+            rf"(?P<verb>is|are|becomes?|remains?|shall\s+be|must\s+be)\s+"
+            rf"(?P<state>eligible|ineligible|qualified|disqualified)\b"
+        )
+
+        for pattern in (
+            actor_action_pattern,
+            passive_pattern,
+            effective_pattern,
+            expiration_pattern,
+            eligibility_pattern,
+        ):
+            for match in pattern.finditer(text):
+                start, end = int(match.start()), int(match.end())
+                if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                    continue
+                groups = match.groupdict()
+                object_text = groups.get("object") or groups.get("state") or "status"
+                actor_text = groups.get("actor") or first_or_none(role_classes.get("subject", []))
+                add_transition(
+                    start=start,
+                    end=end,
+                    actor_text=actor_text,
+                    object_text=object_text,
+                    context_text=match.group(0),
+                )
+                occupied_ranges.append((start, end))
+
+        transition_events = sorted(
+            _unique_preserve_order(transition_events),
+            key=lambda item: (item[0], item[1], item[2], item[3], item[4], item[5]),
+        )
+        transition_signature = "+".join(
+            f"{status_kind}:{actor_class}:{object_class}:{from_state}->{to_state}:"
+            f"{trigger}:{force_class}:{event_polarity}:{scope}"
+            for (
+                _start,
+                status_kind,
+                actor_class,
+                object_class,
+                from_state,
+                to_state,
+                trigger,
+                force_class,
+                event_polarity,
+                scope,
+            ) in transition_events[:8]
+        ) or "none"
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+
+        add("bias")
+        add(f"source-status:{role_signature}:{scope_signature}")
+        add(f"transition-count:{_count_bucket(len(transition_events))}")
+        add(f"transition-signature:{transition_signature}")
+        if not transition_events:
+            add(f"transition-coverage:none:{role_signature}:{scope_signature}")
+
+        for (
+            _start,
+            status_kind,
+            actor_class,
+            object_class,
+            from_state,
+            to_state,
+            trigger,
+            force_class,
+            event_polarity,
+            scope,
+        ) in transition_events[:10]:
+            add(
+                f"status-state:{status_kind}:{object_class}:"
+                f"{from_state}->{to_state}:{trigger}:{event_polarity}"
+            )
+            add(
+                f"compiler-status-edge:{actor_class}->{object_class}:"
+                f"{from_state}->{to_state}:{trigger}:{force_class}"
+            )
+            add(f"event-calculus-status-transition:{from_state}->{to_state}:{object_class}")
+            if to_state in {
+                "active_authorization",
+                "eligible_status",
+                "valid_status",
+            }:
+                add(f"event-calculus-initiates-status:{to_state}:{actor_class}:{object_class}")
+            if to_state in {
+                "terminated_authorization",
+                "suspended_authorization",
+                "expired_authorization",
+                "denied_authorization",
+                "ineligible_status",
+                "invalid_status",
+            }:
+                add(f"event-calculus-terminates-status:{from_state}:{actor_class}:{object_class}")
+            add(f"frame-logic-status-slot:{status_kind}:{object_class}:{to_state}:{scope}")
+            add(f"kg-status-edge:{actor_class}:{trigger}:{object_class}:{to_state}")
+            add(f"decompiler-status-slot:{status_kind}:{object_class}:{to_state}:{trigger}")
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-status:{family}:{symbol}:{predicate_role}:"
+                        f"{status_kind}:{trigger}:{object_class}:{to_state}"
+                    )
+
+        add(f"decompiler-status-plan:{transition_signature}")
+        add(
+            f"operator-status-plan:{transition_signature}:"
+            f"{role_signature}:{operator_signature}"
+        )
+        add(f"todo-route:refine_status_transition:{transition_signature}:{role_signature}")
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:transition-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_status_transition_features]
+        cache[cache_key] = list(result)
+        return result
+
+    def _condition_consequence_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "condition-consequence",
+    ) -> List[str]:
+        """Antecedent-to-consequent contracts for guarded legal rules."""
+        normalized_prefix = str(prefix or "condition-consequence").strip(":")
+        cache_key = f"condition_consequence_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_condition_consequence_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        action_classes = role_classes.get("action", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        def condition_class_for(value: str) -> str:
+            tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
+            if tokens.intersection({"file", "files", "submit", "submits", "application", "claim", "proof"}):
+                return "application_or_proof"
+            if tokens.intersection({"fee", "payment", "paid", "tax", "fine"}):
+                return "payment_or_fee"
+            if tokens.intersection({"notice", "record", "records", "document", "information"}):
+                return "notice_or_record"
+            if tokens.intersection({"timely", "deadline", "date", "days", "period", "before", "after", "within"}):
+                return "deadline_condition"
+            if tokens.intersection({"eligible", "eligibility", "qualified", "complete", "incomplete"}):
+                return "eligibility_condition"
+            if tokens.intersection({"comply", "compliance", "violate", "violation", "breach"}):
+                return "compliance_condition"
+            classes: List[str] = []
+            for role_name in ("condition", "object", "predicate", "kg"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            classes = _unique_preserve_order(classes)
+            return classes[0] if classes else "legal_condition"
+
+        def consequence_class_for(value: str) -> str:
+            tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
+            if tokens.intersection({"approve", "grant", "issue", "authorize", "certify", "license", "permit"}):
+                return "grant_authorization"
+            if tokens.intersection({"deny", "revoke", "suspend", "terminate", "cancel"}):
+                return "deny_or_revoke"
+            if tokens.intersection({"provide", "publish", "notify", "notice", "disclose", "furnish", "send"}):
+                return "disclose_or_notify"
+            if tokens.intersection({"file", "submit", "appeal", "petition", "apply"}):
+                return "submit_or_file"
+            if tokens.intersection({"pay", "maintain", "comply", "perform"}):
+                return "require_compliance"
+            if tokens.intersection({"not", "no", "prohibit", "prohibited", "unlawful", "barred"}):
+                return "prohibit_conduct"
+            classes: List[str] = []
+            for role_name in ("action", "predicate", "kg"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            classes = _unique_preserve_order(classes)
+            return classes[0] if classes else "legal_consequence"
+
+        def object_class_for(value: str) -> str:
+            tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
+            if tokens.intersection({"license", "permit", "certificate", "approval", "authorization", "waiver"}):
+                return "authorization_instrument"
+            if tokens.intersection({"notice", "record", "records", "document", "information"}):
+                return "notice_or_record"
+            if tokens.intersection({"application", "claim", "proof", "filing"}):
+                return "application_or_proof"
+            if tokens.intersection({"appeal", "hearing", "action", "order", "proceeding"}):
+                return "proceeding_or_order"
+            if tokens.intersection({"fee", "payment", "tax", "fine"}):
+                return "payment_or_fee"
+            return "legal_object"
+
+        def actor_class_for(value: str) -> str:
+            tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
+            if tokens.intersection({"agency", "department", "commission", "board", "secretary", "administrator"}):
+                return "government_actor"
+            if tokens.intersection({"court", "judge", "tribunal"}):
+                return "judicial_actor"
+            if tokens.intersection({"applicant", "owner", "person", "party", "claimant", "licensee", "recipient"}):
+                return "private_party"
+            return first_or_none(role_classes.get("subject", [])) or "rule_actor"
+
+        def actor_for_consequence(value: str) -> str:
+            actor_match = re.search(
+                r"\b(?P<actor>agency|department|commission|board|secretary|"
+                r"administrator|court|applicant|owner|person|party|claimant|"
+                r"licensee|recipient)\b",
+                str(value or "").lower(),
+            )
+            if actor_match:
+                return actor_class_for(actor_match.group("actor"))
+            return actor_class_for("")
+
+        def guard_kind_for(marker: str) -> str:
+            normalized = _feature_atom(marker)
+            if normalized == "unless":
+                return "exception_guard"
+            if normalized == "only_if":
+                return "necessary_condition"
+            if normalized in {"provided", "provided_that", "subject_to"}:
+                return "proviso_guard"
+            if normalized in {"when", "whenever", "where"}:
+                return "trigger_condition"
+            return "sufficient_condition"
+
+        def force_class_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\bmay\b|\bauthorized\b|\bpermitted\b", normalized):
+                return "permission"
+            if re.search(r"\bshall\b|\bmust\b|\brequired\b", normalized):
+                return "obligation"
+            if re.search(r"\bshall\s+not\b|\bmay\s+not\b|\bmust\s+not\b|\bprohibited\b", normalized):
+                return "prohibition"
+            return _feature_atom(force_tags[0] if force_tags else "assertive") or "assertive"
+
+        def consequence_polarity_for(value: str, marker: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if _feature_atom(marker) == "unless":
+                return "exception_consequence"
+            if re.search(r"\b(?:shall|may|must)\s+not\b|\bno\b|\bnot\b|\bwithout\b", normalized):
+                return "negative_consequence"
+            return "positive_consequence"
+
+        def consequence_scope_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\bthis\s+(?:section|subsection|chapter|subchapter|title)\b", normalized):
+                return "local_statutory_scope"
+            if re.search(r"\b(?:license|permit|certificate|approval|authorization|waiver)\b", normalized):
+                return "instrument_scope"
+            if re.search(r"\b(?:appeal|hearing|action|order|proceeding)\b", normalized):
+                return "procedure_scope"
+            return "general_scope"
+
+        guard_events: List[tuple[int, str, str, str, str, str, str, str, str, str, str]] = []
+        occupied_ranges: List[tuple[int, int]] = []
+
+        def add_guard(
+            *,
+            start: int,
+            end: int,
+            marker: str,
+            condition_text: str,
+            consequence_text: str,
+        ) -> None:
+            guard_kind = guard_kind_for(marker)
+            condition_class = condition_class_for(condition_text)
+            consequence_class = consequence_class_for(consequence_text)
+            object_class = object_class_for(consequence_text)
+            if object_class == "legal_object":
+                object_class = object_class_for(f"{consequence_text} {condition_text}")
+            actor_class = actor_for_consequence(consequence_text)
+            force_class = force_class_for(consequence_text)
+            polarity = consequence_polarity_for(consequence_text, marker)
+            scope = consequence_scope_for(f"{consequence_text} {condition_text}")
+            guard_events.append(
+                (
+                    int(start),
+                    guard_kind,
+                    condition_class,
+                    consequence_class,
+                    actor_class,
+                    object_class,
+                    force_class,
+                    polarity,
+                    scope,
+                    _feature_atom(condition_text, max_tokens=5) or "condition",
+                    _feature_atom(consequence_text, max_tokens=5) or "consequence",
+                )
+            )
+
+        patterns: tuple[tuple[re.Pattern[str], str], ...] = (
+            (
+                re.compile(
+                    r"\b(?P<marker>provided\s+that|subject\s+to|whenever|when|"
+                    r"where|if|provided)\s+(?P<condition>[^.;,]{1,140}),\s*"
+                    r"(?P<consequence>[^.;]{1,180})"
+                ),
+                "prefix",
+            ),
+            (
+                re.compile(
+                    r"\b(?P<consequence>[^.;]{1,160})\s+only\s+if\s+"
+                    r"(?P<condition>[^.;]{1,140})"
+                ),
+                "only if",
+            ),
+            (
+                re.compile(
+                    r"\b(?P<consequence>[^.;]{1,160})\s+unless\s+"
+                    r"(?P<condition>[^.;]{1,140})"
+                ),
+                "unless",
+            ),
+            (
+                re.compile(
+                    r"\b(?P<consequence>[^.;]{1,160})\s+provided\s+that\s+"
+                    r"(?P<condition>[^.;]{1,140})"
+                ),
+                "provided that",
+            ),
+        )
+        for pattern, default_marker in patterns:
+            for match in pattern.finditer(text):
+                start, end = int(match.start()), int(match.end())
+                if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                    continue
+                marker = match.groupdict().get("marker") or default_marker
+                add_guard(
+                    start=start,
+                    end=end,
+                    marker=marker,
+                    condition_text=match.group("condition"),
+                    consequence_text=match.group("consequence"),
+                )
+                occupied_ranges.append((start, end))
+
+        guard_events = sorted(
+            _unique_preserve_order(guard_events),
+            key=lambda item: (item[0], item[1], item[2], item[3], item[4], item[5]),
+        )
+        guard_signature = "+".join(
+            f"{guard_kind}:{condition_class}->{consequence_class}:"
+            f"{actor_class}:{object_class}:{force_class}:{polarity}:{scope}"
+            for (
+                _start,
+                guard_kind,
+                condition_class,
+                consequence_class,
+                actor_class,
+                object_class,
+                force_class,
+                polarity,
+                scope,
+                _condition_atom,
+                _consequence_atom,
+            ) in guard_events[:8]
+        ) or "none"
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        force_signature = "+".join(force_tags[:3]) or "none"
+        polarity_signature = "+".join(polarity_tags[:3]) or "none"
+
+        add("bias")
+        add(f"source-condition-consequence:{role_signature}:{scope_signature}")
+        add(f"guard-count:{_count_bucket(len(guard_events))}")
+        add(f"guard-signature:{guard_signature}")
+        add(f"force-guard:{force_signature}:{polarity_signature}:{scope_signature}")
+        if not guard_events:
+            add(f"guard-coverage:none:{role_signature}:{scope_signature}")
+
+        for (
+            _start,
+            guard_kind,
+            condition_class,
+            consequence_class,
+            actor_class,
+            object_class,
+            force_class,
+            polarity,
+            scope,
+            condition_atom,
+            consequence_atom,
+        ) in guard_events[:10]:
+            add(
+                f"guard-edge:{guard_kind}:{condition_class}->{consequence_class}:"
+                f"{actor_class}:{object_class}:{force_class}:{polarity}"
+            )
+            add(
+                f"compiler-antecedent-edge:{condition_class}->{consequence_class}:"
+                f"{object_class}:{scope}"
+            )
+            add(f"condition-exact:{guard_kind}:{condition_atom}:{condition_class}")
+            add(f"consequence-exact:{guard_kind}:{consequence_atom}:{consequence_class}")
+            add(f"event-calculus-precondition:{condition_class}->{consequence_class}:{object_class}")
+            add(f"frame-logic-guard-slot:{guard_kind}:{condition_class}:{consequence_class}:{scope}")
+            add(f"kg-guard-edge:{condition_class}:{guard_kind}:{consequence_class}:{object_class}")
+            add(f"decompiler-guard-slot:{guard_kind}:{condition_class}:{consequence_class}:{object_class}")
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-guard:{family}:{symbol}:{predicate_role}:"
+                        f"{guard_kind}:{condition_class}->{consequence_class}"
+                    )
+
+        add(f"decompiler-guard-plan:{guard_signature}")
+        add(
+            f"operator-guard-plan:{guard_signature}:"
+            f"{role_signature}:{operator_signature}"
+        )
+        add(f"todo-route:refine_condition_consequence:{guard_signature}:{role_signature}")
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:guard-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_condition_consequence_features]
+        cache[cache_key] = list(result)
+        return result
+
+    def _applicability_scope_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "applicability-scope",
+    ) -> List[str]:
+        """Applicability, exclusion, purpose, and domain-scope contracts."""
+        normalized_prefix = str(prefix or "applicability-scope").strip(":")
+        cache_key = f"applicability_scope_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_applicability_scope_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        action_classes = role_classes.get("action", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        def source_scope_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\bthis\s+title\b", normalized):
+                return "current_title"
+            if re.search(r"\bthis\s+chapter\b", normalized):
+                return "current_chapter"
+            if re.search(r"\bthis\s+subchapter\b", normalized):
+                return "current_subchapter"
+            if re.search(r"\bthis\s+section\b", normalized):
+                return "current_section"
+            if re.search(r"\bthis\s+subsection\b", normalized):
+                return "current_subsection"
+            if re.search(r"\bsection\s+\d", normalized):
+                return "statutory_section"
+            if re.search(r"\bchapter\s+\d", normalized):
+                return "statutory_chapter"
+            if re.search(r"\bsubsection\s+\([a-z0-9]+\)", normalized):
+                return "local_subsection"
+            if re.search(r"\brequirements?\b|\bprovisions?\b|\brules?\b", normalized):
+                return "rule_set"
+            return "current_rule"
+
+        def target_class_for(value: str) -> str:
+            tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
+            if tokens.intersection(
+                {
+                    "covered",
+                    "entity",
+                    "entities",
+                    "regulated",
+                    "company",
+                    "companies",
+                    "corporation",
+                    "corporations",
+                    "bank",
+                    "banks",
+                    "carrier",
+                    "carriers",
+                    "institution",
+                    "institutions",
+                    "organization",
+                    "organizations",
+                }
+            ):
+                return "regulated_entity"
+            if tokens.intersection(
+                {"employee", "employees", "officer", "officers", "director", "directors"}
+            ):
+                return "affiliated_person"
+            if tokens.intersection(
+                {
+                    "applicant",
+                    "applicants",
+                    "licensee",
+                    "licensees",
+                    "recipient",
+                    "recipients",
+                    "claimant",
+                    "claimants",
+                    "beneficiary",
+                    "beneficiaries",
+                }
+            ):
+                return "benefit_participant"
+            if tokens.intersection({"record", "records", "document", "documents", "information", "notice"}):
+                return "notice_or_record"
+            if tokens.intersection({"license", "licenses", "permit", "permits", "certificate", "renewal"}):
+                return "authorization_instrument"
+            if tokens.intersection({"fee", "fees", "payment", "payments", "tax", "taxes"}):
+                return "payment_or_fee"
+            if tokens.intersection({"property", "facility", "facilities", "vehicle", "vehicles"}):
+                return "regulated_object"
+            if tokens.intersection({"agency", "department", "commission", "board"}):
+                return "government_actor"
+            if tokens.intersection({"person", "persons", "individual", "individuals", "party", "parties"}):
+                return "private_party"
+            classes: List[str] = []
+            for role_name in ("subject", "object", "condition", "kg"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            classes = _unique_preserve_order(classes)
+            return classes[0] if classes else "covered_subject"
+
+        def domain_class_for(value: str, target_class: str) -> str:
+            tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
+            if target_class in {
+                "regulated_entity",
+                "affiliated_person",
+                "benefit_participant",
+                "government_actor",
+                "private_party",
+            }:
+                return "entity_scope"
+            if target_class in {"notice_or_record"} or tokens.intersection(
+                {"record", "records", "document", "documents", "information", "notice"}
+            ):
+                return "record_scope"
+            if target_class in {"authorization_instrument"} or tokens.intersection(
+                {"license", "permit", "certificate", "renewal", "authorization"}
+            ):
+                return "authorization_scope"
+            if target_class in {"payment_or_fee"} or tokens.intersection(
+                {"fee", "payment", "tax", "assessment", "fine"}
+            ):
+                return "payment_scope"
+            if target_class in {"regulated_object"}:
+                return "object_scope"
+            if tokens.intersection({"proceeding", "hearing", "appeal", "action", "case"}):
+                return "procedure_scope"
+            return "general_scope"
+
+        def scope_kind_for(marker: str, negative: bool) -> str:
+            marker_atom = _feature_atom(marker)
+            if negative or marker_atom in {"not_applicable", "exempt_from"}:
+                return "exclusion_scope"
+            if marker_atom == "for_purposes_of":
+                return "purpose_scope"
+            if marker_atom == "in_the_case_of":
+                return "case_scope"
+            if marker_atom == "with_respect_to":
+                return "respect_scope"
+            return "inclusion_scope"
+
+        def polarity_for(scope_kind: str, negative: bool) -> str:
+            if negative or scope_kind == "exclusion_scope":
+                return "negative_applicability"
+            if scope_kind in {"purpose_scope", "case_scope", "respect_scope"}:
+                return "scoped_applicability"
+            return "positive_applicability"
+
+        def object_class_for(value: str) -> str:
+            tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
+            if tokens.intersection({"record", "records", "document", "documents", "information", "notice"}):
+                return "notice_or_record"
+            if tokens.intersection({"license", "permit", "certificate", "renewal", "authorization"}):
+                return "authorization_instrument"
+            if tokens.intersection({"fee", "payment", "tax", "assessment", "fine"}):
+                return "payment_or_fee"
+            if tokens.intersection({"appeal", "hearing", "proceeding", "order", "action"}):
+                return "proceeding_or_order"
+            return first_or_none(role_classes.get("object", [])) or "legal_object"
+
+        def actor_class_for(target_class: str) -> str:
+            if target_class in {
+                "regulated_entity",
+                "affiliated_person",
+                "benefit_participant",
+                "government_actor",
+                "private_party",
+            }:
+                return target_class
+            return first_or_none(role_classes.get("subject", [])) or "scope_actor"
+
+        def force_class_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\bshall\s+not\b|\bdoes\s+not\b|\bnot\s+applicable\b|\bexempt\b", normalized):
+                return "exclusion"
+            if re.search(r"\bshall\b|\bmust\b|\brequired\b", normalized):
+                return "obligation"
+            if re.search(r"\bmay\b|\bauthorized\b|\bpermitted\b", normalized):
+                return "permission"
+            if re.search(r"\bapply|applies|applicable\b", normalized):
+                return "applicability"
+            return _feature_atom(force_tags[0] if force_tags else "assertive") or "assertive"
+
+        applicability_events: List[
+            tuple[int, str, str, str, str, str, str, str, str, str, str]
+        ] = []
+        occupied_ranges: List[tuple[int, int]] = []
+
+        def add_applicability(
+            *,
+            start: int,
+            end: int,
+            marker: str,
+            source_text: str,
+            target_text: str,
+            context_text: str = "",
+            negative: bool = False,
+        ) -> None:
+            combined = " ".join(
+                part for part in (source_text, target_text, context_text) if part
+            )
+            source_scope = source_scope_for(source_text or context_text)
+            target_class = target_class_for(target_text)
+            domain_class = domain_class_for(combined, target_class)
+            scope_kind = scope_kind_for(marker, negative)
+            polarity = polarity_for(scope_kind, negative)
+            actor_class = actor_class_for(target_class)
+            object_class = object_class_for(combined)
+            force_class = force_class_for(combined)
+            applicability_events.append(
+                (
+                    int(start),
+                    scope_kind,
+                    polarity,
+                    source_scope,
+                    target_class,
+                    domain_class,
+                    actor_class,
+                    object_class,
+                    force_class,
+                    _feature_atom(source_text, max_tokens=4) or source_scope,
+                    _feature_atom(target_text, max_tokens=5) or target_class,
+                )
+            )
+
+        source_pattern = (
+            r"this\s+(?:title|chapter|subchapter|section|subsection)|"
+            r"(?:the\s+)?(?:requirements?|provisions?|rules?)\s+of\s+this\s+"
+            r"(?:title|chapter|subchapter|section|subsection)|"
+            r"section\s+\d+[a-z0-9().-]*|chapter\s+\d+[a-z0-9().-]*|"
+            r"subsection\s+\([a-z0-9]+\)"
+        )
+        apply_pattern = re.compile(
+            rf"\b(?P<source>{source_pattern})\s+"
+            r"(?P<neg>does\s+not\s+|shall\s+not\s+|is\s+not\s+)?"
+            r"(?P<aux>shall\s+|must\s+|may\s+|will\s+|is\s+|are\s+)?"
+            r"(?P<verb>apply|applies|be\s+applicable|applicable)\s+"
+            r"(?P<marker>to|with\s+respect\s+to)\s+"
+            r"(?P<target>[^.;,]{1,140})"
+        )
+        exempt_pattern = re.compile(
+            rf"\b(?P<target>[^.;,]{{1,120}}?)\s+"
+            r"(?P<neg>is|are)\s+exempt\s+from\s+"
+            rf"(?P<source>{source_pattern})"
+        )
+        purpose_pattern = re.compile(
+            rf"\bfor\s+purposes\s+of\s+(?P<source>{source_pattern}),\s*"
+            r"(?P<target>[^.;]{1,160})"
+        )
+        case_pattern = re.compile(
+            rf"\bin\s+the\s+case\s+of\s+(?P<target>[^,.;]{{1,120}}),\s*"
+            rf"(?P<context>[^.;]{{0,180}}?(?P<source>{source_pattern})[^.;]{{0,120}})"
+        )
+        respect_pattern = re.compile(
+            r"\bwith\s+respect\s+to\s+(?P<target>[^.;,]{1,140})"
+        )
+
+        for match in purpose_pattern.finditer(text):
+            start, end = int(match.start()), int(match.end())
+            if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                continue
+            add_applicability(
+                start=start,
+                end=end,
+                marker="for_purposes_of",
+                source_text=match.group("source"),
+                target_text=match.group("target"),
+                context_text=match.group(0),
+            )
+            occupied_ranges.append((start, end))
+
+        for match in case_pattern.finditer(text):
+            start, end = int(match.start()), int(match.end())
+            if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                continue
+            add_applicability(
+                start=start,
+                end=end,
+                marker="in_the_case_of",
+                source_text=match.group("source"),
+                target_text=match.group("target"),
+                context_text=match.group("context"),
+            )
+            occupied_ranges.append((start, end))
+
+        for match in apply_pattern.finditer(text):
+            start, end = int(match.start()), int(match.end())
+            if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                continue
+            negative = bool(match.group("neg")) or "not applicable" in match.group(0)
+            marker = "with_respect_to" if "respect" in match.group("marker") else "apply_to"
+            add_applicability(
+                start=start,
+                end=end,
+                marker=marker,
+                source_text=match.group("source"),
+                target_text=match.group("target"),
+                context_text=match.group(0),
+                negative=negative,
+            )
+            occupied_ranges.append((start, end))
+
+        for match in exempt_pattern.finditer(text):
+            start, end = int(match.start()), int(match.end())
+            if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                continue
+            add_applicability(
+                start=start,
+                end=end,
+                marker="exempt_from",
+                source_text=match.group("source"),
+                target_text=match.group("target"),
+                context_text=match.group(0),
+                negative=True,
+            )
+            occupied_ranges.append((start, end))
+
+        for match in respect_pattern.finditer(text):
+            start, end = int(match.start()), int(match.end())
+            if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                continue
+            add_applicability(
+                start=start,
+                end=end,
+                marker="with_respect_to",
+                source_text="current rule",
+                target_text=match.group("target"),
+                context_text=match.group(0),
+            )
+            occupied_ranges.append((start, end))
+
+        applicability_events = sorted(
+            _unique_preserve_order(applicability_events),
+            key=lambda item: (item[0], item[1], item[2], item[3], item[4], item[5]),
+        )
+        applicability_signature = "+".join(
+            f"{scope_kind}:{polarity}:{source_scope}->{target_class}:{domain_class}"
+            for (
+                _start,
+                scope_kind,
+                polarity,
+                source_scope,
+                target_class,
+                domain_class,
+                _actor_class,
+                _object_class,
+                _force_class,
+                _source_atom,
+                _target_atom,
+            ) in applicability_events[:8]
+        ) or "none"
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        force_signature = "+".join(force_tags[:3]) or "none"
+        polarity_signature = "+".join(polarity_tags[:3]) or "none"
+
+        add("bias")
+        add(f"source-applicability:{role_signature}:{scope_signature}")
+        add(f"applicability-count:{_count_bucket(len(applicability_events))}")
+        add(f"applicability-signature:{applicability_signature}")
+        add(f"force-applicability:{force_signature}:{polarity_signature}:{scope_signature}")
+        if not applicability_events:
+            add(f"applicability-coverage:none:{role_signature}:{scope_signature}")
+
+        for (
+            _start,
+            scope_kind,
+            polarity,
+            source_scope,
+            target_class,
+            domain_class,
+            actor_class,
+            object_class,
+            force_class,
+            source_atom,
+            target_atom,
+        ) in applicability_events[:10]:
+            add(
+                f"scope-edge:{scope_kind}:{source_scope}->{target_class}:"
+                f"{polarity}:{domain_class}"
+            )
+            add(
+                f"compiler-domain-edge:{source_scope}->{target_class}:"
+                f"{scope_kind}:{polarity}:{domain_class}"
+            )
+            add(
+                f"applicability-exact:{scope_kind}:{source_atom}:"
+                f"{target_atom}:{target_class}"
+            )
+            add(
+                f"frame-logic-domain-slot:{scope_kind}:"
+                f"{target_class}:{domain_class}:{source_scope}"
+            )
+            add(
+                f"kg-applicability-edge:{source_scope}:"
+                f"{scope_kind}:{target_class}:{polarity}"
+            )
+            add(
+                f"event-calculus-applicability:"
+                f"{scope_kind}:{target_class}:{polarity}:{domain_class}"
+            )
+            add(
+                f"decompiler-applicability-slot:"
+                f"{scope_kind}:{target_class}:{source_scope}:{polarity}"
+            )
+            add(
+                f"scope-role-binding:{scope_kind}:{actor_class}:"
+                f"{object_class}:{force_class}"
+            )
+            if scope_kind == "exclusion_scope":
+                add(
+                    f"defeasible-applicability-exception:"
+                    f"{source_scope}->{target_class}:{domain_class}"
+                )
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-applicability:{family}:{symbol}:{predicate_role}:"
+                        f"{scope_kind}:{target_class}:{source_scope}"
+                    )
+
+        add(f"decompiler-applicability-plan:{applicability_signature}")
+        add(
+            f"operator-applicability-plan:{applicability_signature}:"
+            f"{role_signature}:{operator_signature}"
+        )
+        add(f"todo-route:refine_applicability_scope:{applicability_signature}:{role_signature}")
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:applicability-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_applicability_scope_features]
+        cache[cache_key] = list(result)
+        return result
+
+    def _coreference_binding_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "coreference-binding",
+    ) -> List[str]:
+        """Deictic reference and same-entity bindings across legal clauses."""
+        normalized_prefix = str(prefix or "coreference-binding").strip(":")
+        cache_key = f"coreference_binding_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_coreference_binding_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        action_classes = role_classes.get("action", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        def entity_class_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            tokens = set(_TOKEN_RE.findall(normalized))
+            if re.search(
+                r"\b(?:section|subsection|paragraph|subparagraph|chapter|title)\b",
+                normalized,
+            ):
+                return "statutory_reference"
+            if tokens.intersection(
+                {
+                    "covered",
+                    "regulated",
+                    "entity",
+                    "entities",
+                    "company",
+                    "companies",
+                    "institution",
+                    "institutions",
+                    "organization",
+                    "organizations",
+                }
+            ):
+                return "regulated_entity"
+            if tokens.intersection(
+                {"employee", "employees", "officer", "officers", "director", "directors"}
+            ):
+                return "affiliated_person"
+            if tokens.intersection(
+                {
+                    "applicant",
+                    "applicants",
+                    "licensee",
+                    "licensees",
+                    "recipient",
+                    "recipients",
+                    "claimant",
+                    "claimants",
+                    "beneficiary",
+                    "beneficiaries",
+                }
+            ):
+                return "benefit_participant"
+            if tokens.intersection({"person", "persons", "individual", "individuals", "party", "parties"}):
+                return "private_party"
+            if tokens.intersection({"agency", "department", "commission", "board", "secretary"}):
+                return "government_actor"
+            if tokens.intersection({"license", "licenses", "permit", "permits", "certificate", "approval"}):
+                return "authorization_instrument"
+            if tokens.intersection({"application", "claim", "petition", "proof", "filing"}):
+                return "application_or_proof"
+            if tokens.intersection({"record", "records", "document", "documents", "information", "notice"}):
+                return "notice_or_record"
+            if tokens.intersection({"fee", "fees", "payment", "payments", "tax", "taxes"}):
+                return "payment_or_fee"
+            if tokens.intersection({"appeal", "hearing", "order", "proceeding", "action"}):
+                return "proceeding_or_order"
+            classes: List[str] = []
+            for role_name in ("subject", "object", "condition", "predicate", "kg"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            classes = _unique_preserve_order(classes)
+            return classes[0] if classes else "legal_entity"
+
+        def reference_kind_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if normalized.startswith("such "):
+                return "such_reference"
+            if normalized.startswith("that "):
+                return "that_reference"
+            if normalized.startswith("the same "):
+                return "same_reference"
+            if normalized.startswith("under that "):
+                return "under_that_reference"
+            if normalized in {"thereof", "therein"}:
+                return f"{normalized}_reference"
+            if normalized in {"thereunder", "hereunder", "herein"}:
+                return "statutory_deictic_reference"
+            return "deictic_reference"
+
+        def reference_scope_for(antecedent_end: int, reference_start: int) -> str:
+            between = text[max(0, antecedent_end) : max(0, reference_start)]
+            if re.search(r"[.;]", between):
+                return "cross_sentence"
+            if "," in between:
+                return "same_sentence"
+            return "same_clause"
+
+        mention_pattern = re.compile(
+            r"\b(?P<mention>"
+            r"(?:covered|regulated)\s+entity|"
+            r"(?:a|an|the|each|any|every)\s+"
+            r"(?:person|individual|party|applicant|recipient|licensee|"
+            r"employee|entity|agency|department|commission|board|license|"
+            r"permit|certificate|application|claim|petition|proof|record|"
+            r"document|notice|fee|payment|appeal|hearing|order|proceeding)|"
+            r"(?:this|that)\s+"
+            r"(?:section|subsection|paragraph|subparagraph|chapter|title)|"
+            r"(?:section|subsection|paragraph|subparagraph|chapter|title)\s+"
+            r"(?:\([a-z0-9]+\)|[a-z0-9][a-z0-9().-]*)"
+            r")(?=\W|$)"
+        )
+        reference_patterns: tuple[tuple[re.Pattern[str], str], ...] = (
+            (
+                re.compile(
+                    r"\bunder\s+that\s+"
+                    r"(?P<head>section|subsection|paragraph|subparagraph|chapter|title)\b"
+                ),
+                "under_that_reference",
+            ),
+            (
+                re.compile(
+                    r"\bsuch\s+"
+                    r"(?P<head>person|individual|party|applicant|recipient|licensee|"
+                    r"employee|entity|agency|department|commission|board|license|"
+                    r"permit|certificate|application|claim|petition|proof|record|"
+                    r"document|notice|fee|payment|appeal|hearing|order|proceeding|"
+                    r"section|subsection|paragraph|subparagraph|chapter|title)\b"
+                ),
+                "such_reference",
+            ),
+            (
+                re.compile(
+                    r"\bthat\s+"
+                    r"(?P<head>person|individual|party|applicant|recipient|licensee|"
+                    r"employee|entity|agency|department|commission|board|license|"
+                    r"permit|certificate|application|claim|petition|proof|record|"
+                    r"document|notice|fee|payment|appeal|hearing|order|proceeding|"
+                    r"section|subsection|paragraph|subparagraph|chapter|title)\b"
+                ),
+                "that_reference",
+            ),
+            (
+                re.compile(
+                    r"\bthe\s+same\s+"
+                    r"(?P<head>person|individual|party|applicant|recipient|licensee|"
+                    r"employee|entity|agency|department|commission|board|license|"
+                    r"permit|certificate|application|claim|petition|proof|record|"
+                    r"document|notice|fee|payment|appeal|hearing|order|proceeding)\b"
+                ),
+                "same_reference",
+            ),
+            (
+                re.compile(r"\b(?P<head>thereof|therein|thereunder|hereunder|herein)\b"),
+                "there_reference",
+            ),
+        )
+        mentions: List[tuple[int, int, str, str]] = []
+        for match in mention_pattern.finditer(text):
+            mention = match.group("mention")
+            mentions.append(
+                (
+                    int(match.start()),
+                    int(match.end()),
+                    entity_class_for(mention),
+                    _feature_atom(mention, max_tokens=5) or "mention",
+                )
+            )
+
+        reference_events: List[
+            tuple[int, str, str, str, str, str, str, str]
+        ] = []
+        occupied_ranges: List[tuple[int, int]] = []
+
+        def nearest_antecedent(
+            reference_start: int,
+            referent_class: str,
+        ) -> tuple[int, int, str, str] | None:
+            prior_mentions = [
+                mention for mention in mentions if mention[1] <= reference_start
+            ]
+            if not prior_mentions:
+                return None
+            same_class = [
+                mention for mention in prior_mentions if mention[2] == referent_class
+            ]
+            if same_class:
+                return same_class[-1]
+            return prior_mentions[-1]
+
+        def add_reference(
+            *,
+            start: int,
+            end: int,
+            reference_text: str,
+            default_kind: str,
+            head_text: str,
+        ) -> None:
+            referent_class = (
+                entity_class_for(head_text)
+                if head_text not in {"thereof", "therein", "thereunder", "hereunder", "herein"}
+                else "legal_entity"
+            )
+            antecedent = nearest_antecedent(start, referent_class)
+            if antecedent is None:
+                return
+            antecedent_start, antecedent_end, antecedent_class, antecedent_atom = antecedent
+            if referent_class == "legal_entity":
+                referent_class = antecedent_class
+            identity_state = (
+                "class_preserving"
+                if antecedent_class == referent_class
+                else "bridged_reference"
+            )
+            reference_scope = reference_scope_for(antecedent_end, start)
+            reference_kind = reference_kind_for(reference_text) or default_kind
+            reference_events.append(
+                (
+                    int(start),
+                    reference_kind,
+                    antecedent_class,
+                    referent_class,
+                    reference_scope,
+                    identity_state,
+                    antecedent_atom,
+                    _feature_atom(reference_text, max_tokens=5) or "reference",
+                )
+            )
+
+        for pattern, default_kind in reference_patterns:
+            for match in pattern.finditer(text):
+                start, end = int(match.start()), int(match.end())
+                if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                    continue
+                add_reference(
+                    start=start,
+                    end=end,
+                    reference_text=match.group(0),
+                    default_kind=default_kind,
+                    head_text=match.group("head"),
+                )
+                occupied_ranges.append((start, end))
+
+        reference_events = sorted(
+            _unique_preserve_order(reference_events),
+            key=lambda item: (item[0], item[1], item[2], item[3], item[4], item[5]),
+        )
+        coreference_signature = "+".join(
+            f"{kind}:{antecedent_class}->{referent_class}:"
+            f"{reference_scope}:{identity_state}"
+            for (
+                _start,
+                kind,
+                antecedent_class,
+                referent_class,
+                reference_scope,
+                identity_state,
+                _antecedent_atom,
+                _reference_atom,
+            ) in reference_events[:8]
+        ) or "none"
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        force_signature = "+".join(force_tags[:3]) or "none"
+        polarity_signature = "+".join(polarity_tags[:3]) or "none"
+
+        add("bias")
+        add(f"source-coreference:{role_signature}:{scope_signature}")
+        add(f"coreference-count:{_count_bucket(len(reference_events))}")
+        add(f"coreference-signature:{coreference_signature}")
+        add(f"force-coreference:{force_signature}:{polarity_signature}:{scope_signature}")
+        if not reference_events:
+            add(f"coreference-coverage:none:{role_signature}:{scope_signature}")
+
+        for (
+            _start,
+            kind,
+            antecedent_class,
+            referent_class,
+            reference_scope,
+            identity_state,
+            antecedent_atom,
+            reference_atom,
+        ) in reference_events[:10]:
+            add(
+                f"reference-edge:{kind}:{antecedent_class}->{referent_class}:"
+                f"{reference_scope}:{identity_state}"
+            )
+            add(
+                f"compiler-variable-binding:{antecedent_class}->{referent_class}:"
+                f"{kind}:{reference_scope}"
+            )
+            add(
+                f"frame-logic-same-as:{antecedent_class}:"
+                f"{referent_class}:{kind}:{identity_state}"
+            )
+            add(f"kg-coreference-edge:{antecedent_class}:{kind}:{referent_class}")
+            add(
+                f"event-calculus-reference-binding:"
+                f"{kind}:{antecedent_class}->{referent_class}:{reference_scope}"
+            )
+            add(
+                f"decompiler-reference-slot:"
+                f"{kind}:{referent_class}:{reference_scope}:{identity_state}"
+            )
+            add(
+                f"coreference-exact:{kind}:"
+                f"{antecedent_atom}->{reference_atom}:{referent_class}"
+            )
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-coreference:{family}:{symbol}:{predicate_role}:"
+                        f"{kind}:{antecedent_class}->{referent_class}"
+                    )
+
+        add(f"decompiler-coreference-plan:{coreference_signature}")
+        add(
+            f"operator-coreference-plan:{coreference_signature}:"
+            f"{role_signature}:{operator_signature}"
+        )
+        add(f"todo-route:refine_coreference_binding:{coreference_signature}:{role_signature}")
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:coreference-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_coreference_binding_features]
+        cache[cache_key] = list(result)
+        return result
+
+    def _logical_connective_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "logical-connective",
+    ) -> List[str]:
+        """Boolean connective and list-scope contracts for legal IR formulas."""
+        normalized_prefix = str(prefix or "logical-connective").strip(":")
+        cache_key = f"logical_connective_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_logical_connective_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        action_classes = role_classes.get("action", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        def segment_class_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            tokens = set(_TOKEN_RE.findall(normalized))
+            if tokens.intersection({"file", "files", "submit", "submits", "application", "claim", "petition", "proof"}):
+                return "application_or_proof"
+            if tokens.intersection({"pay", "pays", "fee", "fees", "payment", "tax", "fine"}):
+                return "payment_or_fee"
+            if tokens.intersection({"record", "records", "document", "documents", "report", "reports", "notice", "information"}):
+                return "notice_or_record"
+            if tokens.intersection({"hearing", "appeal", "proceeding", "order", "action", "review"}):
+                return "proceeding_or_order"
+            if tokens.intersection({"license", "permit", "certificate", "approval", "authorization", "waiver"}):
+                return "authorization_instrument"
+            if tokens.intersection({"maintain", "keep", "retain", "preserve", "comply", "perform"}):
+                return "compliance_action"
+            if tokens.intersection({"disclose", "publish", "notify", "provide", "send", "furnish"}):
+                return "disclosure_action"
+            if tokens.intersection({"deny", "revoke", "suspend", "terminate", "cancel"}):
+                return "status_action"
+            if tokens.intersection({"eligible", "qualified", "complete"}):
+                return "eligibility_condition"
+            classes: List[str] = []
+            for role_name in ("action", "object", "condition", "predicate", "kg"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            classes = _unique_preserve_order(classes)
+            return classes[0] if classes else "legal_operand"
+
+        def connective_kind_for(marker: str, context: str) -> str:
+            marker_atom = _feature_atom(marker)
+            normalized = " ".join(str(context or "").lower().split())
+            if marker_atom == "neither_nor":
+                return "negative_conjunction"
+            if marker_atom == "either_or":
+                return "exclusive_or"
+            if marker_atom == "both_and":
+                return "cumulative_conjunction"
+            if marker_atom in {"any_of_following", "one_of_following"}:
+                return "enumerated_disjunction"
+            if marker_atom in {"all_of_following", "each_of_following"}:
+                return "enumerated_conjunction"
+            if marker_atom == "or":
+                if re.search(r"\b(?:any|one)\s+of\s+the\s+following\b", normalized):
+                    return "enumerated_disjunction"
+                return "inclusive_disjunction"
+            return "conjunction"
+
+        def arity_for(context: str, default: int = 2) -> str:
+            normalized = str(context or "").lower()
+            enumerator_count = len(
+                re.findall(
+                    r"(?:^|[;:]\s*|\s)\([a-z0-9]+\)\s+|"
+                    r"(?:^|[;:]\s*)\d+\.\s+",
+                    normalized,
+                )
+            )
+            comma_items = normalized.count(",") + 1 if "," in normalized else default
+            return _count_bucket(max(default, enumerator_count, comma_items))
+
+        def force_class_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\bshall\s+not\b|\bmay\s+not\b|\bmust\s+not\b|\bneither\b|\bnor\b", normalized):
+                return "prohibition"
+            if re.search(r"\bshall\b|\bmust\b|\brequired\b", normalized):
+                return "obligation"
+            if re.search(r"\bmay\b|\bauthorized\b|\bpermitted\b", normalized):
+                return "permission"
+            return _feature_atom(force_tags[0] if force_tags else "assertive") or "assertive"
+
+        def polarity_for(kind: str, context: str) -> str:
+            normalized = " ".join(str(context or "").lower().split())
+            if kind == "negative_conjunction" or re.search(
+                r"\b(?:shall|may|must)\s+not\b|\bno\b|\bnot\b|\bwithout\b",
+                normalized,
+            ):
+                return "negative_connective"
+            return "positive_connective"
+
+        def connective_scope_for(left: str, right: str, context: str) -> str:
+            normalized = " ".join(str(context or "").lower().split())
+            if re.search(r"\bif\b|\bwhen\b|\bunless\b|\bprovided\s+that\b", normalized):
+                return "condition_scope"
+            if re.search(r"\bshall\b|\bmust\b|\bmay\b", normalized):
+                return "modal_scope"
+            if re.search(r"\bany\s+of\s+the\s+following\b|\ball\s+of\s+the\s+following\b", normalized):
+                return "enumeration_scope"
+            if segment_class_for(left) == segment_class_for(right):
+                return "same_role_scope"
+            return "mixed_role_scope"
+
+        connective_events: List[
+            tuple[int, str, str, str, str, str, str, str, str, str, str]
+        ] = []
+        occupied_ranges: List[tuple[int, int]] = []
+
+        def add_connective(
+            *,
+            start: int,
+            end: int,
+            marker: str,
+            left_text: str,
+            right_text: str,
+            context_text: str,
+        ) -> None:
+            kind = connective_kind_for(marker, context_text)
+            left_class = segment_class_for(left_text)
+            right_class = segment_class_for(right_text)
+            force_class = force_class_for(context_text)
+            polarity = polarity_for(kind, context_text)
+            connective_scope = connective_scope_for(left_text, right_text, context_text)
+            connective_arity = arity_for(context_text)
+            connective_events.append(
+                (
+                    int(start),
+                    kind,
+                    left_class,
+                    right_class,
+                    force_class,
+                    polarity,
+                    connective_scope,
+                    connective_arity,
+                    _feature_atom(marker, max_tokens=3) or "and",
+                    _feature_atom(left_text, max_tokens=5) or "left",
+                    _feature_atom(right_text, max_tokens=5) or "right",
+                )
+            )
+
+        patterns: tuple[tuple[re.Pattern[str], str], ...] = (
+            (
+                re.compile(
+                    r"\bneither\s+(?P<left>[^.;,]{1,120})\s+nor\s+"
+                    r"(?P<right>[^.;]{1,160})"
+                ),
+                "neither_nor",
+            ),
+            (
+                re.compile(
+                    r"\beither\s+(?P<left>[^.;,]{1,120})\s+or\s+"
+                    r"(?P<right>[^.;]{1,160})"
+                ),
+                "either_or",
+            ),
+            (
+                re.compile(
+                    r"\bboth\s+(?P<left>[^.;,]{1,120})\s+and\s+"
+                    r"(?P<right>[^.;]{1,160})"
+                ),
+                "both_and",
+            ),
+            (
+                re.compile(
+                    r"\b(?P<marker>any|one|all|each)\s+of\s+the\s+following:"
+                    r"\s*(?P<left>[^;.\n]{1,160})[;,\s]+(?:and\s+|or\s+)?"
+                    r"(?P<right>[^.;\n]{1,160})"
+                ),
+                "following_list",
+            ),
+            (
+                re.compile(
+                    r"\b(?P<left>[^.;,]{1,140})\s+and\s+"
+                    r"(?P<right>[^.;]{1,180})"
+                ),
+                "and",
+            ),
+            (
+                re.compile(
+                    r"\b(?P<left>[^.;,]{1,140})\s+or\s+"
+                    r"(?P<right>[^.;]{1,180})"
+                ),
+                "or",
+            ),
+        )
+        for pattern, default_marker in patterns:
+            for match in pattern.finditer(text):
+                start, end = int(match.start()), int(match.end())
+                if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                    continue
+                marker = match.groupdict().get("marker") or default_marker
+                if default_marker == "following_list":
+                    marker = f"{_feature_atom(marker)}_of_following"
+                add_connective(
+                    start=start,
+                    end=end,
+                    marker=marker,
+                    left_text=match.group("left"),
+                    right_text=match.group("right"),
+                    context_text=match.group(0),
+                )
+                occupied_ranges.append((start, end))
+
+        connective_events = sorted(
+            _unique_preserve_order(connective_events),
+            key=lambda item: (item[0], item[1], item[2], item[3], item[4], item[5]),
+        )
+        connective_signature = "+".join(
+            f"{kind}:{left_class}+{right_class}:"
+            f"{force_class}:{polarity}:{connective_scope}:{connective_arity}"
+            for (
+                _start,
+                kind,
+                left_class,
+                right_class,
+                force_class,
+                polarity,
+                connective_scope,
+                connective_arity,
+                _marker_atom,
+                _left_atom,
+                _right_atom,
+            ) in connective_events[:8]
+        ) or "none"
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        force_signature = "+".join(force_tags[:3]) or "none"
+        polarity_signature = "+".join(polarity_tags[:3]) or "none"
+
+        add("bias")
+        add(f"source-connective:{role_signature}:{scope_signature}")
+        add(f"connective-count:{_count_bucket(len(connective_events))}")
+        add(f"connective-signature:{connective_signature}")
+        add(f"force-connective:{force_signature}:{polarity_signature}:{scope_signature}")
+        if not connective_events:
+            add(f"connective-coverage:none:{role_signature}:{scope_signature}")
+
+        for (
+            _start,
+            kind,
+            left_class,
+            right_class,
+            force_class,
+            polarity,
+            connective_scope,
+            connective_arity,
+            marker_atom,
+            left_atom,
+            right_atom,
+        ) in connective_events[:10]:
+            add(
+                f"boolean-edge:{kind}:{left_class}+{right_class}:"
+                f"{force_class}:{polarity}:{connective_scope}"
+            )
+            add(
+                f"compiler-boolean-node:{kind}:{left_class}+{right_class}:"
+                f"{connective_scope}:{connective_arity}"
+            )
+            add(
+                f"frame-logic-connective-slot:"
+                f"{kind}:{left_class}:{right_class}:{connective_scope}"
+            )
+            add(
+                f"kg-connective-edge:{left_class}:{kind}:{right_class}:"
+                f"{polarity}"
+            )
+            add(
+                f"event-calculus-connective:"
+                f"{kind}:{left_class}+{right_class}:{force_class}:{polarity}"
+            )
+            add(
+                f"decompiler-connective-slot:"
+                f"{kind}:{left_class}:{right_class}:{connective_arity}"
+            )
+            add(
+                f"connective-exact:{marker_atom}:"
+                f"{left_atom}->{right_atom}:{kind}"
+            )
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-connective:{family}:{symbol}:{predicate_role}:"
+                        f"{kind}:{left_class}+{right_class}"
+                    )
+
+        add(f"decompiler-connective-plan:{connective_signature}")
+        add(
+            f"operator-connective-plan:{connective_signature}:"
+            f"{role_signature}:{operator_signature}"
+        )
+        add(f"todo-route:refine_logical_connective:{connective_signature}:{role_signature}")
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:connective-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_logical_connective_features]
+        cache[cache_key] = list(result)
+        return result
+
+    def _enumeration_hierarchy_feature_keys_for(
+        self,
+        sample: LegalSample,
+        *,
+        prefix: str = "enumeration-hierarchy",
+    ) -> List[str]:
+        """Numbered subdivision and cross-reference contracts for legal IR lists."""
+        normalized_prefix = str(prefix or "enumeration-hierarchy").strip(":")
+        cache_key = f"enumeration_hierarchy_feature_keys:{normalized_prefix}"
+        cache = self._sample_cache_for(sample)
+        cached = cache.get(cache_key)
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+        if self.max_enumeration_hierarchy_features <= 0:
+            cache[cache_key] = []
+            return []
+
+        text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
+        cue_names = self._cue_names_for_text(text)
+        source_anchors = self._source_role_anchors_for(sample)
+        role_classes = {
+            role: self._legal_semantic_classes_for(anchor, role=role)
+            for role, anchor in source_anchors.items()
+        }
+        action_classes = role_classes.get("action", [])
+        force_tags = self._normative_force_tags_for_text(
+            text,
+            action_classes=action_classes,
+        )
+        polarity_tags = self._normative_polarity_tags_for_text(text)
+        scope_tags = self._source_clause_scope_tags_for(
+            sample,
+            cue_names,
+            source_anchors,
+        )
+        scope_signature = "+".join(scope_tags)
+        keys: List[str] = []
+        digest_atoms: List[str] = []
+
+        def add(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                keys.append(f"{normalized_prefix}:{suffix_atom}")
+                digest_atoms.append(suffix_atom)
+
+        def first_or_none(values: Sequence[str]) -> str:
+            return _feature_atom(values[0] if values else "") or "none"
+
+        roman_markers = {
+            "i",
+            "ii",
+            "iii",
+            "iv",
+            "v",
+            "vi",
+            "vii",
+            "viii",
+            "ix",
+            "x",
+            "xi",
+            "xii",
+            "xiii",
+            "xiv",
+            "xv",
+            "xvi",
+            "xvii",
+            "xviii",
+            "xix",
+            "xx",
+        }
+
+        def marker_token_for(marker: str) -> str:
+            return str(marker or "").strip().strip("()").lower()
+
+        def is_enumeration_marker(marker: str) -> bool:
+            token = marker_token_for(marker)
+            if not token:
+                return False
+            return bool(
+                token.isdigit()
+                or token in roman_markers
+                or re.fullmatch(r"[a-z]", token)
+                or re.fullmatch(r"[a-z]{2}", token)
+            )
+
+        def marker_level_for(marker: str) -> str:
+            token = marker_token_for(marker)
+            if token.isdigit():
+                return "paragraph_level"
+            if token in roman_markers:
+                return "clause_level"
+            if re.fullmatch(r"[a-z]", token):
+                return "subparagraph_level"
+            if re.fullmatch(r"[a-z]{2}", token):
+                return "subclause_level"
+            return "enumeration_level"
+
+        def item_class_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            tokens = set(_TOKEN_RE.findall(normalized))
+            if tokens.intersection(
+                {
+                    "file",
+                    "files",
+                    "filing",
+                    "filings",
+                    "submit",
+                    "submits",
+                    "application",
+                    "claim",
+                    "petition",
+                    "proof",
+                    "instruction",
+                    "instructions",
+                }
+            ):
+                return "application_or_proof"
+            if tokens.intersection(
+                {"pay", "pays", "fee", "fees", "payment", "payments", "tax", "fine"}
+            ):
+                return "payment_or_fee"
+            if tokens.intersection(
+                {
+                    "record",
+                    "records",
+                    "document",
+                    "documents",
+                    "report",
+                    "reports",
+                    "notice",
+                    "notices",
+                    "information",
+                }
+            ):
+                return "notice_or_record"
+            if tokens.intersection(
+                {"hearing", "appeal", "proceeding", "order", "action", "review"}
+            ):
+                return "proceeding_or_order"
+            if tokens.intersection(
+                {"license", "permit", "certificate", "approval", "authorization", "waiver"}
+            ):
+                return "authorization_instrument"
+            if tokens.intersection(
+                {"person", "persons", "entity", "entities", "applicant", "licensee", "recipient", "individual"}
+            ):
+                return "covered_party"
+            classes: List[str] = []
+            for role_name in ("action", "object", "condition", "predicate", "kg"):
+                classes.extend(self._legal_semantic_classes_for(value, role=role_name))
+            classes = _unique_preserve_order(classes)
+            return classes[0] if classes else "legal_item"
+
+        def quantifier_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\b(?:all|each|every)\s+of\s+the\s+following\b", normalized):
+                return "all"
+            if re.search(r"\b(?:any|one|either)\s+of\s+the\s+following\b", normalized):
+                return "any"
+            if re.search(r"\bno\s+following\b|\bnone\s+of\s+the\s+following\b", normalized):
+                return "none"
+            return "unspecified"
+
+        def force_class_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\bshall\s+not\b|\bmay\s+not\b|\bmust\s+not\b|\bno\b|\bnone\b", normalized):
+                return "prohibition"
+            if re.search(r"\bshall\b|\bmust\b|\brequired\b", normalized):
+                return "obligation"
+            if re.search(r"\bmay\b|\bauthorized\b|\bpermitted\b", normalized):
+                return "permission"
+            return _feature_atom(force_tags[0] if force_tags else "assertive") or "assertive"
+
+        def polarity_for(value: str) -> str:
+            normalized = " ".join(str(value or "").lower().split())
+            if re.search(r"\b(?:shall|may|must)\s+not\b|\bno\b|\bnone\b|\bwithout\b", normalized):
+                return "negative_enumeration"
+            return "positive_enumeration"
+
+        def cross_reference_kind(kind: str) -> str:
+            normalized = _feature_atom(kind, max_tokens=2)
+            singular = {
+                "paragraphs": "paragraph",
+                "subparagraphs": "subparagraph",
+                "clauses": "clause",
+                "subclauses": "subclause",
+                "items": "item",
+            }.get(normalized, normalized)
+            return f"{singular or 'item'}_reference"
+
+        marker_pattern = re.compile(
+            r"(?P<marker>\([a-z0-9]{1,4}\))\s*(?P<body>.*?)"
+            r"(?=(?:\s*\([a-z0-9]{1,4}\)\s*)|[.;]\s|$)"
+        )
+        marker_items: List[tuple[int, str, str, str, str]] = []
+        for match in marker_pattern.finditer(text):
+            marker = match.group("marker")
+            body = " ".join(match.group("body").split())
+            before_marker = text[max(0, int(match.start()) - 56) : int(match.start())]
+            if re.search(
+                r"\b(?:paragraphs?|subparagraphs?|clauses?|subclauses?|items?)\s+"
+                r"(?:\([a-z0-9]{1,4}\)\s+(?:and|or)\s+)?$",
+                before_marker,
+            ):
+                continue
+            if not is_enumeration_marker(marker) or len(body) < 2:
+                continue
+            if re.fullmatch(r"(?:of|and|or|to|from|by|under)\b.*", body):
+                continue
+            marker_items.append(
+                (
+                    int(match.start()),
+                    marker,
+                    marker_level_for(marker),
+                    item_class_for(body),
+                    _feature_atom(body, max_tokens=5) or "item",
+                )
+            )
+
+        following_match = re.search(
+            r"\b(?:(?P<quantifier>any|each|all|one|either)\s+of\s+the\s+)?following\b",
+            text,
+        )
+        crossref_pattern = re.compile(
+            r"\b(?P<kind>paragraphs?|subparagraphs?|clauses?|subclauses?|items?)\s+"
+            r"(?P<first>\([a-z0-9]{1,4}\))"
+            r"(?:\s+(?P<join>and|or)\s+(?P<second>\([a-z0-9]{1,4}\)))?"
+        )
+
+        enumeration_events: List[
+            tuple[int, str, str, str, str, str, str, str, str, str, str]
+        ] = []
+        if marker_items:
+            levels = _unique_preserve_order(item[2] for item in marker_items)
+            level_path = "->".join(levels[:6]) or "enumeration_level"
+            item_signature = "+".join(
+                _unique_preserve_order(item[3] for item in marker_items)[:6]
+            ) or "legal_item"
+            marker_signature = "+".join(
+                _feature_atom(marker_token_for(item[1])) for item in marker_items[:8]
+            ) or "implicit"
+            item_atom_signature = "+".join(
+                _unique_preserve_order(item[4] for item in marker_items)[:6]
+            ) or "item"
+            enumeration_scope = "list_scope" if following_match else "inline_scope"
+            context_start = max(0, marker_items[0][0] - 160)
+            context_end = min(len(text), marker_items[-1][0] + 240)
+            context = text[context_start:context_end]
+            enumeration_events.append(
+                (
+                    marker_items[0][0],
+                    "numbered_list",
+                    level_path,
+                    item_signature,
+                    quantifier_for(context),
+                    _count_bucket(len(marker_items)),
+                    "inline_items",
+                    polarity_for(context),
+                    enumeration_scope,
+                    marker_signature,
+                    item_atom_signature,
+                )
+            )
+
+        for match in crossref_pattern.finditer(text):
+            markers = [
+                marker
+                for marker in (match.group("first"), match.groupdict().get("second"))
+                if marker and is_enumeration_marker(marker)
+            ]
+            if not markers:
+                continue
+            levels = _unique_preserve_order(marker_level_for(marker) for marker in markers)
+            level_path = "->".join(levels[:4]) or "enumeration_level"
+            join = match.groupdict().get("join") or ""
+            enumeration_events.append(
+                (
+                    int(match.start()),
+                    "cross_reference",
+                    level_path,
+                    "reference_target",
+                    "any" if join == "or" else "all",
+                    _count_bucket(len(markers)),
+                    cross_reference_kind(match.group("kind")),
+                    polarity_for(match.group(0)),
+                    "reference_scope",
+                    "+".join(_feature_atom(marker_token_for(marker)) for marker in markers),
+                    _feature_atom(match.group("kind"), max_tokens=2) or "item",
+                )
+            )
+
+        if following_match and not marker_items:
+            context_start = max(0, int(following_match.start()) - 120)
+            context_end = min(len(text), int(following_match.end()) + 200)
+            context = text[context_start:context_end]
+            enumeration_events.append(
+                (
+                    int(following_match.start()),
+                    "following_opening",
+                    "implicit_list",
+                    "legal_item",
+                    quantifier_for(context),
+                    "0",
+                    "implicit_items",
+                    polarity_for(context),
+                    "list_scope",
+                    "implicit",
+                    "item",
+                )
+            )
+
+        enumeration_events = sorted(
+            _unique_preserve_order(enumeration_events),
+            key=lambda item: (item[0], item[1], item[2], item[3], item[4], item[5]),
+        )
+        if not enumeration_events:
+            cache[cache_key] = []
+            return []
+
+        enumeration_signature = "+".join(
+            f"{event_kind}:{level_path}:{item_signature}:"
+            f"{quantifier}:{arity}:{polarity}:{enumeration_scope}"
+            for (
+                _start,
+                event_kind,
+                level_path,
+                item_signature,
+                quantifier,
+                arity,
+                _reference_kind,
+                polarity,
+                enumeration_scope,
+                _marker_signature,
+                _item_atom_signature,
+            ) in enumeration_events[:8]
+        )
+        formulas = list(sample.modal_ir.formulas or [])
+        operator_signature = "->".join(
+            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+            for formula in formulas[:6]
+        ) or "none"
+        subject_class = first_or_none(role_classes.get("subject", []))
+        action_class = first_or_none(role_classes.get("action", []))
+        object_class = first_or_none(role_classes.get("object", []))
+        condition_class = first_or_none(role_classes.get("condition", []))
+        exception_class = first_or_none(role_classes.get("exception", []))
+        temporal_class = first_or_none(role_classes.get("temporal", []))
+        role_signature = (
+            f"{subject_class}:{action_class}:{object_class}:"
+            f"{condition_class}:{exception_class}:{temporal_class}"
+        )
+        force_signature = "+".join(force_tags[:3]) or "none"
+        polarity_signature = "+".join(polarity_tags[:3]) or "none"
+
+        add("bias")
+        add(f"source-enumeration:{role_signature}:{scope_signature}")
+        add(f"enumeration-count:{_count_bucket(len(enumeration_events))}")
+        add(f"enumeration-signature:{enumeration_signature}")
+        add(f"force-enumeration:{force_signature}:{polarity_signature}:{scope_signature}")
+
+        for (
+            _start,
+            event_kind,
+            level_path,
+            item_signature,
+            quantifier,
+            arity,
+            reference_kind,
+            polarity,
+            enumeration_scope,
+            marker_signature,
+            item_atom_signature,
+        ) in enumeration_events[:10]:
+            add(
+                f"enumeration-edge:{event_kind}:{level_path}:"
+                f"{item_signature}:{quantifier}:{polarity}"
+            )
+            add(
+                f"compiler-enumeration-node:{event_kind}:{level_path}:"
+                f"{item_signature}:{quantifier}:{arity}"
+            )
+            add(
+                f"frame-logic-enumeration-slot:"
+                f"{level_path}:{item_signature}:{enumeration_scope}"
+            )
+            add(
+                f"kg-enumeration-edge:{event_kind}:{item_signature}:"
+                f"{reference_kind}:{polarity}"
+            )
+            add(
+                f"event-calculus-enumeration:"
+                f"{event_kind}:{level_path}:{force_class_for(text)}:{polarity}"
+            )
+            add(
+                f"decompiler-enumeration-slot:"
+                f"{level_path}:{item_signature}:{arity}"
+            )
+            add(
+                f"enumeration-exact:{marker_signature}:"
+                f"{item_atom_signature}:{event_kind}"
+            )
+            if reference_kind.endswith("_reference"):
+                add(f"reference-target:{reference_kind}:{level_path}:{arity}")
+            for formula in formulas[:5]:
+                family = _feature_atom(formula.operator.family)
+                symbol = _feature_atom(formula.operator.symbol)
+                predicate_role = _feature_atom(
+                    getattr(formula.predicate, "role", "") or "none"
+                )
+                if family and symbol:
+                    add(
+                        f"operator-enumeration:{family}:{symbol}:{predicate_role}:"
+                        f"{event_kind}:{level_path}:{item_signature}"
+                    )
+
+        add(f"decompiler-enumeration-plan:{enumeration_signature}")
+        add(
+            f"operator-enumeration-plan:{enumeration_signature}:"
+            f"{role_signature}:{operator_signature}"
+        )
+        add(
+            f"todo-route:refine_enumeration_hierarchy:"
+            f"{enumeration_signature}:{role_signature}"
+        )
+
+        digest = hashlib.sha256(
+            "|".join(sorted(set(digest_atoms))).encode("utf-8")
+        ).hexdigest()[:16]
+        keys.insert(1, f"{normalized_prefix}:enumeration-class:{digest}")
+        result = _unique_preserve_order(keys)[: self.max_enumeration_hierarchy_features]
+        cache[cache_key] = list(result)
+        return result
+
     def _compiler_latent_profile_feature_keys_for(
         self,
         sample: LegalSample,
@@ -11335,12 +18275,19 @@ class AdaptiveModalAutoencoder:
         condition_anchor = source_anchors.get("condition", "")
         exception_anchor = source_anchors.get("exception", "")
         temporal_anchor = source_anchors.get("temporal", "")
+        surface_profiles = _uscode_surface_profile_tags(text)
         keys: List[str] = []
+        typed_family_pair_suffixes: List[str] = []
 
         def add(suffix: str) -> None:
             suffix_atom = str(suffix).strip(":")
             if suffix_atom:
                 keys.append(f"{normalized_prefix}:{suffix_atom}")
+
+        def add_typed_family_pair(suffix: str) -> None:
+            suffix_atom = str(suffix).strip(":")
+            if suffix_atom:
+                typed_family_pair_suffixes.append(suffix_atom)
 
         add("bias")
         add(f"formula-count:{_count_bucket(len(sample.modal_ir.formulas))}")
@@ -11354,6 +18301,24 @@ class AdaptiveModalAutoencoder:
             add(f"surface-path:subject-action:{subject_anchor}->{action_anchor}")
         if action_anchor and object_anchor:
             add(f"surface-path:action-object:{action_anchor}->{object_anchor}")
+
+        priority_family_pairs: List[str] = []
+        for formula in list(sample.modal_ir.formulas or [])[:6]:
+            priority_family_pairs.extend(
+                _autoencoder_typed_family_pairs_for_formula(
+                    sample.modal_ir,
+                    formula,
+                    surface_cues=cue_names,
+                )
+            )
+        for family_pair in sorted(
+            pair
+            for pair in _unique_preserve_order(priority_family_pairs)
+            if pair in _AUTOENCODER_PRIORITY_FAMILY_PAIRS
+        ):
+            add(f"typed-family-pair:{family_pair}")
+            for cue_name in cue_names[:4]:
+                add(f"surface-cue-to-family-pair:{cue_name}:{family_pair}")
 
         family_sequence: List[str] = []
         predicate_sequence: List[str] = []
@@ -11430,6 +18395,67 @@ class AdaptiveModalAutoencoder:
                     add(f"cue-round-trip:{cue_name}:{formula_cue}")
             if formula_cue and family:
                 add(f"ir-cue-to-family:{formula_cue}:{family}")
+            family_pairs = _autoencoder_typed_family_pairs_for_formula(
+                sample.modal_ir,
+                formula,
+                surface_cues=cue_names,
+                source_cues=cue_names,
+            )
+            for family_pair in family_pairs:
+                if family_pair in _AUTOENCODER_PRIORITY_FAMILY_PAIRS:
+                    add(f"typed-family-pair:{family_pair}")
+                add_typed_family_pair(f"typed-family-pair:{family_pair}")
+                if formula_cue:
+                    add_typed_family_pair(
+                        f"typed-family-pair-cue:{family_pair}:{formula_cue}"
+                    )
+                for cue_name in cue_names[:4]:
+                    if family_pair in _AUTOENCODER_PRIORITY_FAMILY_PAIRS:
+                        add(f"surface-cue-to-family-pair:{cue_name}:{family_pair}")
+                    add_typed_family_pair(
+                        f"surface-cue-to-family-pair:{cue_name}:{family_pair}"
+                    )
+                    if family_pair in _AUTOENCODER_TARGETED_RECONSTRUCTION_FAMILY_PAIRS:
+                        add_typed_family_pair(
+                            "target-reconstruction-surface-cue-family-pair:"
+                            f"{cue_name}:{family_pair}"
+                        )
+                for profile in surface_profiles[:4]:
+                    add_typed_family_pair(
+                        f"surface-profile-to-family-pair:{profile}:{family_pair}"
+                    )
+                    if family_pair in _AUTOENCODER_TARGETED_RECONSTRUCTION_FAMILY_PAIRS:
+                        add_typed_family_pair(
+                            "target-reconstruction-surface-profile-family-pair:"
+                            f"{profile}:{family_pair}"
+                        )
+                if predicate_head:
+                    add_typed_family_pair(
+                        f"typed-family-pair-predicate:{family_pair}:{predicate_head}"
+                    )
+                if action_anchor:
+                    add_typed_family_pair(
+                        f"surface-action-to-family-pair:{action_anchor}:{family_pair}"
+                    )
+                if object_anchor:
+                    add_typed_family_pair(
+                        f"surface-object-to-family-pair:{object_anchor}:{family_pair}"
+                    )
+                if condition_anchor:
+                    add_typed_family_pair(
+                        f"surface-condition-to-family-pair:"
+                        f"{condition_anchor}:{family_pair}"
+                    )
+                if temporal_anchor:
+                    add_typed_family_pair(
+                        f"surface-temporal-to-family-pair:"
+                        f"{temporal_anchor}:{family_pair}"
+                    )
+                if exception_anchor:
+                    add_typed_family_pair(
+                        f"surface-exception-to-family-pair:"
+                        f"{exception_anchor}:{family_pair}"
+                    )
             if condition_anchor and family:
                 add(
                     f"surface-condition-to-family:{condition_anchor}:{family}:c{condition_bucket}"
@@ -11463,6 +18489,9 @@ class AdaptiveModalAutoencoder:
         ):
             add(f"ir-predicate-transition:{left_predicate}->{right_predicate}")
 
+        for suffix in _unique_preserve_order(typed_family_pair_suffixes):
+            add(suffix)
+
         frame_logic = getattr(sample.modal_ir, "frame_logic", None)
         if frame_logic is None:
             add("kg:missing")
@@ -11491,6 +18520,8 @@ class AdaptiveModalAutoencoder:
                     add(f"kg-subject-predicate:{subject}:{predicate}")
                 if predicate and obj:
                     add(f"kg-predicate-object:{predicate}:{obj}")
+        for suffix in _unique_preserve_order(typed_family_pair_suffixes):
+            add(suffix)
 
         result = _unique_preserve_order(keys)[: self.max_round_trip_bridge_features]
         cache[cache_key] = list(result)
@@ -11856,15 +18887,286 @@ class AdaptiveModalAutoencoder:
                     bump(f"slot:family-exception-present:{family}")
             cue = formula.metadata.get("cue") if formula.metadata else None
             cue_name = _feature_atom(cue)
+            formula_cue_names = _formula_autoencoder_cue_names(formula)
             if cue_name:
                 bump(f"slot:modal-cue:{cue_name}")
                 if family:
                     bump(f"slot:cue-family:{cue_name}:{family}")
+            source_cue_names = self._cue_names_for_text(text)
+            surface_profiles = _uscode_surface_profile_tags(text)
+            for source_cue in source_cue_names:
+                if family:
+                    bump(f"slot:surface-cue-family:{source_cue}:{family}", weight=0.8)
+            for formula_cue_name in formula_cue_names:
+                if formula_cue_name == cue_name:
+                    continue
+                bump(f"slot:modal-cue:{formula_cue_name}", weight=0.75)
+                if family:
+                    bump(
+                        f"slot:cue-family:{formula_cue_name}:{family}",
+                        weight=0.75,
+                    )
+            family_pairs = _autoencoder_typed_family_pairs_for_formula(
+                sample.modal_ir,
+                formula,
+                surface_cues=source_cue_names,
+            )
+            family_pair_strengths = _autoencoder_typed_family_pair_strengths_for_formula(
+                sample.modal_ir,
+                formula,
+                surface_cues=source_cue_names,
+                source_cues=self._cue_names_for_text(text),
+            )
+            predicate_head = predicate_name.split("_", 1)[0] if predicate_name else ""
+            force_tags, polarity_tags = _autoencoder_formula_force_polarity_tags(
+                formula,
+                text=text,
+            )
+            scope_tags = self._source_clause_scope_tags_for(
+                sample,
+                _unique_preserve_order(
+                    [*self._cue_names_for_text(text), *formula_cue_names]
+                ),
+                self._source_role_anchors_for(sample),
+            )
+            if conditions and "conditioned" not in scope_tags:
+                scope_tags = [*scope_tags, "conditioned"]
+            if exceptions and "excepted" not in scope_tags:
+                scope_tags = [*scope_tags, "excepted"]
+            scope_tags = [
+                tag for tag in scope_tags if tag != "unscoped"
+            ] or ["unconditioned"]
+            scope_signature = "+".join(_unique_preserve_order(scope_tags))
+            topology_signature = self._autoencoder_clause_topology_signature_for(
+                sample,
+                formula,
+                conditions=conditions,
+                exceptions=exceptions,
+                scope_tags=scope_tags,
+            )
+            for family_pair in family_pairs:
+                pair_strength = max(
+                    0.0,
+                    float(family_pair_strengths.get(family_pair, 1.0)),
+                )
+                if pair_strength <= 0.0:
+                    continue
+                bump(
+                    f"slot:typed-decompiler-family-pair:{family_pair}",
+                    weight=1.25 * pair_strength,
+                )
+                for formula_cue_name in formula_cue_names:
+                    bump(
+                        (
+                            "slot:typed-decompiler-family-pair-cue:"
+                            f"{family_pair}:{formula_cue_name}"
+                        ),
+                        weight=0.75 * pair_strength,
+                    )
+                for source_cue in source_cue_names[:4]:
+                    bump(
+                        (
+                            "slot:typed-decompiler-surface-cue-family-pair:"
+                            f"{source_cue}:{family_pair}"
+                        ),
+                        weight=0.75 * pair_strength,
+                    )
+                if predicate_head:
+                    bump(
+                        (
+                            "slot:typed-decompiler-family-pair-predicate:"
+                            f"{family_pair}:{predicate_head}"
+                        ),
+                        weight=0.5 * pair_strength,
+                    )
+                if conditions:
+                    bump(
+                        f"slot:typed-decompiler-condition-family-pair:{family_pair}",
+                        weight=0.75 * pair_strength,
+                    )
+                if exceptions:
+                    bump(
+                        f"slot:typed-decompiler-exception-family-pair:{family_pair}",
+                        weight=0.75 * pair_strength,
+                    )
+                if "->" in family_pair:
+                    source_family, _target_family = family_pair.split("->", 1)
+                else:
+                    source_family = family
+                    _target_family = family
+                bump(
+                    f"slot:typed-decompiler-scope-family-pair:{scope_signature}:{family_pair}",
+                    weight=0.75 * pair_strength,
+                )
+                if family_pair in _AUTOENCODER_TARGETED_RECONSTRUCTION_FAMILY_PAIRS:
+                    bump(
+                        f"slot:typed-decompiler-target-reconstruction-pair:{family_pair}",
+                        weight=1.35 * pair_strength,
+                    )
+                    if _target_family:
+                        bump(
+                            (
+                                "slot:typed-decompiler-target-reconstruction-family:"
+                                f"{_target_family}"
+                            ),
+                            weight=0.95 * pair_strength,
+                        )
+                        bump(
+                            (
+                                "slot:typed-decompiler-source-target-family:"
+                                f"{source_family}->{_target_family}"
+                            ),
+                            weight=0.85 * pair_strength,
+                        )
+                    bump(
+                        (
+                            "slot:typed-decompiler-target-reconstruction-scope:"
+                            f"{scope_signature}:{family_pair}"
+                        ),
+                        weight=1.0 * pair_strength,
+                    )
+                    for formula_cue_name in formula_cue_names:
+                        bump(
+                            (
+                                "slot:typed-decompiler-target-reconstruction-cue:"
+                                f"{family_pair}:{formula_cue_name}"
+                            ),
+                            weight=0.9 * pair_strength,
+                        )
+                        if _target_family:
+                            bump(
+                                (
+                                    "slot:typed-decompiler-target-family-cue:"
+                                    f"{_target_family}:{formula_cue_name}"
+                                ),
+                                weight=0.75 * pair_strength,
+                            )
+                    for source_cue in source_cue_names[:4]:
+                        bump(
+                            (
+                                "slot:typed-decompiler-target-reconstruction-surface-cue:"
+                                f"{source_cue}:{family_pair}"
+                            ),
+                            weight=0.8 * pair_strength,
+                        )
+                        bump(
+                            (
+                                "slot:typed-decompiler-target-reconstruction-cue:"
+                                f"{family_pair}:{source_cue}"
+                            ),
+                            weight=0.75 * pair_strength,
+                        )
+                        if _target_family:
+                            bump(
+                                (
+                                    "slot:typed-decompiler-target-family-surface-cue:"
+                                    f"{source_cue}:{_target_family}"
+                                ),
+                                weight=0.7 * pair_strength,
+                            )
+                    for profile in surface_profiles[:4]:
+                        bump(
+                            (
+                                "slot:typed-decompiler-target-reconstruction-surface-profile:"
+                                f"{profile}:{family_pair}"
+                            ),
+                            weight=0.8 * pair_strength,
+                        )
+                        if _target_family:
+                            bump(
+                                (
+                                    "slot:typed-decompiler-target-family-surface-profile:"
+                                    f"{profile}:{_target_family}"
+                                ),
+                                weight=0.65 * pair_strength,
+                            )
+                if topology_signature:
+                    bump(
+                        (
+                            "slot:typed-decompiler-source-clause-topology-family-pair:"
+                            f"{topology_signature}:{source_family}|"
+                            f"typed-decompiler-family-pair:{family_pair}"
+                        ),
+                        weight=0.65 * pair_strength,
+                    )
+                bridge_scope = topology_signature or scope_signature
+                for view in _autoencoder_legal_ir_views_for_family_pair(family_pair):
+                    bump(
+                        (
+                            "slot:typed-decompiler-family-pair-view-contract:"
+                            f"{family_pair}||{view}"
+                        ),
+                        weight=0.8 * pair_strength,
+                    )
+                    bump(
+                        (
+                            "slot:typed-decompiler-family-pair-bridge:"
+                            f"{source_family}->{_target_family}:"
+                            f"{bridge_scope}||{view}"
+                        ),
+                        weight=0.75 * pair_strength,
+                    )
+                    if family_pair in _AUTOENCODER_TARGETED_RECONSTRUCTION_FAMILY_PAIRS:
+                        bump(
+                            (
+                                "slot:typed-decompiler-target-reconstruction-view:"
+                                f"{family_pair}||{view}"
+                            ),
+                            weight=0.95 * pair_strength,
+                        )
+                for force in force_tags:
+                    for polarity in polarity_tags:
+                        bump(
+                            (
+                                "slot:typed-decompiler-force-polarity:"
+                                f"{force}:{polarity}:{source_family}"
+                            ),
+                            weight=0.85,
+                        )
+                        bump(
+                            (
+                                "slot:typed-decompiler-force-polarity-family-pair:"
+                                f"{force}:{polarity}:{family_pair}"
+                            ),
+                            weight=0.85 * pair_strength,
+                        )
+                        bump(
+                            (
+                                "slot:typed-decompiler-force-polarity-scope-family-pair:"
+                                f"{force}:{polarity}:{scope_signature}:{family_pair}"
+                            ),
+                            weight=0.8 * pair_strength,
+                        )
+                        for view in _autoencoder_legal_ir_views_for_family_pair(
+                            family_pair
+                        ):
+                            bump(
+                                (
+                                    "slot:typed-decompiler-force-view-family-pair:"
+                                    f"{force}:{polarity}:{family_pair}||{view}"
+                                ),
+                                weight=0.7 * pair_strength,
+                            )
+                        if predicate_head:
+                            bump(
+                                (
+                                    "slot:typed-decompiler-source-predicate-force-pair:"
+                                    f"{source_family}:{predicate_head}|"
+                                    "typed-decompiler-force-polarity:"
+                                    f"{force}:{polarity}"
+                                ),
+                                weight=0.65,
+                            )
 
         for slot, weight in self._semantic_slot_interactions_for(counts):
             bump(slot, weight)
 
-        result = _normalized_distribution(counts)
+        result = _normalized_distribution(
+            {
+                slot: weight * _autoencoder_semantic_slot_embedding_weight(slot)
+                for slot, weight in counts.items()
+            }
+        )
         cache["semantic_slot_distribution"] = dict(result)
         return result
 
@@ -11883,6 +19185,13 @@ class AdaptiveModalAutoencoder:
             "slot:frame-logic-triples:",
             "slot:predicate-token-count:",
             "slot:predicate-arity:",
+            "slot:typed-decompiler-force-polarity",
+            "slot:typed-decompiler-family-pair-bridge:",
+            "slot:typed-decompiler-family-pair-view-contract:",
+            "slot:typed-decompiler-force-view-family-pair:",
+            "slot:typed-decompiler-scope-family-pair:",
+            "slot:typed-decompiler-source-clause-topology-family-pair:",
+            "slot:typed-decompiler-source-predicate-force-pair:",
         )
         anchors = [
             (slot, max(0.0, float(weight)))
@@ -11894,29 +19203,78 @@ class AdaptiveModalAutoencoder:
         anchors = sorted(
             anchors,
             key=lambda item: (-item[1], item[0]),
-        )[:10]
+        )[:24]
         interactions: List[tuple[str, float]] = []
+        seen_interactions: set[str] = set()
+
+        def interaction_name(left_slot: str, right_slot: str) -> str:
+            return "slot-pair:" + "|".join(
+                sorted(
+                    [
+                        left_slot.removeprefix("slot:"),
+                        right_slot.removeprefix("slot:"),
+                    ]
+                )
+            )
+
+        if self.max_semantic_slot_interactions >= 16:
+            operators = [
+                (slot, max(0.0, float(weight)))
+                for slot, weight in counts.items()
+                if max(0.0, float(weight)) > 0.0
+                and str(slot).startswith("slot:modal-operator:")
+            ]
+            family_pairs = [
+                (slot, max(0.0, float(weight)))
+                for slot, weight in counts.items()
+                if max(0.0, float(weight)) > 0.0
+                and str(slot).startswith("slot:typed-decompiler-family-pair:")
+            ]
+            priority_candidates: List[tuple[str, float]] = []
+            for operator_slot, operator_weight in operators:
+                operator_family = operator_slot.split(":", 3)[2]
+                for pair_slot, pair_weight in family_pairs:
+                    pair_name = pair_slot.rsplit(":", 1)[-1]
+                    pair_source_family = pair_name.split("->", 1)[0]
+                    if pair_source_family != operator_family:
+                        continue
+                    priority_candidates.append(
+                        (
+                            interaction_name(operator_slot, pair_slot),
+                            self.semantic_slot_interaction_weight
+                            * math.sqrt(operator_weight * pair_weight),
+                        )
+                    )
+            priority_budget = min(
+                len(priority_candidates),
+                max(1, self.max_semantic_slot_interactions // 4),
+            )
+            for name, weight in sorted(
+                priority_candidates,
+                key=lambda item: (-item[1], item[0]),
+            )[:priority_budget]:
+                if name in seen_interactions:
+                    continue
+                interactions.append((name, weight))
+                seen_interactions.add(name)
+
         for left_index, (left_slot, left_weight) in enumerate(anchors):
             for right_slot, right_weight in anchors[left_index + 1 :]:
                 left_kind = _semantic_slot_kind(left_slot)
                 right_kind = _semantic_slot_kind(right_slot)
                 if left_kind == right_kind:
                     continue
-                pair_name = "|".join(
-                    sorted(
-                        [
-                            left_slot.removeprefix("slot:"),
-                            right_slot.removeprefix("slot:"),
-                        ]
-                    )
-                )
+                pair_name = interaction_name(left_slot, right_slot)
+                if pair_name in seen_interactions:
+                    continue
                 interactions.append(
                     (
-                        f"slot-pair:{pair_name}",
+                        pair_name,
                         self.semantic_slot_interaction_weight
                         * math.sqrt(left_weight * right_weight),
                     )
                 )
+                seen_interactions.add(pair_name)
                 if len(interactions) >= self.max_semantic_slot_interactions:
                     return interactions
         return interactions
@@ -12183,54 +19541,57 @@ class AdaptiveModalAutoencoder:
                     error,
                     scale=step * embedding_update_scale * normalized_weight,
                 )
-        target_distribution = _observed_family_distribution(sample)
-        for family, target_weight in target_distribution.items():
-            normalized_weight = max(0.0, float(target_weight))
-            if normalized_weight <= 0.0:
-                continue
-            weights = self.state.family_embedding_weights.setdefault(
-                family,
-                [0.0 for _ in sample.embedding_vector],
-            )
-            if len(weights) != len(sample.embedding_vector):
-                weights[:] = [0.0 for _ in sample.embedding_vector]
-            weights[:] = self._add_scaled_vector(
-                weights,
-                error,
-                scale=step * embedding_update_scale * normalized_weight,
-            )
-        for slot, slot_weight in self._semantic_slot_distribution_for(sample).items():
-            normalized_weight = max(0.0, float(slot_weight))
-            if normalized_weight <= 0.0:
-                continue
-            weights = self.state.semantic_slot_embedding_weights.setdefault(
-                slot,
-                [0.0 for _ in sample.embedding_vector],
-            )
-            if len(weights) != len(sample.embedding_vector):
-                weights[:] = [0.0 for _ in sample.embedding_vector]
-            weights[:] = self._add_scaled_vector(
-                weights,
-                error,
-                scale=step * embedding_update_scale * normalized_weight,
-            )
-        for key, target_weight in (
-            self._target_family_semantic_slot_distribution_for_sample(sample).items()
-        ):
-            normalized_weight = max(0.0, float(target_weight))
-            if normalized_weight <= 0.0:
-                continue
-            weights = self.state.family_semantic_slot_embedding_weights.setdefault(
-                key,
-                [0.0 for _ in sample.embedding_vector],
-            )
-            if len(weights) != len(sample.embedding_vector):
-                weights[:] = [0.0 for _ in sample.embedding_vector]
-            weights[:] = self._add_scaled_vector(
-                weights,
-                error,
-                scale=step * embedding_update_scale * normalized_weight,
-            )
+        if self.family_embedding_weight_scale > 0.0:
+            target_distribution = _observed_family_distribution(sample)
+            for family, target_weight in target_distribution.items():
+                normalized_weight = max(0.0, float(target_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                weights = self.state.family_embedding_weights.setdefault(
+                    family,
+                    [0.0 for _ in sample.embedding_vector],
+                )
+                if len(weights) != len(sample.embedding_vector):
+                    weights[:] = [0.0 for _ in sample.embedding_vector]
+                weights[:] = self._add_scaled_vector(
+                    weights,
+                    error,
+                    scale=step * embedding_update_scale * normalized_weight,
+                )
+        if self.semantic_slot_embedding_weight_scale > 0.0:
+            for slot, slot_weight in self._semantic_slot_distribution_for(sample).items():
+                normalized_weight = max(0.0, float(slot_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                weights = self.state.semantic_slot_embedding_weights.setdefault(
+                    slot,
+                    [0.0 for _ in sample.embedding_vector],
+                )
+                if len(weights) != len(sample.embedding_vector):
+                    weights[:] = [0.0 for _ in sample.embedding_vector]
+                weights[:] = self._add_scaled_vector(
+                    weights,
+                    error,
+                    scale=step * embedding_update_scale * normalized_weight,
+                )
+        if self.family_semantic_slot_embedding_weight_scale > 0.0:
+            for key, target_weight in (
+                self._target_family_semantic_slot_distribution_for_sample(sample).items()
+            ):
+                normalized_weight = max(0.0, float(target_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                weights = self.state.family_semantic_slot_embedding_weights.setdefault(
+                    key,
+                    [0.0 for _ in sample.embedding_vector],
+                )
+                if len(weights) != len(sample.embedding_vector):
+                    weights[:] = [0.0 for _ in sample.embedding_vector]
+                weights[:] = self._add_scaled_vector(
+                    weights,
+                    error,
+                    scale=step * embedding_update_scale * normalized_weight,
+                )
         if self.semantic_slot_legal_ir_view_embedding_weight_scale > 0.0:
             for key, target_weight in (
                 self._target_semantic_slot_legal_ir_view_distribution_for_sample(sample).items()
@@ -12251,62 +19612,68 @@ class AdaptiveModalAutoencoder:
                     error,
                     scale=step * embedding_update_scale * normalized_weight,
                 )
-        for key, target_weight in (
-            self._target_family_semantic_slot_legal_ir_view_distribution_for_sample(
-                sample
-            ).items()
-        ):
-            normalized_weight = max(0.0, float(target_weight))
-            if normalized_weight <= 0.0:
-                continue
-            weights = (
-                self.state.family_semantic_slot_legal_ir_view_embedding_weights.setdefault(
+        if self.family_semantic_slot_legal_ir_view_embedding_weight_scale > 0.0:
+            for key, target_weight in (
+                self._target_family_semantic_slot_legal_ir_view_distribution_for_sample(
+                    sample
+                ).items()
+            ):
+                normalized_weight = max(0.0, float(target_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                weights = (
+                    self.state.family_semantic_slot_legal_ir_view_embedding_weights.setdefault(
+                        key,
+                        [0.0 for _ in sample.embedding_vector],
+                    )
+                )
+                if len(weights) != len(sample.embedding_vector):
+                    weights[:] = [0.0 for _ in sample.embedding_vector]
+                weights[:] = self._add_scaled_vector(
+                    weights,
+                    error,
+                    scale=step * embedding_update_scale * normalized_weight,
+                )
+        if self.legal_ir_view_embedding_weight_scale > 0.0:
+            legal_ir_view_distribution = _normalized_distribution(
+                self._legal_ir_view_target_distribution_for_sample(sample)
+            )
+            for view, target_weight in legal_ir_view_distribution.items():
+                normalized_weight = max(0.0, float(target_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                weights = self.state.legal_ir_view_embedding_weights.setdefault(
+                    view,
+                    [0.0 for _ in sample.embedding_vector],
+                )
+                if len(weights) != len(sample.embedding_vector):
+                    weights[:] = [0.0 for _ in sample.embedding_vector]
+                weights[:] = self._add_scaled_vector(
+                    weights,
+                    error,
+                    scale=step * embedding_update_scale * normalized_weight,
+                )
+        if self.family_legal_ir_view_embedding_weight_scale > 0.0:
+            for key, target_weight in (
+                self._target_family_legal_ir_view_distribution_for_sample(sample).items()
+            ):
+                normalized_weight = max(0.0, float(target_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                weights = self.state.family_legal_ir_view_embedding_weights.setdefault(
                     key,
                     [0.0 for _ in sample.embedding_vector],
                 )
-            )
-            if len(weights) != len(sample.embedding_vector):
-                weights[:] = [0.0 for _ in sample.embedding_vector]
-            weights[:] = self._add_scaled_vector(
-                weights,
-                error,
-                scale=step * embedding_update_scale * normalized_weight,
-            )
-        legal_ir_view_distribution = _normalized_distribution(
-            self._legal_ir_view_target_distribution_for_sample(sample)
-        )
-        for view, target_weight in legal_ir_view_distribution.items():
-            normalized_weight = max(0.0, float(target_weight))
-            if normalized_weight <= 0.0:
-                continue
-            weights = self.state.legal_ir_view_embedding_weights.setdefault(
-                view,
-                [0.0 for _ in sample.embedding_vector],
-            )
-            if len(weights) != len(sample.embedding_vector):
-                weights[:] = [0.0 for _ in sample.embedding_vector]
-            weights[:] = self._add_scaled_vector(
-                weights,
-                error,
-                scale=step * embedding_update_scale * normalized_weight,
-            )
-        for key, target_weight in (
-            self._target_family_legal_ir_view_distribution_for_sample(sample).items()
-        ):
-            normalized_weight = max(0.0, float(target_weight))
-            if normalized_weight <= 0.0:
-                continue
-            weights = self.state.family_legal_ir_view_embedding_weights.setdefault(
-                key,
-                [0.0 for _ in sample.embedding_vector],
-            )
-            if len(weights) != len(sample.embedding_vector):
-                weights[:] = [0.0 for _ in sample.embedding_vector]
-            weights[:] = self._add_scaled_vector(
-                weights,
-                error,
-                scale=step * embedding_update_scale * normalized_weight,
-            )
+                if len(weights) != len(sample.embedding_vector):
+                    weights[:] = [0.0 for _ in sample.embedding_vector]
+                weights[:] = self._add_scaled_vector(
+                    weights,
+                    error,
+                    scale=step * embedding_update_scale * normalized_weight,
+                )
+        self._invalidate_legal_ir_view_family_candidates()
+        if self.feature_embedding_weight_scale <= 0.0:
+            return
         feature_keys = self._feature_keys_for(sample)
         if not feature_keys:
             return
@@ -12665,7 +20032,53 @@ class AdaptiveModalAutoencoder:
                     pair_logits[family] = pair_logits.get(family, 0.0) + (
                         2.0 * step * legal_view_update_scale * normalized_weight * gradient
                     )
+        self._invalidate_legal_ir_view_family_candidates()
         return True
+
+    def _nudge_legal_ir_view_global_logits(
+        self,
+        sample: LegalSample,
+        *,
+        learning_rate: float,
+    ) -> bool:
+        """Update only corpus-level LegalIR view logits.
+
+        This projection head is intentionally isolated from embedding, family,
+        and feature-specific LegalIR heads, so holdout CE/cosine/reconstruction
+        Pareto guards can accept useful LegalIR-view movement without also
+        accepting broader architectural drift.
+        """
+        target_distribution = self._legal_ir_view_target_cache.get(sample.sample_id)
+        if not target_distribution:
+            return False
+        step = _clamp_learning_rate(learning_rate)
+        predicted = self._legal_ir_view_distribution(
+            sample,
+            target_distribution,
+            use_sample_memory=False,
+        )
+        families = _unique_preserve_order(
+            list(predicted.keys()) + list(target_distribution.keys())
+        )
+        legal_view_update_scale = self._head_update_scale(
+            1,
+            self.legal_ir_view_head_update_normalization,
+        )
+        changed = False
+        for family in families:
+            gradient = float(target_distribution.get(family, 0.0)) - float(
+                predicted.get(family, 0.0)
+            )
+            if abs(gradient) <= 1.0e-12:
+                continue
+            self.state.legal_ir_view_logits[family] = (
+                self.state.legal_ir_view_logits.get(family, 0.0)
+                + (step * legal_view_update_scale * gradient)
+            )
+            changed = True
+        if changed:
+            self._invalidate_legal_ir_view_family_candidates()
+        return changed
 
     def _regularize_feature_state(self, l2_regularization: float) -> None:
         factor = max(0.0, 1.0 - max(0.0, float(l2_regularization)))
@@ -13055,7 +20468,7 @@ class AdaptiveModalAutoencoder:
     ) -> List[float]:
         if self.family_embedding_weight_scale <= 0.0:
             return [0.0 for _ in range(dimensions)]
-        distribution = self._family_distribution(
+        distribution = self._family_distribution_for_embedding(
             sample,
             use_sample_memory=use_sample_memory,
         )
@@ -13611,15 +21024,67 @@ class AdaptiveModalAutoencoder:
         if self.feature_codec is not None and hasattr(
             self.feature_codec,
             "feature_keys_for_sample",
-        ):
+        ) and self.max_codec_feature_keys > 0:
+            feature_keys_for_sample = self.feature_codec.feature_keys_for_sample
+            try:
+                codec_keys = feature_keys_for_sample(
+                    sample,
+                    max_features=self.max_codec_feature_keys,
+                )
+            except TypeError:
+                codec_keys = feature_keys_for_sample(sample)
             keys.extend(
-                str(value)
-                for value in self.feature_codec.feature_keys_for_sample(sample)
+                self._select_codec_feature_keys(
+                    [str(value) for value in codec_keys],
+                    limit=self.max_codec_feature_keys,
+                )
             )
         keys.extend(self._fallback_feature_keys_for(sample))
         result = _unique_preserve_order(keys)
         cache["feature_keys"] = list(result)
         return result
+
+    def _select_codec_feature_keys(
+        self,
+        keys: Sequence[str],
+        *,
+        limit: int,
+    ) -> List[str]:
+        """Keep a bounded, high-signal subset of codec-provided feature keys."""
+        unique_keys = _unique_preserve_order(str(value) for value in keys)
+        bounded_limit = max(0, int(limit))
+        if bounded_limit <= 0 or len(unique_keys) <= bounded_limit:
+            return unique_keys
+
+        def prefix_score(feature: str) -> float:
+            if feature.startswith(("frame:", "family:selected_frame:", "selected-frame-term:")):
+                return 5.0
+            if feature.startswith(("slot:", "flogic:", "frame-term:", "frame-candidate:")):
+                return 4.0
+            if feature.startswith(("modal-", "modal:", "operator", "predicate", "family:")):
+                return 3.0
+            if feature.startswith(("token:", "token2:", "token3:")):
+                return 1.0
+            return 2.0
+
+        def learned_score(feature: str) -> float:
+            score = prefix_score(feature)
+            if feature in self.state.feature_embedding_weights:
+                score += 8.0
+            if feature in self.state.feature_family_logits:
+                score += 8.0
+            if feature in self.state.feature_legal_ir_view_logits:
+                score += 8.0
+            if len(feature) > 256:
+                score -= 1.0
+            return score
+
+        ranked = sorted(
+            enumerate(unique_keys),
+            key=lambda item: (-learned_score(item[1]), item[0]),
+        )
+        selected = sorted(ranked[:bounded_limit], key=lambda item: item[0])
+        return [feature for _index, feature in selected]
 
     def _fallback_feature_keys_for(self, sample: LegalSample) -> List[str]:
         """Return codec-independent features that make SGD updates portable."""
@@ -13649,6 +21114,10 @@ class AdaptiveModalAutoencoder:
                 keys.append(f"section-cue:{section_prefix}:{cue_name}")
             if sample.selected_frame:
                 keys.append(f"frame-cue:{sample.selected_frame}:{cue_name}")
+        for profile in _uscode_surface_profile_tags(text):
+            keys.append(f"uscode-surface-profile:{profile}")
+            for family in _uscode_surface_profile_modal_families(profile):
+                keys.append(f"uscode-surface-profile-family:{profile}:{family}")
 
         formula_families: List[str] = []
         formula_operators: List[str] = []
@@ -13693,13 +21162,25 @@ class AdaptiveModalAutoencoder:
         keys.extend(self._entity_binding_feature_keys_for(sample))
         keys.extend(self._defeasible_priority_feature_keys_for(sample))
         keys.extend(self._constraint_grounding_feature_keys_for(sample))
+        keys.extend(self._quantitative_formula_feature_keys_for(sample))
         keys.extend(self._definition_grounding_feature_keys_for(sample))
         keys.extend(self._quantifier_scope_feature_keys_for(sample))
         keys.extend(self._procedural_lifecycle_feature_keys_for(sample))
         keys.extend(self._enforcement_remedy_feature_keys_for(sample))
+        keys.extend(self._mental_state_feature_keys_for(sample))
         keys.extend(self._reference_dependency_feature_keys_for(sample))
+        keys.extend(self._amendment_operation_feature_keys_for(sample))
         keys.extend(self._authority_jurisdiction_feature_keys_for(sample))
+        keys.extend(self._discretion_standard_feature_keys_for(sample))
         keys.extend(self._temporal_validity_feature_keys_for(sample))
+        keys.extend(self._evidentiary_burden_feature_keys_for(sample))
+        keys.extend(self._legal_relation_feature_keys_for(sample))
+        keys.extend(self._status_transition_feature_keys_for(sample))
+        keys.extend(self._condition_consequence_feature_keys_for(sample))
+        keys.extend(self._applicability_scope_feature_keys_for(sample))
+        keys.extend(self._coreference_binding_feature_keys_for(sample))
+        keys.extend(self._logical_connective_feature_keys_for(sample))
+        keys.extend(self._enumeration_hierarchy_feature_keys_for(sample))
         keys.extend(
             f"semantic-slot:{slot.removeprefix('slot:')}"
             for slot in self._semantic_slot_distribution_for(sample).keys()
@@ -13760,9 +21241,20 @@ class AdaptiveModalAutoencoder:
             for key in fallback_core_keys
             if self._is_priority_modal_feature_key(key)
         ]
+        fallback_reconstruction_contract_keys = [
+            key
+            for key in fallback_core_keys
+            if self._is_reconstruction_contract_feature_key(key)
+        ]
         fallback_priority_set = set(fallback_priority_keys)
+        fallback_reconstruction_contract_set = set(
+            fallback_reconstruction_contract_keys
+        )
         fallback_structural_keys = [
-            key for key in fallback_core_keys if key not in fallback_priority_set
+            key
+            for key in fallback_core_keys
+            if key not in fallback_priority_set
+            and key not in fallback_reconstruction_contract_set
         ]
         fallback_lexical_keys = [
             key for key in fallback_keys if self._is_lexical_feature_key(key)
@@ -13775,7 +21267,28 @@ class AdaptiveModalAutoencoder:
             if key not in fallback_core_set and key not in fallback_lexical_set
         ]
         weighted_groups: List[tuple[List[str], float]] = []
-        if codec_only_keys:
+        if fallback_reconstruction_contract_keys and codec_only_keys:
+            weighted_groups.extend(
+                [
+                    (fallback_reconstruction_contract_keys, 0.32),
+                    (fallback_priority_keys, 0.31),
+                    (fallback_structural_keys, 0.14),
+                    (fallback_lexical_keys, 0.13),
+                    (fallback_other_keys, 0.05),
+                    (codec_only_keys, 0.05),
+                ]
+            )
+        elif fallback_reconstruction_contract_keys:
+            weighted_groups.extend(
+                [
+                    (fallback_reconstruction_contract_keys, 0.35),
+                    (fallback_priority_keys, 0.28),
+                    (fallback_structural_keys, 0.12),
+                    (fallback_lexical_keys, 0.15),
+                    (fallback_other_keys, 0.10),
+                ]
+            )
+        elif codec_only_keys:
             weighted_groups.extend(
                 [
                     (fallback_priority_keys, 0.42),
@@ -13865,11 +21378,14 @@ class AdaptiveModalAutoencoder:
     def _is_core_modal_feature_key(self, feature: str) -> bool:
         core_prefixes = (
             "bias:",
+            "amendment-operation:",
             "authority-jurisdiction:",
+            "applicability-scope:",
             "canonical-ir:",
             "clause-topology:",
             "compiler-contract:",
             "contrastive-ir:",
+            "coreference-binding:",
             "constraint-grounding:",
             "cue:",
             "cue-family:",
@@ -13877,9 +21393,17 @@ class AdaptiveModalAutoencoder:
             "defeasible-priority:",
             "definition-grounding:",
             "decompiler-surface:",
+            "discretion-standard:",
             "discourse-flow:",
             "entity-binding:",
             "equivalence-prototype:",
+            "evidentiary-burden:",
+            "enumeration-hierarchy:",
+            "legal-relation:",
+            "logical-connective:",
+            "mental-state:",
+            "status-transition:",
+            "condition-consequence:",
             "condition:",
             "condition-count-bin:",
             "compiler-profile:",
@@ -13917,6 +21441,7 @@ class AdaptiveModalAutoencoder:
             "reference-dependency:",
             "provenance-alignment:",
             "proof-obligation:",
+            "quantitative-formula:",
             "repair-plan:",
             "round-trip-bridge:",
             "section-cue:",
@@ -13924,8 +21449,29 @@ class AdaptiveModalAutoencoder:
             "semantic-slot:",
             "temporal-validity:",
             "title:",
+            "uscode-surface-profile:",
         )
         return str(feature).startswith(core_prefixes)
+
+    def _is_reconstruction_contract_feature_key(self, feature: str) -> bool:
+        """Return True for typed compiler/decompiler features worth preserving."""
+        feature_text = str(feature)
+        if "typed-decompiler" in feature_text:
+            return True
+        contract_prefixes = (
+            "compiler-contract:force-polarity",
+            "compiler-contract:cue-contract:",
+            "cycle-consistency:force-operator-cycle:",
+            "normative-polarity:force-",
+            "repair-plan:preserve-force-boundary:",
+            "repair-plan:preserve-negation-boundary:",
+            "round-trip-bridge:typed-family-pair",
+            "round-trip-bridge:surface-cue-to-family-pair:",
+            "round-trip-bridge:surface-condition-to-family-pair:",
+            "round-trip-bridge:surface-temporal-to-family-pair:",
+            "round-trip-bridge:surface-exception-to-family-pair:",
+        )
+        return feature_text.startswith(contract_prefixes)
 
     def _is_priority_modal_feature_key(self, feature: str) -> bool:
         priority_prefixes = (
@@ -14973,7 +22519,10 @@ class AdaptiveModalAutoencoder:
         target_family: str,
         predicted_family: str,
         target_probability: float,
+        cosine_similarity: float = 1.0,
         reconstruction_loss: float,
+        source_decompiled_text_embedding_cosine_loss: float = 0.0,
+        source_decompiled_text_token_loss: float = 0.0,
         legal_ir_view_cross_entropy_loss: float = 0.0,
         legal_ir_view_distribution: Optional[Mapping[str, float]] = None,
         legal_ir_predicted_view_distribution: Optional[Mapping[str, float]] = None,
@@ -14983,8 +22532,16 @@ class AdaptiveModalAutoencoder:
             focus.append("add_deterministic_parser_rule")
         if predicted_family != target_family or target_probability < 0.5:
             focus.append("refine_modal_family_cue_rules")
-        if reconstruction_loss > 0.05:
+        if max(0.0, 1.0 - float(cosine_similarity)) > 0.20:
+            focus.append("improve_encoder_decoder_reconstruction")
+        has_source_decompiled_loss = (
+            float(source_decompiled_text_embedding_cosine_loss) > 0.25
+            or float(source_decompiled_text_token_loss) > 0.25
+        )
+        if reconstruction_loss > 0.05 or has_source_decompiled_loss:
             focus.append("refine_typed_ir_or_decompiler_slots")
+        if has_source_decompiled_loss:
+            focus.append("refine_semantic_decompiler_reconstruction")
         if legal_ir_view_cross_entropy_loss > 0.05:
             distribution = legal_ir_view_distribution or {}
             predicted_distribution = legal_ir_predicted_view_distribution or {}
@@ -15052,6 +22609,140 @@ def _legal_ir_program_synthesis_focus(
     if has_component("zkp."):
         focus.append("repair_zkp_attestation_bridge")
     return focus
+
+
+def _pipeline_stage_diagnostics_for_introspection(
+    sample: LegalSample,
+    *,
+    target_family: str,
+    predicted_family: str,
+    target_probability: float,
+    cosine_similarity_value: float,
+    reconstruction_loss: float,
+    source_decompiled_text_embedding_cosine_loss: float = 0.0,
+    source_decompiled_text_token_loss: float = 0.0,
+    legal_ir_view_cross_entropy_loss: float,
+    legal_ir_component_gaps: Mapping[str, float],
+) -> Dict[str, Any]:
+    """Summarize where the legal text -> IR -> text pipeline is losing signal."""
+
+    formula_count = len(getattr(sample.modal_ir, "formulas", ()) or ())
+    component_gap_values = [
+        max(0.0, _float_or_zero(value))
+        for value in dict(legal_ir_component_gaps or {}).values()
+    ]
+    return {
+        "autoencoder_embedding_cosine_gap": round(
+            max(0.0, 1.0 - float(cosine_similarity_value)),
+            12,
+        ),
+        "ir_decoder_reconstruction_loss": round(
+            max(0.0, float(reconstruction_loss)),
+            12,
+        ),
+        "legal_ir_component_gap_max": round(
+            max(component_gap_values) if component_gap_values else 0.0,
+            12,
+        ),
+        "legal_ir_view_cross_entropy_loss": round(
+            max(0.0, float(legal_ir_view_cross_entropy_loss)),
+            12,
+        ),
+        "modal_family_cue_mismatch": str(predicted_family) != str(target_family),
+        "modal_family_target_probability_gap": round(
+            max(0.0, 0.5 - float(target_probability)),
+            12,
+        ),
+        "spacy_modal_formula_count": int(formula_count),
+        "spacy_parser_missing_formula": bool(formula_count <= 0),
+        "source_decompiled_text_embedding_cosine_loss": round(
+            max(0.0, float(source_decompiled_text_embedding_cosine_loss)),
+            12,
+        ),
+        "source_decompiled_text_token_loss": round(
+            max(0.0, float(source_decompiled_text_token_loss)),
+            12,
+        ),
+    }
+
+
+def _pipeline_stage_focus_from_diagnostics(
+    diagnostics: Mapping[str, Any],
+) -> List[str]:
+    """Return deterministic pipeline stages that should receive Codex attention."""
+
+    focus: List[str] = []
+    if bool(diagnostics.get("spacy_parser_missing_formula")):
+        focus.append("spacy_parser")
+    if bool(diagnostics.get("modal_family_cue_mismatch")) or _float_or_zero(
+        diagnostics.get("modal_family_target_probability_gap")
+    ) > 0.0:
+        focus.append("modal_family_registry")
+    if _float_or_zero(diagnostics.get("autoencoder_embedding_cosine_gap")) > 0.20:
+        focus.append("autoencoder_embedding_head")
+    if _float_or_zero(diagnostics.get("ir_decoder_reconstruction_loss")) > 0.05:
+        focus.append("typed_ir_decoder")
+    if (
+        _float_or_zero(
+            diagnostics.get("source_decompiled_text_embedding_cosine_loss")
+        )
+        > 0.25
+        or _float_or_zero(diagnostics.get("source_decompiled_text_token_loss")) > 0.25
+    ):
+        focus.append("semantic_decompiler")
+    if (
+        _float_or_zero(diagnostics.get("legal_ir_view_cross_entropy_loss")) > 0.05
+        or _float_or_zero(diagnostics.get("legal_ir_component_gap_max")) > 0.02
+    ):
+        focus.append("legal_ir_multiview")
+    return _unique_preserve_order(focus)
+
+
+def _source_decompiled_text_losses_from_targets(
+    losses: Mapping[str, Any],
+) -> Dict[str, float]:
+    """Normalize source text -> structural decompiled text losses from targets."""
+
+    explicit_cosine_loss = losses.get("source_decompiled_text_embedding_cosine_loss")
+    source_decompiled_cosine_loss = (
+        _float_or_zero(explicit_cosine_loss)
+        if explicit_cosine_loss is not None
+        else 0.0
+    )
+    if explicit_cosine_loss is None:
+        source_decompiled_cosine_similarity = losses.get(
+            "source_decompiled_text_embedding_cosine_similarity"
+        )
+        if source_decompiled_cosine_similarity is None:
+            source_decompiled_cosine_similarity = losses.get("cosine_similarity")
+        if source_decompiled_cosine_similarity is None:
+            source_decompiled_cosine_similarity = losses.get(
+                "raw_source_embedding_cosine_similarity"
+            )
+        if source_decompiled_cosine_similarity is not None:
+            source_decompiled_cosine_loss = max(
+                0.0,
+                1.0 - _float_or_zero(source_decompiled_cosine_similarity),
+            )
+
+    source_decompiled_token_loss = _float_or_zero(
+        losses.get("source_decompiled_text_token_loss")
+    )
+    if source_decompiled_token_loss <= 0.0:
+        source_decompiled_token_loss = _float_or_zero(
+            losses.get("structural_text_reconstruction_loss")
+        )
+
+    return {
+        "source_decompiled_text_embedding_cosine_loss": max(
+            0.0,
+            source_decompiled_cosine_loss,
+        ),
+        "source_decompiled_text_token_loss": max(
+            0.0,
+            source_decompiled_token_loss,
+        ),
+    }
 
 
 def _legal_ir_component_gaps(
@@ -15122,6 +22813,163 @@ def _normalized_distribution(distribution: Mapping[str, float]) -> Dict[str, flo
     }
 
 
+_LEGAL_IR_VIEW_FAMILY_RANK = {
+    "deontic": 0,
+    "frame_logic": 1,
+    "tdfol": 2,
+    "kg": 3,
+    "cec": 4,
+    "prover": 5,
+    "zkp": 6,
+    "other": 7,
+}
+
+
+def _legal_ir_view_family_name(view: str) -> str:
+    """Collapse fine-grained LegalIR views into optimizer-facing families."""
+    normalized = str(view or "").strip().lower().replace("-", "_")
+    if not normalized:
+        return "other"
+    compact = normalized.replace("::", ".").replace("/", ".")
+    if (
+        compact.startswith("deontic")
+        or ".deontic" in compact
+        or "norm" in compact
+    ):
+        return "deontic"
+    if (
+        compact.startswith("modal.frame_logic")
+        or compact.startswith("frame_logic")
+        or "frame_logic" in compact
+        or "flogic" in compact
+    ):
+        return "frame_logic"
+    if compact.startswith("tdfol") or compact.startswith("fol.") or "tdfol" in compact:
+        return "tdfol"
+    if (
+        compact.startswith("knowledge_graph")
+        or compact.startswith("kg")
+        or "neo4j" in compact
+        or ".graph" in compact
+    ):
+        return "kg"
+    if compact.startswith("cec") or compact.startswith("dcec") or "event_calculus" in compact:
+        return "cec"
+    if (
+        compact.startswith("external_provers")
+        or compact.startswith("prover")
+        or compact.startswith(("z3", "cvc5", "lean", "coq", "smt"))
+        or ".prover" in compact
+        or "router" in compact
+    ):
+        return "prover"
+    if compact.startswith("zkp") or "zero_knowledge" in compact or "circuit" in compact:
+        return "zkp"
+    return "other"
+
+
+def _legal_ir_view_family_distribution(
+    distribution: Mapping[str, float],
+) -> Dict[str, float]:
+    family_weights: Dict[str, float] = {}
+    for view, value in dict(distribution or {}).items():
+        weight = max(0.0, _float_or_zero(value))
+        if weight <= 0.0:
+            continue
+        family = _legal_ir_view_family_name(str(view))
+        family_weights[family] = family_weights.get(family, 0.0) + weight
+    return _normalized_distribution(family_weights)
+
+
+def _distribution_cosine_similarity(
+    left: Mapping[str, float],
+    right: Mapping[str, float],
+) -> float:
+    keys = sorted(set(left) | set(right))
+    if not keys:
+        return 0.0
+    return cosine_similarity(
+        [float(left.get(key, 0.0)) for key in keys],
+        [float(right.get(key, 0.0)) for key in keys],
+    )
+
+
+def _binary_mass_distribution(name: str, mass: float) -> Dict[str, float]:
+    bounded = min(1.0, max(0.0, _float_or_zero(mass)))
+    return {
+        name: bounded,
+        f"not_{name}": 1.0 - bounded,
+    }
+
+
+def _legal_ir_view_family_sort_key(name: str) -> tuple[int, str]:
+    family = str(name)
+    return (_LEGAL_IR_VIEW_FAMILY_RANK.get(family, 99), family)
+
+
+def _legal_ir_view_family_loss_metrics(
+    predicted_distribution: Mapping[str, float],
+    target_distribution: Mapping[str, float],
+) -> Dict[str, float]:
+    predicted_family_distribution = _legal_ir_view_family_distribution(
+        predicted_distribution
+    )
+    target_family_distribution = _legal_ir_view_family_distribution(target_distribution)
+    if not predicted_family_distribution and not target_family_distribution:
+        return {}
+
+    metrics: Dict[str, float] = {}
+    if target_family_distribution:
+        metrics["legal_ir_view_family_cross_entropy_loss"] = (
+            cross_entropy_distribution_loss(
+                predicted_family_distribution,
+                target_family_distribution,
+            )
+        )
+        metrics["legal_ir_view_family_entropy_loss"] = distribution_entropy_loss(
+            target_family_distribution
+        )
+        metrics["legal_ir_view_family_cross_entropy_excess_loss"] = (
+            cross_entropy_excess_distribution_loss(
+                predicted_family_distribution,
+                target_family_distribution,
+            )
+        )
+    metrics["legal_ir_view_family_cosine_gap_loss"] = max(
+        0.0,
+        1.0
+        - _distribution_cosine_similarity(
+            predicted_family_distribution,
+            target_family_distribution,
+        ),
+    )
+
+    for family in sorted(
+        set(predicted_family_distribution) | set(target_family_distribution),
+        key=_legal_ir_view_family_sort_key,
+    ):
+        predicted_mass = float(predicted_family_distribution.get(family, 0.0))
+        target_mass = float(target_family_distribution.get(family, 0.0))
+        predicted_binary = _binary_mass_distribution(family, predicted_mass)
+        target_binary = _binary_mass_distribution(family, target_mass)
+        prefix = f"legal_ir_view_family_{family}"
+        metrics[f"{prefix}_cross_entropy_loss"] = cross_entropy_distribution_loss(
+            predicted_binary,
+            target_binary,
+        )
+        metrics[f"{prefix}_cross_entropy_excess_loss"] = (
+            cross_entropy_excess_distribution_loss(
+                predicted_binary,
+                target_binary,
+            )
+        )
+        metrics[f"{prefix}_cosine_gap_loss"] = max(
+            0.0,
+            1.0 - _distribution_cosine_similarity(predicted_binary, target_binary),
+        )
+    return metrics
+
+
 def _joint_distribution(
     left: Mapping[str, float],
     right: Mapping[str, float],
@@ -15169,6 +23017,250 @@ def _family_semantic_slot_key(family: str, slot: str) -> str:
     return f"{str(family)}||{str(slot)}"
 
 
+def _autoencoder_typed_family_pairs_for_formula(
+    modal_ir: Any,
+    formula: Any,
+    *,
+    surface_cues: Sequence[str] = (),
+    source_cues: Sequence[str] = (),
+) -> List[str]:
+    source_family = _feature_atom(getattr(formula.operator, "family", "")).lower()
+    if not source_family:
+        return []
+    target_families: List[str] = []
+
+    def add_target(candidate: str) -> None:
+        target = _feature_atom(candidate).lower()
+        if target and target not in target_families:
+            target_families.append(target)
+
+    add_target(source_family)
+    for candidate_formula in list(getattr(modal_ir, "formulas", []) or []):
+        add_target(getattr(candidate_formula.operator, "family", ""))
+    for cue in _unique_preserve_order(
+        [
+            *_formula_autoencoder_cue_names(formula),
+            *surface_cues,
+            *(_feature_atom(cue) for cue in source_cues),
+        ]
+    ):
+        for target_family in _AUTOENCODER_CUE_TARGET_FAMILIES.get(cue, ()):
+            add_target(target_family)
+    for target_family in _AUTOENCODER_DIRECTIONAL_FAMILY_PAIR_TARGETS.get(
+        source_family,
+        (),
+    ):
+        add_target(target_family)
+
+    ordered_targets = sorted(
+        target_families,
+        key=lambda family: (
+            0 if family == source_family else 1,
+            _AUTOENCODER_FAMILY_PAIR_PRIORITY.get(
+                family,
+                len(_AUTOENCODER_FAMILY_PAIR_PRIORITY),
+            ),
+            family,
+        ),
+    )
+    return [f"{source_family}->{target_family}" for target_family in ordered_targets]
+
+
+def _autoencoder_typed_family_pair_strengths_for_formula(
+    modal_ir: Any,
+    formula: Any,
+    *,
+    surface_cues: Sequence[str] = (),
+    source_cues: Sequence[str] = (),
+) -> Dict[str, float]:
+    """Return support weights for typed decompiler family-pair slots.
+
+    Observed compiled families and exact statutory cues are strong evidence for
+    reconstruction.  Registry-only directional expansions remain available as
+    portable candidates, but are intentionally weaker so generic frame headings
+    do not dominate the embedding head for deontic or temporal targets.
+    """
+    source_family = _feature_atom(getattr(formula.operator, "family", "")).lower()
+    if not source_family:
+        return {}
+    strengths: Dict[str, float] = {}
+
+    def bump(target_family: str, strength: float) -> None:
+        target = _feature_atom(target_family).lower()
+        if not target:
+            return
+        pair = f"{source_family}->{target}"
+        strengths[pair] = max(strengths.get(pair, 0.0), float(strength))
+
+    bump(source_family, 1.0)
+    for candidate_formula in list(getattr(modal_ir, "formulas", []) or []):
+        bump(getattr(candidate_formula.operator, "family", ""), 1.0)
+    for cue in _unique_preserve_order(
+        [
+            *_formula_autoencoder_cue_names(formula),
+            *surface_cues,
+            *(_feature_atom(cue) for cue in source_cues),
+        ]
+    ):
+        for target_family in _AUTOENCODER_CUE_TARGET_FAMILIES.get(cue, ()):
+            bump(target_family, 1.0)
+    for target_family in _AUTOENCODER_DIRECTIONAL_FAMILY_PAIR_TARGETS.get(
+        source_family,
+        (),
+    ):
+        bump(target_family, 0.35)
+    return {
+        family_pair: strengths[family_pair]
+        for family_pair in _autoencoder_typed_family_pairs_for_formula(
+            modal_ir,
+            formula,
+            surface_cues=surface_cues,
+            source_cues=source_cues,
+        )
+        if family_pair in strengths
+    }
+
+
+def _autoencoder_legal_ir_views_for_family_pair(family_pair: str) -> List[str]:
+    if "->" in str(family_pair):
+        source_family, target_family = str(family_pair).split("->", 1)
+    else:
+        source_family = str(family_pair)
+        target_family = str(family_pair)
+    views: List[str] = ["modal.autoencoder"]
+    for family in (source_family, target_family):
+        for view in _AUTOENCODER_FAMILY_LEGAL_IR_VIEW_TARGETS.get(family, ()):
+            if view not in views:
+                views.append(view)
+    return views
+
+
+def _formula_autoencoder_cue_names(formula: Any) -> List[str]:
+    cues: List[str] = []
+    metadata = getattr(formula, "metadata", {}) or {}
+    for value, max_tokens in (
+        (metadata.get("cue"), 4),
+        (metadata.get("modal_cue"), 4),
+        (metadata.get("source_cue"), 4),
+        (metadata.get("bridge_cue"), 4),
+        (metadata.get("fallback_rule"), 6),
+        (metadata.get("residual_segment_role"), 4),
+    ):
+        cue = _feature_atom(value, max_tokens=max_tokens)
+        if cue and cue not in cues:
+            cues.append(cue)
+    return cues
+
+
+def _autoencoder_semantic_slot_embedding_weight(slot: str) -> float:
+    """Return reconstruction weight for reusable semantic-slot features."""
+    slot_text = str(slot)
+    if "typed-decompiler-target-reconstruction-" in slot_text:
+        return _AUTOENCODER_TYPED_DECOMPILER_SLOT_WEIGHT * 1.2
+    if (
+        "typed-decompiler-family-pair" in slot_text
+        or "typed-decompiler-force-polarity" in slot_text
+        or "typed-decompiler-source-clause-topology" in slot_text
+    ):
+        return _AUTOENCODER_TYPED_DECOMPILER_SLOT_WEIGHT
+    return 1.0
+
+
+def _autoencoder_formula_force_polarity_tags(
+    formula: Any,
+    *,
+    text: str,
+) -> tuple[List[str], List[str]]:
+    metadata = getattr(formula, "metadata", {}) or {}
+    if not isinstance(metadata, Mapping):
+        metadata = {}
+    symbol = _feature_atom(getattr(formula.operator, "symbol", "")).upper()
+    label = _feature_atom(getattr(formula.operator, "label", ""))
+    family = _feature_atom(getattr(formula.operator, "family", ""))
+    cue_text = " ".join(
+        value.replace("_", " ")
+        for value in _formula_autoencoder_cue_names(formula)
+    ).lower()
+    metadata_force = _feature_atom(metadata.get("force", "")).lower()
+    metadata_polarity = _feature_atom(
+        metadata.get("polarity")
+        or metadata.get("force_polarity")
+        or metadata.get("compiler_guidance_force_polarity")
+        or ""
+    ).lower()
+    predicate_text = _feature_atom(getattr(formula.predicate, "name", "")).replace(
+        "_",
+        " ",
+    )
+    evidence_text = " ".join(
+        value
+        for value in (
+            str(text or ""),
+            cue_text,
+            label,
+            predicate_text,
+        )
+        if value
+    ).lower()
+    force_tags: List[str] = []
+    polarity_tags: List[str] = []
+
+    def add_force(value: str) -> None:
+        atom = _feature_atom(value).lower()
+        if atom and atom not in force_tags:
+            force_tags.append(atom)
+
+    def add_polarity(value: str) -> None:
+        atom = _feature_atom(value).lower()
+        if atom in {"negative", "negated"}:
+            atom = "negative_scope"
+        elif atom in {"positive", "affirmative"}:
+            atom = "positive_scope"
+        if atom and atom not in polarity_tags:
+            polarity_tags.append(atom)
+
+    if metadata_force:
+        add_force(metadata_force)
+    if (
+        symbol in {"O", "O|"}
+        or family == "conditional_normative"
+        or re.search(r"\b(?:shall|must|required|requires|obligation)\b", evidence_text)
+        or "oblig" in label
+    ):
+        add_force("obligation")
+    if (
+        symbol == "P"
+        or re.search(r"\b(?:may|authorized|permitted|eligible|entitled)\b", evidence_text)
+        or "permit" in label
+        or "authoriz" in label
+    ):
+        add_force("permission")
+    if (
+        symbol == "F"
+        or re.search(r"\b(?:may not|must not|shall not|prohibited|forbidden)\b", evidence_text)
+        or "prohibit" in label
+    ):
+        add_force("prohibition")
+    if family == "temporal" and not force_tags:
+        add_force("temporal")
+    if family == "frame" and not force_tags:
+        add_force("definition")
+    if not force_tags:
+        add_force("assertive")
+
+    if metadata_polarity:
+        add_polarity(metadata_polarity)
+    if re.search(r"\b(?:not|no|never|without|prohibited|forbidden)\b", evidence_text):
+        add_polarity("negative_scope")
+    if re.search(r"\b(?:shall|must|required|requires)\b", evidence_text):
+        add_polarity("mandatory")
+    if re.search(r"\b(?:may|authorized|permitted|eligible|entitled)\b", evidence_text):
+        add_polarity("enabling")
+    if not polarity_tags:
+        add_polarity("neutral")
+    return force_tags, polarity_tags
+
+
 def _semantic_slot_legal_ir_view_key(slot: str, view: str) -> str:
     return f"{str(slot)}||{str(view)}"
 
@@ -15183,6 +23275,66 @@ def _family_semantic_slot_legal_ir_view_key(
 
 def _family_legal_ir_view_key(family: str, view: str) -> str:
     return f"{str(family)}||{str(view)}"
+
+
+def _bounded_metric_text(text: str, max_chars: int) -> str:
+    limit = max(0, int(max_chars or 0))
+    source_text = str(text or "")
+    if limit <= 0 or len(source_text) <= limit:
+        return source_text
+    prefix = source_text[:limit].rstrip()
+    if not prefix:
+        return source_text[:limit]
+    boundary = max(prefix.rfind(". "), prefix.rfind("; "), prefix.rfind("\n"))
+    min_boundary = max(80, int(limit * 0.65))
+    if boundary >= min_boundary:
+        return prefix[: boundary + 1].rstrip()
+    whitespace = prefix.rfind(" ")
+    if whitespace >= min_boundary:
+        return prefix[:whitespace].rstrip()
+    return prefix
+
+
+def _legal_ir_metric_sample_for_text(sample: LegalSample, *, metric_text: str) -> LegalSample:
+    original_text = str(getattr(sample, "text", "") or "")
+    if str(metric_text) == original_text:
+        return sample
+    sample_id = str(getattr(sample, "sample_id", "") or "sample")
+    digest = hashlib.sha256(str(metric_text).encode("utf-8")).hexdigest()[:12]
+    dimensions = len(list(getattr(sample, "embedding_vector", []) or [])) or 8
+    embedding_model = str(getattr(sample, "embedding_model", "") or "")
+    metric_embedding_model = (
+        f"metric-prefix:{embedding_model}" if embedding_model else "metric-prefix:mock"
+    )
+    return replace(
+        sample,
+        embedding_model=metric_embedding_model,
+        embedding_vector=stable_mock_embedding(str(metric_text), dimensions=dimensions),
+        normalized_text=str(metric_text),
+        sample_id=f"{sample_id}:metric-prefix:{digest}",
+        text=str(metric_text),
+    )
+
+
+def _bounded_legal_ir_metric_samples(
+    samples: Sequence[LegalSample],
+    *,
+    max_sample_text_chars: Optional[int],
+) -> List[LegalSample]:
+    if max_sample_text_chars is None:
+        return list(samples)
+    limit = max(0, int(max_sample_text_chars or 0))
+    if limit <= 0:
+        return list(samples)
+    bounded: List[LegalSample] = []
+    for sample in samples:
+        sample_text = str(getattr(sample, "text", "") or "")
+        if len(sample_text) <= limit:
+            bounded.append(sample)
+            continue
+        metric_text = _bounded_metric_text(sample_text, limit)
+        bounded.append(_legal_ir_metric_sample_for_text(sample, metric_text=metric_text))
+    return bounded
 
 
 def _legal_ir_target_payload(
@@ -15248,6 +23400,192 @@ def _legal_ir_target_payload(
     }
 
 
+def _legal_ir_target_timeout_seconds() -> float:
+    raw = str(os.environ.get(_LEGAL_IR_TARGET_TIMEOUT_SECONDS_ENV) or "").strip()
+    if not raw:
+        return _LEGAL_IR_TARGET_DEFAULT_TIMEOUT_SECONDS
+    try:
+        value = float(raw)
+    except ValueError:
+        return _LEGAL_IR_TARGET_DEFAULT_TIMEOUT_SECONDS
+    return max(0.0, value)
+
+
+def _legal_ir_target_timeout_enabled(timeout_seconds: float) -> bool:
+    return (
+        timeout_seconds > 0.0
+        and threading.current_thread() is threading.main_thread()
+        and hasattr(signal, "SIGALRM")
+        and hasattr(signal, "ITIMER_REAL")
+        and hasattr(signal, "setitimer")
+    )
+
+
+def _evaluate_legal_ir_multiview_with_timeout(
+    evaluate_legal_ir_multiview: Callable[..., Any],
+    *,
+    timeout_seconds: float,
+    **kwargs: Any,
+) -> Any:
+    if not _legal_ir_target_timeout_enabled(timeout_seconds):
+        return evaluate_legal_ir_multiview(**kwargs)
+
+    previous_handler = signal.getsignal(signal.SIGALRM)
+    previous_timer = signal.setitimer(signal.ITIMER_REAL, 0.0)
+
+    def _raise_timeout(signum: int, frame: Any) -> None:
+        raise _LegalIRTargetTimeout(
+            f"LegalIR target construction exceeded {timeout_seconds:.3f}s"
+        )
+
+    try:
+        signal.signal(signal.SIGALRM, _raise_timeout)
+        signal.setitimer(signal.ITIMER_REAL, timeout_seconds)
+        return evaluate_legal_ir_multiview(**kwargs)
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0.0)
+        signal.signal(signal.SIGALRM, previous_handler)
+        if previous_timer[0] > 0.0:
+            signal.setitimer(
+                signal.ITIMER_REAL,
+                previous_timer[0],
+                previous_timer[1],
+            )
+
+
+def _legal_ir_timeout_view_for_bridge_name(name: str) -> str:
+    normalized = str(name or "").strip().lower().replace("-", "_")
+    if "deontic" in normalized or "norm" in normalized:
+        return "deontic.ir"
+    if "frame" in normalized or "modal" in normalized:
+        return "modal.frame_logic"
+    if "tdfol" in normalized or normalized.startswith("fol"):
+        return "TDFOL.prover"
+    if "cec" in normalized or "event" in normalized:
+        return "CEC.native"
+    if "knowledge" in normalized or "graph" in normalized or "neo4j" in normalized:
+        return "knowledge_graphs.neo4j_compat"
+    if "zkp" in normalized or "zero" in normalized or "circuit" in normalized:
+        return "zkp.circuits"
+    if "prover" in normalized or "router" in normalized:
+        return "external_provers.router"
+    return "modal.frame_logic"
+
+
+def _legal_ir_timeout_view_distribution(
+    sample: LegalSample,
+    *,
+    bridge_names: Sequence[str],
+) -> Dict[str, float]:
+    text = str(sample.text or sample.normalized_text or "").lower()
+    scores: Dict[str, float] = {}
+    for name in bridge_names:
+        view = _legal_ir_timeout_view_for_bridge_name(str(name))
+        scores[view] = max(scores.get(view, 0.0), 0.15)
+
+    def bump(view: str, weight: float) -> None:
+        scores[view] = scores.get(view, 0.0) + float(weight)
+
+    cue_groups = (
+        ("deontic.ir", 0.55, r"\b(?:shall|must|may|required|prohibited|authorized|eligible|entitled)\b"),
+        ("TDFOL.prover", 0.40, r"\b(?:if|unless|provided|subject\s+to|before|after|within|not\s+later\s+than)\b"),
+        ("modal.frame_logic", 0.35, r"\b(?:means|definition|term|section|chapter|subchapter|paragraph)\b"),
+        ("knowledge_graphs.neo4j_compat", 0.30, r"\b(?:secretary|administrator|agency|commission|state|person|contractor)\b"),
+        ("CEC.native", 0.30, r"\b(?:effective|expires?|repealed|transferred|action|event|hearing|notice)\b"),
+        ("external_provers.router", 0.20, r"\b(?:prove|certif(?:y|ies|ied)|determine|finding|report)\b"),
+        ("zkp.circuits", 0.12, r"\b(?:attest|certificate|audit|compliance|verification)\b"),
+    )
+    for view, weight, pattern in cue_groups:
+        if re.search(pattern, text, flags=re.IGNORECASE):
+            bump(view, weight)
+    if not scores:
+        bump("modal.frame_logic", 0.5)
+        bump("deontic.ir", 0.25)
+        bump("TDFOL.prover", 0.25)
+    total = sum(max(0.0, value) for value in scores.values())
+    if total <= 0.0:
+        return {}
+    return {
+        key: value / total
+        for key, value in sorted(scores.items())
+        if value > 0.0
+    }
+
+
+def _legal_ir_target_is_timeout_fallback(target: Any) -> bool:
+    losses = getattr(target, "losses", {}) or {}
+    document = getattr(target, "document", None)
+    document_hash = ""
+    if document is not None and hasattr(document, "canonical_hash"):
+        try:
+            document_hash = str(document.canonical_hash())
+        except Exception:
+            document_hash = ""
+    return (
+        "legal_ir_target_timeout_loss" in dict(losses)
+        or document_hash.startswith("timeout:")
+        or document_hash.startswith("timeout-fallback:")
+    )
+
+
+def _legal_ir_timeout_training_target(
+    sample: LegalSample,
+    *,
+    bridge_names: Sequence[str],
+    cache_key: str,
+    timeout_seconds: float,
+) -> _CachedLegalIRTrainingTarget:
+    view_distribution = _legal_ir_timeout_view_distribution(
+        sample,
+        bridge_names=bridge_names,
+    )
+    entropy_loss = distribution_entropy_loss(view_distribution) if view_distribution else 1.0
+    family_losses = _legal_ir_view_family_loss_metrics(
+        view_distribution,
+        view_distribution,
+    )
+    fallback_loss = min(1.0, 0.35 + 0.10 * len(view_distribution))
+    document_hash = hashlib.sha256(
+        json.dumps(
+            {
+                "bridge_names": list(bridge_names),
+                "cache_key": cache_key,
+                "kind": "legal_ir_target_timeout",
+                "sample_id": sample.sample_id,
+                "timeout_seconds": round(float(timeout_seconds), 6),
+            },
+            ensure_ascii=True,
+            sort_keys=True,
+        ).encode("utf-8")
+    ).hexdigest()
+    return _CachedLegalIRTrainingTarget(
+        bridge_names=tuple(bridge_names),
+        document=_CachedLegalIRDocument(
+            document_hash=f"timeout-fallback:{document_hash}",
+            document_id=sample.sample_id,
+            version="timeout_fallback_v2",
+        ),
+        losses={
+            "legal_ir_multiview_total_loss": fallback_loss,
+            "legal_ir_target_timeout_loss": 1.0,
+            "legal_ir_target_timeout_fallback_loss": fallback_loss,
+            "legal_ir_view_cross_entropy_loss": entropy_loss,
+            "legal_ir_view_cross_entropy_excess_loss": 0.0,
+            "legal_ir_view_entropy_loss": entropy_loss,
+            **family_losses,
+        },
+        adapter_losses={
+            str(name): {
+                "legal_ir_target_timeout_loss": 1.0,
+                "legal_ir_target_timeout_fallback_loss": fallback_loss,
+            }
+            for name in bridge_names
+        },
+        view_distribution=view_distribution,
+        accepted=False,
+    )
+
+
 def _legal_ir_target_items(
     samples: Sequence[LegalSample],
     *,
@@ -15291,20 +23629,39 @@ def _legal_ir_target_items(
             cached = _LEGAL_IR_TARGET_CACHE.get(cache_key)
         if cached is not None:
             return sample.sample_id, cached
-        report = evaluate_legal_ir_multiview(
-            sample.text,
-            bridge_names=names,
-            document_id=sample.sample_id,
-            evaluate_provers=evaluate_provers,
-            citation=sample.citation,
-            source=sample.source,
-            source_embedding=sample.embedding_vector,
-        )
-        target = report.training_target()
+        cached = _read_legal_ir_target_disk_cache(cache_key)
+        if cached is not None:
+            with _LEGAL_IR_TARGET_CACHE_LOCK:
+                if len(_LEGAL_IR_TARGET_CACHE) >= _LEGAL_IR_TARGET_CACHE_MAX:
+                    _LEGAL_IR_TARGET_CACHE.pop(next(iter(_LEGAL_IR_TARGET_CACHE)), None)
+                _LEGAL_IR_TARGET_CACHE[cache_key] = cached
+            return sample.sample_id, cached
+        timeout_seconds = _legal_ir_target_timeout_seconds()
+        try:
+            report = _evaluate_legal_ir_multiview_with_timeout(
+                evaluate_legal_ir_multiview,
+                timeout_seconds=timeout_seconds,
+                text=sample.text,
+                bridge_names=names,
+                document_id=sample.sample_id,
+                evaluate_provers=evaluate_provers,
+                citation=sample.citation,
+                source=sample.source,
+                source_embedding=sample.embedding_vector,
+            )
+            target = report.training_target()
+        except _LegalIRTargetTimeout:
+            target = _legal_ir_timeout_training_target(
+                sample,
+                bridge_names=names,
+                cache_key=cache_key,
+                timeout_seconds=timeout_seconds,
+            )
         with _LEGAL_IR_TARGET_CACHE_LOCK:
             if len(_LEGAL_IR_TARGET_CACHE) >= _LEGAL_IR_TARGET_CACHE_MAX:
                 _LEGAL_IR_TARGET_CACHE.pop(next(iter(_LEGAL_IR_TARGET_CACHE)), None)
             _LEGAL_IR_TARGET_CACHE[cache_key] = target
+        _write_legal_ir_target_disk_cache(cache_key, target)
         return sample.sample_id, target
 
     worker_count = _legal_ir_parallel_worker_count(
@@ -15365,11 +23722,288 @@ def _legal_ir_target_cache_key(
         "evaluate_provers": evaluate_provers,
         "sample_content_hash": _sample_content_cache_id(sample),
         "source": sample.source,
+        "target_timeout_seconds": round(_legal_ir_target_timeout_seconds(), 6),
         "text_hash": _text_hash(sample.normalized_text or sample.text),
     }
     return hashlib.sha256(
         json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
     ).hexdigest()
+
+
+def _legal_ir_target_disk_cache_enabled() -> bool:
+    raw = str(
+        os.environ.get(_LEGAL_IR_TARGET_DISK_CACHE_ENABLED_ENV) or ""
+    ).strip().lower()
+    return raw not in _FALSE_ENV_VALUES
+
+
+def _projection_auto_line_search_attempts(*, max_attempts: int) -> int:
+    upper_bound = max(1, int(max_attempts))
+    raw = str(os.environ.get(_PROJECTION_AUTO_LINE_SEARCH_ATTEMPTS_ENV) or "").strip()
+    if raw:
+        try:
+            requested = int(raw)
+        except ValueError:
+            requested = 3
+    else:
+        requested = 3
+    return max(1, min(upper_bound, requested))
+
+
+def _default_legal_ir_target_disk_cache_dir() -> Path:
+    try:
+        repo_root = Path(__file__).resolve().parents[3]
+    except (IndexError, OSError, RuntimeError):
+        repo_root = Path.cwd()
+    return repo_root / "workspace" / "test-logs" / "legal-ir-metric-cache"
+
+
+def _legal_ir_target_disk_cache_dir() -> Optional[Path]:
+    if not _legal_ir_target_disk_cache_enabled():
+        return None
+    raw = str(os.environ.get(_LEGAL_IR_TARGET_DISK_CACHE_DIR_ENV) or "").strip()
+    if raw.lower() in _FALSE_ENV_VALUES:
+        return None
+    return Path(raw).expanduser() if raw else _default_legal_ir_target_disk_cache_dir()
+
+
+def _legal_ir_target_code_fingerprint() -> str:
+    global _LEGAL_IR_TARGET_CODE_FINGERPRINT_VALUE
+    with _LEGAL_IR_TARGET_CODE_FINGERPRINT_LOCK:
+        if _LEGAL_IR_TARGET_CODE_FINGERPRINT_VALUE:
+            return _LEGAL_IR_TARGET_CODE_FINGERPRINT_VALUE
+        try:
+            package_root = Path(__file__).resolve().parents[2]
+        except (IndexError, OSError, RuntimeError):
+            package_root = Path.cwd()
+        candidates = [
+            Path(__file__),
+            package_root / "logic" / "bridge",
+            package_root / "logic" / "modal",
+            package_root / "knowledge_graphs" / "neo4j_compat" / "legal_ir_projection.py",
+        ]
+        tokens: List[str] = []
+        for candidate in candidates:
+            paths = (
+                sorted(candidate.rglob("*.py"))
+                if candidate.is_dir()
+                else [candidate]
+            )
+            for path in paths:
+                try:
+                    stat = path.stat()
+                except (OSError, RuntimeError):
+                    continue
+                try:
+                    relative = path.relative_to(package_root)
+                except ValueError:
+                    relative = path
+                tokens.append(f"{relative}:{stat.st_mtime_ns}:{stat.st_size}")
+        _LEGAL_IR_TARGET_CODE_FINGERPRINT_VALUE = (
+            hashlib.sha256("\n".join(tokens).encode("utf-8")).hexdigest()
+            if tokens
+            else "unknown"
+        )
+        return _LEGAL_IR_TARGET_CODE_FINGERPRINT_VALUE
+
+
+def _legal_ir_target_disk_cache_key(cache_key: str) -> str:
+    payload = {
+        "code_fingerprint": _legal_ir_target_code_fingerprint(),
+        "kind": _LEGAL_IR_TARGET_DISK_CACHE_KIND,
+        "target_cache_key": str(cache_key),
+        "version": _LEGAL_IR_TARGET_DISK_CACHE_VERSION,
+    }
+    return hashlib.sha256(
+        json.dumps(
+            payload,
+            ensure_ascii=True,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+    ).hexdigest()
+
+
+def _legal_ir_target_disk_cache_path(cache_key: str) -> Optional[Path]:
+    root = _legal_ir_target_disk_cache_dir()
+    if root is None:
+        return None
+    disk_key = _legal_ir_target_disk_cache_key(cache_key)
+    return (
+        root
+        / _LEGAL_IR_TARGET_DISK_CACHE_KIND
+        / disk_key[:2]
+        / f"{disk_key}.json"
+    )
+
+
+def _numeric_float_mapping(values: Any) -> Dict[str, float]:
+    if not isinstance(values, Mapping):
+        return {}
+    return {
+        str(name): _float_or_zero(value)
+        for name, value in values.items()
+    }
+
+
+def _legal_ir_target_cache_payload(target: Any) -> Optional[Dict[str, Any]]:
+    document = getattr(target, "document", None)
+    if document is None or not hasattr(document, "canonical_hash"):
+        return None
+    try:
+        document_hash = str(document.canonical_hash())
+    except Exception:
+        return None
+    if not document_hash:
+        return None
+    adapter_losses: Dict[str, Dict[str, float]] = {}
+    for name, losses in dict(getattr(target, "adapter_losses", {}) or {}).items():
+        if isinstance(losses, Mapping):
+            adapter_losses[str(name)] = _numeric_float_mapping(losses)
+    return {
+        "accepted": bool(getattr(target, "accepted", False)),
+        "adapter_losses": dict(sorted(adapter_losses.items())),
+        "bridge_names": [
+            str(name)
+            for name in list(getattr(target, "bridge_names", ()) or ())
+        ],
+        "document_hash": document_hash,
+        "document_id": str(getattr(document, "document_id", "") or ""),
+        "document_version": str(getattr(document, "version", "") or ""),
+        "losses": _numeric_float_mapping(getattr(target, "losses", {}) or {}),
+        "view_distribution": _numeric_float_mapping(
+            getattr(target, "view_distribution", {}) or {}
+        ),
+    }
+
+
+def _normalise_legal_ir_target_cache_payload(
+    payload: Mapping[str, Any],
+) -> Optional[Dict[str, Any]]:
+    document_hash = str(payload.get("document_hash") or "")
+    if not document_hash:
+        return None
+    adapter_losses: Dict[str, Dict[str, float]] = {}
+    raw_adapter_losses = payload.get("adapter_losses")
+    if isinstance(raw_adapter_losses, Mapping):
+        for name, losses in raw_adapter_losses.items():
+            if isinstance(losses, Mapping):
+                adapter_losses[str(name)] = _numeric_float_mapping(losses)
+    return {
+        "accepted": bool(payload.get("accepted", False)),
+        "adapter_losses": dict(sorted(adapter_losses.items())),
+        "bridge_names": [
+            str(name)
+            for name in list(payload.get("bridge_names") or ())
+            if str(name)
+        ],
+        "document_hash": document_hash,
+        "document_id": str(payload.get("document_id") or ""),
+        "document_version": str(payload.get("document_version") or ""),
+        "losses": _numeric_float_mapping(payload.get("losses")),
+        "view_distribution": _numeric_float_mapping(payload.get("view_distribution")),
+    }
+
+
+def _write_legal_ir_target_disk_cache_payload(
+    cache_key: str,
+    payload: Mapping[str, Any],
+) -> bool:
+    path = _legal_ir_target_disk_cache_path(cache_key)
+    normalized_payload = _normalise_legal_ir_target_cache_payload(payload)
+    if path is None or normalized_payload is None:
+        return False
+    tmp_path = path.with_name(
+        f".{path.stem}.{os.getpid()}.{threading.get_ident()}.tmp"
+    )
+    wrapper = {
+        "code_fingerprint": _legal_ir_target_code_fingerprint(),
+        "created_at": int(time.time()),
+        "kind": _LEGAL_IR_TARGET_DISK_CACHE_KIND,
+        "payload": normalized_payload,
+        "target_cache_key": cache_key,
+        "version": _LEGAL_IR_TARGET_DISK_CACHE_VERSION,
+    }
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp_path.write_text(
+            json.dumps(wrapper, ensure_ascii=True, sort_keys=True),
+            encoding="utf-8",
+        )
+        os.replace(tmp_path, path)
+        cached_target = _legal_ir_target_from_cache_payload(normalized_payload)
+        if cached_target is not None:
+            with _LEGAL_IR_TARGET_CACHE_LOCK:
+                if len(_LEGAL_IR_TARGET_CACHE) >= _LEGAL_IR_TARGET_CACHE_MAX:
+                    _LEGAL_IR_TARGET_CACHE.pop(next(iter(_LEGAL_IR_TARGET_CACHE)), None)
+                _LEGAL_IR_TARGET_CACHE[cache_key] = cached_target
+        return True
+    except Exception:
+        try:
+            tmp_path.unlink(missing_ok=True)
+        except OSError:
+            pass
+        return False
+
+
+def _legal_ir_target_from_cache_payload(
+    payload: Mapping[str, Any],
+) -> Optional[_CachedLegalIRTrainingTarget]:
+    normalized_payload = _normalise_legal_ir_target_cache_payload(payload)
+    if normalized_payload is None:
+        return None
+    adapter_losses: Dict[str, Dict[str, float]] = {}
+    raw_adapter_losses = normalized_payload.get("adapter_losses")
+    if isinstance(raw_adapter_losses, Mapping):
+        for name, losses in raw_adapter_losses.items():
+            adapter_losses[str(name)] = _numeric_float_mapping(losses)
+    return _CachedLegalIRTrainingTarget(
+        bridge_names=tuple(
+            str(name)
+            for name in list(normalized_payload.get("bridge_names") or ())
+            if str(name)
+        ),
+        document=_CachedLegalIRDocument(
+            document_hash=str(normalized_payload.get("document_hash") or ""),
+            document_id=str(normalized_payload.get("document_id") or ""),
+            version=str(normalized_payload.get("document_version") or ""),
+        ),
+        losses=_numeric_float_mapping(normalized_payload.get("losses")),
+        adapter_losses=dict(sorted(adapter_losses.items())),
+        view_distribution=_numeric_float_mapping(normalized_payload.get("view_distribution")),
+        accepted=bool(normalized_payload.get("accepted", False)),
+    )
+
+
+def _read_legal_ir_target_disk_cache(cache_key: str) -> Optional[Any]:
+    path = _legal_ir_target_disk_cache_path(cache_key)
+    if path is None or not path.is_file():
+        return None
+    try:
+        wrapper = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(wrapper, Mapping):
+        return None
+    if wrapper.get("version") != _LEGAL_IR_TARGET_DISK_CACHE_VERSION:
+        return None
+    if wrapper.get("kind") != _LEGAL_IR_TARGET_DISK_CACHE_KIND:
+        return None
+    if wrapper.get("target_cache_key") != cache_key:
+        return None
+    if wrapper.get("code_fingerprint") != _legal_ir_target_code_fingerprint():
+        return None
+    payload = wrapper.get("payload")
+    if not isinstance(payload, Mapping):
+        return None
+    return _legal_ir_target_from_cache_payload(payload)
+
+
+def _write_legal_ir_target_disk_cache(cache_key: str, target: Any) -> None:
+    payload = _legal_ir_target_cache_payload(target)
+    if payload is None:
+        return
+    _write_legal_ir_target_disk_cache_payload(cache_key, payload)
 
 
 def _sample_content_cache_id(sample: LegalSample) -> str:
@@ -15535,6 +24169,10 @@ _LEGAL_IR_DEFINITION_CUE_RE = re.compile(
     r"\b(means|defined|definition|term|for\s+purposes\s+of|includes?)\b",
     re.IGNORECASE,
 )
+_LEGAL_IR_CODIFICATION_CUE_RE = re.compile(
+    r"\b(codification|transferred|reclassified|redesignated|renumbered)\b",
+    re.IGNORECASE,
+)
 _LEGAL_IR_AUTHORITY_CUE_RE = re.compile(
     r"\b(secretary|administrator|agency|commission|authority|jurisdiction|regulation|rulemaking)\b",
     re.IGNORECASE,
@@ -15547,13 +24185,82 @@ _LEGAL_IR_EXCEPTION_CUE_RE = re.compile(
     r"\b(except|exception|notwithstanding|waiver|exemption|excluded?)\b",
     re.IGNORECASE,
 )
+_LEGAL_IR_MAY_NOT_CUE_RE = re.compile(r"\bmay\s+not\b", re.IGNORECASE)
+_LEGAL_IR_SHALL_NOT_CUE_RE = re.compile(r"\bshall\s+not\b", re.IGNORECASE)
+_LEGAL_IR_MAY_CUE_RE = re.compile(r"\bmay\b", re.IGNORECASE)
+_LEGAL_IR_SHALL_CUE_RE = re.compile(r"\bshall\b", re.IGNORECASE)
+_LEGAL_IR_MUST_CUE_RE = re.compile(r"\bmust\b", re.IGNORECASE)
+_LEGAL_IR_UNLESS_CUE_RE = re.compile(r"\bunless\b", re.IGNORECASE)
+_LEGAL_IR_WHEN_CUE_RE = re.compile(r"\bwhen\b", re.IGNORECASE)
+_LEGAL_IR_WHENEVER_CUE_RE = re.compile(r"\bwhenever\b", re.IGNORECASE)
+_LEGAL_IR_NOT_LATER_THAN_CUE_RE = re.compile(
+    r"\bnot\s+later\s+than\b",
+    re.IGNORECASE,
+)
+_LEGAL_IR_SUBJECT_TO_SECTION_CUE_RE = re.compile(
+    r"\bsubject\s+to\s+(?:section|subsection|paragraph|chapter|subchapter|title)\b",
+    re.IGNORECASE,
+)
+_LEGAL_IR_SUBJECT_TO_CUE_RE = re.compile(r"\bsubject\s+to\b", re.IGNORECASE)
+_LEGAL_IR_WITH_RESPECT_TO_CUE_RE = re.compile(
+    r"\bwith\s+respect\s+to\b",
+    re.IGNORECASE,
+)
+_LEGAL_IR_EXCEPT_AS_OTHERWISE_PROVIDED_CUE_RE = re.compile(
+    r"\bexcept\s+as\s+otherwise\s+provided\b",
+    re.IGNORECASE,
+)
+_LEGAL_IR_EXCEPT_AS_PROVIDED_IN_CUE_RE = re.compile(
+    r"\bexcept\s+as\s+provided\s+in\b",
+    re.IGNORECASE,
+)
+_LEGAL_IR_EXCEPT_AS_PROVIDED_CUE_RE = re.compile(
+    r"\bexcept\s+as\s+provided\b",
+    re.IGNORECASE,
+)
+_LEGAL_IR_AS_PROVIDED_IN_CUE_RE = re.compile(
+    r"\bas\s+provided\s+in\b",
+    re.IGNORECASE,
+)
+_LEGAL_IR_PROVIDED_THAT_CUE_RE = re.compile(
+    r"\bprovided\s+that\b",
+    re.IGNORECASE,
+)
+_LEGAL_IR_UNDER_CUE_RE = re.compile(
+    r"\bunder\s+(?:section|subsection|paragraph|chapter|subchapter|title|this)\b",
+    re.IGNORECASE,
+)
+_LEGAL_IR_BY_CUE_RE = re.compile(
+    r"\bby\s+(?:fiscal\s+year\s+)?(?:\d{4}|[0-9]+\s+(?:days?|months?|years?))\b",
+    re.IGNORECASE,
+)
 _LEGAL_IR_CUE_PATTERNS = (
+    ("except_as_otherwise_provided", _LEGAL_IR_EXCEPT_AS_OTHERWISE_PROVIDED_CUE_RE),
+    ("except_as_provided_in", _LEGAL_IR_EXCEPT_AS_PROVIDED_IN_CUE_RE),
+    ("except_as_provided", _LEGAL_IR_EXCEPT_AS_PROVIDED_CUE_RE),
+    ("as_provided_in", _LEGAL_IR_AS_PROVIDED_IN_CUE_RE),
+    ("provided_that", _LEGAL_IR_PROVIDED_THAT_CUE_RE),
+    ("subject_to_section", _LEGAL_IR_SUBJECT_TO_SECTION_CUE_RE),
+    ("subject_to", _LEGAL_IR_SUBJECT_TO_CUE_RE),
+    ("with_respect_to", _LEGAL_IR_WITH_RESPECT_TO_CUE_RE),
+    ("not_later_than", _LEGAL_IR_NOT_LATER_THAN_CUE_RE),
+    ("may_not", _LEGAL_IR_MAY_NOT_CUE_RE),
+    ("shall_not", _LEGAL_IR_SHALL_NOT_CUE_RE),
+    ("may", _LEGAL_IR_MAY_CUE_RE),
+    ("shall", _LEGAL_IR_SHALL_CUE_RE),
+    ("must", _LEGAL_IR_MUST_CUE_RE),
+    ("unless", _LEGAL_IR_UNLESS_CUE_RE),
+    ("whenever", _LEGAL_IR_WHENEVER_CUE_RE),
+    ("when", _LEGAL_IR_WHEN_CUE_RE),
+    ("under", _LEGAL_IR_UNDER_CUE_RE),
+    ("by", _LEGAL_IR_BY_CUE_RE),
     ("conditional", _LEGAL_IR_CONDITIONAL_CUE_RE),
     ("deontic", _LEGAL_IR_DEONTIC_CUE_RE),
     ("obligation", _LEGAL_IR_OBLIGATION_CUE_RE),
     ("permission", _LEGAL_IR_PERMISSION_CUE_RE),
     ("temporal", _LEGAL_IR_TEMPORAL_CUE_RE),
     ("definition", _LEGAL_IR_DEFINITION_CUE_RE),
+    ("codification", _LEGAL_IR_CODIFICATION_CUE_RE),
     ("authority", _LEGAL_IR_AUTHORITY_CUE_RE),
     ("enforcement", _LEGAL_IR_ENFORCEMENT_CUE_RE),
     ("exception", _LEGAL_IR_EXCEPTION_CUE_RE),
@@ -15587,6 +24294,94 @@ def _token_features(text: str, *, max_tokens: int = 40) -> List[str]:
         for token in _TOKEN_RE.findall(text.lower())
         if len(token) > 2 and token not in _STOPWORDS
     ][:max_tokens]
+
+
+def _uscode_surface_profile_tags(text: str) -> List[str]:
+    """Return stable U.S. Code surface profiles for sparse frame records."""
+    normalized = " ".join(str(text or "").lower().split())
+    if not normalized:
+        return []
+    tags: List[str] = []
+
+    def add(tag: str) -> None:
+        if tag and tag not in tags:
+            tags.append(tag)
+
+    if re.search(r"\b(?:u\.?\s*s\.?\s*c|united states code)\b", normalized):
+        add("uscode_catalog_record")
+    if re.search(r"(?:^|\s)(?:§|sec\.?\s+)?\d+[a-z0-9.-]*\s*[-.]?\s+", normalized):
+        add("uscode_section_heading_surface")
+    if re.search(
+        r"\b(?:editorial notes?|codification|reclassified|renumbered|transferred)\b",
+        normalized,
+    ):
+        add("editorial_status_surface")
+    if "editorial notes" in normalized:
+        add("editorial_notes")
+    if "codification" in normalized:
+        add("codification_note")
+    if re.search(
+        r"\b(?:transferred|editorially reclassified|reclassified as section)\b",
+        normalized,
+    ):
+        add("editorial_reclassification")
+    if re.search(r"\bsection\s+\d+[a-z0-9.-]*\s+was\b", normalized):
+        add("section_status_clause")
+    if re.search(r"\btitle\s+\d+\b", normalized):
+        add("cross_title_reference")
+    if "moneys deposited by unknown parties" in normalized:
+        add("unknown_party_deposit")
+    if re.search(r"\bdeposit(?:ed)?\b.*\btreasurer of the united states\b", normalized):
+        add("treasury_deposit")
+    if re.search(r"\bresearch program and plan\b", normalized):
+        add("research_program_plan")
+    if re.search(r"\bgrants? for research\b", normalized):
+        add("research_grant")
+    if re.search(r"\bindividuals with disabilities\b", normalized):
+        add("disability_services")
+    if re.search(r"\bhealth professionals? educational assistance program\b", normalized):
+        add("health_professional_education_assistance")
+    if re.search(r"\beducational assistance\b", normalized):
+        add("education_assistance_benefit")
+    if re.search(r"\b(?:costs?|expenses?)\b.*\bcharge\b", normalized):
+        add("cost_expense_charge")
+    if re.search(r"\bcharge\b.*\bprize\b", normalized):
+        add("prize_proceeds_charge")
+    if re.search(r"\bfunds for printing, binding\b", normalized):
+        add("printing_binding")
+    if re.search(r"\b(?:article reprint purchases|reprint purchases)\b", normalized):
+        add("article_reprint_purchase")
+    if re.search(r"\bscientific and technical article\b", normalized):
+        add("technical_article")
+    if re.search(r"\bauthorization of appropriations\b", normalized):
+        add("appropriation_authorization")
+    if re.search(r"\bremain available until expended\b", normalized):
+        add("no_year_funding_availability")
+    if re.search(r"\beffect of act\b", normalized):
+        add("effect_of_act")
+    return tags
+
+
+_USCODE_SURFACE_PROFILE_MODAL_FAMILIES: Mapping[str, tuple[str, ...]] = {
+    "appropriation_authorization": ("deontic", "temporal"),
+    "article_reprint_purchase": ("deontic", "frame"),
+    "cost_expense_charge": ("deontic", "frame"),
+    "disability_services": ("deontic", "frame"),
+    "education_assistance_benefit": ("deontic", "frame"),
+    "health_professional_education_assistance": ("deontic", "frame"),
+    "no_year_funding_availability": ("temporal", "deontic"),
+    "printing_binding": ("deontic", "frame"),
+    "prize_proceeds_charge": ("deontic", "frame"),
+    "research_grant": ("deontic", "frame"),
+    "research_program_plan": ("frame", "deontic"),
+    "treasury_deposit": ("deontic", "frame"),
+    "unknown_party_deposit": ("deontic", "frame"),
+}
+
+
+def _uscode_surface_profile_modal_families(profile: str) -> tuple[str, ...]:
+    """Return modal families implied by a stable U.S. Code surface profile."""
+    return _USCODE_SURFACE_PROFILE_MODAL_FAMILIES.get(str(profile), ())
 
 
 def _feature_atom(value: Any, *, max_tokens: int = 4) -> str:
@@ -15721,16 +24516,25 @@ def _codex_gate_local_loss(
     prover_signal: Optional[ProverCompilationSignal],
 ) -> float:
     cosine_gap = max(0.0, 1.0 - float(metrics.get("embedding_cosine_similarity", 0.0)))
+    cross_entropy_component = float(
+        metrics.get("cross_entropy_excess_loss", metrics.get("cross_entropy_loss", 0.0))
+    )
     loss = (
         gate.cosine_weight * cosine_gap
-        + gate.cross_entropy_weight * max(0.0, float(metrics.get("cross_entropy_loss", 0.0)))
+        + gate.cross_entropy_weight * max(0.0, cross_entropy_component)
         + gate.reconstruction_weight * max(0.0, float(metrics.get("reconstruction_loss", 0.0)))
         + gate.frame_weight * max(0.0, float(metrics.get("frame_ranking_loss", 0.0)))
         + gate.symbolic_weight * max(0.0, float(metrics.get("symbolic_validity_penalty", 0.0)))
     )
+    legal_ir_view_component = float(
+        metrics.get(
+            "legal_ir_view_cross_entropy_excess_loss",
+            metrics.get("legal_ir_view_cross_entropy_loss", 0.0),
+        )
+    )
     legal_ir_loss = (
         max(0.0, float(metrics.get("legal_ir_multiview_total_loss", 0.0)))
-        + max(0.0, float(metrics.get("legal_ir_view_cross_entropy_loss", 0.0)))
+        + max(0.0, legal_ir_view_component)
         + max(0.0, float(metrics.get("legal_ir_multiview_proof_failure_ratio", 0.0)))
         + max(0.0, float(metrics.get("legal_ir_multiview_graph_failure_penalty", 0.0)))
     )
@@ -15777,7 +24581,12 @@ def _resolve_vector_compute_backend(
         return request, "python", None, None
 
     if request == "auto":
-        if bool(torch.cuda.is_available()):
+        enable_auto_cuda = str(
+            os.environ.get("IPFS_DATASETS_MODAL_AUTOENCODER_AUTO_CUDA", "")
+        ).strip().lower()
+        if enable_auto_cuda in {"1", "true", "yes", "on"} and bool(
+            torch.cuda.is_available()
+        ):
             return request, "torch_cuda", torch.device("cuda"), torch
         return request, "python", None, None
     if request.startswith("cuda"):
@@ -15791,6 +24600,42 @@ def _resolve_vector_compute_backend(
 
 def _mean(values: Sequence[float]) -> float:
     return sum(values) / len(values) if values else 0.0
+
+
+def _sample_embedding_metric_rows(
+    samples: Sequence[LegalSample],
+    *,
+    cosine_scores: Sequence[float],
+    reconstruction_losses: Sequence[float],
+    limit: int = 8,
+) -> List[Dict[str, object]]:
+    """Return the worst embedding residuals for diagnostics and TODO routing."""
+    rows: List[Dict[str, object]] = []
+    for sample, cosine, reconstruction in zip(
+        samples,
+        cosine_scores,
+        reconstruction_losses,
+    ):
+        cosine_value = _float_or_zero(cosine)
+        reconstruction_value = _float_or_zero(reconstruction)
+        rows.append(
+            {
+                "citation": str(getattr(sample, "citation", "")),
+                "cosine_loss": round(1.0 - cosine_value, 9),
+                "cosine_similarity": round(cosine_value, 9),
+                "reconstruction_loss": round(reconstruction_value, 9),
+                "sample_id": str(sample.sample_id),
+                "text_shape": _text_shape(str(getattr(sample, "normalized_text", ""))),
+            }
+        )
+    rows.sort(
+        key=lambda row: (
+            float(row["cosine_similarity"]),
+            -float(row["reconstruction_loss"]),
+            str(row["sample_id"]),
+        )
+    )
+    return rows[: max(0, int(limit))]
 
 
 def _mean_distributions(
@@ -15822,6 +24667,10 @@ def _evaluation_improved_for_training(
     max_reconstruction_regression: float = 0.02,
     max_cross_entropy_regression: float = 0.0,
     max_legal_ir_loss_regression: float = 0.02,
+    cross_entropy: float = 1.0,
+    reconstruction: float = 1.0,
+    cosine_gap: float = 1.0,
+    legal_ir: float = 1.0,
 ) -> bool:
     """Return true when a feature update improves total loss without regressions."""
     if _evaluation_regressions_for_training(
@@ -15834,8 +24683,20 @@ def _evaluation_improved_for_training(
     ):
         return False
     return (
-        _evaluation_objective_for_training(after)
-        < _evaluation_objective_for_training(before)
+        _evaluation_objective_for_training(
+            after,
+            cross_entropy=cross_entropy,
+            reconstruction=reconstruction,
+            cosine_gap=cosine_gap,
+            legal_ir=legal_ir,
+        )
+        < _evaluation_objective_for_training(
+            before,
+            cross_entropy=cross_entropy,
+            reconstruction=reconstruction,
+            cosine_gap=cosine_gap,
+            legal_ir=legal_ir,
+        )
     )
 
 
@@ -15848,8 +24709,19 @@ def _evaluation_objective_for_training(
     legal_ir: float = 1.0,
 ) -> float:
     """Return a scalar objective where lower is better for guarded training."""
+    cross_entropy_component = getattr(
+        evaluation,
+        "cross_entropy_excess_loss",
+        evaluation.cross_entropy_loss,
+    )
+    if (
+        cross_entropy_component <= 0.0
+        and evaluation.cross_entropy_loss > 0.0
+        and getattr(evaluation, "cross_entropy_entropy_loss", 0.0) <= 0.0
+    ):
+        cross_entropy_component = evaluation.cross_entropy_loss
     return (
-        (max(0.0, float(cross_entropy)) * evaluation.cross_entropy_loss)
+        (max(0.0, float(cross_entropy)) * cross_entropy_component)
         + (max(0.0, float(reconstruction)) * evaluation.reconstruction_loss)
         + (
             max(0.0, float(cosine_gap))
@@ -15876,7 +24748,17 @@ def _legal_ir_objective_component(losses: Mapping[str, float]) -> float:
         return 0.0
     component = 0.0
     component += min(1.0, values.get("legal_ir_multiview_total_loss", 0.0))
-    component += min(1.0, values.get("legal_ir_view_cross_entropy_loss", 0.0) / 3.0)
+    view_ce_component = values.get(
+        "legal_ir_view_cross_entropy_excess_loss",
+        values.get("legal_ir_view_cross_entropy_loss", 0.0),
+    )
+    component += min(1.0, view_ce_component / 3.0)
+    view_family_component = values.get(
+        "legal_ir_view_family_cross_entropy_excess_loss",
+        values.get("legal_ir_view_family_cross_entropy_loss", 0.0),
+    )
+    component += min(1.0, view_family_component / 3.0)
+    component += min(1.0, values.get("legal_ir_view_family_cosine_gap_loss", 0.0))
     component += min(1.0, values.get("legal_ir_multiview_proof_failure_ratio", 0.0))
     component += min(1.0, values.get("legal_ir_multiview_graph_failure_penalty", 0.0))
     detail = 0.0
@@ -15884,11 +24766,25 @@ def _legal_ir_objective_component(losses: Mapping[str, float]) -> float:
         if name in {
             "legal_ir_multiview_total_loss",
             "legal_ir_view_cross_entropy_loss",
+            "legal_ir_view_entropy_loss",
+            "legal_ir_view_cross_entropy_excess_loss",
+            "legal_ir_view_family_cross_entropy_loss",
+            "legal_ir_view_family_entropy_loss",
+            "legal_ir_view_family_cross_entropy_excess_loss",
+            "legal_ir_view_family_cosine_gap_loss",
             "legal_ir_multiview_proof_failure_ratio",
             "legal_ir_multiview_graph_failure_penalty",
         }:
             continue
-        if name.startswith("legal_ir_") or name.startswith(("deontic_", "tdfol_", "cec_", "zkp_", "external_prover_")):
+        if name.endswith("_entropy_loss"):
+            continue
+        if name.startswith("legal_ir_view_family_") and name.endswith(
+            "_cross_entropy_loss"
+        ):
+            continue
+        if name.startswith("legal_ir_") or name.startswith(
+            ("deontic_", "tdfol_", "cec_", "zkp_", "external_prover_")
+        ):
             detail += min(0.25, value)
     return component + min(1.0, detail)
 
@@ -15912,9 +24808,23 @@ def _evaluation_regressions_for_training(
     reconstruction_regression = after.reconstruction_loss - before.reconstruction_loss
     if reconstruction_regression > max(0.0, float(max_reconstruction_regression)):
         regressions["reconstruction_loss"] = reconstruction_regression
-    cross_entropy_regression = after.cross_entropy_loss - before.cross_entropy_loss
+    before_ce = getattr(before, "cross_entropy_excess_loss", before.cross_entropy_loss)
+    after_ce = getattr(after, "cross_entropy_excess_loss", after.cross_entropy_loss)
+    if (
+        before_ce <= 0.0
+        and before.cross_entropy_loss > 0.0
+        and getattr(before, "cross_entropy_entropy_loss", 0.0) <= 0.0
+    ):
+        before_ce = before.cross_entropy_loss
+    if (
+        after_ce <= 0.0
+        and after.cross_entropy_loss > 0.0
+        and getattr(after, "cross_entropy_entropy_loss", 0.0) <= 0.0
+    ):
+        after_ce = after.cross_entropy_loss
+    cross_entropy_regression = after_ce - before_ce
     if cross_entropy_regression > max(0.0, float(max_cross_entropy_regression)):
-        regressions["cross_entropy_loss"] = cross_entropy_regression
+        regressions["cross_entropy_excess_loss"] = cross_entropy_regression
     for name in sorted(set(before.legal_ir_losses) | set(after.legal_ir_losses)):
         regression = (
             float(after.legal_ir_losses.get(name, 0.0))
@@ -15925,8 +24835,369 @@ def _evaluation_regressions_for_training(
     return regressions
 
 
+def _projection_deadband_mode(value: str) -> str:
+    mode = str(value or "off").strip().lower()
+    return mode if mode in PROJECTION_DEADBAND_MODES else "off"
+
+
+def _projection_prescreen_mode(value: str) -> str:
+    mode = str(value or "off").strip().lower()
+    return mode if mode in PROJECTION_PRESCREEN_MODES else "off"
+
+
+def _annotate_projection_prescreen_rankings(
+    attempt_reports: Sequence[MutableMapping[str, Any]],
+    *,
+    top_k: int,
+) -> None:
+    ranked: List[tuple[float, int, MutableMapping[str, Any], MutableMapping[str, Any]]] = []
+    for index, report in enumerate(attempt_reports):
+        prescreen = report.get("projection_prescreen")
+        if not isinstance(prescreen, MutableMapping):
+            continue
+        if not bool(prescreen.get("enabled", False)):
+            prescreen["selected_for_holdout"] = True
+            continue
+        objective_delta = _float_or_zero(prescreen.get("objective_delta"))
+        ranked.append((objective_delta, index, report, prescreen))
+    if not ranked:
+        return
+    ranked.sort(key=lambda item: (-item[0], item[1]))
+    selected_limit = max(0, int(top_k or 0))
+    for rank, (_score, _index, _report, prescreen) in enumerate(ranked, start=1):
+        selected = selected_limit <= 0 or rank <= selected_limit
+        prescreen["rank"] = rank
+        prescreen["selected_for_holdout"] = bool(selected)
+        prescreen["would_select_for_holdout"] = bool(selected)
+
+
+def _projection_prescreen_summary(
+    epoch_reports: Sequence[Mapping[str, Any]],
+) -> Dict[str, Any]:
+    attempted_count = 0
+    enabled_attempt_count = 0
+    selected_count = 0
+    unselected_count = 0
+    evaluated_holdout_count = 0
+    positive_delta_count = 0
+    best_prescreen: Optional[Dict[str, Any]] = None
+    for epoch in epoch_reports:
+        candidate_reports = epoch.get("candidate_reports")
+        if not isinstance(candidate_reports, Sequence) or isinstance(
+            candidate_reports,
+            (str, bytes),
+        ):
+            continue
+        for candidate in candidate_reports:
+            if not isinstance(candidate, Mapping):
+                continue
+            attempt_reports = candidate.get("attempt_reports")
+            if not isinstance(attempt_reports, Sequence) or isinstance(
+                attempt_reports,
+                (str, bytes),
+            ):
+                attempt_reports = [candidate]
+            for attempt in attempt_reports:
+                if not isinstance(attempt, Mapping):
+                    continue
+                attempted_count += 1
+                prescreen = attempt.get("projection_prescreen")
+                if not isinstance(prescreen, Mapping):
+                    continue
+                if not bool(prescreen.get("enabled", False)):
+                    continue
+                enabled_attempt_count += 1
+                objective_delta = _float_or_zero(prescreen.get("objective_delta"))
+                if objective_delta > 0.0:
+                    positive_delta_count += 1
+                if bool(prescreen.get("selected_for_holdout", True)):
+                    selected_count += 1
+                else:
+                    unselected_count += 1
+                if bool(attempt.get("holdout_evaluated", True)):
+                    evaluated_holdout_count += 1
+                if (
+                    best_prescreen is None
+                    or objective_delta > _float_or_zero(
+                        best_prescreen.get("objective_delta")
+                    )
+                ):
+                    best_prescreen = {
+                        "line_search_multiplier": round(
+                            _float_or_zero(attempt.get("line_search_multiplier")),
+                            12,
+                        ),
+                        "objective_delta": round(objective_delta, 12),
+                        "rank": int(prescreen.get("rank", 0) or 0),
+                        "selected_for_holdout": bool(
+                            prescreen.get("selected_for_holdout", True)
+                        ),
+                        "update": str(attempt.get("update") or ""),
+                    }
+    return {
+        "attempted_count": attempted_count,
+        "best_prescreen_attempt": best_prescreen or {},
+        "enabled_attempt_count": enabled_attempt_count,
+        "evaluated_holdout_count": evaluated_holdout_count,
+        "positive_delta_count": positive_delta_count,
+        "selected_for_holdout_count": selected_count,
+        "unselected_for_holdout_count": unselected_count,
+    }
+
+
+def _projection_guardrail_names(values: Sequence[str] | str | None) -> tuple[str, ...]:
+    if values is None:
+        return PROJECTION_DEADBAND_DEFAULT_HARD_GUARDRAILS
+    if isinstance(values, str):
+        raw_values: Sequence[Any] = values.split(",")
+    else:
+        raw_values = values
+    normalized = tuple(
+        str(value).strip()
+        for value in raw_values
+        if str(value).strip()
+    )
+    return normalized or PROJECTION_DEADBAND_DEFAULT_HARD_GUARDRAILS
+
+
+def _projection_metric_matches_guardrail(name: str, guardrail: str) -> bool:
+    metric_name = str(name)
+    guardrail_name = str(guardrail)
+    if guardrail_name.endswith("*"):
+        return metric_name.startswith(guardrail_name[:-1])
+    return metric_name == guardrail_name
+
+
+def _projection_deadband_decision(
+    regressions: Mapping[str, float],
+    *,
+    objective_delta: float,
+    mode: str = "off",
+    max_ce_deadband: float = 0.0,
+    hard_guardrail_metrics: Sequence[str] | str | None = None,
+) -> Dict[str, Any]:
+    """Return shadow/enforced acceptance metadata for tiny CE regressions."""
+
+    normalized_mode = _projection_deadband_mode(mode)
+    guardrails = _projection_guardrail_names(hard_guardrail_metrics)
+    ce_deadband = max(0.0, float(max_ce_deadband or 0.0))
+    adjusted_regressions: Dict[str, float] = {}
+    tolerated_regressions: Dict[str, float] = {}
+    hard_guardrail_blocked: Dict[str, float] = {}
+    for name, raw_value in sorted(dict(regressions).items()):
+        value = max(0.0, float(raw_value))
+        is_hard_guardrail = any(
+            _projection_metric_matches_guardrail(name, guardrail)
+            for guardrail in guardrails
+        )
+        if (
+            normalized_mode != "off"
+            and not is_hard_guardrail
+            and name in PROJECTION_DEADBAND_CE_REGRESSION_KEYS
+            and value <= ce_deadband
+        ):
+            tolerated_regressions[str(name)] = value
+            continue
+        adjusted_regressions[str(name)] = value
+        if is_hard_guardrail:
+            hard_guardrail_blocked[str(name)] = value
+
+    would_accept = bool(
+        normalized_mode != "off"
+        and float(objective_delta) > 0.0
+        and tolerated_regressions
+        and not adjusted_regressions
+    )
+    enforced_accepted = bool(normalized_mode == "enforce" and would_accept)
+    return {
+        "adjusted_pareto_regressions": adjusted_regressions,
+        "enabled": normalized_mode != "off",
+        "enforced_accepted": enforced_accepted,
+        "hard_guardrail_blocked_regressions": hard_guardrail_blocked,
+        "hard_guardrail_metrics": list(guardrails),
+        "max_ce_deadband": ce_deadband,
+        "mode": normalized_mode,
+        "tolerated_regressions": tolerated_regressions,
+        "would_accept": would_accept,
+    }
+
+
+def _projection_rejection_summary(
+    epoch_reports: Sequence[Mapping[str, Any]],
+) -> Dict[str, Any]:
+    """Summarize why guarded projection attempts were not accepted."""
+    attempted_count = 0
+    accepted_attempt_count = 0
+    deadband_enforced_accept_count = 0
+    refinement_attempt_count = 0
+    rejected_attempt_count = 0
+    strict_accepted_attempt_count = 0
+    deadband_would_accept_count = 0
+    deadband_shadow_would_accept_count = 0
+    regression_counts: Dict[str, int] = {}
+    deadband_tolerated_counts: Dict[str, int] = {}
+    deadband_hard_guardrail_counts: Dict[str, int] = {}
+    best_rejected: Optional[Dict[str, Any]] = None
+    best_deadband_would_accept: Optional[Dict[str, Any]] = None
+    for epoch in epoch_reports:
+        candidate_reports = epoch.get("candidate_reports")
+        if not isinstance(candidate_reports, Sequence) or isinstance(
+            candidate_reports,
+            (str, bytes),
+        ):
+            continue
+        for candidate in candidate_reports:
+            if not isinstance(candidate, Mapping):
+                continue
+            attempt_reports = candidate.get("attempt_reports")
+            if not isinstance(attempt_reports, Sequence) or isinstance(
+                attempt_reports,
+                (str, bytes),
+            ):
+                attempt_reports = [candidate]
+            for attempt in attempt_reports:
+                if not isinstance(attempt, Mapping):
+                    continue
+                attempted_count += 1
+                if bool(attempt.get("line_search_refinement")):
+                    refinement_attempt_count += 1
+                accepted = bool(attempt.get("accepted"))
+                if bool(attempt.get("strict_accepted")):
+                    strict_accepted_attempt_count += 1
+                deadband = attempt.get("projection_deadband")
+                if isinstance(deadband, Mapping):
+                    if bool(deadband.get("would_accept")):
+                        deadband_would_accept_count += 1
+                        if str(deadband.get("mode") or "") == "shadow":
+                            deadband_shadow_would_accept_count += 1
+                    if bool(deadband.get("enforced_accepted")):
+                        deadband_enforced_accept_count += 1
+                    tolerated = deadband.get("tolerated_regressions")
+                    if isinstance(tolerated, Mapping):
+                        for name in tolerated:
+                            key = str(name)
+                            deadband_tolerated_counts[key] = (
+                                deadband_tolerated_counts.get(key, 0) + 1
+                            )
+                    blocked = deadband.get("hard_guardrail_blocked_regressions")
+                    if isinstance(blocked, Mapping):
+                        for name in blocked:
+                            key = str(name)
+                            deadband_hard_guardrail_counts[key] = (
+                                deadband_hard_guardrail_counts.get(key, 0) + 1
+                            )
+                if accepted:
+                    accepted_attempt_count += 1
+                pareto_regressions = attempt.get("pareto_regressions")
+                if isinstance(pareto_regressions, Mapping):
+                    for name in pareto_regressions:
+                        key = str(name)
+                        if not accepted:
+                            regression_counts[key] = regression_counts.get(key, 0) + 1
+                objective_delta = _float_or_zero(attempt.get("objective_delta"))
+                if (
+                    isinstance(deadband, Mapping)
+                    and bool(deadband.get("would_accept"))
+                    and (
+                        best_deadband_would_accept is None
+                        or objective_delta
+                        > _float_or_zero(
+                            best_deadband_would_accept.get("objective_delta")
+                        )
+                    )
+                ):
+                    best_deadband_would_accept = {
+                        "acceptance_source": str(
+                            attempt.get("acceptance_source") or ""
+                        ),
+                        "cross_entropy_delta": round(
+                            _float_or_zero(attempt.get("cross_entropy_delta")),
+                            12,
+                        ),
+                        "effective_learning_rate": round(
+                            _float_or_zero(attempt.get("effective_learning_rate")),
+                            12,
+                        ),
+                        "line_search_multiplier": round(
+                            _float_or_zero(attempt.get("line_search_multiplier")),
+                            12,
+                        ),
+                        "objective_delta": round(objective_delta, 12),
+                        "pareto_regressions": dict(pareto_regressions)
+                        if isinstance(pareto_regressions, Mapping)
+                        else {},
+                        "projection_deadband": dict(deadband),
+                        "update": str(attempt.get("update") or ""),
+                    }
+                if accepted:
+                    continue
+                rejected_attempt_count += 1
+                if best_rejected is None or objective_delta > _float_or_zero(
+                    best_rejected.get("objective_delta")
+                ):
+                    best_rejected = {
+                        "cross_entropy_delta": round(
+                            _float_or_zero(attempt.get("cross_entropy_delta")),
+                            12,
+                        ),
+                        "effective_learning_rate": round(
+                            _float_or_zero(attempt.get("effective_learning_rate")),
+                            12,
+                        ),
+                        "legal_ir_view_cross_entropy_delta": round(
+                            _float_or_zero(
+                                attempt.get("legal_ir_view_cross_entropy_delta")
+                            ),
+                            12,
+                        ),
+                        "line_search_multiplier": round(
+                            _float_or_zero(attempt.get("line_search_multiplier")),
+                            12,
+                        ),
+                        "line_search_refinement": bool(
+                            attempt.get("line_search_refinement")
+                        ),
+                        "objective_delta": round(objective_delta, 12),
+                        "pareto_regressions": dict(pareto_regressions)
+                        if isinstance(pareto_regressions, Mapping)
+                        else {},
+                        "reconstruction_delta": round(
+                            _float_or_zero(attempt.get("reconstruction_delta")),
+                            12,
+                        ),
+                        "update": str(attempt.get("update") or ""),
+                    }
+    return {
+        "accepted_attempt_count": accepted_attempt_count,
+        "attempted_count": attempted_count,
+        "best_rejected_attempt": best_rejected or {},
+        "projection_deadband": {
+            "best_would_accept_attempt": best_deadband_would_accept or {},
+            "enforced_accept_count": deadband_enforced_accept_count,
+            "hard_guardrail_blocked_counts": dict(
+                sorted(deadband_hard_guardrail_counts.items())
+            ),
+            "shadow_would_accept_count": deadband_shadow_would_accept_count,
+            "strict_accepted_attempt_count": strict_accepted_attempt_count,
+            "tolerated_regression_counts": dict(
+                sorted(deadband_tolerated_counts.items())
+            ),
+            "would_accept_count": deadband_would_accept_count,
+        },
+        "pareto_regression_counts": dict(sorted(regression_counts.items())),
+        "refinement_attempt_count": refinement_attempt_count,
+        "rejected_attempt_count": rejected_attempt_count,
+    }
+
+
 def _vector_norm(values: Sequence[float]) -> float:
     return math.sqrt(sum(float(value) * float(value) for value in values))
+
+
+def _max_abs_mapping(values: Mapping[str, float]) -> float:
+    if not values:
+        return 0.0
+    return max(abs(float(value)) for value in values.values())
 
 
 def frame_ranking_loss(sample: LegalSample) -> float:
@@ -15957,13 +25228,20 @@ __all__ = [
     "CodexCallCache",
     "CodexCallDecision",
     "CodexCallGateConfig",
+    "MODAL_AUTOENCODER_ARCHITECTURE_VERSION",
+    "MODAL_AUTOENCODER_LOW_RANK_BASIS",
+    "MODAL_AUTOENCODER_LOW_RANK_DEFAULT_RANK",
+    "MODAL_AUTOENCODER_LOW_RANK_STATE_SCHEMA_VERSION",
+    "MODAL_AUTOENCODER_STATE_SCHEMA_VERSION",
     "ModalAutoencoderBaseline",
     "ModalAutoencoderTrainingState",
     "ProverCompilationSignal",
     "cosine_loss",
     "cosine_similarity",
+    "cross_entropy_excess_distribution_loss",
     "cross_entropy_distribution_loss",
     "cross_entropy_loss",
+    "distribution_entropy_loss",
     "evaluate_modal_prover_compilation",
     "frame_ranking_loss",
     "mse_loss",

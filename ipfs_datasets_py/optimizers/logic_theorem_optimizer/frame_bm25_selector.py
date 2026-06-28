@@ -66,6 +66,8 @@ _FRAME_ONTOLOGY_STOPWORDS = frozenset(
 )
 _FRAME_ONTOLOGY_TERM_PREDICATES = frozenset(
     {
+        "audited_high_signal_ontology_term",
+        "audited_ontology_term",
         "candidate_ontology_term",
         "selected_ontology_term",
         "interpreted_in_frame_term",
@@ -277,6 +279,39 @@ _FRAME_ONTOLOGY_SLOT_FRAME_SEMANTIC_VALUE_ALIASES = {
     ("role", "frame"): "frame",
 }
 _FRAME_ONTOLOGY_CUE_FEATURE_PREFIX = "cue:frame:"
+_FRAME_ONTOLOGY_LEGAL_IR_VIEW_PREFIXES: tuple[str, ...] = (
+    "legal-ir-view:",
+    "legal_ir_view:",
+)
+_FRAME_ONTOLOGY_LEGAL_IR_VIEW_GUIDANCE_PREFIXES: tuple[str, ...] = (
+    "legal-ir-view-gap:",
+    "legal_ir_view_gap:",
+    "legal-ir-predicted-view:",
+    "legal_ir_predicted_view:",
+    "legal-ir-target-view:",
+    "legal_ir_target_view:",
+)
+_FRAME_ONTOLOGY_CONDITION_CONSEQUENCE_PREFIXES: tuple[str, ...] = (
+    "condition-consequence:",
+    "condition_consequence:",
+    "source-condition-consequence:",
+    "source_condition_consequence:",
+    "legal-ir:condition-consequence:",
+    "legal_ir:condition_consequence:",
+)
+_FRAME_ONTOLOGY_QUALITY_FRAME_PREFIXES: tuple[str, ...] = (
+    "quality:frame:",
+    "quality:frame-logic:",
+    "quality:frame_logic:",
+)
+_FRAME_ONTOLOGY_SIGNATURE_FRAME_PREFIXES: tuple[str, ...] = (
+    "signature:frame:",
+    "signature:frame-logic:",
+    "signature:frame_logic:",
+    "signature:operator:frame:",
+    "signature:operator:frame-logic:",
+    "signature:operator:frame_logic:",
+)
 _FRAME_ONTOLOGY_CUE_VALUE_ALIASES = {
     "is a": "isa",
 }
@@ -297,14 +332,32 @@ _FRAME_ONTOLOGY_VALUE_KEY_FEATURE_PREFIXES = {
     "frame_term": "frame-term:",
     "modal_family": "family:selected_frame:",
     "modal_family_name": "family:selected_frame:",
+    "pipeline_stage": "flogic:statement_hint:",
+    "pipeline_stage_focus": "flogic:statement_hint:",
     "predicted_family": "family:selected_frame:",
+    "primary_pipeline_stage": "flogic:statement_hint:",
     "selected_family": "family:selected_frame:",
     "selected_frame": "frame:",
     "selected_frame_term": "selected-frame-term:",
     "selected_ontology_frame": "frame:",
     "selected_ontology_term": "selected-frame-term:",
     "target_family": "family:selected_frame:",
+    "target_component": "legal-ir-view:",
+    "target_file_lane": "legal-ir-view:",
+    "target_view": "legal-ir-view:",
+    "predicted_view": "legal-ir-view:",
 }
+_FRAME_ONTOLOGY_VIEW_LIST_KEY_FEATURE_PREFIXES = {
+    "legal_ir_underrepresented_components": "legal-ir-view:",
+    "underrepresented_components": "legal-ir-view:",
+    "top_predicted_views": "legal-ir-view:",
+    "top_target_views": "legal-ir-view:",
+}
+_FRAME_ONTOLOGY_HINT_ID_KEYS = frozenset({"hint_id", "hint_ids"})
+_FRAME_ONTOLOGY_HINT_ID_PREFIX_RE = re.compile(
+    r"^\s*(?P<prefix>[A-Za-z][A-Za-z0-9_-]*?)-(?P<digest>[0-9a-f]{12,})\s*$",
+    re.IGNORECASE,
+)
 _FRAME_ONTOLOGY_TERM_PRIORITY_NONE = 0
 _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL_STRUCTURAL = 1
 _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL = 2
@@ -348,6 +401,8 @@ _FRAME_ONTOLOGY_STRUCTURAL_CONTEXTUAL_PREDICATE_SUFFIXES: tuple[str, ...] = (
     "_unique_char_count",
 )
 _FRAME_ONTOLOGY_CONTEXTUAL_ALWAYS_PREDICATE_FRAGMENTS: tuple[str, ...] = (
+    "condition_consequence",
+    "legal_ir_view",
     "modal_cue",
     "condition_modal_family",
     "condition_modal_operator",
@@ -359,12 +414,18 @@ _FRAME_ONTOLOGY_CONTEXTUAL_ALWAYS_PREDICATE_FRAGMENTS: tuple[str, ...] = (
     "_thousands_block",
     "predicate_alnum_segment",
     "predicate_token",
+    "quality_frame",
+    "signature_frame",
     "_terminal_number_digit_count_bucket",
     "_terminal_number_span_digit_count_bucket",
+    "_has_zero_digit",
+    "_trailing_zero_count",
+    "_zero_digit_count",
 )
 _FRAME_ONTOLOGY_FEATURE_VALUE_MAX_DEPTH = 6
 _FRAME_ONTOLOGY_FEATURE_VALUE_MAX_VALUES = 2048
 _FRAME_ONTOLOGY_FEATURE_VALUE_JSON_MAX_LENGTH = 4096
+_PREDICATE_ARGUMENT_DIRECTION_MARKERS = frozenset({"in", "out"})
 
 
 @dataclass(frozen=True)
@@ -632,6 +693,37 @@ def frame_ontology_terms_from_feature_keys(
         term_entries.append(
             (normalized, _priority_for_frame_ontology_term(priority, normalized))
         )
+        for (
+            additional_raw_value,
+            additional_allow_numeric_tokens,
+            additional_allow_single_char_alpha_tokens,
+            additional_priority,
+        ) in _additional_frame_ontology_values_from_feature(feature):
+            additional_coordinate_value = _frame_ontology_coordinate_value(
+                additional_raw_value
+            )
+            if additional_coordinate_value:
+                additional_raw_value = additional_coordinate_value
+                additional_allow_numeric_tokens = True
+            additional_normalized = normalize_frame_ontology_term(
+                additional_raw_value,
+                keep_numeric_tokens=additional_allow_numeric_tokens,
+                keep_single_char_alpha_tokens=(
+                    additional_allow_single_char_alpha_tokens
+                ),
+                keep_stopword_tokens=allow_stopword_tokens,
+            )
+            if not additional_normalized:
+                continue
+            term_entries.append(
+                (
+                    additional_normalized,
+                    _priority_for_frame_ontology_term(
+                        additional_priority,
+                        additional_normalized,
+                    ),
+                )
+            )
     return _bounded_ontology_values(
         term_entries,
         max_items=max_terms,
@@ -767,7 +859,11 @@ def _synthetic_frame_feature_candidates_from_key_value(
     if not normalized_key:
         return []
     prefix = _FRAME_ONTOLOGY_VALUE_KEY_FEATURE_PREFIXES.get(normalized_key)
-    if not prefix:
+    sequence_prefix = _FRAME_ONTOLOGY_VIEW_LIST_KEY_FEATURE_PREFIXES.get(
+        normalized_key
+    )
+    is_hint_id_key = normalized_key in _FRAME_ONTOLOGY_HINT_ID_KEYS
+    if not prefix and not sequence_prefix and not is_hint_id_key:
         return []
     candidates: List[str] = []
     values: Sequence[Any]
@@ -786,8 +882,26 @@ def _synthetic_frame_feature_candidates_from_key_value(
         if is_frame_ontology_feature_key(text):
             candidates.append(text)
             continue
-        candidates.append(f"{prefix}{text}")
+        if is_hint_id_key:
+            hint_term = _frame_ontology_hint_id_audit_value(text)
+            if hint_term:
+                candidates.append(f"flogic:statement_hint:{hint_term}")
+            continue
+        candidates.append(f"{prefix or sequence_prefix}{text}")
     return candidates
+
+
+def _frame_ontology_hint_id_audit_value(value: str) -> str:
+    """Keep deterministic hint families while dropping opaque digest suffixes."""
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    match = _FRAME_ONTOLOGY_HINT_ID_PREFIX_RE.match(text)
+    if match:
+        return str(match.group("prefix") or "").strip()
+    if re.fullmatch(r"[0-9a-f]{12,}", text, re.IGNORECASE):
+        return ""
+    return text
 
 
 def _parsed_frame_ontology_feature_value(text: str) -> Any | None:
@@ -1049,6 +1163,10 @@ def _normalized_frame_ontology_value(predicate: str, value: str) -> str:
             normalized_clause_value = clause_value.strip()
             if normalized_clause_value:
                 raw_value = normalized_clause_value
+    if normalized_predicate == "predicate_argument":
+        normalized_predicate_argument = _normalized_predicate_argument_value(raw_value)
+        if normalized_predicate_argument:
+            return normalized_predicate_argument
     if normalized_predicate.endswith("_positioned"):
         match = _FRAME_ONTOLOGY_POSITIONED_VALUE_RE.match(raw_value)
         if match:
@@ -1065,6 +1183,20 @@ def _normalized_frame_ontology_value(predicate: str, value: str) -> str:
             if positioned_value:
                 return positioned_value
     return raw_value
+
+
+def _normalized_predicate_argument_value(raw_value: str) -> str:
+    """Canonicalize predicate-argument signatures for ontology audits."""
+    signature_type, separator, signature_value = str(raw_value or "").partition(":")
+    if not separator:
+        return ""
+    normalized_signature_type = _normalized_frame_ontology_predicate(signature_type)
+    if not normalized_signature_type:
+        return ""
+    segments = _predicate_argument_signature_segments(signature_value)
+    if not segments:
+        return normalized_signature_type
+    return ":".join([normalized_signature_type, *segments])
 
 
 def _normalized_source_id_ontology_value(raw_value: str) -> str:
@@ -1279,6 +1411,56 @@ def _frame_ontology_value_from_feature(
     feature: str,
 ) -> tuple[str, bool, bool, int]:
     lowered = feature.lower()
+    for prefix in _FRAME_ONTOLOGY_LEGAL_IR_VIEW_PREFIXES:
+        if lowered.startswith(prefix):
+            return (
+                feature[len(prefix) :].strip(),
+                False,
+                False,
+                _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL,
+            )
+    for prefix in _FRAME_ONTOLOGY_LEGAL_IR_VIEW_GUIDANCE_PREFIXES:
+        if lowered.startswith(prefix):
+            return (
+                _legal_ir_view_value_from_guidance_feature(
+                    feature[len(prefix) :].strip()
+                ),
+                False,
+                False,
+                _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL,
+            )
+    for prefix in _FRAME_ONTOLOGY_CONDITION_CONSEQUENCE_PREFIXES:
+        if lowered.startswith(prefix):
+            return (
+                _normalized_condition_consequence_ontology_value(
+                    feature[len(prefix) :].strip()
+                ),
+                False,
+                False,
+                _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL,
+            )
+    for prefix in _FRAME_ONTOLOGY_QUALITY_FRAME_PREFIXES:
+        if lowered.startswith(prefix):
+            return (
+                _normalized_frame_audit_signal_value(
+                    feature[len(prefix) :].strip(),
+                    default="frame",
+                ),
+                False,
+                False,
+                _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL,
+            )
+    for prefix in _FRAME_ONTOLOGY_SIGNATURE_FRAME_PREFIXES:
+        if lowered.startswith(prefix):
+            return (
+                _normalized_frame_audit_signal_value(
+                    feature[len(prefix) :].strip(),
+                    default="frame",
+                ),
+                False,
+                False,
+                _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL,
+            )
 
     for prefix in _FRAME_FAMILY_FEATURE_PREFIXES:
         if lowered == prefix or lowered.startswith(f"{prefix}:"):
@@ -1513,12 +1695,24 @@ def _predicate_allows_stopword_ontology_tokens(predicate: str) -> bool:
     return (
         canonical == "modal_cue"
         or canonical.endswith("_conditional_normative")
-        or canonical.startswith("condition_alnum_segment")
-        or canonical.startswith("condition_scope_alnum_segment")
+        or (
+            canonical.startswith("condition_alnum_segment")
+            and not canonical.endswith("_positioned")
+        )
+        or (
+            canonical.startswith("condition_scope_alnum_segment")
+            and not canonical.endswith("_positioned")
+        )
         or canonical.startswith("condition_token")
         or canonical.startswith("condition_scope_token")
-        or canonical.startswith("exception_alnum_segment")
-        or canonical.startswith("exception_scope_alnum_segment")
+        or (
+            canonical.startswith("exception_alnum_segment")
+            and not canonical.endswith("_positioned")
+        )
+        or (
+            canonical.startswith("exception_scope_alnum_segment")
+            and not canonical.endswith("_positioned")
+        )
         or canonical.startswith("exception_token")
         or canonical.startswith("exception_scope_token")
     )
@@ -1545,6 +1739,191 @@ def _feature_allows_stopword_ontology_tokens(feature: str) -> bool:
     if _is_contextual_frame_ontology_predicate(predicate):
         return _predicate_allows_stopword_ontology_tokens(predicate)
     return False
+
+
+def _legal_ir_view_value_from_guidance_feature(value: str) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    parts = [part.strip() for part in text.split(":") if part.strip()]
+    if len(parts) >= 2 and parts[0].lower() in {
+        "overrepresented",
+        "underrepresented",
+    }:
+        return parts[-1]
+    return parts[-1] if parts else text
+
+
+def _normalized_condition_consequence_ontology_value(value: str) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    text = re.sub(r"\blegal[_-]condition\b", "condition", text, flags=re.IGNORECASE)
+    text = re.sub(
+        r"\blegal[_-]consequence\b",
+        "consequence",
+        text,
+        flags=re.IGNORECASE,
+    )
+    text = re.sub(r"\blegal[_-]object\b", "object", text, flags=re.IGNORECASE)
+    return text
+
+
+def _normalized_frame_audit_signal_value(value: str, *, default: str) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return default
+    return text
+
+
+def _additional_frame_ontology_values_from_feature(
+    feature: str,
+) -> List[tuple[str, bool, bool, int]]:
+    """Return deterministic supplemental values for frame-linked features."""
+    lowered = str(feature or "").lower()
+    if not lowered.startswith("predicate-argument:"):
+        return []
+    _prefix, _separator, tail = str(feature or "").partition(":")
+    signature_type, separator, signature_value = tail.partition(":")
+    if not separator:
+        return []
+    normalized_signature_type = _normalized_frame_ontology_predicate(signature_type)
+    if not normalized_signature_type:
+        return []
+    if normalized_signature_type == "operator":
+        return _predicate_argument_operator_ontology_values(signature_value)
+    if normalized_signature_type == "role_shape":
+        return _predicate_argument_role_shape_ontology_values(signature_value)
+    if normalized_signature_type.endswith("_family"):
+        return _predicate_argument_anchor_family_ontology_values(signature_value)
+    if (
+        normalized_signature_type.endswith("_role")
+        or normalized_signature_type.endswith("_predicate")
+    ):
+        return _predicate_argument_anchor_ontology_values(signature_value)
+    return []
+
+
+def _predicate_argument_operator_ontology_values(
+    signature_value: str,
+) -> List[tuple[str, bool, bool, int]]:
+    segments = [segment.strip() for segment in str(signature_value or "").split(":")]
+    segments = [segment for segment in segments if segment]
+    if not segments:
+        return []
+    family = segments[0]
+    values: List[tuple[str, bool, bool, int]] = [
+        (
+            family,
+            False,
+            False,
+            _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
+        )
+    ]
+    if len(segments) >= 3:
+        values.append(
+            (
+                ":".join(segments[:3]),
+                False,
+                True,
+                _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
+            )
+        )
+    return values
+
+
+def _predicate_argument_anchor_family_ontology_values(
+    signature_value: str,
+) -> List[tuple[str, bool, bool, int]]:
+    segments = _predicate_argument_signature_segments(signature_value)
+    if not segments:
+        return []
+    anchor = segments[0]
+    values: List[tuple[str, bool, bool, int]] = [
+        (
+            anchor,
+            False,
+            False,
+            _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
+        )
+    ]
+    if len(segments) >= 2:
+        family = segments[1]
+        values.append(
+            (
+                f"{anchor}:{family}",
+                False,
+                False,
+                _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
+            )
+        )
+    return values
+
+
+def _predicate_argument_anchor_ontology_values(
+    signature_value: str,
+) -> List[tuple[str, bool, bool, int]]:
+    segments = _predicate_argument_signature_segments(signature_value)
+    if not segments:
+        return []
+    anchor = segments[0]
+    values: List[tuple[str, bool, bool, int]] = [
+        (
+            anchor,
+            False,
+            False,
+            _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
+        )
+    ]
+    if len(segments) >= 2:
+        values.append(
+            (
+                f"{anchor}:{segments[1]}",
+                False,
+                False,
+                _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
+            )
+        )
+    return values
+
+
+def _predicate_argument_signature_segments(signature_value: str) -> List[str]:
+    """Return predicate-argument segments without graph direction markers."""
+    segments = [
+        segment.strip()
+        for segment in str(signature_value or "").split(":")
+        if segment.strip()
+    ]
+    if len(segments) >= 2 and segments[0].lower() in _PREDICATE_ARGUMENT_DIRECTION_MARKERS:
+        return segments[1:]
+    return segments
+
+
+def _predicate_argument_role_shape_ontology_values(
+    signature_value: str,
+) -> List[tuple[str, bool, bool, int]]:
+    segments = [segment.strip() for segment in str(signature_value or "").split(":")]
+    segments = [segment for segment in segments if segment]
+    if not segments:
+        return []
+    values: List[tuple[str, bool, bool, int]] = [
+        (
+            segments[0],
+            False,
+            False,
+            _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
+        )
+    ]
+    if len(segments) >= 2:
+        values.append(
+            (
+                f"{segments[0]}:{segments[1]}",
+                False,
+                False,
+                _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
+            )
+        )
+    return values
 
 
 def _normalized_frame_ontology_cue_value(value: str) -> str:
@@ -1625,6 +2004,22 @@ def _frame_ontology_contextual_predicate_from_feature(feature_key: str) -> str:
     head, separator, tail = str(feature_key or "").partition(":")
     if not separator:
         return ""
+    lowered = str(feature_key or "").strip().lower()
+    for prefix in _FRAME_ONTOLOGY_LEGAL_IR_VIEW_PREFIXES:
+        if lowered.startswith(prefix):
+            return "legal_ir_view"
+    for prefix in _FRAME_ONTOLOGY_LEGAL_IR_VIEW_GUIDANCE_PREFIXES:
+        if lowered.startswith(prefix):
+            return "legal_ir_view"
+    for prefix in _FRAME_ONTOLOGY_CONDITION_CONSEQUENCE_PREFIXES:
+        if lowered.startswith(prefix):
+            return "condition_consequence"
+    for prefix in _FRAME_ONTOLOGY_QUALITY_FRAME_PREFIXES:
+        if lowered.startswith(prefix):
+            return "quality_frame"
+    for prefix in _FRAME_ONTOLOGY_SIGNATURE_FRAME_PREFIXES:
+        if lowered.startswith(prefix):
+            return "signature_frame"
     if _is_contextual_frame_ontology_predicate(head):
         return _normalized_frame_ontology_predicate(head)
     namespace = head.strip().lower()
@@ -1649,6 +2044,8 @@ def _should_contextualize_frame_ontology_value(
     normalized_value: str,
     include_positioned_terms: bool,
 ) -> bool:
+    if _is_low_signal_positioned_alnum_segment(predicate, normalized_value):
+        return False
     if _is_frame_ontology_contextual_low_signal_value(normalized_value):
         return True
     if _predicate_requires_explicit_frame_ontology_context(predicate):
@@ -1656,6 +2053,20 @@ def _should_contextualize_frame_ontology_value(
     if include_positioned_terms and predicate.endswith("_positioned"):
         return True
     return False
+
+
+def _is_low_signal_positioned_alnum_segment(
+    predicate: str,
+    normalized_value: str,
+) -> bool:
+    normalized_predicate = _normalized_frame_ontology_predicate(predicate)
+    if not normalized_predicate.endswith("_alnum_segment_positioned"):
+        return False
+    normalized = str(normalized_value or "").strip().lower()
+    return (
+        normalized in _FRAME_ONTOLOGY_STOPWORDS
+        or _is_frame_ontology_contextual_low_signal_value(normalized)
+    )
 
 
 def _predicate_requires_explicit_frame_ontology_context(predicate: str) -> bool:

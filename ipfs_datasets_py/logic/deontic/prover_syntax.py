@@ -72,6 +72,10 @@ class ProverTargetSyntaxRecord:
     ir_slot_grounding_fingerprint: str
     formula_slots: List[str]
     omitted_formula_slots: Dict[str, Any]
+    omitted_formula_slot_names: List[str]
+    decoded_omitted_formula_slots: List[str]
+    grounded_omitted_formula_slots: List[str]
+    ungrounded_omitted_formula_slots: List[str]
     decoded_ir_slot_alignment: Dict[str, Any]
     slot_alignment_fingerprint: str
     source_formula_symbols: List[str]
@@ -87,6 +91,8 @@ class ProverTargetSyntaxRecord:
     target_components: Dict[str, Any]
     target_quality_gate: Dict[str, Any]
     target_quality_gate_fingerprint: str
+    bridge_validation_status: str
+    bridge_validation_basis: Dict[str, Any]
     syntax_valid: bool
     skipped: bool
     diagnostics: List[Dict[str, Any]]
@@ -200,7 +206,7 @@ def _validate_target_formula(
     reconstruction_token_profile = _reconstruction_token_profile(
         target,
         norm,
-        decoded.text,
+        decoded,
     )
     target_components = _target_components(
         target,
@@ -224,6 +230,11 @@ def _validate_target_formula(
         target_dialect_profile,
         target_parse_profile,
         reconstruction_token_profile,
+    )
+    bridge_validation_basis = _bridge_validation_basis_for_target(
+        target,
+        target_quality_gate,
+        syntax_valid=syntax_valid,
     )
 
     return ProverTargetSyntaxRecord(
@@ -257,6 +268,16 @@ def _validate_target_formula(
         ir_slot_grounding_fingerprint=ir_slot_summary["ir_slot_grounding_fingerprint"],
         formula_slots=alignment_summary["formula_slots"],
         omitted_formula_slots=alignment_summary["omitted_formula_slots"],
+        omitted_formula_slot_names=alignment_summary["omitted_formula_slot_names"],
+        decoded_omitted_formula_slots=alignment_summary[
+            "decoded_omitted_formula_slots"
+        ],
+        grounded_omitted_formula_slots=alignment_summary[
+            "grounded_omitted_formula_slots"
+        ],
+        ungrounded_omitted_formula_slots=alignment_summary[
+            "ungrounded_omitted_formula_slots"
+        ],
         decoded_ir_slot_alignment=alignment_summary,
         slot_alignment_fingerprint=alignment_summary["slot_alignment_fingerprint"],
         source_formula_symbols=symbol_alignment["source_formula_symbols"],
@@ -282,6 +303,8 @@ def _validate_target_formula(
         target_quality_gate_fingerprint=target_quality_gate[
             "target_quality_gate_fingerprint"
         ],
+        bridge_validation_status=bridge_validation_basis["status"],
+        bridge_validation_basis=bridge_validation_basis,
         syntax_valid=syntax_valid,
         skipped=False,
         diagnostics=diagnostics,
@@ -289,6 +312,33 @@ def _validate_target_formula(
         requires_validation=bool(formula_record.get("requires_validation") is not False or diagnostics),
         schema_version=norm.schema_version,
     )
+
+
+def _bridge_validation_basis_for_target(
+    target: str,
+    target_quality_gate: Dict[str, Any],
+    *,
+    syntax_valid: bool,
+) -> Dict[str, Any]:
+    """Expose target-level local validation as an explicit bridge report signal."""
+
+    formal_complete = bool(
+        target_quality_gate.get("formal_validation_complete") is True
+    )
+    return {
+        "status": "validated" if formal_complete else "requires_validation",
+        "validator": "deontic.local_prover_quality_gate",
+        "validation_scope": "local_target_bridge_report",
+        "target": target,
+        "syntax_valid": bool(syntax_valid),
+        "formal_validation_complete": formal_complete,
+        "structural_checks_complete": bool(
+            target_quality_gate.get("structural_checks_complete") is True
+        ),
+        "failed_quality_checks": list(
+            target_quality_gate.get("failed_quality_checks") or []
+        ),
+    }
 
 
 def _render_target_formula(norm: LegalNormIR, target: str, formula: str) -> str:
@@ -429,11 +479,28 @@ def _decoded_ir_slot_alignment(
     grounded_formula_overlap = [
         slot for slot in grounded_ir_slots if slot in formula_set
     ]
+    decoded_omitted_slots = [
+        slot
+        for slot in omitted_formula_slot_names
+        if _slot_name_matches_any(slot, decoded_slots)
+    ]
+    grounded_omitted_slots = [
+        slot
+        for slot in omitted_formula_slot_names
+        if _slot_name_matches_any(slot, grounded_ir_slots)
+    ]
+    ungrounded_omitted_slots = [
+        slot
+        for slot in omitted_formula_slot_names
+        if slot not in grounded_omitted_slots
+    ]
+    omitted_alignment_complete = not ungrounded_omitted_slots
     complete = (
         not missing_decoded
         and not ungrounded_decoded
         and not formula_missing_decoded
         and not formula_ungrounded
+        and omitted_alignment_complete
     )
 
     fingerprint = _stable_fingerprint(
@@ -441,6 +508,8 @@ def _decoded_ir_slot_alignment(
         "|".join(grounded_ir_slots),
         "|".join(formula_slots),
         "|".join(omitted_formula_slot_names),
+        "|".join(grounded_omitted_slots),
+        "|".join(ungrounded_omitted_slots),
         str(complete),
     )
     return {
@@ -449,6 +518,11 @@ def _decoded_ir_slot_alignment(
         "formula_slots": formula_slots,
         "omitted_formula_slots": omitted_formula_slots,
         "omitted_formula_slot_names": omitted_formula_slot_names,
+        "decoded_omitted_formula_slots": decoded_omitted_slots,
+        "grounded_omitted_formula_slots": grounded_omitted_slots,
+        "ungrounded_omitted_formula_slots": ungrounded_omitted_slots,
+        "omitted_formula_slot_count": len(omitted_formula_slot_names),
+        "omitted_formula_slot_alignment_complete": omitted_alignment_complete,
         "decoded_formula_overlap": decoded_formula_overlap,
         "grounded_formula_overlap": grounded_formula_overlap,
         "decoded_missing_grounded_ir_slots": missing_decoded,
@@ -472,6 +546,26 @@ def _ordered_unique(values: Iterable[Any]) -> List[str]:
     return result
 
 
+def _slot_name_matches_any(slot: str, candidates: Sequence[Any]) -> bool:
+    aliases = _slot_name_aliases(slot)
+    return any(str(candidate or "").strip() in aliases for candidate in candidates)
+
+
+def _slot_name_aliases(slot: str) -> set[str]:
+    value = str(slot or "").strip()
+    aliases = {value}
+    if value.endswith("s"):
+        aliases.add(value[:-1])
+    aliases.update({
+        "recipients": "recipient",
+        "recipient": "recipients",
+        "overrides": "override",
+        "override": "overrides",
+    }.get(value, "").split())
+    aliases.discard("")
+    return aliases
+
+
 def _target_components(
     target: str,
     exported_formula: str,
@@ -493,6 +587,18 @@ def _target_components(
     ungrounded_ir_slots = list(ir_slot_summary.get("ungrounded_ir_slots") or [])
     missing_ir_slots = list(ir_slot_summary.get("missing_ir_slots") or [])
     formula_slots = list(alignment_summary.get("formula_slots") or [])
+    omitted_formula_slot_names = list(
+        alignment_summary.get("omitted_formula_slot_names") or []
+    )
+    decoded_omitted_formula_slots = list(
+        alignment_summary.get("decoded_omitted_formula_slots") or []
+    )
+    grounded_omitted_formula_slots = list(
+        alignment_summary.get("grounded_omitted_formula_slots") or []
+    )
+    ungrounded_omitted_formula_slots = list(
+        alignment_summary.get("ungrounded_omitted_formula_slots") or []
+    )
     missing_symbols = list(symbol_alignment.get("missing_exported_formula_symbols") or [])
     source_symbols = list(symbol_alignment.get("source_formula_symbols") or [])
     exported_symbols = list(symbol_alignment.get("exported_formula_symbols") or [])
@@ -517,6 +623,14 @@ def _target_components(
         "missing_ir_slot_count": len(missing_ir_slots),
         "formula_slots": formula_slots,
         "formula_slot_count": len(formula_slots),
+        "omitted_formula_slot_names": omitted_formula_slot_names,
+        "omitted_formula_slot_count": len(omitted_formula_slot_names),
+        "decoded_omitted_formula_slots": decoded_omitted_formula_slots,
+        "grounded_omitted_formula_slots": grounded_omitted_formula_slots,
+        "ungrounded_omitted_formula_slots": ungrounded_omitted_formula_slots,
+        "omitted_formula_slot_alignment_complete": bool(
+            alignment_summary.get("omitted_formula_slot_alignment_complete") is True
+        ),
         "slot_alignment_complete": bool(
             alignment_summary.get("alignment_complete") is True
         ),
@@ -610,6 +724,8 @@ def _semantic_formula_family(action_predicate: str) -> str:
         return "ordinary_duty"
 
     ordered_prefixes: Sequence[tuple[Sequence[str], str]] = (
+        (("Purpose",), "purpose"),
+        (("Repealed", "Omitted", "Reserved", "Transferred", "Lifecycle", "ValidFor", "ExpiresAfter"), "instrument_lifecycle"),
         (("DocumentChainCustody", "LogCustody", "RecordEvidenceTransfer", "InventoryEvidence", "InventoryExhibit", "Accession", "PreserveEvidence"), "evidence_custody_duty"),
         (("RecordMinutes", "SetAgenda", "CallRoll", "NoticeMeeting"), "meeting_governance_duty"),
         (("ReportIncident", "LogIncident", "RegisterBreach", "RegisterRisk", "RegisterIncident"), "incident_risk_reporting_duty"),
@@ -684,6 +800,9 @@ def _target_quality_gate(
         reconstruction_token_profile.get("reconstruction_token_profile_complete")
         is True
     )
+    omitted_slot_alignment_complete = bool(
+        alignment_summary.get("omitted_formula_slot_alignment_complete") is True
+    )
     known_local_target = target in LOCAL_PROVER_TARGETS
     structural_checks_complete = all(
         (
@@ -729,6 +848,10 @@ def _target_quality_gate(
         str(structural_checks_complete),
         str(formal_validation_complete),
         str(parser_theorem_promotable),
+        str(omitted_slot_alignment_complete),
+        "|".join(alignment_summary.get("omitted_formula_slot_names") or []),
+        "|".join(alignment_summary.get("grounded_omitted_formula_slots") or []),
+        "|".join(alignment_summary.get("ungrounded_omitted_formula_slots") or []),
         "|".join(failed_checks),
         "|".join(diagnostic_codes),
     )
@@ -741,6 +864,19 @@ def _target_quality_gate(
         "formula_requires_validation": formula_requires_validation,
         "parser_proof_ready": bool(norm.proof_ready),
         "slot_alignment_complete": slot_alignment_complete,
+        "omitted_formula_slot_alignment_complete": omitted_slot_alignment_complete,
+        "omitted_formula_slot_names": list(
+            alignment_summary.get("omitted_formula_slot_names") or []
+        ),
+        "decoded_omitted_formula_slots": list(
+            alignment_summary.get("decoded_omitted_formula_slots") or []
+        ),
+        "grounded_omitted_formula_slots": list(
+            alignment_summary.get("grounded_omitted_formula_slots") or []
+        ),
+        "ungrounded_omitted_formula_slots": list(
+            alignment_summary.get("ungrounded_omitted_formula_slots") or []
+        ),
         "target_symbol_alignment_complete": symbol_alignment_complete,
         "target_dialect_profile_complete": dialect_complete,
         "target_parse_profile_complete": parse_complete,
@@ -805,16 +941,19 @@ _RECONSTRUCTION_TOKEN_EQUIVALENTS = {
 def _reconstruction_token_profile(
     target: str,
     norm: LegalNormIR,
-    decoded_text: str,
+    decoded: Any,
 ) -> Dict[str, Any]:
     """Compare source and decoded salient legal tokens for Phase 8 audits."""
 
+    decoded_text = str(getattr(decoded, "text", "") or "").strip()
     source_text = str(norm.source_text or "").strip()
     support_text = str(norm.support_text or "").strip()
     source_tokens = _salient_reconstruction_tokens(source_text or support_text)
     support_tokens = _salient_reconstruction_tokens(support_text)
     if not support_tokens:
         support_tokens = list(source_tokens)
+    slot_basis_tokens = _decoded_slot_basis_tokens(decoded)
+    fixed_connector_tokens = _decoded_fixed_connector_tokens(decoded)
     decoded_tokens = _salient_reconstruction_tokens(decoded_text)
     source_set = set(source_tokens)
     decoded_set = set(decoded_tokens)
@@ -826,16 +965,32 @@ def _reconstruction_token_profile(
     reconstruction_neutral_warning_bundle = bool(warning_bundle) and warning_bundle.issubset(
         _RECONSTRUCTION_NEUTRAL_WARNING_BUNDLE
     )
-    use_support_basis = bool(support_tokens) and (
+    use_slot_basis = bool(slot_basis_tokens)
+    use_support_basis = (not use_slot_basis) and bool(support_tokens) and (
         (
             bool(source_tokens)
             and len(source_tokens) > (3 * len(support_tokens))
         )
         or reconstruction_neutral_warning_bundle
     )
-    basis_tokens = support_tokens if use_support_basis else source_tokens
+    if use_slot_basis:
+        basis_tokens = slot_basis_tokens
+        source_text_basis = "decoded_slot_basis"
+    else:
+        basis_tokens = support_tokens if use_support_basis else source_tokens
+        source_text_basis = (
+            "support_text"
+            if use_support_basis
+            else "source_text"
+            if source_text
+            else "support_text"
+        )
     basis_set = set(basis_tokens)
-    reference_source_set = source_set or basis_set
+    reference_source_set = set(source_set or basis_set)
+    reference_source_set.update(basis_set)
+    reference_source_set.update(fixed_connector_tokens)
+    if not reference_source_set:
+        reference_source_set.update(basis_set)
     matched_tokens = [
         token
         for token in basis_tokens
@@ -858,13 +1013,6 @@ def _reconstruction_token_profile(
         6,
     ) if decoded_tokens else 1.0
     complete = not unreconstructed_tokens and not out_of_source_tokens
-    source_text_basis = (
-        "support_text"
-        if use_support_basis
-        else "source_text"
-        if source_text
-        else "support_text"
-    )
     fingerprint = _stable_fingerprint(
         target,
         norm.source_id,
@@ -893,6 +1041,44 @@ def _reconstruction_token_profile(
         "reconstruction_token_profile_complete": complete,
         "reconstruction_token_profile_fingerprint": fingerprint,
     }
+
+
+def _decoded_slot_basis_tokens(decoded: Any) -> List[str]:
+    """Return ordered tokens from semantic decoded slots only.
+
+    Fixed connectives and provenance-only rows are excluded from this basis.
+    They are validated separately as allowed connective/source additions.
+    """
+
+    tokens: List[str] = []
+    for phrase in getattr(decoded, "phrases", []) or []:
+        if getattr(phrase, "fixed", False):
+            continue
+        if getattr(phrase, "provenance_only", False):
+            continue
+        text = str(getattr(phrase, "text", "") or "").strip()
+        if not text:
+            continue
+        for token in _salient_reconstruction_tokens(text):
+            if token not in tokens:
+                tokens.append(token)
+    return tokens
+
+
+def _decoded_fixed_connector_tokens(decoded: Any) -> List[str]:
+    """Return ordered tokens that come from fixed decoder connectives."""
+
+    tokens: List[str] = []
+    for phrase in getattr(decoded, "phrases", []) or []:
+        if not getattr(phrase, "fixed", False):
+            continue
+        text = str(getattr(phrase, "text", "") or "").strip()
+        if not text:
+            continue
+        for token in _salient_reconstruction_tokens(text):
+            if token not in tokens:
+                tokens.append(token)
+    return tokens
 
 
 def _salient_reconstruction_tokens(text: str) -> List[str]:
@@ -1054,9 +1240,14 @@ def _target_parse_profile_shape_complete(
             "AppliesTo",
             "Definition",
             "ExemptFrom",
+            "Purpose",
             "ValidFor",
             "ExpiresAfter",
             "Lifecycle",
+            "Repealed",
+            "Omitted",
+            "Reserved",
+            "Transferred",
         }
     if target == "deontic_fol":
         return (
@@ -1435,7 +1626,9 @@ def _to_ascii_logic(formula: str) -> str:
 
 def _to_frame_logic_atom(formula: str) -> str:
     text = _to_ascii_logic(formula)
-    return re.sub(r"\s+", "_", text).strip("_") or "formula"
+    text = re.sub(r"\s+", "_", text)
+    text = re.sub(r"[^0-9A-Za-z_().,\->=]+", "_", text)
+    return text.strip("_") or "formula"
 
 
 def _is_frame_style_formula(formula: str) -> bool:
@@ -1453,4 +1646,7 @@ def _source_symbol(source_id: str) -> str:
 
 def _predicate_symbol(value: str) -> str:
     words = re.findall(r"[0-9A-Za-z]+", str(value or ""))
-    return "".join(word[:1].upper() + word[1:] for word in words) if words else "Unknown"
+    predicate = "".join(word[:1].upper() + word[1:] for word in words) if words else "Unknown"
+    if predicate and not predicate[0].isalpha():
+        predicate = f"N{predicate}"
+    return predicate

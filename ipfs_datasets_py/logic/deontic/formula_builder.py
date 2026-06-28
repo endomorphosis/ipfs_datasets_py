@@ -114,6 +114,10 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     if operator == "DEF":
         subject = normalize_predicate_name(norm.actor or "DefinedTerm")
         return f"Definition({subject})"
+    if operator == "PURP" or norm.norm_type == "purpose":
+        subject = normalize_predicate_name(norm.actor or "Entity")
+        action = normalize_predicate_name(norm.action or "Purpose")
+        return f"Purpose({subject}, {action})"
     if operator == "APP":
         subject = normalize_predicate_name(norm.actor or "Scope")
         target = normalize_predicate_name(_applicability_target(norm.action or "Apply"))
@@ -135,6 +139,14 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
         if lowered.startswith("expires "):
             anchor = action_text[len("expires ") :]
             return f"ExpiresAfter({subject}, {normalize_predicate_name(anchor)})"
+        if lowered.startswith("repealed"):
+            return f"Repealed({subject})"
+        if lowered.startswith("omitted"):
+            return f"Omitted({subject})"
+        if lowered.startswith("reserved"):
+            return f"Reserved({subject})"
+        if lowered.startswith("transferred"):
+            return f"Transferred({subject})"
         return f"Lifecycle({subject}, {normalize_predicate_name(action_text)})"
 
     action_text = _action_without_mental_state(
@@ -2584,7 +2596,10 @@ def normalize_predicate_name(name: str) -> str:
     ]
     if not filtered_words:
         return "P"
-    return "".join(word.capitalize() for word in filtered_words)
+    predicate = "".join(word.capitalize() for word in filtered_words)
+    if predicate and not predicate[0].isalpha():
+        predicate = f"N{predicate}"
+    return predicate
 
 
 def _slot_texts(items: Iterable[Dict[str, Any]]) -> List[str]:
@@ -3550,34 +3565,56 @@ def _source_grounded_reconstruction_warning_formula_resolution(
         "exception_requires_scope_review",
         "overlong_action_span",
         "llm_repair_required",
+        "normative_conflict_requires_resolution",
     }
     if not blocker_set.issubset(allowed_blockers):
         return {}
 
-    modality = _norm_modality(norm)
-    if modality not in {"O", "P", "F"}:
+    required_slots = _reconstruction_warning_core_slots(norm)
+    if not required_slots:
         return {}
-    if not norm.actor.strip() or not norm.action.strip():
+    for slot_name in required_slots:
+        slot_value = str(getattr(norm, slot_name, "") or "").strip()
+        if slot_value:
+            continue
         return {}
 
     included_slots = set(_included_formula_slots(norm))
-    if not {"actor", "modality", "action"}.issubset(included_slots):
+    if not set(required_slots).issubset(included_slots):
         return {}
 
     omitted_slots = _omitted_formula_slots(norm)
-    for core_slot in ("actor", "modality", "action"):
+    for core_slot in required_slots:
         if omitted_slots.get(core_slot):
             return {}
 
     return {
         "type": "source_grounded_reconstruction_warning_bundle",
         "resolved_blockers": sorted(blocker_set),
-        "core_slots": ["actor", "modality", "action"],
+        "core_slots": list(required_slots),
         "reason": (
             "core deontic slots are source-grounded and formula-complete; "
             "remaining parser warnings are reconstruction-neutral"
         ),
     }
+
+
+def _reconstruction_warning_core_slots(norm: LegalNormIR) -> tuple[str, ...]:
+    """Return family-specific core slots for warning-bundle formula readiness."""
+
+    modality = _norm_modality(norm)
+    norm_type = str(norm.norm_type or "").strip().lower()
+    if modality in {"O", "P", "F"}:
+        return ("actor", "modality", "action")
+    if modality == "DEF" or norm_type == "definition":
+        return ("actor", "action")
+    if modality in {"APP", "EXEMPT", "LIFE"} or norm_type in {
+        "applicability",
+        "exemption",
+        "instrument_lifecycle",
+    }:
+        return ("actor", "action")
+    return ()
 
 
 _READINESS_FORMULA_RESOLUTION_TYPES = {

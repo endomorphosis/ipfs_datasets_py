@@ -285,6 +285,144 @@ def test_compiler_spacy_backend_adds_residual_span_coverage_after_residual_fallb
     assert result.modal_ir.formulas[-1].metadata.get("fallback_rule") == "uscode_procedural_clause_v1"
 
 
+def test_parser_types_notice_comment_residual_span_as_administrative_frame() -> None:
+    parser = LegalModalParser()
+    modal_ir = parser.parse(
+        (
+            "The Secretary shall publish the annual report. "
+            "Public comments on proposed agency guidance are collected in the administrative record."
+        ),
+        document_id="us-code-21-2013-notice-comment-residual",
+        citation="21 U.S.C. 2013",
+    )
+
+    residual_formulas = [
+        formula
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    ]
+    residual_text = " ".join(
+        modal_ir.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ].lower()
+        for formula in residual_formulas
+    )
+
+    assert "public comments on proposed agency guidance" in residual_text
+    assert all(formula.operator.family == ModalLogicFamily.FRAME.value for formula in residual_formulas)
+    assert all(formula.provenance.citation == "21 U.S.C. 2013" for formula in residual_formulas)
+
+
+def test_compiler_spacy_backend_types_notice_comment_residual_span_as_administrative_frame() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+    result = compiler.compile(
+        (
+            "The agency must retain the contract file. "
+            "The administrative comment period for proposed procurement guidance."
+        ),
+        document_id="us-code-41-4711-comment-period-residual",
+        citation="41 U.S.C. 4711",
+    )
+
+    residual_formulas = [
+        formula
+        for formula in result.modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    ]
+    residual_text = " ".join(
+        result.modal_ir.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ].lower()
+        for formula in residual_formulas
+    )
+
+    assert "administrative comment period" in residual_text
+    assert all(formula.operator.family == ModalLogicFamily.FRAME.value for formula in residual_formulas)
+    assert all(formula.provenance.citation == "41 U.S.C. 4711" for formula in residual_formulas)
+
+
+def test_parser_types_compact_uncovered_uscode_topic_headings_as_frame_spans() -> None:
+    parser = LegalModalParser()
+    modal_ir = parser.parse(
+        (
+            "The Secretary shall issue guidance. "
+            "Congressional declaration of purpose. "
+            "Authorization of appropriations. "
+            "Notification and information sharing."
+        ),
+        document_id="us-code-42-300ff-compact-topic-headings",
+        citation="42 U.S.C. 300ff",
+    )
+
+    residual_formulas = [
+        formula
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    ]
+
+    assert residual_formulas
+    residual_text = " ".join(
+        modal_ir.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ].lower()
+        for formula in residual_formulas
+    )
+    frame_text = " ".join(
+        modal_ir.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ].lower()
+        for formula in modal_ir.formulas
+        if formula.operator.family == ModalLogicFamily.FRAME.value
+    )
+    assert "congressional declaration of purpose" in frame_text
+    assert "authorization of appropriations" in residual_text
+    assert "notification and information sharing" in residual_text
+    assert all(formula.operator.family == ModalLogicFamily.FRAME.value for formula in residual_formulas)
+
+
+def test_compiler_spacy_backend_types_compact_uncovered_uscode_topic_headings_as_frame_spans() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+    result = compiler.compile(
+        (
+            "The Secretary shall issue guidance. "
+            "Congressional declaration of purpose. "
+            "Authorization of appropriations. "
+            "Notification and information sharing."
+        ),
+        document_id="us-code-42-300ff-compact-topic-headings",
+        citation="42 U.S.C. 300ff",
+    )
+
+    residual_formulas = [
+        formula
+        for formula in result.modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    ]
+
+    assert residual_formulas
+    residual_text = " ".join(
+        result.modal_ir.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ].lower()
+        for formula in residual_formulas
+    )
+    frame_text = " ".join(
+        result.modal_ir.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ].lower()
+        for formula in result.modal_ir.formulas
+        if formula.operator.family == ModalLogicFamily.FRAME.value
+    )
+    assert "congressional declaration of purpose" in frame_text
+    assert "authorization of appropriations" in residual_text
+    assert "notification and information sharing" in residual_text
+    assert all(formula.operator.family == ModalLogicFamily.FRAME.value for formula in residual_formulas)
+
+
 def test_compiler_spacy_backend_recovers_editorial_status_fallback_when_strict_fallback_is_cue_blocked() -> None:
     compiler = DeterministicModalCompiler(
         config=ModalCompilerConfig(parser_backend="spacy")
@@ -313,6 +451,114 @@ def test_compiler_spacy_backend_recovers_editorial_status_fallback_when_strict_f
     assert _missing_modal_formula_count(result) == 0
     assert all(formula.operator.family == ModalLogicFamily.FRAME.value for formula in editorial_formulas)
     assert all(formula.provenance.citation == "16 U.S.C. 452a" for formula in editorial_formulas)
+
+
+def test_parser_adds_frame_residual_for_omitted_editorial_note_tail_with_non_temporal_by() -> None:
+    parser = LegalModalParser()
+    modal_ir = parser.parse(
+        (
+            "§4906. Omitted Editorial Notes Codification Section, Pub. L. 92-574, "
+            "§7(a), Oct. 27, 1972, 86 Stat. 1239, related to a study by the "
+            "Administrator of the adequacy of noise controls, noise emission "
+            "standards, and measures available to control noise."
+        ),
+        document_id="us-code-42-4906-editorial-tail",
+        citation="42 U.S.C. 4906.",
+    )
+
+    assert any(
+        "related to a study by the administrator" in modal_ir.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ].lower()
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    )
+
+
+def test_parser_keeps_formula_ids_unique_for_editorial_tail_residuals() -> None:
+    parser = LegalModalParser()
+    modal_ir = parser.parse(
+        (
+            "§4906. Omitted Editorial Notes Codification Section, Pub. L. 92-574, "
+            "§7(a), Oct. 27, 1972, 86 Stat. 1239, related to a study by the "
+            "Administrator of the adequacy of noise controls, noise emission "
+            "standards, and measures available to control noise."
+        ),
+        document_id="us-code-42-4906-unique-formulas",
+        citation="42 U.S.C. 4906.",
+    )
+
+    formula_ids = [formula.formula_id for formula in modal_ir.formulas]
+    assert len(formula_ids) == len(set(formula_ids))
+
+
+def test_parser_adds_frame_residual_for_revision_note_omitted_words() -> None:
+    parser = LegalModalParser()
+    modal_ir = parser.parse(
+        (
+            "§22306. Exclusive right to name. The corporation has the exclusive "
+            "right to use the name. Historical and Revision Notes The words "
+            '"sole" and "to have and to use in carrying out its purposes" are '
+            "omitted as unnecessary."
+        ),
+        document_id="us-code-36-22306-revision-note",
+        citation="36 U.S.C. 22306",
+    )
+
+    assert any(
+        "are omitted as unnecessary" in modal_ir.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ].lower()
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    )
+
+
+def test_parser_adds_frame_residual_for_uscode_footnote_tail() -> None:
+    parser = LegalModalParser()
+    modal_ir = parser.parse(
+        (
+            "§737. Unrestricted deeds for townsite lands. The trustee shall "
+            "issue an unrestricted deed. 1 See References in Text note below. "
+            "2 So in original."
+        ),
+        document_id="us-code-43-737-footnote-tail",
+        citation="43 U.S.C. 737.",
+    )
+
+    residual_text = " ".join(
+        modal_ir.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ].lower()
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    )
+    assert "references in text note below" in residual_text
+    assert "so in original" in residual_text
+
+
+def test_parser_adds_frame_residual_for_legislative_history_parenthetical() -> None:
+    parser = LegalModalParser()
+    modal_ir = parser.parse(
+        (
+            "§1315. State reports on water quality. Each State shall submit a "
+            "report. (June 30, 1948, ch. 758, title III, §305, as added Pub. "
+            "L. 92-500, §2, Oct. 18, 1972, 86 Stat. 853; amended Pub. L. "
+            "95-217, §52, Dec. 27, 1977, 91 Stat. 1589.) Editorial Notes"
+        ),
+        document_id="us-code-33-1315-legislative-history",
+        citation="33 U.S.C. 1315",
+    )
+
+    residual_text = " ".join(
+        modal_ir.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ].lower()
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    )
+    assert "june 30, 1948" in residual_text
+    assert "91 stat. 1589" in residual_text
 
 
 def test_compiler_emits_explicit_frame_to_conditional_and_temporal_adaptive_pairs() -> None:

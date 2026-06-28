@@ -91,6 +91,7 @@ class RoundTripMetrics:
     frame_ranking_loss: float = 0.0
     flogic_similarity_score: float = 0.0
     flogic_similarity_loss: float = 0.0
+    ontology_violation_count: float = 0.0
     symbolic_validity_penalty: float = 0.0
     extra_losses: Mapping[str, float] = field(default_factory=dict)
 
@@ -105,6 +106,10 @@ class RoundTripMetrics:
             "frame_ranking_loss",
             "flogic_similarity_score",
             "flogic_similarity_loss",
+            "raw_source_embedding_cosine_similarity",
+            "source_span_copy_ratio",
+            "source_span_text_reconstruction_loss",
+            "structural_text_reconstruction_similarity",
             "symbolic_validity_penalty",
         }
         return cls(
@@ -116,6 +121,7 @@ class RoundTripMetrics:
             frame_ranking_loss=_float_loss(losses, "frame_ranking_loss"),
             flogic_similarity_score=_float_loss(losses, "flogic_similarity_score"),
             flogic_similarity_loss=_float_loss(losses, "flogic_similarity_loss"),
+            ontology_violation_count=_float_loss(losses, "ontology_violation_count"),
             symbolic_validity_penalty=_float_loss(losses, "symbolic_validity_penalty"),
             extra_losses={
                 str(name): _coerce_float(value)
@@ -158,6 +164,7 @@ class RoundTripMetrics:
             "flogic_similarity_score": self.flogic_similarity_score,
             "frame_ranking_loss": self.frame_ranking_loss,
             "reconstruction_loss": self.reconstruction_loss,
+            "ontology_violation_count": self.ontology_violation_count,
             "symbolic_validity_penalty": self.symbolic_validity_penalty,
             "text_reconstruction_loss": self.text_reconstruction_loss,
         }
@@ -251,9 +258,13 @@ class GraphProjectionResult:
             return cls(metadata={"reason": "graph projection disabled"})
         schema = getattr(graph_data, "schema", None)
         metadata = dict(getattr(graph_data, "metadata", {}) or {})
+        if "neo4j_compatible" in metadata:
+            neo4j_compatible = _coerce_bool(metadata.get("neo4j_compatible"))
+        else:
+            neo4j_compatible = _graph_data_has_neo4j_shape(graph_data)
         return cls(
             graph_id=str(metadata.get("graph_id") or ""),
-            neo4j_compatible=bool(metadata.get("neo4j_compatible")),
+            neo4j_compatible=neo4j_compatible,
             node_count=int(getattr(graph_data, "node_count", 0) or 0),
             relationship_count=int(getattr(graph_data, "relationship_count", 0) or 0),
             node_labels=tuple(getattr(schema, "node_labels", ()) or ()),
@@ -291,9 +302,17 @@ class BridgeEvaluationReport:
     @property
     def total_loss(self) -> float:
         return self.round_trip.total_loss(
-            proof_failure_ratio=self.proof_gate.failure_ratio,
+            proof_failure_ratio=self.effective_proof_failure_ratio,
             graph_failure_penalty=self.graph_projection.graph_failure_penalty,
         )
+
+    @property
+    def effective_proof_failure_ratio(self) -> float:
+        """Return optimizer proof penalty after bridge-level soft-pass handling."""
+
+        if bool(self.metadata.get("proof_gate_soft_pass")):
+            return 0.0
+        return self.proof_gate.failure_ratio
 
     @property
     def accepted(self) -> bool:
@@ -314,6 +333,7 @@ class BridgeEvaluationReport:
             "ir_document": self.ir_document.to_dict(),
             "metadata": dict(sorted(self.metadata.items())),
             "proof_gate": self.proof_gate.to_dict(),
+            "effective_proof_failure_ratio": self.effective_proof_failure_ratio,
             "round_trip": self.round_trip.to_dict(),
             "status": self.status,
             "target_component": self.target_component,
@@ -330,6 +350,45 @@ def _coerce_float(value: Any) -> float:
         return float(value)
     except (TypeError, ValueError):
         return 0.0
+
+
+def _coerce_bool(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return value != 0
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"1", "true", "yes", "y", "on"}:
+            return True
+        if normalized in {"0", "false", "no", "n", "off", ""}:
+            return False
+    return bool(value)
+
+
+def _graph_data_has_neo4j_shape(graph_data: Any) -> bool:
+    """Infer compatibility for structural GraphData emitted without metadata."""
+
+    nodes = tuple(getattr(graph_data, "nodes", ()) or ())
+    relationships = tuple(getattr(graph_data, "relationships", ()) or ())
+    if not nodes or not relationships:
+        return False
+
+    node_ids = {
+        str(getattr(node, "id", "") or "")
+        for node in nodes
+        if str(getattr(node, "id", "") or "")
+    }
+    if len(node_ids) != len(nodes):
+        return False
+
+    for relationship in relationships:
+        rel_type = str(getattr(relationship, "type", "") or "").strip()
+        start_node = str(getattr(relationship, "start_node", "") or "")
+        end_node = str(getattr(relationship, "end_node", "") or "")
+        if not rel_type or start_node not in node_ids or end_node not in node_ids:
+            return False
+    return True
 
 
 def _extra_loss_penalty(values: Sequence[float]) -> float:

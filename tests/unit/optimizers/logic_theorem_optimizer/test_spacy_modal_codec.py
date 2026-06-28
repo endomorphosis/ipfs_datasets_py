@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import pytest
 
+from ipfs_datasets_py.logic.modal.decompiler import decode_modal_ir_document
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import build_us_code_sample
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_modal_parser import LegalModalParser
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import AdaptiveModalAutoencoder
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import ModalTodoSupervisor
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec import (
@@ -45,6 +47,10 @@ _USCODE_46_55318_TODO_TEXT = (
     "words \"section 1707a(b)(8) of title 7\" are omitted because the provision referred "
     "to has been repealed."
 )
+_USCODE_SAVINGS_EFFECT_RESIDUAL_TEXT = (
+    "Sec. 18726 - Savings provision. Nothing in this part affects any other "
+    "provision of law of a Federal department or agency."
+)
 _USCODE_8_606_TODO_TEXT = (
     "U.S.C. Title 8 - ALIENS AND NATIONALITY 8 U.S.C. United States Code, 2024 Edition "
     "Title 8 - ALIENS AND NATIONALITY CHAPTER 11 - NATIONALITY SUBCHAPTER II - NATIONALITY "
@@ -80,6 +86,17 @@ _USCODE_50_2523B_RESIDUAL_SPAN_TEXT = (
     "Sec. 2523b - Transfer authority and procedures. Administrative notice and hearing "
     "procedures are established for this section. Editorial Notes Codification Section "
     "2523b was editorially reclassified as section 3373b of this title."
+)
+_USCODE_10_3101_ADMINISTRATIVE_RESIDUAL_SPAN_TEXT = (
+    "Sec. 3101 - General provisions. Administrative notice and hearing procedures "
+    "for eligibility review and petition records."
+)
+_USCODE_ADMINISTRATIVE_PROCEEDING_RESIDUAL_SPAN_TEXT = (
+    "Sec. 1116 - Administrative record. Notice of proceeding and hearing records "
+    "for investigation testimony."
+)
+_USCODE_44_3558_REPORTS_RESIDUAL_SPAN_TEXT = (
+    "Sec. 3558 - Major incident reporting. Congressional notification and reports."
 )
 _USCODE_25_5396_TODO_TEXT = (
     "U.S.C. Title 25 - INDIANS 25 U.S.C. United States Code, 2024 Edition Title 25 - INDIANS CHAPTER 46 - INDIAN SE"
@@ -176,6 +193,20 @@ _USCODE_25_57_RESIDUAL_SPAN_TODO_TEXT = (
     "employees in the Indian Service heat and light for quarters without "
     "charge, was not repeated in subsequent appropriation acts."
 )
+_USCODE_15_1212_TRANSFER_FUNCTIONS_TODO_TEXT = (
+    "U.S.C. Title 15 - COMMERCE AND TRADE 15 U.S.C. United States Code, 2024 "
+    "Edition Title 15 - COMMERCE AND TRADE CHAPTER 26 - HOUSEHOLD "
+    "REFRIGERATORS Sec. 1212 - Violations; misdemeanor; penalties From the "
+    "U.S. Government Publishing Office, www.gpo.gov §1212. Violations; "
+    "misdemeanor; penalties Any person who violates section 1211 of this title "
+    "shall be guilty of a misdemeanor and shall, upon conviction thereof, be "
+    "subject to imprisonment for not more than one year, or a fine of not more "
+    "than $1,000, or both. (Aug. 2, 1956, ch. 890, §2, 70 Stat. 953.) "
+    "Statutory Notes and Related Subsidiaries Transfer of Functions Functions "
+    "of Secretary of Commerce and Federal Trade Commission under this chapter "
+    "transferred to Consumer Product Safety Commission, see section 2079 of "
+    "this title."
+)
 _USCODE_2_5602_SYMBOLIC_VALIDITY_TODO_TEXT = (
     "U.S.C. Title 2 - THE CONGRESS 2 U.S.C. United States Code, 2024 Edition "
     "Title 2 - THE CONGRESS CHAPTER 55 - HOUSE OF REPRESENTATIVES OFFICERS AND "
@@ -225,6 +256,28 @@ _USCODE_42_12313_SYMBOLIC_VALIDITY_TODO_TEXT = (
 _USCODE_43_2430_PACKET_143_TODO_TEXT = (
     "The administrative notice and hearing procedures for offshore mineral leasing "
     "adjustments and adjudications."
+)
+_USCODE_16_431_PACKET_2400_TEXT = (
+    "U.S.C. Title 16 - CONSERVATION 16 U.S.C. United States Code, 2024 Edition "
+    "Title 16 - CONSERVATION CHAPTER 1 - NATIONAL PARKS, MILITARY PARKS, "
+    "MONUMENTS, AND SEASHORES SUBCHAPTER LXI - NATIONAL AND INTERNATIONAL "
+    "MONUMENTS AND MEMORIALS Sec. 431 - Repealed. Pub. L. 113-287, §7, "
+    "Dec. 19, 2014, 128 Stat. 3272 From the U.S. Government Publishing Office, "
+    "www.gpo.gov §431. Repealed. Pub. L. 113–287, §7, Dec. 19, 2014, "
+    "128 Stat. 3272 Section, act June 8, 1906, ch. 3060, §2, 34 Stat. 225, "
+    "authorized declaration of national monuments. See section 320301(a) to "
+    "(c) of Title 54, National Park Service and Related Programs."
+)
+_USCODE_16_590R_PACKET_2400_TEXT = (
+    "U.S.C. Title 16 - CONSERVATION 16 U.S.C. United States Code, 2024 Edition "
+    "Title 16 - CONSERVATION CHAPTER 3C - WATER CONSERVATION SUBCHAPTER I - "
+    "FACILITIES FOR WATER STORAGE AND UTILIZATION Secs. 590r to 590x-4 - "
+    "Repealed. Pub. L. 87-128, title III, §341(a), Aug. 8, 1961, 75 Stat. 318 "
+    "From the U.S. Government Publishing Office, www.gpo.gov §§590r to 590x–4. "
+    "Repealed. Pub. L. 87–128, title III, §341(a), Aug. 8, 1961, 75 Stat. 318 "
+    "Section 590r, acts Aug. 28, 1937, ch. 870, §1, 50 Stat. 869, related to "
+    "Congressional declaration of policy. Section 590x, act Aug. 28, 1937, "
+    "ch. 870, §7, 50 Stat. 870, authorized appropriations."
 )
 _USCODE_2_453_PACKET_39_TEXT = "The oath of office."
 _USCODE_9_6_PACKET_39_TEXT = "The application heard as motion."
@@ -288,6 +341,49 @@ def test_spacy_encoder_ignores_calendar_month_may_as_permission_cue() -> None:
     assert len(may_cues) == 1
     assert may_cues[0].family == "deontic"
     assert any(cue.family == "temporal" and cue.cue.lower() == "after" for cue in encoding.cues)
+
+
+def test_spacy_encoder_prefers_negated_permission_over_embedded_may() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        "The civil penalty may not exceed $100 per day.",
+        document_id="sample-negated-permission",
+    )
+
+    deontic_cues = {
+        (cue.symbol, cue.cue.lower()) for cue in encoding.cues if cue.family == "deontic"
+    }
+
+    assert ("F", "may not") in deontic_cues
+    assert ("P", "may") not in deontic_cues
+
+
+def test_spacy_encoder_refines_packet_000317_registry_family_cues() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+
+    prohibition = encoder.encode(
+        "No member of the armed forces may be placed in confinement.",
+        document_id="packet-000317-prohibition",
+    )
+    assert any(
+        cue.family == "deontic" and cue.symbol == "F" and cue.cue.lower() == "no member"
+        for cue in prohibition.cues
+    )
+
+    appropriations = encoder.encode(
+        "Amounts available for obligation shall remain available without fiscal year limitation "
+        "when determined by the Secretary.",
+        document_id="packet-000317-appropriations",
+    )
+    assert any(
+        cue.family == "temporal"
+        and cue.cue.lower() == "available without fiscal year limitation"
+        for cue in appropriations.cues
+    )
+    assert any(
+        cue.family == "epistemic" and cue.cue.lower() == "determined"
+        for cue in appropriations.cues
+    )
 
 
 def test_spacy_encoder_treats_non_deadline_by_as_non_temporal_cue() -> None:
@@ -432,6 +528,276 @@ def test_spacy_encoder_detects_of_this_title_as_statutory_scope_reference() -> N
     assert signals["has_deontic_scope"] is True
 
 
+def test_spacy_encoder_detects_structural_authority_frame_scope_for_jurisdiction_and_executive_authority() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    jurisdiction_encoding = encoder.encode(
+        (
+            "The United States Court of Federal Claims shall have jurisdiction to "
+            "render judgment under this section."
+        ),
+        document_id="sample-structural-authority-jurisdiction",
+    )
+    authority_encoding = encoder.encode(
+        (
+            "Authority of Executive Agencies under this section shall be exercised "
+            "in accordance with this title."
+        ),
+        document_id="sample-structural-authority-executive",
+    )
+
+    jurisdiction_signals = modal_ambiguity_signals(jurisdiction_encoding)
+    authority_signals = modal_ambiguity_signals(authority_encoding)
+
+    assert jurisdiction_signals["has_frame_structural_authority_scope_phrase"] is True
+    assert authority_signals["has_frame_structural_authority_scope_phrase"] is True
+
+
+def test_spacy_encoder_extracts_rescued_packet_001981_deontic_cues() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        (
+            "The plan shall conduct research and provide for services. "
+            "There are authorized to be appropriated such sums as are necessary. "
+            "The Administrator may guarantee bonds and may carry out this section."
+        ),
+        document_id="packet-001981-rescued-deontic-cues",
+    )
+
+    deontic_cues = {
+        cue.cue.lower()
+        for cue in encoding.cues
+        if cue.family == "deontic"
+    }
+
+    assert {
+        "shall conduct",
+        "provide for",
+        "there are authorized to be appropriated",
+        "may guarantee",
+        "may carry out",
+    }.issubset(deontic_cues)
+
+
+def test_spacy_encoder_extracts_packet_000004_statutory_family_cues() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        (
+            "Sections 5102 and 5124 of this title shall apply to all Indian "
+            "tribes. The Secretary shall develop a system and shall consult "
+            "with the advisory committee. Members may collect charges and may "
+            "present a voucher under such regulations as the Secretary may "
+            "prescribe."
+        ),
+        document_id="packet-000004-family-cues",
+    )
+
+    cues_by_family = {}
+    for cue in encoding.cues:
+        cues_by_family.setdefault(cue.family, set()).add(cue.cue.lower())
+
+    assert {
+        "shall apply",
+        "shall develop",
+        "shall consult",
+        "may collect",
+        "may present",
+    }.issubset(cues_by_family["deontic"])
+    assert "under such regulations" in cues_by_family["conditional_normative"]
+
+
+def test_refined_pair_balance_boosts_frame_for_structural_authority_statutory_scope() -> None:
+    counts = {
+        "deontic": 2.0,
+        "temporal": 1.35,
+        "conditional_normative": 1.35,
+        "frame": 0.62,
+    }
+    signals = {
+        "has_deontic_scope": True,
+        "has_deontic_cue": True,
+        "has_temporal_scope": True,
+        "has_temporal_status_scope": True,
+        "has_calendar_date_scope": True,
+        "has_condition_or_exception_scope": True,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_frame_editorial_scope_phrase": True,
+        "has_frame_structural_authority_scope_phrase": True,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["frame"] > 0.62
+
+
+def test_refined_pair_balance_boosts_temporal_runner_up_in_statutory_status_context() -> None:
+    counts = {
+        "deontic": 1.75,
+        "temporal": 1.35,
+        "conditional_normative": 0.6,
+        "frame": 0.35,
+    }
+    signals = {
+        "has_deontic_scope": True,
+        "has_deontic_cue": True,
+        "has_deontic_scope_phrase": False,
+        "has_temporal_scope": True,
+        "has_temporal_status_scope": True,
+        "has_calendar_date_scope": True,
+        "has_statutory_scope_reference": True,
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": False,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": False,
+        "has_conditional_scope_token": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["temporal"] > 1.35
+
+
+def test_refined_pair_balance_promotes_conditional_scope_over_generic_frame() -> None:
+    counts = {
+        "frame": 2.2,
+        "conditional_normative": 1.4,
+        "deontic": 0.8,
+    }
+    signals = {
+        "has_condition_or_exception_scope": True,
+        "has_conditional_scope_phrase": True,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": True,
+        "has_frame_cue": True,
+        "has_frame_editorial_scope_phrase": False,
+        "has_definition_scope": False,
+        "has_frame_structural_authority_scope_phrase": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["conditional_normative"] > counts["frame"]
+
+
+def test_refined_pair_balance_promotes_typed_temporal_status_over_deontic_cues() -> None:
+    counts = {
+        "deontic": 2.1,
+        "temporal": 1.45,
+        "frame": 0.7,
+        "conditional_normative": 0.35,
+    }
+    signals = {
+        "has_deontic_scope": True,
+        "has_deontic_cue": True,
+        "has_temporal_scope": True,
+        "has_temporal_status_scope": True,
+        "has_calendar_date_scope": True,
+        "has_temporal_scope_token": True,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": True,
+        "has_frame_editorial_scope_phrase": False,
+        "has_deontic_authorization_scope_phrase": False,
+        "has_deontic_report_duty_scope_phrase": False,
+        "has_deontic_corporate_powers_scope_phrase": False,
+        "has_deontic_citation_authority_scope_phrase": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["temporal"] > counts["deontic"]
+
+
+def test_refined_pair_balance_promotes_explicit_conditional_over_frame_cues() -> None:
+    counts = {
+        "frame": 2.35,
+        "conditional_normative": 1.05,
+        "deontic": 0.8,
+        "temporal": 0.4,
+    }
+    signals = {
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": True,
+        "has_conditional_scope_phrase": False,
+        "has_conditional_scope_token": False,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": True,
+        "has_deontic_scope": True,
+        "has_definition_scope": False,
+        "has_frame_structural_authority_scope_phrase": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["conditional_normative"] > counts["frame"]
+
+
+def test_refined_pair_balance_promotes_deontic_over_temporal_status_scaffold() -> None:
+    counts = {
+        "temporal": 2.4,
+        "deontic": 1.2,
+        "conditional_normative": 0.5,
+        "frame": 0.35,
+    }
+    signals = {
+        "has_deontic_scope": True,
+        "has_deontic_cue": True,
+        "has_deontic_scope_phrase": True,
+        "has_temporal_scope": True,
+        "has_temporal_status_scope": True,
+        "has_statutory_scope_reference": True,
+        "has_frame_editorial_scope_phrase": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["deontic"] > counts["temporal"]
+
+
+def test_spacy_encoder_promotes_deontic_over_temporal_period_scaffold() -> None:
+    encoder = SpaCyLegalEncoder(model_name="blank")
+    encoding = encoder.encode(
+        (
+            "Temporary increase. The amount payable under this section for a "
+            "period beginning on the date of enactment and ending on September "
+            "30, 2025, shall be increased."
+        ),
+        document_id="packet-003061-temporal-deontic-period-scaffold",
+    )
+
+    ranking = ranked_modal_families(encoding)
+    signals = modal_ambiguity_signals(encoding)
+
+    assert any(
+        cue.family == "deontic" and cue.cue.lower() == "shall"
+        for cue in encoding.cues
+    )
+    assert signals["has_temporal_scope"] is True
+    assert signals["has_deontic_cue"] is True
+    assert ranking[0]["family"] == "deontic"
+
+
+def test_refined_pair_balance_preserves_alethic_scope_under_temporal_dominance() -> None:
+    counts = {
+        "temporal": 2.25,
+        "alethic": 0.0,
+        "deontic": 1.0,
+        "frame": 0.35,
+    }
+    signals = {
+        "has_temporal_scope": True,
+        "has_temporal_status_scope": True,
+        "has_alethic_scope": True,
+        "has_alethic_scope_phrase": True,
+        "has_deontic_scope": True,
+        "has_deontic_cue": True,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["alethic"] >= 1.0
+
+
 def test_spacy_decoder_promotes_frame_logits_over_hybrid_for_editorial_scope_text() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
@@ -565,7 +931,97 @@ def test_spacy_encoder_treats_repealed_status_as_temporal_scope_signal() -> None
     assert repealed_signals["has_temporal_scope"] is True
     assert repealed_signals["has_temporal_status_scope"] is True
     assert repealed_signals["has_frame_scope_phrase"] is True
+    assert repealed_signals["has_statutory_status_frame_scope"] is True
     assert repealed_logits["temporal"] > baseline_logits["temporal"]
+
+
+def test_spacy_encoder_marks_repealed_statutory_sections_as_status_frame_scope() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="43",
+        section="356.",
+        text=(
+            "Sec. 356. Repealed. Pub. L. 94-579, title VII, Sec. 703(a), "
+            "Oct. 21, 1976, 90 Stat. 2789 Section, act Sept. 22, 1922, "
+            "extended time for development of underground water supplies with "
+            "reclamation grants."
+        ),
+    )
+
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+
+    assert signals["has_temporal_status_scope"] is True
+    assert signals["has_frame_context"] is True
+    assert signals["has_statutory_status_frame_scope"] is True
+
+
+def test_spacy_encoder_extracts_packet_000004_registry_authority_cues() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    repealed_encoding = encoder.encode(
+        (
+            "Sec. 763a-2 - Repealed. Pub. L. 117-263, div. K, "
+            "title CXVIII, Sec. 11808(a)(14), Dec. 23, 2022."
+        ),
+        document_id="packet-000004-repealed-status",
+    )
+    authority_encoding = encoder.encode(
+        (
+            "Transfer of title; power development. The Secretary may, in his "
+            "discretion, when repayments shall have been made, transfer the "
+            "title to said canal and appurtenant structures to districts "
+            "having a beneficial interest. The districts shall have the "
+            "privilege at any time of using such power possibilities as may "
+            "exist, until they shall have paid the required costs."
+        ),
+        document_id="packet-000004-title-transfer-authority",
+    )
+
+    repealed_ranking = ranked_modal_families(repealed_encoding)
+    authority_ranking = ranked_modal_families(authority_encoding)
+    authority_rank_by_family = {
+        item["family"]: item["share_raw"] for item in authority_ranking
+    }
+
+    assert not repealed_encoding.cues
+    assert repealed_ranking[0]["family"] == "frame"
+    assert any(
+        cue.family == "frame" and cue.cue.lower() == "transfer of title"
+        for cue in authority_encoding.cues
+    )
+    assert any(
+        cue.family == "frame" and cue.cue.lower() == "power development"
+        for cue in authority_encoding.cues
+    )
+    assert authority_rank_by_family["frame"] > 0.0
+    assert authority_rank_by_family["deontic"] > authority_rank_by_family["frame"]
+
+
+def test_spacy_encoder_marks_vacant_sections_as_frame_status_scope() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="38",
+        section="3475",
+        text=(
+            "Sec. 3475 - Vacant From the U.S. Government Publishing Office. "
+            "[§3475. Vacant] Editorial Notes Codification Prior section was repealed."
+        ),
+    )
+
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+
+    assert signals["has_vacant_section_scope"] is True
+    assert signals["has_frame_context"] is True
+    assert signals["has_statutory_status_frame_scope"] is True
+    assert ranking[0]["family"] == "frame"
 
 
 def test_spacy_encoder_treats_editorial_required_as_non_deontic_scope() -> None:
@@ -593,6 +1049,36 @@ def test_spacy_encoder_treats_editorial_required_as_non_deontic_scope() -> None:
     assert signals["has_frame_editorial_scope_phrase"] is True
     assert signals["has_temporal_status_scope"] is True
     assert signals["has_deontic_scope"] is False
+
+
+def test_spacy_encoder_treats_repealed_required_submission_as_history_scope() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="42",
+        section="1411d.",
+        text=(
+            "§1411d. Repealed. Pub. L. 93-383, title II, §204, Aug. 22, "
+            "1974, 88 Stat. 668 Section, act Aug. 2, 1954, ch. 649, title "
+            "VIII, §815, 68 Stat. 647, required submission of specifications "
+            "by applicants prior to award of any contract for construction of "
+            "a project."
+        ),
+    )
+
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+
+    assert not any(
+        cue.family == "deontic" and cue.cue.lower() == "required"
+        for cue in encoding.cues
+    )
+    assert signals["has_statutory_status_frame_scope"] is True
+    assert signals["has_deontic_scope"] is False
+    assert ranking[0]["family"] in {"frame", "temporal"}
 
 
 def test_directional_backfill_treats_temporal_status_scope_as_strong_temporal_signal() -> None:
@@ -713,6 +1199,29 @@ def test_spacy_codec_debiases_generic_frame_cues_when_deontic_force_is_present()
         if item["family"] == "frame"
     )
     assert deontic_share > frame_share
+
+
+def test_spacy_codec_reinforces_statutory_structural_frame_cues_without_erasing_deontic_force() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        "The corporation may not issue stock. A director or officer may not "
+        "receive a dividend."
+    )
+
+    ranking = ranked_modal_families(encoding)
+
+    assert any(cue.cue == "corporation" and cue.family == "frame" for cue in encoding.cues)
+    assert any(
+        cue.cue == "director or officer" and cue.family == "frame"
+        for cue in encoding.cues
+    )
+    assert ranking[0]["family"] == "deontic"
+    frame_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "frame"
+    )
+    assert frame_share > 0.3
 
 
 def test_spacy_decoder_debiases_generic_frame_logits_when_deontic_force_is_present() -> None:
@@ -2654,6 +3163,292 @@ def test_spacy_refined_pair_balance_reinforces_deontic_for_temporal_status_scope
     assert counts["deontic"] >= 0.44
 
 
+def test_spacy_refined_pair_balance_reinforces_deontic_for_statutory_repeal_status_scope() -> None:
+    counts = {
+        "temporal": 3.35,
+        "deontic": 1.35,
+        "conditional_normative": 1.35,
+        "frame": 0.75,
+    }
+    signals = {
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": False,
+        "has_deontic_cue": True,
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": True,
+        "has_temporal_scope_token": True,
+        "has_temporal_status_scope": True,
+        "has_temporal_cue": True,
+        "has_temporal_deadline_cue": False,
+        "has_calendar_date_scope": True,
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": False,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": False,
+        "has_conditional_scope_token": False,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_frame_editorial_scope_phrase": False,
+        "has_frame_cue": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["deontic"] >= 2.15
+    assert counts["deontic"] > counts["conditional_normative"]
+
+
+def test_spacy_refined_pair_balance_softens_deontic_overflow_for_statutory_conditional_editorial_scope() -> None:
+    counts = {
+        "deontic": 3.369256,
+        "conditional_normative": 3.0,
+        "temporal": 1.35,
+        "frame": 0.35,
+    }
+    signals = {
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": False,
+        "has_deontic_cue": True,
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": False,
+        "has_temporal_scope_token": True,
+        "has_temporal_status_scope": False,
+        "has_temporal_cue": True,
+        "has_temporal_deadline_cue": True,
+        "has_calendar_date_scope": True,
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": True,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": True,
+        "has_conditional_scope_token": True,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_frame_editorial_scope_phrase": True,
+        "has_frame_cue": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["deontic"] < 3.369256
+    assert counts["conditional_normative"] > 3.0
+    assert (counts["deontic"] - counts["conditional_normative"]) <= 0.13
+
+
+def test_spacy_refined_pair_balance_reinforces_temporal_to_conditional_and_deontic_for_statutory_status_scope() -> None:
+    counts = {
+        "temporal": 2.6,
+        "deontic": 0.05,
+        "conditional_normative": 0.04,
+        "frame": 0.95,
+    }
+    signals = {
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": False,
+        "has_temporal_scope_token": False,
+        "has_temporal_within_scope": False,
+        "has_temporal_status_scope": True,
+        "has_temporal_deadline_cue": False,
+        "has_calendar_date_scope": False,
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": True,
+        "has_deontic_cue": True,
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": False,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": True,
+        "has_conditional_scope_token": False,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_frame_editorial_scope_phrase": False,
+        "has_frame_cue": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["deontic"] >= 0.67
+    assert counts["conditional_normative"] >= 0.57
+
+
+def test_spacy_refined_pair_balance_reinforces_frame_to_deontic_for_non_editorial_statutory_status_scope() -> None:
+    counts = {
+        "frame": 2.2,
+        "deontic": 0.05,
+        "temporal": 0.8,
+        "conditional_normative": 0.0,
+    }
+    signals = {
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_frame_editorial_scope_phrase": False,
+        "has_frame_cue": False,
+        "has_statutory_scope_reference": True,
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": True,
+        "has_deontic_cue": True,
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": False,
+        "has_temporal_scope_token": False,
+        "has_temporal_within_scope": False,
+        "has_temporal_status_scope": True,
+        "has_temporal_deadline_cue": False,
+        "has_calendar_date_scope": False,
+        "has_condition_or_exception_scope": False,
+        "has_condition_clause": False,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": False,
+        "has_conditional_scope_token": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["deontic"] >= 0.55
+
+
+def test_spacy_refined_pair_balance_preserves_deontic_for_generic_statutory_frame_scope() -> None:
+    counts = {
+        "frame": 2.4,
+        "deontic": 0.08,
+        "temporal": 0.2,
+        "conditional_normative": 0.1,
+    }
+    signals = {
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_frame_editorial_scope_phrase": False,
+        "has_frame_cue": True,
+        "has_frame_structural_authority_scope_phrase": True,
+        "has_statutory_scope_reference": True,
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": True,
+        "has_deontic_cue": True,
+        "has_temporal_scope": False,
+        "has_temporal_scope_phrase": False,
+        "has_temporal_scope_token": False,
+        "has_temporal_status_scope": False,
+        "has_calendar_date_scope": False,
+        "has_condition_or_exception_scope": False,
+        "has_condition_clause": False,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": False,
+        "has_conditional_scope_token": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["deontic"] >= 0.7
+
+
+def test_spacy_refined_pair_balance_preserves_temporal_for_generic_statutory_frame_scope() -> None:
+    counts = {
+        "frame": 2.6,
+        "temporal": 0.05,
+        "deontic": 0.2,
+        "conditional_normative": 0.1,
+    }
+    signals = {
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_frame_editorial_scope_phrase": True,
+        "has_frame_cue": True,
+        "has_frame_structural_authority_scope_phrase": False,
+        "has_statutory_scope_reference": True,
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": True,
+        "has_temporal_scope_token": True,
+        "has_temporal_status_scope": True,
+        "has_temporal_within_scope": False,
+        "has_calendar_date_scope": True,
+        "has_temporal_deadline_cue": False,
+        "has_deontic_scope": False,
+        "has_deontic_scope_phrase": False,
+        "has_deontic_cue": False,
+        "has_condition_or_exception_scope": False,
+        "has_condition_clause": False,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": False,
+        "has_conditional_scope_token": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["temporal"] >= 0.75
+
+
+def test_spacy_refined_pair_balance_preserves_conditional_and_deontic_for_temporal_statutory_scope() -> None:
+    counts = {
+        "temporal": 2.8,
+        "conditional_normative": 0.06,
+        "deontic": 0.08,
+        "frame": 0.5,
+    }
+    signals = {
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": True,
+        "has_temporal_scope_token": True,
+        "has_temporal_status_scope": True,
+        "has_temporal_within_scope": False,
+        "has_calendar_date_scope": True,
+        "has_temporal_deadline_cue": False,
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": True,
+        "has_deontic_cue": True,
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": False,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": True,
+        "has_conditional_scope_token": False,
+        "has_purpose_scope_phrase": True,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_frame_editorial_scope_phrase": True,
+        "has_frame_structural_authority_scope_phrase": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["conditional_normative"] >= 0.84
+    assert counts["deontic"] >= 0.84
+
+
+def test_spacy_refined_pair_balance_reinforces_frame_for_statutory_conditional_status_scope() -> None:
+    counts = {
+        "deontic": 3.369256,
+        "conditional_normative": 3.0,
+        "temporal": 2.18,
+        "frame": 0.5,
+    }
+    signals = {
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": False,
+        "has_deontic_cue": True,
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": False,
+        "has_temporal_scope_token": True,
+        "has_temporal_status_scope": True,
+        "has_temporal_cue": True,
+        "has_temporal_deadline_cue": True,
+        "has_calendar_date_scope": True,
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": True,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": False,
+        "has_conditional_scope_token": True,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_frame_editorial_scope_phrase": False,
+        "has_frame_cue": True,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["frame"] >= 1.2
+
+
 def test_spacy_refined_pair_balance_reinforces_deontic_and_temporal_for_structural_conditional_scope() -> None:
     counts = {
         "conditional_normative": 2.2,
@@ -2745,6 +3540,42 @@ def test_spacy_refined_pair_balance_reinforces_conditional_for_phrase_only_statu
     _apply_refined_modal_family_cue_pair_balance(counts, signals)
 
     assert counts["conditional_normative"] >= 0.4
+
+
+def test_spacy_refined_pair_balance_reinforces_conditional_for_structural_statutory_deontic_scope() -> None:
+    counts = {
+        "deontic": 2.4,
+        "conditional_normative": 0.05,
+        "temporal": 0.45,
+        "frame": 0.35,
+    }
+    signals = {
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": False,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": False,
+        "has_conditional_scope_token": False,
+        "has_purpose_scope_phrase": False,
+        "has_statutory_scope_reference": True,
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": False,
+        "has_deontic_cue": True,
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": False,
+        "has_temporal_scope_token": True,
+        "has_temporal_within_scope": False,
+        "has_temporal_status_scope": False,
+        "has_temporal_deadline_cue": False,
+        "has_calendar_date_scope": False,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": False,
+        "has_frame_editorial_scope_phrase": False,
+        "has_frame_cue": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["conditional_normative"] >= 0.45
 
 
 def test_spacy_refined_pair_balance_reinforces_deontic_for_conditional_scope_phrase_with_explicit_deontic_force() -> None:
@@ -2850,6 +3681,43 @@ def test_spacy_refined_pair_balance_reinforces_deontic_for_phrase_only_structura
     _apply_refined_modal_family_cue_pair_balance(counts, signals)
 
     assert counts["deontic"] >= 0.48
+
+
+def test_spacy_refined_pair_balance_reinforces_deontic_for_temporal_appropriations_authorization_scope() -> None:
+    counts = {
+        "temporal": 2.2,
+        "deontic": 0.08,
+        "conditional_normative": 0.2,
+        "frame": 0.15,
+    }
+    signals = {
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": True,
+        "has_temporal_scope_token": True,
+        "has_temporal_within_scope": False,
+        "has_temporal_status_scope": False,
+        "has_calendar_date_scope": False,
+        "has_temporal_deadline_cue": False,
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": True,
+        "has_deontic_appropriations_scope_phrase": True,
+        "has_deontic_cue": False,
+        "has_condition_or_exception_scope": False,
+        "has_condition_clause": False,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": False,
+        "has_conditional_scope_token": False,
+        "has_statutory_scope_reference": False,
+        "has_frame_context": False,
+        "has_frame_scope_phrase": False,
+        "has_frame_editorial_scope_phrase": False,
+        "has_frame_cue": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["deontic"] >= 0.61
+    assert counts["temporal"] < 2.2
 
 
 def test_spacy_refined_pair_balance_reinforces_frame_for_temporal_deontic_statutory_scope() -> None:
@@ -3217,6 +4085,43 @@ def test_spacy_refined_pair_balance_reinforces_temporal_for_purpose_scoped_stron
     assert counts["temporal"] > 0.9
 
 
+def test_spacy_refined_pair_balance_reinforces_temporal_for_fiscal_until_expended_scope() -> None:
+    counts = {
+        "deontic": 5.0,
+        "conditional_normative": 2.5,
+        "temporal": 1.0,
+        "frame": 0.4,
+    }
+    signals = {
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": False,
+        "has_deontic_cue": True,
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": True,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": True,
+        "has_conditional_scope_token": False,
+        "has_statutory_scope_reference": True,
+        "has_temporal_scope": True,
+        "has_temporal_cue": True,
+        "has_temporal_scope_phrase": True,
+        "has_temporal_fiscal_scope_phrase": True,
+        "has_temporal_expended_scope_phrase": True,
+        "has_temporal_scope_token": True,
+        "has_temporal_within_scope": False,
+        "has_temporal_status_scope": False,
+        "has_temporal_deadline_cue": False,
+        "has_calendar_date_scope": False,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_frame_editorial_scope_phrase": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["temporal"] >= 1.3
+
+
 def test_spacy_refined_pair_balance_reinforces_epistemic_for_temporal_statutory_competition() -> None:
     counts = {
         "temporal": 2.4,
@@ -3254,6 +4159,45 @@ def test_spacy_refined_pair_balance_reinforces_epistemic_for_temporal_statutory_
 
     assert counts["epistemic"] >= 0.35
     assert counts["epistemic"] > 0.05
+
+
+def test_spacy_refined_pair_balance_reinforces_alethic_for_temporal_definition_heading_scope() -> None:
+    counts = {
+        "temporal": 2.1,
+        "alethic": 0.02,
+        "frame": 0.0,
+    }
+    signals = {
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": False,
+        "has_temporal_scope_token": False,
+        "has_temporal_within_scope": False,
+        "has_temporal_status_scope": False,
+        "has_temporal_deadline_cue": False,
+        "has_calendar_date_scope": False,
+        "has_deontic_scope": False,
+        "has_deontic_scope_phrase": False,
+        "has_deontic_cue": False,
+        "has_definition_scope": True,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["alethic"] >= 0.35
+
+
+def test_modal_ambiguity_signals_mark_section_defined_heading_as_definition_scope() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        "Sec. 12 - United States Postal Service defined.",
+        document_id="section-defined-heading-doc",
+    )
+
+    signals = modal_ambiguity_signals(encoding)
+
+    assert signals["has_definition_scope"] is True
+    assert signals["has_alethic_scope"] is True
+    assert signals["has_alethic_scope_phrase"] is False
 
 
 def test_spacy_temporal_scope_boost_is_stronger_with_deontic_cue_competition() -> None:
@@ -3903,6 +4847,124 @@ def test_spacy_codec_backfills_deontic_share_for_single_frame_cue_with_temporal_
     assert deontic_share > 0.0
 
 
+def test_spacy_codec_balances_corporate_powers_permission_against_frame_cues() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="36",
+        section="130305",
+        text=(
+            "Powers The corporation may adopt bylaws and carry out the purposes "
+            "of the corporation under this section. The corporation and authority apply."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+    shares = {item["family"]: float(item["share"]) for item in ranking}
+
+    assert signals["has_deontic_corporate_powers_scope_phrase"] is True
+    assert shares["deontic"] >= shares["frame"]
+    assert ranking[0]["family"] == "deontic"
+
+
+def test_spacy_codec_preserves_annual_report_duty_over_fiscal_temporal_scope() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="36",
+        section="140411",
+        text=(
+            "Annual report The corporation shall submit to Congress an annual "
+            "report during the preceding fiscal year under this section."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+    shares = {item["family"]: float(item["share"]) for item in ranking}
+
+    assert signals["has_deontic_report_duty_scope_phrase"] is True
+    assert signals["has_temporal_fiscal_scope_phrase"] is True
+    assert shares["deontic"] > shares["temporal"]
+
+
+def test_spacy_codec_preserves_calendar_report_duty_over_temporal_notes() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="15",
+        section="183",
+        text=(
+            "Report of statistics The Secretary of Commerce shall make a report "
+            "to Congress on the first Monday of January in each year, containing "
+            "the information collected during the preceding year. Historical and "
+            "Revision Notes Based on title 15, U.S.C., 1940 ed., January 1, 1940."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+    shares = {item["family"]: float(item["share"]) for item in ranking}
+
+    assert signals["has_deontic_report_duty_scope_phrase"] is True
+    assert signals["has_calendar_date_scope"] is True
+    assert shares["deontic"] > shares["temporal"]
+    assert ranking[0]["family"] == "deontic"
+
+
+def test_spacy_codec_preserves_court_venue_duty_over_historical_dates() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="28",
+        section="111",
+        text=(
+            "New Mexico constitutes one judicial district. Court shall be held "
+            "at Albuquerque, Las Cruces, Santa Fe, and Silver City. Historical "
+            "and Revision Notes Based on title 28, U.S.C., 1940 ed., June 20, "
+            "1910, and June 25, 1948."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+    shares = {item["family"]: float(item["share"]) for item in ranking}
+
+    assert signals["has_deontic_court_venue_duty_scope_phrase"] is True
+    assert signals["has_calendar_date_scope"] is True
+    assert shares["deontic"] > shares["temporal"]
+    assert ranking[0]["family"] == "deontic"
+
+
+def test_spacy_codec_keeps_deadline_submit_clause_temporal() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="14",
+        section="5113",
+        text=(
+            "Not later than 60 days after the date on which the President submits "
+            "a budget, the Commandant shall submit the report."
+        ),
+    )
+    ranking = ranked_modal_families(codec.encode_sample(sample))
+    shares = {item["family"]: float(item["share"]) for item in ranking}
+
+    assert shares["temporal"] > shares["deontic"]
+    assert ranking[0]["family"] == "temporal"
+
+
 def test_spacy_codec_reinforces_deontic_share_for_moderate_temporal_scope_with_explicit_cue() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
@@ -4015,6 +5077,40 @@ def test_spacy_codec_backfills_conditional_share_for_deontic_competition_with_st
         if item["family"] == "conditional_normative"
     )
     assert conditional_share > 0.0
+
+
+def test_spacy_codec_balances_frame_heavy_statutory_scope_with_normative_cues() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="25",
+        section="310",
+        text=(
+            "The institute has authority, jurisdiction, articles of incorporation, "
+            "and purposes of the corporation under this chapter. Subject to this "
+            "section, the Secretary shall award grants."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+    share_by_family = {
+        str(item["family"]): float(item["share_raw"])
+        for item in ranking
+    }
+
+    assert signals["has_frame_context"] is True
+    assert signals["has_statutory_scope_reference"] is True
+    assert signals["has_condition_or_exception_scope"] is True
+    assert signals["has_deontic_cue"] is True
+    assert share_by_family["deontic"] >= 0.30
+    assert share_by_family["conditional_normative"] >= 0.28
+    assert (
+        share_by_family["frame"]
+        - max(share_by_family["deontic"], share_by_family["conditional_normative"])
+    ) < 0.1
 
 
 def test_spacy_codec_backfills_conditional_share_for_single_frame_cue_with_statutory_scope() -> None:
@@ -4773,6 +5869,32 @@ def test_spacy_codec_treats_as_provided_in_as_explicit_conditional_scope_phrase(
     assert conditional_share > 0.0
 
 
+def test_spacy_codec_treats_provided_comma_that_as_explicit_conditional_scope_phrase() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="43",
+        section="988",
+        text=(
+            "The grant shall not include lands: Provided , That the Secretary may "
+            "issue notice under this section."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+
+    conditional_cues = [
+        cue.cue.lower()
+        for cue in encoding.cues
+        if cue.family == "conditional_normative"
+    ]
+    assert "provided , that" in conditional_cues
+    assert signals["has_conditional_scope_phrase"] is True
+    assert signals["has_condition_or_exception_scope"] is True
+
+
 def test_spacy_codec_backfills_epistemic_share_for_dense_temporal_scope_with_epistemic_tokens() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
@@ -5191,6 +6313,42 @@ def test_spacy_encoder_treats_after_notice_scope_as_non_temporal_cue() -> None:
     )
 
 
+def test_spacy_encoder_treats_by_secretary_may_as_non_temporal_deadline_cue() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        (
+            "The regulatory authority with approval by the Secretary may authorize "
+            "departures in individual cases."
+        ),
+        document_id="sample-by-secretary-may-non-temporal",
+    )
+
+    assert not any(
+        cue.family == "temporal" and cue.cue.lower() == "by"
+        for cue in encoding.cues
+    )
+    assert any(
+        cue.family == "deontic" and cue.cue.lower() == "may"
+        for cue in encoding.cues
+    )
+
+
+def test_spacy_encoder_treats_by_promulgated_standards_with_citation_date_as_non_temporal_deadline_cue() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        (
+            "The public health protection provided by promulgated standards shall apply. "
+            "(Pub. L. 95-87, title VII, sec. 711, Aug. 3, 1977, 91 Stat. 523.)"
+        ),
+        document_id="sample-by-promulgated-standards-non-temporal",
+    )
+
+    assert not any(
+        cue.family == "temporal" and cue.cue.lower() == "by"
+        for cue in encoding.cues
+    )
+
+
 def test_spacy_encoder_extracts_conditional_cue_except_as_provided_in() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     encoding = encoder.encode(
@@ -5405,6 +6563,88 @@ def test_spacy_compiler_replays_uscode_editorial_status_zero_formula_cases() -> 
         assert fallback.provenance.citation == citation
 
 
+def test_spacy_compiler_ignores_historical_authorized_cue_in_repealed_section_notes() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    text = (
+        "§§9881 to 9887. Repealed. Pub. L. 103-252, title I, "
+        "§§112(b)(1), (2)(B), May 18, 1994, 108 Stat. 640, 641 "
+        "Section 9881, Pub. L. 97-35, title VI, §670N, as added "
+        "Pub. L. 100-297, title II, §2503, Apr. 28, 1988, "
+        "102 Stat. 326, authorized Community Services Block Grant "
+        "program coordination."
+    )
+
+    modal_ir = compiler.compile(
+        encoder.encode(
+            text,
+            document_id="us-code-42-9881-to-9887-packet-000124",
+            citation="42 U.S.C. 9881 to 9887.",
+            source="us_code",
+        )
+    )
+
+    assert not any(
+        formula.operator.family == "deontic"
+        and str(formula.metadata.get("cue", "")).lower() == "authorized"
+        for formula in modal_ir.formulas
+    )
+    fallback_rules = {
+        str(formula.metadata.get("fallback_rule"))
+        for formula in modal_ir.formulas
+    }
+    assert "uscode_editorial_status_heading_v1" in fallback_rules
+    assert "uscode_residual_span_coverage_v1" in fallback_rules
+
+
+def test_spacy_and_regex_compilers_treat_repealed_required_history_as_frame() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    regex_parser = LegalModalParser()
+    text = (
+        "§1411d. Repealed. Pub. L. 93–383, title II, §204, Aug. 22, "
+        "1974, 88 Stat. 668 Section, act Aug. 2, 1954, ch. 649, title "
+        "VIII, §815, 68 Stat. 647, required submission of specifications "
+        "by applicants prior to award of any contract for construction of "
+        "a project and submission of data with respect to acquisition of "
+        "land prior to authorization to purchase such land."
+    )
+
+    spacy_ir = compiler.compile(
+        encoder.encode(
+            text,
+            document_id="us-code-42-1411d-packet-000441",
+            citation="42 U.S.C. 1411d.",
+            source="us_code",
+        )
+    )
+    regex_ir = regex_parser.parse(
+        text,
+        document_id="us-code-42-1411d-packet-000441",
+        citation="42 U.S.C. 1411d.",
+        source="us_code",
+    )
+
+    for modal_ir in (spacy_ir, regex_ir):
+        assert not any(
+            formula.operator.family in {"conditional_normative", "deontic", "temporal"}
+            for formula in modal_ir.formulas
+        )
+        assert any(
+            formula.metadata.get("fallback_rule")
+            == "uscode_editorial_status_heading_v1"
+            for formula in modal_ir.formulas
+        )
+        assert any(
+            formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+            and "required submission of specifications"
+            in modal_ir.normalized_text[
+                formula.provenance.start_char : formula.provenance.end_char
+            ]
+            for formula in modal_ir.formulas
+        )
+
+
 def test_spacy_compiler_replays_sec_prefixed_transferred_heading_zero_formula_cases() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()
@@ -5438,6 +6678,57 @@ def test_spacy_compiler_replays_sec_prefixed_transferred_heading_zero_formula_ca
         assert fallback.provenance.citation == citation
 
 
+def test_spacy_and_regex_parsers_ignore_editorial_history_authorized_cues() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    regex_parser = LegalModalParser()
+    cases = [
+        (
+            _USCODE_16_431_PACKET_2400_TEXT,
+            "us-code-16-431-715f8a7a6ba4bc2b",
+            "16 U.S.C. 431",
+        ),
+        (
+            _USCODE_16_590R_PACKET_2400_TEXT,
+            "us-code-16-590r-e49058a68f67bb60",
+            "16 U.S.C. 590r",
+        ),
+    ]
+
+    for text, document_id, citation in cases:
+        encoding = encoder.encode(
+            text,
+            document_id=document_id,
+            citation=citation,
+            source="us_code",
+        )
+        assert not any(
+            cue.family == "deontic" and cue.cue.lower() == "authorized"
+            for cue in encoding.cues
+        )
+
+        spacy_ir = compiler.compile(encoding)
+        regex_ir = regex_parser.parse(
+            text,
+            document_id=document_id,
+            citation=citation,
+            source="us_code",
+        )
+
+        for modal_ir in (spacy_ir, regex_ir):
+            assert not any(
+                formula.operator.family == "deontic"
+                and formula.metadata.get("cue") == "authorized"
+                for formula in modal_ir.formulas
+            )
+            assert any(
+                formula.operator.family == "frame"
+                and formula.metadata.get("fallback_rule")
+                == "uscode_editorial_status_heading_v1"
+                for formula in modal_ir.formulas
+            )
+
+
 def test_spacy_compiler_adds_residual_span_coverage_before_codification_fallback_for_50_2523b_style_text() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()
@@ -5464,6 +6755,369 @@ def test_spacy_compiler_adds_residual_span_coverage_before_codification_fallback
         formula.provenance.citation == "50 U.S.C. 2523b."
         for formula in modal_ir.formulas
     )
+
+
+def test_spacy_compiler_adds_administrative_notice_hearing_residual_span_coverage() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    encoding = encoder.encode(
+        _USCODE_10_3101_ADMINISTRATIVE_RESIDUAL_SPAN_TEXT,
+        document_id="us-code-10-3101-000d4c508496a464",
+        citation="10 U.S.C. 3101",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    assert modal_ir.formulas
+    residual_formulas = [
+        formula
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    ]
+    assert residual_formulas
+    residual_text_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in residual_formulas
+    }
+    assert (
+        "Administrative notice and hearing procedures for eligibility review and petition records."
+        in residual_text_spans
+    )
+    assert all(
+        formula.provenance.citation == "10 U.S.C. 3101"
+        for formula in modal_ir.formulas
+    )
+
+
+def test_spacy_compiler_adds_administrative_proceeding_record_residual_span_coverage() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    encoding = encoder.encode(
+        _USCODE_ADMINISTRATIVE_PROCEEDING_RESIDUAL_SPAN_TEXT,
+        document_id="us-code-45-1116.-5646808ce5a8b0a2",
+        citation="45 U.S.C. 1116.",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    residual_formulas = [
+        formula
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    ]
+    assert residual_formulas
+    residual_text_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in residual_formulas
+    }
+    assert (
+        "Notice of proceeding and hearing records for investigation testimony."
+        in residual_text_spans
+    )
+
+
+def test_spacy_compiler_adds_administrative_approval_residual_span_coverage_for_packet_005219_shape() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    text = (
+        "The Secretary shall prescribe procedures. "
+        "Peer review records. "
+        "Secretarial approval records."
+    )
+    encoding = encoder.encode(
+        text,
+        document_id="us-code-42-6395-packet-005219-spacy",
+        citation="42 U.S.C. 6395.",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    residual_text_spans = {
+        modal_ir.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ].strip()
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    }
+
+    assert "Secretarial approval records." in residual_text_spans
+
+
+def test_spacy_compiler_adds_report_heading_residual_span_coverage() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    encoding = encoder.encode(
+        _USCODE_44_3558_REPORTS_RESIDUAL_SPAN_TEXT,
+        document_id="us-code-44-3558.-9af6ffad8db763d4",
+        citation="44 U.S.C. 3558.",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    residual_formulas = [
+        formula
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    ]
+    residual_text_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in residual_formulas
+    }
+    assert "Congressional notification and reports." in residual_text_spans
+
+
+def test_spacy_compiler_adds_savings_effect_residual_span_coverage() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    encoding = encoder.encode(
+        _USCODE_SAVINGS_EFFECT_RESIDUAL_TEXT,
+        document_id="us-code-42-18726-savings-effect-residual",
+        citation="42 U.S.C. 18726",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    residual_text_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    }
+
+    assert (
+        "Nothing in this part affects any other provision of law of "
+        "a Federal department or agency."
+    ) in residual_text_spans
+
+
+def test_spacy_compiler_adds_cost_analysis_residual_span_coverage() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    text = (
+        "Sec. 1544 - Annual cost analysis by Fish and Wildlife Service. "
+        "Cost analysis."
+    )
+    encoding = encoder.encode(
+        text,
+        document_id="us-code-16-1544-cost-analysis-residual",
+        citation="16 U.S.C. 1544",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    residual_text_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    }
+
+    assert "Cost analysis." in residual_text_spans
+
+
+def test_spacy_compiler_preserves_coalesced_semicolon_uscode_catchline_coverage() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    text = (
+        "U.S.C. Title 30 - MINERAL LANDS AND MINING 30 U.S.C. "
+        "United States Code, 2024 Edition Title 30 - MINERAL LANDS AND "
+        "MINING CHAPTER 13 - CONTROL OF COAL-MINE FIRES Sec. 553 - "
+        "Duties of Secretary; surveys, research, etc.; projects From "
+        "the U.S. Government Publishing Office, www.gpo.gov §553. "
+        "Duties of Secretary; surveys, research, etc.; projects The "
+        "Secretary of the Interior is hereby authorized to conduct surveys."
+    )
+    encoding = encoder.encode(
+        text,
+        document_id="us-code-30-553-semicolon-catchline",
+        citation="30 U.S.C. 553",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    catchline_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule")
+        == "uscode_section_catchline_coverage_v1"
+    }
+    residual_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    }
+
+    assert "Duties of Secretary; surveys, research, etc.; projects" in catchline_spans
+    assert any("surveys, research, etc.; projects" in span for span in residual_spans)
+
+
+def test_spacy_compiler_adds_packet_000004_short_structural_heading_spans() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    text = (
+        "§52. Dissemination of false advertisements "
+        "(a) Unlawfulness It shall be unlawful to disseminate false advertisements. "
+        '"(2) Requirements . The Commission shall include consumer information. '
+        '"(b) Database . The Commission shall establish a national database. '
+        "(c) Definition of Political Appointee . In this section, the term "
+        '"political appointee" means an employee appointed by the Secretary.'
+    )
+    encoding = encoder.encode(
+        text,
+        document_id="us-code-packet-000004-structural-headings",
+        citation="15 U.S.C. 52",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    residual_text_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    }
+
+    assert "2) Requirements ." in residual_text_spans
+    assert "b) Database ." in residual_text_spans
+    assert "c) Definition of Political Appointee ." in residual_text_spans
+
+
+def test_spacy_compiler_adds_compact_administration_heading_span_coverage() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    text = (
+        "Administration. "
+        "The Secretary shall issue regulations for the park area."
+    )
+    encoding = encoder.encode(
+        text,
+        document_id="us-code-16-450dd-1-compact-administration",
+        citation="16 U.S.C. 450dd-1",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    frame_coverage_text_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in modal_ir.formulas
+        if formula.operator.family == "frame"
+        and formula.metadata.get("fallback_rule")
+        in {
+            "uscode_modal_heading_prefix_coverage_v1",
+            "uscode_residual_span_coverage_v1",
+        }
+    }
+
+    assert "Administration." in frame_coverage_text_spans
+
+
+def test_spacy_compiler_adds_criminal_penalty_enforcement_residual_span_coverage() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    text = (
+        "Civil enforcement. "
+        "The Secretary shall maintain records for criminal penalties."
+    )
+    encoding = encoder.encode(
+        text,
+        document_id="us-code-50-2205.-44bac97fa2b482ea",
+        citation="50 U.S.C. 2205.",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    frame_coverage_text_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in modal_ir.formulas
+        if formula.operator.family == "frame"
+        and formula.metadata.get("fallback_rule")
+        in {
+            "uscode_modal_heading_prefix_coverage_v1",
+            "uscode_residual_span_coverage_v1",
+        }
+    }
+
+    assert "Civil enforcement." in frame_coverage_text_spans
+
+
+def test_spacy_compiler_adds_modal_heading_prefix_coverage_for_penalty_heading() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    text = (
+        "§542. Unauthorized aids to maritime navigation; penalty "
+        "No person shall establish an aid without authority."
+    )
+    encoding = encoder.encode(
+        text,
+        document_id="us-code-14-542-heading-prefix",
+        citation="14 U.S.C. 542",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    prefix_formulas = [
+        formula
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule")
+        == "uscode_modal_heading_prefix_coverage_v1"
+    ]
+    assert prefix_formulas
+    prefix_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in prefix_formulas
+    }
+    assert "Unauthorized aids to maritime navigation;" in prefix_spans
+
+
+def test_spacy_compiler_adds_modal_heading_prefix_coverage_for_security_evaluations() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    text = (
+        "§2210d. Security evaluations (a) Security response evaluations "
+        "Not less often than once every 3 years, the Commission shall "
+        "conduct security evaluations."
+    )
+    encoding = encoder.encode(
+        text,
+        document_id="us-code-42-2210d-heading-prefix",
+        citation="42 U.S.C. 2210d.",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    prefix_formulas = [
+        formula
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule")
+        == "uscode_modal_heading_prefix_coverage_v1"
+    ]
+    assert prefix_formulas
+    prefix_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in prefix_formulas
+    }
+    assert "Security response evaluations" in prefix_spans
 
 
 def test_spacy_compiler_replays_sec_prefixed_heading_zero_formula_sample_for_15_1693l() -> None:
@@ -5815,6 +7469,63 @@ def test_spacy_compiler_adds_residual_span_coverage_for_25_57_todo_shape() -> No
         "U.S.C. Title 25 - INDIANS 25 U.S.C." in span for span in residual_text_spans
     )
     assert any("43 Stat." in span for span in residual_text_spans)
+
+
+def test_spacy_compiler_adds_transfer_functions_residual_span_coverage_for_15_1212() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    encoding = encoder.encode(
+        _USCODE_15_1212_TRANSFER_FUNCTIONS_TODO_TEXT,
+        document_id="us-code-15-1212-80d23ee30f50aa42",
+        citation="15 U.S.C. 1212",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    residual_text_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    }
+
+    assert any(
+        "Transfer of Functions Functions of Secretary of Commerce" in span
+        and "Consumer Product Safety Commission" in span
+        for span in residual_text_spans
+    )
+
+
+def test_spacy_compiler_expands_split_omitted_codification_fallback_span() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    text = (
+        "U.S.C. Title 25 - INDIANS 25 U.S.C. United States Code, 2024 Edition "
+        "Title 25 - INDIANS CHAPTER 19 - INDIAN LAND CLAIMS SETTLEMENTS "
+        "SUBCHAPTER XII - TORRES-MARTINEZ DESERT CAHUILLA INDIANS CLAIMS "
+        "SETTLEMENT Sec. 1778b - Omitted From the U.S. Government Publishing "
+        "Office, www.gpo.gov \u00a71778b. Omitted Editorial Notes Codification "
+        "Section, Pub. L. 106-568, title VI, \u00a7604, Dec. 27, 2000, 114 Stat. "
+        "2908, which ratified the Settlement Agreement, was omitted from the "
+        "Code as being of special and not general application."
+    )
+    encoding = encoder.encode(
+        text,
+        document_id="us-code-25-1778b-dc9d5bd7a948724f",
+        citation="25 U.S.C. 1778b",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    fallback = modal_ir.formulas[-1]
+    fallback_span = modal_ir.normalized_text[
+        int(fallback.provenance.start_char) : int(fallback.provenance.end_char)
+    ]
+
+    assert fallback.metadata["fallback_rule"] == "uscode_codification_transfer_heading_v1"
+    assert fallback_span.startswith("Omitted Editorial Notes Codification Section")
+    assert "was omitted from the Code as being of special and not general application" in fallback_span
 
 
 def test_spacy_compiler_supports_usc_and_section_symbol_citation_variants_for_sec_headings() -> None:
@@ -6232,6 +7943,166 @@ def test_spacy_compiler_adds_residual_heading_fallback_when_modal_cues_cover_oth
     assert fallback.provenance.citation == "25 U.S.C. 124"
 
 
+def test_spacy_compiler_adds_long_heading_residual_span_coverage_after_section_heading_fallback() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    encoding = encoder.encode(
+        (
+            "Sec. 124 - Administrative hearing notice and review procedures. "
+            "Definitions and application requirements for appeals and petitions. "
+            "The Secretary shall issue a decision within 30 days."
+        ),
+        document_id="us-code-25-124-long-heading-residual",
+        citation="25 U.S.C. 124",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    residual_formulas = [
+        formula
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    ]
+    assert residual_formulas
+    assert any(formula.operator.family == "deontic" for formula in modal_ir.formulas)
+    fallback = modal_ir.formulas[-1]
+    assert fallback.operator.family == "frame"
+    assert fallback.metadata["fallback_rule"] == "uscode_section_heading_v1"
+
+
+def test_spacy_compiler_adds_purpose_clause_residual_span_coverage_for_institute_sample() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    text = (
+        "\u00a7285 l . Purpose of Institute The general purpose of the National "
+        "Institute of Environmental Health Sciences (in this subpart referred "
+        "to as the \"Institute\") is the conduct and support of research, "
+        "training, health information dissemination, and other programs with "
+        "respect to factors in the environment that affect human health."
+    )
+
+    encoding = encoder.encode(
+        text,
+        document_id="us-code-42-285-purpose-residual",
+        citation="42 U.S.C. 285",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    assert not any(cue.cue.lower() == "with respect to" for cue in encoding.cues)
+    residual_text_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    }
+    assert any(
+        span.startswith("Purpose of Institute The general purpose")
+        for span in residual_text_spans
+    )
+
+
+def test_spacy_compiler_adds_compact_frame_heading_residual_span_coverage_for_packet_000037_samples() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    cases = [
+        (
+            "us-code-42-4906.-49752be6630435d0",
+            "42 U.S.C. 4906.",
+            "Sec. 4906 - Availability of assistance. Environmental program benefits.",
+            "Environmental program benefits.",
+        ),
+        (
+            "us-code-26-676-062ec0a8a033a9fa",
+            "26 U.S.C. 676",
+            "Sec. 676 - Employee payments. Compensation and reimbursement expenses.",
+            "Compensation and reimbursement expenses.",
+        ),
+        (
+            "us-code-5-8173-653bf9ab88ca9151",
+            "5 U.S.C. 8173",
+            "Sec. 8173 - Administrative proceedings. Employee benefit determinations.",
+            "Employee benefit determinations.",
+        ),
+        (
+            "us-code-2-5103-2723bab002d6ffe8",
+            "2 U.S.C. 5103",
+            "Sec. 5103 - Program administration. Payment authorization.",
+            "Payment authorization.",
+        ),
+        (
+            "us-code-43-316b.-afdb72a9cdfde1d3",
+            "43 U.S.C. 316b.",
+            "Sec. 316b - Withdrawal and reservation of lands. Land settlement expenses.",
+            "Land settlement expenses.",
+        ),
+    ]
+
+    for document_id, citation, text, expected_span in cases:
+        encoding = encoder.encode(
+            text,
+            document_id=document_id,
+            citation=citation,
+            source="us_code",
+        )
+        modal_ir = compiler.compile(encoding)
+
+        residual_text_spans = {
+            modal_ir.normalized_text[
+                int(formula.provenance.start_char) : int(formula.provenance.end_char)
+            ].strip()
+            for formula in modal_ir.formulas
+            if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+        }
+        assert expected_span in residual_text_spans
+
+
+def test_spacy_decompiler_preserves_uscode_source_surface_when_typed_slots_overlap() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    cases = [
+        (
+            "us-code-50-1231 to 1238.-54ddc50447da3288",
+            "50 U.S.C. 1231 to 1238.",
+            (
+                "50 U.S.C. 1231 to 1238.: §§1231 to 1238. Repealed. "
+                "Pub. L. 85-861, §36A, Sept. 2, 1958, 72 Stat. 1569 "
+                "Section 1231, act Sept. 3, 1954, ch. 1257, title III, "
+                "§308, 68 Stat. 1155, provided for promotion to first "
+                "lieutenant. See section 14301 et seq. of Title 10, "
+                "Armed Forces."
+            ),
+            "Repealed",
+        ),
+        (
+            "us-code-54-102503.-8cd28d6d56630d35",
+            "54 U.S.C. 102503.",
+            (
+                "54 U.S.C. 102503.: §102503. Authority of Secretary "
+                "(a) In General .-Notwithstanding other provisions or "
+                "limitations of law, the Secretary may perform the functions "
+                "described in this section in the manner that the Secretary "
+                "considers to be in the public interest."
+            ),
+            "Secretary may perform the functions",
+        ),
+    ]
+
+    for document_id, citation, text, expected_fragment in cases:
+        encoding = encoder.encode(
+            text,
+            document_id=document_id,
+            citation=citation,
+            source="us_code",
+        )
+        decoded = decode_modal_ir_document(compiler.compile(encoding))
+
+        assert decoded.reconstruction_similarity == 1.0
+        assert decoded.text.startswith(citation)
+        assert expected_fragment in decoded.text
+
+
 def test_spacy_decoder_vector_and_family_logits_are_deterministic() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
@@ -6371,6 +8242,27 @@ def test_spacy_codec_strengthens_temporal_share_for_statutory_generic_frame_comp
     assert frame_share > temporal_share
 
 
+def test_spacy_codec_marks_us_code_enforcement_and_duration_cues() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        (
+            "Sec. 5009 - Unlawful activities. It is unlawful for any person "
+            "to transport the resource, and the Secretary may discontinue a "
+            "lease for a period of not less than ten years."
+        ),
+        document_id="packet-005384-enforcement-duration-cues",
+    )
+    cues = {(cue.family, cue.cue.lower()) for cue in encoding.cues}
+    ranking = ranked_modal_families(encoding)
+    shares = {str(item["family"]): float(item["share_raw"]) for item in ranking}
+
+    assert ("deontic", "it is unlawful") in cues
+    assert ("deontic", "may discontinue") in cues
+    assert ("temporal", "period of not less than") in cues
+    assert shares["deontic"] > shares["frame"]
+    assert shares["temporal"] > 0.2
+
+
 def test_spacy_codec_strengthens_conditional_share_for_dense_temporal_scope_statutory_conflict() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
@@ -6421,6 +8313,141 @@ def test_spacy_codec_strengthens_temporal_share_for_dense_deontic_scope_statutor
     assert temporal_share > 0.12
 
 
+def test_spacy_signals_mark_authorized_appropriation_fiscal_scope() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        (
+            "There is authorized to be appropriated $25,000,000 for each of the fiscal "
+            "years 1978 and 1979, and $20,000,000 for fiscal year 1980."
+        ),
+        document_id="authorized-appropriation-fiscal-scope-signals",
+    )
+
+    signals = modal_ambiguity_signals(encoding)
+
+    assert signals["has_deontic_authorization_scope_phrase"] is True
+    assert signals["has_temporal_fiscal_scope_phrase"] is True
+    assert signals["has_temporal_deadline_cue"] is False
+
+
+def test_spacy_codec_boosts_deontic_share_for_authorized_appropriation_fiscal_scope() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    with_phrase = build_us_code_sample(
+        title="42",
+        section="6931",
+        text=(
+            "There is authorized to be appropriated $25,000,000 for each of the fiscal "
+            "years 1978 and 1979, and $20,000,000 for fiscal year 1980."
+        ),
+    )
+    without_phrase = build_us_code_sample(
+        title="42",
+        section="6931",
+        text=(
+            "The program is authorized for each of the fiscal years 1978 and 1979, and "
+            "for fiscal year 1980."
+        ),
+    )
+
+    with_phrase_ranking = ranked_modal_families(codec.encode_sample(with_phrase))
+    without_phrase_ranking = ranked_modal_families(codec.encode_sample(without_phrase))
+
+    with_phrase_deontic_share = next(
+        float(item["share"])
+        for item in with_phrase_ranking
+        if item["family"] == "deontic"
+    )
+    without_phrase_deontic_share = next(
+        float(item["share"])
+        for item in without_phrase_ranking
+        if item["family"] == "deontic"
+    )
+    with_phrase_temporal_share = next(
+        float(item["share"])
+        for item in with_phrase_ranking
+        if item["family"] == "temporal"
+    )
+    without_phrase_temporal_share = next(
+        float(item["share"])
+        for item in without_phrase_ranking
+        if item["family"] == "temporal"
+    )
+
+    assert with_phrase_deontic_share > without_phrase_deontic_share
+    assert with_phrase_temporal_share < without_phrase_temporal_share
+
+
+def test_spacy_codec_refines_packet_001882_authorized_appropriation_conditional_cue() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        (
+            "For the purposes of this part, there is authorized to be appropriated "
+            "to the Secretary not to exceed $98,000,000 for the period beginning "
+            "October 1, 1978, and ending September 30, 1981."
+        ),
+        document_id="packet-001882-authorized-appropriation-conditional",
+    )
+    ranking = ranked_modal_families(encoding)
+    shares = {str(item["family"]): float(item["share_raw"]) for item in ranking}
+
+    assert any(
+        cue.family == "conditional_normative"
+        and cue.cue.lower() == "there is authorized to be appropriated"
+        for cue in encoding.cues
+    )
+    assert shares["conditional_normative"] > shares["temporal"]
+    assert shares["conditional_normative"] > 0.34
+
+
+def test_spacy_codec_refines_packet_002939_mixed_scope_family_evidence() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    samples = {
+        "removal_frame": (
+            "Sec. 1450 - Attachment or sequestration; securities. Whenever any "
+            "action is removed from a State court to a district court of the "
+            "United States, any attachment or sequestration shall remain valid "
+            "until dissolved or modified by the district court. Historical and "
+            "Revision Notes changes were made in phraseology."
+        ),
+        "approval_deontic": (
+            "Sec. 6395 - Secretarial approval; peer review. The Secretary shall "
+            "approve each State application that meets the requirements of this "
+            "part and may review such application. Editorial Notes Effective "
+            "Date of 2015 Amendment effective Dec. 10, 2015, see section 6301 "
+            "of this title."
+        ),
+        "repeal_deontic": (
+            "Sec. 3342 - Repealed. Section related to Federal participants and "
+            "prohibited details of employees except for temporary duty provided "
+            "for by law. Effective Date of Repeal effective Oct. 1, 1991, see "
+            "section 6303 of this title."
+        ),
+        "membership_conditional": (
+            "Sec. 286w - Denial of membership or other status. It is the policy "
+            "that the organization should not be given membership or observer "
+            "status. In the event that the Fund provides membership, such action "
+            "would result in a serious diminution of support. Upon review, the "
+            "President would be required to report recommendations to Congress."
+        ),
+    }
+
+    shares_by_sample = {}
+    for sample_id, text in samples.items():
+        ranking = ranked_modal_families(encoder.encode(text, document_id=sample_id))
+        shares_by_sample[sample_id] = {
+            str(item["family"]): float(item["share_raw"])
+            for item in ranking
+        }
+
+    assert shares_by_sample["removal_frame"]["frame"] > 0.14
+    assert shares_by_sample["approval_deontic"]["deontic"] > 0.34
+    assert shares_by_sample["repeal_deontic"]["deontic"] > 0.28
+    assert shares_by_sample["membership_conditional"]["conditional_normative"] > 0.4
+
+
 def test_supervisor_with_spacy_codec_improves_loss_and_cosine() -> None:
     sample = build_us_code_sample(
         title="5",
@@ -6448,3 +8475,110 @@ def test_supervisor_with_spacy_codec_improves_loss_and_cosine() -> None:
     assert run.final_evaluation.reconstruction_loss < before.reconstruction_loss
     assert run.final_evaluation.embedding_cosine_similarity > before.embedding_cosine_similarity
     assert supervisor.queue.status_counts()["completed"] >= 2
+
+
+def test_packet_002219_dense_frame_headings_do_not_outvote_explicit_deontic_cues() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    text = (
+        "33 U.S.C. Title 33 - NAVIGATION AND NAVIGABLE WATERS CHAPTER 12 - "
+        "RIVER AND HARBOR IMPROVEMENTS GENERALLY SUBCHAPTER I - GENERAL "
+        "PROVISIONS Sec. 558b-1 - Canals and appurtenant structures; "
+        "transfer of title; power development. The Secretary shall establish "
+        "authority under this section and may transfer title in accordance "
+        "with this chapter."
+    )
+    encoding = encoder.encode(
+        text,
+        document_id="packet-002219-frame-deontic-cue-balance",
+        citation="33 U.S.C. 558b-1",
+        source="us_code",
+    )
+    ranking = ranked_modal_families(encoding)
+    shares = {str(item["family"]): float(item["share_raw"]) for item in ranking}
+
+    assert ranking[0]["family"] == "deontic"
+    assert shares["deontic"] > shares["frame"]
+    assert shares["frame"] > 0.0
+    assert shares["conditional_normative"] > 0.0
+
+
+def test_spacy_compiler_covers_uscode_effect_of_act_catchline_for_701e() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    text = (
+        "33 U.S.C. 701e. Effect of act June 22, 1936, on provisions for "
+        "Mississippi River and other projects. Nothing in this Act shall be "
+        "construed as repealing or amending any provision of sections 702a "
+        "through 704 of this title."
+    )
+    encoding = encoder.encode(
+        text,
+        document_id="us-code-33-701e-19ea9c3021f51521",
+        citation="33 U.S.C. 701e",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    residual_spans = {
+        modal_ir.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ].strip()
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    }
+
+    assert (
+        "Effect of act June 22, 1936, on provisions for Mississippi River "
+        "and other projects."
+    ) in residual_spans
+
+
+def test_spacy_compiler_bounds_packet_catchlines_before_body_starters() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    cases = [
+        (
+            "us-code-16-666e-packet-catchline",
+            "16 U.S.C. 666e",
+            "U.S.C. Title 16 - CONSERVATION 16 U.S.C. United States Code, "
+            "2024 Edition Title 16 - CONSERVATION Sec. 666e - "
+            "Administration of acquired lands From the U.S. Government "
+            "Publishing Office, www.gpo.gov §666e. Administration of "
+            "acquired lands Any lands acquired by the Secretary shall become "
+            "a part of such refuge.",
+            "Administration of acquired lands",
+        ),
+        (
+            "us-code-10-7592-packet-catchline",
+            "10 U.S.C. 7592",
+            "U.S.C. Title 10 - ARMED FORCES 10 U.S.C. United States Code, "
+            "2024 Edition Title 10 - ARMED FORCES Sec. 7592 - Radiograms "
+            "and telegrams: forwarding charges due connecting commercial "
+            "facilities From the U.S. Government Publishing Office, "
+            "www.gpo.gov §7592. Radiograms and telegrams: forwarding "
+            "charges due connecting commercial facilities In the operation "
+            "of telegraph lines, members of the Signal Corps may collect "
+            "forwarding charges.",
+            "Radiograms and telegrams: forwarding charges due connecting "
+            "commercial facilities",
+        ),
+    ]
+
+    for document_id, citation, text, expected_catchline in cases:
+        encoding = encoder.encode(
+            text,
+            document_id=document_id,
+            citation=citation,
+            source="us_code",
+        )
+        modal_ir = compiler.compile(encoding)
+        catchline_spans = {
+            modal_ir.normalized_text[
+                int(formula.provenance.start_char) : int(formula.provenance.end_char)
+            ].strip()
+            for formula in modal_ir.formulas
+            if formula.metadata.get("fallback_rule")
+            == "uscode_section_catchline_coverage_v1"
+        }
+
+        assert expected_catchline in catchline_spans

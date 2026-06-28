@@ -457,6 +457,18 @@ class BaseStateScraper(ABC):
             return source_url
         return ""
 
+    @staticmethod
+    def _checkpoint_payload_row_key(row: Any) -> str:
+        if not isinstance(row, dict):
+            return ""
+        statute_id = str(row.get("statute_id") or "").strip().lower()
+        if statute_id:
+            return statute_id
+        source_url = str(row.get("source_url") or "").strip().lower()
+        if source_url:
+            return source_url
+        return ""
+
     def _load_partial_checkpoint_statutes(
         self,
         *,
@@ -500,6 +512,32 @@ class BaseStateScraper(ABC):
             )
         return loaded
 
+    def _load_partial_checkpoint_payload(self) -> Dict[str, Any]:
+        """Load the raw partial-checkpoint payload for resume metadata.
+
+        State-specific scrapers can use this to recover progress cursors
+        (for example, titles/chapters already scanned) so retries do not
+        restart from the first page after long-running partial progress.
+        """
+        checkpoint_path = self._partial_checkpoint_path()
+        if checkpoint_path is None or not checkpoint_path.exists():
+            return {}
+        try:
+            payload = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+        except Exception:
+            return {}
+        if not isinstance(payload, dict):
+            return {}
+        return payload
+
+    def _load_partial_checkpoint_progress(self) -> Dict[str, Any]:
+        """Return checkpoint progress metadata if available."""
+        payload = self._load_partial_checkpoint_payload()
+        progress = payload.get("progress")
+        if isinstance(progress, dict):
+            return dict(progress)
+        return {}
+
     def _write_partial_checkpoint(
         self,
         statutes: List[NormalizedStatute],
@@ -542,6 +580,48 @@ class BaseStateScraper(ABC):
                 serialized_rows.append(statute.to_dict())
             except Exception:
                 continue
+
+        existing_rows: List[Dict[str, Any]] = []
+        existing_progress: Dict[str, Any] = {}
+        if checkpoint_path.exists():
+            try:
+                existing_payload = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+            except Exception:
+                existing_payload = {}
+            if isinstance(existing_payload, dict):
+                raw_existing_rows = existing_payload.get("statutes")
+                if isinstance(raw_existing_rows, list):
+                    existing_rows = [row for row in raw_existing_rows if isinstance(row, dict)]
+                raw_existing_progress = existing_payload.get("progress")
+                if isinstance(raw_existing_progress, dict):
+                    existing_progress = dict(raw_existing_progress)
+
+        if existing_progress:
+            merged_progress = dict(existing_progress)
+            merged_progress.update(progress_payload)
+            progress_payload = merged_progress
+
+        # Preserve prior statutes when a progress-only write would otherwise
+        # clear the checkpoint corpus, and prevent regressions where a smaller
+        # intermediate scrape path overwrites a larger recovered corpus.
+        if not serialized_rows and existing_rows:
+            serialized_rows = list(existing_rows)
+        elif serialized_rows and existing_rows and len(serialized_rows) < len(existing_rows):
+            merged_rows = list(existing_rows)
+            merged_keys = {
+                self._checkpoint_payload_row_key(row)
+                for row in merged_rows
+                if self._checkpoint_payload_row_key(row)
+            }
+            for row in serialized_rows:
+                row_key = self._checkpoint_payload_row_key(row)
+                if row_key and row_key in merged_keys:
+                    continue
+                if row_key:
+                    merged_keys.add(row_key)
+                merged_rows.append(row)
+            serialized_rows = merged_rows
+
         if not serialized_rows and not progress_payload:
             return False
 
@@ -551,7 +631,7 @@ class BaseStateScraper(ABC):
             "code_name": str(code_name or ""),
             "stage_label": str(stage_label or ""),
             "updated_at": datetime.now().isoformat(),
-            "statutes_count": len(serialized_rows),
+            "statutes_count": int(len(serialized_rows)),
             "statutes": serialized_rows,
         }
         if progress_payload:
@@ -827,6 +907,7 @@ class BaseStateScraper(ABC):
         import time
         
         all_statutes = []
+        code_errors: List[str] = []
         codes = self.get_code_list()
         
         self.logger.info(f"Scraping {len(codes)} codes for {self.state_name}")
@@ -918,6 +999,7 @@ class BaseStateScraper(ABC):
                 
             except Exception as e:
                 self.logger.error(f"Failed to scrape {code_name}: {e}")
+                code_errors.append(f"{code_name}: {e}")
                 self._write_partial_checkpoint(
                     all_statutes,
                     code_name=code_name,
@@ -934,6 +1016,18 @@ class BaseStateScraper(ABC):
             
             # Rate limiting
             time.sleep(rate_limit_delay)
+
+        # If every code failed and we produced no statutes, surface the failure
+        # so orchestration can classify/retry instead of recording a silent
+        # zero-statute "success".
+        if not all_statutes and code_errors:
+            error_summary = "; ".join(code_errors[:3])
+            if len(code_errors) > 3:
+                error_summary = f"{error_summary}; +{len(code_errors) - 3} more"
+            raise RuntimeError(
+                f"{self.state_code} scrape_all produced zero statutes with code errors: {error_summary}"
+            )
+
         self._write_partial_checkpoint(
             all_statutes,
             code_name="scrape_all",
@@ -1337,12 +1431,20 @@ class BaseStateScraper(ABC):
                     "User-Agent": "ipfs-datasets-state-scraper/2.0",
                     "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
                 }
+
+                def _blocking_fetch(candidate_url: str) -> tuple[int, bytes]:
+                    request = Request(candidate_url, headers=headers)
+                    with urlopen(request, timeout=max(1, int(timeout_seconds or 25))) as response:
+                        status_code = int(getattr(response, "status", 200) or 200)
+                        content = bytes(response.read() or b"")
+                    return status_code, content
+
                 for candidate_url in self._wayback_replay_candidates(fetch_url):
                     try:
-                        request = Request(candidate_url, headers=headers)
-                        with urlopen(request, timeout=max(1, int(timeout_seconds or 25))) as response:
-                            status_code = int(getattr(response, "status", 200) or 200)
-                            content = bytes(response.read() or b"")
+                        status_code, content = await asyncio.wait_for(
+                            asyncio.to_thread(_blocking_fetch, candidate_url),
+                            timeout=max(2, int(timeout_seconds or 25) + 2),
+                        )
                         if status_code != 200 or not content:
                             continue
                         self._record_fetch_event(provider="requests_direct", success=True)
@@ -1352,6 +1454,8 @@ class BaseStateScraper(ABC):
                             provider="requests_direct",
                         )
                         return content
+                    except asyncio.TimeoutError:
+                        continue
                     except Exception:
                         continue
 

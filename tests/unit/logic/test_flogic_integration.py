@@ -727,6 +727,20 @@ class TestFLogicSemanticOptimizer:
         assert len(result.violations) >= 1
         assert result.passed is False
 
+    def test_kg_triples_whitespace_predicate_violation(self):
+        opt = self._optimizer()
+        emb = [1.0, 0.0]
+        result = opt.evaluate(
+            "src",
+            "decoded",
+            emb,
+            emb,
+            kg_triples=[{"subject": "x", "predicate": "   ", "object": "y"}],
+        )
+        assert result.ontology_consistent is False
+        assert len(result.violations) >= 1
+        assert result.passed is False
+
     def test_add_ontology_class(self):
         opt = self._optimizer()
         opt.add_ontology_class("Animal")

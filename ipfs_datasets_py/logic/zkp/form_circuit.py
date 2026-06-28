@@ -42,7 +42,7 @@ import logging
 import os
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Mapping, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -218,6 +218,7 @@ class FormCompletionCertificate:
 
     def to_dict(self) -> Dict[str, Any]:
         proof_dict = self.proof.to_dict() if self.proof else {}
+        zkp_public_inputs = _proof_public_inputs(self.proof)
         attestation: Dict[str, Any] = {}
         if self.proof is not None:
             try:
@@ -236,6 +237,7 @@ class FormCompletionCertificate:
             "ipfs_cid": self.ipfs_cid,
             "verification_summary": self.verification_summary,
             "public_inputs": self.public_inputs,
+            "zkp_public_inputs": zkp_public_inputs,
             "zkp_attestation": attestation,
             "timestamp": self.timestamp,
             "is_simulated": self.is_simulated,
@@ -244,6 +246,42 @@ class FormCompletionCertificate:
 
     def to_json(self, **kwargs: Any) -> str:
         return json.dumps(self.to_dict(), **kwargs)
+
+
+def _proof_public_inputs(proof: Any) -> Dict[str, Any]:
+    """Return the proof-facing public inputs, including attestation fields.
+
+    ``FormCompletionCertificate.public_inputs`` is the form-verifier input
+    surface (template/rule/verdict hashes).  The ZKP proof has its own public
+    inputs and commitment.  Keep them separate so callers can consume the
+    proof attestation without accidentally rebuilding it over form-only inputs.
+    """
+    raw_public_inputs = getattr(proof, "public_inputs", None)
+    if not isinstance(raw_public_inputs, Mapping):
+        return {}
+
+    public_inputs = dict(raw_public_inputs)
+    if public_inputs.get("attestation_ref") and public_inputs.get(
+        "attestation_view_version"
+    ):
+        return public_inputs
+
+    try:
+        from ipfs_datasets_py.logic.zkp.circuits import build_proof_attestation_view
+
+        attestation = build_proof_attestation_view(
+            proof_data=getattr(proof, "proof_data", b""),
+            public_inputs=public_inputs,
+            metadata=getattr(proof, "metadata", {}),
+        )
+    except Exception:
+        return public_inputs
+
+    public_inputs.setdefault("attestation_ref", attestation["attestation_ref"])
+    public_inputs.setdefault(
+        "attestation_view_version", int(attestation["attestation_view_version"])
+    )
+    return public_inputs
 
 
 # ---------------------------------------------------------------------------

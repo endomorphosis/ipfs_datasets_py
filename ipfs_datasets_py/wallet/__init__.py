@@ -32,6 +32,7 @@ from .models import (
     Wallet,
     WalletStorageHealthReport,
     WalletInvocation,
+    WorldIdBinding,
 )
 from .multisig import operation_requires_approval
 from .privacy import AnalyticsPrivacyPolicy
@@ -117,6 +118,7 @@ __all__ = [
     "WalletInvocation",
     "WalletService",
     "WalletStorageHealthReport",
+    "WorldIdBinding",
     "WalletStorageBackendConfig",
     "WalletStorageConfig",
     "WALLET_UCAN_CONFORMANCE_FIXTURE_ID",

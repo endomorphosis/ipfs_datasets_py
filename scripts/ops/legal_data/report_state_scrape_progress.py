@@ -107,6 +107,63 @@ def _parse_shard_states(run_dir: Path) -> Dict[str, List[str]]:
     return out
 
 
+def _infer_shard_states_from_outputs(run_dir: Path) -> Dict[str, List[str]]:
+    """Infer shard->states mapping when meta/shards.json is unavailable.
+
+    Some managed parallel runs only persist shard logs/progress files and omit
+    ``meta/shards.json``. This fallback keeps reporting usable for those runs.
+    """
+    out: Dict[str, List[str]] = {}
+    for shard_dir in sorted(run_dir.glob("shard*")):
+        if not shard_dir.is_dir():
+            continue
+        shard = shard_dir.name
+        discovered_states: List[str] = []
+        seen = set()
+
+        progress_candidates = [
+            shard_dir / "output" / "state_refresh_progress.json",
+            shard_dir / "output" / "state_laws_refresh" / "state_refresh_progress.json",
+        ]
+        progress_candidates.extend(
+            sorted(shard_dir.glob("output/cycles/cycle_*/state_laws_refresh/state_refresh_progress.json"), reverse=True)
+        )
+        for progress_path in progress_candidates:
+            payload = _read_json(progress_path)
+            results = payload.get("state_results") if isinstance(payload.get("state_results"), dict) else {}
+            for code in results.keys():
+                state = str(code or "").strip().upper()
+                if len(state) != 2 or state in seen:
+                    continue
+                seen.add(state)
+                discovered_states.append(state)
+
+        if not discovered_states:
+            partial_dir = shard_dir / "output" / "partial_checkpoints"
+            if partial_dir.exists():
+                for checkpoint_path in sorted(partial_dir.glob("STATE-*-partial.json")):
+                    name = checkpoint_path.name
+                    parts = name.split("-")
+                    state = parts[1].strip().upper() if len(parts) >= 3 else ""
+                    if len(state) != 2 or state in seen:
+                        continue
+                    seen.add(state)
+                    discovered_states.append(state)
+
+        if not discovered_states:
+            log_progress = _collect_log_progress(run_dir / "logs" / f"{shard}.log")
+            for state in sorted(log_progress.keys()):
+                code = str(state or "").strip().upper()
+                if len(code) != 2 or code in seen:
+                    continue
+                seen.add(code)
+                discovered_states.append(code)
+
+        if discovered_states:
+            out[shard] = discovered_states
+    return out
+
+
 def _states_from_phase_or_default(
     phase_payload: Mapping[str, Any],
     default_states: Sequence[str],
@@ -633,6 +690,21 @@ def main() -> int:
     args = parse_args()
     run_dir = _resolve_run_dir(str(args.parallel_run_dir or ""))
     shard_map = _parse_shard_states(run_dir)
+    inferred_shard_map = _infer_shard_states_from_outputs(run_dir)
+    if not shard_map:
+        shard_map = dict(inferred_shard_map)
+    else:
+        for shard, inferred_states in inferred_shard_map.items():
+            existing = shard_map.get(shard, [])
+            merged: List[str] = []
+            seen = set()
+            for code in list(existing) + list(inferred_states):
+                state = str(code or "").strip().upper()
+                if len(state) != 2 or state in seen:
+                    continue
+                seen.add(state)
+                merged.append(state)
+            shard_map[shard] = merged
 
     rows: List[Dict[str, Any]] = []
     shard_summaries: List[Dict[str, Any]] = []

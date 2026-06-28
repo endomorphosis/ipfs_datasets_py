@@ -4,7 +4,7 @@ This module contains the scraper for Virginia statutes from the official state l
 """
 
 import asyncio
-from typing import List, Dict, Optional, Tuple
+from typing import Callable, List, Dict, Optional, Tuple
 import re
 from urllib.parse import urljoin, urlparse
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
@@ -39,6 +39,20 @@ class VirginiaScraper(BaseStateScraper):
             self._VA_SECTION_URL_RE.match(path)
             or self._VA_DIRECT_SECTION_URL_RE.match(path)
         )
+
+    def _derive_va_section_number(self, source_url: str) -> str:
+        path = str(urlparse(str(source_url or "")).path or "").strip()
+        section_match = re.search(
+            r"/vacode/title[0-9A-Za-z.]+/chapter[0-9A-Za-z.]+/section([0-9A-Za-z.\-]+)/?$",
+            path,
+            flags=re.IGNORECASE,
+        )
+        if section_match:
+            return str(section_match.group(1) or "").strip()
+        direct_match = re.search(r"/vacode/([0-9A-Za-z.]+-[0-9A-Za-z.\-]+)/?$", path, flags=re.IGNORECASE)
+        if direct_match:
+            return str(direct_match.group(1) or "").strip()
+        return ""
     
     def get_base_url(self) -> str:
         """Return the base URL for Virginia's legislative website."""
@@ -148,7 +162,41 @@ class VirginiaScraper(BaseStateScraper):
     ) -> List[NormalizedStatute]:
         title_links = await self._discover_title_links()
         self.logger.info("Virginia official index: discovered %s title links", len(title_links))
+        resumed = self._load_partial_checkpoint_statutes(code_name=code_name, max_statutes=max_statutes)
+        checkpoint_progress = self._load_partial_checkpoint_progress()
         statutes: List[NormalizedStatute] = []
+        seen_keys: set[str] = set()
+        seen_urls: set[str] = set()
+
+        def _extend_unique(batch: List[NormalizedStatute]) -> None:
+            for statute in batch:
+                key = str(statute.statute_id or statute.source_url or "").strip().lower()
+                source_url = str(statute.source_url or "").strip().lower()
+                if key and key in seen_keys:
+                    continue
+                if source_url and source_url in seen_urls:
+                    continue
+                if key:
+                    seen_keys.add(key)
+                if source_url:
+                    seen_urls.add(source_url)
+                statutes.append(statute)
+
+        _extend_unique(resumed)
+        if resumed:
+            self.logger.info(
+                "Virginia official index: resumed %s statutes from partial checkpoint",
+                len(statutes),
+            )
+        resume_titles_scanned = max(0, int(checkpoint_progress.get("titles_scanned") or 0))
+        resume_chapters_scanned = max(0, int(checkpoint_progress.get("chapters_scanned") or 0))
+        resume_sections_scanned = max(0, int(checkpoint_progress.get("sections_scanned") or 0))
+        resume_discovered_sections = max(0, int(checkpoint_progress.get("discovered_sections") or 0))
+        title_rewind = max(0, int(self._env_int("STATE_SCRAPER_VA_RESUME_TITLE_REWIND", default=1)))
+        resume_title_floor = max(0, resume_titles_scanned - title_rewind)
+        chapters_scanned_total = int(resume_chapters_scanned)
+        sections_scanned_total = int(max(len(statutes), resume_sections_scanned))
+        sections_discovered_total = int(max(len(statutes), resume_discovered_sections))
         limit = max(1, int(max_statutes)) if max_statutes is not None else None
         self._write_partial_checkpoint(
             statutes,
@@ -157,6 +205,9 @@ class VirginiaScraper(BaseStateScraper):
             extra={
                 "titles_scanned": 0,
                 "discovered_titles": int(len(title_links)),
+                "chapters_scanned": int(chapters_scanned_total),
+                "sections_scanned": int(sections_scanned_total),
+                "discovered_sections": int(sections_discovered_total),
                 "codes_completed": 0,
                 "codes_total": 1,
             },
@@ -164,6 +215,8 @@ class VirginiaScraper(BaseStateScraper):
         for title_index, (title_url, title_label) in enumerate(title_links, start=1):
             if limit is not None and len(statutes) >= limit:
                 break
+            if title_index < resume_title_floor:
+                continue
             chapter_links = await self._discover_chapter_links(title_url)
             self.logger.info(
                 "Virginia official index: title=%s index=%s/%s chapters=%s statutes_so_far=%s",
@@ -180,6 +233,9 @@ class VirginiaScraper(BaseStateScraper):
                 extra={
                     "titles_scanned": int(title_index),
                     "discovered_titles": int(len(title_links)),
+                    "chapters_scanned": int(chapters_scanned_total),
+                    "sections_scanned": int(sections_scanned_total),
+                    "discovered_sections": int(sections_discovered_total),
                     "discovered_chapters": int(len(chapter_links)),
                     "codes_completed": 0,
                     "codes_total": 1,
@@ -188,7 +244,15 @@ class VirginiaScraper(BaseStateScraper):
             for chapter_index, (chapter_url, chapter_label) in enumerate(chapter_links, start=1):
                 if limit is not None and len(statutes) >= limit:
                     break
+                chapters_scanned_total += 1
                 section_links = await self._discover_section_links(chapter_url)
+                if seen_urls:
+                    section_links = [
+                        (url, section_label)
+                        for url, section_label in section_links
+                        if str(url or "").strip().lower() not in seen_urls
+                    ]
+                sections_discovered_total += len(section_links)
                 if chapter_index == 1 or chapter_index % 10 == 0 or chapter_index == len(chapter_links):
                     self.logger.info(
                         "Virginia official index: title=%s chapter=%s/%s sections=%s statutes_so_far=%s",
@@ -205,18 +269,47 @@ class VirginiaScraper(BaseStateScraper):
                         extra={
                             "titles_scanned": int(title_index),
                             "discovered_titles": int(len(title_links)),
-                            "chapters_scanned": int(chapter_index),
+                            "chapters_scanned": int(chapters_scanned_total),
+                            "sections_scanned": int(sections_scanned_total),
+                            "discovered_sections": int(sections_discovered_total),
                             "discovered_chapters": int(len(chapter_links)),
                             "codes_completed": 0,
                             "codes_total": 1,
                         },
                     )
+                def _progress_hook(
+                    scanned_sections: int,
+                    total_sections: int,
+                    partial_batch: List[NormalizedStatute],
+                ) -> None:
+                    if (
+                        scanned_sections == 1
+                        or scanned_sections % 200 == 0
+                        or scanned_sections == total_sections
+                    ):
+                        self._write_partial_checkpoint(
+                            statutes + partial_batch,
+                            code_name=code_name,
+                            stage_label="virginia:section-scan",
+                            extra={
+                                "titles_scanned": int(title_index),
+                                "discovered_titles": int(len(title_links)),
+                                "chapters_scanned": int(chapters_scanned_total),
+                                "sections_scanned": int(sections_scanned_total + scanned_sections),
+                                "discovered_sections": int(sections_discovered_total),
+                                "discovered_chapters": int(len(chapter_links)),
+                                "codes_completed": 0,
+                                "codes_total": 1,
+                            },
+                        )
                 parsed = await self._scrape_section_urls(
                     code_name,
                     section_links,
                     max_statutes=(None if limit is None else max(0, limit - len(statutes))),
+                    progress_hook=_progress_hook,
                 )
-                statutes.extend(parsed)
+                sections_scanned_total += len(section_links)
+                _extend_unique(parsed)
         self._write_partial_checkpoint(
             statutes,
             code_name=code_name,
@@ -225,6 +318,9 @@ class VirginiaScraper(BaseStateScraper):
             extra={
                 "titles_scanned": int(len(title_links)),
                 "discovered_titles": int(len(title_links)),
+                "chapters_scanned": int(chapters_scanned_total),
+                "sections_scanned": int(sections_scanned_total),
+                "discovered_sections": int(sections_discovered_total),
                 "codes_completed": 1,
                 "codes_total": 1,
             },
@@ -306,6 +402,7 @@ class VirginiaScraper(BaseStateScraper):
         code_name: str,
         section_urls: List[Tuple[str, str]],
         max_statutes: Optional[int] = None,
+        progress_hook: Optional[Callable[[int, int, List[NormalizedStatute]], None]] = None,
     ) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
@@ -314,12 +411,6 @@ class VirginiaScraper(BaseStateScraper):
 
         limit = max(1, int(max_statutes)) if max_statutes is not None else None
         statutes: List[NormalizedStatute] = []
-        checkpoint_every_raw = str(self._env_int("STATE_SCRAPER_VA_SECTION_CHECKPOINT_EVERY", default=20))
-        try:
-            checkpoint_every = int(checkpoint_every_raw or 20)
-        except Exception:
-            checkpoint_every = 20
-        checkpoint_every = max(5, min(200, checkpoint_every))
         concurrency = max(1, int(self._env_int("STATE_SCRAPER_VA_SECTION_CONCURRENCY", default=8)))
         sem = asyncio.Semaphore(concurrency)
         total_sections = len(section_urls)
@@ -331,16 +422,27 @@ class VirginiaScraper(BaseStateScraper):
                 if not payload:
                     return None
                 soup = BeautifulSoup(payload, "html.parser")
-                node = soup.find(id="va_code") or soup.find("article", id="vacode") or soup
+                node = (
+                    soup.find(id="va_code")
+                    or soup.find("article", id="vacode")
+                    or soup.select_one("main")
+                    or soup
+                )
                 for tag in node(["script", "style", "nav", "header", "footer"]):
                     tag.decompose()
                 text = self._normalize_legal_text(node.get_text(" ", strip=True))
                 heading = node.find("h2") or soup.find("title")
                 heading_text = heading.get_text(" ", strip=True) if heading else ""
-                match = re.search(r"§\s*([0-9A-Za-z.-]+)", heading_text or text)
-                section_number = match.group(1) if match else self._derive_section_number_from_url(source_url)
+                match = re.search(r"(?:§|section)\s*([0-9A-Za-z.-]+)", heading_text or text, flags=re.IGNORECASE)
+                section_number = (
+                    self._derive_va_section_number(source_url)
+                    or (match.group(1) if match else "")
+                    or str(self._derive_section_number_from_url(source_url) or "").strip()
+                )
                 section_name = re.sub(r"^§\s*[0-9A-Za-z.-]+\s*\.?\s*", "", heading_text or section_label).strip(". ")
-                if len(text) < 240 or not section_number:
+                # Some valid Virginia sections are short; avoid treating those
+                # as missing rows during full-corpus sweeps.
+                if len(text) < 120 or not section_number:
                     return None
                 return NormalizedStatute(
                     state_code=self.state_code,
@@ -365,18 +467,6 @@ class VirginiaScraper(BaseStateScraper):
         cancelled_early = False
         for task in asyncio.as_completed(tasks):
             scanned_sections += 1
-            if scanned_sections == 1 or scanned_sections % checkpoint_every == 0:
-                self._write_partial_checkpoint(
-                    statutes,
-                    code_name=code_name,
-                    stage_label="virginia:section-scan",
-                    extra={
-                        "sections_scanned": int(scanned_sections),
-                        "discovered_sections": int(total_sections),
-                        "codes_completed": 0,
-                        "codes_total": 1,
-                    },
-                )
             statute = await task
             if statute is not None:
                 key = str(statute.statute_id or statute.source_url or "").strip().lower()
@@ -385,6 +475,22 @@ class VirginiaScraper(BaseStateScraper):
                 if key:
                     seen_keys.add(key)
                 statutes.append(statute)
+            if progress_hook is not None:
+                try:
+                    progress_hook(scanned_sections, total_sections, statutes)
+                except Exception:
+                    pass
+            if (
+                scanned_sections == 1
+                or scanned_sections % 100 == 0
+                or scanned_sections == total_sections
+            ):
+                self.logger.info(
+                    "Virginia section scan: scanned_sections=%s/%s statutes_so_far=%s",
+                    scanned_sections,
+                    total_sections,
+                    len(statutes),
+                )
             if limit is not None and len(statutes) >= limit:
                 cancelled_early = True
                 for pending in tasks:
@@ -393,18 +499,6 @@ class VirginiaScraper(BaseStateScraper):
                 break
         if cancelled_early:
             await asyncio.gather(*tasks, return_exceptions=True)
-        self._write_partial_checkpoint(
-            statutes,
-            code_name=code_name,
-            stage_label="virginia:section-scan-complete",
-            force=True,
-            extra={
-                "sections_scanned": int(min(total_sections, scanned_sections)),
-                "discovered_sections": int(total_sections),
-                "codes_completed": 0,
-                "codes_total": 1,
-            },
-        )
         return statutes
 
 

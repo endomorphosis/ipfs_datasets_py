@@ -862,13 +862,31 @@ def _extract_checkpoint_work_signal(payload: Dict[str, Any]) -> Tuple[str, int, 
         ("scanned_sections", "discovered_sections", "sections"),
         ("codes_completed", "codes_total", "codes"),
     ]
+    best_with_scanned: Optional[Tuple[str, int, int]] = None
+    best_any: Optional[Tuple[str, int, int]] = None
     for src in sources:
         for scanned_key, discovered_key, label in candidate_pairs:
-            discovered = _safe_int(src.get(discovered_key), 0)
+            discovered = max(0, _safe_int(src.get(discovered_key), 0))
             if discovered <= 0:
                 continue
-            scanned = _safe_int(src.get(scanned_key), 0)
-            return label, max(0, scanned), max(0, discovered)
+            scanned = max(0, _safe_int(src.get(scanned_key), 0))
+            candidate = (label, scanned, discovered)
+            if (
+                best_any is None
+                or candidate[2] > best_any[2]
+                or (candidate[2] == best_any[2] and candidate[1] > best_any[1])
+            ):
+                best_any = candidate
+            if scanned > 0 and (
+                best_with_scanned is None
+                or candidate[2] > best_with_scanned[2]
+                or (candidate[2] == best_with_scanned[2] and candidate[1] > best_with_scanned[1])
+            ):
+                best_with_scanned = candidate
+    if best_with_scanned is not None:
+        return best_with_scanned
+    if best_any is not None:
+        return best_any
     return "", 0, 0
 
 

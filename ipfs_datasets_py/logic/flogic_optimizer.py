@@ -285,9 +285,9 @@ class FLogicSemanticOptimizer:
         # Group triples by subject to build frames
         subject_map: Dict[str, Dict[str, str]] = {}
         for triple in kg_triples:
-            subj = triple.get("subject", "")
-            pred = triple.get("predicate", "")
-            obj = triple.get("object", "")
+            subj = str(triple.get("subject", "")).strip()
+            pred = str(triple.get("predicate", "")).strip()
+            obj = str(triple.get("object", "")).strip()
             if not subj:
                 continue
             if subj not in subject_map:
@@ -309,6 +309,95 @@ class FLogicSemanticOptimizer:
                             frame_id=subj,
                             constraint="non_empty_predicate",
                             details=f"Triple ({subj!r}, '', {obj!r}) has empty predicate",
+                        )
+                    )
+
+        violations.extend(self._check_frame_ontology_constraints(kg_triples))
+        return violations
+
+    def _check_frame_ontology_constraints(
+        self,
+        kg_triples: Sequence[Mapping[str, Any]],
+    ) -> List[OntologyViolation]:
+        """Validate deterministic modal.frame_logic ontology invariants."""
+        triples_by_subject: Dict[str, List[tuple[str, str]]] = {}
+        for triple in kg_triples:
+            subj = str(triple.get("subject", "")).strip()
+            pred = str(triple.get("predicate", "")).strip()
+            obj = str(triple.get("object", "")).strip()
+            if not subj or not pred or not obj:
+                continue
+            triples_by_subject.setdefault(subj, []).append((pred, obj))
+
+        document_selected_frames: Dict[str, str] = {}
+        document_selected_terms: Dict[str, set[str]] = {}
+        violations: List[OntologyViolation] = []
+        for subj, facts in sorted(triples_by_subject.items()):
+            selected_frames = [
+                obj for pred, obj in facts if pred == "selected_ontology_frame"
+            ]
+            selected_terms = {
+                obj for pred, obj in facts if pred == "selected_ontology_term"
+            }
+            if selected_frames:
+                unique_frames = sorted(set(selected_frames))
+                if len(unique_frames) > 1:
+                    violations.append(
+                        OntologyViolation(
+                            frame_id=subj,
+                            constraint="single_selected_ontology_frame",
+                            details=(
+                                "Subject has multiple selected ontology frames: "
+                                + ", ".join(unique_frames)
+                            ),
+                        )
+                    )
+                document_selected_frames[subj] = unique_frames[0]
+                document_selected_terms[subj] = selected_terms
+                if not selected_terms:
+                    violations.append(
+                        OntologyViolation(
+                            frame_id=subj,
+                            constraint="selected_frame_has_terms",
+                            details=(
+                                "Selected ontology frame "
+                                f"{unique_frames[0]!r} has no selected_ontology_term facts"
+                            ),
+                        )
+                    )
+
+        if not document_selected_frames:
+            return violations
+
+        selected_frame_values = set(document_selected_frames.values())
+        selected_terms_by_frame = {
+            frame: terms
+            for doc_id, frame in document_selected_frames.items()
+            for terms in [document_selected_terms.get(doc_id, set())]
+        }
+        for subj, facts in sorted(triples_by_subject.items()):
+            for pred, obj in facts:
+                if pred != "interpreted_in_frame":
+                    continue
+                if obj not in selected_frame_values:
+                    violations.append(
+                        OntologyViolation(
+                            frame_id=subj,
+                            constraint="interpreted_frame_matches_selected_frame",
+                            details=(
+                                f"Formula is interpreted in {obj!r}, which is not "
+                                "a selected ontology frame for the document"
+                            ),
+                        )
+                    )
+                elif not selected_terms_by_frame.get(obj):
+                    violations.append(
+                        OntologyViolation(
+                            frame_id=subj,
+                            constraint="interpreted_frame_has_selected_terms",
+                            details=(
+                                f"Interpreted frame {obj!r} has no selected term grounding"
+                            ),
                         )
                     )
 

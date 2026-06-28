@@ -8,7 +8,16 @@ from typing import Any
 
 from ipfs_datasets_py.utils.cid_utils import cid_for_obj
 
-from .common import file_manifest_entry, read_jsonl, write_json, write_jsonl, write_parquet
+from .common import (
+    clean_legal_text,
+    disambiguate_duplicate_article_identifiers,
+    file_manifest_entry,
+    read_jsonl,
+    stable_row_key,
+    write_json,
+    write_jsonl,
+    write_parquet,
+)
 from ..paths import (
     DEFAULT_HF_REPO_IDS,
     HF_DATA_DIR,
@@ -66,10 +75,17 @@ def law_payload(row: dict[str, Any]) -> dict[str, Any]:
         "document_type",
         "citation",
         "official_metadata",
+        "law_status",
+        "is_current",
+        "valid_from",
+        "valid_to",
         "effective_date",
+        "retrieved_at",
+        "status_source",
+        "status_confidence",
+        "status_note",
         "version_start_date",
         "version_end_date",
-        "is_current",
         "publication_date",
         "last_modified_date",
         "historical_versions",
@@ -82,7 +98,9 @@ def law_payload(row: dict[str, Any]) -> dict[str, Any]:
         "scraped_at",
         "metadata",
     ]
-    return {key: row.get(key) for key in keep}
+    payload = {key: row.get(key) for key in keep}
+    payload["text"] = clean_legal_text(payload.get("text"))
+    return payload
 
 
 def article_payload(row: dict[str, Any]) -> dict[str, Any]:
@@ -113,13 +131,22 @@ def article_payload(row: dict[str, Any]) -> dict[str, Any]:
         "division_number",
         "paragraph_number",
         "text",
+        "law_status",
+        "is_current",
+        "valid_from",
+        "valid_to",
         "effective_date",
+        "retrieved_at",
+        "status_source",
+        "status_confidence",
+        "status_note",
         "version_start_date",
         "version_end_date",
-        "is_current",
         "scraped_at",
     ]
-    return {key: row.get(key) for key in keep}
+    payload = {key: row.get(key) for key in keep}
+    payload["text"] = clean_legal_text(payload.get("text"))
+    return payload
 
 
 def build_rows(raw_dir: Path | None = None) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
@@ -147,13 +174,28 @@ def build_rows(raw_dir: Path | None = None) -> tuple[list[dict[str, Any]], list[
                 "content_address": f"ipfs://{cid}",
                 "source_url": payload.get("source_url"),
                 "title": payload.get("title"),
+                "law_status": payload.get("law_status"),
+                "is_current": payload.get("is_current"),
+                "valid_from": payload.get("valid_from"),
+                "valid_to": payload.get("valid_to"),
+                "effective_date": payload.get("effective_date"),
+                "retrieved_at": payload.get("retrieved_at"),
+                "status_source": payload.get("status_source"),
+                "status_confidence": payload.get("status_confidence"),
             }
         )
 
+    article_payloads = [article_payload(raw_row) for raw_row in raw_articles]
+    disambiguate_duplicate_article_identifiers(article_payloads)
+
     articles: list[dict[str, Any]] = []
-    for raw_row in raw_articles:
-        payload = article_payload(raw_row)
+    seen_article_payloads: set[str] = set()
+    for payload in article_payloads:
         payload["law_cid"] = law_cid_by_id.get(str(payload.get("law_identifier") or ""), "")
+        dedupe_key = stable_row_key(payload)
+        if dedupe_key in seen_article_payloads:
+            continue
+        seen_article_payloads.add(dedupe_key)
         cid = cid_for_obj(payload)
         payload["cid"] = cid
         payload["content_address"] = f"ipfs://{cid}"
@@ -167,6 +209,14 @@ def build_rows(raw_dir: Path | None = None) -> tuple[list[dict[str, Any]], list[
                 "content_address": f"ipfs://{cid}",
                 "source_url": None,
                 "title": payload.get("citation"),
+                "law_status": payload.get("law_status"),
+                "is_current": payload.get("is_current"),
+                "valid_from": payload.get("valid_from"),
+                "valid_to": payload.get("valid_to"),
+                "effective_date": payload.get("effective_date"),
+                "retrieved_at": payload.get("retrieved_at"),
+                "status_source": payload.get("status_source"),
+                "status_confidence": payload.get("status_confidence"),
             }
         )
     return laws, articles, cid_index
@@ -187,6 +237,20 @@ def write_readme(
         "--max_documents <cap> --rate_limit_delay <delay> --resume"
     )
     coverage = coverage_note(run_metadata, record_counts)
+    scrape_date = str(run_metadata.get("scraped_at") or "unknown")
+    scope_note = str(run_metadata.get("corpus_scope_note") or "")
+    full_bwb = run_metadata.get("full_bwb_discovery") or {}
+    catalog_counts = run_metadata.get("catalog_coverage_counts") or {}
+    catalog_note = ""
+    if run_metadata.get("catalog_backed_run"):
+        catalog_note = (
+            f"Catalog-backed production batch: {run_metadata.get('catalog_batch_size', 'unknown')} queued BWBR identifier(s). "
+            f"Catalog coverage after this run: {catalog_counts.get('complete', 'unknown')} complete of "
+            f"{catalog_counts.get('total_discovered_identifiers', 'unknown')} discovered identifier(s) "
+            f"({run_metadata.get('catalog_percent_complete', 'unknown')}%). Remaining: "
+            f"{catalog_counts.get('remaining', 'unknown')}. Integrity validation ok: "
+            f"{run_metadata.get('catalog_integrity_ok', 'unknown')}."
+        )
     readme = f"""---
 pretty_name: IPFS Netherlands Laws
 language:
@@ -227,9 +291,32 @@ This dataset packages Netherlands law records with deterministic IPFS Content ID
 
 {coverage}
 
+Scrape date: {scrape_date}
+
+Exact corpus size in this package: {record_counts.get("laws", 0)} law records, {record_counts.get("articles", 0)} article records, and {record_counts.get("cid_index", 0)} CID index rows.
+
+Full BWB discovery inventory: {full_bwb.get("unique_laws_discovered", "unknown")} unique BWBR identifiers from {full_bwb.get("number_of_records_reported", "unknown")} official SRU record(s), with {full_bwb.get("failed_pages_count", "unknown")} failed discovery page(s).
+
+{catalog_note}
+
+{scope_note}
+
 This refresh includes parser coverage improvements for older/French heading styles such as `Article I.er`,
 plus run metadata diagnostics that distinguish article-producing laws, parser-missing article cases,
 and genuinely unnumbered/non-article documents.
+
+Quality audit note: this snapshot was rebuilt after parser-noise cleanup for official website UI chrome
+such as relation, permanent-link, print, save, and wetstechnical-information controls. Duplicate article
+identifiers caused by repeated article numbers in different hierarchy branches are disambiguated with
+deterministic hierarchy/text-derived suffixes. The quality audit reports duplicate IDs/CIDs as zero,
+clean status inheritance, clean hierarchy/citation reconstruction, and passing sampled CID/vector/BM25/KG
+retrieval validation.
+
+Historical/former laws are preserved. Consumers should use `law_status`, `is_current`, `valid_from`,
+`valid_to`, `effective_date`, `retrieved_at`, `status_source`, `status_confidence`, and `status_note`
+to distinguish current law from historical, repealed, superseded, or unknown-status records. These fields
+are part of the content-addressed payload, so CIDs change when official status/version metadata changes.
+This dataset is not legal advice and does not validate legal force beyond the official metadata parsed.
 
 Scrape command:
 
@@ -246,8 +333,12 @@ Current package counts:
 - Documents failed: {run_metadata.get("documents_failed", "unknown")}
 - Article-producing laws: {run_metadata.get("article_producing_laws_count", "unknown")}
 - Non-article-producing laws: {run_metadata.get("non_article_producing_laws_count", "unknown")}
+- Current laws: {run_metadata.get("current_laws_count", "unknown")}
+- Historical/repealed/superseded laws: {run_metadata.get("historical_repealed_superseded_laws_count", "unknown")}
+- Unknown-status laws: {run_metadata.get("unknown_status_laws_count", "unknown")}
+- Ambiguous-status laws: {run_metadata.get("ambiguous_status_laws_count", "unknown")}
 
-Remaining limitations before a full corpus release: increase/remove `max_documents`, validate shard/streaming behavior on larger runs, and spot-check laws that expose no article-level rows.
+Remaining limitations: this package should only be described as the full Dutch corpus when the run metadata shows uncapped official discovery and every discovered official BWBR document was parsed or explicitly logged as failed/skipped. Otherwise it is a verified shard or discovered-corpus subset.
 """
     (out_dir / "README.md").write_text(readme, encoding="utf-8")
 

@@ -18,6 +18,13 @@ import hashlib
 _SIMZKP_MAGIC = b"SIMZKP\x00\x01"
 _SIMZKP_PROOF_LENGTH = 160
 _ATTESTATION_VIEW_VERSION = 1
+_DERIVED_PUBLIC_INPUT_KEYS = frozenset(
+    {
+        "attestation_ref",
+        "attestation_view_version",
+    }
+)
+_HEX_CHARS = frozenset("0123456789abcdefABCDEF")
 
 
 def _bytes_from_proof_data(proof_data: object) -> bytes:
@@ -28,6 +35,19 @@ def _bytes_from_proof_data(proof_data: object) -> bytes:
         return bytes(proof_data)
     if isinstance(proof_data, memoryview):
         return proof_data.tobytes()
+    if isinstance(proof_data, str):
+        stripped = proof_data.strip()
+        hex_candidate = stripped[2:] if stripped.startswith(("0x", "0X")) else stripped
+        if (
+            hex_candidate
+            and len(hex_candidate) % 2 == 0
+            and all(char in _HEX_CHARS for char in hex_candidate)
+        ):
+            try:
+                return bytes.fromhex(hex_candidate)
+            except ValueError:
+                pass
+        return proof_data.encode("utf-8")
     if proof_data is None:
         return b""
     return str(proof_data).encode("utf-8")
@@ -96,6 +116,62 @@ def _resolve_circuit_identity(public_inputs: Mapping[str, Any]) -> tuple[str, in
     return "knowledge_of_axioms", fallback_version
 
 
+def _json_safe_public_input(value: Any) -> Any:
+    if value is None or isinstance(value, (bool, int, float, str)):
+        return value
+    if isinstance(value, bytes):
+        return value.hex()
+    if isinstance(value, bytearray):
+        return bytes(value).hex()
+    if isinstance(value, memoryview):
+        return value.tobytes().hex()
+    if isinstance(value, Mapping):
+        return {
+            str(key): _json_safe_public_input(item)
+            for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))
+        }
+    if isinstance(value, (list, tuple)):
+        return [_json_safe_public_input(item) for item in value]
+    return str(value)
+
+
+def compiler_guidance_ref_from_metadata(metadata: Mapping[str, Any] | None) -> str:
+    """Return a stable guidance ref from explicit metadata or a contract body."""
+    metadata_dict = _mapping_dict(metadata)
+    explicit_ref = str(metadata_dict.get("compiler_guidance_ref") or "").strip()
+    if explicit_ref:
+        return explicit_ref
+
+    contract = metadata_dict.get("compiler_guidance_contract")
+    if contract is None:
+        return ""
+    if isinstance(contract, str) and not contract.strip():
+        return ""
+    if isinstance(contract, Mapping) and not contract:
+        return ""
+    if isinstance(contract, (list, tuple)) and not contract:
+        return ""
+
+    canonical_contract = _json_safe_public_input(contract)
+    payload = json.dumps(canonical_contract, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _canonical_public_inputs(public_inputs: Mapping[str, Any]) -> Dict[str, Any]:
+    """Return public inputs suitable for stable attestation-view commitments."""
+    return {
+        str(key): _json_safe_public_input(value)
+        for key, value in sorted(public_inputs.items(), key=lambda pair: str(pair[0]))
+        if str(key) not in _DERIVED_PUBLIC_INPUT_KEYS
+    }
+
+
+def _public_input_commitment(public_inputs: Mapping[str, Any]) -> tuple[Dict[str, Any], str]:
+    canonical = _canonical_public_inputs(public_inputs)
+    payload = json.dumps(canonical, sort_keys=True, separators=(",", ":"))
+    return canonical, hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
 def build_proof_attestation_view(
     *,
     proof_data: object,
@@ -112,7 +188,20 @@ def build_proof_attestation_view(
     theorem_hash = str(public_inputs_dict.get("theorem_hash") or "")
     axioms_commitment = str(public_inputs_dict.get("axioms_commitment") or "")
     ruleset_id = str(public_inputs_dict.get("ruleset_id") or "")
+    compiler_guidance_ref = str(
+        public_inputs_dict.get("compiler_guidance_ref")
+        or metadata_dict.get("compiler_guidance_ref")
+        or compiler_guidance_ref_from_metadata(metadata_dict)
+        or ""
+    )
+    compiler_guidance_version = _non_negative_int(
+        public_inputs_dict.get("compiler_guidance_version")
+        or metadata_dict.get("compiler_guidance_version")
+    )
     proof_digest = hashlib.sha256(proof_bytes).hexdigest()
+    canonical_public_inputs, public_inputs_commitment = _public_input_commitment(
+        public_inputs_dict
+    )
 
     attestation_basis = {
         "axioms_commitment": axioms_commitment,
@@ -121,11 +210,14 @@ def build_proof_attestation_view(
         "ruleset_id": ruleset_id,
         "theorem_hash": theorem_hash,
     }
+    if compiler_guidance_ref:
+        attestation_basis["compiler_guidance_ref"] = compiler_guidance_ref
+        attestation_basis["compiler_guidance_version"] = compiler_guidance_version
     attestation_ref = hashlib.sha256(
         json.dumps(attestation_basis, sort_keys=True, separators=(",", ":")).encode("utf-8")
     ).hexdigest()
 
-    return {
+    view = {
         "attestation_ref": attestation_ref,
         "attestation_view_version": _ATTESTATION_VIEW_VERSION,
         "axioms_commitment": axioms_commitment,
@@ -134,10 +226,584 @@ def build_proof_attestation_view(
         "circuit_version": circuit_version,
         "layout": layout,
         "proof_digest": proof_digest,
+        "public_input_count": len(canonical_public_inputs),
+        "public_input_keys": list(canonical_public_inputs.keys()),
+        "public_inputs_commitment": public_inputs_commitment,
         "proof_system": str(metadata_dict.get("proof_system") or ""),
         "ruleset_id": ruleset_id,
         "theorem_hash": theorem_hash,
     }
+    if compiler_guidance_ref:
+        view["compiler_guidance_ref"] = compiler_guidance_ref
+        view["compiler_guidance_version"] = compiler_guidance_version
+    return view
+
+
+def refresh_proof_attestation(proof: Any) -> Any:
+    """Synchronize a proof's public attestation fields with its current inputs.
+
+    Some bridge paths add deterministic public inputs after backend proof
+    generation.  Keep the public ``attestation_ref`` and embedded
+    ``metadata.attestation_view`` in lockstep so verifier and LegalIR views see
+    the same commitment.
+    """
+    public_inputs = getattr(proof, "public_inputs", None)
+    if not isinstance(public_inputs, dict):
+        return proof
+
+    metadata = getattr(proof, "metadata", None)
+    if not isinstance(metadata, dict):
+        metadata = {}
+        try:
+            proof.metadata = metadata
+        except Exception:
+            return proof
+
+    attestation_view = build_proof_attestation_view(
+        proof_data=getattr(proof, "proof_data", b""),
+        public_inputs=public_inputs,
+        metadata=metadata,
+    )
+    public_inputs["attestation_ref"] = attestation_view["attestation_ref"]
+    public_inputs["attestation_view_version"] = int(
+        attestation_view["attestation_view_version"]
+    )
+    metadata["attestation_view"] = attestation_view
+    return proof
+
+
+def _proof_bytes_from_serialized(proof_data: object) -> object:
+    if isinstance(proof_data, str):
+        try:
+            return bytes.fromhex(proof_data)
+        except ValueError:
+            return proof_data
+    return proof_data
+
+
+def attestation_view_matches_proof(
+    *,
+    proof_data: object,
+    public_inputs: Mapping[str, Any],
+    metadata: Mapping[str, Any] | None = None,
+    attestation_view: Mapping[str, Any] | None = None,
+) -> bool:
+    """Return True when public attestation fields match the proof bytes.
+
+    The attestation view is a bridge-facing commitment over proof bytes,
+    public inputs, circuit identity, and compiler guidance.  Verification
+    should fail closed when a serialized proof carries stale or missing
+    attestation fields.
+    """
+    try:
+        public_inputs_dict = _mapping_dict(public_inputs)
+        if not public_inputs_dict:
+            return False
+        metadata_dict = _mapping_dict(metadata)
+        embedded = _mapping_dict(
+            attestation_view
+            if attestation_view is not None
+            else metadata_dict.get("attestation_view")
+        )
+
+        expected = build_proof_attestation_view(
+            proof_data=_proof_bytes_from_serialized(proof_data),
+            public_inputs=public_inputs_dict,
+            metadata=metadata_dict,
+        )
+
+        if not embedded:
+            return False
+
+        public_ref = public_inputs_dict.get("attestation_ref")
+        public_version = public_inputs_dict.get("attestation_view_version")
+        if public_ref is not None and public_ref != expected["attestation_ref"]:
+            return False
+        if public_version is not None and int(public_version or 0) != int(
+            expected["attestation_view_version"]
+        ):
+            return False
+        if (public_ref is None) != (public_version is None):
+            return False
+
+        for key in (
+            "attestation_ref",
+            "attestation_view_version",
+            "proof_digest",
+            "public_inputs_commitment",
+            "circuit_ref",
+            "theorem_hash",
+            "axioms_commitment",
+            "ruleset_id",
+        ):
+            if embedded.get(key) != expected.get(key):
+                return False
+
+        if "compiler_guidance_ref" in expected:
+            if embedded.get("compiler_guidance_ref") != expected["compiler_guidance_ref"]:
+                return False
+            if int(embedded.get("compiler_guidance_version") or 0) != int(
+                expected["compiler_guidance_version"]
+            ):
+                return False
+        elif embedded.get("compiler_guidance_ref"):
+            return False
+
+        return True
+    except (TypeError, ValueError, AttributeError):
+        return False
+
+
+def _non_negative_int(value: object, default: int = 1) -> int:
+    if isinstance(value, bool):
+        return default
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return default
+    return parsed if parsed >= 0 else default
+
+
+def proof_attestation_view_from_proof_dict(proof: Mapping[str, Any]) -> Dict[str, Any]:
+    """Return the canonical attestation view embedded in a serialized proof.
+
+    Older callers may only have a proof dictionary, not a ``ZKPProof`` object.
+    Prefer the backend-produced ``metadata.attestation_view`` when present, and
+    otherwise rebuild the same deterministic view from serialized proof bytes,
+    public inputs, and metadata.
+    """
+    if not isinstance(proof, Mapping):
+        return {}
+
+    metadata = proof.get("metadata")
+    metadata_dict = _mapping_dict(metadata)
+    embedded = metadata_dict.get("attestation_view")
+
+    proof_data = proof.get("proof_data")
+    proof_bytes = _proof_bytes_from_serialized(proof_data)
+    public_inputs = _mapping_dict(proof.get("public_inputs"))
+    rebuilt = build_proof_attestation_view(
+        proof_data=proof_bytes,
+        public_inputs=public_inputs,
+        metadata=metadata_dict,
+    )
+    if isinstance(embedded, Mapping) and attestation_view_matches_proof(
+        proof_data=proof_bytes,
+        public_inputs=public_inputs,
+        metadata=metadata_dict,
+        attestation_view=embedded,
+    ):
+        return dict(embedded)
+
+    return rebuilt
+
+
+def proof_digest_from_proof_dict(proof: Mapping[str, Any]) -> str:
+    """Return the proof byte digest from a serialized proof dictionary."""
+    if not isinstance(proof, Mapping):
+        return ""
+    proof_data = _proof_bytes_from_serialized(proof.get("proof_data"))
+    proof_bytes = _bytes_from_proof_data(proof_data)
+    if not proof_bytes:
+        return ""
+    return hashlib.sha256(proof_bytes).hexdigest()
+
+
+def proof_public_inputs_from_proof_dict(proof: Mapping[str, Any]) -> Dict[str, Any]:
+    """Return serialized proof public inputs with fresh attestation fields.
+
+    Bridge exporters sometimes receive a proof dictionary after the surrounding
+    record has lost its duplicated ``public_inputs`` field.  The proof itself is
+    the authoritative public-input carrier, so rebuild the derived attestation
+    fields from it before publishing LegalIR records.
+    """
+    if not isinstance(proof, Mapping):
+        return {}
+
+    public_inputs = _mapping_dict(proof.get("public_inputs"))
+    if not public_inputs:
+        return {}
+
+    attestation_view = proof_attestation_view_from_proof_dict(proof)
+    if not attestation_view:
+        return public_inputs
+
+    completed = dict(public_inputs)
+    completed["attestation_ref"] = attestation_view["attestation_ref"]
+    completed["attestation_view_version"] = int(
+        attestation_view["attestation_view_version"]
+    )
+
+    for key in (
+        "axioms_commitment",
+        "circuit_ref",
+        "circuit_version",
+        "compiler_guidance_ref",
+        "compiler_guidance_version",
+        "ruleset_id",
+        "theorem_hash",
+    ):
+        value = attestation_view.get(key)
+        if value not in (None, ""):
+            completed.setdefault(key, value)
+
+    return completed
+
+
+def _first_nonempty(*values: object) -> str:
+    for value in values:
+        if value in (None, ""):
+            continue
+        text = str(value).strip()
+        if text:
+            return text
+    return ""
+
+
+def _us_code_source_id_from_fields(
+    record: Mapping[str, Any],
+    metadata: Mapping[str, Any],
+) -> str:
+    source = _first_nonempty(
+        record.get("source"),
+        record.get("source_type"),
+        metadata.get("source"),
+        metadata.get("source_type"),
+    ).lower()
+    if source not in {"us_code", "us-code", "usc", "u.s.c.", "u.s. code"}:
+        return ""
+
+    title = _first_nonempty(
+        record.get("title"),
+        record.get("title_number"),
+        record.get("usc_title"),
+        record.get("uscode_title"),
+        metadata.get("title"),
+        metadata.get("title_number"),
+        metadata.get("usc_title"),
+        metadata.get("uscode_title"),
+    )
+    section = _first_nonempty(
+        record.get("section"),
+        record.get("section_number"),
+        record.get("usc_section"),
+        record.get("uscode_section"),
+        metadata.get("section"),
+        metadata.get("section_number"),
+        metadata.get("usc_section"),
+        metadata.get("uscode_section"),
+    )
+    if title and section:
+        return f"{title} U.S.C. {section}"
+    return ""
+
+
+def _source_id_from_record(
+    record: Mapping[str, Any],
+    metadata: Mapping[str, Any],
+    proof_hash: str,
+) -> str:
+    """Return a stable LegalIR source id from common proof/export fields."""
+    direct = _first_nonempty(
+        record.get("source_id"),
+        record.get("sample_id"),
+        record.get("document_id"),
+        record.get("doc_id"),
+        record.get("id"),
+        record.get("form_id"),
+        record.get("source_pdf"),
+        metadata.get("source_id"),
+        metadata.get("sample_id"),
+        metadata.get("document_id"),
+        metadata.get("doc_id"),
+        metadata.get("form_id"),
+        metadata.get("source_pdf"),
+    )
+    if direct:
+        return direct
+
+    citation = _first_nonempty(record.get("citation"), metadata.get("citation"))
+    if citation:
+        return citation
+
+    title = _first_nonempty(record.get("title"), metadata.get("title"))
+    section = _first_nonempty(record.get("section"), metadata.get("section"))
+    source = _first_nonempty(record.get("source"), metadata.get("source"))
+    if source.lower() in {"us_code", "us-code", "usc", "u.s.c."} and title and section:
+        return f"{title} U.S.C. {section}"
+
+    us_code_source_id = _us_code_source_id_from_fields(record, metadata)
+    if us_code_source_id:
+        return us_code_source_id
+
+    if proof_hash:
+        return f"zkp-proof:{proof_hash[:16]}"
+    return ""
+
+
+def _source_text_from_record(record: Mapping[str, Any], metadata: Mapping[str, Any]) -> str:
+    return _first_nonempty(
+        record.get("text"),
+        record.get("source_text"),
+        record.get("normalized_text"),
+        record.get("content"),
+        record.get("body"),
+        metadata.get("text"),
+        metadata.get("source_text"),
+        metadata.get("normalized_text"),
+    )
+
+
+def _is_legal_source_record(record: Mapping[str, Any], metadata: Mapping[str, Any]) -> bool:
+    source = _first_nonempty(
+        record.get("source"),
+        record.get("source_type"),
+        metadata.get("source"),
+        metadata.get("source_type"),
+    ).lower()
+    if source in {"us_code", "us-code", "usc", "u.s.c.", "u.s. code"}:
+        return True
+
+    citation = _first_nonempty(record.get("citation"), metadata.get("citation"))
+    if "u.s.c" in citation.lower():
+        return True
+
+    sample_id = _first_nonempty(record.get("sample_id"), metadata.get("sample_id"))
+    return sample_id.lower().startswith("us-code-")
+
+
+def _synthetic_source_proof_data(
+    *,
+    source_id: str,
+    source_text: str,
+    public_inputs: Mapping[str, Any],
+) -> bytes:
+    payload = {
+        "public_inputs": _canonical_public_inputs(public_inputs),
+        "source_id": source_id,
+        "source_text": " ".join(source_text.split()),
+    }
+    encoded = json.dumps(
+        payload,
+        ensure_ascii=True,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode(
+        "utf-8",
+    )
+    return b"LEGALIR-ZKP-SOURCE\x00" + hashlib.sha256(encoded).digest()
+
+
+def _proofless_source_attestation_record(
+    record: Mapping[str, Any],
+    metadata: Mapping[str, Any],
+) -> Dict[str, Any]:
+    """Build a deterministic LegalIR attestation for proofless source samples.
+
+    Metric samples can arrive as raw legal source records before the bridge has
+    materialized a ``ZKPProof``.  This does not claim cryptographic
+    verification; it gives the LegalIR view a stable source-level attestation
+    envelope so missing-view loss reflects the available legal input instead of
+    a serialization artifact.
+    """
+    if not _is_legal_source_record(record, metadata):
+        return {}
+
+    source_text = _source_text_from_record(record, metadata)
+    source_id = _source_id_from_record(record, metadata, "")
+    if not source_text or not source_id:
+        return {}
+
+    normalized_text = " ".join(source_text.split())
+    theorem_hash = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()
+    axiom_basis = json.dumps(
+        {
+            "source_id": source_id,
+            "source_text_hash": theorem_hash,
+        },
+        ensure_ascii=True,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    axioms_commitment = hashlib.sha256(axiom_basis.encode("utf-8")).hexdigest()
+    public_inputs: Dict[str, Any] = {
+        "axioms_commitment": axioms_commitment,
+        "circuit_ref": "legal_ir_source_attestation@v1",
+        "circuit_version": 1,
+        "ruleset_id": "LegalIR_Source_Attestation_v1",
+        "theorem": normalized_text,
+        "theorem_hash": theorem_hash,
+    }
+    proof_data = _synthetic_source_proof_data(
+        source_id=source_id,
+        source_text=normalized_text,
+        public_inputs=public_inputs,
+    )
+    attestation_view = build_proof_attestation_view(
+        proof_data=proof_data,
+        public_inputs=public_inputs,
+        metadata={
+            **metadata,
+            "backend": "source_attestation",
+            "proof_system": "deterministic_source_attestation",
+        },
+    )
+    completed_public_inputs = dict(public_inputs)
+    completed_public_inputs["attestation_ref"] = attestation_view["attestation_ref"]
+    completed_public_inputs["attestation_view_version"] = int(
+        attestation_view["attestation_view_version"]
+    )
+    proof_hash = hashlib.sha256(proof_data).hexdigest()
+
+    completed = dict(record)
+    completed["attestation_ref"] = attestation_view["attestation_ref"]
+    completed["attestation_view"] = attestation_view
+    completed["attestation_view_version"] = int(
+        attestation_view["attestation_view_version"]
+    )
+    completed["axioms_commitment"] = axioms_commitment
+    completed["circuit_ref"] = attestation_view["circuit_ref"]
+    completed["proof_hash"] = proof_hash
+    completed["public_inputs"] = completed_public_inputs
+    completed["ruleset_id"] = public_inputs["ruleset_id"]
+    completed["source_id"] = source_id
+    completed["theorem_hash"] = theorem_hash
+    return completed
+
+
+def complete_zkp_attestation_record(record: Mapping[str, Any]) -> Dict[str, Any]:
+    """Return a LegalIR ZKP attestation record with deterministic bridge fields.
+
+    LegalIR exporters are not perfectly uniform: some put the serialized proof
+    under ``proof`` while others flatten proof bytes and public inputs at the
+    record root.  This helper treats the proof payload as authoritative and
+    fills the duplicated attestation fields expected by downstream views.
+    """
+    record_dict = _mapping_dict(record)
+    if not record_dict:
+        return {}
+
+    completed = dict(record_dict)
+    proof = _mapping_dict(completed.get("proof"))
+    if not proof and (
+        "proof_data" in completed
+        or "public_inputs" in completed
+        or "metadata" in completed
+    ):
+        proof = {
+            "proof_data": completed.get("proof_data"),
+            "public_inputs": completed.get("public_inputs"),
+            "metadata": completed.get("metadata"),
+        }
+
+    proof_data = proof.get("proof_data", completed.get("proof_data", b""))
+    metadata = _mapping_dict(proof.get("metadata") or completed.get("metadata"))
+    public_inputs = _mapping_dict(
+        proof.get("public_inputs") or completed.get("public_inputs")
+    )
+
+    if not public_inputs:
+        source_attestation = _proofless_source_attestation_record(
+            completed,
+            metadata,
+        )
+        if source_attestation:
+            return source_attestation
+        return completed
+
+    proof_for_view = {
+        "proof_data": proof_data,
+        "public_inputs": public_inputs,
+        "metadata": metadata,
+    }
+    attestation_view = proof_attestation_view_from_proof_dict(proof_for_view)
+    proof_public_inputs = proof_public_inputs_from_proof_dict(proof_for_view)
+    if not attestation_view:
+        return completed
+
+    attestation_ref = str(attestation_view.get("attestation_ref") or "")
+    completed["attestation_view"] = attestation_view
+    completed["public_inputs"] = proof_public_inputs or public_inputs
+    if proof:
+        synced_proof = dict(proof)
+        synced_metadata = dict(metadata)
+        synced_metadata["attestation_view"] = attestation_view
+        synced_proof["metadata"] = synced_metadata
+        synced_proof["public_inputs"] = proof_public_inputs or public_inputs
+        completed["proof"] = synced_proof
+    if attestation_ref:
+        completed["attestation_ref"] = attestation_ref
+        completed["attestation_view_version"] = int(
+            attestation_view.get("attestation_view_version") or 0
+        )
+    proof_hash = proof_digest_from_proof_dict(proof_for_view)
+    if proof_hash and not completed.get("proof_hash"):
+        completed["proof_hash"] = proof_hash
+
+    for key in (
+        "axioms_commitment",
+        "circuit_ref",
+        "compiler_guidance_ref",
+        "compiler_guidance_version",
+        "ruleset_id",
+        "source_id",
+        "theorem_hash",
+    ):
+        if completed.get(key):
+            continue
+        if key == "source_id":
+            source_id = _source_id_from_record(completed, metadata, proof_hash)
+            if source_id:
+                completed[key] = str(source_id)
+            continue
+        value = proof_public_inputs.get(key) or attestation_view.get(key)
+        if value not in (None, ""):
+            completed[key] = value
+
+    return completed
+
+
+def zkp_attestation_legal_ir_view_loss(
+    records: object,
+) -> float:
+    """Return a bounded LegalIR view loss for ZKP attestation records.
+
+    The supervisor scores the ZKP bridge as a LegalIR view producer, not just as
+    a proof verifier.  A record is view-complete when it is verified and exposes
+    the stable fields needed to round-trip proof attestations through LegalIR.
+    """
+    if not isinstance(records, (list, tuple)):
+        return 1.0
+    if not records:
+        return 1.0
+
+    required_record_keys = (
+        "attestation_ref",
+        "attestation_view",
+        "circuit_ref",
+        "proof_hash",
+        "public_inputs",
+        "ruleset_id",
+        "source_id",
+        "theorem_hash",
+    )
+    missing = 0
+    total = len(records) * (len(required_record_keys) + 2)
+    for raw_record in records:
+        record = complete_zkp_attestation_record(_mapping_dict(raw_record))
+        for key in required_record_keys:
+            if not record.get(key):
+                missing += 1
+
+        public_inputs = _mapping_dict(record.get("public_inputs"))
+        attestation_view = _mapping_dict(record.get("attestation_view"))
+        attestation_ref = str(record.get("attestation_ref") or "")
+        if not attestation_ref or public_inputs.get("attestation_ref") != attestation_ref:
+            missing += 1
+        if not attestation_ref or attestation_view.get("attestation_ref") != attestation_ref:
+            missing += 1
+
+    return min(1.0, max(0.0, missing / total))
 
 
 @dataclass

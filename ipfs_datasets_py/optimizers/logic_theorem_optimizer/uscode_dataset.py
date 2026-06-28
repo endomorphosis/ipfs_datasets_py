@@ -67,13 +67,28 @@ class USCodeParquetRecord:
             source_url=_clean(row.get("source_url")),
         )
 
-    def to_sample(self, *, embedding_vector: Optional[Sequence[float]] = None) -> LegalSample:
+    def to_sample(
+        self,
+        *,
+        embedding_vector: Optional[Sequence[float]] = None,
+        embedding_model: Optional[str] = None,
+    ) -> LegalSample:
         """Convert this record into the modal parser's legal sample contract."""
+        resolved_embedding_model = (
+            embedding_model
+            if embedding_model is not None
+            else (
+                f"uscode:{USCODE_EMBEDDINGS_PARQUET}"
+                if embedding_vector is not None
+                else "mock:stable-sha256"
+            )
+        )
         return build_us_code_sample(
             title=self.title_number,
             section=self.section_number,
             citation=self.citation,
             text=self.text,
+            embedding_model=resolved_embedding_model,
             embedding_vector=embedding_vector,
         )
 
@@ -156,7 +171,14 @@ def load_uscode_samples_from_parquet(
             cids=[record.ipfs_cid for record in records if record.ipfs_cid],
         )
     return [
-        record.to_sample(embedding_vector=embeddings.get(record.ipfs_cid))
+        record.to_sample(
+            embedding_vector=embeddings.get(record.ipfs_cid),
+            embedding_model=(
+                f"uscode:{USCODE_EMBEDDINGS_PARQUET}"
+                if record.ipfs_cid in embeddings
+                else None
+            ),
+        )
         for record in records
     ]
 
@@ -191,7 +213,14 @@ def load_hf_uscode_samples(
             cids=[record.ipfs_cid for record in records if record.ipfs_cid],
         )
     return [
-        record.to_sample(embedding_vector=embeddings.get(record.ipfs_cid))
+        record.to_sample(
+            embedding_vector=embeddings.get(record.ipfs_cid),
+            embedding_model=(
+                f"hf:{repo_id}:{embeddings_path}"
+                if record.ipfs_cid in embeddings
+                else None
+            ),
+        )
         for record in records
     ]
 

@@ -5,9 +5,11 @@ from __future__ import annotations
 import hashlib
 import heapq
 import json
+import os
 import sys
 import threading
-from dataclasses import dataclass, field
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, BinaryIO, Callable, Dict, Iterable, List, Mapping, Optional, Sequence
@@ -22,29 +24,51 @@ from ipfs_datasets_py.logic.submodule_registry import logic_optimizer_scope_for_
 from .legal_samples import LegalSample
 from .modal_autoencoder import AdaptiveModalAutoencoder, AutoencoderEvaluation
 
+try:
+    from ipfs_accelerate_py.agent_supervisor.codex_failure_policy import (
+        classify_codex_program_outcome,
+    )
+except ImportError:  # pragma: no cover - compatibility when the reusable supervisor package is absent.
+    classify_codex_program_outcome = None  # type: ignore[assignment]
+
 
 def _utc_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def _utc_timestamp(value: Any) -> Optional[float]:
+    if value is None or str(value).strip() == "":
+        return None
+    try:
+        return datetime.fromisoformat(str(value)).timestamp()
+    except (TypeError, ValueError):
+        return None
 
 
 AUTOENCODER_SGD_ROLE = "autoencoder_sgd"
 PROGRAM_SYNTHESIS_ROLE = "program_synthesis"
 AUTOENCODER_EXECUTION_TARGET = "adaptive_autoencoder"
 PROGRAM_SYNTHESIS_EXECUTION_TARGET = "codex_program_repair"
+FAILED_VALIDATION_RESCUE_ACTION = "rescue_failed_program_synthesis_validation"
+FAILED_VALIDATION_RESCUE_MAX_ATTEMPTS = 4
+FAILED_VALIDATION_RESCUE_CLUSTER_CHUNK_SIZE = 64
 TODO_STATUS_RANK = {
     "pending": 0,
     "claimed": 1,
     "completed": 2,
     "failed_validation": 2,
+    "superseded": 2,
 }
 PROGRAM_SYNTHESIS_DEDUPE_KEEP_RANK = {
     "failed_validation": 0,
+    "superseded": 0,
     "pending": 1,
     "claimed": 2,
     "completed": 3,
 }
 AUTOENCODER_DEDUPE_KEEP_RANK = {
     "failed_validation": 0,
+    "superseded": 0,
     "pending": 1,
     "claimed": 2,
     "completed": 3,
@@ -55,6 +79,7 @@ PROGRAM_SYNTHESIS_ACTION_TARGETS = {
     "add_or_review_modal_ambiguity_policy": "modal.compiler.ambiguity",
     "audit_frame_logic_terms": "modal.frame_logic",
     "improve_bm25_frame_selector": "modal.frame_logic",
+    "improve_encoder_decoder_reconstruction": "modal.autoencoder",
     "improve_flogic_frame_alignment": "modal.frame_logic",
     "increase_modal_ir_span_coverage": "modal.compiler",
     "refine_modal_family_cue_rules": "modal.compiler.registry",
@@ -73,16 +98,27 @@ PROGRAM_SYNTHESIS_ACTION_TARGETS = {
     "repair_flogic_ontology_constraints": "modal.frame_logic",
     "repair_tdfol_bridge_parse": "TDFOL.prover",
     "repair_zkp_attestation_bridge": "zkp.circuits",
+    FAILED_VALIDATION_RESCUE_ACTION: "codex.program_repair",
 }
 PROGRAM_SYNTHESIS_ACTION_TARGET_METRICS = {
     "add_deterministic_parser_rule": ("symbolic_validity_penalty", "modal_span_coverage_loss"),
     "add_or_review_modal_ambiguity_policy": ("cross_entropy_loss",),
     "audit_frame_logic_terms": ("flogic_similarity_loss", "ontology_violation_count"),
     "improve_bm25_frame_selector": ("frame_ranking_loss",),
+    "improve_encoder_decoder_reconstruction": (
+        "embedding_cosine_similarity",
+        "cosine_loss",
+        "reconstruction_loss",
+    ),
     "improve_flogic_frame_alignment": ("flogic_similarity_loss",),
     "increase_modal_ir_span_coverage": ("modal_span_coverage_loss",),
     "refine_modal_family_cue_rules": ("cross_entropy_loss",),
-    "refine_semantic_decompiler_reconstruction": ("text_reconstruction_loss",),
+    "refine_semantic_decompiler_reconstruction": (
+        "source_copy_loss",
+        "source_copy_reward_hack_penalty",
+        "structural_text_reconstruction_loss",
+        "text_reconstruction_loss",
+    ),
     "refine_typed_ir_or_decompiler_slots": (
         "embedding_cosine_similarity",
         "reconstruction_loss",
@@ -135,6 +171,7 @@ PROGRAM_SYNTHESIS_ACTION_TARGET_METRICS = {
         "zkp_attestation_missing_loss",
         "legal_ir_view_cross_entropy_loss",
     ),
+    FAILED_VALIDATION_RESCUE_ACTION: (),
 }
 PROGRAM_SYNTHESIS_SCOPE_VALIDATION_TESTS = {
     "bridge": (
@@ -187,11 +224,16 @@ PROGRAM_SYNTHESIS_SCOPE_VALIDATION_TESTS = {
     ),
 }
 BRIDGE_LOSS_CACHE_MAX = 4096
+BRIDGE_LOSS_DISK_CACHE_VERSION = "legal-ir-bridge-loss-disk-cache-v1"
+LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV = "IPFS_DATASETS_LEGAL_IR_METRIC_CACHE_DIR"
+LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV = "IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE"
+_FALSE_ENV_VALUES = {"0", "false", "no", "off", "none", "disabled"}
 _BRIDGE_LOSS_CACHE_LOCK = threading.Lock()
 _BRIDGE_LOSS_CACHE: Dict[str, Dict[str, float]] = {}
+_BRIDGE_LOSS_CODE_FINGERPRINT_LOCK = threading.Lock()
+_BRIDGE_LOSS_CODE_FINGERPRINT_VALUE: Optional[str] = None
 
 AUTOENCODER_TRAINABLE_ACTIONS = {
-    "improve_encoder_decoder_reconstruction",
     "improve_legal_ir_view_distribution",
     "improve_modal_family_classifier",
 }
@@ -318,6 +360,7 @@ def bridge_loss_evaluator_for_names(
     bridge_names: Sequence[str],
     *,
     evaluate_provers: Optional[bool] = None,
+    parallel_workers: Optional[int] = None,
 ) -> BridgeLossEvaluator:
     """Build a lazy bridge evaluator that returns optimizer-visible losses.
 
@@ -333,47 +376,100 @@ def bridge_loss_evaluator_for_names(
             if str(name).strip() and str(name).strip().lower() not in {"none", "off", "false"}
         )
     )
-    def evaluate(samples: Sequence[LegalSample]) -> Mapping[str, Mapping[str, float]]:
-        losses_by_sample: Dict[str, Dict[str, float]] = {}
-        if not names:
-            return losses_by_sample
-        from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
-
-        for sample in samples:
-            sample_losses: Dict[str, float] = {}
-            cache_key = _bridge_loss_cache_key(
-                sample,
-                bridge_names=names,
-                evaluate_provers=evaluate_provers,
-            )
+    def evaluate_one(sample: LegalSample) -> tuple[str, Dict[str, float]]:
+        sample_losses: Dict[str, float] = {}
+        cache_key = _bridge_loss_cache_key(
+            sample,
+            bridge_names=names,
+            evaluate_provers=evaluate_provers,
+        )
+        with _BRIDGE_LOSS_CACHE_LOCK:
+            cached_losses = _BRIDGE_LOSS_CACHE.get(cache_key)
+        if cached_losses is not None:
+            return sample.sample_id, dict(cached_losses)
+        cached_losses = _read_bridge_loss_disk_cache(cache_key)
+        if cached_losses is not None:
             with _BRIDGE_LOSS_CACHE_LOCK:
-                cached_losses = _BRIDGE_LOSS_CACHE.get(cache_key)
-            if cached_losses is not None:
-                losses_by_sample[sample.sample_id] = dict(cached_losses)
-                continue
-            try:
-                multiview = evaluate_legal_ir_multiview(
-                    sample.text,
-                    bridge_names=names,
-                    document_id=sample.sample_id,
-                    evaluate_provers=evaluate_provers,
-                    citation=sample.citation,
-                    source=sample.source,
-                    source_embedding=sample.embedding_vector,
-                )
-                sample_losses.update(_multiview_losses_for_optimizer(multiview))
-            except Exception:
-                sample_losses["legal_ir_multiview_bridge_evaluation_failure_loss"] = 1.0
+                if len(_BRIDGE_LOSS_CACHE) >= BRIDGE_LOSS_CACHE_MAX:
+                    _BRIDGE_LOSS_CACHE.pop(next(iter(_BRIDGE_LOSS_CACHE)), None)
+                _BRIDGE_LOSS_CACHE[cache_key] = dict(cached_losses)
+            return sample.sample_id, dict(cached_losses)
+        try:
+            from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
+
+            multiview = evaluate_legal_ir_multiview(
+                sample.text,
+                bridge_names=names,
+                document_id=sample.sample_id,
+                evaluate_provers=evaluate_provers,
+                citation=sample.citation,
+                source=sample.source,
+                source_embedding=sample.embedding_vector,
+            )
+            sample_losses.update(_multiview_losses_for_optimizer(multiview))
+        except Exception:
+            sample_losses["legal_ir_multiview_bridge_evaluation_failure_loss"] = 1.0
+        sample_losses = dict(sorted(sample_losses.items()))
+        with _BRIDGE_LOSS_CACHE_LOCK:
+            if len(_BRIDGE_LOSS_CACHE) >= BRIDGE_LOSS_CACHE_MAX:
+                _BRIDGE_LOSS_CACHE.pop(next(iter(_BRIDGE_LOSS_CACHE)), None)
+            _BRIDGE_LOSS_CACHE[cache_key] = dict(sample_losses)
+        _write_bridge_loss_disk_cache(cache_key, sample_losses)
+        return sample.sample_id, dict(sorted(sample_losses.items()))
+
+    def evaluate(samples: Sequence[LegalSample]) -> Mapping[str, Mapping[str, float]]:
+        sample_list = list(samples)
+        losses_by_sample: Dict[str, Dict[str, float]] = {}
+        if not names or not sample_list:
+            return losses_by_sample
+
+        worker_count = _parallel_worker_count(
+            requested=parallel_workers,
+            item_count=len(sample_list),
+        )
+        if worker_count <= 1:
+            results = [evaluate_one(sample) for sample in sample_list]
+        else:
+            with ThreadPoolExecutor(
+                max_workers=worker_count,
+                thread_name_prefix="bridge-loss-samples",
+            ) as executor:
+                results = list(executor.map(evaluate_one, sample_list))
+        for sample_id, sample_losses in results:
             if sample_losses:
-                sample_losses = dict(sorted(sample_losses.items()))
-                with _BRIDGE_LOSS_CACHE_LOCK:
-                    if len(_BRIDGE_LOSS_CACHE) >= BRIDGE_LOSS_CACHE_MAX:
-                        _BRIDGE_LOSS_CACHE.pop(next(iter(_BRIDGE_LOSS_CACHE)), None)
-                    _BRIDGE_LOSS_CACHE[cache_key] = dict(sample_losses)
-                losses_by_sample[sample.sample_id] = dict(sorted(sample_losses.items()))
+                losses_by_sample[sample_id] = sample_losses
         return losses_by_sample
 
     return evaluate
+
+
+def _parallel_worker_count(
+    *,
+    requested: Optional[int],
+    item_count: int,
+) -> int:
+    if item_count <= 1:
+        return 1
+    if requested is None:
+        return 1
+    try:
+        requested_count = int(requested)
+    except (TypeError, ValueError):
+        return 1
+    return max(1, min(requested_count, int(item_count)))
+
+
+def _emit_optimization_progress(
+    callback: Optional[Callable[[Mapping[str, Any]], None]],
+    **payload: Any,
+) -> None:
+    """Best-effort progress reporting for long synchronous optimization phases."""
+    if callback is None:
+        return
+    try:
+        callback(dict(payload))
+    except Exception:
+        return
 
 
 def _bridge_loss_cache_key(
@@ -405,6 +501,138 @@ def _bridge_loss_cache_key(
     return hashlib.sha256(
         json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
     ).hexdigest()
+
+
+def _bridge_loss_disk_cache_enabled() -> bool:
+    raw = str(os.environ.get(LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV) or "").strip().lower()
+    return raw not in _FALSE_ENV_VALUES
+
+
+def _bridge_loss_default_disk_cache_dir() -> Path:
+    try:
+        repo_root = Path(__file__).resolve().parents[3]
+    except (IndexError, OSError, RuntimeError):
+        repo_root = Path.cwd()
+    return repo_root / "workspace" / "test-logs" / "legal-ir-metric-cache"
+
+
+def _bridge_loss_disk_cache_dir() -> Optional[Path]:
+    if not _bridge_loss_disk_cache_enabled():
+        return None
+    raw = str(os.environ.get(LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV) or "").strip()
+    if raw.lower() in _FALSE_ENV_VALUES:
+        return None
+    return Path(raw).expanduser() if raw else _bridge_loss_default_disk_cache_dir()
+
+
+def _bridge_loss_code_fingerprint() -> str:
+    global _BRIDGE_LOSS_CODE_FINGERPRINT_VALUE
+    with _BRIDGE_LOSS_CODE_FINGERPRINT_LOCK:
+        if _BRIDGE_LOSS_CODE_FINGERPRINT_VALUE:
+            return _BRIDGE_LOSS_CODE_FINGERPRINT_VALUE
+        try:
+            package_root = Path(__file__).resolve().parents[2]
+        except (IndexError, OSError, RuntimeError):
+            package_root = Path.cwd()
+        candidates = [
+            Path(__file__),
+            package_root / "logic" / "bridge",
+            package_root / "logic" / "modal",
+            package_root
+            / "knowledge_graphs"
+            / "neo4j_compat"
+            / "legal_ir_projection.py",
+        ]
+        tokens: List[str] = []
+        for candidate in candidates:
+            paths = (
+                sorted(candidate.rglob("*.py"))
+                if candidate.is_dir()
+                else [candidate]
+            )
+            for path in paths:
+                try:
+                    stat = path.stat()
+                except (OSError, RuntimeError):
+                    continue
+                try:
+                    relative = path.relative_to(package_root)
+                except ValueError:
+                    relative = path
+                tokens.append(f"{relative}:{stat.st_mtime_ns}:{stat.st_size}")
+        _BRIDGE_LOSS_CODE_FINGERPRINT_VALUE = (
+            hashlib.sha256("\n".join(tokens).encode("utf-8")).hexdigest()
+            if tokens
+            else "unknown"
+        )
+        return _BRIDGE_LOSS_CODE_FINGERPRINT_VALUE
+
+
+def _bridge_loss_disk_cache_key(memory_cache_key: str) -> str:
+    payload = {
+        "code_fingerprint": _bridge_loss_code_fingerprint(),
+        "memory_cache_key": str(memory_cache_key),
+        "version": BRIDGE_LOSS_DISK_CACHE_VERSION,
+    }
+    return hashlib.sha256(
+        json.dumps(
+            payload,
+            ensure_ascii=True,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+    ).hexdigest()
+
+
+def _bridge_loss_disk_cache_path(memory_cache_key: str) -> Optional[Path]:
+    root = _bridge_loss_disk_cache_dir()
+    if root is None:
+        return None
+    key = _bridge_loss_disk_cache_key(memory_cache_key)
+    return root / "bridge_loss_optimizer" / key[:2] / f"{key}.json"
+
+
+def _read_bridge_loss_disk_cache(memory_cache_key: str) -> Optional[Dict[str, float]]:
+    path = _bridge_loss_disk_cache_path(memory_cache_key)
+    if path is None or not path.is_file():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if data.get("version") != BRIDGE_LOSS_DISK_CACHE_VERSION:
+        return None
+    if data.get("code_fingerprint") != _bridge_loss_code_fingerprint():
+        return None
+    losses = data.get("losses")
+    if not isinstance(losses, Mapping):
+        return None
+    return {str(name): _safe_float(value) for name, value in losses.items()}
+
+
+def _write_bridge_loss_disk_cache(
+    memory_cache_key: str,
+    losses: Mapping[str, float],
+) -> None:
+    path = _bridge_loss_disk_cache_path(memory_cache_key)
+    if path is None:
+        return
+    payload = {
+        "code_fingerprint": _bridge_loss_code_fingerprint(),
+        "losses": {str(name): _safe_float(value) for name, value in losses.items()},
+        "memory_cache_key": str(memory_cache_key),
+        "version": BRIDGE_LOSS_DISK_CACHE_VERSION,
+    }
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp_path = path.with_suffix(f"{path.suffix}.{os.getpid()}.tmp")
+        tmp_path.write_text(
+            json.dumps(payload, ensure_ascii=True, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        tmp_path.replace(path)
+    except OSError:
+        return
 
 
 def _multiview_losses_for_optimizer(multiview: Any) -> Dict[str, float]:
@@ -725,6 +953,11 @@ class ModalLossTodoGenerator:
         "modal_span_coverage_loss": 0.0,
         "ontology_violation_count": 0.0,
         "reconstruction_loss": 0.05,
+        "source_copy_loss": 0.35,
+        "source_copy_reward_hack_penalty": 0.10,
+        "source_decompiled_text_embedding_cosine_loss": 0.25,
+        "source_decompiled_text_token_loss": 0.25,
+        "structural_text_reconstruction_loss": 0.50,
         "symbolic_validity_penalty": 0.0,
         "tdfol_no_formula_loss": 0.0,
         "tdfol_parse_failure_ratio": 0.0,
@@ -802,6 +1035,26 @@ class ModalLossTodoGenerator:
             "text_reconstruction_loss": (
                 "refine_semantic_decompiler_reconstruction",
                 "Fix deterministic decompiler reconstruction so source semantics survive the IR round trip.",
+            ),
+            "source_copy_loss": (
+                "refine_semantic_decompiler_reconstruction",
+                "Reduce provenance-span copying so decompiler quality comes from typed IR slots rather than replayed source text.",
+            ),
+            "source_copy_reward_hack_penalty": (
+                "refine_semantic_decompiler_reconstruction",
+                "Penalize round-trip text similarity that is explained by copied source spans instead of typed IR slots.",
+            ),
+            "source_decompiled_text_embedding_cosine_loss": (
+                "refine_semantic_decompiler_reconstruction",
+                "Improve source legal text to structural decompiled legal text cosine without relying on copied provenance spans.",
+            ),
+            "source_decompiled_text_token_loss": (
+                "refine_semantic_decompiler_reconstruction",
+                "Improve source legal text to structural decompiled legal text token overlap without relying on copied provenance spans.",
+            ),
+            "structural_text_reconstruction_loss": (
+                "refine_semantic_decompiler_reconstruction",
+                "Improve structural decompiler text reconstructed from modal/frame/deontic IR slots with copied source spans removed.",
             ),
             "cec_dcec_no_formula_loss": (
                 "repair_cec_dcec_bridge",
@@ -1584,6 +1837,122 @@ class ModalTodoQueue:
         todo.fail_validation(reason)
         return True
 
+    def supersede_rescued_failed_validations(
+        self,
+        *,
+        optimizer_role: str = PROGRAM_SYNTHESIS_ROLE,
+    ) -> Dict[str, Any]:
+        """Mark failed TODOs covered by completed rescue TODOs as superseded."""
+
+        completed_rescues = [
+            todo
+            for todo in self._todos.values()
+            if todo.action == FAILED_VALIDATION_RESCUE_ACTION
+            and todo.status == "completed"
+            and _todo_optimizer_role(todo) == optimizer_role
+        ]
+        superseded_ids: List[str] = []
+        superseded_by: Dict[str, str] = {}
+        for rescue in sorted(completed_rescues, key=lambda item: item.completed_at or item.created_at):
+            covered_ids = _failed_validation_rescue_covered_todo_ids(rescue)
+            for covered_id in covered_ids:
+                todo = self._todos.get(covered_id)
+                if todo is None:
+                    continue
+                if todo.status != "failed_validation":
+                    continue
+                if _todo_optimizer_role(todo) != optimizer_role:
+                    continue
+                todo.status = "superseded"
+                todo.completed_at = rescue.completed_at or _utc_now()
+                todo.claimed_by = None
+                todo.claimed_at = None
+                todo.metadata["superseded_at"] = _utc_now()
+                todo.metadata["superseded_by_rescue_todo_id"] = rescue.todo_id
+                todo.metadata["superseded_reason"] = (
+                    "completed_failed_validation_rescue"
+                )
+                superseded_ids.append(todo.todo_id)
+                superseded_by[todo.todo_id] = rescue.todo_id
+        return {
+            "completed_rescue_count": len(completed_rescues),
+            "superseded_by_rescue": dict(sorted(superseded_by.items())),
+            "superseded_count": len(superseded_ids),
+            "superseded_todo_ids": sorted(superseded_ids),
+        }
+
+    def requeue_stale_claims(
+        self,
+        *,
+        max_age_seconds: float,
+        optimizer_role: Optional[str] = None,
+        reason: str = "stale_claim_requeued",
+        claimed_by: Optional[Iterable[str]] = None,
+        now: Optional[float] = None,
+    ) -> Dict[str, Any]:
+        """Return stale claimed TODOs to pending so abandoned workers cannot starve a lane."""
+        threshold = float(max_age_seconds)
+        if threshold <= 0.0:
+            return {
+                "checked_count": 0,
+                "claimed_by": [],
+                "max_age_seconds": threshold,
+                "requeued_count": 0,
+                "requeued_ids": [],
+                "reason": reason,
+            }
+        claimed_by_filter = (
+            {str(worker_id) for worker_id in claimed_by if str(worker_id)}
+            if claimed_by is not None
+            else None
+        )
+        now_epoch = (
+            float(now)
+            if now is not None
+            else datetime.now(timezone.utc).timestamp()
+        )
+        checked_count = 0
+        requeued_ids: List[str] = []
+        requeued_by: Dict[str, int] = {}
+        for todo in self._todos.values():
+            if not _todo_matches(
+                todo,
+                status="claimed",
+                optimizer_role=optimizer_role,
+            ):
+                continue
+            worker_id = str(todo.claimed_by or "")
+            if claimed_by_filter is not None and worker_id not in claimed_by_filter:
+                continue
+            checked_count += 1
+            claimed_timestamp = _utc_timestamp(todo.claimed_at)
+            if claimed_timestamp is None:
+                age_seconds = threshold
+                stale_reason = f"{reason}:missing_claimed_at"
+            else:
+                age_seconds = max(0.0, now_epoch - claimed_timestamp)
+                stale_reason = reason
+            if age_seconds < threshold:
+                continue
+            todo.metadata["stale_claim_age_seconds"] = round(age_seconds, 3)
+            todo.metadata["stale_claim_previous_claimed_at"] = todo.claimed_at
+            todo.metadata["stale_claim_previous_claimed_by"] = todo.claimed_by
+            todo.metadata["stale_claim_requeued_at"] = _utc_now()
+            todo.metadata["stale_claim_requeue_reason"] = stale_reason
+            todo.requeue(stale_reason)
+            requeued_ids.append(todo.todo_id)
+            if worker_id:
+                requeued_by[worker_id] = requeued_by.get(worker_id, 0) + 1
+        return {
+            "checked_count": checked_count,
+            "claimed_by": sorted(claimed_by_filter or []),
+            "max_age_seconds": threshold,
+            "reason": reason,
+            "requeued_by_worker": dict(sorted(requeued_by.items())),
+            "requeued_count": len(requeued_ids),
+            "requeued_ids": requeued_ids,
+        }
+
     def save_jsonl(self, path: str | Path) -> None:
         destination = Path(path)
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -1665,6 +2034,8 @@ class ModalTodoSupervisor:
         bridge_loss_evaluator: Optional[BridgeLossEvaluator] = None,
         bridge_names: Sequence[str] = (),
         bridge_evaluate_provers: Optional[bool] = None,
+        bridge_metric_max_samples: Optional[int] = None,
+        bridge_parallel_workers: Optional[int] = None,
     ) -> None:
         self.policy = policy or ModalOptimizerPolicy()
         self.queue = queue or ModalTodoQueue()
@@ -1682,6 +2053,12 @@ class ModalTodoSupervisor:
             )
         )
         self.bridge_evaluate_provers = bridge_evaluate_provers
+        self.bridge_metric_max_samples = (
+            None
+            if bridge_metric_max_samples is None
+            else max(0, int(bridge_metric_max_samples))
+        )
+        self.bridge_parallel_workers = bridge_parallel_workers
         self.bridge_loss_evaluator = (
             bridge_loss_evaluator
             if bridge_loss_evaluator is not None
@@ -1689,14 +2066,18 @@ class ModalTodoSupervisor:
                 bridge_loss_evaluator_for_names(
                     self.bridge_names,
                     evaluate_provers=self.bridge_evaluate_provers,
+                    parallel_workers=self.bridge_parallel_workers,
                 )
                 if self.bridge_names
                 else None
             )
         )
         self.last_bridge_loss_failure_count = 0
+        self.last_bridge_loss_full_sample_count = 0
         self.last_bridge_loss_sample_count = 0
+        self.last_bridge_loss_sampled = False
         self.last_bridge_loss_signal_count = 0
+        self.last_failed_validation_superseded_count = 0
         self.last_program_synthesis_deduped_count = 0
 
     def seed_from_evaluation(
@@ -1725,12 +2106,20 @@ class ModalTodoSupervisor:
         samples: Sequence[LegalSample],
     ) -> Dict[str, Dict[str, float]]:
         self.last_bridge_loss_failure_count = 0
+        self.last_bridge_loss_full_sample_count = len(samples)
         self.last_bridge_loss_sample_count = 0
+        self.last_bridge_loss_sampled = False
         self.last_bridge_loss_signal_count = 0
         if self.bridge_loss_evaluator is None:
             return {}
+        sample_list = list(samples)
+        if self.bridge_metric_max_samples is not None:
+            if self.bridge_metric_max_samples <= 0:
+                return {}
+            sample_list = sample_list[: self.bridge_metric_max_samples]
+            self.last_bridge_loss_sampled = len(sample_list) < len(samples)
         try:
-            raw = self.bridge_loss_evaluator(samples)
+            raw = self.bridge_loss_evaluator(sample_list)
         except Exception:
             return {}
         normalized: Dict[str, Dict[str, float]] = {}
@@ -1765,11 +2154,37 @@ class ModalTodoSupervisor:
         *,
         use_sample_memory: bool = True,
     ) -> AutoencoderEvaluation:
-        kwargs: Dict[str, Any] = {"use_sample_memory": use_sample_memory}
-        if self.bridge_names:
-            kwargs["legal_ir_bridge_names"] = self.bridge_names
-            kwargs["legal_ir_evaluate_provers"] = self.bridge_evaluate_provers
-        return autoencoder.evaluate(list(samples), **kwargs)
+        sample_list = list(samples)
+        base = autoencoder.evaluate(
+            sample_list,
+            legal_ir_bridge_names=(),
+            use_sample_memory=use_sample_memory,
+        )
+        if not self.bridge_names:
+            return base
+        bridge_samples = sample_list
+        if self.bridge_metric_max_samples is not None:
+            bridge_samples = bridge_samples[: self.bridge_metric_max_samples]
+        if not bridge_samples:
+            return base
+        kwargs: Dict[str, Any] = {
+            "legal_ir_bridge_names": self.bridge_names,
+            "legal_ir_evaluate_provers": self.bridge_evaluate_provers,
+            "use_sample_memory": use_sample_memory,
+        }
+        if self.bridge_parallel_workers is not None:
+            kwargs["legal_ir_parallel_workers"] = self.bridge_parallel_workers
+        bridge_evaluation = autoencoder.evaluate(bridge_samples, **kwargs)
+        return replace(
+            base,
+            legal_ir_target_count=bridge_evaluation.legal_ir_target_count,
+            legal_ir_losses=dict(bridge_evaluation.legal_ir_losses),
+            legal_ir_predicted_view_distribution=dict(
+                bridge_evaluation.legal_ir_predicted_view_distribution
+            ),
+            legal_ir_target_hashes=dict(bridge_evaluation.legal_ir_target_hashes),
+            legal_ir_view_distribution=dict(bridge_evaluation.legal_ir_view_distribution),
+        )
 
     def seed_program_synthesis_from_introspection(
         self,
@@ -1824,6 +2239,50 @@ class ModalTodoSupervisor:
         todos = self._bounded_new_todos(todos, track_program_deduped=True)
         self.queue.add_many(todos)
         return todos
+
+    def seed_failed_validation_rescue_todos(
+        self,
+        *,
+        max_clusters: int = 8,
+        rescue_max_attempts: int = FAILED_VALIDATION_RESCUE_MAX_ATTEMPTS,
+        program_synthesis_scope: Optional[str] = None,
+        failure_reason: Optional[str] = None,
+        original_action: Optional[str] = None,
+    ) -> List[ModalTodo]:
+        """Seed repair TODOs that rescue repeated failed Codex validation patches."""
+        superseded_report = self.queue.supersede_rescued_failed_validations(
+            optimizer_role=self.policy.program_synthesis_role,
+        )
+        self.last_failed_validation_superseded_count = int(
+            superseded_report.get("superseded_count", 0)
+        )
+        rescue_todos = _failed_validation_rescue_todos(
+            self.queue.all(),
+            policy=self.policy,
+            max_clusters=max_clusters,
+            program_synthesis_scope=program_synthesis_scope,
+            failure_reason=failure_reason,
+            original_action=original_action,
+        )
+        if not rescue_todos:
+            self.last_program_synthesis_deduped_count = 0
+            return []
+        raw_rescue_count = len(rescue_todos)
+        rescue_todos = _refresh_failed_validation_rescue_retries(
+            rescue_todos,
+            self.queue.all(),
+            max_attempts=rescue_max_attempts,
+        )
+        if not rescue_todos:
+            self.last_program_synthesis_deduped_count = raw_rescue_count
+            return []
+        self.last_program_synthesis_deduped_count = 0
+        selected = self._bounded_new_todos(
+            rescue_todos,
+            track_program_deduped=True,
+        )
+        self.queue.add_many(selected)
+        return selected
 
     def _residual_signature_occurrences(self, todo: ModalTodo) -> int:
         signatures = {
@@ -2123,6 +2582,37 @@ class ModalTodoSupervisor:
         }:
             for todo_id in todo_ids:
                 todo = self.queue.get(todo_id)
+                report = dict(validation_report or {})
+                validation_status = str(
+                    report.get("main_apply_validation_status")
+                    or report.get("validation_status")
+                    or report.get("status")
+                    or ""
+                ).strip().lower()
+                target_metric_status = str(
+                    report.get("target_metric_status") or ""
+                ).strip().lower()
+                if validation_status == "failed" or target_metric_status == "regressed":
+                    reason = (
+                        "target_metric_regression"
+                        if target_metric_status == "regressed"
+                        else _program_synthesis_failure_reason(
+                            "main_apply_validation_failed",
+                            validation_report,
+                        )
+                    )
+                    if todo is not None:
+                        _record_program_synthesis_failure_evidence(
+                            todo,
+                            reason=reason,
+                            validation_report=validation_report,
+                            patch_status=normalized_patch_status,
+                            codex_exec_status=normalized_exec_status,
+                        )
+                    failed_validation_count += int(
+                        self.queue.fail_validation(todo_id, reason=reason)
+                    )
+                    continue
                 validation_gate = None
                 if todo is not None:
                     validation_gate = _program_synthesis_validation_gate(
@@ -2137,6 +2627,14 @@ class ModalTodoSupervisor:
                         if validation_gate.get("regressed_metrics")
                         else "program_synthesis_validation_rejected"
                     )
+                    if todo is not None:
+                        _record_program_synthesis_failure_evidence(
+                            todo,
+                            reason=reason,
+                            validation_report=validation_report,
+                            patch_status=normalized_patch_status,
+                            codex_exec_status=normalized_exec_status,
+                        )
                     failed_validation_count += int(
                         self.queue.fail_validation(todo_id, reason=reason)
                     )
@@ -2149,48 +2647,98 @@ class ModalTodoSupervisor:
                 if failed_validation_count
                 else "completed"
             )
-        elif normalized_patch_status.startswith("main_apply_baseline_validation_failed"):
-            reason = "main_apply_baseline_validation_failed"
+        else:
             for todo_id in todo_ids:
                 todo = self.queue.get(todo_id)
+                transient_failure_count = (
+                    int(todo.metadata.get("transient_failure_count", 0))
+                    if todo is not None
+                    else 0
+                )
+                if normalized_patch_status in {
+                    "awaiting_codex_changes",
+                    "main_apply_baseline_validation_failed_rolled_back",
+                    "main_apply_target_metric_unavailable_rolled_back",
+                } and transient_failure_count < 3:
+                    action = "requeue"
+                    if normalized_patch_status == "main_apply_baseline_validation_failed_rolled_back":
+                        reason = "main_apply_baseline_validation_failed"
+                    elif normalized_patch_status == "main_apply_target_metric_unavailable_rolled_back":
+                        reason = "target_metric_unavailable"
+                    else:
+                        reason = normalized_patch_status or "transient_apply_failure"
+                elif classify_codex_program_outcome is not None:
+                    decision = classify_codex_program_outcome(
+                        codex_exec_status=normalized_exec_status,
+                        patch_status=normalized_patch_status,
+                        main_apply_status=(
+                            str((validation_report or {}).get("main_apply_status") or "")
+                            .strip()
+                            .lower()
+                        ),
+                        validation_report=validation_report,
+                        transient_failure_count=transient_failure_count,
+                        max_transient_failures=3,
+                    )
+                    reason = decision.reason
+                    action = decision.action
+                else:
+                    reason = (
+                        "codex_exec_transient_failure"
+                        if normalized_exec_status == "transient_failure"
+                        else f"codex_exec_{normalized_exec_status}"
+                        if normalized_exec_status in {"failed", "timeout"}
+                        else str(patch_status or "patch_not_created")
+                    )
+                    action = (
+                        "requeue"
+                        if normalized_exec_status == "transient_failure"
+                        and transient_failure_count < 3
+                        else "failed_validation"
+                    )
                 if todo is None:
                     continue
-                if int(todo.metadata.get("transient_failure_count", 0)) >= 3:
-                    failed_validation_count += int(
-                        self.queue.fail_validation(todo_id, reason=reason)
+                if action == "requeue":
+                    todo.metadata["last_transient_validation_report"] = dict(
+                        validation_report or {}
                     )
+                    todo.metadata["last_transient_patch_status"] = normalized_patch_status
+                    todo.metadata["last_transient_codex_exec_status"] = normalized_exec_status
+                    todo.requeue(reason or "transient_apply_failure")
+                    requeued_count += 1
                     continue
-                todo.requeue(reason)
-                requeued_count += 1
-            outcome = "requeued" if requeued_count else "failed_validation"
-        elif normalized_exec_status == "transient_failure":
-            reason = "codex_exec_transient_failure"
-            for todo_id in todo_ids:
-                todo = self.queue.get(todo_id)
-                if todo is None:
+                if action == "completed":
+                    completed_count += int(self.queue.complete(todo_id))
                     continue
-                if int(todo.metadata.get("transient_failure_count", 0)) >= 3:
-                    failed_validation_count += int(
-                        self.queue.fail_validation(todo_id, reason=reason)
+                if action == "failed_validation":
+                    reason = _program_synthesis_failure_reason(
+                        reason or "patch_not_created",
+                        validation_report,
                     )
-                    continue
-                todo.requeue(reason)
-                requeued_count += 1
-            outcome = "requeued" if requeued_count else "failed_validation"
-        elif normalized_exec_status in {"failed", "timeout"}:
-            reason = f"codex_exec_{normalized_exec_status}"
-            for todo_id in todo_ids:
-                failed_validation_count += int(
-                    self.queue.fail_validation(todo_id, reason=reason)
-                )
-            outcome = "failed_validation"
-        elif normalized_patch_status not in {"created", "applied_to_main"}:
-            reason = str(patch_status or "patch_not_created")
-            for todo_id in todo_ids:
-                failed_validation_count += int(
-                    self.queue.fail_validation(todo_id, reason=reason)
-                )
-            outcome = "failed_validation"
+                    _record_program_synthesis_failure_evidence(
+                        todo,
+                        reason=reason,
+                        validation_report=validation_report,
+                        patch_status=normalized_patch_status,
+                        codex_exec_status=normalized_exec_status,
+                    )
+                    failed_validation_count += int(
+                        self.queue.fail_validation(
+                            todo_id,
+                            reason=reason,
+                        )
+                    )
+            outcome = (
+                "partial"
+                if completed_count and (failed_validation_count or requeued_count)
+                else "completed"
+                if completed_count
+                else "requeued"
+                if requeued_count
+                else "failed_validation"
+                if failed_validation_count
+                else "no_status_change"
+            )
 
         return {
             "completed_count": completed_count,
@@ -2211,12 +2759,34 @@ class ModalTodoSupervisor:
         max_items: int = 4,
         learning_rate: float = 0.35,
         iteration: int = 1,
+        progress_callback: Optional[Callable[[Mapping[str, Any]], None]] = None,
     ) -> ModalOptimizationStep:
         """Generate TODOs, claim a batch, apply updates, and validate progress."""
+        def report(stage: str, **payload: Any) -> None:
+            _emit_optimization_progress(
+                progress_callback,
+                iteration=iteration,
+                queue_counts=self.queue.status_counts(),
+                role_queue_counts=self.queue.role_status_counts(),
+                stage=stage,
+                **payload,
+            )
+
         sample_list = list(samples)
         validation_list = list(validation_samples or [])
         samples_by_id = {sample.sample_id: sample for sample in sample_list}
+        report(
+            "before_train_evaluation_start",
+            sample_count=len(sample_list),
+            validation_sample_count=len(validation_list),
+        )
         before = self._autoencoder_evaluation(autoencoder, sample_list)
+        report(
+            "before_train_evaluation_done",
+            cross_entropy_loss=before.cross_entropy_loss,
+            cosine_similarity=before.embedding_cosine_similarity,
+        )
+        report("before_validation_evaluation_start")
         validation_before = (
             self._autoencoder_evaluation(
                 autoencoder,
@@ -2226,18 +2796,40 @@ class ModalTodoSupervisor:
             if validation_list
             else None
         )
+        if validation_before is not None:
+            report(
+                "before_validation_evaluation_done",
+                cross_entropy_loss=validation_before.cross_entropy_loss,
+                cosine_similarity=validation_before.embedding_cosine_similarity,
+            )
+        else:
+            report("before_validation_evaluation_skipped")
+        report("seed_loss_todos_start")
         loss_seeded = self.seed_from_evaluation(sample_list, autoencoder=before)
         bridge_loss_failure_count = int(self.last_bridge_loss_failure_count)
+        bridge_loss_full_sample_count = int(self.last_bridge_loss_full_sample_count)
         bridge_loss_sample_count = int(self.last_bridge_loss_sample_count)
+        bridge_loss_sampled = bool(self.last_bridge_loss_sampled)
         bridge_loss_signal_count = int(self.last_bridge_loss_signal_count)
+        report(
+            "seed_loss_todos_done",
+            bridge_loss_full_sample_count=bridge_loss_full_sample_count,
+            bridge_loss_sample_count=bridge_loss_sample_count,
+            bridge_loss_sampled=bridge_loss_sampled,
+            seeded_count=len(loss_seeded),
+        )
+        report("autoencoder_deduplicate_start")
         self.queue.deduplicate_autoencoder(
             optimizer_role=self.policy.autoencoder_role,
         )
+        report("autoencoder_deduplicate_done")
+        report("claim_autoencoder_todos_start", max_items=int(max_items))
         claimed = self.claim_next_batch(
             worker_id=worker_id,
             max_items=max_items,
             optimizer_role=self.policy.autoencoder_role,
         )
+        report("claim_autoencoder_todos_done", claimed_count=len(claimed))
         validation_scope = (
             "validation"
             if validation_before is not None
@@ -2249,12 +2841,21 @@ class ModalTodoSupervisor:
         failed_validation_ids: List[str] = []
         if claimed:
             state_before_batch = autoencoder.state.copy()
+            report("apply_todos_start", claimed_count=len(claimed))
             batch_updates = autoencoder.apply_todos(
                 claimed,
                 samples_by_id,
                 learning_rate=learning_rate,
             )
+            report("apply_todos_done", applied_update_count=len(batch_updates))
+            report("attempted_train_evaluation_start")
             attempted_after = self._autoencoder_evaluation(autoencoder, sample_list)
+            report(
+                "attempted_train_evaluation_done",
+                cross_entropy_loss=attempted_after.cross_entropy_loss,
+                cosine_similarity=attempted_after.embedding_cosine_similarity,
+            )
+            report("attempted_validation_evaluation_start")
             attempted_validation_after = (
                 self._autoencoder_evaluation(
                     autoencoder,
@@ -2264,6 +2865,14 @@ class ModalTodoSupervisor:
                 if validation_list
                 else None
             )
+            if attempted_validation_after is not None:
+                report(
+                    "attempted_validation_evaluation_done",
+                    cross_entropy_loss=attempted_validation_after.cross_entropy_loss,
+                    cosine_similarity=attempted_validation_after.embedding_cosine_similarity,
+                )
+            else:
+                report("attempted_validation_evaluation_skipped")
             completion_before = validation_before or before
             completion_after = attempted_validation_after or attempted_after
             validations: List[Dict[str, Any]] = []
@@ -2302,7 +2911,14 @@ class ModalTodoSupervisor:
                     )
                     failed_validation_ids.append(todo.todo_id)
 
+        report("after_train_evaluation_start")
         after = self._autoencoder_evaluation(autoencoder, sample_list)
+        report(
+            "after_train_evaluation_done",
+            cross_entropy_loss=after.cross_entropy_loss,
+            cosine_similarity=after.embedding_cosine_similarity,
+        )
+        report("after_validation_evaluation_start")
         validation_after = (
             self._autoencoder_evaluation(
                 autoencoder,
@@ -2312,6 +2928,15 @@ class ModalTodoSupervisor:
             if validation_list
             else None
         )
+        if validation_after is not None:
+            report(
+                "after_validation_evaluation_done",
+                cross_entropy_loss=validation_after.cross_entropy_loss,
+                cosine_similarity=validation_after.embedding_cosine_similarity,
+            )
+        else:
+            report("after_validation_evaluation_skipped")
+        report("program_synthesis_seed_start")
         program_synthesis_seeded = self.seed_program_synthesis_from_introspection(
             sample_list,
             autoencoder=autoencoder,
@@ -2321,6 +2946,11 @@ class ModalTodoSupervisor:
             require_residual_survival=bool(claimed),
         )
         program_synthesis_deduped = int(self.last_program_synthesis_deduped_count)
+        report(
+            "program_synthesis_seed_done",
+            deduped_count=program_synthesis_deduped,
+            seeded_count=len(program_synthesis_seeded),
+        )
 
         return ModalOptimizationStep(
             iteration=iteration,
@@ -2363,11 +2993,32 @@ class ModalTodoSupervisor:
         max_iterations: int = 5,
         target_cross_entropy_loss: float = 0.05,
         target_cosine_similarity: float = 0.99,
+        queue_refresh_callback: Optional[Callable[["ModalTodoSupervisor"], None]] = None,
+        progress_callback: Optional[Callable[[Mapping[str, Any]], None]] = None,
     ) -> ModalOptimizationRun:
         """Run bounded daemon iterations until targets are met or progress stops."""
         steps: List[ModalOptimizationStep] = []
         stopped_reason = "max_iterations"
+        _emit_optimization_progress(
+            progress_callback,
+            iteration=0,
+            sample_count=len(samples),
+            stage="initial_train_evaluation_start",
+        )
         final_evaluation = self._autoencoder_evaluation(autoencoder, list(samples))
+        _emit_optimization_progress(
+            progress_callback,
+            cross_entropy_loss=final_evaluation.cross_entropy_loss,
+            cosine_similarity=final_evaluation.embedding_cosine_similarity,
+            iteration=0,
+            stage="initial_train_evaluation_done",
+        )
+        _emit_optimization_progress(
+            progress_callback,
+            iteration=0,
+            sample_count=0 if validation_samples is None else len(validation_samples),
+            stage="initial_validation_evaluation_start",
+        )
         validation_final_evaluation = (
             self._autoencoder_evaluation(
                 autoencoder,
@@ -2377,8 +3028,45 @@ class ModalTodoSupervisor:
             if validation_samples is not None and len(validation_samples) > 0
             else None
         )
+        if validation_final_evaluation is not None:
+            _emit_optimization_progress(
+                progress_callback,
+                cross_entropy_loss=validation_final_evaluation.cross_entropy_loss,
+                cosine_similarity=validation_final_evaluation.embedding_cosine_similarity,
+                iteration=0,
+                stage="initial_validation_evaluation_done",
+            )
+        else:
+            _emit_optimization_progress(
+                progress_callback,
+                iteration=0,
+                stage="initial_validation_evaluation_skipped",
+            )
 
+        def refresh_queue(stage: str, iteration: int) -> None:
+            if queue_refresh_callback is None:
+                return
+            try:
+                queue_refresh_callback(self)
+                _emit_optimization_progress(
+                    progress_callback,
+                    iteration=iteration,
+                    queue_counts=self.queue.status_counts(),
+                    role_queue_counts=self.queue.role_status_counts(),
+                    stage=stage,
+                )
+            except Exception as exc:
+                _emit_optimization_progress(
+                    progress_callback,
+                    error=str(exc),
+                    error_type=type(exc).__name__,
+                    iteration=iteration,
+                    stage=f"{stage}_failed",
+                )
+
+        refresh_queue("queue_refresh_before_optimize", 0)
         for iteration in range(1, max_iterations + 1):
+            refresh_queue("queue_refresh_before_iteration", iteration)
             step = self.optimize_once(
                 samples,
                 autoencoder=autoencoder,
@@ -2387,8 +3075,10 @@ class ModalTodoSupervisor:
                 max_items=max_items,
                 learning_rate=learning_rate,
                 iteration=iteration,
+                progress_callback=progress_callback,
             )
             steps.append(step)
+            refresh_queue("queue_refresh_after_iteration", iteration)
             final_evaluation = step.after
             validation_final_evaluation = step.validation_after or validation_final_evaluation
             target_evaluation = validation_final_evaluation or final_evaluation
@@ -2405,6 +3095,7 @@ class ModalTodoSupervisor:
                 stopped_reason = "no_validated_improvement"
                 break
 
+        refresh_queue("queue_refresh_after_optimize", len(steps))
         return ModalOptimizationRun(
             steps=steps,
             final_evaluation=final_evaluation,
@@ -2699,6 +3390,686 @@ def _program_todo_id(
     return f"program-{digest}"
 
 
+def _failed_validation_rescue_todos(
+    todos: Sequence[ModalTodo],
+    *,
+    policy: ModalOptimizerPolicy,
+    max_clusters: int,
+    program_synthesis_scope: Optional[str] = None,
+    failure_reason: Optional[str] = None,
+    original_action: Optional[str] = None,
+) -> List[ModalTodo]:
+    """Build stable rescue TODOs from failed program-synthesis validation clusters."""
+    limit = max(0, int(max_clusters))
+    if limit < 1:
+        return []
+    scope_filter = str(program_synthesis_scope or "").strip()
+    reason_filter = str(failure_reason or "").strip()
+    action_filter = str(original_action or "").strip()
+    clusters: Dict[tuple[str, str, str, str, str], List[ModalTodo]] = {}
+    for todo in todos:
+        if todo.status != "failed_validation":
+            continue
+        if _todo_optimizer_role(todo) != policy.program_synthesis_role:
+            continue
+        if todo.action == FAILED_VALIDATION_RESCUE_ACTION:
+            continue
+        scope = _program_todo_scope(todo)
+        target_component = _todo_target_component(todo)
+        reason = str(
+            todo.metadata.get("failed_validation_reason")
+            or todo.metadata.get("failure_reason")
+            or ""
+        ).strip()
+        failure_kind = _program_synthesis_validation_failure_kind(
+            todo.metadata.get("failed_validation_report")
+        )
+        if not failure_kind:
+            failure_kind = str(todo.metadata.get("failed_validation_kind") or "").strip()
+        if scope_filter and scope != scope_filter:
+            continue
+        if reason_filter and reason != reason_filter:
+            continue
+        if action_filter and todo.action != action_filter:
+            continue
+        clusters.setdefault(
+            (scope, target_component, todo.action, reason, failure_kind),
+            [],
+        ).append(todo)
+    ranked_clusters = sorted(
+        clusters.items(),
+        key=lambda item: (
+            -len(item[1]),
+            -max(float(todo.priority) for todo in item[1]),
+            item[0],
+        ),
+    )
+    rescue_todos: List[ModalTodo] = []
+    chunk_size = max(1, int(FAILED_VALIDATION_RESCUE_CLUSTER_CHUNK_SIZE))
+    for (scope, target_component, action, reason, failure_kind), failed_todos in ranked_clusters:
+        ordered_failed_todos = sorted(failed_todos, key=_todo_priority_key)
+        shard_count = max(
+            1,
+            (len(ordered_failed_todos) + chunk_size - 1) // chunk_size,
+        )
+        for chunk_index, start in enumerate(
+            range(0, len(ordered_failed_todos), chunk_size),
+            start=1,
+        ):
+            if len(rescue_todos) >= limit:
+                return rescue_todos
+            shard_key = (
+                f"part-{chunk_index}-of-{shard_count}"
+                if shard_count > 1
+                else ""
+            )
+            rescue_todos.append(
+                _failed_validation_rescue_todo(
+                    scope=scope,
+                    target_component=target_component,
+                    original_action=action,
+                    failure_reason=reason,
+                    failure_kind=failure_kind,
+                    failed_todos=ordered_failed_todos[start : start + chunk_size],
+                    policy=policy,
+                    shard_key=shard_key,
+                )
+            )
+    return rescue_todos
+
+
+def _failed_validation_rescue_todo(
+    *,
+    scope: str,
+    target_component: str,
+    original_action: str,
+    failure_reason: str,
+    failure_kind: str = "",
+    failed_todos: Sequence[ModalTodo],
+    policy: ModalOptimizerPolicy,
+    shard_key: str = "",
+) -> ModalTodo:
+    failed_todo_ids = _unique_preserve_order(todo.todo_id for todo in failed_todos)
+    sample_ids = _unique_preserve_order(
+        sample_id
+        for todo in failed_todos
+        for sample_id in todo.sample_ids
+        if str(sample_id)
+    )[:32]
+    citations = _unique_preserve_order(
+        citation
+        for todo in failed_todos
+        for citation in todo.citations
+        if str(citation)
+    )[:32]
+    target_metrics = _failed_validation_rescue_target_metrics(
+        failed_todos,
+        original_action=original_action,
+        target_component=target_component,
+    )
+    validation_commands = _failed_validation_rescue_validation_commands(
+        failed_todos,
+        original_action=original_action,
+        target_component=target_component,
+        program_synthesis_scope=scope,
+    )
+    metric_payloads = _failed_validation_rescue_metric_payloads(failed_todos)
+    hint_evidence = _failed_validation_rescue_evidence(
+        failed_todos,
+        scope=scope,
+        target_component=target_component,
+        failure_reason=failure_reason,
+        failure_kind=failure_kind,
+    )
+    semantic_key = _failed_validation_rescue_signature(
+        scope=scope,
+        target_component=target_component,
+        original_action=original_action,
+        failure_reason=failure_reason,
+        failure_kind=failure_kind,
+        shard_key=shard_key,
+    )
+    count = len(failed_todos)
+    metadata = {
+        **policy.metadata_for(
+            action=FAILED_VALIDATION_RESCUE_ACTION,
+            loss_name="failed_validation_rescue",
+        ),
+        "dedupe_signature": semantic_key,
+        "failed_todo_ids": failed_todo_ids[:64],
+        "failed_validation_count": count,
+        "failed_validation_kind": failure_kind,
+        "failed_validation_reason": failure_reason,
+        "hint_evidence": hint_evidence,
+        "original_action": original_action,
+        "program_synthesis_scope": scope,
+        "rescue_recommended_strategy": _failed_validation_rescue_strategy(
+            failure_reason,
+            failure_kind=failure_kind,
+        ),
+        "semantic_bundle_key": semantic_key,
+        "source": "failed_validation_rescue_v1",
+        "support_count": len(sample_ids),
+        "target_component": target_component,
+        "target_metrics": target_metrics,
+        "validation_commands": validation_commands,
+    }
+    if str(shard_key or "").strip():
+        metadata["rescue_cluster_shard"] = str(shard_key).strip()
+    if metric_payloads:
+        metadata["metric_sample_payloads"] = metric_payloads
+    priority = round(
+        max((float(todo.priority) for todo in failed_todos), default=0.0)
+        + 25.0
+        + (float(count) * 2.0),
+        6,
+    )
+    return ModalTodo(
+        todo_id=_failed_validation_rescue_todo_id(
+            scope=scope,
+            target_component=target_component,
+            original_action=original_action,
+            failure_reason=failure_reason,
+            failure_kind=failure_kind,
+            failed_todo_ids=failed_todo_ids,
+            shard_key=shard_key,
+        ),
+        action=FAILED_VALIDATION_RESCUE_ACTION,
+        objective=(
+            f"Rescue {count} failed validation patch"
+            f"{'' if count == 1 else 'es'} for {original_action} in {scope}; "
+            "inspect the failed evidence, narrow or split the fix, and make the "
+            "validation command pass without regressing the target metrics."
+        ),
+        sample_ids=sample_ids,
+        citations=citations,
+        loss_name="failed_validation_rescue",
+        loss_value=float(count),
+        priority=priority,
+        metadata=metadata,
+    )
+
+
+def _refresh_failed_validation_rescue_retries(
+    rescue_todos: Sequence[ModalTodo],
+    existing_todos: Sequence[ModalTodo],
+    *,
+    max_attempts: int,
+) -> List[ModalTodo]:
+    """Return rescue TODOs, retrying terminal rescue clusters with bounded IDs."""
+
+    refreshed: List[ModalTodo] = []
+    for rescue in rescue_todos:
+        root_signature = _failed_validation_rescue_root_signature(rescue)
+        if not root_signature:
+            refreshed.append(rescue)
+            continue
+        attempts = [
+            todo
+            for todo in existing_todos
+            if todo.action == FAILED_VALIDATION_RESCUE_ACTION
+            and _failed_validation_rescue_root_signature(todo) == root_signature
+        ]
+        if not attempts:
+            refreshed.append(rescue)
+            continue
+        current_failed_ids = set(
+            str(todo_id)
+            for todo_id in _as_list(rescue.metadata.get("failed_todo_ids"))
+            if str(todo_id)
+        )
+        pending_attempts = [
+            todo for todo in attempts if todo.status in {"pending", "claimed"}
+        ]
+        if pending_attempts:
+            pending_covered_ids = {
+                todo_id
+                for attempt in pending_attempts
+                for todo_id in _failed_validation_rescue_covered_todo_ids(attempt)
+            }
+            uncovered_ids = current_failed_ids - pending_covered_ids
+            if not uncovered_ids:
+                continue
+            metadata = dict(rescue.metadata)
+            uncovered_list = sorted(uncovered_ids)
+            refresh_digest = hashlib.sha256(
+                json.dumps(
+                    {
+                        "root_signature": root_signature,
+                        "uncovered_failed_todo_ids": uncovered_list,
+                    },
+                    ensure_ascii=True,
+                    sort_keys=True,
+                ).encode("utf-8")
+            ).hexdigest()[:16]
+            refresh_signature = json.dumps(
+                {
+                    "root_rescue_signature": root_signature,
+                    "source": "failed_validation_rescue_refresh_v1",
+                    "uncovered_digest": refresh_digest,
+                },
+                ensure_ascii=True,
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+            metadata.update(
+                {
+                    "dedupe_signature": refresh_signature,
+                    "failed_todo_ids": uncovered_list,
+                    "failed_validation_count": len(uncovered_list),
+                    "previous_rescue_todo_ids": [
+                        todo.todo_id
+                        for todo in sorted(
+                            pending_attempts,
+                            key=lambda item: item.created_at,
+                        )
+                    ][:16],
+                    "rescue_refresh_reason": (
+                        "new_failed_validation_ids_while_rescue_pending"
+                    ),
+                    "root_rescue_signature": root_signature,
+                    "semantic_bundle_key": refresh_signature,
+                    "source": "failed_validation_rescue_refresh_v1",
+                }
+            )
+            rescue.metadata = metadata
+            rescue.todo_id = f"program-rescue-refresh-{refresh_digest}"
+            rescue.loss_value = float(len(uncovered_list))
+            rescue.objective = (
+                f"Rescue {len(uncovered_list)} failed validation patch"
+                f"{'' if len(uncovered_list) == 1 else 'es'} not covered by "
+                "the currently pending rescue attempt; inspect the failed evidence, "
+                "narrow or split the fix, and make validation pass without "
+                "regressing target metrics."
+            )
+            refreshed.append(rescue)
+            continue
+        completed_attempts = [todo for todo in attempts if todo.status == "completed"]
+        completed_covered_ids = {
+            todo_id
+            for attempt in completed_attempts
+            for todo_id in _failed_validation_rescue_covered_todo_ids(attempt)
+        }
+        if completed_attempts and current_failed_ids.issubset(completed_covered_ids):
+            continue
+        if completed_attempts:
+            metadata = dict(rescue.metadata)
+            metadata.update(
+                {
+                    "previous_completed_rescue_todo_ids": [
+                        todo.todo_id
+                        for todo in sorted(
+                            completed_attempts,
+                            key=lambda item: item.completed_at or item.created_at,
+                        )
+                    ][:16],
+                    "rescue_refresh_reason": (
+                        "new_failed_validation_ids_after_completed_rescue"
+                    ),
+                    "root_rescue_signature": root_signature,
+                    "source": "failed_validation_rescue_refresh_v1",
+                }
+            )
+            rescue.metadata = metadata
+            refreshed.append(rescue)
+            continue
+        next_attempt = max(
+            [_failed_validation_rescue_attempt(todo) for todo in attempts] or [1]
+        ) + 1
+        if next_attempt > max(1, int(max_attempts)):
+            continue
+        refreshed.append(
+            _failed_validation_rescue_retry_todo(
+                rescue,
+                attempts=attempts,
+                next_attempt=next_attempt,
+                max_attempts=max_attempts,
+                root_signature=root_signature,
+            )
+        )
+    return refreshed
+
+
+def _failed_validation_rescue_root_signature(todo: ModalTodo) -> str:
+    metadata = todo.metadata or {}
+    stored = str(
+        metadata.get("root_rescue_signature")
+        or metadata.get("rescue_cluster_signature")
+        or metadata.get("dedupe_signature")
+        or metadata.get("semantic_bundle_key")
+        or ""
+    ).strip()
+    if stored:
+        return stored
+    if todo.action != FAILED_VALIDATION_RESCUE_ACTION:
+        return ""
+    original_action = str(metadata.get("original_action") or "").strip()
+    scope = str(metadata.get("program_synthesis_scope") or "").strip()
+    target_component = str(metadata.get("target_component") or "").strip()
+    failure_reason = str(
+        metadata.get("failed_validation_reason")
+        or metadata.get("failure_reason")
+        or ""
+    ).strip()
+    failure_kind = str(metadata.get("failed_validation_kind") or "").strip()
+    if not (original_action and scope and target_component):
+        return ""
+    return _failed_validation_rescue_signature(
+        scope=scope,
+        target_component=target_component,
+        original_action=original_action,
+        failure_reason=failure_reason,
+        failure_kind=failure_kind,
+        shard_key=str(metadata.get("rescue_cluster_shard") or ""),
+    )
+
+
+def _failed_validation_rescue_covered_todo_ids(todo: ModalTodo) -> List[str]:
+    """Return failed TODO ids that a completed rescue attempt is meant to cover."""
+
+    metadata = todo.metadata or {}
+    covered: List[str] = []
+    for key in ("failed_todo_ids", "previous_rescue_todo_ids"):
+        covered.extend(str(todo_id) for todo_id in _as_list(metadata.get(key)) if str(todo_id))
+    return _unique_preserve_order(covered)
+
+
+def _failed_validation_rescue_attempt(todo: ModalTodo) -> int:
+    try:
+        return max(1, int(todo.metadata.get("rescue_attempt", 1)))
+    except (TypeError, ValueError):
+        return 1
+
+
+def _failed_validation_rescue_retry_todo(
+    rescue: ModalTodo,
+    *,
+    attempts: Sequence[ModalTodo],
+    next_attempt: int,
+    max_attempts: int,
+    root_signature: str,
+) -> ModalTodo:
+    retry_signature = _failed_validation_rescue_retry_signature(
+        root_signature=root_signature,
+        attempt=next_attempt,
+    )
+    previous_rescue_ids = _unique_preserve_order(
+        todo.todo_id
+        for todo in sorted(attempts, key=lambda item: item.created_at)
+        if todo.todo_id
+    )
+    failed_todo_ids = [
+        str(todo_id)
+        for todo_id in list(rescue.metadata.get("failed_todo_ids", []))
+        if str(todo_id)
+    ]
+    metadata = dict(rescue.metadata)
+    metadata.update(
+        {
+            "dedupe_signature": retry_signature,
+            "previous_rescue_todo_ids": previous_rescue_ids[:16],
+            "rescue_attempt": int(next_attempt),
+            "rescue_max_attempts": int(max_attempts),
+            "rescue_retry_reason": "previous_rescue_failed_validation",
+            "root_rescue_signature": root_signature,
+            "semantic_bundle_key": retry_signature,
+            "source": "failed_validation_rescue_retry_v1",
+        }
+    )
+    digest_payload = {
+        "attempt": int(next_attempt),
+        "failed_todo_ids": sorted(failed_todo_ids),
+        "root_signature": root_signature,
+    }
+    digest = hashlib.sha256(
+        json.dumps(digest_payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+    ).hexdigest()[:16]
+    return ModalTodo(
+        todo_id=f"program-rescue-retry-{digest}",
+        action=rescue.action,
+        objective=(
+            f"Retry failed-validation rescue attempt {next_attempt}/{max_attempts}; "
+            f"{rescue.objective}"
+        ),
+        sample_ids=list(rescue.sample_ids),
+        citations=list(rescue.citations),
+        loss_name=rescue.loss_name,
+        loss_value=float(rescue.loss_value),
+        priority=round(float(rescue.priority) + float(next_attempt), 6),
+        metadata=metadata,
+    )
+
+
+def _failed_validation_rescue_retry_signature(
+    *,
+    root_signature: str,
+    attempt: int,
+) -> str:
+    payload = {
+        "attempt": int(attempt),
+        "root_rescue_signature": root_signature,
+        "source": "failed_validation_rescue_retry_v1",
+    }
+    return json.dumps(payload, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+
+
+def _failed_validation_rescue_signature(
+    *,
+    scope: str,
+    target_component: str,
+    original_action: str,
+    failure_reason: str,
+    failure_kind: str = "",
+    shard_key: str = "",
+) -> str:
+    payload = {
+        "failure_reason": failure_reason,
+        "original_action": original_action,
+        "program_synthesis_scope": scope,
+        "source": "failed_validation_rescue_v1",
+        "target_component": target_component,
+    }
+    if str(failure_kind or "").strip():
+        payload["failure_kind"] = str(failure_kind).strip()
+    if str(shard_key or "").strip():
+        payload["shard"] = str(shard_key).strip()
+    return json.dumps(payload, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+
+
+def _failed_validation_rescue_todo_id(
+    *,
+    scope: str,
+    target_component: str,
+    original_action: str,
+    failure_reason: str,
+    failure_kind: str = "",
+    failed_todo_ids: Sequence[str],
+    shard_key: str = "",
+) -> str:
+    payload = {
+        "cluster_signature": _failed_validation_rescue_signature(
+            scope=scope,
+            target_component=target_component,
+            original_action=original_action,
+            failure_reason=failure_reason,
+            failure_kind=failure_kind,
+            shard_key=shard_key,
+        ),
+        "failed_todo_ids": sorted(
+            str(todo_id) for todo_id in failed_todo_ids if str(todo_id)
+        ),
+    }
+    digest = hashlib.sha256(
+        json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+    ).hexdigest()[:16]
+    return f"program-rescue-{digest}"
+
+
+def _failed_validation_rescue_target_metrics(
+    failed_todos: Sequence[ModalTodo],
+    *,
+    original_action: str,
+    target_component: str,
+) -> List[str]:
+    metrics: List[Any] = []
+    for todo in failed_todos:
+        metrics = _merge_jsonish_metadata_values(
+            metrics,
+            todo.metadata.get("target_metrics", []),
+            limit=32,
+        )
+    metrics = _merge_jsonish_metadata_values(
+        metrics,
+        _program_synthesis_target_metrics(
+            action=original_action,
+            target_component=target_component,
+        ),
+        limit=32,
+    )
+    return [str(metric) for metric in metrics if str(metric)]
+
+
+def _failed_validation_rescue_validation_commands(
+    failed_todos: Sequence[ModalTodo],
+    *,
+    original_action: str,
+    target_component: str,
+    program_synthesis_scope: str,
+) -> List[str]:
+    commands: List[Any] = []
+    for todo in failed_todos:
+        commands = _merge_jsonish_metadata_values(
+            commands,
+            todo.metadata.get("validation_commands", []),
+            limit=16,
+        )
+    commands = _merge_jsonish_metadata_values(
+        commands,
+        _program_synthesis_validation_commands(
+            action=original_action,
+            target_component=target_component,
+            program_synthesis_scope=program_synthesis_scope,
+        ),
+        limit=16,
+    )
+    return [str(command) for command in commands if str(command)]
+
+
+def _failed_validation_rescue_metric_payloads(
+    failed_todos: Sequence[ModalTodo],
+) -> List[Any]:
+    payloads: List[Any] = []
+    for todo in failed_todos:
+        payloads = _merge_jsonish_metadata_values(
+            payloads,
+            todo.metadata.get("metric_sample_payloads", []),
+            limit=16,
+            identity_key="sample_id",
+        )
+    return payloads
+
+
+def _failed_validation_rescue_evidence(
+    failed_todos: Sequence[ModalTodo],
+    *,
+    scope: str,
+    target_component: str,
+    failure_reason: str,
+    failure_kind: str = "",
+) -> List[Dict[str, Any]]:
+    evidence: List[Dict[str, Any]] = []
+    for todo in failed_todos[:16]:
+        item: Dict[str, Any] = {
+            "failed_todo_id": todo.todo_id,
+            "failure_kind": failure_kind,
+            "failure_reason": failure_reason,
+            "hint_id": f"failed-validation:{todo.todo_id}",
+            "original_action": todo.action,
+            "program_synthesis_scope": scope,
+            "sample_ids": list(todo.sample_ids[:8]),
+            "target_component": target_component,
+            "target_metrics": list(_as_list(todo.metadata.get("target_metrics")))[:8],
+        }
+        source_evidence = [
+            entry
+            for entry in _as_list(todo.metadata.get("hint_evidence"))
+            if isinstance(entry, Mapping)
+        ]
+        if source_evidence:
+            for key in (
+                "predicted_family",
+                "roundtrip_preview",
+                "selected_frame",
+                "target_family",
+            ):
+                value = source_evidence[0].get(key)
+                if value not in (None, "", []):
+                    item[key] = value
+        validation_gate = todo.metadata.get("validation_gate")
+        if isinstance(validation_gate, Mapping):
+            item["validation_gate_accepted"] = bool(validation_gate.get("accepted"))
+            regressed_metrics = _as_list(validation_gate.get("regressed_metrics"))
+            if regressed_metrics:
+                item["regressed_metrics"] = regressed_metrics[:8]
+        failed_report = todo.metadata.get("failed_validation_report")
+        if isinstance(failed_report, Mapping):
+            item["failed_validation_status"] = failed_report.get("status")
+            item["failed_validation_target_metric_status"] = failed_report.get(
+                "target_metric_status"
+            )
+            failed_tests = _as_list(
+                failed_report.get("main_apply_validation_failed_tests")
+            )
+            if failed_tests:
+                item["failed_validation_tests"] = failed_tests[:8]
+            failure_tokens = _as_list(
+                failed_report.get("main_apply_validation_failure_tokens")
+            )
+            if failure_tokens:
+                item["failed_validation_tokens"] = failure_tokens[:8]
+            syntax_locations = _as_list(
+                failed_report.get("main_apply_validation_syntax_locations")
+            )
+            if syntax_locations:
+                item["syntax_locations"] = syntax_locations[:8]
+            stderr_tail = str(
+                failed_report.get("main_apply_validation_stderr_tail") or ""
+            ).strip()
+            if stderr_tail:
+                item["stderr_tail"] = stderr_tail[-400:]
+            regressed_metrics = _as_list(failed_report.get("regressed_metrics"))
+            if regressed_metrics and "regressed_metrics" not in item:
+                item["regressed_metrics"] = regressed_metrics[:8]
+            metric_deltas = failed_report.get("metric_deltas")
+            if isinstance(metric_deltas, Mapping) and metric_deltas:
+                item["metric_deltas"] = {
+                    str(key): metric_deltas[key]
+                    for key in list(metric_deltas)[:8]
+                }
+        evidence.append(item)
+    return evidence
+
+
+def _failed_validation_rescue_strategy(
+    failure_reason: str,
+    *,
+    failure_kind: str = "",
+) -> str:
+    normalized = str(failure_reason or "").strip().lower()
+    normalized_kind = str(failure_kind or "").strip().lower()
+    if normalized_kind == "python_syntax" or "syntax" in normalized:
+        return "repair_python_syntax_before_retrying_semantic_delta"
+    if "target_metric_regression" in normalized:
+        return "preserve_target_metrics_before_expanding_fix"
+    if normalized.startswith("main_apply_validation_failed"):
+        return "inspect_rolled_back_patch_and_split_risky_delta"
+    if normalized == "program_synthesis_validation_rejected":
+        return "repair_metric_gate_or_validation_contract"
+    if normalized.startswith("main_apply_baseline_validation_failed"):
+        return "refresh_baseline_before_retrying_patch"
+    return "inspect_failed_patch_evidence"
+
+
 def _program_todo_signature(
     *,
     action: str,
@@ -2776,6 +4147,10 @@ def program_synthesis_todo_embedding_text(todo: ModalTodo) -> str:
                     "hint_id",
                     "predicted_family",
                     "target_family",
+                    "primary_pipeline_stage",
+                    "pipeline_stage_focus",
+                    "source_decompiled_text_embedding_cosine_loss",
+                    "source_decompiled_text_token_loss",
                     "selected_frame",
                     "frame_features",
                     "roundtrip_preview",
@@ -2933,6 +4308,17 @@ def _program_todos_near_duplicate(
         return False
     if _todo_target_component(existing) != _todo_target_component(candidate):
         return False
+    if existing.action == FAILED_VALIDATION_RESCUE_ACTION:
+        existing_failed_ids = set(_failed_validation_rescue_covered_todo_ids(existing))
+        candidate_failed_ids = set(_failed_validation_rescue_covered_todo_ids(candidate))
+        return bool(
+            existing.todo_id == candidate.todo_id
+            or (
+                existing_failed_ids
+                and candidate_failed_ids
+                and existing_failed_ids == candidate_failed_ids
+            )
+        )
     existing_signature = str(existing.metadata.get("dedupe_signature") or "")
     candidate_signature = str(candidate.metadata.get("dedupe_signature") or "")
     if existing_signature and candidate_signature and existing_signature == candidate_signature:
@@ -2967,6 +4353,8 @@ def _program_todos_share_semantic_bundle(existing: ModalTodo, candidate: ModalTo
     """Return True for same action/component/scope/family-pair repair requests."""
 
     if existing.action != candidate.action:
+        return False
+    if existing.action == FAILED_VALIDATION_RESCUE_ACTION:
         return False
     if _todo_target_component(existing) != _todo_target_component(candidate):
         return False
@@ -3133,9 +4521,19 @@ def _program_synthesis_target_metrics(
         "modal.compiler.ambiguity": ("cross_entropy_loss",),
         "modal.compiler.registry": ("cross_entropy_loss",),
         "modal.frame_logic": ("flogic_similarity_loss",),
+        "modal.autoencoder": (
+            "embedding_cosine_similarity",
+            "cosine_loss",
+            "reconstruction_loss",
+        ),
         "modal.ir_decompiler": (
             "embedding_cosine_similarity",
             "reconstruction_loss",
+            "source_decompiled_text_embedding_cosine_loss",
+            "source_decompiled_text_token_loss",
+            "source_copy_reward_hack_penalty",
+            "structural_text_reconstruction_loss",
+            "text_reconstruction_loss",
         ),
         "zkp.circuits": ("zkp_verification_failure_ratio",),
     }
@@ -3162,7 +4560,17 @@ def _program_synthesis_validation_commands(
             "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py"
         )
     tests = _unique_preserve_order(str(path) for path in tests if str(path))
-    return [f"{sys.executable} -m pytest -q {' '.join(tests)}"]
+    compile_targets = [
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_registry.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_modal_parser.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py",
+        "tests/unit_tests/logic/modal/test_modal_codec.py",
+    ]
+    return [
+        f"{sys.executable} -m py_compile {' '.join(compile_targets)}",
+        f"{sys.executable} -m pytest -q {' '.join(tests)}",
+    ]
 
 
 def _program_synthesis_sample_payloads(
@@ -3206,16 +4614,22 @@ def _compact_hint_evidence(hint: ModalProgramSynthesisHint) -> Dict[str, Any]:
     }
     for key in (
         "bridge_failure_name",
+        "cosine_loss",
         "cosine_similarity",
         "family_margin",
         "frame_features",
         "generic_bridge_priority_backoff",
         "legal_ir_component_gaps",
         "legal_ir_underrepresented_components",
+        "pipeline_stage_diagnostics",
+        "pipeline_stage_focus",
         "predicted_family",
         "predicted_view",
+        "primary_pipeline_stage",
         "reconstruction_loss",
         "sample_id",
+        "source_decompiled_text_embedding_cosine_loss",
+        "source_decompiled_text_token_loss",
         "target_file_lane",
         "target_family",
         "target_probability",
@@ -3227,6 +4641,118 @@ def _compact_hint_evidence(hint: ModalProgramSynthesisHint) -> Dict[str, Any]:
         if value not in (None, "", []):
             summary[key] = value
     return summary
+
+
+def _program_synthesis_validation_failure_kind(
+    validation_report: Optional[Mapping[str, Any]],
+) -> str:
+    """Classify a failed Codex validation report for rescue routing."""
+
+    if not isinstance(validation_report, Mapping):
+        return ""
+    syntax_locations = _as_list(
+        validation_report.get("main_apply_validation_syntax_locations")
+    )
+    failure_tokens = [
+        str(token)
+        for token in _as_list(
+            validation_report.get("main_apply_validation_failure_tokens")
+        )
+        if str(token)
+    ]
+    stderr_tail = str(
+        validation_report.get("main_apply_validation_stderr_tail") or ""
+    )
+    if (
+        syntax_locations
+        or any(token.startswith("py_compile:") for token in failure_tokens)
+        or "SyntaxError" in stderr_tail
+        or "IndentationError" in stderr_tail
+    ):
+        return "python_syntax"
+
+    failed_tests = _as_list(validation_report.get("main_apply_validation_failed_tests"))
+    if failed_tests or any(token.startswith("pytest:") for token in failure_tokens):
+        return "pytest"
+
+    target_metric_status = str(
+        validation_report.get("target_metric_status") or ""
+    ).strip().lower()
+    if target_metric_status == "regressed" or _as_list(
+        validation_report.get("regressed_metrics")
+    ):
+        return "target_metric_regression"
+    if target_metric_status in {"failed", "invalid_json", "timeout", "unavailable"}:
+        return "target_metric_infrastructure"
+
+    status = str(
+        validation_report.get("main_apply_validation_status")
+        or validation_report.get("status")
+        or ""
+    ).strip().lower()
+    if status == "timeout":
+        return "validation_timeout"
+    if status == "failed":
+        return "validation_failed"
+    return ""
+
+
+def _program_synthesis_failure_reason(
+    reason: str,
+    validation_report: Optional[Mapping[str, Any]],
+) -> str:
+    """Return the most actionable queue failure reason for a validation report."""
+
+    normalized = str(reason or "").strip() or "patch_not_created"
+    kind = _program_synthesis_validation_failure_kind(validation_report)
+    if kind == "python_syntax" and normalized.startswith("main_apply_validation"):
+        return "main_apply_validation_python_syntax_error"
+    return normalized
+
+
+def _record_program_synthesis_failure_evidence(
+    todo: ModalTodo,
+    *,
+    reason: str,
+    validation_report: Optional[Mapping[str, Any]],
+    patch_status: str,
+    codex_exec_status: str,
+) -> None:
+    """Persist compact validation evidence before marking a Codex TODO failed."""
+    todo.metadata["failed_validation_reason"] = str(reason or "")
+    todo.metadata["failed_validation_patch_status"] = str(patch_status or "")
+    todo.metadata["failed_validation_codex_exec_status"] = str(
+        codex_exec_status or ""
+    )
+    failure_kind = _program_synthesis_validation_failure_kind(validation_report)
+    if failure_kind:
+        todo.metadata["failed_validation_kind"] = failure_kind
+    if not isinstance(validation_report, Mapping):
+        return
+    compact_report = {
+        key: value
+        for key, value in validation_report.items()
+        if key
+        in {
+            "baseline_failure_accepted",
+            "baseline_status",
+            "main_apply_validation_failed_command",
+            "main_apply_validation_failed_tests",
+            "main_apply_validation_failure_tokens",
+            "main_apply_validation_gate",
+            "main_apply_validation_stderr_tail",
+            "main_apply_status",
+            "main_apply_validation_stdout_tail",
+            "main_apply_validation_syntax_locations",
+            "metric_deltas",
+            "patch_status",
+            "regressed_metrics",
+            "status",
+            "target_metric_status",
+        }
+    }
+    if compact_report:
+        todo.metadata["failed_validation_report"] = compact_report
 
 
 def _todo_optimizer_role(todo: ModalTodo) -> str:

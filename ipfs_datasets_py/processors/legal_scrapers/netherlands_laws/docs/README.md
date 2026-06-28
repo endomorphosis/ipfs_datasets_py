@@ -65,6 +65,104 @@ The April 26, 2026 medium run is not a full corpus. It visited 25 seed pages, fo
 
 ## Scaling Beyond 100 Laws
 
+For national-scale ingestion, use the persistent BWBR catalog and resumable queue.
+This is the production path for the 42,956 unique BWBR identifiers found by the
+official full SRU discovery inventory. Do not describe an output as the full
+Dutch corpus until every catalog row is parsed, intentionally skipped, or failed
+permanently with an explanation.
+
+Import the official SRU discovery JSONL into the durable catalog. The catalog is
+SQLite-backed and stores each BWBR identifier once, along with discovery source,
+timestamps, scrape state, retry count, parser/article status, law status, and
+version/checksum metadata as runs progress.
+
+```bash
+python -m ipfs_datasets_py.processors.legal_scrapers.netherlands_laws discover \
+  --discovery-jsonl ipfs_datasets_py/processors/legal_scrapers/netherlands_laws/datasets/raw/nl_full_bwb_discovery/netherlands_bwb_full_discovery_urls.jsonl
+```
+
+Queue identifiers in bounded batches:
+
+```bash
+python -m ipfs_datasets_py.processors.legal_scrapers.netherlands_laws queue \
+  --limit 500
+```
+
+Process queued work. This leases rows as `downloading`, writes explicit
+transition events, retries only transient failures, and synchronizes parsed raw
+rows back into the catalog.
+
+```bash
+python -m ipfs_datasets_py.processors.legal_scrapers.netherlands_laws scrape \
+  --from-catalog \
+  --output-dir ipfs_datasets_py/processors/legal_scrapers/netherlands_laws/datasets/raw/nl_full_sru_sharded \
+  --batch-size 50 \
+  --rate-limit-delay 0.35 \
+  --skip-existing true
+```
+
+If a run is interrupted, rerun:
+
+```bash
+python -m ipfs_datasets_py.processors.legal_scrapers.netherlands_laws resume \
+  --raw-dir ipfs_datasets_py/processors/legal_scrapers/netherlands_laws/datasets/raw/nl_full_sru_sharded \
+  --batch-size 50 \
+  --rate-limit-delay 0.35
+```
+
+Transient failures can be requeued separately:
+
+```bash
+python -m ipfs_datasets_py.processors.legal_scrapers.netherlands_laws retry-failures \
+  --limit 200
+```
+
+Write machine-readable completeness metrics after each run:
+
+```bash
+python -m ipfs_datasets_py.processors.legal_scrapers.netherlands_laws coverage-report
+```
+
+Validate integrity before publishing:
+
+```bash
+python -m ipfs_datasets_py.processors.legal_scrapers.netherlands_laws verify \
+  --raw-dir ipfs_datasets_py/processors/legal_scrapers/netherlands_laws/datasets/raw/nl_full_sru_sharded
+```
+
+Reconcile a milestone before scaling or publishing. This command is read-only:
+it does not scrape, use the network, build packages, upload, or mutate the
+catalog. Missing optional package/report artifacts are reported as warnings;
+count or identifier drift is reported with `ok: false`.
+
+```bash
+python -m ipfs_datasets_py.processors.legal_scrapers.netherlands_laws reconcile \
+  --catalog-path ipfs_datasets_py/processors/legal_scrapers/netherlands_laws/datasets/raw/nl_bwb_operations/netherlands_bwb_catalog.sqlite \
+  --raw-dir ipfs_datasets_py/processors/legal_scrapers/netherlands_laws/datasets/raw/nl_full_sru_sharded \
+  --package-dir ipfs_datasets_py/processors/legal_scrapers/netherlands_laws/datasets/huggingface/ipfs_netherlands_laws \
+  --unified-dir ipfs_datasets_py/processors/legal_scrapers/netherlands_laws/datasets/huggingface/wetwijzer_netherlands_legal_corpus \
+  --reports-dir ipfs_datasets_py/processors/legal_scrapers/netherlands_laws/datasets/raw/nl_bwb_operations \
+  --milestone-name nl-5000 \
+  --out-path /tmp/netherlands_reconciliation_report.json
+```
+
+For changed-only operational deltas, emit affected law, article, CID, vector,
+BM25 document, and graph rows without rebuilding global FAISS/BM25 artifacts:
+
+```bash
+python -m ipfs_datasets_py.processors.legal_scrapers.netherlands_laws rebuild-huggingface \
+  --incremental \
+  --raw-dir ipfs_datasets_py/processors/legal_scrapers/netherlands_laws/datasets/raw/nl_full_sru_sharded
+```
+
+For a full published snapshot, rebuild packages and mark represented identifiers
+as packaged:
+
+```bash
+python -m ipfs_datasets_py.processors.legal_scrapers.netherlands_laws rebuild-huggingface \
+  --raw-dir ipfs_datasets_py/processors/legal_scrapers/netherlands_laws/datasets/raw/nl_full_sru_sharded
+```
+
 Use cumulative, resumable scrape directories for larger runs. The scraper discovers official `BWBR...` URLs first, sorts them by identifier, applies `--max_documents` as a cumulative cap, and skips already persisted records when `--resume` or `--skip_existing true` is set. If a run is interrupted, rerun the same command with the same `--output-dir` and `--resume`.
 
 After checking metadata and spot-checking records, increase to 500 laws in a larger-run directory:
@@ -167,3 +265,16 @@ The `all` upload/verify target covers:
 - `justicedao/ipfs_netherlands_laws_vector_index`
 - `justicedao/ipfs_netherlands_laws_bm25_index`
 - `justicedao/ipfs_netherlands_laws_knowledge_graph`
+
+## Reusable Jurisdiction Framework
+
+The Netherlands pipeline is also the first implementation of the reusable legal
+corpus framework in `ipfs_datasets_py.processors.legal_scrapers.legal_corpus`.
+The implementation adapter lives at
+`ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.jurisdiction`.
+
+Existing Netherlands CLI commands remain backward compatible. Future
+jurisdictions should implement the shared discovery, fetching, parsing,
+hierarchy, status/version, CID, packaging, BM25, vector, JSON-LD, Hugging Face
+publishing, and integrity interfaces documented in
+`legal_corpus/docs/JURISDICTION_IMPLEMENTATION.md`.

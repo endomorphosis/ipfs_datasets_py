@@ -52,9 +52,9 @@ RESIDUAL_REPAIR_ROUTES: Dict[str, ModalResidualRepairRoute] = {
         priority=0.5,
     ),
     "cosine_loss": ModalResidualRepairRoute(
-        action="refine_typed_ir_or_decompiler_slots",
-        target_component="modal.ir_decompiler",
-        rationale="Cosine residuals indicate typed IR/decompiler slots are losing embedding semantics.",
+        action="improve_encoder_decoder_reconstruction",
+        target_component="modal.autoencoder",
+        rationale="Cosine residuals indicate the learned embedding head is not preserving reusable compiler/decompiler features.",
         priority=0.5,
     ),
     "reconstruction_loss": ModalResidualRepairRoute(
@@ -62,6 +62,24 @@ RESIDUAL_REPAIR_ROUTES: Dict[str, ModalResidualRepairRoute] = {
         target_component="modal.ir_decompiler",
         rationale="Reconstruction residuals indicate typed IR/decompiler slots are losing source semantics.",
         priority=0.5,
+    ),
+    "source_decompiled_text_embedding_cosine_loss": ModalResidualRepairRoute(
+        action="refine_semantic_decompiler_reconstruction",
+        target_component="modal.ir_decompiler",
+        rationale=(
+            "Source/decompiled text cosine residuals indicate the deterministic "
+            "IR decoder is not reconstructing source semantics from typed slots."
+        ),
+        priority=0.65,
+    ),
+    "source_decompiled_text_token_loss": ModalResidualRepairRoute(
+        action="refine_semantic_decompiler_reconstruction",
+        target_component="modal.ir_decompiler",
+        rationale=(
+            "Source/decompiled token residuals indicate the deterministic IR "
+            "decoder is missing source legal text structure."
+        ),
+        priority=0.55,
     ),
     "legal_ir_view_cross_entropy_loss": ModalResidualRepairRoute(
         action="repair_multiview_legal_ir_loss",
@@ -122,6 +140,10 @@ def residual_signature_for_hint(hint: ModalProgramSynthesisHint) -> str:
             evidence.get("target_family"),
         ],
         "frame_features": sorted(map(str, evidence.get("frame_features", []) or []))[:8],
+        "pipeline_stage": evidence.get("primary_pipeline_stage"),
+        "pipeline_stage_focus": sorted(
+            map(str, evidence.get("pipeline_stage_focus", []) or [])
+        )[:8],
         "target_file_lane": evidence.get("target_file_lane")
         or _target_file_lane(hint.target_component, hint.action),
         "target_component": hint.target_component,
@@ -162,6 +184,8 @@ def synthesis_hints_from_autoencoder_introspection(
         "cross_entropy_loss",
         "cosine_loss",
         "reconstruction_loss",
+        "source_decompiled_text_embedding_cosine_loss",
+        "source_decompiled_text_token_loss",
         "legal_ir_view_cross_entropy_loss",
         "legal_ir_multiview_proof_failure_ratio",
         "legal_ir_multiview_graph_failure_penalty",
@@ -187,6 +211,7 @@ def synthesis_hints_from_autoencoder_introspection(
             introspection.get("legal_ir_predicted_view_distribution") or {}
         )
         component_gaps = dict(introspection.get("legal_ir_component_gaps") or {})
+        pipeline_evidence = _pipeline_evidence(introspection)
         primary_view = _primary_view_for_component(
             route.target_component,
             target_distribution,
@@ -202,6 +227,13 @@ def synthesis_hints_from_autoencoder_introspection(
                 evidence={
                     "loss_name": loss_name,
                     "loss_value": value,
+                    **pipeline_evidence,
+                    "source_decompiled_text_embedding_cosine_loss": introspection.get(
+                        "source_decompiled_text_embedding_cosine_loss"
+                    ),
+                    "source_decompiled_text_token_loss": introspection.get(
+                        "source_decompiled_text_token_loss"
+                    ),
                     "bridge_failure_name": _bridge_failure_name_for_route(
                         route.action,
                         route.target_component,
@@ -250,6 +282,7 @@ def synthesis_hints_from_autoencoder_introspection(
                 rationale="The deterministic compiler produced no modal formulas for this sample.",
                 priority=1.0,
                 evidence={
+                    **_pipeline_evidence(introspection),
                     "target_family": introspection.get("target_family"),
                     "predicted_family": introspection.get("predicted_family"),
                     "target_file_lane": _target_file_lane(
@@ -269,6 +302,7 @@ def synthesis_hints_from_autoencoder_introspection(
                 rationale="Adaptive family evidence disagrees with, or is weak for, the typed modal family.",
                 priority=_priority_from_probability_gap(introspection),
                 evidence={
+                    **_pipeline_evidence(introspection),
                     "family_margin": introspection.get("family_margin"),
                     "predicted_family": introspection.get("predicted_family"),
                     "target_family": introspection.get("target_family"),
@@ -284,24 +318,38 @@ def synthesis_hints_from_autoencoder_introspection(
             )
         )
 
-    if "refine_typed_ir_or_decompiler_slots" in focus:
+    top_embedding_features = _feature_names(
+        introspection.get("top_embedding_contributions", [])
+    )
+    if "refine_typed_ir_or_decompiler_slots" in focus or top_embedding_features:
         hints.append(
             _hint(
                 sample_id,
                 action="refine_typed_ir_or_decompiler_slots",
                 target_component="modal.ir_decompiler",
                 rationale="Embedding residuals point to information not well represented by the typed IR/decompiler.",
-                priority=float(introspection.get("reconstruction_loss") or 0.0),
+                priority=max(
+                    float(introspection.get("reconstruction_loss") or 0.0),
+                    float(introspection.get("cosine_loss") or 0.0),
+                    float(
+                        introspection.get(
+                            "source_decompiled_text_embedding_cosine_loss",
+                        )
+                        or 0.0
+                    ),
+                    float(introspection.get("source_decompiled_text_token_loss") or 0.0),
+                    0.01 if top_embedding_features else 0.0,
+                ),
                 evidence={
+                    **_pipeline_evidence(introspection),
                     "cosine_similarity": introspection.get("cosine_similarity"),
+                    "cosine_loss": introspection.get("cosine_loss"),
                     "reconstruction_loss": introspection.get("reconstruction_loss"),
                     "target_file_lane": _target_file_lane(
                         "modal.ir_decompiler",
                         "refine_typed_ir_or_decompiler_slots",
                     ),
-                    "top_embedding_features": _feature_names(
-                        introspection.get("top_embedding_contributions", [])
-                    ),
+                    "top_embedding_features": top_embedding_features,
                 },
             )
         )
@@ -333,6 +381,7 @@ def synthesis_hints_from_autoencoder_introspection(
                 rationale="Adaptive LegalIR evidence shows the compiler/decompiler view distribution is not aligned with the canonical multiview target.",
                 priority=generic_priority,
                 evidence={
+                    **_pipeline_evidence(introspection),
                     "generic_bridge_priority_backoff": generic_bridge_priority_backoff,
                     "legal_ir_predicted_view_distribution": predicted_distribution,
                     "legal_ir_component_gaps": dict(
@@ -457,6 +506,7 @@ def synthesis_hints_from_autoencoder_introspection(
                 rationale="Frame-linked features influenced reconstruction or family scoring and should be audited as ontology terms.",
                 priority=max(0.05, float(introspection.get("reconstruction_loss") or 0.0)),
                 evidence={
+                    **_pipeline_evidence(introspection),
                     "frame_features": frame_features,
                     "target_file_lane": _target_file_lane(
                         "modal.frame_logic",
@@ -478,6 +528,7 @@ def synthesis_hints_from_autoencoder_introspection(
                 rationale="The adaptive family margin is small, so the compiler should expose an explicit ambiguity.",
                 priority=0.15 - _family_margin(introspection),
                 evidence={
+                    **_pipeline_evidence(introspection),
                     "family_margin": introspection.get("family_margin"),
                     "predicted_family": introspection.get("predicted_family"),
                     "target_family": introspection.get("target_family"),
@@ -561,6 +612,7 @@ def _logic_view_hint(
             float(introspection.get("legal_ir_view_cross_entropy_loss") or 0.0),
         ),
         evidence={
+            **_pipeline_evidence(introspection),
             "bridge_failure_name": _bridge_failure_name_for_route(
                 action,
                 target_component,
@@ -617,6 +669,79 @@ def _frame_features(introspection: Mapping[str, Any]) -> List[str]:
             if feature and feature not in features:
                 features.append(feature)
     return frame_ontology_feature_keys(features)
+
+
+def _pipeline_evidence(introspection: Mapping[str, Any]) -> Dict[str, Any]:
+    """Return compact stage evidence for legal text -> IR -> text repairs."""
+
+    diagnostics = dict(introspection.get("pipeline_stage_diagnostics") or {})
+    focus = [
+        str(value)
+        for value in introspection.get("pipeline_stage_focus", []) or []
+        if str(value)
+    ]
+    if not focus and diagnostics:
+        focus = _pipeline_focus_from_diagnostics(diagnostics)
+    evidence: Dict[str, Any] = {}
+    if diagnostics:
+        evidence["pipeline_stage_diagnostics"] = {
+            str(key): value
+            for key, value in sorted(diagnostics.items())
+        }
+    if focus:
+        evidence["pipeline_stage_focus"] = focus
+        evidence["primary_pipeline_stage"] = focus[0]
+    cosine_loss = introspection.get("cosine_loss")
+    if cosine_loss not in (None, ""):
+        evidence["cosine_loss"] = cosine_loss
+    return evidence
+
+
+def _pipeline_focus_from_diagnostics(diagnostics: Mapping[str, Any]) -> List[str]:
+    focus: List[str] = []
+    if bool(diagnostics.get("spacy_parser_missing_formula")):
+        focus.append("spacy_parser")
+    if bool(diagnostics.get("modal_family_cue_mismatch")) or _float_value(
+        diagnostics.get("modal_family_target_probability_gap")
+    ) > 0.0:
+        focus.append("modal_family_registry")
+    if _float_value(diagnostics.get("autoencoder_embedding_cosine_gap")) > 0.20:
+        focus.append("autoencoder_embedding_head")
+    if _float_value(diagnostics.get("ir_decoder_reconstruction_loss")) > 0.05:
+        focus.append("typed_ir_decoder")
+    if (
+        _float_value(
+            diagnostics.get("source_decompiled_text_embedding_cosine_loss")
+        )
+        > 0.25
+        or _float_value(diagnostics.get("source_decompiled_text_token_loss")) > 0.25
+    ):
+        focus.append("semantic_decompiler")
+    if (
+        _float_value(diagnostics.get("legal_ir_view_cross_entropy_loss")) > 0.05
+        or _float_value(diagnostics.get("legal_ir_component_gap_max")) > 0.02
+    ):
+        focus.append("legal_ir_multiview")
+    return _unique_preserve_order(focus)
+
+
+def _float_value(value: Any) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _unique_preserve_order(values: Iterable[str]) -> List[str]:
+    seen: set[str] = set()
+    unique: List[str] = []
+    for value in values:
+        text = str(value)
+        if not text or text in seen:
+            continue
+        seen.add(text)
+        unique.append(text)
+    return unique
 
 
 def _top_distribution_names(distribution: Mapping[str, Any], *, limit: int = 5) -> List[str]:
@@ -741,6 +866,7 @@ def _component_prefixes(target_component: str) -> List[str]:
         "deontic.ir": ["deontic."],
         "external_provers.router": ["external_provers."],
         "knowledge_graphs.neo4j_compat": ["knowledge_graphs."],
+        "modal.autoencoder": ["modal.autoencoder", "logic.optimizer.autoencoder"],
         "modal.frame_logic": ["modal.frame_logic", "frame_logic"],
         "zkp.circuits": ["zkp."],
     }
@@ -757,6 +883,8 @@ def _target_file_lane(target_component: str, action: str) -> str:
         return "compiler_ambiguity"
     if component == "modal.ir_decompiler":
         return "ir_decompiler"
+    if component == "modal.autoencoder" or component == "logic.optimizer.autoencoder":
+        return "autoencoder"
     if component == "modal.frame_logic":
         return "frame_logic"
     if component == "bridge.contracts":

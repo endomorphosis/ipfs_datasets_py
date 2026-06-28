@@ -2,6 +2,7 @@
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector import (
     frame_ontology_contextualized_terms,
+    frame_ontology_feature_keys,
     frame_ontology_feature_keys_from_values,
     frame_ontology_high_signal_terms,
     frame_ontology_terms_from_feature_keys,
@@ -532,3 +533,59 @@ def test_frame_ontology_contextualized_terms_contextualize_modal_cues_and_low_si
     assert "citation_title_number_leading_digit_2" in terms
     assert "source_id_title_number_leading_digit_2" in terms
     assert "modal_cue_after" in terms
+
+
+def test_frame_ontology_terms_extract_predicate_argument_anchor_terms() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "predicate-argument:source-object-role:education:clause",
+            "predicate-argument:source-object-family:education:frame",
+            "predicate-argument:source-action-role:being:clause",
+            "predicate-argument:operator:deontic:d:o",
+            "predicate-argument:source-object-role:appointed:clause",
+            "predicate-argument:source-action-family:being:deontic",
+            "predicate-argument:source-action-role:meaning:clause",
+            "predicate-argument:source-object-role:constitution:clause",
+            "predicate-argument:source-subject-role:states:clause",
+            "predicate-argument:source-object-family:conservation:frame",
+        ]
+    )
+
+    assert "source_object_role_education_clause" in terms
+    assert "source_object_family_conservation_frame" in terms
+    assert "education" in terms
+    assert "education_frame" in terms
+    assert "being" in terms
+    assert "appointed" in terms
+    assert "meaning" in terms
+    assert "constitution" in terms
+    assert "states" in terms
+    assert "conservation" in terms
+    assert "conservation_frame" in terms
+    assert "deontic" in terms
+    assert "deontic_d_o" in terms
+
+
+def test_frame_ontology_terms_contextualize_legal_ir_view_features() -> None:
+    feature_keys = [
+        "legal-ir-view:deontic.ir",
+        "legal-ir-view:TDFOL.prover",
+        "legal-ir-view:modal.frame_logic",
+        "quality:bias",
+    ]
+
+    assert frame_ontology_feature_keys(feature_keys) == [
+        "legal-ir-view:deontic.ir",
+        "legal-ir-view:TDFOL.prover",
+        "legal-ir-view:modal.frame_logic",
+    ]
+    assert frame_ontology_terms_from_feature_keys(feature_keys) == [
+        "deontic_ir",
+        "tdfol_prover",
+        "modal_frame_logic",
+    ]
+    assert frame_ontology_contextualized_terms(feature_keys=feature_keys) == [
+        "legal_ir_view_deontic_ir",
+        "legal_ir_view_tdfol_prover",
+        "legal_ir_view_modal_frame_logic",
+    ]

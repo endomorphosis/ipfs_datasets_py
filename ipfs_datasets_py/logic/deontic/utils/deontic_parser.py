@@ -238,6 +238,12 @@ _NON_APPLICABILITY_RE = re.compile(
     r"(?:does\s+not\s+apply|shall\s+not\s+apply|is\s+not\s+applicable)\s+to\s+(?P<target>.+?)(?:[.;:]|$)",
     re.IGNORECASE,
 )
+_SAVINGS_PRESERVATION_RE = re.compile(
+    r"\bnothing\s+in\s+(?P<scope>this\s+(?:act|section|chapter|title|article|part|subchapter|subtitle|division))\s+"
+    r"(?P<modal>affects|shall\s+affect|may\s+be\s+construed\s+as\s+affecting|shall\s+be\s+construed\s+to\s+affect|shall\s+be\s+construed\s+as\s+affecting)\s+"
+    r"(?P<target>.+?)(?:[.;:]|$)",
+    re.IGNORECASE,
+)
 _EXEMPTION_RE = re.compile(
     r"\b(?P<target>.+?)\s+(?:is|are)\s+exempt\s+from\s+(?P<requirement>.+?)(?:[.;:]|$)",
     re.IGNORECASE,
@@ -257,6 +263,44 @@ _INSTRUMENT_VALIDITY_RE = re.compile(
 _INSTRUMENT_EXPIRATION_RE = re.compile(
     r"\b(?P<instrument>(?:the|a|an)\s+)?(?P<instrument_type>permit|license|certificate|registration|approval|variance)\s+"
     r"(?:expires|shall\s+expire|terminates|shall\s+terminate)\s+(?P<anchor>.+?)(?:[.;:]|$)",
+    re.IGNORECASE,
+)
+_SECTION_STATUS_RE = re.compile(
+    r"(?:(?P<section_marker>(?:secs?\.?|sections?|§{1,2})\s*[0-9][0-9A-Za-z.\-]*(?:\s*,\s*[0-9][0-9A-Za-z.\-]*)*)\s*[\.:]?\s*)?"
+    r"\b(?P<status>repealed|omitted|reserved|transferred)\b"
+    r"(?P<detail>[^.;:]*)",
+    re.IGNORECASE,
+)
+_SECTION_STATUS_DETAIL_STOP_RE = re.compile(
+    r"\b(?:editorial\s+notes?|codification|pub\.?\s*l\.?|section|sections?|see|prior\s+provisions?)\b",
+    re.IGNORECASE,
+)
+_PURPOSE_RE = re.compile(
+    r"""
+    \b(?:the\s+)?
+    (?P<purpose_kind>general\s+purposes?|purposes?|mission|function|functions)
+    \s+of\s+(?P<subject>.+?)
+    \s+(?:is|are)\s+
+    (?P<action>.+?)
+    (?=[.;:]|$)
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
+_CRITICAL_THAT_RE = re.compile(
+    r"\b[Ii]t\s+is\s+(?P<modal>critical|essential|necessary)\s+that\s+"
+    r"(?P<subject>[A-Z][A-Z0-9&]*(?:\s+[A-Z][A-Z0-9&]*){0,5})\s+"
+    r"(?P<action>.+?)(?=[.;:]|$)",
+)
+_HEREBY_AUTHORIZED_RE = re.compile(
+    r"\b(?P<subject>(?:[Tt]he\s+)?[A-Z][A-Za-z0-9'’\-]*(?:\s+(?!is\b)[A-Za-z][A-Za-z0-9'’\-]*){0,10})\s*"
+    r"(?:,\s*[^,;]{1,260},\s*)?"
+    r"(?P<modal>[Ii]s\s+hereby\s+authorized(?:\s+and\s+directed)?|"
+    r"[Aa]re\s+hereby\s+authorized(?:\s+and\s+directed)?)"
+    r"(?:\s+to|\s*[-—:]\s*)\s*(?P<action>.+?)(?=[.;]|$)",
+)
+_DASH_MODAL_RE = re.compile(
+    r"\b(?P<subject>(?:[Tt]he\s+)?[A-Za-z][A-Za-z0-9'’\-]*(?:\s+(?!may\b|shall\b|must\b)[A-Za-z][A-Za-z0-9'’\-]*){0,10})\s+"
+    r"(?P<modal>may|shall|must)\s*[-—:]\s*(?P<action>.+?)(?=[.;]|$)",
     re.IGNORECASE,
 )
 _MONEY_RE = re.compile(
@@ -496,7 +540,22 @@ def extract_normative_elements(
     *,
     expand_enumerations: bool = False,
 ) -> List[Dict[str, Any]]:
-    elements: List[Dict[str, Any]] = []
+    status_elements = _extract_section_status_lifecycle_elements(str(text or ""), document_type)
+    if status_elements and _section_status_should_short_circuit(str(text or ""), status_elements):
+        elements: List[Dict[str, Any]] = status_elements
+        _apply_definition_context(elements)
+        _apply_cross_reference_context(elements)
+        _apply_same_document_reference_repair_clearance(elements)
+        _apply_local_applicability_repair_clearance(elements)
+        _apply_local_scope_condition_repair_clearance(elements)
+        _apply_local_scope_exception_repair_clearance(elements)
+        _apply_formula_resolved_repair_clearance(elements)
+        _apply_active_repair_status(elements)
+        _apply_document_penalty_context(elements, str(text or ""))
+        _apply_enforcement_context(elements)
+        _apply_conflict_context(elements)
+        return elements
+    elements = []
     segments = segment_legal_text(text)
     for segment in segments:
         segment_text = segment["text"].strip()
@@ -1312,13 +1371,121 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
     sentence_lower = sentence.lower()
     elements: List[Dict[str, Any]] = []
 
+    savings_match = _SAVINGS_PRESERVATION_RE.search(sentence)
+    if savings_match:
+        return [
+            _finalize_element(
+                _build_savings_preservation_element(
+                    sentence=sentence,
+                    document_type=document_type,
+                    match=savings_match,
+                )
+            )
+        ]
+
+    critical_match = _CRITICAL_THAT_RE.search(sentence)
+    if critical_match:
+        subject_text = _clean_phrase(critical_match.group("subject"))
+        action_text = _clean_action(critical_match.group("action"))
+        if action_text:
+            return [
+                _finalize_element(
+                    _build_element(
+                        sentence=sentence,
+                        document_type=document_type,
+                        norm_type="obligation",
+                        deontic_operator="O",
+                        modal=f"is {critical_match.group('modal').lower()} that",
+                        subject_text=subject_text,
+                        action_text=action_text,
+                        support_span=critical_match.span(),
+                        field_spans={
+                            "subject": list(critical_match.span("subject")),
+                            "modal": list(critical_match.span("modal")),
+                            "action": list(critical_match.span("action")),
+                        },
+                        extraction_method="deterministic_critical_that_clause_v1",
+                    )
+                )
+            ]
+
+    hereby_match = _HEREBY_AUTHORIZED_RE.search(sentence)
+    if hereby_match:
+        modal = re.sub(r"\s+", " ", hereby_match.group("modal").lower()).strip()
+        subject_text = _clean_phrase(hereby_match.group("subject"))
+        action_text = _clean_action(
+            _strip_leading_authorized_action_prefix(hereby_match.group("action"))
+        )
+        norm_type, deontic_operator = (
+            ("obligation", "O")
+            if "directed" in modal
+            else ("permission", "P")
+        )
+        if action_text:
+            return [
+                _finalize_element(
+                    _build_element(
+                        sentence=sentence,
+                        document_type=document_type,
+                        norm_type=norm_type,
+                        deontic_operator=deontic_operator,
+                        modal=modal,
+                        subject_text=subject_text,
+                        action_text=action_text,
+                        support_span=hereby_match.span(),
+                        field_spans={
+                            "subject": list(hereby_match.span("subject")),
+                            "modal": list(hereby_match.span("modal")),
+                            "action": list(hereby_match.span("action")),
+                        },
+                        extraction_method="deterministic_hereby_authorized_clause_v1",
+                    )
+                )
+            ]
+
+    dash_modal_match = _DASH_MODAL_RE.search(sentence)
+    if dash_modal_match:
+        modal = re.sub(r"\s+", " ", dash_modal_match.group("modal").lower()).strip()
+        norm_type, deontic_operator = classify_modal(modal)
+        subject_text = _clean_phrase(dash_modal_match.group("subject"))
+        action_text = _clean_action(
+            _strip_leading_authorized_action_prefix(dash_modal_match.group("action"))
+        )
+        if action_text:
+            return [
+                _finalize_element(
+                    _build_element(
+                        sentence=sentence,
+                        document_type=document_type,
+                        norm_type=norm_type,
+                        deontic_operator=deontic_operator,
+                        modal=modal,
+                        subject_text=subject_text,
+                        action_text=action_text,
+                        support_span=dash_modal_match.span(),
+                        field_spans={
+                            "subject": list(dash_modal_match.span("subject")),
+                            "modal": list(dash_modal_match.span("modal")),
+                            "action": list(dash_modal_match.span("action")),
+                        },
+                        extraction_method="deterministic_dash_modal_clause_v1",
+                    )
+                )
+            ]
+
     for match in _MODAL_RE.finditer(sentence):
         modal = re.sub(r"\s+", " ", match.group("modal").lower()).strip()
         norm_type, deontic_operator = classify_modal(modal)
         raw_subject = match.group("subject")
-        if deontic_operator in {"O", "P"} and re.match(r"\s*(?:no|none)\b", raw_subject or "", flags=re.IGNORECASE):
+        negated_subject = _has_leading_negated_subject(raw_subject)
+        if deontic_operator in {"O", "P"} and negated_subject:
             norm_type, deontic_operator = "prohibition", "F"
-        subject_text = _clean_phrase(raw_subject)
+        subject_text = (
+            _clean_negated_subject_phrase(raw_subject)
+            if negated_subject
+            else _clean_phrase(raw_subject)
+        )
+        subject_text = _trim_embedded_heading_subject(subject_text)
         if subject_text.lower() in {"and", "or"}:
             continue
         action_text = _clean_action(match.group("action"))
@@ -1354,6 +1521,8 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
                 continue
             modal = re.sub(r"\s+", " ", match.group("modal").lower()).strip()
             norm_type, deontic_operator = classify_modal(modal)
+            if deontic_operator in {"O", "P"} and _has_leading_negated_subject(first_subject):
+                norm_type, deontic_operator = "prohibition", "F"
             action_text = _clean_action(match.group("action"))
             subject_text, action_text = _normalize_passive_clause(first_subject, action_text)
             if not action_text:
@@ -1467,6 +1636,18 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
             )
         ]
 
+    section_status_match = _SECTION_STATUS_RE.search(sentence)
+    if section_status_match:
+        return [
+            _finalize_element(
+                _build_section_status_lifecycle_element(
+                    sentence=sentence,
+                    document_type=document_type,
+                    match=section_status_match,
+                )
+            )
+        ]
+
     not_required_match = _NOT_REQUIRED_EXEMPTION_RE.search(sentence)
     if not_required_match:
         instrument_text = _clean_phrase(not_required_match.group("instrument"))
@@ -1539,6 +1720,49 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
                         "action": list(penalty_match.span(1)),
                     },
                     extraction_method="deterministic_penalty_clause_v4",
+                )
+            )
+        ]
+
+    purpose_matches = list(_PURPOSE_RE.finditer(sentence))
+    purpose_match = purpose_matches[-1] if purpose_matches else None
+    if purpose_match:
+        subject_text = _clean_phrase(purpose_match.group("subject"))
+        subject_span = list(purpose_match.span("subject"))
+        nested_subject_markers = list(
+            re.finditer(
+                r"\b(?:general\s+purpose|purpose|mission|function|functions)\s+of\s+",
+                subject_text,
+                re.IGNORECASE,
+            )
+        )
+        if nested_subject_markers:
+            nested_start = nested_subject_markers[-1].end()
+            subject_text = _clean_phrase(
+                subject_text[nested_start:]
+            )
+            subject_span = [
+                subject_span[0] + nested_start,
+                subject_span[1],
+            ]
+        action_text = _clean_action(purpose_match.group("action"))
+        return [
+            _finalize_element(
+                _build_element(
+                    sentence=sentence,
+                    document_type=document_type,
+                    norm_type="purpose",
+                    deontic_operator="PURP",
+                    modal=purpose_match.group("purpose_kind"),
+                    subject_text=subject_text,
+                    action_text=action_text,
+                    support_span=purpose_match.span(),
+                    field_spans={
+                        "subject": subject_span,
+                        "modal": list(purpose_match.span("purpose_kind")),
+                        "action": list(purpose_match.span("action")),
+                    },
+                    extraction_method="deterministic_purpose_clause_v1",
                 )
             )
         ]
@@ -1690,6 +1914,294 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
         ]
 
     return []
+
+
+def _extract_section_status_lifecycle_elements(
+    text: str,
+    document_type: str,
+) -> List[Dict[str, Any]]:
+    """Extract whole-document section status notes before sentence splitting."""
+
+    normalized_text = str(text or "").strip()
+    if not normalized_text:
+        return []
+
+    elements: List[Dict[str, Any]] = []
+    for match in _SECTION_STATUS_RE.finditer(normalized_text):
+        elements.append(
+            _finalize_element(
+                _build_section_status_lifecycle_element(
+                    sentence=normalized_text,
+                    document_type=document_type,
+                    match=match,
+                )
+            )
+        )
+    return elements
+
+
+def _section_status_should_short_circuit(
+    text: str,
+    elements: List[Dict[str, Any]],
+) -> bool:
+    """Return true when status rows describe the section itself, not notes.
+
+    Whole U.S. Code documents often contain editorial-history phrases such as
+    "Prior section ... was omitted" after the operative statute. Those status
+    markers are useful when the section is actually repealed/omitted, but they
+    should not suppress ordinary modal parsing for mixed documents.
+    """
+
+    if not elements:
+        return False
+    normalized = re.sub(r"\s+", " ", str(text or "")).strip()
+    if not normalized:
+        return False
+
+    status_starts = [
+        int((element.get("support_span") or [0, 0])[0])
+        for element in elements
+        if isinstance(element.get("support_span"), list)
+        and len(element.get("support_span") or []) == 2
+    ]
+    if not status_starts:
+        return False
+    first_status_start = min(status_starts)
+    prefix = normalized[:first_status_start].lower()
+    if re.search(
+        r"\b(?:shall|must|may|is\s+authorized|are\s+authorized|"
+        r"is\s+critical\s+that|are\s+required|is\s+required)\b",
+        prefix,
+    ):
+        return False
+
+    first_element = min(
+        elements,
+        key=lambda element: int((element.get("support_span") or [0, 0])[0]),
+    )
+    support_text = str(first_element.get("support_text") or "")
+    return bool(
+        re.search(
+            r"^\s*(?:\[?\s*)?(?:(?:secs?\.?|sections?|§{1,2})\s*)?"
+            r"[0-9][0-9A-Za-z.\-]*\.?\s*"
+            r"(?:repealed|omitted|reserved|transferred)\b",
+            support_text,
+            re.IGNORECASE,
+        )
+        or first_status_start < 600
+    )
+
+
+def _build_section_status_lifecycle_element(
+    *,
+    sentence: str,
+    document_type: str,
+    match: re.Match[str],
+) -> Dict[str, Any]:
+    """Build a typed lifecycle row for U.S. Code editorial status markers."""
+
+    status = _clean_phrase(match.group("status")).lower()
+    section_marker = _clean_phrase(match.group("section_marker") or "")
+    detail = _section_status_detail(match.group("detail") or "")
+    instrument_text = section_marker or _section_status_instrument_from_context(sentence)
+    action_text = status
+    if detail:
+        action_text = f"{status} {detail}"
+
+    status_span = list(match.span("status"))
+    subject_span = list(match.span("section_marker")) if section_marker else []
+    return {
+        "schema_version": PARSER_SCHEMA_VERSION,
+        "source_id": "",
+        "canonical_citation": "",
+        "text": sentence,
+        "support_text": sentence[match.start() : match.end()].strip(),
+        "support_span": list(match.span()),
+        "field_spans": {
+            "subject": subject_span,
+            "modal": status_span,
+            "action": status_span,
+            "action_verb": status_span,
+            "action_object": subject_span,
+            "action_recipient": [],
+        },
+        "norm_type": "instrument_lifecycle",
+        "deontic_operator": "LIFE",
+        "modal": status,
+        "subject": [instrument_text],
+        "actor_type": "legal_instrument",
+        "entity_type": "legal_instrument",
+        "action": [action_text],
+        "mental_state": "",
+        "action_verb": status,
+        "action_object": instrument_text,
+        "action_recipient": "",
+        "conditions": extract_conditions(sentence),
+        "condition_details": extract_condition_details(sentence),
+        "temporal_constraints": extract_temporal_constraints(sentence),
+        "temporal_constraint_details": extract_temporal_constraint_details(sentence),
+        "exceptions": extract_exceptions(sentence),
+        "exception_details": extract_exception_details(sentence),
+        "override_clauses": extract_override_clauses(sentence),
+        "override_clause_details": extract_override_clause_details(sentence),
+        "cross_references": [],
+        "cross_reference_details": [],
+        "resolved_cross_references": [],
+        "enforcement_links": [],
+        "conflict_links": [],
+        "enumerated_items": extract_enumerated_items(sentence),
+        "defined_term_refs": [],
+        "definition_scope": {},
+        "ontology_terms": extract_ontology_terms(sentence),
+        "formal_terms": {},
+        "llm_repair": {},
+        "export_readiness": {},
+        "logic_frame": {},
+        "legal_frame": {},
+        "kg_relationship_hints": [],
+        "monetary_amounts": extract_monetary_amounts(sentence),
+        "monetary_amount_details": extract_monetary_amount_details(sentence),
+        "penalty": {},
+        "procedure": {},
+        "section_context": {},
+        "hierarchy_path": [],
+        "hierarchy_details": [],
+        "document_type": document_type,
+        "extraction_method": "deterministic_section_status_lifecycle_v1",
+        "confidence_floor": 0.40,
+    }
+
+
+def _build_savings_preservation_element(
+    *,
+    sentence: str,
+    document_type: str,
+    match: re.Match[str],
+) -> Dict[str, Any]:
+    """Build a typed row for statutory savings/no-effect clauses."""
+
+    scope_text = _clean_phrase(match.group("scope"))
+    target_text = _clean_phrase(match.group("target"))
+    preserved_actor = _savings_preserved_actor_text(target_text) or target_text
+    preserved_object = _savings_preserved_object_text(target_text)
+    action_text = f"preserve {preserved_object or target_text}"
+    if scope_text:
+        action_text = f"{action_text} from {scope_text}"
+
+    return {
+        "schema_version": PARSER_SCHEMA_VERSION,
+        "source_id": "",
+        "canonical_citation": "",
+        "text": sentence,
+        "support_text": sentence[match.start() : match.end()].strip(),
+        "support_span": list(match.span()),
+        "field_spans": {
+            "subject": list(match.span("target")),
+            "modal": list(match.span("modal")),
+            "action": list(match.span("target")),
+            "action_verb": list(match.span("modal")),
+            "action_object": list(match.span("target")),
+            "action_recipient": [],
+        },
+        "norm_type": "exemption",
+        "deontic_operator": "EXEMPT",
+        "modal": "savings preservation",
+        "subject": [preserved_actor],
+        "actor_type": classify_legal_entity(preserved_actor),
+        "entity_type": classify_legal_entity(preserved_actor),
+        "action": [action_text],
+        "mental_state": "",
+        "action_verb": "preserve",
+        "action_object": preserved_object or target_text,
+        "action_recipient": "",
+        "conditions": extract_conditions(sentence),
+        "condition_details": extract_condition_details(sentence),
+        "temporal_constraints": extract_temporal_constraints(sentence),
+        "temporal_constraint_details": extract_temporal_constraint_details(sentence),
+        "exceptions": extract_exceptions(sentence),
+        "exception_details": extract_exception_details(sentence),
+        "override_clauses": extract_override_clauses(sentence),
+        "override_clause_details": extract_override_clause_details(sentence),
+        "cross_references": extract_cross_references(sentence),
+        "cross_reference_details": extract_cross_reference_details(sentence),
+        "resolved_cross_references": [],
+        "enforcement_links": [],
+        "conflict_links": [],
+        "enumerated_items": extract_enumerated_items(sentence),
+        "defined_term_refs": [],
+        "definition_scope": {},
+        "ontology_terms": extract_ontology_terms(sentence),
+        "formal_terms": {},
+        "llm_repair": {},
+        "export_readiness": {},
+        "logic_frame": {},
+        "legal_frame": {},
+        "kg_relationship_hints": [],
+        "monetary_amounts": extract_monetary_amounts(sentence),
+        "monetary_amount_details": extract_monetary_amount_details(sentence),
+        "penalty": {},
+        "procedure": {},
+        "section_context": {},
+        "hierarchy_path": [],
+        "hierarchy_details": [],
+        "document_type": document_type,
+        "extraction_method": "deterministic_savings_preservation_clause_v1",
+        "confidence_floor": 0.40,
+    }
+
+
+def _savings_preserved_actor_text(target_text: str) -> str:
+    text = _clean_phrase(target_text)
+    actor_match = re.search(
+        r"\bof\s+(?P<actor>.+?)(?=,\s+including\b|,\s+except\b|,\s+as\b|$)",
+        text,
+        re.IGNORECASE,
+    )
+    if actor_match:
+        return _clean_phrase(actor_match.group("actor"))
+    return ""
+
+
+def _savings_preserved_object_text(target_text: str) -> str:
+    text = _clean_phrase(target_text)
+    object_match = re.match(
+        r"(?P<object>.+?)(?:,\s*existing\b|\s+of\b|$)",
+        text,
+        re.IGNORECASE,
+    )
+    if object_match:
+        return _clean_phrase(object_match.group("object"))
+    return text
+
+
+def _section_status_detail(value: str) -> str:
+    detail = _clean_phrase(value)
+    if not detail:
+        return ""
+    stop_match = _SECTION_STATUS_DETAIL_STOP_RE.search(detail)
+    if stop_match:
+        detail = detail[: stop_match.start()].strip(" ,")
+    return detail
+
+
+def _section_status_instrument_from_context(sentence: str) -> str:
+    section_context_match = re.search(
+        r"\b(?:secs?\.?|sections?|§{1,2})\s*[0-9][0-9A-Za-z.\-]*(?:\s*,\s*[0-9][0-9A-Za-z.\-]*)*",
+        sentence,
+        re.IGNORECASE,
+    )
+    if section_context_match:
+        return _clean_phrase(section_context_match.group(0))
+    return "section"
+
+
+def _strip_leading_enumeration_label(value: str) -> str:
+    return re.sub(r"^\s*\([A-Za-z0-9]+\)\s*", "", str(value or "")).strip()
+
+
+def _strip_leading_authorized_action_prefix(value: str) -> str:
+    text = _strip_leading_enumeration_label(value)
+    return re.sub(r"^\s*to\s+", "", text, flags=re.IGNORECASE).strip()
 
 
 def _build_element(
@@ -2822,6 +3334,8 @@ def classify_legal_frame(element: Dict[str, Any]) -> str:
         return "exemption"
     if norm_type == "instrument_lifecycle":
         return "instrument_lifecycle"
+    if norm_type == "purpose":
+        return "purpose"
     if norm_type == "definition":
         return "definition"
     if norm_type == "penalty" or "punishable" in text or "fine" in text or "penalty" in text:
@@ -3282,6 +3796,46 @@ def _clean_phrase(value: str) -> str:
     return text
 
 
+def _has_leading_negated_subject(value: Any) -> bool:
+    text = re.sub(r"\s+", " ", str(value or "")).strip(" ,;:").lower()
+    return bool(re.match(r"^(?:(?:then|and|or|but)\s+)?(?:no|none)\b", text))
+
+
+def _clean_negated_subject_phrase(value: Any) -> str:
+    text = re.sub(r"\s+", " ", str(value or "")).strip(" ,;:")
+    text = re.sub(
+        r"^(?:(?:then|and|or|but)\s+)?(?:no|none)\s+",
+        "",
+        text,
+        flags=re.IGNORECASE,
+    ).strip()
+    return _clean_phrase(text)
+
+
+def _trim_embedded_heading_subject(value: str) -> str:
+    """Drop catchline text accidentally glued before a determiner-led actor."""
+
+    text = _clean_phrase(value)
+    matches = list(
+        re.finditer(
+            r"\b(?:[Tt]he|[Aa]|[Aa]n|[Ee]ach|[Aa]ny)\s+"
+            r"(?P<actor>[A-Z][A-Za-z0-9'’\-]*(?:\s+[A-Z][A-Za-z0-9'’\-]*){0,8})$",
+            text,
+        )
+    )
+    if not matches:
+        return text
+    actor = _clean_phrase(matches[-1].group("actor"))
+    if actor and classify_legal_entity(actor) in {
+        "government_actor",
+        "legal_person",
+        "organization",
+        "legal_entity",
+    }:
+        return actor
+    return text
+
+
 def _clean_action(value: str) -> str:
     text = re.sub(r"\s+", " ", str(value or "")).strip(" ,;:")
     text = _TRAILING_NOISE_RE.sub("", text).strip()
@@ -3408,6 +3962,8 @@ def score_scaffold_quality(element: Dict[str, Any]) -> Dict[str, Any]:
     required_slots = ["deontic_operator", "subject", "action"]
     if norm_type == "definition":
         required_slots = ["defined_term", "definition_body"]
+    elif norm_type == "purpose":
+        required_slots = ["subject", "action"]
 
     filled_slots = 0
     for slot in required_slots:
@@ -3454,7 +4010,7 @@ def score_scaffold_quality(element: Dict[str, Any]) -> Dict[str, Any]:
     if (element.get("legal_frame") or {}).get("category") == "procedure" and element.get("temporal_constraints"):
         warnings.append("procedure_timeline_requires_event_order_review")
         score -= 0.04
-    if len(re.findall(r"[A-Za-z][A-Za-z0-9'’\-]*", action_text)) > 18:
+    if norm_type != "purpose" and len(re.findall(r"[A-Za-z][A-Za-z0-9'’\-]*", action_text)) > 18:
         warnings.append("overlong_action_span")
         score -= 0.10
     if norm_type == "definition" and not element.get("defined_term"):

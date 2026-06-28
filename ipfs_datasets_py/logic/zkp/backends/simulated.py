@@ -17,7 +17,11 @@ import time
 
 from .. import ZKPError, ZKPProof
 from ..canonicalization import axioms_commitment_hex, normalize_text, theorem_hash_hex
-from ..circuits import build_proof_attestation_view
+from ..circuits import (
+    attestation_view_matches_proof,
+    build_proof_attestation_view,
+    compiler_guidance_ref_from_metadata,
+)
 from ..statement import format_circuit_ref, parse_circuit_ref_lenient
 
 
@@ -98,6 +102,12 @@ class SimulatedBackend:
             "circuit_version": circuit_version,
             "ruleset_id": ruleset_id,
         }
+        guidance_ref = compiler_guidance_ref_from_metadata(metadata_dict)
+        if guidance_ref:
+            public_inputs["compiler_guidance_ref"] = guidance_ref
+            public_inputs["compiler_guidance_version"] = int(
+                metadata_dict.get("compiler_guidance_version") or 1
+            )
         attestation_view = build_proof_attestation_view(
             proof_data=proof_data,
             public_inputs=public_inputs,
@@ -109,7 +119,10 @@ class SimulatedBackend:
         )
         public_inputs["attestation_ref"] = attestation_view["attestation_ref"]
         public_inputs["attestation_view_version"] = int(attestation_view["attestation_view_version"])
-        output_metadata.setdefault("attestation_view", attestation_view)
+        # Caller metadata can be replayed from serialized LegalIR records.
+        # Always publish the backend-derived view so verification and bridge
+        # losses use the fresh commitment for this proof.
+        output_metadata["attestation_view"] = attestation_view
 
         return ZKPProof(
             proof_data=proof_data,
@@ -145,6 +158,17 @@ class SimulatedBackend:
         if hasattr(proof, 'metadata') and isinstance(proof.metadata, dict):
             # Verify proof_system field exists (for clarity)
             if 'proof_system' not in proof.metadata:
+                return False
+
+            if (
+                "attestation_ref" in proof.public_inputs
+                or "attestation_view_version" in proof.public_inputs
+                or isinstance(proof.metadata.get("attestation_view"), dict)
+            ) and not attestation_view_matches_proof(
+                proof_data=proof.proof_data,
+                public_inputs=proof.public_inputs,
+                metadata=proof.metadata,
+            ):
                 return False
 
         return True

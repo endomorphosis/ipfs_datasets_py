@@ -1,0 +1,135 @@
+{
+  "version": "1.0",
+  "description": "Golden vectors for ProveKit ZKP regression testing. Fixed test cases capturing expected behaviour for theorem canonicalization, axiom commitments, Prover.toml rendering, public inputs, attestation refs, and verifier-key digests.",
+  "metadata": {
+    "created": "2026-06-13",
+    "circuit_version": 1,
+    "ruleset_id": "TDFOL_v1",
+    "hash_backend": "sha256",
+    "circuit_ref": "provekit_knowledge_of_axioms@v1"
+  },
+  "vectors": {
+    "modus_ponens": {
+      "description": "Classic modus ponens: P, P->Q therefore Q. Baseline vector for all public-input fields.",
+      "theorem": "Q",
+      "private_axioms": ["P", "P -> Q"],
+      "theorem_hash": "4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260",
+      "axioms_commitment": "9b5e9c5a5a8b7c87a592287a3a7b55b9cb95329896b8c132ac7e9a5e3ed8a4e6",
+      "circuit_ref": "provekit_knowledge_of_axioms@v1",
+      "circuit_version": 1,
+      "ruleset_id": "TDFOL_v1",
+      "hash_backend": "sha256",
+      "prover_toml": "theorem_hash_field = \"11992964477778470961860911479351441342079885600413204542568579613912411091551\"\naxioms_commitment_field = \"4610925647338419674938347399606652591218770084886187569195235967897972548835\"\ncircuit_ref_field = \"16759665528695555162712778019178509487885632625380302316666067792897360625861\"\ncircuit_version = \"1\"\nruleset_id_field = \"5787603877431705256298018410286603220936651328222224753837663774156313402550\"\ncompiler_guidance_ref_field = \"0\"\ncompiler_guidance_version = \"0\"\nhash_backend_field = \"20337703900405604868708891654018722873457637938855265600918182639257657544493\"\nwitness_theorem_hash_field = \"11992964477778470961860911479351441342079885600413204542568579613912411091551\"\nwitness_axioms_commitment_field = \"4610925647338419674938347399606652591218770084886187569195235967897972548835\"\nwitness_circuit_ref_field = \"16759665528695555162712778019178509487885632625380302316666067792897360625861\"\nwitness_circuit_version = \"1\"\nwitness_ruleset_id_field = \"5787603877431705256298018410286603220936651328222224753837663774156313402550\"\nwitness_compiler_guidance_ref_field = \"0\"\nwitness_compiler_guidance_version = \"0\"\nwitness_hash_backend_field = \"20337703900405604868708891654018722873457637938855265600918182639257657544493\"\n",
+      "public_inputs": {
+        "theorem": "Q",
+        "theorem_hash": "4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260",
+        "axioms_commitment": "9b5e9c5a5a8b7c87a592287a3a7b55b9cb95329896b8c132ac7e9a5e3ed8a4e6",
+        "circuit_ref": "provekit_knowledge_of_axioms@v1",
+        "circuit_version": 1,
+        "ruleset_id": "TDFOL_v1"
+      },
+      "noir_field_inputs": {
+        "theorem_hash_field": 11992964477778470961860911479351441342079885600413204542568579613912411091551,
+        "axioms_commitment_field": 4610925647338419674938347399606652591218770084886187569195235967897972548835,
+        "circuit_version": 1,
+        "ruleset_id_field": 5787603877431705256298018410286603220936651328222224753837663774156313402550,
+        "circuit_ref_field": 16759665528695555162712778019178509487885632625380302316666067792897360625861,
+        "compiler_guidance_ref_field": 0,
+        "compiler_guidance_version": 0,
+        "hash_backend_field": 20337703900405604868708891654018722873457637938855265600918182639257657544493
+      },
+      "canonical_hash": "9b0dec574b3d08af634b821c1efd8a763dd8f4c9ca64d9d4fa5f01de3562a686",
+      "attestation_ref": "6d59222ed5ae9ad1fafb9e191787f65919eb6190cb78817de2c06d7b21d4d7f4",
+      "attestation_view_version": 1,
+      "notes": "Baseline: all public-input fields, Prover.toml lines, field projections, and attestation ref are pinned."
+    },
+    "axiom_reorder": {
+      "description": "Same axioms as modus_ponens but supplied in reverse order. Commitment must be identical.",
+      "theorem": "Q",
+      "private_axioms": ["P -> Q", "P"],
+      "expected_axioms_commitment": "9b5e9c5a5a8b7c87a592287a3a7b55b9cb95329896b8c132ac7e9a5e3ed8a4e6",
+      "matches_modus_ponens_commitment": true,
+      "notes": "Axiom order-independence: sorted+dedup canonical form must produce the same hex commitment."
+    },
+    "whitespace_normalization": {
+      "description": "Theorem and axioms with extra whitespace must normalise to the same hashes as modus_ponens.",
+      "theorem_raw": "  Q  ",
+      "axioms_raw": ["P", "  P  ->   Q  "],
+      "theorem_hash": "4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260",
+      "axioms_commitment": "9b5e9c5a5a8b7c87a592287a3a7b55b9cb95329896b8c132ac7e9a5e3ed8a4e6",
+      "theorem_hash_matches_canonical": true,
+      "notes": "Unicode NFD + whitespace collapse. Both theorem_hash and axioms_commitment must equal the canonical modus_ponens values."
+    },
+    "deduplication": {
+      "description": "Duplicate axioms must be removed before commitment; 3x P commits the same as 1x P.",
+      "axioms": ["P", "P", "P"],
+      "axioms_commitment": "ce43f748e9651942de37353e79fc52678072b620fa76380a85017140af5faec0",
+      "matches_single_p": true,
+      "canonical_axioms": ["P"],
+      "notes": "axioms_commitment_hex deduplicates before hashing."
+    },
+    "three_axiom_chain": {
+      "description": "Three-step chain P, P->Q, Q->R therefore R.",
+      "theorem": "R",
+      "private_axioms": ["P", "P -> Q", "Q -> R"],
+      "theorem_hash": "8c2574892063f995fdf756bce07f46c1a5193e54cd52837ed91e32008ccf41ac",
+      "axioms_commitment": "82378cdf5f169ca91c4dfe661ed8f8bd4000033f89e282d48ccaedc723d5d3cd",
+      "circuit_ref": "provekit_knowledge_of_axioms@v1",
+      "public_inputs": {
+        "theorem": "R",
+        "theorem_hash": "8c2574892063f995fdf756bce07f46c1a5193e54cd52837ed91e32008ccf41ac",
+        "axioms_commitment": "82378cdf5f169ca91c4dfe661ed8f8bd4000033f89e282d48ccaedc723d5d3cd",
+        "circuit_ref": "provekit_knowledge_of_axioms@v1",
+        "circuit_version": 1,
+        "ruleset_id": "TDFOL_v1"
+      },
+      "canonical_hash": "bf664360dcce68139417e76013c9d760243318cde335d7ddc0345919fabb50f4",
+      "notes": "Distinct from modus_ponens: different theorem and axiom set produce different hashes."
+    },
+    "syllogism": {
+      "description": "Aristotelian syllogism: All humans are mortal, Socrates is human therefore Socrates is mortal.",
+      "theorem": "Socrates is mortal",
+      "private_axioms": ["All humans are mortal", "Socrates is human"],
+      "theorem_hash": "1b20e2f377abafc02b82df9db391adbe43fdaf34c3f0ea616a70306d32b7de21",
+      "axioms_commitment": "c6222555071b761e977818b4400b6b5b75a44caf0c15691b5c71ad7415002037",
+      "public_inputs": {
+        "theorem": "Socrates is mortal",
+        "theorem_hash": "1b20e2f377abafc02b82df9db391adbe43fdaf34c3f0ea616a70306d32b7de21",
+        "axioms_commitment": "c6222555071b761e977818b4400b6b5b75a44caf0c15691b5c71ad7415002037",
+        "circuit_ref": "provekit_knowledge_of_axioms@v1",
+        "circuit_version": 1,
+        "ruleset_id": "TDFOL_v1"
+      },
+      "canonical_hash": "fa249002a8fb487c138e04e219a22386e1e424917b477adc80fcf24c6a19d13f",
+      "notes": "Natural language theorem. Multi-word phrases produce well-formed 32-byte hashes."
+    },
+    "with_compiler_guidance": {
+      "description": "Public inputs including a compiler_guidance_ref field.",
+      "theorem": "Q",
+      "private_axioms": ["P", "P -> Q"],
+      "theorem_hash": "4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260",
+      "axioms_commitment": "9b5e9c5a5a8b7c87a592287a3a7b55b9cb95329896b8c132ac7e9a5e3ed8a4e6",
+      "compiler_guidance_ref": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "compiler_guidance_version": 2,
+      "public_inputs": {
+        "theorem": "Q",
+        "theorem_hash": "4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260",
+        "axioms_commitment": "9b5e9c5a5a8b7c87a592287a3a7b55b9cb95329896b8c132ac7e9a5e3ed8a4e6",
+        "circuit_ref": "provekit_knowledge_of_axioms@v1",
+        "circuit_version": 1,
+        "ruleset_id": "TDFOL_v1",
+        "compiler_guidance_ref": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "compiler_guidance_version": 2
+      },
+      "canonical_hash": "61890dab26f491ee504774f0279b020d55e1381be80363f7ab8be50f1d20e86d",
+      "notes": "compiler_guidance_ref must appear in public_inputs when set; canonical_hash changes."
+    },
+    "verifier_key_digest": {
+      "description": "SHA-256 digest of a simulated verifier key. Used to pin vk binding across build snapshots.",
+      "vk_source_label": "SIMULATED_VERIFIER_KEY_V1",
+      "vk_digest_sha256": "3c79edd7f5295d12fa4c2f04ab1a1cb81f06cb244d84554083fa913a60904ed3",
+      "circuit_ref": "provekit_knowledge_of_axioms@v1",
+      "notes": "Verifier-key digest must change when the circuit or provekit_branch changes."
+    }
+  }
+}

@@ -201,6 +201,7 @@ def check_legal_parser_health(
     except Exception:
         worktree_no_child_threshold = 0.0
 
+    ensure_supervisor_pid = ensure.get("supervisor_pid")
     payload = {
         "alive": alive,
         "status": status_label,
@@ -223,7 +224,10 @@ def check_legal_parser_health(
         "ensure_wrapper_pid_alive": pid_is_legal_parser_wrapper(ensure.get("wrapper_pid"))
         if ensure.get("wrapper_pid")
         else False,
-        "ensure_supervisor_pid_alive": ensure.get("supervisor_pid_alive"),
+        "ensure_supervisor_pid": ensure_supervisor_pid,
+        "ensure_supervisor_pid_alive": pid_is_legal_parser_supervisor(ensure_supervisor_pid)
+        if ensure_supervisor_pid
+        else False,
         "cycle_index": current.get("cycle_index"),
         "phase": current.get("phase"),
         "model_name": first_present(current.get("model_name"), supervisor.get("model_name")),

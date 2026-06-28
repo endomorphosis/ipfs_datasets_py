@@ -79,7 +79,15 @@ __all__ = [
     'ZKPError',
     'create_implication_circuit',
     'build_proof_attestation_view',
+    'attestation_view_matches_proof',
+    'compiler_guidance_ref_from_metadata',
+    'complete_zkp_attestation_record',
     'decode_simulated_proof_layout',
+    'proof_attestation_view_from_proof_dict',
+    'proof_digest_from_proof_dict',
+    'proof_public_inputs_from_proof_dict',
+    'refresh_proof_attestation',
+    'zkp_attestation_legal_ir_view_loss',
 ]
 
 _SIMULATION_WARNING = (
@@ -193,13 +201,29 @@ def __getattr__(name: str):
         "BooleanCircuit",
         "create_implication_circuit",
         "build_proof_attestation_view",
+        "attestation_view_matches_proof",
+        "compiler_guidance_ref_from_metadata",
+        "complete_zkp_attestation_record",
         "decode_simulated_proof_layout",
+        "proof_attestation_view_from_proof_dict",
+        "proof_digest_from_proof_dict",
+        "proof_public_inputs_from_proof_dict",
+        "refresh_proof_attestation",
+        "zkp_attestation_legal_ir_view_loss",
     }:
         mod = importlib.import_module(f"{__name__}.circuits")
         if name in {
             "create_implication_circuit",
             "build_proof_attestation_view",
+            "attestation_view_matches_proof",
+            "compiler_guidance_ref_from_metadata",
+            "complete_zkp_attestation_record",
             "decode_simulated_proof_layout",
+            "proof_attestation_view_from_proof_dict",
+            "proof_digest_from_proof_dict",
+            "proof_public_inputs_from_proof_dict",
+            "refresh_proof_attestation",
+            "zkp_attestation_legal_ir_view_loss",
         }:
             value = getattr(mod, name)
             globals()[name] = value

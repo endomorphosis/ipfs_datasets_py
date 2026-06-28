@@ -244,6 +244,22 @@ def _completed_states_to_skip(states: Sequence[str], registry: Mapping[str, Any]
     return skipped
 
 
+def _completed_states_missing_canonical_jsonld(
+    *,
+    states: Sequence[str],
+    jsonld_dir: Path,
+) -> List[str]:
+    missing: List[str] = []
+    for state in states:
+        state_code = str(state or "").strip().upper()
+        if not state_code:
+            continue
+        state_jsonld = Path(jsonld_dir).expanduser().resolve() / f"STATE-{state_code}.jsonld"
+        if not state_jsonld.exists():
+            missing.append(state_code)
+    return missing
+
+
 def _prefill_state_results_from_registry(
     *,
     states: Sequence[str],
@@ -347,17 +363,48 @@ def _reconcile_state_results_from_partial_checkpoints(
 
     results = progress_state.get("state_results")
     if not isinstance(results, dict):
-        return {"reconciled_states": [], "checked_state_count": 0}
+        results = {}
+        progress_state["state_results"] = results
 
     reconciled_states: List[Dict[str, Any]] = []
     checked_state_count = 0
     checkpoint_root = Path(checkpoint_dir).expanduser().resolve()
-    for state_code, entry in list(results.items()):
+    checkpoint_states: set[str] = set()
+    try:
+        for checkpoint_path in checkpoint_root.glob("STATE-*-partial.json"):
+            stem = str(checkpoint_path.stem or "")
+            if not stem.startswith("STATE-") or not stem.endswith("-partial"):
+                continue
+            state_code = stem[len("STATE-") : -len("-partial")].strip().upper()
+            if state_code:
+                checkpoint_states.add(state_code)
+    except Exception:
+        checkpoint_states = set()
+
+    candidate_states: List[str] = []
+    seen_states: set[str] = set()
+    for state_code in list(results.keys()) + sorted(checkpoint_states):
+        state = str(state_code or "").strip().upper()
+        if not state or state in seen_states:
+            continue
+        seen_states.add(state)
+        candidate_states.append(state)
+
+    for state_code in candidate_states:
+        entry = results.get(state_code)
+        if entry is None:
+            entry = {
+                "state_code": state_code,
+                "state_name": US_STATES.get(state_code, state_code),
+                "status": "missing",
+                "statutes_count": 0,
+            }
+            results[state_code] = entry
         if not isinstance(entry, dict):
             continue
         checked_state_count += 1
         status = str(entry.get("status") or "").strip().lower()
-        if status not in {"error", "zero_statutes"}:
+        if status not in {"error", "zero_statutes", "running", "started", "missing", ""}:
             continue
 
         checkpoint_path = checkpoint_root / f"STATE-{str(state_code or '').upper()}-partial.json"
@@ -1069,6 +1116,15 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
         if skip_completed_states
         else []
     )
+    reopened_missing_canonical_states = _completed_states_missing_canonical_jsonld(
+        states=skipped_completed_states,
+        jsonld_dir=jsonld_dir,
+    )
+    if reopened_missing_canonical_states:
+        reopened_set = set(reopened_missing_canonical_states)
+        skipped_completed_states = [
+            state for state in skipped_completed_states if state not in reopened_set
+        ]
     states = [state for state in requested_states if state not in set(skipped_completed_states)]
     needs_hf_token = bool(args.merge_hf_existing or args.publish_to_hf or args.verify)
     hf_token = (
@@ -1084,6 +1140,8 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
         "state_count": len(states),
         "skipped_completed_states": skipped_completed_states,
         "skipped_completed_count": len(skipped_completed_states),
+        "reopened_missing_canonical_states": reopened_missing_canonical_states,
+        "reopened_missing_canonical_count": len(reopened_missing_canonical_states),
         "skip_completed_states": skip_completed_states,
         "completed_states_registry_path": str(completed_states_registry_path),
         "completed_states_baseline_path": str(completed_states_baseline_path),
@@ -1194,6 +1252,11 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
     incremental_publish_results: List[Dict[str, Any]] = []
     incremental_publish_lock = asyncio.Lock()
     progress_heartbeat_seconds = max(10.0, float(getattr(args, "progress_heartbeat_seconds", 60.0)))
+    try:
+        _run_max_statutes_cap = int(getattr(args, "max_statutes", 0) or 0)
+    except Exception:
+        _run_max_statutes_cap = 0
+    bounded_probe_run = _run_max_statutes_cap > 0
 
     async def _progress_heartbeat_loop(stop_event: asyncio.Event) -> None:
         while not stop_event.is_set():
@@ -1231,6 +1294,7 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                     if isinstance(timeout_work_remaining_value, bool)
                     else None
                 )
+                low_quality = bool((state_result or {}).get("low_quality"))
                 timed_out = bool(timeout_diagnostics.get("timed_out")) or ("timed out" in error_text.lower())
                 no_remaining_work_signal = timeout_classification in {
                     "timeout_with_no_detectable_remaining_work",
@@ -1239,6 +1303,8 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                 timeout_promoted_to_success = bool(
                     error_text
                     and timed_out
+                    and (not bounded_probe_run)
+                    and (not low_quality)
                     and timeout_work_remaining is False
                     and (statutes_count > 0 or no_remaining_work_signal)
                 )

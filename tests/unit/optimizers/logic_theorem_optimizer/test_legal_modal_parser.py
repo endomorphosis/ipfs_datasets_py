@@ -14,6 +14,18 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_extractor import 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_critic import LogicCritic
 
 
+def test_legal_modal_parser_prefers_negated_permission_cue() -> None:
+    parser = LegalModalParser()
+
+    cues = parser.extract_cues(
+        "The requirements for serving as a director may not discriminate."
+    )
+
+    cue_labels = {(cue.operator.symbol, cue.cue.lower()) for cue in cues}
+    assert ("F", "may not") in cue_labels
+    assert ("P", "may") not in cue_labels
+
+
 _USCODE_2_31A_2B_TEXT = (
     "U.S.C. Title 2 - THE CONGRESS 2 U.S.C. United States Code, 2024 Edition "
     "Title 2 - THE CONGRESS CHAPTER 3 - COMPENSATION AND ALLOWANCES OF MEMBERS "
@@ -149,6 +161,14 @@ _USCODE_25_57_RESIDUAL_SPAN_TODO_TEXT = (
     "43 Stat. 1147, which authorized the Secretary of the Interior to allow "
     "employees in the Indian Service heat and light for quarters without "
     "charge, was not repeated in subsequent appropriation acts."
+)
+_USCODE_42_8502_DEFINITION_RESIDUAL_TEXT = (
+    "§8502. Definitions For purposes of this chapter— (1) The term "
+    "\"severe energy supply interruption\" means a shortage which the President "
+    "determines— (A) may cause major adverse impact; and (B) results from an "
+    "interruption. (2) The term \"international energy program\" has the meaning "
+    "given that term in section 6202(7) of this title. (3) The term "
+    "\"motor fuel\" means gasoline and diesel fuel."
 )
 _USCODE_7_7913_TEXT = (
     "U.S.C. Title 7 - AGRICULTURE 7 U.S.C. United States Code, 2024 Edition "
@@ -465,6 +485,59 @@ def test_parser_extracts_deontic_and_temporal_cues() -> None:
     assert "deontic" in families
     assert "temporal" in families
     assert {"must", "within"}.issubset(cue_terms)
+
+
+def test_parser_ignores_non_deadline_by_cues_in_uscode_history() -> None:
+    parser = LegalModalParser()
+
+    document = parser.parse(
+        (
+            "Statutory Notes and Related Subsidiaries Effective Date of 2012 "
+            "Amendment Amendment by Pub. L. 112-141 effective Oct. 1, 2012, "
+            "see section 3(a) of Pub. L. 112-141."
+        ),
+        document_id="us-code-history-by-pub-l",
+        source="us_code",
+        citation="49 U.S.C. 32301",
+    )
+
+    assert all(formula.metadata.get("cue") != "by" for formula in document.formulas)
+
+
+def test_parser_ignores_passive_agent_and_amount_by_cues() -> None:
+    parser = LegalModalParser()
+
+    document = parser.parse(
+        (
+            "The alleged victim shall be heard regarding the danger posed by "
+            "the defendant. The amount shall be reduced by $6,000,000. "
+            "(Pub. L. 110-140, Dec. 19, 2007.)"
+        ),
+        document_id="us-code-passive-agent-and-amount-by",
+        source="us_code",
+        citation="18 U.S.C. 2263",
+    )
+
+    by_formulas = [
+        formula for formula in document.formulas if formula.metadata.get("cue") == "by"
+    ]
+    assert by_formulas == []
+
+
+def test_parser_keeps_deadline_by_cues() -> None:
+    parser = LegalModalParser()
+
+    document = parser.parse(
+        "The agency must respond by March 1, 2027.",
+        document_id="deadline-by-cue",
+        source="us_code",
+        citation="5 U.S.C. 552",
+    )
+
+    assert any(
+        formula.operator.family == "temporal" and formula.metadata.get("cue") == "by"
+        for formula in document.formulas
+    )
 
 
 def test_parser_compiles_cues_to_modal_ir_with_provenance() -> None:
@@ -1230,6 +1303,60 @@ def test_parser_adds_residual_span_coverage_for_25_57_todo_shape() -> None:
     assert any("43 Stat." in span for span in residual_text_spans)
 
 
+def test_parser_covers_coalesced_uscode_statute_history_fragments() -> None:
+    parser = LegalModalParser()
+    document = parser.parse(
+        (
+            "§2348. Inventories of supplies not to be increased Inventories of "
+            "supplies may not be increased. (Added Pub. L. 96-323, §2(a), "
+            "Aug. 4, 1980, 94 Stat. 1018, §2328; amended Pub. L. 97-22, "
+            "§11(a)(8), July 10, 1981, 95 Stat. 138; renumbered §2348, "
+            "Pub. L. 99-145, title XIII, §1304(a)(1), Nov. 8, 1985, "
+            "99 Stat. 741.)"
+        ),
+        document_id="us-code-10-2348-history",
+        source="us_code",
+        citation="10 U.S.C. 2348",
+    )
+
+    residual_spans = {
+        document.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ]
+        for formula in document.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    }
+
+    assert any("Added Pub. L. 96-323" in span for span in residual_spans)
+    assert any("L. 99-145" in span and "99 Stat. 741" in span for span in residual_spans)
+
+
+def test_parser_adds_definition_residual_span_coverage_for_8502_style_text() -> None:
+    parser = LegalModalParser()
+    document = parser.parse(
+        _USCODE_42_8502_DEFINITION_RESIDUAL_TEXT,
+        document_id="us-code-42-8502.-fcb0ba12cbbe5b77",
+        source="us_code",
+        citation="42 U.S.C. 8502.",
+    )
+
+    residual_formulas = [
+        formula
+        for formula in document.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    ]
+    residual_text_spans = {
+        document.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in residual_formulas
+    }
+    assert any(
+        "international energy program" in span and "has the meaning given" in span
+        for span in residual_text_spans
+    )
+
+
 def test_parser_replays_heading_only_zero_formula_cases_for_25_422_48_1572_and_42_6323() -> None:
     parser = LegalModalParser()
     cases = [
@@ -1658,3 +1785,112 @@ def test_logic_critic_collects_modal_extraction_metrics() -> None:
     assert score.metrics["modal_family_accuracy"] == 1.0
     assert score.metrics["modal_system_accuracy"] == 1.0
     assert score.metrics["symbolic_validity"] == 1.0
+
+
+def test_parser_covers_uscode_use_recovery_paragraph_headings() -> None:
+    parser = LegalModalParser()
+    text = (
+        "§100724. Use of recovered amounts (a) Limitation on Use .—Response "
+        "costs and damages recovered by the Secretary under this subchapter "
+        "shall be available to the Secretary and without further Congressional "
+        "action may be used only as follows: (1) Reimbursement .—To reimburse "
+        "response costs and damage assessments by the Secretary. (2) Restoration "
+        "and replacement .—To restore, replace, or acquire the equivalent of "
+        "System unit resources."
+    )
+
+    parsed = parser.parse(text, citation="54 U.S.C. 100724.", source="us_code")
+    residual_spans = {
+        parsed.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ].strip()
+        for formula in parsed.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    }
+
+    assert "Use of recovered amounts (a) Limitation on Use ." in residual_spans
+    assert "(1) Reimbursement ." in residual_spans
+    assert any(
+        span.startswith("(2) Restoration and replacement .")
+        for span in residual_spans
+    )
+
+
+def test_parser_covers_uscode_effect_of_act_catchline_for_701e() -> None:
+    parser = LegalModalParser()
+    text = (
+        "33 U.S.C. 701e. Effect of act June 22, 1936, on provisions for "
+        "Mississippi River and other projects. Nothing in this Act shall be "
+        "construed as repealing or amending any provision of sections 702a "
+        "through 704 of this title."
+    )
+
+    parsed = parser.parse(
+        text,
+        document_id="us-code-33-701e-19ea9c3021f51521",
+        source="us_code",
+        citation="33 U.S.C. 701e",
+    )
+    residual_spans = {
+        parsed.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ].strip()
+        for formula in parsed.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    }
+
+    assert (
+        "Effect of act June 22, 1936, on provisions for Mississippi River "
+        "and other projects."
+    ) in residual_spans
+
+
+def test_parser_bounds_packet_catchlines_before_body_starters() -> None:
+    parser = LegalModalParser()
+    cases = [
+        (
+            "16 U.S.C. 666e",
+            "U.S.C. Title 16 - CONSERVATION 16 U.S.C. United States Code, "
+            "2024 Edition Title 16 - CONSERVATION Sec. 666e - "
+            "Administration of acquired lands From the U.S. Government "
+            "Publishing Office, www.gpo.gov §666e. Administration of "
+            "acquired lands Any lands acquired by the Secretary shall become "
+            "a part of such refuge.",
+            "Administration of acquired lands",
+        ),
+        (
+            "35 U.S.C. 101",
+            "U.S.C. Title 35 - PATENTS 35 U.S.C. United States Code, 2024 "
+            "Edition Title 35 - PATENTS Sec. 101 - Inventions patentable "
+            "From the U.S. Government Publishing Office, www.gpo.gov §101. "
+            "Inventions patentable Whoever invents or discovers any new and "
+            "useful process may obtain a patent.",
+            "Inventions patentable",
+        ),
+        (
+            "10 U.S.C. 7592",
+            "U.S.C. Title 10 - ARMED FORCES 10 U.S.C. United States Code, "
+            "2024 Edition Title 10 - ARMED FORCES Sec. 7592 - Radiograms "
+            "and telegrams: forwarding charges due connecting commercial "
+            "facilities From the U.S. Government Publishing Office, "
+            "www.gpo.gov §7592. Radiograms and telegrams: forwarding "
+            "charges due connecting commercial facilities In the operation "
+            "of telegraph lines, members of the Signal Corps may collect "
+            "forwarding charges.",
+            "Radiograms and telegrams: forwarding charges due connecting "
+            "commercial facilities",
+        ),
+    ]
+
+    for citation, text, expected_catchline in cases:
+        parsed = parser.parse(text, citation=citation, source="us_code")
+        catchline_spans = {
+            parsed.normalized_text[
+                formula.provenance.start_char : formula.provenance.end_char
+            ].strip()
+            for formula in parsed.formulas
+            if formula.metadata.get("fallback_rule")
+            == "uscode_section_catchline_coverage_v1"
+        }
+
+        assert expected_catchline in catchline_spans

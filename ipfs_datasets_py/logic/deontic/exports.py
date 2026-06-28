@@ -109,6 +109,7 @@ DEFAULT_DETERMINISTIC_CAPABILITY_PROFILE_SLOTS_BY_FAMILY = {
     "instrument_lifecycle_validity": ("actor", "modality", "action"),
     "instrument_lifecycle_expiration": ("actor", "modality", "action"),
     "instrument_lifecycle": ("actor", "modality", "action"),
+    "purpose": ("actor", "modality", "action"),
 }
 
 
@@ -1201,7 +1202,11 @@ def build_prover_syntax_target_coverage_record(
         if quality_gate_present
         else True
     )
+    role_complete = bool(role_summary["target_role_matrix_complete"])
     formal_syntax_valid = bool(summary["all_required_passed"] and quality_complete)
+    validated_bridge_report = bool(
+        formal_syntax_valid and role_complete and not blockers
+    )
     coverage_summary = dict(summary)
     coverage_summary.update(
         {
@@ -1216,6 +1221,17 @@ def build_prover_syntax_target_coverage_record(
             "target_role_matrix_blockers": role_summary[
                 "target_role_matrix_blockers"
             ],
+            "bridge_validation_status": (
+                "validated" if validated_bridge_report else "requires_validation"
+            ),
+            "bridge_validation_basis": _prover_bridge_validation_basis(
+                summary,
+                quality_summary,
+                role_summary,
+                blockers,
+                formal_syntax_valid=formal_syntax_valid,
+                validated_bridge_report=validated_bridge_report,
+            ),
             "semantic_family_summary": semantic_summary,
             "semantic_formula_families": semantic_summary[
                 "semantic_formula_families"
@@ -1230,6 +1246,14 @@ def build_prover_syntax_target_coverage_record(
     )
 
     normalized_source_id = str(source_id or "").strip()
+    bridge_validation_basis = _prover_bridge_validation_basis(
+        summary,
+        quality_summary,
+        role_summary,
+        blockers,
+        formal_syntax_valid=formal_syntax_valid,
+        validated_bridge_report=validated_bridge_report,
+    )
     return {
         "prover_syntax_summary_id": _stable_id(
             "prover-syntax-coverage",
@@ -1244,6 +1268,11 @@ def build_prover_syntax_target_coverage_record(
         "syntax_valid_rate": summary["syntax_valid_rate"],
         "formal_syntax_valid": formal_syntax_valid,
         "requires_validation": (not formal_syntax_valid) or bool(blockers),
+        "validated_by_quality_gate": validated_bridge_report,
+        "bridge_validation_status": (
+            "validated" if validated_bridge_report else "requires_validation"
+        ),
+        "bridge_validation_basis": bridge_validation_basis,
         "coverage_blockers": blockers,
         "quality_gate_summary": quality_summary,
         "target_role_matrix_summary": role_summary,
@@ -1261,6 +1290,40 @@ def build_prover_syntax_target_coverage_record(
             "target_semantic_family_consistent"
         ],
         "coverage_summary": coverage_summary,
+    }
+
+
+def _prover_bridge_validation_basis(
+    coverage_summary: Mapping[str, Any],
+    quality_summary: Mapping[str, Any],
+    role_summary: Mapping[str, Any],
+    blockers: Sequence[str],
+    *,
+    formal_syntax_valid: bool,
+    validated_bridge_report: bool,
+) -> Dict[str, Any]:
+    """Return the deterministic evidence used to promote coverage to validated."""
+
+    blocker_list = [str(blocker) for blocker in blockers if str(blocker).strip()]
+    return {
+        "validator": "deontic.local_prover_quality_gate",
+        "validation_scope": "source_bridge_report",
+        "status": (
+            "validated"
+            if validated_bridge_report
+            else "requires_validation"
+        ),
+        "all_required_passed": bool(
+            coverage_summary.get("all_required_passed") is True
+        ),
+        "quality_gate_all_targets_complete": bool(
+            quality_summary.get("quality_gate_all_targets_complete") is True
+        ),
+        "target_role_matrix_complete": bool(
+            role_summary.get("target_role_matrix_complete") is True
+        ),
+        "formal_syntax_valid": bool(formal_syntax_valid),
+        "coverage_blockers": blocker_list,
     }
 
 
@@ -1736,6 +1799,15 @@ def build_decoder_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
 
     decoded = decode_legal_norm_ir(norm)
     phrase_rows = _decoder_phrase_rows_with_reference_provenance(norm, decoded.phrases)
+    grounded_phrase_slots = {
+        slot
+        for phrase in phrase_rows
+        if phrase.get("spans")
+        for slot in _decoder_phrase_slot_names(phrase)
+    }
+    missing_slots = [
+        slot for slot in decoded.missing_slots if slot not in grounded_phrase_slots
+    ]
     fixed_phrase_count = sum(1 for phrase in phrase_rows if phrase.get("fixed") is True)
     ungrounded_phrase_count = sum(
         1
@@ -1766,12 +1838,12 @@ def build_decoder_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
         "ungrounded_decoded_phrase_count": ungrounded_phrase_count,
         "grounded_decoded_phrase_rate": grounded_phrase_rate,
         "ungrounded_decoded_phrase_rate": ungrounded_phrase_rate,
-        "missing_slot_count": len(decoded.missing_slots),
-        "missing_slots": list(decoded.missing_slots),
+        "missing_slot_count": len(missing_slots),
+        "missing_slots": missing_slots,
         "parser_warnings": list(decoded.parser_warnings),
         "phrase_provenance": phrase_rows,
         "proof_ready": norm.proof_ready,
-        "requires_validation": bool(norm.decoder_requires_validation or decoded.missing_slots),
+        "requires_validation": bool(norm.decoder_requires_validation or missing_slots),
         "schema_version": norm.schema_version,
     }
 
@@ -1786,13 +1858,15 @@ def _decoder_phrase_rows_with_reference_provenance(
     norm: LegalNormIR,
     phrases: Iterable[Any],
 ) -> List[Dict[str, Any]]:
-    """Return decoder phrase rows plus source-grounded cross-reference rows.
+    """Return decoder phrase rows plus source-grounded provenance-only rows.
 
     The natural-language decoder often renders a cross-reference inside an
     exception or override phrase. Phase 8 slot-loss reports still need the
     legally salient ``cross_references`` slot to be explicitly represented in
-    provenance. These extra rows are diagnostic-only and do not change the
-    decoded text.
+    provenance. Frame-style norms such as definitions, applicability rules,
+    exemptions, and instrument lifecycle clauses similarly encode modality in
+    fixed connectors rather than in an ordinary modal phrase. These extra rows
+    are diagnostic-only and do not change the decoded text.
     """
 
     rows = []
@@ -1811,19 +1885,30 @@ def _decoder_phrase_rows_with_reference_provenance(
         if isinstance(row, Mapping)
     }
 
-    for reference in _decoder_reference_records(norm):
-        text = _decoder_reference_text(reference)
-        spans = _decoder_reference_spans(reference)
+    semantic_modality = _decoder_semantic_modality_row(norm, rows)
+    if semantic_modality:
+        key = (
+            str(semantic_modality.get("slot") or ""),
+            str(semantic_modality.get("text") or ""),
+            tuple(tuple(span) for span in semantic_modality.get("spans") or []),
+        )
+        if key not in seen:
+            seen.add(key)
+            rows.append(semantic_modality)
+
+    for slot, record in _decoder_extra_provenance_records(norm):
+        text = _decoder_extra_provenance_text(record)
+        spans = _decoder_extra_provenance_spans(record)
         if not text or not spans:
             continue
-        key = ("cross_references", text, tuple(tuple(span) for span in spans))
+        key = (slot, text, tuple(tuple(span) for span in spans))
         if key in seen:
             continue
         seen.add(key)
         rows.append(
             {
                 "text": text,
-                "slot": "cross_references",
+                "slot": slot,
                 "spans": spans,
                 "fixed": False,
                 "provenance_only": True,
@@ -1831,6 +1916,71 @@ def _decoder_phrase_rows_with_reference_provenance(
         )
 
     return rows
+
+
+def _decoder_semantic_modality_row(
+    norm: LegalNormIR,
+    rows: Sequence[Mapping[str, Any]],
+) -> Dict[str, Any]:
+    """Return source-grounded modality provenance for frame-style decoders."""
+
+    if any("modality" in _decoder_phrase_slot_names(row) for row in rows):
+        return {}
+
+    modality = str(norm.modality or "").strip().upper()
+    if modality not in {"APP", "DEF", "EXEMPT", "LIFE", "PURP"}:
+        return {}
+
+    text = _decoder_semantic_modality_text(norm)
+    spans = _decoder_semantic_modality_spans(norm)
+    if not text or not spans:
+        return {}
+
+    return {
+        "text": text,
+        "slot": "modality",
+        "spans": spans,
+        "fixed": False,
+        "provenance_only": True,
+        "semantic_modality": modality,
+    }
+
+
+def _decoder_semantic_modality_text(norm: LegalNormIR) -> str:
+    modality = str(norm.modality or "").strip().upper()
+    action = str(norm.action or "").strip()
+    if modality == "APP":
+        return "applies to"
+    if modality == "DEF":
+        return "means"
+    if modality == "EXEMPT":
+        return "is exempt from"
+    if modality == "LIFE":
+        lowered = action.lower()
+        if lowered.startswith("valid for "):
+            return "is valid for"
+        if lowered.startswith("expires "):
+            return "expires"
+        return "lifecycle"
+    if modality == "PURP":
+        return "purpose"
+    return ""
+
+
+def _decoder_semantic_modality_spans(norm: LegalNormIR) -> List[List[int]]:
+    field_spans = norm.field_spans if isinstance(norm.field_spans, Mapping) else {}
+    for key in ("modality", "deontic_operator", "modal"):
+        spans = _decoder_coerce_spans(field_spans.get(key))
+        if spans:
+            return spans
+
+    support_span = norm.support_span.to_list()
+    if support_span != [0, 0]:
+        return [support_span]
+    source_span = norm.source_span.to_list()
+    if source_span != [0, 0]:
+        return [source_span]
+    return []
 
 
 def _decoder_reference_records(norm: LegalNormIR) -> List[Mapping[str, Any]]:
@@ -1847,6 +1997,42 @@ def _decoder_reference_records(norm: LegalNormIR) -> List[Mapping[str, Any]]:
         seen.add(key)
         records.append(reference)
     return records
+
+
+def _decoder_extra_provenance_records(
+    norm: LegalNormIR,
+) -> List[tuple[str, Mapping[str, Any]]]:
+    """Return optional IR slots that may be provenance-only in decoded text."""
+
+    rows: List[tuple[str, Mapping[str, Any]]] = []
+    for reference in _decoder_reference_records(norm):
+        rows.append(("cross_references", reference))
+    for temporal in norm.temporal_constraints or []:
+        if isinstance(temporal, Mapping):
+            rows.append(("temporal_constraints", temporal))
+    return rows
+
+
+def _decoder_extra_provenance_text(record: Mapping[str, Any]) -> str:
+    for key in (
+        "normalized_text",
+        "raw_text",
+        "value",
+        "text",
+        "canonical_citation",
+        "target",
+    ):
+        value = str(record.get(key) or "").strip()
+        if value:
+            return value
+    return ""
+
+
+def _decoder_extra_provenance_spans(record: Mapping[str, Any]) -> List[List[int]]:
+    spans: List[List[int]] = []
+    for key in ("span", "source_span", "support_span", "clause_span"):
+        spans.extend(_decoder_coerce_spans(record.get(key)))
+    return _dedupe_decoder_spans(spans)
 
 
 def _decoder_reference_text(reference: Mapping[str, Any]) -> str:
@@ -2121,6 +2307,8 @@ def _decoder_phrase_slot_names(phrase: Mapping[str, Any]) -> set[str]:
         "sources",
     ):
         add_value(phrase.get(key))
+    if "definition_body" in names:
+        names.add("action")
     return names
 
 
@@ -4113,7 +4301,7 @@ def _hydrate_prompt_context_modal_slots(elements: Sequence[Dict[str, Any]]) -> N
     the same deterministic readiness path as ordinary parser elements.
     """
 
-    allowed = {"O", "P", "F", "DEF", "APP", "EXEMPT", "LIFE"}
+    allowed = {"O", "P", "F", "DEF", "APP", "EXEMPT", "LIFE", "PURP"}
     for element in elements:
         llm_repair = dict(element.get("llm_repair") or {})
         prompt_context = llm_repair.get("prompt_context") or {}
@@ -4493,14 +4681,15 @@ def summarize_reconstruction_slot_loss(
             for phrase in provenance:
                 if not isinstance(phrase, Mapping):
                     continue
-                slot_name = str(phrase.get("slot") or phrase.get("slot_name") or "").strip()
-                if not slot_name:
+                slot_names = _decoder_phrase_slot_names(phrase)
+                if not slot_names:
                     continue
                 spans = phrase.get("spans") or phrase.get("source_spans") or phrase.get("field_spans")
-                if spans:
-                    grounded_slots.add(slot_name)
-                elif phrase.get("fixed_connective") is not True:
-                    ungrounded_slots.add(slot_name)
+                for slot_name in slot_names:
+                    if spans:
+                        grounded_slots.add(slot_name)
+                    elif phrase.get("fixed_connective") is not True:
+                        ungrounded_slots.add(slot_name)
 
     grounded_required = sorted(slot for slot in required if slot in grounded_slots)
     missing_required = sorted(slot for slot in required if slot not in grounded_slots or slot in missing_slots)
@@ -4693,6 +4882,8 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
 
     if norm.norm_type == "definition":
         return "definition"
+    if norm.norm_type == "purpose":
+        return "purpose"
     if norm.norm_type == "applicability":
         return "applicability_rule"
     if norm.norm_type == "exemption":
