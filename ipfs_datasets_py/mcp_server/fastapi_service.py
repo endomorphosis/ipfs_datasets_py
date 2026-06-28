@@ -2039,7 +2039,7 @@ async def mcp_discover():
 
 
 @app.get("/mcp/events/stream")
-async def mcp_event_stream():
+async def mcp_event_stream(request: Request):
     """SSE endpoint: streams EventDAG changes and server events in real-time.
 
     Frontend connects here for live updates (tool executions, peer events, etc).
@@ -2059,25 +2059,31 @@ async def mcp_event_stream():
         last_count = len(dag._events) if dag else 0
         yield f"event: connected\ndata: {{\"server\": \"ipfs-datasets-mcp\", \"events\": {last_count}}}\n\n"
 
-        while True:
-            await asyncio.sleep(1.0)
-            if dag is None:
-                yield ": keepalive\n\n"
-                continue
-            current_count = len(dag._events)
-            if current_count > last_count:
-                new_events = list(dag._events.values())[last_count:current_count]
-                for event in new_events:
-                    event_data = _json.dumps({
-                        "cid": event.cid,
-                        "type": event.event_type,
-                        "timestamp": event.timestamp,
-                        "parents": event.parent_cids,
-                    })
-                    yield f"event: dag_event\ndata: {event_data}\n\n"
-                last_count = current_count
-            else:
-                yield ": keepalive\n\n"
+        try:
+            while True:
+                await asyncio.sleep(1.0)
+                # Check if client disconnected
+                if await request.is_disconnected():
+                    break
+                if dag is None:
+                    yield ": keepalive\n\n"
+                    continue
+                current_count = len(dag._events)
+                if current_count > last_count:
+                    new_events = list(dag._events.values())[last_count:current_count]
+                    for event in new_events:
+                        event_data = _json.dumps({
+                            "cid": event.cid,
+                            "type": event.event_type,
+                            "timestamp": event.timestamp,
+                            "parents": event.parent_cids,
+                        })
+                        yield f"event: dag_event\ndata: {event_data}\n\n"
+                    last_count = current_count
+                else:
+                    yield ": keepalive\n\n"
+        except (asyncio.CancelledError, GeneratorExit):
+            pass
 
     return StreamingResponse(
         _generate_events(),
