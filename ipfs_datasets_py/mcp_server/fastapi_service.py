@@ -16,6 +16,7 @@ from fastapi.openapi.utils import get_openapi
 import anyio
 import logging
 import os
+import threading
 import time
 import uuid
 from typing import Dict, List, Any, Optional, Union
@@ -149,10 +150,20 @@ try:
     ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
 except ValueError as _cfg_err:
     import os as _os
-    logger.warning(f"FastAPISettings could not be fully initialised: {_cfg_err}. "
-                   "Using fallback values — set SECRET_KEY env var for production.")
+    _env = _os.environ.get("ENVIRONMENT", "development")
+    SECRET_KEY = _os.environ.get("SECRET_KEY", "")
+    if not SECRET_KEY:
+        if _env == "production":
+            raise RuntimeError(
+                "FATAL: SECRET_KEY environment variable is required in production. "
+                "Set: export SECRET_KEY='<strong-random-value>'"
+            ) from _cfg_err
+        SECRET_KEY = "dev-fallback-key-NOT-for-production"
+        logger.warning(
+            "FastAPISettings could not be initialised: %s. "
+            "Using INSECURE fallback SECRET_KEY — set SECRET_KEY env var for production.", _cfg_err
+        )
     settings = None
-    SECRET_KEY = _os.environ.get("SECRET_KEY", "dev-fallback-key-NOT-for-production")
     ALGORITHM = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -187,12 +198,15 @@ rate_limit_storage: Dict[str, Dict[str, Any]] = {}
 _rate_limit_last_cleanup: float = time.time()
 _RATE_LIMIT_MAX_ENTRIES = 50000
 _rate_limit_lock = None
+_rate_limit_lock_init = threading.Lock()
 
 def _get_rate_limit_lock():
-    """Lazy init of rate limit lock (anyio.Lock works under both Trio and asyncio)."""
+    """Lazy init of rate limit lock (double-checked locking for thread safety)."""
     global _rate_limit_lock
     if _rate_limit_lock is None:
-        _rate_limit_lock = anyio.Lock()
+        with _rate_limit_lock_init:
+            if _rate_limit_lock is None:
+                _rate_limit_lock = anyio.Lock()
     return _rate_limit_lock
 
 # Pydantic models for API

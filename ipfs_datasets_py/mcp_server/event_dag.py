@@ -163,10 +163,10 @@ class EventDAG:
         compactor = self._get_compactor()
         if compactor is None:
             return
-        if not compactor.should_compact(len(self._nodes)):
-            return
 
         with self._lock:
+            if not compactor.should_compact(len(self._nodes)):
+                return
             # Serialize nodes for compactor
             events_dict = {}
             for cid, node in self._nodes.items():
@@ -199,9 +199,10 @@ class EventDAG:
                     }
                     if not self._children[parent_cid]:
                         del self._children[parent_cid]
+                remaining = len(self._nodes)
             logger.info(
-                "Compacted epoch: removed %d events from hot tier",
-                len(result.compacted_cids),
+                "Compacted epoch: removed %d events, hot tier now %d",
+                len(result.compacted_cids), remaining,
             )
 
     # ------------------------------------------------------------------
