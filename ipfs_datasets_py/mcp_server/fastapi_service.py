@@ -14,7 +14,6 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
 
 import anyio
-import asyncio
 import logging
 import os
 import time
@@ -181,13 +180,13 @@ RATE_LIMITS = {
 rate_limit_storage: Dict[str, Dict[str, Any]] = {}
 _rate_limit_last_cleanup: float = time.time()
 _RATE_LIMIT_MAX_ENTRIES = 50000
-_rate_limit_lock: Optional[asyncio.Lock] = None
+_rate_limit_lock = None
 
-def _get_rate_limit_lock() -> asyncio.Lock:
-    """Lazy init of rate limit lock (must be created inside running event loop)."""
+def _get_rate_limit_lock():
+    """Lazy init of rate limit lock (anyio.Lock works under both Trio and asyncio)."""
     global _rate_limit_lock
     if _rate_limit_lock is None:
-        _rate_limit_lock = asyncio.Lock()
+        _rate_limit_lock = anyio.Lock()
     return _rate_limit_lock
 
 # Pydantic models for API
@@ -2056,7 +2055,6 @@ async def mcp_event_stream(request: Request):
     Frontend connects here for live updates (tool executions, peer events, etc).
     Uses Server-Sent Events (SSE) for broad compatibility with Electron/browsers.
     """
-    import asyncio
     import json as _json
     from starlette.responses import StreamingResponse
 
@@ -2072,7 +2070,7 @@ async def mcp_event_stream(request: Request):
 
         try:
             while True:
-                await asyncio.sleep(1.0)
+                await anyio.sleep(1.0)
                 # Check if client disconnected
                 if await request.is_disconnected():
                     break
@@ -2093,7 +2091,7 @@ async def mcp_event_stream(request: Request):
                     last_count = current_count
                 else:
                     yield ": keepalive\n\n"
-        except (asyncio.CancelledError, GeneratorExit):
+        except (GeneratorExit, BaseException):
             pass
 
     return StreamingResponse(
