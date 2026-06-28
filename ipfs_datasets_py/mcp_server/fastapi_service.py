@@ -14,7 +14,9 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
 
 import anyio
+import asyncio
 import logging
+import os
 import time
 import uuid
 from typing import Dict, List, Any, Optional, Union
@@ -1648,15 +1650,16 @@ async def mcp_execute_with_envelope(request: Request):
         )
         intent_cid = str(artifact_cid({"tool": tool_name, "input": arguments}))
 
-        # Evaluate policy if available
-        decision = "allow"
+        # Evaluate policy if available (fail-closed: deny on error)
+        decision = "allow" if not policy_cid else "deny"
         if policy_cid:
             try:
                 from .temporal_policy import evaluate_policy
                 result = evaluate_policy(intent_cid, proof_cid)
-                decision = result.get("decision", "allow")
-            except (ImportError, Exception):
-                pass  # Default allow if policy module unavailable
+                decision = result.get("decision", "deny")
+            except (ImportError, Exception) as e:
+                logger.warning(f"Policy evaluation failed (fail-closed): {e}")
+                decision = "deny"
 
         if decision == "deny":
             return {
@@ -1665,20 +1668,29 @@ async def mcp_execute_with_envelope(request: Request):
                 "justification": "Denied by temporal deontic policy",
             }
 
-        # Execute the tool
+        # Execute the tool with timeout
         import time as _time
         start = _time.time()
         output = None
         error_msg = None
+        exec_timeout = float(os.environ.get("MCPPP_EXEC_TIMEOUT_S", "30"))
         try:
             mcp_server = app.state.mcp_server if hasattr(app.state, 'mcp_server') else None
             if mcp_server and hasattr(mcp_server, 'tools') and tool_name in mcp_server.tools:
                 tool_fn = mcp_server.tools[tool_name]
-                output = await tool_fn(**arguments) if callable(tool_fn) else None
+                if callable(tool_fn):
+                    import asyncio
+                    output = await asyncio.wait_for(
+                        tool_fn(**arguments), timeout=exec_timeout
+                    )
+                else:
+                    output = None
             else:
                 error_msg = f"Tool not found: {tool_name}"
+        except asyncio.TimeoutError:
+            error_msg = f"Execution timeout after {exec_timeout}s"
         except Exception as e:
-            error_msg = str(e)
+            error_msg = f"{type(e).__name__}: {e}"
         duration_ms = int((_time.time() - start) * 1000)
 
         # Build envelope
