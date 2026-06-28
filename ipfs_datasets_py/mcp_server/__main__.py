@@ -44,7 +44,8 @@ def main():
     parser.add_argument('--config', help='Path to configuration file')
     parser.add_argument('--debug', action='store_true', help='Enable debug logging')
     parser.add_argument('--stdio', action='store_true', help='Run in stdio mode (default for VS Code)')
-    parser.add_argument('--http', action='store_true', help='Run in HTTP mode (legacy)')
+    parser.add_argument('--http', action='store_true', help='Run in HTTP mode with Hypercorn+Trio')
+    parser.add_argument('--port', type=int, default=3002, help='Port for HTTP mode (default: 3002)')
 
     args = parser.parse_args()
 
@@ -72,28 +73,23 @@ def main():
                 print(f"Error with stdio server: {e}")
                 raise
         else:
-            # HTTP mode is legacy; warn and prefer stdio
-            import warnings
-            warnings.warn(
-                "--http mode is deprecated.  The preferred access methods are: "
-                "(1) MCP stdio: `python -m ipfs_datasets_py.mcp_server`, "
-                "(2) CLI: `ipfs-datasets <command>`, "
-                "(3) Python imports: `from ipfs_datasets_py import ...`. "
-                "Flask-based HTTP servers have been removed from this project.",
-                DeprecationWarning,
-                stacklevel=1,
-            )
+            # HTTP mode via Hypercorn+Trio
+            import trio
             try:
-                start_server(
-                    host=args.host,
-                    port=args.port
-                )
-            except (ImportError, TypeError) as e:
-                print(
-                    f"HTTP server failed to start: {e}\n"
-                    "Use `python -m ipfs_datasets_py.mcp_server` instead."
-                )
-                raise
+                from hypercorn.config import Config as HypercornConfig
+                from hypercorn.trio import serve as hypercorn_serve
+                from ipfs_datasets_py.mcp_server.fastapi_service import app as fastapi_app
+
+                hconfig = HypercornConfig()
+                hconfig.bind = [f"{args.host}:{args.port}"]
+                hconfig.worker_class = "trio"
+                hconfig.loglevel = "DEBUG" if args.debug else "INFO"
+                hconfig.accesslog = "-"
+                print(f"🚀 Starting IPFS Datasets MCP++ on {args.host}:{args.port} (Hypercorn+Trio)")
+                trio.run(hypercorn_serve, fastapi_app, hconfig)
+            except ImportError as e:
+                print(f"Hypercorn not available ({e}). Install with: pip install hypercorn[trio]")
+                sys.exit(1)
 
     except KeyboardInterrupt:
         print("\nServer stopped by user")

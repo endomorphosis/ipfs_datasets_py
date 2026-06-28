@@ -42,6 +42,12 @@ except ImportError:  # pragma: no cover - optional dependency
     CryptContext = None
 from pydantic import BaseModel, Field
 try:
+    from hypercorn.config import Config as HypercornConfig
+    from hypercorn.trio import serve as hypercorn_serve
+    HAVE_HYPERCORN = True
+except ImportError:  # pragma: no cover - optional dependency
+    HAVE_HYPERCORN = False
+try:
     import uvicorn
     HAVE_UVICORN = True
 except ImportError:  # pragma: no cover - optional dependency
@@ -1079,18 +1085,29 @@ app.openapi = custom_openapi
 
 # Development server with configuration
 def run_development_server():
-    """Run development server with configuration."""
-    try:
-        # Configure logging
-        logging.basicConfig(
-            level=logging.INFO if not settings.debug else logging.DEBUG,
-            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
-        
-        logger.info(f"🚀 Starting {settings.app_name} v{settings.app_version}")
-        logger.info(f"Environment: {settings.environment}")
-        logger.info(f"Debug mode: {settings.debug}")
-        
+    """Run development server with Hypercorn+Trio (preferred) or uvicorn fallback."""
+    import trio
+
+    # Configure logging
+    logging.basicConfig(
+        level=logging.INFO if not settings.debug else logging.DEBUG,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+
+    logger.info(f"🚀 Starting {settings.app_name} v{settings.app_version}")
+    logger.info(f"Environment: {settings.environment}")
+    logger.info(f"Debug mode: {settings.debug}")
+
+    if HAVE_HYPERCORN:
+        config = HypercornConfig()
+        config.bind = [f"{settings.host}:{settings.port}"]
+        config.worker_class = "trio"
+        config.loglevel = "DEBUG" if settings.debug else "INFO"
+        config.accesslog = "-"
+        logger.info("Using Hypercorn+Trio runtime")
+        trio.run(hypercorn_serve, app, config)
+    elif HAVE_UVICORN:
+        logger.warning("Hypercorn not available — falling back to uvicorn (non-Trio)")
         uvicorn.run(
             "ipfs_datasets_py.fastapi_service:app",
             host=settings.host,
@@ -1099,45 +1116,42 @@ def run_development_server():
             log_level="debug" if settings.debug else "info",
             access_log=True
         )
-    except ConfigurationError as e:
-        logger.error(f"Server configuration error: {e}")
-        raise
-    except ServerStartupError as e:
-        logger.error(f"Failed to start server: {e}")
-        raise
-    except Exception as e:
-        logger.error(f"Unexpected error starting server: {e}", exc_info=True)
-        raise
+    else:
+        raise RuntimeError("No ASGI server available. Install hypercorn[trio] or uvicorn.")
 
 def run_production_server():
-    """Run production server with optimized settings."""
-    try:
-        # Configure production logging
-        logging.basicConfig(
-            level=logging.INFO,
-            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
-        
-        logger.info(f"🚀 Starting {settings.app_name} v{settings.app_version} (Production)")
-        
+    """Run production server with Hypercorn+Trio."""
+    import trio
+
+    # Configure production logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+
+    logger.info(f"🚀 Starting {settings.app_name} v{settings.app_version} (Production)")
+
+    if HAVE_HYPERCORN:
+        config = HypercornConfig()
+        config.bind = [f"{settings.host}:{settings.port}"]
+        config.worker_class = "trio"
+        config.loglevel = "INFO"
+        config.accesslog = "-"
+        config.workers = int(os.environ.get("MCP_WORKERS", "4"))
+        logger.info("Using Hypercorn+Trio runtime (%d workers)", config.workers)
+        trio.run(hypercorn_serve, app, config)
+    elif HAVE_UVICORN:
+        logger.warning("Hypercorn not available — falling back to uvicorn")
         uvicorn.run(
             "ipfs_datasets_py.fastapi_service:app",
             host=settings.host,
             port=settings.port,
-            workers=4,  # Multiple workers for production
+            workers=4,
             log_level="info",
             access_log=True,
-            loop="uvloop"  # Use uvloop for better performance
         )
-    except ConfigurationError as e:
-        logger.error(f"Production server configuration error: {e}")
-        raise
-    except ServerStartupError as e:
-        logger.error(f"Failed to start production server: {e}")
-        raise
-    except Exception as e:
-        logger.error(f"Unexpected error starting production server: {e}", exc_info=True)
-        raise
+    else:
+        raise RuntimeError("No ASGI server available. Install hypercorn[trio] or uvicorn.")
 
 # Dataset Management Endpoints
 @app.post("/datasets/load")
