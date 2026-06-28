@@ -14,7 +14,6 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
 
 import anyio
-import asyncio
 import logging
 import os
 import time
@@ -1668,7 +1667,7 @@ async def mcp_execute_with_envelope(request: Request):
                 "justification": "Denied by temporal deontic policy",
             }
 
-        # Execute the tool with timeout
+        # Execute the tool with timeout (anyio-compatible for Trio/asyncio)
         import time as _time
         start = _time.time()
         output = None
@@ -1679,15 +1678,16 @@ async def mcp_execute_with_envelope(request: Request):
             if mcp_server and hasattr(mcp_server, 'tools') and tool_name in mcp_server.tools:
                 tool_fn = mcp_server.tools[tool_name]
                 if callable(tool_fn):
-                    import asyncio
-                    output = await asyncio.wait_for(
-                        tool_fn(**arguments), timeout=exec_timeout
-                    )
+                    try:
+                        async with anyio.fail_after(exec_timeout):
+                            output = await tool_fn(**arguments)
+                    except TimeoutError:
+                        error_msg = f"Execution timeout after {exec_timeout}s"
                 else:
                     output = None
             else:
                 error_msg = f"Tool not found: {tool_name}"
-        except asyncio.TimeoutError:
+        except TimeoutError:
             error_msg = f"Execution timeout after {exec_timeout}s"
         except Exception as e:
             error_msg = f"{type(e).__name__}: {e}"

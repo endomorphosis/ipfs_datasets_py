@@ -111,6 +111,7 @@ class EventDAG:
 
         Raises:
             ValueError: In strict mode, when a parent CID is unknown.
+            RuntimeError: If DAG has reached hard cap and compaction is unavailable.
         """
         cid = node.event_cid
 
@@ -118,6 +119,16 @@ class EventDAG:
             # Idempotent — already known
             if cid in self._nodes:
                 return cid
+
+            # Hard cap: evict oldest if compaction is unavailable
+            MAX_EVENTS = 10000
+            if len(self._nodes) >= MAX_EVENTS:
+                oldest = sorted(self._nodes.values(), key=lambda n: getattr(n, 'timestamp', 0))[:100]
+                for old in oldest:
+                    old_cid = old.event_cid
+                    del self._nodes[old_cid]
+                    self._children.pop(old_cid, None)
+                logger.warning("DAG hard cap reached (%d); evicted 100 oldest events", MAX_EVENTS)
 
             # Parent validation
             if self.strict:
