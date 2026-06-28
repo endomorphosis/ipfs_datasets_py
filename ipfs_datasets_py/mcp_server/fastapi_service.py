@@ -1979,6 +1979,103 @@ async def p2p_call_remote_tool(request: Request):
 
 # --- MCP++ Capability Negotiation (JSON-RPC) ---
 
+@app.get("/mcp/discover")
+async def mcp_discover():
+    """Discovery endpoint: returns server capabilities, version, available tools.
+
+    Frontend (Electron/SwissKnife) connects here first to discover what's available.
+    """
+    import os as _os
+
+    tools = []
+    try:
+        from .dispatch_pipeline import _TOOL_REGISTRY
+        tools = list(_TOOL_REGISTRY.keys()) if _TOOL_REGISTRY else []
+    except Exception:
+        pass
+
+    profiles = {
+        "A": "MCP-IDL (Interface Descriptors)",
+        "B": "CID-Native Execution (Intent/Decision/Receipt)",
+        "C": "UCAN Authorization (Delegation Chains)",
+        "D": "Temporal Deontic Policy (Permission/Prohibition/Obligation)",
+        "E": "mcp+p2p (libp2p Transport)",
+    }
+
+    return {
+        "server": "ipfs-datasets-mcp",
+        "version": "0.1.0",
+        "protocol": "mcp++",
+        "profiles": profiles,
+        "tools": tools,
+        "endpoints": {
+            "jsonrpc": "/mcp",
+            "execute": "/mcp/execute",
+            "interfaces": "/mcp/interfaces",
+            "ucan_delegate": "/mcp/ucan/delegate",
+            "policy_evaluate": "/mcp/policy/evaluate",
+            "p2p_call": "/mcp/p2p/call",
+            "events": "/mcp/events/stream",
+            "health": "/health",
+        },
+        "auth": {
+            "ucan_required": not bool(_os.environ.get("MCPPP_ALLOW_UNSIGNED_DELEGATIONS")),
+        },
+    }
+
+
+@app.get("/mcp/events/stream")
+async def mcp_event_stream():
+    """SSE endpoint: streams EventDAG changes and server events in real-time.
+
+    Frontend connects here for live updates (tool executions, peer events, etc).
+    Uses Server-Sent Events (SSE) for broad compatibility with Electron/browsers.
+    """
+    import asyncio
+    import json as _json
+    from starlette.responses import StreamingResponse
+
+    try:
+        from .event_dag import get_event_dag
+        dag = get_event_dag()
+    except Exception:
+        dag = None
+
+    async def _generate_events():
+        last_count = len(dag._events) if dag else 0
+        yield f"event: connected\ndata: {{\"server\": \"ipfs-datasets-mcp\", \"events\": {last_count}}}\n\n"
+
+        while True:
+            await asyncio.sleep(1.0)
+            if dag is None:
+                yield ": keepalive\n\n"
+                continue
+            current_count = len(dag._events)
+            if current_count > last_count:
+                new_events = list(dag._events.values())[last_count:current_count]
+                for event in new_events:
+                    event_data = _json.dumps({
+                        "cid": event.cid,
+                        "type": event.event_type,
+                        "timestamp": event.timestamp,
+                        "parents": event.parent_cids,
+                    })
+                    yield f"event: dag_event\ndata: {event_data}\n\n"
+                last_count = current_count
+            else:
+                yield ": keepalive\n\n"
+
+    return StreamingResponse(
+        _generate_events(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
 @app.post("/mcp")
 async def mcp_jsonrpc_handler(request: Request):
     """Handle MCP JSON-RPC requests including MCP++ profile negotiation."""

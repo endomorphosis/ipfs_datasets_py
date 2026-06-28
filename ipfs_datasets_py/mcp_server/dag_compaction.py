@@ -342,6 +342,17 @@ class DAGCompactor:
                     "Loaded compaction index: %d epochs, %d total compacted events",
                     len(self._compaction_proofs), self._total_compacted_events,
                 )
+                # Validate that referenced epoch files actually exist
+                missing = []
+                for proof in self._compaction_proofs:
+                    epoch_path = os.path.join(self.storage_dir, f"epoch_{proof.epoch_id:06d}.json")
+                    if not os.path.isfile(epoch_path):
+                        missing.append(proof.epoch_id)
+                if missing:
+                    logger.warning(
+                        "Compaction index references %d missing epoch files: %s",
+                        len(missing), missing[:10],
+                    )
             except (json.JSONDecodeError, KeyError, OSError, IOError) as e:
                 logger.warning("Failed to load compaction index: %s", e)
 
@@ -505,9 +516,29 @@ class DAGCompactor:
             logger.warning("Cold epoch %d not found at %s", epoch_id, cold_path)
             return []
 
-        with open(cold_path, "r") as f:
-            data = json.load(f)
-        return data.get("events", [])
+        try:
+            with open(cold_path, "r") as f:
+                data = json.load(f)
+            events = data.get("events", [])
+            if not isinstance(events, list):
+                logger.error("Cold epoch %d has invalid events type: %s", epoch_id, type(events).__name__)
+                return []
+            return events
+        except (json.JSONDecodeError, UnicodeDecodeError) as e:
+            logger.error("Cold epoch %d corrupted at %s: %s", epoch_id, cold_path, e)
+            bak_path = cold_path + ".bak"
+            if os.path.isfile(bak_path):
+                try:
+                    with open(bak_path, "r") as f:
+                        data = json.load(f)
+                    logger.info("Recovered cold epoch %d from backup", epoch_id)
+                    return data.get("events", [])
+                except Exception:
+                    pass
+            return []
+        except OSError as e:
+            logger.error("Cold epoch %d I/O error: %s", epoch_id, e)
+            return []
 
     def verify_cold_epoch(self, epoch_id: int) -> bool:
         """Verify a cold epoch's Merkle root matches its stored proof."""
@@ -535,18 +566,33 @@ class DAGCompactor:
         """Find which cold epoch (if any) contains a given CID.
 
         Checks frontier_cids and root_cids first (O(1) per proof),
-        then falls back to scanning cold files if not found.
+        then falls back to scanning cold files with a CID index cache.
         """
         for proof in self._compaction_proofs:
             if cid in proof.frontier_cids or cid in proof.root_cids:
                 return proof.epoch_id
 
-        # Scan cold epochs (more expensive)
+        # Check CID→epoch index cache
+        if not hasattr(self, '_cid_epoch_index'):
+            self._cid_epoch_index: dict = {}
+
+        if cid in self._cid_epoch_index:
+            return self._cid_epoch_index[cid]
+
+        # Scan cold epochs (expensive, but build index as we go)
         for proof in self._compaction_proofs:
+            if proof.epoch_id in getattr(self, '_indexed_epochs', set()):
+                continue
             events = self.load_cold_epoch(proof.epoch_id)
+            if not hasattr(self, '_indexed_epochs'):
+                self._indexed_epochs: set = set()
+            self._indexed_epochs.add(proof.epoch_id)
             for event in events:
-                if event.get("cid") == cid:
-                    return proof.epoch_id
+                ecid = event.get("cid")
+                if ecid:
+                    self._cid_epoch_index[ecid] = proof.epoch_id
+                    if ecid == cid:
+                        return proof.epoch_id
         return None
 
     @property
