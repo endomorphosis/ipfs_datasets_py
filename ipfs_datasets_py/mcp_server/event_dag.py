@@ -120,15 +120,24 @@ class EventDAG:
             if cid in self._nodes:
                 return cid
 
-            # Hard cap: evict oldest if compaction is unavailable
+            # Hard cap: trigger compaction first, then evict oldest if still needed
             MAX_EVENTS = 10000
+            if len(self._nodes) >= int(MAX_EVENTS * 0.9):
+                # Release lock for compaction (I/O-bound)
+                pass  # _maybe_compact() called after lock release below
             if len(self._nodes) >= MAX_EVENTS:
                 oldest = sorted(self._nodes.values(), key=lambda n: getattr(n, 'timestamp', 0))[:100]
+                evicted_cids = []
                 for old in oldest:
                     old_cid = old.event_cid
                     del self._nodes[old_cid]
                     self._children.pop(old_cid, None)
-                logger.warning("DAG hard cap reached (%d); evicted 100 oldest events", MAX_EVENTS)
+                    evicted_cids.append(old_cid)
+                logger.error(
+                    "DAG hard cap reached (%d); evicted %d oldest events. "
+                    "Consider increasing compaction frequency or cold storage capacity.",
+                    MAX_EVENTS, len(evicted_cids)
+                )
 
             # Parent validation
             if self.strict:

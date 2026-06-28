@@ -14,6 +14,7 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
 
 import anyio
+import asyncio
 import logging
 import os
 import time
@@ -180,6 +181,14 @@ RATE_LIMITS = {
 rate_limit_storage: Dict[str, Dict[str, Any]] = {}
 _rate_limit_last_cleanup: float = time.time()
 _RATE_LIMIT_MAX_ENTRIES = 50000
+_rate_limit_lock: Optional[asyncio.Lock] = None
+
+def _get_rate_limit_lock() -> asyncio.Lock:
+    """Lazy init of rate limit lock (must be created inside running event loop)."""
+    global _rate_limit_lock
+    if _rate_limit_lock is None:
+        _rate_limit_lock = asyncio.Lock()
+    return _rate_limit_lock
 
 # Pydantic models for API
 class TokenResponse(BaseModel):
@@ -307,7 +316,7 @@ app.add_middleware(
 
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=["*"]  # Configure appropriately for production
+    allowed_hosts=os.environ.get("MCP_ALLOWED_HOSTS", "localhost,127.0.0.1,0.0.0.0").split(",")
 )
 
 # Authentication functions
@@ -393,14 +402,16 @@ async def check_rate_limit(request: Request, endpoint: str) -> None:
     
     # Periodic cleanup to prevent unbounded memory growth
     global _rate_limit_last_cleanup
+    lock = _get_rate_limit_lock()
     if len(rate_limit_storage) > _RATE_LIMIT_MAX_ENTRIES or (current_time - _rate_limit_last_cleanup > 300):
-        stale = [k for k, v in rate_limit_storage.items()
-                 if current_time - v.get("window_start", 0) > 7200]
-        for k in stale:
-            del rate_limit_storage[k]
-        if len(rate_limit_storage) > _RATE_LIMIT_MAX_ENTRIES:
-            rate_limit_storage.clear()
-        _rate_limit_last_cleanup = current_time
+        async with lock:
+            stale = [k for k, v in rate_limit_storage.items()
+                     if current_time - v.get("window_start", 0) > 7200]
+            for k in stale:
+                del rate_limit_storage[k]
+            if len(rate_limit_storage) > _RATE_LIMIT_MAX_ENTRIES:
+                rate_limit_storage.clear()
+            _rate_limit_last_cleanup = current_time
     
     if key not in rate_limit_storage:
         rate_limit_storage[key] = {"requests": 0, "window_start": current_time}
