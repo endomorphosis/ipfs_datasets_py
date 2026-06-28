@@ -1655,11 +1655,15 @@ async def mcp_execute_with_envelope(request: Request):
         decision = "allow" if not policy_cid else "deny"
         if policy_cid:
             try:
-                from .temporal_policy import evaluate_policy
-                result = evaluate_policy(intent_cid, proof_cid)
-                decision = result.get("decision", "deny")
-            except (ImportError, Exception) as e:
-                logger.warning(f"Policy evaluation failed (fail-closed): {e}")
+                from .temporal_policy import get_policy_evaluator
+                evaluator = get_policy_evaluator()
+                decision_obj = evaluator.evaluate(intent, policy_cid)
+                decision = decision_obj.decision if hasattr(decision_obj, 'decision') else decision_obj.get("decision", "deny")
+            except ImportError as e:
+                logger.warning(f"Policy module unavailable (fail-closed): {e}")
+                decision = "deny"
+            except Exception as e:
+                logger.error(f"Policy evaluation error (fail-closed): {e}", exc_info=True)
                 decision = "deny"
 
         if decision == "deny":

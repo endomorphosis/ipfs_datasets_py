@@ -231,7 +231,8 @@ class EventDAG:
         Returns:
             List of ``event_cid`` strings with no known children.
         """
-        return [cid for cid in self._nodes if cid not in self._children]
+        with self._lock:
+            return [cid for cid in self._nodes if cid not in self._children]
 
     # ------------------------------------------------------------------
     # Causal walk (topological traversal towards roots)
