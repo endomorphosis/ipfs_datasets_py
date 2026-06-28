@@ -364,6 +364,23 @@ app.add_middleware(
     allowed_hosts=os.environ.get("MCP_ALLOWED_HOSTS", "localhost,127.0.0.1,0.0.0.0").split(",")
 )
 
+# Request body size limit middleware
+_MAX_BODY_BYTES = int(os.environ.get("MCPPP_MAX_BODY_BYTES", str(10 * 1024 * 1024)))
+
+from starlette.middleware.base import BaseHTTPMiddleware
+
+class _BodySizeLimitMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        content_length = request.headers.get("content-length")
+        if content_length and int(content_length) > _MAX_BODY_BYTES:
+            return JSONResponse(
+                status_code=413,
+                content={"error": "Request body too large", "max_bytes": _MAX_BODY_BYTES},
+            )
+        return await call_next(request)
+
+app.add_middleware(_BodySizeLimitMiddleware)
+
 # Authentication functions
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash."""
@@ -2141,6 +2158,11 @@ async def mcp_discover():
     }
 
 
+# SSE connection limiter
+_sse_connections = 0
+_sse_lock = __import__("threading").Lock()
+_MAX_SSE_CONNECTIONS = int(os.environ.get("MCPPP_MAX_SSE_CONNECTIONS", "50"))
+
 @app.get("/mcp/events/stream")
 async def mcp_event_stream(request: Request):
     """SSE endpoint: streams EventDAG changes and server events in real-time.
@@ -2148,8 +2170,18 @@ async def mcp_event_stream(request: Request):
     Frontend connects here for live updates (tool executions, peer events, etc).
     Uses Server-Sent Events (SSE) for broad compatibility with Electron/browsers.
     """
+    global _sse_connections
     import json as _json
     from starlette.responses import StreamingResponse
+
+    # Enforce connection limit
+    with _sse_lock:
+        if _sse_connections >= _MAX_SSE_CONNECTIONS:
+            return JSONResponse(
+                status_code=503,
+                content={"error": "Too many SSE connections", "max": _MAX_SSE_CONNECTIONS},
+            )
+        _sse_connections += 1
 
     try:
         from .event_dag import get_event_dag
@@ -2158,13 +2190,13 @@ async def mcp_event_stream(request: Request):
         dag = None
 
     async def _generate_events():
-        last_count = len(dag._events) if dag else 0
-        yield f"event: connected\ndata: {{\"server\": \"ipfs-datasets-mcp\", \"events\": {last_count}}}\n\n"
-
+        global _sse_connections
         try:
+            last_count = len(dag._events) if dag else 0
+            yield f"event: connected\ndata: {{\"server\": \"ipfs-datasets-mcp\", \"events\": {last_count}}}\n\n"
+
             while True:
                 await anyio.sleep(1.0)
-                # Check if client disconnected
                 if await request.is_disconnected():
                     break
                 if dag is None:
@@ -2186,6 +2218,9 @@ async def mcp_event_stream(request: Request):
                     yield ": keepalive\n\n"
         except (GeneratorExit, BaseException):
             pass
+        finally:
+            with _sse_lock:
+                _sse_connections -= 1
 
     return StreamingResponse(
         _generate_events(),
