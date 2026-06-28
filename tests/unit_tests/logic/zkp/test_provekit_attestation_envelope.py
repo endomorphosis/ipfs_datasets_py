@@ -326,6 +326,35 @@ def test_sparse_us_code_record_derives_source_id_from_title_and_section():
     assert zkp_attestation_legal_ir_view_loss([sparse_record]) == 0.0
 
 
+def test_sparse_us_code_record_derives_source_id_from_alias_fields():
+    from ipfs_datasets_py.logic.zkp import ZKPProver
+
+    proof = ZKPProver().generate_proof(
+        theorem="O(share_supply_chain_risk_information(secretary))",
+        private_axioms=[
+            "O(share_supply_chain_risk_information(secretary))",
+            "source_section(985)",
+        ],
+        metadata={
+            "circuit_ref": "legal_ir_zkp_attestation@v1",
+            "circuit_version": 1,
+            "ruleset_id": "LegalIR_TDFOL_v1",
+        },
+    )
+    sparse_record = {
+        "proof": proof.to_dict(),
+        "source_type": "U.S. Code",
+        "title_number": "6",
+        "section_number": "985",
+    }
+
+    completed = complete_zkp_attestation_record(sparse_record)
+
+    assert completed["source_id"] == "6 U.S.C. 985"
+    assert completed["attestation_ref"] == completed["public_inputs"]["attestation_ref"]
+    assert zkp_attestation_legal_ir_view_loss([sparse_record]) == 0.0
+
+
 def test_backend_fails_if_cli_succeeds_without_proof_file(tmp_path):
     binary = _fake_provekit_cli(tmp_path / "provekit-cli", write_proof=False)
     backend = ProveKitBackend(binary_path=str(binary))

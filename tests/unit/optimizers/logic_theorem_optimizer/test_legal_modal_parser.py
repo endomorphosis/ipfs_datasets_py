@@ -1843,3 +1843,54 @@ def test_parser_covers_uscode_effect_of_act_catchline_for_701e() -> None:
         "Effect of act June 22, 1936, on provisions for Mississippi River "
         "and other projects."
     ) in residual_spans
+
+
+def test_parser_bounds_packet_catchlines_before_body_starters() -> None:
+    parser = LegalModalParser()
+    cases = [
+        (
+            "16 U.S.C. 666e",
+            "U.S.C. Title 16 - CONSERVATION 16 U.S.C. United States Code, "
+            "2024 Edition Title 16 - CONSERVATION Sec. 666e - "
+            "Administration of acquired lands From the U.S. Government "
+            "Publishing Office, www.gpo.gov §666e. Administration of "
+            "acquired lands Any lands acquired by the Secretary shall become "
+            "a part of such refuge.",
+            "Administration of acquired lands",
+        ),
+        (
+            "35 U.S.C. 101",
+            "U.S.C. Title 35 - PATENTS 35 U.S.C. United States Code, 2024 "
+            "Edition Title 35 - PATENTS Sec. 101 - Inventions patentable "
+            "From the U.S. Government Publishing Office, www.gpo.gov §101. "
+            "Inventions patentable Whoever invents or discovers any new and "
+            "useful process may obtain a patent.",
+            "Inventions patentable",
+        ),
+        (
+            "10 U.S.C. 7592",
+            "U.S.C. Title 10 - ARMED FORCES 10 U.S.C. United States Code, "
+            "2024 Edition Title 10 - ARMED FORCES Sec. 7592 - Radiograms "
+            "and telegrams: forwarding charges due connecting commercial "
+            "facilities From the U.S. Government Publishing Office, "
+            "www.gpo.gov §7592. Radiograms and telegrams: forwarding "
+            "charges due connecting commercial facilities In the operation "
+            "of telegraph lines, members of the Signal Corps may collect "
+            "forwarding charges.",
+            "Radiograms and telegrams: forwarding charges due connecting "
+            "commercial facilities",
+        ),
+    ]
+
+    for citation, text, expected_catchline in cases:
+        parsed = parser.parse(text, citation=citation, source="us_code")
+        catchline_spans = {
+            parsed.normalized_text[
+                formula.provenance.start_char : formula.provenance.end_char
+            ].strip()
+            for formula in parsed.formulas
+            if formula.metadata.get("fallback_rule")
+            == "uscode_section_catchline_coverage_v1"
+        }
+
+        assert expected_catchline in catchline_spans

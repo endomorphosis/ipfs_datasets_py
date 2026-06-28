@@ -184,6 +184,51 @@ def test_modal_frame_logic_bridge_projects_flogic_repair_guidance_to_ontology_te
     )
 
 
+def test_modal_frame_logic_bridge_promotes_bundle_only_flogic_guidance() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("modal_frame_logic")
+    report = adapter.evaluate(
+        "The agency shall publish notice before the permit takes effect.",
+        document_id="bridge-layer-bundle-only-guided-flogic",
+        citation="Bridge Layer Bundle Only Guided FLogic",
+        compiler_guidance={
+            "bundle": {
+                "program_synthesis_scope": "frame_logic",
+                "route": "repair_flogic_ontology_constraints",
+                "source": "compiler_guidance_distillation_v1",
+                "target_component": "modal.frame_logic",
+            },
+        },
+        evaluate_provers=False,
+    )
+
+    modal_metadata = report.ir_document.views["modal_ir"].payload["modal_ir"][
+        "metadata"
+    ]
+    frame_triples = report.ir_document.views["frame_logic"].payload["triples"]
+    selected_terms = {
+        triple["object"]
+        for triple in frame_triples
+        if triple["predicate"] == "selected_ontology_term"
+    }
+
+    assert modal_metadata["compiler_guidance_legal_ir_target_view_distribution"] == {
+        "modal.frame_logic": 1.0
+    }
+    assert modal_metadata["compiler_guidance_synthesis_focus"] == [
+        "repair_flogic_ontology_constraints"
+    ]
+    assert report.round_trip.extra_losses["ontology_violation_count"] == 0.0
+    assert "repair_flogic_ontology_constraints" in selected_terms
+    assert "modal_frame_logic" in selected_terms
+    assert any(
+        triple["predicate"] == "modal_frame_logic_ontology_constraint"
+        and triple["object"] == "selected_ontology_term:required:satisfied"
+        for triple in frame_triples
+    )
+
+
 def test_modal_frame_logic_bridge_projects_frame_alignment_guidance_routes_to_terms() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
@@ -535,6 +580,55 @@ def test_neo4j_compat_augments_packet_samples_past_modal_triple_cutoff() -> None
         assert ("section_catchline", catchline) in graph_triples
         assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
         assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
+
+
+def test_neo4j_compat_trims_truncated_gpo_tail_from_packet_catchline() -> None:
+    from ipfs_datasets_py.logic.modal.kg_bridge import flogic_triples_to_graph_data
+
+    graph_data = flogic_triples_to_graph_data(
+        [
+            {
+                "subject": "us-code-25-5126-36d2f002e4c2bb26",
+                "predicate": "sample_id",
+                "object": "us-code-25-5126-36d2f002e4c2bb26",
+            },
+            {
+                "subject": "us-code-25-5126-36d2f002e4c2bb26",
+                "predicate": "source_text",
+                "object": (
+                    "25 U.S.C. 5126: U.S.C. Title 25 - INDIANS 25 U.S.C. "
+                    "United States Code, 2024 Edition Title 25 - INDIANS "
+                    "CHAPTER 45 - PROTECTION OF INDIANS AND CONSERVATION "
+                    "OF RESOURCES Sec. 5126 - Mandatory application of "
+                    "sections 5102 and 5124 From the U.S. Government"
+                ),
+            },
+        ],
+        graph_id="packet-truncated-gpo-catchline-projection",
+    )
+
+    graph_triples = {
+        (
+            relationship.properties["flogic_predicate"],
+            relationship.properties["flogic_object"],
+        )
+        for relationship in graph_data.relationships
+    }
+
+    assert (
+        "section_catchline",
+        "Mandatory application of sections 5102 and 5124",
+    ) in graph_triples
+    assert (
+        "section_heading_tail",
+        "Mandatory application of sections 5102 and 5124",
+    ) in graph_triples
+    assert (
+        "section_catchline",
+        "Mandatory application of sections 5102 and 5124 From the U.S. Government",
+    ) not in graph_triples
+    assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
+    assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
 
 
 def test_neo4j_compat_projects_uscode_hierarchy_and_repealed_catchlines() -> None:
@@ -3768,6 +3862,52 @@ def test_tdfol_bridge_compacts_status_and_definition_fallback_predicates() -> No
     assert definition.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
 
 
+def test_tdfol_bridge_uses_uscode_heading_when_only_catalog_text_is_available() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
+
+    class _EmptyResult:
+        success = True
+        metadata = {"legal_norm_irs": [], "parser_elements": []}
+
+    class _EmptyConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _EmptyResult()
+
+    adapter = FolTdfolBridgeAdapter(converter=_EmptyConverter())
+
+    catchline = adapter.evaluate(
+        (
+            "U.S.C. Title 25 - INDIANS 25 U.S.C. United States Code, "
+            "2024 Edition Title 25 - INDIANS Sec. 5126 - Mandatory "
+            "application of sections 5102 and 5124 From the U.S. "
+            "Government Publishing Office"
+        )
+    )
+    truncated_heading = adapter.evaluate(
+        (
+            "U.S.C. Title 22 - FOREIGN RELATIONS AND INTERCOURSE 22 U.S.C. "
+            "United States Code, 2024 Edition Title 22 - FOREIGN RELATIONS "
+            "AND INTERCOURSE CHAPTER 29 - CULTURAL, TECHNICAL, AND "
+            "EDUCATIONAL CENTERS SUBCHAPTER I - CENTER BETWEEN EAST AND WES"
+        )
+    )
+
+    catchline_formula = catchline.ir_document.views["tdfol_formula"].payload[
+        "records"
+    ][0]["formula"]
+    heading_formula = truncated_heading.ir_document.views["tdfol_formula"].payload[
+        "records"
+    ][0]["formula"]
+
+    assert "mandatory_application_of_sections_5102_and_5124" in catchline_formula
+    assert "center_between_east_and_wes" in heading_formula
+    assert "u_s_c_title" not in catchline_formula
+    assert "u_s_c_title" not in heading_formula
+    assert catchline.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
+    assert truncated_heading.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
+
+
 def test_tdfol_bridge_applies_compiler_guidance_conditioned_temporal_rule() -> None:
     from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
 
@@ -3948,6 +4088,7 @@ def test_cec_dcec_bridge_exposes_rescue_target_metrics() -> None:
         "cross_entropy_loss",
         "cosine_similarity",
         "legal_ir_view_cross_entropy_loss",
+        "source_decompiled_text_embedding_cosine_loss",
         "source_copy_reward_hack_penalty",
     }
     round_trip_dict = report.round_trip.to_dict()
@@ -3960,6 +4101,12 @@ def test_cec_dcec_bridge_exposes_rescue_target_metrics() -> None:
     assert target_metric_names <= set(metric_values)
     assert report.round_trip.cross_entropy_loss == 0.0
     assert report.round_trip.extra_losses["legal_ir_view_cross_entropy_loss"] == 0.0
+    assert (
+        report.round_trip.extra_losses[
+            "source_decompiled_text_embedding_cosine_loss"
+        ]
+        == 0.0
+    )
     assert report.round_trip.extra_losses["source_copy_reward_hack_penalty"] == 0.0
     assert report.metadata["target_metrics"]["cosine_similarity"] == 1.0
 
@@ -4572,6 +4719,98 @@ def test_cec_dcec_bridge_extracts_bare_usc_shall_clause_without_converter() -> N
     assert event_record["event"].startswith("submit_a_report_to_congress")
     assert formula_record["proof_input"].startswith("O(")
     assert report.proof_gate.compiles is True
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
+def test_cec_dcec_bridge_extracts_mandatory_application_without_heading_duplication() -> None:
+    from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
+
+    class _NoisyConverter:
+        @staticmethod
+        def convert(_text: str):
+            raise AssertionError("mandatory application clause should be deterministic")
+
+    adapter = CecDcecBridgeAdapter(converter=_NoisyConverter())
+    report = adapter.evaluate(
+        (
+            "25 U.S.C. 5126: U.S.C. Title 25 - INDIANS Sec. 5126 - "
+            "Mandatory application of sections 5102 and 5124 From the U.S. "
+            "Government Publishing Office, www.gpo.gov §5126. Mandatory "
+            "application of sections 5102 and 5124 Sections 5102 and 5124 "
+            "of this title shall apply to this subchapter."
+        ),
+        document_id="cec-bridge-mandatory-application",
+        citation="25 U.S.C. 5126",
+    )
+
+    event_record = report.ir_document.views["cec_events"].payload["events"][0]
+    formula_record = report.ir_document.views["dcec_formula"].payload["records"][0]
+
+    assert event_record["actor"] == "sections_5102_and_5124_of_this_title"
+    assert event_record["event"] == "apply_to_this_subchapter"
+    assert formula_record["proof_input"].startswith("AppliesTo(")
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
+def test_cec_dcec_bridge_extracts_definition_section_without_converter() -> None:
+    from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
+
+    class _NoisyConverter:
+        @staticmethod
+        def convert(_text: str):
+            raise AssertionError("definition clause should be deterministic")
+
+    adapter = CecDcecBridgeAdapter(converter=_NoisyConverter())
+    report = adapter.evaluate(
+        (
+            "5 U.S.C. 2106: U.S.C. Title 5 - GOVERNMENT ORGANIZATION AND "
+            "EMPLOYEES Sec. 2106 - Member of Congress For the purpose of "
+            "this title, Member of Congress means the Vice President, a "
+            "Senator, Representative, Delegate, or Resident Commissioner."
+        ),
+        document_id="cec-bridge-definition-member-of-congress",
+        citation="5 U.S.C. 2106",
+    )
+
+    event_record = report.ir_document.views["cec_events"].payload["events"][0]
+    formula_record = report.ir_document.views["dcec_formula"].payload["records"][0]
+
+    assert event_record["actor"] == "member_of_congress"
+    assert event_record["event"].startswith("mean_vice_president")
+    assert formula_record["proof_input"].startswith("Definition(")
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
+def test_cec_dcec_bridge_extracts_appropriation_authorization_without_converter() -> None:
+    from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
+
+    class _NoisyConverter:
+        @staticmethod
+        def convert(_text: str):
+            raise AssertionError("appropriation authorization should be deterministic")
+
+    adapter = CecDcecBridgeAdapter(converter=_NoisyConverter())
+    report = adapter.evaluate(
+        (
+            "22 U.S.C. 290g-9: U.S.C. Title 22 - FOREIGN RELATIONS AND "
+            "INTERCOURSE Sec. 290g-9 - Authorization of appropriations "
+            "There are authorized to be appropriated such sums as may be "
+            "necessary for United States contributions to the African "
+            "Development Fund."
+        ),
+        document_id="cec-bridge-appropriation-authorization",
+        citation="22 U.S.C. 290g-9",
+    )
+
+    event_record = report.ir_document.views["cec_events"].payload["events"][0]
+    formula_record = report.ir_document.views["dcec_formula"].payload["records"][0]
+
+    assert event_record["actor"] == "congress"
+    assert event_record["event"].startswith("authorize_appropriation_of_such_sums")
+    assert formula_record["proof_input"].startswith("P(")
     assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
 
@@ -7443,6 +7682,54 @@ def test_external_prover_router_bridge_falls_back_to_inventory_only_router(
     assert report.round_trip.extra_losses["external_prover_unavailable_loss"] == 0.0
 
 
+def test_external_prover_router_bridge_inventory_fallback_reports_compile_only_success(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge.external_prover_router import (
+        ExternalProverRouterBridgeAdapter,
+    )
+
+    class _CompileOnlyProver:
+        @staticmethod
+        def prove(_formula, timeout_ms=1000):
+            return {"is_compiled": True, "is_proved": False, "timeout_ms": timeout_ms}
+
+    class _InventoryOnlyRouter:
+        provers = {"native_syntactic": _CompileOnlyProver()}
+        backup_provers = ("native_syntactic",)
+        fallback_prover = "native_syntactic"
+
+        @staticmethod
+        def select_prover(_formula):
+            return "native_syntactic"
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.bridge.external_prover_router._build_router",
+        lambda **_kwargs: _InventoryOnlyRouter(),
+    )
+
+    adapter = ExternalProverRouterBridgeAdapter(
+        enable_native=False,
+        enable_external_binaries=False,
+    )
+    report = adapter.evaluate(
+        "The Secretary shall develop a system to share supply chain risk information.",
+        document_id="external-prover-bridge-inventory-compile-only",
+        citation="6 U.S.C. 985",
+    )
+
+    assert report.proof_gate.compiles is True
+    assert report.proof_gate.valid_count == report.proof_gate.attempted_count
+    assert report.proof_gate.details[0]["compiled"] is True
+    assert report.proof_gate.details[0]["prover_used"] == "native_syntactic"
+    assert report.proof_gate.details[0]["reason"] == (
+        "Used native_syntactic (no proof)"
+    )
+    assert "external_provers:native_syntactic" in report.proof_gate.verified_by
+    assert report.round_trip.extra_losses["external_prover_failure_ratio"] == 0.0
+    assert report.round_trip.extra_losses["external_prover_unavailable_loss"] == 0.0
+
+
 def test_fol_tdfol_coerce_formula_sanitizes_reserved_term_prefixes() -> None:
     from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
 
@@ -9256,6 +9543,86 @@ def test_official_usc_primary_projection_handles_packet_207_bridge_contracts() -
         judicial_review,
         repealed,
         omitted,
+    ):
+        assert abs(sum(projected.values()) - 1.0) < 1e-9
+
+
+def test_official_usc_primary_projection_handles_packet_1136_bridge_contracts() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _project_official_usc_primary_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.25,
+        "TDFOL.prover": 0.25,
+        "deontic.ir": 0.25,
+        "knowledge_graphs.neo4j_compat": 0.25,
+    }
+
+    flexible_schedule = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "5 U.S.C. 6105. Flexible schedules. An agency may establish "
+            "flexible or compressed work schedules. An employee may elect a "
+            "work schedule, but an employee excluded under this section shall "
+            "not be subject to the flexible schedule program."
+        ),
+    )
+    census_confidentiality = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "13 U.S.C. 303. Reports and information. The Secretary of "
+            "Commerce may require census reports and returns. Information "
+            "furnished for statistical purposes shall be confidential and "
+            "publication or disclosure may be subject to penalties."
+        ),
+    )
+    bankruptcy_claims = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "11 U.S.C. 782. Treatment of customer claims. The trustee shall "
+            "deliver securities and property of the estate, and a creditor "
+            "may file a claim after notice and hearing for distribution."
+        ),
+    )
+    historic_preservation = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "16 U.S.C. 470t. Historic preservation consultation. A Federal "
+            "agency shall consult with the Advisory Council before approving "
+            "an undertaking affecting a historic property listed on the "
+            "National Register, and regulations may provide for review."
+        ),
+    )
+    charter_governance = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "36 U.S.C. 20902. Powers. The corporation is a body corporate "
+            "and may adopt bylaws, have perpetual succession, hold property, "
+            "sue and be sued, and act through a board of directors."
+        ),
+    )
+
+    assert flexible_schedule["deontic.ir"] > distribution["deontic.ir"]
+    assert flexible_schedule["TDFOL.prover"] > distribution["TDFOL.prover"]
+    assert census_confidentiality["deontic.ir"] > distribution["deontic.ir"]
+    assert census_confidentiality["knowledge_graphs.neo4j_compat"] >= 0.24
+    assert bankruptcy_claims["deontic.ir"] > distribution["deontic.ir"]
+    assert bankruptcy_claims["TDFOL.prover"] > distribution["TDFOL.prover"]
+    assert historic_preservation["knowledge_graphs.neo4j_compat"] > distribution[
+        "knowledge_graphs.neo4j_compat"
+    ]
+    assert historic_preservation["CEC.native"] > distribution["CEC.native"]
+    assert charter_governance["CEC.native"] > distribution["CEC.native"]
+    assert charter_governance["knowledge_graphs.neo4j_compat"] > distribution[
+        "knowledge_graphs.neo4j_compat"
+    ]
+    for projected in (
+        flexible_schedule,
+        census_confidentiality,
+        bankruptcy_claims,
+        historic_preservation,
+        charter_governance,
     ):
         assert abs(sum(projected.values()) - 1.0) < 1e-9
 

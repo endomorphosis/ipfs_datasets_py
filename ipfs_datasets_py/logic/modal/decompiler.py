@@ -362,6 +362,22 @@ _USCODE_COMPILATION_SEC_CATCHLINE_RE = re.compile(
     r"(?P<catchline>[^.;\n]{2,180})",
     re.IGNORECASE,
 )
+_USCODE_COMPILATION_TITLE_HEADING_RE = re.compile(
+    r"\bTitle\s+(?P<title>\d+[A-Za-z]*)\s*[-–—]\s*"
+    r"(?P<heading>.*?)(?=\s+\d+[A-Za-z]*\s+U\.?\s*S\.?\s*C\.?\b|"
+    r"\s+United\s+States\s+Code\b|"
+    r"\s+(?:Subtitle|PART|Subpart|CHAPTER|SUBCHAPTER)\b|"
+    r"\s+Secs?\.?\s+|\s+§|$)",
+    re.IGNORECASE,
+)
+_USCODE_COMPILATION_LEVEL_HEADING_RE = re.compile(
+    r"\b(?P<label>Subtitle|PART|Subpart|CHAPTER|SUBCHAPTER)\s+"
+    r"(?P<number>[0-9A-ZIVXLCDM.\-]+)?\s*[-–—]\s*"
+    r"(?P<heading>.*?)(?=\s+(?:Subtitle|PART|Subpart|CHAPTER|SUBCHAPTER)\b|"
+    r"\s+Secs?\.?\s+|\s+§|"
+    r"\s+From\s+the\s+U\.?\s*S\.?\s+Government\s+Publishing\s+Office\b|$)",
+    re.IGNORECASE,
+)
 _INFERRED_CONDITION_CLAUSE_SPLIT_RE = re.compile(
     r"(?:;|[.?!]|—|–|,(?!\s*\d))"
 )
@@ -660,6 +676,7 @@ _LEGAL_IR_VIEW_PROTOTYPES: tuple[str, ...] = (
     "CEC.native",
     "zkp.circuits",
 )
+_AUTOENCODER_DECOMPILER_SLOT_VIEW = "modal.autoencoder"
 _PREFERRED_LEGAL_IR_VIEWS_BY_FAMILY: Mapping[str, tuple[str, ...]] = {
     "alethic": (
         "TDFOL.prover",
@@ -1754,6 +1771,10 @@ def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
     phrases: List[DecodedModalPhrase] = [
         *source_phrases,
         *_document_leading_uscode_catchline_phrases(document),
+        *_document_uscode_heading_reconstruction_phrases(
+            document,
+            source_phrases=source_phrases,
+        ),
         *typed_ir_phrases,
         *_document_structural_semantic_reconstruction_phrases(
             document,
@@ -6974,6 +6995,11 @@ def _typed_ir_refined_semantic_slot_phrases(
             for atom in _legal_semantic_atoms_from_text(semantic_text):
                 if atom not in semantic_atoms:
                     semantic_atoms.append(atom)
+        semantic_cues: List[str] = []
+        for semantic_text in semantic_text_values:
+            for cue in _source_semantic_legal_ir_cues(semantic_text):
+                if cue not in semantic_cues:
+                    semantic_cues.append(cue)
         for family_pair in _unique_preserve_order(family_pairs):
             if "->" not in family_pair:
                 continue
@@ -7057,6 +7083,36 @@ def _typed_ir_refined_semantic_slot_phrases(
                 )
             if pair_target == pair_source:
                 continue
+            for evidence_cue in _typed_ir_target_evidence_cues(
+                source_family=pair_source,
+                target_family=pair_target,
+                cues=semantic_cues,
+            ):
+                add_phrase(
+                    slot="typed_ir_refined_target_evidence_cue_family_pair",
+                    text=f"{evidence_cue}:{family_pair}",
+                    spans=spans,
+                )
+                add_phrase(
+                    slot=(
+                        "typed_ir_refined_target_evidence_cue_"
+                        f"{pair_source}_{pair_target}"
+                    ),
+                    text=evidence_cue,
+                    spans=spans,
+                )
+                add_semantic_slot(
+                    family=pair_target,
+                    slot_name="typed-ir-refined-target-evidence-cue",
+                    slot_value=f"{family_pair}:{evidence_cue}",
+                    spans=spans,
+                )
+                add_semantic_slot(
+                    family=pair_target,
+                    slot_name="typed-ir-refined-source-family-evidence-cue",
+                    slot_value=f"{pair_source}:{evidence_cue}",
+                    spans=spans,
+                )
             for semantic_atom in semantic_atoms:
                 add_phrase(
                     slot="typed_ir_refined_legal_semantic_atom_family_pair",
@@ -8492,6 +8548,61 @@ def _source_semantic_legal_ir_cues(text: str) -> List[str]:
     ):
         add(cue)
     return cues
+
+
+def _typed_ir_target_evidence_cues(
+    *,
+    source_family: str,
+    target_family: str,
+    cues: Sequence[str],
+) -> List[str]:
+    """Return cues that specifically justify a refined typed-IR target family."""
+
+    source_key = _slot_safe_family_key(_clean_text(source_family).lower())
+    target_key = _slot_safe_family_key(_clean_text(target_family).lower())
+    if source_key != "frame" or target_key not in {"deontic", "temporal"}:
+        return []
+
+    evidence: List[str] = []
+
+    def add(value: str) -> None:
+        cue = _slot_safe_family_key(_clean_text(value).replace(" ", "_").lower())
+        if cue and cue not in evidence:
+            evidence.append(cue)
+
+    for cue in cues:
+        cue_key = _slot_safe_family_key(_clean_text(cue).replace(" ", "_").lower())
+        if not cue_key:
+            continue
+        if target_key == "deontic":
+            if (
+                cue_key in _DEONTIC_BRIDGE_REINFORCEMENT_CUES
+                or cue_key in _FRAME_REFINED_STATUS_DEONTIC_CUES
+                or cue_key in _REFINED_HEADING_BRIDGE_CUE_OPERATOR_PAIRS
+            ):
+                add(cue_key)
+        elif target_key == "temporal":
+            if (
+                cue_key in _FRAME_TEMPORAL_BRIDGE_CUES
+                or cue_key in _TEMPORAL_BRIDGE_CONTEXT_TOKENS
+                or cue_key
+                in {
+                    "calendar_year",
+                    "edition_year",
+                    "effective_date",
+                    "fiscal_year",
+                    "no_later",
+                    "no_later_than",
+                    "not_later",
+                    "not_later_than",
+                    "on_and_after",
+                    "on_or_after",
+                    "prior_to",
+                    "year",
+                }
+            ):
+                add(cue_key)
+    return evidence
 
 
 def _semantic_text_cue_classes_for_bridge_cue(cue: str) -> List[str]:
@@ -10707,6 +10818,179 @@ def _document_leading_uscode_catchline_phrases(
                 )
             )
     return phrases
+
+
+def _document_uscode_heading_reconstruction_phrases(
+    document: ModalIRDocument,
+    *,
+    source_phrases: Sequence[DecodedModalPhrase],
+) -> List[DecodedModalPhrase]:
+    """Expose compact U.S.C. hierarchy text when copied headers are suppressed."""
+
+    source_text = _clean_text(document.normalized_text)
+    if not source_text or not _document_has_uscode_context(document):
+        return []
+    if not _is_expanded_uscode_compilation_boilerplate(source_text):
+        return []
+
+    visible_text = _clean_text(
+        " ".join(phrase.text for phrase in source_phrases if not phrase.provenance_only)
+    )
+    visible_tokens = set(_tokenize_for_similarity(visible_text))
+    source_tokens = set(_tokenize_for_similarity(source_text))
+    if source_tokens and source_tokens.issubset(visible_tokens):
+        return []
+
+    heading_slots = _uscode_compilation_heading_slots(source_text)
+    if not heading_slots:
+        return []
+
+    summary_values: List[str] = []
+    for slot, value in heading_slots:
+        if slot in {
+            "uscode_title_heading",
+            "uscode_chapter_heading",
+            "uscode_subchapter_heading",
+            "uscode_part_heading",
+            "uscode_subpart_heading",
+            "uscode_section_catchline",
+        }:
+            summary_values.append(value)
+    summary = _clean_text(" ".join(_unique_surface_parts(summary_values)))
+    summary_tokens = _tokenize_for_similarity(summary)
+    if not summary_tokens or len(summary_tokens) > 64:
+        return []
+    if set(summary_tokens).issubset(visible_tokens):
+        return []
+
+    spans = [[0, len(str(document.normalized_text or ""))]]
+    phrases: List[DecodedModalPhrase] = [
+        DecodedModalPhrase(
+            text=summary,
+            slot="document_uscode_heading_reconstruction",
+            spans=spans,
+            provenance_only=False,
+        )
+    ]
+    seen: set[Tuple[str, str]] = {
+        ("document_uscode_heading_reconstruction", summary)
+    }
+    for slot, value in heading_slots:
+        marker = (slot, value)
+        if marker in seen:
+            continue
+        seen.add(marker)
+        phrases.append(
+            DecodedModalPhrase(
+                text=value,
+                slot=slot,
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+        for typed_slot, typed_value in _typed_identifier_slots(
+            value,
+            slot_prefix=slot,
+        ):
+            typed_marker = (typed_slot, typed_value)
+            if typed_marker in seen:
+                continue
+            seen.add(typed_marker)
+            phrases.append(
+                DecodedModalPhrase(
+                    text=typed_value,
+                    slot=typed_slot,
+                    spans=spans,
+                    provenance_only=True,
+                )
+            )
+        phrases.extend(
+            _legal_semantic_atom_phrases(
+                text=value,
+                slot_prefix=slot,
+                spans=spans,
+            )
+        )
+    for atom in _legal_semantic_atoms_from_text(summary):
+        marker = ("document_uscode_heading_semantic_atom", atom)
+        if marker in seen:
+            continue
+        seen.add(marker)
+        phrases.append(
+            DecodedModalPhrase(
+                text=atom,
+                slot="document_uscode_heading_semantic_atom",
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+    return phrases
+
+
+def _uscode_compilation_heading_slots(source_text: str) -> List[Tuple[str, str]]:
+    normalized = _clean_text(source_text)
+    if not normalized:
+        return []
+
+    slots: List[Tuple[str, str]] = []
+
+    def add(slot: str, value: str) -> None:
+        cleaned_slot = _clean_text(slot)
+        cleaned_value = _clean_uscode_compilation_heading_value(value)
+        if cleaned_slot and cleaned_value:
+            slots.append((cleaned_slot, cleaned_value))
+
+    title_match = _USCODE_COMPILATION_TITLE_HEADING_RE.search(normalized)
+    if title_match is not None:
+        title = _clean_text(title_match.group("title"))
+        heading = _clean_uscode_compilation_heading_value(title_match.group("heading"))
+        if title:
+            add("uscode_title_number", title)
+        if heading:
+            add("uscode_title_heading", heading)
+            if title:
+                add("uscode_title_heading_qualified", f"Title {title} {heading}")
+
+    for match in _USCODE_COMPILATION_LEVEL_HEADING_RE.finditer(normalized):
+        label = _clean_text(match.group("label")).lower()
+        number = _clean_text(match.group("number") or "")
+        heading = _clean_uscode_compilation_heading_value(match.group("heading"))
+        if not label or not heading:
+            continue
+        slot_label = label.replace(" ", "_")
+        add(f"uscode_{slot_label}_heading", heading)
+        if number:
+            add(f"uscode_{slot_label}_number", number)
+            add(f"uscode_{slot_label}_heading_qualified", f"{label} {number} {heading}")
+
+    catchline = _document_uscode_catchline_text(normalized[:720], max_tokens=24)
+    if catchline:
+        add("uscode_section_catchline", catchline)
+
+    return _unique_slot_values(slots)
+
+
+def _clean_uscode_compilation_heading_value(value: str) -> str:
+    cleaned = _clean_text(value)
+    if not cleaned:
+        return ""
+    cleaned = _strip_uscode_gpo_attribution_fragment(cleaned)
+    cleaned = _TRAILING_SECTION_PUNCT_RE.sub("", cleaned)
+    cleaned = _clean_text(cleaned)
+    if not cleaned or _is_low_information_section_marker(cleaned):
+        return ""
+    lowered = cleaned.lower()
+    if (
+        lowered.startswith("u.s.c. title")
+        or lowered.startswith("usc title")
+        or "united states code" in lowered
+        or lowered == "from the"
+    ):
+        return ""
+    tokens = _tokenize_for_similarity(cleaned)
+    if not tokens or len(tokens) > 18:
+        return ""
+    return cleaned
 
 
 def _document_structural_semantic_reconstruction_phrases(
@@ -14735,6 +15019,47 @@ def _typed_decompiler_bridge_phrases(
             target_family = family
         if not source_family or not target_family:
             continue
+        for evidence_cue in _typed_ir_target_evidence_cues(
+            source_family=source_family,
+            target_family=target_family,
+            cues=source_cue_keys,
+        ):
+            evidence_value = f"{family_pair}:{evidence_cue}"
+            add("typed_decompiler_target_evidence_cue", evidence_value)
+            add(
+                "typed_decompiler_target_evidence_cue_family_pair",
+                f"{evidence_cue}:{family_pair}",
+            )
+            add(
+                f"typed_decompiler_target_evidence_cue_{source_family}_{target_family}",
+                evidence_cue,
+            )
+            add_family_semantic_slot(
+                family=target_family,
+                slot_name="typed-decompiler-target-evidence-cue",
+                slot_value=evidence_value,
+            )
+            add_family_semantic_slot_pair(
+                family=target_family,
+                left_slot=f"target-evidence-cue:{evidence_cue}",
+                right_slot=f"typed-decompiler-family-pair:{family_pair}",
+            )
+            for view in _preferred_legal_ir_views_for_family(target_family):
+                add(
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    (
+                        f"{target_family}||slot:typed-decompiler-target-"
+                        f"evidence-cue:{evidence_value}||{view}"
+                    ),
+                )
+                add(
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    (
+                        f"{target_family}||slot-pair:target-evidence-cue:"
+                        f"{evidence_cue}|typed-decompiler-family-pair:"
+                        f"{family_pair}||{view}"
+                    ),
+                )
         target_symbol = _typed_ir_refined_target_symbol(
             target_family,
             fallback_symbol=source_operator,
@@ -15980,6 +16305,81 @@ def _typed_decompiler_bridge_phrases(
                             ),
                             right_slot=f"typed-decompiler-family-pair:{family_pair}",
                         )
+                        clause_operator_signature = ":".join(
+                            value
+                            for value in (
+                                _slot_safe_family_key(clause_source_family),
+                                _slot_safe_family_key(
+                                    (
+                                        source_system
+                                        or _default_modal_system_key(
+                                            clause_source_family
+                                        )
+                                    ).lower()
+                                ),
+                                _modal_operator_feature_key(source_operator)
+                                or _slot_safe_family_key(source_operator.lower()),
+                            )
+                            if value
+                        )
+                        if clause_operator_signature:
+                            add(
+                                f"typed_decompiler_{clause_slot}_index_family_pair",
+                                f"{clause_index}:{family_pair}",
+                            )
+                            add(
+                                (
+                                    f"typed_decompiler_{clause_slot}_operator_"
+                                    "family_pair"
+                                ),
+                                (
+                                    f"{clause_index}:{clause_operator_signature}:"
+                                    f"{family_pair}"
+                                ),
+                            )
+                            add_family_semantic_slot_pair(
+                                family=clause_source_family,
+                                left_slot=f"{plural_slot}:{clause_index}",
+                                right_slot=(
+                                    f"typed-decompiler-family-pair:{family_pair}"
+                                ),
+                            )
+                            add_family_semantic_slot_pair(
+                                family=clause_source_family,
+                                left_slot=(
+                                    f"modal-operator:{clause_operator_signature}"
+                                ),
+                                right_slot=(
+                                    f"typed-decompiler-family-pair:{family_pair}"
+                                ),
+                            )
+                            for view in _unique_preserve_order(
+                                (
+                                    *_preferred_legal_ir_views_for_family(
+                                        target_family
+                                    ),
+                                    _AUTOENCODER_DECOMPILER_SLOT_VIEW,
+                                )
+                            ):
+                                add(
+                                    "family_semantic_slot_legal_ir_view_prototype",
+                                    (
+                                        f"{clause_source_family}||slot-pair:"
+                                        f"{plural_slot}:{clause_index}|"
+                                        f"typed-decompiler-family-pair:"
+                                        f"{family_pair}||{view}"
+                                    ),
+                                )
+                                add(
+                                    "family_semantic_slot_legal_ir_view_prototype",
+                                    (
+                                        f"{clause_source_family}||slot-pair:"
+                                        f"modal-operator:"
+                                        f"{clause_operator_signature}|"
+                                        f"typed-decompiler-family-pair:"
+                                        f"{family_pair}||{view}"
+                                    ),
+                                )
                         add_family_semantic_slot(
                             family=target_family,
                             slot_name=f"{clause_slot}-prefix-source-family",

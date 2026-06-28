@@ -10206,6 +10206,45 @@ def test_semantic_slot_embedding_head_transfers_cosine_to_holdout() -> None:
     )
 
 
+def test_disabled_embedding_heads_do_not_write_reusable_prototypes() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice before final action.",
+        embedding_vector=[1.0, 0.0],
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        compiler_quality_embedding_weight_scale=0.0,
+        logic_signature_embedding_weight_scale=0.0,
+        round_trip_signal_embedding_weight_scale=0.0,
+        decompiler_plan_embedding_weight_scale=0.0,
+        predicate_argument_embedding_weight_scale=0.0,
+        feature_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=0.0,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        cosine_reconstruction_weight=0.0,
+    )
+
+    autoencoder._nudge_decoded_embedding(
+        sample,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+
+    assert autoencoder.state.family_embedding_weights == {}
+    assert autoencoder.state.semantic_slot_embedding_weights == {}
+    assert autoencoder.state.family_semantic_slot_embedding_weights == {}
+    assert autoencoder.state.family_semantic_slot_legal_ir_view_embedding_weights == {}
+    assert autoencoder.state.legal_ir_view_embedding_weights == {}
+    assert autoencoder.state.family_legal_ir_view_embedding_weights == {}
+    assert autoencoder.state.feature_embedding_weights == {}
+
+
 def test_semantic_slot_interactions_capture_compositional_ir() -> None:
     sample = build_us_code_sample(
         title="5",

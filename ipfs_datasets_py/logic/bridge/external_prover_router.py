@@ -1193,7 +1193,11 @@ def _route_formula_from_router_inventory(
         "is_proved": False,
         "proof_time": max(0.0, time.monotonic() - start),
         "prover_used": first_completed,
-        "reason": "All provers failed",
+        "reason": (
+            f"Used {first_completed} (no proof)"
+            if first_completed
+            else "All provers failed"
+        ),
         "strategy_used": strategy_text or "compat_selected_prover",
     }
 

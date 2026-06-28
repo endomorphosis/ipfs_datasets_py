@@ -278,6 +278,25 @@ COMPILER_AMBIGUITY_PACKET_002580_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     ),
 )
 
+COMPILER_AMBIGUITY_PACKET_000594_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+)
+
 COMPILER_AMBIGUITY_PACKET_000254_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
@@ -430,6 +449,25 @@ COMPILER_AMBIGUITY_PACKET_001032_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.TEMPORAL.value,
         ModalLogicFamily.DEONTIC.value,
+    ),
+)
+
+COMPILER_REFINED_PACKET_001033_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.TEMPORAL.value,
     ),
 )
 
@@ -898,6 +936,7 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS: Tuple[Tuple[str, str], ...] = (
     *COMPILER_REFINED_PACKET_001844_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_002474_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_002051_FAMILY_PAIRS,
+    *COMPILER_REFINED_PACKET_001033_FAMILY_PAIRS,
 )
 
 COMPILER_AMBIGUITY_PACKET_000669_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
@@ -4762,6 +4801,25 @@ COMPILER_AMBIGUITY_PACKET_001879_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     ),
 )
 
+COMPILER_REFINED_PACKET_000745_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+)
+
 COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS = (
     *COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS,
     *COMPILER_REFINED_PACKET_005573_FAMILY_PAIRS,
@@ -4776,6 +4834,7 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS = (
     *COMPILER_REFINED_PACKET_004382_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_000440_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_003441_FAMILY_PAIRS,
+    *COMPILER_REFINED_PACKET_000745_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_003313_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_003650_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_003960_FAMILY_PAIRS,
@@ -5380,6 +5439,7 @@ COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] =
     *COMPILER_AMBIGUITY_PACKET_003336_FAMILY_PAIRS,
     *COMPILER_AMBIGUITY_PACKET_002204_FAMILY_PAIRS,
     *COMPILER_AMBIGUITY_PACKET_002580_FAMILY_PAIRS,
+    *COMPILER_AMBIGUITY_PACKET_000594_FAMILY_PAIRS,
     *COMPILER_AMBIGUITY_PACKET_000254_FAMILY_PAIRS,
     *COMPILER_AMBIGUITY_PACKET_001954_FAMILY_PAIRS,
     *COMPILER_AMBIGUITY_PACKET_001983_FAMILY_PAIRS,
@@ -6230,6 +6290,7 @@ SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     *COMPILER_AMBIGUITY_PACKET_003336_FAMILY_PAIRS,
     *COMPILER_AMBIGUITY_PACKET_002204_FAMILY_PAIRS,
     *COMPILER_AMBIGUITY_PACKET_002580_FAMILY_PAIRS,
+    *COMPILER_AMBIGUITY_PACKET_000594_FAMILY_PAIRS,
     *COMPILER_AMBIGUITY_PACKET_000254_FAMILY_PAIRS,
 )
 
@@ -6525,6 +6586,7 @@ PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...
     *COMPILER_AMBIGUITY_PACKET_002271_FAMILY_PAIRS,
     *COMPILER_AMBIGUITY_PACKET_003094_FAMILY_PAIRS,
     *COMPILER_AMBIGUITY_PACKET_002580_FAMILY_PAIRS,
+    *COMPILER_AMBIGUITY_PACKET_000594_FAMILY_PAIRS,
     *COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS,
     *COMPILER_AMBIGUITY_PACKET_011135_FAMILY_PAIRS,
     *COMPILER_AMBIGUITY_PACKET_000536_FAMILY_PAIRS,
@@ -6675,9 +6737,11 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                     "shall be administered",
                     "shall be deposited",
                     "shall be fined",
+                    "shall be the trustee",
                     "shall conduct",
                     "shall contain",
                     "shall consult",
+                    "shall collect",
                     "shall develop",
                     "shall issue",
                     "shall prepare and submit",
@@ -6709,6 +6773,8 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                     "may be made available",
                     "may be construed",
                     "may discontinue",
+                    "may be extended",
+                    "may designate",
                     "required quarterly reports",
                     "shall be punished",
                     "shall be fined or imprisoned",
@@ -6745,6 +6811,7 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                 ("prohibition", "forbidden"),
                 (
                     "may not",
+                    "may not be closed",
                     "must not",
                     "no member",
                     "no person",
@@ -6916,9 +6983,11 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                 (
                     "if",
                     "unless",
+                    "unless the aggregate amount appropriated",
                     "except",
                     "there is authorized to be appropriated",
                     "authorized to be appropriated",
+                    "no funds are authorized to be appropriated",
                     "provided that",
                     "provided, that",
                     "provided , that",
@@ -7418,6 +7487,7 @@ __all__ = [
     "COMPILER_AMBIGUITY_PACKET_001983_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_000951_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_001032_FAMILY_PAIRS",
+    "COMPILER_REFINED_PACKET_001033_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_003130_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_001061_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_001547_FAMILY_PAIRS",
@@ -7460,6 +7530,7 @@ __all__ = [
     "COMPILER_AMBIGUITY_PACKET_003336_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_002204_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_002580_FAMILY_PAIRS",
+    "COMPILER_AMBIGUITY_PACKET_000594_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_000254_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_008598_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_007995_FAMILY_PAIRS",
@@ -7510,6 +7581,7 @@ __all__ = [
     "COMPILER_REFINED_PACKET_004382_FAMILY_PAIRS",
     "COMPILER_REFINED_PACKET_000440_FAMILY_PAIRS",
     "COMPILER_REFINED_PACKET_003441_FAMILY_PAIRS",
+    "COMPILER_REFINED_PACKET_000745_FAMILY_PAIRS",
     "COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS",
     "COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR",
     "COMPILER_WEAK_TYPED_SELF_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR",

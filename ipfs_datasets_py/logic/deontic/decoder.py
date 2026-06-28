@@ -454,7 +454,11 @@ def _detail_phrase(
     norm: LegalNormIR,
 ) -> DecodedPhrase:
     span = detail.get("span") or detail.get("clause_span") or []
-    spans = [_coerce_span(span)] if _coerce_span(span) else _slot_spans(norm, slot)
+    spans = [_coerce_span(span)] if _coerce_span(span) else []
+    if not spans:
+        spans = _detail_text_spans(norm, text)
+    if not spans:
+        spans = _slot_spans(norm, slot)
     return DecodedPhrase(text=_clean_text(text), slot=slot, spans=spans)
 
 
@@ -469,6 +473,29 @@ def _provenance_phrase(text: str, slot: str, spans: List[List[int]]) -> DecodedP
         spans=spans,
         provenance_only=True,
     )
+
+
+def _detail_text_spans(norm: LegalNormIR, text: str) -> List[List[int]]:
+    """Recover provenance for reduced detail records that kept text but lost spans."""
+
+    search_text = _clean_text(text)
+    if not search_text:
+        return []
+
+    support_text = str(norm.support_text or "")
+    support_span = norm.support_span.to_list()
+    if support_text and len(support_span) == 2:
+        offset = support_text.lower().find(search_text.lower())
+        if offset >= 0:
+            start = support_span[0] + offset
+            return [[start, start + len(search_text)]]
+
+    source_text = str(norm.source_text or "")
+    if source_text:
+        offset = source_text.lower().find(search_text.lower())
+        if offset >= 0:
+            return [[offset, offset + len(search_text)]]
+    return []
 
 
 def _append_cross_reference_provenance(

@@ -348,6 +348,7 @@ class CecDcecBridgeAdapter:
             "cross_entropy_loss": cross_entropy_loss,
             "cosine_similarity": cosine_similarity,
             "legal_ir_view_cross_entropy_loss": legal_ir_view_cross_entropy_loss,
+            "source_decompiled_text_embedding_cosine_loss": no_formula_loss,
             "source_copy_reward_hack_penalty": source_copy_reward_hack_penalty,
         }
         round_trip = RoundTripMetrics(
@@ -363,6 +364,7 @@ class CecDcecBridgeAdapter:
                 "cec_dcec_validation_failure_ratio": failure_ratio,
                 "cec_dcec_event_formula_invalid_ratio": event_formula_invalid_ratio,
                 "legal_ir_view_cross_entropy_loss": legal_ir_view_cross_entropy_loss,
+                "source_decompiled_text_embedding_cosine_loss": no_formula_loss,
                 "source_copy_reward_hack_penalty": source_copy_reward_hack_penalty,
             },
         )
@@ -416,6 +418,9 @@ def _deontic_norms_from_text(text: str, *, converter: Any) -> list[dict[str, Any
     operational_norm = _section_operational_norm_from_text(text)
     if operational_norm:
         return [operational_norm]
+    definition_norm = _section_definition_norm_from_text(text)
+    if definition_norm:
+        return [definition_norm]
 
     result = converter.convert(text)
     metadata = dict(getattr(result, "metadata", {}) or {})
@@ -2531,6 +2536,25 @@ def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
     operative_text = _strip_parenthetical_public_law_tail(
         _strip_uscode_catchline_and_subsection_heading(substantive_text)
     )
+    appropriation_authorization_match = re.search(
+        r"\bthere\s+are\s+authorized\s+to\s+be\s+appropriated\s+"
+        r"(?P<action>[^.;]+)",
+        operative_text.lower(),
+    )
+    if appropriation_authorization_match:
+        digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
+        return {
+            "actor": "congress",
+            "action": _clean_operational_slot(
+                "authorize appropriation of "
+                + appropriation_authorization_match.group("action")
+            ),
+            "modality": "permitted",
+            "norm_type": "permitted",
+            "source_id": f"dcec:section:{digest}",
+            "support_text": appropriation_authorization_match.group(0)[:500],
+            "extraction_method": "cec_dcec_section_operational_v1",
+        }
     penalty_imposition_match = re.search(
         r"\bthere\s+is\s+hereby\s+imposed\s+a\s+penalty\s+on\s+the\s+"
         r"failure\s+of\s+(?P<actor>[^.;]{1,180}?)\s+to\s+"
@@ -2605,6 +2629,11 @@ def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
         (
             "obligated",
             r"\b(?P<actor>nothing\s+in\s+this\s+chapter)\s+shall\s+"
+            r"(?P<action>apply\s+to\s+[^.;]+)",
+        ),
+        (
+            "obligated",
+            r"\b(?P<actor>sections?\s+[^.;]{1,180}?)\s+shall\s+"
             r"(?P<action>apply\s+to\s+[^.;]+)",
         ),
         (
@@ -2725,6 +2754,7 @@ def _clean_operational_slot(text: str) -> str:
         r"use of recovered amounts|attorney general approval of title|"
         r"guidance for executive agencies on linking of award and incentive fees "
         r"to acquisition outcomes|information to congress on institute activities|"
+        r"mandatory application of sections [0-9a-z.,\sand-]+|"
         r"contribution to inter american development bank authorization of "
         r"appropriations|abandonment of property of the estate|art exhibits|"
         r"disclaimers limited warranties and nonwarranties)\s+",
@@ -2738,6 +2768,12 @@ def _clean_operational_slot(text: str) -> str:
 
 def _clean_operational_actor_slot(text: str) -> str:
     value = _clean_operational_slot(text)
+    value = re.sub(
+        r"^(sections?\s+[0-9a-z.-]+(?:\s+(?:and|,|-)\s+[0-9a-z.-]+)*)\s+\1\s+\b(of\b.*)$",
+        r"\1 \2",
+        value,
+        flags=re.IGNORECASE,
+    )
     value = re.sub(
         r"^notwithstanding\b[^,]{1,240},\s*",
         "",
@@ -2844,6 +2880,55 @@ def _section_editorial_norm_from_text(text: str) -> Optional[dict[str, Any]]:
     }
 
 
+def _section_definition_norm_from_text(text: str) -> Optional[dict[str, Any]]:
+    normalized_text = _normalize_legal_sample_text(text)
+    if not normalized_text or not _looks_like_us_code_section_text(normalized_text):
+        return None
+    substantive_text = _strip_uscode_catchline_and_subsection_heading(
+        _substantive_statutory_text(normalized_text)
+    )
+    if not substantive_text:
+        return None
+    operative_text = _strip_uscode_catchline_and_subsection_heading(substantive_text)
+    lowered = operative_text.lower()
+    definition_match = re.search(
+        r"\b(?:for\s+(?:the\s+)?purposes?\s+of\s+[^,.;]{1,120},\s*)?"
+        r"(?:the\s+term\s+)?(?P<term>[A-Za-z][A-Za-z0-9' -]{1,120}?)\s+"
+        r"means\s+(?P<definition>[^.;]+)",
+        lowered,
+    )
+    if not definition_match:
+        return None
+
+    term = _clean_definition_term(definition_match.group("term"))
+    definition = _clean_operational_slot(definition_match.group("definition"))
+    if not term or not definition:
+        return None
+    digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
+    return {
+        "actor": term,
+        "action": f"mean {definition}",
+        "modality": "definition",
+        "norm_type": "definition",
+        "source_id": f"dcec:definition:{digest}",
+        "support_text": definition_match.group(0)[:500],
+        "extraction_method": "cec_dcec_definition_v1",
+    }
+
+
+def _clean_definition_term(text: str) -> str:
+    value = _normalize_legal_sample_text(text)
+    value = re.sub(
+        r"^(?:definitions?|for\s+(?:the\s+)?purposes?\s+of\s+[^,.;]{1,120},)\s+",
+        "",
+        value,
+        flags=re.IGNORECASE,
+    )
+    value = re.sub(r"^(?:the\s+term|term)\s+", "", value, flags=re.IGNORECASE)
+    value = re.sub(r"^(?:the|a|an)\s+", "", value, flags=re.IGNORECASE)
+    return value.strip(" ,:-")
+
+
 def _section_statutory_statement_norm_from_text(text: str) -> Optional[dict[str, Any]]:
     normalized_text = _normalize_legal_sample_text(text)
     if not normalized_text:
@@ -2923,6 +3008,9 @@ def _strip_uscode_catchline_and_subsection_heading(text: str) -> str:
         "By no later",
         "Upon",
         "There is hereby",
+        "There are authorized",
+        "Section",
+        "Sections",
         "The",
         "An",
         "Any",

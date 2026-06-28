@@ -460,6 +460,44 @@ def _first_nonempty(*values: object) -> str:
     return ""
 
 
+def _us_code_source_id_from_fields(
+    record: Mapping[str, Any],
+    metadata: Mapping[str, Any],
+) -> str:
+    source = _first_nonempty(
+        record.get("source"),
+        record.get("source_type"),
+        metadata.get("source"),
+        metadata.get("source_type"),
+    ).lower()
+    if source not in {"us_code", "us-code", "usc", "u.s.c.", "u.s. code"}:
+        return ""
+
+    title = _first_nonempty(
+        record.get("title"),
+        record.get("title_number"),
+        record.get("usc_title"),
+        record.get("uscode_title"),
+        metadata.get("title"),
+        metadata.get("title_number"),
+        metadata.get("usc_title"),
+        metadata.get("uscode_title"),
+    )
+    section = _first_nonempty(
+        record.get("section"),
+        record.get("section_number"),
+        record.get("usc_section"),
+        record.get("uscode_section"),
+        metadata.get("section"),
+        metadata.get("section_number"),
+        metadata.get("usc_section"),
+        metadata.get("uscode_section"),
+    )
+    if title and section:
+        return f"{title} U.S.C. {section}"
+    return ""
+
+
 def _source_id_from_record(
     record: Mapping[str, Any],
     metadata: Mapping[str, Any],
@@ -493,6 +531,10 @@ def _source_id_from_record(
     source = _first_nonempty(record.get("source"), metadata.get("source"))
     if source.lower() in {"us_code", "us-code", "usc", "u.s.c."} and title and section:
         return f"{title} U.S.C. {section}"
+
+    us_code_source_id = _us_code_source_id_from_fields(record, metadata)
+    if us_code_source_id:
+        return us_code_source_id
 
     if proof_hash:
         return f"zkp-proof:{proof_hash[:16]}"

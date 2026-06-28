@@ -527,9 +527,13 @@ _USCODE_SECTION_CATCHLINE_STOP_RE = re.compile(
     r"\([a-z0-9ivxlcdm]{1,6}\)\s+|"
     r"The\s+(?:Secretary|Foundation|Commission|Administrator|Director|"
     r"consolidated\s+bank)\b|"
+    r"Any\s+\w+\b|"
     r"Each\s+\w+\b|"
+    r"Whoever\s+\w+\b|"
     r"This\s+section\b|"
     r"Nothing\s+in\s+this\b|"
+    r"Notwithstanding\s+\w+\b|"
+    r"In\s+the\s+(?:administration|case|event|operation|performance)\b|"
     r"As\s+soon\s+as\b|"
     r"Under\s+such\s+terms\b|"
     r"It\s+is\s+(?:critical|the\s+purpose|the\s+sense)\b|"
@@ -1873,6 +1877,8 @@ class LegalModalParser:
             stripped = stripped.strip(" .;:\u2014-")
             if not stripped:
                 continue
+            if stripped.startswith(","):
+                continue
             tokens = _TOKEN_RE.findall(stripped.lower())
             if (
                 not tokens
@@ -1888,6 +1894,7 @@ class LegalModalParser:
                 or self._is_short_residual_heading_coverage_candidate(tokens)
                 or self._is_long_residual_heading_coverage_candidate(tokens)
                 or self._is_uscode_compact_frame_residual_candidate(stripped, tokens)
+                or self._looks_like_punctuated_section_catchline(stripped, tokens)
             ):
                 continue
             start_char = candidate_start + leading_offset
@@ -3390,6 +3397,33 @@ class LegalModalParser:
         if tokens[0] in _USCODE_HEADING_ONLY_LEADING_STOPWORDS:
             if not self._looks_like_article_prefixed_heading(tokens):
                 return False
+        return True
+
+    def _looks_like_punctuated_section_catchline(
+        self,
+        segment_text: str,
+        tokens: Sequence[str],
+    ) -> bool:
+        """Accept compact section catchlines that use semicolon or colon separators."""
+        if not tokens:
+            return False
+        normalized = self.normalize_text(segment_text)
+        if not normalized or not any(punctuation in normalized for punctuation in (";", ":")):
+            return False
+        if normalized.lstrip().startswith(","):
+            return False
+        if tokens[0] in {"act", "acts", "ch", "pub", "section", "sections", "stat", "title"}:
+            return False
+        if len(tokens) > _USCODE_SECTION_CATCHLINE_MAX_TOKENS:
+            return False
+        lowered = normalized.lower()
+        if (
+            _USCODE_CODIFICATION_HINT_RE.search(lowered)
+            or _USCODE_EDITORIAL_STATUS_HINT_RE.search(lowered)
+            or _USCODE_DECLARATIVE_STATEMENT_HINT_RE.search(lowered)
+            or _USCODE_HEADING_ONLY_VERB_HINT_RE.search(lowered)
+        ):
+            return False
         return True
 
     def _looks_like_extended_heading_without_section_reference(self, tokens: Sequence[str]) -> bool:

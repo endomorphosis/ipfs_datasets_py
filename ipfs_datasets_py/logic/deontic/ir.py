@@ -260,6 +260,10 @@ def _actor_text(element: Dict[str, Any]) -> str:
     """Return a source-grounded actor slot from flat or detail fields."""
 
     flat_value = _first_text(element.get("subject")).strip()
+    section_application_actor = _section_application_actor_text(element)
+    if flat_value and _is_generic_section_application_actor(flat_value):
+        if section_application_actor:
+            return section_application_actor
     if flat_value.lower() == "it":
         unlawful_actor = _unlawful_clause_actor_text(element)
         if unlawful_actor:
@@ -914,6 +918,61 @@ _SOURCE_CONDITION_RE = re.compile(
     r"(?=(?:[,;.]|\s+(?:shall|must|may)\b)|$)",
     re.IGNORECASE,
 )
+_SECTION_APPLICATION_ACTOR_RE = re.compile(
+    r"\b(?P<actor>sections?\s+[0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*"
+    r"(?:\s*(?:,|and|or)\s*[0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)*"
+    r"(?:\s+of\s+this\s+title)?)\s+shall\s+apply\b",
+    re.IGNORECASE,
+)
+
+
+def _is_generic_section_application_actor(value: str) -> bool:
+    normalized = re.sub(r"\s+", " ", str(value or "").strip().lower())
+    return normalized in {"of this title", "this title", "of this chapter", "this chapter"}
+
+
+def _section_application_actor_text(element: Mapping[str, Any]) -> str:
+    match = _section_application_actor_match(element)
+    return _clean_source_label(match.group("actor")) if match else ""
+
+
+def _section_application_actor_field_spans(element: Mapping[str, Any]) -> Dict[str, List[int]]:
+    match = _section_application_actor_match(element)
+    if not match:
+        return {}
+    base_offset = _section_application_match_base_offset(element)
+    return {
+        "subject": [
+            base_offset + match.start("actor"),
+            base_offset + match.end("actor"),
+        ],
+    }
+
+
+def _section_application_actor_match(element: Mapping[str, Any]) -> Optional[re.Match[str]]:
+    for text in _section_application_source_text_candidates(element):
+        match = _SECTION_APPLICATION_ACTOR_RE.search(text)
+        if match:
+            return match
+    return None
+
+
+def _section_application_source_text_candidates(element: Mapping[str, Any]) -> List[str]:
+    candidates: List[str] = []
+    for key in ("support_text", "text", "source_text"):
+        value = str(element.get(key) or "")
+        if value:
+            candidates.append(value)
+    return candidates
+
+
+def _section_application_match_base_offset(element: Mapping[str, Any]) -> int:
+    support_text = str(element.get("support_text") or "")
+    if support_text and _SECTION_APPLICATION_ACTOR_RE.search(support_text):
+        support_span = SourceSpan.from_value(element.get("support_span")).to_list()
+        if len(support_span) == 2:
+            return support_span[0]
+    return 0
 
 
 def _unlawful_clause_parts(element: Dict[str, Any]) -> Dict[str, str]:
@@ -1039,6 +1098,9 @@ def _field_spans_with_source_fallback(element: Mapping[str, Any]) -> Dict[str, A
     """Return field spans adjusted for deterministic source-text recoveries."""
 
     field_spans = dict(element.get("field_spans") or {})
+    section_application_spans = _section_application_actor_field_spans(element)
+    if section_application_spans:
+        field_spans.update(section_application_spans)
     unlawful_spans = _unlawful_clause_field_spans(element)
     if unlawful_spans:
         field_spans.update(unlawful_spans)
@@ -2383,6 +2445,8 @@ def _ir_slot_spans(norm: LegalNormIR, slot: str, value: Any) -> List[List[int]]:
     spans.extend(_nested_slot_spans(value))
     if not spans and slot in {"actor", "action"}:
         spans.extend(_text_value_spans(norm, value))
+    if not spans and slot in DEFAULT_PHASE8_QUALITY_OPTIONAL_SLOTS:
+        spans.extend(_structured_text_value_spans(norm, value))
     return _dedupe_spans(spans)
 
 
@@ -2406,6 +2470,43 @@ def _text_value_spans(norm: LegalNormIR, value: Any) -> List[List[int]]:
         if offset >= 0:
             return [[offset, offset + len(text)]]
     return []
+
+
+def _structured_text_value_spans(norm: LegalNormIR, value: Any) -> List[List[int]]:
+    """Return source spans for reduced structured slots that retained text only."""
+
+    spans: List[List[int]] = []
+    for text in _structured_slot_text_values(value):
+        spans.extend(_text_value_spans(norm, text))
+    return spans
+
+
+def _structured_slot_text_values(value: Any) -> List[str]:
+    if isinstance(value, Mapping):
+        normalized = _with_value_alias(dict(value))
+        values: List[str] = []
+        for key in (
+            "value",
+            "normalized_text",
+            "raw_text",
+            "text",
+            "canonical_citation",
+            "citation",
+            "target",
+        ):
+            text = str(normalized.get(key) or "").strip()
+            if text and text not in values:
+                values.append(text)
+        return values
+    if isinstance(value, (list, tuple)):
+        values: List[str] = []
+        for item in value:
+            for text in _structured_slot_text_values(item):
+                if text not in values:
+                    values.append(text)
+        return values
+    text = str(value or "").strip()
+    return [text] if text else []
 
 
 def _mental_state_span_from_action(norm: LegalNormIR) -> List[List[int]]:

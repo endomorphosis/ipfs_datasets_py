@@ -139,6 +139,11 @@ _CATCHLINE_BODY_START_RE = re.compile(
     r"\s+(?:A|An|Each|For|In|It|No|Nothing|Not|The|There|This|Whoever|"
     r"Pub\. L\.)\b.*$"
 )
+_SECTION_HEADING_SOURCE_TAIL_RE = re.compile(
+    r"\s+(?:From the U\.S\. Government(?:\s+Publishing\s+Office)?|"
+    r"Editorial\s+Notes?|Statutory\s+Notes?)\b.*$",
+    re.IGNORECASE,
+)
 _DASH_TRANSLATION = str.maketrans(
     {
         "\u2010": "-",
@@ -478,6 +483,7 @@ def _editorial_status_components(text: str) -> List[Tuple[str, str]]:
 
 def _clean_heading_text(text: str) -> str:
     heading = re.sub(r"\s+", " ", _normalize_dashes(text)).strip(" -.;")
+    heading = _SECTION_HEADING_SOURCE_TAIL_RE.sub("", heading).strip(" -.;")
     # Some sparse samples continue directly into text after a short catchline.
     # Keep the canonical heading span conservative and deterministic.
     heading = _CATCHLINE_BODY_START_RE.sub("", heading).strip(" -.;")

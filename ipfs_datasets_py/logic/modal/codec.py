@@ -1505,6 +1505,7 @@ def _guidance_feature_list(value: Any, *, limit: int) -> List[str]:
 
 _GRAPH_PROJECTION_GUIDANCE_ROUTE = "repair_multiview_legal_ir_graph_projection"
 _NEO4J_COMPAT_TARGET_COMPONENT = "knowledge_graphs.neo4j_compat"
+_MODAL_FRAME_LOGIC_TARGET_COMPONENT = "modal.frame_logic"
 
 
 def _compiler_guidance_route_features(
@@ -1523,6 +1524,9 @@ def _compiler_guidance_route_features(
         "route",
         "compiler_guidance_action",
         "action",
+        "original_action",
+        "failed_action",
+        "failed_todo_action",
     ):
         route = str(compiler_guidance.get(route_key) or "").strip()
         if route:
@@ -1535,7 +1539,12 @@ def _compiler_guidance_route_features(
         raw_bundle = compiler_guidance.get("semantic_bundle")
     if isinstance(raw_bundle, Mapping):
         bundle_route = str(
-            raw_bundle.get("route") or raw_bundle.get("action") or ""
+            raw_bundle.get("route")
+            or raw_bundle.get("action")
+            or raw_bundle.get("original_action")
+            or raw_bundle.get("failed_action")
+            or raw_bundle.get("failed_todo_action")
+            or ""
         ).strip()
         if bundle_route:
             features.append(f"compiler-guidance-route:{bundle_route}")
@@ -1558,7 +1567,15 @@ def _compiler_guidance_route_features(
     for item in evidence_items:
         if not isinstance(item, Mapping):
             continue
-        route = str(item.get("compiler_guidance_route") or "").strip()
+        route = str(
+            item.get("compiler_guidance_route")
+            or item.get("route")
+            or item.get("action")
+            or item.get("original_action")
+            or item.get("failed_action")
+            or item.get("failed_todo_action")
+            or ""
+        ).strip()
         if route:
             features.append(f"compiler-guidance-route:{route}")
     return _unique_preserve_order(features)
@@ -1612,6 +1629,37 @@ def _compiler_guidance_implies_neo4j_projection_target(
     if not target_component and isinstance(raw_bundle, Mapping):
         target_component = str(raw_bundle.get("target_component") or "").strip()
     return not target_component or target_component == _NEO4J_COMPAT_TARGET_COMPONENT
+
+
+def _compiler_guidance_frame_logic_target_routes(
+    compiler_guidance: Mapping[str, Any],
+) -> List[str]:
+    """Return frame-logic repair routes encoded in packet-shaped guidance."""
+    if not isinstance(compiler_guidance, Mapping):
+        return []
+    routes: List[str] = []
+    for feature in _compiler_guidance_route_features(compiler_guidance):
+        normalized = _clean_non_empty_string(feature).lower()
+        if normalized.startswith("compiler-guidance-route:"):
+            normalized = normalized.split(":", 1)[1].strip()
+        if normalized in _FLOGIC_ONTOLOGY_GUIDANCE_ROUTES:
+            routes.append(normalized)
+    return _unique_preserve_order(routes)
+
+
+def _compiler_guidance_implies_frame_logic_target(
+    compiler_guidance: Mapping[str, Any],
+) -> bool:
+    """Return true when compact guidance targets the modal frame-logic view."""
+    if _compiler_guidance_frame_logic_target_routes(compiler_guidance):
+        return True
+    target_component = str(compiler_guidance.get("target_component") or "").strip()
+    raw_bundle = compiler_guidance.get("bundle")
+    if not isinstance(raw_bundle, Mapping):
+        raw_bundle = compiler_guidance.get("semantic_bundle")
+    if not target_component and isinstance(raw_bundle, Mapping):
+        target_component = str(raw_bundle.get("target_component") or "").strip()
+    return target_component == _MODAL_FRAME_LOGIC_TARGET_COMPONENT
 
 
 def _compiler_guidance_summary(
@@ -1696,6 +1744,15 @@ def _compiler_guidance_summary(
         compiler_guidance.get("legal_ir_target_view_distribution")
     )
     if (
+        _compiler_guidance_implies_frame_logic_target(compiler_guidance)
+        and _MODAL_FRAME_LOGIC_TARGET_COMPONENT
+        not in legal_ir_target_view_distribution
+    ):
+        legal_ir_target_view_distribution = {
+            **legal_ir_target_view_distribution,
+            _MODAL_FRAME_LOGIC_TARGET_COMPONENT: 1.0,
+        }
+    if (
         _compiler_guidance_implies_neo4j_projection_target(compiler_guidance)
         and _NEO4J_COMPAT_TARGET_COMPONENT not in legal_ir_target_view_distribution
     ):
@@ -1729,6 +1786,13 @@ def _compiler_guidance_summary(
         compiler_guidance.get("synthesis_focus"),
         limit=_COMPILER_GUIDANCE_MAX_FEATURES,
     )
+    frame_logic_routes = _compiler_guidance_frame_logic_target_routes(
+        compiler_guidance
+    )
+    if frame_logic_routes:
+        synthesis_focus = _unique_preserve_order(
+            [*synthesis_focus, *frame_logic_routes]
+        )[:_COMPILER_GUIDANCE_MAX_FEATURES]
     if _compiler_guidance_implies_neo4j_projection_target(compiler_guidance):
         synthesis_focus = _unique_preserve_order(
             [*synthesis_focus, _GRAPH_PROJECTION_GUIDANCE_ROUTE]

@@ -1847,6 +1847,9 @@ def _infer_action_from_text(text: str) -> str:
     )
     if definition_match:
         return f"define_{definition_match.group(1)}"
+    uscode_heading = _infer_uscode_heading_action(normalized)
+    if uscode_heading:
+        return uscode_heading
     tokens = re.findall(r"[a-z0-9]+", lowered)
     if not tokens:
         return "act"
@@ -1881,6 +1884,76 @@ def _infer_action_from_text(text: str) -> str:
     informative = [token for token in tokens if token not in ignored]
     action_tokens = informative[:6] if informative else tokens[:3]
     return " ".join(action_tokens)
+
+
+def _infer_uscode_heading_action(text: str) -> str:
+    """Extract a compact fallback predicate from U.S. Code citation headings."""
+
+    normalized = " ".join(str(text or "").split())
+    if not normalized or not re.search(
+        r"U\.?\s*S\.?\s*C\.?",
+        normalized,
+        re.IGNORECASE,
+    ):
+        return ""
+
+    sec_match = re.search(
+        r"\bSecs?\.\s+[0-9A-Za-z.\-]+(?:\s+to\s+[0-9A-Za-z.\-]+)?\s+-\s+"
+        r"(.+?)(?=\s+(?:From the U\.S\. Government|§|Editorial Notes|"
+        r"Statutory Notes|Historical and Revision Notes|Pub\. L\.|"
+        r"\([A-Z][a-z]{2}\.|[A-Z][a-z]+\s+[0-9]{1,2},\s+[0-9]{4})|$)",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    if sec_match:
+        heading = _clean_uscode_heading_phrase(sec_match.group(1))
+        if heading:
+            return heading
+
+    uppercase_tail = ""
+    for match in re.finditer(
+        r"(?:SUBCHAPTER|CHAPTER|PART|Subtitle)\s+[A-Z0-9IVXLCDM.\-]+\s+-\s+"
+        r"([A-Z][A-Z0-9,.;:'()&/\-\s]{4,120})(?=\s+(?:Sec\.|Secs?\.)|$)",
+        normalized,
+    ):
+        uppercase_tail = match.group(1)
+    if uppercase_tail:
+        heading = _clean_uscode_heading_phrase(uppercase_tail)
+        if heading:
+            return heading
+
+    return ""
+
+
+def _clean_uscode_heading_phrase(text: str) -> str:
+    heading = re.sub(r"\s+", " ", str(text or "")).strip(" -.;:")
+    if not heading:
+        return ""
+    nested_heading = re.split(
+        r"\b(?:SUBCHAPTER|CHAPTER|PART|Subtitle)\s+"
+        r"[A-Z0-9IVXLCDM.\-]+\s+-\s+",
+        heading,
+        flags=re.IGNORECASE,
+    )
+    if len(nested_heading) > 1:
+        heading = nested_heading[-1].strip(" -.;:")
+    heading = re.sub(r"\b(?:From the U\.S\. Government.*)$", "", heading).strip(" -.;:")
+    heading = re.sub(
+        r"\b(?:U\.?\s*S\.?\s*C\.?|United States Code)\b",
+        "",
+        heading,
+        flags=re.IGNORECASE,
+    )
+    heading = re.sub(
+        r"\b(?:Title|Edition|Chapter|Subchapter|Subtitle|Part)\b",
+        "",
+        heading,
+        flags=re.IGNORECASE,
+    )
+    heading = re.sub(r"\s+", " ", heading).strip(" -.;:")
+    if not heading:
+        return ""
+    return heading.lower()
 
 
 def _infer_actor_from_text(text: str) -> str:

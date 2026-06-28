@@ -19435,54 +19435,57 @@ class AdaptiveModalAutoencoder:
                     error,
                     scale=step * embedding_update_scale * normalized_weight,
                 )
-        target_distribution = _observed_family_distribution(sample)
-        for family, target_weight in target_distribution.items():
-            normalized_weight = max(0.0, float(target_weight))
-            if normalized_weight <= 0.0:
-                continue
-            weights = self.state.family_embedding_weights.setdefault(
-                family,
-                [0.0 for _ in sample.embedding_vector],
-            )
-            if len(weights) != len(sample.embedding_vector):
-                weights[:] = [0.0 for _ in sample.embedding_vector]
-            weights[:] = self._add_scaled_vector(
-                weights,
-                error,
-                scale=step * embedding_update_scale * normalized_weight,
-            )
-        for slot, slot_weight in self._semantic_slot_distribution_for(sample).items():
-            normalized_weight = max(0.0, float(slot_weight))
-            if normalized_weight <= 0.0:
-                continue
-            weights = self.state.semantic_slot_embedding_weights.setdefault(
-                slot,
-                [0.0 for _ in sample.embedding_vector],
-            )
-            if len(weights) != len(sample.embedding_vector):
-                weights[:] = [0.0 for _ in sample.embedding_vector]
-            weights[:] = self._add_scaled_vector(
-                weights,
-                error,
-                scale=step * embedding_update_scale * normalized_weight,
-            )
-        for key, target_weight in (
-            self._target_family_semantic_slot_distribution_for_sample(sample).items()
-        ):
-            normalized_weight = max(0.0, float(target_weight))
-            if normalized_weight <= 0.0:
-                continue
-            weights = self.state.family_semantic_slot_embedding_weights.setdefault(
-                key,
-                [0.0 for _ in sample.embedding_vector],
-            )
-            if len(weights) != len(sample.embedding_vector):
-                weights[:] = [0.0 for _ in sample.embedding_vector]
-            weights[:] = self._add_scaled_vector(
-                weights,
-                error,
-                scale=step * embedding_update_scale * normalized_weight,
-            )
+        if self.family_embedding_weight_scale > 0.0:
+            target_distribution = _observed_family_distribution(sample)
+            for family, target_weight in target_distribution.items():
+                normalized_weight = max(0.0, float(target_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                weights = self.state.family_embedding_weights.setdefault(
+                    family,
+                    [0.0 for _ in sample.embedding_vector],
+                )
+                if len(weights) != len(sample.embedding_vector):
+                    weights[:] = [0.0 for _ in sample.embedding_vector]
+                weights[:] = self._add_scaled_vector(
+                    weights,
+                    error,
+                    scale=step * embedding_update_scale * normalized_weight,
+                )
+        if self.semantic_slot_embedding_weight_scale > 0.0:
+            for slot, slot_weight in self._semantic_slot_distribution_for(sample).items():
+                normalized_weight = max(0.0, float(slot_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                weights = self.state.semantic_slot_embedding_weights.setdefault(
+                    slot,
+                    [0.0 for _ in sample.embedding_vector],
+                )
+                if len(weights) != len(sample.embedding_vector):
+                    weights[:] = [0.0 for _ in sample.embedding_vector]
+                weights[:] = self._add_scaled_vector(
+                    weights,
+                    error,
+                    scale=step * embedding_update_scale * normalized_weight,
+                )
+        if self.family_semantic_slot_embedding_weight_scale > 0.0:
+            for key, target_weight in (
+                self._target_family_semantic_slot_distribution_for_sample(sample).items()
+            ):
+                normalized_weight = max(0.0, float(target_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                weights = self.state.family_semantic_slot_embedding_weights.setdefault(
+                    key,
+                    [0.0 for _ in sample.embedding_vector],
+                )
+                if len(weights) != len(sample.embedding_vector):
+                    weights[:] = [0.0 for _ in sample.embedding_vector]
+                weights[:] = self._add_scaled_vector(
+                    weights,
+                    error,
+                    scale=step * embedding_update_scale * normalized_weight,
+                )
         if self.semantic_slot_legal_ir_view_embedding_weight_scale > 0.0:
             for key, target_weight in (
                 self._target_semantic_slot_legal_ir_view_distribution_for_sample(sample).items()
@@ -19503,63 +19506,68 @@ class AdaptiveModalAutoencoder:
                     error,
                     scale=step * embedding_update_scale * normalized_weight,
                 )
-        for key, target_weight in (
-            self._target_family_semantic_slot_legal_ir_view_distribution_for_sample(
-                sample
-            ).items()
-        ):
-            normalized_weight = max(0.0, float(target_weight))
-            if normalized_weight <= 0.0:
-                continue
-            weights = (
-                self.state.family_semantic_slot_legal_ir_view_embedding_weights.setdefault(
+        if self.family_semantic_slot_legal_ir_view_embedding_weight_scale > 0.0:
+            for key, target_weight in (
+                self._target_family_semantic_slot_legal_ir_view_distribution_for_sample(
+                    sample
+                ).items()
+            ):
+                normalized_weight = max(0.0, float(target_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                weights = (
+                    self.state.family_semantic_slot_legal_ir_view_embedding_weights.setdefault(
+                        key,
+                        [0.0 for _ in sample.embedding_vector],
+                    )
+                )
+                if len(weights) != len(sample.embedding_vector):
+                    weights[:] = [0.0 for _ in sample.embedding_vector]
+                weights[:] = self._add_scaled_vector(
+                    weights,
+                    error,
+                    scale=step * embedding_update_scale * normalized_weight,
+                )
+        if self.legal_ir_view_embedding_weight_scale > 0.0:
+            legal_ir_view_distribution = _normalized_distribution(
+                self._legal_ir_view_target_distribution_for_sample(sample)
+            )
+            for view, target_weight in legal_ir_view_distribution.items():
+                normalized_weight = max(0.0, float(target_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                weights = self.state.legal_ir_view_embedding_weights.setdefault(
+                    view,
+                    [0.0 for _ in sample.embedding_vector],
+                )
+                if len(weights) != len(sample.embedding_vector):
+                    weights[:] = [0.0 for _ in sample.embedding_vector]
+                weights[:] = self._add_scaled_vector(
+                    weights,
+                    error,
+                    scale=step * embedding_update_scale * normalized_weight,
+                )
+        if self.family_legal_ir_view_embedding_weight_scale > 0.0:
+            for key, target_weight in (
+                self._target_family_legal_ir_view_distribution_for_sample(sample).items()
+            ):
+                normalized_weight = max(0.0, float(target_weight))
+                if normalized_weight <= 0.0:
+                    continue
+                weights = self.state.family_legal_ir_view_embedding_weights.setdefault(
                     key,
                     [0.0 for _ in sample.embedding_vector],
                 )
-            )
-            if len(weights) != len(sample.embedding_vector):
-                weights[:] = [0.0 for _ in sample.embedding_vector]
-            weights[:] = self._add_scaled_vector(
-                weights,
-                error,
-                scale=step * embedding_update_scale * normalized_weight,
-            )
-        legal_ir_view_distribution = _normalized_distribution(
-            self._legal_ir_view_target_distribution_for_sample(sample)
-        )
-        for view, target_weight in legal_ir_view_distribution.items():
-            normalized_weight = max(0.0, float(target_weight))
-            if normalized_weight <= 0.0:
-                continue
-            weights = self.state.legal_ir_view_embedding_weights.setdefault(
-                view,
-                [0.0 for _ in sample.embedding_vector],
-            )
-            if len(weights) != len(sample.embedding_vector):
-                weights[:] = [0.0 for _ in sample.embedding_vector]
-            weights[:] = self._add_scaled_vector(
-                weights,
-                error,
-                scale=step * embedding_update_scale * normalized_weight,
-            )
-        for key, target_weight in (
-            self._target_family_legal_ir_view_distribution_for_sample(sample).items()
-        ):
-            normalized_weight = max(0.0, float(target_weight))
-            if normalized_weight <= 0.0:
-                continue
-            weights = self.state.family_legal_ir_view_embedding_weights.setdefault(
-                key,
-                [0.0 for _ in sample.embedding_vector],
-            )
-            if len(weights) != len(sample.embedding_vector):
-                weights[:] = [0.0 for _ in sample.embedding_vector]
-            weights[:] = self._add_scaled_vector(
-                weights,
-                error,
-                scale=step * embedding_update_scale * normalized_weight,
-            )
+                if len(weights) != len(sample.embedding_vector):
+                    weights[:] = [0.0 for _ in sample.embedding_vector]
+                weights[:] = self._add_scaled_vector(
+                    weights,
+                    error,
+                    scale=step * embedding_update_scale * normalized_weight,
+                )
         self._invalidate_legal_ir_view_family_candidates()
+        if self.feature_embedding_weight_scale <= 0.0:
+            return
         feature_keys = self._feature_keys_for(sample)
         if not feature_keys:
             return

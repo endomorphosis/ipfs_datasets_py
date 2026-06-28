@@ -118,6 +118,26 @@ def test_legal_norm_ir_recovers_modal_slots_from_prompt_context_detail_rows() ->
     assert ir.canonical_modality == "O"
 
 
+def test_legal_norm_ir_recovers_section_application_actor_from_source_text() -> None:
+    element = extract_normative_elements(
+        "Sections 5102 and 5124 of this title shall apply to this section."
+    )[0]
+
+    ir = LegalNormIR.from_parser_element(element)
+    provenance = legal_norm_ir_slot_provenance(ir, ("actor", "modality", "action"))
+
+    assert element["subject"] == ["of this title"]
+    assert ir.actor == "Sections 5102 and 5124 of this title"
+    assert ir.action == "apply to this section"
+    assert provenance["missing_slots"] == []
+    assert provenance["ungrounded_slots"] == []
+    assert provenance["grounded_slots"] == ["actor", "modality", "action"]
+    actor_grounding = provenance["slot_grounding"][0]
+    assert actor_grounding["slot"] == "actor"
+    assert actor_grounding["value"] == "Sections 5102 and 5124 of this title"
+    assert actor_grounding["spans"] == [[0, 36]]
+
+
 def test_legal_norm_ir_decoder_validation_gate_distinguishes_cross_reference_warning_classes() -> None:
     cross_reference_only = extract_normative_elements(
         "This section applies to food carts."
