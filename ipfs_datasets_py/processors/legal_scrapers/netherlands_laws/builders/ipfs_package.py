@@ -305,6 +305,13 @@ This refresh includes parser coverage improvements for older/French heading styl
 plus run metadata diagnostics that distinguish article-producing laws, parser-missing article cases,
 and genuinely unnumbered/non-article documents.
 
+Quality audit note: this snapshot was rebuilt after parser-noise cleanup for official website UI chrome
+such as relation, permanent-link, print, save, and wetstechnical-information controls. Duplicate article
+identifiers caused by repeated article numbers in different hierarchy branches are disambiguated with
+deterministic hierarchy/text-derived suffixes. The quality audit reports duplicate IDs/CIDs as zero,
+clean status inheritance, clean hierarchy/citation reconstruction, and passing sampled CID/vector/BM25/KG
+retrieval validation.
+
 Historical/former laws are preserved. Consumers should use `law_status`, `is_current`, `valid_from`,
 `valid_to`, `effective_date`, `retrieved_at`, `status_source`, `status_confidence`, and `status_note`
 to distinguish current law from historical, repealed, superseded, or unknown-status records. These fields

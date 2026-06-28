@@ -249,3 +249,16 @@ The `all` upload/verify target covers:
 - `justicedao/ipfs_netherlands_laws_vector_index`
 - `justicedao/ipfs_netherlands_laws_bm25_index`
 - `justicedao/ipfs_netherlands_laws_knowledge_graph`
+
+## Reusable Jurisdiction Framework
+
+The Netherlands pipeline is also the first implementation of the reusable legal
+corpus framework in `ipfs_datasets_py.processors.legal_scrapers.legal_corpus`.
+The implementation adapter lives at
+`ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.jurisdiction`.
+
+Existing Netherlands CLI commands remain backward compatible. Future
+jurisdictions should implement the shared discovery, fetching, parsing,
+hierarchy, status/version, CID, packaging, BM25, vector, JSON-LD, Hugging Face
+publishing, and integrity interfaces documented in
+`legal_corpus/docs/JURISDICTION_IMPLEMENTATION.md`.

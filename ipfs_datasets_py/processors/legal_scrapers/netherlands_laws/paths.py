@@ -23,6 +23,7 @@ NORMALIZED_DATASET_NAME = "netherlands-laws-nl-normalized"
 VECTOR_INDEX_DATASET_NAME = "ipfs_netherlands_laws_vector_index"
 BM25_INDEX_DATASET_NAME = "ipfs_netherlands_laws_bm25_index"
 KNOWLEDGE_GRAPH_DATASET_NAME = "ipfs_netherlands_laws_knowledge_graph"
+UNIFIED_WETWIJZER_DATASET_NAME = "wetwijzer_netherlands_legal_corpus"
 
 DEFAULT_HF_NAMESPACE = "justicedao"
 DEFAULT_HF_REPO_IDS = {
@@ -31,6 +32,7 @@ DEFAULT_HF_REPO_IDS = {
     "vector": f"{DEFAULT_HF_NAMESPACE}/{VECTOR_INDEX_DATASET_NAME}",
     "bm25": f"{DEFAULT_HF_NAMESPACE}/{BM25_INDEX_DATASET_NAME}",
     "knowledge-graph": f"{DEFAULT_HF_NAMESPACE}/{KNOWLEDGE_GRAPH_DATASET_NAME}",
+    "unified": f"{DEFAULT_HF_NAMESPACE}/{UNIFIED_WETWIJZER_DATASET_NAME}",
 }
 
 REPO_ROOT = PACKAGE_DIR.parents[4]

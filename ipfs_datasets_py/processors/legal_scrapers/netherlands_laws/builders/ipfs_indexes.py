@@ -278,7 +278,9 @@ def build_vector_index(
             "The current source dataset may be capped; do not describe it as the full Dutch corpus unless "
             "the paired base dataset manifest/run metadata proves full discovery coverage. "
             "The paired base dataset includes article extraction diagnostics and parser coverage improvements "
-            "for older/French heading styles. Historical/former laws are preserved and labeled with "
+            "for older/French heading styles. The paired source package was quality-audited after parser-noise "
+            "cleanup for official website UI chrome, duplicate article identifier disambiguation, clean "
+            "hierarchy/citation validation, and sampled CID/vector/BM25/KG retrieval checks. Historical/former laws are preserved and labeled with "
             "`law_status`, `is_current`, validity dates, status source, confidence, and notes; these fields "
             "are also present in the vector mapping rows for filtering. This index is not legal advice."
         ),
@@ -398,7 +400,9 @@ def build_bm25_index(
             "The current source dataset may be capped; do not describe it as the full Dutch corpus unless "
             "the paired base dataset manifest/run metadata proves full discovery coverage. "
             "The paired base dataset includes article extraction diagnostics and parser coverage improvements "
-            "for older/French heading styles. Historical/former laws are preserved and labeled with "
+            "for older/French heading styles. The paired source package was quality-audited after parser-noise "
+            "cleanup for official website UI chrome, duplicate article identifier disambiguation, clean "
+            "hierarchy/citation validation, and sampled CID/vector/BM25/KG retrieval checks. Historical/former laws are preserved and labeled with "
             "`law_status`, `is_current`, validity dates, status source, confidence, and notes; these fields "
             "are also present in BM25 document rows for filtering. This index is not legal advice."
         ),
@@ -574,7 +578,9 @@ def build_knowledge_graph(
             "The current source dataset may be capped; do not describe it as the full Dutch corpus unless "
             "the paired base dataset manifest/run metadata proves full discovery coverage. "
             "The paired base dataset includes article extraction diagnostics and parser coverage improvements "
-            "for older/French heading styles. Historical/former laws are preserved and labeled with "
+            "for older/French heading styles. The paired source package was quality-audited after parser-noise "
+            "cleanup for official website UI chrome, duplicate article identifier disambiguation, clean "
+            "hierarchy/citation validation, and sampled CID/vector/BM25/KG retrieval checks. Historical/former laws are preserved and labeled with "
             "`law_status`, `is_current`, validity dates, status source, confidence, and notes in graph nodes "
             "and JSON-LD objects. This graph is not legal advice."
         ),

@@ -14,6 +14,10 @@ from .builders.ipfs_package import DEFAULT_REPO_ID as DEFAULT_BASE_REPO_ID
 from .builders.ipfs_package import build_ipfs_cid_package
 from .builders.normalized_package import DEFAULT_REPO_ID as DEFAULT_NORMALIZED_REPO_ID
 from .builders.normalized_package import build_normalized_package
+from .builders.unified_package import (
+    DEFAULT_REPO_ID as DEFAULT_UNIFIED_REPO_ID,
+)
+from .builders.unified_package import build_unified_wetwijzer_package, validate_unified_package
 from .operations import (
     build_incremental_hf_delta,
     coverage_report,
@@ -191,6 +195,24 @@ def build_parser() -> argparse.ArgumentParser:
     kg = sub.add_parser("build-knowledge-graph", help="Build the JSON-LD knowledge graph package.")
     _add_common_build_args(kg)
 
+    unified = sub.add_parser("build-unified", help="Build the unified WetWijzer corpus bundle.")
+    unified.add_argument("--base-dir", "--base_dir", type=Path)
+    unified.add_argument("--vector-dir", "--vector_dir", type=Path)
+    unified.add_argument("--bm25-dir", "--bm25_dir", type=Path)
+    unified.add_argument("--kg-dir", "--kg_dir", type=Path)
+    unified.add_argument("--reports-dir", "--reports_dir", type=Path)
+    unified.add_argument("--out-dir", "--out_dir", type=Path)
+    unified.add_argument("--repo-id", default=DEFAULT_UNIFIED_REPO_ID)
+    unified.add_argument(
+        "--no-relationship-summaries",
+        "--no_relationship_summaries",
+        action="store_true",
+        help="Do not derive the CID-keyed logic/relationship summary table.",
+    )
+
+    validate_unified = sub.add_parser("validate-unified", help="Validate the local unified WetWijzer corpus bundle.")
+    validate_unified.add_argument("--out-dir", "--out_dir", type=Path)
+
     indexes = sub.add_parser("build-indexes", help="Build vector, BM25, and knowledge graph packages.")
     indexes.add_argument("--source-dir", type=Path)
 
@@ -351,6 +373,24 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "build-knowledge-graph":
         out_dir = build_knowledge_graph(source_dir=args.source_dir, out_dir=args.out_dir, repo_id=args.repo_id or DEFAULT_HF_REPO_IDS["knowledge-graph"])
         _print({"out_dir": str(out_dir)})
+        return 0
+
+    if args.command == "build-unified":
+        out_dir = build_unified_wetwijzer_package(
+            base_dir=args.base_dir,
+            vector_dir=args.vector_dir,
+            bm25_dir=args.bm25_dir,
+            kg_dir=args.kg_dir,
+            reports_dir=args.reports_dir,
+            out_dir=args.out_dir,
+            repo_id=args.repo_id,
+            include_relationship_summaries=not args.no_relationship_summaries,
+        )
+        _print({"out_dir": str(out_dir), "validation": validate_unified_package(out_dir)})
+        return 0
+
+    if args.command == "validate-unified":
+        _print(validate_unified_package(args.out_dir))
         return 0
 
     if args.command == "build-indexes":
