@@ -564,6 +564,33 @@ def test_spacy_encoder_extracts_rescued_packet_001981_deontic_cues() -> None:
     }.issubset(deontic_cues)
 
 
+def test_spacy_encoder_extracts_packet_000004_statutory_family_cues() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        (
+            "Sections 5102 and 5124 of this title shall apply to all Indian "
+            "tribes. The Secretary shall develop a system and shall consult "
+            "with the advisory committee. Members may collect charges and may "
+            "present a voucher under such regulations as the Secretary may "
+            "prescribe."
+        ),
+        document_id="packet-000004-family-cues",
+    )
+
+    cues_by_family = {}
+    for cue in encoding.cues:
+        cues_by_family.setdefault(cue.family, set()).add(cue.cue.lower())
+
+    assert {
+        "shall apply",
+        "shall develop",
+        "shall consult",
+        "may collect",
+        "may present",
+    }.issubset(cues_by_family["deontic"])
+    assert "under such regulations" in cues_by_family["conditional_normative"]
+
+
 def test_refined_pair_balance_boosts_frame_for_structural_authority_statutory_scope() -> None:
     counts = {
         "deontic": 2.0,

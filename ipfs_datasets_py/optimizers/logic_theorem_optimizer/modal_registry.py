@@ -278,6 +278,53 @@ COMPILER_AMBIGUITY_PACKET_002580_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     ),
 )
 
+COMPILER_AMBIGUITY_PACKET_000254_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
+    (
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ),
+    (
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        ModalLogicFamily.FRAME.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.FRAME.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.DYNAMIC.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.FRAME.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.EPISTEMIC.value,
+    ),
+)
+
 COMPILER_AMBIGUITY_PACKET_003094_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.DEONTIC.value,
@@ -5333,6 +5380,7 @@ COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] =
     *COMPILER_AMBIGUITY_PACKET_003336_FAMILY_PAIRS,
     *COMPILER_AMBIGUITY_PACKET_002204_FAMILY_PAIRS,
     *COMPILER_AMBIGUITY_PACKET_002580_FAMILY_PAIRS,
+    *COMPILER_AMBIGUITY_PACKET_000254_FAMILY_PAIRS,
     *COMPILER_AMBIGUITY_PACKET_001954_FAMILY_PAIRS,
     *COMPILER_AMBIGUITY_PACKET_001983_FAMILY_PAIRS,
     *COMPILER_AMBIGUITY_PACKET_000951_FAMILY_PAIRS,
@@ -6182,6 +6230,7 @@ SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     *COMPILER_AMBIGUITY_PACKET_003336_FAMILY_PAIRS,
     *COMPILER_AMBIGUITY_PACKET_002204_FAMILY_PAIRS,
     *COMPILER_AMBIGUITY_PACKET_002580_FAMILY_PAIRS,
+    *COMPILER_AMBIGUITY_PACKET_000254_FAMILY_PAIRS,
 )
 
 
@@ -6482,6 +6531,7 @@ PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...
     *COMPILER_AMBIGUITY_PACKET_000542_FAMILY_PAIRS,
     *COMPILER_AMBIGUITY_PACKET_003336_FAMILY_PAIRS,
     *COMPILER_AMBIGUITY_PACKET_002204_FAMILY_PAIRS,
+    *COMPILER_AMBIGUITY_PACKET_000254_FAMILY_PAIRS,
 )
 
 PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
@@ -6619,15 +6669,22 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                 (
                     "shall",
                     "shall administer",
+                    "shall apply",
                     "shall bear",
+                    "shall become",
+                    "shall be administered",
                     "shall be deposited",
                     "shall be fined",
                     "shall conduct",
                     "shall contain",
+                    "shall consult",
+                    "shall develop",
                     "shall issue",
                     "shall prepare and submit",
                     "shall prepare and transmit",
                     "shall reserve",
+                    "shall take",
+                    "shall take appropriate actions",
                     "shall transmit",
                     "must",
                     "must be undertaken",
@@ -6666,9 +6723,14 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                 (
                     "may",
                     "may acquire",
+                    "may be administered",
                     "may be used",
                     "may carry out",
+                    "may collect",
                     "may guarantee",
+                    "may obtain",
+                    "may present",
+                    "may provide",
                     "permitted",
                     "authorized",
                     "is authorized to",
@@ -6881,8 +6943,11 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                     "for purposes of",
                     "for the purposes of",
                     "in accordance with",
+                    "in accordance with the provisions",
                     "notwithstanding",
                     "pursuant to",
+                    "under applicable law",
+                    "under such regulations",
                     "under terms and conditions",
                     "under such terms and conditions",
                     "on such terms and conditions",
@@ -7395,6 +7460,7 @@ __all__ = [
     "COMPILER_AMBIGUITY_PACKET_003336_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_002204_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_002580_FAMILY_PAIRS",
+    "COMPILER_AMBIGUITY_PACKET_000254_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_008598_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_007995_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_012436_FAMILY_PAIRS",
