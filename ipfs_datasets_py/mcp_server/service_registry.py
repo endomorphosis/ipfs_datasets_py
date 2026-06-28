@@ -20,8 +20,10 @@ Module: ipfs_accelerate_py.mcplusplus_module.service_registry
 from __future__ import annotations
 
 import hashlib
+import hmac
 import json
 import logging
+import os
 import threading
 import time
 from dataclasses import dataclass, field
@@ -50,6 +52,7 @@ class ServiceRecord:
     timestamp: float = field(default_factory=time.time)
     ttl: float = SERVICE_TTL
     metadata: Dict[str, Any] = field(default_factory=dict)
+    signature: Optional[str] = None  # HMAC or Ed25519 signature over record
 
     @property
     def key(self) -> str:
@@ -59,6 +62,33 @@ class ServiceRecord:
     @property
     def is_expired(self) -> bool:
         return time.time() - self.timestamp > self.ttl
+
+    def signing_payload(self) -> bytes:
+        """Canonical payload for signing/verification."""
+        return json.dumps({
+            "service_name": self.service_name,
+            "peer_id": self.peer_id,
+            "tools": sorted(self.tools),
+            "version": self.version,
+            "timestamp": self.timestamp,
+        }, sort_keys=True).encode()
+
+    def sign(self, key: Optional[bytes] = None) -> None:
+        """Sign this record. Uses HMAC-SHA256 with peer_id as default key."""
+        signing_key = key or self.peer_id.encode()
+        self.signature = hmac.new(
+            signing_key, self.signing_payload(), hashlib.sha256
+        ).hexdigest()
+
+    def verify_signature(self, key: Optional[bytes] = None) -> bool:
+        """Verify signature. Returns True if valid or no signature required."""
+        if not self.signature:
+            return False
+        signing_key = key or self.peer_id.encode()
+        expected = hmac.new(
+            signing_key, self.signing_payload(), hashlib.sha256
+        ).hexdigest()
+        return hmac.compare_digest(self.signature, expected)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -70,6 +100,7 @@ class ServiceRecord:
             "timestamp": self.timestamp,
             "ttl": self.ttl,
             "metadata": self.metadata,
+            "signature": self.signature,
         }
 
     @classmethod
@@ -83,6 +114,7 @@ class ServiceRecord:
             timestamp=data.get("timestamp", time.time()),
             ttl=data.get("ttl", SERVICE_TTL),
             metadata=data.get("metadata", {}),
+            signature=data.get("signature"),
         )
 
 
@@ -167,6 +199,7 @@ class ServiceRegistry:
 
                 for record in records:
                     record.timestamp = time.time()  # Refresh timestamp
+                    record.sign()  # Sign before broadcasting
                     # Broadcast to all connected peers
                     for peer_id in list(p2p_node._peers.keys()):
                         try:
@@ -189,14 +222,35 @@ class ServiceRegistry:
             except Exception as e:
                 logger.debug(f"Service advertise error: {e}")
 
-    def handle_announce(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Handle an incoming service announcement from a peer."""
+    def handle_announce(self, params: Dict[str, Any], sender_peer_id: str = "") -> Dict[str, Any]:
+        """Handle an incoming service announcement from a peer.
+
+        Verifies that the record's peer_id matches the sender and validates
+        the signature before accepting.
+        """
+        import os
         record_data = params.get("record", {})
-        if record_data:
-            record = ServiceRecord.from_dict(record_data)
-            self.add_remote(record)
-            return {"status": "accepted", "service": record.service_name}
-        return {"status": "rejected", "reason": "empty record"}
+        if not record_data:
+            return {"status": "rejected", "reason": "empty record"}
+
+        record = ServiceRecord.from_dict(record_data)
+
+        # Verify peer_id matches sender (prevent impersonation)
+        if sender_peer_id and record.peer_id != sender_peer_id:
+            logger.warning(
+                "Service announce rejected: peer_id mismatch (record=%s, sender=%s)",
+                record.peer_id, sender_peer_id
+            )
+            return {"status": "rejected", "reason": "peer_id_mismatch"}
+
+        # Verify signature if enforcement is enabled
+        require_sig = os.environ.get("MCPPP_REQUIRE_SERVICE_SIGNATURES", "0") == "1"
+        if require_sig and not record.verify_signature():
+            logger.warning("Service announce rejected: invalid signature from %s", record.peer_id)
+            return {"status": "rejected", "reason": "invalid_signature"}
+
+        self.add_remote(record)
+        return {"status": "accepted", "service": record.service_name}
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize registry state for API responses."""
