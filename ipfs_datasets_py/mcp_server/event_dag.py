@@ -26,6 +26,7 @@ Public API::
 
 from __future__ import annotations
 
+import threading
 from dataclasses import dataclass, field
 from typing import Dict, Iterable, List, Optional, Set
 
@@ -61,6 +62,7 @@ class EventDAG:
             strict: Enforce parent-CID validation on append.
         """
         self.strict = strict
+        self._lock = threading.Lock()
         self._nodes: Dict[str, EventNode] = {}
         # Reverse index: parent_cid → set of child event_cids
         self._children: Dict[str, Set[str]] = {}
@@ -87,24 +89,25 @@ class EventDAG:
         """
         cid = node.event_cid
 
-        # Idempotent — already known
-        if cid in self._nodes:
-            return cid
+        with self._lock:
+            # Idempotent — already known
+            if cid in self._nodes:
+                return cid
 
-        # Parent validation
-        if self.strict:
+            # Parent validation
+            if self.strict:
+                for parent_cid in node.parents:
+                    if parent_cid not in self._nodes:
+                        raise ValueError(
+                            f"Unknown parent CID {parent_cid!r}; append parents before children "
+                            f"or set strict=False"
+                        )
+
+            self._nodes[cid] = node
+
+            # Update reverse index
             for parent_cid in node.parents:
-                if parent_cid not in self._nodes:
-                    raise ValueError(
-                        f"Unknown parent CID {parent_cid!r}; append parents before children "
-                        f"or set strict=False"
-                    )
-
-        self._nodes[cid] = node
-
-        # Update reverse index
-        for parent_cid in node.parents:
-            self._children.setdefault(parent_cid, set()).add(cid)
+                self._children.setdefault(parent_cid, set()).add(cid)
 
         return cid
 

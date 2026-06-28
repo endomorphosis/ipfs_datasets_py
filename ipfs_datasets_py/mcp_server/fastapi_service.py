@@ -1695,8 +1695,7 @@ async def mcp_execute_with_envelope(request: Request):
                 dag = EventDAG(strict=False)
                 app.state._event_dag = dag
             node = EventNode(
-                event_cid=event_cid,
-                parents=dag.frontier() if hasattr(dag, 'frontier') else [],
+                parents=[n.event_cid for n in dag.frontier()] if hasattr(dag, 'frontier') else [],
                 intent_cid=intent_cid,
                 decision_cid=str(artifact_cid({"decision": decision})),
                 receipt_cid=receipt_cid,
@@ -1811,25 +1810,26 @@ async def create_ucan_delegation(request: Request):
         ]
 
         import time as _time
+        from .cid_artifacts import artifact_cid
         now = int(_time.time())
+
+        # Compute CID for the delegation first
+        proof_cid = str(artifact_cid({
+            "issuer": "did:key:z6MkIPFSDatasetsMCPServer",
+            "audience": audience,
+            "capabilities": [{"resource": c.resource, "ability": c.ability} for c in caps],
+            "expiry": now + (expiration_hours * 3600),
+        }))
+
         delegation = Delegation(
+            cid=proof_cid,
             issuer="did:key:z6MkIPFSDatasetsMCPServer",
             audience=audience,
             capabilities=caps,
-            not_before=now,
-            expiration=now + (expiration_hours * 3600),
-            nonce=str(uuid.uuid4()),
+            expiry=now + (expiration_hours * 3600),
         )
 
         # Store delegation
-        from .cid_artifacts import artifact_cid
-        proof_cid = str(artifact_cid({
-            "issuer": delegation.issuer,
-            "audience": delegation.audience,
-            "capabilities": [{"resource": c.resource, "ability": c.ability} for c in caps],
-            "expiration": delegation.expiration,
-        }))
-
         try:
             add_delegation(proof_cid, delegation)
         except Exception:
@@ -1841,8 +1841,7 @@ async def create_ucan_delegation(request: Request):
                 "issuer": delegation.issuer,
                 "audience": delegation.audience,
                 "capabilities": [{"resource": c.resource, "ability": c.ability} for c in caps],
-                "not_before": delegation.not_before,
-                "expiration": delegation.expiration,
+                "expiry": delegation.expiry,
             },
         }
     except HTTPException:
@@ -1873,7 +1872,7 @@ async def validate_ucan_delegation(request: Request):
         valid = True
         reasons = []
 
-        if hasattr(delegation, 'expiration') and delegation.expiration < now:
+        if hasattr(delegation, 'expiry') and delegation.expiry < now:
             valid = False
             reasons.append("expired")
         if hasattr(delegation, 'not_before') and delegation.not_before > now:
@@ -1886,7 +1885,7 @@ async def validate_ucan_delegation(request: Request):
             "chain": [{
                 "issuer": getattr(delegation, 'issuer', ''),
                 "audience": getattr(delegation, 'audience', ''),
-                "expiration": getattr(delegation, 'expiration', 0),
+                "expiry": getattr(delegation, 'expiry', 0),
             }],
         }
     except HTTPException:
@@ -2013,7 +2012,7 @@ async def mcp_jsonrpc_handler(request: Request):
             delegation = get_delegation(proof_cid)
             import time as _time
             now = int(_time.time())
-            valid = delegation is not None and (not hasattr(delegation, 'expiration') or delegation.expiration >= now)
+            valid = delegation is not None and (not hasattr(delegation, 'expiry') or delegation.expiry >= now)
             return {"jsonrpc": "2.0", "id": req_id, "result": {"valid": valid, "chain": []}}
 
         elif method == "mcp++/policy/evaluate":
