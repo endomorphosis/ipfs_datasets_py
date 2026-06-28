@@ -11704,6 +11704,7 @@ def _statutory_frame_support_text(
 
     for formula in modal_ir.formulas:
         for value in (
+            _uscode_status_clause_text(document=modal_ir, formula=formula),
             _fallback_section_heading_tail_text(modal_ir=modal_ir, formula=formula),
             _fallback_surface_text(modal_ir=modal_ir, formula=formula),
             _status_keyword_value(

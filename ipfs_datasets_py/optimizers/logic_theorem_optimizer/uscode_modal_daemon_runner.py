@@ -545,7 +545,12 @@ def queue_file_lock(queue_path: Path) -> Iterator[None]:
 
 
 @contextmanager
-def codex_main_apply_lock(packet: Mapping[str, Any]) -> Iterator[None]:
+def codex_main_apply_lock(
+    packet: Mapping[str, Any],
+    *,
+    timeout_seconds: Optional[float] = None,
+    poll_seconds: float = 0.1,
+) -> Iterator[None]:
     """Serialize apply/validate/commit for parallel Codex worktree packets."""
     import fcntl
 
@@ -560,7 +565,26 @@ def codex_main_apply_lock(packet: Mapping[str, Any]) -> Iterator[None]:
     lock_path = lock_dir / "codex-main-apply.lock"
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     with lock_path.open("w", encoding="utf-8") as handle:
-        fcntl.flock(handle, fcntl.LOCK_EX)
+        deadline: Optional[float] = None
+        if timeout_seconds is not None:
+            deadline = time.monotonic() + max(0.0, float(timeout_seconds))
+        while True:
+            try:
+                fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError as exc:
+                if deadline is not None and time.monotonic() >= deadline:
+                    raise TimeoutError(
+                        f"Timed out acquiring Codex main apply lock: {lock_path}"
+                    ) from exc
+                if deadline is None:
+                    sleep_seconds = max(0.01, float(poll_seconds))
+                else:
+                    sleep_seconds = min(
+                        max(0.01, float(poll_seconds)),
+                        max(0.0, deadline - time.monotonic()),
+                    )
+                time.sleep(sleep_seconds)
         try:
             yield
         finally:
@@ -2297,6 +2321,46 @@ def _save_codex_packet_diff_patch(
     return patch_path
 
 
+def _codex_packet_main_apply_lock_timeout(
+    packet: Mapping[str, Any],
+    exc: BaseException,
+) -> Dict[str, Any]:
+    """Finalize a packet whose worktree diff could not acquire the main apply lock."""
+    updated = dict(packet)
+    packet_path_value = updated.get("packet_path")
+    packet_path = Path(str(packet_path_value)) if packet_path_value else None
+    worktree_value = updated.get("worktree_path")
+    updated["main_apply_status"] = "lock_timeout"
+    updated["main_apply_error"] = str(exc)
+    updated["patch_status"] = "main_apply_lock_timeout"
+    updated["patch_error"] = str(exc)
+    updated["patch_path"] = None
+    if worktree_value:
+        try:
+            diff_info = _codex_worktree_diff(Path(str(worktree_value)))
+            diff_content = str(diff_info.get("diff_content") or "")
+            updated["main_apply_target_files"] = [
+                str(path) for path in diff_info.get("target_files", [])
+            ]
+            updated["main_apply_untracked_paths"] = [
+                str(path) for path in diff_info.get("untracked_paths", [])
+            ]
+            updated["main_apply_ignored_artifact_paths"] = [
+                str(path) for path in diff_info.get("ignored_artifact_paths", [])
+            ]
+            if diff_content.strip():
+                patch_path = _save_codex_packet_diff_patch(
+                    updated,
+                    diff_content=diff_content,
+                    reason="main-apply-lock-timeout",
+                )
+                updated["patch_path"] = str(patch_path) if patch_path else None
+        except (OSError, RuntimeError, subprocess.SubprocessError, ValueError) as diff_exc:
+            updated["main_apply_diff_error"] = str(diff_exc)
+    _save_packet_if_possible(updated, packet_path)
+    return updated
+
+
 def _is_codex_worktree_artifact(path: str) -> bool:
     normalized = path.replace("\\", "/").strip("/")
     name = Path(normalized).name
@@ -3789,6 +3853,7 @@ def execute_codex_work_packet(
     timeout_seconds: float = 900.0,
     validation_commands: Optional[Sequence[Sequence[str]]] = None,
     validation_timeout_seconds: float = 300.0,
+    main_apply_lock_timeout_seconds: Optional[float] = None,
 ) -> Dict[str, Any]:
     """Run ``codex exec`` in the packet worktree and collect/apply its changes."""
     updated = dict(packet)
@@ -3828,15 +3893,21 @@ def execute_codex_work_packet(
     _save_packet_if_possible(updated, packet_path)
     normalized_apply_mode = str(apply_mode).strip().lower()
     if normalized_apply_mode == "apply_to_main":
-        with codex_main_apply_lock(updated):
-            refreshed = apply_codex_worktree_changes_to_main(
+        try:
+            with codex_main_apply_lock(
                 updated,
-                commit_mode=commit_mode,
-                merge_repair_attempts=merge_repair_attempts,
-                merge_repair_mode=merge_repair_mode,
-                validation_commands=validation_commands,
-                validation_timeout_seconds=validation_timeout_seconds,
-            )
+                timeout_seconds=main_apply_lock_timeout_seconds,
+            ):
+                refreshed = apply_codex_worktree_changes_to_main(
+                    updated,
+                    commit_mode=commit_mode,
+                    merge_repair_attempts=merge_repair_attempts,
+                    merge_repair_mode=merge_repair_mode,
+                    validation_commands=validation_commands,
+                    validation_timeout_seconds=validation_timeout_seconds,
+                )
+        except TimeoutError as exc:
+            refreshed = _codex_packet_main_apply_lock_timeout(updated, exc)
     else:
         refreshed = refresh_codex_work_packet_patch(updated)
     exec_result["attempt_count"] = 1
@@ -3867,15 +3938,21 @@ def execute_codex_work_packet(
         refreshed["codex_exec"] = fallback_result
         _save_packet_if_possible(refreshed, packet_path)
         if normalized_apply_mode == "apply_to_main":
-            with codex_main_apply_lock(refreshed):
-                refreshed = apply_codex_worktree_changes_to_main(
+            try:
+                with codex_main_apply_lock(
                     refreshed,
-                    commit_mode=commit_mode,
-                    merge_repair_attempts=merge_repair_attempts,
-                    merge_repair_mode=merge_repair_mode,
-                    validation_commands=validation_commands,
-                    validation_timeout_seconds=validation_timeout_seconds,
-                )
+                    timeout_seconds=main_apply_lock_timeout_seconds,
+                ):
+                    refreshed = apply_codex_worktree_changes_to_main(
+                        refreshed,
+                        commit_mode=commit_mode,
+                        merge_repair_attempts=merge_repair_attempts,
+                        merge_repair_mode=merge_repair_mode,
+                        validation_commands=validation_commands,
+                        validation_timeout_seconds=validation_timeout_seconds,
+                    )
+            except TimeoutError as exc:
+                refreshed = _codex_packet_main_apply_lock_timeout(refreshed, exc)
         else:
             refreshed = refresh_codex_work_packet_patch(refreshed)
     return refreshed
@@ -4009,7 +4086,10 @@ def _should_retry_codex_exec_with_fallback(
     if normalized_status in {"failed", "timeout"}:
         return True
 
-    if patch_status.strip().lower() in CODEX_COMPLETED_WORK_STATUSES:
+    normalized_patch_status = patch_status.strip().lower()
+    if normalized_patch_status in CODEX_COMPLETED_WORK_STATUSES:
+        return False
+    if normalized_patch_status == "main_apply_lock_timeout":
         return False
     return _codex_exec_logs_indicate_sandbox_block(exec_result)
 
@@ -4059,6 +4139,8 @@ def _codex_packet_should_requeue_transient(packet: Mapping[str, Any]) -> bool:
     main_apply_status = str(packet.get("main_apply_status") or "").strip().lower()
     if patch_status in CODEX_COMPLETED_WORK_STATUSES or main_apply_status == "applied":
         return False
+    if patch_status == "main_apply_lock_timeout" or main_apply_status == "lock_timeout":
+        return True
     if exec_status not in {"failed", "timeout"}:
         return False
     return _codex_exec_logs_indicate_transient_failure(exec_result)
@@ -5561,6 +5643,18 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         type=int,
         default=1,
         help="Maximum automatic merge-repair attempts for one packet apply.",
+    )
+    parser.add_argument(
+        "--codex-main-apply-lock-timeout-seconds",
+        type=float,
+        default=float(
+            os.environ.get("IPFS_DATASETS_CODEX_MAIN_APPLY_LOCK_TIMEOUT_SECONDS", "300")
+            or 300
+        ),
+        help=(
+            "Maximum seconds a Codex packet waits for the serialized main apply "
+            "lock before preserving its patch and requeueing as transient."
+        ),
     )
     parser.add_argument(
         "--codex-sandbox",
@@ -7158,6 +7252,9 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             "codex_execution_failure_count": 0,
             "codex_main_apply_count": 0,
             "codex_main_apply_failure_count": 0,
+            "codex_main_apply_lock_timeout_seconds": (
+                args.codex_main_apply_lock_timeout_seconds
+            ),
             "codex_main_apply_repair_count": 0,
             "codex_packet_count": 0,
             "codex_patch_count": 0,
@@ -7184,6 +7281,10 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
     summary.setdefault("codex_lane_lock_mode", args.codex_lane_lock_mode)
     summary.setdefault("codex_merge_repair_attempts", args.codex_merge_repair_attempts)
     summary.setdefault("codex_merge_repair_mode", args.codex_merge_repair_mode)
+    summary.setdefault(
+        "codex_main_apply_lock_timeout_seconds",
+        args.codex_main_apply_lock_timeout_seconds,
+    )
     summary.setdefault("codex_scope", args.codex_scope)
     summary.setdefault("codex_task_embeddings_provider", args.codex_task_embeddings_provider)
     summary.setdefault("codex_vector_index_path", str(_codex_vector_index_path(args, queue_path)))
@@ -7209,6 +7310,9 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             "codex_lane_lock_mode": args.codex_lane_lock_mode,
             "codex_merge_repair_attempts": args.codex_merge_repair_attempts,
             "codex_merge_repair_mode": args.codex_merge_repair_mode,
+            "codex_main_apply_lock_timeout_seconds": (
+                args.codex_main_apply_lock_timeout_seconds
+            ),
             "codex_scope": args.codex_scope,
             "codex_task_embeddings_provider": args.codex_task_embeddings_provider,
             "codex_vector_index_path": str(_codex_vector_index_path(args, queue_path)),
@@ -7280,6 +7384,9 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                         apply_mode=args.codex_apply_mode,
                         commit_mode=args.codex_commit_mode,
                         codex_command=args.codex_command,
+                        main_apply_lock_timeout_seconds=(
+                            args.codex_main_apply_lock_timeout_seconds
+                        ),
                         merge_repair_attempts=args.codex_merge_repair_attempts,
                         merge_repair_mode=args.codex_merge_repair_mode,
                         model=args.codex_model,

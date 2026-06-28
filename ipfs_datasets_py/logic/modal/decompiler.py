@@ -206,6 +206,11 @@ _USCODE_LEADING_SECTION_REF_RE = re.compile(
     rf"^\s*(?:(?:§{{1,2}}\s*|secs?\.?\s*|sections?\s+){_USCODE_SECTION_LIST_PATTERN}|{_USCODE_SECTION_TOKEN_PATTERN})\s*(?:[.:\-–—]+)?\s*",
     re.IGNORECASE,
 )
+_USCODE_CATCHLINE_BODY_START_RE = re.compile(
+    r"\s+(?=(?:\([a-z0-9]+\)\s+|For\s+purposes\s+of\b|On\s+and\s+after\b|"
+    r"No\s+\w+\b|The\s+\w+\b|A\s+\w+\b|An\s+\w+\b))",
+    re.IGNORECASE,
+)
 _USCODE_STATUS_LEADING_SECTION_LABEL_RE = re.compile(
     r"^\s*(?:(?:this|such)\s+)?(?:sections?|secs?\.?)\b\s*[,.:;\-–—]*\s*",
     re.IGNORECASE,
@@ -1030,6 +1035,14 @@ def _decode_formula_phrases(
             spans=spans,
         )
     )
+    phrases.extend(
+        _typed_decompiler_role_phrases(
+            formula=formula,
+            text=predicate_text,
+            slot_prefix="predicate",
+            spans=spans,
+        )
+    )
     _append_statutory_scope_phrases(
         phrases,
         predicate_text,
@@ -1335,6 +1348,14 @@ def _decode_formula_phrases(
                 spans=spans,
             )
         )
+        phrases.extend(
+            _typed_decompiler_role_phrases(
+                formula=formula,
+                text=source_span_text,
+                slot_prefix="modal_source_span",
+                spans=spans,
+            )
+        )
     for polarity_slot, polarity_value in _modal_polarity_slots(
         formula,
         condition_values=condition_values,
@@ -1367,7 +1388,7 @@ def _decode_formula_phrases(
                 text=status_clause_text,
                 slot="typed_ir_surface_reconstruction",
                 spans=spans,
-                provenance_only=False,
+                provenance_only=True,
             )
         )
         for typed_slot, typed_value in _typed_identifier_slots(
@@ -1826,6 +1847,12 @@ def _fallback_section_heading_tail_text(
         return ""
     start = max(0, min(len(source_text), int(formula.provenance.start_char)))
     end = max(start, min(len(source_text), int(formula.provenance.end_char)))
+    local_heading = _leading_uscode_catchline_text(
+        source_text[start:end],
+        max_tokens=max_tokens,
+    )
+    if local_heading:
+        return local_heading
     trailing = source_text[end:]
     if not trailing:
         return ""
@@ -1834,11 +1861,57 @@ def _fallback_section_heading_tail_text(
         return ""
     candidate = _SECTION_HEADING_TAIL_SPLIT_RE.split(trailing, maxsplit=1)[0]
     heading_tail = _clean_text(candidate)
+    heading_tail = _strip_uscode_gpo_attribution_fragment(heading_tail)
+    heading_tail = _TRAILING_SECTION_PUNCT_RE.sub("", heading_tail)
     if not heading_tail:
+        return ""
+    if _is_low_information_section_marker(heading_tail):
+        return ""
+    lowered_heading_tail = heading_tail.lower()
+    if (
+        lowered_heading_tail.startswith("u.s.c. title")
+        or lowered_heading_tail.startswith("usc title")
+        or "united states code" in lowered_heading_tail
+    ):
         return ""
     if len(_tokenize_for_similarity(heading_tail)) > max_tokens:
         return ""
     return heading_tail
+
+
+def _leading_uscode_catchline_text(text: str, *, max_tokens: int) -> str:
+    normalized = _clean_text(text)
+    if not normalized:
+        return ""
+    stripped = _clean_text(
+        _USCODE_LEADING_SECTION_REF_RE.sub("", normalized, count=1)
+    )
+    if not stripped or stripped == normalized:
+        return ""
+    stripped = _strip_uscode_gpo_attribution_fragment(stripped)
+    stripped = _clean_text(stripped.lstrip(" \t\r\n-–—:;,."))
+    if not stripped:
+        return ""
+    body_match = _USCODE_CATCHLINE_BODY_START_RE.search(stripped)
+    if body_match is not None:
+        stripped = _clean_text(stripped[: body_match.start()])
+    else:
+        stripped = _clean_text(
+            _SECTION_HEADING_TAIL_SPLIT_RE.split(stripped, maxsplit=1)[0]
+        )
+    stripped = _TRAILING_SECTION_PUNCT_RE.sub("", stripped)
+    if not stripped or _is_low_information_section_marker(stripped):
+        return ""
+    lowered = stripped.lower()
+    if (
+        lowered.startswith("u.s.c. title")
+        or lowered.startswith("usc title")
+        or "united states code" in lowered
+    ):
+        return ""
+    if len(_tokenize_for_similarity(stripped)) > max_tokens:
+        return ""
+    return stripped
 
 
 def _fallback_surface_text(
@@ -1866,6 +1939,7 @@ def _fallback_surface_text(
     if not span_text:
         return ""
     normalized = _clean_text(_USCODE_LEADING_SECTION_REF_RE.sub("", span_text))
+    normalized = _strip_uscode_gpo_attribution_fragment(normalized)
     normalized = _TRAILING_SECTION_PUNCT_RE.sub("", normalized)
     normalized = _trim_uscode_compilation_surface_text(
         normalized,
@@ -2042,6 +2116,12 @@ def _uscode_status_clause_text(
         if not clause:
             continue
         clause = _clean_status_clause_surface(clause)
+        clause = _extend_short_status_clause_with_editorial_tail(
+            source_text,
+            clause,
+            keyword,
+            max_tokens=max_tokens,
+        )
         tokens = _tokenize_for_similarity(clause)
         if tokens and len(tokens) <= max_tokens:
             return clause
@@ -2088,6 +2168,46 @@ def _status_clause_around_keyword(source_text: str, keyword: str) -> str:
     return _clean_text(source_text[start:end])
 
 
+def _extend_short_status_clause_with_editorial_tail(
+    source_text: str,
+    clause: str,
+    keyword: str,
+    *,
+    max_tokens: int,
+) -> str:
+    """Attach bounded Pub. L./Section context to one-word status headings."""
+    cleaned_clause = _clean_text(clause)
+    normalized_keyword = _clean_text(keyword).lower()
+    if not cleaned_clause or cleaned_clause.lower() != normalized_keyword:
+        return cleaned_clause
+    match = re.search(
+        rf"(?<!\w){re.escape(normalized_keyword)}(?:d|ed|s)?(?!\w)",
+        source_text,
+        flags=re.IGNORECASE,
+    )
+    if match is None:
+        return cleaned_clause
+    first_end = _status_clause_end(source_text, match.end())
+    if first_end >= len(source_text):
+        return cleaned_clause
+    tail = source_text[first_end:].lstrip(" \t\r\n-–—:;,.")
+    if not tail:
+        return cleaned_clause
+    if not re.match(r"(?i)(?:Pub\.?\s+L\.?|Public\s+Law|Section\b|Act\b)", tail):
+        return cleaned_clause
+    tail_end = _status_clause_end(tail, 0)
+    tail_clause = _clean_status_clause_surface(tail[:tail_end])
+    if not tail_clause:
+        return cleaned_clause
+    combined = _clean_text(f"{cleaned_clause} {tail_clause}")
+    tokens = _tokenize_for_similarity(combined)
+    if not tokens:
+        return cleaned_clause
+    if len(tokens) <= max_tokens:
+        return combined
+    return _clean_text(" ".join(tokens[:max_tokens]))
+
+
 def _status_clause_start(source_text: str, match_start: int) -> int:
     start = 0
     for index in range(match_start - 1, -1, -1):
@@ -2130,6 +2250,7 @@ def _period_marks_status_clause_boundary(source_text: str, index: int) -> bool:
         "jan",
         "jul",
         "jun",
+        "l",
         "mar",
         "nov",
         "oct",
@@ -4975,6 +5096,233 @@ def _content_scope_value(text: str) -> str:
     return content
 
 
+def _typed_decompiler_role_phrases(
+    *,
+    formula: ModalIRFormula,
+    text: str,
+    slot_prefix: str,
+    spans: List[List[int]],
+) -> List[DecodedModalPhrase]:
+    return [
+        DecodedModalPhrase(
+            text=value,
+            slot=slot,
+            spans=spans,
+            provenance_only=True,
+        )
+        for slot, value in _typed_decompiler_role_slots(
+            formula=formula,
+            text=text,
+            slot_prefix=slot_prefix,
+        )
+    ]
+
+
+def _typed_decompiler_role_slots(
+    *,
+    formula: ModalIRFormula,
+    text: str,
+    slot_prefix: str,
+) -> List[Tuple[str, str]]:
+    normalized_slot_prefix = _clean_text(slot_prefix)
+    normalized_text = _clean_text(text).replace("_", " ").lower()
+    family = _clean_text(formula.operator.family).lower()
+    if not normalized_slot_prefix or not normalized_text or not family:
+        return []
+
+    role_values = _semantic_role_values_from_text(normalized_text)
+    temporal_values = _temporal_transition_context_cues_from_text(normalized_text)
+    if not temporal_values:
+        temporal_values = [
+            cue
+            for cue in _bridge_cues_from_text(normalized_text)
+            if any(
+                bridge_family == "temporal"
+                for bridge_family, _bridge_symbol in _cue_bridge_operator_pairs(cue)
+            )
+        ]
+    if temporal_values:
+        role_values["temporal"] = "+".join(temporal_values)
+    if not role_values:
+        return []
+
+    slots: List[Tuple[str, str]] = []
+    for role, value in role_values.items():
+        slots.append((f"{normalized_slot_prefix}_typed_decompiler_role", role))
+        slots.append((f"{normalized_slot_prefix}_typed_decompiler_{role}", value))
+        slots.append(("typed_decompiler_role", role))
+        slots.append((f"typed_decompiler_{role}", value))
+        slots.extend(
+            _typed_identifier_slots(
+                value,
+                slot_prefix=f"{normalized_slot_prefix}_typed_decompiler_{role}",
+            )
+        )
+
+    role_signature = "+".join(
+        role
+        for role in ("subject", "action", "object", "temporal")
+        if role in role_values
+    )
+    if role_signature:
+        slots.extend(
+            (
+                (
+                    f"{normalized_slot_prefix}_typed_decompiler_role_signature",
+                    role_signature,
+                ),
+                ("typed_decompiler_role_signature", role_signature),
+                (
+                    f"{normalized_slot_prefix}_typed_decompiler_family_role_signature",
+                    f"{family}:{role_signature}",
+                ),
+                (
+                    "typed_decompiler_family_role_signature",
+                    f"{family}:{role_signature}",
+                ),
+            )
+        )
+    for bridge_family in _typed_decompiler_bridge_target_families(
+        formula=formula,
+        text=normalized_text,
+        roles=role_values,
+    ):
+        pair = f"{family}->{bridge_family}"
+        slots.extend(
+            (
+                (f"{normalized_slot_prefix}_typed_decompiler_family_pair", pair),
+                ("typed_decompiler_family_pair", pair),
+            )
+        )
+        if role_signature:
+            bridge_signature = f"{pair}:{role_signature}"
+            slots.extend(
+                (
+                    (
+                        f"{normalized_slot_prefix}_typed_decompiler_family_pair_bridge",
+                        bridge_signature,
+                    ),
+                    ("typed_decompiler_family_pair_bridge", bridge_signature),
+                )
+            )
+    return _unique_slot_values(slots)
+
+
+def _semantic_role_values_from_text(text: str) -> Dict[str, str]:
+    normalized = _clean_text(text).replace("_", " ").lower()
+    tokens = _CUE_TOKEN_RE.findall(normalized)
+    if not tokens:
+        return {}
+    modal_indices = [
+        index
+        for index, token in enumerate(tokens)
+        if token in {"shall", "must", "may", "should", "will"}
+    ]
+    action_index = -1
+    if modal_indices:
+        action_index = modal_indices[0] + 1
+    else:
+        for index, token in enumerate(tokens):
+            if token in _LOW_INFORMATION_SCOPE_LEADING_TOKENS:
+                continue
+            action_index = index
+            break
+    if action_index < 0 or action_index >= len(tokens):
+        return {}
+
+    stop_tokens = {
+        "a",
+        "an",
+        "and",
+        "are",
+        "as",
+        "be",
+        "by",
+        "for",
+        "from",
+        "in",
+        "is",
+        "of",
+        "on",
+        "or",
+        "the",
+        "this",
+        "to",
+        "with",
+    }
+    object_break_tokens = {
+        "after",
+        "before",
+        "by",
+        "except",
+        "notwithstanding",
+        "section",
+        "subject",
+        "under",
+        "unless",
+        "until",
+        "when",
+        "where",
+    }
+    values: Dict[str, str] = {}
+    subject_end = action_index - 1 if modal_indices else action_index
+    subject_tokens = [
+        token
+        for token in tokens[: max(0, subject_end)]
+        if token not in stop_tokens and token not in object_break_tokens
+    ]
+    if subject_tokens:
+        values["subject"] = "_".join(subject_tokens[:6])
+
+    action = tokens[action_index]
+    if action and action not in stop_tokens:
+        values["action"] = action
+
+    object_tokens: List[str] = []
+    for token in tokens[action_index + 1 :]:
+        if token in object_break_tokens or token in _TEMPORAL_BRIDGE_CONTEXT_TOKENS:
+            break
+        if _TEMPORAL_BRIDGE_YEAR_RE.fullmatch(token):
+            break
+        if token in stop_tokens:
+            continue
+        object_tokens.append(token)
+        if len(object_tokens) >= 8:
+            break
+    if object_tokens:
+        values["object"] = "_".join(object_tokens)
+    return values
+
+
+def _typed_decompiler_bridge_target_families(
+    *,
+    formula: ModalIRFormula,
+    text: str,
+    roles: Mapping[str, str],
+) -> List[str]:
+    family = _clean_text(formula.operator.family).lower()
+    targets: List[str] = []
+
+    def add(target: str) -> None:
+        normalized_target = _clean_text(target).lower()
+        if normalized_target and normalized_target not in targets:
+            targets.append(normalized_target)
+
+    if family == "deontic":
+        add("deontic")
+    if "temporal" in roles:
+        add("temporal")
+    if "subject" in roles or "object" in roles:
+        add("deontic")
+    text_tokens = set(_CUE_TOKEN_RE.findall(text))
+    if _statutory_scope_slots(text) or text_tokens.intersection(_STRUCTURAL_FRAME_CUE_TOKENS):
+        add("frame")
+    for cue in _bridge_cues_from_text(text):
+        for bridge_family, _bridge_symbol in _cue_bridge_operator_pairs(cue):
+            add(bridge_family)
+    return targets
+
+
 def _cue_modal_slots(
     formula: ModalIRFormula,
     *,
@@ -6288,9 +6636,18 @@ def _statutory_scope_slots(text: str) -> List[Tuple[str, str]]:
             ("statutory_scope_reference", reference),
             ("statutory_scope_connector", connector),
             ("statutory_scope_unit", unit),
+            ("reference_dependency", f"direct_reference:{unit}"),
+            ("reference_dependency_kind", "direct_reference"),
+            ("reference_dependency_target_type", unit),
         ]
         if resolved_target:
             values.append(("statutory_scope_target", resolved_target))
+            values.append(
+                (
+                    "reference_dependency_target",
+                    f"{unit}:{resolved_target}",
+                )
+            )
         for slot in values:
             if slot in seen:
                 continue
@@ -6443,6 +6800,18 @@ def _citation_slots(citation: str) -> List[Tuple[str, str]]:
         if raw_section:
             slots.append(("citation_section_raw", raw_section))
         slots.append(("citation_section_normalized", section))
+        slots.extend(
+            (
+                ("reference_dependency", "direct_reference:statutory_section"),
+                ("reference_dependency_kind", "direct_reference"),
+                ("reference_dependency_target_type", "statutory_section"),
+                ("reference_dependency_target", f"statutory_section:{section}"),
+                (
+                    "citation_reference_dependency",
+                    f"direct_reference:statutory_section:{section}",
+                ),
+            )
+        )
         if section_trailing_punct:
             slots.append(("citation_section_trailing_punct", section_trailing_punct))
             slots.append(("citation_section_has_trailing_punct", "true"))

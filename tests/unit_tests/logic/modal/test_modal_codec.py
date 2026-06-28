@@ -49,6 +49,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_003624_FAMILY_PAIRS,
     COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR,
+    COMPILER_REFINED_PACKET_000001_RESCUE_FAMILY_PAIRS,
     compiler_refined_modal_family_cue_margin_buffer,
     is_compiler_ambiguity_policy_pair,
     supports_signal_free_adaptive_ambiguity_pair,
@@ -3915,6 +3916,18 @@ def test_modal_registry_refined_cue_margin_buffer_keys_are_pair_shaped() -> None
     assert all(
         isinstance(pair, tuple) and len(pair) == 2
         for pair in COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR
+    )
+
+
+def test_modal_registry_packet_000001_rescue_keeps_deontic_conditional_policy() -> None:
+    rescue_pair = ("deontic", "conditional_normative")
+
+    assert rescue_pair in COMPILER_REFINED_PACKET_000001_RESCUE_FAMILY_PAIRS
+    assert is_compiler_ambiguity_policy_pair(*rescue_pair) is True
+    assert supports_signal_free_adaptive_ambiguity_pair(*rescue_pair) is True
+    assert (
+        abs(compiler_refined_modal_family_cue_margin_buffer(*rescue_pair) - 0.0015)
+        < 1e-12
     )
 
 
@@ -12801,6 +12814,55 @@ def test_modal_decompiler_source_spans_emit_refined_directional_family_pairs() -
         "deontic->temporal",
         "conditional_normative->epistemic",
     }.issubset(set(slot_texts["modal_source_span_refined_modal_family_pair"]))
+
+
+def test_modal_decompiler_surfaces_typed_role_and_reference_dependency_slots() -> None:
+    source_id = "us-code-43-337.-typed-decompiler-roles"
+    source = (
+        "Where it shall appear to the satisfaction of the Secretary after "
+        "expenditures, the Secretary shall perfect the homestead entry under "
+        "section 337."
+    )
+    formula = ModalIRFormula(
+        formula_id=f"{source_id}:f0001",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame_bm25",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(name="secretary_shall_perfect_homestead_entry"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source),
+            citation="43 U.S.C. 337",
+        ),
+        conditions=["under section 337"],
+        metadata={"cue": "section"},
+    )
+    document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source,
+        formulas=[formula],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "subject+action+object+temporal" in slot_texts[
+        "modal_source_span_typed_decompiler_role_signature"
+    ]
+    assert "frame->temporal" in slot_texts[
+        "modal_source_span_typed_decompiler_family_pair"
+    ]
+    assert "frame->deontic:subject+action+object+temporal" in slot_texts[
+        "modal_source_span_typed_decompiler_family_pair_bridge"
+    ]
+    assert "direct_reference:statutory_section" in slot_texts["reference_dependency"]
+    assert "statutory_section:337" in slot_texts["reference_dependency_target"]
+    assert "direct_reference:section" in slot_texts["reference_dependency"]
 
 
 def test_modal_decompiler_recovers_condition_exception_and_citation_slots() -> None:

@@ -643,6 +643,43 @@ def _omitted_codification_status_clause_sample_document() -> ModalIRDocument:
     )
 
 
+def _repealed_public_law_status_clause_sample_document() -> ModalIRDocument:
+    source_id = "us-code-42-1411d.-7fb0bfc1d76721e5"
+    normalized_text = (
+        "§1411d. Repealed. Pub. L. 93-383, title II, §204, Aug. 22, "
+        "1974, 88 Stat. 668 Section, act Aug. 2, 1954, ch. 649, title "
+        "VIII, §815, 68 Stat. 647, required submission of specifications "
+        "by applicants prior to award of any contract for construction."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-repealed-public-law-status-clause",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(name="uscode_repealed_heading_fallback"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=17,
+            citation="42 U.S.C. 1411d.",
+        ),
+        metadata={
+            "cue": "__uscode_editorial_status_heading_fallback__",
+            "fallback_rule": "uscode_editorial_status_heading_v1",
+            "status_keyword": "repealed",
+        },
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
 def _single_letter_low_information_fallback_surface_sample_document() -> ModalIRDocument:
     source_id = "us-code-19-134-9f14e2dcbf0f4b1a"
     normalized_text = "S. Repealed."
@@ -4306,6 +4343,39 @@ def test_decode_modal_ir_document_recovers_omitted_codification_status_clause() 
     assert "frame->conditional_normative" in slot_map[
         "typed_decompiler_family_pair"
     ]
+
+
+def test_decode_modal_ir_document_extends_short_repealed_public_law_status_clause() -> None:
+    decoded = decode_modal_ir_document(
+        _repealed_public_law_status_clause_sample_document()
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    expected_clause = (
+        "Repealed Pub. L. 93-383, title II, §204, Aug. 22, 1974, "
+        "88 Stat. 668 Section, act Aug. 2, 1954, ch. 649, title VIII, "
+        "§815, 68 Stat. 647, required submission of specifications by "
+        "applicants prior to award of any contract for construction"
+    )
+    assert slot_map["source_status_clause"] == [expected_clause]
+    assert "repealed" in slot_map["source_status_clause_legal_semantic_atom"]
+    assert "obligation" in slot_map["source_status_clause_legal_semantic_atom"]
+    assert expected_clause in slot_map["typed_ir_surface_reconstruction"]
+
+
+def test_decode_modal_ir_document_keeps_status_surface_audit_only() -> None:
+    decoded = decode_modal_ir_document(
+        _omitted_codification_status_clause_sample_document()
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    expected_clause = (
+        "Sections were omitted pursuant to section 5316 of this title which "
+        "terminated the authority to make grants or loans under this chapter "
+        "after Jan. 1, 1975"
+    )
+    assert slot_map["typed_ir_surface_reconstruction"] == [expected_clause]
+    assert decoded.text.count(expected_clause) == 1
 
 
 def test_modal_ir_to_flogic_triples_recover_omitted_codification_status_clause() -> None:
