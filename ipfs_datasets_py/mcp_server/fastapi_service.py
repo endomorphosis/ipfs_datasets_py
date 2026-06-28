@@ -293,12 +293,14 @@ if wallet_router is not None:
     app.include_router(wallet_router)
 
 # Middleware configuration
+_cors_origins = os.environ.get("MCP_CORS_ORIGINS", "").strip()
+_allowed_origins = _cors_origins.split(",") if _cors_origins else ["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=_allowed_origins,
+    allow_credentials=(_allowed_origins != ["*"]),
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Request-ID"],
 )
 
 app.add_middleware(
