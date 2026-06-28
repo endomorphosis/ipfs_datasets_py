@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
 import random
 import re
@@ -25,9 +26,11 @@ import time
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack, contextmanager
+from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import AbstractSet, Any, Dict, Iterator, List, Mapping, Optional, Sequence
+from types import SimpleNamespace
+from typing import AbstractSet, Any, Callable, Dict, Iterator, List, Mapping, Optional, Sequence
 
 import pyarrow.parquet as pq
 from huggingface_hub import HfFileSystem
@@ -36,7 +39,9 @@ from ipfs_datasets_py.logic.modal import (
     DeterministicModalLogicCodec,
     ModalLogicCodecConfig,
     decoded_modal_phrase_slot_text_map,
+    modal_text_token_similarity,
 )
+from ipfs_datasets_py.logic.modal.codec import stable_mock_embedding
 from ipfs_datasets_py.logic.bridge import DEFAULT_LEGAL_IR_BRIDGE_NAMES
 from ipfs_datasets_py.logic.submodule_registry import (
     logic_optimizer_scope_for_component,
@@ -249,15 +254,325 @@ CODEX_APPLY_VALIDATION_TESTS = (
     "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py",
     "tests/unit_tests/logic/modal/test_modal_codec.py",
 )
+COMPILER_IR_METRIC_MAX_SAMPLE_TEXT_CHARS_ENV = (
+    "IPFS_DATASETS_COMPILER_IR_METRIC_MAX_SAMPLE_TEXT_CHARS"
+)
+COMPILER_IR_METRIC_SAMPLE_TIMEOUT_SECONDS_ENV = (
+    "IPFS_DATASETS_COMPILER_IR_METRIC_SAMPLE_TIMEOUT_SECONDS"
+)
+COMPILER_IR_METRIC_TEXT_POLICY_ENV = "IPFS_DATASETS_COMPILER_IR_METRIC_TEXT_POLICY"
+COMPILER_IR_METRIC_TEXT_POLICIES = ("skip", "truncate")
+DEFAULT_COMPILER_IR_METRIC_MAX_SAMPLE_TEXT_CHARS = 400
+DEFAULT_COMPILER_IR_METRIC_SAMPLE_TIMEOUT_SECONDS = 10.0
+DEFAULT_COMPILER_IR_METRIC_TEXT_POLICY = "truncate"
 BRIDGE_IR_REPORT_CACHE_MAX = 4096
+LEGAL_IR_METRIC_DISK_CACHE_VERSION = "legal-ir-metric-disk-cache-v1"
+LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV = "IPFS_DATASETS_LEGAL_IR_METRIC_CACHE_DIR"
+LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV = "IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE"
+_FALSE_ENV_VALUES = {"0", "false", "no", "off", "none", "disabled"}
 _BRIDGE_IR_REPORT_CACHE_LOCK = threading.Lock()
 _BRIDGE_IR_REPORT_CACHE: Dict[str, Any] = {}
+_METRIC_CODE_FINGERPRINT_LOCK = threading.Lock()
+_METRIC_CODE_FINGERPRINT_VALUE: Optional[str] = None
+_COMPILER_IR_METRIC_BLOCK_CACHE_VERSION = "compiler-ir-metric-block-cache-v7"
+_COMPILER_IR_GUIDANCE_CACHE_POLICY = "codec-output-contract-v1"
+_COMPILER_IR_GUIDANCE_DIAGNOSTICS_VERSION = "compiler-guidance-diagnostics-v3"
+_COMPILER_IR_SAMPLE_CACHE_VERSION = "compiler-ir-metric-sample-cache-v7"
+_COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY = "timeout_surface_fallback_per_sample_budget_v2"
+_COMPILER_IR_SAMPLE_CODE_FINGERPRINT_LOCK = threading.Lock()
+_COMPILER_IR_SAMPLE_CODE_FINGERPRINT_VALUE: Optional[str] = None
 _ACTIVE_CODEX_EXEC_PROCESSES: List[subprocess.Popen[str]] = []
 CODEX_WORKTREE_ARTIFACT_FILENAMES = {"changes.patch"}
 
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def _stable_metric_json(value: Any) -> str:
+    return json.dumps(
+        value,
+        default=str,
+        ensure_ascii=True,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+
+
+def _metric_disk_cache_enabled() -> bool:
+    raw = str(os.environ.get(LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV) or "").strip().lower()
+    return raw not in _FALSE_ENV_VALUES
+
+
+def _default_metric_disk_cache_dir() -> Path:
+    try:
+        repo_root = Path(__file__).resolve().parents[3]
+    except (IndexError, OSError, RuntimeError):
+        repo_root = Path.cwd()
+    return repo_root / "workspace" / "test-logs" / "legal-ir-metric-cache"
+
+
+def _metric_disk_cache_dir() -> Optional[Path]:
+    if not _metric_disk_cache_enabled():
+        return None
+    raw = str(os.environ.get(LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV) or "").strip()
+    if raw.lower() in _FALSE_ENV_VALUES:
+        return None
+    return Path(raw).expanduser() if raw else _default_metric_disk_cache_dir()
+
+
+def _metric_code_fingerprint() -> str:
+    global _METRIC_CODE_FINGERPRINT_VALUE
+    with _METRIC_CODE_FINGERPRINT_LOCK:
+        if _METRIC_CODE_FINGERPRINT_VALUE:
+            return _METRIC_CODE_FINGERPRINT_VALUE
+        try:
+            package_root = Path(__file__).resolve().parents[2]
+        except (IndexError, OSError, RuntimeError):
+            package_root = Path.cwd()
+        candidates = [
+            Path(__file__),
+            package_root / "logic" / "bridge",
+            package_root / "logic" / "modal",
+            package_root / "knowledge_graphs" / "neo4j_compat" / "legal_ir_projection.py",
+        ]
+        tokens: List[str] = []
+        for candidate in candidates:
+            paths = sorted(candidate.rglob("*.py")) if candidate.is_dir() else [candidate]
+            for path in paths:
+                try:
+                    stat = path.stat()
+                except (OSError, RuntimeError):
+                    continue
+                try:
+                    relative = path.relative_to(package_root)
+                except ValueError:
+                    relative = path
+                tokens.append(f"{relative}:{stat.st_mtime_ns}:{stat.st_size}")
+        _METRIC_CODE_FINGERPRINT_VALUE = (
+            hashlib.sha256("\n".join(tokens).encode("utf-8")).hexdigest()
+            if tokens
+            else "unknown"
+        )
+        return _METRIC_CODE_FINGERPRINT_VALUE
+
+
+def _compiler_ir_sample_code_fingerprint() -> str:
+    global _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_VALUE
+    with _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_LOCK:
+        if _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_VALUE:
+            return _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_VALUE
+        try:
+            package_root = Path(__file__).resolve().parents[2]
+        except (IndexError, OSError, RuntimeError):
+            package_root = Path.cwd()
+        candidates = [
+            package_root / "logic" / "modal",
+            package_root / "optimizers" / "logic_theorem_optimizer" / "frame_bm25_selector.py",
+            package_root / "optimizers" / "logic_theorem_optimizer" / "legal_modal_parser.py",
+            package_root / "optimizers" / "logic_theorem_optimizer" / "legal_samples.py",
+            package_root / "optimizers" / "logic_theorem_optimizer" / "modal_ir.py",
+        ]
+        tokens: List[str] = []
+        for candidate in candidates:
+            paths = sorted(candidate.rglob("*.py")) if candidate.is_dir() else [candidate]
+            for path in paths:
+                try:
+                    stat = path.stat()
+                except (OSError, RuntimeError):
+                    continue
+                try:
+                    relative = path.relative_to(package_root)
+                except ValueError:
+                    relative = path
+                tokens.append(f"{relative}:{stat.st_mtime_ns}:{stat.st_size}")
+        _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_VALUE = (
+            hashlib.sha256("\n".join(tokens).encode("utf-8")).hexdigest()
+            if tokens
+            else "unknown"
+        )
+        return _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_VALUE
+
+
+def _compiler_ir_metric_sample_disk_cache_key(payload: Mapping[str, Any]) -> str:
+    wrapper = {
+        "code_fingerprint": _compiler_ir_sample_code_fingerprint(),
+        "kind": "compiler_ir_metric_sample",
+        "payload": payload,
+        "version": _COMPILER_IR_SAMPLE_CACHE_VERSION,
+    }
+    return hashlib.sha256(_stable_metric_json(wrapper).encode("utf-8")).hexdigest()
+
+
+def _compiler_ir_metric_sample_timeout_disk_cache_key(payload: Mapping[str, Any]) -> str:
+    wrapper = {
+        "code_fingerprint": _compiler_ir_sample_code_fingerprint(),
+        "kind": "compiler_ir_metric_sample_timeout",
+        "payload": payload,
+        "version": _COMPILER_IR_SAMPLE_CACHE_VERSION,
+    }
+    return hashlib.sha256(_stable_metric_json(wrapper).encode("utf-8")).hexdigest()
+
+
+def _metric_cache_object_payload(value: Any) -> Any:
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    if isinstance(value, Mapping):
+        return {
+            str(key): _metric_cache_object_payload(item)
+            for key, item in value.items()
+        }
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        return [_metric_cache_object_payload(item) for item in value]
+    if hasattr(value, "__dict__"):
+        return {
+            "attrs": {
+                str(key): _metric_cache_object_payload(item)
+                for key, item in sorted(vars(value).items())
+                if not str(key).startswith("_")
+            },
+            "type": f"{value.__class__.__module__}.{value.__class__.__qualname__}",
+        }
+    return repr(value)
+
+
+_COMPILER_IR_GUIDANCE_CACHE_CONTRACT_KEYS = (
+    "bundle",
+    "compiler_guidance_action",
+    "compiler_guidance_route",
+    "compiler_guidance_selected_frame_after",
+    "compiler_guidance_todo_routes",
+    "evidence",
+    "evidences",
+    "family_distribution",
+    "feature_groups",
+    "legal_ir_predicted_view_distribution",
+    "legal_ir_target_view_distribution",
+    "legal_ir_view_gap_distribution",
+    "legal_ir_view_metrics",
+    "ranked_guidance_features",
+    "routes",
+    "sample_id",
+    "sample_memory_used",
+    "semantic_bundle",
+    "synthesis_focus",
+    "target_component",
+    "todo_routes",
+)
+
+
+def _compiler_ir_metric_guidance_cache_payload(
+    compiler_guidance: Optional[Mapping[str, Any]],
+) -> Optional[Dict[str, Any]]:
+    if not isinstance(compiler_guidance, Mapping) or not compiler_guidance:
+        return None
+    contract = {
+        key: _metric_cache_object_payload(compiler_guidance.get(key))
+        for key in _COMPILER_IR_GUIDANCE_CACHE_CONTRACT_KEYS
+        if key in compiler_guidance
+    }
+    return {
+        "contract": contract,
+        "policy": _COMPILER_IR_GUIDANCE_CACHE_POLICY,
+    }
+
+
+def _sample_metric_cache_payload(sample: Any) -> Dict[str, Any]:
+    embedding = [
+        round(float(value), 12)
+        for value in list(getattr(sample, "embedding_vector", []) or [])
+    ]
+    embedding_hash = hashlib.sha256(
+        json.dumps(embedding, ensure_ascii=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    return {
+        "citation": str(getattr(sample, "citation", "") or ""),
+        "embedding_dimensions": len(embedding),
+        "embedding_hash": embedding_hash,
+        "embedding_model": str(getattr(sample, "embedding_model", "") or ""),
+        "sample_id": str(getattr(sample, "sample_id", "") or ""),
+        "source": str(getattr(sample, "source", "") or ""),
+        "text_hash": hashlib.sha256(
+            str(getattr(sample, "text", "") or "").encode("utf-8")
+        ).hexdigest(),
+        "title": str(getattr(sample, "title", "") or ""),
+        "section": str(getattr(sample, "section", "") or ""),
+    }
+
+
+def _metric_disk_cache_key(kind: str, payload: Mapping[str, Any]) -> str:
+    wrapper = {
+        "code_fingerprint": _metric_code_fingerprint(),
+        "kind": str(kind),
+        "payload": payload,
+        "version": LEGAL_IR_METRIC_DISK_CACHE_VERSION,
+    }
+    return hashlib.sha256(_stable_metric_json(wrapper).encode("utf-8")).hexdigest()
+
+
+def _metric_disk_cache_path(kind: str, key: str) -> Optional[Path]:
+    root = _metric_disk_cache_dir()
+    if root is None:
+        return None
+    safe_kind = re.sub(r"[^A-Za-z0-9_.-]+", "_", str(kind)).strip("._") or "metric"
+    key_text = re.sub(r"[^a-fA-F0-9]+", "", str(key)) or hashlib.sha256(
+        str(key).encode("utf-8")
+    ).hexdigest()
+    return root / safe_kind / key_text[:2] / f"{key_text}.json"
+
+
+def _read_metric_disk_cache(kind: str, key: str) -> Optional[Dict[str, Any]]:
+    path = _metric_disk_cache_path(kind, key)
+    if path is None or not path.is_file():
+        return None
+    try:
+        wrapper = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(wrapper, Mapping):
+        return None
+    if wrapper.get("version") != LEGAL_IR_METRIC_DISK_CACHE_VERSION:
+        return None
+    if wrapper.get("kind") != kind or wrapper.get("key") != key:
+        return None
+    payload = wrapper.get("payload")
+    if not isinstance(payload, Mapping):
+        return None
+    return dict(payload)
+
+
+def _write_metric_disk_cache(kind: str, key: str, payload: Mapping[str, Any]) -> None:
+    path = _metric_disk_cache_path(kind, key)
+    if path is None:
+        return
+    wrapper = {
+        "created_at": utc_now(),
+        "code_fingerprint": _metric_code_fingerprint(),
+        "key": key,
+        "kind": kind,
+        "payload": dict(payload),
+        "version": LEGAL_IR_METRIC_DISK_CACHE_VERSION,
+    }
+    tmp_path: Optional[Path] = None
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile(
+            "w",
+            delete=False,
+            dir=str(path.parent),
+            encoding="utf-8",
+            prefix=f".{path.stem}.",
+            suffix=".tmp",
+        ) as handle:
+            tmp_path = Path(handle.name)
+            json.dump(wrapper, handle, default=str, ensure_ascii=True, sort_keys=True)
+        os.replace(tmp_path, path)
+    except Exception:
+        if tmp_path is not None:
+            try:
+                tmp_path.unlink(missing_ok=True)
+            except OSError:
+                pass
 
 
 def parse_utc(value: str) -> float:
@@ -733,29 +1048,610 @@ def metric_block(evaluation) -> Dict[str, Any]:
     return block
 
 
+def _guidance_slot_safe_key(value: Any) -> str:
+    return re.sub(r"[^A-Za-z0-9]+", "_", str(value or "")).strip("_").lower()
+
+
+def _metadata_sequence_strings(value: Any) -> List[str]:
+    if isinstance(value, Mapping):
+        return [
+            str(item)
+            for item, count in sorted(value.items())
+            if str(item) and _float_or_zero(count) > 0.0
+        ]
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        return [str(item) for item in value if str(item)]
+    if value is None or isinstance(value, (str, bytes)):
+        return [str(value)] if str(value or "") else []
+    return [str(value)]
+
+
+def compiler_guidance_slot_texts_from_result(result: Any) -> Dict[str, List[str]]:
+    """Return guidance slots from decoded phrases, falling back to cached metadata."""
+
+    cached_slot_texts = getattr(result, "compiler_guidance_slot_texts", None)
+    if isinstance(cached_slot_texts, Mapping) and cached_slot_texts:
+        return {
+            str(slot): _metadata_sequence_strings(values)
+            for slot, values in sorted(cached_slot_texts.items())
+            if str(slot)
+        }
+    decoded = getattr(result, "decoded_modal_text", None)
+    slot_texts: Dict[str, List[str]] = {}
+    if hasattr(decoded, "phrases"):
+        slot_texts.update(decoded_modal_phrase_slot_text_map(decoded))
+    metadata = dict(getattr(result, "metadata", {}) or {})
+    cached_metadata_slot_texts = metadata.get("_compiler_guidance_slot_texts")
+    if isinstance(cached_metadata_slot_texts, Mapping) and cached_metadata_slot_texts:
+        return {
+            str(slot): _metadata_sequence_strings(values)
+            for slot, values in sorted(cached_metadata_slot_texts.items())
+            if str(slot)
+        }
+
+    def add(slot: str, value: Any) -> None:
+        text = str(value or "")
+        if text:
+            slot_texts.setdefault(slot, []).append(text)
+
+    feature_groups = metadata.get("compiler_guidance_feature_groups")
+    if isinstance(feature_groups, Mapping):
+        for group_name, features in sorted(feature_groups.items()):
+            safe_group = _guidance_slot_safe_key(group_name)
+            if not safe_group:
+                continue
+            add("compiler_guidance_feature_group", safe_group)
+            for feature in _metadata_sequence_strings(features):
+                add(f"compiler_guidance_{safe_group}_feature", feature)
+    elif _float_or_zero(metadata.get("compiler_guidance_feature_count")) > 0.0:
+        add("compiler_guidance_feature_group", "decompiler_surface_template")
+        for term in _metadata_sequence_strings(
+            metadata.get("compiler_guidance_semantic_overlay_terms")
+        ):
+            safe_term = _guidance_slot_safe_key(term)
+            if safe_term:
+                add(
+                    "compiler_guidance_decompiler_surface_template_feature",
+                    f"semantic-overlay:{safe_term}",
+                )
+
+    predicted = metadata.get("compiler_guidance_legal_ir_predicted_view_distribution")
+    target = metadata.get("compiler_guidance_legal_ir_target_view_distribution")
+    if isinstance(predicted, Mapping) and isinstance(target, Mapping):
+        for view in sorted(set(predicted) | set(target)):
+            safe_view = _guidance_slot_safe_key(view)
+            if not safe_view:
+                continue
+            predicted_value = _float_or_zero(predicted.get(view))
+            target_value = _float_or_zero(target.get(view))
+            if target_value > predicted_value:
+                add("compiler_guidance_legal_ir_view_gap", safe_view)
+                add(
+                    "compiler_guidance_legal_ir_view_gap_direction",
+                    f"{safe_view}:underrepresented",
+                )
+            elif predicted_value > target_value:
+                add("compiler_guidance_legal_ir_view_gap", safe_view)
+                add(
+                    "compiler_guidance_legal_ir_view_gap_direction",
+                    f"{safe_view}:overrepresented",
+                )
+    else:
+        gap_distribution = metadata.get("compiler_guidance_legal_ir_view_gap_distribution")
+        if isinstance(gap_distribution, Mapping):
+            for view, raw_value in sorted(gap_distribution.items()):
+                safe_view = _guidance_slot_safe_key(view)
+                if not safe_view:
+                    continue
+                value = _float_or_zero(raw_value)
+                if value > 0.0:
+                    add("compiler_guidance_legal_ir_view_gap", safe_view)
+                    add(
+                        "compiler_guidance_legal_ir_view_gap_direction",
+                        f"{safe_view}:underrepresented",
+                    )
+                elif value < 0.0:
+                    add("compiler_guidance_legal_ir_view_gap", safe_view)
+                    add(
+                        "compiler_guidance_legal_ir_view_gap_direction",
+                        f"{safe_view}:overrepresented",
+                    )
+
+    for route in _metadata_sequence_strings(metadata.get("compiler_guidance_todo_routes")):
+        add("compiler_guidance_todo_route", route)
+    return slot_texts
+
+
+COMPILER_GUIDANCE_CANARY_METRICS = (
+    "cross_entropy_loss",
+    "cross_entropy_excess_loss",
+    "cosine_similarity",
+    "source_decompiled_text_embedding_cosine_loss",
+    "source_decompiled_text_embedding_cosine_similarity",
+    "source_decompiled_text_token_loss",
+    "source_decompiled_text_token_similarity",
+    "source_copy_loss",
+    "source_copy_reward_hack_penalty",
+    "structural_text_reconstruction_loss",
+    "text_reconstruction_loss",
+)
+
+
+class CompilerIRMetricSampleTimeout(TimeoutError):
+    """Raised when one deterministic compiler metric sample exceeds its budget."""
+
+
+def _compiler_ir_metric_sample_timeout_supported(timeout_seconds: float) -> bool:
+    return (
+        float(timeout_seconds) > 0.0
+        and threading.current_thread() is threading.main_thread()
+        and hasattr(signal, "setitimer")
+        and hasattr(signal, "getitimer")
+    )
+
+
+@contextmanager
+def _compiler_ir_metric_sample_timeout(timeout_seconds: float) -> Iterator[bool]:
+    timeout = max(0.0, float(timeout_seconds))
+    if not _compiler_ir_metric_sample_timeout_supported(timeout):
+        yield False
+        return
+    previous_handler = signal.getsignal(signal.SIGALRM)
+    previous_timer = signal.getitimer(signal.ITIMER_REAL)
+
+    def handle_timeout(_signum: int, _frame: Any) -> None:
+        raise CompilerIRMetricSampleTimeout(
+            f"compiler IR metric sample exceeded {timeout:.3f}s"
+        )
+
+    signal.signal(signal.SIGALRM, handle_timeout)
+    signal.setitimer(signal.ITIMER_REAL, timeout)
+    try:
+        yield True
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0.0)
+        signal.signal(signal.SIGALRM, previous_handler)
+        if previous_timer and previous_timer[0] > 0.0:
+            signal.setitimer(
+                signal.ITIMER_REAL,
+                previous_timer[0],
+                previous_timer[1],
+            )
+
+
+def _compiler_ir_guidance_block_cache_compatible(
+    block: Mapping[str, Any],
+    *,
+    use_autoencoder_guidance: bool,
+) -> bool:
+    if not use_autoencoder_guidance:
+        return True
+    if (
+        block.get("compiler_guidance_diagnostics_version")
+        != _COMPILER_IR_GUIDANCE_DIAGNOSTICS_VERSION
+    ):
+        return False
+    if _float_or_zero(block.get("autoencoder_guidance_applied_count")) <= 0.0:
+        return True
+    required_mapping_keys = (
+        "compiler_guidance_feature_groups",
+        "compiler_guidance_legal_ir_view_gaps",
+        "compiler_guidance_semantic_overlay_terms",
+        "compiler_guidance_surface_features",
+        "compiler_guidance_todo_routes",
+    )
+    return all(isinstance(block.get(key), Mapping) for key in required_mapping_keys)
+
+
+def _normalise_compiler_ir_metric_text_policy(value: Any) -> str:
+    policy = str(value or DEFAULT_COMPILER_IR_METRIC_TEXT_POLICY).strip().lower()
+    if policy not in COMPILER_IR_METRIC_TEXT_POLICIES:
+        return DEFAULT_COMPILER_IR_METRIC_TEXT_POLICY
+    return policy
+
+
+def _compiler_ir_metric_bounded_text(text: str, max_chars: int) -> str:
+    limit = max(0, int(max_chars or 0))
+    source_text = str(text or "")
+    if limit <= 0 or len(source_text) <= limit:
+        return source_text
+    prefix = source_text[:limit].rstrip()
+    if not prefix:
+        return source_text[:limit]
+    boundary = max(prefix.rfind(". "), prefix.rfind("; "), prefix.rfind("\n"))
+    min_boundary = max(80, int(limit * 0.65))
+    if boundary >= min_boundary:
+        return prefix[: boundary + 1].rstrip()
+    whitespace = prefix.rfind(" ")
+    if whitespace >= min_boundary:
+        return prefix[:whitespace].rstrip()
+    return prefix
+
+
+def _compiler_ir_metric_sample_for_text(
+    sample: Any,
+    *,
+    metric_text: str,
+) -> Any:
+    original_text = str(getattr(sample, "text", "") or "")
+    if str(metric_text) == original_text:
+        return sample
+    sample_id = str(getattr(sample, "sample_id", "") or "sample")
+    digest = hashlib.sha256(str(metric_text).encode("utf-8")).hexdigest()[:12]
+    dimensions = len(list(getattr(sample, "embedding_vector", []) or [])) or 8
+    embedding_model = str(getattr(sample, "embedding_model", "") or "")
+    payload = {
+        "embedding_model": (
+            f"metric-prefix:{embedding_model}" if embedding_model else "metric-prefix:mock"
+        ),
+        "embedding_vector": stable_mock_embedding(str(metric_text), dimensions=dimensions),
+        "normalized_text": str(metric_text),
+        "sample_id": f"{sample_id}:metric-prefix:{digest}",
+        "text": str(metric_text),
+    }
+    try:
+        return replace(sample, **payload)
+    except Exception:
+        fallback = dict(getattr(sample, "__dict__", {}) or {})
+        fallback.update(payload)
+        return SimpleNamespace(**fallback)
+
+
+def _vector_cosine_similarity(left: Sequence[float], right: Sequence[float]) -> float:
+    if len(left) != len(right) or not left:
+        return 0.0
+    left_norm = sum(float(value) * float(value) for value in left) ** 0.5
+    right_norm = sum(float(value) * float(value) for value in right) ** 0.5
+    if left_norm <= 0.0 or right_norm <= 0.0:
+        return 0.0
+    return sum(float(a) * float(b) for a, b in zip(left, right)) / (left_norm * right_norm)
+
+
+def _vector_mse_loss(left: Sequence[float], right: Sequence[float]) -> float:
+    if len(left) != len(right) or not left:
+        return 1.0
+    return sum((float(a) - float(b)) ** 2 for a, b in zip(left, right)) / len(left)
+
+
+def _compiler_ir_timeout_structural_text(metric_text: str) -> str:
+    normalized = re.sub(r"\s+", " ", str(metric_text or "")).strip()
+    if not normalized:
+        return ""
+    cue_re = re.compile(
+        r"\b(?:shall|must|may|may\s+not|shall\s+not|required|prohibit(?:ed)?|"
+        r"authorized|eligible|entitled|except|unless|provided|subject\s+to|"
+        r"before|after|within|not\s+later\s+than|effective|repealed|means|"
+        r"definition|penalty|violation|report)\b",
+        flags=re.IGNORECASE,
+    )
+    clauses = [
+        part.strip(" ;:,.")
+        for part in re.split(r"(?<=[.;:])\s+|\n+|\s+\([a-z0-9]+\)\s+", normalized)
+        if part.strip(" ;:,.")
+    ]
+    selected = [part for part in clauses if cue_re.search(part)] or clauses[:2]
+    structural = "; ".join(part[:220] for part in selected[:3]).strip()
+    return structural[:640] or normalized[:640]
+
+
+def _compiler_ir_timeout_family_distribution(metric_text: str, sample: Any) -> Dict[str, float]:
+    counts: Dict[str, float] = {}
+    modal_ir = getattr(sample, "modal_ir", None)
+    for formula in list(getattr(modal_ir, "formulas", ()) or ()):
+        operator = getattr(formula, "operator", None)
+        family = str(getattr(operator, "family", "") or "").strip()
+        if family:
+            counts[family] = counts.get(family, 0.0) + 1.0
+    lowered = str(metric_text or "").lower()
+    cue_weights = {
+        "deontic": ("shall", "must", "may", "required", "prohibited", "authorized"),
+        "temporal": ("before", "after", "within", "deadline", "effective", "later than"),
+        "conditional_normative": ("if", "unless", "provided", "subject to", "except"),
+        "frame": ("means", "definition", "term", "section", "chapter"),
+    }
+    for family, cues in cue_weights.items():
+        hit_count = sum(1 for cue in cues if cue in lowered)
+        if hit_count:
+            counts[family] = counts.get(family, 0.0) + float(hit_count)
+    if not counts:
+        counts["hybrid"] = 1.0
+    total = sum(counts.values()) or 1.0
+    return {name: value / total for name, value in sorted(counts.items()) if value > 0.0}
+
+
+def _compiler_ir_timeout_entropy(distribution: Mapping[str, float]) -> float:
+    return -sum(
+        max(0.0, float(value)) * math.log(max(float(value), 1.0e-12))
+        for value in distribution.values()
+        if float(value) > 0.0
+    )
+
+
+def _compiler_ir_metric_timeout_fallback_result(
+    sample: Any,
+    *,
+    metric_sample_id: str,
+    metric_text: str,
+    metric_text_length: int,
+    original_text_length: int,
+    sample_timeout_seconds: float,
+) -> Any:
+    modal_ir = getattr(sample, "modal_ir", None)
+    formulas = list(getattr(modal_ir, "formulas", ()) or ())
+    frame_candidates = list(getattr(sample, "frame_candidates", ()) or ())
+    structural_text = _compiler_ir_timeout_structural_text(metric_text)
+    dimensions = len(list(getattr(sample, "embedding_vector", []) or [])) or 8
+    source_embedding = list(getattr(sample, "embedding_vector", []) or []) or stable_mock_embedding(
+        str(metric_text),
+        dimensions=dimensions,
+    )
+    decoded_embedding = stable_mock_embedding(structural_text, dimensions=len(source_embedding))
+    embedding_cosine = _vector_cosine_similarity(source_embedding, decoded_embedding)
+    token_similarity = modal_text_token_similarity(str(metric_text), structural_text)
+    family_distribution = _compiler_ir_timeout_family_distribution(metric_text, sample)
+    family_entropy = _compiler_ir_timeout_entropy(family_distribution)
+    source_copy_ratio = min(1.0, max(0.0, token_similarity))
+    source_copy_penalty = max(0.0, source_copy_ratio - 0.65)
+    symbolic_validity_penalty = 0.25 if formulas else 0.75
+    cross_entropy = min(1.0, family_entropy + 0.20 + symbolic_validity_penalty * 0.20)
+    losses = {
+        "cosine_loss": max(0.0, 1.0 - embedding_cosine),
+        "cosine_similarity": embedding_cosine,
+        "cross_entropy_entropy_loss": min(1.0, family_entropy),
+        "cross_entropy_excess_loss": max(0.0, cross_entropy - min(1.0, family_entropy)),
+        "cross_entropy_loss": cross_entropy,
+        "flogic_similarity_loss": max(0.15, 1.0 - token_similarity),
+        "flogic_similarity_score": min(0.85, max(0.0, token_similarity)),
+        "frame_ranking_loss": 0.25 if frame_candidates else 0.75,
+        "modal_span_coverage_loss": max(0.0, 1.0 - token_similarity),
+        "ontology_violation_count": symbolic_validity_penalty,
+        "raw_source_embedding_cosine_similarity": embedding_cosine,
+        "reconstruction_loss": _vector_mse_loss(source_embedding, decoded_embedding),
+        "source_copy_loss": source_copy_ratio,
+        "source_copy_reward_hack_penalty": source_copy_penalty,
+        "source_decompiled_text_embedding_cosine_loss": max(0.0, 1.0 - embedding_cosine),
+        "source_decompiled_text_embedding_cosine_similarity": embedding_cosine,
+        "source_decompiled_text_token_loss": max(0.0, 1.0 - token_similarity),
+        "source_decompiled_text_token_similarity": token_similarity,
+        "source_span_copy_ratio": source_copy_ratio,
+        "source_span_text_reconstruction_loss": max(0.0, 1.0 - token_similarity),
+        "structural_text_reconstruction_loss": max(0.0, 1.0 - token_similarity),
+        "structural_text_reconstruction_similarity": token_similarity,
+        "symbolic_validity_penalty": symbolic_validity_penalty,
+        "text_reconstruction_loss": max(0.0, 1.0 - token_similarity),
+    }
+    metadata = {
+        "compiler_ir_metric_timeout_fallback": True,
+        "compiler_ir_metric_timeout_fallback_kind": "surface_modal_approximation",
+        "compiler_ir_metric_timeout_family_distribution": family_distribution,
+        "llm_call_count": 0.0,
+        "metric_sample_id": metric_sample_id,
+        "metric_text_length": int(metric_text_length),
+        "modal_decompiler_structural_text": structural_text,
+        "original_text_length": int(original_text_length),
+        "sample_timeout_seconds": float(sample_timeout_seconds),
+        "skip_reason": "sample_timeout",
+    }
+    return SimpleNamespace(
+        decoded_modal_text=structural_text,
+        frame_candidates=frame_candidates,
+        losses=losses,
+        metadata=metadata,
+        modal_ir=SimpleNamespace(formulas=formulas),
+    )
+
+
+def _compiler_guidance_legal_ir_gap_family(gap_name: str) -> str:
+    view = str(gap_name or "").split(":", 1)[0]
+    normalized = _guidance_slot_safe_key(view)
+    if "deontic" in normalized:
+        return "deontic"
+    if "frame" in normalized or "flogic" in normalized:
+        return "frame_logic"
+    if "tdfol" in normalized or "first_order" in normalized:
+        return "tdfol"
+    if "knowledge_graph" in normalized or normalized in {"kg", "neo4j"} or "_kg" in normalized:
+        return "knowledge_graph"
+    if "cec" in normalized or "event_calculus" in normalized or "dcec" in normalized:
+        return "cec"
+    if "prover" in normalized:
+        return "prover"
+    if "zkp" in normalized or "zero_knowledge" in normalized:
+        return "zkp"
+    return normalized or "unknown"
+
+
+def _compiler_guidance_legal_ir_family_gap(gap_name: str) -> str:
+    direction = "gap"
+    if ":" in str(gap_name):
+        direction = str(gap_name).rsplit(":", 1)[-1] or "gap"
+    return f"{_compiler_guidance_legal_ir_gap_family(gap_name)}:{direction}"
+
+
 def compiler_ir_metric_block(
     samples: Sequence[Any],
     codec: DeterministicModalLogicCodec,
+    *,
+    autoencoder: Optional[AdaptiveModalAutoencoder] = None,
+    use_autoencoder_guidance: bool = False,
+    guidance_top_k: int = 16,
+    max_sample_metric_records: int = 32,
+    max_sample_text_chars: int = 0,
+    metric_text_policy: str = DEFAULT_COMPILER_IR_METRIC_TEXT_POLICY,
+    progress_callback: Optional[Callable[[Mapping[str, Any]], None]] = None,
+    sample_timeout_seconds: float = 0.0,
 ) -> Dict[str, Any]:
     """Aggregate deterministic compiler/IR/decompiler round-trip metrics."""
     sample_list = list(samples)
     if not sample_list:
         return {
+            "autoencoder_guidance_enabled": bool(use_autoencoder_guidance),
             "evaluated_count": 0,
             "metric_failures": 0,
             "sample_count": 0,
         }
 
+    started_at = time.time()
+    max_sample_text_chars = max(0, int(max_sample_text_chars or 0))
+    metric_text_policy = _normalise_compiler_ir_metric_text_policy(metric_text_policy)
+    sample_timeout_seconds = max(0.0, float(sample_timeout_seconds or 0.0))
+    sample_timeout_supported = _compiler_ir_metric_sample_timeout_supported(
+        sample_timeout_seconds
+    )
+
+    def emit_progress(stage: str, **payload: Any) -> None:
+        if progress_callback is None:
+            return
+        event = {
+            "block": "compiler_ir",
+            "elapsed_seconds": round(time.time() - started_at, 3),
+            "sample_count": len(sample_list),
+            "stage": stage,
+        }
+        event.update(payload)
+        try:
+            progress_callback(event)
+        except Exception:
+            pass
+
+    emit_progress(
+        "start",
+        autoencoder_guidance_enabled=bool(use_autoencoder_guidance),
+        max_sample_text_chars=max_sample_text_chars,
+        metric_text_policy=metric_text_policy,
+    )
+
+    guidance_applied_count = 0
+    guidance_empty_count = 0
+    guidance_failures = 0
+    guidance_produced_count = 0
+    guidance_requested_count = 0
+    precomputed_guidance: List[Optional[Mapping[str, Any]]] = []
+    guidance_cache_records: List[Dict[str, Any]] = []
+    if use_autoencoder_guidance and autoencoder is not None:
+        emit_progress("guidance_start")
+        for sample_index, sample in enumerate(sample_list, start=1):
+            guidance_requested_count += 1
+            guidance_error = ""
+            compiler_guidance: Optional[Mapping[str, Any]] = None
+            try:
+                compiler_guidance = autoencoder.compiler_guidance_for_sample(
+                    sample,
+                    use_sample_memory=False,
+                    top_k=guidance_top_k,
+                )
+                if compiler_guidance:
+                    guidance_produced_count += 1
+                else:
+                    guidance_empty_count += 1
+            except Exception as exc:
+                guidance_failures += 1
+                guidance_error = f"{type(exc).__name__}: {str(exc)[:240]}"
+            precomputed_guidance.append(compiler_guidance)
+            guidance_cache_records.append(
+                {
+                    "error": guidance_error,
+                    "guidance": _compiler_ir_metric_guidance_cache_payload(
+                        compiler_guidance
+                    ),
+                    "sample": _sample_metric_cache_payload(sample),
+                    "sample_index": sample_index,
+                }
+            )
+        emit_progress(
+            "guidance_done",
+            guidance_empty_count=guidance_empty_count,
+            guidance_failures=guidance_failures,
+            guidance_produced_count=guidance_produced_count,
+            guidance_requested_count=guidance_requested_count,
+        )
+
+    persistent_cache_key: Optional[str] = None
+    metric_block_cacheable = (
+        (not use_autoencoder_guidance and autoencoder is None)
+        or (
+            use_autoencoder_guidance
+            and autoencoder is not None
+            and not guidance_failures
+        )
+    )
+    if metric_block_cacheable:
+        persistent_cache_key = _compiler_ir_metric_block_cache_key(
+            sample_list,
+            codec=codec,
+            guidance_cache_records=guidance_cache_records,
+            guidance_top_k=guidance_top_k,
+            max_sample_metric_records=max_sample_metric_records,
+            max_sample_text_chars=max_sample_text_chars,
+            metric_text_policy=metric_text_policy,
+            sample_timeout_seconds=sample_timeout_seconds,
+        )
+        cached_block = _read_metric_disk_cache(
+            "compiler_ir_metric_block",
+            persistent_cache_key,
+        )
+        if cached_block is not None and _compiler_ir_guidance_block_cache_compatible(
+            cached_block,
+            use_autoencoder_guidance=use_autoencoder_guidance,
+        ):
+            cached = dict(cached_block)
+            cached["persistent_cache_enabled"] = True
+            cached["persistent_cache_hit"] = True
+            cached["persistent_cache_key"] = persistent_cache_key
+            cached["persistent_cache_kind"] = "compiler_ir_metric_block"
+            cached["compiler_ir_guidance_cache_policy"] = (
+                _COMPILER_IR_GUIDANCE_CACHE_POLICY
+            )
+            cached["sample_timeout_cache_policy"] = (
+                _COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY
+            )
+            cached["sample_timeout_seconds"] = sample_timeout_seconds
+            cached["sample_cache_not_consulted_due_block_hit"] = True
+            cached["persistent_sample_cache_hits"] = 0
+            cached["persistent_sample_cache_misses"] = 0
+            cached["persistent_sample_timeout_cache_hits"] = 0
+            emit_progress(
+                "persistent_cache_hit",
+                cache_key=persistent_cache_key,
+                evaluated_count=cached.get("evaluated_count", 0),
+            )
+            return cached
+        if cached_block is not None:
+            emit_progress(
+                "persistent_cache_stale",
+                cache_key=persistent_cache_key,
+                reason="guided_diagnostics_schema",
+            )
+        emit_progress("persistent_cache_miss", cache_key=persistent_cache_key)
+
     losses: Dict[str, List[float]] = {
         "cosine_loss": [],
         "cosine_similarity": [],
+        "cross_entropy_entropy_loss": [],
+        "cross_entropy_excess_loss": [],
         "cross_entropy_loss": [],
         "flogic_similarity_loss": [],
         "flogic_similarity_score": [],
         "frame_ranking_loss": [],
+        "guidance_family_cross_entropy_excess_loss": [],
+        "guidance_family_cross_entropy_loss": [],
+        "guidance_legal_ir_view_cross_entropy_excess_loss": [],
+        "guidance_legal_ir_view_cross_entropy_loss": [],
+        "guidance_legal_ir_view_entropy_loss": [],
         "modal_span_coverage_loss": [],
         "ontology_violation_count": [],
+        "raw_source_embedding_cosine_similarity": [],
         "reconstruction_loss": [],
+        "source_copy_loss": [],
+        "source_copy_reward_hack_penalty": [],
+        "source_decompiled_text_embedding_cosine_loss": [],
+        "source_decompiled_text_embedding_cosine_similarity": [],
+        "source_decompiled_text_token_loss": [],
+        "source_decompiled_text_token_similarity": [],
+        "source_span_copy_ratio": [],
+        "source_span_text_reconstruction_loss": [],
+        "structural_text_reconstruction_loss": [],
+        "structural_text_reconstruction_similarity": [],
         "symbolic_validity_penalty": [],
         "text_reconstruction_loss": [],
     }
@@ -763,31 +1659,502 @@ def compiler_ir_metric_block(
     frame_candidate_counts: List[float] = []
     llm_call_counts: List[float] = []
     failures = 0
-    for sample in sample_list:
-        try:
-            result = codec.encode(
-                sample.text,
-                document_id=sample.sample_id,
-                citation=sample.citation,
-                source=sample.source,
-                source_embedding=sample.embedding_vector,
+    sample_timeouts = 0
+    skipped_sample_count = 0
+    text_length_skipped_count = 0
+    text_length_truncated_count = 0
+    timeout_fallback_count = 0
+    persistent_sample_cache_hits = 0
+    persistent_sample_cache_misses = 0
+    persistent_sample_timeout_cache_hits = 0
+    guidance_frame_boost_counts: List[float] = []
+    guidance_frame_changed_count = 0
+    guidance_feature_groups: Counter[str] = Counter()
+    guidance_legal_ir_view_gaps: Counter[str] = Counter()
+    guidance_legal_ir_view_family_gaps: Counter[str] = Counter()
+    guidance_semantic_overlay_counts: List[float] = []
+    guidance_semantic_overlay_terms: Counter[str] = Counter()
+    guidance_surface_features: Counter[str] = Counter()
+    guidance_todo_routes: Counter[str] = Counter()
+    guidance_todo_route_examples: Dict[str, List[Dict[str, str]]] = {}
+    sample_metric_records: List[Dict[str, Any]] = []
+
+    for sample_index, sample in enumerate(sample_list, start=1):
+        sample_started_at = time.time()
+        sample_id = str(getattr(sample, "sample_id", "") or "")
+        citation = str(getattr(sample, "citation", "") or "")
+        sample_text = str(getattr(sample, "text", "") or "")
+        sample_text_length = len(sample_text)
+        emit_progress(
+            "sample_start",
+            citation=citation,
+            sample_id=sample_id,
+            sample_index=sample_index,
+            text_length=sample_text_length,
+        )
+
+        metric_text = sample_text
+        metric_text_truncated = False
+        if max_sample_text_chars > 0 and sample_text_length > max_sample_text_chars:
+            if metric_text_policy == "skip":
+                skipped_sample_count += 1
+                text_length_skipped_count += 1
+                sample_record = {
+                    "citation": citation,
+                    "max_sample_text_chars": max_sample_text_chars,
+                    "metric_text_policy": metric_text_policy,
+                    "sample_id": sample_id,
+                    "skip_reason": "text_length_limit",
+                    "source_text_preview": re.sub(r"\s+", " ", sample_text).strip()[:240],
+                    "text_length": sample_text_length,
+                }
+                if len(sample_metric_records) < max(0, int(max_sample_metric_records)):
+                    sample_metric_records.append(sample_record)
+                emit_progress(
+                    "sample_skipped",
+                    citation=citation,
+                    max_sample_text_chars=max_sample_text_chars,
+                    metric_text_policy=metric_text_policy,
+                    sample_id=sample_id,
+                    sample_index=sample_index,
+                    skip_reason="text_length_limit",
+                    text_length=sample_text_length,
+                )
+                continue
+            metric_text = _compiler_ir_metric_bounded_text(
+                sample_text,
+                max_sample_text_chars,
             )
-        except Exception:
+            metric_text_truncated = len(metric_text) < sample_text_length
+            if metric_text_truncated:
+                text_length_truncated_count += 1
+                emit_progress(
+                    "sample_text_truncated",
+                    citation=citation,
+                    metric_text_length=len(metric_text),
+                    sample_id=sample_id,
+                    sample_index=sample_index,
+                    text_length=sample_text_length,
+                )
+
+        metric_sample = _compiler_ir_metric_sample_for_text(
+            sample,
+            metric_text=metric_text,
+        )
+        metric_sample_id = str(getattr(metric_sample, "sample_id", "") or sample_id)
+        metric_text_length = len(str(getattr(metric_sample, "text", "") or ""))
+
+        compiler_guidance = None
+        if precomputed_guidance:
+            compiler_guidance = precomputed_guidance[sample_index - 1]
+        elif use_autoencoder_guidance and autoencoder is not None:
+            guidance_requested_count += 1
+            try:
+                compiler_guidance = autoencoder.compiler_guidance_for_sample(
+                    sample,
+                    use_sample_memory=False,
+                    top_k=guidance_top_k,
+                )
+                if compiler_guidance:
+                    guidance_produced_count += 1
+                else:
+                    guidance_empty_count += 1
+            except Exception:
+                guidance_failures += 1
+
+        sample_cache_key = _compiler_ir_metric_sample_cache_key(
+            metric_sample,
+            codec=codec,
+            compiler_guidance=compiler_guidance,
+            guidance_top_k=guidance_top_k,
+        )
+        sample_timeout_cache_key = _compiler_ir_metric_sample_timeout_cache_key(
+            metric_sample,
+            codec=codec,
+        )
+        cached_result_payload = _read_metric_disk_cache(
+            "compiler_ir_metric_sample",
+            sample_cache_key,
+        )
+        timeout_record = _compiler_ir_metric_sample_timeout_record_from_cache_payload(
+            cached_result_payload,
+            requested_timeout_seconds=sample_timeout_seconds,
+        )
+        timeout_cache_kind = "compiler_ir_metric_sample"
+        if timeout_record is None:
+            timeout_record = _compiler_ir_metric_sample_timeout_record_from_cache_payload(
+                _read_metric_disk_cache(
+                    "compiler_ir_metric_sample_timeout",
+                    sample_timeout_cache_key,
+                ),
+                requested_timeout_seconds=sample_timeout_seconds,
+            )
+            timeout_cache_kind = "compiler_ir_metric_sample_timeout"
+
+        result_from_timeout_cache = False
+        if timeout_record is not None:
+            result_from_timeout_cache = True
+            persistent_sample_cache_hits += 1
+            persistent_sample_timeout_cache_hits += 1
             failures += 1
-            continue
+            sample_timeouts += 1
+            timeout_fallback_count += 1
+            skipped_sample_count += 1
+            if len(sample_metric_records) < max(0, int(max_sample_metric_records)):
+                cached_record = dict(timeout_record)
+                cached_record["persistent_cache_kind"] = timeout_cache_kind
+                sample_metric_records.append(cached_record)
+            result = _compiler_ir_metric_timeout_fallback_result(
+                metric_sample,
+                metric_sample_id=metric_sample_id,
+                metric_text=metric_text,
+                metric_text_length=metric_text_length,
+                original_text_length=sample_text_length,
+                sample_timeout_seconds=sample_timeout_seconds,
+            )
+            emit_progress(
+                "sample_timeout_cache_hit",
+                citation=citation,
+                persistent_sample_cache_hits=persistent_sample_cache_hits,
+                persistent_sample_cache_misses=persistent_sample_cache_misses,
+                persistent_sample_timeout_cache_hits=persistent_sample_timeout_cache_hits,
+                sample_id=sample_id,
+                sample_index=sample_index,
+                sample_timeout_seconds=sample_timeout_seconds,
+                timeout_cache_kind=timeout_cache_kind,
+            )
+        else:
+            result = _compiler_ir_metric_result_from_cache_payload(cached_result_payload)
+
+        if result is None:
+            persistent_sample_cache_misses += 1
+            emit_progress(
+                "sample_cache_miss",
+                citation=citation,
+                persistent_sample_cache_hits=persistent_sample_cache_hits,
+                persistent_sample_cache_misses=persistent_sample_cache_misses,
+                sample_id=sample_id,
+                sample_index=sample_index,
+            )
+            try:
+                with _compiler_ir_metric_sample_timeout(
+                    sample_timeout_seconds
+                ) as timeout_guarded:
+                    try:
+                        result = codec.encode(
+                            metric_sample.text,
+                            document_id=metric_sample.sample_id,
+                            citation=metric_sample.citation,
+                            source=metric_sample.source,
+                            source_embedding=metric_sample.embedding_vector,
+                            compiler_guidance=compiler_guidance,
+                        )
+                    except TypeError:
+                        result = codec.encode(
+                            metric_sample.text,
+                            document_id=metric_sample.sample_id,
+                            citation=metric_sample.citation,
+                            source=metric_sample.source,
+                            source_embedding=metric_sample.embedding_vector,
+                        )
+                if sample_timeout_seconds > 0.0 and not timeout_guarded:
+                    emit_progress(
+                        "sample_timeout_guard_unsupported",
+                        citation=citation,
+                        metric_sample_id=metric_sample_id,
+                        sample_id=sample_id,
+                        sample_index=sample_index,
+                        sample_timeout_seconds=sample_timeout_seconds,
+                    )
+            except CompilerIRMetricSampleTimeout:
+                failures += 1
+                sample_timeouts += 1
+                timeout_fallback_count += 1
+                skipped_sample_count += 1
+                result = _compiler_ir_metric_timeout_fallback_result(
+                    metric_sample,
+                    metric_sample_id=metric_sample_id,
+                    metric_text=metric_text,
+                    metric_text_length=metric_text_length,
+                    original_text_length=sample_text_length,
+                    sample_timeout_seconds=sample_timeout_seconds,
+                )
+                family_distribution = result.metadata.get(
+                    "compiler_ir_metric_timeout_family_distribution"
+                )
+                sample_record = {
+                    "compiler_ir_metric_timeout_fallback": True,
+                    "compiler_ir_metric_timeout_fallback_kind": str(
+                        result.metadata.get("compiler_ir_metric_timeout_fallback_kind")
+                        or ""
+                    ),
+                    "citation": citation,
+                    "metric_sample_id": metric_sample_id,
+                    "metric_text_length": metric_text_length,
+                    "metric_text_policy": metric_text_policy,
+                    "metric_text_truncated": metric_text_truncated,
+                    "original_text_length": sample_text_length,
+                    "sample_id": sample_id,
+                    "sample_timeout_seconds": sample_timeout_seconds,
+                    "skip_reason": "sample_timeout",
+                    "source_text_preview": re.sub(r"\s+", " ", metric_text).strip()[:240],
+                    "text_length": metric_text_length,
+                }
+                if isinstance(family_distribution, Mapping):
+                    sample_record["compiler_ir_metric_timeout_family_distribution"] = {
+                        str(key): float(value)
+                        for key, value in family_distribution.items()
+                        if isinstance(value, (int, float))
+                    }
+                if len(sample_metric_records) < max(0, int(max_sample_metric_records)):
+                    sample_metric_records.append(sample_record)
+                timeout_payload = _compiler_ir_metric_sample_timeout_cache_payload(
+                    sample_record
+                )
+                _write_metric_disk_cache(
+                    "compiler_ir_metric_sample",
+                    sample_cache_key,
+                    timeout_payload,
+                )
+                _write_metric_disk_cache(
+                    "compiler_ir_metric_sample_timeout",
+                    sample_timeout_cache_key,
+                    timeout_payload,
+                )
+                emit_progress(
+                    "sample_timeout",
+                    citation=citation,
+                    failures=failures,
+                    metric_sample_id=metric_sample_id,
+                    metric_text_length=metric_text_length,
+                    metric_text_truncated=metric_text_truncated,
+                    sample_id=sample_id,
+                    sample_index=sample_index,
+                    sample_seconds=round(time.time() - sample_started_at, 3),
+                    sample_timeout_seconds=sample_timeout_seconds,
+                    text_length=metric_text_length,
+                )
+            except Exception:
+                failures += 1
+                emit_progress(
+                    "sample_failed",
+                    citation=citation,
+                    failures=failures,
+                    sample_id=sample_id,
+                    sample_index=sample_index,
+                    sample_seconds=round(time.time() - sample_started_at, 3),
+                )
+                continue
+            if not bool(
+                getattr(result, "metadata", {}).get(
+                    "compiler_ir_metric_timeout_fallback"
+                )
+            ):
+                _write_metric_disk_cache(
+                    "compiler_ir_metric_sample",
+                    sample_cache_key,
+                    _compiler_ir_metric_result_cache_payload(result),
+                )
+        elif not result_from_timeout_cache:
+            persistent_sample_cache_hits += 1
+            emit_progress(
+                "sample_persistent_cache_hit",
+                citation=citation,
+                persistent_sample_cache_hits=persistent_sample_cache_hits,
+                persistent_sample_cache_misses=persistent_sample_cache_misses,
+                sample_id=sample_id,
+                sample_index=sample_index,
+            )
+
         for name in losses:
             value = result.losses.get(name)
             if value is not None:
                 losses[name].append(float(value))
-        formula_counts.append(float(len(result.modal_ir.formulas)))
-        frame_candidate_counts.append(float(len(result.frame_candidates)))
-        llm_call_counts.append(float(result.metadata.get("llm_call_count", 0.0)))
+        formula_counts.append(float(len(getattr(result.modal_ir, "formulas", ()) or ())))
+        frame_candidate_counts.append(float(len(getattr(result, "frame_candidates", ()) or ())))
+        metadata = dict(getattr(result, "metadata", {}) or {})
+        llm_call_counts.append(float(metadata.get("llm_call_count", 0.0)))
+
+        sample_record: Dict[str, Any] = {
+            "citation": citation,
+            "compiler_guidance_applied": bool(metadata.get("compiler_guidance_applied")),
+            "compiler_guidance_legal_ir_view_family_gaps": [],
+            "compiler_guidance_legal_ir_view_gaps": [],
+            "compiler_guidance_semantic_overlay_terms": [],
+            "compiler_guidance_todo_routes": [],
+            "metric_sample_id": metric_sample_id,
+            "metric_text_length": metric_text_length,
+            "metric_text_policy": metric_text_policy,
+            "metric_text_truncated": metric_text_truncated,
+            "metrics": {
+                name: round(float(result.losses[name]), 9)
+                for name in COMPILER_GUIDANCE_CANARY_METRICS
+                if name in result.losses and result.losses.get(name) is not None
+            },
+            "original_text_length": sample_text_length,
+            "sample_id": sample_id,
+            "source_text_preview": re.sub(r"\s+", " ", metric_text).strip()[:240],
+            "text_length": metric_text_length,
+        }
+        if metadata.get("compiler_ir_metric_timeout_fallback"):
+            sample_record["compiler_ir_metric_timeout_fallback"] = True
+            sample_record["compiler_ir_metric_timeout_fallback_kind"] = str(
+                metadata.get("compiler_ir_metric_timeout_fallback_kind") or ""
+            )
+            sample_record["sample_timeout_seconds"] = float(
+                metadata.get("sample_timeout_seconds", sample_timeout_seconds) or 0.0
+            )
+            sample_record["skip_reason"] = "sample_timeout"
+            family_distribution = metadata.get(
+                "compiler_ir_metric_timeout_family_distribution"
+            )
+            if isinstance(family_distribution, Mapping):
+                sample_record["compiler_ir_metric_timeout_family_distribution"] = {
+                    str(key): float(value)
+                    for key, value in family_distribution.items()
+                    if isinstance(value, (int, float))
+                }
+        structural_preview = str(metadata.get("modal_decompiler_structural_text") or "")
+        if structural_preview:
+            sample_record["decompiled_text_preview"] = re.sub(
+                r"\s+",
+                " ",
+                structural_preview,
+            ).strip()[:240]
+
+        if metadata.get("compiler_guidance_applied"):
+            guidance_applied_count += 1
+            guidance_frame_boost_counts.append(
+                float(metadata.get("compiler_guidance_frame_boost_count", 0.0))
+            )
+            guidance_semantic_overlay_counts.append(
+                float(metadata.get("compiler_guidance_semantic_overlay_count", 0.0))
+            )
+            overlay_terms = metadata.get("compiler_guidance_semantic_overlay_terms")
+            if isinstance(overlay_terms, Sequence) and not isinstance(
+                overlay_terms,
+                (str, bytes),
+            ):
+                for value in overlay_terms:
+                    if str(value):
+                        guidance_semantic_overlay_terms[str(value)] += 1
+                sample_record["compiler_guidance_semantic_overlay_terms"] = [
+                    str(value) for value in overlay_terms if str(value)
+                ]
+            if (
+                metadata.get("compiler_guidance_selected_frame_before")
+                != metadata.get("compiler_guidance_selected_frame_after")
+            ):
+                guidance_frame_changed_count += 1
+            slot_texts = compiler_guidance_slot_texts_from_result(result)
+            for value in slot_texts.get("compiler_guidance_feature_group", []):
+                guidance_feature_groups[str(value)] += 1
+            sample_view_gaps = [
+                str(value)
+                for value in slot_texts.get(
+                    "compiler_guidance_legal_ir_view_gap_direction",
+                    [],
+                )
+                if str(value)
+            ]
+            sample_record["compiler_guidance_legal_ir_view_gaps"] = list(
+                dict.fromkeys(sample_view_gaps)
+            )
+            sample_family_gaps = [
+                _compiler_guidance_legal_ir_family_gap(value)
+                for value in sample_view_gaps
+            ]
+            sample_record["compiler_guidance_legal_ir_view_family_gaps"] = list(
+                dict.fromkeys(sample_family_gaps)
+            )
+            for value in sample_view_gaps:
+                guidance_legal_ir_view_gaps[value] += 1
+            for value in sample_family_gaps:
+                guidance_legal_ir_view_family_gaps[value] += 1
+            for value in slot_texts.get(
+                "compiler_guidance_decompiler_surface_template_feature",
+                [],
+            ):
+                guidance_surface_features[str(value)] += 1
+            sample_todo_routes = [
+                str(value)
+                for value in slot_texts.get("compiler_guidance_todo_route", [])
+                if str(value)
+            ]
+            sample_record["compiler_guidance_todo_routes"] = list(
+                dict.fromkeys(sample_todo_routes)
+            )
+            for value in sample_todo_routes:
+                guidance_todo_routes[value] += 1
+            for route in dict.fromkeys(sample_todo_routes):
+                examples = guidance_todo_route_examples.setdefault(route, [])
+                if len(examples) >= 3:
+                    continue
+                examples.append(
+                    {
+                        "citation": citation,
+                        "sample_id": sample_id,
+                        "selected_frame_after": str(
+                            metadata.get("compiler_guidance_selected_frame_after", "")
+                            or ""
+                        ),
+                        "selected_frame_before": str(
+                            metadata.get("compiler_guidance_selected_frame_before", "")
+                            or ""
+                        ),
+                        "text_preview": re.sub(r"\s+", " ", metric_text).strip()[:240],
+                    }
+                )
+        if len(sample_metric_records) < max(0, int(max_sample_metric_records)):
+            sample_metric_records.append(sample_record)
+        emit_progress(
+            "sample_done",
+            citation=citation,
+            evaluated_count=len(formula_counts),
+            failures=failures,
+            formula_count=int(formula_counts[-1]) if formula_counts else 0,
+            frame_candidate_count=int(frame_candidate_counts[-1]) if frame_candidate_counts else 0,
+            metric_sample_id=metric_sample_id,
+            metric_text_length=metric_text_length,
+            metric_text_truncated=metric_text_truncated,
+            sample_id=sample_id,
+            sample_index=sample_index,
+            sample_seconds=round(time.time() - sample_started_at, 3),
+        )
 
     block: Dict[str, Any] = {
+        "autoencoder_guidance_enabled": bool(use_autoencoder_guidance),
+        "autoencoder_guidance_applied_count": guidance_applied_count,
+        "autoencoder_guidance_empty_count": guidance_empty_count,
+        "autoencoder_guidance_failures": guidance_failures,
+        "autoencoder_guidance_produced_count": guidance_produced_count,
+        "autoencoder_guidance_requested_count": guidance_requested_count,
+        "autoencoder_guidance_unapplied_count": max(
+            0,
+            guidance_produced_count - guidance_applied_count,
+        ),
+        "compiler_ir_guidance_cache_policy": _COMPILER_IR_GUIDANCE_CACHE_POLICY,
         "evaluated_count": len(formula_counts),
+        "max_sample_text_chars": max_sample_text_chars,
+        "metric_text_policy": metric_text_policy,
         "metric_failures": failures,
+        "persistent_sample_cache_hits": persistent_sample_cache_hits,
+        "persistent_sample_cache_misses": persistent_sample_cache_misses,
+        "persistent_sample_timeout_cache_hits": persistent_sample_timeout_cache_hits,
+        "sample_timeout_cache_policy": _COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY,
+        "sample_timeout_seconds": sample_timeout_seconds,
+        "sample_timeout_supported": sample_timeout_supported,
+        "sample_timeouts": sample_timeouts,
         "sample_count": len(sample_list),
+        "skipped_sample_count": skipped_sample_count,
+        "text_length_skipped_count": text_length_skipped_count,
+        "text_length_truncated_count": text_length_truncated_count,
+        "timeout_fallback_count": timeout_fallback_count,
     }
+    if use_autoencoder_guidance:
+        block["compiler_guidance_diagnostics_version"] = (
+            _COMPILER_IR_GUIDANCE_DIAGNOSTICS_VERSION
+        )
     for name, values in losses.items():
         if values:
             block[name] = round(sum(values) / len(values), 9)
@@ -798,6 +2165,53 @@ def compiler_ir_metric_block(
             9,
         )
         block["llm_call_count"] = round(sum(llm_call_counts) / len(llm_call_counts), 9)
+    if guidance_frame_boost_counts:
+        block["compiler_guidance_frame_boost_count"] = round(
+            sum(guidance_frame_boost_counts) / len(guidance_frame_boost_counts),
+            9,
+        )
+        block["compiler_guidance_frame_changed_count"] = guidance_frame_changed_count
+    if guidance_semantic_overlay_counts:
+        block["compiler_guidance_semantic_overlay_count"] = round(
+            sum(guidance_semantic_overlay_counts)
+            / len(guidance_semantic_overlay_counts),
+            9,
+        )
+    if use_autoencoder_guidance or guidance_semantic_overlay_terms:
+        block["compiler_guidance_semantic_overlay_terms"] = dict(
+            guidance_semantic_overlay_terms.most_common(12)
+        )
+    if use_autoencoder_guidance or guidance_feature_groups:
+        block["compiler_guidance_feature_groups"] = dict(
+            guidance_feature_groups.most_common(12)
+        )
+    if use_autoencoder_guidance or guidance_legal_ir_view_gaps:
+        block["compiler_guidance_legal_ir_view_gaps"] = dict(
+            guidance_legal_ir_view_gaps.most_common(12)
+        )
+    if use_autoencoder_guidance or guidance_legal_ir_view_family_gaps:
+        block["compiler_guidance_legal_ir_view_family_gaps"] = dict(
+            guidance_legal_ir_view_family_gaps.most_common(12)
+        )
+    if use_autoencoder_guidance or guidance_surface_features:
+        block["compiler_guidance_surface_features"] = dict(
+            guidance_surface_features.most_common(12)
+        )
+    if use_autoencoder_guidance or guidance_todo_routes:
+        block["compiler_guidance_todo_routes"] = dict(
+            guidance_todo_routes.most_common(12)
+        )
+    if guidance_todo_routes:
+        block["compiler_guidance_todo_route_examples"] = {
+            route: guidance_todo_route_examples.get(route, [])[:3]
+            for route, _ in guidance_todo_routes.most_common(12)
+            if guidance_todo_route_examples.get(route)
+        }
+    if sample_metric_records:
+        block["sample_metric_records"] = sample_metric_records
+        block["worst_source_decompiled_text_records"] = (
+            _worst_source_decompiled_text_records(sample_metric_records)
+        )
     if "modal_span_coverage_loss" in block:
         block["modal_span_coverage"] = round(
             1.0 - float(block["modal_span_coverage_loss"]),
@@ -808,7 +2222,289 @@ def compiler_ir_metric_block(
             1.0 - float(block["text_reconstruction_loss"]),
             9,
         )
+    if "structural_text_reconstruction_loss" in block:
+        block["structural_text_reconstruction_similarity"] = round(
+            1.0 - float(block["structural_text_reconstruction_loss"]),
+            9,
+        )
+    if "source_decompiled_text_embedding_cosine_loss" in block:
+        block["source_decompiled_text_embedding_cosine_gap"] = round(
+            float(block["source_decompiled_text_embedding_cosine_loss"]),
+            9,
+        )
+    if persistent_cache_key is not None and sample_timeouts <= 0:
+        block["persistent_cache_enabled"] = _metric_disk_cache_enabled()
+        block["persistent_cache_hit"] = False
+        block["persistent_cache_key"] = persistent_cache_key
+        block["persistent_cache_kind"] = "compiler_ir_metric_block"
+        _write_metric_disk_cache("compiler_ir_metric_block", persistent_cache_key, block)
+    emit_progress(
+        "done",
+        evaluated_count=len(formula_counts),
+        failures=failures,
+        sample_timeouts=sample_timeouts,
+        skipped_sample_count=skipped_sample_count,
+    )
     return block
+
+
+def _worst_source_decompiled_text_records(
+    records: Sequence[Mapping[str, Any]],
+    *,
+    limit: int = 8,
+) -> List[Dict[str, Any]]:
+    """Return samples with the worst source text to structural decompiled text gaps."""
+
+    ranked: List[tuple[float, Dict[str, Any]]] = []
+    for record in records:
+        if not isinstance(record, Mapping):
+            continue
+        metrics = record.get("metrics")
+        if not isinstance(metrics, Mapping):
+            continue
+        embedding_gap = _metric_value(
+            metrics,
+            "source_decompiled_text_embedding_cosine_loss",
+            default=max(
+                0.0,
+                1.0
+                - _metric_value(
+                    metrics,
+                    "source_decompiled_text_embedding_cosine_similarity",
+                    default=_metric_value(
+                        metrics,
+                        "cosine_similarity",
+                        default=_metric_value(
+                            metrics,
+                            "raw_source_embedding_cosine_similarity",
+                            default=1.0,
+                        ),
+                    ),
+                ),
+            ),
+        )
+        token_loss = _metric_value(
+            metrics,
+            "source_decompiled_text_token_loss",
+            default=_metric_value(
+                metrics,
+                "structural_text_reconstruction_loss",
+                default=0.0,
+            ),
+        )
+        copy_hack = _metric_value(
+            metrics,
+            "source_copy_reward_hack_penalty",
+            default=0.0,
+        )
+        structural_loss = _metric_value(
+            metrics,
+            "structural_text_reconstruction_loss",
+            default=0.0,
+        )
+        score = embedding_gap + token_loss + copy_hack + structural_loss
+        if score <= 0.0:
+            continue
+        ranked.append(
+            (
+                score,
+                {
+                    "citation": str(record.get("citation") or ""),
+                    "decompiled_text_preview": str(
+                        record.get("decompiled_text_preview") or ""
+                    ),
+                    "source_text_preview": str(record.get("source_text_preview") or ""),
+                    "sample_id": str(record.get("sample_id") or ""),
+                    "source_decompiled_text_embedding_cosine_loss": round(
+                        embedding_gap,
+                        9,
+                    ),
+                    "source_decompiled_text_token_loss": round(token_loss, 9),
+                    "source_copy_reward_hack_penalty": round(copy_hack, 9),
+                    "structural_text_reconstruction_loss": round(structural_loss, 9),
+                },
+            )
+        )
+    ranked.sort(
+        key=lambda item: (
+            -item[0],
+            item[1]["sample_id"],
+            item[1]["citation"],
+        )
+    )
+    return [row for _score, row in ranked[: max(0, int(limit))]]
+
+
+def _compiler_ir_metric_block_cache_key(
+    samples: Sequence[Any],
+    *,
+    codec: Any,
+    guidance_cache_records: Sequence[Mapping[str, Any]] = (),
+    guidance_top_k: int,
+    max_sample_text_chars: int,
+    max_sample_metric_records: int,
+    metric_text_policy: str,
+    sample_timeout_seconds: float,
+) -> str:
+    payload = {
+        "block_cache_version": _COMPILER_IR_METRIC_BLOCK_CACHE_VERSION,
+        "codec": {
+            "config": _metric_cache_object_payload(getattr(codec, "config", None)),
+            "type": f"{codec.__class__.__module__}.{codec.__class__.__qualname__}",
+        },
+        "guidance_cache_records": _metric_cache_object_payload(
+            list(guidance_cache_records)
+        ),
+        "guidance_diagnostics_version": _COMPILER_IR_GUIDANCE_DIAGNOSTICS_VERSION,
+        "guidance_top_k": int(guidance_top_k),
+        "max_sample_metric_records": int(max_sample_metric_records),
+        "max_sample_text_chars": int(max_sample_text_chars),
+        "metric_text_policy": _normalise_compiler_ir_metric_text_policy(
+            metric_text_policy
+        ),
+        "samples": [_sample_metric_cache_payload(sample) for sample in samples],
+        "successful_result_timeout_policy": "timeout_agnostic",
+    }
+    return _metric_disk_cache_key("compiler_ir_metric_block", payload)
+
+
+def _compiler_ir_metric_sample_cache_key(
+    sample: Any,
+    *,
+    codec: Any,
+    compiler_guidance: Optional[Mapping[str, Any]],
+    guidance_top_k: int,
+) -> str:
+    payload = {
+        "codec": {
+            "config": _metric_cache_object_payload(getattr(codec, "config", None)),
+            "type": f"{codec.__class__.__module__}.{codec.__class__.__qualname__}",
+        },
+        "compiler_guidance": _compiler_ir_metric_guidance_cache_payload(
+            compiler_guidance
+        ),
+        "guidance_top_k": int(guidance_top_k),
+        "sample": _sample_metric_cache_payload(sample),
+    }
+    return _compiler_ir_metric_sample_disk_cache_key(payload)
+
+
+def _compiler_ir_metric_sample_timeout_cache_key(
+    sample: Any,
+    *,
+    codec: Any,
+) -> str:
+    payload = {
+        "codec": {
+            "config": _metric_cache_object_payload(getattr(codec, "config", None)),
+            "type": f"{codec.__class__.__module__}.{codec.__class__.__qualname__}",
+        },
+        "sample": _sample_metric_cache_payload(sample),
+    }
+    return _compiler_ir_metric_sample_timeout_disk_cache_key(payload)
+
+
+def _compiler_ir_metric_result_cache_payload(result: Any) -> Dict[str, Any]:
+    modal_ir = getattr(result, "modal_ir", None)
+    frame_candidates = getattr(result, "frame_candidates", ()) or ()
+    payload = {
+        "decoded_modal_text": str(getattr(result, "decoded_modal_text", "") or ""),
+        "frame_candidate_count": len(frame_candidates),
+        "losses": _metric_cache_object_payload(getattr(result, "losses", {}) or {}),
+        "metadata": _metric_cache_object_payload(getattr(result, "metadata", {}) or {}),
+        "modal_formula_count": len(getattr(modal_ir, "formulas", ()) or ()),
+    }
+    slot_texts = compiler_guidance_slot_texts_from_result(result)
+    if slot_texts:
+        payload["compiler_guidance_slot_texts"] = _metric_cache_object_payload(
+            slot_texts
+        )
+    return payload
+
+
+def _compiler_ir_metric_sample_timeout_cache_payload(
+    sample_record: Mapping[str, Any],
+) -> Dict[str, Any]:
+    return {
+        "cache_entry_type": "sample_timeout",
+        "record": _metric_cache_object_payload(sample_record),
+        "sample_timeout_cache_policy": _COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY,
+        "sample_timeout_seconds": _float_or_zero(
+            sample_record.get("sample_timeout_seconds")
+        ),
+    }
+
+
+def _compiler_ir_metric_sample_timeout_record_from_cache_payload(
+    payload: Optional[Mapping[str, Any]],
+    *,
+    requested_timeout_seconds: float,
+) -> Optional[Dict[str, Any]]:
+    if not isinstance(payload, Mapping):
+        return None
+    if payload.get("cache_entry_type") != "sample_timeout":
+        return None
+    if (
+        payload.get("sample_timeout_cache_policy")
+        != _COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY
+    ):
+        return None
+    requested_timeout = max(0.0, float(requested_timeout_seconds or 0.0))
+    cached_timeout = _float_or_zero(payload.get("sample_timeout_seconds"))
+    if requested_timeout <= 0.0 or cached_timeout + 1.0e-9 < requested_timeout:
+        return None
+    record = payload.get("record")
+    if not isinstance(record, Mapping):
+        return None
+    cached = dict(record)
+    cached["cached_sample_timeout_seconds"] = cached_timeout
+    cached["from_persistent_sample_cache"] = True
+    cached["sample_timeout_cache_policy"] = _COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY
+    cached["sample_timeout_seconds"] = requested_timeout
+    cached["skip_reason"] = "sample_timeout"
+    return cached
+
+
+def _compiler_ir_metric_result_from_cache_payload(
+    payload: Optional[Mapping[str, Any]],
+) -> Optional[Any]:
+    if not isinstance(payload, Mapping):
+        return None
+    losses = payload.get("losses")
+    if not isinstance(losses, Mapping):
+        return None
+    metadata = payload.get("metadata")
+    if not isinstance(metadata, Mapping):
+        metadata = {}
+    guidance_slot_texts: Dict[str, List[str]] = {}
+    raw_slot_texts = payload.get("compiler_guidance_slot_texts")
+    if isinstance(raw_slot_texts, Mapping):
+        guidance_slot_texts = {
+            str(slot): _metadata_sequence_strings(values)
+            for slot, values in sorted(raw_slot_texts.items())
+            if str(slot)
+        }
+        metadata = dict(metadata)
+        metadata["_compiler_guidance_slot_texts"] = guidance_slot_texts
+    try:
+        formula_count = max(0, int(payload.get("modal_formula_count", 0) or 0))
+    except (TypeError, ValueError):
+        formula_count = 0
+    try:
+        frame_candidate_count = max(
+            0,
+            int(payload.get("frame_candidate_count", 0) or 0),
+        )
+    except (TypeError, ValueError):
+        frame_candidate_count = 0
+    return SimpleNamespace(
+        decoded_modal_text=str(payload.get("decoded_modal_text") or ""),
+        frame_candidates=[None] * frame_candidate_count,
+        losses={str(name): _float_or_zero(value) for name, value in losses.items()},
+        compiler_guidance_slot_texts=guidance_slot_texts,
+        metadata=dict(metadata),
+        modal_ir=SimpleNamespace(formulas=[None] * formula_count),
+    )
 
 
 BRIDGE_ROUND_TRIP_METRIC_NAMES = (
@@ -1175,6 +2871,158 @@ def _metric_value(block: Mapping[str, Any], name: str, default: float = 1.0e12) 
     return value
 
 
+def _compiler_guidance_record_metric(
+    record: Mapping[str, Any],
+    name: str,
+    default: float = 1.0e12,
+) -> float:
+    metrics = record.get("metrics")
+    if isinstance(metrics, Mapping):
+        return _metric_value(metrics, name, default)
+    return _metric_value(record, name, default)
+
+
+def _compiler_guidance_delta_quality_gate(
+    *,
+    ce_delta: float,
+    copy_hack_delta: float,
+    cosine_delta: float,
+    threshold: float,
+) -> str:
+    core_deltas = (ce_delta, copy_hack_delta, cosine_delta)
+    if any(delta < -threshold for delta in core_deltas):
+        return "fail"
+    if any(delta > threshold for delta in core_deltas):
+        return "pass"
+    return "warn"
+
+
+def _compiler_guidance_mean_delta_block(
+    deltas: Sequence[Mapping[str, float]],
+    *,
+    threshold: float,
+) -> Dict[str, Any]:
+    if not deltas:
+        return {
+            "ce_delta": 0.0,
+            "copy_hack_delta": 0.0,
+            "cosine_delta": 0.0,
+            "count": 0,
+            "quality_gate": "inactive",
+        }
+    ce_delta = _mean([float(delta.get("ce_delta", 0.0)) for delta in deltas])
+    copy_hack_delta = _mean(
+        [float(delta.get("copy_hack_delta", 0.0)) for delta in deltas]
+    )
+    cosine_delta = _mean(
+        [float(delta.get("cosine_delta", 0.0)) for delta in deltas]
+    )
+    return {
+        "ce_delta": ce_delta,
+        "copy_hack_delta": copy_hack_delta,
+        "cosine_delta": cosine_delta,
+        "count": len(deltas),
+        "quality_gate": _compiler_guidance_delta_quality_gate(
+            ce_delta=ce_delta,
+            copy_hack_delta=copy_hack_delta,
+            cosine_delta=cosine_delta,
+            threshold=threshold,
+        ),
+    }
+
+
+def _compiler_guidance_canary_attribution(
+    deterministic_block: Mapping[str, Any],
+    guided_block: Mapping[str, Any],
+    *,
+    threshold: float,
+) -> Dict[str, Any]:
+    deterministic_records = deterministic_block.get("sample_metric_records")
+    guided_records = guided_block.get("sample_metric_records")
+    if not isinstance(deterministic_records, Sequence) or isinstance(
+        deterministic_records,
+        (str, bytes),
+    ):
+        deterministic_records = []
+    if not isinstance(guided_records, Sequence) or isinstance(
+        guided_records,
+        (str, bytes),
+    ):
+        guided_records = []
+    deterministic_by_sample = {
+        str(record.get("sample_id") or ""): record
+        for record in deterministic_records
+        if isinstance(record, Mapping) and str(record.get("sample_id") or "")
+    }
+    buckets: Dict[str, Dict[str, List[Dict[str, float]]]] = {
+        "legal_ir_view_family_gaps": {},
+        "legal_ir_view_gaps": {},
+        "semantic_overlay_terms": {},
+        "todo_routes": {},
+    }
+    matched_sample_count = 0
+    for guided_record in guided_records:
+        if not isinstance(guided_record, Mapping):
+            continue
+        sample_id = str(guided_record.get("sample_id") or "")
+        deterministic_record = deterministic_by_sample.get(sample_id)
+        if deterministic_record is None:
+            continue
+        matched_sample_count += 1
+        delta = {
+            "ce_delta": _compiler_guidance_record_metric(
+                deterministic_record,
+                "cross_entropy_loss",
+            )
+            - _compiler_guidance_record_metric(guided_record, "cross_entropy_loss"),
+            "copy_hack_delta": _compiler_guidance_record_metric(
+                deterministic_record,
+                "source_copy_reward_hack_penalty",
+            )
+            - _compiler_guidance_record_metric(
+                guided_record,
+                "source_copy_reward_hack_penalty",
+            ),
+            "cosine_delta": _compiler_guidance_record_metric(
+                guided_record,
+                "cosine_similarity",
+                -1.0,
+            )
+            - _compiler_guidance_record_metric(
+                deterministic_record,
+                "cosine_similarity",
+                -1.0,
+            ),
+        }
+        for output_name, record_key in (
+            (
+                "legal_ir_view_family_gaps",
+                "compiler_guidance_legal_ir_view_family_gaps",
+            ),
+            ("legal_ir_view_gaps", "compiler_guidance_legal_ir_view_gaps"),
+            ("semantic_overlay_terms", "compiler_guidance_semantic_overlay_terms"),
+            ("todo_routes", "compiler_guidance_todo_routes"),
+        ):
+            values = guided_record.get(record_key)
+            if not isinstance(values, Sequence) or isinstance(values, (str, bytes)):
+                values = []
+            for value in values:
+                key = str(value or "").strip()
+                if not key:
+                    continue
+                buckets[output_name].setdefault(key, []).append(dict(delta))
+    attribution: Dict[str, Any] = {
+        "basis": "sample_records",
+        "matched_sample_count": matched_sample_count,
+    }
+    for output_name, output_buckets in buckets.items():
+        attribution[output_name] = {
+            key: _compiler_guidance_mean_delta_block(deltas, threshold=threshold)
+            for key, deltas in sorted(output_buckets.items())
+        }
+    return attribution
+
+
 def compiler_guidance_canary_block(
     deterministic_block: Mapping[str, Any],
     guided_block: Mapping[str, Any],
@@ -1228,8 +3076,14 @@ def compiler_guidance_canary_block(
         quality_gate = "pass"
     else:
         quality_gate = "warn"
+    attribution = _compiler_guidance_canary_attribution(
+        deterministic_block,
+        guided_block,
+        threshold=threshold,
+    )
     return {
         "applied_count": applied_count,
+        "attribution": attribution,
         "ce_delta": round(deltas["ce_delta"], 9),
         "ce_excess_delta": round(deltas["ce_excess_delta"], 9),
         "copy_hack_delta": round(deltas["copy_hack_delta"], 9),
@@ -1358,6 +3212,38 @@ def _compiler_guidance_fallback_todo_routes(
     return _top_numeric_items(route_counts, limit=limit)
 
 
+def _compiler_guidance_legal_ir_view_gap_route(gap_name: str) -> str:
+    normalized = _normalized_guidance_route(gap_name)
+    if "deontic" in normalized:
+        return "repair_deontic_bridge_quality_gate"
+    if "frame" in normalized or "flogic" in normalized:
+        return "repair_flogic_ontology_constraints"
+    if "tdfol" in normalized or "first_order" in normalized:
+        return "repair_tdfol_bridge_parse"
+    if "cec" in normalized or "event_calculus" in normalized:
+        return "repair_cec_dcec_bridge"
+    if "knowledge_graph" in normalized or normalized.startswith("kg_"):
+        return "repair_multiview_legal_ir_graph_projection"
+    if "prover" in normalized:
+        return "repair_external_prover_router"
+    if "zkp" in normalized or "zero_knowledge" in normalized:
+        return "repair_zkp_attestation_bridge"
+    return "repair_multiview_legal_ir_loss"
+
+
+def _compiler_guidance_todo_routes_from_legal_ir_view_gaps(
+    view_gaps: Mapping[str, Any],
+    *,
+    limit: int = 8,
+) -> Dict[str, float]:
+    route_counts: Counter[str] = Counter()
+    for gap_name, count in _top_numeric_items(view_gaps, limit=32).items():
+        route_counts[_compiler_guidance_legal_ir_view_gap_route(gap_name)] += float(
+            count
+        )
+    return _top_numeric_items(route_counts, limit=limit)
+
+
 def compiler_guidance_route_scope(route: str) -> Dict[str, Any]:
     """Map a learned guidance TODO route into a merge-safe Codex AST scope."""
     normalized = _normalized_guidance_route(route)
@@ -1398,7 +3284,22 @@ def compiler_guidance_scope_hints(
 ) -> Dict[str, Any]:
     """Summarize learned guidance routes as Codex worker rebalance hints."""
     todo_routes = guided_block.get("compiler_guidance_todo_routes")
-    if not isinstance(todo_routes, Mapping):
+    if not isinstance(todo_routes, Mapping) or not todo_routes:
+        legal_ir_view_gaps = guided_block.get("compiler_guidance_legal_ir_view_gaps")
+        legal_ir_view_family_gaps = guided_block.get(
+            "compiler_guidance_legal_ir_view_family_gaps"
+        )
+        route_view_gaps: Mapping[str, Any] = {}
+        if isinstance(legal_ir_view_gaps, Mapping) and legal_ir_view_gaps:
+            route_view_gaps = legal_ir_view_gaps
+        elif isinstance(legal_ir_view_family_gaps, Mapping):
+            route_view_gaps = legal_ir_view_family_gaps
+        if route_view_gaps:
+            todo_routes = _compiler_guidance_todo_routes_from_legal_ir_view_gaps(
+                route_view_gaps,
+                limit=max_scopes,
+            )
+    if not isinstance(todo_routes, Mapping) or not todo_routes:
         return {
             "recommended_parallel_scopes": [],
             "route_scope_map": {},
@@ -1473,6 +3374,34 @@ def compiler_guidance_promotion_gate(
     }
 
 
+def _compiler_guidance_attribution_summary(
+    attribution: Mapping[str, Any],
+) -> Dict[str, Any]:
+    summary: Dict[str, Any] = {
+        "basis": str(attribution.get("basis") or ""),
+        "matched_sample_count": int(attribution.get("matched_sample_count", 0) or 0),
+    }
+    for group_name in (
+        "legal_ir_view_family_gaps",
+        "legal_ir_view_gaps",
+        "semantic_overlay_terms",
+        "todo_routes",
+    ):
+        group = attribution.get(group_name)
+        if not isinstance(group, Mapping):
+            continue
+        for gate in ("pass", "warn", "fail"):
+            keys = [
+                str(key)
+                for key, block in sorted(group.items())
+                if isinstance(block, Mapping)
+                and str(block.get("quality_gate") or "") == gate
+            ]
+            if keys:
+                summary[f"{gate}_{group_name}"] = keys
+    return summary
+
+
 def compiler_guidance_distillation_candidates(
     guided_block: Mapping[str, Any],
     canary_block: Mapping[str, Any],
@@ -1482,6 +3411,10 @@ def compiler_guidance_distillation_candidates(
     """Build the reviewable learned-to-deterministic compiler distillation block."""
     feature_groups = guided_block.get("compiler_guidance_feature_groups")
     surface_features = guided_block.get("compiler_guidance_surface_features")
+    legal_ir_view_gaps = guided_block.get("compiler_guidance_legal_ir_view_gaps")
+    legal_ir_view_family_gaps = guided_block.get(
+        "compiler_guidance_legal_ir_view_family_gaps"
+    )
     semantic_overlay_terms = guided_block.get(
         "compiler_guidance_semantic_overlay_terms"
     )
@@ -1495,6 +3428,16 @@ def compiler_guidance_distillation_candidates(
         surface_features if isinstance(surface_features, Mapping) else {},
         limit=max_items,
     )
+    top_legal_ir_view_gaps = _top_numeric_items(
+        legal_ir_view_gaps if isinstance(legal_ir_view_gaps, Mapping) else {},
+        limit=max_items,
+    )
+    top_legal_ir_view_family_gaps = _top_numeric_items(
+        legal_ir_view_family_gaps
+        if isinstance(legal_ir_view_family_gaps, Mapping)
+        else {},
+        limit=max_items,
+    )
     top_todo_routes = _top_numeric_items(
         todo_routes if isinstance(todo_routes, Mapping) else {},
         limit=max_items,
@@ -1505,19 +3448,26 @@ def compiler_guidance_distillation_candidates(
     )
     todo_routes_inferred_from_features = False
     todo_routes_augmented_from_features = False
+    legal_ir_view_gap_todo_routes = _compiler_guidance_todo_routes_from_legal_ir_view_gaps(
+        top_legal_ir_view_gaps or top_legal_ir_view_family_gaps,
+        limit=max_items,
+    )
     fallback_todo_routes = _compiler_guidance_fallback_todo_routes(
         top_feature_groups=top_feature_groups,
         top_surface_features=top_surface_features,
         limit=max_items,
     )
     if not top_todo_routes:
-        top_todo_routes = fallback_todo_routes
+        top_todo_routes = legal_ir_view_gap_todo_routes or fallback_todo_routes
         todo_routes_inferred_from_features = bool(top_todo_routes)
-    elif fallback_todo_routes:
+    elif legal_ir_view_gap_todo_routes or fallback_todo_routes:
         merged_routes = Counter(
             {str(route): float(count) for route, count in top_todo_routes.items()}
         )
-        for route, count in fallback_todo_routes.items():
+        for route, count in {
+            **legal_ir_view_gap_todo_routes,
+            **fallback_todo_routes,
+        }.items():
             before = float(merged_routes.get(str(route), 0.0))
             merged_routes[str(route)] = max(before, float(count))
             if before <= 0.0:
@@ -1540,8 +3490,15 @@ def compiler_guidance_distillation_candidates(
         max_scopes=max_items,
     )
     promotion_gate = compiler_guidance_promotion_gate(canary_block)
+    guidance_attribution = (
+        dict(canary_block.get("attribution"))
+        if isinstance(canary_block.get("attribution"), Mapping)
+        else {}
+    )
     has_candidates = bool(
         top_feature_groups
+        or top_legal_ir_view_family_gaps
+        or top_legal_ir_view_gaps
         or top_semantic_overlay_terms
         or top_surface_features
         or top_todo_routes
@@ -1549,6 +3506,10 @@ def compiler_guidance_distillation_candidates(
     )
     return {
         "has_candidates": has_candidates,
+        "guidance_attribution": guidance_attribution,
+        "guidance_attribution_summary": _compiler_guidance_attribution_summary(
+            guidance_attribution
+        ),
         "promotion_allowed": promotion_gate["promotion_allowed"],
         "promotion_block_reason": promotion_gate["promotion_block_reason"],
         "quality_gate": promotion_gate["quality_gate"],
@@ -1556,6 +3517,8 @@ def compiler_guidance_distillation_candidates(
         "scope_hints": scope_hints,
         "top_semantic_overlay_terms": top_semantic_overlay_terms,
         "top_feature_groups": top_feature_groups,
+        "top_legal_ir_view_family_gaps": top_legal_ir_view_family_gaps,
+        "top_legal_ir_view_gaps": top_legal_ir_view_gaps,
         "top_surface_features": top_surface_features,
         "top_todo_route_examples": top_todo_route_examples,
         "top_todo_routes": top_todo_routes,
@@ -1804,6 +3767,26 @@ def compiler_guidance_distillation_todos(
                 loss_name="compiler_guidance_distillation",
             ),
             "compiler_guidance_distillation_count": count,
+            "compiler_guidance_attribution": dict(
+                candidates.get("guidance_attribution")
+                if isinstance(candidates.get("guidance_attribution"), Mapping)
+                else {}
+            ),
+            "compiler_guidance_attribution_summary": dict(
+                candidates.get("guidance_attribution_summary")
+                if isinstance(candidates.get("guidance_attribution_summary"), Mapping)
+                else {}
+            ),
+            "compiler_guidance_legal_ir_view_gaps": dict(
+                candidates.get("top_legal_ir_view_gaps")
+                if isinstance(candidates.get("top_legal_ir_view_gaps"), Mapping)
+                else {}
+            ),
+            "compiler_guidance_legal_ir_view_family_gaps": dict(
+                candidates.get("top_legal_ir_view_family_gaps")
+                if isinstance(candidates.get("top_legal_ir_view_family_gaps"), Mapping)
+                else {}
+            ),
             "compiler_guidance_quality_gate": candidates.get("quality_gate", ""),
             "compiler_guidance_route": action,
             "compiler_guidance_surface_features": dict(
@@ -1957,7 +3940,27 @@ def compiler_guidance_activation_todos(
             "compiler_guidance_activation_reason": (
                 "guidance_applied_without_metric_movement"
             ),
+            "compiler_guidance_attribution": dict(
+                candidates.get("guidance_attribution")
+                if isinstance(candidates.get("guidance_attribution"), Mapping)
+                else {}
+            ),
+            "compiler_guidance_attribution_summary": dict(
+                candidates.get("guidance_attribution_summary")
+                if isinstance(candidates.get("guidance_attribution_summary"), Mapping)
+                else {}
+            ),
             "compiler_guidance_canary": dict(canary_block),
+            "compiler_guidance_legal_ir_view_gaps": dict(
+                candidates.get("top_legal_ir_view_gaps")
+                if isinstance(candidates.get("top_legal_ir_view_gaps"), Mapping)
+                else {}
+            ),
+            "compiler_guidance_legal_ir_view_family_gaps": dict(
+                candidates.get("top_legal_ir_view_family_gaps")
+                if isinstance(candidates.get("top_legal_ir_view_family_gaps"), Mapping)
+                else {}
+            ),
             "compiler_guidance_quality_gate": canary_block.get("quality_gate", ""),
             "compiler_guidance_route": action,
             "compiler_guidance_surface_features": dict(
@@ -2147,8 +4150,28 @@ def compiler_guidance_guardrail_todos(
             action=action,
             loss_name="compiler_guidance_guardrail",
         ),
+        "compiler_guidance_attribution": dict(
+            candidates.get("guidance_attribution")
+            if isinstance(candidates.get("guidance_attribution"), Mapping)
+            else {}
+        ),
+        "compiler_guidance_attribution_summary": dict(
+            candidates.get("guidance_attribution_summary")
+            if isinstance(candidates.get("guidance_attribution_summary"), Mapping)
+            else {}
+        ),
         "compiler_guidance_canary": dict(canary_block),
         "compiler_guidance_guardrail_reason": guardrail_reason,
+        "compiler_guidance_legal_ir_view_gaps": dict(
+            candidates.get("top_legal_ir_view_gaps")
+            if isinstance(candidates.get("top_legal_ir_view_gaps"), Mapping)
+            else {}
+        ),
+        "compiler_guidance_legal_ir_view_family_gaps": dict(
+            candidates.get("top_legal_ir_view_family_gaps")
+            if isinstance(candidates.get("top_legal_ir_view_family_gaps"), Mapping)
+            else {}
+        ),
         "compiler_guidance_quality_gate": canary_block.get("quality_gate", ""),
         "dedupe_signature": json.dumps(
             {

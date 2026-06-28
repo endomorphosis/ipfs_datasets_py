@@ -5075,15 +5075,17 @@ class AdaptiveModalAutoencoder:
                 bump("modal.autoencoder", 0.30 * weight)
                 bump("deontic.ir", 0.15 * weight)
             elif family_name == "temporal":
-                bump("modal.autoencoder", 0.40 * weight)
-                bump("modal.frame_logic", 0.25 * weight)
-                bump("deontic.ir", 0.20 * weight)
-                bump("TDFOL.prover", 0.15 * weight)
+                bump("TDFOL.prover", 0.35 * weight)
+                bump("CEC.native", 0.25 * weight)
+                bump("modal.frame_logic", 0.20 * weight)
+                bump("deontic.ir", 0.15 * weight)
+                bump("modal.autoencoder", 0.05 * weight)
             elif family_name == "conditional_normative":
                 bump("deontic.ir", 0.35 * weight)
-                bump("modal.frame_logic", 0.30 * weight)
-                bump("TDFOL.prover", 0.20 * weight)
-                bump("modal.autoencoder", 0.15 * weight)
+                bump("TDFOL.prover", 0.25 * weight)
+                bump("modal.frame_logic", 0.20 * weight)
+                bump("CEC.native", 0.15 * weight)
+                bump("modal.autoencoder", 0.05 * weight)
             else:
                 bump("modal.autoencoder", 0.50 * weight)
                 bump("modal.frame_logic", 0.25 * weight)
@@ -24353,6 +24355,27 @@ def _uscode_surface_profile_tags(text: str) -> List[str]:
         add("section_status_clause")
     if re.search(r"\btitle\s+\d+\b", normalized):
         add("cross_title_reference")
+    if re.search(
+        r"\b(?:effective date|effective on|effective as of|takes effect|take effect)\b",
+        normalized,
+    ):
+        add("effective_date")
+    if re.search(r"\brepeal\b.*\beffective\b|\beffective date of repeal\b", normalized):
+        add("repeal_effective_date")
+    if re.search(
+        r"\b(?:before|after|until|during|following|not later than|within)\b",
+        normalized,
+    ):
+        add("temporal_validity")
+    if re.search(r"\b(?:unless and until|if and only if|provided,? that|subject to)\b", normalized):
+        add("condition_precedent")
+    if re.search(
+        r"\b(?:amended|amendment|substituted|inserted|struck out|added)\b",
+        normalized,
+    ):
+        add("amendment_operation")
+    if re.search(r"\([a-z0-9]+\)\s+[a-z][a-z\s,-]{8,}", normalized):
+        add("numbered_enumeration")
     if "moneys deposited by unknown parties" in normalized:
         add("unknown_party_deposit")
     if re.search(r"\bdeposit(?:ed)?\b.*\btreasurer of the united states\b", normalized):
@@ -24387,17 +24410,23 @@ def _uscode_surface_profile_tags(text: str) -> List[str]:
 
 
 _USCODE_SURFACE_PROFILE_MODAL_FAMILIES: Mapping[str, tuple[str, ...]] = {
+    "amendment_operation": ("temporal", "frame"),
     "appropriation_authorization": ("deontic", "temporal"),
     "article_reprint_purchase": ("deontic", "frame"),
+    "condition_precedent": ("conditional_normative", "temporal"),
     "cost_expense_charge": ("deontic", "frame"),
     "disability_services": ("deontic", "frame"),
     "education_assistance_benefit": ("deontic", "frame"),
+    "effective_date": ("temporal", "frame"),
     "health_professional_education_assistance": ("deontic", "frame"),
     "no_year_funding_availability": ("temporal", "deontic"),
+    "numbered_enumeration": ("frame",),
     "printing_binding": ("deontic", "frame"),
     "prize_proceeds_charge": ("deontic", "frame"),
+    "repeal_effective_date": ("temporal", "frame"),
     "research_grant": ("deontic", "frame"),
     "research_program_plan": ("frame", "deontic"),
+    "temporal_validity": ("temporal",),
     "treasury_deposit": ("deontic", "frame"),
     "unknown_party_deposit": ("deontic", "frame"),
 }
@@ -24406,6 +24435,12 @@ _USCODE_SURFACE_PROFILE_LEGAL_IR_VIEW_WEIGHTS: Mapping[
     str,
     Mapping[str, float],
 ] = {
+    "amendment_operation": {
+        "CEC.native": 0.35,
+        "TDFOL.prover": 0.25,
+        "modal.frame_logic": 0.25,
+        "knowledge_graphs.neo4j_compat": 0.15,
+    },
     "appropriation_authorization": {
         "deontic.ir": 0.65,
         "TDFOL.prover": 0.20,
@@ -24422,6 +24457,12 @@ _USCODE_SURFACE_PROFILE_LEGAL_IR_VIEW_WEIGHTS: Mapping[
         "knowledge_graphs.neo4j_compat": 0.25,
         "CEC.native": 0.20,
         "TDFOL.prover": 0.10,
+    },
+    "condition_precedent": {
+        "TDFOL.prover": 0.35,
+        "CEC.native": 0.25,
+        "deontic.ir": 0.20,
+        "modal.frame_logic": 0.15,
     },
     "cost_expense_charge": {
         "deontic.ir": 0.50,
@@ -24460,6 +24501,12 @@ _USCODE_SURFACE_PROFILE_LEGAL_IR_VIEW_WEIGHTS: Mapping[
         "CEC.native": 0.20,
         "TDFOL.prover": 0.10,
     },
+    "effective_date": {
+        "TDFOL.prover": 0.40,
+        "CEC.native": 0.30,
+        "modal.frame_logic": 0.15,
+        "knowledge_graphs.neo4j_compat": 0.10,
+    },
     "effect_of_act": {
         "TDFOL.prover": 0.35,
         "CEC.native": 0.30,
@@ -24476,6 +24523,12 @@ _USCODE_SURFACE_PROFILE_LEGAL_IR_VIEW_WEIGHTS: Mapping[
         "CEC.native": 0.20,
         "modal.frame_logic": 0.10,
     },
+    "numbered_enumeration": {
+        "modal.frame_logic": 0.45,
+        "knowledge_graphs.neo4j_compat": 0.25,
+        "deontic.ir": 0.15,
+        "TDFOL.prover": 0.10,
+    },
     "printing_binding": {
         "deontic.ir": 0.45,
         "modal.frame_logic": 0.30,
@@ -24485,6 +24538,12 @@ _USCODE_SURFACE_PROFILE_LEGAL_IR_VIEW_WEIGHTS: Mapping[
         "deontic.ir": 0.50,
         "knowledge_graphs.neo4j_compat": 0.25,
         "modal.frame_logic": 0.20,
+    },
+    "repeal_effective_date": {
+        "CEC.native": 0.40,
+        "TDFOL.prover": 0.30,
+        "modal.frame_logic": 0.20,
+        "knowledge_graphs.neo4j_compat": 0.10,
     },
     "research_grant": {
         "deontic.ir": 0.55,
@@ -24501,6 +24560,12 @@ _USCODE_SURFACE_PROFILE_LEGAL_IR_VIEW_WEIGHTS: Mapping[
         "CEC.native": 0.25,
         "knowledge_graphs.neo4j_compat": 0.20,
         "TDFOL.prover": 0.10,
+    },
+    "temporal_validity": {
+        "TDFOL.prover": 0.40,
+        "CEC.native": 0.25,
+        "deontic.ir": 0.15,
+        "modal.frame_logic": 0.15,
     },
     "technical_article": {
         "modal.frame_logic": 0.35,

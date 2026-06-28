@@ -42,6 +42,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder impor
     _projection_prescreen_summary,
     _evaluation_improved_for_training,
     _legal_ir_target_cache_key,
+    _legal_ir_surface_profile_view_distribution,
     _legal_ir_timeout_view_distribution,
     _source_decompiled_text_losses_from_targets,
     _uscode_surface_profile_tags,
@@ -318,6 +319,15 @@ def test_autoencoder_surface_profiles_cover_sparse_uscode_frame_records() -> Non
         "10 U.S.C. 8870 Costs and expenses a charge on prize proceeds "
         "Costs and expenses shall be a charge on prize proceeds."
     )
+    effective_text = (
+        "Statutory Notes Effective Date of Repeal Repeal by Pub. L. 112-10 "
+        "shall take effect as if included in the amendment, unless and until "
+        "the Secretary issues final guidance."
+    )
+    enumeration_text = (
+        "12 U.S.C. 9999 Duties (a) In general The Board shall prescribe "
+        "rules. (b) Amendment Section 4 is amended by striking subsection (c)."
+    )
     status_sample = build_us_code_sample(
         title="42",
         section="5616.",
@@ -351,6 +361,16 @@ def test_autoencoder_surface_profiles_cover_sparse_uscode_frame_records() -> Non
     assert set(_uscode_surface_profile_tags(prize_text)) >= {
         "cost_expense_charge",
         "prize_proceeds_charge",
+    }
+    assert set(_uscode_surface_profile_tags(effective_text)) >= {
+        "effective_date",
+        "repeal_effective_date",
+        "temporal_validity",
+        "condition_precedent",
+    }
+    assert set(_uscode_surface_profile_tags(enumeration_text)) >= {
+        "amendment_operation",
+        "numbered_enumeration",
     }
 
     status_features = set(autoencoder._feature_keys_for(status_sample))
@@ -386,6 +406,12 @@ def test_autoencoder_surface_profiles_cover_sparse_uscode_frame_records() -> Non
                 "until expended."
             ),
         )
+    )
+    effective_surface_target = _legal_ir_surface_profile_view_distribution(
+        effective_text
+    )
+    enumeration_surface_target = _legal_ir_surface_profile_view_distribution(
+        enumeration_text
     )
     status_round_trip = set(autoencoder._round_trip_signal_distribution_for(status_sample))
     heading_plan = set(autoencoder._decompiler_plan_distribution_for(heading_sample))
@@ -423,6 +449,13 @@ def test_autoencoder_surface_profiles_cover_sparse_uscode_frame_records() -> Non
     )
     assert formula_free_surface_target["deontic.ir"] > 0.0
     assert formula_free_surface_target["TDFOL.prover"] > 0.0
+    assert effective_surface_target["TDFOL.prover"] > effective_surface_target.get(
+        "deontic.ir",
+        0.0,
+    )
+    assert effective_surface_target["CEC.native"] > 0.0
+    assert enumeration_surface_target["modal.frame_logic"] > 0.0
+    assert enumeration_surface_target["CEC.native"] > 0.0
 
 
 def test_legal_ir_targets_use_persistent_disk_cache(

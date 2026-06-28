@@ -7887,6 +7887,10 @@ def test_compiler_ir_metric_block_reports_guidance_overlay_terms() -> None:
         "deontic_norms:underrepresented": 1,
         "modal_frame_logic:overrepresented": 1,
     }
+    assert block["compiler_guidance_legal_ir_view_family_gaps"] == {
+        "deontic:underrepresented": 1,
+        "frame_logic:overrepresented": 1,
+    }
 
 
 def test_compiler_guidance_diagnostics_do_not_pad_structural_decode_metrics() -> None:
@@ -8213,6 +8217,9 @@ def test_compiler_guidance_canary_block_reports_quality_gate() -> None:
                 "compiler_guidance_legal_ir_view_gaps": [
                     "deontic_norms:underrepresented"
                 ],
+                "compiler_guidance_legal_ir_view_family_gaps": [
+                    "deontic:underrepresented"
+                ],
                 "compiler_guidance_semantic_overlay_terms": ["shall"],
                 "compiler_guidance_todo_routes": [
                     "refine_semantic_decompiler_reconstruction"
@@ -8261,6 +8268,9 @@ def test_compiler_guidance_canary_block_reports_quality_gate() -> None:
     ]["quality_gate"] == "pass"
     assert block["attribution"]["legal_ir_view_gaps"][
         "deontic_norms:underrepresented"
+    ]["copy_hack_delta"] == pytest.approx(0.2)
+    assert block["attribution"]["legal_ir_view_family_gaps"][
+        "deontic:underrepresented"
     ]["copy_hack_delta"] == pytest.approx(0.2)
     assert block["attribution"]["todo_routes"][
         "refine_semantic_decompiler_reconstruction"
@@ -8328,6 +8338,11 @@ def test_compiler_guidance_scope_hints_route_learned_todos_to_codex_scopes() -> 
 
 def test_compiler_guidance_signed_view_gaps_route_to_codex_scopes() -> None:
     guided_block = {
+        "compiler_guidance_legal_ir_view_family_gaps": {
+            "deontic:underrepresented": 3,
+            "frame_logic:overrepresented": 2,
+            "tdfol:underrepresented": 1,
+        },
         "compiler_guidance_legal_ir_view_gaps": {
             "deontic_norms:underrepresented": 3,
             "modal_frame_logic:overrepresented": 2,
@@ -8351,6 +8366,11 @@ def test_compiler_guidance_signed_view_gaps_route_to_codex_scopes() -> None:
         "modal_frame_logic:overrepresented": 2,
         "TDFOL_prover:underrepresented": 1,
     }
+    assert candidates["top_legal_ir_view_family_gaps"] == {
+        "deontic:underrepresented": 3,
+        "frame_logic:overrepresented": 2,
+        "tdfol:underrepresented": 1,
+    }
     assert candidates["todo_routes_inferred_from_features"] is True
     assert candidates["top_todo_routes"] == {
         "repair_deontic_bridge_quality_gate": 3,
@@ -8369,6 +8389,11 @@ def test_compiler_guidance_signed_view_gaps_route_to_codex_scopes() -> None:
         "deontic_norms:underrepresented": 3,
         "modal_frame_logic:overrepresented": 2,
         "TDFOL_prover:underrepresented": 1,
+    }
+    assert todos[0].metadata["compiler_guidance_legal_ir_view_family_gaps"] == {
+        "deontic:underrepresented": 3,
+        "frame_logic:overrepresented": 2,
+        "tdfol:underrepresented": 1,
     }
     assert todos[0].metadata["program_synthesis_scope"] == "deontic"
 
