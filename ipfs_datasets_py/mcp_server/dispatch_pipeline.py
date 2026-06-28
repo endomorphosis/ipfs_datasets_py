@@ -52,7 +52,7 @@ class PipelineIntent:
                 separators=(",", ":"),
             ).encode("utf-8")
         digest = hashlib.sha256(payload).hexdigest()
-        self.intent_cid: str = f"bafy-mock-intent-{digest[:20]}"
+        self.intent_cid: str = artifact_cid({"intent": digest})
 
     @property
     def tool(self) -> str:

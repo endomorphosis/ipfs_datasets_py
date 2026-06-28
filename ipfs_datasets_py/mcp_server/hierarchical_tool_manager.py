@@ -1020,10 +1020,9 @@ class HierarchicalToolManager:
     async def get_tool_schema_cid(self, category: str, tool_name: str) -> str:
         """Return a CIDv1 for the JSON schema of *category*/*tool_name*.
 
-        Uses the ``multiformats`` library if available (dag-cbor + sha2-256,
-        base32 encoding → ``bafy…`` prefix).  Falls back to a deterministic
-        ``"bafy-schema-<sha256hex>"`` pseudo-CID for environments without
-        ``multiformats``.
+        Computes a real Kubo-conformant CIDv1 (raw codec, sha2-256, base32
+        ``bafkrei…``) via ``compute_cid``, byte-identical to
+        ``ipfs add --cid-version=1`` for the canonicalized schema.
 
         Args:
             category: Category containing the tool.
