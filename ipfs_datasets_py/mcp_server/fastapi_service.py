@@ -1771,7 +1771,10 @@ async def mcp_execute_with_envelope(request: Request):
                             if inspect.iscoroutinefunction(tool_fn):
                                 output = await tool_fn(**arguments)
                             else:
-                                output = tool_fn(**arguments)
+                                # Run sync tools in a thread so timeout can cancel them
+                                output = await anyio.to_thread.run_sync(
+                                    lambda: tool_fn(**arguments), cancellable=True
+                                )
                     except TimeoutError:
                         error_msg = f"Execution timeout after {exec_timeout}s"
                 else:
@@ -2068,7 +2071,7 @@ async def p2p_call_remote_tool(request: Request):
             peer_id=peer_id,
             method=body.get("method", ""),
             params=body.get("params", {}),
-            timeout=body.get("timeout", 30.0),
+            timeout=min(max(float(body.get("timeout", 30.0)), 1.0), 120.0),
         )
         return {"result": result}
     except HTTPException:
@@ -2203,6 +2206,14 @@ async def mcp_jsonrpc_handler(request: Request):
         method = body.get("method", "")
         params = body.get("params", {})
         req_id = body.get("id", 1)
+
+        # JSON-RPC 2.0: id must be string, number, or null
+        if req_id is not None and not isinstance(req_id, (str, int, float)):
+            return JSONResponse(
+                status_code=400,
+                content={"jsonrpc": "2.0", "id": None,
+                         "error": {"code": -32600, "message": "Invalid request: id must be string, number, or null"}}
+            )
 
         if method == "initialize":
             # MCP++ capability negotiation
