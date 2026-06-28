@@ -20616,6 +20616,59 @@ def test_modal_codec_grounds_guidance_selected_frame_without_candidate_terms() -
     assert result.violations == []
 
 
+def test_modal_codec_grounds_selected_frame_with_uscode_source_terms() -> None:
+    formula = ModalIRFormula(
+        formula_id="f_repealed_source_grounding",
+        operator=ModalIROperator(
+            family="frame",
+            system="Frame",
+            symbol="Frame",
+            label="framed_as",
+        ),
+        predicate=ModalIRPredicate(name="repealed", role="status"),
+        provenance=ModalIRProvenance(
+            source_id="us-code-22-290g-9-bc42aff04e02a72d",
+            start_char=0,
+            end_char=23,
+            citation="22 U.S.C. 290g-9",
+        ),
+        metadata={"status_keyword": "repealed"},
+    )
+    modal_ir = ModalIRDocument(
+        document_id="us-code-22-290g-9-bc42aff04e02a72d",
+        source="us_code",
+        normalized_text="Sec. 290g-9. Repealed.",
+        formulas=[formula],
+        frame_logic=ModalIRFrameLogic(selected_frame="statutory_status_frame"),
+        metadata={
+            "citation": "22 U.S.C. 290g-9",
+            "selected_frame": "statutory_status_frame",
+        },
+    )
+
+    triples = modal_ir_to_flogic_triples(modal_ir)
+    selected_terms = {
+        triple["object"]
+        for triple in triples
+        if triple["predicate"] == "selected_ontology_term"
+    }
+
+    assert "22_290g_9" in selected_terms
+    assert "repealed" in selected_terms
+
+    from ipfs_datasets_py.logic.flogic_optimizer import FLogicSemanticOptimizer
+
+    result = FLogicSemanticOptimizer().evaluate(
+        source_text=modal_ir.normalized_text,
+        decoded_text=modal_ir.normalized_text,
+        source_embedding=[1.0, 0.0],
+        decoded_embedding=[1.0, 0.0],
+        kg_triples=triples,
+    )
+
+    assert result.violations == []
+
+
 def test_modal_codec_audits_frame_terms_when_metadata_contains_weight_maps() -> None:
     codec = DeterministicModalLogicCodec(
         ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)

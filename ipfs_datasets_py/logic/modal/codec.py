@@ -3224,6 +3224,17 @@ def modal_ir_to_flogic_triples(
                     "object": term,
                 }
             )
+        for term in _selected_frame_source_grounding_terms(modal_ir):
+            if term in selected_frame_terms:
+                continue
+            selected_frame_terms.append(term)
+            triples.append(
+                {
+                    "subject": modal_ir.document_id,
+                    "predicate": "selected_ontology_term",
+                    "object": term,
+                }
+            )
     triples = _append_selected_frame_ontology_constraint_triples(
         triples,
         document_id=modal_ir.document_id,
@@ -9086,6 +9097,56 @@ def _document_source_ids(modal_ir: ModalIRDocument) -> List[str]:
         if source_id and source_id not in source_ids:
             source_ids.append(source_id)
     return source_ids
+
+
+def _selected_frame_source_grounding_terms(modal_ir: ModalIRDocument) -> List[str]:
+    """Return U.S.C. source/status terms that ground the selected frame."""
+
+    values: List[Any] = [
+        modal_ir.metadata.get("citation"),
+        modal_ir.metadata.get("source_id"),
+        modal_ir.metadata.get("sample_id"),
+        modal_ir.document_id,
+    ]
+    for source_id in _document_source_ids(modal_ir):
+        values.append(source_id)
+        source_map = _component_value_map(_source_id_components(source_id))
+        values.extend(
+            source_map.get(key)
+            for key in (
+                "source_id_citation_canonical",
+                "source_id_title",
+                "source_id_section_normalized",
+                "source_id_title_section_key",
+            )
+        )
+    for formula in modal_ir.formulas:
+        values.extend(
+            (
+                getattr(formula.provenance, "citation", None),
+                getattr(formula.provenance, "source_id", None),
+                _status_keyword_value(
+                    formula,
+                    fallback_rule=_clean_non_empty_string(
+                        formula.metadata.get("fallback_rule")
+                    ),
+                ),
+                _clean_non_empty_string(formula.metadata.get("procedural_keyword")),
+                _clean_non_empty_string(formula.metadata.get("statement_hint")),
+                _fallback_section_heading_tail_text(
+                    modal_ir=modal_ir,
+                    formula=formula,
+                ),
+            )
+        )
+
+    terms: List[str] = []
+    for value in values:
+        for term in _frame_ontology_metadata_terms(value):
+            cleaned = _clean_non_empty_string(term)
+            if cleaned:
+                terms.append(cleaned)
+    return _unique_preserve_order(terms)
 
 
 def _inferred_citations_from_source_ids(source_ids: Sequence[str]) -> List[str]:
