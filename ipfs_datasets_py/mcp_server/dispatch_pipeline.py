@@ -800,14 +800,81 @@ def make_default_pipeline(
 def make_full_pipeline(
     metrics_recorder: Optional[PipelineMetricsRecorder] = None,
 ) -> DispatchPipeline:
-    stage_names = [
-        "compliance",
-        "risk",
-        "delegation",
-        "policy",
-        "nl_ucan_gate",
+    """Create a full pipeline with real policy evaluation (Profile D).
+
+    Stages:
+    - compliance: basic tool name validation
+    - risk: pass-through (future: rate limiting)
+    - delegation: UCAN delegation check (Profile C)
+    - policy: Temporal Deontic Policy evaluation (Profile D)
+    - nl_ucan_gate: pass-through (future: natural language UCAN)
+    """
+
+    def _compliance_handler(intent: Dict[str, Any]) -> Dict[str, Any]:
+        tool = intent.get("tool", "")
+        if not tool:
+            return {"allowed": False, "reason": "Missing tool name"}
+        return {"allowed": True, "reason": "compliance_pass"}
+
+    def _risk_handler(intent: Dict[str, Any]) -> Dict[str, Any]:
+        return {"allowed": True, "reason": "risk_pass"}
+
+    def _delegation_handler(intent: Dict[str, Any]) -> Dict[str, Any]:
+        """Check UCAN delegation if a leaf_cid is provided."""
+        leaf_cid = intent.get("leaf_cid", "")
+        if not leaf_cid:
+            return {"allowed": True, "reason": "no_delegation_required"}
+        try:
+            from .ucan_delegation import get_delegation_evaluator
+            evaluator = get_delegation_evaluator()
+            actor = intent.get("actor", "")
+            tool = intent.get("tool", "")
+            ok, reason = evaluator.can_invoke(
+                leaf_cid=leaf_cid,
+                resource=f"mcp://tool/{tool}",
+                ability="invoke",
+                actor=actor if actor else None,
+            )
+            return {"allowed": bool(ok), "reason": str(reason)}
+        except Exception as e:
+            logger.warning(f"Delegation check failed: {e}")
+            return {"allowed": False, "reason": f"delegation_error: {e}"}
+
+    def _policy_handler(intent: Dict[str, Any]) -> Dict[str, Any]:
+        """Evaluate temporal deontic policy (Profile D)."""
+        try:
+            from .temporal_policy import get_policy_evaluator
+            evaluator = get_policy_evaluator()
+            tool = intent.get("tool", "")
+            actor = intent.get("actor", "*")
+            policy_cid = intent.get("policy_cid")
+            decision = evaluator.evaluate(
+                intent=None,  # Will construct from tool/actor
+                policy=policy_cid,
+                actor=actor,
+            ) if policy_cid else None
+
+            if decision is None:
+                return {"allowed": True, "reason": "no_policy_specified"}
+            return {
+                "allowed": decision.decision in ("allow", "allow_with_obligations"),
+                "reason": decision.justification,
+                "obligations": decision.obligations,
+            }
+        except Exception as e:
+            logger.warning(f"Policy evaluation failed: {e}")
+            return {"allowed": True, "reason": f"policy_eval_error (permissive): {e}"}
+
+    def _nl_ucan_gate(intent: Dict[str, Any]) -> Dict[str, Any]:
+        return {"allowed": True, "reason": "nl_ucan_pass"}
+
+    stages = [
+        PipelineStage(name="compliance", handler=_compliance_handler),
+        PipelineStage(name="risk", handler=_risk_handler),
+        PipelineStage(name="delegation", handler=_delegation_handler),
+        PipelineStage(name="policy", handler=_policy_handler),
+        PipelineStage(name="nl_ucan_gate", handler=_nl_ucan_gate),
     ]
-    stages = [PipelineStage(name=n, handler=_allow_all) for n in stage_names]
     pipeline = DispatchPipeline(stages=stages, metrics_recorder=metrics_recorder)
     pipeline.config = PipelineConfig(
         enable_compliance=True,

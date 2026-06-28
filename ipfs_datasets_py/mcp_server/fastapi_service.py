@@ -1925,23 +1925,38 @@ async def evaluate_deontic_policy(request: Request):
 
 @app.get("/mcp/p2p/peers")
 async def discover_p2p_peers():
-    """Discover available P2P peers (Profile E)."""
+    """Discover available P2P peers (Profile E) via libp2p+Trio."""
     try:
-        from .mcp_p2p_transport import MCP_P2P_PROTOCOL_ID
-        p2p_manager = getattr(app.state, '_p2p_service_manager', None)
-        peers = []
-        if p2p_manager and hasattr(p2p_manager, 'get_peers'):
-            peers = p2p_manager.get_peers()
-        return {
-            "protocol": MCP_P2P_PROTOCOL_ID,
-            "peers": peers,
-            "count": len(peers),
-        }
+        from .p2p_libp2p_transport import get_p2p_node, MCP_P2P_PROTOCOL
+        node = get_p2p_node()
+        return node.to_dict()
     except ImportError:
-        return {"protocol": "/mcp+p2p/1.0.0", "peers": [], "count": 0}
+        return {"protocol": "/mcp+p2p/1.0.0", "peers": [], "count": 0, "started": False}
     except Exception as e:
         logger.error(f"P2P peer discovery failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/mcp/p2p/call")
+async def p2p_call_remote_tool(request: Request):
+    """Call a tool on a remote peer via libp2p /mcp+p2p/1.0.0 (Profile E)."""
+    try:
+        from .p2p_libp2p_transport import get_p2p_node
+        body = await request.json()
+        node = get_p2p_node()
+        if not node._started:
+            raise HTTPException(status_code=503, detail="P2P node not started")
+        result = await node.call_tool(
+            peer_id=body.get("peer_id", ""),
+            method=body.get("method", ""),
+            params=body.get("params", {}),
+            timeout=body.get("timeout", 30.0),
+        )
+        return {"result": result}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=str(e))
 
 
 # --- MCP++ Capability Negotiation (JSON-RPC) ---
