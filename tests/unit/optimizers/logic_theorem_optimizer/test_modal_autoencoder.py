@@ -42,6 +42,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder impor
     _projection_prescreen_summary,
     _evaluation_improved_for_training,
     _legal_ir_target_cache_key,
+    _legal_ir_timeout_view_distribution,
     _source_decompiled_text_losses_from_targets,
     _uscode_surface_profile_tags,
 )
@@ -354,14 +355,36 @@ def test_autoencoder_surface_profiles_cover_sparse_uscode_frame_records() -> Non
 
     status_features = set(autoencoder._feature_keys_for(status_sample))
     heading_features = set(autoencoder._feature_keys_for(heading_sample))
-    assistance_features = set(
-        autoencoder._feature_keys_for(
-            build_us_code_sample(
-                title="38",
-                section="7654",
-                citation="38 U.S.C. 7654",
-                text=assistance_text,
-            )
+    assistance_sample = build_us_code_sample(
+        title="38",
+        section="7654",
+        citation="38 U.S.C. 7654",
+        text=assistance_text,
+    )
+    assistance_features = set(autoencoder._feature_keys_for(assistance_sample))
+    status_legal_ir_features = set(
+        autoencoder._legal_ir_view_core_feature_keys_for(status_sample)
+    )
+    assistance_legal_ir_features = set(
+        autoencoder._legal_ir_view_core_feature_keys_for(assistance_sample)
+    )
+    status_timeout_target = _legal_ir_timeout_view_distribution(
+        status_sample,
+        bridge_names=(),
+    )
+    assistance_timeout_target = _legal_ir_timeout_view_distribution(
+        assistance_sample,
+        bridge_names=(),
+    )
+    formula_free_surface_target = autoencoder._autoencoder_view_target_distribution_for_sample(
+        build_us_code_sample(
+            title="7",
+            section="9999",
+            citation="7 U.S.C. 9999",
+            text=(
+                "Authorization of appropriations Amounts shall remain available "
+                "until expended."
+            ),
         )
     )
     status_round_trip = set(autoencoder._round_trip_signal_distribution_for(status_sample))
@@ -377,6 +400,29 @@ def test_autoencoder_surface_profiles_cover_sparse_uscode_frame_records() -> Non
         "uscode-surface-profile-family:health_professional_education_assistance:deontic"
         in assistance_features
     )
+    assert (
+        "legal-ir:uscode-surface-profile-view:editorial_reclassification:CEC.native"
+        in status_legal_ir_features
+    )
+    assert (
+        "legal-ir:uscode-surface-profile-view-family:editorial_reclassification:frame_logic"
+        in status_legal_ir_features
+    )
+    assert (
+        "legal-ir:uscode-surface-profile-view:"
+        "health_professional_education_assistance:deontic.ir"
+        in assistance_legal_ir_features
+    )
+    assert status_timeout_target["modal.frame_logic"] > status_timeout_target.get(
+        "deontic.ir",
+        0.0,
+    )
+    assert assistance_timeout_target["deontic.ir"] > assistance_timeout_target.get(
+        "CEC.native",
+        0.0,
+    )
+    assert formula_free_surface_target["deontic.ir"] > 0.0
+    assert formula_free_surface_target["TDFOL.prover"] > 0.0
 
 
 def test_legal_ir_targets_use_persistent_disk_cache(

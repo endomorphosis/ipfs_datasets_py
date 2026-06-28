@@ -5048,8 +5048,11 @@ class AdaptiveModalAutoencoder:
     ) -> Dict[str, float]:
         """Return a deterministic view prior for reconstruction-only training."""
         family_distribution = _observed_family_distribution(sample)
+        surface_distribution = _legal_ir_surface_profile_view_distribution(
+            sample.text or sample.normalized_text or ""
+        )
         if not family_distribution:
-            return {}
+            return surface_distribution
         view_weights: Dict[str, float] = {}
 
         def bump(view: str, weight: float) -> None:
@@ -5085,6 +5088,8 @@ class AdaptiveModalAutoencoder:
                 bump("modal.autoencoder", 0.50 * weight)
                 bump("modal.frame_logic", 0.25 * weight)
                 bump("TDFOL.prover", 0.25 * weight)
+        for view, surface_weight in surface_distribution.items():
+            bump(view, 0.35 * surface_weight)
         return _normalized_distribution(view_weights)
 
     def _legal_ir_view_distribution_for_embedding(
@@ -6635,6 +6640,7 @@ class AdaptiveModalAutoencoder:
         text = " ".join(str(sample.normalized_text or sample.text or "").split()).lower()
         tokens = _token_features(text)
         cue_names = self._cue_names_for_text(text)
+        surface_profiles = _uscode_surface_profile_tags(text)
         section_prefix = _section_prefix(sample.section)
         keys: List[str] = [
             "legal-ir:bias",
@@ -6653,6 +6659,16 @@ class AdaptiveModalAutoencoder:
                 keys.append(f"legal-ir:section-cue:{section_prefix}:{cue_name}")
             if sample.selected_frame:
                 keys.append(f"legal-ir:frame-cue:{sample.selected_frame}:{cue_name}")
+        for profile in surface_profiles:
+            keys.append(f"legal-ir:uscode-surface-profile:{profile}")
+            for family in _uscode_surface_profile_modal_families(profile):
+                keys.append(f"legal-ir:uscode-surface-profile-family:{profile}:{family}")
+            for view in _uscode_surface_profile_legal_ir_view_weights(profile).keys():
+                keys.append(f"legal-ir:uscode-surface-profile-view:{profile}:{view}")
+                keys.append(
+                    "legal-ir:uscode-surface-profile-view-family:"
+                    f"{profile}:{_legal_ir_view_family_name(view)}"
+                )
 
         formula_families: List[str] = []
         formula_operators: List[str] = []
@@ -23498,6 +23514,14 @@ def _legal_ir_timeout_view_distribution(
     for view, weight, pattern in cue_groups:
         if re.search(pattern, text, flags=re.IGNORECASE):
             bump(view, weight)
+    for profile in _uscode_surface_profile_tags(text):
+        for view, weight in _uscode_surface_profile_legal_ir_view_weights(
+            profile
+        ).items():
+            bump(view, weight)
+        for family in _uscode_surface_profile_modal_families(profile):
+            for view in _AUTOENCODER_FAMILY_LEGAL_IR_VIEW_TARGETS.get(family, ()):
+                bump(view, 0.08)
     if not scores:
         bump("modal.frame_logic", 0.5)
         bump("deontic.ir", 0.25)
@@ -24378,10 +24402,163 @@ _USCODE_SURFACE_PROFILE_MODAL_FAMILIES: Mapping[str, tuple[str, ...]] = {
     "unknown_party_deposit": ("deontic", "frame"),
 }
 
+_USCODE_SURFACE_PROFILE_LEGAL_IR_VIEW_WEIGHTS: Mapping[
+    str,
+    Mapping[str, float],
+] = {
+    "appropriation_authorization": {
+        "deontic.ir": 0.65,
+        "TDFOL.prover": 0.20,
+        "modal.frame_logic": 0.15,
+        "CEC.native": 0.10,
+    },
+    "article_reprint_purchase": {
+        "deontic.ir": 0.45,
+        "modal.frame_logic": 0.30,
+        "knowledge_graphs.neo4j_compat": 0.20,
+    },
+    "codification_note": {
+        "modal.frame_logic": 0.45,
+        "knowledge_graphs.neo4j_compat": 0.25,
+        "CEC.native": 0.20,
+        "TDFOL.prover": 0.10,
+    },
+    "cost_expense_charge": {
+        "deontic.ir": 0.50,
+        "knowledge_graphs.neo4j_compat": 0.25,
+        "modal.frame_logic": 0.20,
+    },
+    "cross_title_reference": {
+        "modal.frame_logic": 0.35,
+        "knowledge_graphs.neo4j_compat": 0.35,
+        "TDFOL.prover": 0.10,
+    },
+    "disability_services": {
+        "deontic.ir": 0.50,
+        "modal.frame_logic": 0.25,
+        "knowledge_graphs.neo4j_compat": 0.20,
+    },
+    "education_assistance_benefit": {
+        "deontic.ir": 0.55,
+        "modal.frame_logic": 0.20,
+        "knowledge_graphs.neo4j_compat": 0.20,
+    },
+    "editorial_notes": {
+        "modal.frame_logic": 0.40,
+        "knowledge_graphs.neo4j_compat": 0.25,
+        "CEC.native": 0.15,
+    },
+    "editorial_reclassification": {
+        "modal.frame_logic": 0.45,
+        "knowledge_graphs.neo4j_compat": 0.25,
+        "CEC.native": 0.25,
+        "TDFOL.prover": 0.10,
+    },
+    "editorial_status_surface": {
+        "modal.frame_logic": 0.45,
+        "knowledge_graphs.neo4j_compat": 0.25,
+        "CEC.native": 0.20,
+        "TDFOL.prover": 0.10,
+    },
+    "effect_of_act": {
+        "TDFOL.prover": 0.35,
+        "CEC.native": 0.30,
+        "modal.frame_logic": 0.20,
+    },
+    "health_professional_education_assistance": {
+        "deontic.ir": 0.55,
+        "modal.frame_logic": 0.20,
+        "knowledge_graphs.neo4j_compat": 0.20,
+    },
+    "no_year_funding_availability": {
+        "deontic.ir": 0.40,
+        "TDFOL.prover": 0.30,
+        "CEC.native": 0.20,
+        "modal.frame_logic": 0.10,
+    },
+    "printing_binding": {
+        "deontic.ir": 0.45,
+        "modal.frame_logic": 0.30,
+        "knowledge_graphs.neo4j_compat": 0.20,
+    },
+    "prize_proceeds_charge": {
+        "deontic.ir": 0.50,
+        "knowledge_graphs.neo4j_compat": 0.25,
+        "modal.frame_logic": 0.20,
+    },
+    "research_grant": {
+        "deontic.ir": 0.55,
+        "modal.frame_logic": 0.25,
+        "knowledge_graphs.neo4j_compat": 0.20,
+    },
+    "research_program_plan": {
+        "modal.frame_logic": 0.45,
+        "deontic.ir": 0.25,
+        "knowledge_graphs.neo4j_compat": 0.20,
+    },
+    "section_status_clause": {
+        "modal.frame_logic": 0.45,
+        "CEC.native": 0.25,
+        "knowledge_graphs.neo4j_compat": 0.20,
+        "TDFOL.prover": 0.10,
+    },
+    "technical_article": {
+        "modal.frame_logic": 0.35,
+        "knowledge_graphs.neo4j_compat": 0.25,
+        "deontic.ir": 0.20,
+    },
+    "treasury_deposit": {
+        "deontic.ir": 0.45,
+        "knowledge_graphs.neo4j_compat": 0.30,
+        "modal.frame_logic": 0.20,
+    },
+    "unknown_party_deposit": {
+        "deontic.ir": 0.45,
+        "knowledge_graphs.neo4j_compat": 0.30,
+        "modal.frame_logic": 0.20,
+    },
+    "uscode_catalog_record": {
+        "modal.frame_logic": 0.35,
+        "knowledge_graphs.neo4j_compat": 0.25,
+    },
+    "uscode_section_heading_surface": {
+        "modal.frame_logic": 0.35,
+        "knowledge_graphs.neo4j_compat": 0.20,
+    },
+}
+
 
 def _uscode_surface_profile_modal_families(profile: str) -> tuple[str, ...]:
     """Return modal families implied by a stable U.S. Code surface profile."""
     return _USCODE_SURFACE_PROFILE_MODAL_FAMILIES.get(str(profile), ())
+
+
+def _uscode_surface_profile_legal_ir_view_weights(
+    profile: str,
+) -> Mapping[str, float]:
+    """Return LegalIR views implied by a stable U.S. Code surface profile."""
+    return _USCODE_SURFACE_PROFILE_LEGAL_IR_VIEW_WEIGHTS.get(str(profile), {})
+
+
+def _legal_ir_surface_profile_view_distribution(text: str) -> Dict[str, float]:
+    """Return a LegalIR-view prior from sparse U.S. Code surface profiles."""
+    scores: Dict[str, float] = {}
+
+    def bump(view: str, weight: float) -> None:
+        normalized_weight = max(0.0, float(weight))
+        if not view or normalized_weight <= 0.0:
+            return
+        scores[view] = scores.get(view, 0.0) + normalized_weight
+
+    for profile in _uscode_surface_profile_tags(text):
+        for view, weight in _uscode_surface_profile_legal_ir_view_weights(
+            profile
+        ).items():
+            bump(view, weight)
+        for family in _uscode_surface_profile_modal_families(profile):
+            for view in _AUTOENCODER_FAMILY_LEGAL_IR_VIEW_TARGETS.get(family, ()):
+                bump(view, 0.08)
+    return _normalized_distribution(scores)
 
 
 def _feature_atom(value: Any, *, max_tokens: int = 4) -> str:
