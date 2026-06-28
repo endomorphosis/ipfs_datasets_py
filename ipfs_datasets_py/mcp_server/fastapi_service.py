@@ -2287,11 +2287,18 @@ async def mcp_jsonrpc_handler(request: Request):
             if mcp_server and hasattr(mcp_server, 'tools') and tool_name in mcp_server.tools:
                 tool_fn = mcp_server.tools[tool_name]
                 import inspect
+                exec_timeout = float(os.environ.get("MCPPP_EXEC_TIMEOUT_S", "30"))
                 if callable(tool_fn):
-                    if inspect.iscoroutinefunction(tool_fn):
-                        result = await tool_fn(**arguments)
-                    else:
-                        result = tool_fn(**arguments)
+                    try:
+                        async with anyio.fail_after(exec_timeout):
+                            if inspect.iscoroutinefunction(tool_fn):
+                                result = await tool_fn(**arguments)
+                            else:
+                                result = await anyio.to_thread.run_sync(
+                                    lambda: tool_fn(**arguments), cancellable=True
+                                )
+                    except TimeoutError:
+                        return {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32000, "message": f"Execution timeout after {exec_timeout}s"}}
                 else:
                     result = None
                 return {"jsonrpc": "2.0", "id": req_id, "result": result}
