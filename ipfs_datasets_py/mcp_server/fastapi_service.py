@@ -306,9 +306,35 @@ async def lifespan(app: FastAPI):
     logger.info("✅ FastAPI service initialized successfully")
     
     yield
-    
-    # Shutdown
+
+    # Shutdown — persist state and clean up resources
     logger.info("🛑 Shutting down FastAPI service...")
+    try:
+        # Persist EventDAG state
+        from .event_dag import get_event_dag
+        dag = get_event_dag()
+        dag_state = dag.to_dict(include_events=True)
+        if dag_state.get("total_events", 0) > 0:
+            import json as _json
+            state_dir = os.path.join(
+                os.environ.get("MCPPP_STORAGE_DIR", os.path.expanduser("~/.ipfs_datasets/state"))
+            )
+            os.makedirs(state_dir, exist_ok=True)
+            dag_path = os.path.join(state_dir, "event_dag.json")
+            with open(dag_path, "w") as f:
+                _json.dump(dag_state, f)
+            logger.info("EventDAG persisted: %d events", dag_state["total_events"])
+    except Exception as e:
+        logger.warning("EventDAG persistence failed on shutdown: %s", e)
+
+    try:
+        # Persist P2P peer state
+        from .p2p_libp2p_transport import get_p2p_node
+        node = get_p2p_node()
+        if node._started:
+            await node.stop()
+    except Exception as e:
+        logger.debug("P2P shutdown: %s", e)
 
 app = FastAPI(
     title="IPFS Datasets API",
@@ -1740,8 +1766,12 @@ async def mcp_execute_with_envelope(request: Request):
                 tool_fn = mcp_server.tools[tool_name]
                 if callable(tool_fn):
                     try:
+                        import inspect
                         async with anyio.fail_after(exec_timeout):
-                            output = await tool_fn(**arguments)
+                            if inspect.iscoroutinefunction(tool_fn):
+                                output = await tool_fn(**arguments)
+                            else:
+                                output = tool_fn(**arguments)
                     except TimeoutError:
                         error_msg = f"Execution timeout after {exec_timeout}s"
                 else:
@@ -2195,7 +2225,14 @@ async def mcp_jsonrpc_handler(request: Request):
             mcp_server = getattr(app.state, 'mcp_server', None)
             if mcp_server and hasattr(mcp_server, 'tools') and tool_name in mcp_server.tools:
                 tool_fn = mcp_server.tools[tool_name]
-                result = await tool_fn(**arguments) if callable(tool_fn) else None
+                import inspect
+                if callable(tool_fn):
+                    if inspect.iscoroutinefunction(tool_fn):
+                        result = await tool_fn(**arguments)
+                    else:
+                        result = tool_fn(**arguments)
+                else:
+                    result = None
                 return {"jsonrpc": "2.0", "id": req_id, "result": result}
             return {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32601, "message": f"Tool not found: {tool_name}"}}
 
