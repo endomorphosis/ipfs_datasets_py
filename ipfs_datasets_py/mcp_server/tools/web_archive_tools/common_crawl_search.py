@@ -4,7 +4,7 @@ This tool provides access to Common Crawl datasets for large-scale web content a
 using the CDX (Canonical Document Index) format.
 """
 import logging
-import asyncio
+import anyio
 import multiprocessing as mp
 import os
 from typing import Dict, List, Optional, Any, Literal
@@ -99,10 +99,10 @@ async def search_common_crawl(
             queue: mp.Queue = mp.Queue(maxsize=1)
             process = mp.Process(target=_run_cdx_search, args=(queue,), daemon=True)
             process.start()
-            await asyncio.to_thread(process.join, max(1.0, timeout_seconds))
+            await anyio.to_thread.run_sync(process.join, max(1.0, timeout_seconds))
             if process.is_alive():
                 process.terminate()
-                await asyncio.to_thread(process.join, 5.0)
+                await anyio.to_thread.run_sync(process.join, 5.0)
                 logger.warning(
                     "Common Crawl search timed out for domain %s after %.1fs",
                     domain,
