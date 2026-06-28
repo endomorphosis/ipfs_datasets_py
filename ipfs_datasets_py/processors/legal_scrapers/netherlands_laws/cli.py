@@ -26,6 +26,7 @@ from .operations import (
     mark_uploaded,
     mark_verified,
     queue_identifiers,
+    reconcile_milestone,
     reset_interrupted_downloads,
     retry_failures,
     scrape_queued_batch,
@@ -255,6 +256,31 @@ def build_parser() -> argparse.ArgumentParser:
     coverage.add_argument("--out-path", "--out_path", type=Path)
     coverage.add_argument("--no-remaining-identifiers", "--no_remaining_identifiers", action="store_true")
 
+    reconcile = sub.add_parser("reconcile", help="Read-only local reconciliation report for a Netherlands corpus milestone.")
+    reconcile.add_argument("--catalog-path", "--catalog_path", type=Path, default=DEFAULT_BWBR_CATALOG_PATH)
+    reconcile.add_argument("--raw-dir", "--raw_dir", type=Path)
+    reconcile.add_argument("--package-dir", "--package_dir", type=Path)
+    reconcile.add_argument("--unified-dir", "--unified_dir", type=Path)
+    reconcile.add_argument("--reports-dir", "--reports_dir", type=Path)
+    reconcile.add_argument("--coverage-report-path", "--coverage_report_path", type=Path)
+    reconcile.add_argument("--integrity-report-path", "--integrity_report_path", type=Path)
+    reconcile.add_argument("--out-path", "--out_path", type=Path)
+    reconcile.add_argument("--milestone-name", "--milestone_name", default="netherlands-legal-corpus")
+
+    reconcile_milestone_parser = sub.add_parser(
+        "reconcile-milestone",
+        help="Alias for reconcile; read-only/no-network/no-scrape milestone report.",
+    )
+    reconcile_milestone_parser.add_argument("--catalog-path", "--catalog_path", type=Path, default=DEFAULT_BWBR_CATALOG_PATH)
+    reconcile_milestone_parser.add_argument("--raw-dir", "--raw_dir", type=Path)
+    reconcile_milestone_parser.add_argument("--package-dir", "--package_dir", type=Path)
+    reconcile_milestone_parser.add_argument("--unified-dir", "--unified_dir", type=Path)
+    reconcile_milestone_parser.add_argument("--reports-dir", "--reports_dir", type=Path)
+    reconcile_milestone_parser.add_argument("--coverage-report-path", "--coverage_report_path", type=Path)
+    reconcile_milestone_parser.add_argument("--integrity-report-path", "--integrity_report_path", type=Path)
+    reconcile_milestone_parser.add_argument("--out-path", "--out_path", type=Path)
+    reconcile_milestone_parser.add_argument("--milestone-name", "--milestone_name", default="netherlands-legal-corpus")
+
     quality = sub.add_parser("quality-audit", help="Run duplicate, parser-noise, hierarchy, citation, status, packaging, and retrieval audits.")
     quality.add_argument("--base-dir", "--base_dir", type=Path)
     quality.add_argument("--vector-dir", "--vector_dir", type=Path)
@@ -473,6 +499,22 @@ def main(argv: list[str] | None = None) -> int:
                 catalog_path=args.catalog_path,
                 out_path=args.out_path,
                 include_remaining_identifiers=not args.no_remaining_identifiers,
+            )
+        )
+        return 0
+
+    if args.command in {"reconcile", "reconcile-milestone"}:
+        _print(
+            reconcile_milestone(
+                catalog_path=args.catalog_path,
+                raw_dir=args.raw_dir,
+                package_dir=args.package_dir,
+                unified_dir=args.unified_dir,
+                reports_dir=args.reports_dir,
+                coverage_report_path=args.coverage_report_path,
+                integrity_report_path=args.integrity_report_path,
+                out_path=args.out_path,
+                milestone_name=args.milestone_name,
             )
         )
         return 0

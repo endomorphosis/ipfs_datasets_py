@@ -130,6 +130,22 @@ python -m ipfs_datasets_py.processors.legal_scrapers.netherlands_laws verify \
   --raw-dir ipfs_datasets_py/processors/legal_scrapers/netherlands_laws/datasets/raw/nl_full_sru_sharded
 ```
 
+Reconcile a milestone before scaling or publishing. This command is read-only:
+it does not scrape, use the network, build packages, upload, or mutate the
+catalog. Missing optional package/report artifacts are reported as warnings;
+count or identifier drift is reported with `ok: false`.
+
+```bash
+python -m ipfs_datasets_py.processors.legal_scrapers.netherlands_laws reconcile \
+  --catalog-path ipfs_datasets_py/processors/legal_scrapers/netherlands_laws/datasets/raw/nl_bwb_operations/netherlands_bwb_catalog.sqlite \
+  --raw-dir ipfs_datasets_py/processors/legal_scrapers/netherlands_laws/datasets/raw/nl_full_sru_sharded \
+  --package-dir ipfs_datasets_py/processors/legal_scrapers/netherlands_laws/datasets/huggingface/ipfs_netherlands_laws \
+  --unified-dir ipfs_datasets_py/processors/legal_scrapers/netherlands_laws/datasets/huggingface/wetwijzer_netherlands_legal_corpus \
+  --reports-dir ipfs_datasets_py/processors/legal_scrapers/netherlands_laws/datasets/raw/nl_bwb_operations \
+  --milestone-name nl-5000 \
+  --out-path /tmp/netherlands_reconciliation_report.json
+```
+
 For changed-only operational deltas, emit affected law, article, CID, vector,
 BM25 document, and graph rows without rebuilding global FAISS/BM25 artifacts:
 
