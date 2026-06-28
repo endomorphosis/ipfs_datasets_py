@@ -34,10 +34,10 @@ from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger("ipfs_datasets.mcp_server.dag_compaction")
 
-# Compaction thresholds
-EPOCH_SIZE = 1000  # Events per epoch before compaction
-HOT_TIER_MAX = 2000  # Max events kept in hot memory
-COLD_TIER_DIR = ".mcppp_dag_cold"  # Directory for cold epoch files
+# Compaction thresholds (configurable via environment variables)
+EPOCH_SIZE = int(os.environ.get("MCPPP_EPOCH_SIZE", "1000"))
+HOT_TIER_MAX = int(os.environ.get("MCPPP_HOT_TIER_MAX", "2000"))
+COLD_TIER_DIR = os.environ.get("MCPPP_STORAGE_DIR", ".mcppp_dag_cold")
 
 
 @dataclass
@@ -342,19 +342,31 @@ class DAGCompactor:
                     "Loaded compaction index: %d epochs, %d total compacted events",
                     len(self._compaction_proofs), self._total_compacted_events,
                 )
-            except (json.JSONDecodeError, KeyError) as e:
+            except (json.JSONDecodeError, KeyError, OSError, IOError) as e:
                 logger.warning("Failed to load compaction index: %s", e)
 
     def _save_compaction_index(self) -> None:
-        """Save compaction proofs index to disk."""
+        """Save compaction proofs index to disk atomically (write-then-rename)."""
         index_path = os.path.join(self.storage_dir, "compaction_index.json")
+        tmp_path = index_path + ".tmp"
         data = {
             "current_epoch_id": self._current_epoch_id,
             "total_compacted_events": self._total_compacted_events,
             "proofs": [p.to_dict() for p in self._compaction_proofs],
         }
-        with open(index_path, "w") as f:
-            json.dump(data, f, indent=2)
+        try:
+            with open(tmp_path, "w") as f:
+                json.dump(data, f, indent=2)
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(tmp_path, index_path)
+        except (OSError, IOError) as e:
+            logger.error("Failed to save compaction index: %s", e)
+            # Clean up partial write
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
 
     def should_compact(self, hot_event_count: int) -> bool:
         """Check if compaction should be triggered."""
@@ -425,17 +437,29 @@ class DAGCompactor:
             # Generate ZK proof
             proof_hex = generate_compaction_proof(epoch_data, merkle_root, self._current_epoch_id)
 
-            # Persist cold epoch to disk
+            # Persist cold epoch to disk (atomic write)
             cold_path = os.path.join(
                 self.storage_dir, f"epoch_{self._current_epoch_id:06d}.json"
             )
-            with open(cold_path, "w") as f:
-                json.dump({
-                    "epoch_id": self._current_epoch_id,
-                    "merkle_root": merkle_root,
-                    "events": epoch_data,
-                    "merkle_layers": layers,
-                }, f)
+            tmp_cold_path = cold_path + ".tmp"
+            try:
+                with open(tmp_cold_path, "w") as f:
+                    json.dump({
+                        "epoch_id": self._current_epoch_id,
+                        "merkle_root": merkle_root,
+                        "events": epoch_data,
+                        "merkle_layers": layers,
+                    }, f)
+                    f.flush()
+                    os.fsync(f.fileno())
+                os.replace(tmp_cold_path, cold_path)
+            except (OSError, IOError) as e:
+                logger.error("Failed to write cold epoch %d: %s", self._current_epoch_id, e)
+                try:
+                    os.unlink(tmp_cold_path)
+                except OSError:
+                    pass
+                return None  # Abort compaction on disk failure
 
             # Build compaction proof
             timestamps = [
