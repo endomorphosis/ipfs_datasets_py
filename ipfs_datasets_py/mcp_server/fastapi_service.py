@@ -1675,9 +1675,12 @@ async def mcp_execute_with_envelope(request: Request):
     try:
         from .cid_artifacts import IntentObject, artifact_cid, EventNode
         body = await request.json()
-        tool_name = body.get("tool", "")
-        arguments = body.get("arguments", {})
-        proof_cid = body.get("proof_cid")
+        # Accept both naming conventions for frontend compatibility:
+        # ipfs_accelerate style: {"method": "...", "params": {...}}
+        # ipfs_datasets style: {"tool": "...", "arguments": {...}}
+        tool_name = body.get("method") or body.get("tool", "")
+        arguments = body.get("params") or body.get("arguments", {})
+        proof_cid = body.get("proof_cid") or body.get("delegation_cid")
         policy_cid = body.get("policy_cid")
 
         # Create intent
@@ -2040,12 +2043,25 @@ async def mcp_discover():
         "E": "mcp+p2p (libp2p Transport)",
     }
 
+    p2p_status = "disabled"
+    peer_id = None
+    try:
+        from .p2p_libp2p_transport import get_p2p_node
+        node = get_p2p_node()
+        if node._started:
+            p2p_status = "active"
+            peer_id = node.peer_id
+    except Exception:
+        pass
+
     return {
         "server": "ipfs-datasets-mcp",
         "version": "0.1.0",
         "protocol": "mcp++",
         "profiles": profiles,
         "tools": tools,
+        "interfaces": len(tools),
+        "p2p": {"status": p2p_status, "peer_id": peer_id},
         "endpoints": {
             "jsonrpc": "/mcp",
             "execute": "/mcp/execute",
@@ -2055,6 +2071,7 @@ async def mcp_discover():
             "p2p_call": "/mcp/p2p/call",
             "events": "/mcp/events/stream",
             "health": "/health",
+            "tools_list": "/tools/list",
         },
         "auth": {
             "ucan_required": not bool(_os.environ.get("MCPPP_ALLOW_UNSIGNED_DELEGATIONS")),
