@@ -25,6 +25,9 @@ logger = logging.getLogger("ipfs_datasets.mcp_server.p2p_libp2p")
 # Protocol ID per MCP++ spec
 MCP_P2P_PROTOCOL = "/mcp+p2p/1.0.0"
 
+# Maximum P2P message size (16 MiB) — prevents allocation attacks via 4-byte length prefix
+MAX_P2P_MESSAGE_SIZE = 16 * 1024 * 1024
+
 # Default bootstrap peers
 DEFAULT_BOOTSTRAP_PEERS = [
     "/ip4/104.131.131.82/tcp/4001/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ",
@@ -88,6 +91,8 @@ class P2PMessage:
         if len(data) < 4:
             raise ValueError("Message too short")
         length = int.from_bytes(data[:4], "big")
+        if length > MAX_P2P_MESSAGE_SIZE:
+            raise ValueError(f"Message size {length} exceeds limit {MAX_P2P_MESSAGE_SIZE}")
         payload = json.loads(data[4:4 + length].decode("utf-8"))
         return cls(
             msg_type=payload.get("type", "request"),
@@ -218,6 +223,9 @@ class MCPp2pNode:
             if len(length_bytes) < 4:
                 return
             length = int.from_bytes(length_bytes, "big")
+            if length > MAX_P2P_MESSAGE_SIZE:
+                logger.warning("Rejecting oversized P2P message: %d bytes", length)
+                return
             payload = await stream.read(length)
 
             msg = P2PMessage.decode(length_bytes + payload)

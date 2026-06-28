@@ -376,7 +376,7 @@ class DelegationEvaluator:
     4. At least one delegation in the chain has the requested capability.
     """
 
-    def __init__(self, max_chain_depth: int = 0) -> None:
+    def __init__(self, max_chain_depth: int = 0, *, require_signatures: bool = False) -> None:
         """Initialise a :class:`DelegationEvaluator`.
 
         Args:
@@ -384,10 +384,13 @@ class DelegationEvaluator:
                 (number of hops from root to leaf, inclusive).  ``0`` means
                 unlimited.  When a chain exceeds this limit,
                 :meth:`build_chain` raises ``ValueError``.
+            require_signatures: If True, reject delegations from external
+                issuers (did:key:*) that lack a valid signature.
         """
         self._store: Dict[str, Delegation] = {}
         self._tokens_by_cid: Dict[str, Union[DelegationToken, Delegation]] = {}
         self._max_chain_depth: int = max_chain_depth
+        self._require_signatures: bool = require_signatures
 
     # ------------------------------------------------------------------
     # Store management
@@ -563,6 +566,9 @@ class DelegationEvaluator:
             if hasattr(d, '_signed') and d._signed is not None:
                 if not verify_delegation_signature(d._signed):
                     return False, f"Delegation '{d.cid}' has invalid signature"
+            elif self._require_signatures and d.issuer.startswith("did:key:"):
+                # External DID-based delegations MUST be signed in strict mode
+                return False, f"Delegation '{d.cid}' from DID issuer lacks required signature"
 
         # Capability check — at least one delegation must cover the request
         for d in chain:

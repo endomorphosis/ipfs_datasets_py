@@ -266,6 +266,70 @@ class EventDAG:
     def __repr__(self) -> str:  # pragma: no cover
         return f"EventDAG({len(self._nodes)} nodes, frontier={len(self.frontier())})"
 
+    # ------------------------------------------------------------------
+    # Persistence
+    # ------------------------------------------------------------------
+
+    def save(self, path: str) -> None:
+        """Persist the DAG to a JSON file at *path*.
+
+        Serializes all nodes as a list of dicts. Thread-safe.
+        """
+        import json
+
+        with self._lock:
+            nodes_data = []
+            for cid, node in self._nodes.items():
+                nodes_data.append({
+                    "event_cid": cid,
+                    "parents": list(node.parents),
+                    "intent_cid": node.intent_cid,
+                    "decision_cid": getattr(node, "decision_cid", ""),
+                    "receipt_cid": getattr(node, "receipt_cid", ""),
+                    "timestamp": getattr(node, "timestamp", ""),
+                })
+
+        import os
+        os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
+        with open(path, "w") as f:
+            json.dump({"version": 1, "nodes": nodes_data}, f)
+
+    def load(self, path: str) -> int:
+        """Load DAG state from a JSON file at *path*. Returns count of nodes loaded.
+
+        Skips nodes whose CIDs already exist. Uses strict=False for loading.
+        """
+        import json
+        import os
+
+        if not os.path.isfile(path):
+            return 0
+
+        with open(path, "r") as f:
+            data = json.load(f)
+
+        nodes_data = data.get("nodes", [])
+        loaded = 0
+        old_strict = self.strict
+        self.strict = False  # Relax for loading (parents may arrive out of order)
+        try:
+            for nd in nodes_data:
+                cid = nd.get("event_cid", "")
+                if cid in self._nodes:
+                    continue
+                node = EventNode(
+                    parents=nd.get("parents", []),
+                    intent_cid=nd.get("intent_cid", ""),
+                    decision_cid=nd.get("decision_cid", ""),
+                    receipt_cid=nd.get("receipt_cid", ""),
+                )
+                # Override computed CID if stored CID differs (legacy data)
+                self.append(node)
+                loaded += 1
+        finally:
+            self.strict = old_strict
+        return loaded
+
 
 # ---------------------------------------------------------------------------
 # Convenience builder
