@@ -11,6 +11,7 @@ This creates an append-only, content-addressed execution history that enables:
 - **Provenance**: trace exactly what inputs produced what outputs
 - **Replay**: walk the DAG from any root to reproduce a computation
 - **Partial ordering**: events with disjoint parent sets are concurrent
+- **ZK Compaction**: older epochs are compacted into Merkle proofs for memory efficiency
 
 Public API::
 
@@ -26,11 +27,17 @@ Public API::
 
 from __future__ import annotations
 
+import logging
 import threading
 from dataclasses import dataclass, field
-from typing import Dict, Iterable, List, Optional, Set
+from typing import Any, Dict, Iterable, List, Optional, Set
 
 from .cid_artifacts import EventNode
+
+logger = logging.getLogger("ipfs_datasets.mcp_server.event_dag")
+
+# Compaction threshold: when hot nodes exceed this, trigger epoch compaction
+HOT_TIER_MAX = 2000
 
 
 # ---------------------------------------------------------------------------
@@ -38,7 +45,7 @@ from .cid_artifacts import EventNode
 # ---------------------------------------------------------------------------
 
 class EventDAG:
-    """Append-only, content-addressed Event DAG.
+    """Append-only, content-addressed Event DAG with ZK compaction.
 
     Nodes are ``EventNode`` instances (from ``cid_artifacts``).  Each node is
     identified by its ``event_cid`` property and references its causal
@@ -49,23 +56,39 @@ class EventDAG:
     - **Parent validation**: all parent CIDs must be known before a node is
       appended (unless ``strict=False`` is set at construction time).
     - **Deduplication**: appending the same CID twice is a no-op.
+    - **ZK Compaction**: when hot tier exceeds HOT_TIER_MAX, oldest events
+      are compacted into a Merkle proof and moved to cold storage on disk.
 
     Attributes:
         strict: If ``True`` (default), raise ``ValueError`` when a node's
             parent CIDs are not yet present in the DAG.
     """
 
-    def __init__(self, *, strict: bool = True) -> None:
+    def __init__(self, *, strict: bool = True, storage_dir: str = "") -> None:
         """Initialise an empty Event DAG.
 
         Args:
             strict: Enforce parent-CID validation on append.
+            storage_dir: Directory for cold-tier epoch storage. Empty = default.
         """
         self.strict = strict
         self._lock = threading.Lock()
         self._nodes: Dict[str, EventNode] = {}
         # Reverse index: parent_cid → set of child event_cids
         self._children: Dict[str, Set[str]] = {}
+        self._storage_dir = storage_dir
+        self._compactor: Optional[Any] = None
+
+    def _get_compactor(self):
+        """Lazy-init the DAG compactor."""
+        if self._compactor is None:
+            try:
+                from .dag_compaction import DAGCompactor, COLD_TIER_DIR
+                storage = self._storage_dir or COLD_TIER_DIR
+                self._compactor = DAGCompactor(storage_dir=storage)
+            except ImportError:
+                logger.warning("dag_compaction module not available; compaction disabled")
+        return self._compactor
 
     # ------------------------------------------------------------------
     # Mutation
@@ -77,6 +100,8 @@ class EventDAG:
         If *strict* mode is enabled, all parent CIDs must already be present
         in the DAG.  Appending a node whose CID is already in the DAG is a
         no-op (idempotent).
+
+        Triggers ZK compaction when hot tier exceeds HOT_TIER_MAX.
 
         Args:
             node: The event node to append.
@@ -109,7 +134,55 @@ class EventDAG:
             for parent_cid in node.parents:
                 self._children.setdefault(parent_cid, set()).add(cid)
 
+        # Check if ZK compaction should run
+        self._maybe_compact()
         return cid
+
+    def _maybe_compact(self) -> None:
+        """Trigger epoch compaction if hot tier is too large."""
+        compactor = self._get_compactor()
+        if compactor is None:
+            return
+        if not compactor.should_compact(len(self._nodes)):
+            return
+
+        with self._lock:
+            # Serialize nodes for compactor
+            events_dict = {}
+            for cid, node in self._nodes.items():
+                events_dict[cid] = {
+                    "cid": cid,
+                    "event_type": "event_node",
+                    "parent_cids": list(node.parents),
+                    "payload": {
+                        "intent_cid": getattr(node, "intent_cid", ""),
+                        "decision_cid": getattr(node, "decision_cid", ""),
+                        "receipt_cid": getattr(node, "receipt_cid", ""),
+                    },
+                    "timestamp": float(getattr(node, "timestamp_created", "0") or 0),
+                }
+            children_dict = {k: list(v) for k, v in self._children.items()}
+
+        # Compact outside the lock (disk I/O)
+        result = compactor.compact_epoch(events_dict, children_dict)
+        if result:
+            with self._lock:
+                compacted_set = set(result.compacted_cids)
+                for cid in result.compacted_cids:
+                    self._nodes.pop(cid, None)
+                    self._children.pop(cid, None)
+                # Clean children refs
+                for parent_cid in list(self._children.keys()):
+                    self._children[parent_cid] = {
+                        c for c in self._children[parent_cid]
+                        if c not in compacted_set
+                    }
+                    if not self._children[parent_cid]:
+                        del self._children[parent_cid]
+            logger.info(
+                "Compacted epoch: removed %d events from hot tier",
+                len(result.compacted_cids),
+            )
 
     # ------------------------------------------------------------------
     # Queries
@@ -160,6 +233,9 @@ class EventDAG:
         is ordered by reverse BFS depth: *event_cid* is first, root nodes last.
         Nodes that share ancestors are deduplicated (each appears once).
 
+        Transparently loads cold-tier events when traversal crosses epoch
+        boundaries (parent CID not in hot tier).
+
         Args:
             event_cid: The CID to start the walk from.
 
@@ -168,7 +244,10 @@ class EventDAG:
             empty list if *event_cid* is not in the DAG.
         """
         if event_cid not in self._nodes:
-            return []
+            # Check cold tier
+            cold_node = self._load_cold_event(event_cid)
+            if cold_node is None:
+                return []
 
         visited: List[str] = []
         seen: Set[str] = set()
@@ -185,8 +264,49 @@ class EventDAG:
                 for parent_cid in node.parents:
                     if parent_cid not in seen:
                         queue.append(parent_cid)
+            else:
+                # Try cold tier for parent traversal
+                cold_data = self._load_cold_event_data(current)
+                if cold_data:
+                    for parent_cid in cold_data.get("parent_cids", []):
+                        if parent_cid not in seen:
+                            queue.append(parent_cid)
 
         return visited
+
+    def _load_cold_event(self, cid: str) -> Optional[EventNode]:
+        """Try to load an EventNode from cold storage."""
+        compactor = self._get_compactor()
+        if compactor is None:
+            return None
+        epoch_id = compactor.find_epoch_for_cid(cid)
+        if epoch_id is None:
+            return None
+        events = compactor.load_cold_epoch(epoch_id)
+        for e in events:
+            if e.get("cid") == cid:
+                payload = e.get("payload", {})
+                return EventNode(
+                    parents=e.get("parent_cids", []),
+                    intent_cid=payload.get("intent_cid", ""),
+                    decision_cid=payload.get("decision_cid", ""),
+                    receipt_cid=payload.get("receipt_cid", ""),
+                )
+        return None
+
+    def _load_cold_event_data(self, cid: str) -> Optional[Dict[str, Any]]:
+        """Load raw event dict from cold storage."""
+        compactor = self._get_compactor()
+        if compactor is None:
+            return None
+        epoch_id = compactor.find_epoch_for_cid(cid)
+        if epoch_id is None:
+            return None
+        events = compactor.load_cold_epoch(epoch_id)
+        for e in events:
+            if e.get("cid") == cid:
+                return e
+        return None
 
     # ------------------------------------------------------------------
     # Rollback helpers
@@ -264,7 +384,12 @@ class EventDAG:
     # ------------------------------------------------------------------
 
     def __repr__(self) -> str:  # pragma: no cover
-        return f"EventDAG({len(self._nodes)} nodes, frontier={len(self.frontier())})"
+        compactor = self._get_compactor()
+        cold_count = compactor.total_compacted_events if compactor else 0
+        return (
+            f"EventDAG({len(self._nodes)} hot nodes, "
+            f"{cold_count} compacted, frontier={len(self.frontier())})"
+        )
 
     # ------------------------------------------------------------------
     # Persistence

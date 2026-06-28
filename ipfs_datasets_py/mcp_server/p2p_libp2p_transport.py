@@ -16,11 +16,41 @@ from __future__ import annotations
 
 import json
 import logging
+import subprocess
+import sys
 import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger("ipfs_datasets.mcp_server.p2p_libp2p")
+
+
+def ensure_libp2p_installed() -> bool:
+    """Auto-install libp2p from git if not already available.
+
+    Returns True if libp2p is importable after this call.
+    """
+    try:
+        import libp2p  # noqa: F401
+        return True
+    except ImportError:
+        pass
+
+    logger.info("libp2p not found — auto-installing from git (py-libp2p@main)...")
+    try:
+        subprocess.check_call(
+            [sys.executable, "-m", "pip", "install", "--quiet",
+             "libp2p @ git+https://github.com/libp2p/py-libp2p.git@main",
+             "multiaddr", "protobuf>=3.20.0"],
+            stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
+            timeout=120,
+        )
+        import libp2p  # noqa: F401
+        logger.info("libp2p installed successfully")
+        return True
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ImportError) as e:
+        logger.error("Failed to auto-install libp2p: %s", e)
+        return False
 
 # Protocol ID per MCP++ spec
 MCP_P2P_PROTOCOL = "/mcp+p2p/1.0.0"
@@ -162,6 +192,15 @@ class MCPp2pNode:
     async def start(self, nursery) -> None:
         """Start the libp2p node with Trio structured concurrency."""
         self._nursery = nursery
+
+        # Auto-install libp2p if missing
+        if not ensure_libp2p_installed():
+            logger.error(
+                "libp2p could not be installed. P2P transport in stub mode. "
+                "Manual install: pip install 'libp2p @ git+https://github.com/libp2p/py-libp2p.git@main'"
+            )
+            self._started = True
+            return
 
         try:
             import trio

@@ -11,6 +11,15 @@ jsonschema>=4.0.0,<5.0.0
 mcp>=1.2.0
 anyio>=4.0.0
 
+# Trio + Hypercorn (required for MCP++ P2P)
+trio
+hypercorn[trio]
+
+# libp2p (required for MCP++ Profile E: P2P transport)
+libp2p @ git+https://github.com/libp2p/py-libp2p.git@main
+multiaddr
+protobuf>=3.20.0
+
 # Basic utilities
 tqdm>=4.60.0,<5.0.0
 toml>=0.10.2
