@@ -585,13 +585,21 @@ class DelegationEvaluator:
 # ---------------------------------------------------------------------------
 
 _GLOBAL_EVALUATOR: Optional[DelegationEvaluator] = None
+_GLOBAL_EVALUATOR_LOCK = __import__("threading").Lock()
+
+# Max delegation chain depth to prevent memory DoS via deep chains
+_MAX_CHAIN_DEPTH = int(__import__("os").environ.get("MCPPP_MAX_CHAIN_DEPTH", "10"))
 
 
 def get_delegation_evaluator() -> DelegationEvaluator:
-    """Return the global :class:`DelegationEvaluator` singleton."""
+    """Return the global :class:`DelegationEvaluator` singleton (thread-safe)."""
     global _GLOBAL_EVALUATOR
     if _GLOBAL_EVALUATOR is None:
-        _GLOBAL_EVALUATOR = DelegationEvaluator()
+        with _GLOBAL_EVALUATOR_LOCK:
+            if _GLOBAL_EVALUATOR is None:
+                _GLOBAL_EVALUATOR = DelegationEvaluator(
+                    max_chain_depth=_MAX_CHAIN_DEPTH
+                )
     return _GLOBAL_EVALUATOR
 
 
@@ -1449,7 +1457,7 @@ class DelegationManager:
             a temporary-directory path.
     """
 
-    def __init__(self, path: Optional[str] = None, max_chain_depth: int = 0) -> None:
+    def __init__(self, path: Optional[str] = None, max_chain_depth: int = 10) -> None:
         _default_path = _tempfile.gettempdir() + "/mcp_delegations.json"
         self._store = DelegationStore(path or _default_path)
         self._revocation = RevocationList()

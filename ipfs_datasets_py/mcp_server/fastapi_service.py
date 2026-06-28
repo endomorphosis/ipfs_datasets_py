@@ -1933,10 +1933,7 @@ async def create_ucan_delegation(request: Request):
         )
 
         # Store delegation
-        try:
-            add_delegation(proof_cid, delegation)
-        except Exception:
-            pass  # Store may not be initialized
+        add_delegation(proof_cid, delegation)
 
         return {
             "proof_cid": proof_cid,
