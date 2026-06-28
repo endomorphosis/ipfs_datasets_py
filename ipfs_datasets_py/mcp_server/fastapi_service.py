@@ -2028,11 +2028,22 @@ async def evaluate_deontic_policy(request: Request):
 
 @app.get("/mcp/p2p/peers")
 async def discover_p2p_peers():
-    """Discover available P2P peers (Profile E) via libp2p+Trio."""
+    """Discover available P2P peers (Profile E) — filtered for security."""
     try:
         from .p2p_libp2p_transport import get_p2p_node, MCP_P2P_PROTOCOL
         node = get_p2p_node()
-        return node.to_dict()
+        full = node.to_dict()
+        # Filter sensitive multiaddrs (contain internal IPs)
+        safe_peers = []
+        for peer in full.get("peers", []):
+            safe_peers.append({
+                "peer_id": peer.get("peer_id", ""),
+                "protocols": peer.get("protocols", []),
+                "last_seen": peer.get("last_seen", 0),
+                "latency_ms": peer.get("latency_ms", 0),
+            })
+        full["peers"] = safe_peers
+        return full
     except ImportError:
         return {"protocol": "/mcp+p2p/1.0.0", "peers": [], "count": 0, "started": False}
     except Exception as e:
@@ -2049,8 +2060,15 @@ async def p2p_call_remote_tool(request: Request):
         node = get_p2p_node()
         if not node._started:
             raise HTTPException(status_code=503, detail="P2P node not started")
+        peer_id = body.get("peer_id", "")
+        # Validate peer is known (prevent SSRF relay to arbitrary hosts)
+        if peer_id not in node._peers:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unknown peer: {peer_id[:16]}... Use /mcp/p2p/peers to discover available peers"
+            )
         result = await node.call_tool(
-            peer_id=body.get("peer_id", ""),
+            peer_id=peer_id,
             method=body.get("method", ""),
             params=body.get("params", {}),
             timeout=body.get("timeout", 30.0),
