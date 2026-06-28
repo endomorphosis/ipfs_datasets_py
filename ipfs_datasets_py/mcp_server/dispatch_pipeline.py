@@ -863,7 +863,7 @@ def make_full_pipeline(
             }
         except Exception as e:
             logger.warning(f"Policy evaluation failed: {e}")
-            return {"allowed": True, "reason": f"policy_eval_error (permissive): {e}"}
+            return {"allowed": False, "reason": f"policy_eval_error (fail-closed): {e}"}
 
     def _nl_ucan_gate(intent: Dict[str, Any]) -> Dict[str, Any]:
         return {"allowed": True, "reason": "nl_ucan_pass"}
