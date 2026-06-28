@@ -118,6 +118,45 @@ _USCODE_FALLBACK_STATUS_KEYWORDS: tuple[str, ...] = (
     "renumbered",
     "terminated",
 )
+_USCODE_EDITORIAL_NOTE_LABELS: tuple[str, ...] = (
+    "Editorial Notes",
+    "Codification",
+    "References in Text",
+    "Historical and Revision Notes",
+    "Prior Provisions",
+    "Amendments",
+    "Statutory Notes and Related Subsidiaries",
+)
+_LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
+    ("authorization of appropriations", "appropriation_authorization"),
+    ("authorized to be appropriated", "appropriation_authorization"),
+    ("remain available until expended", "no_year_funding_availability"),
+    ("available until expended", "no_year_funding_availability"),
+    ("research program and plan", "research_program_plan"),
+    ("grants for research", "research_grant"),
+    ("grants for the conduct of research", "research_grant"),
+    ("conduct of research", "research_activity"),
+    ("individuals with disabilities", "disability_services"),
+    ("funds for printing, binding", "printing_binding"),
+    ("printing, binding", "printing_binding"),
+    ("printing binding", "printing_binding"),
+    ("article reprint purchases", "article_reprint_purchase"),
+    ("reprint purchases", "article_reprint_purchase"),
+    ("scientific and technical article", "technical_article"),
+    ("editorially reclassified", "editorial_reclassification"),
+    ("reclassified as section", "editorial_reclassification"),
+    (
+        "health professionals educational assistance program",
+        "health_professional_education_assistance",
+    ),
+    ("educational assistance", "education_assistance_benefit"),
+    ("moneys deposited by unknown parties", "unknown_party_deposit"),
+    ("treasurer of the united states", "treasury_deposit"),
+    ("costs and expenses", "cost_expense_charge"),
+    ("charge on prize", "prize_proceeds_charge"),
+    ("prize proceeds", "prize_proceeds_charge"),
+    ("effect of act", "effect_of_act"),
+)
 _USCODE_STATUS_DERIVATION_RULES = frozenset(
     {
         "uscode_transferred_heading_v1",
@@ -139,6 +178,11 @@ _USC_CITATION_RE = re.compile(
 )
 _USCODE_SOURCE_ID_RE = re.compile(
     r"^\s*(?P<scheme>us-code)-(?P<title>[^-]+)-(?P<section>.+)-(?P<digest>[0-9a-f]{16})\s*$",
+    re.IGNORECASE,
+)
+_DEFINED_TERM_RE = re.compile(
+    r"\bthe\s+term\s+['\"]?(?P<term>[A-Z][A-Za-z0-9]*(?:[-\s]+[A-Z][A-Za-z0-9]*){0,5})['\"]?"
+    r"\s+(?:has|shall\s+have)\s+the\s+meaning\b",
     re.IGNORECASE,
 )
 _TRAILING_SECTION_PUNCT_RE = re.compile(r"[.;:]+$")
@@ -176,6 +220,10 @@ _USCODE_INLINE_SECTION_REF_RE = re.compile(
 )
 _USCODE_GPO_ATTRIBUTION_RE = re.compile(
     r"\bfrom\s+the\s+u\.?\s*s\.?\s+government\s+publishing\s+office\b.*$",
+    re.IGNORECASE,
+)
+_USCODE_GPO_ATTRIBUTION_FRAGMENT_RE = re.compile(
+    r"\bfrom\s+the\s+u(?:\s*\.?\s*s(?:\s*\.?\s*c\.?)?)?\b.*$",
     re.IGNORECASE,
 )
 _SECTION_HEADING_TAIL_SPLIT_RE = re.compile(r"[.;:\n]")
@@ -1278,6 +1326,92 @@ def _decode_formula_phrases(
                     formula=formula,
                 )
             )
+    source_span_text = _formula_source_span_text(document=document, formula=formula)
+    if source_span_text:
+        phrases.extend(
+            _legal_semantic_atom_phrases(
+                text=source_span_text,
+                slot_prefix="modal_source_span",
+                spans=spans,
+            )
+        )
+    for polarity_slot, polarity_value in _modal_polarity_slots(
+        formula,
+        condition_values=condition_values,
+        exception_values=exception_values,
+        document=document,
+    ):
+        phrases.append(
+            DecodedModalPhrase(
+                text=polarity_value,
+                slot=polarity_slot,
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+    status_clause_text = _uscode_status_clause_text(
+        document=document,
+        formula=formula,
+    )
+    if status_clause_text:
+        phrases.append(
+            DecodedModalPhrase(
+                text=status_clause_text,
+                slot="source_status_clause",
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+        phrases.append(
+            DecodedModalPhrase(
+                text=status_clause_text,
+                slot="typed_ir_surface_reconstruction",
+                spans=spans,
+                provenance_only=False,
+            )
+        )
+        for typed_slot, typed_value in _typed_identifier_slots(
+            status_clause_text,
+            slot_prefix="source_status_clause",
+        ):
+            phrases.append(
+                DecodedModalPhrase(
+                    text=typed_value,
+                    slot=typed_slot,
+                    spans=spans,
+                    provenance_only=True,
+                )
+            )
+        phrases.extend(
+            _legal_semantic_atom_phrases(
+                text=status_clause_text,
+                slot_prefix="source_status_clause",
+                spans=spans,
+            )
+        )
+        phrases.extend(
+            _contextual_modal_cue_phrases(
+                formula=formula,
+                text=status_clause_text,
+                slot_prefix="source_status_clause",
+                spans=spans,
+            )
+        )
+        for transition_slot, transition_value in _refined_contextual_modal_transition_slots(
+            formula,
+            text=status_clause_text,
+            slot_prefix="source_status_clause",
+        ):
+            if not transition_slot.endswith("_refined_modal_family_pair"):
+                continue
+            phrases.append(
+                DecodedModalPhrase(
+                    text=transition_value,
+                    slot="typed_decompiler_family_pair",
+                    spans=spans,
+                    provenance_only=True,
+                )
+            )
     fallback_rule = _clean_text(formula.metadata.get("fallback_rule") or "")
     if fallback_rule:
         phrases.append(
@@ -1447,6 +1581,13 @@ def _fallback_section_heading_tail_phrases(
             )
         )
     phrases.extend(
+        _legal_semantic_atom_phrases(
+            text=heading_tail,
+            slot_prefix="section_heading_tail",
+            spans=spans,
+        )
+    )
+    phrases.extend(
         _contextual_modal_cue_phrases(
             formula=formula,
             text=heading_tail,
@@ -1566,6 +1707,13 @@ def _fallback_surface_text_phrases(
             )
         )
     phrases.extend(
+        _legal_semantic_atom_phrases(
+            text=surface_text,
+            slot_prefix="fallback_surface_text",
+            spans=spans,
+        )
+    )
+    phrases.extend(
         _contextual_modal_cue_phrases(
             formula=formula,
             text=surface_text,
@@ -1574,6 +1722,94 @@ def _fallback_surface_text_phrases(
         )
     )
     return phrases
+
+
+def _legal_semantic_atom_phrases(
+    *,
+    text: str,
+    slot_prefix: str,
+    spans: List[List[int]],
+) -> List[DecodedModalPhrase]:
+    phrases: List[DecodedModalPhrase] = []
+    prefix = _clean_text(slot_prefix).replace(" ", "_")
+    slots = ["legal_semantic_atom"]
+    if prefix:
+        slots.append(f"{prefix}_legal_semantic_atom")
+    for atom in _legal_semantic_atoms_from_text(text):
+        for slot in slots:
+            phrases.append(
+                DecodedModalPhrase(
+                    text=atom,
+                    slot=slot,
+                    spans=spans,
+                    provenance_only=True,
+                )
+            )
+    return phrases
+
+
+def _legal_semantic_atoms_from_text(text: str) -> List[str]:
+    normalized = _clean_text(text).lower()
+    if not normalized:
+        return []
+    tokens = set(_CUE_TOKEN_RE.findall(normalized))
+    atoms: List[str] = []
+    seen: set[str] = set()
+
+    def add(atom: str) -> None:
+        normalized_atom = _clean_text(atom).lower().replace(" ", "_")
+        if normalized_atom and normalized_atom not in seen:
+            seen.add(normalized_atom)
+            atoms.append(normalized_atom)
+
+    for keyword in _USCODE_FALLBACK_STATUS_KEYWORDS:
+        if re.search(rf"(?<!\w){re.escape(keyword)}(?:d|ed|s)?(?!\w)", normalized):
+            add(keyword)
+    for term in _defined_term_atoms_from_text(text):
+        add(term)
+    for phrase, atom in _LEGAL_SEMANTIC_ATOM_PHRASES:
+        phrase_tokens = _CUE_TOKEN_RE.findall(phrase)
+        if phrase in normalized or (
+            phrase_tokens and all(token in tokens for token in phrase_tokens)
+        ):
+            add(atom)
+    if re.search(r"\b(?:shall|must|required|requires?|obligat(?:e|ed|ion))\b", normalized):
+        add("obligation")
+    if re.search(r"\b(?:may|authorized|permitted|permission)\b", normalized):
+        add("permission")
+    if re.search(
+        r"\b(?:may\s+not|shall\s+not|must\s+not|prohibit(?:ed|s)?|forbidden)\b",
+        normalized,
+    ):
+        add("prohibition")
+    if re.search(
+        r"\b(?:except|unless|notwithstanding|subject\s+to|provided\s+that)\b",
+        normalized,
+    ):
+        add("exception_or_condition")
+    if re.search(
+        r"\b(?:not\s+later\s+than|no\s+later\s+than|until|after|before|effective\s+date)\b",
+        normalized,
+    ):
+        add("temporal_condition")
+    return atoms
+
+
+def _defined_term_atoms_from_text(text: str) -> List[str]:
+    atoms: List[str] = []
+    seen: set[str] = set()
+    for match in _DEFINED_TERM_RE.finditer(str(text or "")):
+        term = _clean_text(match.group("term"))
+        if not term:
+            continue
+        tokens = _CUE_TOKEN_RE.findall(term.lower())
+        if not tokens or len(tokens) > 6:
+            continue
+        atom = "_".join(tokens)
+        if atom and atom not in seen:
+            seen.add(atom)
+            atoms.append(atom)
+    return atoms
 
 
 def _fallback_section_heading_tail_text(
@@ -1784,6 +2020,185 @@ def _status_heading_surface_text(text: str, *, status_keyword: str) -> str:
     ):
         return normalized_text.split(maxsplit=1)[0]
     return ""
+
+
+def _uscode_status_clause_text(
+    *,
+    document: ModalIRDocument,
+    formula: ModalIRFormula,
+    max_tokens: int = 48,
+) -> str:
+    """Return the bounded source clause carrying U.S.C. editorial status."""
+    if not _formula_has_uscode_context(formula):
+        return ""
+    source_text = str(document.normalized_text or "")
+    if not source_text:
+        return ""
+    for keyword in _uscode_status_clause_keywords(
+        document=document,
+        formula=formula,
+    ):
+        clause = _status_clause_around_keyword(source_text, keyword)
+        if not clause:
+            continue
+        clause = _clean_status_clause_surface(clause)
+        tokens = _tokenize_for_similarity(clause)
+        if tokens and len(tokens) <= max_tokens:
+            return clause
+    return ""
+
+
+def _uscode_status_clause_keywords(
+    *,
+    document: ModalIRDocument,
+    formula: ModalIRFormula,
+) -> List[str]:
+    keywords: List[str] = []
+
+    def add(value: str) -> None:
+        normalized = _clean_text(value).lower()
+        if normalized and normalized in _USCODE_FALLBACK_STATUS_KEYWORDS:
+            if normalized not in keywords:
+                keywords.append(normalized)
+
+    fallback_rule = _clean_text(formula.metadata.get("fallback_rule") or "")
+    add(_derived_status_keyword(formula=formula, fallback_rule=fallback_rule))
+    add(_clean_text(formula.metadata.get("status_keyword") or ""))
+    predicate_text = _clean_text(formula.predicate.name).replace("_", " ").lower()
+    for keyword in _USCODE_FALLBACK_STATUS_KEYWORDS:
+        if re.search(rf"(?<!\w){re.escape(keyword)}(?!\w)", predicate_text):
+            add(keyword)
+    add(_status_keyword_from_source_text(str(document.normalized_text or "")))
+    return keywords
+
+
+def _status_clause_around_keyword(source_text: str, keyword: str) -> str:
+    normalized_keyword = _clean_text(keyword).lower()
+    if not normalized_keyword:
+        return ""
+    match = re.search(
+        rf"(?<!\w){re.escape(normalized_keyword)}(?:d|ed|s)?(?!\w)",
+        source_text,
+        flags=re.IGNORECASE,
+    )
+    if match is None:
+        return ""
+    start = _status_clause_start(source_text, match.start())
+    end = _status_clause_end(source_text, match.end())
+    return _clean_text(source_text[start:end])
+
+
+def _status_clause_start(source_text: str, match_start: int) -> int:
+    start = 0
+    for index in range(match_start - 1, -1, -1):
+        if source_text[index] in "\n;":
+            start = index + 1
+            break
+        if source_text[index] == "." and _period_marks_status_clause_boundary(
+            source_text,
+            index,
+        ):
+            start = index + 1
+            break
+    return max(0, start)
+
+
+def _status_clause_end(source_text: str, match_end: int) -> int:
+    for index in range(match_end, len(source_text)):
+        if source_text[index] in "\n;":
+            return index
+        if source_text[index] == "." and _period_marks_status_clause_boundary(
+            source_text,
+            index,
+        ):
+            return index + 1
+    return len(source_text)
+
+
+def _period_marks_status_clause_boundary(source_text: str, index: int) -> bool:
+    before = source_text[max(0, index - 16) : index]
+    token_match = re.search(r"([A-Za-z]+)\s*$", before)
+    previous_token = token_match.group(1).lower() if token_match else ""
+    return previous_token not in {
+        "act",
+        "apr",
+        "aug",
+        "ch",
+        "dec",
+        "div",
+        "feb",
+        "jan",
+        "jul",
+        "jun",
+        "mar",
+        "nov",
+        "oct",
+        "pub",
+        "sec",
+        "sep",
+        "sept",
+        "stat",
+    }
+
+
+def _clean_status_clause_surface(text: str) -> str:
+    cleaned = _clean_text(text)
+    if not cleaned:
+        return ""
+    cleaned = _clean_text(_USCODE_LEADING_SECTION_REF_RE.sub("", cleaned, count=1))
+    cleaned = _strip_uscode_gpo_attribution_fragment(cleaned)
+    cleaned = cleaned.lstrip(" \t\r\n-–—:;,.")
+    cleaned = _strip_uscode_editorial_status_prefix(cleaned)
+    cleaned = _TRAILING_SECTION_PUNCT_RE.sub("", cleaned)
+    return _clean_text(cleaned)
+
+
+def _strip_uscode_editorial_status_prefix(text: str) -> str:
+    cleaned = _clean_text(text)
+    if not cleaned:
+        return ""
+    status_heading_re = re.compile(
+        rf"^(?:{'|'.join(re.escape(keyword) for keyword in _USCODE_FALLBACK_STATUS_KEYWORDS)})"
+        r"\s+(?=Editorial Notes|Codification|References in Text|Historical and Revision Notes|"
+        r"Prior Provisions|Amendments|Statutory Notes and Related Subsidiaries)\b",
+        flags=re.IGNORECASE,
+    )
+    while True:
+        updated = _clean_text(status_heading_re.sub("", cleaned, count=1))
+        for label in _USCODE_EDITORIAL_NOTE_LABELS:
+            updated = _clean_text(
+                re.sub(
+                    rf"^{re.escape(label)}\b",
+                    "",
+                    updated,
+                    count=1,
+                    flags=re.IGNORECASE,
+                )
+            )
+        updated = updated.lstrip(" \t\r\n-–—:;,.")
+        if updated == cleaned:
+            return cleaned
+        cleaned = updated
+
+
+def _formula_has_uscode_context(formula: ModalIRFormula) -> bool:
+    citation = _clean_text(formula.provenance.citation or "")
+    if citation and _USC_CITATION_RE.match(citation):
+        return True
+    source_id = _clean_text(formula.provenance.source_id or "")
+    if source_id and _USCODE_SOURCE_ID_RE.match(source_id):
+        return True
+    return source_id.lower().startswith("us-code-")
+
+
+def _strip_uscode_gpo_attribution_fragment(text: str) -> str:
+    normalized = _clean_text(text)
+    if not normalized:
+        return ""
+    stripped = _clean_text(_USCODE_GPO_ATTRIBUTION_RE.sub("", normalized))
+    if stripped != normalized:
+        return stripped
+    return _clean_text(_USCODE_GPO_ATTRIBUTION_FRAGMENT_RE.sub("", normalized))
 
 
 def _source_identifier_phrases(document: ModalIRDocument) -> List[DecodedModalPhrase]:
@@ -5091,6 +5506,158 @@ def _modal_lexeme_slots(
     return slots
 
 
+def _modal_polarity_slots(
+    formula: ModalIRFormula,
+    *,
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
+    document: ModalIRDocument | None = None,
+) -> List[Tuple[str, str]]:
+    source_family = _clean_text(formula.operator.family).lower()
+    source_operator = _clean_text(formula.operator.symbol)
+    if not source_family or not source_operator:
+        return []
+    force = _modal_force_label(formula)
+    polarity = _modal_scope_polarity(
+        formula,
+        condition_values=condition_values,
+        exception_values=exception_values,
+        document=document,
+    )
+    scope = "conditioned" if condition_values or exception_values else "unconditioned"
+    slots: List[Tuple[str, str]] = [
+        ("modal_force", force),
+        ("modal_scope_polarity", polarity),
+        ("modal_force_scope", f"{force}:{scope}"),
+        ("modal_polarity_scope", f"{polarity}:{scope}"),
+        ("modal_force_polarity", f"{force}:{polarity}"),
+        ("modal_force_polarity_family", f"{force}:{polarity}:{source_family}"),
+        (
+            "modal_force_polarity_signature",
+            f"{force}:{polarity}:{source_family}:{source_operator.lower()}:{scope}",
+        ),
+    ]
+    if polarity == "negative_scope":
+        slots.extend(
+            (
+                ("compiler_contract_force_polarity", f"{force}:negative_scope"),
+                (
+                    "compiler_contract_force_polarity_family",
+                    f"{force}:negative_scope:{source_family}",
+                ),
+                ("normative_polarity", "negative_scope"),
+                ("normative_force_polarity", f"{force}:negative_scope"),
+                ("normative_force_scope", f"{force}:{scope}"),
+                ("normative_polarity_scope", f"negative_scope:{scope}"),
+            )
+        )
+    if exception_values:
+        slots.extend(
+            (
+                ("modal_exception_scope", "excepted"),
+                ("modal_force_exception_scope", f"{force}:excepted"),
+                ("modal_polarity_exception_scope", f"{polarity}:excepted"),
+                ("normative_polarity_scope", f"{polarity}:excepted"),
+                ("normative_force_scope", f"{force}:excepted"),
+                ("normative_force_exception_scope", f"{force}:excepted"),
+            )
+        )
+        if force == "obligation":
+            slots.extend(
+                (
+                    ("normative_polarity_scope", "mandatory:excepted"),
+                    ("normative_force_scope", "mandatory:excepted"),
+                )
+            )
+        if polarity == "negative_scope":
+            slots.extend(
+                (
+                    (
+                        "compiler_contract_force_polarity_exception",
+                        f"{force}:negative_scope:excepted",
+                    ),
+                    (
+                        "logic_view_contract_deontic_slot",
+                        f"{force}:negative_scope:deontic:{source_operator.lower()}",
+                    ),
+                    (
+                        "logic_view_contract_deontic_slot_exception",
+                        f"{force}:negative_scope:excepted:deontic:{source_operator.lower()}",
+                    ),
+                    ("normative_polarity_scope", "negative_scope:excepted"),
+                )
+            )
+    return _unique_slot_values(slots)
+
+
+def _modal_force_label(formula: ModalIRFormula) -> str:
+    symbol = _clean_text(formula.operator.symbol)
+    label = _clean_text(formula.operator.label).lower()
+    metadata = formula.metadata if isinstance(formula.metadata, Mapping) else {}
+    guided_force = _clean_text(
+        metadata.get("compiler_guidance_deontic_force")
+        or metadata.get("deontic_force")
+        or metadata.get("force")
+        or ""
+    ).lower()
+    if guided_force in {"permission", "obligation", "prohibition"}:
+        return guided_force
+    if symbol == "P" or label in {"permission", "permitted"}:
+        return "permission"
+    if symbol == "F" or label in {"prohibition", "prohibited", "forbidden"}:
+        return "prohibition"
+    if symbol in {"O", "O|"} or label in {
+        "obligation",
+        "obligatory",
+        "conditional_obligation",
+        "conditionally obligatory",
+    }:
+        return "obligation"
+    return label.replace(" ", "_") or symbol.lower()
+
+
+def _modal_scope_polarity(
+    formula: ModalIRFormula,
+    *,
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
+    document: ModalIRDocument | None = None,
+) -> str:
+    metadata = formula.metadata if isinstance(formula.metadata, Mapping) else {}
+    guided_polarity = _clean_text(
+        metadata.get("compiler_guidance_force_polarity")
+        or metadata.get("force_polarity")
+        or metadata.get("polarity")
+        or ""
+    ).lower()
+    if guided_polarity in {"negative", "negative_scope", "negated"}:
+        return "negative_scope"
+    if guided_polarity in {"positive", "positive_scope", "affirmative"}:
+        return "positive_scope"
+    if _clean_text(formula.operator.symbol) == "F":
+        return "negative_scope"
+    source_span_text = (
+        _formula_source_span_text(document=document, formula=formula)
+        if document is not None
+        else ""
+    )
+    polarity_text = " ".join(
+        value
+        for value in (
+            _clean_text(formula.operator.label),
+            _clean_text(metadata.get("cue") or ""),
+            _predicate_phrase(formula),
+            " ".join(_phrase_values(condition_values)),
+            " ".join(_phrase_values(exception_values)),
+            source_span_text,
+        )
+        if value
+    ).lower()
+    if re.search(r"(?<!\w)(?:not|no|never|without|prohibited|forbidden)(?!\w)", polarity_text):
+        return "negative_scope"
+    return "positive_scope"
+
+
 def _temporal_clause_prefix_relation(prefix_key: str) -> str:
     normalized_key = _clean_text(prefix_key).lower()
     if not normalized_key:
@@ -5451,22 +6018,42 @@ def _refined_contextual_modal_transition_slots(
             cue=normalized_cue,
         ):
             pair = f"{formula_family}->{bridge_family}"
+            operator_pair = f"{formula_symbol}->{bridge_symbol}"
+            operator_pair_key = _modal_operator_pair_feature_key(
+                formula_symbol,
+                bridge_symbol,
+            )
             bridge_signature = f"{bridge_family}:{bridge_symbol}:{normalized_cue}"
             slots.extend(
                 (
                     (f"{normalized_slot_prefix}_refined_modal_family_pair", pair),
-                    (f"{normalized_slot_prefix}_refined_modal_pair_cue", f"{pair}:{normalized_cue}"),
+                    (f"{normalized_slot_prefix}_refined_modal_operator_pair", operator_pair),
+                    (
+                        f"{normalized_slot_prefix}_refined_modal_pair_cue",
+                        f"{pair}:{normalized_cue}",
+                    ),
                     (
                         f"{normalized_slot_prefix}_refined_modal_bridge_signature",
                         bridge_signature,
                     ),
                     ("refined_modal_family_pair", pair),
+                    ("refined_modal_operator_pair", operator_pair),
                     ("refined_modal_pair_cue", f"{pair}:{normalized_cue}"),
                     ("refined_modal_bridge_signature", bridge_signature),
                     ("refined_modal_context_slot", normalized_slot_prefix),
                     ("refined_modal_context_pair", f"{normalized_slot_prefix}:{pair}"),
                 )
             )
+            if operator_pair_key:
+                slots.extend(
+                    (
+                        (
+                            f"{normalized_slot_prefix}_refined_modal_operator_pair_key",
+                            operator_pair_key,
+                        ),
+                        ("refined_modal_operator_pair_key", operator_pair_key),
+                    )
+                )
         slots.extend(
             _refined_temporal_transition_slots(
                 formula=formula,
