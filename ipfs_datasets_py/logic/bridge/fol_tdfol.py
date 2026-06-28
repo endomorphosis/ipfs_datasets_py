@@ -406,7 +406,7 @@ def _tdfol_formula_from_raw_proof_obligation_row(
     """Synthesize a parseable TDFOL formula for legal-text obligation rows."""
 
     text = _raw_legal_text_from_proof_obligation_row(row) or fallback_text
-    if not _looks_like_legal_text_obligation(text):
+    if not _looks_like_legal_text_export(text):
         return None
     norm = _synthesized_norm_from_text(text)
     if norm is None:
@@ -445,6 +445,23 @@ def _looks_like_legal_text_obligation(text: str) -> bool:
         re.search(
             r"\b(shall|must|may|authorized|required|prohibited|forbidden|"
             r"repealed|omitted|established|means|defined)\b",
+            normalized,
+        )
+    )
+
+
+def _looks_like_legal_text_export(text: str) -> bool:
+    """Return True for raw statutory prose exported in place of a formula."""
+
+    normalized = " ".join(str(text or "").split()).lower()
+    if not normalized:
+        return False
+    if _looks_like_tdfol_formula(normalized):
+        return False
+    return _looks_like_legal_text_obligation(normalized) or bool(
+        re.search(
+            r"\b(?:u\.?\s*s\.?\s*c\.?|united states code|section|sections?|"
+            r"chapter|subchapter|part|pub\.?\s*l\.?|stat\.|act)\b",
             normalized,
         )
     )

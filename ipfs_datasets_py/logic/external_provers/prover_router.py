@@ -65,7 +65,27 @@ class RouterProofResult:
 
         if self.is_proved:
             return True
-        return any(not isinstance(result, str) for result in self.all_results.values())
+        return any(
+            _result_is_compiled_result(result)
+            for result in self.all_results.values()
+        )
+
+
+def _result_is_compiled_result(result: Any) -> bool:
+    """Return True when an individual prover result accepted the payload."""
+
+    if result is None or isinstance(result, str):
+        return False
+    for attr_name in ("is_compiled", "compiles"):
+        compiled = getattr(result, attr_name, None)
+        if callable(compiled):
+            try:
+                return bool(compiled())
+            except Exception:
+                return False
+        if compiled not in (None, ""):
+            return bool(compiled)
+    return True
 
 
 @dataclass(frozen=True)
@@ -732,7 +752,9 @@ class ProverRouter:
             
             for future in concurrent.futures.as_completed(futures):
                 prover_name, result, error = future.result()
-                all_results[prover_name] = result if result else error
+                all_results[prover_name] = (
+                    f"Error: {error}" if error is not None else result
+                )
         
         proof_time = time.time() - start_time
         

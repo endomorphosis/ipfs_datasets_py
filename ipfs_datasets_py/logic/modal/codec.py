@@ -3188,14 +3188,12 @@ def modal_ir_to_flogic_triples(
             )
     frame_terms_by_frame = _frame_ontology_terms_by_frame(modal_ir)
     selected_frame_terms: List[str] = []
-    for rank, frame_id in enumerate(
-        _ranked_candidate_frame_ids(
-            modal_ir,
-            frame_terms_by_frame=frame_terms_by_frame,
-            selected_frame=resolved_selected_frame,
-        ),
-        start=1,
-    ):
+    ranked_frame_ids = _ranked_candidate_frame_ids(
+        modal_ir,
+        frame_terms_by_frame=frame_terms_by_frame,
+        selected_frame=resolved_selected_frame,
+    )
+    for rank, frame_id in enumerate(ranked_frame_ids, start=1):
         triples.append(
             {
                 "subject": modal_ir.document_id,
@@ -3299,6 +3297,19 @@ def modal_ir_to_flogic_triples(
                     "object": term,
                 }
             )
+    for predicate, value in _frame_grounding_profile_components(
+        modal_ir,
+        selected_frame=resolved_selected_frame,
+        selected_frame_terms=selected_frame_terms,
+        ranked_frame_ids=ranked_frame_ids,
+    ):
+        triples.append(
+            {
+                "subject": modal_ir.document_id,
+                "predicate": predicate,
+                "object": value,
+            }
+        )
     triples = _append_selected_frame_ontology_constraint_triples(
         triples,
         document_id=modal_ir.document_id,
@@ -9089,6 +9100,85 @@ def _selected_frame_modal_family_count_components(
                 count,
                 slot_prefix=f"selected_frame_modal_family_{safe_family}",
             )
+        )
+    return _unique_preserve_order_tuples(components)
+
+
+def _frame_grounding_profile_components(
+    modal_ir: ModalIRDocument,
+    *,
+    selected_frame: str,
+    selected_frame_terms: Sequence[str],
+    ranked_frame_ids: Sequence[str],
+) -> List[tuple[str, str]]:
+    frame_key = _clean_non_empty_string(selected_frame)
+    if not frame_key:
+        return []
+    ranked_keys = [_clean_non_empty_string(frame_id) for frame_id in ranked_frame_ids]
+    ranked_keys = [frame_id for frame_id in ranked_keys if frame_id]
+    selected_rank = "unranked"
+    if frame_key in ranked_keys:
+        selected_rank = str(ranked_keys.index(frame_key) + 1)
+    candidate_count = str(len(ranked_keys))
+    normalized_terms = _unique_preserve_order(
+        _clean_non_empty_string(term)
+        for term in selected_frame_terms
+        if _clean_non_empty_string(term)
+    )
+    term_count = str(len(normalized_terms))
+    profile = (
+        f"{frame_key}|rank:{selected_rank}|terms:{term_count}|"
+        f"candidates:{candidate_count}"
+    )
+    components: List[tuple[str, str]] = [
+        ("frame_grounding_profile", profile),
+        ("frame_grounding_selected_frame", frame_key),
+        ("frame_grounding_selected_rank", selected_rank),
+        ("frame_grounding_selected_term_count", term_count),
+        ("frame_grounding_candidate_count", candidate_count),
+    ]
+    if selected_rank.isdigit():
+        components.extend(
+            _numeric_signature_components(
+                selected_rank,
+                slot_prefix="frame_grounding_selected_rank",
+            )
+        )
+    components.extend(
+        _numeric_signature_components(
+            term_count,
+            slot_prefix="frame_grounding_selected_term_count",
+        )
+    )
+    components.extend(
+        _numeric_signature_components(
+            candidate_count,
+            slot_prefix="frame_grounding_candidate_count",
+        )
+    )
+    components.extend(
+        _typed_identifier_components(
+            profile,
+            slot_prefix="frame_grounding_profile",
+        )
+    )
+    for rank, term in enumerate(normalized_terms, start=1):
+        components.append(("frame_grounding_selected_term_ranked", f"{rank}:{term}"))
+    for family, count in _resolved_modal_family_counts(modal_ir):
+        family_key = _slot_safe_family_key(family)
+        if not family_key:
+            continue
+        family_profile = (
+            f"{frame_key}|family:{family_key}|count:{count}|"
+            f"rank:{selected_rank}|terms:{term_count}"
+        )
+        components.extend(
+            [
+                ("frame_grounding_modal_family", family_key),
+                ("frame_grounding_modal_family_count", f"{family_key}:{count}"),
+                ("frame_grounding_family_profile", family_profile),
+                (f"frame_grounding_family_profile_{family_key}", family_profile),
+            ]
         )
     return _unique_preserve_order_tuples(components)
 

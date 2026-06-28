@@ -418,9 +418,23 @@ _OFFICIAL_USC_SECTION_BODY_RE = re.compile(
     r"^\s*§+\s*[\w.\-\u2010-\u2015]+\b",
     flags=re.IGNORECASE,
 )
+_OFFICIAL_USC_CITATION_BODY_RE = re.compile(
+    r"^\s*\d+\s+u\.?\s*s\.?\s*c\.?\s+[\w.\-]+(?:\s+to\s+[\w.\-]+)?\s*[.:]",
+    flags=re.IGNORECASE,
+)
 _OFFICIAL_USC_PROVENANCE_RE = re.compile(
     r"\b(?:pub\.\s*l\.|act\s+[a-z]+\s+\d{1,2},\s+\d{4}|"
     r"\d+\s+stat\.\s+\d+)\b",
+    flags=re.IGNORECASE,
+)
+_OFFICIAL_USC_STATUS_BODY_RE = re.compile(
+    r"\b(?:codification|omitted|repealed|transferred)\b",
+    flags=re.IGNORECASE,
+)
+_OFFICIAL_USC_SEMICOLON_CATCHLINE_RE = re.compile(
+    r"^\s*(?:\d+\s+u\.?\s*s\.?\s*c\.?\s+[\w.\-]+(?:\s+to\s+[\w.\-]+)?|"
+    r"§+\s*[\w.\-\u2010-\u2015]+)\s*[.:]\s+"
+    r"[^.]{3,160};\s+[^.]{3,160}\b",
     flags=re.IGNORECASE,
 )
 _COMPACT_USC_HEADING_RE = re.compile(
@@ -605,10 +619,21 @@ def _is_official_usc_section_body_text(text: str, *, citation: Optional[str]) ->
     if not normalized_text:
         return False
     citation_text = " ".join(str(citation or "").split())
+    has_citation_context = bool(_US_CODE_CITATION_RE.search(citation_text))
+    if not has_citation_context:
+        has_citation_context = bool(_US_CODE_CITATION_RE.search(normalized_text[:80]))
+    if not has_citation_context:
+        return False
+    has_official_body_lead = bool(
+        _OFFICIAL_USC_SECTION_BODY_RE.search(normalized_text)
+        or _OFFICIAL_USC_CITATION_BODY_RE.search(normalized_text)
+    )
+    if not has_official_body_lead:
+        return False
     return (
-        bool(_US_CODE_CITATION_RE.search(citation_text))
-        and bool(_OFFICIAL_USC_SECTION_BODY_RE.search(normalized_text))
-        and bool(_OFFICIAL_USC_PROVENANCE_RE.search(normalized_text))
+        bool(_OFFICIAL_USC_PROVENANCE_RE.search(normalized_text))
+        or bool(_OFFICIAL_USC_STATUS_BODY_RE.search(normalized_text))
+        or bool(_OFFICIAL_USC_SEMICOLON_CATCHLINE_RE.search(normalized_text))
     )
 
 

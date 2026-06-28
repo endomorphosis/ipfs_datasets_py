@@ -1418,6 +1418,12 @@ class SpaCyLegalEncoder:
         ].lower()
         if _contains_scope_phrase(context_window, _FRAME_EDITORIAL_SCOPE_PHRASES):
             return True
+        leading_status_window = normalized_text[max(0, start_char - 240) : start_char]
+        if (
+            _NON_DEONTIC_REQUIRED_CONTEXT_RE.search(leading_status_window)
+            and _LEGISLATIVE_HISTORY_ABBREVIATION_RE.search(context_window)
+        ):
+            return True
         return bool(_NON_DEONTIC_REQUIRED_CONTEXT_RE.search(context_window))
 
     def _is_non_conditional_purpose_object_cue(
@@ -1700,7 +1706,12 @@ class SpaCyModalIRCompiler:
 
     def compile(self, encoding: SpaCyLegalEncoding) -> ModalIRDocument:
         formulas: List[ModalIRFormula] = []
-        for index, cue in enumerate(encoding.cues, start=1):
+        eligible_cues = [
+            cue
+            for cue in encoding.cues
+            if not self._is_nonoperative_uscode_history_cue(encoding, cue)
+        ]
+        for index, cue in enumerate(eligible_cues, start=1):
             sentence = _sentence_for_cue(encoding.sentences, cue)
             tokens = _tokens_for_span(encoding.tokens, sentence.start_char, sentence.end_char)
             predicate = _predicate_from_tokens(tokens, cue)
@@ -1886,6 +1897,24 @@ class SpaCyModalIRCompiler:
                 "token_count": len(encoding.tokens),
                 "used_fallback_model": encoding.used_fallback_model,
             },
+        )
+
+    def _is_nonoperative_uscode_history_cue(
+        self,
+        encoding: SpaCyLegalEncoding,
+        cue: SpaCyModalCueFeature,
+    ) -> bool:
+        """Mirror parser-side suppression of repealed-section history cues."""
+        try:
+            family = ModalLogicFamily(cue.family)
+        except ValueError:
+            return False
+        return self._fallback_parser._is_nonoperative_uscode_history_cue(
+            normalized_text=encoding.normalized_text,
+            family=family,
+            cue=cue.cue,
+            start_char=cue.start_char,
+            end_char=cue.end_char,
         )
 
 
@@ -5217,6 +5246,35 @@ def _apply_refined_modal_family_cue_pair_balance(
                     0.2 * math.log1p(frame_count - frame_cap)
                 )
                 frame_count = float(counts.get(frame_family, 0.0))
+        if (
+            frame_count >= deontic_count
+            and deontic_count > 0.0
+            and has_deontic_cue
+            and not has_temporal_deadline_scope
+        ):
+            counts[deontic_family] = max(deontic_count, frame_count + 0.01)
+            deontic_count = float(counts.get(deontic_family, 0.0))
+        if (
+            frame_count >= temporal_count
+            and temporal_count > 0.0
+            and has_strong_temporal_scope
+            and bool(
+                signals.get("has_temporal_cue")
+                or signals.get("has_temporal_deadline_cue")
+            )
+        ):
+            counts[temporal_family] = max(temporal_count, frame_count + 0.01)
+            temporal_count = float(counts.get(temporal_family, 0.0))
+        if (
+            frame_count >= conditional_count
+            and conditional_count > 0.0
+            and has_explicit_conditional_scope
+        ):
+            counts[conditional_family] = max(
+                conditional_count,
+                frame_count + 0.01,
+            )
+            conditional_count = float(counts.get(conditional_family, 0.0))
 
     # temporal -> conditional_normative / deontic:
     # Fiscal-year openers are temporal scope, but in statutory authority
@@ -5947,6 +6005,32 @@ def _apply_refined_modal_family_cue_pair_balance(
         )
         deontic_count = float(counts.get(deontic_family, 0.0))
 
+    # deontic -> temporal:
+    # repealed/amended status notes can contain generic permission or duty verbs
+    # while their typed signal is the temporal status/date scaffold.
+    if (
+        deontic_count > temporal_count
+        and has_deontic_scope
+        and has_temporal_scope
+        and has_temporal_status_scope
+        and (
+            has_calendar_date_scope
+            or bool(signals.get("has_temporal_scope_token"))
+        )
+        and has_statutory_scope_reference
+        and has_frame_scope_context
+        and not has_deontic_authorization_scope_phrase
+        and not has_deontic_report_duty_scope_phrase
+        and not has_deontic_corporate_powers_scope_phrase
+        and not has_deontic_citation_authority_scope_phrase
+    ):
+        temporal_floor = max(
+            temporal_count,
+            deontic_count + 0.01,
+        )
+        counts[temporal_family] = max(temporal_count, temporal_floor)
+        temporal_count = float(counts.get(temporal_family, 0.0))
+
     # temporal -> deontic / conditional_normative:
     # statutory status-style scaffolding can over-index temporal/frame signals
     # while still carrying operative deontic force and conditional qualifiers.
@@ -6110,6 +6194,29 @@ def _apply_refined_modal_family_cue_pair_balance(
             maximum=_STATUTORY_GENERIC_FRAME_CONDITIONAL_SCOPE_MAX,
         )
         counts[conditional_family] = max(conditional_count, conditional_floor)
+        conditional_count = float(counts.get(conditional_family, 0.0))
+
+    # frame -> conditional_normative:
+    # credentialing, eligibility, and transfer provisions often collect frame
+    # headings around explicit conditional qualifiers.  Keep the conditional
+    # family ahead of generic frame evidence when the condition is typed.
+    if (
+        frame_count > conditional_count
+        and has_frame_scope_context
+        and has_structural_conditional_scope
+        and has_explicit_conditional_scope
+        and (
+            has_statutory_scope_reference
+            or has_temporal_status_scope
+            or has_deontic_scope
+        )
+        and not has_definition_scope
+        and not has_structural_authority_frame_scope
+    ):
+        counts[conditional_family] = max(
+            conditional_count,
+            frame_count + 0.01,
+        )
         conditional_count = float(counts.get(conditional_family, 0.0))
 
     # conditional_normative -> temporal:

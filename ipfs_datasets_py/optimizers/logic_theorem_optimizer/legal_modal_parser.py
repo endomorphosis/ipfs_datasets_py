@@ -54,6 +54,20 @@ _USCODE_LEGISLATIVE_HISTORY_ABBREVIATION_RE = re.compile(
     re.IGNORECASE,
 )
 _USCODE_EDITORIAL_PERMISSION_CUES = frozenset({"allowed", "authorized", "permitted"})
+_USCODE_EDITORIAL_REQUIRED_CUES = frozenset({"required", "requires", "require"})
+_USCODE_EDITORIAL_HISTORY_CUE_FAMILIES = frozenset(
+    {
+        ModalLogicFamily.CONDITIONAL_NORMATIVE,
+        ModalLogicFamily.DEONTIC,
+        ModalLogicFamily.TEMPORAL,
+    }
+)
+_USCODE_REPEALED_HISTORY_PREFIX_RE = re.compile(
+    r"\b(?:section|sections?)\s*,?\s*(?:acts?|pub\.?\s*l\.?|ch\.|"
+    r"[A-Z][a-z]{2,8}\.\s+\d{1,2},\s+\d{4}|"
+    r"\d+\s+stat\.)",
+    re.IGNORECASE,
+)
 _USCODE_SECTION_REF_PREFIX_RE = r"(?:§{1,2}\s*|\bsec(?:tion)?s?\.?\s*)"
 _USCODE_OPTIONAL_SECTION_REF_PREFIX_RE = rf"(?:{_USCODE_SECTION_REF_PREFIX_RE})?"
 _USCODE_SECTION_PREFIX_SEGMENT_RE = re.compile(
@@ -610,6 +624,15 @@ _USCODE_COST_ANALYSIS_RESIDUAL_RE = re.compile(
     r"\b(?:(?:annual\s+)?cost\s+analys(?:is|es)|analys(?:is|es)\s+of\s+costs?)\b",
     re.IGNORECASE,
 )
+_USCODE_TRANSFER_FUNCTIONS_RESIDUAL_MAX_TOKENS = 96
+_USCODE_TRANSFER_FUNCTIONS_RESIDUAL_RE = re.compile(
+    r"\btransfer\s+of\s+functions\b"
+    r"(?=[^.;:]{0,360}\b(?:functions?|authority|duties|responsibilities)\b)"
+    r"(?=[^.;:]{0,360}\btransferred\b)"
+    r"(?=[^.;:]{0,360}\b(?:commission|secretary|department|administration|"
+    r"agency|administrator)\b)",
+    re.IGNORECASE,
+)
 _USCODE_RESIDUAL_STATUTORY_FRAGMENT_MAX_TOKENS = 18
 _USCODE_RESIDUAL_STATUTORY_FRAGMENT_HINT_RE = re.compile(
     r"\b(?:ch|chapter|pub|stat)\b",
@@ -643,6 +666,10 @@ _USCODE_LEGISLATIVE_HISTORY_RESIDUAL_RE = re.compile(
     r"amended|added|formerly|renumbered|substituted|title|"
     r"stat\.|pub\.?\s*l\.?|ch\.|act\s+[a-z]+\.?"
     r")\b)",
+    re.IGNORECASE,
+)
+_USCODE_LEGISLATIVE_HISTORY_CONTINUATION_RE = re.compile(
+    r"^\s*\d+[A-Za-z]?\s*,\s*(?:required|authorized|provided|related)\b",
     re.IGNORECASE,
 )
 _MONTH_NAME_TOKENS = frozenset(
@@ -939,6 +966,27 @@ class LegalModalParser:
                             continue
                         if (
                             profile.family == ModalLogicFamily.DEONTIC
+                            and cue.lower() in _USCODE_EDITORIAL_REQUIRED_CUES
+                            and self._is_non_deontic_editorial_required_cue(
+                                normalized_text=normalized,
+                                start_char=match.start(),
+                                end_char=match.end(),
+                            )
+                        ):
+                            continue
+                        if (
+                            profile.family in _USCODE_EDITORIAL_HISTORY_CUE_FAMILIES
+                            and self._is_nonoperative_uscode_history_cue(
+                                normalized_text=normalized,
+                                family=profile.family,
+                                cue=cue,
+                                start_char=match.start(),
+                                end_char=match.end(),
+                            )
+                        ):
+                            continue
+                        if (
+                            profile.family == ModalLogicFamily.DEONTIC
                             and self._is_non_deontic_editorial_permission_cue(
                                 normalized_text=normalized,
                                 cue=cue,
@@ -1059,6 +1107,71 @@ class LegalModalParser:
         if has_section_history_prefix:
             return True
         return bool(_USCODE_LEGISLATIVE_HISTORY_ABBREVIATION_RE.search(context_window))
+
+    def _is_non_deontic_editorial_required_cue(
+        self,
+        *,
+        normalized_text: str,
+        start_char: int,
+        end_char: int,
+    ) -> bool:
+        """Ignore bare `required` when it describes repealed editorial history."""
+        trailing = normalized_text[end_char : end_char + 24]
+        if re.match(r"^\s+to\b", trailing, re.IGNORECASE):
+            return False
+        context_window = normalized_text[
+            max(0, start_char - 160) : min(len(normalized_text), end_char + 96)
+        ]
+        if not _USCODE_EDITORIAL_NOTE_CONTEXT_RE.search(context_window):
+            return False
+        leading = normalized_text[max(0, start_char - 240) : start_char]
+        return bool(
+            _USCODE_REPEALED_HISTORY_PREFIX_RE.search(leading)
+            or (
+                re.search(r"\bsection\s*,?\b", leading, re.IGNORECASE)
+                and _USCODE_LEGISLATIVE_HISTORY_ABBREVIATION_RE.search(leading)
+            )
+        )
+
+    def _is_nonoperative_uscode_history_cue(
+        self,
+        *,
+        normalized_text: str,
+        family: ModalLogicFamily,
+        cue: str,
+        start_char: int,
+        end_char: int,
+    ) -> bool:
+        """Return true for cues inside repealed-section legislative history tails."""
+        if family not in _USCODE_EDITORIAL_HISTORY_CUE_FAMILIES:
+            return False
+        lowered_cue = cue.lower()
+        if family == ModalLogicFamily.DEONTIC and lowered_cue not in (
+            _USCODE_EDITORIAL_REQUIRED_CUES | _USCODE_EDITORIAL_PERMISSION_CUES
+        ):
+            return False
+        context_window = normalized_text[
+            max(0, start_char - 240) : min(len(normalized_text), end_char + 120)
+        ]
+        leading = normalized_text[max(0, start_char - 320) : start_char]
+        if not (
+            _USCODE_EDITORIAL_STATUS_HINT_RE.search(context_window)
+            or _USCODE_EDITORIAL_STATUS_HINT_RE.search(leading)
+        ):
+            return False
+        if not (
+            _USCODE_REPEALED_HISTORY_PREFIX_RE.search(leading)
+            or (
+                re.search(r"\bsection\s*,?\b", leading, re.IGNORECASE)
+                and _USCODE_LEGISLATIVE_HISTORY_ABBREVIATION_RE.search(leading)
+            )
+        ):
+            return False
+        if family == ModalLogicFamily.TEMPORAL:
+            return lowered_cue in {"before", "by", "on", "prior to", "after"}
+        if family == ModalLogicFamily.CONDITIONAL_NORMATIVE:
+            return lowered_cue in {"with respect to", "pursuant to", "subject to"}
+        return True
 
     def _is_non_conditional_purpose_object_cue(
         self,
@@ -1709,6 +1822,8 @@ class LegalModalParser:
         lowered = normalized.lower()
         tokens = _TOKEN_RE.findall(lowered)
         token_count = len(tokens)
+        if self._is_uscode_legislative_history_residual_candidate(normalized, tokens):
+            return True
         if self._has_blocking_residual_modal_cues(normalized):
             return False
         if self._is_uscode_header_residual_candidate(normalized, tokens):
@@ -1735,11 +1850,11 @@ class LegalModalParser:
             return True
         if self._is_uscode_cost_analysis_residual_candidate(normalized, tokens):
             return True
+        if self._is_uscode_transfer_functions_residual_candidate(normalized, tokens):
+            return True
         if self._is_uscode_note_reference_residual_candidate(normalized, tokens):
             return True
         if self._is_uscode_revision_note_residual_candidate(normalized, tokens):
-            return True
-        if self._is_uscode_legislative_history_residual_candidate(normalized, tokens):
             return True
         if self._is_uscode_compact_frame_residual_candidate(normalized, tokens):
             return True
@@ -2306,6 +2421,26 @@ class LegalModalParser:
             return False
         return bool(_USCODE_COST_ANALYSIS_RESIDUAL_RE.search(lowered))
 
+    def _is_uscode_transfer_functions_residual_candidate(
+        self,
+        normalized_segment_text: str,
+        tokens: Sequence[str],
+    ) -> bool:
+        """Recover statutory transfer-of-functions notes without modal cues."""
+        token_count = len(tokens)
+        if (
+            token_count < 8
+            or token_count > _USCODE_TRANSFER_FUNCTIONS_RESIDUAL_MAX_TOKENS
+        ):
+            return False
+        lowered = normalized_segment_text.lower()
+        if (
+            _USCODE_EDITORIAL_STATUS_HINT_RE.search(lowered)
+            or _USCODE_DECLARATIVE_STATEMENT_HINT_RE.search(lowered)
+        ):
+            return False
+        return bool(_USCODE_TRANSFER_FUNCTIONS_RESIDUAL_RE.search(lowered))
+
     def _is_uscode_note_reference_residual_candidate(
         self,
         normalized_segment_text: str,
@@ -2341,7 +2476,10 @@ class LegalModalParser:
         lowered = normalized_segment_text.lower()
         if not any(character.isdigit() for character in lowered):
             return False
-        return bool(_USCODE_LEGISLATIVE_HISTORY_RESIDUAL_RE.search(lowered))
+        return bool(
+            _USCODE_LEGISLATIVE_HISTORY_RESIDUAL_RE.search(lowered)
+            or _USCODE_LEGISLATIVE_HISTORY_CONTINUATION_RE.search(lowered)
+        )
 
     def _residual_span_coverage_formula(
         self,

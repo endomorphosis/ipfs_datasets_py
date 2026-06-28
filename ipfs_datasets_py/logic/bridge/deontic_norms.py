@@ -1008,10 +1008,16 @@ def _decoder_required_core_slots_for_norm(norm: Any) -> tuple[str, ...]:
 
     if norm_type == "definition" or modality == "DEF":
         return ("actor",)
-    if norm_type in {"applicability", "exemption", "instrument_lifecycle"} or modality in {
+    if norm_type in {
+        "applicability",
+        "exemption",
+        "instrument_lifecycle",
+        "purpose",
+    } or modality in {
         "APP",
         "EXEMPT",
         "LIFE",
+        "PURP",
     }:
         return ("actor", "action")
     return ("actor", "modality", "action")

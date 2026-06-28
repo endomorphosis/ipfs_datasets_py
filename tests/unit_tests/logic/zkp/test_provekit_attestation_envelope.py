@@ -355,6 +355,32 @@ def test_sparse_us_code_record_derives_source_id_from_alias_fields():
     assert zkp_attestation_legal_ir_view_loss([sparse_record]) == 0.0
 
 
+def test_proofless_us_code_sample_gets_source_attestation_view():
+    raw_sample = {
+        "citation": "42 U.S.C. 6979b.",
+        "sample_id": "us-code-42-6979b.-e152dcb0fac962de",
+        "section": "6979b.",
+        "source": "us_code",
+        "text": (
+            "\u00a76979b. Law enforcement authority The Attorney General of the "
+            "United States shall, at the request of the Administrator and on "
+            "the basis of a showing of need, deputize qualified employees."
+        ),
+        "title": "42",
+    }
+
+    completed = complete_zkp_attestation_record(raw_sample)
+
+    assert completed["source_id"] == "us-code-42-6979b.-e152dcb0fac962de"
+    assert completed["attestation_ref"] == completed["public_inputs"]["attestation_ref"]
+    assert completed["attestation_view"]["attestation_ref"] == completed["attestation_ref"]
+    assert completed["circuit_ref"] == "legal_ir_source_attestation@v1"
+    assert completed["proof_hash"]
+    assert completed["ruleset_id"] == "LegalIR_Source_Attestation_v1"
+    assert completed["theorem_hash"] == completed["public_inputs"]["theorem_hash"]
+    assert zkp_attestation_legal_ir_view_loss([raw_sample]) == 0.0
+
+
 def test_backend_fails_if_cli_succeeds_without_proof_file(tmp_path):
     binary = _fake_provekit_cli(tmp_path / "provekit-cli", write_proof=False)
     backend = ProveKitBackend(binary_path=str(binary))

@@ -299,6 +299,19 @@ _FRAME_ONTOLOGY_CONDITION_CONSEQUENCE_PREFIXES: tuple[str, ...] = (
     "legal-ir:condition-consequence:",
     "legal_ir:condition_consequence:",
 )
+_FRAME_ONTOLOGY_QUALITY_FRAME_PREFIXES: tuple[str, ...] = (
+    "quality:frame:",
+    "quality:frame-logic:",
+    "quality:frame_logic:",
+)
+_FRAME_ONTOLOGY_SIGNATURE_FRAME_PREFIXES: tuple[str, ...] = (
+    "signature:frame:",
+    "signature:frame-logic:",
+    "signature:frame_logic:",
+    "signature:operator:frame:",
+    "signature:operator:frame-logic:",
+    "signature:operator:frame_logic:",
+)
 _FRAME_ONTOLOGY_CUE_VALUE_ALIASES = {
     "is a": "isa",
 }
@@ -401,6 +414,8 @@ _FRAME_ONTOLOGY_CONTEXTUAL_ALWAYS_PREDICATE_FRAGMENTS: tuple[str, ...] = (
     "_thousands_block",
     "predicate_alnum_segment",
     "predicate_token",
+    "quality_frame",
+    "signature_frame",
     "_terminal_number_digit_count_bucket",
     "_terminal_number_span_digit_count_bucket",
     "_has_zero_digit",
@@ -1424,6 +1439,28 @@ def _frame_ontology_value_from_feature(
                 False,
                 _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL,
             )
+    for prefix in _FRAME_ONTOLOGY_QUALITY_FRAME_PREFIXES:
+        if lowered.startswith(prefix):
+            return (
+                _normalized_frame_audit_signal_value(
+                    feature[len(prefix) :].strip(),
+                    default="frame",
+                ),
+                False,
+                False,
+                _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL,
+            )
+    for prefix in _FRAME_ONTOLOGY_SIGNATURE_FRAME_PREFIXES:
+        if lowered.startswith(prefix):
+            return (
+                _normalized_frame_audit_signal_value(
+                    feature[len(prefix) :].strip(),
+                    default="frame",
+                ),
+                False,
+                False,
+                _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL,
+            )
 
     for prefix in _FRAME_FAMILY_FEATURE_PREFIXES:
         if lowered == prefix or lowered.startswith(f"{prefix}:"):
@@ -1732,6 +1769,13 @@ def _normalized_condition_consequence_ontology_value(value: str) -> str:
     return text
 
 
+def _normalized_frame_audit_signal_value(value: str, *, default: str) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return default
+    return text
+
+
 def _additional_frame_ontology_values_from_feature(
     feature: str,
 ) -> List[tuple[str, bool, bool, int]]:
@@ -1970,6 +2014,12 @@ def _frame_ontology_contextual_predicate_from_feature(feature_key: str) -> str:
     for prefix in _FRAME_ONTOLOGY_CONDITION_CONSEQUENCE_PREFIXES:
         if lowered.startswith(prefix):
             return "condition_consequence"
+    for prefix in _FRAME_ONTOLOGY_QUALITY_FRAME_PREFIXES:
+        if lowered.startswith(prefix):
+            return "quality_frame"
+    for prefix in _FRAME_ONTOLOGY_SIGNATURE_FRAME_PREFIXES:
+        if lowered.startswith(prefix):
+            return "signature_frame"
     if _is_contextual_frame_ontology_predicate(head):
         return _normalized_frame_ontology_predicate(head)
     namespace = head.strip().lower()

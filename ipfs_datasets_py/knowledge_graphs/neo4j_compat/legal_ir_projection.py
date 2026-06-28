@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Mapping, Sequence, Tuple
 
 _USCODE_CITATION_RE = re.compile(
     r"(?P<title>\d+[A-Za-z]*)\s+U\.?S\.?C\.?\s+"
-    r"(?:§{1,2}\s*|sec\.?\s*|section\s+)?"
+    r"(?:§{1,2}\s*|secs?\.?\s*|sections?\s+)?"
     r"(?P<section>\d+[A-Za-z0-9]*(?:[.-][A-Za-z0-9]+)*(?:\s+"
     r"(?:to|through|thru)\s+\d+[A-Za-z0-9]*(?:[.-][A-Za-z0-9]+)*)?(?:\.)?)",
     re.IGNORECASE,
@@ -19,15 +19,17 @@ _USCODE_SOURCE_ID_RE = re.compile(
     re.IGNORECASE,
 )
 _SECTION_MARKER_RE = re.compile(
-    r"(?:§{1,2}|sec\.?|section)\s*"
+    r"(?:§{1,2}|secs?\.?|sections?)\s*"
     r"(?P<section>\d+[A-Za-z0-9]*(?:[.-][A-Za-z0-9]+)*(?:\s+"
-    r"(?:to|through|thru)\s+\d+[A-Za-z0-9]*(?:[.-][A-Za-z0-9]+)*)?(?:\.)?)",
+    r"(?:to|through|thru)\s+\d+[A-Za-z0-9]*(?:[.-][A-Za-z0-9]+)*|"
+    r"\s*,\s*\d+[A-Za-z0-9]*(?:[.-][A-Za-z0-9]+)*)*(?:\.)?)",
     re.IGNORECASE,
 )
 _SECTION_HEADING_MARKER_RE = re.compile(
-    r"(?:§{1,2}|sec\.?|section)\s*"
+    r"(?:§{1,2}|secs?\.?|sections?)\s*"
     r"(?P<section>\d+[A-Za-z0-9]*(?:[.-][A-Za-z0-9]+)*(?:\s+"
-    r"(?:to|through|thru)\s+\d+[A-Za-z0-9]*(?:[.-][A-Za-z0-9]+)*)?(?:\.)?)"
+    r"(?:to|through|thru)\s+\d+[A-Za-z0-9]*(?:[.-][A-Za-z0-9]+)*|"
+    r"\s*,\s*\d+[A-Za-z0-9]*(?:[.-][A-Za-z0-9]+)*)*(?:\.)?)"
     r"\s*(?:[-.]|\])\s*(?P<heading>[^§]+?)(?="
     r"\s+From the U\.S\. Government Publishing Office\b|"
     r"\s+Editorial Notes\b|"
@@ -46,7 +48,7 @@ _CODE_TITLE_HEADING_RE = re.compile(
     r"\s+Subtitle\s+[A-Z0-9]+\s+-\s+|"
     r"\s+CHAPTER\s+[0-9A-Za-z-]+\s+-\s+|"
     r"\s+SUBCHAPTER\s+[IVXLCDM0-9A-Z-]+\s+-\s+|"
-    r"\s+Sec\.?\s+\d|$)",
+    r"\s+Secs?\.?\s+\d|$)",
     re.IGNORECASE,
 )
 _SUBTITLE_HEADING_RE = re.compile(
@@ -57,7 +59,7 @@ _SUBTITLE_HEADING_RE = re.compile(
     r"\s+CHAPTER\s+[0-9A-Za-z-]+\s+-\s+|"
     r"\s+SUBCHAPTER\s+[IVXLCDM0-9A-Z-]+\s+-\s+|"
     r"\s+Subchapter\s+[IVXLCDM0-9A-Z-]+\s+-\s+|"
-    r"\s+Sec\.?\s+\d|$)",
+    r"\s+Secs?\.?\s+\d|$)",
     re.IGNORECASE,
 )
 _CHAPTER_HEADING_RE = re.compile(
@@ -68,7 +70,7 @@ _CHAPTER_HEADING_RE = re.compile(
     r"\s+PART\s+[IVXLCDM0-9A-Z-]+\s+-\s+|"
     r"\s+Part\s+[IVXLCDM0-9A-Z-]+\s+-\s+|"
     r"\s+subpart\s+[IVXLCDM0-9A-Z-]+\s+-\s+|"
-    r"\s+Sec\.?\s+\d|$)",
+    r"\s+Secs?\.?\s+\d|$)",
     re.IGNORECASE,
 )
 _SUBCHAPTER_HEADING_RE = re.compile(
@@ -77,19 +79,19 @@ _SUBCHAPTER_HEADING_RE = re.compile(
     r"\s+PART\s+[IVXLCDM0-9A-Z-]+\s+-\s+|"
     r"\s+Part\s+[IVXLCDM0-9A-Z-]+\s+-\s+|"
     r"\s+subpart\s+[IVXLCDM0-9A-Z-]+\s+-\s+|"
-    r"\s+Sec\.?\s+\d|$)",
+    r"\s+Secs?\.?\s+\d|$)",
     re.IGNORECASE,
 )
 _PART_HEADING_RE = re.compile(
     r"\bPart\s+(?P<label>[IVXLCDM0-9A-Z-]+)\s+-\s+"
     r"(?P<heading>.+?)(?="
     r"\s+subpart\s+[IVXLCDM0-9A-Z-]+\s+-\s+|"
-    r"\s+Sec\.?\s+\d|$)",
+    r"\s+Secs?\.?\s+\d|$)",
     re.IGNORECASE,
 )
 _SUBPART_HEADING_RE = re.compile(
     r"\bsubpart\s+(?P<label>[IVXLCDM0-9A-Z-]+)\s+-\s+"
-    r"(?P<heading>.+?)(?=\s+Sec\.?\s+\d|$)",
+    r"(?P<heading>.+?)(?=\s+Secs?\.?\s+\d|$)",
     re.IGNORECASE,
 )
 _SUBSECTION_HEADING_RE = re.compile(
@@ -115,6 +117,11 @@ _SECTION_RANGE_RE = re.compile(
     r"(?P<end>\d+[A-Za-z0-9]*(?:[.-][A-Za-z0-9]+)*)$",
     re.IGNORECASE,
 )
+_SECTION_LIST_RE = re.compile(
+    r"^(?P<items>\d+[A-Za-z0-9]*(?:[.-][A-Za-z0-9]+)*(?:\s*,\s*"
+    r"\d+[A-Za-z0-9]*(?:[.-][A-Za-z0-9]+)*)+)$",
+    re.IGNORECASE,
+)
 _TEXT_PREDICATES = {
     "document_text",
     "sample_text",
@@ -134,6 +141,10 @@ _EDITORIAL_STATUS_KEYWORDS = (
     ("repealed", re.compile(r"\brepealed\b", re.IGNORECASE)),
     ("transferred", re.compile(r"\btransferred\b", re.IGNORECASE)),
     ("omitted", re.compile(r"\bomitted\b", re.IGNORECASE)),
+)
+_EDITORIAL_NOTES_START_RE = re.compile(
+    r"\b(?:Editorial Notes?|Statutory Notes?|Historical and Revision Notes?)\b",
+    re.IGNORECASE,
 )
 _CATCHLINE_BODY_START_RE = re.compile(
     r"\s+(?:A|An|Each|For|In|It|No|Nothing|Not|The|There|This|Whoever|"
@@ -332,7 +343,7 @@ def _source_id_from_text_components(text: str) -> List[Tuple[str, str]]:
     if not citation_match or not section_match:
         return []
     title = citation_match.group("title")
-    section = _normalize_section(section_match.group("section"))
+    section = _lead_section(_normalize_section(section_match.group("section")))
     if not title or not section:
         return []
     source_id = f"us-code-{title}-{section}"
@@ -365,6 +376,7 @@ def _section_text_components(text: str) -> List[Tuple[str, str]]:
         ("section_marker_component_profile", _section_profile(section)),
     ]
     components.extend(_section_range_components("section_marker", section))
+    components.extend(_section_list_components("section_marker", section))
 
     heading_match = _SECTION_HEADING_MARKER_RE.search(normalized)
     if heading_match:
@@ -463,7 +475,7 @@ def _clean_hierarchy_heading_text(text: str) -> str:
     heading = re.sub(r"\s+", " ", _normalize_dashes(text)).strip(" -.;:")
     heading = re.sub(
         r"\s+(?:From the U\.S\. Government Publishing Office|Editorial Notes|"
-        r"Statutory Notes|Sec\.?\s+\d).*$",
+        r"Statutory Notes|Secs?\.?\s+\d).*$",
         "",
         heading,
         flags=re.IGNORECASE,
@@ -474,11 +486,51 @@ def _clean_hierarchy_heading_text(text: str) -> str:
 def _editorial_status_components(text: str) -> List[Tuple[str, str]]:
     normalized = _normalize_dashes(text)
     components: List[Tuple[str, str]] = []
-    for keyword, pattern in _EDITORIAL_STATUS_KEYWORDS:
-        if pattern.search(normalized):
-            components.append(("status_keyword", keyword))
-            components.append((f"status_keyword_{keyword}", "true"))
+    primary_keywords = _primary_editorial_status_keywords(normalized)
+    for keyword in primary_keywords:
+        components.append(("status_keyword", keyword))
+        components.append((f"status_keyword_{keyword}", "true"))
+        components.append(("status_scope", "section_heading"))
+    for keyword in _editorial_reference_status_keywords(normalized, primary_keywords):
+        components.append(("editorial_reference_status_keyword", keyword))
+        components.append((f"editorial_reference_status_keyword_{keyword}", "true"))
     return components
+
+
+def _primary_editorial_status_keywords(text: str) -> List[str]:
+    heading = ""
+    heading_match = _SECTION_HEADING_MARKER_RE.search(text)
+    if heading_match:
+        heading = _clean_heading_text(heading_match.group("heading"))
+    else:
+        marker_match = _SECTION_MARKER_RE.search(text)
+        if marker_match:
+            heading = _clean_heading_text(
+                text[marker_match.end() : marker_match.end() + 160]
+            )
+    if not heading:
+        return []
+    return [
+        keyword
+        for keyword, pattern in _EDITORIAL_STATUS_KEYWORDS
+        if pattern.search(heading)
+    ]
+
+
+def _editorial_reference_status_keywords(
+    text: str,
+    primary_keywords: Sequence[str],
+) -> List[str]:
+    note_match = _EDITORIAL_NOTES_START_RE.search(text)
+    notes_text = text[note_match.start() :] if note_match else ""
+    if not notes_text:
+        return []
+    primary = set(primary_keywords)
+    return [
+        keyword
+        for keyword, pattern in _EDITORIAL_STATUS_KEYWORDS
+        if keyword not in primary and pattern.search(notes_text)
+    ]
 
 
 def _clean_heading_text(text: str) -> str:
@@ -631,6 +683,8 @@ def _leading_number(value: str) -> str:
 def _section_profile(section: str) -> str:
     if _SECTION_RANGE_RE.fullmatch(section.strip()):
         return "range"
+    if _SECTION_LIST_RE.fullmatch(section.strip()):
+        return "list"
     parts = _SECTION_PART_RE.fullmatch(section.strip())
     if not parts:
         return "mixed"
@@ -662,6 +716,41 @@ def _section_range_components(prefix: str, section: str) -> List[Tuple[str, str]
         components.append((f"{prefix}_range_number_relation", relation))
         components.append((f"{prefix}_range_number_span", str(abs(span))))
     return components
+
+
+def _section_list_components(prefix: str, section: str) -> List[Tuple[str, str]]:
+    match = _SECTION_LIST_RE.fullmatch(section.strip())
+    if not match:
+        return []
+    items = [
+        _normalize_section(item)
+        for item in re.split(r"\s*,\s*", match.group("items"))
+        if _normalize_section(item)
+    ]
+    if len(items) < 2:
+        return []
+    components: List[Tuple[str, str]] = [
+        (f"{prefix}_list", ", ".join(items)),
+        (f"{prefix}_list_count", str(len(items))),
+        (f"{prefix}_list_first", items[0]),
+        (f"{prefix}_list_last", items[-1]),
+    ]
+    components.extend(
+        (f"{prefix}_list_item_{index}", item)
+        for index, item in enumerate(items, start=1)
+    )
+    return components
+
+
+def _lead_section(section: str) -> str:
+    normalized = _normalize_section(section)
+    list_match = _SECTION_LIST_RE.fullmatch(normalized)
+    if list_match:
+        return _normalize_section(re.split(r"\s*,\s*", list_match.group("items"))[0])
+    range_match = _SECTION_RANGE_RE.fullmatch(normalized)
+    if range_match:
+        return _normalize_section(range_match.group("start"))
+    return normalized
 
 
 def _clean_components(components: Sequence[Tuple[str, str]]) -> List[Tuple[str, str]]:

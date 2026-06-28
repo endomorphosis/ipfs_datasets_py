@@ -541,6 +541,136 @@ def _source_id_from_record(
     return ""
 
 
+def _source_text_from_record(record: Mapping[str, Any], metadata: Mapping[str, Any]) -> str:
+    return _first_nonempty(
+        record.get("text"),
+        record.get("source_text"),
+        record.get("normalized_text"),
+        record.get("content"),
+        record.get("body"),
+        metadata.get("text"),
+        metadata.get("source_text"),
+        metadata.get("normalized_text"),
+    )
+
+
+def _is_legal_source_record(record: Mapping[str, Any], metadata: Mapping[str, Any]) -> bool:
+    source = _first_nonempty(
+        record.get("source"),
+        record.get("source_type"),
+        metadata.get("source"),
+        metadata.get("source_type"),
+    ).lower()
+    if source in {"us_code", "us-code", "usc", "u.s.c.", "u.s. code"}:
+        return True
+
+    citation = _first_nonempty(record.get("citation"), metadata.get("citation"))
+    if "u.s.c" in citation.lower():
+        return True
+
+    sample_id = _first_nonempty(record.get("sample_id"), metadata.get("sample_id"))
+    return sample_id.lower().startswith("us-code-")
+
+
+def _synthetic_source_proof_data(
+    *,
+    source_id: str,
+    source_text: str,
+    public_inputs: Mapping[str, Any],
+) -> bytes:
+    payload = {
+        "public_inputs": _canonical_public_inputs(public_inputs),
+        "source_id": source_id,
+        "source_text": " ".join(source_text.split()),
+    }
+    encoded = json.dumps(
+        payload,
+        ensure_ascii=True,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode(
+        "utf-8",
+    )
+    return b"LEGALIR-ZKP-SOURCE\x00" + hashlib.sha256(encoded).digest()
+
+
+def _proofless_source_attestation_record(
+    record: Mapping[str, Any],
+    metadata: Mapping[str, Any],
+) -> Dict[str, Any]:
+    """Build a deterministic LegalIR attestation for proofless source samples.
+
+    Metric samples can arrive as raw legal source records before the bridge has
+    materialized a ``ZKPProof``.  This does not claim cryptographic
+    verification; it gives the LegalIR view a stable source-level attestation
+    envelope so missing-view loss reflects the available legal input instead of
+    a serialization artifact.
+    """
+    if not _is_legal_source_record(record, metadata):
+        return {}
+
+    source_text = _source_text_from_record(record, metadata)
+    source_id = _source_id_from_record(record, metadata, "")
+    if not source_text or not source_id:
+        return {}
+
+    normalized_text = " ".join(source_text.split())
+    theorem_hash = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()
+    axiom_basis = json.dumps(
+        {
+            "source_id": source_id,
+            "source_text_hash": theorem_hash,
+        },
+        ensure_ascii=True,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    axioms_commitment = hashlib.sha256(axiom_basis.encode("utf-8")).hexdigest()
+    public_inputs: Dict[str, Any] = {
+        "axioms_commitment": axioms_commitment,
+        "circuit_ref": "legal_ir_source_attestation@v1",
+        "circuit_version": 1,
+        "ruleset_id": "LegalIR_Source_Attestation_v1",
+        "theorem": normalized_text,
+        "theorem_hash": theorem_hash,
+    }
+    proof_data = _synthetic_source_proof_data(
+        source_id=source_id,
+        source_text=normalized_text,
+        public_inputs=public_inputs,
+    )
+    attestation_view = build_proof_attestation_view(
+        proof_data=proof_data,
+        public_inputs=public_inputs,
+        metadata={
+            **metadata,
+            "backend": "source_attestation",
+            "proof_system": "deterministic_source_attestation",
+        },
+    )
+    completed_public_inputs = dict(public_inputs)
+    completed_public_inputs["attestation_ref"] = attestation_view["attestation_ref"]
+    completed_public_inputs["attestation_view_version"] = int(
+        attestation_view["attestation_view_version"]
+    )
+    proof_hash = hashlib.sha256(proof_data).hexdigest()
+
+    completed = dict(record)
+    completed["attestation_ref"] = attestation_view["attestation_ref"]
+    completed["attestation_view"] = attestation_view
+    completed["attestation_view_version"] = int(
+        attestation_view["attestation_view_version"]
+    )
+    completed["axioms_commitment"] = axioms_commitment
+    completed["circuit_ref"] = attestation_view["circuit_ref"]
+    completed["proof_hash"] = proof_hash
+    completed["public_inputs"] = completed_public_inputs
+    completed["ruleset_id"] = public_inputs["ruleset_id"]
+    completed["source_id"] = source_id
+    completed["theorem_hash"] = theorem_hash
+    return completed
+
+
 def complete_zkp_attestation_record(record: Mapping[str, Any]) -> Dict[str, Any]:
     """Return a LegalIR ZKP attestation record with deterministic bridge fields.
 
@@ -573,6 +703,12 @@ def complete_zkp_attestation_record(record: Mapping[str, Any]) -> Dict[str, Any]
     )
 
     if not public_inputs:
+        source_attestation = _proofless_source_attestation_record(
+            completed,
+            metadata,
+        )
+        if source_attestation:
+            return source_attestation
         return completed
 
     proof_for_view = {

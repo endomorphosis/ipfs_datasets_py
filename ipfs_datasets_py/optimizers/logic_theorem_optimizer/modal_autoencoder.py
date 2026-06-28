@@ -107,9 +107,7 @@ _AUTOENCODER_CUE_TARGET_FAMILIES: Mapping[str, tuple[str, ...]] = {
     "by": ("temporal", "deontic"),
     "conditional": ("conditional_normative", "deontic"),
     "deontic": ("deontic", "conditional_normative"),
-    "by": ("temporal",),
     "codification": ("frame", "deontic", "temporal"),
-    "conditional": ("conditional_normative", "deontic"),
     "determined": ("epistemic", "doxastic", "conditional_normative"),
     "determines": ("epistemic", "doxastic", "conditional_normative"),
     "determining": ("epistemic", "doxastic", "conditional_normative"),
@@ -136,14 +134,9 @@ _AUTOENCODER_CUE_TARGET_FAMILIES: Mapping[str, tuple[str, ...]] = {
     "subject_to_section": ("conditional_normative", "deontic", "frame"),
     "under": ("temporal", "conditional_normative", "dynamic"),
     "uscode_codification_transfer_heading_v1": ("frame", "deontic", "temporal"),
-    "deontic": ("deontic",),
     "following": ("temporal", "frame"),
-    "may": ("deontic",),
     "not_later_than": ("temporal", "deontic", "frame"),
-    "obligation": ("deontic", "conditional_normative"),
-    "permission": ("deontic",),
     "shall": ("deontic", "conditional_normative"),
-    "subject_to": ("conditional_normative", "deontic", "frame"),
     "temporal": ("temporal", "deontic", "frame"),
     "until": ("temporal", "epistemic"),
     "unless": ("conditional_normative", "temporal"),
@@ -5917,7 +5910,7 @@ class AdaptiveModalAutoencoder:
         if self.family_semantic_slot_embedding_weight_scale <= 0.0:
             return {}
         return _joint_distribution(
-            self._family_distribution_for_embedding(
+            self._family_distribution_for_semantic_slot_embedding(
                 sample,
                 use_sample_memory=use_sample_memory,
             ),
@@ -5932,7 +5925,7 @@ class AdaptiveModalAutoencoder:
         if self.family_semantic_slot_embedding_weight_scale <= 0.0:
             return {}
         return _joint_distribution(
-            _observed_family_distribution(sample),
+            self._target_family_distribution_for_semantic_slot_embedding(sample),
             self._semantic_slot_distribution_for(sample),
             key_fn=_family_semantic_slot_key,
         )
@@ -5979,7 +5972,7 @@ class AdaptiveModalAutoencoder:
         if self.family_semantic_slot_legal_ir_view_logit_scale <= 0.0:
             return {}
         return _joint_distribution(
-            _observed_family_distribution(sample),
+            self._target_family_distribution_for_semantic_slot_embedding(sample),
             self._semantic_slot_distribution_for(sample),
             key_fn=_family_semantic_slot_key,
         )
@@ -5993,7 +5986,7 @@ class AdaptiveModalAutoencoder:
         if self.family_semantic_slot_legal_ir_view_embedding_weight_scale <= 0.0:
             return {}
         return _triple_distribution(
-            self._family_distribution_for_embedding(
+            self._family_distribution_for_semantic_slot_embedding(
                 sample,
                 use_sample_memory=use_sample_memory,
             ),
@@ -6012,7 +6005,7 @@ class AdaptiveModalAutoencoder:
         if self.family_semantic_slot_legal_ir_view_embedding_weight_scale <= 0.0:
             return {}
         return _triple_distribution(
-            _observed_family_distribution(sample),
+            self._target_family_distribution_for_semantic_slot_embedding(sample),
             self._semantic_slot_distribution_for(sample),
             self._legal_ir_view_target_distribution_for_sample(sample),
             key_fn=_family_semantic_slot_legal_ir_view_key,
@@ -6069,6 +6062,80 @@ class AdaptiveModalAutoencoder:
         if observed:
             return observed
         return self._family_distribution(sample, use_sample_memory=use_sample_memory)
+
+    def _family_distribution_for_semantic_slot_embedding(
+        self,
+        sample: LegalSample,
+        *,
+        use_sample_memory: bool,
+    ) -> Dict[str, float]:
+        """Return family gates for semantic-slot reconstruction heads.
+
+        A frame formula can carry typed decompiler slots such as
+        ``frame->deontic`` or ``frame->conditional_normative``.  The classifier
+        should still learn from the observed source family, but the embedding
+        heads need target-family gates so reusable decompiler features transfer
+        to the LegalIR view that reconstructs the slot.
+        """
+        return self._semantic_slot_projected_family_distribution(
+            sample,
+            base_distribution=self._family_distribution_for_embedding(
+                sample,
+                use_sample_memory=use_sample_memory,
+            ),
+        )
+
+    def _target_family_distribution_for_semantic_slot_embedding(
+        self,
+        sample: LegalSample,
+    ) -> Dict[str, float]:
+        return self._semantic_slot_projected_family_distribution(
+            sample,
+            base_distribution=_observed_family_distribution(sample),
+        )
+
+    def _semantic_slot_projected_family_distribution(
+        self,
+        sample: LegalSample,
+        *,
+        base_distribution: Mapping[str, float],
+    ) -> Dict[str, float]:
+        base = {
+            str(family): max(0.0, float(weight))
+            for family, weight in dict(base_distribution or {}).items()
+            if max(0.0, float(weight)) > 0.0
+        }
+        slots = self._semantic_slot_distribution_for(sample)
+        if not slots:
+            return _normalized_distribution(base)
+
+        counts: Dict[str, float] = dict(base)
+        for slot, slot_weight in slots.items():
+            weight = max(0.0, float(slot_weight))
+            if weight <= 0.0 or "typed-decompiler" not in str(slot):
+                continue
+            slot_text = str(slot)
+            if "typed-decompiler-target-reconstruction" in slot_text:
+                weight *= 6.0
+            elif "typed-decompiler-family-pair" in slot_text:
+                weight *= 2.5
+            for source_family, target_family in re.findall(
+                r"\b([a-z][a-z0-9_]*)->([a-z][a-z0-9_]*)\b",
+                slot_text,
+            ):
+                is_cross_family = source_family != target_family
+                if is_cross_family and source_family != "frame":
+                    continue
+                if source_family and is_cross_family:
+                    counts[source_family] = counts.get(source_family, 0.0) + (
+                        weight * 0.10
+                    )
+                if target_family:
+                    target_weight = weight if is_cross_family else weight * 0.20
+                    counts[target_family] = (
+                        counts.get(target_family, 0.0) + target_weight
+                    )
+        return _normalized_distribution(counts)
 
     def _is_legal_ir_view_family(self, family: str) -> bool:
         return str(family) not in self.modal_families
@@ -18936,6 +19003,21 @@ class AdaptiveModalAutoencoder:
                         f"slot:typed-decompiler-target-reconstruction-pair:{family_pair}",
                         weight=1.35 * pair_strength,
                     )
+                    if _target_family:
+                        bump(
+                            (
+                                "slot:typed-decompiler-target-reconstruction-family:"
+                                f"{_target_family}"
+                            ),
+                            weight=0.95 * pair_strength,
+                        )
+                        bump(
+                            (
+                                "slot:typed-decompiler-source-target-family:"
+                                f"{source_family}->{_target_family}"
+                            ),
+                            weight=0.85 * pair_strength,
+                        )
                     bump(
                         (
                             "slot:typed-decompiler-target-reconstruction-scope:"
@@ -18951,6 +19033,14 @@ class AdaptiveModalAutoencoder:
                             ),
                             weight=0.9 * pair_strength,
                         )
+                        if _target_family:
+                            bump(
+                                (
+                                    "slot:typed-decompiler-target-family-cue:"
+                                    f"{_target_family}:{formula_cue_name}"
+                                ),
+                                weight=0.75 * pair_strength,
+                            )
                     for source_cue in source_cue_names[:4]:
                         bump(
                             (
@@ -18966,6 +19056,14 @@ class AdaptiveModalAutoencoder:
                             ),
                             weight=0.75 * pair_strength,
                         )
+                        if _target_family:
+                            bump(
+                                (
+                                    "slot:typed-decompiler-target-family-surface-cue:"
+                                    f"{source_cue}:{_target_family}"
+                                ),
+                                weight=0.7 * pair_strength,
+                            )
                     for profile in surface_profiles[:4]:
                         bump(
                             (
@@ -18974,6 +19072,14 @@ class AdaptiveModalAutoencoder:
                             ),
                             weight=0.8 * pair_strength,
                         )
+                        if _target_family:
+                            bump(
+                                (
+                                    "slot:typed-decompiler-target-family-surface-profile:"
+                                    f"{profile}:{_target_family}"
+                                ),
+                                weight=0.65 * pair_strength,
+                            )
                 if topology_signature:
                     bump(
                         (

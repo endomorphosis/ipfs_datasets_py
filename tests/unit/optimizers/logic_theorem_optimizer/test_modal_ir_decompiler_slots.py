@@ -1367,3 +1367,59 @@ def test_modal_decompiler_emits_frame_self_operator_transition_slots() -> None:
         f"{ordered_edge}|typed-decompiler-family-pair:frame->frame||modal.frame_logic"
         in legal_ir_slots
     )
+
+
+def test_modal_decompiler_promotes_residual_fallback_as_target_reconstruction_cue() -> None:
+    source_text = (
+        "Sec. 410y-1 - Publication of regulations. The Secretary shall publish "
+        "regulations in accordance with this section."
+    )
+    document = ModalIRDocument(
+        document_id="packet-001764-frame-deontic-residual-cue",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="packet-001764-frame",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="FRAME_BM25",
+                    symbol="Frame",
+                    label="ontology_frame",
+                ),
+                predicate=ModalIRPredicate(
+                    name="pub_regulations",
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-16-410y-1-477101a2ff02bb17",
+                    start_char=0,
+                    end_char=len(source_text),
+                    citation="16 U.S.C. 410y-1",
+                ),
+                conditions=["in accordance with this section"],
+                metadata={
+                    "cue": "publication",
+                    "fallback_rule": "uscode_residual_span_coverage_v1",
+                },
+            )
+        ],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+    legal_ir_slots = set(slot_texts["family_semantic_slot_legal_ir_view_prototype"])
+    residual_pair_cue = "frame->deontic:uscode_residual_span_coverage_v1"
+
+    assert residual_pair_cue in slot_texts["typed_decompiler_family_pair_cue"]
+    assert residual_pair_cue in slot_texts["typed_decompiler_target_reconstruction_cue"]
+    assert (
+        "deontic||slot:typed-decompiler-target-reconstruction-cue:"
+        f"{residual_pair_cue}||deontic.ir"
+        in legal_ir_slots
+    )
+    assert (
+        "deontic||slot-pair:semantic-reconstruction-cue:"
+        "uscode_residual_span_coverage_v1|typed-decompiler-family-pair:"
+        "frame->deontic||deontic.ir"
+        in legal_ir_slots
+    )

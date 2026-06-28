@@ -736,6 +736,7 @@ _COMPILER_GUIDANCE_PROMOTED_LEGAL_IR_VIEW_GAPS: frozenset[str] = frozenset(
 )
 _COMPILER_GUIDANCE_PROMOTED_TODO_ROUTES: frozenset[str] = frozenset(
     {
+        "refine_semantic_decompiler_reconstruction",
         "repair_cec_dcec_bridge",
         "repair_multiview_legal_ir_graph_projection",
     }
@@ -1800,6 +1801,7 @@ def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
         *_frame_candidate_phrases(document),
         *_frame_ontology_phrases(document),
         *_compiler_guidance_phrases(document),
+        *_compiler_guidance_semantic_reconstruction_phrases(document),
         *_typed_ir_refined_semantic_slot_phrases(document),
         *_legal_ir_view_prototype_phrases(document),
     ]
@@ -5424,6 +5426,96 @@ def _compiler_guidance_phrases(
     return phrases
 
 
+def _compiler_guidance_semantic_reconstruction_phrases(
+    document: ModalIRDocument,
+) -> List[DecodedModalPhrase]:
+    """Promote quality-gated guidance into bounded visible reconstruction."""
+
+    metadata = document.metadata if isinstance(document.metadata, Mapping) else {}
+    if not metadata.get("compiler_guidance_applied") or not document.formulas:
+        return []
+    promoted_terms = _compiler_guidance_promoted_surface_terms(metadata)
+    if not promoted_terms:
+        return []
+
+    source_text = _clean_text(document.normalized_text).lower()
+    source_tokens = set(_CUE_TOKEN_RE.findall(source_text))
+    visible_terms = [
+        term
+        for term in promoted_terms
+        if term in source_tokens
+        or _text_contains_cue_term(source_text, term.replace("_", " "))
+    ]
+    if not visible_terms:
+        return []
+
+    formulas = tuple(sorted(document.formulas, key=lambda item: item.formula_id))
+    parts: List[str] = list(visible_terms)
+    spans: List[List[int]] = []
+    for formula in formulas[:3]:
+        spans.append([formula.provenance.start_char, formula.provenance.end_char])
+        predicate_atom = _slot_safe_text_atom(_predicate_phrase(formula), max_tokens=5)
+        if predicate_atom:
+            parts.append(predicate_atom.replace("_", " "))
+        for argument in _phrase_values(formula.predicate.arguments)[:2]:
+            argument_atom = _slot_safe_text_atom(argument, max_tokens=4)
+            if argument_atom:
+                parts.append(argument_atom.replace("_", " "))
+
+    reconstruction_text = _clean_text(" ".join(_unique_preserve_order(parts)))
+    reconstruction_tokens = _tokenize_for_similarity(reconstruction_text)
+    if (
+        not reconstruction_tokens
+        or len(reconstruction_tokens) > 18
+        or reconstruction_text.lower() == _clean_text(document.normalized_text).lower()
+    ):
+        return []
+
+    phrases: List[DecodedModalPhrase] = [
+        DecodedModalPhrase(
+            text=reconstruction_text,
+            slot="compiler_guidance_semantic_reconstruction",
+            spans=spans,
+            provenance_only=False,
+        )
+    ]
+    for term in visible_terms:
+        phrases.append(
+            DecodedModalPhrase(
+                text=term,
+                slot="compiler_guidance_semantic_reconstruction_term",
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+    for formula in formulas[:3]:
+        condition_values = _resolved_formula_conditions(
+            document=document,
+            formula=formula,
+        )
+        exception_values = _resolved_formula_exceptions(
+            document=document,
+            formula=formula,
+        )
+        force = _modal_force_label(formula)
+        polarity = _modal_scope_polarity(
+            formula,
+            condition_values=condition_values,
+            exception_values=exception_values,
+            document=document,
+        )
+        if force and polarity:
+            phrases.append(
+                DecodedModalPhrase(
+                    text=f"{force}:{polarity}",
+                    slot="compiler_guidance_semantic_reconstruction_force_polarity",
+                    spans=spans,
+                    provenance_only=True,
+                )
+            )
+    return phrases
+
+
 def _compiler_guidance_attribution_summary(
     metadata: Mapping[str, Any],
 ) -> Mapping[str, Any]:
@@ -7962,6 +8054,80 @@ def _decompiler_section_cue_slot_values(
     return _unique_slot_values(slots)
 
 
+def _decompiler_constraint_grounding_profiles(
+    *,
+    document: ModalIRDocument | None,
+    formula: ModalIRFormula,
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
+) -> List[str]:
+    """Return compact statutory constraint profiles for typed decompiler slots."""
+
+    text_parts = [
+        _predicate_phrase(formula),
+        *condition_values,
+        *exception_values,
+        _clean_text(formula.provenance.citation or ""),
+        _clean_text(formula.provenance.source_id or ""),
+    ]
+    if document is not None:
+        source_span_text = _semantic_source_span_text(
+            document=document,
+            formula=formula,
+        )
+        text_parts.extend(
+            [
+                source_span_text,
+                _semantic_source_context_span_text(
+                    document=document,
+                    formula=formula,
+                    source_span_text=source_span_text,
+                ),
+                _fallback_section_heading_tail_text(
+                    document=document,
+                    formula=formula,
+                ),
+                _fallback_surface_text(document=document, formula=formula),
+                _uscode_status_clause_text(document=document, formula=formula),
+            ]
+        )
+    normalized_text = _clean_text(" ".join(part for part in text_parts if part))
+    normalized_text = normalized_text.replace("_", " ").lower()
+    if not normalized_text:
+        return []
+
+    has_statutory_scope = bool(_statutory_scope_slots(normalized_text))
+    has_uscode_citation = bool(
+        _clean_text(formula.provenance.citation or "")
+        or _source_id_inferred_citation(formula.provenance.source_id or "")
+    )
+    has_pub_ref = bool(
+        re.search(
+            r"(?<!\w)(?:pub(?:lic)?\.?\s+l(?:aw)?\.?|public\s+law)(?!\w)",
+            normalized_text,
+        )
+    )
+    has_title_ref = bool(
+        re.search(
+            r"(?<!\w)(?:title|subtitle|chapter|section|subsection)(?!\w)",
+            normalized_text,
+        )
+    )
+    if not (has_statutory_scope or has_uscode_citation or has_pub_ref or has_title_ref):
+        return []
+
+    if has_pub_ref and has_title_ref:
+        anchor = "pub:title"
+    elif has_pub_ref:
+        anchor = "pub"
+    elif has_title_ref:
+        anchor = "title"
+    else:
+        anchor = "section"
+    relation = "direct" if has_statutory_scope or has_uscode_citation else "context"
+    return [f"statutory-crossref:{relation}:{anchor}"]
+
+
 def _decompiler_surface_grounding_slot_values(
     *,
     document: ModalIRDocument,
@@ -10333,7 +10499,118 @@ def _frame_ontology_phrases(document: ModalIRDocument) -> List[DecodedModalPhras
                 )
             )
 
+    phrases.extend(
+        _frame_grounding_profile_phrases(
+            document,
+            selected_frame=selected_frame,
+            selected_frame_terms=selected_frame_terms,
+            ranked_frame_ids=ranked_frame_ids,
+        )
+    )
     return phrases
+
+
+def _frame_grounding_profile_phrases(
+    document: ModalIRDocument,
+    *,
+    selected_frame: str,
+    selected_frame_terms: Sequence[str],
+    ranked_frame_ids: Sequence[str],
+) -> List[DecodedModalPhrase]:
+    phrases: List[DecodedModalPhrase] = []
+    for slot, value in _frame_grounding_profile_slots(
+        document,
+        selected_frame=selected_frame,
+        selected_frame_terms=selected_frame_terms,
+        ranked_frame_ids=ranked_frame_ids,
+    ):
+        phrases.append(
+            DecodedModalPhrase(
+                text=value,
+                slot=slot,
+                provenance_only=True,
+            )
+        )
+    return phrases
+
+
+def _frame_grounding_profile_slots(
+    document: ModalIRDocument,
+    *,
+    selected_frame: str,
+    selected_frame_terms: Sequence[str],
+    ranked_frame_ids: Sequence[str],
+) -> List[Tuple[str, str]]:
+    frame_key = _clean_text(selected_frame)
+    if not frame_key:
+        return []
+    ranked_keys = [_clean_text(frame_id) for frame_id in ranked_frame_ids]
+    ranked_keys = [frame_id for frame_id in ranked_keys if frame_id]
+    selected_rank = "unranked"
+    if frame_key in ranked_keys:
+        selected_rank = str(ranked_keys.index(frame_key) + 1)
+    candidate_count = str(len(ranked_keys))
+    normalized_terms = _unique_preserve_order(
+        [term for term in selected_frame_terms if _clean_text(term)]
+    )
+    term_count = str(len(normalized_terms))
+    profile = (
+        f"{frame_key}|rank:{selected_rank}|terms:{term_count}|"
+        f"candidates:{candidate_count}"
+    )
+    slots: List[Tuple[str, str]] = [
+        ("frame_grounding_profile", profile),
+        ("frame_grounding_selected_frame", frame_key),
+        ("frame_grounding_selected_rank", selected_rank),
+        ("frame_grounding_selected_term_count", term_count),
+        ("frame_grounding_candidate_count", candidate_count),
+    ]
+    if selected_rank.isdigit():
+        slots.extend(
+            _numeric_signature_slots(
+                selected_rank,
+                slot_prefix="frame_grounding_selected_rank",
+            )
+        )
+    slots.extend(
+        _numeric_signature_slots(
+            term_count,
+            slot_prefix="frame_grounding_selected_term_count",
+        )
+    )
+    slots.extend(
+        _numeric_signature_slots(
+            candidate_count,
+            slot_prefix="frame_grounding_candidate_count",
+        )
+    )
+    for slot, value in _typed_identifier_slots(
+        profile,
+        slot_prefix="frame_grounding_profile",
+    ):
+        slots.append((slot, value))
+    for rank, term in enumerate(normalized_terms, start=1):
+        slots.append(("frame_grounding_selected_term_ranked", f"{rank}:{term}"))
+    for family, count in _resolved_modal_family_counts(
+        document.metadata.get("modal_family_counts"),
+        formulas=document.formulas,
+    ):
+        family_key = _slot_safe_family_key(family)
+        if not family_key:
+            continue
+        family_profile = (
+            f"{frame_key}|family:{family_key}|count:{count}|"
+            f"rank:{selected_rank}|terms:{term_count}"
+        )
+        slots.extend(
+            (
+                ("frame_grounding_modal_family", family_key),
+                ("frame_grounding_modal_family_count", f"{family_key}:{count}"),
+                ("frame_grounding_family_profile", family_profile),
+                (f"frame_grounding_family_profile_{family_key}", family_profile),
+            )
+        )
+    return _unique_slot_values(slots)
 
 
 def _frame_ontology_terms_by_frame(document: ModalIRDocument) -> Dict[str, List[str]]:
@@ -15064,6 +15341,93 @@ def _typed_decompiler_bridge_phrases(
             target_family,
             fallback_symbol=source_operator,
         )
+        target_operator_key = (
+            _modal_operator_feature_key(target_symbol)
+            or _slot_safe_family_key(target_symbol)
+        )
+        target_operator_keys = _unique_preserve_order(
+            [
+                target_operator_key,
+                (
+                    "o"
+                    if target_family == "conditional_normative"
+                    and target_operator_key == "o_pipe"
+                    else ""
+                ),
+            ]
+        )
+        for constraint_profile in _decompiler_constraint_grounding_profiles(
+            document=document,
+            formula=formula,
+            condition_values=condition_values,
+            exception_values=exception_values,
+        ):
+            operator_constraints = [
+                ":".join(
+                    value
+                    for value in (
+                        target_family,
+                        operator_key,
+                        predicate_role,
+                        constraint_profile,
+                    )
+                    if value
+                )
+                for operator_key in target_operator_keys
+                if operator_key
+            ]
+            add("constraint_grounding", f"constraint:{constraint_profile}")
+            add("constraint_grounding_exact", constraint_profile)
+            add(
+                "typed_decompiler_constraint_family_pair",
+                f"{constraint_profile}:{family_pair}",
+            )
+            for operator_constraint in operator_constraints:
+                add("operator_constraint", operator_constraint)
+                add(
+                    "typed_decompiler_operator_constraint_family_pair",
+                    f"{operator_constraint}:{family_pair}",
+                )
+            add_family_semantic_slot(
+                family=target_family,
+                slot_name="constraint-grounding",
+                slot_value=f"{constraint_profile}:{source_family}",
+            )
+            add_family_semantic_slot_pair(
+                family=target_family,
+                left_slot=f"constraint-grounding:{constraint_profile}",
+                right_slot=f"typed-decompiler-family-pair:{family_pair}",
+            )
+            for operator_constraint in operator_constraints:
+                add_family_semantic_slot(
+                    family=target_family,
+                    slot_name="operator-constraint",
+                    slot_value=operator_constraint,
+                )
+            for view in _preferred_legal_ir_views_for_family(target_family):
+                add(
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    (
+                        f"{target_family}||slot:constraint-grounding:"
+                        f"{constraint_profile}:{source_family}||{view}"
+                    ),
+                )
+                add(
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    (
+                        f"{target_family}||slot-pair:constraint-grounding:"
+                        f"{constraint_profile}|typed-decompiler-family-pair:"
+                        f"{family_pair}||{view}"
+                    ),
+                )
+                for operator_constraint in operator_constraints:
+                    add(
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        (
+                            f"{target_family}||slot:operator-constraint:"
+                            f"{operator_constraint}||{view}"
+                        ),
+                    )
         transition_slots = _modal_operator_transition_signature_slots(
             source_family=source_family,
             source_system=source_system,
@@ -15362,15 +15726,50 @@ def _typed_decompiler_bridge_phrases(
         for pair_cue in pair_cues:
             if not pair_cue:
                 continue
+            family_pair_cue = f"{family_pair}:{pair_cue}"
             add(
                 "typed_decompiler_family_pair_cue",
-                f"{family_pair}:{pair_cue}",
+                family_pair_cue,
+            )
+            add(
+                "typed_decompiler_semantic_reconstruction_cue_family_pair",
+                f"{pair_cue}:{family_pair}",
+            )
+            add(
+                "typed_decompiler_target_reconstruction_cue",
+                family_pair_cue,
             )
             add_family_semantic_slot(
                 family=target_family,
                 slot_name="typed-decompiler-family-pair-cue",
-                slot_value=f"{family_pair}:{pair_cue}",
+                slot_value=family_pair_cue,
             )
+            add_family_semantic_slot(
+                family=target_family,
+                slot_name="typed-decompiler-target-reconstruction-cue",
+                slot_value=family_pair_cue,
+            )
+            add_family_semantic_slot_pair(
+                family=target_family,
+                left_slot=f"semantic-reconstruction-cue:{pair_cue}",
+                right_slot=f"typed-decompiler-family-pair:{family_pair}",
+            )
+            for view in _preferred_legal_ir_views_for_family(target_family):
+                add(
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    (
+                        f"{target_family}||slot:typed-decompiler-target-"
+                        f"reconstruction-cue:{family_pair_cue}||{view}"
+                    ),
+                )
+                add(
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    (
+                        f"{target_family}||slot-pair:semantic-reconstruction-"
+                        f"cue:{pair_cue}|typed-decompiler-family-pair:"
+                        f"{family_pair}||{view}"
+                    ),
+                )
             for cue_force, cue_polarity in _typed_decompiler_cue_force_polarity_values(
                 pair_cue
             ):

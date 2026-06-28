@@ -36,6 +36,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder impor
     symbolic_validity_penalty,
     _autoencoder_typed_family_pairs_for_formula,
     _autoencoder_typed_family_pair_strengths_for_formula,
+    _AUTOENCODER_CUE_TARGET_FAMILIES,
     _annotate_projection_prescreen_rankings,
     _projection_deadband_decision,
     _projection_prescreen_summary,
@@ -1853,6 +1854,12 @@ def test_targeted_reconstruction_slots_downweight_registry_only_family_pairs() -
         slots["slot:typed-decompiler-target-reconstruction-pair:deontic->deontic"]
         > slots["slot:typed-decompiler-target-reconstruction-pair:deontic->temporal"]
     )
+
+
+def test_semantic_slot_cue_targets_preserve_non_overridden_families() -> None:
+    assert "deontic" in _AUTOENCODER_CUE_TARGET_FAMILIES["by"]
+    assert "conditional_normative" in _AUTOENCODER_CUE_TARGET_FAMILIES["deontic"]
+    assert "epistemic" in _AUTOENCODER_CUE_TARGET_FAMILIES["permission"]
 
 
 def test_round_trip_bridge_feature_head_transfers_ce_and_cosine_to_holdout() -> None:
@@ -10624,6 +10631,71 @@ def test_targeted_typed_family_pairs_have_reconstruction_slots() -> None:
     )
 
 
+def test_frame_target_family_pair_slots_gate_semantic_embedding_heads() -> None:
+    source_text = (
+        "Subject to section 314, the authority may issue rules except as "
+        "provided in subsection (b)."
+    )
+    sample = build_us_code_sample(title="33", section="535a", text=source_text)
+    base_formula = sample.modal_ir.formulas[0]
+    frame_formula = replace(
+        base_formula,
+        formula_id="packet-002433-frame",
+        operator=replace(
+            base_formula.operator,
+            family="frame",
+            system="FRAME_BM25",
+            symbol="Frame",
+            label="ontology_frame",
+        ),
+        conditions=["subject to section 314"],
+        exceptions=["except as provided in subsection (b)"],
+        metadata={"cue": "may"},
+    )
+    sample = replace(sample, modal_ir=replace(sample.modal_ir, formulas=[frame_formula]))
+    autoencoder = AdaptiveModalAutoencoder()
+
+    family_distribution = (
+        autoencoder._target_family_distribution_for_semantic_slot_embedding(sample)
+    )
+    family_slot_distribution = (
+        autoencoder._target_family_semantic_slot_distribution_for_sample(sample)
+    )
+    family_slot_view_distribution = (
+        autoencoder._target_family_semantic_slot_legal_ir_view_distribution_for_sample(
+            sample
+        )
+    )
+
+    assert (
+        family_distribution["deontic"]
+        + family_distribution["conditional_normative"]
+    ) > family_distribution["frame"]
+    assert family_distribution["conditional_normative"] > 0.0
+    assert any(
+        key.startswith(
+            "deontic||slot:typed-decompiler-target-reconstruction-pair:"
+            "frame->deontic"
+        )
+        for key in family_slot_distribution
+    )
+    assert any(
+        key.startswith(
+            "conditional_normative||slot:typed-decompiler-target-reconstruction-pair:"
+            "frame->conditional_normative"
+        )
+        for key in family_slot_distribution
+    )
+    assert any(
+        key.startswith(
+            "deontic||slot:typed-decompiler-family-pair-view-contract:"
+            "frame->deontic"
+        )
+        and key.endswith("||modal.autoencoder")
+        for key in family_slot_view_distribution
+    )
+
+
 def test_exact_cue_semantic_slot_head_transfers_packet_002281_holdout() -> None:
     def framed_sample(
         *,
@@ -12421,6 +12493,62 @@ def test_family_semantic_slot_embedding_head_transfers_cosine_to_holdout() -> No
     introspection = autoencoder.introspect_sample(validation)
     assert any(
         contribution.contribution_type == "family_semantic_slot_embedding_weight"
+        for contribution in introspection.top_embedding_contributions
+    )
+
+
+def test_target_family_semantic_slot_head_transfers_frame_deontic_holdout() -> None:
+    train = build_us_code_sample(
+        title="16",
+        section="281c",
+        text=(
+            "Sec. 281c - Inclusion of lands Indian trust land may be designated "
+            "by the Secretary for inclusion in the park."
+        ),
+        embedding_vector=[0.0, 1.0],
+    )
+    validation = build_us_code_sample(
+        title="16",
+        section="410y-1",
+        text=(
+            "Sec. 410y-1 - Boundaries The Secretary may acquire lands for "
+            "inclusion in the park."
+        ),
+        embedding_vector=[0.0, 1.0],
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        feature_embedding_weight_scale=0.0,
+        family_embedding_weight_scale=0.0,
+        legal_ir_view_embedding_weight_scale=0.0,
+        semantic_slot_embedding_weight_scale=0.0,
+        family_legal_ir_view_embedding_weight_scale=0.0,
+        compiler_quality_embedding_weight_scale=0.0,
+        logic_signature_embedding_weight_scale=0.0,
+        round_trip_signal_embedding_weight_scale=0.0,
+        decompiler_plan_embedding_weight_scale=0.0,
+        predicate_argument_embedding_weight_scale=0.0,
+        family_semantic_slot_legal_ir_view_embedding_weight_scale=0.0,
+        family_semantic_slot_embedding_weight_scale=8.0,
+        cosine_reconstruction_weight=0.0,
+    )
+    before = autoencoder.evaluate([validation], use_sample_memory=False)
+
+    autoencoder._nudge_decoded_embedding(
+        train,
+        learning_rate=0.5,
+        update_sample_memory=False,
+    )
+    after = autoencoder.evaluate([validation], use_sample_memory=False)
+
+    assert any(
+        "slot:typed-decompiler-target-reconstruction-family:deontic" in key
+        for key in autoencoder.state.family_semantic_slot_embedding_weights
+    )
+    assert after.embedding_cosine_similarity > before.embedding_cosine_similarity
+    introspection = autoencoder.introspect_sample(validation)
+    assert any(
+        "slot:typed-decompiler-target-reconstruction-family:deontic"
+        in contribution.feature
         for contribution in introspection.top_embedding_contributions
     )
 

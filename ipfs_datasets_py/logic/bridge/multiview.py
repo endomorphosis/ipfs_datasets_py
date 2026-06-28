@@ -225,6 +225,21 @@ _BRIDGE_CONTRACT_ADMIN_NOTICE_HEARING_CUE_RE = re.compile(
     r"(?:administrative|agency|secretary|commission|board|director)\b",
     flags=re.IGNORECASE,
 )
+_BRIDGE_CONTRACT_ADMIN_NOTICE_REVIEW_PROCEDURE_RE = re.compile(
+    r"\b(?:agency|secretary|commission|board|director|administrator|chairman)\b"
+    r".{0,320}\b(?:notice|hearing|petition|review|approve|approval|"
+    r"modification|rulemaking|comment|written\s+notification|determination)\b"
+    r".{0,320}\b(?:within\s+\d+\s+days|not\s+later\s+than|not\s+more\s+than|"
+    r"by\s+no\s+later\s+than|opportunity\s+for\s+(?:a\s+)?hearing|"
+    r"after\s+(?:such\s+)?notice|public\s+notice)\b"
+    r"|\b(?:notice|hearing|petition|review|approve|approval|modification|"
+    r"rulemaking|comment|written\s+notification|determination)\b"
+    r".{0,320}\b(?:agency|secretary|commission|board|director|administrator|chairman)\b"
+    r".{0,320}\b(?:within\s+\d+\s+days|not\s+later\s+than|not\s+more\s+than|"
+    r"by\s+no\s+later\s+than|opportunity\s+for\s+(?:a\s+)?hearing|"
+    r"after\s+(?:such\s+)?notice|public\s+notice)\b",
+    flags=re.IGNORECASE,
+)
 _BRIDGE_CONTRACT_GOVERNANCE_CROSS_REFERENCE_CUE_RE = re.compile(
     r"\b(?:in\s+accordance\s+with|pursuant\s+to|with\s+respect\s+to|subject\s+to)\s+"
     r"(?:this\s+(?:section|chapter|subchapter|part)|title\s+\d+[a-z0-9\-]*)\b",
@@ -3302,11 +3317,19 @@ def _compact_official_usc_contract_distribution(
             is not None
         )
     )
+    is_official_admin_notice_review_section = (
+        len(normalized_text) >= _BRIDGE_CONTRACT_STATUS_OFFICIAL_USC_MIN_CHARS
+        and _BRIDGE_CONTRACT_OFFICIAL_USC_EXCERPT_RE.search(normalized_text)
+        is not None
+        and _BRIDGE_CONTRACT_ADMIN_NOTICE_REVIEW_PROCEDURE_RE.search(normalized_text)
+        is not None
+    )
     if not (
         is_long_official_excerpt
         or is_short_official_section
         or is_short_editorial_status_section
         or is_official_header_editorial_status_section
+        or is_official_admin_notice_review_section
     ):
         return lanes
     primary = {
@@ -3441,6 +3464,7 @@ def _project_official_usc_primary_contract_distribution(
     )
     has_savings_existing_law = bool(
         _BRIDGE_CONTRACT_SAVINGS_EXISTING_LAW_RE.search(normalized_text)
+        or _BRIDGE_CONTRACT_EFFECT_ON_EXISTING_LAW_CUE_RE.search(normalized_text)
     )
     has_deceptive_advertising_norm = bool(
         _BRIDGE_CONTRACT_DECEPTIVE_ADVERTISING_NORM_RE.search(normalized_text)
@@ -3462,6 +3486,9 @@ def _project_official_usc_primary_contract_distribution(
     )
     has_admin_review_deadline = bool(
         _BRIDGE_CONTRACT_ADMIN_REVIEW_DEADLINE_RE.search(normalized_text)
+    )
+    has_admin_notice_review_procedure = bool(
+        _BRIDGE_CONTRACT_ADMIN_NOTICE_REVIEW_PROCEDURE_RE.search(normalized_text)
     )
     has_agency_technology_goal = bool(
         _BRIDGE_CONTRACT_AGENCY_TECHNOLOGY_GOAL_RE.search(normalized_text)
@@ -3790,14 +3817,16 @@ def _project_official_usc_primary_contract_distribution(
             ("knowledge_graphs.neo4j_compat", 0.10),
         )
         strength = 0.38
-    elif has_admin_review_deadline and deontic_cue_count > 0:
+    elif (
+        has_admin_notice_review_procedure or has_admin_review_deadline
+    ) and deontic_cue_count > 0:
         target_mix = (
             ("deontic.ir", 0.42),
             ("TDFOL.prover", 0.30),
             ("CEC.native", 0.18),
             ("knowledge_graphs.neo4j_compat", 0.10),
         )
-        strength = 0.42
+        strength = 0.48 if has_admin_notice_review_procedure else 0.42
     elif has_judicial_review_procedure and deontic_cue_count > 0:
         target_mix = (
             ("knowledge_graphs.neo4j_compat", 0.30),

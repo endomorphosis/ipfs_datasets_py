@@ -3546,6 +3546,7 @@ def test_modal_ir_to_flogic_triples_infers_selected_frame_and_candidates_from_me
         "agency",
         "appeal",
         "deadline",
+        "26_646",
     ]
     assert objects("interpreted_in_frame") == ["administrative_notice_hearing"]
     assert objects("interpreted_in_frame_term") == [
@@ -3554,6 +3555,29 @@ def test_modal_ir_to_flogic_triples_infers_selected_frame_and_candidates_from_me
         "agency",
         "appeal",
         "deadline",
+        "26_646",
+    ]
+    assert objects("frame_grounding_profile") == [
+        "administrative_notice_hearing|rank:1|terms:6|candidates:3"
+    ]
+    assert objects("frame_grounding_selected_frame") == [
+        "administrative_notice_hearing"
+    ]
+    assert objects("frame_grounding_selected_rank") == ["1"]
+    assert objects("frame_grounding_selected_term_count") == ["6"]
+    assert objects("frame_grounding_candidate_count") == ["3"]
+    assert objects("frame_grounding_selected_term_ranked") == [
+        "1:administrative",
+        "2:administrative_notice_hearing",
+        "3:agency",
+        "4:appeal",
+        "5:deadline",
+        "6:26_646",
+    ]
+    assert objects("frame_grounding_modal_family") == ["temporal"]
+    assert objects("frame_grounding_modal_family_count") == ["temporal:1"]
+    assert objects("frame_grounding_family_profile") == [
+        "administrative_notice_hearing|family:temporal|count:1|rank:1|terms:6"
     ]
 
 
@@ -3600,6 +3624,27 @@ def test_decode_modal_ir_document_infers_selected_frame_terms_from_metadata() ->
         "agency",
         "appeal",
         "deadline",
+    ]
+    assert slot_map["frame_grounding_profile"] == [
+        "administrative_notice_hearing|rank:1|terms:5|candidates:3"
+    ]
+    assert slot_map["frame_grounding_selected_frame"] == [
+        "administrative_notice_hearing"
+    ]
+    assert slot_map["frame_grounding_selected_rank"] == ["1"]
+    assert slot_map["frame_grounding_selected_term_count"] == ["5"]
+    assert slot_map["frame_grounding_candidate_count"] == ["3"]
+    assert slot_map["frame_grounding_selected_term_ranked"] == [
+        "1:administrative",
+        "2:administrative_notice_hearing",
+        "3:agency",
+        "4:appeal",
+        "5:deadline",
+    ]
+    assert slot_map["frame_grounding_modal_family"] == ["temporal"]
+    assert slot_map["frame_grounding_modal_family_count"] == ["temporal:1"]
+    assert slot_map["frame_grounding_family_profile"] == [
+        "administrative_notice_hearing|family:temporal|count:1|rank:1|terms:5"
     ]
 
 

@@ -532,6 +532,16 @@ def _dcec_records(
     source_text: str = "",
 ) -> list[dict[str, Any]]:
     event_formula_exports = _event_formula_exports_from_norms(norms)
+    guidance_event_formula_exports = _compiler_guidance_event_formula_exports(
+        norms,
+        compiler_guidance=compiler_guidance,
+        document_id=document_id,
+        citation=citation,
+        source_text=source_text,
+    )
+    for guided_source_id, guided_records in guidance_event_formula_exports.items():
+        if guided_records:
+            event_formula_exports[guided_source_id] = list(guided_records)
     pending_event_formula_exports = {
         source_id: list(records)
         for source_id, records in event_formula_exports.items()
@@ -682,6 +692,11 @@ def _dcec_records(
             selected_frame=selected_frame,
             selected_frame_source=selected_frame_source,
         )
+        if (
+            not compiler_guidance_source
+            and str(event_formula_source or "").startswith("compiler_guidance.")
+        ):
+            compiler_guidance_source = "repair_cec_dcec_bridge"
         event_formula_fingerprint = _stable_short_hash(event_calculus_formula)
         valid, validation_reason = _compile_dcec_proof_input(formula_object)
         records.append(
@@ -1011,11 +1026,15 @@ def _dcec_state_kind(norm: Mapping[str, Any]) -> str:
     if re.search(
         r"\b(?:(?:does\s+not|do\s+not|shall\s+not)\s+apply\s+to|"
         r"nothing\b.{0,80}\bshall\s+apply\s+to|"
-        r"nothing\b.{0,80}\bshall\s+be\s+construed\s+as)\b",
+        r"nothing\b.{0,80}\bshall\s+be\s+construed\s+(?:as|to))\b",
         corpus,
     ):
         return "exemption"
-    if re.search(r"\b(?:applies|apply|shall\s+apply|is\s+applicable)\s+to\b", corpus):
+    if re.search(
+        r"\b(?:applies|apply|shall\s+apply|"
+        r"(?:is|are|be|shall\s+be)\s+applicable)\s+to\b",
+        corpus,
+    ):
         return "applicability"
     if _looks_like_statutory_purpose_statement(corpus):
         return "purpose"
@@ -1436,6 +1455,145 @@ def _event_formula_exports_from_norms(
             )
             break
     return exports
+
+
+def _compiler_guidance_event_formula_exports(
+    norms: Sequence[Mapping[str, Any]],
+    *,
+    compiler_guidance: Optional[Mapping[str, Any]] = None,
+    document_id: str = "",
+    citation: Optional[str] = None,
+    source_text: str = "",
+) -> dict[str, list[dict[str, Any]]]:
+    guidance = _mapping(compiler_guidance)
+    if not guidance or not _compiler_guidance_has_cec_bridge_route(guidance):
+        return {}
+
+    exports: dict[str, list[dict[str, Any]]] = {}
+    for index, norm in enumerate(norms):
+        if not isinstance(norm, Mapping):
+            continue
+        source_id = str(norm.get("source_id") or f"dcec:norm:{index}").strip()
+        if not source_id:
+            continue
+        for source, row, formula_key in _compiler_guidance_event_formula_candidates(
+            guidance,
+            norm=norm,
+            document_id=document_id,
+            citation=citation,
+            source_text=source_text,
+        ):
+            export = _event_formula_export_from_guidance_row(
+                row,
+                source=f"compiler_guidance.{source}.{formula_key}",
+                formula_key=formula_key,
+            )
+            if not export:
+                continue
+            exports[source_id] = [export]
+            break
+    return exports
+
+
+def _compiler_guidance_event_formula_candidates(
+    guidance: Mapping[str, Any],
+    *,
+    norm: Optional[Mapping[str, Any]] = None,
+    document_id: str = "",
+    citation: Optional[str] = None,
+    source_text: str = "",
+) -> list[tuple[str, Mapping[str, Any], str]]:
+    candidate_keys = (
+        "event_calculus_formula_after",
+        "event_calculus_formula",
+        "dcec_event_calculus_formula",
+        "cec_event_calculus_formula",
+        "event_formula_after",
+        "event_formula",
+        "cec_event_formula",
+        "exported_formula",
+        "target_formula",
+        "formula_after",
+        "formula",
+    )
+    candidates: list[tuple[str, Mapping[str, Any], str]] = []
+    evidence_rows = _compiler_guidance_evidence_rows(guidance)
+    matched_rows = [
+        (collection_key, row)
+        for collection_key, row in evidence_rows
+        if _compiler_guidance_row_matches_norm(
+            row,
+            norm=norm,
+            document_id=document_id,
+            citation=citation,
+            source_text=source_text,
+        )
+    ]
+    for collection_key, row in matched_rows:
+        for key in candidate_keys:
+            candidates.append((collection_key, row, key))
+
+    top_level_row = {
+        key: guidance.get(key)
+        for key in candidate_keys
+        if str(guidance.get(key) or "").strip()
+    }
+    if top_level_row:
+        for key in candidate_keys:
+            candidates.append(("top_level", top_level_row, key))
+
+    for collection_key, row in evidence_rows:
+        if (collection_key, row) in matched_rows:
+            continue
+        for key in candidate_keys:
+            candidates.append((collection_key, row, key))
+    return candidates
+
+
+def _event_formula_export_from_guidance_row(
+    row: Mapping[str, Any],
+    *,
+    source: str,
+    formula_key: str,
+) -> Optional[dict[str, Any]]:
+    formula = str(row.get(formula_key) or "").strip()
+    if not formula:
+        return None
+    parse_profile = _event_formula_parse_profile(formula)
+    if not (
+        parse_profile.get("target_parse_profile_complete") is True
+        or parse_profile.get("event_predicates")
+        or parse_profile.get("top_level_symbol")
+        in (_DCEC_STATE_PREDICATE_SET | {"O", "P", "F"})
+    ):
+        return None
+    syntax_valid = bool(
+        _boolish(row.get("event_formula_syntax_valid"))
+        or _boolish(row.get("syntax_valid"))
+        or parse_profile.get("target_parse_profile_complete") is True
+    )
+    return {
+        "event_calculus_formula": formula,
+        "event_formula_fingerprint": _stable_short_hash(formula),
+        "event_formula_source": _first_text_value(
+            row.get("event_formula_source"),
+            row.get("formula_source"),
+            fallback=source,
+        ),
+        "event_formula_syntax_valid": syntax_valid,
+        "event_formula_target_components": _mapping(
+            row.get("event_formula_target_components")
+            or row.get("target_components")
+        ),
+        "event_formula_target_parse_profile": _mapping(
+            row.get("event_formula_target_parse_profile")
+            or row.get("target_parse_profile")
+        ),
+        "event_formula_target_quality_gate": _mapping(
+            row.get("event_formula_target_quality_gate")
+            or row.get("target_quality_gate")
+        ),
+    }
 
 
 def _direct_event_formula_exports_from_norms(
@@ -2597,6 +2755,47 @@ def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
             "support_text": fers_applicability_match.group(0)[:500],
             "extraction_method": "cec_dcec_section_operational_v1",
         }
+    construction_exemption_match = re.search(
+        r"\bnothing\s+in\s+(?P<actor>this\s+(?:chapter|subchapter|section|"
+        r"subsection|part|title|act))\s+shall\s+be\s+construed\s+"
+        r"(?:to|as)\s+(?P<action>[^.;]+)",
+        operative_text.lower(),
+    )
+    if construction_exemption_match:
+        digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
+        return {
+            "actor": _clean_operational_actor_slot(
+                construction_exemption_match.group("actor")
+            ),
+            "action": _clean_operational_slot(
+                construction_exemption_match.group("action")
+            ),
+            "modality": "obligated",
+            "norm_type": "exemption",
+            "source_id": f"dcec:section:{digest}",
+            "support_text": construction_exemption_match.group(0)[:500],
+            "extraction_method": "cec_dcec_section_operational_v1",
+        }
+    applicable_to_match = re.search(
+        r"\b(?P<actor>(?:the\s+)?(?:provisions?|sections?)\s+[^.;]{1,180}?)\s+"
+        r"shall\s+be\s+applicable\s+to\s+(?P<action>[^.;]+)",
+        operative_text.lower(),
+    )
+    if applicable_to_match:
+        digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
+        return {
+            "actor": _clean_operational_actor_slot(
+                applicable_to_match.group("actor")
+            ),
+            "action": _clean_operational_slot(
+                "apply to " + applicable_to_match.group("action")
+            ),
+            "modality": "obligated",
+            "norm_type": "applicability",
+            "source_id": f"dcec:section:{digest}",
+            "support_text": applicable_to_match.group(0)[:500],
+            "extraction_method": "cec_dcec_section_operational_v1",
+        }
     discretionary_transfer_match = re.search(
         r"\b(?P<actor>(?:the\s+)?(?:secretary|administrator|commission|director|court|council)"
         r"(?:\s+of\s+[^.;,]{1,120})?)\s+may\s*,?\s+"
@@ -2960,7 +3159,7 @@ def _substantive_statutory_text(text: str) -> str:
     value = _normalize_legal_sample_text(text)
     value = re.split(
         r"\b(?:Editorial Notes|Statutory Notes and Related Subsidiaries|"
-        r"Amendments|References in Text)\b",
+        r"References in Text)\b|\bAmendments\s+\d{4}\b",
         value,
         maxsplit=1,
         flags=re.IGNORECASE,

@@ -444,6 +444,10 @@ _SECTION_MARKER_TEXT_RE = re.compile(
     r"(?:\s*(?:,|and|to)\s*[0-9][0-9A-Za-z.\-]*)*",
     re.IGNORECASE,
 )
+_LIFECYCLE_STATUS_ACTION_RE = re.compile(
+    r"\b(?P<status>repealed|omitted|reserved|transferred)\b",
+    re.IGNORECASE,
+)
 
 
 def _source_grounded_lifecycle_instrument_text(element: Dict[str, Any]) -> str:
@@ -478,6 +482,45 @@ def _source_grounded_lifecycle_instrument_text(element: Dict[str, Any]) -> str:
         if citation_match:
             return _clean_source_label(citation_match.group(0))
     return ""
+
+
+def _instrument_lifecycle_actor_field_span(
+    element: Mapping[str, Any],
+) -> Dict[str, List[int]]:
+    """Return a source span for compact lifecycle instrument labels."""
+
+    norm_type = str(element.get("norm_type") or "").strip().lower()
+    operator = str(
+        element.get("deontic_operator") or element.get("modality") or ""
+    ).strip().upper()
+    if norm_type != "instrument_lifecycle" and operator != "LIFE":
+        return {}
+
+    for key in (
+        "support_text",
+        "text",
+        "source_text",
+        "canonical_citation",
+        "citation",
+    ):
+        text = str(element.get(key) or "")
+        if not text:
+            continue
+        base_offset = 0
+        if key == "support_text":
+            support_span = SourceSpan.from_value(element.get("support_span")).to_list()
+            if len(support_span) == 2:
+                base_offset = support_span[0]
+        for pattern in (_SECTION_MARKER_TEXT_RE, _US_CODE_CITATION_TEXT_RE):
+            match = pattern.search(text)
+            if match:
+                return {
+                    "subject": [
+                        base_offset + match.start(),
+                        base_offset + match.end(),
+                    ],
+                }
+    return {}
 
 
 def _clean_source_label(value: str) -> str:
@@ -525,6 +568,10 @@ def _instrument_lifecycle_action_text(element: Dict[str, Any]) -> str:
             if action:
                 return action
 
+    source_action = _instrument_lifecycle_status_action_from_source_text(element)
+    if source_action:
+        return source_action
+
     return ""
 
 
@@ -535,6 +582,68 @@ def _instrument_lifecycle_action_from_parts(kind: str, duration: str, anchor: st
     if anchor and ("expir" in normalized_kind or "terminat" in normalized_kind or "expire" in normalized_kind):
         return f"expires {anchor}"
     return ""
+
+
+def _instrument_lifecycle_status_action_from_source_text(element: Mapping[str, Any]) -> str:
+    """Return source-stated lifecycle status for compact U.S. Code rows."""
+
+    match = _instrument_lifecycle_status_action_match(element)
+    if not match:
+        return ""
+    return match.group("status").capitalize()
+
+
+def _instrument_lifecycle_status_action_field_span(
+    element: Mapping[str, Any],
+) -> Dict[str, List[int]]:
+    match = _instrument_lifecycle_status_action_match(element)
+    if not match:
+        return {}
+    base_offset = _lifecycle_status_action_base_offset(element)
+    return {
+        "action": [
+            base_offset + match.start("status"),
+            base_offset + match.end("status"),
+        ],
+    }
+
+
+def _instrument_lifecycle_status_action_match(
+    element: Mapping[str, Any],
+) -> Optional[re.Match[str]]:
+    norm_type = str(element.get("norm_type") or "").strip().lower()
+    operator = str(
+        element.get("deontic_operator") or element.get("modality") or ""
+    ).strip().upper()
+    if norm_type != "instrument_lifecycle" and operator != "LIFE":
+        return None
+
+    for text in _lifecycle_status_action_source_text_candidates(element):
+        match = _LIFECYCLE_STATUS_ACTION_RE.search(text)
+        if match:
+            return match
+    return None
+
+
+def _lifecycle_status_action_source_text_candidates(
+    element: Mapping[str, Any],
+) -> List[str]:
+    candidates: List[str] = []
+    for key in ("support_text", "action", "text", "source_text"):
+        value = element.get(key)
+        text = _first_text(value) if isinstance(value, list) else str(value or "")
+        if text:
+            candidates.append(text)
+    return candidates
+
+
+def _lifecycle_status_action_base_offset(element: Mapping[str, Any]) -> int:
+    support_text = str(element.get("support_text") or "")
+    if support_text and _LIFECYCLE_STATUS_ACTION_RE.search(support_text):
+        support_span = SourceSpan.from_value(element.get("support_span")).to_list()
+        if len(support_span) == 2:
+            return support_span[0]
+    return 0
 
 
 def _penalty_action_text(element: Dict[str, Any]) -> str:
@@ -1098,12 +1207,18 @@ def _field_spans_with_source_fallback(element: Mapping[str, Any]) -> Dict[str, A
     """Return field spans adjusted for deterministic source-text recoveries."""
 
     field_spans = dict(element.get("field_spans") or {})
+    lifecycle_actor_spans = _instrument_lifecycle_actor_field_span(element)
+    if lifecycle_actor_spans:
+        field_spans.update(lifecycle_actor_spans)
     section_application_spans = _section_application_actor_field_spans(element)
     if section_application_spans:
         field_spans.update(section_application_spans)
     unlawful_spans = _unlawful_clause_field_spans(element)
     if unlawful_spans:
         field_spans.update(unlawful_spans)
+    lifecycle_action_spans = _instrument_lifecycle_status_action_field_span(element)
+    if lifecycle_action_spans:
+        field_spans.update(lifecycle_action_spans)
     return field_spans
 
 
@@ -2346,10 +2461,16 @@ def _phase8_core_slots_for_norm(
 
     if norm_type == "definition" or modality == "DEF":
         return ("actor",)
-    if norm_type in {"applicability", "exemption", "instrument_lifecycle"} or modality in {
+    if norm_type in {
+        "applicability",
+        "exemption",
+        "instrument_lifecycle",
+        "purpose",
+    } or modality in {
         "APP",
         "EXEMPT",
         "LIFE",
+        "PURP",
     }:
         return ("actor", "action")
     return default_core_slots

@@ -193,6 +193,20 @@ _USCODE_25_57_RESIDUAL_SPAN_TODO_TEXT = (
     "employees in the Indian Service heat and light for quarters without "
     "charge, was not repeated in subsequent appropriation acts."
 )
+_USCODE_15_1212_TRANSFER_FUNCTIONS_TODO_TEXT = (
+    "U.S.C. Title 15 - COMMERCE AND TRADE 15 U.S.C. United States Code, 2024 "
+    "Edition Title 15 - COMMERCE AND TRADE CHAPTER 26 - HOUSEHOLD "
+    "REFRIGERATORS Sec. 1212 - Violations; misdemeanor; penalties From the "
+    "U.S. Government Publishing Office, www.gpo.gov §1212. Violations; "
+    "misdemeanor; penalties Any person who violates section 1211 of this title "
+    "shall be guilty of a misdemeanor and shall, upon conviction thereof, be "
+    "subject to imprisonment for not more than one year, or a fine of not more "
+    "than $1,000, or both. (Aug. 2, 1956, ch. 890, §2, 70 Stat. 953.) "
+    "Statutory Notes and Related Subsidiaries Transfer of Functions Functions "
+    "of Secretary of Commerce and Federal Trade Commission under this chapter "
+    "transferred to Consumer Product Safety Commission, see section 2079 of "
+    "this title."
+)
 _USCODE_2_5602_SYMBOLIC_VALIDITY_TODO_TEXT = (
     "U.S.C. Title 2 - THE CONGRESS 2 U.S.C. United States Code, 2024 Edition "
     "Title 2 - THE CONGRESS CHAPTER 55 - HOUSE OF REPRESENTATIVES OFFICERS AND "
@@ -666,6 +680,58 @@ def test_refined_pair_balance_promotes_conditional_scope_over_generic_frame() ->
     assert counts["conditional_normative"] > counts["frame"]
 
 
+def test_refined_pair_balance_promotes_typed_temporal_status_over_deontic_cues() -> None:
+    counts = {
+        "deontic": 2.1,
+        "temporal": 1.45,
+        "frame": 0.7,
+        "conditional_normative": 0.35,
+    }
+    signals = {
+        "has_deontic_scope": True,
+        "has_deontic_cue": True,
+        "has_temporal_scope": True,
+        "has_temporal_status_scope": True,
+        "has_calendar_date_scope": True,
+        "has_temporal_scope_token": True,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": True,
+        "has_frame_editorial_scope_phrase": False,
+        "has_deontic_authorization_scope_phrase": False,
+        "has_deontic_report_duty_scope_phrase": False,
+        "has_deontic_corporate_powers_scope_phrase": False,
+        "has_deontic_citation_authority_scope_phrase": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["temporal"] > counts["deontic"]
+
+
+def test_refined_pair_balance_promotes_explicit_conditional_over_frame_cues() -> None:
+    counts = {
+        "frame": 2.35,
+        "conditional_normative": 1.05,
+        "deontic": 0.8,
+        "temporal": 0.4,
+    }
+    signals = {
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": True,
+        "has_conditional_scope_phrase": False,
+        "has_conditional_scope_token": False,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": True,
+        "has_deontic_scope": True,
+        "has_definition_scope": False,
+        "has_frame_structural_authority_scope_phrase": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["conditional_normative"] > counts["frame"]
+
+
 def test_refined_pair_balance_promotes_deontic_over_temporal_status_scaffold() -> None:
     counts = {
         "temporal": 2.4,
@@ -983,6 +1049,36 @@ def test_spacy_encoder_treats_editorial_required_as_non_deontic_scope() -> None:
     assert signals["has_frame_editorial_scope_phrase"] is True
     assert signals["has_temporal_status_scope"] is True
     assert signals["has_deontic_scope"] is False
+
+
+def test_spacy_encoder_treats_repealed_required_submission_as_history_scope() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="42",
+        section="1411d.",
+        text=(
+            "§1411d. Repealed. Pub. L. 93-383, title II, §204, Aug. 22, "
+            "1974, 88 Stat. 668 Section, act Aug. 2, 1954, ch. 649, title "
+            "VIII, §815, 68 Stat. 647, required submission of specifications "
+            "by applicants prior to award of any contract for construction of "
+            "a project."
+        ),
+    )
+
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+
+    assert not any(
+        cue.family == "deontic" and cue.cue.lower() == "required"
+        for cue in encoding.cues
+    )
+    assert signals["has_statutory_status_frame_scope"] is True
+    assert signals["has_deontic_scope"] is False
+    assert ranking[0]["family"] in {"frame", "temporal"}
 
 
 def test_directional_backfill_treats_temporal_status_scope_as_strong_temporal_signal() -> None:
@@ -6501,6 +6597,54 @@ def test_spacy_compiler_ignores_historical_authorized_cue_in_repealed_section_no
     assert "uscode_residual_span_coverage_v1" in fallback_rules
 
 
+def test_spacy_and_regex_compilers_treat_repealed_required_history_as_frame() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    regex_parser = LegalModalParser()
+    text = (
+        "§1411d. Repealed. Pub. L. 93–383, title II, §204, Aug. 22, "
+        "1974, 88 Stat. 668 Section, act Aug. 2, 1954, ch. 649, title "
+        "VIII, §815, 68 Stat. 647, required submission of specifications "
+        "by applicants prior to award of any contract for construction of "
+        "a project and submission of data with respect to acquisition of "
+        "land prior to authorization to purchase such land."
+    )
+
+    spacy_ir = compiler.compile(
+        encoder.encode(
+            text,
+            document_id="us-code-42-1411d-packet-000441",
+            citation="42 U.S.C. 1411d.",
+            source="us_code",
+        )
+    )
+    regex_ir = regex_parser.parse(
+        text,
+        document_id="us-code-42-1411d-packet-000441",
+        citation="42 U.S.C. 1411d.",
+        source="us_code",
+    )
+
+    for modal_ir in (spacy_ir, regex_ir):
+        assert not any(
+            formula.operator.family in {"conditional_normative", "deontic", "temporal"}
+            for formula in modal_ir.formulas
+        )
+        assert any(
+            formula.metadata.get("fallback_rule")
+            == "uscode_editorial_status_heading_v1"
+            for formula in modal_ir.formulas
+        )
+        assert any(
+            formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+            and "required submission of specifications"
+            in modal_ir.normalized_text[
+                formula.provenance.start_char : formula.provenance.end_char
+            ]
+            for formula in modal_ir.formulas
+        )
+
+
 def test_spacy_compiler_replays_sec_prefixed_transferred_heading_zero_formula_cases() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()
@@ -7325,6 +7469,32 @@ def test_spacy_compiler_adds_residual_span_coverage_for_25_57_todo_shape() -> No
         "U.S.C. Title 25 - INDIANS 25 U.S.C." in span for span in residual_text_spans
     )
     assert any("43 Stat." in span for span in residual_text_spans)
+
+
+def test_spacy_compiler_adds_transfer_functions_residual_span_coverage_for_15_1212() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    encoding = encoder.encode(
+        _USCODE_15_1212_TRANSFER_FUNCTIONS_TODO_TEXT,
+        document_id="us-code-15-1212-80d23ee30f50aa42",
+        citation="15 U.S.C. 1212",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    residual_text_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    }
+
+    assert any(
+        "Transfer of Functions Functions of Secretary of Commerce" in span
+        and "Consumer Product Safety Commission" in span
+        for span in residual_text_spans
+    )
 
 
 def test_spacy_compiler_expands_split_omitted_codification_fallback_span() -> None:
@@ -8305,6 +8475,31 @@ def test_supervisor_with_spacy_codec_improves_loss_and_cosine() -> None:
     assert run.final_evaluation.reconstruction_loss < before.reconstruction_loss
     assert run.final_evaluation.embedding_cosine_similarity > before.embedding_cosine_similarity
     assert supervisor.queue.status_counts()["completed"] >= 2
+
+
+def test_packet_002219_dense_frame_headings_do_not_outvote_explicit_deontic_cues() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    text = (
+        "33 U.S.C. Title 33 - NAVIGATION AND NAVIGABLE WATERS CHAPTER 12 - "
+        "RIVER AND HARBOR IMPROVEMENTS GENERALLY SUBCHAPTER I - GENERAL "
+        "PROVISIONS Sec. 558b-1 - Canals and appurtenant structures; "
+        "transfer of title; power development. The Secretary shall establish "
+        "authority under this section and may transfer title in accordance "
+        "with this chapter."
+    )
+    encoding = encoder.encode(
+        text,
+        document_id="packet-002219-frame-deontic-cue-balance",
+        citation="33 U.S.C. 558b-1",
+        source="us_code",
+    )
+    ranking = ranked_modal_families(encoding)
+    shares = {str(item["family"]): float(item["share_raw"]) for item in ranking}
+
+    assert ranking[0]["family"] == "deontic"
+    assert shares["deontic"] > shares["frame"]
+    assert shares["frame"] > 0.0
+    assert shares["conditional_normative"] > 0.0
 
 
 def test_spacy_compiler_covers_uscode_effect_of_act_catchline_for_701e() -> None:
