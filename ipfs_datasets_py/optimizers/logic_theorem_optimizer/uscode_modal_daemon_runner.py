@@ -13,6 +13,7 @@ import hashlib
 import json
 import os
 import random
+import re
 import shlex
 import shutil
 import signal
@@ -21,6 +22,7 @@ import sys
 import tempfile
 import threading
 import time
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack, contextmanager
 from datetime import datetime, timezone
@@ -33,9 +35,11 @@ from huggingface_hub import HfFileSystem
 from ipfs_datasets_py.logic.modal import (
     DeterministicModalLogicCodec,
     ModalLogicCodecConfig,
+    decoded_modal_phrase_slot_text_map,
 )
 from ipfs_datasets_py.logic.bridge import DEFAULT_LEGAL_IR_BRIDGE_NAMES
 from ipfs_datasets_py.logic.submodule_registry import (
+    logic_optimizer_scope_for_component,
     logic_optimizer_target_file_hints,
     logic_submodule_specs,
 )
@@ -50,6 +54,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon impor
     ModalTodo,
     ModalTodoQueue,
     ModalTodoSupervisor,
+    PROGRAM_SYNTHESIS_ACTION_TARGETS,
     bridge_loss_evaluator_for_names,
     program_synthesis_todo_embedding_text,
     select_program_synthesis_vector_bundle,
@@ -1158,6 +1163,1107 @@ def update_program_synthesis_summary(
         summary,
         execution_mode=execution_mode or "queued_for_external_codex_worker",
     )
+
+
+def _metric_value(block: Mapping[str, Any], name: str, default: float = 1.0e12) -> float:
+    try:
+        value = float(block.get(name, default))
+    except (TypeError, ValueError):
+        return default
+    if value != value:
+        return default
+    return value
+
+
+def compiler_guidance_canary_block(
+    deterministic_block: Mapping[str, Any],
+    guided_block: Mapping[str, Any],
+    *,
+    plateau_threshold: float = 1.0e-5,
+) -> Dict[str, Any]:
+    """Compare deterministic compiler IR metrics with guided compiler IR metrics.
+
+    Positive deltas mean guidance improved that metric. This block is intentionally
+    scale-aware: raw cross entropy is compared with raw cross entropy, while CE
+    excess stays a separate KL-style diagnostic.
+    """
+    threshold = max(0.0, float(plateau_threshold))
+    applied_count = int(guided_block.get("autoencoder_guidance_applied_count", 0) or 0)
+    enabled = bool(guided_block.get("autoencoder_guidance_enabled"))
+    plain_ce = _metric_value(deterministic_block, "cross_entropy_loss")
+    guided_ce = _metric_value(guided_block, "cross_entropy_loss")
+    plain_ce_excess = _metric_value(deterministic_block, "cross_entropy_excess_loss")
+    guided_ce_excess = _metric_value(guided_block, "cross_entropy_excess_loss")
+    plain_cosine = _metric_value(deterministic_block, "cosine_similarity", -1.0)
+    guided_cosine = _metric_value(guided_block, "cosine_similarity", -1.0)
+    plain_copy_hack = _metric_value(
+        deterministic_block,
+        "source_copy_reward_hack_penalty",
+    )
+    guided_copy_hack = _metric_value(
+        guided_block,
+        "source_copy_reward_hack_penalty",
+    )
+    plain_source_copy = _metric_value(deterministic_block, "source_copy_loss")
+    guided_source_copy = _metric_value(guided_block, "source_copy_loss")
+    deltas = {
+        "ce_delta": plain_ce - guided_ce,
+        "ce_excess_delta": plain_ce_excess - guided_ce_excess,
+        "copy_hack_delta": plain_copy_hack - guided_copy_hack,
+        "cosine_delta": guided_cosine - plain_cosine,
+        "source_copy_delta": plain_source_copy - guided_source_copy,
+    }
+    core_names = ("ce_delta", "copy_hack_delta", "cosine_delta")
+    improved = enabled and applied_count > 0 and any(
+        deltas[name] > threshold for name in core_names
+    )
+    regressed = enabled and applied_count > 0 and any(
+        deltas[name] < -threshold for name in core_names
+    )
+    if not enabled or applied_count <= 0:
+        quality_gate = "inactive"
+    elif regressed:
+        quality_gate = "fail"
+    elif improved:
+        quality_gate = "pass"
+    else:
+        quality_gate = "warn"
+    return {
+        "applied_count": applied_count,
+        "ce_delta": round(deltas["ce_delta"], 9),
+        "ce_excess_delta": round(deltas["ce_excess_delta"], 9),
+        "copy_hack_delta": round(deltas["copy_hack_delta"], 9),
+        "cosine_delta": round(deltas["cosine_delta"], 9),
+        "enabled": enabled,
+        "frame_boost_count": _metric_value(
+            guided_block,
+            "compiler_guidance_frame_boost_count",
+            0.0,
+        ),
+        "frame_changed_count": int(
+            guided_block.get("compiler_guidance_frame_changed_count", 0) or 0
+        ),
+        "improved": improved,
+        "quality_gate": quality_gate,
+        "regressed": regressed,
+        "source_copy_delta": round(deltas["source_copy_delta"], 9),
+        "threshold": threshold,
+    }
+
+
+GUIDANCE_ROUTE_TARGET_OVERRIDES = {
+    "refine_amendment_operation": "modal.compiler",
+    "refine_applicability_scope": "modal.compiler",
+    "refine_authority_jurisdiction": "modal.frame_logic",
+    "refine_condition_consequence": "modal.compiler",
+    "refine_coreference_binding": "modal.compiler",
+    "refine_defeasible_priority_scope": "modal.ir_decompiler",
+    "refine_definition_grounding": "modal.compiler",
+    "refine_discretion_standard": "modal.frame_logic",
+    "refine_enforcement_remedy": "deontic.ir",
+    "refine_enumeration_hierarchy": "modal.compiler",
+    "refine_evidentiary_burden": "modal.ir_decompiler",
+    "refine_legal_relation": "deontic.ir",
+    "refine_logical_connective": "modal.compiler",
+    "refine_mental_state": "modal.compiler",
+    "refine_predicate_argument_binding": "modal.compiler",
+    "refine_procedural_lifecycle": "CEC.native",
+    "refine_quantifier_scope": "modal.compiler",
+    "refine_quantitative_crossref_grounding": "modal.compiler",
+    "refine_quantitative_formula": "modal.compiler",
+    "refine_reference_dependency_graph": "knowledge_graphs.neo4j_compat",
+    "refine_status_transition": "CEC.native",
+    "refine_temporal_validity": "TDFOL.prover",
+}
+
+GUIDANCE_ROUTE_PREFIX_TARGETS = (
+    ("repair_deontic", "deontic.ir"),
+    ("repair_tdfol", "TDFOL.prover"),
+    ("repair_cec", "CEC.native"),
+    ("repair_external", "external_provers.router"),
+    ("repair_zkp", "zkp.circuits"),
+    ("repair_multiview_legal_ir_graph", "knowledge_graphs.neo4j_compat"),
+    ("repair_multiview", "bridge.contracts"),
+    ("repair_flogic", "modal.frame_logic"),
+    ("audit_frame", "modal.frame_logic"),
+    ("improve_bm25", "modal.frame_logic"),
+    ("improve_flogic", "modal.frame_logic"),
+    ("refine_modal_family", "modal.compiler.registry"),
+    ("refine_semantic_decompiler", "modal.ir_decompiler"),
+    ("refine_typed_ir", "modal.ir_decompiler"),
+    ("increase_modal_ir_span", "modal.compiler"),
+    ("add_deterministic_parser_rule", "modal.compiler"),
+    ("add_or_review_modal_ambiguity", "modal.compiler.ambiguity"),
+)
+
+
+def _normalized_guidance_route(value: str) -> str:
+    return re.sub(r"[^a-z0-9_]+", "_", str(value or "").lower()).strip("_")
+
+
+def _top_numeric_items(
+    values: Mapping[str, Any],
+    *,
+    limit: int = 8,
+) -> Dict[str, float]:
+    items: List[tuple[str, float]] = []
+    for raw_key, raw_value in values.items():
+        key = str(raw_key or "").strip()
+        if not key:
+            continue
+        try:
+            value = float(raw_value)
+        except (TypeError, ValueError):
+            continue
+        if value <= 0.0 or value != value:
+            continue
+        items.append((key, value))
+    items.sort(key=lambda item: (-item[1], item[0]))
+    return {
+        key: (int(value) if value.is_integer() else round(value, 9))
+        for key, value in items[: max(0, int(limit))]
+    }
+
+
+def _compiler_guidance_fallback_todo_routes(
+    *,
+    top_feature_groups: Mapping[str, Any],
+    top_surface_features: Mapping[str, Any],
+    limit: int = 8,
+) -> Dict[str, float]:
+    """Infer deterministic repair routes when guidance has features but no route."""
+    route_counts: Counter[str] = Counter()
+    surface_total = sum(
+        float(value)
+        for value in top_surface_features.values()
+        if isinstance(value, (float, int)) and float(value) > 0.0
+    )
+    if surface_total > 0.0:
+        route_counts["refine_semantic_decompiler_reconstruction"] += surface_total
+
+    feature_group_counts = {
+        str(key): float(value)
+        for key, value in top_feature_groups.items()
+        if isinstance(value, (float, int)) and float(value) > 0.0
+    }
+    logic_view_count = feature_group_counts.get("logic_view_contract", 0.0)
+    if logic_view_count > 0.0 and not route_counts:
+        route_counts["repair_multiview_legal_ir_loss"] += logic_view_count
+    compiler_count = max(
+        feature_group_counts.get("compiler_contract", 0.0),
+        feature_group_counts.get("compiler_latent_profile", 0.0),
+    )
+    if compiler_count > 0.0 and not route_counts:
+        route_counts["refine_modal_family_cue_rules"] += compiler_count
+    return _top_numeric_items(route_counts, limit=limit)
+
+
+def compiler_guidance_route_scope(route: str) -> Dict[str, Any]:
+    """Map a learned guidance TODO route into a merge-safe Codex AST scope."""
+    normalized = _normalized_guidance_route(route)
+    normalized_targets = {
+        _normalized_guidance_route(action): target
+        for action, target in PROGRAM_SYNTHESIS_ACTION_TARGETS.items()
+    }
+    target_component = (
+        normalized_targets.get(normalized)
+        or GUIDANCE_ROUTE_TARGET_OVERRIDES.get(normalized)
+    )
+    matched_by = "action_target" if normalized in normalized_targets else "override"
+    if not target_component:
+        matched_by = "prefix"
+        for prefix, component in GUIDANCE_ROUTE_PREFIX_TARGETS:
+            if normalized.startswith(prefix):
+                target_component = component
+                break
+    if not target_component:
+        matched_by = "fallback"
+        target_component = normalized or "modal.compiler"
+    scope = logic_optimizer_scope_for_component(
+        target_component,
+        action=normalized,
+    )
+    return {
+        "matched_by": matched_by,
+        "route": normalized,
+        "scope": scope,
+        "target_component": target_component,
+    }
+
+
+def compiler_guidance_scope_hints(
+    guided_block: Mapping[str, Any],
+    *,
+    max_scopes: int = 8,
+) -> Dict[str, Any]:
+    """Summarize learned guidance routes as Codex worker rebalance hints."""
+    todo_routes = guided_block.get("compiler_guidance_todo_routes")
+    if not isinstance(todo_routes, Mapping):
+        return {
+            "recommended_parallel_scopes": [],
+            "route_scope_map": {},
+            "scope_counts": {},
+            "scope_weights": {},
+            "target_component_counts": {},
+        }
+
+    scope_counts: Counter[str] = Counter()
+    target_component_counts: Counter[str] = Counter()
+    route_scope_map: Dict[str, Dict[str, Any]] = {}
+    for route, count in _top_numeric_items(todo_routes, limit=32).items():
+        route_scope = compiler_guidance_route_scope(route)
+        scope = str(route_scope["scope"])
+        target_component = str(route_scope["target_component"])
+        weight = float(count)
+        scope_counts[scope] += weight
+        target_component_counts[target_component] += weight
+        route_scope_map[str(route)] = route_scope
+
+    limited_scope_counts = dict(scope_counts.most_common(max(0, int(max_scopes))))
+    total = sum(float(value) for value in limited_scope_counts.values())
+    scope_weights = {
+        scope: round(float(value) / total, 6)
+        for scope, value in limited_scope_counts.items()
+        if total > 0.0
+    }
+    return {
+        "recommended_parallel_scopes": list(limited_scope_counts),
+        "route_scope_map": route_scope_map,
+        "scope_counts": {
+            scope: (int(value) if float(value).is_integer() else round(float(value), 9))
+            for scope, value in limited_scope_counts.items()
+        },
+        "scope_weights": scope_weights,
+        "target_component_counts": {
+            component: (
+                int(value) if float(value).is_integer() else round(float(value), 9)
+            )
+            for component, value in target_component_counts.most_common(max(0, int(max_scopes)))
+        },
+    }
+
+
+def compiler_guidance_promotion_gate(
+    canary_block: Mapping[str, Any],
+    *,
+    min_applied_count: int = 1,
+) -> Dict[str, Any]:
+    """Return whether guided compiler IR is safe to promote into deterministic rules."""
+    quality_gate = str(canary_block.get("quality_gate") or "inactive")
+    applied_count = int(canary_block.get("applied_count", 0) or 0)
+    if applied_count < max(1, int(min_applied_count)):
+        reason = "insufficient_guidance_samples"
+    elif quality_gate == "pass":
+        reason = "quality_gate_pass"
+    elif quality_gate == "fail":
+        reason = "quality_gate_fail"
+    elif quality_gate == "warn":
+        reason = "quality_gate_warn"
+    else:
+        reason = "guidance_inactive"
+    promotion_allowed = reason == "quality_gate_pass"
+    return {
+        "applied_count": applied_count,
+        "promotion_allowed": promotion_allowed,
+        "promotion_block_reason": "" if promotion_allowed else reason,
+        "quality_gate": quality_gate,
+        "recommended_mode": (
+            "promote_deterministic_rules" if promotion_allowed else "canary_only"
+        ),
+    }
+
+
+def compiler_guidance_distillation_candidates(
+    guided_block: Mapping[str, Any],
+    canary_block: Mapping[str, Any],
+    *,
+    max_items: int = 8,
+) -> Dict[str, Any]:
+    """Build the reviewable learned-to-deterministic compiler distillation block."""
+    feature_groups = guided_block.get("compiler_guidance_feature_groups")
+    surface_features = guided_block.get("compiler_guidance_surface_features")
+    semantic_overlay_terms = guided_block.get(
+        "compiler_guidance_semantic_overlay_terms"
+    )
+    todo_routes = guided_block.get("compiler_guidance_todo_routes")
+    todo_route_examples = guided_block.get("compiler_guidance_todo_route_examples")
+    top_feature_groups = _top_numeric_items(
+        feature_groups if isinstance(feature_groups, Mapping) else {},
+        limit=max_items,
+    )
+    top_surface_features = _top_numeric_items(
+        surface_features if isinstance(surface_features, Mapping) else {},
+        limit=max_items,
+    )
+    top_todo_routes = _top_numeric_items(
+        todo_routes if isinstance(todo_routes, Mapping) else {},
+        limit=max_items,
+    )
+    top_semantic_overlay_terms = _top_numeric_items(
+        semantic_overlay_terms if isinstance(semantic_overlay_terms, Mapping) else {},
+        limit=max_items,
+    )
+    todo_routes_inferred_from_features = False
+    todo_routes_augmented_from_features = False
+    fallback_todo_routes = _compiler_guidance_fallback_todo_routes(
+        top_feature_groups=top_feature_groups,
+        top_surface_features=top_surface_features,
+        limit=max_items,
+    )
+    if not top_todo_routes:
+        top_todo_routes = fallback_todo_routes
+        todo_routes_inferred_from_features = bool(top_todo_routes)
+    elif fallback_todo_routes:
+        merged_routes = Counter(
+            {str(route): float(count) for route, count in top_todo_routes.items()}
+        )
+        for route, count in fallback_todo_routes.items():
+            before = float(merged_routes.get(str(route), 0.0))
+            merged_routes[str(route)] = max(before, float(count))
+            if before <= 0.0:
+                todo_routes_augmented_from_features = True
+        top_todo_routes = _top_numeric_items(merged_routes, limit=max_items)
+    top_todo_route_examples: Dict[str, Any] = {}
+    if isinstance(todo_route_examples, Mapping):
+        for route in top_todo_routes:
+            examples = todo_route_examples.get(route)
+            if isinstance(examples, Sequence) and not isinstance(
+                examples,
+                (str, bytes),
+            ):
+                top_todo_route_examples[route] = list(examples[:3])
+    scope_hints = compiler_guidance_scope_hints(
+        {
+            **dict(guided_block),
+            "compiler_guidance_todo_routes": top_todo_routes,
+        },
+        max_scopes=max_items,
+    )
+    promotion_gate = compiler_guidance_promotion_gate(canary_block)
+    has_candidates = bool(
+        top_feature_groups
+        or top_semantic_overlay_terms
+        or top_surface_features
+        or top_todo_routes
+        or scope_hints.get("scope_counts")
+    )
+    return {
+        "has_candidates": has_candidates,
+        "promotion_allowed": promotion_gate["promotion_allowed"],
+        "promotion_block_reason": promotion_gate["promotion_block_reason"],
+        "quality_gate": promotion_gate["quality_gate"],
+        "recommended_mode": promotion_gate["recommended_mode"],
+        "scope_hints": scope_hints,
+        "top_semantic_overlay_terms": top_semantic_overlay_terms,
+        "top_feature_groups": top_feature_groups,
+        "top_surface_features": top_surface_features,
+        "top_todo_route_examples": top_todo_route_examples,
+        "top_todo_routes": top_todo_routes,
+        "todo_routes_augmented_from_features": todo_routes_augmented_from_features,
+        "todo_routes_inferred_from_features": todo_routes_inferred_from_features,
+    }
+
+
+GUIDANCE_SCOPE_TARGET_METRICS = {
+    "bridge": (
+        "legal_ir_view_cross_entropy_loss",
+        "legal_ir_multiview_total_loss",
+    ),
+    "cec": (
+        "cec_dcec_validation_failure_ratio",
+        "legal_ir_view_cross_entropy_loss",
+    ),
+    "compiler_ambiguity": ("cross_entropy_loss", "cosine_similarity"),
+    "compiler_parser": (
+        "modal_span_coverage_loss",
+        "symbolic_validity_penalty",
+    ),
+    "compiler_registry": ("cross_entropy_loss", "cosine_similarity"),
+    "deontic": (
+        "deontic_decoder_slot_loss",
+        "legal_ir_view_cross_entropy_loss",
+    ),
+    "external_provers": ("legal_ir_multiview_proof_failure_ratio",),
+    "frame_logic": ("flogic_similarity_loss", "ontology_violation_count"),
+    "ir_decompiler": (
+        "cosine_similarity",
+        "source_copy_reward_hack_penalty",
+        "structural_text_reconstruction_loss",
+        "text_reconstruction_loss",
+    ),
+    "knowledge_graphs": ("legal_ir_multiview_graph_failure_penalty",),
+    "tdfol": ("tdfol_parse_failure_ratio", "legal_ir_view_cross_entropy_loss"),
+    "zkp": ("zkp_verification_failure_ratio", "legal_ir_view_cross_entropy_loss"),
+}
+
+GUIDANCE_SCOPE_VALIDATION_TESTS = {
+    "bridge": (
+        "tests/unit/logic/test_logic_bridge_layer.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
+    ),
+    "cec": ("tests/unit/logic/test_logic_bridge_layer.py",),
+    "compiler_ambiguity": (
+        "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py",
+        "tests/unit_tests/logic/modal/test_modal_codec.py",
+    ),
+    "compiler_parser": (
+        "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py",
+        "tests/unit_tests/logic/modal/test_modal_codec.py",
+    ),
+    "compiler_registry": (
+        "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py",
+        "tests/unit_tests/logic/modal/test_modal_codec.py",
+    ),
+    "deontic": (
+        "tests/unit/logic/test_deontic_graph.py",
+        "tests/unit/logic/test_deontic_knowledge_base.py",
+        "tests/unit/logic/test_logic_bridge_layer.py",
+    ),
+    "external_provers": (
+        "tests/unit/logic/test_logic_bridge_layer.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
+    ),
+    "frame_logic": (
+        "ipfs_datasets_py/logic/test_flogic_optimizer.py",
+        "tests/unit/logic/test_flogic_integration.py",
+        "tests/unit/logic/test_logic_bridge_layer.py",
+    ),
+    "ir_decompiler": (
+        "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py",
+        "tests/unit_tests/logic/modal/test_modal_codec.py",
+    ),
+    "knowledge_graphs": ("tests/unit/logic/test_logic_bridge_layer.py",),
+    "tdfol": (
+        "tests/unit/logic/TDFOL/test_formula_dependency_graph.py",
+        "tests/unit/logic/test_logic_bridge_layer.py",
+    ),
+    "zkp": (
+        "tests/unit/logic/test_flogic_cache_zkp.py",
+        "tests/unit/logic/test_logic_bridge_layer.py",
+    ),
+}
+
+
+def _compiler_guidance_target_metrics(route: str, scope: str) -> List[str]:
+    metrics = [
+        "cross_entropy_loss",
+        "cosine_similarity",
+        "source_copy_reward_hack_penalty",
+    ]
+    metrics.extend(GUIDANCE_SCOPE_TARGET_METRICS.get(str(scope), ()))
+    if "decompiler" in route:
+        metrics.extend(
+            (
+                "structural_text_reconstruction_loss",
+                "text_reconstruction_loss",
+            )
+        )
+    if "multiview" in route or "legal_ir" in route:
+        metrics.append("legal_ir_view_cross_entropy_loss")
+    return list(dict.fromkeys(str(metric) for metric in metrics if str(metric)))
+
+
+def _compiler_guidance_validation_commands(scope: str) -> List[str]:
+    tests = list(
+        GUIDANCE_SCOPE_VALIDATION_TESTS.get(
+            str(scope),
+            (
+                "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
+            ),
+        )
+    )
+    tests = list(dict.fromkeys(str(test) for test in tests if str(test)))
+    return [f"{sys.executable} -m pytest -q {' '.join(tests)}"] if tests else []
+
+
+def _compiler_guidance_distillation_todo_id(
+    *,
+    route: str,
+    target_component: str,
+    sample_ids: Sequence[str],
+) -> str:
+    payload = {
+        "route": route,
+        "sample_ids": sorted(str(sample_id) for sample_id in sample_ids),
+        "source": "compiler_guidance_distillation_v1",
+        "target_component": target_component,
+    }
+    digest = hashlib.sha256(
+        json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+    ).hexdigest()[:16]
+    return f"guidance-program-{digest}"
+
+
+def _compiler_guidance_distillation_signature(
+    *,
+    route: str,
+    target_component: str,
+    sample_ids: Sequence[str],
+) -> str:
+    payload = {
+        "route": route,
+        "sample_ids": sorted(str(sample_id) for sample_id in sample_ids),
+        "source": "compiler_guidance_distillation_v1",
+        "target_component": target_component,
+    }
+    return json.dumps(payload, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+
+
+def _compiler_guidance_example_payloads(
+    examples: Any,
+    *,
+    route: str,
+    max_examples: int = 8,
+) -> tuple[List[str], List[str], List[Dict[str, Any]], List[Dict[str, Any]]]:
+    if not isinstance(examples, Sequence) or isinstance(examples, (str, bytes)):
+        examples = []
+    sample_ids: List[str] = []
+    citations: List[str] = []
+    evidence: List[Dict[str, Any]] = []
+    metric_payloads: List[Dict[str, Any]] = []
+    for index, raw_example in enumerate(examples[: max(0, int(max_examples))], start=1):
+        if not isinstance(raw_example, Mapping):
+            continue
+        sample_id = str(raw_example.get("sample_id") or "").strip()
+        citation = str(raw_example.get("citation") or "").strip()
+        text_preview = str(raw_example.get("text_preview") or "").strip()
+        selected_before = str(raw_example.get("selected_frame_before") or "").strip()
+        selected_after = str(raw_example.get("selected_frame_after") or "").strip()
+        if sample_id:
+            sample_ids.append(sample_id)
+        if citation:
+            citations.append(citation)
+        evidence.append(
+            {
+                "citation": citation,
+                "compiler_guidance_route": route,
+                "evidence_rank": index,
+                "sample_id": sample_id,
+                "selected_frame_after": selected_after,
+                "selected_frame_before": selected_before,
+                "text_preview": text_preview,
+            }
+        )
+        if sample_id or text_preview:
+            metric_payloads.append(
+                {
+                    "citation": citation,
+                    "sample_id": sample_id or f"compiler-guidance:{route}:{index}",
+                    "text": text_preview,
+                }
+            )
+    return (
+        list(dict.fromkeys(sample_ids)),
+        list(dict.fromkeys(citations)),
+        evidence,
+        metric_payloads,
+    )
+
+
+def compiler_guidance_distillation_todos(
+    candidates: Mapping[str, Any],
+    *,
+    policy: Optional[ModalOptimizerPolicy] = None,
+    max_routes: int = 8,
+) -> List[ModalTodo]:
+    """Convert passing guidance distillation candidates into normal Codex TODOs."""
+    if not candidates.get("promotion_allowed"):
+        return []
+    route_counts = candidates.get("top_todo_routes")
+    if not isinstance(route_counts, Mapping):
+        return []
+    route_examples = candidates.get("top_todo_route_examples")
+    if not isinstance(route_examples, Mapping):
+        route_examples = {}
+    scope_hints = candidates.get("scope_hints")
+    if not isinstance(scope_hints, Mapping):
+        scope_hints = {}
+    route_scope_map = scope_hints.get("route_scope_map")
+    if not isinstance(route_scope_map, Mapping):
+        route_scope_map = {}
+
+    optimizer_policy = policy or ModalOptimizerPolicy()
+    todos: List[ModalTodo] = []
+    for route, raw_count in _top_numeric_items(route_counts, limit=max_routes).items():
+        route_scope = route_scope_map.get(route)
+        if not isinstance(route_scope, Mapping):
+            route_scope = compiler_guidance_route_scope(route)
+        action = _normalized_guidance_route(route)
+        target_component = str(route_scope.get("target_component") or "")
+        scope = str(route_scope.get("scope") or "")
+        examples = route_examples.get(route)
+        sample_ids, citations, evidence, metric_payloads = (
+            _compiler_guidance_example_payloads(examples, route=action)
+        )
+        if not sample_ids:
+            sample_ids = [f"compiler-guidance:{action}"]
+        count = float(raw_count)
+        metadata = {
+            **optimizer_policy.metadata_for(
+                action=action,
+                loss_name="compiler_guidance_distillation",
+            ),
+            "compiler_guidance_distillation_count": count,
+            "compiler_guidance_quality_gate": candidates.get("quality_gate", ""),
+            "compiler_guidance_route": action,
+            "compiler_guidance_surface_features": dict(
+                candidates.get("top_surface_features")
+                if isinstance(candidates.get("top_surface_features"), Mapping)
+                else {}
+            ),
+            "compiler_guidance_semantic_overlay_terms": dict(
+                candidates.get("top_semantic_overlay_terms")
+                if isinstance(candidates.get("top_semantic_overlay_terms"), Mapping)
+                else {}
+            ),
+            "compiler_guidance_todo_routes_augmented_from_features": bool(
+                candidates.get("todo_routes_augmented_from_features")
+            ),
+            "compiler_guidance_todo_routes_inferred_from_features": bool(
+                candidates.get("todo_routes_inferred_from_features")
+            ),
+            "dedupe_signature": _compiler_guidance_distillation_signature(
+                route=action,
+                target_component=target_component,
+                sample_ids=sample_ids,
+            ),
+            "hint_evidence": evidence,
+            "metric_sample_payloads": metric_payloads,
+            "program_synthesis_scope": scope,
+            "semantic_bundle_key": json.dumps(
+                {
+                    "program_synthesis_scope": scope,
+                    "route": action,
+                    "source": "compiler_guidance_distillation_v1",
+                    "target_component": target_component,
+                },
+                ensure_ascii=True,
+                sort_keys=True,
+                separators=(",", ":"),
+            ),
+            "source": "compiler_guidance_distillation_v1",
+            "support_count": len(sample_ids),
+            "target_component": target_component,
+            "target_metrics": _compiler_guidance_target_metrics(action, scope),
+            "validation_commands": _compiler_guidance_validation_commands(scope),
+        }
+        todos.append(
+            ModalTodo(
+                todo_id=_compiler_guidance_distillation_todo_id(
+                    route=action,
+                    target_component=target_component,
+                    sample_ids=sample_ids,
+                ),
+                action=action,
+                objective=(
+                    "Promote passing autoencoder compiler-guidance evidence into "
+                    f"deterministic {target_component or scope or 'compiler'} rules."
+                ),
+                sample_ids=sample_ids,
+                citations=citations,
+                loss_name="compiler_guidance_distillation",
+                loss_value=round(count, 9),
+                priority=round(250.0 + (25.0 * count), 6),
+                metadata=metadata,
+            )
+        )
+    return todos
+
+
+def _compiler_guidance_activation_todo_id(
+    *,
+    route: str,
+    target_component: str,
+    sample_ids: Sequence[str],
+) -> str:
+    payload = {
+        "route": route,
+        "sample_ids": sorted(str(sample_id) for sample_id in sample_ids),
+        "source": "compiler_guidance_activation_v1",
+        "target_component": target_component,
+    }
+    digest = hashlib.sha256(
+        json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+    ).hexdigest()[:16]
+    return f"guidance-activation-{digest}"
+
+
+def _compiler_guidance_activation_signature(
+    *,
+    route: str,
+    target_component: str,
+    sample_ids: Sequence[str],
+) -> str:
+    payload = {
+        "route": route,
+        "sample_ids": sorted(str(sample_id) for sample_id in sample_ids),
+        "source": "compiler_guidance_activation_v1",
+        "target_component": target_component,
+    }
+    return json.dumps(payload, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+
+
+def compiler_guidance_activation_todos(
+    candidates: Mapping[str, Any],
+    canary_block: Mapping[str, Any],
+    *,
+    policy: Optional[ModalOptimizerPolicy] = None,
+    max_routes: int = 4,
+) -> List[ModalTodo]:
+    """Seed TODOs when learned guidance exists but has no compiler effect yet."""
+    if str(canary_block.get("quality_gate") or "") != "warn":
+        return []
+    if int(canary_block.get("applied_count", 0) or 0) <= 0:
+        return []
+    if not candidates.get("has_candidates"):
+        return []
+    route_counts = candidates.get("top_todo_routes")
+    if not isinstance(route_counts, Mapping):
+        return []
+    route_examples = candidates.get("top_todo_route_examples")
+    if not isinstance(route_examples, Mapping):
+        route_examples = {}
+    scope_hints = candidates.get("scope_hints")
+    if not isinstance(scope_hints, Mapping):
+        scope_hints = {}
+    route_scope_map = scope_hints.get("route_scope_map")
+    if not isinstance(route_scope_map, Mapping):
+        route_scope_map = {}
+
+    optimizer_policy = policy or ModalOptimizerPolicy()
+    todos: List[ModalTodo] = []
+    for route, raw_count in _top_numeric_items(route_counts, limit=max_routes).items():
+        route_scope = route_scope_map.get(route)
+        if not isinstance(route_scope, Mapping):
+            route_scope = compiler_guidance_route_scope(route)
+        action = _normalized_guidance_route(route)
+        target_component = str(route_scope.get("target_component") or "")
+        scope = str(route_scope.get("scope") or "")
+        sample_ids, citations, evidence, metric_payloads = (
+            _compiler_guidance_example_payloads(
+                route_examples.get(route),
+                route=action,
+            )
+        )
+        if not sample_ids:
+            sample_ids = [f"compiler-guidance-activation:{action}"]
+        count = float(raw_count)
+        metadata = {
+            **optimizer_policy.metadata_for(
+                action=action,
+                loss_name="compiler_guidance_activation",
+            ),
+            "compiler_guidance_activation_count": count,
+            "compiler_guidance_activation_reason": (
+                "guidance_applied_without_metric_movement"
+            ),
+            "compiler_guidance_canary": dict(canary_block),
+            "compiler_guidance_quality_gate": canary_block.get("quality_gate", ""),
+            "compiler_guidance_route": action,
+            "compiler_guidance_surface_features": dict(
+                candidates.get("top_surface_features")
+                if isinstance(candidates.get("top_surface_features"), Mapping)
+                else {}
+            ),
+            "compiler_guidance_semantic_overlay_terms": dict(
+                candidates.get("top_semantic_overlay_terms")
+                if isinstance(candidates.get("top_semantic_overlay_terms"), Mapping)
+                else {}
+            ),
+            "compiler_guidance_todo_routes_augmented_from_features": bool(
+                candidates.get("todo_routes_augmented_from_features")
+            ),
+            "compiler_guidance_todo_routes_inferred_from_features": bool(
+                candidates.get("todo_routes_inferred_from_features")
+            ),
+            "dedupe_signature": _compiler_guidance_activation_signature(
+                route=action,
+                target_component=target_component,
+                sample_ids=sample_ids,
+            ),
+            "hint_evidence": evidence,
+            "metric_sample_payloads": metric_payloads,
+            "program_synthesis_scope": scope,
+            "semantic_bundle_key": json.dumps(
+                {
+                    "program_synthesis_scope": scope,
+                    "route": action,
+                    "source": "compiler_guidance_activation_v1",
+                    "target_component": target_component,
+                },
+                ensure_ascii=True,
+                sort_keys=True,
+                separators=(",", ":"),
+            ),
+            "source": "compiler_guidance_activation_v1",
+            "support_count": len(sample_ids),
+            "target_component": target_component,
+            "target_metrics": _compiler_guidance_target_metrics(action, scope),
+            "validation_commands": _compiler_guidance_validation_commands(scope),
+        }
+        todos.append(
+            ModalTodo(
+                todo_id=_compiler_guidance_activation_todo_id(
+                    route=action,
+                    target_component=target_component,
+                    sample_ids=sample_ids,
+                ),
+                action=action,
+                objective=(
+                    "Wire autoencoder compiler-guidance evidence into deterministic "
+                    f"{target_component or scope or 'compiler'} behavior so canary "
+                    "IR metrics move without relying on diagnostic-only slots."
+                ),
+                sample_ids=sample_ids,
+                citations=citations,
+                loss_name="compiler_guidance_activation",
+                loss_value=round(count, 9),
+                priority=round(175.0 + (15.0 * count), 6),
+                metadata=metadata,
+            )
+        )
+    return todos
+
+
+def _compiler_guidance_guardrail_todo_id(
+    *,
+    action: str,
+    guardrail_reason: str,
+    sample_ids: Sequence[str],
+    canary_block: Mapping[str, Any],
+) -> str:
+    payload = {
+        "action": action,
+        "copy_hack_delta": canary_block.get("copy_hack_delta"),
+        "cosine_delta": canary_block.get("cosine_delta"),
+        "guardrail_reason": guardrail_reason,
+        "sample_ids": sorted(str(sample_id) for sample_id in sample_ids),
+        "source": "compiler_guidance_guardrail_v1",
+    }
+    digest = hashlib.sha256(
+        json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+    ).hexdigest()[:16]
+    return f"guidance-guardrail-{digest}"
+
+
+def compiler_guidance_guardrail_todos(
+    candidates: Mapping[str, Any],
+    canary_block: Mapping[str, Any],
+    *,
+    policy: Optional[ModalOptimizerPolicy] = None,
+) -> List[ModalTodo]:
+    """Seed guardrail repairs when learned guidance helps one metric but reward-hacks."""
+    if str(canary_block.get("quality_gate") or "") != "fail":
+        return []
+    copy_hack_delta = _metric_value(canary_block, "copy_hack_delta", 0.0)
+    cosine_delta = _metric_value(canary_block, "cosine_delta", 0.0)
+    ce_delta = _metric_value(canary_block, "ce_delta", 0.0)
+    core_deltas = {
+        "ce_delta": ce_delta,
+        "copy_hack_delta": copy_hack_delta,
+        "cosine_delta": cosine_delta,
+    }
+    if not any(value > 0.0 for value in core_deltas.values()) or not any(
+        value < 0.0 for value in core_deltas.values()
+    ):
+        return []
+    if copy_hack_delta < 0.0:
+        action = "refine_semantic_decompiler_reconstruction"
+        guardrail_reason = "copy_hack_regression_with_useful_guidance"
+        target_component = "modal.ir_decompiler"
+        scope = "ir_decompiler"
+        target_metrics = [
+            "source_copy_reward_hack_penalty",
+            "source_copy_loss",
+            "structural_text_reconstruction_loss",
+            "text_reconstruction_loss",
+            "cosine_similarity",
+        ]
+        objective = (
+            "Keep the useful autoencoder compiler-guidance signal while reducing "
+            "source-copy reward hacking in the IR decompiler."
+        )
+        loss_value = abs(float(copy_hack_delta))
+    elif cosine_delta < 0.0:
+        action = "refine_typed_ir_or_decompiler_slots"
+        guardrail_reason = "cosine_regression_with_useful_guidance"
+        target_component = "modal.ir_decompiler"
+        scope = "ir_decompiler"
+        target_metrics = [
+            "cosine_similarity",
+            "reconstruction_loss",
+            "source_copy_reward_hack_penalty",
+            "structural_text_reconstruction_loss",
+        ]
+        objective = (
+            "Keep useful autoencoder compiler-guidance improvements while preserving "
+            "IR cosine similarity and typed decompiler slot alignment."
+        )
+        loss_value = abs(float(cosine_delta))
+    elif ce_delta < 0.0:
+        action = "refine_modal_family_cue_rules"
+        guardrail_reason = "cross_entropy_regression_with_useful_guidance"
+        target_component = "modal.compiler.registry"
+        scope = "compiler_registry"
+        target_metrics = [
+            "cross_entropy_loss",
+            "cosine_similarity",
+            "source_copy_reward_hack_penalty",
+        ]
+        objective = (
+            "Keep useful autoencoder compiler-guidance improvements while preventing "
+            "modal-family cross-entropy regressions."
+        )
+        loss_value = abs(float(ce_delta))
+    else:
+        return []
+    route_examples = candidates.get("top_todo_route_examples")
+    if not isinstance(route_examples, Mapping):
+        route_examples = {}
+    route_counts = candidates.get("top_todo_routes")
+    if not isinstance(route_counts, Mapping):
+        route_counts = {}
+    sample_ids: List[str] = []
+    citations: List[str] = []
+    evidence: List[Dict[str, Any]] = []
+    metric_payloads: List[Dict[str, Any]] = []
+    for route in _top_numeric_items(route_counts, limit=8):
+        route_samples, route_citations, route_evidence, route_payloads = (
+            _compiler_guidance_example_payloads(
+                route_examples.get(route),
+                route=_normalized_guidance_route(route),
+                max_examples=3,
+            )
+        )
+        sample_ids.extend(route_samples)
+        citations.extend(route_citations)
+        evidence.extend(route_evidence)
+        metric_payloads.extend(route_payloads)
+    sample_ids = list(dict.fromkeys(sample_ids)) or ["compiler-guidance:guardrail"]
+    citations = list(dict.fromkeys(citations))
+    optimizer_policy = policy or ModalOptimizerPolicy()
+    metadata = {
+        **optimizer_policy.metadata_for(
+            action=action,
+            loss_name="compiler_guidance_guardrail",
+        ),
+        "compiler_guidance_canary": dict(canary_block),
+        "compiler_guidance_guardrail_reason": guardrail_reason,
+        "compiler_guidance_quality_gate": canary_block.get("quality_gate", ""),
+        "dedupe_signature": json.dumps(
+            {
+                "sample_ids": sorted(sample_ids),
+                "source": "compiler_guidance_guardrail_v1",
+            },
+            ensure_ascii=True,
+            sort_keys=True,
+            separators=(",", ":"),
+        ),
+        "hint_evidence": evidence,
+        "metric_sample_payloads": metric_payloads,
+        "program_synthesis_scope": scope,
+        "semantic_bundle_key": json.dumps(
+            {
+                "program_synthesis_scope": scope,
+                "source": "compiler_guidance_guardrail_v1",
+                "target_component": target_component,
+            },
+            ensure_ascii=True,
+            sort_keys=True,
+            separators=(",", ":"),
+        ),
+        "source": "compiler_guidance_guardrail_v1",
+        "support_count": len(sample_ids),
+        "target_component": target_component,
+        "target_metrics": target_metrics,
+        "validation_commands": _compiler_guidance_validation_commands(scope),
+    }
+    return [
+        ModalTodo(
+            todo_id=_compiler_guidance_guardrail_todo_id(
+                action=action,
+                guardrail_reason=guardrail_reason,
+                sample_ids=sample_ids,
+                canary_block=canary_block,
+            ),
+            action=action,
+            objective=objective,
+            sample_ids=sample_ids,
+            citations=citations,
+            loss_name="compiler_guidance_guardrail",
+            loss_value=loss_value,
+            priority=round(150.0 + (float(loss_value) * 100.0), 6),
+            metadata=metadata,
+        )
+    ]
+
+def cleanup_program_synthesis_terminal_queue(
+    *,
+    queue_path: str | Path,
+    archive_dir: Optional[str | Path] = None,
+    policy: Optional[ModalOptimizerPolicy] = None,
+    statuses: Sequence[str] = ("superseded",),
+    supersede_rescued_failed_validations: bool = True,
+) -> Dict[str, Any]:
+    """Archive terminal program-synthesis history out of an active queue."""
+
+    queue_path = Path(queue_path)
+    policy = policy or ModalOptimizerPolicy()
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    with queue_file_lock(queue_path):
+        queue = ModalTodoQueue.load_jsonl(queue_path)
+        before = queue.status_counts()
+        superseded_report: Dict[str, Any] = {}
+        if supersede_rescued_failed_validations:
+            superseded_report = queue.supersede_rescued_failed_validations(
+                optimizer_role=policy.program_synthesis_role,
+            )
+        archived = queue.pop_terminal_history(
+            optimizer_role=policy.program_synthesis_role,
+            statuses=statuses,
+        )
+        archived_status_counts: Dict[str, int] = {}
+        for todo in archived:
+            archived_status_counts[todo.status] = (
+                archived_status_counts.get(todo.status, 0) + 1
+            )
+
+        backup_path: Optional[Path] = None
+        archive_path: Optional[Path] = None
+        changed = bool(archived) or bool(superseded_report.get("superseded_count"))
+        if changed:
+            if queue_path.exists():
+                backup_path = queue_path.with_name(
+                    f"{queue_path.name}.pre-terminal-cleanup-{timestamp}.bak"
+                )
+                shutil.copy2(queue_path, backup_path)
+            if archived:
+                destination_dir = (
+                    Path(archive_dir) if archive_dir is not None else queue_path.parent / "archive"
+                )
+                destination_dir.mkdir(parents=True, exist_ok=True)
+                archive_path = destination_dir / (
+                    f"{queue_path.stem}.terminal-history-{timestamp}.jsonl"
+                )
+                archive_path.write_text(
+                    "\n".join(todo.to_json() for todo in archived) + "\n",
+                    encoding="utf-8",
+                )
+            queue.save_jsonl(queue_path)
+        after = queue.status_counts()
+
+    return {
+        "archive_path": str(archive_path) if archive_path is not None else None,
+        "archived_count": len(archived),
+        "archived_status_counts": dict(sorted(archived_status_counts.items())),
+        "backup_path": str(backup_path) if backup_path is not None else None,
+        "before": before,
+        "after": after,
+        "changed": changed,
+        "queue_path": str(queue_path),
+        "statuses": list(statuses),
+        "superseded_report": superseded_report,
+    }
 
 
 def bridge_loss_adapter_names(args: argparse.Namespace) -> List[str]:

@@ -1881,6 +1881,31 @@ class ModalTodoQueue:
             "superseded_todo_ids": sorted(superseded_ids),
         }
 
+    def pop_terminal_history(
+        self,
+        *,
+        optimizer_role: str = PROGRAM_SYNTHESIS_ROLE,
+        statuses: Iterable[str] = ("superseded",),
+    ) -> List[ModalTodo]:
+        """Remove terminal history rows from the active queue and return them."""
+
+        terminal_statuses = {str(status).strip() for status in statuses if str(status).strip()}
+        if not terminal_statuses:
+            return []
+        retired: List[ModalTodo] = []
+        kept: Dict[str, ModalTodo] = {}
+        for todo in self._todos.values():
+            if (
+                _todo_optimizer_role(todo) == optimizer_role
+                and todo.status in terminal_statuses
+            ):
+                retired.append(todo)
+                continue
+            kept[todo.todo_id] = todo
+        if retired:
+            self._todos = kept
+        return sorted(retired, key=_todo_priority_key)
+
     def requeue_stale_claims(
         self,
         *,

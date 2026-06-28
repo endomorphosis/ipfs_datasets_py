@@ -971,6 +971,89 @@ def test_supervisor_supersedes_failures_covered_by_completed_rescue() -> None:
     assert supervisor.program_synthesis_status()["failed_validation"] == 0
 
 
+def test_runner_cleanup_archives_rescued_failed_and_superseded_history(
+    tmp_path: Path,
+) -> None:
+    metadata = {
+        "execution_target": "codex_program_repair",
+        "failure_reason": "codex_exec_transient_failure",
+        "optimizer_role": "program_synthesis",
+        "optimizer_stage": "typed_program_synthesis",
+        "program_synthesis_scope": "ir_decompiler",
+        "target_component": "modal.ir_decompiler",
+    }
+    failed = ModalTodo(
+        todo_id="failed-ir",
+        action="refine_typed_ir_or_decompiler_slots",
+        objective="repair typed slots",
+        sample_ids=["sample-a"],
+        citations=["5 U.S.C. 552"],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=2.0,
+        priority=44.0,
+        status="failed_validation",
+        metadata=dict(metadata),
+    )
+    rescue = ModalTodo(
+        todo_id="rescue-ir",
+        action=daemon.FAILED_VALIDATION_RESCUE_ACTION,
+        objective="rescue failed validation",
+        sample_ids=["sample-a"],
+        citations=["5 U.S.C. 552"],
+        loss_name="failed_validation_rescue",
+        loss_value=1.0,
+        priority=50.0,
+        metadata={**metadata, "failed_todo_ids": ["failed-ir"]},
+    )
+    rescue.complete()
+    old_superseded = ModalTodo(
+        todo_id="old-superseded",
+        action="refine_modal_family_cue_rules",
+        objective="old covered work",
+        sample_ids=["sample-b"],
+        citations=["12 U.S.C. 1"],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.5,
+        priority=12.0,
+        status="superseded",
+        metadata=dict(metadata),
+    )
+    completed = ModalTodo(
+        todo_id="completed-live-history",
+        action="refine_semantic_decompiler_reconstruction",
+        objective="completed repair",
+        sample_ids=["sample-c"],
+        citations=["15 U.S.C. 1"],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=0.5,
+        priority=8.0,
+        status="completed",
+        metadata=dict(metadata),
+    )
+    queue_path = tmp_path / "queue.jsonl"
+    ModalTodoQueue([failed, rescue, old_superseded, completed]).save_jsonl(queue_path)
+
+    report = runner.cleanup_program_synthesis_terminal_queue(queue_path=queue_path)
+    queue = ModalTodoQueue.load_jsonl(queue_path)
+    archive_path = Path(str(report["archive_path"]))
+    archived = [
+        json.loads(line)
+        for line in archive_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+
+    assert report["superseded_report"]["superseded_count"] == 1
+    assert report["archived_count"] == 2
+    assert report["archived_status_counts"] == {"superseded": 2}
+    assert Path(str(report["backup_path"])).exists()
+    assert archive_path.exists()
+    assert queue.status_counts() == {"completed": 2}
+    assert queue.get("failed-ir") is None
+    assert queue.get("old-superseded") is None
+    assert queue.get("rescue-ir").status == "completed"
+    assert {row["todo_id"] for row in archived} == {"failed-ir", "old-superseded"}
+
+
 def test_supervisor_refreshes_rescue_for_new_failures_after_completed_rescue() -> None:
     metadata = {
         "execution_target": "codex_program_repair",
