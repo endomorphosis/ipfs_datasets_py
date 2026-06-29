@@ -17,6 +17,8 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import (
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
     ModalIRDocument,
     ModalIRFormula,
+    ModalIRFrame,
+    ModalIRFrameLogic,
     ModalIROperator,
     ModalIRPredicate,
     ModalIRProvenance,
@@ -592,6 +594,74 @@ def test_modal_slots_emit_terminal_and_profile_alignment_slots_for_todo_cluster_
             assert triple_values == expected[predicate]
 
 
+def test_modal_ir_decompiler_emits_deontic_selected_frame_grounding_slots() -> None:
+    document = ModalIRDocument(
+        document_id="us-code-36-150404-32d16ea28c8d2940",
+        source="36 U.S.C. 150404",
+        normalized_text=(
+            "The corporation may participate in patriotic and national "
+            "observances, ceremonies, and organizations."
+        ),
+        formulas=[
+            ModalIRFormula(
+                formula_id="f1",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="KD",
+                    symbol="P",
+                    label="permission",
+                ),
+                predicate=ModalIRPredicate(
+                    name="participate",
+                    arguments=["corporation", "patriotic observances"],
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-36-150404-32d16ea28c8d2940",
+                    start_char=0,
+                    end_char=99,
+                    citation="36 U.S.C. 150404",
+                ),
+            )
+        ],
+        frame_candidates=[
+            ModalIRFrame(
+                frame_id="patriotic_observance",
+                score=1.0,
+                matched_terms=[
+                    "patriotic",
+                    "national observances",
+                    "ceremonies",
+                    "organizations",
+                ],
+            )
+        ],
+        frame_logic=ModalIRFrameLogic(selected_frame="patriotic_observance"),
+        metadata={"modal_family_counts": {"deontic": 1}},
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+    triple_values: dict[str, list[str]] = {}
+    for triple in modal_ir_to_flogic_triples(document):
+        predicate = str(triple.get("predicate", "")).strip()
+        value = str(triple.get("object", "")).strip()
+        if predicate.startswith("frame_grounding") and value:
+            triple_values.setdefault(predicate, []).append(value)
+
+    assert slot_map["selected_ontology_frame"] == ["patriotic_observance"]
+    assert slot_map["frame_grounding_modal_family"] == ["deontic"]
+    assert slot_map["frame_grounding_candidate_count"] == ["1"]
+    assert slot_map["frame_grounding_profile"] == triple_values["frame_grounding_profile"]
+    assert (
+        slot_map["frame_grounding_selected_term_count"]
+        == triple_values["frame_grounding_selected_term_count"]
+    )
+    assert (
+        slot_map["frame_grounding_family_profile_deontic"]
+        == triple_values["frame_grounding_family_profile_deontic"]
+    )
+
+
 def test_modal_slots_emit_primary_terminal_number_distance_profiles() -> None:
     expected_by_section = {
         ("42", "18791."): ("equal_lt_1k", "1k"),
@@ -828,6 +898,76 @@ def test_modal_decompiler_refines_condition_scope_bridge_slots() -> None:
     ]
     assert "condition:not_later_than:deadline" in slot_texts[
         "refined_temporal_bridge_context"
+    ]
+
+
+def test_modal_decompiler_projects_condition_scope_typed_roles_to_triples() -> None:
+    formula = ModalIRFormula(
+        formula_id="f_condition_typed_roles",
+        operator=ModalIROperator(
+            family="deontic",
+            system="D",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="maintain_certification_records", arguments=[]),
+        provenance=ModalIRProvenance(
+            source_id="condition-typed-role-doc",
+            start_char=0,
+            end_char=96,
+            citation="7 U.S.C. 6503",
+        ),
+        conditions=["if the Secretary shall establish a national organic program"],
+    )
+    document = ModalIRDocument(
+        document_id="condition-typed-role-doc",
+        source="us_code",
+        normalized_text=(
+            "If the Secretary shall establish a national organic program, "
+            "certification records shall be maintained."
+        ),
+        formulas=[formula],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+    triple_values: dict[str, list[str]] = {}
+    for triple in modal_ir_to_flogic_triples(document):
+        predicate = str(triple.get("predicate", "")).strip()
+        value = str(triple.get("object", "")).strip()
+        if not predicate or not value:
+            continue
+        values = triple_values.setdefault(predicate, [])
+        if value not in values:
+            values.append(value)
+
+    assert "subject" in slot_texts["condition_scope_typed_decompiler_role"]
+    assert "secretary" in slot_texts["condition_scope_typed_decompiler_subject"]
+    assert "establish" in slot_texts["condition_scope_typed_decompiler_action"]
+    assert "national_organic_program" in slot_texts[
+        "condition_scope_typed_decompiler_object"
+    ]
+    assert "deontic:subject+action+object" in slot_texts[
+        "condition_scope_typed_decompiler_family_role_signature"
+    ]
+    assert "deontic->deontic:subject+action+object" in slot_texts[
+        "condition_scope_typed_decompiler_family_pair_bridge"
+    ]
+
+    assert triple_values["condition_scope_typed_decompiler_role"] == [
+        "subject",
+        "action",
+        "object",
+    ]
+    assert triple_values["condition_scope_typed_decompiler_subject"] == ["secretary"]
+    assert triple_values["condition_scope_typed_decompiler_action"] == ["establish"]
+    assert triple_values["condition_scope_typed_decompiler_object"] == [
+        "national_organic_program"
+    ]
+    assert "deontic:subject+action+object" in triple_values[
+        "condition_scope_typed_decompiler_family_role_signature"
+    ]
+    assert "deontic->deontic:subject+action+object" in triple_values[
+        "condition_scope_typed_decompiler_family_pair_bridge"
     ]
 
 
@@ -1134,6 +1274,45 @@ def test_modal_decompiler_refines_packet_003430_frame_target_pairs() -> None:
     )
 
 
+def test_modal_decompiler_refines_frame_epistemic_nominal_cues() -> None:
+    text = (
+        "The Secretary's determination and findings for the park boundary "
+        "shall be published with supporting records."
+    )
+    formula = ModalIRFormula(
+        formula_id="f_packet_000909_frame_epistemic",
+        operator=ModalIROperator(
+            family="frame",
+            system="FRAME_BM25",
+            symbol="Frame",
+            label="ontology_frame",
+        ),
+        predicate=ModalIRPredicate(name="park_boundary_determination", role="clause"),
+        provenance=ModalIRProvenance(
+            source_id="us-code-16-410ccc-packet-000909",
+            start_char=0,
+            end_char=len(text),
+            citation="16 U.S.C. 410ccc",
+        ),
+        metadata={"cue": "__uscode_section_heading_fallback__"},
+    )
+    document = ModalIRDocument(
+        document_id="packet-000909-frame-epistemic-nominal-cues",
+        source="us_code",
+        normalized_text=text,
+        formulas=[formula],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+
+    assert "frame->epistemic" in slot_texts["typed_decompiler_family_pair"]
+    assert "Frame->K" in slot_texts["refined_modal_operator_pair"]
+    assert (
+        "frame->epistemic:determination"
+        in slot_texts["refined_modal_pair_cue"]
+    )
+
+
 def test_modal_decompiler_refines_effective_date_temporal_typed_ir_slots() -> None:
     formula = ModalIRFormula(
         formula_id="f_effective_date_temporal",
@@ -1422,4 +1601,53 @@ def test_modal_decompiler_promotes_residual_fallback_as_target_reconstruction_cu
         "uscode_residual_span_coverage_v1|typed-decompiler-family-pair:"
         "frame->deontic||deontic.ir"
         in legal_ir_slots
+    )
+
+
+def test_modal_decompiler_surfaces_epistemic_frame_pair_cues_for_statutory_scope() -> None:
+    source_text = (
+        "The Administrator determines that the agency shall provide mitigation "
+        "assistance under this section."
+    )
+    document = ModalIRDocument(
+        document_id="packet-003095-epistemic-frame-scope",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="packet-003095-epistemic",
+                operator=ModalIROperator(
+                    family="epistemic",
+                    system="S5",
+                    symbol="K",
+                    label="knowledge",
+                ),
+                predicate=ModalIRPredicate(
+                    name="administrator_determines_agency_shall_provide_mitigation",
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-42-4104c.-bd287c7c45a3de65",
+                    start_char=0,
+                    end_char=len(source_text),
+                    citation="42 U.S.C. 4104c.",
+                ),
+                conditions=["under this section"],
+                metadata={"cue": "determines"},
+            )
+        ],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+
+    assert "epistemic->frame" in slot_texts["typed_decompiler_family_pair"]
+    assert {
+        "epistemic->frame:section",
+        "epistemic->frame:shall",
+    }.issubset(set(slot_texts["typed_decompiler_family_pair_cue"]))
+    assert {
+        "epistemic->frame:section",
+        "epistemic->frame:shall",
+    }.issubset(
+        set(slot_texts["modal_source_span_typed_decompiler_family_pair_cue"])
     )

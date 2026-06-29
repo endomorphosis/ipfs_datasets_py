@@ -1248,9 +1248,11 @@ class SpaCyLegalEncoder:
                             )
                         ):
                             continue
+                        lowered_cue = cue.lower()
+                        first_cue_token = lowered_cue.split(maxsplit=1)[0]
                         if (
                             profile.family == ModalLogicFamily.DEONTIC
-                            and cue.lower() == "required"
+                            and first_cue_token in {"require", "required", "requires"}
                             and self._is_non_deontic_required_cue(
                                 normalized_text=normalized,
                                 start_char=match.start(),
@@ -1279,7 +1281,6 @@ class SpaCyLegalEncoder:
                         ):
                             continue
                         if profile.family == ModalLogicFamily.TEMPORAL:
-                            lowered_cue = cue.lower()
                             if lowered_cue in _NON_TEMPORAL_PROCEDURAL_AFTER_CUES:
                                 continue
                             if (

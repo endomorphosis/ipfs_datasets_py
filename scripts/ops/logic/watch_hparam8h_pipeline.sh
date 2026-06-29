@@ -133,7 +133,8 @@ while true; do
     exit 0
   fi
 
-  if has_failure_signature; then
+  final_run_id="$(extract_final_run_id)"
+  if has_failure_signature && [[ -z "${final_run_id}" ]]; then
     log_line "problem_detected signature=failure_in_pipeline_log"
     write_state "unknown" "failed" "failure_signature_detected" "" false
     exit 3
@@ -146,7 +147,6 @@ while true; do
     exit 4
   fi
 
-  final_run_id="$(extract_final_run_id)"
   if [[ -n "${final_run_id}" ]]; then
     final_summary="${LOG_DIR}/${final_run_id}-autoencoder.summary"
     if [[ -f "${final_summary}" ]]; then

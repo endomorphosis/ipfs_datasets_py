@@ -620,6 +620,53 @@ def test_modal_compiler_decompiler_are_explainable_and_deterministic() -> None:
     }
 
 
+def test_modal_decompiler_surfaces_autoencoder_modal_family_guidance_slots() -> None:
+    modal_ir = ModalIRDocument(
+        document_id="guidance-doc",
+        source="us_code",
+        normalized_text="The agency must provide notice.",
+        metadata={
+            "hint_evidence": [
+                {
+                    "primary_pipeline_stage": "modal_family_registry",
+                    "pipeline_stage_focus": ["modal_family_registry"],
+                    "pipeline_stage_diagnostics": {
+                        "modal_family_cue_mismatch": True,
+                        "modal_family_target_probability_gap": 0.366001885428,
+                    },
+                    "top_embedding_features": [
+                        "modal-family-prototype:temporal",
+                        "legal-ir-view-prototype:modal.frame_logic",
+                        "modal-family-prototype:frame",
+                        "family-legal-ir-view-prototype:frame||modal.frame_logic",
+                    ],
+                }
+            ],
+        },
+    )
+
+    decoded = decode_modal_ir_document(modal_ir)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert decoded.text == modal_ir.normalized_text
+    assert slot_texts["autoencoder_modal_family_cue_mismatch"] == ["true"]
+    assert slot_texts["autoencoder_modal_family_target_probability_gap"] == [
+        "0.366001885428"
+    ]
+    assert slot_texts["autoencoder_modal_family_target_probability_gap_bucket"] == [
+        "0_25_to_0_5"
+    ]
+    assert slot_texts["autoencoder_primary_pipeline_stage"] == [
+        "modal_family_registry"
+    ]
+    assert slot_texts["autoencoder_modal_family_prototype"] == ["temporal", "frame"]
+    assert slot_texts["autoencoder_modal_family_prototype_pair"] == ["temporal->frame"]
+    assert slot_texts["autoencoder_legal_ir_view_prototype"] == ["modal.frame_logic"]
+    assert slot_texts["autoencoder_family_legal_ir_view_pair"] == [
+        "frame||modal.frame_logic"
+    ]
+
+
 def test_flogic_graph_projection_metadata_tracks_frame_logic_alignment() -> None:
     graph_data = flogic_triples_to_graph_data(
         [
@@ -12865,6 +12912,53 @@ def test_modal_decompiler_surfaces_typed_role_and_reference_dependency_slots() -
     assert "direct_reference:section" in slot_texts["reference_dependency"]
 
 
+def test_modal_decompiler_surfaces_frame_to_deontic_typed_ir_slots() -> None:
+    source_id = "frame-deontic-typed-ir-slots"
+    source = "The Secretary shall tax costs under section 1920."
+    formula = ModalIRFormula(
+        formula_id=f"{source_id}:f0001",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame_bm25",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(name="secretary_shall_tax_costs"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source),
+            citation="28 U.S.C. 1920",
+        ),
+    )
+    document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source,
+        formulas=[formula],
+        frame_candidates=[
+            ModalIRFrame(
+                frame_id="taxation_of_costs",
+                score=2.0,
+                matched_terms=["tax costs"],
+            )
+        ],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert decoded.formulas == ["Frame[frame:frame_bm25](secretary_shall_tax_costs)"]
+    assert "obligation" in slot_texts["typed_ir_deontic_force"]
+    assert "frame->deontic" in slot_texts["typed_ir_deontic_candidate_family_pair"]
+    assert "shall" in slot_texts["typed_ir_deontic_candidate_cue"]
+    assert (
+        "frame:Frame->deontic:O:shall"
+        in slot_texts["typed_ir_frame_deontic_bridge_signature"]
+    )
+    assert "taxation_of_costs" in slot_texts["typed_ir_deontic_frame_context"]
+
+
 def test_modal_decompiler_recovers_condition_exception_and_citation_slots() -> None:
     compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
     compiled = compiler.compile(
@@ -13475,6 +13569,51 @@ def test_modal_decompiler_and_triples_surface_frame_to_temporal_snapshot_bridge_
     )
 
 
+def test_modal_decompiler_surfaces_frame_to_alethic_scope_bridge_slots() -> None:
+    source_id = "us-code-29-3221-frame-to-alethic-bridge"
+    source_text = (
+        "Sec. 3221 - Native American programs. The program plan includes "
+        "services necessary to carry out this section."
+    )
+    formula = ModalIRFormula(
+        formula_id=f"{source_id}:f0001",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame_bm25",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(name="native_american_programs_section_scope"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="29 U.S.C. 3221",
+        ),
+        metadata={"cue": "__uscode_section_heading_fallback__"},
+    )
+    document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "frame->alethic" in slot_texts["typed_decompiler_family_pair"]
+    assert "frame->alethic" in slot_texts[
+        "modal_source_span_typed_decompiler_family_pair"
+    ]
+    assert "frame->alethic" in slot_texts[
+        "modal_source_span_refined_modal_family_pair"
+    ]
+    assert "alethic:□:necessary" in slot_texts[
+        "modal_source_span_refined_modal_bridge_signature"
+    ]
+
+
 def test_modal_decompiler_surfaces_deontic_to_temporal_snapshot_bridge_slots() -> None:
     source_id = "us-code-25-155-deontic-to-temporal-bridge"
     source_text = (
@@ -13582,6 +13721,51 @@ def test_modal_decompiler_and_triples_surface_subject_to_section_specific_bridge
         and triple["object"] == "frame:Frame:subject_to_section"
         for triple in triples
     )
+
+
+def test_modal_decompiler_inferred_frame_condition_surfaces_conditional_bridge_slots() -> None:
+    source_id = "us-code-29-1400-frame-conditional-scope"
+    source_text = (
+        "The multiemployer plan provision is subject to section 1401 of this title."
+    )
+    formula = ModalIRFormula(
+        formula_id=f"{source_id}:f0001",
+        operator=ModalIROperator(
+            family="frame",
+            system="flogic",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="multiemployer_plan_provision"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="29 U.S.C. 1400",
+        ),
+        metadata={"cue": "section"},
+    )
+    document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_texts["condition_prefix_key"] == ["subject_to_section"]
+    assert "subject_to_section" in slot_texts["bridge_cue"]
+    assert "frame->conditional_normative" in slot_texts[
+        "condition_modal_bridge_family_pair"
+    ]
+    assert "conditional_normative:O|:subject_to_section" in slot_texts[
+        "condition_modal_bridge_signature"
+    ]
+    assert "frame->conditional_normative" in slot_texts[
+        "bridge_modal_bridge_family_pair"
+    ]
 
 
 def test_modal_decompiler_and_triples_surface_in_accordance_with_bridge_slots() -> None:
@@ -13749,6 +13933,49 @@ def test_modal_decompiler_and_triples_infer_condition_slots_from_source_span_whe
     )
 
 
+def test_modal_decompiler_surfaces_suspension_as_deontic_dynamic_bridge() -> None:
+    source_id = "us-code-15-1693j-48f8e1ec46a9aac8"
+    source_text = (
+        "15 U.S.C. 1693j: U.S.C. Title 15 - COMMERCE AND TRADE "
+        "Sec. 1693j - Suspension of obligations From the U.S. Government "
+        "Publishing Office, www.gpo.gov."
+    )
+    formula = ModalIRFormula(
+        formula_id=f"{source_id}:f0001",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="suspension_of_obligations", role="clause"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="15 U.S.C. 1693j",
+        ),
+        metadata={"cue": "obligations"},
+    )
+    document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "deontic->dynamic" in slot_texts["bridge_modal_bridge_family_pair"]
+    assert "deontic->dynamic" in slot_texts[
+        "modal_source_span_typed_decompiler_family_pair"
+    ]
+    assert "dynamic:[a]:suspension" in slot_texts[
+        "modal_source_span_refined_modal_bridge_signature"
+    ]
+
+
 def test_modal_decompiler_and_triples_prefer_longest_condition_prefix_match() -> None:
     source_id = "us-code-5-552-longest-prefix"
     source_text = (
@@ -13913,6 +14140,60 @@ def test_modal_decompiler_and_triples_surface_inflected_bridge_cue_variants() ->
     assert any(
         triple["predicate"] == "bridge_modal_bridge_signature"
         and triple["object"] == "temporal:F:effective_dates"
+        for triple in triples
+    )
+
+
+def test_modal_decompiler_and_triples_bridge_epistemic_determinations_to_deontic_slots() -> None:
+    source_id = "us-code-15-78j-1-fa54b11a0d51e53f"
+    source_text = (
+        "If the Commission determines that an issuer failed to comply, the "
+        "issuer shall retain audit records."
+    )
+    formula = ModalIRFormula(
+        formula_id=f"{source_id}:f0001",
+        operator=ModalIROperator(
+            family="epistemic",
+            system="s5",
+            symbol="K",
+            label="known",
+        ),
+        predicate=ModalIRPredicate(
+            name="determine_issuer_compliance",
+            arguments=["issuer shall retain audit records"],
+            role="clause",
+        ),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="15 U.S.C. 78j-1",
+        ),
+        conditions=["if the Commission determines that an issuer failed to comply"],
+        metadata={"cue": "determines"},
+    )
+    document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+    triples = modal_ir_to_flogic_triples(document)
+
+    assert "epistemic->deontic" in slot_texts["cue_modal_bridge_family_pair"]
+    assert "epistemic_deontic" in slot_texts["cue_modal_bridge_family_pair_key"]
+    assert "deontic:O:determines" in slot_texts["cue_modal_bridge_signature"]
+    assert "epistemic->deontic" in slot_texts["typed_decompiler_family_pair"]
+    assert any(
+        triple["predicate"] == "cue_modal_bridge_family_pair"
+        and triple["object"] == "epistemic->deontic"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "cue_modal_bridge_family_pair_key"
+        and triple["object"] == "epistemic_deontic"
         for triple in triples
     )
 

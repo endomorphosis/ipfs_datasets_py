@@ -319,10 +319,12 @@ for idx in "${!CONFIGS[@]}"; do
     summary_path="${LOG_DIR}/${trial_id}.summary"
   fi
 
+  trap - ERR
   set +e
   "${PYTHON_BIN}" -m "${MODULE}" "${trial_args[@]}"
   trial_exit_code=$?
   set -e
+  trap 'echo "[pipeline] failed line=${LINENO} status=$?"' ERR
   echo "[trial] exit_code run_id=${trial_id} code=${trial_exit_code}"
 
   if [[ ! -f "${summary_path}" ]]; then
@@ -551,10 +553,12 @@ final_args=(
   "${PAIRED_ARGS[@]}"
 )
 
+trap - ERR
 set +e
 "${PYTHON_BIN}" -m "${MODULE}" "${final_args[@]}"
 final_exit_code=$?
 set -e
+trap 'echo "[pipeline] failed line=${LINENO} status=$?"' ERR
 
 if (( final_exit_code != 0 )); then
   final_summary_path="${LOG_DIR}/${final_run_id}-autoencoder.summary"

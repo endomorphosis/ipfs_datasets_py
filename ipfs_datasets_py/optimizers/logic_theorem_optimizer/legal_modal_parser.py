@@ -55,6 +55,11 @@ _USCODE_LEGISLATIVE_HISTORY_ABBREVIATION_RE = re.compile(
 )
 _USCODE_EDITORIAL_PERMISSION_CUES = frozenset({"allowed", "authorized", "permitted"})
 _USCODE_EDITORIAL_REQUIRED_CUES = frozenset({"required", "requires", "require"})
+_USCODE_EDITORIAL_DEONTIC_HISTORY_CUE_PREFIXES = (
+    _USCODE_EDITORIAL_REQUIRED_CUES
+    | _USCODE_EDITORIAL_PERMISSION_CUES
+    | frozenset({"authorization"})
+)
 _USCODE_EDITORIAL_HISTORY_CUE_FAMILIES = frozenset(
     {
         ModalLogicFamily.CONDITIONAL_NORMATIVE,
@@ -964,9 +969,11 @@ class LegalModalParser:
                             end_char=match.end(),
                         ):
                             continue
+                        lowered_cue = cue.lower()
+                        first_cue_token = lowered_cue.split(maxsplit=1)[0]
                         if (
                             profile.family == ModalLogicFamily.DEONTIC
-                            and cue.lower() in _USCODE_EDITORIAL_REQUIRED_CUES
+                            and first_cue_token in _USCODE_EDITORIAL_REQUIRED_CUES
                             and self._is_non_deontic_editorial_required_cue(
                                 normalized_text=normalized,
                                 start_char=match.start(),
@@ -1146,8 +1153,10 @@ class LegalModalParser:
         if family not in _USCODE_EDITORIAL_HISTORY_CUE_FAMILIES:
             return False
         lowered_cue = cue.lower()
-        if family == ModalLogicFamily.DEONTIC and lowered_cue not in (
-            _USCODE_EDITORIAL_REQUIRED_CUES | _USCODE_EDITORIAL_PERMISSION_CUES
+        first_cue_token = lowered_cue.split(maxsplit=1)[0]
+        if (
+            family == ModalLogicFamily.DEONTIC
+            and first_cue_token not in _USCODE_EDITORIAL_DEONTIC_HISTORY_CUE_PREFIXES
         ):
             return False
         context_window = normalized_text[

@@ -75,6 +75,7 @@ from .decompiler import (
     decoded_modal_phrase_slot_text_map,
     _legal_semantic_atoms_from_text,
     _modal_polarity_slots,
+    _typed_decompiler_role_slots,
     _uscode_status_clause_text,
     modal_text_token_similarity,
 )
@@ -1004,6 +1005,18 @@ _DEONTIC_EPISTEMIC_BRIDGE_CUES: frozenset[str] = frozenset(
         "believed",
         "believing",
         "reasonably_believes",
+    }
+)
+_EPISTEMIC_DEONTIC_BRIDGE_CUES: frozenset[str] = frozenset(
+    {
+        "determine",
+        "determines",
+        "determined",
+        "determining",
+        "find",
+        "finds",
+        "finding",
+        "reason_to_believe",
     }
 )
 _DEONTIC_ALETHIC_BRIDGE_CUES: frozenset[str] = frozenset(
@@ -3576,6 +3589,13 @@ def modal_ir_to_flogic_triples(
                     "object": predicate_value,
                 }
             )
+        _append_typed_decompiler_role_triples(
+            triples,
+            subject=formula.formula_id,
+            formula=formula,
+            text=formula.predicate.name,
+            slot_prefix="predicate",
+        )
         predicate_surface_text = _predicate_surface_text_component(
             modal_ir=modal_ir,
             formula=formula,
@@ -3630,6 +3650,13 @@ def modal_ir_to_flogic_triples(
                         "object": predicate_value,
                     }
                 )
+            _append_typed_decompiler_role_triples(
+                triples,
+                subject=formula.formula_id,
+                formula=formula,
+                text=surface_text,
+                slot_prefix="predicate_surface_text",
+            )
         modal_operator_label = _resolved_modal_operator_label(formula)
         if modal_operator_label:
             triples.append(
@@ -4272,6 +4299,13 @@ def modal_ir_to_flogic_triples(
                                 "object": predicate_value,
                             }
                         )
+                    _append_typed_decompiler_role_triples(
+                        triples,
+                        subject=formula.formula_id,
+                        formula=formula,
+                        text=scoped_value,
+                        slot_prefix="condition_scope",
+                    )
         for exception in resolved_exceptions:
             triples.append(
                 {
@@ -4401,6 +4435,13 @@ def modal_ir_to_flogic_triples(
                                 "object": predicate_value,
                             }
                         )
+                    _append_typed_decompiler_role_triples(
+                        triples,
+                        subject=formula.formula_id,
+                        formula=formula,
+                        text=scoped_value,
+                        slot_prefix="exception_scope",
+                    )
             if not resolved_conditions:
                 for (
                     condition_predicate,
@@ -6215,6 +6256,13 @@ def _augment_deontic_bridge_pairs(
         deontic_epistemic_pair = ("epistemic", "K")
         if deontic_epistemic_pair not in pairs:
             pairs.append(deontic_epistemic_pair)
+    if (
+        normalized_family == "epistemic"
+        and cue_key in _EPISTEMIC_DEONTIC_BRIDGE_CUES
+    ):
+        epistemic_deontic_pair = ("deontic", "O")
+        if epistemic_deontic_pair not in pairs:
+            pairs.append(epistemic_deontic_pair)
     if (
         normalized_family == "temporal"
         and _temporal_clause_prefix_relation(cue_key)
@@ -11241,6 +11289,44 @@ def _append_statutory_scope_triples(
                 "subject": subject,
                 "predicate": predicate,
                 "object": value,
+            }
+        )
+
+
+def _append_typed_decompiler_role_triples(
+    triples: List[Dict[str, str]],
+    *,
+    subject: str,
+    formula: ModalIRFormula,
+    text: str,
+    slot_prefix: str,
+) -> None:
+    emitted = {
+        (
+            _clean_non_empty_string(triple.get("predicate")),
+            _clean_non_empty_string(triple.get("object")),
+        )
+        for triple in triples
+        if _clean_non_empty_string(triple.get("subject")) == subject
+    }
+    for predicate, value in _typed_decompiler_role_slots(
+        formula=formula,
+        text=text,
+        slot_prefix=slot_prefix,
+    ):
+        normalized_predicate = _clean_non_empty_string(predicate)
+        normalized_value = _clean_non_empty_string(value)
+        if not normalized_predicate or not normalized_value:
+            continue
+        marker = (normalized_predicate, normalized_value)
+        if marker in emitted:
+            continue
+        emitted.add(marker)
+        triples.append(
+            {
+                "subject": subject,
+                "predicate": normalized_predicate,
+                "object": normalized_value,
             }
         )
 

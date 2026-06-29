@@ -320,6 +320,16 @@ _STRUCTURAL_FRAME_CUE_TOKENS = frozenset(
         "title",
     }
 )
+_ALETHIC_SCOPE_CUE_OPERATOR_SYMBOLS: Mapping[str, str] = {
+    "able": "◇",
+    "capable": "◇",
+    "can": "◇",
+    "cannot": "□",
+    "impossible": "□",
+    "may_be": "◇",
+    "necessary": "□",
+    "possible": "◇",
+}
 _CANONICAL_MODAL_OPERATOR_LABELS: Mapping[Tuple[str, str], str] = {
     ("deontic", "O"): "obligation",
     ("deontic", "P"): "permission",
@@ -612,6 +622,16 @@ _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...
     "transfers": (("dynamic", "[a]"),),
     "transferred": (("dynamic", "[a]"),),
     "transferring": (("dynamic", "[a]"),),
+    "suspend": (("dynamic", "[a]"),),
+    "suspends": (("dynamic", "[a]"),),
+    "suspended": (("dynamic", "[a]"),),
+    "suspending": (("dynamic", "[a]"),),
+    "suspension": (("dynamic", "[a]"),),
+    "terminate": (("dynamic", "[a]"),),
+    "terminates": (("dynamic", "[a]"),),
+    "terminated": (("dynamic", "[a]"),),
+    "terminating": (("dynamic", "[a]"),),
+    "termination": (("dynamic", "[a]"),),
     "vest": (("dynamic", "[a]"),),
     "vests": (("dynamic", "[a]"),),
     "vested": (("dynamic", "[a]"),),
@@ -644,9 +664,13 @@ _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...
         ("doxastic", "B"),
         ("conditional_normative", "O|"),
     ),
+    "determination": (("epistemic", "K"),),
+    "determinations": (("epistemic", "K"),),
     "finding": (("epistemic", "K"),),
+    "findings": (("epistemic", "K"),),
     "find": (("epistemic", "K"),),
     "finds": (("epistemic", "K"),),
+    "knowledge": (("epistemic", "K"),),
     "knows": (("epistemic", "K"),),
     "know": (("epistemic", "K"),),
     "known": (("epistemic", "K"),),
@@ -697,6 +721,22 @@ _DEONTIC_EPISTEMIC_BRIDGE_CUES: frozenset[str] = frozenset(
         "believing",
         "reasonably_believes",
     }
+)
+_EPISTEMIC_DEONTIC_BRIDGE_CUES: frozenset[str] = frozenset(
+    {
+        "determine",
+        "determines",
+        "determined",
+        "determining",
+        "find",
+        "finds",
+        "finding",
+        "reason_to_believe",
+    }
+)
+_CLAUSE_PREFIX_BRIDGE_CUES: frozenset[str] = frozenset(
+    prefix_key
+    for _, prefix_key in (*_CONDITION_PREFIXES, *_EXCEPTION_PREFIXES)
 )
 _DEONTIC_TEMPORAL_BRIDGE_CUES: frozenset[str] = frozenset(
     {
@@ -836,6 +876,7 @@ def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
         *_source_identifier_phrases(document),
         *_document_citation_phrases(document),
         *_document_modal_family_count_phrases(document),
+        *_autoencoder_modal_family_guidance_phrases(document),
         *_frame_candidate_phrases(document),
         *_frame_ontology_phrases(document),
     ]
@@ -976,6 +1017,13 @@ def _decode_formula_phrases(
     cue_end = formula.metadata.get("cue_end_char")
     cue_values = _formula_cues(formula)
     argument_values = _phrase_values(formula.predicate.arguments)
+    condition_values = _phrase_values(formula.conditions)
+    if not condition_values:
+        condition_values = _inferred_condition_values_from_source_span(
+            document=document,
+            formula=formula,
+        )
+    exception_values = _phrase_values(formula.exceptions)
     statutory_scope_emissions: set[Tuple[str, str]] = set()
     predicate_text = _predicate_phrase(formula)
     phrases = [
@@ -1169,7 +1217,10 @@ def _decode_formula_phrases(
                         provenance_only=True,
                     )
                 )
-    for bridge_cue in _formula_bridge_cues(formula):
+    for bridge_cue in _formula_bridge_cues(
+        formula,
+        extra_clauses=(*condition_values, *exception_values),
+    ):
         bridge_spans = _span_from_values(cue_start, cue_end) or spans
         phrases.append(
             DecodedModalPhrase(
@@ -1253,14 +1304,23 @@ def _decode_formula_phrases(
                 provenance_only=True,
             )
         )
-    condition_values = _phrase_values(formula.conditions)
-    if not condition_values:
-        condition_values = _inferred_condition_values_from_source_span(
-            document=document,
-            formula=formula,
-        )
-    exception_values = _phrase_values(formula.exceptions)
     proxy_condition_from_exception = not condition_values and bool(exception_values)
+    for slot, value in _typed_deontic_ir_slots(
+        formula=formula,
+        document=document,
+        predicate_text=predicate_text,
+        cue_values=cue_values,
+        condition_values=condition_values,
+        exception_values=exception_values,
+    ):
+        phrases.append(
+            DecodedModalPhrase(
+                text=value,
+                slot=slot,
+                spans=spans,
+                provenance_only=True,
+            )
+        )
     for condition in condition_values:
         phrases.append(
             DecodedModalPhrase(
@@ -2447,6 +2507,246 @@ def _document_modal_family_count_phrases(
     return phrases
 
 
+def _autoencoder_modal_family_guidance_phrases(
+    document: ModalIRDocument,
+) -> List[DecodedModalPhrase]:
+    phrases: List[DecodedModalPhrase] = []
+    for slot, value in _autoencoder_modal_family_guidance_slots(document):
+        phrases.append(
+            DecodedModalPhrase(
+                text=value,
+                slot=slot,
+                provenance_only=True,
+            )
+        )
+    return phrases
+
+
+def _autoencoder_modal_family_guidance_slots(
+    document: ModalIRDocument,
+) -> List[Tuple[str, str]]:
+    slots: List[Tuple[str, str]] = []
+    for entry in _autoencoder_guidance_entries(document):
+        diagnostics = entry.get("pipeline_stage_diagnostics")
+        if isinstance(diagnostics, Mapping):
+            mismatch = diagnostics.get("modal_family_cue_mismatch")
+            if isinstance(mismatch, bool):
+                slots.append(
+                    (
+                        "autoencoder_modal_family_cue_mismatch",
+                        str(mismatch).lower(),
+                    )
+                )
+            gap = _clean_text(diagnostics.get("modal_family_target_probability_gap") or "")
+            if gap:
+                slots.append(("autoencoder_modal_family_target_probability_gap", gap))
+                gap_bucket = _probability_gap_bucket(gap)
+                if gap_bucket:
+                    slots.append(
+                        (
+                            "autoencoder_modal_family_target_probability_gap_bucket",
+                            gap_bucket,
+                        )
+                    )
+        for stage_slot in (
+            "primary_pipeline_stage",
+            "pipeline_stage",
+        ):
+            stage_value = _clean_text(entry.get(stage_slot) or "")
+            if stage_value:
+                slots.append((f"autoencoder_{stage_slot}", stage_value))
+                slots.extend(
+                    _typed_identifier_slots(
+                        stage_value,
+                        slot_prefix=f"autoencoder_{stage_slot}",
+                    )
+                )
+        for focus in _string_list(entry.get("pipeline_stage_focus")):
+            slots.append(("autoencoder_pipeline_stage_focus", focus))
+            slots.extend(
+                _typed_identifier_slots(
+                    focus,
+                    slot_prefix="autoencoder_pipeline_stage_focus",
+                )
+            )
+        family_features = _modal_family_guidance_features(entry)
+        for rank, family in enumerate(family_features, start=1):
+            slots.append(("autoencoder_modal_family_prototype", family))
+            slots.append(
+                ("autoencoder_modal_family_prototype_ranked", f"{rank}:{family}")
+            )
+            slots.append((f"autoencoder_modal_family_prototype_{family}", str(rank)))
+        if len(family_features) >= 2:
+            slots.append(
+                (
+                    "autoencoder_modal_family_prototype_pair",
+                    f"{family_features[0]}->{family_features[1]}",
+                )
+            )
+        for rank, view in enumerate(_legal_ir_view_guidance_features(entry), start=1):
+            slots.append(("autoencoder_legal_ir_view_prototype", view))
+            slots.append(
+                ("autoencoder_legal_ir_view_prototype_ranked", f"{rank}:{view}")
+            )
+            for slot, value in _typed_identifier_slots(
+                view.replace(".", "_"),
+                slot_prefix="autoencoder_legal_ir_view_prototype",
+            ):
+                slots.append((slot, value))
+        for pair in _family_legal_ir_view_guidance_pairs(entry):
+            slots.append(("autoencoder_family_legal_ir_view_pair", pair))
+    return _unique_slot_values(slots)
+
+
+def _autoencoder_guidance_entries(document: ModalIRDocument) -> List[Mapping[str, Any]]:
+    entries: List[Mapping[str, Any]] = []
+
+    def add_mapping(value: Any) -> None:
+        if isinstance(value, Mapping) and value not in entries:
+            entries.append(value)
+
+    metadata_sources: List[Any] = [document.metadata]
+    if isinstance(document.frame_logic.metadata, Mapping):
+        metadata_sources.append(document.frame_logic.metadata)
+    for metadata in metadata_sources:
+        if not isinstance(metadata, Mapping):
+            continue
+        add_mapping(metadata)
+        for evidence in _mapping_sequence(metadata.get("hint_evidence")):
+            add_mapping(evidence)
+        for evidence in _mapping_sequence(metadata.get("evidence")):
+            add_mapping(evidence)
+        for evidence in _mapping_sequence(metadata.get("evidences")):
+            add_mapping(evidence)
+    return entries
+
+
+def _modal_family_guidance_features(entry: Mapping[str, Any]) -> List[str]:
+    families: List[str] = []
+
+    def add(value: str) -> None:
+        family = _slot_safe_family_key(_clean_text(value).lower())
+        if family and family not in families:
+            families.append(family)
+
+    for field in ("family", "predicted_family", "target_family", "selected_family"):
+        add(str(entry.get(field) or ""))
+    for feature in _guidance_feature_strings(entry):
+        normalized = _clean_text(feature)
+        lowered = normalized.lower()
+        if lowered.startswith("modal-family-prototype:"):
+            add(normalized.split(":", 1)[1])
+        elif lowered.startswith("family:selected_frame:"):
+            add(normalized.rsplit(":", 1)[1])
+        elif lowered.startswith("flogic:modal_family:"):
+            add(normalized.rsplit(":", 1)[1])
+    return families
+
+
+def _legal_ir_view_guidance_features(entry: Mapping[str, Any]) -> List[str]:
+    views: List[str] = []
+    for feature in _guidance_feature_strings(entry):
+        normalized = _clean_text(feature)
+        lowered = normalized.lower()
+        if not lowered.startswith("legal-ir-view-prototype:"):
+            continue
+        view = _clean_text(normalized.split(":", 1)[1])
+        if view and view not in views:
+            views.append(view)
+    return views
+
+
+def _family_legal_ir_view_guidance_pairs(entry: Mapping[str, Any]) -> List[str]:
+    pairs: List[str] = []
+    for feature in _guidance_feature_strings(entry):
+        normalized = _clean_text(feature)
+        lowered = normalized.lower()
+        if not lowered.startswith("family-legal-ir-view-prototype:"):
+            continue
+        pair = _clean_text(normalized.split(":", 1)[1])
+        if pair and pair not in pairs:
+            pairs.append(pair)
+    return pairs
+
+
+def _guidance_feature_strings(entry: Mapping[str, Any]) -> List[str]:
+    features: List[str] = []
+    for field in (
+        "top_embedding_features",
+        "top_family_features",
+        "top_embedding_contributions",
+        "top_family_contributions",
+        "frame_features",
+        "feature_keys",
+        "features",
+    ):
+        for feature in _feature_strings(entry.get(field)):
+            if feature not in features:
+                features.append(feature)
+    return features
+
+
+def _feature_strings(value: Any) -> List[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        feature = _clean_text(value)
+        return [feature] if feature else []
+    if isinstance(value, Mapping):
+        features: List[str] = []
+        for key in ("feature", "feature_key", "name", "value"):
+            feature = _clean_text(value.get(key) or "")
+            if feature and feature not in features:
+                features.append(feature)
+        return features
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        features: List[str] = []
+        for item in value:
+            for feature in _feature_strings(item):
+                if feature not in features:
+                    features.append(feature)
+        return features
+    return []
+
+
+def _mapping_sequence(value: Any) -> List[Mapping[str, Any]]:
+    if isinstance(value, Mapping):
+        return [value]
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        return [item for item in value if isinstance(item, Mapping)]
+    return []
+
+
+def _string_list(value: Any) -> List[str]:
+    if isinstance(value, str):
+        cleaned = _clean_text(value)
+        return [cleaned] if cleaned else []
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        result: List[str] = []
+        for item in value:
+            cleaned = _clean_text(item)
+            if cleaned and cleaned not in result:
+                result.append(cleaned)
+        return result
+    return []
+
+
+def _probability_gap_bucket(value: str) -> str:
+    try:
+        gap = abs(float(value))
+    except (TypeError, ValueError):
+        return ""
+    if gap == 0.0:
+        return "zero"
+    if gap < 0.1:
+        return "lt_0_1"
+    if gap < 0.25:
+        return "0_1_to_0_25"
+    if gap < 0.5:
+        return "0_25_to_0_5"
+    return "gte_0_5"
+
+
 def _selected_frame_modal_family_phrases(
     document: ModalIRDocument,
 ) -> List[DecodedModalPhrase]:
@@ -2604,6 +2904,19 @@ def _coerce_non_negative_int(value: Any) -> int | None:
 def _slot_safe_family_key(value: str) -> str:
     normalized = re.sub(r"[^a-z0-9_]+", "_", str(value or "").lower()).strip("_")
     return normalized
+
+
+def _slot_safe_family_pair_key(value: str) -> str:
+    normalized = _clean_text(value).lower()
+    if not normalized:
+        return ""
+    if "->" in normalized:
+        left_raw, right_raw = normalized.split("->", 1)
+        left = _slot_safe_family_key(left_raw)
+        right = _slot_safe_family_key(right_raw)
+        if left and right:
+            return f"{left}_{right}"
+    return _slot_safe_family_key(normalized)
 
 
 def _document_source_ids(document: ModalIRDocument) -> List[str]:
@@ -4017,6 +4330,17 @@ def _frame_ontology_phrases(document: ModalIRDocument) -> List[DecodedModalPhras
             )
 
     if selected_frame:
+        for term in _selected_frame_source_grounding_terms(document):
+            if term in selected_frame_terms:
+                continue
+            selected_frame_terms.append(term)
+            phrases.append(
+                DecodedModalPhrase(
+                    text=term,
+                    slot="selected_ontology_term",
+                    provenance_only=True,
+                )
+            )
         phrases.append(
             DecodedModalPhrase(
                 text=selected_frame,
@@ -4039,8 +4363,133 @@ def _frame_ontology_phrases(document: ModalIRDocument) -> List[DecodedModalPhras
                     provenance_only=True,
                 )
             )
+        for slot, value in _frame_grounding_profile_slots(
+            document,
+            selected_frame=selected_frame,
+            selected_frame_terms=selected_frame_terms,
+            ranked_frame_ids=ranked_frame_ids,
+        ):
+            phrases.append(
+                DecodedModalPhrase(
+                    text=value,
+                    slot=slot,
+                    provenance_only=True,
+                )
+            )
 
     return phrases
+
+
+def _frame_grounding_profile_slots(
+    document: ModalIRDocument,
+    *,
+    selected_frame: str,
+    selected_frame_terms: Sequence[str],
+    ranked_frame_ids: Sequence[str],
+) -> List[Tuple[str, str]]:
+    frame_key = _clean_text(selected_frame)
+    if not frame_key:
+        return []
+    ranked_keys = [_clean_text(frame_id) for frame_id in ranked_frame_ids]
+    ranked_keys = [frame_id for frame_id in ranked_keys if frame_id]
+    selected_rank = "unranked"
+    if frame_key in ranked_keys:
+        selected_rank = str(ranked_keys.index(frame_key) + 1)
+    candidate_count = str(len(ranked_keys))
+    normalized_terms = _unique_preserve_order(selected_frame_terms)
+    term_count = str(len(normalized_terms))
+    profile = (
+        f"{frame_key}|rank:{selected_rank}|terms:{term_count}|"
+        f"candidates:{candidate_count}"
+    )
+    slots: List[Tuple[str, str]] = [
+        ("frame_grounding_profile", profile),
+        ("frame_grounding_selected_frame", frame_key),
+        ("frame_grounding_selected_rank", selected_rank),
+        ("frame_grounding_selected_term_count", term_count),
+        ("frame_grounding_candidate_count", candidate_count),
+    ]
+    if selected_rank.isdigit():
+        slots.extend(
+            _numeric_signature_slots(
+                selected_rank,
+                slot_prefix="frame_grounding_selected_rank",
+            )
+        )
+    slots.extend(
+        _numeric_signature_slots(
+            term_count,
+            slot_prefix="frame_grounding_selected_term_count",
+        )
+    )
+    slots.extend(
+        _numeric_signature_slots(
+            candidate_count,
+            slot_prefix="frame_grounding_candidate_count",
+        )
+    )
+    slots.extend(
+        _typed_identifier_slots(
+            profile,
+            slot_prefix="frame_grounding_profile",
+        )
+    )
+    for rank, term in enumerate(normalized_terms, start=1):
+        slots.append(("frame_grounding_selected_term_ranked", f"{rank}:{term}"))
+    for family, count in _resolved_modal_family_counts(
+        document.metadata.get("modal_family_counts"),
+        formulas=document.formulas,
+    ):
+        family_key = _slot_safe_family_key(family)
+        if not family_key:
+            continue
+        family_profile = (
+            f"{frame_key}|family:{family_key}|count:{count}|"
+            f"rank:{selected_rank}|terms:{term_count}"
+        )
+        slots.extend(
+            (
+                ("frame_grounding_modal_family", family_key),
+                ("frame_grounding_modal_family_count", f"{family_key}:{count}"),
+                ("frame_grounding_family_profile", family_profile),
+                (f"frame_grounding_family_profile_{family_key}", family_profile),
+            )
+        )
+    return _unique_slot_values(slots)
+
+
+def _selected_frame_source_grounding_terms(document: ModalIRDocument) -> List[str]:
+    values: List[Any] = [
+        document.metadata.get("citation"),
+        document.metadata.get("source_id"),
+        document.metadata.get("sample_id"),
+        document.document_id,
+    ]
+    for source_id in _document_source_ids(document):
+        values.append(source_id)
+        source_map = _slot_value_map(_source_id_slots(source_id))
+        values.extend(
+            source_map.get(key)
+            for key in (
+                "source_id_citation_canonical",
+                "source_id_title_section_key",
+            )
+        )
+    for formula in document.formulas:
+        values.extend(
+            (
+                getattr(formula.provenance, "citation", None),
+                getattr(formula.provenance, "source_id", None),
+                formula.metadata.get("status_keyword"),
+                formula.metadata.get("procedural_keyword"),
+                formula.metadata.get("statement_hint"),
+            )
+        )
+
+    terms: List[str] = []
+    for value in values:
+        terms.extend(_frame_ontology_metadata_terms(value))
+    return _unique_preserve_order(terms)
 
 
 def _frame_ontology_terms_by_frame(document: ModalIRDocument) -> Dict[str, List[str]]:
@@ -4897,6 +5346,14 @@ def _typed_clause_phrases(
                 spans=spans,
             )
         )
+        phrases.extend(
+            _typed_decompiler_role_phrases(
+                formula=formula,
+                text=scoped_value,
+                slot_prefix=f"{slot}_scope",
+                spans=spans,
+            )
+        )
     return phrases
 
 
@@ -5046,6 +5503,14 @@ def _condition_proxy_phrases_from_exception(
             spans=spans,
         )
     )
+    phrases.extend(
+        _typed_decompiler_role_phrases(
+            formula=formula,
+            text=scoped_value,
+            slot_prefix="condition_scope",
+            spans=spans,
+        )
+    )
     return phrases
 
 
@@ -5116,6 +5581,173 @@ def _typed_decompiler_role_phrases(
             slot_prefix=slot_prefix,
         )
     ]
+
+
+def _typed_deontic_ir_slots(
+    *,
+    formula: ModalIRFormula,
+    document: ModalIRDocument,
+    predicate_text: str,
+    cue_values: Sequence[str],
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
+) -> List[Tuple[str, str]]:
+    family = _clean_text(formula.operator.family).lower()
+    symbol = _clean_text(formula.operator.symbol)
+    if not family or not symbol:
+        return []
+
+    deontic_candidates = _deontic_ir_candidate_cues(
+        formula=formula,
+        document=document,
+        predicate_text=predicate_text,
+        cue_values=cue_values,
+    )
+    if family != "deontic" and not deontic_candidates:
+        return []
+
+    force = _modal_force_label(formula)
+    if family != "deontic" and deontic_candidates:
+        force = _deontic_force_for_symbol(
+            _deontic_symbol_for_cue(deontic_candidates[0], fallback_force=force)
+        )
+    polarity = _modal_scope_polarity(
+        formula,
+        condition_values=condition_values,
+        exception_values=exception_values,
+        document=document,
+    )
+    scope = "conditioned" if condition_values or exception_values else "unconditioned"
+    selected_frame = _selected_frame(document)
+    slots: List[Tuple[str, str]] = [
+        ("typed_ir_view", "deontic.ir"),
+        ("typed_ir_family_view", f"{family}:deontic.ir"),
+        ("typed_ir_deontic_force", force),
+        ("typed_ir_deontic_scope", scope),
+        ("typed_ir_deontic_polarity", polarity),
+        ("typed_ir_deontic_force_scope", f"{force}:{scope}"),
+        ("typed_ir_deontic_force_polarity", f"{force}:{polarity}"),
+        (
+            "typed_ir_deontic_signature",
+            f"{family}:{symbol}:{force}:{polarity}:{scope}",
+        ),
+    ]
+    if family == "deontic":
+        slots.extend(
+            (
+                ("typed_ir_deontic_family", "deontic"),
+                ("typed_ir_deontic_operator", symbol),
+                ("typed_ir_deontic_operator_signature", f"deontic:{symbol}:{force}"),
+            )
+        )
+    if selected_frame:
+        slots.extend(
+            (
+                ("typed_ir_deontic_frame_context", selected_frame),
+                (
+                    "typed_ir_deontic_frame_context_signature",
+                    f"{family}:{selected_frame}:deontic.ir",
+                ),
+            )
+        )
+
+    for cue in deontic_candidates:
+        target_symbol = _deontic_symbol_for_cue(cue, fallback_force=force)
+        pair = f"{family}->deontic"
+        slots.extend(
+            (
+                ("typed_ir_deontic_candidate_family", "deontic"),
+                ("typed_ir_deontic_candidate_operator", target_symbol),
+                ("typed_ir_deontic_candidate_cue", cue),
+                (
+                    "typed_ir_deontic_candidate_signature",
+                    f"deontic:{target_symbol}:{cue}",
+                ),
+                ("typed_ir_deontic_candidate_family_pair", pair),
+                (
+                    "typed_ir_deontic_candidate_operator_pair",
+                    f"{symbol}->{target_symbol}",
+                ),
+                (
+                    "typed_ir_deontic_candidate_pair_cue",
+                    f"{pair}:{cue}",
+                ),
+                (
+                    "typed_ir_family_disambiguation",
+                    f"{pair}:{force}:{cue}",
+                ),
+            )
+        )
+        if family == "frame":
+            slots.extend(
+                (
+                    ("typed_ir_frame_deontic_bridge", f"Frame->{target_symbol}:{cue}"),
+                    ("typed_ir_frame_deontic_bridge_family_pair", pair),
+                    (
+                        "typed_ir_frame_deontic_bridge_signature",
+                        f"frame:Frame->deontic:{target_symbol}:{cue}",
+                    ),
+                )
+            )
+    return _unique_slot_values(slots)
+
+
+def _deontic_ir_candidate_cues(
+    *,
+    formula: ModalIRFormula,
+    document: ModalIRDocument,
+    predicate_text: str,
+    cue_values: Sequence[str],
+) -> List[str]:
+    search_segments = [
+        predicate_text,
+        " ".join(_phrase_values(formula.predicate.arguments)),
+        " ".join(_phrase_values(formula.conditions)),
+        " ".join(_phrase_values(formula.exceptions)),
+        _formula_source_span_text(document=document, formula=formula),
+    ]
+    cues: List[str] = []
+    for cue in cue_values:
+        normalized = _clean_text(cue).lower().replace(" ", "_")
+        if _is_deontic_bridge_cue(normalized) and normalized not in cues:
+            cues.append(normalized)
+    for segment in search_segments:
+        for cue in _bridge_cues_from_text(segment):
+            normalized = _clean_text(cue).lower().replace(" ", "_")
+            if _is_deontic_bridge_cue(normalized) and normalized not in cues:
+                cues.append(normalized)
+    return cues
+
+
+def _is_deontic_bridge_cue(cue: str) -> bool:
+    normalized = _clean_text(cue).lower().replace(" ", "_")
+    if not normalized:
+        return False
+    return any(
+        bridge_family == "deontic"
+        for bridge_family, _bridge_symbol in _cue_bridge_operator_pairs(normalized)
+    )
+
+
+def _deontic_symbol_for_cue(cue: str, *, fallback_force: str) -> str:
+    normalized = _clean_text(cue).lower().replace(" ", "_")
+    for bridge_family, bridge_symbol in _cue_bridge_operator_pairs(normalized):
+        if bridge_family == "deontic" and bridge_symbol:
+            return bridge_symbol
+    if fallback_force == "permission":
+        return "P"
+    if fallback_force == "prohibition":
+        return "F"
+    return "O"
+
+
+def _deontic_force_for_symbol(symbol: str) -> str:
+    normalized_symbol = _clean_text(symbol)
+    if normalized_symbol == "P":
+        return "permission"
+    if normalized_symbol == "F":
+        return "prohibition"
+    return "obligation"
 
 
 def _typed_decompiler_role_slots(
@@ -5194,6 +5826,21 @@ def _typed_decompiler_role_slots(
                 ("typed_decompiler_family_pair", pair),
             )
         )
+        for cue in _typed_decompiler_family_pair_cues(
+            formula=formula,
+            text=normalized_text,
+            target_family=bridge_family,
+        ):
+            pair_cue = f"{pair}:{cue}"
+            slots.extend(
+                (
+                    (
+                        f"{normalized_slot_prefix}_typed_decompiler_family_pair_cue",
+                        pair_cue,
+                    ),
+                    ("typed_decompiler_family_pair_cue", pair_cue),
+                )
+            )
         if role_signature:
             bridge_signature = f"{pair}:{role_signature}"
             slots.extend(
@@ -5315,12 +5962,65 @@ def _typed_decompiler_bridge_target_families(
     if "subject" in roles or "object" in roles:
         add("deontic")
     text_tokens = set(_CUE_TOKEN_RE.findall(text))
+    if _alethic_scope_cues_from_text(text):
+        add("alethic")
     if _statutory_scope_slots(text) or text_tokens.intersection(_STRUCTURAL_FRAME_CUE_TOKENS):
         add("frame")
     for cue in _bridge_cues_from_text(text):
         for bridge_family, _bridge_symbol in _cue_bridge_operator_pairs(cue):
             add(bridge_family)
     return targets
+
+
+def _typed_decompiler_family_pair_cues(
+    *,
+    formula: ModalIRFormula,
+    text: str,
+    target_family: str,
+) -> List[str]:
+    normalized_text = _clean_text(text).replace("_", " ").lower()
+    normalized_target = _clean_text(target_family).lower()
+    if not normalized_text or not normalized_target:
+        return []
+
+    cues: List[str] = []
+
+    def add(cue: str) -> None:
+        normalized_cue = _clean_text(cue).lower().replace(" ", "_")
+        if normalized_cue and normalized_cue not in cues:
+            cues.append(normalized_cue)
+
+    has_frame_scope = bool(_statutory_scope_slots(normalized_text)) or bool(
+        set(_CUE_TOKEN_RE.findall(normalized_text)).intersection(
+            _STRUCTURAL_FRAME_CUE_TOKENS
+        )
+    )
+    for cue in _refined_contextual_modal_cues_from_text(formula, text=normalized_text):
+        bridge_pairs = _augment_deontic_bridge_pairs(
+            bridge_pairs=_refined_cue_bridge_operator_pairs(cue),
+            formula_family=_clean_text(formula.operator.family).lower(),
+            formula_symbol=_clean_text(formula.operator.symbol),
+            cue=cue,
+        )
+        if any(
+            _clean_text(bridge_family).lower() == normalized_target
+            for bridge_family, _bridge_symbol in bridge_pairs
+        ):
+            add(cue)
+            continue
+        if normalized_target == "frame" and has_frame_scope:
+            # In frame-scoped legal clauses, normative cue words in the same
+            # typed span are useful evidence for an epistemic/frame correction.
+            if any(
+                _clean_text(bridge_family).lower()
+                in {"deontic", "conditional_normative"}
+                for bridge_family, _bridge_symbol in bridge_pairs
+            ):
+                add(cue)
+    fallback_rule = _clean_text(formula.metadata.get("fallback_rule") or "").lower()
+    if fallback_rule:
+        add(fallback_rule)
+    return cues
 
 
 def _cue_modal_slots(
@@ -5580,12 +6280,27 @@ def _augment_deontic_bridge_pairs(
         if deontic_scope_pair not in pairs:
             pairs.append(deontic_scope_pair)
     if (
+        normalized_family == "conditional_normative"
+        and normalized_symbol == "O|"
+        and cue_key in _CLAUSE_PREFIX_BRIDGE_CUES
+    ):
+        deontic_scope_pair = ("deontic", "O")
+        if deontic_scope_pair not in pairs:
+            pairs.append(deontic_scope_pair)
+    if (
         normalized_family == "deontic"
         and cue_key in _DEONTIC_EPISTEMIC_BRIDGE_CUES
     ):
         deontic_epistemic_pair = ("epistemic", "K")
         if deontic_epistemic_pair not in pairs:
             pairs.append(deontic_epistemic_pair)
+    if (
+        normalized_family == "epistemic"
+        and cue_key in _EPISTEMIC_DEONTIC_BRIDGE_CUES
+    ):
+        epistemic_deontic_pair = ("deontic", "O")
+        if epistemic_deontic_pair not in pairs:
+            pairs.append(epistemic_deontic_pair)
     if (
         normalized_family == "deontic"
         and normalized_symbol in _DEONTIC_BRIDGE_REINFORCEMENT_OPERATORS
@@ -5739,6 +6454,16 @@ def _modal_lexeme_slots(
                 f"{family}->{registry_family}",
             )
         )
+        registry_family_pair_key = _slot_safe_family_pair_key(
+            f"{family}->{registry_family}"
+        )
+        if registry_family_pair_key:
+            slots.append(
+                (
+                    f"{normalized_slot_prefix}_registry_family_pair_key",
+                    registry_family_pair_key,
+                )
+            )
         slots.append(
             (
                 f"{normalized_slot_prefix}_registry_operator_pair",
@@ -5780,6 +6505,7 @@ def _modal_lexeme_slots(
     ):
         bridge_signature = f"{bridge_family}:{bridge_symbol}:{cue_value}"
         bridge_family_pair = f"{family}->{bridge_family}"
+        bridge_family_pair_key = _slot_safe_family_pair_key(bridge_family_pair)
         bridge_operator_pair = f"{symbol}->{bridge_symbol}"
         slots.append(
             (
@@ -5787,6 +6513,13 @@ def _modal_lexeme_slots(
                 bridge_family_pair,
             )
         )
+        if bridge_family_pair_key:
+            slots.append(
+                (
+                    f"{normalized_slot_prefix}_bridge_family_pair_key",
+                    bridge_family_pair_key,
+                )
+            )
         slots.append(
             (
                 f"{normalized_slot_prefix}_bridge_operator_pair",
@@ -5806,6 +6539,10 @@ def _modal_lexeme_slots(
             )
         if alias_prefix:
             slots.append((f"{alias_prefix}_bridge_family_pair", bridge_family_pair))
+            if bridge_family_pair_key:
+                slots.append(
+                    (f"{alias_prefix}_bridge_family_pair_key", bridge_family_pair_key)
+                )
             slots.append((f"{alias_prefix}_bridge_operator_pair", bridge_operator_pair))
         if bridge_family == family and bridge_symbol == symbol:
             slots.append((f"{normalized_slot_prefix}_self_bridge_family", bridge_family))
@@ -6026,14 +6763,18 @@ def _text_has_prefix(text: str, prefix: str) -> bool:
     return not suffix_char.isalnum()
 
 
-def _formula_bridge_cues(formula: ModalIRFormula) -> List[str]:
+def _formula_bridge_cues(
+    formula: ModalIRFormula,
+    *,
+    extra_clauses: Sequence[str] = (),
+) -> List[str]:
     searchable_segments: List[str] = []
     predicate_text = _clean_text(formula.predicate.name).replace("_", " ").lower()
     if predicate_text:
         searchable_segments.append(predicate_text)
     searchable_segments.extend(
         _clean_text(value).replace("_", " ").lower()
-        for value in (*formula.conditions, *formula.exceptions)
+        for value in (*formula.conditions, *formula.exceptions, *extra_clauses)
         if _clean_text(value)
     )
     if not searchable_segments:
@@ -6285,6 +7026,20 @@ def _bridge_registry_cues_from_text(text: str) -> List[str]:
     return cues
 
 
+def _alethic_scope_cues_from_text(text: str) -> List[str]:
+    normalized_text = _clean_text(text).replace("_", " ").lower()
+    if not normalized_text:
+        return []
+    cues: List[str] = []
+    for cue_key in _ALETHIC_SCOPE_CUE_OPERATOR_SYMBOLS:
+        cue_term = cue_key.replace("_", " ")
+        if not _text_contains_cue_term(normalized_text, cue_term):
+            continue
+        if cue_key and cue_key not in cues:
+            cues.append(cue_key)
+    return cues
+
+
 def _refined_cue_bridge_operator_pairs(
     cue: str,
 ) -> List[Tuple[str, str]]:
@@ -6292,6 +7047,9 @@ def _refined_cue_bridge_operator_pairs(
     if not normalized_cue:
         return []
     pairs = _cue_bridge_operator_pairs(normalized_cue)
+    alethic_symbol = _ALETHIC_SCOPE_CUE_OPERATOR_SYMBOLS.get(normalized_cue)
+    if alethic_symbol and ("alethic", alethic_symbol) not in pairs:
+        pairs.append(("alethic", alethic_symbol))
     if (
         normalized_cue in _STRUCTURAL_FRAME_CUE_TOKENS
         and ("frame", "Frame") not in pairs
@@ -6326,6 +7084,9 @@ def _refined_contextual_modal_cues_from_text(
             cues.append(cue)
     if formula_family == "frame":
         for cue in _bridge_registry_cues_from_text(text):
+            if cue and cue not in cues:
+                cues.append(cue)
+        for cue in _alethic_scope_cues_from_text(text):
             if cue and cue not in cues:
                 cues.append(cue)
         for cue in _structural_frame_cues_from_text(text):
