@@ -18541,7 +18541,34 @@ class AdaptiveModalAutoencoder:
         for suffix in _unique_preserve_order(typed_family_pair_suffixes):
             add(suffix)
 
-        result = _unique_preserve_order(keys)[: self.max_round_trip_bridge_features]
+        unique_keys = _unique_preserve_order(keys)
+        core_round_trip_prefixes = (
+            f"{normalized_prefix}:surface-action-to-family:",
+            f"{normalized_prefix}:surface-action-to-predicate:",
+            f"{normalized_prefix}:surface-object-to-predicate:",
+            f"{normalized_prefix}:compile-path:",
+            f"{normalized_prefix}:ir-role-shape:",
+        )
+        core_round_trip_keys = [
+            key
+            for key in unique_keys
+            if str(key).startswith(core_round_trip_prefixes)
+        ]
+        contract_keys = [
+            key
+            for key in unique_keys
+            if self._is_reconstruction_contract_feature_key(key)
+            and key not in core_round_trip_keys
+        ]
+        generic_keys = [
+            key
+            for key in unique_keys
+            if key not in core_round_trip_keys
+            and not self._is_reconstruction_contract_feature_key(key)
+        ]
+        result = _unique_preserve_order(
+            [*core_round_trip_keys, *contract_keys, *generic_keys]
+        )[: self.max_round_trip_bridge_features]
         cache[cache_key] = list(result)
         return result
 
@@ -21484,7 +21511,9 @@ class AdaptiveModalAutoencoder:
             "repair-plan:preserve-force-boundary:",
             "repair-plan:preserve-negation-boundary:",
             "round-trip-bridge:typed-family-pair",
+            "round-trip-bridge:surface-action-to-family-pair:",
             "round-trip-bridge:surface-cue-to-family-pair:",
+            "round-trip-bridge:surface-object-to-family-pair:",
             "round-trip-bridge:surface-condition-to-family-pair:",
             "round-trip-bridge:surface-temporal-to-family-pair:",
             "round-trip-bridge:surface-exception-to-family-pair:",
@@ -22521,10 +22550,20 @@ class AdaptiveModalAutoencoder:
                     },
                 )
             )
+        def contribution_head_scale(contribution: AutoencoderFeatureContribution) -> float:
+            for key, value in contribution.metadata.items():
+                if str(key).endswith("_weight_scale"):
+                    try:
+                        return max(0.0, float(value))
+                    except (TypeError, ValueError):
+                        return 0.0
+            return 0.0
+
         return sorted(
             contributions,
             key=lambda contribution: (
                 -abs(float(contribution.metadata.get("alignment_with_residual", 0.0))),
+                -contribution_head_scale(contribution),
                 -contribution.magnitude,
                 contribution.feature,
             ),
@@ -23903,6 +23942,21 @@ def _legal_ir_target_cache_payload(target: Any) -> Optional[Dict[str, Any]]:
     }
 
 
+def _legal_ir_target_cache_payload_is_timeout_fallback(
+    payload: Mapping[str, Any],
+) -> bool:
+    document_hash = str(payload.get("document_hash") or "")
+    losses = payload.get("losses")
+    return (
+        document_hash.startswith("timeout:")
+        or document_hash.startswith("timeout-fallback:")
+        or (
+            isinstance(losses, Mapping)
+            and "legal_ir_target_timeout_loss" in losses
+        )
+    )
+
+
 def _normalise_legal_ir_target_cache_payload(
     payload: Mapping[str, Any],
 ) -> Optional[Dict[str, Any]]:
@@ -23938,6 +23992,8 @@ def _write_legal_ir_target_disk_cache_payload(
     path = _legal_ir_target_disk_cache_path(cache_key)
     normalized_payload = _normalise_legal_ir_target_cache_payload(payload)
     if path is None or normalized_payload is None:
+        return False
+    if _legal_ir_target_cache_payload_is_timeout_fallback(normalized_payload):
         return False
     tmp_path = path.with_name(
         f".{path.stem}.{os.getpid()}.{threading.get_ident()}.tmp"
@@ -24022,10 +24078,15 @@ def _read_legal_ir_target_disk_cache(cache_key: str) -> Optional[Any]:
     payload = wrapper.get("payload")
     if not isinstance(payload, Mapping):
         return None
-    return _legal_ir_target_from_cache_payload(payload)
+    target = _legal_ir_target_from_cache_payload(payload)
+    if target is not None and _legal_ir_target_is_timeout_fallback(target):
+        return None
+    return target
 
 
 def _write_legal_ir_target_disk_cache(cache_key: str, target: Any) -> None:
+    if _legal_ir_target_is_timeout_fallback(target):
+        return
     payload = _legal_ir_target_cache_payload(target)
     if payload is None:
         return

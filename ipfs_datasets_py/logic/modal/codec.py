@@ -69,6 +69,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec impor
     SpaCyModalIRCompiler,
 )
 from .decompiler import (
+    DecodedModalPhrase,
     DecodedModalText,
     decode_modal_ir_document,
     decoded_modal_phrase_slot_text_map,
@@ -2002,6 +2003,115 @@ def _compiler_guidance_surface_overlay_terms(
     return _normalize_guidance_surface_overlay_terms(terms)[: max(0, int(limit))]
 
 
+def _with_compiler_guidance_decoded_phrases(
+    decoded: DecodedModalText,
+    *,
+    guidance_summary: Mapping[str, Any],
+) -> DecodedModalText:
+    """Expose learned compiler guidance as provenance-only decoded slots."""
+    if not guidance_summary:
+        return decoded
+    phrases = list(decoded.phrases)
+    seen = {
+        (str(phrase.slot or "").strip(), _clean_non_empty_string(phrase.text))
+        for phrase in phrases
+    }
+
+    def slot_atom(value: Any) -> str:
+        return _slot_feature_value(str(value or "").replace(".", "_"), max_tokens=8)
+
+    def add(slot: str, text: Any) -> None:
+        normalized_slot = _clean_non_empty_string(slot).replace(" ", "_")
+        normalized_text = _clean_non_empty_string(text)
+        marker = (normalized_slot, normalized_text)
+        if not normalized_slot or not normalized_text or marker in seen:
+            return
+        seen.add(marker)
+        phrases.append(
+            DecodedModalPhrase(
+                text=normalized_text,
+                slot=normalized_slot,
+                provenance_only=True,
+            )
+        )
+
+    add("compiler_guidance_applied", "true")
+    add(
+        "compiler_guidance_feature_count",
+        str(len(_compiler_guidance_feature_strings(guidance_summary))),
+    )
+
+    family_distribution = guidance_summary.get("family_distribution")
+    if isinstance(family_distribution, Mapping):
+        for family, weight in sorted(
+            family_distribution.items(),
+            key=lambda item: (-_safe_float(item[1]), str(item[0])),
+        )[:8]:
+            family_atom = slot_atom(family)
+            if family_atom:
+                add("compiler_guidance_family", family_atom)
+                add(
+                    "compiler_guidance_family_weight",
+                    f"{family_atom}:{_safe_float(weight):.6f}",
+                )
+
+    feature_groups = guidance_summary.get("feature_groups")
+    if isinstance(feature_groups, Mapping):
+        for group, raw_features in sorted(feature_groups.items()):
+            group_atom = slot_atom(group)
+            if not group_atom:
+                continue
+            add("compiler_guidance_feature_group", group_atom)
+            if isinstance(raw_features, Sequence) and not isinstance(
+                raw_features,
+                (str, bytes),
+            ):
+                for feature in raw_features[:8]:
+                    feature_text = _clean_non_empty_string(feature)
+                    if not feature_text:
+                        continue
+                    add("compiler_guidance_feature", feature_text)
+                    add(f"compiler_guidance_{group_atom}_feature", feature_text)
+
+    for feature in _compiler_guidance_feature_strings(guidance_summary)[:16]:
+        add("compiler_guidance_feature", feature)
+
+    gap_distribution = guidance_summary.get("legal_ir_view_gap_distribution")
+    if isinstance(gap_distribution, Mapping):
+        ranked_gaps = sorted(
+            gap_distribution.items(),
+            key=lambda item: (-abs(_safe_float(item[1])), str(item[0])),
+        )[:8]
+        underrepresented_rank = 0
+        overrepresented_rank = 0
+        for view, value in ranked_gaps:
+            gap = _safe_float(value)
+            view_atom = slot_atom(view)
+            if not view_atom:
+                continue
+            direction = "underrepresented" if gap > 0.0 else "overrepresented"
+            add("compiler_guidance_legal_ir_view_gap", f"{view_atom}:{gap:.6f}")
+            add(
+                "compiler_guidance_legal_ir_view_gap_direction",
+                f"{view_atom}:{direction}",
+            )
+            if gap > 0.0:
+                underrepresented_rank += 1
+                add("compiler_guidance_legal_ir_underrepresented_view", view_atom)
+                add(
+                    "compiler_guidance_legal_ir_underrepresented_view_ranked",
+                    f"{underrepresented_rank}:{view_atom}",
+                )
+            elif gap < 0.0:
+                overrepresented_rank += 1
+                add("compiler_guidance_legal_ir_overrepresented_view", view_atom)
+                add(
+                    "compiler_guidance_legal_ir_overrepresented_view_ranked",
+                    f"{overrepresented_rank}:{view_atom}",
+                )
+    return replace(decoded, phrases=phrases)
+
+
 def _apply_compiler_guidance_surface_overlay(
     structural_decoded_text: str,
     overlay_terms: Sequence[str],
@@ -2475,6 +2585,11 @@ class DeterministicModalLogicCodec:
             },
         )
         decoded_modal_text = decode_modal_ir_document(modal_ir)
+        if guidance_summary:
+            decoded_modal_text = _with_compiler_guidance_decoded_phrases(
+                decoded_modal_text,
+                guidance_summary=guidance_summary,
+            )
         frame_feature_keys = _frame_ontology_audit_feature_keys(
             modal_ir=modal_ir,
             selected_frame=selected_frame,

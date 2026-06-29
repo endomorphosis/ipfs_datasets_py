@@ -535,6 +535,92 @@ def test_legal_ir_targets_use_persistent_disk_cache(
     assert second.legal_ir_losses["legal_ir_multiview_total_loss"] == pytest.approx(0.25)
 
 
+def test_legal_ir_timeout_fallback_does_not_poison_persistent_disk_cache(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from ipfs_datasets_py.logic import bridge as bridge_module
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+        modal_autoencoder as modal_autoencoder_module,
+    )
+
+    monkeypatch.setenv(
+        "IPFS_DATASETS_LEGAL_IR_METRIC_CACHE_DIR",
+        str(tmp_path),
+    )
+    monkeypatch.setenv("IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE", "1")
+    monkeypatch.setenv("IPFS_DATASETS_LEGAL_IR_TARGET_TIMEOUT_SECONDS", "0.01")
+    sample = build_us_code_sample(
+        title="5",
+        section="552-timeout-cache",
+        text="The agency shall publish a uniquely slow cache fixture notice.",
+    )
+
+    def clear_process_cache() -> None:
+        with modal_autoencoder_module._LEGAL_IR_TARGET_CACHE_LOCK:
+            modal_autoencoder_module._LEGAL_IR_TARGET_CACHE.clear()
+
+    def slow_multiview(**kwargs: object) -> object:
+        time.sleep(1.0)
+        raise AssertionError("timeout should interrupt this fake bridge")
+
+    clear_process_cache()
+    monkeypatch.setattr(
+        bridge_module,
+        "evaluate_legal_ir_multiview",
+        slow_multiview,
+    )
+    first = AdaptiveModalAutoencoder().evaluate(
+        [sample],
+        legal_ir_bridge_names=("deontic_norms",),
+        legal_ir_evaluate_provers=False,
+    )
+
+    assert first.legal_ir_target_hashes[sample.sample_id].startswith(
+        "timeout-fallback:"
+    )
+    assert not list(tmp_path.rglob("*.json"))
+
+    target = SimpleNamespace(
+        accepted=True,
+        adapter_losses={"deontic_norms": {"total_loss": 0.15}},
+        bridge_names=("deontic_norms",),
+        document=SimpleNamespace(
+            canonical_hash=lambda: "healthy-target-hash",
+            document_id=sample.sample_id,
+            version="legal-ir-test",
+        ),
+        losses={"legal_ir_multiview_total_loss": 0.15},
+        view_distribution={"deontic.ir": 1.0},
+    )
+    call_count = 0
+
+    class FakeReport:
+        def training_target(self) -> object:
+            return target
+
+    def healthy_multiview(**kwargs: object) -> FakeReport:
+        nonlocal call_count
+        call_count += 1
+        return FakeReport()
+
+    clear_process_cache()
+    monkeypatch.setattr(
+        bridge_module,
+        "evaluate_legal_ir_multiview",
+        healthy_multiview,
+    )
+    second = AdaptiveModalAutoencoder().evaluate(
+        [sample],
+        legal_ir_bridge_names=("deontic_norms",),
+        legal_ir_evaluate_provers=False,
+    )
+
+    assert call_count == 1
+    assert second.legal_ir_target_hashes[sample.sample_id] == "healthy-target-hash"
+    assert second.legal_ir_losses["legal_ir_multiview_total_loss"] == pytest.approx(0.15)
+
+
 def test_adaptive_autoencoder_sgd_lowers_legal_ir_view_cross_entropy() -> None:
     from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
 
