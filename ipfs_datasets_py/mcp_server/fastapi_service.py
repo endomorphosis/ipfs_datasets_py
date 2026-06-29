@@ -2325,7 +2325,7 @@ async def mcp_jsonrpc_handler(request: Request):
             return {"jsonrpc": "2.0", "id": req_id, "result": {"valid": valid, "chain": []}}
 
         elif method == "mcp++/policy/evaluate":
-            return {"jsonrpc": "2.0", "id": req_id, "result": {"decision": "allow", "obligations": []}}
+            return {"jsonrpc": "2.0", "id": req_id, "result": {"decision": "allow", "obligations": [], "allowed": True}}
 
         elif method == "mcp++/p2p/peers":
             return {"jsonrpc": "2.0", "id": req_id, "result": {"peers": [], "protocol": "/mcp+p2p/1.0.0"}}
