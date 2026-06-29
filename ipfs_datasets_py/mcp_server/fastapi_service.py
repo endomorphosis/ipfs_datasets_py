@@ -1879,7 +1879,15 @@ async def get_dag_history(limit: int = 50):
             "events": [
                 {
                     "event_cid": str(n.event_cid),
+                    "event_type": "envelope",
                     "parents": [str(p) for p in (n.parents or [])],
+                    "timestamp": getattr(n, "timestamp_created", ""),
+                    "payload": {
+                        "intent_cid": str(getattr(n, 'intent_cid', '')),
+                        "decision_cid": str(getattr(n, 'decision_cid', '')),
+                        "output_cid": str(getattr(n, 'output_cid', '')),
+                        "receipt_cid": str(getattr(n, 'receipt_cid', '')),
+                    },
                     "intent_cid": str(getattr(n, 'intent_cid', '')),
                     "receipt_cid": str(getattr(n, 'receipt_cid', '')),
                 }
