@@ -2474,3 +2474,60 @@ async def mcp_jsonrpc_handler(request: Request):
     except Exception as e:
         logger.error(f"MCP JSON-RPC error: {e}", exc_info=True)
         return {"jsonrpc": "2.0", "id": body.get("id", 1) if 'body' in dir() else 1, "error": {"code": -32603, "message": str(e)}}
+
+
+@app.get("/mcp/tools/list")
+@app.post("/mcp/tools/list")
+async def mcp_tools_list_rest():
+    """REST alias for ``tools/list``.
+
+    hallucinate_app's unified tool explorer (and other simple HTTP clients)
+    discover tools via ``GET /mcp/tools/list`` rather than a JSON-RPC ``POST
+    /mcp``. Serve the same descriptor list in the same ``{jsonrpc, result:
+    {tools}}`` envelope the JSON-RPC path and ipfs-kit return.
+    """
+    mcp_server = getattr(app.state, 'mcp_server', None)
+    return {"jsonrpc": "2.0", "result": {"tools": _mcp_tool_descriptors(mcp_server)}}
+
+
+@app.post("/mcp/tools/call")
+async def mcp_tools_call_rest(request: Request):
+    """REST alias for ``tools/call`` used by the hallucinate_app tool explorer."""
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    params = body.get("params") if isinstance(body.get("params"), dict) else {}
+    tool_name = body.get("name") or body.get("tool") or params.get("name") or ""
+    arguments = body.get("arguments")
+    if arguments is None:
+        arguments = params.get("arguments")
+    arguments = arguments or {}
+    if not tool_name:
+        return JSONResponse(
+            status_code=400,
+            content={"jsonrpc": "2.0", "error": {"code": -32602, "message": "Missing tool name"}},
+        )
+    mcp_server = getattr(app.state, 'mcp_server', None)
+    if mcp_server and hasattr(mcp_server, 'tools') and tool_name in mcp_server.tools:
+        tool_fn = mcp_server.tools[tool_name]
+        import inspect
+        exec_timeout = float(os.environ.get("MCPPP_EXEC_TIMEOUT_S", "30"))
+        if callable(tool_fn):
+            try:
+                with anyio.fail_after(exec_timeout):
+                    if inspect.iscoroutinefunction(tool_fn):
+                        result = await tool_fn(**arguments)
+                    else:
+                        result = await anyio.to_thread.run_sync(
+                            lambda: tool_fn(**arguments), cancellable=True
+                        )
+            except TimeoutError:
+                return {"jsonrpc": "2.0", "error": {"code": -32000, "message": f"Execution timeout after {exec_timeout}s"}}
+        else:
+            result = None
+        return {"jsonrpc": "2.0", "result": _mcp_tool_result(result)}
+    return JSONResponse(
+        status_code=404,
+        content={"jsonrpc": "2.0", "error": {"code": -32601, "message": f"Tool not found: {tool_name}"}},
+    )
