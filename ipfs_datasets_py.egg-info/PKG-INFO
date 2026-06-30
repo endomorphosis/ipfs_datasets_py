@@ -8,9 +8,6 @@ Requires-Python: >=3.12
 Description-Content-Type: text/markdown
 License-File: LICENSE
 Requires-Dist: orbitdb_kit_py
-Requires-Dist: ipfs_kit_py[ai_ml,api,ipld] @ file:///home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_accelerate/ipfs_datasets_py/ipfs_kit_py
-Requires-Dist: ipfs_accelerate_py @ file:///home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_accelerate/ipfs_datasets_py/ipfs_accelerate_py
-Requires-Dist: libp2p @ git+https://github.com/libp2p/py-libp2p.git@main
 Requires-Dist: ipfs_kit_py[ai_ml,api,ipld] @ git+https://github.com/endomorphosis/ipfs_kit_py.git@main
 Requires-Dist: ipfs_accelerate_py @ git+https://github.com/endomorphosis/ipfs_accelerate_py.git@main
 Requires-Dist: libp2p @ git+https://github.com/libp2p/py-libp2p.git@main
