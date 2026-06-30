@@ -53,6 +53,8 @@ from ipfs_datasets_py.optimizers.agentic.patch_control import PatchManager, Work
 from ipfs_datasets_py.optimizers.common.llm_defaults import DEFAULT_CODEX_MODEL
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import (
     AdaptiveModalAutoencoder,
+    MODAL_AUTOENCODER_ARCHITECTURE_VERSION,
+    MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
     ModalAutoencoderTrainingState,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import (
@@ -110,6 +112,7 @@ DEFAULT_AUTOENCODER_BEFORE_TRAIN_EVAL_MODE = "periodic"
 DEFAULT_AUTOENCODER_SAMPLE_MEMORY_PROBE_MODE = "periodic"
 DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MODE = "starved"
 DEFAULT_CANONICAL_AUTOENCODER_STATE_NAME = "legal-ir-autoencoder-canonical.state.json"
+AUTOENCODER_DAEMON_METRIC_SCHEMA_VERSION = "legal-ir-daemon-metrics-v2"
 AUTOENCODER_CANONICAL_WARM_START_ENV = "IPFS_DATASETS_AUTOENCODER_CANONICAL_WARM_START"
 AUTOENCODER_CANONICAL_WARM_START_STATE_ENV = (
     "IPFS_DATASETS_AUTOENCODER_CANONICAL_WARM_START_STATE"
@@ -4643,6 +4646,26 @@ def compiler_guidance_distillation_candidates(
         "todo_routes_augmented_from_features": todo_routes_augmented_from_features,
         "todo_routes_inferred_from_features": todo_routes_inferred_from_features,
     }
+
+
+def compiler_guidance_distillation_path(summary_path: Path) -> Path:
+    return summary_path.with_name(
+        f"{summary_path.stem}.compiler-guidance-distillation.json"
+    )
+
+
+def save_compiler_guidance_distillation(
+    summary_path: Path,
+    candidates: Mapping[str, Any],
+) -> Optional[Path]:
+    if not candidates.get("has_candidates"):
+        return None
+    artifact_path = compiler_guidance_distillation_path(summary_path)
+    artifact_path.write_text(
+        json.dumps(dict(candidates), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return artifact_path
 
 
 GUIDANCE_SCOPE_TARGET_METRICS = {
@@ -10072,6 +10095,9 @@ def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Pat
         "laws_path": USCODE_LAWS_PARQUET,
         "log_path": str(log_path),
         "loop_role": getattr(args, "loop_role", "autoencoder"),
+        "metric_schema_version": AUTOENCODER_DAEMON_METRIC_SCHEMA_VERSION,
+        "autoencoder_architecture_version": MODAL_AUTOENCODER_ARCHITECTURE_VERSION,
+        "autoencoder_state_schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
         "metric_failures": 0,
         "optimizer_policy": "autoencoder_sgd_with_codex_program_synthesis_backlog",
         "program_synthesis_claimed": 0,
@@ -11823,10 +11849,32 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         1,
         int(getattr(args, "autoencoder_bridge_workers", 1) or 1),
     )
+    metric_bridge_adapters = autoencoder_metric_bridge_adapter_names(
+        args,
+        bridge_adapters,
+    )
+    diagnostic_bridge_adapters = autoencoder_diagnostic_bridge_adapter_names(
+        args,
+        bridge_adapters=bridge_adapters,
+        metric_bridge_adapters=metric_bridge_adapters,
+    )
+    bridge_metric_adapters = diagnostic_bridge_adapters or metric_bridge_adapters
     os.environ["IPFS_DATASETS_LEGAL_IR_PARALLEL_WORKERS"] = str(bridge_parallel_workers)
+    summary["metric_schema_version"] = AUTOENCODER_DAEMON_METRIC_SCHEMA_VERSION
+    summary["autoencoder_architecture_version"] = MODAL_AUTOENCODER_ARCHITECTURE_VERSION
+    summary["autoencoder_state_schema_version"] = MODAL_AUTOENCODER_STATE_SCHEMA_VERSION
     summary["bridge_loss_adapters"] = bridge_adapters
+    summary["autoencoder_metric_bridge_adapters"] = metric_bridge_adapters
+    summary["autoencoder_diagnostic_bridge_adapters"] = diagnostic_bridge_adapters
     summary["bridge_evaluate_provers"] = bridge_evaluate_provers
     summary["autoencoder_bridge_workers"] = bridge_parallel_workers
+    summary["legal_ir_bridge_parallelism"] = {
+        "bridge_loss_adapters": list(bridge_adapters),
+        "diagnostic_bridge_adapters": list(diagnostic_bridge_adapters),
+        "metric_bridge_adapters": list(metric_bridge_adapters),
+        "parallel_workers": int(bridge_parallel_workers),
+        "prover_evaluation_enabled": bool(bridge_evaluate_provers),
+    }
     summary["max_sample_text_chars"] = int(getattr(args, "max_sample_text_chars", 0) or 0)
     summary.setdefault("bridge_loss_failures", 0)
     summary.setdefault("bridge_loss_samples", 0)
@@ -12448,6 +12496,21 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 active_phase["started_at"] = now
                 summary["active_cycle"] = cycle
                 summary["active_cycle_phase"] = str(phase)
+                summary["active_cycle_bridge_loss_adapters"] = list(bridge_adapters)
+                summary["active_cycle_metric_bridge_adapters"] = list(
+                    metric_bridge_adapters
+                )
+                summary["active_cycle_diagnostic_bridge_adapters"] = list(
+                    diagnostic_bridge_adapters
+                )
+                summary["active_cycle_metric_bridge_max_sample_text_chars"] = int(
+                    getattr(
+                        args,
+                        "autoencoder_metric_bridge_max_sample_text_chars",
+                        DEFAULT_AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLE_TEXT_CHARS,
+                    )
+                    or 0
+                )
                 summary["active_cycle_last_heartbeat_at"] = utc_now()
                 summary["active_cycle_phase_payload"] = dict(payload)
                 summary["active_cycle_phase_timings"] = {
@@ -12499,6 +12562,27 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     },
                 )
 
+            def metric_progress_callback(dataset: str) -> Callable[[Mapping[str, Any]], None]:
+                def record_metric_progress(progress: Mapping[str, Any]) -> None:
+                    payload = dict(progress)
+                    payload["cycle"] = cycle
+                    payload["dataset"] = str(dataset)
+                    summary["active_cycle"] = cycle
+                    summary["active_cycle_metric_progress"] = payload
+                    summary["active_cycle_last_heartbeat_at"] = utc_now()
+                    save_summary(summary_path, summary)
+                    append_event(
+                        log_path,
+                        args.run_id,
+                        {
+                            "cycle": cycle,
+                            "event": "metric_progress",
+                            "progress": payload,
+                        },
+                    )
+
+                return record_metric_progress
+
             cycle_learning_rate, cycle_lr_policy = _cycle_learning_rate(args, summary)
             mark_cycle_phase("sampling")
             (
@@ -12529,7 +12613,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             )
             before_train = autoencoder.evaluate(
                 train_samples,
-                legal_ir_bridge_names=bridge_adapters,
+                legal_ir_bridge_names=metric_bridge_adapters,
                 legal_ir_evaluate_provers=bridge_evaluate_provers,
                 legal_ir_parallel_workers=bridge_parallel_workers,
             )
@@ -12540,7 +12624,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             )
             before_validation = autoencoder.evaluate(
                 acceptance_validation_samples,
-                legal_ir_bridge_names=bridge_adapters,
+                legal_ir_bridge_names=metric_bridge_adapters,
                 legal_ir_evaluate_provers=bridge_evaluate_provers,
                 legal_ir_parallel_workers=bridge_parallel_workers,
                 use_sample_memory=False,
@@ -12569,6 +12653,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             compiler_ir_train = compiler_ir_metric_block(
                 train_samples,
                 feature_codec,
+                progress_callback=metric_progress_callback("compiler_ir_train"),
                 **compiler_ir_metric_kwargs,
             )
             mark_cycle_phase(
@@ -12578,6 +12663,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             compiler_ir_validation = compiler_ir_metric_block(
                 acceptance_validation_samples,
                 feature_codec,
+                progress_callback=metric_progress_callback("compiler_ir_validation"),
                 **compiler_ir_metric_kwargs,
             )
             compiler_ir_validation_sample_ids = [
@@ -12634,20 +12720,32 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             mark_cycle_phase("bridge_ir_train", sample_count=len(train_samples))
             bridge_ir_train = bridge_ir_metric_block(
                 train_samples,
-                bridge_adapters,
+                bridge_metric_adapters,
                 evaluate_provers=bridge_evaluate_provers,
                 parallel_workers=bridge_parallel_workers,
+                progress_callback=metric_progress_callback("bridge_ir_train"),
             )
+            bridge_ir_train["bridge_loss_adapters"] = list(bridge_adapters)
+            bridge_ir_train["diagnostic_bridge_adapters"] = list(
+                diagnostic_bridge_adapters
+            )
+            bridge_ir_train["metric_bridge_adapters"] = list(metric_bridge_adapters)
             mark_cycle_phase(
                 "bridge_ir_validation",
                 sample_count=len(acceptance_validation_samples),
             )
             bridge_ir_validation = bridge_ir_metric_block(
                 acceptance_validation_samples,
-                bridge_adapters,
+                bridge_metric_adapters,
                 evaluate_provers=bridge_evaluate_provers,
                 parallel_workers=bridge_parallel_workers,
+                progress_callback=metric_progress_callback("bridge_ir_validation"),
             )
+            bridge_ir_validation["bridge_loss_adapters"] = list(bridge_adapters)
+            bridge_ir_validation["diagnostic_bridge_adapters"] = list(
+                diagnostic_bridge_adapters
+            )
+            bridge_ir_validation["metric_bridge_adapters"] = list(metric_bridge_adapters)
             feature_projection_report: Dict[str, Any] = {}
             generalizable_projection_epochs = max(
                 0,
@@ -12665,7 +12763,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     validation_samples=acceptance_validation_samples,
                     epochs=generalizable_projection_epochs,
                     learning_rate=cycle_learning_rate,
-                    legal_ir_bridge_names=bridge_adapters,
+                    legal_ir_bridge_names=metric_bridge_adapters,
                     legal_ir_evaluate_provers=bridge_evaluate_provers,
                     legal_ir_parallel_workers=bridge_parallel_workers,
                     max_cosine_regression=float(
@@ -12804,7 +12902,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             mark_cycle_phase("after_train_eval", sample_count=len(train_samples))
             after_train = autoencoder.evaluate(
                 train_samples,
-                legal_ir_bridge_names=bridge_adapters,
+                legal_ir_bridge_names=metric_bridge_adapters,
                 legal_ir_evaluate_provers=bridge_evaluate_provers,
                 legal_ir_parallel_workers=bridge_parallel_workers,
             )
@@ -12815,11 +12913,98 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             )
             after_validation = autoencoder.evaluate(
                 acceptance_validation_samples,
-                legal_ir_bridge_names=bridge_adapters,
+                legal_ir_bridge_names=metric_bridge_adapters,
                 legal_ir_evaluate_provers=bridge_evaluate_provers,
                 legal_ir_parallel_workers=bridge_parallel_workers,
                 use_sample_memory=False,
             )
+            mark_cycle_phase("sample_memory_probe", sample_count=len(train_samples))
+            after_train_generalized_probe = autoencoder.evaluate(
+                train_samples,
+                legal_ir_bridge_names=metric_bridge_adapters,
+                legal_ir_evaluate_provers=bridge_evaluate_provers,
+                legal_ir_parallel_workers=bridge_parallel_workers,
+                use_sample_memory=False,
+            )
+            after_validation_sample_memory_probe = autoencoder.evaluate(
+                acceptance_validation_samples,
+                legal_ir_bridge_names=metric_bridge_adapters,
+                legal_ir_evaluate_provers=bridge_evaluate_provers,
+                legal_ir_parallel_workers=bridge_parallel_workers,
+                use_sample_memory=True,
+            )
+            mark_cycle_phase("compiler_ir_guided_train", sample_count=len(train_samples))
+            compiler_ir_guided_train = compiler_ir_metric_block(
+                train_samples,
+                feature_codec,
+                autoencoder=autoencoder,
+                use_autoencoder_guidance=True,
+                progress_callback=metric_progress_callback("compiler_ir_guided_train"),
+                **compiler_ir_metric_kwargs,
+            )
+            mark_cycle_phase(
+                "compiler_ir_guided_validation",
+                sample_count=len(acceptance_validation_samples),
+            )
+            compiler_ir_guided_validation = compiler_ir_metric_block(
+                acceptance_validation_samples,
+                feature_codec,
+                autoencoder=autoencoder,
+                use_autoencoder_guidance=True,
+                progress_callback=metric_progress_callback("compiler_ir_guided_validation"),
+                **compiler_ir_metric_kwargs,
+            )
+            guidance_canary = compiler_guidance_canary_block(
+                compiler_ir_validation,
+                compiler_ir_guided_validation,
+                plateau_threshold=float(
+                    getattr(args, "learning_rate_plateau_delta", 1.0e-5)
+                ),
+            )
+            guidance_promotion_gate = compiler_guidance_promotion_gate(guidance_canary)
+            guidance_scope_hints = compiler_guidance_scope_hints(
+                compiler_ir_guided_validation
+            )
+            guidance_distillation = compiler_guidance_distillation_candidates(
+                compiler_ir_guided_validation,
+                guidance_canary,
+            )
+            guidance_distillation_path = save_compiler_guidance_distillation(
+                summary_path,
+                guidance_distillation,
+            )
+            guidance_todo_candidates_by_kind = {
+                "activation": compiler_guidance_activation_todos(
+                    guidance_distillation,
+                    guidance_canary,
+                    policy=supervisor.policy,
+                ),
+                "distillation": compiler_guidance_distillation_todos(
+                    guidance_distillation,
+                    policy=supervisor.policy,
+                ),
+                "guardrail": compiler_guidance_guardrail_todos(
+                    guidance_distillation,
+                    guidance_canary,
+                    policy=supervisor.policy,
+                ),
+            }
+            guidance_todo_counts: Dict[str, int] = {
+                "activation_deduped_count": 0,
+                "activation_seeded_count": 0,
+                "activation_semantic_deduped_count": 0,
+                "distillation_deduped_count": 0,
+                "distillation_seeded_count": 0,
+                "distillation_semantic_deduped_count": 0,
+                "guardrail_deduped_count": 0,
+                "guardrail_seeded_count": 0,
+                "guardrail_semantic_deduped_count": 0,
+            }
+            guidance_todo_ids: Dict[str, List[str]] = {
+                "activation": [],
+                "distillation": [],
+                "guardrail": [],
+            }
             blocked_validation_sample_ids.update(sample.sample_id for sample in train_samples)
             mark_cycle_phase("queue_merge")
             with queue_file_lock(queue_path):
@@ -12835,6 +13020,61 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 latest_queue.save_jsonl(queue_path)
                 supervisor.queue = latest_queue
                 queue = latest_queue
+            for guidance_kind, guidance_todo_candidates in (
+                guidance_todo_candidates_by_kind.items()
+            ):
+                if not guidance_todo_candidates:
+                    continue
+                with queue_file_lock(queue_path):
+                    latest_queue = ModalTodoQueue.load_jsonl(queue_path)
+                    latest_queue.merge_from(
+                        supervisor.queue,
+                        preserve_claimed_role=(
+                            supervisor.policy.program_synthesis_role
+                        ),
+                    )
+                    supervisor.queue = latest_queue
+                    selected_guidance_todos = supervisor._bounded_new_todos(
+                        guidance_todo_candidates,
+                        track_program_deduped=True,
+                    )
+                    deduped_count = int(
+                        supervisor.last_program_synthesis_deduped_count
+                    )
+                    before_guidance_todo_ids = {
+                        todo.todo_id for todo in supervisor.queue.all()
+                    }
+                    seeded_count = supervisor.queue.add_many(selected_guidance_todos)
+                    guidance_todo_ids[guidance_kind] = [
+                        todo.todo_id
+                        for todo in selected_guidance_todos
+                        if todo.todo_id not in before_guidance_todo_ids
+                        and supervisor.queue.get(todo.todo_id) is not None
+                    ]
+                    guidance_semantic_deduped_count = (
+                        supervisor.queue.deduplicate_semantic(
+                            optimizer_role=(
+                                supervisor.policy.program_synthesis_role
+                            ),
+                            near_duplicate_jaccard=(
+                                supervisor
+                                .policy
+                                .program_synthesis_near_duplicate_jaccard
+                            ),
+                        )
+                    )
+                    semantic_deduped_count += int(guidance_semantic_deduped_count)
+                    guidance_todo_counts[
+                        f"{guidance_kind}_deduped_count"
+                    ] = deduped_count
+                    guidance_todo_counts[
+                        f"{guidance_kind}_seeded_count"
+                    ] = int(seeded_count)
+                    guidance_todo_counts[
+                        f"{guidance_kind}_semantic_deduped_count"
+                    ] = int(guidance_semantic_deduped_count)
+                    supervisor.queue.save_jsonl(queue_path)
+                    queue = supervisor.queue
             mark_cycle_phase("state_save")
             autoencoder.state.save_json(state_path)
             run.save_json(run_json_path)
@@ -12847,16 +13087,325 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 after_validation.embedding_cosine_similarity
                 - before_validation.embedding_cosine_similarity
             )
+            before_train_metrics = metric_block(before_train)
+            before_validation_metrics = metric_block(before_validation)
+            after_train_metrics = metric_block(after_train)
+            after_train_generalized_probe_metrics = metric_block(
+                after_train_generalized_probe
+            )
+            after_validation_metrics = metric_block(after_validation)
+            after_validation_sample_memory_probe_metrics = metric_block(
+                after_validation_sample_memory_probe
+            )
+            train_sample_memory_gap = autoencoder_memory_gap_block(
+                after_train_generalized_probe,
+                after_train,
+                dataset="train",
+                expected_holdout=False,
+            )
+            validation_sample_memory_gap = autoencoder_memory_gap_block(
+                after_validation,
+                after_validation_sample_memory_probe,
+                dataset="validation",
+                expected_holdout=True,
+            )
+            learned_ir_before_train = learned_ir_metric_block(before_train)
+            learned_ir_before_validation = learned_ir_metric_block(before_validation)
+            learned_ir_train = learned_ir_metric_block(after_train)
+            learned_ir_validation = learned_ir_metric_block(after_validation)
+            latest_compiler_ir_ce = _metric_value(
+                compiler_ir_validation,
+                "cross_entropy_loss",
+                1.0e12,
+            )
+            latest_compiler_ir_ce_excess = _metric_value(
+                compiler_ir_validation,
+                "cross_entropy_excess_loss",
+                1.0e12,
+            )
+            latest_compiler_ir_cosine = _metric_value(
+                compiler_ir_validation,
+                "cosine_similarity",
+                -1.0,
+            )
+            latest_compiler_ir_raw_source_embedding_cosine = _metric_value(
+                compiler_ir_validation,
+                "raw_source_embedding_cosine_similarity",
+                -1.0,
+            )
+            latest_compiler_ir_source_copy_loss = _metric_value(
+                compiler_ir_validation,
+                "source_copy_loss",
+                1.0e12,
+            )
+            latest_compiler_ir_source_copy_reward_hack_penalty = _metric_value(
+                compiler_ir_validation,
+                "source_copy_reward_hack_penalty",
+                1.0e12,
+            )
+            latest_source_decompiled_text_embedding_cosine_loss = _metric_value(
+                compiler_ir_validation,
+                "source_decompiled_text_embedding_cosine_loss",
+                1.0e12,
+            )
+            latest_source_decompiled_text_token_loss = _metric_value(
+                compiler_ir_validation,
+                "source_decompiled_text_token_loss",
+                1.0e12,
+            )
+            latest_guided_compiler_ir_ce = _metric_value(
+                compiler_ir_guided_validation,
+                "cross_entropy_loss",
+                1.0e12,
+            )
+            latest_guided_compiler_ir_ce_excess = _metric_value(
+                compiler_ir_guided_validation,
+                "cross_entropy_excess_loss",
+                1.0e12,
+            )
+            latest_guided_compiler_ir_cosine = _metric_value(
+                compiler_ir_guided_validation,
+                "cosine_similarity",
+                -1.0,
+            )
+            latest_guided_compiler_ir_source_copy_reward_hack_penalty = _metric_value(
+                compiler_ir_guided_validation,
+                "source_copy_reward_hack_penalty",
+                1.0e12,
+            )
+            latest_compiler_ir_guidance_ce_delta = float(guidance_canary["ce_delta"])
+            latest_compiler_ir_guidance_cosine_delta = float(
+                guidance_canary["cosine_delta"]
+            )
+            latest_compiler_ir_guidance_copy_hack_delta = float(
+                guidance_canary["copy_hack_delta"]
+            )
+            latest_learned_ir_view_ce = _metric_value(
+                learned_ir_validation,
+                "view_cross_entropy_loss",
+                1.0e12,
+            )
+            latest_learned_ir_view_cosine = _metric_value(
+                learned_ir_validation,
+                "view_cosine_similarity",
+                -1.0,
+            )
+            latest_cycle_seconds = round(time.time() - cycle_started, 3)
+            latest_state_telemetry = autoencoder_state_telemetry(
+                autoencoder.state,
+                state_path=state_path,
+            )
+            backend_metadata = autoencoder.compute_backend_metadata()
+            host_resource_health = _host_resource_health()
             summary["cycles"] = cycle
             summary["latest_stop_reason"] = run.stopped_reason
-            summary.update(autoencoder.compute_backend_metadata())
+            summary.update(backend_metadata)
+            summary["latest_autoencoder_backend"] = dict(backend_metadata)
+            summary["latest_host_resource_health"] = dict(host_resource_health)
             summary["latest_queue_counts"] = supervisor.queue.status_counts()
             summary["latest_role_queue_counts"] = supervisor.queue.role_status_counts()
             summary["latest_feature_projection_report"] = feature_projection_report
+            summary["latest_cycle_seconds"] = latest_cycle_seconds
             summary["latest_cycle_phase_timings"] = {
                 name: round(seconds, 3)
                 for name, seconds in sorted(cycle_phase_timings.items())
             }
+            summary["latest_autoencoder_state_telemetry"] = latest_state_telemetry
+            summary["latest_autoencoder_train"] = after_train_metrics
+            summary["latest_autoencoder_train_generalized_probe"] = (
+                after_train_generalized_probe_metrics
+            )
+            summary["latest_autoencoder_validation"] = after_validation_metrics
+            summary["latest_autoencoder_validation_sample_memory_probe"] = (
+                after_validation_sample_memory_probe_metrics
+            )
+            summary["latest_autoencoder_before_validation"] = before_validation_metrics
+            summary["latest_train_sample_memory_gap"] = train_sample_memory_gap
+            summary["latest_validation_sample_memory_gap"] = validation_sample_memory_gap
+            summary["latest_train_ce"] = after_train.cross_entropy_loss
+            summary["latest_train_cosine"] = after_train.embedding_cosine_similarity
+            summary["latest_train_reconstruction"] = after_train.reconstruction_loss
+            summary["latest_validation_ce"] = after_validation.cross_entropy_loss
+            summary["latest_validation_cosine"] = (
+                after_validation.embedding_cosine_similarity
+            )
+            summary["latest_validation_reconstruction"] = (
+                after_validation.reconstruction_loss
+            )
+            summary["latest_train_ce_delta"] = train_ce_delta
+            summary["latest_train_cosine_delta"] = train_cos_delta
+            summary["latest_validation_ce_delta"] = validation_ce_delta
+            summary["latest_validation_cosine_delta"] = validation_cos_delta
+            summary["latest_compiler_ir_train"] = compiler_ir_train
+            summary["latest_compiler_ir_validation"] = compiler_ir_validation
+            summary["latest_compiler_ir_guided_train"] = compiler_ir_guided_train
+            summary["latest_compiler_ir_guided_validation"] = (
+                compiler_ir_guided_validation
+            )
+            summary["latest_compiler_ir_ce"] = latest_compiler_ir_ce
+            summary["latest_compiler_ir_ce_excess"] = latest_compiler_ir_ce_excess
+            summary["latest_compiler_ir_cosine"] = latest_compiler_ir_cosine
+            summary["latest_compiler_ir_raw_source_embedding_cosine"] = (
+                latest_compiler_ir_raw_source_embedding_cosine
+            )
+            summary["latest_cosine_metric_disagreement"] = {
+                "compiler_ir_cosine_metric": (
+                    "deterministic compiler/decompiler structural IR round-trip"
+                ),
+                "compiler_ir_minus_autoencoder_embedding_cosine": round(
+                    latest_compiler_ir_cosine
+                    - after_validation.embedding_cosine_similarity,
+                    9,
+                ),
+                "compiler_raw_source_embedding_cosine_metric": (
+                    "deterministic compiler decoded text embedding vs source embedding"
+                ),
+                "compiler_raw_source_embedding_minus_autoencoder_embedding_cosine": round(
+                    latest_compiler_ir_raw_source_embedding_cosine
+                    - after_validation.embedding_cosine_similarity,
+                    9,
+                ),
+                "validation_cosine_metric": (
+                    "autoencoder decoded embedding vs source embedding"
+                ),
+            }
+            summary["latest_validation_cosine_bottleneck"] = {
+                "autoencoder_embedding_cosine": round(
+                    after_validation.embedding_cosine_similarity,
+                    9,
+                ),
+                "autoencoder_embedding_cosine_gap": round(
+                    max(0.0, 1.0 - after_validation.embedding_cosine_similarity),
+                    9,
+                ),
+                "autoencoder_reconstruction_loss": round(
+                    after_validation.reconstruction_loss,
+                    9,
+                ),
+                "compiler_raw_source_embedding_cosine": round(
+                    latest_compiler_ir_raw_source_embedding_cosine,
+                    9,
+                ),
+                "compiler_structural_ir_cosine": round(
+                    latest_compiler_ir_cosine,
+                    9,
+                ),
+                "is_embedding_head_bottleneck": bool(
+                    after_validation.embedding_cosine_similarity < 0.25
+                ),
+                "worst_samples": list(
+                    after_validation_metrics.get("worst_sample_embedding_metrics", [])
+                    or []
+                ),
+            }
+            summary["latest_compiler_ir_source_copy_loss"] = (
+                latest_compiler_ir_source_copy_loss
+            )
+            summary["latest_compiler_ir_source_copy_reward_hack_penalty"] = (
+                latest_compiler_ir_source_copy_reward_hack_penalty
+            )
+            summary["latest_source_decompiled_text_embedding_cosine_loss"] = (
+                latest_source_decompiled_text_embedding_cosine_loss
+            )
+            summary["latest_source_decompiled_text_token_loss"] = (
+                latest_source_decompiled_text_token_loss
+            )
+            summary["latest_source_decompiled_text_roundtrip_bottleneck"] = {
+                "copy_hack_penalty": round(
+                    latest_compiler_ir_source_copy_reward_hack_penalty,
+                    9,
+                ),
+                "embedding_cosine_loss": round(
+                    latest_source_decompiled_text_embedding_cosine_loss,
+                    9,
+                ),
+                "embedding_cosine_similarity": round(
+                    1.0 - latest_source_decompiled_text_embedding_cosine_loss,
+                    9,
+                ),
+                "source_copy_loss": round(latest_compiler_ir_source_copy_loss, 9),
+                "token_loss": round(latest_source_decompiled_text_token_loss, 9),
+                "token_similarity": round(
+                    1.0 - latest_source_decompiled_text_token_loss,
+                    9,
+                ),
+                "worst_samples": list(
+                    compiler_ir_validation.get(
+                        "worst_source_decompiled_text_records",
+                        [],
+                    )
+                    or []
+                )[:8],
+            }
+            summary["latest_compiler_ir_guided_ce"] = latest_guided_compiler_ir_ce
+            summary["latest_compiler_ir_guided_ce_excess"] = (
+                latest_guided_compiler_ir_ce_excess
+            )
+            summary["latest_compiler_ir_guided_cosine"] = (
+                latest_guided_compiler_ir_cosine
+            )
+            summary[
+                "latest_compiler_ir_guided_source_copy_reward_hack_penalty"
+            ] = latest_guided_compiler_ir_source_copy_reward_hack_penalty
+            summary["latest_compiler_ir_guidance_canary"] = guidance_canary
+            summary["latest_compiler_ir_guidance_quality_gate"] = guidance_canary[
+                "quality_gate"
+            ]
+            summary["latest_compiler_ir_guidance_promotion"] = (
+                guidance_promotion_gate
+            )
+            summary["latest_compiler_ir_guidance_promotion_allowed"] = bool(
+                guidance_promotion_gate["promotion_allowed"]
+            )
+            summary["latest_compiler_ir_guidance_promotion_block_reason"] = (
+                guidance_promotion_gate["promotion_block_reason"]
+            )
+            summary["latest_compiler_ir_guidance_scope_hints"] = (
+                guidance_scope_hints
+            )
+            summary["latest_compiler_ir_guidance_distillation"] = (
+                guidance_distillation
+            )
+            summary["latest_compiler_ir_guidance_distillation_path"] = (
+                str(guidance_distillation_path)
+                if guidance_distillation_path is not None
+                else ""
+            )
+            summary["latest_compiler_ir_guidance_ce_delta"] = (
+                latest_compiler_ir_guidance_ce_delta
+            )
+            summary["latest_compiler_ir_guidance_cosine_delta"] = (
+                latest_compiler_ir_guidance_cosine_delta
+            )
+            summary["latest_compiler_ir_guidance_copy_hack_delta"] = (
+                latest_compiler_ir_guidance_copy_hack_delta
+            )
+            summary["latest_learned_ir_before_train"] = learned_ir_before_train
+            summary["latest_learned_ir_before_validation"] = (
+                learned_ir_before_validation
+            )
+            summary["latest_learned_ir_train"] = learned_ir_train
+            summary["latest_learned_ir_validation"] = learned_ir_validation
+            summary["latest_learned_ir_view_ce"] = latest_learned_ir_view_ce
+            summary["latest_learned_ir_view_cosine"] = latest_learned_ir_view_cosine
+            summary["latest_rollout_baseline_snapshot"] = rollout_baseline_snapshot(
+                summary=summary,
+                cycle=cycle,
+                cycle_seconds=latest_cycle_seconds,
+                cycle_phase_timings=summary["latest_cycle_phase_timings"],
+                validation_metrics=after_validation_metrics,
+                compiler_ir_validation=compiler_ir_validation,
+                compiler_ir_guided_validation=compiler_ir_guided_validation,
+                learned_ir_validation=learned_ir_validation,
+                logic_bridge_validation=bridge_ir_validation,
+                queue_counts=summary["latest_queue_counts"],
+                role_queue_counts=summary["latest_role_queue_counts"],
+                state_telemetry=latest_state_telemetry,
+                backend_metadata=backend_metadata,
+                host_resource_health=host_resource_health,
+                metric_bridge_adapters=metric_bridge_adapters,
+                diagnostic_bridge_adapters=diagnostic_bridge_adapters,
+            )
             summary["validation_mode"] = validation_mode
             program_synthesis_status = update_program_synthesis_summary(
                 summary,
@@ -12871,10 +13420,80 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             )
             summary["program_synthesis_seeded"] = int(
                 summary.get("program_synthesis_seeded", 0)
-            ) + sum(step.program_synthesis_seeded_count for step in run.steps)
+            ) + sum(step.program_synthesis_seeded_count for step in run.steps) + sum(
+                value
+                for key, value in guidance_todo_counts.items()
+                if key.endswith("_seeded_count")
+            )
             preinsert_deduped_count = sum(
                 step.program_synthesis_deduped_count for step in run.steps
+            ) + sum(
+                value
+                for key, value in guidance_todo_counts.items()
+                if key.endswith("_deduped_count")
+                and not key.endswith("_semantic_deduped_count")
             )
+            summary["latest_program_synthesis_seeded_count"] = sum(
+                step.program_synthesis_seeded_count for step in run.steps
+            ) + sum(
+                value
+                for key, value in guidance_todo_counts.items()
+                if key.endswith("_seeded_count")
+            )
+            summary["latest_program_synthesis_preinsert_deduped_count"] = int(
+                preinsert_deduped_count
+            )
+            summary["latest_program_synthesis_semantic_deduped_count"] = int(
+                semantic_deduped_count
+            )
+            for guidance_kind in ("activation", "distillation", "guardrail"):
+                summary[
+                    f"latest_compiler_ir_guidance_{guidance_kind}_deduped_count"
+                ] = int(guidance_todo_counts[f"{guidance_kind}_deduped_count"])
+                summary[
+                    f"latest_compiler_ir_guidance_{guidance_kind}_seeded_count"
+                ] = int(guidance_todo_counts[f"{guidance_kind}_seeded_count"])
+                summary[
+                    "latest_compiler_ir_guidance_"
+                    f"{guidance_kind}_semantic_deduped_count"
+                ] = int(
+                    guidance_todo_counts[
+                        f"{guidance_kind}_semantic_deduped_count"
+                    ]
+                )
+                summary[
+                    f"latest_compiler_ir_guidance_{guidance_kind}_todo_ids"
+                ] = list(guidance_todo_ids[guidance_kind])
+                summary[
+                    f"compiler_ir_guidance_{guidance_kind}_seeded_total"
+                ] = int(
+                    summary.get(
+                        f"compiler_ir_guidance_{guidance_kind}_seeded_total",
+                        0,
+                    )
+                ) + int(guidance_todo_counts[f"{guidance_kind}_seeded_count"])
+                summary[
+                    f"compiler_ir_guidance_{guidance_kind}_deduped_total"
+                ] = int(
+                    summary.get(
+                        f"compiler_ir_guidance_{guidance_kind}_deduped_total",
+                        0,
+                    )
+                ) + int(guidance_todo_counts[f"{guidance_kind}_deduped_count"])
+                summary[
+                    "compiler_ir_guidance_"
+                    f"{guidance_kind}_semantic_deduped_total"
+                ] = int(
+                    summary.get(
+                        "compiler_ir_guidance_"
+                        f"{guidance_kind}_semantic_deduped_total",
+                        0,
+                    )
+                ) + int(
+                    guidance_todo_counts[
+                        f"{guidance_kind}_semantic_deduped_count"
+                    ]
+                )
             summary["program_synthesis_preinsert_deduped"] = int(
                 summary.get("program_synthesis_preinsert_deduped", 0)
             ) + int(preinsert_deduped_count)
@@ -12952,6 +13571,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["metric_failures"] = int(summary.get("metric_failures", 0)) + int(
                 compiler_ir_train.get("metric_failures", 0)
                 + compiler_ir_validation.get("metric_failures", 0)
+                + compiler_ir_guided_train.get("metric_failures", 0)
+                + compiler_ir_guided_validation.get("metric_failures", 0)
                 + bridge_ir_train.get("metric_failures", 0)
                 + bridge_ir_validation.get("metric_failures", 0)
             )
@@ -12975,16 +13596,48 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 ) + 1
             else:
                 summary["learning_rate_cosine_regression_streak"] = 0
+            guidance_improved = bool(guidance_canary.get("improved"))
+            summary["compiler_guidance_improved_cycles"] = int(
+                summary.get("compiler_guidance_improved_cycles", 0)
+            ) + int(guidance_improved)
+            guidance_regressed = bool(guidance_canary.get("regressed"))
+            if guidance_regressed:
+                summary["compiler_guidance_regression_streak"] = int(
+                    summary.get("compiler_guidance_regression_streak", 0)
+                ) + 1
+            else:
+                summary["compiler_guidance_regression_streak"] = 0
             summary["learning_rate_applied"] = float(cycle_learning_rate)
             summary["learning_rate_policy"] = cycle_lr_policy
             summary["best_validation_ce"] = min(summary.get("best_validation_ce"), after_validation.cross_entropy_loss)
             summary["best_validation_ir_ce"] = min(
                 summary.get("best_validation_ir_ce", 1.0e12),
-                float(compiler_ir_validation.get("cross_entropy_loss", 1.0e12)),
+                latest_compiler_ir_ce,
+            )
+            summary["best_validation_ir_guided_ce"] = min(
+                summary.get("best_validation_ir_guided_ce", 1.0e12),
+                latest_guided_compiler_ir_ce,
+            )
+            summary["best_validation_ir_guided_ce_excess"] = min(
+                summary.get("best_validation_ir_guided_ce_excess", 1.0e12),
+                latest_guided_compiler_ir_ce_excess,
+            )
+            summary["best_validation_ir_guided_cosine"] = max(
+                summary.get("best_validation_ir_guided_cosine", -1.0),
+                latest_guided_compiler_ir_cosine,
+            )
+            summary[
+                "best_validation_ir_guided_source_copy_reward_hack_penalty"
+            ] = min(
+                summary.get(
+                    "best_validation_ir_guided_source_copy_reward_hack_penalty",
+                    1.0e12,
+                ),
+                latest_guided_compiler_ir_source_copy_reward_hack_penalty,
             )
             summary["best_validation_ir_cosine"] = max(
                 summary.get("best_validation_ir_cosine", -1.0),
-                float(compiler_ir_validation.get("cosine_similarity", -1.0)),
+                latest_compiler_ir_cosine,
             )
             summary["best_validation_ir_reconstruction"] = min(
                 summary.get("best_validation_ir_reconstruction", 1.0e12),
@@ -12993,6 +13646,22 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["best_validation_ir_text_reconstruction"] = min(
                 summary.get("best_validation_ir_text_reconstruction", 1.0e12),
                 float(compiler_ir_validation.get("text_reconstruction_loss", 1.0e12)),
+            )
+            summary["best_validation_ir_source_copy_loss"] = min(
+                summary.get("best_validation_ir_source_copy_loss", 1.0e12),
+                latest_compiler_ir_source_copy_loss,
+            )
+            summary["best_validation_ir_structural_text_reconstruction"] = min(
+                summary.get(
+                    "best_validation_ir_structural_text_reconstruction",
+                    1.0e12,
+                ),
+                float(
+                    compiler_ir_validation.get(
+                        "structural_text_reconstruction_loss",
+                        1.0e12,
+                    )
+                ),
             )
             summary["best_validation_logic_bridge_acceptance"] = max(
                 summary.get("best_validation_logic_bridge_acceptance", -1.0),
@@ -13014,20 +13683,76 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 summary.get("best_validation_reconstruction"),
                 after_validation.reconstruction_loss,
             )
+            summary["best_validation_learned_ir_view_ce"] = min(
+                summary.get("best_validation_learned_ir_view_ce", 1.0e12),
+                latest_learned_ir_view_ce,
+            )
+            summary["best_validation_learned_ir_view_cosine"] = max(
+                summary.get("best_validation_learned_ir_view_cosine", -1.0),
+                latest_learned_ir_view_cosine,
+            )
             append_event(
                 log_path,
                 args.run_id,
                 {
-                    "after_train": metric_block(after_train),
-                    "after_validation": metric_block(after_validation),
+                    "after_train": after_train_metrics,
+                    "after_validation": after_validation_metrics,
                     "applied_count": sum(step.applied_count for step in run.steps),
-                    "autoencoder_after_train": metric_block(after_train),
-                    "autoencoder_after_validation": metric_block(after_validation),
-                    "autoencoder_before_train": metric_block(before_train),
-                    "autoencoder_before_validation": metric_block(before_validation),
-                    "before_train": metric_block(before_train),
-                    "before_validation": metric_block(before_validation),
+                    "autoencoder_after_train": after_train_metrics,
+                    "autoencoder_after_validation": after_validation_metrics,
+                    "autoencoder_before_train": before_train_metrics,
+                    "autoencoder_before_validation": before_validation_metrics,
+                    "autoencoder_train_generalized_probe": (
+                        after_train_generalized_probe_metrics
+                    ),
+                    "autoencoder_validation_sample_memory_probe": (
+                        after_validation_sample_memory_probe_metrics
+                    ),
+                    "before_train": before_train_metrics,
+                    "before_validation": before_validation_metrics,
                     "completed_count": sum(step.completed_count for step in run.steps),
+                    "compiler_ir_guided_train": compiler_ir_guided_train,
+                    "compiler_ir_guided_validation": compiler_ir_guided_validation,
+                    "compiler_ir_guidance_activation_deduped_count": int(
+                        guidance_todo_counts["activation_deduped_count"]
+                    ),
+                    "compiler_ir_guidance_activation_seeded_count": int(
+                        guidance_todo_counts["activation_seeded_count"]
+                    ),
+                    "compiler_ir_guidance_activation_todo_ids": list(
+                        guidance_todo_ids["activation"]
+                    ),
+                    "compiler_ir_guidance_canary": guidance_canary,
+                    "compiler_ir_guidance_ce_delta": (
+                        latest_compiler_ir_guidance_ce_delta
+                    ),
+                    "compiler_ir_guidance_copy_hack_delta": (
+                        latest_compiler_ir_guidance_copy_hack_delta
+                    ),
+                    "compiler_ir_guidance_cosine_delta": (
+                        latest_compiler_ir_guidance_cosine_delta
+                    ),
+                    "compiler_ir_guidance_distillation": guidance_distillation,
+                    "compiler_ir_guidance_distillation_deduped_count": int(
+                        guidance_todo_counts["distillation_deduped_count"]
+                    ),
+                    "compiler_ir_guidance_distillation_seeded_count": int(
+                        guidance_todo_counts["distillation_seeded_count"]
+                    ),
+                    "compiler_ir_guidance_distillation_todo_ids": list(
+                        guidance_todo_ids["distillation"]
+                    ),
+                    "compiler_ir_guidance_guardrail_deduped_count": int(
+                        guidance_todo_counts["guardrail_deduped_count"]
+                    ),
+                    "compiler_ir_guidance_guardrail_seeded_count": int(
+                        guidance_todo_counts["guardrail_seeded_count"]
+                    ),
+                    "compiler_ir_guidance_guardrail_todo_ids": list(
+                        guidance_todo_ids["guardrail"]
+                    ),
+                    "compiler_ir_guidance_promotion": guidance_promotion_gate,
+                    "compiler_ir_guidance_scope_hints": guidance_scope_hints,
                     "compiler_ir_train": compiler_ir_train,
                     "compiler_ir_validation": compiler_ir_validation,
                     "compiler_ir_validation_comparable_to_previous_cycle": bool(
@@ -13042,8 +13767,14 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     ),
                     "logic_bridge_train": bridge_ir_train,
                     "logic_bridge_validation": bridge_ir_validation,
+                    "learned_ir_before_train": learned_ir_before_train,
+                    "learned_ir_before_validation": learned_ir_before_validation,
+                    "learned_ir_train": learned_ir_train,
+                    "learned_ir_validation": learned_ir_validation,
+                    "train_sample_memory_gap": train_sample_memory_gap,
+                    "validation_sample_memory_gap": validation_sample_memory_gap,
                     "cycle": cycle,
-                    "duration_seconds": round(time.time() - cycle_started, 3),
+                    "duration_seconds": latest_cycle_seconds,
                     "event": "cycle",
                     "failed_validation_count": sum(step.failed_validation_count for step in run.steps),
                     "feature_projection_report": feature_projection_report,
@@ -13061,6 +13792,11 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "program_synthesis_pending_count": program_synthesis_status["pending"],
                     "program_synthesis_seeded_count": sum(
                         step.program_synthesis_seeded_count for step in run.steps
+                    )
+                    + sum(
+                        value
+                        for key, value in guidance_todo_counts.items()
+                        if key.endswith("_seeded_count")
                     ),
                     "program_synthesis_preinsert_deduped_count": preinsert_deduped_count,
                     "program_synthesis_semantic_deduped_count": semantic_deduped_count,
