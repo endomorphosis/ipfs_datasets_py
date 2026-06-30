@@ -4194,6 +4194,121 @@ def test_build_paired_daemon_commands_pass_projection_bounds_to_autoencoder() ->
     assert command[command.index("--autoencoder-bootstrap-mode") + 1] == "fast"
 
 
+def test_guarded_daemon_passes_projection_runtime_bounds_to_autoencoder(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice before denying a request.",
+    )
+    captured: dict[str, object] = {}
+
+    class FakeAutoencoder:
+        def __init__(self, *, state: ModalAutoencoderTrainingState, **_kwargs: object) -> None:
+            self.state = state
+
+        def compute_backend_metadata(self) -> dict[str, str]:
+            return {
+                "autoencoder_compute_backend": "fake",
+                "autoencoder_compute_device": "python",
+                "autoencoder_compute_device_request": "fake",
+            }
+
+        def evaluate(self, *_args: object, **_kwargs: object) -> object:
+            return SimpleNamespace(
+                cross_entropy_loss=1.0,
+                embedding_cosine_similarity=0.0,
+            )
+
+        def train_generalizable_projection(self, *_args: object, **kwargs: object) -> dict[str, object]:
+            captured.update(kwargs)
+            raise SystemExit(17)
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(runner, "AdaptiveModalAutoencoder", FakeAutoencoder)
+    monkeypatch.setattr(
+        runner,
+        "load_laws_table",
+        lambda: SimpleNamespace(num_rows=1),
+    )
+    monkeypatch.setattr(
+        runner,
+        "sample_train_validation_rows",
+        lambda *_args, **_kwargs: ([0], [sample], [0], [sample], 1),
+    )
+    monkeypatch.setattr(
+        runner,
+        "compiler_ir_metric_block",
+        lambda *_args, **_kwargs: {
+            "cross_entropy_loss": 1.0,
+            "cosine_similarity": 0.0,
+            "metric_failures": 0,
+        },
+    )
+    monkeypatch.setattr(
+        runner,
+        "bridge_ir_metric_block",
+        lambda *_args, **_kwargs: {
+            "acceptance_rate": 1.0,
+            "metric_failures": 0,
+            "proof_failure_ratio": 0.0,
+            "total_loss": 0.0,
+        },
+    )
+
+    args = SimpleNamespace(
+        autoencoder_bridge_workers=1,
+        autoencoder_canonical_warm_start="off",
+        autoencoder_device="python",
+        autoencoder_hard_guardrail_metrics="compiler_ir_cosine,structural_validity",
+        autoencoder_max_ce_deadband=0.002,
+        autoencoder_metric_bridge_max_sample_text_chars=321,
+        autoencoder_projection_deadband_mode="enforce",
+        autoencoder_projection_periodic_full_search_every_n_cycles=9,
+        autoencoder_projection_prescreen_mode="enforce",
+        autoencoder_projection_prescreen_top_k=2,
+        bridge_evaluate_provers=False,
+        bridge_loss_adapters="none",
+        duration_seconds=60.0,
+        generalizable_projection_epochs=1,
+        generalizable_projection_hard_example_fraction=0.5,
+        generalizable_projection_max_line_search_attempts=1,
+        generalizable_projection_timeout_seconds=7.5,
+        learning_rate=0.1,
+        max_inner_iterations=1,
+        max_items=1,
+        max_sample_text_chars=512,
+        queue_run_id=None,
+        run_id="projection-wiring",
+        sampling_seed="projection-wiring-seed",
+        test_every_cycles=100,
+        train_count=1,
+        validation_canary_count=0,
+        validation_count=1,
+        warm_start_run_id=[],
+        warm_start_state=[],
+    )
+
+    with pytest.raises(SystemExit) as excinfo:
+        runner.run_guarded_uscode_modal_daemon(args)
+
+    assert excinfo.value.code == 17
+    assert captured["max_seconds"] == 7.5
+    assert captured["max_line_search_attempts"] == 1
+    assert captured["legal_ir_bridge_max_sample_text_chars"] == 321
+    assert captured["projection_deadband_mode"] == "enforce"
+    assert captured["projection_max_ce_deadband"] == 0.002
+    assert captured["projection_hard_guardrail_metrics"] == (
+        "compiler_ir_cosine,structural_validity"
+    )
+    assert captured["projection_prescreen_mode"] == "enforce"
+    assert captured["projection_prescreen_top_k"] == 2
+    assert captured["projection_periodic_full_search_every_n_cycles"] == 9
+    assert captured["projection_cycle"] == 1
+
+
 def test_initial_summary_uses_explicit_sampling_seed(tmp_path) -> None:
     args = SimpleNamespace(
         run_id="summary-run",

@@ -12639,6 +12639,58 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                             1.0,
                         )
                     ),
+                    max_seconds=float(
+                        getattr(
+                            args,
+                            "generalizable_projection_timeout_seconds",
+                            DEFAULT_GENERALIZABLE_PROJECTION_TIMEOUT_SECONDS,
+                        )
+                        or 0.0
+                    ),
+                    max_line_search_attempts=int(
+                        getattr(
+                            args,
+                            "generalizable_projection_max_line_search_attempts",
+                            DEFAULT_GENERALIZABLE_PROJECTION_MAX_LINE_SEARCH_ATTEMPTS,
+                        )
+                        or 0
+                    ),
+                    legal_ir_bridge_max_sample_text_chars=int(
+                        getattr(
+                            args,
+                            "autoencoder_metric_bridge_max_sample_text_chars",
+                            DEFAULT_AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLE_TEXT_CHARS,
+                        )
+                        or 0
+                    ),
+                    projection_deadband_mode=str(
+                        getattr(args, "autoencoder_projection_deadband_mode", "shadow")
+                    ),
+                    projection_max_ce_deadband=float(
+                        getattr(args, "autoencoder_max_ce_deadband", 0.0001) or 0.0
+                    ),
+                    projection_hard_guardrail_metrics=str(
+                        getattr(
+                            args,
+                            "autoencoder_hard_guardrail_metrics",
+                            "compiler_ir_cosine,structural_validity,source_copy_penalty",
+                        )
+                    ),
+                    projection_prescreen_mode=str(
+                        getattr(args, "autoencoder_projection_prescreen_mode", "off")
+                    ),
+                    projection_prescreen_top_k=int(
+                        getattr(args, "autoencoder_projection_prescreen_top_k", 3) or 0
+                    ),
+                    projection_periodic_full_search_every_n_cycles=int(
+                        getattr(
+                            args,
+                            "autoencoder_projection_periodic_full_search_every_n_cycles",
+                            8,
+                        )
+                        or 0
+                    ),
+                    projection_cycle=cycle,
                 )
             run = supervisor.optimize(
                 train_samples,
