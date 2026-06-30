@@ -298,6 +298,11 @@ COMPILER_IR_METRIC_TEXT_POLICIES = ("skip", "truncate")
 DEFAULT_COMPILER_IR_METRIC_MAX_SAMPLE_TEXT_CHARS = 400
 DEFAULT_COMPILER_IR_METRIC_SAMPLE_TIMEOUT_SECONDS = 10.0
 DEFAULT_COMPILER_IR_METRIC_TEXT_POLICY = "truncate"
+CODEX_TARGET_METRIC_TIMEOUT_SECONDS_ENV = (
+    "IPFS_DATASETS_CODEX_TARGET_METRIC_TIMEOUT_SECONDS"
+)
+DEFAULT_CODEX_TARGET_METRIC_TIMEOUT_SECONDS = 300.0
+CODEX_TARGET_METRIC_TRADEOFF_POLICY_VERSION = "target-metric-tradeoff-v1"
 BRIDGE_IR_REPORT_CACHE_MAX = 4096
 LEGAL_IR_METRIC_DISK_CACHE_VERSION = "legal-ir-metric-disk-cache-v1"
 LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV = "IPFS_DATASETS_LEGAL_IR_METRIC_CACHE_DIR"
@@ -8154,6 +8159,21 @@ print(json.dumps({
     return snapshot
 
 
+def _codex_target_metric_timeout_seconds(validation_timeout_seconds: float) -> float:
+    """Return the subprocess budget for Codex target metric snapshots."""
+
+    try:
+        requested = float(validation_timeout_seconds)
+    except (TypeError, ValueError):
+        requested = DEFAULT_CODEX_TARGET_METRIC_TIMEOUT_SECONDS
+    raw_cap = str(os.environ.get(CODEX_TARGET_METRIC_TIMEOUT_SECONDS_ENV) or "").strip()
+    try:
+        cap = float(raw_cap) if raw_cap else DEFAULT_CODEX_TARGET_METRIC_TIMEOUT_SECONDS
+    except ValueError:
+        cap = DEFAULT_CODEX_TARGET_METRIC_TIMEOUT_SECONDS
+    return max(1.0, min(max(1.0, requested), max(1.0, cap)))
+
+
 def _call_codex_packet_target_metric_snapshot(
     packet: Mapping[str, Any],
     repo_root: Path,
@@ -8207,45 +8227,134 @@ def _codex_target_metric_validation_report(
     target_metrics = list(dict.fromkeys(list(before.get("target_metrics", []) or [])))
     before_metrics = dict(before.get("metrics", {}) or {})
     after_metrics = dict(after.get("metrics", {}) or {})
+    deadband_by_metric: Dict[str, float] = {}
     metric_deltas: Dict[str, float] = {}
+    metric_weights: Dict[str, float] = {}
     improved_metrics: List[str] = []
-    regressed_metrics: List[str] = []
+    raw_regressed_metrics: List[str] = []
+    hard_regressed_metrics: List[str] = []
+    tolerated_regressed_metrics: List[str] = []
     missing_metrics: List[str] = []
+    objective_delta = 0.0
+    weighted_metric_deltas: Dict[str, float] = {}
     for metric in target_metrics:
         if metric not in before_metrics or metric not in after_metrics:
             missing_metrics.append(str(metric))
             continue
+        metric_name = str(metric)
         delta = _target_metric_improvement_delta(
-            metric,
+            metric_name,
             before_value=float(before_metrics[metric]),
             after_value=float(after_metrics[metric]),
         )
-        metric_deltas[str(metric)] = round(delta, 9)
+        weight = _codex_target_metric_weight(metric_name)
+        weighted_delta = delta * weight
+        objective_delta += weighted_delta
+        deadband = _codex_target_metric_deadband(metric_name)
+        deadband_by_metric[metric_name] = round(deadband, 9)
+        metric_deltas[metric_name] = round(delta, 9)
+        metric_weights[metric_name] = round(weight, 6)
+        weighted_metric_deltas[metric_name] = round(weighted_delta, 9)
         if delta > 0.0:
-            improved_metrics.append(str(metric))
+            improved_metrics.append(metric_name)
         elif delta < 0.0:
-            regressed_metrics.append(str(metric))
+            raw_regressed_metrics.append(metric_name)
+            if abs(delta) <= deadband:
+                tolerated_regressed_metrics.append(metric_name)
+            else:
+                hard_regressed_metrics.append(metric_name)
     before_status = str(before.get("status") or "")
     after_status = str(after.get("status") or "")
-    status = (
-        "skipped"
-        if before_status == "skipped" or after_status == "skipped"
-        else "unavailable"
-        if before_status != "measured" or after_status != "measured"
-        else "regressed"
-        if regressed_metrics
-        else "passed"
-    )
+    if before_status == "skipped" or after_status == "skipped":
+        status = "skipped"
+    elif before_status != "measured" or after_status != "measured":
+        status = "unavailable"
+    elif hard_regressed_metrics:
+        status = "regressed"
+    elif raw_regressed_metrics:
+        status = "passed_with_tradeoff" if objective_delta > 0.0 else "regressed"
+        if status == "regressed":
+            hard_regressed_metrics = list(raw_regressed_metrics)
+            tolerated_regressed_metrics = []
+    else:
+        status = "passed"
     return {
         "after": dict(after),
         "before": dict(before),
+        "deadband_by_metric": deadband_by_metric,
+        "gate_policy": CODEX_TARGET_METRIC_TRADEOFF_POLICY_VERSION,
+        "hard_regressed_metrics": hard_regressed_metrics,
         "improved_metrics": improved_metrics,
         "metric_deltas": metric_deltas,
+        "metric_weights": metric_weights,
         "missing_metrics": missing_metrics,
-        "regressed_metrics": regressed_metrics,
+        "objective_delta": round(objective_delta, 9),
+        "raw_regressed_metrics": raw_regressed_metrics,
+        "regressed_metrics": hard_regressed_metrics,
         "status": status,
         "target_metrics": target_metrics,
+        "tolerated_regressed_metrics": tolerated_regressed_metrics,
+        "weighted_metric_deltas": weighted_metric_deltas,
     }
+
+
+def _codex_target_metric_deadband(metric_name: str) -> float:
+    """Return the tolerated negative delta for noisy target metrics."""
+
+    normalized = str(metric_name)
+    if normalized in {
+        "source_decompiled_text_token_loss",
+        "structural_text_reconstruction_loss",
+    }:
+        return 0.005
+    if normalized == "source_copy_reward_hack_penalty":
+        return 0.002
+    if (
+        normalized in {"embedding_cosine_similarity", "cosine_similarity"}
+        or normalized.endswith("_similarity")
+        or normalized.endswith("_score")
+        or normalized.endswith("_rate")
+    ) and not normalized.endswith("_loss"):
+        return 0.002
+    if "cosine" in normalized and normalized.endswith("_loss"):
+        return 0.0001
+    if normalized == "cross_entropy_loss" or normalized.endswith("_cross_entropy_loss"):
+        return 0.0001
+    if normalized in {"reconstruction_loss", "text_reconstruction_loss"}:
+        return 0.001
+    if normalized.endswith("_reconstruction_loss"):
+        return 0.001
+    return 0.0
+
+
+def _codex_target_metric_weight(metric_name: str) -> float:
+    """Return the weighted objective contribution for a target metric."""
+
+    normalized = str(metric_name)
+    if normalized in {
+        "cross_entropy_loss",
+        "compiler_ir_cross_entropy_loss",
+        "legal_ir_view_cross_entropy_loss",
+    } or normalized.endswith("_cross_entropy_loss"):
+        return 4.0
+    if (
+        normalized in {"embedding_cosine_similarity", "cosine_similarity"}
+        or normalized.endswith("_similarity")
+        or normalized.endswith("_score")
+        or normalized.endswith("_rate")
+    ) and not normalized.endswith("_loss"):
+        return 4.0
+    if normalized == "source_decompiled_text_embedding_cosine_loss":
+        return 4.0
+    if "legal_ir" in normalized and "cosine" in normalized:
+        return 3.0
+    if normalized == "source_copy_reward_hack_penalty":
+        return 3.0
+    if normalized in {"reconstruction_loss", "legal_ir_multiview_reconstruction_loss"}:
+        return 2.0
+    if normalized.startswith(("deontic_", "tdfol_", "cec_", "zkp_", "external_prover_")):
+        return 2.0
+    return 1.0
 
 
 def _target_metric_improvement_delta(
@@ -8265,6 +8374,38 @@ def _target_metric_improvement_delta(
     if higher_is_better:
         return after_value - before_value
     return before_value - after_value
+
+
+def _target_metric_improvement_delta_map(
+    *,
+    before: Mapping[str, Any],
+    after: Mapping[str, Any],
+    target_metrics: Sequence[str],
+) -> Dict[str, float]:
+    """Return rounded positive-is-better deltas for comparable metric mappings."""
+
+    before_metrics = dict(before or {})
+    after_metrics = dict(after or {})
+    deltas: Dict[str, float] = {}
+    for metric in target_metrics:
+        metric_name = str(metric)
+        if metric_name not in before_metrics or metric_name not in after_metrics:
+            continue
+        before_value = before_metrics[metric_name]
+        after_value = after_metrics[metric_name]
+        if not isinstance(before_value, (int, float)) or not isinstance(
+            after_value, (int, float)
+        ):
+            continue
+        deltas[metric_name] = round(
+            _target_metric_improvement_delta(
+                metric_name,
+                before_value=float(before_value),
+                after_value=float(after_value),
+            ),
+            9,
+        )
+    return deltas
 
 
 def _codex_validation_failure_tokens(validation: Mapping[str, Any]) -> List[str]:
@@ -8570,12 +8711,15 @@ def apply_codex_worktree_changes_to_main(
         target_files=target_files,
     )
     validation_metric_payloads = _codex_packet_validation_metric_sample_payloads(updated)
+    target_metric_timeout_seconds = _codex_target_metric_timeout_seconds(
+        validation_timeout_seconds
+    )
     target_metric_before = (
         _call_codex_packet_target_metric_snapshot(
             updated,
             source_repo_root,
             sample_role="evidence",
-            timeout_seconds=min(float(validation_timeout_seconds), 120.0),
+            timeout_seconds=target_metric_timeout_seconds,
         )
         if measure_target_metrics
         else {
@@ -8593,7 +8737,7 @@ def apply_codex_worktree_changes_to_main(
             source_repo_root,
             sample_payloads=validation_metric_payloads,
             sample_role="holdout",
-            timeout_seconds=min(float(validation_timeout_seconds), 120.0),
+            timeout_seconds=target_metric_timeout_seconds,
         )
         if measure_target_metrics and validation_metric_payloads
         else {
@@ -8709,7 +8853,7 @@ def apply_codex_worktree_changes_to_main(
             updated,
             source_repo_root,
             sample_role="evidence",
-            timeout_seconds=min(float(validation_timeout_seconds), 120.0),
+            timeout_seconds=target_metric_timeout_seconds,
         )
         if measure_target_metrics
         else {
@@ -8730,7 +8874,7 @@ def apply_codex_worktree_changes_to_main(
             source_repo_root,
             sample_payloads=validation_metric_payloads,
             sample_role="holdout",
-            timeout_seconds=min(float(validation_timeout_seconds), 120.0),
+            timeout_seconds=target_metric_timeout_seconds,
         )
         if measure_target_metrics and validation_metric_payloads
         else {
@@ -8762,6 +8906,11 @@ def apply_codex_worktree_changes_to_main(
         and holdout_target_metric_validation["status"] == "skipped"
     ):
         updated["main_apply_target_metric_gate"] = "skipped"
+    elif (
+        target_metric_validation["status"] == "passed_with_tradeoff"
+        or holdout_target_metric_validation["status"] == "passed_with_tradeoff"
+    ):
+        updated["main_apply_target_metric_gate"] = "passed_with_tradeoff"
     else:
         updated["main_apply_target_metric_gate"] = "passed"
     if (
@@ -9207,11 +9356,21 @@ def _codex_packet_validation_report(packet: Mapping[str, Any]) -> Dict[str, Any]
     return {
         "baseline_failure_accepted": baseline_failure_accepted,
         "baseline_status": baseline_validation.get("status"),
+        "holdout_hard_regressed_metrics": list(
+            holdout_target_metric_validation.get("hard_regressed_metrics", []) or []
+        ),
         "holdout_metric_deltas": dict(packet.get("holdout_metric_deltas", {}) or {}),
+        "holdout_objective_delta": holdout_target_metric_validation.get("objective_delta"),
+        "holdout_raw_regressed_metrics": list(
+            holdout_target_metric_validation.get("raw_regressed_metrics", []) or []
+        ),
         "holdout_regressed_metrics": list(
             holdout_target_metric_validation.get("regressed_metrics", []) or []
         ),
         "holdout_target_metric_status": holdout_target_metric_validation.get("status"),
+        "holdout_tolerated_regressed_metrics": list(
+            holdout_target_metric_validation.get("tolerated_regressed_metrics", []) or []
+        ),
         "main_apply_validation_gate": packet.get("main_apply_validation_gate"),
         "main_apply_validation_failed_command": failed_command,
         "main_apply_validation_failed_tests": list(
@@ -9225,10 +9384,21 @@ def _codex_packet_validation_report(packet: Mapping[str, Any]) -> Dict[str, Any]
         ),
         "main_apply_status": packet.get("main_apply_status"),
         "metric_deltas": dict(packet.get("metric_deltas", {}) or {}),
+        "objective_delta": target_metric_validation.get("objective_delta"),
         "patch_status": packet.get("patch_status"),
+        "raw_regressed_metrics": list(
+            target_metric_validation.get("raw_regressed_metrics", []) or []
+        ),
         "regressed_metrics": list(target_metric_validation.get("regressed_metrics", []) or []),
+        "target_metric_gate_policy": target_metric_validation.get("gate_policy"),
+        "target_metric_hard_regressed_metrics": list(
+            target_metric_validation.get("hard_regressed_metrics", []) or []
+        ),
         "status": validation_status,
         "target_metric_status": target_metric_validation.get("status"),
+        "tolerated_regressed_metrics": list(
+            target_metric_validation.get("tolerated_regressed_metrics", []) or []
+        ),
     }
 
 
@@ -11936,6 +12106,49 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 acceptance_validation_samples,
                 feature_codec,
             )
+            compiler_ir_validation_sample_ids = [
+                str(getattr(sample, "sample_id", "") or "")
+                for sample in acceptance_validation_samples
+            ]
+            compiler_ir_validation_metrics = {
+                str(key): float(value)
+                for key, value in compiler_ir_validation.items()
+                if isinstance(value, (int, float))
+            }
+            previous_compiler_ir_validation_sample_ids = [
+                str(sample_id)
+                for sample_id in summary.get(
+                    "latest_compiler_ir_validation_sample_ids",
+                    [],
+                )
+                or []
+            ]
+            previous_compiler_ir_validation_metrics = dict(
+                summary.get("latest_compiler_ir_validation_metrics", {}) or {}
+            )
+            compiler_ir_validation_comparable = (
+                bool(previous_compiler_ir_validation_metrics)
+                and previous_compiler_ir_validation_sample_ids
+                == compiler_ir_validation_sample_ids
+            )
+            compiler_ir_validation_delta = (
+                _target_metric_improvement_delta_map(
+                    before=previous_compiler_ir_validation_metrics,
+                    after=compiler_ir_validation_metrics,
+                    target_metrics=(
+                        "cross_entropy_loss",
+                        "cosine_similarity",
+                        "reconstruction_loss",
+                        "text_reconstruction_loss",
+                        "source_decompiled_text_embedding_cosine_loss",
+                        "source_decompiled_text_token_loss",
+                        "source_copy_reward_hack_penalty",
+                        "structural_text_reconstruction_loss",
+                    ),
+                )
+                if compiler_ir_validation_comparable
+                else {}
+            )
             bridge_ir_train = bridge_ir_metric_block(
                 train_samples,
                 bridge_adapters,
@@ -12121,6 +12334,51 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             )
             summary["latest_logic_bridge_train"] = bridge_ir_train
             summary["latest_logic_bridge_validation"] = bridge_ir_validation
+            summary["latest_compiler_ir_validation_metrics"] = (
+                compiler_ir_validation_metrics
+            )
+            summary["latest_compiler_ir_validation_sample_count"] = len(
+                compiler_ir_validation_sample_ids
+            )
+            summary["latest_compiler_ir_validation_sample_ids"] = (
+                compiler_ir_validation_sample_ids
+            )
+            summary["compiler_ir_validation_comparable_to_previous_cycle"] = bool(
+                compiler_ir_validation_comparable
+            )
+            summary["compiler_ir_validation_last_delta"] = compiler_ir_validation_delta
+            if compiler_ir_validation_comparable:
+                summary["compiler_ir_validation_ce_improved_cycles"] = int(
+                    summary.get("compiler_ir_validation_ce_improved_cycles", 0)
+                ) + int(compiler_ir_validation_delta.get("cross_entropy_loss", 0.0) > 0.0)
+                summary["compiler_ir_validation_cosine_improved_cycles"] = int(
+                    summary.get("compiler_ir_validation_cosine_improved_cycles", 0)
+                ) + int(compiler_ir_validation_delta.get("cosine_similarity", 0.0) > 0.0)
+            seen_compiler_ir_sample_ids = [
+                str(sample_id)
+                for sample_id in summary.get(
+                    "compiler_ir_validation_sample_ids_seen",
+                    [],
+                )
+                or []
+            ]
+            for sample_id in compiler_ir_validation_sample_ids:
+                if sample_id and sample_id not in seen_compiler_ir_sample_ids:
+                    seen_compiler_ir_sample_ids.append(sample_id)
+            summary["compiler_ir_validation_sample_ids_seen"] = (
+                seen_compiler_ir_sample_ids[-512:]
+            )
+            summary["compiler_ir_validation_unique_sample_count_seen"] = len(
+                set(seen_compiler_ir_sample_ids)
+            )
+            summary["compiler_ir_validation_min_recommended_canaries"] = (
+                DEFAULT_VALIDATION_CANARY_COUNT
+            )
+            summary["compiler_ir_validation_low_sample_warning"] = (
+                validation_mode == "fixed_canary"
+                and len(compiler_ir_validation_sample_ids)
+                < DEFAULT_VALIDATION_CANARY_COUNT
+            )
             summary["metric_failures"] = int(summary.get("metric_failures", 0)) + int(
                 compiler_ir_train.get("metric_failures", 0)
                 + compiler_ir_validation.get("metric_failures", 0)
@@ -12202,6 +12460,16 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "completed_count": sum(step.completed_count for step in run.steps),
                     "compiler_ir_train": compiler_ir_train,
                     "compiler_ir_validation": compiler_ir_validation,
+                    "compiler_ir_validation_comparable_to_previous_cycle": bool(
+                        compiler_ir_validation_comparable
+                    ),
+                    "compiler_ir_validation_delta": compiler_ir_validation_delta,
+                    "compiler_ir_validation_sample_count": len(
+                        compiler_ir_validation_sample_ids
+                    ),
+                    "compiler_ir_validation_sample_ids": (
+                        compiler_ir_validation_sample_ids[:32]
+                    ),
                     "logic_bridge_train": bridge_ir_train,
                     "logic_bridge_validation": bridge_ir_validation,
                     "cycle": cycle,

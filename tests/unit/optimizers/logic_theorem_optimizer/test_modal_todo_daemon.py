@@ -2728,6 +2728,102 @@ def test_codex_target_metric_validation_reports_regressions() -> None:
     assert unavailable["regressed_metrics"] == []
 
 
+def test_codex_target_metric_validation_accepts_weighted_tradeoff() -> None:
+    before = {
+        "metrics": {
+            "embedding_cosine_similarity": 0.5,
+            "legal_ir_multiview_cosine_loss": 0.25,
+            "reconstruction_loss": 0.4,
+            "source_copy_reward_hack_penalty": 0.2,
+            "source_decompiled_text_token_loss": 0.55,
+            "structural_text_reconstruction_loss": 0.55,
+        },
+        "status": "measured",
+        "target_metrics": [
+            "embedding_cosine_similarity",
+            "legal_ir_multiview_cosine_loss",
+            "reconstruction_loss",
+            "source_copy_reward_hack_penalty",
+            "source_decompiled_text_token_loss",
+            "structural_text_reconstruction_loss",
+        ],
+    }
+    after = {
+        "metrics": {
+            "embedding_cosine_similarity": 0.5069,
+            "legal_ir_multiview_cosine_loss": 0.24995,
+            "reconstruction_loss": 0.3983,
+            "source_copy_reward_hack_penalty": 0.2006,
+            "source_decompiled_text_token_loss": 0.55004,
+            "structural_text_reconstruction_loss": 0.5545,
+        },
+        "status": "measured",
+        "target_metrics": before["target_metrics"],
+    }
+
+    report = runner._codex_target_metric_validation_report(
+        before=before,
+        after=after,
+    )
+
+    assert report["status"] == "passed_with_tradeoff"
+    assert report["objective_delta"] > 0.0
+    assert report["regressed_metrics"] == []
+    assert report["raw_regressed_metrics"] == [
+        "source_copy_reward_hack_penalty",
+        "source_decompiled_text_token_loss",
+        "structural_text_reconstruction_loss",
+    ]
+    assert report["tolerated_regressed_metrics"] == [
+        "source_copy_reward_hack_penalty",
+        "source_decompiled_text_token_loss",
+        "structural_text_reconstruction_loss",
+    ]
+
+
+def test_program_synthesis_validation_gate_accepts_target_metric_tradeoff() -> None:
+    todo = ModalTodo(
+        todo_id="program-tradeoff",
+        action="refine_typed_ir_or_decompiler_slots",
+        objective="refine IR projection",
+        sample_ids=["sample-1"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=1.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "target_metrics": [
+                "embedding_cosine_similarity",
+                "structural_text_reconstruction_loss",
+            ],
+        },
+    )
+
+    gate = daemon._program_synthesis_validation_gate(
+        todo,
+        patch_status="applied_to_main",
+        validation_report={
+            "metric_deltas": {
+                "embedding_cosine_similarity": 0.006,
+                "structural_text_reconstruction_loss": -0.004,
+            },
+            "objective_delta": 0.02,
+            "status": "passed",
+            "target_metric_status": "passed_with_tradeoff",
+            "tolerated_regressed_metrics": ["structural_text_reconstruction_loss"],
+        },
+    )
+
+    assert gate["accepted"] is True
+    assert gate["accepted_tradeoff"] is True
+    assert gate["regressed_metrics"] == []
+    assert gate["raw_regressed_metrics"] == ["structural_text_reconstruction_loss"]
+    assert gate["tolerated_regressed_metrics"] == [
+        "structural_text_reconstruction_loss"
+    ]
+
+
 def test_codex_metric_payloads_keep_holdout_separate() -> None:
     packet = {
         "todos": [

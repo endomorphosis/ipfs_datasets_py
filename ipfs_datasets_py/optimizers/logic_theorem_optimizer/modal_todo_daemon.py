@@ -3294,25 +3294,59 @@ def _program_synthesis_validation_gate(
         for metric in targeted_metrics
         if float(metric_deltas.get(metric, 0.0) or 0.0) > 0.0
     ]
-    regressed_metrics = [
+    raw_regressed_metrics = [
         metric
         for metric in targeted_metrics
         if float(metric_deltas.get(metric, 0.0) or 0.0) < 0.0
     ]
+    reported_regressed_metrics = [
+        str(metric)
+        for metric in _as_list(report.get("regressed_metrics"))
+        if str(metric).strip()
+    ]
+    tolerated_regressed_metrics = [
+        str(metric)
+        for metric in _as_list(report.get("tolerated_regressed_metrics"))
+        if str(metric).strip()
+    ]
+    target_metric_status = str(
+        report.get("target_metric_status") or report.get("status") or ""
+    ).strip().lower()
+    regressed_metrics = (
+        reported_regressed_metrics
+        if reported_regressed_metrics
+        or target_metric_status in {"passed_with_tradeoff", "regressed"}
+        else raw_regressed_metrics
+    )
     deterministic_fix = str(report.get("status") or "").lower() in {
         "passed",
+        "passed_with_tradeoff",
         "skipped",
         "not_measured",
         "",
     }
+    accepted_tradeoff = (
+        target_metric_status == "passed_with_tradeoff"
+        and bool(tolerated_regressed_metrics)
+        and not regressed_metrics
+    )
     return {
-        "accepted": bool(improved_metrics or (deterministic_fix and not regressed_metrics)),
+        "accepted": bool(
+            improved_metrics
+            or accepted_tradeoff
+            or (deterministic_fix and not regressed_metrics)
+        ),
+        "accepted_tradeoff": accepted_tradeoff,
         "deterministic_validation_fix": deterministic_fix,
         "improved_metrics": improved_metrics,
         "metric_deltas": metric_deltas,
+        "objective_delta": report.get("objective_delta"),
         "patch_status": patch_status,
+        "raw_regressed_metrics": raw_regressed_metrics,
         "regressed_metrics": regressed_metrics,
         "target_metrics": targeted_metrics,
+        "target_metric_status": target_metric_status or "not_measured",
+        "tolerated_regressed_metrics": tolerated_regressed_metrics,
         "validation_status": str(report.get("status") or "not_measured"),
     }
 
@@ -4787,9 +4821,13 @@ def _record_program_synthesis_failure_evidence(
         in {
             "baseline_failure_accepted",
             "baseline_status",
+            "holdout_hard_regressed_metrics",
             "holdout_metric_deltas",
+            "holdout_objective_delta",
+            "holdout_raw_regressed_metrics",
             "holdout_regressed_metrics",
             "holdout_target_metric_status",
+            "holdout_tolerated_regressed_metrics",
             "main_apply_validation_failed_command",
             "main_apply_validation_failed_tests",
             "main_apply_validation_failure_tokens",
@@ -4799,10 +4837,15 @@ def _record_program_synthesis_failure_evidence(
             "main_apply_validation_stdout_tail",
             "main_apply_validation_syntax_locations",
             "metric_deltas",
+            "objective_delta",
             "patch_status",
+            "raw_regressed_metrics",
             "regressed_metrics",
             "status",
+            "target_metric_gate_policy",
+            "target_metric_hard_regressed_metrics",
             "target_metric_status",
+            "tolerated_regressed_metrics",
         }
     }
     if compact_report:
