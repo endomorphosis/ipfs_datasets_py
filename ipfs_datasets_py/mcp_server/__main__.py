@@ -72,22 +72,51 @@ def main():
                 print(f"Error with stdio server: {e}")
                 raise
         else:
-            # HTTP mode via Hypercorn+Trio
-            import trio
-            try:
-                from hypercorn.config import Config as HypercornConfig
-                from hypercorn.trio import serve as hypercorn_serve
-                from ipfs_datasets_py.mcp_server.fastapi_service import app as fastapi_app
+            # HTTP mode. The MCP++ transport prefers Hypercorn (anyio/trio) so
+            # the server honours the trio/anyio + hypercorn stack, but it falls
+            # back to uvicorn automatically when Hypercorn is unavailable so the
+            # daemon still binds a port and external MCP clients can connect.
+            from ipfs_datasets_py.mcp_server.fastapi_service import app as fastapi_app
 
+            log_level = "DEBUG" if args.debug else "INFO"
+
+            def _serve_hypercorn() -> bool:
+                try:
+                    import trio
+                    from hypercorn.config import Config as HypercornConfig
+                    from hypercorn.trio import serve as hypercorn_serve
+                except ImportError as exc:
+                    print(f"Hypercorn+Trio not available ({exc}); falling back to uvicorn.")
+                    return False
                 hconfig = HypercornConfig()
                 hconfig.bind = [f"{args.host}:{args.port}"]
                 hconfig.worker_class = "trio"
-                hconfig.loglevel = "DEBUG" if args.debug else "INFO"
+                hconfig.loglevel = log_level
                 hconfig.accesslog = "-"
                 print(f"🚀 Starting IPFS Datasets MCP++ on {args.host}:{args.port} (Hypercorn+Trio)")
                 trio.run(hypercorn_serve, fastapi_app, hconfig)
-            except ImportError as e:
-                print(f"Hypercorn not available ({e}). Install with: pip install hypercorn[trio]")
+                return True
+
+            def _serve_uvicorn() -> bool:
+                try:
+                    import uvicorn
+                except ImportError as exc:
+                    print(f"uvicorn not available ({exc}).")
+                    return False
+                print(f"🚀 Starting IPFS Datasets MCP++ on {args.host}:{args.port} (uvicorn)")
+                uvicorn.run(
+                    fastapi_app,
+                    host=args.host,
+                    port=args.port,
+                    log_level=log_level.lower(),
+                )
+                return True
+
+            if not (_serve_hypercorn() or _serve_uvicorn()):
+                print(
+                    "No ASGI server available. Install one with: "
+                    "pip install 'hypercorn[trio]'  (preferred)  or  pip install uvicorn"
+                )
                 sys.exit(1)
 
     except KeyboardInterrupt:
