@@ -2202,6 +2202,17 @@ def test_program_synthesis_generator_clusters_stable_autoencoder_residuals() -> 
     assert all(todo.metadata["target_metrics"] for todo in todos)
     assert all(todo.metadata["validation_commands"] for todo in todos)
     assert all(todo.metadata["metric_sample_payloads"] for todo in todos)
+    decompiler_todo = next(
+        todo
+        for todo in todos
+        if todo.action == "refine_typed_ir_or_decompiler_slots"
+    )
+    assert "compiler_ir_cross_entropy_loss" in decompiler_todo.metadata["target_metrics"]
+    assert "compiler_ir_cosine_similarity" in decompiler_todo.metadata["target_metrics"]
+    assert (
+        "compiler_ir_source_decompiled_text_embedding_cosine_loss"
+        in decompiler_todo.metadata["target_metrics"]
+    )
     for todo in todos:
         assert {
             evidence["hint_id"] for evidence in todo.metadata["hint_evidence"]
@@ -2779,6 +2790,45 @@ def test_codex_target_metric_validation_accepts_weighted_tradeoff() -> None:
         "source_decompiled_text_token_loss",
         "structural_text_reconstruction_loss",
     ]
+
+
+def test_codex_target_metric_validation_weights_compiler_ir_aliases() -> None:
+    before = {
+        "metrics": {
+            "compiler_ir_cosine_similarity": 0.50,
+            "compiler_ir_cross_entropy_loss": 1.20,
+            "compiler_ir_structural_text_reconstruction_loss": 0.50,
+        },
+        "status": "measured",
+        "target_metrics": [
+            "compiler_ir_cosine_similarity",
+            "compiler_ir_cross_entropy_loss",
+            "compiler_ir_structural_text_reconstruction_loss",
+        ],
+    }
+    after = {
+        "metrics": {
+            "compiler_ir_cosine_similarity": 0.51,
+            "compiler_ir_cross_entropy_loss": 1.19,
+            "compiler_ir_structural_text_reconstruction_loss": 0.504,
+        },
+        "status": "measured",
+        "target_metrics": before["target_metrics"],
+    }
+
+    report = runner._codex_target_metric_validation_report(
+        before=before,
+        after=after,
+    )
+
+    assert report["status"] == "passed_with_tradeoff"
+    assert report["objective_delta"] > 0.0
+    assert report["regressed_metrics"] == []
+    assert report["tolerated_regressed_metrics"] == [
+        "compiler_ir_structural_text_reconstruction_loss"
+    ]
+    assert report["metric_weights"]["compiler_ir_cosine_similarity"] == pytest.approx(4.0)
+    assert report["metric_weights"]["compiler_ir_cross_entropy_loss"] == pytest.approx(4.0)
 
 
 def test_program_synthesis_validation_gate_accepts_target_metric_tradeoff() -> None:
@@ -7245,18 +7295,32 @@ def test_compiler_ir_metric_block_reports_deterministic_codec_losses(monkeypatch
     assert "cross_entropy_entropy_loss" in block
     assert "cross_entropy_excess_loss" in block
     assert "cross_entropy_loss" in block
+    assert "compiler_ir_cross_entropy_loss" in block
     assert "cosine_similarity" in block
+    assert "compiler_ir_cosine_similarity" in block
     assert "reconstruction_loss" in block
+    assert "compiler_ir_reconstruction_loss" in block
     assert "source_copy_loss" in block
     assert "source_copy_reward_hack_penalty" in block
+    assert "compiler_ir_source_copy_reward_hack_penalty" in block
     assert "source_span_copy_ratio" in block
     assert "source_decompiled_text_embedding_cosine_loss" in block
+    assert "compiler_ir_source_decompiled_text_embedding_cosine_loss" in block
     assert "source_decompiled_text_embedding_cosine_similarity" in block
     assert "source_decompiled_text_token_loss" in block
+    assert "compiler_ir_source_decompiled_text_token_loss" in block
     assert "source_decompiled_text_token_similarity" in block
     assert "structural_text_reconstruction_loss" in block
+    assert "compiler_ir_structural_text_reconstruction_loss" in block
     assert "text_reconstruction_loss" in block
+    assert "compiler_ir_text_reconstruction_loss" in block
     assert "modal_span_coverage" in block
+    assert block["compiler_ir_cross_entropy_loss"] == pytest.approx(
+        block["cross_entropy_loss"]
+    )
+    assert block["compiler_ir_cosine_similarity"] == pytest.approx(
+        block["cosine_similarity"]
+    )
     assert block["source_decompiled_text_embedding_cosine_loss"] == pytest.approx(
         max(0.0, 1.0 - block["source_decompiled_text_embedding_cosine_similarity"])
     )

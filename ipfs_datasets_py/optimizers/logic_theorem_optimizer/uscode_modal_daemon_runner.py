@@ -323,6 +323,22 @@ _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_SIGNATURE: Optional[str] = None
 _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_VALUE: Optional[str] = None
 _ACTIVE_CODEX_EXEC_PROCESSES: List[subprocess.Popen[str]] = []
 CODEX_WORKTREE_ARTIFACT_FILENAMES = {"changes.patch"}
+COMPILER_IR_METRIC_ALIASES = {
+    "cosine_similarity": "compiler_ir_cosine_similarity",
+    "cross_entropy_loss": "compiler_ir_cross_entropy_loss",
+    "modal_span_coverage_loss": "compiler_ir_modal_span_coverage_loss",
+    "reconstruction_loss": "compiler_ir_reconstruction_loss",
+    "source_copy_reward_hack_penalty": "compiler_ir_source_copy_reward_hack_penalty",
+    "source_decompiled_text_embedding_cosine_loss": (
+        "compiler_ir_source_decompiled_text_embedding_cosine_loss"
+    ),
+    "source_decompiled_text_token_loss": "compiler_ir_source_decompiled_text_token_loss",
+    "structural_text_reconstruction_loss": (
+        "compiler_ir_structural_text_reconstruction_loss"
+    ),
+    "symbolic_validity_penalty": "compiler_ir_symbolic_validity_penalty",
+    "text_reconstruction_loss": "compiler_ir_text_reconstruction_loss",
+}
 
 
 def utc_now() -> str:
@@ -337,6 +353,19 @@ def _stable_metric_json(value: Any) -> str:
         separators=(",", ":"),
         sort_keys=True,
     )
+
+
+def _add_compiler_ir_metric_aliases(block: Mapping[str, Any]) -> Dict[str, Any]:
+    """Return a compiler metric block with explicit compiler_ir_* aliases."""
+
+    aliased = dict(block)
+    for source_name, alias_name in COMPILER_IR_METRIC_ALIASES.items():
+        if alias_name in aliased or source_name not in aliased:
+            continue
+        value = aliased[source_name]
+        if isinstance(value, (int, float)):
+            aliased[alias_name] = value
+    return aliased
 
 
 def _metric_disk_cache_enabled() -> bool:
@@ -1871,6 +1900,7 @@ def compiler_ir_metric_block(
             cached["persistent_sample_cache_hits"] = 0
             cached["persistent_sample_cache_misses"] = 0
             cached["persistent_sample_timeout_cache_hits"] = 0
+            cached = _add_compiler_ir_metric_aliases(cached)
             emit_progress(
                 "persistent_cache_hit",
                 cache_key=persistent_cache_key,
@@ -2495,6 +2525,7 @@ def compiler_ir_metric_block(
             float(block["source_decompiled_text_embedding_cosine_loss"]),
             9,
         )
+    block = _add_compiler_ir_metric_aliases(block)
     if persistent_cache_key is not None and sample_timeouts <= 0:
         block["persistent_cache_enabled"] = _metric_disk_cache_enabled()
         block["persistent_cache_hit"] = False
@@ -4605,12 +4636,26 @@ GUIDANCE_SCOPE_TARGET_METRICS = {
         "cec_dcec_validation_failure_ratio",
         "legal_ir_view_cross_entropy_loss",
     ),
-    "compiler_ambiguity": ("cross_entropy_loss", "cosine_similarity"),
+    "compiler_ambiguity": (
+        "cross_entropy_loss",
+        "cosine_similarity",
+        "compiler_ir_cross_entropy_loss",
+        "compiler_ir_cosine_similarity",
+        "compiler_ir_reconstruction_loss",
+    ),
     "compiler_parser": (
         "modal_span_coverage_loss",
         "symbolic_validity_penalty",
+        "compiler_ir_modal_span_coverage_loss",
+        "compiler_ir_symbolic_validity_penalty",
     ),
-    "compiler_registry": ("cross_entropy_loss", "cosine_similarity"),
+    "compiler_registry": (
+        "cross_entropy_loss",
+        "cosine_similarity",
+        "compiler_ir_cross_entropy_loss",
+        "compiler_ir_cosine_similarity",
+        "compiler_ir_reconstruction_loss",
+    ),
     "deontic": (
         "deontic_decoder_slot_loss",
         "legal_ir_view_cross_entropy_loss",
@@ -4619,6 +4664,14 @@ GUIDANCE_SCOPE_TARGET_METRICS = {
     "frame_logic": ("flogic_similarity_loss", "ontology_violation_count"),
     "ir_decompiler": (
         "cosine_similarity",
+        "compiler_ir_cosine_similarity",
+        "compiler_ir_cross_entropy_loss",
+        "compiler_ir_reconstruction_loss",
+        "compiler_ir_source_decompiled_text_embedding_cosine_loss",
+        "compiler_ir_source_decompiled_text_token_loss",
+        "compiler_ir_source_copy_reward_hack_penalty",
+        "compiler_ir_structural_text_reconstruction_loss",
+        "compiler_ir_text_reconstruction_loss",
         "source_copy_reward_hack_penalty",
         "structural_text_reconstruction_loss",
         "text_reconstruction_loss",
@@ -4680,6 +4733,8 @@ def _compiler_guidance_target_metrics(route: str, scope: str) -> List[str]:
     metrics = [
         "cross_entropy_loss",
         "cosine_similarity",
+        "compiler_ir_cross_entropy_loss",
+        "compiler_ir_cosine_similarity",
         "source_copy_reward_hack_penalty",
     ]
     metrics.extend(GUIDANCE_SCOPE_TARGET_METRICS.get(str(scope), ()))
@@ -8305,9 +8360,16 @@ def _codex_target_metric_deadband(metric_name: str) -> float:
     if normalized in {
         "source_decompiled_text_token_loss",
         "structural_text_reconstruction_loss",
-    }:
+    } or normalized.endswith(
+        (
+            "source_decompiled_text_token_loss",
+            "structural_text_reconstruction_loss",
+        )
+    ):
         return 0.005
-    if normalized == "source_copy_reward_hack_penalty":
+    if normalized == "source_copy_reward_hack_penalty" or normalized.endswith(
+        "source_copy_reward_hack_penalty"
+    ):
         return 0.002
     if (
         normalized in {"embedding_cosine_similarity", "cosine_similarity"}
@@ -8344,13 +8406,19 @@ def _codex_target_metric_weight(metric_name: str) -> float:
         or normalized.endswith("_rate")
     ) and not normalized.endswith("_loss"):
         return 4.0
-    if normalized == "source_decompiled_text_embedding_cosine_loss":
+    if normalized == "source_decompiled_text_embedding_cosine_loss" or normalized.endswith(
+        "source_decompiled_text_embedding_cosine_loss"
+    ):
         return 4.0
     if "legal_ir" in normalized and "cosine" in normalized:
         return 3.0
-    if normalized == "source_copy_reward_hack_penalty":
+    if normalized == "source_copy_reward_hack_penalty" or normalized.endswith(
+        "source_copy_reward_hack_penalty"
+    ):
         return 3.0
     if normalized in {"reconstruction_loss", "legal_ir_multiview_reconstruction_loss"}:
+        return 2.0
+    if normalized == "compiler_ir_reconstruction_loss":
         return 2.0
     if normalized.startswith(("deontic_", "tdfol_", "cec_", "zkp_", "external_prover_")):
         return 2.0
@@ -9471,6 +9539,7 @@ def _todo_metric_guidance_lines(todo: ModalTodo, *, indent: str = "  ") -> List[
 def _packet_metric_guidance_lines(todos: Sequence[ModalTodo]) -> List[str]:
     target_metrics: List[str] = []
     sample_count = 0
+    holdout_sample_count = 0
     for todo in todos:
         target_metrics.extend(
             str(metric)
@@ -9484,18 +9553,31 @@ def _packet_metric_guidance_lines(todos: Sequence[ModalTodo]) -> List[str]:
                 if isinstance(payload, Mapping)
             ]
         )
+        holdout_sample_count += len(
+            [
+                payload
+                for payload in _metadata_sequence(
+                    todo.metadata.get("validation_metric_sample_payloads", [])
+                )
+                if isinstance(payload, Mapping)
+            ]
+        )
     unique_metrics = list(dict.fromkeys(target_metrics))
-    if not unique_metrics and not sample_count:
+    if not unique_metrics and not sample_count and not holdout_sample_count:
         return []
     lines = [
         "## Metric Guard",
         "The daemon remeasures these target metrics before and after applying the worktree diff.",
-        "A patch that regresses any targeted metric is rolled back and marked failed_validation.",
+        "Hard target-metric regressions are rolled back; tiny noisy text-metric regressions may pass only when the weighted compiler/IR objective improves.",
     ]
     if unique_metrics:
         lines.append(f"- Target metrics: `{', '.join(unique_metrics)}`")
     if sample_count:
         lines.append(f"- Metric sample payloads: `{sample_count}` across claimed TODOs")
+    if holdout_sample_count:
+        lines.append(
+            f"- Holdout metric sample payloads: `{holdout_sample_count}` across claimed TODOs"
+        )
     return lines
 
 
@@ -12137,13 +12219,21 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     after=compiler_ir_validation_metrics,
                     target_metrics=(
                         "cross_entropy_loss",
+                        "compiler_ir_cross_entropy_loss",
                         "cosine_similarity",
+                        "compiler_ir_cosine_similarity",
                         "reconstruction_loss",
+                        "compiler_ir_reconstruction_loss",
                         "text_reconstruction_loss",
+                        "compiler_ir_text_reconstruction_loss",
                         "source_decompiled_text_embedding_cosine_loss",
+                        "compiler_ir_source_decompiled_text_embedding_cosine_loss",
                         "source_decompiled_text_token_loss",
+                        "compiler_ir_source_decompiled_text_token_loss",
                         "source_copy_reward_hack_penalty",
+                        "compiler_ir_source_copy_reward_hack_penalty",
                         "structural_text_reconstruction_loss",
+                        "compiler_ir_structural_text_reconstruction_loss",
                     ),
                 )
                 if compiler_ir_validation_comparable

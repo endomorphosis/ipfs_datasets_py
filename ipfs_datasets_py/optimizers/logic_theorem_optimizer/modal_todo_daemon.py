@@ -100,28 +100,61 @@ PROGRAM_SYNTHESIS_ACTION_TARGETS = {
     "repair_zkp_attestation_bridge": "zkp.circuits",
     FAILED_VALIDATION_RESCUE_ACTION: "codex.program_repair",
 }
+COMPILER_IR_CORE_TARGET_METRICS = (
+    "compiler_ir_cross_entropy_loss",
+    "compiler_ir_cosine_similarity",
+    "compiler_ir_reconstruction_loss",
+)
+COMPILER_IR_DECOMPILER_TARGET_METRICS = (
+    "compiler_ir_source_decompiled_text_embedding_cosine_loss",
+    "compiler_ir_source_decompiled_text_token_loss",
+    "compiler_ir_source_copy_reward_hack_penalty",
+    "compiler_ir_structural_text_reconstruction_loss",
+    "compiler_ir_text_reconstruction_loss",
+)
+COMPILER_IR_PARSER_TARGET_METRICS = (
+    "compiler_ir_modal_span_coverage_loss",
+    "compiler_ir_symbolic_validity_penalty",
+)
 PROGRAM_SYNTHESIS_ACTION_TARGET_METRICS = {
-    "add_deterministic_parser_rule": ("symbolic_validity_penalty", "modal_span_coverage_loss"),
-    "add_or_review_modal_ambiguity_policy": ("cross_entropy_loss",),
+    "add_deterministic_parser_rule": (
+        "symbolic_validity_penalty",
+        "modal_span_coverage_loss",
+        *COMPILER_IR_PARSER_TARGET_METRICS,
+    ),
+    "add_or_review_modal_ambiguity_policy": (
+        "cross_entropy_loss",
+        *COMPILER_IR_CORE_TARGET_METRICS,
+    ),
     "audit_frame_logic_terms": ("flogic_similarity_loss", "ontology_violation_count"),
     "improve_bm25_frame_selector": ("frame_ranking_loss",),
     "improve_encoder_decoder_reconstruction": (
         "embedding_cosine_similarity",
         "cosine_loss",
         "reconstruction_loss",
+        *COMPILER_IR_CORE_TARGET_METRICS,
     ),
     "improve_flogic_frame_alignment": ("flogic_similarity_loss",),
-    "increase_modal_ir_span_coverage": ("modal_span_coverage_loss",),
-    "refine_modal_family_cue_rules": ("cross_entropy_loss",),
+    "increase_modal_ir_span_coverage": (
+        "modal_span_coverage_loss",
+        *COMPILER_IR_PARSER_TARGET_METRICS,
+    ),
+    "refine_modal_family_cue_rules": (
+        "cross_entropy_loss",
+        *COMPILER_IR_CORE_TARGET_METRICS,
+    ),
     "refine_semantic_decompiler_reconstruction": (
         "source_copy_loss",
         "source_copy_reward_hack_penalty",
         "structural_text_reconstruction_loss",
         "text_reconstruction_loss",
+        *COMPILER_IR_DECOMPILER_TARGET_METRICS,
     ),
     "refine_typed_ir_or_decompiler_slots": (
         "embedding_cosine_similarity",
         "reconstruction_loss",
+        *COMPILER_IR_CORE_TARGET_METRICS,
+        *COMPILER_IR_DECOMPILER_TARGET_METRICS,
         "legal_ir_multiview_cosine_loss",
         "legal_ir_multiview_reconstruction_loss",
     ),
@@ -4602,18 +4635,30 @@ def _program_synthesis_target_metrics(
         "knowledge_graphs.neo4j_compat": (
             "legal_ir_multiview_graph_failure_penalty",
         ),
-        "modal.compiler": ("symbolic_validity_penalty",),
-        "modal.compiler.ambiguity": ("cross_entropy_loss",),
-        "modal.compiler.registry": ("cross_entropy_loss",),
+        "modal.compiler": (
+            "symbolic_validity_penalty",
+            *COMPILER_IR_PARSER_TARGET_METRICS,
+        ),
+        "modal.compiler.ambiguity": (
+            "cross_entropy_loss",
+            *COMPILER_IR_CORE_TARGET_METRICS,
+        ),
+        "modal.compiler.registry": (
+            "cross_entropy_loss",
+            *COMPILER_IR_CORE_TARGET_METRICS,
+        ),
         "modal.frame_logic": ("flogic_similarity_loss",),
         "modal.autoencoder": (
             "embedding_cosine_similarity",
             "cosine_loss",
             "reconstruction_loss",
+            *COMPILER_IR_CORE_TARGET_METRICS,
         ),
         "modal.ir_decompiler": (
             "embedding_cosine_similarity",
             "reconstruction_loss",
+            *COMPILER_IR_CORE_TARGET_METRICS,
+            *COMPILER_IR_DECOMPILER_TARGET_METRICS,
             "source_decompiled_text_embedding_cosine_loss",
             "source_decompiled_text_token_loss",
             "source_copy_reward_hack_penalty",
