@@ -288,6 +288,118 @@ class VectorIndexRequest(BaseModel):
 # Phase C2: track server start time for uptime reporting in health endpoints.
 _SERVER_START_TIME: float = time.time()
 
+import inspect as _inspect
+
+_PY_TYPE_TO_JSON = {
+    str: "string",
+    int: "integer",
+    float: "number",
+    bool: "boolean",
+    dict: "object",
+    list: "array",
+}
+
+
+def _callable_input_schema(fn) -> Dict[str, Any]:
+    """Best-effort JSON Schema for a tool callable derived from its signature."""
+    props: Dict[str, Any] = {}
+    required: List[str] = []
+    try:
+        sig = _inspect.signature(fn)
+    except (TypeError, ValueError):
+        return {"type": "object", "properties": {}, "additionalProperties": True}
+    for name, param in sig.parameters.items():
+        if name in ("self", "cls"):
+            continue
+        if param.kind in (param.VAR_POSITIONAL, param.VAR_KEYWORD):
+            continue
+        json_type = "string"
+        for py_t, js_t in _PY_TYPE_TO_JSON.items():
+            if param.annotation is py_t:
+                json_type = js_t
+                break
+        prop: Dict[str, Any] = {"type": json_type}
+        if param.default is _inspect.Parameter.empty:
+            required.append(name)
+        elif param.default is not None:
+            prop["default"] = param.default
+        props[name] = prop
+    schema: Dict[str, Any] = {"type": "object", "properties": props}
+    if required:
+        schema["required"] = required
+    return schema
+
+
+def _mcp_tool_descriptors(mcp_server) -> List[Dict[str, Any]]:
+    """Build MCP-conformant tool descriptors from a server's ``.tools`` registry."""
+    descriptors: List[Dict[str, Any]] = []
+    tools = getattr(mcp_server, "tools", {}) or {}
+    for name, fn in tools.items():
+        doc = (getattr(fn, "__doc__", None) or "").strip()
+        description = doc.split("\n", 1)[0].strip() if doc else name
+        descriptors.append({
+            "name": name,
+            "description": description,
+            "inputSchema": _callable_input_schema(fn),
+        })
+    return descriptors
+
+
+def _mcp_tool_result(result) -> Dict[str, Any]:
+    """Wrap a raw tool return value in the MCP ``tools/call`` content shape."""
+    import json as _json
+    if isinstance(result, dict):
+        structured = result
+        text = _json.dumps(result, default=str)
+    elif isinstance(result, list):
+        structured = {"result": result}
+        text = _json.dumps(result, default=str)
+    else:
+        structured = {"result": result}
+        text = "" if result is None else str(result)
+    return {
+        "content": [{"type": "text", "text": text}],
+        "structuredContent": structured,
+        "isError": False,
+    }
+
+
+def _ensure_dataset_meta_tools(mcp_server) -> None:
+    """Ensure the hierarchical meta-tools are present in ``mcp_server.tools``.
+
+    ``register_tools()`` requires FastMCP. For the HTTP / JSON-RPC transport we
+    register the FastMCP-independent hierarchical meta-tools directly so that
+    stock MCP clients always receive a non-empty ``tools/list`` and can reach
+    the full 373-tool surface through ``tools_dispatch``.
+    """
+    if mcp_server is None:
+        return
+    tools = getattr(mcp_server, "tools", None)
+    if tools is None:
+        tools = {}
+        try:
+            mcp_server.tools = tools
+        except Exception:
+            return
+    try:
+        from .hierarchical_tool_manager import (
+            tools_list_categories,
+            tools_list_tools,
+            tools_get_schema,
+            tools_dispatch,
+        )
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.warning("Hierarchical meta-tools unavailable: %s", exc)
+        return
+    for _name, _fn in (
+        ("tools_list_categories", tools_list_categories),
+        ("tools_list_tools", tools_list_tools),
+        ("tools_get_schema", tools_get_schema),
+        ("tools_dispatch", tools_dispatch),
+    ):
+        tools.setdefault(_name, _fn)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager."""
@@ -296,6 +408,16 @@ async def lifespan(app: FastAPI):
     
     # Initialize MCP server
     app.state.mcp_server = IPFSDatasetsMCPServer()
+
+    # Populate the hierarchical meta-tools so the HTTP / JSON-RPC MCP surface
+    # exposes a non-empty, dispatchable tool list to stock MCP clients even when
+    # FastMCP (register_tools) is unavailable in the runtime environment.
+    try:
+        if hasattr(app.state.mcp_server, "register_tools"):
+            await app.state.mcp_server.register_tools()
+    except Exception as _reg_exc:
+        logger.warning("register_tools() unavailable, using meta-tool fallback: %s", _reg_exc)
+    _ensure_dataset_meta_tools(app.state.mcp_server)
     
     # Initialize vector stores
     app.state.vector_stores = {}
@@ -2259,7 +2381,6 @@ async def mcp_jsonrpc_handler(request: Request):
             )
 
         if method == "initialize":
-            # MCP++ capability negotiation
             client_caps = params.get("capabilities", {}).get("experimental", {})
             server_caps = {}
             if client_caps.get("mcp++/mcp-idl"):
@@ -2288,9 +2409,16 @@ async def mcp_jsonrpc_handler(request: Request):
                 },
             }
 
+        elif method == "ping":
+            return {"jsonrpc": "2.0", "id": req_id, "result": {}}
+
+        elif method == "notifications/initialized" or method.startswith("notifications/"):
+            # JSON-RPC notification: the client expects no result payload.
+            return JSONResponse(status_code=202, content={"jsonrpc": "2.0", "result": None, "id": req_id})
+
         elif method == "tools/call":
             tool_name = params.get("name", "")
-            arguments = params.get("arguments", {})
+            arguments = params.get("arguments", {}) or {}
             mcp_server = getattr(app.state, 'mcp_server', None)
             if mcp_server and hasattr(mcp_server, 'tools') and tool_name in mcp_server.tools:
                 tool_fn = mcp_server.tools[tool_name]
@@ -2298,7 +2426,7 @@ async def mcp_jsonrpc_handler(request: Request):
                 exec_timeout = float(os.environ.get("MCPPP_EXEC_TIMEOUT_S", "30"))
                 if callable(tool_fn):
                     try:
-                        async with anyio.fail_after(exec_timeout):
+                        with anyio.fail_after(exec_timeout):
                             if inspect.iscoroutinefunction(tool_fn):
                                 result = await tool_fn(**arguments)
                             else:
@@ -2309,13 +2437,12 @@ async def mcp_jsonrpc_handler(request: Request):
                         return {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32000, "message": f"Execution timeout after {exec_timeout}s"}}
                 else:
                     result = None
-                return {"jsonrpc": "2.0", "id": req_id, "result": result}
+                return {"jsonrpc": "2.0", "id": req_id, "result": _mcp_tool_result(result)}
             return {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32601, "message": f"Tool not found: {tool_name}"}}
 
         elif method == "tools/list":
             mcp_server = getattr(app.state, 'mcp_server', None)
-            tools = list(mcp_server.tools.keys()) if mcp_server and hasattr(mcp_server, 'tools') else []
-            return {"jsonrpc": "2.0", "id": req_id, "result": {"tools": tools}}
+            return {"jsonrpc": "2.0", "id": req_id, "result": {"tools": _mcp_tool_descriptors(mcp_server)}}
 
         elif method == "mcp++/execute":
             # Delegate to the envelope execution endpoint
