@@ -304,6 +304,9 @@ _FRAME_ONTOLOGY_QUALITY_FRAME_PREFIXES: tuple[str, ...] = (
     "quality:frame-logic:",
     "quality:frame_logic:",
 )
+_FRAME_ONTOLOGY_QUALITY_AUDIT_PREFIXES: tuple[str, ...] = (
+    "quality:",
+)
 _FRAME_ONTOLOGY_SIGNATURE_FRAME_PREFIXES: tuple[str, ...] = (
     "signature:frame:",
     "signature:frame-logic:",
@@ -414,6 +417,7 @@ _FRAME_ONTOLOGY_CONTEXTUAL_ALWAYS_PREDICATE_FRAGMENTS: tuple[str, ...] = (
     "_thousands_block",
     "predicate_alnum_segment",
     "predicate_token",
+    "quality",
     "quality_frame",
     "signature_frame",
     "_terminal_number_digit_count_bucket",
@@ -1450,6 +1454,17 @@ def _frame_ontology_value_from_feature(
                 False,
                 _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL,
             )
+    for prefix in _FRAME_ONTOLOGY_QUALITY_AUDIT_PREFIXES:
+        if lowered.startswith(prefix):
+            return (
+                _normalized_frame_audit_signal_value(
+                    feature[len(prefix) :].strip(),
+                    default="quality",
+                ),
+                False,
+                False,
+                _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL,
+            )
     for prefix in _FRAME_ONTOLOGY_SIGNATURE_FRAME_PREFIXES:
         if lowered.startswith(prefix):
             return (
@@ -2017,6 +2032,9 @@ def _frame_ontology_contextual_predicate_from_feature(feature_key: str) -> str:
     for prefix in _FRAME_ONTOLOGY_QUALITY_FRAME_PREFIXES:
         if lowered.startswith(prefix):
             return "quality_frame"
+    for prefix in _FRAME_ONTOLOGY_QUALITY_AUDIT_PREFIXES:
+        if lowered.startswith(prefix):
+            return "quality"
     for prefix in _FRAME_ONTOLOGY_SIGNATURE_FRAME_PREFIXES:
         if lowered.startswith(prefix):
             return "signature_frame"

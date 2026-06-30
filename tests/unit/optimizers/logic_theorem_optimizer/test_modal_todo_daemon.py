@@ -3094,8 +3094,11 @@ def test_supervisor_finalize_program_synthesis_batch_applies_queue_transitions()
         codex_exec_status="succeeded",
         patch_status="created",
         validation_report={
+            "holdout_metric_deltas": {"cross_entropy_loss": 0.1},
+            "holdout_target_metric_status": "improved",
             "metric_deltas": {"cross_entropy_loss": 0.2},
             "status": "passed",
+            "target_metric_status": "improved",
         },
     )
     assert completed["updated"] is True
@@ -3107,6 +3110,18 @@ def test_supervisor_finalize_program_synthesis_batch_applies_queue_transitions()
     assert completed_todo.metadata["validation_gate"]["improved_metrics"] == [
         "cross_entropy_loss"
     ]
+    assert completed_todo.metadata["completed_patch_status"] == "created"
+    assert completed_todo.metadata["completed_codex_exec_status"] == "succeeded"
+    assert completed_todo.metadata["completed_target_metric_status"] == "improved"
+    assert (
+        completed_todo.metadata["completed_holdout_target_metric_status"] == "improved"
+    )
+    assert completed_todo.metadata["completed_validation_report"]["metric_deltas"] == {
+        "cross_entropy_loss": 0.2
+    }
+    assert completed_todo.metadata["completed_validation_report"][
+        "holdout_metric_deltas"
+    ] == {"cross_entropy_loss": 0.1}
 
     supervisor_regression = ModalTodoSupervisor(
         policy=ModalOptimizerPolicy(program_synthesis_min_support=2)
@@ -3285,6 +3300,91 @@ def test_supervisor_finalize_program_synthesis_batch_applies_queue_transitions()
     assert no_delta["completed_count"] == 1
     assert no_delta["failed_validation_count"] == 0
     assert supervisor_no_delta.queue.get(claimed_no_delta[0].todo_id).status == "completed"
+
+
+def test_program_synthesis_metric_feedback_report_surfaces_canary_blind_spot() -> None:
+    queue = ModalTodoQueue(
+        [
+            ModalTodo(
+                todo_id="completed-non-canary",
+                action="improve_modal_family_classifier",
+                objective="Improve non-canary modal family routing.",
+                sample_ids=["sample-a", "sample-b"],
+                citations=["5 U.S.C. 552"],
+                loss_name="autoencoder_residual_cluster",
+                loss_value=0.4,
+                priority=5.0,
+                status="completed",
+                metadata={
+                    "completed_validation_report": {
+                        "holdout_metric_deltas": {
+                            "compiler_ir_cosine_similarity": 0.01
+                        },
+                        "holdout_target_metric_status": "flat",
+                        "metric_deltas": {
+                            "compiler_ir_cosine_similarity": 0.03
+                        },
+                        "target_metric_status": "improved",
+                    },
+                    "optimizer_role": daemon.PROGRAM_SYNTHESIS_ROLE,
+                    "target_component": "modal.compiler.registry",
+                },
+            ),
+            ModalTodo(
+                todo_id="failed-canary",
+                action="improve_ir_decompiler",
+                objective="Repair canary decompiler regression.",
+                sample_ids=["canary-1"],
+                citations=["16 U.S.C. 430w"],
+                loss_name="autoencoder_residual_cluster",
+                loss_value=0.7,
+                priority=8.0,
+                status="failed_validation",
+                metadata={
+                    "failed_validation_reason": "target_metric_regression",
+                    "optimizer_role": daemon.PROGRAM_SYNTHESIS_ROLE,
+                    "target_component": "modal.ir_decompiler",
+                },
+            ),
+            ModalTodo(
+                todo_id="pending-non-canary",
+                action="improve_frame_logic_roles",
+                objective="Improve pending frame logic routing.",
+                sample_ids=["sample-c"],
+                citations=["25 U.S.C. 116"],
+                loss_name="autoencoder_residual_cluster",
+                loss_value=0.2,
+                priority=3.0,
+                status="pending",
+                metadata={
+                    "optimizer_role": daemon.PROGRAM_SYNTHESIS_ROLE,
+                    "target_component": "frame_logic.roles",
+                },
+            ),
+        ]
+    )
+
+    report = runner._program_synthesis_metric_feedback_report(
+        queue,
+        compiler_ir_validation_sample_ids=["canary-1", "canary-2"],
+    )
+
+    assert report["canary_sample_count"] == 2
+    assert report["completed_canary_blind"] is True
+    assert report["completed_unique_sample_count"] == 2
+    assert report["completed_canary_overlap_sample_count"] == 0
+    assert report["failed_validation_canary_overlap_sample_count"] == 1
+    assert report["failed_validation_reason_counts"] == {
+        "target_metric_regression": 1
+    }
+    assert report["completed_target_metric_status_counts"] == {"improved": 1}
+    assert report["completed_holdout_target_metric_status_counts"] == {"flat": 1}
+    assert report["completed_metric_delta_sums"] == {
+        "compiler_ir_cosine_similarity": 0.03
+    }
+    assert report["completed_holdout_metric_delta_sums"] == {
+        "compiler_ir_cosine_similarity": 0.01
+    }
 
 
 def test_supervisor_finalize_requeues_transient_codex_failure() -> None:

@@ -2722,6 +2722,13 @@ class ModalTodoSupervisor:
                         self.queue.fail_validation(todo_id, reason=reason)
                     )
                     continue
+                if todo is not None:
+                    _record_program_synthesis_completion_evidence(
+                        todo,
+                        validation_report=validation_report,
+                        patch_status=normalized_patch_status,
+                        codex_exec_status=normalized_exec_status,
+                    )
                 completed_count += int(self.queue.complete(todo_id))
             outcome = (
                 "partial"
@@ -2791,6 +2798,12 @@ class ModalTodoSupervisor:
                     requeued_count += 1
                     continue
                 if action == "completed":
+                    _record_program_synthesis_completion_evidence(
+                        todo,
+                        validation_report=validation_report,
+                        patch_status=normalized_patch_status,
+                        codex_exec_status=normalized_exec_status,
+                    )
                     completed_count += int(self.queue.complete(todo_id))
                     continue
                 if action == "failed_validation":
@@ -4840,26 +4853,12 @@ def _program_synthesis_failure_reason(
     return normalized
 
 
-def _record_program_synthesis_failure_evidence(
-    todo: ModalTodo,
-    *,
-    reason: str,
+def _compact_program_synthesis_validation_report(
     validation_report: Optional[Mapping[str, Any]],
-    patch_status: str,
-    codex_exec_status: str,
-) -> None:
-    """Persist compact validation evidence before marking a Codex TODO failed."""
-    todo.metadata["failed_validation_reason"] = str(reason or "")
-    todo.metadata["failed_validation_patch_status"] = str(patch_status or "")
-    todo.metadata["failed_validation_codex_exec_status"] = str(
-        codex_exec_status or ""
-    )
-    failure_kind = _program_synthesis_validation_failure_kind(validation_report)
-    if failure_kind:
-        todo.metadata["failed_validation_kind"] = failure_kind
+) -> Dict[str, Any]:
     if not isinstance(validation_report, Mapping):
-        return
-    compact_report = {
+        return {}
+    return {
         key: value
         for key, value in validation_report.items()
         if key
@@ -4893,6 +4892,49 @@ def _record_program_synthesis_failure_evidence(
             "tolerated_regressed_metrics",
         }
     }
+
+
+def _record_program_synthesis_completion_evidence(
+    todo: ModalTodo,
+    *,
+    validation_report: Optional[Mapping[str, Any]],
+    patch_status: str,
+    codex_exec_status: str,
+) -> None:
+    """Persist compact validation evidence before marking a Codex TODO complete."""
+    todo.metadata["completed_patch_status"] = str(patch_status or "")
+    todo.metadata["completed_codex_exec_status"] = str(codex_exec_status or "")
+    compact_report = _compact_program_synthesis_validation_report(validation_report)
+    if compact_report:
+        todo.metadata["completed_validation_report"] = compact_report
+        target_status = str(compact_report.get("target_metric_status") or "").strip()
+        holdout_status = str(
+            compact_report.get("holdout_target_metric_status") or ""
+        ).strip()
+        if target_status:
+            todo.metadata["completed_target_metric_status"] = target_status
+        if holdout_status:
+            todo.metadata["completed_holdout_target_metric_status"] = holdout_status
+
+
+def _record_program_synthesis_failure_evidence(
+    todo: ModalTodo,
+    *,
+    reason: str,
+    validation_report: Optional[Mapping[str, Any]],
+    patch_status: str,
+    codex_exec_status: str,
+) -> None:
+    """Persist compact validation evidence before marking a Codex TODO failed."""
+    todo.metadata["failed_validation_reason"] = str(reason or "")
+    todo.metadata["failed_validation_patch_status"] = str(patch_status or "")
+    todo.metadata["failed_validation_codex_exec_status"] = str(
+        codex_exec_status or ""
+    )
+    failure_kind = _program_synthesis_validation_failure_kind(validation_report)
+    if failure_kind:
+        todo.metadata["failed_validation_kind"] = failure_kind
+    compact_report = _compact_program_synthesis_validation_report(validation_report)
     if compact_report:
         todo.metadata["failed_validation_report"] = compact_report
 

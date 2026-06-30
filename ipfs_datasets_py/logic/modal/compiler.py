@@ -1420,6 +1420,7 @@ class DeterministicModalCompiler:
                 target_family=target_family,
                 is_priority_policy_pair=is_priority_policy_pair,
                 is_compiler_required_policy_pair=is_compiler_required_policy_pair,
+                has_target_signal_evidence=has_target_signal_evidence,
                 direct_is_priority_policy_pair=direct_is_priority_policy_pair,
                 runner_up_is_priority_policy_pair=runner_up_is_priority_policy_pair,
             )
@@ -2111,6 +2112,7 @@ class DeterministicModalCompiler:
             target_family=resolved_competing_family,
             is_priority_policy_pair=is_priority_policy_pair,
             is_compiler_required_policy_pair=is_compiler_required_policy_pair,
+            has_target_signal_evidence=has_target_signal_evidence,
             direct_is_priority_policy_pair=direct_is_priority_policy_pair,
             runner_up_is_priority_policy_pair=runner_up_is_priority_policy_pair,
             prefer_runner_up_priority_over_contested=True,
@@ -2399,12 +2401,20 @@ class DeterministicModalCompiler:
             )
             or runner_up_is_compiler_required_policy_pair
         )
+        has_compiled_target_family_formula = resolved_compiled_primary_family in (
+            canonical_compiled_modal_families
+        )
+        has_target_signal_evidence = bool(
+            primary_share > 0.0
+            or has_compiled_target_family_formula
+        )
         margin_direction = self._adaptive_margin_direction(
             family_margin=family_margin,
             predicted_family=resolved_compiled_primary_family,
             target_family=resolved_compiled_primary_family,
             is_priority_policy_pair=is_priority_policy_pair,
             is_compiler_required_policy_pair=is_compiler_required_policy_pair,
+            has_target_signal_evidence=has_target_signal_evidence,
             direct_is_priority_policy_pair=direct_is_priority_policy_pair,
             runner_up_is_priority_policy_pair=runner_up_is_priority_policy_pair,
             prefer_runner_up_priority_over_contested=True,
@@ -2417,13 +2427,6 @@ class DeterministicModalCompiler:
         )
         primary_share_display = round(primary_share, 6)
         family_margin_display = round(family_margin, 6)
-        has_compiled_target_family_formula = resolved_compiled_primary_family in (
-            canonical_compiled_modal_families
-        )
-        has_target_signal_evidence = bool(
-            primary_share > 0.0
-            or has_compiled_target_family_formula
-        )
         adaptive_priority = self._adaptive_margin_priority(
             family_margin=family_margin,
             threshold=threshold,
@@ -2588,6 +2591,7 @@ class DeterministicModalCompiler:
         target_family: str,
         is_priority_policy_pair: bool,
         is_compiler_required_policy_pair: bool,
+        has_target_signal_evidence: bool = False,
         direct_is_priority_policy_pair: Optional[bool] = None,
         runner_up_is_priority_policy_pair: bool = False,
         prefer_runner_up_priority_over_contested: bool = False,
@@ -2622,7 +2626,11 @@ class DeterministicModalCompiler:
             return "outvoted"
         if resolved_margin <= resolved_epsilon and runner_up_priority:
             return "outvoted"
-        if resolved_margin <= resolved_epsilon and is_compiler_required_policy_pair:
+        if (
+            resolved_margin <= resolved_epsilon
+            and is_compiler_required_policy_pair
+            and not has_target_signal_evidence
+        ):
             return "outvoted"
         return "contested"
 
@@ -2847,6 +2855,10 @@ class DeterministicModalCompiler:
         family_margin = target_share - predicted_share
         if family_margin >= self.config.modal_frame_target_family_outvote_margin:
             return []
+        is_compiler_ambiguity_bundle_pair = _is_compiler_ambiguity_policy_pair(
+            predicted_family,
+            target_family,
+        )
         return [
             ModalCompilationAmbiguity(
                 ambiguity_type="frame_scope_family_outvoted",
@@ -2859,6 +2871,19 @@ class DeterministicModalCompiler:
                 metadata={
                     "family_margin": round(family_margin, 6),
                     "family_ranking": list(ranking),
+                    "is_compiler_ambiguity_bundle_pair": (
+                        is_compiler_ambiguity_bundle_pair
+                    ),
+                    "ambiguity_policy_bundle": (
+                        "compiler_ambiguity"
+                        if is_compiler_ambiguity_bundle_pair
+                        else None
+                    ),
+                    "compiler_ambiguity_policy_pair": (
+                        f"{predicted_family}->{target_family}"
+                        if is_compiler_ambiguity_bundle_pair
+                        else None
+                    ),
                     "lexical_signals": dict(sorted(signals.items())),
                     "outvote_margin_threshold": self.config.modal_frame_target_family_outvote_margin,
                     "predicted_family": predicted_family,
@@ -3018,6 +3043,10 @@ class DeterministicModalCompiler:
         family_margin = target_share - predicted_share
         if family_margin >= self.config.modal_alethic_target_family_outvote_margin:
             return []
+        is_compiler_ambiguity_bundle_pair = _is_compiler_ambiguity_policy_pair(
+            predicted_family,
+            target_family,
+        )
         return [
             ModalCompilationAmbiguity(
                 ambiguity_type="alethic_scope_family_outvoted",
@@ -3030,6 +3059,19 @@ class DeterministicModalCompiler:
                 metadata={
                     "family_margin": round(family_margin, 6),
                     "family_ranking": list(ranking),
+                    "is_compiler_ambiguity_bundle_pair": (
+                        is_compiler_ambiguity_bundle_pair
+                    ),
+                    "ambiguity_policy_bundle": (
+                        "compiler_ambiguity"
+                        if is_compiler_ambiguity_bundle_pair
+                        else None
+                    ),
+                    "compiler_ambiguity_policy_pair": (
+                        f"{predicted_family}->{target_family}"
+                        if is_compiler_ambiguity_bundle_pair
+                        else None
+                    ),
                     "lexical_signals": dict(sorted(signals.items())),
                     "outvote_margin_threshold": self.config.modal_alethic_target_family_outvote_margin,
                     "predicted_family": predicted_family,

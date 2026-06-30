@@ -60,6 +60,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon impor
     ModalTodo,
     ModalTodoQueue,
     ModalTodoSupervisor,
+    PROGRAM_SYNTHESIS_ROLE,
     PROGRAM_SYNTHESIS_ACTION_TARGETS,
     bridge_loss_evaluator_for_names,
     program_synthesis_todo_embedding_text,
@@ -7529,6 +7530,37 @@ def _resolve_unmerged_targets_with_union(
     }
 
 
+def _repair_python_syntax_preflight(
+    repair_worktree: Path,
+    *,
+    target_files: Sequence[str],
+) -> Dict[str, Any]:
+    """Return a py_compile preflight report for repaired Python targets."""
+    python_targets = [
+        str(path)
+        for path in target_files
+        if str(path).endswith(".py") and (repair_worktree / str(path)).exists()
+    ]
+    if not python_targets:
+        return {"status": "skipped", "reason": "no_python_targets"}
+    command = [sys.executable, "-m", "py_compile", *python_targets]
+    result = subprocess.run(
+        command,
+        cwd=repair_worktree,
+        capture_output=True,
+        text=True,
+        timeout=60.0,
+    )
+    return {
+        "command": command,
+        "exit_code": result.returncode,
+        "status": "passed" if result.returncode == 0 else "failed",
+        "stderr_tail": (result.stderr or "")[-1000:],
+        "stdout_tail": (result.stdout or "")[-1000:],
+        "target_files": python_targets,
+    }
+
+
 def _repair_codex_diff_against_dirty_targets(
     *,
     diff_content: str,
@@ -7695,6 +7727,14 @@ def _repair_codex_diff_against_dirty_targets(
         if not repaired_content.strip():
             report["status"] = "no_merged_delta"
             return report
+        syntax_preflight = _repair_python_syntax_preflight(
+            repair_worktree,
+            target_files=repaired_targets,
+        )
+        report["python_syntax_preflight"] = dict(syntax_preflight)
+        if syntax_preflight.get("status") == "failed":
+            report["status"] = "repaired_python_syntax_failed"
+            return report
         report["diff_content"] = repaired_content
         report["status"] = "repaired"
         return report
@@ -7773,6 +7813,14 @@ def _repair_codex_worktree_diff_against_main(
         report["target_files"] = list(repaired_diff.get("target_files", []))
         if not repaired_content.strip():
             report["status"] = "no_repaired_diff"
+            return report
+        syntax_preflight = _repair_python_syntax_preflight(
+            repair_worktree,
+            target_files=report["target_files"],
+        )
+        report["python_syntax_preflight"] = dict(syntax_preflight)
+        if syntax_preflight.get("status") == "failed":
+            report["status"] = "repaired_python_syntax_failed"
             return report
         report["diff_content"] = repaired_content
         report["status"] = "repaired"
@@ -9468,6 +9516,164 @@ def _codex_packet_validation_report(packet: Mapping[str, Any]) -> Dict[str, Any]
             target_metric_validation.get("tolerated_regressed_metrics", []) or []
         ),
     }
+
+
+def _target_metric_report_sample_count(report: Mapping[str, Any]) -> Optional[int]:
+    for side in ("after", "before"):
+        side_value = report.get(side)
+        if not isinstance(side_value, Mapping):
+            continue
+        compiler = side_value.get("compiler")
+        if not isinstance(compiler, Mapping):
+            continue
+        value = compiler.get("sample_count")
+        if isinstance(value, (int, float)):
+            return int(value)
+    return None
+
+
+def _codex_packet_metric_event_fields(packet: Mapping[str, Any]) -> Dict[str, Any]:
+    target_report = dict(packet.get("target_metric_validation", {}) or {})
+    holdout_report = dict(packet.get("holdout_target_metric_validation", {}) or {})
+    fields: Dict[str, Any] = {
+        "holdout_metric_deltas": dict(packet.get("holdout_metric_deltas", {}) or {}),
+        "holdout_target_metric_hard_regressed_metrics": list(
+            holdout_report.get("hard_regressed_metrics", []) or []
+        ),
+        "holdout_target_metric_objective_delta": holdout_report.get("objective_delta"),
+        "holdout_target_metric_regressed_metrics": list(
+            holdout_report.get("regressed_metrics", []) or []
+        ),
+        "holdout_target_metric_sample_count": _target_metric_report_sample_count(
+            holdout_report
+        ),
+        "holdout_target_metric_status": holdout_report.get("status"),
+        "main_apply_target_metric_gate": packet.get("main_apply_target_metric_gate"),
+        "metric_deltas": dict(packet.get("metric_deltas", {}) or {}),
+        "target_metric_hard_regressed_metrics": list(
+            target_report.get("hard_regressed_metrics", []) or []
+        ),
+        "target_metric_objective_delta": target_report.get("objective_delta"),
+        "target_metric_regressed_metrics": list(
+            target_report.get("regressed_metrics", []) or []
+        ),
+        "target_metric_sample_count": _target_metric_report_sample_count(target_report),
+        "target_metric_status": target_report.get("status"),
+    }
+    return {
+        key: value
+        for key, value in fields.items()
+        if value not in ({}, [], None, "")
+    }
+
+
+def _program_synthesis_metric_feedback_report(
+    queue: ModalTodoQueue,
+    *,
+    compiler_ir_validation_sample_ids: Sequence[str],
+) -> Dict[str, Any]:
+    """Summarize whether program-synthesis work is visible to compiler-IR canaries."""
+    canary_ids = {
+        str(sample_id)
+        for sample_id in compiler_ir_validation_sample_ids
+        if str(sample_id).strip()
+    }
+    status_counts: Counter[str] = Counter()
+    status_unique_samples: Dict[str, set[str]] = {}
+    status_canary_overlap_samples: Dict[str, set[str]] = {}
+    status_canary_overlap_todos: Counter[str] = Counter()
+    completed_target_status: Counter[str] = Counter()
+    completed_holdout_status: Counter[str] = Counter()
+    failed_reasons: Counter[str] = Counter()
+    completed_metric_delta_sums: Counter[str] = Counter()
+    completed_holdout_metric_delta_sums: Counter[str] = Counter()
+
+    for todo in queue.all():
+        if str(todo.metadata.get("optimizer_role") or "") != PROGRAM_SYNTHESIS_ROLE:
+            continue
+        status = str(todo.status or "unknown")
+        status_counts[status] += 1
+        sample_ids = {
+            str(sample_id)
+            for sample_id in list(todo.sample_ids or [])
+            if str(sample_id).strip()
+        }
+        status_unique_samples.setdefault(status, set()).update(sample_ids)
+        overlap = sample_ids & canary_ids
+        status_canary_overlap_samples.setdefault(status, set()).update(overlap)
+        if overlap:
+            status_canary_overlap_todos[status] += 1
+
+        if status == "completed":
+            completed_report = todo.metadata.get("completed_validation_report")
+            if isinstance(completed_report, Mapping):
+                target_status = str(
+                    completed_report.get("target_metric_status") or ""
+                ).strip()
+                holdout_status = str(
+                    completed_report.get("holdout_target_metric_status") or ""
+                ).strip()
+                if target_status:
+                    completed_target_status[target_status] += 1
+                if holdout_status:
+                    completed_holdout_status[holdout_status] += 1
+                for metric, value in dict(
+                    completed_report.get("metric_deltas", {}) or {}
+                ).items():
+                    if isinstance(value, (int, float)) and math.isfinite(float(value)):
+                        completed_metric_delta_sums[str(metric)] += float(value)
+                for metric, value in dict(
+                    completed_report.get("holdout_metric_deltas", {}) or {}
+                ).items():
+                    if isinstance(value, (int, float)) and math.isfinite(float(value)):
+                        completed_holdout_metric_delta_sums[str(metric)] += float(value)
+        elif status == "failed_validation":
+            reason = str(
+                todo.metadata.get("failed_validation_reason")
+                or todo.metadata.get("failure_reason")
+                or "unknown"
+            ).strip()
+            failed_reasons[reason or "unknown"] += 1
+
+    def rounded_counter(counter: Counter[str]) -> Dict[str, float]:
+        return {
+            str(key): round(float(value), 9)
+            for key, value in sorted(counter.items())
+        }
+
+    report: Dict[str, Any] = {
+        "canary_sample_count": len(canary_ids),
+        "canary_sample_ids": sorted(canary_ids),
+        "completed_canary_blind": bool(
+            status_unique_samples.get("completed")
+            and not status_canary_overlap_samples.get("completed")
+        ),
+        "completed_holdout_target_metric_status_counts": dict(
+            sorted(completed_holdout_status.items())
+        ),
+        "completed_metric_delta_sums": rounded_counter(
+            completed_metric_delta_sums
+        ),
+        "completed_target_metric_status_counts": dict(
+            sorted(completed_target_status.items())
+        ),
+        "failed_validation_reason_counts": dict(sorted(failed_reasons.items())),
+        "status_counts": dict(sorted(status_counts.items())),
+    }
+    for status in sorted(status_counts):
+        unique_samples = status_unique_samples.get(status, set())
+        overlap_samples = status_canary_overlap_samples.get(status, set())
+        report[f"{status}_unique_sample_count"] = len(unique_samples)
+        report[f"{status}_canary_overlap_sample_count"] = len(overlap_samples)
+        report[f"{status}_canary_overlap_todo_count"] = int(
+            status_canary_overlap_todos.get(status, 0)
+        )
+        if overlap_samples:
+            report[f"{status}_canary_overlap_sample_ids"] = sorted(overlap_samples)
+    holdout_delta_sums = rounded_counter(completed_holdout_metric_delta_sums)
+    if holdout_delta_sums:
+        report["completed_holdout_metric_delta_sums"] = holdout_delta_sums
+    return report
 
 
 def _suggested_target_files(todos: Sequence[ModalTodo]) -> List[str]:
@@ -12414,6 +12620,12 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 supervisor.queue,
                 supervisor.policy,
             )
+            summary["program_synthesis_metric_feedback"] = (
+                _program_synthesis_metric_feedback_report(
+                    supervisor.queue,
+                    compiler_ir_validation_sample_ids=compiler_ir_validation_sample_ids,
+                )
+            )
             summary["program_synthesis_seeded"] = int(
                 summary.get("program_synthesis_seeded", 0)
             ) + sum(step.program_synthesis_seeded_count for step in run.steps)
@@ -13042,10 +13254,10 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                 if claimed
                 else "waiting_for_program_synthesis_todos"
             )
-            append_event(
-                log_path,
-                args.run_id,
-                {
+            metric_event_fields = _codex_packet_metric_event_fields(packet)
+            if metric_event_fields:
+                summary["latest_codex_target_metric_event"] = dict(metric_event_fields)
+            event_payload = {
                     "claimed_count": len(claimed),
                     "cycle": cycle,
                     "codex_exec_status": dict(packet.get("codex_exec", {})).get("status"),
@@ -13074,7 +13286,12 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                     "todo_markdown_path": packet.get("todo_markdown_path"),
                     "worktree_path": packet.get("worktree_path"),
                     "worktree_cleanup": worktree_cleanup,
-                },
+            }
+            event_payload.update(metric_event_fields)
+            append_event(
+                log_path,
+                args.run_id,
+                event_payload,
             )
             save_summary(summary_path, summary)
             sleep_seconds = max(0.1, float(args.poll_seconds))

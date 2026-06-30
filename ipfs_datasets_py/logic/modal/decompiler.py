@@ -1321,6 +1321,21 @@ def _decode_formula_phrases(
                 provenance_only=True,
             )
         )
+    for slot, value in _typed_decompiler_target_reconstruction_slots(
+        formula=formula,
+        document=document,
+        predicate_text=predicate_text,
+        condition_values=condition_values,
+        exception_values=exception_values,
+    ):
+        phrases.append(
+            DecodedModalPhrase(
+                text=value,
+                slot=slot,
+                spans=spans,
+                provenance_only=True,
+            )
+        )
     for condition in condition_values:
         phrases.append(
             DecodedModalPhrase(
@@ -1426,6 +1441,20 @@ def _decode_formula_phrases(
             DecodedModalPhrase(
                 text=polarity_value,
                 slot=polarity_slot,
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+    for cue_force_slot, cue_force_value in _typed_decompiler_cue_force_slots(
+        formula=formula,
+        text=source_span_text or predicate_text,
+        condition_values=condition_values,
+        exception_values=exception_values,
+    ):
+        phrases.append(
+            DecodedModalPhrase(
+                text=cue_force_value,
+                slot=cue_force_slot,
                 spans=spans,
                 provenance_only=True,
             )
@@ -5855,6 +5884,188 @@ def _typed_decompiler_role_slots(
     return _unique_slot_values(slots)
 
 
+def _typed_decompiler_target_reconstruction_slots(
+    *,
+    formula: ModalIRFormula,
+    document: ModalIRDocument,
+    predicate_text: str,
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
+) -> List[Tuple[str, str]]:
+    source_family = _clean_text(formula.operator.family).lower()
+    source_symbol = _clean_text(formula.operator.symbol).lower()
+    if not source_family:
+        return []
+
+    source_span_text = _formula_source_span_text(document=document, formula=formula)
+    reconstruction_text = _clean_text(
+        " ".join(
+            value
+            for value in (
+                predicate_text,
+                source_span_text,
+                " ".join(_phrase_values(condition_values)),
+                " ".join(_phrase_values(exception_values)),
+            )
+            if _clean_text(value)
+        )
+    ).replace("_", " ").lower()
+    if not reconstruction_text:
+        return []
+
+    roles = _semantic_role_values_from_text(reconstruction_text)
+    temporal_cues = _temporal_transition_context_cues_from_text(reconstruction_text)
+    if temporal_cues:
+        roles["temporal"] = "+".join(temporal_cues)
+    targets = _typed_decompiler_bridge_target_families(
+        formula=formula,
+        text=reconstruction_text,
+        roles=roles,
+    )
+    condition_cues = _typed_decompiler_condition_cues(
+        condition_values=condition_values,
+        exception_values=exception_values,
+        text=reconstruction_text,
+    )
+    has_conditioned_scope = bool(condition_values or exception_values or condition_cues)
+    has_temporal_scope = bool(
+        temporal_cues
+        or any(_temporal_clause_prefix_relation(cue) for cue in condition_cues)
+    )
+    if has_conditioned_scope and "conditional_normative" not in targets:
+        targets.append("conditional_normative")
+    if has_temporal_scope and "temporal" not in targets:
+        targets.append("temporal")
+    if source_family == "frame" and "frame" not in targets:
+        targets.append("frame")
+    if (
+        source_family in {"frame", "temporal", "conditional_normative"}
+        and _has_deontic_reconstruction_cue(formula, reconstruction_text)
+        and "deontic" not in targets
+    ):
+        targets.append("deontic")
+
+    slots: List[Tuple[str, str]] = []
+    scope_parts: List[str] = []
+    if has_conditioned_scope:
+        scope_parts.append("conditioned")
+    if has_temporal_scope:
+        scope_parts.append("temporal")
+    if not scope_parts and not targets:
+        return []
+
+    scope_signature = "+".join(scope_parts) if scope_parts else "unconditioned"
+    for target in targets:
+        pair = f"{source_family}->{target}"
+        slots.append(
+            (
+                "typed-decompiler-target-reconstruction-scope",
+                f"{scope_signature}:{pair}",
+            )
+        )
+        for cue in condition_cues:
+            slots.append(
+                (
+                    "typed-decompiler-target-reconstruction-surface-cue",
+                    f"{cue}:{pair}",
+                )
+            )
+        if target == "temporal" and has_temporal_scope:
+            temporal_symbol = (
+                source_symbol if source_family == "temporal" and source_symbol else "f"
+            )
+            slots.extend(
+                (
+                    (
+                        "defeasible-priority",
+                        f"temporal-priority:temporal-guard:none:temporal:{temporal_symbol}:clause",
+                    ),
+                    (
+                        "entity-binding",
+                        f"system-binding:ltl:temporal:{temporal_symbol}:temporal-order:clause",
+                    ),
+                )
+            )
+            for role in ("subject", "action", "object"):
+                if role in roles:
+                    slots.append(
+                        (
+                            "entity-binding",
+                            f"source-ir-role:{role}:none:temporal:{temporal_symbol}:clause",
+                        )
+                    )
+
+    force = _modal_force_label(formula)
+    polarity = _modal_scope_polarity(
+        formula,
+        condition_values=condition_values,
+        exception_values=exception_values,
+        document=document,
+    )
+    if source_family == "deontic" and force == "permission" and polarity == "positive_scope":
+        for target in (
+            "conditional_normative",
+            "deontic",
+            "epistemic",
+            "frame",
+            "temporal",
+        ):
+            slots.append(
+                (
+                    "decompiler-plan",
+                    f"force-polarity-family-pair:permission:enabling:deontic->{target}",
+                )
+            )
+    return _unique_slot_values(slots)
+
+
+def _typed_decompiler_condition_cues(
+    *,
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
+    text: str,
+) -> List[str]:
+    cues: List[str] = []
+
+    def add(cue: str) -> None:
+        normalized = _clean_text(cue).lower().replace(" ", "_")
+        if normalized and normalized not in cues:
+            cues.append(normalized)
+
+    for clause in (*condition_values, *exception_values):
+        parsed_clause = _typed_clause_slot(clause, slot="condition")
+        if parsed_clause is None:
+            parsed_clause = _typed_clause_slot(clause, slot="exception")
+        if parsed_clause is None:
+            continue
+        _slot, prefix_key, _value = parsed_clause
+        add(prefix_key)
+    normalized_text = _clean_text(text).replace("_", " ").lower()
+    for prefix, prefix_key in (*_CONDITION_PREFIXES, *_EXCEPTION_PREFIXES):
+        if _text_contains_cue_term(normalized_text, prefix):
+            add(prefix_key)
+    return cues
+
+
+def _has_deontic_reconstruction_cue(
+    formula: ModalIRFormula,
+    text: str,
+) -> bool:
+    force = _modal_force_label(formula)
+    if force in {"permission", "obligation", "prohibition"}:
+        return True
+    normalized = _clean_text(text).replace("_", " ").lower()
+    if not normalized:
+        return False
+    return bool(
+        re.search(
+            r"(?<!\w)(?:shall|must|may|authorized|required|prohibited|"
+            r"obligated|permitted)(?!\w)",
+            normalized,
+        )
+    )
+
+
 def _semantic_role_values_from_text(text: str) -> Dict[str, str]:
     normalized = _clean_text(text).replace("_", " ").lower()
     tokens = _CUE_TOKEN_RE.findall(normalized)
@@ -5969,6 +6180,9 @@ def _typed_decompiler_bridge_target_families(
     for cue in _bridge_cues_from_text(text):
         for bridge_family, _bridge_symbol in _cue_bridge_operator_pairs(cue):
             add(bridge_family)
+    if family == "frame" and _uscode_residual_fallback_decompiler_cues(formula):
+        add("conditional_normative")
+        add("epistemic")
     return targets
 
 
@@ -6017,10 +6231,180 @@ def _typed_decompiler_family_pair_cues(
                 for bridge_family, _bridge_symbol in bridge_pairs
             ):
                 add(cue)
+        if (
+            _clean_text(formula.operator.family).lower() == "frame"
+            and normalized_target in {"conditional_normative", "epistemic"}
+            and _uscode_residual_fallback_decompiler_cues(formula)
+            and cue in _STRUCTURAL_FRAME_CUE_TOKENS
+        ):
+            add(cue)
     fallback_rule = _clean_text(formula.metadata.get("fallback_rule") or "").lower()
     if fallback_rule:
         add(fallback_rule)
+    if (
+        _clean_text(formula.operator.family).lower() == "frame"
+        and normalized_target in {"conditional_normative", "epistemic"}
+    ):
+        for residual_cue in _uscode_residual_fallback_decompiler_cues(formula):
+            add(residual_cue)
     return cues
+
+
+def _uscode_residual_fallback_decompiler_cues(formula: ModalIRFormula) -> List[str]:
+    metadata = formula.metadata if isinstance(formula.metadata, Mapping) else {}
+    raw_values = (
+        metadata.get("cue"),
+        metadata.get("fallback_rule"),
+    )
+    cues: List[str] = []
+    for raw_value in raw_values:
+        cue = _clean_text(raw_value or "").lower().replace(" ", "_").strip("_")
+        if not cue or not cue.startswith("uscode_residual_span"):
+            continue
+        if cue not in cues:
+            cues.append(cue)
+    return cues
+
+
+def _typed_decompiler_cue_force_slots(
+    *,
+    formula: ModalIRFormula,
+    text: str,
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
+) -> List[Tuple[str, str]]:
+    family = _clean_text(formula.operator.family).lower()
+    if not family:
+        return []
+    normalized_text = _clean_text(text).replace("_", " ").lower()
+    clause_text = " ".join(
+        _clean_text(value).replace("_", " ").lower()
+        for value in (*condition_values, *exception_values)
+        if _clean_text(value)
+    )
+    searchable_text = " ".join(
+        value for value in (normalized_text, clause_text) if value
+    )
+    cues: List[str] = []
+    for cue in [
+        *(_clean_text(cue).lower().replace(" ", "_") for cue in _formula_cues(formula)),
+        *_bridge_cues_from_text(searchable_text),
+    ]:
+        if cue and cue not in cues:
+            cues.append(cue)
+    if not cues:
+        return []
+
+    role_values = _semantic_role_values_from_text(searchable_text)
+    target_families = _typed_decompiler_bridge_target_families(
+        formula=formula,
+        text=searchable_text,
+        roles=role_values,
+    )
+    if not target_families:
+        target_families = [family]
+    predicate_head = _typed_decompiler_predicate_head(formula)
+
+    slots: List[Tuple[str, str]] = []
+    for cue in cues:
+        cue_force = _typed_decompiler_force_for_cue(cue)
+        if not cue_force:
+            continue
+        polarity_values = _typed_decompiler_polarities_for_cue(
+            cue,
+            condition_values=condition_values,
+            exception_values=exception_values,
+            text=searchable_text,
+        )
+        slots.append(("typed_decompiler_cue_force", f"{cue}:{cue_force}"))
+        slots.append(("normative_polarity", f"cue-force:{cue}:{cue_force}"))
+        for polarity in polarity_values:
+            slots.append(
+                (
+                    "typed_decompiler_cue_force_polarity",
+                    f"{cue}:{cue_force}:{polarity}",
+                )
+            )
+            for target_family in target_families:
+                pair = f"{family}->{target_family}"
+                force_pair = f"{cue_force}:{polarity}:{pair}"
+                slots.extend(
+                    (
+                        (
+                            "typed_decompiler_cue_force_polarity_family_pair",
+                            f"{cue}:{force_pair}",
+                        ),
+                        (
+                            "typed_decompiler_source_predicate_force_pair",
+                            "source-predicate-head:"
+                            f"{family}:{predicate_head}|"
+                            "typed-decompiler-force-polarity:"
+                            f"{force_pair}",
+                        ),
+                    )
+                )
+    return _unique_slot_values(slots)
+
+
+def _typed_decompiler_force_for_cue(cue: str) -> str:
+    normalized_cue = _clean_text(cue).lower().replace(" ", "_")
+    if not normalized_cue:
+        return ""
+    for bridge_family, bridge_symbol in _cue_bridge_operator_pairs(normalized_cue):
+        if bridge_family == "deontic":
+            return _deontic_force_for_symbol(bridge_symbol)
+    if normalized_cue in {"if", "unless", "provided", "provided_that"}:
+        return "obligation"
+    if normalized_cue in _CLAUSE_PREFIX_BRIDGE_CUES:
+        return "obligation"
+    return ""
+
+
+def _typed_decompiler_polarities_for_cue(
+    cue: str,
+    *,
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
+    text: str,
+) -> List[str]:
+    normalized_cue = _clean_text(cue).lower().replace(" ", "_")
+    normalized_text = _clean_text(text).replace("_", " ").lower()
+    polarities: List[str] = []
+
+    def add(value: str) -> None:
+        if value and value not in polarities:
+            polarities.append(value)
+
+    if normalized_cue in {"may", "authorized", "permitted"}:
+        add("enabling")
+    if normalized_cue in _CLAUSE_PREFIX_BRIDGE_CUES or condition_values:
+        add("conditional")
+    if exception_values or normalized_cue.startswith("except") or normalized_cue == "unless":
+        add("excepted")
+    if re.search(r"(?<!\w)(?:not|no|never|without|prohibited|forbidden)(?!\w)", normalized_text):
+        add("negative_scope")
+    if normalized_cue in {
+        "shall",
+        "must",
+        "obligation",
+        "obligated",
+        "required",
+        "require",
+        "requires",
+        "requiring",
+    }:
+        add("mandatory")
+    if not polarities:
+        add("positive_scope")
+    return polarities
+
+
+def _typed_decompiler_predicate_head(formula: ModalIRFormula) -> str:
+    predicate_name = _clean_text(getattr(formula.predicate, "name", "")).lower()
+    tokens = _CUE_TOKEN_RE.findall(predicate_name)
+    if tokens:
+        return tokens[0]
+    return "unnamed"
 
 
 def _cue_modal_slots(

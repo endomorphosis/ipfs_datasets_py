@@ -572,20 +572,27 @@ def test_frame_ontology_terms_contextualize_legal_ir_view_features() -> None:
         "legal-ir-view:TDFOL.prover",
         "legal-ir-view:modal.frame_logic",
         "quality:bias",
+        "quality:symbolic:has-formula",
     ]
 
     assert frame_ontology_feature_keys(feature_keys) == [
         "legal-ir-view:deontic.ir",
         "legal-ir-view:TDFOL.prover",
         "legal-ir-view:modal.frame_logic",
+        "quality:bias",
+        "quality:symbolic:has-formula",
     ]
     assert frame_ontology_terms_from_feature_keys(feature_keys) == [
         "deontic_ir",
         "tdfol_prover",
         "modal_frame_logic",
+        "bias",
+        "symbolic_has_formula",
     ]
     assert frame_ontology_contextualized_terms(feature_keys=feature_keys) == [
         "legal_ir_view_deontic_ir",
         "legal_ir_view_tdfol_prover",
         "legal_ir_view_modal_frame_logic",
+        "quality_bias",
+        "quality_symbolic_has_formula",
     ]
