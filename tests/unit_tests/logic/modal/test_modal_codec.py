@@ -57,6 +57,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR,
     COMPILER_REFINED_PACKET_000593_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000001_RESCUE_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_000043_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_003148_FAMILY_PAIRS,
     compiler_refined_modal_family_cue_margin_buffer,
     is_compiler_ambiguity_policy_pair,
@@ -4004,6 +4005,47 @@ def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_003148_pair
         ("deontic", "conditional_normative"): 0.0015,
         ("frame", "deontic"): 0.0015,
         ("frame", "temporal"): 0.002,
+    }
+    for predicted_family, target_family in packet_pairs:
+        assert (
+            supports_signal_free_adaptive_ambiguity_pair(
+                predicted_family,
+                target_family,
+            )
+            is True
+        )
+        assert (
+            is_compiler_ambiguity_policy_pair(
+                predicted_family,
+                target_family,
+            )
+            is True
+        )
+        assert (
+            abs(
+                compiler_refined_modal_family_cue_margin_buffer(
+                    predicted_family,
+                    target_family,
+                )
+                - expected_buffers[(predicted_family, target_family)]
+            )
+            < 1e-12
+        )
+
+
+def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_000043_pairs() -> None:
+    packet_pairs = (
+        ("frame", "deontic"),
+        ("frame", "frame"),
+        ("frame", "temporal"),
+        ("temporal", "conditional_normative"),
+    )
+    assert tuple(COMPILER_REFINED_PACKET_000043_FAMILY_PAIRS) == packet_pairs
+    expected_buffers = {
+        ("frame", "deontic"): 0.0015,
+        ("frame", "frame"): 0.135,
+        ("frame", "temporal"): 0.002,
+        ("temporal", "conditional_normative"): 0.0015,
     }
     for predicted_family, target_family in packet_pairs:
         assert (
