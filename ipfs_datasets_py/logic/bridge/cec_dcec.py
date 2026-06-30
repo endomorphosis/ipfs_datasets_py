@@ -2819,6 +2819,92 @@ def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
             "support_text": operative_text[:500],
             "extraction_method": "cec_dcec_section_operational_v1",
         }
+    no_restriction_match = re.search(
+        r"\b(?P<actor>this\s+(?:chapter|subchapter|section|subsection|part|title|act))\s+"
+        r"(?:does|do)\s+not\s+(?P<action>restrict\s+or\s+limit\s+[^.;]+)",
+        operative_text.lower(),
+    )
+    if no_restriction_match:
+        digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
+        return {
+            "actor": _clean_operational_actor_slot(no_restriction_match.group("actor")),
+            "action": _clean_operational_slot(no_restriction_match.group("action")),
+            "modality": "permitted",
+            "norm_type": "exemption",
+            "source_id": f"dcec:section:{digest}",
+            "support_text": no_restriction_match.group(0)[:500],
+            "extraction_method": "cec_dcec_section_operational_v1",
+        }
+    nothing_shall_affect_match = re.search(
+        r"\b(?P<actor>nothing\s+in\s+this\s+(?:chapter|subchapter|section|"
+        r"subsection|part|title|act))\s+shall\s*[—-]?\s*"
+        r"(?:\([0-9a-z]+\)\s*)?(?P<action>affect\s+[^.;]+)",
+        operative_text.lower(),
+    )
+    if nothing_shall_affect_match:
+        digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
+        return {
+            "actor": _clean_operational_actor_slot(
+                nothing_shall_affect_match.group("actor")
+            ),
+            "action": _clean_operational_slot(nothing_shall_affect_match.group("action")),
+            "modality": "permitted",
+            "norm_type": "exemption",
+            "source_id": f"dcec:section:{digest}",
+            "support_text": nothing_shall_affect_match.group(0)[:500],
+            "extraction_method": "cec_dcec_section_operational_v1",
+        }
+    age_condition_right_match = re.search(
+        r"\b(?P<actor>all\s+[a-z][^,.;]{1,120}?),\s*"
+        r"when\s+they\s+shall\s+arrive\s+[^,.;]{1,180},\s*"
+        r"shall\s+(?P<action>have\s+the\s+right\s+to\s+[^.;]+)",
+        operative_text.lower(),
+    )
+    if age_condition_right_match:
+        digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
+        return {
+            "actor": _clean_operational_actor_slot(age_condition_right_match.group("actor")),
+            "action": _clean_operational_slot(age_condition_right_match.group("action")),
+            "modality": "permitted",
+            "norm_type": "permitted",
+            "source_id": f"dcec:section:{digest}",
+            "support_text": age_condition_right_match.group(0)[:500],
+            "extraction_method": "cec_dcec_section_operational_v1",
+        }
+    corporation_agent_match = re.search(
+        r"\b(?P<actor>the\s+corporation)\s+shall\s+"
+        r"(?P<action>have\s+a\s+designated\s+agent\s+[^.;]+)",
+        operative_text.lower(),
+    )
+    if corporation_agent_match:
+        digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
+        return {
+            "actor": _clean_operational_actor_slot(corporation_agent_match.group("actor")),
+            "action": _clean_operational_slot(corporation_agent_match.group("action")),
+            "modality": "obligated",
+            "norm_type": "obligated",
+            "source_id": f"dcec:section:{digest}",
+            "support_text": corporation_agent_match.group(0)[:500],
+            "extraction_method": "cec_dcec_section_operational_v1",
+        }
+    corporation_records_match = re.search(
+        r"\b(?P<actor>the\s+corporation)\s+shall\s+"
+        r"(?P<action>keep\s*[—-]\s*[^.;]+)",
+        operative_text.lower(),
+    )
+    if corporation_records_match:
+        digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
+        return {
+            "actor": _clean_operational_actor_slot(
+                corporation_records_match.group("actor")
+            ),
+            "action": _clean_operational_slot(corporation_records_match.group("action")),
+            "modality": "obligated",
+            "norm_type": "obligated",
+            "source_id": f"dcec:section:{digest}",
+            "support_text": corporation_records_match.group(0)[:500],
+            "extraction_method": "cec_dcec_section_operational_v1",
+        }
     patterns = (
         (
             "obligated",
@@ -3159,7 +3245,8 @@ def _substantive_statutory_text(text: str) -> str:
     value = _normalize_legal_sample_text(text)
     value = re.split(
         r"\b(?:Editorial Notes|Statutory Notes and Related Subsidiaries|"
-        r"References in Text)\b|\bAmendments\s+\d{4}\b",
+        r"Historical and Revision Notes|Executive Documents|References in Text)\b|"
+        r"\bAmendments\s+\d{4}\b",
         value,
         maxsplit=1,
         flags=re.IGNORECASE,
@@ -3210,12 +3297,23 @@ def _strip_uscode_catchline_and_subsection_heading(text: str) -> str:
         "There are authorized",
         "Section",
         "Sections",
+        "This",
+        "All",
         "The",
         "An",
         "Any",
         "No",
+        "Nothing",
     )
     starter_pattern = "|".join(re.escape(starter) for starter in starters)
+    subsection_dash_match = re.match(
+        rf"^.{{1,220}}?\s+\([a-z]\)\s+[^.;]{{0,140}}?\s+\.[—-]\s*"
+        rf"(?=({starter_pattern})\b)",
+        value,
+        flags=re.IGNORECASE,
+    )
+    if subsection_dash_match:
+        return value[subsection_dash_match.end():].strip()
     subsection_match = re.match(
         rf"^.{1,220}?\s+\([a-z0-9]+\)\s+[^.;]{{0,140}}?\s+"
         rf"(?=({starter_pattern})\b)",

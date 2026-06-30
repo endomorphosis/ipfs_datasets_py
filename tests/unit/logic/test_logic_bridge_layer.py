@@ -2336,6 +2336,88 @@ def test_deontic_bridge_recovers_core_slots_from_nested_prompt_context() -> None
     assert report.round_trip.extra_losses["deontic_quality_requires_validation_loss"] == 0.0
 
 
+def test_deontic_bridge_fills_reduced_parser_rows_from_legal_norm_ir_rows() -> None:
+    from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
+
+    source_text = "The Secretary shall publish notice."
+    source_id = "legacy:deontic:legal-norm-ir-sibling"
+
+    class _FakeResult:
+        success = True
+        metadata = {
+            "parser_elements": [
+                {
+                    "schema_version": "legal_norm_ir-v1",
+                    "source_id": source_id,
+                    "canonical_citation": "20 U.S.C. 107b-3",
+                    "norm_type": "obligation",
+                    "subject": [],
+                    "action": [],
+                    "modality": "",
+                    "text": source_text,
+                    "support_text": source_text,
+                    "support_span": [0, len(source_text)],
+                    "promotable_to_theorem": True,
+                    "export_readiness": {"blockers": []},
+                }
+            ],
+            "legal_norm_irs": [
+                {
+                    "schema_version": "legal_norm_ir-v1",
+                    "source_id": source_id,
+                    "canonical_citation": "20 U.S.C. 107b-3",
+                    "norm_type": "obligation",
+                    "modality": "O",
+                    "actor": "Secretary",
+                    "action": "publish notice",
+                    "source_text": source_text,
+                    "support_text": source_text,
+                    "source_span": [0, len(source_text)],
+                    "support_span": [0, len(source_text)],
+                    "field_spans": {
+                        "subject": [4, 13],
+                        "modality": [14, 19],
+                        "action": [20, 34],
+                    },
+                    "quality": {
+                        "promotable_to_theorem": True,
+                        "parser_warnings": [],
+                        "export_readiness": {"blockers": []},
+                    },
+                    "export_readiness": {"blockers": []},
+                }
+            ],
+        }
+
+    class _FakeConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _FakeResult()
+
+    adapter = DeonticNormsBridgeAdapter(converter=_FakeConverter())
+    report = adapter.evaluate(
+        source_text,
+        document_id="deontic-bridge-legal-norm-ir-sibling",
+        citation="Deontic Bridge LegalNormIR Sibling",
+    )
+
+    norm = report.ir_document.views["deontic_ir"].payload["norms"][0]
+    decoder_record = report.ir_document.views["deontic_decoder_reconstructions"].payload[
+        "records"
+    ][0]
+    slot_loss = report.ir_document.views["deontic_reconstruction_slot_loss"].payload[
+        "summary"
+    ]
+
+    assert norm["actor"] == "Secretary"
+    assert norm["modality"] == "O"
+    assert norm["action"] == "publish notice"
+    assert decoder_record["missing_slots"] == []
+    assert decoder_record["requires_validation"] is False
+    assert slot_loss["slot_reconstruction_complete"] is True
+    assert report.round_trip.extra_losses["deontic_decoder_slot_loss"] == 0.0
+
+
 def test_deontic_bridge_recovers_purpose_slots_from_nested_legal_frame() -> None:
     from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
 
@@ -5655,6 +5737,118 @@ def test_cec_dcec_bridge_materializes_guided_notice_hearing_frame_events() -> No
         and triple["object"].endswith(":procedure:notice")
         for triple in report.ir_document.frame_logic_triples
     )
+
+
+def test_cec_dcec_bridge_extracts_retained_rights_as_exemption_state() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("cec_dcec")
+    report = adapter.evaluate(
+        (
+            "U.S.C. Title 20 - EDUCATION 20 U.S.C. United States Code, "
+            "2024 Edition Sec. 3609 - Retained rights From the U.S. "
+            "Government Publishing Office, www.gpo.gov §3609. Retained "
+            "rights Except as otherwise provided in section 3607 of this "
+            "title, nothing in this chapter shall— (1) affect the right "
+            "of any party to seek legal redress in connection with the "
+            "purchase or installation of asbestos materials in schools; "
+            "or (2) affect the rights of any party under any other law."
+        ),
+        document_id="us-code-20-3609-retained-rights",
+        citation="20 U.S.C. 3609",
+    )
+
+    event_record = report.ir_document.views["event_calculus"].payload["records"][0]
+    proof_record = report.ir_document.views["dcec_formula"].payload["records"][0]
+
+    assert event_record["modality"] == "permitted"
+    assert event_record["event_formula_syntax_valid"] is True
+    assert proof_record["formula"].startswith("ExemptedFrom(")
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+
+
+def test_cec_dcec_bridge_ignores_executive_boilerplate_for_no_restriction_clause() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("cec_dcec")
+    report = adapter.evaluate(
+        (
+            "U.S.C. Title 13 - CENSUS 13 U.S.C. United States Code, 2024 "
+            "Edition Sec. 62 - Additional statistics From the U.S. "
+            "Government Publishing Office, www.gpo.gov §62. Additional "
+            "statistics This subchapter does not restrict or limit the "
+            "Secretary in the collection and publication, under the general "
+            "authority of the Secretary, of such statistics on fats and oils "
+            "or products thereof not specifically required in this subchapter, "
+            "as he deems to be in the public interest. Historical and Revision "
+            "Notes Based on title 13. Executive Documents Transfer of "
+            "Functions effective May 24, 1950, 15 F.R. 3174."
+        ),
+        document_id="us-code-13-62-no-restriction",
+        citation="13 U.S.C. 62",
+    )
+
+    context_record = report.ir_document.views["event_calculus"].payload["records"][0]
+    proof_record = report.ir_document.views["dcec_formula"].payload["records"][0]
+
+    assert context_record["event_formula_syntax_valid"] is True
+    assert proof_record["formula"].startswith("ExemptedFrom(")
+    assert "effective" not in proof_record["proof_input"]
+    assert "sym_24_1950" not in proof_record["proof_input"]
+
+
+def test_cec_dcec_bridge_preserves_conditional_rights_actor() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("cec_dcec")
+    report = adapter.evaluate(
+        (
+            "U.S.C. Title 25 - INDIANS 25 U.S.C. United States Code, 2024 "
+            "Edition Sec. 116 - Indians 18 years of age to have right to "
+            "receipt for annuity From the U.S. Government Publishing Office, "
+            "www.gpo.gov §116. Indians 18 years of age to have right to "
+            "receipt for annuity All Indians, when they shall arrive at the "
+            "age of eighteen years, shall have the right to receive and "
+            "receipt for all annuity money that may be due or become due to "
+            "them, if not otherwise incapacitated under the regulations of "
+            "the Indian Office."
+        ),
+        document_id="us-code-25-116-conditional-right",
+        citation="25 U.S.C. 116",
+    )
+
+    proof_record = report.ir_document.views["dcec_formula"].payload["records"][0]
+
+    assert "all_indians" in proof_record["proof_input"]
+    assert "age_of_eighteen_years" not in proof_record["proof_input"]
+    assert proof_record["formula"].startswith("P[")
+
+
+def test_cec_dcec_bridge_keeps_subsection_dash_first_clause() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("cec_dcec")
+    report = adapter.evaluate(
+        (
+            "U.S.C. Title 36 - PATRIOTIC AND NATIONAL OBSERVANCES, "
+            "CEREMONIES, AND ORGANIZATIONS 36 U.S.C. United States Code, "
+            "2024 Edition Sec. 150511 - Service of process From the U.S. "
+            "Government Publishing Office, www.gpo.gov §150511. Service "
+            "of process (a) District of Columbia .-The corporation shall "
+            "have a designated agent in the District of Columbia to receive "
+            "service of process for the corporation. Designation of the "
+            "agent shall be filed in the office of the clerk of the United "
+            "States District Court for the District of Columbia."
+        ),
+        document_id="us-code-36-150511-service-process",
+        citation="36 U.S.C. 150511",
+    )
+
+    proof_record = report.ir_document.views["dcec_formula"].payload["records"][0]
+
+    assert "corporation" in proof_record["proof_input"]
+    assert "have_a_designated_agent" in proof_record["proof_input"]
+    assert "designation_of_the_agent" not in proof_record["proof_input"]
 
 
 def test_cec_dcec_bridge_emits_parse_profile_for_fallback_event_formulas() -> None:

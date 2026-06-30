@@ -67,6 +67,10 @@ class DeonticNormsBridgeAdapter:
             guidance_context,
         )
         norms = _apply_deontic_compiler_guidance_to_rows(norms, guidance_context)
+        parser_elements = _merge_legal_norm_rows_into_parser_elements(
+            parser_elements,
+            norms,
+        )
         compiler_guidance_applied = bool(guidance_context.get("applied"))
         deontic_source_rows = parser_elements if parser_elements else norms
         norm_objects = _legal_norm_objects_from_parser_elements(deontic_source_rows)
@@ -507,6 +511,122 @@ def _apply_deontic_compiler_guidance_to_rows(
                 context["applied"] = True
         enriched_rows.append(enriched)
     return enriched_rows
+
+
+def _merge_legal_norm_rows_into_parser_elements(
+    parser_elements: Sequence[Mapping[str, Any]],
+    norm_rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    """Fill reduced parser rows from sibling typed LegalNormIR rows.
+
+    Some converter/repair payloads carry compact ``parser_elements`` alongside
+    richer ``legal_norm_irs`` for the same ``source_id``. The bridge builds
+    decoder and quality exports from parser rows when they exist, so a reduced
+    parser row can otherwise lose LegalNormIR actor/modality/action slots and
+    keep round-trip validation active. This merge is fill-only and source-keyed:
+    explicit parser data remains authoritative, while typed IR slots provide
+    deterministic reconstruction context.
+    """
+
+    normalized_parser_rows = [
+        dict(row) for row in parser_elements or [] if isinstance(row, Mapping)
+    ]
+    if not normalized_parser_rows or not norm_rows:
+        return normalized_parser_rows
+
+    norm_by_source: dict[str, dict[str, Any]] = {}
+    ordered_norms: list[dict[str, Any]] = []
+    for row in norm_rows or []:
+        if not isinstance(row, Mapping):
+            continue
+        norm = dict(row)
+        ordered_norms.append(norm)
+        source_id = str(norm.get("source_id") or "").strip()
+        if source_id and source_id not in norm_by_source:
+            norm_by_source[source_id] = norm
+
+    merged: list[dict[str, Any]] = []
+    for index, parser_row in enumerate(normalized_parser_rows):
+        source_id = str(parser_row.get("source_id") or "").strip()
+        norm_row = norm_by_source.get(source_id)
+        if norm_row is None and len(ordered_norms) == len(normalized_parser_rows):
+            norm_row = ordered_norms[index]
+        merged.append(_fill_parser_row_from_legal_norm_row(parser_row, norm_row or {}))
+    return merged
+
+
+def _fill_parser_row_from_legal_norm_row(
+    parser_row: Mapping[str, Any],
+    norm_row: Mapping[str, Any],
+) -> dict[str, Any]:
+    row = dict(parser_row)
+    if not norm_row:
+        return row
+
+    direct_slots = (
+        "schema_version",
+        "source_id",
+        "canonical_citation",
+        "parent_source_id",
+        "enumeration_label",
+        "enumeration_index",
+        "is_enumerated_child",
+        "source_span",
+        "support_span",
+        "support_text",
+        "field_spans",
+        "formal_terms",
+        "legal_frame",
+        "section_context",
+        "definition_scope",
+        "actor_type",
+        "mental_state",
+        "action_verb",
+        "action_object",
+        "recipient",
+        "conditions",
+        "exceptions",
+        "overrides",
+        "temporal_constraints",
+        "cross_references",
+        "resolved_cross_references",
+        "defined_terms",
+        "penalty",
+        "procedure",
+        "ontology_terms",
+        "kg_relationship_hints",
+        "quality",
+        "export_readiness",
+        "prover_syntax_records",
+        "local_prover_syntax_records",
+    )
+    for slot in direct_slots:
+        _fill_empty_field(row, norm_row, slot)
+
+    _fill_scalar_alias_from_norm(row, norm_row, "subject", "actor", as_list=True)
+    _fill_scalar_alias_from_norm(row, norm_row, "action", "action", as_list=True)
+    _fill_scalar_alias_from_norm(row, norm_row, "deontic_operator", "modality")
+    _fill_scalar_alias_from_norm(row, norm_row, "modality", "modality")
+    _fill_scalar_alias_from_norm(row, norm_row, "text", "source_text")
+    _fill_scalar_alias_from_norm(row, norm_row, "source_text", "source_text")
+    _fill_scalar_alias_from_norm(row, norm_row, "norm_type", "norm_type")
+    return row
+
+
+def _fill_scalar_alias_from_norm(
+    target: dict[str, Any],
+    source: Mapping[str, Any],
+    target_key: str,
+    source_key: str,
+    *,
+    as_list: bool = False,
+) -> None:
+    if _value_is_present(target.get(target_key)):
+        return
+    value = source.get(source_key)
+    if not _value_is_present(value):
+        return
+    target[target_key] = [_copy_slot_value(value)] if as_list else _copy_slot_value(value)
 
 
 def _compiler_guidance_has_deontic_route(guidance: Mapping[str, Any]) -> bool:
@@ -2300,6 +2420,36 @@ def _list_of_dicts(value: Any) -> list[dict[str, Any]]:
 
 def _mapping(value: Any) -> dict[str, Any]:
     return dict(value) if isinstance(value, Mapping) else {}
+
+
+def _value_is_present(value: Any) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, str):
+        return bool(value.strip())
+    if isinstance(value, (list, tuple, set, dict)):
+        return len(value) > 0
+    return True
+
+
+def _copy_slot_value(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return dict(value)
+    if isinstance(value, list):
+        return list(value)
+    return value
+
+
+def _fill_empty_field(
+    target: dict[str, Any],
+    source: Mapping[str, Any],
+    key: str,
+) -> None:
+    if _value_is_present(target.get(key)):
+        return
+    value = source.get(key)
+    if _value_is_present(value):
+        target[key] = _copy_slot_value(value)
 
 
 def _rate(numerator: Any, denominator: Any) -> float:
