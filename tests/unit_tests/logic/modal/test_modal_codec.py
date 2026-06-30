@@ -25108,9 +25108,41 @@ def test_decompiler_emits_permission_enabling_and_temporal_to_deontic_slots() ->
     assert "temporal:temporal->deontic" in temporal_slots[
         "typed-decompiler-target-reconstruction-scope"
     ]
+    assert "under" in temporal_slots["typed-decompiler-source-scope-cue"]
     assert (
         "source-ir-role:action:none:temporal:f:clause"
         in temporal_slots["entity-binding"]
+    )
+
+
+def test_decompiler_emits_source_scope_slots_for_within_and_deadline_cues() -> None:
+    document = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "The agency must provide notice within 30 days and no later than "
+            "45 days after review."
+        ),
+        predicate="agency_must_provide_notice",
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    assert "within" in slot_texts["typed-decompiler-source-scope-cue"]
+    assert "no_later_than" in slot_texts["typed-decompiler-source-scope-cue"]
+    assert any(
+        value.startswith("deontic:")
+        and "|typed-decompiler-force-polarity:obligation:" in value
+        for value in slot_texts["typed-decompiler-source-predicate-force-pair"]
+    )
+    assert any(
+        value.startswith("condition+subject+action+object+temporal:deontic|")
+        for value in slot_texts[
+            "typed-decompiler-source-clause-topology-family-pair"
+        ]
     )
 
 

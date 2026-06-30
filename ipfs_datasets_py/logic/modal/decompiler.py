@@ -1336,6 +1336,21 @@ def _decode_formula_phrases(
                 provenance_only=True,
             )
         )
+    for slot, value in _typed_decompiler_source_reconstruction_slots(
+        formula=formula,
+        document=document,
+        predicate_text=predicate_text,
+        condition_values=condition_values,
+        exception_values=exception_values,
+    ):
+        phrases.append(
+            DecodedModalPhrase(
+                text=value,
+                slot=slot,
+                spans=spans,
+                provenance_only=True,
+            )
+        )
     for condition in condition_values:
         phrases.append(
             DecodedModalPhrase(
@@ -6017,6 +6032,150 @@ def _typed_decompiler_target_reconstruction_slots(
                 )
             )
     return _unique_slot_values(slots)
+
+
+def _typed_decompiler_source_reconstruction_slots(
+    *,
+    formula: ModalIRFormula,
+    document: ModalIRDocument,
+    predicate_text: str,
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
+) -> List[Tuple[str, str]]:
+    source_family = _clean_text(formula.operator.family).lower()
+    source_symbol = _clean_text(formula.operator.symbol).lower()
+    if not source_family:
+        return []
+
+    source_span_text = _formula_source_span_text(document=document, formula=formula)
+    reconstruction_text = _clean_text(
+        " ".join(
+            value
+            for value in (
+                predicate_text,
+                source_span_text,
+                " ".join(_phrase_values(condition_values)),
+                " ".join(_phrase_values(exception_values)),
+            )
+            if _clean_text(value)
+        )
+    ).replace("_", " ").lower()
+    if not reconstruction_text:
+        return []
+
+    roles = _semantic_role_values_from_text(reconstruction_text)
+    temporal_cues = _temporal_transition_context_cues_from_text(reconstruction_text)
+    if temporal_cues:
+        roles["temporal"] = "+".join(temporal_cues)
+    targets = _typed_decompiler_bridge_target_families(
+        formula=formula,
+        text=reconstruction_text,
+        roles=roles,
+    )
+    condition_cues = _typed_decompiler_condition_cues(
+        condition_values=condition_values,
+        exception_values=exception_values,
+        text=reconstruction_text,
+    )
+    source_scope_cues = _source_scope_reconstruction_cues(reconstruction_text)
+    if not source_scope_cues:
+        return []
+
+    if (
+        condition_values or exception_values or condition_cues
+    ) and "conditional_normative" not in targets:
+        targets.append("conditional_normative")
+    if (
+        temporal_cues
+        or any(_temporal_clause_prefix_relation(cue) for cue in condition_cues)
+    ) and "temporal" not in targets:
+        targets.append("temporal")
+    if source_family == "frame" and "frame" not in targets:
+        targets.append("frame")
+    if (
+        source_family in {"frame", "temporal", "conditional_normative"}
+        and _has_deontic_reconstruction_cue(formula, reconstruction_text)
+        and "deontic" not in targets
+    ):
+        targets.append("deontic")
+
+    force = _modal_force_label(formula)
+    polarity = _modal_scope_polarity(
+        formula,
+        condition_values=condition_values,
+        exception_values=exception_values,
+        document=document,
+    )
+    predicate_head = _typed_decompiler_predicate_head(formula)
+    topology_parts = [
+        part
+        for part, present in (
+            ("condition", bool(condition_values or condition_cues)),
+            ("subject", "subject" in roles),
+            ("action", "action" in roles),
+            ("object", "object" in roles),
+            ("exception", bool(exception_values)),
+            ("temporal", bool(temporal_cues)),
+        )
+        if present
+    ]
+    topology = "+".join(topology_parts) if topology_parts else "unscoped"
+
+    slots: List[Tuple[str, str]] = [
+        (
+            "typed-decompiler-source-predicate-force-pair",
+            f"{source_family}:{predicate_head}|typed-decompiler-force-polarity:{force}:{polarity}",
+        ),
+        (
+            "typed-decompiler-source-clause-topology",
+            f"{topology}:{source_family}:{source_symbol or 'none'}",
+        ),
+    ]
+    for target in targets:
+        pair = f"{source_family}->{target}"
+        slots.append(
+            (
+                "typed-decompiler-source-clause-topology-family-pair",
+                f"{topology}:{source_family}|typed-decompiler-family-pair:{pair}",
+            )
+        )
+    for cue in source_scope_cues:
+        slots.extend(
+            (
+                ("typed-decompiler-source-scope-cue", cue),
+                (
+                    "typed-decompiler-source-scope-signature",
+                    f"{source_family}:{source_symbol or 'none'}:{topology}:{cue}",
+                ),
+            )
+        )
+    return _unique_slot_values(slots)
+
+
+def _source_scope_reconstruction_cues(text: str) -> List[str]:
+    normalized = _clean_text(text).replace("_", " ").lower()
+    if not normalized:
+        return []
+    cues: List[str] = []
+
+    def add(cue: str) -> None:
+        if cue and cue not in cues:
+            cues.append(cue)
+
+    statutory_scope_slots = _statutory_scope_slots(normalized)
+    if statutory_scope_slots:
+        for slot, value in statutory_scope_slots:
+            if slot == "statutory_scope_connector":
+                add(value.replace(" ", "_"))
+    if re.search(r"(?<!\w)within\s+\d+\s+(?:days?|months?|years?)(?!\w)", normalized):
+        add("within")
+    for phrase, cue in (
+        ("no later than", "no_later_than"),
+        ("not later than", "not_later_than"),
+    ):
+        if re.search(rf"(?<!\w){re.escape(phrase)}(?!\w)", normalized):
+            add(cue)
+    return cues
 
 
 def _typed_decompiler_condition_cues(
