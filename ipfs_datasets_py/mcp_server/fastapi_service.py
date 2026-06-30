@@ -65,7 +65,7 @@ try:
     from .vector_stores.base import BaseVectorStore
     from .vector_stores.qdrant_store import QdrantVectorStore
     from .vector_stores.faiss_store import FAISSVectorStore
-    from .mcp_server.server import IPFSDatasetsMCPServer
+    from .server import IPFSDatasetsMCPServer
     from .fastapi_config import FastAPISettings
 except ImportError:
     # Fallback imports for development
@@ -141,6 +141,18 @@ except ImportError:
         from wallet.api import router as wallet_router
     except ImportError:
         wallet_router = None
+
+# Ensure the REAL MCP server loads even when optional vector-store/embedding
+# dependencies are missing (otherwise the combined import above falls back to a
+# tool-less mock, breaking MCP-protocol backwards compatibility / tools/list).
+try:
+    from .server import IPFSDatasetsMCPServer  # type: ignore[no-redef]
+except Exception:  # pragma: no cover - defensive
+    try:
+        from mcp_server.server import IPFSDatasetsMCPServer  # type: ignore[no-redef]
+    except Exception as _srv_err:
+        logger.warning("Real IPFSDatasetsMCPServer unavailable, MCP tools disabled: %s", _srv_err)
+
 
 # Load configuration (SECRET_KEY may be absent in test environments)
 try:
