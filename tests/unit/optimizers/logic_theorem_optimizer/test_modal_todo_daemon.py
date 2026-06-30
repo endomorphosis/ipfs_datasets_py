@@ -7549,6 +7549,30 @@ def test_compiler_ir_metric_block_uses_persistent_metric_cache(
     assert first["cross_entropy_loss"] == second["cross_entropy_loss"]
 
 
+def test_metric_code_fingerprint_refreshes_when_watched_code_changes(
+    monkeypatch,
+) -> None:
+    responses = iter(
+        [
+            ("signature-a", "fingerprint-a"),
+            ("signature-a", "stale-fingerprint-ignored"),
+            ("signature-b", "fingerprint-b"),
+        ]
+    )
+
+    monkeypatch.setattr(runner, "_METRIC_CODE_FINGERPRINT_SIGNATURE", None)
+    monkeypatch.setattr(runner, "_METRIC_CODE_FINGERPRINT_VALUE", None)
+    monkeypatch.setattr(
+        runner,
+        "_code_fingerprint_from_candidates",
+        lambda package_root, candidates: next(responses),
+    )
+
+    assert runner._metric_code_fingerprint() == "fingerprint-a"
+    assert runner._metric_code_fingerprint() == "fingerprint-a"
+    assert runner._metric_code_fingerprint() == "fingerprint-b"
+
+
 def test_compiler_ir_metric_block_cache_reuses_success_across_timeout_settings(
     tmp_path: Path,
     monkeypatch,

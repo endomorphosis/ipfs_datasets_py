@@ -273,13 +273,15 @@ _FALSE_ENV_VALUES = {"0", "false", "no", "off", "none", "disabled"}
 _BRIDGE_IR_REPORT_CACHE_LOCK = threading.Lock()
 _BRIDGE_IR_REPORT_CACHE: Dict[str, Any] = {}
 _METRIC_CODE_FINGERPRINT_LOCK = threading.Lock()
+_METRIC_CODE_FINGERPRINT_SIGNATURE: Optional[str] = None
 _METRIC_CODE_FINGERPRINT_VALUE: Optional[str] = None
-_COMPILER_IR_METRIC_BLOCK_CACHE_VERSION = "compiler-ir-metric-block-cache-v7"
+_COMPILER_IR_METRIC_BLOCK_CACHE_VERSION = "compiler-ir-metric-block-cache-v8"
 _COMPILER_IR_GUIDANCE_CACHE_POLICY = "codec-output-contract-v1"
 _COMPILER_IR_GUIDANCE_DIAGNOSTICS_VERSION = "compiler-guidance-diagnostics-v3"
-_COMPILER_IR_SAMPLE_CACHE_VERSION = "compiler-ir-metric-sample-cache-v7"
+_COMPILER_IR_SAMPLE_CACHE_VERSION = "compiler-ir-metric-sample-cache-v8"
 _COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY = "timeout_surface_fallback_per_sample_budget_v2"
 _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_LOCK = threading.Lock()
+_COMPILER_IR_SAMPLE_CODE_FINGERPRINT_SIGNATURE: Optional[str] = None
 _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_VALUE: Optional[str] = None
 _ACTIVE_CODEX_EXEC_PROCESSES: List[subprocess.Popen[str]] = []
 CODEX_WORKTREE_ARTIFACT_FILENAMES = {"changes.patch"}
@@ -321,11 +323,31 @@ def _metric_disk_cache_dir() -> Optional[Path]:
     return Path(raw).expanduser() if raw else _default_metric_disk_cache_dir()
 
 
+def _code_fingerprint_from_candidates(
+    package_root: Path,
+    candidates: Sequence[Path],
+) -> tuple[str, str]:
+    tokens: List[str] = []
+    for candidate in candidates:
+        paths = sorted(candidate.rglob("*.py")) if candidate.is_dir() else [candidate]
+        for path in paths:
+            try:
+                stat = path.stat()
+            except (OSError, RuntimeError):
+                continue
+            try:
+                relative = path.relative_to(package_root)
+            except ValueError:
+                relative = path
+            tokens.append(f"{relative}:{stat.st_mtime_ns}:{stat.st_size}")
+    signature = "\n".join(tokens)
+    fingerprint = hashlib.sha256(signature.encode("utf-8")).hexdigest() if tokens else "unknown"
+    return signature, fingerprint
+
+
 def _metric_code_fingerprint() -> str:
-    global _METRIC_CODE_FINGERPRINT_VALUE
+    global _METRIC_CODE_FINGERPRINT_SIGNATURE, _METRIC_CODE_FINGERPRINT_VALUE
     with _METRIC_CODE_FINGERPRINT_LOCK:
-        if _METRIC_CODE_FINGERPRINT_VALUE:
-            return _METRIC_CODE_FINGERPRINT_VALUE
         try:
             package_root = Path(__file__).resolve().parents[2]
         except (IndexError, OSError, RuntimeError):
@@ -335,33 +357,27 @@ def _metric_code_fingerprint() -> str:
             package_root / "logic" / "bridge",
             package_root / "logic" / "modal",
             package_root / "knowledge_graphs" / "neo4j_compat" / "legal_ir_projection.py",
+            package_root / "optimizers" / "logic_theorem_optimizer" / "frame_bm25_selector.py",
+            package_root / "optimizers" / "logic_theorem_optimizer" / "legal_modal_parser.py",
+            package_root / "optimizers" / "logic_theorem_optimizer" / "modal_ir.py",
+            package_root / "optimizers" / "logic_theorem_optimizer" / "modal_registry.py",
+            package_root / "optimizers" / "logic_theorem_optimizer" / "spacy_modal_codec.py",
         ]
-        tokens: List[str] = []
-        for candidate in candidates:
-            paths = sorted(candidate.rglob("*.py")) if candidate.is_dir() else [candidate]
-            for path in paths:
-                try:
-                    stat = path.stat()
-                except (OSError, RuntimeError):
-                    continue
-                try:
-                    relative = path.relative_to(package_root)
-                except ValueError:
-                    relative = path
-                tokens.append(f"{relative}:{stat.st_mtime_ns}:{stat.st_size}")
-        _METRIC_CODE_FINGERPRINT_VALUE = (
-            hashlib.sha256("\n".join(tokens).encode("utf-8")).hexdigest()
-            if tokens
-            else "unknown"
-        )
+        signature, fingerprint = _code_fingerprint_from_candidates(package_root, candidates)
+        if (
+            _METRIC_CODE_FINGERPRINT_SIGNATURE == signature
+            and _METRIC_CODE_FINGERPRINT_VALUE
+        ):
+            return _METRIC_CODE_FINGERPRINT_VALUE
+        _METRIC_CODE_FINGERPRINT_SIGNATURE = signature
+        _METRIC_CODE_FINGERPRINT_VALUE = fingerprint
         return _METRIC_CODE_FINGERPRINT_VALUE
 
 
 def _compiler_ir_sample_code_fingerprint() -> str:
+    global _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_SIGNATURE
     global _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_VALUE
     with _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_LOCK:
-        if _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_VALUE:
-            return _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_VALUE
         try:
             package_root = Path(__file__).resolve().parents[2]
         except (IndexError, OSError, RuntimeError):
@@ -372,25 +388,17 @@ def _compiler_ir_sample_code_fingerprint() -> str:
             package_root / "optimizers" / "logic_theorem_optimizer" / "legal_modal_parser.py",
             package_root / "optimizers" / "logic_theorem_optimizer" / "legal_samples.py",
             package_root / "optimizers" / "logic_theorem_optimizer" / "modal_ir.py",
+            package_root / "optimizers" / "logic_theorem_optimizer" / "modal_registry.py",
+            package_root / "optimizers" / "logic_theorem_optimizer" / "spacy_modal_codec.py",
         ]
-        tokens: List[str] = []
-        for candidate in candidates:
-            paths = sorted(candidate.rglob("*.py")) if candidate.is_dir() else [candidate]
-            for path in paths:
-                try:
-                    stat = path.stat()
-                except (OSError, RuntimeError):
-                    continue
-                try:
-                    relative = path.relative_to(package_root)
-                except ValueError:
-                    relative = path
-                tokens.append(f"{relative}:{stat.st_mtime_ns}:{stat.st_size}")
-        _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_VALUE = (
-            hashlib.sha256("\n".join(tokens).encode("utf-8")).hexdigest()
-            if tokens
-            else "unknown"
-        )
+        signature, fingerprint = _code_fingerprint_from_candidates(package_root, candidates)
+        if (
+            _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_SIGNATURE == signature
+            and _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_VALUE
+        ):
+            return _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_VALUE
+        _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_SIGNATURE = signature
+        _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_VALUE = fingerprint
         return _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_VALUE
 
 
@@ -5227,12 +5235,18 @@ def _paired_codex_children_succeeded(
     codex_exit_codes: Mapping[str, Optional[int]],
     *,
     autoencoder_exit_code: Optional[int],
+    autoencoder_success: Optional[bool] = None,
     runner_terminated_children: AbstractSet[str],
     stop_requested: bool,
 ) -> bool:
     """Return whether Codex children finished cleanly for paired-run accounting."""
 
-    if not codex_exit_codes or autoencoder_exit_code != 0:
+    auto_ok = (
+        bool(autoencoder_success)
+        if autoencoder_success is not None
+        else autoencoder_exit_code == 0
+    )
+    if not codex_exit_codes or not auto_ok:
         return False
     for run_id, exit_code in codex_exit_codes.items():
         if exit_code == 0:
@@ -5251,11 +5265,233 @@ def _paired_autoencoder_succeeded(
     *,
     autoencoder_run_id: str,
     autoencoder_exit_code: Optional[int],
+    autoencoder_child_health: Optional[Mapping[str, Any]] = None,
     runner_terminated_children: AbstractSet[str],
+    stop_requested: bool = False,
 ) -> bool:
     """Return whether the paired autoencoder child reached its own clean stop."""
 
-    return autoencoder_exit_code == 0 and autoencoder_run_id not in runner_terminated_children
+    if stop_requested:
+        return False
+    runner_stopped_child = autoencoder_run_id in runner_terminated_children
+    if autoencoder_exit_code == 0:
+        if not runner_stopped_child:
+            return True
+        health = dict(autoencoder_child_health or {})
+        try:
+            cycles = int(health.get("autoencoder_cycles", 0) or 0)
+        except (TypeError, ValueError):
+            cycles = 0
+        return bool(health.get("autoencoder_summary_final", False)) or cycles > 0
+    runner_stopped_by_signal = (
+        runner_stopped_child
+        and autoencoder_exit_code in {-signal.SIGTERM, -signal.SIGKILL}
+    )
+    if not runner_stopped_by_signal:
+        return False
+    health = dict(autoencoder_child_health or {})
+    try:
+        cycles = int(health.get("autoencoder_cycles", 0) or 0)
+    except (TypeError, ValueError):
+        cycles = 0
+    summary_final = bool(health.get("autoencoder_summary_final", False))
+    return summary_final or cycles > 0
+
+
+def _paired_child_exit_should_restart(
+    *,
+    exit_code: Optional[int],
+    restart_count: int,
+    restart_limit: int,
+    latest_stop_reason: str = "",
+    stop_requested: bool = False,
+) -> bool:
+    """Return whether an accelerate-style paired child should be relaunched."""
+
+    if stop_requested or exit_code is None:
+        return False
+    if int(restart_count) >= int(restart_limit):
+        return False
+    if exit_code != 0:
+        return True
+    return str(latest_stop_reason or "").startswith("signal_")
+
+
+def _host_resource_health() -> Dict[str, float]:
+    """Return lightweight host resource health without requiring psutil."""
+
+    health: Dict[str, float] = {"cpu_count": float(os.cpu_count() or 1)}
+    try:
+        meminfo: Dict[str, float] = {}
+        for line in Path("/proc/meminfo").read_text(encoding="utf-8").splitlines():
+            if ":" not in line:
+                continue
+            key, raw_value = line.split(":", 1)
+            parts = raw_value.strip().split()
+            if not parts:
+                continue
+            meminfo[key] = float(parts[0]) / (1024.0 * 1024.0)
+        if "MemAvailable" in meminfo:
+            health["memory_available_gb"] = meminfo["MemAvailable"]
+        if "MemTotal" in meminfo:
+            health["memory_total_gb"] = meminfo["MemTotal"]
+        if "SwapFree" in meminfo:
+            health["swap_free_gb"] = meminfo["SwapFree"]
+        if "SwapTotal" in meminfo:
+            health["swap_total_gb"] = meminfo["SwapTotal"]
+    except OSError:
+        pass
+    return health
+
+
+def paired_codex_worker_resource_plan(
+    args: argparse.Namespace,
+    *,
+    requested_workers: int,
+    resource_health: Optional[Mapping[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Plan a Codex worker count from CPU, memory, and swap pressure."""
+
+    health = dict(resource_health or _host_resource_health())
+    requested = max(1, int(requested_workers or 1))
+    guard = str(getattr(args, "paired_resource_guard", "auto") or "auto").lower()
+    cpu_count = max(1, int(float(health.get("cpu_count", os.cpu_count() or 1) or 1)))
+    cpu_cap = max(1, int(cpu_count * 0.6))
+    available_gb = float(health.get("memory_available_gb", 0.0) or 0.0)
+    reserved_gb = max(0.0, float(getattr(args, "paired_reserved_memory_gb", 0.0) or 0.0))
+    worker_gb = max(0.001, float(getattr(args, "paired_codex_worker_memory_gb", 1.0) or 1.0))
+    memory_cap = max(1, int((available_gb - reserved_gb) // worker_gb)) if available_gb else requested
+    min_swap_free_gb = max(0.0, float(getattr(args, "paired_min_swap_free_gb", 0.0) or 0.0))
+    swap_free_gb = float(health.get("swap_free_gb", min_swap_free_gb) or 0.0)
+    swap_pressure = bool(min_swap_free_gb > 0.0 and swap_free_gb < min_swap_free_gb)
+    swap_cap = max(1, int(cpu_cap * (2.0 / 3.0))) if swap_pressure else requested
+
+    caps = [requested]
+    reason_parts: List[str] = []
+    if guard == "auto":
+        caps.extend([cpu_cap, memory_cap])
+        reason_parts.extend(["cpu", "memory"])
+        if swap_pressure:
+            caps.append(swap_cap)
+            reason_parts.append("swap")
+    effective = max(1, min(caps))
+    reason = "unlimited" if guard in _FALSE_ENV_VALUES else f"auto_{'_'.join(reason_parts)}_cap"
+    return {
+        "cpu_cap": cpu_cap,
+        "effective_workers": effective,
+        "memory_available_gb": available_gb,
+        "memory_cap": memory_cap,
+        "reason": reason,
+        "requested_workers": requested,
+        "swap_cap": swap_cap,
+        "swap_free_gb": swap_free_gb,
+        "swap_pressure": swap_pressure,
+    }
+
+
+def _paired_resource_pressure(
+    args: argparse.Namespace,
+    *,
+    role: str = "codex",
+    resource_health: Optional[Mapping[str, Any]] = None,
+) -> tuple[bool, Dict[str, Any]]:
+    """Report whether resource pressure should block paired child restarts."""
+
+    health = dict(resource_health or _host_resource_health())
+    min_memory_gb = max(
+        0.0,
+        float(getattr(args, "paired_min_available_memory_gb", 0.0) or 0.0),
+    )
+    min_swap_gb = max(0.0, float(getattr(args, "paired_min_swap_free_gb", 0.0) or 0.0))
+    memory_available_gb = float(health.get("memory_available_gb", 0.0) or 0.0)
+    swap_free_gb = float(health.get("swap_free_gb", min_swap_gb) or 0.0)
+    memory_pressure = bool(min_memory_gb > 0.0 and memory_available_gb < min_memory_gb)
+    swap_pressure = bool(min_swap_gb > 0.0 and swap_free_gb < min_swap_gb)
+    restart_role = str(role or "codex")
+    swap_blocks_restart = swap_pressure and restart_role != "autoencoder"
+    resource_pressure = memory_pressure or swap_blocks_restart
+    report = {
+        "memory_available_gb": memory_available_gb,
+        "memory_pressure": memory_pressure,
+        "memory_total_gb": float(health.get("memory_total_gb", 0.0) or 0.0),
+        "min_available_memory_gb": min_memory_gb,
+        "min_swap_free_gb": min_swap_gb,
+        "resource_pressure": resource_pressure,
+        "restart_role": restart_role,
+        "swap_blocks_restart": swap_blocks_restart,
+        "swap_free_gb": swap_free_gb,
+        "swap_pressure": swap_pressure,
+        "swap_total_gb": float(health.get("swap_total_gb", 0.0) or 0.0),
+    }
+    return resource_pressure, report
+
+
+def paired_autoencoder_child_health(
+    summary_path: Path,
+    *,
+    now: Optional[float] = None,
+) -> Dict[str, Any]:
+    """Summarize autoencoder child heartbeat state for paired-run accounting."""
+
+    current = float(now if now is not None else time.time())
+    path = Path(summary_path)
+    health: Dict[str, Any] = {
+        "autoencoder_active_cycle": 0,
+        "autoencoder_active_cycle_heartbeat_age_seconds": None,
+        "autoencoder_active_cycle_phase": "",
+        "autoencoder_cycles": 0,
+        "autoencoder_effective_heartbeat_age_seconds": None,
+        "autoencoder_latest_stop_reason": "",
+        "autoencoder_summary_age_seconds": None,
+        "autoencoder_summary_exists": path.exists(),
+        "autoencoder_summary_final": False,
+    }
+    if not path.exists():
+        return health
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
+        health["autoencoder_summary_error"] = f"{type(exc).__name__}: {str(exc)[:240]}"
+        return health
+
+    def age_seconds(value: Any) -> Optional[float]:
+        text = str(value or "").strip()
+        if not text:
+            return None
+        try:
+            return max(0.0, current - parse_utc(text))
+        except (TypeError, ValueError):
+            return None
+
+    try:
+        health["autoencoder_cycles"] = int(data.get("cycles", 0) or 0)
+    except (TypeError, ValueError):
+        health["autoencoder_cycles"] = 0
+    try:
+        health["autoencoder_active_cycle"] = int(data.get("active_cycle", 0) or 0)
+    except (TypeError, ValueError):
+        health["autoencoder_active_cycle"] = 0
+    health["autoencoder_active_cycle_phase"] = str(
+        data.get("active_cycle_phase", "") or ""
+    )
+    health["autoencoder_active_cycle_projection_stage"] = str(
+        data.get("active_cycle_projection_stage", "") or ""
+    )
+    health["autoencoder_latest_stop_reason"] = str(
+        data.get("latest_stop_reason", "") or ""
+    )
+    health["autoencoder_summary_final"] = bool(data.get("final", False))
+    summary_age = age_seconds(data.get("updated_at"))
+    heartbeat_age = age_seconds(data.get("active_cycle_last_heartbeat_at"))
+    health["autoencoder_summary_age_seconds"] = summary_age
+    health["autoencoder_active_cycle_heartbeat_age_seconds"] = heartbeat_age
+    effective_ages = [
+        age for age in (summary_age, heartbeat_age) if age is not None
+    ]
+    health["autoencoder_effective_heartbeat_age_seconds"] = (
+        max(effective_ages) if effective_ages else None
+    )
+    return health
 
 
 def create_codex_work_packet(
@@ -8797,6 +9033,22 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--paired-poll-seconds", type=float, default=1.0)
     parser.add_argument("--paired-grace-seconds", type=float, default=300.0)
     parser.add_argument(
+        "--paired-supervisor-backend",
+        choices=("simple", "accelerate_style"),
+        default="accelerate_style",
+        help="Supervisor accounting style for paired autoencoder/Codex children.",
+    )
+    parser.add_argument(
+        "--paired-resource-guard",
+        choices=("off", "auto"),
+        default="auto",
+        help="Cap paired Codex workers from host CPU/memory/swap health.",
+    )
+    parser.add_argument("--paired-reserved-memory-gb", type=float, default=24.0)
+    parser.add_argument("--paired-codex-worker-memory-gb", type=float, default=2.0)
+    parser.add_argument("--paired-min-available-memory-gb", type=float, default=0.0)
+    parser.add_argument("--paired-min-swap-free-gb", type=float, default=0.0)
+    parser.add_argument(
         "--warm-start-run-id",
         action="append",
         default=[],
@@ -9158,17 +9410,24 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
             },
         }
         summary["finished_at"] = utc_now()
+        autoencoder_child_health = paired_autoencoder_child_health(
+            log_dir / f"{paired['autoencoder_run_id']}.summary"
+        )
+        summary["autoencoder_child_health"] = autoencoder_child_health
         autoencoder_runner_terminated = (
             str(paired["autoencoder_run_id"]) in runner_terminated_children
         )
         autoencoder_success = _paired_autoencoder_succeeded(
             autoencoder_run_id=str(paired["autoencoder_run_id"]),
             autoencoder_exit_code=auto_exit_code,
+            autoencoder_child_health=autoencoder_child_health,
             runner_terminated_children=runner_terminated_children,
+            stop_requested=stop_requested,
         )
         codex_success = _paired_codex_children_succeeded(
             codex_exit_codes,
             autoencoder_exit_code=auto_exit_code,
+            autoencoder_success=autoencoder_success,
             runner_terminated_children=runner_terminated_children,
             stop_requested=stop_requested,
         )
@@ -9194,16 +9453,21 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         for signum, handler in previous_signal_handlers.items():
             signal.signal(signum, handler)
 
-    codex_success = _paired_codex_children_succeeded(
-        codex_exit_codes,
-        autoencoder_exit_code=auto_exit_code,
-        runner_terminated_children=runner_terminated_children,
-        stop_requested=stop_requested,
-    )
     autoencoder_success = _paired_autoencoder_succeeded(
         autoencoder_run_id=str(paired["autoencoder_run_id"]),
         autoencoder_exit_code=auto_exit_code,
+        autoencoder_child_health=paired_autoencoder_child_health(
+            log_dir / f"{paired['autoencoder_run_id']}.summary"
+        ),
         runner_terminated_children=runner_terminated_children,
+        stop_requested=stop_requested,
+    )
+    codex_success = _paired_codex_children_succeeded(
+        codex_exit_codes,
+        autoencoder_exit_code=auto_exit_code,
+        autoencoder_success=autoencoder_success,
+        runner_terminated_children=runner_terminated_children,
+        stop_requested=stop_requested,
     )
     return 0 if autoencoder_success and codex_success else 1
 
