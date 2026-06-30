@@ -40,12 +40,11 @@ def main():
     """Main entry point for the MCP server."""
     parser = argparse.ArgumentParser(description='IPFS Datasets MCP Server')
     parser.add_argument('--host', default='127.0.0.1', help='Host to bind to (HTTP mode only)')
-    parser.add_argument('--port', type=int, default=8000, help='Port to bind to (HTTP mode only)')
+    parser.add_argument('--port', type=int, default=3002, help='Port to bind to (HTTP mode only)')
     parser.add_argument('--config', help='Path to configuration file')
     parser.add_argument('--debug', action='store_true', help='Enable debug logging')
     parser.add_argument('--stdio', action='store_true', help='Run in stdio mode (default for VS Code)')
     parser.add_argument('--http', action='store_true', help='Run in HTTP mode with Hypercorn+Trio')
-    parser.add_argument('--port', type=int, default=3002, help='Port for HTTP mode (default: 3002)')
 
     args = parser.parse_args()
 
