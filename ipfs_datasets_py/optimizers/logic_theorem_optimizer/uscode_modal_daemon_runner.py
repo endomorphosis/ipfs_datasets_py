@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import inspect
 import json
 import math
 import os
@@ -82,6 +83,38 @@ LAW_COLUMNS = [
     "normalized_citation",
 ]
 DEFAULT_BRIDGE_LOSS_ADAPTERS = ",".join(DEFAULT_LEGAL_IR_BRIDGE_NAMES)
+BRIDGE_EVALUATE_PROVERS_ENV = "IPFS_DATASETS_BRIDGE_EVALUATE_PROVERS"
+_TRUE_ENV_VALUES = {"1", "true", "yes", "y", "on"}
+DEFAULT_BRIDGE_EVALUATE_PROVERS = (
+    str(os.environ.get(BRIDGE_EVALUATE_PROVERS_ENV) or "").strip().lower()
+    in _TRUE_ENV_VALUES
+)
+AUTOENCODER_METRIC_BRIDGE_ADAPTERS_ENV = (
+    "IPFS_DATASETS_AUTOENCODER_METRIC_BRIDGE_ADAPTERS"
+)
+AUTOENCODER_DIAGNOSTIC_BRIDGE_ADAPTERS_ENV = (
+    "IPFS_DATASETS_AUTOENCODER_DIAGNOSTIC_BRIDGE_ADAPTERS"
+)
+DEFAULT_AUTOENCODER_METRIC_BRIDGE_ADAPTERS = (
+    "modal_frame_logic",
+    "deontic_norms",
+)
+DEFAULT_VALIDATION_CANARY_COUNT = 4
+DEFAULT_AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLE_TEXT_CHARS = 400
+DEFAULT_GENERALIZABLE_PROJECTION_TIMEOUT_SECONDS = 600.0
+DEFAULT_GENERALIZABLE_PROJECTION_MAX_LINE_SEARCH_ATTEMPTS = 3
+DEFAULT_COMPILER_IR_TRAIN_MODE = "periodic"
+DEFAULT_COMPILER_IR_GUIDED_TRAIN_MODE = "periodic"
+DEFAULT_AUTOENCODER_BEFORE_TRAIN_EVAL_MODE = "periodic"
+DEFAULT_AUTOENCODER_SAMPLE_MEMORY_PROBE_MODE = "periodic"
+DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MODE = "starved"
+
+
+def _default_bridge_evaluate_provers() -> bool:
+    return (
+        str(os.environ.get(BRIDGE_EVALUATE_PROVERS_ENV) or "").strip().lower()
+        in _TRUE_ENV_VALUES
+    )
 
 CODEX_AST_SCOPES = tuple(
     dict.fromkeys(
@@ -1054,6 +1087,221 @@ def metric_block(evaluation) -> Dict[str, Any]:
             )
         }
     return block
+
+
+def autoencoder_memory_gap_block(
+    generalized: Any,
+    sample_memory: Any,
+    *,
+    dataset: str,
+    expected_holdout: bool = False,
+) -> Dict[str, Any]:
+    """Compare generalizable evaluation against sample-memory evaluation."""
+
+    cosine_gain = float(
+        getattr(sample_memory, "embedding_cosine_similarity", 0.0) or 0.0
+    ) - float(getattr(generalized, "embedding_cosine_similarity", 0.0) or 0.0)
+    reconstruction_gain = float(
+        getattr(generalized, "reconstruction_loss", 0.0) or 0.0
+    ) - float(getattr(sample_memory, "reconstruction_loss", 0.0) or 0.0)
+    advantage = cosine_gain > 1e-9 or reconstruction_gain > 1e-9
+    return {
+        "cosine_gain_from_sample_memory": round(cosine_gain, 9),
+        "dataset": str(dataset),
+        "expected_holdout": bool(expected_holdout),
+        "generalized_label": "sample_memory_disabled",
+        "generalized_metrics": metric_block(generalized),
+        "reconstruction_gain_from_sample_memory": round(reconstruction_gain, 9),
+        "sample_memory_advantage_detected": bool(advantage),
+        "sample_memory_label": "sample_memory_enabled",
+        "sample_memory_metrics": metric_block(sample_memory),
+        "unexpected_holdout_memory_advantage": bool(expected_holdout and advantage),
+    }
+
+
+def _file_telemetry(path: Optional[Path]) -> Dict[str, Any]:
+    if path is None:
+        return {"exists": False, "path": None, "size_bytes": 0}
+    target = Path(path)
+    try:
+        stat = target.stat()
+    except OSError:
+        return {"exists": False, "path": str(target), "size_bytes": 0}
+    return {
+        "exists": target.exists(),
+        "path": str(target),
+        "size_bytes": int(stat.st_size),
+    }
+
+
+def autoencoder_state_telemetry(
+    state: ModalAutoencoderTrainingState,
+    *,
+    state_path: Optional[Path] = None,
+) -> Dict[str, Any]:
+    """Return state telemetry plus low-rank shadow rollout diagnostics."""
+
+    telemetry = state.telemetry()
+    path = Path(state_path) if state_path is not None else None
+    telemetry["state_file"] = _file_telemetry(path)
+    rank = int(os.environ.get("IPFS_DATASETS_AUTOENCODER_LOW_RANK_RANK", "16") or 16)
+    telemetry["low_rank_shadow"] = state.low_rank_shadow_report(rank=rank)
+    raw_max_vectors = str(
+        os.environ.get("IPFS_DATASETS_AUTOENCODER_LOW_RANK_SIDECAR_MAX_VECTORS") or ""
+    ).strip()
+    sidecar: Dict[str, Any] = {
+        "enabled": bool(raw_max_vectors) and raw_max_vectors.lower() not in _FALSE_ENV_VALUES,
+    }
+    if not sidecar["enabled"] or path is None:
+        telemetry["low_rank_sidecar"] = sidecar
+        return telemetry
+    try:
+        max_vectors = max(0, int(raw_max_vectors))
+        sidecar_path = ModalAutoencoderTrainingState.low_rank_shadow_sidecar_path(path)
+        payload = state.save_low_rank_shadow_json(
+            sidecar_path,
+            rank=rank,
+            max_vectors=max_vectors,
+        )
+        sidecar.update(
+            {
+                "complete": bool(payload.get("complete", False)),
+                "file": _file_telemetry(sidecar_path),
+                "path": str(sidecar_path),
+                "status": "saved",
+                "vector_entry_count": int(payload.get("vector_entry_count", 0) or 0),
+            }
+        )
+    except (OSError, RuntimeError, ValueError) as exc:
+        sidecar.update({"error": str(exc), "status": "failed"})
+    telemetry["low_rank_sidecar"] = sidecar
+    return telemetry
+
+
+def autoencoder_low_rank_load_report(
+    state: ModalAutoencoderTrainingState,
+    *,
+    state_path: Path,
+) -> Dict[str, Any]:
+    """Optionally hydrate dense state from a low-rank shadow sidecar."""
+
+    enabled = str(
+        os.environ.get("IPFS_DATASETS_AUTOENCODER_LOW_RANK_LOAD") or ""
+    ).strip().lower() in _TRUE_ENV_VALUES
+    sidecar_path = ModalAutoencoderTrainingState.low_rank_shadow_sidecar_path(state_path)
+    if not enabled:
+        return {
+            "dense_state_hydrated": False,
+            "enabled": False,
+            "path": str(sidecar_path),
+            "status": "disabled",
+        }
+    report = state.hydrate_low_rank_shadow_json(sidecar_path, overwrite=False)
+    report["enabled"] = True
+    return report
+
+
+def _legal_ir_family_from_view(view: str) -> str:
+    normalized = str(view or "").strip().lower().replace("-", "_").replace("/", ".")
+    if normalized.startswith("deontic") or "norm" in normalized:
+        return "deontic"
+    if "frame_logic" in normalized or "flogic" in normalized:
+        return "frame_logic"
+    if normalized.startswith("tdfol") or normalized.startswith("fol.") or "tdfol" in normalized:
+        return "tdfol"
+    if normalized.startswith(("kg", "knowledge_graph")) or "neo4j" in normalized:
+        return "kg"
+    if normalized.startswith(("cec", "dcec")) or "event_calculus" in normalized:
+        return "cec"
+    if "prover" in normalized or "router" in normalized:
+        return "prover"
+    if normalized.startswith("zkp") or "zero_knowledge" in normalized:
+        return "zkp"
+    return "other"
+
+
+def _family_distribution(distribution: Mapping[str, Any]) -> Dict[str, float]:
+    totals: Dict[str, float] = {}
+    for view, value in dict(distribution or {}).items():
+        weight = max(0.0, _float_or_zero(value))
+        if weight <= 0.0:
+            continue
+        family = _legal_ir_family_from_view(str(view))
+        totals[family] = totals.get(family, 0.0) + weight
+    total = sum(totals.values())
+    if total <= 0.0:
+        return {}
+    return {family: round(value / total, 9) for family, value in sorted(totals.items())}
+
+
+def learned_ir_metric_block(evaluation: Any) -> Dict[str, Any]:
+    """Return the learned LegalIR-view alignment metrics as a stable block."""
+
+    losses = dict(getattr(evaluation, "legal_ir_losses", {}) or {})
+    target_distribution = dict(getattr(evaluation, "legal_ir_view_distribution", {}) or {})
+    predicted_distribution = dict(
+        getattr(evaluation, "legal_ir_predicted_view_distribution", {}) or {}
+    )
+    family_excess = {
+        name.removeprefix("legal_ir_view_family_").removesuffix(
+            "_cross_entropy_excess_loss"
+        ): float(value)
+        for name, value in losses.items()
+        if name.startswith("legal_ir_view_family_")
+        and name.endswith("_cross_entropy_excess_loss")
+        and name != "legal_ir_view_family_cross_entropy_excess_loss"
+    }
+    family_cosine_gaps = {
+        name.removeprefix("legal_ir_view_family_").removesuffix("_cosine_gap_loss"): float(
+            value
+        )
+        for name, value in losses.items()
+        if name.startswith("legal_ir_view_family_")
+        and name.endswith("_cosine_gap_loss")
+        and name != "legal_ir_view_family_cosine_gap_loss"
+    }
+    worst_family = max(family_excess, key=family_excess.get) if family_excess else ""
+    worst_cosine_family = (
+        max(family_cosine_gaps, key=family_cosine_gaps.get) if family_cosine_gaps else ""
+    )
+    view_cosine = max(
+        0.0,
+        1.0 - float(losses.get("legal_ir_view_family_cosine_gap_loss", 0.0) or 0.0),
+    )
+    return {
+        "family_cross_entropy_excess_by_family": {
+            name: round(value, 9) for name, value in sorted(family_excess.items())
+        },
+        "family_cross_entropy_excess_loss": round(
+            float(losses.get("legal_ir_view_family_cross_entropy_excess_loss", 0.0) or 0.0),
+            9,
+        ),
+        "predicted_family_distribution": _family_distribution(predicted_distribution),
+        "predicted_view_distribution": {
+            name: round(float(value), 9)
+            for name, value in sorted(predicted_distribution.items())
+        },
+        "target_count": int(getattr(evaluation, "legal_ir_target_count", 0) or 0),
+        "target_family_distribution": _family_distribution(target_distribution),
+        "target_view_distribution": {
+            name: round(float(value), 9) for name, value in sorted(target_distribution.items())
+        },
+        "view_cosine_similarity": round(view_cosine, 9),
+        "view_cross_entropy_loss": round(
+            float(losses.get("legal_ir_view_cross_entropy_loss", 0.0) or 0.0),
+            9,
+        ),
+        "worst_family_cosine_gap_loss": round(
+            float(family_cosine_gaps.get(worst_cosine_family, 0.0) or 0.0),
+            9,
+        ),
+        "worst_family_cosine_gap_name": worst_cosine_family,
+        "worst_family_cross_entropy_excess_loss": round(
+            float(family_excess.get(worst_family, 0.0) or 0.0),
+            9,
+        ),
+        "worst_family_cross_entropy_excess_name": worst_family,
+    }
 
 
 def _guidance_slot_safe_key(value: Any) -> str:
@@ -2057,14 +2305,16 @@ def compiler_ir_metric_block(
             slot_texts = compiler_guidance_slot_texts_from_result(result)
             for value in slot_texts.get("compiler_guidance_feature_group", []):
                 guidance_feature_groups[str(value)] += 1
-            sample_view_gaps = [
-                str(value)
-                for value in slot_texts.get(
-                    "compiler_guidance_legal_ir_view_gap_direction",
-                    [],
+            sample_view_gaps = list(
+                dict.fromkeys(
+                    str(value)
+                    for value in slot_texts.get(
+                        "compiler_guidance_legal_ir_view_gap_direction",
+                        [],
+                    )
+                    if str(value)
                 )
-                if str(value)
-            ]
+            )
             sample_record["compiler_guidance_legal_ir_view_gaps"] = list(
                 dict.fromkeys(sample_view_gaps)
             )
@@ -2534,6 +2784,7 @@ def bridge_ir_metric_block(
     *,
     evaluate_provers: Optional[bool] = None,
     parallel_workers: Optional[int] = None,
+    progress_callback: Optional[Callable[[Mapping[str, Any]], None]] = None,
 ) -> Dict[str, Any]:
     """Aggregate bridge-level compiler/prover/KG diagnostics by adapter."""
 
@@ -2543,11 +2794,56 @@ def bridge_ir_metric_block(
         for name in dict.fromkeys(str(name).strip() for name in bridge_names)
         if name and name.lower() not in {"none", "off", "false"}
     ]
+    started_at = time.time()
+
+    def emit_progress(stage: str, **payload: Any) -> None:
+        if progress_callback is None:
+            return
+        event = {
+            "block": "bridge_ir",
+            "elapsed_seconds": round(time.time() - started_at, 3),
+            "sample_count": len(sample_list),
+            "stage": stage,
+        }
+        event.update(payload)
+        try:
+            progress_callback(event)
+        except Exception:
+            pass
+
+    block_payload = {
+        "bridge_names": adapter_names,
+        "evaluate_provers": evaluate_provers,
+        "samples": [_sample_metric_cache_payload(sample) for sample in sample_list],
+    }
+    persistent_cache_key = _metric_disk_cache_key(
+        "bridge_ir_metric_block",
+        block_payload,
+    )
+    cached_block = _read_metric_disk_cache("bridge_ir_metric_block", persistent_cache_key)
+    if cached_block is not None:
+        cached = dict(cached_block)
+        cached["persistent_cache_enabled"] = True
+        cached["persistent_cache_hit"] = True
+        cached["persistent_cache_key"] = persistent_cache_key
+        cached["persistent_cache_kind"] = "bridge_ir_metric_block"
+        emit_progress("persistent_cache_hit", cache_key=persistent_cache_key)
+        return cached
+
     block: Dict[str, Any] = {
         "adapter_count": len(adapter_names),
         "adapters": {},
+        "cache_hits": 0,
+        "cache_misses": 0,
+        "cache_size": 0,
+        "evaluation_seconds_max": 0.0,
         "evaluated_count": 0,
         "metric_failures": 0,
+        "persistent_cache_enabled": _metric_disk_cache_enabled(),
+        "persistent_cache_hit": False,
+        "persistent_cache_key": persistent_cache_key,
+        "persistent_cache_kind": "bridge_ir_metric_block",
+        "persistent_sample_cache_hits": 0,
         "sample_count": len(sample_list),
     }
     if not sample_list or not adapter_names:
@@ -2574,8 +2870,51 @@ def bridge_ir_metric_block(
     failures_by_adapter: Dict[str, int] = {name: 0 for name in adapter_names}
 
     from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import (
+        _legal_ir_target_cache_key,
+        _read_legal_ir_target_disk_cache,
+        _write_legal_ir_target_disk_cache,
+    )
+
+    class _CachedBridgeMultiviewReport:
+        def __init__(self, target: Any) -> None:
+            self._target = target
+            self.acceptance_rate = 1.0 if bool(getattr(target, "accepted", False)) else 0.0
+            losses = dict(getattr(target, "losses", {}) or {})
+            self.graph_failure_penalty = float(
+                losses.get("legal_ir_multiview_graph_failure_penalty", 0.0) or 0.0
+            )
+            self.proof_failure_ratio = float(
+                losses.get("legal_ir_multiview_proof_failure_ratio", 0.0) or 0.0
+            )
+            self.reports = {}
+            self.failures = {}
+            self.total_loss = float(
+                losses.get(
+                    "legal_ir_multiview_total_loss",
+                    getattr(target, "total_loss", 0.0),
+                )
+                or 0.0
+            )
+            self.view_count = max(
+                0,
+                len(dict(getattr(target, "view_distribution", {}) or {})),
+            )
+            self.document = getattr(
+                target,
+                "document",
+                SimpleNamespace(canonical_hash=lambda: "cached-legal-ir-target"),
+            )
+
+        def training_target(self) -> Any:
+            return self._target
+
+        def view_coverage_loss(self) -> float:
+            losses = dict(getattr(self._target, "losses", {}) or {})
+            return float(losses.get("legal_ir_multiview_view_coverage_loss", 0.0) or 0.0)
 
     def evaluate_sample(sample: Any) -> Any:
+        sample_started = time.time()
         cache_key = _bridge_ir_report_cache_key(
             sample,
             bridge_names=adapter_names,
@@ -2584,7 +2923,20 @@ def bridge_ir_metric_block(
         with _BRIDGE_IR_REPORT_CACHE_LOCK:
             cached = _BRIDGE_IR_REPORT_CACHE.get(cache_key)
         if cached is not None:
-            return cached
+            return cached, "memory", time.time() - sample_started
+        target_cache_key = _legal_ir_target_cache_key(
+            sample,
+            bridge_names=adapter_names,
+            evaluate_provers=evaluate_provers,
+        )
+        cached_target = _read_legal_ir_target_disk_cache(target_cache_key)
+        if cached_target is not None:
+            report = _CachedBridgeMultiviewReport(cached_target)
+            with _BRIDGE_IR_REPORT_CACHE_LOCK:
+                if len(_BRIDGE_IR_REPORT_CACHE) >= BRIDGE_IR_REPORT_CACHE_MAX:
+                    _BRIDGE_IR_REPORT_CACHE.pop(next(iter(_BRIDGE_IR_REPORT_CACHE)), None)
+                _BRIDGE_IR_REPORT_CACHE[cache_key] = report
+            return report, "persistent_target", time.time() - sample_started
         report = evaluate_legal_ir_multiview(
             sample.text,
             bridge_names=adapter_names,
@@ -2598,20 +2950,64 @@ def bridge_ir_metric_block(
             if len(_BRIDGE_IR_REPORT_CACHE) >= BRIDGE_IR_REPORT_CACHE_MAX:
                 _BRIDGE_IR_REPORT_CACHE.pop(next(iter(_BRIDGE_IR_REPORT_CACHE)), None)
             _BRIDGE_IR_REPORT_CACHE[cache_key] = report
-        return report
+        try:
+            target = report.training_target()
+            if getattr(target, "document", None) is None:
+                target = SimpleNamespace(
+                    accepted=bool(getattr(report, "acceptance_rate", 0.0)),
+                    adapter_losses={},
+                    bridge_names=tuple(adapter_names),
+                    document=getattr(report, "document", None),
+                    losses=dict(getattr(target, "losses", {}) or {}),
+                    view_distribution=dict(
+                        getattr(target, "view_distribution", {}) or {}
+                    ),
+                )
+            _write_legal_ir_target_disk_cache(target_cache_key, target)
+        except Exception:
+            pass
+        return report, "miss", time.time() - sample_started
 
     worker_count = _parallel_worker_count(
         requested=parallel_workers,
         item_count=len(sample_list),
     )
+    block["worker_count"] = worker_count
+    emit_progress("start", adapter_count=len(adapter_names), worker_count=worker_count)
     if worker_count <= 1:
-        multiview_reports = [evaluate_sample(sample) for sample in sample_list]
+        sample_results = []
+        for sample_index, sample in enumerate(sample_list, start=1):
+            emit_progress(
+                "sample_start",
+                sample_id=str(getattr(sample, "sample_id", "") or ""),
+                sample_index=sample_index,
+            )
+            result = evaluate_sample(sample)
+            emit_progress(
+                "sample_done" if result[1] == "miss" else "sample_cache_hit",
+                cache_source=result[1],
+                sample_id=str(getattr(sample, "sample_id", "") or ""),
+                sample_index=sample_index,
+            )
+            sample_results.append(result)
     else:
         with ThreadPoolExecutor(
             max_workers=worker_count,
             thread_name_prefix="bridge-ir-metrics",
         ) as executor:
-            multiview_reports = list(executor.map(evaluate_sample, sample_list))
+            sample_results = list(executor.map(evaluate_sample, sample_list))
+
+    multiview_reports = [result[0] for result in sample_results]
+    cache_sources = [str(result[1]) for result in sample_results]
+    evaluation_seconds = [float(result[2]) for result in sample_results]
+    block["cache_hits"] = sum(1 for source in cache_sources if source == "memory")
+    block["cache_misses"] = sum(1 for source in cache_sources if source == "miss")
+    block["persistent_sample_cache_hits"] = sum(
+        1 for source in cache_sources if source == "persistent_target"
+    )
+    block["evaluation_seconds_max"] = round(max(evaluation_seconds or [0.0]), 9)
+    with _BRIDGE_IR_REPORT_CACHE_LOCK:
+        block["cache_size"] = len(_BRIDGE_IR_REPORT_CACHE)
 
     for multiview in multiview_reports:
         canonical_values["acceptance_rate"].append(multiview.acceptance_rate)
@@ -2675,6 +3071,20 @@ def bridge_ir_metric_block(
     for name, values in aggregate_values.items():
         if values:
             block[name if name != "acceptance" else "acceptance_rate"] = _mean(values)
+    if "zkp_attestation" in adapter_names:
+        block["zkp_attestation_cache"] = {
+            "mode": (
+                "persistent_metric_certificate"
+                if _metric_disk_cache_enabled()
+                else "memory_metric_certificate"
+            )
+        }
+    block["legal_ir_target_cache_exports"] = (
+        block["cache_misses"] + block["persistent_sample_cache_hits"]
+    )
+    if block["persistent_cache_enabled"]:
+        _write_metric_disk_cache("bridge_ir_metric_block", persistent_cache_key, block)
+    emit_progress("done", evaluated_count=block["evaluated_count"])
     return block
 
 
@@ -2867,6 +3277,652 @@ def update_program_synthesis_summary(
         summary,
         execution_mode=execution_mode or "queued_for_external_codex_worker",
     )
+
+
+def _sampling_seed_for_args(args: argparse.Namespace) -> tuple[int, str]:
+    raw = getattr(args, "sampling_seed", None)
+    if raw is not None and str(raw).strip():
+        text = str(raw).strip()
+        try:
+            return int(text), text
+        except ValueError:
+            return int(hashlib.sha256(text.encode("utf-8")).hexdigest()[:12], 16), text
+    run_id = str(getattr(args, "run_id", "") or "default")
+    return int(hashlib.sha256(run_id.encode("utf-8")).hexdigest()[:12], 16), "run_id"
+
+
+def _should_run_cycle_cadence(*, cycle: int, mode: str, every_n_cycles: int) -> bool:
+    normalized = str(mode or "every_cycle").strip().lower()
+    if normalized in {"off", "none", "false"}:
+        return False
+    if normalized in {"every_cycle", "always"}:
+        return True
+    if normalized == "periodic":
+        cadence = int(every_n_cycles or 0)
+        return cadence > 0 and int(cycle) % cadence == 0
+    return True
+
+
+def _should_run_cycle_tests(cycle: int, every_n_cycles: int) -> bool:
+    cadence = int(every_n_cycles or 0)
+    return cadence > 0 and int(cycle) % cadence == 0
+
+
+def _todo_supervisor_skip_decision(
+    *,
+    mode: str,
+    program_synthesis_status: Mapping[str, Any],
+    min_open: int,
+) -> Dict[str, Any]:
+    normalized = str(mode or "starved").strip().lower()
+    pending = int(program_synthesis_status.get("pending", 0) or 0)
+    claimed = int(program_synthesis_status.get("claimed", 0) or 0)
+    open_count = pending + claimed
+    if normalized in {"off", "none", "false"}:
+        return {
+            "open_count": open_count,
+            "skip_reason": "todo_supervisor_disabled",
+            "skipped": True,
+        }
+    if normalized == "starved" and open_count >= int(min_open):
+        return {
+            "open_count": open_count,
+            "skip_reason": "program_synthesis_queue_sufficient",
+            "skipped": True,
+        }
+    return {"open_count": open_count, "skip_reason": "", "skipped": False}
+
+
+def paired_codex_child_env(args: argparse.Namespace) -> Dict[str, str]:
+    if not bool(getattr(args, "paired_codex_disable_cuda", True)):
+        return {}
+    return {
+        "CUDA_VISIBLE_DEVICES": "",
+        "IPFS_DATASETS_CODEX_TASK_EMBEDDINGS_DEVICE": "cpu",
+        "NVIDIA_VISIBLE_DEVICES": "none",
+    }
+
+
+def _round_robin_codex_children(
+    children: Sequence[Mapping[str, Any]],
+    *,
+    limit: int,
+) -> List[Dict[str, Any]]:
+    buckets: Dict[str, List[Mapping[str, Any]]] = {}
+    for child in children:
+        buckets.setdefault(str(child.get("scope") or ""), []).append(child)
+    selected: List[Dict[str, Any]] = []
+    while len(selected) < max(0, int(limit)) and any(buckets.values()):
+        for scope in sorted(list(buckets)):
+            bucket = buckets.get(scope) or []
+            if not bucket:
+                continue
+            selected.append(dict(bucket.pop(0)))
+            if len(selected) >= max(0, int(limit)):
+                break
+    return selected
+
+
+def _claim_program_synthesis_batch_with_scope_fallback(
+    supervisor: ModalTodoSupervisor,
+    *,
+    worker_id: str,
+    max_items: int,
+    requested_scope: Optional[str],
+    semantic_bundle: bool = False,
+    fallback_to_global: bool = True,
+) -> tuple[List[ModalTodo], Dict[str, Any]]:
+    claimed = supervisor.claim_program_synthesis_batch(
+        worker_id=worker_id,
+        max_items=max_items,
+        program_synthesis_scope=requested_scope,
+        semantic_bundle=semantic_bundle,
+    )
+    if claimed or not fallback_to_global or not requested_scope:
+        return claimed, {
+            "borrowed_scopes": [],
+            "fallback_used": False,
+            "requested_scope": requested_scope,
+        }
+    claimed = supervisor.claim_program_synthesis_batch(
+        worker_id=worker_id,
+        max_items=max_items,
+        program_synthesis_scope=None,
+        semantic_bundle=semantic_bundle,
+    )
+    borrowed = list(
+        dict.fromkeys(
+            str(todo.metadata.get("program_synthesis_scope") or "")
+            for todo in claimed
+            if str(todo.metadata.get("program_synthesis_scope") or "")
+        )
+    )
+    return claimed, {
+        "borrowed_scopes": borrowed,
+        "fallback_used": bool(claimed),
+        "requested_scope": requested_scope,
+    }
+
+
+def _clamp_nested_bridge_adapter_parallelism(
+    *,
+    bridge_parallel_workers: int,
+    sample_parallel_workers: int,
+    adapter_count: int,
+) -> Dict[str, Any]:
+    requested = os.environ.get("IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS")
+    requested_workers = (
+        int(requested)
+        if requested is not None and str(requested).strip().isdigit()
+        else max(1, int(adapter_count or 1))
+    )
+    budget = max(1, int(bridge_parallel_workers or 1))
+    sample_workers = max(1, int(sample_parallel_workers or 1))
+    adapter_workers = max(1, min(requested_workers, int(adapter_count or 1)))
+    effective = max(1, min(adapter_workers, max(1, budget // sample_workers)))
+    os.environ["IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS"] = str(effective)
+    return {
+        "adapter_count": int(adapter_count or 0),
+        "bridge_parallel_workers": int(bridge_parallel_workers or 0),
+        "clamped": effective != requested_workers,
+        "effective_adapter_workers": effective,
+        "estimated_nested_workers": effective * sample_workers,
+        "nested_worker_budget": budget,
+        "requested_adapter_workers": requested_workers,
+        "sample_parallel_workers": sample_workers,
+    }
+
+
+def _codex_validation_failure_details(
+    *,
+    command: Sequence[str],
+    command_index: int,
+    status: str,
+    exit_code: Optional[int],
+    stdout: str,
+    stderr: str,
+) -> Dict[str, Any]:
+    text = f"{stdout}\n{stderr}"
+    failed_tests: List[str] = []
+    failure_tokens: List[str] = []
+    syntax_locations: List[Dict[str, Any]] = []
+    for match in re.finditer(r"\bFAILED\s+([A-Za-z0-9_./\\-]+\.py::[^\s]+)", text):
+        node_id = match.group(1).strip()
+        if node_id and node_id not in failed_tests:
+            failed_tests.append(node_id)
+    for match in re.finditer(r"([\w./-]+\.py):\d+:\s+in\s+([A-Za-z_][\w]*)", text):
+        node_id = f"{match.group(1)}::{match.group(2)}"
+        if node_id not in failed_tests:
+            failed_tests.append(node_id)
+    for node_id in failed_tests:
+        token = f"pytest:{node_id}"
+        if token not in failure_tokens:
+            failure_tokens.append(token)
+    for match in re.finditer(r'File "([^"]+\.py)", line (\d+)', text):
+        path = match.group(1)
+        try:
+            line = int(match.group(2))
+        except (TypeError, ValueError):
+            line = 0
+        syntax_locations.append({"line": line, "path": path})
+    if "-m" in command and "py_compile" in command:
+        for part in command:
+            if str(part).endswith(".py"):
+                token = f"py_compile:{part}"
+                if token not in failure_tokens:
+                    failure_tokens.append(token)
+                if not any(location.get("path") == part for location in syntax_locations):
+                    syntax_locations.append({"line": 0, "path": str(part)})
+    return {
+        "command": list(command),
+        "command_index": int(command_index),
+        "exit_code": exit_code,
+        "failed_tests": failed_tests,
+        "failure_tokens": failure_tokens,
+        "status": status,
+        "syntax_locations": syntax_locations,
+    }
+
+
+def paired_program_synthesis_health(
+    *,
+    queue_path: Path,
+    codex_summary_paths: Sequence[Path],
+    codex_worker_stale_seconds: float = 300.0,
+) -> Dict[str, Any]:
+    queue_exists = queue_path.exists()
+    queue = ModalTodoQueue.load_jsonl(queue_path) if queue_exists else ModalTodoQueue()
+    status = queue.role_status_counts().get("program_synthesis", {})
+    failed_reason_counts: Counter[str] = Counter()
+    failed_kind_counts: Counter[str] = Counter()
+    failed_test_counts: Counter[str] = Counter()
+    claimed_by_worker: Counter[str] = Counter()
+    for todo in queue.all():
+        if todo.status == "claimed" and todo.claimed_by:
+            claimed_by_worker[str(todo.claimed_by)] += 1
+        if todo.status != "failed_validation":
+            continue
+        reason = str(todo.metadata.get("failed_validation_reason") or "")
+        if reason:
+            failed_reason_counts[reason] += 1
+        report = todo.metadata.get("failed_validation_report")
+        if isinstance(report, Mapping):
+            tests = list(report.get("main_apply_validation_failed_tests", []) or [])
+            tokens = list(report.get("main_apply_validation_failure_tokens", []) or [])
+            if tests or tokens:
+                failed_kind_counts["pytest"] += 1
+            for test in tests:
+                failed_test_counts[str(test)] += 1
+
+    waiting = 0
+    active = 0
+    claimed_total = 0
+    execution_count = 0
+    idle_stale = 0
+    stale_claimed_worker_ids: List[str] = []
+    stale_idle_worker_ids: List[str] = []
+    summary_count = 0
+    now = time.time()
+    for path in codex_summary_paths:
+        if not Path(path).is_file():
+            continue
+        try:
+            payload = json.loads(Path(path).read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        summary_count += 1
+        claimed_total += int(payload.get("codex_claimed_total", 0) or 0)
+        execution_count += int(payload.get("codex_execution_count", 0) or 0)
+        worker_id = str(payload.get("worker_id") or payload.get("codex_scope") or path.stem)
+        heartbeat_age = 0.0
+        if payload.get("heartbeat_at"):
+            try:
+                heartbeat_age = max(0.0, now - parse_utc(str(payload.get("heartbeat_at"))))
+            except Exception:
+                heartbeat_age = 0.0
+        stale = heartbeat_age > float(codex_worker_stale_seconds)
+        if payload.get("active_packet_claimed_todo_ids") or payload.get("active_packet_phase"):
+            active += 1
+        elif str(payload.get("latest_stop_reason") or "") == "waiting_for_program_synthesis_todos":
+            waiting += 1
+            if stale:
+                idle_stale += 1
+                stale_idle_worker_ids.append(worker_id)
+        elif str(payload.get("latest_stop_reason") or "") == "claimed_program_synthesis_todos":
+            if stale:
+                stale_claimed_worker_ids.append(worker_id)
+    pending = int(status.get("pending", 0) or 0)
+    claimed = int(status.get("claimed", 0) or 0)
+    failed_validation = int(status.get("failed_validation", 0) or 0)
+    superseded = int(status.get("superseded", 0) or 0)
+    starved = pending == 0 and claimed == 0 and waiting > 0
+    drained = pending == 0 and claimed == 0 and failed_validation == 0
+    return {
+        "codex_claimed_total": claimed_total,
+        "codex_execution_count": execution_count,
+        "codex_idle_worker_stale_count": idle_stale,
+        "codex_queue_starved": starved,
+        "codex_queue_drained": drained,
+        "codex_worker_summary_count": summary_count,
+        "codex_worker_stale_count": len(stale_claimed_worker_ids),
+        "codex_workers_active_packet_count": active,
+        "codex_workers_waiting_for_todos_count": waiting,
+        "program_synthesis_claimed": claimed,
+        "program_synthesis_claimed_by_worker": dict(claimed_by_worker),
+        "program_synthesis_completed": int(status.get("completed", 0) or 0),
+        "program_synthesis_failed_validation": failed_validation,
+        "program_synthesis_failed_validation_kind_counts": dict(failed_kind_counts),
+        "program_synthesis_failed_validation_reason_counts": dict(failed_reason_counts),
+        "program_synthesis_failed_validation_test_counts": dict(failed_test_counts),
+        "program_synthesis_pending": pending,
+        "program_synthesis_superseded": superseded,
+        "queue_exists": queue_exists,
+        "stale_claimed_codex_worker_ids": stale_claimed_worker_ids,
+        "stale_idle_codex_worker_ids": stale_idle_worker_ids,
+    }
+
+
+def _paired_failed_validation_rescue_should_seed(
+    health: Mapping[str, Any],
+    *,
+    mode: str,
+    last_seed_at: float,
+    interval_seconds: float,
+    now: float,
+    backlog_threshold: int = 16,
+) -> bool:
+    if str(mode or "auto").strip().lower() in {"off", "none", "false"}:
+        return False
+    if not bool(health.get("queue_exists", False)):
+        return False
+    if float(now) - float(last_seed_at) < float(interval_seconds):
+        return False
+    failed = int(health.get("program_synthesis_failed_validation", 0) or 0)
+    pending = int(health.get("program_synthesis_pending", 0) or 0)
+    claimed = int(health.get("program_synthesis_claimed", 0) or 0)
+    if failed <= 0:
+        return False
+    normalized_mode = str(mode or "auto").strip().lower()
+    if normalized_mode == "starved" and not bool(health.get("codex_queue_starved")):
+        return False
+    if bool(health.get("codex_queue_starved")):
+        return pending == 0 and claimed == 0
+    waiting = int(health.get("codex_workers_waiting_for_todos_count", 0) or 0)
+    active = int(health.get("codex_workers_active_packet_count", 0) or 0)
+    if pending == 0:
+        return True
+    if claimed > 0 and waiting > 0:
+        return True
+    if active > 0 and failed >= int(backlog_threshold):
+        return True
+    return failed >= int(backlog_threshold)
+
+
+def seed_failed_validation_rescue_todos_for_queue(
+    *,
+    queue_path: Path,
+    max_clusters: int = 8,
+    policy: Optional[ModalOptimizerPolicy] = None,
+) -> Dict[str, Any]:
+    """Seed rescue TODOs for failed validation rows in a queue file."""
+
+    active_policy = policy or ModalOptimizerPolicy()
+    with queue_file_lock(queue_path):
+        queue = ModalTodoQueue.load_jsonl(queue_path)
+        before = queue.status_counts()
+        supervisor = ModalTodoSupervisor(queue=queue, policy=active_policy)
+        rescue_todos = supervisor.seed_failed_validation_rescue_todos(
+            max_clusters=max_clusters,
+        )
+        after = queue.status_counts()
+        queue.save_jsonl(queue_path)
+    superseded_count = int(supervisor.last_failed_validation_superseded_count)
+    seeded_ids = [todo.todo_id for todo in rescue_todos]
+    deduped_count = int(supervisor.last_program_synthesis_deduped_count)
+    report: Dict[str, Any] = {
+        "after": after,
+        "before": before,
+        "deduped_count": deduped_count,
+        "max_clusters": int(max_clusters),
+        "queue_path": str(queue_path),
+        "seeded_count": len(seeded_ids),
+        "seeded_todo_ids": seeded_ids,
+        "superseded_count": superseded_count,
+    }
+    if superseded_count and not seeded_ids:
+        report["reason"] = "resolved_by_completed_rescue"
+    elif deduped_count and not seeded_ids:
+        report["reason"] = "duplicate_rescue_already_pending"
+    elif seeded_ids:
+        report["reason"] = "seeded_failed_validation_rescue"
+    else:
+        report["reason"] = "no_failed_validation_rescue_needed"
+    return report
+
+
+def _codex_main_apply_backpressure_report(
+    queue: ModalTodoQueue,
+    *,
+    args: argparse.Namespace,
+    policy: ModalOptimizerPolicy,
+    worker_id: str,
+) -> Dict[str, Any]:
+    """Return whether apply-to-main should serialize new packet claims."""
+
+    apply_mode = str(getattr(args, "codex_apply_mode", "patch_only") or "patch_only")
+    max_inflight = int(getattr(args, "codex_main_apply_max_inflight_packets", 0) or 0)
+    pending = queue.pending(optimizer_role=policy.program_synthesis_role)
+    claimed = queue.claimed(optimizer_role=policy.program_synthesis_role)
+    active = [
+        todo
+        for todo in claimed
+        if str(todo.claimed_by or "") and str(todo.claimed_by or "") != str(worker_id)
+    ]
+    active_workers = sorted(
+        dict.fromkeys(str(todo.claimed_by) for todo in active if todo.claimed_by)
+    )
+    enabled = apply_mode == "apply_to_main" and max_inflight > 0
+    blocked = bool(enabled and len(active) >= max_inflight and pending)
+    reason = "main_apply_inflight_limit_reached" if blocked else ""
+    if not enabled:
+        reason = "main_apply_backpressure_disabled"
+    elif not pending:
+        reason = "no_pending_program_synthesis_todos"
+    elif not blocked:
+        reason = "main_apply_inflight_capacity_available"
+    return {
+        "active_packet_count": len(active),
+        "active_workers": active_workers,
+        "blocked": blocked,
+        "max_inflight_packets": max_inflight,
+        "pending_count": len(pending),
+        "reason": reason,
+    }
+
+
+def rollout_baseline_snapshot(
+    *,
+    summary: Mapping[str, Any],
+    cycle: int,
+    cycle_seconds: float,
+    cycle_phase_timings: Mapping[str, float],
+    validation_metrics: Mapping[str, Any],
+    compiler_ir_validation: Mapping[str, Any],
+    compiler_ir_guided_validation: Optional[Mapping[str, Any]] = None,
+    learned_ir_validation: Optional[Mapping[str, Any]] = None,
+    logic_bridge_validation: Optional[Mapping[str, Any]] = None,
+    queue_counts: Optional[Mapping[str, int]] = None,
+    role_queue_counts: Optional[Mapping[str, Any]] = None,
+    failed_validation_count: int = 0,
+    state_report: Optional[Mapping[str, Any]] = None,
+    state_telemetry: Optional[Mapping[str, Any]] = None,
+    embedding_report: Optional[Mapping[str, Any]] = None,
+    backend_metadata: Optional[Mapping[str, Any]] = None,
+    host_resource_health: Optional[Mapping[str, Any]] = None,
+    metric_bridge_adapters: Sequence[str] = (),
+    diagnostic_bridge_adapters: Sequence[str] = (),
+) -> Dict[str, Any]:
+    state_payload = dict(state_report or state_telemetry or {})
+    guided_validation = dict(compiler_ir_guided_validation or {})
+    learned_payload = dict(learned_ir_validation or {})
+    bridge_payload = dict(logic_bridge_validation or {})
+    validation_payload = dict(validation_metrics or {})
+    compiler_payload = dict(compiler_ir_validation or {})
+    signal_health = autoencoder_validation_signal_health(
+        compiler_ir_validation=compiler_payload,
+        learned_ir_validation=learned_payload,
+        logic_bridge_validation=bridge_payload,
+        validation_metrics=validation_payload,
+        metric_bridge_adapters=metric_bridge_adapters,
+        diagnostic_bridge_adapters=diagnostic_bridge_adapters,
+    )
+    resolved_failed_validation_count = int(
+        failed_validation_count
+        or dict(queue_counts or {}).get("failed_validation", 0)
+        or 0
+    )
+    return {
+        "backend": dict(backend_metadata or {}),
+        "compiler_ir_metric_cache": {
+            "validation_sample_cache_hits": compiler_payload.get(
+                "persistent_sample_cache_hits",
+                0,
+            ),
+            "validation_sample_cache_misses": compiler_payload.get(
+                "persistent_sample_cache_misses",
+                0,
+            ),
+            "guided_validation_block_cache_hit": compiler_payload.get(
+                "persistent_cache_hit",
+                guided_validation.get("persistent_cache_hit", False),
+            ),
+        },
+        "compiler_ir_guided_validation": guided_validation,
+        "compiler_ir_validation": compiler_payload,
+        "cycle": int(cycle),
+        "cycle_phase_timings": dict(cycle_phase_timings),
+        "cycle_seconds": round(float(cycle_seconds), 3),
+        "embedding": dict(embedding_report or {}),
+        "failed_validation_count": resolved_failed_validation_count,
+        "host_resource_health": dict(host_resource_health or {}),
+        "learned_feature_rows": state_payload,
+        "learned_ir_view_validation": learned_payload,
+        "logic_bridge_validation": bridge_payload,
+        "metric_schema_version": summary.get("metric_schema_version"),
+        "queue_counts": dict(queue_counts or {}),
+        "role_queue_counts": dict(role_queue_counts or {}),
+        "run_id": summary.get("run_id"),
+        "signal_health": signal_health,
+        "state_file": dict(state_payload.get("state_file", {}) or {}),
+        "validation": dict(validation_metrics),
+    }
+
+
+def _sample_payloads_for_codex_metrics(
+    samples: Sequence[Any],
+    *,
+    max_samples: int = 8,
+) -> List[Dict[str, Any]]:
+    payloads: List[Dict[str, Any]] = []
+    for sample in list(samples)[: max(0, int(max_samples))]:
+        payloads.append(
+            {
+                "citation": str(getattr(sample, "citation", "") or ""),
+                "embedding_model": str(getattr(sample, "embedding_model", "") or ""),
+                "embedding_vector": [
+                    float(value)
+                    for value in list(getattr(sample, "embedding_vector", []) or [])
+                ],
+                "sample_id": str(getattr(sample, "sample_id", "") or ""),
+                "section": str(getattr(sample, "section", "") or ""),
+                "source": str(getattr(sample, "source", "") or ""),
+                "text": str(getattr(sample, "text", "") or ""),
+                "title": str(getattr(sample, "title", "") or ""),
+            }
+        )
+    return payloads
+
+
+def _bootstrap_target_metrics_for_scope(scope: str) -> List[str]:
+    scope_metrics = {
+        "bridge": ["legal_ir_multiview_total_loss", "legal_ir_view_cross_entropy_loss"],
+        "cec": ["cec_dcec_validation_failure_ratio"],
+        "compiler_ambiguity": ["cross_entropy_loss"],
+        "compiler_parser": ["symbolic_validity_penalty", "modal_span_coverage_loss"],
+        "compiler_registry": ["cross_entropy_loss"],
+        "deontic": ["deontic_decoder_slot_loss", "legal_ir_multiview_total_loss"],
+        "external_provers": ["legal_ir_multiview_proof_failure_ratio"],
+        "frame_logic": ["flogic_similarity_loss", "ontology_violation_count"],
+        "ir_decompiler": [
+            "embedding_cosine_similarity",
+            "source_copy_reward_hack_penalty",
+            "text_reconstruction_loss",
+        ],
+        "knowledge_graphs": ["legal_ir_multiview_graph_failure_penalty"],
+        "tdfol": ["tdfol_parse_failure_ratio"],
+        "zkp": ["zkp_verification_failure_ratio"],
+    }
+    return list(scope_metrics.get(scope, ["cross_entropy_loss"]))
+
+
+def fast_program_synthesis_bootstrap_todos(
+    samples: Sequence[Any],
+    *,
+    policy: Optional[ModalOptimizerPolicy] = None,
+    cycle: int = 0,
+) -> List[ModalTodo]:
+    """Seed parallel Codex scopes before enough residual clusters accumulate."""
+
+    resolved_policy = policy or ModalOptimizerPolicy()
+    sample_list = list(samples)
+    sample_ids = [
+        str(getattr(sample, "sample_id", "") or "")
+        for sample in sample_list
+        if str(getattr(sample, "sample_id", "") or "")
+    ]
+    citations = [
+        str(getattr(sample, "citation", "") or "")
+        for sample in sample_list
+        if str(getattr(sample, "citation", "") or "")
+    ]
+    metric_payloads = _sample_payloads_for_codex_metrics(sample_list)
+    scope_actions = {
+        "bridge": ("repair_multiview_legal_ir_loss", "bridge.contracts"),
+        "cec": ("repair_cec_dcec_bridge", "CEC.native"),
+        "compiler_ambiguity": (
+            "add_or_review_modal_ambiguity_policy",
+            "modal.compiler.ambiguity",
+        ),
+        "compiler_parser": ("add_deterministic_parser_rule", "modal.compiler"),
+        "compiler_registry": ("refine_modal_family_cue_rules", "modal.compiler.registry"),
+        "deontic": ("repair_deontic_bridge_quality_gate", "deontic.ir"),
+        "external_provers": ("repair_external_prover_router", "external_provers.router"),
+        "frame_logic": ("improve_flogic_frame_alignment", "modal.frame_logic"),
+        "ir_decompiler": (
+            "refine_semantic_decompiler_reconstruction",
+            "modal.ir_decompiler",
+        ),
+        "knowledge_graphs": (
+            "repair_multiview_legal_ir_graph_projection",
+            "knowledge_graphs.neo4j_compat",
+        ),
+        "tdfol": ("repair_tdfol_bridge_parse", "TDFOL.prover"),
+        "zkp": ("repair_zkp_attestation_bridge", "zkp.circuits"),
+    }
+    todos: List[ModalTodo] = []
+    for scope, (action, target_component) in sorted(scope_actions.items()):
+        signature_payload = {
+            "cycle": int(cycle),
+            "sample_ids": sample_ids,
+            "scope": scope,
+            "source": "modal_program_synthesis_fast_bootstrap_v1",
+            "target_component": target_component,
+        }
+        signature = hashlib.sha256(
+            _stable_metric_json(signature_payload).encode("utf-8")
+        ).hexdigest()
+        metadata = {
+            **resolved_policy.metadata_for(
+                action=action,
+                loss_name="program_synthesis_bootstrap",
+            ),
+            "dedupe_signature": f"fast-bootstrap:{scope}:{signature}",
+            "hint_evidence": [
+                {
+                    "cycle": int(cycle),
+                    "evidence_kind": "fast_bootstrap_scope",
+                    "scope": scope,
+                    "target_component": target_component,
+                }
+            ],
+            "metric_sample_payloads": metric_payloads,
+            "program_synthesis_scope": scope,
+            "semantic_bundle_key": f"fast-bootstrap:{scope}:{signature}",
+            "source": "modal_program_synthesis_fast_bootstrap_v1",
+            "support_count": len(sample_list),
+            "target_component": target_component,
+            "target_metrics": _bootstrap_target_metrics_for_scope(scope),
+            "validation_commands": [
+                f"{sys.executable} -m pytest -q tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py"
+            ],
+        }
+        todos.append(
+            ModalTodo(
+                todo_id=f"program-synthesis-fast-bootstrap-{scope}-{signature[:16]}",
+                action=action,
+                objective=(
+                    "Bootstrap deterministic legal IR compiler/decompiler repairs "
+                    f"for the {scope} scope."
+                ),
+                sample_ids=sample_ids,
+                citations=citations,
+                loss_name="program_synthesis_bootstrap",
+                loss_value=1.0,
+                priority=round(100.0 + len(sample_list), 6),
+                metadata=metadata,
+            )
+        )
+    return todos
 
 
 def _metric_value(block: Mapping[str, Any], name: str, default: float = 1.0e12) -> float:
@@ -4312,6 +5368,167 @@ def bridge_loss_adapter_names(args: argparse.Namespace) -> List[str]:
     ]
 
 
+def _adapter_names_from_raw(raw: Any) -> List[str]:
+    text = str(raw or "").strip()
+    if text.lower() in {"", "none", "off", "false"}:
+        return []
+    return [
+        name
+        for name in (part.strip() for part in text.split(","))
+        if name and name.lower() not in {"none", "off", "false"}
+    ]
+
+
+def autoencoder_metric_bridge_adapter_names(
+    args: argparse.Namespace,
+    bridge_adapters: Sequence[str],
+) -> List[str]:
+    """Return lightweight bridge adapters used for validation metrics.
+
+    Metric bridge adapters are deliberately independent from bridge-loss
+    adapters so disabling bridge losses does not also blind LegalIR validation.
+    """
+
+    raw = getattr(args, "autoencoder_metric_bridge_adapters", None)
+    if raw is None:
+        raw = os.environ.get(AUTOENCODER_METRIC_BRIDGE_ADAPTERS_ENV)
+    if raw is None or str(raw).strip().lower() == "default":
+        return list(DEFAULT_AUTOENCODER_METRIC_BRIDGE_ADAPTERS)
+    if str(raw).strip().lower() == "same":
+        return list(bridge_adapters)
+    return _adapter_names_from_raw(raw)
+
+
+def autoencoder_diagnostic_bridge_adapter_names(
+    args: argparse.Namespace,
+    *,
+    bridge_adapters: Sequence[str],
+    metric_bridge_adapters: Sequence[str],
+) -> List[str]:
+    """Return occasional diagnostic bridge adapters for syntax/KG/prover coverage."""
+
+    raw = getattr(args, "autoencoder_diagnostic_bridge_adapters", None)
+    if raw is None:
+        raw = os.environ.get(AUTOENCODER_DIAGNOSTIC_BRIDGE_ADAPTERS_ENV)
+    if raw is None:
+        return []
+    normalized = str(raw).strip().lower()
+    if normalized == "default":
+        return list(metric_bridge_adapters)
+    if normalized == "same":
+        return list(bridge_adapters)
+    return _adapter_names_from_raw(raw)
+
+
+def autoencoder_metric_bridge_samples_for_evaluation(
+    samples: Sequence[Any],
+    *,
+    max_sample_text_chars: int,
+) -> List[Any]:
+    """Return samples with bounded text for expensive bridge metric evaluation."""
+
+    limit = max(0, int(max_sample_text_chars or 0))
+    if limit <= 0:
+        return list(samples)
+    bounded_samples: List[Any] = []
+    for sample in samples:
+        text = str(getattr(sample, "text", "") or "")
+        if len(text) <= limit:
+            bounded_samples.append(sample)
+            continue
+        bounded_text = _compiler_ir_metric_bounded_text(text, limit)
+        sample_id = str(getattr(sample, "sample_id", "") or "sample")
+        bounded_id = (
+            f"{sample_id}:metric-prefix:"
+            f"{hashlib.sha256(bounded_text.encode('utf-8')).hexdigest()[:12]}"
+        )
+        try:
+            bounded_samples.append(
+                replace(
+                    sample,
+                    sample_id=bounded_id,
+                    text=bounded_text,
+                    normalized_text=bounded_text,
+                )
+            )
+        except TypeError:
+            clone = SimpleNamespace(**dict(vars(sample)))
+            clone.sample_id = bounded_id
+            clone.text = bounded_text
+            if hasattr(clone, "normalized_text"):
+                clone.normalized_text = bounded_text
+            bounded_samples.append(clone)
+    return bounded_samples
+
+
+def autoencoder_validation_signal_health(
+    *,
+    compiler_ir_validation: Mapping[str, Any],
+    learned_ir_validation: Mapping[str, Any],
+    logic_bridge_validation: Mapping[str, Any],
+    validation_metrics: Mapping[str, Any],
+    metric_bridge_adapters: Sequence[str],
+    diagnostic_bridge_adapters: Sequence[str],
+) -> Dict[str, Any]:
+    """Summarize whether validation metrics are active enough to trust."""
+
+    issues: List[str] = []
+    recommendations: List[str] = []
+    compiler_sample_count = int(compiler_ir_validation.get("sample_count", 0) or 0)
+    compiler_evaluated_count = int(compiler_ir_validation.get("evaluated_count", 0) or 0)
+    compiler_timeouts = int(compiler_ir_validation.get("sample_timeouts", 0) or 0)
+    validation_sample_count = int(validation_metrics.get("sample_count", 0) or 0)
+    learned_target_count = int(learned_ir_validation.get("target_count", 0) or 0)
+    bridge_adapter_count = int(logic_bridge_validation.get("adapter_count", 0) or 0)
+    bridge_evaluated_count = int(logic_bridge_validation.get("evaluated_count", 0) or 0)
+
+    if learned_target_count <= 0:
+        issues.append("learned_ir_targets_inactive")
+    if compiler_sample_count > 0 and compiler_timeouts >= compiler_sample_count:
+        issues.append("compiler_ir_all_samples_timed_out")
+    if compiler_sample_count > 0 and compiler_evaluated_count <= 0:
+        issues.append("compiler_ir_metrics_inactive")
+    if validation_sample_count < 8:
+        issues.append("validation_holdout_too_small")
+    if metric_bridge_adapters and bridge_adapter_count > 0 and bridge_evaluated_count <= 0:
+        issues.append("logic_bridge_metrics_inactive")
+    if metric_bridge_adapters and not diagnostic_bridge_adapters:
+        recommendations.append(
+            "run occasional diagnostic bridge sweeps for syntax/KG/prover coverage"
+        )
+
+    hard_failures = {
+        "compiler_ir_all_samples_timed_out",
+        "compiler_ir_metrics_inactive",
+        "learned_ir_targets_inactive",
+    }
+    if any(issue in hard_failures for issue in issues):
+        quality_gate = "fail"
+    elif issues:
+        quality_gate = "warn"
+    else:
+        quality_gate = "pass"
+
+    return {
+        "compiler_ir": {
+            "evaluated_count": compiler_evaluated_count,
+            "sample_count": compiler_sample_count,
+            "sample_timeouts": compiler_timeouts,
+        },
+        "diagnostic_bridge_adapters": list(diagnostic_bridge_adapters),
+        "issues": issues,
+        "learned_ir": {"target_count": learned_target_count},
+        "logic_bridge": {
+            "adapter_count": bridge_adapter_count,
+            "evaluated_count": bridge_evaluated_count,
+        },
+        "metric_bridge_adapters": list(metric_bridge_adapters),
+        "quality_gate": quality_gate,
+        "recommendations": recommendations,
+        "validation": {"sample_count": validation_sample_count},
+    }
+
+
 def parse_bool_flag(value: Any) -> bool:
     normalized = str(value).strip().lower()
     if normalized in {"1", "true", "yes", "y", "on"}:
@@ -4635,6 +5852,28 @@ def _claim_vector_program_synthesis_batch(
         todos=all_program_todos,
     )
     vector_report.update(index_report)
+    with queue_file_lock(queue_path):
+        queue = ModalTodoQueue.load_jsonl(queue_path)
+        backpressure = _codex_main_apply_backpressure_report(
+            queue,
+            args=args,
+            policy=policy,
+            worker_id=worker_id,
+        )
+        if bool(backpressure.get("blocked", False)):
+            status = update_program_synthesis_summary(
+                summary,
+                queue,
+                policy,
+                execution_mode=execution_mode,
+            )
+            vector_report["mode"] = "main_apply_backpressure"
+            vector_report["main_apply_backpressure"] = backpressure
+            vector_report["main_apply_backpressure_active_workers"] = list(
+                backpressure.get("active_workers", []) or []
+            )
+            vector_report["selected_count"] = 0
+            return [], queue, status, vector_report
 
     if not vectors_by_id:
         with queue_file_lock(queue_path):
@@ -4924,6 +6163,8 @@ def _build_codex_child_command(
         str(getattr(args, "codex_merge_repair_mode", "apply_3way")),
         "--codex-merge-repair-attempts",
         str(getattr(args, "codex_merge_repair_attempts", 1)),
+        "--codex-main-apply-max-inflight-packets",
+        str(getattr(args, "codex_main_apply_max_inflight_packets", 1)),
     ]
     if getattr(args, "codex_vector_index_path", None):
         command.extend(["--codex-vector-index-path", str(args.codex_vector_index_path)])
@@ -4968,7 +6209,7 @@ def build_paired_daemon_commands(
         "--validation-count",
         str(args.validation_count),
         "--validation-canary-count",
-        str(getattr(args, "validation_canary_count", 4)),
+        str(getattr(args, "validation_canary_count", DEFAULT_VALIDATION_CANARY_COUNT)),
         "--max-sample-text-chars",
         str(getattr(args, "max_sample_text_chars", 0)),
         "--max-inner-iterations",
@@ -4987,10 +6228,52 @@ def build_paired_daemon_commands(
         str(args.learning_rate),
         "--generalizable-projection-epochs",
         str(getattr(args, "generalizable_projection_epochs", 1)),
+        "--sampling-seed",
+        str(getattr(args, "sampling_seed", getattr(args, "run_id", "default"))),
+        "--autoencoder-bootstrap-mode",
+        str(getattr(args, "autoencoder_bootstrap_mode", "fast")),
+        "--autoencoder-metric-bridge-adapters",
+        str(getattr(args, "autoencoder_metric_bridge_adapters", "default")),
+        "--autoencoder-diagnostic-bridge-adapters",
+        str(getattr(args, "autoencoder_diagnostic_bridge_adapters", "none")),
+        "--autoencoder-metric-bridge-max-sample-text-chars",
+        str(
+            getattr(
+                args,
+                "autoencoder_metric_bridge_max_sample_text_chars",
+                DEFAULT_AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLE_TEXT_CHARS,
+            )
+        ),
+        "--compiler-ir-metric-text-policy",
+        str(getattr(args, "compiler_ir_metric_text_policy", DEFAULT_COMPILER_IR_METRIC_TEXT_POLICY)),
+        "--compiler-ir-metric-sample-timeout-seconds",
+        str(
+            getattr(
+                args,
+                "compiler_ir_metric_sample_timeout_seconds",
+                DEFAULT_COMPILER_IR_METRIC_SAMPLE_TIMEOUT_SECONDS,
+            )
+        ),
+        "--generalizable-projection-timeout-seconds",
+        str(
+            getattr(
+                args,
+                "generalizable_projection_timeout_seconds",
+                DEFAULT_GENERALIZABLE_PROJECTION_TIMEOUT_SECONDS,
+            )
+        ),
+        "--generalizable-projection-max-line-search-attempts",
+        str(
+            getattr(
+                args,
+                "generalizable_projection_max_line_search_attempts",
+                DEFAULT_GENERALIZABLE_PROJECTION_MAX_LINE_SEARCH_ATTEMPTS,
+            )
+        ),
         "--bridge-loss-adapters",
         str(getattr(args, "bridge_loss_adapters", DEFAULT_BRIDGE_LOSS_ADAPTERS)),
         "--bridge-evaluate-provers",
-        str(getattr(args, "bridge_evaluate_provers", True)).lower(),
+        str(getattr(args, "bridge_evaluate_provers", _default_bridge_evaluate_provers())).lower(),
         "--autoencoder-device",
         str(getattr(args, "autoencoder_device", "auto")),
         "--autoencoder-feature-family-logit-scale",
@@ -5151,6 +6434,44 @@ def build_paired_daemon_commands(
         str(getattr(args, "generalizable_projection_objective_legal_ir_weight", 1.0)),
         "--generalizable-projection-hard-example-fraction",
         str(getattr(args, "generalizable_projection_hard_example_fraction", 1.0)),
+        "--autoencoder-projection-deadband-mode",
+        str(getattr(args, "autoencoder_projection_deadband_mode", "shadow")),
+        "--autoencoder-max-ce-deadband",
+        str(getattr(args, "autoencoder_max_ce_deadband", 0.0001)),
+        "--autoencoder-hard-guardrail-metrics",
+        str(
+            getattr(
+                args,
+                "autoencoder_hard_guardrail_metrics",
+                "compiler_ir_cosine,structural_validity,source_copy_penalty",
+            )
+        ),
+        "--autoencoder-projection-prescreen-mode",
+        str(getattr(args, "autoencoder_projection_prescreen_mode", "off")),
+        "--autoencoder-projection-prescreen-top-k",
+        str(getattr(args, "autoencoder_projection_prescreen_top_k", 3)),
+        "--autoencoder-projection-periodic-full-search-every-n-cycles",
+        str(getattr(args, "autoencoder_projection_periodic_full_search_every_n_cycles", 8)),
+        "--compiler-ir-train-mode",
+        str(getattr(args, "compiler_ir_train_mode", DEFAULT_COMPILER_IR_TRAIN_MODE)),
+        "--compiler-ir-train-every-n-cycles",
+        str(getattr(args, "compiler_ir_train_every_n_cycles", 4)),
+        "--compiler-ir-guided-train-mode",
+        str(getattr(args, "compiler_ir_guided_train_mode", DEFAULT_COMPILER_IR_GUIDED_TRAIN_MODE)),
+        "--compiler-ir-guided-train-every-n-cycles",
+        str(getattr(args, "compiler_ir_guided_train_every_n_cycles", 4)),
+        "--autoencoder-before-train-eval-mode",
+        str(getattr(args, "autoencoder_before_train_eval_mode", DEFAULT_AUTOENCODER_BEFORE_TRAIN_EVAL_MODE)),
+        "--autoencoder-before-train-eval-every-n-cycles",
+        str(getattr(args, "autoencoder_before_train_eval_every_n_cycles", 4)),
+        "--autoencoder-sample-memory-probe-mode",
+        str(getattr(args, "autoencoder_sample_memory_probe_mode", DEFAULT_AUTOENCODER_SAMPLE_MEMORY_PROBE_MODE)),
+        "--autoencoder-sample-memory-probe-every-n-cycles",
+        str(getattr(args, "autoencoder_sample_memory_probe_every_n_cycles", 4)),
+        "--autoencoder-todo-supervisor-mode",
+        str(getattr(args, "autoencoder_todo_supervisor_mode", DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MODE)),
+        "--autoencoder-todo-supervisor-min-open",
+        str(getattr(args, "autoencoder_todo_supervisor_min_open", 12)),
         "--learning-rate-floor-ratio",
         str(getattr(args, "learning_rate_floor_ratio", 0.25)),
         "--learning-rate-cap-ratio",
@@ -6443,10 +7764,47 @@ def _codex_apply_validation_env() -> Dict[str, str]:
     return env
 
 
+def accelerate_run_process_group_capture(
+    command: Sequence[str],
+    *,
+    cwd: Path,
+    env: Optional[Mapping[str, str]] = None,
+    input_text: str = "",
+    timeout_seconds: float = 120.0,
+) -> Dict[str, Any]:
+    """Small local shim for the accelerate-style process capture contract."""
+
+    try:
+        result = subprocess.run(
+            list(command),
+            cwd=cwd,
+            input=input_text,
+            capture_output=True,
+            env=dict(env or os.environ),
+            text=True,
+            timeout=max(1.0, float(timeout_seconds)),
+        )
+    except subprocess.TimeoutExpired as exc:
+        return {
+            "exit_code": None,
+            "status": "timeout",
+            "stderr": _process_text(exc.stderr),
+            "stdout": _process_text(exc.stdout),
+            "timeout_seconds": float(timeout_seconds),
+        }
+    return {
+        "exit_code": result.returncode,
+        "status": "completed" if result.returncode == 0 else "failed",
+        "stderr": result.stderr or "",
+        "stdout": result.stdout or "",
+    }
+
+
 def _run_codex_apply_validation(
     repo_root: Path,
     packet_dir: Path,
     *,
+    target_files: Optional[Sequence[str]] = None,
     validation_commands: Optional[Sequence[Sequence[str]]] = None,
     timeout_seconds: float = 300.0,
 ) -> Dict[str, Any]:
@@ -6455,14 +7813,26 @@ def _run_codex_apply_validation(
         if validation_commands is not None
         else _default_codex_apply_validation_commands(repo_root)
     )
+    python_targets = [
+        str(path)
+        for path in (target_files or [])
+        if str(path).endswith(".py") and (repo_root / str(path)).exists()
+    ]
+    if python_targets:
+        commands = [[sys.executable, "-m", "py_compile", *python_targets], *commands]
     if not commands:
         return {"commands": [], "status": "skipped"}
 
     results: List[Dict[str, Any]] = []
+    failed_tests: List[str] = []
+    failure_tokens: List[str] = []
+    syntax_locations: List[Dict[str, Any]] = []
     for index, command in enumerate(commands, start=1):
         stdout_path = packet_dir / f"main-apply-validation-{index}.stdout.log"
         stderr_path = packet_dir / f"main-apply-validation-{index}.stderr.log"
         started = time.time()
+        stdout_text = ""
+        stderr_text = ""
         try:
             result = subprocess.run(
                 command,
@@ -6472,8 +7842,10 @@ def _run_codex_apply_validation(
                 text=True,
                 timeout=max(1.0, float(timeout_seconds)),
             )
-            stdout_path.write_text(result.stdout or "", encoding="utf-8")
-            stderr_path.write_text(result.stderr or "", encoding="utf-8")
+            stdout_text = result.stdout or ""
+            stderr_text = result.stderr or ""
+            stdout_path.write_text(stdout_text, encoding="utf-8")
+            stderr_path.write_text(stderr_text, encoding="utf-8")
             command_result = {
                 "command": command,
                 "duration_seconds": round(time.time() - started, 3),
@@ -6483,8 +7855,10 @@ def _run_codex_apply_validation(
                 "stdout_path": str(stdout_path),
             }
         except subprocess.TimeoutExpired as exc:
-            stdout_path.write_text(_process_text(exc.stdout), encoding="utf-8")
-            stderr_path.write_text(_process_text(exc.stderr), encoding="utf-8")
+            stdout_text = _process_text(exc.stdout)
+            stderr_text = _process_text(exc.stderr)
+            stdout_path.write_text(stdout_text, encoding="utf-8")
+            stderr_path.write_text(stderr_text, encoding="utf-8")
             command_result = {
                 "command": command,
                 "duration_seconds": round(time.time() - started, 3),
@@ -6494,16 +7868,54 @@ def _run_codex_apply_validation(
                 "stdout_path": str(stdout_path),
                 "timeout_seconds": float(timeout_seconds),
             }
+        if command_result["status"] != "passed":
+            details = _codex_validation_failure_details(
+                command=command,
+                command_index=index,
+                status=str(command_result["status"]),
+                exit_code=command_result.get("exit_code"),
+                stdout=stdout_text,
+                stderr=stderr_text,
+            )
+            command_result.update(
+                {
+                    "failed_tests": list(details.get("failed_tests", []) or []),
+                    "failure_tokens": list(details.get("failure_tokens", []) or []),
+                    "syntax_locations": list(details.get("syntax_locations", []) or []),
+                }
+            )
+            for test in command_result["failed_tests"]:
+                if test not in failed_tests:
+                    failed_tests.append(str(test))
+            for token in command_result["failure_tokens"]:
+                if token not in failure_tokens:
+                    failure_tokens.append(str(token))
+            for location in command_result["syntax_locations"]:
+                if location not in syntax_locations:
+                    syntax_locations.append(dict(location))
         results.append(command_result)
         if command_result["status"] != "passed":
-            return {"commands": results, "status": command_result["status"]}
-    return {"commands": results, "status": "passed"}
+            return {
+                "commands": results,
+                "failed_tests": failed_tests,
+                "failure_tokens": failure_tokens,
+                "status": command_result["status"],
+                "syntax_locations": syntax_locations,
+            }
+    return {
+        "commands": results,
+        "failed_tests": failed_tests,
+        "failure_tokens": failure_tokens,
+        "status": "passed",
+        "syntax_locations": syntax_locations,
+    }
 
 
 def _codex_packet_metric_sample_payloads(
     packet: Mapping[str, Any],
     *,
     max_samples: int = 8,
+    payload_keys: Sequence[str] = ("metric_sample_payloads",),
 ) -> List[Dict[str, Any]]:
     """Return unique legal sample payloads carried by claimed TODO metadata."""
     payloads: List[Dict[str, Any]] = []
@@ -6512,20 +7924,35 @@ def _codex_packet_metric_sample_payloads(
         if not isinstance(todo, Mapping):
             continue
         metadata = dict(todo.get("metadata", {}) or {})
-        for payload in metadata.get("metric_sample_payloads", []) or []:
-            if not isinstance(payload, Mapping):
-                continue
-            sample_id = str(payload.get("sample_id") or "")
-            key = sample_id or hashlib.sha256(
-                json.dumps(dict(payload), sort_keys=True, default=str).encode("utf-8")
-            ).hexdigest()
-            if key in seen:
-                continue
-            seen.add(key)
-            payloads.append(dict(payload))
-            if len(payloads) >= max(0, int(max_samples)):
-                return payloads
+        for payload_key in payload_keys:
+            for payload in metadata.get(str(payload_key), []) or []:
+                if not isinstance(payload, Mapping):
+                    continue
+                sample_id = str(payload.get("sample_id") or "")
+                key = sample_id or hashlib.sha256(
+                    json.dumps(dict(payload), sort_keys=True, default=str).encode("utf-8")
+                ).hexdigest()
+                if key in seen:
+                    continue
+                seen.add(key)
+                payloads.append(dict(payload))
+                if len(payloads) >= max(0, int(max_samples)):
+                    return payloads
     return payloads
+
+
+def _codex_packet_validation_metric_sample_payloads(
+    packet: Mapping[str, Any],
+    *,
+    max_samples: int = 8,
+) -> List[Dict[str, Any]]:
+    """Return held-out validation sample payloads carried by claimed TODO metadata."""
+
+    return _codex_packet_metric_sample_payloads(
+        packet,
+        max_samples=max_samples,
+        payload_keys=("validation_metric_sample_payloads",),
+    )
 
 
 def _codex_packet_target_metric_names(packet: Mapping[str, Any]) -> List[str]:
@@ -6539,20 +7966,58 @@ def _codex_packet_target_metric_names(packet: Mapping[str, Any]) -> List[str]:
     return list(dict.fromkeys(metric for metric in metrics if metric))
 
 
+def _codex_target_metric_bridge_adapter_names(metrics: Sequence[str]) -> List[str]:
+    """Return bridge adapters needed to measure target metric names."""
+
+    selected: List[str] = []
+
+    def add(name: str) -> None:
+        if name not in selected:
+            selected.append(name)
+
+    metric_names = [str(metric) for metric in metrics if str(metric)]
+    for metric in metric_names:
+        if metric.startswith("deontic_"):
+            add("deontic_norms")
+        elif metric.startswith("tdfol_"):
+            add("fol_tdfol")
+        elif metric.startswith("cec_"):
+            add("cec_dcec")
+        elif metric.startswith("zkp_"):
+            add("zkp_attestation")
+        elif metric.startswith("external_prover_") or "proof_failure_ratio" in metric:
+            add("external_prover_router")
+        elif "graph_failure_penalty" in metric:
+            add("modal_frame_logic")
+    if selected:
+        return selected
+    if any(metric.startswith("legal_ir_") for metric in metric_names):
+        return list(DEFAULT_LEGAL_IR_BRIDGE_NAMES)
+    return []
+
+
 def _codex_packet_target_metric_snapshot(
     packet: Mapping[str, Any],
     repo_root: Path,
     *,
+    sample_payloads: Optional[Sequence[Mapping[str, Any]]] = None,
+    sample_role: str = "evidence",
     timeout_seconds: float = 120.0,
 ) -> Dict[str, Any]:
     """Measure target metrics in a fresh subprocess using packet sample payloads."""
-    sample_payloads = _codex_packet_metric_sample_payloads(packet)
+    sample_payload_list = (
+        [dict(payload) for payload in sample_payloads]
+        if sample_payloads is not None
+        else _codex_packet_metric_sample_payloads(packet)
+    )
     target_metrics = _codex_packet_target_metric_names(packet)
-    if not sample_payloads or not target_metrics:
+    bridge_names = _codex_target_metric_bridge_adapter_names(target_metrics)
+    if not sample_payload_list or not target_metrics:
         return {
             "metric_count": 0,
             "metrics": {},
-            "sample_count": len(sample_payloads),
+            "sample_count": len(sample_payload_list),
+            "sample_role": sample_role,
             "status": "skipped",
             "target_metrics": target_metrics,
         }
@@ -6584,7 +8049,7 @@ codec = DeterministicModalLogicCodec(ModalLogicCodecConfig())
 compiler = compiler_ir_metric_block(samples, codec)
 bridge = bridge_ir_metric_block(
     samples,
-    DEFAULT_LEGAL_IR_BRIDGE_NAMES,
+    payload.get("bridge_names") or [],
     evaluate_provers=False,
     parallel_workers=1,
 )
@@ -6624,55 +8089,94 @@ print(json.dumps({
     "target_metrics": target_metrics,
 }, sort_keys=True))
 '''
-    payload = {"samples": sample_payloads, "target_metrics": target_metrics}
-    try:
-        result = subprocess.run(
-            [sys.executable, "-c", script],
-            cwd=repo_root,
-            input=json.dumps(payload, ensure_ascii=True),
-            capture_output=True,
-            env=_codex_apply_validation_env(),
-            text=True,
-            timeout=max(1.0, float(timeout_seconds)),
-        )
-    except subprocess.TimeoutExpired as exc:
+    payload = {
+        "bridge_names": bridge_names,
+        "samples": sample_payload_list,
+        "target_metrics": target_metrics,
+    }
+    result = accelerate_run_process_group_capture(
+        [sys.executable, "-c", script],
+        cwd=repo_root,
+        input_text=json.dumps(payload, ensure_ascii=True),
+        env=_codex_apply_validation_env(),
+        timeout_seconds=max(1.0, float(timeout_seconds)),
+    )
+    if str(result.get("status") or "") == "timeout":
         return {
             "metric_count": 0,
             "metrics": {},
-            "sample_count": len(sample_payloads),
+            "sample_count": len(sample_payload_list),
+            "sample_role": sample_role,
             "status": "timeout",
-            "stderr_tail": _process_text(exc.stderr)[-500:],
-            "stdout_tail": _process_text(exc.stdout)[-500:],
+            "stderr_tail": str(result.get("stderr") or "")[-500:],
+            "stdout_tail": str(result.get("stdout") or "")[-500:],
+            "target_bridge_names": bridge_names,
             "target_metrics": target_metrics,
             "timeout_seconds": float(timeout_seconds),
         }
-    if result.returncode != 0:
+    if int(result.get("exit_code") or 0) != 0:
         return {
-            "exit_code": result.returncode,
+            "exit_code": result.get("exit_code"),
             "metric_count": 0,
             "metrics": {},
-            "sample_count": len(sample_payloads),
+            "sample_count": len(sample_payload_list),
+            "sample_role": sample_role,
             "status": "failed",
-            "stderr_tail": (result.stderr or "")[-500:],
-            "stdout_tail": (result.stdout or "")[-500:],
+            "stderr_tail": str(result.get("stderr") or "")[-500:],
+            "stdout_tail": str(result.get("stdout") or "")[-500:],
+            "target_bridge_names": bridge_names,
             "target_metrics": target_metrics,
         }
     try:
-        stdout_lines = [line for line in (result.stdout or "").splitlines() if line.strip()]
+        stdout_lines = [
+            line for line in str(result.get("stdout") or "").splitlines() if line.strip()
+        ]
         snapshot = json.loads(stdout_lines[-1] if stdout_lines else "")
     except json.JSONDecodeError:
         return {
-            "exit_code": result.returncode,
+            "exit_code": result.get("exit_code"),
             "metric_count": 0,
             "metrics": {},
-            "sample_count": len(sample_payloads),
+            "sample_count": len(sample_payload_list),
+            "sample_role": sample_role,
             "status": "invalid_json",
-            "stderr_tail": (result.stderr or "")[-500:],
-            "stdout_tail": (result.stdout or "")[-500:],
+            "stderr_tail": str(result.get("stderr") or "")[-500:],
+            "stdout_tail": str(result.get("stdout") or "")[-500:],
+            "target_bridge_names": bridge_names,
             "target_metrics": target_metrics,
         }
-    snapshot["stderr_tail"] = (result.stderr or "")[-500:]
+    snapshot["stderr_tail"] = str(result.get("stderr") or "")[-500:]
+    snapshot["sample_role"] = sample_role
+    snapshot["target_bridge_names"] = list(
+        snapshot.get("target_bridge_names") or bridge_names
+    )
+    snapshot["timeout_seconds"] = float(timeout_seconds)
     return snapshot
+
+
+def _call_codex_packet_target_metric_snapshot(
+    packet: Mapping[str, Any],
+    repo_root: Path,
+    **kwargs: Any,
+) -> Dict[str, Any]:
+    """Call target metric snapshot while tolerating older two-arg monkeypatches."""
+
+    try:
+        signature = inspect.signature(_codex_packet_target_metric_snapshot)
+        accepts_var_kwargs = any(
+            parameter.kind == inspect.Parameter.VAR_KEYWORD
+            for parameter in signature.parameters.values()
+        )
+        unsupported = [
+            name
+            for name in kwargs
+            if name not in signature.parameters and not accepts_var_kwargs
+        ]
+        if unsupported:
+            return _codex_packet_target_metric_snapshot(packet, repo_root)
+    except (TypeError, ValueError):
+        pass
+    return _codex_packet_target_metric_snapshot(packet, repo_root, **kwargs)
 
 
 def _codex_packet_should_measure_target_metrics(
@@ -6681,7 +8185,10 @@ def _codex_packet_should_measure_target_metrics(
     target_files: Sequence[str],
 ) -> bool:
     """Return true when packet metadata and changed files justify metric checks."""
-    if not _codex_packet_metric_sample_payloads(packet):
+    if not (
+        _codex_packet_metric_sample_payloads(packet)
+        or _codex_packet_validation_metric_sample_payloads(packet)
+    ):
         return False
     if not _codex_packet_target_metric_names(packet):
         return False
@@ -6758,6 +8265,43 @@ def _target_metric_improvement_delta(
     if higher_is_better:
         return after_value - before_value
     return before_value - after_value
+
+
+def _codex_validation_failure_tokens(validation: Mapping[str, Any]) -> List[str]:
+    tokens = [str(token) for token in validation.get("failure_tokens", []) or [] if str(token)]
+    if tokens:
+        return list(dict.fromkeys(tokens))
+    extracted: List[str] = []
+    for command in validation.get("commands", []) or []:
+        if not isinstance(command, Mapping):
+            continue
+        for token in command.get("failure_tokens", []) or []:
+            if str(token):
+                extracted.append(str(token))
+    return list(dict.fromkeys(extracted))
+
+
+def _codex_validation_comparison(
+    packet_validation: Mapping[str, Any],
+    baseline_validation: Mapping[str, Any],
+) -> Dict[str, Any]:
+    packet_tokens = _codex_validation_failure_tokens(packet_validation)
+    baseline_tokens = _codex_validation_failure_tokens(baseline_validation)
+    packet_set = set(packet_tokens)
+    baseline_set = set(baseline_tokens)
+    return {
+        "baseline_failure_tokens": baseline_tokens,
+        "baseline_only_failure_tokens": [
+            token for token in baseline_tokens if token not in packet_set
+        ],
+        "packet_failure_tokens": packet_tokens,
+        "packet_only_failure_tokens": [
+            token for token in packet_tokens if token not in baseline_set
+        ],
+        "shared_failure_tokens": [
+            token for token in packet_tokens if token in baseline_set
+        ],
+    }
 
 
 def _commit_codex_main_changes(
@@ -7025,10 +8569,12 @@ def apply_codex_worktree_changes_to_main(
         updated,
         target_files=target_files,
     )
+    validation_metric_payloads = _codex_packet_validation_metric_sample_payloads(updated)
     target_metric_before = (
-        _codex_packet_target_metric_snapshot(
+        _call_codex_packet_target_metric_snapshot(
             updated,
             source_repo_root,
+            sample_role="evidence",
             timeout_seconds=min(float(validation_timeout_seconds), 120.0),
         )
         if measure_target_metrics
@@ -7041,6 +8587,25 @@ def apply_codex_worktree_changes_to_main(
         }
     )
     updated["target_metric_baseline"] = target_metric_before
+    holdout_target_metric_before = (
+        _call_codex_packet_target_metric_snapshot(
+            updated,
+            source_repo_root,
+            sample_payloads=validation_metric_payloads,
+            sample_role="holdout",
+            timeout_seconds=min(float(validation_timeout_seconds), 120.0),
+        )
+        if measure_target_metrics and validation_metric_payloads
+        else {
+            "metric_count": 0,
+            "metrics": {},
+            "sample_count": len(validation_metric_payloads),
+            "sample_role": "holdout",
+            "status": "skipped",
+            "target_metrics": _codex_packet_target_metric_names(updated),
+        }
+    )
+    updated["holdout_target_metric_baseline"] = holdout_target_metric_before
 
     apply_result = _run_git_apply_stdin(source_repo_root, diff_content)
     updated["main_apply_result"] = {
@@ -7064,6 +8629,7 @@ def apply_codex_worktree_changes_to_main(
     validation = _run_codex_apply_validation(
         source_repo_root,
         packet_dir,
+        target_files=target_files,
         validation_commands=validation_commands,
         timeout_seconds=validation_timeout_seconds,
     )
@@ -7082,17 +8648,36 @@ def apply_codex_worktree_changes_to_main(
             baseline_validation = _run_codex_apply_validation(
                 source_repo_root,
                 baseline_validation_dir,
+                target_files=target_files,
                 validation_commands=validation_commands,
                 timeout_seconds=validation_timeout_seconds,
             )
         updated["main_apply_baseline_validation"] = baseline_validation
-        patch_path = _save_codex_packet_diff_patch(
-            updated,
-            diff_content=diff_content,
-            reason="validation-failed",
-        )
-        updated["patch_path"] = str(patch_path) if patch_path is not None else None
         if baseline_validation["status"] not in {"passed", "skipped"}:
+            comparison = _codex_validation_comparison(validation, baseline_validation)
+            updated["main_apply_validation_comparison"] = comparison
+            if rollback.returncode == 0 and not comparison["packet_only_failure_tokens"]:
+                reapply = _run_git_apply_stdin(source_repo_root, diff_content)
+                updated["main_apply_reapply_after_baseline_validation"] = {
+                    "exit_code": reapply.returncode,
+                    "stderr_tail": (reapply.stderr or "")[-500:],
+                    "stdout_tail": (reapply.stdout or "")[-500:],
+                }
+                if reapply.returncode == 0:
+                    updated["main_apply_baseline_failure_accepted"] = True
+                    updated["main_apply_validation_gate"] = "inconclusive_baseline_failed"
+                    updated["main_apply_status"] = "applied"
+                    updated["patch_error"] = None
+                    updated["patch_path"] = None
+                    updated["patch_status"] = "applied_to_main"
+                    _save_packet_if_possible(updated, packet_path)
+                    return updated
+            patch_path = _save_codex_packet_diff_patch(
+                updated,
+                diff_content=diff_content,
+                reason="validation-failed",
+            )
+            updated["patch_path"] = str(patch_path) if patch_path is not None else None
             updated["patch_status"] = (
                 "main_apply_baseline_validation_failed_rolled_back"
                 if rollback.returncode == 0
@@ -7103,6 +8688,12 @@ def apply_codex_worktree_changes_to_main(
                 f"after packet validation {validation['status']}"
             )
         else:
+            patch_path = _save_codex_packet_diff_patch(
+                updated,
+                diff_content=diff_content,
+                reason="validation-failed",
+            )
+            updated["patch_path"] = str(patch_path) if patch_path is not None else None
             updated["patch_status"] = (
                 "main_apply_validation_failed_rolled_back"
                 if rollback.returncode == 0
@@ -7114,9 +8705,10 @@ def apply_codex_worktree_changes_to_main(
         return updated
 
     target_metric_after = (
-        _codex_packet_target_metric_snapshot(
+        _call_codex_packet_target_metric_snapshot(
             updated,
             source_repo_root,
+            sample_role="evidence",
             timeout_seconds=min(float(validation_timeout_seconds), 120.0),
         )
         if measure_target_metrics
@@ -7132,9 +8724,51 @@ def apply_codex_worktree_changes_to_main(
         before=target_metric_before,
         after=target_metric_after,
     )
+    holdout_target_metric_after = (
+        _call_codex_packet_target_metric_snapshot(
+            updated,
+            source_repo_root,
+            sample_payloads=validation_metric_payloads,
+            sample_role="holdout",
+            timeout_seconds=min(float(validation_timeout_seconds), 120.0),
+        )
+        if measure_target_metrics and validation_metric_payloads
+        else {
+            "metric_count": 0,
+            "metrics": {},
+            "sample_count": len(validation_metric_payloads),
+            "sample_role": "holdout",
+            "status": "skipped",
+            "target_metrics": _codex_packet_target_metric_names(updated),
+        }
+    )
+    holdout_target_metric_validation = _codex_target_metric_validation_report(
+        before=holdout_target_metric_before,
+        after=holdout_target_metric_after,
+    )
     updated["target_metric_validation"] = target_metric_validation
+    updated["holdout_target_metric_validation"] = holdout_target_metric_validation
     updated["metric_deltas"] = dict(target_metric_validation.get("metric_deltas", {}))
-    if target_metric_validation["status"] == "regressed":
+    updated["holdout_metric_deltas"] = dict(
+        holdout_target_metric_validation.get("metric_deltas", {})
+    )
+    if (
+        target_metric_validation["status"] == "unavailable"
+        or holdout_target_metric_validation["status"] == "unavailable"
+    ):
+        updated["main_apply_target_metric_gate"] = "diagnostic_unavailable"
+    elif (
+        target_metric_validation["status"] == "skipped"
+        and holdout_target_metric_validation["status"] == "skipped"
+    ):
+        updated["main_apply_target_metric_gate"] = "skipped"
+    else:
+        updated["main_apply_target_metric_gate"] = "passed"
+    if (
+        target_metric_validation["status"] == "regressed"
+        or holdout_target_metric_validation["status"] == "regressed"
+    ):
+        updated["main_apply_target_metric_gate"] = "regressed"
         rollback = _run_git_apply_stdin(source_repo_root, diff_content, "-R")
         updated["main_apply_rollback"] = {
             "exit_code": rollback.returncode,
@@ -7144,7 +8778,11 @@ def apply_codex_worktree_changes_to_main(
         patch_path = _save_codex_packet_diff_patch(
             updated,
             diff_content=diff_content,
-            reason="target-metric-regression",
+            reason=(
+                "holdout-target-metric-regression"
+                if holdout_target_metric_validation["status"] == "regressed"
+                else "target-metric-regression"
+            ),
         )
         updated["patch_path"] = str(patch_path) if patch_path is not None else None
         updated["patch_status"] = (
@@ -7152,7 +8790,11 @@ def apply_codex_worktree_changes_to_main(
             if rollback.returncode == 0
             else "main_apply_target_metric_regression_rollback_failed"
         )
-        updated["patch_error"] = "target metric regression"
+        updated["patch_error"] = (
+            "holdout target metric regression"
+            if holdout_target_metric_validation["status"] == "regressed"
+            else "target metric regression"
+        )
         updated["main_apply_error"] = updated["patch_error"]
         _save_packet_if_possible(updated, packet_path)
         return updated
@@ -7542,16 +9184,50 @@ def _codex_packet_validation_report(packet: Mapping[str, Any]) -> Dict[str, Any]
     main_validation = dict(packet.get("main_apply_validation", {}) or {})
     baseline_validation = dict(packet.get("main_apply_baseline_validation", {}) or {})
     target_metric_validation = dict(packet.get("target_metric_validation", {}) or {})
+    holdout_target_metric_validation = dict(
+        packet.get("holdout_target_metric_validation", {}) or {}
+    )
+    baseline_failure_accepted = bool(packet.get("main_apply_baseline_failure_accepted"))
+    validation_status = (
+        "passed"
+        if baseline_failure_accepted
+        else main_validation.get("status")
+        or packet.get("main_apply_status")
+        or packet.get("patch_status")
+        or "not_measured"
+    )
+    failed_command: List[str] = []
+    for command in main_validation.get("commands", []) or []:
+        if isinstance(command, Mapping) and command.get("status") not in {
+            "passed",
+            None,
+        }:
+            failed_command = [str(part) for part in command.get("command", []) or []]
+            break
     return {
+        "baseline_failure_accepted": baseline_failure_accepted,
         "baseline_status": baseline_validation.get("status"),
+        "holdout_metric_deltas": dict(packet.get("holdout_metric_deltas", {}) or {}),
+        "holdout_regressed_metrics": list(
+            holdout_target_metric_validation.get("regressed_metrics", []) or []
+        ),
+        "holdout_target_metric_status": holdout_target_metric_validation.get("status"),
+        "main_apply_validation_gate": packet.get("main_apply_validation_gate"),
+        "main_apply_validation_failed_command": failed_command,
+        "main_apply_validation_failed_tests": list(
+            main_validation.get("failed_tests", []) or []
+        ),
+        "main_apply_validation_failure_tokens": _codex_validation_failure_tokens(
+            main_validation
+        ),
+        "main_apply_validation_syntax_locations": list(
+            main_validation.get("syntax_locations", []) or []
+        ),
         "main_apply_status": packet.get("main_apply_status"),
         "metric_deltas": dict(packet.get("metric_deltas", {}) or {}),
         "patch_status": packet.get("patch_status"),
         "regressed_metrics": list(target_metric_validation.get("regressed_metrics", []) or []),
-        "status": main_validation.get("status")
-        or packet.get("main_apply_status")
-        or packet.get("patch_status")
-        or "not_measured",
+        "status": validation_status,
         "target_metric_status": target_metric_validation.get("status"),
     }
 
@@ -7881,7 +9557,7 @@ def save_summary(summary_path: Path, summary: Dict[str, Any], *, final: bool = F
 
 
 def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Path, state_path: Path) -> Dict[str, Any]:
-    seed = int(hashlib.sha256(args.run_id.encode("utf-8")).hexdigest()[:12], 16)
+    seed, seed_source = _sampling_seed_for_args(args)
     return {
         "best_validation_ce": 1.0e12,
         "best_validation_cosine": -1.0,
@@ -7893,7 +9569,9 @@ def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Pat
         "best_validation_logic_bridge_acceptance": -1.0,
         "best_validation_logic_bridge_proof_failure_ratio": 1.0e12,
         "best_validation_logic_bridge_total_loss": 1.0e12,
-        "bridge_evaluate_provers": bool(getattr(args, "bridge_evaluate_provers", True)),
+        "bridge_evaluate_provers": bool(
+            getattr(args, "bridge_evaluate_provers", _default_bridge_evaluate_provers())
+        ),
         "bridge_loss_adapters": bridge_loss_adapter_names(args),
         "bridge_loss_failures": 0,
         "bridge_loss_samples": 0,
@@ -7919,6 +9597,7 @@ def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Pat
         "queue_run_id": getattr(args, "queue_run_id", None) or args.run_id,
         "queue_path": str(queue_path),
         "run_id": args.run_id,
+        "sampling_seed_source": seed_source,
         "seed": seed,
         "started_at": utc_now(),
         "state_path": str(state_path),
@@ -7949,7 +9628,7 @@ def _cycle_learning_rate(args: argparse.Namespace, summary: Mapping[str, Any]) -
     )
     scale = 1.0
     if plateau_streak >= 3:
-        scale *= 1.1
+        scale *= 0.9 ** float(plateau_streak - 2)
     if cosine_regression_streak > 0:
         scale *= 0.85 ** float(cosine_regression_streak)
     lr = base * scale
@@ -7986,7 +9665,7 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--validation-canary-count",
         type=int,
-        default=4,
+        default=DEFAULT_VALIDATION_CANARY_COUNT,
         help=(
             "Sample this many fixed holdout rows once per run and use them for "
             "autoencoder acceptance so validation deltas are comparable across cycles. "
@@ -8005,6 +9684,8 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-inner-iterations", type=int, default=3)
     parser.add_argument("--max-items", type=int, default=8)
     parser.add_argument("--learning-rate", type=float, default=0.35)
+    parser.add_argument("--sampling-seed", default=None)
+    parser.add_argument("--autoencoder-bootstrap-mode", default="fast")
     parser.add_argument(
         "--learning-rate-floor-ratio",
         type=float,
@@ -8090,6 +9771,74 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--generalizable-projection-timeout-seconds",
+        type=float,
+        default=DEFAULT_GENERALIZABLE_PROJECTION_TIMEOUT_SECONDS,
+    )
+    parser.add_argument(
+        "--generalizable-projection-max-line-search-attempts",
+        type=int,
+        default=DEFAULT_GENERALIZABLE_PROJECTION_MAX_LINE_SEARCH_ATTEMPTS,
+    )
+    parser.add_argument("--autoencoder-projection-deadband-mode", default="shadow")
+    parser.add_argument("--autoencoder-max-ce-deadband", type=float, default=0.0001)
+    parser.add_argument(
+        "--autoencoder-hard-guardrail-metrics",
+        default="compiler_ir_cosine,structural_validity,source_copy_penalty",
+    )
+    parser.add_argument("--autoencoder-projection-prescreen-mode", default="off")
+    parser.add_argument("--autoencoder-projection-prescreen-top-k", type=int, default=3)
+    parser.add_argument(
+        "--autoencoder-projection-periodic-full-search-every-n-cycles",
+        type=int,
+        default=8,
+    )
+    parser.add_argument(
+        "--autoencoder-metric-bridge-adapters",
+        default="default",
+    )
+    parser.add_argument(
+        "--autoencoder-diagnostic-bridge-adapters",
+        default="none",
+    )
+    parser.add_argument(
+        "--autoencoder-metric-bridge-max-sample-text-chars",
+        type=int,
+        default=DEFAULT_AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLE_TEXT_CHARS,
+    )
+    parser.add_argument(
+        "--compiler-ir-metric-text-policy",
+        choices=COMPILER_IR_METRIC_TEXT_POLICIES,
+        default=DEFAULT_COMPILER_IR_METRIC_TEXT_POLICY,
+    )
+    parser.add_argument(
+        "--compiler-ir-metric-sample-timeout-seconds",
+        type=float,
+        default=DEFAULT_COMPILER_IR_METRIC_SAMPLE_TIMEOUT_SECONDS,
+    )
+    parser.add_argument("--compiler-ir-train-mode", default=DEFAULT_COMPILER_IR_TRAIN_MODE)
+    parser.add_argument("--compiler-ir-train-every-n-cycles", type=int, default=4)
+    parser.add_argument(
+        "--compiler-ir-guided-train-mode",
+        default=DEFAULT_COMPILER_IR_GUIDED_TRAIN_MODE,
+    )
+    parser.add_argument("--compiler-ir-guided-train-every-n-cycles", type=int, default=4)
+    parser.add_argument(
+        "--autoencoder-before-train-eval-mode",
+        default=DEFAULT_AUTOENCODER_BEFORE_TRAIN_EVAL_MODE,
+    )
+    parser.add_argument("--autoencoder-before-train-eval-every-n-cycles", type=int, default=4)
+    parser.add_argument(
+        "--autoencoder-sample-memory-probe-mode",
+        default=DEFAULT_AUTOENCODER_SAMPLE_MEMORY_PROBE_MODE,
+    )
+    parser.add_argument("--autoencoder-sample-memory-probe-every-n-cycles", type=int, default=4)
+    parser.add_argument(
+        "--autoencoder-todo-supervisor-mode",
+        default=DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MODE,
+    )
+    parser.add_argument("--autoencoder-todo-supervisor-min-open", type=int, default=12)
+    parser.add_argument(
         "--bridge-loss-adapters",
         default=DEFAULT_BRIDGE_LOSS_ADAPTERS,
         help=(
@@ -8100,7 +9849,7 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--bridge-evaluate-provers",
         type=parse_bool_flag,
-        default=True,
+        default=_default_bridge_evaluate_provers(),
         help=(
             "Whether bridge scoring should run expensive theorem-prover gates. "
             "Use false for daemon health checks that need fast compiler/KG/TODO cycles."
@@ -9022,6 +10771,18 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--codex-main-apply-max-inflight-packets",
+        type=int,
+        default=int(
+            os.environ.get("IPFS_DATASETS_CODEX_MAIN_APPLY_MAX_INFLIGHT_PACKETS", "1")
+            or 1
+        ),
+        help=(
+            "Maximum active apply_to_main Codex packets before new claims are "
+            "backpressured. Use 0 to disable this claim-time guard."
+        ),
+    )
+    parser.add_argument(
         "--codex-sandbox",
         choices=("read-only", "workspace-write", "danger-full-access"),
         default="workspace-write",
@@ -9032,6 +10793,11 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--paired-launch-delay-seconds", type=float, default=0.0)
     parser.add_argument("--paired-poll-seconds", type=float, default=1.0)
     parser.add_argument("--paired-grace-seconds", type=float, default=300.0)
+    parser.add_argument(
+        "--paired-codex-disable-cuda",
+        type=parse_bool_flag,
+        default=True,
+    )
     parser.add_argument(
         "--paired-supervisor-backend",
         choices=("simple", "accelerate_style"),
@@ -9512,7 +11278,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         )
         save_summary(summary_path, summary)
     bridge_adapters = bridge_loss_adapter_names(args)
-    bridge_evaluate_provers = bool(getattr(args, "bridge_evaluate_provers", True))
+    bridge_evaluate_provers = bool(
+        getattr(args, "bridge_evaluate_provers", _default_bridge_evaluate_provers())
+    )
     bridge_parallel_workers = max(
         1,
         int(getattr(args, "autoencoder_bridge_workers", 1) or 1),

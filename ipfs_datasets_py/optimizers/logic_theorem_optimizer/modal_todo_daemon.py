@@ -1320,6 +1320,7 @@ class ModalProgramSynthesisTodoGenerator:
         samples: Sequence[LegalSample],
         *,
         autoencoder: AdaptiveModalAutoencoder,
+        validation_samples: Optional[Sequence[LegalSample]] = None,
     ) -> List[ModalTodo]:
         """Generate program-repair TODOs only for repeated interpretable hints."""
         if not self.policy.enable_program_synthesis_todos:
@@ -1329,6 +1330,16 @@ class ModalProgramSynthesisTodoGenerator:
             return []
 
         samples_by_id = {sample.sample_id: sample for sample in sample_list}
+        validation_list = list(validation_samples or [])
+        validation_samples_by_id = {
+            sample.sample_id: sample
+            for sample in validation_list
+        }
+        validation_sample_ids = [sample.sample_id for sample in validation_list]
+        validation_metric_payloads = _program_synthesis_sample_payloads(
+            validation_sample_ids,
+            samples_by_id=validation_samples_by_id,
+        )
         introspections = [
             autoencoder.introspect_sample(sample, use_sample_memory=False).to_dict()
             for sample in sample_list
@@ -1399,6 +1410,9 @@ class ModalProgramSynthesisTodoGenerator:
                 sample_ids,
                 samples_by_id=samples_by_id,
             )
+            if validation_metric_payloads:
+                metadata["validation_metric_sample_payloads"] = validation_metric_payloads
+                metadata["validation_metric_sample_role"] = "holdout"
             metadata["residual_cluster_stage"] = "post_sgd_or_current_state"
             metadata["semantic_bundle_key"] = _program_todo_bundle_signature(
                 action=action,
@@ -2216,6 +2230,7 @@ class ModalTodoSupervisor:
         samples: Sequence[LegalSample],
         *,
         autoencoder: AdaptiveModalAutoencoder,
+        validation_samples: Optional[Sequence[LegalSample]] = None,
         residual_before: Optional[AutoencoderEvaluation] = None,
         residual_after: Optional[AutoencoderEvaluation] = None,
         residual_stage: str = "current_state",
@@ -2225,6 +2240,7 @@ class ModalTodoSupervisor:
         todos = self.program_synthesis_generator.generate(
             list(samples),
             autoencoder=autoencoder,
+            validation_samples=validation_samples,
         )
         if residual_before is not None and residual_after is not None:
             annotated: List[ModalTodo] = []
@@ -2617,10 +2633,19 @@ class ModalTodoSupervisor:
                 target_metric_status = str(
                     report.get("target_metric_status") or ""
                 ).strip().lower()
-                if validation_status == "failed" or target_metric_status == "regressed":
+                holdout_target_metric_status = str(
+                    report.get("holdout_target_metric_status") or ""
+                ).strip().lower()
+                if (
+                    validation_status == "failed"
+                    or target_metric_status == "regressed"
+                    or holdout_target_metric_status == "regressed"
+                ):
                     reason = (
                         "target_metric_regression"
                         if target_metric_status == "regressed"
+                        else "holdout_target_metric_regression"
+                        if holdout_target_metric_status == "regressed"
                         else _program_synthesis_failure_reason(
                             "main_apply_validation_failed",
                             validation_report,
@@ -2965,6 +2990,7 @@ class ModalTodoSupervisor:
         program_synthesis_seeded = self.seed_program_synthesis_from_introspection(
             sample_list,
             autoencoder=autoencoder,
+            validation_samples=validation_list,
             residual_before=before,
             residual_after=after,
             residual_stage="post_sgd" if claimed else "current_state_no_sgd",
@@ -4761,6 +4787,9 @@ def _record_program_synthesis_failure_evidence(
         in {
             "baseline_failure_accepted",
             "baseline_status",
+            "holdout_metric_deltas",
+            "holdout_regressed_metrics",
+            "holdout_target_metric_status",
             "main_apply_validation_failed_command",
             "main_apply_validation_failed_tests",
             "main_apply_validation_failure_tokens",

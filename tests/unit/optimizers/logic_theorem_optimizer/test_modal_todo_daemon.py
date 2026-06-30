@@ -2728,6 +2728,52 @@ def test_codex_target_metric_validation_reports_regressions() -> None:
     assert unavailable["regressed_metrics"] == []
 
 
+def test_codex_metric_payloads_keep_holdout_separate() -> None:
+    packet = {
+        "todos": [
+            {
+                "metadata": {
+                    "metric_sample_payloads": [
+                        {
+                            "sample_id": "evidence-1",
+                            "text": "The agency shall publish notice.",
+                        }
+                    ],
+                    "target_metrics": ["cross_entropy_loss"],
+                    "validation_metric_sample_payloads": [
+                        {
+                            "sample_id": "holdout-1",
+                            "text": "The agency may not deny the permit.",
+                        }
+                    ],
+                }
+            }
+        ]
+    }
+
+    evidence = runner._codex_packet_metric_sample_payloads(packet)
+    holdout = runner._codex_packet_validation_metric_sample_payloads(packet)
+    report = runner._codex_packet_validation_report(
+        {
+            "holdout_metric_deltas": {"cross_entropy_loss": -0.1},
+            "holdout_target_metric_validation": {
+                "regressed_metrics": ["cross_entropy_loss"],
+                "status": "regressed",
+            },
+            "main_apply_status": "applied",
+            "main_apply_validation": {"status": "passed"},
+            "patch_status": "applied_to_main",
+            "target_metric_validation": {"status": "passed"},
+        }
+    )
+
+    assert [payload["sample_id"] for payload in evidence] == ["evidence-1"]
+    assert [payload["sample_id"] for payload in holdout] == ["holdout-1"]
+    assert report["holdout_target_metric_status"] == "regressed"
+    assert report["holdout_regressed_metrics"] == ["cross_entropy_loss"]
+    assert report["holdout_metric_deltas"] == {"cross_entropy_loss": -0.1}
+
+
 def test_codex_target_metric_snapshot_uses_shared_process_capture(
     tmp_path: Path,
     monkeypatch,

@@ -2103,7 +2103,7 @@ def _with_compiler_guidance_decoded_phrases(
             if not view_atom:
                 continue
             direction = "underrepresented" if gap > 0.0 else "overrepresented"
-            add("compiler_guidance_legal_ir_view_gap", f"{view_atom}:{gap:.6f}")
+            add("compiler_guidance_legal_ir_view_gap", view_atom)
             add(
                 "compiler_guidance_legal_ir_view_gap_direction",
                 f"{view_atom}:{direction}",
