@@ -12183,10 +12183,35 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 legal_ir_parallel_workers=bridge_parallel_workers,
                 use_sample_memory=False,
             )
-            compiler_ir_train = compiler_ir_metric_block(train_samples, feature_codec)
+            compiler_ir_metric_kwargs = {
+                "max_sample_text_chars": int(
+                    getattr(args, "max_sample_text_chars", 0) or 0
+                ),
+                "metric_text_policy": str(
+                    getattr(
+                        args,
+                        "compiler_ir_metric_text_policy",
+                        DEFAULT_COMPILER_IR_METRIC_TEXT_POLICY,
+                    )
+                ),
+                "sample_timeout_seconds": float(
+                    getattr(
+                        args,
+                        "compiler_ir_metric_sample_timeout_seconds",
+                        DEFAULT_COMPILER_IR_METRIC_SAMPLE_TIMEOUT_SECONDS,
+                    )
+                    or 0.0
+                ),
+            }
+            compiler_ir_train = compiler_ir_metric_block(
+                train_samples,
+                feature_codec,
+                **compiler_ir_metric_kwargs,
+            )
             compiler_ir_validation = compiler_ir_metric_block(
                 acceptance_validation_samples,
                 feature_codec,
+                **compiler_ir_metric_kwargs,
             )
             compiler_ir_validation_sample_ids = [
                 str(getattr(sample, "sample_id", "") or "")
