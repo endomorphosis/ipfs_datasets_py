@@ -3643,6 +3643,10 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
     assert paired["codex_command"][scope_index + 1] == "frame_logic"
     assert paired["autoencoder_command"].count("--warm-start-run-id") == 2
     assert paired["autoencoder_command"].count("--warm-start-state") == 1
+    canonical_mode_index = paired["autoencoder_command"].index(
+        "--autoencoder-canonical-warm-start"
+    )
+    assert paired["autoencoder_command"][canonical_mode_index + 1] == "auto"
     assert "--generalizable-projection-max-cosine-regression" in paired["autoencoder_command"]
     assert "--generalizable-projection-max-reconstruction-regression" in paired["autoencoder_command"]
     assert "--generalizable-projection-max-cross-entropy-regression" in paired["autoencoder_command"]
@@ -3863,6 +3867,59 @@ def test_build_paired_daemon_commands_respect_custom_child_run_ids_and_model() -
     model_index = paired["codex_command"].index("--codex-model")
     assert paired["codex_command"][model_index + 1] == "gpt-5.5"
     assert "--worker-id" not in paired["codex_command"]
+
+
+def test_resolve_warm_start_state_paths_uses_canonical_state_by_default(tmp_path: Path) -> None:
+    queue_dir = tmp_path / "todo-queues"
+    queue_dir.mkdir()
+    canonical_state_path = queue_dir / runner.DEFAULT_CANONICAL_AUTOENCODER_STATE_NAME
+    ModalAutoencoderTrainingState(
+        feature_family_logits={"feature:canonical": {"deontic": 1.0}},
+        decoded_embeddings={"sample-memory": [1.0, 0.0]},
+        family_logits={"sample-memory": {"deontic": 1.0}},
+        applied_todo_ids=["sample-todo"],
+    ).save_json(canonical_state_path)
+
+    args = SimpleNamespace(
+        warm_start_run_id=[],
+        warm_start_state=[],
+        autoencoder_canonical_warm_start="auto",
+        canonical_warm_start_state=Path(runner.DEFAULT_CANONICAL_AUTOENCODER_STATE_NAME),
+    )
+
+    paths = runner.resolve_warm_start_state_paths(args, queue_dir)
+    warm_state, metadata = runner.load_warm_start_state(paths)
+
+    assert paths == [canonical_state_path]
+    assert metadata["source_count"] == 1
+    assert metadata["loaded_paths"] == [str(canonical_state_path)]
+    assert warm_state.feature_family_logits["feature:canonical"]["deontic"] == pytest.approx(1.0)
+    assert warm_state.decoded_embeddings == {}
+    assert warm_state.family_logits == {}
+    assert warm_state.applied_todo_ids == []
+
+
+def test_resolve_warm_start_state_paths_can_disable_or_require_canonical_state(tmp_path: Path) -> None:
+    queue_dir = tmp_path / "todo-queues"
+    queue_dir.mkdir()
+    args_off = SimpleNamespace(
+        warm_start_run_id=[],
+        warm_start_state=[],
+        autoencoder_canonical_warm_start="off",
+        canonical_warm_start_state=Path(runner.DEFAULT_CANONICAL_AUTOENCODER_STATE_NAME),
+    )
+
+    assert runner.resolve_warm_start_state_paths(args_off, queue_dir) == []
+
+    args_require = SimpleNamespace(
+        warm_start_run_id=[],
+        warm_start_state=[],
+        autoencoder_canonical_warm_start="require",
+        canonical_warm_start_state=Path(runner.DEFAULT_CANONICAL_AUTOENCODER_STATE_NAME),
+    )
+
+    with pytest.raises(FileNotFoundError, match=runner.DEFAULT_CANONICAL_AUTOENCODER_STATE_NAME):
+        runner.resolve_warm_start_state_paths(args_require, queue_dir)
 
 
 def test_build_paired_daemon_commands_can_launch_parallel_scoped_codex_children() -> None:

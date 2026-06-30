@@ -109,6 +109,12 @@ DEFAULT_COMPILER_IR_GUIDED_TRAIN_MODE = "periodic"
 DEFAULT_AUTOENCODER_BEFORE_TRAIN_EVAL_MODE = "periodic"
 DEFAULT_AUTOENCODER_SAMPLE_MEMORY_PROBE_MODE = "periodic"
 DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MODE = "starved"
+DEFAULT_CANONICAL_AUTOENCODER_STATE_NAME = "legal-ir-autoencoder-canonical.state.json"
+AUTOENCODER_CANONICAL_WARM_START_ENV = "IPFS_DATASETS_AUTOENCODER_CANONICAL_WARM_START"
+AUTOENCODER_CANONICAL_WARM_START_STATE_ENV = (
+    "IPFS_DATASETS_AUTOENCODER_CANONICAL_WARM_START_STATE"
+)
+AUTOENCODER_CANONICAL_WARM_START_MODES = frozenset({"auto", "off", "require"})
 
 
 def _default_bridge_evaluate_provers() -> bool:
@@ -116,6 +122,17 @@ def _default_bridge_evaluate_provers() -> bool:
         str(os.environ.get(BRIDGE_EVALUATE_PROVERS_ENV) or "").strip().lower()
         in _TRUE_ENV_VALUES
     )
+
+
+def _default_canonical_warm_start_mode() -> str:
+    value = str(os.environ.get(AUTOENCODER_CANONICAL_WARM_START_ENV) or "auto").strip().lower()
+    if value in {"0", "false", "no", "off", "none", "disabled"}:
+        return "off"
+    if value in {"1", "true", "yes", "y", "on", "auto"}:
+        return "auto"
+    if value == "require":
+        return "require"
+    return "auto"
 
 CODEX_AST_SCOPES = tuple(
     dict.fromkeys(
@@ -6543,7 +6560,20 @@ def build_paired_daemon_commands(
         str(getattr(args, "autoencoder_bridge_workers", 1)),
         "--test-every-cycles",
         str(args.test_every_cycles),
+        "--autoencoder-canonical-warm-start",
+        str(
+            getattr(
+                args,
+                "autoencoder_canonical_warm_start",
+                _default_canonical_warm_start_mode(),
+            )
+        ),
     ]
+    canonical_warm_start_state = getattr(args, "canonical_warm_start_state", None)
+    if canonical_warm_start_state:
+        autoencoder_command.extend(
+            ["--canonical-warm-start-state", str(canonical_warm_start_state)]
+        )
     for warm_start_run_id in getattr(args, "warm_start_run_id", []):
         autoencoder_command.extend(["--warm-start-run-id", str(warm_start_run_id)])
     for warm_start_state in getattr(args, "warm_start_state", []):
@@ -11284,16 +11314,66 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         default=[],
         help="Import feature-level state from a prior state JSON path.",
     )
+    parser.add_argument(
+        "--autoencoder-canonical-warm-start",
+        choices=tuple(sorted(AUTOENCODER_CANONICAL_WARM_START_MODES)),
+        default=_default_canonical_warm_start_mode(),
+        help=(
+            "Automatically warm-start autoencoder runs from the canonical "
+            "feature-level state when available."
+        ),
+    )
+    parser.add_argument(
+        "--canonical-warm-start-state",
+        type=Path,
+        default=Path(
+            os.environ.get(AUTOENCODER_CANONICAL_WARM_START_STATE_ENV)
+            or DEFAULT_CANONICAL_AUTOENCODER_STATE_NAME
+        ),
+        help="Canonical feature-level autoencoder state path, relative to queue dir unless absolute.",
+    )
     return parser
 
 
 def resolve_warm_start_state_paths(args: argparse.Namespace, queue_dir: Path) -> List[Path]:
     """Resolve explicit warm-start state paths and prior run ids."""
-    paths = [Path(path) for path in getattr(args, "warm_start_state", [])]
-    paths.extend(
-        queue_dir / f"{run_id}.state.json"
-        for run_id in getattr(args, "warm_start_run_id", [])
-    )
+    paths: List[Path] = []
+    seen: set[str] = set()
+
+    def append_once(path: Path, *, base_dir: Optional[Path] = None) -> None:
+        resolved = path if path.is_absolute() or base_dir is None else base_dir / path
+        key = str(resolved)
+        if key in seen:
+            return
+        seen.add(key)
+        paths.append(resolved)
+
+    canonical_mode = str(
+        getattr(args, "autoencoder_canonical_warm_start", _default_canonical_warm_start_mode())
+        or "auto"
+    ).strip().lower()
+    if canonical_mode not in AUTOENCODER_CANONICAL_WARM_START_MODES:
+        canonical_mode = "auto"
+    if canonical_mode != "off":
+        canonical_path = Path(
+            getattr(
+                args,
+                "canonical_warm_start_state",
+                DEFAULT_CANONICAL_AUTOENCODER_STATE_NAME,
+            )
+        )
+        canonical_path = canonical_path if canonical_path.is_absolute() else queue_dir / canonical_path
+        if canonical_path.exists() or canonical_mode == "require":
+            append_once(canonical_path)
+        if canonical_mode == "require" and not canonical_path.exists():
+            raise FileNotFoundError(
+                f"required canonical autoencoder warm-start state not found: {canonical_path}"
+            )
+
+    for path in getattr(args, "warm_start_state", []):
+        append_once(Path(path))
+    for run_id in getattr(args, "warm_start_run_id", []):
+        append_once(Path(f"{run_id}.state.json"), base_dir=queue_dir)
     return paths
 
 
