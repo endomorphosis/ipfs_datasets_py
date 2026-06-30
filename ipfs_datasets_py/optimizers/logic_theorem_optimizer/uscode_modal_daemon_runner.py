@@ -12433,7 +12433,74 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         while not stop_requested and time.time() + 8.0 < end_at:
             cycle = int(summary.get("cycles", 0)) + 1
             cycle_started = time.time()
+            cycle_phase_timings: Dict[str, float] = {}
+            active_phase = {"name": "", "started_at": cycle_started}
+
+            def mark_cycle_phase(phase: str, **payload: Any) -> None:
+                now = time.time()
+                previous = str(active_phase.get("name") or "")
+                if previous:
+                    cycle_phase_timings[previous] = (
+                        cycle_phase_timings.get(previous, 0.0)
+                        + max(0.0, now - float(active_phase["started_at"]))
+                    )
+                active_phase["name"] = str(phase)
+                active_phase["started_at"] = now
+                summary["active_cycle"] = cycle
+                summary["active_cycle_phase"] = str(phase)
+                summary["active_cycle_last_heartbeat_at"] = utc_now()
+                summary["active_cycle_phase_payload"] = dict(payload)
+                summary["active_cycle_phase_timings"] = {
+                    name: round(seconds, 3)
+                    for name, seconds in sorted(cycle_phase_timings.items())
+                }
+                save_summary(summary_path, summary)
+                append_event(
+                    log_path,
+                    args.run_id,
+                    {
+                        "cycle": cycle,
+                        "event": "cycle_phase",
+                        "phase": str(phase),
+                        **payload,
+                    },
+                )
+
+            def finish_cycle_phase() -> None:
+                now = time.time()
+                previous = str(active_phase.get("name") or "")
+                if previous:
+                    cycle_phase_timings[previous] = (
+                        cycle_phase_timings.get(previous, 0.0)
+                        + max(0.0, now - float(active_phase["started_at"]))
+                    )
+                summary["active_cycle_phase_timings"] = {
+                    name: round(seconds, 3)
+                    for name, seconds in sorted(cycle_phase_timings.items())
+                }
+
+            def projection_progress_callback(progress: Mapping[str, Any]) -> None:
+                payload = dict(progress)
+                summary["active_cycle"] = cycle
+                summary["active_cycle_phase"] = "projection_training"
+                summary["active_cycle_projection_stage"] = str(
+                    payload.get("stage") or ""
+                )
+                summary["active_cycle_projection_progress"] = payload
+                summary["active_cycle_last_heartbeat_at"] = utc_now()
+                save_summary(summary_path, summary)
+                append_event(
+                    log_path,
+                    args.run_id,
+                    {
+                        "cycle": cycle,
+                        "event": "projection_progress",
+                        "progress": payload,
+                    },
+                )
+
             cycle_learning_rate, cycle_lr_policy = _cycle_learning_rate(args, summary)
+            mark_cycle_phase("sampling")
             (
                 train_indices,
                 train_samples,
@@ -12456,11 +12523,20 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 if validation_canary_samples
                 else "rotating_holdout"
             )
+            mark_cycle_phase(
+                "before_train_eval",
+                sample_count=len(train_samples),
+            )
             before_train = autoencoder.evaluate(
                 train_samples,
                 legal_ir_bridge_names=bridge_adapters,
                 legal_ir_evaluate_provers=bridge_evaluate_provers,
                 legal_ir_parallel_workers=bridge_parallel_workers,
+            )
+            mark_cycle_phase(
+                "before_validation_eval",
+                sample_count=len(acceptance_validation_samples),
+                validation_mode=validation_mode,
             )
             before_validation = autoencoder.evaluate(
                 acceptance_validation_samples,
@@ -12489,10 +12565,15 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     or 0.0
                 ),
             }
+            mark_cycle_phase("compiler_ir_train", sample_count=len(train_samples))
             compiler_ir_train = compiler_ir_metric_block(
                 train_samples,
                 feature_codec,
                 **compiler_ir_metric_kwargs,
+            )
+            mark_cycle_phase(
+                "compiler_ir_validation",
+                sample_count=len(acceptance_validation_samples),
             )
             compiler_ir_validation = compiler_ir_metric_block(
                 acceptance_validation_samples,
@@ -12550,11 +12631,16 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 if compiler_ir_validation_comparable
                 else {}
             )
+            mark_cycle_phase("bridge_ir_train", sample_count=len(train_samples))
             bridge_ir_train = bridge_ir_metric_block(
                 train_samples,
                 bridge_adapters,
                 evaluate_provers=bridge_evaluate_provers,
                 parallel_workers=bridge_parallel_workers,
+            )
+            mark_cycle_phase(
+                "bridge_ir_validation",
+                sample_count=len(acceptance_validation_samples),
             )
             bridge_ir_validation = bridge_ir_metric_block(
                 acceptance_validation_samples,
@@ -12568,6 +12654,12 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 int(getattr(args, "generalizable_projection_epochs", 0) or 0),
             )
             if generalizable_projection_epochs > 0 and train_samples:
+                mark_cycle_phase(
+                    "projection_training",
+                    epoch_count=generalizable_projection_epochs,
+                    train_sample_count=len(train_samples),
+                    validation_sample_count=len(acceptance_validation_samples),
+                )
                 feature_projection_report = autoencoder.train_generalizable_projection(
                     train_samples,
                     validation_samples=acceptance_validation_samples,
@@ -12691,7 +12783,13 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                         or 0
                     ),
                     projection_cycle=cycle,
+                    progress_callback=projection_progress_callback,
                 )
+            mark_cycle_phase(
+                "todo_supervisor_optimize",
+                max_inner_iterations=args.max_inner_iterations,
+                max_items=args.max_items,
+            )
             run = supervisor.optimize(
                 train_samples,
                 validation_samples=acceptance_validation_samples,
@@ -12703,11 +12801,17 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 target_cross_entropy_loss=0.001,
                 target_cosine_similarity=0.999999,
             )
+            mark_cycle_phase("after_train_eval", sample_count=len(train_samples))
             after_train = autoencoder.evaluate(
                 train_samples,
                 legal_ir_bridge_names=bridge_adapters,
                 legal_ir_evaluate_provers=bridge_evaluate_provers,
                 legal_ir_parallel_workers=bridge_parallel_workers,
+            )
+            mark_cycle_phase(
+                "after_validation_eval",
+                sample_count=len(acceptance_validation_samples),
+                validation_mode=validation_mode,
             )
             after_validation = autoencoder.evaluate(
                 acceptance_validation_samples,
@@ -12717,6 +12821,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 use_sample_memory=False,
             )
             blocked_validation_sample_ids.update(sample.sample_id for sample in train_samples)
+            mark_cycle_phase("queue_merge")
             with queue_file_lock(queue_path):
                 latest_queue = ModalTodoQueue.load_jsonl(queue_path)
                 latest_queue.merge_from(
@@ -12730,8 +12835,10 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 latest_queue.save_jsonl(queue_path)
                 supervisor.queue = latest_queue
                 queue = latest_queue
+            mark_cycle_phase("state_save")
             autoencoder.state.save_json(state_path)
             run.save_json(run_json_path)
+            finish_cycle_phase()
 
             train_ce_delta = before_train.cross_entropy_loss - after_train.cross_entropy_loss
             validation_ce_delta = before_validation.cross_entropy_loss - after_validation.cross_entropy_loss
@@ -12746,6 +12853,10 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["latest_queue_counts"] = supervisor.queue.status_counts()
             summary["latest_role_queue_counts"] = supervisor.queue.role_status_counts()
             summary["latest_feature_projection_report"] = feature_projection_report
+            summary["latest_cycle_phase_timings"] = {
+                name: round(seconds, 3)
+                for name, seconds in sorted(cycle_phase_timings.items())
+            }
             summary["validation_mode"] = validation_mode
             program_synthesis_status = update_program_synthesis_summary(
                 summary,
