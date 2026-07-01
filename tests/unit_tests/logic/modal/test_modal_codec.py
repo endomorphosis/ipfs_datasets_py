@@ -29733,6 +29733,51 @@ def test_decompiler_emits_direct_target_reconstruction_pair_and_family_slots() -
     )
 
 
+def test_decompiler_routes_office_seal_atoms_to_deontic_frame_and_legal_views() -> None:
+    document = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "The Plant Variety Protection Office shall have an official seal, "
+            "which shall be judicially noticed."
+        ),
+        predicate="plant_variety_protection_office_official_seal",
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "deontic->deontic" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "deontic->frame" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "official_seal:deontic->deontic" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "plant_variety_protection_office:deontic->frame" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
+    assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
+    assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
+    assert "knowledge_graphs.neo4j_compat" in slot_texts["legal_ir_view_prototype"]
+    assert "modal.frame_logic" in slot_texts["legal_ir_view_prototype"]
+    assert any(
+        "obligation" in value
+        and "plant variety protection office official seal" in value
+        for value in slot_texts["typed_ir_reconstruction"]
+    )
+    assert "plant variety protection office official seal" in structural_text
+
+
 def test_decompiler_emits_heading_typed_ir_reconstruction_for_frame_residuals() -> None:
     document = _single_formula_document(
         family="frame",

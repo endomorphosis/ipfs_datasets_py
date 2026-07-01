@@ -6984,13 +6984,17 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "game_preserve",
         "government_claim",
         "governing_body",
+        "health_professional_education_assistance",
         "irrigation_project",
         "jurisdiction_authority",
         "law_enforcement",
         "livestock_commerce",
         "officer_election",
+        "prize_proceeds_charge",
         "state_court_civil_jurisdiction",
         "state_court_jurisdiction",
+        "treasury_deposit",
+        "unknown_party_deposit",
         "white_horse_hill_game_preserve",
     }:
         add("knowledge_graphs.neo4j_compat")
@@ -7019,11 +7023,15 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "false_claim_knowledge",
         "false_fraudulent_claim",
         "government_claim",
+        "health_professional_education_assistance",
         "irrigation_project",
         "jurisdiction_authority",
         "livestock_commerce",
+        "prize_proceeds_charge",
         "state_court_civil_jurisdiction",
         "state_court_jurisdiction",
+        "treasury_deposit",
+        "unknown_party_deposit",
     }:
         add("CEC.native")
     if normalized_atom in {
@@ -7034,6 +7042,22 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
     }:
         add("CEC.native")
         add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
+    if normalized_atom in {
+        "cost_expense_charge",
+        "education_assistance_benefit",
+        "health_professional_education_assistance",
+        "internal_service_fee",
+        "office_seal",
+        "official_seal",
+        "plant_variety_protection",
+        "plant_variety_protection_office",
+        "prize_proceeds_charge",
+        "treasury_deposit",
+        "unknown_party_deposit",
+    }:
+        add("deontic.ir")
+        add("TDFOL.prover")
     if normalized_atom in {
         "annual_report_duty",
         "admission_fee_collection",
@@ -7173,6 +7197,8 @@ def _typed_decompiler_semantic_atom_target_families(
             "game_preserve",
             "government_claim",
             "governing_body",
+            "health_professional_education_assistance",
+            "education_assistance_benefit",
             "internal_service_fee",
             "irrigation_project",
             "jurisdiction_authority",
@@ -7185,12 +7211,29 @@ def _typed_decompiler_semantic_atom_target_families(
             "official_seal",
             "plant_variety_protection",
             "plant_variety_protection_office",
+            "prize_proceeds_charge",
             "test_platform",
             "state_court_civil_jurisdiction",
             "state_court_jurisdiction",
+            "treasury_deposit",
+            "unknown_party_deposit",
             "white_horse_hill_game_preserve",
         }:
             add("frame")
+        if normalized_atom in {
+            "cost_expense_charge",
+            "education_assistance_benefit",
+            "health_professional_education_assistance",
+            "internal_service_fee",
+            "office_seal",
+            "official_seal",
+            "plant_variety_protection",
+            "plant_variety_protection_office",
+            "prize_proceeds_charge",
+            "treasury_deposit",
+            "unknown_party_deposit",
+        }:
+            add("deontic")
         if normalized_atom in {
             "codification",
             "omitted",
