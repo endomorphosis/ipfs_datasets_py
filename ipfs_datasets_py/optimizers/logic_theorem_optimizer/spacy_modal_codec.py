@@ -6212,10 +6212,10 @@ def _apply_refined_modal_family_cue_pair_balance(
         counts[deontic_family] = max(deontic_count, deontic_floor)
         deontic_count = float(counts.get(deontic_family, 0.0))
 
-    # frame -> deontic / temporal:
+    # frame -> conditional_normative / deontic / temporal:
     # generic structural frame cues in statutory references often describe the
-    # venue for an operative rule.  Preserve explicit deontic and temporal
-    # target evidence even when the frame cue count is dominant.
+    # venue for an operative rule.  Preserve explicit conditional, deontic,
+    # and temporal target evidence even when the frame cue count is dominant.
     if (
         frame_count > 0.0
         and has_frame_scope_context
@@ -6238,6 +6238,38 @@ def _apply_refined_modal_family_cue_pair_balance(
             )
             counts[deontic_family] = max(deontic_count, deontic_floor)
             deontic_count = float(counts.get(deontic_family, 0.0))
+            if (
+                frame_count >= deontic_count
+                and has_deontic_cue
+                and not has_editorial_frame_context
+                and not has_structural_authority_frame_scope
+            ):
+                counts[deontic_family] = max(deontic_count, frame_count + 0.01)
+                deontic_count = float(counts.get(deontic_family, 0.0))
+        if (
+            frame_count > conditional_count
+            and has_structural_conditional_scope
+            and has_explicit_conditional_scope
+        ):
+            conditional_floor = _scaled_competing_scope_backfill(
+                source_count=max(frame_count, temporal_count, deontic_count, 1.0),
+                ratio=0.34,
+                minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                maximum=_STATUTORY_GENERIC_FRAME_CONDITIONAL_SCOPE_MAX,
+            )
+            counts[conditional_family] = max(conditional_count, conditional_floor)
+            conditional_count = float(counts.get(conditional_family, 0.0))
+            if (
+                frame_count >= conditional_count
+                and not has_editorial_frame_context
+                and not has_definition_scope
+                and not has_structural_authority_frame_scope
+            ):
+                counts[conditional_family] = max(
+                    conditional_count,
+                    frame_count + 0.01,
+                )
+                conditional_count = float(counts.get(conditional_family, 0.0))
         if (
             frame_count > temporal_count
             and has_temporal_scope

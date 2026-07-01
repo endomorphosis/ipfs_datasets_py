@@ -1856,6 +1856,21 @@ COMPILER_REFINED_PACKET_001095_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     ),
 )
 
+COMPILER_REFINED_PACKET_001096_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ),
+)
+
 COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.ALETHIC.value,
@@ -1886,6 +1901,7 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS: Tuple[Tuple[str, str], ...] = (
     *COMPILER_REFINED_PACKET_000172_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_000259_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_000301_FAMILY_PAIRS,
+    *COMPILER_REFINED_PACKET_001096_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_000467_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_000407_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_001095_FAMILY_PAIRS,
