@@ -1147,6 +1147,14 @@ def _normalize_tdfol_export_formula(text: str) -> str:
         normalized,
         flags=re.IGNORECASE,
     )
+    normalized = re.sub(
+        r"^\s*TDFOL(?:[\s.]prover)?\s+"
+        r"(?:proof_obligation|proof\s+obligation|obligation|goal|claim)"
+        r"\s*[:=]\s*",
+        "",
+        normalized,
+        flags=re.IGNORECASE,
+    )
     normalized = normalized.strip("`\"'").strip()
     normalized = _unwrap_tdfol_multiline_export(normalized)
     normalized = _unwrap_tdfol_export_wrapper(normalized)
@@ -1338,7 +1346,7 @@ def _normalize_deontic_agent_annotation_export(text: str) -> str:
 def _normalize_bracketed_deontic_agent_export(text: str) -> str:
     result: list[str] = []
     index = 0
-    pattern = re.compile(r"([OPF])\s*\[\s*([A-Za-z_][A-Za-z0-9_-]*)\s*\]\s*\(")
+    pattern = re.compile(r"([OPF])\s*\[\s*([^\]\(\)]+?)\s*\]\s*\(")
     while index < len(text):
         match = pattern.search(text, index)
         if match is None:
@@ -1353,9 +1361,40 @@ def _normalize_bracketed_deontic_agent_export(text: str) -> str:
             text[open_index + 1:close_index]
         )
         result.append(text[index:match.start()])
-        result.append(f"{match.group(1)}({inner})")
+        raw_formula = _formula_from_bracketed_deontic_agent(
+            match.group(1),
+            match.group(2),
+            inner,
+        )
+        result.append(raw_formula or f"{match.group(1)}({inner})")
         index = close_index + 1
     return "".join(result)
+
+
+def _formula_from_bracketed_deontic_agent(
+    operator: str,
+    agent: str,
+    inner: str,
+) -> str:
+    """Synthesize formulas from O[agency](publish notice) style exports."""
+
+    payload = str(inner or "").strip()
+    if not payload or _looks_like_tdfol_formula(payload):
+        return ""
+    agent_text = re.sub(r"\s+", " ", str(agent or "")).strip()
+    if not agent_text:
+        return ""
+    operator = str(operator or "").upper()
+    modal_word = {
+        "O": "shall",
+        "P": "may",
+        "F": "shall not",
+    }.get(operator, "shall")
+    return _formula_from_raw_deontic_text_argument(
+        operator,
+        f"{agent_text} {modal_word} {payload}",
+        prefer_modal_clause=True,
+    )
 
 
 def _normalize_underscored_deontic_agent_export(text: str) -> str:
@@ -1492,17 +1531,37 @@ def _normalize_raw_deontic_text_export(text: str) -> str:
     return "".join(result)
 
 
-def _formula_from_raw_deontic_text_argument(operator: str, text: str) -> str:
+def _formula_from_raw_deontic_text_argument(
+    operator: str,
+    text: str,
+    *,
+    prefer_modal_clause: bool = False,
+) -> str:
     candidate = str(text or "").strip().rstrip(".").strip()
     if not candidate or _looks_like_tdfol_formula(candidate):
         return ""
     if not _looks_like_legal_text_obligation(candidate):
         return ""
-    norm = _synthesized_norm_from_text(candidate)
+    norm = _synthesized_norm_from_text(
+        candidate,
+        prefer_modal_clause=prefer_modal_clause,
+    )
     if norm is None:
         return ""
-    actor = _symbol(norm.get("actor") or _infer_actor_from_text(candidate))
-    action = _predicate_name(norm.get("action") or _infer_action_from_text(candidate))
+    actor = _symbol(
+        norm.get("actor")
+        or _infer_actor_from_text(
+            candidate,
+            prefer_modal_clause=prefer_modal_clause,
+        )
+    )
+    action = _predicate_name(
+        norm.get("action")
+        or _infer_action_from_text(
+            candidate,
+            prefer_modal_clause=prefer_modal_clause,
+        )
+    )
     return f"{operator}({action}({actor}))"
 
 
@@ -1799,15 +1858,26 @@ def _norm_from_parser_element(
     }
 
 
-def _synthesized_norm_from_text(text: str) -> Optional[dict[str, Any]]:
+def _synthesized_norm_from_text(
+    text: str,
+    *,
+    prefer_modal_clause: bool = False,
+) -> Optional[dict[str, Any]]:
     normalized_text = " ".join(str(text or "").split())
     if not normalized_text:
         return None
     digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:12]
     modality = _normalized_modality(normalized_text)
+    use_modal_clause = prefer_modal_clause or _is_uscode_text(normalized_text)
     return {
-        "action": _infer_action_from_text(normalized_text),
-        "actor": _infer_actor_from_text(normalized_text),
+        "action": _infer_action_from_text(
+            normalized_text,
+            prefer_modal_clause=use_modal_clause,
+        ),
+        "actor": _infer_actor_from_text(
+            normalized_text,
+            prefer_modal_clause=use_modal_clause,
+        ),
         "canonical_citation": _extract_citation_from_text(normalized_text) or "",
         "condition": "",
         "modality": modality,
@@ -1851,7 +1921,7 @@ def _first_text_value(value: Any) -> str:
     return ""
 
 
-def _infer_action_from_text(text: str) -> str:
+def _infer_action_from_text(text: str, *, prefer_modal_clause: bool = False) -> str:
     normalized = " ".join(str(text or "").split())
     lowered = normalized.lower()
     if re.search(r"\b(?:repealed|repeal)\b", lowered):
@@ -1864,6 +1934,10 @@ def _infer_action_from_text(text: str) -> str:
     )
     if definition_match:
         return f"define_{definition_match.group(1)}"
+    if prefer_modal_clause:
+        modal_action = _infer_modal_action_from_text(normalized)
+        if modal_action:
+            return modal_action
     uscode_heading = _infer_uscode_heading_action(normalized)
     if uscode_heading:
         return uscode_heading
@@ -1901,6 +1975,29 @@ def _infer_action_from_text(text: str) -> str:
     informative = [token for token in tokens if token not in ignored]
     action_tokens = informative[:6] if informative else tokens[:3]
     return " ".join(action_tokens)
+
+
+def _infer_modal_action_from_text(text: str) -> str:
+    """Extract the operative action from the first shall/must/may clause."""
+
+    normalized = " ".join(str(text or "").split())
+    if not normalized:
+        return ""
+    match = re.search(
+        r"\b(?:shall|must|may)\s+(?:not\s+)?(.+?)(?:[.;]|$)",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    if not match:
+        return ""
+    action = match.group(1).strip()
+    action = re.sub(
+        r"\b(?:as|if|when|unless|before|after|until|except)\b.*$",
+        "",
+        action,
+        flags=re.IGNORECASE,
+    ).strip(" ,")
+    return action
 
 
 def _infer_uscode_heading_action(text: str) -> str:
@@ -1973,14 +2070,55 @@ def _clean_uscode_heading_phrase(text: str) -> str:
     return heading.lower()
 
 
-def _infer_actor_from_text(text: str) -> str:
-    lowered = str(text or "").lower()
+def _infer_actor_from_text(text: str, *, prefer_modal_clause: bool = False) -> str:
+    text_value = " ".join(str(text or "").split())
+    if prefer_modal_clause:
+        modal_subject = _infer_modal_actor_from_text(text_value)
+        if modal_subject:
+            return modal_subject
+    lowered = text_value.lower()
     ignored = {"term", "section", "subsection", "chapter", "title", "part", "clause"}
     for match in re.finditer(r"\bthe\s+([a-z][a-z0-9_]*)\b", lowered):
         candidate = match.group(1).strip()
         if candidate and candidate not in ignored:
             return candidate
     return "actor"
+
+
+def _is_uscode_text(text: str) -> bool:
+    return bool(
+        re.search(
+            r"(?:\b[0-9]+\s+U\.?\s*S\.?\s*C\.?\b|\bUnited States Code\b|\bSec\.)",
+            str(text or ""),
+            flags=re.IGNORECASE,
+        )
+    )
+
+
+def _infer_modal_actor_from_text(text: str) -> str:
+    """Extract the legal subject immediately governing shall/must/may clauses."""
+
+    normalized = " ".join(str(text or "").split())
+    if not normalized:
+        return ""
+    matches = list(
+        re.finditer(
+            r"\b(?:the\s+)?([A-Za-z][A-Za-z0-9'&/().,\-\s]{1,120}?)\s+"
+            r"(?:shall|must|may)\b",
+            normalized,
+        )
+    )
+    for match in reversed(matches):
+        subject = match.group(1).strip(" ,;:-")
+        subject = re.split(
+            r"\b(?:Sec\.|Secs?\.|Section|CHAPTER|SUBCHAPTER|PART|Subtitle|Title)\b",
+            subject,
+            flags=re.IGNORECASE,
+        )[-1].strip(" ,;:-")
+        subject = re.sub(r"^the\s+", "", subject, flags=re.IGNORECASE).strip()
+        if subject:
+            return subject
+    return ""
 
 
 def _extract_citation_from_text(text: str) -> Optional[str]:

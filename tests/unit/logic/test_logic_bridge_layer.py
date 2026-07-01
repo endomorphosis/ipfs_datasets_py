@@ -5739,6 +5739,132 @@ def test_cec_dcec_bridge_materializes_guided_notice_hearing_frame_events() -> No
     )
 
 
+def test_cec_dcec_bridge_extracts_conditional_fee_collection_actor() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("cec_dcec")
+    report = adapter.evaluate(
+        (
+            "U.S.C. Title 2 - THE CONGRESS Sec. 5541 - Fees for internal "
+            "delivery in House of Representatives of nonpostage mail from "
+            "outside sources From the U.S. Government Publishing Office, "
+            "www.gpo.gov §5541. Fees for internal delivery in House of "
+            "Representatives of nonpostage mail from outside sources Effective "
+            "with respect to fiscal years beginning with fiscal year 1995, in "
+            "the case of mail from outside sources presented to the Chief "
+            "Administrative Officer of the House of Representatives (other "
+            "than mail through the Postal Service and mail with postage "
+            "otherwise paid) for internal delivery in the House of "
+            "Representatives, the Chief Administrative Officer is authorized "
+            "to collect fees equal to the applicable postage."
+        ),
+        document_id="us-code-2-5541-conditional-fee-collection",
+        citation="2 U.S.C. 5541",
+    )
+
+    event_record = report.ir_document.views["cec_events"].payload["events"][0]
+    proof_record = report.ir_document.views["dcec_formula"].payload["records"][0]
+
+    assert event_record["actor"] == "chief_administrative_officer"
+    assert event_record["event"] == "collect_fees_equal_to_the_applicable_postage"
+    assert proof_record["proof_input"].startswith("P(")
+    assert "effective_with_respect" not in proof_record["proof_input"]
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
+def test_cec_dcec_bridge_extracts_authorized_assistance_without_catchline_pollution() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("cec_dcec")
+    report = adapter.evaluate(
+        (
+            "38 U.S.C. 1731: U.S.C. Title 38 - VETERANS' BENEFITS Sec. "
+            "1731 - Assistance to the Republic of the Philippines From the "
+            "U.S. Government Publishing Office, www.gpo.gov §1731. "
+            "Assistance to the Republic of the Philippines The President is "
+            "authorized to assist the Republic of the Philippines in "
+            "fulfilling its responsibility in providing medical care and "
+            "treatment for Commonwealth Army veterans and new Philippine "
+            "Scouts in need of such care and treatment."
+        ),
+        document_id="us-code-38-1731-authorized-assistance",
+        citation="38 U.S.C. 1731",
+    )
+
+    event_record = report.ir_document.views["cec_events"].payload["events"][0]
+    proof_record = report.ir_document.views["dcec_formula"].payload["records"][0]
+
+    assert event_record["actor"] == "president"
+    assert event_record["event"].startswith("assist_the_republic_of_the_philippines")
+    assert proof_record["proof_input"].startswith("P(")
+    assert "assistance_to_the_republic" not in proof_record["proof_input"]
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
+def test_cec_dcec_bridge_keeps_nato_contribution_limit_as_permission() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("cec_dcec")
+    report = adapter.evaluate(
+        (
+            "10 U.S.C. 2263: Sec. 2263 - United States contributions to "
+            "the North Atlantic Treaty Organization common-funded budgets "
+            "§2263. United States contributions to the North Atlantic Treaty "
+            "Organization common-funded budgets (a) In General .-The total "
+            "amount contributed by the Secretary of Defense in any fiscal "
+            "year for the common-funded budgets of NATO may be an amount in "
+            "excess of the maximum amount that would otherwise be applicable "
+            "to those contributions in such fiscal year under the fiscal year "
+            "1998 baseline limitation. (b) Definitions .-In this section: "
+            "The term common-funded budgets of NATO means the Military Budget."
+        ),
+        document_id="us-code-10-2263-nato-contribution-limit",
+        citation="10 U.S.C. 2263",
+    )
+
+    event_record = report.ir_document.views["cec_events"].payload["events"][0]
+    proof_record = report.ir_document.views["dcec_formula"].payload["records"][0]
+
+    assert event_record["actor"] == "secretary_of_defense"
+    assert event_record["event"].startswith("contribute_an_amount_in_excess")
+    assert proof_record["proof_input"].startswith("P(")
+    assert not proof_record["proof_input"].startswith("Definition(")
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
+def test_cec_dcec_bridge_extracts_passive_administration_agent() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("cec_dcec")
+    report = adapter.evaluate(
+        (
+            "16 U.S.C. 430w: Sec. 430w - Administration, protection, and "
+            "development §430w. Administration, protection, and development "
+            "The administration, protection, and development of the aforesaid "
+            "national battlefield park shall be exercised under the direction "
+            "of the Secretary of the Interior by the National Park Service "
+            "subject to the provisions of the Act of August 25, 1916."
+        ),
+        document_id="us-code-16-430w-passive-administration",
+        citation="16 U.S.C. 430w",
+    )
+
+    event_record = report.ir_document.views["cec_events"].payload["events"][0]
+    proof_record = report.ir_document.views["dcec_formula"].payload["records"][0]
+
+    assert event_record["actor"] == "national_park_service"
+    assert event_record["event"].startswith(
+        "administer_administration_protection_and_development"
+    )
+    assert proof_record["proof_input"].startswith("O(")
+    assert "be_exercised_under_the_direction" not in proof_record["proof_input"]
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
 def test_cec_dcec_bridge_extracts_retained_rights_as_exemption_state() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
@@ -8511,6 +8637,57 @@ def test_fol_tdfol_coerce_formula_synthesizes_named_raw_deontic_labels() -> None
 
         assert parsed is not None
         assert parsed.to_string() == expected
+
+
+def test_fol_tdfol_coerce_formula_accepts_tdfol_prover_proof_labels() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
+
+    parsed = coerce_tdfol_formula(
+        "TDFOL.prover proof obligation: "
+        "O(Chief Administrative Officer, collect_fees(internal_services))"
+    )
+
+    assert parsed is not None
+    assert parsed.to_string() == "O(collect_fees(internal_services))"
+
+
+def test_fol_tdfol_coerce_formula_synthesizes_spaced_bracket_agents() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
+
+    parsed = coerce_tdfol_formula(
+        "O[Chief Administrative Officer](collect fees for internal services)"
+    )
+
+    assert parsed is not None
+    assert (
+        parsed.to_string()
+        == "O(collect_fees_for_internal_services(chief_administrative_officer))"
+    )
+
+
+def test_tdfol_bridge_uscode_fallback_prefers_operative_shall_clause() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
+
+    adapter = FolTdfolBridgeAdapter()
+    report = adapter.evaluate(
+        (
+            "2 U.S.C. 5541: U.S.C. Title 2 - THE CONGRESS 2 U.S.C. "
+            "United States Code, 2024 Edition Title 2 - THE CONGRESS "
+            "CHAPTER 55 - HOUSE OF REPRESENTATIVES OFFICERS AND "
+            "ADMINISTRATION SUBCHAPTER III - CHIEF ADMINISTRATIVE OFFICER "
+            "Sec. 5541 - Fees for internal services. The Chief "
+            "Administrative Officer shall collect fees for services."
+        ),
+        document_id="tdfol-uscode-operative-shall-fallback",
+        citation="2 U.S.C. 5541",
+    )
+
+    formulas = {
+        record["formula"]
+        for record in report.ir_document.views["tdfol_formula"].payload["records"]
+    }
+    assert "O(collect_fees_for_services(chief_administrative_officer))" in formulas
+    assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
 
 
 def test_tdfol_bridge_guidance_activates_from_target_metric_evidence() -> None:

@@ -1030,12 +1030,13 @@ def _dcec_state_kind(norm: Mapping[str, Any]) -> str:
         corpus,
     ):
         return "exemption"
-    if re.search(
-        r"\b(?:applies|apply|shall\s+apply|"
-        r"(?:is|are|be|shall\s+be)\s+applicable)\s+to\b",
-        corpus,
-    ):
-        return "applicability"
+    if "otherwise be applicable" not in corpus:
+        if re.search(
+            r"\b(?:applies|apply|shall\s+apply|"
+            r"(?:is|are|be|shall\s+be)\s+applicable)\s+to\b",
+            corpus,
+        ):
+            return "applicability"
     if _looks_like_statutory_purpose_statement(corpus):
         return "purpose"
     if re.search(r"\b(?:expires?|expiration|effective\s+date|takes?\s+effect)\b", corpus):
@@ -2755,6 +2756,95 @@ def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
             "support_text": fers_applicability_match.group(0)[:500],
             "extraction_method": "cec_dcec_section_operational_v1",
         }
+    conditional_fee_collection_match = re.search(
+        r"\bin\s+the\s+case\s+of\s+(?P<object>[^.;]{1,360}?),\s+"
+        r"(?P<actor>(?:the\s+)?[a-z][^.;]{1,160}?)\s+"
+        r"is\s+authorized\s+to\s+(?P<action>collect\s+[^.;]+)",
+        operative_text.lower(),
+    )
+    if conditional_fee_collection_match:
+        digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
+        return {
+            "actor": _clean_operational_actor_slot(
+                conditional_fee_collection_match.group("actor")
+            ),
+            "action": _clean_operational_slot(
+                conditional_fee_collection_match.group("action")
+            ),
+            "modality": "permitted",
+            "norm_type": "permitted",
+            "source_id": f"dcec:section:{digest}",
+            "support_text": conditional_fee_collection_match.group(0)[:500],
+            "extraction_method": "cec_dcec_section_operational_v1",
+        }
+    authorized_assistance_match = re.search(
+        r"\b(?P<actor>(?:the\s+)?(?:president|secretary|administrator|"
+        r"comptroller\s+general|director|commission|commissioner))\s+"
+        r"is\s+authorized\s+to\s+"
+        r"(?P<action>assist\s+[^.;]+)",
+        operative_text.lower(),
+    )
+    if authorized_assistance_match:
+        digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
+        return {
+            "actor": _clean_operational_actor_slot(
+                authorized_assistance_match.group("actor")
+            ),
+            "action": _clean_operational_slot(
+                authorized_assistance_match.group("action")
+            ),
+            "modality": "permitted",
+            "norm_type": "permitted",
+            "source_id": f"dcec:section:{digest}",
+            "support_text": authorized_assistance_match.group(0)[:500],
+            "extraction_method": "cec_dcec_section_operational_v1",
+        }
+    nato_contribution_limit_match = re.search(
+        r"\bthe\s+total\s+amount\s+contributed\s+by\s+"
+        r"(?P<actor>the\s+secretary\s+of\s+defense)\s+[^.;]{0,240}?\s+"
+        r"may\s+be\s+(?P<action>an\s+amount\s+in\s+excess\s+of\s+[^.;]+)",
+        operative_text.lower(),
+    )
+    if nato_contribution_limit_match:
+        digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
+        return {
+            "actor": _clean_operational_actor_slot(
+                nato_contribution_limit_match.group("actor")
+            ),
+            "action": _clean_operational_slot(
+                "contribute " + nato_contribution_limit_match.group("action")
+            ),
+            "modality": "permitted",
+            "norm_type": "permitted",
+            "source_id": f"dcec:section:{digest}",
+            "support_text": nato_contribution_limit_match.group(0)[:500],
+            "extraction_method": "cec_dcec_section_operational_v1",
+        }
+    passive_administration_match = re.search(
+        r"\b(?P<object>administration[^.;]{1,180}?)\s+shall\s+be\s+"
+        r"(?P<action>exercised\s+under\s+the\s+direction\s+of\s+[^.;]+?)"
+        r"\s+by\s+(?P<actor>(?:the\s+)?[a-z][^.;]{1,120}?)\s+"
+        r"subject\s+to\b",
+        operative_text.lower(),
+    )
+    if passive_administration_match:
+        digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
+        object_text = _clean_operational_slot(
+            passive_administration_match.group("object")
+        )
+        return {
+            "actor": _clean_operational_actor_slot(
+                passive_administration_match.group("actor")
+            ),
+            "action": _clean_operational_slot(
+                "administer " + object_text
+            ),
+            "modality": "obligated",
+            "norm_type": "obligated",
+            "source_id": f"dcec:section:{digest}",
+            "support_text": passive_administration_match.group(0)[:500],
+            "extraction_method": "cec_dcec_section_operational_v1",
+        }
     construction_exemption_match = re.search(
         r"\bnothing\s+in\s+(?P<actor>this\s+(?:chapter|subchapter|section|"
         r"subsection|part|title|act))\s+shall\s+be\s+construed\s+"
@@ -2997,7 +3087,7 @@ def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
             "modality": modality,
             "norm_type": modality,
             "source_id": f"dcec:section:{digest}",
-            "support_text": operative_text[:500],
+            "support_text": match.group(0)[:500],
             "extraction_method": "cec_dcec_section_operational_v1",
         }
     return None
