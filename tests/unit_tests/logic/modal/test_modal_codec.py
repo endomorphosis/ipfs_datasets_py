@@ -28385,6 +28385,12 @@ def test_modal_compiler_surfaces_packet_000105_ambiguity_policy_pairs(
             -0.995415977757,
         ),
         (
+            "us-code-25-382-6a73d864a5a614d0",
+            "frame",
+            "deontic",
+            -0.486574281614,
+        ),
+        (
             "us-code-42-18121.-7e39b12e3fd1243d",
             "frame",
             "frame",
@@ -28416,6 +28422,11 @@ def test_modal_compiler_surfaces_packet_000105_ambiguity_policy_pairs(
         predicted_share = 0.9
         if predicted_family == target_family:
             runner_up_family = "deontic" if predicted_family == "frame" else "frame"
+        predicted_share = 0.44 if predicted_family == target_family else 0.9
+        if predicted_family == target_family:
+            runner_up_family = (
+                "temporal" if predicted_family == "deontic" else "deontic"
+            )
             ranking = [
                 {
                     "family": predicted_family,
