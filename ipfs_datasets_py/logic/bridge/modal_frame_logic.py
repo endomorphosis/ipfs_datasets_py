@@ -437,6 +437,15 @@ _OFFICIAL_USC_SEMICOLON_CATCHLINE_RE = re.compile(
     r"[^.]{3,160};\s+[^.]{3,160}\b",
     flags=re.IGNORECASE,
 )
+_OFFICIAL_USC_SECTION_DIGEST_RE = re.compile(
+    r"^\s*§{1,2}\s*[\w.\-\u2010-\u2015]+"
+    r"(?:\s+(?:to|through|thru)\s+[\w.\-\u2010-\u2015]+)?"
+    r"(?:\s+[A-Za-z])?\s*(?:[.)\]:-]|\s)\s*.{0,180}\b"
+    r"(?:authority|definitions?|in\s+general|purpose|regular\s+navy|"
+    r"repealed|retired\s+list|codification|omitted|effective\s+date|"
+    r"statutory\s+notes)\b",
+    flags=re.IGNORECASE,
+)
 _COMPACT_USC_HEADING_RE = re.compile(
     r"\b\d+\s+u\.?\s*s\.?\s*c\.?\s+[\w.\-]+[:.]?\s+"
     r".{0,220}\bunited\s+states\s+code,\s+\d{4}\s+edition\b"
@@ -630,6 +639,8 @@ def _is_official_usc_section_body_text(text: str, *, citation: Optional[str]) ->
     )
     if not has_official_body_lead:
         return False
+    if _OFFICIAL_USC_SECTION_DIGEST_RE.search(normalized_text):
+        return True
     return (
         bool(_OFFICIAL_USC_PROVENANCE_RE.search(normalized_text))
         or bool(_OFFICIAL_USC_STATUS_BODY_RE.search(normalized_text))
