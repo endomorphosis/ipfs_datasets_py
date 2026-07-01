@@ -30425,6 +30425,84 @@ def test_decompiler_emits_reclassification_target_slots_for_uscode_status_clause
     assert "knowledge_graphs.neo4j_compat" in slot_texts["legal_ir_view_prototype"]
 
 
+def test_decompiler_reconstructs_packet_276_authority_and_grant_atoms() -> None:
+    conveyance = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Conveyance to States of roads leading to certain historical areas. "
+            "The Secretary may convey roads to a State subject to such terms "
+            "and conditions as the Secretary determines appropriate."
+        ),
+        predicate="secretary_convey_roads_to_state",
+        conditions=[
+            "subject to such terms and conditions as the Secretary determines appropriate"
+        ],
+    )
+    sea_grant = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "The Secretary shall make grants for the conduct of research under "
+            "the national sea grant college program for marine science development."
+        ),
+        predicate="secretary_make_research_grants",
+    )
+
+    conveyance_decoded = decode_modal_ir_document(conveyance)
+    conveyance_slots = decoded_modal_phrase_slot_text_map(conveyance_decoded)
+    sea_grant_decoded = decode_modal_ir_document(sea_grant)
+    sea_grant_slots = decoded_modal_phrase_slot_text_map(sea_grant_decoded)
+    conveyance_structural_text = _structural_decoded_text(
+        conveyance_decoded,
+        modal_ir=conveyance,
+        selected_frame=None,
+    )
+    sea_grant_structural_text = _structural_decoded_text(
+        sea_grant_decoded,
+        modal_ir=sea_grant,
+        selected_frame=None,
+    )
+
+    assert "state_conveyance_authority" in conveyance_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "historic_area_access_road" in conveyance_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "state_conveyance_authority:frame->deontic" in conveyance_slots[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "state_conveyance_authority:frame->frame" in conveyance_slots[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "CEC.native" in conveyance_slots["legal_ir_view_prototype"]
+    assert "knowledge_graphs.neo4j_compat" in conveyance_slots[
+        "legal_ir_view_prototype"
+    ]
+    assert "state conveyance authority" in conveyance_structural_text
+    assert "historic area access road" in conveyance_structural_text
+
+    assert "research_grant" in sea_grant_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "sea_grant_college_program" in sea_grant_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "research_grant:deontic->deontic" in sea_grant_slots[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "sea_grant_college_program:deontic->temporal" in sea_grant_slots[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "deontic.ir" in sea_grant_slots["legal_ir_view_prototype"]
+    assert "TDFOL.prover" in sea_grant_slots["legal_ir_view_prototype"]
+    assert "research grant" in sea_grant_structural_text
+    assert "sea grant college program" in sea_grant_structural_text
+
+
 def test_decompiler_reconstructs_renumbered_status_transition_from_typed_slots() -> None:
     document = _single_formula_document(
         family="frame",
