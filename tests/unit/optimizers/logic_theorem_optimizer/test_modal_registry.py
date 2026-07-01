@@ -7,6 +7,7 @@ import json
 import ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry as modal_registry
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_CORE_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_000521_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001444_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001807_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_004796_FAMILY_PAIRS,
@@ -699,6 +700,36 @@ def test_compiler_required_adaptive_ambiguity_bundle_covers_deontic_conflict_pai
         "temporal",
         "alethic",
     )
+
+
+def test_compiler_ambiguity_packet_000521_pairs_surface_adaptive_ambiguity() -> None:
+    expected_pairs = (
+        ("deontic", "deontic"),
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("frame", "temporal"),
+        ("temporal", "frame"),
+    )
+
+    assert COMPILER_AMBIGUITY_PACKET_000521_FAMILY_PAIRS == expected_pairs
+    for predicted_family, target_family in expected_pairs:
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_signal_free_adaptive_ambiguity_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert (
+            compiler_refined_modal_family_cue_margin_buffer(
+                predicted_family,
+                target_family,
+            )
+            > 0.0
+        )
 
 
 def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None:
