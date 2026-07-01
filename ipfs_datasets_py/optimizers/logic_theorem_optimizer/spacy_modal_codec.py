@@ -1044,6 +1044,14 @@ _DEONTIC_COURT_VENUE_DUTY_SCOPE_PHRASES = (
 _DEONTIC_CITATION_AUTHORITY_SCOPE_PHRASES = (
     "may be cited",
 )
+_DEONTIC_BENEFIT_ENTITLEMENT_SCOPE_PHRASES = (
+    "shall be entitled to",
+    "is entitled to",
+    "entitled to compensation",
+    "entitled to return",
+    "privilege of filing",
+    "privilege of making",
+)
 
 
 @dataclass(frozen=True)
@@ -5075,6 +5083,9 @@ def _apply_refined_modal_family_cue_pair_balance(
     has_deontic_citation_authority_scope_phrase = bool(
         signals.get("has_deontic_citation_authority_scope_phrase")
     )
+    has_deontic_benefit_entitlement_scope_phrase = bool(
+        signals.get("has_deontic_benefit_entitlement_scope_phrase")
+    )
     has_phrase_only_deontic_scope = bool(
         has_deontic_scope
         and not bool(signals.get("has_deontic_scope_phrase"))
@@ -5386,6 +5397,23 @@ def _apply_refined_modal_family_cue_pair_balance(
             + _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
         )
         counts[deontic_family] = deontic_floor
+        deontic_count = float(counts.get(deontic_family, 0.0))
+
+    # frame -> deontic:
+    # compensation and return-privilege provisions carry entitlement or
+    # permission force even when U.S.C. headings and cross-references add
+    # generic frame evidence.
+    if (
+        frame_count >= deontic_count
+        and has_deontic_benefit_entitlement_scope_phrase
+        and has_deontic_cue
+        and has_frame_scope_context
+        and not has_editorial_frame_context
+    ):
+        counts[deontic_family] = max(
+            deontic_count,
+            frame_count + 0.01,
+        )
         deontic_count = float(counts.get(deontic_family, 0.0))
 
     # temporal -> deontic:
@@ -7105,6 +7133,9 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
     deontic_citation_authority_scope_phrase = _contains_scope_phrase(
         normalized_text, _DEONTIC_CITATION_AUTHORITY_SCOPE_PHRASES
     )
+    deontic_benefit_entitlement_scope_phrase = _contains_scope_phrase(
+        normalized_text, _DEONTIC_BENEFIT_ENTITLEMENT_SCOPE_PHRASES
+    )
     epistemic_scope_phrase = _contains_scope_phrase(
         normalized_text, _EPISTEMIC_SCOPE_PHRASES
     )
@@ -7263,6 +7294,9 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         ),
         "has_deontic_citation_authority_scope_phrase": bool(
             deontic_citation_authority_scope_phrase
+        ),
+        "has_deontic_benefit_entitlement_scope_phrase": bool(
+            deontic_benefit_entitlement_scope_phrase
         ),
         "has_doxastic_cue": ModalLogicFamily.DOXASTIC.value in cue_families,
         "has_doxastic_scope": doxastic_scope,

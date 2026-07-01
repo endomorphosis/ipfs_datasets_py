@@ -1777,6 +1777,40 @@ def test_spacy_codec_prioritizes_deontic_share_for_generic_frame_statutory_scope
     assert deontic_share > frame_share
 
 
+def test_spacy_codec_prioritizes_deontic_share_for_compensation_and_privilege_sections() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    cases = (
+        build_us_code_sample(
+            title="29",
+            section="2634",
+            text=(
+                "Sec. 2634 - Compensation. Members shall be entitled to "
+                "compensation and travel reimbursement under this section."
+            ),
+        ),
+        build_us_code_sample(
+            title="26",
+            section="1501",
+            text=(
+                "Sec. 1501 - Privilege to file consolidated returns. "
+                "Authority under this section provides that an affiliated "
+                "group shall have the privilege of filing a consolidated "
+                "return under regulations prescribed by the Secretary."
+            ),
+        ),
+    )
+
+    for sample in cases:
+        ranking = ranked_modal_families(codec.encode_sample(sample))
+
+        assert ranking[0]["family"] == "deontic"
+        shares = {str(item["family"]): float(item["share"]) for item in ranking}
+        assert shares["deontic"] > shares.get("frame", 0.0)
+
+
 def test_spacy_codec_prioritizes_temporal_share_for_generic_frame_statutory_scope_with_strong_temporal_scope_phrase() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
