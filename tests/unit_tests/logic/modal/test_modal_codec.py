@@ -27189,6 +27189,58 @@ def test_decompiler_emits_semantic_source_slots_for_consultation_frame_span() ->
     ]
 
 
+def test_decompiler_emits_reclassification_target_slots_for_uscode_status_clause() -> None:
+    compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
+    compiled = compiler.compile(
+        (
+            "42 U.S.C. 3789: §3789 l . Transferred Editorial Notes "
+            "Codification Section 3789l was editorially reclassified as "
+            "section 10235 of Title 34, Crime Control and Law Enforcement."
+        ),
+        document_id="us-code-42-3789-6b8dde5719830288",
+        citation="42 U.S.C. 3789",
+        source="us_code",
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(compiled.modal_ir)
+    )
+
+    assert "editorial_reclassification" in slot_texts["legal_semantic_atom"]
+    assert "crime_control_law_enforcement" in slot_texts["legal_semantic_atom"]
+    assert "3789l" in slot_texts["uscode_reclassification_source_section"]
+    assert "10235" in slot_texts["uscode_reclassification_target_section"]
+    assert "34" in slot_texts["uscode_reclassification_target_title"]
+    assert "34 U.S.C. 10235" in slot_texts[
+        "uscode_reclassification_target_citation"
+    ]
+
+
+def test_decompiler_emits_document_semantic_atoms_for_formula_free_frame_text() -> None:
+    document = ModalIRDocument(
+        document_id="us-code-16-674c-0521fc631368c550",
+        source="us_code",
+        normalized_text=(
+            "U.S.C. Title 16 - CONSERVATION 16 U.S.C. United States Code, "
+            "2024 Edition Title 16 - CONSERVATION CHAPTER 6 - GAME AND BIRD "
+            "PRESERVES; PROTECTION Sec. 674c - Boundary and division fences "
+            "for White Horse Hill National Game Preserve; build and maintain "
+            "such fences."
+        ),
+        metadata={"citation": "16 U.S.C. 674c"},
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert decoded.text == document.normalized_text
+    assert "boundary_division_fence" in slot_texts["legal_semantic_atom"]
+    assert "white_horse_hill_game_preserve" in slot_texts[
+        "source_context_span_legal_semantic_atom"
+    ]
+    assert "build_maintain_duty" in slot_texts["legal_semantic_atom"]
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()

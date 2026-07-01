@@ -134,6 +134,11 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("civil enforcement", "civil_enforcement"),
     ("consultation and cooperation", "consultation_cooperation"),
     ("following consultation", "consultation"),
+    ("boundary and division fences", "boundary_division_fence"),
+    ("build and maintain", "build_maintain_duty"),
+    ("game and bird preserves", "game_bird_preserve_protection"),
+    ("national game preserve", "game_preserve"),
+    ("white horse hill national game preserve", "white_horse_hill_game_preserve"),
     ("annual report", "annual_report"),
     ("annually shall submit", "annual_report_duty"),
     ("submit to congress", "congressional_report_duty"),
@@ -159,6 +164,7 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("scientific and technical article", "technical_article"),
     ("editorially reclassified", "editorial_reclassification"),
     ("reclassified as section", "editorial_reclassification"),
+    ("crime control and law enforcement", "crime_control_law_enforcement"),
     (
         "health professionals educational assistance program",
         "health_professional_education_assistance",
@@ -1523,6 +1529,18 @@ def _decode_formula_phrases(
                     provenance_only=True,
                 )
             )
+        for status_slot, status_value in _uscode_reclassification_detail_slots(
+            status_clause_text,
+            slot_prefix="source_status_clause",
+        ):
+            phrases.append(
+                DecodedModalPhrase(
+                    text=status_value,
+                    slot=status_slot,
+                    spans=spans,
+                    provenance_only=True,
+                )
+            )
         phrases.extend(
             _legal_semantic_atom_phrases(
                 text=status_clause_text,
@@ -2284,6 +2302,54 @@ def _uscode_status_clause_keywords(
             add(keyword)
     add(_status_keyword_from_source_text(str(document.normalized_text or "")))
     return keywords
+
+
+def _uscode_reclassification_detail_slots(
+    text: str,
+    *,
+    slot_prefix: str,
+) -> List[Tuple[str, str]]:
+    """Extract bounded source/target section details from editorial transfers."""
+    normalized = _clean_text(text)
+    prefix = _clean_text(slot_prefix).replace(" ", "_")
+    if not normalized or not prefix:
+        return []
+
+    slots: List[Tuple[str, str]] = []
+
+    def add(slot_suffix: str, value: str) -> None:
+        cleaned = _clean_text(value)
+        if cleaned:
+            slots.append((f"{prefix}_{slot_suffix}", cleaned))
+            slots.append((f"uscode_reclassification_{slot_suffix}", cleaned))
+
+    source_match = re.search(
+        rf"\bSection\s+(?P<section>{_USCODE_SECTION_TOKEN_PATTERN})\s+"
+        r"was\s+editorially\s+reclassified\b",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    if source_match is not None:
+        add("source_section", source_match.group("section"))
+
+    target_match = re.search(
+        rf"\breclassified\s+as\s+section\s+"
+        rf"(?P<section>{_USCODE_SECTION_TOKEN_PATTERN})"
+        rf"(?:\s+of\s+(?:(?:this|such)\s+title|Title\s+(?P<title>\d+[A-Za-z]*)))?",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    if target_match is not None:
+        target_section = _clean_text(target_match.group("section"))
+        target_title = _clean_text(target_match.group("title") or "")
+        add("target_section", target_section)
+        if target_title:
+            add("target_title", target_title)
+            add("target_citation", f"{target_title} U.S.C. {target_section}")
+        else:
+            add("target_citation", f"this title section {target_section}")
+
+    return _unique_slot_values(slots)
 
 
 def _status_clause_around_keyword(source_text: str, keyword: str) -> str:
@@ -4913,6 +4979,32 @@ def _source_span_slot_phrases(
                     provenance_only=True,
                 )
             )
+        for semantic_phrase in _legal_semantic_atom_phrases(
+            text=text,
+            slot_prefix=slot_prefix,
+            spans=spans,
+        ):
+            marker = (semantic_phrase.slot, semantic_phrase.text, span_marker)
+            if marker in seen:
+                continue
+            seen.add(marker)
+            phrases.append(semantic_phrase)
+        for status_slot, status_value in _uscode_reclassification_detail_slots(
+            text,
+            slot_prefix=slot_prefix,
+        ):
+            marker = (status_slot, status_value, span_marker)
+            if marker in seen:
+                continue
+            seen.add(marker)
+            phrases.append(
+                DecodedModalPhrase(
+                    text=status_value,
+                    slot=status_slot,
+                    spans=spans,
+                    provenance_only=True,
+                )
+            )
         for cue in _bridge_cues_from_text(text):
             cue_marker = (f"{slot_prefix}_bridge_cue", cue, span_marker)
             if cue_marker not in seen:
@@ -6260,6 +6352,7 @@ def _typed_decompiler_semantic_atom_target_families(
         normalized_atom = _clean_text(atom).lower()
         if normalized_atom in {
             "annual_report_duty",
+            "build_maintain_duty",
             "congressional_report_duty",
             "expenditure_requirement",
             "obligation",
@@ -6280,10 +6373,15 @@ def _typed_decompiler_semantic_atom_target_families(
             add("temporal")
         if normalized_atom in {
             "administration_enforcement",
+            "boundary_division_fence",
             "civil_enforcement",
             "consultation",
             "consultation_cooperation",
+            "crime_control_law_enforcement",
+            "game_bird_preserve_protection",
+            "game_preserve",
             "internal_service_fee",
+            "white_horse_hill_game_preserve",
         }:
             add("frame")
         if normalized_atom in {"exception_or_condition"}:
