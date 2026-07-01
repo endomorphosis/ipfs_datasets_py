@@ -145,12 +145,30 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("national game preserve", "game_preserve"),
     ("white horse hill national game preserve", "white_horse_hill_game_preserve"),
     ("annual report", "annual_report"),
+    ("annual budget program", "budget_program_submission"),
     ("annually shall submit", "annual_report_duty"),
+    ("prepare and submit", "submit_or_file"),
+    ("preparation and submission", "submit_or_file"),
     ("submit to congress", "congressional_report_duty"),
+    ("submit or file", "submit_or_file"),
+    ("file or submit", "submit_or_file"),
     ("make publicly available a report", "public_report_duty"),
     ("shall make a report", "report_duty"),
     ("shall submit the report", "report_duty"),
     ("shall submit a report", "report_duty"),
+    ("study and report", "study_report_duty"),
+    ("maintenance of accounts", "account_maintenance"),
+    ("audit by government accountability office", "audit_requirement"),
+    ("government accountability office", "audit_requirement"),
+    ("termination of authority", "termination_authority"),
+    ("termination of authorities", "termination_authority"),
+    ("governing body", "governing_body"),
+    ("board of directors", "board_of_directors"),
+    ("election of officers", "officer_election"),
+    ("irrigation projects", "irrigation_project"),
+    ("irrigation project", "irrigation_project"),
+    ("foreign commercial service", "foreign_commercial_service"),
+    ("export promotion", "export_promotion"),
     ("remain available until expended", "no_year_funding_availability"),
     ("available until expended", "no_year_funding_availability"),
     ("expenditures and cultivation requirements", "expenditure_requirement"),
@@ -2253,10 +2271,36 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
     ):
         add("annual_report_duty")
     if re.search(
+        r"\b(?:prepare|preparation)\b.{0,80}\bsubmit(?:s|ted|ting|tal|sion)?\b",
+        normalized,
+    ):
+        add("submit_or_file")
+    if re.search(
+        r"\b(?:submit|file|provide|prepare)\b.{0,80}\b(?:budget|program|accounts?|audit)\b",
+        normalized,
+    ):
+        add("submit_or_file")
+    if re.search(r"\bannual\s+budget\s+program\b", normalized):
+        add("budget_program_submission")
+    if re.search(r"\bmaint(?:ain|enance)\b.{0,40}\baccounts?\b", normalized):
+        add("account_maintenance")
+    if re.search(
+        r"\b(?:audit|audited)\b.{0,80}\b(?:government\s+accountability\s+office|comptroller\s+general)\b",
+        normalized,
+    ):
+        add("audit_requirement")
+    if re.search(
         r"\b(?:shall|must)\s+(?:submit|make|file|provide)\b.{0,80}\breports?\b",
         normalized,
     ):
         add("report_duty")
+    if re.search(
+        r"\b(?:study|review|assessment)\b.{0,40}\b(?:and\s+)?reports?\b",
+        normalized,
+    ):
+        add("study_report_duty")
+    if re.search(r"\bterminat(?:e|es|ed|ion)\b.{0,60}\bauthorit(?:y|ies)\b", normalized):
+        add("termination_authority")
     if re.search(r"\b(?:consultation|cooperation)\b", normalized):
         add("consultation")
     if re.search(r"\b(?:administ(?:er|ration)|enforce(?:ment|d|s)?)\b", normalized):
@@ -6756,20 +6800,28 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
     if normalized_atom in {
         "administration_enforcement",
         "admission_fee_collection",
+        "audit_requirement",
+        "board_of_directors",
         "boundary_division_fence",
+        "budget_program_submission",
         "civil_action",
         "civil_action_jurisdiction",
         "civil_enforcement",
         "crime_control_law_enforcement",
+        "export_promotion",
         "fee_collection_authority",
+        "foreign_commercial_service",
         "false_claim_knowledge",
         "false_fraudulent_claim",
         "game_bird_preserve_protection",
         "game_preserve",
         "government_claim",
+        "governing_body",
+        "irrigation_project",
         "jurisdiction_authority",
         "law_enforcement",
         "livestock_commerce",
+        "officer_election",
         "state_court_civil_jurisdiction",
         "state_court_jurisdiction",
         "white_horse_hill_game_preserve",
@@ -6794,10 +6846,13 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "admission_fee_collection",
         "civil_action",
         "civil_action_jurisdiction",
+        "export_promotion",
         "fee_collection_authority",
+        "foreign_commercial_service",
         "false_claim_knowledge",
         "false_fraudulent_claim",
         "government_claim",
+        "irrigation_project",
         "jurisdiction_authority",
         "livestock_commerce",
         "state_court_civil_jurisdiction",
@@ -6816,7 +6871,9 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "annual_report_duty",
         "admission_fee_collection",
         "appropriation_authorization",
+        "audit_requirement",
         "build_maintain_duty",
+        "budget_program_submission",
         "congressional_report_duty",
         "definition",
         "exception_or_condition",
@@ -6828,6 +6885,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "false_claim_knowledge",
         "false_fraudulent_claim",
         "government_claim",
+        "account_maintenance",
         "office_establishment",
         "obligation",
         "patent_prohibition",
@@ -6836,6 +6894,8 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "prohibition",
         "public_report_duty",
         "report_duty",
+        "study_report_duty",
+        "submit_or_file",
         "test_platform",
     }:
         add("deontic.ir")
@@ -6859,7 +6919,10 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
     if normalized_atom in {
         "annual_report",
         "annual_report_duty",
+        "budget_program_submission",
         "no_year_funding_availability",
+        "study_report_duty",
+        "termination_authority",
         "temporal_condition",
     }:
         add("TDFOL.prover")
@@ -6880,7 +6943,10 @@ def _typed_decompiler_semantic_atom_target_families(
         if normalized_atom in {
             "annual_report_duty",
             "admission_fee_collection",
+            "account_maintenance",
+            "audit_requirement",
             "build_maintain_duty",
+            "budget_program_submission",
             "congressional_report_duty",
             "definition",
             "exempt_operation",
@@ -6899,20 +6965,29 @@ def _typed_decompiler_semantic_atom_target_families(
             "prohibition",
             "public_report_duty",
             "report_duty",
+            "study_report_duty",
+            "submit_or_file",
             "test_platform",
         }:
             add("deontic")
         if normalized_atom in {
             "annual_report",
             "annual_report_duty",
+            "budget_program_submission",
             "no_year_funding_availability",
+            "study_report_duty",
+            "termination_authority",
             "temporal_condition",
         }:
             add("temporal")
         if normalized_atom in {
+            "account_maintenance",
             "administration_enforcement",
             "admission_fee_collection",
+            "audit_requirement",
+            "board_of_directors",
             "boundary_division_fence",
+            "budget_program_submission",
             "civil_action",
             "civil_action_jurisdiction",
             "civil_enforcement",
@@ -6920,21 +6995,26 @@ def _typed_decompiler_semantic_atom_target_families(
             "consultation_cooperation",
             "crime_control_law_enforcement",
             "definition",
+            "export_promotion",
             "exempt_operation",
             "facility_operation",
             "fee_collection_authority",
+            "foreign_commercial_service",
             "false_claim_knowledge",
             "false_fraudulent_claim",
             "game_bird_preserve_protection",
             "game_preserve",
             "government_claim",
+            "governing_body",
             "internal_service_fee",
+            "irrigation_project",
             "jurisdiction_authority",
             "law_enforcement",
             "livestock_commerce",
             "office_establishment",
             "office_of_womens_health",
             "office_seal",
+            "officer_election",
             "official_seal",
             "plant_variety_protection",
             "plant_variety_protection_office",

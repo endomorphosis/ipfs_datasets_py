@@ -28906,6 +28906,48 @@ def test_decompiler_emits_source_scope_slots_for_within_and_deadline_cues() -> N
     )
 
 
+def test_decompiler_preserves_budget_submission_and_audit_semantic_slots() -> None:
+    document = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "In the performance of, and with respect to, the functions of the "
+            "Secretary, the Secretary shall prepare and submit an annual budget "
+            "program, maintain accounts, and be audited by the Government "
+            "Accountability Office."
+        ),
+        predicate="secretary_prepare_submit_budget_program",
+        conditions=["with respect to the functions of the Secretary"],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    assert "submit_or_file" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "budget_program_submission" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "account_maintenance" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "audit_requirement" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "submit_or_file:deontic->frame" in slot_texts[
+        "typed-decompiler-source-semantic-family-pair"
+    ]
+    assert "budget_program_submission:deontic->conditional_normative" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
+    assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
+    assert "knowledge_graphs.neo4j_compat" in slot_texts["legal_ir_view_prototype"]
+
+
 def test_decompiler_emits_semantic_source_slots_for_annual_report_duty() -> None:
     document = _single_formula_document(
         family="temporal",
