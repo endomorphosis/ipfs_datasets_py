@@ -370,11 +370,11 @@ class FLogicSemanticOptimizer:
             return violations
 
         selected_frame_values = set(document_selected_frames.values())
-        selected_terms_by_frame = {
-            frame: terms
-            for doc_id, frame in document_selected_frames.items()
-            for terms in [document_selected_terms.get(doc_id, set())]
-        }
+        selected_terms_by_frame: Dict[str, set[str]] = {}
+        for doc_id, frame in document_selected_frames.items():
+            selected_terms_by_frame.setdefault(frame, set()).update(
+                document_selected_terms.get(doc_id, set())
+            )
         for subj, facts in sorted(triples_by_subject.items()):
             for pred, obj in facts:
                 if pred != "interpreted_in_frame":
@@ -397,6 +397,27 @@ class FLogicSemanticOptimizer:
                             constraint="interpreted_frame_has_selected_terms",
                             details=(
                                 f"Interpreted frame {obj!r} has no selected term grounding"
+                            ),
+                        )
+                    )
+                    continue
+                interpreted_terms = {
+                    term
+                    for term_pred, term in facts
+                    if term_pred == "interpreted_in_frame_term"
+                }
+                ungrounded_terms = sorted(
+                    interpreted_terms - selected_terms_by_frame.get(obj, set())
+                )
+                if ungrounded_terms:
+                    violations.append(
+                        OntologyViolation(
+                            frame_id=subj,
+                            constraint="interpreted_frame_terms_selected",
+                            details=(
+                                f"Formula terms are not selected ontology terms "
+                                f"for frame {obj!r}: "
+                                + ", ".join(ungrounded_terms)
                             ),
                         )
                     )
