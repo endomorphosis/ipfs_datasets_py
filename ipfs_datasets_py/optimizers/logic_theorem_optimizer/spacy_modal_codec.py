@@ -6636,6 +6636,21 @@ def _apply_competing_deontic_temporal_scope_phrase_reinforcement(
     ):
         counts[deontic_family] = temporal_count + 0.01
         deontic_count = float(counts.get(deontic_family, 0.0))
+    # A bare sequence cue such as "after conclusion of the testing period" is
+    # temporal context, but it should not outrank operative "shall not apply"
+    # language unless a deadline/date/status signal is also present.
+    if (
+        bool(signals.get("has_deontic_cue"))
+        and bool(signals.get("has_temporal_cue"))
+        and not has_temporal_deadline_cue
+        and not bool(signals.get("has_temporal_scope_phrase"))
+        and not bool(signals.get("has_temporal_within_scope"))
+        and not bool(signals.get("has_temporal_status_scope"))
+        and not bool(signals.get("has_calendar_date_scope"))
+        and temporal_count >= deontic_count
+    ):
+        counts[deontic_family] = temporal_count + 0.01
+        deontic_count = float(counts.get(deontic_family, 0.0))
     if has_temporal_expended_scope_phrase:
         counts[temporal_family] = temporal_count + _TEMPORAL_SCOPE_PHRASE_REINFORCEMENT
 
