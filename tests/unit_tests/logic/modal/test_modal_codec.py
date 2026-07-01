@@ -26013,6 +26013,13 @@ def test_modal_compiler_surfaces_packet_000125_compiler_ambiguity_policy_pairs(
             "priority": 1.149995481117,
         },
         {
+            "sample_id": "us-code-10-2491a-3e9212b2e10205f6",
+            "predicted_family": "frame",
+            "target_family": "conditional_normative",
+            "family_margin": -0.701174619046,
+            "priority": 0.851174619046,
+        },
+        {
             "sample_id": "us-code-16-799-ed4b744b4bed77ee",
             "predicted_family": "frame",
             "target_family": "deontic",
@@ -26053,6 +26060,13 @@ def test_modal_compiler_surfaces_packet_000125_compiler_ambiguity_policy_pairs(
             "target_family": "dynamic",
             "family_margin": -0.489728789977,
             "priority": 0.639728789977,
+        },
+        {
+            "sample_id": "us-code-16-1111-b5fe24687ebb5578",
+            "predicted_family": "temporal",
+            "target_family": "deontic",
+            "family_margin": -0.125837888844,
+            "priority": 0.275837888844,
         },
         {
             "sample_id": "us-code-20-1103c-536981ebcd983068",
