@@ -608,6 +608,9 @@ def _router_guidance_routes(compiler_guidance: Mapping[str, Any]) -> set[str]:
             for nested_key in route_keys:
                 add_route(item.get(nested_key))
 
+    if _router_guidance_has_passing_external_prover_evidence(compiler_guidance):
+        add_route("repair_external_prover_router")
+
     return routes
 
 
@@ -626,6 +629,122 @@ def _router_guidance_mapping(value: Any) -> dict[str, Any]:
     if isinstance(parsed, Mapping):
         return dict(parsed)
     return {}
+
+
+def _router_guidance_has_passing_external_prover_evidence(
+    compiler_guidance: Mapping[str, Any],
+) -> bool:
+    """Infer the router repair route from passing autoencoder gap evidence."""
+
+    if _router_guidance_targets_external_router(compiler_guidance) and (
+        _router_guidance_quality_gate_passes(
+            compiler_guidance.get("compiler_guidance_quality_gate")
+        )
+        or _router_guidance_quality_gate_passes(compiler_guidance.get("quality_gate"))
+    ):
+        return True
+
+    for key in (
+        "compiler_guidance_legal_ir_view_gaps",
+        "compiler_guidance_legal_ir_view_family_gaps",
+    ):
+        if _router_guidance_gap_summary_targets_external_router(
+            compiler_guidance.get(key),
+            quality_gate=compiler_guidance.get("compiler_guidance_quality_gate"),
+        ):
+            return True
+
+    attribution = compiler_guidance.get("compiler_guidance_attribution")
+    if isinstance(attribution, Mapping):
+        for key in ("legal_ir_view_gaps", "legal_ir_view_family_gaps"):
+            if _router_guidance_attribution_gaps_target_external_router(
+                attribution.get(key)
+            ):
+                return True
+
+    for key in ("evidence", "hint_evidence"):
+        evidence_items = compiler_guidance.get(key)
+        if not isinstance(evidence_items, Sequence) or isinstance(
+            evidence_items,
+            (str, bytes),
+        ):
+            continue
+        for item in evidence_items:
+            if (
+                isinstance(item, Mapping)
+                and _router_guidance_has_passing_external_prover_evidence(item)
+            ):
+                return True
+
+    return False
+
+
+def _router_guidance_targets_external_router(value: Mapping[str, Any]) -> bool:
+    target_values = (
+        value.get("target_component"),
+        value.get("program_synthesis_scope"),
+        value.get("target"),
+        value.get("scope"),
+    )
+    return any(_router_guidance_key_targets_external_router(item) for item in target_values)
+
+
+def _router_guidance_key_targets_external_router(value: Any) -> bool:
+    text = (
+        str(value or "")
+        .strip()
+        .lower()
+        .split(":", 1)[0]
+        .replace("-", "_")
+        .replace(".", "_")
+        .replace(" ", "_")
+    )
+    return text in {
+        "external_provers",
+        "external_provers_router",
+        "external_prover_router",
+        "prover",
+    }
+
+
+def _router_guidance_quality_gate_passes(value: Any) -> bool:
+    return str(value or "").strip().lower() in {"pass", "passed", "ok", "true", "1"}
+
+
+def _router_guidance_gap_summary_targets_external_router(
+    value: Any,
+    *,
+    quality_gate: Any,
+) -> bool:
+    if not isinstance(value, Mapping):
+        return False
+    if not _router_guidance_quality_gate_passes(quality_gate):
+        return False
+    return any(
+        _router_guidance_key_targets_external_router(key)
+        and _router_guidance_positive_support(count)
+        for key, count in value.items()
+    )
+
+
+def _router_guidance_attribution_gaps_target_external_router(value: Any) -> bool:
+    if not isinstance(value, Mapping):
+        return False
+    for key, gap in value.items():
+        if not _router_guidance_key_targets_external_router(key):
+            continue
+        if not isinstance(gap, Mapping):
+            continue
+        if _router_guidance_quality_gate_passes(gap.get("quality_gate")):
+            return True
+    return False
+
+
+def _router_guidance_positive_support(value: Any) -> bool:
+    try:
+        return float(value or 0.0) > 0.0
+    except (TypeError, ValueError):
+        return bool(value)
 
 
 def _supports_router_guidance_prover_gate_soft_pass(

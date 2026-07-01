@@ -8168,6 +8168,70 @@ def test_external_prover_router_bridge_accepts_packet_evidence_guidance_route(
     assert report.round_trip.extra_losses["external_prover_failure_ratio"] == 0.0
 
 
+def test_external_prover_router_bridge_infers_route_from_passing_gap_evidence(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge.external_prover_router import (
+        ExternalProverRouterBridgeAdapter,
+    )
+
+    class _GuidedResult:
+        def __init__(self) -> None:
+            self.is_proved = True
+            self.prover_used = "native"
+            self.proof_time = 0.01
+            self.reason = "Proved by native"
+            self.strategy_used = "sequential"
+            self.all_results = {"native": object()}
+
+    class _GuidedRouter:
+        @staticmethod
+        def get_available_provers() -> list[str]:
+            return ["native"]
+
+        @staticmethod
+        def route(_formula, **_kwargs):
+            return _GuidedResult()
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.bridge.external_prover_router._build_router",
+        lambda **_kwargs: _GuidedRouter(),
+    )
+
+    adapter = ExternalProverRouterBridgeAdapter(
+        enable_native=True,
+        enable_external_binaries=False,
+    )
+    report = adapter.evaluate(
+        "The Director shall make awards on a competitive basis.",
+        document_id="external-prover-bridge-packet-gap-guidance-route",
+        citation="42 U.S.C. 19012",
+        compiler_guidance={
+            "compiler_guidance_attribution": {
+                "basis": "sample_records",
+                "legal_ir_view_gaps": {
+                    "external_provers_router:overrepresented": {
+                        "count": 6,
+                        "quality_gate": "pass",
+                    }
+                },
+                "todo_routes": {},
+            },
+            "compiler_guidance_legal_ir_view_gaps": {
+                "external_provers_router:overrepresented": 6,
+            },
+            "compiler_guidance_quality_gate": "pass",
+            "source": "compiler_guidance_distillation_v1",
+        },
+    )
+
+    assert report.status == "ok"
+    assert report.metadata["compiler_guidance_applied"] is True
+    assert report.metadata["compiler_guidance_prover_gate_hint"] is True
+    assert report.proof_gate.compiles is True
+    assert report.round_trip.extra_losses["external_prover_failure_ratio"] == 0.0
+
+
 def test_external_prover_router_bridge_accepts_rescue_original_action_guidance(
     monkeypatch,
 ) -> None:
