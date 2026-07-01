@@ -5251,11 +5251,34 @@ def _apply_refined_modal_family_cue_pair_balance(
                 conditional_floor,
             )
             conditional_count = float(counts.get(conditional_family, 0.0))
+        if (
+            frame_count > epistemic_count
+            and has_epistemic_scope
+            and has_strong_epistemic_scope
+        ):
+            epistemic_floor = _scaled_competing_scope_backfill(
+                source_count=frame_count,
+                ratio=0.9,
+                minimum=max(
+                    epistemic_count,
+                    _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                ),
+                maximum=max(
+                    frame_count,
+                    _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                ),
+            )
+            counts[epistemic_family] = max(
+                epistemic_count,
+                epistemic_floor,
+            )
+            epistemic_count = float(counts.get(epistemic_family, 0.0))
         strongest_non_frame = max(
             strongest_non_frame,
             deontic_count,
             temporal_count,
             conditional_count,
+            epistemic_count,
         )
         if strongest_non_frame > 0.0 and frame_count > strongest_non_frame:
             frame_cap = (

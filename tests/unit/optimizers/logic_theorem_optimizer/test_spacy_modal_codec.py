@@ -680,6 +680,30 @@ def test_refined_pair_balance_promotes_conditional_scope_over_generic_frame() ->
     assert counts["conditional_normative"] > counts["frame"]
 
 
+def test_refined_pair_balance_promotes_epistemic_scope_over_generic_frame() -> None:
+    counts = {
+        "frame": 2.2,
+        "epistemic": 1.15,
+        "conditional_normative": 0.4,
+        "deontic": 0.35,
+    }
+    signals = {
+        "has_epistemic_scope": True,
+        "has_epistemic_cue": True,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": True,
+        "has_frame_cue": True,
+        "has_frame_editorial_scope_phrase": False,
+        "has_definition_scope": False,
+        "has_frame_structural_authority_scope_phrase": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["epistemic"] > 1.15
+    assert counts["frame"] - counts["epistemic"] <= 0.62
+
+
 def test_refined_pair_balance_promotes_typed_temporal_status_over_deontic_cues() -> None:
     counts = {
         "deontic": 2.1,
