@@ -9105,6 +9105,76 @@ def test_zkp_prover_derives_guidance_ref_from_contract_metadata() -> None:
     assert verifier.verify_proof(second) is True
 
 
+def test_zkp_prover_derives_guidance_ref_from_packet_shaped_metadata() -> None:
+    from ipfs_datasets_py.logic.zkp import (
+        ZKPProver,
+        ZKPVerifier,
+        compiler_guidance_contract_from_metadata,
+        compiler_guidance_ref_from_metadata,
+    )
+
+    metadata = {
+        "circuit_ref": "legal_ir_zkp_attestation@v1",
+        "circuit_version": 1,
+        "program_synthesis_scope": "zkp",
+        "route": "repair_zkp_attestation_bridge",
+        "source": "compiler_guidance_distillation_v1",
+        "target_component": "zkp.circuits",
+    }
+    theorem = "O(publish_notice(agency))"
+    axioms = [theorem, "uses_predicate(publish_notice)"]
+
+    prover = ZKPProver(backend="simulated", enable_caching=False)
+    proof = prover.generate_proof(theorem, axioms, metadata=metadata)
+    verifier = ZKPVerifier(backend="simulated")
+
+    assert compiler_guidance_contract_from_metadata(metadata) == {
+        "program_synthesis_scope": "zkp",
+        "route": "repair_zkp_attestation_bridge",
+        "source": "compiler_guidance_distillation_v1",
+        "target_component": "zkp.circuits",
+    }
+    assert proof.public_inputs["compiler_guidance_ref"] == (
+        compiler_guidance_ref_from_metadata(metadata)
+    )
+    assert (
+        proof.metadata["attestation_view"]["compiler_guidance_ref"]
+        == proof.public_inputs["compiler_guidance_ref"]
+    )
+    assert verifier.verify_proof(proof) is True
+
+
+def test_zkp_guidance_ref_normalizes_json_encoded_packet_bundle() -> None:
+    from ipfs_datasets_py.logic.zkp import (
+        compiler_guidance_contract_from_metadata,
+        compiler_guidance_ref_from_metadata,
+    )
+
+    bundled = {
+        "bundle": (
+            '{"program_synthesis_scope":"zkp",'
+            '"route":"repair_zkp_attestation_bridge",'
+            '"source":"compiler_guidance_distillation_v1",'
+            '"target_component":"zkp.circuits"}'
+        )
+    }
+    explicit = {
+        "compiler_guidance_contract": {
+            "program_synthesis_scope": "zkp",
+            "route": "repair_zkp_attestation_bridge",
+            "source": "compiler_guidance_distillation_v1",
+            "target_component": "zkp.circuits",
+        }
+    }
+
+    assert compiler_guidance_contract_from_metadata(bundled) == (
+        compiler_guidance_contract_from_metadata(explicit)
+    )
+    assert compiler_guidance_ref_from_metadata(bundled) == (
+        compiler_guidance_ref_from_metadata(explicit)
+    )
+
+
 def test_zkp_verifier_rejects_stale_attestation_view() -> None:
     from ipfs_datasets_py.logic.zkp import ZKPProver, ZKPVerifier
 

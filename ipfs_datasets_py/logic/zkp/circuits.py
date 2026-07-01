@@ -25,6 +25,31 @@ _DERIVED_PUBLIC_INPUT_KEYS = frozenset(
     }
 )
 _HEX_CHARS = frozenset("0123456789abcdefABCDEF")
+_COMPILER_GUIDANCE_CONTAINER_KEYS = (
+    "compiler_guidance_contract",
+    "compiler_guidance",
+    "compiler_guidance_bundle",
+    "compiler_guidance_attribution",
+    "guidance_contract",
+    "guidance",
+    "semantic_bundle",
+    "bundle",
+)
+_COMPILER_GUIDANCE_PACKET_KEYS = frozenset(
+    {
+        "action",
+        "objective",
+        "program_synthesis_scope",
+        "role",
+        "route",
+        "samples",
+        "scope",
+        "source",
+        "target",
+        "target_component",
+        "target_metrics",
+    }
+)
 
 
 def _bytes_from_proof_data(proof_data: object) -> bytes:
@@ -135,6 +160,85 @@ def _json_safe_public_input(value: Any) -> Any:
     return str(value)
 
 
+def _decode_json_guidance_value(value: Any) -> Any:
+    if not isinstance(value, str):
+        return value
+    stripped = value.strip()
+    if not stripped or stripped[0] not in "{[":
+        return value
+    try:
+        return json.loads(stripped)
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return value
+
+
+def _canonical_guidance_value(value: Any) -> Any:
+    return _json_safe_public_input(_decode_json_guidance_value(value))
+
+
+def _guidance_container_contract(value: Any) -> Any:
+    decoded = _decode_json_guidance_value(value)
+    if isinstance(decoded, Mapping):
+        return {
+            str(key): _canonical_guidance_value(item)
+            for key, item in sorted(decoded.items(), key=lambda pair: str(pair[0]))
+        }
+    if isinstance(decoded, (list, tuple)):
+        return [_canonical_guidance_value(item) for item in decoded]
+    if decoded in (None, ""):
+        return {}
+    return _canonical_guidance_value(decoded)
+
+
+def compiler_guidance_contract_from_metadata(
+    metadata: Mapping[str, Any] | None,
+) -> Any:
+    """Return the deterministic compiler-guidance contract carried by metadata.
+
+    Compiler guidance can arrive as an explicit contract, a nested packet
+    bundle, or flattened ``compiler_guidance_*`` fields.  This normalizer keeps
+    the ZKP circuit layer responsible for the public commitment shape instead
+    of relying on each bridge caller to pre-normalize evidence.
+    """
+    metadata_dict = _mapping_dict(metadata)
+    if not metadata_dict:
+        return {}
+
+    for key in _COMPILER_GUIDANCE_CONTAINER_KEYS:
+        if key not in metadata_dict:
+            continue
+        contract = _guidance_container_contract(metadata_dict.get(key))
+        if contract not in ({}, [], ""):
+            return contract
+
+    selected: Dict[str, Any] = {}
+    for key, value in sorted(metadata_dict.items(), key=lambda pair: str(pair[0])):
+        name = str(key)
+        if name.startswith("compiler_guidance_"):
+            selected[name] = _canonical_guidance_value(value)
+    if selected:
+        return selected
+
+    # Packet-shaped autoencoder rows sometimes arrive directly as the metadata
+    # object.  Require a target/component signal before accepting generic keys
+    # such as "source" so ordinary proof metadata does not become guidance.
+    names = {str(key) for key in metadata_dict}
+    if names & {
+        "program_synthesis_scope",
+        "target_component",
+        "compiler_guidance_route",
+        "compiler_guidance_todo_routes",
+    }:
+        return {
+            str(key): _canonical_guidance_value(value)
+            for key, value in sorted(metadata_dict.items(), key=lambda pair: str(pair[0]))
+            if str(key) in _COMPILER_GUIDANCE_PACKET_KEYS
+            or str(key).startswith("compiler_guidance_")
+        }
+
+    return {}
+
+
 def compiler_guidance_ref_from_metadata(metadata: Mapping[str, Any] | None) -> str:
     """Return a stable guidance ref from explicit metadata or a contract body."""
     metadata_dict = _mapping_dict(metadata)
@@ -142,14 +246,8 @@ def compiler_guidance_ref_from_metadata(metadata: Mapping[str, Any] | None) -> s
     if explicit_ref:
         return explicit_ref
 
-    contract = metadata_dict.get("compiler_guidance_contract")
-    if contract is None:
-        return ""
-    if isinstance(contract, str) and not contract.strip():
-        return ""
-    if isinstance(contract, Mapping) and not contract:
-        return ""
-    if isinstance(contract, (list, tuple)) and not contract:
+    contract = compiler_guidance_contract_from_metadata(metadata_dict)
+    if contract in ({}, [], ""):
         return ""
 
     canonical_contract = _json_safe_public_input(contract)
