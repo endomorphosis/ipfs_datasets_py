@@ -12,7 +12,7 @@ ARGS_SNAPSHOT="${LOG_DIR}/${BASE_RUN_ID}.args"
 
 STOP_EXISTING="${STOP_EXISTING:-1}"
 START_SUPERVISOR="${START_SUPERVISOR:-1}"
-SUPERVISOR_LOG="${LOG_DIR}/${BASE_RUN_ID}.watchdog-supervisor.launch.log"
+SUPERVISOR_LOG="${LOG_DIR}/${BASE_RUN_ID}.canonical-watchdog.launch.log"
 SUPERVISOR_PID_FILE="${LOG_DIR}/${BASE_RUN_ID}.watchdog-supervisor.pid"
 
 mkdir -p "${LOG_DIR}"
@@ -121,7 +121,7 @@ echo "$!" > "${PID_FILE}"
 log_line "pipeline_started pid=$(cat "${PID_FILE}") log=${PIPELINE_LOG}"
 
 if [[ "${START_SUPERVISOR}" == "1" ]]; then
-  setsid bash scripts/ops/logic/ensure_watchdog_until_verified.sh "${BASE_RUN_ID}" > "${SUPERVISOR_LOG}" 2>&1 &
+  setsid bash scripts/ops/logic/watch_canonical_weights_loop.sh "${BASE_RUN_ID}" > "${SUPERVISOR_LOG}" 2>&1 &
   echo "$!" > "${SUPERVISOR_PID_FILE}"
   log_line "supervisor_started pid=$(cat "${SUPERVISOR_PID_FILE}") log=${SUPERVISOR_LOG}"
 fi
