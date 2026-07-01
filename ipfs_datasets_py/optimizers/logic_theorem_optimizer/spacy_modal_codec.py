@@ -992,6 +992,7 @@ _DEONTIC_SCOPE_PHRASES = (
     "requirement that",
     "requirements for",
     "is liable for",
+    "shall appoint",
     "shall issue",
     "court shall be held",
     "shall be held at",
