@@ -25566,32 +25566,39 @@ def test_modal_compiler_surfaces_packet_000111_compiler_ambiguity_policy_pairs(
     )
     scenarios = (
         {
-            "sample_id": "us-code-33-3803-ac8f8e7ef6c14117",
-            "predicted_family": "deontic",
-            "target_family": "conditional_normative",
-            "family_margin": -0.15381837787,
-            "priority": 0.30381837787,
-        },
-        {
-            "sample_id": "us-code-10-2263-571407a5044f94b2",
-            "predicted_family": "temporal",
-            "target_family": "frame",
-            "family_margin": -0.602948048611,
-            "priority": 0.752948048611,
-        },
-        {
-            "sample_id": "us-code-38-1731-7736f9e2e50472ec",
-            "predicted_family": "temporal",
+            "sample_id": "us-code-42-17256.-53095ca157393209",
+            "predicted_family": "frame",
             "target_family": "deontic",
-            "family_margin": -0.020147733483,
-            "priority": 0.170147733483,
+            "family_margin": -0.104926223005,
+            "priority": 0.254926223005,
         },
         {
-            "sample_id": "us-code-2-5541-462165e82b6b68ce",
+            "sample_id": "us-code-18-1705-828a5b629d033e04",
+            "predicted_family": "frame",
+            "target_family": "doxastic",
+            "family_margin": -0.511343388633,
+            "priority": 0.661343388633,
+        },
+        {
+            "sample_id": "us-code-33-2213a-a015499eddb1f5f6",
             "predicted_family": "frame",
             "target_family": "conditional_normative",
-            "family_margin": -0.06766595464,
-            "priority": 0.21766595464,
+            "family_margin": -0.999995435821,
+            "priority": 1.149995435821,
+        },
+        {
+            "sample_id": "us-code-51-40305.-5f23b53ad79a36d5",
+            "predicted_family": "frame",
+            "target_family": "frame",
+            "family_margin": 0.090044947089,
+            "priority": 0.059955052911,
+        },
+        {
+            "sample_id": "us-code-33-579f-1eafb0dbc84f748e",
+            "predicted_family": "frame",
+            "target_family": "temporal",
+            "family_margin": -0.604402806232,
+            "priority": 0.754402806232,
         },
     )
     expected_pairs = {
@@ -25620,31 +25627,52 @@ def test_modal_compiler_surfaces_packet_000111_compiler_ambiguity_policy_pairs(
             predicted_label = "obligation"
 
         predicted_share = 0.9
-        target_share = predicted_share + family_margin
-        if target_share < 0.0:
-            predicted_share = min(0.99, abs(family_margin) + 0.05)
+        if predicted_family == target_family:
+            runner_up_family = "deontic"
+            ranking = [
+                {
+                    "family": predicted_family,
+                    "count": 0,
+                    "share_raw": predicted_share,
+                    "share": predicted_share,
+                },
+                {
+                    "family": runner_up_family,
+                    "count": 0,
+                    "share_raw": predicted_share - family_margin,
+                    "share": predicted_share - family_margin,
+                },
+            ]
+            candidate_ids = [predicted_family]
+            margin_direction = "contested"
+        else:
             target_share = predicted_share + family_margin
-        ranking = [
-            {
-                "family": predicted_family,
-                "count": 0,
-                "share_raw": predicted_share,
-                "share": predicted_share,
-            },
-            {
-                "family": target_family,
-                "count": 0,
-                "share_raw": target_share,
-                "share": target_share,
-            },
-        ]
+            if target_share < 0.0:
+                predicted_share = min(0.99, abs(family_margin) + 0.05)
+                target_share = predicted_share + family_margin
+            ranking = [
+                {
+                    "family": predicted_family,
+                    "count": 0,
+                    "share_raw": predicted_share,
+                    "share": predicted_share,
+                },
+                {
+                    "family": target_family,
+                    "count": 0,
+                    "share_raw": target_share,
+                    "share": target_share,
+                },
+            ]
+            candidate_ids = [predicted_family, target_family]
+            margin_direction = "outvoted"
         family_shares = {
             str(candidate["family"]): float(candidate["share_raw"])
             for candidate in ranking
         }
         policy_pair = f"{predicted_family}->{target_family}"
         expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
+            f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
         )
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-000111-adaptive-evidence-{index}",
@@ -25704,22 +25732,31 @@ def test_modal_compiler_surfaces_packet_000111_compiler_ambiguity_policy_pairs(
             ambiguity
             for ambiguity in ambiguities
             if ambiguity.ambiguity_type == "adaptive_family_margin_low"
-            and ambiguity.candidate_ids == [predicted_family, target_family]
+            and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
-        assert base_ambiguity.severity == "requires_rule"
+        assert base_ambiguity.severity == (
+            "review" if margin_direction == "contested" else "requires_rule"
+        )
         assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
-        assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
+        assert base_ambiguity.metadata["adaptive_margin_direction"] == margin_direction
+        expected_buffer = compiler_refined_modal_family_cue_margin_buffer(
+            predicted_family,
+            target_family,
+        )
         assert (
             abs(
                 float(base_ambiguity.metadata["adaptive_effective_family_margin_threshold"])
-                - 0.1515
+                - (0.15 + expected_buffer)
             )
             < 1e-12
         )
         assert (
-            abs(float(base_ambiguity.metadata["adaptive_pair_margin_buffer"]) - 0.0015)
+            abs(
+                float(base_ambiguity.metadata["adaptive_pair_margin_buffer"])
+                - expected_buffer
+            )
             < 1e-12
         )
         assert (
@@ -25736,7 +25773,7 @@ def test_modal_compiler_surfaces_packet_000111_compiler_ambiguity_policy_pairs(
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
-            and ambiguity.candidate_ids == [predicted_family, target_family]
+            and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
             and ambiguity.metadata["adaptive_base_ambiguity_type"]
             == "adaptive_family_margin_low"

@@ -440,6 +440,22 @@ COMPILER_AMBIGUITY_PACKET_000111_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
     ),
     (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DOXASTIC.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.FRAME.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ),
+    (
         ModalLogicFamily.TEMPORAL.value,
         ModalLogicFamily.DEONTIC.value,
     ),
