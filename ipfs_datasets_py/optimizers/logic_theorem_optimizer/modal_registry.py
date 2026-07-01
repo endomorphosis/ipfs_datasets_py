@@ -5495,11 +5495,11 @@ COMPILER_AMBIGUITY_PACKET_001248_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
 COMPILER_AMBIGUITY_PACKET_000220_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.DEONTIC.value,
-        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DEONTIC.value,
     ),
     (
-        ModalLogicFamily.FRAME.value,
         ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.FRAME.value,
     ),
 )
 
