@@ -409,6 +409,73 @@ def test_modal_frame_logic_bridge_promotes_action_shaped_graph_guidance_to_neo4j
     assert graph_metadata["legal_ir_view_cross_entropy_loss"] == 0.0
 
 
+def test_neo4j_projection_promotes_packet_metadata_guidance_to_alignment_view() -> None:
+    from ipfs_datasets_py.logic.modal.kg_bridge import modal_ir_to_neo4j_graph_data
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
+        ModalIRDocument,
+        ModalIRFrameLogic,
+    )
+
+    modal_ir = ModalIRDocument(
+        document_id="us-code-26-994-packet-metadata-projection",
+        source="us_code",
+        normalized_text=(
+            "26 U.S.C. 994: U.S.C. Title 26 - INTERNAL REVENUE CODE "
+            "Sec. 994 - Regulations."
+        ),
+        frame_logic=ModalIRFrameLogic.from_triples(
+            [
+                {
+                    "subject": "us-code-26-994-packet-metadata-projection",
+                    "predicate": "source_id",
+                    "object": "us-code-26-994",
+                },
+                {
+                    "subject": "us-code-26-994-packet-metadata-projection",
+                    "predicate": "source_text",
+                    "object": (
+                        "26 U.S.C. 994: U.S.C. Title 26 - INTERNAL REVENUE "
+                        "CODE CHAPTER 1 - NORMAL TAXES AND SURTAXES "
+                        "Sec. 994 - Regulations."
+                    ),
+                },
+            ]
+        ),
+        metadata={
+            "bundle": {
+                "program_synthesis_scope": "knowledge_graphs",
+                "route": "repair_multiview_legal_ir_graph_projection",
+                "source": "compiler_guidance_distillation_v1",
+                "target_component": "knowledge_graphs.neo4j_compat",
+            },
+            "evidence": [
+                {
+                    "bridge_failure_name": (
+                        "legal_ir_multiview_graph_failure_penalty"
+                    ),
+                    "target_view": "knowledge_graphs.neo4j_compat",
+                }
+            ],
+        },
+    )
+
+    graph_data = modal_ir_to_neo4j_graph_data(modal_ir)
+    graph_relationships = graph_data.to_dict()["relationships"]
+
+    assert any(
+        relationship["properties"]["flogic_predicate"]
+        == "learned_legal_ir_target_view"
+        and relationship["properties"]["flogic_object"]
+        == "knowledge_graphs.neo4j_compat"
+        for relationship in graph_relationships
+    )
+    assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
+    assert graph_data.metadata[
+        "frame_logic_projection_legal_view_coverage_complete"
+    ] is True
+    assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
+
+
 def test_neo4j_compat_augments_sparse_legal_sample_text_projection() -> None:
     from ipfs_datasets_py.logic.modal.kg_bridge import flogic_triples_to_graph_data
 

@@ -8,6 +8,7 @@ surface of the legal IR.  This module projects those triples into the migration
 from __future__ import annotations
 
 import hashlib
+import json
 import math
 import re
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
@@ -964,6 +965,7 @@ def _metadata_implies_neo4j_projection_guidance(metadata: Mapping[str, Any]) -> 
 
 def _compiler_guidance_metadata_features(metadata: Mapping[str, Any]) -> List[str]:
     features: List[str] = []
+    _extend_guidance_mapping_features(metadata, features)
     for key in (
         "compiler_guidance_synthesis_focus",
         "compiler_guidance_semantic_overlay_terms",
@@ -976,6 +978,96 @@ def _compiler_guidance_metadata_features(metadata: Mapping[str, Any]) -> List[st
         for value in groups.values():
             features.extend(_feature_values(value))
     return _unique(features)
+
+
+def _extend_guidance_mapping_features(
+    value: Any,
+    features: List[str],
+) -> None:
+    mapping = _guidance_mapping(value)
+    if not mapping:
+        return
+    for key in (
+        "compiler_guidance_route",
+        "route",
+        "compiler_guidance_action",
+        "action",
+        "original_action",
+        "failed_action",
+        "failed_todo_action",
+    ):
+        route = str(mapping.get(key) or "").strip()
+        if route:
+            features.append(route)
+            features.append(f"compiler-guidance-route:{route}")
+    for key in (
+        "target_component",
+        "target_view",
+        "predicted_component",
+        "predicted_view",
+    ):
+        target = str(mapping.get(key) or "").strip()
+        if target:
+            features.append(target)
+            features.append(f"{key}:{target}")
+    for routes_key in ("compiler_guidance_todo_routes", "todo_routes", "routes"):
+        raw_routes = mapping.get(routes_key)
+        if isinstance(raw_routes, Mapping):
+            features.extend(str(route) for route in raw_routes if str(route).strip())
+        else:
+            features.extend(_feature_values(raw_routes))
+    for distribution_key in (
+        "legal_ir_target_view_distribution",
+        "compiler_guidance_legal_ir_target_view_distribution",
+        "target_view_distribution",
+    ):
+        distribution = mapping.get(distribution_key)
+        if isinstance(distribution, Mapping):
+            features.extend(str(name) for name in distribution if str(name).strip())
+    for bundle_key in (
+        "bundle",
+        "semantic_bundle",
+        "semantic_bundle_key",
+        "compiler_guidance_bundle",
+        "vector_bundle",
+    ):
+        _extend_guidance_mapping_features(mapping.get(bundle_key), features)
+    for evidence in _guidance_records(
+        mapping.get("evidence")
+        if "evidence" in mapping
+        else mapping.get("compiler_guidance_evidence")
+    ):
+        _extend_guidance_mapping_features(evidence, features)
+
+
+def _guidance_mapping(value: Any) -> Dict[str, Any]:
+    if isinstance(value, Mapping):
+        return dict(value)
+    if not isinstance(value, (str, bytes)):
+        return {}
+    text = value.decode("utf-8", errors="ignore") if isinstance(value, bytes) else value
+    text = text.strip()
+    if not text:
+        return {}
+    try:
+        parsed = json.loads(text)
+    except json.JSONDecodeError:
+        return {}
+    return dict(parsed) if isinstance(parsed, Mapping) else {}
+
+
+def _guidance_records(value: Any) -> List[Any]:
+    if value is None:
+        return []
+    if isinstance(value, Mapping):
+        return [value]
+    if isinstance(value, (str, bytes)):
+        mapping = _guidance_mapping(value)
+        return [mapping] if mapping else []
+    try:
+        return list(value)
+    except TypeError:
+        return []
 
 
 def _feature_values(value: Any) -> List[str]:
