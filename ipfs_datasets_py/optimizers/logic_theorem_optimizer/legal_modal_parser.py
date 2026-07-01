@@ -543,6 +543,7 @@ _USCODE_RESIDUAL_HEADER_SCOPE_PHRASES = (
 )
 _USCODE_SECTION_CATCHLINE_STOP_RE = re.compile(
     r"\s+(?=(?:From\s+the\s+U\.?\s*S\.?\s+Government\s+Publishing\s+Office|"
+    r"§+\s*\d|"
     r"\([a-z0-9ivxlcdm]{1,6}\)\s+|"
     r"The\s+(?:Secretary|Foundation|Commission|Administrator|Director|"
     r"consolidated\s+bank)\b|"
@@ -1247,6 +1248,13 @@ class LegalModalParser:
             re.match(r"^\s+(?:pub\.?\s*l\.?|public\s+law)\b", trailing, re.IGNORECASE)
             and _MONTH_DAY_RE.search(trailing)
         ):
+            leading = normalized_text[max(0, start_char - 120) : start_char]
+            if re.search(
+                r"\b(?:amendment|amendments|effective\s+date)\b",
+                leading,
+                re.IGNORECASE,
+            ):
+                return False
             return True
         if _NON_TEMPORAL_BY_PHRASE_RE.match(trailing):
             return False
@@ -1675,8 +1683,10 @@ class LegalModalParser:
         next_index = max(1, int(start_index))
         for segment in eligible_segments[:resolved_max_formulas]:
             coverage_segment = (
-                self._residual_paragraph_heading_prefix_segment(segment) or segment
-            )
+                None
+                if self._preserve_full_residual_segment(segment)
+                else self._residual_paragraph_heading_prefix_segment(segment)
+            ) or segment
             formulas.append(
                 self._residual_span_coverage_formula(
                     document_id=document_id,
@@ -1690,6 +1700,14 @@ class LegalModalParser:
             next_index += 1
         return formulas
 
+    def _preserve_full_residual_segment(self, segment: LegalSegment) -> bool:
+        """Keep typed residual definitions intact instead of shrinking to headings."""
+        normalized = self.normalize_text(segment.text)
+        if not normalized:
+            return False
+        tokens = _TOKEN_RE.findall(normalized.lower())
+        return self._is_uscode_definition_residual_candidate(normalized, tokens)
+
     def uscode_section_catchline_coverage_formulas(
         self,
         *,
@@ -1698,7 +1716,7 @@ class LegalModalParser:
         citation: Optional[str],
         start_index: int = 1,
         covered_spans: Sequence[tuple[int, int]] = (),
-        max_formulas: int = 1,
+        max_formulas: int = 2,
     ) -> List[ModalIRFormula]:
         """Emit frame coverage for the coalesced U.S.C. section catchline."""
         if max_formulas <= 0 or not self._is_uscode_citation(citation):

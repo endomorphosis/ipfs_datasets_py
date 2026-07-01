@@ -559,6 +559,76 @@ def test_parser_compiles_cues_to_modal_ir_with_provenance() -> None:
     assert document.canonical_hash() == document.canonical_hash()
 
 
+def test_parser_covers_duplicated_uscode_catchlines() -> None:
+    parser = LegalModalParser()
+    text = (
+        "10 U.S.C. 2263: Sec. 2263 - United States contributions to the "
+        "North Atlantic Treaty Organization common-funded budgets §2263. "
+        "United States contributions to the North Atlantic Treaty Organization "
+        "common-funded budgets (a) In General .-The Secretary may contribute."
+    )
+
+    document = parser.parse(
+        text,
+        document_id="us-code-10-2263-duplicated-catchline",
+        source="us_code",
+        citation="10 U.S.C. 2263",
+    )
+
+    catchline_formulas = [
+        formula
+        for formula in document.formulas
+        if formula.metadata.get("fallback_rule")
+        == "uscode_section_catchline_coverage_v1"
+    ]
+    assert len(catchline_formulas) == 2
+    assert {
+        document.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ]
+        for formula in catchline_formulas
+    } == {
+        "United States contributions to the North Atlantic Treaty Organization "
+        "common-funded budgets"
+    }
+
+
+def test_parser_preserves_uscode_definition_residual_tail() -> None:
+    parser = LegalModalParser()
+    text = (
+        "10 U.S.C. 2263: Sec. 2263 - United States contributions to the "
+        "North Atlantic Treaty Organization common-funded budgets §2263. "
+        "United States contributions to the North Atlantic Treaty Organization "
+        "common-funded budgets (a) In General .-The Secretary may contribute. "
+        "(b) Definitions .-In this section: The term common-funded budgets of "
+        "NATO means the Military Budget."
+    )
+
+    document = parser.parse(
+        text,
+        document_id="us-code-10-2263-definition-tail",
+        source="us_code",
+        citation="10 U.S.C. 2263",
+    )
+
+    definition_formula = next(
+        formula
+        for formula in document.formulas
+        if "The term common-funded budgets of NATO means the Military Budget"
+        in document.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ]
+    )
+    covered_text = document.normalized_text[
+        definition_formula.provenance.start_char : definition_formula.provenance.end_char
+    ]
+    assert covered_text.strip().startswith("(b) Definitions")
+    assert (
+        definition_formula.metadata["fallback_rule"]
+        == "uscode_residual_span_coverage_v1"
+    )
+
+
 def test_parser_extracts_condition_and_exception_slots() -> None:
     parser = LegalModalParser()
 
