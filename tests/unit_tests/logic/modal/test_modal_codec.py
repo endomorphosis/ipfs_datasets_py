@@ -25695,6 +25695,64 @@ def test_decompiler_emits_source_scope_slots_for_within_and_deadline_cues() -> N
     )
 
 
+def test_decompiler_emits_semantic_source_slots_for_annual_report_duty() -> None:
+    document = _single_formula_document(
+        family="temporal",
+        symbol="F",
+        label="eventuality",
+        text=(
+            "The Secretary annually shall submit to Congress and make publicly "
+            "available a report on the progress made in advancing smart "
+            "manufacturing in the United States."
+        ),
+        predicate="secretary_submit_report",
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    assert "annual_report_duty" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "report_duty:temporal->deontic" in slot_texts[
+        "typed-decompiler-source-semantic-family-pair"
+    ]
+    assert any(
+        value.startswith("subject+action+object+semantic:temporal|")
+        for value in slot_texts[
+            "typed-decompiler-source-clause-topology-family-pair"
+        ]
+    )
+
+
+def test_decompiler_emits_semantic_source_slots_for_consultation_frame_span() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Consultation and cooperation between Federal officers and affected "
+            "States shall be carried out under this section."
+        ),
+        predicate="consultation_cooperation",
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    assert "consultation_cooperation" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "consultation_cooperation:frame->frame" in slot_texts[
+        "typed-decompiler-source-semantic-family-pair"
+    ]
+    assert "consultation_cooperation:frame->deontic" in slot_texts[
+        "typed-decompiler-source-semantic-family-pair"
+    ]
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()

@@ -128,10 +128,24 @@ _USCODE_EDITORIAL_NOTE_LABELS: tuple[str, ...] = (
     "Statutory Notes and Related Subsidiaries",
 )
 _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
+    ("administration and enforcement", "administration_enforcement"),
     ("authorization of appropriations", "appropriation_authorization"),
     ("authorized to be appropriated", "appropriation_authorization"),
+    ("civil enforcement", "civil_enforcement"),
+    ("consultation and cooperation", "consultation_cooperation"),
+    ("following consultation", "consultation"),
+    ("annual report", "annual_report"),
+    ("annually shall submit", "annual_report_duty"),
+    ("submit to congress", "congressional_report_duty"),
+    ("make publicly available a report", "public_report_duty"),
+    ("shall make a report", "report_duty"),
+    ("shall submit the report", "report_duty"),
+    ("shall submit a report", "report_duty"),
     ("remain available until expended", "no_year_funding_availability"),
     ("available until expended", "no_year_funding_availability"),
+    ("expenditures and cultivation requirements", "expenditure_requirement"),
+    ("shall have expended", "expenditure_requirement"),
+    ("no land shall be patented", "patent_prohibition"),
     ("research program and plan", "research_program_plan"),
     ("grants for research", "research_grant"),
     ("grants for the conduct of research", "research_grant"),
@@ -156,6 +170,8 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("charge on prize", "prize_proceeds_charge"),
     ("prize proceeds", "prize_proceeds_charge"),
     ("effect of act", "effect_of_act"),
+    ("payment authorization", "payment_authorization"),
+    ("fees for internal services", "internal_service_fee"),
 )
 _USCODE_STATUS_DERIVATION_RULES = frozenset(
     {
@@ -1917,6 +1933,20 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         normalized,
     ):
         add("temporal_condition")
+    if re.search(r"\bannually\b", normalized) and re.search(
+        r"\b(?:report|submit|make\s+publicly\s+available)\b",
+        normalized,
+    ):
+        add("annual_report_duty")
+    if re.search(
+        r"\b(?:shall|must)\s+(?:submit|make|file|provide)\b.{0,80}\breports?\b",
+        normalized,
+    ):
+        add("report_duty")
+    if re.search(r"\b(?:consultation|cooperation)\b", normalized):
+        add("consultation")
+    if re.search(r"\b(?:administ(?:er|ration)|enforce(?:ment|d|s)?)\b", normalized):
+        add("administration_enforcement")
     return atoms
 
 
@@ -6078,8 +6108,21 @@ def _typed_decompiler_source_reconstruction_slots(
         text=reconstruction_text,
     )
     source_scope_cues = _source_scope_reconstruction_cues(reconstruction_text)
-    if not source_scope_cues:
+    semantic_atoms = _legal_semantic_atoms_from_text(reconstruction_text)
+    if not source_scope_cues and not semantic_atoms:
         return []
+    semantic_topology_atoms = [
+        atom
+        for atom in semantic_atoms
+        if atom
+        not in {
+            "exception_or_condition",
+            "obligation",
+            "permission",
+            "prohibition",
+            "temporal_condition",
+        }
+    ]
 
     if (
         condition_values or exception_values or condition_cues
@@ -6098,6 +6141,11 @@ def _typed_decompiler_source_reconstruction_slots(
         and "deontic" not in targets
     ):
         targets.append("deontic")
+    for semantic_target in _typed_decompiler_semantic_atom_target_families(
+        semantic_atoms
+    ):
+        if semantic_target not in targets:
+            targets.append(semantic_target)
 
     force = _modal_force_label(formula)
     polarity = _modal_scope_polarity(
@@ -6116,6 +6164,7 @@ def _typed_decompiler_source_reconstruction_slots(
             ("object", "object" in roles),
             ("exception", bool(exception_values)),
             ("temporal", bool(temporal_cues)),
+            ("semantic", bool(semantic_topology_atoms)),
         )
         if present
     ]
@@ -6149,7 +6198,68 @@ def _typed_decompiler_source_reconstruction_slots(
                 ),
             )
         )
+    for atom in semantic_atoms:
+        slots.extend(
+            (
+                ("typed-decompiler-source-semantic-atom", atom),
+                (
+                    "typed-decompiler-source-semantic-atom-family",
+                    f"{source_family}:{atom}",
+                ),
+            )
+        )
+        for target in targets:
+            slots.append(
+                (
+                    "typed-decompiler-source-semantic-family-pair",
+                    f"{atom}:{source_family}->{target}",
+                )
+            )
     return _unique_slot_values(slots)
+
+
+def _typed_decompiler_semantic_atom_target_families(
+    semantic_atoms: Sequence[str],
+) -> List[str]:
+    targets: List[str] = []
+
+    def add(target: str) -> None:
+        if target and target not in targets:
+            targets.append(target)
+
+    for atom in semantic_atoms:
+        normalized_atom = _clean_text(atom).lower()
+        if normalized_atom in {
+            "annual_report_duty",
+            "congressional_report_duty",
+            "expenditure_requirement",
+            "obligation",
+            "patent_prohibition",
+            "payment_authorization",
+            "permission",
+            "prohibition",
+            "public_report_duty",
+            "report_duty",
+        }:
+            add("deontic")
+        if normalized_atom in {
+            "annual_report",
+            "annual_report_duty",
+            "no_year_funding_availability",
+            "temporal_condition",
+        }:
+            add("temporal")
+        if normalized_atom in {
+            "administration_enforcement",
+            "civil_enforcement",
+            "consultation",
+            "consultation_cooperation",
+            "internal_service_fee",
+        }:
+            add("frame")
+        if normalized_atom in {"exception_or_condition"}:
+            add("conditional_normative")
+    return targets
 
 
 def _source_scope_reconstruction_cues(text: str) -> List[str]:
