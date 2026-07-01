@@ -6543,6 +6543,18 @@ def _typed_decompiler_target_reconstruction_slots(
                             "family_source_scope_cue_legal_ir_view_prototype",
                             f"{source_family}->{target}||{cue}||{view}",
                         ),
+                        (
+                            "semantic_slot_legal_ir_view_prototype",
+                            f"slot:cue-family:{cue}:{target}||{view}",
+                        ),
+                        (
+                            "family_semantic_slot_legal_ir_view_prototype",
+                            f"{source_family}||slot:cue-family:{cue}:{target}||{view}",
+                        ),
+                        (
+                            "family_semantic_slot_legal_ir_view_prototype",
+                            f"{target}||slot:cue-family:{cue}:{target}||{view}",
+                        ),
                     )
                 )
         for cue in condition_cues:
@@ -7136,6 +7148,39 @@ def _source_scope_cue_legal_ir_views(cue: str) -> List[str]:
         if view and view not in views:
             views.append(view)
 
+    if normalized_cue in {
+        "as_defined_in",
+        "as_described_in",
+        "as_otherwise_provided_in",
+        "as_provided_in",
+        "as_set_forth_in",
+        "defined_in",
+        "described_in",
+        "for_purposes_of",
+        "for_the_purposes_of",
+        "in_accordance_with",
+        "in_the_case_of",
+        "pursuant_to",
+        "referred_to_in",
+        "subject_to",
+        "under",
+        "with_respect_to",
+        "within",
+    }:
+        add("knowledge_graphs.neo4j_compat")
+        add("CEC.native")
+        add("modal.frame_logic")
+    if normalized_cue in {
+        "as_otherwise_provided_in",
+        "as_provided_in",
+        "in_accordance_with",
+        "pursuant_to",
+        "subject_to",
+        "under",
+        "with_respect_to",
+    }:
+        add("deontic.ir")
+        add("TDFOL.prover")
     if normalized_cue in {
         "shall_not_apply",
         "exempt",

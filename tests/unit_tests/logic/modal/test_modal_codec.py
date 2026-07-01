@@ -29560,6 +29560,19 @@ def test_decompiler_emits_direct_target_reconstruction_pair_and_family_slots() -
     assert "in_accordance_with:conditional_normative" in slot_texts[
         "typed-decompiler-target-family-surface-cue"
     ]
+    assert "knowledge_graphs.neo4j_compat" in slot_texts[
+        "legal_ir_view_prototype"
+    ]
+    assert (
+        "slot:cue-family:in_accordance_with:conditional_normative||"
+        "knowledge_graphs.neo4j_compat"
+        in slot_texts["semantic_slot_legal_ir_view_prototype"]
+    )
+    assert (
+        "conditional_normative||slot:cue-family:in_accordance_with:"
+        "conditional_normative||CEC.native"
+        in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
+    )
 
 
 def test_decompiler_emits_heading_typed_ir_reconstruction_for_frame_residuals() -> None:
