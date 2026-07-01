@@ -1037,6 +1037,11 @@ _DEONTIC_REPORT_DUTY_SCOPE_PHRASES = (
     "shall make a report",
     "report shall be submitted",
 )
+_DEONTIC_PROGRAM_DUTY_SCOPE_PHRASES = (
+    "shall establish",
+    "shall establish a program",
+    "shall issue guidelines",
+)
 _DEONTIC_COURT_VENUE_DUTY_SCOPE_PHRASES = (
     "court shall be held",
     "shall be held at",
@@ -5080,6 +5085,9 @@ def _apply_refined_modal_family_cue_pair_balance(
     has_deontic_report_duty_scope_phrase = bool(
         signals.get("has_deontic_report_duty_scope_phrase")
     )
+    has_deontic_program_duty_scope_phrase = bool(
+        signals.get("has_deontic_program_duty_scope_phrase")
+    )
     has_deontic_citation_authority_scope_phrase = bool(
         signals.get("has_deontic_citation_authority_scope_phrase")
     )
@@ -5379,6 +5387,26 @@ def _apply_refined_modal_family_cue_pair_balance(
         counts[deontic_family] = max(
             deontic_count,
             temporal_count + 0.01,
+        )
+        deontic_count = float(counts.get(deontic_family, 0.0))
+
+    # frame/conditional/temporal -> deontic:
+    # mandatory program-establishment clauses often contain purpose phrases,
+    # deadlines, and technology-transfer nouns.  The operative "shall
+    # establish/issue guidelines" duty remains deontic under that scaffolding.
+    if (
+        has_deontic_program_duty_scope_phrase
+        and has_deontic_cue
+        and deontic_count > 0.0
+        and (
+            has_frame_scope_context
+            or has_structural_conditional_scope
+            or has_temporal_scope
+        )
+    ):
+        counts[deontic_family] = max(
+            deontic_count,
+            max(frame_count, conditional_count, temporal_count) + 0.01,
         )
         deontic_count = float(counts.get(deontic_family, 0.0))
 
@@ -7127,6 +7155,9 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
     deontic_report_duty_scope_phrase = _contains_scope_phrase(
         normalized_text, _DEONTIC_REPORT_DUTY_SCOPE_PHRASES
     )
+    deontic_program_duty_scope_phrase = _contains_scope_phrase(
+        normalized_text, _DEONTIC_PROGRAM_DUTY_SCOPE_PHRASES
+    )
     deontic_court_venue_duty_scope_phrase = _contains_scope_phrase(
         normalized_text, _DEONTIC_COURT_VENUE_DUTY_SCOPE_PHRASES
     )
@@ -7288,6 +7319,9 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         ),
         "has_deontic_report_duty_scope_phrase": bool(
             deontic_report_duty_scope_phrase
+        ),
+        "has_deontic_program_duty_scope_phrase": bool(
+            deontic_program_duty_scope_phrase
         ),
         "has_deontic_court_venue_duty_scope_phrase": bool(
             deontic_court_venue_duty_scope_phrase
