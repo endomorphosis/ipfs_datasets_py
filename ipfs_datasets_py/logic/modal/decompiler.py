@@ -1598,7 +1598,7 @@ def _decode_formula_phrases(
                     provenance_only=True,
                 )
             )
-        for status_slot, status_value in _uscode_reclassification_detail_slots(
+        for status_slot, status_value in _uscode_editorial_status_detail_slots(
             status_clause_text,
             slot_prefix="source_status_clause",
         ):
@@ -2011,6 +2011,25 @@ def _typed_ir_reconstruction_phrases(
             if _clean_text(value)
         )
     )
+    status_detail_values = [
+        value
+        for slot, value in _uscode_editorial_status_detail_slots(
+            " ".join(
+                value
+                for value in (
+                    heading_text,
+                    fallback_text,
+                    source_span_text,
+                    " ".join(condition_values),
+                    " ".join(exception_values),
+                )
+                if _clean_text(value)
+            ),
+            slot_prefix="typed_ir_status",
+        )
+        if slot.startswith("uscode_editorial_status_")
+        and not slot.endswith("_keyword")
+    ]
     targets = _typed_decompiler_bridge_target_families(
         formula=formula,
         text=" ".join(
@@ -2057,6 +2076,8 @@ def _typed_ir_reconstruction_phrases(
         add_support(value)
     for atom in semantic_atoms:
         add_support(atom)
+    for value in status_detail_values:
+        add_support(value)
     for view_support in legal_ir_view_support:
         add_support(view_support)
     for role in ("subject", "action", "object", "temporal"):
@@ -2782,6 +2803,55 @@ def _uscode_reclassification_detail_slots(
     target_match = re.search(
         rf"\breclassified\s+as\s+section\s+"
         rf"(?P<section>{_USCODE_SECTION_TOKEN_PATTERN})"
+        rf"(?:\s+of\s+(?:(?:this|such)\s+title|Title\s+(?P<title>\d+[A-Za-z]*)))?",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    if target_match is not None:
+        target_section = _clean_text(target_match.group("section"))
+        target_title = _clean_text(target_match.group("title") or "")
+        add("target_section", target_section)
+        if target_title:
+            add("target_title", target_title)
+            add("target_citation", f"{target_title} U.S.C. {target_section}")
+        else:
+            add("target_citation", f"this title section {target_section}")
+
+    return _unique_slot_values(slots)
+
+
+def _uscode_editorial_status_detail_slots(
+    text: str,
+    *,
+    slot_prefix: str,
+) -> List[Tuple[str, str]]:
+    """Extract normalized U.S.C. editorial status transition details."""
+    normalized = _clean_text(text)
+    prefix = _clean_text(slot_prefix).replace(" ", "_")
+    if not normalized or not prefix:
+        return []
+
+    slots = list(_uscode_reclassification_detail_slots(normalized, slot_prefix=prefix))
+
+    def add(slot_suffix: str, value: str) -> None:
+        cleaned = _clean_text(value)
+        if cleaned:
+            slots.append((f"{prefix}_{slot_suffix}", cleaned))
+            slots.append((f"uscode_editorial_status_{slot_suffix}", cleaned))
+
+    status_match = re.search(
+        r"\b(?P<keyword>renumbered|reclassified|transferred)\b",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    if status_match is not None:
+        add("keyword", status_match.group("keyword").lower())
+
+    target_match = re.search(
+        rf"\b(?:renumbered|reclassified|transferred)"
+        rf"(?:\s+(?:as|to|from))?\s+"
+        rf"(?:§{{1,2}}\s*|secs?\.?\s*|sections?\s+)?"
+        rf"(?P<section>{_USCODE_SECTION_LIST_PATTERN})"
         rf"(?:\s+of\s+(?:(?:this|such)\s+title|Title\s+(?P<title>\d+[A-Za-z]*)))?",
         normalized,
         flags=re.IGNORECASE,
@@ -5436,7 +5506,7 @@ def _source_span_slot_phrases(
                 continue
             seen.add(marker)
             phrases.append(semantic_phrase)
-        for status_slot, status_value in _uscode_reclassification_detail_slots(
+        for status_slot, status_value in _uscode_editorial_status_detail_slots(
             text,
             slot_prefix=slot_prefix,
         ):

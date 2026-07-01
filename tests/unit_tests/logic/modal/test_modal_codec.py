@@ -30021,6 +30021,48 @@ def test_decompiler_emits_reclassification_target_slots_for_uscode_status_clause
     assert "knowledge_graphs.neo4j_compat" in slot_texts["legal_ir_view_prototype"]
 
 
+def test_decompiler_reconstructs_renumbered_status_transition_from_typed_slots() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "10 U.S.C. 2216: Sec. 2216 - Renumbered. Section 2216 was "
+            "renumbered §322 of this title."
+        ),
+        predicate="section_renumbered",
+    )
+    formula = document.formulas[0]
+    formula.metadata["fallback_rule"] = "uscode_editorial_status_heading_v1"
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "renumbered" in slot_texts["uscode_editorial_status_keyword"]
+    assert "322" in slot_texts["uscode_editorial_status_target_section"]
+    assert "this title section 322" in slot_texts[
+        "uscode_editorial_status_target_citation"
+    ]
+    assert "renumbered:frame->temporal" in slot_texts[
+        "typed-decompiler-source-semantic-family-pair"
+    ]
+    assert "this title section 322" in slot_texts["typed_ir_semantic_support"]
+    assert any(
+        "temporal deadline period" in value
+        and "renumbered" in value
+        and "322" in value
+        and "title" in value
+        for value in slot_texts["typed_ir_reconstruction"]
+    )
+    assert "renumbered" in structural_text
+    assert "322" in structural_text
+
+
 def test_decompiler_reconstructs_autoencoder_target_legal_ir_view_support() -> None:
     document = _single_formula_document(
         family="deontic",
