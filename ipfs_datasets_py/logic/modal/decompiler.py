@@ -194,6 +194,15 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("there is established", "office_establishment"),
     ("is established within", "office_establishment"),
     ("office to be known as", "office_establishment"),
+    ("admission and other fees", "admission_fee_collection"),
+    ("fees for admission", "admission_fee_collection"),
+    ("collect fees", "fee_collection_authority"),
+    ("false, fictitious or fraudulent claims", "false_fraudulent_claim"),
+    ("false fictitious or fraudulent claims", "false_fraudulent_claim"),
+    ("false, fictitious, or fraudulent", "false_fraudulent_claim"),
+    ("knowing such claim to be false", "false_claim_knowledge"),
+    ("claim upon or against the united states", "government_claim"),
+    ("buying livestock in commerce", "livestock_commerce"),
 )
 _USCODE_STATUS_DERIVATION_RULES = frozenset(
     {
@@ -6458,15 +6467,21 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
 
     if normalized_atom in {
         "administration_enforcement",
+        "admission_fee_collection",
         "boundary_division_fence",
         "civil_action",
         "civil_action_jurisdiction",
         "civil_enforcement",
         "crime_control_law_enforcement",
+        "fee_collection_authority",
+        "false_claim_knowledge",
+        "false_fraudulent_claim",
         "game_bird_preserve_protection",
         "game_preserve",
+        "government_claim",
         "jurisdiction_authority",
         "law_enforcement",
+        "livestock_commerce",
         "state_court_civil_jurisdiction",
         "state_court_jurisdiction",
         "white_horse_hill_game_preserve",
@@ -6474,9 +6489,15 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("knowledge_graphs.neo4j_compat")
         add("modal.frame_logic")
     if normalized_atom in {
+        "admission_fee_collection",
         "civil_action",
         "civil_action_jurisdiction",
+        "fee_collection_authority",
+        "false_claim_knowledge",
+        "false_fraudulent_claim",
+        "government_claim",
         "jurisdiction_authority",
+        "livestock_commerce",
         "state_court_civil_jurisdiction",
         "state_court_jurisdiction",
     }:
@@ -6491,12 +6512,17 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("knowledge_graphs.neo4j_compat")
     if normalized_atom in {
         "annual_report_duty",
+        "admission_fee_collection",
         "appropriation_authorization",
         "build_maintain_duty",
         "congressional_report_duty",
         "definition",
         "exception_or_condition",
         "expenditure_requirement",
+        "fee_collection_authority",
+        "false_claim_knowledge",
+        "false_fraudulent_claim",
+        "government_claim",
         "office_establishment",
         "obligation",
         "patent_prohibition",
@@ -6539,10 +6565,15 @@ def _typed_decompiler_semantic_atom_target_families(
         normalized_atom = _clean_text(atom).lower()
         if normalized_atom in {
             "annual_report_duty",
+            "admission_fee_collection",
             "build_maintain_duty",
             "congressional_report_duty",
             "definition",
             "expenditure_requirement",
+            "fee_collection_authority",
+            "false_claim_knowledge",
+            "false_fraudulent_claim",
+            "government_claim",
             "office_establishment",
             "obligation",
             "patent_prohibition",
@@ -6562,6 +6593,7 @@ def _typed_decompiler_semantic_atom_target_families(
             add("temporal")
         if normalized_atom in {
             "administration_enforcement",
+            "admission_fee_collection",
             "boundary_division_fence",
             "civil_action",
             "civil_action_jurisdiction",
@@ -6570,11 +6602,16 @@ def _typed_decompiler_semantic_atom_target_families(
             "consultation_cooperation",
             "crime_control_law_enforcement",
             "definition",
+            "fee_collection_authority",
+            "false_claim_knowledge",
+            "false_fraudulent_claim",
             "game_bird_preserve_protection",
             "game_preserve",
+            "government_claim",
             "internal_service_fee",
             "jurisdiction_authority",
             "law_enforcement",
+            "livestock_commerce",
             "office_establishment",
             "office_of_womens_health",
             "office_seal",

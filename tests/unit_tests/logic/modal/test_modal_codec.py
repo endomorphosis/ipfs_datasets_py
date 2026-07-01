@@ -27914,6 +27914,74 @@ def test_decompiler_emits_definition_slots_for_as_used_frame_span() -> None:
     assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
 
 
+def test_decompiler_emits_fee_collection_slots_for_admission_frame_span() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Admission and other fees. The Secretary may establish and collect "
+            "fees for admission to the Carlsbad Caverns National Park."
+        ),
+        predicate="admission_fee_authority",
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    assert "admission_fee_collection" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "fee_collection_authority" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "admission_fee_collection:frame->deontic" in slot_texts[
+        "typed-decompiler-source-semantic-family-pair"
+    ]
+    assert "fee_collection_authority:frame->frame" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
+    assert "knowledge_graphs.neo4j_compat" in slot_texts["legal_ir_view_prototype"]
+
+
+def test_decompiler_emits_claim_fraud_slots_for_epistemic_deontic_span() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "False, fictitious or fraudulent claims. Whoever presents a claim "
+            "upon or against the United States, knowing such claim to be false, "
+            "shall be imprisoned not more than five years."
+        ),
+        predicate="fraudulent_claim_penalty",
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    assert "false_fraudulent_claim" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "false_claim_knowledge" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "government_claim" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "false_claim_knowledge:frame->deontic" in slot_texts[
+        "typed-decompiler-source-semantic-family-pair"
+    ]
+    assert "false_fraudulent_claim:frame->frame" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
+    assert "knowledge_graphs.neo4j_compat" in slot_texts["legal_ir_view_prototype"]
+
+
 def test_decompiler_emits_establishment_slots_for_office_frame_span() -> None:
     document = _single_formula_document(
         family="frame",
