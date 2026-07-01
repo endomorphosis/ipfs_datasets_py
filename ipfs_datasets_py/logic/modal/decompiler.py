@@ -189,6 +189,11 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("effect of act", "effect_of_act"),
     ("payment authorization", "payment_authorization"),
     ("fees for internal services", "internal_service_fee"),
+    ("office of women's health", "office_of_womens_health"),
+    ("office of womens health", "office_of_womens_health"),
+    ("there is established", "office_establishment"),
+    ("is established within", "office_establishment"),
+    ("office to be known as", "office_establishment"),
 )
 _USCODE_STATUS_DERIVATION_RULES = frozenset(
     {
@@ -216,6 +221,17 @@ _USCODE_SOURCE_ID_RE = re.compile(
 _DEFINED_TERM_RE = re.compile(
     r"\bthe\s+term\s+['\"]?(?P<term>[A-Z][A-Za-z0-9]*(?:[-\s]+[A-Z][A-Za-z0-9]*){0,5})['\"]?"
     r"\s+(?:has|shall\s+have)\s+the\s+meaning\b",
+    re.IGNORECASE,
+)
+_DEFINED_AS_USED_TERM_RE = re.compile(
+    r"\b(?:the\s+term\s+|a\s+|an\s+)?['\"]?"
+    r"(?P<term>[A-Za-z][A-Za-z0-9]*(?:[-\s]+[A-Za-z][A-Za-z0-9]*){0,5})['\"]?"
+    r"\s+as\s+used\s+in\s+(?:this|the)\b",
+    re.IGNORECASE,
+)
+_DEFINITION_HEADING_RE = re.compile(
+    r"(?<!\w)['\"]?(?P<term>[A-Z][A-Za-z0-9]*(?:[-\s]+[A-Z][A-Za-z0-9]*){0,5})['\"]?"
+    r"\s+defined\b",
     re.IGNORECASE,
 )
 _TRAILING_SECTION_PUNCT_RE = re.compile(r"[.;:]+$")
@@ -1937,6 +1953,14 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
             add(keyword)
     for term in _defined_term_atoms_from_text(text):
         add(term)
+    if _has_definition_semantics(normalized):
+        add("definition")
+    if re.search(
+        r"\b(?:there\s+is\s+established|is\s+established\s+within|"
+        r"office\s+to\s+be\s+known\s+as)\b",
+        normalized,
+    ):
+        add("office_establishment")
     for phrase, atom in _LEGAL_SEMANTIC_ATOM_PHRASES:
         phrase_tokens = _CUE_TOKEN_RE.findall(phrase)
         if phrase in normalized or (
@@ -1997,18 +2021,37 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
 def _defined_term_atoms_from_text(text: str) -> List[str]:
     atoms: List[str] = []
     seen: set[str] = set()
-    for match in _DEFINED_TERM_RE.finditer(str(text or "")):
-        term = _clean_text(match.group("term"))
-        if not term:
-            continue
-        tokens = _CUE_TOKEN_RE.findall(term.lower())
-        if not tokens or len(tokens) > 6:
-            continue
-        atom = "_".join(tokens)
-        if atom and atom not in seen:
-            seen.add(atom)
-            atoms.append(atom)
+    for pattern in (
+        _DEFINED_TERM_RE,
+        _DEFINED_AS_USED_TERM_RE,
+        _DEFINITION_HEADING_RE,
+    ):
+        for match in pattern.finditer(str(text or "")):
+            term = _clean_text(match.group("term"))
+            if not term:
+                continue
+            tokens = _CUE_TOKEN_RE.findall(term.lower())
+            if not tokens or len(tokens) > 6:
+                continue
+            if tokens[0] in {"a", "an", "the", "this", "that", "such"}:
+                tokens = tokens[1:]
+            if not tokens:
+                continue
+            atom = "_".join(tokens)
+            if atom and atom not in seen:
+                seen.add(atom)
+                atoms.append(atom)
     return atoms
+
+
+def _has_definition_semantics(normalized_text: str) -> bool:
+    if not normalized_text:
+        return False
+    return bool(
+        re.search(r"\bdefined\b", normalized_text)
+        or re.search(r"\bas\s+used\s+in\s+(?:this|the)\b", normalized_text)
+        or re.search(r"\b(?:means|includes?)\b", normalized_text)
+    )
 
 
 def _fallback_section_heading_tail_text(
@@ -6080,6 +6123,7 @@ def _typed_decompiler_target_reconstruction_slots(
     temporal_cues = _temporal_transition_context_cues_from_text(reconstruction_text)
     if temporal_cues:
         roles["temporal"] = "+".join(temporal_cues)
+    semantic_atoms = _legal_semantic_atoms_from_text(reconstruction_text)
     targets = _typed_decompiler_bridge_target_families(
         formula=formula,
         text=reconstruction_text,
@@ -6107,6 +6151,11 @@ def _typed_decompiler_target_reconstruction_slots(
         and "deontic" not in targets
     ):
         targets.append("deontic")
+    for semantic_target in _typed_decompiler_semantic_atom_target_families(
+        semantic_atoms
+    ):
+        if semantic_target not in targets:
+            targets.append(semantic_target)
 
     slots: List[Tuple[str, str]] = []
     scope_parts: List[str] = []
@@ -6160,6 +6209,16 @@ def _typed_decompiler_target_reconstruction_slots(
                 (
                     "typed-decompiler-target-reconstruction-surface-cue",
                     f"{cue}:{pair}",
+                )
+            )
+        for atom in semantic_atoms:
+            slots.extend(
+                (
+                    ("typed-decompiler-target-semantic-atom", atom),
+                    (
+                        "typed-decompiler-target-semantic-family-pair",
+                        f"{atom}:{pair}",
+                    ),
                 )
             )
         if target == "temporal" and has_temporal_scope:
@@ -6435,8 +6494,10 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "appropriation_authorization",
         "build_maintain_duty",
         "congressional_report_duty",
+        "definition",
         "exception_or_condition",
         "expenditure_requirement",
+        "office_establishment",
         "obligation",
         "patent_prohibition",
         "payment_authorization",
@@ -6447,6 +6508,14 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
     }:
         add("deontic.ir")
         add("TDFOL.prover")
+    if normalized_atom in {
+        "definition",
+        "office_establishment",
+        "office_of_womens_health",
+    }:
+        add("CEC.native")
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
     if normalized_atom in {
         "annual_report",
         "annual_report_duty",
@@ -6472,7 +6541,9 @@ def _typed_decompiler_semantic_atom_target_families(
             "annual_report_duty",
             "build_maintain_duty",
             "congressional_report_duty",
+            "definition",
             "expenditure_requirement",
+            "office_establishment",
             "obligation",
             "patent_prohibition",
             "payment_authorization",
@@ -6498,11 +6569,14 @@ def _typed_decompiler_semantic_atom_target_families(
             "consultation",
             "consultation_cooperation",
             "crime_control_law_enforcement",
+            "definition",
             "game_bird_preserve_protection",
             "game_preserve",
             "internal_service_fee",
             "jurisdiction_authority",
             "law_enforcement",
+            "office_establishment",
+            "office_of_womens_health",
             "office_seal",
             "official_seal",
             "plant_variety_protection",

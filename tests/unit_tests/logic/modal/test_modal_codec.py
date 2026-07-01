@@ -27886,6 +27886,66 @@ def test_decompiler_emits_semantic_source_slots_for_consultation_frame_span() ->
     ]
 
 
+def test_decompiler_emits_definition_slots_for_as_used_frame_span() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            '"Complaint" defined A complaint as used in this subchapter is a '
+            "writing or document within the meaning of section 1001, title 18."
+        ),
+        predicate="complaint_definition",
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    assert "definition" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "complaint" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "definition:frame->deontic" in slot_texts[
+        "typed-decompiler-source-semantic-family-pair"
+    ]
+    assert "definition:frame->frame" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
+    assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
+
+
+def test_decompiler_emits_establishment_slots_for_office_frame_span() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "There is established within the Office of the Director of the "
+            "Centers for Disease Control and Prevention an office to be known "
+            "as the Office of Women's Health."
+        ),
+        predicate="office_established",
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    assert "office_establishment" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "office_of_womens_health" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "office_establishment:frame->deontic" in slot_texts[
+        "typed-decompiler-source-semantic-family-pair"
+    ]
+    assert "office_establishment:frame->frame" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "knowledge_graphs.neo4j_compat" in slot_texts["legal_ir_view_prototype"]
+
+
 def test_decompiler_emits_reclassification_target_slots_for_uscode_status_clause() -> None:
     compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
     compiled = compiler.compile(
