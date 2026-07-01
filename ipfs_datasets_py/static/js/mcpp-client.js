@@ -261,6 +261,28 @@
   }
 
   // ---------------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Split a flat `<category>.<tool>` name into the `{ category, tool }` pair
+   * required by the hierarchical `tools_get_schema` / `tools_dispatch`
+   * meta-tools.  Servers split on the FIRST dot (mirroring Python's
+   * `str.partition('.')`), so `data.load.csv` → `{ category:'data',
+   * tool:'load.csv' }`.  A name with no interior dot falls back to `{ name }`
+   * for non-hierarchical servers.
+   * @param {string} name
+   * @returns {{ category: string, tool: string } | { name: string }}
+   */
+  function splitDottedToolName(name) {
+    const i = name.indexOf('.');
+    if (i > 0 && i < name.length - 1) {
+      return { category: name.slice(0, i), tool: name.slice(i + 1) };
+    }
+    return { name };
+  }
+
+  // ---------------------------------------------------------------------------
   // The client
   // ---------------------------------------------------------------------------
   class MCPPPClient {
@@ -339,12 +361,15 @@
 
     /**
      * Lazily fetch a single tool's full JSON schema.
-     * @param {string|object} nameOrTool - a tool name string, or `{ name }` /
-     *   `{ category, tool }` selector object.
+     * @param {string|object} nameOrTool - a flat `<category>.<tool>` string
+     *   (split on the first dot into `{ category, tool }` as the hierarchical
+     *   `tools_get_schema` meta-tool requires), or an explicit
+     *   `{ category, tool }` / `{ name }` selector object.
+     *   A dot-less name falls back to `{ name }` for non-hierarchical servers.
      */
     async getToolSchema(nameOrTool) {
       const params =
-        typeof nameOrTool === 'string' ? { name: nameOrTool } : nameOrTool || {};
+        typeof nameOrTool === 'string' ? splitDottedToolName(nameOrTool) : nameOrTool || {};
       return await this.callTool('tools_get_schema', params);
     }
 
