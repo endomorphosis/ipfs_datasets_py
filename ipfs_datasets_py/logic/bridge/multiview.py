@@ -58,6 +58,7 @@ _BRIDGE_CONTRACT_SPARSE_OPERATIONAL_KG_FLOOR = 0.12
 _BRIDGE_CONTRACT_SPARSE_EPISTEMIC_SHIFT = 0.025
 _BRIDGE_CONTRACT_SPARSE_EPISTEMIC_KG_FLOOR = 0.22
 _BRIDGE_CONTRACT_GUIDANCE_PROJECTION_STRENGTH = 0.32
+_BRIDGE_CONTRACT_GUIDANCE_PROJECTION_STRENGTH_MAX = 0.68
 _BRIDGE_CONTRACT_GUIDANCE_LANE_FLOOR = 0.08
 _BRIDGE_CONTRACT_CITATION_FRAME_DEONTIC_FLOOR = 0.20
 _BRIDGE_CONTRACT_CITATION_FRAME_STRUCTURE_MIN_COUNT = 3
@@ -1233,6 +1234,8 @@ def _compiler_guidance_bridge_contract_metadata(
 
     lane_scores: Dict[str, float] = {}
     component_gaps: Dict[str, float] = {}
+    diagnostic_probability_gaps: list[float] = []
+    diagnostic_component_gap_max: list[float] = []
 
     def add_lane(value: Any, score: float = 1.0) -> None:
         lane = _bridge_contract_lane_component(
@@ -1266,6 +1269,18 @@ def _compiler_guidance_bridge_contract_metadata(
                 component_gaps[canonical_lane] = float(score)
                 if score > 0.0:
                     add_lane(lane, score)
+        diagnostics = mapping.get("pipeline_stage_diagnostics")
+        if isinstance(diagnostics, Mapping):
+            probability_gap = _float_or_zero(
+                diagnostics.get("modal_family_target_probability_gap")
+            )
+            if probability_gap > 0.0:
+                diagnostic_probability_gaps.append(probability_gap)
+            component_gap = _float_or_zero(
+                diagnostics.get("legal_ir_component_gap_max")
+            )
+            if component_gap > 0.0:
+                diagnostic_component_gap_max.append(component_gap)
 
     collect(compiler_guidance)
     for mapping in _compiler_guidance_nested_mappings(compiler_guidance):
@@ -1276,15 +1291,66 @@ def _compiler_guidance_bridge_contract_metadata(
     target_distribution = _normalize_positive_mapping(lane_scores)
     if not target_distribution:
         return {}
+    projection_strength = _compiler_guidance_projection_strength(
+        target_distribution=target_distribution,
+        component_gaps=component_gaps,
+        probability_gaps=diagnostic_probability_gaps,
+        component_gap_maxima=diagnostic_component_gap_max,
+    )
     return {
         "compiler_guidance_bridge_contract_evidence_count": len(evidence_rows),
-        "compiler_guidance_bridge_contract_projection_strength": (
-            _BRIDGE_CONTRACT_GUIDANCE_PROJECTION_STRENGTH
-        ),
+        "compiler_guidance_bridge_contract_projection_strength": projection_strength,
         "compiler_guidance_bridge_contract_target_distribution": target_distribution,
         "compiler_guidance_bridge_contract_target_lanes": sorted(target_distribution),
+        "compiler_guidance_bridge_contract_target_probability_gap": max(
+            diagnostic_probability_gaps,
+            default=0.0,
+        ),
         "compiler_guidance_component_gaps": dict(sorted(component_gaps.items())),
+        "compiler_guidance_component_gap_max": max(
+            (
+                max(diagnostic_component_gap_max, default=0.0),
+                max((gap for gap in component_gaps.values() if gap > 0.0), default=0.0),
+            )
+        ),
     }
+
+
+def _compiler_guidance_projection_strength(
+    *,
+    target_distribution: Mapping[str, float],
+    component_gaps: Mapping[str, float],
+    probability_gaps: Sequence[float],
+    component_gap_maxima: Sequence[float],
+) -> float:
+    """Return deterministic bridge-contract projection strength from evidence."""
+
+    base = _BRIDGE_CONTRACT_GUIDANCE_PROJECTION_STRENGTH
+    positive_component_gap = max(
+        (
+            max((gap for gap in component_gaps.values() if gap > 0.0), default=0.0),
+            max((gap for gap in component_gap_maxima if gap > 0.0), default=0.0),
+        )
+    )
+    probability_gap = max((gap for gap in probability_gaps if gap > 0.0), default=0.0)
+    target_count = len(
+        [
+            lane
+            for lane, weight in target_distribution.items()
+            if weight > 0.0
+        ]
+    )
+    confidence_boost = min(
+        0.24,
+        (0.55 * min(0.32, positive_component_gap))
+        + (0.30 * min(0.50, probability_gap)),
+    )
+    if target_count >= 3:
+        confidence_boost *= 0.85
+    return min(
+        _BRIDGE_CONTRACT_GUIDANCE_PROJECTION_STRENGTH_MAX,
+        base + confidence_boost,
+    )
 
 
 def _compiler_guidance_routes(

@@ -9887,6 +9887,62 @@ def test_multiview_training_target_applies_compiler_guidance_view_gaps() -> None
     assert abs(sum(target_distribution.values()) - 1.0) < 1e-9
 
 
+def test_bridge_contract_guidance_strength_uses_probability_and_component_gaps() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _BRIDGE_CONTRACT_GUIDANCE_PROJECTION_STRENGTH,
+        _compiler_guidance_bridge_contract_metadata,
+    )
+
+    metadata = _compiler_guidance_bridge_contract_metadata(
+        {
+            "bundle": {
+                "route": "repair_multiview_legal_ir_loss",
+                "target_component": "bridge.contracts",
+            },
+            "evidence": [
+                {
+                    "bridge_failure_name": "legal_ir_view_cross_entropy_loss",
+                    "legal_ir_component_gaps": {
+                        "CEC.native": 0.174666463809,
+                        "TDFOL.prover": 0.014560416953,
+                        "deontic.ir": -0.020584266796,
+                        "knowledge_graphs.neo4j_compat": 0.051164392521,
+                    },
+                    "legal_ir_underrepresented_components": [
+                        "CEC.native",
+                        "knowledge_graphs.neo4j_compat",
+                        "TDFOL.prover",
+                    ],
+                    "pipeline_stage_diagnostics": {
+                        "legal_ir_component_gap_max": 0.174666463809,
+                        "modal_family_target_probability_gap": 0.298229205982,
+                    },
+                    "predicted_view": "CEC.native",
+                    "target_view": "CEC.native",
+                }
+            ],
+        }
+    )
+
+    target_distribution = metadata[
+        "compiler_guidance_bridge_contract_target_distribution"
+    ]
+
+    assert metadata["compiler_guidance_bridge_contract_projection_strength"] > (
+        _BRIDGE_CONTRACT_GUIDANCE_PROJECTION_STRENGTH
+    )
+    assert metadata["compiler_guidance_bridge_contract_target_probability_gap"] == (
+        0.298229205982
+    )
+    assert metadata["compiler_guidance_component_gap_max"] == 0.174666463809
+    assert set(target_distribution) == {
+        "CEC.native",
+        "TDFOL.prover",
+        "knowledge_graphs.neo4j_compat",
+    }
+    assert target_distribution["CEC.native"] > target_distribution["TDFOL.prover"]
+
+
 def test_multiview_training_target_distribution_preserves_zkp_tail_lane() -> None:
     from ipfs_datasets_py.logic.bridge.multiview import MultiViewLegalIRReport
     from ipfs_datasets_py.logic.bridge.types import LegalIRDocument, LogicIRView
