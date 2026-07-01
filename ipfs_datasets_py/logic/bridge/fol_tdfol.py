@@ -793,10 +793,7 @@ def _has_tdfol_parse_repair_evidence(
     """Detect packet evidence that names the TDFOL parse-repair failure."""
 
     for evidence in _tdfol_guidance_evidence_records(compiler_guidance):
-        target_metrics = {
-            _normalized_guidance_token(metric)
-            for metric in evidence.get("target_metrics") or ()
-        }
+        target_metrics = _guidance_tokens(evidence.get("target_metrics"))
         failure_name = _normalized_guidance_token(
             evidence.get("bridge_failure_name") or evidence.get("failure_name")
         )
@@ -833,6 +830,11 @@ def _tdfol_guidance_evidence_records(
     def collect(value: Any) -> None:
         if isinstance(value, Mapping):
             records.append(dict(value))
+            return
+        if isinstance(value, str):
+            parsed = _tdfol_guidance_json_value(value)
+            if parsed is not None and parsed is not value:
+                collect(parsed)
             return
         if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
             for item in value:
@@ -879,6 +881,18 @@ def _tdfol_guidance_mapping(value: Any) -> dict[str, Any]:
     if isinstance(parsed, Mapping):
         return dict(parsed)
     return {}
+
+
+def _tdfol_guidance_json_value(value: str) -> Any:
+    """Parse JSON-shaped guidance strings without treating plain text as data."""
+
+    text = str(value or "").strip()
+    if not text or text[0] not in "{[":
+        return value
+    try:
+        return json.loads(text)
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return value
 
 
 def _tdfol_guidance_formula(
@@ -958,6 +972,15 @@ def _guidance_tokens(value: Any) -> set[str]:
         return {
             token
             for token in (_normalized_guidance_token(item) for item in value)
+            if token
+        }
+    if isinstance(value, str):
+        return {
+            token
+            for token in (
+                _normalized_guidance_token(item)
+                for item in re.split(r"[\s,;|]+", value)
+            )
             if token
         }
     token = _normalized_guidance_token(value)

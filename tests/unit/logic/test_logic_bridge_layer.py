@@ -132,6 +132,47 @@ def test_external_prover_router_uses_syntactic_fallback_when_backends_absent() -
     assert "native_syntactic" in report.metadata["available_provers"]
 
 
+def test_fol_tdfol_bridge_promotes_json_string_parse_repair_evidence() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
+
+    class _Converter:
+        def convert(self, _text: str):
+            return SimpleNamespace(metadata={})
+
+    adapter = FolTdfolBridgeAdapter(converter=_Converter())
+    report = adapter.evaluate(
+        (
+            "10 U.S.C. 2263: U.S.C. Title 10 - ARMED FORCES "
+            "Sec. 2263 - Transfer of funds. The Secretary shall transfer "
+            "amounts as provided in this section."
+        ),
+        document_id="bridge-layer-tdfol-json-evidence",
+        citation="10 U.S.C. 2263",
+        compiler_guidance={
+            "evidence": (
+                '{"bridge_failure_name":"tdfol_parse_failure_ratio",'
+                '"target_metrics":"tdfol_parse_failure_ratio, '
+                'tdfol_no_formula_loss, legal_ir_view_cross_entropy_loss",'
+                '"target_file_lane":"tdfol",'
+                '"target_view":"TDFOL.prover"}'
+            )
+        },
+    )
+
+    records = report.ir_document.views["tdfol_formula"].payload["records"]
+    guidance_records = [
+        record
+        for record in records
+        if str(record["source_id"]).startswith("tdfol:compiler_guidance:")
+    ]
+
+    assert report.metadata["compiler_guidance_applied"] is True
+    assert guidance_records
+    assert all(record["parse_ok"] is True for record in guidance_records)
+    assert report.proof_gate.compiles is True
+    assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
+
+
 def test_modal_frame_logic_bridge_projects_flogic_repair_guidance_to_ontology_terms() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
@@ -298,6 +339,72 @@ def test_modal_frame_logic_bridge_projects_frame_alignment_guidance_routes_to_te
             and triple["object"] == "tdfol_prover"
             for triple in frame_triples
         )
+
+
+def test_modal_frame_logic_bridge_audits_packet_frame_feature_evidence() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("modal_frame_logic")
+    report = adapter.evaluate(
+        (
+            "10 U.S.C. 2263: The Secretary shall provide administrative "
+            "notice and records before final disposition."
+        ),
+        document_id="bridge-layer-packet-frame-features",
+        citation="10 U.S.C. 2263",
+        compiler_guidance={
+            "action": "audit_frame_logic_terms",
+            "target_component": "modal.frame_logic",
+            "frame_features": [
+                "legal-ir-view:deontic.ir",
+                "legal-ir-view:modal.frame_logic",
+                "quality:bias",
+                "quality:symbolic:has-formula",
+                "legal-ir-view:modal.autoencoder",
+                "legal-ir-view:TDFOL.prover",
+                "quality:frame:rank-top",
+            ],
+            "pipeline_stage_focus": [
+                "modal_family_registry",
+                "legal_ir_multiview",
+            ],
+            "primary_pipeline_stage": "modal_family_registry",
+            "top_family_features": [
+                "legal-ir-view:deontic.ir",
+                "legal-ir-view:modal.frame_logic",
+                "quality:bias",
+                "quality:symbolic:has-formula",
+                "legal-ir-view:modal.autoencoder",
+                "legal-ir-view:TDFOL.prover",
+                "quality:frame:rank-top",
+            ],
+        },
+        evaluate_provers=False,
+    )
+
+    modal_metadata = report.ir_document.views["modal_ir"].payload["modal_ir"][
+        "metadata"
+    ]
+    audit_terms = set(modal_metadata["frame_ontology_term_audit_terms"])
+    high_signal_terms = set(
+        modal_metadata["frame_ontology_high_signal_term_audit_terms"]
+    )
+    frame_triples = report.ir_document.views["frame_logic"].payload["triples"]
+    selected_terms = {
+        triple["object"]
+        for triple in frame_triples
+        if triple["predicate"] == "selected_ontology_term"
+    }
+
+    assert report.round_trip.to_dict()["ontology_violation_count"] == 0.0
+    assert "audit_frame_logic_terms" in selected_terms
+    assert "deontic_ir" in selected_terms
+    assert "modal_autoencoder" in selected_terms
+    assert "tdfol_prover" in selected_terms
+    assert "rank_top" in audit_terms
+    assert "symbolic_has_formula" in audit_terms
+    assert "modal_family_registry" in high_signal_terms
+    assert "legal_ir_multiview" in high_signal_terms
 
 
 def test_modal_frame_logic_bridge_promotes_graph_projection_guidance_to_neo4j_view() -> None:
