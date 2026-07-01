@@ -64,6 +64,8 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_REFINED_PACKET_000044_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000112_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_003148_FAMILY_PAIRS,
+    DEFAULT_MODAL_REGISTRY,
+    ModalLogicFamily,
     compiler_refined_modal_family_cue_margin_buffer,
     is_compiler_ambiguity_policy_pair,
     supports_signal_free_adaptive_ambiguity_pair,
@@ -101,6 +103,41 @@ _USCODE_46_8906_TEXT = (
     "chapter. Editorial Notes Amendments 1996 —Pub. L. 104–324 substituted "
     "\"not more than $25,000\" for \"$1,000\"."
 )
+
+
+def test_modal_registry_packet_000117_refines_family_cue_rules() -> None:
+    expected_pairs = {
+        ("deontic", "frame"),
+        ("frame", "conditional_normative"),
+        ("frame", "temporal"),
+    }
+    for predicted_family, target_family in expected_pairs:
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+
+    temporal_terms = {
+        cue
+        for operator in DEFAULT_MODAL_REGISTRY.get_profile(
+            ModalLogicFamily.TEMPORAL
+        ).operators
+        for cue in operator.cue_terms
+    }
+    frame_terms = {
+        cue
+        for operator in DEFAULT_MODAL_REGISTRY.get_profile(
+            ModalLogicFamily.FRAME
+        ).operators
+        for cue in operator.cue_terms
+    }
+
+    assert {
+        "temporary withdrawal",
+        "withdrawal from settlement",
+        "entry of desert lands",
+    }.issubset(temporal_terms)
+    assert {
+        "authority for employment",
+        "employment and retention",
+    }.issubset(frame_terms)
 
 
 def test_modal_registry_packet_001514_refines_family_cue_policy_pairs() -> None:
