@@ -28,6 +28,7 @@ from ipfs_datasets_py.logic.modal.codec import (
     _frame_decoder_audit_features,
     _frame_ontology_audit_feature_keys,
     _frame_ontology_audit_terms,
+    _structural_decoded_text,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector import (
     BM25FrameSelector,
@@ -27864,6 +27865,87 @@ def test_decompiler_emits_direct_target_reconstruction_pair_and_family_slots() -
     assert "in_accordance_with:conditional_normative" in slot_texts[
         "typed-decompiler-target-family-surface-cue"
     ]
+
+
+def test_decompiler_emits_heading_typed_ir_reconstruction_for_frame_residuals() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Sec. 556 - Disposal of dredge vessels. The Administrator may "
+            "dispose of a vessel if the Secretary declares the vessel to be "
+            "in excess of federal needs."
+        ),
+        predicate="dredge_vessel_disposal",
+        conditions=[
+            "if the Secretary declares the vessel to be in excess of federal needs"
+        ],
+    )
+    formula = document.formulas[0]
+    formula.metadata["fallback_rule"] = "uscode_section_heading_v1"
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "frame->conditional_normative:heading" in slot_texts[
+        "typed-decompiler-target-reconstruction-cue"
+    ]
+    assert "frame->conditional_normative:heading" in slot_texts[
+        "typed_decompiler_family_pair_cue"
+    ]
+    assert any(
+        "conditional obligation" in value
+        and "disposal of dredge vessels" in value
+        and "secretary" in value
+        and "declares" in value
+        for value in slot_texts["typed_ir_reconstruction"]
+    )
+    assert structural_text.startswith("conditional obligation")
+    assert "dredge vessels" in structural_text
+    assert "federal needs" in structural_text
+
+
+def test_decompiler_typed_ir_reconstruction_preserves_epistemic_frame_cues() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Right to administrative offset. If the authority determines that "
+            "a person is liable, the head of the authority may collect the "
+            "amount by administrative offset."
+        ),
+        predicate="administrative_offset_determination",
+        conditions=["If the authority determines that a person is liable"],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "frame->epistemic" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "frame->deontic" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert any(
+        "knowledge determination finding" in value
+        and "administrative offset" in value
+        for value in slot_texts["typed_ir_reconstruction"]
+    )
+    assert "knowledge determination finding" in structural_text
+    assert "administrative offset" in structural_text
 
 
 def test_decompiler_emits_formula_cue_surface_slots_for_conditioned_permission() -> None:

@@ -14,7 +14,7 @@ from __future__ import annotations
 import re
 from dataclasses import asdict, dataclass, field
 from functools import lru_cache
-from typing import Any, Dict, List, Mapping, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Mapping, Sequence, Tuple
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector import (
     FrameCandidate,
@@ -977,6 +977,12 @@ def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
                 formula=formula,
             )
         )
+        phrases.extend(
+            _typed_ir_reconstruction_phrases(
+                document=document,
+                formula=formula,
+            )
+        )
 
     selected_frame = _selected_frame(document)
     if selected_frame:
@@ -1926,6 +1932,229 @@ def _fallback_surface_text_phrases(
         )
     )
     return phrases
+
+
+def _typed_ir_reconstruction_phrases(
+    *,
+    document: ModalIRDocument,
+    formula: ModalIRFormula,
+    max_values: int = 10,
+    max_tokens: int = 56,
+) -> List[DecodedModalPhrase]:
+    """Emit bounded structural text from typed slots, not copied source spans."""
+    spans = [[formula.provenance.start_char, formula.provenance.end_char]]
+    predicate_text = _predicate_phrase(formula)
+    condition_values = _phrase_values(formula.conditions)
+    if not condition_values:
+        condition_values = _inferred_condition_values_from_source_span(
+            document=document,
+            formula=formula,
+        )
+    exception_values = _phrase_values(formula.exceptions)
+    source_span_text = _formula_source_span_text(document=document, formula=formula)
+    heading_text = _fallback_section_heading_tail_text(
+        document=document,
+        formula=formula,
+        max_tokens=18,
+    )
+    fallback_text = _fallback_surface_text(
+        document=document,
+        formula=formula,
+        max_tokens=24,
+    )
+    operator_label = _canonical_modal_operator_label(
+        formula,
+        operator_label=_resolved_modal_operator_label(formula),
+    )
+    family = _clean_text(formula.operator.family).lower()
+    roles = _semantic_role_values_from_text(
+        " ".join(
+            value.replace("_", " ")
+            for value in (
+                predicate_text,
+                source_span_text,
+                " ".join(condition_values),
+                " ".join(exception_values),
+            )
+            if _clean_text(value)
+        )
+    )
+    semantic_atoms = _legal_semantic_atoms_from_text(
+        " ".join(
+            value
+            for value in (
+                heading_text,
+                fallback_text,
+                predicate_text,
+                source_span_text,
+                " ".join(condition_values),
+                " ".join(exception_values),
+            )
+            if _clean_text(value)
+        )
+    )
+    targets = _typed_decompiler_bridge_target_families(
+        formula=formula,
+        text=" ".join(
+            value.replace("_", " ")
+            for value in (
+                predicate_text,
+                source_span_text,
+                heading_text,
+                fallback_text,
+                " ".join(condition_values),
+                " ".join(exception_values),
+            )
+            if _clean_text(value)
+        ),
+        roles=roles,
+    )
+    if (condition_values or exception_values) and "conditional_normative" not in targets:
+        targets.append("conditional_normative")
+    for semantic_target in _typed_decompiler_semantic_atom_target_families(
+        semantic_atoms
+    ):
+        if semantic_target not in targets:
+            targets.append(semantic_target)
+
+    support_values: List[str] = []
+
+    def add_support(value: str) -> None:
+        cleaned = _clean_text(value).replace("_", " ")
+        if cleaned and cleaned not in support_values:
+            support_values.append(cleaned)
+
+    add_support(heading_text)
+    add_support(fallback_text)
+    add_support(predicate_text)
+    add_support(operator_label)
+    for value in (*condition_values, *exception_values):
+        add_support(value)
+    for atom in semantic_atoms:
+        add_support(atom)
+    for role in ("subject", "action", "object", "temporal"):
+        add_support(roles.get(role, ""))
+
+    ordered_targets = sorted(
+        targets,
+        key=_typed_ir_reconstruction_target_order,
+    )
+    target_labels = [
+        _typed_ir_target_family_label(target)
+        for target in ordered_targets
+        if _typed_ir_target_family_label(target)
+    ]
+    summary_parts = [
+        *target_labels[:4],
+        *support_values[:max_values],
+    ]
+    summary = _bounded_reconstruction_text(summary_parts, max_tokens=max_tokens)
+
+    phrases: List[DecodedModalPhrase] = []
+    if summary:
+        phrases.append(
+            DecodedModalPhrase(
+                text=summary,
+                slot="typed_ir_reconstruction",
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+    for value in support_values[:max_values]:
+        phrases.append(
+            DecodedModalPhrase(
+                text=value,
+                slot="typed_ir_semantic_support",
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+    if semantic_atoms:
+        phrases.append(
+            DecodedModalPhrase(
+                text=_bounded_reconstruction_text(
+                    (_humanize_typed_ir_value(atom) for atom in semantic_atoms),
+                    max_tokens=24,
+                ),
+                slot="typed_ir_compact_semantic_support",
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+    if family and targets:
+        for target in targets:
+            pair = f"{family}->{target}"
+            phrases.append(
+                DecodedModalPhrase(
+                    text=pair,
+                    slot="typed_ir_cross_family_semantic_support",
+                    spans=spans,
+                    provenance_only=True,
+                )
+            )
+            if heading_text or fallback_text:
+                phrases.append(
+                    DecodedModalPhrase(
+                        text=f"{pair}:heading",
+                        slot="typed_decompiler_family_pair_cue",
+                        spans=spans,
+                        provenance_only=True,
+                    )
+                )
+    return phrases
+
+
+def _typed_ir_target_family_label(target: str) -> str:
+    normalized = _clean_text(target).lower()
+    if normalized == "conditional_normative":
+        return "conditional obligation"
+    if normalized == "deontic":
+        return "obligation permission prohibition"
+    if normalized == "epistemic":
+        return "knowledge determination finding"
+    if normalized == "temporal":
+        return "temporal deadline period"
+    if normalized == "frame":
+        return "legal frame"
+    if normalized == "alethic":
+        return "capability possibility"
+    return normalized.replace("_", " ")
+
+
+def _typed_ir_reconstruction_target_order(target: str) -> Tuple[int, str]:
+    normalized = _clean_text(target).lower()
+    priority = {
+        "conditional_normative": 0,
+        "epistemic": 1,
+        "deontic": 2,
+        "temporal": 3,
+        "frame": 4,
+        "doxastic": 5,
+        "alethic": 6,
+    }
+    return priority.get(normalized, 20), normalized
+
+
+def _humanize_typed_ir_value(value: str) -> str:
+    return _clean_text(value).replace("_", " ")
+
+
+def _bounded_reconstruction_text(
+    values: Iterable[str],
+    *,
+    max_tokens: int,
+) -> str:
+    tokens: List[str] = []
+    seen_tokens: set[str] = set()
+    for value in values:
+        for token in _tokenize_for_similarity(_humanize_typed_ir_value(value)):
+            if token in seen_tokens:
+                continue
+            seen_tokens.add(token)
+            tokens.append(token)
+            if len(tokens) >= max_tokens:
+                return _clean_text(" ".join(tokens))
+    return _clean_text(" ".join(tokens))
 
 
 def _legal_semantic_atom_phrases(
@@ -6166,6 +6395,14 @@ def _typed_decompiler_target_reconstruction_slots(
         exception_values=exception_values,
         text=reconstruction_text,
     )
+    heading_cues = (
+        ["heading"]
+        if (
+            _fallback_section_heading_tail_text(document=document, formula=formula)
+            or _fallback_surface_text(document=document, formula=formula)
+        )
+        else []
+    )
     has_conditioned_scope = bool(condition_values or exception_values or condition_cues)
     has_temporal_scope = bool(
         temporal_cues
@@ -6221,7 +6458,7 @@ def _typed_decompiler_target_reconstruction_slots(
         ]
         source_surface_cues = _bridge_cues_from_text(reconstruction_text)
         reconstruction_cues = _unique_text_values(
-            (*condition_cues, *formula_cues, *source_surface_cues)
+            (*heading_cues, *condition_cues, *formula_cues, *source_surface_cues)
         )
         for cue in reconstruction_cues:
             slots.append(
