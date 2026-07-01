@@ -30021,6 +30021,65 @@ def test_decompiler_emits_reclassification_target_slots_for_uscode_status_clause
     assert "knowledge_graphs.neo4j_compat" in slot_texts["legal_ir_view_prototype"]
 
 
+def test_decompiler_reconstructs_autoencoder_target_legal_ir_view_support() -> None:
+    document = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "Requirement for on-site managers. Before obligating any "
+            "Cooperative Threat Reduction funds, the Secretary of Defense "
+            "shall appoint one on-site manager for the project."
+        ),
+        predicate="secretary_appoint_on_site_manager",
+        conditions=[
+            "Before obligating any Cooperative Threat Reduction funds"
+        ],
+    )
+    document.metadata["hint_evidence"] = [
+        {
+            "target_view": "CEC.native",
+            "predicted_view": "deontic.ir",
+            "legal_ir_underrepresented_components": [
+                "CEC.native",
+                "knowledge_graphs.neo4j_compat",
+            ],
+            "legal_ir_component_gaps": {
+                "CEC.native": 0.18183142613,
+                "knowledge_graphs.neo4j_compat": 0.129043015649,
+                "deontic.ir": -0.101861423791,
+            },
+            "top_embedding_features": [
+                "legal-ir-view-prototype:deontic.ir",
+                "legal-ir-view-prototype:CEC.native",
+                "legal-ir-view-prototype:knowledge_graphs.neo4j_compat",
+            ],
+        }
+    ]
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "event calculus native legal events" in slot_texts[
+        "typed_ir_legal_view_support"
+    ]
+    assert "knowledge graph legal relations" in slot_texts[
+        "typed_ir_legal_view_support"
+    ]
+    assert any(
+        "event calculus native legal events" in value
+        and "secretary appoint on site manager" in value
+        for value in slot_texts["typed_ir_reconstruction"]
+    )
+    assert "event calculus native legal events" in structural_text
+    assert "knowledge graph legal relations" in structural_text
+
+
 def test_decompiler_emits_exemption_source_slots_for_test_platform_clauses() -> None:
     document = _single_formula_document(
         family="deontic",

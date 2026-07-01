@@ -2041,6 +2041,7 @@ def _typed_ir_reconstruction_phrases(
         if semantic_target not in targets:
             targets.append(semantic_target)
 
+    legal_ir_view_support = _typed_ir_legal_view_support_values(document)
     support_values: List[str] = []
 
     def add_support(value: str) -> None:
@@ -2056,6 +2057,8 @@ def _typed_ir_reconstruction_phrases(
         add_support(value)
     for atom in semantic_atoms:
         add_support(atom)
+    for view_support in legal_ir_view_support:
+        add_support(view_support)
     for role in ("subject", "action", "object", "temporal"):
         add_support(roles.get(role, ""))
 
@@ -2105,6 +2108,15 @@ def _typed_ir_reconstruction_phrases(
                 provenance_only=True,
             )
         )
+    for value in legal_ir_view_support:
+        phrases.append(
+            DecodedModalPhrase(
+                text=value,
+                slot="typed_ir_legal_view_support",
+                spans=spans,
+                provenance_only=True,
+            )
+        )
     if family and targets:
         for target in targets:
             pair = f"{family}->{target}"
@@ -2124,8 +2136,61 @@ def _typed_ir_reconstruction_phrases(
                         spans=spans,
                         provenance_only=True,
                     )
-                )
+            )
     return phrases
+
+
+def _typed_ir_legal_view_support_values(document: ModalIRDocument) -> List[str]:
+    """Return deterministic semantic labels for LegalIR views flagged by evidence."""
+    views: List[str] = []
+
+    def add_view(value: Any) -> None:
+        view = _clean_text(str(value or ""))
+        if view and view not in views:
+            views.append(view)
+
+    for entry in _autoencoder_guidance_entries(document):
+        for field in ("target_view", "predicted_view", "selected_view"):
+            add_view(entry.get(field))
+        for view in _legal_ir_view_guidance_features(entry):
+            add_view(view)
+        for value in _string_list(entry.get("legal_ir_underrepresented_components")):
+            add_view(value)
+        component_gaps = entry.get("legal_ir_component_gaps")
+        if isinstance(component_gaps, Mapping):
+            ranked_gaps: List[Tuple[float, str]] = []
+            for view, gap in component_gaps.items():
+                try:
+                    gap_value = float(gap)
+                except (TypeError, ValueError):
+                    continue
+                if gap_value > 0:
+                    ranked_gaps.append((gap_value, _clean_text(str(view))))
+            for _gap, view in sorted(ranked_gaps, reverse=True):
+                add_view(view)
+
+    labels: List[str] = []
+    for view in views:
+        label = _legal_ir_view_semantic_label(view)
+        if label and label not in labels:
+            labels.append(label)
+    return labels
+
+
+def _legal_ir_view_semantic_label(view: str) -> str:
+    normalized = _clean_text(view)
+    lowered = normalized.lower()
+    labels = {
+        "cec.native": "event calculus native legal events",
+        "knowledge_graphs.neo4j_compat": "knowledge graph legal relations",
+        "tdfol.prover": "typed first order prover obligations",
+        "deontic.ir": "deontic legal obligations",
+        "modal.frame_logic": "frame logic ontology",
+        "modal.autoencoder": "modal autoencoder reconstruction",
+    }
+    if lowered in labels:
+        return labels[lowered]
+    return normalized.replace(".", " ").replace("_", " ")
 
 
 def _typed_ir_target_family_label(target: str) -> str:

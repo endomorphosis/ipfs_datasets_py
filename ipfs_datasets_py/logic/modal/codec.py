@@ -100,6 +100,21 @@ _COMPILER_GUIDANCE_MAX_FEATURES = 32
 _COMPILER_GUIDANCE_MAX_GROUP_FEATURES = 16
 _COMPILER_GUIDANCE_MAX_EMBEDDING_VALUES = 32
 _COMPILER_GUIDANCE_FRAME_BOOST_CAP = 1.5
+_COMPILER_GUIDANCE_FRAME_AUDIT_FEATURE_KEYS = (
+    "frame_feature",
+    "frame_feature_key",
+    "frame_feature_keys",
+    "frame_features",
+    "top_embedding_features",
+    "top_family_features",
+    "top_predicted_views",
+    "top_target_views",
+)
+_COMPILER_GUIDANCE_FRAME_AUDIT_STAGE_KEYS = (
+    "pipeline_stage",
+    "pipeline_stage_focus",
+    "primary_pipeline_stage",
+)
 _CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("provided that", "provided_that"),
     ("subject to this subsection", "subject_to_this_subsection"),
@@ -1574,7 +1589,10 @@ def _compiler_guidance_route_features(
         raw_evidence = compiler_guidance.get("evidences")
     if isinstance(raw_evidence, Mapping):
         evidence_items: Iterable[Any] = [raw_evidence]
-    elif isinstance(raw_evidence, Sequence) and not isinstance(raw_evidence, (str, bytes)):
+    elif isinstance(raw_evidence, Sequence) and not isinstance(
+        raw_evidence,
+        (str, bytes),
+    ):
         evidence_items = raw_evidence
     else:
         evidence_items = []
@@ -1692,6 +1710,13 @@ def _compiler_guidance_summary(
             )
             if features:
                 feature_groups[str(group_name)] = features
+    frame_audit_features = _compiler_guidance_frame_audit_features(
+        compiler_guidance
+    )
+    if frame_audit_features:
+        feature_groups["frame_logic_evidence"] = frame_audit_features[
+            :_COMPILER_GUIDANCE_MAX_GROUP_FEATURES
+        ]
     ranked_guidance_features: List[Dict[str, Any]] = []
     raw_ranked = compiler_guidance.get("ranked_guidance_features")
     if isinstance(raw_ranked, Sequence) and not isinstance(raw_ranked, (str, bytes)):
@@ -1832,6 +1857,45 @@ def _compiler_guidance_summary(
         for key, value in summary.items()
         if value not in ({}, [], "", None)
     }
+
+
+def _compiler_guidance_frame_audit_features(
+    compiler_guidance: Mapping[str, Any],
+) -> List[str]:
+    """Extract packet-shaped frame features for deterministic ontology audit."""
+    candidates: List[str] = []
+
+    def add_feature_values(value: Any) -> None:
+        candidates.extend(_guidance_feature_list(value, limit=0))
+
+    def add_stage_values(value: Any) -> None:
+        for stage in _guidance_feature_list(value, limit=0):
+            candidates.append(f"flogic:statement_hint:{stage}")
+
+    def collect(mapping: Mapping[str, Any]) -> None:
+        for key in _COMPILER_GUIDANCE_FRAME_AUDIT_FEATURE_KEYS:
+            add_feature_values(mapping.get(key))
+        for key in _COMPILER_GUIDANCE_FRAME_AUDIT_STAGE_KEYS:
+            add_stage_values(mapping.get(key))
+
+    collect(compiler_guidance)
+    raw_evidence = compiler_guidance.get("evidence")
+    if raw_evidence is None:
+        raw_evidence = compiler_guidance.get("evidences")
+    if isinstance(raw_evidence, Mapping):
+        evidence_items: Iterable[Any] = [raw_evidence]
+    elif isinstance(raw_evidence, Sequence) and not isinstance(raw_evidence, (str, bytes)):
+        evidence_items = raw_evidence
+    else:
+        evidence_items = []
+    for item in evidence_items:
+        if isinstance(item, Mapping):
+            collect(item)
+
+    return frame_ontology_feature_keys(
+        _unique_preserve_order(candidates),
+        max_keys=_COMPILER_GUIDANCE_MAX_FEATURES,
+    )
 
 
 def _compiler_guidance_feature_strings(
@@ -11770,6 +11834,7 @@ def _structural_decoded_text(
         *slot_text_map.get("typed_ir_semantic_support", ()),
         *slot_text_map.get("typed_ir_compact_semantic_support", ()),
         *slot_text_map.get("typed_ir_semantic_summary", ()),
+        *slot_text_map.get("typed_ir_legal_view_support", ()),
         *slot_text_map.get("typed_ir_cross_family_semantic_support", ()),
     ]
     typed_ir_rendered = _clean_non_empty_string(
