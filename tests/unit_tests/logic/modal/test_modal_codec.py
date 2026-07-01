@@ -28185,6 +28185,39 @@ def test_decompiler_emits_reclassification_target_slots_for_uscode_status_clause
     assert "34 U.S.C. 10235" in slot_texts[
         "uscode_reclassification_target_citation"
     ]
+    assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
+    assert "knowledge_graphs.neo4j_compat" in slot_texts["legal_ir_view_prototype"]
+
+
+def test_decompiler_emits_exemption_source_slots_for_test_platform_clauses() -> None:
+    document = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "Exempt operations. The provisions of this subchapter shall not "
+            "apply to any test platform which will not operate as an ocean "
+            "thermal energy conversion facility or plantship after conclusion "
+            "of the testing period."
+        ),
+        predicate="provisions_apply_to_test_platform",
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    assert "exemption" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "test_platform" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "facility_operation" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "shall_not_apply" in slot_texts["typed-decompiler-source-scope-cue"]
+    assert "testing_period" in slot_texts["typed-decompiler-source-scope-cue"]
+    assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
+    assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
+    assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
+    assert "modal.frame_logic" in slot_texts["legal_ir_view_prototype"]
 
 
 def test_decompiler_emits_document_semantic_atoms_for_formula_free_frame_text() -> None:

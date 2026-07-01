@@ -167,6 +167,15 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("article reprint purchases", "article_reprint_purchase"),
     ("reprint purchases", "article_reprint_purchase"),
     ("scientific and technical article", "technical_article"),
+    ("exempt operations", "exempt_operation"),
+    ("exempt operation", "exempt_operation"),
+    ("shall not apply", "exemption"),
+    ("provisions of this subchapter shall not apply", "exemption"),
+    ("test platforms", "test_platform"),
+    ("test platform", "test_platform"),
+    ("ocean thermal energy conversion facility", "facility_operation"),
+    ("ocean thermal energy conversion", "facility_operation"),
+    ("plantship", "facility_operation"),
     ("editorially reclassified", "editorial_reclassification"),
     ("reclassified as section", "editorial_reclassification"),
     ("crime control and law enforcement", "crime_control_law_enforcement"),
@@ -1990,6 +1999,20 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         normalized,
     ):
         add("exception_or_condition")
+    if re.search(
+        r"\b(?:exempt(?:ed|ion|ions)?|shall\s+not\s+apply|"
+        r"provisions?\s+of\s+this\s+\w+\s+shall\s+not\s+apply)\b",
+        normalized,
+    ):
+        add("exemption")
+    if re.search(r"\btest\s+platforms?\b", normalized):
+        add("test_platform")
+    if re.search(
+        r"\b(?:ocean\s+thermal\s+energy\s+conversion|plantship|"
+        r"facilit(?:y|ies)\s+(?:or\s+)?plantship)\b",
+        normalized,
+    ):
+        add("facility_operation")
     if re.search(
         r"\b(?:not\s+later\s+than|no\s+later\s+than|until|after|before|effective\s+date)\b",
         normalized,
@@ -6213,6 +6236,20 @@ def _typed_decompiler_target_reconstruction_slots(
                     f"{cue}:{target}",
                 )
             )
+            for view in _source_scope_cue_legal_ir_views(cue):
+                slots.extend(
+                    (
+                        ("legal_ir_view_prototype", view),
+                        (
+                            "source_scope_cue_legal_ir_view_prototype",
+                            f"{cue}||{view}",
+                        ),
+                        (
+                            "family_source_scope_cue_legal_ir_view_prototype",
+                            f"{source_family}->{target}||{cue}||{view}",
+                        ),
+                    )
+                )
         for cue in condition_cues:
             slots.append(
                 (
@@ -6413,6 +6450,20 @@ def _typed_decompiler_source_reconstruction_slots(
                 ),
             )
         )
+        for view in _source_scope_cue_legal_ir_views(cue):
+            slots.extend(
+                (
+                    ("legal_ir_view_prototype", view),
+                    (
+                        "source_scope_cue_legal_ir_view_prototype",
+                        f"{cue}||{view}",
+                    ),
+                    (
+                        "family_source_scope_cue_legal_ir_view_prototype",
+                        f"{source_family}||{cue}||{view}",
+                    ),
+                )
+            )
     for atom in semantic_atoms:
         slots.extend(
             (
@@ -6489,6 +6540,20 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("knowledge_graphs.neo4j_compat")
         add("modal.frame_logic")
     if normalized_atom in {
+        "codification",
+        "omitted",
+        "reclassified",
+        "renumbered",
+        "repealed",
+        "reserved",
+        "terminated",
+        "transferred",
+        "vacant",
+    }:
+        add("CEC.native")
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
+    if normalized_atom in {
         "admission_fee_collection",
         "civil_action",
         "civil_action_jurisdiction",
@@ -6518,7 +6583,10 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "congressional_report_duty",
         "definition",
         "exception_or_condition",
+        "exempt_operation",
+        "exemption",
         "expenditure_requirement",
+        "facility_operation",
         "fee_collection_authority",
         "false_claim_knowledge",
         "false_fraudulent_claim",
@@ -6531,9 +6599,18 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "prohibition",
         "public_report_duty",
         "report_duty",
+        "test_platform",
     }:
         add("deontic.ir")
         add("TDFOL.prover")
+    if normalized_atom in {
+        "exempt_operation",
+        "exemption",
+        "facility_operation",
+        "test_platform",
+    }:
+        add("CEC.native")
+        add("modal.frame_logic")
     if normalized_atom in {
         "definition",
         "office_establishment",
@@ -6569,7 +6646,10 @@ def _typed_decompiler_semantic_atom_target_families(
             "build_maintain_duty",
             "congressional_report_duty",
             "definition",
+            "exempt_operation",
+            "exemption",
             "expenditure_requirement",
+            "facility_operation",
             "fee_collection_authority",
             "false_claim_knowledge",
             "false_fraudulent_claim",
@@ -6582,6 +6662,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "prohibition",
             "public_report_duty",
             "report_duty",
+            "test_platform",
         }:
             add("deontic")
         if normalized_atom in {
@@ -6602,6 +6683,8 @@ def _typed_decompiler_semantic_atom_target_families(
             "consultation_cooperation",
             "crime_control_law_enforcement",
             "definition",
+            "exempt_operation",
+            "facility_operation",
             "fee_collection_authority",
             "false_claim_knowledge",
             "false_fraudulent_claim",
@@ -6618,9 +6701,22 @@ def _typed_decompiler_semantic_atom_target_families(
             "official_seal",
             "plant_variety_protection",
             "plant_variety_protection_office",
+            "test_platform",
             "state_court_civil_jurisdiction",
             "state_court_jurisdiction",
             "white_horse_hill_game_preserve",
+        }:
+            add("frame")
+        if normalized_atom in {
+            "codification",
+            "omitted",
+            "reclassified",
+            "renumbered",
+            "repealed",
+            "reserved",
+            "terminated",
+            "transferred",
+            "vacant",
         }:
             add("frame")
         if normalized_atom in {"exception_or_condition"}:
@@ -6648,10 +6744,59 @@ def _source_scope_reconstruction_cues(text: str) -> List[str]:
     for phrase, cue in (
         ("no later than", "no_later_than"),
         ("not later than", "not_later_than"),
+        ("shall not apply", "shall_not_apply"),
+        ("will not operate", "will_not_operate"),
+        ("testing period", "testing_period"),
+        ("after conclusion", "after_conclusion"),
     ):
         if re.search(rf"(?<!\w){re.escape(phrase)}(?!\w)", normalized):
             add(cue)
+    if re.search(r"\bexempt(?:ed|ion|ions)?\b", normalized):
+        add("exempt")
     return cues
+
+
+def _source_scope_cue_legal_ir_views(cue: str) -> List[str]:
+    normalized_cue = _clean_text(cue).lower().replace(" ", "_")
+    if not normalized_cue:
+        return []
+    views: List[str] = []
+
+    def add(view: str) -> None:
+        if view and view not in views:
+            views.append(view)
+
+    if normalized_cue in {
+        "shall_not_apply",
+        "exempt",
+        "exemption",
+        "will_not_operate",
+    }:
+        add("deontic.ir")
+        add("TDFOL.prover")
+        add("CEC.native")
+    if normalized_cue in {
+        "after",
+        "after_conclusion",
+        "before",
+        "by",
+        "no_later_than",
+        "not_later_than",
+        "testing_period",
+        "until",
+        "when",
+        "within",
+    }:
+        add("TDFOL.prover")
+    if normalized_cue in {
+        "exempt",
+        "exemption",
+        "shall_not_apply",
+        "testing_period",
+        "will_not_operate",
+    }:
+        add("modal.frame_logic")
+    return views
 
 
 def _typed_decompiler_condition_cues(
