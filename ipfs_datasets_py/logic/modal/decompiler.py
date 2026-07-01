@@ -131,6 +131,11 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("administration and enforcement", "administration_enforcement"),
     ("authorization of appropriations", "appropriation_authorization"),
     ("authorized to be appropriated", "appropriation_authorization"),
+    ("jurisdiction of new york state courts in civil actions", "state_court_civil_jurisdiction"),
+    ("jurisdiction of new york state courts", "state_court_jurisdiction"),
+    ("state courts in civil actions", "state_court_civil_jurisdiction"),
+    ("civil actions", "civil_action"),
+    ("civil action", "civil_action"),
     ("civil enforcement", "civil_enforcement"),
     ("consultation and cooperation", "consultation_cooperation"),
     ("following consultation", "consultation"),
@@ -165,6 +170,12 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("editorially reclassified", "editorial_reclassification"),
     ("reclassified as section", "editorial_reclassification"),
     ("crime control and law enforcement", "crime_control_law_enforcement"),
+    ("law enforcement", "law_enforcement"),
+    ("plant variety protection office", "plant_variety_protection_office"),
+    ("plant variety protection", "plant_variety_protection"),
+    ("seal from the plant variety protection office", "office_seal"),
+    ("seal of office", "office_seal"),
+    ("official seal", "official_seal"),
     (
         "health professionals educational assistance program",
         "health_professional_education_assistance",
@@ -1965,6 +1976,21 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         add("consultation")
     if re.search(r"\b(?:administ(?:er|ration)|enforce(?:ment|d|s)?)\b", normalized):
         add("administration_enforcement")
+    if re.search(r"\bjurisdiction\b", normalized) and re.search(
+        r"\b(?:court|courts|civil\s+actions?|actions?|state)\b",
+        normalized,
+    ):
+        add("jurisdiction_authority")
+    if re.search(r"\bcivil\s+actions?\b", normalized):
+        add("civil_action")
+    if re.search(r"\blaw\s+enforcement\b", normalized):
+        add("law_enforcement")
+    if re.search(r"\b(?:official\s+)?seal\b", normalized):
+        add("official_seal")
+    if re.search(r"\bplant\s+variety\s+protection\s+office\b", normalized):
+        add("plant_variety_protection_office")
+    elif re.search(r"\bplant\s+variety\s+protection\b", normalized):
+        add("plant_variety_protection")
     return atoms
 
 
@@ -6330,13 +6356,105 @@ def _typed_decompiler_source_reconstruction_slots(
             )
         )
         for target in targets:
+            pair = f"{source_family}->{target}"
             slots.append(
                 (
                     "typed-decompiler-source-semantic-family-pair",
-                    f"{atom}:{source_family}->{target}",
+                    f"{atom}:{pair}",
                 )
             )
+            for view in _legal_semantic_atom_legal_ir_views(atom):
+                slots.extend(
+                    (
+                        ("legal_ir_view_prototype", view),
+                        (
+                            "semantic_slot_legal_ir_view_prototype",
+                            f"slot:typed-decompiler-source-semantic-atom:{atom}||{view}",
+                        ),
+                        (
+                            "family_semantic_slot_legal_ir_view_prototype",
+                            f"{source_family}||slot:source-semantic-atom:{atom}||{view}",
+                        ),
+                        (
+                            "family_semantic_slot_legal_ir_view_prototype",
+                            (
+                                f"{source_family}||slot-pair:source-semantic-atom:{atom}|"
+                                f"typed-decompiler-family-pair:{pair}||{view}"
+                            ),
+                        ),
+                    )
+                )
     return _unique_slot_values(slots)
+
+
+def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
+    normalized_atom = _clean_text(atom).lower()
+    if not normalized_atom:
+        return []
+    views: List[str] = []
+
+    def add(view: str) -> None:
+        if view and view not in views:
+            views.append(view)
+
+    if normalized_atom in {
+        "administration_enforcement",
+        "boundary_division_fence",
+        "civil_action",
+        "civil_action_jurisdiction",
+        "civil_enforcement",
+        "crime_control_law_enforcement",
+        "game_bird_preserve_protection",
+        "game_preserve",
+        "jurisdiction_authority",
+        "law_enforcement",
+        "state_court_civil_jurisdiction",
+        "state_court_jurisdiction",
+        "white_horse_hill_game_preserve",
+    }:
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
+    if normalized_atom in {
+        "civil_action",
+        "civil_action_jurisdiction",
+        "jurisdiction_authority",
+        "state_court_civil_jurisdiction",
+        "state_court_jurisdiction",
+    }:
+        add("CEC.native")
+    if normalized_atom in {
+        "office_seal",
+        "official_seal",
+        "plant_variety_protection",
+        "plant_variety_protection_office",
+    }:
+        add("CEC.native")
+        add("knowledge_graphs.neo4j_compat")
+    if normalized_atom in {
+        "annual_report_duty",
+        "appropriation_authorization",
+        "build_maintain_duty",
+        "congressional_report_duty",
+        "exception_or_condition",
+        "expenditure_requirement",
+        "obligation",
+        "patent_prohibition",
+        "payment_authorization",
+        "permission",
+        "prohibition",
+        "public_report_duty",
+        "report_duty",
+    }:
+        add("deontic.ir")
+        add("TDFOL.prover")
+    if normalized_atom in {
+        "annual_report",
+        "annual_report_duty",
+        "no_year_funding_availability",
+        "temporal_condition",
+    }:
+        add("TDFOL.prover")
+    return views
 
 
 def _typed_decompiler_semantic_atom_target_families(
@@ -6374,6 +6492,8 @@ def _typed_decompiler_semantic_atom_target_families(
         if normalized_atom in {
             "administration_enforcement",
             "boundary_division_fence",
+            "civil_action",
+            "civil_action_jurisdiction",
             "civil_enforcement",
             "consultation",
             "consultation_cooperation",
@@ -6381,6 +6501,14 @@ def _typed_decompiler_semantic_atom_target_families(
             "game_bird_preserve_protection",
             "game_preserve",
             "internal_service_fee",
+            "jurisdiction_authority",
+            "law_enforcement",
+            "office_seal",
+            "official_seal",
+            "plant_variety_protection",
+            "plant_variety_protection_office",
+            "state_court_civil_jurisdiction",
+            "state_court_jurisdiction",
             "white_horse_hill_game_preserve",
         }:
             add("frame")

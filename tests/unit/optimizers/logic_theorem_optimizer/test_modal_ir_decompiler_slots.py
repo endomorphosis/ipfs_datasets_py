@@ -1651,3 +1651,111 @@ def test_modal_decompiler_surfaces_epistemic_frame_pair_cues_for_statutory_scope
     }.issubset(
         set(slot_texts["modal_source_span_typed_decompiler_family_pair_cue"])
     )
+
+
+def test_modal_decompiler_reconstructs_heading_semantics_as_legal_ir_view_slots() -> None:
+    source_text = (
+        "Sec. 233 - Jurisdiction of New York State courts in civil actions. "
+        "The State courts may hear civil actions under this section."
+    )
+    document = ModalIRDocument(
+        document_id="packet-000153-jurisdiction-heading-semantics",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="packet-000153-jurisdiction",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="KD",
+                    symbol="P",
+                    label="permission",
+                ),
+                predicate=ModalIRPredicate(
+                    name="hear_civil_actions",
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-25-233-da029ae8d3664392",
+                    start_char=0,
+                    end_char=len(source_text),
+                    citation="25 U.S.C. 233",
+                ),
+                conditions=["under this section"],
+                metadata={"cue": "may"},
+            )
+        ],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+    legal_ir_slots = set(slot_texts["family_semantic_slot_legal_ir_view_prototype"])
+
+    assert {
+        "state_court_civil_jurisdiction",
+        "jurisdiction_authority",
+        "civil_action",
+    }.issubset(set(slot_texts["typed-decompiler-source-semantic-atom"]))
+    assert "state_court_civil_jurisdiction:deontic->frame" in set(
+        slot_texts["typed-decompiler-source-semantic-family-pair"]
+    )
+    assert (
+        "deontic||slot:source-semantic-atom:"
+        "state_court_civil_jurisdiction||knowledge_graphs.neo4j_compat"
+        in legal_ir_slots
+    )
+    assert (
+        "deontic||slot:source-semantic-atom:"
+        "state_court_civil_jurisdiction||CEC.native"
+        in legal_ir_slots
+    )
+
+
+def test_modal_decompiler_reconstructs_office_seal_as_cec_view_slot() -> None:
+    source_text = (
+        "Sec. 2322 - Seal. The Plant Variety Protection Office shall have an "
+        "official seal."
+    )
+    document = ModalIRDocument(
+        document_id="packet-000153-office-seal-semantics",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="packet-000153-seal",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="KD",
+                    symbol="O",
+                    label="obligation",
+                ),
+                predicate=ModalIRPredicate(
+                    name="maintain_official_seal",
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-7-2322-8a47b18df0989404",
+                    start_char=0,
+                    end_char=len(source_text),
+                    citation="7 U.S.C. 2322",
+                ),
+                metadata={"cue": "shall"},
+            )
+        ],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+    legal_ir_slots = set(slot_texts["family_semantic_slot_legal_ir_view_prototype"])
+
+    assert {
+        "official_seal",
+        "plant_variety_protection_office",
+    }.issubset(set(slot_texts["typed-decompiler-source-semantic-atom"]))
+    assert (
+        "deontic||slot:source-semantic-atom:official_seal||CEC.native"
+        in legal_ir_slots
+    )
+    assert (
+        "deontic||slot:source-semantic-atom:"
+        "plant_variety_protection_office||knowledge_graphs.neo4j_compat"
+        in legal_ir_slots
+    )
