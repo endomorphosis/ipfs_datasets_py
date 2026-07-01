@@ -2029,6 +2029,12 @@ def _typed_ir_reconstruction_phrases(
     )
     if (condition_values or exception_values) and "conditional_normative" not in targets:
         targets.append("conditional_normative")
+    if family == "frame" and semantic_atoms:
+        for status_target in _typed_decompiler_status_atom_target_families(
+            semantic_atoms
+        ):
+            if status_target not in targets:
+                targets.append(status_target)
     for semantic_target in _typed_decompiler_semantic_atom_target_families(
         semantic_atoms
     ):
@@ -2130,6 +2136,8 @@ def _typed_ir_target_family_label(target: str) -> str:
         return "obligation permission prohibition"
     if normalized == "epistemic":
         return "knowledge determination finding"
+    if normalized == "doxastic":
+        return "belief intent knowledge state"
     if normalized == "temporal":
         return "temporal deadline period"
     if normalized == "frame":
@@ -6469,6 +6477,12 @@ def _typed_decompiler_target_reconstruction_slots(
     ):
         if semantic_target not in targets:
             targets.append(semantic_target)
+    if source_family == "frame":
+        for status_target in _typed_decompiler_status_atom_target_families(
+            semantic_atoms
+        ):
+            if status_target not in targets:
+                targets.append(status_target)
 
     slots: List[Tuple[str, str]] = []
     scope_parts: List[str] = []
@@ -6679,6 +6693,12 @@ def _typed_decompiler_source_reconstruction_slots(
     ):
         if semantic_target not in targets:
             targets.append(semantic_target)
+    if source_family == "frame":
+        for status_target in _typed_decompiler_status_atom_target_families(
+            semantic_atoms
+        ):
+            if status_target not in targets:
+                targets.append(status_target)
 
     force = _modal_force_label(formula)
     polarity = _modal_scope_polarity(
@@ -7041,6 +7061,39 @@ def _typed_decompiler_semantic_atom_target_families(
     return targets
 
 
+def _typed_decompiler_status_atom_target_families(
+    semantic_atoms: Sequence[str],
+) -> List[str]:
+    """Return modal targets carried by U.S.C. editorial status atoms."""
+    targets: List[str] = []
+
+    def add(target: str) -> None:
+        if target and target not in targets:
+            targets.append(target)
+
+    for atom in semantic_atoms:
+        normalized_atom = _clean_text(atom).lower()
+        if normalized_atom not in {
+            "codification",
+            "omitted",
+            "reclassified",
+            "renumbered",
+            "repealed",
+            "reserved",
+            "terminated",
+            "transferred",
+            "vacant",
+        }:
+            continue
+        add("frame")
+        add("conditional_normative")
+        if normalized_atom in {"repealed", "terminated", "omitted", "vacant"}:
+            add("deontic")
+        if normalized_atom in {"reclassified", "renumbered", "transferred"}:
+            add("temporal")
+    return targets
+
+
 def _source_scope_reconstruction_cues(text: str) -> List[str]:
     normalized = _clean_text(text).replace("_", " ").lower()
     if not normalized:
@@ -7277,9 +7330,33 @@ def _typed_decompiler_bridge_target_families(
     for cue in _bridge_cues_from_text(text):
         for bridge_family, _bridge_symbol in _cue_bridge_operator_pairs(cue):
             add(bridge_family)
+    if family == "frame":
+        for bridge_family in _doxastic_bridge_families_from_text(text):
+            add(bridge_family)
     if family == "frame" and _uscode_residual_fallback_decompiler_cues(formula):
         add("conditional_normative")
         add("epistemic")
+    return targets
+
+
+def _doxastic_bridge_families_from_text(text: str) -> List[str]:
+    """Detect belief/intent cues whose registry surfaces may be multi-token."""
+    normalized_text = _clean_text(text).replace("_", " ").lower()
+    if not normalized_text:
+        return []
+    targets: List[str] = []
+
+    def add(target: str) -> None:
+        if target and target not in targets:
+            targets.append(target)
+
+    if re.search(
+        r"(?<!\w)(?:believe|believes|believed|believing|"
+        r"reason(?:s)?\s+to\s+believe|reasonably\s+believes|"
+        r"intent\s+to|with\s+intent\s+to)(?!\w)",
+        normalized_text,
+    ):
+        add("doxastic")
     return targets
 
 

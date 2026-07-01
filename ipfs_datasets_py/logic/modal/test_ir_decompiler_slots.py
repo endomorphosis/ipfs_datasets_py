@@ -7075,3 +7075,99 @@ def test_modal_ir_to_flogic_triples_surface_under_scope_temporal_cross_family_br
     assert "f_to_o_pipe" in objects("condition_modal_bridge_operator_pair_key")
     assert "f_to_o" in objects("condition_modal_bridge_operator_pair_key")
     assert "f_to_frame" in objects("condition_modal_bridge_operator_pair_key")
+
+
+def _frame_intent_doxastic_sample_document() -> ModalIRDocument:
+    source_id = "us-code-18-1705-frame-intent-doxastic-828a5b629d033e04"
+    source_text = (
+        "Whoever willfully and maliciously, with intent to obstruct the "
+        "correspondence, destroys any letter box shall be fined."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-frame-intent-doxastic",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="destroy_letter_box", role="clause"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="18 U.S.C. 1705",
+        ),
+        metadata={"cue": "with_intent_to"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_bridges_frame_intent_text_to_doxastic_slots() -> None:
+    decoded = decode_modal_ir_document(_frame_intent_doxastic_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "frame->doxastic" in slot_map["typed_decompiler_family_pair"]
+    assert (
+        "frame->doxastic:with_intent_to"
+        in slot_map["typed_decompiler_family_pair_cue"]
+    )
+    assert (
+        "frame->doxastic"
+        in slot_map["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert (
+        "frame->doxastic"
+        in slot_map["typed_ir_cross_family_semantic_support"]
+    )
+    assert "belief intent knowledge state" in slot_map["typed_ir_reconstruction"][0]
+
+
+def _frame_repealed_status_sample_document() -> ModalIRDocument:
+    source_id = "us-code-42-2486j.-frame-repealed-fee27fac375a53cb"
+    source_text = (
+        "§2486j. Repealed. Pub. L. 105-362, title XI, §1101(a), "
+        "Nov. 10, 1998, 112 Stat. 3292."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-frame-repealed-status",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="repealed_section", role="clause"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="42 U.S.C. 2486j",
+        ),
+        metadata={"status_keyword": "repealed"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_routes_frame_status_atoms_to_normative_targets() -> None:
+    decoded = decode_modal_ir_document(_frame_repealed_status_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["status_keyword"] == ["repealed"]
+    assert "repealed" in slot_map["typed-decompiler-target-semantic-atom"]
+    assert (
+        "frame->conditional_normative"
+        in slot_map["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert "frame->deontic" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "frame->deontic" in slot_map["typed_ir_cross_family_semantic_support"]
