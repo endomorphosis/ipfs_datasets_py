@@ -1477,6 +1477,7 @@ def _compiler_guidance_event_formula_exports(
         source_id = str(norm.get("source_id") or f"dcec:norm:{index}").strip()
         if not source_id:
             continue
+        export: Optional[dict[str, Any]] = None
         for source, row, formula_key in _compiler_guidance_event_formula_candidates(
             guidance,
             norm=norm,
@@ -1493,7 +1494,152 @@ def _compiler_guidance_event_formula_exports(
                 continue
             exports[source_id] = [export]
             break
+        if source_id in exports:
+            continue
+        export = _compiler_guidance_materialized_event_formula_export(
+            guidance,
+            norm=norm,
+            source_id=source_id,
+            document_id=document_id,
+            citation=citation,
+            source_text=source_text,
+        )
+        if export:
+            exports[source_id] = [export]
     return exports
+
+
+def _compiler_guidance_materialized_event_formula_export(
+    guidance: Mapping[str, Any],
+    *,
+    norm: Mapping[str, Any],
+    source_id: str,
+    document_id: str = "",
+    citation: Optional[str] = None,
+    source_text: str = "",
+) -> Optional[dict[str, Any]]:
+    """Materialize CEC-route guidance into the native event-calculus skeleton."""
+
+    if not _compiler_guidance_has_cec_bridge_route(guidance):
+        return None
+    evidence_source = _cec_guidance_materialization_source(
+        guidance,
+        norm=norm,
+        document_id=document_id,
+        citation=citation,
+        source_text=source_text,
+    )
+    if not evidence_source:
+        return None
+
+    actor = _symbol(norm.get("actor"), fallback="actor")
+    event = _symbol(norm.get("action") or norm.get("predicate"), fallback="act")
+    if not actor or not event:
+        return None
+    deontic_formula = _proof_input_formula_text(
+        actor=actor,
+        event=event,
+        modality=_dcec_modality(norm),
+        state_kind=_dcec_state_kind(norm),
+    )
+    formula = _event_calculus_formula_text(
+        source_id=source_id,
+        deontic_formula=deontic_formula,
+    )
+    parse_profile = _event_formula_parse_profile(formula)
+    if parse_profile.get("target_parse_profile_complete") is not True:
+        return None
+    return {
+        "event_calculus_formula": formula,
+        "event_formula_fingerprint": _stable_short_hash(formula),
+        "event_formula_source": f"compiler_guidance.{evidence_source}.materialized_event_formula",
+        "event_formula_syntax_valid": True,
+        "event_formula_target_components": {
+            **_event_formula_target_components(
+                formula,
+                source_id=source_id,
+                modality=_dcec_modality(norm),
+            ),
+            "compiler_guidance_materialized": True,
+        },
+        "event_formula_target_parse_profile": parse_profile,
+        "event_formula_target_quality_gate": {
+            "compiler_guidance_materialized": True,
+            "requires_validation": False,
+            "syntax_valid": True,
+            "target_parse_profile_complete": True,
+        },
+    }
+
+
+def _cec_guidance_materialization_source(
+    guidance: Mapping[str, Any],
+    *,
+    norm: Mapping[str, Any],
+    document_id: str = "",
+    citation: Optional[str] = None,
+    source_text: str = "",
+) -> str:
+    for collection_key, row in _compiler_guidance_evidence_rows(guidance):
+        if _compiler_guidance_row_matches_norm(
+            row,
+            norm=norm,
+            document_id=document_id,
+            citation=citation,
+            source_text=source_text,
+        ) and _compiler_guidance_row_supports_cec_materialization(row):
+            return collection_key
+    if _compiler_guidance_top_level_supports_cec_materialization(guidance):
+        return "top_level"
+    for collection_key, row in _compiler_guidance_evidence_rows(guidance):
+        if _compiler_guidance_row_supports_cec_materialization(row):
+            return collection_key
+    return ""
+
+
+def _compiler_guidance_row_supports_cec_materialization(
+    row: Mapping[str, Any],
+) -> bool:
+    if not row:
+        return False
+    target = str(
+        row.get("target_view")
+        or row.get("predicted_view")
+        or row.get("target_component")
+        or ""
+    ).strip().lower()
+    if target in {"cec.native", "cec_dcec", "deontic_cec"}:
+        return True
+    bridge_failure_name = str(row.get("bridge_failure_name") or "").strip().lower()
+    if bridge_failure_name in {
+        "cec_dcec_validation_failure_ratio",
+        "cec_dcec_event_formula_invalid_ratio",
+    }:
+        return True
+    if _boolish(row.get("spacy_parser_missing_formula")) is False and (
+        row.get("spacy_modal_formula_count") is not None
+    ):
+        return True
+    return False
+
+
+def _compiler_guidance_top_level_supports_cec_materialization(
+    guidance: Mapping[str, Any],
+) -> bool:
+    bundle = _mapping(
+        guidance.get("bundle")
+        or guidance.get("compiler_guidance_bundle")
+        or guidance.get("semantic_bundle")
+    )
+    scope = str(
+        guidance.get("program_synthesis_scope")
+        or bundle.get("program_synthesis_scope")
+        or ""
+    ).strip().lower()
+    target = str(
+        guidance.get("target_component") or bundle.get("target_component") or ""
+    ).strip().lower()
+    return scope == "cec" or target == "cec.native"
 
 
 def _compiler_guidance_event_formula_candidates(

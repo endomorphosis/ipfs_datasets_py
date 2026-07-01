@@ -5699,6 +5699,75 @@ def test_cec_dcec_bridge_promotes_compiler_guidance_event_formula_evidence() -> 
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
 
 
+def test_cec_dcec_bridge_materializes_event_formula_from_packet_guidance() -> None:
+    from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
+
+    class _PlainNormResult:
+        success = True
+        metadata = {
+            "legal_norm_irs": [
+                {
+                    "source_id": "us-code-33-3803-ac8f8e7ef6c14117",
+                    "actor": "Administrator",
+                    "action": "administer and enforce clean hull requirements",
+                    "modality": "obligated",
+                    "support_text": "The Administrator shall administer and enforce this chapter.",
+                }
+            ]
+        }
+
+    class _PlainNormConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _PlainNormResult()
+
+    adapter = CecDcecBridgeAdapter(converter=_PlainNormConverter())
+    report = adapter.evaluate(
+        "33 U.S.C. 3803: Administrative enforcement evidence.",
+        document_id="us-code-33-3803-ac8f8e7ef6c14117",
+        citation="33 U.S.C. 3803",
+        compiler_guidance={
+            "bundle": {
+                "program_synthesis_scope": "cec",
+                "route": "repair_cec_dcec_bridge",
+                "source": "compiler_guidance_distillation_v1",
+                "target_component": "CEC.native",
+            },
+            "evidence": [
+                {
+                    "bridge_failure_name": "cec_dcec_validation_failure_ratio",
+                    "cosine_loss": 0.0,
+                    "sample_id": "us-code-33-3803-ac8f8e7ef6c14117",
+                    "spacy_modal_formula_count": 19,
+                    "spacy_parser_missing_formula": False,
+                    "target_view": "CEC.native",
+                }
+            ],
+        },
+    )
+
+    event_record = report.ir_document.views["event_calculus"].payload["records"][0]
+
+    assert event_record["event_formula_source"] == (
+        "compiler_guidance.evidence.materialized_event_formula"
+    )
+    assert event_record["event_calculus_formula"] == (
+        "Happens(legal_norm(us_code_33_3803_ac8f8e7ef6c14117), t) "
+        "=> HoldsAt(O(Happens(administrator,administer_and_enforce_clean_hull_requirements,t0)), t)"
+    )
+    assert event_record["event_formula_syntax_valid"] is True
+    assert (
+        event_record["event_formula_target_components"][
+            "compiler_guidance_materialized"
+        ]
+        is True
+    )
+    assert event_record["compiler_guidance_source"] == "repair_cec_dcec_bridge"
+    assert report.metadata["compiler_guidance_applied"] is True
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
 def test_cec_dcec_bridge_guidance_overrides_generic_legal_frame_category() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
