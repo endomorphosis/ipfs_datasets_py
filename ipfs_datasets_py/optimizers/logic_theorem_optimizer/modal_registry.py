@@ -529,6 +529,10 @@ COMPILER_AMBIGUITY_PACKET_000120_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
         ModalLogicFamily.DEONTIC.value,
     ),
     (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.EPISTEMIC.value,
+    ),
+    (
         ModalLogicFamily.TEMPORAL.value,
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
     ),

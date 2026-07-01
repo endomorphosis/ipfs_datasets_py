@@ -192,6 +192,7 @@ def test_modal_registry_packet_000120_exposes_low_margin_ambiguity_pairs() -> No
     expected_pairs = (
         ("frame", "conditional_normative"),
         ("frame", "deontic"),
+        ("frame", "epistemic"),
         ("temporal", "conditional_normative"),
         ("temporal", "deontic"),
     )
