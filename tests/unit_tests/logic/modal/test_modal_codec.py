@@ -49,6 +49,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_000111_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_000117_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000205_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000964_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001514_FAMILY_PAIRS,
@@ -25276,6 +25277,301 @@ def test_modal_compiler_surfaces_packet_000111_compiler_ambiguity_policy_pairs(
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
+            and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+            and ambiguity.metadata["adaptive_base_ambiguity_type"]
+            == "adaptive_family_margin_low"
+            for ambiguity in ambiguities
+        )
+
+
+def test_modal_compiler_surfaces_packet_000117_compiler_ambiguity_policy_pairs(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+    scenarios = (
+        {
+            "sample_id": "us-code-42-18352.-971ae10f7bcfb4c0",
+            "predicted_family": "temporal",
+            "target_family": "deontic",
+            "family_margin": -0.262135208701,
+            "priority": 0.412135208701,
+        },
+        {
+            "sample_id": "us-code-16-478a-64b1d31b47a6ea82",
+            "predicted_family": "frame",
+            "target_family": "epistemic",
+            "family_margin": -0.999989809153,
+            "priority": 1.149989809153,
+        },
+        {
+            "sample_id": "us-code-45-916.-bab48ead3b1dd179",
+            "predicted_family": "frame",
+            "target_family": "conditional_normative",
+            "family_margin": -0.996298550577,
+            "priority": 1.146298550577,
+        },
+        {
+            "sample_id": "us-code-20-7231c-74bfbb64db1c3f13",
+            "predicted_family": "frame",
+            "target_family": "conditional_normative",
+            "family_margin": -0.378261576529,
+            "priority": 0.528261576529,
+        },
+        {
+            "sample_id": "us-code-20-1067l-3ec9016aef729a55",
+            "predicted_family": "frame",
+            "target_family": "temporal",
+            "family_margin": -0.999972456418,
+            "priority": 1.149972456418,
+        },
+        {
+            "sample_id": "us-code-42-1769h.-1af74d99614edc90",
+            "predicted_family": "frame",
+            "target_family": "temporal",
+            "family_margin": -0.995435587685,
+            "priority": 1.145435587685,
+        },
+        {
+            "sample_id": "us-code-15-4725-b12b241227535e10",
+            "predicted_family": "deontic",
+            "target_family": "deontic",
+            "family_margin": 0.047053530074,
+            "priority": 0.102946469926,
+        },
+        {
+            "sample_id": "us-code-25-382-6a73d864a5a614d0",
+            "predicted_family": "frame",
+            "target_family": "deontic",
+            "family_margin": -0.486148822529,
+            "priority": 0.636148822529,
+        },
+        {
+            "sample_id": "us-code-42-18121.-7e39b12e3fd1243d",
+            "predicted_family": "frame",
+            "target_family": "frame",
+            "family_margin": 0.085750365697,
+            "priority": 0.064249634303,
+        },
+        {
+            "sample_id": "us-code-15-7609-a6c624371927ff8b",
+            "predicted_family": "temporal",
+            "target_family": "deontic",
+            "family_margin": -0.454290695252,
+            "priority": 0.604290695252,
+        },
+        {
+            "sample_id": "us-code-36-220314-f81a9efb8f36f101",
+            "predicted_family": "deontic",
+            "target_family": "frame",
+            "family_margin": -0.018496448383,
+            "priority": 0.168496448383,
+        },
+        {
+            "sample_id": "us-code-46-4106.-e1ccfe4a030a9cde",
+            "predicted_family": "frame",
+            "target_family": "conditional_normative",
+            "family_margin": -0.610595945204,
+            "priority": 0.760595945204,
+        },
+        {
+            "sample_id": "us-code-50-514.-bdaced095d73d36a",
+            "predicted_family": "temporal",
+            "target_family": "deontic",
+            "family_margin": -0.088370601516,
+            "priority": 0.238370601516,
+        },
+        {
+            "sample_id": "us-code-46-10310.-4748e5ab4483791a",
+            "predicted_family": "deontic",
+            "target_family": "deontic",
+            "family_margin": 0.120048366785,
+            "priority": 0.029951633215,
+        },
+        {
+            "sample_id": "us-code-20-7291-bf8ffbef55c6755e",
+            "predicted_family": "deontic",
+            "target_family": "deontic",
+            "family_margin": 0.005237928446,
+            "priority": 0.144762071554,
+        },
+        {
+            "sample_id": "us-code-42-1437h.-cabcbab29b5aa356",
+            "predicted_family": "deontic",
+            "target_family": "conditional_normative",
+            "family_margin": -0.090109154357,
+            "priority": 0.240109154357,
+        },
+    )
+    expected_pairs = {
+        (str(scenario["predicted_family"]), str(scenario["target_family"]))
+        for scenario in scenarios
+    }
+    assert expected_pairs == set(COMPILER_AMBIGUITY_PACKET_000117_FAMILY_PAIRS)
+
+    for index, scenario in enumerate(scenarios, start=1):
+        predicted_family = str(scenario["predicted_family"])
+        target_family = str(scenario["target_family"])
+        family_margin = float(scenario["family_margin"])
+        sample_id = str(scenario["sample_id"])
+
+        if predicted_family == "temporal":
+            predicted_system = "LTL"
+            predicted_symbol = "F"
+            predicted_label = "eventually"
+        elif predicted_family == "frame":
+            predicted_system = "FRAME_BM25"
+            predicted_symbol = "Frame"
+            predicted_label = "frame"
+        else:
+            predicted_system = "D"
+            predicted_symbol = "O"
+            predicted_label = "obligation"
+
+        if predicted_family == target_family and family_margin > 0.0:
+            predicted_share = 0.9
+            runner_up_share = predicted_share - family_margin
+            runner_up_family = "temporal" if predicted_family != "temporal" else "deontic"
+            ranking = [
+                {
+                    "family": predicted_family,
+                    "count": 0,
+                    "share_raw": predicted_share,
+                    "share": predicted_share,
+                },
+                {
+                    "family": runner_up_family,
+                    "count": 0,
+                    "share_raw": runner_up_share,
+                    "share": runner_up_share,
+                },
+            ]
+        else:
+            predicted_share = 0.9
+            target_share = predicted_share + family_margin
+            if target_share < 0.0:
+                predicted_share = min(0.99, abs(family_margin) + 0.05)
+                target_share = predicted_share + family_margin
+            ranking = [
+                {
+                    "family": predicted_family,
+                    "count": 0,
+                    "share_raw": predicted_share,
+                    "share": predicted_share,
+                },
+                {
+                    "family": target_family,
+                    "count": 0,
+                    "share_raw": target_share,
+                    "share": target_share,
+                },
+            ]
+        family_shares = {
+            str(candidate["family"]): float(candidate["share_raw"])
+            for candidate in ranking
+        }
+        candidate_ids = (
+            [predicted_family]
+            if predicted_family == target_family
+            else [predicted_family, target_family]
+        )
+        margin_direction = "contested" if family_margin > 0.0 else "outvoted"
+        expected_explicit_type = (
+            f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
+        )
+        encoding = SpaCyLegalEncoding(
+            document_id=f"packet-000117-adaptive-evidence-{index}",
+            text=f"Synthetic {predicted_family} ambiguity evidence.",
+            normalized_text=f"Synthetic {predicted_family} ambiguity evidence.",
+            tokens=[],
+            sentences=[],
+            cues=[
+                SpaCyModalCueFeature(
+                    family=predicted_family,
+                    system=predicted_system,
+                    symbol=predicted_symbol,
+                    label=predicted_label,
+                    cue=predicted_family,
+                    start_char=0,
+                    end_char=len(predicted_family),
+                    token_indices=[],
+                ),
+            ],
+        )
+        modal_ir = ModalIRDocument(
+            document_id=f"packet-000117-adaptive-evidence-{index}",
+            source="us_code",
+            normalized_text=encoding.normalized_text,
+            formulas=[
+                ModalIRFormula(
+                    formula_id=f"f-{predicted_family}-{index}",
+                    operator=ModalIROperator(
+                        family=predicted_family,
+                        system=predicted_system,
+                        symbol=predicted_symbol,
+                        label=predicted_label,
+                    ),
+                    predicate=ModalIRPredicate(
+                        name=f"{predicted_family}_predicate",
+                        arguments=["actor:agency"],
+                        role="clause",
+                    ),
+                    provenance=ModalIRProvenance(
+                        source_id=sample_id,
+                        start_char=0,
+                        end_char=len(encoding.normalized_text),
+                        citation="packet-000117",
+                    ),
+                ),
+            ],
+        )
+
+        ambiguities = compiler._adaptive_family_margin_ambiguities(
+            encoding,
+            modal_ir=modal_ir,
+            ranking=ranking,
+            family_shares=family_shares,
+            predicted_family_source="adaptive_logits",
+        )
+        policy_pair = f"{predicted_family}->{target_family}"
+        base_ambiguity = next(
+            ambiguity
+            for ambiguity in ambiguities
+            if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+            and ambiguity.candidate_ids == candidate_ids
+            and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+        )
+        assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
+        assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+        assert base_ambiguity.metadata["adaptive_margin_direction"] == margin_direction
+        assert (
+            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
+            < 1e-12
+        )
+        assert (
+            abs(
+                float(base_ambiguity.metadata["adaptive_priority"])
+                - float(scenario["priority"])
+            )
+            < 1e-12
+        )
+        assert (
+            base_ambiguity.severity
+            == ("review" if margin_direction == "contested" else "requires_rule")
+        )
+        assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
+        assert any(
+            ambiguity.ambiguity_type == expected_explicit_type
+            and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
             and ambiguity.metadata["adaptive_base_ambiguity_type"]
             == "adaptive_family_margin_low"
