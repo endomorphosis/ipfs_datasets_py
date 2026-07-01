@@ -6002,12 +6002,41 @@ def _typed_decompiler_target_reconstruction_slots(
     scope_signature = "+".join(scope_parts) if scope_parts else "unconditioned"
     for target in targets:
         pair = f"{source_family}->{target}"
+        slots.extend(
+            (
+                ("typed-decompiler-target-reconstruction-pair", pair),
+                ("typed-decompiler-target-reconstruction-family", target),
+                ("typed-decompiler-source-target-family", pair),
+            )
+        )
         slots.append(
             (
                 "typed-decompiler-target-reconstruction-scope",
                 f"{scope_signature}:{pair}",
             )
         )
+        formula_cues = [
+            _clean_text(cue).lower().replace(" ", "_")
+            for cue in _formula_cues(formula)
+            if _clean_text(cue)
+        ]
+        source_surface_cues = _bridge_cues_from_text(reconstruction_text)
+        reconstruction_cues = _unique_text_values(
+            (*condition_cues, *formula_cues, *source_surface_cues)
+        )
+        for cue in reconstruction_cues:
+            slots.append(
+                (
+                    "typed-decompiler-target-reconstruction-cue",
+                    f"{pair}:{cue}",
+                )
+            )
+            slots.append(
+                (
+                    "typed-decompiler-target-family-surface-cue",
+                    f"{cue}:{target}",
+                )
+            )
         for cue in condition_cues:
             slots.append(
                 (
@@ -9600,6 +9629,18 @@ def _unique_slot_values(values: Sequence[Tuple[str, str]]) -> List[Tuple[str, st
             continue
         seen.add(value)
         result.append(value)
+    return result
+
+
+def _unique_text_values(values: Sequence[str]) -> List[str]:
+    result: List[str] = []
+    seen: set[str] = set()
+    for value in values:
+        cleaned = _clean_text(value)
+        if not cleaned or cleaned in seen:
+            continue
+        seen.add(cleaned)
+        result.append(cleaned)
     return result
 
 

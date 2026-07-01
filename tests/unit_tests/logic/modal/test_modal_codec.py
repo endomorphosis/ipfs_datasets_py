@@ -26838,6 +26838,73 @@ def test_decompiler_emits_provided_that_target_reconstruction_surface_cues() -> 
     ]
 
 
+def test_decompiler_emits_direct_target_reconstruction_pair_and_family_slots() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "In accordance with section 9303 of title 15, the Director shall "
+            "carry out activities in support of sustainable chemistry."
+        ),
+        predicate="director_carry_out_activities",
+        conditions=["In accordance with section 9303 of title 15"],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    assert "frame->conditional_normative" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "frame->deontic" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "conditional_normative" in slot_texts[
+        "typed-decompiler-target-reconstruction-family"
+    ]
+    assert "deontic" in slot_texts[
+        "typed-decompiler-target-reconstruction-family"
+    ]
+    assert "frame->deontic:shall" in slot_texts[
+        "typed-decompiler-target-reconstruction-cue"
+    ]
+    assert "in_accordance_with:conditional_normative" in slot_texts[
+        "typed-decompiler-target-family-surface-cue"
+    ]
+
+
+def test_decompiler_emits_formula_cue_surface_slots_for_conditioned_permission() -> None:
+    document = _single_formula_document(
+        family="conditional_normative",
+        symbol="O|",
+        label="conditional obligation",
+        text=(
+            "The Secretary may transfer funds except after fiscal year 2026."
+        ),
+        predicate="secretary_transfer_funds",
+        conditions=["except after fiscal year 2026"],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    assert "conditional_normative->deontic" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "conditional_normative->temporal" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "may:deontic" in slot_texts[
+        "typed-decompiler-target-family-surface-cue"
+    ]
+    assert "after:conditional_normative->temporal" in slot_texts[
+        "typed-decompiler-target-reconstruction-surface-cue"
+    ]
+
+
 def test_decompiler_emits_permission_enabling_and_temporal_to_deontic_slots() -> None:
     deontic_document = _single_formula_document(
         family="deontic",
