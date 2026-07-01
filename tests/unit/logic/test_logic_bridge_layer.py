@@ -3469,6 +3469,77 @@ def test_deontic_bridge_promotes_compiler_guidance_frame_evidence() -> None:
     assert report.round_trip.extra_losses["deontic_quality_requires_validation_loss"] == 0.0
 
 
+def test_deontic_bridge_trims_uscode_catchline_from_modal_actor() -> None:
+    from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
+
+    source_text = (
+        "Assistance to the Republic of the Philippines The President is "
+        "authorized to assist the Republic of the Philippines."
+    )
+    actor_start = source_text.index("The President")
+    modal_start = source_text.index("is authorized")
+    action_start = source_text.index("assist the Republic")
+
+    class _FakeResult:
+        success = True
+        metadata = {
+            "parser_element": {
+                "schema_version": "legal_norm_ir-v1",
+                "source_id": "legacy:deontic:catchline-actor",
+                "canonical_citation": "38 U.S.C. 1731",
+                "deontic_operator": "authorized",
+                "norm_type": "permission",
+                "subject": ["Philippines The President"],
+                "action": ["assist the Republic of the Philippines"],
+                "text": source_text,
+                "source_text": source_text,
+                "support_text": source_text,
+                "support_span": [0, len(source_text)],
+                "promotable_to_theorem": True,
+                "export_readiness": {"blockers": []},
+                "field_spans": {
+                    "subject": [
+                        source_text.index("Philippines The President"),
+                        actor_start + len("The President"),
+                    ],
+                    "modal": [modal_start, modal_start + len("is authorized")],
+                    "action": [
+                        action_start,
+                        action_start + len("assist the Republic of the Philippines"),
+                    ],
+                },
+            }
+        }
+
+    class _FakeConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _FakeResult()
+
+    adapter = DeonticNormsBridgeAdapter(converter=_FakeConverter())
+    report = adapter.evaluate(
+        source_text,
+        document_id="deontic-bridge-catchline-actor",
+        citation="38 U.S.C. 1731",
+    )
+
+    norm = report.ir_document.views["deontic_ir"].payload["norms"][0]
+    decoder_record = report.ir_document.views["deontic_decoder_reconstructions"].payload[
+        "records"
+    ][0]
+    actor_phrase = next(
+        phrase
+        for phrase in decoder_record["phrase_provenance"]
+        if phrase["slot"] == "actor"
+    )
+
+    assert norm["actor"] == "The President"
+    assert actor_phrase["text"] == "The President"
+    assert actor_phrase["spans"] == [[actor_start, actor_start + len("The President")]]
+    assert report.round_trip.extra_losses["deontic_decoder_slot_loss"] == 0.0
+    assert report.round_trip.extra_losses["deontic_quality_requires_validation_loss"] == 0.0
+
+
 def test_deontic_bridge_rehydrates_legacy_coverage_rows_without_summary() -> None:
     from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
 

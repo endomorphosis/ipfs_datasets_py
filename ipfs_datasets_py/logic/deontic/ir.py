@@ -260,6 +260,14 @@ def _actor_text(element: Dict[str, Any]) -> str:
     """Return a source-grounded actor slot from flat or detail fields."""
 
     flat_value = _first_text(element.get("subject")).strip()
+    modal_clause_actor = _modal_clause_actor_text(element)
+    if (
+        flat_value
+        and modal_clause_actor
+        and _is_heading_polluted_actor(flat_value, modal_clause_actor)
+    ):
+        return modal_clause_actor
+
     section_application_actor = _section_application_actor_text(element)
     if flat_value and _is_generic_section_application_actor(flat_value):
         if section_application_actor:
@@ -1033,6 +1041,13 @@ _SECTION_APPLICATION_ACTOR_RE = re.compile(
     r"(?:\s+of\s+this\s+title)?)\s+shall\s+apply\b",
     re.IGNORECASE,
 )
+_MODAL_CLAUSE_ACTOR_RE = re.compile(
+    r"\b(?P<actor>(?:(?:The|the)\s+)?[A-Z][A-Za-z]*"
+    r"(?:\s+(?:of|for|and|or|the|[A-Z][A-Za-z]*)){0,10})\s+"
+    r"(?P<modal>(?i:shall|must|may|is\s+authorized\s+to|are\s+authorized\s+to|"
+    r"is\s+directed\s+to|are\s+directed\s+to|is\s+required\s+to|"
+    r"are\s+required\s+to))\b",
+)
 
 
 def _is_generic_section_application_actor(value: str) -> bool:
@@ -1056,6 +1071,102 @@ def _section_application_actor_field_spans(element: Mapping[str, Any]) -> Dict[s
             base_offset + match.end("actor"),
         ],
     }
+
+
+def _modal_clause_actor_text(element: Mapping[str, Any]) -> str:
+    match_info = _modal_clause_actor_match(element)
+    if not match_info:
+        return ""
+    match, _key = match_info
+    actor, _start, _end = _modal_clause_actor_parts(element, match)
+    return actor
+
+
+def _modal_clause_actor_field_spans(element: Mapping[str, Any]) -> Dict[str, List[int]]:
+    match_info = _modal_clause_actor_match(element)
+    if not match_info:
+        return {}
+    match, key = match_info
+    actor, actor_start, actor_end = _modal_clause_actor_parts(element, match)
+    flat_value = _first_text(element.get("subject")).strip()
+    if not _is_heading_polluted_actor(flat_value, actor):
+        return {}
+    base_offset = _modal_clause_match_base_offset(element, key)
+    return {
+        "subject": [
+            base_offset + actor_start,
+            base_offset + actor_end,
+        ],
+    }
+
+
+def _modal_clause_actor_match(
+    element: Mapping[str, Any],
+) -> Optional[tuple[re.Match[str], str]]:
+    """Return the last explicit modal-clause actor in source text.
+
+    U.S. Code snippets can include the catchline immediately before the real
+    actor (for example, ``Assistance ... The President is authorized``). The
+    parser may keep that whole prefix as ``subject``; using the last explicit
+    modal actor keeps the IR source-grounded without inventing a replacement.
+    """
+
+    for key, text in _modal_clause_source_text_candidates(element):
+        matches = list(_MODAL_CLAUSE_ACTOR_RE.finditer(text))
+        if matches:
+            return matches[-1], key
+    return None
+
+
+def _modal_clause_source_text_candidates(element: Mapping[str, Any]) -> List[tuple[str, str]]:
+    candidates: List[tuple[str, str]] = []
+    for key in ("support_text", "text", "source_text"):
+        value = str(element.get(key) or "")
+        if value:
+            candidates.append((key, value))
+    return candidates
+
+
+def _modal_clause_match_base_offset(element: Mapping[str, Any], key: str) -> int:
+    if key == "support_text":
+        support_span = SourceSpan.from_value(element.get("support_span")).to_list()
+        if len(support_span) == 2:
+            return support_span[0]
+    return 0
+
+
+def _modal_clause_actor_parts(
+    element: Mapping[str, Any],
+    match: re.Match[str],
+) -> tuple[str, int, int]:
+    actor_text = str(match.group("actor") or "")
+    actor_start = match.start("actor")
+    actor_end = match.end("actor")
+    flat_value = _first_text(element.get("subject")).strip()
+
+    suffix_matches = list(re.finditer(r"\b(?:The|the)\s+[A-Z][A-Za-z]", actor_text))
+    for suffix_match in reversed(suffix_matches):
+        if suffix_match.start() <= 0:
+            continue
+        suffix = _clean_source_label(actor_text[suffix_match.start() :])
+        if _is_heading_polluted_actor(flat_value, suffix):
+            return (
+                suffix,
+                actor_start + suffix_match.start(),
+                actor_end,
+            )
+
+    return _clean_source_label(actor_text), actor_start, actor_end
+
+
+def _is_heading_polluted_actor(flat_value: str, modal_clause_actor: str) -> bool:
+    flat = _clean_source_label(flat_value).lower()
+    actor = _clean_source_label(modal_clause_actor).lower()
+    if not flat or not actor or flat == actor:
+        return False
+    if not actor.startswith("the "):
+        return False
+    return flat.endswith(actor) and len(flat.split()) > len(actor.split())
 
 
 def _section_application_actor_match(element: Mapping[str, Any]) -> Optional[re.Match[str]]:
@@ -1207,6 +1318,9 @@ def _field_spans_with_source_fallback(element: Mapping[str, Any]) -> Dict[str, A
     """Return field spans adjusted for deterministic source-text recoveries."""
 
     field_spans = dict(element.get("field_spans") or {})
+    modal_clause_actor_spans = _modal_clause_actor_field_spans(element)
+    if modal_clause_actor_spans:
+        field_spans.update(modal_clause_actor_spans)
     lifecycle_actor_spans = _instrument_lifecycle_actor_field_span(element)
     if lifecycle_actor_spans:
         field_spans.update(lifecycle_actor_spans)
