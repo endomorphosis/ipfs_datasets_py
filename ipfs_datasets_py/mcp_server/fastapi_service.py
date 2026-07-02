@@ -342,8 +342,107 @@ def _callable_input_schema(fn) -> Dict[str, Any]:
     return schema
 
 
+# Cached flat descriptors / index for the full hierarchical tool surface.
+_FLAT_TOOL_DESCRIPTORS_CACHE: Optional[List[Dict[str, Any]]] = None
+_FLAT_TOOL_INDEX_CACHE: Optional[set] = None
+
+
+def _hierarchical_flat_descriptors() -> List[Dict[str, Any]]:
+    """Cheaply enumerate the full hierarchical tool surface as flat MCP descriptors.
+
+    The datasets server exposes ~350 tools behind a hierarchical ``tools_dispatch``
+    facade, so a bare ``tools/list`` used to advertise only the 4 meta-tools and
+    external MCP clients (and the hallucinate_app tool explorer) under-reported the
+    real tool count. Here we enumerate every dispatchable tool as a flat
+    ``<category>.<tool>`` descriptor.
+
+    Crucially the tool modules are **not imported** — names come from the tool
+    filenames on disk (each tool file's stem is its dispatchable function name),
+    so ``tools/list`` stays fast and never pays the import cost of the whole tool
+    surface. Real input schemas are resolved lazily via ``tools_get_schema`` and
+    execution imports only the target category on first dispatch.
+    """
+    global _FLAT_TOOL_DESCRIPTORS_CACHE, _FLAT_TOOL_INDEX_CACHE
+    if _FLAT_TOOL_DESCRIPTORS_CACHE is not None:
+        return _FLAT_TOOL_DESCRIPTORS_CACHE
+
+    from pathlib import Path as _Path
+
+    descriptors: List[Dict[str, Any]] = []
+    index: set = set()
+    try:
+        from .hierarchical_tool_manager import get_tool_manager
+        manager = get_tool_manager()
+        if not getattr(manager, "_discovered_categories", False):
+            manager.discover_categories()
+
+        items = []
+        categories = getattr(manager, "categories", {}) or {}
+        if categories:
+            items = [(c.name, getattr(c, "path", None)) for c in categories.values()]
+        else:
+            tools_root = getattr(manager, "tools_root", None)
+            if tools_root is not None:
+                items = [(p.name, p) for p in _Path(tools_root).iterdir() if p.is_dir()]
+
+        for cat_name, cat_path in items:
+            if not cat_name or cat_path is None:
+                continue
+            try:
+                for tool_file in sorted(_Path(cat_path).glob("*.py")):
+                    stem = tool_file.stem
+                    if stem.startswith("_") or stem == "__init__":
+                        continue
+                    flat = f"{cat_name}.{stem}"
+                    if flat in index:
+                        continue
+                    index.add(flat)
+                    descriptors.append({
+                        "name": flat,
+                        "description": f"{stem} (category: {cat_name})",
+                        # Lazy: full schema is served by tools_get_schema / dispatch
+                        # so we don't import the tool module at list time.
+                        "inputSchema": {"type": "object"},
+                    })
+            except Exception:
+                continue
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.warning("Flat hierarchical descriptor enumeration failed: %s", exc)
+        return []
+
+    _FLAT_TOOL_DESCRIPTORS_CACHE = descriptors
+    _FLAT_TOOL_INDEX_CACHE = index
+    return descriptors
+
+
+async def _dispatch_hierarchical_flat_tool(tool_name: str, arguments: Dict[str, Any]):
+    """Dispatch a flat ``<category>.<tool>`` name through the hierarchical manager.
+
+    Returns ``(handled, result)``. ``handled`` is False when ``tool_name`` is not a
+    known flat hierarchical tool so callers fall through to their own error path.
+    Only the target category is imported (lazily, on first dispatch).
+    """
+    if not tool_name or "." not in tool_name:
+        return False, None
+    _hierarchical_flat_descriptors()  # ensure the flat index is populated
+    index = _FLAT_TOOL_INDEX_CACHE or set()
+    if tool_name not in index:
+        return False, None
+    category, _, tool = tool_name.partition(".")
+    if not category or not tool:
+        return False, None
+    from .hierarchical_tool_manager import tools_dispatch
+    result = await tools_dispatch(category=category, tool=tool, params=arguments or {})
+    return True, result
+
+
 def _mcp_tool_descriptors(mcp_server) -> List[Dict[str, Any]]:
-    """Build MCP-conformant tool descriptors from a server's ``.tools`` registry."""
+    """Build MCP-conformant tool descriptors from a server's ``.tools`` registry.
+
+    Returns the hierarchical meta-tools (from ``mcp_server.tools``) **and** the
+    full flat ``<category>.<tool>`` surface so stock MCP clients discover every
+    dispatchable tool and the reported tool count reflects reality.
+    """
     descriptors: List[Dict[str, Any]] = []
     tools = getattr(mcp_server, "tools", {}) or {}
     for name, fn in tools.items():
@@ -354,6 +453,7 @@ def _mcp_tool_descriptors(mcp_server) -> List[Dict[str, Any]]:
             "description": description,
             "inputSchema": _callable_input_schema(fn),
         })
+    descriptors.extend(_hierarchical_flat_descriptors())
     return descriptors
 
 
@@ -1066,6 +1166,9 @@ async def list_available_tools(
         # Get tools from MCP server
         mcp_server = app.state.mcp_server
         tools = list(mcp_server.tools.keys()) if hasattr(mcp_server, 'tools') else []
+        # Include the full flat hierarchical surface so the reported count reflects
+        # every dispatchable tool, not just the 4 hierarchical meta-tools.
+        tools = tools + [d["name"] for d in _hierarchical_flat_descriptors()]
         
         return {
             "tools": tools,
@@ -1098,6 +1201,10 @@ async def execute_tool(
         mcp_server = app.state.mcp_server
         
         if not hasattr(mcp_server, 'tools') or tool_name not in mcp_server.tools:
+            # Fall back to the hierarchical surface for flat <category>.<tool> names.
+            handled, dispatch_result = await _dispatch_hierarchical_flat_tool(tool_name, parameters or {})
+            if handled:
+                return {"tool": tool_name, "status": "success", "result": dispatch_result}
             raise HTTPException(status_code=404, detail=f"Tool '{tool_name}' not found")
         
         # Execute the tool
@@ -2450,6 +2557,9 @@ async def mcp_jsonrpc_handler(request: Request):
                 else:
                     result = None
                 return {"jsonrpc": "2.0", "id": req_id, "result": _mcp_tool_result(result)}
+            handled, result = await _dispatch_hierarchical_flat_tool(tool_name, arguments)
+            if handled:
+                return {"jsonrpc": "2.0", "id": req_id, "result": _mcp_tool_result(result)}
             return {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32601, "message": f"Tool not found: {tool_name}"}}
 
         elif method == "tools/list":
@@ -2538,6 +2648,9 @@ async def mcp_tools_call_rest(request: Request):
                 return {"jsonrpc": "2.0", "error": {"code": -32000, "message": f"Execution timeout after {exec_timeout}s"}}
         else:
             result = None
+        return {"jsonrpc": "2.0", "result": _mcp_tool_result(result)}
+    handled, result = await _dispatch_hierarchical_flat_tool(tool_name, arguments)
+    if handled:
         return {"jsonrpc": "2.0", "result": _mcp_tool_result(result)}
     return JSONResponse(
         status_code=404,
