@@ -83,6 +83,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_000535_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000154_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000155_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_000160_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001248_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000964_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001514_FAMILY_PAIRS,
@@ -193,6 +194,30 @@ def test_modal_registry_packet_001514_refines_family_cue_policy_pairs() -> None:
     assert set(COMPILER_AMBIGUITY_PACKET_001514_FAMILY_PAIRS) == expected_pairs
     for predicted_family, target_family in expected_pairs:
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+
+def test_modal_registry_packet_000160_exposes_adaptive_ambiguity_pairs() -> None:
+    """Packet 000160 pairs surface explicit low-margin ambiguity policy."""
+    expected_pairs = (
+        ("frame", "temporal"),
+        ("temporal", "deontic"),
+    )
+
+    assert COMPILER_AMBIGUITY_PACKET_000160_FAMILY_PAIRS == expected_pairs
+    for predicted_family, target_family in expected_pairs:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
         assert supports_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
