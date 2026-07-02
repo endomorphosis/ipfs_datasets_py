@@ -32370,8 +32370,12 @@ def test_decompiler_preserves_budget_submission_and_audit_semantic_slots() -> No
         conditions=["with respect to the functions of the Secretary"],
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
     )
 
     assert "submit_or_file" in slot_texts[
@@ -32395,6 +32399,16 @@ def test_decompiler_preserves_budget_submission_and_audit_semantic_slots() -> No
     assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
     assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
     assert "knowledge_graphs.neo4j_compat" in slot_texts["legal_ir_view_prototype"]
+    assert any(
+        "source clause" in value
+        and "secretary" in value
+        and "submit budget program" in value
+        and "audit requirement" in value
+        for value in slot_texts["typed_ir_clause_role_support"]
+    )
+    assert "source clause" in structural_text
+    assert "budget program" in structural_text
+    assert "audit requirement" in structural_text
 
 
 def test_decompiler_emits_semantic_source_slots_for_annual_report_duty() -> None:
