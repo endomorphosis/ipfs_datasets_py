@@ -288,6 +288,96 @@ def test_compiler_refined_pair_margin_buffer_surfaces_near_threshold_conditional
     )
     assert float(ambiguity.metadata.get("adaptive_pair_margin_buffer", 0.0)) > 0.0
 
+
+@pytest.mark.parametrize(
+    (
+        "sample_id",
+        "predicted_family",
+        "target_family",
+        "family_margin",
+        "priority",
+        "expected_type",
+        "expected_severity",
+    ),
+    (
+        (
+            "us-code-42-13431.-84ac79e2afc504da",
+            ModalLogicFamily.DEONTIC.value,
+            ModalLogicFamily.DEONTIC.value,
+            0.073523213548,
+            0.076476786452,
+            "adaptive_deontic_deontic_contested_margin_low",
+            "review",
+        ),
+        (
+            "us-code-38-2108-955affeffdfda19c",
+            ModalLogicFamily.DEONTIC.value,
+            ModalLogicFamily.FRAME.value,
+            -0.268692982202,
+            0.418692982202,
+            "adaptive_deontic_frame_outvoted_margin_low",
+            "requires_rule",
+        ),
+    ),
+)
+def test_compiler_exposes_explicit_ambiguity_for_packet_000258_adaptive_margins(
+    monkeypatch,
+    sample_id: str,
+    predicted_family: str,
+    target_family: str,
+    family_margin: float,
+    priority: float,
+    expected_type: str,
+    expected_severity: str,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="regex")
+    )
+    monkeypatch.setattr(
+        modal_compiler_module,
+        "ranked_modal_families",
+        lambda _encoding: [],
+    )
+    monkeypatch.setattr(
+        modal_compiler_module,
+        "modal_ambiguity_signals",
+        lambda _encoding: {},
+    )
+    ranking = _ranking_for_margin(
+        predicted_family=predicted_family,
+        target_family=target_family,
+        family_margin=family_margin,
+    )
+    compiler._adaptive_family_ranking_from_logits = (  # type: ignore[method-assign]
+        lambda _encoding, ranking=ranking: list(ranking)
+    )
+
+    result = compiler.compile(
+        "The Secretary shall conduct a program under this section.",
+        document_id=f"packet-000258-{sample_id}",
+    )
+    ambiguity = _adaptive_explicit_ambiguity_from_source(
+        result,
+        predicted_family=predicted_family,
+        target_family=target_family,
+        predicted_family_source="adaptive_logits_fallback",
+    )
+    assert ambiguity is not None, sample_id
+    assert ambiguity.ambiguity_type == expected_type
+    assert ambiguity.severity == expected_severity
+    assert ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
+    assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
+    assert ambiguity.metadata.get("explicit_ambiguity_type") == expected_type
+    assert (
+        abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin)
+        <= 1e-12
+    )
+    assert abs(float(ambiguity.metadata.get("priority", 0.0)) - priority) <= 1e-12
+    assert abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - priority) <= (
+        1e-12
+    )
+
+
 @pytest.mark.parametrize(
     (
         "sample_id",
