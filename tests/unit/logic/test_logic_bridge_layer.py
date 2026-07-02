@@ -4519,6 +4519,53 @@ def test_tdfol_bridge_accepts_exported_formula_proof_obligation_rows() -> None:
     assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
 
 
+def test_tdfol_bridge_accepts_router_alias_formula_proof_obligation_rows() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
+
+    class _ProofObligationResult:
+        success = True
+        metadata = {
+            "proof_obligations": {
+                "records": [
+                    {
+                        "candidate_formula": "O(collect_fees(chief_administrative_officer))",
+                        "source_id": "tdfol:guidance:candidate-formula",
+                    },
+                    {
+                        "theorem_formula": "P(accept_payment(chief_administrative_officer))",
+                        "source_id": "tdfol:guidance:theorem-formula",
+                    },
+                    {
+                        "logical_form": "F(disclose_records(agency))",
+                        "source_id": "tdfol:guidance:logical-form",
+                    },
+                ]
+            },
+            "legal_norm_irs": [],
+            "parser_elements": [],
+        }
+
+    class _ProofObligationConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _ProofObligationResult()
+
+    adapter = FolTdfolBridgeAdapter(converter=_ProofObligationConverter())
+
+    report = adapter.evaluate("The officer shall collect fees.")
+    records = report.ir_document.views["tdfol_formula"].payload["records"]
+
+    assert {
+        "tdfol:guidance:candidate-formula",
+        "tdfol:guidance:theorem-formula",
+        "tdfol:guidance:logical-form",
+    } <= {record["source_id"] for record in records}
+    assert all(record["parse_ok"] for record in records)
+    assert report.proof_gate.compiles is True
+    assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
+    assert report.round_trip.extra_losses["tdfol_no_formula_loss"] == 0.0
+
+
 def test_tdfol_bridge_recovers_nested_alternate_proof_obligation_rows() -> None:
     from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
 
