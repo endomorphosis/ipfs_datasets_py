@@ -28206,6 +28206,7 @@ def test_modal_compiler_surfaces_packet_000168_compiler_ambiguity_policy_pairs(
         lambda _: {},
     )
     scenarios = (
+        ("us-code-16-556i-32e4432ee41bc5bb", "conditional_normative", "conditional_normative", 0.043102274812),
         ("us-code-42-19059.-91665c522bc27130", "frame", "conditional_normative", -0.63705791442),
         ("us-code-20-1132-3-80f3f53cc302786f", "frame", "epistemic", -0.349252987524),
         ("us-code-25-500e-890d173d23b6875b", "frame", "conditional_normative", -0.436370787702),
