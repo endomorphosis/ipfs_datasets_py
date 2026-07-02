@@ -18,6 +18,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_REFINED_PACKET_000043_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000258_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000116_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_000194_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000440_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_003441_FAMILY_PAIRS,
     COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
@@ -1342,6 +1343,46 @@ def test_packet_000495_adaptive_family_pairs_are_explicit_ambiguity_policy() -> 
         assert supports_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
+        )
+
+
+def test_packet_000194_refined_family_cue_pairs_are_policy_covered() -> None:
+    """Keep packet-000194 deontic/frame refined cue transitions explicit."""
+    expected_pairs = (
+        ("deontic", "deontic"),
+        ("deontic", "frame"),
+        ("frame", "frame"),
+    )
+
+    assert COMPILER_REFINED_PACKET_000194_FAMILY_PAIRS == expected_pairs
+    for predicted_family, target_family in expected_pairs:
+        assert (predicted_family, target_family) in (
+            COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert (
+            compiler_refined_modal_family_cue_margin_buffer(
+                predicted_family,
+                target_family,
+            )
+            > 0.0
         )
 
 

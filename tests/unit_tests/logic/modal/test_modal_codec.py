@@ -98,6 +98,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_REFINED_PACKET_000044_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000112_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000192_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_000194_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000126_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000170_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_001095_FAMILY_PAIRS,
@@ -5655,6 +5656,45 @@ def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_000192_pair
     assert ("deontic", "requirement for") in extracted_cues
     assert ("deontic", "on-site manager requirement") in extracted_cues
     assert ("deontic", "before obligating") in extracted_cues
+
+
+def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_000194_pairs() -> None:
+    packet_pairs = (
+        ("deontic", "deontic"),
+        ("deontic", "frame"),
+        ("frame", "frame"),
+    )
+    assert tuple(COMPILER_REFINED_PACKET_000194_FAMILY_PAIRS) == packet_pairs
+    expected_buffers = {
+        ("deontic", "deontic"): 0.0015,
+        ("deontic", "frame"): 0.0015,
+        ("frame", "frame"): 0.135,
+    }
+    for predicted_family, target_family in packet_pairs:
+        assert (
+            supports_signal_free_adaptive_ambiguity_pair(
+                predicted_family,
+                target_family,
+            )
+            is True
+        )
+        assert (
+            is_compiler_ambiguity_policy_pair(
+                predicted_family,
+                target_family,
+            )
+            is True
+        )
+        assert (
+            abs(
+                compiler_refined_modal_family_cue_margin_buffer(
+                    predicted_family,
+                    target_family,
+                )
+                - expected_buffers[(predicted_family, target_family)]
+            )
+            < 1e-12
+        )
 
 
 def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_001095_pairs() -> None:
