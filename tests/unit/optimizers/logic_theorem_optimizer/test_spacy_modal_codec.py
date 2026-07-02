@@ -8,6 +8,12 @@ from ipfs_datasets_py.logic.modal.decompiler import decode_modal_ir_document
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import build_us_code_sample
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_modal_parser import LegalModalParser
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import AdaptiveModalAutoencoder
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
+    COMPILER_REFINED_PACKET_004071_FAMILY_PAIRS,
+    compiler_refined_modal_family_cue_margin_buffer,
+    compiler_weak_typed_self_family_cue_margin_buffer,
+    is_compiler_ambiguity_policy_pair,
+)
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import ModalTodoSupervisor
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec import (
     _apply_competing_scope_backfill,
@@ -848,6 +854,43 @@ def test_refined_pair_balance_promotes_statutory_deontic_over_generic_frame() ->
     _apply_refined_modal_family_cue_pair_balance(counts, signals)
 
     assert counts["deontic"] > counts["frame"]
+
+
+def test_refined_pair_balance_promotes_explicit_deontic_over_frame_scaffold() -> None:
+    counts = {
+        "frame": 2.6,
+        "deontic": 1.1,
+        "conditional_normative": 0.35,
+    }
+    signals = {
+        "has_deontic_scope": True,
+        "has_deontic_cue": True,
+        "has_deontic_scope_phrase": False,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": True,
+        "has_frame_cue": True,
+        "has_frame_editorial_scope_phrase": False,
+        "has_definition_scope": False,
+        "has_frame_structural_authority_scope_phrase": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["deontic"] > counts["frame"]
+
+
+def test_packet_004071_registry_refines_frame_deontic_and_dynamic_self_buffers() -> None:
+    assert set(COMPILER_REFINED_PACKET_004071_FAMILY_PAIRS) == {
+        ("dynamic", "dynamic"),
+        ("frame", "deontic"),
+    }
+    assert is_compiler_ambiguity_policy_pair("frame", "deontic")
+    assert compiler_refined_modal_family_cue_margin_buffer("frame", "deontic") == 0.0015
+    assert compiler_refined_modal_family_cue_margin_buffer("dynamic", "dynamic") >= 0.02
+    assert (
+        compiler_weak_typed_self_family_cue_margin_buffer("dynamic", "dynamic")
+        > compiler_weak_typed_self_family_cue_margin_buffer("deontic", "deontic")
+    )
 
 
 def test_refined_pair_balance_promotes_deontic_over_temporal_status_scaffold() -> None:
