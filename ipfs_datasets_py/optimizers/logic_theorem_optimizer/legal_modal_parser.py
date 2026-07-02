@@ -27,7 +27,7 @@ _WHITESPACE_RE = re.compile(r"\s+")
 _SEGMENT_RE = re.compile(r"[^.;:\n]+[.;:]?")
 _TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_'-]*")
 _CLAUSE_DELIMITER_RE = re.compile(r"[,;:\n.]")
-_CONDITION_PREFIXES = ("provided that", "subject to", "if", "when")
+_CONDITION_PREFIXES = ("provided that", "subject to", "only after", "if", "when")
 _EXCEPTION_PREFIXES = ("except that", "except as", "unless", "except")
 _USCODE_CODIFICATION_HINT_RE = re.compile(
     r"\b(?:transferred|editorially reclassified|codification)\b",

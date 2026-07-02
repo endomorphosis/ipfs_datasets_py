@@ -901,6 +901,60 @@ def test_modal_decompiler_refines_condition_scope_bridge_slots() -> None:
     ]
 
 
+def test_modal_decompiler_refines_only_after_condition_as_deontic_temporal_scope() -> None:
+    formula = ModalIRFormula(
+        formula_id="f_only_after_bridge",
+        operator=ModalIROperator(
+            family="deontic",
+            system="D",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="implement_flood_mapping_program", arguments=[]),
+        provenance=ModalIRProvenance(
+            source_id="only-after-bridge-doc",
+            start_char=0,
+            end_char=119,
+            citation="42 U.S.C. 4101d",
+        ),
+        conditions=["only after review by the Technical Mapping Advisory Council"],
+        metadata={"cue": "shall"},
+    )
+    document = ModalIRDocument(
+        document_id="only-after-bridge-doc",
+        source="us_code",
+        normalized_text=(
+            "The Administrator shall implement a flood mapping program only after "
+            "review by the Technical Mapping Advisory Council."
+        ),
+        formulas=[formula],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+
+    assert slot_texts["condition_prefix_key"] == ["only_after"]
+    assert slot_texts["condition_prefix_temporal_relation"] == ["after"]
+    assert "temporal:X:only_after" in slot_texts["condition_modal_bridge_signature"]
+    assert "temporal:X:only_after" in slot_texts[
+        "condition_scope_refined_modal_bridge_signature"
+    ]
+    assert "deontic->temporal" in slot_texts[
+        "condition_scope_refined_temporal_bridge_family_pair"
+    ]
+    assert "deontic_temporal" in slot_texts[
+        "condition_scope_refined_temporal_bridge_family_pair"
+    ]
+    assert "o_to_f" in slot_texts[
+        "condition_scope_refined_temporal_bridge_operator_pair_key"
+    ]
+    assert "only_after:after" in slot_texts[
+        "condition_scope_refined_temporal_bridge_context"
+    ]
+    assert "condition:only_after:after" in slot_texts[
+        "refined_temporal_bridge_context"
+    ]
+
+
 def test_modal_decompiler_projects_condition_scope_typed_roles_to_triples() -> None:
     formula = ModalIRFormula(
         formula_id="f_condition_typed_roles",

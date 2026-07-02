@@ -168,6 +168,7 @@ _CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("no later than", "no_later_than"),
     ("not later", "not_later"),
     ("no later", "no_later"),
+    ("only after", "only_after"),
     ("which", "which"),
     ("if", "if"),
     ("when", "when"),
@@ -194,6 +195,7 @@ _TEMPORAL_CLAUSE_PREFIX_RELATIONS: dict[str, str] = {
     "when": "when",
     "until": "until",
     "after": "after",
+    "only_after": "after",
     "before": "before",
     "by": "deadline",
     "no_later_than": "deadline",
@@ -762,6 +764,11 @@ _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...
         ("temporal", "G"),
     ),
     "after": (
+        ("conditional_normative", "O|"),
+        ("temporal", "X"),
+        ("dynamic", "[a]"),
+    ),
+    "only_after": (
         ("conditional_normative", "O|"),
         ("temporal", "X"),
         ("dynamic", "[a]"),

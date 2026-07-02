@@ -78,6 +78,7 @@ _CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("to the extent provided", "to_the_extent_provided"),
     ("not later than", "not_later_than"),
     ("no later than", "no_later_than"),
+    ("only after", "only_after"),
     ("if", "if"),
     ("when", "when"),
     ("until", "until"),
@@ -101,6 +102,7 @@ _TEMPORAL_CLAUSE_PREFIX_RELATIONS: dict[str, str] = {
     "when": "when",
     "until": "until",
     "after": "after",
+    "only_after": "after",
     "before": "before",
     "by": "deadline",
     "no_later_than": "deadline",
@@ -782,6 +784,11 @@ _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...
         ("temporal", "G"),
     ),
     "after": (
+        ("conditional_normative", "O|"),
+        ("temporal", "X"),
+        ("dynamic", "[a]"),
+    ),
+    "only_after": (
         ("conditional_normative", "O|"),
         ("temporal", "X"),
         ("dynamic", "[a]"),
@@ -6373,6 +6380,14 @@ def _typed_clause_phrases(
                 provenance_only=True,
             )
         )
+    phrases.extend(
+        _contextual_modal_cue_phrases(
+            formula=formula,
+            text=prefix_slot_value,
+            slot_prefix=f"{slot}_scope",
+            spans=spans,
+        )
+    )
     if scoped_value:
         phrases.append(
             DecodedModalPhrase(
@@ -10176,17 +10191,27 @@ def _refined_temporal_transition_slots(
     normalized_slot_prefix = _clean_text(slot_prefix)
     normalized_cue = _clean_text(cue).lower()
     formula_family = _clean_text(formula.operator.family).lower()
+    formula_symbol = _clean_text(formula.operator.symbol)
     if (
         not normalized_slot_prefix
         or not normalized_cue
+        or not formula_symbol
         or formula_family not in {"deontic", "frame", "temporal"}
     ):
         return []
     context_cues = _temporal_transition_context_cues_from_text(text)
+    temporal_relation_context = _temporal_clause_prefix_relation(normalized_cue)
+    if temporal_relation_context:
+        relation_context = f"{normalized_cue}:{temporal_relation_context}"
+        if relation_context not in context_cues:
+            context_cues.insert(0, relation_context)
     if not context_cues:
         return []
     if formula_family == "deontic":
-        if normalized_cue not in _DEONTIC_TEMPORAL_BRIDGE_CUES:
+        if (
+            normalized_cue not in _DEONTIC_TEMPORAL_BRIDGE_CUES
+            and not temporal_relation_context
+        ):
             return []
         pair_source_family = "deontic"
     elif formula_family == "frame":
@@ -10199,15 +10224,30 @@ def _refined_temporal_transition_slots(
         pair_source_family = "deontic"
 
     pair = f"{pair_source_family}->temporal"
-    signature = f"temporal:F:{normalized_cue}"
+    pair_key = _slot_safe_family_pair_key(pair)
+    temporal_symbol = (
+        formula_symbol if formula_family == "temporal" and formula_symbol else "F"
+    )
+    operator_pair = f"{formula_symbol}->{temporal_symbol}"
+    operator_pair_key = _modal_operator_pair_feature_key(
+        formula_symbol,
+        temporal_symbol,
+    )
+    signature = f"temporal:{temporal_symbol}:{normalized_cue}"
     slots: List[Tuple[str, str]] = [
         (f"{normalized_slot_prefix}_refined_temporal_bridge_family_pair", pair),
+        (f"{normalized_slot_prefix}_refined_temporal_bridge_family_pair_key", pair_key),
+        (f"{normalized_slot_prefix}_refined_temporal_bridge_family_pair", pair_key),
+        (f"{normalized_slot_prefix}_refined_temporal_bridge_operator_pair", operator_pair),
         (f"{normalized_slot_prefix}_refined_temporal_bridge_signature", signature),
         (
             f"{normalized_slot_prefix}_refined_temporal_bridge_pair_cue",
             f"{pair}:{normalized_cue}",
         ),
         ("refined_temporal_bridge_family_pair", pair),
+        ("refined_temporal_bridge_family_pair_key", pair_key),
+        ("refined_temporal_bridge_family_pair", pair_key),
+        ("refined_temporal_bridge_operator_pair", operator_pair),
         ("refined_temporal_bridge_signature", signature),
         ("refined_temporal_bridge_pair_cue", f"{pair}:{normalized_cue}"),
         ("refined_temporal_bridge_context_slot", normalized_slot_prefix),
@@ -10215,8 +10255,23 @@ def _refined_temporal_transition_slots(
             "refined_temporal_bridge_context_pair",
             f"{normalized_slot_prefix}:{pair}",
         ),
+        (
+            "refined_temporal_bridge_context_pair",
+            f"{normalized_slot_prefix}_{pair_key}",
+        ),
     ]
+    if operator_pair_key:
+        slots.extend(
+            (
+                (
+                    f"{normalized_slot_prefix}_refined_temporal_bridge_operator_pair_key",
+                    operator_pair_key,
+                ),
+                ("refined_temporal_bridge_operator_pair_key", operator_pair_key),
+            )
+        )
     for context_cue in context_cues:
+        context_slot_alias = normalized_slot_prefix.removesuffix("_scope")
         slots.extend(
             (
                 (
@@ -10228,6 +10283,14 @@ def _refined_temporal_transition_slots(
                     f"{signature}:{context_cue}",
                 ),
                 ("refined_temporal_bridge_context", context_cue),
+                (
+                    "refined_temporal_bridge_context",
+                    f"{normalized_slot_prefix}:{context_cue}",
+                ),
+                (
+                    "refined_temporal_bridge_context",
+                    f"{context_slot_alias}:{context_cue}",
+                ),
                 (
                     "refined_temporal_bridge_context_signature",
                     f"{signature}:{context_cue}",
