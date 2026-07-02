@@ -1944,8 +1944,10 @@ def test_modal_frame_logic_bridge_exports_graph_projection_signal_for_uscode_sca
             for view_name in (
                 "citation_structure",
                 "document_scope",
+                "frame_link",
                 "editorial_status",
                 "legal_ir_view_alignment",
+                "ontology_term",
                 "section_structure",
                 "type_assertion",
             )
@@ -2863,6 +2865,107 @@ def test_deontic_bridge_treats_reconstruction_neutral_warning_bundle_as_quality_
     assert report.round_trip.extra_losses["deontic_quality_requires_validation_loss"] == 0.0
 
 
+def test_deontic_bridge_uses_persisted_formula_readiness_for_decoder_validation() -> None:
+    from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
+
+    support_text = (
+        "The Secretary shall publish notice except as provided in section 552."
+    )
+    actor_start = support_text.index("Secretary")
+    modality_start = support_text.index("shall")
+    action_start = support_text.index("publish")
+    exception_start = support_text.index("except")
+    reference_start = support_text.index("section 552")
+
+    class _FakeResult:
+        success = True
+        metadata = {
+            "parser_element": {
+                "schema_version": "legal_norm_ir-v1",
+                "source_id": "legacy:deontic:persisted-readiness-decoder",
+                "canonical_citation": "5 U.S.C. 552",
+                "deontic_operator": "shall",
+                "subject": ["Secretary"],
+                "action": ["publish notice"],
+                "text": support_text,
+                "source_text": support_text,
+                "support_text": support_text,
+                "support_span": [0, len(support_text)],
+                "norm_type": "obligation",
+                "promotable_to_theorem": False,
+                "parser_warnings": [
+                    "cross_reference_requires_resolution",
+                    "exception_requires_scope_review",
+                ],
+                "export_readiness": {
+                    "blockers": [
+                        "cross_reference_requires_resolution",
+                        "exception_requires_scope_review",
+                    ],
+                    "formula_proof_ready": True,
+                    "formula_requires_validation": False,
+                    "formula_repair_required": False,
+                    "deterministic_resolution": {
+                        "type": "resolved_same_document_reference_exception",
+                        "resolved_blockers": [
+                            "cross_reference_requires_resolution",
+                            "exception_requires_scope_review",
+                        ],
+                    },
+                },
+                "field_spans": {
+                    "subject": [actor_start, actor_start + len("Secretary")],
+                    "modality": [modality_start, modality_start + len("shall")],
+                    "action": [action_start, action_start + len("publish notice")],
+                },
+                "exception_details": [
+                    {
+                        "value": "except as provided in section 552",
+                        "span": [exception_start, len(support_text) - 1],
+                    }
+                ],
+                "cross_reference_details": [
+                    {
+                        "value": "section 552",
+                        "span": [reference_start, reference_start + len("section 552")],
+                    }
+                ],
+            }
+        }
+
+    class _FakeConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _FakeResult()
+
+    adapter = DeonticNormsBridgeAdapter(converter=_FakeConverter())
+    report = adapter.evaluate(
+        support_text,
+        document_id="deontic-bridge-persisted-readiness-decoder",
+        citation="Deontic Bridge Persisted Readiness Decoder",
+    )
+
+    decoder_record = report.ir_document.views["deontic_decoder_reconstructions"].payload[
+        "records"
+    ][0]
+    formula_record = report.ir_document.views["deontic_formula_records"].payload[
+        "records"
+    ][0]
+    phase8_record = report.ir_document.views["deontic_phase8_quality"].payload[
+        "records"
+    ][0]
+
+    assert formula_record["requires_validation"] is False
+    assert decoder_record["missing_slots"] == []
+    assert decoder_record["requires_validation"] is False
+    assert decoder_record["decoder_validation_resolution"]["type"] == (
+        "formula_deterministic_readiness"
+    )
+    assert phase8_record["requires_validation"] is False
+    assert report.round_trip.extra_losses["deontic_decoder_slot_loss"] == 0.0
+    assert report.round_trip.extra_losses["deontic_quality_requires_validation_loss"] == 0.0
+
+
 def test_deontic_bridge_phase8_quality_includes_coverage_only_source_records() -> None:
     from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
 
@@ -3540,6 +3643,102 @@ def test_deontic_bridge_trims_uscode_catchline_from_modal_actor() -> None:
     assert report.round_trip.extra_losses["deontic_quality_requires_validation_loss"] == 0.0
 
 
+def test_deontic_bridge_promotes_packet_action_guidance_to_ir_evidence() -> None:
+    from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
+
+    source_text = "The Chief Administrative Officer may collect fees."
+    source_id = "us-code-2-5541-462165e82b6b68ce"
+
+    class _FakeResult:
+        success = True
+        metadata = {
+            "legal_norm_irs": [
+                {
+                    "schema_version": "legal_norm_ir-v1",
+                    "source_id": source_id,
+                    "canonical_citation": "2 U.S.C. 5541",
+                    "norm_type": "permission",
+                    "modality": "P",
+                    "actor": "Chief Administrative Officer",
+                    "action": "collect fees",
+                    "source_text": source_text,
+                    "support_text": source_text,
+                    "source_span": [0, len(source_text)],
+                    "support_span": [0, len(source_text)],
+                    "field_spans": {
+                        "subject": [4, 32],
+                        "modality": [33, 36],
+                        "action": [37, 49],
+                    },
+                    "quality": {
+                        "promotable_to_theorem": True,
+                        "parser_warnings": [],
+                        "export_readiness": {"blockers": []},
+                    },
+                    "export_readiness": {"blockers": []},
+                }
+            ]
+        }
+
+    class _FakeConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _FakeResult()
+
+    adapter = DeonticNormsBridgeAdapter(converter=_FakeConverter())
+    report = adapter.evaluate(
+        source_text,
+        document_id=source_id,
+        citation="2 U.S.C. 5541",
+        compiler_guidance={
+            "compiler_guidance_quality_gate": "pass",
+            "bundle": {
+                "action": "repair_deontic_bridge_quality_gate",
+                "target_component": "deontic.ir",
+            },
+            "evidence": [
+                {
+                    "sample_id": source_id,
+                    "quality_gate": "pass",
+                    "target_view": "deontic.ir",
+                    "predicted_view": "deontic.ir",
+                    "legal_ir_underrepresented_components": [
+                        "deontic.ir",
+                        "TDFOL.prover",
+                    ],
+                    "legal_ir_component_gaps": {
+                        "deontic.ir": 0.138041708115,
+                        "TDFOL.prover": 0.041522358337,
+                    },
+                }
+            ],
+        },
+    )
+
+    norm = report.ir_document.views["deontic_ir"].payload["norms"][0]
+    legal_frame = norm["legal_frame"]
+    assert legal_frame["compiler_guidance_target_view"] == "deontic.ir"
+    assert legal_frame["compiler_guidance_quality_gate"] == "pass"
+    assert legal_frame["compiler_guidance_legal_ir_underrepresented_components"] == [
+        "deontic.ir",
+        "TDFOL.prover",
+    ]
+    assert report.metadata["compiler_guidance_applied"] is True
+    assert any(
+        triple["predicate"] == "compiler_guidance_target_view"
+        and triple["object"] == "deontic.ir"
+        for triple in report.ir_document.frame_logic_triples
+    )
+    assert any(
+        triple["predicate"]
+        == "compiler_guidance_legal_ir_underrepresented_component"
+        and triple["object"] == "deontic.ir"
+        for triple in report.ir_document.frame_logic_triples
+    )
+    assert report.round_trip.extra_losses["deontic_decoder_slot_loss"] == 0.0
+    assert report.round_trip.extra_losses["deontic_quality_requires_validation_loss"] == 0.0
+
+
 def test_deontic_bridge_rehydrates_legacy_coverage_rows_without_summary() -> None:
     from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
 
@@ -3836,6 +4035,35 @@ def test_tdfol_bridge_evaluates_proof_obligations_and_graph() -> None:
     } <= set(logic_bridge_spec("fol_tdfol").loss_names)
     assert "legal_ir_view_cross_entropy_loss" in report.round_trip.extra_losses
     assert "source_copy_reward_hack_penalty" in report.round_trip.extra_losses
+
+
+def test_tdfol_bridge_keeps_shall_clause_before_permit_as_obligation() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
+
+    class _EmptyResult:
+        success = True
+        metadata = {
+            "legal_norm_irs": [],
+            "parser_elements": [],
+        }
+
+    class _EmptyConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _EmptyResult()
+
+    adapter = FolTdfolBridgeAdapter(converter=_EmptyConverter())
+    report = adapter.evaluate(
+        "The agency shall publish notice before the permit takes effect.",
+        document_id="tdfol-bridge-permit-object",
+    )
+
+    record = report.ir_document.views["tdfol_formula"].payload["records"][0]
+
+    assert record["formula"].startswith("O(")
+    assert "publish_notice" in record["formula"]
+    assert record["parse_ok"] is True
+    assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
 
 
 def test_tdfol_bridge_synthesizes_formula_when_converter_yields_no_norms() -> None:
@@ -4275,6 +4503,41 @@ def test_tdfol_bridge_recovers_nested_alternate_proof_obligation_rows() -> None:
 
     assert record["source_id"] == "tdfol:guidance:keyword"
     assert record["formula"] == "O(publish_notice(agency, deadline))"
+    assert record["parse_ok"] is True
+    assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
+
+
+def test_tdfol_bridge_recovers_alternate_rows_after_empty_records_list() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
+
+    class _ProofObligationResult:
+        success = True
+        metadata = {
+            "proof_obligations": {
+                "records": [],
+                "rows": [
+                    {
+                        "proof_input": "O(collect_fees(chief_administrative_officer))",
+                        "source_id": "tdfol:guidance:rows",
+                    }
+                ],
+            },
+            "legal_norm_irs": [],
+            "parser_elements": [],
+        }
+
+    class _ProofObligationConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _ProofObligationResult()
+
+    adapter = FolTdfolBridgeAdapter(converter=_ProofObligationConverter())
+
+    report = adapter.evaluate("The Chief Administrative Officer shall collect fees.")
+    record = report.ir_document.views["tdfol_formula"].payload["records"][0]
+
+    assert record["source_id"] == "tdfol:guidance:rows"
+    assert record["formula"] == "O(collect_fees(chief_administrative_officer))"
     assert record["parse_ok"] is True
     assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
 
@@ -9029,6 +9292,31 @@ def test_fol_tdfol_coerce_formula_accepts_tdfol_prover_proof_labels() -> None:
     assert parsed.to_string() == "O(collect_fees(internal_services))"
 
 
+def test_fol_tdfol_coerce_formula_accepts_targeted_prover_wrappers() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
+
+    cases = {
+        (
+            "proof_obligation: TDFOL.prover => "
+            "O(Chief Administrative Officer, collect fees for internal services)"
+        ): "O(collect_fees_for_internal_services(chief_administrative_officer))",
+        (
+            "TDFOL.prover proof_obligation view: "
+            "obligation(Chief Administrative Officer, collect fees for internal services)"
+        ): "O(collect_fees_for_internal_services(chief_administrative_officer))",
+        (
+            "target_view: TDFOL.prover, goal: "
+            "P(Secretary, transfer funds when necessary)"
+        ): "P(transfer_funds_when_necessary(secretary))",
+    }
+
+    for formula, expected in cases.items():
+        parsed = coerce_tdfol_formula(formula)
+
+        assert parsed is not None
+        assert parsed.to_string() == expected
+
+
 def test_fol_tdfol_coerce_formula_synthesizes_spaced_bracket_agents() -> None:
     from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
 
@@ -9065,6 +9353,45 @@ def test_tdfol_bridge_uscode_fallback_prefers_operative_shall_clause() -> None:
         for record in report.ir_document.views["tdfol_formula"].payload["records"]
     }
     assert "O(collect_fees_for_services(chief_administrative_officer))" in formulas
+    assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
+
+
+def test_tdfol_bridge_uscode_fallback_omits_heading_from_modal_actor() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
+
+    class _EmptyResult:
+        success = True
+        metadata = {
+            "legal_norm_irs": [],
+            "parser_elements": [],
+            "proof_obligations": [],
+        }
+
+    class _EmptyConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _EmptyResult()
+
+    adapter = FolTdfolBridgeAdapter(converter=_EmptyConverter())
+    report = adapter.evaluate(
+        (
+            "2 U.S.C. 5541: U.S.C. Title 2 - THE CONGRESS 2 U.S.C. "
+            "United States Code, 2024 Edition Title 2 - THE CONGRESS "
+            "CHAPTER 55 - HOUSE OF REPRESENTATIVES OFFICERS AND "
+            "ADMINISTRATION SUBCHAPTER III - CHIEF ADMINISTRATIVE OFFICER "
+            "Sec. 5541 - Fees for internal services. The Chief "
+            "Administrative Officer shall collect fees for services."
+        ),
+        document_id="tdfol-uscode-heading-trimmed-actor",
+        citation="2 U.S.C. 5541",
+    )
+
+    records = report.ir_document.views["tdfol_formula"].payload["records"]
+
+    assert records[0]["formula"] == (
+        "O(collect_fees_for_services(chief_administrative_officer))"
+    )
+    assert records[0]["parse_ok"] is True
     assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
 
 
@@ -10582,6 +10909,73 @@ def test_official_usc_primary_projection_handles_bootstrap_bridge_samples() -> N
     assert abs(sum(act_savings.values()) - 1.0) < 1e-9
     assert abs(sum(false_advertising.values()) - 1.0) < 1e-9
     assert abs(sum(performance_plan.values()) - 1.0) < 1e-9
+
+
+def test_official_usc_primary_projection_handles_packet_100_bridge_contracts() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _project_official_usc_primary_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.25,
+        "TDFOL.prover": 0.25,
+        "deontic.ir": 0.25,
+        "knowledge_graphs.neo4j_compat": 0.25,
+    }
+
+    administration_enforcement = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "33 U.S.C. 3803. Administration and enforcement. Unless otherwise "
+            "specified, the Secretary shall administer and enforce the "
+            "Convention and this chapter. The Administrator and Secretary may "
+            "prescribe and enforce regulations."
+        ),
+    )
+    medical_assistance = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "38 U.S.C. 1731. Veterans' benefits. The President is authorized "
+            "to assist the Republic of the Philippines in providing medical "
+            "care and treatment for veterans with service-connected "
+            "disabilities."
+        ),
+    )
+    fee_deposit = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "2 U.S.C. 5541. Fees for internal delivery. The Chief "
+            "Administrative Officer is authorized to collect fees equal to "
+            "the applicable postage. Amounts received as fees shall be "
+            "deposited in the Treasury for credit to the account."
+        ),
+    )
+    contribution_limit = _project_official_usc_primary_contract_distribution(
+        distribution,
+        text=(
+            "10 U.S.C. 2263. Contributions to NATO common-funded budgets. "
+            "The total amount contributed by the Secretary of Defense in any "
+            "fiscal year for common-funded budgets may exceed the fiscal "
+            "year 1998 baseline limitation."
+        ),
+    )
+
+    assert administration_enforcement["CEC.native"] > distribution["CEC.native"]
+    assert administration_enforcement["CEC.native"] > administration_enforcement[
+        "deontic.ir"
+    ]
+    assert medical_assistance["CEC.native"] > distribution["CEC.native"]
+    assert medical_assistance["CEC.native"] > medical_assistance["deontic.ir"]
+    assert fee_deposit["deontic.ir"] > distribution["deontic.ir"]
+    assert contribution_limit["deontic.ir"] > distribution["deontic.ir"]
+    assert contribution_limit["TDFOL.prover"] > distribution["TDFOL.prover"]
+    for projected in (
+        administration_enforcement,
+        medical_assistance,
+        fee_deposit,
+        contribution_limit,
+    ):
+        assert abs(sum(projected.values()) - 1.0) < 1e-9
 
 
 def test_official_usc_primary_projection_handles_packet_2711_bridge_samples() -> None:

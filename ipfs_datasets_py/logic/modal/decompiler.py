@@ -167,6 +167,14 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("election of officers", "officer_election"),
     ("irrigation projects", "irrigation_project"),
     ("irrigation project", "irrigation_project"),
+    ("permanently nonirrigable lands", "permanent_nonirrigable_land_status"),
+    ("permanently nonirrigable land", "permanent_nonirrigable_land_status"),
+    ("permanently non-irrigable lands", "permanent_nonirrigable_land_status"),
+    ("permanently non-irrigable land", "permanent_nonirrigable_land_status"),
+    ("nonirrigable lands", "nonirrigable_land_status"),
+    ("nonirrigable land", "nonirrigable_land_status"),
+    ("non-irrigable lands", "nonirrigable_land_status"),
+    ("non-irrigable land", "nonirrigable_land_status"),
     ("foreign commercial service", "foreign_commercial_service"),
     ("export promotion", "export_promotion"),
     ("remain available until expended", "no_year_funding_availability"),
@@ -958,6 +966,7 @@ class DecodedModalText:
 def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
     """Reconstruct source semantics while preserving formula audit metadata."""
     source_phrases, modal_span_coverage = _source_reconstruction_phrases(document)
+    typed_reconstruction_provenance_only = bool(source_phrases)
     formula_order = tuple(sorted(document.formulas, key=lambda item: item.formula_id))
     phrases: List[DecodedModalPhrase] = [
         *source_phrases,
@@ -1011,6 +1020,7 @@ def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
             _typed_ir_reconstruction_phrases(
                 document=document,
                 formula=formula,
+                provenance_only=typed_reconstruction_provenance_only,
             )
         )
 
@@ -1970,6 +1980,7 @@ def _typed_ir_reconstruction_phrases(
     formula: ModalIRFormula,
     max_values: int = 10,
     max_tokens: int = 56,
+    provenance_only: bool = True,
 ) -> List[DecodedModalPhrase]:
     """Emit bounded structural text from typed slots, not copied source spans."""
     spans = [[formula.provenance.start_char, formula.provenance.end_char]]
@@ -2084,6 +2095,40 @@ def _typed_ir_reconstruction_phrases(
     add_support(fallback_text)
     add_support(predicate_text)
     add_support(operator_label)
+    force = _modal_force_label(formula)
+    polarity = _modal_scope_polarity(
+        formula,
+        condition_values=condition_values,
+        exception_values=exception_values,
+        document=document,
+    )
+    add_support(force)
+    add_support(polarity.replace("_", " "))
+    if "deontic" in targets or any(
+        "deontic" in _clean_text(value).lower()
+        for value in legal_ir_view_support
+    ):
+        add_support("deontic legal obligations")
+        if force in {"obligation", "permission", "prohibition"}:
+            add_support(f"{force} force")
+    for cue in _typed_ir_reconstruction_cue_support_values(
+        formula=formula,
+        text=" ".join(
+            value.replace("_", " ")
+            for value in (
+                predicate_text,
+                source_span_text,
+                heading_text,
+                fallback_text,
+                " ".join(condition_values),
+                " ".join(exception_values),
+            )
+            if _clean_text(value)
+        ),
+        condition_values=condition_values,
+        exception_values=exception_values,
+    ):
+        add_support(cue)
     for value in (*condition_values, *exception_values):
         add_support(value)
     for atom in semantic_atoms:
@@ -2104,8 +2149,14 @@ def _typed_ir_reconstruction_phrases(
         for target in ordered_targets
         if _typed_ir_target_family_label(target)
     ]
+    pair_labels = [
+        _typed_ir_family_pair_reconstruction_label(family, target)
+        for target in ordered_targets
+        if _typed_ir_family_pair_reconstruction_label(family, target)
+    ]
     summary_parts = [
         *target_labels[:4],
+        *pair_labels[:4],
         *support_values[:max_values],
     ]
     summary = _bounded_reconstruction_text(summary_parts, max_tokens=max_tokens)
@@ -2117,7 +2168,7 @@ def _typed_ir_reconstruction_phrases(
                 text=summary,
                 slot="typed_ir_reconstruction",
                 spans=spans,
-                provenance_only=True,
+                provenance_only=provenance_only,
             )
         )
     for value in support_values[:max_values]:
@@ -2126,7 +2177,7 @@ def _typed_ir_reconstruction_phrases(
                 text=value,
                 slot="typed_ir_semantic_support",
                 spans=spans,
-                provenance_only=True,
+                provenance_only=provenance_only,
             )
         )
     if semantic_atoms:
@@ -2138,7 +2189,7 @@ def _typed_ir_reconstruction_phrases(
                 ),
                 slot="typed_ir_compact_semantic_support",
                 spans=spans,
-                provenance_only=True,
+                provenance_only=provenance_only,
             )
         )
     for value in legal_ir_view_support:
@@ -2153,6 +2204,7 @@ def _typed_ir_reconstruction_phrases(
     if family and targets:
         for target in targets:
             pair = f"{family}->{target}"
+            pair_label = _typed_ir_family_pair_reconstruction_label(family, target)
             phrases.append(
                 DecodedModalPhrase(
                     text=pair,
@@ -2161,6 +2213,15 @@ def _typed_ir_reconstruction_phrases(
                     provenance_only=True,
                 )
             )
+            if pair_label:
+                phrases.append(
+                    DecodedModalPhrase(
+                        text=pair_label,
+                        slot="typed_ir_family_pair_reconstruction_support",
+                        spans=spans,
+                        provenance_only=provenance_only,
+                    )
+                )
             if heading_text or fallback_text:
                 phrases.append(
                     DecodedModalPhrase(
@@ -2171,6 +2232,40 @@ def _typed_ir_reconstruction_phrases(
                     )
             )
     return phrases
+
+
+def _typed_ir_reconstruction_cue_support_values(
+    *,
+    formula: ModalIRFormula,
+    text: str,
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
+) -> List[str]:
+    cues: List[str] = []
+
+    def add(value: str) -> None:
+        cleaned = _clean_text(value).replace("_", " ")
+        if cleaned and cleaned not in cues:
+            cues.append(cleaned)
+
+    for cue in _formula_cues(formula):
+        add(cue)
+    for cue in _typed_decompiler_condition_cues(
+        condition_values=condition_values,
+        exception_values=exception_values,
+        text=text,
+    ):
+        add(cue)
+    for cue in _bridge_cues_from_text(text):
+        add(cue)
+    for cue in list(cues):
+        force = _typed_decompiler_force_for_cue(cue)
+        if force:
+            add(f"{cue} {force}")
+        temporal_relation = _temporal_clause_prefix_relation(cue.replace(" ", "_"))
+        if temporal_relation:
+            add(f"{cue} temporal {temporal_relation}")
+    return cues
 
 
 def _typed_ir_legal_view_support_values(document: ModalIRDocument) -> List[str]:
@@ -2243,6 +2338,18 @@ def _typed_ir_target_family_label(target: str) -> str:
     if normalized == "alethic":
         return "capability possibility"
     return normalized.replace("_", " ")
+
+
+def _typed_ir_family_pair_reconstruction_label(source: str, target: str) -> str:
+    source_label = _typed_ir_target_family_label(source)
+    target_label = _typed_ir_target_family_label(target)
+    if not source_label or not target_label:
+        return ""
+    normalized_source = _clean_text(source).lower()
+    normalized_target = _clean_text(target).lower()
+    if normalized_source == normalized_target:
+        return f"{target_label} source reconstruction"
+    return f"{source_label} source reconstructs {target_label}"
 
 
 def _typed_ir_reconstruction_target_order(target: str) -> Tuple[int, str]:
@@ -2426,6 +2533,16 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         add("plant_variety_protection_office")
     elif re.search(r"\bplant\s+variety\s+protection\b", normalized):
         add("plant_variety_protection")
+    if re.search(
+        r"\b(?:secretary|administrator|agency|authority|commission|director)\b"
+        r".{0,80}\b(?:determin(?:e|es|ed|ation|ations|ing)|find(?:s|ing)?)\b",
+        normalized,
+    ) or re.search(
+        r"\b(?:determin(?:e|es|ed|ation|ations|ing)|find(?:s|ing)?)\b"
+        r".{0,80}\b(?:secretary|administrator|agency|authority|commission|director)\b",
+        normalized,
+    ):
+        add("agency_determination")
     return atoms
 
 
@@ -7041,6 +7158,8 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "health_professional_education_assistance",
         "marine_science_development",
         "irrigation_project",
+        "nonirrigable_land_status",
+        "permanent_nonirrigable_land_status",
         "jurisdiction_authority",
         "livestock_commerce",
         "prize_proceeds_charge",
@@ -7064,12 +7183,16 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("knowledge_graphs.neo4j_compat")
         add("modal.frame_logic")
     if normalized_atom in {
+        "agency_determination",
         "cost_expense_charge",
         "education_assistance_benefit",
+        "false_claim_knowledge",
         "health_professional_education_assistance",
         "internal_service_fee",
+        "nonirrigable_land_status",
         "office_seal",
         "official_seal",
+        "permanent_nonirrigable_land_status",
         "plant_variety_protection",
         "plant_variety_protection_office",
         "prize_proceeds_charge",
@@ -7079,6 +7202,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("deontic.ir")
         add("TDFOL.prover")
     if normalized_atom in {
+        "agency_determination",
         "annual_report_duty",
         "admission_fee_collection",
         "appropriation_authorization",
@@ -7097,10 +7221,12 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "false_fraudulent_claim",
         "government_claim",
         "account_maintenance",
+        "nonirrigable_land_status",
         "office_establishment",
         "obligation",
         "patent_prohibition",
         "payment_authorization",
+        "permanent_nonirrigable_land_status",
         "permission",
         "prohibition",
         "public_report_duty",
@@ -7124,9 +7250,12 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("CEC.native")
         add("modal.frame_logic")
     if normalized_atom in {
+        "agency_determination",
         "definition",
+        "nonirrigable_land_status",
         "office_establishment",
         "office_of_womens_health",
+        "permanent_nonirrigable_land_status",
     }:
         add("CEC.native")
         add("knowledge_graphs.neo4j_compat")
@@ -7177,8 +7306,10 @@ def _typed_decompiler_semantic_atom_target_families(
             "false_claim_knowledge",
             "false_fraudulent_claim",
             "government_claim",
+            "agency_determination",
             "office_establishment",
             "obligation",
+            "permanent_nonirrigable_land_status",
             "patent_prohibition",
             "payment_authorization",
             "permission",
@@ -7240,8 +7371,11 @@ def _typed_decompiler_semantic_atom_target_families(
             "education_assistance_benefit",
             "historic_area",
             "historic_area_access_road",
+            "agency_determination",
             "internal_service_fee",
             "irrigation_project",
+            "nonirrigable_land_status",
+            "permanent_nonirrigable_land_status",
             "jurisdiction_authority",
             "law_enforcement",
             "livestock_commerce",
@@ -7267,6 +7401,13 @@ def _typed_decompiler_semantic_atom_target_families(
         }:
             add("frame")
         if normalized_atom in {
+            "agency_determination",
+            "false_claim_knowledge",
+            "nonirrigable_land_status",
+            "permanent_nonirrigable_land_status",
+        }:
+            add("epistemic")
+        if normalized_atom in {
             "cost_expense_charge",
             "education_assistance_benefit",
             "health_professional_education_assistance",
@@ -7282,6 +7423,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "state_conveyance_authority",
             "treasury_deposit",
             "unknown_party_deposit",
+            "permanent_nonirrigable_land_status",
         }:
             add("deontic")
         if normalized_atom in {

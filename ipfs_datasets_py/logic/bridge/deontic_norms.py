@@ -491,22 +491,35 @@ def _apply_deontic_compiler_guidance_to_rows(
             context,
             norm=enriched,
         )
-        if frame_guidance:
+        bridge_guidance = _deontic_bridge_evidence_from_compiler_guidance(
+            context,
+            norm=enriched,
+        )
+        if frame_guidance or bridge_guidance:
             legal_frame = dict(enriched.get("legal_frame") or {})
-            legal_frame.setdefault("selected_frame", frame_guidance["selected_frame"])
-            legal_frame.setdefault(
-                "selected_frame_source",
-                frame_guidance["selected_frame_source"],
-            )
-            legal_frame.setdefault(
-                "compiler_guidance_source",
-                frame_guidance["compiler_guidance_source"],
-            )
+            if frame_guidance:
+                legal_frame.setdefault("selected_frame", frame_guidance["selected_frame"])
+                legal_frame.setdefault(
+                    "selected_frame_source",
+                    frame_guidance["selected_frame_source"],
+                )
+                legal_frame.setdefault(
+                    "compiler_guidance_source",
+                    frame_guidance["compiler_guidance_source"],
+                )
+                enriched.setdefault("selected_frame", frame_guidance["selected_frame"])
+                enriched["compiler_guidance_source"] = frame_guidance[
+                    "compiler_guidance_source"
+                ]
+            if bridge_guidance:
+                for key, value in bridge_guidance.items():
+                    if _value_is_present(value):
+                        legal_frame.setdefault(key, value)
+                enriched.setdefault(
+                    "compiler_guidance_source",
+                    bridge_guidance.get("compiler_guidance_source"),
+                )
             enriched["legal_frame"] = legal_frame
-            enriched.setdefault("selected_frame", frame_guidance["selected_frame"])
-            enriched["compiler_guidance_source"] = frame_guidance[
-                "compiler_guidance_source"
-            ]
             if isinstance(context, dict):
                 context["applied"] = True
         enriched_rows.append(enriched)
@@ -635,7 +648,13 @@ def _compiler_guidance_has_deontic_route(guidance: Mapping[str, Any]) -> bool:
         "deontic_norms",
         "repair_deontic_bridge_quality_gate",
     }
-    for key in ("route", "compiler_guidance_route", "target_component", "target"):
+    for key in (
+        "route",
+        "compiler_guidance_route",
+        "action",
+        "target_component",
+        "target",
+    ):
         token = str(guidance.get(key) or "").strip().lower()
         if token in route_tokens:
             return True
@@ -657,7 +676,13 @@ def _compiler_guidance_has_deontic_route(guidance: Mapping[str, Any]) -> bool:
 
 
 def _deontic_guidance_route(guidance: Mapping[str, Any]) -> str:
-    for key in ("compiler_guidance_route", "route", "target_component", "target"):
+    for key in (
+        "compiler_guidance_route",
+        "route",
+        "action",
+        "target_component",
+        "target",
+    ):
         value = str(guidance.get(key) or "").strip()
         if value:
             return value
@@ -668,6 +693,98 @@ def _deontic_guidance_route(guidance: Mapping[str, Any]) -> str:
             if route_text:
                 return route_text
     return "repair_deontic_bridge_quality_gate"
+
+
+def _deontic_bridge_evidence_from_compiler_guidance(
+    context: Mapping[str, Any],
+    *,
+    norm: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Promote pass-gated deontic target-view evidence into LegalNormIR metadata."""
+
+    guidance = _mapping(context.get("guidance"))
+    if not guidance:
+        return {}
+
+    evidence_rows = _deontic_guidance_evidence_rows(guidance)
+    matched_rows = [
+        (collection_key, row)
+        for collection_key, row in evidence_rows
+        if _deontic_guidance_row_matches_norm(row, context=context, norm=norm)
+    ]
+    ordered_rows = matched_rows or evidence_rows
+
+    bridge_evidence: dict[str, Any] = {}
+    for collection_key, row in ordered_rows:
+        row_evidence = _deontic_bridge_evidence_from_guidance_row(
+            row,
+            source=f"compiler_guidance.{collection_key}",
+            route=str(context.get("route") or "repair_deontic_bridge_quality_gate"),
+        )
+        if row_evidence:
+            bridge_evidence.update(row_evidence)
+            break
+
+    top_level_evidence = _deontic_bridge_evidence_from_guidance_row(
+        guidance,
+        source="compiler_guidance",
+        route=str(context.get("route") or "repair_deontic_bridge_quality_gate"),
+    )
+    for key, value in top_level_evidence.items():
+        bridge_evidence.setdefault(key, value)
+    return bridge_evidence
+
+
+def _deontic_bridge_evidence_from_guidance_row(
+    row: Mapping[str, Any],
+    *,
+    source: str,
+    route: str,
+) -> dict[str, Any]:
+    target_view = _deontic_guidance_target_view(row)
+    quality_gate = str(
+        row.get("compiler_guidance_quality_gate")
+        or row.get("quality_gate")
+        or ""
+    ).strip().lower()
+    component_gaps = row.get("legal_ir_component_gaps")
+    underrepresented = row.get("legal_ir_underrepresented_components")
+    if not target_view and not component_gaps and not underrepresented:
+        return {}
+    if target_view and target_view != "deontic.ir":
+        return {}
+    if quality_gate and quality_gate not in {"pass", "passed", "ok"}:
+        return {}
+
+    evidence: dict[str, Any] = {
+        "compiler_guidance_source": route,
+        "compiler_guidance_evidence_source": source,
+        "compiler_guidance_target_view": target_view or "deontic.ir",
+    }
+    if quality_gate:
+        evidence["compiler_guidance_quality_gate"] = "pass"
+    predicted_view = str(row.get("predicted_view") or "").strip()
+    if predicted_view:
+        evidence["compiler_guidance_predicted_view"] = predicted_view
+    normalized_underrepresented = _list_of_strings(underrepresented)
+    if normalized_underrepresented:
+        evidence["compiler_guidance_legal_ir_underrepresented_components"] = (
+            normalized_underrepresented
+        )
+    if isinstance(component_gaps, Mapping):
+        evidence["compiler_guidance_legal_ir_component_gaps"] = dict(component_gaps)
+    return evidence
+
+
+def _deontic_guidance_target_view(row: Mapping[str, Any]) -> str:
+    for key in ("target_view", "target_component", "target", "predicted_view"):
+        value = str(row.get(key) or "").strip()
+        if value:
+            return value
+    bundle = row.get("bundle") or row.get("semantic_bundle")
+    if isinstance(bundle, Mapping):
+        return _deontic_guidance_target_view(bundle)
+    return ""
 
 
 def _selected_frame_from_deontic_compiler_guidance(
@@ -1942,8 +2059,53 @@ def _frame_logic_triples_from_deontic_records(
                         "predicate": "compiler_guidance_source",
                         "object": str(legal_frame.get("compiler_guidance_source") or ""),
                     },
+                    {
+                        "subject": source_id,
+                        "predicate": "compiler_guidance_target_view",
+                        "object": str(
+                            legal_frame.get("compiler_guidance_target_view") or ""
+                        ),
+                    },
+                    {
+                        "subject": source_id,
+                        "predicate": "compiler_guidance_quality_gate",
+                        "object": str(
+                            legal_frame.get("compiler_guidance_quality_gate") or ""
+                        ),
+                    },
+                    {
+                        "subject": source_id,
+                        "predicate": "compiler_guidance_evidence_source",
+                        "object": str(
+                            legal_frame.get("compiler_guidance_evidence_source") or ""
+                        ),
+                    },
                 ]
             )
+            for component in _list_of_strings(
+                legal_frame.get(
+                    "compiler_guidance_legal_ir_underrepresented_components"
+                )
+            ):
+                triples.append(
+                    {
+                        "subject": source_id,
+                        "predicate": (
+                            "compiler_guidance_legal_ir_underrepresented_component"
+                        ),
+                        "object": component,
+                    }
+                )
+            component_gaps = legal_frame.get("compiler_guidance_legal_ir_component_gaps")
+            if isinstance(component_gaps, Mapping):
+                for component, gap in sorted(component_gaps.items()):
+                    triples.append(
+                        {
+                            "subject": source_id,
+                            "predicate": "compiler_guidance_legal_ir_component_gap",
+                            "object": f"{component}:{gap}",
+                        }
+                    )
         formula_record = formulas_by_source.get(source_id, {})
         if formula_record:
             triples.extend(

@@ -816,6 +816,15 @@ def _collect_frame_ontology_feature_value_candidates(
                 extracted.append(synthetic_feature)
                 if len(extracted) >= max(max_values, 1):
                     return
+            if _is_frame_family_feature_list_key(key_text):
+                _collect_frame_family_feature_list_candidates(
+                    value,
+                    extracted,
+                    depth=depth + 1,
+                    max_depth=max_depth,
+                    max_values=max_values,
+                )
+                continue
             _collect_frame_ontology_feature_value_candidates(
                 value,
                 extracted,
@@ -850,6 +859,75 @@ def _collect_frame_ontology_feature_value_candidates(
         )
         return
     extracted.append(text)
+
+
+def _is_frame_family_feature_list_key(key_text: str) -> bool:
+    normalized_key = _FRAME_ONTOLOGY_PREDICATE_TOKEN_RE.sub(
+        "_",
+        str(key_text or "").strip().lower(),
+    ).strip("_")
+    return normalized_key in {"frame_features", "top_family_features"}
+
+
+def _collect_frame_family_feature_list_candidates(
+    values: Any,
+    extracted: List[str],
+    *,
+    depth: int,
+    max_depth: int,
+    max_values: int,
+) -> None:
+    if (
+        values is None
+        or depth >= max(max_depth, 1)
+        or len(extracted) >= max(max_values, 1)
+    ):
+        return
+    if isinstance(values, Mapping):
+        _collect_frame_ontology_feature_value_candidates(
+            values,
+            extracted,
+            depth=depth,
+            max_depth=max_depth,
+            max_values=max_values,
+        )
+        return
+    if isinstance(values, Sequence) and not isinstance(values, (str, bytes)):
+        for value in values:
+            if len(extracted) >= max(max_values, 1):
+                return
+            _collect_frame_family_feature_list_candidates(
+                value,
+                extracted,
+                depth=depth + 1,
+                max_depth=max_depth,
+                max_values=max_values,
+            )
+        return
+    text = str(values or "").strip()
+    if not text or _is_generic_quality_audit_feature(text):
+        return
+    parsed = _parsed_frame_ontology_feature_value(text)
+    if parsed is not None:
+        _collect_frame_family_feature_list_candidates(
+            parsed,
+            extracted,
+            depth=depth + 1,
+            max_depth=max_depth,
+            max_values=max_values,
+        )
+        return
+    extracted.append(text)
+
+
+def _is_generic_quality_audit_feature(feature: str) -> bool:
+    lowered = str(feature or "").strip().lower()
+    if not lowered.startswith("quality:"):
+        return False
+    return not any(
+        lowered.startswith(prefix)
+        for prefix in _FRAME_ONTOLOGY_QUALITY_FRAME_PREFIXES
+    )
 
 
 def _synthetic_frame_feature_candidates_from_key_value(

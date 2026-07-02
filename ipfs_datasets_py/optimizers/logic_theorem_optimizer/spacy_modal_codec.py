@@ -1037,6 +1037,17 @@ _DEONTIC_REPORT_DUTY_SCOPE_PHRASES = (
     "shall make a report",
     "report shall be submitted",
 )
+_TEMPORAL_NOTIFICATION_DEADLINE_SCOPE_RE = re.compile(
+    r"\b(?:notification|notify|notifies|notified|notice|report|reports|"
+    r"submit|submits|submitted|submission)\b.{0,140}\b(?:within|"
+    r"not\s+later\s+than|no\s+later\s+than|after|as\s+soon\s+as\s+practicable|"
+    r"promptly)\b|"
+    r"\b(?:within|not\s+later\s+than|no\s+later\s+than|after|"
+    r"as\s+soon\s+as\s+practicable|promptly)\b.{0,140}\b(?:notification|"
+    r"notify|notifies|notified|notice|report|reports|submit|submits|"
+    r"submitted|submission)\b",
+    re.IGNORECASE,
+)
 _DEONTIC_PROGRAM_DUTY_SCOPE_PHRASES = (
     "shall establish",
     "shall establish a program",
@@ -5085,6 +5096,9 @@ def _apply_refined_modal_family_cue_pair_balance(
     has_deontic_report_duty_scope_phrase = bool(
         signals.get("has_deontic_report_duty_scope_phrase")
     )
+    has_temporal_notification_deadline_scope_phrase = bool(
+        signals.get("has_temporal_notification_deadline_scope_phrase")
+    )
     has_deontic_program_duty_scope_phrase = bool(
         signals.get("has_deontic_program_duty_scope_phrase")
     )
@@ -5412,6 +5426,24 @@ def _apply_refined_modal_family_cue_pair_balance(
             temporal_count + 0.01,
         )
         deontic_count = float(counts.get(deontic_family, 0.0))
+
+    # deontic -> temporal:
+    # notification/report duties with an adjacent deadline are timed event
+    # obligations.  Keep the temporal family ahead when the operative cue is
+    # "notify/report/submit ... within/not later than/after ...", while leaving
+    # generic annual report duties to the deontic protection above.
+    if (
+        has_temporal_notification_deadline_scope_phrase
+        and has_deontic_cue
+        and has_temporal_deadline_scope
+        and temporal_count > 0.0
+        and deontic_count > 0.0
+    ):
+        counts[temporal_family] = max(
+            temporal_count,
+            deontic_count + 0.08,
+        )
+        temporal_count = float(counts.get(temporal_family, 0.0))
 
     # frame/conditional/temporal -> deontic:
     # mandatory program-establishment clauses often contain purpose phrases,
@@ -7210,6 +7242,9 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
     deontic_report_duty_scope_phrase = _contains_scope_phrase(
         normalized_text, _DEONTIC_REPORT_DUTY_SCOPE_PHRASES
     )
+    temporal_notification_deadline_scope_phrase = bool(
+        _TEMPORAL_NOTIFICATION_DEADLINE_SCOPE_RE.search(normalized_text)
+    )
     deontic_program_duty_scope_phrase = _contains_scope_phrase(
         normalized_text, _DEONTIC_PROGRAM_DUTY_SCOPE_PHRASES
     )
@@ -7374,6 +7409,9 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         ),
         "has_deontic_report_duty_scope_phrase": bool(
             deontic_report_duty_scope_phrase
+        ),
+        "has_temporal_notification_deadline_scope_phrase": bool(
+            temporal_notification_deadline_scope_phrase
         ),
         "has_deontic_program_duty_scope_phrase": bool(
             deontic_program_duty_scope_phrase

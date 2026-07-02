@@ -35,7 +35,9 @@ LEGAL_MODAL_DOCUMENT_LABEL = "LegalModalDocument"
 LEGAL_CITATION_STRUCTURE_LABEL = "LegalCitationStructure"
 LEGAL_DOCUMENT_SCOPE_LABEL = "LegalDocumentScope"
 LEGAL_EDITORIAL_STATUS_LABEL = "LegalEditorialStatus"
+LEGAL_FRAME_ALIGNMENT_LABEL = "LegalFrameAlignment"
 LEGAL_IR_VIEW_ALIGNMENT_LABEL = "LegalIRViewAlignment"
+LEGAL_ONTOLOGY_TERM_LABEL = "LegalOntologyTerm"
 LEGAL_SECTION_STRUCTURE_LABEL = "LegalSectionStructure"
 
 _FRAME_PREDICATES = {
@@ -193,7 +195,9 @@ _NODE_LABELS_BY_PROJECTION_VIEW = {
     "citation_structure": LEGAL_CITATION_STRUCTURE_LABEL,
     "document_scope": LEGAL_DOCUMENT_SCOPE_LABEL,
     "editorial_status": LEGAL_EDITORIAL_STATUS_LABEL,
+    "frame_link": LEGAL_FRAME_ALIGNMENT_LABEL,
     "legal_ir_view_alignment": LEGAL_IR_VIEW_ALIGNMENT_LABEL,
+    "ontology_term": LEGAL_ONTOLOGY_TERM_LABEL,
     "section_structure": LEGAL_SECTION_STRUCTURE_LABEL,
 }
 _IDENTIFIER_RE = re.compile(r"[^A-Za-z0-9_]+")
@@ -317,6 +321,7 @@ def modal_ir_to_neo4j_graph_data(
         from .codec import modal_ir_to_flogic_triples
 
         triples = modal_ir_to_flogic_triples(modal_ir, selected_frame=selected_frame)
+    triples = _with_modal_ir_document_projection_context(modal_ir, triples)
     triples = _with_guided_legal_ir_projection_triples(modal_ir, triples)
     return flogic_triples_to_graph_data(
         triples,
@@ -548,12 +553,14 @@ def _projection_alignment_metadata(
     graph_projection_signal_count = _graph_projection_signal_count(
         projection_view_counts
     )
+    projected_triple_aligned = relationship_count == len(triples)
+    augmented_triple_count = max(0, len(triples) - normalized_triple_count)
     metadata: Dict[str, Any] = {
         "canonical_legal_ir_projection_components": sorted(canonical_view_distribution),
         "canonical_legal_ir_projection_view_distribution": canonical_view_distribution,
         "canonical_legal_ir_projection_view_total": len(canonical_view_distribution),
         "frame_logic_to_neo4j_alignment_total": relationship_count
-        if normalized_triple_count == relationship_count
+        if projected_triple_aligned
         else 0,
         "frame_logic_to_neo4j_component_pair": (
             "modal.frame_logic->knowledge_graphs.neo4j_compat"
@@ -565,12 +572,23 @@ def _projection_alignment_metadata(
         "flogic_duplicate_triple_count": max(0, len(triples) - unique_triple_count),
         "flogic_normalized_triple_count": normalized_triple_count,
         "flogic_unique_triple_count": unique_triple_count,
+        "frame_logic_projection_augmented_aligned": (
+            projected_triple_aligned and relationship_count >= normalized_triple_count
+        ),
+        "frame_logic_projection_augmented_triple_count": augmented_triple_count,
         "frame_logic_projection_input_aligned": relationship_count == input_triple_count,
-        "frame_logic_projection_input_relationship_gap": input_triple_count
-        - relationship_count,
-        "frame_logic_projection_aligned": relationship_count == len(triples),
-        "frame_logic_projection_normalized_aligned": relationship_count
-        == normalized_triple_count,
+        "frame_logic_projection_input_relationship_gap": max(
+            0,
+            input_triple_count - relationship_count,
+        ),
+        "frame_logic_projection_aligned": projected_triple_aligned,
+        "frame_logic_projection_normalized_aligned": (
+            projected_triple_aligned and relationship_count >= normalized_triple_count
+        ),
+        "frame_logic_projection_normalized_relationship_gap": max(
+            0,
+            normalized_triple_count - relationship_count,
+        ),
         "frame_logic_projection_has_duplicate_facts": len(triples) != unique_triple_count,
         "frame_logic_projection_node_count": node_count,
         "frame_logic_projection_relationship_count": relationship_count,
@@ -669,6 +687,11 @@ def _required_legal_projection_views(
         or predicate.startswith(_LEGAL_IR_VIEW_ALIGNMENT_PREDICATE_PREFIXES)
         for predicate in predicates
     )
+    has_frame_link = any(
+        predicate in _FRAME_PREDICATES
+        or predicate.startswith(_FRAME_PREDICATE_PREFIXES)
+        for predicate in predicates
+    )
     required: List[str] = []
     if has_source_id:
         required.append("document_scope")
@@ -680,7 +703,72 @@ def _required_legal_projection_views(
         required.append("editorial_status")
     if has_view_alignment:
         required.append("legal_ir_view_alignment")
+    if has_frame_link:
+        required.append("frame_link")
     return sorted(set(required))
+
+
+def _with_modal_ir_document_projection_context(
+    modal_ir: ModalIRDocument,
+    triples: Sequence[Mapping[str, Any]],
+) -> List[Mapping[str, Any]]:
+    """Carry document-level LegalIR context into sparse frame-logic graphs."""
+
+    projected = list(triples or [])
+    context_triples = _modal_ir_document_projection_context_triples(modal_ir)
+    if not context_triples:
+        return projected
+    seen = {
+        (
+            str(triple.get("subject") or ""),
+            str(triple.get("predicate") or ""),
+            str(triple.get("object") or ""),
+        )
+        for triple in projected
+    }
+    for triple in context_triples:
+        key = (
+            str(triple.get("subject") or ""),
+            str(triple.get("predicate") or ""),
+            str(triple.get("object") or ""),
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        projected.append(triple)
+    return projected
+
+
+def _modal_ir_document_projection_context_triples(
+    modal_ir: ModalIRDocument,
+) -> List[Dict[str, str]]:
+    metadata = getattr(modal_ir, "metadata", {}) or {}
+    if not isinstance(metadata, Mapping):
+        metadata = {}
+    subject = str(getattr(modal_ir, "document_id", "") or "").strip()
+    if not subject:
+        return []
+
+    triples: List[Dict[str, str]] = []
+    for predicate, value in (
+        ("source_id", getattr(modal_ir, "document_id", "")),
+        ("source", getattr(modal_ir, "source", "")),
+        ("citation", metadata.get("citation")),
+        ("sample_text", getattr(modal_ir, "normalized_text", "")),
+    ):
+        text = str(value or "").strip()
+        if not text:
+            continue
+        triples.append(
+            {
+                "subject": subject,
+                "predicate": predicate,
+                "object": text,
+            }
+        )
+    return triples
+
+
 def _canonical_component_distribution(
     projection_view_counts: Mapping[str, int],
     *,
@@ -727,7 +815,9 @@ def _graph_projection_signal_count(
             "citation_structure",
             "document_scope",
             "editorial_status",
+            "frame_link",
             "legal_ir_view_alignment",
+            "ontology_term",
             "section_structure",
             "type_assertion",
         )

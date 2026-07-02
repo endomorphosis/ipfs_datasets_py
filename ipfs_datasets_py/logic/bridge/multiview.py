@@ -334,6 +334,14 @@ _BRIDGE_CONTRACT_FISCAL_AVAILABILITY_NORM_RE = re.compile(
     r"(?:may|shall)\s+be\s+made\s+available\b",
     flags=re.IGNORECASE,
 )
+_BRIDGE_CONTRACT_FISCAL_FEE_DEPOSIT_RULE_RE = re.compile(
+    r"\b(?:fees?\s+for\s+internal\s+delivery|collect\s+fees?\s+equal\s+to|"
+    r"fees?\s+equal\s+to\s+the\s+applicable\s+postage|"
+    r"amounts?\s+received\b.{0,120}\bfees?\b.{0,160}\b"
+    r"(?:deposited|credited)|"
+    r"deposited\s+in\s+the\s+treasury\b.{0,120}\bcredit\s+to\s+the\s+account)\b",
+    flags=re.IGNORECASE,
+)
 _BRIDGE_CONTRACT_LIABILITY_PROVISION_RE = re.compile(
     r"\b(?:liable\s+for|liability\s+for|scope\s+of\s+(?:his|her|its|their|the)\s+"
     r"authority|acts?\s+of\s+(?:its|their|the)\s+officers?\s+and\s+agents?)\b",
@@ -409,6 +417,15 @@ _BRIDGE_CONTRACT_SAFETY_REGULATORY_PROCEDURE_RE = re.compile(
     r"prevent\s+pollution|clean\s+up\s+any\s+pollutants?|"
     r"prescribe\s+and\s+enforce\s+procedures?|"
     r"issue\s+and\s+enforce\s+regulations?)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_ADMIN_ENFORCEMENT_REGULATION_RE = re.compile(
+    r"\b(?:administration\s+and\s+enforcement|"
+    r"(?:secretary|administrator)\s+shall\s+administer\s+and\s+enforce|"
+    r"(?:administrator|secretary)\b.{0,180}\bprescribe\s+and\s+enforce\s+"
+    r"regulations?|"
+    r"administer\s+and\s+enforce\b.{0,180}\b(?:convention|chapter|"
+    r"subchapter))\b",
     flags=re.IGNORECASE,
 )
 _BRIDGE_CONTRACT_SAVINGS_EXISTING_LAW_RE = re.compile(
@@ -571,6 +588,23 @@ _BRIDGE_CONTRACT_PROGRAM_FUNDING_AUTHORITY_RE = re.compile(
     r"development,\s+demonstration,\s+and\s+deployment)\b"
     r"|\b(?:funding\s+for|authorized\s+to\s+carry\s+out|authorized\s+to\s+be\s+"
     r"appropriated)\b.{0,220}\b(?:program|collaborative|fiscal\s+years?)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_BENEFIT_MEDICAL_ASSISTANCE_RE = re.compile(
+    r"\b(?:veterans'? benefits?|medical\s+care\s+and\s+treatment|"
+    r"hospital,\s+nursing\s+home,\s+domiciliary,\s+and\s+medical\s+care|"
+    r"authorized\s+to\s+assist\b.{0,220}\b(?:medical\s+care|treatment|"
+    r"service-connected\s+disabilities)|"
+    r"providing\s+medical\s+care\s+and\s+treatment\b.{0,180}\b"
+    r"(?:veterans|disabilities))\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_CONTRIBUTION_BUDGET_LIMIT_RE = re.compile(
+    r"\b(?:common-funded\s+budgets?|contributions?\s+to\s+the\s+"
+    r"north\s+atlantic\s+treaty\s+organization|"
+    r"amount\s+contributed\b.{0,180}\bmaximum\s+amount|"
+    r"fiscal\s+year\s+1998\s+baseline\s+limitation|"
+    r"annual\s+limitation\b.{0,160}\b(?:contributions?|budgets?))\b",
     flags=re.IGNORECASE,
 )
 _BRIDGE_CONTRACT_PAYMENT_INSTALLMENT_SCHEDULE_RE = re.compile(
@@ -3482,6 +3516,9 @@ def _project_official_usc_primary_contract_distribution(
     has_fiscal_availability_norm = bool(
         _BRIDGE_CONTRACT_FISCAL_AVAILABILITY_NORM_RE.search(normalized_text)
     )
+    has_fiscal_fee_deposit_rule = bool(
+        _BRIDGE_CONTRACT_FISCAL_FEE_DEPOSIT_RULE_RE.search(normalized_text)
+    )
     has_liability_provision = bool(
         _BRIDGE_CONTRACT_LIABILITY_PROVISION_RE.search(normalized_text)
     )
@@ -3527,6 +3564,9 @@ def _project_official_usc_primary_contract_distribution(
     )
     has_safety_regulatory_procedure = bool(
         _BRIDGE_CONTRACT_SAFETY_REGULATORY_PROCEDURE_RE.search(normalized_text)
+    )
+    has_admin_enforcement_regulation = bool(
+        _BRIDGE_CONTRACT_ADMIN_ENFORCEMENT_REGULATION_RE.search(normalized_text)
     )
     has_savings_existing_law = bool(
         _BRIDGE_CONTRACT_SAVINGS_EXISTING_LAW_RE.search(normalized_text)
@@ -3587,6 +3627,12 @@ def _project_official_usc_primary_contract_distribution(
     )
     has_program_funding_authority = bool(
         _BRIDGE_CONTRACT_PROGRAM_FUNDING_AUTHORITY_RE.search(normalized_text)
+    )
+    has_benefit_medical_assistance = bool(
+        _BRIDGE_CONTRACT_BENEFIT_MEDICAL_ASSISTANCE_RE.search(normalized_text)
+    )
+    has_contribution_budget_limit = bool(
+        _BRIDGE_CONTRACT_CONTRIBUTION_BUDGET_LIMIT_RE.search(normalized_text)
     )
     has_payment_installment_schedule = bool(
         _BRIDGE_CONTRACT_PAYMENT_INSTALLMENT_SCHEDULE_RE.search(normalized_text)
@@ -3723,6 +3769,22 @@ def _project_official_usc_primary_contract_distribution(
             ("knowledge_graphs.neo4j_compat", 0.10),
         )
         strength = 0.55
+    elif has_benefit_medical_assistance:
+        target_mix = (
+            ("CEC.native", 0.45),
+            ("deontic.ir", 0.28),
+            ("TDFOL.prover", 0.17),
+            ("knowledge_graphs.neo4j_compat", 0.10),
+        )
+        strength = 0.55
+    elif has_contribution_budget_limit:
+        target_mix = (
+            ("deontic.ir", 0.42),
+            ("TDFOL.prover", 0.28),
+            ("CEC.native", 0.20),
+            ("knowledge_graphs.neo4j_compat", 0.10),
+        )
+        strength = 0.40
     elif has_payment_installment_schedule:
         target_mix = (
             ("TDFOL.prover", 0.36),
@@ -3819,6 +3881,14 @@ def _project_official_usc_primary_contract_distribution(
             ("knowledge_graphs.neo4j_compat", 0.12),
         )
         strength = 0.38
+    elif has_admin_enforcement_regulation and deontic_cue_count > 0:
+        target_mix = (
+            ("CEC.native", 0.50),
+            ("TDFOL.prover", 0.22),
+            ("deontic.ir", 0.20),
+            ("knowledge_graphs.neo4j_compat", 0.08),
+        )
+        strength = 0.55
     elif has_safety_regulatory_procedure and deontic_cue_count > 0:
         target_mix = (
             ("TDFOL.prover", 0.46),
@@ -3983,6 +4053,14 @@ def _project_official_usc_primary_contract_distribution(
             ("CEC.native", 0.06),
         )
         strength = 0.34
+    elif has_fiscal_fee_deposit_rule and deontic_cue_count > 0:
+        target_mix = (
+            ("deontic.ir", 0.46),
+            ("TDFOL.prover", 0.24),
+            ("CEC.native", 0.20),
+            ("knowledge_graphs.neo4j_compat", 0.10),
+        )
+        strength = 0.42
     elif has_fiscal_availability_norm and deontic_cue_count > 0:
         target_mix = (
             ("deontic.ir", 0.50),

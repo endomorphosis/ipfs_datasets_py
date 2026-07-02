@@ -513,10 +513,20 @@ def _proof_obligation_rows_from_metadata(metadata: Mapping[str, Any]) -> list[di
 
 def _proof_obligation_rows_from_value(value: Any) -> list[dict[str, Any]]:
     if isinstance(value, Mapping):
-        for key in ("records", "obligations", "proof_obligations", "items", "formulas"):
+        rows: list[dict[str, Any]] = []
+        for key in (
+            "records",
+            "rows",
+            "obligations",
+            "proof_obligations",
+            "items",
+            "formulas",
+        ):
             records = value.get(key)
             if isinstance(records, Sequence) and not isinstance(records, (str, bytes)):
-                return [dict(item) for item in records if isinstance(item, Mapping)]
+                rows.extend(dict(item) for item in records if isinstance(item, Mapping))
+        if rows:
+            return rows
         if any(
             key in value
             for key in _TDFOL_FORMULA_EXPORT_KEYS
@@ -545,6 +555,10 @@ def _tdfol_formula_from_norm(norm: Mapping[str, Any]) -> Any:
     operator_context = " ".join(
         str(norm.get(key) or "") for key in ("modality", "norm_type", "action")
     ).lower()
+    permission_context = " ".join(
+        str(norm.get(key) or "")
+        for key in ("modality", "norm_type", "source_text")
+    ).lower()
     prohibition_context = " ".join(
         str(norm.get(key) or "")
         for key in ("modality", "norm_type", "action", "source_text")
@@ -556,9 +570,9 @@ def _tdfol_formula_from_norm(norm: Mapping[str, Any]) -> Any:
     ):
         operator = DeonticOperator.PROHIBITION
     elif (
-        "permit" in operator_context
-        or re.search(r"\bmay\b", operator_context)
-        or re.search(r"\bauthori[sz]ed\b", operator_context)
+        re.search(r"\b(?:permission|permitted)\b", permission_context)
+        or re.search(r"\bmay\b", permission_context)
+        or re.search(r"\bauthori[sz]ed\b", permission_context)
     ):
         operator = DeonticOperator.PERMISSION
     else:
@@ -1150,6 +1164,7 @@ def _normalize_tdfol_export_formula(text: str) -> str:
     normalized = _strip_tdfol_line_comment(normalized)
     normalized = _unwrap_tdfol_fenced_export(normalized)
     normalized = _unwrap_tdfol_json_export(normalized)
+    normalized = _unwrap_tdfol_targeted_export(normalized)
     normalized = _normalize_deontic_text_label_export(normalized)
     normalized = _unwrap_tdfol_assignment_export(normalized)
     normalized = _unwrap_tdfol_key_value_export(normalized)
@@ -1198,6 +1213,29 @@ def _normalize_tdfol_export_formula(text: str) -> str:
     normalized = re.sub(r",\s*(?=\))", "", normalized)
     normalized = re.sub(r"(:[0-9A-Za-z_-]+)\.(?=\s*[\),])", r"\1", normalized)
     return normalized.strip()
+
+
+def _unwrap_tdfol_targeted_export(text: str) -> str:
+    """Drop TDFOL.prover target wrappers around proof-obligation formulas."""
+
+    normalized = str(text or "").strip()
+    if not normalized:
+        return normalized
+    patterns = (
+        r"(?is)^\s*TDFOL(?:[\s.]prover)?\s*(?:=>|->|:)\s*(.+)$",
+        r"(?is)^\s*TDFOL(?:[\s.]prover)?\s+"
+        r"(?:proof_obligation|proof\s+obligation|tdfol_formula|"
+        r"tdfol\s+formula|obligation|goal|claim)(?:\s+view)?\s*[:=]\s*(.+)$",
+        r"(?is)^\s*(?:target_logic|target_component|target_view|"
+        r"predicted_view)\s*[:=]\s*TDFOL(?:[\s.]prover)?\s*(?:[,;]|=>|->)\s*(.+)$",
+    )
+    for pattern in patterns:
+        match = re.match(pattern, normalized)
+        if match:
+            candidate = match.group(1).strip("`\"'").strip()
+            formula = _extract_balanced_tdfol_formula(candidate)
+            return formula or candidate
+    return normalized
 
 
 def _unwrap_tdfol_assignment_export(text: str) -> str:
@@ -1589,6 +1627,7 @@ def _formula_from_raw_deontic_text_argument(
 
 
 def _formula_argument_from_deontic_parts(parts: Sequence[str]) -> str:
+    normalized_parts = [str(part or "").strip() for part in parts]
     for part in reversed([str(part or "").strip() for part in parts]):
         if not part:
             continue
@@ -1601,7 +1640,33 @@ def _formula_argument_from_deontic_parts(parts: Sequence[str]) -> str:
         candidate = candidate.strip("`\"'").strip()
         if _looks_like_tdfol_formula(candidate):
             return candidate
+    raw_action_formula = _formula_from_deontic_agent_action_parts(normalized_parts)
+    if raw_action_formula:
+        return raw_action_formula
     return ""
+
+
+def _formula_from_deontic_agent_action_parts(parts: Sequence[str]) -> str:
+    """Synthesize predicate(agent) from O(agent, raw legal action text)."""
+
+    cleaned = [
+        str(part or "").strip("`\"' ").strip()
+        for part in parts
+        if str(part or "").strip()
+    ]
+    if len(cleaned) < 2:
+        return ""
+    actor = cleaned[0]
+    action = cleaned[-1]
+    if _looks_like_tdfol_formula(action):
+        return ""
+    if not re.search(r"[A-Za-z]", actor) or not re.search(r"[A-Za-z]", action):
+        return ""
+    if not (re.search(r"\s", action) or re.search(r"[-,;]", action)):
+        return ""
+    actor_symbol = _symbol(actor)
+    action_name = _predicate_name(action)
+    return f"{action_name}({actor_symbol})"
 
 
 def _matching_paren_index(text: str, open_index: int) -> Optional[int]:
@@ -2132,16 +2197,37 @@ def _infer_modal_actor_from_text(text: str) -> str:
         )
     )
     for match in reversed(matches):
-        subject = match.group(1).strip(" ,;:-")
-        subject = re.split(
-            r"\b(?:Sec\.|Secs?\.|Section|CHAPTER|SUBCHAPTER|PART|Subtitle|Title)\b",
-            subject,
-            flags=re.IGNORECASE,
-        )[-1].strip(" ,;:-")
-        subject = re.sub(r"^the\s+", "", subject, flags=re.IGNORECASE).strip()
+        subject = _clean_modal_actor_subject(match.group(1))
         if subject:
             return subject
     return ""
+
+
+def _clean_modal_actor_subject(text: str) -> str:
+    """Trim citation and heading text from a modal-clause subject."""
+
+    subject = re.sub(r"\s+", " ", str(text or "")).strip(" ,;:-")
+    if not subject:
+        return ""
+    subject = re.split(
+        r"\b(?:Sec\.|Secs?\.|Section|CHAPTER|SUBCHAPTER|PART|Subtitle|Title)\b",
+        subject,
+        flags=re.IGNORECASE,
+    )[-1].strip(" ,;:-")
+    sentence_parts = re.split(
+        r"(?<=[.;])\s+(?=(?:The|Each|Any|No|A|An|Such|Every)\b)",
+        subject,
+        flags=re.IGNORECASE,
+    )
+    subject = sentence_parts[-1].strip(" ,;:-")
+    heading_parts = re.split(
+        r"\s+-\s+(?=(?:The|Each|Any|No|A|An|Such|Every)\b)",
+        subject,
+        flags=re.IGNORECASE,
+    )
+    subject = heading_parts[-1].strip(" ,;:-")
+    subject = re.sub(r"^the\s+", "", subject, flags=re.IGNORECASE).strip()
+    return subject
 
 
 def _extract_citation_from_text(text: str) -> Optional[str]:
