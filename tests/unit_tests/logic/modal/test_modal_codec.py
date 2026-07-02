@@ -29947,6 +29947,24 @@ def test_modal_compiler_surfaces_packet_000130_ambiguity_policy_pairs(
             "frame",
             0.090044947089,
         ),
+        (
+            "us-code-30-501-3c448e13ffc98255",
+            "conditional_normative",
+            "conditional_normative",
+            0.058817163597,
+        ),
+        (
+            "us-code-28-2003-9fcb722493144b69",
+            "deontic",
+            "temporal",
+            -0.101026476056,
+        ),
+        (
+            "us-code-42-7195.-122e167c4369367c",
+            "temporal",
+            "epistemic",
+            -0.161220066487,
+        ),
     )
     expected_pairs = {
         (predicted_family, target_family)
@@ -30004,6 +30022,15 @@ def test_modal_compiler_surfaces_packet_000130_ambiguity_policy_pairs(
             str(candidate["family"]): float(candidate["share_raw"])
             for candidate in ranking
         }
+        operator_by_family = {
+            "conditional_normative": ("KD", "O|", "conditional_obligation"),
+            "deontic": ("D", "O", "obligation"),
+            "frame": ("FRAME_BM25", "Frame", "frame"),
+            "temporal": ("LTL", "F", "eventually"),
+        }
+        predicted_system, predicted_symbol, predicted_label = operator_by_family[
+            predicted_family
+        ]
         text = f"Synthetic packet 000130 {predicted_family} ambiguity evidence."
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-000130-adaptive-evidence-{index}",
@@ -30014,9 +30041,9 @@ def test_modal_compiler_surfaces_packet_000130_ambiguity_policy_pairs(
             cues=[
                 SpaCyModalCueFeature(
                     family=predicted_family,
-                    system="FRAME_BM25",
-                    symbol="Frame",
-                    label="frame",
+                    system=predicted_system,
+                    symbol=predicted_symbol,
+                    label=predicted_label,
                     cue=predicted_family,
                     start_char=0,
                     end_char=len(predicted_family),
@@ -30033,14 +30060,14 @@ def test_modal_compiler_surfaces_packet_000130_ambiguity_policy_pairs(
                     formula_id=f"f-packet-000130-{index}",
                     operator=ModalIROperator(
                         family=predicted_family,
-                        system="FRAME_BM25",
-                        symbol="Frame",
-                        label="frame",
+                        system=predicted_system,
+                        symbol=predicted_symbol,
+                        label=predicted_label,
                     ),
                     predicate=ModalIRPredicate(
                         name=f"{predicted_family}_predicate",
                         arguments=["actor:agency"],
-                        role="frame",
+                        role=predicted_label,
                     ),
                     provenance=ModalIRProvenance(
                         source_id=sample_id,
@@ -30069,6 +30096,26 @@ def test_modal_compiler_surfaces_packet_000130_ambiguity_policy_pairs(
             if ambiguity.ambiguity_type == "adaptive_family_margin_low"
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+        )
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert (
+            compiler_refined_modal_family_cue_margin_buffer(
+                predicted_family,
+                target_family,
+            )
+            >= 0.0015
         )
         assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
