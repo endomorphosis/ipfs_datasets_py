@@ -34,6 +34,16 @@ _ZKP_ATTESTATION_RECORD_DISK_CACHE_ENABLED_ENV = "IPFS_DATASETS_LEGAL_IR_METRIC_
 _ZKP_ATTESTATION_RECORD_CODE_FINGERPRINT_LOCK = Lock()
 _ZKP_ATTESTATION_RECORD_CODE_FINGERPRINT_VALUE = ""
 _FALSE_ENV_VALUES = {"0", "false", "no", "off", "none", "disabled"}
+_COMPILER_GUIDANCE_CONTAINER_KEYS = {
+    "compiler_guidance_contract",
+    "compiler_guidance",
+    "compiler_guidance_bundle",
+    "compiler_guidance_attribution",
+    "guidance_contract",
+    "guidance",
+    "semantic_bundle",
+    "bundle",
+}
 
 
 @dataclass
@@ -65,6 +75,7 @@ class ZkpAttestationBridgeAdapter:
         citation: Optional[str] = None,
         source: str = "us_code",
         source_embedding: Optional[Sequence[float]] = None,
+        compiler_guidance: Optional[Mapping[str, Any]] = None,
     ) -> tuple[LegalIRDocument, Mapping[str, Any]]:
         adapter = self.tdfol_adapter or FolTdfolBridgeAdapter()
         _, context = adapter.encode(
@@ -73,6 +84,7 @@ class ZkpAttestationBridgeAdapter:
             citation=citation,
             source=source,
             source_embedding=source_embedding,
+            compiler_guidance=compiler_guidance,
         )
         formula_records = list(context.get("formula_records") or [])
         if not formula_records:
@@ -86,6 +98,13 @@ class ZkpAttestationBridgeAdapter:
                         "source_id": fallback_source_id,
                     }
                 ]
+        formula_records = _formula_records_with_compiler_guidance(
+            formula_records,
+            compiler_guidance,
+        )
+        compiler_guidance_ref = _compiler_guidance_ref(
+            _compiler_guidance_contract_from_mapping(compiler_guidance)
+        )
         resolved_document_id = document_id or _document_id("zkp", text)
         attestations = _zkp_attestation_records(
             formula_records,
@@ -168,12 +187,15 @@ class ZkpAttestationBridgeAdapter:
                 frame_logic_triples=triples,
                 metadata={
                     "formula_count": len(formula_records),
+                    "compiler_guidance_applied": bool(compiler_guidance_ref),
+                    "compiler_guidance_ref": compiler_guidance_ref,
                     "proof_system": "simulated_zkp",
                     "zkp_attestation_count": len(attestations),
                 },
             ),
             {
                 "attestations": attestations,
+                "compiler_guidance_ref": compiler_guidance_ref,
                 "formula_records": formula_records,
                 "graph_data": graph_data,
             },
@@ -187,6 +209,7 @@ class ZkpAttestationBridgeAdapter:
         citation: Optional[str] = None,
         source: str = "us_code",
         source_embedding: Optional[Sequence[float]] = None,
+        compiler_guidance: Optional[Mapping[str, Any]] = None,
         **_: Any,
     ) -> BridgeEvaluationReport:
         ir_document, context = self.encode(
@@ -195,6 +218,7 @@ class ZkpAttestationBridgeAdapter:
             citation=citation,
             source=source,
             source_embedding=source_embedding,
+            compiler_guidance=compiler_guidance,
         )
         attestations = list(context["attestations"])
         public_attestation_records = list(
@@ -240,6 +264,12 @@ class ZkpAttestationBridgeAdapter:
             status=status,
             metadata={
                 "adapter": "zkp_attestation_bridge_v1",
+                "compiler_guidance_applied": bool(
+                    context.get("compiler_guidance_ref")
+                ),
+                "compiler_guidance_ref": str(
+                    context.get("compiler_guidance_ref") or ""
+                ),
                 "proof_system": "simulated_zkp",
                 "simulated_only": True,
             },
@@ -724,18 +754,60 @@ def _document_id(prefix: str, text: str) -> str:
     return f"{prefix}:{digest}"
 
 
+def _formula_records_with_compiler_guidance(
+    formula_records: Sequence[Mapping[str, Any]],
+    compiler_guidance: Optional[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    guidance_contract = _compiler_guidance_contract_from_mapping(compiler_guidance)
+    if not guidance_contract:
+        return [dict(record) for record in formula_records]
+
+    records: list[dict[str, Any]] = []
+    for record in formula_records:
+        record_dict = dict(record)
+        existing_contract = _compiler_guidance_contract(record_dict)
+        merged_contract = {**guidance_contract, **existing_contract}
+        record_dict["compiler_guidance_contract"] = merged_contract
+        records.append(record_dict)
+    return records
+
+
+def _compiler_guidance_contract_from_mapping(
+    value: Optional[Mapping[str, Any]],
+) -> dict[str, Any]:
+    if not isinstance(value, Mapping):
+        return {}
+    try:
+        from ipfs_datasets_py.logic.zkp.circuits import (
+            compiler_guidance_contract_from_metadata,
+        )
+
+        contract = compiler_guidance_contract_from_metadata(value)
+    except Exception:
+        contract = {}
+    if isinstance(contract, Mapping):
+        return _to_json_compatible(contract)
+    return {}
+
+
+def _merge_compiler_guidance_contract(
+    selected: dict[str, Any],
+    value: Any,
+) -> None:
+    mapping = value if isinstance(value, Mapping) else {}
+    selected.update(_compiler_guidance_contract_from_mapping(mapping))
+    for key in sorted(mapping.keys(), key=str):
+        name = str(key)
+        if name in _COMPILER_GUIDANCE_CONTAINER_KEYS:
+            continue
+        if name.startswith("compiler_guidance_"):
+            selected[name] = _to_json_compatible(mapping.get(key))
+
+
 def _compiler_guidance_contract(formula_record: Mapping[str, Any]) -> dict[str, Any]:
-    source_norm = formula_record.get("source_norm")
-    source_norm_mapping = source_norm if isinstance(source_norm, Mapping) else {}
     selected: dict[str, Any] = {}
-    for key in sorted(source_norm_mapping.keys(), key=str):
-        name = str(key)
-        if name.startswith("compiler_guidance_"):
-            selected[name] = _to_json_compatible(source_norm_mapping.get(key))
-    for key in sorted(formula_record.keys(), key=str):
-        name = str(key)
-        if name.startswith("compiler_guidance_"):
-            selected[name] = _to_json_compatible(formula_record.get(key))
+    _merge_compiler_guidance_contract(selected, formula_record.get("source_norm"))
+    _merge_compiler_guidance_contract(selected, formula_record)
     return selected
 
 

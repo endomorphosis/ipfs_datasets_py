@@ -9796,6 +9796,34 @@ def test_zkp_attestation_bridge_passes_compiler_guidance_ref_into_public_inputs(
     assert record["attestation_view"]["compiler_guidance_version"] == 1
 
 
+def test_zkp_attestation_bridge_promotes_top_level_packet_guidance() -> None:
+    from ipfs_datasets_py.logic.bridge.zkp_attestation import ZkpAttestationBridgeAdapter
+    from ipfs_datasets_py.logic.zkp import compiler_guidance_ref_from_metadata
+
+    guidance = {
+        "program_synthesis_scope": "zkp",
+        "route": "repair_zkp_attestation_bridge",
+        "source": "compiler_guidance_distillation_v1",
+        "target_component": "zkp.circuits",
+    }
+
+    adapter = ZkpAttestationBridgeAdapter()
+    report = adapter.evaluate(
+        "The agency shall publish notice before the permit takes effect.",
+        document_id="zkp-top-level-packet-guidance",
+        citation="ZKP Top Level Packet Guidance",
+        compiler_guidance=guidance,
+    )
+
+    record = report.ir_document.views["zkp_attestations"].payload["records"][0]
+    expected_ref = compiler_guidance_ref_from_metadata(guidance)
+    assert report.metadata["compiler_guidance_applied"] is True
+    assert record["compiler_guidance_ref"] == expected_ref
+    assert record["public_inputs"]["compiler_guidance_ref"] == expected_ref
+    assert record["attestation_view"]["compiler_guidance_ref"] == expected_ref
+    assert report.proof_gate.compiles is True
+
+
 def test_form_certificate_serializes_distinct_zkp_public_inputs() -> None:
     from ipfs_datasets_py.logic.zkp import ZKPProver
     from ipfs_datasets_py.logic.zkp.form_circuit import FormCompletionCertificate
