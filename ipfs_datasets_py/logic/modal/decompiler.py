@@ -131,6 +131,20 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("administration and enforcement", "administration_enforcement"),
     ("authorization of appropriations", "appropriation_authorization"),
     ("authorized to be appropriated", "appropriation_authorization"),
+    ("appropriated to carry out", "appropriation_authorization"),
+    ("authorized to expand", "facility_expansion_authorization"),
+    ("expansion of facilities", "facility_expansion_authorization"),
+    ("expand the naval facilities", "facility_expansion_authorization"),
+    ("local asthma surveillance activities", "health_surveillance_data"),
+    ("asthma surveillance activities", "health_surveillance_data"),
+    ("compilation of data on asthma", "health_surveillance_data"),
+    ("collect data on the prevalence", "data_collection_surveillance"),
+    ("compile and analyze data", "data_collection_surveillance"),
+    ("publish data", "data_publication"),
+    ("income gap multiplier", "income_gap_multiplier"),
+    ("operated in violation", "violation_penalty"),
+    ("violation of this chapter", "violation_penalty"),
+    ("penalties", "penalty_enforcement"),
     ("jurisdiction of new york state courts in civil actions", "state_court_civil_jurisdiction"),
     ("jurisdiction of new york state courts", "state_court_jurisdiction"),
     ("state courts in civil actions", "state_court_civil_jurisdiction"),
@@ -2516,8 +2530,52 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         add("termination_authority")
     if re.search(r"\b(?:consultation|cooperation)\b", normalized):
         add("consultation")
+    if re.search(
+        r"\b(?:consultation|cooperation)\b.{0,80}\b(?:federal\s+officers?|states?)\b",
+        normalized,
+    ) or re.search(
+        r"\b(?:federal\s+officers?|states?)\b.{0,80}\b(?:consultation|cooperation)\b",
+        normalized,
+    ):
+        add("consultation_cooperation")
     if re.search(r"\b(?:administ(?:er|ration)|enforce(?:ment|d|s)?)\b", normalized):
         add("administration_enforcement")
+    if re.search(
+        r"\b(?:penalt(?:y|ies)|civil\s+penalt(?:y|ies)|criminal\s+penalt(?:y|ies))\b",
+        normalized,
+    ):
+        add("penalty_enforcement")
+    if re.search(
+        r"\b(?:violat(?:e|es|ed|ion|ions)|operated\s+in\s+violation)\b",
+        normalized,
+    ) and re.search(
+        r"\b(?:penalt(?:y|ies)|liable|liability|owner|operator|master|agent)\b",
+        normalized,
+    ):
+        add("violation_penalty")
+    if re.search(
+        r"\b(?:secretary|administrator|director|commission)\b.{0,80}"
+        r"\b(?:authorized|may)\b.{0,80}\b(?:expand|construct|facilit(?:y|ies))\b",
+        normalized,
+    ) or re.search(
+        r"\b(?:authorized|may)\b.{0,80}\b(?:expand|construct)\b.{0,80}"
+        r"\bfacilit(?:y|ies)\b",
+        normalized,
+    ):
+        add("facility_expansion_authorization")
+    if re.search(
+        r"\b(?:surveillance|collect|compile|analy[sz]e|publish)\b.{0,100}"
+        r"\b(?:data|prevalence|severity|asthma)\b",
+        normalized,
+    ) and re.search(r"\b(?:health|disease|asthma|surveillance)\b", normalized):
+        add("health_surveillance_data")
+    if re.search(
+        r"\b(?:collect|compile|analy[sz]e|publish)\b.{0,80}\bdata\b",
+        normalized,
+    ):
+        add("data_collection_surveillance")
+    if re.search(r"\bpublish\b.{0,80}\bdata\b", normalized):
+        add("data_publication")
     if re.search(r"\bjurisdiction\b", normalized) and re.search(
         r"\b(?:court|courts|civil\s+actions?|actions?|state)\b",
         normalized,
@@ -7103,8 +7161,13 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "civil_action",
         "civil_action_jurisdiction",
         "civil_enforcement",
+        "consultation",
+        "consultation_cooperation",
         "crime_control_law_enforcement",
+        "data_collection_surveillance",
+        "data_publication",
         "export_promotion",
+        "facility_expansion_authorization",
         "fee_collection_authority",
         "foreign_commercial_service",
         "false_claim_knowledge",
@@ -7114,19 +7177,23 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "government_claim",
         "governing_body",
         "health_professional_education_assistance",
+        "health_surveillance_data",
         "historic_area",
         "historic_area_access_road",
+        "income_gap_multiplier",
         "irrigation_project",
         "jurisdiction_authority",
         "law_enforcement",
         "livestock_commerce",
         "officer_election",
+        "penalty_enforcement",
         "prize_proceeds_charge",
         "state_court_civil_jurisdiction",
         "state_court_jurisdiction",
         "state_conveyance_authority",
         "treasury_deposit",
         "unknown_party_deposit",
+        "violation_penalty",
         "white_horse_hill_game_preserve",
     }:
         add("knowledge_graphs.neo4j_compat")
@@ -7151,17 +7218,21 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "civil_action_jurisdiction",
         "export_promotion",
         "fee_collection_authority",
+        "facility_expansion_authorization",
         "foreign_commercial_service",
         "false_claim_knowledge",
         "false_fraudulent_claim",
         "government_claim",
         "health_professional_education_assistance",
+        "health_surveillance_data",
+        "income_gap_multiplier",
         "marine_science_development",
         "irrigation_project",
         "nonirrigable_land_status",
         "permanent_nonirrigable_land_status",
         "jurisdiction_authority",
         "livestock_commerce",
+        "penalty_enforcement",
         "prize_proceeds_charge",
         "road_conveyance",
         "sea_grant_college",
@@ -7171,6 +7242,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "state_conveyance_authority",
         "treasury_deposit",
         "unknown_party_deposit",
+        "violation_penalty",
     }:
         add("CEC.native")
     if normalized_atom in {
@@ -7203,9 +7275,9 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("TDFOL.prover")
     if normalized_atom in {
         "agency_determination",
+        "appropriation_authorization",
         "annual_report_duty",
         "admission_fee_collection",
-        "appropriation_authorization",
         "audit_requirement",
         "build_maintain_duty",
         "budget_program_submission",
@@ -7216,16 +7288,20 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "exemption",
         "expenditure_requirement",
         "facility_operation",
+        "facility_expansion_authorization",
         "fee_collection_authority",
         "false_claim_knowledge",
         "false_fraudulent_claim",
         "government_claim",
+        "health_surveillance_data",
         "account_maintenance",
+        "income_gap_multiplier",
         "nonirrigable_land_status",
         "office_establishment",
         "obligation",
         "patent_prohibition",
         "payment_authorization",
+        "penalty_enforcement",
         "permanent_nonirrigable_land_status",
         "permission",
         "prohibition",
@@ -7238,6 +7314,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "study_report_duty",
         "submit_or_file",
         "test_platform",
+        "violation_penalty",
     }:
         add("deontic.ir")
         add("TDFOL.prover")
@@ -7245,13 +7322,20 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "exempt_operation",
         "exemption",
         "facility_operation",
+        "facility_expansion_authorization",
+        "health_surveillance_data",
+        "penalty_enforcement",
         "test_platform",
+        "violation_penalty",
     }:
         add("CEC.native")
         add("modal.frame_logic")
     if normalized_atom in {
         "agency_determination",
         "definition",
+        "data_collection_surveillance",
+        "data_publication",
+        "health_surveillance_data",
         "nonirrigable_land_status",
         "office_establishment",
         "office_of_womens_health",
@@ -7264,6 +7348,10 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "annual_report",
         "annual_report_duty",
         "budget_program_submission",
+        "data_collection_surveillance",
+        "data_publication",
+        "facility_expansion_authorization",
+        "health_surveillance_data",
         "marine_science_development",
         "sea_grant_college",
         "sea_grant_college_program",
@@ -7293,25 +7381,34 @@ def _typed_decompiler_semantic_atom_target_families(
             "annual_report_duty",
             "admission_fee_collection",
             "account_maintenance",
+            "appropriation_authorization",
             "audit_requirement",
             "build_maintain_duty",
             "budget_program_submission",
+            "consultation",
+            "consultation_cooperation",
             "congressional_report_duty",
+            "data_collection_surveillance",
+            "data_publication",
             "definition",
             "exempt_operation",
             "exemption",
             "expenditure_requirement",
+            "facility_expansion_authorization",
             "facility_operation",
             "fee_collection_authority",
             "false_claim_knowledge",
             "false_fraudulent_claim",
             "government_claim",
+            "health_surveillance_data",
+            "income_gap_multiplier",
             "agency_determination",
             "office_establishment",
             "obligation",
             "permanent_nonirrigable_land_status",
             "patent_prohibition",
             "payment_authorization",
+            "penalty_enforcement",
             "permission",
             "prohibition",
             "public_report_duty",
@@ -7324,12 +7421,17 @@ def _typed_decompiler_semantic_atom_target_families(
             "submit_or_file",
             "state_conveyance_authority",
             "test_platform",
+            "violation_penalty",
         }:
             add("deontic")
         if normalized_atom in {
             "annual_report",
             "annual_report_duty",
             "budget_program_submission",
+            "data_collection_surveillance",
+            "data_publication",
+            "facility_expansion_authorization",
+            "health_surveillance_data",
             "marine_science_development",
             "no_year_funding_availability",
             "research_activity",
@@ -7355,9 +7457,12 @@ def _typed_decompiler_semantic_atom_target_families(
             "consultation",
             "consultation_cooperation",
             "crime_control_law_enforcement",
+            "data_collection_surveillance",
+            "data_publication",
             "definition",
             "export_promotion",
             "exempt_operation",
+            "facility_expansion_authorization",
             "facility_operation",
             "fee_collection_authority",
             "foreign_commercial_service",
@@ -7369,9 +7474,11 @@ def _typed_decompiler_semantic_atom_target_families(
             "governing_body",
             "health_professional_education_assistance",
             "education_assistance_benefit",
+            "health_surveillance_data",
             "historic_area",
             "historic_area_access_road",
             "agency_determination",
+            "income_gap_multiplier",
             "internal_service_fee",
             "irrigation_project",
             "nonirrigable_land_status",
@@ -7385,6 +7492,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "office_seal",
             "officer_election",
             "official_seal",
+            "penalty_enforcement",
             "plant_variety_protection",
             "plant_variety_protection_office",
             "prize_proceeds_charge",
@@ -7397,11 +7505,14 @@ def _typed_decompiler_semantic_atom_target_families(
             "state_conveyance_authority",
             "treasury_deposit",
             "unknown_party_deposit",
+            "violation_penalty",
             "white_horse_hill_game_preserve",
         }:
             add("frame")
         if normalized_atom in {
             "agency_determination",
+            "data_collection_surveillance",
+            "health_surveillance_data",
             "false_claim_knowledge",
             "nonirrigable_land_status",
             "permanent_nonirrigable_land_status",
@@ -7410,7 +7521,9 @@ def _typed_decompiler_semantic_atom_target_families(
         if normalized_atom in {
             "cost_expense_charge",
             "education_assistance_benefit",
+            "facility_expansion_authorization",
             "health_professional_education_assistance",
+            "health_surveillance_data",
             "internal_service_fee",
             "road_conveyance",
             "office_seal",
@@ -7423,6 +7536,8 @@ def _typed_decompiler_semantic_atom_target_families(
             "state_conveyance_authority",
             "treasury_deposit",
             "unknown_party_deposit",
+            "penalty_enforcement",
+            "violation_penalty",
             "permanent_nonirrigable_land_status",
         }:
             add("deontic")
@@ -7438,7 +7553,15 @@ def _typed_decompiler_semantic_atom_target_families(
             "vacant",
         }:
             add("frame")
-        if normalized_atom in {"exception_or_condition"}:
+        if normalized_atom in {
+            "appropriation_authorization",
+            "data_collection_surveillance",
+            "exception_or_condition",
+            "facility_expansion_authorization",
+            "health_surveillance_data",
+            "penalty_enforcement",
+            "violation_penalty",
+        }:
             add("conditional_normative")
     return targets
 

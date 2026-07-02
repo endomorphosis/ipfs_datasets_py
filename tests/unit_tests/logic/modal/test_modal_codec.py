@@ -31878,6 +31878,80 @@ def test_decompiler_emits_semantic_source_slots_for_consultation_frame_span() ->
     ]
 
 
+def test_decompiler_routes_authorization_penalty_and_surveillance_atoms() -> None:
+    penalty_document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Penalties. If a vessel is operated in violation of this chapter, "
+            "the owner and operator are each liable for a civil penalty."
+        ),
+        predicate="vessel_operation_penalty",
+        conditions=["If a vessel is operated in violation of this chapter"],
+    )
+    surveillance_document = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "The Secretary shall conduct local asthma surveillance activities "
+            "to collect data on the prevalence and severity of asthma and "
+            "publish data."
+        ),
+        predicate="secretary_conduct_asthma_surveillance",
+    )
+    facility_document = _single_formula_document(
+        family="temporal",
+        symbol="F",
+        label="eventuality",
+        text=(
+            "The Secretary of the Navy is authorized, in implementation of the "
+            "plan, to expand the naval facilities by construction."
+        ),
+        predicate="secretary_expand_naval_facilities",
+    )
+
+    penalty_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(penalty_document)
+    )
+    surveillance_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(surveillance_document)
+    )
+    facility_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(facility_document)
+    )
+
+    assert "violation_penalty" in penalty_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "violation_penalty:frame->deontic" in penalty_slots[
+        "typed-decompiler-source-semantic-family-pair"
+    ]
+    assert "violation_penalty:frame->conditional_normative" in penalty_slots[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "health_surveillance_data" in surveillance_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "data_collection_surveillance:deontic->temporal" in surveillance_slots[
+        "typed-decompiler-source-semantic-family-pair"
+    ]
+    assert "knowledge_graphs.neo4j_compat" in surveillance_slots[
+        "legal_ir_view_prototype"
+    ]
+    assert "facility_expansion_authorization" in facility_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "facility_expansion_authorization:temporal->deontic" in facility_slots[
+        "typed-decompiler-source-semantic-family-pair"
+    ]
+    assert (
+        "facility_expansion_authorization:temporal->conditional_normative"
+        in facility_slots["typed-decompiler-target-semantic-family-pair"]
+    )
+
+
 def test_decompiler_emits_definition_slots_for_as_used_frame_span() -> None:
     document = _single_formula_document(
         family="frame",
