@@ -5350,6 +5350,16 @@ def _apply_refined_modal_family_cue_pair_balance(
                 frame_count + 0.01,
             )
             conditional_count = float(counts.get(conditional_family, 0.0))
+        if (
+            frame_count >= epistemic_count
+            and epistemic_count > 0.0
+            and has_strong_epistemic_scope
+        ):
+            counts[epistemic_family] = max(
+                epistemic_count,
+                frame_count + 0.01,
+            )
+            epistemic_count = float(counts.get(epistemic_family, 0.0))
 
     # temporal -> conditional_normative / deontic:
     # Fiscal-year openers are temporal scope, but in statutory authority
