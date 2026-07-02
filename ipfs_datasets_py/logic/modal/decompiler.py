@@ -378,6 +378,23 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("marine science development", "marine_science_development"),
     ("national sea grant college program", "sea_grant_college_program"),
     ("sea grant program", "sea_grant_college_program"),
+    ("technology transfer and transitions assessment", "technology_transfer_assessment"),
+    ("technology transfer", "technology_transfer"),
+    ("transitions assessment", "technology_transition_assessment"),
+    ("appropriate committees of congress", "congressional_committee_report"),
+    ("appropriate committees", "congressional_committee_report"),
+    ("territorial jurisdiction", "territorial_jurisdiction"),
+    ("hydraulic mining", "hydraulic_mining"),
+    ("california debris commission", "california_debris_commission"),
+    ("clearing banks", "clearing_bank_resolution"),
+    ("clearing bank", "clearing_bank_resolution"),
+    ("resolution of clearing banks", "clearing_bank_resolution"),
+    ("federal reserve board", "federal_reserve_board_oversight"),
+    ("false statement or representation", "false_statement_penalty"),
+    ("false statements", "false_statement_penalty"),
+    ("criminal penalty for false statements", "false_statement_penalty"),
+    ("knowingly and willfully", "scienter_requirement"),
+    ("material fact", "material_fact_representation"),
 )
 _USCODE_STATUS_DERIVATION_RULES = frozenset(
     {
@@ -2865,6 +2882,62 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         normalized,
     ):
         add("classified_information_procedure")
+    if re.search(
+        r"\btechnology\s+transfer\b.{0,80}\b(?:transition|transitions|assessment)\b",
+        normalized,
+    ) or re.search(
+        r"\b(?:transition|transitions|assessment)\b.{0,80}\btechnology\s+transfer\b",
+        normalized,
+    ):
+        add("technology_transfer_assessment")
+    if re.search(
+        r"\b(?:secretary|administrator|director|agency)\b.{0,120}"
+        r"\b(?:transmit|submit|provide|report)\b.{0,120}"
+        r"\b(?:committee|committees|congress)\b",
+        normalized,
+    ) or re.search(
+        r"\b(?:committee|committees|congress)\b.{0,120}"
+        r"\b(?:transmit|submit|provide|report)\b",
+        normalized,
+    ):
+        add("congressional_committee_report")
+    if re.search(
+        r"\b(?:not|no)\s+later\s+than\b.{0,160}"
+        r"\b(?:transmit|submit|provide|report)\b",
+        normalized,
+    ):
+        add("deadline_report_duty")
+    if re.search(
+        r"\bterritorial\s+jurisdiction\b.{0,120}\b(?:hydraulic\s+)?mining\b",
+        normalized,
+    ) or re.search(
+        r"\b(?:hydraulic\s+)?mining\b.{0,120}\bterritorial\s+jurisdiction\b",
+        normalized,
+    ):
+        add("territorial_jurisdiction")
+        add("hydraulic_mining")
+    if re.search(r"\bcalifornia\s+debris\s+commission\b", normalized):
+        add("california_debris_commission")
+    if re.search(
+        r"\b(?:resolution|resolve|resolving)\b.{0,80}\bclearing\s+banks?\b",
+        normalized,
+    ) or re.search(
+        r"\bclearing\s+banks?\b.{0,80}\b(?:resolution|resolve|resolving)\b",
+        normalized,
+    ):
+        add("clearing_bank_resolution")
+    if re.search(r"\bfederal\s+reserve\s+board\b", normalized):
+        add("federal_reserve_board_oversight")
+    if re.search(
+        r"\b(?:false|fictitious|fraudulent)\b.{0,80}"
+        r"\b(?:statement|representation|material\s+fact)\b",
+        normalized,
+    ):
+        add("false_statement_penalty")
+    if re.search(r"\bknowingly\b.{0,40}\bwillfully\b", normalized):
+        add("scienter_requirement")
+    if re.search(r"\bmaterial\s+fact\b", normalized):
+        add("material_fact_representation")
     return atoms
 
 
@@ -7650,6 +7723,9 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "foreign_commercial_service",
         "false_claim_knowledge",
         "false_fraudulent_claim",
+        "false_statement_penalty",
+        "scienter_requirement",
+        "material_fact_representation",
         "game_bird_preserve_protection",
         "game_preserve",
         "government_claim",
@@ -7683,12 +7759,22 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "mineral_development_technology",
         "mining_law_application",
         "mining_claim",
+        "territorial_jurisdiction",
+        "hydraulic_mining",
+        "california_debris_commission",
+        "clearing_bank_resolution",
+        "federal_reserve_board_oversight",
+        "technology_transfer",
+        "technology_transfer_assessment",
+        "technology_transition_assessment",
         "natural_resource_use",
         "enforcement_remedy",
         "officer_election",
         "prize_proceeds_charge",
         "remedy",
         "report_contents",
+        "congressional_committee_report",
+        "deadline_report_duty",
         "reserve_active_status_list",
         "resource_availability",
         "settler_resource_use",
@@ -7744,6 +7830,9 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "foreign_commercial_service",
         "false_claim_knowledge",
         "false_fraudulent_claim",
+        "false_statement_penalty",
+        "scienter_requirement",
+        "material_fact_representation",
         "cybersecurity_information_sharing",
         "deceased_veterans_property_disposition",
         "departmental_property_custody",
@@ -7761,6 +7850,12 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "mineral_leasing_law",
         "mining_law_application",
         "mining_claim",
+        "territorial_jurisdiction",
+        "hydraulic_mining",
+        "california_debris_commission",
+        "clearing_bank_resolution",
+        "federal_reserve_board_oversight",
+        "technology_transfer_assessment",
         "military_commission_procedure",
         "military_defense_counsel_duty",
         "military_trial_counsel_duty",
@@ -7870,6 +7965,8 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "congressional_budget_process",
         "classified_information_procedure",
         "congressional_findings_declaration",
+        "congressional_committee_report",
+        "deadline_report_duty",
         "competitive_award_program",
         "cybersecurity_information_sharing",
         "definition",
@@ -7903,6 +8000,11 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "national_forest_resource",
         "interinstitutional_discussion",
         "mining_law_application",
+        "territorial_jurisdiction",
+        "hydraulic_mining",
+        "california_debris_commission",
+        "clearing_bank_resolution",
+        "federal_reserve_board_oversight",
         "nonirrigable_land_status",
         "office_establishment",
         "officer_promotion",
@@ -7921,6 +8023,8 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "enforcement_remedy",
         "remedy",
         "report_contents",
+        "congressional_committee_report",
+        "deadline_report_duty",
         "reserve_active_status_list",
         "resource_availability",
         "research_activity",
@@ -7935,6 +8039,8 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "state_ranking",
         "study_report_duty",
         "submit_or_file",
+        "technology_transfer_assessment",
+        "technology_transition_assessment",
         "test_platform",
         "timber_cutting",
         "timber_cutting_forest_scope",
@@ -7972,6 +8078,9 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "state_energy_program",
         "state_ranking",
         "sovereign_debt_conversion",
+        "technology_transfer_assessment",
+        "technology_transition_assessment",
+        "federal_reserve_board_oversight",
     }:
         add("CEC.native")
         add("knowledge_graphs.neo4j_compat")
@@ -7983,6 +8092,8 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "appropriation_authorization",
         "congressional_budget_allocation",
         "budget_program_submission",
+        "congressional_committee_report",
+        "deadline_report_duty",
         "mineral_development_technology",
         "date_range_temporal_scope",
         "fund_transfer_authority",
@@ -8003,6 +8114,8 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "research_grant",
         "settler_resource_use",
         "study_report_duty",
+        "technology_transfer_assessment",
+        "technology_transition_assessment",
         "termination_authority",
         "temporal_condition",
         "state_ranking",
@@ -8054,6 +8167,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "forest_resource_reservation",
             "false_claim_knowledge",
             "false_fraudulent_claim",
+            "false_statement_penalty",
             "government_claim",
             "funding_eligibility",
             "human_welfare_resource_program",
@@ -8066,6 +8180,11 @@ def _typed_decompiler_semantic_atom_target_families(
             "military_defense_counsel_duty",
             "military_trial_counsel_duty",
             "mining_law_application",
+            "clearing_bank_resolution",
+            "congressional_committee_report",
+            "deadline_report_duty",
+            "federal_reserve_board_oversight",
+            "material_fact_representation",
             "natural_resource_use",
             "national_forest_resource",
             "office_establishment",
@@ -8090,6 +8209,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "research_grant",
             "report_duty",
             "road_conveyance",
+            "scienter_requirement",
             "sea_grant_college_program",
             "secretary_availability",
             "state_energy_program",
@@ -8101,6 +8221,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "submit_or_file",
             "state_conveyance_authority",
             "sovereign_debt_conversion",
+            "technology_transfer_assessment",
             "test_platform",
             "timber_cutting",
             "timber_cutting_forest_scope",
@@ -8116,6 +8237,8 @@ def _typed_decompiler_semantic_atom_target_families(
             "affordable_housing_supply",
             "budget_program_submission",
             "congressional_budget_allocation",
+            "congressional_committee_report",
+            "deadline_report_duty",
             "housing_family_service_investment",
             "long_term_housing_supply",
             "marine_science_development",
@@ -8131,6 +8254,8 @@ def _typed_decompiler_semantic_atom_target_families(
             "sea_grant_college_program",
             "sovereign_debt_conversion",
             "study_report_duty",
+            "technology_transfer_assessment",
+            "technology_transition_assessment",
             "termination_authority",
             "temporal_condition",
             "timber_cutting",
@@ -8153,6 +8278,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "classified_information_procedure",
             "congressional_budget_allocation",
             "congressional_budget_process",
+            "congressional_committee_report",
             "consultation",
             "consultation_cooperation",
             "congressional_findings_declaration",
@@ -8173,6 +8299,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "foreign_commercial_service",
             "false_claim_knowledge",
             "false_fraudulent_claim",
+            "false_statement_penalty",
             "game_bird_preserve_protection",
             "game_preserve",
             "government_claim",
@@ -8207,6 +8334,11 @@ def _typed_decompiler_semantic_atom_target_families(
             "marine_science_development",
             "mineral_development_technology",
             "mining_law_application",
+            "territorial_jurisdiction",
+            "hydraulic_mining",
+            "california_debris_commission",
+            "clearing_bank_resolution",
+            "federal_reserve_board_oversight",
             "monitoring_enforcement",
             "national_forest_resource",
             "office_establishment",
@@ -8232,6 +8364,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "per_capita_ranking",
             "remedy",
             "report_contents",
+            "deadline_report_duty",
             "reserve_active_status_list",
             "resource_availability",
             "road_conveyance",
@@ -8243,6 +8376,9 @@ def _typed_decompiler_semantic_atom_target_families(
             "statutory_chapter_applicability",
             "settler_resource_use",
             "sustainable_chemistry_research",
+            "technology_transfer",
+            "technology_transfer_assessment",
+            "technology_transition_assessment",
             "test_platform",
             "state_court_civil_jurisdiction",
             "state_court_jurisdiction",
@@ -8256,6 +8392,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "unknown_party_deposit",
             "veterans_personal_property",
             "white_horse_hill_game_preserve",
+            "material_fact_representation",
         }:
             add("frame")
         if normalized_atom in {
@@ -8267,6 +8404,9 @@ def _typed_decompiler_semantic_atom_target_families(
             "departmental_property_custody",
             "departmental_record_custody",
             "false_claim_knowledge",
+            "false_statement_penalty",
+            "material_fact_representation",
+            "scienter_requirement",
             "monitoring_enforcement",
             "military_commission_procedure",
             "interinstitutional_discussion",
@@ -8278,6 +8418,9 @@ def _typed_decompiler_semantic_atom_target_families(
             "partnership_proceeding",
             "permanent_nonirrigable_land_status",
             "sovereign_debt_conversion",
+            "technology_transfer_assessment",
+            "technology_transition_assessment",
+            "federal_reserve_board_oversight",
         }:
             add("epistemic")
         if normalized_atom in {
@@ -8339,6 +8482,11 @@ def _typed_decompiler_semantic_atom_target_families(
             "livestock_commerce",
             "monitoring_enforcement",
             "interinstitutional_discussion",
+            "territorial_jurisdiction",
+            "hydraulic_mining",
+            "false_statement_penalty",
+            "scienter_requirement",
+            "material_fact_representation",
             "partnership_adjustment",
             "partnership_notice_proceeding",
             "partnership_proceeding",
@@ -8349,6 +8497,8 @@ def _typed_decompiler_semantic_atom_target_families(
             "state_energy_program",
             "state_ranking",
             "sovereign_debt_conversion",
+            "clearing_bank_resolution",
+            "federal_reserve_board_oversight",
         }:
             add("conditional_normative")
     return targets
@@ -8637,6 +8787,7 @@ def _typed_decompiler_predicate_classes(
             "prohibition",
             "remedy",
             "enforcement_remedy",
+            "false_statement_penalty",
         }
     ):
         add("remedy")
@@ -8656,6 +8807,10 @@ def _typed_decompiler_predicate_classes(
             "payment_authorization",
             "priority_state",
             "permission",
+            "clearing_bank_resolution",
+            "federal_reserve_board_oversight",
+            "technology_transfer",
+            "technology_transfer_assessment",
             "state_energy_program",
             "resource_availability",
             "secretary_availability",
@@ -8669,6 +8824,8 @@ def _typed_decompiler_predicate_classes(
             "accountability_responsibility",
             "budget_program_submission",
             "congressional_report_duty",
+            "congressional_committee_report",
+            "deadline_report_duty",
             "report_duty",
             "study_report_duty",
             "submit_or_file",
@@ -8683,6 +8840,11 @@ def _typed_decompiler_predicate_classes(
             "national_forest_resource",
             "priority_state",
             "per_capita_ranking",
+            "territorial_jurisdiction",
+            "hydraulic_mining",
+            "california_debris_commission",
+            "material_fact_representation",
+            "scienter_requirement",
             "state_energy_program",
             "state_ranking",
             "statutory_applicability",

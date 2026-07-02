@@ -35956,6 +35956,110 @@ def test_decompiler_reconstructs_autoencoder_target_legal_ir_view_support() -> N
     assert "knowledge graph legal relations" in structural_text
 
 
+def test_decompiler_reconstructs_technology_transfer_report_assessment_slots() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Technology transfer and transitions assessment. Not later than "
+            "1 year after September 28, 2018, and as often as the Secretary "
+            "determines to be necessary thereafter, the Secretary shall "
+            "transmit to the appropriate committees of Congress a report."
+        ),
+        predicate="technology_transfer_transition_assessment",
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "technology_transfer_assessment" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "congressional_committee_report" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "deadline_report_duty:frame->temporal" in slot_texts[
+        "typed-decompiler-source-semantic-family-pair"
+    ]
+    assert "technology_transfer_assessment:frame->epistemic" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
+    assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
+    assert "technology transfer assessment" in structural_text
+    assert "congressional report duty" in structural_text
+
+
+def test_decompiler_reconstructs_jurisdiction_and_false_statement_frame_atoms() -> None:
+    jurisdiction = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Territorial jurisdiction over hydraulic mining. The California "
+            "Debris Commission shall have jurisdiction over hydraulic mining."
+        ),
+        predicate="hydraulic_mining_territorial_jurisdiction",
+    )
+    false_statement = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Criminal penalty for false statements. Whoever knowingly and "
+            "willfully makes any false statement or representation of a "
+            "material fact in connection with furnishing items or services "
+            "shall be fined."
+        ),
+        predicate="false_statement_criminal_penalty",
+    )
+
+    jurisdiction_decoded = decode_modal_ir_document(jurisdiction)
+    jurisdiction_slots = decoded_modal_phrase_slot_text_map(jurisdiction_decoded)
+    jurisdiction_structural_text = _structural_decoded_text(
+        jurisdiction_decoded,
+        modal_ir=jurisdiction,
+        selected_frame=None,
+    )
+    false_statement_decoded = decode_modal_ir_document(false_statement)
+    false_statement_slots = decoded_modal_phrase_slot_text_map(false_statement_decoded)
+    false_statement_structural_text = _structural_decoded_text(
+        false_statement_decoded,
+        modal_ir=false_statement,
+        selected_frame=None,
+    )
+
+    assert "territorial_jurisdiction" in jurisdiction_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "hydraulic_mining:frame->conditional_normative" in jurisdiction_slots[
+        "typed-decompiler-source-semantic-family-pair"
+    ]
+    assert "california_debris_commission" in jurisdiction_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "territorial jurisdiction" in jurisdiction_structural_text
+    assert "hydraulic mining" in jurisdiction_structural_text
+
+    assert "false_statement_penalty" in false_statement_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "scienter_requirement" in false_statement_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "false_statement_penalty:frame->deontic" in false_statement_slots[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "knowledge determination finding" in false_statement_structural_text
+    assert "false statement penalty" in false_statement_structural_text
+
+
 def test_decompiler_emits_exemption_source_slots_for_test_platform_clauses() -> None:
     document = _single_formula_document(
         family="deontic",
