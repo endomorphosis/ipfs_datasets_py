@@ -3771,20 +3771,20 @@ def _project_official_usc_primary_contract_distribution(
         strength = 0.55
     elif has_benefit_medical_assistance:
         target_mix = (
-            ("CEC.native", 0.45),
-            ("deontic.ir", 0.28),
-            ("TDFOL.prover", 0.17),
-            ("knowledge_graphs.neo4j_compat", 0.10),
+            ("CEC.native", 0.55),
+            ("deontic.ir", 0.25),
+            ("TDFOL.prover", 0.12),
+            ("knowledge_graphs.neo4j_compat", 0.08),
         )
-        strength = 0.55
+        strength = 0.64
     elif has_contribution_budget_limit:
         target_mix = (
-            ("deontic.ir", 0.42),
-            ("TDFOL.prover", 0.28),
-            ("CEC.native", 0.20),
-            ("knowledge_graphs.neo4j_compat", 0.10),
+            ("deontic.ir", 0.50),
+            ("TDFOL.prover", 0.26),
+            ("CEC.native", 0.16),
+            ("knowledge_graphs.neo4j_compat", 0.08),
         )
-        strength = 0.40
+        strength = 0.50
     elif has_payment_installment_schedule:
         target_mix = (
             ("TDFOL.prover", 0.36),
@@ -3883,12 +3883,12 @@ def _project_official_usc_primary_contract_distribution(
         strength = 0.38
     elif has_admin_enforcement_regulation and deontic_cue_count > 0:
         target_mix = (
-            ("CEC.native", 0.50),
-            ("TDFOL.prover", 0.22),
-            ("deontic.ir", 0.20),
-            ("knowledge_graphs.neo4j_compat", 0.08),
+            ("CEC.native", 0.56),
+            ("TDFOL.prover", 0.20),
+            ("deontic.ir", 0.18),
+            ("knowledge_graphs.neo4j_compat", 0.06),
         )
-        strength = 0.55
+        strength = 0.62
     elif has_safety_regulatory_procedure and deontic_cue_count > 0:
         target_mix = (
             ("TDFOL.prover", 0.46),
@@ -3953,6 +3953,22 @@ def _project_official_usc_primary_contract_distribution(
             ("knowledge_graphs.neo4j_compat", 0.10),
         )
         strength = 0.38
+    elif has_fiscal_fee_deposit_rule and deontic_cue_count > 0:
+        target_mix = (
+            ("deontic.ir", 0.54),
+            ("TDFOL.prover", 0.22),
+            ("CEC.native", 0.16),
+            ("knowledge_graphs.neo4j_compat", 0.08),
+        )
+        strength = 0.50
+    elif has_fiscal_availability_norm and deontic_cue_count > 0:
+        target_mix = (
+            ("deontic.ir", 0.50),
+            ("TDFOL.prover", 0.26),
+            ("CEC.native", 0.16),
+            ("knowledge_graphs.neo4j_compat", 0.08),
+        )
+        strength = 0.34
     elif (
         has_admin_notice_review_procedure or has_admin_review_deadline
     ) and deontic_cue_count > 0:
@@ -4051,22 +4067,6 @@ def _project_official_usc_primary_contract_distribution(
             ("knowledge_graphs.neo4j_compat", 0.30),
             ("TDFOL.prover", 0.18),
             ("CEC.native", 0.06),
-        )
-        strength = 0.34
-    elif has_fiscal_fee_deposit_rule and deontic_cue_count > 0:
-        target_mix = (
-            ("deontic.ir", 0.46),
-            ("TDFOL.prover", 0.24),
-            ("CEC.native", 0.20),
-            ("knowledge_graphs.neo4j_compat", 0.10),
-        )
-        strength = 0.42
-    elif has_fiscal_availability_norm and deontic_cue_count > 0:
-        target_mix = (
-            ("deontic.ir", 0.50),
-            ("TDFOL.prover", 0.26),
-            ("CEC.native", 0.16),
-            ("knowledge_graphs.neo4j_compat", 0.08),
         )
         strength = 0.34
     elif has_admin_rulemaking_schedule and deontic_cue_count > 0:

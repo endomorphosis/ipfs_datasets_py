@@ -10531,6 +10531,61 @@ def test_multiview_training_target_projects_packet_official_usc_contract_pattern
             "report the possible violation in writing to the inspector "
             "general. (Pub. L. 111-350, §3, Jan. 4, 2011, 124 Stat. 3839.)"
         ),
+        "medical_assistance": (
+            "U.S.C. Title 38 - VETERANS' BENEFITS 38 U.S.C. United States "
+            "Code, 2024 Edition CHAPTER 17 - HOSPITAL, NURSING HOME, "
+            "DOMICILIARY, AND MEDICAL CARE Sec. 1731 - Assistance to the "
+            "Republic of the Philippines From the U.S. Government Publishing "
+            "Office, www.gpo.gov §1731. The President is authorized to assist "
+            "the Republic of the Philippines in fulfilling its responsibility "
+            "in providing medical care and treatment for Commonwealth Army "
+            "veterans and new Philippine Scouts in need of such care and "
+            "treatment for service-connected disabilities and non-service-"
+            "connected disabilities under certain conditions. Editorial Notes "
+            "Prior Provisions Amendments Statutory Notes and Related "
+            "Subsidiaries Effective Date."
+        ),
+        "clean_hulls_administration": (
+            "U.S.C. Title 33 - NAVIGATION AND NAVIGABLE WATERS 33 U.S.C. "
+            "United States Code, 2024 Edition CHAPTER 51 - CLEAN HULLS "
+            "Sec. 3803 - Administration and enforcement From the U.S. "
+            "Government Publishing Office, www.gpo.gov §3803. Unless "
+            "otherwise specified in this chapter, with respect to a vessel, "
+            "the Secretary shall administer and enforce the Convention and "
+            "this chapter. The Administrator shall administer and enforce "
+            "subchapter III. The Administrator and the Secretary may each "
+            "prescribe and enforce regulations as may be necessary to carry "
+            "out their respective responsibilities under this chapter."
+        ),
+        "house_internal_delivery_fees": (
+            "U.S.C. Title 2 - THE CONGRESS 2 U.S.C. United States Code, "
+            "2024 Edition CHAPTER 55 - HOUSE OF REPRESENTATIVES OFFICERS "
+            "AND ADMINISTRATION Sec. 5541 - Fees for internal delivery in "
+            "House of Representatives of nonpostage mail from outside "
+            "sources From the U.S. Government Publishing Office, www.gpo.gov "
+            "§5541. Effective with respect to fiscal years beginning with "
+            "fiscal year 1995, the Chief Administrative Officer is "
+            "authorized to collect fees equal to the applicable postage. "
+            "Amounts received by the Chief Administrative Officer as fees "
+            "under the preceding sentence shall be deposited in the Treasury "
+            "for credit to the account of the Office of the Chief "
+            "Administrative Officer. Editorial Notes Codification."
+        ),
+        "nato_contribution_budget_limit": (
+            "U.S.C. Title 10 - ARMED FORCES 10 U.S.C. United States Code, "
+            "2024 Edition CHAPTER 134 - MISCELLANEOUS ADMINISTRATIVE "
+            "PROVISIONS Sec. 2263 - United States contributions to the "
+            "North Atlantic Treaty Organization common-funded budgets From "
+            "the U.S. Government Publishing Office, www.gpo.gov §2263. The "
+            "total amount contributed by the Secretary of Defense in any "
+            "fiscal year for the common-funded budgets of NATO may be an "
+            "amount in excess of the maximum amount that would otherwise be "
+            "applicable to those contributions in such fiscal year under the "
+            "fiscal year 1998 baseline limitation. Definitions. The term "
+            "common-funded budgets of NATO means the Military Budget, the "
+            "Security Investment Program, and the Civil Budget of the North "
+            "Atlantic Treaty Organization."
+        ),
     }
 
     projected = {
@@ -10543,6 +10598,10 @@ def test_multiview_training_target_projects_packet_official_usc_contract_pattern
     assert projected["program_funding"]["deontic.ir"] > 0.40
     assert projected["installment_schedule"]["TDFOL.prover"] > 0.29
     assert projected["contractor_reporting"]["deontic.ir"] > 0.40
+    assert projected["medical_assistance"]["CEC.native"] > 0.40
+    assert projected["clean_hulls_administration"]["CEC.native"] > 0.36
+    assert projected["house_internal_delivery_fees"]["deontic.ir"] > 0.43
+    assert projected["nato_contribution_budget_limit"]["deontic.ir"] > 0.42
     for compacted in projected.values():
         assert set(compacted) == {
             "CEC.native",
