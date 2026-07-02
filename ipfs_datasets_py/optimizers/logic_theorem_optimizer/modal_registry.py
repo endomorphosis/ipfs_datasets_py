@@ -1377,6 +1377,17 @@ COMPILER_REFINED_PACKET_001581_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     ),
 )
 
+COMPILER_REFINED_PACKET_000192_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+)
+
 COMPILER_REFINED_PACKET_001702_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.DEONTIC.value,
@@ -6967,6 +6978,7 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS = (
     *COMPILER_REFINED_PACKET_000043_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_000044_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_000112_FAMILY_PAIRS,
+    *COMPILER_REFINED_PACKET_000192_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_000113_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_000116_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_000151_FAMILY_PAIRS,
@@ -9214,6 +9226,9 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                     "shall deputize",
                     "must",
                     "must be undertaken",
+                    "requirement for",
+                    "on-site manager requirement",
+                    "before obligating",
                     "required",
                     "required submission",
                     "obligated",
@@ -10070,6 +10085,7 @@ __all__ = [
     "COMPILER_REFINED_PACKET_000043_FAMILY_PAIRS",
     "COMPILER_REFINED_PACKET_000044_FAMILY_PAIRS",
     "COMPILER_REFINED_PACKET_000112_FAMILY_PAIRS",
+    "COMPILER_REFINED_PACKET_000192_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_000004_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_003336_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_000099_FAMILY_PAIRS",

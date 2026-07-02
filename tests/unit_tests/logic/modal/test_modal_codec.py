@@ -97,6 +97,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_REFINED_PACKET_000043_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000044_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000112_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_000192_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000126_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000170_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_001095_FAMILY_PAIRS,
@@ -5607,6 +5608,53 @@ def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_000112_pair
             )
             < 1e-12
         )
+
+
+def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_000192_pairs() -> None:
+    packet_pairs = (
+        ("deontic", "deontic"),
+        ("frame", "deontic"),
+    )
+    assert tuple(COMPILER_REFINED_PACKET_000192_FAMILY_PAIRS) == packet_pairs
+    for predicted_family, target_family in packet_pairs:
+        assert (
+            supports_signal_free_adaptive_ambiguity_pair(
+                predicted_family,
+                target_family,
+            )
+            is True
+        )
+        assert (
+            is_compiler_ambiguity_policy_pair(
+                predicted_family,
+                target_family,
+            )
+            is True
+        )
+        assert (
+            abs(
+                compiler_refined_modal_family_cue_margin_buffer(
+                    predicted_family,
+                    target_family,
+                )
+                - 0.0015
+            )
+            < 1e-12
+        )
+    extracted_cues = {
+        (cue.family, cue.cue.lower())
+        for cue in SpaCyLegalEncoder().encode(
+            (
+                "Requirement for on-site managers. Before obligating any "
+                "Cooperative Threat Reduction funds, the Secretary shall "
+                "appoint one on-site manager for the project. The on-site "
+                "manager requirement applies."
+            )
+        ).cues
+    }
+    assert ("deontic", "requirement for") in extracted_cues
+    assert ("deontic", "on-site manager requirement") in extracted_cues
+    assert ("deontic", "before obligating") in extracted_cues
 
 
 def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_001095_pairs() -> None:
