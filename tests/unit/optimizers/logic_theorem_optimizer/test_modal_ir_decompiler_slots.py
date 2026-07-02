@@ -1759,3 +1759,95 @@ def test_modal_decompiler_reconstructs_office_seal_as_cec_view_slot() -> None:
         "plant_variety_protection_office||knowledge_graphs.neo4j_compat"
         in legal_ir_slots
     )
+
+
+def test_modal_decompiler_emits_directional_frame_target_reconstruction_pairs() -> None:
+    source_text = "Sec. 799 - Regulation of power resources."
+    document = ModalIRDocument(
+        document_id="packet-000121-frame-directional-reconstruction",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="packet-000121-frame",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="frame",
+                    symbol="Frame",
+                    label="framed as",
+                ),
+                predicate=ModalIRPredicate(
+                    name="regulation_of_power_resources",
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-16-799-ed4b744b4bed77ee",
+                    start_char=0,
+                    end_char=len(source_text),
+                    citation="16 U.S.C. 799",
+                ),
+            )
+        ],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+
+    assert {
+        "frame->frame",
+        "frame->deontic",
+        "frame->temporal",
+    }.issubset(set(slot_texts["typed-decompiler-target-reconstruction-pair"]))
+    assert {
+        "frame",
+        "deontic",
+        "temporal",
+    }.issubset(set(slot_texts["typed-decompiler-target-reconstruction-family"]))
+    assert {
+        "unconditioned:frame->frame",
+        "unconditioned:frame->deontic",
+        "unconditioned:frame->temporal",
+    }.issubset(set(slot_texts["typed-decompiler-target-reconstruction-scope"]))
+
+
+def test_modal_decompiler_emits_directional_temporal_deontic_reconstruction_pair() -> None:
+    source_text = "The effective date applies after enactment."
+    document = ModalIRDocument(
+        document_id="packet-000121-temporal-directional-reconstruction",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="packet-000121-temporal",
+                operator=ModalIROperator(
+                    family="temporal",
+                    system="ltl",
+                    symbol="F",
+                    label="eventually",
+                ),
+                predicate=ModalIRPredicate(
+                    name="effective_date_applies",
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-42-300a-e57ccd658257dc26",
+                    start_char=0,
+                    end_char=len(source_text),
+                    citation="42 U.S.C. 300a",
+                ),
+                conditions=["after enactment"],
+                metadata={"cue": "after"},
+            )
+        ],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+
+    assert "temporal->deontic" in set(
+        slot_texts["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert "deontic" in set(
+        slot_texts["typed-decompiler-target-reconstruction-family"]
+    )
+    assert "conditioned+temporal:temporal->deontic" in set(
+        slot_texts["typed-decompiler-target-reconstruction-scope"]
+    )

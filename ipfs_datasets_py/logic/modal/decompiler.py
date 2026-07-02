@@ -801,6 +801,13 @@ _CROSS_FAMILY_BRIDGE_FAMILY_PRIORITY: Mapping[str, int] = {
     "doxastic": 5,
     "dynamic": 6,
 }
+_SOURCE_ANCHOR_DIRECTIONAL_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = {
+    "alethic": ("conditional_normative", "deontic", "temporal"),
+    "conditional_normative": ("deontic",),
+    "deontic": ("conditional_normative", "deontic", "frame", "temporal"),
+    "frame": ("conditional_normative", "deontic", "doxastic", "frame", "temporal"),
+    "temporal": ("conditional_normative", "deontic", "epistemic", "temporal"),
+}
 _DEONTIC_BRIDGE_REINFORCEMENT_OPERATORS: frozenset[str] = frozenset(
     {
         "O",
@@ -6801,6 +6808,11 @@ def _typed_decompiler_target_reconstruction_slots(
         ):
             if status_target not in targets:
                 targets.append(status_target)
+    for directional_target in _typed_decompiler_directional_target_families(
+        source_family
+    ):
+        if directional_target not in targets:
+            targets.append(directional_target)
 
     slots: List[Tuple[str, str]] = []
     scope_parts: List[str] = []
@@ -7029,6 +7041,11 @@ def _typed_decompiler_source_reconstruction_slots(
         ):
             if status_target not in targets:
                 targets.append(status_target)
+    for directional_target in _typed_decompiler_directional_target_families(
+        source_family
+    ):
+        if directional_target not in targets:
+            targets.append(directional_target)
 
     force = _modal_force_label(formula)
     polarity = _modal_scope_polarity(
@@ -7805,6 +7822,22 @@ def _typed_decompiler_bridge_target_families(
     if family == "frame" and _uscode_residual_fallback_decompiler_cues(formula):
         add("conditional_normative")
         add("epistemic")
+    return targets
+
+
+def _typed_decompiler_directional_target_families(source_family: str) -> List[str]:
+    """Return portable decoder target families for source-family reconstruction."""
+    normalized_source = _clean_text(source_family).lower()
+    if not normalized_source:
+        return []
+    targets: List[str] = []
+    for target in _SOURCE_ANCHOR_DIRECTIONAL_FAMILY_PAIR_TARGETS.get(
+        normalized_source,
+        (),
+    ):
+        normalized_target = _clean_text(target).lower()
+        if normalized_target and normalized_target not in targets:
+            targets.append(normalized_target)
     return targets
 
 
