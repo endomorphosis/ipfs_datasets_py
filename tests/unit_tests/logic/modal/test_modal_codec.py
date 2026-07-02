@@ -34586,6 +34586,89 @@ def test_decompiler_typed_ir_reconstruction_preserves_epistemic_frame_cues() -> 
     assert "administrative offset" in structural_text
 
 
+def test_decompiler_reconstructs_housing_investment_authority_from_frame_slots() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Authority. The Secretary is authorized to make funds available to "
+            "participating jurisdictions for investment to increase the number "
+            "of families served with decent, safe, sanitary, and affordable "
+            "housing and expand the long-term supply of affordable housing."
+        ),
+        predicate="secretary_housing_investment_authority",
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "housing_investment_authority" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "participating_jurisdiction" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "affordable_housing_supply" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "housing_investment_authority:frame->deontic" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "affordable_housing_supply:frame->temporal" in slot_texts[
+        "typed-decompiler-source-semantic-family-pair"
+    ]
+    assert "obligation permission prohibition" in structural_text
+    assert "housing investment authority" in structural_text
+    assert "affordable housing supply" in structural_text
+
+
+def test_decompiler_reconstructs_partnership_notice_epistemic_slots() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Notice of proceedings and adjustment. The Secretary shall mail "
+            "to each partner notice of any partnership proceeding and notice "
+            "of final partnership adjustment for each partnership-related item."
+        ),
+        predicate="partnership_adjustment_notice",
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "partnership_notice_proceeding" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "partnership_adjustment_notice" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "partnership_item" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "partnership_notice_proceeding:frame->epistemic" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "partnership_notice_proceeding:frame->conditional_normative" in slot_texts[
+        "typed-decompiler-source-semantic-family-pair"
+    ]
+    assert "knowledge determination finding" in structural_text
+    assert "partnership notice proceeding" in structural_text
+    assert "partnership adjustment notice" in structural_text
+
+
 def test_decompiler_routes_temporal_irrigation_status_to_epistemic_slots() -> None:
     document = _single_formula_document(
         family="temporal",
