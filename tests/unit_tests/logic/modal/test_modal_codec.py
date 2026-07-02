@@ -36508,6 +36508,63 @@ def test_decompiler_reconstructs_packet_2014_frame_to_deontic_temporal_atoms() -
     )
 
 
+def test_decompiler_reconstructs_packet_2577_deontic_frame_temporal_atoms() -> None:
+    consular_document = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "Foreign Service. Powers, duties and liabilities of consular "
+            "officers shall be exercised in accordance with this chapter."
+        ),
+        predicate="consular_officers_exercise_powers_duties_liabilities",
+        conditions=["in accordance with this chapter"],
+    )
+    land_document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Permanently nonirrigable lands. The Secretary may classify "
+            "nonirrigable lands before final project repayment."
+        ),
+        predicate="secretary_classify_nonirrigable_lands",
+        conditions=["before final project repayment"],
+    )
+
+    consular_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(consular_document)
+    )
+    land_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(land_document)
+    )
+
+    assert "consular_officer_powers_duties_liabilities" in consular_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "deontic->frame" in consular_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "consular_officer_powers_duties_liabilities:deontic->frame" in (
+        consular_slots["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert "knowledge_graphs.neo4j_compat" in consular_slots[
+        "legal_ir_view_prototype"
+    ]
+    assert "deontic.ir" in consular_slots["legal_ir_view_prototype"]
+
+    assert "permanent_nonirrigable_land_status" in land_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "frame->deontic" in land_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "frame->temporal" in land_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "TDFOL.prover" in land_slots["legal_ir_view_prototype"]
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()
