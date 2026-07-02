@@ -3255,6 +3255,11 @@ class LegalModalParser:
                 fallback_rule_override = "uscode_section_heading_coarse_v1"
         if candidate_segment is None:
             return None
+        candidate_segment = self._expanded_uscode_leading_citation_heading_segment(
+            candidate_segment=candidate_segment,
+            normalized_text=normalized_text,
+            citation=citation,
+        )
 
         profile = self.registry.get_profile(ModalLogicFamily.FRAME)
         if not profile.operators:
@@ -3304,6 +3309,51 @@ class LegalModalParser:
                     else "uscode_heading_without_section_reference_v1"
                 ),
             },
+        )
+
+    def _expanded_uscode_leading_citation_heading_segment(
+        self,
+        *,
+        candidate_segment: LegalSegment,
+        normalized_text: str,
+        citation: Optional[str],
+    ) -> LegalSegment:
+        """Include an adjacent leading ``N U.S.C. section:`` citation header."""
+        if candidate_segment.start_char <= 0:
+            return candidate_segment
+        citation_section = self._citation_section_token(citation)
+        if not citation_section:
+            return candidate_segment
+        citation_title = self._citation_title_token(citation)
+        section_pattern = self._citation_section_pattern(citation_section)
+        if citation_title:
+            title_pattern = re.escape(citation_title)
+        else:
+            title_pattern = r"\d+[A-Za-z]*"
+        citation_prefix_re = re.compile(
+            rf"(?P<header>\b{title_pattern}\s+U\.?\s*S\.?\s*C\.?\s+"
+            rf"{section_pattern}\s*[:.)-]?)\s*$",
+            re.IGNORECASE,
+        )
+        window_start = max(0, candidate_segment.start_char - 64)
+        window = normalized_text[window_start : candidate_segment.end_char]
+        match = citation_prefix_re.search(window)
+        if match is None:
+            return candidate_segment
+        expanded_start = window_start + match.start("header")
+        if expanded_start >= candidate_segment.start_char:
+            return candidate_segment
+        expanded_text = normalized_text[expanded_start : candidate_segment.end_char].strip()
+        if not expanded_text:
+            return candidate_segment
+        leading_offset = len(
+            normalized_text[expanded_start : candidate_segment.end_char]
+        ) - len(normalized_text[expanded_start : candidate_segment.end_char].lstrip())
+        return LegalSegment(
+            text=expanded_text,
+            start_char=expanded_start + leading_offset,
+            end_char=expanded_start + leading_offset + len(expanded_text),
+            role=candidate_segment.role,
         )
 
     def _uscode_procedural_clause_fallback_formula(

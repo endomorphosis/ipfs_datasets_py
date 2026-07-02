@@ -28784,6 +28784,7 @@ def test_modal_compiler_surfaces_packet_000099_ambiguity_policy_pairs(
             )
             < 1e-12
         )
+
         assert any(
             ambiguity.ambiguity_type == expected_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
@@ -28792,6 +28793,81 @@ def test_modal_compiler_surfaces_packet_000099_ambiguity_policy_pairs(
             == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
+
+
+def test_modal_compiler_expands_packet_000111_uscode_citation_heading_spans() -> None:
+    compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
+    cases = (
+        (
+            "us-code-38-1731-7736f9e2e50472ec",
+            "38 U.S.C. 1731",
+            (
+                "38 U.S.C. 1731: U.S.C. Title 38 - VETERANS' BENEFITS "
+                "Sec. 1731 - Assistance to the Republic of the Philippines "
+                "From the U.S. Government Publishing Office, www.gpo.gov "
+                "§1731. Assistance to the Republic of the Philippines The "
+                "President is authorized to assist the Republic of the "
+                "Philippines in fulfilling its responsibility in providing "
+                "medical care and treatment for Commonwealth Army veterans "
+                "and new Philippine Scouts in need of such care and treatment."
+            ),
+            "38 U.S.C. 1731:",
+        ),
+        (
+            "us-code-10-2263-571407a5044f94b2",
+            "10 U.S.C. 2263",
+            (
+                "10 U.S.C. 2263: Sec. 2263 - United States contributions "
+                "to the North Atlantic Treaty Organization common-funded "
+                "budgets §2263. United States contributions to the North "
+                "Atlantic Treaty Organization common-funded budgets (a) In "
+                "General .-The total amount contributed by the Secretary of "
+                "Defense in any fiscal year for the common-funded budgets of "
+                "NATO may be an amount in excess of the maximum amount that "
+                "would otherwise be applicable to those contributions in such "
+                "fiscal year under the fiscal year 1998 baseline limitation. "
+                "(b) Definitions .-In this section: The term common-funded "
+                "budgets of NATO means the Military Budget."
+            ),
+            "10 U.S.C. 2263:",
+        ),
+        (
+            "us-code-2-5541-462165e82b6b68ce",
+            "2 U.S.C. 5541",
+            (
+                "U.S.C. Title 2 - THE CONGRESS Sec. 5541 - Fees for internal "
+                "delivery in House of Representatives of nonpostage mail from "
+                "outside sources From the U.S. Government Publishing Office, "
+                "www.gpo.gov §5541. Fees for internal delivery in House of "
+                "Representatives of nonpostage mail from outside sources "
+                "Effective with respect to fiscal years beginning with fiscal "
+                "year 1995, in the case of mail from outside sources "
+                "presented to the Chief Administrative Officer of the House "
+                "of Representatives (other than mail through the Postal "
+                "Service and mail with postage otherwise paid) for internal "
+                "delivery in the House of Representatives, the Chief "
+                "Administrative Officer is authorized to collect fees equal "
+                "to the applicable postage."
+            ),
+            "U.S.C. Title 2",
+        ),
+    )
+
+    for document_id, citation, text, expected_prefix in cases:
+        compiled = compiler.compile(
+            text,
+            document_id=document_id,
+            citation=citation,
+            source="us_code",
+        )
+        formula_spans = [
+            compiled.modal_ir.normalized_text[
+                int(formula.provenance.start_char) : int(formula.provenance.end_char)
+            ].strip()
+            for formula in compiled.modal_ir.formulas
+        ]
+
+        assert any(span.startswith(expected_prefix) for span in formula_spans)
 
 
 def test_modal_compiler_surfaces_packet_001248_ambiguity_policy_pairs(
