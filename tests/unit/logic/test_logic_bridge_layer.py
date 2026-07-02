@@ -353,6 +353,59 @@ def test_modal_frame_logic_bridge_promotes_bundle_only_flogic_guidance() -> None
     )
 
 
+def test_modal_frame_logic_bridge_infers_flogic_route_from_passing_gap_evidence() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("modal_frame_logic")
+    report = adapter.evaluate(
+        "The agency shall publish notice before the permit takes effect.",
+        document_id="bridge-layer-gap-guided-flogic",
+        citation="Bridge Layer Gap Guided FLogic",
+        compiler_guidance={
+            "compiler_guidance_attribution": {
+                "basis": "sample_records",
+                "legal_ir_view_gaps": {
+                    "modal_frame_logic:overrepresented": {
+                        "count": 5,
+                        "quality_gate": "pass",
+                    }
+                },
+                "todo_routes": {},
+            },
+            "compiler_guidance_legal_ir_view_gaps": {
+                "modal_frame_logic:overrepresented": 5,
+            },
+            "compiler_guidance_quality_gate": "pass",
+            "source": "compiler_guidance_distillation_v1",
+        },
+        evaluate_provers=False,
+    )
+
+    modal_metadata = report.ir_document.views["modal_ir"].payload["modal_ir"][
+        "metadata"
+    ]
+    frame_triples = report.ir_document.views["frame_logic"].payload["triples"]
+    selected_terms = {
+        triple["object"]
+        for triple in frame_triples
+        if triple["predicate"] == "selected_ontology_term"
+    }
+    audit_terms = set(modal_metadata["frame_ontology_term_audit_terms"])
+
+    assert modal_metadata["compiler_guidance_synthesis_focus"] == [
+        "repair_flogic_ontology_constraints"
+    ]
+    assert report.round_trip.extra_losses["ontology_violation_count"] == 0.0
+    assert "repair_flogic_ontology_constraints" in selected_terms
+    assert "modal_frame_logic" in selected_terms
+    assert "modal_frame_logic" in audit_terms
+    assert any(
+        triple["predicate"] == "modal_frame_logic_ontology_constraint"
+        and triple["object"] == "selected_ontology_term:required:satisfied"
+        for triple in frame_triples
+    )
+
+
 def test_modal_frame_logic_bridge_projects_frame_alignment_guidance_routes_to_terms() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 

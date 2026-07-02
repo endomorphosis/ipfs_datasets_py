@@ -1560,6 +1560,7 @@ def _compiler_guidance_route_features(
         route = str(compiler_guidance.get(route_key) or "").strip()
         if route:
             routes.append(route)
+    routes.extend(_compiler_guidance_routes_from_view_gaps(compiler_guidance))
 
     features = [f"compiler-guidance-route:{route}" for route in routes]
     target_component = str(compiler_guidance.get("target_component") or "").strip()
@@ -1611,6 +1612,97 @@ def _compiler_guidance_route_features(
         if route:
             features.append(f"compiler-guidance-route:{route}")
     return _unique_preserve_order(features)
+
+
+def _compiler_guidance_routes_from_view_gaps(
+    compiler_guidance: Mapping[str, Any],
+) -> List[str]:
+    """Infer repair routes from compiler-guidance LegalIR view-gap evidence."""
+    routes: List[str] = []
+    for gap_key in (
+        "compiler_guidance_legal_ir_view_gaps",
+        "compiler_guidance_legal_ir_view_family_gaps",
+        "legal_ir_view_gaps",
+        "legal_ir_view_family_gaps",
+    ):
+        raw_gaps = compiler_guidance.get(gap_key)
+        if not isinstance(raw_gaps, Mapping):
+            continue
+        for gap_name, raw_weight in sorted(raw_gaps.items()):
+            if (
+                _compiler_guidance_gap_weight(raw_weight) <= 0.0
+                or not _compiler_guidance_gap_quality_passes(raw_weight)
+            ):
+                continue
+            route = _compiler_guidance_route_from_view_gap(str(gap_name))
+            if route:
+                routes.append(route)
+    return _unique_preserve_order(routes)
+
+
+def _compiler_guidance_route_from_view_gap(gap_name: str) -> str:
+    """Map LegalIR view-gap labels onto deterministic bridge repair routes."""
+    normalized = _clean_non_empty_string(gap_name).lower()
+    normalized = normalized.replace(".", "_").replace("-", "_")
+    if "deontic" in normalized:
+        return "repair_deontic_bridge_quality_gate"
+    if "frame" in normalized or "flogic" in normalized:
+        return "repair_flogic_ontology_constraints"
+    if "knowledge_graph" in normalized or normalized.startswith("kg_"):
+        return _GRAPH_PROJECTION_GUIDANCE_ROUTE
+    if "tdfol" in normalized or "first_order" in normalized:
+        return "repair_tdfol_bridge_parse"
+    if "cec" in normalized or "event_calculus" in normalized:
+        return "repair_cec_dcec_bridge"
+    if "prover" in normalized:
+        return "repair_external_prover_router"
+    if "zkp" in normalized or "zero_knowledge" in normalized:
+        return "repair_zkp_attestation_bridge"
+    return ""
+
+
+def _compiler_guidance_view_gap_features(
+    compiler_guidance: Mapping[str, Any],
+) -> List[str]:
+    """Return deterministic ontology feature strings for LegalIR gap evidence."""
+    features: List[str] = []
+    for gap_key in (
+        "compiler_guidance_legal_ir_view_gaps",
+        "compiler_guidance_legal_ir_view_family_gaps",
+        "legal_ir_view_gaps",
+        "legal_ir_view_family_gaps",
+    ):
+        raw_gaps = compiler_guidance.get(gap_key)
+        if not isinstance(raw_gaps, Mapping):
+            continue
+        for gap_name, raw_weight in sorted(raw_gaps.items()):
+            if (
+                _compiler_guidance_gap_weight(raw_weight) <= 0.0
+                or not _compiler_guidance_gap_quality_passes(raw_weight)
+            ):
+                continue
+            safe_gap = _clean_non_empty_string(gap_name).replace(".", "_")
+            if safe_gap:
+                features.append(f"legal-ir-view-gap:{safe_gap}")
+    return _unique_preserve_order(features)
+
+
+def _compiler_guidance_gap_weight(value: Any) -> float:
+    if isinstance(value, Mapping):
+        return _safe_float(
+            value.get("count")
+            or value.get("support")
+            or value.get("weight")
+            or value.get("score")
+        )
+    return _safe_float(value)
+
+
+def _compiler_guidance_gap_quality_passes(value: Any) -> bool:
+    if not isinstance(value, Mapping):
+        return True
+    quality_gate = _clean_non_empty_string(value.get("quality_gate")).lower()
+    return not quality_gate or quality_gate == "pass"
 
 
 def _compiler_guidance_selected_frame_evidence(
@@ -1715,6 +1807,11 @@ def _compiler_guidance_summary(
     )
     if frame_audit_features:
         feature_groups["frame_logic_evidence"] = frame_audit_features[
+            :_COMPILER_GUIDANCE_MAX_GROUP_FEATURES
+        ]
+    view_gap_features = _compiler_guidance_view_gap_features(compiler_guidance)
+    if view_gap_features:
+        feature_groups["legal_ir_view_gap_evidence"] = view_gap_features[
             :_COMPILER_GUIDANCE_MAX_GROUP_FEATURES
         ]
     ranked_guidance_features: List[Dict[str, Any]] = []
@@ -11831,7 +11928,6 @@ def _structural_decoded_text(
     )
     typed_ir_values = [
         *slot_text_map.get("typed_ir_reconstruction", ()),
-        *slot_text_map.get("typed_ir_bridge_reconstruction", ()),
         *slot_text_map.get("typed_ir_clause_role_support", ()),
         *slot_text_map.get("typed_ir_semantic_support", ()),
         *slot_text_map.get("typed_ir_compact_semantic_support", ()),
