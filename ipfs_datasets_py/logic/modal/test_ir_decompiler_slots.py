@@ -7171,3 +7171,153 @@ def test_decode_modal_ir_document_routes_frame_status_atoms_to_normative_targets
     )
     assert "frame->deontic" in slot_map["typed-decompiler-target-reconstruction-pair"]
     assert "frame->deontic" in slot_map["typed_ir_cross_family_semantic_support"]
+
+
+def _publication_depository_frame_sample_document() -> ModalIRDocument:
+    source_id = "us-code-44-1911-publications-9996c33b70179dc3"
+    source_text = (
+        "Depository libraries shall make Government publications available "
+        "for the free use of the general public, and may dispose of them "
+        "after retention."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-publication-depository-frame",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="government_publications_available"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="44 U.S.C. 1911",
+        ),
+        metadata={"cue": "may"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_routes_publication_depository_atoms_to_deontic_frame_views() -> None:
+    decoded = decode_modal_ir_document(
+        _publication_depository_frame_sample_document()
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert (
+        "government_publication_depository_access"
+        in slot_map["typed-decompiler-target-semantic-atom"]
+    )
+    assert (
+        "publication_disposal_authority"
+        in slot_map["typed-decompiler-target-semantic-atom"]
+    )
+    assert "frame->deontic" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "frame->temporal" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "deontic.ir" in slot_map["legal_ir_view_prototype"]
+    assert "knowledge_graphs.neo4j_compat" in slot_map["legal_ir_view_prototype"]
+
+
+def _homestead_temporal_deontic_sample_document() -> ModalIRDocument:
+    source_id = "us-code-43-890-homestead-f2c18b546ee3f4aa"
+    source_text = (
+        "Homestead entries on railroad lands prior to withdrawal or after "
+        "restoration to market are confirmed."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-homestead-temporal",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="P",
+            label="permitted",
+        ),
+        predicate=ModalIRPredicate(name="confirm_homestead_entries"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="43 U.S.C. 890",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_routes_homestead_entry_surface_to_temporal_frame_slots() -> None:
+    decoded = decode_modal_ir_document(_homestead_temporal_deontic_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert (
+        "homestead_entry_confirmation"
+        in slot_map["typed-decompiler-target-semantic-atom"]
+    )
+    assert (
+        "land_withdrawal_restoration_scope"
+        in slot_map["typed-decompiler-target-semantic-atom"]
+    )
+    assert "deontic->temporal" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "deontic->frame" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "TDFOL.prover" in slot_map["legal_ir_view_prototype"]
+    assert "modal.frame_logic" in slot_map["legal_ir_view_prototype"]
+
+
+def _housing_transfer_certification_sample_document() -> ModalIRDocument:
+    source_id = "us-code-42-1589c-transfer-647f9efc99dc6755"
+    source_text = (
+        "Upon a certification by the Secretary of the Interior that any "
+        "surplus housing is classified as demountable, the housing may be "
+        "transferred to Indians."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-housing-transfer-certification",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="transfer_surplus_housing"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="42 U.S.C. 1589c",
+        ),
+        conditions=["upon a certification by the Secretary of the Interior"],
+        metadata={"cue": "may"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_surfaces_housing_transfer_certification_targets() -> None:
+    decoded = decode_modal_ir_document(_housing_transfer_certification_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert (
+        "agency_certification_determination"
+        in slot_map["typed-decompiler-target-semantic-atom"]
+    )
+    assert (
+        "housing_transfer_authority"
+        in slot_map["typed-decompiler-target-semantic-atom"]
+    )
+    assert "frame->deontic" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "frame->epistemic" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "frame->temporal" in slot_map["typed-decompiler-target-reconstruction-pair"]

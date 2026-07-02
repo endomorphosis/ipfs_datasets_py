@@ -176,6 +176,12 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("game and bird preserves", "game_bird_preserve_protection"),
     ("national game preserve", "game_preserve"),
     ("white horse hill national game preserve", "white_horse_hill_game_preserve"),
+    ("government publications", "government_publication_depository_access"),
+    ("free use of government publications", "government_publication_depository_access"),
+    ("depository libraries", "government_publication_depository_access"),
+    ("free use of the general public", "public_access_requirement"),
+    ("disposal of unwanted publications", "publication_disposal_authority"),
+    ("dispose of them after retention", "publication_disposal_authority"),
     ("annual report", "annual_report"),
     ("reports to congress", "congressional_report_duty"),
     ("report to congress", "congressional_report_duty"),
@@ -225,7 +231,13 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("active status list", "active_status_list"),
     ("applicability of this chapter", "statutory_chapter_applicability"),
     ("applicability", "statutory_applicability"),
+    ("short title", "statutory_short_title"),
     ("election of officers", "officer_election"),
+    ("homestead entries", "homestead_entry_confirmation"),
+    ("preemption and homestead entries", "homestead_entry_confirmation"),
+    ("railroad lands", "railroad_land_status"),
+    ("withdrawal or after restoration to market", "land_withdrawal_restoration_scope"),
+    ("restoration to market", "land_withdrawal_restoration_scope"),
     ("irrigation projects", "irrigation_project"),
     ("irrigation project", "irrigation_project"),
     ("agricultural commodity set-aside", "agricultural_commodity_set_aside"),
@@ -279,6 +291,11 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("transfer of funds made available", "fund_transfer_authority"),
     ("transfer funds made available", "fund_transfer_authority"),
     ("transfer funds", "fund_transfer_authority"),
+    ("transfer of certain housing", "housing_transfer_authority"),
+    ("surplus housing", "surplus_housing_transfer"),
+    ("classified by the secretary", "agency_certification_determination"),
+    ("certification by the secretary", "agency_certification_determination"),
+    ("certification by the secretary of the interior", "agency_certification_determination"),
     ("expenditures and cultivation requirements", "expenditure_requirement"),
     ("shall have expended", "expenditure_requirement"),
     ("mining claims", "mining_claim"),
@@ -2878,6 +2895,46 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         add("information_sharing")
     if re.search(r"\blaw\s+enforcement\b", normalized):
         add("law_enforcement")
+    if re.search(
+        r"\b(?:government\s+publications?|depositor(?:y|ies)|"
+        r"free\s+use\s+of\s+the\s+general\s+public)\b",
+        normalized,
+    ):
+        add("government_publication_depository_access")
+    if re.search(
+        r"\b(?:dispose|disposal)\b.{0,80}\b(?:publications?|depositor(?:y|ies))\b",
+        normalized,
+    ):
+        add("publication_disposal_authority")
+    if re.search(r"\bshort\s+title\b", normalized):
+        add("statutory_short_title")
+    if re.search(
+        r"\b(?:preemption\s+and\s+)?homestead\s+entries\b|"
+        r"\bentries\b.{0,80}\bmade\s+in\s+good\s+faith\b",
+        normalized,
+    ):
+        add("homestead_entry_confirmation")
+    if re.search(r"\brailroad\s+lands?\b", normalized):
+        add("railroad_land_status")
+    if re.search(
+        r"\b(?:withdrawal|restoration\s+to\s+market|after\s+restoration)\b",
+        normalized,
+    ):
+        add("land_withdrawal_restoration_scope")
+    if re.search(
+        r"\btransfer\b.{0,80}\b(?:housing|lands?|property)\b|"
+        r"\b(?:housing|lands?|property)\b.{0,80}\btransfer\b",
+        normalized,
+    ):
+        add("housing_transfer_authority")
+    if re.search(r"\bsurplus\s+housing\b", normalized):
+        add("surplus_housing_transfer")
+    if re.search(
+        r"\bcertification\b.{0,80}\bsecretar(?:y|ies)\b|"
+        r"\bsecretar(?:y|ies)\b.{0,80}\bcertif(?:y|ies|ied|ication)\b",
+        normalized,
+    ):
+        add("agency_certification_determination")
     if re.search(r"\b(?:official\s+)?seal\b", normalized):
         add("official_seal")
     if re.search(r"\bplant\s+variety\s+protection\s+office\b", normalized):
@@ -7851,11 +7908,15 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "game_bird_preserve_protection",
         "game_preserve",
         "government_claim",
+        "government_publication_depository_access",
         "governing_body",
         "health_professional_education_assistance",
         "historic_area",
         "historic_area_access_road",
         "information_sharing",
+        "agency_certification_determination",
+        "homestead_entry_confirmation",
+        "housing_transfer_authority",
         "interagency_coordination",
         "interinstitutional_discussion",
         "irrigation_project",
@@ -7896,6 +7957,8 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "prize_proceeds_charge",
         "remedy",
         "report_contents",
+        "public_access_requirement",
+        "publication_disposal_authority",
         "congressional_committee_report",
         "deadline_report_duty",
         "reserve_active_status_list",
@@ -7906,8 +7969,11 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "secretary_availability",
         "state_energy_program",
         "state_ranking",
+        "statutory_short_title",
         "statutory_applicability",
         "statutory_chapter_applicability",
+        "land_withdrawal_restoration_scope",
+        "railroad_land_status",
         "state_court_civil_jurisdiction",
         "state_court_jurisdiction",
         "state_conveyance_authority",
@@ -7922,6 +7988,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "unknown_party_deposit",
         "veterans_personal_property",
         "white_horse_hill_game_preserve",
+        "surplus_housing_transfer",
     }:
         add("knowledge_graphs.neo4j_compat")
         add("modal.frame_logic")
@@ -7968,6 +8035,10 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "departmental_record_custody",
         "forest_resource_reservation",
         "government_claim",
+        "government_publication_depository_access",
+        "agency_certification_determination",
+        "homestead_entry_confirmation",
+        "housing_transfer_authority",
         "health_professional_education_assistance",
         "human_welfare_resource_program",
         "interagency_coordination",
@@ -8001,6 +8072,8 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "road_conveyance",
         "reserve_active_status_list",
         "resource_availability",
+        "public_access_requirement",
+        "publication_disposal_authority",
         "sea_grant_college",
         "sea_grant_college_program",
         "secretary_availability",
@@ -8013,7 +8086,9 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "state_court_jurisdiction",
         "state_energy_program",
         "state_ranking",
+        "statutory_short_title",
         "state_conveyance_authority",
+        "surplus_housing_transfer",
         "timber_cutting",
         "timber_cutting_forest_scope",
         "timber_stone_use",
@@ -8033,6 +8108,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("modal.frame_logic")
     if normalized_atom in {
         "agency_determination",
+        "agency_certification_determination",
         "appropriations_committee_duty",
         "classified_information_procedure",
         "child_abduction_remedy",
@@ -8122,6 +8198,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "false_claim_knowledge",
         "false_fraudulent_claim",
         "government_claim",
+        "government_publication_depository_access",
         "human_welfare_resource_program",
         "account_maintenance",
         "development_advice_assistance",
@@ -8135,6 +8212,8 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "military_trial_counsel_duty",
         "natural_resource_use",
         "national_forest_resource",
+        "homestead_entry_confirmation",
+        "housing_transfer_authority",
         "interinstitutional_discussion",
         "mining_law_application",
         "territorial_jurisdiction",
@@ -8155,6 +8234,8 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "priority_state",
         "per_capita_ranking",
         "prohibition",
+        "public_access_requirement",
+        "publication_disposal_authority",
         "public_report_duty",
         "promotion_retention",
         "enforcement_remedy",
@@ -8174,6 +8255,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "settler_resource_use",
         "state_energy_program",
         "state_ranking",
+        "statutory_short_title",
         "study_report_duty",
         "submit_or_file",
         "technology_transfer_assessment",
@@ -8182,6 +8264,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "timber_cutting",
         "timber_cutting_forest_scope",
         "timber_stone_use",
+        "surplus_housing_transfer",
         "veterans_personal_property",
     }:
         add("deontic.ir")
@@ -8196,6 +8279,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("modal.frame_logic")
     if normalized_atom in {
         "agency_determination",
+        "agency_certification_determination",
         "congressional_findings_declaration",
         "definition",
         "development_advice_assistance",
@@ -8211,7 +8295,10 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "office_establishment",
         "office_of_womens_health",
         "priority_state",
+        "homestead_entry_confirmation",
+        "land_withdrawal_restoration_scope",
         "permanent_nonirrigable_land_status",
+        "railroad_land_status",
         "state_energy_program",
         "state_ranking",
         "sovereign_debt_conversion",
@@ -8316,6 +8403,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "false_fraudulent_claim",
             "false_statement_penalty",
             "government_claim",
+            "government_publication_depository_access",
             "funding_eligibility",
             "human_welfare_resource_program",
             "predictive_analytics",
@@ -8323,7 +8411,9 @@ def _typed_decompiler_semantic_atom_target_families(
             "waste_fraud_abuse_prevention",
             "housing_family_service_investment",
             "housing_investment_authority",
+            "housing_transfer_authority",
             "interagency_coordination",
+            "agency_certification_determination",
             "agency_determination",
             "legal_relationship_override",
             "liability_protection",
@@ -8347,6 +8437,8 @@ def _typed_decompiler_semantic_atom_target_families(
             "patent_prohibition",
             "payment_authorization",
             "priority_state",
+            "public_access_requirement",
+            "publication_disposal_authority",
             "permission",
             "per_capita_ranking",
             "interinstitutional_discussion",
@@ -8365,8 +8457,10 @@ def _typed_decompiler_semantic_atom_target_families(
             "secretary_availability",
             "state_energy_program",
             "state_ranking",
+            "statutory_short_title",
             "statutory_applicability",
             "statutory_chapter_applicability",
+            "homestead_entry_confirmation",
             "settler_resource_use",
             "study_report_duty",
             "submit_or_file",
@@ -8374,6 +8468,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "sovereign_debt_conversion",
             "technology_transfer_assessment",
             "test_platform",
+            "surplus_housing_transfer",
             "timber_cutting",
             "timber_cutting_forest_scope",
             "timber_stone_use",
@@ -8397,6 +8492,8 @@ def _typed_decompiler_semantic_atom_target_families(
             "commodity_value_determination",
             "deadline_report_duty",
             "housing_family_service_investment",
+            "homestead_entry_confirmation",
+            "land_withdrawal_restoration_scope",
             "long_term_housing_supply",
             "marine_science_development",
             "mineral_development_technology",
@@ -8415,6 +8512,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "technology_transition_assessment",
             "termination_authority",
             "temporal_condition",
+            "statutory_short_title",
             "timber_cutting",
             "timber_cutting_forest_scope",
         }:
@@ -8469,15 +8567,18 @@ def _typed_decompiler_semantic_atom_target_families(
             "game_bird_preserve_protection",
             "game_preserve",
             "government_claim",
+            "government_publication_depository_access",
             "governing_body",
             "housing_family_service_investment",
             "housing_investment_authority",
+            "housing_transfer_authority",
             "health_professional_education_assistance",
             "human_welfare_resource_program",
             "education_assistance_benefit",
             "historic_area",
             "historic_area_access_road",
             "agency_determination",
+            "agency_certification_determination",
             "internal_service_fee",
             "interinstitutional_discussion",
             "interagency_coordination",
@@ -8492,7 +8593,10 @@ def _typed_decompiler_semantic_atom_target_families(
             "mining_claim",
             "natural_resource_use",
             "nonirrigable_land_status",
+            "homestead_entry_confirmation",
+            "land_withdrawal_restoration_scope",
             "permanent_nonirrigable_land_status",
+            "railroad_land_status",
             "jurisdiction_authority",
             "law_enforcement",
             "legal_relationship_override",
@@ -8534,6 +8638,8 @@ def _typed_decompiler_semantic_atom_target_families(
             "deadline_report_duty",
             "reserve_active_status_list",
             "resource_availability",
+            "public_access_requirement",
+            "publication_disposal_authority",
             "road_conveyance",
             "sea_grant_college",
             "sea_grant_college_program",
@@ -8541,6 +8647,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "sovereign_debt_conversion",
             "statutory_applicability",
             "statutory_chapter_applicability",
+            "statutory_short_title",
             "settler_resource_use",
             "sustainable_chemistry_research",
             "technology_transfer",
@@ -8560,10 +8667,12 @@ def _typed_decompiler_semantic_atom_target_families(
             "veterans_personal_property",
             "white_horse_hill_game_preserve",
             "material_fact_representation",
+            "surplus_housing_transfer",
         }:
             add("frame")
         if normalized_atom in {
             "agency_determination",
+            "agency_certification_determination",
             "accountability_responsibility",
             "child_abduction_remedy",
             "commodity_value_determination",
@@ -8582,6 +8691,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "military_commission_procedure",
             "interinstitutional_discussion",
             "interagency_coordination",
+            "homestead_entry_confirmation",
             "nonirrigable_land_status",
             "partnership_adjustment",
             "partnership_adjustment_notice",
@@ -8589,6 +8699,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "partnership_notice_proceeding",
             "partnership_proceeding",
             "permanent_nonirrigable_land_status",
+            "land_withdrawal_restoration_scope",
             "sovereign_debt_conversion",
             "technology_transfer_assessment",
             "technology_transition_assessment",
@@ -8598,11 +8709,14 @@ def _typed_decompiler_semantic_atom_target_families(
             add("epistemic")
         if normalized_atom in {
             "affordable_housing_supply",
+            "agency_certification_determination",
             "cost_expense_charge",
             "education_assistance_benefit",
             "health_professional_education_assistance",
             "housing_family_service_investment",
             "housing_investment_authority",
+            "homestead_entry_confirmation",
+            "housing_transfer_authority",
             "internal_service_fee",
             "award_program",
             "officer_promotion",
@@ -8630,6 +8744,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "reserve_active_status_list",
             "resource_availability",
             "secretary_availability",
+            "surplus_housing_transfer",
         }:
             add("deontic")
         if normalized_atom in {
@@ -8979,6 +9094,8 @@ def _typed_decompiler_predicate_classes(
             "forest_resource_reservation",
             "fund_transfer_authority",
             "funding_eligibility",
+            "government_publication_depository_access",
+            "housing_transfer_authority",
             "information_sharing",
             "national_forest_resource",
             "payment_authorization",
@@ -8992,6 +9109,7 @@ def _typed_decompiler_predicate_classes(
             "resource_availability",
             "secretary_availability",
             "state_conveyance_authority",
+            "surplus_housing_transfer",
         }
     ):
         add("authorization")
@@ -9006,6 +9124,8 @@ def _typed_decompiler_predicate_classes(
             "congressional_report_duty",
             "congressional_committee_report",
             "deadline_report_duty",
+            "public_access_requirement",
+            "publication_disposal_authority",
             "report_duty",
             "study_report_duty",
             "submit_or_file",
@@ -9016,11 +9136,14 @@ def _typed_decompiler_predicate_classes(
     if normalized_atoms.intersection(
         {
             "definition",
+            "agency_certification_determination",
             "child_abduction_remedy",
             "commodity_set_aside",
             "commodity_value_determination",
             "funding_eligibility",
             "forest_resource_reservation",
+            "homestead_entry_confirmation",
+            "land_withdrawal_restoration_scope",
             "national_forest_resource",
             "priority_state",
             "per_capita_ranking",
@@ -9033,6 +9156,8 @@ def _typed_decompiler_predicate_classes(
             "state_ranking",
             "statutory_applicability",
             "statutory_chapter_applicability",
+            "statutory_short_title",
+            "railroad_land_status",
         }
     ):
         add("statutory")
