@@ -13,6 +13,8 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_000128_FAMILY_PAIRS,
     ModalLogicFamily,
     compiler_ambiguity_policy_targets,
+    compiler_refined_modal_family_cue_margin_buffer,
+    compiler_weak_typed_self_family_cue_margin_buffer,
     is_compiler_ambiguity_policy_pair,
     is_compiler_required_adaptive_ambiguity_pair,
     is_priority_signal_free_adaptive_ambiguity_pair,
@@ -27,7 +29,11 @@ def _mock_adaptive_ranking(
     target_family: str,
     family_margin: float,
 ) -> List[Dict[str, Any]]:
-    predicted_share = min(0.99, abs(float(family_margin)) + 0.05)
+    margin = float(family_margin)
+    if margin < 0.0 and abs(margin) > 0.94:
+        predicted_share = min(0.999999, abs(margin))
+    else:
+        predicted_share = min(0.99, abs(margin) + 0.05)
     target_share = predicted_share + family_margin
     return [
         {
@@ -83,11 +89,31 @@ def test_packet_000128_pairs_are_registered_across_ambiguity_policies() -> None:
         ),
         (
             ModalLogicFamily.DEONTIC.value,
-            ModalLogicFamily.DYNAMIC.value,
+            ModalLogicFamily.FRAME.value,
+        ),
+        (
+            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.DEONTIC.value,
+        ),
+        (
+            ModalLogicFamily.DEONTIC.value,
+            ModalLogicFamily.DEONTIC.value,
+        ),
+        (
+            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.TEMPORAL.value,
+        ),
+        (
+            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        ),
+        (
+            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.EPISTEMIC.value,
         ),
         (
             ModalLogicFamily.TEMPORAL.value,
-            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.DEONTIC.value,
         ),
     )
 
@@ -111,27 +137,54 @@ def test_packet_000128_pairs_are_registered_across_ambiguity_policies() -> None:
             predicted_family,
             target_family,
         )
+        assert (
+            compiler_refined_modal_family_cue_margin_buffer(
+                predicted_family,
+                target_family,
+            )
+            > 0.0
+        )
+
+    assert (
+        compiler_weak_typed_self_family_cue_margin_buffer(
+            ModalLogicFamily.DEONTIC.value,
+            ModalLogicFamily.DEONTIC.value,
+        )
+        > 0.0
+    )
 
 
 def test_compiler_exposes_packet_000128_explicit_adaptive_ambiguities() -> None:
     evidence_cases: Tuple[Tuple[str, str, str, float], ...] = (
         (
-            "us-code-31-1532-d8780c8260270f6c",
+            "us-code-30-24-ca9fb7a95ddb4f73",
+            ModalLogicFamily.FRAME.value,
             ModalLogicFamily.DEONTIC.value,
-            ModalLogicFamily.DYNAMIC.value,
-            -0.491876806133,
+            -0.450949818893,
         ),
         (
-            "us-code-20-1703-d96d239b54afbdf8",
+            "us-code-15-1199-768607b95c168102",
             ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
             ModalLogicFamily.DEONTIC.value,
-            -0.210308783823,
+            -0.111358353933,
         ),
         (
-            "us-code-20-1103c-536981ebcd983068",
-            ModalLogicFamily.TEMPORAL.value,
+            "us-code-30-934a-4ff2d25121dd0f38",
             ModalLogicFamily.FRAME.value,
-            -0.224516604444,
+            ModalLogicFamily.TEMPORAL.value,
+            -0.999589511294,
+        ),
+        (
+            "us-code-16-4412-1d586cde28403027",
+            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.EPISTEMIC.value,
+            -0.175597063344,
+        ),
+        (
+            "us-code-26-1021-8fd2a2f6811ff75e",
+            ModalLogicFamily.TEMPORAL.value,
+            ModalLogicFamily.DEONTIC.value,
+            -0.221784868084,
         ),
     )
 
