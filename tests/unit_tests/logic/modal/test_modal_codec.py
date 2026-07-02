@@ -33764,6 +33764,41 @@ def test_decompiler_emits_source_scope_slots_for_within_and_deadline_cues() -> N
     )
 
 
+def test_decompiler_emits_cue_derived_source_force_slots_for_frame_shall() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Except as provided in this chapter, an air carrier shall provide "
+            "safe and adequate interstate air transportation."
+        ),
+        predicate="pub_safe_transportation",
+        conditions=["Except as provided in this chapter"],
+    )
+    document.formulas[0].exceptions.append("Except as provided in this chapter")
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    force_value = (
+        "frame:pub|typed-decompiler-force-polarity:obligation:mandatory"
+    )
+    assert force_value in slot_texts[
+        "typed-decompiler-source-predicate-force-pair"
+    ]
+    assert (
+        f"{force_value}|typed-decompiler-family-pair:frame->deontic"
+        in slot_texts["typed-decompiler-source-predicate-force-family-pair"]
+    )
+    assert "conditional_normative" in slot_texts["family_exception_present"]
+    assert (
+        "deontic||slot:typed-decompiler-source-predicate-force-pair:"
+        f"{force_value}||deontic.ir"
+    ) in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
+
+
 def test_decompiler_preserves_budget_submission_and_audit_semantic_slots() -> None:
     document = _single_formula_document(
         family="deontic",
@@ -34377,6 +34412,47 @@ def test_decompiler_reconstructs_renumbered_status_transition_from_typed_slots()
     )
     assert "renumbered" in structural_text
     assert "322" in structural_text
+
+
+def test_decompiler_routes_repealed_status_fallback_to_frame_deontic_slots() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "42 U.S.C. 7156a: Sec. 7156a - Repealed. Pub. L. 105-85, "
+            "div. C, title XXXIV, section 3403, Nov. 18, 1997, 111 Stat. "
+            "2059."
+        ),
+        predicate="section_repealed",
+    )
+    formula = document.formulas[0]
+    formula.metadata["fallback_rule"] = "uscode_editorial_status_heading_v1"
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "repealed" in slot_texts["status_keyword"]
+    assert "repealed:frame->deontic" in slot_texts[
+        "typed-decompiler-source-semantic-family-pair"
+    ]
+    assert "frame->frame" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "frame->deontic" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert any(
+        "obligation permission prohibition" in value
+        and "repealed" in value
+        for value in slot_texts["typed_ir_reconstruction"]
+    )
+    assert "repealed" in structural_text
 
 
 def test_decompiler_reconstructs_autoencoder_target_legal_ir_view_support() -> None:

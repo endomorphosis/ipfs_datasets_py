@@ -7150,6 +7150,78 @@ def _typed_decompiler_source_reconstruction_slots(
             f"{topology}:{source_family}:{source_symbol or 'none'}",
         ),
     ]
+    for cue in _typed_decompiler_source_force_cues(
+        formula=formula,
+        reconstruction_text=reconstruction_text,
+        condition_values=condition_values,
+        exception_values=exception_values,
+    ):
+        cue_force = _typed_decompiler_force_for_cue(cue)
+        if not cue_force:
+            continue
+        for cue_polarity in _typed_decompiler_polarities_for_cue(
+            cue,
+            condition_values=condition_values,
+            exception_values=exception_values,
+            text=reconstruction_text,
+        ):
+            source_force_value = (
+                f"{source_family}:{predicate_head}|"
+                f"typed-decompiler-force-polarity:{cue_force}:{cue_polarity}"
+            )
+            slots.extend(
+                (
+                    ("typed-decompiler-source-force-cue", cue),
+                    (
+                        "typed-decompiler-source-predicate-force-pair",
+                        source_force_value,
+                    ),
+                    (
+                        "typed-decompiler-source-predicate-force-cue",
+                        f"{cue}:{source_force_value}",
+                    ),
+                )
+            )
+            for target in targets or [source_family]:
+                pair = f"{source_family}->{target}"
+                slots.extend(
+                    (
+                        (
+                            "typed-decompiler-source-predicate-force-family-pair",
+                            f"{source_force_value}|typed-decompiler-family-pair:{pair}",
+                        ),
+                        (
+                            "family_semantic_slot_prototype",
+                            (
+                                f"{target}||slot:typed-decompiler-source-predicate-force-pair:"
+                                f"{source_force_value}"
+                            ),
+                        ),
+                    )
+                )
+                for view in _typed_decompiler_family_pair_legal_ir_views(
+                    source_family,
+                    target,
+                ):
+                    slots.append(
+                        (
+                            "family_semantic_slot_legal_ir_view_prototype",
+                            (
+                                f"{target}||slot:typed-decompiler-source-predicate-force-pair:"
+                                f"{source_force_value}||{view}"
+                            ),
+                        )
+                    )
+    if exception_values or any(cue.startswith("except") for cue in condition_cues):
+        slots.extend(
+            (
+                ("family_exception_present", "conditional_normative"),
+                (
+                    "family_semantic_slot_prototype",
+                    "conditional_normative||slot:family-exception-present:conditional_normative",
+                ),
+            )
+        )
     for target in targets:
         pair = f"{source_family}->{target}"
         slots.append(
@@ -7239,6 +7311,33 @@ def _typed_decompiler_source_reconstruction_slots(
                     )
                 )
     return _unique_slot_values(slots)
+
+
+def _typed_decompiler_source_force_cues(
+    *,
+    formula: ModalIRFormula,
+    reconstruction_text: str,
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
+) -> List[str]:
+    cues: List[str] = []
+
+    def add(cue: str) -> None:
+        normalized = _clean_text(cue).lower().replace(" ", "_")
+        if normalized and normalized not in cues:
+            cues.append(normalized)
+
+    for cue in _formula_cues(formula):
+        add(cue)
+    for cue in _bridge_cues_from_text(reconstruction_text):
+        add(cue)
+    for cue in _typed_decompiler_condition_cues(
+        condition_values=condition_values,
+        exception_values=exception_values,
+        text=reconstruction_text,
+    ):
+        add(cue)
+    return cues
 
 
 def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
