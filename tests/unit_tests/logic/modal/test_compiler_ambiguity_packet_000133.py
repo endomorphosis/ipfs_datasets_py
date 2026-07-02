@@ -95,6 +95,14 @@ def test_packet_000133_pairs_are_registered_across_ambiguity_policies() -> None:
         ),
         (
             ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        ),
+        (
+            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.EPISTEMIC.value,
+        ),
+        (
+            ModalLogicFamily.FRAME.value,
             ModalLogicFamily.TEMPORAL.value,
         ),
     )
@@ -163,6 +171,27 @@ def test_compiler_exposes_packet_000133_explicit_adaptive_ambiguities() -> None:
             ModalLogicFamily.FRAME.value,
             ModalLogicFamily.DEONTIC.value,
             -0.456207104787,
+            "outvoted",
+        ),
+        (
+            "us-code-25-500e-890d173d23b6875b",
+            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+            -0.430963035293,
+            "outvoted",
+        ),
+        (
+            "us-code-20-1132-3-80f3f53cc302786f",
+            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.EPISTEMIC.value,
+            -0.348930797154,
+            "outvoted",
+        ),
+        (
+            "us-code-42-19059.-91665c522bc27130",
+            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+            -0.632567936557,
             "outvoted",
         ),
     )
