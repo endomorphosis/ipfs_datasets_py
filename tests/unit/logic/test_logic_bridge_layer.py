@@ -6771,6 +6771,51 @@ def test_cec_dcec_bridge_materializes_guided_notice_hearing_frame_events() -> No
     )
 
 
+def test_cec_dcec_bridge_extracts_conditional_required_clause_without_converter() -> None:
+    from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
+
+    class _NoisyConverter:
+        @staticmethod
+        def convert(_text: str):
+            raise AssertionError("conditional required clause should be deterministic")
+
+    adapter = CecDcecBridgeAdapter(converter=_NoisyConverter())
+    report = adapter.evaluate(
+        (
+            "15 U.S.C. 9901. If the applicant submits a complete notice, "
+            "the Secretary is required to approve the registration."
+        ),
+        document_id="cec-bridge-conditional-required-clause",
+        citation="15 U.S.C. 9901",
+        compiler_guidance={
+            "compiler_guidance_quality_gate": "pass",
+            "compiler_guidance_route": "repair_cec_dcec_bridge",
+            "source": "compiler_guidance_distillation_v1",
+            "target_component": "CEC.native",
+        },
+    )
+
+    event_view = report.ir_document.views["cec_events"]
+    event_record = report.ir_document.views["event_calculus"].payload["records"][0]
+    procedure_events = [
+        event
+        for event in event_view.payload["events"]
+        if event["event_role"] == "procedure_event"
+    ]
+
+    assert event_record["source_id"].startswith("dcec:section:")
+    assert event_record["event_calculus_formula"].startswith("Happens(legal_norm(")
+    assert event_record["event_formula_syntax_valid"] is True
+    assert event_record["procedure_event_records"][0]["relation"] == (
+        "condition_precedent"
+    )
+    assert procedure_events[0]["event"] == "applicant submits a complete notice"
+    assert event_view.metadata["procedure_event_count"] == 1
+    assert report.proof_gate.compiles is True
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
 def test_cec_dcec_bridge_extracts_conditional_fee_collection_actor() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 

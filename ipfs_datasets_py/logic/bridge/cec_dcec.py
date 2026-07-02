@@ -2930,6 +2930,27 @@ def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
             "support_text": conditional_fee_collection_match.group(0)[:500],
             "extraction_method": "cec_dcec_section_operational_v1",
         }
+    conditional_modal_match = _conditional_modal_norm_match(operative_text)
+    if conditional_modal_match:
+        condition_text = conditional_modal_match["condition"]
+        digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
+        source_id = f"dcec:section:{digest}"
+        return {
+            "actor": conditional_modal_match["actor"],
+            "action": conditional_modal_match["action"],
+            "modality": conditional_modal_match["modality"],
+            "norm_type": conditional_modal_match["modality"],
+            "source_id": source_id,
+            "support_text": conditional_modal_match["support_text"][:500],
+            "procedure_event_records": [
+                _condition_procedure_event_record(
+                    condition_text,
+                    source_id=source_id,
+                    relation=conditional_modal_match["relation"],
+                )
+            ],
+            "extraction_method": "cec_dcec_section_operational_v1",
+        }
     authorized_assistance_match = re.search(
         r"\b(?P<actor>(?:the\s+)?(?:president|secretary|administrator|"
         r"comptroller\s+general|director|commission|commissioner))\s+"
@@ -3246,6 +3267,82 @@ def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
     return None
 
 
+def _conditional_modal_norm_match(text: str) -> dict[str, str]:
+    lowered = _normalize_legal_sample_text(text).lower()
+    if not lowered:
+        return {}
+    patterns = (
+        (
+            "condition_precedent",
+            r"\b(?P<intro>if|when)\s+(?P<condition>[^.;]{1,260}?),\s*"
+            r"(?P<actor>(?:the\s+)?[a-z][^,.;]{1,160}?)\s+"
+            r"(?P<modal>shall\s+not|must\s+not|may\s+not|shall|must|may|"
+            r"is\s+required\s+to|is\s+obligated\s+to|is\s+authorized\s+to)\s+"
+            r"(?P<action>[^.;:]+)",
+        ),
+        (
+            "exception",
+            r"\bexcept\s+(?P<condition>[^.;]{1,260}?),\s*"
+            r"(?P<actor>(?:the\s+)?[a-z][^,.;]{1,160}?)\s+"
+            r"(?P<modal>shall\s+not|must\s+not|may\s+not|shall|must|may|"
+            r"is\s+required\s+to|is\s+obligated\s+to|is\s+authorized\s+to)\s+"
+            r"(?P<action>[^.;:]+)",
+        ),
+    )
+    for relation, pattern in patterns:
+        match = re.search(pattern, lowered)
+        if not match:
+            continue
+        raw_actor = match.group("actor")
+        if re.match(r"^(?:shall|must|may|is)\b", raw_actor.strip()):
+            continue
+        actor = _clean_operational_actor_slot(raw_actor)
+        action = _clean_operational_slot(match.group("action"))
+        condition = _clean_operational_slot(match.group("condition"))
+        if not actor or not action or not condition:
+            continue
+        return {
+            "actor": actor,
+            "action": action,
+            "condition": condition,
+            "modality": _modality_from_modal_phrase(match.group("modal")),
+            "relation": relation,
+            "support_text": match.group(0),
+        }
+    return {}
+
+
+def _modality_from_modal_phrase(value: str) -> str:
+    lowered = str(value or "").strip().lower()
+    if lowered in {"shall not", "must not", "may not"}:
+        return "forbidden"
+    if lowered in {"may", "is authorized to"}:
+        return "permitted"
+    return "obligated"
+
+
+def _condition_procedure_event_record(
+    condition: str,
+    *,
+    source_id: str,
+    relation: str,
+) -> dict[str, Any]:
+    event_symbol = _symbol(condition, fallback="condition")
+    return {
+        "actor": "condition",
+        "event": condition,
+        "event_id": f"{source_id}:procedure:{event_symbol}",
+        "event_order": 1,
+        "event_symbol": event_symbol,
+        "is_formula_antecedent": True,
+        "is_trigger": True,
+        "proof_role": relation,
+        "raw_text": condition,
+        "relation": relation,
+        "source_id": source_id,
+    }
+
+
 def _looks_like_us_code_section_text(text: str) -> bool:
     lowered = str(text or "").lower()
     return bool(
@@ -3532,6 +3629,8 @@ def _strip_uscode_catchline_and_subsection_heading(text: str) -> str:
     starters = (
         "Notwithstanding",
         "Except",
+        "If",
+        "When",
         "As soon",
         "Within",
         "By no later",
