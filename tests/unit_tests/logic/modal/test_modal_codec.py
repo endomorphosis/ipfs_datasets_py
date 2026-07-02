@@ -33878,6 +33878,68 @@ def test_decompiler_emits_semantic_source_slots_for_consultation_frame_span() ->
     ]
 
 
+def test_decompiler_binds_packet_000208_family_pairs_to_legal_ir_views() -> None:
+    deontic_document = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "National sea grant college program. The Secretary shall review "
+            "applications in accordance with this section."
+        ),
+        predicate="secretary_review_applications",
+    )
+    frame_document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Consultation and cooperation. The Secretary may coordinate "
+            "activities under this section."
+        ),
+        predicate="consultation_cooperation",
+    )
+
+    deontic_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(deontic_document)
+    )
+    frame_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(frame_document)
+    )
+
+    assert "deontic.ir" in deontic_slots["legal_ir_view_prototype"]
+    assert "CEC.native" in deontic_slots["legal_ir_view_prototype"]
+    assert "knowledge_graphs.neo4j_compat" in deontic_slots[
+        "legal_ir_view_prototype"
+    ]
+    assert (
+        "deontic||slot:typed-decompiler-family-pair:"
+        "deontic->conditional_normative||CEC.native"
+    ) in deontic_slots["family_semantic_slot_legal_ir_view_prototype"]
+    assert (
+        "conditional_normative||slot:typed-decompiler-family-pair:"
+        "deontic->conditional_normative||TDFOL.prover"
+    ) in deontic_slots["family_semantic_slot_legal_ir_view_prototype"]
+    assert (
+        "deontic||slot:typed-decompiler-family-pair:"
+        "deontic->deontic||CEC.native"
+    ) in deontic_slots["family_semantic_slot_legal_ir_view_prototype"]
+
+    assert "deontic.ir" in frame_slots["legal_ir_view_prototype"]
+    assert "CEC.native" in frame_slots["legal_ir_view_prototype"]
+    assert "knowledge_graphs.neo4j_compat" in frame_slots[
+        "legal_ir_view_prototype"
+    ]
+    assert (
+        "frame||slot:typed-decompiler-family-pair:"
+        "frame->deontic||CEC.native"
+    ) in frame_slots["family_semantic_slot_legal_ir_view_prototype"]
+    assert (
+        "frame||slot:typed-decompiler-family-pair:"
+        "frame->frame||knowledge_graphs.neo4j_compat"
+    ) in frame_slots["family_semantic_slot_legal_ir_view_prototype"]
+
+
 def test_decompiler_emits_definition_slots_for_as_used_frame_span() -> None:
     document = _single_formula_document(
         family="frame",

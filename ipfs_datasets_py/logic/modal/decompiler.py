@@ -6940,6 +6940,23 @@ def _typed_decompiler_target_reconstruction_slots(
                         ),
                     )
                 )
+        for view in _typed_decompiler_family_pair_legal_ir_views(
+            source_family,
+            target,
+        ):
+            slots.extend(
+                (
+                    ("legal_ir_view_prototype", view),
+                    (
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        f"{source_family}||slot:typed-decompiler-family-pair:{pair}||{view}",
+                    ),
+                    (
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        f"{target}||slot:typed-decompiler-family-pair:{pair}||{view}",
+                    ),
+                )
+            )
         for cue in condition_cues:
             slots.append(
                 (
@@ -7141,6 +7158,23 @@ def _typed_decompiler_source_reconstruction_slots(
                 f"{topology}:{source_family}|typed-decompiler-family-pair:{pair}",
             )
         )
+        for view in _typed_decompiler_family_pair_legal_ir_views(
+            source_family,
+            target,
+        ):
+            slots.extend(
+                (
+                    ("legal_ir_view_prototype", view),
+                    (
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        f"{source_family}||slot:typed-decompiler-family-pair:{pair}||{view}",
+                    ),
+                    (
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        f"{target}||slot:typed-decompiler-family-pair:{pair}||{view}",
+                    ),
+                )
+            )
     for cue in source_scope_cues:
         slots.extend(
             (
@@ -7737,6 +7771,7 @@ def _source_scope_cue_legal_ir_views(cue: str) -> List[str]:
         "under",
         "with_respect_to",
         "within",
+        "heading",
     }:
         add("knowledge_graphs.neo4j_compat")
         add("CEC.native")
@@ -7744,6 +7779,7 @@ def _source_scope_cue_legal_ir_views(cue: str) -> List[str]:
     if normalized_cue in {
         "as_otherwise_provided_in",
         "as_provided_in",
+        "heading",
         "in_accordance_with",
         "pursuant_to",
         "subject_to",
@@ -7782,6 +7818,47 @@ def _source_scope_cue_legal_ir_views(cue: str) -> List[str]:
         "will_not_operate",
     }:
         add("modal.frame_logic")
+    if normalized_cue.startswith("uscode_residual_span"):
+        add("deontic.ir")
+        add("CEC.native")
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
+    return views
+
+
+def _typed_decompiler_family_pair_legal_ir_views(
+    source_family: str,
+    target_family: str,
+) -> List[str]:
+    """Return legal-view anchors for typed source/target reconstruction pairs."""
+    source = _clean_text(source_family).lower()
+    target = _clean_text(target_family).lower()
+    pair = f"{source}->{target}"
+    views: List[str] = []
+
+    def add(view: str) -> None:
+        if view and view not in views:
+            views.append(view)
+
+    if target == "deontic" or source == "deontic":
+        add("deontic.ir")
+        add("CEC.native")
+    if target == "conditional_normative":
+        add("deontic.ir")
+        add("CEC.native")
+        add("TDFOL.prover")
+    if source == "frame" or target == "frame":
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
+        add("CEC.native")
+    if pair in {
+        "deontic->conditional_normative",
+        "deontic->deontic",
+        "frame->deontic",
+        "frame->frame",
+    }:
+        add("CEC.native")
+        add("knowledge_graphs.neo4j_compat")
     return views
 
 
