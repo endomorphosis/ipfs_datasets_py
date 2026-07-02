@@ -6209,6 +6209,75 @@ def test_cec_dcec_bridge_materializes_event_formula_from_packet_guidance() -> No
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
 
 
+def test_cec_dcec_bridge_materializes_event_formula_from_json_packet_guidance() -> None:
+    import json
+
+    from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
+
+    class _PlainNormResult:
+        success = True
+        metadata = {
+            "legal_norm_irs": [
+                {
+                    "source_id": "us-code-38-1731-7736f9e2e50472ec",
+                    "actor": "President",
+                    "action": "assist veterans health care providers",
+                    "modality": "permitted",
+                    "support_text": "The President is authorized to assist.",
+                }
+            ]
+        }
+
+    class _PlainNormConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _PlainNormResult()
+
+    adapter = CecDcecBridgeAdapter(converter=_PlainNormConverter())
+    report = adapter.evaluate(
+        "38 U.S.C. 1731: The President is authorized to assist.",
+        document_id="us-code-38-1731-7736f9e2e50472ec",
+        citation="38 U.S.C. 1731",
+        compiler_guidance={
+            "bundle": json.dumps(
+                {
+                    "action": "repair_cec_dcec_bridge",
+                    "program_synthesis_scope": "cec",
+                    "target_component": "CEC.native",
+                }
+            ),
+            "evidence": json.dumps(
+                [
+                    {
+                        "bridge_failure_name": "cec_dcec_validation_failure_ratio",
+                        "sample_id": "us-code-38-1731-7736f9e2e50472ec",
+                        "spacy_modal_formula_count": 12,
+                        "spacy_parser_missing_formula": False,
+                        "target_view": "CEC.native",
+                    }
+                ]
+            ),
+        },
+    )
+
+    event_record = report.ir_document.views["event_calculus"].payload["records"][0]
+
+    assert event_record["event_formula_source"] == (
+        "compiler_guidance.evidence.materialized_event_formula"
+    )
+    assert event_record["event_formula_syntax_valid"] is True
+    assert (
+        event_record["event_formula_target_components"][
+            "compiler_guidance_materialized"
+        ]
+        is True
+    )
+    assert event_record["compiler_guidance_source"] == "repair_cec_dcec_bridge"
+    assert report.metadata["compiler_guidance_applied"] is True
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
 def test_cec_dcec_bridge_guidance_overrides_generic_legal_frame_category() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 

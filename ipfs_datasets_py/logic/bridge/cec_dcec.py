@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Optional, Sequence
@@ -2723,6 +2724,12 @@ def _compiler_guidance_evidence_rows(
             collection_rows = [value]
         elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
             collection_rows = [row for row in value if isinstance(row, Mapping)]
+        elif isinstance(value, str):
+            parsed = _json_guidance_value(value)
+            if isinstance(parsed, Mapping):
+                collection_rows = [parsed]
+            elif isinstance(parsed, Sequence) and not isinstance(parsed, (str, bytes)):
+                collection_rows = [row for row in parsed if isinstance(row, Mapping)]
         for row in sorted(
             collection_rows,
             key=lambda item: int(item.get("evidence_rank") or item.get("rank") or 999999),
@@ -3762,6 +3769,12 @@ def _looks_like_heading_polluted_text(text: str) -> bool:
 
 def _list_of_dicts(value: Any) -> list[dict[str, Any]]:
     if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
+        if isinstance(value, str):
+            parsed = _json_guidance_value(value)
+            if isinstance(parsed, Mapping):
+                return [dict(parsed)]
+            if isinstance(parsed, Sequence) and not isinstance(parsed, (str, bytes)):
+                return [dict(item) for item in parsed if isinstance(item, Mapping)]
         return []
     return [dict(item) for item in value if isinstance(item, Mapping)]
 
@@ -3769,7 +3782,21 @@ def _list_of_dicts(value: Any) -> list[dict[str, Any]]:
 def _mapping(value: Any) -> dict[str, Any]:
     if isinstance(value, Mapping):
         return dict(value)
+    if isinstance(value, str):
+        parsed = _json_guidance_value(value)
+        if isinstance(parsed, Mapping):
+            return dict(parsed)
     return {}
+
+
+def _json_guidance_value(value: str) -> Any:
+    text = str(value or "").strip()
+    if not text or text[0] not in "[{":
+        return None
+    try:
+        return json.loads(text)
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return None
 
 
 def _boolish(value: Any) -> bool:
