@@ -118,6 +118,7 @@ class ExternalProverRouterBridgeAdapter:
         citation: Optional[str] = None,
         source: str = "us_code",
         source_embedding: Optional[Sequence[float]] = None,
+        compiler_guidance: Optional[Mapping[str, Any]] = None,
     ) -> tuple[LegalIRDocument, Mapping[str, Any]]:
         """Encode text into router-ready TDFOL formulas and graph records."""
 
@@ -128,6 +129,7 @@ class ExternalProverRouterBridgeAdapter:
             citation=citation,
             source=source,
             source_embedding=source_embedding,
+            compiler_guidance=compiler_guidance,
         )
         records = list(context["formula_records"])
         formula_resolution = _router_formula_resolution(records)
@@ -229,6 +231,7 @@ class ExternalProverRouterBridgeAdapter:
             citation=citation,
             source=source,
             source_embedding=source_embedding,
+            compiler_guidance=compiler_guidance,
         )
         router = _build_router(
             enable_native=self.enable_native,
@@ -636,11 +639,23 @@ def _router_guidance_has_passing_external_prover_evidence(
 ) -> bool:
     """Infer the router repair route from passing autoencoder gap evidence."""
 
+    for evidence in _router_guidance_evidence_mappings(compiler_guidance):
+        if evidence is compiler_guidance:
+            continue
+        if _router_guidance_has_passing_external_prover_evidence(evidence):
+            return True
+
     if _router_guidance_targets_external_router(compiler_guidance) and (
         _router_guidance_quality_gate_passes(
             compiler_guidance.get("compiler_guidance_quality_gate")
         )
         or _router_guidance_quality_gate_passes(compiler_guidance.get("quality_gate"))
+        or (
+            _router_guidance_source_is_passing_distillation(compiler_guidance)
+            and _router_guidance_positive_support(
+                _router_guidance_support_value(compiler_guidance)
+            )
+        )
     ):
         return True
 
@@ -677,6 +692,61 @@ def _router_guidance_has_passing_external_prover_evidence(
                 return True
 
     return False
+
+
+def _router_guidance_evidence_mappings(
+    compiler_guidance: Mapping[str, Any],
+) -> tuple[Mapping[str, Any], ...]:
+    """Return nested packet/compiler-guidance mappings that may carry route evidence."""
+
+    mappings: list[Mapping[str, Any]] = []
+    seen: set[int] = set()
+
+    def visit(value: Any) -> None:
+        if isinstance(value, str):
+            value = _router_guidance_mapping(value)
+        if isinstance(value, Mapping):
+            object_id = id(value)
+            if object_id in seen:
+                return
+            seen.add(object_id)
+            mappings.append(value)
+            for nested_key in (
+                "bundle",
+                "semantic_bundle_key",
+                "compiler_guidance_bundle",
+                "metadata",
+                "compiler_guidance_attribution",
+                "attribution",
+                "evidence",
+                "hint_evidence",
+            ):
+                if nested_key in value:
+                    visit(value.get(nested_key))
+            return
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            for item in value:
+                visit(item)
+
+    visit(compiler_guidance)
+    return tuple(mappings)
+
+
+def _router_guidance_source_is_passing_distillation(value: Mapping[str, Any]) -> bool:
+    source = str(value.get("source") or "").strip().lower()
+    if source in {
+        "compiler_guidance_distillation_v1",
+        "compiler_guidance_activation_v1",
+    }:
+        return True
+    return bool(value.get("promotion_allowed") is True)
+
+
+def _router_guidance_support_value(value: Mapping[str, Any]) -> Any:
+    for key in ("support", "support_count", "matched_sample_count", "applied_count"):
+        if key in value:
+            return value.get(key)
+    return 1
 
 
 def _router_guidance_targets_external_router(value: Mapping[str, Any]) -> bool:

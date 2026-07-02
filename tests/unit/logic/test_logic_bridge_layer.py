@@ -180,6 +180,41 @@ def test_external_prover_router_uses_syntactic_fallback_when_backends_absent() -
     assert "native_syntactic" in report.metadata["available_provers"]
 
 
+def test_external_prover_router_promotes_nested_distillation_bundle() -> None:
+    from ipfs_datasets_py.logic.bridge.external_prover_router import (
+        ExternalProverRouterBridgeAdapter,
+        _router_guidance_signal,
+    )
+
+    compiler_guidance = {
+        "bundle": (
+            '{"program_synthesis_scope":"external_provers",'
+            '"source":"compiler_guidance_distillation_v1",'
+            '"target_component":"external_provers.router",'
+            '"support":1}'
+        )
+    }
+
+    signal = _router_guidance_signal(compiler_guidance)
+    assert signal["prover_gate_hint"] is True
+    assert "repair_external_prover_router" in signal["routes"]
+
+    adapter = ExternalProverRouterBridgeAdapter(
+        enable_external_binaries=False,
+        enable_native=False,
+    )
+    report = adapter.evaluate(
+        "The agency shall publish notice before the permit takes effect.",
+        document_id="bridge-layer-external-router-nested-guidance",
+        citation="Bridge Layer Nested Guidance",
+        compiler_guidance=compiler_guidance,
+    )
+
+    assert report.metadata["compiler_guidance_applied"] is True
+    assert report.metadata["compiler_guidance_prover_gate_hint"] is True
+    assert report.proof_gate.compiles is True
+
+
 def test_fol_tdfol_bridge_promotes_json_string_parse_repair_evidence() -> None:
     from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
 
