@@ -5107,6 +5107,7 @@ def test_tdfol_bridge_accepts_packet_shaped_compiler_guidance_route() -> None:
     assert records[0]["source_id"] == "tdfol:compiler_guidance:repair_tdfol_bridge_parse"
     assert records[0]["parse_ok"] is True
     assert report.metadata["compiler_guidance_applied"] is True
+    assert report.ir_document.metadata["compiler_guidance_applied"] is True
     assert report.proof_gate.compiles is True
     assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
 

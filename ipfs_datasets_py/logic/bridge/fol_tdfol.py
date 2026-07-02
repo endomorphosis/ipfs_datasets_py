@@ -216,6 +216,9 @@ class FolTdfolBridgeAdapter:
                     "guidance_formula_count": len(
                         bridge_inputs["proof_obligation_rows"]
                     ),
+                    "compiler_guidance_applied": bool(
+                        compiler_guidance_records
+                    ),
                 },
             ),
             {
