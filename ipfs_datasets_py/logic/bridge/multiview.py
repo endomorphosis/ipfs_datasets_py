@@ -1281,6 +1281,8 @@ def _compiler_guidance_bridge_contract_metadata(
     def collect(mapping: Mapping[str, Any]) -> None:
         for key in ("target_view", "predicted_view", "target_component"):
             add_lane(mapping.get(key))
+        for metric_name in _guidance_metric_names(mapping.get("target_metrics")):
+            _add_metric_target_lanes(metric_name, add_lane=add_lane)
         for key in (
             "legal_ir_underrepresented_components",
             "underrepresented_components",
@@ -1323,6 +1325,11 @@ def _compiler_guidance_bridge_contract_metadata(
         collect(evidence)
 
     target_distribution = _normalize_positive_mapping(lane_scores)
+    if not target_distribution and (
+        "repair_multiview_legal_ir_loss" in routes
+        or "bridge.contracts" in target_components
+    ):
+        target_distribution = dict(_BRIDGE_CONTRACT_GENERIC_LOSS_TARGET_DISTRIBUTION)
     if not target_distribution:
         return {}
     projection_strength = _compiler_guidance_projection_strength(
@@ -1450,6 +1457,10 @@ def _compiler_guidance_nested_mappings(
         value = compiler_guidance.get(key)
         if isinstance(value, Mapping):
             mappings.append(value)
+        else:
+            decoded = _json_mapping(value)
+            if decoded is not None:
+                mappings.append(decoded)
     return tuple(mappings)
 
 
@@ -1466,8 +1477,22 @@ def _compiler_guidance_evidence_rows(
         value = compiler_guidance.get(key)
         if isinstance(value, Mapping):
             rows.append(value)
+        elif isinstance(value, str):
+            decoded_mapping = _json_mapping(value)
+            if decoded_mapping is not None:
+                rows.append(decoded_mapping)
+                continue
+            decoded_rows = _json_sequence_of_mappings(value)
+            if decoded_rows:
+                rows.extend(decoded_rows)
         elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
-            rows.extend(item for item in value if isinstance(item, Mapping))
+            for item in value:
+                if isinstance(item, Mapping):
+                    rows.append(item)
+                    continue
+                decoded = _json_mapping(item)
+                if decoded is not None:
+                    rows.append(decoded)
     return tuple(rows)
 
 
@@ -1488,6 +1513,9 @@ def _guidance_sequence(value: Any) -> tuple[Any, ...]:
 
 
 def _guidance_distribution_items(value: Any) -> tuple[tuple[str, float], ...]:
+    decoded = _json_mapping(value)
+    if decoded is not None:
+        value = decoded
     if not isinstance(value, Mapping):
         return ()
     items: list[tuple[str, float]] = []
@@ -1500,6 +1528,89 @@ def _guidance_distribution_items(value: Any) -> tuple[tuple[str, float], ...]:
             continue
         items.append((str(raw_lane), score))
     return tuple(items)
+
+
+def _guidance_metric_names(value: Any) -> tuple[Any, ...]:
+    names: list[Any] = []
+    for item in _guidance_sequence(value):
+        if isinstance(item, str) and "," in item:
+            names.extend(part.strip() for part in item.split(",") if part.strip())
+        else:
+            names.append(item)
+    return tuple(names)
+
+
+_BRIDGE_CONTRACT_GENERIC_LOSS_TARGET_DISTRIBUTION: Mapping[str, float] = {
+    "TDFOL.prover": 0.30,
+    "deontic.ir": 0.30,
+    "knowledge_graphs.neo4j_compat": 0.25,
+    "modal.frame_logic": 0.15,
+}
+
+
+def _add_metric_target_lanes(
+    metric_name: Any,
+    *,
+    add_lane: Any,
+) -> None:
+    """Project metric names from distillation packets into contract lanes."""
+
+    metric = str(metric_name or "").strip()
+    if not metric:
+        return
+    normalized = metric.lower()
+    if "graph" in normalized or "neo4j" in normalized or "view_coverage" in normalized:
+        add_lane("knowledge_graphs.neo4j_compat", 1.0)
+    if "tdfol" in normalized or "compiler_ir" in normalized:
+        add_lane("TDFOL.prover", 1.0)
+    if "deontic" in normalized or "norm" in normalized:
+        add_lane("deontic.ir", 1.0)
+    if "cec" in normalized or "event" in normalized:
+        add_lane("CEC.native", 1.0)
+    if "prover" in normalized and "external" in normalized:
+        add_lane("external_provers.router", 1.0)
+    if (
+        "source_copy" in normalized
+        or "cosine" in normalized
+        or "cross_entropy" in normalized
+    ):
+        add_lane("modal.frame_logic", 0.75)
+    if normalized in {
+        "legal_ir_multiview_total_loss",
+        "legal_ir_view_cross_entropy_loss",
+    }:
+        for lane, weight in _BRIDGE_CONTRACT_GENERIC_LOSS_TARGET_DISTRIBUTION.items():
+            add_lane(lane, weight)
+
+
+def _json_mapping(value: Any) -> Optional[Mapping[str, Any]]:
+    if not isinstance(value, str):
+        return None
+    text = value.strip()
+    if not text or not text.startswith("{"):
+        return None
+    try:
+        decoded = json.loads(text)
+    except (TypeError, ValueError):
+        return None
+    if isinstance(decoded, Mapping):
+        return decoded
+    return None
+
+
+def _json_sequence_of_mappings(value: Any) -> tuple[Mapping[str, Any], ...]:
+    if not isinstance(value, str):
+        return ()
+    text = value.strip()
+    if not text or not text.startswith("["):
+        return ()
+    try:
+        decoded = json.loads(text)
+    except (TypeError, ValueError):
+        return ()
+    if not isinstance(decoded, Sequence) or isinstance(decoded, (str, bytes)):
+        return ()
+    return tuple(item for item in decoded if isinstance(item, Mapping))
 
 
 def _normalize_positive_mapping(values: Mapping[str, float]) -> Dict[str, float]:

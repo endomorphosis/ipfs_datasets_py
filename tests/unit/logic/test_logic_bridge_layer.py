@@ -2168,6 +2168,44 @@ def test_bridge_contract_compacts_admin_notice_review_uscode_targets() -> None:
     assert abs(sum(compacted.values()) - 1.0) < 1e-12
 
 
+def test_bridge_contract_promotes_packet_json_bundle_guidance() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _compiler_guidance_bridge_contract_metadata,
+    )
+
+    metadata = _compiler_guidance_bridge_contract_metadata(
+        {
+            "bundle": (
+                '{"program_synthesis_scope":"bridge",'
+                '"route":"repair_multiview_legal_ir_loss",'
+                '"source":"compiler_guidance_distillation_v1",'
+                '"target_component":"bridge.contracts"}'
+            ),
+            "target_metrics": (
+                "cross_entropy_loss, cosine_similarity, "
+                "compiler_ir_cross_entropy_loss, compiler_ir_cosine_similarity, "
+                "source_copy_reward_hack_penalty, legal_ir_view_cross_entropy_loss, "
+                "legal_ir_multiview_total_loss"
+            ),
+        }
+    )
+
+    target_distribution = metadata[
+        "compiler_guidance_bridge_contract_target_distribution"
+    ]
+
+    assert metadata["compiler_guidance_bridge_contract_target_lanes"]
+    assert set(target_distribution) == {
+        "TDFOL.prover",
+        "deontic.ir",
+        "knowledge_graphs.neo4j_compat",
+        "modal.frame_logic",
+    }
+    assert target_distribution["TDFOL.prover"] > 0.0
+    assert target_distribution["knowledge_graphs.neo4j_compat"] > 0.0
+    assert abs(sum(target_distribution.values()) - 1.0) < 1e-12
+
+
 def test_modal_frame_logic_bridge_exports_graph_projection_signal_for_uscode_scaffolds() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
