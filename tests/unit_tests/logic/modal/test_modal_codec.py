@@ -35362,6 +35362,49 @@ def test_decompiler_routes_packer_definition_to_conditional_normative_slots() ->
     assert "livestock commerce" in structural_text
 
 
+def test_decompiler_routes_priority_state_definition_to_typed_legal_views() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            'Definitions. The term "Priority State" means a State that is '
+            "eligible for funding under the State Energy Program and is among "
+            "the 15 States with the highest annual per-capita combined energy "
+            "burdens."
+        ),
+        predicate="priority_state_definition",
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    assert "priority_state" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "funding_eligibility" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "state_energy_program" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "per_capita_ranking" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "state_ranking" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "frame->conditional_normative" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "priority_state:frame->conditional_normative" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "funding_eligibility:frame->conditional_normative" in slot_texts[
+        "typed-decompiler-source-semantic-family-pair"
+    ]
+    assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
+    assert "knowledge_graphs.neo4j_compat" in slot_texts["legal_ir_view_prototype"]
+    assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
+
+
 def test_decompiler_emits_fee_collection_slots_for_admission_frame_span() -> None:
     document = _single_formula_document(
         family="frame",
