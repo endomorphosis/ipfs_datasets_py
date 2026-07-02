@@ -33448,6 +33448,103 @@ def test_decompiler_reconstructs_packet_276_authority_and_grant_atoms() -> None:
     assert "program" in sea_grant_structural_text
 
 
+def test_decompiler_reconstructs_mining_claim_date_range_from_typed_slots() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Mining claims located between July 31, 1939, and January 1, "
+            "1953. No land shall be patented under the mineral leasing laws."
+        ),
+        predicate="mining_claim_patent_restriction",
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "mining_claim" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "date_range_temporal_scope" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "patent_prohibition:frame->deontic" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "mining_claim:frame->temporal" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "mining claim" in structural_text
+    assert "date range temporal scope" in structural_text
+
+
+def test_decompiler_reconstructs_award_program_and_fund_transfer_atoms() -> None:
+    awards = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Sustainable chemistry research and education. The Director shall "
+            "carry out activities, including establishing a program to make "
+            "awards on a competitive basis."
+        ),
+        predicate="director_sustainable_chemistry_awards",
+    )
+    transfer = _single_formula_document(
+        family="conditional_normative",
+        symbol="O|",
+        label="conditional obligation",
+        text=(
+            "The Secretary may transfer funds made available for the fiscal "
+            "year, and the funds shall remain available until expended."
+        ),
+        predicate="secretary_transfer_available_funds",
+    )
+
+    awards_decoded = decode_modal_ir_document(awards)
+    awards_slots = decoded_modal_phrase_slot_text_map(awards_decoded)
+    awards_structural_text = _structural_decoded_text(
+        awards_decoded,
+        modal_ir=awards,
+        selected_frame=None,
+    )
+    transfer_decoded = decode_modal_ir_document(transfer)
+    transfer_slots = decoded_modal_phrase_slot_text_map(transfer_decoded)
+    transfer_structural_text = _structural_decoded_text(
+        transfer_decoded,
+        modal_ir=transfer,
+        selected_frame=None,
+    )
+
+    assert "sustainable_chemistry_research" in awards_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "competitive_award_program:frame->deontic" in awards_slots[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "knowledge_graphs.neo4j_compat" in awards_slots[
+        "legal_ir_view_prototype"
+    ]
+    assert "sustainable chemistry research" in awards_structural_text
+    assert "competitive award program" in awards_structural_text
+
+    assert "fund_transfer_authority" in transfer_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "no_year_funding_availability" in transfer_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "fund_transfer_authority:conditional_normative->temporal" in transfer_slots[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "fund transfer authority" in transfer_structural_text
+    assert "no year funding availability" in transfer_structural_text
+
+
 def test_decompiler_reconstructs_renumbered_status_transition_from_typed_slots() -> None:
     document = _single_formula_document(
         family="frame",

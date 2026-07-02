@@ -131,6 +131,12 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("administration and enforcement", "administration_enforcement"),
     ("authorization of appropriations", "appropriation_authorization"),
     ("authorized to be appropriated", "appropriation_authorization"),
+    ("telemedicine and distance learning services", "telemedicine_distance_learning"),
+    ("distance learning services", "telemedicine_distance_learning"),
+    ("sustainable chemistry research and education", "sustainable_chemistry_research"),
+    ("sustainable chemistry", "sustainable_chemistry_research"),
+    ("make awards on a competitive basis", "competitive_award_program"),
+    ("make awards", "award_program"),
     ("jurisdiction of new york state courts in civil actions", "state_court_civil_jurisdiction"),
     ("jurisdiction of new york state courts", "state_court_jurisdiction"),
     ("state courts in civil actions", "state_court_civil_jurisdiction"),
@@ -145,6 +151,10 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("national game preserve", "game_preserve"),
     ("white horse hill national game preserve", "white_horse_hill_game_preserve"),
     ("annual report", "annual_report"),
+    ("report to congress", "congressional_report_duty"),
+    ("report to congress; contents", "report_contents"),
+    ("report contents", "report_contents"),
+    ("contents within one year", "report_contents"),
     ("annual budget program", "budget_program_submission"),
     ("annually shall submit", "annual_report_duty"),
     ("prepare and submit", "submit_or_file"),
@@ -179,8 +189,20 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("export promotion", "export_promotion"),
     ("remain available until expended", "no_year_funding_availability"),
     ("available until expended", "no_year_funding_availability"),
+    ("transfer of funds made available", "fund_transfer_authority"),
+    ("transfer funds made available", "fund_transfer_authority"),
+    ("transfer funds", "fund_transfer_authority"),
     ("expenditures and cultivation requirements", "expenditure_requirement"),
     ("shall have expended", "expenditure_requirement"),
+    ("mining claims", "mining_claim"),
+    ("mining claim", "mining_claim"),
+    ("mineral lands and mining", "mineral_land_status"),
+    ("mineral leasing laws", "mineral_leasing_law"),
+    ("located between", "date_range_temporal_scope"),
+    ("judicial sales", "judicial_sale_execution"),
+    ("executions and judicial sales", "judicial_sale_execution"),
+    ("marshal's incapacity", "marshal_incapacity"),
+    ("marshal incapacity", "marshal_incapacity"),
     ("no land shall be patented", "patent_prohibition"),
     ("research program and plan", "research_program_plan"),
     ("grants for research", "research_grant"),
@@ -206,12 +228,6 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("reclassified as section", "editorial_reclassification"),
     ("crime control and law enforcement", "crime_control_law_enforcement"),
     ("law enforcement", "law_enforcement"),
-    ("enforcement action", "enforcement_remedy"),
-    ("enforcement actions", "enforcement_remedy"),
-    ("legal remedy", "remedy"),
-    ("legal remedies", "remedy"),
-    ("civil remedy", "remedy"),
-    ("civil remedies", "remedy"),
     ("plant variety protection office", "plant_variety_protection_office"),
     ("plant variety protection", "plant_variety_protection"),
     ("seal from the plant variety protection office", "office_seal"),
@@ -2545,6 +2561,12 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         normalized,
     ):
         add("temporal_condition")
+    if re.search(
+        r"\b(?:between|from)\b.{0,80}\b(?:18|19|20)\d{2}\b"
+        r".{0,80}\b(?:and|to|through|until)\b.{0,80}\b(?:18|19|20)\d{2}\b",
+        normalized,
+    ):
+        add("date_range_temporal_scope")
     if re.search(r"\bannually\b", normalized) and re.search(
         r"\b(?:report|submit|make\s+publicly\s+available)\b",
         normalized,
@@ -2575,10 +2597,20 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
     ):
         add("report_duty")
     if re.search(
+        r"\breports?\b.{0,80}\b(?:contents?|discussion|actions?\s+taken|include)\b",
+        normalized,
+    ):
+        add("report_contents")
+    if re.search(
         r"\b(?:study|review|assessment)\b.{0,40}\b(?:and\s+)?reports?\b",
         normalized,
     ):
         add("study_report_duty")
+    if re.search(
+        r"\b(?:transfer|transferred|transferring)\b.{0,80}\bfunds?\b",
+        normalized,
+    ):
+        add("fund_transfer_authority")
     if re.search(r"\bterminat(?:e|es|ed|ion)\b.{0,60}\bauthorit(?:y|ies)\b", normalized):
         add("termination_authority")
     if re.search(r"\b(?:consultation|cooperation)\b", normalized):
@@ -2594,24 +2626,6 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         add("civil_action")
     if re.search(r"\blaw\s+enforcement\b", normalized):
         add("law_enforcement")
-    if re.search(
-        r"\b(?:remed(?:y|ies)|sanctions?|penalt(?:y|ies)|"
-        r"enforcement\s+actions?|civil\s+actions?|liable|liability)\b",
-        normalized,
-    ):
-        add("remedy")
-    if re.search(
-        r"\b(?:enforce(?:ment|d|s)?|violat(?:e|es|ed|ion|ions))\b"
-        r".{0,80}\b(?:remed(?:y|ies)|sanctions?|penalt(?:y|ies)|"
-        r"liable|liability|actions?)\b",
-        normalized,
-    ) or re.search(
-        r"\b(?:remed(?:y|ies)|sanctions?|penalt(?:y|ies)|"
-        r"liable|liability|actions?)\b"
-        r".{0,80}\b(?:enforce(?:ment|d|s)?|violat(?:e|es|ed|ion|ions))\b",
-        normalized,
-    ):
-        add("enforcement_remedy")
     if re.search(r"\b(?:official\s+)?seal\b", normalized):
         add("official_seal")
     if re.search(r"\bplant\s+variety\s+protection\s+office\b", normalized):
@@ -6928,12 +6942,6 @@ def _typed_decompiler_target_reconstruction_slots(
                     ),
                 )
             )
-            if atom in {"enforcement_remedy", "remedy"} and target in {
-                "deontic",
-                "frame",
-                "temporal",
-            }:
-                slots.append(("decompiler-plan", f"compiled-role:{target}:{atom}"))
         if target == "temporal" and has_temporal_scope:
             temporal_symbol = (
                 source_symbol if source_family == "temporal" and source_symbol else "f"
@@ -7198,15 +7206,18 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "administration_enforcement",
         "admission_fee_collection",
         "audit_requirement",
+        "award_program",
         "board_of_directors",
         "boundary_division_fence",
         "budget_program_submission",
         "civil_action",
         "civil_action_jurisdiction",
         "civil_enforcement",
+        "competitive_award_program",
         "crime_control_law_enforcement",
         "export_promotion",
         "fee_collection_authority",
+        "fund_transfer_authority",
         "foreign_commercial_service",
         "false_claim_knowledge",
         "false_fraudulent_claim",
@@ -7218,16 +7229,26 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "historic_area",
         "historic_area_access_road",
         "irrigation_project",
+        "judicial_sale_execution",
         "jurisdiction_authority",
         "law_enforcement",
         "livestock_commerce",
+        "officer_election",
+        "prize_proceeds_charge",
+        "marshal_incapacity",
+        "mineral_land_status",
+        "mineral_leasing_law",
+        "mining_claim",
         "enforcement_remedy",
         "officer_election",
         "prize_proceeds_charge",
         "remedy",
+        "report_contents",
         "state_court_civil_jurisdiction",
         "state_court_jurisdiction",
         "state_conveyance_authority",
+        "sustainable_chemistry_research",
+        "telemedicine_distance_learning",
         "treasury_deposit",
         "unknown_party_deposit",
         "white_horse_hill_game_preserve",
@@ -7254,6 +7275,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "civil_action_jurisdiction",
         "export_promotion",
         "fee_collection_authority",
+        "fund_transfer_authority",
         "foreign_commercial_service",
         "false_claim_knowledge",
         "false_fraudulent_claim",
@@ -7261,16 +7283,18 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "health_professional_education_assistance",
         "marine_science_development",
         "irrigation_project",
+        "mineral_land_status",
+        "mineral_leasing_law",
+        "mining_claim",
         "nonirrigable_land_status",
         "permanent_nonirrigable_land_status",
         "jurisdiction_authority",
         "livestock_commerce",
-        "enforcement_remedy",
         "prize_proceeds_charge",
-        "remedy",
         "road_conveyance",
         "sea_grant_college",
         "sea_grant_college_program",
+        "sustainable_chemistry_research",
         "state_court_civil_jurisdiction",
         "state_court_jurisdiction",
         "state_conveyance_authority",
@@ -7301,8 +7325,6 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "plant_variety_protection",
         "plant_variety_protection_office",
         "prize_proceeds_charge",
-        "enforcement_remedy",
-        "remedy",
         "treasury_deposit",
         "unknown_party_deposit",
     }:
@@ -7314,9 +7336,11 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "admission_fee_collection",
         "appropriation_authorization",
         "audit_requirement",
+        "award_program",
         "build_maintain_duty",
         "budget_program_submission",
         "congressional_report_duty",
+        "competitive_award_program",
         "definition",
         "exception_or_condition",
         "exempt_operation",
@@ -7324,10 +7348,13 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "expenditure_requirement",
         "facility_operation",
         "fee_collection_authority",
+        "fund_transfer_authority",
         "false_claim_knowledge",
         "false_fraudulent_claim",
         "government_claim",
         "account_maintenance",
+        "judicial_sale_execution",
+        "marshal_incapacity",
         "nonirrigable_land_status",
         "office_establishment",
         "obligation",
@@ -7339,6 +7366,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "public_report_duty",
         "enforcement_remedy",
         "remedy",
+        "report_contents",
         "research_activity",
         "research_grant",
         "report_duty",
@@ -7373,12 +7401,15 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "annual_report",
         "annual_report_duty",
         "budget_program_submission",
+        "date_range_temporal_scope",
+        "fund_transfer_authority",
         "marine_science_development",
+        "mineral_land_status",
+        "mineral_leasing_law",
+        "mining_claim",
         "sea_grant_college",
         "sea_grant_college_program",
         "no_year_funding_availability",
-        "enforcement_remedy",
-        "remedy",
         "research_activity",
         "research_grant",
         "study_report_duty",
@@ -7405,6 +7436,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "admission_fee_collection",
             "account_maintenance",
             "audit_requirement",
+            "award_program",
             "build_maintain_duty",
             "budget_program_submission",
             "congressional_report_duty",
@@ -7426,8 +7458,6 @@ def _typed_decompiler_semantic_atom_target_families(
             "permission",
             "prohibition",
             "public_report_duty",
-            "enforcement_remedy",
-            "remedy",
             "research_activity",
             "research_grant",
             "report_duty",
@@ -7452,8 +7482,6 @@ def _typed_decompiler_semantic_atom_target_families(
             "study_report_duty",
             "termination_authority",
             "temporal_condition",
-            "enforcement_remedy",
-            "remedy",
         }:
             add("temporal")
         if normalized_atom in {
@@ -7461,6 +7489,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "administration_enforcement",
             "admission_fee_collection",
             "audit_requirement",
+            "award_program",
             "board_of_directors",
             "boundary_division_fence",
             "budget_program_submission",
@@ -7469,12 +7498,14 @@ def _typed_decompiler_semantic_atom_target_families(
             "civil_enforcement",
             "consultation",
             "consultation_cooperation",
+            "competitive_award_program",
             "crime_control_law_enforcement",
             "definition",
             "export_promotion",
             "exempt_operation",
             "facility_operation",
             "fee_collection_authority",
+            "fund_transfer_authority",
             "foreign_commercial_service",
             "false_claim_knowledge",
             "false_fraudulent_claim",
@@ -7489,13 +7520,17 @@ def _typed_decompiler_semantic_atom_target_families(
             "agency_determination",
             "internal_service_fee",
             "irrigation_project",
+            "judicial_sale_execution",
+            "marshal_incapacity",
+            "mineral_land_status",
+            "mineral_leasing_law",
+            "mining_claim",
             "nonirrigable_land_status",
             "permanent_nonirrigable_land_status",
             "jurisdiction_authority",
             "law_enforcement",
             "livestock_commerce",
             "marine_science_development",
-            "enforcement_remedy",
             "office_establishment",
             "office_of_womens_health",
             "office_seal",
@@ -7505,9 +7540,11 @@ def _typed_decompiler_semantic_atom_target_families(
             "plant_variety_protection_office",
             "prize_proceeds_charge",
             "remedy",
+            "report_contents",
             "road_conveyance",
             "sea_grant_college",
             "sea_grant_college_program",
+            "sustainable_chemistry_research",
             "test_platform",
             "state_court_civil_jurisdiction",
             "state_court_jurisdiction",
@@ -7529,12 +7566,15 @@ def _typed_decompiler_semantic_atom_target_families(
             "education_assistance_benefit",
             "health_professional_education_assistance",
             "internal_service_fee",
+            "award_program",
             "road_conveyance",
             "office_seal",
             "official_seal",
             "plant_variety_protection",
             "plant_variety_protection_office",
             "prize_proceeds_charge",
+            "fund_transfer_authority",
+            "competitive_award_program",
             "research_grant",
             "sea_grant_college_program",
             "state_conveyance_authority",
