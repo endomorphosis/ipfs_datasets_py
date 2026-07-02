@@ -62,6 +62,54 @@ def test_bridge_import_is_lightweight() -> None:
     assert "ipfs_datasets_py.logic.external_provers" not in sys.modules
 
 
+def test_deontic_phase8_quality_soft_passes_stale_coverage_validation() -> None:
+    from ipfs_datasets_py.logic.bridge.deontic_norms import (
+        _merge_phase8_validation_from_coverage_records,
+    )
+
+    phase8_records = [
+        {
+            "source_id": "deontic:test",
+            "phase8_quality_complete": True,
+            "requires_validation": False,
+            "coverage_blockers": [],
+            "coverage_summary": {
+                "phase8_quality_complete": True,
+                "requires_validation": False,
+                "coverage_blockers": [],
+                "reconstruction_slot_loss": {
+                    "slot_reconstruction_complete": True,
+                },
+                "ir_slot_provenance": {
+                    "all_checked_slots_grounded": True,
+                },
+                "prover_syntax_corpus_coverage": {
+                    "all_sources_complete": True,
+                },
+            },
+        }
+    ]
+    stale_coverage_records = [
+        {
+            "source_id": "deontic:test",
+            "requires_validation": True,
+            "coverage_blockers": ["legacy_requires_validation"],
+            "coverage_summary": {"requires_validation": True},
+        }
+    ]
+
+    merged = _merge_phase8_validation_from_coverage_records(
+        phase8_records,
+        stale_coverage_records,
+    )
+
+    assert merged[0]["phase8_quality_complete"] is True
+    assert merged[0]["requires_validation"] is False
+    assert merged[0]["coverage_blockers"] == []
+    assert merged[0]["coverage_validation_soft_pass"] is True
+    assert merged[0]["coverage_validation_blockers"] == ["legacy_requires_validation"]
+
+
 def test_modal_frame_logic_bridge_evaluates_ir_graph_and_proof_gate() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 

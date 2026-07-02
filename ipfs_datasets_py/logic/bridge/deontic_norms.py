@@ -2414,17 +2414,29 @@ def _merge_phase8_validation_from_coverage_records(
             merged.append(row)
             continue
 
-        blockers = set(_list_of_strings(row.get("coverage_blockers")))
-        blockers.update(_list_of_strings(coverage_record.get("coverage_blockers")))
+        row_blockers = set(_list_of_strings(row.get("coverage_blockers")))
+        coverage_blockers = set(_list_of_strings(coverage_record.get("coverage_blockers")))
+        coverage_requires_validation = _coverage_record_requires_validation(coverage_record)
+        coverage_soft_pass = _phase8_quality_soft_passes_coverage_validation(
+            row,
+            coverage_record,
+        )
 
-        requires_validation = _truthy_flag(
-            row.get("requires_validation")
-        ) or _coverage_record_requires_validation(coverage_record)
+        blockers = set(row_blockers)
+        if coverage_requires_validation and not coverage_soft_pass:
+            blockers.update(coverage_blockers)
+
+        requires_validation = _truthy_flag(row.get("requires_validation")) or (
+            coverage_requires_validation and not coverage_soft_pass
+        )
         row["coverage_blockers"] = sorted(blockers)
         row["requires_validation"] = requires_validation
         row["phase8_quality_complete"] = (
             bool(row.get("phase8_quality_complete")) and not requires_validation
         )
+        if coverage_soft_pass:
+            row["coverage_validation_soft_pass"] = True
+            row["coverage_validation_blockers"] = sorted(coverage_blockers)
         coverage_summary = row.get("coverage_summary")
         if isinstance(coverage_summary, Mapping):
             summary = dict(coverage_summary)
@@ -2435,6 +2447,9 @@ def _merge_phase8_validation_from_coverage_records(
             summary_blockers = set(_list_of_strings(summary.get("coverage_blockers")))
             summary_blockers.update(blockers)
             summary["coverage_blockers"] = sorted(summary_blockers)
+            if coverage_soft_pass:
+                summary["coverage_validation_soft_pass"] = True
+                summary["coverage_validation_blockers"] = sorted(coverage_blockers)
             row["coverage_summary"] = summary
         merged.append(row)
 
@@ -2444,6 +2459,47 @@ def _merge_phase8_validation_from_coverage_records(
         merged.append(_phase8_record_from_coverage_record(coverage_record))
 
     return merged
+
+
+def _phase8_quality_soft_passes_coverage_validation(
+    phase8_record: Mapping[str, Any],
+    coverage_record: Mapping[str, Any],
+) -> bool:
+    """Return whether complete Phase 8 quality clears stale coverage validation.
+
+    The deontic bridge reports decoder reconstruction, local prover coverage,
+    and IR slot provenance as a source-level Phase 8 quality gate.  Persisted
+    coverage records can still carry older ``requires_validation`` flags even
+    when that richer gate is complete for the same source.  Treat those as
+    coverage diagnostics, not bridge-quality failures.
+    """
+
+    if phase8_record.get("phase8_quality_complete") is not True:
+        return False
+    if _truthy_flag(phase8_record.get("requires_validation")):
+        return False
+    if not _coverage_record_requires_validation(coverage_record):
+        return False
+
+    summary = phase8_record.get("coverage_summary")
+    if not isinstance(summary, Mapping):
+        return False
+    reconstruction = summary.get("reconstruction_slot_loss")
+    if not isinstance(reconstruction, Mapping):
+        return False
+    if reconstruction.get("slot_reconstruction_complete") is not True:
+        return False
+    provenance = summary.get("ir_slot_provenance")
+    if not isinstance(provenance, Mapping):
+        return False
+    if provenance.get("all_checked_slots_grounded") is not True:
+        return False
+    prover = summary.get("prover_syntax_corpus_coverage")
+    if not isinstance(prover, Mapping):
+        return False
+    if prover.get("all_sources_complete") is not True:
+        return False
+    return True
 
 
 def _phase8_record_from_coverage_record(record: Mapping[str, Any]) -> dict[str, Any]:
