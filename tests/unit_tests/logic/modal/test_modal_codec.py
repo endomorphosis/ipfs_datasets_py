@@ -26184,46 +26184,39 @@ def test_modal_compiler_surfaces_packet_000111_compiler_ambiguity_policy_pairs(
     )
     scenarios = (
         {
-            "sample_id": "us-code-42-17256.-53095ca157393209",
-            "predicted_family": "frame",
-            "target_family": "deontic",
-            "family_margin": -0.104926223005,
-            "priority": 0.254926223005,
+            "sample_id": "us-code-33-3803-ac8f8e7ef6c14117",
+            "predicted_family": "deontic",
+            "target_family": "conditional_normative",
+            "family_margin": -0.152841598672,
+            "priority": 0.302841598672,
         },
         {
-            "sample_id": "us-code-18-1705-828a5b629d033e04",
-            "predicted_family": "frame",
-            "target_family": "doxastic",
-            "family_margin": -0.511343388633,
-            "priority": 0.661343388633,
-        },
-        {
-            "sample_id": "us-code-33-2213a-a015499eddb1f5f6",
+            "sample_id": "us-code-2-5541-462165e82b6b68ce",
             "predicted_family": "frame",
             "target_family": "conditional_normative",
-            "family_margin": -0.999995435821,
-            "priority": 1.149995435821,
+            "family_margin": -0.066991852876,
+            "priority": 0.216991852876,
         },
         {
-            "sample_id": "us-code-51-40305.-5f23b53ad79a36d5",
-            "predicted_family": "frame",
+            "sample_id": "us-code-38-1731-7736f9e2e50472ec",
+            "predicted_family": "temporal",
+            "target_family": "deontic",
+            "family_margin": -0.020471159665,
+            "priority": 0.170471159665,
+        },
+        {
+            "sample_id": "us-code-10-2263-571407a5044f94b2",
+            "predicted_family": "temporal",
             "target_family": "frame",
-            "family_margin": 0.090044947089,
-            "priority": 0.059955052911,
-        },
-        {
-            "sample_id": "us-code-33-579f-1eafb0dbc84f748e",
-            "predicted_family": "frame",
-            "target_family": "temporal",
-            "family_margin": -0.604402806232,
-            "priority": 0.754402806232,
+            "family_margin": -0.602442718506,
+            "priority": 0.752442718506,
         },
     )
     expected_pairs = {
         (str(scenario["predicted_family"]), str(scenario["target_family"]))
         for scenario in scenarios
     }
-    assert expected_pairs.issubset(set(COMPILER_AMBIGUITY_PACKET_000111_FAMILY_PAIRS))
+    assert expected_pairs == set(COMPILER_AMBIGUITY_PACKET_000111_FAMILY_PAIRS)
 
     for index, scenario in enumerate(scenarios, start=1):
         predicted_family = str(scenario["predicted_family"])
