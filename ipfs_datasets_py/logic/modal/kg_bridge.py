@@ -162,6 +162,7 @@ _SECTION_STRUCTURE_PREDICATE_PREFIXES = (
     "section_subsection_",
     "source_id_section_",
     "source_id_title_section_",
+    "usc_hierarchy_",
 )
 _SOURCE_ID_CITATION_STRUCTURE_PREDICATES = {
     "source_id_citation_canonical",

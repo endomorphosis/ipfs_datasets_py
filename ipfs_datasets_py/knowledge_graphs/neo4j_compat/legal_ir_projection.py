@@ -85,6 +85,9 @@ _SUBCHAPTER_HEADING_RE = re.compile(
 _PART_HEADING_RE = re.compile(
     r"\bPart\s+(?P<label>[IVXLCDM0-9A-Z-]+)\s+-\s+"
     r"(?P<heading>.+?)(?="
+    r"\s+CHAPTER\s+[0-9A-Za-z-]+\s+-\s+|"
+    r"\s+SUBCHAPTER\s+[IVXLCDM0-9A-Z-]+\s+-\s+|"
+    r"\s+Subchapter\s+[IVXLCDM0-9A-Z-]+\s+-\s+|"
     r"\s+subpart\s+[IVXLCDM0-9A-Z-]+\s+-\s+|"
     r"\s+Secs?\.?\s+\d|$)",
     re.IGNORECASE,

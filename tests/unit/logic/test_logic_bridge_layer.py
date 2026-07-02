@@ -944,6 +944,12 @@ def test_neo4j_compat_projects_uscode_hierarchy_and_repealed_catchlines() -> Non
         for relationship in graph_data.relationships
     }
     view_distribution = graph_data.metadata["frame_logic_projection_view_distribution"]
+    view_by_predicate = {
+        relationship.properties["flogic_predicate"]: relationship.properties[
+            "frame_logic_projection_view"
+        ]
+        for relationship in graph_data.relationships
+    }
 
     assert ("usc_hierarchy_title_label", "16") in graph_triples
     assert ("usc_hierarchy_title_heading", "CONSERVATION") in graph_triples
@@ -955,9 +961,78 @@ def test_neo4j_compat_projects_uscode_hierarchy_and_repealed_catchlines() -> Non
     assert ("section_catchline", "Repealed") in graph_triples
     assert ("section_heading_tail", "Repealed") in graph_triples
     assert ("status_keyword", "repealed") in graph_triples
+    assert view_by_predicate["usc_hierarchy_title_label"] == "section_structure"
+    assert view_by_predicate["usc_hierarchy_chapter_heading"] == "section_structure"
     assert view_distribution["citation_structure"] >= 1
     assert view_distribution["section_structure"] >= 1
     assert view_distribution["editorial_status"] >= 1
+    assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
+    assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
+
+
+def test_neo4j_compat_projects_packet_legal_ir_hierarchy_samples_as_section_structure() -> None:
+    from ipfs_datasets_py.logic.modal.kg_bridge import flogic_triples_to_graph_data
+
+    graph_data = flogic_triples_to_graph_data(
+        [
+            {
+                "subject": "us-code-10-2515-cb1304b3980adf2a",
+                "predicate": "source_text",
+                "object": (
+                    "10 U.S.C. 2515: U.S.C. Title 10 - ARMED FORCES "
+                    "10 U.S.C. United States Code, 2024 Edition Title 10 - "
+                    "ARMED FORCES Subtitle A - General Military Law PART IV - "
+                    "SERVICE, SUPPLY, AND PROPERTY CHAPTER 148 - REPEALED "
+                    "SUBCHAPTER III - REPEALED Sec. 2515 - Repealed."
+                ),
+            },
+            {
+                "subject": "us-code-22-290k-5-2914184e2690e597",
+                "predicate": "source_text",
+                "object": (
+                    "22 U.S.C. 290k-5: U.S.C. Title 22 - FOREIGN RELATIONS "
+                    "AND INTERCOURSE 22 U.S.C. United States Code, 2024 "
+                    "Edition CHAPTER 7 - INTERNATIONAL BUREAUS, CONGRESSES, "
+                    "ETC. SUBCHAPTER XXVI - MULTILATERAL INVESTMENT "
+                    "GUARANTEE AGENCY Sec. 290k-5 - Jurisdiction."
+                ),
+            },
+        ],
+        graph_id="packet-000193-uscode-hierarchy-projection",
+    )
+
+    graph_triples = {
+        (
+            relationship.properties["flogic_subject"],
+            relationship.properties["flogic_predicate"],
+            relationship.properties["flogic_object"],
+        )
+        for relationship in graph_data.relationships
+    }
+    views_by_predicate = {
+        relationship.properties["flogic_predicate"]: relationship.properties[
+            "frame_logic_projection_view"
+        ]
+        for relationship in graph_data.relationships
+    }
+
+    assert (
+        "us-code-10-2515-cb1304b3980adf2a",
+        "usc_hierarchy_part_heading",
+        "SERVICE, SUPPLY, AND PROPERTY",
+    ) in graph_triples
+    assert (
+        "us-code-10-2515-cb1304b3980adf2a",
+        "usc_hierarchy_subchapter_heading",
+        "REPEALED",
+    ) in graph_triples
+    assert (
+        "us-code-22-290k-5-2914184e2690e597",
+        "usc_hierarchy_subchapter_heading",
+        "MULTILATERAL INVESTMENT GUARANTEE AGENCY",
+    ) in graph_triples
+    assert views_by_predicate["usc_hierarchy_part_heading"] == "section_structure"
+    assert views_by_predicate["usc_hierarchy_subchapter_heading"] == "section_structure"
     assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
     assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
 
