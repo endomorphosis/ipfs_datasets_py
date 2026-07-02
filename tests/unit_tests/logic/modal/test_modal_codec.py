@@ -35085,6 +35085,40 @@ def test_decompiler_emits_direct_target_reconstruction_pair_and_family_slots() -
     )
 
 
+def test_decompiler_uses_autoencoder_target_family_in_typed_reconstruction() -> None:
+    document = _single_formula_document(
+        family="epistemic",
+        symbol="K",
+        label="knowledge",
+        text="The Secretary determines that compliance is adequate.",
+        predicate="secretary_determines_compliance",
+    )
+    document.metadata["hint_evidence"] = [
+        {
+            "predicted_family": "epistemic",
+            "target_family": "temporal",
+            "target_view": "CEC.native",
+        }
+    ]
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "epistemic->temporal" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert any(
+        "temporal deadline period" in value
+        for value in slot_texts["typed_ir_reconstruction"]
+    )
+    assert "temporal deadline period" in structural_text
+
+
 def test_decompiler_routes_office_seal_atoms_to_deontic_frame_and_legal_views() -> None:
     document = _single_formula_document(
         family="deontic",

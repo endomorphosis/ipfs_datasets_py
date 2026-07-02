@@ -2257,6 +2257,9 @@ def _typed_ir_reconstruction_phrases(
         ),
         roles=roles,
     )
+    for guided_target in _autoencoder_target_family_guidance_values(document):
+        if guided_target not in targets:
+            targets.append(guided_target)
     if (condition_values or exception_values) and "conditional_normative" not in targets:
         targets.append("conditional_normative")
     if family == "frame" and semantic_atoms:
@@ -3835,6 +3838,21 @@ def _autoencoder_guidance_entries(document: ModalIRDocument) -> List[Mapping[str
         for evidence in _mapping_sequence(metadata.get("evidences")):
             add_mapping(evidence)
     return entries
+
+
+def _autoencoder_target_family_guidance_values(
+    document: ModalIRDocument,
+) -> List[str]:
+    """Return explicit target-family hints for typed IR reconstruction."""
+    targets: List[str] = []
+    for entry in _autoencoder_guidance_entries(document):
+        for field in ("target_family", "selected_family"):
+            family = _slot_safe_family_key(
+                _clean_text(str(entry.get(field) or "")).lower()
+            )
+            if family and family not in targets:
+                targets.append(family)
+    return targets
 
 
 def _modal_family_guidance_features(entry: Mapping[str, Any]) -> List[str]:
@@ -7144,6 +7162,9 @@ def _typed_decompiler_target_reconstruction_slots(
         text=reconstruction_text,
         roles=roles,
     )
+    for guided_target in _autoencoder_target_family_guidance_values(document):
+        if guided_target not in targets:
+            targets.append(guided_target)
     condition_cues = _typed_decompiler_condition_cues(
         condition_values=condition_values,
         exception_values=exception_values,
@@ -7430,6 +7451,9 @@ def _typed_decompiler_source_reconstruction_slots(
         text=reconstruction_text,
         roles=roles,
     )
+    for guided_target in _autoencoder_target_family_guidance_values(document):
+        if guided_target not in targets:
+            targets.append(guided_target)
     condition_cues = _typed_decompiler_condition_cues(
         condition_values=condition_values,
         exception_values=exception_values,
