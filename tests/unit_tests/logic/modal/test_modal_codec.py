@@ -33418,6 +33418,25 @@ def test_decompiler_emits_reclassification_target_slots_for_uscode_status_clause
     assert "knowledge_graphs.neo4j_compat" in slot_texts["legal_ir_view_prototype"]
 
 
+def test_codec_source_copy_loss_ignores_structurally_excluded_source_spans() -> None:
+    codec = DeterministicModalLogicCodec(ModalLogicCodecConfig(embedding_dimensions=8))
+    result = codec.encode(
+        (
+            "42 U.S.C. 3789: §3789 l . Transferred Editorial Notes "
+            "Codification Section 3789l was editorially reclassified as "
+            "section 10235 of Title 34, Crime Control and Law Enforcement."
+        ),
+        document_id="us-code-42-3789-6b8dde5719830288",
+        citation="42 U.S.C. 3789",
+        source="us_code",
+    )
+
+    assert result.decoded_modal_text.reconstruction_similarity == 1.0
+    assert result.losses["source_copy_loss"] == 0.0
+    assert result.losses["source_copy_reward_hack_penalty"] == 0.0
+    assert result.metadata["modal_decompiler_source_span_copy_ratio"] == 0.0
+
+
 def test_decompiler_reconstructs_packet_276_authority_and_grant_atoms() -> None:
     conveyance = _single_formula_document(
         family="frame",

@@ -12092,6 +12092,8 @@ def _source_span_copy_ratio(decoded: DecodedModalText) -> float:
     for phrase in decoded.phrases:
         if phrase.fixed or phrase.provenance_only:
             continue
+        if _is_source_copy_slot(str(phrase.slot or "")):
+            continue
         text = _clean_non_empty_string(phrase.text)
         if not text:
             continue
@@ -12099,8 +12101,6 @@ def _source_span_copy_ratio(decoded: DecodedModalText) -> float:
         if token_count <= 0:
             continue
         rendered_tokens += token_count
-        if _is_source_copy_slot(str(phrase.slot or "")):
-            copied_tokens += token_count
     if rendered_tokens <= 0:
         return 0.0
     semantic_support_tokens = _semantic_support_token_count(decoded)
