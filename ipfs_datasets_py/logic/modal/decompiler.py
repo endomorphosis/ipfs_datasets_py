@@ -7005,6 +7005,14 @@ def _typed_decompiler_target_reconstruction_slots(
                     ),
                 )
             )
+        slots.extend(
+            _typed_decompiler_family_pair_predicate_slots(
+                source_family=source_family,
+                target_family=target,
+                text=reconstruction_text,
+                semantic_atoms=semantic_atoms,
+            )
+        )
         for cue in condition_cues:
             slots.append(
                 (
@@ -7295,6 +7303,14 @@ def _typed_decompiler_source_reconstruction_slots(
                     ),
                 )
             )
+        slots.extend(
+            _typed_decompiler_family_pair_predicate_slots(
+                source_family=source_family,
+                target_family=target,
+                text=reconstruction_text,
+                semantic_atoms=semantic_atoms,
+            )
+        )
     for cue in source_scope_cues:
         slots.extend(
             (
@@ -8095,6 +8111,203 @@ def _typed_decompiler_family_pair_legal_ir_views(
     }:
         add("CEC.native")
         add("knowledge_graphs.neo4j_compat")
+    return views
+
+
+def _typed_decompiler_family_pair_predicate_slots(
+    *,
+    source_family: str,
+    target_family: str,
+    text: str,
+    semantic_atoms: Sequence[str],
+) -> List[Tuple[str, str]]:
+    source = _clean_text(source_family).lower()
+    target = _clean_text(target_family).lower()
+    if not source or not target:
+        return []
+
+    pair = f"{source}->{target}"
+    predicate_classes = _typed_decompiler_predicate_classes(
+        text=text,
+        semantic_atoms=semantic_atoms,
+    )
+    if not predicate_classes:
+        return []
+
+    family_anchors = _typed_decompiler_predicate_family_anchors(
+        source_family=source,
+        target_family=target,
+        predicate_classes=predicate_classes,
+        semantic_atoms=semantic_atoms,
+    )
+    view_anchors = _typed_decompiler_pair_predicate_legal_ir_views(
+        source_family=source,
+        target_family=target,
+        predicate_classes=predicate_classes,
+        semantic_atoms=semantic_atoms,
+    )
+
+    slots: List[Tuple[str, str]] = []
+    for predicate_class in predicate_classes:
+        value = f"{pair}:{predicate_class}"
+        slots.append(("typed-decompiler-family-pair-predicate", value))
+        for family in family_anchors:
+            slots.append(
+                (
+                    "family_semantic_slot_prototype",
+                    f"{family}||slot:typed-decompiler-family-pair-predicate:{value}",
+                )
+            )
+        for view in view_anchors:
+            slots.append(("legal_ir_view_prototype", view))
+            slots.append(
+                (
+                    "semantic_slot_legal_ir_view_prototype",
+                    f"slot:typed-decompiler-family-pair-predicate:{value}||{view}",
+                )
+            )
+            for family in family_anchors:
+                slots.append(
+                    (
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        (
+                            f"{family}||slot:typed-decompiler-family-pair-predicate:"
+                            f"{value}||{view}"
+                        ),
+                    )
+                )
+    return _unique_slot_values(slots)
+
+
+def _typed_decompiler_predicate_classes(
+    *,
+    text: str,
+    semantic_atoms: Sequence[str],
+) -> List[str]:
+    normalized = _clean_text(text).replace("_", " ").lower()
+    normalized_atoms = {
+        _clean_text(atom).lower()
+        for atom in semantic_atoms
+        if _clean_text(atom)
+    }
+    classes: List[str] = []
+
+    def add(value: str) -> None:
+        if value and value not in classes:
+            classes.append(value)
+
+    if _statutory_scope_slots(normalized) or re.search(
+        r"(?<!\w)(?:section|chapter|subchapter|paragraph|subsection|title)s?(?!\w)",
+        normalized,
+    ):
+        add("statutory")
+    if normalized_atoms.intersection(
+        {
+            "exemption",
+            "exempt_operation",
+            "patent_prohibition",
+            "prohibition",
+            "remedy",
+            "enforcement_remedy",
+        }
+    ):
+        add("remedy")
+    if normalized_atoms.intersection(
+        {
+            "admission_fee_collection",
+            "appropriation_authorization",
+            "fee_collection_authority",
+            "fund_transfer_authority",
+            "payment_authorization",
+            "permission",
+            "resource_availability",
+            "secretary_availability",
+            "state_conveyance_authority",
+        }
+    ):
+        add("authorization")
+    if normalized_atoms.intersection(
+        {
+            "annual_report_duty",
+            "budget_program_submission",
+            "congressional_report_duty",
+            "report_duty",
+            "study_report_duty",
+            "submit_or_file",
+        }
+    ):
+        add("duty")
+    if normalized_atoms.intersection(
+        {
+            "definition",
+            "statutory_applicability",
+            "statutory_chapter_applicability",
+        }
+    ):
+        add("statutory")
+    return classes
+
+
+def _typed_decompiler_predicate_family_anchors(
+    *,
+    source_family: str,
+    target_family: str,
+    predicate_classes: Sequence[str],
+    semantic_atoms: Sequence[str],
+) -> List[str]:
+    anchors: List[str] = []
+
+    def add(family: str) -> None:
+        normalized = _clean_text(family).lower()
+        if normalized and normalized not in anchors:
+            anchors.append(normalized)
+
+    add(source_family)
+    add(target_family)
+    for family in _typed_decompiler_semantic_atom_target_families(semantic_atoms):
+        add(family)
+    if "statutory" in predicate_classes:
+        add("frame")
+        add("temporal")
+    if any(
+        predicate_class in {"authorization", "duty", "remedy"}
+        for predicate_class in predicate_classes
+    ):
+        add("deontic")
+    return anchors
+
+
+def _typed_decompiler_pair_predicate_legal_ir_views(
+    *,
+    source_family: str,
+    target_family: str,
+    predicate_classes: Sequence[str],
+    semantic_atoms: Sequence[str],
+) -> List[str]:
+    views: List[str] = []
+
+    def add(view: str) -> None:
+        if view and view not in views:
+            views.append(view)
+
+    for view in _typed_decompiler_family_pair_legal_ir_views(
+        source_family,
+        target_family,
+    ):
+        add(view)
+    for atom in semantic_atoms:
+        for view in _legal_semantic_atom_legal_ir_views(atom):
+            add(view)
+    if "statutory" in predicate_classes:
+        add("modal.frame_logic")
+        add("knowledge_graphs.neo4j_compat")
+        add("CEC.native")
+    if any(
+        predicate_class in {"authorization", "duty", "remedy"}
+        for predicate_class in predicate_classes
+    ):
+        add("deontic.ir")
+        add("TDFOL.prover")
     return views
 
 

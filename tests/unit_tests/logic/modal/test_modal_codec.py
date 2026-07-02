@@ -34753,6 +34753,55 @@ def test_decompiler_binds_packet_000208_family_pairs_to_legal_ir_views() -> None
     ) in frame_slots["family_semantic_slot_legal_ir_view_prototype"]
 
 
+def test_decompiler_emits_predicate_class_slots_for_deontic_frame_family_pairs() -> None:
+    deontic_document = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "Applicability of this chapter. The requirements of this chapter "
+            "shall apply under this section."
+        ),
+        predicate="chapter_applicability_requirements",
+    )
+    frame_document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Construction. The provisions of this chapter shall not affect any "
+            "authority available under this section."
+        ),
+        predicate="statutory_construction_authority",
+    )
+
+    deontic_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(deontic_document)
+    )
+    frame_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(frame_document)
+    )
+
+    assert "deontic->frame:statutory" in deontic_slots[
+        "typed-decompiler-family-pair-predicate"
+    ]
+    assert "frame->deontic:statutory" in frame_slots[
+        "typed-decompiler-family-pair-predicate"
+    ]
+    assert (
+        "temporal||slot:typed-decompiler-family-pair-predicate:"
+        "frame->deontic:statutory||modal.frame_logic"
+    ) in frame_slots["family_semantic_slot_legal_ir_view_prototype"]
+    assert (
+        "slot:typed-decompiler-family-pair-predicate:"
+        "deontic->frame:statutory||modal.frame_logic"
+    ) in deontic_slots["semantic_slot_legal_ir_view_prototype"]
+    assert "deontic.ir" in frame_slots["legal_ir_view_prototype"]
+    assert "knowledge_graphs.neo4j_compat" in deontic_slots[
+        "legal_ir_view_prototype"
+    ]
+
+
 def test_decompiler_emits_definition_slots_for_as_used_frame_span() -> None:
     document = _single_formula_document(
         family="frame",
