@@ -44,7 +44,12 @@ class DeonticNormsBridgeAdapter:
     ) -> tuple[LegalIRDocument, Any]:
         """Encode legal text into the canonical bridge IR envelope."""
 
-        result = self._converter().convert(text)
+        result = _convert_with_deterministic_deontic_fallback(
+            self._converter(),
+            text,
+            document_type=str(self.converter_kwargs.get("document_type") or "statute"),
+            expand_enumerations=bool(self.converter_kwargs.get("expand_enumerations", False)),
+        )
         metadata = dict(getattr(result, "metadata", {}) or {})
         norms = _list_of_dicts(metadata.get("legal_norm_irs"))
         parser_elements = _list_of_dicts(metadata.get("parser_elements"))
@@ -380,6 +385,115 @@ class DeonticNormsBridgeAdapter:
 
         self.converter = DeonticConverter(**dict(self.converter_kwargs))
         return self.converter
+
+
+@dataclass(frozen=True)
+class _DeterministicDeonticFallbackResult:
+    """Minimal conversion result shape consumed by the bridge encoder."""
+
+    metadata: Mapping[str, Any]
+    success: bool = True
+    status: str = "deterministic_fallback"
+    output: Any = None
+
+
+def _convert_with_deterministic_deontic_fallback(
+    converter: Any,
+    text: str,
+    *,
+    document_type: str,
+    expand_enumerations: bool,
+) -> Any:
+    """Convert with the configured converter, falling back to local parser IR.
+
+    Some optional converter dependencies perform environment setup before the
+    deterministic parser can return rows. The bridge should still validate
+    LegalNormIR obligations/definitions when the local parser can extract them.
+    """
+
+    try:
+        result = converter.convert(text)
+    except Exception:
+        return _deterministic_deontic_fallback_result(
+            text,
+            document_type=document_type,
+            expand_enumerations=expand_enumerations,
+        )
+    if getattr(result, "success", True) is False:
+        return _deterministic_deontic_fallback_result(
+            text,
+            document_type=document_type,
+            expand_enumerations=expand_enumerations,
+        )
+    return result
+
+
+def _deterministic_deontic_fallback_result(
+    text: str,
+    *,
+    document_type: str,
+    expand_enumerations: bool,
+) -> _DeterministicDeonticFallbackResult:
+    from ipfs_datasets_py.logic.deontic.exports import (
+        build_deterministic_parser_capability_profile_records,
+        build_prover_syntax_target_coverage_records_from_irs,
+        parser_elements_with_ir_export_readiness,
+    )
+    from ipfs_datasets_py.logic.deontic.formula_builder import (
+        build_deontic_formula_records_from_irs,
+    )
+    from ipfs_datasets_py.logic.deontic.ir import LegalNormIR
+    from ipfs_datasets_py.logic.deontic.utils.deontic_parser import (
+        extract_normative_elements,
+    )
+
+    parser_elements = extract_normative_elements(
+        text,
+        document_type,
+        expand_enumerations=expand_enumerations,
+    )
+    parser_elements = parser_elements_with_ir_export_readiness(parser_elements)
+    legal_norm_irs = [
+        LegalNormIR.from_parser_element(element)
+        for element in parser_elements
+        if isinstance(element, Mapping)
+    ]
+    norm_rows = [norm.to_dict() for norm in legal_norm_irs]
+    formula_records = build_deontic_formula_records_from_irs(legal_norm_irs)
+    coverage_records = build_prover_syntax_target_coverage_records_from_irs(
+        legal_norm_irs
+    )
+    metadata: dict[str, Any] = {
+        "parser_elements": parser_elements,
+        "legal_norm_irs": norm_rows,
+        "legal_formula_records": formula_records,
+        "legal_formula_record_proof_ready_count": sum(
+            1 for record in formula_records if record.get("proof_ready") is True
+        ),
+        "legal_parser_capability_profile_records": (
+            build_deterministic_parser_capability_profile_records(legal_norm_irs)
+        ),
+        "legal_prover_syntax_target_coverage_records": coverage_records,
+        "legal_formal_syntax_valid_count": sum(
+            1
+            for record in coverage_records
+            if record.get("formal_syntax_valid") is True
+        ),
+        "deterministic_parser": {
+            "enabled": True,
+            "source": "ipfs_datasets_py.logic.deontic.utils.deontic_parser",
+            "fallback": True,
+            "element_count": len(parser_elements),
+            "ir_count": len(legal_norm_irs),
+            "formula_record_count": len(formula_records),
+            "prover_syntax_target_coverage_record_count": len(coverage_records),
+        },
+    }
+    if parser_elements:
+        metadata["parser_element"] = parser_elements[0]
+    if norm_rows:
+        metadata["legal_norm_ir"] = norm_rows[0]
+    return _DeterministicDeonticFallbackResult(metadata=metadata)
 
 
 def _summarize_parser_metrics(parser_elements: Sequence[Mapping[str, Any]]) -> dict[str, Any]:

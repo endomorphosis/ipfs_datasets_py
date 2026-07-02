@@ -2345,6 +2345,43 @@ def test_deontic_bridge_evaluates_legal_norm_ir_and_prover_syntax() -> None:
     ]["coverage_record_count"] >= 1
 
 
+def test_deontic_bridge_falls_back_to_parser_for_failed_definition_conversion() -> None:
+    from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
+
+    class _FailedConversionResult:
+        success = False
+        metadata = {}
+        output = None
+
+    class _FailedConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _FailedConversionResult()
+
+    adapter = DeonticNormsBridgeAdapter(converter=_FailedConverter())
+    report = adapter.evaluate(
+        "22 U.S.C. 4132: The term Secretary means the Secretary of State.",
+        document_id="deontic-bridge-definition-fallback",
+        citation="22 U.S.C. 4132",
+    )
+
+    norm = report.ir_document.views["deontic_ir"].payload["norms"][0]
+    coverage_record = report.ir_document.views["deontic_prover_syntax"].payload[
+        "records"
+    ][0]
+
+    assert norm["norm_type"] == "definition"
+    assert norm["actor"] == "Secretary"
+    assert report.proof_gate.failure_ratio == 0.0
+    assert report.proof_gate.valid_count == 5
+    assert coverage_record["formal_syntax_valid"] is True
+    assert coverage_record["coverage_blockers"] == []
+    assert (
+        report.round_trip.extra_losses["deontic_decoder_slot_loss"]
+        == 0.0
+    )
+
+
 def test_deontic_bridge_phase8_quality_gate_uses_present_optional_slots_only() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
