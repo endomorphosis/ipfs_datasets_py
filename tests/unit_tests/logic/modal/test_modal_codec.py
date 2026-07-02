@@ -14628,6 +14628,100 @@ def test_modal_decompiler_preserves_context_without_formula_style_text() -> None
     assert modal_text_token_similarity(source, result.decoded_text) == 1.0
 
 
+def test_modal_decompiler_structural_slots_route_resource_use_frame_to_deontic() -> None:
+    source = (
+        "Sec. 477 - Use of timber and stone by settlers. "
+        "The Secretary may permit settlers to use timber and stone from national forests."
+    )
+    document = ModalIRDocument(
+        document_id="us-code-16-477-resource-use",
+        source="us_code",
+        normalized_text=source,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-resource-use",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="frame",
+                    symbol="Frame",
+                    label="frame",
+                ),
+                predicate=ModalIRPredicate(
+                    name="permit_settlers_use_timber_stone",
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-16-477-resource-use",
+                    start_char=0,
+                    end_char=len(source),
+                    citation="16 U.S.C. 477",
+                ),
+                metadata={"cue": "may"},
+            )
+        ],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert decoded.text == source
+    assert "settler_resource_use" in slot_texts["legal_semantic_atom"]
+    assert "timber_stone_use" in slot_texts["legal_semantic_atom"]
+    assert "natural_resource_use" in slot_texts["legal_semantic_atom"]
+    assert "frame->deontic" in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    assert "frame->deontic" in slot_texts["typed_ir_cross_family_semantic_support"]
+    assert "settler resource use" in structural_text
+    assert "timber stone" in structural_text
+
+
+def test_modal_decompiler_jurisdiction_atoms_support_frame_and_deontic_views() -> None:
+    source = (
+        "Sec. 233 - Jurisdiction of New York State courts in civil actions. "
+        "The State courts shall have jurisdiction over civil actions."
+    )
+    document = ModalIRDocument(
+        document_id="us-code-25-233-jurisdiction",
+        source="us_code",
+        normalized_text=source,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-jurisdiction",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="kd",
+                    symbol="O",
+                    label="obligatory",
+                ),
+                predicate=ModalIRPredicate(
+                    name="state_courts_have_jurisdiction_civil_actions",
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-25-233-jurisdiction",
+                    start_char=0,
+                    end_char=len(source),
+                    citation="25 U.S.C. 233",
+                ),
+                metadata={"cue": "shall"},
+            )
+        ],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "jurisdiction_authority" in slot_texts["legal_semantic_atom"]
+    assert "state_court_civil_jurisdiction" in slot_texts["legal_semantic_atom"]
+    assert "deontic->frame" in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    assert "modal.frame_logic" in slot_texts["legal_ir_view_prototype"]
+    assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
+
+
 def test_modal_decompiler_surfaces_source_span_modal_transition_slots() -> None:
     source_id = "us-code-5-552-source-span-transitions"
     source_text = (

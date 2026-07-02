@@ -189,6 +189,11 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("export promotion", "export_promotion"),
     ("remain available until expended", "no_year_funding_availability"),
     ("available until expended", "no_year_funding_availability"),
+    ("use of timber and stone by settlers", "settler_resource_use"),
+    ("timber and stone by settlers", "settler_resource_use"),
+    ("timber and stone", "timber_stone_use"),
+    ("use of timber", "timber_stone_use"),
+    ("use of stone", "timber_stone_use"),
     ("transfer of funds made available", "fund_transfer_authority"),
     ("transfer funds made available", "fund_transfer_authority"),
     ("transfer funds", "fund_transfer_authority"),
@@ -2622,6 +2627,16 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         normalized,
     ):
         add("jurisdiction_authority")
+    if re.search(r"\btimber\b", normalized) and re.search(r"\bstone\b", normalized):
+        add("timber_stone_use")
+        if re.search(r"\bsettlers?\b", normalized):
+            add("settler_resource_use")
+    if re.search(
+        r"\b(?:use|uses|using|utili[sz](?:e|es|ed|ation))\b.{0,80}"
+        r"\b(?:timber|stone|forest|forests?|mineral|minerals?|land|lands)\b",
+        normalized,
+    ):
+        add("natural_resource_use")
     if re.search(r"\bcivil\s+actions?\b", normalized):
         add("civil_action")
     if re.search(r"\blaw\s+enforcement\b", normalized):
@@ -7239,16 +7254,19 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "mineral_land_status",
         "mineral_leasing_law",
         "mining_claim",
+        "natural_resource_use",
         "enforcement_remedy",
         "officer_election",
         "prize_proceeds_charge",
         "remedy",
         "report_contents",
+        "settler_resource_use",
         "state_court_civil_jurisdiction",
         "state_court_jurisdiction",
         "state_conveyance_authority",
         "sustainable_chemistry_research",
         "telemedicine_distance_learning",
+        "timber_stone_use",
         "treasury_deposit",
         "unknown_party_deposit",
         "white_horse_hill_game_preserve",
@@ -7286,6 +7304,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "mineral_land_status",
         "mineral_leasing_law",
         "mining_claim",
+        "natural_resource_use",
         "nonirrigable_land_status",
         "permanent_nonirrigable_land_status",
         "jurisdiction_authority",
@@ -7294,10 +7313,12 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "road_conveyance",
         "sea_grant_college",
         "sea_grant_college_program",
+        "settler_resource_use",
         "sustainable_chemistry_research",
         "state_court_civil_jurisdiction",
         "state_court_jurisdiction",
         "state_conveyance_authority",
+        "timber_stone_use",
         "treasury_deposit",
         "unknown_party_deposit",
     }:
@@ -7318,6 +7339,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "false_claim_knowledge",
         "health_professional_education_assistance",
         "internal_service_fee",
+        "natural_resource_use",
         "nonirrigable_land_status",
         "office_seal",
         "official_seal",
@@ -7325,6 +7347,8 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "plant_variety_protection",
         "plant_variety_protection_office",
         "prize_proceeds_charge",
+        "settler_resource_use",
+        "timber_stone_use",
         "treasury_deposit",
         "unknown_party_deposit",
     }:
@@ -7355,6 +7379,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "account_maintenance",
         "judicial_sale_execution",
         "marshal_incapacity",
+        "natural_resource_use",
         "nonirrigable_land_status",
         "office_establishment",
         "obligation",
@@ -7372,9 +7397,11 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "report_duty",
         "road_conveyance",
         "sea_grant_college_program",
+        "settler_resource_use",
         "study_report_duty",
         "submit_or_file",
         "test_platform",
+        "timber_stone_use",
     }:
         add("deontic.ir")
         add("TDFOL.prover")
@@ -7407,14 +7434,17 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "mineral_land_status",
         "mineral_leasing_law",
         "mining_claim",
+        "natural_resource_use",
         "sea_grant_college",
         "sea_grant_college_program",
         "no_year_funding_availability",
         "research_activity",
         "research_grant",
+        "settler_resource_use",
         "study_report_duty",
         "termination_authority",
         "temporal_condition",
+        "timber_stone_use",
     }:
         add("TDFOL.prover")
     return views
@@ -7450,6 +7480,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "false_fraudulent_claim",
             "government_claim",
             "agency_determination",
+            "natural_resource_use",
             "office_establishment",
             "obligation",
             "permanent_nonirrigable_land_status",
@@ -7463,10 +7494,12 @@ def _typed_decompiler_semantic_atom_target_families(
             "report_duty",
             "road_conveyance",
             "sea_grant_college_program",
+            "settler_resource_use",
             "study_report_duty",
             "submit_or_file",
             "state_conveyance_authority",
             "test_platform",
+            "timber_stone_use",
         }:
             add("deontic")
         if normalized_atom in {
@@ -7474,6 +7507,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "annual_report_duty",
             "budget_program_submission",
             "marine_science_development",
+            "natural_resource_use",
             "no_year_funding_availability",
             "research_activity",
             "research_grant",
@@ -7525,6 +7559,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "mineral_land_status",
             "mineral_leasing_law",
             "mining_claim",
+            "natural_resource_use",
             "nonirrigable_land_status",
             "permanent_nonirrigable_land_status",
             "jurisdiction_authority",
@@ -7544,11 +7579,13 @@ def _typed_decompiler_semantic_atom_target_families(
             "road_conveyance",
             "sea_grant_college",
             "sea_grant_college_program",
+            "settler_resource_use",
             "sustainable_chemistry_research",
             "test_platform",
             "state_court_civil_jurisdiction",
             "state_court_jurisdiction",
             "state_conveyance_authority",
+            "timber_stone_use",
             "treasury_deposit",
             "unknown_party_deposit",
             "white_horse_hill_game_preserve",
@@ -7577,7 +7614,9 @@ def _typed_decompiler_semantic_atom_target_families(
             "competitive_award_program",
             "research_grant",
             "sea_grant_college_program",
+            "settler_resource_use",
             "state_conveyance_authority",
+            "timber_stone_use",
             "treasury_deposit",
             "unknown_party_deposit",
             "permanent_nonirrigable_land_status",
