@@ -1851,3 +1851,53 @@ def test_modal_decompiler_emits_directional_temporal_deontic_reconstruction_pair
     assert "conditioned+temporal:temporal->deontic" in set(
         slot_texts["typed-decompiler-target-reconstruction-scope"]
     )
+
+
+def test_modal_decompiler_reconstructs_temporal_remedy_deontic_slots() -> None:
+    source_text = (
+        "The Administrator may continue enforcement remedies until final disposition."
+    )
+    document = ModalIRDocument(
+        document_id="packet-000123-temporal-remedy-reconstruction",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="packet-000123-temporal-remedy",
+                operator=ModalIROperator(
+                    family="temporal",
+                    system="ltl",
+                    symbol="F",
+                    label="eventually",
+                ),
+                predicate=ModalIRPredicate(
+                    name="continue_enforcement_remedies",
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-30-1308a-b5cb6f4cb8397723",
+                    start_char=0,
+                    end_char=len(source_text),
+                    citation="30 U.S.C. 1308a",
+                ),
+                conditions=["until final disposition"],
+                metadata={"cue": "may"},
+            )
+        ],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+
+    assert "remedy" in set(slot_texts["typed-decompiler-target-semantic-atom"])
+    assert "enforcement_remedy" in set(
+        slot_texts["typed-decompiler-target-semantic-atom"]
+    )
+    assert "temporal->deontic" in set(
+        slot_texts["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert "temporal->frame" in set(
+        slot_texts["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert "compiled-role:temporal:remedy" in set(slot_texts["decompiler-plan"])
+    assert "deontic.ir" in set(slot_texts["legal_ir_view_prototype"])
+    assert "TDFOL.prover" in set(slot_texts["legal_ir_view_prototype"])

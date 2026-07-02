@@ -206,6 +206,12 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("reclassified as section", "editorial_reclassification"),
     ("crime control and law enforcement", "crime_control_law_enforcement"),
     ("law enforcement", "law_enforcement"),
+    ("enforcement action", "enforcement_remedy"),
+    ("enforcement actions", "enforcement_remedy"),
+    ("legal remedy", "remedy"),
+    ("legal remedies", "remedy"),
+    ("civil remedy", "remedy"),
+    ("civil remedies", "remedy"),
     ("plant variety protection office", "plant_variety_protection_office"),
     ("plant variety protection", "plant_variety_protection"),
     ("seal from the plant variety protection office", "office_seal"),
@@ -2588,6 +2594,24 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         add("civil_action")
     if re.search(r"\blaw\s+enforcement\b", normalized):
         add("law_enforcement")
+    if re.search(
+        r"\b(?:remed(?:y|ies)|sanctions?|penalt(?:y|ies)|"
+        r"enforcement\s+actions?|civil\s+actions?|liable|liability)\b",
+        normalized,
+    ):
+        add("remedy")
+    if re.search(
+        r"\b(?:enforce(?:ment|d|s)?|violat(?:e|es|ed|ion|ions))\b"
+        r".{0,80}\b(?:remed(?:y|ies)|sanctions?|penalt(?:y|ies)|"
+        r"liable|liability|actions?)\b",
+        normalized,
+    ) or re.search(
+        r"\b(?:remed(?:y|ies)|sanctions?|penalt(?:y|ies)|"
+        r"liable|liability|actions?)\b"
+        r".{0,80}\b(?:enforce(?:ment|d|s)?|violat(?:e|es|ed|ion|ions))\b",
+        normalized,
+    ):
+        add("enforcement_remedy")
     if re.search(r"\b(?:official\s+)?seal\b", normalized):
         add("official_seal")
     if re.search(r"\bplant\s+variety\s+protection\s+office\b", normalized):
@@ -6904,6 +6928,12 @@ def _typed_decompiler_target_reconstruction_slots(
                     ),
                 )
             )
+            if atom in {"enforcement_remedy", "remedy"} and target in {
+                "deontic",
+                "frame",
+                "temporal",
+            }:
+                slots.append(("decompiler-plan", f"compiled-role:{target}:{atom}"))
         if target == "temporal" and has_temporal_scope:
             temporal_symbol = (
                 source_symbol if source_family == "temporal" and source_symbol else "f"
@@ -7191,8 +7221,10 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "jurisdiction_authority",
         "law_enforcement",
         "livestock_commerce",
+        "enforcement_remedy",
         "officer_election",
         "prize_proceeds_charge",
+        "remedy",
         "state_court_civil_jurisdiction",
         "state_court_jurisdiction",
         "state_conveyance_authority",
@@ -7233,7 +7265,9 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "permanent_nonirrigable_land_status",
         "jurisdiction_authority",
         "livestock_commerce",
+        "enforcement_remedy",
         "prize_proceeds_charge",
+        "remedy",
         "road_conveyance",
         "sea_grant_college",
         "sea_grant_college_program",
@@ -7267,6 +7301,8 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "plant_variety_protection",
         "plant_variety_protection_office",
         "prize_proceeds_charge",
+        "enforcement_remedy",
+        "remedy",
         "treasury_deposit",
         "unknown_party_deposit",
     }:
@@ -7301,6 +7337,8 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "permission",
         "prohibition",
         "public_report_duty",
+        "enforcement_remedy",
+        "remedy",
         "research_activity",
         "research_grant",
         "report_duty",
@@ -7339,6 +7377,8 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "sea_grant_college",
         "sea_grant_college_program",
         "no_year_funding_availability",
+        "enforcement_remedy",
+        "remedy",
         "research_activity",
         "research_grant",
         "study_report_duty",
@@ -7386,6 +7426,8 @@ def _typed_decompiler_semantic_atom_target_families(
             "permission",
             "prohibition",
             "public_report_duty",
+            "enforcement_remedy",
+            "remedy",
             "research_activity",
             "research_grant",
             "report_duty",
@@ -7410,6 +7452,8 @@ def _typed_decompiler_semantic_atom_target_families(
             "study_report_duty",
             "termination_authority",
             "temporal_condition",
+            "enforcement_remedy",
+            "remedy",
         }:
             add("temporal")
         if normalized_atom in {
@@ -7451,6 +7495,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "law_enforcement",
             "livestock_commerce",
             "marine_science_development",
+            "enforcement_remedy",
             "office_establishment",
             "office_of_womens_health",
             "office_seal",
@@ -7459,6 +7504,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "plant_variety_protection",
             "plant_variety_protection_office",
             "prize_proceeds_charge",
+            "remedy",
             "road_conveyance",
             "sea_grant_college",
             "sea_grant_college_program",
