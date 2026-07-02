@@ -33906,6 +33906,51 @@ def test_decompiler_emits_definition_slots_for_as_used_frame_span() -> None:
     assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
 
 
+def test_decompiler_routes_packer_definition_to_conditional_normative_slots() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            '"Packer" defined. When used in this chapter, the term packer '
+            "means any person engaged in the business of buying livestock in "
+            "commerce for purposes of slaughter."
+        ),
+        predicate="packer_defined_livestock_commerce",
+        conditions=["When used in this chapter"],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "definition" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "livestock_commerce" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "frame->conditional_normative" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "definition:frame->conditional_normative" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "livestock_commerce:frame->conditional_normative" in slot_texts[
+        "typed-decompiler-source-semantic-family-pair"
+    ]
+    assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
+    assert any(
+        "conditional obligation" in value
+        and "livestock commerce" in value
+        for value in slot_texts["typed_ir_reconstruction"]
+    )
+    assert "conditional obligation" in structural_text
+    assert "livestock commerce" in structural_text
+
+
 def test_decompiler_emits_fee_collection_slots_for_admission_frame_span() -> None:
     document = _single_formula_document(
         family="frame",
