@@ -36050,6 +36050,61 @@ def test_decompiler_reconstructs_monitoring_enforcement_epistemic_frame_slots() 
     assert "monitoring enforcement" in structural_text
 
 
+def test_decompiler_reconstructs_sovereign_debt_discussion_epistemic_slots() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Initiation of discussions to facilitate financing of human welfare "
+            "and natural resource programs in connection with debt reduction "
+            "and conversion. The Congress finds that the financing of programs "
+            "should be facilitated in the context of reducing and converting "
+            "sovereign debt. The Secretary shall instruct the United States "
+            "Executive Director to initiate discussions with directors of such "
+            "institutions and propose that they provide advice and assistance."
+        ),
+        predicate="sovereign_debt_financing_discussions",
+        conditions=["in connection with debt reduction and conversion"],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "interinstitutional_discussion" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "sovereign_debt_conversion" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "human_welfare_resource_program" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "development_advice_assistance" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "interinstitutional_discussion:frame->epistemic" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "sovereign_debt_conversion:frame->epistemic" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "frame->epistemic" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
+    assert "knowledge_graphs.neo4j_compat" in slot_texts[
+        "legal_ir_view_prototype"
+    ]
+    assert "interinstitutional discussion" in structural_text
+    assert "sovereign debt conversion" in structural_text
+
+
 def test_decompiler_reconstructs_reserve_officer_promotion_slots() -> None:
     document = _single_formula_document(
         family="frame",

@@ -157,6 +157,13 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("information sharing", "information_sharing"),
     ("consultation and cooperation", "consultation_cooperation"),
     ("following consultation", "consultation"),
+    ("initiation of discussions", "interinstitutional_discussion"),
+    ("initiate discussions", "interinstitutional_discussion"),
+    ("provide advice and assistance", "development_advice_assistance"),
+    ("debt reduction and conversion", "sovereign_debt_conversion"),
+    ("reducing and converting sovereign debt", "sovereign_debt_conversion"),
+    ("human welfare and natural resource programs", "human_welfare_resource_program"),
+    ("human welfare", "human_welfare_resource_program"),
     ("boundary and division fences", "boundary_division_fence"),
     ("build and maintain", "build_maintain_duty"),
     ("game and bird preserves", "game_bird_preserve_protection"),
@@ -2722,6 +2729,36 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         add("termination_authority")
     if re.search(r"\b(?:consultation|cooperation)\b", normalized):
         add("consultation")
+    if re.search(
+        r"\binitiat(?:e|es|ed|ing|ion)\b.{0,80}\bdiscussions?\b",
+        normalized,
+    ) or re.search(
+        r"\bdiscussions?\b.{0,80}\b(?:directors?|institutions?|banks?|funds?)\b",
+        normalized,
+    ):
+        add("interinstitutional_discussion")
+    if re.search(
+        r"\bprovide\b.{0,40}\badvice\b.{0,40}\bassistance\b",
+        normalized,
+    ):
+        add("development_advice_assistance")
+    if re.search(
+        r"\b(?:reduc(?:e|ed|ing|tion)|convert(?:ed|ing|sion))\b.{0,80}"
+        r"\b(?:sovereign\s+)?debt\b",
+        normalized,
+    ) or re.search(
+        r"\b(?:sovereign\s+)?debt\b.{0,80}"
+        r"\b(?:reduc(?:e|ed|ing|tion)|convert(?:ed|ing|sion))\b",
+        normalized,
+    ):
+        add("sovereign_debt_conversion")
+    if re.search(
+        r"\bhuman\s+welfare\b|"
+        r"\bnatural\s+resource\s+programs?\b|"
+        r"\bconservation\b.{0,80}\brestoration\b.{0,80}\bnatural\s+resources?\b",
+        normalized,
+    ):
+        add("human_welfare_resource_program")
     if re.search(r"\b(?:administ(?:er|ration)|enforce(?:ment|d|s)?)\b", normalized):
         add("administration_enforcement")
     if re.search(r"\bjurisdiction\b", normalized) and re.search(
@@ -7543,6 +7580,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "competitive_award_program",
         "crime_control_law_enforcement",
         "cybersecurity_information_sharing",
+        "development_advice_assistance",
         "departmental_property_custody",
         "departmental_record_custody",
         "export_promotion",
@@ -7561,6 +7599,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "historic_area",
         "historic_area_access_road",
         "information_sharing",
+        "interinstitutional_discussion",
         "irrigation_project",
         "judicial_sale_execution",
         "jurisdiction_authority",
@@ -7591,6 +7630,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "reserve_active_status_list",
         "resource_availability",
         "settler_resource_use",
+        "sovereign_debt_conversion",
         "active_status_list",
         "secretary_availability",
         "state_energy_program",
@@ -7600,6 +7640,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "state_court_civil_jurisdiction",
         "state_court_jurisdiction",
         "state_conveyance_authority",
+        "human_welfare_resource_program",
         "sustainable_chemistry_research",
         "telemedicine_distance_learning",
         "national_forest_resource",
@@ -7643,7 +7684,9 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "forest_resource_reservation",
         "government_claim",
         "health_professional_education_assistance",
+        "human_welfare_resource_program",
         "marine_science_development",
+        "interinstitutional_discussion",
         "irrigation_project",
         "legal_relationship_override",
         "liability_protection",
@@ -7666,6 +7709,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "sea_grant_college",
         "sea_grant_college_program",
         "secretary_availability",
+        "sovereign_debt_conversion",
         "statutory_applicability",
         "statutory_chapter_applicability",
         "settler_resource_use",
@@ -7697,6 +7741,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "congressional_findings_declaration",
         "cost_expense_charge",
         "cybersecurity_information_sharing",
+        "development_advice_assistance",
         "departmental_property_custody",
         "departmental_record_custody",
         "education_assistance_benefit",
@@ -7704,6 +7749,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "funding_eligibility",
         "health_professional_education_assistance",
         "internal_service_fee",
+        "interinstitutional_discussion",
         "legal_relationship_override",
         "liability_protection",
         "monitoring_enforcement",
@@ -7720,6 +7766,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "settler_resource_use",
         "state_energy_program",
         "state_ranking",
+        "sovereign_debt_conversion",
         "timber_cutting",
         "timber_cutting_forest_scope",
         "timber_stone_use",
@@ -7758,7 +7805,9 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "false_claim_knowledge",
         "false_fraudulent_claim",
         "government_claim",
+        "human_welfare_resource_program",
         "account_maintenance",
+        "development_advice_assistance",
         "active_status_list",
         "legal_relationship_override",
         "liability_protection",
@@ -7766,6 +7815,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "marshal_incapacity",
         "natural_resource_use",
         "national_forest_resource",
+        "interinstitutional_discussion",
         "mining_law_application",
         "nonirrigable_land_status",
         "office_establishment",
@@ -7792,6 +7842,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "report_duty",
         "road_conveyance",
         "secretary_availability",
+        "sovereign_debt_conversion",
         "sea_grant_college_program",
         "settler_resource_use",
         "state_energy_program",
@@ -7817,9 +7868,11 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "agency_determination",
         "congressional_findings_declaration",
         "definition",
+        "development_advice_assistance",
         "departmental_property_custody",
         "departmental_record_custody",
         "monitoring_enforcement",
+        "interinstitutional_discussion",
         "nonirrigable_land_status",
         "office_establishment",
         "office_of_womens_health",
@@ -7827,6 +7880,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "permanent_nonirrigable_land_status",
         "state_energy_program",
         "state_ranking",
+        "sovereign_debt_conversion",
     }:
         add("CEC.native")
         add("knowledge_graphs.neo4j_compat")
@@ -7893,6 +7947,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "congressional_report_duty",
             "cybersecurity_information_sharing",
             "definition",
+            "development_advice_assistance",
             "departmental_property_custody",
             "departmental_record_custody",
             "exempt_operation",
@@ -7905,6 +7960,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "false_fraudulent_claim",
             "government_claim",
             "funding_eligibility",
+            "human_welfare_resource_program",
             "housing_family_service_investment",
             "housing_investment_authority",
             "agency_determination",
@@ -7924,6 +7980,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "priority_state",
             "permission",
             "per_capita_ranking",
+            "interinstitutional_discussion",
             "partnership_adjustment_notice",
             "prohibition",
             "promotion_retention",
@@ -7944,6 +8001,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "study_report_duty",
             "submit_or_file",
             "state_conveyance_authority",
+            "sovereign_debt_conversion",
             "test_platform",
             "timber_cutting",
             "timber_cutting_forest_scope",
@@ -7969,6 +8027,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "research_grant",
             "sea_grant_college",
             "sea_grant_college_program",
+            "sovereign_debt_conversion",
             "study_report_duty",
             "termination_authority",
             "temporal_condition",
@@ -7997,6 +8056,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "crime_control_law_enforcement",
             "cybersecurity_information_sharing",
             "definition",
+            "development_advice_assistance",
             "departmental_property_custody",
             "departmental_record_custody",
             "export_promotion",
@@ -8015,11 +8075,13 @@ def _typed_decompiler_semantic_atom_target_families(
             "housing_family_service_investment",
             "housing_investment_authority",
             "health_professional_education_assistance",
+            "human_welfare_resource_program",
             "education_assistance_benefit",
             "historic_area",
             "historic_area_access_road",
             "agency_determination",
             "internal_service_fee",
+            "interinstitutional_discussion",
             "irrigation_project",
             "judicial_sale_execution",
             "marshal_incapacity",
@@ -8068,6 +8130,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "sea_grant_college",
             "sea_grant_college_program",
             "secretary_availability",
+            "sovereign_debt_conversion",
             "statutory_applicability",
             "statutory_chapter_applicability",
             "settler_resource_use",
@@ -8090,10 +8153,12 @@ def _typed_decompiler_semantic_atom_target_families(
             "agency_determination",
             "accountability_responsibility",
             "congressional_findings_declaration",
+            "development_advice_assistance",
             "departmental_property_custody",
             "departmental_record_custody",
             "false_claim_knowledge",
             "monitoring_enforcement",
+            "interinstitutional_discussion",
             "nonirrigable_land_status",
             "partnership_adjustment",
             "partnership_adjustment_notice",
@@ -8101,6 +8166,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "partnership_notice_proceeding",
             "partnership_proceeding",
             "permanent_nonirrigable_land_status",
+            "sovereign_debt_conversion",
         }:
             add("epistemic")
         if normalized_atom in {
@@ -8160,6 +8226,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "liability_protection",
             "livestock_commerce",
             "monitoring_enforcement",
+            "interinstitutional_discussion",
             "partnership_adjustment",
             "partnership_notice_proceeding",
             "partnership_proceeding",
@@ -8169,6 +8236,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "statutory_chapter_applicability",
             "state_energy_program",
             "state_ranking",
+            "sovereign_debt_conversion",
         }:
             add("conditional_normative")
     return targets
