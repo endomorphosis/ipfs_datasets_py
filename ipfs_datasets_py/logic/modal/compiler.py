@@ -2917,6 +2917,19 @@ class DeterministicModalCompiler:
         signals = _modal_ambiguity_signals(encoding)
         target_specs = (
             (
+                ModalLogicFamily.DEONTIC.value,
+                bool(
+                    signals.get("has_deontic_scope")
+                    or signals.get("has_deontic_cue")
+                ),
+                "frame_deontic_family_outvoted",
+                (
+                    "Frame evidence outvotes deontic force evidence for a "
+                    "compiler ambiguity policy pair."
+                ),
+                self.config.modal_deontic_target_family_outvote_margin,
+            ),
+            (
                 ModalLogicFamily.TEMPORAL.value,
                 bool(signals.get("has_temporal_scope")),
                 "frame_temporal_family_outvoted",
