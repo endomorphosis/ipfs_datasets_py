@@ -1042,8 +1042,6 @@ class DeterministicModalCompiler:
         if not resolved:
             return ""
         if "->" in resolved:
-            source_family, _ = resolved.split("->", maxsplit=1)
-            directional_side = source_family.strip()
             source_family, target_family = resolved.split("->", maxsplit=1)
             directional_side = target_family if prefer_target_side else source_family
             directional_side = directional_side.strip()

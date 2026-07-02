@@ -27707,6 +27707,37 @@ def test_modal_compiler_surfaces_packet_000161_compiler_ambiguity_policy_pairs(
         )
 
 
+def test_modal_compiler_derives_packet_000161_directional_explicit_type() -> None:
+    compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
+    base_ambiguity = ModalCompilationAmbiguity(
+        ambiguity_type="adaptive_family_margin_low",
+        message="low margin",
+        candidate_ids=["frame", "temporal"],
+        severity="requires_rule",
+        metadata={
+            "adaptive_margin_direction": "outvoted",
+            "adaptive_policy_pair": "frame->temporal",
+            "family_margin_raw": -0.5,
+            "predicted_family": "frame->temporal",
+            "target_family": "frame->temporal",
+        },
+    )
+
+    ambiguities = compiler._ensure_explicit_adaptive_ambiguities([base_ambiguity])
+    explicit_ambiguity = next(
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.ambiguity_type != "adaptive_family_margin_low"
+    )
+
+    assert explicit_ambiguity.ambiguity_type == (
+        "adaptive_frame_temporal_outvoted_margin_low"
+    )
+    assert explicit_ambiguity.candidate_ids == ["frame", "temporal"]
+    assert explicit_ambiguity.metadata["predicted_family"] == "frame"
+    assert explicit_ambiguity.metadata["target_family"] == "temporal"
+
+
 def test_modal_compiler_surfaces_packet_000166_compiler_ambiguity_policy_pairs(
     monkeypatch,
 ) -> None:
