@@ -9,6 +9,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import bu
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_modal_parser import LegalModalParser
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import AdaptiveModalAutoencoder
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
+    COMPILER_REFINED_PACKET_004348_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_004071_FAMILY_PAIRS,
     compiler_refined_modal_family_cue_margin_buffer,
     compiler_weak_typed_self_family_cue_margin_buffer,
@@ -891,6 +892,66 @@ def test_packet_004071_registry_refines_frame_deontic_and_dynamic_self_buffers()
         compiler_weak_typed_self_family_cue_margin_buffer("dynamic", "dynamic")
         > compiler_weak_typed_self_family_cue_margin_buffer("deontic", "deontic")
     )
+
+
+def test_packet_004348_registry_refines_modal_family_cue_pairs() -> None:
+    assert set(COMPILER_REFINED_PACKET_004348_FAMILY_PAIRS) == {
+        ("deontic", "temporal"),
+        ("frame", "deontic"),
+        ("frame", "temporal"),
+        ("temporal", "deontic"),
+    }
+    for predicted_family, target_family in COMPILER_REFINED_PACKET_004348_FAMILY_PAIRS:
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert (
+            compiler_refined_modal_family_cue_margin_buffer(
+                predicted_family,
+                target_family,
+            )
+            > 0.0
+        )
+
+
+def test_refined_pair_balance_promotes_temporal_for_dated_status_history_tail() -> None:
+    counts = {
+        "frame": 1.2,
+        "temporal": 1.0,
+        "deontic": 0.0,
+        "conditional_normative": 0.0,
+    }
+    signals = {
+        "has_calendar_date_scope": True,
+        "has_dated_status_legislative_history_scope": True,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_temporal_scope": True,
+        "has_temporal_status_scope": True,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["temporal"] > counts["frame"]
+
+
+def test_spacy_encoder_promotes_temporal_for_dated_repealed_history_tail() -> None:
+    encoder = SpaCyLegalEncoder(model_name="blank")
+    encoding = encoder.encode(
+        (
+            "§833. Repealed. Pub. L. 104-201, div. A, title XVI, "
+            "§1633(b)(2), Sept. 23, 1996, 110 Stat. 2751 Section, "
+            "act Sept. 23, 1950, ch. 1024, title III, §303, as added "
+            "Mar. 26, 1964, Pub. L. 88-290, 78 Stat. 169; amended "
+            "Oct. 27, 1972, Pub. L. 92-544, 86 Stat. 1115."
+        ),
+        document_id="packet-004348-dated-repealed-history-tail",
+    )
+
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+
+    assert signals["has_dated_status_legislative_history_scope"] is True
+    assert signals["has_temporal_status_scope"] is True
+    assert ranking[0]["family"] == "temporal"
 
 
 def test_refined_pair_balance_promotes_deontic_over_temporal_status_scaffold() -> None:

@@ -971,6 +971,10 @@ _LEGISLATIVE_HISTORY_ABBREVIATION_RE = re.compile(
     r"(?:\b(?:act|acts)\b|\bch\.|\bpub\.\s*l\.|\bstat\.|\brelated\s+to\b)",
     re.IGNORECASE,
 )
+_DATED_STATUS_LEGISLATIVE_HISTORY_RE = re.compile(
+    r"\b(?:repealed|amended)\b.{0,360}\b(?:section,\s+act|as\s+added|as\s+amended)\b",
+    re.IGNORECASE,
+)
 _DEONTIC_SCOPE_PHRASES = (
     "authorization of appropriations",
     "authorized to be appropriated",
@@ -2334,10 +2338,16 @@ def _weighted_modal_family_counts(
     if cue_empty_editorial_status_frame_backfill:
         frame_family = ModalLogicFamily.FRAME.value
         temporal_family = ModalLogicFamily.TEMPORAL.value
-        counts[frame_family] = max(
-            float(counts.get(frame_family, 0.0)),
-            float(counts.get(temporal_family, 0.0)) + 0.2,
-        )
+        if bool(resolved_signals.get("has_dated_status_legislative_history_scope")):
+            counts[temporal_family] = max(
+                float(counts.get(temporal_family, 0.0)),
+                float(counts.get(frame_family, 0.0)) + 0.01,
+            )
+        else:
+            counts[frame_family] = max(
+                float(counts.get(frame_family, 0.0)),
+                float(counts.get(temporal_family, 0.0)) + 0.2,
+            )
     return counts
 
 
@@ -5159,6 +5169,9 @@ def _apply_refined_modal_family_cue_pair_balance(
     )
     has_temporal_status_scope = bool(signals.get("has_temporal_status_scope"))
     has_calendar_date_scope = bool(signals.get("has_calendar_date_scope"))
+    has_dated_status_legislative_history_scope = bool(
+        signals.get("has_dated_status_legislative_history_scope")
+    )
     has_epistemic_scope = bool(
         signals.get("has_epistemic_scope")
         or signals.get("has_epistemic_cue")
@@ -6440,6 +6453,25 @@ def _apply_refined_modal_family_cue_pair_balance(
             )
             conditional_count = float(counts.get(conditional_family, 0.0))
 
+    # packet-004348 frame -> temporal:
+    # Repealed/amended headings with a legislative-history tail ("Section,
+    # act", "as added", "as amended") are temporal status records. Keep bare
+    # status headings frame-led, but let dated history tails outrank generic
+    # editorial frame scaffolding.
+    if (
+        frame_count >= temporal_count
+        and frame_count > 0.0
+        and has_dated_status_legislative_history_scope
+        and has_temporal_scope
+        and has_temporal_status_scope
+        and has_calendar_date_scope
+        and has_frame_scope_context
+        and not has_deontic_cue
+        and not has_explicit_conditional_scope
+    ):
+        counts[temporal_family] = max(temporal_count, frame_count + 0.01)
+        temporal_count = float(counts.get(temporal_family, 0.0))
+
     if (
         temporal_count >= deontic_count
         and has_deontic_study_report_duty_scope_phrase
@@ -7383,6 +7415,9 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         _CALENDAR_DATE_RE.search(normalized_text)
         or _MONTH_DAY_RE.search(normalized_text)
     )
+    dated_status_legislative_history_scope = bool(
+        _DATED_STATUS_LEGISLATIVE_HISTORY_RE.search(normalized_text)
+    )
     temporal_within_scope = _has_temporal_within_scope(
         encoding.normalized_text,
         encoding.tokens,
@@ -7497,6 +7532,9 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
             or conditional_scope_token
         ),
         "has_calendar_date_scope": calendar_date_scope,
+        "has_dated_status_legislative_history_scope": (
+            dated_status_legislative_history_scope
+        ),
         "has_deontic_cue": ModalLogicFamily.DEONTIC.value in cue_families,
         "has_deontic_scope": deontic_scope,
         "has_deontic_scope_phrase": bool(deontic_scope_phrase),
