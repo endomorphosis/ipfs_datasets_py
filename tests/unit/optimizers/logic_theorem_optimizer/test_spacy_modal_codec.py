@@ -3744,6 +3744,137 @@ def test_spacy_refined_pair_balance_reinforces_deontic_for_clause_only_if_scope_
     assert counts["deontic"] > 0.2
 
 
+def test_spacy_refined_pair_balance_promotes_epistemic_over_generic_frame_scaffold() -> None:
+    counts = {
+        "frame": 2.4,
+        "epistemic": 0.35,
+        "deontic": 0.1,
+    }
+    signals = {
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_frame_editorial_scope_phrase": False,
+        "has_frame_structural_authority_scope_phrase": False,
+        "has_statutory_scope_reference": True,
+        "has_definition_scope": False,
+        "has_epistemic_scope": True,
+        "has_epistemic_cue": True,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["epistemic"] > counts["frame"]
+
+
+def test_spacy_refined_pair_balance_promotes_temporal_status_over_editorial_frame_scaffold() -> None:
+    counts = {
+        "frame": 2.5,
+        "temporal": 0.45,
+        "deontic": 0.0,
+        "conditional_normative": 0.0,
+    }
+    signals = {
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_frame_editorial_scope_phrase": True,
+        "has_statutory_scope_reference": True,
+        "has_definition_scope": False,
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": True,
+        "has_temporal_status_scope": True,
+        "has_calendar_date_scope": True,
+        "has_deontic_cue": False,
+        "has_condition_or_exception_scope": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["temporal"] > counts["frame"]
+
+
+def test_spacy_refined_pair_balance_promotes_conditional_over_frame_status_scaffold() -> None:
+    counts = {
+        "frame": 2.1,
+        "conditional_normative": 0.4,
+        "temporal": 0.8,
+    }
+    signals = {
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_frame_editorial_scope_phrase": True,
+        "has_frame_structural_authority_scope_phrase": False,
+        "has_statutory_scope_reference": True,
+        "has_definition_scope": False,
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": True,
+        "has_conditional_scope_phrase": True,
+        "has_conditional_scope_token": False,
+        "has_temporal_status_scope": True,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["conditional_normative"] > counts["frame"]
+
+
+def test_spacy_refined_pair_balance_promotes_deontic_study_report_over_deadline_scope() -> None:
+    counts = {
+        "temporal": 2.15,
+        "deontic": 0.7,
+        "conditional_normative": 0.2,
+        "frame": 0.35,
+    }
+    signals = {
+        "has_deontic_scope": True,
+        "has_deontic_cue": True,
+        "has_deontic_report_duty_scope_phrase": True,
+        "has_deontic_study_report_duty_scope_phrase": True,
+        "has_temporal_scope": True,
+        "has_temporal_deadline_cue": True,
+        "has_temporal_within_scope": True,
+        "has_frame_editorial_scope_phrase": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["deontic"] > counts["temporal"]
+
+
+def test_spacy_refined_pair_balance_promotes_structural_authority_frame_over_generic_deontic() -> None:
+    counts = {
+        "deontic": 2.0,
+        "frame": 0.6,
+        "temporal": 0.2,
+    }
+    signals = {
+        "has_deontic_scope": True,
+        "has_deontic_cue": True,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_frame_structural_authority_scope_phrase": True,
+        "has_deontic_authorization_scope_phrase": False,
+        "has_deontic_report_duty_scope_phrase": False,
+        "has_deontic_corporate_powers_scope_phrase": False,
+        "has_deontic_benefit_entitlement_scope_phrase": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["frame"] > counts["deontic"]
+
+
+def test_spacy_encoder_marks_study_and_report_as_deontic_report_duty_scope() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        "The Commission shall conduct a study and report not later than 180 days.",
+        document_id="packet-000117-study-report-duty",
+    )
+
+    signals = modal_ambiguity_signals(encoding)
+
+    assert signals["has_deontic_study_report_duty_scope_phrase"] is True
+
+
 def test_spacy_encoder_treats_to_the_extent_possible_as_deontic_qualifier_not_alethic_cue() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     encoding = encoder.encode(

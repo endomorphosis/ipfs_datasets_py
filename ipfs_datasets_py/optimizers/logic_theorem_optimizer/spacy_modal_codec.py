@@ -1033,9 +1033,23 @@ _DEONTIC_CORPORATE_POWERS_SCOPE_PHRASES = (
     "the corporation may",
 )
 _DEONTIC_REPORT_DUTY_SCOPE_PHRASES = (
+    "conduct a study",
+    "conduct the study",
     "shall submit",
+    "shall conduct a study",
+    "shall conduct the study",
+    "shall study",
     "shall make a report",
+    "study and report",
     "report shall be submitted",
+)
+_DEONTIC_STUDY_REPORT_DUTY_SCOPE_PHRASES = (
+    "conduct a study",
+    "conduct the study",
+    "shall conduct a study",
+    "shall conduct the study",
+    "shall study",
+    "study and report",
 )
 _TEMPORAL_NOTIFICATION_DEADLINE_SCOPE_RE = re.compile(
     r"\b(?:notification|notify|notifies|notified|notice|report|reports|"
@@ -5096,6 +5110,9 @@ def _apply_refined_modal_family_cue_pair_balance(
     has_deontic_report_duty_scope_phrase = bool(
         signals.get("has_deontic_report_duty_scope_phrase")
     )
+    has_deontic_study_report_duty_scope_phrase = bool(
+        signals.get("has_deontic_study_report_duty_scope_phrase")
+    )
     has_temporal_notification_deadline_scope_phrase = bool(
         signals.get("has_temporal_notification_deadline_scope_phrase")
     )
@@ -6364,6 +6381,78 @@ def _apply_refined_modal_family_cue_pair_balance(
         )
         conditional_count = float(counts.get(conditional_family, 0.0))
 
+    # packet-000117 family cue refinement:
+    # U.S.C. extracts often combine title/editorial frame scaffolding with a
+    # smaller typed signal.  When the typed signal is explicit, keep that
+    # family just above generic frame or deadline/status evidence instead of
+    # treating the scaffold as the operative family.
+    if (
+        frame_count > 0.0
+        and has_frame_scope_context
+        and not has_definition_scope
+    ):
+        if (
+            frame_count >= epistemic_count
+            and epistemic_count > 0.0
+            and has_strong_epistemic_scope
+            and not has_editorial_frame_context
+            and not has_structural_authority_frame_scope
+        ):
+            counts[epistemic_family] = max(epistemic_count, frame_count + 0.01)
+            epistemic_count = float(counts.get(epistemic_family, 0.0))
+        if (
+            frame_count >= temporal_count
+            and has_temporal_status_scope
+            and has_strong_temporal_scope
+            and has_editorial_frame_context
+            and not bool(signals.get("has_vacant_section_scope"))
+            and not has_explicit_conditional_scope
+            and not has_deontic_cue
+            and temporal_count > 0.0
+        ):
+            counts[temporal_family] = max(temporal_count, frame_count + 0.01)
+            temporal_count = float(counts.get(temporal_family, 0.0))
+        if (
+            frame_count >= conditional_count
+            and conditional_count > 0.0
+            and has_structural_conditional_scope
+            and has_explicit_conditional_scope
+            and (
+                has_editorial_frame_context
+                or has_temporal_status_scope
+                or has_statutory_scope_reference
+            )
+            and not has_structural_authority_frame_scope
+        ):
+            counts[conditional_family] = max(
+                conditional_count,
+                frame_count + 0.01,
+            )
+            conditional_count = float(counts.get(conditional_family, 0.0))
+
+    if (
+        temporal_count >= deontic_count
+        and has_deontic_study_report_duty_scope_phrase
+        and has_deontic_cue
+        and has_temporal_deadline_scope
+        and not has_editorial_frame_context
+    ):
+        counts[deontic_family] = max(deontic_count, temporal_count + 0.01)
+        deontic_count = float(counts.get(deontic_family, 0.0))
+
+    if (
+        deontic_count > frame_count
+        and frame_count > 0.0
+        and has_structural_authority_frame_scope
+        and has_frame_scope_context
+        and not has_deontic_authorization_scope_phrase
+        and not has_deontic_report_duty_scope_phrase
+        and not has_deontic_corporate_powers_scope_phrase
+        and not has_deontic_benefit_entitlement_scope_phrase
+    ):
+        counts[frame_family] = max(frame_count, deontic_count + 0.01)
+        frame_count = float(counts.get(frame_family, 0.0))
+
     # conditional_normative -> temporal:
     # when statutory structural conditionals only carry weak temporal cue tokens,
     # preserve temporal evidence so conditional scaffolding does not dominate.
@@ -7242,6 +7331,9 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
     deontic_report_duty_scope_phrase = _contains_scope_phrase(
         normalized_text, _DEONTIC_REPORT_DUTY_SCOPE_PHRASES
     )
+    deontic_study_report_duty_scope_phrase = _contains_scope_phrase(
+        normalized_text, _DEONTIC_STUDY_REPORT_DUTY_SCOPE_PHRASES
+    )
     temporal_notification_deadline_scope_phrase = bool(
         _TEMPORAL_NOTIFICATION_DEADLINE_SCOPE_RE.search(normalized_text)
     )
@@ -7409,6 +7501,9 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         ),
         "has_deontic_report_duty_scope_phrase": bool(
             deontic_report_duty_scope_phrase
+        ),
+        "has_deontic_study_report_duty_scope_phrase": bool(
+            deontic_study_report_duty_scope_phrase
         ),
         "has_temporal_notification_deadline_scope_phrase": bool(
             temporal_notification_deadline_scope_phrase
