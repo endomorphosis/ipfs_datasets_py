@@ -35293,6 +35293,117 @@ def test_decompiler_uses_autoencoder_target_family_in_typed_reconstruction() -> 
     assert "temporal deadline period" in structural_text
 
 
+def test_decompiler_uses_heading_semantics_for_deontic_temporal_reconstruction() -> None:
+    text = (
+        "Sec. 1531 - Buying Power Maintenance accounts for International Trade "
+        "Administration. Funds shall remain available until expended."
+    )
+    formula = ModalIRFormula(
+        formula_id="f1",
+        operator=ModalIROperator(
+            family="deontic",
+            system="KD",
+            symbol="O",
+            label="obligation",
+        ),
+        predicate=ModalIRPredicate(name="section_heading_fallback"),
+        provenance=ModalIRProvenance(
+            source_id="us-code-15-1531-packet-002914",
+            start_char=0,
+            end_char=text.index(" -"),
+            citation="15 U.S.C. 1531",
+        ),
+        metadata={
+            "cue": "__uscode_section_heading_fallback__",
+            "fallback_rule": "uscode_section_heading_v1",
+        },
+    )
+    document = ModalIRDocument(
+        document_id="us-code-15-1531-packet-002914",
+        source="us_code",
+        normalized_text=text,
+        formulas=[formula],
+        metadata={
+            "citation": "15 U.S.C. 1531",
+            "hint_evidence": [{"predicted_family": "deontic", "target_family": "temporal"}],
+        },
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "buying_power_account_maintenance" in slot_texts[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "buying_power_account_maintenance:deontic->temporal" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "deontic->temporal" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "buying power account maintenance" in structural_text
+
+
+def test_decompiler_uses_heading_semantics_for_frame_deontic_reconstruction() -> None:
+    text = (
+        "§1320a-7n. Disclosure of predictive modeling and other analytics "
+        "technologies to identify and prevent waste, fraud, and abuse. The "
+        "Secretary shall disclose technologies."
+    )
+    formula = ModalIRFormula(
+        formula_id="f1",
+        operator=ModalIROperator(
+            family="frame",
+            system="Frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="section_heading_fallback"),
+        provenance=ModalIRProvenance(
+            source_id="us-code-42-1320a-packet-002914",
+            start_char=0,
+            end_char=text.index(".") + 1,
+            citation="42 U.S.C. 1320a",
+        ),
+        metadata={
+            "cue": "__uscode_section_heading_fallback__",
+            "fallback_rule": "uscode_section_heading_v1",
+        },
+    )
+    document = ModalIRDocument(
+        document_id="us-code-42-1320a-packet-002914",
+        source="us_code",
+        normalized_text=text,
+        formulas=[formula],
+        metadata={"citation": "42 U.S.C. 1320a"},
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "predictive_analytics_disclosure" in slot_texts[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "waste_fraud_abuse_prevention:frame->deontic" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "frame->deontic" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
+    assert "predictive analytics disclosure" in structural_text
+
+
 def test_decompiler_routes_office_seal_atoms_to_deontic_frame_and_legal_views() -> None:
     document = _single_formula_document(
         family="deontic",

@@ -194,7 +194,10 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("shall submit the report", "report_duty"),
     ("shall submit a report", "report_duty"),
     ("study and report", "study_report_duty"),
+    ("buying power maintenance accounts", "buying_power_account_maintenance"),
+    ("buying power maintenance", "buying_power_account_maintenance"),
     ("maintenance of accounts", "account_maintenance"),
+    ("maintenance accounts", "account_maintenance"),
     ("custody of departmental records", "departmental_record_custody"),
     ("custody of department records", "departmental_record_custody"),
     ("custody of departmental property", "departmental_property_custody"),
@@ -352,6 +355,12 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("false, fictitious, or fraudulent", "false_fraudulent_claim"),
     ("knowing such claim to be false", "false_claim_knowledge"),
     ("claim upon or against the united states", "government_claim"),
+    ("predictive modeling and other analytics technologies", "predictive_analytics_disclosure"),
+    ("predictive modeling technologies", "predictive_analytics_disclosure"),
+    ("predictive modeling", "predictive_analytics"),
+    ("waste, fraud, and abuse", "waste_fraud_abuse_prevention"),
+    ("waste fraud and abuse", "waste_fraud_abuse_prevention"),
+    ("identify and prevent waste", "waste_fraud_abuse_prevention"),
     ("buying livestock in commerce", "livestock_commerce"),
     ("conveyance to states", "state_conveyance_authority"),
     ("conveyance to a state", "state_conveyance_authority"),
@@ -2748,6 +2757,8 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         add("submit_or_file")
     if re.search(r"\bannual\s+budget\s+program\b", normalized):
         add("budget_program_submission")
+    if re.search(r"\bbuying\s+power\b.{0,50}\bmaint(?:ain|enance)\b", normalized):
+        add("buying_power_account_maintenance")
     if re.search(r"\bmaint(?:ain|enance)\b.{0,40}\baccounts?\b", normalized):
         add("account_maintenance")
     if re.search(
@@ -2976,6 +2987,18 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         add("scienter_requirement")
     if re.search(r"\bmaterial\s+fact\b", normalized):
         add("material_fact_representation")
+    if re.search(r"\bpredictive\s+modeling\b", normalized):
+        add("predictive_analytics")
+        if re.search(r"\b(?:disclos(?:e|ure)|analytics|technologies)\b", normalized):
+            add("predictive_analytics_disclosure")
+    if re.search(
+        r"\b(?:waste|fraud|abuse)\b.{0,80}\b(?:prevent|identify|analytics|modeling)\b",
+        normalized,
+    ) or re.search(
+        r"\b(?:prevent|identify|analytics|modeling)\b.{0,80}\b(?:waste|fraud|abuse)\b",
+        normalized,
+    ):
+        add("waste_fraud_abuse_prevention")
     return atoms
 
 
@@ -7123,6 +7146,42 @@ def _typed_decompiler_role_slots(
     return _unique_slot_values(slots)
 
 
+def _typed_decompiler_semantic_reconstruction_text(
+    *,
+    document: ModalIRDocument,
+    formula: ModalIRFormula,
+    predicate_text: str,
+    source_span_text: str,
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
+) -> str:
+    """Return the bounded semantic surface used by typed family-pair slots."""
+    heading_text = _fallback_section_heading_tail_text(
+        document=document,
+        formula=formula,
+        max_tokens=18,
+    )
+    fallback_text = _fallback_surface_text(
+        document=document,
+        formula=formula,
+        max_tokens=24,
+    )
+    return _clean_text(
+        " ".join(
+            value
+            for value in (
+                predicate_text,
+                source_span_text,
+                heading_text,
+                fallback_text,
+                " ".join(_phrase_values(condition_values)),
+                " ".join(_phrase_values(exception_values)),
+            )
+            if _clean_text(value)
+        )
+    ).replace("_", " ").lower()
+
+
 def _typed_decompiler_target_reconstruction_slots(
     *,
     formula: ModalIRFormula,
@@ -7137,18 +7196,14 @@ def _typed_decompiler_target_reconstruction_slots(
         return []
 
     source_span_text = _formula_source_span_text(document=document, formula=formula)
-    reconstruction_text = _clean_text(
-        " ".join(
-            value
-            for value in (
-                predicate_text,
-                source_span_text,
-                " ".join(_phrase_values(condition_values)),
-                " ".join(_phrase_values(exception_values)),
-            )
-            if _clean_text(value)
-        )
-    ).replace("_", " ").lower()
+    reconstruction_text = _typed_decompiler_semantic_reconstruction_text(
+        document=document,
+        formula=formula,
+        predicate_text=predicate_text,
+        source_span_text=source_span_text,
+        condition_values=condition_values,
+        exception_values=exception_values,
+    )
     if not reconstruction_text:
         return []
 
@@ -7427,18 +7482,14 @@ def _typed_decompiler_source_reconstruction_slots(
         return []
 
     source_span_text = _formula_source_span_text(document=document, formula=formula)
-    reconstruction_text = _clean_text(
-        " ".join(
-            value
-            for value in (
-                predicate_text,
-                source_span_text,
-                " ".join(_phrase_values(condition_values)),
-                " ".join(_phrase_values(exception_values)),
-            )
-            if _clean_text(value)
-        )
-    ).replace("_", " ").lower()
+    reconstruction_text = _typed_decompiler_semantic_reconstruction_text(
+        document=document,
+        formula=formula,
+        predicate_text=predicate_text,
+        source_span_text=source_span_text,
+        condition_values=condition_values,
+        exception_values=exception_values,
+    )
     if not reconstruction_text:
         return []
 
@@ -7759,6 +7810,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "board_of_directors",
         "boundary_division_fence",
         "budget_program_submission",
+        "buying_power_account_maintenance",
         "accountability_responsibility",
         "agricultural_commodity_set_aside",
         "civil_action",
@@ -7791,6 +7843,9 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "false_claim_knowledge",
         "false_fraudulent_claim",
         "false_statement_penalty",
+        "predictive_analytics",
+        "predictive_analytics_disclosure",
+        "waste_fraud_abuse_prevention",
         "scienter_requirement",
         "material_fact_representation",
         "game_bird_preserve_protection",
@@ -8230,6 +8285,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "annual_report_duty",
             "admission_fee_collection",
             "account_maintenance",
+            "buying_power_account_maintenance",
             "accountability_responsibility",
             "audit_requirement",
             "award_program",
@@ -8262,6 +8318,9 @@ def _typed_decompiler_semantic_atom_target_families(
             "government_claim",
             "funding_eligibility",
             "human_welfare_resource_program",
+            "predictive_analytics",
+            "predictive_analytics_disclosure",
+            "waste_fraud_abuse_prevention",
             "housing_family_service_investment",
             "housing_investment_authority",
             "interagency_coordination",
@@ -8319,6 +8378,9 @@ def _typed_decompiler_semantic_atom_target_families(
             "timber_cutting_forest_scope",
             "timber_stone_use",
             "veterans_personal_property",
+            "predictive_analytics",
+            "predictive_analytics_disclosure",
+            "waste_fraud_abuse_prevention",
         }:
             add("deontic")
         if normalized_atom in {
@@ -8367,6 +8429,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "board_of_directors",
             "boundary_division_fence",
             "budget_program_submission",
+            "buying_power_account_maintenance",
             "accountability_responsibility",
             "civil_action",
             "civil_action_jurisdiction",
