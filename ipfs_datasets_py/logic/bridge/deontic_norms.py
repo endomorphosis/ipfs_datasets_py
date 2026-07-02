@@ -626,6 +626,10 @@ def _apply_deontic_compiler_guidance_to_rows(
                     "compiler_guidance_source"
                 ]
             if bridge_guidance:
+                _fill_deontic_row_from_compiler_guidance_ir(
+                    enriched,
+                    bridge_guidance,
+                )
                 for key, value in bridge_guidance.items():
                     if _value_is_present(value):
                         legal_frame.setdefault(key, value)
@@ -887,7 +891,110 @@ def _deontic_bridge_evidence_from_guidance_row(
         )
     if isinstance(component_gaps, Mapping):
         evidence["compiler_guidance_legal_ir_component_gaps"] = dict(component_gaps)
+    promoted_ir = _deontic_guidance_legal_norm_ir_slots(row)
+    if promoted_ir:
+        evidence["compiler_guidance_legal_norm_ir"] = promoted_ir
     return evidence
+
+
+def _deontic_guidance_legal_norm_ir_slots(row: Mapping[str, Any]) -> dict[str, Any]:
+    """Return typed deontic IR slots carried by pass-gated guidance evidence."""
+
+    for candidate in _deontic_guidance_ir_candidates(row):
+        slots = _deontic_guidance_ir_slots_from_candidate(candidate)
+        if slots:
+            return slots
+    return {}
+
+
+def _deontic_guidance_ir_candidates(row: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    candidates: list[Mapping[str, Any]] = []
+    for key in (
+        "legal_norm_ir",
+        "legal_norm",
+        "deontic_ir",
+        "parser_element",
+        "target_ir",
+        "expected_ir",
+        "ir",
+    ):
+        value = row.get(key)
+        if isinstance(value, Mapping):
+            candidates.append(value)
+    candidates.append(row)
+
+    nested = row.get("payload")
+    if isinstance(nested, Mapping):
+        candidates.extend(_deontic_guidance_ir_candidates(nested))
+    return candidates
+
+
+def _deontic_guidance_ir_slots_from_candidate(
+    candidate: Mapping[str, Any],
+) -> dict[str, Any]:
+    slots: dict[str, Any] = {}
+    for output_key, aliases in (
+        ("actor", ("actor", "legal_actor", "regulated_entity", "subject")),
+        ("action", ("action", "action_text", "required_action", "conduct")),
+        ("modality", ("modality", "deontic_operator", "modal")),
+        ("norm_type", ("norm_type", "type", "legal_norm_type")),
+        ("source_text", ("source_text", "text")),
+        ("support_text", ("support_text", "text_preview")),
+        ("canonical_citation", ("canonical_citation", "citation")),
+    ):
+        value = _first_present_mapping_value(candidate, aliases)
+        if _value_is_present(value):
+            if output_key in {"actor", "action", "modality", "norm_type"}:
+                text_values = _list_of_strings(value)
+                slots[output_key] = text_values[0] if text_values else str(value)
+            else:
+                slots[output_key] = _copy_slot_value(value)
+
+    for key in ("field_spans", "support_span", "source_span", "formal_terms"):
+        value = candidate.get(key)
+        if _value_is_present(value):
+            slots[key] = _copy_slot_value(value)
+
+    return slots
+
+
+def _first_present_mapping_value(
+    mapping: Mapping[str, Any],
+    aliases: Sequence[str],
+) -> Any:
+    for alias in aliases:
+        value = mapping.get(alias)
+        if _value_is_present(value):
+            return value
+    return None
+
+
+def _fill_deontic_row_from_compiler_guidance_ir(
+    row: dict[str, Any],
+    bridge_guidance: Mapping[str, Any],
+) -> None:
+    """Hydrate missing parser-row slots from pass-gated LegalNormIR evidence."""
+
+    promoted_ir = bridge_guidance.get("compiler_guidance_legal_norm_ir")
+    if not isinstance(promoted_ir, Mapping):
+        return
+
+    _fill_scalar_alias_from_norm(row, promoted_ir, "subject", "actor", as_list=True)
+    _fill_scalar_alias_from_norm(row, promoted_ir, "action", "action", as_list=True)
+    _fill_scalar_alias_from_norm(row, promoted_ir, "deontic_operator", "modality")
+    _fill_scalar_alias_from_norm(row, promoted_ir, "modality", "modality")
+    _fill_scalar_alias_from_norm(row, promoted_ir, "norm_type", "norm_type")
+    _fill_scalar_alias_from_norm(row, promoted_ir, "text", "source_text")
+    _fill_scalar_alias_from_norm(row, promoted_ir, "source_text", "source_text")
+    for key in (
+        "support_text",
+        "canonical_citation",
+        "field_spans",
+        "support_span",
+        "source_span",
+        "formal_terms",
+    ):
+        _fill_empty_field(row, promoted_ir, key)
 
 
 def _deontic_guidance_target_view(row: Mapping[str, Any]) -> str:

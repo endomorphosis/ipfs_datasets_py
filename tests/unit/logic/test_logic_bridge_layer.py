@@ -2789,6 +2789,92 @@ def test_deontic_bridge_fills_reduced_parser_rows_from_legal_norm_ir_rows() -> N
     assert report.round_trip.extra_losses["deontic_decoder_slot_loss"] == 0.0
 
 
+def test_deontic_bridge_promotes_passed_guidance_ir_into_reduced_parser_rows() -> None:
+    from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
+
+    source_text = "The Secretary shall publish notice."
+    source_id = "legacy:deontic:guidance-reduced-row"
+
+    class _FakeResult:
+        success = True
+        metadata = {
+            "parser_element": {
+                "schema_version": "legal_norm_ir-v1",
+                "source_id": source_id,
+                "canonical_citation": "20 U.S.C. 107b-3",
+                "norm_type": "obligation",
+                "subject": [],
+                "action": [],
+                "deontic_operator": "",
+                "text": source_text,
+                "source_text": source_text,
+                "support_text": source_text,
+                "support_span": [0, len(source_text)],
+                "promotable_to_theorem": True,
+                "export_readiness": {"blockers": []},
+            }
+        }
+
+    class _FakeConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _FakeResult()
+
+    adapter = DeonticNormsBridgeAdapter(converter=_FakeConverter())
+    report = adapter.evaluate(
+        source_text,
+        document_id="deontic-bridge-guidance-reduced-row",
+        citation="Deontic Bridge Guidance Reduced Row",
+        compiler_guidance={
+            "compiler_guidance_route": "repair_deontic_bridge_quality_gate",
+            "compiler_guidance_quality_gate": "pass",
+            "target_component": "deontic.ir",
+            "metric_sample_payloads": [
+                {
+                    "sample_id": source_id,
+                    "target_view": "deontic.ir",
+                    "quality_gate": "pass",
+                    "legal_norm_ir": {
+                        "actor": "Secretary",
+                        "modality": "O",
+                        "norm_type": "obligation",
+                        "action": "publish notice",
+                        "source_text": source_text,
+                        "support_text": source_text,
+                        "support_span": [0, len(source_text)],
+                        "field_spans": {
+                            "subject": [4, 13],
+                            "modality": [14, 19],
+                            "action": [20, 34],
+                        },
+                    },
+                }
+            ],
+        },
+    )
+
+    norm = report.ir_document.views["deontic_ir"].payload["norms"][0]
+    legal_frame = norm["legal_frame"]
+    summary = report.ir_document.views["deontic_reconstruction_slot_loss"].payload[
+        "summary"
+    ]
+    phase8_record = report.ir_document.views["deontic_phase8_quality"].payload[
+        "records"
+    ][0]
+
+    assert report.metadata["compiler_guidance_applied"] is True
+    assert norm["actor"] == "Secretary"
+    assert norm["modality"] == "O"
+    assert norm["action"] == "publish notice"
+    assert legal_frame["compiler_guidance_quality_gate"] == "pass"
+    assert legal_frame["compiler_guidance_target_view"] == "deontic.ir"
+    assert summary["missing_required_slots"] == []
+    assert summary["slot_reconstruction_complete"] is True
+    assert phase8_record["requires_validation"] is False
+    assert report.round_trip.extra_losses["deontic_decoder_slot_loss"] == 0.0
+    assert report.round_trip.extra_losses["deontic_quality_requires_validation_loss"] == 0.0
+
+
 def test_deontic_bridge_recovers_purpose_slots_from_nested_legal_frame() -> None:
     from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
 
