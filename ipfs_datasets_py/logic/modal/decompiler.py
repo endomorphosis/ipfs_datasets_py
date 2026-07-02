@@ -136,6 +136,13 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("monitoring and enforcement of the", "monitoring_enforcement"),
     ("authorization of appropriations", "appropriation_authorization"),
     ("authorized to be appropriated", "appropriation_authorization"),
+    ("appropriations are authorized", "appropriation_authorization"),
+    ("committee allocations", "congressional_budget_allocation"),
+    ("committee allocation", "congressional_budget_allocation"),
+    ("congressional budget", "congressional_budget_process"),
+    ("budget allocations", "congressional_budget_allocation"),
+    ("budget allocation", "congressional_budget_allocation"),
+    ("appropriations committee", "appropriations_committee_duty"),
     ("telemedicine and distance learning services", "telemedicine_distance_learning"),
     ("distance learning services", "telemedicine_distance_learning"),
     ("sustainable chemistry research and education", "sustainable_chemistry_research"),
@@ -192,6 +199,12 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("custody of department records", "departmental_record_custody"),
     ("custody of departmental property", "departmental_property_custody"),
     ("custody of department property", "departmental_property_custody"),
+    ("disposition of deceased veterans' personal property", "deceased_veterans_property_disposition"),
+    ("disposition of deceased veterans personal property", "deceased_veterans_property_disposition"),
+    ("deceased veterans' personal property", "deceased_veterans_property_disposition"),
+    ("deceased veterans personal property", "deceased_veterans_property_disposition"),
+    ("veterans' personal property", "veterans_personal_property"),
+    ("veterans personal property", "veterans_personal_property"),
     ("accountability and responsibility", "accountability_responsibility"),
     ("audit by government accountability office", "audit_requirement"),
     ("government accountability office", "audit_requirement"),
@@ -254,6 +267,10 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("executions and judicial sales", "judicial_sale_execution"),
     ("marshal's incapacity", "marshal_incapacity"),
     ("marshal incapacity", "marshal_incapacity"),
+    ("military commissions", "military_commission_procedure"),
+    ("military commission", "military_commission_procedure"),
+    ("trial counsel", "military_trial_counsel_duty"),
+    ("defense counsel", "military_defense_counsel_duty"),
     ("no land shall be patented", "patent_prohibition"),
     ("research program and plan", "research_program_plan"),
     ("grants for research", "research_grant"),
@@ -2284,9 +2301,11 @@ def _typed_ir_reconstruction_phrases(
         for target in ordered_targets
         if _typed_ir_family_pair_reconstruction_label(family, target)
     ]
+    atom_support_values = [_humanize_typed_ir_value(atom) for atom in semantic_atoms]
     summary_parts = [
         *target_labels[:4],
         *pair_labels[:4],
+        *atom_support_values[:6],
         *support_values[:max_values],
     ]
     summary = _bounded_reconstruction_text(summary_parts, max_tokens=max_tokens)
@@ -7137,6 +7156,43 @@ def _typed_decompiler_target_reconstruction_slots(
                         ),
                     )
                 )
+        for condition_index, _condition in enumerate(condition_values):
+            slots.extend(
+                (
+                    (
+                        "semantic_slot_legal_ir_view_prototype",
+                        (
+                            f"slot-pair:conditions:{condition_index}|"
+                            f"typed-decompiler-target-reconstruction-family:{target}||deontic.ir"
+                        ),
+                    ),
+                    (
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        (
+                            f"{source_family}||slot-pair:conditions:{condition_index}|"
+                            f"typed-decompiler-target-reconstruction-family:{target}||deontic.ir"
+                        ),
+                    ),
+                    (
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        (
+                            f"{target}||slot-pair:conditions:{condition_index}|"
+                            f"typed-decompiler-target-reconstruction-family:{target}||deontic.ir"
+                        ),
+                    ),
+                )
+            )
+            if target in {"deontic", "temporal"}:
+                slots.append(
+                    (
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        (
+                            f"{target}||slot-pair:conditions:{condition_index}|"
+                            "typed-decompiler-target-reconstruction-family:deontic||"
+                            "TDFOL.prover"
+                        ),
+                    )
+                )
         for view in _typed_decompiler_family_pair_legal_ir_views(
             source_family,
             target,
@@ -7576,11 +7632,14 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "civil_action_jurisdiction",
         "civil_enforcement",
         "classified_information_procedure",
+        "congressional_budget_allocation",
+        "congressional_budget_process",
         "congressional_findings_declaration",
         "competitive_award_program",
         "crime_control_law_enforcement",
         "cybersecurity_information_sharing",
         "development_advice_assistance",
+        "deceased_veterans_property_disposition",
         "departmental_property_custody",
         "departmental_record_custody",
         "export_promotion",
@@ -7616,6 +7675,9 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "priority_state",
         "per_capita_ranking",
         "marshal_incapacity",
+        "military_commission_procedure",
+        "military_defense_counsel_duty",
+        "military_trial_counsel_duty",
         "mineral_land_status",
         "mineral_leasing_law",
         "mineral_development_technology",
@@ -7649,6 +7711,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "timber_stone_use",
         "treasury_deposit",
         "unknown_party_deposit",
+        "veterans_personal_property",
         "white_horse_hill_game_preserve",
     }:
         add("knowledge_graphs.neo4j_compat")
@@ -7669,8 +7732,11 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("modal.frame_logic")
     if normalized_atom in {
         "admission_fee_collection",
+        "appropriations_committee_duty",
         "civil_action",
         "civil_action_jurisdiction",
+        "congressional_budget_allocation",
+        "congressional_budget_process",
         "export_promotion",
         "fee_collection_authority",
         "fund_transfer_authority",
@@ -7679,6 +7745,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "false_claim_knowledge",
         "false_fraudulent_claim",
         "cybersecurity_information_sharing",
+        "deceased_veterans_property_disposition",
         "departmental_property_custody",
         "departmental_record_custody",
         "forest_resource_reservation",
@@ -7694,6 +7761,9 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "mineral_leasing_law",
         "mining_law_application",
         "mining_claim",
+        "military_commission_procedure",
+        "military_defense_counsel_duty",
+        "military_trial_counsel_duty",
         "natural_resource_use",
         "national_forest_resource",
         "nonirrigable_land_status",
@@ -7724,6 +7794,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "timber_stone_use",
         "treasury_deposit",
         "unknown_party_deposit",
+        "veterans_personal_property",
     }:
         add("CEC.native")
     if normalized_atom in {
@@ -7737,10 +7808,14 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("modal.frame_logic")
     if normalized_atom in {
         "agency_determination",
+        "appropriations_committee_duty",
         "classified_information_procedure",
+        "congressional_budget_allocation",
+        "congressional_budget_process",
         "congressional_findings_declaration",
         "cost_expense_charge",
         "cybersecurity_information_sharing",
+        "deceased_veterans_property_disposition",
         "development_advice_assistance",
         "departmental_property_custody",
         "departmental_record_custody",
@@ -7753,6 +7828,9 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "legal_relationship_override",
         "liability_protection",
         "monitoring_enforcement",
+        "military_commission_procedure",
+        "military_defense_counsel_duty",
+        "military_trial_counsel_duty",
         "natural_resource_use",
         "nonirrigable_land_status",
         "office_seal",
@@ -7772,6 +7850,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "timber_stone_use",
         "treasury_deposit",
         "unknown_party_deposit",
+        "veterans_personal_property",
     }:
         add("deontic.ir")
         add("TDFOL.prover")
@@ -7780,17 +7859,21 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "annual_report_duty",
         "admission_fee_collection",
         "appropriation_authorization",
+        "appropriations_committee_duty",
         "audit_requirement",
         "award_program",
         "build_maintain_duty",
         "budget_program_submission",
         "accountability_responsibility",
         "congressional_report_duty",
+        "congressional_budget_allocation",
+        "congressional_budget_process",
         "classified_information_procedure",
         "congressional_findings_declaration",
         "competitive_award_program",
         "cybersecurity_information_sharing",
         "definition",
+        "deceased_veterans_property_disposition",
         "departmental_property_custody",
         "departmental_record_custody",
         "exception_or_condition",
@@ -7813,6 +7896,9 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "liability_protection",
         "judicial_sale_execution",
         "marshal_incapacity",
+        "military_commission_procedure",
+        "military_defense_counsel_duty",
+        "military_trial_counsel_duty",
         "natural_resource_use",
         "national_forest_resource",
         "interinstitutional_discussion",
@@ -7853,6 +7939,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "timber_cutting",
         "timber_cutting_forest_scope",
         "timber_stone_use",
+        "veterans_personal_property",
     }:
         add("deontic.ir")
         add("TDFOL.prover")
@@ -7869,9 +7956,13 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "congressional_findings_declaration",
         "definition",
         "development_advice_assistance",
+        "deceased_veterans_property_disposition",
         "departmental_property_custody",
         "departmental_record_custody",
         "monitoring_enforcement",
+        "military_commission_procedure",
+        "military_defense_counsel_duty",
+        "military_trial_counsel_duty",
         "interinstitutional_discussion",
         "nonirrigable_land_status",
         "office_establishment",
@@ -7889,6 +7980,8 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "annual_report",
         "annual_report_duty",
         "active_status_list",
+        "appropriation_authorization",
+        "congressional_budget_allocation",
         "budget_program_submission",
         "mineral_development_technology",
         "date_range_temporal_scope",
@@ -7944,9 +8037,12 @@ def _typed_decompiler_semantic_atom_target_families(
             "build_maintain_duty",
             "budget_program_submission",
             "classified_information_procedure",
+            "congressional_budget_allocation",
+            "congressional_budget_process",
             "congressional_report_duty",
             "cybersecurity_information_sharing",
             "definition",
+            "deceased_veterans_property_disposition",
             "development_advice_assistance",
             "departmental_property_custody",
             "departmental_record_custody",
@@ -7966,6 +8062,9 @@ def _typed_decompiler_semantic_atom_target_families(
             "agency_determination",
             "legal_relationship_override",
             "liability_protection",
+            "military_commission_procedure",
+            "military_defense_counsel_duty",
+            "military_trial_counsel_duty",
             "mining_law_application",
             "natural_resource_use",
             "national_forest_resource",
@@ -8006,14 +8105,17 @@ def _typed_decompiler_semantic_atom_target_families(
             "timber_cutting",
             "timber_cutting_forest_scope",
             "timber_stone_use",
+            "veterans_personal_property",
         }:
             add("deontic")
         if normalized_atom in {
             "annual_report",
             "annual_report_duty",
             "active_status_list",
+            "appropriation_authorization",
             "affordable_housing_supply",
             "budget_program_submission",
+            "congressional_budget_allocation",
             "housing_family_service_investment",
             "long_term_housing_supply",
             "marine_science_development",
@@ -8049,6 +8151,8 @@ def _typed_decompiler_semantic_atom_target_families(
             "civil_action_jurisdiction",
             "civil_enforcement",
             "classified_information_procedure",
+            "congressional_budget_allocation",
+            "congressional_budget_process",
             "consultation",
             "consultation_cooperation",
             "congressional_findings_declaration",
@@ -8056,6 +8160,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "crime_control_law_enforcement",
             "cybersecurity_information_sharing",
             "definition",
+            "deceased_veterans_property_disposition",
             "development_advice_assistance",
             "departmental_property_custody",
             "departmental_record_custody",
@@ -8085,6 +8190,9 @@ def _typed_decompiler_semantic_atom_target_families(
             "irrigation_project",
             "judicial_sale_execution",
             "marshal_incapacity",
+            "military_commission_procedure",
+            "military_defense_counsel_duty",
+            "military_trial_counsel_duty",
             "mineral_land_status",
             "mineral_leasing_law",
             "mining_claim",
@@ -8146,6 +8254,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "timber_stone_use",
             "treasury_deposit",
             "unknown_party_deposit",
+            "veterans_personal_property",
             "white_horse_hill_game_preserve",
         }:
             add("frame")
@@ -8154,10 +8263,12 @@ def _typed_decompiler_semantic_atom_target_families(
             "accountability_responsibility",
             "congressional_findings_declaration",
             "development_advice_assistance",
+            "deceased_veterans_property_disposition",
             "departmental_property_custody",
             "departmental_record_custody",
             "false_claim_knowledge",
             "monitoring_enforcement",
+            "military_commission_procedure",
             "interinstitutional_discussion",
             "nonirrigable_land_status",
             "partnership_adjustment",
@@ -8224,6 +8335,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "funding_eligibility",
             "legal_relationship_override",
             "liability_protection",
+            "military_commission_procedure",
             "livestock_commerce",
             "monitoring_enforcement",
             "interinstitutional_discussion",

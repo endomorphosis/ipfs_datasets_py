@@ -36258,6 +36258,95 @@ def test_decompiler_reconstructs_timber_cutting_forest_temporal_slots() -> None:
     assert "timber cutting" in structural_text
 
 
+def test_decompiler_reconstructs_packet_2014_frame_to_deontic_temporal_atoms() -> None:
+    appropriation_document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Authorization of appropriations. There are authorized to be "
+            "appropriated such sums as may be necessary for each fiscal year."
+        ),
+        predicate="appropriation_authorization",
+    )
+    property_document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Disposition of deceased veterans' personal property. The facility "
+            "shall deliver the property to the recognized representative."
+        ),
+        predicate="deceased_veterans_property_disposition",
+    )
+    commission_document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Military commissions. Trial counsel and defense counsel shall "
+            "perform their duties before the military commission."
+        ),
+        predicate="military_commission_counsel_duties",
+    )
+    budget_document = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "Committee allocations. If the joint explanatory statement applies, "
+            "the committee shall allocate spending authority for the fiscal year."
+        ),
+        predicate="committee_allocate_spending_authority",
+        conditions=["If the joint explanatory statement applies"],
+    )
+
+    appropriation_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(appropriation_document)
+    )
+    property_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(property_document)
+    )
+    commission_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(commission_document)
+    )
+    budget_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(budget_document)
+    )
+
+    assert "appropriation_authorization" in appropriation_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "frame->temporal" in appropriation_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert any(
+        "appropriation authorization" in value
+        for value in appropriation_slots["typed_ir_reconstruction"]
+    )
+    assert "deceased_veterans_property_disposition" in property_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "frame->deontic" in property_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "CEC.native" in property_slots["legal_ir_view_prototype"]
+    assert "military_commission_procedure" in commission_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "military_trial_counsel_duty" in commission_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "frame->deontic" in commission_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert (
+        "deontic||slot-pair:conditions:0|"
+        "typed-decompiler-target-reconstruction-family:deontic||deontic.ir"
+        in budget_slots["family_semantic_slot_legal_ir_view_prototype"]
+    )
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()
