@@ -2221,6 +2221,25 @@ def _typed_ir_reconstruction_phrases(
                 provenance_only=provenance_only,
             )
         )
+    for bridge_text in _typed_ir_bridge_reconstruction_texts(
+        source_family=family,
+        targets=ordered_targets,
+        force=force,
+        polarity=polarity,
+        roles=roles,
+        condition_values=condition_values,
+        exception_values=exception_values,
+        support_values=support_values,
+        max_tokens=36,
+    ):
+        phrases.append(
+            DecodedModalPhrase(
+                text=bridge_text,
+                slot="typed_ir_bridge_reconstruction",
+                spans=spans,
+                provenance_only=provenance_only,
+            )
+        )
     for value in support_values[:max_values]:
         phrases.append(
             DecodedModalPhrase(
@@ -2354,6 +2373,75 @@ def _typed_ir_clause_role_support_text(
         for atom in semantic_atoms[:6]:
             add(atom)
     return _bounded_reconstruction_text(parts, max_tokens=max_tokens)
+
+
+def _typed_ir_bridge_reconstruction_texts(
+    *,
+    source_family: str,
+    targets: Sequence[str],
+    force: str,
+    polarity: str,
+    roles: Mapping[str, str],
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
+    support_values: Sequence[str],
+    max_tokens: int = 36,
+) -> List[str]:
+    """Render per-family bridge semantics from typed slots.
+
+    The main reconstruction summary is intentionally compact and de-duplicates
+    tokens across all targets.  For frame formulas with deontic, temporal, or
+    conditional cues that can erase the target-specific phrase that the metric
+    compares against.  These bridge phrases keep each family pair explainable
+    without copying a raw source span.
+    """
+    normalized_source = _clean_text(source_family).lower()
+    if not normalized_source or not targets:
+        return []
+
+    role_parts = [
+        _humanize_typed_ir_value(roles[role])
+        for role in ("subject", "action", "object", "temporal")
+        if role in roles and _clean_text(roles[role])
+    ]
+    scope_parts = [
+        *(_clean_text(value) for value in condition_values[:2]),
+        *(_clean_text(value) for value in exception_values[:2]),
+    ]
+    semantic_support = [
+        value
+        for value in support_values
+        if value
+        not in {
+            force,
+            polarity.replace("_", " "),
+        }
+    ][:6]
+
+    phrases: List[str] = []
+    for target in targets:
+        normalized_target = _clean_text(target).lower()
+        if not normalized_target or normalized_target == normalized_source:
+            continue
+        pair_label = _typed_ir_family_pair_reconstruction_label(
+            normalized_source,
+            normalized_target,
+        )
+        if not pair_label:
+            continue
+        parts = [
+            pair_label,
+            _typed_ir_target_family_label(normalized_target),
+            force,
+            polarity.replace("_", " "),
+            *role_parts,
+            *scope_parts,
+            *semantic_support,
+        ]
+        phrase = _bounded_reconstruction_text(parts, max_tokens=max_tokens)
+        if phrase and phrase not in phrases:
+            phrases.append(phrase)
+    return phrases
 
 
 def _typed_ir_legal_view_support_values(document: ModalIRDocument) -> List[str]:

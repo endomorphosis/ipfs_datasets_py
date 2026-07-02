@@ -33337,6 +33337,46 @@ def test_decompiler_emits_heading_typed_ir_reconstruction_for_frame_residuals() 
     assert "federal needs" in structural_text
 
 
+def test_decompiler_reconstructs_frame_bridge_semantics_from_typed_slots() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Use of facilities. With their consent, the Secretary and the "
+            "Federal Energy Regulatory Commission may use the research, "
+            "equipment, and facilities of public agencies after fiscal year 2026."
+        ),
+        predicate="secretary_commission_may_use_facilities",
+        conditions=[
+            "With their consent",
+            "after fiscal year 2026",
+        ],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "frame->deontic" in slot_texts["typed_ir_cross_family_semantic_support"]
+    assert "frame->temporal" in slot_texts["typed_ir_cross_family_semantic_support"]
+    assert "frame->conditional_normative" in slot_texts[
+        "typed_ir_cross_family_semantic_support"
+    ]
+    bridge_text = " ".join(slot_texts["typed_ir_bridge_reconstruction"])
+    assert "legal frame source reconstructs obligation permission prohibition" in bridge_text
+    assert "legal frame source reconstructs temporal deadline period" in bridge_text
+    assert "may" in bridge_text
+    assert "permission" in bridge_text
+    assert "after fiscal year 2026" in bridge_text
+    assert "facilities" in structural_text
+    assert "temporal deadline period" in structural_text
+
+
 def test_decompiler_typed_ir_reconstruction_preserves_epistemic_frame_cues() -> None:
     document = _single_formula_document(
         family="frame",
