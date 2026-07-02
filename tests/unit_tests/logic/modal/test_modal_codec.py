@@ -35433,6 +35433,84 @@ def test_decompiler_emits_document_semantic_atoms_for_formula_free_frame_text() 
     assert "build_maintain_duty" in slot_texts["legal_semantic_atom"]
 
 
+def test_decompiler_reconstructs_monitoring_enforcement_epistemic_frame_slots() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Monitoring and enforcement of the People's Republic of China "
+            "compliance. The President shall determine whether the requirements "
+            "are satisfied."
+        ),
+        predicate="china_compliance_monitoring",
+        conditions=["whether the requirements are satisfied"],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "monitoring_enforcement" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "monitoring_enforcement:frame->epistemic" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "frame->conditional_normative" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
+    assert "knowledge_graphs.neo4j_compat" in slot_texts[
+        "legal_ir_view_prototype"
+    ]
+    assert "monitoring enforcement" in structural_text
+
+
+def test_decompiler_reconstructs_reserve_officer_promotion_slots() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Promotion and retention of officers on the reserve active-status "
+            "list. Applicability of this chapter shall be determined by the "
+            "Secretary."
+        ),
+        predicate="reserve_officer_promotion_retention",
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "officer_promotion_retention" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "reserve_active_status_list" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "statutory_chapter_applicability" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "officer_promotion_retention:frame->deontic" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "statutory_chapter_applicability:frame->conditional_normative" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
+    assert "reserve active status list" in structural_text
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()
