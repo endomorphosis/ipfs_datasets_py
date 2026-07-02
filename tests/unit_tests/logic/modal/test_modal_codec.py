@@ -35087,6 +35087,95 @@ def test_decompiler_reconstructs_mining_claim_date_range_from_typed_slots() -> N
     assert "date range temporal scope" in structural_text
 
 
+def test_decompiler_reconstructs_findings_reports_and_law_override_slots() -> None:
+    findings = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Findings and declaration. Congress finds and declares that the "
+            "level of technology of mineral exploration and development has "
+            "changed radically, and continued application of the mining laws "
+            "of the United States should be reviewed."
+        ),
+        predicate="congressional_mining_findings",
+    )
+    reports = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "Reports to Congress. The Attorney General shall submit reports to "
+            "Congress under the Classified Information Procedures Act."
+        ),
+        predicate="attorney_general_submit_reports",
+    )
+    override = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Relationship to other law. Except as provided in this section, "
+            "this subchapter shall not affect any other provision of law."
+        ),
+        predicate="relationship_to_other_law",
+        conditions=["Except as provided in this section"],
+    )
+
+    findings_decoded = decode_modal_ir_document(findings)
+    findings_slots = decoded_modal_phrase_slot_text_map(findings_decoded)
+    findings_structural_text = _structural_decoded_text(
+        findings_decoded,
+        modal_ir=findings,
+        selected_frame=None,
+    )
+    reports_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(reports)
+    )
+    override_decoded = decode_modal_ir_document(override)
+    override_slots = decoded_modal_phrase_slot_text_map(override_decoded)
+    override_structural_text = _structural_decoded_text(
+        override_decoded,
+        modal_ir=override,
+        selected_frame=None,
+    )
+
+    assert "congressional_findings_declaration" in findings_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "mineral_development_technology" in findings_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "mining_law_application" in findings_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "congressional_findings_declaration:frame->epistemic" in findings_slots[
+        "typed-decompiler-source-semantic-family-pair"
+    ]
+    assert "knowledge determination finding" in findings_structural_text
+    assert "congressional findings declaration" in findings_structural_text
+
+    assert "congressional_report_duty" in reports_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "classified_information_procedure" in reports_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "TDFOL.prover" in reports_slots["legal_ir_view_prototype"]
+
+    assert "legal_relationship_override" in override_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "legal_relationship_override:frame->conditional_normative" in override_slots[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "frame->conditional_normative" in override_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "conditional obligation" in override_structural_text
+    assert "legal relationship override" in override_structural_text
+
+
 def test_decompiler_reconstructs_award_program_and_fund_transfer_atoms() -> None:
     awards = _single_formula_document(
         family="frame",

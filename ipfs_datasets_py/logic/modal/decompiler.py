@@ -151,6 +151,7 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("national game preserve", "game_preserve"),
     ("white horse hill national game preserve", "white_horse_hill_game_preserve"),
     ("annual report", "annual_report"),
+    ("reports to congress", "congressional_report_duty"),
     ("report to congress", "congressional_report_duty"),
     ("report to congress; contents", "report_contents"),
     ("report contents", "report_contents"),
@@ -203,7 +204,11 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("mining claim", "mining_claim"),
     ("mineral lands and mining", "mineral_land_status"),
     ("mineral leasing laws", "mineral_leasing_law"),
+    ("mineral exploration and development", "mineral_development_technology"),
+    ("mining laws of the united states", "mining_law_application"),
     ("located between", "date_range_temporal_scope"),
+    ("findings and declaration", "congressional_findings_declaration"),
+    ("congress finds and declares", "congressional_findings_declaration"),
     ("judicial sales", "judicial_sale_execution"),
     ("executions and judicial sales", "judicial_sale_execution"),
     ("marshal's incapacity", "marshal_incapacity"),
@@ -249,6 +254,7 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("charge on prize", "prize_proceeds_charge"),
     ("prize proceeds", "prize_proceeds_charge"),
     ("effect of act", "effect_of_act"),
+    ("relationship to other law", "legal_relationship_override"),
     ("payment authorization", "payment_authorization"),
     ("fees for internal services", "internal_service_fee"),
     ("office of women's health", "office_of_womens_health"),
@@ -2657,6 +2663,32 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         normalized,
     ):
         add("agency_determination")
+    if re.search(
+        r"\bcongress\s+finds?\b.{0,80}\b(?:declares?|declaration|findings?)\b",
+        normalized,
+    ) or re.search(r"\bfindings?\s+and\s+declarations?\b", normalized):
+        add("congressional_findings_declaration")
+    if re.search(
+        r"\blevel\s+of\s+technology\b.{0,80}\b(?:changed|radical|development|exploration)\b",
+        normalized,
+    ):
+        add("mineral_development_technology")
+    if re.search(
+        r"\b(?:continued\s+)?application\b.{0,80}\bmining\s+laws?\b",
+        normalized,
+    ):
+        add("mining_law_application")
+    if re.search(
+        r"\brelationship\s+to\s+other\s+law\b|"
+        r"\bexcept\s+as\s+provided\b.{0,80}\b(?:law|section|title)\b",
+        normalized,
+    ):
+        add("legal_relationship_override")
+    if re.search(
+        r"\bclassified\s+information\s+procedures?\s+act\b",
+        normalized,
+    ):
+        add("classified_information_procedure")
     return atoms
 
 
@@ -7361,6 +7393,8 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "civil_action",
         "civil_action_jurisdiction",
         "civil_enforcement",
+        "classified_information_procedure",
+        "congressional_findings_declaration",
         "competitive_award_program",
         "crime_control_law_enforcement",
         "export_promotion",
@@ -7380,12 +7414,15 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "judicial_sale_execution",
         "jurisdiction_authority",
         "law_enforcement",
+        "legal_relationship_override",
         "livestock_commerce",
         "officer_election",
         "prize_proceeds_charge",
         "marshal_incapacity",
         "mineral_land_status",
         "mineral_leasing_law",
+        "mineral_development_technology",
+        "mining_law_application",
         "mining_claim",
         "natural_resource_use",
         "enforcement_remedy",
@@ -7434,8 +7471,10 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "health_professional_education_assistance",
         "marine_science_development",
         "irrigation_project",
+        "legal_relationship_override",
         "mineral_land_status",
         "mineral_leasing_law",
+        "mining_law_application",
         "mining_claim",
         "natural_resource_use",
         "nonirrigable_land_status",
@@ -7467,11 +7506,14 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("modal.frame_logic")
     if normalized_atom in {
         "agency_determination",
+        "classified_information_procedure",
+        "congressional_findings_declaration",
         "cost_expense_charge",
         "education_assistance_benefit",
         "false_claim_knowledge",
         "health_professional_education_assistance",
         "internal_service_fee",
+        "legal_relationship_override",
         "natural_resource_use",
         "nonirrigable_land_status",
         "office_seal",
@@ -7497,6 +7539,8 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "build_maintain_duty",
         "budget_program_submission",
         "congressional_report_duty",
+        "classified_information_procedure",
+        "congressional_findings_declaration",
         "competitive_award_program",
         "definition",
         "exception_or_condition",
@@ -7510,9 +7554,11 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "false_fraudulent_claim",
         "government_claim",
         "account_maintenance",
+        "legal_relationship_override",
         "judicial_sale_execution",
         "marshal_incapacity",
         "natural_resource_use",
+        "mining_law_application",
         "nonirrigable_land_status",
         "office_establishment",
         "obligation",
@@ -7548,6 +7594,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("modal.frame_logic")
     if normalized_atom in {
         "agency_determination",
+        "congressional_findings_declaration",
         "definition",
         "nonirrigable_land_status",
         "office_establishment",
@@ -7561,6 +7608,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "annual_report",
         "annual_report_duty",
         "budget_program_submission",
+        "mineral_development_technology",
         "date_range_temporal_scope",
         "fund_transfer_authority",
         "marine_science_development",
@@ -7602,6 +7650,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "award_program",
             "build_maintain_duty",
             "budget_program_submission",
+            "classified_information_procedure",
             "congressional_report_duty",
             "definition",
             "exempt_operation",
@@ -7613,6 +7662,8 @@ def _typed_decompiler_semantic_atom_target_families(
             "false_fraudulent_claim",
             "government_claim",
             "agency_determination",
+            "legal_relationship_override",
+            "mining_law_application",
             "natural_resource_use",
             "office_establishment",
             "obligation",
@@ -7640,6 +7691,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "annual_report_duty",
             "budget_program_submission",
             "marine_science_development",
+            "mineral_development_technology",
             "natural_resource_use",
             "no_year_funding_availability",
             "research_activity",
@@ -7663,8 +7715,10 @@ def _typed_decompiler_semantic_atom_target_families(
             "civil_action",
             "civil_action_jurisdiction",
             "civil_enforcement",
+            "classified_information_procedure",
             "consultation",
             "consultation_cooperation",
+            "congressional_findings_declaration",
             "competitive_award_program",
             "crime_control_law_enforcement",
             "definition",
@@ -7697,8 +7751,11 @@ def _typed_decompiler_semantic_atom_target_families(
             "permanent_nonirrigable_land_status",
             "jurisdiction_authority",
             "law_enforcement",
+            "legal_relationship_override",
             "livestock_commerce",
             "marine_science_development",
+            "mineral_development_technology",
+            "mining_law_application",
             "office_establishment",
             "office_of_womens_health",
             "office_seal",
@@ -7726,6 +7783,7 @@ def _typed_decompiler_semantic_atom_target_families(
             add("frame")
         if normalized_atom in {
             "agency_determination",
+            "congressional_findings_declaration",
             "false_claim_knowledge",
             "nonirrigable_land_status",
             "permanent_nonirrigable_land_status",
@@ -7771,6 +7829,7 @@ def _typed_decompiler_semantic_atom_target_families(
         if normalized_atom in {
             "definition",
             "exception_or_condition",
+            "legal_relationship_override",
             "livestock_commerce",
         }:
             add("conditional_normative")
