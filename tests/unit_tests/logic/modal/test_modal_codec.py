@@ -9790,6 +9790,63 @@ def test_modal_compiler_treats_zero_margin_frame_epistemic_priority_pair_as_outv
     )
 
 
+def test_modal_compiler_exposes_frame_temporal_epistemic_policy_target_outvotes(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+    encoding = SpaCyLegalEncoding(
+        document_id="frame-policy-target-outvote-doc",
+        text="Authority after report to Congress.",
+        normalized_text="Authority after report to Congress.",
+        tokens=[],
+        sentences=[],
+        cues=[],
+    )
+    ambiguities = compiler._frame_policy_target_family_ambiguities(
+        encoding,
+        ranking=[
+            {"family": "frame", "count": 4, "share": 0.55},
+            {"family": "temporal", "count": 2, "share": 0.17},
+            {"family": "epistemic", "count": 2, "share": 0.20},
+        ],
+        family_shares={
+            "frame": 0.55,
+            "temporal": 0.17,
+            "epistemic": 0.20,
+        },
+    )
+
+    by_type = {ambiguity.ambiguity_type: ambiguity for ambiguity in ambiguities}
+    assert set(by_type) == {
+        "frame_temporal_family_outvoted",
+        "frame_epistemic_family_outvoted",
+    }
+    for target_family, ambiguity_type in (
+        ("temporal", "frame_temporal_family_outvoted"),
+        ("epistemic", "frame_epistemic_family_outvoted"),
+    ):
+        ambiguity = by_type[ambiguity_type]
+        assert ambiguity.candidate_ids == ["frame", target_family]
+        assert ambiguity.severity == "requires_rule"
+        assert ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+        assert (
+            ambiguity.metadata["compiler_ambiguity_policy_pair"]
+            == f"frame->{target_family}"
+        )
+        assert ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
+        assert ambiguity.metadata["predicted_family"] == "frame"
+        assert ambiguity.metadata["target_family"] == target_family
+
+
 def test_modal_compiler_emits_explicit_frame_bundle_ambiguities_for_autoencoder_margins(
     monkeypatch,
 ) -> None:

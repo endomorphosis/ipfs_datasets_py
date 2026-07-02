@@ -635,6 +635,13 @@ class DeterministicModalCompiler:
             )
         )
         ambiguities.extend(
+            self._frame_policy_target_family_ambiguities(
+                encoding,
+                ranking=ranking,
+                family_shares=family_shares,
+            )
+        )
+        ambiguities.extend(
             self._conditional_scope_target_family_ambiguities(
                 encoding,
                 ranking=ranking,
@@ -2891,6 +2898,100 @@ class DeterministicModalCompiler:
                 },
             )
         ]
+
+    def _frame_policy_target_family_ambiguities(
+        self,
+        encoding: SpaCyLegalEncoding,
+        *,
+        ranking: Sequence[Dict[str, Any]],
+        family_shares: Dict[str, float],
+    ) -> List[ModalCompilationAmbiguity]:
+        """Expose frame wins over policy target families as explicit ambiguity."""
+        if not ranking:
+            return []
+        predicted_family = str(ranking[0]["family"])
+        if predicted_family != ModalLogicFamily.FRAME.value:
+            return []
+
+        predicted_share = self._ranking_share(ranking[0])
+        signals = _modal_ambiguity_signals(encoding)
+        target_specs = (
+            (
+                ModalLogicFamily.TEMPORAL.value,
+                bool(signals.get("has_temporal_scope")),
+                "frame_temporal_family_outvoted",
+                (
+                    "Frame evidence outvotes temporal scope evidence for a "
+                    "compiler ambiguity policy pair."
+                ),
+                self.config.modal_temporal_target_family_outvote_margin,
+            ),
+            (
+                ModalLogicFamily.EPISTEMIC.value,
+                bool(
+                    signals.get("has_epistemic_scope")
+                    or signals.get("has_epistemic_cue")
+                    or signals.get("has_epistemic_scope_phrase")
+                ),
+                "frame_epistemic_family_outvoted",
+                (
+                    "Frame evidence outvotes epistemic cue evidence for a "
+                    "compiler ambiguity policy pair."
+                ),
+                0.0,
+            ),
+        )
+        ambiguities: List[ModalCompilationAmbiguity] = []
+        for (
+            target_family,
+            has_signal,
+            ambiguity_type,
+            message,
+            outvote_margin_threshold,
+        ) in target_specs:
+            target_share = float(family_shares.get(target_family, 0.0))
+            is_compiler_ambiguity_bundle_pair = _is_compiler_ambiguity_policy_pair(
+                predicted_family,
+                target_family,
+            )
+            if not has_signal and target_share <= 0.0:
+                continue
+            family_margin = target_share - predicted_share
+            if family_margin >= outvote_margin_threshold:
+                continue
+            ambiguities.append(
+                ModalCompilationAmbiguity(
+                    ambiguity_type=ambiguity_type,
+                    message=message,
+                    candidate_ids=[predicted_family, target_family],
+                    severity="requires_rule",
+                    metadata={
+                        "family_margin": round(family_margin, 6),
+                        "family_ranking": list(ranking),
+                        "is_compiler_ambiguity_bundle_pair": (
+                            is_compiler_ambiguity_bundle_pair
+                        ),
+                        "ambiguity_policy_bundle": (
+                            "compiler_ambiguity"
+                            if is_compiler_ambiguity_bundle_pair
+                            else None
+                        ),
+                        "compiler_ambiguity_policy_pair": (
+                            f"{predicted_family}->{target_family}"
+                            if is_compiler_ambiguity_bundle_pair
+                            else None
+                        ),
+                        "lexical_signals": dict(sorted(signals.items())),
+                        "outvote_margin_threshold": outvote_margin_threshold,
+                        "predicted_family": predicted_family,
+                        "predicted_share": round(predicted_share, 6),
+                        "signal_free_pair_policy_applied": False,
+                        "target_family": target_family,
+                        "target_share": round(target_share, 6),
+                    },
+                )
+            )
+        return ambiguities
 
     def _conditional_scope_target_family_ambiguities(
         self,
