@@ -36565,6 +36565,65 @@ def test_decompiler_reconstructs_packet_2577_deontic_frame_temporal_atoms() -> N
     assert "TDFOL.prover" in land_slots["legal_ir_view_prototype"]
 
 
+def test_decompiler_reconstructs_packet_2578_commodity_and_interagency_slots() -> None:
+    commodity_document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Determination of commodity value for set-aside. The Secretary "
+            "shall determine the value of each agricultural commodity placed "
+            "in a commodity set-aside program."
+        ),
+        predicate="secretary_determine_commodity_value",
+    )
+    interagency_document = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "Interagency coordinating group. The Secretary of State shall "
+            "establish an interagency coordinating group for international "
+            "child abduction remedies."
+        ),
+        predicate="secretary_establish_interagency_coordinating_group",
+    )
+
+    commodity_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(commodity_document)
+    )
+    interagency_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(interagency_document)
+    )
+
+    assert "commodity_value_determination" in commodity_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "commodity_set_aside" in commodity_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "frame->deontic" in commodity_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "CEC.native" in commodity_slots["legal_ir_view_prototype"]
+    assert "knowledge_graphs.neo4j_compat" in commodity_slots[
+        "legal_ir_view_prototype"
+    ]
+    assert "TDFOL.prover" in commodity_slots["legal_ir_view_prototype"]
+
+    assert "interagency_coordination" in interagency_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "child_abduction_remedy" in interagency_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "deontic->deontic" in interagency_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "deontic.ir" in interagency_slots["legal_ir_view_prototype"]
+    assert "TDFOL.prover" in interagency_slots["legal_ir_view_prototype"]
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()
