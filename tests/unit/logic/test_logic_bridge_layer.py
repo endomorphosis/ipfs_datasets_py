@@ -666,6 +666,63 @@ def test_neo4j_projection_promotes_packet_metadata_guidance_to_alignment_view() 
     assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
 
 
+def test_neo4j_projection_promotes_packet_view_gap_buckets_to_alignment_view() -> None:
+    from ipfs_datasets_py.logic.modal.kg_bridge import modal_ir_to_neo4j_graph_data
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
+        ModalIRDocument,
+        ModalIRFrameLogic,
+    )
+
+    modal_ir = ModalIRDocument(
+        document_id="us-code-43-1312-packet-gap-projection",
+        source="us_code",
+        normalized_text=(
+            "43 U.S.C. 1312: U.S.C. Title 43 - PUBLIC LANDS "
+            "Sec. 1312. Seaward boundaries of States."
+        ),
+        frame_logic=ModalIRFrameLogic.from_triples(
+            [
+                {
+                    "subject": "us-code-43-1312-packet-gap-projection",
+                    "predicate": "source_id",
+                    "object": "us-code-43-1312",
+                },
+                {
+                    "subject": "us-code-43-1312-packet-gap-projection",
+                    "predicate": "source_text",
+                    "object": (
+                        "43 U.S.C. 1312: U.S.C. Title 43 - PUBLIC LANDS "
+                        "CHAPTER 29 - SUBMERGED LANDS Sec. 1312. "
+                        "Seaward boundaries of States."
+                    ),
+                },
+            ]
+        ),
+        metadata={
+            "compiler_guidance_legal_ir_view_gaps": {
+                "knowledge_graphs_neo4j_compat:underrepresented": 3,
+                "modal_frame_logic:overrepresented": 5,
+            }
+        },
+    )
+
+    graph_data = modal_ir_to_neo4j_graph_data(modal_ir)
+    graph_relationships = graph_data.to_dict()["relationships"]
+
+    assert any(
+        relationship["properties"]["flogic_predicate"]
+        == "learned_legal_ir_target_view"
+        and relationship["properties"]["flogic_object"]
+        == "knowledge_graphs.neo4j_compat"
+        for relationship in graph_relationships
+    )
+    assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
+    assert graph_data.metadata[
+        "frame_logic_projection_legal_view_coverage_complete"
+    ] is True
+    assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
+
+
 def test_neo4j_compat_augments_sparse_legal_sample_text_projection() -> None:
     from ipfs_datasets_py.logic.modal.kg_bridge import flogic_triples_to_graph_data
 

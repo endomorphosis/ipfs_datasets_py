@@ -955,6 +955,13 @@ def _guided_legal_ir_projection_triples(
     gaps = _numeric_signed_mapping(
         metadata.get("compiler_guidance_legal_ir_view_gap_distribution")
     )
+    packet_gap_targets, packet_gap_values = _packet_legal_ir_view_gap_evidence(
+        metadata
+    )
+    if packet_gap_targets:
+        target = {**target, **packet_gap_targets}
+    if packet_gap_values:
+        gaps = {**gaps, **packet_gap_values}
     if _metadata_implies_neo4j_projection_guidance(metadata):
         target = {
             **target,
@@ -1044,6 +1051,11 @@ def _metadata_implies_neo4j_projection_guidance(metadata: Mapping[str, Any]) -> 
     )
     if _NEO4J_COMPAT_TARGET_COMPONENT in target_distribution:
         return True
+    packet_gap_targets, _packet_gap_values = _packet_legal_ir_view_gap_evidence(
+        metadata
+    )
+    if _NEO4J_COMPAT_TARGET_COMPONENT in packet_gap_targets:
+        return True
     features = _compiler_guidance_metadata_features(metadata)
     has_graph_route = any(
         _GRAPH_PROJECTION_GUIDANCE_ROUTE in feature for feature in features
@@ -1068,6 +1080,12 @@ def _compiler_guidance_metadata_features(metadata: Mapping[str, Any]) -> List[st
     if isinstance(groups, Mapping):
         for value in groups.values():
             features.extend(_feature_values(value))
+    gap_targets, gap_values = _packet_legal_ir_view_gap_evidence(metadata)
+    features.extend(gap_targets)
+    features.extend(
+        f"compiler_guidance_legal_ir_view_gap:{view}:{score:.6f}"
+        for view, score in sorted(gap_values.items())
+    )
     return _unique(features)
 
 
@@ -1115,6 +1133,12 @@ def _extend_guidance_mapping_features(
         distribution = mapping.get(distribution_key)
         if isinstance(distribution, Mapping):
             features.extend(str(name) for name in distribution if str(name).strip())
+    gap_targets, gap_values = _packet_legal_ir_view_gap_evidence(mapping)
+    features.extend(gap_targets)
+    features.extend(
+        f"compiler_guidance_legal_ir_view_gap:{view}:{score:.6f}"
+        for view, score in sorted(gap_values.items())
+    )
     for bundle_key in (
         "bundle",
         "semantic_bundle",
@@ -1205,6 +1229,86 @@ def _numeric_distribution(value: Any) -> Dict[str, float]:
         for key, score in sorted(distribution.items())
         if max(0.0, score) > 0.0
     }
+
+
+def _packet_legal_ir_view_gap_evidence(
+    metadata: Mapping[str, Any],
+) -> Tuple[Dict[str, float], Dict[str, float]]:
+    """Normalize autoencoder view-gap buckets into graph target evidence.
+
+    Packet metadata commonly uses compact keys such as
+    ``knowledge_graphs_neo4j_compat:underrepresented`` instead of the bridge
+    runtime's dotted ``knowledge_graphs.neo4j_compat`` distribution keys.
+    Underrepresented buckets mean the graph lane should be projected into the
+    Neo4j view, while overrepresented buckets remain negative gap evidence.
+    """
+
+    raw_gaps = metadata.get("compiler_guidance_legal_ir_view_gaps")
+    if raw_gaps is None:
+        raw_gaps = metadata.get("legal_ir_view_gaps")
+    if not isinstance(raw_gaps, Mapping):
+        return {}, {}
+
+    target: Dict[str, float] = {}
+    gaps: Dict[str, float] = {}
+    for raw_key, raw_value in raw_gaps.items():
+        key = str(raw_key or "").strip()
+        if not key:
+            continue
+        raw_view, _separator, raw_direction = key.partition(":")
+        view = _canonical_legal_ir_view_name(raw_view)
+        if not view:
+            continue
+        weight = _packet_gap_weight(raw_value)
+        direction = raw_direction.strip().lower()
+        if direction == "underrepresented":
+            target[view] = max(target.get(view, 0.0), weight)
+            gaps[view] = max(gaps.get(view, 0.0), weight)
+        elif direction == "overrepresented":
+            gaps[view] = min(gaps.get(view, 0.0), -weight)
+        else:
+            gaps[view] = gaps.get(view, 0.0) + weight
+            if weight > 0.0:
+                target[view] = max(target.get(view, 0.0), weight)
+    return target, gaps
+
+
+def _canonical_legal_ir_view_name(value: str) -> str:
+    normalized = str(value or "").strip()
+    if not normalized:
+        return ""
+    aliases = {
+        "knowledge_graph": _NEO4J_COMPAT_TARGET_COMPONENT,
+        "knowledge_graphs_neo4j_compat": _NEO4J_COMPAT_TARGET_COMPONENT,
+        "knowledge_graphs.neo4j_compat": _NEO4J_COMPAT_TARGET_COMPONENT,
+        "neo4j_compat": _NEO4J_COMPAT_TARGET_COMPONENT,
+        "modal_frame_logic": "modal.frame_logic",
+        "modal.frame_logic": "modal.frame_logic",
+        "tdfol_prover": "TDFOL.prover",
+        "tdfol.prover": "TDFOL.prover",
+        "deontic_ir": "deontic.ir",
+        "deontic.ir": "deontic.ir",
+        "cec_native": "CEC.native",
+        "cec.native": "CEC.native",
+        "zkp_circuits": "zkp.circuits",
+        "zkp.circuits": "zkp.circuits",
+        "external_provers_router": "external_provers.router",
+        "external_provers.router": "external_provers.router",
+    }
+    return aliases.get(normalized.lower(), normalized)
+
+
+def _packet_gap_weight(value: Any) -> float:
+    if isinstance(value, Mapping):
+        for key in ("count", "score", "weight", "loss_value", "ce_delta"):
+            number = _finite_float(value.get(key))
+            if number is not None and number != 0.0:
+                return abs(number)
+        return 1.0
+    number = _finite_float(value)
+    if number is None or number == 0.0:
+        return 1.0
+    return abs(number)
 
 
 def _numeric_signed_mapping(value: Any) -> Dict[str, float]:
