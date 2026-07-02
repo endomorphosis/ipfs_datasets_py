@@ -146,6 +146,13 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("civil actions", "civil_action"),
     ("civil action", "civil_action"),
     ("civil enforcement", "civil_enforcement"),
+    ("protection from liability", "liability_protection"),
+    ("protected from liability", "liability_protection"),
+    ("liability protection", "liability_protection"),
+    ("no cause of action shall lie", "liability_protection"),
+    ("cybersecurity information sharing", "cybersecurity_information_sharing"),
+    ("cybersecurity information", "cybersecurity_information_sharing"),
+    ("information sharing", "information_sharing"),
     ("consultation and cooperation", "consultation_cooperation"),
     ("following consultation", "consultation"),
     ("boundary and division fences", "boundary_division_fence"),
@@ -172,6 +179,11 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("shall submit a report", "report_duty"),
     ("study and report", "study_report_duty"),
     ("maintenance of accounts", "account_maintenance"),
+    ("custody of departmental records", "departmental_record_custody"),
+    ("custody of department records", "departmental_record_custody"),
+    ("custody of departmental property", "departmental_property_custody"),
+    ("custody of department property", "departmental_property_custody"),
+    ("accountability and responsibility", "accountability_responsibility"),
     ("audit by government accountability office", "audit_requirement"),
     ("government accountability office", "audit_requirement"),
     ("termination of authority", "termination_authority"),
@@ -208,6 +220,10 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("made available", "resource_availability"),
     ("use of timber and stone by settlers", "settler_resource_use"),
     ("timber and stone by settlers", "settler_resource_use"),
+    ("cutting of timber within forest", "timber_cutting_forest_scope"),
+    ("cutting of timber", "timber_cutting"),
+    ("reservation of timber", "forest_resource_reservation"),
+    ("national forests", "national_forest_resource"),
     ("timber and stone", "timber_stone_use"),
     ("use of timber", "timber_stone_use"),
     ("use of stone", "timber_stone_use"),
@@ -878,7 +894,14 @@ _SOURCE_ANCHOR_DIRECTIONAL_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = 
     "alethic": ("conditional_normative", "deontic", "temporal"),
     "conditional_normative": ("deontic",),
     "deontic": ("conditional_normative", "deontic", "frame", "temporal"),
-    "frame": ("conditional_normative", "deontic", "doxastic", "frame", "temporal"),
+    "frame": (
+        "conditional_normative",
+        "deontic",
+        "doxastic",
+        "epistemic",
+        "frame",
+        "temporal",
+    ),
     "temporal": ("conditional_normative", "deontic", "epistemic", "temporal"),
 }
 _DEONTIC_BRIDGE_REINFORCEMENT_OPERATORS: frozenset[str] = frozenset(
@@ -2638,6 +2661,19 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
     if re.search(r"\bmaint(?:ain|enance)\b.{0,40}\baccounts?\b", normalized):
         add("account_maintenance")
     if re.search(
+        r"\bcustody\b.{0,80}\b(?:departmental|department|records?|property)\b",
+        normalized,
+    ) or re.search(
+        r"\b(?:departmental|department)\b.{0,80}\bcustody\b",
+        normalized,
+    ):
+        add("departmental_record_custody")
+    if re.search(
+        r"\baccountab(?:ility|le)\b.{0,60}\bresponsib(?:ility|le)\b",
+        normalized,
+    ):
+        add("accountability_responsibility")
+    if re.search(
         r"\b(?:audit|audited)\b.{0,80}\b(?:government\s+accountability\s+office|comptroller\s+general)\b",
         normalized,
     ):
@@ -2677,6 +2713,20 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         add("timber_stone_use")
         if re.search(r"\bsettlers?\b", normalized):
             add("settler_resource_use")
+    if re.search(r"\bcut(?:ting)?\b.{0,40}\btimber\b", normalized):
+        add("timber_cutting")
+        if re.search(r"\bforest(?:s)?\b", normalized):
+            add("timber_cutting_forest_scope")
+    if re.search(
+        r"\b(?:reserv(?:e|es|ed|ation)|reserved)\b.{0,80}\b(?:timber|forest|forests)\b",
+        normalized,
+    ) or re.search(
+        r"\b(?:timber|forest|forests)\b.{0,80}\b(?:reserv(?:e|es|ed|ation)|reserved)\b",
+        normalized,
+    ):
+        add("forest_resource_reservation")
+    if re.search(r"\bnational\s+forests?\b", normalized):
+        add("national_forest_resource")
     if re.search(
         r"\b(?:use|uses|using|utili[sz](?:e|es|ed|ation))\b.{0,80}"
         r"\b(?:timber|stone|forest|forests?|mineral|minerals?|land|lands)\b",
@@ -2685,6 +2735,16 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         add("natural_resource_use")
     if re.search(r"\bcivil\s+actions?\b", normalized):
         add("civil_action")
+    if re.search(
+        r"\b(?:protection\s+from\s+liability|liability\s+protection|"
+        r"protected\s+from\s+liability|no\s+cause\s+of\s+action\s+shall\s+lie)\b",
+        normalized,
+    ):
+        add("liability_protection")
+    if re.search(r"\bcybersecurity\s+information(?:\s+sharing)?\b", normalized):
+        add("cybersecurity_information_sharing")
+    elif re.search(r"\binformation\s+sharing\b", normalized):
+        add("information_sharing")
     if re.search(r"\blaw\s+enforcement\b", normalized):
         add("law_enforcement")
     if re.search(r"\b(?:official\s+)?seal\b", normalized):
@@ -7446,6 +7506,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "board_of_directors",
         "boundary_division_fence",
         "budget_program_submission",
+        "accountability_responsibility",
         "civil_action",
         "civil_action_jurisdiction",
         "civil_enforcement",
@@ -7453,8 +7514,12 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "congressional_findings_declaration",
         "competitive_award_program",
         "crime_control_law_enforcement",
+        "cybersecurity_information_sharing",
+        "departmental_property_custody",
+        "departmental_record_custody",
         "export_promotion",
         "fee_collection_authority",
+        "forest_resource_reservation",
         "fund_transfer_authority",
         "foreign_commercial_service",
         "false_claim_knowledge",
@@ -7466,11 +7531,13 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "health_professional_education_assistance",
         "historic_area",
         "historic_area_access_road",
+        "information_sharing",
         "irrigation_project",
         "judicial_sale_execution",
         "jurisdiction_authority",
         "law_enforcement",
         "legal_relationship_override",
+        "liability_protection",
         "livestock_commerce",
         "monitoring_enforcement",
         "officer_promotion",
@@ -7502,6 +7569,9 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "state_conveyance_authority",
         "sustainable_chemistry_research",
         "telemedicine_distance_learning",
+        "national_forest_resource",
+        "timber_cutting",
+        "timber_cutting_forest_scope",
         "timber_stone_use",
         "treasury_deposit",
         "unknown_party_deposit",
@@ -7533,16 +7603,22 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "foreign_commercial_service",
         "false_claim_knowledge",
         "false_fraudulent_claim",
+        "cybersecurity_information_sharing",
+        "departmental_property_custody",
+        "departmental_record_custody",
+        "forest_resource_reservation",
         "government_claim",
         "health_professional_education_assistance",
         "marine_science_development",
         "irrigation_project",
         "legal_relationship_override",
+        "liability_protection",
         "mineral_land_status",
         "mineral_leasing_law",
         "mining_law_application",
         "mining_claim",
         "natural_resource_use",
+        "national_forest_resource",
         "nonirrigable_land_status",
         "permanent_nonirrigable_land_status",
         "jurisdiction_authority",
@@ -7561,6 +7637,8 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "state_court_civil_jurisdiction",
         "state_court_jurisdiction",
         "state_conveyance_authority",
+        "timber_cutting",
+        "timber_cutting_forest_scope",
         "timber_stone_use",
         "treasury_deposit",
         "unknown_party_deposit",
@@ -7580,11 +7658,15 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "classified_information_procedure",
         "congressional_findings_declaration",
         "cost_expense_charge",
+        "cybersecurity_information_sharing",
+        "departmental_property_custody",
+        "departmental_record_custody",
         "education_assistance_benefit",
         "false_claim_knowledge",
         "health_professional_education_assistance",
         "internal_service_fee",
         "legal_relationship_override",
+        "liability_protection",
         "monitoring_enforcement",
         "natural_resource_use",
         "nonirrigable_land_status",
@@ -7595,6 +7677,8 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "plant_variety_protection_office",
         "prize_proceeds_charge",
         "settler_resource_use",
+        "timber_cutting",
+        "timber_cutting_forest_scope",
         "timber_stone_use",
         "treasury_deposit",
         "unknown_party_deposit",
@@ -7610,11 +7694,15 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "award_program",
         "build_maintain_duty",
         "budget_program_submission",
+        "accountability_responsibility",
         "congressional_report_duty",
         "classified_information_procedure",
         "congressional_findings_declaration",
         "competitive_award_program",
+        "cybersecurity_information_sharing",
         "definition",
+        "departmental_property_custody",
+        "departmental_record_custody",
         "exception_or_condition",
         "exempt_operation",
         "exemption",
@@ -7622,15 +7710,18 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "facility_operation",
         "fee_collection_authority",
         "fund_transfer_authority",
+        "forest_resource_reservation",
         "false_claim_knowledge",
         "false_fraudulent_claim",
         "government_claim",
         "account_maintenance",
         "active_status_list",
         "legal_relationship_override",
+        "liability_protection",
         "judicial_sale_execution",
         "marshal_incapacity",
         "natural_resource_use",
+        "national_forest_resource",
         "mining_law_application",
         "nonirrigable_land_status",
         "office_establishment",
@@ -7660,6 +7751,8 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "study_report_duty",
         "submit_or_file",
         "test_platform",
+        "timber_cutting",
+        "timber_cutting_forest_scope",
         "timber_stone_use",
     }:
         add("deontic.ir")
@@ -7676,6 +7769,8 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "agency_determination",
         "congressional_findings_declaration",
         "definition",
+        "departmental_property_custody",
+        "departmental_record_custody",
         "monitoring_enforcement",
         "nonirrigable_land_status",
         "office_establishment",
@@ -7698,6 +7793,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "mineral_leasing_law",
         "mining_claim",
         "natural_resource_use",
+        "national_forest_resource",
         "sea_grant_college",
         "sea_grant_college_program",
         "no_year_funding_availability",
@@ -7709,6 +7805,8 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "study_report_duty",
         "termination_authority",
         "temporal_condition",
+        "timber_cutting",
+        "timber_cutting_forest_scope",
         "timber_stone_use",
     }:
         add("TDFOL.prover")
@@ -7732,18 +7830,23 @@ def _typed_decompiler_semantic_atom_target_families(
             "annual_report_duty",
             "admission_fee_collection",
             "account_maintenance",
+            "accountability_responsibility",
             "audit_requirement",
             "award_program",
             "build_maintain_duty",
             "budget_program_submission",
             "classified_information_procedure",
             "congressional_report_duty",
+            "cybersecurity_information_sharing",
             "definition",
+            "departmental_property_custody",
+            "departmental_record_custody",
             "exempt_operation",
             "exemption",
             "expenditure_requirement",
             "facility_operation",
             "fee_collection_authority",
+            "forest_resource_reservation",
             "false_claim_knowledge",
             "false_fraudulent_claim",
             "government_claim",
@@ -7751,8 +7854,10 @@ def _typed_decompiler_semantic_atom_target_families(
             "housing_investment_authority",
             "agency_determination",
             "legal_relationship_override",
+            "liability_protection",
             "mining_law_application",
             "natural_resource_use",
+            "national_forest_resource",
             "office_establishment",
             "officer_promotion",
             "officer_promotion_retention",
@@ -7781,6 +7886,8 @@ def _typed_decompiler_semantic_atom_target_families(
             "submit_or_file",
             "state_conveyance_authority",
             "test_platform",
+            "timber_cutting",
+            "timber_cutting_forest_scope",
             "timber_stone_use",
         }:
             add("deontic")
@@ -7795,6 +7902,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "marine_science_development",
             "mineral_development_technology",
             "natural_resource_use",
+            "national_forest_resource",
             "no_year_funding_availability",
             "reserve_active_status_list",
             "resource_availability",
@@ -7805,6 +7913,8 @@ def _typed_decompiler_semantic_atom_target_families(
             "study_report_duty",
             "termination_authority",
             "temporal_condition",
+            "timber_cutting",
+            "timber_cutting_forest_scope",
         }:
             add("temporal")
         if normalized_atom in {
@@ -7816,6 +7926,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "board_of_directors",
             "boundary_division_fence",
             "budget_program_submission",
+            "accountability_responsibility",
             "civil_action",
             "civil_action_jurisdiction",
             "civil_enforcement",
@@ -7825,11 +7936,15 @@ def _typed_decompiler_semantic_atom_target_families(
             "congressional_findings_declaration",
             "competitive_award_program",
             "crime_control_law_enforcement",
+            "cybersecurity_information_sharing",
             "definition",
+            "departmental_property_custody",
+            "departmental_record_custody",
             "export_promotion",
             "exempt_operation",
             "facility_operation",
             "fee_collection_authority",
+            "forest_resource_reservation",
             "fund_transfer_authority",
             "foreign_commercial_service",
             "false_claim_knowledge",
@@ -7858,11 +7973,13 @@ def _typed_decompiler_semantic_atom_target_families(
             "jurisdiction_authority",
             "law_enforcement",
             "legal_relationship_override",
+            "liability_protection",
             "livestock_commerce",
             "marine_science_development",
             "mineral_development_technology",
             "mining_law_application",
             "monitoring_enforcement",
+            "national_forest_resource",
             "office_establishment",
             "office_of_womens_health",
             "office_seal",
@@ -7897,6 +8014,8 @@ def _typed_decompiler_semantic_atom_target_families(
             "state_court_civil_jurisdiction",
             "state_court_jurisdiction",
             "state_conveyance_authority",
+            "timber_cutting",
+            "timber_cutting_forest_scope",
             "timber_stone_use",
             "treasury_deposit",
             "unknown_party_deposit",
@@ -7905,7 +8024,10 @@ def _typed_decompiler_semantic_atom_target_families(
             add("frame")
         if normalized_atom in {
             "agency_determination",
+            "accountability_responsibility",
             "congressional_findings_declaration",
+            "departmental_property_custody",
+            "departmental_record_custody",
             "false_claim_knowledge",
             "monitoring_enforcement",
             "nonirrigable_land_status",
@@ -7970,6 +8092,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "definition",
             "exception_or_condition",
             "legal_relationship_override",
+            "liability_protection",
             "livestock_commerce",
             "monitoring_enforcement",
             "partnership_adjustment",
@@ -8151,6 +8274,9 @@ def _typed_decompiler_family_pair_legal_ir_views(
         add("deontic.ir")
         add("CEC.native")
         add("TDFOL.prover")
+    if target == "temporal" or source == "temporal":
+        add("TDFOL.prover")
+        add("CEC.native")
     if source == "frame" or target == "frame":
         add("knowledge_graphs.neo4j_compat")
         add("modal.frame_logic")
@@ -8257,6 +8383,7 @@ def _typed_decompiler_predicate_classes(
         {
             "exemption",
             "exempt_operation",
+            "liability_protection",
             "patent_prohibition",
             "prohibition",
             "remedy",
@@ -8268,8 +8395,14 @@ def _typed_decompiler_predicate_classes(
         {
             "admission_fee_collection",
             "appropriation_authorization",
+            "cybersecurity_information_sharing",
+            "departmental_property_custody",
+            "departmental_record_custody",
             "fee_collection_authority",
+            "forest_resource_reservation",
             "fund_transfer_authority",
+            "information_sharing",
+            "national_forest_resource",
             "payment_authorization",
             "permission",
             "resource_availability",
@@ -8281,6 +8414,7 @@ def _typed_decompiler_predicate_classes(
     if normalized_atoms.intersection(
         {
             "annual_report_duty",
+            "accountability_responsibility",
             "budget_program_submission",
             "congressional_report_duty",
             "report_duty",
@@ -8292,6 +8426,8 @@ def _typed_decompiler_predicate_classes(
     if normalized_atoms.intersection(
         {
             "definition",
+            "forest_resource_reservation",
+            "national_forest_resource",
             "statutory_applicability",
             "statutory_chapter_applicability",
         }

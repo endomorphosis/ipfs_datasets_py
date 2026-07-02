@@ -36047,6 +36047,119 @@ def test_decompiler_reconstructs_reserve_officer_promotion_slots() -> None:
     assert "reserve active status list" in structural_text
 
 
+def test_decompiler_reconstructs_custody_accountability_slots() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Accountability and responsibility. Custody of departmental "
+            "records and property shall remain with the accountable official."
+        ),
+        predicate="departmental_records_property_custody",
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "departmental_record_custody" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "accountability_responsibility" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "departmental_record_custody:frame->epistemic" in slot_texts[
+        "typed-decompiler-source-semantic-family-pair"
+    ]
+    assert "frame->temporal" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
+    assert "departmental record custody" in structural_text
+
+
+def test_decompiler_reconstructs_cyber_liability_information_sharing_slots() -> None:
+    document = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "Protection from liability. No cause of action shall lie for "
+            "cybersecurity information sharing conducted in accordance with "
+            "this subchapter."
+        ),
+        predicate="cybersecurity_information_sharing_liability_protection",
+        conditions=["in accordance with this subchapter"],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "liability_protection" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "cybersecurity_information_sharing" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "liability_protection:deontic->deontic" in slot_texts[
+        "typed-decompiler-source-semantic-family-pair"
+    ]
+    assert "cybersecurity_information_sharing:deontic->conditional_normative" in slot_texts[
+        "typed-decompiler-source-semantic-family-pair"
+    ]
+    assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
+    assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
+    assert "liability protection" in structural_text
+
+
+def test_decompiler_reconstructs_timber_cutting_forest_temporal_slots() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Cutting of timber within forest; reservation of timber. The "
+            "Secretary may authorize cutting of timber within national forests "
+            "subject to reservation of timber for public use."
+        ),
+        predicate="authorize_timber_cutting_forest_reservation",
+        conditions=["subject to reservation of timber for public use"],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "timber_cutting" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "forest_resource_reservation" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "timber_cutting:frame->temporal" in slot_texts[
+        "typed-decompiler-source-semantic-family-pair"
+    ]
+    assert "frame->temporal" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
+    assert "timber cutting" in structural_text
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()
