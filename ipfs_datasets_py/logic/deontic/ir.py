@@ -1045,6 +1045,7 @@ _MODAL_CLAUSE_ACTOR_RE = re.compile(
     r"\b(?P<actor>(?:(?:The|the)\s+)?[A-Z][A-Za-z]*"
     r"(?:\s+(?:of|for|and|or|the|[A-Z][A-Za-z]*)){0,10})\s+"
     r"(?P<modal>(?i:shall|must|may|is\s+authorized\s+to|are\s+authorized\s+to|"
+    r"is\s+authorized\s+and\s+directed\s+to|are\s+authorized\s+and\s+directed\s+to|"
     r"is\s+directed\s+to|are\s+directed\s+to|is\s+required\s+to|"
     r"are\s+required\s+to))\b",
 )
@@ -1098,6 +1099,21 @@ def _modal_clause_actor_field_spans(element: Mapping[str, Any]) -> Dict[str, Lis
             base_offset + actor_end,
         ],
     }
+
+
+def _modal_clause_modality_field_spans(element: Mapping[str, Any]) -> Dict[str, List[int]]:
+    """Return source spans for explicit modal cues used to infer modality."""
+
+    match_info = _modal_clause_actor_match(element)
+    if not match_info:
+        return {}
+    match, key = match_info
+    base_offset = _modal_clause_match_base_offset(element, key)
+    span = [
+        base_offset + match.start("modal"),
+        base_offset + match.end("modal"),
+    ]
+    return {"modality": span, "deontic_operator": span}
 
 
 def _modal_clause_actor_match(
@@ -1321,6 +1337,9 @@ def _field_spans_with_source_fallback(element: Mapping[str, Any]) -> Dict[str, A
     modal_clause_actor_spans = _modal_clause_actor_field_spans(element)
     if modal_clause_actor_spans:
         field_spans.update(modal_clause_actor_spans)
+    modal_clause_modality_spans = _modal_clause_modality_field_spans(element)
+    for slot_name, span in modal_clause_modality_spans.items():
+        field_spans.setdefault(slot_name, span)
     lifecycle_actor_spans = _instrument_lifecycle_actor_field_span(element)
     if lifecycle_actor_spans:
         field_spans.update(lifecycle_actor_spans)

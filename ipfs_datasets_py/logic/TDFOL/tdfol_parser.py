@@ -379,6 +379,7 @@ class TDFOLParser:
     def __init__(self, tokens: List[Token]):
         self.tokens = tokens
         self.position = 0
+        self._last_quantifier_colon_separator = False
     
     def current_token(self) -> Token:
         """Get current token."""
@@ -491,7 +492,10 @@ class TDFOLParser:
         variable = self.parse_variable(allow_formula_separator_colon=True)
         if self.current_token().type == TokenType.DOT:
             self.advance()
-        elif not self._token_can_start_formula(self.current_token()):
+        elif (
+            not self._last_quantifier_colon_separator
+            and self.current_token().type != TokenType.LPAREN
+        ):
             token = self.current_token()
             raise ValueError(
                 f"Expected {TokenType.DOT} but got {token.type} at position {token.position}"
@@ -505,7 +509,10 @@ class TDFOLParser:
         variable = self.parse_variable(allow_formula_separator_colon=True)
         if self.current_token().type == TokenType.DOT:
             self.advance()
-        elif not self._token_can_start_formula(self.current_token()):
+        elif (
+            not self._last_quantifier_colon_separator
+            and self.current_token().type != TokenType.LPAREN
+        ):
             token = self.current_token()
             raise ValueError(
                 f"Expected {TokenType.DOT} but got {token.type} at position {token.position}"
@@ -736,6 +743,7 @@ class TDFOLParser:
     
     def parse_variable(self, *, allow_formula_separator_colon: bool = False) -> Variable:
         """Parse a variable."""
+        self._last_quantifier_colon_separator = False
         name_token = self.expect(TokenType.IDENTIFIER)
         name = name_token.value
         
@@ -744,6 +752,7 @@ class TDFOLParser:
         if self.current_token().type == TokenType.COLON:
             self.advance()
             if allow_formula_separator_colon and self._colon_introduces_formula():
+                self._last_quantifier_colon_separator = True
                 return Variable(name, sort)
             sort_token = self.expect(TokenType.IDENTIFIER)
             sort = self.parse_sort(sort_token.value)
@@ -756,7 +765,9 @@ class TDFOLParser:
         token = self.current_token()
         if token.type != TokenType.IDENTIFIER:
             return self._token_can_start_formula(token)
-        return self.peek_token().type == TokenType.LPAREN
+        if token.value.upper() in self._KNOWN_SORT_NAMES:
+            return False
+        return self._token_can_start_formula(token)
     
     def parse_sort(self, sort_name: str) -> Optional[Sort]:
         """Parse a sort name."""

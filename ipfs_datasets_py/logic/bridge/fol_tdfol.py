@@ -84,6 +84,14 @@ _TDFOL_FORMULA_EXPORT_KEYS = (
     "value",
     "text",
 )
+_TDFOL_CONTAINER_EXPORT_KEYS = (
+    "obligations",
+    "proof_obligations",
+    "records",
+    "rows",
+    "items",
+    "formulas",
+)
 
 
 @dataclass
@@ -497,7 +505,7 @@ def _formula_text_from_proof_obligation_row(row: Mapping[str, Any]) -> str:
         extracted = _tdfol_formula_text_from_json_value(value)
         if extracted:
             return extracted
-    return ""
+    return _tdfol_formula_text_from_json_value(row)
 
 
 def _merge_formula_records(
@@ -1256,7 +1264,10 @@ def _unwrap_tdfol_targeted_export(text: str) -> str:
         if match:
             candidate = match.group(1).strip("`\"'").strip()
             formula = _extract_balanced_tdfol_formula(candidate)
-            return formula or candidate
+            if formula:
+                return formula
+            extracted = _tdfol_formula_text_from_export_payload(candidate)
+            return extracted or candidate
     return normalized
 
 
@@ -1269,9 +1280,15 @@ def _unwrap_tdfol_assignment_export(text: str) -> str:
     for key in _TDFOL_FORMULA_EXPORT_KEYS:
         value = _extract_tdfol_key_value(normalized, key)
         if value:
-            candidate = value.strip("`\"'").strip()
-            formula = _extract_balanced_tdfol_formula(candidate)
-            return formula or candidate
+            return _normalize_tdfol_export_value(value)
+    for key in _TDFOL_CONTAINER_EXPORT_KEYS:
+        value = _extract_tdfol_key_value(normalized, key)
+        if value:
+            extracted = _tdfol_formula_text_from_export_payload(
+                value.strip("`\"'").strip()
+            )
+            if extracted:
+                return extracted
     return normalized
 
 
@@ -1342,13 +1359,13 @@ def _extract_balanced_tdfol_formula(text: str) -> str:
 
 
 def _tdfol_formula_start_index(text: str) -> int:
+    match = re.search(r"(?is)(?:forall|exists|∀|∃)\b", text)
+    if match:
+        return match.start()
     match = re.search(
         r"(?is)(?:forall|exists|[OPFGX]|□|◊|¬|[A-Za-z_][A-Za-z0-9_-]*)\s*\(",
         text,
     )
-    if match:
-        return match.start()
-    match = re.search(r"(?is)(?:forall|exists|∀|∃)\b", text)
     return match.start() if match else -1
 
 
@@ -1532,6 +1549,30 @@ def _unwrap_tdfol_json_export(text: str) -> str:
     if match:
         return match.group(2).strip()
     return normalized
+
+
+def _normalize_tdfol_export_value(value: str) -> str:
+    candidate = str(value or "").strip("`\"'").strip()
+    formula = _extract_balanced_tdfol_formula(candidate)
+    if formula:
+        return formula
+    extracted = _tdfol_formula_text_from_export_payload(candidate)
+    return extracted or candidate
+
+
+def _tdfol_formula_text_from_export_payload(value: str) -> str:
+    """Extract formula text from JSON or JSON-ish nested TDFOL view payloads."""
+
+    candidate = str(value or "").strip()
+    if not candidate:
+        return ""
+    unwrapped = _unwrap_tdfol_json_export(candidate)
+    if unwrapped != candidate:
+        return unwrapped
+    formula = _extract_balanced_tdfol_formula(candidate)
+    if formula:
+        return formula
+    return ""
 
 
 def _tdfol_formula_text_from_json_value(value: Any) -> str:
@@ -1736,8 +1777,8 @@ def _unwrap_tdfol_key_value_export(text: str) -> str:
 
     normalized = str(text or "").strip()
     match = re.match(
-        r"^\s*(?:proof_obligation|proof\s+obligation|tdfol_formula|"
-        r"tdfol\s+formula|obligation)\s*\(",
+        r"^\s*(?:TDFOL(?:[\s.]prover)?|proof_obligation|proof\s+obligation|"
+        r"tdfol_formula|tdfol\s+formula|obligation)\s*\(",
         normalized,
         flags=re.IGNORECASE,
     )
@@ -1748,6 +1789,9 @@ def _unwrap_tdfol_key_value_export(text: str) -> str:
         value = _extract_tdfol_key_value(inner, key)
         if value:
             return value.strip("`\"'").strip()
+    formula = _extract_balanced_tdfol_formula(inner)
+    if formula:
+        return formula
     return normalized
 
 

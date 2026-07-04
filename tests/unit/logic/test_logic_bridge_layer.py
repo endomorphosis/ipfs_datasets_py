@@ -4687,6 +4687,35 @@ def test_tdfol_bridge_coerce_parses_legacy_proof_obligation_formula() -> None:
     assert "legacy_deontic_target" in coerced.get_predicates()
 
 
+def test_tdfol_bridge_coerce_preserves_targeted_quantified_obligation_view() -> None:
+    from ipfs_datasets_py.logic.TDFOL.tdfol_core import QuantifiedFormula
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
+
+    formula = (
+        "TDFOL.prover proof obligation view: forall t. "
+        "true and By(t,2026-03-20) -> O(frm:10-2851a,t)."
+    )
+
+    coerced = coerce_tdfol_formula(formula)
+
+    assert isinstance(coerced, QuantifiedFormula)
+    assert "By" in coerced.get_predicates()
+    assert "legacy_deontic_target" in coerced.get_predicates()
+
+
+def test_tdfol_bridge_coerce_parses_colon_quantifier_before_nullary_atom() -> None:
+    from ipfs_datasets_py.logic.TDFOL.tdfol_core import QuantifiedFormula
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
+
+    formula = "forall t: true and By(t,2026-03-20) -> O(frm:10-2851a,t)"
+
+    coerced = coerce_tdfol_formula(formula)
+
+    assert isinstance(coerced, QuantifiedFormula)
+    assert "By" in coerced.get_predicates()
+    assert "legacy_deontic_target" in coerced.get_predicates()
+
+
 def test_tdfol_bridge_coerce_parses_legal_id_proof_obligation_formula() -> None:
     from ipfs_datasets_py.logic.TDFOL.tdfol_core import QuantifiedFormula
     from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
@@ -4761,6 +4790,38 @@ def test_tdfol_bridge_coerce_extracts_assignment_formula_export_text() -> None:
     assert isinstance(coerced, DeonticFormula)
     assert coerced.operator == DeonticOperator.OBLIGATION
     assert coerced.to_string() == "O(perform_functions(secretary))"
+
+
+def test_tdfol_bridge_coerce_extracts_targeted_json_view_export_text() -> None:
+    from ipfs_datasets_py.logic.TDFOL.tdfol_core import DeonticFormula, DeonticOperator
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
+
+    formula = (
+        'TDFOL.prover proof obligation view: '
+        '{"formula": "O(collect_fees(chief_administrative_officer))"}'
+    )
+
+    coerced = coerce_tdfol_formula(formula)
+
+    assert isinstance(coerced, DeonticFormula)
+    assert coerced.operator == DeonticOperator.OBLIGATION
+    assert coerced.to_string() == "O(collect_fees(chief_administrative_officer))"
+
+
+def test_tdfol_bridge_coerce_extracts_assignment_container_export_text() -> None:
+    from ipfs_datasets_py.logic.TDFOL.tdfol_core import DeonticFormula, DeonticOperator
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
+
+    formula = (
+        'target_logic=TDFOL; proof_obligations='
+        '[{"formula": "O(collect_fees(chief_administrative_officer))"}]'
+    )
+
+    coerced = coerce_tdfol_formula(formula)
+
+    assert isinstance(coerced, DeonticFormula)
+    assert coerced.operator == DeonticOperator.OBLIGATION
+    assert coerced.to_string() == "O(collect_fees(chief_administrative_officer))"
 
 
 def test_tdfol_bridge_coerce_canonicalizes_deontic_label_export_text() -> None:
@@ -4862,6 +4923,50 @@ def test_tdfol_bridge_canonicalizes_assignment_proof_obligation_rows() -> None:
 
     assert record["formula"] == "O(publish_notice(agency))"
     assert record["parse_ok"] is True
+    assert report.proof_gate.compiles is True
+    assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
+
+
+def test_tdfol_bridge_canonicalizes_targeted_prover_wrapper_rows() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
+
+    class _ProofObligationResult:
+        success = True
+        metadata = {
+            "proof_obligations": [
+                {
+                    "proof_formula": (
+                        "TDFOL.prover("
+                        "proof_obligation=O(publish_notice(agency)), "
+                        "target_metric=tdfol_parse_failure_ratio)"
+                    ),
+                    "source_id": "tdfol:guidance:targeted-wrapper",
+                },
+                {
+                    "proof_formula": (
+                        "TDFOL.prover(P(accept_payment(secretary)))"
+                    ),
+                    "source_id": "tdfol:guidance:targeted-direct",
+                },
+            ],
+            "legal_norm_irs": [],
+            "parser_elements": [],
+        }
+
+    class _ProofObligationConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _ProofObligationResult()
+
+    adapter = FolTdfolBridgeAdapter(converter=_ProofObligationConverter())
+
+    report = adapter.evaluate("The agency shall publish notice.")
+    records = report.ir_document.views["tdfol_formula"].payload["records"]
+    formulas = {record["source_id"]: record["formula"] for record in records}
+
+    assert formulas["tdfol:guidance:targeted-wrapper"] == "O(publish_notice(agency))"
+    assert formulas["tdfol:guidance:targeted-direct"] == "P(accept_payment(secretary))"
+    assert all(record["parse_ok"] for record in records)
     assert report.proof_gate.compiles is True
     assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
 
@@ -5015,6 +5120,53 @@ def test_tdfol_bridge_recovers_alternate_rows_after_empty_records_list() -> None
     assert record["source_id"] == "tdfol:guidance:rows"
     assert record["formula"] == "O(collect_fees(chief_administrative_officer))"
     assert record["parse_ok"] is True
+    assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
+
+
+def test_tdfol_bridge_recovers_nested_view_payload_proof_obligation_rows() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
+
+    class _ProofObligationResult:
+        success = True
+        metadata = {
+            "proof_obligations": [
+                {
+                    "target_view": "TDFOL.prover",
+                    "payload": {
+                        "obligations": [
+                            {
+                                "target_logic": "TDFOL",
+                                "proof_goal": (
+                                    "TDFOL.prover proof_obligation view: "
+                                    "O(Chief Administrative Officer, "
+                                    "collect fees for internal services)"
+                                ),
+                            }
+                        ]
+                    },
+                    "source_id": "tdfol:guidance:nested-view",
+                }
+            ],
+            "legal_norm_irs": [],
+            "parser_elements": [],
+        }
+
+    class _ProofObligationConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _ProofObligationResult()
+
+    adapter = FolTdfolBridgeAdapter(converter=_ProofObligationConverter())
+
+    report = adapter.evaluate("The Chief Administrative Officer shall collect fees.")
+    record = report.ir_document.views["tdfol_formula"].payload["records"][0]
+
+    assert record["source_id"] == "tdfol:guidance:nested-view"
+    assert record["formula"] == (
+        "O(collect_fees_for_internal_services(chief_administrative_officer))"
+    )
+    assert record["parse_ok"] is True
+    assert report.proof_gate.compiles is True
     assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
 
 

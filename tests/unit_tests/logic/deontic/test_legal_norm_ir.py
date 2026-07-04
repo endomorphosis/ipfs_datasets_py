@@ -138,6 +138,29 @@ def test_legal_norm_ir_recovers_section_application_actor_from_source_text() -> 
     assert actor_grounding["spans"] == [[0, 36]]
 
 
+def test_legal_norm_ir_carries_official_usc_leadin_citation_to_norm_sentence() -> None:
+    elements = extract_normative_elements(
+        "38 U.S.C. 1731: U.S.C. Title 38 - VETERANS' BENEFITS "
+        "Sec. 1731 - Hospital care and medical services. "
+        "The Secretary shall furnish hospital care and medical services which "
+        "the Secretary determines are needed."
+    )
+
+    ir = LegalNormIR.from_parser_element(elements[0])
+
+    assert len(elements) == 1
+    assert elements[0]["canonical_citation"] == "38 U.S.C. 1731"
+    assert elements[0]["section_context"] == {
+        "title": "38",
+        "section": "1731",
+        "canonical_citation": "38 U.S.C. 1731",
+    }
+    assert ir.canonical_citation == "38 U.S.C. 1731"
+    assert ir.modality == "O"
+    assert ir.actor == "Secretary"
+    assert ir.action.startswith("furnish hospital care and medical services")
+
+
 def test_legal_norm_ir_decoder_validation_gate_distinguishes_cross_reference_warning_classes() -> None:
     cross_reference_only = extract_normative_elements(
         "This section applies to food carts."

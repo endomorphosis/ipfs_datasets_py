@@ -116,6 +116,17 @@ _SECTION_HEADER_RE = re.compile(
     r"^\s*(?:(?:sec(?:tion)?\.?|§)\s*)?([0-9]+(?:\.[0-9]+)*(?:[A-Za-z])?)\.?\s*(.*)$",
     re.IGNORECASE,
 )
+_USC_CITATION_CONTEXT_RE = re.compile(
+    r"\b(?P<title>\d+)\s+U\.?\s*S\.?\s*C\.?\s+"
+    r"(?P<section>[0-9][0-9A-Za-z.\-]*)\b"
+    r"(?:\s*[:\-]\s*|\s+)?(?P<heading>[^.;:]{0,120})",
+    re.IGNORECASE,
+)
+_SEC_CITATION_CONTEXT_RE = re.compile(
+    r"\bSec(?:tion)?\.?\s+(?P<section>[0-9][0-9A-Za-z.\-]*)"
+    r"\s*(?:[-:]\s*)?(?P<heading>[^.;:]{0,120})",
+    re.IGNORECASE,
+)
 _HIERARCHY_HEADER_RE = re.compile(
     r"^\s*(title|chapter|article|part|division)\s+([0-9A-Za-z][0-9A-Za-z.\-]*)\.?\s*(.*)$",
     re.IGNORECASE,
@@ -1296,16 +1307,25 @@ def segment_legal_text(text: str) -> List[Dict[str, Any]]:
                     if label.startswith("paragraph:")
                 ],
             ]
+            segment_section_context = dict(section_context)
             for sentence in _split_legal_sentences(segment_text):
                 sentence_offset = segment_text.find(sentence)
                 if sentence_offset < 0:
                     sentence_offset = 0
                 sentence_start = absolute_start + sentence_offset
+                citation_context = _citation_context_from_sentence(sentence)
+                if citation_context:
+                    segment_section_context = {
+                        **segment_section_context,
+                        **citation_context,
+                    }
+                    if not _sentence_has_normative_cue(sentence):
+                        continue
                 segments.append(
                     {
                         "text": sentence,
                         "span": [sentence_start, sentence_start + len(sentence)],
-                        "section_context": dict(section_context),
+                        "section_context": dict(segment_section_context),
                         "hierarchy_path": segment_hierarchy,
                         "hierarchy_details": segment_hierarchy_details,
                     }
@@ -1323,6 +1343,62 @@ def segment_legal_text(text: str) -> List[Dict[str, Any]]:
             }
         ]
     return segments
+
+
+def _citation_context_from_sentence(sentence: str) -> Dict[str, str]:
+    """Return U.S.C./section context carried by official excerpt lead-ins."""
+
+    text = str(sentence or "").strip()
+    if not text:
+        return {}
+
+    usc_match = _USC_CITATION_CONTEXT_RE.search(text)
+    if usc_match:
+        title = usc_match.group("title")
+        section = usc_match.group("section")
+        heading = _clean_citation_heading(usc_match.group("heading"))
+        context = {
+            "title": title,
+            "section": section,
+            "canonical_citation": f"{title} U.S.C. {section}",
+        }
+        if heading:
+            context["heading"] = heading
+        return context
+
+    sec_match = _SEC_CITATION_CONTEXT_RE.search(text)
+    if sec_match:
+        if _sentence_has_normative_cue(text):
+            return {}
+        section = sec_match.group("section")
+        heading = _clean_citation_heading(sec_match.group("heading"))
+        context = {"section": section}
+        if heading:
+            context["heading"] = heading
+        return context
+    return {}
+
+
+def _clean_citation_heading(value: str) -> str:
+    heading = re.sub(r"\s+", " ", str(value or "")).strip(" .:-")
+    if not heading:
+        return ""
+    if _sentence_has_normative_cue(heading):
+        return ""
+    if len(heading.split()) > 12:
+        return ""
+    return heading
+
+
+def _sentence_has_normative_cue(sentence: str) -> bool:
+    return bool(
+        re.search(
+            r"\b(?:shall|must|may|required|prohibited|authorized|"
+            r"permitted|applies|apply|means|exempt|unlawful)\b",
+            str(sentence or ""),
+            re.IGNORECASE,
+        )
+    )
 
 
 def _hierarchy_path_replaced_by(level: str, item: str) -> bool:
@@ -2450,12 +2526,23 @@ def _apply_definition_context(elements: List[Dict[str, Any]]) -> None:
 
 def build_canonical_citation(element: Dict[str, Any]) -> str:
     """Build a deterministic citation-like label from available hierarchy metadata."""
+    section_context = element.get("section_context") or {}
+    if isinstance(section_context, dict):
+        canonical = str(section_context.get("canonical_citation") or "").strip()
+        if canonical:
+            return canonical
+
     parts: List[str] = []
     for level in ["title", "division", "chapter", "article", "part"]:
         value = _hierarchy_value(element, level)
         if value:
             parts.append(f"{level} {value}")
-    section = (element.get("section_context") or {}).get("section")
+    section_title = ""
+    if isinstance(section_context, dict):
+        section_title = str(section_context.get("title") or "").strip()
+    if section_title and not any(part == f"title {section_title}" for part in parts):
+        parts.insert(0, f"title {section_title}")
+    section = section_context.get("section") if isinstance(section_context, dict) else ""
     if section:
         parts.append(f"section {section}")
     paragraph = _hierarchy_value(element, "paragraph")
