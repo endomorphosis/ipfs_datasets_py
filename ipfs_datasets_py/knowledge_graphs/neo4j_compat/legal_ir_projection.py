@@ -134,10 +134,36 @@ _TEXT_PREDICATES = {
 _SOURCE_ID_ALIAS_PREDICATES = {
     "sample_id",
 }
+_LEGAL_IR_VIEW_GUIDANCE_PREDICATES = {
+    "compiler_guidance_predicted_view",
+    "compiler_guidance_target_component",
+    "compiler_guidance_target_view",
+    "predicted_component",
+    "predicted_view",
+    "target_component",
+    "target_view",
+}
+_LEGAL_IR_GRAPH_REPAIR_ACTIONS = {
+    "repair_multiview_legal_ir_graph_projection",
+}
+_LEGAL_IR_VIEW_ALIASES = {
+    "knowledge_graph": "knowledge_graphs.neo4j_compat",
+    "knowledge_graphs_neo4j_compat": "knowledge_graphs.neo4j_compat",
+    "knowledge_graphs.neo4j_compat": "knowledge_graphs.neo4j_compat",
+    "neo4j_compat": "knowledge_graphs.neo4j_compat",
+    "modal_frame_logic": "modal.frame_logic",
+    "modal.frame_logic": "modal.frame_logic",
+}
 _MULTI_VALUE_COMPONENT_PREDICATES = {
     "section_definition_term",
     "section_paragraph_label",
     "section_subsection_label",
+    "learned_legal_ir_predicted_view",
+    "learned_legal_ir_predicted_view_weight",
+    "learned_legal_ir_target_view",
+    "learned_legal_ir_target_view_weight",
+    "learned_legal_ir_view_gap",
+    "learned_legal_ir_view_rank",
 }
 _MAX_AUGMENT_TRIGGER_TRIPLES_PER_SUBJECT = 8
 _EDITORIAL_STATUS_KEYWORDS = (
@@ -252,6 +278,11 @@ def augment_legal_ir_projection_triples(
                 }
             )
     _append_source_citation_alignment_triples(
+        augmented,
+        predicates_by_subject=predicates_by_subject,
+        seen=seen,
+    )
+    _append_legal_ir_guidance_alignment_triples(
         augmented,
         predicates_by_subject=predicates_by_subject,
         seen=seen,
@@ -862,6 +893,101 @@ def _source_citation_alignment_components(
             )
         )
     return _clean_components(components_out)
+
+
+def _append_legal_ir_guidance_alignment_triples(
+    triples: List[Dict[str, str]],
+    *,
+    predicates_by_subject: Dict[str, set[str]],
+    seen: set[Tuple[str, str, str]],
+) -> None:
+    guidance_by_subject: Dict[str, Dict[str, set[str]]] = {}
+    for triple in triples:
+        subject = triple["subject"]
+        predicate = triple["predicate"]
+        obj = triple["object"]
+        guidance = guidance_by_subject.setdefault(
+            subject,
+            {"predicted": set(), "target": set(), "actions": set()},
+        )
+        normalized_predicate = predicate.strip().lower()
+        normalized_view = _canonical_legal_ir_view_name(obj)
+        if normalized_predicate in _LEGAL_IR_VIEW_GUIDANCE_PREDICATES:
+            if "predicted" in normalized_predicate:
+                if normalized_view:
+                    guidance["predicted"].add(normalized_view)
+            elif normalized_view:
+                guidance["target"].add(normalized_view)
+        elif normalized_predicate in {
+            "action",
+            "compiler_guidance_action",
+            "compiler_guidance_route",
+            "route",
+        }:
+            guidance["actions"].add(obj.strip())
+
+    for subject, guidance in sorted(guidance_by_subject.items()):
+        target_views = set(guidance["target"])
+        predicted_views = set(guidance["predicted"])
+        if guidance["actions"] & _LEGAL_IR_GRAPH_REPAIR_ACTIONS:
+            target_views.add("knowledge_graphs.neo4j_compat")
+        if not target_views and not predicted_views:
+            continue
+        facts: List[Tuple[str, str]] = []
+        ranked_views = sorted(target_views | predicted_views)
+        for rank, view in enumerate(ranked_views, start=1):
+            if view in predicted_views:
+                facts.append(("learned_legal_ir_predicted_view", view))
+                facts.append(
+                    ("learned_legal_ir_predicted_view_weight", f"{view}:1.000000")
+                )
+            if view in target_views:
+                facts.append(("learned_legal_ir_target_view", view))
+                facts.append(("learned_legal_ir_target_view_weight", f"{view}:1.000000"))
+            gap = 0.0
+            if view in target_views and view not in predicted_views:
+                gap = 1.0
+            elif view in predicted_views and view not in target_views:
+                gap = -1.0
+            facts.append(("learned_legal_ir_view_rank", f"{rank}:{view}"))
+            facts.append(("learned_legal_ir_view_gap", f"{view}:{gap:.6f}"))
+        _append_component_triples(
+            triples,
+            subject=subject,
+            components=facts,
+            predicates_by_subject=predicates_by_subject,
+            seen=seen,
+        )
+
+
+def _append_component_triples(
+    triples: List[Dict[str, str]],
+    *,
+    subject: str,
+    components: Sequence[Tuple[str, str]],
+    predicates_by_subject: Dict[str, set[str]],
+    seen: set[Tuple[str, str, str]],
+) -> None:
+    existing_predicates = predicates_by_subject.setdefault(subject, set())
+    for predicate, value in _clean_components(components):
+        if (
+            predicate in existing_predicates
+            and predicate not in _MULTI_VALUE_COMPONENT_PREDICATES
+        ):
+            continue
+        key = (subject, predicate, value)
+        if key in seen:
+            continue
+        seen.add(key)
+        existing_predicates.add(predicate)
+        triples.append({"subject": subject, "predicate": predicate, "object": value})
+
+
+def _canonical_legal_ir_view_name(value: str) -> str:
+    normalized = str(value or "").strip()
+    if not normalized:
+        return ""
+    return _LEGAL_IR_VIEW_ALIASES.get(normalized.lower(), normalized)
 
 
 __all__ = ["augment_legal_ir_projection_triples"]

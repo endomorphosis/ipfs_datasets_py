@@ -1431,6 +1431,21 @@ class LegalModalParser:
                 ],
             )
 
+        def _marker_formulas(start_index: int) -> List[ModalIRFormula]:
+            return self.uscode_section_marker_coverage_formulas(
+                document_id=resolved_document_id,
+                text=normalized,
+                citation=citation,
+                start_index=start_index,
+                covered_spans=[
+                    (
+                        int(formula.provenance.start_char),
+                        int(formula.provenance.end_char),
+                    )
+                    for formula in formulas
+                ],
+            )
+
         fallback_formula = self.fallback_formula(
             document_id=resolved_document_id,
             text=normalized,
@@ -1467,6 +1482,7 @@ class LegalModalParser:
                 if reindexed_fallback is not None:
                     fallback_formula = reindexed_fallback
             formulas.extend(_prefix_formulas(len(formulas) + 2))
+            formulas.extend(_marker_formulas(len(formulas) + 2))
             formulas.extend(_catchline_formulas(len(formulas) + 2))
             formulas.append(fallback_formula)
         elif formulas:
@@ -1508,6 +1524,7 @@ class LegalModalParser:
                     )
                 )
                 formulas.extend(_prefix_formulas(len(formulas) + 2))
+                formulas.extend(_marker_formulas(len(formulas) + 2))
                 formulas.extend(_catchline_formulas(len(formulas) + 2))
                 formulas.append(residual_fallback_formula)
             else:
@@ -1521,6 +1538,7 @@ class LegalModalParser:
                     )
                 )
                 formulas.extend(_prefix_formulas(len(formulas) + 1))
+                formulas.extend(_marker_formulas(len(formulas) + 1))
                 formulas.extend(_catchline_formulas(len(formulas) + 1))
 
         return ModalIRDocument(
@@ -1748,6 +1766,53 @@ class LegalModalParser:
                     operator=operator,
                     profile=profile,
                     fallback_rule="uscode_section_catchline_coverage_v1",
+                )
+            )
+            next_index += 1
+            if len(formulas) >= max_formulas:
+                break
+        return formulas
+
+    def uscode_section_marker_coverage_formulas(
+        self,
+        *,
+        document_id: str,
+        text: str,
+        citation: Optional[str],
+        start_index: int = 1,
+        covered_spans: Sequence[tuple[int, int]] = (),
+        max_formulas: int = 4,
+    ) -> List[ModalIRFormula]:
+        """Emit frame coverage for bare U.S.C. section markers left between spans."""
+        if max_formulas <= 0 or not self._is_uscode_citation(citation):
+            return []
+        normalized = self.normalize_text(text)
+        if not normalized.strip():
+            return []
+        citation_section = self._citation_section_token(citation)
+        if not citation_section:
+            return []
+        profile = self.registry.get_profile(ModalLogicFamily.FRAME)
+        if not profile.operators:
+            return []
+        operator = profile.operators[0]
+        formulas: List[ModalIRFormula] = []
+        next_index = max(1, int(start_index))
+        for segment in self._uscode_section_marker_segments(
+            normalized_text=normalized,
+            citation_section=citation_section,
+        ):
+            if self._is_overlapping_covered_span(segment, covered_spans):
+                continue
+            formulas.append(
+                self._residual_span_coverage_formula(
+                    document_id=document_id,
+                    citation=citation,
+                    segment=segment,
+                    start_index=next_index,
+                    operator=operator,
+                    profile=profile,
+                    fallback_rule="uscode_section_marker_coverage_v1",
                 )
             )
             next_index += 1
@@ -2058,6 +2123,45 @@ class LegalModalParser:
             deduped.append(candidate)
         return deduped
 
+    def _uscode_section_marker_segments(
+        self,
+        *,
+        normalized_text: str,
+        citation_section: str,
+    ) -> List[LegalSegment]:
+        """Return compact ``Sec. N -`` and ``§N.`` marker spans for a citation."""
+        if not citation_section:
+            return []
+        section_pattern = self._citation_section_pattern(citation_section)
+        marker_re = re.compile(
+            rf"(?P<marker>\s*(?:"
+            rf"\bsec(?:tion)?s?\.?\s+{section_pattern}\s*(?:[-\u2012\u2013\u2014]\s*)?|"
+            rf"§+\s*{section_pattern}\s*[.)]?"
+            rf"))(?=\s|$)",
+            re.IGNORECASE,
+        )
+        candidates: List[LegalSegment] = []
+        seen_spans: set[tuple[int, int]] = set()
+        for marker in marker_re.finditer(normalized_text):
+            marker_text = marker.group("marker")
+            if not marker_text or not marker_text.strip():
+                continue
+            start_char = marker.start("marker")
+            end_char = marker.end("marker")
+            span = (start_char, end_char)
+            if span in seen_spans:
+                continue
+            seen_spans.add(span)
+            candidates.append(
+                LegalSegment(
+                    text=marker_text,
+                    start_char=start_char,
+                    end_char=end_char,
+                    role="section_marker",
+                )
+            )
+        return candidates
+
     def _is_exactly_covered_span(
         self,
         segment: LegalSegment,
@@ -2065,6 +2169,21 @@ class LegalModalParser:
     ) -> bool:
         return any(
             int(start_char) == segment.start_char and int(end_char) == segment.end_char
+            for start_char, end_char in covered_spans
+        )
+
+    def _is_overlapping_covered_span(
+        self,
+        segment: LegalSegment,
+        covered_spans: Sequence[tuple[int, int]],
+    ) -> bool:
+        return any(
+            self._spans_overlap(
+                segment.start_char,
+                segment.end_char,
+                start_char,
+                end_char,
+            )
             for start_char, end_char in covered_spans
         )
 

@@ -1164,6 +1164,8 @@ def _modal_clause_actor_parts(
     for suffix_match in reversed(suffix_matches):
         if suffix_match.start() <= 0:
             continue
+        if _modal_actor_suffix_is_embedded_tail(actor_text, suffix_match.start()):
+            continue
         suffix = _clean_source_label(actor_text[suffix_match.start() :])
         if _is_heading_polluted_actor(flat_value, suffix):
             return (
@@ -1173,6 +1175,37 @@ def _modal_clause_actor_parts(
             )
 
     return _clean_source_label(actor_text), actor_start, actor_end
+
+
+def _modal_actor_suffix_is_embedded_tail(actor_text: str, suffix_start: int) -> bool:
+    """Return whether a later ``the X`` is part of the same actor title.
+
+    Heading cleanup should trim catchlines such as ``Assistance ... The
+    President shall`` to ``The President``.  It should not trim institutional
+    titles like ``Chief Administrative Officer of the House of Representatives``
+    to the prepositional object ``the House of Representatives``.
+    """
+
+    prefix = str(actor_text or "")[:suffix_start].rstrip()
+    if not prefix:
+        return False
+    previous_token_match = re.search(r"([A-Za-z]+)$", prefix)
+    if not previous_token_match:
+        return False
+    previous_token = previous_token_match.group(1).lower()
+    return previous_token in {
+        "and",
+        "at",
+        "by",
+        "for",
+        "from",
+        "in",
+        "of",
+        "or",
+        "to",
+        "under",
+        "within",
+    }
 
 
 def _is_heading_polluted_actor(flat_value: str, modal_clause_actor: str) -> bool:

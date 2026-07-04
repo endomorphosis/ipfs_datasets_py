@@ -125,6 +125,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_REFINED_PACKET_000170_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_001095_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_001702_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_003186_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_003148_FAMILY_PAIRS,
     DEFAULT_MODAL_REGISTRY,
     ModalLogicFamily,
@@ -5630,6 +5631,40 @@ def test_modal_registry_applies_refined_cue_terms_for_packet_001702_pairs() -> N
     assert ("deontic", "shall") in extracted_cues
     assert ("temporal", "remain available until expended") in extracted_cues
     assert ("conditional_normative", "subject to") in extracted_cues
+
+
+def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_003186_pairs() -> None:
+    packet_pairs = (
+        ("deontic", "deontic"),
+        ("frame", "conditional_normative"),
+    )
+    assert tuple(COMPILER_REFINED_PACKET_003186_FAMILY_PAIRS) == packet_pairs
+    expected_minimum_buffers = {
+        ("deontic", "deontic"): 0.0015,
+        ("frame", "conditional_normative"): 0.0015,
+    }
+    for predicted_family, target_family in packet_pairs:
+        assert (
+            supports_signal_free_adaptive_ambiguity_pair(
+                predicted_family,
+                target_family,
+            )
+            is True
+        )
+        assert (
+            is_compiler_ambiguity_policy_pair(
+                predicted_family,
+                target_family,
+            )
+            is True
+        )
+        assert (
+            compiler_refined_modal_family_cue_margin_buffer(
+                predicted_family,
+                target_family,
+            )
+            >= expected_minimum_buffers[(predicted_family, target_family)]
+        )
 
 
 def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_000043_pairs() -> None:
@@ -39239,6 +39274,47 @@ def test_decompiler_emits_document_semantic_atoms_for_formula_free_frame_text() 
         "source_context_span_legal_semantic_atom"
     ]
     assert "build_maintain_duty" in slot_texts["legal_semantic_atom"]
+
+
+def test_decompiler_reconstructs_definition_condition_slots_for_priority_state() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Definitions. In this part, the term Priority State means a State "
+            "that is eligible for funding under the State Energy Program and "
+            "is among the 15 States with the highest annual per-capita "
+            "combined energy costs."
+        ),
+        predicate="priority_state_definition",
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "priority_state" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "funding_eligibility" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "per_capita_ranking" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "priority_state:frame->conditional_normative" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "definition_condition" in slot_texts["typed-decompiler-source-scope-cue"]
+    assert "eligibility_condition" in slot_texts["typed-decompiler-source-scope-cue"]
+    assert "ranking_condition" in slot_texts["typed-decompiler-source-scope-cue"]
+    assert "definition condition" in slot_texts["typed_ir_semantic_support"]
+    assert "eligibility condition" in slot_texts["typed_ir_semantic_support"]
+    assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
+    assert "ranking condition" in structural_text
 
 
 def test_decompiler_reconstructs_monitoring_enforcement_epistemic_frame_slots() -> None:

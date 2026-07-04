@@ -593,6 +593,37 @@ def test_parser_covers_duplicated_uscode_catchlines() -> None:
     }
 
 
+def test_parser_covers_untyped_uscode_section_markers_between_catchlines() -> None:
+    parser = LegalModalParser()
+    text = (
+        "10 U.S.C. 2263: Sec. 2263 - United States contributions to the "
+        "North Atlantic Treaty Organization common-funded budgets §2263. "
+        "United States contributions to the North Atlantic Treaty Organization "
+        "common-funded budgets (a) In General .-The total amount contributed "
+        "by the Secretary of Defense in any fiscal year for the common-funded "
+        "budgets of NATO may be an amount in excess of the maximum amount "
+        "that would otherwise be applicable to those contributions."
+    )
+
+    document = parser.parse(
+        text,
+        document_id="us-code-10-2263-section-marker-coverage",
+        source="us_code",
+        citation="10 U.S.C. 2263",
+    )
+
+    marker_spans = [
+        document.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ]
+        for formula in document.formulas
+        if formula.metadata.get("fallback_rule")
+        == "uscode_section_marker_coverage_v1"
+    ]
+    assert " Sec. 2263 -" in marker_spans
+    assert " §2263." in marker_spans
+
+
 def test_parser_preserves_uscode_definition_residual_tail() -> None:
     parser = LegalModalParser()
     text = (

@@ -64,3 +64,69 @@ def test_legal_ir_projection_keeps_prior_provision_transfer_out_of_primary_statu
     assert predicates["editorial_reference_status_keyword"] == ["transferred"]
     assert predicates["editorial_reference_status_keyword_transferred"] == ["true"]
     assert predicates["section_catchline"] == ["Law enforcement authority"]
+
+
+def test_legal_ir_projection_promotes_sparse_graph_guidance_to_view_alignment() -> None:
+    triples = augment_legal_ir_projection_triples(
+        [
+            {
+                "subject": "us-code-10-2515",
+                "predicate": "action",
+                "object": "repair_multiview_legal_ir_graph_projection",
+            },
+            {
+                "subject": "us-code-10-2515",
+                "predicate": "predicted_view",
+                "object": "knowledge_graphs_neo4j_compat",
+            },
+            {
+                "subject": "us-code-10-2515",
+                "predicate": "target_component",
+                "object": "neo4j_compat",
+            },
+        ]
+    )
+    values = {
+        (triple["predicate"], triple["object"])
+        for triple in triples
+        if triple["predicate"].startswith("learned_legal_ir_")
+    }
+
+    assert (
+        "learned_legal_ir_predicted_view",
+        "knowledge_graphs.neo4j_compat",
+    ) in values
+    assert (
+        "learned_legal_ir_target_view",
+        "knowledge_graphs.neo4j_compat",
+    ) in values
+    assert (
+        "learned_legal_ir_view_gap",
+        "knowledge_graphs.neo4j_compat:0.000000",
+    ) in values
+
+
+def test_legal_ir_projection_graph_repair_action_adds_neo4j_target_view() -> None:
+    triples = augment_legal_ir_projection_triples(
+        [
+            {
+                "subject": "us-code-22-290k-5",
+                "predicate": "compiler_guidance_action",
+                "object": "repair_multiview_legal_ir_graph_projection",
+            },
+        ]
+    )
+    values = {
+        (triple["predicate"], triple["object"])
+        for triple in triples
+        if triple["predicate"].startswith("learned_legal_ir_")
+    }
+
+    assert (
+        "learned_legal_ir_target_view",
+        "knowledge_graphs.neo4j_compat",
+    ) in values
+    assert (
+        "learned_legal_ir_view_gap",
+        "knowledge_graphs.neo4j_compat:1.000000",
+    ) in values

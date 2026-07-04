@@ -161,6 +161,27 @@ def test_legal_norm_ir_carries_official_usc_leadin_citation_to_norm_sentence() -
     assert ir.action.startswith("furnish hospital care and medical services")
 
 
+def test_legal_norm_ir_preserves_full_institutional_actor_with_internal_the_phrase() -> None:
+    elements = extract_normative_elements(
+        "2 U.S.C. 5541: U.S.C. Title 2 - THE CONGRESS "
+        "Sec. 5541 - Fees for internal delivery in House of Representatives. "
+        "The Chief Administrative Officer of the House of Representatives may "
+        "establish reasonable fees for delivery of mail matter and other items "
+        "within the House of Representatives."
+    )
+
+    ir = LegalNormIR.from_parser_element(elements[0])
+    provenance = legal_norm_ir_slot_provenance(ir, ("actor", "modality", "action"))
+
+    assert ir.actor == "Chief Administrative Officer of the House of Representatives"
+    assert ir.field_spans["subject"] == [4, 64]
+    assert provenance["missing_slots"] == []
+    assert provenance["ungrounded_slots"] == []
+    assert provenance["slot_grounding"][0]["value"] == (
+        "Chief Administrative Officer of the House of Representatives"
+    )
+
+
 def test_legal_norm_ir_decoder_validation_gate_distinguishes_cross_reference_warning_classes() -> None:
     cross_reference_only = extract_normative_elements(
         "This section applies to food carts."

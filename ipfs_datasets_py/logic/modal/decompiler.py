@@ -2623,6 +2623,21 @@ def _typed_ir_reconstruction_phrases(
         exception_values=exception_values,
     ):
         add_support(cue)
+    for cue in _definition_condition_support_values(
+        " ".join(
+            value.replace("_", " ")
+            for value in (
+                predicate_text,
+                source_span_text,
+                heading_text,
+                fallback_text,
+                " ".join(condition_values),
+                " ".join(exception_values),
+            )
+            if _clean_text(value)
+        )
+    ):
+        add_support(cue)
     for value in (*condition_values, *exception_values):
         add_support(value)
     for atom in semantic_atoms:
@@ -2968,6 +2983,8 @@ def _typed_ir_reconstruction_cue_support_values(
     ):
         add(cue)
     for cue in _bridge_cues_from_text(text):
+        add(cue)
+    for cue in _definition_condition_support_values(text):
         add(cue)
     for cue in list(cues):
         force = _typed_decompiler_force_for_cue(cue)
@@ -3842,6 +3859,34 @@ def _has_definition_semantics(normalized_text: str) -> bool:
         or re.search(r"\bas\s+used\s+in\s+(?:this|the)\b", normalized_text)
         or re.search(r"\b(?:means|includes?)\b", normalized_text)
     )
+
+
+def _definition_condition_support_values(text: str) -> List[str]:
+    """Return compact typed cues for definition clauses that impose criteria."""
+    normalized = _clean_text(text).replace("_", " ").lower()
+    if not normalized or not _has_definition_semantics(normalized):
+        return []
+    values: List[str] = []
+
+    def add(value: str) -> None:
+        cleaned = _clean_text(value).replace("_", " ")
+        if cleaned and cleaned not in values:
+            values.append(cleaned)
+
+    add("definition condition")
+    if re.search(r"\b(?:means|includes?)\b", normalized):
+        add("defined term criteria")
+    if re.search(r"\b(?:that|which)\b", normalized):
+        add("definition relative condition")
+    if re.search(r"\b(?:eligible|eligibility)\b", normalized):
+        add("eligibility condition")
+    if re.search(r"\b(?:among|highest|lowest|ranking|per\s+capita)\b", normalized):
+        add("ranking condition")
+    if re.search(r"\b(?:and|or)\b", normalized) and re.search(
+        r"\([a-z0-9ivxlcdm]+\)", normalized
+    ):
+        add("enumerated definition criteria")
+    return values
 
 
 def _fallback_section_heading_tail_text(
@@ -11099,6 +11144,8 @@ def _source_scope_reconstruction_cues(text: str) -> List[str]:
     ):
         if re.search(rf"(?<!\w){re.escape(phrase)}(?!\w)", normalized):
             add(cue)
+    for value in _definition_condition_support_values(normalized):
+        add(value.replace(" ", "_"))
     if re.search(r"\bexempt(?:ed|ion|ions)?\b", normalized):
         add("exempt")
     return cues
@@ -11126,7 +11173,13 @@ def _source_scope_cue_legal_ir_views(cue: str) -> List[str]:
         "for_the_purposes_of",
         "in_accordance_with",
         "in_the_case_of",
+        "defined_term_criteria",
+        "definition_condition",
+        "definition_relative_condition",
+        "eligibility_condition",
+        "enumerated_definition_criteria",
         "pursuant_to",
+        "ranking_condition",
         "referred_to_in",
         "subject_to",
         "under",
