@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Optional, Sequence
 
@@ -865,11 +866,11 @@ def _deontic_bridge_evidence_from_guidance_row(
         or row.get("quality_gate")
         or ""
     ).strip().lower()
-    component_gaps = row.get("legal_ir_component_gaps")
-    underrepresented = row.get("legal_ir_underrepresented_components")
+    component_gaps = _deontic_guidance_component_gaps(row)
+    underrepresented = _deontic_guidance_underrepresented_components(row)
     if not target_view and not component_gaps and not underrepresented:
         return {}
-    if target_view and target_view != "deontic.ir":
+    if target_view and _canonical_deontic_target_view(target_view) != "deontic.ir":
         return {}
     if quality_gate and quality_gate not in {"pass", "passed", "ok"}:
         return {}
@@ -887,10 +888,13 @@ def _deontic_bridge_evidence_from_guidance_row(
     normalized_underrepresented = _list_of_strings(underrepresented)
     if normalized_underrepresented:
         evidence["compiler_guidance_legal_ir_underrepresented_components"] = (
-            normalized_underrepresented
+            [_canonical_deontic_target_view(item) for item in normalized_underrepresented]
         )
     if isinstance(component_gaps, Mapping):
-        evidence["compiler_guidance_legal_ir_component_gaps"] = dict(component_gaps)
+        evidence["compiler_guidance_legal_ir_component_gaps"] = {
+            _canonical_deontic_gap_key(key): value
+            for key, value in dict(component_gaps).items()
+        }
     promoted_ir = _deontic_guidance_legal_norm_ir_slots(row)
     if promoted_ir:
         evidence["compiler_guidance_legal_norm_ir"] = promoted_ir
@@ -1001,11 +1005,85 @@ def _deontic_guidance_target_view(row: Mapping[str, Any]) -> str:
     for key in ("target_view", "target_component", "target", "predicted_view"):
         value = str(row.get(key) or "").strip()
         if value:
-            return value
+            return _canonical_deontic_target_view(value)
     bundle = row.get("bundle") or row.get("semantic_bundle")
     if isinstance(bundle, Mapping):
         return _deontic_guidance_target_view(bundle)
     return ""
+
+
+def _canonical_deontic_target_view(value: Any) -> str:
+    text = str(value or "").strip()
+    normalized = text.lower().replace("-", "_")
+    aliases = {
+        "deontic.ir": "deontic.ir",
+        "deontic_ir": "deontic.ir",
+        "deontic": "deontic.ir",
+        "deontic_norms": "deontic.ir",
+        "legal-ir-view:deontic.ir": "deontic.ir",
+        "legal_ir_view:deontic_ir": "deontic.ir",
+    }
+    return aliases.get(normalized, text)
+
+
+def _canonical_deontic_gap_key(value: Any) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    head, separator, tail = text.partition(":")
+    canonical_head = _canonical_deontic_target_view(head)
+    return f"{canonical_head}{separator}{tail}" if separator else canonical_head
+
+
+def _deontic_guidance_component_gaps(row: Mapping[str, Any]) -> dict[str, Any]:
+    gaps: dict[str, Any] = {}
+    for key in (
+        "legal_ir_component_gaps",
+        "compiler_guidance_legal_ir_component_gaps",
+        "legal_ir_view_gaps",
+        "compiler_guidance_legal_ir_view_gaps",
+        "legal_ir_view_family_gaps",
+        "compiler_guidance_legal_ir_view_family_gaps",
+    ):
+        value = row.get(key)
+        if isinstance(value, Mapping):
+            gaps.update(dict(value))
+
+    attribution = row.get("compiler_guidance_attribution")
+    if isinstance(attribution, Mapping):
+        for key in ("legal_ir_view_gaps", "legal_ir_view_family_gaps"):
+            value = attribution.get(key)
+            if isinstance(value, Mapping):
+                for gap_key, gap_value in value.items():
+                    if _guidance_gap_quality_gate_passes(gap_value):
+                        gaps.setdefault(str(gap_key), gap_value)
+    return gaps
+
+
+def _deontic_guidance_underrepresented_components(row: Mapping[str, Any]) -> list[str]:
+    components: list[str] = []
+    for key in (
+        "legal_ir_underrepresented_components",
+        "compiler_guidance_legal_ir_underrepresented_components",
+    ):
+        for item in _list_of_strings(row.get(key)):
+            if item not in components:
+                components.append(item)
+
+    for gap_key in _deontic_guidance_component_gaps(row):
+        text = str(gap_key or "")
+        if text.endswith(":underrepresented"):
+            component = text.rsplit(":", 1)[0]
+            if component not in components:
+                components.append(component)
+    return components
+
+
+def _guidance_gap_quality_gate_passes(value: Any) -> bool:
+    if not isinstance(value, Mapping):
+        return True
+    quality_gate = str(value.get("quality_gate") or "").strip().lower()
+    return quality_gate in {"pass", "passed", "ok"}
 
 
 def _selected_frame_from_deontic_compiler_guidance(
@@ -1071,6 +1149,23 @@ def _deontic_guidance_evidence_rows(
     guidance: Mapping[str, Any],
 ) -> list[tuple[str, Mapping[str, Any]]]:
     rows: list[tuple[str, Mapping[str, Any]]] = []
+
+    def collect(collection_key: str, value: Any) -> None:
+        if isinstance(value, Mapping):
+            rows.append((collection_key, value))
+            return
+        if isinstance(value, str):
+            parsed = _json_guidance_value(value)
+            if isinstance(parsed, Mapping):
+                rows.append((collection_key, parsed))
+            elif isinstance(parsed, Sequence) and not isinstance(parsed, (str, bytes)):
+                for item in parsed:
+                    collect(collection_key, item)
+            return
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            for item in value:
+                collect(collection_key, item)
+
     for collection_key in (
         "hint_evidence",
         "evidence",
@@ -1079,18 +1174,14 @@ def _deontic_guidance_evidence_rows(
         "metric_sample_payloads",
         "samples",
     ):
-        value = guidance.get(collection_key)
-        if isinstance(value, Mapping):
-            collection_rows = [value]
-        elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
-            collection_rows = [row for row in value if isinstance(row, Mapping)]
-        else:
-            collection_rows = []
-        for row in sorted(
-            collection_rows,
-            key=lambda item: int(item.get("evidence_rank") or item.get("rank") or 999999),
-        ):
-            rows.append((collection_key, row))
+        before = len(rows)
+        collect(collection_key, guidance.get(collection_key))
+        rows[before:] = sorted(
+            rows[before:],
+            key=lambda item: int(
+                item[1].get("evidence_rank") or item[1].get("rank") or 999999
+            ),
+        )
     return rows
 
 
@@ -2858,7 +2949,23 @@ def _list_of_dicts(value: Any) -> list[dict[str, Any]]:
 
 
 def _mapping(value: Any) -> dict[str, Any]:
-    return dict(value) if isinstance(value, Mapping) else {}
+    if isinstance(value, Mapping):
+        return dict(value)
+    if isinstance(value, str):
+        parsed = _json_guidance_value(value)
+        if isinstance(parsed, Mapping):
+            return dict(parsed)
+    return {}
+
+
+def _json_guidance_value(value: str) -> Any:
+    text = str(value or "").strip()
+    if not text or text[0] not in "[{":
+        return None
+    try:
+        return json.loads(text)
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return None
 
 
 def _value_is_present(value: Any) -> bool:
